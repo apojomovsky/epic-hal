@@ -6,9 +6,11 @@
 [![Runs on: host & silicon](https://img.shields.io/badge/runs%20on-host%20%26%20silicon-orange.svg)](#quick-start)
 
 A datasheet-faithful hardware abstraction layer and a set of firmware
-building blocks (scheduler, FSM, math, timebase, serial, bus, storage,
-control) for 8-bit PIC microcontrollers, in the spirit of STM32Cube HAL
-but for parts with no vendor HAL of their own.
+building blocks for 8-bit PIC microcontrollers, in the spirit of
+STM32Cube HAL but for parts with no vendor HAL of their own. 16 modules
+span the HALs plus scheduling, fixed-point math, serial/Modbus/USB,
+EEPROM and SD-card storage, PID, quadrature, debouncing, and character
+LCD.
 
 Every module dual-builds from the same source: a host simulation backend
 (gcc/CMake, runs as a normal program, no hardware required) and a
@@ -16,26 +18,59 @@ real-target build (MPLAB XC8, produces a `.hex`). Applications never
 `#ifdef` between them, the split happens at build time via include-path
 and linked-file selection.
 
+## Contents
+
+- [Why](#why)
+- [Supported devices](#supported-devices)
+- [Quick start](#quick-start)
+  - [Real hardware](#real-hardware)
+- [Modules](#modules)
+- [Documentation](#documentation)
+- [Requirements](#requirements)
+- [Development](#development)
+- [License](#license)
+
 ## Why
 
-- **Datasheet-faithful.** Every register, bit name, and reset value is
-  taken 1-to-1 from the Microchip datasheets
+8-bit PIC parts ship with no vendor HAL, so firmware for them tends to
+grow into a one-off tangle of register poking, copy-pasted between
+projects. This repo is a datasheet-faithful alternative: a hardware
+abstraction layer in the spirit of STM32Cube HAL, plus the higher-level
+building blocks (scheduler, math, serial, bus, storage, control) that sit
+on top of it, written once and reused across parts.
+
+The guiding decisions:
+
+- **Be faithful to the datasheet, not clever.** Every register, bit name,
+  and reset value is taken 1-to-1 from the Microchip datasheets
   ([DS39582B](https://ww1.microchip.com/downloads/en/DeviceDoc/39582b.pdf)
   for PIC16F87XA,
   [DS39632E](https://ww1.microchip.com/downloads/en/DeviceDoc/39632e.pdf)
   for PIC18F2455), cited in the source and in each family's `MANUAL.md`.
-- **Test on a laptop, not just on silicon.** Every module builds and runs
-  as a host program under CMake/ctest. Firmware logic gets exercised long
+- **Make the host a first-class target.** Every module builds and runs as
+  a host program under CMake/ctest, so firmware logic gets exercised long
   before it touches a programmer.
-- **Two families, one contract.** `pic8-common/` holds everything
-  architecture-blind (status codes, the harness, shared build
-  fragments); each family HAL implements the same names and signatures
-  over different registers. Higher-level modules (scheduler, protocol
-  stacks, drivers) are written once and build against either family
-  unchanged.
-- **No framework tax.** No RTOS, no dynamic allocation, no C++. Plain C99,
-  cooperative scheduling, static storage. Every module is usable on its
-  own; nothing requires pulling in the rest of the tree.
+- **Share one contract across families.** `pic8-common/` holds everything
+  architecture-blind (status codes, the harness, shared build fragments);
+  each family HAL implements the same names and signatures over different
+  registers. Higher-level modules (scheduler, protocol stacks, drivers)
+  are written once and build against either family unchanged.
+- **Keep the framework tax at zero.** No RTOS, no dynamic allocation, no
+  C++. Plain C99, cooperative scheduling, static storage. Every module is
+  usable on its own; nothing requires pulling in the rest of the tree.
+
+## Supported devices
+
+| Family | Parts | HAL module | Notes |
+|---|---|---|---|
+| PIC16F87XA | 16F873A / 874A / 876A / 877A | [pic16f87xa-hal](pic16f87xa-hal/) | Tested on a 16F877A. DFP ships with XC8. |
+| PIC18F2455 family | 18F2455 / 2550 / 4455 / 4550 | [pic18fxx5x-hal](pic18fxx5x-hal/) | Tested on a 18F4550. Needs the PIC18Fxxxx DFP. |
+
+The examples use PORTB only, so they run on every part of both families.
+Family-agnostic modules (scheduler, math, serial, Modbus, ...) build
+against either family by selecting the HAL at build time; a few modules
+target one family only where the peripheral doesn't exist (USB, SD card),
+called out in the [Modules](#modules) table.
 
 ## Quick start
 
@@ -165,21 +200,16 @@ family, that's called out.
 - [docs/multi-family-plan.md](docs/multi-family-plan.md), the refactor
   that extracted `pic8-common/` and added the PIC18F2455 family behind a
   fixed contract (Phases 0-4 done, litmus test met).
-- Datasheets are not vendored in this repo; reference Microchip's own
-  hosted copies:
-  [DS39582B](https://ww1.microchip.com/downloads/en/DeviceDoc/39582b.pdf)
-  (PIC16F87XA),
-  [DS39632E](https://ww1.microchip.com/downloads/en/DeviceDoc/39632e.pdf)
-  (PIC18F2455 family).
+- Datasheet references (not vendored in this repo) are listed under
+  [License](#license).
 
 ## Requirements
 
 - **Host simulation**: CMake >= 3.16 and any C99 compiler (gcc/clang).
 - **Real target**: MPLAB X IDE v6.x and MPLAB XC8 v3.x (`xc8-cc`). Tested
-  on a PIC16F877A and PIC18F4550; the examples use PORTB only, so they run
-  on all parts of both families. The PIC18 build needs the PIC18Fxxxx
-  Device Family Pack installed separately (the PIC16Fxxx DFP ships with
-  XC8, see
+  on a PIC16F877A and PIC18F4550 (see [Supported devices](#supported-devices)).
+  The PIC18 build needs the PIC18Fxxxx Device Family Pack installed
+  separately (the PIC16Fxxx DFP ships with XC8, see
   [pic18fxx5x-hal/mcu/pic18fxx5x-mplabx/README.md](pic18fxx5x-hal/mcu/pic18fxx5x-mplabx/README.md)).
 
 ## Development
