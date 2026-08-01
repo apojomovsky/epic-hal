@@ -83,6 +83,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build ${{ matrix.dir }} MCU=${{ matrix.mcu }}
-        run: make -C ${{ matrix.dir }} MCU=${{ matrix.mcu }}
+        # Neither DFP is bundled with the standalone XC8 v4.00 install (see
+        # docker/ci-toolchain/Dockerfile), and each Makefile's own DFP_DIR
+        # default still points at the repo's documented v3.10 path, so it
+        # has to be overridden here to match where the image actually put
+        # them ($XC8_INSTALL_DIR is set by the image itself).
+        run: |
+          case "${{ matrix.dir }}" in
+            *pic16f87xa*) dfp=Microchip.PIC16Fxxx_DFP ;;
+            *pic18fxx5x*) dfp=Microchip.PIC18Fxxxx_DFP ;;
+            *) echo "unrecognized family for ${{ matrix.dir }}" >&2; exit 1 ;;
+          esac
+          make -C ${{ matrix.dir }} MCU=${{ matrix.mcu }} \
+            DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${dfp}/xc8"
       - name: Confirm .hex was produced
         run: test -f ${{ matrix.dir }}/build/${{ matrix.mcu }}-firmware.hex

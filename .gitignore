@@ -26,3 +26,8 @@ cmake_install.cmake
 # Vendor datasheets / app notes — not committed (copyrighted Microchip
 # documentation); docs link to Microchip's own hosted PDFs instead.
 *.pdf
+
+# Vendor installers (e.g. a manually-downloaded XC8 .run, see
+# docker/ci-toolchain/Dockerfile): large binaries, never meant to be
+# committed, only ever a local, temporary staging step.
+*.run

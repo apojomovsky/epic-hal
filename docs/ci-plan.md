@@ -4,14 +4,16 @@ Status: **Phase 0 done** (`.github/workflows/host-tests.yml`,
 `scripts/pre-commit-checks.sh` extended with `PRE_COMMIT_BASE_REF` for CI
 reuse; first push to `master` after landing it went green, all 20 jobs,
 https://github.com/apojomovsky/pic8-hal/actions/runs/30717451172).
-**Phase 1 implemented, pending its first real run to confirm the
-toolchain image actually builds** (`docker/ci-toolchain/Dockerfile`,
-`.github/workflows/xc8-build.yml`, `scripts/ci-discover-xc8-matrix.py`);
-see Phase 1's "real, unresolved risk" note below, a local `docker build`
-of the image failed from the development sandbox with a `403` fetching
-the XC8 installer, not yet confirmed either way on an actual GitHub
-Actions runner. Phases 2+ depend on a probe (Phase 2) whose findings must
-be recorded in this document before Phase 3 starts.
+**Phase 1 implemented and validated locally end to end** (XC8 v4.00,
+`docker/ci-toolchain/Dockerfile`, `.github/workflows/xc8-build.yml`,
+`scripts/ci-discover-xc8-matrix.py`), **pending one manual step before
+its first real GitHub Actions run can succeed**: uploading the XC8
+installer as a release asset (`ci-toolchain-assets` tag,
+`xc8-v4.00-full-install-linux-x64-installer.run`), since Microchip's
+installer CDN turned out to be behind an Akamai bot-challenge that
+blocked both a real GitHub Actions run and local attempts, see Phase 1's
+findings below for the full story. Phases 2+ depend on a probe (Phase 2)
+whose findings must be recorded in this document before Phase 3 starts.
 
 ## Motivation
 
@@ -180,21 +182,22 @@ push, without yet touching the simulator problem.
 
 **Tasks**
 1. `docker/ci-toolchain/Dockerfile`: Debian slim base; `curl`, `make`,
-   `unzip`; XC8 **v3.10** (see "which XC8 version to pin" below, resolved:
-   matches the version already named throughout this repo's Makefiles and
-   `docs/multi-family-plan.md`, not the newest license-free v4.x, so CI
-   exercises the same toolchain a contributor actually has installed)
-   installed via its silent Linux installer (`--mode unattended
-   --unattendedmodeui none --LicenseType FreeMode`, v3.10 still has the
-   PRO gate, unlike v4.00+). Only `Microchip.PIC18Fxxxx_DFP.1.7.171` is
-   fetched as an `.atpack` from `packs.download.microchip.com` and
-   unzipped to the path `pic18fxx5x-hal/mcu/pic18fxx5x-mplabx/Makefile`
-   already defaults `DFP_DIR` to; `PIC16Fxxx_DFP` is bundled with the
-   XC8 v3.10 install itself (recorded in
-   `pic18fxx5x-hal/mcu/pic18fxx5x-mplabx/README.md`), not fetched
-   separately.
+   `unzip`; XC8 **v4.00** (superseded the plan's first pass at this
+   decision, see "which XC8 version to pin" below) installed via its
+   silent Linux installer (`--mode unattended --unattendedmodeui none`,
+   no license flags at all, v4.00 dropped the PRO gate entirely, verified
+   against the real installer's own `--help` output, its flag set doesn't
+   even have `--LicenseType` or `--netservername` anymore). Both
+   `Microchip.PIC16Fxxx_DFP.1.7.162` and `Microchip.PIC18Fxxxx_DFP.1.7.171`
+   are fetched as `.atpack` files from `packs.download.microchip.com` and
+   unzipped under `$XC8_INSTALL_DIR/pic/packs/`; **neither is bundled**
+   with the standalone v4.00 installer (verified locally: no `packs/`
+   directory anywhere under the installed tree at all). `xc8-build.yml`'s
+   `build` job passes `DFP_DIR` explicitly per family, since the
+   Makefiles' own `DFP_DIR` default still points at the repo-documented
+   v3.10 path, which doesn't exist in this image.
 2. `.github/workflows/xc8-build.yml`, `toolchain-image` job: resolves a
-   version-pinned tag (`xc8-v3.10-dfp1.7.171`) and reuses it via
+   version-pinned tag (`xc8-v4.00-dfp1.7.162-1.7.171`) and reuses it via
    `docker pull` if it already exists on `ghcr.io/<owner>/pic8-hal-ci`,
    only building+pushing on a cache miss. Deliberately not a separate
    path-filtered "publish" workflow (the plan's original sketch): that
@@ -207,31 +210,41 @@ push, without yet touching the simulator problem.
    undercounted) and pairs each with its family's four MCU variants,
    same "discover, don't hardcode" discipline as `host-tests.yml`.
 4. `xc8-build.yml`, `build` job: matrices over the discovered set inside
-   the resolved image, `make -C <dir> MCU=<variant>`, then asserts
-   `<dir>/build/<variant>-firmware.hex` exists.
+   the resolved image, `make -C <dir> MCU=<variant> DFP_DIR=<family's
+   pack path>`, then asserts `<dir>/build/<variant>-firmware.hex` exists.
 
 **Explicitly out of scope**: no MPLAB X IDE, no `mdb`, no simulation.
 This phase only needs the XC8 compiler.
 
-**A real, unresolved risk going into this phase's first CI run**:
-Microchip's download CDN (`ww1.microchip.com`) returned `403 Access
-Denied` from an Akamai edge for every installer request attempted from
-the development sandbox this Dockerfile was written in, including a full
-local `docker build` of `docker/ci-toolchain` (curl exit 22). Fetching
-the same DFP `.atpack` from `packs.download.microchip.com` (a different,
-S3/CloudFront-backed host) worked fine from that same sandbox, so this
-looks specific to the compiler-installer CDN, not a blanket network
-block. Whether GitHub Actions' runner IP ranges hit the same block is
-genuinely unknown until the workflow actually runs there; the Dockerfile
-fails loudly (curl `-f`, plus a minimum-file-size check) rather than
-silently proceeding with a bad download, so if this is going to fail, it
-fails clearly on `toolchain-image`, not confusingly deep in a matrix
-leg.
+**A real risk that materialized, and how it got resolved**: Microchip's
+installer CDN (`ww1.microchip.com`) sits behind an Akamai bot-challenge.
+The first version of this Dockerfile (pinned to v3.10, fetching straight
+from that CDN) failed identically in two independent places: a local
+`docker build` in the sandbox this was written in, *and* a real
+`xc8-build.yml` run on GitHub Actions itself (same `curl` exit code 22
+in both). Trying `curl-impersonate` (spoofs Chrome's TLS/JA3 fingerprint)
+got past the initial block but landed on a JavaScript challenge page
+instead of the file, confirming it's a JS bot-challenge, not just header/
+TLS fingerprinting, and not something worth automating past even if it
+were feasible. Resolved by switching approach entirely: the user
+downloaded the v4.00 installer directly (a real browser clears the
+challenge trivially) and it's re-hosted as a release asset in this repo
+(`ci-toolchain-assets` tag) instead of fetched from Microchip's CDN in
+CI. The DFPs were never affected, `packs.download.microchip.com` is a
+different, S3/CloudFront-backed host with no such challenge, confirmed
+working from both the sandbox and a real GitHub Actions run.
 
 **Validation**
 - [ ] Toolchain image builds successfully and is pullable from GHCR.
-      **Not yet confirmed**, this is the actual test of the risk noted
-      above; record the real outcome here once `xc8-build.yml` has run.
+      Confirmed **locally** end to end (`docker build` against the final
+      Dockerfile using a local HTTP server standing in for the release
+      asset URL, then a real `make MCU=16F877A` and `make MCU=18F4550`
+      against the resulting image, both produced a `.hex`). Not yet
+      confirmed **on GitHub Actions** with the real release asset in
+      place, that still needs the actual release to exist first
+      (`ci-toolchain-assets` tag, asset
+      `xc8-v4.00-full-install-linux-x64-installer.run`). Record the real
+      run's outcome here once that's done.
 - [ ] Every existing module/MCU combination that builds locally today
       also builds green in this workflow (no regressions from the
       containerized environment vs. a developer's local XC8 install).
@@ -393,27 +406,37 @@ deferral is documented in its own `docs/pic8-usb-plan.md`, not just here.
 
 ## Open questions (resolve during the phase noted)
 
-- **Which XC8 version to pin.** **RESOLVED (Phase 1): stayed on `v3.10`**,
-  matching every existing Makefile, `docs/multi-family-plan.md`'s recorded
-  PIC18 interrupt-syntax findings, and both `mcu/*-mplabx/README.md`
-  files. Bumping to v4.00+ (no PRO license gate at all) was considered
-  but rejected for now: CI should exercise the same toolchain version a
-  contributor actually has installed locally, and nothing in this plan
-  needs v4's license change (v3.10's `--LicenseType FreeMode` silent-
-  install flag already gets a working, unattended, free-tier compiler).
-  Revisit as its own follow-up if the repo ever moves its pin.
-- **Whether the XC8 installer is even fetchable from a CI runner.** New
-  question, not anticipated when this plan was first written. Confirmed
-  during Phase 1 that `ww1.microchip.com`'s installer CDN returns
-  `403 Access Denied` (Akamai) from the development sandbox, for every
-  filename tried, while `packs.download.microchip.com` (DFPs, a
-  different CloudFront-backed host) works fine from the same sandbox.
-  Whether GitHub Actions' runner IPs hit the same block is unknown until
-  `xc8-build.yml`'s `toolchain-image` job actually runs there. Resolve
-  by recording that job's real outcome in Phase 1's validation checklist
-  above; if it does fail there too, the fallback is hosting the installer
-  ourselves (a release asset in this repo, or a manually re-uploaded
-  blob) rather than depending on Microchip's CDN from CI at all.
+- **Which XC8 version to pin.** **RESOLVED (Phase 1), reversed from this
+  document's first pass: `v4.00`, not `v3.10`.** The first pass reasoned
+  CI should match what's already documented in this repo's Makefiles.
+  That held right up until the CDN-fetchability question below forced a
+  full reconsideration: since the installer had to be self-hosted as a
+  release asset either way, there was no longer a "just curl it from
+  Microchip" reason to prefer the older version, and v4.00 removes the
+  PRO-license flag entirely (confirmed against the real installer's own
+  `--help`: no `--LicenseType`/`--netservername` options exist anymore),
+  one less moving part. This does mean CI now runs a newer XC8 than the
+  version named in this repo's Makefile comments and
+  `docs/multi-family-plan.md`; that divergence is real and left as its
+  own separate follow-up (bump the repo-wide pin, or don't), not bundled
+  into this CI work.
+- **Whether the XC8 installer is even fetchable from a CI runner.**
+  **RESOLVED (Phase 1): no, not from Microchip's CDN.** Confirmed twice,
+  independently: a local `docker build` in the development sandbox, and
+  a real `xc8-build.yml` run on GitHub Actions, both failed identically
+  (`curl` exit 22) against `ww1.microchip.com`, which sits behind an
+  Akamai bot-challenge. `curl-impersonate` (spoofs Chrome's TLS
+  fingerprint) got past the TLS-level check but hit a JavaScript
+  challenge page instead of the file, so it's a real JS challenge, not
+  fixable with header/fingerprint spoofing, and not worth trying to
+  automate past regardless. `packs.download.microchip.com` (DFPs) is
+  unaffected, a different, S3/CloudFront-backed host, confirmed working
+  from both the sandbox and a real GitHub Actions run. Fix: the XC8
+  installer is now fetched from this repo's own GitHub Release
+  (`ci-toolchain-assets` tag) instead of Microchip's CDN; a human
+  downloaded it once via a real browser, which clears the challenge
+  trivially. See `docker/ci-toolchain/Dockerfile`'s header comment for
+  the full account.
 - **Whether `mdb` truly needs no display server.** Believed true (it's
   documented as the headless/scriptable counterpart to the MPLAB X IDE
   GUI, distinct binary, distinct purpose), not yet independently
