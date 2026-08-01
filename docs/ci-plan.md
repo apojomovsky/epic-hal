@@ -19,13 +19,18 @@ them against real XC8 (root-caused and filed separately in
 rather than either left red or silently ignored). See Phase 1's
 validation notes below for the full account of each.
 
-**Post-Phase-1 fix in progress, not yet confirmed on a real run**: both
-the GHCR image and the GitHub Release asset used to land Phase 1 turned
-out to be publicly redistributing Microchip's software with no EULA
-authorization to do so (confirmed: an unauthenticated `docker pull`
-worked). See the "Correction" note under Decision, and Phase 1's
-follow-up validation checklist, for the fix (`docker/ci-assets/`, a
-private blob-carrier image) and what's still unconfirmed.
+**Post-Phase-1 redistribution fix: done.** Both the GHCR image and the
+GitHub Release asset used to land Phase 1 turned out to be publicly
+redistributing Microchip's software with no EULA authorization to do so
+(confirmed: an unauthenticated `docker pull` worked). Fixed with
+`docker/ci-assets/`, a private blob-carrier image, both GHCR packages
+manually confirmed private, and a real green run
+(https://github.com/apojomovsky/pic8-hal/actions/runs/30722374627)
+against the simplified pipeline. See the "Correction" note under
+Decision, and Phase 1's follow-up validation checklist, for the full
+account. Only remaining step: deleting the now-redundant public
+`ci-toolchain-assets` release, a one-way action left for a human to
+trigger, not done as part of this fix.
 
 **Phase 2 (probe `mdb`/MPLAB SIM)**: the actual mechanism is confirmed
 working for both families (headless, plain `.hex`, UART-to-file capture,
@@ -397,10 +402,21 @@ working from both the sandbox and a real GitHub Actions run.
 - [ ] The public `ci-toolchain-assets` GitHub Release can now be deleted
       (both packages confirmed private, the bootstrap fallback that
       depended on it is gone). Not yet done.
-- [ ] A real CI run confirming the simplified `ci-assets`/`toolchain-image`
+- [x] A real CI run confirming the simplified `ci-assets`/`toolchain-image`
       jobs (no bootstrap fallback, no visibility-API steps) still work
-      end to end against the now-private, already-cached images. Not yet
-      run since removing that code.
+      end to end against the now-private, already-cached images. Confirmed
+      on run https://github.com/apojomovsky/pic8-hal/actions/runs/30722374627,
+      all 75 jobs green (`ci-assets`, `toolchain-image`, `discover`, all
+      72 `build` legs). The redistribution fix is done: both packages
+      private, workflow doesn't lie about it, cache-hit path works.
+
+The only remaining item from this fix is deleting the now-redundant
+public `ci-toolchain-assets` GitHub Release (Repo -> Releases ->
+`ci-toolchain-assets` -> Delete), safe to do now that both packages are
+confirmed private and nothing in the workflow reads from it anymore.
+Not this document's author's call to make unilaterally (deleting a
+public release is a one-way, visible action), left for whoever's driving
+this to do when ready.
 
 ---
 
