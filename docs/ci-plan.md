@@ -4,18 +4,22 @@ Status: **Phase 0 done** (`.github/workflows/host-tests.yml`,
 `scripts/pre-commit-checks.sh` extended with `PRE_COMMIT_BASE_REF` for CI
 reuse; first push to `master` after landing it went green, all 20 jobs,
 https://github.com/apojomovsky/pic8-hal/actions/runs/30717451172).
-**Phase 1 implemented, the `.hex`-check fix below not yet confirmed on a
-real run** (XC8 v4.00, `docker/ci-toolchain/Dockerfile`,
-`.github/workflows/xc8-build.yml`, `scripts/ci-discover-xc8-matrix.py`).
-Two real GitHub Actions runs so far: the first hit Microchip's installer
-CDN being behind an Akamai bot-challenge (fixed by self-hosting the
-installer as a GitHub Release asset, `ci-toolchain-assets` tag), the
-second's `toolchain-image` succeeded but 104/112 `build` legs failed on a
-bug in the workflow's own `.hex`-exists check, not the actual builds,
-fixed and verified against three modules locally (pulling the real
-published image) but not yet re-run for real. See Phase 1's validation
-notes below for both. Phases 2+ depend on a probe (Phase 2)
-whose findings must be recorded in this document before Phase 3 starts.
+**Phase 1 done** (XC8 v4.00, `docker/ci-toolchain/Dockerfile`,
+`.github/workflows/xc8-build.yml`, `scripts/ci-discover-xc8-matrix.py`),
+green on run https://github.com/apojomovsky/pic8-hal/actions/runs/30720162258
+(74/74 jobs: `toolchain-image`, `discover`, 72 `build` legs). Took four
+real GitHub Actions runs to land: Microchip's installer CDN being behind
+an Akamai bot-challenge (fixed by self-hosting the installer as a GitHub
+Release asset), a workflow bug assuming every module names its `.hex`
+`<MCU>-firmware.hex` (fixed by globbing instead of guessing), and 40 of
+112 `(module, MCU)` pairs having real, pre-existing link/resource bugs of
+their own, never caught before because nothing had ever actually linked
+them against real XC8 (root-caused and filed separately in
+`docs/mplabx-link-gaps-plan.md`, excluded from this workflow's matrix
+rather than either left red or silently ignored). See Phase 1's
+validation notes below for the full account of each. Phases 2+ depend on
+a probe (Phase 2) whose findings must be recorded in this document before
+Phase 3 starts.
 
 ## Motivation
 
@@ -263,7 +267,10 @@ working from both the sandbox and a real GitHub Actions run.
          `KNOWN_BROKEN` set (verified the excluded set matches the real
          failure set exactly, diffed both lists) so this workflow stays
          meaningfully green rather than either permanently red or
-         silently wrong. Marked `[~]`, not `[x]`: this is "green on the
+         silently wrong. **Confirmed on run 30720162258**: all 74 jobs
+         green (`toolchain-image`, `discover`, all 72 `build` legs),
+         https://github.com/apojomovsky/pic8-hal/actions/runs/30720162258.
+         Marked `[~]`, not `[x]`: this is "green on the
          72 legs that are known to actually work," not literally "every
          module/MCU combination," 40 are deliberately, visibly excluded
          pending `docs/mplabx-link-gaps-plan.md`.
@@ -271,7 +278,8 @@ working from both the sandbox and a real GitHub Actions run.
       matrix leg for its module/MCU, not the whole job. Not yet
       exercised.
 
-**Exit criterion**: `xc8-build.yml` green on `master`, merged.
+**Exit criterion**: `xc8-build.yml` green on `master`, merged. Met
+(run 30720162258).
 
 ---
 
