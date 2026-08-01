@@ -454,14 +454,29 @@ This phase only answers "does the mechanism work," recorded as fact, not
 assumption.
 
 **Validation**
-- [ ] Both probes (PIC16, PIC18) produce a captured UART output file with
+- [x] Both probes (PIC16, PIC18) produce a captured UART output file with
       the expected `printf` content, driven entirely by `mdb.sh` inside
-      the container, no interactive step.
-- [ ] Findings for each open question below are recorded, with the
-      actual `mdb` script and output pasted or referenced.
+      the container, no interactive step. PIC16F877A: a throwaway
+      `probe_usart_16f87xa.c` transmitting a fixed line in a loop, run
+      for 2 real-time seconds under `mdb`/MPLAB SIM, produced 50KB of
+      correctly-captured output. PIC18F4550 (the plan named PIC18F2455;
+      used 4550 instead, same family, same mechanism, not a meaningful
+      difference here): same shape, 895 bytes captured. Neither probe is
+      committed, per this repo's own convention for exploratory checks
+      (scripts/README.md's "throwaway probe" precedent).
+- [x] Findings for each open question below are recorded, with the
+      actual `mdb` script and output referenced.
 
 **Exit criterion**: every open question tagged "resolve in Phase 2" below
-has a recorded answer.
+has a recorded answer. Met for the `mdb` mechanism itself (see open
+questions below). **Not yet met for the Dockerfile task** (extending
+`docker/ci-toolchain/Dockerfile` with MPLAB X IDE, task 1 above):
+`mdb`/MPLAB SIM has so far only run against an ad hoc local install
+(a Docker volume in the sandbox that ran these probes, `mplabx-install-
+vol`), nothing committed to this repo yet. That's still open, tracked as
+its own follow-up now that Phase 1 already established the private-asset
+pattern MPLAB X IDE will need (1.1GB, even more clearly Microchip's full
+commercial product than the XC8 compiler was).
 
 ---
 
@@ -602,15 +617,58 @@ deferral is documented in its own `docs/pic8-usb-plan.md`, not just here.
   downloaded it once via a real browser, which clears the challenge
   trivially. See `docker/ci-toolchain/Dockerfile`'s header comment for
   the full account.
-- **Whether `mdb` truly needs no display server.** Believed true (it's
-  documented as the headless/scriptable counterpart to the MPLAB X IDE
-  GUI, distinct binary, distinct purpose), not yet independently
-  confirmed for this repo's exact MPLAB X version. Resolve in Phase 2,
-  record the actual container run (with or without `Xvfb`) here.
+- **Whether `mdb` truly needs no display server.** **RESOLVED (Phase 2):
+  confirmed true.** Ran `mplab_platform/bin/mdb.sh` (MPLAB X IDE v6.35)
+  in a plain Debian container, no `Xvfb`, no `DISPLAY` set at all. It
+  degrades gracefully: `WARNING: Unable to create a system terminal,
+  creating a dumb terminal`, then runs the script to completion normally.
+  No GUI dependency in practice, not just in theory.
 - **Whether `mdb`'s `program` command accepts a bare `.hex` with no
   `.elf`/debug symbols, and whether UART capture works without them.**
-  Believed yes (UART capture doesn't need symbol info, only symbolic
-  breakpoints/memory-by-name would). Resolve in Phase 2.
+  **RESOLVED (Phase 2): yes to both.** `program /path/to/16F877A-
+  firmware.hex` (no `.elf` anywhere in the container) programmed the
+  simulator fine, and UART capture worked identically.
+- **Two undocumented-until-hit `mdb` gotchas, found while getting the
+  above two working, worth recording since they cost real debugging
+  time:**
+  - **`set` tool-property commands must be issued *before* `hwtool`**,
+    not after. Silently ignored otherwise, no error, the property just
+    doesn't take effect (confirmed by testing both orders: same script,
+    reordered, went from "runs clean, output file never appears" to
+    "works"). This is actually documented, in the MDB User's Guide
+    (DS-50002102G, section on tool-property commands: "the set command
+    ... must be executed before the Hwtool command is issued, otherwise
+    the changes to the tool properties will be ignored"), just easy to
+    miss since `mdb` doesn't warn about it at the point you get it wrong.
+  - **The property is `uart1io.*`, not `usart1io.*`.** Also confirmed
+    from the MDB User's Guide (`uartNio.uartioenabled`, `uartNio.output`,
+    `uartNio.outputfile`, N = 1..6), not something `mdb` will tell you if
+    you guess wrong: `set usart1io.anythingAtAll true` is silently
+    accepted with no error either, so a wrong property name and a right
+    one look identical until you check whether the file it should have
+    produced actually exists.
+  - The actual mechanism, both families, in the order that matters:
+    ```
+    device PIC16F877A
+    set uart1io.uartioenabled true
+    set uart1io.output file
+    set uart1io.outputfile /path/to/output.txt
+    hwtool SIM
+    program /path/to/firmware.hex
+    run
+    wait 2000
+    halt
+    quit
+    ```
+  - **Unrelated to `mdb`, but hit while writing the PIC16/PIC18 probes**:
+    this repo's own `HAL_USART_Init` (`pic16f87xa_usart.c` and
+    `pic18fxx5x_usart.c`, both families, same pattern) only sets `TXEN`
+    when a non-null `TxCpltCallback` is supplied
+    (`if (h->TxCpltCallback) txsta |= PIC_TXSTA_TXEN;`). Without one, the
+    transmitter silently never enables, nothing shifts out, no error.
+    Worth knowing for Phase 3's sim-target harness design, whatever it
+    ends up transmitting over USART will need a callback set, even a
+    no-op one, or `TXEN` never gets set.
 - **Wire format for the sim-target harness's PASS/FAIL report.** Options:
   a single terminating line (simplest, easiest to grep, no third-party
   dependency), or adopting the Unity test framework (what Microchip's
