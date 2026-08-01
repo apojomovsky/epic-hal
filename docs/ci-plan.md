@@ -243,25 +243,30 @@ working from both the sandbox and a real GitHub Actions run.
       asset URL) and for real, `toolchain-image` succeeded on GitHub
       Actions once the `ci-toolchain-assets` release existed
       (https://github.com/apojomovsky/pic8-hal/actions/runs/30718807266).
-- [ ] Every existing module/MCU combination that builds locally today
-      also builds green in this workflow. **Not yet confirmed for real**;
-      the first real run (30718807266) actually caught a genuine bug:
-      104 of 112 `build` legs failed, but not because compilation failed,
-      `make` itself succeeded on every one. The workflow's own "Confirm
-      .hex was produced" step assumed every module names its output
-      `<MCU>-firmware.hex`, true only of the two top-level HAL Makefiles;
-      each `pic8-*` module's `TARGET` has its own suffix (`-debounce`,
-      `-adcfilter-sizecheck`, `-multi-blink`, ..., no shared convention).
-      Fixed by globbing `build/*.hex` and asserting exactly one match
-      instead of guessing a filename, verified locally against three
-      different modules (`pic8-debounce`, `pic8-adcfilter`,
-      `pic8-taskmgr`) pulling the real published GHCR image, but not yet
-      re-run on GitHub Actions itself; check this box only once that run
-      is actually green. Also fixed while here: the `toolchain-image` tag
-      resolution only read `PIC18FXXXX_DFP_VERSION`, silently ignoring
-      the newly-added `PIC16FXXX_DFP_VERSION`, so the actual pushed tag
-      was `xc8-v4.00-dfp1.7.171`, missing the PIC16 DFP version this
-      document's Phase 1 task list said it would include.
+- [~] Every existing module/MCU combination that builds locally today
+      also builds green in this workflow. Two real bugs found across two
+      runs, both fixed:
+      1. Run 30718807266: `make` itself succeeded on every leg, but the
+         workflow's own "Confirm .hex was produced" step assumed every
+         module names its output `<MCU>-firmware.hex`, true only of the
+         two top-level HAL Makefiles (each `pic8-*` module's `TARGET` has
+         its own suffix, `-debounce`, `-adcfilter-sizecheck`,
+         `-multi-blink`, ..., no shared convention). Fixed by globbing
+         `build/*.hex` and asserting exactly one match.
+      2. Run 30719090416 (after fix 1, and after also fixing
+         `toolchain-image`'s tag resolution silently ignoring the
+         newly-added `PIC16FXXX_DFP_VERSION`): 40 of 112 `build` legs
+         failed for real, genuine pre-existing link/resource bugs in
+         those modules' Makefiles, not CI plumbing. Filed and root-caused
+         in `docs/mplabx-link-gaps-plan.md`; excluded from this
+         workflow's matrix via `scripts/ci-discover-xc8-matrix.py`'s
+         `KNOWN_BROKEN` set (verified the excluded set matches the real
+         failure set exactly, diffed both lists) so this workflow stays
+         meaningfully green rather than either permanently red or
+         silently wrong. Marked `[~]`, not `[x]`: this is "green on the
+         72 legs that are known to actually work," not literally "every
+         module/MCU combination," 40 are deliberately, visibly excluded
+         pending `docs/mplabx-link-gaps-plan.md`.
 - [ ] A deliberately broken `.c` file (throwaway test branch) fails the
       matrix leg for its module/MCU, not the whole job. Not yet
       exercised.
