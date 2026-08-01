@@ -140,17 +140,19 @@ artifact to surface it. Two things happened, in order:
    GitHub Release asset were reachable by anyone, not just this repo's
    own CI, no EULA authorization for that exists.
 
-**Fix**: neither artifact is public anymore (or won't be, once the
-migration below is confirmed and the visibility settings are checked).
-`docker/ci-assets/Dockerfile` is a generic, non-runnable "blob carrier"
-(`FROM scratch`, `COPY . /`), built once per vendor file and pushed to a
-**private** `ghcr.io/<owner>/pic8-hal-ci-assets` image. Consumers extract
-the file with `docker create` + `docker cp` (never `docker run`, there's
-nothing to run). `xc8-build.yml`'s new `ci-assets` job builds/pushes it
-and attempts to flip its visibility to private via the GitHub API
-(best-effort, `GITHUB_TOKEN` may not have that scope, needs manual
-confirmation either way, see Phase 1's updated validation below).
-`toolchain-image` extracts the installer from that private image into
+**Fix**: neither artifact is public anymore. `docker/ci-assets/Dockerfile`
+is a generic, non-runnable "blob carrier" (`FROM scratch`, `COPY . /`),
+built once per vendor file and pushed to a **private**
+`ghcr.io/<owner>/pic8-hal-ci-assets` image. Consumers extract the file
+with `docker create` + `docker cp` (never `docker run`, there's nothing
+to run). `xc8-build.yml`'s `ci-assets` job builds/pushes it; visibility
+is set by hand, once, per package (package Settings page, "Danger Zone"),
+not by the workflow, an initial attempt to do it via `gh api PATCH
+.../visibility` with `GITHUB_TOKEN` reported success but silently didn't
+work (the token lacks the scope), so that step was removed rather than
+left in as false confidence, see Phase 1's updated validation below for
+the full account. `toolchain-image` extracts the installer from that
+private image into
 `docker/ci-toolchain/vendor/` (gitignored, `*.run`) before `docker
 build`, so `docker/ci-toolchain/Dockerfile` now `COPY`s the installer
 from build context instead of `curl`-ing it from anywhere, public or
@@ -368,33 +370,37 @@ working from both the sandbox and a real GitHub Actions run.
 - [x] `toolchain-image` job's extraction step (`docker create` + `docker
       cp` from the private asset image into `docker/ci-toolchain/vendor/`)
       confirmed working on that same real run, not just locally.
-- [ ] **Both `pic8-hal-ci-assets` and `pic8-hal-ci` are actually private:
-      confirmed FALSE.** The workflow's `gh api PATCH .../visibility`
-      steps reported step-level "success", but that step has a `||`
-      fallback that never fails the job either way, "success" only means
-      the shell script ran, not that the API call worked. Checked for
-      real: `docker logout ghcr.io` then `docker pull` on both images,
-      **both succeeded with zero authentication**, run right after the
-      above CI run finished. `GITHUB_TOKEN` most likely lacks the scope
-      GitHub requires for the package-visibility endpoint (this needs a
-      PAT with admin rights on the package, not the automatic per-run
-      token). **This is the actual unresolved compliance gap right now**:
-      both images are still publicly pullable. Needs a human to flip
-      visibility to private by hand (package Settings page,
-      "Danger Zone" → "Change package visibility"), for both packages,
-      before this can be considered fixed. Not done as of this writing.
-- [ ] The public `ci-toolchain-assets` GitHub Release is deleted, once
-      the above are actually confirmed private (order matters: the
-      migration's bootstrap path still reads from it, and there's no
-      urgency to delete it before the private copies are confirmed
-      working, deleting it early with nothing to fall back on would just
-      break the next cache-miss run for no compliance benefit, the
-      release being public is the problem, not a ticking clock).
-- [ ] The bootstrap fallback in `ci-assets`'s "Pull cached asset image,
-      or seed it" step is deleted in a follow-up commit once the above
-      are all confirmed, it's a one-time migration path that goes stale
-      (silently wrong, not just broken) the moment `XC8_VERSION` changes
-      again. Track this as a real TODO, not something to forget about.
+- [x] **Both `pic8-hal-ci-assets` and `pic8-hal-ci` are actually
+      private.** First check (right after the run above) found this
+      FALSE: the workflow's `gh api PATCH .../visibility` steps reported
+      step-level "success", but that step had a `||` fallback that never
+      failed the job either way, "success" only meant the shell script
+      ran, not that the API call worked, and `docker logout ghcr.io` +
+      `docker pull` on both images succeeded with zero authentication.
+      `GITHUB_TOKEN` doesn't have the scope GitHub requires for the
+      package-visibility endpoint (needs a PAT with admin rights on the
+      package, not the automatic per-run token). Fixed by hand (package
+      Settings page, "Danger Zone" > "Change package visibility", both
+      packages), then re-verified the same way: `docker pull` on both
+      now returns `unauthorized`. The ineffective API-attempt steps were
+      then removed from `xc8-build.yml` entirely, false "success" is
+      worse than no attempt; visibility is a one-time manual setting per
+      package now, not something the workflow re-asserts.
+- [x] The now-unnecessary bootstrap-from-public-release fallback in
+      `ci-assets`'s pull step was removed (it only existed to seed the
+      private image once from the about-to-be-deleted public release; the
+      private image is cached now, and the fallback would have gone
+      silently stale, not just broken, the next `XC8_VERSION` bump).
+      Replaced with a loud failure plus reseed instructions on a cache
+      miss. Re-run to confirm the cache-hit path still works without it
+      before considering this done, see the item below.
+- [ ] The public `ci-toolchain-assets` GitHub Release can now be deleted
+      (both packages confirmed private, the bootstrap fallback that
+      depended on it is gone). Not yet done.
+- [ ] A real CI run confirming the simplified `ci-assets`/`toolchain-image`
+      jobs (no bootstrap fallback, no visibility-API steps) still work
+      end to end against the now-private, already-cached images. Not yet
+      run since removing that code.
 
 ---
 
