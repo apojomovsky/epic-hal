@@ -42,13 +42,14 @@ findings are written up. MPLAB X IDE v6.35 has been added to
 tracked as deliberately deferred follow-up, see the Dockerfile's own
 header comment), following the same private-GHCR-asset pattern Phase 1's
 redistribution fix established (`ci-assets-mplabx` job in
-`xc8-build.yml`, still carrying a TEMPORARY one-time bootstrap fallback
-mirroring `ci-assets`'s original one, to be deleted once seeding is
-confirmed on a real run, same as `ci-assets`'s was). Validated locally
-end to end (combined XC8 + MPLAB X IDE image built from the real
-installer files, `xc8-cc --version`, and a real `mdb.sh` script against
-PIC16F877A, all working), **not yet confirmed on a real GitHub Actions
-run**, pending the temporary `ci-mplabx-assets-tmp` release existing.
+`xc8-build.yml`). Confirmed on a real run
+(https://github.com/apojomovsky/pic8-hal/actions/runs/30723598436,
+76/76 jobs green), both new GHCR tags confirmed private. The temporary
+bootstrap fallback has since been removed from the workflow (same
+lifecycle as `ci-assets`'s original one); that removal itself is not
+yet confirmed on a fresh run, see Phase 2's validation checklist below.
+Once it is, only deleting the now-redundant `ci-mplabx-assets-tmp`
+GitHub Release (a human's call) is left.
 
 ## Motivation
 
@@ -482,24 +483,36 @@ temporary `ci-mplabx-assets-tmp` release), see the follow-up checklist
 below.
 
 **Follow-up validation, MPLAB X IDE addition**:
-- [ ] `ci-assets-mplabx` job succeeds on a real run (seeds
+- [x] `ci-assets-mplabx` job succeeded on a real run: seeded
       `pic8-hal-ci-assets:mplabx-v6.35-installer` from the temporary
-      `ci-mplabx-assets-tmp` release). Not yet run.
-- [ ] `toolchain-image`'s extraction step pulls both asset images and
-      builds the combined XC8 + MPLAB X IDE image on a real runner (not
-      just locally). Confirmed locally (built from both real installer
-      files, `xc8-cc --version`, and a real `mdb.sh device/hwtool
-      SIM/quit` script all worked against the resulting image); not yet
-      confirmed in CI.
-- [ ] `pic8-hal-ci-assets:mplabx-v6.35-installer` is private (same
-      manual check as before: `docker logout ghcr.io && docker pull`
-      should return `unauthorized`). Not yet checked, this tag didn't
-      exist before this phase.
-- [ ] The temporary `ci-mplabx-assets-tmp` GitHub Release is deleted once
-      the above are confirmed.
-- [ ] The bootstrap fallback in `ci-assets-mplabx`'s seed step is removed
-      in a follow-up commit once seeding is confirmed, mirroring exactly
-      what happened to `ci-assets`'s original bootstrap.
+      `ci-mplabx-assets-tmp` release. Confirmed on run
+      https://github.com/apojomovsky/pic8-hal/actions/runs/30723598436
+      (76/76 jobs green: `ci-assets`, `ci-assets-mplabx`,
+      `toolchain-image`, `discover`, all 72 `build` legs).
+- [x] `toolchain-image`'s extraction step pulled both asset images and
+      built the combined XC8 + MPLAB X IDE image on a real runner, same
+      run, ~6 minutes for that job alone (the image is ~7GB+). Confirmed
+      locally too before pushing (built from both real installer files,
+      `xc8-cc --version`, and a real `mdb.sh device/hwtool SIM/quit`
+      script all worked against the resulting image).
+- [x] `pic8-hal-ci-assets:mplabx-v6.35-installer` is private. Checked the
+      same way as before, `docker logout ghcr.io && docker pull`
+      returned `unauthorized`. It inherited the package's existing
+      private visibility automatically (visibility is per-package, not
+      per-tag), no separate manual step was needed for this new tag.
+      Same check against the new combined `pic8-hal-ci` tag
+      (`...-mplabx6.35`) also returned `unauthorized`.
+- [x] The bootstrap fallback in `ci-assets-mplabx`'s seed step was
+      removed, mirroring exactly what happened to `ci-assets`'s original
+      bootstrap, once the above were confirmed.
+- [ ] A fresh run confirms the cache-hit path still works with that
+      fallback gone (same discipline as `ci-assets`'s own removal:
+      removing dead code that would have failed silently isn't the same
+      as confirming the remaining code still works). Not yet run.
+- [ ] The temporary `ci-mplabx-assets-tmp` GitHub Release can now be
+      deleted (all of the above confirmed, the bootstrap that depended on
+      it is gone). Not yet done as of this writing, a human's call, same
+      as `ci-toolchain-assets` was.
 
 ---
 

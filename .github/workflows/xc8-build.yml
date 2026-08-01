@@ -18,8 +18,6 @@ name: xc8-build
 #     not authorized by Microchip's EULA (a *use* license, not a
 #     redistribution one). See docs/ci-plan.md for the full account.
 #   - ci-assets-mplabx: same pattern, one asset behind, for MPLAB X IDE.
-#     Still has a TEMPORARY one-time bootstrap fallback, see that job's
-#     own comment.
 #   - toolchain-image: needs both ci-assets jobs; extracts both installers
 #     from those private images into docker/ci-toolchain/vendor/ (`docker
 #     create` + `docker cp`, never `docker run`, there's nothing to run),
@@ -90,11 +88,8 @@ jobs:
           echo "Using cached $image"
 
   # Same pattern as ci-assets, one asset behind, for MPLAB X IDE (Phase 2,
-  # needed only for mdb.sh). TEMPORARY: still has the one-time bootstrap
-  # fallback ci-assets had before its migration was confirmed done; delete
-  # that step (mirroring exactly how ci-assets's was removed) once
-  # docs/ci-plan.md records this seeding as confirmed, and delete the
-  # `ci-mplabx-assets-tmp` GitHub Release at that point too.
+  # needed only for mdb.sh). Its one-time bootstrap fallback was removed
+  # once seeding was confirmed (docs/ci-plan.md), same as ci-assets's was.
   ci-assets-mplabx:
     runs-on: ubuntu-latest
     outputs:
@@ -111,26 +106,20 @@ jobs:
           echo "Resolved asset image: $image"
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-      - name: Pull cached asset image, or seed it (TEMPORARY, see job comment)
-        env:
-          MPLABX_INSTALLER_BOOTSTRAP_URL: https://github.com/apojomovsky/pic8-hal/releases/download/ci-mplabx-assets-tmp/MPLABX-v6.35-linux-installer.tar
+      - name: Pull the private asset image
         run: |
           image="${{ steps.resolve.outputs.image }}"
-          if docker pull "$image"; then
-            echo "Reusing cached $image"
-            exit 0
-          fi
-
-          echo "No cached $image, seeding it from $MPLABX_INSTALLER_BOOTSTRAP_URL"
-          mkdir -p /tmp/asset-context
-          curl -fsSL -o /tmp/asset-context/mplabx-installer.tar "$MPLABX_INSTALLER_BOOTSTRAP_URL"
-          size=$(stat -c%s /tmp/asset-context/mplabx-installer.tar)
-          if [ "$size" -lt 100000000 ]; then
-            echo "error: downloaded installer is only ${size} bytes, expected a multi-hundred-megabyte file" >&2
+          if ! docker pull "$image"; then
+            echo "error: no cached $image on GHCR." >&2
+            echo "This job does not auto-fetch vendor installers (see this" >&2
+            echo "workflow's header comment for why). To reseed: get the" >&2
+            echo "installer file privately (not a public URL), then locally:" >&2
+            echo "  docker login ghcr.io -u <you> (needs a PAT with write:packages)" >&2
+            echo "  docker build -t $image -f docker/ci-assets/Dockerfile <dir-containing-just-that-file>" >&2
+            echo "  docker push $image" >&2
             exit 1
           fi
-          docker build -t "$image" -f docker/ci-assets/Dockerfile /tmp/asset-context
-          docker push "$image"
+          echo "Using cached $image"
 
   toolchain-image:
     needs: [ci-assets, ci-assets-mplabx]
