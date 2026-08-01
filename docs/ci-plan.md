@@ -4,8 +4,14 @@ Status: **Phase 0 done** (`.github/workflows/host-tests.yml`,
 `scripts/pre-commit-checks.sh` extended with `PRE_COMMIT_BASE_REF` for CI
 reuse; first push to `master` after landing it went green, all 20 jobs,
 https://github.com/apojomovsky/pic8-hal/actions/runs/30717451172).
-Phases 1+ not started; Phases 2+ depend on a probe (Phase 2) whose
-findings must be recorded in this document before Phase 3 starts.
+**Phase 1 implemented, pending its first real run to confirm the
+toolchain image actually builds** (`docker/ci-toolchain/Dockerfile`,
+`.github/workflows/xc8-build.yml`, `scripts/ci-discover-xc8-matrix.py`);
+see Phase 1's "real, unresolved risk" note below, a local `docker build`
+of the image failed from the development sandbox with a `403` fetching
+the XC8 installer, not yet confirmed either way on an actual GitHub
+Actions runner. Phases 2+ depend on a probe (Phase 2) whose findings must
+be recorded in this document before Phase 3 starts.
 
 ## Motivation
 
@@ -85,13 +91,17 @@ is purely a latency optimization for everyday CI runs.
 
 ```
 .github/workflows/
-  host-tests.yml            # Phase 0: cmake/ctest matrix, every module + both HALs
-  xc8-build.yml              # Phase 1: xc8-cc build matrix, every MCU variant, both families
-  build-toolchain-image.yml  # Phase 1 infra: builds+pushes docker/ci-toolchain, path-filtered
-  sim-tests.yml               # Phase 4: runs pilot module(s) under mdb/MPLAB SIM, parses PASS/FAIL
+  host-tests.yml   # Phase 0: cmake/ctest matrix, every module + both HALs
+  xc8-build.yml    # Phase 1: toolchain-image (build-or-reuse on GHCR) + discover
+                    # + build (xc8-cc matrix, every MCU variant, both families)
+  sim-tests.yml    # Phase 4: runs pilot module(s) under mdb/MPLAB SIM, parses PASS/FAIL
 
 docker/ci-toolchain/
-  Dockerfile                 # Debian base, XC8, MPLAB X IDE (for mdb), both DFPs
+  Dockerfile                  # Debian base, XC8; MPLAB X IDE (for mdb) added in Phase 2
+
+scripts/
+  ci-discover-xc8-matrix.py   # Phase 1: (mcu/*-mplabx dir, MCU variant) discovery,
+                               # used by xc8-build.yml's discover job
 
 pic8-common/
   include/core/pic8_harness.h        # unchanged contract, cycles param already exists
@@ -169,30 +179,59 @@ Proves every family/MCU combination still produces a `.hex` on every
 push, without yet touching the simulator problem.
 
 **Tasks**
-1. `docker/ci-toolchain/Dockerfile`: Debian base; `curl`, `make`,
-   `unzip`; XC8 (current stable, see open question below on which
-   version to pin) installed via its silent Linux installer
-   (`--mode unattended --unattendedmodeui none`, no license flags needed
-   now that PRO optimizations are free); both DFPs
-   (`Microchip.PIC16Fxxx_DFP`, `Microchip.PIC18Fxxxx_DFP`) fetched as
-   `.atpack` files from `packs.download.microchip.com` and unzipped to
-   the paths the existing Makefiles already reference
-   (`DFP_DIR` in each family's `mcu/*-mplabx/Makefile`).
-2. `.github/workflows/build-toolchain-image.yml`: builds and pushes
-   `ghcr.io/<owner>/pic8-hal-ci:<tag>` on changes to
-   `docker/ci-toolchain/**`, or via manual `workflow_dispatch`. Tag by
-   the pinned XC8/DFP versions so a stale image is obvious from its tag.
-3. `.github/workflows/xc8-build.yml`: pulls the image, matrices over
-   every `(family, MCU variant)` pair (873A/874A/876A/877A;
-   2455/2550/4455/4550) and every module that has an `mcu/*-mplabx/`
-   tree, runs `make MCU=<variant>`, asserts a `.hex` exists and the
-   build exits zero.
+1. `docker/ci-toolchain/Dockerfile`: Debian slim base; `curl`, `make`,
+   `unzip`; XC8 **v3.10** (see "which XC8 version to pin" below, resolved:
+   matches the version already named throughout this repo's Makefiles and
+   `docs/multi-family-plan.md`, not the newest license-free v4.x, so CI
+   exercises the same toolchain a contributor actually has installed)
+   installed via its silent Linux installer (`--mode unattended
+   --unattendedmodeui none --LicenseType FreeMode`, v3.10 still has the
+   PRO gate, unlike v4.00+). Only `Microchip.PIC18Fxxxx_DFP.1.7.171` is
+   fetched as an `.atpack` from `packs.download.microchip.com` and
+   unzipped to the path `pic18fxx5x-hal/mcu/pic18fxx5x-mplabx/Makefile`
+   already defaults `DFP_DIR` to; `PIC16Fxxx_DFP` is bundled with the
+   XC8 v3.10 install itself (recorded in
+   `pic18fxx5x-hal/mcu/pic18fxx5x-mplabx/README.md`), not fetched
+   separately.
+2. `.github/workflows/xc8-build.yml`, `toolchain-image` job: resolves a
+   version-pinned tag (`xc8-v3.10-dfp1.7.171`) and reuses it via
+   `docker pull` if it already exists on `ghcr.io/<owner>/pic8-hal-ci`,
+   only building+pushing on a cache miss. Deliberately not a separate
+   path-filtered "publish" workflow (the plan's original sketch): that
+   would race its own first consumer on the very first run, before
+   anything has been published yet. One workflow, image resolved before
+   the matrix that needs it runs, sidesteps the chicken-and-egg.
+3. `xc8-build.yml`, `discover` job: `scripts/ci-discover-xc8-matrix.py`
+   finds every `mcu/*-mplabx/Makefile` from tracked files (28 found, more
+   than this plan's earlier draft assumed, an incomplete manual `find`
+   undercounted) and pairs each with its family's four MCU variants,
+   same "discover, don't hardcode" discipline as `host-tests.yml`.
+4. `xc8-build.yml`, `build` job: matrices over the discovered set inside
+   the resolved image, `make -C <dir> MCU=<variant>`, then asserts
+   `<dir>/build/<variant>-firmware.hex` exists.
 
 **Explicitly out of scope**: no MPLAB X IDE, no `mdb`, no simulation.
 This phase only needs the XC8 compiler.
 
+**A real, unresolved risk going into this phase's first CI run**:
+Microchip's download CDN (`ww1.microchip.com`) returned `403 Access
+Denied` from an Akamai edge for every installer request attempted from
+the development sandbox this Dockerfile was written in, including a full
+local `docker build` of `docker/ci-toolchain` (curl exit 22). Fetching
+the same DFP `.atpack` from `packs.download.microchip.com` (a different,
+S3/CloudFront-backed host) worked fine from that same sandbox, so this
+looks specific to the compiler-installer CDN, not a blanket network
+block. Whether GitHub Actions' runner IP ranges hit the same block is
+genuinely unknown until the workflow actually runs there; the Dockerfile
+fails loudly (curl `-f`, plus a minimum-file-size check) rather than
+silently proceeding with a bad download, so if this is going to fail, it
+fails clearly on `toolchain-image`, not confusingly deep in a matrix
+leg.
+
 **Validation**
 - [ ] Toolchain image builds successfully and is pullable from GHCR.
+      **Not yet confirmed**, this is the actual test of the risk noted
+      above; record the real outcome here once `xc8-build.yml` has run.
 - [ ] Every existing module/MCU combination that builds locally today
       also builds green in this workflow (no regressions from the
       containerized environment vs. a developer's local XC8 install).
@@ -354,14 +393,27 @@ deferral is documented in its own `docs/pic8-usb-plan.md`, not just here.
 
 ## Open questions (resolve during the phase noted)
 
-- **Which XC8 version to pin.** Currently `v3.10` throughout the repo's
-  Makefiles (chosen when DFPs moved out of the compiler install).
-  XC8 v4.00+ removes the PRO-optimization license gate entirely, which
-  simplifies the silent-install command (no `--LicenseType` flag needed
-  at all). Bumping isn't required for this plan to work at `v3.10`, but
-  since Phase 1 stands up fresh install scripting anyway, decide whether
-  to move the pin. Resolve in Phase 1, record the chosen version and
-  install command here.
+- **Which XC8 version to pin.** **RESOLVED (Phase 1): stayed on `v3.10`**,
+  matching every existing Makefile, `docs/multi-family-plan.md`'s recorded
+  PIC18 interrupt-syntax findings, and both `mcu/*-mplabx/README.md`
+  files. Bumping to v4.00+ (no PRO license gate at all) was considered
+  but rejected for now: CI should exercise the same toolchain version a
+  contributor actually has installed locally, and nothing in this plan
+  needs v4's license change (v3.10's `--LicenseType FreeMode` silent-
+  install flag already gets a working, unattended, free-tier compiler).
+  Revisit as its own follow-up if the repo ever moves its pin.
+- **Whether the XC8 installer is even fetchable from a CI runner.** New
+  question, not anticipated when this plan was first written. Confirmed
+  during Phase 1 that `ww1.microchip.com`'s installer CDN returns
+  `403 Access Denied` (Akamai) from the development sandbox, for every
+  filename tried, while `packs.download.microchip.com` (DFPs, a
+  different CloudFront-backed host) works fine from the same sandbox.
+  Whether GitHub Actions' runner IPs hit the same block is unknown until
+  `xc8-build.yml`'s `toolchain-image` job actually runs there. Resolve
+  by recording that job's real outcome in Phase 1's validation checklist
+  above; if it does fail there too, the fallback is hosting the installer
+  ourselves (a release asset in this repo, or a manually re-uploaded
+  blob) rather than depending on Microchip's CDN from CI at all.
 - **Whether `mdb` truly needs no display server.** Believed true (it's
   documented as the headless/scriptable counterpart to the MPLAB X IDE
   GUI, distinct binary, distinct purpose), not yet independently
@@ -387,6 +439,10 @@ deferral is documented in its own `docs/pic8-usb-plan.md`, not just here.
   turns out MPLAB SIM does model the SIE well enough to be useful,
   that's a separate follow-up, tracked in `docs/pic8-usb-plan.md`, not a
   blocker here.
-- **GHCR image naming/ownership** (`ghcr.io/<owner>/...`): depends on
-  which GitHub account/org ends up owning the repo's packages. Fill in
-  the real path when `build-toolchain-image.yml` is written in Phase 1.
+- **GHCR image naming/ownership.** **RESOLVED (Phase 1):**
+  `ghcr.io/${{ github.repository_owner }}/pic8-hal-ci`, resolved at
+  workflow run time rather than hardcoded, so it stays correct across a
+  fork or rename. Tag is `xc8-v<XC8_VERSION>-dfp<PIC18FXXXX_DFP_VERSION>`,
+  read from `docker/ci-toolchain/Dockerfile`'s `ARG` defaults, so the tag
+  changes automatically (forcing a rebuild instead of a stale reuse) if
+  either pinned version is bumped.
