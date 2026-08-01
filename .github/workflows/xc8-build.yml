@@ -5,13 +5,26 @@ name: xc8-build
 # (that's Phase 2+); this only proves every combination still produces a
 # .hex.
 #
-# Three jobs:
-#   - toolchain-image: resolves a version-pinned tag and reuses it via
-#     `docker pull` if it already exists on GHCR, only building+pushing on
-#     a cache miss (first run, or docker/ci-toolchain/Dockerfile's pinned
-#     versions changed). No separate always-run "publish" workflow, that
-#     would race the first consumer of its own image (chicken-and-egg on
-#     the very first run).
+# Four jobs:
+#   - ci-assets: resolves a version-pinned tag for the vendor-installer
+#     "blob carrier" image (docker/ci-assets/Dockerfile) and reuses it via
+#     `docker pull` if it already exists on GHCR. On a cache miss, seeds it
+#     from XC8_INSTALLER_BOOTSTRAP_URL (see that step's comment: this is a
+#     one-time migration path, not meant to be a permanent fallback, and
+#     should be deleted once docs/ci-plan.md confirms the private asset is
+#     seeded). Attempts to set the package visibility to private, this is
+#     the fix for a real problem: an earlier version of this pipeline
+#     re-hosted the XC8 installer as a public GitHub Release asset, which
+#     turned out to itself be redistribution (confirmed: `docker pull`
+#     worked with zero auth), not authorized by Microchip's EULA (a *use*
+#     license, not a redistribution one). See docs/ci-plan.md for the full
+#     account.
+#   - toolchain-image: needs ci-assets; extracts the installer from that
+#     private image into docker/ci-toolchain/vendor/ (`docker create` +
+#     `docker cp`, never `docker run`, there's nothing to run), then
+#     resolves a version-pinned tag for the actual compiler image and
+#     reuses it via `docker pull` if it already exists on GHCR, only
+#     building+pushing on a cache miss.
 #   - discover: finds every mcu/*-mplabx/Makefile from tracked files (no
 #     hardcoded module list, same discipline as host-tests.yml's module
 #     discovery) and pairs each with its family's MCU variants.
@@ -28,12 +41,79 @@ permissions:
   packages: write
 
 jobs:
-  toolchain-image:
+  ci-assets:
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.resolve.outputs.image }}
     steps:
       - uses: actions/checkout@v4
+      - id: resolve
+        name: Resolve version-pinned asset image tag
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-installer"
+          image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci-assets:${tag}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "Resolved asset image: $image"
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Pull cached asset image, or seed it
+        env:
+          # One-time migration path: the very first version of this pipeline
+          # re-hosted the installer here, publicly, before realizing that
+          # was itself the problem this job exists to fix. Using it once
+          # more, as the seed for the *private* replacement, is how that
+          # public copy gets to stop existing. Not meant to survive past
+          # that: a future XC8 version bump will make this URL point at the
+          # wrong file, so the size check below only catches "empty/broken
+          # download", not "wrong version". Delete this fallback (fail
+          # instead, with instructions to reseed) once docs/ci-plan.md
+          # records the migration as done.
+          XC8_INSTALLER_BOOTSTRAP_URL: https://github.com/apojomovsky/pic8-hal/releases/download/ci-toolchain-assets/xc8-v4.00-full-install-linux-x64-installer.run
+        run: |
+          image="${{ steps.resolve.outputs.image }}"
+          if docker pull "$image"; then
+            echo "Reusing cached $image"
+            exit 0
+          fi
+
+          echo "No cached $image, seeding it from $XC8_INSTALLER_BOOTSTRAP_URL"
+          mkdir -p /tmp/asset-context
+          curl -fsSL -o /tmp/asset-context/xc8-installer.run "$XC8_INSTALLER_BOOTSTRAP_URL"
+          size=$(stat -c%s /tmp/asset-context/xc8-installer.run)
+          if [ "$size" -lt 10000000 ]; then
+            echo "error: downloaded installer is only ${size} bytes, expected a multi-megabyte file" >&2
+            exit 1
+          fi
+          docker build -t "$image" -f docker/ci-assets/Dockerfile /tmp/asset-context
+          docker push "$image"
+      - name: Attempt to set package visibility to private
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/user/packages/container/pic8-hal-ci-assets/visibility" \
+            -f visibility=private \
+            && echo "Package visibility set to private" \
+            || echo "::warning::Could not set pic8-hal-ci-assets visibility via API (GITHUB_TOKEN may lack the scope); verify manually in the package's Settings page."
+
+  toolchain-image:
+    needs: ci-assets
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Extract the installer from the private asset image
+        run: |
+          docker pull "${{ needs.ci-assets.outputs.image }}"
+          docker create --name asset-extract "${{ needs.ci-assets.outputs.image }}"
+          mkdir -p docker/ci-toolchain/vendor
+          docker cp asset-extract:/xc8-installer.run docker/ci-toolchain/vendor/xc8-installer.run
+          docker rm asset-extract
       - id: resolve
         name: Resolve version-pinned image tag
         run: |
@@ -44,8 +124,6 @@ jobs:
           image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
           echo "image=$image" >> "$GITHUB_OUTPUT"
           echo "Resolved image: $image"
-      - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
       - name: Pull cached image, or build and push it
         run: |
           image="${{ steps.resolve.outputs.image }}"
@@ -56,6 +134,16 @@ jobs:
             docker build -t "$image" docker/ci-toolchain
             docker push "$image"
           fi
+      - name: Attempt to set package visibility to private
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/user/packages/container/pic8-hal-ci/visibility" \
+            -f visibility=private \
+            && echo "Package visibility set to private" \
+            || echo "::warning::Could not set pic8-hal-ci visibility via API (GITHUB_TOKEN may lack the scope); verify manually in the package's Settings page."
 
   discover:
     runs-on: ubuntu-latest

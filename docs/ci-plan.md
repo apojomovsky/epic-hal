@@ -17,9 +17,26 @@ their own, never caught before because nothing had ever actually linked
 them against real XC8 (root-caused and filed separately in
 `docs/mplabx-link-gaps-plan.md`, excluded from this workflow's matrix
 rather than either left red or silently ignored). See Phase 1's
-validation notes below for the full account of each. Phases 2+ depend on
-a probe (Phase 2) whose findings must be recorded in this document before
-Phase 3 starts.
+validation notes below for the full account of each.
+
+**Post-Phase-1 fix in progress, not yet confirmed on a real run**: both
+the GHCR image and the GitHub Release asset used to land Phase 1 turned
+out to be publicly redistributing Microchip's software with no EULA
+authorization to do so (confirmed: an unauthenticated `docker pull`
+worked). See the "Correction" note under Decision, and Phase 1's
+follow-up validation checklist, for the fix (`docker/ci-assets/`, a
+private blob-carrier image) and what's still unconfirmed.
+
+**Phase 2 (probe `mdb`/MPLAB SIM)**: the actual mechanism is confirmed
+working for both families (headless, plain `.hex`, UART-to-file capture,
+both PIC16F877A and PIC18F4550, throwaway probes, see this document's
+Phase 2 task list and the open questions below for the exact findings),
+but the required entry in this document ("findings must be recorded ...
+before Phase 3 starts") isn't written up yet, and MPLAB X IDE hasn't been
+added to `docker/ci-toolchain/Dockerfile` or wired into CI at all, that
+needs the same private-asset treatment as Phase 1's fix, not the
+public-artifact approach Phase 1 started with. Phase 3 should not start
+until both of those are actually done, not just verbally confirmed.
 
 ## Motivation
 
@@ -95,17 +112,79 @@ it to `ghcr.io/<owner>/pic8-hal-ci` only when that Dockerfile changes
 bandwidth for public images, so there is no cost concern either way; this
 is purely a latency optimization for everyday CI runs.
 
+**Correction, found during Phase 1: those images, and the installer,
+cannot be public.** The paragraph above was written assuming a public
+GHCR image was simply a latency optimization with no other tradeoff.
+That assumption was wrong, and it took actually shipping a public
+artifact to surface it. Two things happened, in order:
+
+1. Phase 1's first CDN failure (Microchip's installer download sits
+   behind an Akamai bot-challenge, see Phase 1 below) was "fixed" by
+   re-hosting the XC8 installer as a public GitHub Release asset in this
+   repo. That worked, but was the wrong fix.
+2. Checking what Microchip's own EULA actually says (pulled straight out
+   of the installed product's `docs/MPLABIDELicense.htm`, not assumed):
+
+   > **2. Software License Grant.** Microchip grants strictly to Licensee
+   > a non-exclusive, non-transferable, worldwide license to: a. Use the
+   > Software solely for use with Microchip Products...
+   >
+   > **6. Licensee Obligations.** Licensee will not: (a) engage in
+   > unauthorized use, modification, **disclosure or distribution of
+   > Software or Documentation, or its derivatives**...
+
+   That is a *use* license, not a redistribution one. Checked whether
+   what this pipeline was actually doing counted as distribution:
+   `docker logout ghcr.io && docker pull ghcr.io/apojomovsky/pic8-hal-ci:<tag>`
+   succeeded with **zero authentication**. Both the GHCR image and the
+   GitHub Release asset were reachable by anyone, not just this repo's
+   own CI, no EULA authorization for that exists.
+
+**Fix**: neither artifact is public anymore (or won't be, once the
+migration below is confirmed and the visibility settings are checked).
+`docker/ci-assets/Dockerfile` is a generic, non-runnable "blob carrier"
+(`FROM scratch`, `COPY . /`), built once per vendor file and pushed to a
+**private** `ghcr.io/<owner>/pic8-hal-ci-assets` image. Consumers extract
+the file with `docker create` + `docker cp` (never `docker run`, there's
+nothing to run). `xc8-build.yml`'s new `ci-assets` job builds/pushes it
+and attempts to flip its visibility to private via the GitHub API
+(best-effort, `GITHUB_TOKEN` may not have that scope, needs manual
+confirmation either way, see Phase 1's updated validation below).
+`toolchain-image` extracts the installer from that private image into
+`docker/ci-toolchain/vendor/` (gitignored, `*.run`) before `docker
+build`, so `docker/ci-toolchain/Dockerfile` now `COPY`s the installer
+from build context instead of `curl`-ing it from anywhere, public or
+not. Multi-stage trimming of the *final* image (the idea that started
+this conversation: keep only `mdb`/`xc8-cc`/packs, drop the NetBeans
+GUI once MPLAB X IDE is added in Phase 2) is a good idea on its own
+merits, but doesn't address this problem by itself, a smaller
+redistributed copy is still a redistributed copy; the fix is about who
+can reach the artifact, not how much of it there is.
+
+**This same problem will recur for MPLAB X IDE** (Phase 2's `mdb`), 1.1GB
+and even more obviously Microchip's full commercial product. It hasn't
+touched any persistent or shared artifact yet, everything so far is
+local to whichever machine's Docker daemon ran the Phase 2 probes. Apply
+the same private-asset pattern before it does.
+
 ## Target layout
 
 ```
 .github/workflows/
   host-tests.yml   # Phase 0: cmake/ctest matrix, every module + both HALs
-  xc8-build.yml    # Phase 1: toolchain-image (build-or-reuse on GHCR) + discover
+  xc8-build.yml    # Phase 1: ci-assets (private vendor-installer blob carrier)
+                    # + toolchain-image (build-or-reuse on GHCR, private) + discover
                     # + build (xc8-cc matrix, every MCU variant, both families)
   sim-tests.yml    # Phase 4: runs pilot module(s) under mdb/MPLAB SIM, parses PASS/FAIL
 
 docker/ci-toolchain/
   Dockerfile                  # Debian base, XC8; MPLAB X IDE (for mdb) added in Phase 2
+  vendor/                     # gitignored (*.run); populated at build time only,
+                               # extracted from the private ci-assets image
+
+docker/ci-assets/
+  Dockerfile                  # generic vendor-file blob carrier (FROM scratch),
+                               # never redistributed publicly, see "Correction" above
 
 scripts/
   ci-discover-xc8-matrix.py   # Phase 1: (mcu/*-mplabx dir, MCU variant) discovery,
@@ -280,6 +359,30 @@ working from both the sandbox and a real GitHub Actions run.
 
 **Exit criterion**: `xc8-build.yml` green on `master`, merged. Met
 (run 30720162258).
+
+**Follow-up validation, redistribution fix** (see "Correction" above):
+- [ ] `ci-assets` job succeeds: seeds `pic8-hal-ci-assets` from the (still
+      public, about to be deleted) `ci-toolchain-assets` release, pushes
+      it, attempts the visibility-private API call. Not yet run for real.
+- [ ] `toolchain-image` job's new extraction step (`docker create` +
+      `docker cp` from the private asset image into `docker/ci-toolchain/
+      vendor/`) works inside a real GitHub Actions runner, not just
+      locally. Confirmed locally end to end (built `docker/ci-assets`
+      from the real 92MB installer, extracted it, fed it into
+      `docker/ci-toolchain/Dockerfile`'s new `COPY`-based build, ran
+      `xc8-cc --version` against the result), not yet confirmed in CI.
+- [ ] Both `pic8-hal-ci-assets` and `pic8-hal-ci` are actually private.
+      The workflow's API-based attempt is best-effort; **check both
+      packages' Settings pages by hand regardless**, don't trust the
+      automated attempt alone for something this load-bearing.
+- [ ] The public `ci-toolchain-assets` GitHub Release is deleted, once
+      the above are confirmed (order matters: the migration's bootstrap
+      path still reads from it).
+- [ ] The bootstrap fallback in `ci-assets`'s "Pull cached asset image,
+      or seed it" step is deleted in a follow-up commit once the above
+      are all confirmed, it's a one-time migration path that goes stale
+      (silently wrong, not just broken) the moment `XC8_VERSION` changes
+      again. Track this as a real TODO, not something to forget about.
 
 ---
 

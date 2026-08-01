@@ -16,28 +16,36 @@
 #     PIC16Fxxx_DFP ships bundled, that was true of the full MPLAB X IDE's
 #     pack manager, not the bare compiler installer used here.
 #
-# The XC8 installer is fetched from this repo's own GitHub Release, not
-# Microchip's CDN: ww1.microchip.com sits behind an Akamai bot-challenge
-# that returns a JavaScript challenge page (not the file) to any
-# non-browser client, confirmed against both a local `docker build` and a
-# real GitHub Actions run of an earlier version of this Dockerfile, and
-# curl-impersonate (which spoofs Chrome's TLS fingerprint) still didn't get
-# past it, it's a JS challenge, not just TLS/header fingerprinting. Trying
-# to automate past a vendor's explicit anti-bot protection in CI is also
-# just the wrong instinct, so this doesn't attempt to. Instead: a human
-# (with a real browser, which clears the challenge trivially) downloaded
-# the installer once and it's re-hosted as a release asset in this repo,
-# release tag `ci-toolchain-assets`. DFPs are unaffected, fetched straight
-# from packs.download.microchip.com (a different, S3/CloudFront-backed
-# host, not Akamai-protected, confirmed working both locally and from a
-# real GitHub Actions run).
+# The XC8 installer is NOT fetched by this Dockerfile at all, on purpose.
+# ww1.microchip.com sits behind an Akamai bot-challenge that returns a
+# JavaScript challenge page (not the file) to any non-browser client,
+# confirmed against both a local `docker build` and a real GitHub Actions
+# run, and curl-impersonate (spoofs Chrome's TLS fingerprint) still didn't
+# get past it, it's a JS challenge, not just TLS/header fingerprinting, so
+# trying to automate past it was abandoned. The first fix (re-hosting the
+# installer as a public GitHub Release asset) turned out to itself be a
+# licensing problem: Microchip's EULA (pulled from the installed product's
+# own docs/MPLABIDELicense.htm) grants a *use* license, not a
+# redistribution one, and `docker pull`ing the resulting image worked with
+# zero authentication, i.e. we were redistributing it. See docs/ci-plan.md
+# for the full account.
+#
+# Fix: `.github/workflows/xc8-build.yml`'s `ci-assets` job extracts the
+# installer from a PRIVATE `ghcr.io/.../pic8-hal-ci-assets` image (built by
+# docker/ci-assets/Dockerfile, a plain file carrier, see its own header)
+# into vendor/xc8-installer.run in this Dockerfile's build context, purely
+# a local file on the runner's disk at that point, never a public URL. This
+# Dockerfile just COPYs it in. DFPs are unaffected by any of this, fetched
+# straight from packs.download.microchip.com (a different, S3/CloudFront-
+# backed host, no bot-challenge, and Microchip's own DFP distribution
+# terms are separate from the compiler EULA, confirmed working both
+# locally and from a real GitHub Actions run).
 
 FROM debian:12-slim
 
 ARG XC8_VERSION=4.00
 ARG PIC16FXXX_DFP_VERSION=1.7.162
 ARG PIC18FXXXX_DFP_VERSION=1.7.171
-ARG XC8_INSTALLER_URL=https://github.com/apojomovsky/pic8-hal/releases/download/ci-toolchain-assets/xc8-v4.00-full-install-linux-x64-installer.run
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV XC8_INSTALL_DIR=/opt/microchip/xc8/v${XC8_VERSION}
@@ -48,12 +56,13 @@ RUN apt-get update -yq \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+COPY vendor/xc8-installer.run /tmp/installer.run
 RUN set -eu; \
-    curl -fsSL -o /tmp/installer.run "${XC8_INSTALLER_URL}"; \
     size=$(stat -c%s /tmp/installer.run); \
     if [ "$size" -lt 10000000 ]; then \
-        echo "error: downloaded XC8 installer is only ${size} bytes," \
-             "expected a multi-megabyte .run file: ${XC8_INSTALLER_URL}" >&2; \
+        echo "error: /tmp/installer.run is only ${size} bytes," \
+             "expected a multi-megabyte .run file; check the ci-assets" \
+             "job actually extracted it into the build context" >&2; \
         exit 1; \
     fi; \
     chmod +x /tmp/installer.run; \
