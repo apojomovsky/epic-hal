@@ -38,8 +38,9 @@ jobs:
         name: Resolve version-pinned image tag
         run: |
           xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          tag="xc8-v${xc8_version}-dfp${dfp_version}"
+          pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}"
           image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
           echo "image=$image" >> "$GITHUB_OUTPUT"
           echo "Resolved image: $image"
@@ -97,4 +98,13 @@ jobs:
           make -C ${{ matrix.dir }} MCU=${{ matrix.mcu }} \
             DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${dfp}/xc8"
       - name: Confirm .hex was produced
-        run: test -f ${{ matrix.dir }}/build/${{ matrix.mcu }}-firmware.hex
+        # Each module's TARGET has its own suffix (-firmware, -debounce,
+        # -adcfilter-sizecheck, -multi-blink, ...), no single convention
+        # to reconstruct, so glob instead of guessing a filename.
+        run: |
+          hex_count=$(ls ${{ matrix.dir }}/build/*.hex 2>/dev/null | wc -l)
+          if [ "$hex_count" -ne 1 ]; then
+            echo "expected exactly one .hex in ${{ matrix.dir }}/build, found $hex_count" >&2
+            ls -la ${{ matrix.dir }}/build/ >&2 || true
+            exit 1
+          fi

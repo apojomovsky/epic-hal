@@ -4,15 +4,17 @@ Status: **Phase 0 done** (`.github/workflows/host-tests.yml`,
 `scripts/pre-commit-checks.sh` extended with `PRE_COMMIT_BASE_REF` for CI
 reuse; first push to `master` after landing it went green, all 20 jobs,
 https://github.com/apojomovsky/pic8-hal/actions/runs/30717451172).
-**Phase 1 implemented and validated locally end to end** (XC8 v4.00,
-`docker/ci-toolchain/Dockerfile`, `.github/workflows/xc8-build.yml`,
-`scripts/ci-discover-xc8-matrix.py`), **pending one manual step before
-its first real GitHub Actions run can succeed**: uploading the XC8
-installer as a release asset (`ci-toolchain-assets` tag,
-`xc8-v4.00-full-install-linux-x64-installer.run`), since Microchip's
-installer CDN turned out to be behind an Akamai bot-challenge that
-blocked both a real GitHub Actions run and local attempts, see Phase 1's
-findings below for the full story. Phases 2+ depend on a probe (Phase 2)
+**Phase 1 implemented, the `.hex`-check fix below not yet confirmed on a
+real run** (XC8 v4.00, `docker/ci-toolchain/Dockerfile`,
+`.github/workflows/xc8-build.yml`, `scripts/ci-discover-xc8-matrix.py`).
+Two real GitHub Actions runs so far: the first hit Microchip's installer
+CDN being behind an Akamai bot-challenge (fixed by self-hosting the
+installer as a GitHub Release asset, `ci-toolchain-assets` tag), the
+second's `toolchain-image` succeeded but 104/112 `build` legs failed on a
+bug in the workflow's own `.hex`-exists check, not the actual builds,
+fixed and verified against three modules locally (pulling the real
+published image) but not yet re-run for real. See Phase 1's validation
+notes below for both. Phases 2+ depend on a probe (Phase 2)
 whose findings must be recorded in this document before Phase 3 starts.
 
 ## Motivation
@@ -235,21 +237,34 @@ different, S3/CloudFront-backed host with no such challenge, confirmed
 working from both the sandbox and a real GitHub Actions run.
 
 **Validation**
-- [ ] Toolchain image builds successfully and is pullable from GHCR.
-      Confirmed **locally** end to end (`docker build` against the final
+- [x] Toolchain image builds successfully and is pullable from GHCR.
+      Confirmed twice: locally (`docker build` against the final
       Dockerfile using a local HTTP server standing in for the release
-      asset URL, then a real `make MCU=16F877A` and `make MCU=18F4550`
-      against the resulting image, both produced a `.hex`). Not yet
-      confirmed **on GitHub Actions** with the real release asset in
-      place, that still needs the actual release to exist first
-      (`ci-toolchain-assets` tag, asset
-      `xc8-v4.00-full-install-linux-x64-installer.run`). Record the real
-      run's outcome here once that's done.
+      asset URL) and for real, `toolchain-image` succeeded on GitHub
+      Actions once the `ci-toolchain-assets` release existed
+      (https://github.com/apojomovsky/pic8-hal/actions/runs/30718807266).
 - [ ] Every existing module/MCU combination that builds locally today
-      also builds green in this workflow (no regressions from the
-      containerized environment vs. a developer's local XC8 install).
+      also builds green in this workflow. **Not yet confirmed for real**;
+      the first real run (30718807266) actually caught a genuine bug:
+      104 of 112 `build` legs failed, but not because compilation failed,
+      `make` itself succeeded on every one. The workflow's own "Confirm
+      .hex was produced" step assumed every module names its output
+      `<MCU>-firmware.hex`, true only of the two top-level HAL Makefiles;
+      each `pic8-*` module's `TARGET` has its own suffix (`-debounce`,
+      `-adcfilter-sizecheck`, `-multi-blink`, ..., no shared convention).
+      Fixed by globbing `build/*.hex` and asserting exactly one match
+      instead of guessing a filename, verified locally against three
+      different modules (`pic8-debounce`, `pic8-adcfilter`,
+      `pic8-taskmgr`) pulling the real published GHCR image, but not yet
+      re-run on GitHub Actions itself; check this box only once that run
+      is actually green. Also fixed while here: the `toolchain-image` tag
+      resolution only read `PIC18FXXXX_DFP_VERSION`, silently ignoring
+      the newly-added `PIC16FXXX_DFP_VERSION`, so the actual pushed tag
+      was `xc8-v4.00-dfp1.7.171`, missing the PIC16 DFP version this
+      document's Phase 1 task list said it would include.
 - [ ] A deliberately broken `.c` file (throwaway test branch) fails the
-      matrix leg for its module/MCU, not the whole job.
+      matrix leg for its module/MCU, not the whole job. Not yet
+      exercised.
 
 **Exit criterion**: `xc8-build.yml` green on `master`, merged.
 
