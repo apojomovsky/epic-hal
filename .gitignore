@@ -31,3 +31,10 @@ cmake_install.cmake
 # docker/ci-toolchain/Dockerfile): large binaries, never meant to be
 # committed, only ever a local, temporary staging step.
 *.run
+
+# docker/ci-toolchain/vendor/: populated at build time only (extracted
+# from a private GHCR asset image, see .github/workflows/xc8-build.yml),
+# holds whatever vendor installer file type shows up there (.run, .tar,
+# ...); ignore the whole directory rather than chasing extensions one at
+# a time, *.run above already missed the .tar MPLAB X IDE installer once.
+docker/ci-toolchain/vendor/

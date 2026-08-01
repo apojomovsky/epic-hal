@@ -32,16 +32,23 @@ account. Only remaining step: deleting the now-redundant public
 `ci-toolchain-assets` release, a one-way action left for a human to
 trigger, not done as part of this fix.
 
-**Phase 2 (probe `mdb`/MPLAB SIM)**: the actual mechanism is confirmed
-working for both families (headless, plain `.hex`, UART-to-file capture,
-both PIC16F877A and PIC18F4550, throwaway probes, see this document's
-Phase 2 task list and the open questions below for the exact findings),
-but the required entry in this document ("findings must be recorded ...
-before Phase 3 starts") isn't written up yet, and MPLAB X IDE hasn't been
-added to `docker/ci-toolchain/Dockerfile` or wired into CI at all, that
-needs the same private-asset treatment as Phase 1's fix, not the
-public-artifact approach Phase 1 started with. Phase 3 should not start
-until both of those are actually done, not just verbally confirmed.
+**Phase 2 (probe `mdb`/MPLAB SIM)**: the mechanism is confirmed working
+for both families (headless, plain `.hex`, UART-to-file capture, both
+PIC16F877A and PIC18F4550, throwaway probes, see this document's Phase 2
+task list and the open questions below for the exact findings), and
+findings are written up. MPLAB X IDE v6.35 has been added to
+`docker/ci-toolchain/Dockerfile` (full, untrimmed 8-bit-only install,
+~7.3GB; a multi-stage trim to keep only `mdbcore`/`java`/`packs` is
+tracked as deliberately deferred follow-up, see the Dockerfile's own
+header comment), following the same private-GHCR-asset pattern Phase 1's
+redistribution fix established (`ci-assets-mplabx` job in
+`xc8-build.yml`, still carrying a TEMPORARY one-time bootstrap fallback
+mirroring `ci-assets`'s original one, to be deleted once seeding is
+confirmed on a real run, same as `ci-assets`'s was). Validated locally
+end to end (combined XC8 + MPLAB X IDE image built from the real
+installer files, `xc8-cc --version`, and a real `mdb.sh` script against
+PIC16F877A, all working), **not yet confirmed on a real GitHub Actions
+run**, pending the temporary `ci-mplabx-assets-tmp` release existing.
 
 ## Motivation
 
@@ -185,7 +192,7 @@ the same private-asset pattern before it does.
   sim-tests.yml    # Phase 4: runs pilot module(s) under mdb/MPLAB SIM, parses PASS/FAIL
 
 docker/ci-toolchain/
-  Dockerfile                  # Debian base, XC8; MPLAB X IDE (for mdb) added in Phase 2
+  Dockerfile                  # Debian base, XC8, MPLAB X IDE (for mdb.sh)
   vendor/                     # gitignored (*.run); populated at build time only,
                                # extracted from the private ci-assets image
 
@@ -468,15 +475,31 @@ assumption.
       actual `mdb` script and output referenced.
 
 **Exit criterion**: every open question tagged "resolve in Phase 2" below
-has a recorded answer. Met for the `mdb` mechanism itself (see open
-questions below). **Not yet met for the Dockerfile task** (extending
-`docker/ci-toolchain/Dockerfile` with MPLAB X IDE, task 1 above):
-`mdb`/MPLAB SIM has so far only run against an ad hoc local install
-(a Docker volume in the sandbox that ran these probes, `mplabx-install-
-vol`), nothing committed to this repo yet. That's still open, tracked as
-its own follow-up now that Phase 1 already established the private-asset
-pattern MPLAB X IDE will need (1.1GB, even more clearly Microchip's full
-commercial product than the XC8 compiler was).
+has a recorded answer, met. `docker/ci-toolchain/Dockerfile` extended
+with MPLAB X IDE (task 1), validated locally against the real installer
+end to end; not yet confirmed on a real GitHub Actions run (pending the
+temporary `ci-mplabx-assets-tmp` release), see the follow-up checklist
+below.
+
+**Follow-up validation, MPLAB X IDE addition**:
+- [ ] `ci-assets-mplabx` job succeeds on a real run (seeds
+      `pic8-hal-ci-assets:mplabx-v6.35-installer` from the temporary
+      `ci-mplabx-assets-tmp` release). Not yet run.
+- [ ] `toolchain-image`'s extraction step pulls both asset images and
+      builds the combined XC8 + MPLAB X IDE image on a real runner (not
+      just locally). Confirmed locally (built from both real installer
+      files, `xc8-cc --version`, and a real `mdb.sh device/hwtool
+      SIM/quit` script all worked against the resulting image); not yet
+      confirmed in CI.
+- [ ] `pic8-hal-ci-assets:mplabx-v6.35-installer` is private (same
+      manual check as before: `docker logout ghcr.io && docker pull`
+      should return `unauthorized`). Not yet checked, this tag didn't
+      exist before this phase.
+- [ ] The temporary `ci-mplabx-assets-tmp` GitHub Release is deleted once
+      the above are confirmed.
+- [ ] The bootstrap fallback in `ci-assets-mplabx`'s seed step is removed
+      in a follow-up commit once seeding is confirmed, mirroring exactly
+      what happened to `ci-assets`'s original bootstrap.
 
 ---
 

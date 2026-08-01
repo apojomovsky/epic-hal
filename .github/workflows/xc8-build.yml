@@ -1,12 +1,13 @@
 name: xc8-build
 
 # Phase 1 of docs/ci-plan.md: real-target XC8 builds, both families, every
-# MCU variant, every module with an mcu/*-mplabx tree. No simulator yet
-# (that's Phase 2+); this only proves every combination still produces a
-# .hex.
+# MCU variant, every module with an mcu/*-mplabx tree. Phase 2 adds MPLAB
+# X IDE (for mdb.sh) to the same toolchain image; no simulator wiring yet
+# (that's Phase 4), this workflow still only proves every combination
+# produces a .hex.
 #
-# Four jobs:
-#   - ci-assets: resolves a version-pinned tag for the vendor-installer
+# Five jobs:
+#   - ci-assets: resolves a version-pinned tag for the XC8-installer
 #     "blob carrier" image (docker/ci-assets/Dockerfile) and reuses it via
 #     `docker pull` if it already exists on GHCR; fails loudly, with
 #     reseed instructions, if it doesn't (no auto-fetch fallback, see
@@ -16,11 +17,14 @@ name: xc8-build
 #     redistribution (confirmed: `docker pull` worked with zero auth),
 #     not authorized by Microchip's EULA (a *use* license, not a
 #     redistribution one). See docs/ci-plan.md for the full account.
-#   - toolchain-image: needs ci-assets; extracts the installer from that
-#     private image into docker/ci-toolchain/vendor/ (`docker create` +
-#     `docker cp`, never `docker run`, there's nothing to run), then
-#     resolves a version-pinned tag for the actual compiler image and
-#     reuses it via `docker pull` if it already exists on GHCR, only
+#   - ci-assets-mplabx: same pattern, one asset behind, for MPLAB X IDE.
+#     Still has a TEMPORARY one-time bootstrap fallback, see that job's
+#     own comment.
+#   - toolchain-image: needs both ci-assets jobs; extracts both installers
+#     from those private images into docker/ci-toolchain/vendor/ (`docker
+#     create` + `docker cp`, never `docker run`, there's nothing to run),
+#     then resolves a version-pinned tag for the actual toolchain image
+#     and reuses it via `docker pull` if it already exists on GHCR, only
 #     building+pushing on a cache miss.
 #   - discover: finds every mcu/*-mplabx/Makefile from tracked files (no
 #     hardcoded module list, same discipline as host-tests.yml's module
@@ -85,8 +89,51 @@ jobs:
           fi
           echo "Using cached $image"
 
+  # Same pattern as ci-assets, one asset behind, for MPLAB X IDE (Phase 2,
+  # needed only for mdb.sh). TEMPORARY: still has the one-time bootstrap
+  # fallback ci-assets had before its migration was confirmed done; delete
+  # that step (mirroring exactly how ci-assets's was removed) once
+  # docs/ci-plan.md records this seeding as confirmed, and delete the
+  # `ci-mplabx-assets-tmp` GitHub Release at that point too.
+  ci-assets-mplabx:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: resolve
+        name: Resolve version-pinned asset image tag
+        run: |
+          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="mplabx-v${mplabx_version}-installer"
+          image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci-assets:${tag}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "Resolved asset image: $image"
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Pull cached asset image, or seed it (TEMPORARY, see job comment)
+        env:
+          MPLABX_INSTALLER_BOOTSTRAP_URL: https://github.com/apojomovsky/pic8-hal/releases/download/ci-mplabx-assets-tmp/MPLABX-v6.35-linux-installer.tar
+        run: |
+          image="${{ steps.resolve.outputs.image }}"
+          if docker pull "$image"; then
+            echo "Reusing cached $image"
+            exit 0
+          fi
+
+          echo "No cached $image, seeding it from $MPLABX_INSTALLER_BOOTSTRAP_URL"
+          mkdir -p /tmp/asset-context
+          curl -fsSL -o /tmp/asset-context/mplabx-installer.tar "$MPLABX_INSTALLER_BOOTSTRAP_URL"
+          size=$(stat -c%s /tmp/asset-context/mplabx-installer.tar)
+          if [ "$size" -lt 100000000 ]; then
+            echo "error: downloaded installer is only ${size} bytes, expected a multi-hundred-megabyte file" >&2
+            exit 1
+          fi
+          docker build -t "$image" -f docker/ci-assets/Dockerfile /tmp/asset-context
+          docker push "$image"
+
   toolchain-image:
-    needs: ci-assets
+    needs: [ci-assets, ci-assets-mplabx]
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.resolve.outputs.image }}
@@ -94,20 +141,27 @@ jobs:
       - uses: actions/checkout@v4
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-      - name: Extract the installer from the private asset image
+      - name: Extract the installers from the private asset images
         run: |
-          docker pull "${{ needs.ci-assets.outputs.image }}"
-          docker create --name asset-extract "${{ needs.ci-assets.outputs.image }}"
           mkdir -p docker/ci-toolchain/vendor
-          docker cp asset-extract:/xc8-installer.run docker/ci-toolchain/vendor/xc8-installer.run
-          docker rm asset-extract
+
+          docker pull "${{ needs.ci-assets.outputs.image }}"
+          docker create --name asset-extract-xc8 "${{ needs.ci-assets.outputs.image }}"
+          docker cp asset-extract-xc8:/xc8-installer.run docker/ci-toolchain/vendor/xc8-installer.run
+          docker rm asset-extract-xc8
+
+          docker pull "${{ needs.ci-assets-mplabx.outputs.image }}"
+          docker create --name asset-extract-mplabx "${{ needs.ci-assets-mplabx.outputs.image }}"
+          docker cp asset-extract-mplabx:/mplabx-installer.tar docker/ci-toolchain/vendor/mplabx-installer.tar
+          docker rm asset-extract-mplabx
       - id: resolve
         name: Resolve version-pinned image tag
         run: |
           xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}"
+          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-mplabx${mplabx_version}"
           image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
           echo "image=$image" >> "$GITHUB_OUTPUT"
           echo "Resolved image: $image"
