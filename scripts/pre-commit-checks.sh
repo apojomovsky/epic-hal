@@ -9,12 +9,31 @@
 # committed without you seeing it). If you staged only part of a file with
 # `git add -p`, the fixer still touches the whole working-tree file; review
 # `git diff` before re-adding in that case.
+#
+# CI reuses this same script (see .github/workflows/host-tests.yml) against
+# an already-committed ref range instead of a staged index: a fresh CI
+# checkout has nothing staged, everything is already committed. Set
+# PRE_COMMIT_BASE_REF to the commit/ref to diff against (the PR base SHA, or
+# the previous commit on a push); when unset, behavior is unchanged from the
+# local staged-index hook.
 
 set -u
 fail=0
 
+if [ -n "${PRE_COMMIT_BASE_REF:-}" ]; then
+    diff_range=("$PRE_COMMIT_BASE_REF...HEAD")
+    diff_cached=()
+else
+    diff_range=()
+    diff_cached=(--cached)
+fi
+
+git_diff() {
+    git diff "${diff_cached[@]}" "${diff_range[@]}" "$@"
+}
+
 staged_files() {
-    git diff --cached --name-only --diff-filter=ACM
+    git_diff --name-only --diff-filter=ACM
 }
 
 # ---- 1. trailing newline + trailing whitespace (auto-fix, then block) ----
@@ -27,7 +46,7 @@ newline_whitespace_check() {
         # Skip binary files (git diff --numstat reports "-\t-\t..." for
         # binary).
         local numstat
-        numstat="$(git diff --cached --numstat -- "$f")"
+        numstat="$(git_diff --numstat -- "$f")"
         case "$numstat" in
             -*) continue ;;
         esac
@@ -59,7 +78,7 @@ newline_whitespace_check() {
 
 emdash_check() {
     local diff
-    diff="$(git diff --cached -U0 --diff-filter=ACM -- \
+    diff="$(git_diff -U0 --diff-filter=ACM -- \
         '*.c' '*.h' '*.md' 'CMakeLists.txt' '*/CMakeLists.txt' \
         'Makefile' '*/Makefile' '*/Makefile.*')"
     [ -z "$diff" ] && return 0

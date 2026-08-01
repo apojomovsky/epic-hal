@@ -1,0 +1,83 @@
+name: host-tests
+
+# Phase 0 of docs/ci-plan.md: host CMake/ctest matrix + the repo's own
+# pre-commit checks, re-run as an explicit CI step. No XC8, no MPLAB X, no
+# Docker here; see xc8-build.yml (Phase 1) for the real-target build.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  # Every module and HAL follows the same fixed contract (see AGENTS.md
+  # "Module anatomy"): a top-level CMakeLists.txt, host-testable via
+  # `cmake -B build && cmake --build build && ctest`. Discover that set
+  # from tracked files rather than hand-listing it here, so a new module
+  # is picked up without a workflow edit.
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      modules: ${{ steps.discover.outputs.modules }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: discover
+        run: |
+          modules="$(git ls-files -- '*/CMakeLists.txt' \
+            | sed 's#/CMakeLists.txt$##' \
+            | sort \
+            | jq -R -s -c 'split("\n")[:-1]')"
+          echo "modules=$modules" >> "$GITHUB_OUTPUT"
+          echo "Discovered modules: $modules"
+
+  build-test:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJson(needs.discover.outputs.modules) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install host toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential
+      - name: Configure
+        run: cmake -B build -S ${{ matrix.module }}
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install lint toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+      - name: Determine base ref for the diff scan
+        id: base
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+          fi
+          # "before" is all-zeros on the first push of a new branch (and
+          # base can be empty in other edge-triggered cases); fall back to
+          # the previous commit, or the empty tree if there isn't one.
+          case "$base" in
+            ""|0000000000000000000000000000000000000000)
+              base="$(git rev-parse HEAD~1 2>/dev/null || echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904)"
+              ;;
+          esac
+          echo "ref=$base" >> "$GITHUB_OUTPUT"
+      - name: Run pre-commit checks (trailing whitespace, no em-dash, cppcheck)
+        env:
+          PRE_COMMIT_BASE_REF: ${{ steps.base.outputs.ref }}
+        run: bash scripts/pre-commit-checks.sh

@@ -85,3 +85,15 @@ bash scripts/pre-commit-checks.sh
 ```
 
 Runs the exact same checks the hook runs, without committing.
+
+### CI
+
+`.github/workflows/host-tests.yml`'s `lint` job runs this same script
+against a fresh checkout, which has nothing staged (everything is already
+committed). Setting `PRE_COMMIT_BASE_REF=<ref>` switches every check from
+"staged index vs. `HEAD`" to "`<ref>` vs. `HEAD`", so a PR gets exactly the
+same em-dash/whitespace/cppcheck rules applied to the lines it actually
+changed, not the whole tree (which would also flag this repo's
+pre-existing violations from before the rules were adopted). Local,
+hook-driven runs are unaffected: the variable is unset there, so behavior
+is identical to before.
