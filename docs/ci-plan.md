@@ -1,11 +1,11 @@
 # CI: host tests, XC8 cross-compile, MPLAB SIM target tests, implementation plan
 
-Status: **Phase 0 implemented, pending its first real run on GitHub
-Actions to confirm the validation checklist** (`.github/workflows/
-host-tests.yml`, `scripts/pre-commit-checks.sh` extended with
-`PRE_COMMIT_BASE_REF` for CI reuse). Phases 1+ not started; Phases 2+
-depend on a probe (Phase 2) whose findings must be recorded in this
-document before Phase 3 starts.
+Status: **Phase 0 done** (`.github/workflows/host-tests.yml`,
+`scripts/pre-commit-checks.sh` extended with `PRE_COMMIT_BASE_REF` for CI
+reuse; first push to `master` after landing it went green, all 20 jobs,
+https://github.com/apojomovsky/pic8-hal/actions/runs/30717451172).
+Phases 1+ not started; Phases 2+ depend on a probe (Phase 2) whose
+findings must be recorded in this document before Phase 3 starts.
 
 ## Motivation
 
@@ -147,13 +147,19 @@ tooling, matching what `scripts/bootstrap.sh` already sets up.
 
 **Validation**
 - [ ] A PR that breaks one module's host test fails only that module's
-      matrix leg, others stay green.
-- [ ] A clean push against current `master` is fully green.
+      matrix leg, others stay green. Not yet exercised for real (no
+      failing PR has been pushed); `fail-fast: false` is set specifically
+      for this, but treat as unconfirmed until a real matrix leg actually
+      fails independently.
+- [x] A clean push against current `master` is fully green. Confirmed on
+      the first real run after landing this workflow: 20/20 jobs
+      (`discover`, `lint`, 18 `build-test` legs), all `success`,
+      https://github.com/apojomovsky/pic8-hal/actions/runs/30717451172.
 - [ ] Removing a module's `CMakeLists.txt` (test in a throwaway branch)
       shrinks the matrix automatically, confirming discovery isn't
-      hardcoded.
+      hardcoded. Not yet exercised.
 
-**Exit criterion**: `host-tests.yml` green on `master`, merged.
+**Exit criterion**: `host-tests.yml` green on `master`, merged. Met.
 
 ---
 
