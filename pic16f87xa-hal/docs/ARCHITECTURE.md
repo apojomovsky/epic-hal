@@ -237,19 +237,61 @@ overlap-sensitivity observation from Finding 5's bisection still stands
 remains the best lead, just without yet knowing *which* two things
 overlap.
 
+## Finding 7: pinning the storage that goes stale just moves the corruption, doesn't remove it
+
+**Whack-a-mole, not a fix; strengthens Finding 5 rather than resolving
+the bug.** Tried the cheapest targeted mitigation available: make
+`HAL_IRQ_Disable`'s internal locals (`s`, `prev`) and `pic8_tick_get`'s
+locals (`prev`, `t`, the ones live across the disable/restore window)
+`static`, so they get a permanently dedicated address instead of
+participating in XC8's non-reentrant storage-overlap pool at all
+(throwaway, uncommitted, `pic16_irq.c` and `pic8_tick.c`). Rebuilt, ran
+under real `mdb`.
+
+Result: the *original* symptom is gone. `INTCON` reads `192`
+(`GIE=1, PEIE=1`) after the hang, not the usual `64`. But the test still
+produces no UART output at all, and register inspection shows `PR2`
+(Timer2's period register) reading `0`, which should hold a
+compiler-computed nonzero value, exactly the same corruption signature
+this session already fixed once before for a different call
+(`HAL_TIMER2_WritePeriod` landing `PR2=0` due to the original
+`pic_select_bank`-as-function bug, unrelated to this specific edit).
+Reverted (`git checkout --`).
+
+Read the manual's own claim on this (§5.7.2.1, Compiled Stack
+Operation): "The compiler takes into account that interrupt functions,
+and functions they call, need their own dedicated memory." That's the
+documented guarantee; this session's whole investigation is evidence
+that guarantee doesn't reliably hold for this program. There is no
+compiler option to disable this overlap analysis outright, and the
+alternative that would sidestep it entirely (the software/reentrant
+stack, §5.7.2.2) is explicitly **not available for classic mid-range
+PIC16** ("available only for Enhanced Mid-range and PIC18 devices"), so
+there's no blunt escape hatch for this device family, only the compiled
+stack's overlap-sharing model, bugs and all.
+
+**Conclusion**: pinning individual variables one at a time is not a
+convergent strategy, it just relocates which live-across-an-interrupt
+value gets corrupted. A real fix needs either (a) the `.map`/`-Wa,-a`
+forensic pass to find and pin *every* overlapping pair at once, with no
+guarantee that's a finite or small set, or (b) a structural change that
+reduces how much state and how many functions the interrupt path and
+main-line path actually share, rather than fighting the allocator
+variable by variable.
+
 ## Open, for whoever picks this back up
 
 - The GIE-stuck-disabled hang (`docs/ci-plan.md` Phase 4) is still
-  unresolved, and two well-motivated theories (raw stack depth, Finding
-  5; the indirect-call `-mstackcall` gap, Finding 6) have both been
-  directly tested and ruled out. What's left un-eliminated is Finding 5's
-  bisection result itself (adding `CCP1_IRQHandler` back fixes a broken
-  config), which is a real, reproducible, but still unexplained data
-  point. The highest-confidence next step is no longer "guess and test a
-  new theory" but the concrete, mechanical one already flagged: compare
+  unresolved. Three theories (raw stack depth, Finding 5; the
+  indirect-call `-mstackcall` gap, Finding 6; targeted variable pinning,
+  Finding 7) have each been directly tested; none resolved it, though
+  Finding 7 makes the systemic-overlap explanation the strongest
+  remaining one. The mechanical next step, if pursued further: compare
   the `.map`/`-Wa,-a` storage assignment between a working dispatcher
   configuration (e.g. `TIMER2_IRQHandler` + `CCP1_IRQHandler` only) and a
-  broken one (`TIMER2_IRQHandler` alone) to find what, concretely, moved.
+  broken one (`TIMER2_IRQHandler` alone) to find what, concretely, moved,
+  and how many such pairs exist in total before deciding whether pinning
+  all of them is even tractable.
 - Finding 2 remains a plausible-but-unconfirmed explanation; if anyone
   needs to write more hand-rolled bank-switching C (not asm) in this HAL,
   treat plain SFR writes to `STATUS` as unreliable for bank purposes

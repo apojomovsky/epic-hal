@@ -931,14 +931,24 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            callback's presence). Removing it entirely (throwaway,
            reverted) made no difference: `INTCON` still shows `GIE=0`
            after the hang, identical to baseline. Full account:
-           `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 6. Current best
-           lead, still unconfirmed: a non-reentrant storage-overlap
-           collision whose presence/absence is sensitive to the interrupt
-           call graph's exact shape (closer to Finding 2 than Finding 4),
-           not raw stack depth and not the indirect-call gap, though
-           *which* two things overlap hasn't been located yet (would need
-           a `.map`/`-Wa,-a` storage-assignment comparison, not done).
-           Whatever the exact mechanism turns out to be, this is a
+           `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 6. A third attempt,
+           pinning the specific locals live across the disable/restore
+           window (`HAL_IRQ_Disable`'s and `pic8_tick_get`'s auto
+           variables made `static`, throwaway, reverted) actually removed
+           the `GIE`-stuck symptom, but a *different* variable (`PR2`,
+           Timer2's period register) came back corrupted instead, whack-a-
+           mole rather than a fix (`pic16f87xa-hal/docs/ARCHITECTURE.md`
+           Finding 7). Current best lead, still unconfirmed: a systemic
+           non-reentrant storage-overlap issue, not one fixable variable
+           at a time, and not raw stack depth or the indirect-call gap.
+           *Which* pairs overlap hasn't been fully mapped (would need a
+           `.map`/`-Wa,-a` storage-assignment comparison across
+           configurations, not done), and there's no compiler option to
+           disable this class of optimization outright; the
+           software/reentrant stack model that would sidestep it entirely
+           is not available for classic mid-range PIC16 at all (XC8 User's
+           Guide §5.7.2.2, Enhanced Mid-range/PIC18 only). Whatever the
+           exact mechanism turns out to be, this is a
            genuine pre-existing bug in `pic8_tick`/`example_tick.c`'s own
            structure (or the dispatcher's
            unconditional-call-to-every-handler design), never caught
