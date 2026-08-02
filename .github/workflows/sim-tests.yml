@@ -192,7 +192,7 @@ jobs:
           hwtool SIM
           program ${{ matrix.dir }}/build/${{ matrix.mcu }}-tick-sim.hex
           run
-          wait 2000
+          wait 15
           halt
           print INTCON
           print PIR1
@@ -200,7 +200,8 @@ jobs:
           print TXSTA
           print RCSTA
           print T2CON
-          print PC
+          print TMR2
+          print PR2
           quit
           SCRIPT
 
