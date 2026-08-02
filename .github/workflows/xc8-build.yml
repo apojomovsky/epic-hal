@@ -26,18 +26,25 @@ name: xc8-build
 #     building+pushing on a cache miss.
 #   - discover: finds every mcu/*-mplabx/Makefile from tracked files (no
 #     hardcoded module list, same discipline as host-tests.yml's module
-#     discovery), one matrix entry per module (not per module x MCU) with
-#     that module's allowed MCU variants and DFP pack name attached.
-#   - build: matrices over discover's output, ONE JOB PER MODULE (not per
-#     MCU variant): the container image is pulled once per job either
-#     way, so a fully-exploded per-MCU matrix (112 jobs before excluding
-#     known-broken pairs) paid for that multi-GB pull over and over to do
-#     a few seconds of real compiling each, badly bottlenecked by GitHub's
-#     concurrent-job cap besides. Each job loops over its module's MCU
-#     variants itself (`join(matrix.mcus, ' ')`), keeps going past a
-#     failing variant instead of stopping at the first one, and reports
-#     per-variant PASS/FAIL in $GITHUB_STEP_SUMMARY, so a red job still
-#     tells you which variant broke without diving into raw logs.
+#     discovery), one matrix entry per FAMILY (not per module, and not per
+#     module x MCU) with that family's modules (each module's dir + its
+#     allowed MCU variants, packed into one bash-parseable string, see
+#     scripts/ci-discover-xc8-matrix.py's header) and DFP pack name
+#     attached.
+#   - build: matrices over discover's output, ONE JOB PER FAMILY (not per
+#     module, not per MCU variant): the container image is pulled once
+#     per job either way, so even one job per module (23 of them, the
+#     previous version of this workflow) paid for 23 redundant multi-GB
+#     pulls to do a few seconds of real compiling each, and a fully
+#     exploded per-MCU matrix (112 jobs before excluding known-broken
+#     pairs) was worse still, badly bottlenecked by GitHub's
+#     concurrent-job cap besides. Grouping by family cuts that to 2 pulls
+#     while keeping PIC16/PIC18 builds running concurrently. Each job
+#     loops over every module in its family and every MCU variant within
+#     that module, keeps going past a failing module or variant instead of
+#     stopping at the first one, and reports per-module-per-variant
+#     PASS/FAIL in $GITHUB_STEP_SUMMARY, so a red job still tells you
+#     exactly which module/variant broke without diving into raw logs.
 #
 # Both GHCR packages (pic8-hal-ci, pic8-hal-ci-assets) are manually
 # confirmed private (checked with `docker logout ghcr.io && docker pull`,
@@ -184,7 +191,6 @@ jobs:
         run: |
           matrix="$(python3 scripts/ci-discover-xc8-matrix.py)"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
-          echo "$matrix" | python3 -c "import json, sys; e = json.load(sys.stdin); print('Discovered', len(e), 'module jobs,', sum(len(x['mcus']) for x in e), 'total MCU builds')"
 
   build:
     needs: [toolchain-image, discover]
@@ -200,49 +206,61 @@ jobs:
         include: ${{ fromJson(needs.discover.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build and verify every MCU variant for ${{ matrix.dir }}
-        # One job per module, not one per (module, MCU): with the image
-        # pulled once by the `container:` directive above, looping over
-        # this module's MCU variants here is what actually saves the
-        # redundant multi-GB pulls a fully-exploded matrix (28 modules x
-        # up to 4 variants = 112 jobs) would pay for a few seconds of real
-        # compiling each. fail-fast is off at the job level (above), and
-        # this loop deliberately doesn't stop at the first failing MCU
-        # either, so one broken variant doesn't hide results for the
-        # others in the same module; the job still fails overall if any
-        # variant failed ($fail below), and $GITHUB_STEP_SUMMARY lists
-        # exactly which. DFP_DIR: neither DFP is bundled with the
-        # standalone XC8 v4.00 install (see docker/ci-toolchain/
-        # Dockerfile), and each Makefile's own DFP_DIR default still
-        # points at the repo's documented v3.10 path, so it has to be
-        # overridden ($XC8_INSTALL_DIR is set by the image itself,
-        # matrix.dfp by scripts/ci-discover-xc8-matrix.py).
+      - name: Build and verify every module/MCU in ${{ matrix.family }}
+        # One job per family, not one per module or per (module, MCU):
+        # with the image pulled once by the `container:` directive above,
+        # looping over every module and every MCU variant here is what
+        # actually saves the redundant multi-GB pulls a per-module matrix
+        # (23 jobs) or a fully-exploded per-MCU matrix (112 jobs) would
+        # pay for a few seconds of real compiling each. fail-fast is off
+        # at the job level (above, though with only 2 jobs it barely
+        # matters), and neither loop below stops at the first failure
+        # either: a broken module doesn't hide results for the rest of
+        # the family, and a broken MCU variant doesn't hide the rest of
+        # that module's variants. The job still fails overall if anything
+        # failed ($fail below), and $GITHUB_STEP_SUMMARY lists exactly
+        # which module/MCU. matrix.modules is "dir=mcu,mcu;dir=mcu,..."
+        # (see scripts/ci-discover-xc8-matrix.py's header for why it's a
+        # flat string and not nested JSON: no python3/jq in this
+        # container). DFP_DIR: neither DFP is bundled with the standalone
+        # XC8 v4.00 install (see docker/ci-toolchain/Dockerfile), and each
+        # Makefile's own DFP_DIR default still points at the repo's
+        # documented v3.10 path, so it has to be overridden
+        # ($XC8_INSTALL_DIR is set by the image itself, matrix.dfp by
+        # scripts/ci-discover-xc8-matrix.py).
         run: |
           fail=0
           {
-            echo "| MCU | Result |"
-            echo "|---|---|"
+            echo "| Module | MCU | Result |"
+            echo "|---|---|---|"
           } >> "$GITHUB_STEP_SUMMARY"
-          for mcu in ${{ join(matrix.mcus, ' ') }}; do
-            echo "::group::${{ matrix.dir }} MCU=${mcu}"
-            # build/ is shared across every MCU this loop builds (same
-            # checkout, same job), so a bare *.hex glob after the second
-            # iteration matches every prior MCU's .hex too, not just this
-            # one, caught by testing this locally before trusting it.
-            # Every module's TARGET starts with $(MCU)-, confirmed across
-            # all Makefiles, so glob on that prefix instead of "*.hex", on
-            # top of a clean between iterations for a truly fresh compile.
-            make -C ${{ matrix.dir }} clean >/dev/null 2>&1 || true
-            if make -C ${{ matrix.dir }} MCU="${mcu}" \
-                 DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${{ matrix.dfp }}/xc8" \
-               && [ "$(ls ${{ matrix.dir }}/build/${mcu}-*.hex 2>/dev/null | wc -l)" -eq 1 ]; then
-              echo "PASS: ${mcu}"
-              echo "| ${mcu} | PASS |" >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo "FAIL: ${mcu}"
-              echo "| ${mcu} | FAIL |" >> "$GITHUB_STEP_SUMMARY"
-              fail=1
-            fi
-            echo "::endgroup::"
+          IFS=';' read -ra module_entries <<< "${{ matrix.modules }}"
+          for entry in "${module_entries[@]}"; do
+            dir="${entry%%=*}"
+            mcus="${entry#*=}"
+            IFS=',' read -ra mcu_list <<< "$mcus"
+            for mcu in "${mcu_list[@]}"; do
+              echo "::group::${dir} MCU=${mcu}"
+              # build/ is shared across every MCU a module's inner loop
+              # builds (same checkout, same job), so a bare *.hex glob
+              # after the second iteration matches every prior MCU's .hex
+              # too, not just this one, caught by testing this locally
+              # before trusting it. Every module's TARGET starts with
+              # $(MCU)-, confirmed across all Makefiles, so glob on that
+              # prefix instead of "*.hex", on top of a clean between
+              # iterations for a truly fresh compile.
+              make -C "$dir" clean >/dev/null 2>&1 || true
+              if make -C "$dir" MCU="${mcu}" \
+                   DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${{ matrix.dfp }}/xc8" \
+                 && [ "$(ls "$dir"/build/${mcu}-*.hex 2>/dev/null | wc -l)" -eq 1 ]; then
+                echo "PASS: ${dir} ${mcu}"
+                echo "| ${dir} | ${mcu} | PASS |" >> "$GITHUB_STEP_SUMMARY"
+              else
+                echo "FAIL: ${dir} ${mcu}"
+                echo "| ${dir} | ${mcu} | FAIL |" >> "$GITHUB_STEP_SUMMARY"
+                fail=1
+              fi
+              echo "::endgroup::"
+            done
           done
           exit "$fail"

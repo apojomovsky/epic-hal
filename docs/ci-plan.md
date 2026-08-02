@@ -76,6 +76,24 @@ on a fresh run too
 the now-redundant `ci-mplabx-assets-tmp` GitHub Release, a human's call,
 not done as part of this fix.
 
+**Post-Phase-2 CI efficiency fix: done.** The per-module matrix (previous
+paragraph) still meant 23 separate jobs each paying for its own multi-GB
+image pull, most of which was pure overhead once the image grew to
+~7.3GB with MPLAB X IDE added. Restructured again, this time to matrix
+per *family* (2 jobs, PIC16F87XA and PIC18FXX5X):
+`scripts/ci-discover-xc8-matrix.py` now emits one entry per family, with
+that family's modules packed into a single bash-parseable string
+(`"<dir>=<mcu>,<mcu>;<dir>=<mcu>,..."`, not nested JSON, since the
+toolchain container has no `python3`/`jq` installed to parse it with).
+Each family's job pulls the image once, then loops over every module and
+every MCU variant within it, `fail-fast: false` at the job level plus
+neither loop stopping at the first failure, so one broken module or MCU
+doesn't hide results for the rest; `$GITHUB_STEP_SUMMARY` gets a
+per-module-per-MCU PASS/FAIL table. Same 72 real MCU builds covered, now
+behind 2 image pulls instead of 23. Verified locally (bash `IFS` parsing
+against the script's actual output, both families' leg counts summing to
+72) before pushing.
+
 ## Motivation
 
 There is no CI today. Every `pic8-*` module and both HALs are host-testable
@@ -227,9 +245,11 @@ docker/ci-assets/
                                # never redistributed publicly, see "Correction" above
 
 scripts/
-  ci-discover-xc8-matrix.py   # Phase 1: per-module (mcu/*-mplabx dir + its
-                               # allowed MCU variants + DFP name) discovery,
-                               # used by xc8-build.yml's discover job
+  ci-discover-xc8-matrix.py   # Phase 1, per-family since the post-Phase-2
+                               # efficiency fix: per-family (mcu/*-mplabx
+                               # dirs + their allowed MCU variants + DFP
+                               # name) discovery, used by xc8-build.yml's
+                               # discover job
 
 pic8-common/
   include/core/pic8_harness.h        # unchanged contract, cycles param already exists

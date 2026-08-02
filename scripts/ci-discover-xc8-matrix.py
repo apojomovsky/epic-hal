@@ -4,12 +4,19 @@
 Reads the tracked Makefile set from git (no hardcoded module list, same
 discipline host-tests.yml uses for its own module discovery) and pairs
 each with its family's known MCU variants and DFP pack name. Prints a
-compact JSON array to stdout, one entry per module (not per module x MCU,
-see docs/ci-plan.md's "one job per module" efficiency note: matrixing
-per-MCU meant 72 separate GitHub Actions jobs each paying a fresh
-multi-GB image pull to do a few seconds of real compiling), consumed by
-the workflow as a matrix `include` list; the build job pulls the image
-once per module and loops over that module's `mcus` list itself.
+compact JSON array to stdout, ONE ENTRY PER FAMILY (not per module, and
+not per module x MCU): the build job's container image is pulled once per
+job either way, so even one job per module (23 of them) was paying for 23
+redundant multi-GB pulls to do a few seconds of compiling each. Grouping
+by family cuts that to 2 pulls while keeping PIC16/PIC18 builds running
+concurrently (see docs/ci-plan.md's "one job per family" efficiency note).
+
+Each family's `modules` field is a single string, not nested JSON: the
+toolchain container (docker/ci-toolchain/Dockerfile) deliberately has no
+python3/jq installed, so it has to be parseable with plain bash `IFS`
+splitting. Format: "<dir>=<mcu>,<mcu>,...;<dir>=<mcu>,...", one
+semicolon-separated segment per module, each segment's MCU list
+comma-separated.
 """
 
 import json
@@ -64,6 +71,11 @@ KNOWN_BROKEN = {
     ("pic8-tick/mcu/pic18fxx5x-tick-mplabx", mcu) for mcu in ("18F2455", "18F2550")
 }
 
+FAMILIES = {
+    "pic16f87xa": (PIC16_VARIANTS, "Microchip.PIC16Fxxx_DFP"),
+    "pic18fxx5x": (PIC18_VARIANTS, "Microchip.PIC18Fxxxx_DFP"),
+}
+
 
 def main():
     out = subprocess.run(
@@ -71,16 +83,17 @@ def main():
         capture_output=True, text=True, check=True,
     ).stdout
 
-    entries = []
+    by_family = {name: [] for name in FAMILIES}
     skipped = 0
     for line in out.splitlines():
         d = line.rsplit("/Makefile", 1)[0]
         if "pic16f87xa" in d:
-            variants, dfp = PIC16_VARIANTS, "Microchip.PIC16Fxxx_DFP"
+            family = "pic16f87xa"
         elif "pic18fxx5x" in d:
-            variants, dfp = PIC18_VARIANTS, "Microchip.PIC18Fxxxx_DFP"
+            family = "pic18fxx5x"
         else:
             sys.exit(f"unrecognized family for {d}")
+        variants, _dfp = FAMILIES[family]
 
         mcus = []
         for v in variants:
@@ -90,12 +103,26 @@ def main():
             mcus.append(v)
 
         if mcus:
-            entries.append({"dir": d, "dfp": dfp, "mcus": mcus})
+            by_family[family].append((d, mcus))
+
+    entries = []
+    for family, modules in by_family.items():
+        if not modules:
+            continue
+        _variants, dfp = FAMILIES[family]
+        modules_str = ";".join(f"{d}={','.join(mcus)}" for d, mcus in modules)
+        entries.append({"family": family, "dfp": dfp, "modules": modules_str})
 
     if not entries:
         sys.exit("no mcu/*-mplabx/Makefile found, discovery is broken")
 
-    print(f"skipped {skipped} known-broken (dir, mcu) pairs, see docs/mplabx-link-gaps-plan.md", file=sys.stderr)
+    total_modules = sum(len(v) for v in by_family.values())
+    total_mcus = sum(len(mcus) for modules in by_family.values() for _d, mcus in modules)
+    print(
+        f"skipped {skipped} known-broken (dir, mcu) pairs, see docs/mplabx-link-gaps-plan.md; "
+        f"{total_modules} modules, {total_mcus} MCU builds across {len(entries)} families",
+        file=sys.stderr,
+    )
     print(json.dumps(entries))
 
 
