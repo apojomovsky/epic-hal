@@ -110,6 +110,26 @@ actual run-under-MPLAB-SIM verification is deferred to Phase 4, since
 this environment has no local `mdb`/GHCR access to do it by hand the way
 Phase 2's own probes did.
 
+**Phase 4 (wire the pilot into CI): blocked, paused for a decision.**
+`sim-tests.yml` and local-reproduction tooling (`scripts/sim-mdb-run.sh`,
+`scripts/sim-test-local.sh`) are built and working; local Docker/GHCR
+access was set up mid-phase specifically to debug this faster than
+repeated CI round trips. The pilot module still fails, and the reason
+turned out to be much bigger than pic8-tick: a real XC8 v4.00 codegen
+bug where any C-level local variable accessed while a PIC16 bank switch
+(`pic_select_bank`) is in effect gets misdirected, silently breaking
+every Bank 1 SFR access in `pic16f87xa-hal` (Timer2's period register,
+USART's SPBRG, both IRQ enable registers) that needs a read-modify-write
+rather than a blind write. Three real, narrower bugs in the same area
+were found and fixed along the way (a `pic_select_bank`
+function-call-boundary corruption, the same for `pie_reg_addr`/
+`pir_reg_addr`, and a ROM-read interleaved with an SFR read-modify-write
+in `HAL_IRQ_Enable`/`DisableSrc`), all verified not to regress anything,
+but none of them were the actual blocker. See Phase 4's own Validation
+section for the full, detailed account. Not chased further without a
+deliberate decision on how to proceed: this is scoped compiler-bug
+workaround work (likely hand-written inline asm), not a quick follow-up.
+
 ## Motivation
 
 There is no CI today. Every `pic8-*` module and both HALs are host-testable
@@ -735,25 +755,100 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
         (`HAL_IRQ_DisableSrc(..._IRQ_USART_TX)` right after Init, both
         families' `*_harness_sim_target.c`), also did not by itself
         turn the jobs green.
-      - Both fixes are very likely still correct and staying in; the
-        pilot module is still red after both, and register-level
-        diagnostics (`print INTCON/PIE1/...` at `halt`) produced a
-        confusing snapshot taken after multiple WDT reset cycles had
-        already scrambled state, and a second attempt with a much
-        shorter `wait` was inconclusive for a different reason: MPLAB
-        SIM runs noticeably slower than real-time (a `wait 15`
-        real-ms sample only showed ~1.8ms of simulated Timer2 progress,
-        not enough to have reached the code under suspicion yet).
-      - Given the cost of iterating this blind through CI, work paused
-        here to build the local-reproduction tooling (task 3 above)
-        instead of continuing to guess through more push/wait/paste
-        cycles; debugging resumes with that tool.
+      - Both fixes are correct and staying in, but resolved a different
+        problem than the actual blocker turned out to be.
+      - **Root cause, found after switching to local reproduction (task
+        3): a genuine XC8 v4.00 PIC16 codegen bug affecting ANY
+        Bank-1 SFR access (PIE1/PIE2, SPBRG, PR2, i.e. everything this
+        family's `pic_select_bank` helper exists for), not something
+        specific to pic8-tick.** `mdb`'s `wait N` does not mean "N
+        simulated milliseconds," it means "poll for the simulator to
+        halt on its own, give up after N *real* milliseconds" (per
+        `help wait`); since nothing in these scripts ever triggers a
+        natural halt, every earlier `wait`-based register dump in this
+        phase was actually reading state *after* an unknown, uncontrolled
+        number of WDT reset cycles (confirmed: even `wait 5` showed the
+        same "2 resets" as `wait 2000`, because MPLAB SIM simulates much
+        faster than real time once actually running). Switched to `stepi
+        N` (deterministic instruction count, immune to WDT timing)
+        for reliable diagnostics.
+        1. `pic_select_bank` (the `static inline` bank-select helper,
+           `pic16f87xa_sfr.h`) compiled to a genuine out-of-line `fcall`
+           under XC8 v4.00 (`__attribute__((always_inline))` was tried
+           and ignored), and something about that call boundary
+           corrupted the caller's own live value across it: a real
+           `HAL_TIMER2_WritePeriod(200)` call landed as PR2=0 every
+           time, confirmed via a dedicated probe. **Fixed**: converted
+           to a macro, forcing true preprocessor-level inlining, no call
+           boundary possible regardless of what the optimizer does.
+        2. `pie_reg_addr`/`pir_reg_addr` (`pic16_irq.c`, small `static`
+           helpers returning a Bank 1/PIR register address) had the same
+           function-call-boundary problem. **Fixed**: also converted to
+           macros.
+        3. `irq_table` is `static const`, ROM-resident on PIC16's
+           Harvard architecture; XC8 reads its fields through its own
+           runtime helper (`fcall stringdir` in the generated `.s`), and
+           interleaving that ROM read with an in-progress SFR
+           read-modify-write silently corrupted the SFR side. **Fixed**:
+           `HAL_IRQ_Enable`/`DisableSrc`/`ClearFlag`/`GetFlag` now pull
+           every field out of `d` into locals before touching any SFR.
+        4. **Not fixed, current blocker**: even with all three of the
+           above applied, `HAL_IRQ_Enable(TMR2)` still does not persist
+           the PIE1 write (confirmed with `stepi` up to 50000, no WDT
+           interference possible). Isolated with a chain of probes: a
+           bare literal-address write (`*(volatile uint8_t*)0x8C =
+           0x02`, no `pic_select_bank` call at all) works; the same
+           write preceded by a single `pic_select_bank(1)` call (no
+           restore, ruling out the restore step) does not. Current best
+           evidence: **any C-level local-variable access performed while
+           `pic_select_bank(1)` is in effect (RP0 non-default) gets
+           misdirected**, because XC8 places ordinary C locals assuming
+           Bank 0 and reaches them with plain direct addressing
+           regardless of the CPU's actual current bank; a
+           read-modify-write must store the read result into a local
+           (`v`) while still banked, which is exactly the corrupted case.
+           `HAL_TIMER2_WritePeriod`'s original (partially-working, for
+           the address itself) code happened to dodge this by loading
+           its value into W *before* the bank switch and never touching
+           a local while banked, a pattern too fragile to rely on
+           generally. Likely fix: hand-written inline asm for this one
+           read-modify-write, keeping the read result in W across the
+           bank restore instead of spilling it to a Bank-0-assumed
+           local; not yet attempted.
+        5. **Also found, unrelated but real**: two or more
+           `pic_select_bank` macro invocations combined with certain
+           surrounding code in the same function can hang XC8's `cgpic`
+           optimizer pass outright (confirmed: 100% CPU, non-terminating
+           for 2+ minutes, a real build-time hang, not a miscompile) for
+           *some* combinations, while other two-call combinations
+           compile fine; the exact trigger isn't isolated. Worth knowing
+           before writing more `pic_select_bank`-adjacent code: if a
+           build seems to hang rather than fail, this is a real,
+           reproduced possibility.
+      - All of the above verified against a real local XC8 v4.00 build
+        (via `scripts/sim-test-local.sh`'s toolchain image, pulled
+        directly once `docker login ghcr.io` was set up) and real `mdb`
+        runs, not simulated/assumed; full host CMake/ctest suite
+        re-confirmed 0 failures after the `pic16_irq.c`/
+        `pic16f87xa_sfr.h` changes.
+      - **Status: paused here, not resolved.** This turned out to be a
+        much deeper problem than "wire up one pilot module": a real XC8
+        v4.00 codegen defect affecting every PIC16 Bank 1 SFR access in
+        this HAL (Timer2's period register, USART's SPBRG, both IRQ
+        enable registers), silently present since before this CI effort
+        started, invisible until Phase 2-4 actually *ran* compiled
+        firmware for the first time. Fixing it fully (likely hand-written
+        inline asm for the affected read-modify-write sites) is real,
+        scoped work, not a quick follow-up; left for a deliberate
+        decision on how to proceed rather than pushed through
+        unilaterally.
 - [ ] A deliberately broken pilot-module change (throwaway branch) turns
       the job red for the right reason (grep sees FAIL or missing
       marker), not a container/tooling failure.
 
 **Exit criterion**: `sim-tests.yml` green on `master` for the pilot
-module, both families, merged.
+module, both families, merged. **Not met.** Blocked on the Bank 1 SFR
+codegen bug above.
 
 ---
 

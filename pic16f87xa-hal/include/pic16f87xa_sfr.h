@@ -353,13 +353,42 @@
 /**
  * @brief  Set the bank-select bits RP1:RP0 in STATUS to access a given bank.
  *         DS39582B §2.2, Table 2-1.
+ *
+ * @details
+ *   A macro, not a `static inline` function (empirically probed, per this
+ *   repo's own convention for uncertain compiler behavior): XC8 v4.00
+ *   compiled the function form to a genuine out-of-line `fcall`, ignoring
+ *   even `__attribute__((always_inline))`, and something about that call
+ *   boundary corrupted a caller's own local value (a real target's PR2
+ *   write went through with the correct RP0 bit set, confirmed via a
+ *   dedicated probe run under MPLAB SIM, but the *value* written landed
+ *   as 0 instead of the real period, every single time). Never caught
+ *   before because nothing had ever *run* this repo's PIC16 firmware,
+ *   only linked it (see docs/ci-plan.md's Phase 3/4 account); every
+ *   caller across this HAL that reads a Bank 1 register (SPBRG, PR2,
+ *   PIE1/PIE2) was silently affected. A macro is expanded at the
+ *   preprocessor stage, before XC8 ever gets a chance to turn it into a
+ *   call, so this class of bug cannot recur here regardless of what the
+ *   optimizer decides to do with `static inline`.
+ *
+ *   This did NOT turn out to be the only bank-1 codegen problem: a
+ *   SEPARATE, still-unresolved issue affects any C-level local variable
+ *   accessed WHILE a bank switch is in effect (RP0 non-default), see
+ *   pic16_irq.c's HAL_IRQ_Enable for the full, current account and
+ *   docs/ci-plan.md's Phase 4 findings. Also worth knowing: two or more
+ *   pic_select_bank invocations combined with certain surrounding code
+ *   in the same function has been observed to hang XC8's `cgpic`
+ *   optimizer pass outright (100% CPU, non-terminating within several
+ *   minutes), not just miscompile; if a build ever seems to hang rather
+ *   than fail, this is a real, reproduced possibility, not a fluke.
  */
-static inline void pic_select_bank(uint8_t bank)
-{
-    uint8_t status = PIC8_REG8(PIC_REG_STATUS);
-    status &= (uint8_t)~(PIC_STATUS_RP0 | PIC_STATUS_RP1);
-    status |= (uint8_t)((bank & 0x03U) << 5);
-    PIC8_REG8(PIC_REG_STATUS) = status;
-}
+#define pic_select_bank(bank)                                          \
+    do {                                                               \
+        uint8_t pic_select_bank_status_ = PIC8_REG8(PIC_REG_STATUS);   \
+        pic_select_bank_status_ &=                                     \
+            (uint8_t)~(PIC_STATUS_RP0 | PIC_STATUS_RP1);               \
+        pic_select_bank_status_ |= (uint8_t)(((bank) & 0x03U) << 5);   \
+        PIC8_REG8(PIC_REG_STATUS) = pic_select_bank_status_;           \
+    } while (0)
 
 #endif /* PIC16F87XA_SFR_H */
