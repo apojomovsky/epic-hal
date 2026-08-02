@@ -46,10 +46,12 @@ redistribution fix established (`ci-assets-mplabx` job in
 (https://github.com/apojomovsky/pic8-hal/actions/runs/30723598436,
 76/76 jobs green), both new GHCR tags confirmed private. The temporary
 bootstrap fallback has since been removed from the workflow (same
-lifecycle as `ci-assets`'s original one); that removal itself is not
-yet confirmed on a fresh run, see Phase 2's validation checklist below.
-Once it is, only deleting the now-redundant `ci-mplabx-assets-tmp`
-GitHub Release (a human's call) is left.
+lifecycle as `ci-assets`'s original one), and that removal is confirmed
+on a fresh run too
+(https://github.com/apojomovsky/pic8-hal/actions/runs/30724128114,
+76/76 jobs green). **Phase 2 is done.** Only remaining step: deleting
+the now-redundant `ci-mplabx-assets-tmp` GitHub Release, a human's call,
+not done as part of this fix.
 
 ## Motivation
 
@@ -505,10 +507,12 @@ below.
 - [x] The bootstrap fallback in `ci-assets-mplabx`'s seed step was
       removed, mirroring exactly what happened to `ci-assets`'s original
       bootstrap, once the above were confirmed.
-- [ ] A fresh run confirms the cache-hit path still works with that
+- [x] A fresh run confirms the cache-hit path still works with that
       fallback gone (same discipline as `ci-assets`'s own removal:
       removing dead code that would have failed silently isn't the same
-      as confirming the remaining code still works). Not yet run.
+      as confirming the remaining code still works). Confirmed on run
+      https://github.com/apojomovsky/pic8-hal/actions/runs/30724128114,
+      76/76 jobs green.
 - [ ] The temporary `ci-mplabx-assets-tmp` GitHub Release can now be
       deleted (all of the above confirmed, the bootstrap that depended on
       it is gone). Not yet done as of this writing, a human's call, same
