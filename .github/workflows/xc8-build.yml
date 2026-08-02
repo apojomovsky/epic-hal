@@ -26,9 +26,18 @@ name: xc8-build
 #     building+pushing on a cache miss.
 #   - discover: finds every mcu/*-mplabx/Makefile from tracked files (no
 #     hardcoded module list, same discipline as host-tests.yml's module
-#     discovery) and pairs each with its family's MCU variants.
-#   - build: matrices over discover's output, each leg building inside the
-#     resolved image (guaranteed to exist on GHCR by the time this starts).
+#     discovery), one matrix entry per module (not per module x MCU) with
+#     that module's allowed MCU variants and DFP pack name attached.
+#   - build: matrices over discover's output, ONE JOB PER MODULE (not per
+#     MCU variant): the container image is pulled once per job either
+#     way, so a fully-exploded per-MCU matrix (112 jobs before excluding
+#     known-broken pairs) paid for that multi-GB pull over and over to do
+#     a few seconds of real compiling each, badly bottlenecked by GitHub's
+#     concurrent-job cap besides. Each job loops over its module's MCU
+#     variants itself (`join(matrix.mcus, ' ')`), keeps going past a
+#     failing variant instead of stopping at the first one, and reports
+#     per-variant PASS/FAIL in $GITHUB_STEP_SUMMARY, so a red job still
+#     tells you which variant broke without diving into raw logs.
 #
 # Both GHCR packages (pic8-hal-ci, pic8-hal-ci-assets) are manually
 # confirmed private (checked with `docker logout ghcr.io && docker pull`,
@@ -175,7 +184,7 @@ jobs:
         run: |
           matrix="$(python3 scripts/ci-discover-xc8-matrix.py)"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
-          echo "Discovered $(echo "$matrix" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))') build legs"
+          echo "$matrix" | python3 -c "import json, sys; e = json.load(sys.stdin); print('Discovered', len(e), 'module jobs,', sum(len(x['mcus']) for x in e), 'total MCU builds')"
 
   build:
     needs: [toolchain-image, discover]
@@ -191,28 +200,49 @@ jobs:
         include: ${{ fromJson(needs.discover.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build ${{ matrix.dir }} MCU=${{ matrix.mcu }}
-        # Neither DFP is bundled with the standalone XC8 v4.00 install (see
-        # docker/ci-toolchain/Dockerfile), and each Makefile's own DFP_DIR
-        # default still points at the repo's documented v3.10 path, so it
-        # has to be overridden here to match where the image actually put
-        # them ($XC8_INSTALL_DIR is set by the image itself).
+      - name: Build and verify every MCU variant for ${{ matrix.dir }}
+        # One job per module, not one per (module, MCU): with the image
+        # pulled once by the `container:` directive above, looping over
+        # this module's MCU variants here is what actually saves the
+        # redundant multi-GB pulls a fully-exploded matrix (28 modules x
+        # up to 4 variants = 112 jobs) would pay for a few seconds of real
+        # compiling each. fail-fast is off at the job level (above), and
+        # this loop deliberately doesn't stop at the first failing MCU
+        # either, so one broken variant doesn't hide results for the
+        # others in the same module; the job still fails overall if any
+        # variant failed ($fail below), and $GITHUB_STEP_SUMMARY lists
+        # exactly which. DFP_DIR: neither DFP is bundled with the
+        # standalone XC8 v4.00 install (see docker/ci-toolchain/
+        # Dockerfile), and each Makefile's own DFP_DIR default still
+        # points at the repo's documented v3.10 path, so it has to be
+        # overridden ($XC8_INSTALL_DIR is set by the image itself,
+        # matrix.dfp by scripts/ci-discover-xc8-matrix.py).
         run: |
-          case "${{ matrix.dir }}" in
-            *pic16f87xa*) dfp=Microchip.PIC16Fxxx_DFP ;;
-            *pic18fxx5x*) dfp=Microchip.PIC18Fxxxx_DFP ;;
-            *) echo "unrecognized family for ${{ matrix.dir }}" >&2; exit 1 ;;
-          esac
-          make -C ${{ matrix.dir }} MCU=${{ matrix.mcu }} \
-            DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${dfp}/xc8"
-      - name: Confirm .hex was produced
-        # Each module's TARGET has its own suffix (-firmware, -debounce,
-        # -adcfilter-sizecheck, -multi-blink, ...), no single convention
-        # to reconstruct, so glob instead of guessing a filename.
-        run: |
-          hex_count=$(ls ${{ matrix.dir }}/build/*.hex 2>/dev/null | wc -l)
-          if [ "$hex_count" -ne 1 ]; then
-            echo "expected exactly one .hex in ${{ matrix.dir }}/build, found $hex_count" >&2
-            ls -la ${{ matrix.dir }}/build/ >&2 || true
-            exit 1
-          fi
+          fail=0
+          {
+            echo "| MCU | Result |"
+            echo "|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for mcu in ${{ join(matrix.mcus, ' ') }}; do
+            echo "::group::${{ matrix.dir }} MCU=${mcu}"
+            # build/ is shared across every MCU this loop builds (same
+            # checkout, same job), so a bare *.hex glob after the second
+            # iteration matches every prior MCU's .hex too, not just this
+            # one, caught by testing this locally before trusting it.
+            # Every module's TARGET starts with $(MCU)-, confirmed across
+            # all Makefiles, so glob on that prefix instead of "*.hex", on
+            # top of a clean between iterations for a truly fresh compile.
+            make -C ${{ matrix.dir }} clean >/dev/null 2>&1 || true
+            if make -C ${{ matrix.dir }} MCU="${mcu}" \
+                 DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${{ matrix.dfp }}/xc8" \
+               && [ "$(ls ${{ matrix.dir }}/build/${mcu}-*.hex 2>/dev/null | wc -l)" -eq 1 ]; then
+              echo "PASS: ${mcu}"
+              echo "| ${mcu} | PASS |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "FAIL: ${mcu}"
+              echo "| ${mcu} | FAIL |" >> "$GITHUB_STEP_SUMMARY"
+              fail=1
+            fi
+            echo "::endgroup::"
+          done
+          exit "$fail"

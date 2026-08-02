@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Discover the (mcu/*-mplabx dir, MCU variant) matrix for xc8-build.yml.
+"""Discover the mcu/*-mplabx build matrix for xc8-build.yml.
 
 Reads the tracked Makefile set from git (no hardcoded module list, same
 discipline host-tests.yml uses for its own module discovery) and pairs
-each with its family's known MCU variants. Prints a compact JSON array to
-stdout, consumed by the workflow as a GitHub Actions matrix `include` list.
+each with its family's known MCU variants and DFP pack name. Prints a
+compact JSON array to stdout, one entry per module (not per module x MCU,
+see docs/ci-plan.md's "one job per module" efficiency note: matrixing
+per-MCU meant 72 separate GitHub Actions jobs each paying a fresh
+multi-GB image pull to do a few seconds of real compiling), consumed by
+the workflow as a matrix `include` list; the build job pulls the image
+once per module and loops over that module's `mcus` list itself.
 """
 
 import json
@@ -71,16 +76,21 @@ def main():
     for line in out.splitlines():
         d = line.rsplit("/Makefile", 1)[0]
         if "pic16f87xa" in d:
-            variants = PIC16_VARIANTS
+            variants, dfp = PIC16_VARIANTS, "Microchip.PIC16Fxxx_DFP"
         elif "pic18fxx5x" in d:
-            variants = PIC18_VARIANTS
+            variants, dfp = PIC18_VARIANTS, "Microchip.PIC18Fxxxx_DFP"
         else:
             sys.exit(f"unrecognized family for {d}")
+
+        mcus = []
         for v in variants:
             if (d, v) in KNOWN_BROKEN:
                 skipped += 1
                 continue
-            entries.append({"dir": d, "mcu": v})
+            mcus.append(v)
+
+        if mcus:
+            entries.append({"dir": d, "dfp": dfp, "mcus": mcus})
 
     if not entries:
         sys.exit("no mcu/*-mplabx/Makefile found, discovery is broken")

@@ -28,9 +28,32 @@ manually confirmed private, and a real green run
 (https://github.com/apojomovsky/pic8-hal/actions/runs/30722374627)
 against the simplified pipeline. See the "Correction" note under
 Decision, and Phase 1's follow-up validation checklist, for the full
-account. Only remaining step: deleting the now-redundant public
-`ci-toolchain-assets` release, a one-way action left for a human to
-trigger, not done as part of this fix.
+account. The now-redundant public `ci-toolchain-assets` release has
+since been deleted.
+
+**Post-Phase-1 CI efficiency fix: done.** `xc8-build.yml`'s `build` job
+originally matrixed per `(module, MCU)` pair, 112 jobs before excluding
+known-broken ones (72 after), each a separate GitHub Actions job, meaning
+a separate fresh VM and a separate `docker pull` of the multi-GB
+toolchain image, to do a few seconds of real `make` work. It also meant
+GitHub's concurrent-job cap (~20 on the free tier) turned the matrix into
+queued batches, adding wait time unrelated to actual work, visibly so
+once MPLAB X IDE made the image ~7GB+. Restructured to matrix per
+*module* instead (23 jobs; `scripts/ci-discover-xc8-matrix.py` now emits
+one entry per module with that module's allowed `mcus` and `dfp` attached,
+not one entry per `(module, MCU)` pair), each job pulling the image once
+and looping over its own MCU variants, `fail-fast: false` at the job
+level plus the loop itself not stopping at the first failing variant, so
+one broken MCU doesn't hide results for the others in the same module;
+`$GITHUB_STEP_SUMMARY` gets a per-MCU PASS/FAIL table so a red job is
+still legible without diving into raw logs. Caught a real bug while
+testing this locally before pushing: `build/` is shared across every MCU
+a job loops over now (same checkout, same job), so a bare `*.hex` glob
+after the second MCU matched every prior MCU's `.hex` too, not just the
+current one, fixed with `make clean` between iterations plus globbing on
+the `$(MCU)-*.hex` prefix every module's `TARGET` actually uses (not a
+guess, confirmed the same way the original filename-guessing bug was
+diagnosed).
 
 **Phase 2 (probe `mdb`/MPLAB SIM)**: the mechanism is confirmed working
 for both families (headless, plain `.hex`, UART-to-file capture, both
@@ -204,7 +227,8 @@ docker/ci-assets/
                                # never redistributed publicly, see "Correction" above
 
 scripts/
-  ci-discover-xc8-matrix.py   # Phase 1: (mcu/*-mplabx dir, MCU variant) discovery,
+  ci-discover-xc8-matrix.py   # Phase 1: per-module (mcu/*-mplabx dir + its
+                               # allowed MCU variants + DFP name) discovery,
                                # used by xc8-build.yml's discover job
 
 pic8-common/
