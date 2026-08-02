@@ -165,71 +165,21 @@ jobs:
             dfp: Microchip.PIC18Fxxxx_DFP
     steps:
       - uses: actions/checkout@v4
-      - name: Build the sim-target .hex for pic8-tick (${{ matrix.family }})
+      - name: Build + run under MPLAB SIM (mdb), check the PASS/FAIL marker
+        # scripts/sim-mdb-run.sh: the exact same script scripts/sim-test-
+        # local.sh calls for a local repro run against the same toolchain
+        # image (docs/ci-plan.md's local-reproduction plan), so CI and a
+        # local run go through one source of truth, not two copies of
+        # this logic that can drift apart. Command order matters inside
+        # it: `set` tool-property commands must come before `hwtool`,
+        # silently ignored otherwise (Phase 2 finding). wait_ms defaults
+        # to 2000 (2 real seconds); MPLAB SIM runs noticeably slower than
+        # real-time (confirmed empirically, not a documented spec), so
+        # this is a wall-clock budget, not a simulated-time one.
         shell: bash
         run: |
-          make -C ${{ matrix.dir }} clean
-          make -C ${{ matrix.dir }} MCU=${{ matrix.mcu }} HARNESS=sim \
-            DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${{ matrix.dfp }}/xc8"
-      - name: Run under MPLAB SIM (mdb) and check the PASS/FAIL marker
-        # Command order matters: `set` tool-property commands must come
-        # before `hwtool`, silently ignored otherwise (Phase 2 finding,
-        # cost real debugging time then, documented in docs/ci-plan.md's
-        # open questions so it doesn't cost it again here). `wait 2000`
-        # (2 real seconds) is the same value Phase 2's own throwaway
-        # probes used successfully; pic8-tick's actual bounded work is
-        # only ~15ms of simulated time (a 10ms + 5ms delay), so this is
-        # a generous margin, not a tight one.
-        shell: bash
-        run: |
-          out=/tmp/${{ matrix.family }}-uart.txt
-          rm -f "$out"
-          cat > /tmp/${{ matrix.family }}-mdb.txt <<SCRIPT
-          device ${{ matrix.device }}
-          set uart1io.uartioenabled true
-          set uart1io.output file
-          set uart1io.outputfile $out
-          hwtool SIM
-          program ${{ matrix.dir }}/build/${{ matrix.mcu }}-tick-sim.hex
-          run
-          wait 15
-          halt
-          print INTCON
-          print PIR1
-          print PIE1
-          print TXSTA
-          print RCSTA
-          print T2CON
-          print TMR2
-          print PR2
-          quit
-          SCRIPT
-
-          mdb_ok=1
-          mdb.sh /tmp/${{ matrix.family }}-mdb.txt || mdb_ok=0
-
-          echo "---- captured UART output ----"
-          cat "$out" 2>/dev/null || echo "(no output file produced)"
-          echo "-------------------------------"
-
-          if [ "$mdb_ok" -ne 1 ]; then
-            echo "::error::mdb.sh itself exited non-zero"
-            exit 1
-          fi
-          if [ ! -s "$out" ]; then
-            echo "::error::mdb produced no UART output at all (simulator" \
-                 "may have errored, or the harness never reached report())"
-            exit 1
-          fi
-          if grep -q "PIC8_HARNESS_RESULT: FAIL" "$out"; then
-            echo "::error::sim-target harness reported FAIL"
-            exit 1
-          fi
-          if ! grep -q "PIC8_HARNESS_RESULT: PASS" "$out"; then
-            echo "::error::no PASS/FAIL marker found in captured UART output"
-            exit 1
-          fi
-          echo "PASS marker found"
+          scripts/sim-mdb-run.sh ${{ matrix.family }} ${{ matrix.mcu }} \
+            ${{ matrix.device }} ${{ matrix.dir }} ${{ matrix.dfp }}
       - name: Upload captured UART output (debugging aid on failure)
         if: failure()
         uses: actions/upload-artifact@v4

@@ -687,28 +687,67 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
    now). `sim-test` matrices over the 2 families (hardcoded pilot entries
    for now, `pic8-tick` only; Phase 5 makes this dynamic the way
    `xc8-build.yml`'s `discover` job already is), builds the sim-target
-   `.hex` (`HARNESS=sim`), runs `mdb.sh` against a heredoc-generated
-   script (not a committed `mdb-sim-script.txt` file as this plan's
-   Target layout originally sketched, see the workflow's own header
-   comment for why: the content is entirely mechanical, generating it
-   keeps the one real command sequence in one place instead of
-   duplicated across a growing number of near-identical files once
-   Phase 5 rolls this out further), and checks the captured output in
-   three distinct steps so a failure is legible about *why*: `mdb.sh`
-   itself exiting non-zero, no output file at all, or a FAIL/missing
-   marker are three different `::error::` messages, not one opaque
-   red X. Verified the check logic against 5 fake capture files locally
-   (real PASS, real FAIL, garbage/no-marker output, empty file, and a
-   forced non-zero `mdb_ok`) before trusting it against a real run.
+   `.hex` and runs `mdb.sh` via `scripts/sim-mdb-run.sh` (moved out of
+   the workflow's own inline YAML once local reproduction, see below,
+   needed the exact same build+mdb+grep sequence too; one script, two
+   callers, not two copies that can drift apart), and checks the
+   captured output in three distinct steps so a failure is legible about
+   *why*: `mdb.sh` itself exiting non-zero, no output file at all, or a
+   FAIL/missing marker are three different `::error::` messages, not one
+   opaque red X.
 2. Done: `actions/upload-artifact@v4`, `if: failure()`, uploads the
    captured UART file per family.
+3. **New, added mid-Phase-4**: local reproduction. This environment has
+   no local `mdb`/GHCR access, so every debugging round trip during this
+   phase meant push, wait several minutes for a real Actions run, then
+   ask a human to paste the log back (this assistant cannot pull
+   Actions logs or artifacts itself, confirmed: the REST API returns
+   403 "Must have admin rights to Repository" for both, even against
+   this assistant's own pushed commits). That's fine for one or two
+   rounds, expensive for the kind of register-level debugging Phase 4's
+   pilot actually needed (see Validation below). Fix: `scripts/
+   sim-mdb-run.sh` (the same script the workflow now calls) plus
+   `scripts/sim-test-local.sh`, which resolves the exact same
+   version-pinned image tag `toolchain-image` does, `docker pull`s it,
+   and runs `sim-mdb-run.sh` inside it with this repo bind-mounted, so a
+   local run goes through the identical toolchain, the identical
+   command sequence, and produces the identical captured-UART output a
+   CI run would, just in seconds instead of minutes and without a human
+   relaying logs by hand. Requires `docker login ghcr.io` once (a PAT
+   with `read:packages`; this repo's GHCR packages are private).
 
 **Validation**
-- [ ] A green pilot-module run on `master`. Pushed, not yet confirmed
-      (this is the actual first real `mdb`-driven signal for this repo;
-      everything before this was build-only or hand-probed locally in
-      Phase 2, itself not repeated here since this environment has no
-      local `mdb`/GHCR access, see Phase 3's validation notes).
+- [ ] A green pilot-module run on `master`. **Not yet, still red as of
+      this writing**, and this phase surfaced real, previously-uncaught
+      bugs along the way (the actual point of Phase 2-4: nothing had
+      ever *executed* this repo's compiled firmware before now, only
+      linked it):
+      - `pic8_tick_init` never enabled the chip's global interrupt
+        enable (GIE); fixed (`pic8-tick/src/pic8_tick.c`,
+        `HAL_IRQ_Restore(1)`), confirmed via host/target rebuilds, did
+        not by itself turn the sim-test jobs green.
+      - The sim-target harness's `HAL_USART_Init` TXEN workaround (a
+        non-null `TxCpltCallback`) has a side effect: it also enables
+        the TX interrupt source (TXIE). TXIF is pending immediately
+        after reset and is only cleared by writing TXREG, so the moment
+        GIE turns on, TXIE + pending TXIF fire the TX ISR in an
+        infinite storm (the no-op callback never clears TXIF). Fixed
+        (`HAL_IRQ_DisableSrc(..._IRQ_USART_TX)` right after Init, both
+        families' `*_harness_sim_target.c`), also did not by itself
+        turn the jobs green.
+      - Both fixes are very likely still correct and staying in; the
+        pilot module is still red after both, and register-level
+        diagnostics (`print INTCON/PIE1/...` at `halt`) produced a
+        confusing snapshot taken after multiple WDT reset cycles had
+        already scrambled state, and a second attempt with a much
+        shorter `wait` was inconclusive for a different reason: MPLAB
+        SIM runs noticeably slower than real-time (a `wait 15`
+        real-ms sample only showed ~1.8ms of simulated Timer2 progress,
+        not enough to have reached the code under suspicion yet).
+      - Given the cost of iterating this blind through CI, work paused
+        here to build the local-reproduction tooling (task 3 above)
+        instead of continuing to guess through more push/wait/paste
+        cycles; debugging resumes with that tool.
 - [ ] A deliberately broken pilot-module change (throwaway branch) turns
       the job red for the right reason (grep sees FAIL or missing
       marker), not a container/tooling failure.
