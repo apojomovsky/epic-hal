@@ -199,15 +199,57 @@ assignment, compared between a working and broken dispatcher
 configuration) to confirm this overlap theory concretely rather than
 inferring it from the bisection pattern above.
 
+## Finding 6: the XC8 v4.00 release notes' own indirect-call/`-mstackcall` known issue, tested and ruled out
+
+**A second official, well-motivated lead, also directly tested and
+falsified.** The XC8 v4.00 release notes (`docs/Readme_XC8_for_PIC.htm`
+inside the toolchain image, §6 Known Issues) list `XC8E-11, "Stack
+overflow"`: "When the managed stack is used (the `stackcall`
+suboption)... if these functions are indirect function calls (made via a
+pointer) the compiler will actually encode them using a regular call
+instruction and when these calls return, the stack will overflow. The
+managed stack works as expected for all direct function calls... but not
+for indirect calls that exceed the stack depth." This matches Finding
+4's `-mstackcall` trial producing *worse* behavior instead of better,
+and this HAL has exactly one indirect (function-pointer) call sitting in
+the interrupt path: `USART_TX_IRQHandler` calling `g_usart->
+TxCpltCallback()` (`pic16f87xa_usart.c:150`), reachable because
+`pic16_harness_sim_target.c` registers a no-op callback purely to work
+around a separate, real bug (`HAL_USART_Init` only sets `TXEN` when a
+non-null `TxCpltCallback` is supplied, `pic16f87xa_usart.c:61`).
+
+Tested directly (throwaway, uncommitted): made `TXEN` unconditional in
+`HAL_USART_Init` and left `TxCpltCallback` `NULL` in the harness, so the
+indirect call is entirely absent from the compiled interrupt path for
+this binary. Rebuilt, ran under real `mdb`, checked both the UART output
+and register state directly (`run` + `wait 30000` + `halt` +
+`print INTCON`/`PIR1`/`PIE1`): **no change**. Still hangs after the
+first delay, `INTCON=64` (`PEIE=1, GIE=0`), the identical symptom as
+baseline. Reverted (`git checkout --`) once confirmed.
+
+This rules out the indirect-call/`-mstackcall` gap as the (sole) cause
+too, despite being a real, officially-documented, and specifically
+matching-shaped issue. Combined with Finding 5, both of the two most
+plausible, best-evidenced theories (call depth, indirect calls escaping
+`-mstackcall`) have now been tested and falsified individually. The
+overlap-sensitivity observation from Finding 5's bisection still stands
+(it's an experimental result, not a theory it was testing), so it
+remains the best lead, just without yet knowing *which* two things
+overlap.
+
 ## Open, for whoever picks this back up
 
 - The GIE-stuck-disabled hang (`docs/ci-plan.md` Phase 4) is still
-  unresolved. Finding 5 rules out "just shrink the dispatcher" as a
-  quick fix and points toward a storage-overlap investigation instead:
-  compare the `.map`/`-Wa,-a` storage assignment between a working
-  dispatcher configuration (e.g. `TIMER2_IRQHandler` + `CCP1_IRQHandler`
-  only) and a broken one (`TIMER2_IRQHandler` alone) to find what,
-  concretely, moved.
+  unresolved, and two well-motivated theories (raw stack depth, Finding
+  5; the indirect-call `-mstackcall` gap, Finding 6) have both been
+  directly tested and ruled out. What's left un-eliminated is Finding 5's
+  bisection result itself (adding `CCP1_IRQHandler` back fixes a broken
+  config), which is a real, reproducible, but still unexplained data
+  point. The highest-confidence next step is no longer "guess and test a
+  new theory" but the concrete, mechanical one already flagged: compare
+  the `.map`/`-Wa,-a` storage assignment between a working dispatcher
+  configuration (e.g. `TIMER2_IRQHandler` + `CCP1_IRQHandler` only) and a
+  broken one (`TIMER2_IRQHandler` alone) to find what, concretely, moved.
 - Finding 2 remains a plausible-but-unconfirmed explanation; if anyone
   needs to write more hand-rolled bank-switching C (not asm) in this HAL,
   treat plain SFR writes to `STATUS` as unreliable for bank purposes

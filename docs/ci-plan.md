@@ -920,13 +920,26 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            handlers' presence matters found a case where *adding* a
            handler back (increasing depth) fixed a worse failure, the
            opposite of what a pure depth theory predicts. Full account:
-           `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 5. Current best
-           explanation, still unconfirmed: a non-reentrant
-           storage-overlap collision whose presence/absence is sensitive
-           to the interrupt call graph's exact shape (closer to Finding 2
-           than Finding 4), not raw stack depth by itself. Whatever the
-           exact mechanism turns out to be, this is a genuine
-           pre-existing bug in `pic8_tick`/`example_tick.c`'s own
+           `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 5. A second,
+           separately-motivated official lead was also tested and ruled
+           out: the XC8 v4.00 release notes' own Known Issue `XC8E-11`
+           ("Stack overflow") documents that `-mstackcall`'s protection
+           does not cover indirect (function-pointer) calls, and this HAL
+           has exactly one in the interrupt path
+           (`USART_TX_IRQHandler`'s `TxCpltCallback` call, only present
+           because of a separate, real bug tying `TXEN` to that
+           callback's presence). Removing it entirely (throwaway,
+           reverted) made no difference: `INTCON` still shows `GIE=0`
+           after the hang, identical to baseline. Full account:
+           `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 6. Current best
+           lead, still unconfirmed: a non-reentrant storage-overlap
+           collision whose presence/absence is sensitive to the interrupt
+           call graph's exact shape (closer to Finding 2 than Finding 4),
+           not raw stack depth and not the indirect-call gap, though
+           *which* two things overlap hasn't been located yet (would need
+           a `.map`/`-Wa,-a` storage-assignment comparison, not done).
+           Whatever the exact mechanism turns out to be, this is a
+           genuine pre-existing bug in `pic8_tick`/`example_tick.c`'s own
            structure (or the dispatcher's
            unconditional-call-to-every-handler design), never caught
            before because nothing had ever *run* this combination on
