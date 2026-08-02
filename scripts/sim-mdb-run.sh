@@ -11,20 +11,24 @@
 # anywhere xc8-cc/mdb.sh are on PATH and $XC8_INSTALL_DIR is set the
 # same way that image's Dockerfile sets it.
 #
-# Usage: sim-mdb-run.sh <family> <mcu> <device> <dir> <dfp> [wait_ms]
-#   family  matrix label, only used to namespace temp files (e.g. pic16f87xa)
-#   mcu     Makefile MCU= value (e.g. 16F877A)
-#   device  mdb `device` command's part name (e.g. PIC16F877A)
-#   dir     module's mcu/*-mplabx dir (e.g. pic8-tick/mcu/pic16f87xa-tick-mplabx)
-#   dfp     DFP pack name (e.g. Microchip.PIC16Fxxx_DFP)
-#   wait_ms real-time ms to let mdb run before halting (default 2000;
-#           MPLAB SIM runs noticeably slower than real-time, see
-#           docs/ci-plan.md Phase 4's findings, so this is a wall-clock
-#           budget, not a simulated-time one)
+# Usage: sim-mdb-run.sh <family> <mcu> <device> <dir> <dfp> [wait_ms] [extra_mdb]
+#   family    matrix label, only used to namespace temp files (e.g. pic16f87xa)
+#   mcu       Makefile MCU= value (e.g. 16F877A)
+#   device    mdb `device` command's part name (e.g. PIC16F877A)
+#   dir       module's mcu/*-mplabx dir (e.g. pic8-tick/mcu/pic16f87xa-tick-mplabx)
+#   dfp       DFP pack name (e.g. Microchip.PIC16Fxxx_DFP)
+#   wait_ms   real-time ms to let mdb run before halting (default 2000;
+#             MPLAB SIM runs noticeably slower than real-time, see
+#             docs/ci-plan.md Phase 4's findings, so this is a wall-clock
+#             budget, not a simulated-time one)
+#   extra_mdb extra mdb commands (e.g. `print`s), inserted right before
+#             `quit`, for register-level debugging without hardcoding
+#             device-specific diagnostics into this generic script
 
 set -euo pipefail
 
-family="$1"; mcu="$2"; device="$3"; dir="$4"; dfp="$5"; wait_ms="${6:-2000}"
+family="$1"; mcu="$2"; device="$3"; dir="$4"; dfp="$5"
+wait_ms="${6:-2000}"; extra_mdb="${7:-}"
 
 make -C "$dir" clean
 make -C "$dir" MCU="$mcu" HARNESS=sim \
@@ -50,6 +54,7 @@ program ${hex}
 run
 wait ${wait_ms}
 halt
+${extra_mdb}
 quit
 SCRIPT
 

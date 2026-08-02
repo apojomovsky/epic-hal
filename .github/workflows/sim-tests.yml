@@ -178,8 +178,20 @@ jobs:
         # this is a wall-clock budget, not a simulated-time one.
         shell: bash
         run: |
+          extra_mdb="$(cat <<'EOF'
+          print INTCON
+          print PIR1
+          print PIE1
+          print TXSTA
+          print RCSTA
+          print T2CON
+          print TMR2
+          print PR2
+          EOF
+          )"
           scripts/sim-mdb-run.sh ${{ matrix.family }} ${{ matrix.mcu }} \
-            ${{ matrix.device }} ${{ matrix.dir }} ${{ matrix.dfp }}
+            ${{ matrix.device }} ${{ matrix.dir }} ${{ matrix.dfp }} \
+            80 "$extra_mdb"
       - name: Upload captured UART output (debugging aid on failure)
         if: failure()
         uses: actions/upload-artifact@v4
