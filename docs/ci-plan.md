@@ -116,27 +116,31 @@ local-reproduction tooling (`scripts/sim-mdb-run.sh`,
 `scripts/sim-test-local.sh`) are built and working; local Docker/GHCR
 access was set up mid-phase specifically to debug this faster than
 repeated CI round trips, and paid off immediately. The pilot module's
-failure turned out to be much bigger than pic8-tick: a real XC8 v4.00
-codegen bug where any C-level local variable accessed while a PIC16
-bank switch (`pic_select_bank`) is in effect gets misdirected, silently
-breaking every Bank 1 SFR access in `pic16f87xa-hal` that needs a
-read-modify-write rather than a blind write (Timer2's period register,
-both IRQ enable registers; USART's SPBRG not yet re-tested). Six real
-bugs found and fixed along the way (four variations on the Bank-1
-codegen theme: `pic_select_bank`'s and `pie_reg_addr`'s/`pir_reg_addr`'s
-own function-call-boundary corruption, a ROM-read interleaved with an
-SFR read-modify-write, and `HAL_IRQ_Enable`/`DisableSrc`'s PIE1/PIE2
-read-modify-write itself, now hand-written inline asm; plus a genuine
-dangling-pointer bug in the sim-target harness's USART handle, and a
-WDT/config-word oversight), each verified individually via the local
-toolchain, none of them regressing the host suite (18/18 modules) or
-the real XC8 build. None of the six turned out to be the *final*
-blocker: with all six applied, the pilot now gets further than ever
-(first delay completes, first log line transmits correctly) but hangs
-on the second delay with `GIE` stuck disabled. Leading, unconfirmed
-hypothesis: PIC16F87XA's 8-level hardware call stack, which XC8 has
-been warning about on every single build of this test
-(`estimated stack depth: 9`) since before this session even started.
+failure turned out to be much bigger than pic8-tick: any C-level local
+variable accessed while a PIC16 bank switch (`pic_select_bank`) is in
+effect got misdirected, silently breaking every Bank 1 SFR access in
+`pic16f87xa-hal` that needs a read-modify-write rather than a blind
+write (Timer2's period register, both IRQ enable registers; USART's
+SPBRG not yet re-tested). Six real bugs found and fixed along the way
+(four variations on the Bank-1 theme: `pic_select_bank`'s and
+`pie_reg_addr`'s/`pir_reg_addr`'s own function-call-boundary corruption,
+a ROM-read interleaved with an SFR read-modify-write, and
+`HAL_IRQ_Enable`/`DisableSrc`'s PIE1/PIE2 read-modify-write itself, now
+hand-written inline asm; plus a genuine dangling-pointer bug in the
+sim-target harness's USART handle, and a WDT/config-word oversight),
+each verified individually via the local toolchain, none of them
+regressing the host suite (18/18 modules) or the real XC8 build. None of
+the six turned out to be the *final* blocker: with all six applied, the
+pilot now gets further than ever (first delay completes, first log line
+transmits correctly) but hangs on the second delay with `GIE` stuck
+disabled. Leading hypothesis, now with direct compiler-generated
+evidence behind it (not just the build-time warning): PIC16F87XA's
+8-level hardware call stack, the interrupt-path call graph in a real
+build's own `.s` output shows an estimated maximum depth of 10. See
+`pic16f87xa-hal/docs/ARCHITECTURE.md` for the full writeup, cross-checked
+against the real XC8 v4.00 User's Guide rather than asserted from
+empirical probing alone (an earlier draft of this account called several
+of these "genuine XC8 bugs" without doing that check first; corrected).
 See Phase 4's own Validation section for the full, detailed account of
 all seven findings. Not chased further without a deliberate decision on
 how to proceed.
@@ -769,10 +773,15 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
       - Both fixes are correct and staying in, but resolved a different
         problem than the actual blocker turned out to be.
       - **Root cause, found after switching to local reproduction (task
-        3): a genuine XC8 v4.00 PIC16 codegen bug affecting ANY
-        Bank-1 SFR access (PIE1/PIE2, SPBRG, PR2, i.e. everything this
-        family's `pic_select_bank` helper exists for), not something
-        specific to pic8-tick.** `mdb`'s `wait N` does not mean "N
+        3): any Bank-1 SFR access (PIE1/PIE2, SPBRG, PR2, i.e.
+        everything this family's `pic_select_bank` helper exists for)
+        was at risk of corruption, not something specific to
+        pic8-tick.** (See `pic16f87xa-hal/docs/ARCHITECTURE.md` for the
+        cross-check against XC8's own User's Guide done after this
+        phase's initial debugging; item 1 below is a plausible, but not
+        confirmed, explanation rather than a proven compiler defect,
+        item 4 below turned out to match documented behavior exactly.)
+        `mdb`'s `wait N` does not mean "N
         simulated milliseconds," it means "poll for the simulator to
         halt on its own, give up after N *real* milliseconds" (per
         `help wait`); since nothing in these scripts ever triggers a
@@ -804,16 +813,21 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            `HAL_IRQ_Enable`/`DisableSrc`/`ClearFlag`/`GetFlag` now pull
            every field out of `d` into locals before touching any SFR.
         4. **Fixed**: `HAL_IRQ_Enable`/`DisableSrc`'s PIE1/PIE2
-           read-modify-write, root-caused to the same class of bug as
-           item 1 (any C-level local touched while banked into Bank 1
-           gets misdirected), now hand-written inline asm following this
+           read-modify-write, affected by the same symptom as item 1
+           (a C-level local touched while banked into Bank 1 got
+           misdirected), now hand-written inline asm following this
            repo's established binding convention
            (`pic8-math/docs/ARCHITECTURE.md`'s "Inline-asm binding"
            section): the operand is copied into a file-scope,
            `__at`-pinned scratch byte and loaded into W *before* the
            bank switch, so nothing Bank-0-assumed is ever touched while
            banked; the read-modify-write itself is one `iorwf`/`andwf
-           <SFR>,f` against the named SFR and W only. This has to live
+           <SFR>,f` against the named SFR and W only. This is confirmed
+           correct against XC8's own documentation, not just empirically:
+           `pic16f87xa-hal/docs/ARCHITECTURE.md`'s Finding 1 cites the
+           User's Guide's §5.12.2 stating in-line assembly resets the
+           compiler's bank tracking, which is exactly what this fix
+           relies on. This has to live
            in the per-platform header
            (`target/pic16f87xa_platform.h`'s new `PIC8_PIE_ENABLE_BIT`/
            `PIC8_PIE_DISABLE_BIT` macros), not inline in `pic16_irq.c`:
@@ -880,28 +894,32 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            already ran successfully once (proven by the first delay
            completing at all). `HAL_IRQ_Disable`/`Restore`'s own
            generated assembly was traced instruction-by-instruction and
-           is logically correct. Leading hypothesis, not yet confirmed:
-           **PIC16F87XA's hardware call stack is only 8 levels deep, and
-           XC8 has been warning about this the entire time** (`warning:
-           (1393) possible hardware stack overflow detected; estimated
-           stack depth: 9` on every single build of `example_tick.c`,
-           including every build before this session's Phase 2-4 work
-           even started). An interrupt firing while main code is already
-           several calls deep (`main -> pic8_tick_delay_ms ->
-           pic8_tick_elapsed_since -> pic8_tick_get -> HAL_IRQ_Disable`)
-           plus the ISR's own call chain
-           (`pic8_dispatch_all_irqs -> TIMER2_IRQHandler ->
-           pic8_tick_on_overflow`, plus every *other* peripheral
-           handler the dispatcher unconditionally calls too, per its own
-           documented strong-reference design) can plausibly exceed 8
-           and wrap the hardware stack, corrupting a return address in
-           exactly the way that would explain `HAL_IRQ_Disable` never
-           reaching its matching `Restore`. Not yet confirmed
-           empirically (would need single-stepping through the exact
-           corruption instant, or comparing call depth against the
-           `.sym` file's own stack-usage annotations); if true, this is
-           a genuine pre-existing bug in `pic8_tick`/`example_tick.c`'s
-           own structure, never caught before because nothing had ever
+           is logically correct. Leading hypothesis: **PIC16F87XA's
+           hardware call stack is only 8 levels deep**, and XC8 has been
+           warning about this the entire time (`warning: (1393) possible
+           hardware stack overflow detected; estimated stack depth: 9` on
+           every single build of `example_tick.c`, including every build
+           before this session's Phase 2-4 work even started). This is
+           now backed by more than the build warning: a fresh build's own
+           generated `.s` Call Graph Tables (compiler-computed, not
+           inferred) show the interrupt-rooted call graph
+           (`_PIC16_IRQ_Handler -> _pic8_dispatch_all_irqs -> ` every
+           peripheral `_IRQHandler`, unconditionally called per the
+           dispatcher's own documented strong-reference design `->
+           i1_HAL_IRQ_ClearFlag`) at an estimated maximum stack depth of
+           **10**, two over the hardware's 8-level limit, while the
+           main-line graph tops out at a safe 5. Full account, including
+           the documented mitigation tried (`-mstackcall`, did not
+           cleanly resolve it on a first attempt) and citations against
+           the real XC8 v4.00 User's Guide: `pic16f87xa-hal/docs/
+           ARCHITECTURE.md`, Finding 4. **Still not proven as the exact
+           mechanism** (that would need single-stepping through the exact
+           corruption instant, or per-instruction bank/stack tracking via
+           `-Wa,-a`, neither done yet), but no longer just an inferred
+           guess from a generic build warning either. If confirmed, this
+           is a genuine pre-existing bug in `pic8_tick`/`example_tick.c`'s
+           own structure (or the dispatcher's unconditional-call-to-every-
+           handler design), never caught before because nothing had ever
            *run* this combination on real silicon or a real simulator
            until now, not something specific to the sim-target harness.
       - All of the above verified against a real local XC8 v4.00 build
@@ -914,24 +932,30 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
         commit.
       - **Status: paused here, not resolved.** This turned out to be a
         much deeper problem than "wire up one pilot module": six real,
-        independently-confirmed bugs found and fixed (four genuine XC8
-        v4.00 codegen defects around Bank 1 SFR access and ROM-const
-        reads, one dangling-pointer bug in the sim-target harness, one
-        WDT/config-word oversight), none of them pre-existing knowledge,
-        all invisible until Phase 2-4 actually *ran* compiled firmware
-        for the first time. A seventh, different bug (very likely PIC16's
-        8-level hardware stack, see item 7) remains, genuinely
-        unconfirmed, not pushed through unilaterally; left for a
-        deliberate decision on how to proceed. PIC18's own sim-test leg
-        is untouched by any of this session's fixes (all PIC16-specific)
-        and still fails the same way it always has, tracked separately.
+        independently-confirmed bugs found and fixed (four around Bank 1
+        SFR access and ROM-const reads, one dangling-pointer bug in the
+        sim-target harness, one WDT/config-word oversight), none of them
+        pre-existing knowledge, all invisible until Phase 2-4 actually
+        *ran* compiled firmware for the first time. Of those four, one
+        (item 4, the PIE1/PIE2 inline-asm fix) is now confirmed correct
+        against XC8's own documented behavior; the others are, per
+        `pic16f87xa-hal/docs/ARCHITECTURE.md`, real and reproduced but
+        not yet run down to a documented compiler statement, so this
+        document no longer calls them "codegen defects" outright. A
+        seventh, different bug (very likely PIC16's 8-level hardware
+        stack, see item 7, now with direct call-graph evidence, not just
+        a build warning) remains open; not pushed through unilaterally,
+        left for a deliberate decision on how to proceed. PIC18's own
+        sim-test leg is untouched by any of this session's fixes (all
+        PIC16-specific) and still fails the same way it always has,
+        tracked separately.
 - [ ] A deliberately broken pilot-module change (throwaway branch) turns
       the job red for the right reason (grep sees FAIL or missing
       marker), not a container/tooling failure.
 
 **Exit criterion**: `sim-tests.yml` green on `master` for the pilot
-module, both families, merged. **Not met.** Blocked on the Bank 1 SFR
-codegen bug above.
+module, both families, merged. **Not met.** Blocked on the still-open
+hardware-stack-depth issue above (item 7).
 
 ---
 

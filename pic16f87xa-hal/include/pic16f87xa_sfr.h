@@ -368,12 +368,15 @@
  *   caller across this HAL that reads a Bank 1 register (SPBRG, PR2,
  *   PIE1/PIE2) was silently affected. A macro is expanded at the
  *   preprocessor stage, before XC8 ever gets a chance to turn it into a
- *   call, so this class of bug cannot recur here regardless of what the
- *   optimizer decides to do with `static inline`.
+ *   call, so this failure mode cannot recur here regardless of what the
+ *   optimizer decides to do with `static inline`. Root cause not fully
+ *   pinned down against official docs (plausible, unconfirmed
+ *   explanation: pic16f87xa-hal/docs/ARCHITECTURE.md's Finding 2), the
+ *   macro conversion sidesteps the question rather than resolving it.
  *
- *   This did NOT turn out to be the only bank-1 codegen problem: a
- *   SEPARATE, still-unresolved issue affects any C-level local variable
- *   accessed WHILE a bank switch is in effect (RP0 non-default), see
+ *   This did NOT turn out to be the only bank-1 issue: a SEPARATE,
+ *   still-unresolved one affects any C-level local variable accessed
+ *   WHILE a bank switch is in effect (RP0 non-default), see
  *   pic16_irq.c's HAL_IRQ_Enable for the full, current account and
  *   docs/ci-plan.md's Phase 4 findings. Also worth knowing: two or more
  *   pic_select_bank invocations combined with certain surrounding code

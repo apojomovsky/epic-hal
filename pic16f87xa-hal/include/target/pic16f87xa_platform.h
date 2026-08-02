@@ -44,7 +44,10 @@
  * misdirected. This macro instead loads the operand into W *before* the
  * bank switch and does the whole read-modify-write as one `iorwf`/
  * `andwf <SFR>,f` against the named SFR and W only, so nothing
- * Bank-0-assumed is ever touched while banked.
+ * Bank-0-assumed is ever touched while banked. This approach is
+ * confirmed correct per the XC8 v4.00 User's Guide, not just
+ * empirically: see pic16f87xa-hal/docs/ARCHITECTURE.md's Finding 1
+ * (in-line asm resets the compiler's bank tracking, §5.12.2).
  *
  * Lives here (the target platform header), not in pic16_irq.c: that
  * file is shared with the host build (this repo's rule: no `#ifdef`

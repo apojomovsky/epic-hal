@@ -50,11 +50,13 @@ static const irq_desc_t irq_table[] = {
 #define IRQ_TABLE_SIZE  (sizeof irq_table / sizeof irq_table[0])
 
 /* Macro, not a `static` function (empirically probed under MPLAB SIM,
- * same class of bug as PIC8_PIE_ENABLE_BIT's own header comment: a
- * genuine XC8 function-call boundary here silently lost the returned
- * address by the time it reached the caller's read/write, confirmed by
- * a dedicated probe that wrote PIE1 correctly via a hand-computed
- * address but not via this function). PIR1 = 0x0C, PIR2 = 0x0D. */
+ * same symptom as PIC8_PIE_ENABLE_BIT's own header comment: a
+ * function-call boundary here silently lost the returned address by the
+ * time it reached the caller's read/write, confirmed by a dedicated
+ * probe that wrote PIE1 correctly via a hand-computed address but not
+ * via this function; see pic16f87xa-hal/docs/ARCHITECTURE.md's Finding
+ * 2 for the current, still-unconfirmed best explanation). PIR1 = 0x0C,
+ * PIR2 = 0x0D. */
 #define pir_reg_addr(d) ((d)->pir_is_pir2 ? PIC_REG_PIR2 : PIC_REG_PIR1)
 
 /* ───────────────────────── public API ───────────────────────────── */
