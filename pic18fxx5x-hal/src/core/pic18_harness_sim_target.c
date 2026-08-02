@@ -20,6 +20,7 @@
  */
 
 #include "core/pic8_harness.h"
+#include "core/pic18_irq.h"
 #include "peripherals/pic18fxx5x_usart.h"
 
 #include <stdint.h>
@@ -59,6 +60,12 @@ void pic8_harness_init(uint32_t cycles)
                                            USART_BAUDGEN_8BIT);
     h.TxCpltCallback = s_tx_cplt;
     (void)HAL_USART_Init(&h);
+    /* Same TXIE-storm risk as pic16_harness_sim_target.c, same fix: see
+     * that file's header comment for the full account (confirmed
+     * against a real mdb run, not theoretical). Transmission here is
+     * polled, TXIE was never wanted, only a side effect of the TXEN
+     * workaround; turn the source back off, TXEN stays untouched. */
+    HAL_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
 }
 
 void pic8_harness_tick(void)

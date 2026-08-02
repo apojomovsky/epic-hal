@@ -50,6 +50,7 @@
  */
 
 #include "core/pic8_harness.h"
+#include "core/pic16_irq.h"
 #include "peripherals/pic16f87xa_usart.h"
 
 #include <stdint.h>
@@ -87,6 +88,22 @@ void pic8_harness_init(uint32_t cycles)
                                            USART_BRGH_HIGH);
     h.TxCpltCallback = s_tx_cplt;
     (void)HAL_USART_Init(&h);
+    /* HAL_USART_Init's TXEN gate (see this file's header comment) has a
+     * real side effect beyond TXEN: a non-null TxCpltCallback also
+     * enables the USART TX interrupt SOURCE (TXIE), not just TXEN.
+     * TXIF is pending (1) immediately after reset (TXREG/TSR empty) and
+     * is only cleared by writing TXREG, never by the ISR itself; the
+     * moment something elsewhere enables GIE (pic8_tick_init does, for
+     * its own Timer2 ISR), TXIE+pending-TXIF+GIE fire the USART TX ISR
+     * immediately, s_tx_cplt does nothing, TXIF is still pending on
+     * return, and the CPU re-enters it forever: a real interrupt storm
+     * that starves every other instruction, confirmed against a real
+     * mdb run (WDT eventually reset it out of the storm; without a
+     * short-period WDT it would just hang silently, both observed).
+     * Transmission here is polled, never interrupt-driven, so TXIE was
+     * never wanted; turn the source back off right after Init, TXEN
+     * (already latched into TXSTA) stays untouched. */
+    HAL_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
 }
 
 void pic8_harness_tick(void)
