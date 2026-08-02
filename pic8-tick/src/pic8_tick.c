@@ -98,6 +98,18 @@ void pic8_tick_init(uint32_t fosc_hz)
     s_timer2.OverflowCallback = pic8_tick_on_overflow;
     HAL_TIMER2_Init(&s_timer2);
     HAL_TIMER2_Start(&s_timer2);
+    /* HAL_TIMER2_Init only arms Timer2's own source enable bit
+     * (pic8-common/MANUAL.md §6-7); the chip's global interrupt enable
+     * is separate and nothing else here ever turned it on. Without this,
+     * the Timer2 ISR never fires on real hardware (or a real
+     * instruction-accurate simulator), g_tick_ms never increments, and
+     * pic8_tick_delay_ms spins forever. Invisible on the host build,
+     * whose pic8_harness_tick() steps the simulator directly instead of
+     * relying on a real interrupt; only surfaced once this module's
+     * compiled firmware actually ran under MPLAB SIM for the first time
+     * (docs/ci-plan.md Phase 4).
+     */
+    HAL_IRQ_Restore(1);
 }
 
 uint32_t pic8_tick_get(void)
