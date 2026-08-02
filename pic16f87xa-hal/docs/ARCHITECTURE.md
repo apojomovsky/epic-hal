@@ -148,17 +148,66 @@ failure that could explain `HAL_IRQ_Disable` never reaching its matching
 `HAL_IRQ_Restore`, observed as `GIE` staying disabled indefinitely after
 the first successful interrupt cycle). It does not, by itself, prove
 that *this specific failure* is caused by *this specific* stack
-condition; that would need single-instruction-stepping through the exact
-point of corruption, or building with `-Wa,-a` (§5.12.2) and inspecting
-per-instruction bank/register tracking around the failure, neither done
-yet.
+condition. **Finding 5 below tested this directly and the result argues
+against depth being the (sole) mechanism.**
+
+## Finding 5: trimming the dispatcher's call depth does not fix the hang, and can break earlier instead
+
+**A direct, reproducible experiment against Finding 4's hypothesis;
+result contradicts a pure stack-depth explanation.** If the hang really
+were "interrupt-path call depth 10 exceeds the 8-level hardware stack,"
+shrinking `pic8_dispatch_all_irqs` (`pic16_irq_dispatch.c`) down to only
+the one handler `pic8-tick`'s test actually needs (`TIMER2_IRQHandler`)
+should reduce worst-case interrupt-side depth well under 8 and fix the
+hang. Tested directly (throwaway, uncommitted edits to
+`pic8_dispatch_all_irqs`, rebuilt and run under real `mdb`/MPLAB SIM each
+time, `run` + real-time `wait 10000` + `halt`, checking for the first
+delay's `"tick: delay(10) -> %lu ms"` log line as the pass signal, since
+that's what the known-good baseline reliably produces before it hangs):
+
+| Dispatcher body | Result |
+|---|---|
+| All 13 handlers (baseline, `master`) | First delay's log line appears, hangs on the second (documented behavior) |
+| `TIMER2_IRQHandler()` only | **No output at all**, worse than baseline |
+| `TIMER2_IRQHandler(); CCP1_IRQHandler();` only | First delay's log line appears (matches baseline) |
+| `TIMER0/TIMER1/TIMER2/CCP1_IRQHandler()` only | Matches baseline |
+| `TIMER1_IRQHandler(); TIMER2_IRQHandler();` (no CCP1) | **No output at all** |
+| `TIMER0_IRQHandler(); TIMER2_IRQHandler();` (no CCP1) | **No output at all** |
+
+Binary-searching which handler's presence flips the result landed on:
+**`TIMER2_IRQHandler` alone is broken; adding `CCP1_IRQHandler` back
+(which *increases* call depth) fixes it.** This is the opposite of what
+a pure call-depth theory predicts: adding depth should never fix an
+overflow, only worsen it. None of these configurations eliminate the
+hang either (nothing tested reached a full PASS), so this doesn't
+directly locate a fix, but it strongly suggests the mechanism is not
+simply "the interrupt path is too deep." A more consistent explanation:
+XC8's non-reentrant storage-overlap assignment (which functions' locals
+get to share RAM, decided from the *whole program's* call-graph shape,
+not a per-function local decision) shifts when the interrupt call graph's
+shape changes, and some configurations happen to produce a harmful
+overlap between an unrelated pair of functions while others don't. This
+would make the underlying issue closer to Finding 2 (storage overlap
+across a boundary the compiler's analysis didn't fully account for) than
+to Finding 4 (raw depth), with Finding 4's depth-10-vs-8 warning being a
+real, correctly-reported risk that happens to coexist with this rather
+than being demonstrated as the actual trigger.
+
+**Not done**: actually locating the specific overlapping pair (would
+need the linker `.map`'s PSECT placement, or `-Wa,-a` per-symbol storage
+assignment, compared between a working and broken dispatcher
+configuration) to confirm this overlap theory concretely rather than
+inferring it from the bisection pattern above.
 
 ## Open, for whoever picks this back up
 
-- Confirm or rule out Finding 4 as the actual cause of the sim-target
-  hang (`docs/ci-plan.md` Phase 4), ideally by getting `-mstackcall` (or
-  an equivalent restructuring, e.g. reducing interrupt-reachable call
-  depth) to a state that's verified to fix it, not just tried once.
+- The GIE-stuck-disabled hang (`docs/ci-plan.md` Phase 4) is still
+  unresolved. Finding 5 rules out "just shrink the dispatcher" as a
+  quick fix and points toward a storage-overlap investigation instead:
+  compare the `.map`/`-Wa,-a` storage assignment between a working
+  dispatcher configuration (e.g. `TIMER2_IRQHandler` + `CCP1_IRQHandler`
+  only) and a broken one (`TIMER2_IRQHandler` alone) to find what,
+  concretely, moved.
 - Finding 2 remains a plausible-but-unconfirmed explanation; if anyone
   needs to write more hand-rolled bank-switching C (not asm) in this HAL,
   treat plain SFR writes to `STATUS` as unreliable for bank purposes

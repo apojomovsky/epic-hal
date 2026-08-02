@@ -133,10 +133,14 @@ regressing the host suite (18/18 modules) or the real XC8 build. None of
 the six turned out to be the *final* blocker: with all six applied, the
 pilot now gets further than ever (first delay completes, first log line
 transmits correctly) but hangs on the second delay with `GIE` stuck
-disabled. Leading hypothesis, now with direct compiler-generated
-evidence behind it (not just the build-time warning): PIC16F87XA's
-8-level hardware call stack, the interrupt-path call graph in a real
-build's own `.s` output shows an estimated maximum depth of 10. See
+disabled. PIC16F87XA's 8-level hardware call stack was the leading
+hypothesis (a real build's own `.s` output shows the interrupt-path call
+graph at an estimated maximum depth of 10), but a direct experiment
+(shrinking the interrupt dispatcher to cut that depth) did not fix the
+hang and in one case a bisection showed *adding* depth back fixing a
+worse failure, the opposite of what that theory predicts. Current best
+explanation, still unconfirmed: a non-reentrant storage-overlap collision
+sensitive to the interrupt call graph's shape, not raw depth. See
 `pic16f87xa-hal/docs/ARCHITECTURE.md` for the full writeup, cross-checked
 against the real XC8 v4.00 User's Guide rather than asserted from
 empirical probing alone (an earlier draft of this account called several
@@ -894,34 +898,40 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            already ran successfully once (proven by the first delay
            completing at all). `HAL_IRQ_Disable`/`Restore`'s own
            generated assembly was traced instruction-by-instruction and
-           is logically correct. Leading hypothesis: **PIC16F87XA's
-           hardware call stack is only 8 levels deep**, and XC8 has been
-           warning about this the entire time (`warning: (1393) possible
-           hardware stack overflow detected; estimated stack depth: 9` on
-           every single build of `example_tick.c`, including every build
-           before this session's Phase 2-4 work even started). This is
-           now backed by more than the build warning: a fresh build's own
-           generated `.s` Call Graph Tables (compiler-computed, not
-           inferred) show the interrupt-rooted call graph
-           (`_PIC16_IRQ_Handler -> _pic8_dispatch_all_irqs -> ` every
-           peripheral `_IRQHandler`, unconditionally called per the
-           dispatcher's own documented strong-reference design `->
-           i1_HAL_IRQ_ClearFlag`) at an estimated maximum stack depth of
-           **10**, two over the hardware's 8-level limit, while the
-           main-line graph tops out at a safe 5. Full account, including
-           the documented mitigation tried (`-mstackcall`, did not
-           cleanly resolve it on a first attempt) and citations against
-           the real XC8 v4.00 User's Guide: `pic16f87xa-hal/docs/
-           ARCHITECTURE.md`, Finding 4. **Still not proven as the exact
-           mechanism** (that would need single-stepping through the exact
-           corruption instant, or per-instruction bank/stack tracking via
-           `-Wa,-a`, neither done yet), but no longer just an inferred
-           guess from a generic build warning either. If confirmed, this
-           is a genuine pre-existing bug in `pic8_tick`/`example_tick.c`'s
-           own structure (or the dispatcher's unconditional-call-to-every-
-           handler design), never caught before because nothing had ever
-           *run* this combination on real silicon or a real simulator
-           until now, not something specific to the sim-target harness.
+           is logically correct. Earlier hypothesis, since tested and
+           weakened: **PIC16F87XA's hardware call stack is only 8 levels
+           deep**, and XC8 has been warning about this the entire time
+           (`warning: (1393) possible hardware stack overflow detected;
+           estimated stack depth: 9` on every single build of
+           `example_tick.c`, including every build before this session's
+           Phase 2-4 work even started); a fresh build's own generated
+           `.s` Call Graph Tables (compiler-computed, not inferred) show
+           the interrupt-rooted call graph at an estimated maximum stack
+           depth of **10**, two over the hardware's 8-level limit, while
+           the main-line graph tops out at a safe 5
+           (`pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 4). **Directly
+           tested and not confirmed**: shrinking the dispatcher
+           (`pic16_irq_dispatch.c`'s `pic8_dispatch_all_irqs`, which
+           really does unconditionally call all 13 peripheral handlers on
+           every interrupt, not just in the compiler's worst-case
+           estimate) down to only the one handler this test needs should
+           reduce interrupt-side depth well under 8 if depth is really
+           the mechanism. It didn't fix the hang; a bisection of which
+           handlers' presence matters found a case where *adding* a
+           handler back (increasing depth) fixed a worse failure, the
+           opposite of what a pure depth theory predicts. Full account:
+           `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 5. Current best
+           explanation, still unconfirmed: a non-reentrant
+           storage-overlap collision whose presence/absence is sensitive
+           to the interrupt call graph's exact shape (closer to Finding 2
+           than Finding 4), not raw stack depth by itself. Whatever the
+           exact mechanism turns out to be, this is a genuine
+           pre-existing bug in `pic8_tick`/`example_tick.c`'s own
+           structure (or the dispatcher's
+           unconditional-call-to-every-handler design), never caught
+           before because nothing had ever *run* this combination on
+           real silicon or a real simulator until now, not something
+           specific to the sim-target harness.
       - All of the above verified against a real local XC8 v4.00 build
         (via `scripts/sim-test-local.sh`'s toolchain image, pulled
         directly once `docker login ghcr.io` was set up) and real `mdb`
@@ -955,7 +965,9 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
 
 **Exit criterion**: `sim-tests.yml` green on `master` for the pilot
 module, both families, merged. **Not met.** Blocked on the still-open
-hardware-stack-depth issue above (item 7).
+GIE-stuck-disabled issue above (item 7), now believed to be a
+storage-overlap collision rather than pure stack depth (see
+`pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 5).
 
 ---
 
