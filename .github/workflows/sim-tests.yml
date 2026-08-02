@@ -1,0 +1,231 @@
+name: sim-tests
+
+# Phase 4 of docs/ci-plan.md: drives the Phase 3 sim-target harness under
+# MPLAB SIM (via mdb, headless, confirmed in Phase 2) and turns the
+# captured UART output into a real PASS/FAIL CI signal, closing the loop
+# Phase 3 left open (build-verified locally, never actually run under a
+# simulator, since this environment has no local mdb/GHCR access).
+#
+# Scoped to the pic8-tick pilot only, both families (Phase 5 rolls this
+# out to every module, discovered the same dynamic way xc8-build.yml
+# already discovers its own matrix).
+#
+# ci-assets / ci-assets-mplabx / toolchain-image below are a deliberate,
+# verbatim copy of xc8-build.yml's own jobs, not a shared/reusable
+# workflow: same tag-resolution formula means this workflow's `docker
+# pull` gets a cache hit against whatever xc8-build.yml already pushed
+# (or vice versa, whichever workflow runs first on a given ref), so the
+# image only ever gets built once regardless of which workflow triggers
+# the build. Factoring this into a `workflow_call` reusable workflow is
+# reasonable future cleanup once a second consumer beyond these two
+# exists (Phase 5 already anticipates matrixing this file further, a
+# better moment to reconsider), not done now.
+#
+# The mdb script is generated inline (a heredoc, substituting matrix
+# values) rather than committed as a per-module mdb-sim-script.txt file
+# as this plan's Target layout originally sketched: the content is
+# entirely mechanical (device name, hex path, output path, wait time),
+# and generating it keeps the one real command sequence (order matters,
+# see Phase 2's `set`-before-`hwtool` gotcha) in one place instead of
+# duplicated across a growing number of near-identical files once Phase
+# 5 rolls this out to every module.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  ci-assets:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: resolve
+        name: Resolve version-pinned asset image tag
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-installer"
+          image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci-assets:${tag}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "Resolved asset image: $image"
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Pull the private asset image
+        run: |
+          image="${{ steps.resolve.outputs.image }}"
+          if ! docker pull "$image"; then
+            echo "error: no cached $image on GHCR." >&2
+            echo "This job does not auto-fetch vendor installers. To reseed:" >&2
+            echo "  docker login ghcr.io -u <you> (needs a PAT with write:packages)" >&2
+            echo "  docker build -t $image -f docker/ci-assets/Dockerfile <dir-containing-just-that-file>" >&2
+            echo "  docker push $image" >&2
+            exit 1
+          fi
+          echo "Using cached $image"
+
+  ci-assets-mplabx:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: resolve
+        name: Resolve version-pinned asset image tag
+        run: |
+          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="mplabx-v${mplabx_version}-installer"
+          image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci-assets:${tag}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "Resolved asset image: $image"
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Pull the private asset image
+        run: |
+          image="${{ steps.resolve.outputs.image }}"
+          if ! docker pull "$image"; then
+            echo "error: no cached $image on GHCR." >&2
+            echo "This job does not auto-fetch vendor installers. To reseed:" >&2
+            echo "  docker login ghcr.io -u <you> (needs a PAT with write:packages)" >&2
+            echo "  docker build -t $image -f docker/ci-assets/Dockerfile <dir-containing-just-that-file>" >&2
+            echo "  docker push $image" >&2
+            exit 1
+          fi
+          echo "Using cached $image"
+
+  toolchain-image:
+    needs: [ci-assets, ci-assets-mplabx]
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - id: resolve
+        name: Resolve version-pinned image tag
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-mplabx${mplabx_version}"
+          image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "Resolved image: $image"
+      - name: Pull cached image, or build and push it
+        run: |
+          image="${{ steps.resolve.outputs.image }}"
+          if docker pull "$image"; then
+            echo "Reusing cached $image"
+            exit 0
+          fi
+          echo "No cached $image, building it"
+          mkdir -p docker/ci-toolchain/vendor
+
+          docker pull "${{ needs.ci-assets.outputs.image }}"
+          docker create --name asset-extract-xc8 "${{ needs.ci-assets.outputs.image }}"
+          docker cp asset-extract-xc8:/xc8-installer.run docker/ci-toolchain/vendor/xc8-installer.run
+          docker rm asset-extract-xc8
+
+          docker pull "${{ needs.ci-assets-mplabx.outputs.image }}"
+          docker create --name asset-extract-mplabx "${{ needs.ci-assets-mplabx.outputs.image }}"
+          docker cp asset-extract-mplabx:/mplabx-installer.tar docker/ci-toolchain/vendor/mplabx-installer.tar
+          docker rm asset-extract-mplabx
+
+          docker build -t "$image" docker/ci-toolchain
+          docker push "$image"
+
+  sim-test:
+    needs: [toolchain-image]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ needs.toolchain-image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - family: pic16f87xa
+            mcu: 16F877A
+            device: PIC16F877A
+            dir: pic8-tick/mcu/pic16f87xa-tick-mplabx
+            dfp: Microchip.PIC16Fxxx_DFP
+          - family: pic18fxx5x
+            mcu: 18F4550
+            device: PIC18F4550
+            dir: pic8-tick/mcu/pic18fxx5x-tick-mplabx
+            dfp: Microchip.PIC18Fxxxx_DFP
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the sim-target .hex for pic8-tick (${{ matrix.family }})
+        shell: bash
+        run: |
+          make -C ${{ matrix.dir }} clean
+          make -C ${{ matrix.dir }} MCU=${{ matrix.mcu }} HARNESS=sim \
+            DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${{ matrix.dfp }}/xc8"
+      - name: Run under MPLAB SIM (mdb) and check the PASS/FAIL marker
+        # Command order matters: `set` tool-property commands must come
+        # before `hwtool`, silently ignored otherwise (Phase 2 finding,
+        # cost real debugging time then, documented in docs/ci-plan.md's
+        # open questions so it doesn't cost it again here). `wait 2000`
+        # (2 real seconds) is the same value Phase 2's own throwaway
+        # probes used successfully; pic8-tick's actual bounded work is
+        # only ~15ms of simulated time (a 10ms + 5ms delay), so this is
+        # a generous margin, not a tight one.
+        shell: bash
+        run: |
+          out=/tmp/${{ matrix.family }}-uart.txt
+          rm -f "$out"
+          cat > /tmp/${{ matrix.family }}-mdb.txt <<SCRIPT
+          device ${{ matrix.device }}
+          set uart1io.uartioenabled true
+          set uart1io.output file
+          set uart1io.outputfile $out
+          hwtool SIM
+          program ${{ matrix.dir }}/build/${{ matrix.mcu }}-tick-sim.hex
+          run
+          wait 2000
+          halt
+          quit
+          SCRIPT
+
+          mdb_ok=1
+          mdb.sh /tmp/${{ matrix.family }}-mdb.txt || mdb_ok=0
+
+          echo "---- captured UART output ----"
+          cat "$out" 2>/dev/null || echo "(no output file produced)"
+          echo "-------------------------------"
+
+          if [ "$mdb_ok" -ne 1 ]; then
+            echo "::error::mdb.sh itself exited non-zero"
+            exit 1
+          fi
+          if [ ! -s "$out" ]; then
+            echo "::error::mdb produced no UART output at all (simulator" \
+                 "may have errored, or the harness never reached report())"
+            exit 1
+          fi
+          if grep -q "PIC8_HARNESS_RESULT: FAIL" "$out"; then
+            echo "::error::sim-target harness reported FAIL"
+            exit 1
+          fi
+          if ! grep -q "PIC8_HARNESS_RESULT: PASS" "$out"; then
+            echo "::error::no PASS/FAIL marker found in captured UART output"
+            exit 1
+          fi
+          echo "PASS marker found"
+      - name: Upload captured UART output (debugging aid on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-uart-${{ matrix.family }}
+          path: /tmp/${{ matrix.family }}-uart.txt
+          if-no-files-found: ignore

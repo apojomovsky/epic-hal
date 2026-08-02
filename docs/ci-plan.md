@@ -677,18 +677,38 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
 ### Phase 4: Wire the pilot into CI
 
 **Tasks**
-1. `.github/workflows/sim-tests.yml`: pulls the toolchain image, builds
-   the pilot module's sim-target `.hex` for both families, runs `mdb.sh`
-   with the module's `mdb-sim-script.txt`, captures UART output to a
-   file, greps for the PASS/FAIL marker agreed in Phase 3, fails the job
-   if FAIL, if the marker is missing, or if `mdb` itself errors
-   (a silently-hanging simulator should fail loud, not fail quiet).
-2. Surface the captured UART output as a build artifact on failure, so a
-   failing run is debuggable from the GitHub Actions UI without
-   reproducing locally.
+1. Done: `.github/workflows/sim-tests.yml`. `ci-assets` /
+   `ci-assets-mplabx` / `toolchain-image` are a deliberate verbatim copy
+   of `xc8-build.yml`'s own jobs (not a shared/reusable workflow, see the
+   file's own header comment for why: same tag-resolution formula means
+   both workflows' `docker pull` hits the same cache regardless of which
+   one runs first, and a `workflow_call` refactor is reasonable future
+   cleanup once a second consumer exists beyond these two, not forced
+   now). `sim-test` matrices over the 2 families (hardcoded pilot entries
+   for now, `pic8-tick` only; Phase 5 makes this dynamic the way
+   `xc8-build.yml`'s `discover` job already is), builds the sim-target
+   `.hex` (`HARNESS=sim`), runs `mdb.sh` against a heredoc-generated
+   script (not a committed `mdb-sim-script.txt` file as this plan's
+   Target layout originally sketched, see the workflow's own header
+   comment for why: the content is entirely mechanical, generating it
+   keeps the one real command sequence in one place instead of
+   duplicated across a growing number of near-identical files once
+   Phase 5 rolls this out further), and checks the captured output in
+   three distinct steps so a failure is legible about *why*: `mdb.sh`
+   itself exiting non-zero, no output file at all, or a FAIL/missing
+   marker are three different `::error::` messages, not one opaque
+   red X. Verified the check logic against 5 fake capture files locally
+   (real PASS, real FAIL, garbage/no-marker output, empty file, and a
+   forced non-zero `mdb_ok`) before trusting it against a real run.
+2. Done: `actions/upload-artifact@v4`, `if: failure()`, uploads the
+   captured UART file per family.
 
 **Validation**
-- [ ] A green pilot-module run on `master`.
+- [ ] A green pilot-module run on `master`. Pushed, not yet confirmed
+      (this is the actual first real `mdb`-driven signal for this repo;
+      everything before this was build-only or hand-probed locally in
+      Phase 2, itself not repeated here since this environment has no
+      local `mdb`/GHCR access, see Phase 3's validation notes).
 - [ ] A deliberately broken pilot-module change (throwaway branch) turns
       the job red for the right reason (grep sees FAIL or missing
       marker), not a container/tooling failure.
