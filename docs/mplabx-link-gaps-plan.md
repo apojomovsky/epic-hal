@@ -112,6 +112,52 @@ peripherals still being compiled in, stack usage in a shared path) is
 avoidably wasting RAM and can be trimmed. Distinguishing (a) from (b)
 needs looking at each module's actual data/stack usage, not assumed here.
 
+## Root cause 3: one PIE1/PIE2 fix byte tipped two marginal modules over
+
+Different from root causes 1/2 above: these two weren't always broken,
+they regressed on `master` during `docs/ci-plan.md` Phase 4's PIE1/PIE2
+codegen-bug investigation. `HAL_IRQ_Enable`/`DisableSrc`'s fix for that
+bug (see Phase 4's Validation section for the full account) needed one
+new file-scope, `__at`-pinned scratch byte
+(`pic16_isr_vector.c`'s `pic8_irq_pie_scratch`), unconditionally linked
+into every module that calls `HAL_IRQ_Enable`/`DisableSrc` for a Bank 1
+IRQ source, which includes anything using `HAL_USART_Init` with a
+callback, i.e. most modules. That one extra byte of Bank 0 RAM was
+enough to tip two already-marginal modules from "fits" to "genuine XC8
+linker error", confirmed via a real local XC8 v4.00 build:
+
+```
+../../../pic16f87xa-hal/src/core/pic16_isr_vector.c:42:: error: (1356)
+fixup overflow referencing psect bssBANK1 (0xA4) into 1 byte at ...
+```
+
+(Some other, unrelated large buffer, not `pic8_irq_pie_scratch` itself,
+spilling into Bank 1 once one more byte of Bank 0 got claimed.)
+
+**Affected**:
+
+- `pic8-math/mcu/pic16f87xa-math-mplabx`: 16F873A, 16F874A now fail
+  (16F876A, 16F877A still build fine). Consistent with this module's own
+  `docs/ARCHITECTURE.md` already documenting PIC16 RAM as marginal
+  ("cannot hold math + full HAL + `golden_vectors.h` + the self-test...
+  spills to bank 1 and overflows"); this pushed marginal to broken.
+- `pic8-modbus/mcu/pic16f87xa-modbus-mplabx`: 16F876A, 16F877A now also
+  fail, on top of 16F873A/16F874A already excluded under root cause 2
+  above; this module now has **zero** surviving PIC16 variants and has
+  dropped out of `xc8-build.yml`'s matrix entirely (same as
+  `pic8-console`/`pic8-settings` already do for both families).
+
+**Fix**: same open question as root cause 2 (is the smaller-variant RAM
+budget genuinely too tight for this feature set, or is there RAM being
+wasted somewhere that can be trimmed), plus one PIE1/PIE2-fix-specific
+angle worth checking first: is `pic8_irq_pie_scratch`'s permanent,
+unconditional 1-byte reservation avoidable for modules that don't
+actually need Bank 1 IRQ access at runtime (XC8's own dead-code
+elimination should already prune it for modules that never call
+`HAL_IRQ_Enable`/`DisableSrc` on a Bank 1 source at all; not yet checked
+whether that's actually happening, or whether `pic16_irq.c` being
+unconditionally compiled into every module's `HAL_SOURCES` defeats it).
+
 ## Next steps
 
 1. Decide, per module, whether root cause 2's smaller-variant failures
