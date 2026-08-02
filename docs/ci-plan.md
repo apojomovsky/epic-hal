@@ -938,17 +938,30 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            the `GIE`-stuck symptom, but a *different* variable (`PR2`,
            Timer2's period register) came back corrupted instead, whack-a-
            mole rather than a fix (`pic16f87xa-hal/docs/ARCHITECTURE.md`
-           Finding 7). Current best lead, still unconfirmed: a systemic
+           Finding 7). The flagged `.sym`-diff forensic pass was then
+           actually carried out: built the `TIMER2_IRQHandler`-only and
+           `TIMER2_IRQHandler`+`CCP1_IRQHandler` configs, diffed every
+           local variable's storage assignment, and found a real
+           candidate collision (`compute_period`'s `best_pr2` landing on
+           `pic8_harness_init`'s `cycles` parameter address in the broken
+           config only). Tested directly (pinned `compute_period`'s
+           locals `static`): `PR2` was still `0`. A second candidate
+           (`pic8_tick_init`'s own locals) had no collision at all.
+           Full account: `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 8.
+           Current best lead, still unconfirmed: a systemic
            non-reentrant storage-overlap issue, not one fixable variable
-           at a time, and not raw stack depth or the indirect-call gap.
-           *Which* pairs overlap hasn't been fully mapped (would need a
-           `.map`/`-Wa,-a` storage-assignment comparison across
-           configurations, not done), and there's no compiler option to
-           disable this class of optimization outright; the
-           software/reentrant stack model that would sidestep it entirely
-           is not available for classic mid-range PIC16 at all (XC8 User's
-           Guide §5.7.2.2, Enhanced Mid-range/PIC18 only). Whatever the
-           exact mechanism turns out to be, this is a
+           at a time, and not raw stack depth or the indirect-call gap,
+           though the two most obvious candidate collisions have now been
+           ruled out too; either a different pair (untested, ~13 more
+           multi-owner slots exist in the `.sym` diff) or the mechanism
+           isn't a simple pairwise overlap at all and needs
+           instruction-level tracing of the actual `PR2` write. There is
+           no compiler option to disable this class of optimization
+           outright, and the software/reentrant stack model that would
+           sidestep it entirely is not available for classic mid-range
+           PIC16 at all (XC8 User's Guide §5.7.2.2, Enhanced
+           Mid-range/PIC18 only). Whatever the exact mechanism turns out
+           to be, this is a
            genuine pre-existing bug in `pic8_tick`/`example_tick.c`'s own
            structure (or the dispatcher's
            unconditional-call-to-every-handler design), never caught

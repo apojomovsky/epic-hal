@@ -279,19 +279,59 @@ reduces how much state and how many functions the interrupt path and
 main-line path actually share, rather than fighting the allocator
 variable by variable.
 
+## Finding 8: the flagged `.sym` storage comparison, done; found two candidates, neither was it
+
+**The mechanical next step from Finding 5/7 was actually carried out.**
+Built the `TIMER2_IRQHandler`-only (broken) and `TIMER2_IRQHandler` +
+`CCP1_IRQHandler` (matches baseline) dispatcher configurations, pulled
+both `.sym` files, and diffed every auto/param local's `(bank, address)`
+assignment between them (a Python pass grouping symbols by storage slot,
+scratchpad-only, not committed). Confirmed the broken config independently
+reproduces the exact `PR2=0` signature from Finding 7 (`INTCON=192`,
+`GIE=1`, but `PR2=0`), so this pair is a legitimate, minimal repro of
+that same corruption class, not a different bug.
+
+The diff found `compute_period`'s storage shifted by 4 bytes between
+configs (an incidental consequence of `CCP1_IRQHandler` changing the
+interrupt call graph's own footprint), and in the *broken* config only,
+`compute_period`'s `best_pr2` lands on the exact same `(BANK1, 176)`
+address as `pic8_harness_init`'s `cycles` parameter. This looked like
+the smoking gun (`best_pr2` is the value that ultimately becomes `PR2`),
+so it was tested directly: made `compute_period`'s locals `static`
+(throwaway). **`PR2` was still `0`.** Checked the next candidate from
+the same data, `pic8_tick_init`'s own locals (the caller that actually
+holds the value between `compute_period` returning and
+`HAL_TIMER2_Init` consuming it): no colliding function was found at any
+of its addresses at all, ruling that candidate out without even needing
+to test it. Both throwaway edits reverted.
+
+**Where this leaves the forensic approach**: it worked exactly as
+designed (found a real, concrete storage collision, distinguishable from
+noise), but the first candidate it surfaced wasn't the actual cause, and
+the second had no collision at all. Whatever is corrupting `PR2` in this
+specific repro is not explained by a simple pairwise `(bank, address)`
+overlap between two named C functions' compiled-stack frames, at least
+not among the ones directly touching `PR2`'s value on its way to the
+register. Two real possibilities: (a) there's a *different* colliding
+pair not yet checked (the `.sym` diff has ~15 multi-owner slots total,
+only 2 were tested), or (b) the mechanism isn't storage overlap at the
+C-variable level at all, and needs actual instruction-level tracing of
+the `PR2` write itself (single-stepping through
+`HAL_TIMER2_Init`/`HAL_TIMER2_WritePeriod`'s generated assembly from
+reset, watching `PR2`'s value change) rather than more `.sym` inference.
+Neither was pursued further in this session.
+
 ## Open, for whoever picks this back up
 
 - The GIE-stuck-disabled hang (`docs/ci-plan.md` Phase 4) is still
-  unresolved. Three theories (raw stack depth, Finding 5; the
+  unresolved. Four theories/approaches (raw stack depth, Finding 5;
   indirect-call `-mstackcall` gap, Finding 6; targeted variable pinning,
-  Finding 7) have each been directly tested; none resolved it, though
-  Finding 7 makes the systemic-overlap explanation the strongest
-  remaining one. The mechanical next step, if pursued further: compare
-  the `.map`/`-Wa,-a` storage assignment between a working dispatcher
-  configuration (e.g. `TIMER2_IRQHandler` + `CCP1_IRQHandler` only) and a
-  broken one (`TIMER2_IRQHandler` alone) to find what, concretely, moved,
-  and how many such pairs exist in total before deciding whether pinning
-  all of them is even tractable.
+  Finding 7; `.sym`-diff-driven candidate pinning, Finding 8) have each
+  been directly tested; none resolved it. The remaining, more expensive
+  options: (a) test the other ~13 untested multi-owner slots from the
+  `.sym` diff one at a time, or (b) instruction-level tracing of the
+  actual `PR2` write to find the corruption mechanism directly instead
+  of inferring it from storage layout.
 - Finding 2 remains a plausible-but-unconfirmed explanation; if anyone
   needs to write more hand-rolled bank-switching C (not asm) in this HAL,
   treat plain SFR writes to `STATUS` as unreliable for bank purposes
