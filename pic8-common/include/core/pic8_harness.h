@@ -88,11 +88,21 @@ void pic8_harness_log(const char *fmt, ...);
 
 /**
  * @brief  Map a pass/fail flag to a process exit code (0 = pass, 1 =
- *         fail). Identical on both builds and on every family, so it is
- *         inlined here.
+ *         fail), and, first, emit a fixed marker line through @ref
+ *         pic8_harness_log so anything capturing that build's log output
+ *         has a single, reliable line to check. Identical on every build
+ *         and every family, so it is inlined here; what differs is
+ *         pic8_harness_log's own per-build implementation (no-op on the
+ *         host printed already-plenty diagnostics; no-op on a real
+ *         target; and, for the sim-target build variant added in
+ *         docs/ci-plan.md's Phase 3, an actual USART write, which is
+ *         what turns this line into something MPLAB SIM's UART capture
+ *         can give CI a PASS/FAIL grep on).
  */
 static inline int pic8_harness_report(int ok)
 {
+    pic8_harness_log(ok ? "PIC8_HARNESS_RESULT: PASS\n"
+                         : "PIC8_HARNESS_RESULT: FAIL\n");
     return ok ? 0 : 1;
 }
 

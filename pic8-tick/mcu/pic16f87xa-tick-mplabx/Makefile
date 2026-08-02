@@ -42,6 +42,19 @@ else
   DFP_FLAG :=
 endif
 
+# HARNESS=target (default): real-target harness, infinite loop, no
+# stdout, unchanged from before Phase 3. HARNESS=sim: bounded harness
+# that reports PASS/FAIL over the USART, for driving under MPLAB SIM
+# (docs/ci-plan.md Phase 3); needs its own TARGET suffix so a sim build
+# doesn't clobber a target build's .hex in the same build/ dir.
+HARNESS ?= target
+ifeq ($(HARNESS),sim)
+  TARGET     := $(BUILD_DIR)/$(MCU)-tick-sim
+  HARNESS_SRC := $(HAL_DIR)/src/core/pic16_harness_sim_target.c
+else
+  HARNESS_SRC := $(COMMON_DIR)/src/core/pic8_harness_target.c
+endif
+
 CC     := xc8-cc
 INC    := -I$(HAL_DIR)/include/target -I$(HAL_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include
 CFLAGS := $(DFP_FLAG) \
@@ -69,7 +82,7 @@ HAL_SOURCES := \
   $(HAL_DIR)/src/core/pic16f87xa_wdt_sleep_target.c \
   $(HAL_DIR)/src/core/pic16_isr_vector.c          \
   $(HAL_DIR)/src/core/pic16_irq_dispatch.c        \
-  $(COMMON_DIR)/src/core/pic8_harness_target.c
+  $(HARNESS_SRC)
 
 ifeq ($(filter $(MCU),16F874A 16F877A),$(MCU))
   HAL_SOURCES += $(HAL_DIR)/src/peripherals/pic16f87xa_psp.c

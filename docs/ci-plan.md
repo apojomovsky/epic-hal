@@ -92,7 +92,23 @@ doesn't hide results for the rest; `$GITHUB_STEP_SUMMARY` gets a
 per-module-per-MCU PASS/FAIL table. Same 72 real MCU builds covered, now
 behind 2 image pulls instead of 23. Verified locally (bash `IFS` parsing
 against the script's actual output, both families' leg counts summing to
-72) before pushing.
+72) before pushing. First push failed both `build` jobs with "Syntax
+error: redirection unexpected" (exit code 2): a `container:` job
+defaults to `shell: sh`, not `bash`, unlike a bare `runs-on` job, and the
+new per-family script uses `<<<` here-strings and `read -ra` arrays,
+both bashisms `sh` doesn't support. The old per-module version never hit
+this, it only used a POSIX `for mcu in $list` loop. Fixed by pinning the
+step to `shell: bash` explicitly (confirmed present in the
+`debian:12-slim` base image first); confirmed green on the next run,
+6/6 jobs.
+
+**Phase 3 (sim-target harness): build side done, `mdb`-driven signal
+pending.** See Phase 3's own section below for the full account: the
+harness contract, wire format, and Makefile opt-in are implemented and
+build-verified for the pilot module (`pic8-tick`, both families); the
+actual run-under-MPLAB-SIM verification is deferred to Phase 4, since
+this environment has no local `mdb`/GHCR access to do it by hand the way
+Phase 2's own probes did.
 
 ## Motivation
 
@@ -572,28 +588,33 @@ the existing infinite-loop, no-stdout contract that real hardware still
 needs.
 
 **Tasks**
-1. Add `pic8-common/src/core/pic8_harness_sim_target.c`: a third
-   implementation of the four-function contract, compiled only into a
-   new build variant. Bounded by the existing `cycles` parameter to
-   `pic8_harness_init` (already plumbed through the API, currently
-   ignored on real target); `pic8_harness_running` returns false once the
-   bound is hit instead of always true; on completion it reports over
-   USART instead of stdout. Exact wire format is an open question below
-   (resolve before writing code): the simplest thing that a `grep` in CI
-   can check reliably, most likely a single terminating line rather than
-   adopting Unity wholesale (Unity is what Microchip's own docs pair
-   with this workflow, but pulling in a third-party test framework is a
-   bigger decision than this plan should make unilaterally, flagged
-   below, not decided here).
-2. Extend `pic8-common/mk/pic8_family.mk` (or add a sibling fragment) so
-   a module's `mcu/*-mplabx/Makefile` can opt into linking the sim-target
-   harness instead of the real-target one, without duplicating the whole
-   fragment. Exact mechanism (a `make` target like `sim-hex`, vs. a
-   `HARNESS=sim` variable) is an open question below.
-3. Pick one pilot module per family to wire up first (suggest
-   `pic8-debounce` or `pic8-tick`, both already have their own plan docs
-   in flight and are simple enough to validate the mechanism without a
-   large surface area).
+1. ~~Add `pic8-common/src/core/pic8_harness_sim_target.c`~~ Done, but per
+   family, not in `pic8-common`: see "Where the sim-target harness file
+   lives" in Open questions for why. `pic16f87xa-hal/src/core/
+   pic16_harness_sim_target.c` and `pic18fxx5x-hal/src/core/
+   pic18_harness_sim_target.c`, both mirroring
+   `pic8_harness_target.c`'s init/tick no-ops, but with
+   `pic8_harness_running` bounded by `cycles` (like the host build) and
+   `pic8_harness_log` doing a real, polled USART write (not a real
+   `printf`, see the files' own header comments: it walks `fmt` and
+   transmits its raw bytes, ignoring any variadic args, deliberately, to
+   avoid a `vsnprintf`-over-USART flash cost for a wire format that only
+   ever needs to carry `pic8_harness_report`'s own fixed marker line
+   reliably). `pic8_harness_report` itself (`pic8_harness.h`) changed
+   too: it now calls `pic8_harness_log` with that marker before
+   returning, see "Wire format" in Open questions.
+2. ~~Extend `pic8-common/mk/pic8_family.mk`~~ Done, and it turned out
+   `pic8_family.mk` itself needed no changes at all: see "Mechanism for
+   a module to opt in" in Open questions, a `HARNESS ?= target` variable
+   in the module's own Makefile is enough.
+3. Pilot module: `pic8-tick`, both families. Already buildable, no
+   USART dependency of its own (so no conflict with the harness
+   borrowing the family's one physical USART for reporting), and its
+   `example_tick.c` doesn't use the `pic8_harness_running` loop pattern
+   at all (a straight-line delay/check/report test), so the pilot
+   doesn't happen to exercise the bounded-`running()` path; that path is
+   still implemented correctly for Phase 5's other modules that do use
+   it, just not exercised by this particular pilot.
 
 **Explicitly out of scope**: no rollout to every module yet, no CI
 wiring yet (that's Phase 4). This phase proves the harness variant works
@@ -602,20 +623,54 @@ discipline as Phase 1 of `multi-family-plan.md` proving the build seam
 before the hardware worked.
 
 **Validation**
-- [ ] The pilot module's sim-target `.hex` builds via `xc8-cc`, same as
+- [x] The pilot module's sim-target `.hex` builds via `xc8-cc`, same as
       today's real-target `.hex`, just linking the new harness variant.
+      Confirmed against a real local XC8 v3.10 install (not just
+      syntax-checked): `HARNESS=sim` for PIC16F877A/876A and
+      PIC18F4455/4550 all link clean. PIC16F873A/874A hit a genuine new
+      RAM overflow (`error: (1250) could not find space (4 bytes) for
+      variable _g_cycles`, the sim harness's one extra `static uint32_t`
+      plus the USART handle pushes an already-tight variant over
+      budget); not a regression (those two build fine under
+      `HARNESS=target`), a new, real, small-MCU-only constraint,
+      recorded here for Phase 5 to handle the same way
+      `docs/mplabx-link-gaps-plan.md` already handles other small-MCU
+      overflows, not chased down further in this phase (the exit
+      criterion only needs one working variant per family).
+      PIC18F2455/2550 fail for an unrelated, pre-existing reason
+      (`pic18fxx5x_spp.c` doesn't compile for those variants at all,
+      regardless of harness; already excluded from `xc8-build.yml`'s
+      matrix via `KNOWN_BROKEN`, confirmed the same failure happens
+      under `HARNESS=target` too, so this is not something Phase 3
+      introduced).
 - [ ] Run under `mdb`/MPLAB SIM (from Phase 2's probe setup): a passing
       test reports the agreed PASS marker over captured UART, a
       deliberately-broken version (throwaway edit) reports the FAIL
       marker, and both terminate on their own (no reliance on the `mdb`
-      script's `wait` timeout as the only signal).
-- [ ] Real-target build of the same module (`pic8_harness_target.c`
+      script's `wait` timeout as the only signal). Not yet done: no
+      local `mdb`/MPLAB X IDE install available outside the private
+      GHCR toolchain image, and this environment has no GHCR
+      credentials to pull it. Folded into Phase 4 instead of blocking
+      here: `sim-tests.yml` will prove this against a real GitHub
+      Actions run, the same ground-truth-over-local-assumption pattern
+      Phase 1/2 already used when local reproduction wasn't available.
+- [x] Real-target build of the same module (`pic8_harness_target.c`
       variant) is unchanged, confirming the new variant is additive, not
-      a modification of the existing target contract.
+      a modification of the existing target contract. Confirmed for both
+      families (`HARNESS=target`, the default, still produces the exact
+      same `$(MCU)-tick.hex` target name it always did). One small,
+      repo-wide, deliberately-accepted side effect: `pic8_harness_report`
+      now calls `pic8_harness_log` with the marker string on every
+      build, including real-target; since target's `log()` stays a
+      no-op, this costs a few bytes of program space everywhere (two
+      string literals + a call site), confirmed on PIC16F877A: A22h ->
+      A67h words. Full host CMake/ctest suite re-run across all 18
+      host-testable modules after this header change, 0 failures.
 
 **Exit criterion**: one module, both families, produces a real PASS/FAIL
 signal from MPLAB SIM, driven by a script, with no manual interpretation
-needed.
+needed. Build side confirmed; the actual `mdb`-driven signal is Phase
+4's job now.
 
 ---
 
@@ -753,16 +808,41 @@ deferral is documented in its own `docs/pic8-usb-plan.md`, not just here.
     Worth knowing for Phase 3's sim-target harness design, whatever it
     ends up transmitting over USART will need a callback set, even a
     no-op one, or `TXEN` never gets set.
-- **Wire format for the sim-target harness's PASS/FAIL report.** Options:
-  a single terminating line (simplest, easiest to grep, no third-party
-  dependency), or adopting the Unity test framework (what Microchip's
-  own CI/CD Wizard docs pair with this exact workflow, gets richer
-  per-assertion output, but pulls in a third-party C framework this repo
-  doesn't currently use anywhere). Resolve in Phase 3, before writing
-  `pic8_harness_sim_target.c`.
+- **Wire format for the sim-target harness's PASS/FAIL report.**
+  **RESOLVED (Phase 3): a single terminating line, not Unity.**
+  `pic8_harness_report` (`pic8_harness.h`, previously a bare `ok ? 0 :
+  1`) now also calls `pic8_harness_log` with a fixed marker
+  (`PIC8_HARNESS_RESULT: PASS\n` / `...FAIL\n`) before returning. Since
+  `pic8_harness_log` already differs per build (no-op on target, printf
+  on host, and now a real USART write on sim-target), every module gets
+  the marker for free through its existing `return
+  pic8_harness_report(...)` call, no per-example changes needed, and no
+  third-party framework pulled in.
 - **Mechanism for a module to opt a build into the sim-target harness
-  variant** (separate `make` target vs. a `HARNESS=sim` variable vs.
-  something else). Resolve in Phase 3 task 2.
+  variant.** **RESOLVED (Phase 3): a `HARNESS ?= target` Makefile
+  variable**, not a separate `make` target. Each module's own
+  `mcu/*-mplabx/Makefile` gains a small `ifeq ($(HARNESS),sim)` block
+  (mirroring the pattern it already uses for PSP's conditional source
+  list) that swaps in the sim-target harness source and gives `TARGET`
+  a `-sim` suffix so a sim build never clobbers a target build's `.hex`
+  in the same `build/` dir. No change needed to the shared
+  `pic8_family.mk` fragment at all: which harness `.c` file lands in
+  `SRCS` is decided by the caller before `include`-ing it, exactly like
+  every other per-module source choice already works.
+- **Where the sim-target harness file lives.** **CORRECTED from this
+  plan's original Phase 3 task 1**, which named
+  `pic8-common/src/core/pic8_harness_sim_target.c`. That's wrong once
+  you account for what the file actually has to do: unlike
+  `pic8_harness_target.c`'s four architecture-blind no-ops, the
+  sim-target variant needs real USART SFR access to make the report
+  marker reach `mdb`'s `uart1io` capture, and USART access is
+  family-specific. Per this repo's own rule (`pic8-common/` holds only
+  architecture-blind code, register-specific code lives per-family), it
+  lives per-family instead: `pic16f87xa-hal/src/core/
+  pic16_harness_sim_target.c` and `pic18fxx5x-hal/src/core/
+  pic18_harness_sim_target.c`, mirroring the existing split for the
+  host build's own per-family harness (`pic16_harness_sim.c` /
+  `pic18_harness_sim.c`).
 - **MPLAB SIM's fidelity for the PIC18 SIE (USB) peripheral.** Not
   expected to be trustworthy enough for enumeration-level testing of
   `pic8-usb`; not going to be chased down as part of this plan. If it
