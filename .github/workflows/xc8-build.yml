@@ -207,6 +207,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build and verify every module/MCU in ${{ matrix.family }}
+        # Explicit shell: bash, not this job's implicit default. A
+        # `container:` job defaults to `sh`, unlike a bare `runs-on` job
+        # which defaults to `bash`; this script uses `<<<` here-strings
+        # and `read -ra` arrays, neither valid under `sh -e` ("Syntax
+        # error: redirection unexpected", confirmed against a real failed
+        # run before this fix, see the commit that added this comment).
+        # The old per-module version never hit this: it only used a
+        # POSIX `for mcu in $list` loop, no arrays.
+        shell: bash
         # One job per family, not one per module or per (module, MCU):
         # with the image pulled once by the `container:` directive above,
         # looping over every module and every MCU variant here is what
