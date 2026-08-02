@@ -18,6 +18,16 @@
 
 #include "core/pic16_irq.h"
 
+/* Definition for target/pic16f87xa_platform.h's `extern volatile
+ * uint8_t pic8_irq_pie_scratch;` (see PIC8_PIE_ENABLE_BIT's header
+ * comment there for the full account of what this scratch byte is for
+ * and why it has to live in a target-only translation unit). This file
+ * is as good a home as any target-only one: already exists, already
+ * interrupt-machinery-themed, and this repo avoids adding new files
+ * without a real reason to. `__at(0x70)` pins it into PIC16 mid-range's
+ * bank-independent common RAM. */
+volatile uint8_t pic8_irq_pie_scratch __at(0x70);
+
 /* Declared in pic8_harness.h (shared). Declared here as a strong extern
  * prototype instead of including that header, to keep the harness's
  * unused inline (pic8_harness_report) out of this translation unit's

@@ -51,8 +51,16 @@ HARNESS ?= target
 ifeq ($(HARNESS),sim)
   TARGET     := $(BUILD_DIR)/$(MCU)-tick-sim
   HARNESS_SRC := $(HAL_DIR)/src/core/pic16_harness_sim_target.c
+  # WDTE=OFF only for this variant, see the config-word recipe below for
+  # why: real-target firmware genuinely needs the watchdog running
+  # unattended; a diagnostic build that terminates and reports over USART
+  # does not, and PIC16's WDTE is a config-word fuse burned at program
+  # time, not a runtime-togglable bit like PIC18's SWDTEN, so this is the
+  # only place it can be turned off for this variant.
+  CONFIG_WDTE := OFF
 else
   HARNESS_SRC := $(COMMON_DIR)/src/core/pic8_harness_target.c
+  CONFIG_WDTE := ON
 endif
 
 CC     := xc8-cc
@@ -109,7 +117,7 @@ $(CONFIG_SRC): | $(BUILD_DIR)
 	@printf '/* Auto-generated. Do not edit. */\n' > $@
 	@printf '#include <xc.h>\n' >> $@
 	@printf '#pragma config FOSC = HS\n' >> $@
-	@printf '#pragma config WDTE = ON\n' >> $@
+	@printf '#pragma config WDTE = $(CONFIG_WDTE)\n' >> $@
 	@printf '#pragma config PWRTE = ON\n' >> $@
 	@printf '#pragma config BOREN = ON\n' >> $@
 	@printf '#pragma config LVP = OFF\n' >> $@

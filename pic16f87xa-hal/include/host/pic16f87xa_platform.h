@@ -40,4 +40,21 @@ extern uint8_t pic16f87xa_sim_sfr[0x200];
 /* Address of a register as a uint8_t lvalue (read/write/RMW). */
 #define PIC8_REG8(addr)          (pic16f87xa_sim_sfr[(uint16_t)(addr)])
 
+/* PIE1 (0x8C) / PIE2 (0x8D) enable/disable. Host counterpart of
+ * target/pic16f87xa_platform.h's same two macro names: no banking
+ * concept exists in the simulated register file (a plain array indexed
+ * by absolute address), so this is just a direct read-modify-write,
+ * none of the target header's inline-asm workaround applies here. */
+#define PIC8_PIE_ENABLE_BIT(is_pir2, mask) \
+    do { \
+        if (is_pir2) { pic16f87xa_sim_sfr[0x8DU] |= (uint8_t)(mask); } \
+        else         { pic16f87xa_sim_sfr[0x8CU] |= (uint8_t)(mask); } \
+    } while (0)
+
+#define PIC8_PIE_DISABLE_BIT(is_pir2, mask) \
+    do { \
+        if (is_pir2) { pic16f87xa_sim_sfr[0x8DU] &= (uint8_t)~(mask); } \
+        else         { pic16f87xa_sim_sfr[0x8CU] &= (uint8_t)~(mask); } \
+    } while (0)
+
 #endif /* PIC16F87XA_PLATFORM_H */

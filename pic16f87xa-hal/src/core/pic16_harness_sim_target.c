@@ -78,16 +78,27 @@ static void s_uart_putc(char c)
     HAL_USART_Transmit((uint8_t)c);
 }
 
+/* HAL_USART_Init stores the POINTER it's given (pic16f87xa_usart.c's
+ * g_usart), dereferenced later from ISR context on every interrupt for
+ * the lifetime of the program (USART_TX_IRQHandler's g_usart->
+ * TxCpltCallback), not just for the duration of this call. A plain
+ * local here would be exactly the dangling-pointer hazard XC8's
+ * non-reentrant storage-sharing model creates: once pic8_harness_init
+ * returns, its locals' memory is fair game for some other function's
+ * locals to reuse, and g_usart would keep pointing at whatever ends up
+ * there. static gives it permanent, never-reused storage instead. */
+static USART_HandleTypeDef s_usart_handle;
+
 void pic8_harness_init(uint32_t cycles)
 {
     g_cycles = cycles;
 
-    USART_HandleTypeDef h = USART_HANDLE_DEFAULT;
-    h.SPBRG = (uint8_t)USART_ComputeSPBRG(FOSC_HZ, PIC8_HARNESS_SIM_BAUD,
-                                           USART_MODE_ASYNCHRONOUS,
-                                           USART_BRGH_HIGH);
-    h.TxCpltCallback = s_tx_cplt;
-    (void)HAL_USART_Init(&h);
+    s_usart_handle = (USART_HandleTypeDef)USART_HANDLE_DEFAULT;
+    s_usart_handle.SPBRG = (uint8_t)USART_ComputeSPBRG(
+        FOSC_HZ, PIC8_HARNESS_SIM_BAUD, USART_MODE_ASYNCHRONOUS,
+        USART_BRGH_HIGH);
+    s_usart_handle.TxCpltCallback = s_tx_cplt;
+    (void)HAL_USART_Init(&s_usart_handle);
     /* HAL_USART_Init's TXEN gate (see this file's header comment) has a
      * real side effect beyond TXEN: a non-null TxCpltCallback also
      * enables the USART TX interrupt SOURCE (TXIE), not just TXEN.
