@@ -1,8 +1,16 @@
 # CI toolchain image for docs/ci-plan.md Phase 1 (XC8) and Phase 2 (MPLAB X
-# IDE, for `mdb`/MPLAB SIM). Built and pushed to GHCR by the
-# `toolchain-image` job in .github/workflows/xc8-build.yml, tagged by the
-# version pins below, so a tag that already exists on GHCR is reused
-# instead of rebuilt.
+# IDE, for `mdb`/MPLAB SIM). Tagged by the version pins below.
+#
+# Two consumers, one image (docs/docker-dev-plan.md):
+#   - CI: `.github/workflows/xc8-build.yml`/`sim-tests.yml` `docker pull`
+#     the version-pinned tag from GHCR; they do NOT build this image
+#     themselves anymore (see that plan's "CI simplification").
+#   - Local dev: the root `Makefile` (`make image`) builds this image
+#     directly from `vendor/` (populated by hand, see that directory's
+#     own notes and `make check-vendor`), and `make ci-image-push` can
+#     push the result to the same private GHCR tag CI pulls, so a human
+#     with `write:packages` access is how this image actually gets
+#     updated; CI never builds or pushes it.
 #
 # Versions:
 #   - XC8 v4.00: license-free (no PRO gate at all, so no --LicenseType flag
@@ -10,12 +18,15 @@
 #     Makefiles/docs currently name (v3.10). Deliberately bumped ahead of
 #     the repo's documented pin rather than matching it: see "which XC8
 #     version to pin" in docs/ci-plan.md's open questions for the tradeoff.
-#   - Microchip.PIC16Fxxx_DFP.1.7.162, Microchip.PIC18Fxxxx_DFP.1.7.171:
-#     neither is bundled with the standalone XC8 v4.00 installer (verified
-#     locally: `find /opt/microchip/xc8/v4.00/pic` has no `packs/`
-#     directory at all). This repo's mcu/*-mplabx/README.md files assumed
-#     PIC16Fxxx_DFP ships bundled, that was true of the full MPLAB X IDE's
-#     pack manager, not the bare compiler installer used here.
+#   - Microchip.PIC16Fxxx_DFP.1.7.162, Microchip.PIC18Fxxxx_DFP.1.7.171,
+#     Microchip.PIC12-16F1xxx_DFP.1.9.258 (pic16f193x-hal, Enhanced
+#     Mid-range, added when that family's real-target build was verified
+#     locally against this exact version): none of the three is bundled
+#     with the standalone XC8 v4.00 installer (verified locally: `find
+#     /opt/microchip/xc8/v4.00/pic` has no `packs/` directory at all).
+#     This repo's mcu/*-mplabx/README.md files assumed PIC16Fxxx_DFP
+#     ships bundled, that was true of the full MPLAB X IDE's pack
+#     manager, not the bare compiler installer used here.
 #   - MPLAB X IDE v6.35: installed only for `mplab_platform/bin/mdb.sh`
 #     (headless, scriptable, distinct from the NetBeans GUI, see
 #     docs/ci-plan.md's Phase 2 findings). Component selection installs
@@ -61,6 +72,7 @@ FROM debian:12-slim
 ARG XC8_VERSION=4.00
 ARG PIC16FXXX_DFP_VERSION=1.7.162
 ARG PIC18FXXXX_DFP_VERSION=1.7.171
+ARG PIC12_16F1XXX_DFP_VERSION=1.9.258
 ARG MPLABX_VERSION=6.35
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -90,14 +102,16 @@ RUN set -eu; \
         --prefix "${XC8_INSTALL_DIR}"; \
     rm /tmp/installer.run
 
-# Neither DFP is bundled with the standalone XC8 v4.00 installer (see
-# header comment). Unzipped to the paths this repo's mcu/*-mplabx/Makefile
-# DFP_DIR override targets (xc8-build.yml passes DFP_DIR explicitly, these
-# paths don't match the Makefiles' own v3.10-pinned defaults).
+# None of the three DFPs is bundled with the standalone XC8 v4.00
+# installer (see header comment). Unzipped to the paths this repo's
+# mcu/*-mplabx/Makefile DFP_DIR override targets (xc8-build.yml passes
+# DFP_DIR explicitly, these paths don't match the Makefiles' own
+# v3.10-pinned defaults).
 RUN set -eu; \
     for pack_ver in \
         "Microchip.PIC16Fxxx_DFP:${PIC16FXXX_DFP_VERSION}" \
-        "Microchip.PIC18Fxxxx_DFP:${PIC18FXXXX_DFP_VERSION}"; \
+        "Microchip.PIC18Fxxxx_DFP:${PIC18FXXXX_DFP_VERSION}" \
+        "Microchip.PIC12-16F1xxx_DFP:${PIC12_16F1XXX_DFP_VERSION}"; \
     do \
         pack="${pack_ver%%:*}"; \
         ver="${pack_ver##*:}"; \
