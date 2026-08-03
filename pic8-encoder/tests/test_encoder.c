@@ -1,31 +1,14 @@
 /**
  * @file    test_encoder.c
  * @brief   Host tests for the quadrature decoder, exercising the exact code
- *          that ships on-target (one src/encoder.c, no per-family variant).
+ *          that ships on-target.
  *
  * @details
- *   Covers every case in docs/pic8-encoder-plan.md §Testing strategy (Phase 1).
- *   The glitch-gate cases use pic8_tick_init + pic8_harness_tick() to advance
- *   genuinely real simulated time, the same technique pic8-debounce's suite
- *   uses. The pure-decode cases drive encoder_update directly with constructed
- *   port bytes (the decoder is bit-position-agnostic; the same byte the
- *   RB-change callback would receive).
- *
- *   Sign convention note (read before reading the assertions): the shipped
- *   QUAD_TABLE (verbatim from the plan, a well-established reference, not
- *   redesigned) counts the physical direction 00->10->11->01->00 positive
- *   (+4 per electrical cycle) and 00->01->11->10->00 negative. The plan's
- *   prose labeled 00->01->11->10 "forward, +8", but the verbatim table it
- *   also specifies makes that direction -8 (verified by a throwaway probe
- *   before this test was written, per the repo's "probe, don't assume"
- *   convention). The table is the non-redesignable shipped artifact, so the
- *   test asserts the table's actual output and documents the sign as a
- *   wiring convention: swap pin_a/pin_b at encoder_init to invert direction
- *   (see docs/API.md). What the rotation cases actually prove is the
- *   known-good-against-the-table property the plan requires: a full rotation
- *   is exactly +/-4 per electrical cycle, the opposite direction gives the
- *   opposite sign, and error_count stays 0 (every step is a valid single-bit
- *   Gray transition).
+ *   Glitch-gate cases use `pic8_tick_init` + `pic8_harness_tick()` to
+ *   advance real simulated time; pure-decode cases drive `encoder_update`
+ *   directly with constructed port bytes. Sign convention: `QUAD_TABLE`
+ *   counts `00->10->11->01->00` positive; swap `pin_a`/`pin_b` at init to
+ *   invert (see docs/API.md).
  */
 
 #include "encoder.h"

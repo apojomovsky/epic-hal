@@ -1,30 +1,13 @@
 /**
  * @file    example_encoder_pid_loop.c
  * @brief   One encoder feeding encoder_get_position() into pid_update() as
- *          the measurement each control cycle -- the direct demonstration of
- *          pic8-encoder's reason for existing ("transparent alongside PID").
+ *          the measurement each control cycle.
  *
  * @details
- *   A simulated servo: a PID loop closes on a motor angle, and the angle is
- *   read back through a quadrature encoder. Each control cycle:
- *     1. measurement = encoder_get_position(&enc)   (the encoder reading)
- *     2. output      = pid_update(&pid, setpoint, (int16_t)measurement)
- *     3. plant:  motor_angle += (output - motor_angle) / N   (first-order lag,
- *               no floats, same plant shape as example_pid_setpoint_step)
- *     4. drive the encoder to motor_angle one quadrature edge at a time
- *   so the encoder faithfully counts the motor's movement (feeding every
- *   intermediate Gray state, never a diagonal two-bit jump), and
- *   encoder_get_position() == motor_angle exactly. The PID therefore closes
- *   the loop on the *encoder reading*, not on a bare variable: this is the
- *   composition pic8-encoder was built for.
- *
- *   The encoder is driven directly here (encoder_update called from the main
- *   loop) to keep the focus on the PID composition; in real firmware those
- *   encoder_update calls come from the RB-change ISR callback, exactly as
- *   example_encoder_hal.c wires it. The decode is the same either way.
- *
- *   Host-only (no XC8 build): the point is to make the loop's behavior visible
- *   in logged output, like example_pid_setpoint_step. No floats anywhere.
+ *   A simulated servo: each cycle reads the encoder, steps the PID, applies
+ *   the output to a first-order-lag plant, then drives the encoder one
+ *   quadrature edge at a time to match, so `encoder_get_position() ==
+ *   motor_angle` exactly. Host-only, no floats.
  */
 
 #include "encoder.h"
@@ -101,13 +84,9 @@ int main(void)
     printf("== Servo: PID closes on encoder_get_position(), setpoint %d ==\n",
            (int)setpoint);
     printf("step | setpoint | encoder_meas |   output  | motor_angle | integrator_q8\n");
-    /* Convergence = the encoder reading has settled within 1 count of the
-     * setpoint for several consecutive cycles. (The PID output itself need
-     * not be ~0: the integer first-order-lag plant can sit at motor_angle ==
-     * setpoint while the integrator holds a small residual output whose
-     * (output - motor_angle)/N rounds to a zero delta. That is a correct
-     * steady state -- the measurement, which is what the loop closes on, has
-     * reached the setpoint.) */
+    /* Convergence = the encoder reading settles within 1 count of the
+     * setpoint for several consecutive cycles (the PID output need not
+     * reach 0, only the measurement matters). */
     int settled = 0;
     int converged = 0;
     int last_step_logged = 0;

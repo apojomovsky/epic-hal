@@ -4,30 +4,11 @@
  *          wired end to end through HAL_GPIO_RegisterChangeCallback.
  *
  * @details
- *   Host-sim runnable. Two `encoder_t` instances share the one RB<7:4>
- *   change-interrupt source: encoder A on RB4/RB5, encoder B on RB6/RB7
- *   (the at-most-two-encoders-per-port hardware ceiling, see docs/API.md).
- *   One function registered via `HAL_GPIO_RegisterChangeCallback` receives
- *   the PORTB byte the HAL's `RB_IRQHandler` already read (read-before-clear,
- *   see pic16f87xa_gpio.c / pic18fxx5x_gpio.c) and fans it out to both
- *   instances by calling `encoder_update` on each -- the application-level
- *   composition the plan deliberately keeps out of the HAL.
- *
- *   Simulating an encoder edge: the host sim does not auto-assert RBIF on a
- *   PORTB mismatch (see docs/ARCHITECTURE.md for why a faithful model would
- *   be disproportionate), so this example drives a byte onto PORTB, asserts
- *   RBIF directly, and calls `pic8_dispatch_all_irqs()`. That routes through
- *   `RB_IRQHandler` -> the registered callback -> both `encoder_update`
- *   calls, the exact path a real target's RB-change interrupt vector takes
- *   (on a real target you would additionally `HAL_IRQ_Enable` the RB source
- *   and `HAL_IRQ_Restore(1)` to arm it; the sim-driven dispatch path here does
- *   not need that, mirroring example_rb_change in each HAL's own suite).
- *
- *   Drives A one full rotation in the table's positive direction
- *   (00->10->11->01->00 x2 = +8) and B in the negative direction
- *   (00->01->11->10->00 x2 = -8), interleaved on the shared byte, then one
- *   step where only A moves (B no-ops) and one where only B moves (A no-ops),
- *   and reports pass/fail on the final positions and zero error counts.
+ *   Encoder A on RB4/RB5, B on RB6/RB7 (the at-most-two-per-port ceiling,
+ *   see docs/API.md); one callback fans the PORTB byte out to both via
+ *   `encoder_update`. The host sim doesn't auto-assert RBIF on a mismatch,
+ *   so this example drives PORTB, sets RBIF, and calls
+ *   `pic8_dispatch_all_irqs()` directly to simulate an edge.
  */
 
 #include "encoder.h"
@@ -77,9 +58,7 @@ int main(void)
     pic8_harness_init(SIM_CYCLES);
     pic8_tick_init(FOSC_HZ);
 
-    /* Configure the four encoder input pins, then seed PORTB to a known
-     * state before reading it for encoder_init (the same byte the callback
-     * would receive, per the plan's init contract). */
+    /* Seed PORTB to a known state before reading it for encoder_init. */
     HAL_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7,
                   GPIO_MODE_INPUT);
     uint8_t start = make_portb(0, 0);
@@ -97,9 +76,7 @@ int main(void)
     for (int i = 0; i < 8; i++)
         sim_rb_edge(make_portb(a_seq[i], b_seq[i]));
 
-    /* One step where only A moves (B's pins unchanged -> B no-ops), then one
-     * where only B moves (A no-ops): proves the shared byte doesn't make
-     * one instance react to the other's edges. */
+    /* One step per instance, proving the shared byte doesn't cross-react. */
     sim_rb_edge(make_portb(2, 0));   /* A: 00->10 (+1);  B: 00==00 no-op   */
     sim_rb_edge(make_portb(2, 1));   /* A: 10==10 no-op; B: 00->01 (-1)    */
 
