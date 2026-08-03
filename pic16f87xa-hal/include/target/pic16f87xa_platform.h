@@ -72,6 +72,31 @@
  * referencing psect bssBANK1" link error before this was pinned). */
 extern volatile uint8_t pic8_irq_pie_scratch __at(0x70);
 
+/* Same root cause and same fix shape as PIC8_PIE_ENABLE_BIT above, for
+ * plain (non-read-modify-write) Bank 1 SFR writes whose source value is
+ * a function parameter or other C-level local: `HAL_TIMER2_WritePeriod`
+ * (writing `period` into PR2) and `HAL_USART_Init` (writing `h->SPBRG`
+ * into SPBRG) both landed the wrong byte in the register, traced via
+ * `mdb` instruction-stepping to the exact point of divergence (the
+ * parameter's own value was already correct right up until this write;
+ * see pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9). Same fix: load the
+ * value into W through the bank-independent scratch byte *before*
+ * switching banks, then a single `movwf <SFR>` while banked touches
+ * nothing else. A separate scratch byte from PIE's own
+ * (`pic8_bank1_scratch`, not `pic8_irq_pie_scratch`): unrelated
+ * subsystems, no reason to couple them, and this repo has a full 16
+ * bytes of common RAM (0x70-0x7F, DS39582B Figure 2-3) to work with. */
+extern volatile uint8_t pic8_bank1_scratch __at(0x71);
+
+#define PIC8_BANK1_WRITE8(sfr_name, value)                              \
+    do {                                                                \
+        pic8_bank1_scratch = (uint8_t)(value);                         \
+        asm("movf _pic8_bank1_scratch,w");                             \
+        asm("bsf STATUS,5");                                           \
+        asm("movwf " #sfr_name);                                       \
+        asm("bcf STATUS,5");                                           \
+    } while (0)
+
 #define PIC8_PIE_ENABLE_BIT(is_pir2, mask)                              \
     do {                                                                \
         pic8_irq_pie_scratch = (uint8_t)(mask);                        \

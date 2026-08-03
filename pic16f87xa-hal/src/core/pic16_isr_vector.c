@@ -28,6 +28,12 @@
  * bank-independent common RAM. */
 volatile uint8_t pic8_irq_pie_scratch __at(0x70);
 
+/* Definition for target/pic16f87xa_platform.h's `extern volatile
+ * uint8_t pic8_bank1_scratch;` (see PIC8_BANK1_WRITE8's header comment
+ * there). Same reasoning as pic8_irq_pie_scratch above for living here
+ * and being `__at`-pinned. */
+volatile uint8_t pic8_bank1_scratch __at(0x71);
+
 /* Declared in pic8_harness.h (shared). Declared here as a strong extern
  * prototype instead of including that header, to keep the harness's
  * unused inline (pic8_harness_report) out of this translation unit's

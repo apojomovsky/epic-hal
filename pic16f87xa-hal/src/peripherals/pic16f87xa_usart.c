@@ -39,10 +39,22 @@ HAL_StatusTypeDef HAL_USART_Init(const USART_HandleTypeDef *h)
     g_usart = h;
 
     /* Program SPBRG (Bank 1, address 0x99, DS39582B §10.1). */
+#ifdef PIC8_BANK1_WRITE8
+    /* See PIC8_BANK1_WRITE8's header comment (target/pic16f87xa_platform.h):
+     * a plain `pic_select_bank(1); PIC8_REG8(PIC_REG_SPBRG) = h->SPBRG;`
+     * here silently corrupted SPBRG under XC8 v4.00, same bug as
+     * HAL_TIMER2_WritePeriod's PR2 (pic16f87xa-hal/docs/ARCHITECTURE.md
+     * Finding 9). Masked in sim-target testing until now: MPLAB SIM's
+     * uart1io capture isn't baud-timing-sensitive, so a wrong SPBRG
+     * didn't visibly break the captured UART bytes, only real hardware
+     * talking to a real receiver would show it. */
+    PIC8_BANK1_WRITE8(SPBRG, h->SPBRG);
+#else
     uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
     PIC8_REG8(PIC_REG_SPBRG) = h->SPBRG;
     pic_select_bank(prev);
+#endif
 
     /* Build TXSTA (Bank 1, address 0x98).
      *   CSRC  bit 7, sync clock source
