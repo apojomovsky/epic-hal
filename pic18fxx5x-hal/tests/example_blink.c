@@ -4,23 +4,11 @@
  *          the PIC16F87XA canonical HAL smoke test.
  *
  * @details
- *   One source builds for both the host simulation backend and a real XC8
- *   target with no `#ifdef` in the code: the build selects the harness
- *   implementation (core/pic8_harness.h), which abstracts the only two
- *   execution-model differences, pumping simulated time vs. real time
- *   advancing on its own, and a terminating pass/fail test vs. firmware
- *   that runs forever.
- *
- *   Timer0 overflows drive an interrupt; the ISR toggles RB0. The main
- *   loop just lets time pass (pumping the sim on the host, busy-spinning
- *   on the target) and refreshes the WDT, the peripheral does the work.
- *
- *   Wiring (real target): LED + resistor between RB0 and GND
- *   (active-high); 20 MHz crystal on OSC1/OSC2 -> FOSC = HS, FCY = 5 MHz.
- *   Timer0 8-bit mode (the PIC18 T0CON default selected here), internal
- *   Fosc/4, 1:256 prescaler, reload 0 -> overflow every 256 x 256 x 0.2 us
- *   ~ 13 ms, so RB0 toggles ~76x/s (a fast blink), matching the PIC16
- *   example. The WDT (enabled in the config word) is refreshed in the loop.
+ *   Timer0 overflow drives an interrupt; the ISR toggles RB0, the main
+ *   loop just lets time pass and refreshes the WDT. One source builds for
+ *   host sim and real XC8 target with no `#ifdef`, via `core/pic8_harness.h`.
+ *   Real target: LED + resistor on RB0 (active-high), 20 MHz crystal,
+ *   Timer0 8-bit/Fosc/4/1:256, overflow every ~13 ms (~76 Hz blink).
  */
 
 #include "pic18fxx5x.h"

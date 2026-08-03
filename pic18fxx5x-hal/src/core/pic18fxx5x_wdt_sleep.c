@@ -3,13 +3,10 @@
  * @brief   BOR / POR status helpers, shared by both builds.
  *
  * @details
- *   The build-mode-specific helpers HAL_WDT_Refresh and HAL_Sleep_Enter
- *   live in pic18fxx5x_wdt_sleep_sim.c (host) and
- *   pic18fxx5x_wdt_sleep_target.c (XC8), selected at link time. The BOR/POR
- *   status helpers below are identical on both builds, they just read and
- *   clear bits in RCON through the platform SFR macro, so they stay here as
- *   one shared translation unit. RCON bits: POR = bit 1, BOR = bit 0
- *   (DS39632E Register 4-1).
+ *   `HAL_WDT_Refresh`/`HAL_Sleep_Enter` are link-time-selected
+ *   (`*_sim.c` host, `*_target.c` XC8); these BOR/POR helpers are
+ *   identical on both builds, so they stay shared. RCON: POR = bit 1,
+ *   BOR = bit 0 (DS39632E Register 4-1).
  */
 
 #include "core/pic18fxx5x_wdt_sleep.h"

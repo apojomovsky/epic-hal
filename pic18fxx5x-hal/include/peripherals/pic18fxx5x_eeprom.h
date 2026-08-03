@@ -3,29 +3,11 @@
  * @brief   Data EEPROM driver.
  *
  * @details
- *   Source: DS39632E §7.0 (Data EEPROM Memory), Register 7-1 (EECON1),
- *   §7.2 (writing), §7.1 (reading).
- *
- *   The API mirrors pic16f87xa_eeprom.h — the same `HAL_EEPROM_*`
- *   functions and weak `EEPROM_IRQHandler` — so consumer code is portable.
- *   The PIC18 moves the EEPROM registers into the Access Bank (no bank
- *   switching) and adds the EEPGD/CFGS select bits in EECON1; for data
- *   EEPROM access the driver keeps EEPGD = 0 and CFGS = 0.
- *
- *   Wiring on the part:
- *     - 256 bytes of data EEPROM (DS39632E §1.0, Table 1-1).
- *     - EEDATA (0xFA8), 8-bit data register.
- *     - EEADR  (0xFA9), 8-bit address register (0..255; no EEADRH on
- *       this family).
- *     - EECON1 (0xFA6): RD, WR, WREN, WRERR, FREE, CFGS, EEPGD.
- *     - EECON2 (0xFA7), magic unlock: write 0x55 then 0xAA (§7.2).
- *
- *   The driver hides the unlock sequence from the caller. Writes are
- *   non-blocking: the driver returns as soon as the WR bit is set; the
- *   caller detects completion by polling EEIF (PIR2<4>), which fires when
- *   the write cycle ends.
- *
- *   Reset state (DS39632E Table 5-1): EECON1 = 0x00.
+ *   256 bytes of data EEPROM (DS39632E §7.0). Mirrors
+ *   `pic16f87xa_eeprom.h`'s API; PIC18 moves the registers into the Access
+ *   Bank and adds EEPGD/CFGS in EECON1 (kept 0 for data EEPROM). The
+ *   driver hides the 0x55/0xAA unlock sequence; writes are non-blocking,
+ *   the caller polls EEIF (PIR2<4>) for write-cycle completion.
  */
 
 #ifndef PIC18FXX5X_EEPROM_H

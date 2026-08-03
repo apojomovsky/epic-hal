@@ -2,14 +2,10 @@
  * @file    pic18fxx5x_ssp.c
  * @brief   MSSP driver, implementation (DS39632E §19.0).
  *
- *   Register-level driver: the I2C state machine (Start/Stop/ACK timing,
- *   slave address matching) is left to the user. The driver configures
- *   SSPCON1 / SSPCON2 / SSPSTAT / SSPADD and provides the byte-level
- *   transmit / receive primitives. Simpler than the PIC16 driver: the PIC18
- *   MSSP registers are all in the Access Bank, so there is no bank
- *   switching. RMW on the SFRs uses split read+write (pic8_sfr_read8/
- *   write8) because XC8 cannot lower a compound assignment on a volatile
- *   cast-lvalue at a runtime SFR address (the Phase 2 codegen lesson).
+ *   Register-level: the I2C state machine (Start/Stop/ACK, address
+ *   matching) is left to the user. All MSSP registers are in the Access
+ *   Bank, no bank switching. RMW uses split read+write because XC8 cannot
+ *   lower a compound assignment on a volatile cast-lvalue.
  */
 
 #include "peripherals/pic18fxx5x_ssp.h"

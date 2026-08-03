@@ -3,12 +3,9 @@
  * @brief   Family-neutral WDT / Sleep / BOR / POR helper contract.
  *
  * @details
- *   Family-agnostic consumers include this neutral name instead of the
- *   family-specific `pic18fxx5x_wdt_sleep.h`. Each family provides its own
- *   `core/hal_wdt_sleep.h` that pulls in its family-specific WDT/Sleep
- *   header (same `HAL_WDT_Refresh` / `HAL_Sleep_Enter` / `HAL_BOR_*` /
- *   `HAL_POR_*` API, family-shaped bodies). The build's include path
- *   selects which family's copy resolves.
+ *   Family-agnostic consumers include this neutral name instead of
+ *   `pic18fxx5x_wdt_sleep.h` directly; each family provides its own copy,
+ *   and the build's include path picks which one resolves.
  */
 
 #ifndef HAL_WDT_SLEEP_H

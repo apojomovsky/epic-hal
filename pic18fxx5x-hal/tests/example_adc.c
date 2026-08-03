@@ -3,18 +3,10 @@
  * @brief   A/D converter driver smoke test on the PIC18 host sim.
  *
  * @details
- *   Verifies (DS39632E §21.0):
- *     1. HAL_ADC_Init() programs ADCON0/ADCON1/ADCON2 (channel, clock,
- *        acquisition, ADFM, Vref, PCFG).
- *     2. HAL_ADC_Start() sets GO/DONE; drive_adc_done clears it + sets ADIF.
- *     3. HAL_ADC_Read() returns the 10-bit result in both ADFM formats
- *        (the sim stores per ADFM, the driver un-justifies to 0..1023).
- *     4. VReference programs ADCON1<VCFG0:VCFG1>.
- *     5. HAL_ADC_SelectChannel() updates CHS.
- *     6. HAL_ADC_DeInit() restores ADCON0/1/2 to 0x00.
- *
- *   The conversion-complete IRQ handler clears ADIF, so for the polling
- *   checks we disable the sim IRQ callback (as the other examples do).
+ *   Verifies init register programming (ADCON0/1/2, DS39632E §21.0),
+ *   start/complete via GO/DONE and ADIF, 10-bit read in both ADFM
+ *   justifications, Vref/channel select, and deinit. The conversion IRQ
+ *   handler clears ADIF, so polling checks disable the sim IRQ callback.
  *   Host sim only; the XC8 target build uses example_blink.
  */
 

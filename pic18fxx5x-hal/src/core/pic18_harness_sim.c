@@ -4,15 +4,10 @@
  *          harness (see core/pic8_harness.h).
  *
  * @details
- *   Linked by the CMake host build. The companion target implementation is
- *   the family-blind pic8_harness_target.c in pic8-common; the build picks
- *   one, so neither this file nor the examples need `#ifdef`. This file is
- *   PIC18-specific only because it pumps the PIC18 simulator; the harness
- *   contract it implements is shared by every family.
- *
- *   Phase 1: the sim step is a no-op, so `pic8_harness_tick` advances
- *   nothing, but the wiring (reset + register the family dispatcher as the
- *   sim IRQ callback) is real and identical to the PIC16 host harness.
+ *   Linked by the CMake host build; the companion target implementation is
+ *   the family-blind `pic8_harness_target.c` in `pic8-common`, so neither
+ *   this file nor the examples need `#ifdef`. PIC18-specific only because
+ *   it pumps the PIC18 simulator; the harness contract itself is shared.
  */
 
 #include "core/pic8_harness.h"   /* pic8_dispatch_all_irqs is declared here */

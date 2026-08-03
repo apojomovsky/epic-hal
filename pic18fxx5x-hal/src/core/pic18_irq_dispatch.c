@@ -4,27 +4,13 @@
  *          IRQHandler. Shared by both builds.
  *
  * @details
- *   The PIC18F2455 family has two interrupt vectors: 0008h high-priority
- *   and 0018h low-priority (DS39632E §9.0). On a real target the XC8
- *   `__interrupt(high_priority)` / `__interrupt(low_priority)` handlers in
- *   pic18_isr_vector.c both call this; on the host the harness registers
- *   this as the sim IRQ callback. Both reach the same dispatch, so there is
- *   one source of truth and no duplication.
- *
- *   Each peripheral IRQHandler checks its own flag and returns immediately
- *   when its source is not pending (see @ref TIMER0_IRQHandler), so calling
- *   them all in turn is correct and costs only a few cycles per interrupt.
- *
- *   Phase 2 MVP: only Timer0 has a handler (the task manager's tick source
- *   and the blink example). Phase 4 adds the per-source handlers for the
- *   remaining peripherals (Timer1/2/3, CCP, MSSP, ADC, USART, ...) the same
- *   way PIC16's pic16_irq_dispatch.c does.
- *
- *   The handler prototypes are declared here as strong externs (not via the
- *   peripheral headers, whose `PIC8_WEAK` declaration would make the
- *   reference weak and let the linker drop the handler's object from the
- *   static library). On the XC8 target there is no weak attribute, so this
- *   is a no-op there; it only matters for the host link.
+ *   Both PIC18 interrupt vectors (0008h high, 0018h low, DS39632E §9.0)
+ *   call this on target; the host harness registers it as the sim IRQ
+ *   callback. Each peripheral IRQHandler checks its own flag and returns
+ *   immediately if not pending, so calling them all in turn is correct.
+ *   Prototypes are declared here as strong externs, not via the peripheral
+ *   headers' `PIC8_WEAK` declaration, which would let the host linker drop
+ *   the handler's object from the static library.
  */
 
 extern void TIMER0_IRQHandler(void);

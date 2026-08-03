@@ -4,27 +4,11 @@
  *          prescaler.
  *
  * @details
- *   Source: DS39632E §11.0 (Timer0 Module), Register 11-1 (T0CON),
- *   Table 11-1 (T0PS2:T0PS0 encoding).
- *
- *   The names and signatures match pic16f87xa_timer0.h so consumer code
- *   (the task manager, the examples) is portable; the bodies differ because
- *   PIC18's Timer0 is controlled by T0CON (a dedicated register) rather
- *   than PIC16's OPTION_REG, and PIC18 adds an 8/16-bit mode bit.
- *
- *   Wiring on the part (DS39632E §11.0):
- *     - Counter is TMR0L in 8-bit mode, TMR0H:TMR0L in 16-bit mode.
- *     - Clock source: internal Fosc/4 (T0CS=0) or T0CKI pin (T0CS=1).
- *     - Edge select: rising (T0SE=0) or falling (T0SE=1) on T0CKI.
- *     - Prescaler: dedicated to Timer0 (not shared with the WDT as on
- *       PIC16), controlled by PSA + T0PS2:T0PS0.
- *     - Overflow sets INTCON<TMR0IF>.
- *
- *   Phase 2 default: 8-bit mode (T08BIT = 1), matching the PIC16 Timer0
- *   model the task manager uses as its tick source. 16-bit mode is
- *   selectable per-handle via @ref TIMER0_BitModeTypeDef; the default
- *   handle initialiser keeps it 8-bit so existing PIC16 caller code is a
- *   drop-in.
+ *   Matches `pic16f87xa_timer0.h`'s names/signatures (DS39632E §11.0);
+ *   bodies differ because PIC18's Timer0 is controlled by the dedicated
+ *   T0CON register (not PIC16's OPTION_REG) and adds an 8/16-bit mode bit
+ *   and its own prescaler (not shared with the WDT). Default is 8-bit
+ *   (T08BIT=1), matching PIC16's model so existing caller code is a drop-in.
  */
 
 #ifndef PIC18FXX5X_TIMER0_H

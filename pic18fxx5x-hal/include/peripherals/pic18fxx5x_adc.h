@@ -3,36 +3,12 @@
  * @brief   10-bit A/D converter driver.
  *
  * @details
- *   Source: DS39632E §21.0 (10-Bit A/D), Registers 21-1 (ADCON0),
- *   21-2 (ADCON1), 21-3 (ADCON2).
- *
- *   The API mirrors the shape of pic16f87xa_adc.h (ADC_HandleTypeDef,
- *   HAL_ADC_*, weak ADC_IRQHandler) so consumer code is portable. The
- *   PIC18 EUSART-style enhancements over the PIC16 plain ADC are surfaced
- *   through the third control register ADCON2 and the split VCFG/PCFG
- *   fields in ADCON1:
- *     - three control registers (ADCON0/1/2) instead of two;
- *     - 4-bit channel select (CHS3:CHS0, AN0..AN12);
- *     - 16-bit Tad/conversion clock split into ADCS (ADCON2<2:0>) and a
- *       new ACQT acquisition-time field (ADCON2<5:3>);
- *     - voltage reference split into VCFG0 (Vref+) and VCFG1 (Vref-),
- *       separate from the pin-config PCFG (ADCON1<3:0>);
- *     - ADFM justification moved to ADCON2<7>.
- *
- *   PCFG is a 4-bit code (Table 21-3) selecting which of AN0..AN12 are
- *   analog vs digital; the table is large and the driver takes it as a
- *   raw 4-bit value (`PinConfig`) the caller reads off Table 21-3, rather
- *   than encoding a curated enum.
- *
- *   Wiring on the part:
- *     - 10-bit successive-approximation ADC, 10 channels on 28-pin parts
- *       (AN0..AN4, AN8..AN12) and 13 on 40/44-pin parts (AN0..AN12).
- *     - Reference voltage: VDD/VSS or AN3 (Vref+) / AN2 (Vref-).
- *     - Result in ADRESH:ADRESL; right-justified when ADFM=1, left when 0.
- *     - GO/DONE (ADCON0<1>) starts conversion; ADIF (PIR1<6>) fires on
- *       completion and GO/DONE self-clears.
- *
- *   Reset state (DS39632E Table 5-1): ADCON0/1/2 = 0x00 (module off).
+ *   10-bit successive-approximation ADC (DS39632E §21.0), 10 channels on
+ *   28-pin parts, 13 on 40/44-pin. Mirrors `pic16f87xa_adc.h`'s API shape
+ *   but uses a third control register, ADCON2, for the clock (ADCS) and
+ *   acquisition-time (ACQT) fields; `PinConfig` is the raw 4-bit ADCON1
+ *   PCFG code from Table 21-3 rather than a curated enum, the table is too
+ *   large to usefully encode.
  */
 
 #ifndef PIC18FXX5X_ADC_H

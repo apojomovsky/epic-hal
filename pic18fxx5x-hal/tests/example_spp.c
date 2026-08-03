@@ -3,18 +3,10 @@
  * @brief   Streaming Parallel Port driver smoke test on the PIC18 host sim.
  *
  * @details
- *   Verifies (DS39632E §18.0), 40/44-pin parts only:
- *     1. HAL_SPP_Init() programs SPPCON (SPPEN/SPPOWN), SPPCFG
- *        (CLKCFG/CSEN/CLK1EN/WS), SPPEPS (endpoint).
- *     2. HAL_SPP_WriteByte()/ReadByte() select the endpoint in SPPEPS and
- *        access SPPDATA.
- *     3. pic18_sim_drive_spp() sets WRSPP/RDSPP + SPPIF; the status/flag
- *        helpers read them.
- *     4. HAL_SPP_DeInit() restores the registers to 0x00.
- *
- *   The transfer IRQ handler clears SPPIF, so for the polling checks we
- *   disable the sim IRQ callback (as the other examples do). Host sim
- *   only; the XC8 target build uses example_blink.
+ *   40/44-pin parts only (DS39632E §18.0). Verifies init register
+ *   programming, byte read/write through SPPDATA/SPPEPS, sim-driven
+ *   status/flag helpers, and deinit. The transfer IRQ handler clears
+ *   SPPIF, so polling checks disable the sim IRQ callback.
  */
 
 #include "pic8_hal.h"

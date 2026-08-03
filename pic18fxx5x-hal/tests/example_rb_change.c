@@ -4,24 +4,10 @@
  *          (HAL_GPIO_RegisterChangeCallback / RB_IRQHandler) on the sim.
  *
  * @details
- *   Covers the Phase 0a cases from docs/pic8-encoder-plan.md, run in the
- *   HAL's own example suite:
- *     1. RB_IRQHandler is a no-op when RBIF is not pending.
- *     2. With RBIF pending, the registered callback fires exactly once,
- *        receives the freshly-read PORTB byte, and RBIF is clear after.
- *     3. A NULL (or unregistered) callback does not crash.
- *     4. pic8_dispatch_all_irqs reaches RB_IRQHandler (full dispatch pass
- *        with RBIF pending still drives the callback, proving the fan-out).
- *
- *   RBIF modeling: the host sim does not assert RBIF on a PORTB mismatch
- *   (modeling the datasheet mismatch-comparator "snapshot on every PORTB
- *   read" behavior faithfully would require intercepting every CPU read of
- *   PORTB through the PIC8_REG8 macro, which is invasive for the one feature
- *   that needs it). The documented fallback (plan §"host sim does not model
- *   RBIF yet") is used here: the test asserts RBIF directly in INTCON, then
- *   calls the handler and checks the callback's observed argument and the
- *   post-call flag state. This proves the handler's own read/clear/callback
- *   ordering, which is the part that actually matters.
+ *   The host sim doesn't assert RBIF on a PORTB mismatch (would require
+ *   intercepting every CPU read of PORTB through `PIC8_REG8`), so this
+ *   test sets RBIF directly in INTCON, then checks the handler's own
+ *   read/clear/callback ordering, the part that actually matters.
  */
 
 #include "pic8_hal.h"

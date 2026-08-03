@@ -3,14 +3,9 @@
  * @brief   MSSP driver smoke test on the PIC18 host sim.
  *
  * @details
- *   Verifies:
- *     1. SSPADD computation: 16 MHz / 100 kHz I2C -> 39, 16 MHz / 400 kHz -> 9.
- *     2. HAL_SSP_Init() in SPI master mode programs SSPCON1 correctly.
- *     3. SPI write goes to SSPBUF, write collision reporting works.
- *     4. pic18_sim_drive_ssp_rx() injects a byte, HAL_SSP_ReadByte returns
- *        it, and BF is cleared.
- *     5. I2C master mode + Start/Stop set SEN/PEN in SSPCON2.
- *   One source builds for host sim and XC8 target with no `#ifdef`.
+ *   Verifies SSPADD baud computation, SPI master init/write/collision,
+ *   sim-injected RX + BF clear, and I2C Start/Stop (SEN/PEN in SSPCON2).
+ *   Builds for host sim and XC8 target with no `#ifdef`.
  */
 
 #include "pic8_hal.h"

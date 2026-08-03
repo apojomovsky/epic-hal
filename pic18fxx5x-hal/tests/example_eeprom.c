@@ -3,18 +3,10 @@
  * @brief   Data EEPROM driver smoke test on the PIC18 host sim.
  *
  * @details
- *   Verifies (DS39632E §7.0):
- *     1. HAL_EEPROM_ReadByte() loads EEADR then strobes RD; with the sim
- *        preloaded at 0x42 the read returns the stored byte.
- *     2. HAL_EEPROM_WriteByte() does the unlock sequence (0x55 -> 0xAA) and
- *        leaves EEDATA/EEADR/EECON2 programmed.
- *     3. pic18_sim_drive_eeprom_done() models the write completion (EEIF);
- *        IsWriteComplete/ClearITFlag track it.
- *     4. Buffer write/read round-trip.
- *
- *   The write-complete IRQ handler clears EEIF, so for the polling checks
- *   we disable the sim IRQ callback (as example_usart/example_comp do).
- *   Host sim only; the XC8 target build uses example_blink.
+ *   Verifies read (EEADR + RD strobe), write (the 0x55/0xAA unlock
+ *   sequence, DS39632E §7.0), sim-driven write-completion via EEIF, and a
+ *   buffer round-trip. The write-complete IRQ handler clears EEIF, so
+ *   polling checks disable the sim IRQ callback.
  */
 
 #include "pic8_hal.h"

@@ -2,16 +2,13 @@
  * @file    pic18fxx5x_usart.c
  * @brief   EUSART driver, implementation (DS39632E §20.0).
  *
- *   The driver only programs the SFRs; it does not model the bit shifts or
- *   the auto-baud measurement. The sim backend (src/sim/pic18_sim.c)
- *   re-asserts TXIF each cycle when TXEN is set and dispatches RCREG
- *   values from pic18_sim_drive_usart_rx().
- *
- *   RMW on TXSTA / RCSTA / BAUDCON uses split read+write (pic8_sfr_read8/
- *   write8) because XC8 cannot lower a compound assignment on a volatile
- *   cast-lvalue at a runtime SFR address (the Phase 2 codegen lesson). The
- *   handle is copied into owned storage so a caller may stack-allocate it
- *   (the Phase 3 lesson).
+ *   The driver only programs the SFRs; it does not model bit shifts or
+ *   auto-baud measurement. The sim backend re-asserts TXIF each cycle
+ *   when TXEN is set and dispatches RCREG values from
+ *   `pic18_sim_drive_usart_rx()`. RMW on TXSTA/RCSTA/BAUDCON uses split
+ *   read+write because XC8 cannot lower a compound assignment on a
+ *   volatile cast-lvalue. The handle is copied into owned storage so a
+ *   caller may stack-allocate it.
  */
 
 #include "peripherals/pic18fxx5x_usart.h"

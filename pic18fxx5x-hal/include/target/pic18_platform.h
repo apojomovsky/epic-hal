@@ -4,24 +4,13 @@
  *          attribute is spelled, for the XC8 build.
  *
  * @details
- *   This is the target half of the SFR mapping layer. The companion
- *   host/pic18_platform.h is used by the CMake host build. Which one is
- *   included is decided by the build's include path (the XC8 Makefile puts
- *   include/target first; CMake puts include/host first), so pic18fxx5x.h
- *   includes "pic18_platform.h" unconditionally and there is no `#ifdef`
- *   around code anywhere in the HAL.
- *
- *   On a real PIC every SFR access is a direct volatile dereference of the
- *   literal address, exactly what the XC8 linker maps to the SFR. The
- *   address is cast through uintptr_t so XC8 does not warn about converting
- *   an integer to a pointer. XC8 has no weak symbols, so PIC8_WEAK is
- *   empty.
- *
- *   Phase 1 note: this is the placeholder flat-dereference form. Phase 2
- *   task 2 may refine how the Access Bank / BSR is expressed on the target
- *   (XC8's `xc.h` already provides bank-aware SFR symbols for named
- *   registers), but the `pic8_sfr_read8` / `PIC8_REG8` contract this header
- *   presents to the drivers stays the same.
+ *   Target half of the SFR mapping layer (the host half is
+ *   `host/pic18_platform.h`); the build's include path picks one, so
+ *   `pic18fxx5x.h` includes `"pic18_platform.h"` unconditionally with no
+ *   `#ifdef`. Every SFR access is a direct volatile dereference of the
+ *   literal address, cast through `uintptr_t` to silence XC8's
+ *   integer-to-pointer warning. XC8 has no weak symbols, so `PIC8_WEAK`
+ *   is empty.
  */
 
 #ifndef PIC18_PLATFORM_H

@@ -3,24 +3,10 @@
  * @brief   Timer2 driver, 8-bit timer with PR2 period register and postscaler.
  *
  * @details
- *   Source: DS39632E §12.0 (Timer2 Module), Register 12-2 (T2CON),
- *   Register 12-3 (PR2).
- *
- *   The API matches pic16f87xa_timer2.h (same `TIMER2_HandleTypeDef`,
- *   `HAL_TIMER2_*` names/signatures, weak `TIMER2_IRQHandler`); the body is
- *   simpler than PIC16's because PIC18 puts PR2 in the Access Bank
- *   (0xFCB), so there is no bank switching to read/write it (PIC16's PR2
- *   lives in Bank 1). T2CON's layout (postscaler bits 6:3, TMR2ON bit 2,
- *   prescaler bits 1:0) and reset value (0x00) are identical to PIC16.
- *
- *   Wiring: 8-bit counter TMR2 (always Fosc/4); period register PR2 (TMR2
- *   resets to 0x00 on TMR2 == PR2); prescaler 1:1/1:4/1:16 (T2CON<T2CKPS>);
- *   4-bit postscaler 1:1..1:16 (T2CON<T2OUTPS>); TMR2IF (PIR1<1>) fires every
- *   prescaler x postscaler x (PR2+1) instruction cycles. TMR2IF drives the
- *   CCP/ECCP PWM time base.
- *
- *   Reset (DS39632E Table 5-1): T2CON = 0x00 (off, 1:1/1:1), PR2 = 0xFF,
- *   TMR2 = 0x00.
+ *   Matches `pic16f87xa_timer2.h`'s API (DS39632E §12.0); simpler than
+ *   PIC16's because PIC18 puts PR2 in the Access Bank (0xFCB), no bank
+ *   switching needed. TMR2IF (PIR1<1>) fires every prescaler x postscaler
+ *   x (PR2+1) instruction cycles and drives the CCP/ECCP PWM time base.
  */
 
 #ifndef PIC18FXX5X_TIMER2_H

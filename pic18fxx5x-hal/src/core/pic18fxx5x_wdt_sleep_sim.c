@@ -4,12 +4,9 @@
  *          HAL_Sleep_Enter.
  *
  * @details
- *   Linked by the CMake host build. The companion target implementation is
- *   pic18fxx5x_wdt_sleep_target.c; the build picks one, so neither this
- *   file nor the examples need `#ifdef`. On the host there is no PIC18 CPU
- *   to stop and no WDT to refresh, so both are no-ops, exactly as the PIC16
- *   host build does. The shared BOR/POR status helpers live in
- *   pic18fxx5x_wdt_sleep.c.
+ *   Linked by the CMake host build (the target counterpart is
+ *   `pic18fxx5x_wdt_sleep_target.c`). No PIC18 CPU to stop and no WDT to
+ *   refresh on the host, so both are no-ops.
  */
 
 #include "core/pic18fxx5x_wdt_sleep.h"

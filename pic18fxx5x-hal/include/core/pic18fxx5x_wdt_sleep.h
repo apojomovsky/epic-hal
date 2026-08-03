@@ -3,32 +3,12 @@
  * @brief   CPU-level helpers: Watchdog Timer, Brown-out Reset, Sleep.
  *
  * @details
- *   Source: DS39632E §4.0 (RCON, Register 4-1), §9.0 (RCON<IPEN>),
- *   §14.x (WDT), §3.0 (Power-down Mode / Sleep).
- *
- *   The API matches pic16f87xa_wdt_sleep.h (same function names/signatures)
- *   so consumer code is portable; the register-level difference is that
- *   PIC18 folds the reset-status bits (TO/PD/POR/BOR) into RCON rather
- *   than PIC16's separate PCON, and the bit positions differ:
- *     - RCON<TO>  (bit 3): Watchdog Time-out flag (1 = not timed out).
- *     - RCON<PD>  (bit 2): Power-down (Sleep) detection flag (1 = not in
- *       Sleep).
- *     - RCON<POR> (bit 1): Power-on Reset status.
- *     - RCON<BOR> (bit 0): Brown-out Reset status.
- *
- *   The Watchdog Timer is enabled by the WDTEN configuration bit (set at
- *   flash time via `#pragma config WDT = ON`); the runtime API only
- *   provides a refresh helper. Once enabled, the user MUST call
- *   @ref HAL_WDT_Refresh periodically or the chip will reset.
- *
- *   The SLEEP instruction is invoked via inline asm. On the host
- *   simulation, HAL_Sleep_Enter is a no-op because there is no PIC18 CPU
- *   to stop.
- *
- *   The build-mode-specific helpers HAL_WDT_Refresh and HAL_Sleep_Enter
- *   live in pic18fxx5x_wdt_sleep_sim.c (host) and
- *   pic18fxx5x_wdt_sleep_target.c (XC8), selected at link time; the BOR/POR
- *   status helpers are shared and stay in pic18fxx5x_wdt_sleep.c.
+ *   Matches `pic16f87xa_wdt_sleep.h`'s API (DS39632E §4.0/§9.0/§14.x/§3.0);
+ *   PIC18 folds the reset-status bits (TO/PD/POR/BOR) into RCON instead of
+ *   PIC16's separate PCON. WDT is enabled via `#pragma config WDT = ON` at
+ *   flash time; once on, the user must call @ref HAL_WDT_Refresh
+ *   periodically or the chip resets. `HAL_WDT_Refresh`/`HAL_Sleep_Enter`
+ *   are link-time-selected (`*_sim.c` host, `*_target.c` XC8).
  */
 
 #ifndef PIC18FXX5X_WDT_SLEEP_H

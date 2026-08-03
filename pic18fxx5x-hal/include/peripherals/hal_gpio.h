@@ -3,17 +3,10 @@
  * @brief   Family-neutral GPIO contract (`HAL_GPIO_*` + RB-change hook).
  *
  * @details
- *   Family-agnostic consumers include this neutral name instead of the
- *   family-specific `pic18fxx5x_gpio.h`. Each family provides its own
- *   `peripherals/hal_gpio.h` that pulls in its family-specific GPIO header
- *   (same `GPIO_TypeDef` / `HAL_GPIO_*` API, family-shaped bodies). The
- *   build's include path selects which family's copy resolves.
- *
- *   The surface this neutral header exists for, beyond the always-portable
- *   `HAL_GPIO_Init/Read/Write/...`, is the RB<7:4> change-interrupt hook
- *   (@ref HAL_GPIO_RegisterChangeCallback / @ref RB_IRQHandler) that
- *   `pic8-encoder` builds on: the same names/signatures on both families,
- *   different register-level bodies.
+ *   Family-agnostic consumers include this neutral name instead of
+ *   `pic18fxx5x_gpio.h` directly; each family provides its own copy, and
+ *   the build's include path picks which one resolves. Also carries the
+ *   RB<7:4> change-interrupt hook `pic8-encoder` builds on.
  */
 
 #ifndef HAL_GPIO_H

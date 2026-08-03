@@ -3,27 +3,11 @@
  * @brief   General-Purpose I/O port driver for the PIC18F2455 family.
  *
  * @details
- *   Cube-style API: every pin is addressed by (GPIOx, GPIO_PIN_n). The
- *   names and signatures match pic16f87xa_gpio.h exactly so consumer code
- *   (the task manager, the examples) is portable across families; only the
- *   register-level bodies differ.
- *
- *   PIC18 GPIO difference from PIC16 (DS39632E §10.0): the output latch is
- *   exposed as its own mapped register, LATx. **Writes go through LATx, not
- *   PORTx.** This is a real correctness improvement PIC18 provides natively:
- *   on PIC16 a write to PORTx is a read-modify-write of the latch, which can
- *   corrupt an input pin's state on a shared write; PIC18 lets you write the
- *   latch directly. Reads of PORTx return the pin state (input) or the
- *   latched output (output). This driver therefore:
- *     - writes LATx in HAL_GPIO_WritePin / TogglePin / WritePort,
- *     - reads PORTx in HAL_GPIO_ReadPin / ReadPort,
- *     - programs direction in TRISx (TRIS = 1 input, 0 output, §10.0).
- *
- *   PORTA..PORTC are present on every device. PORTD and PORTE exist only on
- *   40/44-pin parts (PIC18F4455 / 4550, DS39632E Table 1-1). PORTA is 6-bit
- *   wide on these parts (RA0..RA5), PORTE is 3-bit; the driver enforces
- *   those widths. PORTB weak pull-ups live in INTCON2<RBPU> (§9.0 / §10.2),
- *   active-low.
+ *   Cube-style API, `(GPIOx, GPIO_PIN_n)`, matching `pic16f87xa_gpio.h`'s
+ *   names/signatures. PIC18 exposes the output latch as its own register,
+ *   LATx (DS39632E §10.0): writes go through LATx (avoiding PIC16's
+ *   read-modify-write-of-PORTx pitfall), reads come from PORTx. PORTD/E
+ *   exist only on 40/44-pin parts; PORTB pull-ups are INTCON2<RBPU>.
  */
 
 #ifndef PIC18FXX5X_GPIO_H
@@ -157,18 +141,11 @@ void HAL_GPIO_SetPullups(GPIO_PullTypeDef pull);
  *                   freshly-read PORTB byte, or NULL to unregister.
  *
  * @details
- *   Same names/signature as pic16f87xa_gpio.h's hook (the fixed contract
- *   across families), PIC18 register-level body. There is only ever one
- *   PORTB, so (unlike Timer2's per-handle callback) there is no handle
- *   struct: exactly one callback slot. NULL is safe (the handler no-ops).
- *   Fanning one received byte out to N consumers is application-level
- *   composition, not a HAL registry.
- *
- *   The handler reads PORTB *before* clearing RBIF (DS39632E §9.0: the
- *   mismatch comparator latches the value at the last read, so reading
- *   PORTB is what re-arms detection; clearing the flag first risks a
- *   spurious re-interrupt or a silently-missed change). See @ref
- *   RB_IRQHandler.
+ *   Same name/signature as `pic16f87xa_gpio.h`'s hook. One callback slot
+ *   (only one PORTB exists); NULL unregisters safely. The handler must
+ *   read PORTB *before* clearing RBIF (DS39632E §9.0: reading PORTB is
+ *   what re-arms the mismatch comparator, clearing first risks a missed
+ *   or spurious interrupt). See @ref RB_IRQHandler.
  */
 void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
 
@@ -176,16 +153,11 @@ void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
  * @brief  Weak RB<7:4> change-interrupt ISR (DS39632E §9.0/§10.2).
  *
  * @details
- *   Mirrors every other `*_IRQHandler` in this HAL: weak so user code may
- *   override it to add application logic, with a default body that clears
- *   RBIF and forwards the already-read PORTB byte to the callback
- *   registered via @ref HAL_GPIO_RegisterChangeCallback.
- *
- *   The read/clear order is mandatory, not stylistic: PORTB is read into a
- *   local *before* RBIF is cleared, then the callback receives that
- *   already-read value (never a second, later read). This is the datasheet
- *   "read PORTB to end the mismatch condition" sequence, identical to the
- *   PIC16 hook's rationale.
+ *   Weak, like every other `*_IRQHandler` here: default body reads PORTB
+ *   into a local, clears RBIF, then forwards that value to the callback
+ *   from @ref HAL_GPIO_RegisterChangeCallback. The read-before-clear order
+ *   is mandatory (datasheet "read PORTB to end the mismatch condition"),
+ *   not stylistic.
  */
 void RB_IRQHandler(void) PIC8_WEAK;
 

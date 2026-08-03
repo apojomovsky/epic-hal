@@ -4,16 +4,11 @@
  *          runs against an empty PIC18 family backend.
  *
  * @details
- *   Phase 1 of the multi-family plan (docs/multi-family-plan.md) stands up
- *   the pic18fxx5x-hal skeleton with no real drivers yet. This example does
- *   nothing but exercise the four-function host/target harness contract
- *   (core/pic8_harness.h): init, a bounded tick loop, a log line, and a
- *   pass/fail report. It is the proof that `pic8_harness_*` really is
- *   family-blind, since PIC18's empty backend links against the exact same
- *   header and contract PIC16 uses.
- *
- *   No GPIO, no Timer0, no interrupts are touched. When the loop runs for
- *   exactly the requested number of cycles, the test passes.
+ *   Exercises only the four-function host/target harness contract
+ *   (`core/pic8_harness.h`): init, a bounded tick loop, a log line, a
+ *   pass/fail report. No GPIO, Timer0, or interrupts touched; proves
+ *   `pic8_harness_*` is genuinely family-blind, since PIC18 links against
+ *   the exact same header and contract PIC16 uses.
  */
 
 #include "pic18fxx5x.h"

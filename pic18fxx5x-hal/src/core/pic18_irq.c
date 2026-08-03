@@ -3,55 +3,18 @@
  * @brief   Implementation of @ref pic18_irq.h.
  *
  * @details
- *   Each IRQ source maps to a flag bit, an enable bit, and (except INT0)
- *   a priority bit, spread across INTCON / INTCON2 / INTCON3 / PIR1 /
- *   PIE1 / IPR1 (DS39632E §9.0, Register 9-1/9-2/9-3/9-5/9-6/9-8).
- *
- *   The master enable is GIEH (INTCON<7>) and, in priority mode, GIEL
- *   (INTCON<6>). HAL_IRQ_Disable/Restore treat them as a single "interrupts
- *   on/off" switch so the API is the drop-in equivalent of PIC16's GIE.
- *   Restoring to "on" also sets IPEN (RCON<7>) to activate the two-vector
- *   priority scheme.
- *
- *   No runtime-addressed SFR access anywhere in this file, deliberately.
- *   An earlier version held a `pic18_irq_desc_t` lookup table (flag/enable/
- *   priority register addresses as `uint16_t` fields) and dispatched through
- *   two small helpers, `sfr_set(addr, mask)` / `sfr_clr(addr, mask)`, that
- *   took the register address as a runtime function parameter. That
- *   compiled, linked, and looked correct, but silently did nothing on real
- *   hardware and under MPLAB SIM: confirmed via `mdb` that `HAL_IRQ_Restore`
- *   never actually set `GIEH`/`GIEL`/`IPEN`, tracing all the way to the
- *   generated assembly for `sfr_set`, which used `movff addr,tblptrl` /
- *   `tblrd *` / `tblwt *`, PIC18's *program-memory* (flash) table
- *   read/write mechanism, not a data-memory SFR access at all. XC8's
- *   pointer classification (User's Guide §5.3.6.3) apparently can't prove a
- *   runtime `uint16_t` cast through a generic pointer targets data memory
- *   only, and defaults to the mixed-target-space representation, which for
- *   PIC18 means routing through `TBLPTR`/`TABLAT`. A `tblwt` with no
- *   accompanying NVMCON unlock/write-cycle sequence writes to an internal
- *   latch that never commits anywhere, so the "write" is a silent no-op.
- *   Neither the `__ram` pointer-target qualifier nor `-flocal` (the option
- *   gating when `__ram`/`__rom` are honored, per §5.3.6.3.2) changed the
- *   generated code when tried. See `pic18fxx5x-hal/docs/ARCHITECTURE.md`
- *   Finding 3 for the full account.
- *
- *   Manually inlining the identical read-modify-write logic, but with the
- *   register address as a genuine compile-time constant (not passed through
- *   a function parameter), worked correctly and used plain SFR access, no
- *   table instructions. That's the fix applied throughout this file: every
- *   function is now a `switch` on `irq` with one case per source, each case
- *   naming its register directly so the address is always a compile-time
- *   constant at the point of access, never a value that has crossed a
- *   function-call boundary as a `uint16_t`.
+ *   Every function names its SFR as a compile-time-constant `PIC_REG_*`
+ *   token, never a runtime address: on PIC18, a runtime SFR address
+ *   compiles to the program-memory table mechanism instead of a data
+ *   access (see `pic18fxx5x-hal/docs/ARCHITECTURE.md`). GIEH/GIEL
+ *   (INTCON<7:6>) act as one on/off switch; enabling also sets IPEN
+ *   (RCON<7>) for the two-vector priority scheme.
  */
 
 #include "core/pic18_irq.h"
 
-/* Read-modify-write against a *literal* SFR address (never a variable):
- * `reg` must be a `PIC_REG_*` macro, textually substituted, so `reg` is
- * still a compile-time constant inside `pic8_sfr_read8`/`write8` after
- * expansion. See this file's own header comment for why that distinction
- * is the entire fix. */
+/* `reg` must be a literal `PIC_REG_*` token so it stays a compile-time
+ * constant through `pic8_sfr_read8`/`write8` (see file header). */
 #define SFR_SET_BIT(reg, mask) \
     pic8_sfr_write8((reg), (uint8_t)(pic8_sfr_read8(reg) | (mask)))
 #define SFR_CLR_BIT(reg, mask) \

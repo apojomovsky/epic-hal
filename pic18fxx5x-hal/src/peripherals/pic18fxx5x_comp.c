@@ -2,11 +2,9 @@
  * @file    pic18fxx5x_comp.c
  * @brief   Comparator driver, implementation (DS39632E §22.0).
  *
- *   Simpler than the PIC16 driver: CMCON is in the Access Bank (0xFB4), so
- *   there is no bank switching, and RMW uses split read+write
- *   (pic8_sfr_read8/write8) per the Phase 2 codegen lesson. The handle is
- *   copied into owned storage (the Phase 3 lesson). The sim backend sets
- *   C1OUT/C2OUT + CMIF from pic18_sim_drive_comp().
+ *   Simpler than the PIC16 driver: CMCON is in the Access Bank (0xFB4),
+ *   no bank switching needed. The sim backend sets C1OUT/C2OUT + CMIF
+ *   from `pic18_sim_drive_comp()`.
  */
 
 #include "peripherals/pic18fxx5x_comp.h"

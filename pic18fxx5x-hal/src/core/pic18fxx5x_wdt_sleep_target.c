@@ -3,11 +3,8 @@
  * @brief   Real-target implementation of HAL_WDT_Refresh / HAL_Sleep_Enter.
  *
  * @details
- *   Linked by the XC8 Makefile. The companion host implementation is
- *   pic18fxx5x_wdt_sleep_sim.c; the build picks one, so neither this file
- *   nor the examples need `#ifdef`. On a real PIC18 these are the native
- *   `clrwdt` / `sleep` instructions. The shared BOR/POR status helpers
- *   live in pic18fxx5x_wdt_sleep.c.
+ *   Linked by the XC8 Makefile (the host counterpart is
+ *   `pic18fxx5x_wdt_sleep_sim.c`). Native `clrwdt`/`sleep` instructions.
  */
 
 #include "core/pic18fxx5x_wdt_sleep.h"

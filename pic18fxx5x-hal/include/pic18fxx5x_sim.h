@@ -4,21 +4,10 @@
  *
  * @details
  *   On the host build every SFR access indexes a host-side register file
- *   (the platform header include/host/pic18_platform.h). The hooks declared
- *   here let the host application:
- *     - drive external input pins (e.g. simulate a button press on RB0),
- *     - read output-pin levels as an external load would see them (from
- *       LATx, the PIC18 output latch, DS39632E §10.0),
- *     - advance the simulated peripherals by N instruction cycles via
- *       pic18_sim_step(),
- *     - register an interrupt callback fired when a simulated peripheral
- *       raises an IRQ.
- *
- *   Phase 2 models Timer0 (8/16-bit, prescaler, overflow -> TMR0IF) and
- *   GPIO drive/read. The function names mirror pic16f87xa_sim_*; Phase 2
- *   task 8 of the plan notes the family-blind part of this API may move to
- *   shared `pic8_sim_*` naming later, but Phase 2 keeps the family-prefixed
- *   names to stay symmetric with the PIC16 tree.
+ *   (`include/host/pic18_platform.h`). These hooks let the host application
+ *   drive input pins, read output-pin levels, advance simulated peripherals
+ *   by N instruction cycles, and register an interrupt callback. Function
+ *   names mirror `pic16f87xa_sim_*` for symmetry with the PIC16 tree.
  */
 
 #ifndef PIC18FXX5X_SIM_H

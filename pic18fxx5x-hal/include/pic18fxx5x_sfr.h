@@ -4,31 +4,14 @@
  *          PIC18F2455/2550/4455/4550 family (MVP subset).
  *
  * @details
- *   Every address, bit mask and reset value in this file is taken 1-to-1
- *   from the DS39632E datasheet:
- *     - Table 5-1, SFR Map (Access Bank 0xF60-0xFFF). The addresses are
- *       cross-checked against the PIC18Fxxxx DFP device header
- *       (pic/include/proc/pic18f4550.inc), the compiler's own datasheet-
- *       derived register map.
- *     - Register 5-2 (STATUS), Register 4-1/9-10 (RCON),
- *       Register 9-1/9-2/9-3 (INTCON/INTCON2/INTCON3),
- *       Register 9-5/9-6/9-8 (PIR1/PIE1/IPR1), Register 10-1 (PORTB),
- *       Register 11-1 (T0CON).
- *
- *   The macro naming (<tt>PIC_REG_* / PIC_*_*</tt>) deliberately matches
- *   pic16f87xa_sfr.h so that driver source reads identically across
- *   families: <tt>PIC8_REG8(PIC_REG_INTCON)</tt> resolves to 0x0B on PIC16
- *   and 0xFF2 on PIC18, selected by which family's headers are on the
- *   include path. Only one family's sfr.h is ever in a given translation
- *   unit, so the shared <tt>PIC_</tt> prefix never collides.
- *
- *   Phase 2 scope (the plan's MVP vertical slice): STATUS, BSR, RCON,
- *   PORTA-E / LATA-E / TRISA-E, INTCON / INTCON2 / INTCON3,
- *   PIR1 / PIE1 / IPR1, TMR0L / TMR0H / T0CON. Every SFR here is in the
- *   Access Bank (0xF60-0xFFF), so no BSR banking is needed to reach any
- *   of them (DS39632E §5.3). PORTD / PORTE / LATD / LATE / TRISD / TRISE
- *   exist only on the 40/44-pin parts (4455/4550) and are gated with
- *   PIC18FXX5X_FAMILY_HAS_PORTD / HAS_PORTE.
+ *   Every address, bit mask, and reset value here is taken 1-to-1 from
+ *   DS39632E (Table 5-1 SFR Map, Registers 5-2/9-1/9-2/9-3/9-5/9-6/9-8/
+ *   10-1/11-1), cross-checked against the PIC18Fxxxx DFP device header.
+ *   Macro naming (`PIC_REG_*` / `PIC_*_*`) deliberately matches
+ *   `pic16f87xa_sfr.h` so driver source reads identically across families.
+ *   All of it is in the Access Bank (0xF60-0xFFF), no BSR banking needed;
+ *   PORTD/E/LATD/E/TRISD/E exist only on 40/44-pin parts, gated by
+ *   `PIC18FXX5X_FAMILY_HAS_PORTD`/`HAS_PORTE`.
  */
 
 #ifndef PIC18FXX5X_SFR_H

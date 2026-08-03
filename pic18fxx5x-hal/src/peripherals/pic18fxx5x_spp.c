@@ -2,14 +2,11 @@
  * @file    pic18fxx5x_spp.c
  * @brief   Streaming Parallel Port driver, implementation (DS39632E §18.0).
  *
- *   Register-level only: the USB streaming protocol (endpoint management,
- *   CLK1/CLK2 toggling, USB ownership handoff) is left to the user. The
- *   driver programs SPPCON / SPPCFG / SPPEPS and provides byte-level
- *   SPPDATA access plus the busy / read-occurred / write-occurred flags and
- *   the SPPIF interrupt. RMW on the SFRs uses split read+write
- *   (pic8_sfr_read8/write8) per the Phase 2 codegen lesson; the handle is
- *   copied into owned storage (the Phase 3 lesson). The sim backend drives
- *   the SPP status via pic18_sim_drive_spp().
+ *   Register-level only: the USB streaming protocol itself (endpoint
+ *   management, CLK1/CLK2 toggling, ownership handoff) is left to the
+ *   user. The handle is copied into owned storage so a caller may
+ *   stack-allocate it; the sim backend drives status via
+ *   `pic18_sim_drive_spp()`.
  */
 
 #include "peripherals/pic18fxx5x_spp.h"

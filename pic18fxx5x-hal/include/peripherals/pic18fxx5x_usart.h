@@ -3,41 +3,11 @@
  * @brief   EUSART driver, async + sync master/slave.
  *
  * @details
- *   Source: DS39632E §20.0 (EUSART), Registers 20-1 (TXSTA), 20-2 (RCSTA),
- *   20-3 (BAUDCON), §20.1 (BRG, Table 20-1 baud-rate formulas).
- *
- *   The API mirrors pic16f87xa_usart.h — the same `USART_HandleTypeDef`,
- *   `USART_*TypeDef`, `HAL_USART_*` functions and weak
- *   `USART_RX/TX_IRQHandler` — so consumer code is portable. The PIC18
- *   EUSART adds what the PIC16 plain USART lacks, all surfaced through
- *   BAUDCON and the SPBRGH high byte:
- *     - 16-bit baud generator (BAUDCON<BRG16>) with SPBRG:SPBRGH;
- *     - auto-baud detection (BAUDCON<ABDEN>, status ABDOVF);
- *     - wake-up enable (BAUDCON<WUE>) and sync clock/data polarity
- *       (BAUDCON<TXCKP>/<RXDTP>);
- *     - 9-bit address-detect mode (RCSTA<ADDEN>).
- *
- *   Wiring on the part:
- *     - Asynchronous full-duplex (TX on RC6, RX on RC7).
- *     - Synchronous master (clock on RC6, data on RC7).
- *     - Synchronous slave (clock on RC6, data on RC7, both input).
- *     - 8-bit or 9-bit data.
- *
- *   Reset state (DS39632E Table 5-1):
- *     - TXSTA = 0000 0010 (TRMT=1, others 0)
- *     - RCSTA = 0000 0000
- *     - BAUDCON = 0000 0000
- *     - SPBRG / SPBRGH = 0000 0000
- *
- *   Simpler than the PIC16 driver: the PIC18 EUSART registers are all in the
- *   Access Bank (no bank switching), and the BRG is configured through
- *   BAUDCON + SPBRGH instead of the PIC16's single BRGH bit + SPBRG. RMW on
- *   the SFRs uses split read+write (pic8_sfr_read8/write8) because XC8 cannot
- *   lower a compound assignment on a volatile cast-lvalue at a runtime SFR
- *   address (the Phase 2 codegen lesson). The handle is copied into owned
- *   storage (the Phase 3 lesson).
- *
- *   Only one EUSART instance exists on the PIC18F2455 family.
+ *   Mirrors `pic16f87xa_usart.h`'s API shape (DS39632E §20.0). PIC18 adds a
+ *   16-bit BRG (BAUDCON<BRG16>, SPBRG:SPBRGH), auto-baud detect
+ *   (ABDEN/ABDOVF), and 9-bit address-detect (RCSTA<ADDEN>), all in the
+ *   Access Bank (no bank switching). RMW here uses split read+write because
+ *   XC8 cannot lower a compound assignment on a volatile cast-lvalue.
  */
 
 #ifndef PIC18FXX5X_USART_H

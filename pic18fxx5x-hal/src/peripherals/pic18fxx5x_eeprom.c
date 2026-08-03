@@ -3,17 +3,10 @@
  * @brief   Data EEPROM driver, implementation (DS39632E §7.0).
  *
  *   Simpler than the PIC16 driver: the EEPROM registers are in the Access
- *   Bank (0xFA6-0xFA9), so there is no bank switching, and RMW uses split
- *   read+write (pic8_sfr_read8/write8) per the Phase 2 codegen lesson.
- *
- *   The sim backend (src/sim/pic18_sim.c) models the EEPROM cell storage
- *   in a 256-byte array. ReadByte sets RD then pulls the byte from the sim
- *   array via pic18_sim_eeprom_read() (the flat-array sim has no write
- *   hook to model the RD strobe loading EEDATA, so the driver asks the sim
- *   directly — the same coupling the PIC16 driver uses). On the XC8 target
- *   build the EEPROM functions are never called by example_blink, so the
- *   sim reference is dead-stripped and there is no link error; real target
- *   firmware that uses the EEPROM would read EEDATA after RD instead.
+ *   Bank (0xFA6-0xFA9), no bank switching needed. `ReadByte` sets RD then
+ *   pulls the byte via `pic18_sim_eeprom_read()` on host (the flat-array
+ *   sim has no write hook to model the RD strobe loading EEDATA); real
+ *   target firmware reads EEDATA after RD instead.
  */
 
 #include "peripherals/pic18fxx5x_eeprom.h"

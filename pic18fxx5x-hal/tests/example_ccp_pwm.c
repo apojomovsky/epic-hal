@@ -3,24 +3,11 @@
  * @brief   End-to-end smoke test: ECCP1 half-bridge PWM with dead-band.
  *
  * @details
- *   Exercises the PIC18 Enhanced CCP path that PIC16's plain CCP lacks:
- *   half-bridge output mode (P1M), dead-band delay (ECCP1DEL) and
- *   auto-restart (PRSEN). The host sim does not toggle the PWM pins, so the
- *   test verifies the driver programmed CCP1CON/CCPR1L/ECCP1DEL correctly
- *   and counts Timer2 overflows (Timer2 is the PWM time base, one overflow
- *   per PWM period). DS39632E §16.4.
- *
- *   Setup:
- *     - Timer2 PR2=99, 1:1/1:1 -> PWM period = (99+1) = 100 instruction cycles.
- *     - ECCP1 PWM, half-bridge output, 50% duty (duty=50 of 100), dead-band
- *       delay=12, auto-restart enabled.
- *     - Expected register image:
- *         CCPR1L  = 50 >> 2             = 0x0C (12)
- *         CCP1CON = P1M(10)<<6 | duty[1:0]<<4 | PWM(1100)
- *                 = 0x80 | 0x20 | 0x0C  = 0xAC
- *         ECCP1DEL= PRSEN | 12          = 0x8C
- *
- *   One source builds for host sim and XC8 target with no `#ifdef`.
+ *   Exercises Enhanced CCP (DS39632E §16.4): half-bridge output (P1M),
+ *   dead-band (ECCP1DEL), auto-restart (PRSEN). The host sim doesn't
+ *   toggle PWM pins, so the test checks the programmed register image
+ *   (PR2=99, 50% duty, dead-band=12 -> `CCPR1L=0x0C`, `CCP1CON=0xAC`,
+ *   `ECCP1DEL=0x8C`) and counts Timer2 overflows as the PWM period marker.
  */
 
 #include "pic8_hal.h"

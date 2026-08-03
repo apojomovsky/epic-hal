@@ -3,17 +3,9 @@
  * @brief   Comparator driver smoke test on the PIC18 host sim.
  *
  * @details
- *   Verifies (DS39632E §22.0):
- *     1. HAL_COMP_Init() programs CMCON for two independent comparators
- *        with C1/C2 inverted and the input switch set.
- *     2. pic18_sim_drive_comp() drives the C1/C2 output levels and raises
- *        CMIF; HAL_COMP_C1Out()/C2Out() read them back.
- *     3. HAL_COMP_IsChangeFlag()/ClearChangeFlag() track CMIF.
- *     4. HAL_COMP_DeInit() restores CMCON to 0x07 (comparators off).
- *
- *   The change IRQ handler clears CMIF, so for the polling checks we
- *   disable the sim IRQ callback (as example_usart does). Host sim only;
- *   the XC8 target build uses example_blink as its APP_SOURCES.
+ *   Verifies init CMCON programming (DS39632E §22.0), sim-driven C1/C2
+ *   output + CMIF, flag tracking, and deinit. The change IRQ handler
+ *   clears CMIF, so polling checks disable the sim IRQ callback.
  */
 
 #include "pic8_hal.h"

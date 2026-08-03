@@ -3,30 +3,12 @@
  * @brief   MSSP driver, SPI master/slave + I²C master/slave.
  *
  * @details
- *   Source: DS39632E §19.0 (MSSP Module), Registers 19-1..19-6
- *   (SSPSTAT, SSPCON1, SSPCON2, SSPADD, SSPBUF).
- *
- *   The API mirrors pic16f87xa_ssp.h (same `SSP_HandleTypeDef`,
- *   `SSP_*TypeDef`, `HAL_SSP_*` functions, weak `SSP_IRQHandler`) so
- *   consumer code is portable; the only difference is the PIC18 has no
- *   bank switching (all MSSP registers are in the Access Bank), and the
- *   control register is named SSPCON1 (PIC16's is SSPCON).
- *
- *   The MSSP module has one set of pins (RC3/SCK/SCL, RC4/SDI/SDA,
- *   RC5/SDO) but multiple operating modes:
- *     - SPI master (clock = Fosc/4, /16, /64, TMR2/2)
- *     - SPI slave (clock = external on SCK, optional SS on RA5/AN4)
- *     - I²C master (7-bit or 10-bit address)
- *     - I²C slave (7-bit or 10-bit address)
- *
- *   This driver is **register-level only**; it does not implement the I²C
- *   state machine. A user-space I²C master needs to:
- *     1. HAL_SSP_Start() to issue a Start condition,
- *     2. write the address byte to SSPBUF,
- *     3. poll SSPSTAT<BF> + ACKSTAT (SSPCON2<6>),
- *     4. HAL_SSP_Stop() to issue a Stop.
- *   For SPI, the transfer is fully automatic once SSPBUF is written; poll
- *   SSPSTAT<BF> to know when a byte is available.
+ *   SPI master/slave + I2C master/slave (DS39632E §19.0). Mirrors
+ *   `pic16f87xa_ssp.h`'s API; the PIC18 MSSP registers are all in the
+ *   Access Bank (no bank switching) and the control register is SSPCON1
+ *   (PIC16's is SSPCON). Register-level only: I2C's Start/Stop/ACK state
+ *   machine is left to the caller, SPI transfers complete automatically
+ *   once SSPBUF is written, poll SSPSTAT<BF> for a byte's arrival.
  */
 
 #ifndef PIC18FXX5X_SSP_H

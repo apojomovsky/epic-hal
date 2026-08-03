@@ -2,12 +2,9 @@
  * @file    pic18fxx5x_adc.c
  * @brief   A/D converter driver, implementation (DS39632E §21.0).
  *
- *   Simpler than the PIC16 driver in one way (no bank switching — all ADC
- *   registers are in the Access Bank) and richer in another: three control
- *   registers (ADCON0/1/2) and a split VCFG/PCFG. RMW on the SFRs uses split
- *   read+write (pic8_sfr_read8/write8) per the Phase 2 codegen lesson; the
- *   handle is copied into owned storage (the Phase 3 lesson). The sim
- *   backend models conversion completion via pic18_sim_drive_adc_done().
+ *   No bank switching (all ADC registers are in the Access Bank), but
+ *   three control registers (ADCON0/1/2) versus PIC16's two. The sim
+ *   backend models conversion completion via `pic18_sim_drive_adc_done()`.
  */
 
 #include "peripherals/pic18fxx5x_adc.h"

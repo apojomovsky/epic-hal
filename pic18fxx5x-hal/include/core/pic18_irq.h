@@ -1,41 +1,14 @@
 /**
  * @file    core/pic18_irq.h
- * @brief   PIC18F2455 family interrupt controller: the IRQn enum and the
- *          enable / disable / flag / priority helpers. The family-blind
- *          dispatch contract (pic8_dispatch_all_irqs) lives in
- *          pic8_harness.h; the shared priority enum lives in pic8_irq.h.
+ * @brief   PIC18F2455 family interrupt controller: IRQn enum plus
+ *          enable/disable/flag/priority helpers (DS39632E §9.0), mirroring
+ *          STM32Cube's `HAL_NVIC_*` and the PIC16 `HAL_IRQ_*` API.
  *
  * @details
- *   Mirrors `HAL_NVIC_*` from STM32Cube and the PIC16 `HAL_IRQ_*` API: the
- *   application never touches INTCON / INTCON2 / INTCON3 / PIE1 / PIR1 /
- *   IPR1 directly; it goes through these helpers so the routing logic is
- *   portable. The `HAL_IRQ_*` function names are shared by every 8-bit PIC
- *   family (each implements them against its own interrupt registers); the
- *   `PIC18_IRQn` enum and the register addresses behind those helpers are
- *   PIC18F2455-specific.
- *
- *   PIC18 interrupt architecture (DS39632E §9.0):
- *     - Two vectors: 0008h high-priority, 0018h low-priority.
- *     - IPEN (RCON<7>) enables the priority scheme. When IPEN = 0 the
- *       controller is in PIC16-compatible mode (single vector at 0008h,
- *       GIE/PEIE master enables, no priority); when IPEN = 1 the two
- *       vectors and the per-source priority bits (INTCON2 / INTCON3 /
- *       IPR1) take effect, with GIEH gating high- and GIEL gating
- *       low-priority sources.
- *     - INT0 has no priority bit and is always high-priority.
- *
- *   Phase 2 default: the core runs in priority mode (IPEN = 1). The
- *   master-enable helpers HAL_IRQ_Disable / Restore operate on GIEH and
- *   GIEL together, so HAL_IRQ_Restore(1) is the drop-in equivalent of
- *   PIC16's "GIE = 1" (enable all interrupts). HAL_IRQ_SetPriority writes
- *   the matching priority bit; sources default to high after reset
- *   (INTCON2 / INTCON3 / IPR1 reset to all-ones, DS39632E Table 5-1).
- *
- *   Sources covered (the MVP + the PIR1/PIR2 peripheral set):
- *     - INTCON:   TMR0, INT0, RB<7:4> change.
- *     - INTCON3:  INT1, INT2.
- *     - PIR1:     TMR1, TMR2, CCP1, SSP, USART RX/TX, ADC, SPP.
- *     - PIR2:     TMR3, CCP2, Comparator, EEPROM.
+ *   IPEN (RCON<7>) selects single-vector PIC16-compatible mode (IPEN=0) or
+ *   two-vector priority mode (IPEN=1, the default here), with GIEH/GIEL
+ *   gating high/low priority sources; INT0 has no priority bit, always
+ *   high. `HAL_IRQ_Restore(1)` is the drop-in for PIC16's `GIE = 1`.
  */
 
 #ifndef PIC18_IRQ_H

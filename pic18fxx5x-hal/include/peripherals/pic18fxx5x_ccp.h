@@ -3,38 +3,13 @@
  * @brief   ECCP1 (Enhanced CCP) + CCP2 driver: Capture / Compare / PWM.
  *
  * @details
- *   Source: DS39632E §16.0 (Enhanced Capture/Compare/PWM), Register 16-1
- *   (CCP1CON), Register 16-2 (ECCP1DEL), Register 16-3 (ECCP1AS).
- *
- *   The PIC18F2455 family has two CCP modules. CCP1 is the *Enhanced* CCP
- *   (ECCP1): in addition to the plain capture/compare/PWM modes, it adds
- *   multi-output PWM (single / half-bridge / full-bridge forward/reverse),
- *   programmable dead-band delay (ECCP1DEL), and auto-shutdown with optional
- *   auto-restart (ECCP1AS) — features PIC16's plain CCP does not have.
- *   CCP2 is the plain CCP (single-output PWM, capture/compare, no dead-band
- *   or auto-shutdown).
- *
- *   The API mirrors pic16f87xa_ccp.h (same `CCP_InstanceTypeDef`,
- *   `CCP_ModeTypeDef`, `CCP_PWMConfigTypeDef`, `HAL_CCP_*` functions, weak
- *   `CCP1_IRQHandler`/`CCP2_IRQHandler`) so consumer code is portable; the
- *   handle adds the three ECCP-only fields (PWMOutputMode, DeadBand,
- *   AutoShutdown), which CCP2 ignores.
- *
- *   PIC18 also adds a Compare "toggle output on match" mode (CCP1M3:CCP1M0
- *   = 0010) that PIC16 lacks; see @ref CCP_ModeTypeDef.
- *
- *   Timer resources (DS39632E Table 16-1):
- *     - Capture  -> Timer1 or Timer3 (selected by T3CON<T3CCP2:T3CCP1>;
- *       default Timer1)
- *     - Compare  -> Timer1 or Timer3 (same select)
- *     - PWM      -> Timer2 (always)
- *
- *   The driver leaves T3CCP2:T3CCP1 at reset (Timer1 for CCP1 and CCP2
- *   capture/compare); to use Timer3 as the time base, configure T3CON
- *   directly via the Timer3 driver's notes. PWM always uses Timer2.
- *
- *   Reset (DS39632E Table 5-1): CCP1CON = 0x00, CCP2CON = 0x00,
- *   ECCP1DEL = 0x00, ECCP1AS = 0x00, CCPRxH/L unknown at POR.
+ *   CCP1 is the Enhanced CCP (ECCP1, DS39632E §16.0): beyond plain
+ *   capture/compare/PWM it adds multi-output PWM, programmable dead-band
+ *   (ECCP1DEL), and auto-shutdown/restart (ECCP1AS). CCP2 is the plain CCP.
+ *   Mirrors `pic16f87xa_ccp.h`'s API; the handle adds the three ECCP-only
+ *   fields, which CCP2 ignores. Capture/Compare use Timer1 or Timer3
+ *   (T3CON<T3CCP2:T3CCP1>, left at reset default Timer1); PWM always uses
+ *   Timer2.
  */
 
 #ifndef PIC18FXX5X_CCP_H

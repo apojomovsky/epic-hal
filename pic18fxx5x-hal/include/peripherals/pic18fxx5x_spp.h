@@ -3,35 +3,11 @@
  * @brief   Streaming Parallel Port (SPP) driver.
  *
  * @details
- *   Source: DS39632E §18.0 (Streaming Parallel Port), Registers 18-1
- *   (SPPCON), 18-2 (SPPCFG), 18-3 (SPPEPS).
- *
- *   ⚠ This driver is **40/44-pin only** (PIC18F4455 / PIC18F4550). The
- *   28-pin PIC18F2455 / PIC18F2550 have no SPP. The compile-time check
- *   `PIC18FXX5X_FAMILY_HAS_SPP` (defined in pic18fxx5x.h) keeps this header
- *   out of 28-pin builds.
- *
- *   The SPP is a USB-era parallel port: an 8-bit data register (SPPDATA)
- *   plus clock/chip-select outputs, accessed through a USB endpoint
- *   address (SPPEPS<ADDR>) or directly by the microcontroller. It is the
- *   PIC18 analog of the PIC16 PSP, but USB-based.
- *
- *   This driver is **register-level only**: it programs SPPCON / SPPCFG /
- *   SPPEPS and provides byte-level read/write primitives to SPPDATA plus
- *   the busy / read-occurred / write-occurred status flags and the SPPIF
- *   interrupt. The USB streaming protocol (endpoint management, CLK1/CLK2
- *   toggling, ownership handoff to the USB peripheral) is left to the
- *   user, the same way the I²C state machine is left to the user for MSSP.
- *
- *   Register map (Access Bank):
- *     - SPPDATA (0xF62): read/write data byte.
- *     - SPPCFG  (0xF63): CLKCFG1:0 (bits 7:6), CSEN (5), CLK1EN (4),
- *                        WS3:WS0 (3:0, wait states 0..30 in steps of 2).
- *     - SPPEPS  (0xF64): ADDR3:0 (bits 3:0, endpoint), SPPBUSY (4),
- *                        WRSPP (6), RDSPP (7) — status read-only.
- *     - SPPCON  (0xF65): SPPOWN (1, USB vs MCU ownership), SPPEN (0).
- *
- *   Reset state (DS39632E Table 5-1): all 0x00.
+ *   40/44-pin only (PIC18F4455/4550, gated by `PIC18FXX5X_FAMILY_HAS_SPP`):
+ *   a USB-era parallel port (DS39632E §18.0), the PIC18 analog of PIC16's
+ *   PSP. Register-level only: programs SPPCON/SPPCFG/SPPEPS and provides
+ *   byte-level SPPDATA read/write plus the busy/read/write status flags
+ *   and SPPIF; the USB streaming protocol itself is left to the user.
  */
 
 #ifndef PIC18FXX5X_SPP_H

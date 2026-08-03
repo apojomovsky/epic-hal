@@ -7,28 +7,11 @@
 #include "peripherals/pic18fxx5x_ccp.h"
 #include "core/pic18_irq.h"
 
-/**
- * @brief Per-instance register access. CCP1 is the enhanced module (has
- *        ECCP1DEL/ECCP1AS); CCP2 is plain.
- *
- * @details
- *   Previously a `ccp_addrs_t` lookup table holding CCPRxL/CCPRxH/CCPxCON
- *   as `uint16_t` fields, dereferenced via a runtime `const ccp_addrs_t *a
- *   = &addrs[inst]; PIC8_REG8(a->cprl) = ...`. Same bug class as
- *   `pic18_irq.c`'s (see `pic18fxx5x-hal/docs/ARCHITECTURE.md` Finding 3):
- *   confirmed via a real-target `mdb` probe that `CCPR1L`/`CCP1CON` stayed
- *   `0` after `HAL_CCP_Init` while `ECCP1DEL` (written through the
- *   compile-time-constant `PIC_REG_ECCP1DEL` directly, never through the
- *   `addrs[]` table) came out correct. XC8 compiles a runtime-addressed
- *   SFR access on PIC18 to its program-memory table read/write mechanism
- *   (`TBLPTR`/`tblrd`/`tblwt`) instead of a data-memory access, so the
- *   table-driven writes silently went nowhere.
- *
- *   Fixed the same way as `pic18_irq.c`: these macros branch on `inst`
- *   *before* touching any SFR, so each branch's `PIC8_REG8`/
- *   `pic8_sfr_read8`/`write8` call always sees a literal `PIC_REG_*`
- *   token, never a value that crossed a function-call or struct-member
- *   boundary as a `uint16_t`. */
+/* Per-instance register access. Each macro branches on `inst` before
+ * touching any SFR, so the address is always a literal `PIC_REG_*` token,
+ * never a runtime value (see `pic18_irq.c`'s file header for why that
+ * matters on PIC18). CCP1 is the enhanced module (ECCP1DEL/ECCP1AS);
+ * CCP2 is plain. */
 #define CCP_WRITE_CPRL(inst, value)                                     \
     do {                                                                \
         if ((inst) == CCP_INSTANCE_1) PIC8_REG8(PIC_REG_CCPR1L) = (uint8_t)(value); \

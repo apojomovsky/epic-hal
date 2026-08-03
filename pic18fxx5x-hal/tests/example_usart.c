@@ -3,23 +3,11 @@
  * @brief   EUSART driver smoke test on the PIC18 host sim.
  *
  * @details
- *   Verifies (DS39632E §20.0):
- *     1. BRG math for every row of Table 20-1, including the 16-bit BRG
- *        (BRG16=1) range extension that the PIC16 plain USART lacks.
- *     2. HAL_USART_Init() in async 8-bit BRG mode programs TXSTA / RCSTA /
- *        BAUDCON / SPBRG / SPBRGH correctly.
- *     3. HAL_USART_Transmit() writes TXREG and clears TXIF.
- *     4. RX: pic18_sim_drive_usart_rx() sets RCREG + RCIF, and
- *        HAL_USART_Receive() returns the byte + clears RCIF.
- *     5. 16-bit BRG mode (BRG16=1) sets BAUDCON<BRG16> and uses SPBRGH.
- *     6. Auto-baud: HAL_USART_StartAutoBaud() sets BAUDCON<ABDEN>.
- *     7. 9-bit address-detect mode sets RCSTA<ADDEN>.
- *
- *   The RX IRQ handler consumes RCREG, so for the polling checks we disable
- *   the sim IRQ callback (the way pic16f87xa example_usart does); the
- *   dispatcher path is exercised by example_blink. This source builds for
- *   the host sim only (the XC8 target build uses example_blink as its
- *   APP_SOURCES); it calls pic18_sim_* which are host-only.
+ *   Verifies BRG math (all of Table 20-1, DS39632E §20.0, including the
+ *   16-bit BRG16=1 extension PIC16 lacks), init register programming,
+ *   TX/RX, auto-baud, and 9-bit address-detect. The RX IRQ handler
+ *   consumes RCREG, so polling checks disable the sim IRQ callback; host
+ *   sim only, calls `pic18_sim_*` host-only hooks.
  */
 
 #include "pic8_hal.h"

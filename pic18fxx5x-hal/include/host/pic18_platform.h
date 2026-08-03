@@ -4,24 +4,12 @@
  *          attribute is spelled, for the CMake host build.
  *
  * @details
- *   This is the host half of the SFR mapping layer. The companion
- *   target/pic18_platform.h is used by the XC8 build. Which one is included
- *   is decided by the build's include path (CMake puts include/host first;
- *   the XC8 Makefile puts include/target first), so pic18fxx5x.h includes
- *   "pic18_platform.h" unconditionally and there is no `#ifdef` around
- *   code anywhere in the HAL.
- *
- *   On the host every SFR access indexes a memory-backed register file
- *   `pic18_sim_sfr[]` (defined in src/sim/pic18_sim.c), so tests can poke
- *   registers directly. GCC/Clang provides a real weak attribute for
- *   optional handler override.
- *
- *   Phase 1 note: the array is provisionally sized to the full 12-bit
- *   data-memory address space (4096 B) so any address the Phase 2 drivers
- *   use resolves without reallocation. Phase 2 task 2 decides whether the
- *   BSR / Access-Bank scheme is modeled explicitly or kept as this flat
- *   array; either way the macros below stay the same, only the storage
- *   behind them changes.
+ *   Host half of the SFR mapping layer (the target half is
+ *   `target/pic18_platform.h`); the build's include path picks one, so
+ *   `pic18fxx5x.h` includes `"pic18_platform.h"` unconditionally with no
+ *   `#ifdef`. Every SFR access indexes a memory-backed register file
+ *   `pic18_sim_sfr[]` (`src/sim/pic18_sim.c`), sized to the full 12-bit
+ *   data-memory address space so tests can poke any register directly.
  */
 
 #ifndef PIC18_PLATFORM_H
@@ -30,8 +18,7 @@
 #include <stdint.h>
 
 /* 4096-byte memory-backed register file (DS39632E Figure 5-5 data-memory
- * map footprint), defined in src/sim/pic18_sim.c. Provisional size; see
- * file header. */
+ * map footprint), defined in src/sim/pic18_sim.c. */
 extern uint8_t pic18_sim_sfr[0x1000];
 
 /* GCC/Clang weak attribute, lets user code override a peripheral's

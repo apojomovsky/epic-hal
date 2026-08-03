@@ -3,16 +3,12 @@
  * @brief   PIC18F2455 family host simulation backend.
  *
  * @details
- *   Linked by the CMake host build only; the XC8 Makefile does not compile
- *   this file. Provides `pic18_sim_sfr[]`, the 4096-byte memory-backed
- *   register file the host SFR macros (include/host/pic18_platform.h)
- *   dereference, and the hooks declared in pic18fxx5x_sim.h.
- *
- *   Phase 2 models Timer0 (8/16-bit, prescaler, overflow -> TMR0IF) and
- *   GPIO drive/read. The flat-array / physical-address approach (per the
- *   plan's Phase 2 task 2 decision) means every SFR the drivers touch is
- *   in the Access Bank (0xF60-0xFFF) and is just an index into this array;
- *   no BSR translation is needed.
+ *   Linked by the CMake host build only. Provides `pic18_sim_sfr[]`, the
+ *   4096-byte memory-backed register file the host SFR macros
+ *   (`include/host/pic18_platform.h`) dereference, and the hooks declared
+ *   in `pic18fxx5x_sim.h`. Every SFR the drivers touch is in the Access
+ *   Bank (0xF60-0xFFF), so it's just an index into this array, no BSR
+ *   translation needed.
  */
 
 #include "pic18fxx5x_sim.h"

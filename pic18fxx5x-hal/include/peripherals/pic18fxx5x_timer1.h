@@ -3,26 +3,11 @@
  * @brief   Timer1 driver, 16-bit timer/counter.
  *
  * @details
- *   Source: DS39632E §12.0 (Timer1 Module), Register 12-1 (T1CON).
- *
- *   The API matches pic16f87xa_timer1.h (same `TIMER1_HandleTypeDef`,
- *   `HAL_TIMER1_*` names/signatures, weak `TIMER1_IRQHandler`) so consumer
- *   code is portable; the body differs because PIC18's T1CON adds two bits in
- *   the top byte that PIC16 left unimplemented:
- *     - RD16 (T1CON<7>): 16-bit read/write mode. Set by this driver so the
- *       16-bit atomic read/write idiom works as on PIC16 (reading TMR1L
- *       latches TMR1H into a shadow). PIC16 is always 16-bit; PIC18 makes it
- *       a mode bit.
- *     - T1RUN (T1CON<6>): Timer1 system-clock status, read-only; ignored.
- *   The prescaler (1:1/1:2/1:4/1:8), T1OSCEN, T1SYNC, TMR1CS, TMR1ON bits
- *   are at the same positions as PIC16.
- *
- *   Wiring: 16-bit counter TMR1H:TMR1L; clock Fosc/4 (TMR1CS=0) or external
- *   T1CKI/T1OSC (TMR1CS=1); T1OSCEN enables the 32.768 kHz crystal on
- *   T1OSI/T1OSO; overflow (0xFFFF -> 0x0000) sets PIR1<TMR1IF>.
- *
- *   Reset (DS39632E Table 5-1): T1CON = 0x00 (off, 1:1, internal, T1OSC off,
- *   sync, RD16 off). TMR1H/L unknown at POR. The driver sets RD16 on init.
+ *   Matches `pic16f87xa_timer1.h`'s API (DS39632E §12.0). PIC18's T1CON
+ *   adds RD16 (T1CON<7>, 16-bit read/write mode, set by this driver so the
+ *   atomic TMR1L-latches-TMR1H idiom works) and read-only T1RUN
+ *   (T1CON<6>, ignored); prescaler/T1OSCEN/T1SYNC/TMR1CS/TMR1ON sit at the
+ *   same positions as PIC16.
  */
 
 #ifndef PIC18FXX5X_TIMER1_H
