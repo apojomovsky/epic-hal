@@ -59,7 +59,24 @@ CI_IMAGE        := ghcr.io/$(GHCR_OWNER)/pic8-hal-ci:$(IMAGE_TAG)
 # files, etc.) are owned by you, not root. Confirmed the hard way: without
 # this, every container write lands as root and `rm -rf` from the host
 # fails with Permission denied.
-DOCKER_RUN := docker run --rm --user $$(id -u):$$(id -g) -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE)
+#
+# The passwd/group bind-mounts + a writable HOME are needed on top of
+# that, specifically for mdb-test/mdb.sh (MPLAB X's JVM): an arbitrary
+# --user UID with no /etc/passwd entry makes Java's getpwuid()-based home
+# directory lookup fail, and mdb.sh's own preference-directory creation
+# then writes into a literal `?` directory at the container's CWD (which
+# is the bind-mounted repo, so this corrupted the actual working tree
+# during testing). Bind-mounting the real /etc/passwd + /etc/group lets
+# the UID resolve to a real user (with the host's real $HOME path), and
+# HOME_MOUNT gives that path something writable to land in, kept in
+# ~/.cache (not the repo, not a Docker volume, since anonymous/named
+# volumes default to root-owned and hit the exact same permission
+# problem this is fixing). Confirmed fixed against a real mdb-test run.
+HOME_MOUNT := $(HOME)/.cache/pic8-hal-toolchain-home
+DOCKER_RUN := mkdir -p $(HOME_MOUNT) && docker run --rm --user $$(id -u):$$(id -g) \
+	-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+	-v $(HOME_MOUNT):$(HOME) \
+	-v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE)
 
 # ─────────────────────────── vendor installers ───────────────────────
 VENDOR_DIR := docker/ci-toolchain/vendor
@@ -165,7 +182,11 @@ mdb-test: image
 	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(DFP) $(WAIT_MS)
 
 # ─────────────────────────── dev shell ───────────────────────────────
-# --user here too (see DOCKER_RUN's comment): anything you build or edit
-# from this shell lands owned by you, not root.
+# Same --user/passwd/HOME fix as DOCKER_RUN (see its comment); a plain
+# `docker run -it` here instead of reusing $(DOCKER_RUN) since that
+# variable doesn't carry -it and isn't worth complicating for one target.
 shell: image
-	docker run --rm -it --user $$(id -u):$$(id -g) -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) bash
+	mkdir -p $(HOME_MOUNT) && docker run --rm -it --user $$(id -u):$$(id -g) \
+		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+		-v $(HOME_MOUNT):$(HOME) \
+		-v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) bash
