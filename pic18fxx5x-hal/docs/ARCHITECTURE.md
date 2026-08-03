@@ -1,14 +1,13 @@
 # `pic18fxx5x-hal` architecture: XC8 v4.00 codegen notes
 
-> Status: **two real bugs found and fixed (a baud-rate math error and a
-> missing WDT-off knob for the sim-target harness); a third, deeper one
-> found and precisely localized but not yet fixed.** Written up during
+> Status: **all three bugs found and fixed; `pic8-tick`'s PIC18
+> sim-target test reaches a full `PASS`.** Written up during
 > `docs/ci-plan.md` Phase 4's PIC18 follow-up, after the PIC16 side of
 > the same phase reached a full fix (see `pic16f87xa-hal/docs/
 > ARCHITECTURE.md`). None of what's below is the same bug class as
 > PIC16's (PIC18's EUSART/Timer2 registers are all in the Access Bank,
 > no `pic_select_bank`-equivalent exists in this family's drivers at
-> all), so this is a genuinely separate investigation, not a port of
+> all), so this was a genuinely separate investigation, not a port of
 > the PIC16 fixes.
 
 ## Why this exists
@@ -61,9 +60,10 @@ from PIC16's own reasoning.
 
 ## Finding 3: a runtime-computed SFR address compiles to program-memory table access, not data-memory access
 
-**Root cause of the remaining sim-target hang, precisely localized, not
-yet fixed.** With Findings 1 and 2 applied, `pic8-tick`'s PIC18
-sim-target test still produces no UART output at all. Traced via `mdb`
+**Root cause of the remaining sim-target hang, found, precisely
+localized, and fixed.** With Findings 1 and 2 applied, `pic8-tick`'s
+PIC18 sim-target test still produces no UART output at all. Traced via
+`mdb`
 instruction-stepping (`stepi`, not `run`+`wait`, for the same reason
 noted in `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 9: headless
 `break`-set breakpoints don't reliably work in this toolchain):
@@ -133,36 +133,43 @@ needs to apply repo-wide (it changes storage-duration-object allocation
 scope too, §4.6.x, not tried at that scope) or the qualifier needs a
 different placement/syntax than tried, not determined.
 
+**Fix**: the mechanically-safe approach, proven to work for the
+equivalent PIC16 problem (`pic16f87xa-hal/docs/ARCHITECTURE.md`
+Finding 9's SSP/EEPROM follow-up). `pic18_irq.c`'s entire
+`pic18_irq_desc_t` lookup table and `sfr_set`/`sfr_clr` helpers were
+removed; every function (`HAL_IRQ_Disable`/`Restore`/`Enable`/
+`DisableSrc`/`ClearFlag`/`GetFlag`/`SetPriority`) is now a `switch` on
+`irq` with one `case` per source, each naming its register directly
+(a new `SFR_SET_BIT`/`SFR_CLR_BIT` macro pair, expanding to a plain
+`pic8_sfr_read8`/`write8` pair against a literal `PIC_REG_*` token, so
+the address is always a compile-time constant, never a value that
+crossed a function-call boundary as a `uint16_t`). `HAL_IRQ_Disable`/
+`Restore` needed the same treatment even though they already passed
+constant addresses at their own call sites: `sfr_set`/`sfr_clr` still
+received them as a genuine runtime parameter internally, so the bug
+applied there too, not just to the table-driven per-source functions.
+
+Verified via `mdb`: `pic8-tick`'s PIC18 sim-target test reaches
+`PIC8_HARNESS_RESULT: PASS` reliably (3/3 runs). Host suite and all 22
+previously-passing PIC18 `(module, MCU)` real-target builds re-verified
+clean, no regressions.
+
 ## Open, for whoever picks this back up
 
-- **Finding 3 is unresolved.** The mechanically-safe fix, proven to
-  work for the equivalent PIC16 problem
-  (`pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 9's SSP/EEPROM
-  follow-up): stop passing a runtime address through
-  `sfr_set`/`sfr_clr` at all. `pic18_irq.c`'s entire interrupt subsystem
-  (`HAL_IRQ_Enable`/`DisableSrc`/`ClearFlag`/`GetFlag`, all 14 IRQ
-  sources) is table-driven off a runtime `pic18_irq_desc_t` struct
-  holding `flag_addr`/`en_addr`/`prio_addr` as `uint16_t` values, so
-  this bug is very likely **not specific to Timer2/`HAL_IRQ_Restore`**,
-  it should affect every PIC18 interrupt source that goes through this
-  table. Converting the table-driven dispatch to a
-  switch/if-chain over named, compile-time-constant SFR accesses (one
-  branch per `PIC18_IRQn` value) would fix it the same proven way, at
-  the cost of a much larger, more mechanical rewrite than PIC16's
-  equivalent fix (this file dispatches on far more than the two
-  registers PIC16's `pic_select_bank`-based bugs touched). Not
-  attempted here, given the scope; this document exists so the next
-  session doesn't have to re-derive the diagnosis.
-- Checked every other PIC18 peripheral driver for the same pattern
-  (`grep` for `pic8_sfr_read8`/`write8` call sites, not `mdb`-verified
-  beyond `pic18_irq.c` itself): `pic18fxx5x_usart.c`, `_ssp.c`,
-  `_adc.c`, `_eeprom.c`, `_comp.c`, and `_spp.c` all pass a
+- `pic18fxx5x_ccp.c`'s `HAL_CCP_*` functions use the same
+  runtime-address shape Finding 3 just fixed in `pic18_irq.c`
+  (`a->cprh`/`a->cprl`/`a->con`, struct-member-derived, not compile-time
+  constants). Checked every other PIC18 peripheral driver for the same
+  pattern (`grep` for `pic8_sfr_read8`/`write8` call sites, not
+  `mdb`-verified beyond `pic18_irq.c` itself): `pic18fxx5x_usart.c`,
+  `_ssp.c`, `_adc.c`, `_eeprom.c`, `_comp.c`, and `_spp.c` all pass a
   compile-time-constant `PIC_REG_*` macro directly, the pattern already
-  confirmed safe (matches the manual-inline test that worked in Finding
-  3). `pic18fxx5x_ccp.c` does not: `HAL_CCP_*` reads/writes
-  `a->cprh`/`a->cprl`/`a->con`, struct-member-derived runtime addresses,
-  the same shape as `pic18_irq.c`'s table-driven dispatch. Very likely
-  has the same bug; not yet probed under `mdb` to confirm.
+  confirmed safe; `_ccp.c` is the only other one that doesn't. Very
+  likely has the same bug; not yet probed under `mdb` to confirm, nor
+  fixed (`pic8-tick` doesn't exercise CCP, so it didn't block the
+  sim-target pilot). Same fix shape would apply: dispatch on which CCP
+  instance before touching any SFR, so each access site ends up with a
+  literal register name.
 - This document itself should be checked for staleness against whatever
   XC8 version `docker/ci-toolchain/Dockerfile` pins if that version is
   ever bumped; these findings are cited against v4.00 specifically.

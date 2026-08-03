@@ -156,13 +156,16 @@ earlier draft of this account called several of these "genuine XC8
 bugs" without doing that check first; corrected). See Phase 4's own
 Validation section for the full, detailed account.
 
-**PIC18 still red**, investigated as a follow-up: two real, unrelated
-bugs found and fixed (a baud-rate math error in the sim-target harness,
-and the same missing `WDT=OFF` Makefile knob PIC16 needed), but a
-third, deeper bug remains open, a runtime-addressed SFR write compiling
-to PIC18's program-memory table mechanism instead of a data-memory
-access. Not the same bug class as PIC16's at all (PIC18's own drivers
-have no `pic_select_bank` equivalent). See
+**PIC18 now green too**, investigated and fixed as a follow-up: three
+real bugs found and fixed (a baud-rate math error in the sim-target
+harness, the same missing `WDT=OFF` Makefile knob PIC16 needed, and a
+runtime-addressed SFR write compiling to PIC18's program-memory table
+mechanism instead of a data-memory access, fixed by rewriting
+`pic18_irq.c`'s table-driven dispatch into named, compile-time-constant
+SFR accesses per IRQ source). Not the same bug class as PIC16's at all
+(PIC18's own drivers have no `pic_select_bank` equivalent), a genuinely
+separate investigation. `pic8-tick`'s PIC18 sim-target test now reaches
+`PIC8_HARNESS_RESULT: PASS` reliably. See
 `pic18fxx5x-hal/docs/ARCHITECTURE.md`.
 
 ## Motivation
@@ -1020,25 +1023,23 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
 
 **Exit criterion**: `sim-tests.yml` green on `master` for the pilot
 module, both families, merged. **PIC16 leg met** (verified locally,
-5/5 runs; not yet merged/observed green in CI itself). **PIC18 leg
-still not met**, though investigated: two real bugs found and fixed
-(the sim-target harness's baud-rate math didn't fit `SPBRG`'s 8 bits at
-this file's 48 MHz `FOSC_HZ`, and the same missing `HARNESS=sim` →
-`WDT=OFF` Makefile knob PIC16 needed), but a third, deeper bug remains
-open and blocking: `pic18_irq.c`'s `HAL_IRQ_Restore`/`Enable`/
-`DisableSrc`/`ClearFlag`/`GetFlag` dispatch off a runtime SFR address
-(from a lookup table, not a compile-time constant), and XC8 compiles
-that specific access pattern to PIC18's program-memory table
-read/write mechanism (`TBLPTR`/`TABLAT`/`tblrd`/`tblwt`) instead of a
-plain data-memory access, so the write silently goes nowhere. Root
-cause precisely localized (down to the exact generated instructions)
-but not fixed; a proper fix needs restructuring `pic18_irq.c`'s
-table-driven dispatch into named, compile-time-constant SFR accesses
-per IRQ source, comparable in scope to a second version of this same
-phase's PIC16 work. Full account:
-`pic18fxx5x-hal/docs/ARCHITECTURE.md`. PIC18 remains tracked as
-separate follow-up work, not blocking merge of the PIC16 fixes
-themselves.
+5/5 runs; not yet merged/observed green in CI itself). **PIC18 leg now
+also met** (verified locally, 3/3 runs; not yet merged/observed green
+in CI itself). Three real bugs found and fixed: the sim-target
+harness's baud-rate math didn't fit `SPBRG`'s 8 bits at this file's
+48 MHz `FOSC_HZ`; the same missing `HARNESS=sim` → `WDT=OFF` Makefile
+knob PIC16 needed; and `pic18_irq.c`'s `HAL_IRQ_Restore`/`Enable`/
+`DisableSrc`/`ClearFlag`/`GetFlag`, which dispatched off a runtime SFR
+address (from a lookup table, not a compile-time constant), which XC8
+compiled to PIC18's program-memory table read/write mechanism
+(`TBLPTR`/`TABLAT`/`tblrd`/`tblwt`) instead of a plain data-memory
+access, so the write silently went nowhere. Fixed by rewriting
+`pic18_irq.c`'s table-driven dispatch into a `switch` per function with
+one case per `PIC18_IRQn`, each naming its register directly so the
+address is always a compile-time constant. Full account:
+`pic18fxx5x-hal/docs/ARCHITECTURE.md`. `pic18fxx5x_ccp.c` has the same
+runtime-address shape and is very likely affected the same way, not yet
+probed or fixed, tracked as separate follow-up work there.
 
 ---
 
