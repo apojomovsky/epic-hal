@@ -1,0 +1,29 @@
+/**
+ * @file    pic16f193x_irq_dispatch.c
+ * @brief   Fan-out from the single PIC16F193X interrupt vector to every
+ *          peripheral IRQHandler. Shared by both builds.
+ *
+ * @details
+ *   Single PIC16F193X vector (0x0004, DS41364B §4.0): the target's
+ *   `__interrupt()` and the host's sim IRQ callback both call this one
+ *   dispatcher. Each peripheral IRQHandler checks its own flag and
+ *   returns immediately if not pending. Handlers are declared here
+ *   with strong prototypes, not via their PIC8_WEAK headers, so the
+ *   host linker is forced to pull every handler's object out of the
+ *   static library instead of leaving an unreferenced weak symbol NULL.
+ *
+ *   Foundation scope: only TIMER0 and IOC (the GPIO change interrupt)
+ *   have drivers yet. Each peripheral phase appends its handler extern
+ *   and its call here, in the same shape.
+ */
+
+#include "core/pic16f193x_irq.h"
+
+extern void TIMER0_IRQHandler(void);
+extern void IOC_IRQHandler(void);
+
+void pic8_dispatch_all_irqs(void)
+{
+    TIMER0_IRQHandler();
+    IOC_IRQHandler();
+}

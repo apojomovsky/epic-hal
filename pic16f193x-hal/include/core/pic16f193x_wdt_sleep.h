@@ -1,0 +1,52 @@
+/**
+ * @file    core/pic16f193x_wdt_sleep.h
+ * @brief   CPU-level helpers: Watchdog Timer, Brown-out Reset, Sleep.
+ *
+ * @details
+ *   Source: DS41364B §3.0 (PCON), §24.0 (WDT, WDTCON), §24.2 (Sleep). The
+ *   watchdog is enabled by the WDTEN config bit (or per-window via the
+ *   SWDTEN bit in WDTCON, DS41364B §24.1); either way call
+ *   @ref HAL_WDT_Refresh periodically or the chip resets. Config bits
+ *   themselves are emitted by the mcu Makefile, not here. HAL_Sleep_Enter
+ *   is a no-op on host (no real CPU to stop).
+ */
+
+#ifndef PIC16F193X_WDT_SLEEP_H
+#define PIC16F193X_WDT_SLEEP_H
+
+#include "pic16f193x.h"
+#include "pic16f193x_sfr.h"
+
+/**
+ * @brief  Refresh the Watchdog Timer (`clrwdt`, no-op on host). Must be
+ *         called more often than the WDT period on a real target.
+ */
+void HAL_WDT_Refresh(void);
+
+/**
+ * @brief  Enter Sleep (`sleep` asm on target, no-op on host; callers
+ *         should keep driving pic16f193x_sim_step()). Real target halts
+ *         until any enabled interrupt wakes it (DS41364B §24.2).
+ */
+void HAL_Sleep_Enter(void);
+
+/**
+ * @brief  Returns 1 if the last reset was a Brown-out Reset
+ *         (PCON<BOR>, DS41364B §3.0). Clear after reading via
+ *         @ref HAL_BOR_ClearFlag.
+ */
+uint8_t HAL_BOR_GetStatus(void);
+
+/** Clear PCON<BOR>. */
+void HAL_BOR_ClearFlag(void);
+
+/**
+ * @brief  Returns 1 if the device just powered on (PCON<POR>,
+ *         DS41364B §3.0). Set only on Power-on Reset.
+ */
+uint8_t HAL_POR_GetStatus(void);
+
+/** Clear PCON<POR>. */
+void HAL_POR_ClearFlag(void);
+
+#endif /* PIC16F193X_WDT_SLEEP_H */
