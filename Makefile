@@ -54,7 +54,12 @@ LOCAL_IMAGE     := pic8-hal-toolchain:local
 GHCR_OWNER      ?=
 CI_IMAGE        := ghcr.io/$(GHCR_OWNER)/pic8-hal-ci:$(IMAGE_TAG)
 
-DOCKER_RUN := docker run --rm -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE)
+# --user matches the container process to the invoking host user, so
+# build artifacts written to the bind-mounted repo (build/ dirs, .hex
+# files, etc.) are owned by you, not root. Confirmed the hard way: without
+# this, every container write lands as root and `rm -rf` from the host
+# fails with Permission denied.
+DOCKER_RUN := docker run --rm --user $$(id -u):$$(id -g) -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE)
 
 # ─────────────────────────── vendor installers ───────────────────────
 VENDOR_DIR := docker/ci-toolchain/vendor
@@ -160,5 +165,7 @@ mdb-test: image
 	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(DFP) $(WAIT_MS)
 
 # ─────────────────────────── dev shell ───────────────────────────────
+# --user here too (see DOCKER_RUN's comment): anything you build or edit
+# from this shell lands owned by you, not root.
 shell: image
-	docker run --rm -it -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) bash
+	docker run --rm -it --user $$(id -u):$$(id -g) -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) bash
