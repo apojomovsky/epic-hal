@@ -15,6 +15,9 @@ build*/
 *.swo
 .DS_Store
 
+# Claude Code local state (personal settings, session/lock files)
+.claude/
+
 # CMake (generated only — build*/ above already covers the generated
 # top-level Makefile CMake emits in a build dir; a bare "Makefile" rule here
 # would also match hand-written source Makefiles like mcu/*/Makefile, which
