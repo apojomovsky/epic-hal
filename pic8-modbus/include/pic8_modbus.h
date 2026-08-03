@@ -6,27 +6,11 @@
  *
  * @details
  *   RTU only (binary framing, CRC-16), slave role only, function codes
- *   01/02/03/04/05/06/15/16 (read/write coils, discrete inputs, holding and
- *   input registers). No ASCII, no TCP, no master role, see
- *   `docs/ARCHITECTURE.md` for what's deliberately out of scope and why.
- *
- *   Register access is a plain data map (`pic8_modbus_slave_map_t`): the
- *   arrays *are* the data on both the host sim and real silicon, so unlike
- *   `pic8-bus`'s injectable ops seam (which exists to mock hardware the host
- *   sim can't model), no callback indirection is needed here.
- *
- *   `pic8_modbus_slave_poll()` is silence-delimited, not event-delimited:
- *   call it every main-loop iteration (or wire it as a `pic8-taskmgr` task).
- *   It drains newly received bytes into an internal frame buffer and, once
- *   `pic8-tick` shows the RTU T3.5 inter-frame gap has elapsed since the
- *   last received byte, validates and dispatches the frame in one call.
- *
- *   This header stays family-neutral (only <stdint.h>): the optional RS-485
- *   direction pin is identified by plain `port`/`pin` integers (mirroring
- *   `pic8_bus_spi_init`'s `cs_port`/`cs_pin` convention), not a HAL
- *   `GPIO_TypeDef`, so no HAL header needs to appear here. Only
- *   `src/pic8_modbus.c` includes `pic8_hal.h`, `pic8_serial.h`,
- *   `pic8_tick.h`.
+ *   01-06/15/16 (see docs/ARCHITECTURE.md for what's out of scope).
+ *   Register access is plain arrays (pic8_modbus_slave_map_t), the data
+ *   itself on host and target, no callback indirection needed.
+ *   pic8_modbus_slave_poll() is silence-delimited, dispatching once the
+ *   RTU T3.5 inter-frame gap elapses; call it every main-loop iteration.
  */
 
 #ifndef PIC8_MODBUS_H
@@ -42,15 +26,12 @@
 #endif
 
 /**
- * @brief  The slave's register map. Every array is caller-owned storage;
- *         this module only ever reads/writes through these pointers, it
- *         never allocates.
- *
- *   Coils and discrete inputs are bit-packed, LSB of `array[0]` is address
- *   0, matching Modbus's own bit-addressing order within a byte. Holding
- *   and input registers are one `uint16_t` per address. Any array may be
- *   NULL with its count 0 if the slave doesn't expose that table, requests
- *   against it get an ILLEGAL DATA ADDRESS exception.
+ * @brief  The slave's register map: caller-owned storage, this module
+ *         only reads/writes through these pointers, never allocates.
+ *         Coils/discrete_inputs are bit-packed (LSB of array[0] =
+ *         address 0); holding/input regs are one uint16_t per address.
+ *         A NULL array (count 0) makes that table absent: matching
+ *         requests get an ILLEGAL DATA ADDRESS exception.
  */
 typedef struct {
     uint8_t        *coils;              /**< bit-packed, read/write        */

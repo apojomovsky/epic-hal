@@ -4,14 +4,11 @@
  *          function-code dispatch, optional RS-485 direction control.
  *
  * @details
- *   Single-instance module (one slave per firmware image), the same model
- *   `pic8-serial` and `pic8-tick` use, state lives in file-scope statics,
- *   not a caller-owned handle.
- *
- *   Family-neutral: the only family-specific surface touched here is GPIO
- *   (for the optional RS-485 pin), and that's already neutral through
- *   `pic8_hal.h`'s `GPIO_TypeDef`/`HAL_GPIO_*` contract, no `#if` needed in
- *   this file at all.
+ *   Single-instance module (one slave per firmware image), state lives
+ *   in file-scope statics, not a caller-owned handle, same model
+ *   pic8-serial/pic8-tick use. Family-neutral: the only family-specific
+ *   surface is GPIO for the optional RS-485 pin, already neutral via
+ *   pic8_hal.h's GPIO_TypeDef/HAL_GPIO_* contract, no #if needed here.
  */
 
 #include "pic8_modbus.h"

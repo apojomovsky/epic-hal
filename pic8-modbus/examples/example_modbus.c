@@ -5,18 +5,11 @@
  *          and assert the exact response bytes on the wire.
  *
  * @details
- *   Host-sim test (the family is selected by the CMake HAL_FAMILY / the XC8
- *   Makefile's MCU), mirrors pic8-serial's example_serial.c: RX bytes are
- *   injected through `*_sim_drive_usart_rx`, and TX bytes are captured by
- *   pumping `pic8_dispatch_all_irqs` while reading `PIC8_REG8(PIC_REG_TXREG)`.
- *   `pic8_tick_delay_ms` pumps `pic8_harness_tick()` internally, which is how
- *   simulated time advances past the module's T3.5 inter-frame timeout.
- *
- *   CRC-16 expected values are computed here with an independently written
- *   copy of the CRC-16/MODBUS algorithm (self-checked against the standard
- *   catalogue "123456789" -> 0x4B37 test vector), not by re-deriving from
- *   the module's own implementation, so this test can't share a CRC bug
- *   with `src/pic8_modbus.c`.
+ *   Host-sim test: RX bytes go in via *_sim_drive_usart_rx, TX bytes are
+ *   captured via pic8_dispatch_all_irqs + TXREG reads, and
+ *   pic8_tick_delay_ms advances simulated time past the T3.5 timeout.
+ *   CRC-16 expected values use an independently written copy of the
+ *   algorithm, so this test can't share a CRC bug with pic8_modbus.c.
  */
 
 #include "pic8_modbus.h"

@@ -3,14 +3,11 @@
  * @brief   pic8-modbus on-target demo: a 4-holding-register RTU slave.
  *
  * @details
- *   The XC8 Makefiles build this (the host smoke test
- *   examples/example_modbus.c uses the host-sim RX-injection API, which is
- *   not compiled on target). Initializes the tick timebase and the Modbus
- *   slave (address 0x11, 9600 baud, 4 holding registers), then polls
- *   forever. On a real target `pic8_harness_running` always returns 1, so
- *   this is a link/init smoke (proves the module builds and runs against
- *   real HAL), not a live transaction, same caveat `pic8-bus`'s target
- *   example states: connect a Modbus RTU master to exercise it for real.
+ *   The XC8 Makefiles build this (the host smoke test uses a host-sim
+ *   RX-injection API not compiled on target). Initializes the tick
+ *   timebase and a 4-holding-register Modbus slave (address 0x11, 9600
+ *   baud), then polls forever. This is a link/init smoke, not a live
+ *   transaction, connect a real RTU master to exercise it for real.
  */
 
 #include "pic8_modbus.h"
