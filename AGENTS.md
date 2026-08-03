@@ -16,8 +16,8 @@ bodies) lives per-family under a **fixed contract**: same names/signatures
 across families, different bodies. Read `pic8-common/README.md` +
 `pic8-common/MANUAL.md` before touching any HAL code, every family manual
 points back there instead of repeating it. Full design:
-`docs/multi-family-plan.md` (its "How to add family #3" checklist is the
-playbook if a third family shows up).
+`docs/multi-family-plan.md`. `docs/adding-a-device.md` is the playbook if a
+new device variant or a third family shows up.
 
 ## Module anatomy
 
@@ -62,6 +62,17 @@ actually per-family.
   ...`) or `phaseN` for multi-family work. Don't batch unrelated changes
   into one commit, split them and commit each as its own piece of work
   finishes.
+- **Before calling a development or fix task done, update the docs it
+  touches.** That means the module's `README.md`/`docs/API.md`/
+  `docs/ARCHITECTURE.md` if a public API, behavior, or status changed; the
+  relevant `MANUAL.md` chapter if a register-level fact changed; and the
+  `Status:` line (and any claim it makes) of the `docs/<name>-plan.md` the
+  work closes out, if there is one. A repo-wide documentation audit found
+  `Status: not started` lines on modules that had shipped long ago, and
+  cross-references pointing at sections that no longer existed, as the
+  norm rather than the exception, exactly because this step kept getting
+  skipped. Don't repeat that: docs are part of the deliverable, not an
+  afterthought.
 - Non-trivial work gets a plan doc first: `docs/<name>-plan.md`, a
   `Status:` line, explicit **solved vs. pending** framing when design
   validation happens before implementation.
