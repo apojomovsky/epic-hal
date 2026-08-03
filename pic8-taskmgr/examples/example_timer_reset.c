@@ -3,22 +3,12 @@
  * @brief   Verify @ref task_reset re-arms a task from the full period.
  *
  * @details
- *   A periodic "marker" task (period 10) records the scheduler tick at each
- *   fire. A priority-0 supervisor (period 25) calls `task_reset(marker)` on
- *   its first fire and records the reset tick. The assertion:
- *
- *     - Before the reset the marker fires every 10 ticks (fires at 10, 20).
- *     - The reset lands at tick 25.
- *     - The first fire *after* the reset is at tick 35 = reset_tick + period,
- *       NOT at the originally-scheduled 30 — i.e. the reset restarted the
- *       countdown from the full period, pushing the fire out. The gap across
- *       the reset widens to 15 (> 10), then resumes at 10.
- *
- *   This is the "re-triggerable timeout" pattern (debounce / feed-the-WDT):
- *   `task_reset` on each event pushes the fire out by a full period.
- *
- *   Uses a fast tick (reload 253, prescaler 1:2 → ~6 sim cycles/tick) so the
- *   run is short. Host sim only; the XC8 target build uses example_multi_blink.
+ *   A period-10 marker task records the scheduler tick at each fire; a
+ *   period-25 supervisor calls `task_reset(marker)` on its first fire.
+ *   Marker fires at 10, 20, then the reset lands at 25 and the next fire
+ *   is at 35 (reset_tick + period), not the originally-scheduled 30, so
+ *   the gap across the reset widens to 15 before resuming at 10. Host sim
+ *   only; the XC8 target build uses example_multi_blink.
  */
 
 #include "pic8_hal.h"
@@ -29,11 +19,9 @@
     if (!(cond)) { pic8_harness_log("FAIL: %s\n", msg); return pic8_harness_report(0); } \
 } while (0)
 
-/* Tick config matched to example_multi_blink (reload 61, 1:256): proven on
- * both families. The fire ticks are deterministic in scheduler-tick units
- * (g_ticks = Timer0 overflow count) regardless of cycles-per-tick, so the
- * assertions on tick numbers 10/20/25/35/45 hold on both. SIM_CYCLES=4M
- * yields ~80 scheduler ticks — enough for the marker to fire through 75. */
+/* Tick config matched to example_multi_blink (reload 61, 1:256); fire
+ * ticks are deterministic in scheduler-tick units regardless of
+ * cycles-per-tick, so the tick-number assertions hold on both families. */
 #define TICK_RELOAD     61U
 #define TICK_PRESCALER  TIMER0_PRESCALER_1_256
 #define SIM_CYCLES      4000000UL
@@ -81,11 +69,8 @@ int main(void)
 
     task_manager_run();
 
-    /* 1. Enough fires observed to cover: two pre-reset fires (10, 20), the
-     *    first post-reset fire (35), and one more to confirm resumed spacing
-     *    (45). PIC16 reaches ~61 scheduler ticks in SIM_CYCLES (vs ~80 on
-     *    PIC18 — the PIC16 sim's first TMR0 overflow is slower), yielding 5
-     *    marker fires; PIC18 yields 7. Either way >= 4. */
+    /* 1. Enough fires to cover both pre-reset fires (10, 20), the first
+     *    post-reset fire (35), and one more confirming resumed spacing (45). */
     CHECK(n_fires >= 4U, "marker did not fire enough times");
     CHECK(fire_ticks[0] == 10U, "first fire not at tick 10");
     CHECK(fire_ticks[1] == 20U, "second fire not at tick 20");
@@ -96,8 +81,8 @@ int main(void)
     CHECK(did_reset == 1U, "supervisor never reset the marker");
     CHECK(reset_tick == 25U, "reset did not land at tick 25");
 
-    /* 3. The first fire after the reset is exactly period ticks after the
-     *    reset (35, not 30) — the reset re-armed from the full period. */
+    /* 3. First fire after reset is exactly period ticks later (35, not 30),
+     *    confirming the reset re-armed from the full period. */
     uint8_t j = 0U;
     while (j < n_fires && fire_ticks[j] <= reset_tick) j++;
     CHECK(j < n_fires, "no fire after the reset");

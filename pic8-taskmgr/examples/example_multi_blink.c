@@ -5,31 +5,12 @@
  *          and a real XC8 target, with no `#ifdef` in the code.
  *
  * @details
- *   The scheduler is wired to a ~10 ms Timer0 tick on a 20 MHz target
- *   (Fosc/4 = 5 MHz, prescaler 1:256, reload 61 → 195 counts × 51.2 µs ≈
- *   9.98 ms per tick). Four cooperative tasks blink LEDs on PORTB at distinct
- *   rates, showing:
- *
- *     - Periodic tasks at different periods (led_fast / led_med / led_slow).
- *     - Priority ordering: the supervisor (priority 0) runs first each round.
- *     - Runtime task spawning: the periodic supervisor spawns one-shot blip
- *       children at runtime.
- *     - One-shot tasks (period 0): a blip runs once, then its slot is freed.
- *
- *   PORTB is used so the example builds unchanged for every device in the
- *   family (the 28-pin PIC16F873A/876A have no PORTD/PORTE, but all have a
- *   full PORTB). Wiring (real target): an LED and resistor on each of
- *   RB0..RB3 to GND (active-high); a 20 MHz HS crystal on OSC1/OSC2.
- *
- *   On the host the harness bounds the run and the example reports per-LED
- *   toggle counts to stdout; the test passes when the fast LED toggled more
- *   often than the medium, the medium more than the slow, and at least one
- *   blip was spawned. On a real target the loop never returns and the LEDs
- *   blink forever.
- *
- *   The build links the host harness (sim) or the target harness (real time)
- *   via the HAL harness seam; `task_manager_run()` runs bounded on the host
- *   and forever on the target.
+ *   Demonstrates periodic tasks at different periods, priority ordering
+ *   (the supervisor runs first each round), and runtime one-shot spawning
+ *   (the supervisor spawns "blip" children that free their slot after one
+ *   run). PORTB is used so the example builds unchanged for every device
+ *   in the family, including the 28-pin parts with no PORTD/PORTE. Wiring:
+ *   an LED and resistor on each of RB0..RB3 to GND, 20 MHz HS crystal.
  */
 
 #include "pic8_hal.h"          /* family-neutral HAL entry point         */
@@ -39,13 +20,8 @@
 
 /* ───────────────────────── timing ────────────────────────────────── */
 
-/**
- * @brief  Timer0 reload for a ~10 ms tick on a 20 MHz target.
- *         Fosc/4 = 5 MHz; prescaler 1:256 → a 51.2 µs count.
- *         256 - 195 = 61 → 195 counts × 51.2 µs ≈ 9.98 ms per tick.
- *         The sim reproduces the overflow/IRQ plumbing, not the wall-clock
- *         rate.
- */
+/** Timer0 reload for a ~10 ms tick on a 20 MHz target: Fosc/4=5 MHz,
+ *  prescaler 1:256 (51.2 us/count), reload 61 -> 195 counts ~= 9.98 ms. */
 #define TICK_RELOAD       61U
 #define TICK_PRESCALER    TIMER0_PRESCALER_1_256
 
@@ -66,17 +42,9 @@
 
 /* ───────────────────────── per-task state ─────────────────────────── */
 
-/**
- * @brief  Per-LED state carried by each blink task through its @ref
- *         task_spawn argument. This is the idiomatic cooperative-scheduler
- *         pattern: a task cannot keep state in locals (they don't survive
- *         between calls), so it stores it in a struct it owns and reaches
- *         via `arg`.
- *
- *         Pointer-free so it banks in the 192 B of the 28-pin
- *         PIC16F873A/876A: `pin` is a bit index (0..7), and `count` is a
- *         uint8_t toggle counter.
- */
+/** Per-LED state carried through each blink task's @ref task_spawn `arg`,
+ *  since locals don't survive between calls. Pointer-free to fit the
+ *  192 B 28-pin parts. */
 typedef struct {
     GPIO_TypeDef      port;   /* Which port the LED lives on. */
     uint8_t           pin;    /* Bit index 0..7 of the LED pin. */
@@ -90,9 +58,8 @@ static blink_arg_t arg_blip = { GPIOB, 3U, 0U };   /* RB3 (spawned at runtime) *
 
 /* ───────────────────────── tasks ──────────────────────────────────── */
 
-/** Map a LED's pin index to a short label for the log. The string literals
- *  live in program space (not RAM), so this costs no data memory, important
- *  on the 192 B parts. Padded to 4 chars so the log columns line up. */
+/** Map a LED's pin index to a short label for the log, padded to 4 chars
+ *  so the columns line up. */
 static const char *led_name(uint8_t pin)
 {
     switch (pin) {
@@ -104,11 +71,8 @@ static const char *led_name(uint8_t pin)
     }
 }
 
-/** Periodic blink task: toggle the LED described by @ref blink_arg_t, bump
- *  its toggle count, and log a line so the run is visible as it happens
- *  (a stream of dispatches rather than one summary at the end). The log is
- *  a no-op on a real target (no stdout), so this is free there. The same
- *  function serves all four LEDs, each carries its own arg. */
+/** Periodic blink task: toggle the LED, bump its count, log a line. The
+ *  same function serves all four LEDs, each with its own arg. */
 static void task_blink(void *arg)
 {
     blink_arg_t *a = (blink_arg_t *)arg;
@@ -120,10 +84,8 @@ static void task_blink(void *arg)
 }
 
 /** Periodic supervisor (priority 0, runs first each round): every
- *  PERIOD_SUPERVISOR ticks, spawn a fresh one-shot blip on RB3. This is a
- *  task spawning another task at runtime, from inside a running task, the
- *  "etc." The blip fires once on the next tick, toggles RB3, and the
- *  scheduler frees its slot (period 0). */
+ *  PERIOD_SUPERVISOR ticks, spawns a fresh one-shot blip on RB3, which
+ *  fires once and frees its own slot. */
 static void task_supervisor(void *arg)
 {
     (void)arg;
@@ -144,10 +106,8 @@ int main(void)
                       GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3,
                       GPIO_PIN_RESET);
 
-    /* 2. Spawn the application tasks. Priority 0 = supervisor runs first
-     *    within each round; the three blinks share priority 1 and run in
-     *    spawn order. The arg pointer is how each task knows which LED and
-     *    counter are its own. */
+    /* 2. Priority 0 = supervisor runs first; the three blinks share
+     *    priority 1 and run in spawn order. */
     task_spawn(task_supervisor, NULL, PERIOD_SUPERVISOR, 0U);
     task_spawn(task_blink, &arg_fast, PERIOD_FAST, 1U);
     task_spawn(task_blink, &arg_med,  PERIOD_MED,  1U);

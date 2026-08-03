@@ -3,27 +3,13 @@
  * @brief   Cooperative task scheduler implementation (see task_manager.h).
  *
  * @details
- *   The scheduler keeps a fixed array of task control blocks
- *   (@ref TASK_MGR_MAX_TASKS slots). `task_manager_tick()` (called from a
- *   Timer0 overflow in the usual setup) decrements each enabled task's
- *   countdown and marks due tasks ready. `task_manager_run_once()` then
- *   runs the ready set in priority order, with interrupts re-enabled so a
- *   tick that lands during a long task is not lost.
- *
- *   The only shared state between interrupt context (tick) and main context
- *   (run_once / mutators) is the TCB array. Three rules keep it race-free:
- *     1. run_once snapshots and clears the ready flags under a brief
- *        critical section, then runs the tasks with interrupts on.
- *     2. The mutators (spawn/stop/set_period) fill their slot under a brief
- *        critical section, so a tick that fires mid-spawn never sees a
- *        half-initialised TCB.
- *     3. A one-shot task that has run is freed atomically (its slot's flags
- *        are cleared under a critical section), so a periodic task that
- *        re-spawns one-shots, like the example's supervisor, does not
- *        exhaust the table one slot per spawn.
- *   On the host sim the tick is delivered synchronously from inside
- *   `pic8_harness_tick()`, so tick and run_once never truly overlap;
- *   the critical sections are a no-op there but remain correct on the target.
+ *   `task_manager_tick()` (usually a Timer0 ISR) decrements each enabled
+ *   task's countdown and marks due tasks ready; `run_once()` then runs the
+ *   ready set in priority order with interrupts re-enabled, so a tick
+ *   during a long task arms it for the next round rather than being lost.
+ *   The TCB array is the only state shared with interrupt context:
+ *   run_once, the mutators, and one-shot slot-freeing each take a brief
+ *   critical section so a tick ISR never observes a half-updated TCB.
  */
 
 #include "task_manager.h"
@@ -39,23 +25,16 @@ static task_t g_tasks[TASK_MGR_MAX_TASKS];
 /** Monotonic tick counter since the last init (wraps at 65535). */
 static uint16_t g_ticks = 0U;
 
-/**
- * @brief  The countdown value that makes a task fire after exactly `period`
- *         ticks. The tick logic is "if countdown==0 then fire, else
- *         decrement", so a periodic task reloads to @e period-1 (not
- *         period) to keep the spacing constant, otherwise every fire would
- *         take period+1 ticks. A one-shot (period 0) uses 0, so it is ready
- *         on the first tick until @ref task_manager_run_once frees it.
- */
+/** Countdown that fires a task after exactly `period` ticks: periodic
+ *  tasks reload to period-1, not period (else every fire would take
+ *  period+1 ticks); a one-shot (period 0) uses 0, ready on the first tick. */
 static uint16_t arm_countdown(uint16_t period)
 {
     return (period == 0U) ? 0U : (uint16_t)(period - 1U);
 }
 
-/** Reload written back into TMR0 on each overflow so every tick has the
- *  same period. Timer0 has no hardware auto-reload (unlike Timer2), so a
- *  fixed tick rate requires reloading in the ISR, also the correct pattern
- *  on a real target. Stored by task_manager_attach_timer0. */
+/** TMR0 reload value, rewritten each overflow since Timer0 has no
+ *  hardware auto-reload; set by task_manager_attach_timer0. */
 static uint8_t g_tick_reload = 0U;
 
 /* ───────────────────────── lifecycle ─────────────────────────────── */
@@ -126,11 +105,8 @@ void task_stop(task_id_t id)
 
 void task_reset(task_id_t id)
 {
-    /* Re-arm: restart the countdown from the full period and ensure the
-     * task is enabled (matches FreeRTOS xTimerReset, which starts a dormant
-     * timer). Same critical section as the other mutators, so it is safe to
-     * call from a running task — e.g. a debounce task calling task_reset on
-     * itself, or another task pushing a timeout out. */
+    /* Re-arm: restart the countdown and ensure the task is enabled; same
+     * critical section as the other mutators, safe from a running task. */
     if (id >= TASK_MGR_MAX_TASKS) return;
     uint8_t prev = HAL_IRQ_Disable();
     if (g_tasks[id].flags & TM_FLAG_USED) {
@@ -164,10 +140,7 @@ void task_manager_tick(void)
             continue;
         }
         if (t->countdown == 0U) {
-            /* Due now. Periodic tasks re-arm to period-1 so the next fire is
-             * exactly `period` ticks later (not period+1). One-shots
-             * (period 0) leave countdown 0, ready every tick until
-             * task_manager_run_once frees the slot. */
+            /* Due now; see arm_countdown for the period-1 reload reasoning. */
             t->flags |= TM_FLAG_READY;
             if (t->period != 0U) {
                 t->countdown = arm_countdown(t->period);
@@ -260,13 +233,10 @@ uint8_t task_manager_count(void)
 /* ───────────────────────── optional tick source ──────────────────── */
 
 /** Trampoline matching the HAL's `void (*)(void)` overflow callback shape.
- *  Reloads TMR0 first so every tick has the same period (Timer0 has no
- *  auto-reload), then advances the scheduler. */
+ *  Reloads TMR0 first (no hardware auto-reload) so every tick has the
+ *  same period, then advances the scheduler. */
 static void task_manager_on_timer0_overflow(void)
 {
-    /* Reload for a constant period (Timer0 has no auto-reload), then
-     * advance the scheduler. Writing TMR0 also clears the prescaler
-     * (DS39582B §5.3), desirable here: every tick starts a clean count. */
     HAL_TIMER0_WriteCounter(g_tick_reload);
     task_manager_tick();
 }
