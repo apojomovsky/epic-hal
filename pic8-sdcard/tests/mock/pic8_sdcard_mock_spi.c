@@ -3,19 +3,12 @@
  * @brief   Mock SD-over-SPI card -- see pic8_sdcard_mock_spi.h.
  *
  * @details
- *   Dispatch is driven entirely by call *shape* (which of out_buf/in_buf
- *   is non-NULL, and len), matched against exactly how mmc.c actually
- *   calls MMC_SPI_TRANSFER -- confirmed by reading it, not guessed:
- *     - out-only, len==6            -> a 6-byte command frame
- *     - out-only, len==1            -> a pending write's 0xFE start token
- *     - out-only, len==512          -> a pending write's block data
- *     - out-only, len==2            -> a pending write's trailing CRC16
- *     - in-only, any len            -> drain the queued reply
- *     - both NULL                   -> pure clock filler ("give it 8 extra
- *                                       clocks", blank_clock()), no-op
- *   No other shape occurs in the command set this mock implements
- *   (CMD0/8/55/41/58/9/16/17/24/13 -- CMD25 multi-block write is not
- *   implemented, matching pic8_sdcard.h not wrapping it either).
+ *   Dispatch is by call shape (out_buf/in_buf presence and len), matching
+ *   exactly how mmc.c calls MMC_SPI_TRANSFER: len 6 out-only is a command
+ *   frame, len 1/512/2 out-only is a pending write's token/data/CRC,
+ *   in-only drains the queued reply. Implements CMD0/8/55/41/58/9/16/17/
+ *   24/13; CMD25 (multi-block write) isn't implemented, matching
+ *   pic8_sdcard.h.
  */
 
 #include "pic8_sdcard_mock_spi.h"
@@ -39,11 +32,10 @@ static uint16_t g_resp_pos;
 static uint8_t g_blocks[PIC8_SDCARD_MOCK_BACKING_BLOCKS][PIC8_SDCARD_MOCK_BLOCK_SIZE];
 
 /* SDHC-style CSD v2.0: byte 0 top bits '01' = version 2.0; byte 3 =
- * TRAN_SPEED (time_val_code=1, transfer_unit=1 -> calculate_speed() in
- * mmc.c returns 1,000,000, an arbitrary nonzero value); bytes 7-9 = 0
- * means C_SIZE=0, so mmc.c computes card_size_blocks = (0+1)*1024 =
- * PIC8_SDCARD_MOCK_REPORTED_BLOCKS. Everything else is unread by mmc.c
- * for a CCS=1 (SDHC) card, left zero. */
+ * TRAN_SPEED (nonzero, calculate_speed() just needs something present);
+ * bytes 7-9 = 0 means C_SIZE=0, so mmc.c computes card_size_blocks =
+ * (0+1)*1024 = PIC8_SDCARD_MOCK_REPORTED_BLOCKS. Everything else is
+ * unread for a CCS=1 (SDHC) card, left zero. */
 static const uint8_t g_csd[16] = {
     0x40, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -71,20 +63,11 @@ static void q_bytes(const uint8_t *data, uint16_t len)
     }
 }
 
-/* Data-block reply: idle gap, start token (7.3.3.2), the bytes, then the
- * CRC16.
- *
- * Byte order note (corrected from an initial wrong guess -- verified with
- * a standalone probe against the real vendored crc.c before settling
- * this): __read_data_block's self-check (continue the CRC16 accumulator
- * with the trailing CRC bytes in receive order, expect 0) only holds for
- * [high_byte, low_byte] (MSB-first). mmc_write_block sends
- * [low_byte, high_byte] instead, but that send is never self-checked by
- * anything in mmc.c (writes are validated by the card's data-response
- * token, not a self-check) -- so it's simply a different, unverified
- * convention on the write side, not evidence for what reads need. Only
- * MSB-first makes __read_data_block's actual math work; that's what this
- * mock (playing the *card*, i.e. the read path) must send. */
+/* Data-block reply: idle gap, start token (7.3.3.2), bytes, then CRC16
+ * MSB-first: __read_data_block's self-check only holds for
+ * [high_byte, low_byte] order (mmc_write_block sends the opposite order
+ * on the write side, but that path is never self-checked, so it doesn't
+ * apply here). */
 static void q_data_block(const uint8_t *data, uint16_t len)
 {
     q_byte(0xFF);
@@ -117,9 +100,8 @@ static void handle_command(const uint8_t *cmd6)
         q_byte(0x01u); q_byte(0x00u); q_byte(0x00u); q_byte(0x01u); q_byte(0xA0u);
         break;
 
-    case 55:    /* CMD55: APP_CMD -- also mmc_ready()'s own poll (its comment says CMD13,
-                 * its code actually sends CMD55; harmless upstream comment/code
-                 * mismatch, not something this mock needs to "fix") */
+    case 55:    /* CMD55: APP_CMD, also what mmc_ready() polls with despite its
+                 * own comment saying CMD13 (upstream comment/code mismatch) */
         q_byte(g_idle ? 0x01u : 0x00u);
         break;
 

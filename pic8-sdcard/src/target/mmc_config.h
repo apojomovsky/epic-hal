@@ -1,20 +1,10 @@
 /*
- * M-Stack mmc.h config for the real PIC18Fxx5x target.
- *
- * Private to this module -- included only by the vendored mmc.c
- * (third_party/m-stack-storage/src/mmc.c) when compiled for real
- * silicon. The host test build uses a completely different
- * tests/mock/mmc_config.h instead (see pic8-sdcard/docs/pic8-sdcard-plan.md,
- * "Host build story" -- mmc.c itself is portable, so unlike pic8-usb this
- * module compiles the SAME vendored source against two different configs
- * rather than needing a separate host-stub reimplementation).
- *
- * Binds MMC_SPI_TRANSFER/SET_CS/SET_SPEED to pic8_sdcard.c's HAL_SSP/
- * HAL_GPIO-backed functions, and the timer macros to pic8-tick -- real
- * wall-clock timeouts instead of mmc.c's bounded-retry-count fallback
- * (see the plan doc's "Confirmed API surface" for why this matters: the
- * spec-derived MMC_READ_TIMEOUT/MMC_WRITE_TIMEOUT constants in mmc.c are
- * otherwise dead weight).
+ * M-Stack mmc.h config for the real PIC18Fxx5x target, private to this
+ * module (included only by the vendored mmc.c for real-silicon builds;
+ * tests/mock/mmc_config.h is the host-build equivalent). Binds
+ * the MMC_SPI_ and timer macros to pic8_sdcard.c's HAL-backed functions, using
+ * pic8-tick for real wall-clock timeouts instead of mmc.c's bounded-retry
+ * fallback.
  */
 
 #ifndef PIC8_SDCARD_MMC_CONFIG_H__

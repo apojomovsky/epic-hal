@@ -1,15 +1,8 @@
 /**
  * @file    pic8_sdcard.c
- * @brief   Real-target implementation: binds M-Stack's mmc.c to this
- *          repo's SSP/GPIO HAL and pic8-tick, plus thin call-throughs to
- *          mmc_init/mmc_ready/mmc_get_num_blocks/mmc_read_block/
- *          mmc_write_block against one owned mmc_card.
- *
- * @details
- *   Unlike pic8_usb.c, this file is genuinely thin -- mmc.h's functions
- *   are already the right public shape (see pic8-sdcard-plan.md, "Public
- *   API design"). The real content here is the SPI/CS/clock-speed/timer
- *   binding.
+ * @brief   Binds M-Stack's mmc.c to this repo's SSP/GPIO HAL and
+ *          pic8-tick: SPI byte transfer, CS control, clock-speed
+ *          selection, and timeout timing, against one owned mmc_card.
  */
 
 #include "pic8_sdcard.h"
@@ -63,19 +56,11 @@ void pic8_sdcard_spi_set_cs(uint8_t instance, uint8_t value)
                       value ? GPIO_PIN_SET : GPIO_PIN_RESET);   /* 0 = asserted, per mmc.h */
 }
 
-/* Pick the fastest of the SSP's three fixed SPI divisors (Fosc/4, /16,
- * /64) that still meets target_hz; if none do, fall back to the slowest
- * available rather than silently picking something faster than asked.
- *
- * Known gap: at Fosc = 48 MHz (this family's USB-mandated clock, see
- * pic8-usb-plan.md), Fosc/64 = 750 kHz, which cannot reach the SD spec's
- * <=400 kHz mandatory card-bring-up speed -- the SSP's fixed divisors
- * only get there at Fosc <= 25.6 MHz. Reaching true spec compliance at
- * 48 MHz would need the SSP's TMR2/2 clock source (SSP_MODE_SPI_MASTER_TMR2,
- * arbitrary divisor via Timer2's PR2), not implemented here -- deliberately
- * out of scope for this plan (see pic8-sdcard-plan.md, "Open risks"): many
- * real cards tolerate a faster-than-spec bring-up clock in practice, but
- * this is unverified without real hardware. */
+/* Picks the fastest of the SSP's 3 fixed divisors (Fosc/4, /16, /64) that
+ * still meets target_hz, falling back to the slowest if none do. Known
+ * gap: at 48 MHz (this family's USB clock), the slowest available divisor
+ * is 750 kHz, above the SD spec's 400 kHz bring-up ceiling; unverified
+ * whether real cards tolerate that without a board to test on. */
 static SSP_ModeTypeDef pick_divisor(uint32_t target_hz, uint32_t *achieved_hz)
 {
     static const uint8_t          divs[3]  = {4u, 16u, 64u};

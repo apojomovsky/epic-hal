@@ -1,16 +1,10 @@
 /*
- * M-Stack mmc.h config for the host test build.
- *
- * Binds MMC_SPI_TRANSFER/SET_CS/SET_SPEED to pic8_sdcard_mock_spi.c
- * instead of real hardware -- see that file's header comment and
- * pic8-sdcard/docs/pic8-sdcard-plan.md, "Host build story".
- *
- * MMC_USE_TIMER is deliberately NOT defined here: a host mock has no real
- * SPI latency to time out against, so mmc.c's bounded-retry-count
- * fallback (see mmc.c's own #ifndef MMC_USE_TIMER block) is both simpler
- * and sufficient for host tests. The real target's src/target/mmc_config.h
- * DOES define it, bound to pic8-tick -- that's the one that matters for
- * real hardware.
+ * M-Stack mmc.h config for the host test build: binds MMC_SPI_* to
+ * pic8_sdcard_mock_spi.c instead of real hardware. MMC_USE_TIMER is
+ * deliberately not defined: a host mock has no real SPI latency to time
+ * out against, so mmc.c's bounded-retry-count fallback is sufficient
+ * here (the real target's mmc_config.h does define it, bound to
+ * pic8-tick).
  */
 
 #ifndef PIC8_SDCARD_MOCK_MMC_CONFIG_H__

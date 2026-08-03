@@ -1,14 +1,9 @@
 /**
  * @file    example_sdcard_dump.c
- * @brief   Read block 0 and print its first 16 bytes over pic8-serial --
- *          the Phase 3 real-hardware smoke test (see
- *          pic8-sdcard/docs/pic8-sdcard-plan.md). Real-target only: unlike
- *          pic8-usb, this module's host tests exercise mmc.c/crc.c
- *          directly against a mock (see tests/test_pic8_sdcard.c), not
- *          this wrapper -- pic8_sdcard.c itself depends on pic8_hal.h/
- *          pic8-tick, which need a real (or host-simulated, but
- *          meaninglessly so without a real SPI slave behind it) HAL
- *          family, so there's no useful host build of this example.
+ * @brief   Read block 0 and print its first 16 bytes over pic8-serial.
+ *          Real-target only: host tests exercise mmc.c/crc.c directly
+ *          against a mock (tests/test_pic8_sdcard.c) instead of this
+ *          wrapper, since pic8_sdcard.c depends on real HAL/SPI.
  */
 
 #include "pic8_sdcard.h"

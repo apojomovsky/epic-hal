@@ -1,10 +1,8 @@
 /**
  * @file    test_pic8_sdcard.c
  * @brief   Host tests for the vendored mmc.c/crc.c against
- *          pic8_sdcard_mock_spi.c -- exercises the actual shipped
- *          protocol logic (init sequence, read/write round-trip, a
- *          failure path), not pic8_sdcard.c's HAL binding (that's
- *          real-target-only; see the plan doc's "Host build story").
+ *          pic8_sdcard_mock_spi.c: exercises the actual shipped protocol
+ *          logic, not pic8_sdcard.c's HAL binding (real-target-only).
  */
 
 #include "mmc.h"
@@ -19,7 +17,7 @@ static int g_pass = 0, g_fail = 0;
 
 static struct mmc_card new_card(void)
 {
-    struct mmc_card card;
+    struct mmc_card card = {0};
     card.max_speed_hz = 20000000UL;
     card.spi_instance = 0u;
     return card;
@@ -115,9 +113,8 @@ static void test_read_beyond_reported_size_fails(void)
 
     uint8_t data[PIC8_SDCARD_MOCK_BLOCK_SIZE];
     /* mmc_read_block range-checks against card_size_blocks (the
-     * *reported* 1024, not the mock's small backing store) before ever
-     * touching SPI -- this is mmc.c's own bounds check, exercised for
-     * real, not simulated by the mock. */
+     * *reported* 1024, not the mock's small backing store) before
+     * touching SPI at all, mmc.c's own bounds check. */
     int8_t res = mmc_read_block(&card, PIC8_SDCARD_MOCK_REPORTED_BLOCKS, data);
     CHECK(res < 0, "read_block: rejects a block address at/past the reported size");
 }
@@ -137,13 +134,10 @@ static void test_read_before_init_fails(void)
 
 static void test_crc16_self_check_property(void)
 {
-    /* The same identity mmc.c's own __read_data_block relies on: CRC16
-     * over (data, then data's own CRC16 in [high,low] / MSB-first order)
-     * is 0. Verified empirically against this exact crc.c before writing
-     * this assertion -- [low,high] (the order mmc_write_block happens to
-     * send, for an unrelated, never-self-checked reason) does NOT
-     * self-check to 0; only MSB-first does. See
-     * pic8_sdcard_mock_spi.c's q_data_block() for where this mattered. */
+    /* The same identity mmc.c's __read_data_block relies on: CRC16 over
+     * (data, then its own CRC16 in [high,low]/MSB-first order) is 0.
+     * [low,high] (the order mmc_write_block sends, unrelated and never
+     * self-checked) does not self-check to 0; only MSB-first does. */
     uint8_t data[16];
     for (uint16_t i = 0; i < sizeof(data); i++) {
         data[i] = (uint8_t)(i * 17 + 3);
@@ -173,10 +167,9 @@ static void test_crc7_nonzero_and_deterministic(void)
     for (uint8_t i = 0; i < sizeof(frame); i++) {
         csum = add_crc7(csum, frame[i]);
     }
-    /* mmc.c's own __send_mmc_command computes exactly this and OR's in
-     * the stop bit: (crc7 << 1) | 0x1. CMD0's real, spec-defined CRC7
-     * byte is well-known to be 0x95 -- if this ever drifts, add_crc7
-     * itself changed, which is worth knowing about. */
+    /* mmc.c's __send_mmc_command computes exactly this and ORs in the
+     * stop bit: (crc7 << 1) | 0x1. CMD0's spec-defined CRC7 byte is
+     * 0x95; if this ever drifts, add_crc7 itself changed. */
     uint8_t on_wire = (uint8_t)((csum << 1) | 0x1u);
     CHECK(on_wire == 0x95u, "crc7: CMD0's frame produces the spec-known 0x95 CRC byte");
 }
