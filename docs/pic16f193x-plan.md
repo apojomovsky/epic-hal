@@ -1,8 +1,14 @@
 # PIC16F193X family addition
 
-Status: **in progress**. Device identity confirmed (§1), Path B confirmed
-(§2). Foundation implementation under way; real-target/`mdb` gate deferred
-until the `Microchip.PIC12-16F1xxx_DFP` + `mdb` toolchain is installed.
+Status: **foundation host-verified and committed**. Device identity
+confirmed (§1), Path B confirmed (§2), scope set (§3). The foundation
+(platform headers, SFR map, IRQ backend, dispatch, ISR vector, harness,
+WDT/Sleep, GPIO, Timer0, host sim) builds clean with `-Wall -Wextra
+-Werror` and passes its host examples across all six parts (commit
+`786e9db`). Real-target XC8 build and the `mdb` register-readback gate
+are deferred until the `Microchip.PIC12-16F1xxx_DFP` + `mdb` toolchain
+is installed (§4); peripherals then land one at a time through the §4
+gate (§7).
 
 This plan follows `docs/adding-a-device.md` (the operational procedure,
 which supersedes `docs/multi-family-plan.md`'s "add family #3" checklist).
@@ -214,7 +220,8 @@ Foundation deliverables (everything needed for a minimal blink + host sim
     `pic8-common/MANUAL.md` for shared conventions), `docs/ARCHITECTURE.md`
     (codegen findings, filled as the §4 gate surfaces them).
 
-Solved. Implementation pending.
+Solved. Foundation implemented, host-verified and committed (`786e9db`);
+real-target build and `mdb` gate pending the DFP (§4).
 
 ## §6. Verification (partly solved)
 
