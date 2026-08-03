@@ -8,6 +8,10 @@ behaviour is taken 1-to-1 from the datasheet [DS39582B](https://ww1.microchip.co
 architecture, both builds, the simulator, the harness, and a per-peripheral
 reference. Start there if you are new to the HAL.
 
+➜ **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** covers XC8 codegen
+gotchas found empirically on this family (bank-switch pitfalls and their
+fixes), not datasheet material, so it lives apart from `MANUAL.md`.
+
 ## Status
 
 Done so far:

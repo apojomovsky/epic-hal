@@ -3,9 +3,11 @@
 The shared layer reused by every 8-bit PIC HAL family. Nothing here
 references a register, a bank, an interrupt vector, or any other detail
 that differs between families; that is the whole point. Adding a new
-family (PIC18F2455 next, then others) implements a fixed contract defined
-here and in each family's own headers, without re-deriving the status
-enum, the harness, or the build boilerplate.
+family (PIC16F87XA and PIC18F2455 are both done; see
+[../docs/adding-a-device.md](../docs/adding-a-device.md) for the next one)
+implements a fixed contract defined here and in each family's own headers,
+without re-deriving the status enum, the harness, or the build
+boilerplate.
 
 ## What lives here
 
@@ -40,4 +42,6 @@ peripheral driver bodies, config-word directives. Those stay in each
 family's tree (`pic16f87xa-hal/`, `pic18fxx5x-hal/`, …), implementing the
 contract this layer defines. See
 [../docs/multi-family-plan.md](../docs/multi-family-plan.md) for the full
-design and the per-phase plan.
+design and the per-phase plan, and
+[../docs/adding-a-device.md](../docs/adding-a-device.md) for the operational
+guide to adding another device or family.

@@ -488,7 +488,6 @@ demonstrates.
   and the peripheral drivers need rework against that family's datasheet,
   but the *structure*, the handle pattern, the harness, the link-time
   host/target split, the shared-dispatcher interrupt model, is reusable
-  as-is. See `docs/multi-family-plan.md`, "How to add family #3 (and
-  #4)", for the concrete checklist, and write that family's own
-  `MANUAL.md` against the shape of this repo's existing ones as part of
-  it.
+  as-is. See `docs/adding-a-device.md` for the concrete, verification-gated
+  checklist (Path B: new family), and write that family's own `MANUAL.md`
+  against the shape of this repo's existing ones as part of it.

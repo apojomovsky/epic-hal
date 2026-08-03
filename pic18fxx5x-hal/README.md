@@ -13,6 +13,14 @@ interrupt-dispatch name (`pic8_dispatch_all_irqs`) all come from
 BSR/Access-Bank platform, dual-priority interrupt backend, peripheral
 drivers) live here.
 
+➜ **[MANUAL.md](MANUAL.md)** is the full, human-readable manual:
+architecture, both builds, the simulator, the harness, and a per-peripheral
+reference. Start there if you are new to this HAL.
+
+➜ **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** covers XC8 codegen
+gotchas found empirically on this family (runtime-SFR-address pitfalls and
+their fixes), not datasheet material, so it lives apart from `MANUAL.md`.
+
 ## Status
 
 **Phase 4 complete — every peripheral on the part is ported.** GPIO,

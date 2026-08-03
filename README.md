@@ -200,6 +200,10 @@ family, that's called out.
 - [docs/multi-family-plan.md](docs/multi-family-plan.md), the refactor
   that extracted `pic8-common/` and added the PIC18F2455 family behind a
   fixed contract (Phases 0-4 done, litmus test met).
+- [docs/adding-a-device.md](docs/adding-a-device.md), the operational,
+  verification-gated guide for adding a new device variant or a new family.
+- [docs/ci-plan.md](docs/ci-plan.md), the CI build/test matrix design and
+  its phase-by-phase findings.
 - Datasheet references (not vendored in this repo) are listed under
   [License](#license).
 
