@@ -10,16 +10,17 @@ name: sim-tests
 # out to every module, discovered the same dynamic way xc8-build.yml
 # already discovers its own matrix).
 #
-# ci-assets / ci-assets-mplabx / toolchain-image below are a deliberate,
-# verbatim copy of xc8-build.yml's own jobs, not a shared/reusable
-# workflow: same tag-resolution formula means this workflow's `docker
-# pull` gets a cache hit against whatever xc8-build.yml already pushed
-# (or vice versa, whichever workflow runs first on a given ref), so the
-# image only ever gets built once regardless of which workflow triggers
-# the build. Factoring this into a `workflow_call` reusable workflow is
-# reasonable future cleanup once a second consumer beyond these two
-# exists (Phase 5 already anticipates matrixing this file further, a
-# better moment to reconsider), not done now.
+# toolchain-image below is a deliberate, verbatim copy of xc8-build.yml's
+# own job, not a shared/reusable workflow: same tag-resolution formula
+# means this workflow's `docker pull` gets a cache hit against whatever
+# tag `make ci-image-push` last published, same tag xc8-build.yml also
+# pulls, so both workflows always agree on which toolchain image is
+# current without either one building it (docs/docker-dev-plan.md's "CI
+# simplification": CI only ever pulls now, publishing is a local, human-
+# triggered step). Factoring this into a `workflow_call` reusable
+# workflow is reasonable future cleanup once a second consumer beyond
+# these two exists (Phase 5 already anticipates matrixing this file
+# further, a better moment to reconsider), not done now.
 #
 # The mdb script is generated inline (a heredoc, substituting matrix
 # values) rather than committed as a per-module mdb-sim-script.txt file
@@ -35,111 +36,52 @@ on:
     branches: [master]
   pull_request:
 
+# packages: read only, this workflow only ever pulls now (docs/
+# docker-dev-plan.md); publishing the toolchain image is a local,
+# human-triggered `make ci-image-push`, not something CI does anymore.
 permissions:
   contents: read
-  packages: write
+  packages: read
 
 jobs:
-  ci-assets:
-    runs-on: ubuntu-latest
-    outputs:
-      image: ${{ steps.resolve.outputs.image }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: resolve
-        name: Resolve version-pinned asset image tag
-        run: |
-          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          tag="xc8-v${xc8_version}-installer"
-          image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci-assets:${tag}"
-          echo "image=$image" >> "$GITHUB_OUTPUT"
-          echo "Resolved asset image: $image"
-      - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-      - name: Pull the private asset image
-        run: |
-          image="${{ steps.resolve.outputs.image }}"
-          if ! docker pull "$image"; then
-            echo "error: no cached $image on GHCR." >&2
-            echo "This job does not auto-fetch vendor installers. To reseed:" >&2
-            echo "  docker login ghcr.io -u <you> (needs a PAT with write:packages)" >&2
-            echo "  docker build -t $image -f docker/ci-assets/Dockerfile <dir-containing-just-that-file>" >&2
-            echo "  docker push $image" >&2
-            exit 1
-          fi
-          echo "Using cached $image"
-
-  ci-assets-mplabx:
-    runs-on: ubuntu-latest
-    outputs:
-      image: ${{ steps.resolve.outputs.image }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: resolve
-        name: Resolve version-pinned asset image tag
-        run: |
-          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          tag="mplabx-v${mplabx_version}-installer"
-          image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci-assets:${tag}"
-          echo "image=$image" >> "$GITHUB_OUTPUT"
-          echo "Resolved asset image: $image"
-      - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-      - name: Pull the private asset image
-        run: |
-          image="${{ steps.resolve.outputs.image }}"
-          if ! docker pull "$image"; then
-            echo "error: no cached $image on GHCR." >&2
-            echo "This job does not auto-fetch vendor installers. To reseed:" >&2
-            echo "  docker login ghcr.io -u <you> (needs a PAT with write:packages)" >&2
-            echo "  docker build -t $image -f docker/ci-assets/Dockerfile <dir-containing-just-that-file>" >&2
-            echo "  docker push $image" >&2
-            exit 1
-          fi
-          echo "Using cached $image"
-
+  # Pull-only, verbatim copy of xc8-build.yml's own toolchain-image job
+  # (see this workflow's header comment for why it isn't factored out
+  # yet). Fails loudly, with `make ci-image-push` instructions, if the
+  # resolved tag isn't on GHCR.
   toolchain-image:
-    needs: [ci-assets, ci-assets-mplabx]
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.resolve.outputs.image }}
     steps:
       - uses: actions/checkout@v4
-      - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
       - id: resolve
         name: Resolve version-pinned image tag
         run: |
           xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-mplabx${mplabx_version}"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
           image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
           echo "image=$image" >> "$GITHUB_OUTPUT"
           echo "Resolved image: $image"
-      - name: Pull cached image, or build and push it
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Pull the private toolchain image
         run: |
           image="${{ steps.resolve.outputs.image }}"
-          if docker pull "$image"; then
-            echo "Reusing cached $image"
-            exit 0
+          if ! docker pull "$image"; then
+            echo "error: no cached $image on GHCR." >&2
+            echo "This workflow no longer builds the toolchain image itself" >&2
+            echo "(see this workflow's header comment). To publish it:" >&2
+            echo "  1. drop the Microchip installers in docker/ci-toolchain/vendor/" >&2
+            echo "     (see \`make check-vendor\` for exact filenames)" >&2
+            echo "  2. docker login ghcr.io -u <you> (needs a PAT with write:packages)" >&2
+            echo "  3. make ci-image-push GHCR_OWNER=${{ github.repository_owner }}" >&2
+            exit 1
           fi
-          echo "No cached $image, building it"
-          mkdir -p docker/ci-toolchain/vendor
-
-          docker pull "${{ needs.ci-assets.outputs.image }}"
-          docker create --name asset-extract-xc8 "${{ needs.ci-assets.outputs.image }}"
-          docker cp asset-extract-xc8:/xc8-installer.run docker/ci-toolchain/vendor/xc8-installer.run
-          docker rm asset-extract-xc8
-
-          docker pull "${{ needs.ci-assets-mplabx.outputs.image }}"
-          docker create --name asset-extract-mplabx "${{ needs.ci-assets-mplabx.outputs.image }}"
-          docker cp asset-extract-mplabx:/mplabx-installer.tar docker/ci-toolchain/vendor/mplabx-installer.tar
-          docker rm asset-extract-mplabx
-
-          docker build -t "$image" docker/ci-toolchain
-          docker push "$image"
+          echo "Using cached $image"
 
   sim-test:
     needs: [toolchain-image]
