@@ -19,8 +19,8 @@ HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h)
     if (h->C1Inverted) v |= PIC_CMCON_C1INV;
     if (h->C2Inverted) v |= PIC_CMCON_C2INV;
 #ifdef PIC8_BANK1_WRITE8
-    /* See PIC8_BANK1_WRITE8's header comment (target/pic16f87xa_platform.h)
-     * and pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9. */
+    /* See target/pic16f87xa_platform.h: a plain bank-switch RMW here
+     * silently corrupts under XC8 v4.00. */
     PIC8_BANK1_WRITE8(CMCON, v);
 #else
     {
@@ -57,8 +57,7 @@ uint8_t HAL_COMP_C1Out(void)
 {
     uint8_t v = 0U;
 #ifdef PIC8_BANK1_READ8
-    /* See PIC8_BANK1_WRITE8's header comment (target/pic16f87xa_platform.h)
-     * and pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9. */
+    /* See target/pic16f87xa_platform.h: same corruption shape, read side. */
     PIC8_BANK1_READ8(CMCON, v);
 #else
     uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;

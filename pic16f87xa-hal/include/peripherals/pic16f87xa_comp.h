@@ -3,28 +3,10 @@
  * @brief   Comparator driver, two on-chip comparators.
  *
  * @details
- *   Source: DS39582B §12.0 (Comparator Module), Register 12-1 (CMCON),
- *   Figure 12-1 (8 operating modes), §12.6 (interrupts).
- *
- *   Wiring on the part:
- *     - Two comparators C1 and C2.
- *     - 8 operating modes selected by CMCON<CM2:CM0> (Register 12-1,
- *       Figure 12-1):
- *         000, Comparators reset (POR default)
- *         111, Comparators off (read 0)
- *         010, Two independent
- *         011, Two independent with outputs
- *         100, Two common reference
- *         101, Two common reference with outputs
- *         001, One independent with output
- *         110, Four inputs multiplexed to two comparators
- *     - Inputs are multiplexed onto PORTA pins (RA0..RA3, RA5) and
- *       the VREF output if enabled.
- *     - Outputs on RA4 (C1OUT) and RA5 (C2OUT) when enabled.
- *     - Interrupts on change of either output (CMIF + CMIE).
- *
- *   Reset state: CMCON = 0x07 (CM2:CM0 = 111, comparators off, PIC16F87X
- *   compatibility).
+ *   Source: DS39582B §12.0, Register 12-1, Figure 12-1. Full reference:
+ *   MANUAL.md §17. The 8 operating modes are documented on
+ *   @ref COMP_ModeTypeDef below. Inputs multiplex onto PORTA
+ *   (RA0-RA3, RA5, or VREF); outputs on RA4/RA5 when enabled.
  */
 
 #ifndef PIC16F87XA_COMP_H

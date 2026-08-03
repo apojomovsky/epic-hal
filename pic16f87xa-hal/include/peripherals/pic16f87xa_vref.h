@@ -3,18 +3,10 @@
  * @brief   Comparator Voltage Reference driver.
  *
  * @details
- *   Source: DS39582B §13.0 (Voltage Reference Module), Register 13-1
- *   (CVRCON), Figure 13-1 (resistor ladder).
- *
- *   The CVREF output is a 16-tap resistor ladder.  When CVRR=0, the
- *   range is 0..(0.75 × VDD); when CVRR=1, the range is
- *   0.25..(0.75 × VDD).  Each step is CVRSRC/24 (CVRR=0) or
- *   CVRSRC/32 (CVRR=1).
- *
- *   When CVROE=1, the output is routed to the RA2/AN2/VREF- pin
- *   (shared with the comparator and ADC reference inputs).
- *
- *   Reset state: CVRCON = 0x00, reference disabled, output = 0 V.
+ *   Source: DS39582B §13.0, Register 13-1. 16-tap resistor ladder:
+ *   CVRR=0 gives 0..0.75 VDD in VDD/24 steps; CVRR=1 gives
+ *   0.25..0.75 VDD in VDD/32 steps. CVROE routes the output to
+ *   RA2/AN2/VREF-, shared with the comparator/ADC reference.
  */
 
 #ifndef PIC16F87XA_VREF_H

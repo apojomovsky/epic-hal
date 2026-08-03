@@ -3,20 +3,10 @@
  * @brief   Timer2 driver, 8-bit timer with PR2 period register and postscaler.
  *
  * @details
- *   Source: DS39582B §7.0 (Timer2 Module), Register 7-1 (T2CON),
- *   Register 7-2 (PR2), Table 7-1 (timer summary).
- *
- *   Wiring on the part:
- *     - 8-bit counter TMR2, always clocked from Fosc/4.
- *     - Period register PR2 (Bank 1). TMR2 resets to 0x00 on
- *       TMR2 == PR2 (i.e. it never reaches PR2+1 in normal operation).
- *     - Separate prescaler (1:1, 1:4, 1:16), T2CON<T2CKPS1:T2CKPS0>.
- *     - 4-bit postscaler (1:1..1:16), T2CON<TOUTPS3:TOUTPS0>.
- *     - TMR2IF fires every (prescaler × postscaler × (PR2+1)) instruction
- *       cycles. TMR2IF drives the CCP1/CCP2 PWM time base, see CCP driver.
- *
- *   Reset state (DS39582B Table 14-6): T2CON = 0x00 (off, 1:1 prescaler,
- *   1:1 postscaler), PR2 = 0xFF.
+ *   Source: DS39582B §7.0. Full reference: MANUAL.md §12. TMR2 resets
+ *   to 0 on TMR2==PR2 (never reaches PR2+1). TMR2IF fires every
+ *   prescaler x postscaler x (PR2+1) cycles and drives the CCP PWM
+ *   time base.
  */
 
 #ifndef PIC16F87XA_TIMER2_H

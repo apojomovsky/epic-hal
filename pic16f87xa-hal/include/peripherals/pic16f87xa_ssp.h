@@ -3,25 +3,11 @@
  * @brief   MSSP driver, SPI master/slave + I²C master/slave.
  *
  * @details
- *   Source: DS39582B §9.0 (MSSP Module), Registers 9-1..9-5
- *   (SSPSTAT, SSPCON, SSPCON2), Tables 9-1..9-2 (mode select encodings).
- *
- *   The MSSP module has one set of pins (RC3/SCK/SCL, RC4/SDI/SDA,
- *   RC5/SDO) but multiple operating modes:
- *     - SPI master (clock = FOSC/4, /16, /64, TMR2 output)
- *     - SPI slave (clock = external on SCK, optional SS on RA5/AN4)
- *     - I²C master (7-bit or 10-bit address)
- *     - I²C slave (7-bit or 10-bit address, with/without S/S interrupts)
- *     - I²C firmware-controlled master (slave idle)
- *
- *   ⚠ This driver is **register-level only**, it does not implement
- *   the I²C state machine. A user-space I²C master needs to:
- *     1. HAL_SSP_Start() to issue a Start condition,
- *     2. write the address byte to SSPBUF,
- *     3. poll SSPSTAT<BF> + ACKSTAT (SSPCON2<6>),
- *     4. HAL_SSP_Stop() to issue a Stop.
- *   For SPI, the transfer is fully automatic once SSPBUF is written;
- *   the user polls SSPSTAT<BF> to know when a byte is available.
+ *   Source: DS39582B §9.0. Full register reference: MANUAL.md §15.
+ *   Register-level only, no I²C state machine: a master issues
+ *   HAL_SSP_Start(), writes SSPBUF, polls SSPSTAT<BF>+ACKSTAT
+ *   (SSPCON2<6>), then HAL_SSP_Stop(). SPI is automatic once SSPBUF is
+ *   written; poll SSPSTAT<BF> for RX-ready.
  */
 
 #ifndef PIC16F87XA_SSP_H

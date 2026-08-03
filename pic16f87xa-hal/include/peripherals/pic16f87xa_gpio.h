@@ -3,19 +3,11 @@
  * @brief   General-Purpose I/O port driver for the PIC16F87XA family.
  *
  * @details
- *   Cube-style API: every pin is addressed by (GPIOx, GPIO_PIN_n). The
- *   PORTx registers are read-modify-write (DS39582B §4.x), so this driver
- *   never reads back the pin level to set a bit, it ORs/ANDs a mask onto
- *   the latch directly. That matches the datasheet's recommended idiom:
- *
- *     BSF   PORTB, 3       ; "set" only touches the latch
- *
- *   PORTA is 6-bit wide; PORTB/C/D are 8-bit; PORTE is 3-bit (only on
- *   40/44-pin parts, §4.5). The driver enforces those widths.
- *
- *   Pin mapping follows the datasheet pinout tables (Table 1-2 for
- *   28-pin, Table 1-3 for 40/44-pin), every pin has the same name on
- *   every part of the family.
+ *   Cube-style API: every pin is (GPIOx, GPIO_PIN_n). Writes only
+ *   OR/AND a mask onto the PORTx latch, never read-modify the pin level
+ *   first (DS39582B §4.x). PORTA is 6-bit, PORTB/C/D are 8-bit, PORTE
+ *   is 3-bit (40/44-pin only); pin names match the datasheet pinout
+ *   tables across every part in the family.
  */
 
 #ifndef PIC16F87XA_GPIO_H
@@ -114,10 +106,8 @@ void HAL_GPIO_DeInit(GPIO_TypeDef port);
 /* ───────────────────────── read / write / toggle ────────────────── */
 
 /**
- * @brief  Drive a pin high or low. Reads-modify-writes the PORTx latch
- *         directly (DS39582B §4.x "write is read-modify-write of the
- *         port pins", but writes only update the latch; this driver follows
- *         the recommended BSF/BCF idiom that masks the latch).
+ * @brief  Drive a pin high or low; ORs/ANDs the mask onto the PORTx
+ *         latch directly, never reads back the pin level first.
  */
 void HAL_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
 
@@ -157,19 +147,10 @@ void HAL_GPIO_SetPullups(GPIO_PullTypeDef pull);
  *                   freshly-read PORTB byte, or NULL to unregister.
  *
  * @details
- *   There is only ever one PORTB on this family, so (unlike Timer2's
- *   per-handle callback) there is no handle struct: exactly one callback
- *   slot, matching the one-`OverflowCallback`-per-handle shape but simpler.
- *   NULL is safe (the handler no-ops). Fanning one received byte out to N
- *   consumers (e.g. several `encoder_t` on different RB<7:4> pin pairs) is
- *   application-level composition, not a HAL registry, exactly like
- *   Timer2's one-callback-per-handle contract.
- *
- *   The handler reads PORTB *before* clearing RBIF (DS39582B §14.11.3: the
- *   mismatch comparator latches the value at the last read, so reading
- *   PORTB is what re-arms detection; clearing the flag first risks a
- *   spurious re-interrupt or a silently-missed change). See @ref
- *   RB_IRQHandler.
+ *   One callback slot (there's only one PORTB); fanning one received
+ *   byte out to N consumers is application-level composition, not a
+ *   HAL registry. NULL is safe. @ref RB_IRQHandler reads PORTB before
+ *   clearing RBIF, see its own doc for why that order is mandatory.
  */
 void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
 
@@ -177,16 +158,11 @@ void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
  * @brief  Weak RB<7:4> change-interrupt ISR (DS39582B §14.11.3).
  *
  * @details
- *   Mirrors every other `*_IRQHandler` in this HAL: weak so user code may
- *   override it to add application logic, with a default body that clears
- *   RBIF and forwards the already-read PORTB byte to the callback
- *   registered via @ref HAL_GPIO_RegisterChangeCallback.
- *
- *   The read/clear order is mandatory, not stylistic: PORTB is read into a
- *   local *before* RBIF is cleared, then the callback receives that
- *   already-read value (never a second, later read, which by then may not
- *   reflect the byte the mismatch logic cleared against). This is the
- *   datasheet "read PORTB to end the mismatch condition" sequence.
+ *   Default body clears RBIF and forwards the already-read PORTB byte
+ *   to the registered callback. Read-before-clear is mandatory, not
+ *   stylistic: the mismatch comparator only re-arms once PORTB is
+ *   read, so reading it after clearing RBIF risks a spurious
+ *   re-interrupt or a silently-missed change.
  */
 void RB_IRQHandler(void) PIC8_WEAK;
 

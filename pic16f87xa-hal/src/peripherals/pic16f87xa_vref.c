@@ -15,8 +15,8 @@ HAL_StatusTypeDef HAL_VREF_Init(const VREF_HandleTypeDef *h)
     if (h->OutputEnable)            v |= PIC_CVRCON_CVROE;
     if (h->Enabled)                 v |= PIC_CVRCON_CVREN;
 #ifdef PIC8_BANK1_WRITE8
-    /* See PIC8_BANK1_WRITE8's header comment (target/pic16f87xa_platform.h)
-     * and pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9. */
+    /* See target/pic16f87xa_platform.h: a plain bank-switch write here
+     * silently corrupts under XC8 v4.00. */
     PIC8_BANK1_WRITE8(CVRCON, v);
 #else
     {

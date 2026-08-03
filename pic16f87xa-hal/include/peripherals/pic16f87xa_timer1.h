@@ -3,27 +3,11 @@
  * @brief   Timer1 driver, 16-bit timer/counter.
  *
  * @details
- *   Source: DS39582B §6.0 (Timer1 Module), §6.1 (Timer mode),
- *   §6.2 (Counter mode), §6.3 (Synchronized), §6.4 (Asynchronous),
- *   Register 6-1 (T1CON), Table 6-2 (register summary).
- *
- *   Wiring on the part:
- *     - 16-bit counter TMR1H:TMR1L, read/writable.
- *     - Clock source: internal Fosc/4 (TMR1CS=0) or RC0/T1CKI (TMR1CS=1).
- *     - T1OSCEN enables a low-power 32.768 kHz crystal oscillator on
- *       RC0/T1OSO and RC1/T1OSI, intended for real-time-clock use.
- *     - T1SYNC selects whether the external clock is synchronized to
- *       Fosc (synchronous counter) or free-running (asynchronous).
- *     - Prescaler: 1:1, 1:2, 1:4, 1:8.
- *     - Overflow (0xFFFF → 0x0000) sets PIR1<TMR1IF>.
- *
- *   Reset state (DS39582B Table 14-6): T1CON = 0x00 (TMR1ON cleared,
- *   prescaler 1:1, internal clock, T1OSC off, sync). TMR1H/L are
- *   "unknown" on POR.
- *
- *   CCP special-event trigger (DS39582B §6.6) resets TMR1H:TMR1L when
- *   CCP1M3:CCP1M0 = 1011. The driver does not configure that; the CCP
- *   driver does.
+ *   Source: DS39582B §6.0. Full reference: MANUAL.md §11. T1OSCEN
+ *   enables a 32.768 kHz crystal on RC0/RC1 for RTC use; T1SYNC
+ *   selects sync-to-Fosc vs free-running for the external clock. The
+ *   CCP special-event trigger (§6.6) can reset TMR1H:L; configured by
+ *   the CCP driver, not here.
  */
 
 #ifndef PIC16F87XA_TIMER1_H

@@ -3,26 +3,11 @@
  * @brief   CPU-level helpers: Watchdog Timer, Brown-out Reset, Sleep.
  *
  * @details
- *   Source: DS39582B §14.10 (PCON, Register 14-2), §14.13 (WDT),
- *   §14.14 (Power-down Mode / Sleep).
- *
- *   The Watchdog Timer is enabled by the WDT configuration bit
- *   (Register 14-1) which can only be programmed at flash time, the
- *   runtime API only provides a refresh helper. Once the WDT is
- *   enabled (WDTEN=1 in CONFIG), the user MUST call
- *   @ref HAL_WDT_Refresh periodically or the chip will reset.
- *
- *   The SLEEP instruction is invoked via inline asm. On the host
- *   simulation, HAL_Sleep_Enter is a no-op because there is no
- *   PIC16F87XA CPU to stop.
- *
- *   BOR (Brown-out Reset) state is observable through PCON<BOR>
- *   (bit 0, DS39582B §14.10). The POR bit (bit 1) is set on power-on
- *   reset and unaffected by other resets.
- *
- *   The config-bit control is left to the user's MPLAB X / XC8 setup;
- *   this file does not emit `#pragma config` directives because the
- *   bit definitions live in user code (and vary by IDE).
+ *   Source: DS39582B §14.10 (PCON), §14.13 (WDT), §14.14 (Sleep). Once
+ *   WDTEN=1 in the config word, call @ref HAL_WDT_Refresh periodically
+ *   or the chip resets; config bits themselves are left to the user's
+ *   MPLAB X/XC8 project setup, not emitted here. HAL_Sleep_Enter is a
+ *   no-op on host (no real CPU to stop).
  */
 
 #ifndef PIC16F87XA_WDT_SLEEP_H
@@ -32,22 +17,16 @@
 #include "pic16f87xa_sfr.h"
 
 /**
- * @brief  Refresh the Watchdog Timer by executing the `clrwdt` asm
- *         instruction (or the equivalent macro in the simulator).
- *
- *         On a real target this MUST be called more often than the
- *         WDT period (typ. 18 ms × prescaler, §17.0 #31). On the
- *         host simulator it's a no-op.
+ * @brief  Refresh the Watchdog Timer (`clrwdt`, no-op on host). Must be
+ *         called more often than the WDT period (typ. 18 ms x
+ *         prescaler, §17.0 #31) on a real target.
  */
 void HAL_WDT_Refresh(void);
 
 /**
- * @brief  Enter Power-down (Sleep) mode. On a real target this is
- *         implemented with the `sleep` asm instruction; the CPU
+ * @brief  Enter Sleep (`sleep` asm on target, no-op on host; callers
+ *         should keep driving pic16f87xa_sim_step()). Real target
  *         halts until any enabled interrupt wakes it (§14.14).
- *
- *         On the host simulator this is a no-op; callers should
- *         continue to drive pic16f87xa_sim_step().
  */
 void HAL_Sleep_Enter(void);
 

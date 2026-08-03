@@ -3,25 +3,10 @@
  * @brief   A/D converter driver, 10-bit, 5/8 channels.
  *
  * @details
- *   Source: DS39582B §11.0, Registers 11-1 (ADCON0) and 11-2 (ADCON1),
- *   Tables 11-1 (Tad selection) and 11-2 (register summary).
- *
- *   Wiring on the part:
- *     - 10-bit successive-approximation ADC with 5 channels on
- *       28-pin parts and 8 channels on 40/44-pin parts (§1.0).
- *     - 5/8 analog inputs multiplexed on PORTA / PORTE pins.
- *     - Reference voltage: VDD+VSS, VREF+ + VREF-, or AN2 + AN3.
- *     - Result in two registers ADRESH:ADRESL, 16 bits wide.
- *     - Right-justified by default; left-justified with ADFM=0.
- *     - GO/DONE bit starts conversion; ADIF (PIR1<6>) fires on completion.
- *
- *   Acquisition time per §11.1 must elapse between channel selection
- *   and the GO bit, the driver enforces this by requiring the user
- *   to call HAL_ADC_Start() explicitly (rather than configuring + starting
- *   in one step).
- *
- *   Reset state (Table 11-2): ADCON0 = 0x00, ADCON1 = 0x00 (all analog,
- *   no clock). All analog pins default to analog input.
+ *   Source: DS39582B §11.0. Full register/wiring reference:
+ *   `pic16f87xa-hal/MANUAL.md` §16. Acquisition time (§11.1) must
+ *   elapse between channel select and GO, enforced by requiring an
+ *   explicit HAL_ADC_Start() call rather than combining select+start.
  */
 
 #ifndef PIC16F87XA_ADC_H

@@ -162,12 +162,9 @@ void RB_IRQHandler(void)
 {
     if (!HAL_IRQ_GetFlag(PIC16_IRQ_RB)) return;
 
-    /* MUST read PORTB before clearing RBIF, DS39582B §14.11.3: the mismatch
-     * comparator latches the value at the last CPU read of PORTB, so the
-     * read is what ends the current mismatch condition and re-arms the next
-     * one. Clearing the flag first (or not reading at all) risks an
-     * immediate spurious re-interrupt or a silently-missed change. The
-     * callback gets this already-read byte, never a second later read. */
+    /* MUST read PORTB before clearing RBIF (DS39582B §14.11.3): the
+     * mismatch comparator only re-arms once PORTB is read, so reading
+     * after clearing risks a spurious re-interrupt or a missed change. */
     uint8_t portb = PIC8_REG8(PIC_REG_PORTB);
     HAL_IRQ_ClearFlag(PIC16_IRQ_RB);
     if (s_rb_change_callback) s_rb_change_callback(portb);

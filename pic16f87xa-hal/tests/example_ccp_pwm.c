@@ -13,15 +13,6 @@
  *   period, so this test reads the underlying CCP1CON register +
  *   PR2 / T2CON to verify the driver configured everything correctly,
  *   and counts TMR2 overflows to confirm the period.
- *
- * Build:
- *   cc -std=c99 -DPIC16F877A -Iinclude/host -Iinclude \
- *      tests/example_ccp_pwm.c \
- *      src/peripherals/pic16f87xa_ccp.c \
- *      src/peripherals/pic16f87xa_timer2.c \
- *      src/core/pic16_irq.c \
- *      src/sim/pic16f87xa_sim.c \
- *      -o example_ccp_pwm
  */
 
 #include "pic16f87xa.h"

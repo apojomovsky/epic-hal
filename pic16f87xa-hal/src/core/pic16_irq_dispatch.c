@@ -4,26 +4,13 @@
  *          peripheral IRQHandler. Shared by both builds.
  *
  * @details
- *   The PIC16F87XA family has a single interrupt vector at 0x0004
- *   (DS39582B §14.11). On a real target the XC8 `__interrupt()` handler in
- *   pic16_isr_vector.c calls this; on the host the harness registers
- *   this as the sim IRQ callback. Both reach the same dispatch, so there
- *   is one source of truth and no duplication.
- *
- *   Each peripheral IRQHandler checks its own flag and returns
- *   immediately when its source is not pending (see e.g.
- *   @ref TIMER0_IRQHandler), so calling them all in turn is correct and
- *   costs only a few cycles per interrupt.
- *
- *   The handlers are declared `PIC8_WEAK` in their own headers (to
- *   allow optional user override). That makes a reference through those
- *   headers a *weak* reference, which the linker will NOT use to pull the
- *   handler's object out of the static library, leaving the call target
- *   NULL for any handler not already pulled by a strong reference. To
- *   force the linker to resolve every handler, this file declares them
- *   with strong prototypes and does not include the peripheral headers.
- *   (On the XC8 target there is no weak attribute, so this is a no-op
- *   there; it only matters for the host link.)
+ *   Single PIC16 vector (0x0004, DS39582B §14.11): the target's
+ *   `__interrupt()` and the host's sim IRQ callback both call this one
+ *   dispatcher. Each peripheral IRQHandler checks its own flag and
+ *   returns immediately if not pending. Handlers are declared here
+ *   with strong prototypes, not via their PIC8_WEAK headers, so the
+ *   host linker is forced to pull every handler's object out of the
+ *   static library instead of leaving an unreferenced weak symbol NULL.
  */
 
 #include "core/pic16_irq.h"

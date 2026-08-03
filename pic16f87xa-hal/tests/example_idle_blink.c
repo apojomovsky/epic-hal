@@ -4,25 +4,13 @@
  *          driven, so the CPU is mostly idle.
  *
  * @details
- *   The timebase is a hardware timer, not a software delay loop. The CPU
- *   spends almost all of its time in Power-down (Sleep); a Timer1 overflow
- *   raises an interrupt, the ISR toggles the LED, and the CPU goes back to
- *   sleep. The CPU is awake for only a handful of cycles per overflow.
- *
- *   One source builds for both the host simulation backend and a real XC8
- *   target with no `#ifdef` in the code, the same Timer1 configuration on
- *   both. On a real target: Timer1 on the 32.768 kHz watch crystal (T1OSC)
- *   on T1OSO/T1OSI, asynchronous (the only Timer1 mode that keeps counting
- *   in Sleep, DS39582B §6.5), 1:1, reload 0x8000 (32768) → 1 s overflow.
- *   The host sim models the external/T1OSC clock at a simplified rate, so
- *   the identical configuration drives the same ISR → callback → GPIO
- *   path there too.
- *
- *   Real-target wiring: LED + resistor on RB0; a 32.768 kHz crystal +
- *   ~22 pF caps on T1OSO/T1OSI (PORTC<0>/<1>); the 20 MHz HS crystal on
- *   OSC1/OSC2 is still required for the CPU clock. With the default config
- *   (WDTE=ON) the ISR refreshes the WDT each wake; set WDTE=OFF if you'd
- *   rather not manage it.
+ *   Hardware timebase, not a software delay loop: the CPU spends
+ *   almost all its time in Sleep, a Timer1 overflow interrupt wakes it
+ *   just long enough to toggle the LED. Timer1 runs on the 32.768 kHz
+ *   watch crystal (T1OSC), asynchronous (the only mode that keeps
+ *   counting in Sleep, DS39582B §6.5), reload 0x8000 for a 1 s period.
+ *   Wiring: LED+resistor on RB0, 32.768 kHz crystal on T1OSO/T1OSI,
+ *   20 MHz HS crystal still required for the CPU clock.
  */
 
 #include "pic16f87xa.h"

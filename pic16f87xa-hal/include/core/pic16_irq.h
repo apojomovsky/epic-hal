@@ -5,13 +5,10 @@
  *          contract (pic8_dispatch_all_irqs) lives in pic8_harness.h.
  *
  * @details
- *   Mirrors `HAL_NVIC_*` from STM32Cube: the application never touches
- *   INTCON/PIE1/PIE2/PIR1/PIR2 directly; it goes through these helpers so
- *   the routing logic is portable and identical across all four devices in
- *   the PIC16F87XA family. The `HAL_IRQ_*` function names are shared by
- *   every 8-bit PIC family (each implements them against its own interrupt
- *   registers); the `PIC16_IRQn` enum and the register addresses behind
- *   those helpers are PIC16F87XA-specific.
+ *   Mirrors `HAL_NVIC_*` from STM32Cube: callers never touch
+ *   INTCON/PIE1/PIE2/PIR1/PIR2 directly. `HAL_IRQ_*` names are shared
+ *   across every 8-bit PIC family; `PIC16_IRQn` and the registers behind
+ *   it are PIC16F87XA-specific.
  *
  *   Sources (15 on 40/44-pin, 14 on 28-pin) follow DS39582B Figure 14-10
  *   "Interrupt Logic" and §14.11 "Interrupts":
@@ -101,12 +98,10 @@ void HAL_IRQ_ClearFlag(PIC16_IRQn irq);
 uint8_t HAL_IRQ_GetFlag(PIC16_IRQn irq);
 
 /**
- * @brief Set the priority of `irq`. **No-op on PIC16**: the PIC16F87XA
- *        family has a single interrupt vector and no priority scheme
- *        (DS39582B §14.11), so the priority is ignored. Declared with the
- *        shared @ref HAL_IRQ_Priority enum so consumer code is portable to
- *        PIC18, where this writes the matching IPR bit. Part of the shared
- *        `HAL_IRQ_*` contract extended in Phase 2 of the multi-family plan.
+ * @brief Set the priority of `irq`. No-op on PIC16 (single vector, no
+ *        priority scheme, DS39582B §14.11); declared with the shared
+ *        @ref HAL_IRQ_Priority enum so callers stay portable to PIC18,
+ *        which implements it for real.
  */
 void HAL_IRQ_SetPriority(PIC16_IRQn irq, HAL_IRQ_Priority prio);
 

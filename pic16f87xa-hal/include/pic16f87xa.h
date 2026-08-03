@@ -4,14 +4,10 @@
  *          selection, and the simulated/real-target SFR mapping layer.
  *
  * @details
- *   This header is the single entry point for the PIC16F87XA HAL. It mirrors
- *   the role of `stm32fxxx_hal.h` in STMicroelectronics' HAL: pulling in
- *   standard integer types, common macros, status enums, and the device-
- *   specific include that defines every SFR.
- *
- *   The datasheet (DS39582B) is the authoritative source for every constant,
- *   bit name, reset value and behavior implemented in this HAL. Every
- *   peripheral header carries a citation of the datasheet section it maps to.
+ *   Single entry point for the PIC16F87XA HAL, mirrors `stm32fxxx_hal.h`'s
+ *   role in ST's HAL: standard types, status enums, and the
+ *   device-specific SFR include. DS39582B is authoritative for every
+ *   constant; each peripheral header cites its own section.
  *
  * Target family (DS39582B §1.0, Table 1-1):
  *   - PIC16F873A, 28-pin,  4 KW flash, 192 B RAM, 128 B EEPROM, 5 ADC ch.
@@ -90,27 +86,16 @@
 #endif
 /** @} */
 
-/* ─────────── family-neutral capability aliases (pic8-common contract) ── */
-/**
- * Each family exposes its capability macros under family-neutral names too,
- * so family-agnostic consumers (the cooperative task manager) can scale to
- * the part without referencing a family-specific macro. Defined here to the
- * PIC16F87XA family's value; `pic18fxx5x.h` defines the same names to the
- * PIC18 value. Only the RAM size is aliased today (the task manager scales
- * its slot table to it); add more aliases as a family-agnostic consumer
- * needs them.
- */
+/* Family-neutral capability aliases (pic8-common contract): exposed
+ * under family-neutral names too, so family-agnostic consumers (the
+ * task manager) can scale without referencing a family-specific macro.
+ * `pic18fxx5x.h` defines the same names to its own values. */
 #define PIC8_FAMILY_RAM_BYTES   PIC16F87XA_FAMILY_RAM_BYTES
 
-/* ─────────── shared HAL status codes + bit helpers (pic8-common) ── */
-/**
- * The status enum (`HAL_StatusTypeDef` / `HAL_OK` / ...) and the bit
- * macros (`PIC8_BIT` / `PIC8_BIT_SET` / ...) are architecture-blind, so
- * they live in the shared layer and are identical on every 8-bit PIC
- * family. Pulled in here so a single `#include "pic16f87xa.h"` gives the
- * whole family the same status/bit vocabulary every consumer codebase
- * (the task manager, the examples) shares.
- */
+/* HAL_StatusTypeDef/HAL_OK/... and the PIC8_BIT* macros are
+ * architecture-blind, so they live in the shared layer; pulled in here
+ * so one `#include "pic16f87xa.h"` gives every consumer the same
+ * status/bit vocabulary. */
 #include "core/hal_status.h"
 
 /* ───────────── platform: SFR mapping + weak attribute ───────────── */
@@ -118,14 +103,9 @@
  * @defgroup PIC16F87XA_SFR Special Function Register mapping
  * @brief   How every SFR is stored and how the weak attribute is spelled.
  *
- * The same source code reads `pic8_sfr_read8(0x05)` (or uses the
- * convenience macro `PIC8_REG8`) on both builds, but the
- * implementation is chosen by the build's include path, not by `#ifdef`:
- * the CMake host build resolves `pic16f87xa_platform.h` to
- * `include/host/...` (a 512-byte memory-backed register file), and the
- * XC8 Makefile resolves it to `include/target/...` (direct volatile
- * dereference of the literal SFR address). See those two headers for the
- * exact macros; @ref PIC8_WEAK is likewise defined there.
+ * Same source reads `pic8_sfr_read8()`/`PIC8_REG8()` on both builds;
+ * the build's include path picks `include/host/...` (memory-backed) or
+ * `include/target/...` (direct volatile deref), not `#ifdef`.
  * @{
  */
 #include "pic16f87xa_platform.h"

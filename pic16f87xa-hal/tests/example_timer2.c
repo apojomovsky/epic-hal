@@ -5,14 +5,6 @@
  *   Timer2 with PR2=249, prescaler 1:1, postscaler 1:1 should fire every
  *   250 instruction cycles (DS39582B §7.0: period = (PR2+1) × prescaler
  *   × postscaler = 250 × 1 × 1 = 250).
- *
- * Build:
- *   cc -std=c99 -DPIC16F877A -Iinclude/host -Iinclude \
- *      tests/example_timer2.c \
- *      src/peripherals/pic16f87xa_timer2.c \
- *      src/core/pic16_irq.c \
- *      src/sim/pic16f87xa_sim.c \
- *      -o example_timer2
  */
 
 #include "pic16f87xa.h"

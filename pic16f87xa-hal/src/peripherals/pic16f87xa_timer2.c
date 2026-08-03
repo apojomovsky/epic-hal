@@ -40,11 +40,8 @@ uint8_t HAL_TIMER2_ReadPeriod(void)
 void HAL_TIMER2_WritePeriod(uint8_t period)
 {
 #ifdef PIC8_BANK1_WRITE8
-    /* See PIC8_BANK1_WRITE8's header comment (target/pic16f87xa_platform.h):
-     * a plain `pic_select_bank(1); PIC8_REG8(PIC_REG_PR2) = period;`
-     * here silently corrupted PR2 under XC8 v4.00 (confirmed via `mdb`
-     * instruction-stepping: `period` itself was correct right up until
-     * this write, see pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9). */
+    /* See target/pic16f87xa_platform.h: a plain bank-switch write here
+     * silently corrupts under XC8 v4.00. */
     PIC8_BANK1_WRITE8(PR2, period);
 #else
     uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;

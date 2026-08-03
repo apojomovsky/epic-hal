@@ -15,22 +15,12 @@
 
 static const SSP_HandleTypeDef *g_ssp = NULL;
 
-/* Helper: bank-switching wrapper for the SSPCON2 / SSPSTAT / SSPADD
- * reads. These registers are in Bank 1 (SSPSTAT=0x94, SSPCON2=0x91,
- * SSPADD=0x93) per DS39582B Figure 2-4.
- *
- * A plain `pic_select_bank(1); PIC8_REG8(addr) = v;` here silently
- * corrupted the write, confirmed via a real-target `mdb` probe
- * (`SSPADD` read back `0` instead of the value passed in): the same
- * bug already found and fixed for `HAL_TIMER2_WritePeriod`/
- * `HAL_USART_Init`, see pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9.
- * `PIC8_BANK1_WRITE8`/`READ8` need a literal SFR name at compile time
- * (it's an inline-asm operand, see their own header comment), not a
- * runtime `addr`, so this dispatches on `addr` *before* any bank
- * switch begins (a plain comparison in Bank 0, nothing at risk) and
- * only then invokes the named macro for the matching register; every
- * real call site below passes a compile-time-constant `addr`, so XC8
- * folds this down to the single matching branch either way. */
+/* SSPCON2/SSPSTAT/SSPADD are Bank 1 (SSPSTAT=0x94, SSPCON2=0x91,
+ * SSPADD=0x93, DS39582B Figure 2-4). PIC8_BANK1_WRITE8/READ8 need a
+ * literal SFR name at compile time (inline-asm operands), not a
+ * runtime `addr`, so this dispatches on `addr` before any bank switch
+ * begins, then invokes the named macro; every real call site passes a
+ * compile-time constant, so XC8 folds this to one branch either way. */
 #ifdef PIC8_BANK1_READ8
 static uint8_t ssp_b1_read(uint8_t addr)
 {

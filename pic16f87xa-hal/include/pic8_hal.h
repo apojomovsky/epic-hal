@@ -3,13 +3,10 @@
  * @brief   Family-neutral top-level entry point to the PIC16F87XA HAL.
  *
  * @details
- *   A consumer that should build unchanged against any 8-bit PIC family
- *   (the cooperative task manager is the canonical example) includes this
- *   single neutral header instead of the family-specific `pic16f87xa.h`.
- *   Each family provides its own `pic8_hal.h` under the same neutral name,
- *   so the build's include path (which family's HAL tree is added) decides
- *   which family's headers are pulled in. This is the family-agnostic
- *   contract entry point introduced for the Phase 3 litmus test.
+ *   A consumer that builds unchanged against any 8-bit PIC family
+ *   includes this neutral name instead of `pic16f87xa.h`; each family
+ *   provides its own `pic8_hal.h` under the same name, selected by
+ *   which family's HAL tree is on the include path.
  */
 
 #ifndef PIC8_HAL_H

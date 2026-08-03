@@ -49,14 +49,9 @@ static const irq_desc_t irq_table[] = {
 
 #define IRQ_TABLE_SIZE  (sizeof irq_table / sizeof irq_table[0])
 
-/* Macro, not a `static` function (empirically probed under MPLAB SIM,
- * same symptom as PIC8_PIE_ENABLE_BIT's own header comment: a
- * function-call boundary here silently lost the returned address by the
- * time it reached the caller's read/write, confirmed by a dedicated
- * probe that wrote PIE1 correctly via a hand-computed address but not
- * via this function; see pic16f87xa-hal/docs/ARCHITECTURE.md's Finding
- * 2 for the current, still-unconfirmed best explanation). PIR1 = 0x0C,
- * PIR2 = 0x0D. */
+/* Macro, not a `static` function: a function-call boundary here lost
+ * the returned address before it reached the caller's read/write
+ * (ARCHITECTURE.md Finding 2). PIR1 = 0x0C, PIR2 = 0x0D. */
 #define pir_reg_addr(d) ((d)->pir_is_pir2 ? PIC_REG_PIR2 : PIC_REG_PIR1)
 
 /* ───────────────────────── public API ───────────────────────────── */
@@ -79,31 +74,23 @@ void HAL_IRQ_Enable(PIC16_IRQn irq)
 {
     if ((unsigned)irq >= IRQ_TABLE_SIZE) return;
     const irq_desc_t *d = &irq_table[irq];
-    /* irq_table is `static const`, ROM-resident on PIC16's Harvard
-     * architecture; XC8 reads each field through its own runtime helper
-     * (visible in the generated .s as `fcall stringdir`), not a plain
-     * load. Empirically probed under MPLAB SIM: interleaving that field
-     * read with an in-progress SFR read-modify-write silently corrupted
-     * the SFR side. Fix: pull every field this function needs out of
-     * `d` into locals FIRST, before touching any SFR. */
+    /* irq_table is ROM-resident; XC8 reads each field through a
+     * runtime helper, not a plain load, and interleaving that read
+     * with an in-progress SFR RMW silently corrupted the SFR side.
+     * Fix: pull every field this function needs into locals first,
+     * before touching any SFR. */
     uint8_t in_intcon = d->in_intcon;
     uint8_t enable_mask = d->enable_mask;
     if (in_intcon) {
         PIC8_BIT_SET(PIC8_REG8(PIC_REG_INTCON), enable_mask);
         return;
     }
-    /* Bank 1 (PIE1/PIE2). See PIC8_PIE_ENABLE_BIT's own header comment
-     * (target/pic16f87xa_platform.h) for the full account: a plain C
-     * read-modify-write here never persisted under XC8 v4.00, any
-     * C-level local-variable access performed while banked into Bank 1
-     * gets misdirected. Lives in the per-platform header, not inline
-     * here, because this file is shared with the host build and
-     * `asm()`/`__at()` are XC8-only syntax the host's gcc/clang cannot
-     * parse. */
+    /* Bank 1 (PIE1/PIE2): a plain C RMW here never persisted under XC8
+     * v4.00 (see PIC8_PIE_ENABLE_BIT's own comment). Lives in the
+     * per-platform header, not inline here, because this file is
+     * shared with the host build and asm()/__at() are XC8-only. */
     PIC8_PIE_ENABLE_BIT(d->pir_is_pir2, enable_mask);
-    /* Peripheral IRQs also need PEIE; auto-set it as a courtesy.
-     * PIC_REG_INTCON is a compile-time constant and Bank 0-resident
-     * (INTCON is unbanked), so the plain compound form is fine here. */
+    /* Peripheral IRQs also need PEIE; auto-set it as a courtesy. */
     PIC8_BIT_SET(PIC8_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
 }
 

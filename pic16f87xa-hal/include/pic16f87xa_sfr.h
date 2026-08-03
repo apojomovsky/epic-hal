@@ -355,35 +355,12 @@
  *         DS39582B §2.2, Table 2-1.
  *
  * @details
- *   A macro, not a `static inline` function (empirically probed, per this
- *   repo's own convention for uncertain compiler behavior): XC8 v4.00
- *   compiled the function form to a genuine out-of-line `fcall`, ignoring
- *   even `__attribute__((always_inline))`, and something about that call
- *   boundary corrupted a caller's own local value (a real target's PR2
- *   write went through with the correct RP0 bit set, confirmed via a
- *   dedicated probe run under MPLAB SIM, but the *value* written landed
- *   as 0 instead of the real period, every single time). Never caught
- *   before because nothing had ever *run* this repo's PIC16 firmware,
- *   only linked it (see docs/ci-plan.md's Phase 3/4 account); every
- *   caller across this HAL that reads a Bank 1 register (SPBRG, PR2,
- *   PIE1/PIE2) was silently affected. A macro is expanded at the
- *   preprocessor stage, before XC8 ever gets a chance to turn it into a
- *   call, so this failure mode cannot recur here regardless of what the
- *   optimizer decides to do with `static inline`. Root cause not fully
- *   pinned down against official docs (plausible, unconfirmed
- *   explanation: pic16f87xa-hal/docs/ARCHITECTURE.md's Finding 2), the
- *   macro conversion sidesteps the question rather than resolving it.
- *
- *   This did NOT turn out to be the only bank-1 issue: a SEPARATE,
- *   still-unresolved one affects any C-level local variable accessed
- *   WHILE a bank switch is in effect (RP0 non-default), see
- *   pic16_irq.c's HAL_IRQ_Enable for the full, current account and
- *   docs/ci-plan.md's Phase 4 findings. Also worth knowing: two or more
- *   pic_select_bank invocations combined with certain surrounding code
- *   in the same function has been observed to hang XC8's `cgpic`
- *   optimizer pass outright (100% CPU, non-terminating within several
- *   minutes), not just miscompile; if a build ever seems to hang rather
- *   than fail, this is a real, reproduced possibility, not a fluke.
+ *   A macro, not a `static inline` function: XC8 v4.00 compiling this
+ *   as a function corrupted values written to Bank 1 registers across
+ *   the call boundary (ARCHITECTURE.md Finding 2); expanding at the
+ *   preprocessor stage sidesteps it entirely. Also: multiple calls
+ *   combined with certain surrounding code can hang XC8's `cgpic` pass
+ *   outright, a known issue here, not a fluke.
  */
 #define pic_select_bank(bank)                                          \
     do {                                                               \

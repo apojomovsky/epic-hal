@@ -36,10 +36,8 @@ HAL_StatusTypeDef HAL_ADC_Init(const ADC_HandleTypeDef *h)
     }
     if (h->ResultFormat == ADC_FORMAT_RIGHT) adcon1 |= PIC_ADCON1_ADFM;
 #ifdef PIC8_BANK1_WRITE8
-    /* See PIC8_BANK1_WRITE8's header comment (target/pic16f87xa_platform.h)
-     * and pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9: a plain
-     * `pic_select_bank(1); PIC8_REG8(0x9FU) = adcon1;` here is the same
-     * shape that silently corrupted PR2/SPBRG. */
+    /* See target/pic16f87xa_platform.h: a plain bank-switch RMW here
+     * silently corrupts under XC8 v4.00. */
     PIC8_BANK1_WRITE8(ADCON1, adcon1);
 #else
     {
@@ -110,9 +108,7 @@ uint16_t HAL_ADC_Read(void)
     /* Read ADRESL first, then ADRESH, in the active bank. */
     uint8_t lo = 0U, adfm_raw = 0U;
 #ifdef PIC8_BANK1_READ8
-    /* See PIC8_BANK1_WRITE8's header comment (target/pic16f87xa_platform.h)
-     * and pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9: same corruption
-     * shape, read side. */
+    /* See target/pic16f87xa_platform.h: same corruption shape, read side. */
     PIC8_BANK1_READ8(ADRESL, lo);
     PIC8_BANK1_READ8(ADCON1, adfm_raw);
 #else

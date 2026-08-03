@@ -4,31 +4,12 @@
  *          (HAL_GPIO_RegisterChangeCallback / RB_IRQHandler) on the sim.
  *
  * @details
- *   Covers the Phase 0a cases from docs/pic8-encoder-plan.md, run in the
- *   HAL's own example suite (the repo's HAL "tests" are example_*.c
- *   executables that return 0 on pass / non-zero on fail):
- *     1. RB_IRQHandler is a no-op when RBIF is not pending (callback not
- *        invoked, flag untouched).
- *     2. With RBIF pending, the registered callback fires exactly once,
- *        receives the freshly-read PORTB byte, and RBIF is clear after.
- *     3. A NULL (or unregistered) callback does not crash.
- *     4. pic8_dispatch_all_irqs reaches RB_IRQHandler (a full dispatch pass
- *        with RBIF pending still drives the callback, proving the fan-out).
- *
- *   RBIF modeling: the host sim does not assert RBIF on a PORTB mismatch
- *   (modeling the datasheet mismatch-comparator "snapshot on every PORTB
- *   read" behavior faithfully would require intercepting every CPU read of
- *   PORTB through the PIC8_REG8 macro, which is invasive for the one feature
- *   that needs it). The documented fallback (plan §"host sim does not model
- *   RBIF yet") is used here: the test asserts RBIF directly in INTCON, then
- *   calls the handler and checks the callback's observed argument and the
- *   post-call flag state. This proves the handler's own read/clear/callback
- *   ordering, which is the part that actually matters.
- *
- * Build (host):
- *   cc -std=c99 -DPIC16F877A -Iinclude/host -Iinclude \
- *      tests/example_rb_change.c -L... -lpic16f87xa_hal -o example_rb_change
- *   (or via the CMake build, which links the HAL library for this example.)
+ *   Exercises HAL_GPIO_RegisterChangeCallback/RB_IRQHandler: no-op when
+ *   RBIF isn't pending, callback fires exactly once with the read
+ *   PORTB byte when it is, a NULL callback doesn't crash, and
+ *   pic8_dispatch_all_irqs reaches the handler. The host sim doesn't
+ *   model RBIF-on-mismatch, so the test asserts RBIF directly and
+ *   checks the handler's read/clear/callback ordering instead.
  */
 
 #include "pic16f87xa.h"

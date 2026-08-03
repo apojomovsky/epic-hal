@@ -3,22 +3,9 @@
  * @brief   USART driver, async + sync master/slave.
  *
  * @details
- *   Source: DS39582B §10.0, Registers 10-1 (TXSTA) and 10-2 (RCSTA),
- *   §10.1 (BRG), Table 10-1 (baud-rate formulas).
- *
- *   Wiring on the part:
- *     - Asynchronous full-duplex (TX on RC6, RX on RC7).
- *     - Synchronous master (clock on RC6, data on RC7).
- *     - Synchronous slave (clock on RC6, data on RC7, both input).
- *     - 8-bit or 9-bit data.
- *     - Address-detect mode (9-bit async with ADDEN).
- *
- *   Reset state (DS39582B Table 14-6):
- *     - TXSTA = 0000 -010 (TRMT=1, others 0)
- *     - RCSTA = 0000 000x
- *     - SPBRG = 0000 0000
- *
- *   Only one USART instance exists on the PIC16F87XA.
+ *   Source: DS39582B §10.0, §10.1 (BRG). Full reference: MANUAL.md
+ *   §14. One USART instance on this family; async and sync
+ *   master/slave, 8/9-bit data, address-detect mode via ADDEN.
  */
 
 #ifndef PIC16F87XA_USART_H

@@ -4,22 +4,12 @@
  *          "the HAL drives a real application" smoke test.
  *
  * @details
- *   One source builds for both the host simulation backend and a real XC8
- *   target with no `#ifdef` in the code: the build selects the harness
- *   implementation (core/pic8_harness.h), which abstracts the only
- *   two execution-model differences, pumping simulated time vs. real
- *   time advancing on its own, and a terminating pass/fail test vs.
- *   firmware that runs forever.
- *
  *   Timer0 overflows drive an interrupt; the ISR toggles RB0. The main
- *   loop just lets time pass (pumping the sim on the host, busy-spinning
- *   on the target) and refreshes the WDT, the peripheral does the work.
- *
- *   Wiring (real target): LED + resistor between RB0 and GND
- *   (active-high); 20 MHz crystal on OSC1/OSC2 → FOSC = HS, FCY = 5 MHz.
- *   Timer0 internal Fosc/4, 1:256 prescaler, reload 0 → overflow every
- *   256 × 256 × 0.2 µs ≈ 13 ms, so RB0 toggles ~76×/s (a fast blink).
- *   The WDT (enabled in the config word) is refreshed in the main loop.
+ *   loop just lets time pass (pumping the sim on host, busy-spinning
+ *   on target, via core/pic8_harness.h) and refreshes the WDT.
+ *   Wiring: LED+resistor between RB0 and GND, 20 MHz crystal (FOSC=HS,
+ *   FCY=5 MHz). Timer0 Fosc/4, 1:256 prescaler, reload 0, overflows
+ *   every ~13 ms (~76 Hz toggle).
  */
 
 #include "pic16f87xa.h"

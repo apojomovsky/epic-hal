@@ -3,25 +3,11 @@
  * @brief   CCP1 / CCP2 driver, Capture / Compare / PWM.
  *
  * @details
- *   Source: DS39582B §8.0 (Capture/Compare/PWM Modules), Register 8-1
- *   (CCPxCON), Tables 8-1..8-4.
- *
- *   The PIC16F87XA has two CCP modules. CCP1 and CCP2 are identical except
- *   for their special-event trigger: CCP1's trigger resets Timer1;
- *   CCP2's trigger resets Timer1 *and* starts an A/D conversion.
- *   See §8.2.4.
- *
- *   Timer resources required (DS39582B Table 8-1):
- *     - Capture  → Timer1 (must be in Timer or Synchronized Counter mode)
- *     - Compare  → Timer1
- *     - PWM      → Timer2
- *
- *   Two modules are exposed through the same driver, selected by
- *   `CCP_Instance` in the handle. That keeps Cube-style symmetry:
- *     HAL_CCP_Init(&h, CCP_INSTANCE_1, &cfg);
- *
- *   Reset state (DS39582B Table 14-6): CCPxCON = 0x00, all modes off.
- *   CCPRxL / CCPRxH are unknown on POR.
+ *   Source: DS39582B §8.0. Full register reference: MANUAL.md §13.
+ *   CCP1 and CCP2 are identical except their special-event trigger:
+ *   CCP1 resets Timer1; CCP2 resets Timer1 *and* starts an A/D
+ *   conversion (§8.2.4). Capture/Compare need Timer1 running; PWM
+ *   needs Timer2 running.
  */
 
 #ifndef PIC16F87XA_CCP_H

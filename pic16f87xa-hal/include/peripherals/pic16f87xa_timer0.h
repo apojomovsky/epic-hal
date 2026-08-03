@@ -3,23 +3,11 @@
  * @brief   Timer0 driver, 8-bit timer/counter with shared prescaler.
  *
  * @details
- *   Source: DS39582B §5.0 (Timer0 Module), §5.3 (Prescaler),
- *   Register 5-1 (OPTION_REG), Table 5-1 (PS2:PS0 encoding).
- *
- *   Wiring on the part:
- *     - Counter is read-modify-writable from the CPU.
- *     - Clock source: internal Fosc/4 (T0CS=0) or RA4/T0CKI pin (T0CS=1).
- *     - Edge select: rising (T0SE=0) or falling (T0SE=1) on T0CKI.
- *     - Prescaler: shared with WDT, controlled by PSA + PS2:PS0.
- *     - Overflow (0xFF → 0x00) sets INTCON<TMR0IF>.
- *
- *   ⚠ PIC16F87XA gotchas (cited):
- *     - Writing TMR0 clears the prescaler when it's assigned to Timer0
- *       (DS39582B §5.3 Note).
- *     - Switching the prescaler from TMR0 to WDT requires a specific
- *       sequence (DS39582B §5.3, footnote 1) to avoid a spurious reset.
- *       The driver does NOT touch PSA while WDT is active; if you do, you
- *       must follow the example in the datasheet.
+ *   Source: DS39582B §5.0, §5.3. Full reference: MANUAL.md §10.
+ *   Writing TMR0 clears the prescaler (§5.3 Note). The driver never
+ *   touches PSA while WDT is active; switching the shared prescaler
+ *   from TMR0 to WDT needs the exact sequence in §5.3 footnote 1 to
+ *   avoid a spurious reset.
  */
 
 #ifndef PIC16F87XA_TIMER0_H
@@ -46,13 +34,9 @@ typedef enum {
 } TIMER0_ClockEdgeTypeDef;
 
 /**
- * @brief Timer0 prescaler ratio. Encoded as the value to load into
- *        OPTION_REG<PS2:PS0> (DS39582B Table 5-1).
- *
- *        Note that PS2:PS0=000 is 1:2 for Timer0, NOT 1:1, the 1:1
- *        option is "no prescaler" and is selected by NOT assigning the
- *        prescaler to Timer0 (PSA = 1, then the prescaler applies to
- *        WDT and TMR0 gets the raw clock).
+ * @brief Timer0 prescaler ratio, loaded into OPTION_REG<PS2:PS0>
+ *        (DS39582B Table 5-1). 000 is 1:2, NOT 1:1; "no prescaler"
+ *        means PSA=1 (prescaler assigned to WDT instead).
  */
 typedef enum {
     TIMER0_PRESCALER_1_2    = 0x0U,  /**< 1:2, PS2:PS0 = 000. */

@@ -3,25 +3,10 @@
  * @brief   Data EEPROM driver.
  *
  * @details
- *   Source: DS39582B §3.0 (Data EEPROM Memory), Table 3-1, Register 3-1
- *   (EECON1), §3.4 (writing sequence), §3.5 (reading sequence).
- *
- *   Wiring on the part:
- *     - 128 / 256 bytes of data EEPROM (Table 1-1).
- *     - EEDATA (Bank 2, 0x10C), 8-bit data register.
- *     - EEADR  (Bank 2, 0x10D), 8-bit low address register.
- *     - EEDATH (Bank 2, 0x10E) + EEADRH (Bank 2, 0x10F), flash-only,
- *       ignored for EEPROM access.
- *     - EECON1 (Bank 3, 0x18C): RD, WR, WREN, WRERR, EEIF.
- *     - EECON2 (Bank 3, 0x18D), magic unlock: must write 0x55 then 0xAA
- *       (DS39582B §3.4 / Example 3-1).
- *
- *   The driver hides the unlock sequence from the caller. Writes are
- *   non-blocking: the driver returns as soon as the WR bit is set;
- *   the caller detects completion by polling EEIF (PIR2<4>), which
- *   fires when the write cycle ends (DS39582B §3.4 step 6).
- *
- *   Reset state: EECON1 = 0x00 (RD/WR cleared).
+ *   Source: DS39582B §3.0. Full register reference: MANUAL.md §19. The
+ *   driver hides the mandatory 0x55/0xAA unlock sequence; writes are
+ *   non-blocking, poll EEIF (PIR2<4>) or use the callback for
+ *   completion.
  */
 
 #ifndef PIC16F87XA_EEPROM_H

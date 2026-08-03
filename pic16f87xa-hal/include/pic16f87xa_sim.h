@@ -3,19 +3,12 @@
  * @brief   Public API for the PIC16F87XA host simulation backend.
  *
  * @details
- *   On the host build every SFR access indexes a host-side register file
- *   (the platform header include/host/pic16f87xa_platform.h, see
- *   @ref pic16f87xa_sfr.h). The hooks declared here let the host
- *   application:
- *     - drive external input pins (e.g. simulate a button press on RB0),
- *     - read output-pin levels as an external load would see them,
- *     - advance the simulated timers / A/D / USART by N instruction
- *       cycles via pic16f87xa_sim_step(),
- *     - inject peripheral events (ADC done, USART byte received, etc.).
- *
- *   The simulator models the most-used peripherals (Timer0/1/2, GPIO,
- *   ADC, USART, MSSP, EEPROM); see the implementation in
- *   src/sim/pic16f87xa_sim.c for the full list.
+ *   On the host build every SFR access indexes a host-side register
+ *   file (include/host/pic16f87xa_platform.h). These hooks let test
+ *   code drive input pins, read output-pin levels, advance simulated
+ *   time via pic16f87xa_sim_step(), and inject peripheral events
+ *   (ADC/USART/EEPROM done, etc.); see src/sim/pic16f87xa_sim.c for
+ *   the full peripheral coverage.
  */
 
 #ifndef PIC16F87XA_SIM_H

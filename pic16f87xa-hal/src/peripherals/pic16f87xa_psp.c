@@ -12,8 +12,7 @@ static uint8_t b1_trise(void)
 {
     uint8_t v = 0U;
 #ifdef PIC8_BANK1_READ8
-    /* See PIC8_BANK1_WRITE8's header comment (target/pic16f87xa_platform.h)
-     * and pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9. */
+    /* See target/pic16f87xa_platform.h: same corruption shape, read side. */
     PIC8_BANK1_READ8(TRISE, v);
 #else
     uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
