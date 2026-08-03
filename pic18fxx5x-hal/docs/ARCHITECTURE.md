@@ -1,7 +1,9 @@
 # `pic18fxx5x-hal` architecture: XC8 v4.00 codegen notes
 
-> Status: **all three bugs found and fixed; `pic8-tick`'s PIC18
-> sim-target test reaches a full `PASS`.** Written up during
+> Status: **all four bugs found and fixed (including a fourth found by
+> following up on this document's own "very likely affected" flag
+> rather than leaving it as a guess); `pic8-tick`'s PIC18 sim-target
+> test reaches a full `PASS`.** Written up during
 > `docs/ci-plan.md` Phase 4's PIC18 follow-up, after the PIC16 side of
 > the same phase reached a full fix (see `pic16f87xa-hal/docs/
 > ARCHITECTURE.md`). None of what's below is the same bug class as
@@ -154,22 +156,43 @@ Verified via `mdb`: `pic8-tick`'s PIC18 sim-target test reaches
 previously-passing PIC18 `(module, MCU)` real-target builds re-verified
 clean, no regressions.
 
+## Finding 4: `pic18fxx5x_ccp.c` had the identical bug, confirmed and fixed too
+
+**Found, confirmed via `mdb`, and fixed, even though `pic8-tick` never
+exercised it.** Flagged in an earlier draft of this document as "very
+likely has the same bug" from a `grep` for the pattern alone; followed
+up rather than left as a guess. `HAL_CCP_Init`/`SetCompare`/
+`GetCapture`/`SetPWMDuty` read/wrote `CCPRxL`/`CCPRxH`/`CCPxCON` through
+a `const ccp_addrs_t *a = &addrs[inst]; PIC8_REG8(a->cprl) = ...`
+pattern, the exact same struct-member-derived-runtime-address shape
+Finding 3 fixed in `pic18_irq.c`.
+
+Confirmed broken with the existing host-and-target `example_ccp_pwm.c`
+smoke test (already asserts the expected `CCPR1L`/`CCP1CON`/`ECCP1DEL`
+register image after `HAL_CCP_Init`, no new test needed): built for
+real target, ran under `mdb`, `CCPR1L` and `CCP1CON` both read `0`
+after init (expected `0x0C`/`0xAC`), while `ECCP1DEL` (written through
+the compile-time-constant `PIC_REG_ECCP1DEL` directly, never through
+the `addrs[]` table) came out correct at `0x8C`, matching Finding 3's
+signature exactly: constant-address writes work, table-derived ones
+don't.
+
+Fixed the same way: removed the `ccp_addrs_t`/`addrs[]` table, added
+`CCP_WRITE_CPRL`/`CPRH`/`CON` and `CCP_READ_CPRL`/`CPRH`/`CON` macros
+that branch on the instance *before* touching any SFR, so every branch
+uses a literal `PIC_REG_CCPR1L`/`CCPR2L`/etc. token. The interrupt ID
+(`a->irq`) wasn't itself an address (just a small enum passed into
+`pic18_irq.c`'s already-fixed dispatch), so that part only needed a
+trivial `ccp_irq(inst)` helper, not the macro treatment.
+
+Re-verified via `mdb` with the fix applied: `CCPR1L=12` (`0x0C`),
+`CCP1CON=172` (`0xAC`), `ECCP1DEL=140` (`0x8C`, unchanged), all matching
+the test's own documented expected values exactly. Host suite
+(`example_ccp_pwm` passes) and all 22 previously-passing PIC18
+`(module, MCU)` real-target builds re-verified clean, no regressions.
+
 ## Open, for whoever picks this back up
 
-- `pic18fxx5x_ccp.c`'s `HAL_CCP_*` functions use the same
-  runtime-address shape Finding 3 just fixed in `pic18_irq.c`
-  (`a->cprh`/`a->cprl`/`a->con`, struct-member-derived, not compile-time
-  constants). Checked every other PIC18 peripheral driver for the same
-  pattern (`grep` for `pic8_sfr_read8`/`write8` call sites, not
-  `mdb`-verified beyond `pic18_irq.c` itself): `pic18fxx5x_usart.c`,
-  `_ssp.c`, `_adc.c`, `_eeprom.c`, `_comp.c`, and `_spp.c` all pass a
-  compile-time-constant `PIC_REG_*` macro directly, the pattern already
-  confirmed safe; `_ccp.c` is the only other one that doesn't. Very
-  likely has the same bug; not yet probed under `mdb` to confirm, nor
-  fixed (`pic8-tick` doesn't exercise CCP, so it didn't block the
-  sim-target pilot). Same fix shape would apply: dispatch on which CCP
-  instance before touching any SFR, so each access site ends up with a
-  literal register name.
 - This document itself should be checked for staleness against whatever
   XC8 version `docker/ci-toolchain/Dockerfile` pins if that version is
   ever bumped; these findings are cited against v4.00 specifically.

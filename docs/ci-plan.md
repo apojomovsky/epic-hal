@@ -1036,10 +1036,10 @@ compiled to PIC18's program-memory table read/write mechanism
 access, so the write silently went nowhere. Fixed by rewriting
 `pic18_irq.c`'s table-driven dispatch into a `switch` per function with
 one case per `PIC18_IRQn`, each naming its register directly so the
-address is always a compile-time constant. Full account:
-`pic18fxx5x-hal/docs/ARCHITECTURE.md`. `pic18fxx5x_ccp.c` has the same
-runtime-address shape and is very likely affected the same way, not yet
-probed or fixed, tracked as separate follow-up work there.
+address is always a compile-time constant. `pic18fxx5x_ccp.c` had the
+identical bug (confirmed via `mdb` with the existing `example_ccp_pwm.c`
+smoke test, `CCPR1L`/`CCP1CON` both read `0` after init), fixed the
+same way. Full account: `pic18fxx5x-hal/docs/ARCHITECTURE.md`.
 
 ---
 

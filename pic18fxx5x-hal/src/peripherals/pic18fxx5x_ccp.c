@@ -8,21 +8,65 @@
 #include "core/pic18_irq.h"
 
 /**
- * @brief Per-instance register addresses + interrupt ID. CCP1 is the
- *        enhanced module (has ECCP1DEL/ECCP1AS); CCP2 is plain.
- */
-typedef struct {
-    uint16_t   cprl;   /**< CCPRxL address. */
-    uint16_t   cprh;   /**< CCPRxH address. */
-    uint16_t   con;    /**< CCPxCON address. */
-    PIC18_IRQn irq;    /**< Interrupt ID. */
-} ccp_addrs_t;
+ * @brief Per-instance register access. CCP1 is the enhanced module (has
+ *        ECCP1DEL/ECCP1AS); CCP2 is plain.
+ *
+ * @details
+ *   Previously a `ccp_addrs_t` lookup table holding CCPRxL/CCPRxH/CCPxCON
+ *   as `uint16_t` fields, dereferenced via a runtime `const ccp_addrs_t *a
+ *   = &addrs[inst]; PIC8_REG8(a->cprl) = ...`. Same bug class as
+ *   `pic18_irq.c`'s (see `pic18fxx5x-hal/docs/ARCHITECTURE.md` Finding 3):
+ *   confirmed via a real-target `mdb` probe that `CCPR1L`/`CCP1CON` stayed
+ *   `0` after `HAL_CCP_Init` while `ECCP1DEL` (written through the
+ *   compile-time-constant `PIC_REG_ECCP1DEL` directly, never through the
+ *   `addrs[]` table) came out correct. XC8 compiles a runtime-addressed
+ *   SFR access on PIC18 to its program-memory table read/write mechanism
+ *   (`TBLPTR`/`tblrd`/`tblwt`) instead of a data-memory access, so the
+ *   table-driven writes silently went nowhere.
+ *
+ *   Fixed the same way as `pic18_irq.c`: these macros branch on `inst`
+ *   *before* touching any SFR, so each branch's `PIC8_REG8`/
+ *   `pic8_sfr_read8`/`write8` call always sees a literal `PIC_REG_*`
+ *   token, never a value that crossed a function-call or struct-member
+ *   boundary as a `uint16_t`. */
+#define CCP_WRITE_CPRL(inst, value)                                     \
+    do {                                                                \
+        if ((inst) == CCP_INSTANCE_1) PIC8_REG8(PIC_REG_CCPR1L) = (uint8_t)(value); \
+        else                          PIC8_REG8(PIC_REG_CCPR2L) = (uint8_t)(value); \
+    } while (0)
+#define CCP_WRITE_CPRH(inst, value)                                     \
+    do {                                                                \
+        if ((inst) == CCP_INSTANCE_1) PIC8_REG8(PIC_REG_CCPR1H) = (uint8_t)(value); \
+        else                          PIC8_REG8(PIC_REG_CCPR2H) = (uint8_t)(value); \
+    } while (0)
+#define CCP_WRITE_CON(inst, value)                                      \
+    do {                                                                \
+        if ((inst) == CCP_INSTANCE_1) PIC8_REG8(PIC_REG_CCP1CON) = (uint8_t)(value); \
+        else                          PIC8_REG8(PIC_REG_CCP2CON) = (uint8_t)(value); \
+    } while (0)
+#define CCP_READ_CPRL(inst, out)                                        \
+    do {                                                                \
+        if ((inst) == CCP_INSTANCE_1) (out) = PIC8_REG8(PIC_REG_CCPR1L); \
+        else                          (out) = PIC8_REG8(PIC_REG_CCPR2L); \
+    } while (0)
+#define CCP_READ_CPRH(inst, out)                                        \
+    do {                                                                \
+        if ((inst) == CCP_INSTANCE_1) (out) = PIC8_REG8(PIC_REG_CCPR1H); \
+        else                          (out) = PIC8_REG8(PIC_REG_CCPR2H); \
+    } while (0)
+#define CCP_READ_CON(inst, out)                                         \
+    do {                                                                \
+        if ((inst) == CCP_INSTANCE_1) (out) = PIC8_REG8(PIC_REG_CCP1CON); \
+        else                          (out) = PIC8_REG8(PIC_REG_CCP2CON); \
+    } while (0)
 
-static const ccp_addrs_t addrs[3] = {
-    { 0,            0,            0,            (PIC18_IRQn)0   },  /* index 0 unused */
-    { PIC_REG_CCPR1L, PIC_REG_CCPR1H, PIC_REG_CCP1CON, PIC18_IRQ_CCP1 },  /* CCP1/ECCP1 */
-    { PIC_REG_CCPR2L, PIC_REG_CCPR2H, PIC_REG_CCP2CON, PIC18_IRQ_CCP2 },  /* CCP2 */
-};
+/* The interrupt ID isn't an SFR address (just a small enum passed into
+ * pic18_irq.c's own, already-fixed dispatch), so a plain lookup is fine
+ * here, nothing at risk. */
+static PIC18_IRQn ccp_irq(CCP_InstanceTypeDef inst)
+{
+    return (inst == CCP_INSTANCE_1) ? PIC18_IRQ_CCP1 : PIC18_IRQ_CCP2;
+}
 
 /* Static handle storage, one per CCP instance. COPIES the caller's handle
  * (dangling-pointer rationale, see Timer1). The weak ISRs read from these. */
@@ -44,16 +88,15 @@ HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h)
     if (h->Instance != CCP_INSTANCE_1 && h->Instance != CCP_INSTANCE_2) {
         return HAL_INVALID;
     }
-    const ccp_addrs_t *a = &addrs[h->Instance];
     g_ccp_storage[h->Instance] = *h;
     g_ccp_handles[h->Instance] = &g_ccp_storage[h->Instance];
 
     /* Clear/rearm the IRQ before reconfiguring. */
-    HAL_IRQ_ClearFlag(a->irq);
+    HAL_IRQ_ClearFlag(ccp_irq(h->Instance));
     if (h->EventCallback) {
-        HAL_IRQ_Enable(a->irq);
+        HAL_IRQ_Enable(ccp_irq(h->Instance));
     } else {
-        HAL_IRQ_DisableSrc(a->irq);
+        HAL_IRQ_DisableSrc(ccp_irq(h->Instance));
     }
 
     if (h->Mode == CCP_MODE_PWM) {
@@ -65,18 +108,18 @@ HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h)
         if (h->Instance == CCP_INSTANCE_1) {
             con |= (uint8_t)((h->PWMOutputMode & 0x3U) << 6);   /* P1M[7:6] */
         }
-        PIC8_REG8(a->cprl) = (uint8_t)(duty >> 2);
-        PIC8_REG8(a->cprh) = 0U;
-        PIC8_REG8(a->con)  = con;
+        CCP_WRITE_CPRL(h->Instance, duty >> 2);
+        CCP_WRITE_CPRH(h->Instance, 0U);
+        CCP_WRITE_CON(h->Instance, con);
     } else {
         /* Capture / compare: write the 16-bit value then enable mode. */
-        PIC8_REG8(a->cprh) = (uint8_t)(h->CompareValue >> 8);
-        PIC8_REG8(a->cprl) = (uint8_t)(h->CompareValue & 0xFFU);
+        CCP_WRITE_CPRH(h->Instance, h->CompareValue >> 8);
+        CCP_WRITE_CPRL(h->Instance, h->CompareValue & 0xFFU);
         uint8_t con = (uint8_t)(h->Mode & PIC_CCP1_M_MASK);
         if (h->Instance == CCP_INSTANCE_1) {
             con |= (uint8_t)((h->PWMOutputMode & 0x3U) << 6);
         }
-        PIC8_REG8(a->con) = con;
+        CCP_WRITE_CON(h->Instance, con);
     }
 
     /* ECCP1-only: dead-band + auto-restart (ECCP1DEL) and auto-shutdown
@@ -99,10 +142,9 @@ HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h)
 HAL_StatusTypeDef HAL_CCP_DeInit(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return HAL_INVALID;
-    const ccp_addrs_t *a = &addrs[inst];
-    HAL_IRQ_DisableSrc(a->irq);
-    HAL_IRQ_ClearFlag(a->irq);
-    PIC8_REG8(a->con) = 0x00U;
+    HAL_IRQ_DisableSrc(ccp_irq(inst));
+    HAL_IRQ_ClearFlag(ccp_irq(inst));
+    CCP_WRITE_CON(inst, 0x00U);
     if (inst == CCP_INSTANCE_1) {
         PIC8_REG8(PIC_REG_ECCP1DEL) = PIC_ECCP1DEL_POR_VALUE;
         PIC8_REG8(PIC_REG_ECCP1AS) = PIC_ECCP1AS_POR_VALUE;
@@ -114,21 +156,19 @@ HAL_StatusTypeDef HAL_CCP_DeInit(CCP_InstanceTypeDef inst)
 void HAL_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
-    const ccp_addrs_t *a = &addrs[inst];
     /* High byte first to avoid a spurious compare match (DS39632E §16.x). */
-    PIC8_REG8(a->cprh) = (uint8_t)(value >> 8);
-    PIC8_REG8(a->cprl) = (uint8_t)(value & 0xFFU);
+    CCP_WRITE_CPRH(inst, value >> 8);
+    CCP_WRITE_CPRL(inst, value & 0xFFU);
 }
 
 uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return 0U;
-    const ccp_addrs_t *a = &addrs[inst];
     uint8_t lo, hi1, hi2;
     do {
-        hi1 = pic8_sfr_read8(a->cprh);
-        lo  = pic8_sfr_read8(a->cprl);
-        hi2 = pic8_sfr_read8(a->cprh);
+        CCP_READ_CPRH(inst, hi1);
+        CCP_READ_CPRL(inst, lo);
+        CCP_READ_CPRH(inst, hi2);
     } while (hi1 != hi2);
     return (uint16_t)(((uint16_t)hi2 << 8) | lo);
 }
@@ -136,14 +176,15 @@ uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst)
 void HAL_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
-    const ccp_addrs_t *a = &addrs[inst];
     duty &= 0x03FFU;
     /* Latch the duty LSBs first (CCPxCON<5:4>), then CCPRxL (bits 9:2),
      * preserving the mode + P1M bits (DS39632E §16.4.4). */
-    uint8_t con = (uint8_t)(pic8_sfr_read8(a->con) & ~PIC_CCP1_DC1B_MASK);
+    uint8_t con;
+    CCP_READ_CON(inst, con);
+    con = (uint8_t)(con & ~PIC_CCP1_DC1B_MASK);
     con |= (uint8_t)((duty & 0x03U) << 4);
-    pic8_sfr_write8(a->con, con);
-    pic8_sfr_write8(a->cprl, (uint8_t)(duty >> 2));
+    CCP_WRITE_CON(inst, con);
+    CCP_WRITE_CPRL(inst, duty >> 2);
 }
 
 /* ───────────────────────── ECCP1-only controls ──────────────────── */
