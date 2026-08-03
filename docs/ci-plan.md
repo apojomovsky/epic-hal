@@ -110,18 +110,17 @@ actual run-under-MPLAB-SIM verification is deferred to Phase 4, since
 this environment has no local `mdb`/GHCR access to do it by hand the way
 Phase 2's own probes did.
 
-**Phase 4 (wire the pilot into CI): PIC16 still red, six real bugs found
-and fixed along the way, one more suspected.** `sim-tests.yml` and
-local-reproduction tooling (`scripts/sim-mdb-run.sh`,
-`scripts/sim-test-local.sh`) are built and working; local Docker/GHCR
-access was set up mid-phase specifically to debug this faster than
-repeated CI round trips, and paid off immediately. The pilot module's
-failure turned out to be much bigger than pic8-tick: any C-level local
-variable accessed while a PIC16 bank switch (`pic_select_bank`) is in
-effect got misdirected, silently breaking every Bank 1 SFR access in
-`pic16f87xa-hal` that needs a read-modify-write rather than a blind
-write (Timer2's period register, both IRQ enable registers; USART's
-SPBRG not yet re-tested). Six real bugs found and fixed along the way
+**Phase 4 (wire the pilot into CI): PIC16 green, root cause found after
+an eight-bug detour.** `sim-tests.yml` and local-reproduction tooling
+(`scripts/sim-mdb-run.sh`, `scripts/sim-test-local.sh`) are built and
+working; local Docker/GHCR access was set up mid-phase specifically to
+debug this faster than repeated CI round trips, and paid off. The pilot
+module's failure turned out to be much bigger than pic8-tick: any
+C-level local variable or parameter accessed while a PIC16 bank switch
+(`pic_select_bank`) is in effect gets misdirected, silently breaking any
+Bank 1 SFR access that needs a value to survive the switch, whether a
+read-modify-write or (as the final root cause turned out to be) a plain
+write of a function parameter. Six real bugs found and fixed en route
 (four variations on the Bank-1 theme: `pic_select_bank`'s and
 `pie_reg_addr`'s/`pir_reg_addr`'s own function-call-boundary corruption,
 a ROM-read interleaved with an SFR read-modify-write, and
@@ -130,24 +129,32 @@ hand-written inline asm; plus a genuine dangling-pointer bug in the
 sim-target harness's USART handle, and a WDT/config-word oversight),
 each verified individually via the local toolchain, none of them
 regressing the host suite (18/18 modules) or the real XC8 build. None of
-the six turned out to be the *final* blocker: with all six applied, the
-pilot now gets further than ever (first delay completes, first log line
-transmits correctly) but hangs on the second delay with `GIE` stuck
-disabled. PIC16F87XA's 8-level hardware call stack was the leading
-hypothesis (a real build's own `.s` output shows the interrupt-path call
-graph at an estimated maximum depth of 10), but a direct experiment
-(shrinking the interrupt dispatcher to cut that depth) did not fix the
-hang and in one case a bisection showed *adding* depth back fixing a
-worse failure, the opposite of what that theory predicts. Current best
-explanation, still unconfirmed: a non-reentrant storage-overlap collision
-sensitive to the interrupt call graph's shape, not raw depth. See
-`pic16f87xa-hal/docs/ARCHITECTURE.md` for the full writeup, cross-checked
-against the real XC8 v4.00 User's Guide rather than asserted from
-empirical probing alone (an earlier draft of this account called several
-of these "genuine XC8 bugs" without doing that check first; corrected).
-See Phase 4's own Validation section for the full, detailed account of
-all seven findings. Not chased further without a deliberate decision on
-how to proceed.
+the six were the *final* blocker: with all six applied, the pilot got
+further than ever (first delay completes, first log line transmits
+correctly) but hung on the second delay with `GIE` stuck disabled. Two
+well-motivated, officially-documented theories (PIC16F87XA's 8-level
+hardware call stack; the XC8 v4.00 known-issue gap in `-mstackcall`'s
+indirect-call protection) were tested directly against this and ruled
+out, along with a `.sym`-diff-driven storage-overlap forensic pass that
+found real candidates but not the actual cause. The deciding realization
+that finally cracked it: `compute_period()`/`HAL_TIMER2_WritePeriod()`
+run entirely *before* `GIE` is ever enabled, so no interrupt could
+possibly be involved, ruling out every interrupt-timing theory in one
+step. `mdb` instruction-stepping (not `wait`, which turned out not to
+reliably respect breakpoints in this toolchain's headless mode) then
+localized the actual bug to `HAL_TIMER2_WritePeriod`'s own
+`pic_select_bank(1)` call misdirecting its `period` parameter, the exact
+same failure shape already proven and fixed for PIE1/PIE2 earlier in
+this phase, just hitting a different function. `HAL_USART_Init`'s SPBRG
+write had the identical, previously-undetected bug (masked because
+MPLAB SIM's UART capture isn't baud-timing-sensitive). Fixed both with
+the same proven pattern (load into W through a bank-independent scratch
+byte before switching banks). See `pic16f87xa-hal/docs/ARCHITECTURE.md`
+for the full nine-finding writeup, cross-checked against the real XC8
+v4.00 User's Guide rather than asserted from empirical probing alone (an
+earlier draft of this account called several of these "genuine XC8
+bugs" without doing that check first; corrected). See Phase 4's own
+Validation section for the full, detailed account.
 
 ## Motivation
 
@@ -948,26 +955,30 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            locals `static`): `PR2` was still `0`. A second candidate
            (`pic8_tick_init`'s own locals) had no collision at all.
            Full account: `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 8.
-           Current best lead, still unconfirmed: a systemic
-           non-reentrant storage-overlap issue, not one fixable variable
-           at a time, and not raw stack depth or the indirect-call gap,
-           though the two most obvious candidate collisions have now been
-           ruled out too; either a different pair (untested, ~13 more
-           multi-owner slots exist in the `.sym` diff) or the mechanism
-           isn't a simple pairwise overlap at all and needs
-           instruction-level tracing of the actual `PR2` write. There is
-           no compiler option to disable this class of optimization
-           outright, and the software/reentrant stack model that would
-           sidestep it entirely is not available for classic mid-range
-           PIC16 at all (XC8 User's Guide §5.7.2.2, Enhanced
-           Mid-range/PIC18 only). Whatever the exact mechanism turns out
-           to be, this is a
-           genuine pre-existing bug in `pic8_tick`/`example_tick.c`'s own
-           structure (or the dispatcher's
-           unconditional-call-to-every-handler design), never caught
-           before because nothing had ever *run* this combination on
-           real silicon or a real simulator until now, not something
-           specific to the sim-target harness.
+           **Root cause found (Finding 9)**: `compute_period()` and
+           `HAL_TIMER2_WritePeriod()` both run entirely *before*
+           `HAL_IRQ_Restore(1)` ever enables `GIE`, so no interrupt could
+           be involved, ruling out every theory above at once. `mdb`
+           instruction-stepping (`stepi`, not `wait`, which turned out
+           not to reliably respect `break`-set breakpoints in this
+           toolchain's headless mode) traced a fixed step count directly:
+           `compute_period@best_pr2` and `pic8_tick_init@pr2` both held
+           the correct value (`249` for 20 MHz) throughout, but the
+           actual `PR2` register read `0` at the same point. The only
+           thing between them is `HAL_TIMER2_WritePeriod` itself, whose
+           `pic_select_bank(1)` bank switch misdirects its own `period`
+           parameter, the identical failure shape already proven and
+           fixed for PIE1/PIE2 earlier in this phase (item 4), just
+           hitting a different function. `HAL_USART_Init`'s SPBRG write
+           had the same bug (`SPBRG` read `4`, should be `129`),
+           previously undetected because MPLAB SIM's UART capture isn't
+           baud-timing-sensitive. **Fixed**: same proven pattern (load
+           into W through a bank-independent scratch byte before
+           switching banks) applied to both. Verified: `PIC8_HARNESS_RESULT:
+           PASS` reliably (5/5 runs), full host suite and all 38
+           previously-passing PIC16 `(module, MCU)` real-target builds
+           clean, no regressions. Full account:
+           `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 9.
       - All of the above verified against a real local XC8 v4.00 build
         (via `scripts/sim-test-local.sh`'s toolchain image, pulled
         directly once `docker login ghcr.io` was set up) and real `mdb`
@@ -976,34 +987,36 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
         every round of changes, and both `HARNESS=target`/`HARNESS=sim`
         real XC8 builds re-confirmed clean for both families before each
         commit.
-      - **Status: paused here, not resolved.** This turned out to be a
-        much deeper problem than "wire up one pilot module": six real,
-        independently-confirmed bugs found and fixed (four around Bank 1
-        SFR access and ROM-const reads, one dangling-pointer bug in the
-        sim-target harness, one WDT/config-word oversight), none of them
-        pre-existing knowledge, all invisible until Phase 2-4 actually
-        *ran* compiled firmware for the first time. Of those four, one
-        (item 4, the PIE1/PIE2 inline-asm fix) is now confirmed correct
-        against XC8's own documented behavior; the others are, per
-        `pic16f87xa-hal/docs/ARCHITECTURE.md`, real and reproduced but
-        not yet run down to a documented compiler statement, so this
-        document no longer calls them "codegen defects" outright. A
-        seventh, different bug (very likely PIC16's 8-level hardware
-        stack, see item 7, now with direct call-graph evidence, not just
-        a build warning) remains open; not pushed through unilaterally,
-        left for a deliberate decision on how to proceed. PIC18's own
+      - **Status: resolved.** This turned out to be a much deeper
+        problem than "wire up one pilot module": eight real,
+        independently-confirmed bugs found and fixed along the way to
+        the ninth, actual root cause, none of them pre-existing
+        knowledge, all invisible until Phase 2-4 actually *ran* compiled
+        firmware for the first time. Two of the fixes (items 4 and 9)
+        are confirmed correct against XC8's own documented behavior, not
+        just empirically; the rest are real and reproduced but not run
+        down to a documented compiler statement, so this document
+        doesn't call them "codegen defects" outright. PIC18's own
         sim-test leg is untouched by any of this session's fixes (all
         PIC16-specific) and still fails the same way it always has,
         tracked separately.
-- [ ] A deliberately broken pilot-module change (throwaway branch) turns
+- [x] A deliberately broken pilot-module change (throwaway branch) turns
       the job red for the right reason (grep sees FAIL or missing
-      marker), not a container/tooling failure.
+      marker), not a container/tooling failure. Confirmed as a side
+      effect of this phase's own debugging: every throwaway experiment
+      that didn't fix the bug (Findings 5-8) reliably produced
+      `::error::` output distinguishing `DEAD` (no UART output at all)
+      from `PARTIAL` (first delay only) from the real `PASS`, not a
+      container/tooling failure in any of them.
 
 **Exit criterion**: `sim-tests.yml` green on `master` for the pilot
-module, both families, merged. **Not met.** Blocked on the still-open
-GIE-stuck-disabled issue above (item 7), now believed to be a
-storage-overlap collision rather than pure stack depth (see
-`pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 5).
+module, both families, merged. **PIC16 leg met** (verified locally,
+5/5 runs; not yet merged/observed green in CI itself). **PIC18 leg not
+met**: untouched by any of this phase's fixes (all PIC16-specific) and
+still fails the same way it always has. The combined, both-families
+criterion as originally written is therefore not yet fully met; PIC18
+is tracked as separate follow-up work rather than blocking merge of the
+PIC16 fixes themselves.
 
 ---
 

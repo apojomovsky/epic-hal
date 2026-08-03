@@ -1,6 +1,8 @@
 # `pic16f87xa-hal` architecture: XC8 v4.00 codegen notes
 
-> Status: **investigation in progress, not closed out.** Written up after
+> Status: **root cause of the Phase 4 sim-target hang found and fixed
+> (Finding 9)**, after an extensive detour (Findings 4-8) chasing two
+> well-motivated but ultimately wrong theories. Written up after
 > `docs/ci-plan.md` Phase 4's sim-target pilot debugging surfaced several
 > real, surprising interactions between this HAL's PIC16 interrupt/bank
 > code and XC8 v4.00's code generator. Earlier drafts of this account (in
@@ -321,22 +323,118 @@ the `PR2` write itself (single-stepping through
 reset, watching `PR2`'s value change) rather than more `.sym` inference.
 Neither was pursued further in this session.
 
+## Finding 9: root cause found, unrelated to Findings 4-8's storage-overlap detour
+
+**The actual bug, localized and fixed.** Findings 4 through 8 spent
+considerable effort chasing two theories, interrupt call-graph stack
+depth and a systemic non-reentrant storage-overlap collision, based on
+symptoms (`GIE` stuck disabled, `PR2` reading `0`) observed downstream
+of where the real corruption happens. Both theories turned out to be
+wrong, or at best measuring a secondary effect. The deciding piece of
+evidence: `compute_period()` and `HAL_TIMER2_WritePeriod()` both run
+during `pic8_tick_init`, entirely *before* `HAL_IRQ_Restore(1)` ever
+enables `GIE`. No interrupt can be involved in corrupting `PR2` at that
+point, full stop, regardless of call-graph shape or storage overlap.
+That single fact ruled out every interrupt-timing-dependent theory this
+document had been pursuing.
+
+Once reframed as "this must be deterministic, not a race," the fix was
+mechanical: `mdb` instruction-stepping (`stepi`, not `run`+`wait`, see
+the methodology note below) through the exact sequence with a fixed
+step budget, reading each candidate variable's memory address directly
+(`x /1xbr <addr>`, addresses from a fresh `.sym`), confirmed:
+- `compute_period@best_pr2` (the search loop's own result): correct
+  (`249`, matching the datasheet-formula hand calculation for 20 MHz),
+  stays correct long after the function returns.
+- `pic8_tick_init@pr2` (the caller's copy, received via the `uint8_t
+  *pr2` output parameter): also correct (`249`).
+- The actual `PR2` hardware register: `0` at the same point in time.
+
+The only thing left between "correct value sitting in a C variable" and
+"wrong value in the register" is `HAL_TIMER2_WritePeriod` itself:
+
+```c
+void HAL_TIMER2_WritePeriod(uint8_t period)
+{
+    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    pic_select_bank(1);
+    PIC8_REG8(PIC_REG_PR2) = period;   /* <-- period misdirected here */
+    pic_select_bank(prev);
+}
+```
+
+This is the *exact* failure shape Finding 1 already proved and fixed
+for `PIC8_PIE_ENABLE_BIT`/`PIC8_PIE_DISABLE_BIT`: a plain C-level access
+to something the compiler assumes is Bank-0-resident (here, the
+`period` parameter), performed after `pic_select_bank(1)`'s bank switch,
+gets misdirected. The only difference is *which* function it hit.
+`HAL_USART_Init`'s SPBRG write has the identical shape
+(`PIC8_REG8(PIC_REG_SPBRG) = h->SPBRG;` after its own
+`pic_select_bank(1)`) and was confirmed corrupted too (`SPBRG` read `4`,
+should be `129` for 9600 baud at 20 MHz), just masked until now because
+MPLAB SIM's `uart1io` capture isn't baud-timing-sensitive, so a wrong
+baud rate doesn't visibly break the captured byte stream in simulation,
+only on real hardware talking to a real receiver.
+
+**Fix**, mirroring Finding 1's already-proven pattern exactly: load the
+value into W through a bank-independent common-RAM scratch byte
+*before* switching banks, then a single `movwf <SFR>` while banked
+touches nothing else. New `PIC8_BANK1_WRITE8(sfr, value)` macro
+(`target/pic16f87xa_platform.h`) with its own scratch byte
+(`pic8_bank1_scratch` at `0x71`, deliberately separate from
+`pic8_irq_pie_scratch` at `0x70`, unrelated subsystems). Applied to both
+`HAL_TIMER2_WritePeriod` and `HAL_USART_Init`. Verified: `PR2` reads
+`249`, `SPBRG` reads `129`, and `pic8-tick`'s PIC16 sim-target test
+reaches `PIC8_HARNESS_RESULT: PASS` reliably (5/5 runs). Full host
+suite and all 38 previously-passing PIC16 `(module, MCU)` real-target
+builds re-verified clean, no regressions from the new scratch byte
+(the same class of regression Root cause 3 in
+`docs/mplabx-link-gaps-plan.md` hit last time one was added).
+
+**A methodology correction, worth keeping**: `run` + `wait N` + `halt`
+does **not** reliably stop at a `break`-set breakpoint in `mdb`'s
+scripted/headless mode; in one probe during this investigation, `wait`
+returned and `halt` reported a `PC` address past *both* the target
+function and its caller, well beyond where the breakpoint should have
+stopped execution. Whether `run`/`wait` simply ignore breakpoints
+entirely in this mode, or something else is going on, wasn't fully
+determined, since `stepi` (deterministic instruction count, no reliance
+on breakpoint-triggered halting, already established as the more
+trustworthy tool for register-level work earlier in Phase 4) sidestepped
+the question and got useful data directly. Treat `break`+`run`+`wait`
+combinations in this toolchain's `mdb` as unverified until proven
+otherwise; `stepi` plus direct memory reads (`x /1xbr <addr>`, addresses
+from a matching `.sym`) is the reliable path for anything that doesn't
+depend on real peripheral timing.
+
+**Why Findings 4-8 weren't wasted**: Finding 5's dispatcher bisection
+result (adding `CCP1_IRQHandler` back "fixing" a broken config) is now
+explained too, retroactively: different dispatcher compositions shift
+the compiled-stack storage layout enough to change other, *unrelated*
+things (which functions' non-reentrant storage happens to overlap with
+what), which can coincidentally paper over or unmask *this* bug's
+visible symptoms without touching its actual cause. That's a real,
+confirmed compiler behavior (Finding 5's data), just not this bug's
+mechanism. Finding 6 (ruling out the indirect-call/`-mstackcall` gap)
+and Finding 1 (the bank-tracking-reset mechanism this fix directly
+relies on) both hold up entirely unchanged.
+
 ## Open, for whoever picks this back up
 
-- The GIE-stuck-disabled hang (`docs/ci-plan.md` Phase 4) is still
-  unresolved. Four theories/approaches (raw stack depth, Finding 5;
-  indirect-call `-mstackcall` gap, Finding 6; targeted variable pinning,
-  Finding 7; `.sym`-diff-driven candidate pinning, Finding 8) have each
-  been directly tested; none resolved it. The remaining, more expensive
-  options: (a) test the other ~13 untested multi-owner slots from the
-  `.sym` diff one at a time, or (b) instruction-level tracing of the
-  actual `PR2` write to find the corruption mechanism directly instead
-  of inferring it from storage layout.
-- Finding 2 remains a plausible-but-unconfirmed explanation; if anyone
-  needs to write more hand-rolled bank-switching C (not asm) in this HAL,
-  treat plain SFR writes to `STATUS` as unreliable for bank purposes
-  until this is actually confirmed one way or the other, and prefer the
-  `asm()`-based pattern from Finding 1.
+- **Follow-up, not yet done**: the same `pic_select_bank(N)` shape (a
+  parameter or local read/written *after* the switch, before it's
+  restored) appears in `pic16f87xa_adc.c`, `_eeprom.c`, `_ssp.c`,
+  `_vref.c`, `_comp.c`, and `_psp.c`. None of these have been audited or
+  run under `mdb` yet (only `pic8-tick`'s Timer2/USART path has), so
+  it's unknown whether they're actually hit in practice or just
+  theoretically at risk; worth checking before trusting any of those
+  peripherals' real-target behavior the way `pic8-tick`'s can now be
+  trusted.
+- Finding 2 (the *other* `pic_select_bank`-related bug, in the
+  now-macro'd bank-select helper itself) remains a
+  plausible-but-unconfirmed explanation for its own, separate symptom;
+  not resolved by Finding 9's fix, which addresses a different call site
+  entirely.
 - This document itself should be checked for staleness against whatever
   XC8 version `docker/ci-toolchain/Dockerfile` pins if that version is
   ever bumped; these findings are cited against v4.00 specifically.
