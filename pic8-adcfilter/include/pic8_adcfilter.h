@@ -4,21 +4,12 @@
  *          Zero dependencies beyond <stdint.h>.
  *
  * @details
- *   Two composable utilities for noisy 10-bit ADC readings on 8-bit PICs:
- *
- *   - `pic8_adcfilter_oversample`: the standard oversample-and-decimate
- *     technique (average 4^n raw samples, right-shift by n) to gain n extra
- *     bits of effective resolution.
- *   - `pic8_adcfilter_avg_push`: an O(1) moving average over a caller-owned
- *     ring buffer with a running sum.
- *
- *   Both are fully vendor-agnostic: the core never calls `HAL_ADC_Read`; it
- *   takes a `pic8_adcfilter_read_fn` callback, so it works over any HAL
- *   family's ADC, a simulated/mock source in tests, or any 16-bit numeric
- *   source someone wants smoothed. The header and implementation depend on
- *   nothing beyond `<stdint.h>`, making this the most directly host-testable
- *   module in the repo: the host suite tests literally the same code that
- *   ships on-target.
+ *   `pic8_adcfilter_oversample`: oversample-and-decimate (average 4^n raw
+ *   samples, right-shift by n) for n extra bits of resolution.
+ *   `pic8_adcfilter_avg_push`: an O(1) moving average over a caller-owned
+ *   ring buffer. Both take a `pic8_adcfilter_read_fn` callback instead of
+ *   calling `HAL_ADC_Read` directly, so they work over any HAL family's
+ *   ADC or a mock source in tests.
  */
 
 #ifndef PIC8_ADCFILTER_H
