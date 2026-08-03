@@ -1,11 +1,16 @@
 # HAL manual, multi-family split — plan
 
-Status: **proposed, not started.** Written after inspecting the actual state
-of the docs (not assumed): `pic16f87xa-hal/MANUAL.md` is 1416 lines and is
-the *only* manual in the repo; `pic18fxx5x-hal` has no `MANUAL.md` at all,
-only a 219-line README that already contains fragments of the same kind of
-content (layout, build, an XC8-interrupt-syntax note, API conventions) but
-nowhere near the same depth or a per-peripheral reference.
+Status: **done.** The split described below has been fully executed:
+`pic8-common/MANUAL.md` and `pic18fxx5x-hal/MANUAL.md` both exist, in the
+shape this document specifies. Kept as the historical design record
+(`pic8-common/MANUAL.md`'s own intro cites this document for exactly that
+reason); nothing below should be read as pending work. Written after
+inspecting the actual state of the docs at the time (not assumed):
+`pic16f87xa-hal/MANUAL.md` was then 1416 lines and the *only* manual in the
+repo; `pic18fxx5x-hal` had no `MANUAL.md` at all, only a 219-line README
+that already contained fragments of the same kind of content (layout,
+build, an XC8-interrupt-syntax note, API conventions) but nowhere near the
+same depth or a per-peripheral reference.
 
 ## Motivation
 
@@ -99,11 +104,11 @@ the fixed code contract.
 
 ## Also update `docs/multi-family-plan.md`
 
-Its existing "How to add family #3 (and #4)" checklist (four steps: sibling
-tree, family backend, reuse `pic8-common` untouched, litmus test) has no
-documentation step. Add a fifth: write `<family>-hal/MANUAL.md` against
-`pic8-common/MANUAL.md`'s shape, so a manual isn't something that quietly
-gets skipped the way PIC18's was.
+**Done, though not the way originally planned.** `multi-family-plan.md`'s
+old "How to add family #3 (and #4)" checklist was later replaced wholesale
+by `docs/adding-a-device.md`, which covers writing the new family's
+`MANUAL.md` (against this document's shape) as one of its own steps, so the
+documentation step this section asked for exists, just relocated.
 
 ## Phased execution
 
@@ -120,4 +125,5 @@ gets skipped the way PIC18's was.
 4. Add the manual-doc step to `multi-family-plan.md`'s "add a new family"
    checklist.
 
-Nothing above has been started; this document only records the plan.
+All four steps above have been completed; this document only records how
+the split was designed and done.
