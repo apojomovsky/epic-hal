@@ -58,8 +58,20 @@ HARNESS ?= target
 ifeq ($(HARNESS),sim)
   TARGET     := $(BUILD_DIR)/$(MCU)-tick-sim
   HARNESS_SRC := $(HAL_DIR)/src/core/pic18_harness_sim_target.c
+  # WDT=OFF only for this variant, mirroring
+  # pic16f87xa-tick-mplabx/Makefile's own CONFIG_WDTE: real-target
+  # firmware genuinely needs the watchdog running unattended; a
+  # diagnostic build that terminates and reports over USART does not,
+  # and this Makefile's own WDT=ON default has nothing petting it, only
+  # a fixed cycle count bounding the harness. Applied by the same
+  # reasoning as PIC16's fix, not because it was confirmed to be the
+  # cause of any specific observed symptom here (it wasn't: the sim-test
+  # hang has a separate, deeper cause, see docs/ci-plan.md Phase 4's
+  # PIC18 follow-up and pic18fxx5x-hal/docs/ARCHITECTURE.md).
+  CONFIG_WDT := OFF
 else
   HARNESS_SRC := $(COMMON_DIR)/src/core/pic8_harness_target.c
+  CONFIG_WDT := ON
 endif
 
 CC     := xc8-cc
@@ -119,7 +131,7 @@ $(CONFIG_SRC): | $(BUILD_DIR)
 	@printf '#pragma config BOR = OFF\n'        >> $@
 	@printf '#pragma config BORV = 3\n'         >> $@
 	@printf '#pragma config VREGEN = OFF\n'     >> $@
-	@printf '#pragma config WDT = ON\n'         >> $@
+	@printf '#pragma config WDT = $(CONFIG_WDT)\n' >> $@
 	@printf '#pragma config WDTPS = 32768\n'    >> $@
 	@printf '#pragma config MCLRE = ON\n'       >> $@
 	@printf '#pragma config LPT1OSC = OFF\n'    >> $@

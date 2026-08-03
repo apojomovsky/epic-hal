@@ -53,10 +53,20 @@ void pic8_harness_init(uint32_t cycles)
 {
     g_cycles = cycles;
 
+    /* BRGH=HIGH (the USART_HANDLE_DEFAULT default, divisor 16) needs
+     * SPBRG=311 for 9600 baud at this file's 48 MHz FOSC_HZ, which
+     * doesn't fit the 8-bit BRG (max 255): USART_ComputeSPBRG correctly
+     * returned its error sentinel (0xFFFF, truncating to SPBRG=255),
+     * silently misconfiguring the baud rate and producing no captured
+     * UART output at all (confirmed via a real-target mdb probe, not
+     * theoretical; see docs/ci-plan.md Phase 4's PIC18 follow-up).
+     * BRGH=LOW (divisor 64) needs only SPBRG=77, comfortably in range
+     * (actual baud ~9615, ~0.16% error, fine for this marker line). */
     USART_HandleTypeDef h = USART_HANDLE_DEFAULT;
+    h.BaudHigh = USART_BRGH_LOW;
     h.SPBRG = (uint8_t)USART_ComputeSPBRG(FOSC_HZ, PIC8_HARNESS_SIM_BAUD,
                                            USART_MODE_ASYNCHRONOUS,
-                                           USART_BRGH_HIGH,
+                                           USART_BRGH_LOW,
                                            USART_BAUDGEN_8BIT);
     h.TxCpltCallback = s_tx_cplt;
     (void)HAL_USART_Init(&h);
