@@ -1,18 +1,8 @@
 /**
  * @file    example_serial.c
- * @brief   pic8-serial host smoke test: RX ring fills from injected bytes,
- *          TX ring drains through the ISR callback, and putch enqueues.
- *
- * @details
- *   Host-sim test (the family is selected by the CMake HAL_FAMILY / the XC8
- *   Makefile's MCU). RX is driven by the family sim's
- *   `*_sim_drive_usart_rx`, which sets RCIF and fires the dispatch -> the
- *   HAL's USART_RX_IRQHandler -> this module's RX callback -> the RX ring;
- *   `pic8_serial_read` then pulls the bytes. TX is exercised by writing a
- *   short buffer, pumping `pic8_dispatch_all_irqs` (the host analogue of the
- *   TX ISR firing) with TXIF set, and capturing what the TX callback loads
- *   into TXREG. On a real target the same code runs against the hardware USART
- *   (the ISRs fire in real time); this example is a smoke, not a loopback.
+ * @brief   pic8-serial host smoke test: RX ring fills from injected bytes
+ *          via the family sim's `*_sim_drive_usart_rx`, and TX drains
+ *          through `pic8_dispatch_all_irqs` into a captured TXREG.
  */
 
 #include "pic8_serial.h"

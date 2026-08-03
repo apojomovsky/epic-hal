@@ -1,32 +1,11 @@
 /**
  * @file    pic8_serial.c
- * @brief   Interrupt-driven ring-buffered UART + printf retarget.
- *
- * @details
- *   The serial ISRs are installed through the USART handle's `RxCpltCallback`
- *   / `TxCpltCallback` -- the HAL owns `USART_RX/TX_IRQHandler` (a strong def
- *   on XC8 target, where `PIC8_WEAK` expands to nothing, so redefining them
- *   would be a multiple-definition error). The HAL's RX handler reads RCREG
- *   and calls `RxCpltCallback(byte)`; the HAL's TX handler calls
- *   `TxCpltCallback()` when TXIF is set (TXREG empty). This module's callbacks
- *   push to / pop from ring buffers, so the main loop never blocks on a byte.
- *
- *   TX is demand-driven: `pic8_serial_write` fills the TX ring and enables
- *   TXIE; the TX callback drains the ring one byte per TXIF, and disables
- *   TXIE when the ring empties (so the idle TX ISR does not fire). RX is
- *   always-on (RCIE enabled at init); the RX callback pushes each received
- *   byte into the RX ring, dropping on overflow.
- *
- *   Ring access shared between ISR and main is critical-sectioned
- *   (HAL_IRQ_Disable/Restore). The single-byte ring counters are read
- *   atomically (one byte) so `pic8_serial_available` needs no lock.
- *
- *   Family branch (PIC16 vs PIC18): the USART handle shape, the
- *   `USART_ComputeSPBRG` signature (PIC18 takes a BRG16 arg), the TX/RX IRQ
- *   numbers, and the TXREG write (PIC16 `PIC8_REG8 =`, PIC18
- *   `pic8_sfr_write8` -- XC8 can't lower `|=` on a volatile cast lvalue at a
- *   runtime SFR address). These are the only spots the two USART peripherals
- *   differ; everything else is family-neutral through `pic8_hal.h`.
+ * @brief   Interrupt-driven ring-buffered UART + printf retarget: RX is
+ *          always-on into a ring, TX is demand-driven (TXIE stays off
+ *          until `pic8_serial_write` has bytes queued). Installed through
+ *          the USART handle's `RxCpltCallback`/`TxCpltCallback`, never
+ *          redefining the HAL's own strong `USART_RX/TX_IRQHandler`. Ring
+ *          access shared with an ISR is critical-sectioned.
  */
 
 #include "pic8_serial.h"

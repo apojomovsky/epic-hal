@@ -1,28 +1,10 @@
 /**
  * @file    pic8_serial.h
  * @brief   Family-agnostic interrupt-driven ring-buffered UART + printf
- *          retarget -- the non-blocking serial layer Cube's
- *          `HAL_UART_Transmit_DMA`/`Receive_DMA`/`_IT` gives, for 8-bit PICs.
- *
- * @details
- *   Sits on the HAL's USART driver. RX bytes land in the USART RX ISR, which
- *   feeds a ring buffer; `pic8_serial_read` pulls from it without blocking.
- *   `pic8_serial_write` enqueues to a TX ring and the TX ISR drains it in the
- *   background, so the main loop is never blocked stuffing bytes into TXREG.
- *   `putch` retargets XC8's `printf` to the TX ring. Works on every PIC this
- *   repo supports (PIC16F87XA and PIC18F2455/2550/4455/4550) and on the host
- *   simulator.
- *
- *   The serial ISRs are installed through the USART handle's `RxCpltCallback`
- *   / `TxCpltCallback` (the HAL owns `USART_RX/TX_IRQHandler` and calls them)
- *   -- the same pattern `pic8-taskmgr` uses for its Timer0 tick. This keeps
- *   the module a clean overlay on the HAL: it sets the callbacks and manages
- *   the rings, it does not redefine the HAL's interrupt handlers.
- *
- *   The public API is family-neutral (only <stdint.h>). The implementation
- *   has one family branch (PIC16 vs PIC18) for the USART handle shape,
- *   `USART_ComputeSPBRG` signature, the TX/RX IRQ numbers, and the TXREG
- *   write -- the only spots the two USART peripherals differ.
+ *          retarget, the non-blocking serial layer Cube's
+ *          `HAL_UART_Transmit_DMA`/`Receive_DMA`/`_IT` gives, for 8-bit
+ *          PICs. RX/TX ISRs feed ring buffers via the USART handle's
+ *          callbacks; `putch` retargets XC8's `printf` to the TX ring.
  */
 
 #ifndef PIC8_SERIAL_H
