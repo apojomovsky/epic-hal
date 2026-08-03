@@ -3,37 +3,11 @@
  * @brief   Host-only setpoint-step + manual/auto transfer demo for pic8-pid.
  *
  * @details
- *   Pure-host, zero HAL dependency, no XC8 build (the example's purpose
- *   is to make the algorithm's behavior visible in logged output, not
- *   to be flashed). Mirrors pic8-fsm's example_traffic_light in scope
- *   and shape: a single-file demo of one module's central use case.
- *
- *   The setup:
- *
- *     - A simple integer first-order-lag "plant":
- *         measurement += (output - measurement) / N   (N = 4)
- *       no floats anywhere, consistent with this repo's no-float
- *       convention even though the example itself is host-only.
- *       N=4 makes the plant time constant about 4 control steps.
- *
- *     - A PID loop with Kp, Ki, Kd chosen so the step response is
- *       underdamped and visibly oscillates if anti-windup is not
- *       doing its job. Output clamp is deliberately tight (e.g.
- *       [-150, 150]) so anti-windup engages on a setpoint jump
- *       that the unclamped integral would otherwise overshoot by.
- *
- *     - A setpoint step at the start, then a switch to MANUAL
- *       mid-run (operator wants to take over), then a switch back
- *       to AUTO (bumpless handoff). The log shows the integrator
- *       wind down naturally during AUTO, the held manual value
- *       during MANUAL, and the no-jump AUTO resume after.
- *
- *   The numbers in the log are not pinned to specific values
- *   (different Kp/Ki/Kd choices make the example easy to retune);
- *   the test of correctness is that anti-windup engages (the
- *   output saturates at the clamp during the step) and that the
- *   MANUAL->AUTO handoff is continuous (the first AUTO output
- *   after MANUAL matches the last MANUAL output exactly).
+ *   Pure-host, no HAL/XC8 build; a first-order-lag integer "plant"
+ *   (`measurement += (output - measurement) / 4`) driven by a
+ *   deliberately tight output clamp so anti-windup visibly engages on a
+ *   setpoint step, then a MANUAL -> AUTO handoff shows the resume is
+ *   bumpless (matches the last MANUAL output exactly).
  */
 
 #include "pid.h"
@@ -42,23 +16,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/* Q8.8 conversion helpers (host-side convenience, not part of the
- * library: the library takes pre-scaled Q8.8 gains, the example
- * picks them from a continuous-time design here). */
+/* Host-side Q8.8 conversion; the library itself takes pre-scaled gains. */
 static int16_t q8(float x) { return (int16_t)(x * 256.0f); }
 
 int main(void)
 {
-    /* Sample period Ts = 1 control step. Plant time constant ~ N=4
-     * steps, so an aggressive design (visibly saturating the output
-     * and engaging anti-windup) is:
-     *   Kp ~ 2.0   (big step response, P alone would saturate)
-     *   Ki ~ 0.5   (steady-state error gone in ~10 steps after
-     *               anti-windup releases the integrator)
-     *   Kd ~ 0.0   (the integer plant already gives some natural
-     *               smoothing; Kd only sharpens noise here)
-     * Output clamp tight on purpose so the integrator windup
-     * (and anti-windup) is clearly visible during the initial step. */
+    /* Kp=2.0/Ki=0.5/Kd=0.0 and a tight output clamp are chosen to make
+     * saturation and anti-windup clearly visible in the log. */
     const int16_t kp_q8 = q8(2.0f);
     const int16_t ki_q8 = q8(0.5f);
     const int16_t kd_q8 = q8(0.0f);
@@ -71,13 +35,8 @@ int main(void)
     int16_t measurement = 0;
     int16_t setpoint    = 0;
 
-    /* Phase 1: setpoint step from 0 to 100. Watch the plant rise,
-     * the output saturate against the upper clamp briefly, and the
-     * anti-windup keep the integrator in check so it doesn't have
-     * to unwind once the plant catches up. With the integer plant's
-     * N=4 lag, a steady-state output of 100 drives the measurement
-     * to about 97 (the integer-quantization asymptote), and the
-     * integrator winds up to remove the residual error. */
+    /* Phase 1: setpoint step 0 -> 100; output should saturate briefly
+     * then the plant catches up as anti-windup releases the integrator. */
     setpoint = 100;
     printf("== Setpoint step 0 -> 100 (AUTO) ==\n");
     printf("step | setpoint | measurement | output | integrator_q8 | mode\n");
@@ -92,10 +51,8 @@ int main(void)
                pid.mode == PID_MODE_AUTO ? "AUTO" : "MANUAL");
     }
 
-    /* Phase 2: switch to MANUAL, set the operator's target. The PID
-     * loop stops integrating; the operator drives the plant directly
-     * via pid_set_manual_output each cycle. The integrator is
-     * back-calculated to make the eventual AUTO resume bumpless. */
+    /* Phase 2: switch to MANUAL; the operator drives the plant directly
+     * via pid_set_manual_output while the integrator back-calculates. */
     printf("\n== Switch to MANUAL, operator takes over (target 50) ==\n");
     pid_set_mode(&pid, PID_MODE_MANUAL);
     pid_set_manual_output(&pid, 50);
@@ -109,14 +66,8 @@ int main(void)
                pid.mode == PID_MODE_AUTO ? "AUTO" : "MANUAL");
     }
 
-    /* Bumpless-equivalence demonstration: with the plant frozen (no
-     * step in between), a MANUAL call followed by an AUTO call at
-     * the same setpoint/measurement returns the exact same output.
-     * This is the "held output equals first AUTO output" property
-     * the plan's test_bumpless_transfer asserts; the loop above
-     * doesn't show it directly because the plant moves between
-     * the MANUAL and AUTO calls, so the AUTO call sees a different
-     * measurement. */
+    /* With the plant frozen, a MANUAL call followed by an AUTO call at
+     * the same setpoint/measurement returns the exact same output. */
     int16_t frozen_setpoint = setpoint;
     int16_t frozen_measurement = measurement;
     int16_t new_manual = 75;
@@ -135,17 +86,8 @@ int main(void)
     int16_t second_auto = pid_update(&pid, frozen_setpoint, frozen_measurement);
     printf("  second AUTO output = %d  (integrator resumes evolving)\n", second_auto);
 
-    /* Phase 3: switch back to AUTO. The bumpless-transfer property
-     * means the integrator was back-calculated during the last MANUAL
-     * call so that, *if* the same setpoint/measurement were presented
-     * to the first AUTO call, its output would equal the held manual
-     * value exactly. In this run, the plant advances between the
-     * MANUAL call and the first AUTO call, so the measurement is
-     * slightly different and the AUTO output is too -- the
-     * controller's internal state is continuous (no jump in the
-     * integrator), but the new measurement changes P and therefore
-     * the output. The same-property-at-same-input behavior is what
-     * test_bumpless_transfer in tests/test_pid.c asserts. */
+    /* Phase 3: switch back to AUTO. Internal state is continuous (no
+     * integrator jump), but the plant moved, so the output isn't pinned. */
     printf("\n== Switch back to AUTO (controller state is continuous, "
            "but the plant moved one step) ==\n");
     pid_set_mode(&pid, PID_MODE_AUTO);

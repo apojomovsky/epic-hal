@@ -1,48 +1,16 @@
 /**
  * @file    pid.h
- * @brief   Vendor-agnostic, single-loop, fixed-point PID controller with
- *          anti-windup, derivative-on-measurement, and bumpless auto/manual
- *          transfer.
+ * @brief   Vendor-agnostic, single-loop, fixed-point (Q8.8) PID controller
+ *          with anti-windup, derivative-on-measurement, and bumpless
+ *          auto/manual transfer.
  *
  * @details
- *   One caller-owned `pid_t` instance per control loop, initialized once,
- *   then stepped once per fixed-period control cycle via `pid_update()`. A
- *   PID controller is arithmetic on plain data, not a hardware operation,
- *   so this module needs no per-family backend and no inline asm: `pid.c`
- *   is one file, compiles unchanged for host, PIC16, and PIC18, and the
- *   host unit suite tests the exact code that ships on-target.
- *
- *   The one real dependency is `pic8-math`, for the 16x16->32 signed
- *   multiply (`pic_math_mul_s16`) the Q8.8 fixed-point math needs. On PIC16
- *   (no hardware multiply) that call is AN526's shift-add asm; on PIC18 it
- *   is the hardware `MULWF` path; on host it is the portable-C reference.
- *   `pid.c` never knows or cares which. `pid.h` itself stays a two-`#include`
- *   file (`<stdint.h>`, `<stdbool.h>`), dependency-free.
- *
- *   The control algorithm is fixed-point throughout (Q8.8, `int16_t`/`int32_t`
- *   holding `value * 256`). Gains are caller-pre-scaled by the sample
- *   period `Ts` at configuration time, so `pid_update` needs no division
- *   (division is the most expensive primitive `pic8-math` provides on
- *   PIC16) and the module has zero dependency on `pic8-tick` or any
- *   timebase. See `docs/API.md` for the exact Kp/Ki/Kd/Ts -> kp_q8/ki_q8/kd_q8
- *   conversion.
- *
- *   Anti-windup is clamping: the integrator is hard-capped to
- *   `[out_min << 8, out_max << 8]` after every accumulation, so it can
- *   recover immediately when the error reverses sign (no separate
- *   `Kt`/back-calculation tracking gain, no conditional-integration flag;
- *   the only two design alternatives considered, both rejected as a
- *   gratuitous extra knob). The derivative term is computed from
- *   `-d(measurement)/dt`, not `d(error)/dt`, to eliminate setpoint-step
- *   derivative kick by construction (no mode flag). Bumpless auto/manual
- *   transfer is built in: while in MANUAL, the integrator is back-calculated
- *   to whatever value would have made the AUTO output equal the current
- *   manual output, so resuming AUTO is a no-op.
- *
- *   Preconditions documented (not runtime-guarded, consistent with how
- *   `pic_math` documents its own scaling assumptions): `|setpoint -
- *   measurement| <= 32767` (so `error` fits in `int16_t`); caller calls
- *   `pid_update` at a fixed, known period `Ts`; `out_min <= out_max`.
+ *   One caller-owned `pid_t` per control loop; call `pid_update()` once per
+ *   fixed period `Ts`. Pure arithmetic, no HAL dependency, compiles
+ *   unchanged for host/PIC16/PIC18 (uses `pic8-math` for the 16x16->32
+ *   multiply). Gains are caller-pre-scaled by `Ts` so `pid_update` needs no
+ *   division; see `docs/ARCHITECTURE.md` for the full design rationale and
+ *   `docs/API.md` for the Kp/Ki/Kd/Ts -> kp_q8/ki_q8/kd_q8 conversion.
  */
 
 #ifndef PID_H
@@ -66,56 +34,40 @@ typedef enum {
  * but harmless.
  */
 typedef struct {
-    int16_t    kp_q8, ki_q8, kd_q8;   /* Q8.8 discrete-time gains; ki_q8 already
-                                        * includes *Ts, kd_q8 already includes /Ts */
+    int16_t    kp_q8, ki_q8, kd_q8;   /* Q8.8 gains; ki_q8 includes *Ts, kd_q8 includes /Ts */
     int16_t    out_min, out_max;      /* actuator output clamp; out_min <= out_max */
 
-    int32_t    integrator_q8;         /* Q8.8 accumulated integral term, always kept
-                                        * clamped to [out_min<<8, out_max<<8] */
+    int32_t    integrator_q8;         /* Q8.8 integral term, clamped to [out_min,out_max]<<8 */
     int16_t    prev_measurement;      /* for derivative-on-measurement */
-    bool       have_prev_measurement; /* false until the first pid_update() call
-                                        * since init/reset -- gates the D term so
-                                        * there is no spurious kick on the first call */
-    bool       skip_next_i_increment; /* true after a MANUAL pid_update that
-                                        * back-calculated the integrator: the
-                                        * next AUTO call must NOT apply the I
-                                        * increment, so its output equals the
-                                        * held manual value exactly (the
-                                        * bumpless-transfer property). Cleared
-                                        * by the AUTO call that consumes it. */
+    bool       have_prev_measurement; /* false until first pid_update() since init/reset;
+                                        * gates the D term to avoid a first-call kick */
+    bool       skip_next_i_increment; /* set after a MANUAL call back-calculates the
+                                        * integrator; the next AUTO call skips the I
+                                        * increment (bumpless transfer), then clears this */
     pid_mode_t mode;
     int16_t    manual_output;         /* caller-set target output while mode == MANUAL */
 } pid_t;
 
 /**
- * @brief  Initialize a PID instance.
- *
- * Stores the gains and the output clamp range, sets `mode = PID_MODE_AUTO`,
- * zeroes the integrator, clears the D-term history, and zeroes
- * `manual_output`. The first `pid_update()` call therefore behaves like
- * the first call on a freshly-initialized loop: P+I from zero, D zeroed
- * by the no-prev-measurement gate.
+ * @brief  Initialize a PID instance: stores gains and clamp range, sets
+ *         AUTO mode, zeroes the integrator and D-term history.
  *
  * @param  pid       the instance (caller-owned storage).
  * @param  kp_q8     Q8.8 proportional gain (= round(Kp * 256)).
- * @param  ki_q8     Q8.8 *integral* gain, already pre-multiplied by the
- *                   sample period Ts (= round(Ki * Ts * 256)).
- * @param  kd_q8     Q8.8 *derivative* gain, already pre-divided by the
- *                   sample period Ts (= round(Kd / Ts * 256)).
- * @param  out_min   minimum allowed output (clamp rail; precond: out_min <= out_max).
- * @param  out_max   maximum allowed output (clamp rail).
+ * @param  ki_q8     Q8.8 integral gain, pre-multiplied by sample period Ts
+ *                   (= round(Ki * Ts * 256)).
+ * @param  kd_q8     Q8.8 derivative gain, pre-divided by Ts
+ *                   (= round(Kd / Ts * 256)).
+ * @param  out_min   minimum output (clamp rail; out_min <= out_max).
+ * @param  out_max   maximum output (clamp rail).
  */
 void pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
               int16_t out_min, int16_t out_max);
 
 /**
- * @brief  Zero the integrator and clear the D-term history.
- *
- * For recovering from an external fault (e-stop, sensor dropout) without
- * losing tuning. Keeps `kp_q8`/`ki_q8`/`kd_q8`/`out_min`/`out_max`/`mode`
- * untouched. The next `pid_update()` call behaves like the very first call
- * on a freshly-`pid_init`'d instance despite the gains being unchanged
- * from before the reset.
+ * @brief  Zero the integrator and clear the D-term history, without losing
+ *         tuning (gains/clamp/mode untouched), for recovering from an
+ *         external fault (e-stop, sensor dropout).
  */
 void pid_reset(pid_t *pid);
 
@@ -141,23 +93,14 @@ void pid_set_mode(pid_t *pid, pid_mode_t mode);
 void pid_set_manual_output(pid_t *pid, int16_t value);
 
 /**
- * @brief  Step the controller once. Call once per fixed control-loop
- *         period, in EITHER mode; this is the single per-cycle entry
- *         point, there is no separate "manual step" function.
+ * @brief  Step the controller once per fixed control-loop period, in
+ *         either mode; the single per-cycle entry point.
  *
- * In AUTO: integrates `ki_q8 * error`, adds the P, I, and -d(measurement)/dt
- * terms, and returns `clamp((P+I+D) >> 8, out_min, out_max)`. The integrator
- * is itself clamped to `[out_min << 8, out_max << 8]` so it can recover
- * immediately when the error reverses sign.
- *
- * In MANUAL: returns `clamp(manual_output, out_min, out_max)`, and
- * back-calculates the integrator so that resuming AUTO is bumpless (the
- * next AUTO `pid_update` returns the same output this MANUAL call did,
- * given the same setpoint/measurement).
- *
- * Precondition: `|setpoint - measurement| <= 32767` (so `error` fits in
- * `int16_t`). Not runtime-checked; violating it indicates a misconfigured
- * caller, not a normal runtime condition.
+ * AUTO: `clamp((P+I+D) >> 8, out_min, out_max)`, D from
+ * `-d(measurement)/dt`, integrator clamped to `[out_min, out_max] << 8`
+ * for anti-windup. MANUAL: `clamp(manual_output, out_min, out_max)`, and
+ * back-calculates the integrator so resuming AUTO is bumpless. Precondition
+ * (not runtime-checked): `|setpoint - measurement| <= 32767`.
  *
  * @return  the clamped output, always in `[out_min, out_max]`.
  */

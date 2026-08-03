@@ -3,38 +3,11 @@
  * @brief   Host tests for the fixed-point PID controller.
  *
  * @details
- *   One implementation means host tests prove the shipped code directly
- *   (the same reasoning as pic8-fsm and pic8-debounce: the host suite
- *   tests the exact pid.c that links into the PIC16 and PIC18 XC8
- *   cross-compiles). There is no HAL, no timebase, no peripheral model
- *   involved -- the algorithm is pure arithmetic on plain data, and
- *   `pic_math_mul_s16` is the only dependency, and the host reference
- *   for that is the same portable-C body the test cases already use
- *   `pic_math`'s own exhaustive tests against. Each expected value in
- *   the test file is computed independently in the test (plain
- *   `(int32_t)a * b` arithmetic, not by calling `pic_math_mul_s16` and
- *   trusting it circularly), so a bug in pid.c's wiring, not in
- *   pic_math, is what these tests catch.
- *
- *   Covers (per docs/pic8-pid-plan.md § Testing strategy):
- *     1. Pure P (ki=kd=0): constant error -> clamp(Kp*error, ...).
- *     2. Pure I (kp=kd=0): repeated calls accumulate linearly.
- *     3. Anti-windup clamps: tight clamp + sustained large error,
- *        integrator never exceeds the rails and output saturates exactly.
- *     4. Windup recovery: case 3 with sign reversal -> output moves
- *        off the rail on the very next call.
- *     5. No derivative kick on the first call: D contribution is zero
- *        on the first pid_update after init or reset.
- *     6. Derivative sign: rising measurement -> negative D contribution
- *        (damping); falling -> positive.
- *     7. Final output always clamps: extreme gains that would push
- *        sum_q8 >> 8 outside the clamp yield a clamped output regardless
- *        of which term (P, I, or D) caused the excess.
- *     8. Bumpless transfer: AUTO -> MANUAL -> AUTO with the same
- *        setpoint/measurement returns the same output through the switch.
- *     9. pid_reset: behavior matches a freshly-pid_init'd instance for
- *        the integrator and the D term, while gains/clamp/mode persist.
- *    10. Two independent instances never affect each other.
+ *   Tests the exact pid.c that ships in the PIC16/PIC18 cross-compiles;
+ *   no HAL, timebase, or per-family split involved. Expected values are
+ *   computed independently in the test (plain `(int32_t)a * b`), not via
+ *   `pic_math_mul_s16`, so a pid.c bug is what these tests catch, not a
+ *   pic_math one.
  */
 
 #include "pid.h"
@@ -82,7 +55,7 @@ static void test_pure_p(void)
     /* error = -200 -> P_q8 = -51200, output = clamp(-200, ...) = -200. */
     out = pid_update(&pid, (int16_t)(-200), (int16_t)0);
     p_q8 = p_or_d_term(256, (int16_t)(-200));          /* -51200 */
-    exp  = (int16_t)(p_q8 >> 8);                      /* -200 */
+    exp  = (int16_t)(p_q8 / 256);                      /* -200, exact multiple, no rounding */
     CHECK(out == exp, "pure P: error=-200 -> output -200");
 
     /* Now choose a gain * error that would exceed the clamp. kp=256,
@@ -220,7 +193,7 @@ static void test_no_derivative_kick_first_call(void)
      * D term. Same setpoint, measurement changes to 100: dmeas = 100. */
     out = pid_update(&pid, (int16_t)1000, (int16_t)100);
     int32_t d_q8 = -mul_s16(256, (int16_t)100);  /* derivative-on-measurement, negated */
-    int16_t exp  = (int16_t)(d_q8 >> 8);         /* -100 */
+    int16_t exp  = (int16_t)(d_q8 / 256);        /* -100, exact multiple, no rounding */
     CHECK(out == exp, "no-deriv-kick: D term appears on second call only");
 }
 
@@ -359,13 +332,8 @@ static void test_bumpless_transfer(void)
     CHECK(first_auto_after == manual_out,
           "bumpless: first AUTO call after MANUAL returns the same value (no jump)");
 
-    /* The integrator should now continue evolving. After one more
-     * AUTO call, the output must equal the integrator's new value
-     * (since kd=0, prev_measurement=0, P=100, sum=integrator+25600,
-     * output = (integrator+25600)>>8). We don't pin the exact value
-     * (it depends on the integrator increment), but it must be
-     * different from the held manual_out (otherwise the integrator
-     * never moved, which would be a hidden back-calc bug). */
+    /* A second AUTO call must move off manual_out as the integrator
+     * accumulates; exact value not pinned, just that it changed. */
     int16_t second_auto_after = pid_update(&pid, (int16_t)100, (int16_t)0);
     CHECK(second_auto_after != manual_out,
           "bumpless: integrator resumes evolving after AUTO resumes");
