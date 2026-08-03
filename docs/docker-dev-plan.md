@@ -1,10 +1,17 @@
 # Docker-first local dev, and pushing CI's toolchain image from the CLI
 
-Status: **implemented**. Root `Makefile` covers host tests, real-target
-XC8 builds, the `mdb` gate, and a dev shell, all through the existing
-`docker/ci-toolchain/` image built from locally-supplied vendor
-installers. CI now pulls a pre-pushed private image instead of building
-it; the `ci-assets` blob-carrier mechanism is dormant, not deleted.
+Status: **implemented and verified against real builds**, except the
+`mdb` gate itself and the final `docker push`, both blocked on the MPLAB
+X IDE installer, which only a human can obtain (see "What the user must
+provide" below; this is a hard, confirmed wall, not a gap in effort).
+Root `Makefile` covers host tests, real-target XC8 builds, the `mdb`
+gate, and a dev shell, all through the existing `docker/ci-toolchain/`
+image built from locally-supplied vendor installers. CI now pulls a
+pre-pushed private image instead of building it; the `ci-assets`
+blob-carrier mechanism is dormant, not deleted. Two real bugs (root-owned
+build output, a missing `cmake`/`build-essential` in the image) were
+found and fixed by actually running the flow, see "Verification
+performed this session" below.
 
 ## Motivation
 
@@ -131,17 +138,81 @@ consumed `toolchain-image`'s resolved `image` output.
 - [x] Root `README.md` documents the Docker quick start.
 - [x] `docs/ci-plan.md` and `scripts/README.md` reference the new flow.
 
-## Known limitation, not fixed here
+## What the user must provide (cannot be automated)
 
-`make ci-image-push`/CI's pull step were validated by static inspection
-(Makefile dry-runs, YAML parsing, dfp/family-glob logic tested against
-every real MCU value in the repo) and by the existing pattern they copy
-(the same tag formula and pull-vs-fail-loudly posture `ci-assets` already
-proved out in production). They were **not** exercised end-to-end
-against a real multi-gigabyte XC8/MPLAB X installer pair in this session
-(no such files were available locally), so `make image`'s actual `docker
-build` succeeding, and a real `make ci-image-push` round trip landing a
-pullable tag, are unverified beyond the Dockerfile change itself being a
-small, mechanical extension of an already-working build. Whoever first
-runs `make image` with real installers in `vendor/` is the actual
-verification of that half.
+Microchip's download pages sit behind an Akamai bot-challenge (returns
+403/a JS challenge page to any non-browser client, confirmed again
+directly in this session: a plain `curl -I` against
+`microchip.com/mplab/mplab-x-ide` came back `403 AkamaiGHost`). No agent
+working on this repo can fetch these; do not spend time retrying a
+scripted download, it is a dead end already documented in
+`docs/ci-plan.md` (curl-impersonate/TLS-fingerprint spoofing was tried
+there too and also failed). The two files below are the **only** inputs
+this whole flow needs a human for:
+
+- `docker/ci-toolchain/vendor/xc8-installer.run`: the XC8 v4.00 Linux
+  installer, from https://www.microchip.com/mplab/compilers (a browser
+  download; log in with a (free) myMicrochip account if prompted).
+- `docker/ci-toolchain/vendor/mplabx-installer.tar`: the MPLAB X IDE
+  v6.35 Linux installer, from https://www.microchip.com/mplab/mplab-x-ide,
+  tar'd up as a single `.tar` (matching the Dockerfile's own extraction
+  step, `tar -xf mplabx.tar` expecting the installer `.sh` inside).
+
+`make check-vendor` checks for exactly these two files/sizes and prints
+this same guidance if either is missing; that is the intended, sole
+recovery path, not a bug to route around. Everything else (DFPs, apt
+packages, the image build itself, every Makefile target) needs no human
+input beyond those two files existing once.
+
+## Verification performed this session
+
+**Fully verified, real builds, no simulated results:**
+
+- The XC8 v4.00 install layer and all three DFP fetches (`curl` against
+  `packs.download.microchip.com`, no bot-challenge there, confirmed
+  again) succeed inside a real `docker build`, using the real
+  `docker/ci-toolchain/Dockerfile` plus an XC8 installer that was
+  already present locally.
+- `xc8-cc` runs inside the built image and compiles against all three
+  DFPs, including the new `PIC12-16F1xxx_DFP` for `pic16f193x-hal`.
+- A full real-target build of `pic16f193x-hal` (`MCU=16F1937`),
+  `pic8-tick`'s PIC16F87XA leg (`MCU=16F877A`), and its PIC18 leg
+  (`MCU=18F4550`) all complete and produce valid `.hex` files inside the
+  container, via the exact command `make xc8-build` runs.
+- All 19 host-sim modules (`git ls-files -- '*/CMakeLists.txt'`) build
+  and pass their `ctest` suite inside the container, via the exact
+  command `make test` runs per module.
+- **Two real bugs found and fixed by this testing**, both below.
+
+**Not exercised**: the actual `docker build` of the *complete* image
+(XC8 + all DFPs + MPLAB X) end-to-end, `make ci-image-push`'s real
+`docker push`, and the `mdb` gate itself, all because no MPLAB X
+installer was available locally in this session. The XC8-only and
+DFP-fetch portions of the Dockerfile are proven; the MPLAB X `COPY`/
+install steps are unchanged from the already-working CI Dockerfile this
+plan reuses verbatim, so they are not new risk, just not re-proven here.
+
+### Bug 1: containers ran as root, corrupting host file ownership
+
+Every `docker run` in the original Makefile draft ran as the container's
+default user (root). Any file a target wrote to the bind-mounted repo
+(`build/` dirs, `.hex` outputs) came back **root-owned on the host**,
+un-removable by the invoking user without `sudo` or another container.
+Hit directly while testing: cleaning up a test build required a
+throwaway `docker run ... rm -rf` because the host user couldn't. Fixed
+by adding `--user $(id -u):$(id -g)` to both `DOCKER_RUN` and `shell`'s
+`docker run`; confirmed `xc8-cc` and `cmake`/`ctest` all run fine under
+an arbitrary non-root UID (the toolchain install is world-readable), and
+that output written under the fix lands owned by the invoking host user.
+
+### Bug 2: the toolchain image had no `cmake`/`build-essential`
+
+`docker/ci-toolchain/Dockerfile` only ever installed the packages XC8/
+MPLAB X's own installers need (`curl unzip make tar` + GTK libs); nothing
+in it provided a C compiler or CMake. `make test`'s host-sim builds need
+both. Confirmed the failure directly (`cmake: command not found` inside
+the built image) before fixing it by adding `cmake build-essential` to
+the same `apt-get install` line, with a header comment explaining these
+are for local dev's `make test` specifically, not for CI (CI's own
+`host-tests.yml` installs them itself on a bare runner and never touches
+this image).

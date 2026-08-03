@@ -234,11 +234,25 @@ the `mdb` (MPLAB SIM) verification gate, and a dev shell, inside the same
 toolchain image CI uses (`docker/ci-toolchain/`). See
 [docs/docker-dev-plan.md](docs/docker-dev-plan.md) for the design.
 
+**One-time, human-only step**: download two files from Microchip's site
+(a browser, not a script, myMicrochip login may be prompted) and drop
+them in `docker/ci-toolchain/vendor/`:
+
+- the XC8 v4.00 Linux installer, as `xc8-installer.run`, from
+  https://www.microchip.com/mplab/compilers
+- the MPLAB X IDE v6.35 Linux installer, tar'd up as a single
+  `mplabx-installer.tar`, from https://www.microchip.com/mplab/mplab-x-ide
+
+Neither can be fetched by a script or an agent: Microchip's download CDN
+sits behind an Akamai bot-challenge that returns a 403 to any
+non-browser client (confirmed, not assumed, see
+[docs/ci-plan.md](docs/ci-plan.md) and
+[docs/docker-dev-plan.md](docs/docker-dev-plan.md)). If an agent is
+driving this and hits that wall, it should stop and ask you for the
+files, not keep retrying.
+
 ```sh
-# One-time: drop the Microchip installers where the image build expects
-# them. Neither can be fetched automatically (Microchip's download CDN
-# sits behind a bot-challenge, see docs/ci-plan.md), so this is manual:
-make check-vendor    # tells you exactly what's missing and where to get it
+make check-vendor    # confirms both files are present and correctly sized
 
 make image            # build the toolchain image locally (once; cached after)
 make test             # host-sim build + test, every module
