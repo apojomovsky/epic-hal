@@ -1,19 +1,9 @@
 /**
  * @file    pic_math_sqrt.c (shared portable-C, no asm)
- * @brief   pic_math_sqrt_u16 -- integer square root via Newton-Raphson.
- *
- * @details
- *   One implementation, linked by every backend (host + PIC16 + PIC18). As
- *   AN544 does, the square root is BUILT ON THE DIVISION PRIMITIVE, not fresh
- *   asm: each Newton step is x = (x + value/x)/2, where value/x is computed
- *   by pic_math_divmod_u16 (the per-backend divide -- native `/` on host,
- *   restoring shift-subtract asm on the XC8 targets). This is the plan's
- *   "derived routines are portable C, built on the leaf primitives" rule.
- *
- *   Converges to floor(sqrt(value)) for all 0..65535 (the Tier-1 test checks
- *   every value against double-precision sqrt). The /2 is a shift (the
- *   compiler optimizes it); only the value/x division goes through the leaf
- *   divide primitive, as the plan specifies.
+ * @brief   `pic_math_sqrt_u16`: integer square root via Newton-Raphson,
+ *          built on `pic_math_divmod_u16` rather than fresh asm, one
+ *          implementation linked by every backend. Converges to
+ *          floor(sqrt(value)) for the full 0..65535 range.
  */
 
 #include "pic_math.h"

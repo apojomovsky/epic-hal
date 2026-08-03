@@ -1,16 +1,8 @@
 /**
  * @file    test_mul.c
- * @brief   Tier-1 host tests for pic_math_mul_u8 / _u16 / _s16.
- *
- * @details
- *   - pic_math_mul_u8: EXHAUSTIVE over all 256*256 operand pairs, compared
- *     to (uint16_t)a*b.
- *   - pic_math_mul_u16 / _s16: randomized (fixed-seed, reproducible) plus
- *     the boundary set {0,1,UINT16_MAX,INT16_MIN,INT16_MAX, powers of two},
- *     cross-checked against native uint32_t/int32_t arithmetic.
- *
- *   These test the host reference backend (the oracle). The per-family asm
- *   backends are validated separately (Tier 2/3 + hand-traces).
+ * @brief   Host tests for `pic_math_mul_u8` (exhaustive over all 256x256
+ *          pairs) and `_u16`/`_s16` (randomized plus boundary values)
+ *          against native wider-integer arithmetic.
  */
 
 #include "pic_math.h"

@@ -1,22 +1,11 @@
 /**
  * @file    test_numeric.c
- * @brief   Tier-1 host tests for pic_math_diff3 and pic_math_integrate_simpson38.
- *
- * @details
- *   Both routines are checked against analytic functions:
- *     - diff3 (3-point central derivative): the central difference is EXACT
- *       for degree <= 2, so linear and quadratic sequences are checked for
- *       an exact Q8.8 result (the true derivative * 256). A cubic is checked
- *       against the central-difference value within the documented O(h^2)
- *       error bound. A non-integer slope is checked within one Q8.8 ULP.
- *     - integrate_simpson38 (Simpson's 3/8 rule): exact for degree <= 3, so
- *       constant/linear/cubic are checked for an exact Q16.16 result. A
- *       quartic is checked within the documented O(h^4) bound.
- *
- *   These are the portable-C derived routines in src/common/; they use the
- *   host mul/div oracles indirectly. The Q-format scale factors are passed in
- *   explicitly (as the API requires), so the tests fix h and compute the
- *   expected Q-format value exactly.
+ * @brief   Host tests for `pic_math_diff3` and
+ *          `pic_math_integrate_simpson38` against analytic functions:
+ *          both are exact up to their respective polynomial degree
+ *          (diff3: <=2, Simpson's 3/8: <=3), checked for an exact
+ *          Q-format result there and within a documented error bound
+ *          for higher-degree inputs.
  */
 
 #include "pic_math.h"

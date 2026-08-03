@@ -1,18 +1,9 @@
 /**
  * @file    test_bcd.c
- * @brief   Tier-1 host tests for the BCD primitives.
- *
- * @details
- *   - bcd8/bin8 forms: exhaustive over all 100 valid values (0..99), plus
- *     the invalid-nibble documented behavior.
- *   - bcd16/bin16 forms: exhaustive over 0..99999 (the whole valid BCD range
- *     -- cheap on a host), plus invalid-nibble inputs.
- *   - bcd_add8/sub8: exhaustive over all 100*100 valid operand pairs,
- *     checking the result and the carry/borrow-out against a decimal
- *     reference, plus invalid-nibble cases.
- *
- *   These test the host reference backend (the oracle). The per-family asm
- *   backends are validated separately (Tier 2/3 + hand-traces).
+ * @brief   Host tests for the BCD primitives against the host reference
+ *          backend: exhaustive over the valid BCD range for each width,
+ *          plus the documented invalid-nibble behavior. The per-family
+ *          asm backends are validated separately (hand-traces).
  */
 
 #include "pic_math.h"

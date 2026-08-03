@@ -1,22 +1,10 @@
 /**
  * @file    pic_math_bcd.c (PIC16 inline-asm backend)
- * @brief   BCD primitives: conversions + the manual digit-adjust.
- *
- * @details
- *   The BCD<->binary conversions are built on this backend's asm mul/div
- *   primitives (pic_math_mul_u8/u16, pic_math_divmod_u16) -- the "built on
- *   the leaf primitives" / "minimal asm surface" approach. They are C and do
- *   not use the shared scratch.
- *
- *   The DAW-style digit adjust IS new per-family asm. Mid-range PIC16 has NO
- *   `daw` instruction, so bcd_add8 does the manual nibble adjust (+6 when a
- *   nibble > 9, carry to high); bcd_sub8 is the nibble-wise subtract with
- *   borrow (same shape as the PIC18 backend, using `goto`). Both use the
- *   shared 16-byte buffer pic16_mscratch. Offsets: bcd_add8 a@0,b@1,r@2,co@3,
- *   lo@4,hi@5; bcd_sub8 a@0,b@1,r@2,bo@3,aL@4,bL@5,br@6,aH@7. The asm is
- *   identical to the per-struct form (same algorithm, same offsets -- only
- *   the symbol changes), so the hand-traces remain valid. The adjust is
- *   defined for valid BCD operands (0..99), which is what the tests exercise.
+ * @brief   BCD conversions are C built on this backend's asm mul/div
+ *          primitives. The digit-adjust is new asm: mid-range PIC16 has
+ *          no `daw` instruction, so `bcd_add8` does the manual +6 nibble
+ *          adjust and `bcd_sub8` the nibble-wise subtract with borrow.
+ *          Defined for valid BCD operands (0..99) only.
  */
 
 #include <xc.h>

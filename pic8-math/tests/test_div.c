@@ -1,19 +1,11 @@
 /**
  * @file    test_div.c
- * @brief   Tier-1 host tests for pic_math_divmod_u16 / _s16 / _u32_16.
- *
- * @details
- *   Three layers:
- *     1. The host oracle (pic_math_divmod_*) vs native /, %  -- randomized
- *        plus boundaries, divide-by-zero, and INT16_MIN / -1.
- *     2. A C reference of the RESTORING SHIFT-SUBTRACT algorithm (the exact
- *        shape the PIC16/PIC18 asm backends mirror) vs native /, %, over a
- *        broad sweep. This machine-verifies the algorithm the asm hand-traces
- *        describe, so a correct hand-trace that matches this C implies a
- *        correct asm body.
- *     3. The documented edge contracts: den==0 -> *ok=false, zeroed fields;
- *        INT16_MIN / -1 -> (INT16_MIN, 0) (the wrap of 32768); u32_16
- *        quotient truncation.
+ * @brief   Host tests for `pic_math_divmod_u16`/`_s16`/`_u32_16`: the
+ *          oracle against native `/`/`%`, a C reference of the restoring
+ *          shift-subtract algorithm the PIC16/PIC18 asm mirrors (so a
+ *          correct hand-trace against this implies a correct asm body),
+ *          and the documented edge contracts (divide-by-zero, `INT16_MIN
+ *          / -1`, u32_16 truncation).
  */
 
 #include "pic_math.h"

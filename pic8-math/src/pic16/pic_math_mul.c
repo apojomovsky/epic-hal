@@ -1,21 +1,10 @@
 /**
  * @file    pic_math_mul.c (PIC16 inline-asm backend)
- * @brief   multiply primitives via AN526's shift-and-add (no HW multiply).
- *
- * @details
- *   The mid-range PIC16F87XA has no hardware multiply. Both 8x8 and 16x16 use
- *   AN526's shift-and-add: accumulate a<<i into the result for each set bit i
- *   of the multiplier. PIC_MATH_OPTIMIZE_FOR_SIZE (default 1 = looped)
- *   selects the looped (small) vs straight-line unrolled (fast) 8x8 form --
- *   a real trade-off on a 1.5 KB-flash part. 16x16 -> 32 is the 16-iteration
- *   form. Signed multiply is plain C over the asm unsigned path with the
- *   negate-operands/negate-result trick. STATUS bits by number (C=0, Z=2).
- *
- *   Scratch: the shared 16-byte buffer pic16_mscratch (pic_math_scratch.h),
- *   one object in one bank -> one banksel per routine. Offsets: mul_u8
- *   a@0,b@1,bk@2,cnt@3,r@4-5,t@6-7; mul_u16 a@0-1,b@2-3,bk@4-5,r@6-9,t@10-13,
- *   cnt@14. The asm is identical to the per-struct form (same algorithm, same
- *   offsets -- only the symbol changes), so the hand-traces remain valid.
+ * @brief   Multiply primitives via AN526's shift-and-add (PIC16F87XA has
+ *          no hardware multiply): accumulate a<<i for each set bit i of
+ *          the multiplier. All operands live in the shared scratch buffer
+ *          (pic_math_scratch.h), one `banksel` per routine. STATUS bits
+ *          by number (C=0, Z=2).
  */
 
 #include <xc.h>

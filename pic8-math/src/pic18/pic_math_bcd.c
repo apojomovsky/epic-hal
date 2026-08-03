@@ -1,22 +1,11 @@
 /**
  * @file    pic_math_bcd.c (PIC18 inline-asm backend)
- * @brief   BCD primitives: conversions + the DAW digit-adjust.
- *
- * @details
- *   The BCD<->binary conversions are built on this backend's asm multiply/
- *   divide primitives (pic_math_mul_u8/u16, pic_math_divmod_u16): the same
- *   "built on the leaf primitives" approach the derived routines use, kept
- *   here (per-backend) rather than in common/ because they call the
- *   backend-specific primitives. This is the plan's "minimal asm surface"
- *   priority applied to BCD -- the conversions are arithmetic (x10, /10),
- *   not new asm.
- *
- *   The DAW-style digit adjust IS new per-family asm: PIC18 has the `daw`
- *   instruction (one-instruction packed-BCD adjust of W after an add, with C
- *   set on BCD overflow), so bcd_add8 is addwf+daw. bcd_sub8 has no
- *   BCD-subtract instruction on any core, so it is the manual nibble-wise
- *   subtract-with-borrow (the ±10 adjust), shared in shape with the PIC16
- *   backend. Hand-traces below.
+ * @brief   BCD conversions are C built on this backend's asm mul/div
+ *          primitives. The digit-adjust is new asm: PIC18 has `daw`
+ *          (one-instruction packed-BCD adjust after an add), so
+ *          `bcd_add8` is `addwf`+`daw`; `bcd_sub8` has no hardware
+ *          equivalent on any core, so it does the manual nibble-wise
+ *          subtract-with-borrow.
  */
 
 #include <xc.h>

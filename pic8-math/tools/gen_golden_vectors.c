@@ -1,26 +1,12 @@
 /**
  * @file    tools/gen_golden_vectors.c
- * @brief   Host-side generator for tests/golden_vectors.h.
+ * @brief   Host-side generator for tests/golden_vectors.h: input vectors
+ *          for the per-family asm leaf primitives, each paired with the
+ *          expected output from the host oracle, replayed on real
+ *          silicon by tests/target_selftest.c.
  *
- * @details
- *   Builds against the host reference backend (src/host/ + src/common/) and
- *   emits tests/golden_vectors.h: a curated set of input vectors for the
- *   per-family ASM LEAF primitives, each paired with the EXPECTED output
- *   computed by the host oracle (Tier-1-tested). The Tier-3 on-target
- *   self-test replays these through the real inline-asm backends on silicon
- *   and compares -- a regression in any backend shows up as the same vector
- *   index failing.
- *
- *   Scope: only the routines that have per-family inline asm (mul, divmod,
- *   add/sub, negate, bcd_add/sub). The C-over-asm wrappers (mul_s16,
- *   divmod_s16, BCD conversions) and the portable-C derived routines (sqrt,
- *   diff3, simpson38, rand) are validated by the exhaustive/randomized
- *   Tier-1 host tests; they share one C body across all backends, so there
- *   is no separate asm to verify on target. Keeping the on-target set to the
- *   asm leaves also fits the 8 K-word PIC16F87XA flash.
- *
- *   Run:  cmake -B build && cmake --build build
- *         ./build/gen_golden_vectors > tests/golden_vectors.h
+ * Run:  cmake -B build && cmake --build build
+ *       ./build/gen_golden_vectors > tests/golden_vectors.h
  */
 
 #include "pic_math.h"

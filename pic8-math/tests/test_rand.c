@@ -1,21 +1,9 @@
 /**
  * @file    test_rand.c
- * @brief   Tier-1 host tests for pic_math_rand_next (LFSR) and rand_gauss.
- *
- * @details
- *   Not "randomness" in the cryptographic sense -- the tests assert the
- *   LFSR's documented properties, per the plan:
- *     - period: from a seed, the state returns to the seed after exactly
- *       2^16 - 1 = 65535 steps (maximal-length).
- *     - never-zero: rand_next never returns 0 over the full period (the
- *       all-zero state is the one it must escape, not produce).
- *     - all-zero-state escape: a zero *state maps to the documented seed and
- *       is not stuck at zero.
- *     - reentrant: two independent states advance independently.
- *     - gauss distribution: a coarse bucket histogram is bell-shaped (the
- *       central bucket is more populated than the tail buckets) and the
- *       samples span a reasonable int16 range -- a sanity check mirroring
- *       AN544 Figure 3, not a chi-square test.
+ * @brief   Host tests asserting `pic_math_rand_next`'s documented LFSR
+ *          properties (maximal-length period, never returns 0, escapes a
+ *          zero seed, two states advance independently) and a coarse
+ *          bell-shape sanity check on `rand_gauss`, not a chi-square test.
  */
 
 #include "pic_math.h"

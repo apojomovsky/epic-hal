@@ -1,19 +1,10 @@
 /**
  * @file    pic_math_mul.c (host reference backend)
- * @brief   Portable-C multiply primitives -- the Tier-1 oracle.
- *
- * @details
- *   Linked by the CMake host build. The same symbols are provided by
- *   src/pic16/pic_math_mul.c (shift-and-add; no hardware multiply on
- *   mid-range PIC16F87XA) and src/pic18/pic_math_mul.c (hardware MULWF,
- *   three partial products for 16x16) for the XC8 target builds; the build
- *   selects one, so no #ifdef anywhere.
- *
- *   The host reference uses native wider types: trivially correct, and
- *   the independent oracle the Tier-1 tests cross-check the algorithm
- *   against. The XC8 optimizer already emits `mulwf` for the idiomatic
- *   8x8 form here on PIC18, so the asm backend's value is on the structured
- *   16x16 / signed paths (see docs/ARCHITECTURE.md).
+ * @brief   Portable-C multiply primitives, linked by the CMake host
+ *          build; the PIC16/PIC18 asm backends provide the same symbols
+ *          for XC8 target builds, the build selects one. Native wider
+ *          types make this the independent oracle the tests cross-check
+ *          the asm algorithms against.
  */
 
 #include "pic_math.h"

@@ -1,21 +1,9 @@
 /**
  * @file    pic_math_addsub.c (PIC18 inline-asm backend)
- * @brief   add/sub/negate primitives via PIC18 addwfc/subfwb/comf.
- *
- * @details
- *   PIC18 core has single-instruction carry-add/subtract (`addwfc`/
- *   `subwfb`) -- unlike mid-range PIC16, which must propagate carry with
- *   the `btfsc STATUS,0` + `incf` idiom. So this backend uses addwfc/
- *   subwfb directly and does NOT carry over AN526/AN544's skip-and-increment
- *   idiom (per docs/ARCHITECTURE.md).
- *
- *   Operand binding: file-scope `static volatile` scratch, one set per
- *   routine (see ARCHITECTURE.md "Inline-asm binding"). `volatile` forces
- *   the C wrapper's stores/reads the compiler can't see the asm needing;
- *   `banksel` sets BSR to the scratch bank (COMRAM/access bank, bank 0) so
- *   the unqualified `movf _m_x` operands address it. The scratch for each
- *   routine is declared together, so XC8 co-locates it in one bank and one
- *   `banksel` covers the whole routine.
+ * @brief   Add/sub/negate primitives using PIC18's single-instruction
+ *          carry ops (`addwfc`/`subwfb`), unlike PIC16's skip-and-increment
+ *          idiom. Operands are file-scope `static volatile` scratch, one
+ *          `banksel` per routine (see ARCHITECTURE.md "Inline-asm binding").
  */
 
 #include <xc.h>

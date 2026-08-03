@@ -1,18 +1,9 @@
 /**
  * @file    pic_math_test.h
- * @brief   Tiny shared test harness for the pic8-math Tier-1 host tests.
- *
- * @details
- *   No external framework (matches this repo's convention -- the HAL and
- *   task-manager "tests" are plain main()s returning a process exit code).
- *   Provides a CHECK macro (counts failures, logs the line), a fixed-seed
- *   deterministic LCG so randomized tests are reproducible, and a couple of
- *   boundary constants. Each test_*.c defines main() and returns
- *   pic_math_test_report() (0 on pass, 1 on any failure).
- *
- *   Linked only into the CMake host test executables; not built by the XC8
- *   target Makefiles (Tier-1 is host-only; the asm backends are validated
- *   by gpsim/Tier-3 + hand-traces, not these tests).
+ * @brief   Tiny shared host-test harness for pic8-math, no external
+ *          framework: a CHECK macro, a fixed-seed deterministic LCG for
+ *          reproducible randomized tests, and a pass/fail exit-code
+ *          reporter. Host-only; not built by the XC8 target Makefiles.
  */
 
 #ifndef PIC_MATH_TEST_H

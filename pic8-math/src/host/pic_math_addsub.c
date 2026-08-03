@@ -1,18 +1,9 @@
 /**
  * @file    pic_math_addsub.c (host reference backend)
- * @brief   Portable-C add/sub/negate primitives -- the Tier-1 oracle.
- *
- * @details
- *   Linked by the CMake host build. The same symbols are provided by
- *   src/pic16/pic_math_addsub.c (mid-range: `addwf` + the `btfsc STATUS,0`/
- *   `incf` carry idiom -- no ADDWFC) and src/pic18/pic_math_addsub.c
- *   (`addwfc`/`subfwb`, single-instruction carry-add/subtract) for the XC8
- *   target builds.
- *
- *   The host reference uses native wider types and is trivially correct.
- *   Negation is done in unsigned to avoid the -INT_MIN overflow: 0 - (unsigned)v
- *   wraps to the two's-complement result, so negate(INT16_MIN) = INT16_MIN
- *   and negate(INT32_MIN) = INT32_MIN (documented).
+ * @brief   Portable-C add/sub/negate primitives, the independent oracle
+ *          for the PIC16/PIC18 asm backends. Negation works in unsigned
+ *          to avoid `-INT_MIN` overflow, so `negate(INT16_MIN) ==
+ *          INT16_MIN` (two's-complement wrap, documented).
  */
 
 #include "pic_math.h"

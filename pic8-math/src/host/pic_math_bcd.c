@@ -1,19 +1,10 @@
 /**
  * @file    pic_math_bcd.c (host reference backend)
- * @brief   Portable-C BCD primitives -- the Tier-1 oracle.
- *
- * @details
- *   Linked by the CMake host build. The same symbols are provided by
- *   src/pic16/pic_math_bcd.c and src/pic18/pic_math_bcd.c (the BCD digit-
- *   adjust ±6 correction and the conversion loops in inline asm) for the XC8
- *   target builds.
- *
- *   BCD values are packed (one nibble per digit): decimal 42 is the byte
- *   0x42, decimal 9999 is 0x009999 packed into the low 3 nibbles of a
- *   uint32_t. "8"/"16" name the *binary* width; BCD width follows (2/5
- *   digits). Invalid nibbles (> 9) are processed arithmetically -- each
- *   nibble contributes its value times its place -- so bcd8_to_bin(0x0A) =
- *   10. This is the documented behavior for out-of-range input.
+ * @brief   Portable-C BCD primitives, the independent oracle for the
+ *          PIC16/PIC18 asm backends. BCD is packed (one nibble per
+ *          digit: decimal 42 is the byte 0x42); an invalid nibble (> 9)
+ *          is processed arithmetically, e.g. `bcd8_to_bin(0x0A) == 10`,
+ *          the documented behavior for out-of-range input.
  */
 
 #include "pic_math.h"

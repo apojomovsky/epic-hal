@@ -1,20 +1,10 @@
 /**
  * @file    pic_math_div.c (host reference backend)
- * @brief   Portable-C divide/modulo primitives -- the Tier-1 oracle.
- *
- * @details
- *   Linked by the CMake host build. The same symbols are provided by
- *   src/pic16/pic_math_div.c and src/pic18/pic_math_div.c (both use the
- *   restoring shift-subtract algorithm AN526/AN544 use -- no hardware
- *   divide on either core) for the XC8 target builds.
- *
- *   The host reference uses native wider types and is trivially correct.
- *   Divide-by-zero returns zeroed fields with *ok=false (the plan's
- *   documented improvement over AN526/AN544, which produced garbage and
- *   required the caller to avoid zero). INT16_MIN / -1, the one signed
- *   divide whose true quotient (32768) does not fit int16, is computed in
- *   int32 and cast back, so it returns the two's-complement wrap
- *   (INT16_MIN, 0) -- documented, not silent (see docs/API.md).
+ * @brief   Portable-C divide/modulo primitives, the independent oracle
+ *          for the PIC16/PIC18 asm backends. Divide-by-zero returns
+ *          zeroed fields with `*ok=false`; `INT16_MIN / -1` (the one
+ *          signed divide whose true quotient overflows int16) wraps to
+ *          `(INT16_MIN, 0)`, documented in docs/API.md.
  */
 
 #include "pic_math.h"

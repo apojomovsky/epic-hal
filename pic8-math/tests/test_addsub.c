@@ -1,13 +1,9 @@
 /**
  * @file    test_addsub.c
- * @brief   Tier-1 host tests for pic_math_add_u16 / sub_u16 / negate_s16 /
- *          negate_s32.
- *
- * @details
- *   add_u16 / sub_u16: randomized (fixed seed) + the boundary cross-product,
- *   checking both the truncated 16-bit result and the carry/borrow-out flag
- *   against a 32-bit reference. negate_s16/s32: the boundary set including
- *   INT16_MIN / INT32_MIN (which negate to themselves) and 0, +/-1, max.
+ * @brief   Host tests for `pic_math_add_u16`/`sub_u16`/`negate_s16`/
+ *          `negate_s32`: randomized plus boundary cases (including
+ *          `INT16_MIN`/`INT32_MIN`, which negate to themselves) against a
+ *          32-bit reference.
  */
 
 #include "pic_math.h"

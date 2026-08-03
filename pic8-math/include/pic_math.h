@@ -1,49 +1,12 @@
 /**
  * @file    pic_math.h
- * @brief   Family-agnostic fixed-point math utility library for 8-bit PICs.
- *
- * @details
- *   `pic8-math` is a stateless computation library ported from two 1997
- *   Microchip application notes -- AN526 ("PIC16C5X/PIC16CXXX Math Utility
- *   Routines", DS00526) and AN544 ("Math Utility Routines", DS00544) --
- *   modernized into one family-agnostic C library with a hand-written
- *   inline-asm core. It targets the same two families this repo already
- *   supports: PIC16F87XA (mid-range core, no hardware multiply) and
- *   PIC18F2455/2550/4455/4550 (PIC18 core, with the single-cycle `MULWF`
- *   8x8->16 hardware multiply neither app note's target chip had).
- *
- *   The design follows the repo's shared-core/per-family-backend pattern
- *   (see docs/multi-family-plan.md): one neutral public API (this header,
- *   no `#ifdef` for family), a portable-C host backend that doubles as the
- *   independent test oracle, a PIC16 inline-asm backend, and a PIC18
- *   inline-asm backend that exploits hardware the app notes' chips lacked.
- *   Only the true leaf arithmetic primitives get per-family inline asm;
- *   everything expressible in terms of them -- square root, numerical
- *   differentiation/integration, the RNGs -- is written once in portable C
- *   under src/common/ and is identical on every family.
- *
- *   This is also a deliberate improvement over the source material.
- *   AN526/AN544 hang every routine's operands off fixed, conventionally-
- *   agreed RAM addresses (ACCaLO/ACCaHI/..., documented in a "Data RAM
- *   Requirements" table the caller must respect and never reuse across
- *   calls). That is a reentrancy and testability hazard -- nothing stops
- *   two call sites colliding on ACCa. This API passes everything by
- *   value/pointer instead; there is no global mutable arithmetic state
- *   anywhere, including the RNGs (explicit `uint16_t *state` in/out, not a
- *   hidden global "current seed").
- *
- *   Unlike the peripheral-driver HAL headers, this is a stateless
- *   computation library, not a peripheral, so the API is plain `pic_math_*`
- *   snake_case functions with explicit parameters and return values. It
- *   needs no HAL contract header at all -- only <stdint.h>/<stdbool.h> --
- *   so the host unit-test build links the library with no HAL dependency.
- *   The family dimension lives entirely in the XC8 Makefile targets under
- *   mcu/, which pick the per-family asm backend; the CMake host build picks
- *   the portable-C src/host/ backend.
- *
- *   See docs/ARCHITECTURE.md for the backend split and the inline-asm
- *   operand-binding convention, and docs/API.md for the per-function
- *   reference.
+ * @brief   Family-agnostic fixed-point math utility library for 8-bit
+ *          PICs, ported from AN526/AN544 into a stateless API (everything
+ *          by value/pointer, no fixed operand addresses, explicit RNG
+ *          state). One neutral public API; a portable-C host backend, a
+ *          PIC16 inline-asm backend, and a PIC18 inline-asm backend
+ *          (exploiting hardware `MULWF` the app notes' chips lacked) sit
+ *          behind it. See docs/ARCHITECTURE.md for the backend split.
  */
 
 #ifndef PIC_MATH_H
@@ -55,17 +18,9 @@
 /* ─── configuration ────────────────────────────────────────────── */
 
 /**
- * @brief  PIC16 multiply code-size vs speed trade-off.
- *
- * @details AN526 offers both a straight-line (faster, larger) and a looped
- *         (slower, smaller) 8x8 multiply; on a part with as little as 1.5 KB
- *         of flash that is a meaningful trade-off. The PIC16 backend honors
- *         it: define PIC_MATH_OPTIMIZE_FOR_SIZE=0 (default 1) to select the
- *         straight-line form. The PIC18 backend is unaffected -- it uses the
- *         hardware MULWF regardless of this knob.
- *
- *         Override by defining before including the header, or pass
- *         -DPIC_MATH_OPTIMIZE_FOR_SIZE=0 on the XC8 command line.
+ * @brief  PIC16 8x8 multiply code-size vs speed trade-off: default 1
+ *         selects AN526's looped (smaller) form, 0 selects straight-line
+ *         (faster, larger). No effect on PIC18, which always uses `MULWF`.
  */
 #ifndef PIC_MATH_OPTIMIZE_FOR_SIZE
 #define PIC_MATH_OPTIMIZE_FOR_SIZE 1

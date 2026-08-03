@@ -1,13 +1,7 @@
 /**
  * @file    test_sqrt.c
- * @brief   Tier-1 host test for pic_math_sqrt_u16.
- *
- * @details
- *   EXHAUSTIVE over 0..65535 against (uint16_t)floor(sqrt((double)v) -- cheap
- *   on a host, and it removes any doubt about Newton-Raphson convergence or
- *   rounding at every single input. sqrt is the portable-C routine built on
- *   the div primitive (src/common/), so this also indirectly exercises the
- *   host divmod_u16 oracle through the Newton loop.
+ * @brief   Host test for `pic_math_sqrt_u16`: exhaustive over 0..65535
+ *          against `(uint16_t)floor(sqrt((double)v))`.
  */
 
 #include "pic_math.h"

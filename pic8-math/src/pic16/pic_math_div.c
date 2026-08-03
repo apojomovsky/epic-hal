@@ -1,22 +1,10 @@
 /**
  * @file    pic_math_div.c (PIC16 inline-asm backend)
- * @brief   divide/modulo primitives via the restoring shift-subtract loop.
- *
- * @details
- *   Same restoring shift-subtract algorithm as the PIC18 backend (and as
- *   AN526/AN544), using mid-range PIC16 instructions: `rlf`/`rrf` for shifts,
- *   `goto` for branches, and the `btfss STATUS,0` / `incf` idiom for the
- *   16-bit subtract-with-borrow (mid-range has no `subwfb`). The asm mirrors
- *   the machine-verified C reference `ref_divmod_u16_algo` /
- *   `ref_divmod_u32_16_algo` in tests/test_div.c. STATUS bits by number
- *   (C=0, Z=2).
- *
- *   Scratch: the shared 16-byte buffer pic16_mscratch (pic_math_scratch.h).
- *   Offsets: divmod_u16 num@0-1,rem@2-3,den@4-5,cnt@6; divmod_u32_16
- *   num@0-3,rem@4-5,den@6-7,cnt@8. 16/16 needs no 17-bit handling; 32/16
- *   does, handled by branching on the rem shift's carry-out. Signed divide
- *   is plain C over the asm divmod_u16. The asm is identical to the per-struct
- *   form (same algorithm, same offsets -- only the symbol changes).
+ * @brief   Divide/modulo primitives via a restoring shift-subtract loop
+ *          (same algorithm as the PIC18 backend and AN526/AN544), using
+ *          mid-range PIC16 instructions (no `subwfb`, so borrow is the
+ *          `btfss STATUS,0`/`incf` idiom). Mirrors the machine-verified C
+ *          reference in tests/test_div.c. STATUS bits by number (C=0, Z=2).
  */
 
 #include <xc.h>

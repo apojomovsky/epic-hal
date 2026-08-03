@@ -1,24 +1,10 @@
 /**
  * @file    pic_math_addsub.c (PIC16 inline-asm backend)
- * @brief   add/sub/negate primitives via mid-range PIC16 instructions.
- *
- * @details
- *   The mid-range PIC16F87XA core (14-bit word) has NO `addwfc`/`subwfb` --
- *   that pair arrived with enhanced mid-range/PIC18 -- so carry propagation
- *   uses AN526's own idiom: `btfsc STATUS,0` (test carry) + `incf` (add the
- *   carry into the high byte's addend). The exact sequence matches what
- *   XC8's own optimizer emits for plain-C 16-bit add/sub. STATUS bits by
- *   NUMBER (C=0, Z=2); mid-range has no `setf`, so carry/borrow-out is
- *   recorded with `incf` (1 = true).
- *
- *   Scratch: the shared 16-byte buffer pic16_mscratch (pic_math_scratch.h),
- *   one object in one bank so a single `banksel` covers each routine. The
- *   C wrapper packs operands into the buffer by byte; the asm reads/writes
- *   pic16_mscratch+OFFSET. Offsets per routine (non-overlapping within a
- *   routine; routines do not nest): add/sub a@0-1,b@2-3,r@4-5,flag@6;
- *   neg_s16 v@0-1,r@2-3; neg_s32 v@0-3,r@4-7. The asm instructions are
- *   identical to the per-struct form (same algorithm, same offsets), so the
- *   hand-traces below remain valid.
+ * @brief   Add/sub/negate primitives. Mid-range PIC16 has no `addwfc`/
+ *          `subwfb`, so carry propagation uses AN526's idiom: `btfsc
+ *          STATUS,0` + `incf` to fold carry into the high byte's addend.
+ *          STATUS bits by number (C=0, Z=2). Operands live in the shared
+ *          scratch buffer (pic_math_scratch.h), one `banksel` per routine.
  */
 
 #include <xc.h>

@@ -1,14 +1,8 @@
 /**
  * @file    test_smoke.c
- * @brief   Phase 0 link/compile smoke test for the pic8-math host build.
- *
- * @details
- *   Proves the CMake host pipeline works end to end -- the pic_math static
- *   library (src/host/ + src/common/) links, the public header pic_math.h
- *   compiles, and the API types are visible -- before any real arithmetic
- *   lands in Phase 1. Phase 1 replaces this with real per-primitive tests
- *   (test_mul.c, test_div.c, ...); the smoke test stays as the minimal
- *   "did the build wire up" check.
+ * @brief   Minimal link/compile smoke test: proves the CMake host build
+ *          links the pic_math static library and the public API types
+ *          are visible from the header alone.
  */
 
 #include "pic_math.h"

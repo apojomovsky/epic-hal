@@ -1,29 +1,11 @@
 /**
  * @file    pic_math_mul.c (PIC18 inline-asm backend)
- * @brief   multiply primitives via the hardware MULWF instruction.
- *
- * @details
- *   PIC18 has the single-cycle 8x8->16 `MULWF` (result in PRODH:PRODL) that
- *   neither mid-range PIC16 nor the PIC17C42 AN544 targeted had. So this
- *   backend does NOT port AN544's shift-and-add multiply -- it uses MULWF
- *   directly for pic_math_mul_u8, and builds pic_math_mul_u16 from four
- *   8x8 partial products (aL*bL, aL*bH, aH*bL, aH*bH) summed at the right
- *   byte offsets, the standard textbook form. This is both smaller and
- *   faster than the 16-iteration shift-add loop, and faster than XC8's own
- *   generic ___lmul library call (which the C `(uint32_t)a*(uint32_t)b`
- *   form lowers to -- the probe confirmed the compiler punts 16x16 to a
- *   runtime routine, so hand-asm earns its keep here).
- *
- *   Signed multiply uses the app notes' negate-operands/negate-result trick
- *   on top of the unsigned hardware path: it is plain C calling
- *   pic_math_mul_u16 + pic_math_negate_s32 (both asm, this backend). The
- *   XC8 optimizer already emits `mulwf` for idiomatic 8x8 C, so mul_u8 is the
- *   one place where hand-asm and C agree -- it stays asm for symmetry with
- *   the leaf-primitive set and to keep the MULWF path explicit.
- *
- *   PRODL/PRODH are xc.h SFR symbols; the assembler addresses them via the
- *   access bank automatically (they live at 0xFF3/0xFF4). File-scratch uses
- *   banksel + unqualified operands (COMRAM, bank 0) -- see ARCHITECTURE.md.
+ * @brief   Multiply primitives via the hardware single-cycle `MULWF`
+ *          (result in PRODH:PRODL): direct for 8x8, four summed 8x8
+ *          partial products for 16x16 (smaller and faster than a
+ *          shift-add loop or XC8's generic `___lmul` runtime call).
+ *          Signed multiply is the app notes' negate/negate-result trick
+ *          in plain C over the unsigned asm path.
  */
 
 #include <xc.h>

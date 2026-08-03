@@ -1,29 +1,11 @@
 /**
  * @file    pic_math_rand.c (shared portable-C, no asm)
- * @brief   pic_math_rand_next (16-bit LFSR PRNG) and pic_math_rand_gauss
- *          (Gaussian via the Central Limit Theorem over rand_next).
- *
- * @details
- *   One implementation, linked by every backend. These are NOT cryptographic
- *   -- they are the deterministic pseudo-random generators AN544 ships, with
- *   the plan's two fixes: explicit `uint16_t *state` in/out (no hidden global
- *   seed -- reentrant and testable), and a documented escape from the all-
- *   zero state the LFSR could not otherwise recover from.
- *
- *   rand_next: a 16-bit Fibonacci LFSR with the maximal-length taps
- *   {0,2,3,5} (polynomial x^16 + x^14 + x^13 + x^11 + 1), right-shifting with
- *   the feedback bit into the MSB. Period 2^16 - 1 = 65535 (every nonzero
- *   16-bit state). The all-zero state is a fixed point of an XOR LFSR (it
- *   never recovers), so a zero *state is mapped to the documented nonzero
- *   seed 0xACE1 on entry. A shift + XOR-tap is not worth hand-optimizing in
- *   asm (per the plan), so this is portable C.
- *
- *   rand_gauss: the sum of four rand_next samples, mean-subtracted and
- *   scaled to int16. By the Central Limit Theorem the sum of independent
- *   uniforms approaches a Gaussian; four is enough for an approximately bell-
- *   shaped distribution (mirrors AN544 Figure 3). The LFSR output is uniform
- *   over 1..65535 (mean 32768), so four samples have mean 131072; centered and
- *   >>2 the result lands in int16 range.
+ * @brief   `pic_math_rand_next`: a 16-bit Fibonacci LFSR (taps {0,2,3,5},
+ *          period 65535), not cryptographic. A zero `*state` maps to a
+ *          fixed nonzero seed, escaping the LFSR's unrecoverable
+ *          all-zero fixed point. `pic_math_rand_gauss` sums four samples
+ *          (Central Limit Theorem) for an approximately bell-shaped
+ *          distribution, mirroring AN544 Figure 3.
  */
 
 #include "pic_math.h"

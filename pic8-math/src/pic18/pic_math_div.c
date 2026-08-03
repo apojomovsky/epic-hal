@@ -1,30 +1,12 @@
 /**
  * @file    pic_math_div.c (PIC18 inline-asm backend)
- * @brief   divide/modulo primitives via the restoring shift-subtract loop.
- *
- * @details
- *   Neither core has a hardware divide. Both backends use the same restoring
- *   shift-subtract algorithm shape AN526/AN544 use; PIC18 comes out faster
- *   from more addressing modes and single-instruction carry-add/subtract,
- *   not from a different algorithm.
- *
- *   The asm mirrors the C reference `ref_divmod_u16_algo` /
- *   `ref_divmod_u32_16_algo` in tests/test_div.c, which are cross-checked
- *   against native `/`/`%` over a broad sweep (and exhaustively over all
- *   65536 numerators x a boundary-denominator set for u16). The hand-traces
- *   below show the asm's per-iteration state matches that reference, so a
- *   correct hand-trace implies a correct asm body -- the plan's stated
- *   PIC18-asm correctness route (Tier 3 + code review, no gpsim for PIC18).
- *
- *   Layout (AN526): `num` (the dividend) is shifted left; its MSB feeds into
- *   the LSB of `rem` (the remainder accumulator, starts 0); after each shift
- *   `rem` is compared to `den` and reduced if it fits, ORing a 1 into `num`'s
- *   LSB (the quotient bit). After N iterations `num` holds the quotient and
- *   `rem` the remainder.
- *
- *   Signed divide (divmod_s16) is plain C over the asm divmod_u16, with the
- *   app notes' negate-operands/negate-result sign handling -- per the plan,
- *   signed uses the unsigned path.
+ * @brief   Divide/modulo primitives via the same restoring shift-subtract
+ *          algorithm as AN526/AN544 (neither core has hardware divide):
+ *          `num` shifts left into `rem`, `rem` reduces by `den` when it
+ *          fits, ORing a quotient bit into `num`'s LSB. Signed divide is
+ *          plain C negate/negate-result over the asm unsigned path.
+ *          Correctness verified by hand-trace against tests/test_div.c's
+ *          reference (cross-checked against native `/`/`%`).
  */
 
 #include <xc.h>

@@ -1,23 +1,12 @@
 /**
  * @file    target_smoke16.c
- * @brief   PIC16F87XA on-target smoke: links the real PIC16 inline-asm math
- *          backend and exercises a few routines, proving the backend builds
- *          and links for the target.
- *
- * @details
- *   The PIC16F87XA family tops out at 8 K words of flash and 368 bytes of
- *   RAM -- too small to hold the full math library + the HAL + the
- *   golden-vector self-test (tests/target_selftest.c) + golden_vectors.h.
- *   That full on-target self-test is the Tier-3 artifact on the 32 K-flash
- *   PIC18 family (mcu/pic18fxx5x-math-mplabx builds it). On PIC16, Tier-3
- *   validation therefore relies on Tier-1 (the exhaustive host tests, which
- *   cover the algorithm) + the asm build (this smoke proves the PIC16
- *   inline-asm backend compiles and links) + the worked hand-traces in the
- *   backend comments. See docs/ARCHITECTURE.md "Testing tiers".
- *
- *   This smoke calls a representative primitive from each asm-leaf group
- *   (multiply, divide, add, BCD) so the linker pulls in the real asm bodies,
- *   then idles. On a real target it runs the asm on silicon once at startup.
+ * @brief   PIC16F87XA on-target smoke: calls one representative primitive
+ *          per asm-leaf group (multiply, divide, add, BCD) so the linker
+ *          pulls in the real asm bodies, proving the backend builds and
+ *          links. PIC16's flash/RAM budget is too small for the full
+ *          golden-vector self-test (see target_selftest.c, PIC18-only);
+ *          see docs/ARCHITECTURE.md "Testing tiers" for the rest of the
+ *          PIC16 validation story.
  */
 
 #include "pic8_hal.h"
