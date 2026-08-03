@@ -1,8 +1,8 @@
 # `pic8-fsm`: table-driven finite state machine engine — implementation plan
 
-Status: **approved, implementing now** (see chat log for the design discussion
-this plan closes out). Written so the plan stands alone even though in this
-case the same session goes on to implement it.
+Status: **implemented**; see `pic8-fsm/docs/ARCHITECTURE.md` for the as-built
+design. This document is kept as the original design record (see chat log
+for the design discussion it closes out).
 
 ## What this is and why it's simple
 

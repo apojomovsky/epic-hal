@@ -1,10 +1,9 @@
 # `pic8-math`: fixed-point math utility library — implementation plan
 
-Status: **proposed, not started**. This is a plan for a new standalone module,
-`pic8-math/`, ported from two 1997 Microchip application notes and modernized
-into a family-agnostic C library with a hand-written inline-asm core. Written
-for a fresh implementing agent with no other context on this conversation —
-read this top to bottom before writing code.
+Status: **implemented**, Phases 0-5 complete; see `pic8-math/docs/ARCHITECTURE.md`
+for the as-built design. This document is kept as the original design record.
+Ported from two 1997 Microchip application notes and modernized into a
+family-agnostic C library with a hand-written inline-asm core.
 
 ## Source material
 

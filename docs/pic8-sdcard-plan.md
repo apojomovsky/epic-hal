@@ -1,10 +1,14 @@
 # `pic8-sdcard`: SD/MMC-over-SPI block storage for PIC18F2455/2550/4455/4550 — implementation plan
 
-Status: **proposed, not started**. Written for a fresh implementing agent
-with no other context on this conversation — read this top to bottom
-before writing code. Follows the same vendor-a-third-party-stack shape as
-`pic8-usb` (`docs/pic8-usb-plan.md`) — read that plan first if unfamiliar
-with this repo's M-Stack vendoring conventions; this plan assumes it.
+Status: **Phase 1/2 done** (vendoring + binding layer + mock-SPI host tests,
+see "Phase 1/2 findings" below and `pic8-sdcard/docs/ARCHITECTURE.md` for the
+as-built version), **Phase 3 (real-silicon bring-up,
+`mcu/pic18fxx5x-sdcard-mplabx/`) not started**, matching
+`pic8-sdcard/README.md`'s own status. Originally written for a fresh
+implementing agent with no other context on this conversation. Follows the
+same vendor-a-third-party-stack shape as `pic8-usb` (`docs/pic8-usb-plan.md`),
+read that plan first if unfamiliar with this repo's M-Stack vendoring
+conventions; this plan assumes it.
 
 ## What this is
 

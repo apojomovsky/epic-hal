@@ -1,11 +1,14 @@
 # `pic8-usb`: USB CDC-ACM device stack for the PIC18F2455/2550/4455/4550 family — implementation plan
 
-Status: **proposed, not started**. Written for a fresh implementing agent
-with no other context on this conversation — read this top to bottom before
-writing code. Chip scope and device class were decided in the design
-discussion this plan closes out: PIC18F2455/2550/4455/4550 only (the exact
-family `pic18fxx5x-hal` already targets), CDC-ACM only (virtual serial port,
-no HID/vendor-class work in this plan).
+Status: **Phase 1/2 done** (M-Stack vendored, wrapper + host-stub + unit
+tests, see "Phase 2 findings" below and `pic8-usb/docs/ARCHITECTURE.md` for
+the as-built version), **Phase 3 (real-silicon bring-up,
+`mcu/pic18fxx5x-usb-mplabx/`) not started**, matching `pic8-usb/README.md`'s
+own status. Originally written for a fresh implementing agent with no other
+context on this conversation. Chip scope and device class were decided in
+the design discussion this plan closes out: PIC18F2455/2550/4455/4550 only
+(the exact family `pic18fxx5x-hal` already targets), CDC-ACM only (virtual
+serial port, no HID/vendor-class work in this plan).
 
 ## What this is, and why it breaks the pattern every other `pic8-*` module set
 
