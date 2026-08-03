@@ -419,22 +419,62 @@ mechanism. Finding 6 (ruling out the indirect-call/`-mstackcall` gap)
 and Finding 1 (the bank-tracking-reset mechanism this fix directly
 relies on) both hold up entirely unchanged.
 
+## Finding 9 follow-up: the other six call sites, audited and fixed
+
+**Done, not just flagged.** The follow-up item this document originally
+left open (the same `pic_select_bank(N)` shape appearing in
+`pic16f87xa_adc.c`, `_eeprom.c`, `_ssp.c`, `_vref.c`, `_comp.c`, and
+`_psp.c`, unaudited) was carried out. Each site was checked empirically
+under real-target `mdb`, not assumed safe or unsafe from reading the
+source: a throwaway probe (`HAL_ADC_Init`/`HAL_VREF_Init`/
+`HAL_COMP_Init`/`HAL_PSP_Enable` with known values, and separately
+`HAL_SSP_Init`/`HAL_EEPROM_WriteByte`) confirmed every one of them was
+actually corrupted, landing `0` (or another wrong value) in `ADCON1`,
+`CVRCON`, `CMCON`, `TRISE`, `SSPADD`, `SSPSTAT`, `SSPCON2`, `EEDATA`,
+`EEADR`, `EECON1`, and `EECON2`, the identical mechanism as `PR2`/
+`SPBRG`. One genuinely new data point: `HAL_SSP_Init`/`HAL_EEPROM_*`'s
+internal bank-switch helpers (`ssp_b1_write`, `b2_write`/`b3_write`)
+are tiny `static` functions that XC8 fully inlines (confirmed: zero
+trace of their names survives in the generated `.s`), and the
+corruption still happened anyway, comparing a same-Bank-0 register
+(`SSPCON`, always correct) against the Bank-1 ones (`SSPADD`, wrong) in
+the same probe run. Inlining does not sidestep this bug; the
+misdirection happens in the flattened code too.
+
+Fixed with the same pattern, extended to cover Banks 2 and 3
+(`PIC8_BANK2_WRITE8`/`READ8`, `PIC8_BANK3_WRITE8`/`READ8`, needed for
+EEPROM specifically since its own call sites interleave both banks
+back to back, so neither macro can assume the incoming `RP1:RP0` state
+the way the Bank-1-only macros safely do). SSP and EEPROM's helpers
+take a runtime address parameter but the inline-asm macros need a
+literal SFR name at compile time; fixed by dispatching on the address
+*before* any bank switch begins (a plain comparison in ordinary Bank 0
+context, nothing at risk there) and only then invoking the named macro,
+since every real call site passes a compile-time-constant address
+anyway.
+
+Re-verified via the same probes with the fix applied: `ADCON1=0x80`,
+`CVRCON=0x8A`, `CMCON=0xC5`, `TRISE=0x17`, `SSPADD=42`, `EEADR=66`,
+`EECON1=6`, all matching hand-computed expected values. Full host suite
+and all 38 previously-passing PIC16 `(module, MCU)` real-target builds
+re-verified clean.
+
+**Noticed but not fixed, unrelated bug**: `HAL_SSP_ReadByte`
+(`pic16f87xa_ssp.c`) writes `SSPSTAT` (Bank 1, `0x94`) with no
+`pic_select_bank(1)` at all, relying on whatever bank happens to already
+be selected. Not the corruption class this document is about (nothing
+to do with a bank-switch-and-restore sequence at all, since there isn't
+one here); flagged for whoever next touches SSP.
+
 ## Open, for whoever picks this back up
 
-- **Follow-up, not yet done**: the same `pic_select_bank(N)` shape (a
-  parameter or local read/written *after* the switch, before it's
-  restored) appears in `pic16f87xa_adc.c`, `_eeprom.c`, `_ssp.c`,
-  `_vref.c`, `_comp.c`, and `_psp.c`. None of these have been audited or
-  run under `mdb` yet (only `pic8-tick`'s Timer2/USART path has), so
-  it's unknown whether they're actually hit in practice or just
-  theoretically at risk; worth checking before trusting any of those
-  peripherals' real-target behavior the way `pic8-tick`'s can now be
-  trusted.
 - Finding 2 (the *other* `pic_select_bank`-related bug, in the
   now-macro'd bank-select helper itself) remains a
   plausible-but-unconfirmed explanation for its own, separate symptom;
   not resolved by Finding 9's fix, which addresses a different call site
   entirely.
+- `HAL_SSP_ReadByte`'s missing `pic_select_bank(1)` (noted above): a
+  real, separate bug, not yet fixed.
 - This document itself should be checked for staleness against whatever
   XC8 version `docker/ci-toolchain/Dockerfile` pins if that version is
   ever bumped; these findings are cited against v4.00 specifically.
