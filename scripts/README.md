@@ -1,5 +1,15 @@
 # Dev environment scripts
 
+Covers the host-toolchain bootstrap and pre-commit hook below. For
+real-target XC8 builds and the `mdb` (MPLAB SIM) verification gate
+without installing XC8/MPLAB X yourself, see the root
+[`Makefile`](../Makefile) and [`docs/docker-dev-plan.md`](../docs/docker-dev-plan.md)
+instead, everything runs inside a Docker image built from installers you
+drop in `docker/ci-toolchain/vendor/`. `scripts/sim-mdb-run.sh` and
+`scripts/sim-test-local.sh` (this directory) are the lower-level pieces
+that flow reuses; their own header comments cover direct use if you
+need it.
+
 ## Bootstrap
 
 ```sh

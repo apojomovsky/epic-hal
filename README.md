@@ -28,6 +28,7 @@ and linked-file selection.
 - [Documentation](#documentation)
 - [Requirements](#requirements)
 - [Development](#development)
+  - [Docker quick start](#docker-quick-start)
 - [License](#license)
 
 ## Why
@@ -224,6 +225,36 @@ pre-commit hook (trailing newline/whitespace, no-em-dash, `cppcheck` on
 staged `.c` files). `--check-only` reports what's missing without
 installing anything. See [scripts/README.md](scripts/README.md) for what
 the hook checks and why `clang-format` isn't part of it yet.
+
+### Docker quick start
+
+Prefer not to install XC8/MPLAB X/CMake on your own machine? The root
+`Makefile` runs the whole workflow, host tests, real-target XC8 builds,
+the `mdb` (MPLAB SIM) verification gate, and a dev shell, inside the same
+toolchain image CI uses (`docker/ci-toolchain/`). See
+[docs/docker-dev-plan.md](docs/docker-dev-plan.md) for the design.
+
+```sh
+# One-time: drop the Microchip installers where the image build expects
+# them. Neither can be fetched automatically (Microchip's download CDN
+# sits behind a bot-challenge, see docs/ci-plan.md), so this is manual:
+make check-vendor    # tells you exactly what's missing and where to get it
+
+make image            # build the toolchain image locally (once; cached after)
+make test             # host-sim build + test, every module
+make test MODULE=pic8-lcd   # ... or just one
+
+make xc8-build MODULE=pic16f193x-hal MCU=16F1937   # real-target build
+make mdb-test MODULE=pic8-tick/mcu/pic16f87xa-tick-mplabx \
+  MCU=16F877A DEVICE=PIC16F877A DFP=Microchip.PIC16Fxxx_DFP  # the mdb gate
+
+make shell             # interactive shell, repo mounted at /repo
+```
+
+Maintainers with `write:packages` access to this repo's GHCR packages can
+publish an updated toolchain image with `make ci-image-push
+GHCR_OWNER=<owner>` (after `docker login ghcr.io`), the same private tag
+CI's workflows pull from; CI itself never builds this image.
 
 ## License
 

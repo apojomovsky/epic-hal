@@ -1,5 +1,20 @@
 # CI: host tests, XC8 cross-compile, MPLAB SIM target tests, implementation plan
 
+**Post-Phase-4 update, see `docs/docker-dev-plan.md`:** the toolchain
+image `ci-assets`/`ci-assets-mplabx`/`toolchain-image` jobs documented
+below (Phase 1/2's own account) were later simplified: CI now only
+`docker pull`s a pre-published private GHCR image, it never builds or
+pushes one itself. The root `Makefile` (`make image`, `make
+ci-image-push`) is now the only path that builds and publishes that
+image, from installers a human drops in `docker/ci-toolchain/vendor/`,
+the exact same private-image / EULA-redistribution constraint this
+document's Decision section worked out still applies unchanged.
+`docker/ci-assets/` is kept, dormant, as a fallback if CI ever needs to
+build the image itself again. The phase-by-phase history below is left
+as-is, a historical record of how the image and its jobs were designed
+and debugged, not a description of the current job set; read
+`docs/docker-dev-plan.md` for that.
+
 Status: **Phase 0 done** (`.github/workflows/host-tests.yml`,
 `scripts/pre-commit-checks.sh` extended with `PRE_COMMIT_BASE_REF` for CI
 reuse; first push to `master` after landing it went green, all 20 jobs,
