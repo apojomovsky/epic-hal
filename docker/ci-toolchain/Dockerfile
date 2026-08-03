@@ -12,6 +12,13 @@
 #     with `write:packages` access is how this image actually gets
 #     updated; CI never builds or pushes it.
 #
+# `cmake`/`build-essential` (below) are for local dev's `make test`
+# (host-sim builds), not for CI: `.github/workflows/host-tests.yml`
+# installs those itself on a bare `ubuntu-latest` runner and never uses
+# this image at all. Confirmed missing the hard way: an early version of
+# the root Makefile's `make test` failed with `cmake: command not found`
+# against an image that only had the XC8/MPLAB X install dependencies.
+#
 # Versions:
 #   - XC8 v4.00: license-free (no PRO gate at all, so no --LicenseType flag
 #     below, unlike older XC8), newer than what the rest of this repo's
@@ -85,6 +92,7 @@ RUN apt-get update -yq \
     && apt-get install -yq --no-install-recommends \
         ca-certificates curl unzip make tar \
         libgtk-3-0 libxext6 libxrender1 libxtst6 libxi6 libusb-1.0-0 libudev1 \
+        cmake build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
