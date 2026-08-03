@@ -1,13 +1,14 @@
 # Docker-first local dev, and pushing CI's toolchain image from the CLI
 
-Status: **implemented and verified against real builds**, except the
-`mdb` gate itself and the final `docker push`, both blocked on the MPLAB
-X IDE installer, which only a human can obtain (see "What the user must
-provide" below; this is a hard, confirmed wall, not a gap in effort).
-Root `Makefile` covers host tests, real-target XC8 builds, the `mdb`
-gate, and a dev shell, all through the existing `docker/ci-toolchain/`
-image built from locally-supplied vendor installers. CI now pulls a
-pre-pushed private image instead of building it; the `ci-assets`
+Status: **implemented and fully verified against real builds**,
+including the full image (XC8 + all three DFPs + MPLAB X) and a real
+`mdb` gate run. The user supplied both installers (see "What the user
+must provide" below; the Akamai bot-challenge is a hard, confirmed wall,
+not a gap in effort). Root `Makefile` covers host tests, real-target XC8
+builds, the `mdb` gate, and a dev shell, all through the existing
+`docker/ci-toolchain/` image built from locally-supplied vendor
+installers. CI now pulls a pre-pushed private image instead of building
+it; the `ci-assets`
 blob-carrier mechanism is dormant, not deleted. Two real bugs (root-owned
 build output, a missing `cmake`/`build-essential` in the image) were
 found and fixed by actually running the flow, see "Verification
@@ -166,31 +167,33 @@ input beyond those two files existing once.
 
 ## Verification performed this session
 
-**Fully verified, real builds, no simulated results:**
+**Fully verified end-to-end, real builds, no simulated results, both
+installers eventually supplied by the user:**
 
-- The XC8 v4.00 install layer and all three DFP fetches (`curl` against
-  `packs.download.microchip.com`, no bot-challenge there, confirmed
-  again) succeed inside a real `docker build`, using the real
-  `docker/ci-toolchain/Dockerfile` plus an XC8 installer that was
-  already present locally.
+- The complete image (XC8 v4.00 + all three DFPs + MPLAB X IDE v6.35,
+  ~10.8GB) builds successfully via `make image` from the real
+  `docker/ci-toolchain/Dockerfile`, ~2 minutes wall clock.
 - `xc8-cc` runs inside the built image and compiles against all three
   DFPs, including the new `PIC12-16F1xxx_DFP` for `pic16f193x-hal`.
+- `mdb.sh` runs inside the built image.
 - A full real-target build of `pic16f193x-hal` (`MCU=16F1937`),
   `pic8-tick`'s PIC16F87XA leg (`MCU=16F877A`), and its PIC18 leg
-  (`MCU=18F4550`) all complete and produce valid `.hex` files inside the
-  container, via the exact command `make xc8-build` runs.
+  (`MCU=18F4550`) all complete and produce valid `.hex` files via the
+  real `make xc8-build`.
 - All 19 host-sim modules (`git ls-files -- '*/CMakeLists.txt'`) build
-  and pass their `ctest` suite inside the container, via the exact
-  command `make test` runs per module.
-- **Two real bugs found and fixed by this testing**, both below.
-
-**Not exercised**: the actual `docker build` of the *complete* image
-(XC8 + all DFPs + MPLAB X) end-to-end, `make ci-image-push`'s real
-`docker push`, and the `mdb` gate itself, all because no MPLAB X
-installer was available locally in this session. The XC8-only and
-DFP-fetch portions of the Dockerfile are proven; the MPLAB X `COPY`/
-install steps are unchanged from the already-working CI Dockerfile this
-plan reuses verbatim, so they are not new risk, just not re-proven here.
+  and pass their `ctest` suite via the real `make test`.
+- **The `mdb` gate itself runs and reports real
+  `PIC8_HARNESS_RESULT: PASS`** for `pic8-tick`'s pilot module, both
+  families (`make mdb-test`, `PIC16F877A` and `PIC18F4550`), the actual
+  reason this whole Docker effort exists.
+- `make ci-image-push`'s tag resolution and its missing-`GHCR_OWNER`
+  guard were exercised (`make -n` plus a real run without `GHCR_OWNER`
+  correctly erroring); the real `docker push` to the shared private GHCR
+  package was deliberately not run in this session (publishing to a
+  shared registry needs the user present, not something to do
+  silently), but the tag it resolves was confirmed to match exactly what
+  `xc8-build.yml`/`sim-tests.yml` compute.
+- **Three real bugs found and fixed by this testing**, all below.
 
 ### Bug 1: containers ran as root, corrupting host file ownership
 
@@ -216,3 +219,24 @@ the same `apt-get install` line, with a header comment explaining these
 are for local dev's `make test` specifically, not for CI (CI's own
 `host-tests.yml` installs them itself on a bare runner and never touches
 this image).
+
+### Bug 3: `--user` broke `mdb.sh`, corrupting the repo with a literal `?` directory
+
+Once the full image (with real MPLAB X) was available, `make mdb-test`
+under Bug 1's `--user` fix alone failed and left a literal `?` directory
+at the repo root, inside the bind mount. Root cause: `mdb.sh` is MPLAB
+X's JVM-based debugger; Java resolves its preferences directory via
+`getpwuid()`-based home-directory lookup, not the `$HOME` environment
+variable. An arbitrary `--user <uid>:<gid>` with no matching
+`/etc/passwd` entry makes that lookup fail, and whatever fallback
+`mdb.sh`'s preference-directory creation takes in that case writes into
+a directory literally named `?`, at the container's current working
+directory, which is the bind-mounted repo. Setting `HOME` alone did not
+fix it (confirmed: the JVM home-directory lookup ignores it). Fixed by
+bind-mounting the real `/etc/passwd` + `/etc/group` (so the mapped UID
+resolves to a real user with the host's real `$HOME` path) and mounting
+a writable directory at that exact path, sourced from `~/.cache` on the
+host (not the repo, and not a Docker volume: anonymous/named volumes
+default to root-owned and hit the identical permission problem this is
+fixing). Confirmed clean against a real `mdb-test` run: no stray `?`,
+correct ownership on every artifact, real `PASS` result.
