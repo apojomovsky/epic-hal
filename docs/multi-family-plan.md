@@ -460,28 +460,16 @@ matching the rigor already applied to every PIC16 peripheral driver.
 
 ## How to add family #3 (and #4), after this refactor lands
 
-1. New sibling tree (`<partno>-hal/`), skeleton copied from whichever
-   existing family tree is architecturally closer. Note: closeness is
-   about addressing model and interrupt architecture, not pin count or
-   peripheral list, e.g. PIC16F1xxx (enhanced midrange) has its own
-   BSR-like scheme distinct from both classic PIC16 and PIC18, so expect
-   real driver work regardless of which tree is copied as a starting point.
-2. Implement that family's platform header, SFR map, IRQ backend, and
-   peripheral drivers, citing its datasheet the way both existing trees do.
-3. Everything under `pic8-common/` is reused untouched, this is the payoff
-   of Phase 0. If it turns out something needs to change in
-   `pic8-common/` to fit family #3, that's a signal the contract was
-   accidentally PIC16/PIC18-specific somewhere and needs a small follow-up
-   fix, not a sign the whole approach is wrong.
-4. Run the same Phase 3-style litmus test: point the task manager (or
-   whatever else consumes the HAL by then) at the new family, expect zero
-   changes to the consumer.
-5. Write `<family>-hal/MANUAL.md` against the shape of the existing ones
-   (`pic16f87xa-hal/MANUAL.md`, `pic18fxx5x-hal/MANUAL.md`), pointing back
-   to `pic8-common/MANUAL.md` for every family-agnostic convention instead
-   of re-explaining it. See `docs/hal-manual-plan.md` for how that split
-   was carved out and why — don't let a new family's manual quietly not
-   happen the way PIC18's did the first time around.
+**Superseded by `docs/adding-a-device.md`.** That document is the
+current operational procedure for adding a device or family (datasheet
+sourcing, the Path A/new-variant vs Path B/new-family decision, and,
+learned since this section was first written, a mandatory real-`mdb`
+verification gate per peripheral that this section didn't have). Kept
+here only as a pointer, not duplicated: the specific decisions recorded
+below in "Open questions" (PIC18's interrupt pragma syntax, its BSR/
+Access-Bank sim approach, etc.) remain a useful historical record of
+what was actually decided and why, even though the step-by-step
+checklist itself has moved.
 
 ## Open questions (resolve during the phase noted)
 
