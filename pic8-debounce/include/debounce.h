@@ -3,28 +3,11 @@
  * @brief   Vendor-agnostic, instantiable digital-input debouncer.
  *
  * @details
- *   A debounce instance for one digital input (a button, a limit switch,
- *   anything read as a boolean): given a raw, possibly-bouncy pin read, decide
- *   when the *stable* state has actually changed and emit a press/release edge
- *   event. Multiple instances, each independent plain data, cover multiple
- *   inputs, there is no global "the button" anywhere in this design.
- *
- *   Vendor-agnostic: the caller supplies a small read callback
- *   (`debounce_read_fn`) returning `true` when the pin currently reads
- *   "active", the callback itself resolves active-high vs. active-low, so the
- *   debounce core never needs to know or care which convention a given input
- *   uses. This makes the module equally useful over a HAL GPIO pin, an
- *   I2C-expander bit (`pic8-bus`), or a mock pin in a host test.
- *
- *   The implementation depends on `pic8-tick` for its timebase (calling
- *   `pic8_tick_get()` / `pic8_tick_elapsed_since()` directly, not an injected
- *   clock, so the host test suite exercises genuinely real timing semantics
- *   under simulated tick advancement). Only `src/debounce.c` includes
- *   `pic8_tick.h`; this header stays a two-`#include` file
- *   (`<stdint.h>`, `<stdbool.h>`), dependency-free.
- *
- *   Poll-driven: call `debounce_poll()` once per scheduler tick or main-loop
- *   iteration. No per-family interrupt-on-change wiring needed.
+ *   One instance per input (button, limit switch, ...), plain data, no
+ *   global state. The caller supplies a `debounce_read_fn` callback that
+ *   resolves active-high/low, so this module works equally over a HAL
+ *   GPIO pin, an I2C-expander bit, or a mock in a host test. Poll-driven:
+ *   call `debounce_poll()` once per tick; uses `pic8-tick` for timing.
  */
 
 #ifndef DEBOUNCE_H

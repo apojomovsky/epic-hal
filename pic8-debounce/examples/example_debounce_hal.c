@@ -1,17 +1,12 @@
 /**
  * @file    example_debounce_hal.c
- * @brief   Two debounce instances on two HAL GPIO pins, demonstrates
- *          "any gpio" (the read callback wraps `HAL_GPIO_ReadPin`) and
- *          reuse (two independent `debounce_t`).
+ * @brief   Two debounce instances on two HAL GPIO pins (RA0/RA1), a press
+ *          on either toggles the LED on RB0.
  *
  * @details
- *   Host-sim runnable. Two buttons on RA0 and RA1 are debounced; a press on
- *   either toggles the LED on RB0. The read callback wraps
- *   `HAL_GPIO_ReadPin` through a small `pin_ctx_t`, the debounce core never
- *   sees a HAL type, proving the vendor-agnostic design. On the host sim the
- *   example drives RA0 high/low to simulate a button press/release; on a real
- *   target the pins read real switches (the PORTA writes are harmless for
- *   input pins).
+ *   The read callback wraps `HAL_GPIO_ReadPin` through a small `pin_ctx_t`,
+ *   so the debounce core never sees a HAL type. Host sim drives RA0/RA1
+ *   high/low to simulate presses; on target the pins read real switches.
  */
 
 #include "debounce.h"

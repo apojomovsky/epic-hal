@@ -5,23 +5,11 @@
  *          mock read callback for bounce sequences.
  *
  * @details
- *   One implementation means host tests prove the shipped code directly. The
- *   test uses `pic8_tick_init` + `pic8_harness_tick()` (the same host-sim
- *   timing the debounce core calls via `pic8_tick_get`), so it exercises
- *   genuinely real timing semantics under simulated tick advancement. A
- *   scripted `debounce_read_fn` returns a sequence of raw reads (the "bounce
- *   pattern") indexed by call count; the test advances 1 ms between polls.
- *
- *   Covers (per the plan):
- *     1. A single clean transition fires exactly one PRESSED / one RELEASED.
- *     2. A bouncy transition fires no event until the final state holds for
- *        the full window, then exactly one event.
- *     3. A transition that starts but reverses before the window elapses
- *        produces no event.
- *     4. Init on an already-active pin does not spuriously fire after the
- *        window elapses with no further change.
- *     5. Two independent instances never affect each other.
- *     6. `debounce_is_active` reflects the committed stable state throughout.
+ *   Exercises the exact code that ships on-target under genuinely real
+ *   timing semantics (simulated tick advancement, not an injected clock).
+ *   A scripted `debounce_read_fn` returns a sequence of raw reads (the
+ *   "bounce pattern") indexed by call count; the test advances 1 ms
+ *   between polls.
  */
 
 #include "debounce.h"
@@ -152,36 +140,10 @@ static void test_init_already_active(void)
 
 static void test_two_independent_instances(void)
 {
-    /* Instance A: clean press at call 10, release at call 25.
-     * Instance B: stays inactive the whole time.
-     * Both share the same mock_read + g_script/g_idx, so we interleave
-     * their polls carefully. Actually, sharing one g_idx would make them
-     * read different entries. Instead, use separate scripts. */
-    /* Simpler: use two separate script arrays + two read fns. */
-    static bool scriptA[512], scriptB[512];
-    static int idxA, idxB;
-    for (int i = 0; i < 512; i++) {
-        scriptA[i] = (i >= 10 && i < 25);
-        scriptB[i] = false;
-    }
-    bool (*readA)(void*) = (void*)0;  /* can't use captures in C... */
-
-    /* C has no closures. Use two global read fns with their own arrays. */
-    /* Redefine the approach: reset and use two static read functions. */
-    /* For this test, inline two read fns: */
-    g_idx = 0;  /* not used here; we use idxA/idxB */
-
-    /* Actually, let me just use the global g_script for A and a separate
-     * static for B, with two read fns. Define them as file-scope statics. */
-    /* This test needs its own read functions, let me restructure. */
-    /* For simplicity, test independence by: init A with the global mock,
-     * init B with the global mock but a different script, and verify A's
-     * events don't leak into B. But they share g_idx... */
-
-    /* Pragmatic: test independence by running A fully, then B fully with a
-     * fresh script, and confirming B's result is unaffected by A's prior
-     * run (the debounce_t structs are separate). */
-    /* Run A: press at 10, release at 25. */
+    /* Run A fully, then B fully with a fresh script, confirming the
+     * debounce_t structs are independent (B's result is unaffected by
+     * A's prior run). test_concurrent_independence below covers true
+     * interleaved polling. */
     g_idx = 0;
     for (int i = 0; i < 512; i++) g_script[i] = (i >= 10 && i < 25);
     debounce_t dbA;
@@ -204,7 +166,6 @@ static void test_two_independent_instances(void)
     CHECK(pressB == 0, "indep: B has 0 presses");
     CHECK(debounce_is_active(&dbA) == false, "indep: A unaffected by B");
     CHECK(debounce_is_active(&dbB) == false, "indep: B stays inactive");
-    /* A's stable state was released (false) by its script; B never changed. */
 }
 
 /* ---- a second read fn for the true-concurrent-independence test ---- */
