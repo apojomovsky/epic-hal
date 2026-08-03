@@ -10,19 +10,30 @@ static void (*g_psp_cb)(void) = NULL;
 
 static uint8_t b1_trise(void)
 {
+    uint8_t v = 0U;
+#ifdef PIC8_BANK1_READ8
+    /* See PIC8_BANK1_WRITE8's header comment (target/pic16f87xa_platform.h)
+     * and pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9. */
+    PIC8_BANK1_READ8(TRISE, v);
+#else
     uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    uint8_t v = PIC8_REG8(0x89U);
+    v = PIC8_REG8(0x89U);
     pic_select_bank(prev);
+#endif
     return v;
 }
 
 static void b1_trise_write(uint8_t v)
 {
+#ifdef PIC8_BANK1_WRITE8
+    PIC8_BANK1_WRITE8(TRISE, v);
+#else
     uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
     PIC8_REG8(0x89U) = v;
     pic_select_bank(prev);
+#endif
 }
 
 HAL_StatusTypeDef HAL_PSP_Init(void (*callback)(void))

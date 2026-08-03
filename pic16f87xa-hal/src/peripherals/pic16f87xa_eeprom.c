@@ -8,7 +8,51 @@
 
 static void (*g_eeprom_cb)(void) = NULL;
 
-/* Bank helpers, EEPROM registers are in Banks 2 and 3. */
+/* Bank helpers, EEPROM registers are in Banks 2 and 3.
+ *
+ * A plain `pic_select_bank(N); PIC8_REG8(addr) = v;` here silently
+ * corrupted the write, confirmed via a real-target `mdb` probe
+ * (`EEADR`/`EECON1` both read back `0` instead of the values passed
+ * in): the same bug already found and fixed for
+ * `HAL_TIMER2_WritePeriod`/`HAL_USART_Init`, see
+ * pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9. `PIC8_BANK2_WRITE8`/
+ * `PIC8_BANK3_WRITE8` (and their `READ8` counterparts) need a literal
+ * SFR name at compile time (they're inline-asm operands, see their own
+ * header comment), not a runtime `addr`, so this dispatches on `addr`
+ * *before* any bank switch begins (a plain comparison in Bank 0,
+ * nothing at risk) and only then invokes the named macro for the
+ * matching register; every real call site below passes a
+ * compile-time-constant `addr`, so XC8 folds this down to the single
+ * matching branch either way. */
+#ifdef PIC8_BANK3_WRITE8
+static void b3_write(uint16_t addr, uint8_t v)
+{
+    if (addr == 0x18CU) PIC8_BANK3_WRITE8(EECON1, v);
+    else                PIC8_BANK3_WRITE8(EECON2, v);
+}
+
+static uint8_t b3_read(uint16_t addr)
+{
+    uint8_t v = 0U;
+    (void)addr;   /* only EECON1 is ever read via b3_read. */
+    PIC8_BANK3_READ8(EECON1, v);
+    return v;
+}
+
+static void b2_write(uint16_t addr, uint8_t v)
+{
+    if (addr == 0x0CU) PIC8_BANK2_WRITE8(EEDATA, v);
+    else               PIC8_BANK2_WRITE8(EEADR, v);
+}
+
+static uint8_t b2_read(uint16_t addr)
+{
+    uint8_t v = 0U;
+    if (addr == 0x0CU) PIC8_BANK2_READ8(EEDATA, v);
+    else               PIC8_BANK2_READ8(EEADR, v);
+    return v;
+}
+#else
 static void b3_write(uint16_t addr, uint8_t v)
 {
     uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
@@ -42,6 +86,7 @@ static uint8_t b2_read(uint16_t addr)
     pic_select_bank(prev);
     return v;
 }
+#endif
 
 HAL_StatusTypeDef HAL_EEPROM_Init(void (*callback)(void))
 {

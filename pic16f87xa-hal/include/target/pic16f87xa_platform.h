@@ -97,6 +97,80 @@ extern volatile uint8_t pic8_bank1_scratch __at(0x71);
         asm("bcf STATUS,5");                                           \
     } while (0)
 
+/* Read side of the same fix: switch to Bank 1, read the SFR into W,
+ * switch back to Bank 0 *before* touching any C-level storage (the
+ * scratch byte itself is bank-independent common RAM either way, but
+ * restoring the bank first keeps the sequence symmetric with the write
+ * macro and avoids relying on that), then hand the value to the
+ * caller's C-level `out_var` through the same scratch byte. Statement
+ * macro with an output parameter (not an expression macro): simpler
+ * and consistent with PIC8_BANK1_WRITE8's own shape. */
+#define PIC8_BANK1_READ8(sfr_name, out_var)                             \
+    do {                                                                \
+        asm("bsf STATUS,5");                                           \
+        asm("movf " #sfr_name ",w");                                   \
+        asm("bcf STATUS,5");                                           \
+        asm("movwf _pic8_bank1_scratch");                              \
+        (out_var) = pic8_bank1_scratch;                                \
+    } while (0)
+
+/* Same fix, Banks 2 and 3 (`pic16f87xa_eeprom.c`'s EEDATA/EEADR/EECON1/
+ * EECON2, confirmed corrupted the same way via a real-target `mdb`
+ * probe, see pic16f87xa-hal/docs/ARCHITECTURE.md Finding 9's follow-up).
+ * Unlike PIC8_BANK1_*, these set/clear *both* RP1:RP0 bits explicitly
+ * rather than assuming RP1 already reads 0: EEPROM's own call sites
+ * interleave Bank 2 and Bank 3 accesses back to back, so the incoming
+ * bank state can't be assumed here the way it safely can for the
+ * Bank-1-only PIE/Timer2/USART/ADC/VREF/COMP/PSP call sites. Both exit
+ * to Bank 0 rather than restoring the caller's original bank (a
+ * deliberate simplification, not a bug: every access in this codebase
+ * explicitly selects the bank it needs before touching an SFR, none
+ * rely on an inherited bank from a prior call, confirmed by this
+ * session's own audit of every pic_select_bank call site). */
+#define PIC8_BANK2_WRITE8(sfr_name, value)                              \
+    do {                                                                \
+        pic8_bank1_scratch = (uint8_t)(value);                         \
+        asm("movf _pic8_bank1_scratch,w");                             \
+        asm("bcf STATUS,5");                                           \
+        asm("bsf STATUS,6");                                           \
+        asm("movwf " #sfr_name);                                       \
+        asm("bcf STATUS,5");                                           \
+        asm("bcf STATUS,6");                                           \
+    } while (0)
+
+#define PIC8_BANK2_READ8(sfr_name, out_var)                             \
+    do {                                                                \
+        asm("bcf STATUS,5");                                           \
+        asm("bsf STATUS,6");                                           \
+        asm("movf " #sfr_name ",w");                                   \
+        asm("bcf STATUS,5");                                           \
+        asm("bcf STATUS,6");                                           \
+        asm("movwf _pic8_bank1_scratch");                              \
+        (out_var) = pic8_bank1_scratch;                                \
+    } while (0)
+
+#define PIC8_BANK3_WRITE8(sfr_name, value)                              \
+    do {                                                                \
+        pic8_bank1_scratch = (uint8_t)(value);                         \
+        asm("movf _pic8_bank1_scratch,w");                             \
+        asm("bsf STATUS,5");                                           \
+        asm("bsf STATUS,6");                                           \
+        asm("movwf " #sfr_name);                                       \
+        asm("bcf STATUS,5");                                           \
+        asm("bcf STATUS,6");                                           \
+    } while (0)
+
+#define PIC8_BANK3_READ8(sfr_name, out_var)                             \
+    do {                                                                \
+        asm("bsf STATUS,5");                                           \
+        asm("bsf STATUS,6");                                           \
+        asm("movf " #sfr_name ",w");                                   \
+        asm("bcf STATUS,5");                                           \
+        asm("bcf STATUS,6");                                           \
+        asm("movwf _pic8_bank1_scratch");                              \
+        (out_var) = pic8_bank1_scratch;                                \
+    } while (0)
+
 #define PIC8_PIE_ENABLE_BIT(is_pir2, mask)                              \
     do {                                                                \
         pic8_irq_pie_scratch = (uint8_t)(mask);                        \
