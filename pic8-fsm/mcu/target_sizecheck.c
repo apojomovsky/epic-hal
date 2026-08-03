@@ -1,12 +1,8 @@
 /**
  * @file    target_sizecheck.c
- * @brief   Minimal on-target program exercising fsm.c, used only by the
- *          mcu build (see the Makefiles under mcu/) to prove fsm.c
- *          cross-compiles cleanly with real XC8 for PIC16/PIC18 silicon
- *          and to report flash/RAM footprint. Not a correctness test:
- *          dispatch correctness is fully covered on host by
- *          ../tests/test_fsm.c (there is no per-family variant of fsm.c,
- *          so the host suite already proves the shipped code).
+ * @brief   Minimal on-target build proving fsm.c cross-compiles for real
+ *          XC8/PIC16/PIC18 silicon and reporting flash/RAM footprint; not
+ *          a correctness test (see ../tests/test_fsm.c for that).
  */
 
 #include "fsm.h"

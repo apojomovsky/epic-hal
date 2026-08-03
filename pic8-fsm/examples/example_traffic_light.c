@@ -1,14 +1,7 @@
 /**
  * @file    example_traffic_light.c
- * @brief   Minimal, dependency-free demonstration of pic8-fsm.
- *
- * @details
- *   No HAL, no task manager, no PIC-specific header anywhere in this file
- *   — deliberately, to prove the whole point of the library: read the
- *   table below and you have the entire machine, with no other module in
- *   scope. Prints each transition to stdout so it can be run and read
- *   directly (`./example_traffic_light`); this is a host-only example, not
- *   built for real targets.
+ * @brief   Minimal, dependency-free demonstration of pic8-fsm: no HAL, no
+ *          task manager, host-only, prints each transition to stdout.
  */
 
 #include <stdio.h>

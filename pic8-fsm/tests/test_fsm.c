@@ -1,13 +1,7 @@
 /**
  * @file    test_fsm.c
- * @brief   Unit tests for pic8-fsm. Exercises the exact fsm.c that ships
- *          on-target (there is no per-family variant to this library), so
- *          this suite is the complete correctness proof, not a stand-in.
- *
- *          Plain hand-rolled asserts + a PASS/FAIL summary on stdout, exit
- *          code 0/1 — same convention as the HAL/task-manager examples
- *          elsewhere in this repo, since this module has no test framework
- *          dependency either.
+ * @brief   Unit tests for pic8-fsm; exercises the exact fsm.c that ships
+ *          on-target (no per-family variant, no test-framework dependency).
  */
 
 #include <stdio.h>
@@ -23,10 +17,8 @@ static int g_failures = 0;
     } \
 } while (0)
 
-/* ------------------------------------------------------------------ */
-/* A minimal traffic light: RED -> GREEN -> YELLOW -> RED on EV_TIMER, */
-/* plus a global EV_FAULT -> FAULT transition from any state.          */
-/* ------------------------------------------------------------------ */
+/* A minimal traffic light: RED -> GREEN -> YELLOW -> RED on EV_TIMER,
+ * plus a global EV_FAULT -> FAULT transition from any state. */
 
 enum { ST_RED, ST_GREEN, ST_YELLOW, ST_FAULT };
 enum { EV_TIMER, EV_FAULT };
@@ -107,11 +99,8 @@ static void test_unhandled_event(void)
     CHECK(fsm_state(&fsm) == ST_FAULT, "unhandled event leaves state unchanged");
 }
 
-/* ------------------------------------------------------------------ */
-/* Guard fall-through: a turnstile where COIN unlocks only with enough  */
-/* credit, otherwise buzzes and stays locked — the canonical example    */
-/* from the header doc comment, tested literally.                      */
-/* ------------------------------------------------------------------ */
+/* Guard fall-through: a turnstile where COIN unlocks only with enough
+ * credit, otherwise buzzes and stays locked. */
 
 enum { ST_LOCKED, ST_UNLOCKED };
 enum { EV_COIN, EV_PUSH };

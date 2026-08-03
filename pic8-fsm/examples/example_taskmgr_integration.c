@@ -1,17 +1,8 @@
 /**
  * @file    example_taskmgr_integration.c
- * @brief   Proves pic8-fsm composes with pic8-taskmgr with zero special
- *          integration: a task callback just owns an fsm_t and dispatches
- *          into it. Built only when -DPIC8_FSM_BUILD_TASKMGR_EXAMPLE=ON,
- *          since it's the taskmgr (not the FSM engine) that needs a HAL
- *          family choice.
- *
- * @details
- *   A debounced-button-style machine: IDLE -> ARMED on a simulated press
- *   event, ARMED -> IDLE after a timeout if not confirmed. Driven by a
- *   periodic task on the host sim, exactly the way any other
- *   pic8-taskmgr task would drive real work — fsm.h never appears in
- *   task_manager.h, and task_manager.h never appears in fsm.h.
+ * @brief   pic8-fsm composed with pic8-taskmgr: a task callback just owns
+ *          an fsm_t and dispatches into it, no special integration needed.
+ *          Built only when -DPIC8_FSM_BUILD_TASKMGR_EXAMPLE=ON.
  */
 
 #include <stddef.h>
