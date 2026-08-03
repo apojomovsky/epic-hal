@@ -1,21 +1,9 @@
 /**
  * @file    core/hal_status.h
- * @brief   Status codes and bit macros shared by every 8-bit PIC HAL
- *          family. Architecture-blind: no register, no bank, no vector.
- *
- * @details
- *   This is the one header in the shared layer (`pic8-common/`) that every
- *   per-family HAL tree (`pic16f87xa-hal/`, `pic18fxx5x-hal/`, ...) includes
- *   unmodified. It mirrors the role of `HAL_StatusTypeDef` and the bit
- *   helpers in STM32Cube's `stm32fxxx_hal_def.h`: the names and values are
- *   identical on every family, so consumer code (the task manager, the
- *   examples) never sees a family-specific status enum or bit macro.
- *
- *   What does NOT live here: SFR access, bank/BSR addressing, the weak-
- *   attribute spelling, the IRQ enum, anything that differs between
- *   PIC16F87XA and PIC18F2455. Those stay in each family's `platform.h`
- *   and IRQ backend, which all implement the same contract spelled out
- *   by this shared layer's headers.
+ * @brief   Status codes and bit macros shared, unmodified, by every 8-bit
+ *          PIC HAL family: architecture-blind, mirrors STM32Cube's
+ *          `HAL_StatusTypeDef` so consumer code never sees a
+ *          family-specific status enum or bit macro.
  */
 
 #ifndef HAL_STATUS_H
