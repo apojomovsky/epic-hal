@@ -10,10 +10,15 @@ the XC8 installer and is **not** pinned in this repo's CI toolchain image
 yet (`docker/ci-toolchain/Dockerfile` pins only the classic
 PIC16Fxxx_DFP + PIC18Fxxxx_DFP).
 
-Install it first (either via MPLAB X's *Tools > Packs* panel, or by
-unpacking the `.atpack` from `packs.download.microchip.com` into your
-`.mchp_packs` / `xc8/pic/packs` tree), then point `DFP_DIR` at the DFP's
-`xc8/` subdirectory if it is not in the default location below.
+Installed locally at
+`/opt/microchip/xc8/v3.10/pic/packs/Microchip.PIC12-16F1xxx_DFP/`
+(version 1.9.258, from the `.atpack` unpacked into both the flat and
+versioned pack layout, matching the existing PIC16Fxxx_DFP/
+PIC18Fxxxx_DFP convention). `DFP_DIR` in the `Makefile` already points
+here by default; override it if your install lives elsewhere (via MPLAB
+X's *Tools > Packs* panel, or by unpacking a `.atpack` from
+`packs.download.microchip.com` into your own `.mchp_packs` /
+`xc8/pic/packs` tree).
 
 ## Build
 
@@ -30,12 +35,17 @@ your project's `main.c`.
 
 ## Status
 
-This Makefile is a **draft pending the DFP**: the `#pragma config`
-directive names are the standard Enhanced Mid-range set and are
-verified against the DFP's device `.PIC` the first time the build runs
-with the pack installed (the `#pragma config` spellings come from the
-device file, not from XC8 itself). The host-sim build
-(`../CMakeLists.txt`) has no such dependency and runs now. Per
-`docs/adding-a-device.md`, no peripheral counts as done until the §4
-`mdb` register-readback gate passes, which also needs this DFP plus
-`mdb` (MPLAB SIM, headless).
+**Real-target build passes** for all six parts (`make MCU=16F193{3,4,6,7,8,9}`),
+each producing a valid Intel-HEX firmware image, with the DFP above
+installed. One datasheet/DFP disagreement was found and fixed getting
+here: the DFP's `PIC16F1937.PIC` marks the `DEBUG` config-word field
+`islanghidden`, meaning XC8 rejects it as a user `#pragma config`
+(error 1363, reserved for debugger tooling); it is not emitted by this
+Makefile's config-word recipe. The other 12 directives
+(FOSC/WDTE/PWRTE/MCLRE/CP/CPD/BOREN/CLKOUTEN/IESO/FCMEN/LVP/STVREN/
+PLLEN/WRT) are confirmed accepted by the DFP.
+
+Per `docs/adding-a-device.md`, "it compiled" is necessary but not
+sufficient: no peripheral counts as done until the §4 `mdb`
+register-readback gate passes, and `mdb` (MPLAB SIM, headless, part of
+MPLAB X) is not yet installed. That is the only remaining toolchain gap.

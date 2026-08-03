@@ -138,7 +138,6 @@ $(CONFIG_SRC): | $(BUILD_DIR)
 	@printf '#pragma config IESO = OFF\n' >> $@
 	@printf '#pragma config FCMEN = OFF\n' >> $@
 	@printf '#pragma config LVP = OFF\n' >> $@
-	@printf '#pragma config DEBUG = OFF\n' >> $@
 	@printf '#pragma config STVREN = ON\n' >> $@
 	@printf '#pragma config PLLEN = OFF\n' >> $@
 	@printf '#pragma config WRT = OFF\n' >> $@

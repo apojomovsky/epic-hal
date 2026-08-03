@@ -21,41 +21,81 @@ different core, so neither result carries over automatically.
 
 ## Status
 
-No findings yet: the real-target build and the `mdb` gate are pending
-the `Microchip.PIC12-16F1xxx_DFP` (see the plan doc and the mcu README).
-The foundation is host-sim verified only. The first action once the DFP
-lands is the codegen probe below, before any peripheral is built on top
-of the platform layer.
+Real-target build passes for all six parts (`Microchip.PIC12-16F1xxx_DFP`
+1.9.258 installed). Finding 1 below is the completed codegen probe for
+the two known-risky patterns, done by disassembling the actual linked
+firmware (`xc8-cc ... -o firmware.elf` then reading the generated
+`.s`, since a bare `-S` on a non-`main` translation unit does not
+trigger XC8's full optimizer here; linking the real `example_blink`
+image and dumping its `.s` does). `mdb` (MPLAB SIM, headless) is still
+not installed, so no peripheral has been through the real-register
+readback half of the §4 gate yet; this finding covers the codegen
+inspection half only.
 
-## Finding 0 (planned): the BSR / runtime-SFR-address codegen probe
+## Finding 1: runtime SFR addresses route through FSR1:INDF1, not BSR; literal tokens auto-bank correctly
 
-Before trusting the platform layer on this core, probe these two
-patterns under XC8 and inspect the generated `.s`/`.map`, per
-`docs/adding-a-device.md` §4.8 and the appendix's known-risky patterns:
+**Probed, both patterns clean, no misdirection found.**
 
-1. An SFR access made while a BSR bank switch is in effect, where the
-   address or an intermediate value is a C local/parameter (the
-   classic-PIC16 shape, `pic16f87xa-hal/docs/ARCHITECTURE.md` Findings
-   1/2/9). On the 193X XC8 auto-banks literal SFR access, so the question
-   is whether a manual `pic16f193x_select_bank` interleaved with a C
-   local misdirects the same way.
-2. An SFR address that is a runtime variable/struct-field/parameter at
-   the point of access (the PIC18 shape, `pic18fxx5x-hal/docs/ARCHITECTURE.md`
-   Findings 3/4), compiled to a data-memory access and not to the
-   program-memory table-read mechanism.
+Every function that dispatches a runtime value to one of several SFRs
+(`HAL_IRQ_Enable/DisableSrc/ClearFlag/GetFlag` picking PIE1/PIE2/PIE3 or
+PIR1/PIR2/PIR3 by `pir_index`; `HAL_GPIO_Init` picking TRISx/LATx/ANSELx
+by `port`) computes the target's 12-bit data-memory address in a local
+(`_pa`, `ta`, `la`, `aa`) and then reads/writes through it. Disassembly
+of the linked `example_blink` firmware (XC8 v3.10, `-O2`,
+`-mcpu=16f1937`) shows every one of these compiles to:
 
-If either misdirects, the platform header's plain-C PIE RMW form is
-replaced with an inline-asm banking sequence (MOVLB-based, the
-Enhanced Mid-range equivalent of the classic `bsf STATUS,5` path) and
-the finding is written up here with the XC8 User's Guide section
-cited. If neither misdirects, that is recorded here too, so the
-plain-C form is trusted on evidence rather than assumption.
+```
+movf    (addr_local),w
+movwf   fsr1l
+movf    (addr_local+1),w      ; upper byte, since the space is >256 bytes
+movwf   fsr1h
+movf    indf1,w               ; or: movwf indf1 for a write
+```
+
+i.e. **indirect addressing via FSR1/INDF1** (DS41364B §2.5), which is
+architecturally BSR-independent by design: FSR1 holds the full 12-bit
+address itself, so no bank-select state can be stale or wrong at the
+point of access. This is a different (and safer) resolution than either
+prior family's bug shape: it is not the classic-PIC16 failure (bank bits
++ direct addressing, where a stale/misordered bank switch corrupts the
+access) and not the PIC18 failure (compiled to the program-memory table
+mechanism instead of a data access). Confirmed clean for both the
+PIE-bank dispatch in `pic16f193x_irq.c` and the port-register dispatch
+in `pic16f193x_gpio.c`.
+
+Separately, a **literal, compile-time-constant SFR token in a
+non-mirrored bank** (`option_clr_set()`'s access to `PIC_REG_OPTION`,
+bank 1) compiles to the expected `movlb 1` / access / `movlb 0`
+sequence, i.e. XC8 auto-banks literal SFR tokens on this core exactly as
+`pic16f193x_sfr.h`'s header comment assumed. No manual
+`pic_select_bank`-style macro is needed for a literal token, and none of
+the foundation code uses one for that reason.
+
+**Not yet exercised**: the `pic16f193x_select_bank()` macro
+(`pic16f193x_sfr.h`) is currently unused by any driver, since every
+access above is either a literal auto-banked token or a runtime address
+that lower to FSR/INDF (which never needs BSR set explicitly). Given
+this finding, that is the *recommended* shape going forward: prefer
+literal tokens (auto-banked) or FSR/INDF-routed runtime dispatch over a
+manual `movlb` + raw address write, since the latter is the pattern that
+broke classic PIC16. If a future peripheral needs
+`pic16f193x_select_bank` directly (e.g. bulk indirect access into linear
+data memory), re-run this same disassembly check on that specific call
+site before trusting it, don't assume this finding covers it.
+
+Method, for reproducing or extending this check: `xc8-cc -mdfp=<DFP>/xc8
+-mcpu=16f1937 -O2 <all HAL .c + one app .c> -o out.elf` (a full link, not
+a standalone `-c`/`-S` on one file) produces `out.s` alongside `out.elf`
+as a side effect; grep it for the function under test's label
+(`_HAL_IRQ_Enable:` etc.) and read the instructions between it and the
+next `global` line.
 
 ## Open, for whoever picks this back up
 
-The probe runs the moment the `PIC12-16F1xxx_DFP` is installed. Until
-then every SFR access in the foundation stays a compile-time-constant
-`PIC_REG_*` token and runtime dispatch branches before touching any
-SFR, the same proven pattern from `pic18_irq.c` / `pic18fxx5x_ccp.c`,
-which is correct on both existing families regardless of the 193X
-result.
+The real *register-readback* half of the §4 gate (an actual `mdb`
+session confirming, e.g., that enabling `PIC16F193X_IRQ_TMR2` sets bit 1
+of PIE1 at address 0x91 and nothing else) has not run yet; `mdb` is not
+installed. Finding 1 above only clears the static-codegen half of the
+verification. Per `docs/adding-a-device.md`, that is necessary but not
+sufficient, run the `mdb` gate before marking any peripheral done, even
+though the codegen inspection came back clean.

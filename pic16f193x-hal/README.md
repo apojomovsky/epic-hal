@@ -19,20 +19,33 @@ rationale and the procedure this addition follows.
 
 ## Status
 
-**Foundation, host-sim verified.** The platform headers, SFR map, IRQ
-backend (23 sources across INTCON + PIR1/2/3 + PIE1/2/3), dispatch,
-single-vector ISR, harness, WDT/Sleep, GPIO (LAT/ANSEL/WPUB/IOC), Timer0,
-and the host simulation backend build and pass `ctest`. The remaining
-peripherals (Timer1/2/4/6, 5x CCP, EUSART, MSSP, ADC, Comparator, DAC,
-FVR, SR latch, capacitive sensing, LCD driver, EEPROM) are added one at
-a time, each through the §4 verification gate.
+**Foundation: host-sim verified and real-target-build verified.** The
+platform headers, SFR map, IRQ backend (23 sources across INTCON +
+PIR1/2/3 + PIE1/2/3), dispatch, single-vector ISR, harness, WDT/Sleep,
+GPIO (LAT/ANSEL/WPUB/IOC), Timer0, and the host simulation backend build
+clean (`-Wall -Wextra -Werror`) and pass on the host for all six parts.
+The `Microchip.PIC12-16F1xxx_DFP` (1.9.258) is now installed locally,
+and the real-target XC8 build (`mcu/pic16f193x-mplabx/Makefile`) also
+passes for all six parts, producing a valid Intel-HEX image each. The
+remaining peripherals (Timer1/2/4/6, 5x CCP, EUSART, MSSP, ADC,
+Comparator, DAC, FVR, SR latch, capacitive sensing, LCD driver, EEPROM)
+are added one at a time, each through the §4 verification gate.
 
-The **real-target XC8 build and the `mdb` register-readback gate are
-deferred** until the `Microchip.PIC12-16F1xxx_DFP` (not bundled with XC8,
-not yet pinned in CI) is installed. Until then every piece is
-`host-verified, mdb-pending`, and an XC8 codegen probe of the
-known-risky SFR-access patterns (docs/adding-a-device.md appendix) runs
-before any peripheral relies on them.
+The XC8 codegen probe of the known-risky SFR-access patterns
+(docs/adding-a-device.md appendix) came back clean: disassembling the
+linked `example_blink` firmware shows every runtime-dispatched SFR
+address (the PIE1/2/3 pick in `HAL_IRQ_Enable` et al., the
+TRISx/LATx/ANSELx pick in `HAL_GPIO_Init`) compiles to FSR1:INDF1
+indirect addressing, which is BSR-independent by construction, neither
+the classic-PIC16 bank-bit failure nor the PIC18 program-memory-table
+failure. Literal SFR tokens in non-mirrored banks correctly get a
+`movlb` bank-select. See `docs/ARCHITECTURE.md` Finding 1.
+
+The **`mdb` register-readback gate is still pending**: MPLAB X / `mdb`
+(MPLAB SIM, headless) is not yet installed, and per
+`docs/adding-a-device.md` "it compiled" is necessary but not sufficient,
+no peripheral counts as done until that gate actually runs on real
+register reads, even with the codegen probe clean.
 
 ## Layout
 

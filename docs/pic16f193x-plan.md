@@ -1,14 +1,22 @@
 # PIC16F193X family addition
 
-Status: **foundation host-verified and committed**. Device identity
-confirmed (§1), Path B confirmed (§2), scope set (§3). The foundation
-(platform headers, SFR map, IRQ backend, dispatch, ISR vector, harness,
-WDT/Sleep, GPIO, Timer0, host sim) builds clean with `-Wall -Wextra
--Werror` and passes its host examples across all six parts (commit
-`786e9db`). Real-target XC8 build and the `mdb` register-readback gate
-are deferred until the `Microchip.PIC12-16F1xxx_DFP` + `mdb` toolchain
-is installed (§4); peripherals then land one at a time through the §4
-gate (§7).
+Status: **foundation host-verified, real-target-build-verified, and
+codegen-probed clean; `mdb` register-readback gate still pending**.
+Device identity confirmed (§1), Path B confirmed (§2), scope set (§3).
+The foundation (platform headers, SFR map, IRQ backend, dispatch, ISR
+vector, harness, WDT/Sleep, GPIO, Timer0, host sim) builds clean with
+`-Wall -Wextra -Werror` and passes its host examples across all six
+parts (commit `786e9db`). The `Microchip.PIC12-16F1xxx_DFP` is now
+installed and the real-target XC8 build passes for all six parts (§4).
+The XC8 codegen probe of the two known-risky SFR-access patterns came
+back clean (`pic16f193x-hal/docs/ARCHITECTURE.md` Finding 1): runtime
+SFR-address dispatch routes through FSR1:INDF1 (BSR-independent by
+construction), literal tokens in non-mirrored banks get a correct
+`movlb`. The `mdb` register-readback gate (the mandatory, no-exceptions
+half of §4 of `adding-a-device.md`) still needs MPLAB X / `mdb`
+installed; until that runs, no peripheral counts
+as done, only "compiles clean on host and target." Peripherals land one
+at a time through the full §4 gate once `mdb` is available (§7).
 
 This plan follows `docs/adding-a-device.md` (the operational procedure,
 which supersedes `docs/multi-family-plan.md`'s "add family #3" checklist).
@@ -143,22 +151,38 @@ Sleep, ICSP. Solved.
   done until the `mdb` gate passes, so each foundation piece and
   peripheral is tracked as `host-verified, mdb-pending`.
 
-## §4. Blocker: DFP / mdb (pending, user-owned)
+## §4. Blocker: DFP / mdb (half-resolved: DFP installed, mdb still pending)
 
 `adding-a-device.md` §1.3 requires the part to be in a pinned DFP; the
-1937 is not. It lives in `Microchip.PIC12-16F1xxx_DFP`, which is:
+1937 was not. It lives in `Microchip.PIC12-16F1xxx_DFP`, which the user
+downloaded (`Microchip.PIC12-16F1xxx_DFP.1.9.258.atpack`) and which is
+now installed locally at
+`/opt/microchip/xc8/v3.10/pic/packs/Microchip.PIC12-16F1xxx_DFP/` (both
+the flat layout and the versioned `Microchip/PIC12-16F1xxx_DFP/1.9.258/`
+layout, matching the existing PIC16Fxxx_DFP/PIC18Fxxxx_DFP convention).
+Confirmed present: `edc/PIC16F1937.PIC`, `xc8/pic/include/proc/pic16f1937.h`,
+`xc8/pic/dat/cfgdata/16f1937.cfgdata`, and the matching files for all
+six parts (1933/34/36/37/38/39, F+LF).
 
-- not installed locally (v3.10 has only `PIC16Fxxx_DFP/1.6.156` +
-  `PIC18Fxxxx_DFP`, classic mid-range; no 1937 proc header),
-- not pinned in `docker/ci-toolchain/Dockerfile` (pins
-  `PIC16Fxxx_DFP.1.7.162` + `PIC18Fxxxx_DFP.1.7.171`),
-- required for the XC8 real-target build and the `mdb` gate.
+**Real-target XC8 build: now passing for all six parts** (`make
+MCU=16F1933..1939`), each producing a valid Intel-HEX firmware image.
+One datasheet/DFP disagreement found and fixed here, exactly the kind
+`adding-a-device.md`'s "flag it, don't guess" rule anticipates: the
+`DEBUG` config-word field the initial Makefile draft emitted
+(`#pragma config DEBUG = OFF`) is marked `islanghidden="true"` in the
+DFP's `PIC16F1937.PIC` (reserved for debugger tooling, not a
+user-settable `#pragma config`); XC8 rejects it with error 1363. Removed
+from the Makefile's generated config-word recipe; the other 12
+directives (FOSC/WDTE/PWRTE/MCLRE/CP/CPD/BOREN/CLKOUTEN/IESO/FCMEN/LVP/
+STVREN/PLLEN/WRT) are all confirmed non-hidden in the DFP and compile
+clean.
 
-The `mcu/pic16f193x-mplabx/Makefile` is written with the right
-`DFP_DIR`/`DFP_FLAG` for `Microchip.PIC12-16F1xxx_DFP` so it is ready the
-moment the pack is installed; the CI Dockerfile pin + `sim-tests.yml`
-wiring are drafted for review but not applied until the user approves CI
-changes. Pending: user installs the DFP and confirms `mdb` availability.
+**Still pending: `mdb` (MPLAB SIM, headless)** is not installed locally.
+The §4 register-readback gate needs it; the real-target build passing
+is necessary but explicitly not sufficient per the playbook ("it
+compiled" and "the host sim passed" are necessary, not sufficient).
+CI Dockerfile pin + `sim-tests.yml` wiring are still drafted for review,
+not applied. Pending: user installs MPLAB X / `mdb`.
 
 ## §5. Foundation design (solved, user-approved)
 
@@ -225,22 +249,34 @@ real-target build and `mdb` gate pending the DFP (§4).
 
 ## §6. Verification (partly solved)
 
-- **Host sim** (solved now): `cmake -B build && cmake --build build &&
-  ctest` for every foundation piece. Catches logic bugs; does not catch
-  the codegen bugs the gate exists for.
-- **Real-target XC8 build** (pending DFP): the `mcu` Makefile builds once
-  `Microchip.PIC12-16F1xxx_DFP` is installed.
-- **`mdb` register readback** (pending DFP + mdb): the §4 gate for every
-  peripheral, using the established `stepi <N>` + `print <REGISTER>`
-  protocol, comparing against hand-computed expected values from each
-  example's header. Deferred until the toolchain lands; re-run for every
-  piece tracked `mdb-pending`.
-- **XC8 codegen probe** (pending DFP): before building peripherals on top
-  of the platform layer, probe the known-risky SFR-access patterns (SFR
-  address as a runtime value; SFR access while a bank switch is in
-  effect) under XC8 for enhanced mid-range and inspect the generated
-  `.s`/`.map`. Per the playbook, every real bug in this repo so far had
-  one of those shapes. Record findings in `docs/ARCHITECTURE.md`.
+- **Host sim** (solved): `cmake -B build && cmake --build build`, then
+  running each example directly (the shared `pic8_family.cmake` doesn't
+  register `ctest` targets; examples self-report pass/fail via
+  `pic8_harness_report`'s exit code). Clean with `-Wall -Wextra -Werror`
+  for every foundation piece. Catches logic bugs; does not catch the
+  codegen bugs the gate exists for.
+- **Real-target XC8 build** (solved): `make MCU=16F193{3,4,6,7,8,9}` all
+  build clean and produce a valid Intel-HEX image with the
+  `Microchip.PIC12-16F1xxx_DFP` installed (§4). One datasheet/DFP
+  disagreement found and fixed (the hidden `DEBUG` config field, §4).
+- **`mdb` register readback** (pending mdb only, DFP is no longer the
+  blocker): the §4 gate for every peripheral, using the established
+  `stepi <N>` + `print <REGISTER>` protocol, comparing against
+  hand-computed expected values from each example's header. Deferred
+  until MPLAB X / `mdb` is installed; re-run for every piece tracked
+  `mdb-pending`.
+- **XC8 codegen probe** (solved, clean result): disassembled the linked
+  `example_blink` firmware and confirmed both known-risky patterns are
+  safe on this core (`pic16f193x-hal/docs/ARCHITECTURE.md` Finding 1).
+  Runtime-dispatched SFR addresses (the PIE1/2/3 pick in
+  `HAL_IRQ_Enable` et al., the TRISx/LATx/ANSELx pick in
+  `HAL_GPIO_Init`) compile to FSR1:INDF1 indirect addressing, which is
+  BSR-independent by construction, not the classic-PIC16 bank-bit
+  failure mode and not the PIC18 program-memory-table failure mode.
+  Literal SFR tokens in non-mirrored banks (`PIC_REG_OPTION`, bank 1)
+  correctly get a `movlb` bank-select. No misdirection found; no fix
+  needed. `mdb` register readback (below) still has to run before any
+  peripheral is actually marked done, this only clears the static half.
 
 ## §7. Peripheral roadmap (pending, decided incrementally)
 
