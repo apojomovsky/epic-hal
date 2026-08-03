@@ -1,26 +1,11 @@
 /**
  * @file    pic8_bus.c
- * @brief   I2C/SPI MEM register-access transactions on the MSSP/SSP HAL.
- *
- * @details
- *   The MEM transaction logic (start/addr/reg/restart/addr+R/read-N-NACK/stop
- *   for I2C; select/exchange(reg)/exchange(...)/deselect for SPI) is
- *   family-neutral and calls a small "bus ops" interface. The default ops
- *   wrap the HAL's SSP primitives plus the two pieces the HAL doesn't expose:
- *
- *   - the ACKDT bit (NACK the last byte of an I2C read): a read-modify-write
- *     of SSPCON2<ACKDT> (0 = send ACK, 1 = send NACK). SSPCON2 and the bit
- *     name are the same on both families; the address differs (PIC16 bank-1
- *     0x91, PIC18 0xFC5), reached through PIC8_REG8 / pic8_sfr_write8.
- *   - the wait-for-idle poll: the HAL's Start/Stop/WriteByte/ReceiveEnable/
- *     AcknowledgeEnable only SET the control bits and return; we poll SSPIF
- *     (the MSSP event flag) until set, then clear it, before the next step.
- *
- *   The host sim has no SSP slave model (it never raises SSPIF for bus
- *   operations), so the default ops would hang there. `pic8_bus_set_i2c_ops`
- *   / `pic8_bus_set_spi_ops` inject an alternate ops table -- the host test
- *   wires in a mock MEM device, exercising the transaction LOGIC without
- *   hardware. On a real target the default (HAL) ops are used.
+ * @brief   I2C/SPI MEM register-access transactions on the MSSP/SSP HAL,
+ *          family-neutral via a small "bus ops" interface. The default
+ *          ops wrap the HAL's SSP primitives plus a poll for SSPIF (the
+ *          HAL's own calls only set control bits and return). The host
+ *          sim has no SSP slave model, so `pic8_bus_set_i2c_ops`/
+ *          `_set_spi_ops` let the host test inject a mock device instead.
  */
 
 #include "pic8_bus.h"

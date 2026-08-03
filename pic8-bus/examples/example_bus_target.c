@@ -1,16 +1,9 @@
 /**
  * @file    example_bus_target.c
- * @brief   pic8-bus on-target link smoke: initialize the I2C and SPI buses.
- *
- * @details
- *   The XC8 Makefiles build this (the host test examples/example_bus.c uses
- *   injected mock ops and needs no hardware). This demo configures the MSSP
- *   as an I2C master (100 kHz) and an SPI master with a GPIO chip-select,
- *   proving the pic8-bus module compiles and links against the real HAL on
- *   target. It deliberately does NOT issue a MEM transaction -- the default
- *   ops' SSPIF wait would block without a device attached. A real firmware
- *   image calls `pic8_bus_i2c_mem_read`/`write` against an attached sensor
- *   after this init.
+ * @brief   pic8-bus on-target link smoke: configures an I2C master and an
+ *          SPI master, proving the module links against the real HAL.
+ *          Deliberately issues no MEM transaction, since the default
+ *          ops' SSPIF wait would block with no device attached.
  */
 
 #include "pic8_bus.h"

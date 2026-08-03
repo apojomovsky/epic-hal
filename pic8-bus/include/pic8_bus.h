@@ -1,30 +1,11 @@
 /**
  * @file    pic8_bus.h
- * @brief   Family-agnostic I2C/SPI "MEM" register-access idiom -- the
- *          `HAL_I2C_Mem_Read`/`Mem_Write` / SPI register-transaction layer
- *          Cube sensor code uses, for 8-bit PICs.
- *
- * @details
- *   Sits on the HAL's MSSP/SSP driver. The two operations every I2C/SPI
- *   sensor driver reimplements -- "write a register address, then write N
- *   bytes" and "write a register address, then read N bytes" -- are one call
- *   here. Works on every PIC this repo supports (PIC16F87XA and
- *   PIC18F2455/2550/4455/4550) and is host-testable.
- *
- *   The MEM transaction logic (start, addr+W, reg, restart, addr+R, read N
- *   with NACK-last, stop -- and the SPI select/exchange/deselect equivalent)
- *   is family-neutral and lives in src/pic8_bus.c. It calls a small "bus
- *   ops" interface (start/repeated_start/stop/write_byte/read_byte for I2C;
- *   select/exchange/deselect for SPI). The default ops wrap the HAL's SSP
- *   primitives plus the two pieces the HAL doesn't expose -- the ACKDT bit
- *   (NACK the last read byte) and the wait-for-SSPIF idle poll -- with a
- *   family branch for the SSPCON2/IRQn differences. `pic8_bus_set_i2c_ops`
- *   / `pic8_bus_set_spi_ops` inject an alternate ops table, which is how the
- *   host test wires in a mock I2C/SPI MEM device (the host sim has no SSP
- *   slave model, so end-to-end bus transactions can't run there).
- *
- *   See docs/ARCHITECTURE.md for the transaction shapes and the ops seam,
- *   and docs/API.md for the per-function reference.
+ * @brief   Family-agnostic I2C/SPI "MEM" register-access idiom, the
+ *          `HAL_I2C_Mem_Read`/`Mem_Write` layer Cube sensor code uses, for
+ *          8-bit PICs. Sits on the HAL's MSSP/SSP driver through a small
+ *          injectable "bus ops" interface, which is also how the host
+ *          test wires in a mock device (the host sim has no SSP slave
+ *          model). See docs/ARCHITECTURE.md for the transaction shapes.
  */
 
 #ifndef PIC8_BUS_H

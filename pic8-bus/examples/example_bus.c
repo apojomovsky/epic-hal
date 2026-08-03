@@ -1,18 +1,10 @@
 /**
  * @file    example_bus.c
- * @brief   pic8-bus host test: verify the I2C/SPI MEM transaction logic
- *          against a mock MEM device injected through the ops seam.
- *
- * @details
- *   The host sim has no SSP slave model, so end-to-end bus transactions can't
- *   run there. Instead this test injects a mock I2C and a mock SPI "MEM
- *   device" (a small register map + a transaction state machine) through
- *   `pic8_bus_set_i2c_ops` / `pic8_bus_set_spi_ops`, and checks that
- *   `pic8_bus_i2c_mem_read`/`write` and `pic8_bus_spi_mem_read`/`write`
- *   drive the correct transaction shape (start, addr+W, reg, restart, addr+R,
- *   NACK-last / select, exchange(reg), exchange(0)/data, deselect) and move
- *   the right bytes. This exercises the family-neutral MEM logic; the default
- *   HAL ops are validated on real silicon.
+ * @brief   pic8-bus host test: verifies the I2C/SPI MEM transaction logic
+ *          against a mock MEM device injected through the ops seam (the
+ *          host sim has no SSP slave model, so this can't run end to end
+ *          against real hardware here; the default HAL ops are validated
+ *          on real silicon instead).
  */
 
 #include "pic8_bus.h"
