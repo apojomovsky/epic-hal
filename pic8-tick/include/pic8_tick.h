@@ -1,28 +1,10 @@
 /**
  * @file    pic8_tick.h
- * @brief   Family-agnostic 1 ms timebase: `pic8_tick_get()` / `pic8_tick_delay_ms()`,
- *          the STM32Cube `HAL_GetTick`/`HAL_Delay` equivalent for 8-bit PICs.
- *
- * @details
- *   A millisecond timebase built on the HAL's Timer2 (auto-reload, so no
- *   manual reload in the ISR -- unlike the task manager's Timer0). A Timer2
- *   period-match ISR increments a volatile 32-bit counter; this header's
- *   functions read it. Works on every PIC this repo supports (PIC16F87XA and
- *   PIC18F2455/2550/4455/4550) and on the host simulator.
- *
- *   The public API is family-neutral (only <stdint.h>); the Timer2 contract
- *   is pulled in only by the implementation via the family-neutral
- *   `peripherals/hal_timer2.h` shim. The tick ISR is installed through the
- *   Timer2 handle's `OverflowCallback` (the HAL owns `TIMER2_IRQHandler`),
- *   exactly the pattern `pic8-taskmgr` uses for its Timer0 tick.
- *
- *   On the host sim, simulated time advances only when the main loop pumps
- *   `pic8_harness_tick()`; `pic8_tick_delay_ms()` pumps it internally so it
- *   works unchanged on both builds. On a real target the Timer2 ISR advances
- *   the counter in the background and `pic8_harness_tick()` is a no-op.
- *
- *   See docs/ARCHITECTURE.md for the timebase math and the host/target
- *   execution models, and docs/API.md for the per-function reference.
+ * @brief   Family-agnostic 1 ms timebase (`pic8_tick_get`/`pic8_tick_delay_ms`,
+ *          the STM32Cube `HAL_GetTick`/`HAL_Delay` equivalent) built on the
+ *          HAL's auto-reload Timer2: a period-match ISR increments a
+ *          volatile 32-bit counter this header's functions read. See
+ *          docs/ARCHITECTURE.md for the timebase math.
  */
 
 #ifndef PIC8_TICK_H
@@ -31,10 +13,9 @@
 #include <stdint.h>
 
 /**
- * @brief  Start the 1 ms timebase. Configures Timer2 for a ~1 ms period-match
- *         from @p fosc_hz (the PR2/prescaler/postscaler are computed for the
- *         closest achievable 1 ms; for common Fosc -- 4/8/16/20/32/48 MHz --
- *         it is exact) and enables its ISR. Call once at startup.
+ * @brief  Start the 1 ms timebase: configures Timer2 for the closest
+ *         achievable 1 ms period from @p fosc_hz and enables its ISR.
+ *         Call once at startup.
  * @param  fosc_hz  the system oscillator frequency in Hz (e.g. 20000000UL).
  */
 void pic8_tick_init(uint32_t fosc_hz);

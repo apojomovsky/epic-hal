@@ -3,29 +3,13 @@
  * @brief   1 ms timebase on Timer2, family-agnostic.
  *
  * @details
- *   The tick ISR is the Timer2 handle's `OverflowCallback` -- the HAL already
- *   owns a strong `TIMER2_IRQHandler` that clears TMR2IF and calls the
- *   callback, so this module does NOT redefine the handler (that would be a
- *   multiple-definition error). The handle is `static` because the PIC16
- *   Timer2 driver stores the caller's pointer (not a copy), so it must
- *   outlive the ISR; the PIC18 driver copies the handle, so static is safe
- *   there too.
- *
- *   Period math: TMR2IF fires every `prescaler * (PR2+1) * postscaler`
- *   instruction cycles; one instruction cycle = Fosc/4. For a 1 ms tick we
- *   need `Fosc/4000` instruction cycles. `compute_period()` searches the
- *   prescaler {1,4,16} x postscaler {1..16} x (PR2+1) {1..256} space for the
- *   configuration whose product is closest to the target; for the common
- *   Fosc values it is exact (e.g. 20 MHz -> pre 1:4, PR2 249, post 1:5 =
- *   4*250*5 = 5000; 48 MHz -> pre 1:16, PR2 249, post 1:3 = 16*250*3 = 12000).
- *
- *   `pic8_tick_get()` disables interrupts around the 32-bit read (an 8-bit
- *   core reads it in 4 bytes; the ISR could update it mid-read). On the host
- *   sim the ISR fires synchronously inside `pic8_harness_tick()`, so the
- *   disable/restore is harmless there. `pic8_tick_delay_ms()` pumps
- *   `pic8_harness_tick()` while waiting so simulated time advances on host;
- *   on target that call is a no-op and the real Timer2 ISR advances the
- *   counter.
+ *   The tick ISR is the Timer2 handle's `OverflowCallback`; the HAL's own
+ *   strong `TIMER2_IRQHandler` clears TMR2IF and calls it, so this module
+ *   never redefines the handler. `compute_period()` searches the
+ *   prescaler/postscaler/PR2 space for the configuration closest to a 1 ms
+ *   period at the given Fosc (exact for common values). `pic8_tick_get()`
+ *   disables interrupts around the 32-bit read since an 8-bit core reads
+ *   it in 4 bytes and the ISR could update it mid-read.
  */
 
 #include "pic8_tick.h"
@@ -98,17 +82,9 @@ void pic8_tick_init(uint32_t fosc_hz)
     s_timer2.OverflowCallback = pic8_tick_on_overflow;
     HAL_TIMER2_Init(&s_timer2);
     HAL_TIMER2_Start(&s_timer2);
-    /* HAL_TIMER2_Init only arms Timer2's own source enable bit
-     * (pic8-common/MANUAL.md §6-7); the chip's global interrupt enable
-     * is separate and nothing else here ever turned it on. Without this,
-     * the Timer2 ISR never fires on real hardware (or a real
-     * instruction-accurate simulator), g_tick_ms never increments, and
-     * pic8_tick_delay_ms spins forever. Invisible on the host build,
-     * whose pic8_harness_tick() steps the simulator directly instead of
-     * relying on a real interrupt; only surfaced once this module's
-     * compiled firmware actually ran under MPLAB SIM for the first time
-     * (docs/ci-plan.md Phase 4).
-     */
+    /* HAL_TIMER2_Init only arms Timer2's own source enable; the global
+     * interrupt enable is separate, so without this the ISR never fires
+     * and pic8_tick_delay_ms spins forever (pic8-common/MANUAL.md §6-7). */
     HAL_IRQ_Restore(1);
 }
 

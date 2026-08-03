@@ -1,16 +1,9 @@
 /**
  * @file    example_tick.c
- * @brief   pic8-tick smoke test: verify the 1 ms timebase advances and
- *          `pic8_tick_delay_ms`/`pic8_tick_elapsed_since` behave.
- *
- * @details
- *   Builds and runs on both the host simulator and a real target. On host,
- *   `pic8_tick_delay_ms` pumps `pic8_harness_tick()` so simulated time
- *   advances (one tick = `prescaler*(PR2+1)*postscaler` sim steps, e.g. 5000
- *   at 20 MHz); on target the Timer2 ISR advances the counter in real time.
- *   The test delays 10 ms and 5 ms and checks the elapsed counts are in
- *   range (the delay guarantees at least N ms, overshooting by at most ~1
- *   tick), then reports PASS/FAIL via the harness.
+ * @brief   pic8-tick smoke test: delays 10 ms and 5 ms, checks the elapsed
+ *          counts land within one tick of the requested value, then
+ *          reports PASS/FAIL via the harness. Builds and runs on both the
+ *          host simulator and a real target.
  */
 
 #include "pic8_tick.h"
