@@ -4,26 +4,11 @@
  *          share implementation with pic8_usb.c.
  *
  * @details
- *   M-Stack's raw endpoint API (usb_get_in_buffer, usb_send_in_buffer, ...)
- *   has no meaningful host simulation -- there is no faithful stand-in for
- *   a real USB SIE enumerating against a real host driver stack. See
- *   "Host build story" in pic8-usb/docs/pic8-usb-plan.md.
- *
- *   What this file DOES prove, honestly: the public API's behavioral
- *   contract -- ring fill/drain ordering, overflow-drop policy,
- *   connected()'s DTR-gated state transitions, write() draining once
- *   connected. It proves nothing about real enumeration or the real
- *   endpoint-buffer code path in pic8_usb.c; that only gets proven on real
- *   silicon (Phase 3 of the plan).
- *
- *   The pic8_usb_test_* driver hooks (pic8_usb_test_support.h) simulate a
- *   host: pic8_usb_test_set_dtr() stands in for the CDC
- *   SET_CONTROL_LINE_STATE request, pic8_usb_test_inject_rx() stands in
- *   for bytes arriving on the OUT endpoint, and the sent-log stands in for
- *   bytes actually transmitted on the IN endpoint (only while "connected",
- *   matching the real module servicing EP2 only once usb_is_configured()
- *   -- here simplified to just the DTR gate, since enumeration itself
- *   isn't being modeled).
+ *   No faithful host simulation of a real USB SIE exists, so this only
+ *   proves the public API's behavioral contract (ring fill/drain,
+ *   overflow-drop, DTR-gated connected()), never real enumeration,
+ *   that's real-silicon only. pic8_usb_test_support.h's hooks
+ *   (set_dtr/inject_rx/sent-log) simulate the host side.
  */
 
 #include "pic8_usb.h"

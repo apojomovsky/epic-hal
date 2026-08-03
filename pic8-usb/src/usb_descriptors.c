@@ -1,15 +1,9 @@
 /*
- * USB descriptors for pic8-usb, adapted from M-Stack's own cdc_acm demo
- * (third_party/m-stack/apps/cdc_acm/usb_descriptors.c) -- same descriptor
- * shape (a CDC-ACM spec requires this exact interface/endpoint layout),
- * pic8-usb-specific strings.
- *
- * VID/PID: 0xA0A0 / 0x0004 is M-Stack's own bundled placeholder pair (the
- * same one used by its cdc_acm demo and referenced by its host_test/
- * libusb tools). Fine for bring-up on a bench. Per
- * pic8-usb/docs/pic8-usb-plan.md, "VID/PID": swap for a real pid.codes
- * allocation (VID 0x1209) before this ships to anyone else -- do not
- * redistribute a device carrying this placeholder pair.
+ * USB descriptors for pic8-usb, adapted from M-Stack's cdc_acm demo
+ * (same shape, required by the CDC-ACM spec; pic8-usb-specific strings).
+ * VID/PID 0xA0A0/0x0004 is M-Stack's placeholder pair, fine for bench
+ * bring-up only, swap for a real pid.codes allocation before
+ * redistributing a device carrying it.
  */
 
 #include "usb_config.h"
@@ -121,9 +115,9 @@ static const struct configuration_1_packet configuration_1 =
 	1, /* bSlaveInterface0 */
 	},
 
-	/* CDC ACM Notification Endpoint (Endpoint 1 IN) -- present because the
-	 * CDC-ACM interface descriptor requires it; pic8_usb.c does not send
-	 * serial-state notifications on it (see file header comment). */
+	/* CDC ACM Notification Endpoint (Endpoint 1 IN), required by the
+	 * CDC-ACM interface descriptor; pic8_usb.c never sends serial-state
+	 * notifications on it. */
 	{
 	sizeof(struct endpoint_descriptor),
 	DESC_ENDPOINT,
@@ -204,11 +198,9 @@ int16_t usb_application_get_string(uint8_t string_number, const void **ptr)
 		return sizeof(product_string);
 	}
 	else if (string_number == 3) {
-		/* Placeholder, not a real per-unit serial number -- see the
-		 * string's own contents. A real deployment needs a genuine
-		 * per-unit serial (e.g. read from EEPROM), same as any M-Stack
-		 * device -- required by the CDC spec, and needed so a host
-		 * doesn't confuse two boards sharing this dev VID/PID. */
+		/* Placeholder, not a real per-unit serial number: a real
+		 * deployment needs a genuine one (e.g. from EEPROM) so a host
+		 * doesn't confuse two boards sharing this VID/PID. */
 		*ptr = &dev_serial_string;
 		return sizeof(dev_serial_string);
 	}

@@ -1,11 +1,9 @@
 /**
  * @file    test_pic8_usb.c
- * @brief   Host tests against pic8_usb_host_stub.c -- the public API's
+ * @brief   Host tests against pic8_usb_host_stub.c: the public API's
  *          behavioral contract only (ring fill/drain, overflow-drop,
- *          connected() transitions). Does NOT exercise pic8_usb.c (the
- *          real target file) or M-Stack -- see pic8_usb_host_stub.c's file
- *          header and pic8-usb/docs/pic8-usb-plan.md, "Host build story",
- *          for why that boundary is real and not a shortcut.
+ *          connected() transitions). Does not exercise pic8_usb.c or
+ *          M-Stack, that boundary is real, not a shortcut.
  */
 
 #include "pic8_usb.h"

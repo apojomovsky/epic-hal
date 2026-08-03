@@ -1,16 +1,8 @@
 /*
- * M-Stack application config for pic8-usb.
- *
- * Private to this module -- included only by the vendored M-Stack sources
- * (third_party/m-stack/usb/src/usb.c, usb_cdc.c) and by pic8_usb.c itself.
- * Not a public pic8-usb header; callers only ever see pic8_usb.h.
- *
- * Endpoint layout matches M-Stack's own cdc_acm demo
- * (third_party/m-stack/apps/cdc_acm/usb_config.h): EP1 IN is the CDC
- * notification endpoint (required by the CDC-ACM interface descriptor,
- * unused by pic8_usb.c beyond being present -- see pic8-usb-plan.md,
- * "deliberately not building" serial-state notifications), EP2 IN/OUT is
- * the bulk data pipe pic8_usb_write/read actually move bytes through.
+ * M-Stack application config for pic8-usb, private to this module.
+ * Endpoint layout matches M-Stack's cdc_acm demo: EP1 IN is the
+ * required CDC notification endpoint (unused beyond being present),
+ * EP2 IN/OUT is the bulk pipe pic8_usb_write/read actually use.
  */
 
 #ifndef PIC8_USB_CONFIG_H__
@@ -32,22 +24,18 @@
 
 #define PPB_MODE PPB_NONE
 
-/* Polling, not interrupt-driven: pic8_usb_service() is called from the
- * caller's main loop or a pic8-taskmgr task -- see pic8-usb-plan.md,
- * "Servicing cadence". Leave USB_USE_INTERRUPTS undefined (M-Stack's demo
- * defines it by default and drives usb_service() from a high-priority ISR
- * instead; this module deliberately does not build that second mode -- see
- * the plan doc for why). */
+/* Polling, not interrupt-driven: pic8_usb_service() runs from the
+ * caller's main loop or a pic8-taskmgr task. USB_USE_INTERRUPTS is left
+ * undefined; this module doesn't build M-Stack's ISR-driven mode. */
 
 /* Objects from usb_descriptors.c */
 #define USB_DEVICE_DESCRIPTOR this_device_descriptor
 #define USB_CONFIG_DESCRIPTOR_MAP usb_application_config_descs
 #define USB_STRING_DESCRIPTOR_FUNC usb_application_get_string
 
-/* Callbacks from usb.c -- implemented in pic8_usb.c under pic8_usb_* names
- * (not app_*, so this module doesn't collide with a firmware's own
- * app-level callbacks if something else in the same build also uses
- * M-Stack's app_* naming convention). */
+/* Callbacks from usb.c, implemented in pic8_usb.c under pic8_usb_*
+ * names (not app_*, to avoid colliding with a firmware's own app-level
+ * callbacks). */
 #define SET_CONFIGURATION_CALLBACK         pic8_usb_set_configuration_cb
 #define GET_DEVICE_STATUS_CALLBACK         pic8_usb_get_device_status_cb
 #define ENDPOINT_HALT_CALLBACK             pic8_usb_endpoint_halt_cb

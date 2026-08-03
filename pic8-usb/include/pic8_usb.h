@@ -5,20 +5,11 @@
  *          (third_party/m-stack, see pic8-usb/docs/pic8-usb-plan.md).
  *
  * @details
- *   Deliberately mirrors pic8_serial.h's shape: same non-blocking
- *   read/available contract, same "write blocks until enqueued" contract.
- *   Anyone who already knows pic8_serial_* needs near-zero new mental model.
- *
- *   Unlike pic8_serial, this is PIC18F2455/2550/4455/4550-only by hardware
- *   necessity (M-Stack's usb_hal.h talks directly to the SIE/BDT; there is
- *   no per-family split, no PIC16 backend, and never will be -- PIC16F87XA
- *   parts have no USB peripheral). See the plan doc for why.
- *
- *   pic8_usb_service() must be called frequently (every main-loop
- *   iteration, or from a short-period pic8-taskmgr task) -- it pumps
- *   M-Stack's enumeration/control-transfer state machine and drains/fills
- *   the ring buffers below. Nothing else in this API does anything useful
- *   before pic8_usb_connected() is true.
+ *   Mirrors pic8_serial.h's contract (non-blocking read/available, write
+ *   blocks until enqueued). PIC18Fxx5x-only by hardware necessity, no
+ *   USB peripheral on PIC16F87XA. pic8_usb_service() must be called
+ *   frequently (every main-loop iteration or a short pic8-taskmgr task)
+ *   to pump enumeration and drain/fill the ring buffers.
  */
 
 #ifndef PIC8_USB_H

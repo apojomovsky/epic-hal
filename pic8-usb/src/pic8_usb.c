@@ -5,22 +5,11 @@
  *          points at.
  *
  * @details
- *   M-Stack has no read()/write()/ring buffer of its own for CDC -- the
- *   real API is raw endpoint access (usb_get_in_buffer, usb_send_in_buffer,
- *   usb_get_out_buffer, usb_arm_out_endpoint, ...; confirmed by reading
- *   third_party/m-stack/apps/cdc_acm/main.c, which builds its own ad hoc
- *   buffering for lack of anything better). This file is genuinely new
- *   code, not a thin rename of something M-Stack already provides.
- *
- *   TX is drained opportunistically: pic8_usb_service() moves as many
- *   queued bytes as fit into one EP2 IN packet whenever the endpoint isn't
- *   busy. RX is drained the same way: whenever EP2 OUT has data, every byte
- *   is copied into the RX ring (dropped on overflow, same policy as
- *   pic8-serial) and the endpoint is re-armed.
- *
- *   This file does NOT run on the host build -- see pic8_usb_host_stub.c,
- *   a deliberately separate, independent implementation (host build story
- *   is in pic8-usb/docs/pic8-usb-plan.md).
+ *   M-Stack has no CDC read/write/ring buffer, only raw endpoint access
+ *   (usb_get_in_buffer, usb_arm_out_endpoint, ...); this file is new
+ *   buffering code, not a wrapper. TX/RX each drain opportunistically
+ *   into/from one EP2 packet per service() call, dropping RX on ring
+ *   overflow. Host build uses pic8_usb_host_stub.c instead.
  */
 
 #include "pic8_usb.h"
@@ -137,15 +126,10 @@ bool pic8_usb_connected(void)
 }
 
 /* ---- M-Stack callbacks (named in usb_config.h) ----
- *
- * Every one of these must exist because usb_config.h points a macro at it,
- * even the ones this module has no use for -- M-Stack calls them
- * unconditionally. Only pic8_usb_cdc_set_control_line_state_cb (the DTR
- * signal) and pic8_usb_unknown_setup_request_cb (routes CDC class requests
- * into M-Stack's own process_cdc_setup_request) do anything beyond being
- * present; everything else is a correctly-typed no-op or the same
- * "capability not implemented" answer M-Stack's own demo gives.
- */
+ * Every one must exist, even unused ones, M-Stack calls them
+ * unconditionally. Only the DTR (set_control_line_state) and
+ * unknown_setup_request (routes CDC class requests) callbacks do
+ * anything beyond that; the rest are typed no-ops. */
 
 void pic8_usb_set_configuration_cb(uint8_t configuration)
 {

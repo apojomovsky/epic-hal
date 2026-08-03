@@ -4,12 +4,10 @@
  *          API contract without real USB hardware.
  *
  * @details
- *   Implemented only by pic8_usb_host_stub.c (never by the real-target
- *   pic8_usb.c) -- see "Host build story" in pic8-usb/docs/pic8-usb-plan.md
- *   for why there is no faithful host simulation of the real USB SIE, and
- *   why this header exists as a separate, test-only surface instead of
- *   growing pic8_usb.h itself. Only tests/example host tooling should
- *   include this; target firmware never does.
+ *   Implemented only by pic8_usb_host_stub.c, not the real-target
+ *   pic8_usb.c: there is no faithful host simulation of the real USB SIE,
+ *   so this exists as a separate test-only surface. Only test/example
+ *   tooling includes it; target firmware never does.
  */
 
 #ifndef PIC8_USB_TEST_SUPPORT_H
