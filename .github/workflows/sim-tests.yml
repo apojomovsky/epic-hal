@@ -172,26 +172,25 @@ jobs:
         # local run go through one source of truth, not two copies of
         # this logic that can drift apart. Command order matters inside
         # it: `set` tool-property commands must come before `hwtool`,
-        # silently ignored otherwise (Phase 2 finding). wait_ms defaults
-        # to 2000 (2 real seconds); MPLAB SIM runs noticeably slower than
-        # real-time (confirmed empirically, not a documented spec), so
-        # this is a wall-clock budget, not a simulated-time one.
+        # silently ignored otherwise (Phase 2 finding).
+        #
+        # wait_ms: 5000 (5 real seconds). MPLAB SIM runs noticeably slower
+        # than real-time (confirmed empirically, not a documented spec),
+        # so this is a wall-clock budget, not a simulated-time one, and
+        # pic18fxx5x needs more of it than pic16f87xa does to reach the
+        # harness's report() call (more peripherals to init at a fixed
+        # 48 MHz FOSC). A leftover debug value of 80ms (from isolating a
+        # since-fixed bug, see pic18fxx5x-hal/docs/ARCHITECTURE.md Finding
+        # 3) starved pic18fxx5x of real time here for a while after that
+        # fix landed, producing the same "no UART output" symptom for an
+        # unrelated reason; confirmed reproducing this exact CI image
+        # locally that 80/500ms fail and 2000/5000ms reliably pass, picked
+        # 5000 for margin over the confirmed-passing 2000 baseline.
         shell: bash
         run: |
-          extra_mdb="$(cat <<'EOF'
-          print INTCON
-          print PIR1
-          print PIE1
-          print TXSTA
-          print RCSTA
-          print T2CON
-          print TMR2
-          print PR2
-          EOF
-          )"
           scripts/sim-mdb-run.sh ${{ matrix.family }} ${{ matrix.mcu }} \
             ${{ matrix.device }} ${{ matrix.dir }} ${{ matrix.dfp }} \
-            80 "$extra_mdb"
+            5000
       - name: Upload captured UART output (debugging aid on failure)
         if: failure()
         uses: actions/upload-artifact@v4

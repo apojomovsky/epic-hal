@@ -168,6 +168,30 @@ separate investigation. `pic8-tick`'s PIC18 sim-target test now reaches
 `PIC8_HARNESS_RESULT: PASS` reliably. See
 `pic18fxx5x-hal/docs/ARCHITECTURE.md`.
 
+**A fourth, unrelated bug kept CI itself red after all three driver bugs
+above were fixed and pushed**: `sim-tests.yml`'s `wait_ms` for the
+`Build + run under MPLAB SIM` step was hardcoded to `80` (milliseconds
+of real wall-clock time), a leftover from an earlier debugging pass that
+needed a short window to sample pre-reset state and was never reverted.
+80ms is enough real time for `pic16f87xa`'s build to reach the harness's
+`report()` call but not `pic18fxx5x`'s (more peripherals to initialize
+at a fixed 48 MHz FOSC), so the `pic18fxx5x` leg kept failing with the
+same "no UART output" symptom the three driver-level bugs originally
+produced, for a completely unrelated reason, even on commits where the
+driver code was already correct. Found by reading the actual CI job logs
+via `gh` (not available earlier in this phase) and reproducing the exact
+failing GitHub Actions container locally with `docker run` against the
+same `ghcr.io/apojomovsky/pic8-hal-ci` image tag: `stepi`-based `mdb`
+stepping on that image confirmed `HAL_IRQ_Restore` sets `GIEH`/`GIEL`/
+`IPEN` correctly (ruling out a driver regression), and re-running
+`scripts/sim-mdb-run.sh` locally at increasing `wait_ms` values showed
+80/500ms fail and 2000/5000ms reliably pass. Fixed by raising `wait_ms`
+to `5000` in `sim-tests.yml` (margin above the confirmed-passing 2000ms
+baseline) and removing the now-stale debug `print` list that went with
+the 80ms value. Verified locally against the real CI image for both
+families; not yet confirmed on a live GitHub Actions run since this fix
+hasn't been pushed yet.
+
 ## Motivation
 
 There is no CI today. Every `pic8-*` module and both HALs are host-testable
