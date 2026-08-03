@@ -3,18 +3,12 @@
  * @brief   EEPROM-backed settings blobs with CRC-16 validation.
  *
  * @details
- *   The family HAL already exposes `HAL_EEPROM_WriteBuffer`, but that helper
- *   is unsafe for multi-byte writes today: `HAL_EEPROM_WriteByte` starts a
- *   write cycle and returns immediately, while `HAL_EEPROM_WriteBuffer`
- *   simply loops to the next byte without waiting for EEIF / completion.
- *   This module therefore performs its own byte-at-a-time write sequencing:
- *   start one byte, wait for completion, clear the completion flag, then
- *   start the next byte.
- *
- *   On real silicon the EEPROM write cycle completes asynchronously in
- *   hardware. On the host simulator there is no timed EEPROM model, so after
- *   starting each byte this module drives the simulated write to completion
- *   immediately, then follows the same poll/clear contract as target code.
+ *   HAL_EEPROM_WriteBuffer is unsafe for multi-byte writes (it loops to
+ *   the next byte without waiting for EEIF completion), so this module
+ *   sequences its own byte-at-a-time writes: start, wait, clear flag,
+ *   repeat. The host sim has no timed EEPROM model, so it drives each
+ *   simulated write to completion immediately, then follows the same
+ *   poll/clear contract as target code.
  */
 
 #include "pic8_settings.h"

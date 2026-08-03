@@ -3,16 +3,12 @@
  * @brief   EEPROM-backed settings blobs with CRC-16 validation.
  *
  * @details
- *   Saves an opaque caller-owned blob to EEPROM, appending a trailing
- *   CRC-16-CCITT so a later load can detect corruption or an unwritten
- *   region. There is no instance object and no hidden state: a settings
- *   block is just `(eeprom_addr, size, data)` passed explicitly on each
- *   call, so one firmware can keep several independent settings blobs in
- *   different EEPROM regions.
- *
- *   The module intentionally does not try to distinguish "never written"
- *   from "corrupt" on load failure. Both cases mean the stored blob is not
- *   usable, and the normal recovery is the same: apply defaults.
+ *   Saves an opaque caller-owned blob to EEPROM with a trailing
+ *   CRC-16-CCITT for corruption/blank detection. No instance object or
+ *   hidden state: a block is just (eeprom_addr, size, data) passed
+ *   explicitly, so one firmware can keep several independent blobs.
+ *   "Never written" and "corrupt" are not distinguished on load
+ *   failure, both mean apply defaults.
  */
 
 #ifndef PIC8_SETTINGS_H
