@@ -71,23 +71,11 @@ static void gpio4_delay_ms(void *ctx, uint32_t ms)
     pic8_tick_delay_ms(ms);
 }
 
-/* 4-bit init requires special handling: before the LCD knows we're in
- * 4-bit mode, we must send the Function Set command's high nibble
- * three times (0x3, 0x3, 0x3) then 0x2 to switch to 4-bit.
- * gpio4_send() already handles nibble splitting, so sending 0x33
- * then 0x32 replicates this. But the init sequence in pic8_lcd.c
- * sends full 0x38 commands -- the transport must intercept those.
- *
- * Strategy: the first send() call after a cold start needs to send
- * the 4-bit init preamble. We don't track cold start here; instead,
- * pic8_lcd_init() sends Function Set three times before anything else.
- * The first 0x38 send produces: nibble 0x3, pulse, nibble 0x8, pulse.
- * The LCD only interprets the first nibble 0x3 as "8-bit Function Set",
- * and ignores the second nibble (still in 8-bit mode, expecting DB0-3).
- * After three 0x3X sends the LCD is stabilized, and the fourth send
- * (0x28 = 4-bit, 2-line) switches to 4-bit mode properly.
- *
- * This matches the HD44780 datasheet's 4-bit init procedure exactly. */
+/* No special cold-start handling here: nibble-splitting 0x38 three times
+ * (as pic8_lcd_init does before switching modes) reproduces the HD44780's
+ * 4-bit init preamble (0x3, 0x3, 0x3, then 0x28 for 4-bit/2-line) on its
+ * own, since the LCD only reads the first nibble of each 0x3X send while
+ * still in 8-bit mode. */
 
 void pic8_lcd_gpio4_init(pic8_lcd_ops_t *ops, void **ctx,
                          const pic8_lcd_gpio4_pins_t *pins)

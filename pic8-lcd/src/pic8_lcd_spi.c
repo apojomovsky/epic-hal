@@ -2,19 +2,10 @@
  * @file    pic8_lcd_spi.c
  * @brief   SPI transport for pic8_lcd via 74HC595 shift register.
  *
- *          The 74HC595 converts a serial SPI byte into 8 parallel outputs
- *          (Q0-Q7). A configurable layout struct maps which Q output
- *          connects to which LCD signal (RS, E, DB4-DB7, optional R/W).
- *
- *          Send procedure for one nibble (4-bit LCD mode over SPI):
- *            1. Shift out a byte with the data nibble and E=0, latch it.
- *            2. Shift out the same byte but with E=1, latch it.
- *            3. Shift out the byte with E=0 again, latch it.
- *          This produces the E-pulse the HD44780 expects.
- *
- *          Uses the HAL SSP driver directly (not pic8-bus), because the
- *          595 isn't a register-addressed device -- it's a raw shift
- *          register with a single latch pin.
+ *          A layout struct maps each 74HC595 Q output to an LCD signal
+ *          (RS, E, DB4-DB7). Uses the HAL SSP driver directly, not
+ *          pic8-bus, since the 595 is a raw shift register, not a
+ *          register-addressed device.
  */
 
 #include "pic8_lcd.h"

@@ -90,23 +90,9 @@ void pic8_lcd_init(pic8_lcd_t *lcd, const pic8_lcd_ops_t *ops, void *ops_ctx,
         memcpy(lcd->row_addr, default_row_addr, PIC8_LCD_MAX_ROWS);
     }
 
-    /* HD44780 init sequence (8-bit interface, datasheet §13):
-     *   Wait >40ms after VDD rises to 4.5V
-     *   Function Set (0x38 = 8-bit, 2-line, 5x8)
-     *   Wait >39us
-     *   Function Set (again)
-     *   Wait >37us
-     *   Display ON/OFF (display off)
-     *   Wait >37us
-     *   Clear Display
-     *   Wait >1.53ms
-     *   Entry Mode Set (increment, no shift)
-     *
-     * The 4-bit transport handles the 4-bit init sequence itself
-     * (send 0x3, 0x3, 0x3, 0x2 before switching to 4-bit mode).
-     * Here we send the 8-bit-form Function Set regardless -- the
-     * transport's send() translates as needed.
-     */
+    /* HD44780 8-bit init sequence per datasheet §13; the 4-bit transport
+     * handles its own sub-sequence internally, so this always sends the
+     * 8-bit-form Function Set regardless of the active transport. */
 
     lcd->ops->delay_ms(lcd->ops_ctx, DELAY_INIT_MS);
 

@@ -4,30 +4,11 @@
  *          configurable transport (4-bit GPIO, 8-bit GPIO, SPI via 74HC595).
  *
  * @details
- *   The core logic (HD44780 command set, init sequence, cursor control,
- *   custom characters, print) is transport-agnostic: it calls through a
- *   small ops struct (`pic8_lcd_ops_t`) that hides how bytes reach the
- *   display. Three transports ship with this module:
- *
- *     - `pic8_lcd_gpio4` -- 4-bit parallel GPIO (RS, E, DB4-DB7). Most
- *       common on resource-constrained PICs: 6 I/O pins, compatible with
- *       every family this repo supports.
- *     - `pic8_lcd_gpio8` -- 8-bit parallel GPIO (RS, E, DB0-DB7). Faster
- *       (one send instead of two) at the cost of 4 extra pins.
- *     - `pic8_lcd_spi`  -- SPI via 74HC595 shift register (one chip). 3
- *       wires instead of 6-10; cost is slower transfers and one external IC.
- *
- *   The ops seam also enables host testing: a mock transport records
- *   commands without real hardware, so init-sequence correctness, DDRAM
- *   addressing, and cursor management are verified on the host.
- *
- *   Instance-based (not a singleton): one `pic8_lcd_t` per display. If a
- *   board has two LCDs, create two instances with independent transports.
- *
- *   Timed delays (no busy-flag polling): R/W is tied low in all shipped
- *   transports, so the busy flag is unreadable. Commands wait their
- *   datasheet-specified execution time instead. This costs a few ms max
- *   per command but saves a pin and avoids the read-timing complexity.
+ *   Core HD44780 logic is transport-agnostic, calling through
+ *   `pic8_lcd_ops_t` (also mockable for host tests). Instance-based, one
+ *   `pic8_lcd_t` per display. R/W is tied low in every shipped transport,
+ *   so commands wait a fixed datasheet delay instead of polling the busy
+ *   flag.
  */
 
 #ifndef PIC8_LCD_H
@@ -40,18 +21,9 @@
 /* ---- Transport ops (injected by the caller at init time) ---- */
 
 /**
- * @brief  LCD transport operations. The core calls these to send bytes
- *         and wait for command execution.
- *
- * @details
- *   `send` writes one byte to the display with RS selecting command (0)
- *   vs. data (1). The transport handles 4-bit nibble splitting, E
- *   pulsing, or SPI shift-register framing internally -- the core never
- *   sees those details.
- *
- *   `delay_us` / `delay_ms` wait at least the requested time. On target
- *   these wrap `pic8_tick_delay_ms` and a busy-wait for sub-ms; on host
- *   they are no-ops (test timing is logic-level, not wall-clock).
+ * @brief  LCD transport operations: send a byte and wait for command
+ *         execution. 4-bit nibble splitting, E pulsing, or SPI framing
+ *         happens inside the transport, invisible to the core.
  */
 typedef struct {
     /** Send a byte. rs=0 for instruction register, rs=1 for data register. */
@@ -66,21 +38,17 @@ typedef struct {
 
 /* ---- LCD instance ---- */
 
-/** Row-address table: maps logical row index (0, 1, ...) to the
- *  DDRAM base address for that row. Row 0 = 0x00, row 1 = 0x40 for
- *  the standard HD44780 16x2 / 20x4 layout. Extensible for 4-row
- *  displays (row 2 = 0x14, row 3 = 0x54 for 20-column; row 2 = 0x10,
- *  row 3 = 0x50 for 16-column). PIC8_LCD_MAX_ROWS caps the table. */
+/** Row-address table: DDRAM base address per logical row. Standard HD44780
+ *  layout: row 0=0x00, row 1=0x40, row 2=0x14/0x10, row 3=0x54/0x50
+ *  (20-col/16-col). PIC8_LCD_MAX_ROWS caps the table size. */
 #define PIC8_LCD_MAX_ROWS 4u
 
 /** LCD configuration, passed at init time. */
 typedef struct {
     uint8_t cols;  /**< columns per row (e.g. 16 or 20) */
     uint8_t rows;  /**< number of rows (e.g. 2 or 4)   */
-    /** DDRAM base address for each row. Defaults to the standard HD44780
-     *  layout if `row_addr[0] == 0` at init time:
-     *    row 0 = 0x00, row 1 = 0x40, row 2 = 0x14, row 3 = 0x54.
-     *  Override for non-standard controllers.                       */
+    /** DDRAM base address per row; if row_addr[0]==0 at init, defaults to
+     *  the standard HD44780 layout (see PIC8_LCD_MAX_ROWS comment above). */
     uint8_t row_addr[PIC8_LCD_MAX_ROWS];
 } pic8_lcd_config_t;
 
@@ -98,14 +66,9 @@ typedef struct {
 /* ---- Lifecycle ---- */
 
 /**
- * @brief  Initialize the LCD. Runs the full HD44780 init sequence
- *         (Function Set, Display ON/OFF, Clear, Entry Mode Set) per the
- *         datasheet's "8-Bit Interface" procedure, then applies the
- *         caller's display/cursor/blink defaults (display on, cursor off,
- *         blink off) and entry mode (increment, no shift).
- *
- *         Must be called once before any other function. The ops and
- *         ops_ctx pointers must outlive the lcd instance.
+ * @brief  Run the full HD44780 init sequence and apply the caller's
+ *         display/cursor/blink and entry-mode defaults. Call once before
+ *         any other function; ops/ops_ctx must outlive the lcd instance.
  */
 void pic8_lcd_init(pic8_lcd_t *lcd, const pic8_lcd_ops_t *ops, void *ops_ctx,
                    const pic8_lcd_config_t *config);
