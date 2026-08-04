@@ -1,86 +1,100 @@
 # AGENTS.md
 
-8-bit PIC HAL and tooling library (Microchip PIC16F87XA + PIC18F2455
-families), C99, MPLAB XC8. Every module dual-builds: a host simulation
-backend (gcc/CMake, runs as a normal program, no hardware) and a
-real-target build (XC8 Makefile, produces a `.hex`). Applications never
-`#ifdef` between them, the split happens at build time via include-path
-and linked-file selection.
+8-bit PIC HAL and tooling library. Three families: PIC16F87XA, PIC18F2455
+(both full peripheral coverage), PIC16F193X/Enhanced Mid-range
+(foundation only, GPIO+Timer0, peripherals land incrementally). C99,
+MPLAB XC8. Every module dual-builds: host simulation (gcc/CMake, no
+hardware) and real-target (XC8 Makefile, produces `.hex`). Applications
+never `#ifdef` between them, the split happens at build time via
+include-path and linked-file selection.
 
 ## The one idea that matters most
 
 `pic8-common/` holds everything architecture-blind (status codes, the
-4-function test/firmware harness, shared CMake/Make fragments). Everything
-register-specific (SFR maps, bank/BSR addressing, IRQ vectors, peripheral
-bodies) lives per-family under a **fixed contract**: same names/signatures
-across families, different bodies. Read `pic8-common/README.md` +
-`pic8-common/MANUAL.md` before touching any HAL code, every family manual
-points back there instead of repeating it. Full design:
-`docs/multi-family-plan.md`. `docs/adding-a-device.md` is the playbook if a
-new device variant or a third family shows up.
+4-function harness, shared CMake/Make fragments). Everything
+register-specific (SFR maps, bank/BSR addressing, IRQ vectors,
+peripheral bodies) lives per-family under a **fixed contract**: same
+names/signatures across families, different bodies. Read
+`pic8-common/README.md` + `pic8-common/MANUAL.md` before touching HAL
+code; family manuals point back there instead of repeating it. Full
+design: `docs/multi-family-plan.md`. `docs/adding-a-device.md` is the
+verification-gated playbook for a new device or family (used to add
+PIC16F193X, see `docs/pic16f193x-plan.md`).
 
 ## Module anatomy
 
-Every `pic8-*` module: `README.md` (what/why), often
-`docs/ARCHITECTURE.md` + `docs/API.md`, host-testable via CMake
-(`cmake -B build && cmake --build build && ctest`), real-target via
-`mcu/<family>-*-mplabx/Makefile`
-(`export PATH=$PATH:/opt/microchip/xc8/v3.10/bin && make MCU=...`). No
-top-level build, build each module directly.
+Every `pic8-*` module: `README.md`, often `docs/ARCHITECTURE.md` +
+`docs/API.md`, host-testable via CMake (`cmake -B build && cmake
+--build build && ctest`), real-target via `mcu/<family>-*-mplabx/
+Makefile` (`make MCU=...`). No top-level build, build each module
+directly. Each HAL additionally has `MANUAL.md`, datasheet-cited
+per-peripheral register reference; `pic8-common/MANUAL.md` covers
+shared conventions (naming, handle pattern, harness, interrupt model),
+family manuals only cover what's actually per-family.
 
-The two HALs (`pic16f87xa-hal/`, `pic18fxx5x-hal/`) additionally have
-`MANUAL.md`, per-peripheral register reference, datasheet-cited.
-`pic8-common/MANUAL.md` has the shared conventions (naming, handle
-pattern, harness, interrupt model); family manuals only cover what's
-actually per-family.
+## Build & toolchain
+
+Two paths, pick either. **Native**: XC8/MPLAB X installed by hand
+(license-gated), `export PATH=$PATH:/opt/microchip/xc8/v3.10/bin`,
+`make MCU=...` in a module's `mcu/*-mplabx/` dir;
+`./scripts/bootstrap.sh` covers the host-sim side only. **Docker** (no
+local installs beyond two vendor files only a human can fetch,
+Microchip's CDN blocks scripted downloads): root `Makefile`, `make
+check-vendor` -> `make image` -> `make test` / `make xc8-build
+MODULE=... MCU=...` / `make mdb-test MODULE=... MCU=... DEVICE=...
+DFP=...` / `make shell`. Details: `docs/docker-dev-plan.md`. Same image
+is pushed to a **private** GHCR package CI pulls from
+(`make ci-image-push`, human-triggered only; see that doc for why it
+must stay private, EULA redistribution terms).
+
+CI (`.github/workflows/`): `host-tests.yml` (host build+ctest, every
+module), `xc8-build.yml` (real XC8 cross-compile, every MCU variant),
+`sim-tests.yml` (real `mdb`/MPLAB SIM run, checks actual register/UART
+output, not just "compiled"). All pull the private image, never build
+it.
 
 ## Non-obvious things that will bite you
 
-- **XC8 inline asm is not GNU extended asm.** No operand constraints. Only
-  file-scope `static volatile` symbols are addressable, not function
-  params, not local statics. PIC16 user globals need a leading `_` in the
-  asm string; SFRs (`FSR`, `STATUS`, `PORTD`, …) don't. STATUS bits are
-  numeric (`STATUS,0`), never aliased (`STATUS,C` fails to link). Full
-  empirically-probed writeup: `pic8-math/docs/ARCHITECTURE.md`.
-- **PIC16 indirect addressing (`FSR`/`INDF`) banking**: `STATUS,7` is
-  `IRP`, it selects a 256-byte bank-*pair*, not a per-bank switch. The
-  linker scatters `static` placement by best-fit, not declaration order,
-  pin anything that needs a known bank with `__at(addr)` rather than
-  relying on default placement.
-- **Datasheet/app-note PDFs are not committed** (`*.pdf` is gitignored).
-  Reference them as links to Microchip's own hosted copies
-  (`ww1.microchip.com/downloads/en/...`), never as a local path.
-- **PIC16 has one interrupt vector, no priority; PIC18 has two (high/low)
-  with `HAL_IRQ_SetPriority`.** The enable/disable API shape is otherwise
-  identical, see `pic8-common/MANUAL.md` §6.
+- **XC8 inline asm is not GNU extended asm.** No operand constraints.
+  Only file-scope `static volatile` symbols are addressable. PIC16 user
+  globals need a leading `_` in the asm string; SFRs don't. STATUS bits
+  are numeric (`STATUS,0`), never aliased. Full writeup:
+  `pic8-math/docs/ARCHITECTURE.md`.
+- **Banking differs per family, not just "PIC16 vs PIC18."** Classic
+  PIC16 (87XA): RP0/RP1 bank bits, `STATUS,7`=IRP selects a bank-*pair*.
+  PIC18: Access Bank, no BSR. Enhanced Mid-range (193X): real BSR (32
+  banks x 128B); runtime-dispatched SFR addresses there compile to safe
+  FSR1:INDF1 indirect addressing, not the classic-PIC16 failure mode
+  (verified, not assumed: `pic16f193x-hal/docs/ARCHITECTURE.md` Finding
+  1). The linker scatters unpinned `static` by best-fit, not declaration
+  order, pin anything bank-sensitive with `__at(addr)`.
+- **Datasheet/app-note PDFs are not committed** (`*.pdf` gitignored).
+  Link Microchip's own hosted copies, never a local path.
+- **Interrupt model differs per family.** Classic PIC16: one vector, no
+  priority, manual context save. PIC18: two vectors (high/low),
+  `HAL_IRQ_SetPriority` real. Enhanced Mid-range: one vector, no
+  priority, but *automatic* hardware context save (no manual push/pop).
+  Enable/disable API shape is otherwise identical,
+  `pic8-common/MANUAL.md` §6.
 
 ## Conventions
 
-- **Commit whenever a piece of work is finished**, using Conventional
-  Commits (`type(scope): summary`, types `feat`, `docs`, `plan`, `fix`,
-  `refactor`, `style`). Scope is usually the module (`feat(pic8-lcd):
-  ...`) or `phaseN` for multi-family work. Don't batch unrelated changes
-  into one commit, split them and commit each as its own piece of work
-  finishes.
-- **Before calling a development or fix task done, update the docs it
-  touches.** That means the module's `README.md`/`docs/API.md`/
-  `docs/ARCHITECTURE.md` if a public API, behavior, or status changed; the
-  relevant `MANUAL.md` chapter if a register-level fact changed; and the
-  `Status:` line (and any claim it makes) of the `docs/<name>-plan.md` the
-  work closes out, if there is one. A repo-wide documentation audit found
-  `Status: not started` lines on modules that had shipped long ago, and
-  cross-references pointing at sections that no longer existed, as the
-  norm rather than the exception, exactly because this step kept getting
-  skipped. Don't repeat that: docs are part of the deliverable, not an
-  afterthought.
-- Non-trivial work gets a plan doc first: `docs/<name>-plan.md`, a
-  `Status:` line, explicit **solved vs. pending** framing when design
-  validation happens before implementation.
-- Before trusting an uncertain compiler or hardware behavior (bank
-  placement, inline-asm symbol binding, timing), write a throwaway probe
-  and inspect the generated `.s`/`.map` rather than assume from the
-  datasheet alone. This repo does that repeatedly (`pic8-math`'s XC8
-  round-trip probe is the canonical example) and it has caught real wrong
-  assumptions every time it's been tried.
+- **Commit whenever a piece of work is finished**, Conventional Commits
+  (`type(scope): summary`; `feat`/`docs`/`plan`/`fix`/`refactor`/`style`).
+  Scope is usually the module or `phaseN`. Don't batch unrelated changes.
+- **Update the docs a change touches before calling it done**: the
+  module's `README.md`/`docs/API.md`/`docs/ARCHITECTURE.md` if
+  behavior changed, `MANUAL.md` if a register fact changed, the
+  `Status:` line of the relevant `docs/<name>-plan.md`. A repo-wide
+  audit once found stale `Status: not started` lines on shipped modules
+  as the norm, not the exception, because this step kept getting
+  skipped.
+- **Non-trivial work gets a plan doc first**: `docs/<name>-plan.md`, a
+  `Status:` line, explicit solved-vs-pending framing.
+- **Before trusting an uncertain compiler/hardware behavior**, write a
+  throwaway probe and inspect the generated `.s`/`.map`, don't assume
+  from the datasheet alone. Has caught real wrong assumptions every
+  time it's been tried (`pic8-math`'s XC8 round-trip probe, the
+  PIC16F193X BSR-addressing probe).
 - **No em-dashes (—).** Not in docs, not in commit messages, not in code
   comments. Use a comma, a colon, or a period and a new sentence instead.
