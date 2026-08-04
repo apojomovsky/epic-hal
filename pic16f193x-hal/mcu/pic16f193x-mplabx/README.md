@@ -6,19 +6,21 @@ Builds the HAL for real PIC16F193X silicon via MPLAB XC8 (`xc8-cc`).
 
 The PIC16F193X is an Enhanced Mid-range part. Its device support lives
 in the **Microchip.PIC12-16F1xxx_DFP**, which is **not** bundled with
-the XC8 installer and is **not** pinned in this repo's CI toolchain image
-yet (`docker/ci-toolchain/Dockerfile` pins only the classic
-PIC16Fxxx_DFP + PIC18Fxxxx_DFP).
+the XC8 installer, but **is** pinned in this repo's CI toolchain image
+(`docker/ci-toolchain/Dockerfile`, version 1.9.258, alongside the
+classic PIC16Fxxx_DFP + PIC18Fxxxx_DFP) and is baked into the pushed
+`ghcr.io/apojomovsky/pic8-hal-ci` image `make image`/CI pull. No manual
+DFP setup is needed if you're using the root `Makefile`'s Docker flow
+(see repo-root `README.md`'s Docker quick start).
 
-Installed locally at
-`/opt/microchip/xc8/v3.10/pic/packs/Microchip.PIC12-16F1xxx_DFP/`
-(version 1.9.258, from the `.atpack` unpacked into both the flat and
-versioned pack layout, matching the existing PIC16Fxxx_DFP/
-PIC18Fxxxx_DFP convention). `DFP_DIR` in the `Makefile` already points
-here by default; override it if your install lives elsewhere (via MPLAB
-X's *Tools > Packs* panel, or by unpacking a `.atpack` from
-`packs.download.microchip.com` into your own `.mchp_packs` /
-`xc8/pic/packs` tree).
+If building outside that image, it needs installing locally at
+`.../pic/packs/Microchip.PIC12-16F1xxx_DFP/` (from the `.atpack`
+unpacked into both the flat and versioned pack layout, matching the
+existing PIC16Fxxx_DFP/PIC18Fxxxx_DFP convention). `DFP_DIR` in the
+`Makefile` defaults to the v3.10 local-install path; override it if your
+install lives elsewhere (via MPLAB X's *Tools > Packs* panel, or by
+unpacking a `.atpack` from `packs.download.microchip.com` into your own
+`.mchp_packs` / `xc8/pic/packs` tree).
 
 ## Build
 
@@ -47,5 +49,18 @@ PLLEN/WRT) are confirmed accepted by the DFP.
 
 Per `docs/adding-a-device.md`, "it compiled" is necessary but not
 sufficient: no peripheral counts as done until the §4 `mdb`
-register-readback gate passes, and `mdb` (MPLAB SIM, headless, part of
-MPLAB X) is not yet installed. That is the only remaining toolchain gap.
+register-readback gate passes for it specifically. The toolchain gap is
+closed, `mdb` (MPLAB SIM, headless, part of MPLAB X) is installed and
+confirmed working (verified against `pic8-tick`'s pilot module, both
+existing families, both reaching a real `PIC8_HARNESS_RESULT: PASS` via
+the root `Makefile`'s `make mdb-test`, see `docs/docker-dev-plan.md`).
+
+That specific `make mdb-test`/`scripts/sim-mdb-run.sh` path needs a
+`HARNESS=sim` build that reports over EUSART; this family has no EUSART
+driver yet, so that convenience wrapper doesn't apply here directly. The
+real §4 gate doesn't need it: `stepi <N>` + `print <REGISTER>` against a
+plain `mdb.sh` script, run against this Makefile's existing
+`HARNESS=target`-shaped build (there's no `HARNESS=sim` variant here
+yet, unlike `pic8-tick`'s Makefile). No `pic16f193x-hal` peripheral has
+been run through the gate yet, that is the next real step, not a
+toolchain blocker.

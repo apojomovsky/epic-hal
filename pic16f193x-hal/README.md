@@ -41,11 +41,24 @@ the classic-PIC16 bank-bit failure nor the PIC18 program-memory-table
 failure. Literal SFR tokens in non-mirrored banks correctly get a
 `movlb` bank-select. See `docs/ARCHITECTURE.md` Finding 1.
 
-The **`mdb` register-readback gate is still pending**: MPLAB X / `mdb`
-(MPLAB SIM, headless) is not yet installed, and per
-`docs/adding-a-device.md` "it compiled" is necessary but not sufficient,
-no peripheral counts as done until that gate actually runs on real
-register reads, even with the codegen probe clean.
+The **toolchain gap is closed**: MPLAB X / `mdb` (MPLAB SIM, headless)
+is installed (`docker/ci-toolchain/Dockerfile`, pushed to
+`ghcr.io/apojomovsky/pic8-hal-ci`) and confirmed working end-to-end via
+the root `Makefile`'s `make mdb-test` (verified against `pic8-tick`'s
+pilot module, both existing families, real `PIC8_HARNESS_RESULT: PASS`).
+`make xc8-build MODULE=pic16f193x-hal MCU=16F1937` works today.
+
+`make mdb-test` itself is a convenience wrapper around a `HARNESS=sim`
+build that reports PASS/FAIL over the **EUSART** (see
+`scripts/sim-mdb-run.sh`); this family has no EUSART driver yet, so that
+exact wrapper doesn't apply until one exists. The real §4 gate does not
+require it: `docs/adding-a-device.md` §4.6's protocol is `stepi <N>` +
+`print <REGISTER>` against a plain `mdb.sh` script, run directly
+against the existing `HARNESS=target` build (`make shell`, then invoke
+`mdb.sh` by hand, or add a small ad-hoc script), no UART needed. No
+`pic16f193x-hal` peripheral has actually been run through that gate yet,
+per `docs/adding-a-device.md` "it compiled" is necessary but not
+sufficient, so nothing here is "done" until that specific run happens.
 
 ## Layout
 

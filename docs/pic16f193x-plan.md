@@ -1,7 +1,9 @@
 # PIC16F193X family addition
 
 Status: **foundation host-verified, real-target-build-verified, and
-codegen-probed clean; `mdb` register-readback gate still pending**.
+codegen-probed clean. `mdb` is installed and confirmed working
+end-to-end (proven on the pilot module, not yet on this family). No
+`pic16f193x-hal` peripheral has been through the §4 gate yet.**
 Device identity confirmed (§1), Path B confirmed (§2), scope set (§3).
 The foundation (platform headers, SFR map, IRQ backend, dispatch, ISR
 vector, harness, WDT/Sleep, GPIO, Timer0, host sim) builds clean with
@@ -12,11 +14,20 @@ The XC8 codegen probe of the two known-risky SFR-access patterns came
 back clean (`pic16f193x-hal/docs/ARCHITECTURE.md` Finding 1): runtime
 SFR-address dispatch routes through FSR1:INDF1 (BSR-independent by
 construction), literal tokens in non-mirrored banks get a correct
-`movlb`. The `mdb` register-readback gate (the mandatory, no-exceptions
-half of §4 of `adding-a-device.md`) still needs MPLAB X / `mdb`
-installed; until that runs, no peripheral counts
-as done, only "compiles clean on host and target." Peripherals land one
-at a time through the full §4 gate once `mdb` is available (§7).
+`movlb`.
+
+The toolchain gap is closed: MPLAB X / `mdb` is installed
+(`docker/ci-toolchain/Dockerfile`, pushed to the private
+`ghcr.io/apojomovsky/pic8-hal-ci` GHCR image) and confirmed working via
+the root `Makefile`'s `make mdb-test`, real `PIC8_HARNESS_RESULT: PASS`
+against `pic8-tick`'s pilot module on both existing families. What is
+**not** yet done: no `pic16f193x-hal` peripheral has actually been run
+through the §4 gate, and the convenience wrapper `make mdb-test` relies
+on needs a `HARNESS=sim` EUSART-reporting build this family doesn't
+have yet (see §4 for the two options: add that harness variant, or run
+the underlying `stepi`/`print` protocol directly against the existing
+`HARNESS=target` build). That is real, undone work for whoever picks up
+the first peripheral (§7), not a solved detail.
 
 This plan follows `docs/adding-a-device.md` (the operational procedure,
 which supersedes `docs/multi-family-plan.md`'s "add family #3" checklist).
@@ -151,7 +162,7 @@ Sleep, ICSP. Solved.
   done until the `mdb` gate passes, so each foundation piece and
   peripheral is tracked as `host-verified, mdb-pending`.
 
-## §4. Blocker: DFP / mdb (half-resolved: DFP installed, mdb still pending)
+## §4. Blocker: DFP / mdb (resolved: both installed and confirmed working)
 
 `adding-a-device.md` §1.3 requires the part to be in a pinned DFP; the
 1937 was not. It lives in `Microchip.PIC12-16F1xxx_DFP`, which the user
@@ -177,12 +188,31 @@ directives (FOSC/WDTE/PWRTE/MCLRE/CP/CPD/BOREN/CLKOUTEN/IESO/FCMEN/LVP/
 STVREN/PLLEN/WRT) are all confirmed non-hidden in the DFP and compile
 clean.
 
-**Still pending: `mdb` (MPLAB SIM, headless)** is not installed locally.
-The §4 register-readback gate needs it; the real-target build passing
-is necessary but explicitly not sufficient per the playbook ("it
-compiled" and "the host sim passed" are necessary, not sufficient).
-CI Dockerfile pin + `sim-tests.yml` wiring are still drafted for review,
-not applied. Pending: user installs MPLAB X / `mdb`.
+**`mdb` (MPLAB SIM, headless): now installed and confirmed working.**
+User supplied the MPLAB X IDE installer; `docker/ci-toolchain/Dockerfile`
+now builds the full image (XC8 + all three DFPs + MPLAB X), pushed to
+the private `ghcr.io/apojomovsky/pic8-hal-ci` GHCR package that
+`xc8-build.yml`/`sim-tests.yml` pull. The root `Makefile`'s `make
+mdb-test` was run for real against `pic8-tick`'s pilot module (both
+PIC16F87XA and PIC18F4550), both reaching a genuine
+`PIC8_HARNESS_RESULT: PASS`. See `docs/docker-dev-plan.md` for the full
+account. The real-target build passing was necessary but not sufficient
+per the playbook; that half is now also closed.
+
+**Not yet done**: no `pic16f193x-hal` peripheral has been run through
+the §4 gate itself. `make mdb-test`'s convenience wrapper
+(`scripts/sim-mdb-run.sh`) needs a `HARNESS=sim` build reporting
+PASS/FAIL over EUSART; this family has no EUSART driver yet, so that
+exact command doesn't apply until one exists (or a substitute reporting
+mechanism, e.g. a GPIO pulse pattern, is added). The underlying §4
+protocol (`stepi <N>` + `print <REGISTER>` via a plain `mdb.sh` script,
+`docs/adding-a-device.md` §4.6) does not need UART and can run today
+against the existing `HARNESS=target`-shaped build. Whoever picks up
+the first peripheral should either add a minimal `HARNESS=sim` variant
+to `mcu/pic16f193x-mplabx/Makefile` (mirroring `pic8-tick`'s, reporting
+via GPIO toggle or an early, minimal EUSART TX-only path) or run the
+`stepi`/`print` protocol directly. This is a real, open design decision
+for the next unit of work, not a solved detail.
 
 ## §5. Foundation design (solved, user-approved)
 
@@ -245,7 +275,8 @@ Foundation deliverables (everything needed for a minimal blink + host sim
     (codegen findings, filled as the §4 gate surfaces them).
 
 Solved. Foundation implemented, host-verified and committed (`786e9db`);
-real-target build and `mdb` gate pending the DFP (§4).
+real-target build verified (§4); `mdb` gate not yet run for this family
+(§4, §6).
 
 ## §6. Verification (partly solved)
 
@@ -259,12 +290,17 @@ real-target build and `mdb` gate pending the DFP (§4).
   build clean and produce a valid Intel-HEX image with the
   `Microchip.PIC12-16F1xxx_DFP` installed (§4). One datasheet/DFP
   disagreement found and fixed (the hidden `DEBUG` config field, §4).
-- **`mdb` register readback** (pending mdb only, DFP is no longer the
-  blocker): the §4 gate for every peripheral, using the established
+- **`mdb` register readback** (toolchain ready, not yet run for this
+  family): the §4 gate for every peripheral, using the established
   `stepi <N>` + `print <REGISTER>` protocol, comparing against
-  hand-computed expected values from each example's header. Deferred
-  until MPLAB X / `mdb` is installed; re-run for every piece tracked
-  `mdb-pending`.
+  hand-computed expected values from each example's header. `mdb` is
+  installed and proven working (`make mdb-test` against `pic8-tick`'s
+  pilot module, both existing families, real PASS). Not yet run against
+  any `pic16f193x-hal` peripheral: that convenience wrapper needs a
+  `HARNESS=sim` EUSART-reporting build this family doesn't have; either
+  add one (mirroring `pic8-tick`'s Makefile) or run `stepi`/`print`
+  directly via `mdb.sh` against the existing `HARNESS=target` build.
+  Whoever starts the first peripheral makes this call.
 - **XC8 codegen probe** (solved, clean result): disassembled the linked
   `example_blink` firmware and confirmed both known-risky patterns are
   safe on this core (`pic16f193x-hal/docs/ARCHITECTURE.md` Finding 1).
