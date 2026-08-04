@@ -68,6 +68,28 @@ COMMON_DIR ?= $(HAL_DIR)/../pic8-common
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-firmware
 
+# HARNESS=target (default): real-target harness, infinite loop, no
+# stdout, unchanged from the foundation. HARNESS=sim: bounded harness
+# that drives RA0 (PORTA bit 0) to indicate PASS/FAIL, for driving
+# under MPLAB SIM with scripts/sim-mdb-run.sh MODE=gpio. Needs its
+# own TARGET suffix so a sim build doesn't clobber a target build's
+# .hex in the same build/ dir.
+HARNESS ?= target
+ifeq ($(HARNESS),sim)
+  TARGET     := $(BUILD_DIR)/$(MCU)-firmware-sim
+  HARNESS_SRC := $(HAL_DIR)/src/core/pic16f193x_harness_sim_target.c
+  # WDTE=OFF only for this variant, see the config-word recipe below
+  # for why: real-target firmware genuinely needs the watchdog
+  # running unattended; a diagnostic build that terminates and
+  # reports does not, and PIC16F193X's WDTE is a config-word fuse
+  # burned at program time, not a runtime-togglable bit, so this is
+  # the only place it can be turned off for this variant.
+  CONFIG_WDTE := OFF
+else
+  HARNESS_SRC := $(COMMON_DIR)/src/core/pic8_harness_target.c
+  CONFIG_WDTE := ON
+endif
+
 # Enhanced Mid-range DFP. Override with make DFP_DIR=/path/to/.../xc8.
 DFP_DIR ?= /opt/microchip/xc8/v3.10/pic/packs/Microchip.PIC12-16F1xxx_DFP/xc8
 ifneq ($(strip $(DFP_DIR)),)
@@ -103,7 +125,7 @@ HAL_SOURCES := \
   $(HAL_DIR)/src/core/pic16f193x_wdt_sleep_target.c \
   $(HAL_DIR)/src/core/pic16f193x_isr_vector.c      \
   $(HAL_DIR)/src/core/pic16f193x_irq_dispatch.c    \
-  $(COMMON_DIR)/src/core/pic8_harness_target.c
+  $(HARNESS_SRC)
 
 # Add your application sources here. example_blink is the canonical
 # "turn an LED on" smoke test. Replace it with your project's main.c.
@@ -128,7 +150,7 @@ $(CONFIG_SRC): | $(BUILD_DIR)
 	@printf '/* Auto-generated. Do not edit. */\n' > $@
 	@printf '#include <xc.h>\n' >> $@
 	@printf '#pragma config FOSC = INTOSC\n' >> $@
-	@printf '#pragma config WDTE = ON\n' >> $@
+	@printf '#pragma config WDTE = $(CONFIG_WDTE)\n' >> $@
 	@printf '#pragma config PWRTE = ON\n' >> $@
 	@printf '#pragma config MCLRE = ON\n' >> $@
 	@printf '#pragma config CP = OFF\n' >> $@

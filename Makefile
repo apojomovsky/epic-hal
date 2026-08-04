@@ -175,11 +175,13 @@ xc8-build: image
 # for the mdb command sequence, not a fourth copy of it here.
 mdb-test: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ] || [ -z "$(DFP)" ]; then \
-		echo "usage: make mdb-test MODULE=<mcu/*-mplabx dir> MCU=<mcu> DEVICE=<device> DFP=<pack> [WAIT_MS=<ms>]" >&2; \
+		echo "usage: make mdb-test MODULE=<mcu/*-mplabx dir> MCU=<mcu> DEVICE=<device> DFP=<pack> [WAIT_MS=<ms>] [MODE=uart|gpio]" >&2; \
+		echo "  MODE=uart (default) for PIC16F87XA/PIC18Fxxxx (UART capture);" >&2; \
+		echo "  MODE=gpio for PIC16F193X (RA0 register readback)." >&2; \
 		echo "  e.g. make mdb-test MODULE=pic8-tick/mcu/pic16f87xa-tick-mplabx MCU=16F877A DEVICE=PIC16F877A DFP=Microchip.PIC16Fxxx_DFP" >&2; \
 		exit 1; \
 	fi
-	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(DFP) $(WAIT_MS)
+	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(DFP) $(or $(WAIT_MS),2000) $(or $(MODE),uart)
 
 # ─────────────────────────── dev shell ───────────────────────────────
 # Same --user/passwd/HOME fix as DOCKER_RUN (see its comment); a plain
