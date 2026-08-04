@@ -226,6 +226,22 @@
 #define PIC_REG_IOCBN         0x395U
 #define PIC_REG_IOCBF         0x396U
 
+/* ───────────────────────── Bank 8 SFRs (0x40C-0x41F) ────────────── */
+
+/* Timer4/Timer6, DS41364B §17.0. NOT documented in
+ * docs/pic16f193x-plan.md §2's bank-map table (that table only covers
+ * banks 0-7; banks 8-15 were assumed GPR/linear-only, which is wrong
+ * for this bank, see docs/superpowers/plans/2026-08-04-pic16f193x-timer246.md's
+ * "Known documentation gap" note). Confirmed via the installed DFP header
+ * (xc8/pic/include/proc/pic16f1937.h): TMR4/PR4/T4CON and TMR6/PR6/T6CON
+ * both live in bank 8, distinct from Timer2's bank-0 placement. */
+#define PIC_REG_TMR4          0x415U
+#define PIC_REG_PR4           0x416U
+#define PIC_REG_T4CON         0x417U
+#define PIC_REG_TMR6          0x41CU
+#define PIC_REG_PR6           0x41DU
+#define PIC_REG_T6CON         0x41EU
+
 /* ───────────────────────── STATUS register bits ────────────────── */
 
 /* DS41364B §2.2, Register 2-1. Enhanced Mid-range has no RP0/RP1/IRP
@@ -351,6 +367,41 @@
 
 /* POR value of T1CON, DS41364B Register 16-1 POR column. */
 #define PIC_T1CON_POR_VALUE      0x00U
+
+/* ───────────────── T2CON / T4CON / T6CON bits (Timer2/4/6) ──────── */
+
+/* DS41364B §17.0 (one register template documents Timer2/4/6 as a
+ * group; the physical registers are T2CON/T4CON/T6CON, one instance
+ * each). Cross-checked against the installed DFP header's
+ * T2CON_T2CKPS_POSN/_MASK, T2CON_TMR2ON_POSN/_MASK,
+ * T2CON_T2OUTPS_POSN/_MASK macros (and the T4CON/T6CON equivalents,
+ * identical shape). Re-verify against DS41364B directly before relying
+ * on these; the §4 gate is the actual verification floor, not this
+ * comment.
+ *
+ * Layout, identical for all three registers:
+ *   bit 7      unimplemented, reads 0
+ *   bits 6:3   T*OUTPS<3:0>  postscaler select, 1:1 through 1:16, N+1
+ *   bit 2      TMR*ON        timer enable
+ *   bits 1:0   T*CKPS<1:0>   prescaler select: 00=1:1, 01=1:4, 1x=1:16
+ * POR value: 0x00 for all three (DS41364B Register 17-1 POR column). */
+#define PIC_T2CON_T2CKPS_MASK   0x03U         /* T2CON<1:0>. */
+#define PIC_T2CON_TMR2ON        PIC8_BIT(2)   /* T2CON<2>. */
+#define PIC_T2CON_TOUTPS_MASK   0x78U         /* T2CON<6:3>. */
+#define PIC_T2CON_TOUTPS_POS    3U
+#define PIC_T2CON_POR_VALUE     0x00U
+
+#define PIC_T4CON_T4CKPS_MASK   0x03U         /* T4CON<1:0>. */
+#define PIC_T4CON_TMR4ON        PIC8_BIT(2)   /* T4CON<2>. */
+#define PIC_T4CON_TOUTPS_MASK   0x78U         /* T4CON<6:3>. */
+#define PIC_T4CON_TOUTPS_POS    3U
+#define PIC_T4CON_POR_VALUE     0x00U
+
+#define PIC_T6CON_T6CKPS_MASK   0x03U         /* T6CON<1:0>. */
+#define PIC_T6CON_TMR6ON        PIC8_BIT(2)   /* T6CON<2>. */
+#define PIC_T6CON_TOUTPS_MASK   0x78U         /* T6CON<6:3>. */
+#define PIC_T6CON_TOUTPS_POS    3U
+#define PIC_T6CON_POR_VALUE     0x00U
 
 /* ───────────────────────── Reset values (POR) ──────────────────── */
 

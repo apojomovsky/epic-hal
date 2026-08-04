@@ -12,20 +12,27 @@
  *   host linker is forced to pull every handler's object out of the
  *   static library instead of leaving an unreferenced weak symbol NULL.
  *
- *   Foundation + Timer1: TIMER0, TIMER1, and IOC (the GPIO change
- *   interrupt) have drivers. Each peripheral phase appends its handler
- *   extern and its call here, in the same shape.
+ *   Foundation + Timer1 + Timer2/4/6: TIMER0, TIMER1, TIMER2, TIMER4,
+ *   TIMER6, and IOC (the GPIO change interrupt) have drivers. Each
+ *   peripheral phase appends its handler extern and its call here, in
+ *   the same shape.
  */
 
 #include "core/pic16f193x_irq.h"
 
 extern void TIMER0_IRQHandler(void);
 extern void TIMER1_IRQHandler(void);
+extern void TIMER2_IRQHandler(void);
+extern void TIMER4_IRQHandler(void);
+extern void TIMER6_IRQHandler(void);
 extern void IOC_IRQHandler(void);
 
 void pic8_dispatch_all_irqs(void)
 {
     TIMER0_IRQHandler();
     TIMER1_IRQHandler();
+    TIMER2_IRQHandler();
+    TIMER4_IRQHandler();
+    TIMER6_IRQHandler();
     IOC_IRQHandler();
 }

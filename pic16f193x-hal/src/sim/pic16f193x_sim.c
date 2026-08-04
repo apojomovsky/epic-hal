@@ -33,6 +33,7 @@ static pic16f193x_sim_irq_cb_t sim_irq_cb = 0;
 
 static void sim_step_timer0(void);
 static void sim_step_timer1(void);
+static void sim_step_timer246(void);
 static void sim_refresh_ports(void);
 static void sim_step_ioc(void);
 
@@ -65,6 +66,13 @@ void pic16f193x_sim_reset(void)
     pic16f193x_sim_sfr[PIC_REG_PIE1]    = PIC_PIE1_POR_VALUE;
     pic16f193x_sim_sfr[PIC_REG_PIE2]    = PIC_PIE2_POR_VALUE;
     pic16f193x_sim_sfr[PIC_REG_PIE3]    = PIC_PIE3_POR_VALUE;
+
+    /* PR2/PR4/PR6 reset to 0xFF, not 0x00 (DS41364B §17.0, Register
+     * 17-1 POR column); the surrounding memset zeroes everything, so
+     * these three need an explicit override like PIR1/PIE1 above. */
+    pic16f193x_sim_sfr[PIC_REG_PR2] = 0xFFU;
+    pic16f193x_sim_sfr[PIC_REG_PR4] = 0xFFU;
+    pic16f193x_sim_sfr[PIC_REG_PR6] = 0xFFU;
 
     /* PIR1<TXIF> resets to 1 (TXREG empty after POR, DS41364B §20.0). */
     pic16f193x_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TXIF;
@@ -121,6 +129,7 @@ void pic16f193x_sim_step(uint32_t ticks)
     for (uint32_t i = 0; i < ticks; i++) {
         sim_step_timer0();
         sim_step_timer1();
+        sim_step_timer246();
         sim_refresh_ports();
         sim_step_ioc();
     }
@@ -204,6 +213,60 @@ static void sim_step_timer1(void)
     if (full == 0x0000U) {
         pic16f193x_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR1IF;
         if (sim_irq_cb) sim_irq_cb();
+    }
+}
+
+/* ───────────────────────── Timer2/4/6 step ──────────────────────── */
+
+static void sim_step_timer246(void)
+{
+    /* T*CON layout (DS41364B §17.0), identical for T2CON/T4CON/T6CON:
+     *   bits 6:3  T*OUTPS<3:0>  postscaler select, 1:(N+1)
+     *   bit 2     TMR*ON        timer enable
+     *   bits 1:0  T*CKPS<1:0>   prescaler select: 00=1:1,01=1:4,1x=1:16
+     *
+     * Unlike sim_step_timer0/sim_step_timer1 (increment then check for
+     * wraparound), this counts up to PRx and resets to 0 on the cycle
+     * it would exceed PRx: comparing tmr == pr BEFORE incrementing,
+     * not after, because an 8-bit counter wrapping 0xFF -> 0x00 on its
+     * own can't be told apart from a PR=0xFF match using a
+     * post-increment check. */
+    static const uint16_t con_addr[3] = { PIC_REG_T2CON, PIC_REG_T4CON, PIC_REG_T6CON };
+    static const uint16_t tmr_addr[3] = { PIC_REG_TMR2,  PIC_REG_TMR4,  PIC_REG_TMR6  };
+    static const uint16_t pr_addr[3]  = { PIC_REG_PR2,   PIC_REG_PR4,   PIC_REG_PR6   };
+    static const uint16_t pir_addr[3] = { PIC_REG_PIR1,  PIC_REG_PIR3,  PIC_REG_PIR3  };
+    static const uint8_t  pir_bit[3]  = { PIC_PIR1_TMR2IF, PIC_PIR3_TMR4IF, PIC_PIR3_TMR6IF };
+    static const uint8_t  pre_ratio[4] = { 1, 4, 16, 16 };
+
+    static uint16_t prescale_ctr[3]  = { 0, 0, 0 };
+    static uint8_t  postscale_ctr[3] = { 0, 0, 0 };
+
+    for (uint8_t i = 0; i < 3u; i++) {
+        uint8_t con = pic16f193x_sim_sfr[con_addr[i]];
+        if (!(con & 0x04U)) continue;   /* TMR*ON = 0 -> stopped. */
+
+        uint8_t ckps = con & 0x03U;
+        prescale_ctr[i]++;
+        if (prescale_ctr[i] < pre_ratio[ckps]) continue;
+        prescale_ctr[i] = 0U;
+
+        uint8_t tmr = pic16f193x_sim_sfr[tmr_addr[i]];
+        uint8_t pr  = pic16f193x_sim_sfr[pr_addr[i]];
+
+        if (tmr == pr) {
+            /* PR match: reset to 0, bump the postscaler. */
+            tmr = 0U;
+            uint8_t outps = (uint8_t)((con >> 3) & 0x0FU);
+            postscale_ctr[i]++;
+            if (postscale_ctr[i] > outps) {
+                postscale_ctr[i] = 0U;
+                pic16f193x_sim_sfr[pir_addr[i]] |= pir_bit[i];
+                if (sim_irq_cb) sim_irq_cb();
+            }
+        } else {
+            tmr++;
+        }
+        pic16f193x_sim_sfr[tmr_addr[i]] = tmr;
     }
 }
 

@@ -11,7 +11,7 @@
 # anywhere xc8-cc/mdb.sh are on PATH and $XC8_INSTALL_DIR is set the
 # same way that image's Dockerfile sets it.
 #
-# Usage: sim-mdb-run.sh <family> <mcu> <device> <dir> <dfp> [wait_ms] [mode] [extra_mdb]
+# Usage: sim-mdb-run.sh <family> <mcu> <device> <dir> <dfp> [wait_ms] [mode] [sim_app] [extra_mdb]
 #   family    matrix label, only used to namespace temp files (e.g. pic16f87xa)
 #   mcu       Makefile MCU= value (e.g. 16F877A)
 #   device    mdb `device` command's part name (e.g. PIC16F877A)
@@ -26,6 +26,11 @@
 #             marker from a PORTA register via mdb `print` and checks
 #             bit 0. Only pic16f193x currently uses gpio; pic16f87xa
 #             and pic18fxx5x keep uart.
+#   sim_app   optional: which tests/*.c file HARNESS=sim links as the
+#             diagnostic firmware, forwarded to the nested make as
+#             SIM_APP=<value>. Empty (default) leaves the Makefile's
+#             own SIM_APP default (example_timer1.c) in place. Only
+#             needed when gating a peripheral other than Timer1.
 #   extra_mdb extra mdb commands (e.g. `print`s), inserted right before
 #             `quit`, for register-level debugging without hardcoding
 #             device-specific diagnostics into this generic script.
@@ -33,7 +38,7 @@
 set -euo pipefail
 
 family="$1"; mcu="$2"; device="$3"; dir="$4"; dfp="$5"
-wait_ms="${6:-2000}"; mode="${7:-uart}"; extra_mdb="${8:-}"
+wait_ms="${6:-2000}"; mode="${7:-uart}"; sim_app="${8:-}"; extra_mdb="${9:-}"
 
 if [ "$mode" != "uart" ] && [ "$mode" != "gpio" ]; then
   echo "::error::mode must be 'uart' or 'gpio', got '$mode'" >&2
@@ -41,8 +46,13 @@ if [ "$mode" != "uart" ] && [ "$mode" != "gpio" ]; then
 fi
 
 make -C "$dir" clean
-make -C "$dir" MCU="$mcu" HARNESS=sim \
-  DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${dfp}/xc8"
+if [ -n "$sim_app" ]; then
+  make -C "$dir" MCU="$mcu" HARNESS=sim SIM_APP="$sim_app" \
+    DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${dfp}/xc8"
+else
+  make -C "$dir" MCU="$mcu" HARNESS=sim \
+    DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${dfp}/xc8"
+fi
 
 hexes=("$dir"/build/"$mcu"-*-sim.hex)
 if [ ! -e "${hexes[0]}" ] || [ "${#hexes[@]}" -ne 1 ]; then

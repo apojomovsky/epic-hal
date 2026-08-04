@@ -85,7 +85,12 @@ ifeq ($(HARNESS),sim)
   # default real-target example (example_blink) returns the report's
   # result and re-enters main via `ljmp start`, which flickers RA0 in
   # the simulator and breaks the readback.
-  APP_SOURCES := $(HAL_DIR)/tests/example_timer1.c
+  # SIM_APP selects which diagnostic example HARNESS=sim builds.
+  # Default stays example_timer1.c so Timer1's own MODE=gpio gate keeps
+  # working unchanged; override per invocation for a different
+  # peripheral's gate, e.g. make ... HARNESS=sim SIM_APP=example_timer246.c
+  SIM_APP     ?= example_timer1.c
+  APP_SOURCES := $(HAL_DIR)/tests/$(SIM_APP)
   # WDTE=OFF only for this variant, see the config-word recipe below
   # for why: real-target firmware genuinely needs the watchdog
   # running unattended; a diagnostic build that terminates and
@@ -133,6 +138,7 @@ HAL_SOURCES := \
   $(HAL_DIR)/src/peripherals/pic16f193x_gpio.c     \
   $(HAL_DIR)/src/peripherals/pic16f193x_timer0.c   \
   $(HAL_DIR)/src/peripherals/pic16f193x_timer1.c   \
+  $(HAL_DIR)/src/peripherals/pic16f193x_timer246.c \
   $(HAL_DIR)/src/core/pic16f193x_irq.c             \
   $(HAL_DIR)/src/core/pic16f193x_wdt_sleep.c       \
   $(HAL_DIR)/src/core/pic16f193x_wdt_sleep_target.c \
