@@ -26,10 +26,12 @@ GPIO (LAT/ANSEL/WPUB/IOC), Timer0, and the host simulation backend build
 clean (`-Wall -Wextra -Werror`) and pass on the host for all six parts.
 The `Microchip.PIC12-16F1xxx_DFP` (1.9.258) is now installed locally,
 and the real-target XC8 build (`mcu/pic16f193x-mplabx/Makefile`) also
-passes for all six parts, producing a valid Intel-HEX image each. The
-remaining peripherals (Timer1/2/4/6, 5x CCP, EUSART, MSSP, ADC,
-Comparator, DAC, FVR, SR latch, capacitive sensing, LCD driver, EEPROM)
-are added one at a time, each through the §4 verification gate.
+passes for all six parts, producing a valid Intel-HEX image each.
+Timer1 has cleared the §4 verification gate, including the `mdb`
+register-readback half (see below). The remaining peripherals
+(Timer2/4/6, 5x CCP, EUSART, MSSP, ADC, Comparator, DAC, FVR, SR latch,
+capacitive sensing, LCD driver, EEPROM) are added one at a time, each
+through the §4 verification gate.
 
 The XC8 codegen probe of the known-risky SFR-access patterns
 (docs/adding-a-device.md appendix) came back clean: disassembling the
@@ -48,17 +50,18 @@ the root `Makefile`'s `make mdb-test` (verified against `pic8-tick`'s
 pilot module, both existing families, real `PIC8_HARNESS_RESULT: PASS`).
 `make xc8-build MODULE=pic16f193x-hal MCU=16F1937` works today.
 
-`make mdb-test` itself is a convenience wrapper around a `HARNESS=sim`
-build that reports PASS/FAIL over the **EUSART** (see
-`scripts/sim-mdb-run.sh`); this family has no EUSART driver yet, so that
-exact wrapper doesn't apply until one exists. The real §4 gate does not
-require it: `docs/adding-a-device.md` §4.6's protocol is `stepi <N>` +
-`print <REGISTER>` against a plain `mdb.sh` script, run directly
-against the existing `HARNESS=target` build (`make shell`, then invoke
-`mdb.sh` by hand, or add a small ad-hoc script), no UART needed. No
-`pic16f193x-hal` peripheral has actually been run through that gate yet,
-per `docs/adding-a-device.md` "it compiled" is necessary but not
-sufficient, so nothing here is "done" until that specific run happens.
+`make mdb-test` is now wired for PIC16F193X via `MODE=gpio`: the
+HARNESS=sim harness drives RA0 (PORTA bit 0) from the pass/fail
+marker (`pic8_harness_log()` magic-string dispatch), and the wrapper
+reads `print PORTA` to detect the result. Run
+`make mdb-test MODULE=pic16f193x-hal/mcu/pic16f193x-mplabx \
+   MCU=16F1937 DEVICE=PIC16F1937 \
+   DFP=Microchip.PIC12-16F1xxx_DFP MODE=gpio`
+(with `WAIT_MS=60000` on the Docker MPLAB SIM, since the simulator
+runs ~1/2000th real-time and the default 2000 ms is too short for
+the Timer1 example to overflow even once) to exercise the gate.
+PIC16F87XA and PIC18Fxxxx continue to use the default `MODE=uart`
+for their EUSART-based marker.
 
 ## Layout
 
@@ -67,12 +70,12 @@ include/      family + core/peripheral headers
   host/       host platform header (memory-backed SFR)
   target/     target platform header (volatile-deref SFR)
   core/       IRQ, WDT/Sleep, neutral shims
-  peripherals/ GPIO, Timer0, neutral shims
+  peripherals/ GPIO, Timer0, Timer1, neutral shims
 src/
-  core/       IRQ backend, dispatch, ISR vector, harness, WDT/Sleep
-  peripherals/ GPIO, Timer0
+  core/       IRQ backend, dispatch, ISR vector, harness (host + sim-target), WDT/Sleep
+  peripherals/ GPIO, Timer0, Timer1
   sim/        host simulation backend (flat-array register file)
-tests/       example_blink.c, example_gpio.c
+tests/       example_blink.c, example_gpio.c, example_timer1.c
 mcu/pic16f193x-mplabx/  XC8 Makefile (+ DFP pin, config words)
 docs/        ARCHITECTURE.md (XC8 codegen findings, filled as found)
 ```

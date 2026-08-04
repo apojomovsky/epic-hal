@@ -332,6 +332,26 @@
 #define PIC_WDTCON_WDTPS_MASK 0x3EU          /* WDTPS4:WDTPS0, bits 5:1. */
 #define PIC_WDTCON_WDTPS_POS  1U
 
+/* ───────────────────────── T1CON bits (Timer1) ──────────────────── */
+
+/* DS41364B Register 16-1. Verify each bit position and the POR
+ * value against the datasheet before relying on them; the §4 gate
+ * will catch any wrong literal.
+ *
+ * TMR1CS<1:0> (bits 7:6) selects the clock source (00 = FOSC/4,
+ * 01 = FOSC, 10 = T1CKI pin/T1OSC, 11 = CAPOSC); bit 1 is
+ * unimplemented. Everything but FOSC/4 (external clock, T1OSC,
+ * CAPOSC) is out of scope for this phase (MANUAL.md §11 "Not in
+ * this phase"), so no TMR1CS bit mask is defined here yet, and
+ * HAL_TIMER1_Init/Start reject any ClockSource other than
+ * TIMER1_CLOCK_INTERNAL. */
+#define PIC_T1CON_TMR1ON        PIC8_BIT(0)   /* T1CON<0>. */
+#define PIC_T1CON_T1CKPS0       PIC8_BIT(4)   /* T1CON<4>. */
+#define PIC_T1CON_T1CKPS1       PIC8_BIT(5)   /* T1CON<5>. */
+
+/* POR value of T1CON, DS41364B Register 16-1 POR column. */
+#define PIC_T1CON_POR_VALUE      0x00U
+
 /* ───────────────────────── Reset values (POR) ──────────────────── */
 
 /* DS41364B §3 reset values and the per-register POR columns of the

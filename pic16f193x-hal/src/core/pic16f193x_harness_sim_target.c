@@ -87,3 +87,14 @@ void pic8_harness_log(const char *fmt, ...)
     }
     /* variadic args ignored; the marker has none. */
 }
+
+/* Freeze here so RA0 stays at its post-report value: XC8's `ljmp
+ * start` epilogue would otherwise re-enter main() on return, and
+ * pic8_harness_init() would drive RA0 low again, flickering
+ * PORTA<0> across the mdb `print PORTA` readback window. */
+void pic16f193x_harness_halt(void)
+{
+    for (;;) {
+        /* nothing */
+    }
+}

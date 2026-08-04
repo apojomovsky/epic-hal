@@ -10,19 +10,27 @@
  *   `#ifdef`. SFR access is a direct volatile dereference of the literal
  *   address; XC8 has no weak symbols, so PIC8_WEAK is empty.
  *
- *   On the Enhanced Mid-range core XC8 auto-banks every literal SFR
- *   access (it knows each SFR's bank from the DFP and emits the BSR
- *   select), so the PIE1/2/3 read-modify-writes below are plain C against
- *   `PIC_REG_*` tokens, no inline-asm bank switching. Whether this plain
- *   form is safe on this core is NOT assumed from the classic-PIC16
- *   result (where the same shape failed under XC8 v4.00,
- *   pic16f87xa-hal/docs/ARCHITECTURE.md Finding 1): it is verified by the
- *   §4 codegen probe (docs/adding-a-device.md) the moment the
- *   Microchip.PIC12-16F1xxx_DFP is available, and replaced with an
- *   inline-asm banking sequence if it misdirects. Until the probe runs,
- *   every SFR access stays a compile-time-constant token and runtime
- *   dispatch branches before touching any SFR, the same proven pattern
- *   used by pic18_irq.c / pic18fxx5x_ccp.c.
+ *   Plain C reads against compile-time-constant SFR tokens compile to
+ *   `movlb N; movf <sfr>,w` once XC8 sees which bank each token belongs
+ *   to (it pulls the bank map from the DFP at -O2). That is why
+ *   `PIC8_REG8(addr)` dereferences the literal address without bank
+ *   switching: XC8 sets BSR itself. Verified on the Enhanced Mid-range
+ *   core by the Foundation's codegen probe (`docs/adding-a-device.md` §4,
+ *   Finding 1 of the foundation ARCHITECTURE.md).
+ *
+ *   PIE1/PIE2/PIE3 enable/disable is NOT a plain-C read-modify-write:
+ *   on this core, the original plain-C RMW shape silently produced
+ *   `movwf fsr1l; clrf fsr1h` indirect addressing with FSR1H=0, which
+ *   is not what PIE1 lives behind (PIE1 is at 0x91 in bank 1, not in
+ *   the linear address space FSR1 reads with FSR1H=0). The fix mirrors
+ *   pic16f87xa-hal's proven `__at()`-pinned scratch byte +
+ *   inline-asm bank-switch pattern, on the Enhanced Mid-range idiom
+ *   (`movlb 1` sets BSR=1 in one instruction). All three PIEs are in
+ *   bank 1 (DS41364B Tables 2-4), so a single `movlb 1` covers all
+ *   three pir_index values (0/1/2). See
+ *   pic16f193x-hal/docs/ARCHITECTURE.md Finding 2 for the failing
+ *   codegen evidence (FSR1H=0 read of address 0x91) and the fixed
+ *   assembly (`movlb 1; iorwf PIE1,f; movlb 0`).
  */
 
 #ifndef PIC16F193X_PLATFORM_H
@@ -42,27 +50,65 @@
 /* Address of a register as a uint8_t lvalue (read/write/RMW). */
 #define PIC8_REG8(addr)          (*(volatile uint8_t *)(uintptr_t)(addr))
 
-/* PIE1/PIE2/PIE3 enable/disable. Plain C RMW against the literal PIE
- * register token; XC8 auto-banks the bank-1 access. See the file header
- * for the verification status of this form on the Enhanced Mid-range core.
- * `pir_index` is 0 for PIE1, 1 for PIE2, 2 for PIE3 (DS41364B §4.5). */
-#define PIC8_PIE_REG_ADDR(pir_index) \
-    ((pir_index) == 0 ? 0x91U : ((pir_index) == 1 ? 0x92U : 0x93U))
+/* File-scope symbol the asm below needs (inline asm can only address
+ * file-scope symbols, see pic8-math/docs/ARCHITECTURE.md's "Inline-asm
+ * binding"). `__at()`-pinned into bank-independent common RAM (0x70,
+ * PIC16F193X Table 2-3, accessable across all banks) in
+ * pic16f193x_isr_vector.c rather than left to the linker's default
+ * placement, which scatters unpinned statics by best-fit, not
+ * declaration order (AGENTS.md). Same shape as
+ * pic16f87xa-hal/include/target/pic16f87xa_platform.h. */
+extern volatile uint8_t pic8_irq_pie_scratch __at(0x70);
 
+/* PIE1/PIE2/PIE3 enable/disable via inline asm on the Enhanced
+ * Mid-range core. `pir_index` is 0 for PIE1, 1 for PIE2, 2 for PIE3
+ * (DS41364B §4.5). All three PIEs are in bank 1, so a single `movlb 1`
+ * selects the right bank for any pir_index; the literal `PIE1` /
+ * `PIE2` / `PIE3` symbols in pic16f1937.inc resolve to the same offset
+ * (0x11/0x12/0x13 within bank 1) and the asm picks the right symbol
+ * via the C switch. Bits go in via the `__at()`-pinned scratch byte so
+ * the load of W can happen before the bank switch without disturbing
+ * any C-level local (matches pic16f87xa-hal's proven pattern). */
 #define PIC8_PIE_ENABLE_BIT(pir_index, mask)                              \
     do {                                                                  \
-        uint8_t _pa = PIC8_PIE_REG_ADDR(pir_index);                       \
-        uint8_t _v = pic8_sfr_read8(_pa);                                 \
-        _v |= (uint8_t)(mask);                                            \
-        pic8_sfr_write8(_pa, _v);                                         \
+        pic8_irq_pie_scratch = (uint8_t)(mask);                          \
+        if ((pir_index) == 2U) {                                         \
+            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movlb 1");                                              \
+            asm("iorwf PIE3,f");                                         \
+            asm("movlb 0");                                              \
+        } else if ((pir_index) == 1U) {                                  \
+            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movlb 1");                                              \
+            asm("iorwf PIE2,f");                                         \
+            asm("movlb 0");                                              \
+        } else {                                                         \
+            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movlb 1");                                              \
+            asm("iorwf PIE1,f");                                         \
+            asm("movlb 0");                                              \
+        }                                                                \
     } while (0)
 
 #define PIC8_PIE_DISABLE_BIT(pir_index, mask)                             \
     do {                                                                  \
-        uint8_t _pa = PIC8_PIE_REG_ADDR(pir_index);                       \
-        uint8_t _v = pic8_sfr_read8(_pa);                                 \
-        _v &= (uint8_t)~(uint8_t)(mask);                                  \
-        pic8_sfr_write8(_pa, _v);                                         \
+        pic8_irq_pie_scratch = (uint8_t)~(uint8_t)(mask);                 \
+        if ((pir_index) == 2U) {                                         \
+            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movlb 1");                                              \
+            asm("andwf PIE3,f");                                         \
+            asm("movlb 0");                                              \
+        } else if ((pir_index) == 1U) {                                  \
+            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movlb 1");                                              \
+            asm("andwf PIE2,f");                                         \
+            asm("movlb 0");                                              \
+        } else {                                                         \
+            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movlb 1");                                              \
+            asm("andwf PIE1,f");                                         \
+            asm("movlb 0");                                              \
+        }                                                                \
     } while (0)
 
 #endif /* PIC16F193X_PLATFORM_H */

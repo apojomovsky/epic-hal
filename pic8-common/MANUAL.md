@@ -279,7 +279,24 @@ linked by CMake) and a target implementation
 (`pic8_harness_target.c`, family-blind, in `pic8-common/`, linked by
 every XC8 Makefile). The build picks one.
 
-### 4.1 The canonical example shape
+### 4.1 Real-target `log()` implementations
+
+A real-target `pic8_harness_log()` may dispatch on its format string.
+The family-blind `pic8_harness_target.c` is a no-op; the PIC16F87XA
+and PIC18Fxxxx sim-target harnesses write bytes to the UART; the
+PIC16F193X sim-target harness drives RA0 (PORTA bit 0) from the
+exact `PIC8_HARNESS_RESULT: PASS\n` / `...: FAIL\n` marker passed
+by `pic8_harness_report()` so the wrapper can read the result via
+`print PORTA` in `MODE=gpio`. Future sim-target harnesses may define
+their own dispatch.
+
+The format-string dispatch is opt-in per file: not every
+implementation does it. The marker strings are passed verbatim from
+`pic8_harness_report()` (a static inline in `pic8_harness.h`). No
+other call site in the codebase passes these literals, so the
+dispatch never fires by accident.
+
+### 4.2 The canonical example shape
 
 ```c
 int main(void)

@@ -201,8 +201,17 @@ it done.
    `scripts/sim-test-local.sh` does), for **every** MCU variant in the
    family this peripheral applies to, not just one. A clean build is
    necessary, not sufficient, keep going.
-6. **Run the same test under real `mdb`** (MPLAB SIM, headless). Use
-   this exact protocol, established the hard way this session:
+6. **Run the same test under real `mdb`** (MPLAB SIM, headless). The
+   `make mdb-test` recipe wraps `scripts/sim-mdb-run.sh`, which builds
+   the `HARNESS=sim` firmware and drives `mdb.sh`. For families that
+   report PASS/FAIL over UART (PIC16F87XA, PIC18Fxxxx), the default
+   `MODE=uart` captures the `PIC8_HARNESS_RESULT` marker from the
+   USART output file. For families without an EUSART driver yet
+   (currently PIC16F193X, exercised via RA0/GPIO), pass `MODE=gpio`;
+   the wrapper then reads the marker via `print PORTA` and checks bit
+   0. The matching `pic8_harness_log()` magic-string dispatch lives
+   in `pic16f193x-hal/src/core/pic16f193x_harness_sim_target.c`.
+   Use this exact protocol, established the hard way this session:
    - Use `stepi <N>` with a generous instruction count, **not**
      `run` + `wait`. `run`+`wait` does not reliably respect `break`-set
      breakpoints in this toolchain's headless mode (confirmed: `PC`

@@ -78,6 +78,14 @@ HARNESS ?= target
 ifeq ($(HARNESS),sim)
   TARGET     := $(BUILD_DIR)/$(MCU)-firmware-sim
   HARNESS_SRC := $(HAL_DIR)/src/core/pic16f193x_harness_sim_target.c
+  # HARNESS=sim exercises the Timer1 driver (the §4 gate's load-bearing
+  # peripheral for Phase 0). The Timer1 example's main loop halts in a
+  # tight `for(;;)` after pic8_harness_report() so the HARNESS=sim
+  # marker's RA0 stays set across the mdb `print PORTA` readback; the
+  # default real-target example (example_blink) returns the report's
+  # result and re-enters main via `ljmp start`, which flickers RA0 in
+  # the simulator and breaks the readback.
+  APP_SOURCES := $(HAL_DIR)/tests/example_timer1.c
   # WDTE=OFF only for this variant, see the config-word recipe below
   # for why: real-target firmware genuinely needs the watchdog
   # running unattended; a diagnostic build that terminates and
@@ -87,6 +95,10 @@ ifeq ($(HARNESS),sim)
   CONFIG_WDTE := OFF
 else
   HARNESS_SRC := $(COMMON_DIR)/src/core/pic8_harness_target.c
+  # example_blink is the canonical "turn an LED on" smoke test for the
+  # real-target (HARNESS=target, default) build. Replace it with your
+  # project's main.c.
+  APP_SOURCES := $(HAL_DIR)/tests/example_blink.c
   CONFIG_WDTE := ON
 endif
 
@@ -120,16 +132,13 @@ CFLAGS := $(DFP_FLAG) \
 HAL_SOURCES := \
   $(HAL_DIR)/src/peripherals/pic16f193x_gpio.c     \
   $(HAL_DIR)/src/peripherals/pic16f193x_timer0.c   \
+  $(HAL_DIR)/src/peripherals/pic16f193x_timer1.c   \
   $(HAL_DIR)/src/core/pic16f193x_irq.c             \
   $(HAL_DIR)/src/core/pic16f193x_wdt_sleep.c       \
   $(HAL_DIR)/src/core/pic16f193x_wdt_sleep_target.c \
   $(HAL_DIR)/src/core/pic16f193x_isr_vector.c      \
   $(HAL_DIR)/src/core/pic16f193x_irq_dispatch.c    \
   $(HARNESS_SRC)
-
-# Add your application sources here. example_blink is the canonical
-# "turn an LED on" smoke test. Replace it with your project's main.c.
-APP_SOURCES := $(HAL_DIR)/tests/example_blink.c
 
 # All real .c sources (the config word is generated separately, below).
 SRCS := $(HAL_SOURCES) $(APP_SOURCES)

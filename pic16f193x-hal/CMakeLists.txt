@@ -63,6 +63,7 @@ set(PIC8_FAMILY_DEVICES       PIC16F1933 PIC16F1934 PIC16F1936 PIC16F1937 PIC16F
 set(PIC8_HAL_SOURCES
     src/peripherals/pic16f193x_gpio.c
     src/peripherals/pic16f193x_timer0.c
+    src/peripherals/pic16f193x_timer1.c
     src/core/pic16f193x_irq.c
     src/core/pic16f193x_wdt_sleep.c
     src/core/pic16f193x_wdt_sleep_sim.c
@@ -75,6 +76,8 @@ pic8_add_hal_library(${PIC8_HAL_LIB})
 
 pic8_add_example(example_blink tests/example_blink.c)
 pic8_add_example(example_gpio tests/example_gpio.c)
+pic8_add_example(example_timer1 tests/example_timer1.c)
 
 # Optional: example for every device in the family.
 pic8_add_example_per_device(example_blink tests/example_blink.c)
+pic8_add_example_per_device(example_timer1 tests/example_timer1.c)

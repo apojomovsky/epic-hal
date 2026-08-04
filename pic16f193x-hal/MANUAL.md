@@ -110,7 +110,60 @@ only (1934/1937/1939); PORTE is 4-bit.
 to the WDT and Timer0 runs 1:1. Writing TMR0 clears the prescaler. The
 overflow flag/enable are INTCON<TMR0IF>/<TMR0IE>.
 
-## 11. The SFR layer
+## 11. Timer1 (DS41364B §16.0)
+
+The 16-bit timer/counter. Clock source, prescaler, and on bit are in
+T1CON (DS41364B Register 16-1). The flag is `PIR1<TMR1IF>`,
+the enable is `PIE1<TMR1IE>`. The 16-bit counter lives in
+TMR1H:TMR1L.
+
+### Atomic read
+
+DS41364B §16.4.1: the 16-bit counter can return inconsistent
+values across the two reads. Use `HAL_TIMER1_ReadCounter()` rather
+than reading TMR1H and TMR1L directly. The driver uses the standard
+high-low-high retry idiom (DS41364B §16.4.1).
+
+### Atomic write
+
+DS41364B §16.8: writing TMR1H clears the prescaler. Write the high
+byte first.
+
+### Register layout
+
+| Register | Address | Bit 7 | Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 | Bit 0 |
+|---|---|---|---|---|---|---|---|---|---|
+| T1CON | 0x18 | TMR1CS1 | TMR1CS0 | T1CKPS1 | T1CKPS0 | T1OSCEN | T1SYNC | (unused, 0) | TMR1ON |
+
+T1CON POR value: `0x00` (DS41364B Register 16-1 POR column).
+
+TMR1CS<1:0> (bits 7:6) selects the clock source: `00` = FOSC/4
+(internal, the only encoding this phase uses), `01` = FOSC, `10` =
+T1CKI pin or T1OSC (per T1OSCEN), `11` = CAPOSC. T1CKPS<1:0> selects
+the prescaler ratio (1:1, 1:2, 1:4, 1:8). T1OSCEN enables the
+dedicated Timer1 oscillator circuit; T1SYNC controls external-clock
+synchronization when TMR1CS<1:0> = 1X, ignored otherwise. Both are
+left at 0 this phase (see "Not in this phase" below). TMR1ON enables
+the timer. `HAL_TIMER1_Init`/`HAL_TIMER1_Start` return `HAL_INVALID`
+for any `ClockSource` other than `TIMER1_CLOCK_INTERNAL`.
+
+### Driver API
+
+`HAL_TIMER1_Init`, `HAL_TIMER1_DeInit`, `HAL_TIMER1_Start`,
+`HAL_TIMER1_Stop`, `HAL_TIMER1_ReadCounter`, `HAL_TIMER1_WriteCounter`,
+`HAL_TIMER1_PrescalerToRatio`. Weak `TIMER1_IRQHandler`.
+
+### Example
+
+See `pic16f193x-hal/tests/example_timer1.c` for the canonical
+Timer1 ISR + main loop + bounded sim run.
+
+### Not in this phase
+
+- T1GCON (gate control, DS41364B §16.6): Timer1.1 spec.
+- External clock + T1OSC (DS41364B §16.5): Timer1.1 spec.
+
+## 12. The SFR layer
 
 `include/pic16f193x_sfr.h` defines `PIC_REG_*` addresses, `PIC_*_BIT`
 masks, and `PIC_*_POR_VALUE` reset values, all DS41364B-cited. The
@@ -119,7 +172,7 @@ selected) defines `PIC8_REG8` / `pic8_sfr_read8` / `pic8_sfr_write8` /
 `PIC8_SFR_PTR` and the per-PIE-bank `PIC8_PIE_ENABLE_BIT` /
 `PIC8_PIE_DISABLE_BIT` macros (`pir_index` 0/1/2 for PIE1/2/3).
 
-## 12. Device selection
+## 13. Device selection
 
 `include/pic16f193x.h` selects exactly one of 1933/1934/1936/1937/1938/
 1939 via a `-D` define, default 1937, and sets per-device capability
@@ -127,28 +180,40 @@ macros (`PIC16F193X_FAMILY_HAS_PORTD`/`_PORTE` on 40/44-pin parts, plus
 flash/RAM/EEPROM/ADC sizes). `PIC8_FAMILY_RAM_BYTES` is the neutral
 alias consumers use.
 
-## 13. The examples
+## 14. The examples
 
 `example_blink.c`: Timer0 overflow drives an ISR that toggles RB0; the
 canonical dual-build smoke test, its header documents the expected
 register image for the §4 gate. `example_gpio.c`: host-only GPIO + IOC
-smoke test driving the sim directly.
+smoke test driving the sim directly. `example_timer1.c`: Timer1
+overflow drives an ISR that toggles RB0, the §4 gate's `HARNESS=sim
+MODE=gpio` payload (its header documents the expected register image).
 
-## 14. Known gaps and gotchas
+## 15. Known gaps and gotchas
 
-- The real-target build and the §4 `mdb` gate are pending the
-  `Microchip.PIC12-16F1xxx_DFP`. No peripheral counts as done until that
-  gate passes.
+- The `Microchip.PIC12-16F1xxx_DFP` is installed and the real-target
+  XC8 build passes for all six parts. Timer1 has cleared the §4 gate
+  (Task 11 fix-round-1): `make mdb-test ... MODE=gpio WAIT_MS=60000`
+  produces `PIC8_HARNESS_RESULT: PASS` and the §4 control-register
+  readback confirms `PIE1=0x01`. The remaining peripherals (Timer2/4/6,
+  CCP/ECCP, EUSART, MSSP, ADC, LCD, comparators, DAC, FVR, EEPROM, etc.)
+  still need to clear the §4 gate individually; none of them count as
+  done until they do.
 - Silicon errata DS80000479 (1934/1936/1937): ADC may not complete at
   FOSC > 8 MHz; ECCP 0%-duty direction-change and port-steering issues;
   Timer1 gate toggle issues; EUSART auto-baud SPBRG bug; MSSP SPI master
   BF/SSPIF set half SCK early (CKE=0). Honored in the relevant peripheral
   phases when built.
-- The target platform's plain-C PIE RMW form is unverified on this core
-  (the classic-PIC16 equivalent failed under XC8 v4.00); the §4 codegen
-  probe clears or replaces it before the real-target build is trusted.
+- The target platform's PIE1/2/3 RMW uses an inline-asm `movlb 1` +
+  `iorwf PIE1,f` / `andwf PIE1,f` shape (in `pic16f193x_platform.h`,
+  with a `__at(0x70)` scratch byte in `pic16f193x_isr_vector.c`),
+  mirroring `pic16f87xa-hal`'s proven pattern. The plain-C RMW
+  that the foundation originally shipped silently failed under XC8
+  v3.10 (FSR1H=0 read of address 0x91, which is the linear/GPR
+  byte, not PIE1 in bank 1). See `docs/ARCHITECTURE.md` Finding 2
+  for the codegen evidence and the fix.
 
-## 15. Appendix: datasheet section index
+## 16. Appendix: datasheet section index
 
 DS41364B §2.2 data memory, §3 resets, §4 interrupts, §6 I/O ports, §7
 interrupt-on-change, §8 oscillator, §10 device config, §11 ADC, §12

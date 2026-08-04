@@ -46,3 +46,9 @@ void pic8_harness_log(const char *fmt, ...)
     (void)vprintf(fmt, ap);
     va_end(ap);
 }
+
+/* No-op on the host: example_timer1.c falls through to `return rc`
+ * and the process exits normally, same as every other example. */
+void pic16f193x_harness_halt(void)
+{
+}

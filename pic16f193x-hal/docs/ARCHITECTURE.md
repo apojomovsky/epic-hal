@@ -27,14 +27,17 @@ the two known-risky patterns, done by disassembling the actual linked
 firmware (`xc8-cc ... -o firmware.elf` then reading the generated
 `.s`, since a bare `-S` on a non-`main` translation unit does not
 trigger XC8's full optimizer here; linking the real `example_blink`
-image and dumping its `.s` does). `mdb` (MPLAB SIM, headless) is still
-not installed, so no peripheral has been through the real-register
-readback half of the §4 gate yet; this finding covers the codegen
+image and dumping its `.s` does). `mdb` (MPLAB SIM, headless) is now
+installed and confirmed working; Timer1 has been through the
+real-register readback half of the §4 gate (Finding 2; `PORTA=1` PASS,
+`PIE1=0x01` confirmed), the other peripherals have not yet (see "Open,
+for whoever picks this back up" below). Finding 1 covers the codegen
 inspection half only.
 
 ## Finding 1: runtime SFR addresses route through FSR1:INDF1, not BSR; literal tokens auto-bank correctly
 
-**Probed, both patterns clean, no misdirection found.**
+**Probed, both patterns clean, no misdirection found for the read-only
+half. The RMW half is broken; see Finding 2.**
 
 Every function that dispatches a runtime value to one of several SFRs
 (`HAL_IRQ_Enable/DisableSrc/ClearFlag/GetFlag` picking PIE1/PIE2/PIE3 or
@@ -52,16 +55,20 @@ movwf   fsr1h
 movf    indf1,w               ; or: movwf indf1 for a write
 ```
 
-i.e. **indirect addressing via FSR1/INDF1** (DS41364B §2.5), which is
-architecturally BSR-independent by design: FSR1 holds the full 12-bit
-address itself, so no bank-select state can be stale or wrong at the
-point of access. This is a different (and safer) resolution than either
-prior family's bug shape: it is not the classic-PIC16 failure (bank bits
-+ direct addressing, where a stale/misordered bank switch corrupts the
-access) and not the PIC18 failure (compiled to the program-memory table
-mechanism instead of a data access). Confirmed clean for both the
-PIE-bank dispatch in `pic16f193x_irq.c` and the port-register dispatch
-in `pic16f193x_gpio.c`.
+i.e. **indirect addressing via FSR1/INDF1** (DS41364B §2.5). Reading
+INDF1 in PIC16F193X returns the byte at the FSR1 16-bit data-memory
+address, which on this core is *decoded as a linear-style address, NOT
+BSR-relative* (DS41364B §2.5 "Indirect Addressing", with bit 7 of FSRnH
+acting as an IRP-style high bit). Because FSR1 holds the full address
+itself, no bank-select state is involved: so this is a true architectural
+"BSR-independent" access.
+
+**Confirmed clean for the read-only half (`HAL_IRQ_GetFlag`,
+`HAL_IRQ_ClearFlag` for the `pir_index=1` / `pir_index=2` branches, the
+PIR1-bank dispatch in `pic16f193x_irq.c`, and the port-register dispatch
+in `pic16f193x_gpio.c`).** The PIC18 failure mode (compiled to the
+program-memory table mechanism instead of a data access) does not apply
+on this core.
 
 Separately, a **literal, compile-time-constant SFR token in a
 non-mirrored bank** (`option_clr_set()`'s access to `PIC_REG_OPTION`,
@@ -71,17 +78,12 @@ sequence, i.e. XC8 auto-banks literal SFR tokens on this core exactly as
 `pic_select_bank`-style macro is needed for a literal token, and none of
 the foundation code uses one for that reason.
 
-**Not yet exercised**: the `pic16f193x_select_bank()` macro
-(`pic16f193x_sfr.h`) is currently unused by any driver, since every
-access above is either a literal auto-banked token or a runtime address
-that lower to FSR/INDF (which never needs BSR set explicitly). Given
-this finding, that is the *recommended* shape going forward: prefer
-literal tokens (auto-banked) or FSR/INDF-routed runtime dispatch over a
-manual `movlb` + raw address write, since the latter is the pattern that
-broke classic PIC16. If a future peripheral needs
-`pic16f193x_select_bank` directly (e.g. bulk indirect access into linear
-data memory), re-run this same disassembly check on that specific call
-site before trusting it, don't assume this finding covers it.
+**Not yet exercised / now superseded**: the `pic16f193x_select_bank()`
+macro (`pic16f193x_sfr.h`) is currently unused by any driver, since
+every access above is either a literal auto-banked token or a runtime
+address that lowers to FSR/INDF. For *read-modify-write* against a
+runtime SFR address (the PIE1/2/3 case) this FSR/INDF shape turned out
+to be the wrong approach. See Finding 2.
 
 Method, for reproducing or extending this check: `xc8-cc -mdfp=<DFP>/xc8
 -mcpu=16f1937 -O2 <all HAL .c + one app .c> -o out.elf` (a full link, not
@@ -90,12 +92,205 @@ as a side effect; grep it for the function under test's label
 (`_HAL_IRQ_Enable:` etc.) and read the instructions between it and the
 next `global` line.
 
+## Finding 2: PIC8_PIE_ENABLE_BIT FSR1:INDF1 route silently addresses the wrong byte for PIE1/2/3; replaced with `__at()`-pinned scratch + inline asm `movlb 1`/`iorwf PIE1,f`/`movlb 0`
+
+**Status:** fixed; verified by both the disassembly comparison below and
+the `mdb` register readback (§4 control-register check) of the Timer1
+example now showing `PIE1=0x01` (TMR1IE bit 0 set) where the broken
+build showed `PIE1=0x00`. The fix mirrors `pic16f87xa-hal`'s proven
+`__at(0x70)`-pinned scratch + inline-asm bank-switch shape; the
+Enhanced-Mid-range idiom is `movlb 1` instead of classic's
+`bsf STATUS,5`.
+
+### Why this had to be looked at twice
+
+Finding 1 concluded the FSR1:INDF1 indirect pattern was safe because
+"FSR1 holds the full 12-bit address itself, so no bank-select state can
+be stale or wrong at the point of access." That was wrong for
+*read-modify-write* against a runtime address: while reading via
+`movf indf1,w` does return the byte at the FSR 16-bit address, the
+matching *write* via `movwf indf1` writes the SAME FSR-addressed byte,
+which is the *unmirrored* PIE1 byte at FSR=0x0091 (linear/GPR-style
+addressing). Per DS41364B §2.5 "Indirect Addressing", the PIC16F193X
+data-memory map addresses the FSR <-> byte mapping linearly for the
+area between 0x2000-0x29AF (the linear GPR region) and via the banked
+mirror for everything below 0x2000 *except where the banked mirror
+overrides the linear map*. PIE1 lives at bank 1, offset 0x11, which
+is reachable only via the banked mirror at FSR<0x2000 OR via direct
+addressing with BSR=1. The `movwf indf1` route writes to byte 0x91 in
+the linear/GPR-style region, which is a GPR byte, NOT PIE1. So
+PIE1<TMR1IE>=0 was the runtime symptom even though the *read* half of
+the broken RMW appears to succeed (it reads the same wrong byte, then
+ORs in the mask, then writes the same wrong byte. The read returns
+0x00 for an unimplemented GPR, so the OR with the mask sets the GPR
+byte, but PIE1 in the bank 1 mirror stays at 0x00).
+
+This is the §4-gate scenario the gate is designed to catch: code that
+builds clean, links clean, and silently writes the wrong thing at
+runtime.
+
+### The fix
+
+Mirror `pic16f87xa-hal/include/target/pic16f87xa_platform.h` line for
+line, swapping `bsf STATUS,5` (RP0-bit bank select on classic PIC16)
+for `movlb 1` (BSR-byte bank select on Enhanced Mid-range, single
+instruction, DS41364B §3.4). Switch on `pir_index` to pick the right
+PIE1/PIE2/PIE3 literal symbol (all three PIEs are in bank 1 per
+DS41364B §3.4 Tables 2-4, verified in the DFP's `pic16f1937.inc`:
+`PIE1 equ 0091h`, `PIE2 equ 0092h`, `PIE3 equ 0093h`, all consistent
+with bank-1 offsets 0x11/0x12/0x13).
+
+**Files changed**:
+
+1. `pic16f193x-hal/include/target/pic16f193x_platform.h`: replace
+   the plain-C `PIC8_PIE_ENABLE_BIT` / `PIC8_PIE_DISABLE_BIT` macros
+   with the inline-asm shape. Add the
+   `extern volatile uint8_t pic8_irq_pie_scratch __at(0x70);`
+   declaration. Update the file header to point at this finding for
+   the failure mode.
+2. `pic16f193x-hal/src/core/pic16f193x_isr_vector.c`: add the
+   `volatile uint8_t pic8_irq_pie_scratch __at(0x70);` definition
+   that the platform header's `extern` needs, plus a header-comment
+   update that removes the old "no bank-switch scratch bytes are
+   pinned" assertion (it was the assumption that hid the bug).
+
+The platform header's scratch byte is in PIC16F193X's
+bank-independent common RAM at 0x70 (DS41364B Table 2-3,
+`pic16f193x_isr_vector.c`'s `pic16_irq_pie_scratch` parallels the
+classic `pic16_isr_vector.c`'s same-named byte at the same address).
+
+### Disassembly evidence
+
+**Before** (broken, plain-C RMW, `make xc8-build ...MCU=16F1937
+HARNESS=sim` then `xxd build/16F1937-firmware-sim.s` near
+`_HAL_IRQ_Enable:`):
+
+```
+l2400:                          ; pir_index = 0 branch (PIE1)
+    movlw   091h
+    movwf   (_HAL_IRQ_Enable$410)
+    movlw   0
+    movwf   ((_HAL_IRQ_Enable$410))+1    ; _pa = 0x0091
+
+l223:
+    movf    (_HAL_IRQ_Enable$410),w
+    movwf   (??_HAL_IRQ_Enable)
+    clrf    (??_HAL_IRQ_Enable+1)
+    movf    (0+(??_HAL_IRQ_Enable)),w
+    movwf   fsr1l                   ; FSR1L = 0x91
+    movf    (1+(??_HAL_IRQ_Enable)),w
+    movwf   fsr1h                   ; FSR1H = 0  <-  address = 0x0091
+
+    movf    indf1,w                 ; read byte at FSR1 = 0x0091
+    movwf   (HAL_IRQ_Enable@_v)
+
+l2404:
+    movf    (HAL_IRQ_Enable@enable_mask),w
+    iorwf   (HAL_IRQ_Enable@_v),f       ; v |= mask
+
+l2406:
+    movf    (HAL_IRQ_Enable@_pa),w
+    movwf   (??_HAL_IRQ_Enable)
+    clrf    (??_HAL_IRQ_Enable+1)
+    movf    (0+(??_HAL_IRQ_Enable)),w
+    movwf   fsr1l                   ; FSR1L = 0x91
+    movf    (1+(??_HAL_IRQ_Enable)),w
+    movwf   fsr1h                   ; FSR1H = 0
+
+    movf    (HAL_IRQ_Enable@_v),w
+    movwf   indf1                   ; write byte at FSR1 = 0x0091
+```
+
+This routes the read AND the write through FSR=0x0091, never setting
+BSR. Per DS41364B Table 2-4, the byte mapped to FSR=0x0091 in the
+linear/GPR region is not PIE1; PIE1 lives in bank 1 at offset 0x11
+and is reachable via the banked mirror with BSR=1 (or via direct
+addressing `movf 091h,w` / `movwf 091h` after `movlb 1`).
+
+**After** (fixed, inline asm, same `pir_index = 0` path for PIE1):
+
+```
+l224:
+# 98 "../../src/core/pic16f193x_irq.c"
+    movf    _pic8_irq_pie_scratch,w      ; W = mask
+# 98 "../../src/core/pic16f193x_irq.c"
+    movlb   1                              ; BSR = 1 (bank 1)
+# 98 "../../src/core/pic16f193x_irq.c"
+    iorwf   PIE1,f                         ; PIE1 |= mask
+# 98 "../../src/core/pic16f193x_irq.c"
+    movlb   0                              ; restore BSR
+```
+
+Three asm lines do what the C-level `_v = read8(); _v |= mask;
+write8(_v)` tried to do. The read half is implicit in `iorwf PIE1,f`
+(W is loaded with PIE1 OR'd against the scratch-mask value, then
+written back). The `movlb 0` at the end restores bank 0 because the
+*callers* of `HAL_IRQ_Enable` (e.g. `HAL_TIMER1_Init`) expect bank 0
+to be active on return. The same defensive-restoring shape as
+`pic16f87xa-hal`'s `bcf STATUS,5` exit.
+
+The exact form for `pir_index=1` and `pir_index=2` (PIE2 and PIE3)
+is the same shape with `iorwf PIE2,f` / `iorwf PIE3,f`. Both
+register symbols also live in bank 1, so the `movlb 1` is correct
+for all three.
+
+### Runtime evidence: §4 control-register check
+
+`mdb` register readback against `HARNESS=sim` builds:
+
+**Before** (Timer1 example on top of broken macro):
+```
+TRISB  = 254 (0xFE)        ; GPIO path correct
+T1CON  = 49  (0x31)         ; HAL_TIMER1_Start ran (manual movlb)
+PIE1   = 0                  ; <- BROKEN: TMR1IE bit 0 should be set
+PIR1   = 0
+INTCON = 194 (0xC2)         ; GIE=1, PEIE=1
+LATA   = 0                  ; harness never drove RA0 high
+LATB   = 1                  ; at least one Timer0 ISR ran in last wait
+```
+
+**After** (same example on top of the fixed macro):
+```
+TRISB  = 254 (0xFE)        ; unchanged (no GPIO code change)
+T1CON  = 49  (0x31)         ; unchanged (no Timer1 code change)
+PIE1   = 1                  ; <- FIXED: TMR1IE bit 0 now set
+PIR1   = 0                  ; ISR cleared TMR1IF after handling
+INTCON = 194 (0xC2)         ; unchanged
+LATA   = 1                  ; <- FIXED: PIC8_HARNESS_RESULT: PASS fired
+LATB   = 0                  ; even toggle count returns RB0 to 0
+PORTA  = 1                  ; PASS marker visible from mdb
+```
+
+The PORTA bit 0 transition (0 -> 1) is what makes the
+`make mdb-test ... MODE=gpio` recipe finally return success (`PASS
+marker found (PORTA bit 0 set, byte=1)`). The brief's default
+`WAIT_MS=2000` is too short on the Docker MPLAB SIM (~1/2000th
+real-time, see Phase 0 notes); passing `WAIT_MS=60000` to
+`make mdb-test` produces PASS in the same session.
+
+### Why the same shape as pic16f87xa-hal
+
+`pic16f87xa-hal/include/target/pic16f87xa_platform.h` carries the same
+fix shape because the same codegen trap existed on the classic PIC16
+core (Finding 1 of that family's `docs/ARCHITECTURE.md`). The
+Enhanced Mid-range port uses the same `__at(0x70)` scratch + asm
+pattern, just with `movlb 1` (BSR-byte select) instead of
+`bsf STATUS,5` (RP0 bit select). pic18_irq.c uses an equivalent
+`switch`-based per-bank dispatch via case-by-case inline writes; same
+goal, different mechanism appropriate to the family's pure-C
+compilation model.
+
 ## Open, for whoever picks this back up
 
-The real *register-readback* half of the §4 gate (an actual `mdb`
-session confirming, e.g., that enabling `PIC16F193X_IRQ_TMR2` sets bit 1
-of PIE1 at address 0x91 and nothing else) has not run yet; `mdb` is not
-installed. Finding 1 above only clears the static-codegen half of the
-verification. Per `docs/adding-a-device.md`, that is necessary but not
-sufficient, run the `mdb` gate before marking any peripheral done, even
-though the codegen inspection came back clean.
+The real *register-readback* half of the §4 gate ran for the Timer1
+case (Finding 2; PORTA=1 PASS, PIE1=0x01 confirmed). It has not yet
+been repeated for the other peripheral IRQs routed through
+`PIC8_PIE_ENABLE_BIT` (TMR2, CCP1, SSP, USART TX/RX, ADC, TMR1G,
+PIE2 / PIR2 entries: CCP2, LCD, BCL, EEPROM, CMP1/2, OSF; PIE3 /
+PIR3 entries: TMR4/6, CCP3/4/5). Each of those dispatches the same
+macro, so the same fix should apply, but the §4 register readback
+should run for at least one PIE2 source and one PIE3 source to
+confirm the third branch of the `pir_index` switch actually emits
+`iorwf PIE2,f` and `iorwf PIE3,f` (not just `PIE1`). Per
+`docs/adding-a-device.md`, that is the recommended gate before
+shipping any peripheral beyond Timer1.

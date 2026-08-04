@@ -32,6 +32,7 @@ static uint8_t sim_last_portb = 0xFFU;
 static pic16f193x_sim_irq_cb_t sim_irq_cb = 0;
 
 static void sim_step_timer0(void);
+static void sim_step_timer1(void);
 static void sim_refresh_ports(void);
 static void sim_step_ioc(void);
 
@@ -119,6 +120,7 @@ void pic16f193x_sim_step(uint32_t ticks)
 {
     for (uint32_t i = 0; i < ticks; i++) {
         sim_step_timer0();
+        sim_step_timer1();
         sim_refresh_ports();
         sim_step_ioc();
     }
@@ -157,6 +159,52 @@ static void sim_step_timer0(void)
         if (sim_irq_cb) sim_irq_cb();
     }
     pic16f193x_sim_sfr[PIC_REG_TMR0] = t0;
+}
+
+/* ───────────────────────── Timer1 step ──────────────────────────── */
+
+static void sim_step_timer1(void)
+{
+    /* T1CON layout (DS41364B Register 16-1):
+     *   bit 0    TMR1ON
+     *   bit 1    unimplemented
+     *   bit 2    T1SYNC
+     *   bit 3    T1OSCEN
+     *   bit 5:4  T1CKPS1:T1CKPS0
+     *   bit 7:6  TMR1CS1:TMR1CS0
+     * T1SYNC/T1OSCEN are 0 in this phase; HAL_TIMER1_Start() rejects
+     * any ClockSource other than TIMER1_CLOCK_INTERNAL, so TMR1CS
+     * bits 7:6 are always 00 (FOSC/4) coming from the driver. */
+    uint8_t t1con = pic16f193x_sim_sfr[PIC_REG_T1CON];
+    if (!(t1con & PIC_T1CON_TMR1ON)) return;   /* TMR1ON = 0 -> stopped. */
+
+    /* TMR1CS<1:0> != 00 (external clock / T1OSC / CAPOSC): the sim
+     * does not model those sources, so the counter halts. Same
+     * limitation as pic16f87xa_sim.c. Unreachable via the current
+     * HAL (see above), kept as a direct-SFR-poke safety net. */
+    if (t1con & 0xC0U) return;
+
+    /* Prescaler ratio from T1CKPS<1:0>. */
+    uint8_t ckps = (uint8_t)((t1con >> 4) & 0x3U);
+    static const uint16_t ps_ratio[4] = { 1, 2, 4, 8 };
+    static uint16_t t1_prescaler = 0U;
+    t1_prescaler++;
+    if (t1_prescaler < ps_ratio[ckps]) return;
+    t1_prescaler = 0U;
+
+    /* Increment TMR1H:TMR1L (16-bit counter). */
+    uint8_t lo = pic16f193x_sim_sfr[PIC_REG_TMR1L];
+    uint8_t hi = pic16f193x_sim_sfr[PIC_REG_TMR1H];
+    uint16_t full = (uint16_t)(((uint16_t)hi << 8) | lo);
+    full++;
+    pic16f193x_sim_sfr[PIC_REG_TMR1L] = (uint8_t)(full & 0xFFU);
+    pic16f193x_sim_sfr[PIC_REG_TMR1H] = (uint8_t)(full >> 8);
+
+    /* On overflow, set PIR1<TMR1IF> and fire the IRQ callback. */
+    if (full == 0x0000U) {
+        pic16f193x_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR1IF;
+        if (sim_irq_cb) sim_irq_cb();
+    }
 }
 
 /* ───────────────────────── GPIO pin-level refresh ───────────────── */
