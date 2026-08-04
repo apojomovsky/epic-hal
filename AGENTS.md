@@ -53,6 +53,32 @@ module), `xc8-build.yml` (real XC8 cross-compile, every MCU variant),
 output, not just "compiled"). All pull the private image, never build
 it.
 
+## Development cycle
+
+Fast inner loop stays host-sim only, either path: `cmake -B build &&
+cmake --build build && ctest` (native) or `make test MODULE=<dir>`
+(Docker), repeat. Only move to real-target + `mdb` once the host-sim
+example passes, that loop is much slower.
+
+Real-target build: `make MCU=...` in the module's `mcu/*-mplabx/` dir
+(native) or `make xc8-build MODULE=<dir> MCU=<mcu>` (Docker).
+`scripts/sim-mdb-run.sh` runs the `mdb` gate either way, inside the
+container or directly if `xc8-cc`/`mdb.sh` are on `PATH` and
+`$XC8_INSTALL_DIR` is set the same way (its own header comment covers
+direct use); `make mdb-test` is just the Docker-wrapped call to it.
+
+A build or test failing with too little output: `make shell` (Docker)
+drops into the same container interactively for full output; native
+already has a real shell.
+
+A real-target register looking wrong: `docs/adding-a-device.md` §4 is
+the debug protocol, for any real-target bug, not just new peripherals.
+Covers `stepi` over `run`+`wait` (unreliable headless), checking a
+known-good control register before blaming timing, and the
+high-risk-pattern checklist (runtime SFR addresses, read-modify-write,
+clock-derived divisors) that has caught every real bug found in this
+codebase so far.
+
 ## Non-obvious things that will bite you
 
 - **XC8 inline asm is not GNU extended asm.** No operand constraints.
