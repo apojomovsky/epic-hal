@@ -1,17 +1,21 @@
 # PIC16F193X family addition
 
-Status: **foundation, Timer1, and the §4 codegen probe all clear. Timer1
-has also cleared the §4 register-readback half of the gate (Task 11
-fix-round-1): the PIE1/2/3 inline-asm fix makes `mdb` report `PIE1=0x01`
-(TMR1IE bit 0 set) and the `HARNESS=sim` Timer1 build reports
-`PIC8_HARNESS_RESULT: PASS` via `MODE=gpio` on `PORTA` bit 0. The 6-part
-real-target XC8 build (`MCU=16F1933/1934/1936/1937/1938/1939`,
-`HARNESS=target`) all PASS, and `HARNESS=sim` PASSes via `make
-mdb-test ... MODE=gpio WAIT_MS=60000`. §7 now has one detailed
-implementation plan doc per remaining peripheral, all 13 written
-(`docs/superpowers/plans/2026-08-04-pic16f193x-*.md`): Timer2/4/6,
-CCP1/2, EUSART, MSSP, ADC, Comparator, EEPROM, DAC, FVR, SR latch, CPS,
-LCD, CCP3/4/5. None implemented yet. Next: execute them one at a time
+Status: **foundation, Timer1, Timer2/4/6, and the §4 codegen probe all
+clear. Timer1 cleared the §4 register-readback half of the gate (Task
+11 fix-round-1): the PIE1/2/3 inline-asm fix makes `mdb` report
+`PIE1=0x01`. Timer2/4/6 has now also cleared the §4 gate: the
+`HARNESS=sim` build reports PASS via `MODE=gpio` on `PORTA` bit 0, the
+6-part real-target XC8 build all PASS, and `mdb` register readback
+confirms T2CON=0x04, T4CON=0x05, T6CON=0x1E, PR2=0xC7, PR4=0x7C,
+PR6=0x31, PIE1=0x02, PIE3=0x0A (TMR4IE | TMR6IE), PIR1=0x02, PIR3=0x0A
+(TMR4IF | TMR6IF), TRISC=0xF8, LATA=0x01. PIE3=0x0A is the first PIE3
+source verified by the §4 gate, confirming the Finding 2 inline-asm fix
+works for the third `pir_index` branch (`iorwf PIE3,f`), not just PIE1.
+§7 now has one detailed implementation plan doc per remaining
+peripheral, all 13 written
+(`docs/superpowers/plans/2026-08-04-pic16f193x-*.md`): Timer2/4/6
+(done), CCP1/2, EUSART, MSSP, ADC, Comparator, EEPROM, DAC, FVR, SR
+latch, CPS, LCD, CCP3/4/5. Next: execute the remaining 12 one at a time
 through the §4 gate, in the order §7's table lists, confirming each
 with the user before starting. The LCD plan (peripheral #12) has one
 explicitly flagged open risk (the seg-to-register bit mapping) that
@@ -157,6 +161,11 @@ Table 2-5):
 - Bank 6 (0x30C-0x31F): CCPR3L/H, CCP3CON, PWM3CON, CCP3AS, PSTR3CON,
   CCPR4L/H, CCP4CON, CCPR5L/H, CCP5CON.
 - Bank 7 (0x38C-0x39F): IOCBP, IOCBN, IOCBF.
+- Bank 8 (0x40C-0x41F, partial): NOT purely GPR/linear despite the
+  Table 2-5 assumption above; TMR4/PR4/T4CON (0x415-0x417) and
+  TMR6/PR6/T6CON (0x41C-0x41E) live here, confirmed via the installed
+  DFP header when Timer2/4/6 was implemented
+  (`docs/superpowers/plans/2026-08-04-pic16f193x-timer246.md`).
 
 Peripheral modules (DS41364B): I/O Ports + Interrupt-on-Change, Oscillator
 (INTOSC + Fail-Safe Clock Monitor), SR Latch, ADC (10-bit), Comparator
@@ -388,12 +397,13 @@ issues; EUSART plan must avoid/flag auto-baud-detect mode (SPBRG bug);
 MSSP plan must note the SPI-master BF/SSPIF-half-SCK-early behavior
 when CKE=0.
 
-Status per plan doc: **written, not yet implemented** until each is
-executed and its peripheral clears the §4 gate; this table's own
-Status line and each peripheral's own plan-doc Status line are the
-source of truth as they land. The landing order above is a
-recommendation (dependency-free peripherals can go in any order); confirm
-with the user before starting each one, same as Timer1.
+Status per plan doc: **Timer2/4/6 done (cleared the §4 gate); the other
+12 written, not yet implemented** until each is executed and its
+peripheral clears the §4 gate; this table's own Status line and each
+peripheral's own plan-doc Status line are the source of truth as they
+land. The landing order above is a recommendation (dependency-free
+peripherals can go in any order); confirm with the user before starting
+each one, same as Timer1.
 
 ## §8. Risks (from the playbook appendix)
 

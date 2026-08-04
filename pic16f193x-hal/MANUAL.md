@@ -163,7 +163,67 @@ Timer1 ISR + main loop + bounded sim run.
 - T1GCON (gate control, DS41364B §16.6): Timer1.1 spec.
 - External clock + T1OSC (DS41364B §16.5): Timer1.1 spec.
 
-## 12. The SFR layer
+## 12. Timer2 / Timer4 / Timer6 (DS41364B §17.0)
+
+Three instances of the same 8-bit timer: TMRx counts 0..PRx and resets
+to 0 on the cycle it would exceed PRx (never reaches PRx+1), unlike
+Timer0/Timer1's raw free-running overflow. TMRxIF fires once every
+prescaler x (PRx+1) x postscaler cycles: the PR match happens every
+prescaler x (PRx+1) cycles, the postscaler divides that further before
+setting the flag. One driver, `HAL_TIMER246_*`, covers all three via a
+`TIMER246_InstanceTypeDef` selector (mirrors `pic18fxx5x_ccp.h`'s
+`CCP_InstanceTypeDef` convention).
+
+### Register layout
+
+Identical for T2CON/T4CON/T6CON (DS41364B §17.0):
+
+| Register | Address | Bit 7 | Bits 6:3 | Bit 2 | Bits 1:0 |
+|---|---|---|---|---|---|
+| T2CON | 0x1C | unimplemented | T2OUTPS<3:0> | TMR2ON | T2CKPS<1:0> |
+| T4CON | 0x417 | unimplemented | T4OUTPS<3:0> | TMR4ON | T4CKPS<1:0> |
+| T6CON | 0x41E | unimplemented | T6OUTPS<3:0> | TMR6ON | T6CKPS<1:0> |
+
+POR value: `0x00` for all three. PRx POR value: `0xFF` for all three
+(TMR2/TMR4/TMR6 POR: `0x00`).
+
+Prescaler `T*CKPS<1:0>`: `00`=1:1, `01`=1:4, `1x`=1:16 (both `10` and
+`11` give 1:16). Postscaler `T*OUTPS<3:0>`: value N gives 1:(N+1),
+linear, all 16 encodings distinct.
+
+TMR2/PR2/T2CON live in bank 0 (0x1A-0x1C). TMR4/PR4/T4CON and
+TMR6/PR6/T6CON live in bank 8 (0x415-0x417, 0x41C-0x41E), a bank not
+documented in this repo's `docs/pic16f193x-plan.md` §2 bank-map table
+before this peripheral landed (that table only covered banks 0-7; see
+`docs/superpowers/plans/2026-08-04-pic16f193x-timer246.md`'s "Known
+documentation gap" section for the full account).
+
+### Driver API
+
+`HAL_TIMER246_Init`, `HAL_TIMER246_DeInit`, `HAL_TIMER246_Start`,
+`HAL_TIMER246_Stop`, `HAL_TIMER246_ReadCounter`,
+`HAL_TIMER246_WriteCounter`, `HAL_TIMER246_ReadPeriod`,
+`HAL_TIMER246_WritePeriod`, `HAL_TIMER246_PrescalerToRatio`,
+`HAL_TIMER246_PostscalerToRatio`. Each takes a
+`TIMER246_InstanceTypeDef` (or the handle carries it). Weak
+`TIMER2_IRQHandler`/`TIMER4_IRQHandler`/`TIMER6_IRQHandler`, one per
+instance. Every SFR access inside the driver branches on the instance
+before touching any register, so each branch's own access is a literal
+`PIC_REG_*` token (mirrors `pic18fxx5x_ccp.c`'s `CCP_WRITE_*`/
+`CCP_READ_*` shape, `docs/adding-a-device.md` §4.8's proven pattern).
+
+### Errata
+
+DS80000479 does not list any Timer2/4/6-specific silicon issue (it
+covers ADC, ECCP, Timer1 gate, EUSART, MSSP). No workaround needed.
+
+### Example
+
+See `pic16f193x-hal/tests/example_timer246.c`: all three instances run
+at once with different prescaler/postscaler/period values, each
+overflow ISR toggles a distinct RC pin (RC0/RC1/RC2).
+
+## 13. The SFR layer
 
 `include/pic16f193x_sfr.h` defines `PIC_REG_*` addresses, `PIC_*_BIT`
 masks, and `PIC_*_POR_VALUE` reset values, all DS41364B-cited. The
@@ -172,7 +232,7 @@ selected) defines `PIC8_REG8` / `pic8_sfr_read8` / `pic8_sfr_write8` /
 `PIC8_SFR_PTR` and the per-PIE-bank `PIC8_PIE_ENABLE_BIT` /
 `PIC8_PIE_DISABLE_BIT` macros (`pir_index` 0/1/2 for PIE1/2/3).
 
-## 13. Device selection
+## 14. Device selection
 
 `include/pic16f193x.h` selects exactly one of 1933/1934/1936/1937/1938/
 1939 via a `-D` define, default 1937, and sets per-device capability
@@ -180,7 +240,7 @@ macros (`PIC16F193X_FAMILY_HAS_PORTD`/`_PORTE` on 40/44-pin parts, plus
 flash/RAM/EEPROM/ADC sizes). `PIC8_FAMILY_RAM_BYTES` is the neutral
 alias consumers use.
 
-## 14. The examples
+## 15. The examples
 
 `example_blink.c`: Timer0 overflow drives an ISR that toggles RB0; the
 canonical dual-build smoke test, its header documents the expected
@@ -189,7 +249,7 @@ smoke test driving the sim directly. `example_timer1.c`: Timer1
 overflow drives an ISR that toggles RB0, the §4 gate's `HARNESS=sim
 MODE=gpio` payload (its header documents the expected register image).
 
-## 15. Known gaps and gotchas
+## 16. Known gaps and gotchas
 
 - The `Microchip.PIC12-16F1xxx_DFP` is installed and the real-target
   XC8 build passes for all six parts. Timer1 has cleared the §4 gate
@@ -213,7 +273,7 @@ MODE=gpio` payload (its header documents the expected register image).
   byte, not PIE1 in bank 1). See `docs/ARCHITECTURE.md` Finding 2
   for the codegen evidence and the fix.
 
-## 16. Appendix: datasheet section index
+## 17. Appendix: datasheet section index
 
 DS41364B §2.2 data memory, §3 resets, §4 interrupts, §6 I/O ports, §7
 interrupt-on-change, §8 oscillator, §10 device config, §11 ADC, §12

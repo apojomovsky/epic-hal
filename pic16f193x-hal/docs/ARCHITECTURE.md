@@ -283,14 +283,14 @@ compilation model.
 ## Open, for whoever picks this back up
 
 The real *register-readback* half of the §4 gate ran for the Timer1
-case (Finding 2; PORTA=1 PASS, PIE1=0x01 confirmed). It has not yet
-been repeated for the other peripheral IRQs routed through
-`PIC8_PIE_ENABLE_BIT` (TMR2, CCP1, SSP, USART TX/RX, ADC, TMR1G,
-PIE2 / PIR2 entries: CCP2, LCD, BCL, EEPROM, CMP1/2, OSF; PIE3 /
-PIR3 entries: TMR4/6, CCP3/4/5). Each of those dispatches the same
-macro, so the same fix should apply, but the §4 register readback
-should run for at least one PIE2 source and one PIE3 source to
-confirm the third branch of the `pir_index` switch actually emits
-`iorwf PIE2,f` and `iorwf PIE3,f` (not just `PIE1`). Per
-`docs/adding-a-device.md`, that is the recommended gate before
-shipping any peripheral beyond Timer1.
+case (Finding 2; PORTA=1 PASS, PIE1=0x01 confirmed). The Timer2/4/6
+peripheral has now also cleared it: `mdb` register readback confirms
+PIE1=0x02 (TMR2IE) and PIE3=0x0A (TMR4IE | TMR6IE), which is the first
+PIE3 source verified by the §4 gate. This confirms the third branch
+of the `pir_index` switch actually emits `iorwf PIE3,f` (not just
+`iorwf PIE1,f`), closing the Finding 2 verification gap for the PIE3
+bank. The PIE2 bank (CCP2, LCD, BCL, EEPROM, CMP1/2, OSF) has still
+not been exercised by a §4 readback; the first PIE2-routed peripheral
+to land (CCP1/2 per the §7 roadmap) should verify `iorwf PIE2,f` the
+same way. Per `docs/adding-a-device.md`, that is the recommended gate
+before shipping any peripheral routed through PIE2.
