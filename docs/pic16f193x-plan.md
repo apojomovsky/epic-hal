@@ -7,9 +7,16 @@ fix-round-1): the PIE1/2/3 inline-asm fix makes `mdb` report `PIE1=0x01`
 `PIC8_HARNESS_RESULT: PASS` via `MODE=gpio` on `PORTA` bit 0. The 6-part
 real-target XC8 build (`MCU=16F1933/1934/1936/1937/1938/1939`,
 `HARNESS=target`) all PASS, and `HARNESS=sim` PASSes via `make
-mdb-test ... MODE=gpio WAIT_MS=60000`. The next spec phase is
-Timer2/4/6 + CCP/ECCP + EUSART + MSSP + ADC + LCD + comparators + DAC +
-FVR + EEPROM, in that order.**
+mdb-test ... MODE=gpio WAIT_MS=60000`. §7 now has one detailed
+implementation plan doc per remaining peripheral, all 13 written
+(`docs/superpowers/plans/2026-08-04-pic16f193x-*.md`): Timer2/4/6,
+CCP1/2, EUSART, MSSP, ADC, Comparator, EEPROM, DAC, FVR, SR latch, CPS,
+LCD, CCP3/4/5. None implemented yet. Next: execute them one at a time
+through the §4 gate, in the order §7's table lists, confirming each
+with the user before starting. The LCD plan (peripheral #12) has one
+explicitly flagged open risk (the seg-to-register bit mapping) that
+must be resolved from the DFP header before that plan's driver code
+ships, see its own file.**
 Device identity confirmed (§1), Path B confirmed (§2), scope set (§3).
 The foundation (platform headers, SFR map, IRQ backend, dispatch, ISR
 vector, harness, WDT/Sleep, GPIO, Timer0, host sim) builds clean with
@@ -319,16 +326,74 @@ real-target build verified (§4); `mdb` gate not yet run for this family
   register-readback confirmed the fix (`PIE1=0x01` after the fix,
   `PIE1=0x00` before).
 
-## §7. Peripheral roadmap (pending, decided incrementally)
+## §7. Peripheral roadmap (pending, one detailed plan doc per peripheral)
 
-After the foundation is host-verified, peripherals one at a time through
-the §4 gate. Likely order mirroring `pic16f87xa-hal`'s coverage first:
-Timer1, Timer2/4/6, CCP (ECCP1 first), EUSART, MSSP, ADC, Comparator,
-EEPROM. Then the 193X-extras with no existing analog: DAC, FVR, SR latch,
-capacitive sensing, LCD driver, CCP3/4/5. Each gets its own
-`example_<periph>.c` with a hand-computed expected register image, host
-test, then `mdb` gate. The order is confirmed with the user as each
-finishes.
+After the foundation, GPIO, Timer0, and Timer1 (all cleared, §4-§6), 13
+peripheral groups remain, covering every module DS41364B documents for
+this family (§2's peripheral list). Each gets its own plan doc under
+`docs/superpowers/plans/`, written to the same rigor as Timer1's (design
++ full `Task N` code-level breakdown, `docs/superpowers/plans/2026-08-03-pic16f193x-phase0-timer1.md`
+is the template every new plan mirrors) so an implementer with no prior
+context on this codebase can execute it. Each plan gets its own
+`example_<periph>.c` with a hand-computed expected register image (the
+`example_timer1.c` header-comment pattern), host sim step function,
+real-target XC8 build, and the `mdb` `MODE=gpio` register-readback half
+of the §4 gate (mandatory for every 193X peripheral until an EUSART
+`HARNESS=sim` build exists, since there is no UART-reporting path yet).
+
+**Standing rule for every plan below, non-negotiable**: every register
+bit position must be re-derived from DS41364B's own register table for
+that specific SFR and cross-checked against the installed DFP header
+(`/opt/microchip/xc8/v3.10/pic/packs/Microchip.PIC12-16F1xxx_DFP/xc8/pic/include/proc/pic16f1937.h`,
+`_<REG>_<FIELD>_POSN`/`_MASK` macros), never transcribed from another
+family's driver or from memory. This is not theoretical: Timer1 shipped
+with `PIC_T1CON_TMR1CS` at bit 1 (correct for `pic16f87xa`'s classic
+PIC16 T1CON, wrong here; the real field is bits 7:6) because it was
+copied without re-verifying, caught only by the §4 gate. Every plan doc
+below embeds the exact verified addresses/bit positions already
+extracted from the DFP header so the implementer never has to guess.
+
+**MANUAL.md section numbers** are assigned in landing order starting at
+§12 (Timer1 is §11); `pic16f193x-hal/docs/ARCHITECTURE.md` §5 notes the
+renumbering cascade risk if peripherals land out of this order, i.e. if
+peripheral N+2 lands before N+1, renumber on merge, don't leave a gap or
+a collision. `src/core/pic16f193x_irq_dispatch.c` needs exactly one
+`extern`+call addition per peripheral (`include/core/pic16f193x_irq.h`'s
+23-source table and `src/core/pic16f193x_irq.c`'s descriptor array are
+already fully populated for all pending peripherals, zero changes
+needed there). Each `pic16f193x-hal/CMakeLists.txt` addition is one
+`HAL_SOURCES` line + one `pic8_add_example[_per_device]` call, same
+shape as Timer1's.
+
+| # | Peripheral group | Plan doc | Registers (bank) | MANUAL § | Reference driver to mirror |
+|---|---|---|---|---|---|
+| 1 | Timer2/4/6 | `docs/superpowers/plans/2026-08-04-pic16f193x-timer246.md` | TMR2/PR2/T2CON (bank 0); TMR4/PR4/T4CON, TMR6/PR6/T6CON (bank 8, **not yet in `pic16f193x_sfr.h`**, addresses newly confirmed via DFP: 0x415-0x417, 0x41C-0x41E) | §12 | `pic16f87xa_timer2.{h,c}` |
+| 2 | CCP1/CCP2 (ECCP1/ECCP2) | `docs/superpowers/plans/2026-08-04-pic16f193x-ccp12.md` | CCPR1-2L/H, CCP1-2CON, PWM1-2CON, CCP1-2AS, PSTR1-2CON, CCPTMRS0/1 (bank 5) | §13 | `pic18fxx5x_ccp.{h,c}` (PIC18's ECCP1/plain-CCP2 split matches this family's shape; `pic16f87xa_ccp.{h,c}` is plain-CCP-only, not a good template here) |
+| 3 | EUSART | `docs/superpowers/plans/2026-08-04-pic16f193x-eusart.md` | RCREG/TXREG/SPBRGL/H/RCSTA/TXSTA/BAUDCON (bank 3) | §14 | `pic16f87xa_usart.{h,c}` |
+| 4 | MSSP (SPI + I2C) | `docs/superpowers/plans/2026-08-04-pic16f193x-mssp.md` | SSPBUF/SSPADD/SSPMSK/SSPSTAT/SSPCON1-3 (bank 4) | §15 | `pic16f87xa_ssp.{h,c}` |
+| 5 | ADC | `docs/superpowers/plans/2026-08-04-pic16f193x-adc.md` | ADRESL/H/ADCON0/1 (bank 1) | §16 | `pic16f87xa_adc.{h,c}` |
+| 6 | Comparator (C1/C2) | `docs/superpowers/plans/2026-08-04-pic16f193x-comparator.md` | CM1CON0/1, CM2CON0/1, CMOUT (bank 2) | §17 | `pic16f87xa_comp.{h,c}` (single-`CMCON` shape; this family splits into per-comparator CM1CON0/1 + CM2CON0/1 + a shared CMOUT, adapt the shape, don't copy the register count) |
+| 7 | EEPROM | `docs/superpowers/plans/2026-08-04-pic16f193x-eeprom.md` | EEADRL/H/EEDATL/H/EECON1/2 (bank 3) | §18 | `pic16f87xa_eeprom.{h,c}` |
+| 8 | DAC | `docs/superpowers/plans/2026-08-04-pic16f193x-dac.md` | DACCON0/1 (bank 2) | §19 | none in either reference family, new shape (small: 2 registers) |
+| 9 | FVR | `docs/superpowers/plans/2026-08-04-pic16f193x-fvr.md` | FVRCON (bank 2) | §20 | none in either reference family, new shape (single register) |
+| 10 | SR latch | `docs/superpowers/plans/2026-08-04-pic16f193x-srlatch.md` | SRCON0/1 (bank 2) | §21 | none in either reference family, new shape |
+| 11 | Capacitive sensing (CPS) | `docs/superpowers/plans/2026-08-04-pic16f193x-cps.md` | CPSCON0/1 (bank 0) | §22 | none in either reference family, new shape |
+| 12 | LCD segment driver | `docs/superpowers/plans/2026-08-04-pic16f193x-lcd.md` | LCDCON/LCDPS/LCDREF/LCDCST/LCDRL/LCDSE0-2/LCDDATA0-11 (bank 15, 0x790-0x7AB, **not yet in `pic16f193x_sfr.h`**, newly confirmed via DFP) | §23 | none in either reference family, largest and highest-risk of the 13 (24 segments / 4 commons on the 1937/1939, fewer on 28-pin parts, needs its own per-device segment-count capability macro) |
+| 13 | CCP3/CCP4/CCP5 | `docs/superpowers/plans/2026-08-04-pic16f193x-ccp345.md` | CCPR3-5L/H, CCP3CON, PWM3CON, CCP3AS, PSTR3CON (bank 6, ECCP3), CCP4CON, CCP5CON (bank 6, **plain, no PWM/AS/PSTR registers**, do not assume ECCP shape for 4/5) | §24 | `pic18fxx5x_ccp.{h,c}` for CCP3 (ECCP), `pic16f87xa_ccp.{h,c}` for CCP4/5 (plain); shares the peripheral #2 driver's handle-shape decisions, so land after it |
+
+Errata to carry into the relevant plan (DS80000479, full detail already
+in §1): ADC plan must gate/warn on FOSC > 8 MHz; CCP1/2 and CCP3/4/5
+plans must flag ECCP1-3's 0%-duty direction-change and port-steering
+issues; EUSART plan must avoid/flag auto-baud-detect mode (SPBRG bug);
+MSSP plan must note the SPI-master BF/SSPIF-half-SCK-early behavior
+when CKE=0.
+
+Status per plan doc: **written, not yet implemented** until each is
+executed and its peripheral clears the §4 gate; this table's own
+Status line and each peripheral's own plan-doc Status line are the
+source of truth as they land. The landing order above is a
+recommendation (dependency-free peripherals can go in any order); confirm
+with the user before starting each one, same as Timer1.
 
 ## §8. Risks (from the playbook appendix)
 
