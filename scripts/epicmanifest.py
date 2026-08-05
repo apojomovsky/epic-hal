@@ -35,6 +35,7 @@ class ManifestError(Exception):
 class ConditionalSource:
     path: str
     variants: list[str]
+    after: str | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -136,17 +137,31 @@ class Manifest:
     def sources_for(self, module_name: str, mcu: str) -> list[str]:
         """Repo-root-relative sources for one (module, MCU) build.
 
-        Order: family HAL sources and applicable conditional sources (only
-        when the build uses the HAL), each resolved module's own sources
-        plus its per-family sources, then the requested module's example.
-        Only the requested module's example is included; a dependency's
-        example is a separate program.
+        Order: family HAL sources with applicable conditional sources
+        spliced in at their recorded position (only when the build uses
+        the HAL), each resolved module's own sources plus its per-family
+        sources, then the requested module's example. Only the requested
+        module's example is included; a dependency's example is a
+        separate program.
+
+        Conditional-source position matters, not just presence: XC8 lays
+        out psects in link order, so a source inserted at the wrong point
+        in the list changes the .hex even though the same files compile.
+        A conditional with `after` set is spliced in right after that
+        sibling path; one with no `after` is appended at the end (the
+        historical default, still correct for the one family that needs
+        it that way).
         """
         fam = self.family_of(mcu)
         out = []
         if self.uses_hal(module_name, mcu):
-            out += list(fam.hal_sources)
-            out += [c.path for c in fam.conditional_sources if mcu in c.variants]
+            applicable = [c for c in fam.conditional_sources if mcu in c.variants]
+            for hal_src in fam.hal_sources:
+                out.append(hal_src)
+                for c in applicable:
+                    if c.after == hal_src:
+                        out.append(c.path)
+            out += [c.path for c in applicable if c.after is None]
 
         for name in self.resolve_deps(module_name):
             mod = self._module(name)
@@ -203,7 +218,8 @@ def _parse_family(name, table):
         includes=list(_require(table, "includes", f"families.{name}")),
         hal_sources=list(_require(table, "hal_sources", f"families.{name}")),
         conditional_sources=[
-            ConditionalSource(path=c["path"], variants=list(c["variants"]))
+            ConditionalSource(path=c["path"], variants=list(c["variants"]),
+                              after=c.get("after"))
             for c in table.get("conditional_sources", [])
         ],
     )
