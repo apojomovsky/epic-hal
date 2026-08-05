@@ -75,6 +75,7 @@ set(PIC8_HAL_SOURCES
     src/peripherals/pic16f193x_fvr.c
     src/peripherals/pic16f193x_srlatch.c
     src/peripherals/pic16f193x_cps.c
+    src/peripherals/pic16f193x_lcd.c
     src/core/pic16f193x_irq.c
     src/core/pic16f193x_wdt_sleep.c
     src/core/pic16f193x_wdt_sleep_sim.c
@@ -100,6 +101,7 @@ pic8_add_example(example_fvr tests/example_fvr.c)
 pic8_add_example(example_srlatch tests/example_srlatch.c)
 pic8_add_example(example_cps tests/example_cps.c)
 pic8_add_example(example_ccp345 tests/example_ccp345.c)
+pic8_add_example(example_lcd tests/example_lcd.c)
 
 # Optional: example for every device in the family.
 pic8_add_example_per_device(example_blink tests/example_blink.c)
@@ -116,3 +118,4 @@ pic8_add_example_per_device(example_fvr tests/example_fvr.c)
 pic8_add_example_per_device(example_srlatch tests/example_srlatch.c)
 pic8_add_example_per_device(example_cps tests/example_cps.c)
 pic8_add_example_per_device(example_ccp345 tests/example_ccp345.c)
+pic8_add_example_per_device(example_lcd tests/example_lcd.c)

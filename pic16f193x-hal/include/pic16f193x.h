@@ -111,6 +111,14 @@
 #endif
 /** @} */
 
+/* LCD segment count: 24 on 40/44-pin (1934/1937/1939), 16 on 28-pin
+ * (1933/1936/1938), per DS41364B §1 device table. */
+#if PIC16F193X_FAMILY_HAS_PORTD
+  #define PIC16F193X_FAMILY_LCD_SEGMENTS  24
+#else
+  #define PIC16F193X_FAMILY_LCD_SEGMENTS  16
+#endif
+
 /* Family-neutral capability aliases (pic8-common contract): exposed
  * under family-neutral names too, so family-agnostic consumers (the
  * task manager) can scale without referencing a family-specific macro.

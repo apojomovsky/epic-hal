@@ -609,6 +609,42 @@
 #define PIC_CPSCON0_CPSON      PIC8_BIT(7)
 #define PIC_CPSCON1_CPSCH_MASK 0x0FU
 
+/* ───────────────── LCD bits (DS41364B LCD chapter) ──────────────── */
+
+/* Bank 15. LCDCON=0x791, LCDPS=0x792, LCDREF=0x793, LCDCST=0x794,
+ * LCDRL=0x795, LCDSE0-2=0x798-0x79A, LCDDATA0-11=0x7A0-0x7AB.
+ * Cross-checked against DFP: _LCDCON_LCDEN_POSN=7, _LCDCON_LMUX_POSN=0
+ * (mask 0x03). Segment-to-data-register mapping derived from DFP's
+ * _LCDDATAn_SEGxCOMy_POSN macros: data_reg_index = com*3 + seg/8,
+ * bit = seg%8. */
+#define PIC_REG_LCDCON          0x791U
+#define PIC_REG_LCDPS           0x792U
+#define PIC_REG_LCDREF          0x793U
+#define PIC_REG_LCDCST          0x794U
+#define PIC_REG_LCDRL           0x795U
+#define PIC_REG_LCDSE0          0x798U
+#define PIC_REG_LCDSE1          0x799U
+#define PIC_REG_LCDSE2          0x79AU
+#define PIC_REG_LCDDATA0        0x7A0U
+#define PIC_REG_LCDDATA1        0x7A1U
+#define PIC_REG_LCDDATA2        0x7A2U
+#define PIC_REG_LCDDATA3        0x7A3U
+#define PIC_REG_LCDDATA4        0x7A4U
+#define PIC_REG_LCDDATA5        0x7A5U
+#define PIC_REG_LCDDATA6        0x7A6U
+#define PIC_REG_LCDDATA7        0x7A7U
+#define PIC_REG_LCDDATA8        0x7A8U
+#define PIC_REG_LCDDATA9        0x7A9U
+#define PIC_REG_LCDDATA10       0x7AAU
+#define PIC_REG_LCDDATA11       0x7ABU
+
+#define PIC_LCDCON_LMUX_MASK    0x03U
+#define PIC_LCDCON_LCDEN        PIC8_BIT(7)
+#define PIC_LCDPS_LP_MASK       0x0FU
+#define PIC_LCDPS_WA            PIC8_BIT(4)
+#define PIC_LCDPS_LCDA          PIC8_BIT(5)
+#define PIC_LCDCST_LCDCST_MASK   0x07U
+
 /* ───────────────────────── Reset values (POR) ──────────────────── */
 
 /* DS41364B §3 reset values and the per-register POR columns of the
