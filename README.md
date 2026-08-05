@@ -24,14 +24,6 @@ register-level driver per peripheral, faithful to the datasheet, and one
 contract that holds across every family it's ported to, however little
 those families have in common.
 
-Every module builds two ways from one source tree: as a host program
-under gcc/CMake (no hardware required) and as real firmware under
-MPLAB XC8 (produces a .hex). The build selects which target to link
-for, not the source code. CI runs all three stages on every push: host
-build and test, a real XC8 cross-compile of every module against every
-supported part, and a real run under MPLAB SIM (mdb, headless) that
-checks actual register and UART output, not just whether it compiled.
-
 ## Contents
 
 - [Why](#why)
@@ -62,6 +54,10 @@ The shape of that, concretely:
 - **Zero framework tax.** No RTOS, no dynamic allocation, no C++. Plain
   C99, cooperative scheduling, static storage, every module usable on
   its own.
+- **Proven on real silicon, not just compiled.** CI runs three stages on
+  every push: host build and test, a real XC8 cross-compile of every
+  module against every supported part, and a real run under MPLAB SIM
+  (mdb, headless) that checks actual register and UART output.
 
 ## Supported devices
 
