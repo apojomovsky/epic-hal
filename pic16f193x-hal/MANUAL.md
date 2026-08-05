@@ -268,7 +268,41 @@ See `pic16f193x-hal/tests/example_ccp.c`: both instances in
 compare-set mode with distinct compare values, register-state
 verification (no ISR, no callback, pure register readback).
 
-## 14. The SFR layer
+## 14. EUSART (DS41364B §23.0)
+
+Enhanced USART, async 8-bit mode only this phase. 9-bit addressed
+mode, auto-baud detection, and synchronous mode are deferred. Auto-baud
+is deferred specifically due to DS80000479's "EUSART auto-baud SPBRG
+bug" on this silicon, not just convenience.
+
+### Register layout
+
+| Register | Address | Key bits |
+|---|---|---|
+| TXSTA | 0x19E | TXEN(5), BRGH(2), TRMT(1, read-only) |
+| RCSTA | 0x19D | SPEN(7), CREN(4), OERR(1, read-only) |
+| SPBRGL | 0x19B | 8-bit baud divisor (BRG16=0 this phase) |
+| SPBRGH | 0x19C | unused (BRG16=0 this phase) |
+| BAUDCON | 0x19F | BRG16(3), RCIDL(6, read-only) |
+
+POR values: TXSTA=0x02 (TRMT=1), RCSTA=0x00, BAUDCON=0x40 (RCIDL=1).
+
+Baud rate formula (BRG16=0): `rate = FOSC / (divisor * (SPBRG+1))` where
+divisor=64 (BRGH=0) or 16 (BRGH=1). `USART_ComputeSPBRG` computes this.
+
+### Driver API
+
+`HAL_USART_Init`, `HAL_USART_DeInit`, `HAL_USART_Transmit`,
+`HAL_USART_IsTxShiftRegisterEmpty`, `HAL_USART_Receive`,
+`HAL_USART_HasOverrunError`, `USART_ComputeSPBRG`. Weak
+`USART_TX_IRQHandler`/`USART_RX_IRQHandler`.
+
+### Example
+
+See `pic16f193x-hal/tests/example_eusart.c`: init at 9600 baud (32MHz
+Fosc, BRGH=1), transmit one byte, register-state verification.
+
+## 15. The SFR layer
 
 `include/pic16f193x_sfr.h` defines `PIC_REG_*` addresses, `PIC_*_BIT`
 masks, and `PIC_*_POR_VALUE` reset values, all DS41364B-cited. The
@@ -277,7 +311,7 @@ selected) defines `PIC8_REG8` / `pic8_sfr_read8` / `pic8_sfr_write8` /
 `PIC8_SFR_PTR` and the per-PIE-bank `PIC8_PIE_ENABLE_BIT` /
 `PIC8_PIE_DISABLE_BIT` macros (`pir_index` 0/1/2 for PIE1/2/3).
 
-## 15. Device selection
+## 16. Device selection
 
 `include/pic16f193x.h` selects exactly one of 1933/1934/1936/1937/1938/
 1939 via a `-D` define, default 1937, and sets per-device capability
@@ -285,7 +319,7 @@ macros (`PIC16F193X_FAMILY_HAS_PORTD`/`_PORTE` on 40/44-pin parts, plus
 flash/RAM/EEPROM/ADC sizes). `PIC8_FAMILY_RAM_BYTES` is the neutral
 alias consumers use.
 
-## 16. The examples
+## 17. The examples
 
 `example_blink.c`: Timer0 overflow drives an ISR that toggles RB0; the
 canonical dual-build smoke test, its header documents the expected
@@ -294,7 +328,7 @@ smoke test driving the sim directly. `example_timer1.c`: Timer1
 overflow drives an ISR that toggles RB0, the §4 gate's `HARNESS=sim
 MODE=gpio` payload (its header documents the expected register image).
 
-## 17. Known gaps and gotchas
+## 18. Known gaps and gotchas
 
 - The `Microchip.PIC12-16F1xxx_DFP` is installed and the real-target
   XC8 build passes for all six parts. Timer1 has cleared the §4 gate
@@ -318,7 +352,7 @@ MODE=gpio` payload (its header documents the expected register image).
   byte, not PIE1 in bank 1). See `docs/ARCHITECTURE.md` Finding 2
   for the codegen evidence and the fix.
 
-## 18. Appendix: datasheet section index
+## 19. Appendix: datasheet section index
 
 DS41364B §2.2 data memory, §3 resets, §4 interrupts, §6 I/O ports, §7
 interrupt-on-change, §8 oscillator, §10 device config, §11 ADC, §12

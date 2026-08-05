@@ -140,6 +140,7 @@ HAL_SOURCES := \
   $(HAL_DIR)/src/peripherals/pic16f193x_timer1.c   \
   $(HAL_DIR)/src/peripherals/pic16f193x_timer246.c \
   $(HAL_DIR)/src/peripherals/pic16f193x_ccp.c \
+  $(HAL_DIR)/src/peripherals/pic16f193x_usart.c \
   $(HAL_DIR)/src/core/pic16f193x_irq.c             \
   $(HAL_DIR)/src/core/pic16f193x_wdt_sleep.c       \
   $(HAL_DIR)/src/core/pic16f193x_wdt_sleep_target.c \

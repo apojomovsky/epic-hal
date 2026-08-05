@@ -451,6 +451,42 @@
 #define PIC_CCPTMRS0_C4TSEL_MASK 0xC0U
 #define PIC_CCPTMRS1_C5TSEL_MASK 0x03U
 
+/* ───────────────── EUSART bits (DS41364B §23.0) ─────────────────── */
+
+/* RCSTA/TXSTA/BAUDCON, DS41364B Register 23-2/23-3/23-4. Cross-checked
+ * against the DFP header: _RCSTA_SPEN_POSN=7, _RCSTA_CREN_POSN=4,
+ * _TXSTA_TXEN_POSN=5, _TXSTA_BRGH_POSN=2, _TXSTA_TRMT_POSN=1. */
+#define PIC_RCSTA_RX9D          PIC8_BIT(0)
+#define PIC_RCSTA_OERR          PIC8_BIT(1)
+#define PIC_RCSTA_FERR          PIC8_BIT(2)
+#define PIC_RCSTA_ADDEN         PIC8_BIT(3)
+#define PIC_RCSTA_CREN          PIC8_BIT(4)
+#define PIC_RCSTA_SREN          PIC8_BIT(5)
+#define PIC_RCSTA_RX9           PIC8_BIT(6)
+#define PIC_RCSTA_SPEN          PIC8_BIT(7)
+
+#define PIC_TXSTA_TX9D          PIC8_BIT(0)
+#define PIC_TXSTA_TRMT          PIC8_BIT(1)
+#define PIC_TXSTA_BRGH          PIC8_BIT(2)
+#define PIC_TXSTA_SENDB         PIC8_BIT(3)
+#define PIC_TXSTA_SYNC          PIC8_BIT(4)
+#define PIC_TXSTA_TXEN          PIC8_BIT(5)
+#define PIC_TXSTA_TX9           PIC8_BIT(6)
+#define PIC_TXSTA_CSRC          PIC8_BIT(7)
+
+#define PIC_BAUDCON_ABDEN       PIC8_BIT(0)
+#define PIC_BAUDCON_WUE         PIC8_BIT(1)
+#define PIC_BAUDCON_BRG16       PIC8_BIT(3)
+#define PIC_BAUDCON_SCKP        PIC8_BIT(4)
+#define PIC_BAUDCON_RCIDL       PIC8_BIT(6)
+#define PIC_BAUDCON_ABDOVF      PIC8_BIT(7)
+
+/* POR values: TXSTA=0x02 (TRMT=1), RCSTA=0x00, BAUDCON=0x40 (RCIDL=1).
+ * DS41364B Register 23-2/23-3/23-4 POR columns. */
+#define PIC_TXSTA_POR_VALUE     0x02U
+#define PIC_RCSTA_POR_VALUE     0x00U
+#define PIC_BAUDCON_POR_VALUE   0x40U
+
 /* ───────────────────────── Reset values (POR) ──────────────────── */
 
 /* DS41364B §3 reset values and the per-register POR columns of the

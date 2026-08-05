@@ -34,6 +34,7 @@ static pic16f193x_sim_irq_cb_t sim_irq_cb = 0;
 static void sim_step_timer0(void);
 static void sim_step_timer1(void);
 static void sim_step_timer246(void);
+static void sim_step_usart(void);
 static void sim_refresh_ports(void);
 static void sim_step_ioc(void);
 
@@ -73,6 +74,11 @@ void pic16f193x_sim_reset(void)
     pic16f193x_sim_sfr[PIC_REG_PR2] = 0xFFU;
     pic16f193x_sim_sfr[PIC_REG_PR4] = 0xFFU;
     pic16f193x_sim_sfr[PIC_REG_PR6] = 0xFFU;
+
+    /* TXSTA POR = 0x02 (TRMT=1), BAUDCON POR = 0x40 (RCIDL=1, read-only),
+     * DS41364B Register 23-3/23-4 POR columns. */
+    pic16f193x_sim_sfr[PIC_REG_TXSTA] = PIC_TXSTA_POR_VALUE;
+    pic16f193x_sim_sfr[PIC_REG_BAUDCON] = PIC_BAUDCON_POR_VALUE;
 
     /* PIR1<TXIF> resets to 1 (TXREG empty after POR, DS41364B §20.0). */
     pic16f193x_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TXIF;
@@ -130,6 +136,7 @@ void pic16f193x_sim_step(uint32_t ticks)
         sim_step_timer0();
         sim_step_timer1();
         sim_step_timer246();
+        sim_step_usart();
         sim_refresh_ports();
         sim_step_ioc();
     }
@@ -268,6 +275,23 @@ static void sim_step_timer246(void)
         }
         pic16f193x_sim_sfr[tmr_addr[i]] = tmr;
     }
+}
+
+/* ───────────────────────── USART step ──────────────────────────── */
+
+static void sim_step_usart(void)
+{
+    /* TXSTA: TRMT is a hardware-read-only bit (DS41364B §23.0) that
+     * reads 1 when the shift register is empty. The sim models
+     * transmission as instantaneous (no real UART wire), so TRMT stays
+     * 1 whenever TXEN is set. The driver writes TXSTA without TRMT
+     * (it is read-only on real silicon), so the sim sets it here. */
+    uint8_t txsta = pic16f193x_sim_sfr[PIC_REG_TXSTA];
+    if (txsta & PIC_TXSTA_TXEN) {
+        pic16f193x_sim_sfr[PIC_REG_TXSTA] = (uint8_t)(txsta | PIC_TXSTA_TRMT);
+    }
+    /* BAUDCON: RCIDL (bit 6) is read-only, stays 1 when receiver idle. */
+    pic16f193x_sim_sfr[PIC_REG_BAUDCON] |= PIC_BAUDCON_RCIDL;
 }
 
 /* ───────────────────────── GPIO pin-level refresh ───────────────── */
