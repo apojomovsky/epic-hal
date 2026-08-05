@@ -63,8 +63,9 @@ while IFS= read -r line; do
       continue
     fi
     rm -rf "build-manifest/$module/$mcu"/*.p1
-    if ! EPIC_REPO_ROOT="$PWD" sh "$new_script" >/dev/null 2>&1; then
+    if ! EPIC_REPO_ROOT="$PWD" sh "$new_script" >"/tmp/new-$module-$mcu.log" 2>&1; then
       echo "FAIL $module $mcu (manifest build failed)"
+      tail -20 "/tmp/new-$module-$mcu.log"
       fail=$((fail + 1))
       continue
     fi
