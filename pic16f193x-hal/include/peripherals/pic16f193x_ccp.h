@@ -31,6 +31,9 @@
 typedef enum {
     CCP_INSTANCE_1 = 1,   /**< CCP1, CCPR1L/H + CCP1CON (bank 5). */
     CCP_INSTANCE_2 = 2,   /**< CCP2, CCPR2L/H + CCP2CON (bank 5). */
+    CCP_INSTANCE_3 = 3,   /**< CCP3, CCPR3L/H + CCP3CON (bank 6, ECCP). */
+    CCP_INSTANCE_4 = 4,   /**< CCP4, CCPR4L/H + CCP4CON (bank 6, plain). */
+    CCP_INSTANCE_5 = 5,   /**< CCP5, CCPR5L/H + CCP5CON (bank 6, plain). */
 } CCP_InstanceTypeDef;
 
 /** CCPxCON<3:0> mode select, capture/compare encodings only this phase
@@ -72,5 +75,8 @@ uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst);
 /** Weak CCP1/CCP2 ISRs, one per instance, override in user code. */
 void CCP1_IRQHandler(void) PIC8_WEAK;
 void CCP2_IRQHandler(void) PIC8_WEAK;
+void CCP3_IRQHandler(void) PIC8_WEAK;
+void CCP4_IRQHandler(void) PIC8_WEAK;
+void CCP5_IRQHandler(void) PIC8_WEAK;
 
 #endif /* PIC16F193X_CCP_H */

@@ -419,6 +419,16 @@
 #define PIC_CCP2CON_DCB_MASK    0x30U
 #define PIC_CCP2CON_PM_MASK     0xC0U
 
+#define PIC_CCP3CON_CCPM_MASK   0x0FU
+#define PIC_CCP3CON_DCB_MASK    0x30U
+#define PIC_CCP3CON_PM_MASK     0xC0U
+
+#define PIC_CCP4CON_CCPM_MASK   0x0FU
+#define PIC_CCP4CON_DCB_MASK    0x30U
+
+#define PIC_CCP5CON_CCPM_MASK   0x0FU
+#define PIC_CCP5CON_DCB_MASK    0x30U
+
 /* PWM1CON/PWM2CON, CCP1AS/CCP2AS, PSTR1CON/PSTR2CON: PWM-only this
  * phase; macros defined for completeness and the CCP3/4/5 follow-up. */
 #define PIC_PWM1CON_P1DC_MASK   0x7FU

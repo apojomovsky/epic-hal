@@ -34,6 +34,9 @@ extern void ADC_IRQHandler(void);
 extern void CMP1_IRQHandler(void);
 extern void CMP2_IRQHandler(void);
 extern void EEPROM_IRQHandler(void);
+extern void CCP3_IRQHandler(void);
+extern void CCP4_IRQHandler(void);
+extern void CCP5_IRQHandler(void);
 extern void IOC_IRQHandler(void);
 
 void pic8_dispatch_all_irqs(void)
@@ -52,5 +55,8 @@ void pic8_dispatch_all_irqs(void)
     CMP1_IRQHandler();
     CMP2_IRQHandler();
     EEPROM_IRQHandler();
+    CCP3_IRQHandler();
+    CCP4_IRQHandler();
+    CCP5_IRQHandler();
     IOC_IRQHandler();
 }

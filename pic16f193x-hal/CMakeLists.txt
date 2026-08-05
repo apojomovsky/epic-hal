@@ -99,6 +99,7 @@ pic8_add_example(example_dac tests/example_dac.c)
 pic8_add_example(example_fvr tests/example_fvr.c)
 pic8_add_example(example_srlatch tests/example_srlatch.c)
 pic8_add_example(example_cps tests/example_cps.c)
+pic8_add_example(example_ccp345 tests/example_ccp345.c)
 
 # Optional: example for every device in the family.
 pic8_add_example_per_device(example_blink tests/example_blink.c)
@@ -114,3 +115,4 @@ pic8_add_example_per_device(example_dac tests/example_dac.c)
 pic8_add_example_per_device(example_fvr tests/example_fvr.c)
 pic8_add_example_per_device(example_srlatch tests/example_srlatch.c)
 pic8_add_example_per_device(example_cps tests/example_cps.c)
+pic8_add_example_per_device(example_ccp345 tests/example_ccp345.c)
