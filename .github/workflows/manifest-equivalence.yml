@@ -67,7 +67,7 @@ jobs:
                           ["python3", "scripts/epic_build.py", "build",
                            "--module", name, "--mcu", mcu,
                            "--build-dir", f"build-manifest/{name}"],
-                          check=True,
+                          check=True, stdout=subprocess.DEVNULL,
                       )
           PY
           cat pairs.txt
