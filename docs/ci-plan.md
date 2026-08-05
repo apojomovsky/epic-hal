@@ -224,6 +224,22 @@ the 80ms value. Verified locally against the real CI image for both
 families; not yet confirmed on a live GitHub Actions run since this fix
 hasn't been pushed yet.
 
+**PIC16F193X's `mdb` gate, previously verified only via manual
+`make mdb-test` runs (`docs/pic16f193x-plan.md` §6), is now wired into
+`sim-tests.yml`'s matrix, same root-cause class as the wait_ms bug
+above.** `pic16f193x-hal`'s `example_timer1.c` (the family's `HARNESS=sim`
+diagnostic, `MODE=gpio`) loops `SIM_CYCLES=2_000_000` C-level iterations
+before calling `pic8_harness_report`, far more wall-clock time under
+MPLAB SIM than the default `5000`ms budget: confirmed locally that
+20000ms still fails (halts mid-loop, `PORTA` never set) while
+30000/40000/60000ms reliably pass, matching the `WAIT_MS=60000` value
+`docs/pic16f193x-plan.md` §6 already used for its manual Timer1
+verification. Added as a third `sim-tests.yml` matrix entry
+(`pic16f193x-hal/mcu/pic16f193x-mplabx`, `MODE=gpio`, `wait_ms: 60000`),
+confirmed identically on both the pre- and post-image-trim toolchain
+image (see the image-size fix above). Not yet confirmed on a live GitHub
+Actions run.
+
 ## Motivation
 
 There is no CI today. Every `pic8-*` module and both HALs are host-testable

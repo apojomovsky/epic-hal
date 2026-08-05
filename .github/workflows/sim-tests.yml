@@ -6,9 +6,13 @@ name: sim-tests
 # Phase 3 left open (build-verified locally, never actually run under a
 # simulator, since this environment has no local mdb/GHCR access).
 #
-# Scoped to the pic8-tick pilot only, both families (Phase 5 rolls this
-# out to every module, discovered the same dynamic way xc8-build.yml
-# already discovers its own matrix).
+# Scoped to the pic8-tick pilot for PIC16F87XA/PIC18Fxxxx (Phase 5 rolls
+# this out to every module, discovered the same dynamic way xc8-build.yml
+# already discovers its own matrix), plus PIC16F193X's own diagnostic
+# example directly (pic16f193x-hal has no pic8-tick port yet): its
+# harness has no UART, so it reports over MODE=gpio instead (RA0 driven
+# high/low by pic8_harness_report, read back via mdb `print PORTA`, see
+# scripts/sim-mdb-run.sh's own header comment).
 #
 # toolchain-image below is a deliberate, verbatim copy of xc8-build.yml's
 # own job, not a shared/reusable workflow: same tag-resolution formula
@@ -128,6 +132,13 @@ jobs:
             device: PIC18F4550
             dir: pic8-tick/mcu/pic18fxx5x-tick-mplabx
             dfp: Microchip.PIC18Fxxxx_DFP
+          - family: pic16f193x
+            mcu: 16F1937
+            device: PIC16F1937
+            dir: pic16f193x-hal/mcu/pic16f193x-mplabx
+            dfp: Microchip.PIC12-16F1xxx_DFP
+            mode: gpio
+            wait_ms: 60000
     steps:
       - uses: actions/checkout@v4
       - name: Build + run under MPLAB SIM (mdb), check the PASS/FAIL marker
@@ -139,27 +150,41 @@ jobs:
         # it: `set` tool-property commands must come before `hwtool`,
         # silently ignored otherwise (Phase 2 finding).
         #
-        # wait_ms: 5000 (5 real seconds). MPLAB SIM runs noticeably slower
-        # than real-time (confirmed empirically, not a documented spec),
-        # so this is a wall-clock budget, not a simulated-time one, and
-        # pic18fxx5x needs more of it than pic16f87xa does to reach the
-        # harness's report() call (more peripherals to init at a fixed
-        # 48 MHz FOSC). A leftover debug value of 80ms (from isolating a
+        # wait_ms: 5000 (5 real seconds) default, matrix-overridden for
+        # pic16f193x. MPLAB SIM runs noticeably slower than real-time
+        # (confirmed empirically, not a documented spec), so this is a
+        # wall-clock budget, not a simulated-time one, and pic18fxx5x
+        # needs more of it than pic16f87xa does to reach the harness's
+        # report() call (more peripherals to init at a fixed 48 MHz
+        # FOSC). A leftover debug value of 80ms (from isolating a
         # since-fixed bug, see pic18fxx5x-hal/docs/ARCHITECTURE.md Finding
         # 3) starved pic18fxx5x of real time here for a while after that
         # fix landed, producing the same "no UART output" symptom for an
         # unrelated reason; confirmed reproducing this exact CI image
         # locally that 80/500ms fail and 2000/5000ms reliably pass, picked
         # 5000 for margin over the confirmed-passing 2000 baseline.
+        #
+        # pic16f193x's example_timer1.c loops SIM_CYCLES=2_000_000 C-level
+        # iterations (not machine cycles) before calling report(), far
+        # more wall-clock time under MPLAB SIM than the other two
+        # families' examples need: confirmed locally that 20000ms fails
+        # (PORTA never set, halted mid-loop) and 30000/40000/60000ms
+        # reliably pass, picked 60000 for the same margin-over-confirmed-
+        # passing logic as pic18fxx5x's 5000 above. This is the actual
+        # root cause of PIC16F193X's mdb gate never having been wired up
+        # here before now (previously tracked as "mdb still pending"):
+        # not a firmware bug, a wait-time budget too short for this
+        # family's diagnostic example, identical failure mode confirmed
+        # on both a pre- and post-image-trim toolchain image.
         shell: bash
         run: |
           scripts/sim-mdb-run.sh ${{ matrix.family }} ${{ matrix.mcu }} \
             ${{ matrix.device }} ${{ matrix.dir }} ${{ matrix.dfp }} \
-            5000
-      - name: Upload captured UART output (debugging aid on failure)
+            ${{ matrix.wait_ms || 5000 }} ${{ matrix.mode || 'uart' }}
+      - name: Upload captured sim output (debugging aid on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: sim-uart-${{ matrix.family }}
-          path: /tmp/${{ matrix.family }}-uart.txt
+          name: sim-${{ matrix.mode || 'uart' }}-${{ matrix.family }}
+          path: /tmp/${{ matrix.family }}-${{ matrix.mode || 'uart' }}.txt
           if-no-files-found: ignore

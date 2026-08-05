@@ -317,7 +317,10 @@ real-target build verified (§4); `mdb` gate not yet run for this family
   Timer1 cleared the §4 gate via `make mdb-test ... MODE=gpio
   WAIT_MS=60000`, with `mdb` reporting `PIE1=0x01` (TMR1IE bit 0 set)
   and `PORTA` bit 0 transitioning high so the harness reports
-  `PIC8_HARNESS_RESULT: PASS` (Task 11 fix-round-1). The other
+  `PIC8_HARNESS_RESULT: PASS` (Task 11 fix-round-1). This is now also a
+  CI gate, not just a manual check: `sim-tests.yml`'s matrix runs this
+  exact `MODE=gpio WAIT_MS=60000` invocation on every push/PR
+  (`docs/ci-plan.md`'s Phase 4 section). The other
   `pir_index` branches (PIE2/PIE3) still need the same register-readback
   verification before any peripheral routed through them is marked done.
   Each new peripheral gets its own `example_<periph>.c` and the same
