@@ -63,7 +63,13 @@ jobs:
                   if m.example_for(name, fam_name) is None:
                       continue
                   key = fam.hal_dir.replace("-hal", "")
-                  d = f"{name}/mcu/{key}-{name.replace('epic-','')}-mplabx"
+                  if mod.dir == fam.hal_dir:
+                      # A module standing in for a family's own bare-HAL
+                      # Makefile (e.g. epic-pic16f193x-firmware) lives at
+                      # mcu/<key>-mplabx, not mcu/<key>-<suffix>-mplabx.
+                      d = f"{mod.dir}/mcu/{key}-mplabx"
+                  else:
+                      d = f"{name}/mcu/{key}-{name.replace('epic-','')}-mplabx"
                   print(f"{d}={','.join(mcus)}")
                   dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
                   for mcu in mcus:
