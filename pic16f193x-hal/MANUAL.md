@@ -223,7 +223,52 @@ See `pic16f193x-hal/tests/example_timer246.c`: all three instances run
 at once with different prescaler/postscaler/period values, each
 overflow ISR toggles a distinct RC pin (RC0/RC1/RC2).
 
-## 13. The SFR layer
+## 13. CCP1 / CCP2 (DS41364B §15.0)
+
+Both instances are Enhanced CCP on this device (unlike PIC18 where
+only CCP1 is). One driver, `HAL_CCP_*`, covers both via a
+`CCP_InstanceTypeDef` selector (mirrors `pic18fxx5x_ccp.h`'s
+convention). This phase covers capture and compare modes only; PWM
+(enhanced output steering, dead-band, auto-shutdown) is deferred and
+rejected by `HAL_CCP_Init` with `HAL_INVALID` for `CCP_MODE_PWM`,
+mirroring Timer1's `TIMER1_CLOCK_EXTERNAL` rejection precedent.
+
+### Register layout
+
+CCPxCON (DS41364B Register 15-1/15-2, bank 5):
+
+| Register | Address | Bits 7:6 | Bits 5:4 | Bits 3:0 |
+|---|---|---|---|---|
+| CCP1CON | 0x293 | P1M (PWM-only) | DC1B (PWM duty LSBs) | CCP1M mode |
+| CCP2CON | 0x29A | P2M (PWM-only) | DC2B (PWM duty LSBs) | CCP2M mode |
+
+CCPxM mode select (bits 3:0): `0000`=off, `0100`-`0111`=capture
+(falling/rising/4th/16th edge), `1000`-`1011`=compare
+(set/clear/software-int/special-event), `11xx`=PWM (rejected this phase).
+
+CCPRxL/H (16-bit compare/capture register): CCPR1L=0x291, CCPR1H=0x292,
+CCPR2L=0x298, CCPR2H=0x299.
+
+### Driver API
+
+`HAL_CCP_Init`, `HAL_CCP_DeInit`, `HAL_CCP_SetCompare`,
+`HAL_CCP_GetCapture`. Weak `CCP1_IRQHandler`/`CCP2_IRQHandler`, one per
+instance. Every SFR access branches on the instance before touching any
+register (literal `PIC_REG_*` token per branch).
+
+### Errata
+
+DS80000479 flags "ECCP 0%-duty direction-change and port-steering
+issues" for the deferred PWM modes, not for this phase's
+capture/compare scope. The errata applies to whoever picks up PWM.
+
+### Example
+
+See `pic16f193x-hal/tests/example_ccp.c`: both instances in
+compare-set mode with distinct compare values, register-state
+verification (no ISR, no callback, pure register readback).
+
+## 14. The SFR layer
 
 `include/pic16f193x_sfr.h` defines `PIC_REG_*` addresses, `PIC_*_BIT`
 masks, and `PIC_*_POR_VALUE` reset values, all DS41364B-cited. The
@@ -232,7 +277,7 @@ selected) defines `PIC8_REG8` / `pic8_sfr_read8` / `pic8_sfr_write8` /
 `PIC8_SFR_PTR` and the per-PIE-bank `PIC8_PIE_ENABLE_BIT` /
 `PIC8_PIE_DISABLE_BIT` macros (`pir_index` 0/1/2 for PIE1/2/3).
 
-## 14. Device selection
+## 15. Device selection
 
 `include/pic16f193x.h` selects exactly one of 1933/1934/1936/1937/1938/
 1939 via a `-D` define, default 1937, and sets per-device capability
@@ -240,7 +285,7 @@ macros (`PIC16F193X_FAMILY_HAS_PORTD`/`_PORTE` on 40/44-pin parts, plus
 flash/RAM/EEPROM/ADC sizes). `PIC8_FAMILY_RAM_BYTES` is the neutral
 alias consumers use.
 
-## 15. The examples
+## 16. The examples
 
 `example_blink.c`: Timer0 overflow drives an ISR that toggles RB0; the
 canonical dual-build smoke test, its header documents the expected
@@ -249,7 +294,7 @@ smoke test driving the sim directly. `example_timer1.c`: Timer1
 overflow drives an ISR that toggles RB0, the §4 gate's `HARNESS=sim
 MODE=gpio` payload (its header documents the expected register image).
 
-## 16. Known gaps and gotchas
+## 17. Known gaps and gotchas
 
 - The `Microchip.PIC12-16F1xxx_DFP` is installed and the real-target
   XC8 build passes for all six parts. Timer1 has cleared the §4 gate
@@ -273,7 +318,7 @@ MODE=gpio` payload (its header documents the expected register image).
   byte, not PIE1 in bank 1). See `docs/ARCHITECTURE.md` Finding 2
   for the codegen evidence and the fix.
 
-## 17. Appendix: datasheet section index
+## 18. Appendix: datasheet section index
 
 DS41364B §2.2 data memory, §3 resets, §4 interrupts, §6 I/O ports, §7
 interrupt-on-change, §8 oscillator, §10 device config, §11 ADC, §12

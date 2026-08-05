@@ -25,6 +25,8 @@ extern void TIMER1_IRQHandler(void);
 extern void TIMER2_IRQHandler(void);
 extern void TIMER4_IRQHandler(void);
 extern void TIMER6_IRQHandler(void);
+extern void CCP1_IRQHandler(void);
+extern void CCP2_IRQHandler(void);
 extern void IOC_IRQHandler(void);
 
 void pic8_dispatch_all_irqs(void)
@@ -34,5 +36,7 @@ void pic8_dispatch_all_irqs(void)
     TIMER2_IRQHandler();
     TIMER4_IRQHandler();
     TIMER6_IRQHandler();
+    CCP1_IRQHandler();
+    CCP2_IRQHandler();
     IOC_IRQHandler();
 }

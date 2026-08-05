@@ -403,6 +403,54 @@
 #define PIC_T6CON_TOUTPS_POS    3U
 #define PIC_T6CON_POR_VALUE     0x00U
 
+/* ───────────────── CCP1/CCP2 bits (DS41364B §15.0) ──────────────── */
+
+/* Both instances are Enhanced CCP on this device. CCPxCON layout
+ * (DS41364B Register 15-1/15-2): bits 3:0 = CCPxM mode select, bits
+ * 5:4 = DCxB PWM duty LSBs (PWM-only this phase), bits 7:6 = PxE
+ * enhanced PWM output config (PWM-only this phase). Cross-checked
+ * against the DFP header's _CCP1CON_CCP1M_POSN/_MASK (bits 3:0,
+ * mask 0xF), _CCP1CON_DC1B_POSN/_MASK (bits 5:4, mask 0x30),
+ * _CCP1CON_P1M_POSN/_MASK (bits 7:6, mask 0xC0). */
+#define PIC_CCP1CON_CCPM_MASK   0x0FU   /* CCP1CON<3:0>. */
+#define PIC_CCP1CON_DCB_MASK    0x30U   /* CCP1CON<5:4>. */
+#define PIC_CCP1CON_PM_MASK     0xC0U   /* CCP1CON<7:6>. */
+#define PIC_CCP2CON_CCPM_MASK   0x0FU
+#define PIC_CCP2CON_DCB_MASK    0x30U
+#define PIC_CCP2CON_PM_MASK     0xC0U
+
+/* PWM1CON/PWM2CON, CCP1AS/CCP2AS, PSTR1CON/PSTR2CON: PWM-only this
+ * phase; macros defined for completeness and the CCP3/4/5 follow-up. */
+#define PIC_PWM1CON_P1DC_MASK   0x7FU
+#define PIC_PWM1CON_P1RSEN      PIC8_BIT(7)
+#define PIC_PWM2CON_P2DC_MASK   0x7FU
+#define PIC_PWM2CON_P2RSEN      PIC8_BIT(7)
+#define PIC_CCP1AS_PSS1BD_MASK  0x03U
+#define PIC_CCP1AS_PSS1AC_MASK  0x0CU
+#define PIC_CCP1AS_CCP1AS_MASK  0x70U
+#define PIC_CCP1AS_ECCP1ASE     PIC8_BIT(7)
+#define PIC_CCP2AS_PSS2BD_MASK  0x03U
+#define PIC_CCP2AS_PSS2AC_MASK  0x0CU
+#define PIC_CCP2AS_CCP2AS_MASK  0x70U
+#define PIC_CCP2AS_ECCP2ASE     PIC8_BIT(7)
+#define PIC_PSTR1CON_STR1A      PIC8_BIT(0)
+#define PIC_PSTR1CON_STR1B      PIC8_BIT(1)
+#define PIC_PSTR1CON_STR1C      PIC8_BIT(2)
+#define PIC_PSTR1CON_STR1D      PIC8_BIT(3)
+#define PIC_PSTR1CON_STR1SYNC   PIC8_BIT(4)
+#define PIC_PSTR2CON_STR2A      PIC8_BIT(0)
+#define PIC_PSTR2CON_STR2B      PIC8_BIT(1)
+#define PIC_PSTR2CON_STR2C      PIC8_BIT(2)
+#define PIC_PSTR2CON_STR2D      PIC8_BIT(3)
+#define PIC_PSTR2CON_STR2SYNC   PIC8_BIT(4)
+
+/* CCPTMRS0/1: PWM timebase select, PWM-only (also needed by CCP3/4/5). */
+#define PIC_CCPTMRS0_C1TSEL_MASK 0x03U
+#define PIC_CCPTMRS0_C2TSEL_MASK 0x0CU
+#define PIC_CCPTMRS0_C3TSEL_MASK 0x30U
+#define PIC_CCPTMRS0_C4TSEL_MASK 0xC0U
+#define PIC_CCPTMRS1_C5TSEL_MASK 0x03U
+
 /* ───────────────────────── Reset values (POR) ──────────────────── */
 
 /* DS41364B §3 reset values and the per-register POR columns of the
