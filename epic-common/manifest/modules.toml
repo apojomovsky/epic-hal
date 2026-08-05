@@ -135,6 +135,37 @@ variants = [
   "18F4550",
 ]
 
+# PIC16F193X has no higher-level modules yet (out of scope, see
+# docs/superpowers/specs/2026-08-05-distribution-design.md), so nothing
+# else exercises its family HAL. This module is the family's own
+# top-level Makefile in manifest form: it links no application code of
+# its own, just tests/example_blink.c, the same real-target smoke every
+# xc8-build.yml run has always covered for this family. dir points at
+# the HAL directory itself because that is where its example lives.
+[modules.epic-pic16f193x-firmware]
+dir        = "pic16f193x-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.epic-pic16f193x-firmware.supported]
+PIC16F193X = [
+  "16F1933",
+  "16F1934",
+  "16F1936",
+  "16F1937",
+  "16F1938",
+  "16F1939",
+]
+
+[modules.epic-pic16f193x-firmware.example.PIC16F193X]
+name    = "firmware"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { FOSC = "INTOSC", WDTE = "ON", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "OFF", WRT = "OFF" }
+
 [modules.epic-adcfilter]
 dir        = "epic-adcfilter"
 sources    = [
