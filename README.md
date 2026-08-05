@@ -1,4 +1,13 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/epicurus-logo-dark-mode.svg">
+    <img src="docs/assets/epicurus-logo-light-mode.svg" width="120" alt="Epicurus logo: a chip-temple inside a laurel wreath">
+  </picture>
+</p>
+
 # Epicurus
+
+*Built down to what the datasheet requires.*
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Language: C99](https://img.shields.io/badge/C-99-555.svg)](https://en.cppreference.com/w/c)
@@ -8,16 +17,18 @@
 [![xc8-build](https://github.com/apojomovsky/pic8-hal/actions/workflows/xc8-build.yml/badge.svg)](https://github.com/apojomovsky/pic8-hal/actions/workflows/xc8-build.yml)
 [![sim-tests](https://github.com/apojomovsky/pic8-hal/actions/workflows/sim-tests.yml/badge.svg)](https://github.com/apojomovsky/pic8-hal/actions/workflows/sim-tests.yml)
 
-A datasheet-faithful hardware abstraction layer for 8-bit PIC
-microcontrollers, plus the higher-level building blocks that sit on top
-of it. Twenty modules span three HAL families, a cooperative scheduler,
+8-bit PIC microcontrollers are not glamorous. They ship by the billion
+into thermostats, motor controllers, and blinking status LEDs, with no
+vendor HAL and no abstraction, just a register map and a datasheet PDF.
+Epicurus argued that a good life comes from reducing things to their
+essentials, not adding to them. This library takes that literally: one
+register-level driver per peripheral, faithful to the datasheet, and one
+contract that holds across every family it's ported to, however little
+those families have in common.
+
+Twenty modules span three HAL families so far, a cooperative scheduler,
 fixed-point math, serial and Modbus, USB, EEPROM and SD-card storage,
 PID, quadrature, debouncing, and character LCD.
-
-8-bit PIC parts ship with no vendor HAL. This is the alternative:
-register-level drivers taken 1-to-1 from Microchip's datasheets, plus
-the scheduler, math, bus, and control-loop code that usually gets
-copy-pasted between projects. Written once, reused across families.
 
 Every module builds two ways from one source tree: as a host program
 under gcc/CMake (no hardware required) and as real firmware under
@@ -42,12 +53,7 @@ checks actual register and UART output, not just whether it compiled.
 
 ## Why
 
-8-bit PIC parts ship with no vendor HAL, so firmware for them tends to
-grow into a one-off tangle of register poking, copy-pasted between
-projects. This repo is a datasheet-faithful alternative: a hardware
-abstraction layer in the spirit of STM32Cube HAL, plus the higher-level
-building blocks (scheduler, math, serial, bus, storage, control) that sit
-on top of it, written once and reused across parts.
+The shape of that, concretely:
 
 - **Datasheet-faithful, not clever.** Every register, bit name, and
   reset value is taken 1-to-1 from Microchip's own datasheets, cited in
