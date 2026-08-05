@@ -231,6 +231,26 @@ it done.
    - Compare against the hand-computed expected values from step 3's
      test header, byte for byte. Not "looks plausible", the literal
      expected value.
+   - **For `MODE=gpio` families, when the peripheral has real hardware
+     timing (a timer, a continuously-running conversion), don't rely
+     solely on the main loop's bounded iteration count to reach
+     `pic8_harness_report()`.** Confirmed on PIC16F193X's Timer2/4/6:
+     with three timers firing ISRs continuously, the MPLAB SIM's
+     interrupt-servicing overhead starved the bounded main loop badly
+     enough that it never reached the report call inside the `mdb`
+     wait window, even though every ISR was firing correctly and the
+     peripheral logic was right. Two independent fixes made this
+     reliable: (1) an *early exit* from the bounded loop the moment the
+     pass condition is already true (mirrors `pic18fxx5x-hal/tests/
+     example_timer2.c`'s `if (overflows >= EXPECTED_OVERFLOWS) break;`
+     idiom), and (2) having the slowest-firing instance's own ISR drive
+     the RA0 marker directly the instant its condition is met, instead
+     of depending on the main loop to notice and report. Both paths set
+     RA0=1 on PASS; whichever gets there first wins. Do this for any
+     `MODE=gpio` example whose pass condition depends on more than one
+     concurrently-running interrupt source, not just when a bug is
+     observed, it's cheaper to build it in than to debug a flaky gate
+     later.
 7. **If any value is wrong**, don't assume "not enough steps yet" and
    just increase the count. First check a **known-good control
    register**, something written via a plain compile-time-constant SFR
@@ -239,7 +259,22 @@ it done.
    This is exactly the trick that distinguished a genuine PIC18 bug from
    a false alarm this session (`SSPCON`, unbanked, direct-address, read
    correctly; `SSPADD`, same file, runtime-addressed, read `0`).
-8. **Treat these patterns as high-risk, always verify them explicitly**,
+8. **A register you wrote a known value to can legitimately read back
+   different bits than you wrote**, and that is not automatically a
+   codegen bug. Confirmed repeatedly across PIC16F193X's peripherals:
+   `BAUDCON`'s `RCIDL` (read-only, hardware sets it whenever the
+   receiver is idle, so a driver that writes `0x00` reads back `0x40`),
+   both comparators' `CxOUT` (read-only live comparator output, bit 6),
+   `FVRCON`'s `FVRRDY` (read-only, hardware sets it once the reference
+   has stabilized), and CPS's `CPSOUT` (read-only raw oscillator
+   output). Before treating a mismatch as a bug, check the datasheet's
+   register table for which bits in that specific register are
+   read-only status/flag bits versus writable control bits, and mask
+   the read-only bits out of the comparison (or assert against the
+   POR-then-hardware-set value, not the value you wrote). Only escalate
+   to "real bug" once the mismatch remains after masking every
+   documented read-only bit.
+9. **Treat these patterns as high-risk, always verify them explicitly**,
    because every real bug found in this codebase so far had one of
    these shapes:
    - **Any SFR address that is a variable, struct field, or function
@@ -268,8 +303,8 @@ it done.
      divisor choice for its own `FOSC_HZ`, silently overflowed `SPBRG`'s
      8 bits and returned an error sentinel that got truncated instead
      of surfaced.)
-9. Only once host **and** real-`mdb` verification both pass does the
-   peripheral count as done. Move to the next one.
+10. Only once host **and** real-`mdb` verification both pass does the
+    peripheral count as done. Move to the next one.
 
 ## §5. Path B: new family from scratch
 
@@ -303,7 +338,39 @@ assumes the previous ones are done and verified, not just written):
    one of a new family, isolated, is much cheaper than finding it after
    ten peripherals are built on top of a broken IRQ core.
 6. **Peripherals one at a time**, each through §4's verification gate in
-   full, no batching multiple unverified peripherals together.
+   full, no batching multiple unverified peripherals together. Two
+   sub-patterns recurred often enough across PIC16F193X's 13
+   peripherals to call out explicitly:
+   - **Multiple identical-shape instances of one peripheral (Timer2/
+     Timer4/Timer6; CCP1 through CCP5) get one driver with an instance
+     selector, not N copy-pasted drivers.** Every register access
+     still branches on the instance *before* touching any SFR, so each
+     branch's own access stays a literal `PIC_REG_*` token (§4's
+     high-risk pattern about runtime SFR addresses applies here just
+     as much as to a single-instance driver; branching per-instance
+     doesn't get a pass on that rule). When one instance's register
+     shape genuinely differs (PIC16F193X's CCP4/CCP5 are plain CCP,
+     no PWM/AS/PSTR registers at all, unlike CCP1-3's Enhanced CCP
+     shape), confirm the absence directly against the DFP header
+     (grep for the register name, confirm it doesn't exist) rather
+     than assuming symmetry with the other instances; don't let a
+     driver reference a macro for a register a smaller instance
+     doesn't have.
+   - **For a peripheral with a large, non-obvious register-to-function
+     mapping (a segment LCD driver's segment-to-data-register layout,
+     a crossbar/mux table), derive the mapping from the DFP header's
+     own bitfield macros, not from hand-reading the datasheet's prose
+     or a guessed formula.** Confirmed on PIC16F193X's LCD driver: the
+     DFP header carries one `_LCDDATAn_SEGxCOMy_POSN` macro per actual
+     segment/common/register/bit combination (hundreds of them for a
+     full segment count), which is the vendor's own machine-readable
+     statement of the mapping, strictly more reliable than re-deriving
+     it by hand from a datasheet table. Grep the DFP header for the
+     full family of macros, confirm the pattern is linear/regular
+     across a sample large enough to be confident (not just the first
+     one or two entries), then encode the derived formula in the
+     driver with a comment citing where it came from, not the formula
+     alone.
 7. **`<family>-hal/MANUAL.md`** as you go, matching
    `pic16f87xa-hal/MANUAL.md`/`pic18fxx5x-hal/MANUAL.md`'s shape:
    datasheet-cited peripheral/register reference, pointing to
@@ -320,10 +387,28 @@ assumes the previous ones are done and verified, not just written):
    repo's own documentation called several things "genuine XC8 bugs"
    from empirical probing alone without doing that check, and had to be
    corrected; don't repeat it.
-9. **CI wiring**: `scripts/ci-discover-xc8-matrix.py` gains the new
-   family, `xc8-build.yml`'s matrix picks it up automatically via that
-   discovery script (don't hand-list it), `sim-tests.yml` gets the new
-   family's pilot module once its sim-target harness exists.
+9. **CI wiring, done at foundation time, not deferred to "later":**
+   `scripts/ci-discover-xc8-matrix.py`'s `FAMILIES` dict and its
+   `if "<family>" in d` detection branch both need the new family the
+   moment its first `mcu/<family>-mplabx/Makefile` exists and builds,
+   even before every peripheral lands. Confirmed the hard way on
+   PIC16F193X: the family's real-target build had been passing locally
+   for a long time before anyone noticed the discovery script itself
+   still only recognized the original two families, and `xc8-build.yml`
+   was failing outright with `unrecognized family for
+   pic16f193x-hal/mcu/pic16f193x-mplabx` (a hard `sys.exit`, not a
+   silently-skipped family) the entire time. A local `make xc8-build
+   MODULE=<new>-hal MCU=<mcu>` passing is not the same signal as the CI
+   matrix actually including the family; run `python3
+   scripts/ci-discover-xc8-matrix.py` directly and grep its JSON output
+   for the new family's name as its own explicit checklist item, don't
+   infer it from local builds working. `xc8-build.yml`'s matrix then
+   picks the family up automatically via that discovery script (never
+   hand-list a family or MCU inside the workflow file itself);
+   `sim-tests.yml` gets the new family's pilot module once its
+   sim-target harness exists (that one's matrix is hand-listed by
+   design, see its own header comment, so it needs an explicit edit,
+   unlike `xc8-build.yml`).
 10. **Litmus test**: point an existing family-agnostic consumer (a
     `pic8-*` module, the task manager, whatever exists by then) at the
     new family and confirm zero changes are needed to the consumer
@@ -347,7 +432,14 @@ exist and are accurate, not just present:
       genuinely surprising found along the way, with manual citations,
       not bare assertions.
 - [ ] `scripts/ci-discover-xc8-matrix.py` reflects the new MCU(s)/family,
-      any `KNOWN_BROKEN` entries are documented in
+      verified by actually running `python3
+      scripts/ci-discover-xc8-matrix.py` and finding the new family in
+      its JSON output, not by "the Makefile exists so it must be
+      picked up" (confirmed false on PIC16F193X: the Makefile existed
+      and built clean for a long time before anyone noticed the
+      discovery script itself had never been told about the family,
+      and `xc8-build.yml` was failing outright the whole time). Any
+      `KNOWN_BROKEN` entries are documented in
       `docs/mplabx-link-gaps-plan.md` with a real root cause, not just
       silently excluded.
 - [ ] Full regression run: every module, every MCU variant in the
@@ -372,6 +464,9 @@ account lives.
 | Baud-rate/timing divisor math that can silently overflow the target register width | PIC18 (found in `pic18_harness_sim_target.c`) | `pic18fxx5x-hal/docs/ARCHITECTURE.md` Finding 1 |
 | Missing `HARNESS=sim` → watchdog-off Makefile override, WDT resets a bounded diagnostic build mid-run | PIC16, PIC18 | `docs/ci-plan.md` Phase 4 |
 | Dangling pointer: a HAL `_Init` stores the caller's pointer instead of copying the handle, and the caller's storage is a non-`static` local | PIC16 (fixed); PIC18's own driver already copies the handle, not affected | `docs/ci-plan.md` Phase 4 |
+| Read-only status/flag bits (RCIDL, CxOUT, FVRRDY, CPSOUT, ...) reading back set even though the driver never wrote them, mistaken for a write not landing | PIC16F193X (Enhanced Mid-range) | `pic16f193x-hal/docs/ARCHITECTURE.md`; §4 step 8 above |
+| `MODE=gpio` bounded-loop example starved by continuously-firing ISRs on MPLAB SIM, never reaching `pic8_harness_report()` inside the `mdb` wait window, despite every ISR and the peripheral logic being correct | PIC16F193X (Timer2/4/6, 3 concurrent timer ISRs) | §4 step 6's sub-bullet above; the fix (early-exit + ISR-driven marker) is in `pic16f193x-hal/tests/example_timer246.c` |
+| CI matrix discovery script (`scripts/ci-discover-xc8-matrix.py`) not updated when a new family's first `mcu/*-mplabx/Makefile` lands, so local real-target builds pass indefinitely while `xc8-build.yml` fails outright on every push | PIC16F193X | §5 step 9 above; §6's CI-wiring checklist item |
 
 This table is deliberately family-specific in its "confirmed on" column
 and deliberately generic in its "pattern" column: a new family should

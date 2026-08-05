@@ -280,17 +280,39 @@ pattern, just with `movlb 1` (BSR-byte select) instead of
 goal, different mechanism appropriate to the family's pure-C
 compilation model.
 
+## Finding 3: read-only status/flag bits reading back set even though the driver never wrote them, mistaken for a codegen bug across several peripherals
+
+**Status:** not a bug, a repeated false alarm worth documenting so it
+stops costing debugging time. Confirmed across four independent
+peripherals during their §4 gates: EUSART's `BAUDCON<RCIDL>` (bit 6,
+hardware sets it whenever the receiver is idle, so a driver that
+writes `BAUDCON = 0x00` reads back `0x40`), both comparators'
+`CxCON0<CxOUT>` (bit 6, the live comparator output, always driven by
+hardware regardless of what the driver wrote to the rest of the
+register), FVR's `FVRCON<FVRRDY>` (bit 6, hardware sets it once the
+reference has stabilized), and CPS's `CPSCON0<CPSOUT>` (bit 1, the raw
+oscillator output). In every case the register's writable control bits
+landed exactly as written; only the datasheet-documented read-only
+status bit differed from the written value.
+
+The fix in each case was the same: check the datasheet's register
+table for which bits are read-only status/flag bits before treating a
+readback mismatch as a bug, and mask those bits out of the comparison
+(or assert the POR-then-hardware-set value for them specifically, not
+the value the driver wrote). This is now `docs/adding-a-device.md` §4
+step 8's standing instruction, not something to re-derive per
+peripheral.
+
 ## Open, for whoever picks this back up
 
-The real *register-readback* half of the §4 gate ran for the Timer1
-case (Finding 2; PORTA=1 PASS, PIE1=0x01 confirmed). The Timer2/4/6
-peripheral has now also cleared it: `mdb` register readback confirms
-PIE1=0x02 (TMR2IE) and PIE3=0x0A (TMR4IE | TMR6IE), which is the first
-PIE3 source verified by the §4 gate. This confirms the third branch
-of the `pir_index` switch actually emits `iorwf PIE3,f` (not just
-`iorwf PIE1,f`), closing the Finding 2 verification gap for the PIE3
-bank. The PIE2 bank (CCP2, LCD, BCL, EEPROM, CMP1/2, OSF) has still
-not been exercised by a §4 readback; the first PIE2-routed peripheral
-to land (CCP1/2 per the §7 roadmap) should verify `iorwf PIE2,f` the
-same way. Per `docs/adding-a-device.md`, that is the recommended gate
-before shipping any peripheral routed through PIE2.
+The real *register-readback* half of the §4 gate has now run for at
+least one peripheral routed through every PIE/PIR bank: PIE1 (Timer1,
+Timer2, CCP1/2, ADC), PIE2 (comparators C1/C2), and PIE3 (Timer4/6,
+CCP3/4/5), closing the verification gap this section used to flag for
+PIE2 and PIE3. All 13 peripherals in `docs/pic16f193x-plan.md` §7's
+roadmap have landed and cleared the §4 gate; there is no remaining
+open peripheral work for this family as of this note. Future work here
+is either a new device variant (Path A, `docs/adding-a-device.md` §3)
+or wiring the family-agnostic `pic8-*` modules (taskmgr, tick, serial,
+...) against it for the first time, per the main `README.md`'s status
+table.
