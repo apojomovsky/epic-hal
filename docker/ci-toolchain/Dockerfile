@@ -39,11 +39,25 @@
 #     docs/ci-plan.md's Phase 2 findings). Component selection installs
 #     just IDE + 8-bit MCU device support (`--ipe 0 --16bitmcu 0
 #     --32bitmcu 0`), skipping ~8GB of dsPIC/PIC24/PIC32/ARM support this
-#     repo will never touch. This is the FULL, untrimmed 8-bit install
-#     (~7.3GB): a multi-stage build that keeps only mdbcore/java/packs and
-#     drops the NetBeans GUI/MCC/thirdparty tooling is real follow-up work,
-#     deliberately deferred (see docs/ci-plan.md Phase 2), not attempted
-#     here, `mdb.sh`'s actual runtime dependency set (a NetBeans-platform
+#     repo will never touch. Even with that flag, the installer's bundled
+#     `packs/` still ships every 8-bit device family plus every hardware
+#     debug-probe tool pack (ICD, ICE, PICkit, Snap, PKOB, JTAGICE3,
+#     EDBG/mEDBG/AtmelICE) and every Atmel/AVR DFP (Microchip's Atmel
+#     acquisition), none of which this repo needs: `mdb` here only ever
+#     drives the built-in Simulator (`hwtool SIM`, never real hardware),
+#     and only three DFPs (PIC16Fxxx, PIC18Fxxxx, PIC12-16F1xxx, the same
+#     three the XC8-side pack install above fetches) cover the three
+#     families this repo targets. Pruned in the same `RUN` as the install
+#     itself (a later `RUN rm` would still leave the bytes in an earlier
+#     layer; deleting before that `RUN` commits keeps them out of the
+#     image entirely), verified against a real `mdb` run for both
+#     `sim-tests.yml` matrix entries (PIC16F877A, PIC18F4550) before and
+#     after: identical PASS output, ~5.7GB image instead of ~10.8GB.
+#     `mplab_platform/` (the actual NetBeans-platform runtime `mdb.sh`
+#     needs, ~1.6GB) is left untouched: a multi-stage build that keeps
+#     only mdbcore/java and drops the GUI/MCC/thirdparty tooling is real
+#     follow-up work, deliberately deferred (see docs/ci-plan.md Phase 2),
+#     `mdb.sh`'s actual runtime dependency set there (a NetBeans-platform
 #     module classpath, not just a few obvious directories) isn't obvious
 #     enough to prune correctly without real trial-and-error verification.
 #
@@ -154,6 +168,16 @@ RUN set -eu; \
         --ide 1 --ipe 0 --8bitmcu 1 --16bitmcu 0 --32bitmcu 0 --othermcu 0 \
         --collectInfo 0 --collectMyMicrochipInfo 0 \
         --installdir "${MPLABX_INSTALL_DIR}"; \
-    rm "$installer"
+    rm "$installer"; \
+    cd "${MPLABX_INSTALL_DIR}/packs/Microchip" && rm -rf \
+        ICD5_TP ICE4_TP PICkit5_TP PICkit4_TP Snap_TP PICkitBasic_TP \
+        PKOB4_TP ICD4_TP EDBG_TP mEDBG_TP AtmelICE_TP JTAGICE3_TP \
+        PowerDebugger_TP nEDBG_TP \
+        AVR-Dx_DFP ATmega_DFP ATtiny_DFP XMEGAA_DFP XMEGAB_DFP XMEGAC_DFP \
+        XMEGAD_DFP XMEGAE_DFP AVR-Ex_DFP AVR-Lx_DFP AVR-Sx_DFP \
+        ATautomotive_DFP \
+        PIC18F-Q_DFP PIC18F-K_DFP PIC18F-J_DFP PIC10-12Fxxx_DFP \
+        PIC12-16Cxxx_DFP PIC18Cxxx_DFP MCPxxxx_DFP PIC-8bitAC_DFP \
+        MCVxxxx_DFP PIC16F1xxxx_DFP
 
 ENV PATH="${XC8_INSTALL_DIR}/bin:${MPLABX_INSTALL_DIR}/mplab_platform/bin:${PATH}"

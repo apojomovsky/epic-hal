@@ -91,6 +91,23 @@ on a fresh run too
 the now-redundant `ci-mplabx-assets-tmp` GitHub Release, a human's call,
 not done as part of this fix.
 
+**Post-Phase-2 image-size fix: done.** The ~7.3GB untrimmed MPLAB X
+install above was fatter than it needed to be even for what
+`--8bitmcu 1` claims to scope: its bundled `packs/` still shipped every
+hardware debug-probe tool pack (ICD, ICE, PICkit, Snap, PKOB, JTAGICE3,
+EDBG family) and every Atmel/AVR DFP, none of which this repo's `mdb`
+runs touch (Simulator only, never real hardware, never AVR). Pruned in
+`docker/ci-toolchain/Dockerfile`'s own MPLAB X install `RUN` (same layer
+as the install, not a later one, so the deleted bytes never land in a
+committed layer), verified against a real `mdb` run for both
+`sim-tests.yml` matrix entries (PIC16F877A, PIC18F4550, identical PASS
+output before/after). Image: ~10.8GB to ~5.69GB. `mplab_platform/`
+itself (the NetBeans-platform runtime `mdb.sh` actually needs, ~1.6GB)
+is untouched, that multi-stage trim (`mdbcore`/`java` only, drop the
+GUI/MCC/thirdparty tooling) is still deliberately deferred, same reason
+as before: its real dependency set is a module classpath, not a few
+obvious directories, and needs real trial-and-error to prune safely.
+
 **Post-Phase-2 CI efficiency fix: done.** The per-module matrix (previous
 paragraph) still meant 23 separate jobs each paying for its own multi-GB
 image pull, most of which was pure overhead once the image grew to
