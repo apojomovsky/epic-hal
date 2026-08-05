@@ -420,7 +420,38 @@ brief flagged). Full write/read cycle not exercised in the gate
 example (the while(WR) spin deadlocks the host sim's polled step
 model); the WREN test is the actual codegen verification.
 
-## 19. The SFR layer
+## 19. DAC (DS41364B §13.0)
+
+5-bit DAC. DACCON0 (0x118): DACEN(7), DACLPS(6), DACOE(5), DACPSS(3:2),
+DACNSS(0). DACCON1 (0x119): DACR(4:0, 5-bit output value).
+
+`HAL_DAC_Init`, `HAL_DAC_DeInit`. See `tests/example_dac.c`.
+
+## 20. FVR (DS41364B §12.0)
+
+Fixed Voltage Reference. FVRCON (0x117): FVREN(7), FVRRDY(6, RO),
+TSEN(5), TSRNG(4), CDAFVR(3:2), ADFVR(1:0). FVRRDY is read-only
+(hardware sets it when FVR is stable).
+
+`HAL_FVR_Init`, `HAL_FVR_DeInit`, `HAL_FVR_IsReady`. See
+`tests/example_fvr.c`.
+
+## 21. SR Latch (DS41364B §11.0)
+
+SR latch. SRCON0 (0x11A): SRLEN(7), SRCLK(6:4), SRQEN(3), SRNQEN(2),
+SRPS(1, self-clearing), SRPR(0, self-clearing). SRCON1 (0x11B).
+
+`HAL_SRLATCH_Enable`, `HAL_SRLATCH_Disable`. See
+`tests/example_srlatch.c`.
+
+## 22. CPS (DS41364B §18.0)
+
+Capacitive Sensing. CPSCON0 (0x1E): CPSON(7), CPSRNG(3:2), CPSOUT(1, RO),
+T0XCS(0). CPSCON1 (0x1F): CPSCH(3:0, channel select). CPSOUT is read-only.
+
+`HAL_CPS_Init`, `HAL_CPS_DeInit`. See `tests/example_cps.c`.
+
+## 23. The SFR layer
 
 `include/pic16f193x_sfr.h` defines `PIC_REG_*` addresses, `PIC_*_BIT`
 masks, and `PIC_*_POR_VALUE` reset values, all DS41364B-cited. The

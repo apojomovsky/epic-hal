@@ -71,6 +71,10 @@ set(PIC8_HAL_SOURCES
     src/peripherals/pic16f193x_adc.c
     src/peripherals/pic16f193x_comp.c
     src/peripherals/pic16f193x_eeprom.c
+    src/peripherals/pic16f193x_dac.c
+    src/peripherals/pic16f193x_fvr.c
+    src/peripherals/pic16f193x_srlatch.c
+    src/peripherals/pic16f193x_cps.c
     src/core/pic16f193x_irq.c
     src/core/pic16f193x_wdt_sleep.c
     src/core/pic16f193x_wdt_sleep_sim.c
@@ -91,6 +95,10 @@ pic8_add_example(example_mssp tests/example_mssp.c)
 pic8_add_example(example_adc tests/example_adc.c)
 pic8_add_example(example_comparator tests/example_comparator.c)
 pic8_add_example(example_eeprom tests/example_eeprom.c)
+pic8_add_example(example_dac tests/example_dac.c)
+pic8_add_example(example_fvr tests/example_fvr.c)
+pic8_add_example(example_srlatch tests/example_srlatch.c)
+pic8_add_example(example_cps tests/example_cps.c)
 
 # Optional: example for every device in the family.
 pic8_add_example_per_device(example_blink tests/example_blink.c)
@@ -102,3 +110,7 @@ pic8_add_example_per_device(example_mssp tests/example_mssp.c)
 pic8_add_example_per_device(example_adc tests/example_adc.c)
 pic8_add_example_per_device(example_comparator tests/example_comparator.c)
 pic8_add_example_per_device(example_eeprom tests/example_eeprom.c)
+pic8_add_example_per_device(example_dac tests/example_dac.c)
+pic8_add_example_per_device(example_fvr tests/example_fvr.c)
+pic8_add_example_per_device(example_srlatch tests/example_srlatch.c)
+pic8_add_example_per_device(example_cps tests/example_cps.c)

@@ -563,6 +563,42 @@
 #define PIC_EEADRH_MASK         0x7FU
 #define PIC_EEDATH_MASK         0x3FU
 
+/* ───────────────── DAC bits (DS41364B §13.0) ───────────────────── */
+#define PIC_DACCON0_DACNSS     PIC8_BIT(0)
+#define PIC_DACCON0_DACPSS_MASK 0x0CU
+#define PIC_DACCON0_DACOE      PIC8_BIT(5)
+#define PIC_DACCON0_DACLPS     PIC8_BIT(6)
+#define PIC_DACCON0_DACEN      PIC8_BIT(7)
+#define PIC_DACCON1_DACR_MASK  0x1FU
+
+/* ───────────────── FVR bits (DS41364B §12.0) ───────────────────── */
+#define PIC_FVRCON_ADFVR_MASK   0x03U
+#define PIC_FVRCON_CDAFVR_MASK  0x0CU
+#define PIC_FVRCON_CDAFVR_SHIFT 2U
+#define PIC_FVRCON_TSRNG       PIC8_BIT(4)
+#define PIC_FVRCON_TSEN        PIC8_BIT(5)
+#define PIC_FVRCON_FVRRDY      PIC8_BIT(6)
+#define PIC_FVRCON_FVREN       PIC8_BIT(7)
+
+/* ───────────────── SR latch bits (DS41364B §11.0) ──────────────── */
+#define PIC_SRCON0_SRPR        PIC8_BIT(0)
+#define PIC_SRCON0_SRPS        PIC8_BIT(1)
+#define PIC_SRCON0_SRNQEN      PIC8_BIT(2)
+#define PIC_SRCON0_SRQEN       PIC8_BIT(3)
+#define PIC_SRCON0_SRCLK_MASK  0x70U
+#define PIC_SRCON0_SRLEN       PIC8_BIT(7)
+#define PIC_SRCON1_SRRC1E      PIC8_BIT(0)
+#define PIC_SRCON1_SRRC2E      PIC8_BIT(1)
+#define PIC_SRCON1_SRNQEN      PIC8_BIT(2)
+#define PIC_SRCON1_SRQEN       PIC8_BIT(3)
+
+/* ───────────────── CPS bits (DS41364B §18.0) ───────────────────── */
+#define PIC_CPSCON0_T0XCS      PIC8_BIT(0)
+#define PIC_CPSCON0_CPSOUT     PIC8_BIT(1)
+#define PIC_CPSCON0_CPSRNG_MASK 0x0CU
+#define PIC_CPSCON0_CPSON      PIC8_BIT(7)
+#define PIC_CPSCON1_CPSCH_MASK 0x0FU
+
 /* ───────────────────────── Reset values (POR) ──────────────────── */
 
 /* DS41364B §3 reset values and the per-register POR columns of the
