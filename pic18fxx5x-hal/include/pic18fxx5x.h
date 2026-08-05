@@ -116,7 +116,7 @@
  * consumers (e.g. the task manager) can scale without a family-specific
  * name; `pic16f87xa.h` defines the same names to the PIC16 value.
  */
-#define PIC8_FAMILY_RAM_BYTES   PIC18FXX5X_FAMILY_RAM_BYTES
+#define EPIC_FAMILY_RAM_BYTES   PIC18FXX5X_FAMILY_RAM_BYTES
 
 /* ─────────── shared HAL status codes + bit helpers (epic-common) ── */
 /** Status enum and bit macros are architecture-blind, shared across
@@ -128,11 +128,11 @@
  * @defgroup PIC18FXX5X_SFR Special Function Register mapping
  * @brief   How every SFR is stored and how the weak attribute is spelled.
  *
- * The same source reads `epic_sfr_read8(addr)` (or `PIC8_REG8`) on both
+ * The same source reads `epic_sfr_read8(addr)` (or `EPIC_REG8`) on both
  * builds; the implementation is chosen by include path, not `#ifdef`: host
  * CMake resolves `pic18_platform.h` to `include/host/...` (a memory-backed
  * register file), the XC8 Makefile to `include/target/...` (direct
- * volatile dereference). `@ref PIC8_WEAK` is likewise defined there.
+ * volatile dereference). `@ref EPIC_WEAK` is likewise defined there.
  * @{
  */
 #include "pic18_platform.h"

@@ -5,7 +5,7 @@
  *
  * @details
  *   The host sim doesn't assert RBIF on a PORTB mismatch (would require
- *   intercepting every CPU read of PORTB through `PIC8_REG8`), so this
+ *   intercepting every CPU read of PORTB through `EPIC_REG8`), so this
  *   test sets RBIF directly in INTCON, then checks the handler's own
  *   read/clear/callback ordering, the part that actually matters.
  */
@@ -37,12 +37,12 @@ static void reset_observed(void)
 /* Assert RBIF directly (the documented test-only fallback). */
 static void assert_rbif(void)
 {
-    PIC8_REG8(PIC_REG_INTCON) |= PIC_INTCON_RBIF;
+    EPIC_REG8(PIC_REG_INTCON) |= PIC_INTCON_RBIF;
 }
 
 static uint8_t rbif_pending(void)
 {
-    return (PIC8_REG8(PIC_REG_INTCON) & PIC_INTCON_RBIF) ? 1U : 0U;
+    return (EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_RBIF) ? 1U : 0U;
 }
 
 static void test_noop_when_not_pending(void)
@@ -51,7 +51,7 @@ static void test_noop_when_not_pending(void)
     EPIC_GPIO_RegisterChangeCallback(on_rb_change);
 
     EPIC_IRQ_ClearFlag(PIC18_IRQ_RB);
-    PIC8_REG8(PIC_REG_PORTB) = 0xA5U;
+    EPIC_REG8(PIC_REG_PORTB) = 0xA5U;
 
     RB_IRQHandler();   /* RBIF not pending: must do nothing. */
 
@@ -66,7 +66,7 @@ static void test_fires_when_pending(void)
     EPIC_GPIO_RegisterChangeCallback(on_rb_change);
 
     EPIC_IRQ_ClearFlag(PIC18_IRQ_RB);
-    PIC8_REG8(PIC_REG_PORTB) = 0x3CU;   /* the byte the handler must read */
+    EPIC_REG8(PIC_REG_PORTB) = 0x3CU;   /* the byte the handler must read */
     assert_rbif();
     CHECK(rbif_pending() == 1, "fires: RBIF set before handler");
 
@@ -83,7 +83,7 @@ static void test_null_callback_safe(void)
     EPIC_GPIO_RegisterChangeCallback(NULL);
 
     EPIC_IRQ_ClearFlag(PIC18_IRQ_RB);
-    PIC8_REG8(PIC_REG_PORTB) = 0x00U;
+    EPIC_REG8(PIC_REG_PORTB) = 0x00U;
     assert_rbif();
 
     RB_IRQHandler();   /* must not crash, must still clear the flag */
@@ -98,7 +98,7 @@ static void test_dispatch_reaches_handler(void)
     EPIC_GPIO_RegisterChangeCallback(on_rb_change);
 
     EPIC_IRQ_ClearFlag(PIC18_IRQ_RB);
-    PIC8_REG8(PIC_REG_PORTB) = 0x96U;
+    EPIC_REG8(PIC_REG_PORTB) = 0x96U;
     assert_rbif();
 
     /* A full dispatch pass must route to RB_IRQHandler. */

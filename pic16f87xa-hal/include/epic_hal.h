@@ -9,8 +9,8 @@
  *   which family's HAL tree is on the include path.
  */
 
-#ifndef PIC8_EPIC_H
-#define PIC8_EPIC_H
+#ifndef EPIC_H
+#define EPIC_H
 
 #include "pic16f87xa.h"       /* standard types, status codes, platform   */
 #include "pic16f87xa_sfr.h"   /* SFR address map + bit definitions       */
@@ -35,4 +35,4 @@
 #include "peripherals/pic16f87xa_psp.h"
 #endif
 
-#endif /* PIC8_EPIC_H */
+#endif /* EPIC_H */

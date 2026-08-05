@@ -124,9 +124,9 @@
  * task manager) can scale without referencing a family-specific macro.
  * `pic16f87xa.h` and `pic18fxx5x.h` define the same names to their own
  * values. */
-#define PIC8_FAMILY_RAM_BYTES   PIC16F193X_FAMILY_RAM_BYTES
+#define EPIC_FAMILY_RAM_BYTES   PIC16F193X_FAMILY_RAM_BYTES
 
-/* EPIC_StatusTypeDef/EPIC_OK/... and the PIC8_BIT* macros are
+/* EPIC_StatusTypeDef/EPIC_OK/... and the EPIC_BIT* macros are
  * architecture-blind, so they live in the shared layer; pulled in here
  * so one `#include "pic16f193x.h"` gives every consumer the same
  * status/bit vocabulary. */
@@ -137,7 +137,7 @@
  * @defgroup PIC16F193X_SFR Special Function Register mapping
  * @brief   How every SFR is stored and how the weak attribute is spelled.
  *
- * Same source reads `epic_sfr_read8()`/`PIC8_REG8()` on both builds;
+ * Same source reads `epic_sfr_read8()`/`EPIC_REG8()` on both builds;
  * the build's include path picks `include/host/...` (memory-backed) or
  * `include/target/...` (direct volatile deref), not `#ifdef`.
  * @{

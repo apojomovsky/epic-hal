@@ -7,15 +7,15 @@
  *          callbacks; `putch` retargets XC8's `printf` to the TX ring.
  */
 
-#ifndef PIC8_SERIAL_H
-#define PIC8_SERIAL_H
+#ifndef EPIC_SERIAL_H
+#define EPIC_SERIAL_H
 
 #include <stdint.h>
 
 /** Default ring-buffer size (power of two) for both TX and RX. Override by
- *  defining PIC8_SERIAL_RING_SZ before including the header. */
-#ifndef PIC8_SERIAL_RING_SZ
-#define PIC8_SERIAL_RING_SZ 32u
+ *  defining EPIC_SERIAL_RING_SZ before including the header. */
+#ifndef EPIC_SERIAL_RING_SZ
+#define EPIC_SERIAL_RING_SZ 32u
 #endif
 
 /**
@@ -70,4 +70,4 @@ void epic_serial_flush(void);
  */
 void putch(char c);
 
-#endif /* PIC8_SERIAL_H */
+#endif /* EPIC_SERIAL_H */

@@ -31,9 +31,9 @@ int main(void)
     EPIC_PSP_Enable();
 
     /* Read TRISE. */
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    uint8_t trise = PIC8_REG8(0x89U);
+    uint8_t trise = EPIC_REG8(0x89U);
     pic_select_bank(prev);
     /* Bit 4 (PSPMODE) should be set. */
     CHECK((trise & 0x10U) != 0U, "PSPMODE not set after EPIC_PSP_Enable");
@@ -45,16 +45,16 @@ int main(void)
 
     /* Disable. */
     EPIC_PSP_Disable();
-    prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    trise = PIC8_REG8(0x89U);
+    trise = EPIC_REG8(0x89U);
     pic_select_bank(prev);
     CHECK((trise & 0x10U) == 0U, "PSPMODE not cleared after EPIC_PSP_Disable");
 
     EPIC_PSP_DeInit();
-    prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    trise = PIC8_REG8(0x89U);
+    trise = EPIC_REG8(0x89U);
     pic_select_bank(prev);
     /* After DeInit TRISE = 0x07 (POR default). */
     CHECK(trise == 0x07U, "TRISE not 0x07 after DeInit");

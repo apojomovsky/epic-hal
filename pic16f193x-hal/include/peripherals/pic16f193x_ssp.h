@@ -59,6 +59,6 @@ uint8_t  EPIC_SSP_IsBufferFull(void);
 uint8_t  EPIC_SSP_HasWriteCollision(void);
 void     EPIC_SSP_ClearWriteCollision(void);
 
-void SSP_IRQHandler(void) PIC8_WEAK;
+void SSP_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F193X_SSP_H */

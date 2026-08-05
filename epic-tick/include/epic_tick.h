@@ -7,8 +7,8 @@
  *          docs/ARCHITECTURE.md for the timebase math.
  */
 
-#ifndef PIC8_TICK_H
-#define PIC8_TICK_H
+#ifndef EPIC_TICK_H
+#define EPIC_TICK_H
 
 #include <stdint.h>
 
@@ -44,4 +44,4 @@ void epic_tick_delay_ms(uint32_t ms);
  */
 uint32_t epic_tick_elapsed_since(uint32_t t0);
 
-#endif /* PIC8_TICK_H */
+#endif /* EPIC_TICK_H */

@@ -23,27 +23,27 @@ extern uint8_t pic16f87xa_sim_sfr[0x200];
 
 /* GCC/Clang weak attribute, lets user code override a peripheral's
  * IRQHandler if it ever needs to. */
-#define PIC8_WEAK   __attribute__((weak))
+#define EPIC_WEAK   __attribute__((weak))
 
 /* SFR access resolves to an index into the simulated register file. */
-#define PIC8_SFR_PTR(addr)       (&pic16f87xa_sim_sfr[(uint16_t)(addr)])
+#define EPIC_SFR_PTR(addr)       (&pic16f87xa_sim_sfr[(uint16_t)(addr)])
 #define epic_sfr_read8(addr)     (pic16f87xa_sim_sfr[(uint16_t)(addr)])
 #define epic_sfr_write8(addr, v) \
     do { pic16f87xa_sim_sfr[(uint16_t)(addr)] = (uint8_t)(v); } while (0)
 
 /* Address of a register as a uint8_t lvalue (read/write/RMW). */
-#define PIC8_REG8(addr)          (pic16f87xa_sim_sfr[(uint16_t)(addr)])
+#define EPIC_REG8(addr)          (pic16f87xa_sim_sfr[(uint16_t)(addr)])
 
 /* PIE1 (0x8C) / PIE2 (0x8D) enable/disable, direct read-modify-write:
  * the simulated register file is a plain array, so none of
  * target/pic16f87xa_platform.h's inline-asm banking path applies here. */
-#define PIC8_PIE_ENABLE_BIT(is_pir2, mask) \
+#define EPIC_PIE_ENABLE_BIT(is_pir2, mask) \
     do { \
         if (is_pir2) { pic16f87xa_sim_sfr[0x8DU] |= (uint8_t)(mask); } \
         else         { pic16f87xa_sim_sfr[0x8CU] |= (uint8_t)(mask); } \
     } while (0)
 
-#define PIC8_PIE_DISABLE_BIT(is_pir2, mask) \
+#define EPIC_PIE_DISABLE_BIT(is_pir2, mask) \
     do { \
         if (is_pir2) { pic16f87xa_sim_sfr[0x8DU] &= (uint8_t)~(mask); } \
         else         { pic16f87xa_sim_sfr[0x8CU] &= (uint8_t)~(mask); } \

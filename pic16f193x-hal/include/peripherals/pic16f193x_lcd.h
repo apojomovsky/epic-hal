@@ -25,6 +25,6 @@ EPIC_StatusTypeDef EPIC_LCD_SetSegment(uint8_t seg, uint8_t com, uint8_t on);
 EPIC_StatusTypeDef EPIC_LCD_Clear(void);
 uint8_t EPIC_LCD_IsActive(void);
 
-void LCD_IRQHandler(void) PIC8_WEAK;
+void LCD_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F193X_LCD_H */

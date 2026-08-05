@@ -12,18 +12,18 @@
  *   to pump enumeration and drain/fill the ring buffers.
  */
 
-#ifndef PIC8_USB_H
-#define PIC8_USB_H
+#ifndef EPIC_USB_H
+#define EPIC_USB_H
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 
 /** Ring-buffer size (power of two) for both TX and RX. Override by defining
- *  PIC8_USB_RING_SZ before including this header. Default is one full-speed
+ *  EPIC_USB_RING_SZ before including this header. Default is one full-speed
  *  bulk packet (64 bytes) -- the natural quantum for this endpoint size. */
-#ifndef PIC8_USB_RING_SZ
-#define PIC8_USB_RING_SZ 64u
+#ifndef EPIC_USB_RING_SZ
+#define EPIC_USB_RING_SZ 64u
 #endif
 
 /**
@@ -77,4 +77,4 @@ void epic_usb_flush(void);
  */
 bool epic_usb_connected(void);
 
-#endif /* PIC8_USB_H */
+#endif /* EPIC_USB_H */

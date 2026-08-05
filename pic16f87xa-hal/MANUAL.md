@@ -333,7 +333,7 @@ cause.
 typedef enum { GPIOA=0, GPIOB=1, GPIOC=2, GPIOD=3, GPIOE=4 } GPIO_TypeDef;
 // GPIOD / GPIOE exist only on 40/44-pin parts.
 
-#define GPIO_PIN_0   PIC8_BIT(0)   // … GPIO_PIN_7
+#define GPIO_PIN_0   EPIC_BIT(0)   // … GPIO_PIN_7
 #define GPIO_PIN_All 0xFFU
 
 typedef enum { GPIO_PIN_RESET=0, GPIO_PIN_SET=1 } GPIO_PinState;
@@ -384,7 +384,7 @@ pulls this header in.
 
 ```c
 void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
-void RB_IRQHandler(void) PIC8_WEAK;
+void RB_IRQHandler(void) EPIC_WEAK;
 ```
 
 `EPIC_GPIO_RegisterChangeCallback` stores one callback slot (NULL is safe,
@@ -408,7 +408,7 @@ when the source is idle. To arm it on a real target, also
 
 **Host sim.** The sim does not auto-assert RBIF on a PORTB mismatch
 (faithfully modeling the datasheet "snapshot on every PORTB read" would
-require intercepting every CPU read of PORTB through the `PIC8_REG8`
+require intercepting every CPU read of PORTB through the `EPIC_REG8`
 macro, disproportionate for the one feature that needs it). Tests that
 exercise the handler assert RBIF directly in INTCON, then call
 `RB_IRQHandler` / `epic_dispatch_all_irqs` and check the callback's byte
@@ -452,7 +452,7 @@ EPIC_StatusTypeDef EPIC_TIMER0_Stop(void);
 uint8_t  EPIC_TIMER0_ReadCounter(void);
 void     EPIC_TIMER0_WriteCounter(uint8_t value);   // also clears the prescaler
 uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);  // 1, 2, …, 256
-void     TIMER0_IRQHandler(void) PIC8_WEAK;
+void     TIMER0_IRQHandler(void) EPIC_WEAK;
 ```
 
 ### 10.3 Gotchas
@@ -512,7 +512,7 @@ EPIC_StatusTypeDef EPIC_TIMER1_Stop(void);
 uint16_t EPIC_TIMER1_ReadCounter(void);    // atomic, read-twice idiom per §6.4.1
 void     EPIC_TIMER1_WriteCounter(uint16_t value);
 uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);  // 1, 2, 4, 8
-void     TIMER1_IRQHandler(void) PIC8_WEAK;
+void     TIMER1_IRQHandler(void) EPIC_WEAK;
 ```
 
 ### 11.3 Notes
@@ -560,7 +560,7 @@ uint8_t  EPIC_TIMER2_ReadPeriod(void);
 void     EPIC_TIMER2_WritePeriod(uint8_t period);
 uint16_t EPIC_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p);
 uint16_t EPIC_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p);
-void     TIMER2_IRQHandler(void) PIC8_WEAK;
+void     TIMER2_IRQHandler(void) EPIC_WEAK;
 ```
 
 ---
@@ -615,8 +615,8 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
 void     EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
 void     EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);  // 0..1023
-void     CCP1_IRQHandler(void) PIC8_WEAK;
-void     CCP2_IRQHandler(void) PIC8_WEAK;
+void     CCP1_IRQHandler(void) EPIC_WEAK;
+void     CCP2_IRQHandler(void) EPIC_WEAK;
 ```
 
 ### 13.3 PWM usage
@@ -678,8 +678,8 @@ void    EPIC_USART_SetTX9D(uint8_t bit9);     // set BEFORE Transmit for 9-bit
 uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);   // TRMT
 uint8_t EPIC_USART_Receive(void);              // reads RCREG; clears RCIF, advances FIFO
 uint8_t EPIC_USART_GetRX9D(void);
-void    USART_RX_IRQHandler(void) PIC8_WEAK;
-void    USART_TX_IRQHandler(void) PIC8_WEAK;
+void    USART_RX_IRQHandler(void) EPIC_WEAK;
+void    USART_TX_IRQHandler(void) EPIC_WEAK;
 ```
 
 ### 14.3 Notes
@@ -738,7 +738,7 @@ void     EPIC_SSP_Start(void);          void     EPIC_SSP_RepeatedStart(void);
 void     EPIC_SSP_Stop(void);          void     EPIC_SSP_ReceiveEnable(void);
 void     EPIC_SSP_AcknowledgeEnable(void);
 uint8_t  EPIC_SSP_AcknowledgeStatus(void);
-void     SSP_IRQHandler(void) PIC8_WEAK;
+void     SSP_IRQHandler(void) EPIC_WEAK;
 ```
 
 ### 15.3 I²C master by hand
@@ -795,7 +795,7 @@ uint8_t  EPIC_ADC_IsConversionInProgress(void);  // GO/DONE == 1
 uint8_t  EPIC_ADC_IsConversionDone(void);         // ADIF == 1
 void     EPIC_ADC_ClearITFlag(void);
 uint16_t EPIC_ADC_Read(void);                    // 0..1023 (right-justified; left is shifted down)
-void     ADC_IRQHandler(void) PIC8_WEAK;
+void     ADC_IRQHandler(void) EPIC_WEAK;
 ```
 
 ### 16.3 The acquisition-time step
@@ -842,7 +842,7 @@ uint8_t EPIC_COMP_C1Out(void);            // CMCON<C1OUT>
 uint8_t EPIC_COMP_C2Out(void);
 uint8_t EPIC_COMP_IsChangeFlag(void);
 void    EPIC_COMP_ClearChangeFlag(void);
-void    COMP_IRQHandler(void) PIC8_WEAK;
+void    COMP_IRQHandler(void) EPIC_WEAK;
 ```
 
 POR default is `CMCON = 0x07` (comparators off). Pick a mode from the
@@ -900,7 +900,7 @@ EPIC_StatusTypeDef EPIC_EEPROM_WriteBuffer(uint8_t start, const uint8_t *buf, ui
 
 uint8_t  EPIC_EEPROM_IsWriteComplete(void);   // EEIF
 void     EPIC_EEPROM_ClearITFlag(void);
-void     EEPROM_IRQHandler(void) PIC8_WEAK;
+void     EEPROM_IRQHandler(void) EPIC_WEAK;
 ```
 
 ### 19.2 Notes
@@ -930,7 +930,7 @@ uint8_t  EPIC_PSP_IsInputBufferFull(void);    // TRISE<IBF>
 uint8_t  EPIC_PSP_IsOutputBufferFull(void);   // TRISE<OBF>
 uint8_t  EPIC_PSP_HasInputOverflow(void);     // TRISE<IBOV>
 void     EPIC_PSP_ClearInputOverflow(void);
-void     PSP_IRQHandler(void) PIC8_WEAK;
+void     PSP_IRQHandler(void) EPIC_WEAK;
 ```
 
 Including `pic16f87xa_psp.h` on a 28-pin part is a **compile error**
@@ -965,18 +965,18 @@ directly through the platform macros and the SFR map
 ### 21.2 The access macros (platform header)
 
 ```c
-PIC8_REG8(addr)                 // an lvalue for the register at addr
-PIC8_SFR_PTR(addr)              // address of that register
+EPIC_REG8(addr)                 // an lvalue for the register at addr
+EPIC_SFR_PTR(addr)              // address of that register
 epic_sfr_read8(addr)            // read
 epic_sfr_write8(addr, value)    // write
-PIC8_BIT_SET(reg, mask)         // reg |= mask
-PIC8_BIT_CLR(reg, mask)         // reg &= ~mask
-PIC8_BIT_TGL(reg, mask)         // reg ^= mask
-PIC8_BIT_READ(reg, mask)        // reg & mask
-PIC8_BIT(n)                     // (1u << n)
+EPIC_BIT_SET(reg, mask)         // reg |= mask
+EPIC_BIT_CLR(reg, mask)         // reg &= ~mask
+EPIC_BIT_TGL(reg, mask)         // reg ^= mask
+EPIC_BIT_READ(reg, mask)        // reg & mask
+EPIC_BIT(n)                     // (1u << n)
 ```
 
-On the host `PIC8_REG8(0x05)` is `pic16f87xa_sim_sfr[0x05]`; on a
+On the host `EPIC_REG8(0x05)` is `pic16f87xa_sim_sfr[0x05]`; on a
 target it is `*(volatile uint8_t *)(uintptr_t)0x05`. The same source
 compiles to both, which is the whole point of the platform layer.
 
@@ -985,8 +985,8 @@ compiles to both, which is the whole point of the platform layer.
 ```c
 #include "pic16f87xa_sfr.h"
 
-PIC8_BIT_SET(PIC8_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
-uint8_t status = PIC8_REG8(PIC_REG_STATUS);
+EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
+uint8_t status = EPIC_REG8(PIC_REG_STATUS);
 ```
 
 Prefer the HAL where it exists; reach for these only for bits the HAL

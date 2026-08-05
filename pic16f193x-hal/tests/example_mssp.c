@@ -23,8 +23,8 @@ int main(void)
     SSP_HandleTypeDef ssp = SSP_HANDLE_DEFAULT;
     EPIC_SSP_Init(&ssp);
 
-    uint8_t stat = PIC8_REG8(PIC_REG_SSPSTAT);
-    uint8_t con1 = PIC8_REG8(PIC_REG_SSPCON1);
+    uint8_t stat = EPIC_REG8(PIC_REG_SSPSTAT);
+    uint8_t con1 = EPIC_REG8(PIC_REG_SSPCON1);
 
     epic_harness_log("SSPSTAT=0x%02X SSPCON1=0x%02X\n", stat, con1);
     int pass = (stat == 0x40U) && (con1 == 0x20U);

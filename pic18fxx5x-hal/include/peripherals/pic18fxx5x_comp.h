@@ -70,6 +70,6 @@ void EPIC_COMP_ClearChangeFlag(void);
 
 /* ───────────────────────── interrupts ───────────────────────────── */
 
-void COMP_IRQHandler(void) PIC8_WEAK;
+void COMP_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_COMP_H */

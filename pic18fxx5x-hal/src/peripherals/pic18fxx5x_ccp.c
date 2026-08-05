@@ -14,33 +14,33 @@
  * CCP2 is plain. */
 #define CCP_WRITE_CPRL(inst, value)                                     \
     do {                                                                \
-        if ((inst) == CCP_INSTANCE_1) PIC8_REG8(PIC_REG_CCPR1L) = (uint8_t)(value); \
-        else                          PIC8_REG8(PIC_REG_CCPR2L) = (uint8_t)(value); \
+        if ((inst) == CCP_INSTANCE_1) EPIC_REG8(PIC_REG_CCPR1L) = (uint8_t)(value); \
+        else                          EPIC_REG8(PIC_REG_CCPR2L) = (uint8_t)(value); \
     } while (0)
 #define CCP_WRITE_CPRH(inst, value)                                     \
     do {                                                                \
-        if ((inst) == CCP_INSTANCE_1) PIC8_REG8(PIC_REG_CCPR1H) = (uint8_t)(value); \
-        else                          PIC8_REG8(PIC_REG_CCPR2H) = (uint8_t)(value); \
+        if ((inst) == CCP_INSTANCE_1) EPIC_REG8(PIC_REG_CCPR1H) = (uint8_t)(value); \
+        else                          EPIC_REG8(PIC_REG_CCPR2H) = (uint8_t)(value); \
     } while (0)
 #define CCP_WRITE_CON(inst, value)                                      \
     do {                                                                \
-        if ((inst) == CCP_INSTANCE_1) PIC8_REG8(PIC_REG_CCP1CON) = (uint8_t)(value); \
-        else                          PIC8_REG8(PIC_REG_CCP2CON) = (uint8_t)(value); \
+        if ((inst) == CCP_INSTANCE_1) EPIC_REG8(PIC_REG_CCP1CON) = (uint8_t)(value); \
+        else                          EPIC_REG8(PIC_REG_CCP2CON) = (uint8_t)(value); \
     } while (0)
 #define CCP_READ_CPRL(inst, out)                                        \
     do {                                                                \
-        if ((inst) == CCP_INSTANCE_1) (out) = PIC8_REG8(PIC_REG_CCPR1L); \
-        else                          (out) = PIC8_REG8(PIC_REG_CCPR2L); \
+        if ((inst) == CCP_INSTANCE_1) (out) = EPIC_REG8(PIC_REG_CCPR1L); \
+        else                          (out) = EPIC_REG8(PIC_REG_CCPR2L); \
     } while (0)
 #define CCP_READ_CPRH(inst, out)                                        \
     do {                                                                \
-        if ((inst) == CCP_INSTANCE_1) (out) = PIC8_REG8(PIC_REG_CCPR1H); \
-        else                          (out) = PIC8_REG8(PIC_REG_CCPR2H); \
+        if ((inst) == CCP_INSTANCE_1) (out) = EPIC_REG8(PIC_REG_CCPR1H); \
+        else                          (out) = EPIC_REG8(PIC_REG_CCPR2H); \
     } while (0)
 #define CCP_READ_CON(inst, out)                                         \
     do {                                                                \
-        if ((inst) == CCP_INSTANCE_1) (out) = PIC8_REG8(PIC_REG_CCP1CON); \
-        else                          (out) = PIC8_REG8(PIC_REG_CCP2CON); \
+        if ((inst) == CCP_INSTANCE_1) (out) = EPIC_REG8(PIC_REG_CCP1CON); \
+        else                          (out) = EPIC_REG8(PIC_REG_CCP2CON); \
     } while (0)
 
 /* The interrupt ID isn't an SFR address (just a small enum passed into
@@ -110,13 +110,13 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
     if (h->Instance == CCP_INSTANCE_1) {
         uint8_t del = (uint8_t)(h->DeadBand.Delay & PIC_ECCP1DEL_PDC_MASK);
         if (h->DeadBand.AutoRestart) del |= PIC_ECCP1DEL_PRSEN;
-        PIC8_REG8(PIC_REG_ECCP1DEL) = del;
+        EPIC_REG8(PIC_REG_ECCP1DEL) = del;
         /* ECCP1AS: source[6:4] | PSSAC[3:2] | PSSBD[1:0]; ECCPASE (bit 7)
          * is the status bit, left 0 here. */
         uint8_t asv = (uint8_t)(((h->AutoShutdown.Source & 0x7U) << 4) |
                                 (pss_encode(h->AutoShutdown.PinsAC) << 2) |
                                 pss_encode(h->AutoShutdown.PinsBD));
-        PIC8_REG8(PIC_REG_ECCP1AS) = asv;
+        EPIC_REG8(PIC_REG_ECCP1AS) = asv;
     }
 
     return EPIC_OK;
@@ -129,8 +129,8 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
     EPIC_IRQ_ClearFlag(ccp_irq(inst));
     CCP_WRITE_CON(inst, 0x00U);
     if (inst == CCP_INSTANCE_1) {
-        PIC8_REG8(PIC_REG_ECCP1DEL) = PIC_ECCP1DEL_POR_VALUE;
-        PIC8_REG8(PIC_REG_ECCP1AS) = PIC_ECCP1AS_POR_VALUE;
+        EPIC_REG8(PIC_REG_ECCP1DEL) = PIC_ECCP1DEL_POR_VALUE;
+        EPIC_REG8(PIC_REG_ECCP1AS) = PIC_ECCP1AS_POR_VALUE;
     }
     g_ccp_handles[inst] = NULL;
     return EPIC_OK;
@@ -178,7 +178,7 @@ void EPIC_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst,
     if (inst != CCP_INSTANCE_1) return;     /* ECCP1 only */
     uint8_t del = (uint8_t)(delay & PIC_ECCP1DEL_PDC_MASK);
     if (auto_restart) del |= PIC_ECCP1DEL_PRSEN;
-    PIC8_REG8(PIC_REG_ECCP1DEL) = del;
+    EPIC_REG8(PIC_REG_ECCP1DEL) = del;
 }
 
 void EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
@@ -198,7 +198,7 @@ void EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
 uint8_t EPIC_CCP_IsShutdown(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1) return 0U;
-    return (PIC8_REG8(PIC_REG_ECCP1AS) & PIC_ECCP1AS_ECCPASE) ? 1U : 0U;
+    return (EPIC_REG8(PIC_REG_ECCP1AS) & PIC_ECCP1AS_ECCPASE) ? 1U : 0U;
 }
 
 void EPIC_CCP_Restart(CCP_InstanceTypeDef inst)

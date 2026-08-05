@@ -39,14 +39,14 @@ typedef enum {
  * @brief Pin identifiers. Each port has up to 8 pins.
  *        Use @ref GPIO_PIN_All for whole-port operations.
  */
-#define GPIO_PIN_0    PIC8_BIT(0)
-#define GPIO_PIN_1    PIC8_BIT(1)
-#define GPIO_PIN_2    PIC8_BIT(2)
-#define GPIO_PIN_3    PIC8_BIT(3)
-#define GPIO_PIN_4    PIC8_BIT(4)
-#define GPIO_PIN_5    PIC8_BIT(5)
-#define GPIO_PIN_6    PIC8_BIT(6)
-#define GPIO_PIN_7    PIC8_BIT(7)
+#define GPIO_PIN_0    EPIC_BIT(0)
+#define GPIO_PIN_1    EPIC_BIT(1)
+#define GPIO_PIN_2    EPIC_BIT(2)
+#define GPIO_PIN_3    EPIC_BIT(3)
+#define GPIO_PIN_4    EPIC_BIT(4)
+#define GPIO_PIN_5    EPIC_BIT(5)
+#define GPIO_PIN_6    EPIC_BIT(6)
+#define GPIO_PIN_7    EPIC_BIT(7)
 #define GPIO_PIN_All  0xFFU
 
 /**
@@ -159,6 +159,6 @@ void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
  *   is mandatory (datasheet "read PORTB to end the mismatch condition"),
  *   not stylistic.
  */
-void RB_IRQHandler(void) PIC8_WEAK;
+void RB_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_GPIO_H */

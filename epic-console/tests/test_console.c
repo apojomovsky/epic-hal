@@ -89,7 +89,7 @@ static int drain_tx(char *out, int max)
     epic_harness_tick();
     while (epic_serial_tx_pending() > 0 && n < max) {
         epic_dispatch_all_irqs();
-        out[n++] = (char)PIC8_REG8(PIC_REG_TXREG);
+        out[n++] = (char)EPIC_REG8(PIC_REG_TXREG);
         epic_harness_tick();
     }
     return n;
@@ -105,7 +105,7 @@ static void test_no_arg_dispatch(void)
         { "status", cmd_capture, "show status" },
     };
     reset_ctx(&ctx);
-    PIC8_CONSOLE_INIT(&con, table, &ctx);
+    EPIC_CONSOLE_INIT(&con, table, &ctx);
 
     drive_input("status\r");
     epic_console_poll(&con);
@@ -125,7 +125,7 @@ static void test_multi_arg_tokenization(void)
         { "set", cmd_capture, "set value" },
     };
     reset_ctx(&ctx);
-    PIC8_CONSOLE_INIT(&con, table, &ctx);
+    EPIC_CONSOLE_INIT(&con, table, &ctx);
 
     drive_input("set   mode   12\r");
     epic_console_poll(&con);
@@ -148,7 +148,7 @@ static void test_backspace_behavior(void)
         { "ping", cmd_capture, "ping command" },
     };
     reset_ctx(&ctx);
-    PIC8_CONSOLE_INIT(&con, table, &ctx);
+    EPIC_CONSOLE_INIT(&con, table, &ctx);
 
     drive_input("pign\b\bng\r");
     epic_console_poll(&con);
@@ -171,7 +171,7 @@ static void test_backspace_at_empty_line(void)
         { "x", cmd_capture, "unused" },
     };
     reset_ctx(&ctx);
-    PIC8_CONSOLE_INIT(&con, table, &ctx);
+    EPIC_CONSOLE_INIT(&con, table, &ctx);
 
     drive_input("\b\r");
     epic_console_poll(&con);
@@ -191,12 +191,12 @@ static void test_overlong_line_truncates_without_crashing(void)
         { "abcdefghijklmnopqrstuvwxyz12345", cmd_capture, "long command" },
     };
     reset_ctx(&ctx);
-    PIC8_CONSOLE_INIT(&con, table, &ctx);
+    EPIC_CONSOLE_INIT(&con, table, &ctx);
 
     drive_input_polled(&con, "abcdefghijklmnopqrstuvwxyz12345ZZZZ\r");
 
     CHECK(ctx.call_count == 1, "overflow: handler still called for truncated line");
-    CHECK(strlen(ctx.args[0]) == (size_t)(PIC8_CONSOLE_LINE_MAX - 1u),
+    CHECK(strlen(ctx.args[0]) == (size_t)(EPIC_CONSOLE_LINE_MAX - 1u),
           "overflow: line truncated to max payload");
     CHECK(strncmp(ctx.args[0], "abcdefghijklmnopqrstuvwxyz12345ZZZZ", strlen(ctx.args[0])) == 0,
           "overflow: line preserves the input prefix that fit");
@@ -212,7 +212,7 @@ static void test_crlf_is_one_terminator(void)
         { "go", cmd_capture, "run" },
     };
     reset_ctx(&ctx);
-    PIC8_CONSOLE_INIT(&con, table, &ctx);
+    EPIC_CONSOLE_INIT(&con, table, &ctx);
 
     drive_input("go\r\n");
     epic_console_poll(&con);
@@ -230,7 +230,7 @@ static void test_unknown_command_ignored(void)
         { "known", cmd_capture, "known command" },
     };
     reset_ctx(&ctx);
-    PIC8_CONSOLE_INIT(&con, table, &ctx);
+    EPIC_CONSOLE_INIT(&con, table, &ctx);
 
     drive_input("unknown\r");
     epic_console_poll(&con);
@@ -250,7 +250,7 @@ static void test_init_macro_table_len(void)
         { "c", cmd_capture, "C" },
     };
     reset_ctx(&ctx);
-    PIC8_CONSOLE_INIT(&con, table, &ctx);
+    EPIC_CONSOLE_INIT(&con, table, &ctx);
 
     CHECK(con.table_len == 3u, "init macro: table_len matches array size");
 }

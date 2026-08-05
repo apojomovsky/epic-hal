@@ -3,7 +3,7 @@
  * @brief   PIC16F193X sim-target implementation of the test harness.
  *          Mirrors pic16_harness_sim_target.c's shape but with no
  *          USART init: instead, epic_harness_log() inspects its
- *          format string and, on the PIC8_HARNESS_RESULT marker,
+ *          format string and, on the EPIC_HARNESS_RESULT marker,
  *          drives RA0 (PORTA bit 0) so the mdb wrapper can read the
  *          result via 'print PORTA' in MODE=gpio. This is the
  *          documented "magic-string dispatch" hook from the spec.
@@ -64,8 +64,8 @@ void epic_harness_log(const char *fmt, ...)
      * On those, drive RA0 from the meaning (PASS = high, FAIL = low).
      * Every other log line is a no-op, same as the family-blind four
      * no-ops. */
-    if (fmt && fmt[0] == 'P' && fmt[1] == 'I' && fmt[2] == 'C' &&
-        fmt[3] == '8' && fmt[4] == '_' && fmt[5] == 'H' &&
+    if (fmt && fmt[0] == 'E' && fmt[1] == 'P' && fmt[2] == 'I' &&
+        fmt[3] == 'C' && fmt[4] == '_' && fmt[5] == 'H' &&
         fmt[6] == 'A' && fmt[7] == 'R' && fmt[8] == 'N' &&
         fmt[9] == 'E' && fmt[10] == 'S' && fmt[11] == 'S' &&
         fmt[12] == '_' && fmt[13] == 'R' && fmt[14] == 'E' &&
@@ -74,8 +74,8 @@ void epic_harness_log(const char *fmt, ...)
         fmt[21] == 'P' && fmt[22] == 'A' && fmt[23] == 'S' &&
         fmt[24] == 'S' && fmt[25] == '\n' && fmt[26] == '\0') {
         EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-    } else if (fmt && fmt[0] == 'P' && fmt[1] == 'I' && fmt[2] == 'C' &&
-        fmt[3] == '8' && fmt[4] == '_' && fmt[5] == 'H' &&
+    } else if (fmt && fmt[0] == 'E' && fmt[1] == 'P' && fmt[2] == 'I' &&
+        fmt[3] == 'C' && fmt[4] == '_' && fmt[5] == 'H' &&
         fmt[6] == 'A' && fmt[7] == 'R' && fmt[8] == 'N' &&
         fmt[9] == 'E' && fmt[10] == 'S' && fmt[11] == 'S' &&
         fmt[12] == '_' && fmt[13] == 'R' && fmt[14] == 'E' &&

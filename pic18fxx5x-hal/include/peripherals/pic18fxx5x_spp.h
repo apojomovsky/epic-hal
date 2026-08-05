@@ -98,6 +98,6 @@ void EPIC_SPP_ClearITFlag(void);
 
 /* ───────────────────────── interrupts ───────────────────────────── */
 
-void SPP_IRQHandler(void) PIC8_WEAK;
+void SPP_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_SPP_H */

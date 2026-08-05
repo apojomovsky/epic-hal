@@ -21,10 +21,10 @@
   #define SERIAL_IS_PIC18     0
   #define SERIAL_IRQ_TX       PIC16_IRQ_USART_TX
   #define SERIAL_IRQ_RX       PIC16_IRQ_USART_RX
-  #define SERIAL_TXREG_WRITE(b)  (PIC8_REG8(PIC_REG_TXREG) = (uint8_t)(b))
+  #define SERIAL_TXREG_WRITE(b)  (EPIC_REG8(PIC_REG_TXREG) = (uint8_t)(b))
 #endif
 
-#define SZ     PIC8_SERIAL_RING_SZ
+#define SZ     EPIC_SERIAL_RING_SZ
 #define MASK   (SZ - 1u)
 
 static volatile uint8_t g_tx_buf[SZ], g_rx_buf[SZ];

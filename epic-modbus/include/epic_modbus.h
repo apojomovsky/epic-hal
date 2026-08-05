@@ -13,16 +13,16 @@
  *   RTU T3.5 inter-frame gap elapses; call it every main-loop iteration.
  */
 
-#ifndef PIC8_MODBUS_H
-#define PIC8_MODBUS_H
+#ifndef EPIC_MODBUS_H
+#define EPIC_MODBUS_H
 
 #include <stdint.h>
 
 /** Max RTU ADU (address + PDU + CRC) this module buffers. Override before
- *  including this header, e.g. -DPIC8_MODBUS_MAX_ADU=128, to fit a larger
+ *  including this header, e.g. -DEPIC_MODBUS_MAX_ADU=128, to fit a larger
  *  register map's read/write-multiple responses. */
-#ifndef PIC8_MODBUS_MAX_ADU
-#define PIC8_MODBUS_MAX_ADU 64u
+#ifndef EPIC_MODBUS_MAX_ADU
+#define EPIC_MODBUS_MAX_ADU 64u
 #endif
 
 /**
@@ -85,4 +85,4 @@ void epic_modbus_slave_set_rs485_dir_pin(uint8_t port, uint8_t pin);
  */
 void epic_modbus_slave_poll(void);
 
-#endif /* PIC8_MODBUS_H */
+#endif /* EPIC_MODBUS_H */

@@ -205,7 +205,7 @@ it done.
    `make mdb-test` recipe wraps `scripts/sim-mdb-run.sh`, which builds
    the `HARNESS=sim` firmware and drives `mdb.sh`. For families that
    report PASS/FAIL over UART (PIC16F87XA, PIC18Fxxxx), the default
-   `MODE=uart` captures the `PIC8_HARNESS_RESULT` marker from the
+   `MODE=uart` captures the `EPIC_HARNESS_RESULT` marker from the
    USART output file. For families without an EUSART driver yet
    (currently PIC16F193X, exercised via RA0/GPIO), pass `MODE=gpio`;
    the wrapper then reads the marker via `print PORTA` and checks bit

@@ -27,9 +27,9 @@
 /* Helper: read a register from a non-default bank. */
 static uint8_t b_read(uint8_t bank, uint16_t addr)
 {
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(bank);
-    uint8_t v = PIC8_REG8(addr);
+    uint8_t v = EPIC_REG8(addr);
     pic_select_bank(prev);
     return v;
 }

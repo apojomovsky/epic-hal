@@ -9,7 +9,7 @@
  *   callback. Each peripheral IRQHandler checks its own flag and returns
  *   immediately if not pending, so calling them all in turn is correct.
  *   Prototypes are declared here as strong externs, not via the peripheral
- *   headers' `PIC8_WEAK` declaration, which would let the host linker drop
+ *   headers' `EPIC_WEAK` declaration, which would let the host linker drop
  *   the handler's object from the static library.
  */
 

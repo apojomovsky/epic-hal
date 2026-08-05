@@ -70,8 +70,8 @@ rewrite per peripheral.
   implementation of `epic_harness_*` for `HARNESS=sim` builds.
   Mirrors `pic16_harness_sim_target.c`'s shape but without USART
   init. `log()` is not a pure no-op: when `fmt` is the pass/fail
-  marker string (`"PIC8_HARNESS_RESULT: PASS\n"` or
-  `"PIC8_HARNESS_RESULT: FAIL\n"`), it drives RA0 (PORTA bit 0) and
+  marker string (`"EPIC_HARNESS_RESULT: PASS\n"` or
+  `"EPIC_HARNESS_RESULT: FAIL\n"`), it drives RA0 (PORTA bit 0) and
   ignores variadic args; for any other `fmt`, it is a no-op. See
   "Harness hook: magic-string in `log()`" below for the rationale.
 - **No changes to `epic-common/`.** The family-blind no-op
@@ -101,8 +101,8 @@ rewrite per peripheral.
 
 The existing `epic_harness_report()` static inline (in
 `epic_harness.h`) emits its PASS/FAIL marker line by calling
-`epic_harness_log(ok ? "PIC8_HARNESS_RESULT: PASS\n" :
-"PIC8_HARNESS_RESULT: FAIL\n")`. The UART-mode `log()` writes those
+`epic_harness_log(ok ? "EPIC_HARNESS_RESULT: PASS\n" :
+"EPIC_HARNESS_RESULT: FAIL\n")`. The UART-mode `log()` writes those
 bytes to the USART. The new PIC16F193X sim-target `log()` instead
 *inspects the format string*: when it is exactly the pass or fail
 marker, drive RA0 (PORTA bit 0) from the message's meaning. Call
@@ -229,7 +229,7 @@ All three verification runs PASS. PIC16F193X `HARNESS=sim` produces a
 - `pic16f193x-hal/src/sim/pic16f193x_sim.c`: add `sim_step_timer1`
   mirroring `sim_step_timer0`'s shape. Wire into the per-step loop.
 - `pic16f193x-hal/CMakeLists.txt`: add `pic16f193x_timer1.c` to
-  `PIC8_EPIC_SOURCES`; add
+  `EPIC_SOURCES`; add
   `epic_add_example(example_timer1 tests/example_timer1.c)`.
 - `pic16f193x-hal/mcu/pic16f193x-mplabx/Makefile`: add the new
   source to `EPIC_SOURCES` (both `HARNESS=target` and `HARNESS=sim`

@@ -29,7 +29,7 @@ it takes **strong** references to every peripheral's `_IRQHandler`
 reference), specifically so the linker is forced to pull every handler
 in. Quoting the file:
 
-> The handlers are declared `PIC8_WEAK` in their own headers (to allow
+> The handlers are declared `EPIC_WEAK` in their own headers (to allow
 > optional user override). That makes a reference through those headers
 > a *weak* reference, which the linker will NOT use to pull the
 > handler's object out of the static library, leaving the call target

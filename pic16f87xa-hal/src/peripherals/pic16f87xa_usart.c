@@ -39,16 +39,16 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     g_usart = h;
 
     /* Program SPBRG (Bank 1, address 0x99, DS39582B §10.1). */
-#ifdef PIC8_BANK1_WRITE8
+#ifdef EPIC_BANK1_WRITE8
     /* See target/pic16f87xa_platform.h: a plain bank-switch write here
      * silently corrupts under XC8 v4.00. A wrong SPBRG is masked in
      * sim-target testing since MPLAB SIM's UART capture isn't
      * baud-timing-sensitive; only a real receiver would show it. */
-    PIC8_BANK1_WRITE8(SPBRG, h->SPBRG);
+    EPIC_BANK1_WRITE8(SPBRG, h->SPBRG);
 #else
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    PIC8_REG8(PIC_REG_SPBRG) = h->SPBRG;
+    EPIC_REG8(PIC_REG_SPBRG) = h->SPBRG;
     pic_select_bank(prev);
 #endif
 
@@ -67,7 +67,7 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     if (h->BaudHigh == USART_BRGH_HIGH) txsta |= PIC_TXSTA_BRGH;
     if (h->DataWidth == USART_DATA_9BITS) txsta |= PIC_TXSTA_TX9;
     if (h->TxCpltCallback) txsta |= PIC_TXSTA_TXEN;  /* TXEN implied if user has a callback. */
-    PIC8_REG8(PIC_REG_TXSTA) = txsta;
+    EPIC_REG8(PIC_REG_TXSTA) = txsta;
 
     /* Build RCSTA (Bank 0, address 0x18).
      *   SPEN bit 7, enable serial port
@@ -78,7 +78,7 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     uint8_t rcsta = PIC_RCSTA_SPEN;
     if (h->DataWidth == USART_DATA_9BITS) rcsta |= PIC_RCSTA_RX9;
     if (h->RxCpltCallback) rcsta |= PIC_RCSTA_CREN;
-    PIC8_REG8(PIC_REG_RCSTA) = rcsta;
+    EPIC_REG8(PIC_REG_RCSTA) = rcsta;
 
     /* TXIF is initially 1 (TXREG empty after reset, §10.2.1).
      * RCIF is initially 0 (RCREG empty after reset). */
@@ -98,12 +98,12 @@ EPIC_StatusTypeDef EPIC_USART_DeInit(void)
     EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_RX);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_TX);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
-    PIC8_REG8(PIC_REG_RCSTA) = 0x00U;
-    PIC8_REG8(PIC_REG_TXSTA) = 0x02U;     /* keep TRMT=1 reset state. */
+    EPIC_REG8(PIC_REG_RCSTA) = 0x00U;
+    EPIC_REG8(PIC_REG_TXSTA) = 0x02U;     /* keep TRMT=1 reset state. */
     {
-        uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
-        PIC8_REG8(PIC_REG_SPBRG) = 0x00U;
+        EPIC_REG8(PIC_REG_SPBRG) = 0x00U;
         pic_select_bank(prev);
     }
     g_usart = NULL;
@@ -115,37 +115,37 @@ void EPIC_USART_Transmit(uint8_t data)
     /* Writing TXREG clears TXIF (DS39582B §10.2.1). The hardware
      * simultaneously starts the TSR→line shift; the sim backend
      * re-asserts TXIF on the next pic16f87xa_sim_step() call. */
-    PIC8_REG8(PIC_REG_TXREG) = data;
+    EPIC_REG8(PIC_REG_TXREG) = data;
     EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_TX);
 }
 
 uint8_t EPIC_USART_GetTX9D(void)
 {
-    return (PIC8_REG8(PIC_REG_TXSTA) & PIC_TXSTA_TX9D) ? 1U : 0U;
+    return (EPIC_REG8(PIC_REG_TXSTA) & PIC_TXSTA_TX9D) ? 1U : 0U;
 }
 
 void EPIC_USART_SetTX9D(uint8_t bit9)
 {
-    if (bit9) PIC8_BIT_SET(PIC8_REG8(PIC_REG_TXSTA), PIC_TXSTA_TX9D);
-    else      PIC8_BIT_CLR(PIC8_REG8(PIC_REG_TXSTA), PIC_TXSTA_TX9D);
+    if (bit9) EPIC_BIT_SET(EPIC_REG8(PIC_REG_TXSTA), PIC_TXSTA_TX9D);
+    else      EPIC_BIT_CLR(EPIC_REG8(PIC_REG_TXSTA), PIC_TXSTA_TX9D);
 }
 
 uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void)
 {
-    return (PIC8_REG8(PIC_REG_TXSTA) & PIC_TXSTA_TRMT) ? 1U : 0U;
+    return (EPIC_REG8(PIC_REG_TXSTA) & PIC_TXSTA_TRMT) ? 1U : 0U;
 }
 
 uint8_t EPIC_USART_Receive(void)
 {
     /* Reading RCREG clears RCIF (DS39582B §10.2.2). */
-    uint8_t data = PIC8_REG8(PIC_REG_RCREG);
+    uint8_t data = EPIC_REG8(PIC_REG_RCREG);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
     return data;
 }
 
 uint8_t EPIC_USART_GetRX9D(void)
 {
-    return (PIC8_REG8(PIC_REG_RCSTA) & PIC_RCSTA_RX9D) ? 1U : 0U;
+    return (EPIC_REG8(PIC_REG_RCSTA) & PIC_RCSTA_RX9D) ? 1U : 0U;
 }
 
 /* ───────────────────────── ISRs ─────────────────────────────────── */
@@ -161,7 +161,7 @@ void USART_TX_IRQHandler(void)
 void USART_RX_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC16_IRQ_USART_RX)) return;
-    uint8_t data = PIC8_REG8(PIC_REG_RCREG);
+    uint8_t data = EPIC_REG8(PIC_REG_RCREG);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
     if (g_usart && g_usart->RxCpltCallback) g_usart->RxCpltCallback(data);
 }

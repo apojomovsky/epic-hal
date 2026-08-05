@@ -177,8 +177,8 @@ void EPIC_USART_ClearAutoBaudOverflow(void);
 /* ───────────────────────── interrupts ───────────────────────────── */
 
 /** Weak USART RX ISR, override in user code. */
-void USART_RX_IRQHandler(void) PIC8_WEAK;
+void USART_RX_IRQHandler(void) EPIC_WEAK;
 /** Weak USART TX ISR, override in user code. */
-void USART_TX_IRQHandler(void) PIC8_WEAK;
+void USART_TX_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_USART_H */

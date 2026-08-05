@@ -64,7 +64,7 @@ static int drain_tx(uint8_t *out, int max)
     int n = 0;
     while (epic_serial_tx_pending() > 0 && n < max) {
         epic_dispatch_all_irqs();
-        out[n++] = PIC8_REG8(PIC_REG_TXREG);
+        out[n++] = EPIC_REG8(PIC_REG_TXREG);
     }
     return n;
 }

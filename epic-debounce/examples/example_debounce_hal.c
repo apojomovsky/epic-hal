@@ -51,8 +51,8 @@ int main(void)
     for (uint32_t i = 0; epic_harness_running(i); i++) {
         /* Simulate a button press on RA0 around tick 50, release at tick 100. */
         uint32_t t = epic_tick_get();
-        if (t == 50u) { PIC8_REG8(PIC_REG_PORTA) |=  (uint8_t)GPIO_PIN_0; }
-        if (t == 100u){ PIC8_REG8(PIC_REG_PORTA) &= ~(uint8_t)GPIO_PIN_0; }
+        if (t == 50u) { EPIC_REG8(PIC_REG_PORTA) |=  (uint8_t)GPIO_PIN_0; }
+        if (t == 100u){ EPIC_REG8(PIC_REG_PORTA) &= ~(uint8_t)GPIO_PIN_0; }
 
         epic_harness_tick();
 

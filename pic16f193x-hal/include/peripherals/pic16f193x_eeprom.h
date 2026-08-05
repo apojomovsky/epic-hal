@@ -20,6 +20,6 @@ EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data);
 uint8_t EPIC_EEPROM_IsWriteComplete(void);
 uint8_t EPIC_EEPROM_HasWriteError(void);
 
-void EEPROM_IRQHandler(void) PIC8_WEAK;
+void EEPROM_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F193X_EEPROM_H */

@@ -13,8 +13,8 @@ boilerplate.
 
 - **`include/core/hal_status.h`**: `EPIC_StatusTypeDef` / `EPIC_OK` /
   `EPIC_ERROR` / `EPIC_BUSY` / `EPIC_TIMEOUT` / `EPIC_INVALID`, and the
-  `PIC8_BIT` / `PIC8_BIT_SET` / `PIC8_BIT_CLR` / `PIC8_BIT_TGL` /
-  `PIC8_BIT_READ` helpers. Identical on every family.
+  `EPIC_BIT` / `EPIC_BIT_SET` / `EPIC_BIT_CLR` / `EPIC_BIT_TGL` /
+  `EPIC_BIT_READ` helpers. Identical on every family.
 - **`include/core/epic_harness.h`** — the four-function test/firmware
   harness contract (`epic_harness_init` / `_tick` / `_running` / `_log` /
   `_report`) that lets one example source build for the host simulator

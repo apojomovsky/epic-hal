@@ -44,8 +44,8 @@ effects, §5.9.4.1), so the *next* SFR access after an asm block gets a
 fresh, correct bank-select regardless of what the asm actually did to
 `STATUS`.
 
-This directly validates `pic16f87xa_platform.h`'s `PIC8_PIE_ENABLE_BIT`/
-`PIC8_PIE_DISABLE_BIT` macros (the fix for `EPIC_IRQ_Enable`/
+This directly validates `pic16f87xa_platform.h`'s `EPIC_PIE_ENABLE_BIT`/
+`EPIC_PIE_DISABLE_BIT` macros (the fix for `EPIC_IRQ_Enable`/
 `EPIC_IRQ_DisableSrc`'s PIE1/PIE2 read-modify-write): loading the operand
 into W *before* the bank switch, doing the whole read-modify-write as a
 single `iorwf`/`andwf <SFR>,f` inside one `asm()` block, is not a
@@ -56,8 +56,8 @@ banked SFR access from C.
 
 **Plausible, not confirmed.** This is the current best explanation for
 why the *original* `pic_select_bank` (a `static inline` function doing
-`status = PIC8_REG8(PIC_REG_STATUS); status &= ~(RP0|RP1); status |=
-(bank&3)<<5; PIC8_REG8(PIC_REG_STATUS) = status;`, no `asm()` involved at
+`status = EPIC_REG8(PIC_REG_STATUS); status &= ~(RP0|RP1); status |=
+(bank&3)<<5; EPIC_REG8(PIC_REG_STATUS) = status;`, no `asm()` involved at
 all) reliably corrupted a caller's own live local value when called as a
 real out-of-line function (confirmed via a dedicated probe:
 `EPIC_TIMER2_WritePeriod(200)` landed as `PR2=0` every time).
@@ -67,7 +67,7 @@ specific, compiler-generated bank-select sequences (or `BANKSEL`-style
 assembler idioms, see §5.12.3.1's worked example, which uses
 `BANKSEL (PORTB)` explicitly rather than a raw SFR write) as the trigger
 to update its internal "current bank" belief. A **plain C assignment
-through a generic pointer-dereference macro** (`PIC8_REG8(PIC_REG_STATUS)
+through a generic pointer-dereference macro** (`EPIC_REG8(PIC_REG_STATUS)
 = status;`, indistinguishable at the IR level from writing any other
 byte-sized object) may not be recognized as such a trigger at all. If so,
 the compiler could still believe it is in whatever bank it was in before
@@ -356,20 +356,20 @@ The only thing left between "correct value sitting in a C variable" and
 ```c
 void EPIC_TIMER2_WritePeriod(uint8_t period)
 {
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    PIC8_REG8(PIC_REG_PR2) = period;   /* <-- period misdirected here */
+    EPIC_REG8(PIC_REG_PR2) = period;   /* <-- period misdirected here */
     pic_select_bank(prev);
 }
 ```
 
 This is the *exact* failure shape Finding 1 already proved and fixed
-for `PIC8_PIE_ENABLE_BIT`/`PIC8_PIE_DISABLE_BIT`: a plain C-level access
+for `EPIC_PIE_ENABLE_BIT`/`EPIC_PIE_DISABLE_BIT`: a plain C-level access
 to something the compiler assumes is Bank-0-resident (here, the
 `period` parameter), performed after `pic_select_bank(1)`'s bank switch,
 gets misdirected. The only difference is *which* function it hit.
 `EPIC_USART_Init`'s SPBRG write has the identical shape
-(`PIC8_REG8(PIC_REG_SPBRG) = h->SPBRG;` after its own
+(`EPIC_REG8(PIC_REG_SPBRG) = h->SPBRG;` after its own
 `pic_select_bank(1)`) and was confirmed corrupted too (`SPBRG` read `4`,
 should be `129` for 9600 baud at 20 MHz), just masked until now because
 MPLAB SIM's `uart1io` capture isn't baud-timing-sensitive, so a wrong
@@ -379,13 +379,13 @@ only on real hardware talking to a real receiver.
 **Fix**, mirroring Finding 1's already-proven pattern exactly: load the
 value into W through a bank-independent common-RAM scratch byte
 *before* switching banks, then a single `movwf <SFR>` while banked
-touches nothing else. New `PIC8_BANK1_WRITE8(sfr, value)` macro
+touches nothing else. New `EPIC_BANK1_WRITE8(sfr, value)` macro
 (`target/pic16f87xa_platform.h`) with its own scratch byte
 (`epic_bank1_scratch` at `0x71`, deliberately separate from
 `epic_irq_pie_scratch` at `0x70`, unrelated subsystems). Applied to both
 `EPIC_TIMER2_WritePeriod` and `EPIC_USART_Init`. Verified: `PR2` reads
 `249`, `SPBRG` reads `129`, and `epic-tick`'s PIC16 sim-target test
-reaches `PIC8_HARNESS_RESULT: PASS` reliably (5/5 runs). Full host
+reaches `EPIC_HARNESS_RESULT: PASS` reliably (5/5 runs). Full host
 suite and all 38 previously-passing PIC16 `(module, MCU)` real-target
 builds re-verified clean, no regressions from the new scratch byte
 (the same class of regression Root cause 3 in
@@ -442,7 +442,7 @@ the same probe run. Inlining does not sidestep this bug; the
 misdirection happens in the flattened code too.
 
 Fixed with the same pattern, extended to cover Banks 2 and 3
-(`PIC8_BANK2_WRITE8`/`READ8`, `PIC8_BANK3_WRITE8`/`READ8`, needed for
+(`EPIC_BANK2_WRITE8`/`READ8`, `EPIC_BANK3_WRITE8`/`READ8`, needed for
 EEPROM specifically since its own call sites interleave both banks
 back to back, so neither macro can assume the incoming `RP1:RP0` state
 the way the Bank-1-only macros safely do). SSP and EEPROM's helpers

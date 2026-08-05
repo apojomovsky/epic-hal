@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build a module's sim-target .hex and run it under MPLAB SIM (mdb),
-# checking for the PIC8_HARNESS_RESULT marker (see
+# checking for the EPIC_HARNESS_RESULT marker (see
 # epic-common/include/core/epic_harness.h). Shared by
 # .github/workflows/sim-tests.yml and scripts/sim-test-local.sh, so CI
 # and a local run go through the exact same build+mdb+grep sequence,
@@ -22,7 +22,7 @@
 #             docs/ci-plan.md Phase 4's findings, so this is a wall-clock
 #             budget, not a simulated-time one)
 #   mode      reporting mode: "uart" (default) or "gpio". uart captures
-#             PIC8_HARNESS_RESULT marker from the UART; gpio reads the
+#             EPIC_HARNESS_RESULT marker from the UART; gpio reads the
 #             marker from a PORTA register via mdb `print` and checks
 #             bit 0. Only pic16f193x currently uses gpio; pic16f87xa
 #             and pic18fxx5x keep uart.
@@ -149,11 +149,11 @@ if [ ! -s "$out" ]; then
        "may have errored, or the harness never reached report())"
   exit 1
 fi
-if grep -q "PIC8_HARNESS_RESULT: FAIL" "$out"; then
+if grep -q "EPIC_HARNESS_RESULT: FAIL" "$out"; then
   echo "::error::sim-target harness reported FAIL"
   exit 1
 fi
-if ! grep -q "PIC8_HARNESS_RESULT: PASS" "$out"; then
+if ! grep -q "EPIC_HARNESS_RESULT: PASS" "$out"; then
   echo "::error::no PASS/FAIL marker found in captured UART output"
   exit 1
 fi

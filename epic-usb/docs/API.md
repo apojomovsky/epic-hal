@@ -1,7 +1,7 @@
 # `epic-usb` API reference
 
 Authoritative declarations: [`include/epic_usb.h`](../include/epic_usb.h).
-Override the ring size with `-DPIC8_USB_RING_SZ=128` (power of two) before
+Override the ring size with `-DEPIC_USB_RING_SZ=128` (power of two) before
 including the header. Default is 64 (one full-speed bulk packet).
 
 ### `void epic_usb_init(void)`

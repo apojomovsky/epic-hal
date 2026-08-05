@@ -34,7 +34,7 @@ implement the same contract. See the design writeup in conversation for the
 full comparison table; the short version:
 
 **Shared across every family** (extract once, reuse forever):
-- Status codes and bit macros (`EPIC_StatusTypeDef`, `PIC8_BIT*`)
+- Status codes and bit macros (`EPIC_StatusTypeDef`, `EPIC_BIT*`)
 - The host/target harness contract (`init/tick/running/log`) and its
   target-side no-op implementation (identical on every family, it's four
   functions that do nothing because real silicon needs no harness)
@@ -58,14 +58,14 @@ full comparison table; the short version:
 
 ```
 epic-common/                         # NEW: thin, stable, rarely touched after Phase 0
-  include/core/hal_status.h          # EPIC_StatusTypeDef, PIC8_BIT*
+  include/core/hal_status.h          # EPIC_StatusTypeDef, EPIC_BIT*
   include/core/epic_harness.h        # the 4-function host/target contract
   src/core/epic_harness_target.c     # the one shared no-op file
   cmake/epic_family.cmake            # shared CMake helpers (add_example, etc.)
   mk/epic_family.mk                  # shared Makefile include (pattern rules, VPATH)
 
 pic16f87xa-hal/                      # EXISTING tree, restructured in place
-  include/{host,target}/...          # unchanged pattern; defines PIC8_REG8 etc.
+  include/{host,target}/...          # unchanged pattern; defines EPIC_REG8 etc.
   include/core/pic16_irq.h           # PIC16 IRQn enum + backend (renamed from
                                       # pic16f87xa_interrupt.h's family-specific half)
   include/peripherals/...            # EPIC_GPIO_*, EPIC_TIMER0_*, names unchanged
@@ -105,7 +105,7 @@ of the existing PIC16F87XA HAL. **Done** (commit `3f33d48`).
 
 **Tasks**
 1. Create `epic-common/` with `hal_status.h` (`EPIC_StatusTypeDef`,
-   `EPIC_OK/ERROR/BUSY/TIMEOUT/INVALID`, `PIC8_BIT/BIT_SET/BIT_CLR/BIT_TGL/
+   `EPIC_OK/ERROR/BUSY/TIMEOUT/INVALID`, `EPIC_BIT/BIT_SET/BIT_CLR/BIT_TGL/
    BIT_READ`) and `epic_harness.h` (the existing 4-function contract, moved
    and renamed from `pic16f87xa_harness_*` to `epic_harness_*`).
 2. Move `pic16f87xa_harness_target.c` to `epic-common/src/core/
@@ -113,10 +113,10 @@ of the existing PIC16F87XA HAL. **Done** (commit `3f33d48`).
    family-blind: four no-ops).
 3. Rename in `pic16f87xa-hal`:
    `PIC16F87XA_StatusTypeDef`/`_OK`/... → use the shared `EPIC_*` from
-   `epic-common`; `PIC16F87XA_BIT*` → `PIC8_BIT*`; `PIC16F87XA_IRQ_Disable/
+   `epic-common`; `PIC16F87XA_BIT*` → `EPIC_BIT*`; `PIC16F87XA_IRQ_Disable/
    Restore/Enable/DisableSrc/ClearFlag/GetFlag` → `EPIC_IRQ_*` (still taking
-   a PIC16-defined `IRQn` enum); `PIC16F87XA_WEAK` → `PIC8_WEAK`;
-   `PIC16F87XA_REG8`/`_SFR_PTR` → `PIC8_REG8`/`PIC8_SFR_PTR`.
+   a PIC16-defined `IRQn` enum); `PIC16F87XA_WEAK` → `EPIC_WEAK`;
+   `PIC16F87XA_REG8`/`_SFR_PTR` → `EPIC_REG8`/`EPIC_SFR_PTR`.
 4. Extract shared CMake helper functions (e.g. the `pic16f87xa_add_example`
    pattern) into `epic-common/cmake/epic_family.cmake`, parameterized so
    `pic16f87xa-hal/CMakeLists.txt` becomes a thin caller.

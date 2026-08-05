@@ -10,8 +10,8 @@
  *   tooling includes it; target firmware never does.
  */
 
-#ifndef PIC8_USB_TEST_SUPPORT_H
-#define PIC8_USB_TEST_SUPPORT_H
+#ifndef EPIC_USB_TEST_SUPPORT_H
+#define EPIC_USB_TEST_SUPPORT_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -38,4 +38,4 @@ const uint8_t *epic_usb_test_sent_data(void);
 /** Clear the transmitted-byte log without touching connection/ring state. */
 void epic_usb_test_reset_sent(void);
 
-#endif /* PIC8_USB_TEST_SUPPORT_H */
+#endif /* EPIC_USB_TEST_SUPPORT_H */

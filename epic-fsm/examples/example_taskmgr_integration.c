@@ -2,7 +2,7 @@
  * @file    example_taskmgr_integration.c
  * @brief   epic-fsm composed with epic-taskmgr: a task callback just owns
  *          an fsm_t and dispatches into it, no special integration needed.
- *          Built only when -DPIC8_FSM_BUILD_TASKMGR_EXAMPLE=ON.
+ *          Built only when -DEPIC_FSM_BUILD_TASKMGR_EXAMPLE=ON.
  */
 
 #include <stddef.h>

@@ -31,14 +31,14 @@ typedef enum {
 /**
  * @name    Bit manipulation
  * @brief   Standard set/clr/test helpers, preferred over hand-rolled masks.
- *          The `PIC8_` prefix marks them as shared across every family.
+ *          The `EPIC_` prefix marks them as shared across every family.
  * @{
  */
-#define PIC8_BIT(n)                  (1U << (n))
-#define PIC8_BIT_SET(reg, mask)     ((reg) |=  (uint8_t)(mask))
-#define PIC8_BIT_CLR(reg, mask)     ((reg) &= ~(uint8_t)(mask))
-#define PIC8_BIT_TGL(reg, mask)      ((reg) ^=  (uint8_t)(mask))
-#define PIC8_BIT_READ(reg, mask)     ((reg) &   (uint8_t)(mask))
+#define EPIC_BIT(n)                  (1U << (n))
+#define EPIC_BIT_SET(reg, mask)     ((reg) |=  (uint8_t)(mask))
+#define EPIC_BIT_CLR(reg, mask)     ((reg) &= ~(uint8_t)(mask))
+#define EPIC_BIT_TGL(reg, mask)      ((reg) ^=  (uint8_t)(mask))
+#define EPIC_BIT_READ(reg, mask)     ((reg) &   (uint8_t)(mask))
 /** @} */
 
 #endif /* EPIC_STATUS_H */

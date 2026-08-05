@@ -15,7 +15,7 @@ int main(void)
         { "ping", stub, "ping" },
     };
     epic_console_t con;
-    PIC8_CONSOLE_INIT(&con, table, 0);
+    EPIC_CONSOLE_INIT(&con, table, 0);
     epic_console_print_help(&con);
     return 0;
 }

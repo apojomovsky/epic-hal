@@ -22,8 +22,8 @@ module-global state.
 
 ## Buffering and tokenization
 
-- `PIC8_CONSOLE_LINE_MAX` sets the fixed line-buffer size.
-- `PIC8_CONSOLE_MAX_ARGS` sets the fixed `argv[]` capacity during dispatch.
+- `EPIC_CONSOLE_LINE_MAX` sets the fixed line-buffer size.
+- `EPIC_CONSOLE_MAX_ARGS` sets the fixed `argv[]` capacity during dispatch.
 - Tokenization is in-place and whitespace-based.
 - The module does not use `strtok`, so there is no hidden global tokenizer
   state and multiple console instances remain independent.

@@ -7,11 +7,11 @@
  * epic-tick).
  */
 
-#ifndef PIC8_SDCARD_MOCK_MMC_CONFIG_H__
-#define PIC8_SDCARD_MOCK_MMC_CONFIG_H__
+#ifndef EPIC_SDCARD_MOCK_MMC_CONFIG_H__
+#define EPIC_SDCARD_MOCK_MMC_CONFIG_H__
 
 #define MMC_SPI_TRANSFER  epic_sdcard_mock_spi_transfer
 #define MMC_SPI_SET_CS    epic_sdcard_mock_spi_set_cs
 #define MMC_SPI_SET_SPEED epic_sdcard_mock_spi_set_speed
 
-#endif /* PIC8_SDCARD_MOCK_MMC_CONFIG_H__ */
+#endif /* EPIC_SDCARD_MOCK_MMC_CONFIG_H__ */

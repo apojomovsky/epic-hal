@@ -134,6 +134,6 @@ uint8_t EPIC_SSP_AcknowledgeStatus(void);
 
 /* ───────────────────────── interrupts ───────────────────────────── */
 
-void SSP_IRQHandler(void) PIC8_WEAK;
+void SSP_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_SSP_H */

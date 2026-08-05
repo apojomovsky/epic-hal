@@ -10,7 +10,7 @@
 # read, exactly the way epic-fsm's taskmgr-integration example is the one
 # thing in that module needing a family choice.
 #
-#   cmake -B build -DPIC8_ADCFILTER_BUILD_EPIC_EXAMPLE=ON   # builds the example
+#   cmake -B build -DEPIC_ADCFILTER_BUILD_EPIC_EXAMPLE=ON   # builds the example
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_adcfilter C)
@@ -28,10 +28,10 @@ target_link_libraries(test_adcfilter PRIVATE adcfilter)
 add_test(NAME adcfilter_tests COMMAND test_adcfilter)
 
 # Optional: HAL example (links a HAL family for the ADC read callback).
-option(PIC8_ADCFILTER_BUILD_EPIC_EXAMPLE
+option(EPIC_ADCFILTER_BUILD_EPIC_EXAMPLE
        "Build examples/example_adcfilter_hal.c against a real HAL ADC" OFF)
 
-if(PIC8_ADCFILTER_BUILD_EPIC_EXAMPLE)
+if(EPIC_ADCFILTER_BUILD_EPIC_EXAMPLE)
     set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family: PIC16 or PIC18")
     if(EPIC_FAMILY STREQUAL "PIC18")
         set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic18fxx5x-hal CACHE PATH "")

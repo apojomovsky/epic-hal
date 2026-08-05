@@ -22,7 +22,7 @@ EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
     uint8_t adcon0 = PIC_ADCON0_ADON;
     adcon0 |= (uint8_t)((h->Channel & 0x7U) << PIC_ADCON0_CHS_POS);
     adcon0 |= (uint8_t)((h->ClockSource & 0x3U) << PIC_ADCON0_ADCS_POS);
-    PIC8_REG8(0x1FU) = adcon0;
+    EPIC_REG8(0x1FU) = adcon0;
 
     /* ADCON1, Bank 1, address 0x9F.
      *   bit 3:0  PCFG3:PCFG0
@@ -35,15 +35,15 @@ EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
         adcon1 |= PIC_ADCON1_ADCS2;
     }
     if (h->ResultFormat == ADC_FORMAT_RIGHT) adcon1 |= PIC_ADCON1_ADFM;
-#ifdef PIC8_BANK1_WRITE8
+#ifdef EPIC_BANK1_WRITE8
     /* See target/pic16f87xa_platform.h: a plain bank-switch RMW here
      * silently corrupts under XC8 v4.00. */
-    PIC8_BANK1_WRITE8(ADCON1, adcon1);
+    EPIC_BANK1_WRITE8(ADCON1, adcon1);
 #else
     {
-        uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
-        PIC8_REG8(0x9FU) = adcon1;
+        EPIC_REG8(0x9FU) = adcon1;
         pic_select_bank(prev);
     }
 #endif
@@ -60,11 +60,11 @@ EPIC_StatusTypeDef EPIC_ADC_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16_IRQ_ADC);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_ADC);
-    PIC8_REG8(0x1FU) = 0x00U;
+    EPIC_REG8(0x1FU) = 0x00U;
     {
-        uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
-        PIC8_REG8(0x9FU) = 0x00U;
+        EPIC_REG8(0x9FU) = 0x00U;
         pic_select_bank(prev);
     }
     g_adc = NULL;
@@ -73,29 +73,29 @@ EPIC_StatusTypeDef EPIC_ADC_DeInit(void)
 
 void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch)
 {
-    uint8_t v = PIC8_REG8(0x1FU);
+    uint8_t v = EPIC_REG8(0x1FU);
     v = (uint8_t)((v & (uint8_t)~PIC_ADCON0_CHS_MASK) |
                   ((uint8_t)(ch & 0x7U) << PIC_ADCON0_CHS_POS));
-    PIC8_REG8(0x1FU) = v;
+    EPIC_REG8(0x1FU) = v;
 }
 
 uint16_t EPIC_ADC_Start(void)
 {
-    uint8_t v = PIC8_REG8(0x1FU);
+    uint8_t v = EPIC_REG8(0x1FU);
     if (v & PIC_ADCON0_GO_DONE) return 0xFFFFU;
-    PIC8_REG8(0x1FU) = v | PIC_ADCON0_GO_DONE;
+    EPIC_REG8(0x1FU) = v | PIC_ADCON0_GO_DONE;
     return 0U;
 }
 
 uint8_t EPIC_ADC_IsConversionInProgress(void)
 {
-    return (PIC8_REG8(0x1FU) & PIC_ADCON0_GO_DONE) ? 1U : 0U;
+    return (EPIC_REG8(0x1FU) & PIC_ADCON0_GO_DONE) ? 1U : 0U;
 }
 
 uint8_t EPIC_ADC_IsConversionDone(void)
 {
     /* ADIF lives in PIR1<6>. */
-    return (PIC8_REG8(0x0CU) & 0x40U) ? 1U : 0U;
+    return (EPIC_REG8(0x0CU) & 0x40U) ? 1U : 0U;
 }
 
 void EPIC_ADC_ClearITFlag(void)
@@ -107,19 +107,19 @@ uint16_t EPIC_ADC_Read(void)
 {
     /* Read ADRESL first, then ADRESH, in the active bank. */
     uint8_t lo = 0U, adfm_raw = 0U;
-#ifdef PIC8_BANK1_READ8
+#ifdef EPIC_BANK1_READ8
     /* See target/pic16f87xa_platform.h: same corruption shape, read side. */
-    PIC8_BANK1_READ8(ADRESL, lo);
-    PIC8_BANK1_READ8(ADCON1, adfm_raw);
+    EPIC_BANK1_READ8(ADRESL, lo);
+    EPIC_BANK1_READ8(ADCON1, adfm_raw);
 #else
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    lo = PIC8_REG8(0x9EU);        /* ADRESL, Bank 1. */
-    adfm_raw = PIC8_REG8(0x9FU);  /* ADCON1. */
+    lo = EPIC_REG8(0x9EU);        /* ADRESL, Bank 1. */
+    adfm_raw = EPIC_REG8(0x9FU);  /* ADCON1. */
     pic_select_bank(prev);
 #endif
     uint8_t adfm = (uint8_t)(adfm_raw & 0x80U);  /* ADFM. */
-    uint8_t hi = PIC8_REG8(0x1EU);  /* ADRESH, Bank 0. */
+    uint8_t hi = EPIC_REG8(0x1EU);  /* ADRESH, Bank 0. */
     uint16_t raw = (uint16_t)(((uint16_t)hi << 8) | lo);
     /* Right-shift if left-justified (ADFM=0) so the caller always
      * gets a 0..1023 result. */

@@ -86,7 +86,7 @@ noted in `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 9: headless
 - Isolated with a minimal throwaway probe (`EPIC_IRQ_Disable()` then
   `EPIC_IRQ_Restore(1)` then spin, nothing else): same result, `INTCON`
   and `RCON` unchanged. A plain, unrelated SFR write in the same probe
-  (`PIC8_REG8(PIC_REG_LATB) = 0x5AU`) *did* show up correctly
+  (`EPIC_REG8(PIC_REG_LATB) = 0x5AU`) *did* show up correctly
   (`LATB=0x5A`), ruling out an `mdb` display/caching issue and
   confirming the problem is specific to how `EPIC_IRQ_Restore` (via
   `pic18_irq.c`'s internal `sfr_set`/`sfr_clr` helpers) accesses SFRs.
@@ -152,7 +152,7 @@ received them as a genuine runtime parameter internally, so the bug
 applied there too, not just to the table-driven per-source functions.
 
 Verified via `mdb`: `epic-tick`'s PIC18 sim-target test reaches
-`PIC8_HARNESS_RESULT: PASS` reliably (3/3 runs). Host suite and all 22
+`EPIC_HARNESS_RESULT: PASS` reliably (3/3 runs). Host suite and all 22
 previously-passing PIC18 `(module, MCU)` real-target builds re-verified
 clean, no regressions.
 
@@ -163,7 +163,7 @@ exercised it.** Flagged in an earlier draft of this document as "very
 likely has the same bug" from a `grep` for the pattern alone; followed
 up rather than left as a guess. `EPIC_CCP_Init`/`SetCompare`/
 `GetCapture`/`SetPWMDuty` read/wrote `CCPRxL`/`CCPRxH`/`CCPxCON` through
-a `const ccp_addrs_t *a = &addrs[inst]; PIC8_REG8(a->cprl) = ...`
+a `const ccp_addrs_t *a = &addrs[inst]; EPIC_REG8(a->cprl) = ...`
 pattern, the exact same struct-member-derived-runtime-address shape
 Finding 3 fixed in `pic18_irq.c`.
 

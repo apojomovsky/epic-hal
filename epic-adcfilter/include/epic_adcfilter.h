@@ -12,8 +12,8 @@
  *   ADC or a mock source in tests.
  */
 
-#ifndef PIC8_ADCFILTER_H
-#define PIC8_ADCFILTER_H
+#ifndef EPIC_ADCFILTER_H
+#define EPIC_ADCFILTER_H
 
 #include <stdint.h>
 
@@ -57,4 +57,4 @@ void epic_adcfilter_avg_init(epic_adcfilter_avg_t *f, uint16_t *buf, uint8_t cou
  */
 uint16_t epic_adcfilter_avg_push(epic_adcfilter_avg_t *f, uint16_t sample);
 
-#endif /* PIC8_ADCFILTER_H */
+#endif /* EPIC_ADCFILTER_H */

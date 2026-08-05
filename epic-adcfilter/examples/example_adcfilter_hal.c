@@ -3,7 +3,7 @@
  * @brief   Demonstrates epic-adcfilter with a real HAL ADC read callback.
  *
  * @details
- *   Host-sim runnable (build with -DPIC8_ADCFILTER_BUILD_EPIC_EXAMPLE=ON).
+ *   Host-sim runnable (build with -DEPIC_ADCFILTER_BUILD_EPIC_EXAMPLE=ON).
  *   Wires `EPIC_ADC_Read` through the `epic_adcfilter_read_fn` callback,
  *   oversamples 16x (extra_bits=2), then feeds the oversampled readings into
  *   a moving-average filter. On the host sim, ADC results are injected via

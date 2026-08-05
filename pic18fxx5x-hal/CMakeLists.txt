@@ -25,8 +25,8 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Shared layer: status codes, harness, CMake helpers.
-set(PIC8_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-common)
-include(${PIC8_COMMON_DIR}/cmake/epic_family.cmake)
+set(EPIC_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-common)
+include(${EPIC_COMMON_DIR}/cmake/epic_family.cmake)
 
 # Default device, can be overridden with -DPIC18FXX5X_DEVICE=... The default
 # is PIC18F4550, the family's most-featured (40/44-pin) part.
@@ -47,14 +47,14 @@ else()
 endif()
 
 # Variables consumed by the shared epic_family.cmake helpers.
-set(PIC8_EPIC_LIB              pic18fxx5x_hal)
-set(PIC8_DEFAULT_DEVICE       ${PIC18FXX5X_DEFAULT_DEVICE})
-set(PIC8_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(PIC8_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
-set(PIC8_COMMON_INCLUDE_DIR    ${PIC8_COMMON_DIR}/include)
-set(PIC8_FAMILY_DEVICES        PIC18F2455 PIC18F2550 PIC18F4455 PIC18F4550)
+set(EPIC_LIB              pic18fxx5x_hal)
+set(EPIC_DEFAULT_DEVICE       ${PIC18FXX5X_DEFAULT_DEVICE})
+set(EPIC_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(EPIC_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
+set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
+set(EPIC_FAMILY_DEVICES        PIC18F2455 PIC18F2550 PIC18F4455 PIC18F4550)
 
-set(PIC8_EPIC_SOURCES
+set(EPIC_SOURCES
     src/sim/pic18_sim.c
     src/core/pic18_harness_sim.c
     src/core/pic18_irq.c
@@ -78,10 +78,10 @@ set(PIC8_EPIC_SOURCES
 # has it, so the library includes the SPP driver; 28-pin per-device examples
 # just don't use it (and don't include the gated header).
 if(PIC18FXX5X_FAMILY_HAS_SPP)
-    list(APPEND PIC8_EPIC_SOURCES src/peripherals/pic18fxx5x_spp.c)
+    list(APPEND EPIC_SOURCES src/peripherals/pic18fxx5x_spp.c)
 endif()
 
-epic_add_hal_library(${PIC8_EPIC_LIB})
+epic_add_hal_library(${EPIC_LIB})
 
 # Phase 2 MVP examples. example_blink is the canonical Timer0 + GPIO +
 # interrupt smoke test; example_smoke remains the bare harness-seam test.

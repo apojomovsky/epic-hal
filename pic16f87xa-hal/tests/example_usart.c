@@ -63,10 +63,10 @@ int main(void)
     EPIC_USART_Init(&h);
 
     /* TXSTA is at 0x98 (Bank 1); SPBRG is at 0x99 (Bank 1). */
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    uint8_t txsta_b1 = PIC8_REG8(0x98U);
-    uint8_t spbrg    = PIC8_REG8(0x99U);
+    uint8_t txsta_b1 = EPIC_REG8(0x98U);
+    uint8_t spbrg    = EPIC_REG8(0x99U);
     pic_select_bank(prev);
 
     CHECK(spbrg == 103U, "SPBRG not 103 after Init");
@@ -76,16 +76,16 @@ int main(void)
 
     /* 3. Transmit a byte. Verify TXREG holds it. */
     EPIC_USART_Transmit(0xA5U);
-    CHECK(PIC8_REG8(PIC_REG_TXREG) == 0xA5U, "TXREG did not capture 0xA5");
+    CHECK(EPIC_REG8(PIC_REG_TXREG) == 0xA5U, "TXREG did not capture 0xA5");
     /* TXIF should be 0 right after the write. */
-    CHECK((PIC8_REG8(0x0CU) & 0x10U) == 0U, "TXIF should be 0 after Transmit");
+    CHECK((EPIC_REG8(0x0CU) & 0x10U) == 0U, "TXIF should be 0 after Transmit");
 
     /* 4. RX path: drive a byte, then Receive. */
     pic16f87xa_sim_drive_usart_rx(0xC3U);
-    CHECK((PIC8_REG8(0x0CU) & 0x20U) != 0U, "RCIF not set after drive_usart_rx");
+    CHECK((EPIC_REG8(0x0CU) & 0x20U) != 0U, "RCIF not set after drive_usart_rx");
     uint8_t got = EPIC_USART_Receive();
     CHECK(got == 0xC3U, "Receive did not return 0xC3");
-    CHECK((PIC8_REG8(0x0CU) & 0x20U) == 0U, "RCIF not cleared after Receive");
+    CHECK((EPIC_REG8(0x0CU) & 0x20U) == 0U, "RCIF not cleared after Receive");
 
     printf("OK: USART driver, SPBRG math, init, transmit, receive all pass.\n");
     return 0;

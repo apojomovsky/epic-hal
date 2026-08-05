@@ -8,71 +8,71 @@
 
 static void (*g_eeprom_cb)(void) = NULL;
 
-/* EEPROM registers live in Banks 2/3. PIC8_BANK2/3_WRITE8/READ8 need a
+/* EEPROM registers live in Banks 2/3. EPIC_BANK2/3_WRITE8/READ8 need a
  * literal SFR name at compile time (inline-asm operands), not a
  * runtime `addr`, so this dispatches on `addr` *before* any bank
  * switch begins, then invokes the named macro for the matching
  * register; every real call site passes a compile-time constant, so
  * XC8 folds this to the single matching branch either way. */
-#ifdef PIC8_BANK3_WRITE8
+#ifdef EPIC_BANK3_WRITE8
 static void b3_write(uint16_t addr, uint8_t v)
 {
-    if (addr == 0x18CU) PIC8_BANK3_WRITE8(EECON1, v);
-    else                PIC8_BANK3_WRITE8(EECON2, v);
+    if (addr == 0x18CU) EPIC_BANK3_WRITE8(EECON1, v);
+    else                EPIC_BANK3_WRITE8(EECON2, v);
 }
 
 static uint8_t b3_read(uint16_t addr)
 {
     uint8_t v = 0U;
     (void)addr;   /* only EECON1 is ever read via b3_read. */
-    PIC8_BANK3_READ8(EECON1, v);
+    EPIC_BANK3_READ8(EECON1, v);
     return v;
 }
 
 static void b2_write(uint16_t addr, uint8_t v)
 {
-    if (addr == 0x0CU) PIC8_BANK2_WRITE8(EEDATA, v);
-    else               PIC8_BANK2_WRITE8(EEADR, v);
+    if (addr == 0x0CU) EPIC_BANK2_WRITE8(EEDATA, v);
+    else               EPIC_BANK2_WRITE8(EEADR, v);
 }
 
 static uint8_t b2_read(uint16_t addr)
 {
     uint8_t v = 0U;
-    if (addr == 0x0CU) PIC8_BANK2_READ8(EEDATA, v);
-    else               PIC8_BANK2_READ8(EEADR, v);
+    if (addr == 0x0CU) EPIC_BANK2_READ8(EEDATA, v);
+    else               EPIC_BANK2_READ8(EEADR, v);
     return v;
 }
 #else
 static void b3_write(uint16_t addr, uint8_t v)
 {
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(3);
-    PIC8_REG8(addr) = v;
+    EPIC_REG8(addr) = v;
     pic_select_bank(prev);
 }
 
 static uint8_t b3_read(uint16_t addr)
 {
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(3);
-    uint8_t v = PIC8_REG8(addr);
+    uint8_t v = EPIC_REG8(addr);
     pic_select_bank(prev);
     return v;
 }
 
 static void b2_write(uint16_t addr, uint8_t v)
 {
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(2);
-    PIC8_REG8(addr) = v;
+    EPIC_REG8(addr) = v;
     pic_select_bank(prev);
 }
 
 static uint8_t b2_read(uint16_t addr)
 {
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(2);
-    uint8_t v = PIC8_REG8(addr);
+    uint8_t v = EPIC_REG8(addr);
     pic_select_bank(prev);
     return v;
 }
@@ -148,7 +148,7 @@ EPIC_StatusTypeDef EPIC_EEPROM_WriteBuffer(uint8_t start,
 uint8_t EPIC_EEPROM_IsWriteComplete(void)
 {
     /* EEIF lives in PIR2<4>. */
-    return (PIC8_REG8(0x0DU) & 0x10U) ? 1U : 0U;
+    return (EPIC_REG8(0x0DU) & 0x10U) ? 1U : 0U;
 }
 
 void EPIC_EEPROM_ClearITFlag(void)

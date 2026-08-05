@@ -10,13 +10,13 @@ The public header depends only on `<stdint.h>` and `<stdbool.h>`.
 
 ## Build-time knobs
 
-### `PIC8_CONSOLE_LINE_MAX`
+### `EPIC_CONSOLE_LINE_MAX`
 
 Maximum buffered line length including the terminating `'\0'`. Defaults to
 `32u`. Once full, additional input bytes are ignored until space is freed by
 backspace or the line is dispatched.
 
-### `PIC8_CONSOLE_MAX_ARGS`
+### `EPIC_CONSOLE_MAX_ARGS`
 
 Maximum number of tokens placed in `argv[]` during dispatch. Defaults to `8u`.
 Extra tokens beyond that are ignored.
@@ -42,7 +42,7 @@ pointer, fixed line buffer, current line length, and CR/LF state.
 
 Initializes an instance with a table, row count, and opaque caller context.
 
-### `PIC8_CONSOLE_INIT(con, table, ctx)`
+### `EPIC_CONSOLE_INIT(con, table, ctx)`
 
 Convenience macro that computes `table_len` via `sizeof(table) /
 sizeof(table[0])`. As with `FSM_INIT`, call it with the actual array, not a

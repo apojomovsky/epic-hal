@@ -16,7 +16,7 @@ int main(void)
     epic_harness_init(1UL);
     LCD_HandleTypeDef lcd = LCD_HANDLE_DEFAULT;
     EPIC_LCD_Init(&lcd);
-    uint8_t con = PIC8_REG8(PIC_REG_LCDCON);
+    uint8_t con = EPIC_REG8(PIC_REG_LCDCON);
     epic_harness_log("LCDCON=0x%02X\n", con);
     int pass = (con == (PIC_LCDCON_LCDEN | 0x03U));
     int rc = epic_harness_report(pass);

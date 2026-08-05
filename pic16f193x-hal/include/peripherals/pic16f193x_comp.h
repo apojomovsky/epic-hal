@@ -41,7 +41,7 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_COMP_DeInit(COMP_InstanceTypeDef inst);
 uint8_t EPIC_COMP_ReadOutput(COMP_InstanceTypeDef inst);
 
-void CMP1_IRQHandler(void) PIC8_WEAK;
-void CMP2_IRQHandler(void) PIC8_WEAK;
+void CMP1_IRQHandler(void) EPIC_WEAK;
+void CMP2_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F193X_COMP_H */

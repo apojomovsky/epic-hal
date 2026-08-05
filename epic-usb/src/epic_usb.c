@@ -18,52 +18,52 @@
 #include "usb_ch9.h"
 #include "usb_cdc.h"
 
-#define PIC8_USB_DATA_EP 2u
-#define MASK             (PIC8_USB_RING_SZ - 1u)
+#define EPIC_USB_DATA_EP 2u
+#define MASK             (EPIC_USB_RING_SZ - 1u)
 
-static uint8_t g_tx_buf[PIC8_USB_RING_SZ];
+static uint8_t g_tx_buf[EPIC_USB_RING_SZ];
 static uint8_t g_tx_head, g_tx_tail, g_tx_count;
-static uint8_t g_rx_buf[PIC8_USB_RING_SZ];
+static uint8_t g_rx_buf[EPIC_USB_RING_SZ];
 static uint8_t g_rx_head, g_rx_tail, g_rx_count;
 static bool    g_dtr;
 
 static void epic_usb_drain_tx(void)
 {
     if (!usb_is_configured() ||
-        usb_in_endpoint_halted(PIC8_USB_DATA_EP) ||
-        usb_in_endpoint_busy(PIC8_USB_DATA_EP) ||
+        usb_in_endpoint_halted(EPIC_USB_DATA_EP) ||
+        usb_in_endpoint_busy(EPIC_USB_DATA_EP) ||
         g_tx_count == 0u) {
         return;
     }
 
-    unsigned char *buf = usb_get_in_buffer(PIC8_USB_DATA_EP);
+    unsigned char *buf = usb_get_in_buffer(EPIC_USB_DATA_EP);
     size_t n = 0;
     while (n < EP_2_IN_LEN && g_tx_count > 0u) {
         buf[n++] = g_tx_buf[g_tx_tail];
         g_tx_tail = (uint8_t)((g_tx_tail + 1u) & MASK);
         g_tx_count--;
     }
-    usb_send_in_buffer(PIC8_USB_DATA_EP, n);
+    usb_send_in_buffer(EPIC_USB_DATA_EP, n);
 }
 
 static void epic_usb_drain_rx(void)
 {
     if (!usb_is_configured() ||
-        usb_out_endpoint_halted(PIC8_USB_DATA_EP) ||
-        !usb_out_endpoint_has_data(PIC8_USB_DATA_EP)) {
+        usb_out_endpoint_halted(EPIC_USB_DATA_EP) ||
+        !usb_out_endpoint_has_data(EPIC_USB_DATA_EP)) {
         return;
     }
 
     const unsigned char *out_buf;
-    uint8_t len = usb_get_out_buffer(PIC8_USB_DATA_EP, &out_buf);
+    uint8_t len = usb_get_out_buffer(EPIC_USB_DATA_EP, &out_buf);
     for (uint8_t i = 0; i < len; i++) {
-        if (g_rx_count < PIC8_USB_RING_SZ) {    /* drop on overflow */
+        if (g_rx_count < EPIC_USB_RING_SZ) {    /* drop on overflow */
             g_rx_buf[g_rx_head] = out_buf[i];
             g_rx_head = (uint8_t)((g_rx_head + 1u) & MASK);
             g_rx_count++;
         }
     }
-    usb_arm_out_endpoint(PIC8_USB_DATA_EP);
+    usb_arm_out_endpoint(EPIC_USB_DATA_EP);
 }
 
 /* ---- public API ---- */
@@ -86,7 +86,7 @@ void epic_usb_service(void)
 size_t epic_usb_write(const uint8_t *data, size_t len)
 {
     for (size_t i = 0; i < len; i++) {
-        while (g_tx_count >= PIC8_USB_RING_SZ) {
+        while (g_tx_count >= EPIC_USB_RING_SZ) {
             epic_usb_service();    /* block until space frees, servicing as we go */
         }
         g_tx_buf[g_tx_head] = data[i];
@@ -115,7 +115,7 @@ size_t epic_usb_available(void)
 
 void epic_usb_flush(void)
 {
-    while (g_tx_count > 0u || usb_in_endpoint_busy(PIC8_USB_DATA_EP)) {
+    while (g_tx_count > 0u || usb_in_endpoint_busy(EPIC_USB_DATA_EP)) {
         epic_usb_service();
     }
 }

@@ -33,7 +33,7 @@
 #define MB_EXC_ILLEGAL_DATA_VALUE    0x03u
 
 /* ─── module state ────────────────────────────────────────────────────── */
-static uint8_t  s_frame[PIC8_MODBUS_MAX_ADU];
+static uint8_t  s_frame[EPIC_MODBUS_MAX_ADU];
 static uint16_t s_frame_len;
 static uint32_t s_last_rx_tick;
 
@@ -129,7 +129,7 @@ static uint16_t handle_read_bits(uint8_t fc, const uint8_t *table, uint16_t tabl
         return build_exception(resp, fc, MB_EXC_ILLEGAL_DATA_ADDRESS);
     }
     uint16_t byte_count = (uint16_t)((qty + 7u) / 8u);
-    if ((uint32_t)byte_count + 5u > PIC8_MODBUS_MAX_ADU) { /* +5 = addr+fc+bytecount+crc16 */
+    if ((uint32_t)byte_count + 5u > EPIC_MODBUS_MAX_ADU) { /* +5 = addr+fc+bytecount+crc16 */
         return build_exception(resp, fc, MB_EXC_ILLEGAL_DATA_VALUE);
     }
 
@@ -163,7 +163,7 @@ static uint16_t handle_read_regs(uint8_t fc, const uint16_t *table, uint16_t tab
         return build_exception(resp, fc, MB_EXC_ILLEGAL_DATA_ADDRESS);
     }
     uint16_t byte_count = (uint16_t)(qty * 2u);
-    if ((uint32_t)byte_count + 5u > PIC8_MODBUS_MAX_ADU) { /* +5 = addr+fc+bytecount+crc16 */
+    if ((uint32_t)byte_count + 5u > EPIC_MODBUS_MAX_ADU) { /* +5 = addr+fc+bytecount+crc16 */
         return build_exception(resp, fc, MB_EXC_ILLEGAL_DATA_VALUE);
     }
 
@@ -295,13 +295,13 @@ static uint16_t handle_write_multiple_regs(uint8_t *resp)
 static void send_response(const uint8_t *resp, uint16_t len)
 {
     if (s_dir_configured) {
-        EPIC_GPIO_WritePin((GPIO_TypeDef)s_dir_port, (uint16_t)PIC8_BIT(s_dir_pin), GPIO_PIN_SET);
+        EPIC_GPIO_WritePin((GPIO_TypeDef)s_dir_port, (uint16_t)EPIC_BIT(s_dir_pin), GPIO_PIN_SET);
     }
     epic_serial_write(resp, (int)len);
     if (s_dir_configured) {
         epic_serial_flush(); /* wait for the ring AND the shift register to drain
                                  before dropping the driver enable */
-        EPIC_GPIO_WritePin((GPIO_TypeDef)s_dir_port, (uint16_t)PIC8_BIT(s_dir_pin), GPIO_PIN_RESET);
+        EPIC_GPIO_WritePin((GPIO_TypeDef)s_dir_port, (uint16_t)EPIC_BIT(s_dir_pin), GPIO_PIN_RESET);
     }
 }
 
@@ -325,7 +325,7 @@ static void process_frame(void)
     }
 
     uint8_t  fc = s_frame[1];
-    uint8_t  resp[PIC8_MODBUS_MAX_ADU];
+    uint8_t  resp[EPIC_MODBUS_MAX_ADU];
     uint16_t pdu_len;
 
     switch (fc) {
@@ -388,15 +388,15 @@ void epic_modbus_slave_set_rs485_dir_pin(uint8_t port, uint8_t pin)
     s_dir_pin        = pin;
     s_dir_configured = true;
 
-    EPIC_GPIO_Init((GPIO_TypeDef)port, (uint16_t)PIC8_BIT(pin), GPIO_MODE_OUTPUT);
-    EPIC_GPIO_WritePin((GPIO_TypeDef)port, (uint16_t)PIC8_BIT(pin), GPIO_PIN_RESET); /* idle = receive */
+    EPIC_GPIO_Init((GPIO_TypeDef)port, (uint16_t)EPIC_BIT(pin), GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin((GPIO_TypeDef)port, (uint16_t)EPIC_BIT(pin), GPIO_PIN_RESET); /* idle = receive */
 }
 
 void epic_modbus_slave_poll(void)
 {
     int avail = epic_serial_available();
     if (avail > 0) {
-        uint16_t space = (uint16_t)(PIC8_MODBUS_MAX_ADU - s_frame_len);
+        uint16_t space = (uint16_t)(EPIC_MODBUS_MAX_ADU - s_frame_len);
         if (space > 0u) {
             int n = epic_serial_read(&s_frame[s_frame_len], (int)space);
             if (n > 0) {

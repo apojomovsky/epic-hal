@@ -45,7 +45,7 @@ EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
     if (!h) return EPIC_INVALID;
 
     /* Stop the timer before reconfiguring. */
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
 
     /* Configure the overflow interrupt. */
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR1);
@@ -57,7 +57,7 @@ EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
 
     /* Enable 16-bit read/write mode (RD16) so the atomic 16-bit idiom works
      * the same way it always does on PIC16. */
-    PIC8_BIT_SET(PIC8_REG8(PIC_REG_T1CON), PIC_T1CON_RD16);
+    EPIC_BIT_SET(EPIC_REG8(PIC_REG_T1CON), PIC_T1CON_RD16);
 
     g_t1_storage = *h;
     g_t1_handle = &g_t1_storage;
@@ -68,9 +68,9 @@ EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR1);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR1);
-    PIC8_REG8(PIC_REG_T1CON) = PIC_T1CON_POR_VALUE;
-    PIC8_REG8(PIC_REG_TMR1H) = 0x00U;
-    PIC8_REG8(PIC_REG_TMR1L) = 0x00U;
+    EPIC_REG8(PIC_REG_T1CON) = PIC_T1CON_POR_VALUE;
+    EPIC_REG8(PIC_REG_TMR1H) = 0x00U;
+    EPIC_REG8(PIC_REG_TMR1L) = 0x00U;
     g_t1_handle = NULL;
     return EPIC_OK;
 }
@@ -94,14 +94,14 @@ EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
     if (h->ClockSync   == TIMER1_ASYNC_EXTERNAL) v |= PIC_T1CON_T1SYNC;
     if (h->ClockSource == TIMER1_CLOCK_EXTERNAL)  v |= PIC_T1CON_TMR1CS;
     v |= PIC_T1CON_TMR1ON;
-    PIC8_REG8(PIC_REG_T1CON) = v;
+    EPIC_REG8(PIC_REG_T1CON) = v;
 
     return EPIC_OK;
 }
 
 EPIC_StatusTypeDef EPIC_TIMER1_Stop(void)
 {
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
     return EPIC_OK;
 }
 

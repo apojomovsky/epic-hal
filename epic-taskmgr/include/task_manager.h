@@ -22,12 +22,12 @@
 
 /**
  * @brief Maximum number of simultaneously registered tasks (~12 B/slot).
- *        Scales via @ref PIC8_FAMILY_RAM_BYTES: 6 on 192 B parts, 8
+ *        Scales via @ref EPIC_FAMILY_RAM_BYTES: 6 on 192 B parts, 8
  *        otherwise. Override with `#define TASK_MGR_MAX_TASKS` before
  *        including this header.
  */
 #ifndef TASK_MGR_MAX_TASKS
-#  if PIC8_FAMILY_RAM_BYTES <= 192
+#  if EPIC_FAMILY_RAM_BYTES <= 192
 #    define TASK_MGR_MAX_TASKS  6
 #  else
 #    define TASK_MGR_MAX_TASKS  8

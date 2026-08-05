@@ -72,34 +72,34 @@ split-register shape.
 /* Bank 2. Comparator, DS41364B Comparator chapter. Verified against
  * the installed DFP header (pic16f1937.h) _CM1CON0_ etc POSN/MASK
  * macros; re-verify against DS41364B before relying on them. */
-#define PIC_CM1CON0_C1SYNC      PIC8_BIT(0)
-#define PIC_CM1CON0_C1HYS       PIC8_BIT(1)
-#define PIC_CM1CON0_C1SP        PIC8_BIT(2)
-#define PIC_CM1CON0_C1POL       PIC8_BIT(4)
-#define PIC_CM1CON0_C1OE        PIC8_BIT(5)
-#define PIC_CM1CON0_C1OUT       PIC8_BIT(6)   /* Read-only output value. */
-#define PIC_CM1CON0_C1ON        PIC8_BIT(7)
+#define PIC_CM1CON0_C1SYNC      EPIC_BIT(0)
+#define PIC_CM1CON0_C1HYS       EPIC_BIT(1)
+#define PIC_CM1CON0_C1SP        EPIC_BIT(2)
+#define PIC_CM1CON0_C1POL       EPIC_BIT(4)
+#define PIC_CM1CON0_C1OE        EPIC_BIT(5)
+#define PIC_CM1CON0_C1OUT       EPIC_BIT(6)   /* Read-only output value. */
+#define PIC_CM1CON0_C1ON        EPIC_BIT(7)
 #define PIC_CM1CON1_C1NCH_MASK  0x03U         /* Negative-input channel select. */
 #define PIC_CM1CON1_C1PCH_MASK  0x30U         /* Positive-input channel select. */
-#define PIC_CM1CON1_C1INTN      PIC8_BIT(6)   /* Interrupt on negative edge. */
-#define PIC_CM1CON1_C1INTP      PIC8_BIT(7)   /* Interrupt on positive edge. */
+#define PIC_CM1CON1_C1INTN      EPIC_BIT(6)   /* Interrupt on negative edge. */
+#define PIC_CM1CON1_C1INTP      EPIC_BIT(7)   /* Interrupt on positive edge. */
 /* CM1CON0/CM1CON1 POR = 0x00 (confirm against DS41364B). */
 
-#define PIC_CM2CON0_C2SYNC      PIC8_BIT(0)
-#define PIC_CM2CON0_C2HYS       PIC8_BIT(1)
-#define PIC_CM2CON0_C2SP        PIC8_BIT(2)
-#define PIC_CM2CON0_C2POL       PIC8_BIT(4)
-#define PIC_CM2CON0_C2OE        PIC8_BIT(5)
-#define PIC_CM2CON0_C2OUT       PIC8_BIT(6)
-#define PIC_CM2CON0_C2ON        PIC8_BIT(7)
+#define PIC_CM2CON0_C2SYNC      EPIC_BIT(0)
+#define PIC_CM2CON0_C2HYS       EPIC_BIT(1)
+#define PIC_CM2CON0_C2SP        EPIC_BIT(2)
+#define PIC_CM2CON0_C2POL       EPIC_BIT(4)
+#define PIC_CM2CON0_C2OE        EPIC_BIT(5)
+#define PIC_CM2CON0_C2OUT       EPIC_BIT(6)
+#define PIC_CM2CON0_C2ON        EPIC_BIT(7)
 #define PIC_CM2CON1_C2NCH_MASK  0x03U
 #define PIC_CM2CON1_C2PCH_MASK  0x30U
-#define PIC_CM2CON1_C2INTN      PIC8_BIT(6)
-#define PIC_CM2CON1_C2INTP      PIC8_BIT(7)
+#define PIC_CM2CON1_C2INTN      EPIC_BIT(6)
+#define PIC_CM2CON1_C2INTP      EPIC_BIT(7)
 /* CM2CON0/CM2CON1 POR = 0x00 (confirm against DS41364B). */
 
-#define PIC_CMOUT_MC1OUT        PIC8_BIT(0)   /* Synchronized mirror of C1OUT. */
-#define PIC_CMOUT_MC2OUT        PIC8_BIT(1)   /* Synchronized mirror of C2OUT. */
+#define PIC_CMOUT_MC1OUT        EPIC_BIT(0)   /* Synchronized mirror of C1OUT. */
+#define PIC_CMOUT_MC2OUT        EPIC_BIT(1)   /* Synchronized mirror of C2OUT. */
 /* CMOUT POR = 0x00 (confirm against DS41364B). */
 ```
 
@@ -161,8 +161,8 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_COMP_DeInit(COMP_InstanceTypeDef inst);
 uint8_t EPIC_COMP_ReadOutput(COMP_InstanceTypeDef inst);   /**< Reads CMOUT's synchronized mirror bit, not CxCON0<CxOUT> directly. */
 
-void CMP1_IRQHandler(void) PIC8_WEAK;
-void CMP2_IRQHandler(void) PIC8_WEAK;
+void CMP1_IRQHandler(void) EPIC_WEAK;
+void CMP2_IRQHandler(void) EPIC_WEAK;
 
 #ifdef __cplusplus
 }
@@ -217,12 +217,12 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
     if (h->OutputToPin) con0 |= PIC_CM1CON0_C1OE;
 
     if (h->Instance == COMP_INSTANCE_1) {
-        PIC8_REG8(PIC_REG_CM1CON1) = con1;
-        PIC8_REG8(PIC_REG_CM1CON0) = con0;
+        EPIC_REG8(PIC_REG_CM1CON1) = con1;
+        EPIC_REG8(PIC_REG_CM1CON0) = con0;
         s_comp1_cb = h->EventCallback;
     } else if (h->Instance == COMP_INSTANCE_2) {
-        PIC8_REG8(PIC_REG_CM2CON1) = con1;
-        PIC8_REG8(PIC_REG_CM2CON0) = con0;
+        EPIC_REG8(PIC_REG_CM2CON1) = con1;
+        EPIC_REG8(PIC_REG_CM2CON0) = con0;
         s_comp2_cb = h->EventCallback;
     } else {
         return EPIC_INVALID;
@@ -234,12 +234,12 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
 EPIC_StatusTypeDef EPIC_COMP_DeInit(COMP_InstanceTypeDef inst)
 {
     if (inst == COMP_INSTANCE_1) {
-        PIC8_REG8(PIC_REG_CM1CON0) = 0x00U;
-        PIC8_REG8(PIC_REG_CM1CON1) = 0x00U;
+        EPIC_REG8(PIC_REG_CM1CON0) = 0x00U;
+        EPIC_REG8(PIC_REG_CM1CON1) = 0x00U;
         s_comp1_cb = 0;
     } else if (inst == COMP_INSTANCE_2) {
-        PIC8_REG8(PIC_REG_CM2CON0) = 0x00U;
-        PIC8_REG8(PIC_REG_CM2CON1) = 0x00U;
+        EPIC_REG8(PIC_REG_CM2CON0) = 0x00U;
+        EPIC_REG8(PIC_REG_CM2CON1) = 0x00U;
         s_comp2_cb = 0;
     } else {
         return EPIC_INVALID;
@@ -249,7 +249,7 @@ EPIC_StatusTypeDef EPIC_COMP_DeInit(COMP_InstanceTypeDef inst)
 
 uint8_t EPIC_COMP_ReadOutput(COMP_InstanceTypeDef inst)
 {
-    uint8_t cmout = PIC8_REG8(PIC_REG_CMOUT);
+    uint8_t cmout = EPIC_REG8(PIC_REG_CMOUT);
     if (inst == COMP_INSTANCE_1) return (cmout & PIC_CMOUT_MC1OUT) ? 1U : 0U;
     if (inst == COMP_INSTANCE_2) return (cmout & PIC_CMOUT_MC2OUT) ? 1U : 0U;
     return 0U;
@@ -317,7 +317,7 @@ calls `sim_step_timer1()`.
 
 ## Task 6: Wire into `CMakeLists.txt` and the XC8 Makefile
 
-- [ ] **Step 1: Add `pic16f193x_comp.c`** to `PIC8_EPIC_SOURCES`,
+- [ ] **Step 1: Add `pic16f193x_comp.c`** to `EPIC_SOURCES`,
   mirroring Timer1's entry.
 
 - [ ] **Step 2: Register `example_comparator`** via
@@ -374,9 +374,9 @@ int main(void)
     pic16f193x_sim_comp_drive(1U, 1U);
     pic16f193x_sim_comp_drive(2U, 0U);
 
-    uint8_t con1 = PIC8_REG8(PIC_REG_CM1CON0);
-    uint8_t con2 = PIC8_REG8(PIC_REG_CM2CON0);
-    uint8_t cmout = PIC8_REG8(PIC_REG_CMOUT);
+    uint8_t con1 = EPIC_REG8(PIC_REG_CM1CON0);
+    uint8_t con2 = EPIC_REG8(PIC_REG_CM2CON0);
+    uint8_t cmout = EPIC_REG8(PIC_REG_CMOUT);
     epic_harness_log("CM1CON0=0x%02X CM2CON0=0x%02X CMOUT=0x%02X\n", con1, con2, cmout);
     int rc = epic_harness_report((con1 == 0x80U) && (con2 == 0x80U) && (cmout == 0x01U));
     pic16f193x_harness_halt();
@@ -386,7 +386,7 @@ int main(void)
 
 - [ ] **Step 2: Build and run on host.** Run:
   `cmake -B build -S pic16f193x-hal && cmake --build build && ./build/example_comparator`.
-  Expected: logged values match, then `PIC8_HARNESS_RESULT: PASS`.
+  Expected: logged values match, then `EPIC_HARNESS_RESULT: PASS`.
 
 - [ ] **Step 3: Fix any mismatch at the source**, not by editing the
   expected value.
@@ -397,7 +397,7 @@ int main(void)
 
 - [ ] **Step 2: `HARNESS=sim` build + `mdb` gate**: `make MCU=16F1937 HARNESS=sim SIM_APP=example_comparator.c`, then
   `make mdb-test MODULE=pic16f193x-hal MCU=16F1937 DEVICE=PIC16F1937 DFP=Microchip.PIC12-16F1xxx_DFP MODE=gpio WAIT_MS=60000`.
-  Expected: `PIC8_HARNESS_RESULT: PASS`.
+  Expected: `EPIC_HARNESS_RESULT: PASS`.
 
 - [ ] **Step 3: Manual register readback** via `mdb.sh` `stepi`/`print`
   (`docs/adding-a-device.md` §4.6), confirm `CM1CON0=0x80`,

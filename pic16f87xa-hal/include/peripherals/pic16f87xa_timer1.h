@@ -91,6 +91,6 @@ void EPIC_TIMER1_WriteCounter(uint16_t value);
 uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);
 
 /** Weak Timer1 ISR, override in user code to add application logic. */
-void TIMER1_IRQHandler(void) PIC8_WEAK;
+void TIMER1_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_TIMER1_H */

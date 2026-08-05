@@ -37,10 +37,10 @@ int main(void)
     /* Let the sim model TRMT=1 (shift register empty after TXEN). */
     epic_harness_tick();
 
-    uint8_t txsta = PIC8_REG8(PIC_REG_TXSTA);
-    uint8_t rcsta = PIC8_REG8(PIC_REG_RCSTA);
-    uint8_t spbrgl = PIC8_REG8(PIC_REG_SPBRGL);
-    uint8_t baudcon = PIC8_REG8(PIC_REG_BAUDCON);
+    uint8_t txsta = EPIC_REG8(PIC_REG_TXSTA);
+    uint8_t rcsta = EPIC_REG8(PIC_REG_RCSTA);
+    uint8_t spbrgl = EPIC_REG8(PIC_REG_SPBRGL);
+    uint8_t baudcon = EPIC_REG8(PIC_REG_BAUDCON);
 
     epic_harness_log("TXSTA=0x%02X RCSTA=0x%02X SPBRGL=0x%02X BAUDCON=0x%02X\n",
                       txsta, rcsta, spbrgl, baudcon);

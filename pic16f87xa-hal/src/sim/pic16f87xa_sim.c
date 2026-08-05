@@ -262,9 +262,9 @@ static void sim_step_usart(void)
      * this step brings it back high to model the instantaneous
      * transmit completion.  RCIF is set by the host application
      * through pic16f87xa_sim_drive_usart_rx(). */
-    uint8_t txsta = PIC8_REG8(PIC_REG_TXSTA);
+    uint8_t txsta = EPIC_REG8(PIC_REG_TXSTA);
     if (txsta & PIC_TXSTA_TXEN) {
-        PIC8_REG8(0x0CU) |= 0x10U;     /* PIR1<TXIF> */
+        EPIC_REG8(0x0CU) |= 0x10U;     /* PIR1<TXIF> */
     }
 }
 

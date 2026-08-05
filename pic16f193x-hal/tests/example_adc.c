@@ -23,8 +23,8 @@ int main(void)
     ADC_HandleTypeDef adc = ADC_HANDLE_DEFAULT;
     EPIC_ADC_Init(&adc);
 
-    uint8_t con0 = PIC8_REG8(PIC_REG_ADCON0);
-    uint8_t con1 = PIC8_REG8(PIC_REG_ADCON1);
+    uint8_t con0 = EPIC_REG8(PIC_REG_ADCON0);
+    uint8_t con1 = EPIC_REG8(PIC_REG_ADCON1);
 
     epic_harness_log("ADCON0=0x%02X ADCON1=0x%02X\n", con0, con1);
     int pass = (con0 == 0x01U) && (con1 == 0xB0U);

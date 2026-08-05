@@ -36,9 +36,9 @@ int main(void)
     EPIC_COMP_Init(&ch);
 
     {
-        uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
-        uint8_t cmcon = PIC8_REG8(0x9CU);
+        uint8_t cmcon = EPIC_REG8(0x9CU);
         pic_select_bank(prev);
         /* Expected: CM2:CM0 = 010, C1INV = 1 → 0x12. */
         CHECK(cmcon == 0x12U, "CMCON not programmed for two indep with C1 inverted");
@@ -46,9 +46,9 @@ int main(void)
 
     EPIC_COMP_DeInit();
     {
-        uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
-        uint8_t cmcon = PIC8_REG8(0x9CU);
+        uint8_t cmcon = EPIC_REG8(0x9CU);
         pic_select_bank(prev);
         CHECK(cmcon == 0x07U, "CMCON not 0x07 (off) after DeInit");
     }
@@ -64,9 +64,9 @@ int main(void)
     EPIC_VREF_Init(&vh);
 
     {
-        uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
-        uint8_t cvr = PIC8_REG8(0x9DU);
+        uint8_t cvr = EPIC_REG8(0x9DU);
         pic_select_bank(prev);
         /* Expected: CVR3:0 = 1000 (0x08), CVRR = 1, CVROE = 1, CVREN = 1
          *          → 0x08 | 0x20 | 0x40 | 0x80 = 0xE8. */

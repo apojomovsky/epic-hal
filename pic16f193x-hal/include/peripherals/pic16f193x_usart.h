@@ -45,7 +45,7 @@ uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);
 uint8_t EPIC_USART_Receive(void);
 uint8_t EPIC_USART_HasOverrunError(void);
 
-void USART_TX_IRQHandler(void) PIC8_WEAK;
-void USART_RX_IRQHandler(void) PIC8_WEAK;
+void USART_TX_IRQHandler(void) EPIC_WEAK;
+void USART_RX_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F193X_USART_H */

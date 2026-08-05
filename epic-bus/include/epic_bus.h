@@ -8,8 +8,8 @@
  *          model). See docs/ARCHITECTURE.md for the transaction shapes.
  */
 
-#ifndef PIC8_BUS_H
-#define PIC8_BUS_H
+#ifndef EPIC_BUS_H
+#define EPIC_BUS_H
 
 #include <stdint.h>
 
@@ -67,4 +67,4 @@ int epic_bus_spi_mem_write(uint8_t reg, const uint8_t *data, int n);
  *  exchange(0) x n (capturing MISO), CS high. Returns n. */
 int epic_bus_spi_mem_read(uint8_t reg, uint8_t *buf, int n);
 
-#endif /* PIC8_BUS_H */
+#endif /* EPIC_BUS_H */

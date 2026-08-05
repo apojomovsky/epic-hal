@@ -30,9 +30,9 @@ int main(void)
 
     EPIC_EEPROM_Init();
     /* Test the banked RMW: set WREN on EECON1 (bank 3) and verify. */
-    PIC8_BIT_SET(PIC8_REG8(PIC_REG_EECON1), PIC_EECON1_WREN);
+    EPIC_BIT_SET(EPIC_REG8(PIC_REG_EECON1), PIC_EECON1_WREN);
 
-    uint8_t econ1 = PIC8_REG8(PIC_REG_EECON1);
+    uint8_t econ1 = EPIC_REG8(PIC_REG_EECON1);
 
     epic_harness_log("EECON1=0x%02X\n", econ1);
     int pass = ((econ1 & PIC_EECON1_WREN) != 0U);

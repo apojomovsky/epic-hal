@@ -11,7 +11,7 @@
  *   family's copy resolves.
  */
 
-#ifndef EPIC_IRQ_H
-#define EPIC_IRQ_H
+#ifndef EPIC_HAL_IRQ_H
+#define EPIC_HAL_IRQ_H
 #include "pic16_irq.h"
-#endif /* EPIC_IRQ_H */
+#endif /* EPIC_HAL_IRQ_H */

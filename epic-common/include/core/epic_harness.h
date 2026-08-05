@@ -14,8 +14,8 @@
  *   interrupt vector calls the same function directly.
  */
 
-#ifndef PIC8_HARNESS_H
-#define PIC8_HARNESS_H
+#ifndef EPIC_HARNESS_H
+#define EPIC_HARNESS_H
 
 #include <stdint.h>
 
@@ -57,8 +57,8 @@ void epic_harness_log(const char *fmt, ...);
  */
 static inline int epic_harness_report(int ok)
 {
-    epic_harness_log(ok ? "PIC8_HARNESS_RESULT: PASS\n"
-                         : "PIC8_HARNESS_RESULT: FAIL\n");
+    epic_harness_log(ok ? "EPIC_HARNESS_RESULT: PASS\n"
+                         : "EPIC_HARNESS_RESULT: FAIL\n");
     return ok ? 0 : 1;
 }
 
@@ -73,4 +73,4 @@ static inline int epic_harness_report(int ok)
  */
 void epic_dispatch_all_irqs(void);
 
-#endif /* PIC8_HARNESS_H */
+#endif /* EPIC_HARNESS_H */

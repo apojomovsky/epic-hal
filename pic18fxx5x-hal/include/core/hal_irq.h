@@ -8,7 +8,7 @@
  *   `EPIC_IRQ_*` against that family's own `PIC*_IRQn` enum.
  */
 
-#ifndef EPIC_IRQ_H
-#define EPIC_IRQ_H
+#ifndef EPIC_HAL_IRQ_H
+#define EPIC_HAL_IRQ_H
 #include "pic18_irq.h"
-#endif /* EPIC_IRQ_H */
+#endif /* EPIC_HAL_IRQ_H */

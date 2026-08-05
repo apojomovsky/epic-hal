@@ -27,7 +27,7 @@ static const epic_console_cmd_t cmds[] = {
 };
 
 epic_console_t con;
-PIC8_CONSOLE_INIT(&con, cmds, &app_ctx);
+EPIC_CONSOLE_INIT(&con, cmds, &app_ctx);
 epic_console_poll(&con);
 ```
 

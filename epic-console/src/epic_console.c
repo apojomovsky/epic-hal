@@ -19,7 +19,7 @@ static uint8_t console_tokenize(char *line, char **argv)
     uint8_t argc = 0u;
     char *p = line;
 
-    while (*p != '\0' && argc < PIC8_CONSOLE_MAX_ARGS) {
+    while (*p != '\0' && argc < EPIC_CONSOLE_MAX_ARGS) {
         while (*p == ' ' || *p == '\t') {
             *p++ = '\0';
         }
@@ -45,7 +45,7 @@ static uint8_t console_tokenize(char *line, char **argv)
 
 static void console_dispatch(epic_console_t *con)
 {
-    char *argv[PIC8_CONSOLE_MAX_ARGS];
+    char *argv[EPIC_CONSOLE_MAX_ARGS];
     uint8_t argc;
 
     con->line[con->line_len] = '\0';
@@ -75,7 +75,7 @@ void epic_console_init(epic_console_t *con, const epic_console_cmd_t *table,
     con->ctx = ctx;
     con->line_len = 0u;
     con->last_was_cr = false;
-    if (PIC8_CONSOLE_LINE_MAX > 0u) {
+    if (EPIC_CONSOLE_LINE_MAX > 0u) {
         con->line[0] = '\0';
     }
 }
@@ -112,7 +112,7 @@ void epic_console_poll(epic_console_t *con)
             continue;
         }
 
-        if (con->line_len < (uint8_t)(PIC8_CONSOLE_LINE_MAX - 1u)) {
+        if (con->line_len < (uint8_t)(EPIC_CONSOLE_LINE_MAX - 1u)) {
             con->line[con->line_len++] = (char)ch;
             con->line[con->line_len] = '\0';
             (void)epic_serial_write(&ch, 1);

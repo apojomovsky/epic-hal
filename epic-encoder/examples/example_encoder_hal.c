@@ -48,8 +48,8 @@ static uint8_t make_portb(uint8_t state_a, uint8_t state_b)
 /* Simulate one RB-change interrupt: drive the byte, assert RBIF, dispatch. */
 static void sim_rb_edge(uint8_t portb)
 {
-    PIC8_REG8(PIC_REG_PORTB)   = portb;
-    PIC8_REG8(PIC_REG_INTCON) |= PIC_INTCON_RBIF;   /* test-only RBIF assertion */
+    EPIC_REG8(PIC_REG_PORTB)   = portb;
+    EPIC_REG8(PIC_REG_INTCON) |= PIC_INTCON_RBIF;   /* test-only RBIF assertion */
     epic_dispatch_all_irqs();                        /* -> RB_IRQHandler -> on_rb_change */
 }
 
@@ -62,7 +62,7 @@ int main(void)
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7,
                   GPIO_MODE_INPUT);
     uint8_t start = make_portb(0, 0);
-    PIC8_REG8(PIC_REG_PORTB) = start;
+    EPIC_REG8(PIC_REG_PORTB) = start;
 
     EPIC_GPIO_RegisterChangeCallback(on_rb_change);
     encoder_init(&g_enc_a, 4, 5, 0, start);   /* A on RB4/RB5, gate off */

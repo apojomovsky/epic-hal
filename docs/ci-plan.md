@@ -197,7 +197,7 @@ mechanism instead of a data-memory access, fixed by rewriting
 SFR accesses per IRQ source). Not the same bug class as PIC16's at all
 (PIC18's own drivers have no `pic_select_bank` equivalent), a genuinely
 separate investigation. `epic-tick`'s PIC18 sim-target test now reaches
-`PIC8_HARNESS_RESULT: PASS` reliably. See
+`EPIC_HARNESS_RESULT: PASS` reliably. See
 `pic18fxx5x-hal/docs/ARCHITECTURE.md`.
 
 **A fourth, unrelated bug kept CI itself red after all three driver bugs
@@ -924,8 +924,8 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            compiler's bank tracking, which is exactly what this fix
            relies on. This has to live
            in the per-platform header
-           (`target/pic16f87xa_platform.h`'s new `PIC8_PIE_ENABLE_BIT`/
-           `PIC8_PIE_DISABLE_BIT` macros), not inline in `pic16_irq.c`:
+           (`target/pic16f87xa_platform.h`'s new `EPIC_PIE_ENABLE_BIT`/
+           `EPIC_PIE_DISABLE_BIT` macros), not inline in `pic16_irq.c`:
            that file is shared with the host build, and `asm()`/`__at()`
            are XC8-only syntax gcc/clang cannot parse (confirmed the
            hard way: an in-place version broke the host build outright,
@@ -1058,7 +1058,7 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            previously undetected because MPLAB SIM's UART capture isn't
            baud-timing-sensitive. **Fixed**: same proven pattern (load
            into W through a bank-independent scratch byte before
-           switching banks) applied to both. Verified: `PIC8_HARNESS_RESULT:
+           switching banks) applied to both. Verified: `EPIC_HARNESS_RESULT:
            PASS` reliably (5/5 runs), full host suite and all 38
            previously-passing PIC16 `(module, MCU)` real-target builds
            clean, no regressions. Full account:
@@ -1229,7 +1229,7 @@ deferral is documented in its own `docs/epic-usb-plan.md`, not just here.
   **RESOLVED (Phase 3): a single terminating line, not Unity.**
   `epic_harness_report` (`epic_harness.h`, previously a bare `ok ? 0 :
   1`) now also calls `epic_harness_log` with a fixed marker
-  (`PIC8_HARNESS_RESULT: PASS\n` / `...FAIL\n`) before returning. Since
+  (`EPIC_HARNESS_RESULT: PASS\n` / `...FAIL\n`) before returning. Since
   `epic_harness_log` already differs per build (no-op on target, printf
   on host, and now a real USART write on sim-target), every module gets
   the marker for free through its existing `return

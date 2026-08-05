@@ -79,7 +79,7 @@ static void spi_delay_ms(void *ctx, uint32_t ms)
     epic_tick_delay_ms(ms);
 }
 
-const epic_lcd_spi_layout_t PIC8_LCD_SPI_LAYOUT_COMMON = {
+const epic_lcd_spi_layout_t EPIC_LCD_SPI_LAYOUT_COMMON = {
     .db4_bit = 0,
     .db5_bit = 1,
     .db6_bit = 2,

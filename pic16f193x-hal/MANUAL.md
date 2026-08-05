@@ -393,7 +393,7 @@ C1OUT/C2OUT read-only bit 6 masked).
 Data EEPROM, 256 bytes on every variant. Data space only this phase
 (program-memory self-write deferred). The unlock sequence (0x55/0xAA
 to EECON2) is required before WR. The §4 gate confirmed the banked RMW
-of EECON1 (bank 3) works correctly with plain-C PIC8_BIT_SET/CLR,
+of EECON1 (bank 3) works correctly with plain-C EPIC_BIT_SET/CLR,
 unlike PIE1/2/3 which needed the inline-asm fix (Finding 2).
 
 ### Register layout
@@ -456,16 +456,16 @@ T0XCS(0). CPSCON1 (0x1F): CPSCH(3:0, channel select). CPSOUT is read-only.
 `include/pic16f193x_sfr.h` defines `PIC_REG_*` addresses, `PIC_*_BIT`
 masks, and `PIC_*_POR_VALUE` reset values, all DS41364B-cited. The
 platform pair (`include/host` + `include/target`, same name, include-path
-selected) defines `PIC8_REG8` / `epic_sfr_read8` / `epic_sfr_write8` /
-`PIC8_SFR_PTR` and the per-PIE-bank `PIC8_PIE_ENABLE_BIT` /
-`PIC8_PIE_DISABLE_BIT` macros (`pir_index` 0/1/2 for PIE1/2/3).
+selected) defines `EPIC_REG8` / `epic_sfr_read8` / `epic_sfr_write8` /
+`EPIC_SFR_PTR` and the per-PIE-bank `EPIC_PIE_ENABLE_BIT` /
+`EPIC_PIE_DISABLE_BIT` macros (`pir_index` 0/1/2 for PIE1/2/3).
 
 ## 18. Device selection
 
 `include/pic16f193x.h` selects exactly one of 1933/1934/1936/1937/1938/
 1939 via a `-D` define, default 1937, and sets per-device capability
 macros (`PIC16F193X_FAMILY_HAS_PORTD`/`_PORTE` on 40/44-pin parts, plus
-flash/RAM/EEPROM/ADC sizes). `PIC8_FAMILY_RAM_BYTES` is the neutral
+flash/RAM/EEPROM/ADC sizes). `EPIC_FAMILY_RAM_BYTES` is the neutral
 alias consumers use.
 
 ## 19. The examples
@@ -482,7 +482,7 @@ MODE=gpio` payload (its header documents the expected register image).
 - The `Microchip.PIC12-16F1xxx_DFP` is installed and the real-target
   XC8 build passes for all six parts. Timer1 has cleared the §4 gate
   (Task 11 fix-round-1): `make mdb-test ... MODE=gpio WAIT_MS=60000`
-  produces `PIC8_HARNESS_RESULT: PASS` and the §4 control-register
+  produces `EPIC_HARNESS_RESULT: PASS` and the §4 control-register
   readback confirms `PIE1=0x01`. The remaining peripherals (Timer2/4/6,
   CCP/ECCP, EUSART, MSSP, ADC, LCD, comparators, DAC, FVR, EEPROM, etc.)
   still need to clear the §4 gate individually; none of them count as

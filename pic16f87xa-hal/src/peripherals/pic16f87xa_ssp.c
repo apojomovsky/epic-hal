@@ -16,42 +16,42 @@
 static const SSP_HandleTypeDef *g_ssp = NULL;
 
 /* SSPCON2/SSPSTAT/SSPADD are Bank 1 (SSPSTAT=0x94, SSPCON2=0x91,
- * SSPADD=0x93, DS39582B Figure 2-4). PIC8_BANK1_WRITE8/READ8 need a
+ * SSPADD=0x93, DS39582B Figure 2-4). EPIC_BANK1_WRITE8/READ8 need a
  * literal SFR name at compile time (inline-asm operands), not a
  * runtime `addr`, so this dispatches on `addr` before any bank switch
  * begins, then invokes the named macro; every real call site passes a
  * compile-time constant, so XC8 folds this to one branch either way. */
-#ifdef PIC8_BANK1_READ8
+#ifdef EPIC_BANK1_READ8
 static uint8_t ssp_b1_read(uint8_t addr)
 {
     uint8_t v = 0U;
-    if (addr == 0x91U)      PIC8_BANK1_READ8(SSPCON2, v);
-    else if (addr == 0x93U) PIC8_BANK1_READ8(SSPADD, v);
-    else                    PIC8_BANK1_READ8(SSPSTAT, v);
+    if (addr == 0x91U)      EPIC_BANK1_READ8(SSPCON2, v);
+    else if (addr == 0x93U) EPIC_BANK1_READ8(SSPADD, v);
+    else                    EPIC_BANK1_READ8(SSPSTAT, v);
     return v;
 }
 
 static void ssp_b1_write(uint8_t addr, uint8_t v)
 {
-    if (addr == 0x91U)      PIC8_BANK1_WRITE8(SSPCON2, v);
-    else if (addr == 0x93U) PIC8_BANK1_WRITE8(SSPADD, v);
-    else                    PIC8_BANK1_WRITE8(SSPSTAT, v);
+    if (addr == 0x91U)      EPIC_BANK1_WRITE8(SSPCON2, v);
+    else if (addr == 0x93U) EPIC_BANK1_WRITE8(SSPADD, v);
+    else                    EPIC_BANK1_WRITE8(SSPSTAT, v);
 }
 #else
 static uint8_t ssp_b1_read(uint8_t addr)
 {
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    uint8_t v = PIC8_REG8(addr);
+    uint8_t v = EPIC_REG8(addr);
     pic_select_bank(prev);
     return v;
 }
 
 static void ssp_b1_write(uint8_t addr, uint8_t v)
 {
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    PIC8_REG8(addr) = v;
+    EPIC_REG8(addr) = v;
     pic_select_bank(prev);
 }
 #endif
@@ -92,7 +92,7 @@ EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h)
     uint8_t con = (uint8_t)(h->Mode & 0x0FU);
     if (h->ClockPolarity == SSP_SPI_CKP_IDLE_HIGH) con |= PIC_SSPCON_CKP;
     con |= PIC_SSPCON_SSPEN;
-    PIC8_REG8(0x14U) = con;
+    EPIC_REG8(0x14U) = con;
 
     /* SSPCON2 (Bank 1, address 0x91), clear all bits (idle state). */
     ssp_b1_write(0x91U, 0x00U);
@@ -109,7 +109,7 @@ EPIC_StatusTypeDef EPIC_SSP_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16_IRQ_SSP);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_SSP);
-    PIC8_REG8(0x14U) = 0x00U;
+    EPIC_REG8(0x14U) = 0x00U;
     ssp_b1_write(0x91U, 0x00U);
     ssp_b1_write(0x94U, 0x00U);
     ssp_b1_write(0x93U, 0x00U);
@@ -119,9 +119,9 @@ EPIC_StatusTypeDef EPIC_SSP_DeInit(void)
 
 uint16_t EPIC_SSP_WriteByte(uint8_t data)
 {
-    uint8_t con = PIC8_REG8(0x14U);
+    uint8_t con = EPIC_REG8(0x14U);
     if (con & PIC_SSPCON_WCOL) return 0xFFFFU;     /* write collision pending. */
-    PIC8_REG8(PIC_REG_SSPBUF) = data;
+    EPIC_REG8(PIC_REG_SSPBUF) = data;
     /* The sim backend sets BF + SSPIF on the next sim_step
      * (see sim_step_ssp() in src/sim/pic16f87xa_sim.c). */
     return 0U;
@@ -130,24 +130,24 @@ uint16_t EPIC_SSP_WriteByte(uint8_t data)
 uint8_t EPIC_SSP_ReadByte(void)
 {
     /* Reading SSPBUF clears BF (Register 9-1). */
-    uint8_t v = PIC8_REG8(PIC_REG_SSPBUF);
-    PIC8_REG8(0x94U) &= (uint8_t)~PIC_SSPSTAT_BF;
+    uint8_t v = EPIC_REG8(PIC_REG_SSPBUF);
+    EPIC_REG8(0x94U) &= (uint8_t)~PIC_SSPSTAT_BF;
     return v;
 }
 
 uint8_t EPIC_SSP_IsBufferFull(void)
 {
-    return (PIC8_REG8(0x94U) & PIC_SSPSTAT_BF) ? 1U : 0U;
+    return (EPIC_REG8(0x94U) & PIC_SSPSTAT_BF) ? 1U : 0U;
 }
 
 uint8_t EPIC_SSP_HasWriteCollision(void)
 {
-    return (PIC8_REG8(0x14U) & PIC_SSPCON_WCOL) ? 1U : 0U;
+    return (EPIC_REG8(0x14U) & PIC_SSPCON_WCOL) ? 1U : 0U;
 }
 
 void EPIC_SSP_ClearWriteCollision(void)
 {
-    PIC8_REG8(0x14U) &= (uint8_t)~PIC_SSPCON_WCOL;
+    EPIC_REG8(0x14U) &= (uint8_t)~PIC_SSPCON_WCOL;
 }
 
 void EPIC_SSP_Start(void)

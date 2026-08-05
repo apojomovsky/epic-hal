@@ -26,12 +26,12 @@
 
 #if defined(__XC32__) || defined(__XC16__) || defined(__XC8)
 #include <xc.h>
-#elif defined(PIC8_SDCARD_HOST_BUILD)
+#elif defined(EPIC_SDCARD_HOST_BUILD)
 /* Deviation from upstream (epic-sdcard, not sent upstream): upstream only
  * allows XC8/XC16/XC32. Nothing below this line actually uses anything
  * from <xc.h> (no SFR names, no __delay_*, no interrupt keyword -- grepped
  * to confirm before patching); the guard is a defensive compiler
- * allowlist, not a real dependency. PIC8_SDCARD_HOST_BUILD (set by this
+ * allowlist, not a real dependency. EPIC_SDCARD_HOST_BUILD (set by this
  * module's host CMakeLists.txt, never by the real-target build) skips the
  * include so this exact file can be host-compiled and tested directly.
  * See epic-sdcard/docs/epic-sdcard-plan.md, "Host build story". */

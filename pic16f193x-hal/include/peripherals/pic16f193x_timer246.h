@@ -113,8 +113,8 @@ uint16_t EPIC_TIMER246_PrescalerToRatio(TIMER246_PrescalerTypeDef p);
 uint16_t EPIC_TIMER246_PostscalerToRatio(TIMER246_PostscalerTypeDef p);
 
 /** Weak Timer2/4/6 ISRs, one per instance, override in user code. */
-void TIMER2_IRQHandler(void) PIC8_WEAK;
-void TIMER4_IRQHandler(void) PIC8_WEAK;
-void TIMER6_IRQHandler(void) PIC8_WEAK;
+void TIMER2_IRQHandler(void) EPIC_WEAK;
+void TIMER4_IRQHandler(void) EPIC_WEAK;
+void TIMER6_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F193X_TIMER246_H */

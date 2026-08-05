@@ -92,7 +92,7 @@ as a side effect; grep it for the function under test's label
 (`_EPIC_IRQ_Enable:` etc.) and read the instructions between it and the
 next `global` line.
 
-## Finding 2: PIC8_PIE_ENABLE_BIT FSR1:INDF1 route silently addresses the wrong byte for PIE1/2/3; replaced with `__at()`-pinned scratch + inline asm `movlb 1`/`iorwf PIE1,f`/`movlb 0`
+## Finding 2: EPIC_PIE_ENABLE_BIT FSR1:INDF1 route silently addresses the wrong byte for PIE1/2/3; replaced with `__at()`-pinned scratch + inline asm `movlb 1`/`iorwf PIE1,f`/`movlb 0`
 
 **Status:** fixed; verified by both the disassembly comparison below and
 the `mdb` register readback (§4 control-register check) of the Timer1
@@ -143,7 +143,7 @@ with bank-1 offsets 0x11/0x12/0x13).
 **Files changed**:
 
 1. `pic16f193x-hal/include/target/pic16f193x_platform.h`: replace
-   the plain-C `PIC8_PIE_ENABLE_BIT` / `PIC8_PIE_DISABLE_BIT` macros
+   the plain-C `EPIC_PIE_ENABLE_BIT` / `EPIC_PIE_DISABLE_BIT` macros
    with the inline-asm shape. Add the
    `extern volatile uint8_t epic_irq_pie_scratch __at(0x70);`
    declaration. Update the file header to point at this finding for
@@ -256,7 +256,7 @@ T1CON  = 49  (0x31)         ; unchanged (no Timer1 code change)
 PIE1   = 1                  ; <- FIXED: TMR1IE bit 0 now set
 PIR1   = 0                  ; ISR cleared TMR1IF after handling
 INTCON = 194 (0xC2)         ; unchanged
-LATA   = 1                  ; <- FIXED: PIC8_HARNESS_RESULT: PASS fired
+LATA   = 1                  ; <- FIXED: EPIC_HARNESS_RESULT: PASS fired
 LATB   = 0                  ; even toggle count returns RB0 to 0
 PORTA  = 1                  ; PASS marker visible from mdb
 ```

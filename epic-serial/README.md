@@ -11,7 +11,7 @@ The non-blocking serial layer STM32Cube's `HAL_UART_Transmit_DMA`/
 - **Family-agnostic**: one `src/epic_serial.c` builds against
   `pic16f87xa-hal` or `pic18fxx5x-hal` (one `#if` branch for the
   family-specific USART handle/IRQ/TXREG-write); runs on the host sim and real
-  silicon. Configurable ring size (`-DPIC8_SERIAL_RING_SZ=64`).
+  silicon. Configurable ring size (`-DEPIC_SERIAL_RING_SZ=64`).
 
 ## Documentation
 

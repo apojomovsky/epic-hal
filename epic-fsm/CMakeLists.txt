@@ -37,10 +37,10 @@ target_link_libraries(example_traffic_light PRIVATE fsm)
 # never forces a HAL family choice on a consumer who only wants the FSM
 # engine; turn it on to build the demonstration that an fsm_t composes with
 # epic-taskmgr with zero special integration.
-option(PIC8_FSM_BUILD_TASKMGR_EXAMPLE
+option(EPIC_FSM_BUILD_TASKMGR_EXAMPLE
        "Build examples/example_taskmgr_integration.c against epic-taskmgr" OFF)
 
-if(PIC8_FSM_BUILD_TASKMGR_EXAMPLE)
+if(EPIC_FSM_BUILD_TASKMGR_EXAMPLE)
     set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link the taskmgr example against: PIC16 or PIC18")
     set(TASKMGR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-taskmgr
         CACHE PATH "Path to the epic-taskmgr source tree")

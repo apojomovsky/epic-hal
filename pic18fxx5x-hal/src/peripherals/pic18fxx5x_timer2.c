@@ -22,23 +22,23 @@ static const TIMER2_HandleTypeDef *g_t2_handle = NULL;
 
 uint8_t EPIC_TIMER2_ReadCounter(void)
 {
-    return PIC8_REG8(PIC_REG_TMR2);
+    return EPIC_REG8(PIC_REG_TMR2);
 }
 
 void EPIC_TIMER2_WriteCounter(uint8_t value)
 {
-    PIC8_REG8(PIC_REG_TMR2) = value;
+    EPIC_REG8(PIC_REG_TMR2) = value;
 }
 
 uint8_t EPIC_TIMER2_ReadPeriod(void)
 {
     /* PR2 is in the Access Bank (0xFCB), no bank switching needed. */
-    return PIC8_REG8(PIC_REG_PR2);
+    return EPIC_REG8(PIC_REG_PR2);
 }
 
 void EPIC_TIMER2_WritePeriod(uint8_t period)
 {
-    PIC8_REG8(PIC_REG_PR2) = period;
+    EPIC_REG8(PIC_REG_PR2) = period;
 }
 
 uint16_t EPIC_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p)
@@ -57,7 +57,7 @@ EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
 
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
 
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR2);
     if (h->OverflowCallback) {
@@ -75,7 +75,7 @@ EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR2);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR2);
-    PIC8_REG8(PIC_REG_T2CON) = PIC_T2CON_POR_VALUE;
+    EPIC_REG8(PIC_REG_T2CON) = PIC_T2CON_POR_VALUE;
     EPIC_TIMER2_WritePeriod(PIC_PR2_POR_VALUE);
     g_t2_handle = NULL;
     return EPIC_OK;
@@ -98,14 +98,14 @@ EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h)
     v |= (uint8_t)((h->Postscaler & 0xFU) << 3);
     v |= PIC_T2CON_TMR2ON;
     v |= (uint8_t)(h->Prescaler & 0x3U);
-    PIC8_REG8(PIC_REG_T2CON) = v;
+    EPIC_REG8(PIC_REG_T2CON) = v;
 
     return EPIC_OK;
 }
 
 EPIC_StatusTypeDef EPIC_TIMER2_Stop(void)
 {
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
     return EPIC_OK;
 }
 

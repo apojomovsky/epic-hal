@@ -35,7 +35,7 @@ target_include_directories(epic_sdcard_hosttest PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/mock       # resolved first: mmc_config.h picks the mock
     ${STORAGE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_compile_definitions(epic_sdcard_hosttest PUBLIC PIC8_SDCARD_HOST_BUILD)
+target_compile_definitions(epic_sdcard_hosttest PUBLIC EPIC_SDCARD_HOST_BUILD)
 
 enable_testing()
 add_executable(test_epic_sdcard tests/test_epic_sdcard.c)

@@ -18,15 +18,15 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
     if (h->CIS)        v |= PIC_CMCON_CIS;
     if (h->C1Inverted) v |= PIC_CMCON_C1INV;
     if (h->C2Inverted) v |= PIC_CMCON_C2INV;
-#ifdef PIC8_BANK1_WRITE8
+#ifdef EPIC_BANK1_WRITE8
     /* See target/pic16f87xa_platform.h: a plain bank-switch RMW here
      * silently corrupts under XC8 v4.00. */
-    PIC8_BANK1_WRITE8(CMCON, v);
+    EPIC_BANK1_WRITE8(CMCON, v);
 #else
     {
-        uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
-        PIC8_REG8(0x9CU) = v;
+        EPIC_REG8(0x9CU) = v;
         pic_select_bank(prev);
     }
 #endif
@@ -44,9 +44,9 @@ EPIC_StatusTypeDef EPIC_COMP_DeInit(void)
     EPIC_IRQ_DisableSrc(PIC16_IRQ_CMP);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_CMP);
     {
-        uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
-        PIC8_REG8(0x9CU) = 0x07U;     /* POR default: comparators off. */
+        EPIC_REG8(0x9CU) = 0x07U;     /* POR default: comparators off. */
         pic_select_bank(prev);
     }
     g_comp = NULL;
@@ -56,13 +56,13 @@ EPIC_StatusTypeDef EPIC_COMP_DeInit(void)
 uint8_t EPIC_COMP_C1Out(void)
 {
     uint8_t v = 0U;
-#ifdef PIC8_BANK1_READ8
+#ifdef EPIC_BANK1_READ8
     /* See target/pic16f87xa_platform.h: same corruption shape, read side. */
-    PIC8_BANK1_READ8(CMCON, v);
+    EPIC_BANK1_READ8(CMCON, v);
 #else
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    v = PIC8_REG8(0x9CU);
+    v = EPIC_REG8(0x9CU);
     pic_select_bank(prev);
 #endif
     return (v & PIC_CMCON_C1OUT) ? 1U : 0U;
@@ -71,12 +71,12 @@ uint8_t EPIC_COMP_C1Out(void)
 uint8_t EPIC_COMP_C2Out(void)
 {
     uint8_t v = 0U;
-#ifdef PIC8_BANK1_READ8
-    PIC8_BANK1_READ8(CMCON, v);
+#ifdef EPIC_BANK1_READ8
+    EPIC_BANK1_READ8(CMCON, v);
 #else
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    v = PIC8_REG8(0x9CU);
+    v = EPIC_REG8(0x9CU);
     pic_select_bank(prev);
 #endif
     return (v & PIC_CMCON_C2OUT) ? 1U : 0U;
@@ -85,7 +85,7 @@ uint8_t EPIC_COMP_C2Out(void)
 uint8_t EPIC_COMP_IsChangeFlag(void)
 {
     /* CMIF lives in PIR2<6>. */
-    return (PIC8_REG8(0x0DU) & 0x40U) ? 1U : 0U;
+    return (EPIC_REG8(0x0DU) & 0x40U) ? 1U : 0U;
 }
 
 void EPIC_COMP_ClearChangeFlag(void)

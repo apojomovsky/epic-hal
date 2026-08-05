@@ -19,34 +19,34 @@ static const TIMER2_HandleTypeDef *g_t2_handle = NULL;
 
 uint8_t EPIC_TIMER2_ReadCounter(void)
 {
-    return PIC8_REG8(PIC_REG_TMR2);
+    return EPIC_REG8(PIC_REG_TMR2);
 }
 
 void EPIC_TIMER2_WriteCounter(uint8_t value)
 {
-    PIC8_REG8(PIC_REG_TMR2) = value;
+    EPIC_REG8(PIC_REG_TMR2) = value;
 }
 
 uint8_t EPIC_TIMER2_ReadPeriod(void)
 {
     /* PR2 lives in Bank 1 (DS39582B Register 7-2, address 0x92). */
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    uint8_t pr2 = PIC8_REG8(PIC_REG_PR2);
+    uint8_t pr2 = EPIC_REG8(PIC_REG_PR2);
     pic_select_bank(prev);
     return pr2;
 }
 
 void EPIC_TIMER2_WritePeriod(uint8_t period)
 {
-#ifdef PIC8_BANK1_WRITE8
+#ifdef EPIC_BANK1_WRITE8
     /* See target/pic16f87xa_platform.h: a plain bank-switch write here
      * silently corrupts under XC8 v4.00. */
-    PIC8_BANK1_WRITE8(PR2, period);
+    EPIC_BANK1_WRITE8(PR2, period);
 #else
-    uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
-    PIC8_REG8(PIC_REG_PR2) = period;
+    EPIC_REG8(PIC_REG_PR2) = period;
     pic_select_bank(prev);
 #endif
 }
@@ -67,7 +67,7 @@ EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
 
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
 
     EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR2);
     if (h->OverflowCallback) {
@@ -84,7 +84,7 @@ EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR2);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR2);
-    PIC8_REG8(PIC_REG_T2CON) = PIC_T2CON_POR_VALUE;
+    EPIC_REG8(PIC_REG_T2CON) = PIC_T2CON_POR_VALUE;
     EPIC_TIMER2_WritePeriod(0xFFU);
     g_t2_handle = NULL;
     return EPIC_OK;
@@ -107,14 +107,14 @@ EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h)
     v |= (uint8_t)((h->Postscaler & 0xFU) << 3);
     v |= PIC_T2CON_TMR2ON;
     v |= (uint8_t)(h->Prescaler & 0x3U);
-    PIC8_REG8(PIC_REG_T2CON) = v;
+    EPIC_REG8(PIC_REG_T2CON) = v;
 
     return EPIC_OK;
 }
 
 EPIC_StatusTypeDef EPIC_TIMER2_Stop(void)
 {
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
     return EPIC_OK;
 }
 

@@ -7,8 +7,8 @@
  *          Include this header when using GPIO or SPI transports on target.
  */
 
-#ifndef PIC8_LCD_TRANSPORT_H
-#define PIC8_LCD_TRANSPORT_H
+#ifndef EPIC_LCD_TRANSPORT_H
+#define EPIC_LCD_TRANSPORT_H
 
 #include "epic_lcd.h"
 #include "epic_hal.h"
@@ -57,7 +57,7 @@ typedef struct {
     uint8_t rw_bit;    /* 0xFF = not connected (tied low) */
 } epic_lcd_spi_layout_t;
 
-extern const epic_lcd_spi_layout_t PIC8_LCD_SPI_LAYOUT_COMMON;
+extern const epic_lcd_spi_layout_t EPIC_LCD_SPI_LAYOUT_COMMON;
 
 typedef struct {
     GPIO_TypeDef cs_port;  uint16_t cs_pin;
@@ -69,4 +69,4 @@ void epic_lcd_spi_init(epic_lcd_ops_t *ops, void **ctx,
                        const epic_lcd_spi_config_t *config,
                        const epic_lcd_spi_layout_t *layout);
 
-#endif /* PIC8_LCD_TRANSPORT_H */
+#endif /* EPIC_LCD_TRANSPORT_H */

@@ -332,7 +332,7 @@ the family-neutral shim `peripherals/hal_gpio.h` pulls this header in.
 
 ```c
 void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
-void RB_IRQHandler(void) PIC8_WEAK;
+void RB_IRQHandler(void) EPIC_WEAK;
 ```
 
 `EPIC_GPIO_RegisterChangeCallback` stores one callback slot (NULL is safe,
@@ -361,7 +361,7 @@ when the source is idle. To arm it on a real target, also
 
 **Host sim.** The sim does not auto-assert RBIF on a PORTB mismatch
 (faithfully modeling the datasheet "snapshot on every PORTB read" would
-require intercepting every CPU read of PORTB through the `PIC8_REG8`
+require intercepting every CPU read of PORTB through the `EPIC_REG8`
 macro, disproportionate for the one feature that needs it). Tests that
 exercise the handler assert RBIF directly in INTCON, then call
 `RB_IRQHandler` / `epic_dispatch_all_irqs` and check the callback's byte
@@ -395,7 +395,7 @@ EPIC_StatusTypeDef EPIC_TIMER0_Stop(void);
 uint8_t  EPIC_TIMER0_ReadCounter(void);     // TMR0L only, even in 16-bit mode
 void     EPIC_TIMER0_WriteCounter(uint8_t value);
 uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);
-void     TIMER0_IRQHandler(void) PIC8_WEAK;
+void     TIMER0_IRQHandler(void) EPIC_WEAK;
 ```
 
 **Default is 8-bit mode** (`T08BIT=1`), matching the PIC16 Timer0 model the
@@ -442,7 +442,7 @@ EPIC_StatusTypeDef EPIC_TIMER1_Init/DeInit/Start/Stop(...);
 uint16_t EPIC_TIMER1_ReadCounter(void);      // atomic (RD16 latches TMR1H on TMR1L read)
 void     EPIC_TIMER1_WriteCounter(uint16_t value);
 uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);
-void     TIMER1_IRQHandler(void) PIC8_WEAK;
+void     TIMER1_IRQHandler(void) EPIC_WEAK;
 ```
 
 Overflow sets `PIR1<TMR1IF>`. Reset: `T1CON = 0x00`; the driver sets RD16
@@ -473,7 +473,7 @@ uint8_t  EPIC_TIMER2_ReadPeriod(void);
 void     EPIC_TIMER2_WritePeriod(uint8_t period);
 uint16_t EPIC_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p);
 uint16_t EPIC_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p);
-void     TIMER2_IRQHandler(void) PIC8_WEAK;
+void     TIMER2_IRQHandler(void) EPIC_WEAK;
 ```
 
 `TMR2IF` (`PIR1<1>`) fires every `prescaler × (PR2+1) × postscaler`
@@ -512,7 +512,7 @@ EPIC_StatusTypeDef EPIC_TIMER3_Init/DeInit/Start/Stop(...);
 uint16_t EPIC_TIMER3_ReadCounter(void);
 void     EPIC_TIMER3_WriteCounter(uint16_t value);
 uint16_t EPIC_TIMER3_PrescalerToRatio(TIMER3_PrescalerTypeDef p);
-void     TIMER3_IRQHandler(void) PIC8_WEAK;
+void     TIMER3_IRQHandler(void) EPIC_WEAK;
 ```
 
 Timer3 + Timer1 can form a 32-bit timer (DS39632E §14.0) when both are
@@ -565,8 +565,8 @@ void     EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst, CCP_AutoShutdownS
                                      CCP_PinStateTypeDef pins_ac, CCP_PinStateTypeDef pins_bd);  // no-op for CCP2
 uint8_t  EPIC_CCP_IsShutdown(CCP_InstanceTypeDef inst);
 void     EPIC_CCP_Restart(CCP_InstanceTypeDef inst);   // no-op for CCP2
-void     CCP1_IRQHandler(void) PIC8_WEAK;
-void     CCP2_IRQHandler(void) PIC8_WEAK;
+void     CCP1_IRQHandler(void) EPIC_WEAK;
+void     CCP2_IRQHandler(void) EPIC_WEAK;
 ```
 
 Timer resources (Table 16-1): Capture/Compare use Timer1 **or** Timer3
@@ -620,7 +620,7 @@ uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz);  // Fscl = Fosc/
 void     EPIC_SSP_Start(void);  void EPIC_SSP_RepeatedStart(void);  void EPIC_SSP_Stop(void);
 void     EPIC_SSP_ReceiveEnable(void);  void EPIC_SSP_AcknowledgeEnable(void);
 uint8_t  EPIC_SSP_AcknowledgeStatus(void);
-void     SSP_IRQHandler(void) PIC8_WEAK;
+void     SSP_IRQHandler(void) EPIC_WEAK;
 ```
 
 `example_ssp` (host sim) verifies: `SSP_ComputeSSPADD(16MHz, 100kHz) == 39`,
@@ -670,8 +670,8 @@ uint8_t EPIC_USART_HasOverrun(void);  void EPIC_USART_ClearOverrun(void);   // c
 void    EPIC_USART_StartAutoBaud(void);
 uint8_t EPIC_USART_IsAutoBaudBusy(void);
 uint8_t EPIC_USART_HasAutoBaudOverflow(void);  void EPIC_USART_ClearAutoBaudOverflow(void);
-void    USART_RX_IRQHandler(void) PIC8_WEAK;
-void    USART_TX_IRQHandler(void) PIC8_WEAK;
+void    USART_RX_IRQHandler(void) EPIC_WEAK;
+void    USART_TX_IRQHandler(void) EPIC_WEAK;
 ```
 
 Baud formulas (Table 20-1): `BRG16=0,BRGH=0: Fosc/(64(X+1))`;
@@ -708,7 +708,7 @@ uint8_t  EPIC_ADC_IsConversionInProgress(void);   // GO/DONE
 uint8_t  EPIC_ADC_IsConversionDone(void);         // ADIF
 void     EPIC_ADC_ClearITFlag(void);
 uint16_t EPIC_ADC_Read(void);                     // always returns 0..1023 regardless of ADFM
-void     ADC_IRQHandler(void) PIC8_WEAK;
+void     ADC_IRQHandler(void) EPIC_WEAK;
 ```
 
 `PinConfig` is a raw 4-bit `PCFG3:PCFG0` code (Table 21-3 is large; the
@@ -742,7 +742,7 @@ typedef struct {
 EPIC_StatusTypeDef EPIC_COMP_Init/DeInit(...);
 uint8_t EPIC_COMP_C1Out(void);  uint8_t EPIC_COMP_C2Out(void);
 uint8_t EPIC_COMP_IsChangeFlag(void);  void EPIC_COMP_ClearChangeFlag(void);
-void    COMP_IRQHandler(void) PIC8_WEAK;
+void    COMP_IRQHandler(void) EPIC_WEAK;
 ```
 
 POR default `CMCON = 0x07` (off). `example_comp` verifies
@@ -769,7 +769,7 @@ void     EPIC_EEPROM_ReadBuffer(uint8_t start, uint8_t *buf, uint8_t len);
 EPIC_StatusTypeDef EPIC_EEPROM_WriteBuffer(uint8_t start, const uint8_t *buf, uint8_t len);
 uint8_t  EPIC_EEPROM_IsWriteComplete(void);   // EEIF, PIR2<4>
 void     EPIC_EEPROM_ClearITFlag(void);
-void     EEPROM_IRQHandler(void) PIC8_WEAK;
+void     EEPROM_IRQHandler(void) EPIC_WEAK;
 ```
 
 Writes are non-blocking, same as PIC16: `WriteByte` returns once `WR` is
@@ -809,7 +809,7 @@ uint8_t EPIC_SPP_IsBusy(void);                 // SPPEPS<SPPBUSY>
 uint8_t EPIC_SPP_HasWriteOccurred(void);        // SPPEPS<WRSPP>
 uint8_t EPIC_SPP_HasReadOccurred(void);         // SPPEPS<RDSPP>
 uint8_t EPIC_SPP_IsInterruptFlag(void);  void EPIC_SPP_ClearITFlag(void);
-void    SPP_IRQHandler(void) PIC8_WEAK;
+void    SPP_IRQHandler(void) EPIC_WEAK;
 ```
 
 `example_spp` verifies init register images for both MCU-owned
@@ -828,8 +828,8 @@ of course differ). Every SFR this HAL touches lives in the **Access Bank**
 register this HAL uses.
 
 ```c
-PIC8_REG8(addr)                 // lvalue for the register at addr
-PIC8_SFR_PTR(addr)              // address of that register
+EPIC_REG8(addr)                 // lvalue for the register at addr
+EPIC_SFR_PTR(addr)              // address of that register
 epic_sfr_read8(addr)            // read
 epic_sfr_write8(addr, value)    // write (used over compound RMW where XC8
                                  // can't lower a compound assignment on a
@@ -859,7 +859,7 @@ one is. Sets:
 | `_HAS_SPP`                      | 0    | 0    | 1    | 1    |
 | `_HAS_USB`                      | 1    | 1    | 1    | 1    |
 
-`PIC8_FAMILY_RAM_BYTES` aliases `PIC18FXX5X_FAMILY_RAM_BYTES` under the
+`EPIC_FAMILY_RAM_BYTES` aliases `PIC18FXX5X_FAMILY_RAM_BYTES` under the
 family-neutral name a consumer like the task manager scales against.
 
 ## 22. The examples

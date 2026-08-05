@@ -19,8 +19,8 @@
 #else
   #define BUS_IS_PIC18         0
   #define BUS_IRQ_SSP          PIC16_IRQ_SSP
-  #define BUS_SSPCON2_READ()   PIC8_REG8(PIC_REG_SSPCON2)
-  #define BUS_SSPCON2_WRITE(c) (PIC8_REG8(PIC_REG_SSPCON2) = (uint8_t)(c))
+  #define BUS_SSPCON2_READ()   EPIC_REG8(PIC_REG_SSPCON2)
+  #define BUS_SSPCON2_WRITE(c) (EPIC_REG8(PIC_REG_SSPCON2) = (uint8_t)(c))
 #endif
 
 /* ─── default I2C ops (HAL SSP + ACKDT + SSPIF wait) ────────────── */
@@ -86,11 +86,11 @@ static uint8_t s_cs_pin;
 
 static void spi_real_select(void)
 {
-    EPIC_GPIO_WritePin((GPIO_TypeDef)s_cs_port, (uint16_t)PIC8_BIT(s_cs_pin), GPIO_PIN_RESET);
+    EPIC_GPIO_WritePin((GPIO_TypeDef)s_cs_port, (uint16_t)EPIC_BIT(s_cs_pin), GPIO_PIN_RESET);
 }
 static void spi_real_deselect(void)
 {
-    EPIC_GPIO_WritePin((GPIO_TypeDef)s_cs_port, (uint16_t)PIC8_BIT(s_cs_pin), GPIO_PIN_SET);
+    EPIC_GPIO_WritePin((GPIO_TypeDef)s_cs_port, (uint16_t)EPIC_BIT(s_cs_pin), GPIO_PIN_SET);
 }
 static uint8_t spi_real_exchange(uint8_t b)
 {
@@ -123,8 +123,8 @@ void epic_bus_spi_init(uint32_t fosc_hz, uint32_t f_sclk_hz, uint8_t cs_port, ui
     EPIC_SSP_Init(&s_ssp);
     s_cs_port = cs_port;
     s_cs_pin  = cs_pin;
-    EPIC_GPIO_Init((GPIO_TypeDef)cs_port, (uint16_t)PIC8_BIT(cs_pin), GPIO_MODE_OUTPUT);
-    EPIC_GPIO_WritePin((GPIO_TypeDef)cs_port, (uint16_t)PIC8_BIT(cs_pin), GPIO_PIN_SET);
+    EPIC_GPIO_Init((GPIO_TypeDef)cs_port, (uint16_t)EPIC_BIT(cs_pin), GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin((GPIO_TypeDef)cs_port, (uint16_t)EPIC_BIT(cs_pin), GPIO_PIN_SET);
     g_spi_ops = &g_spi_default;
 }
 

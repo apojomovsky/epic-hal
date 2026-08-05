@@ -16,44 +16,44 @@
 /* Per-instance register access. Branch before touching any SFR. */
 #define TIMER246_WRITE_TMR(inst, value)                                    \
     do {                                                                   \
-        if ((inst) == TIMER246_INSTANCE_2)      PIC8_REG8(PIC_REG_TMR2) = (uint8_t)(value); \
-        else if ((inst) == TIMER246_INSTANCE_4) PIC8_REG8(PIC_REG_TMR4) = (uint8_t)(value); \
-        else                                     PIC8_REG8(PIC_REG_TMR6) = (uint8_t)(value); \
+        if ((inst) == TIMER246_INSTANCE_2)      EPIC_REG8(PIC_REG_TMR2) = (uint8_t)(value); \
+        else if ((inst) == TIMER246_INSTANCE_4) EPIC_REG8(PIC_REG_TMR4) = (uint8_t)(value); \
+        else                                     EPIC_REG8(PIC_REG_TMR6) = (uint8_t)(value); \
     } while (0)
 
 #define TIMER246_READ_TMR(inst, out)                                       \
     do {                                                                   \
-        if ((inst) == TIMER246_INSTANCE_2)      (out) = PIC8_REG8(PIC_REG_TMR2); \
-        else if ((inst) == TIMER246_INSTANCE_4) (out) = PIC8_REG8(PIC_REG_TMR4); \
-        else                                     (out) = PIC8_REG8(PIC_REG_TMR6); \
+        if ((inst) == TIMER246_INSTANCE_2)      (out) = EPIC_REG8(PIC_REG_TMR2); \
+        else if ((inst) == TIMER246_INSTANCE_4) (out) = EPIC_REG8(PIC_REG_TMR4); \
+        else                                     (out) = EPIC_REG8(PIC_REG_TMR6); \
     } while (0)
 
 #define TIMER246_WRITE_PR(inst, value)                                     \
     do {                                                                   \
-        if ((inst) == TIMER246_INSTANCE_2)      PIC8_REG8(PIC_REG_PR2) = (uint8_t)(value); \
-        else if ((inst) == TIMER246_INSTANCE_4) PIC8_REG8(PIC_REG_PR4) = (uint8_t)(value); \
-        else                                     PIC8_REG8(PIC_REG_PR6) = (uint8_t)(value); \
+        if ((inst) == TIMER246_INSTANCE_2)      EPIC_REG8(PIC_REG_PR2) = (uint8_t)(value); \
+        else if ((inst) == TIMER246_INSTANCE_4) EPIC_REG8(PIC_REG_PR4) = (uint8_t)(value); \
+        else                                     EPIC_REG8(PIC_REG_PR6) = (uint8_t)(value); \
     } while (0)
 
 #define TIMER246_READ_PR(inst, out)                                        \
     do {                                                                   \
-        if ((inst) == TIMER246_INSTANCE_2)      (out) = PIC8_REG8(PIC_REG_PR2); \
-        else if ((inst) == TIMER246_INSTANCE_4) (out) = PIC8_REG8(PIC_REG_PR4); \
-        else                                     (out) = PIC8_REG8(PIC_REG_PR6); \
+        if ((inst) == TIMER246_INSTANCE_2)      (out) = EPIC_REG8(PIC_REG_PR2); \
+        else if ((inst) == TIMER246_INSTANCE_4) (out) = EPIC_REG8(PIC_REG_PR4); \
+        else                                     (out) = EPIC_REG8(PIC_REG_PR6); \
     } while (0)
 
 #define TIMER246_WRITE_CON(inst, value)                                    \
     do {                                                                   \
-        if ((inst) == TIMER246_INSTANCE_2)      PIC8_REG8(PIC_REG_T2CON) = (uint8_t)(value); \
-        else if ((inst) == TIMER246_INSTANCE_4) PIC8_REG8(PIC_REG_T4CON) = (uint8_t)(value); \
-        else                                     PIC8_REG8(PIC_REG_T6CON) = (uint8_t)(value); \
+        if ((inst) == TIMER246_INSTANCE_2)      EPIC_REG8(PIC_REG_T2CON) = (uint8_t)(value); \
+        else if ((inst) == TIMER246_INSTANCE_4) EPIC_REG8(PIC_REG_T4CON) = (uint8_t)(value); \
+        else                                     EPIC_REG8(PIC_REG_T6CON) = (uint8_t)(value); \
     } while (0)
 
 #define TIMER246_STOP(inst)                                                \
     do {                                                                   \
-        if ((inst) == TIMER246_INSTANCE_2)      PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON); \
-        else if ((inst) == TIMER246_INSTANCE_4) PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T4CON), PIC_T4CON_TMR4ON); \
-        else                                     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T6CON), PIC_T6CON_TMR6ON); \
+        if ((inst) == TIMER246_INSTANCE_2)      EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON); \
+        else if ((inst) == TIMER246_INSTANCE_4) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T4CON), PIC_T4CON_TMR4ON); \
+        else                                     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T6CON), PIC_T6CON_TMR6ON); \
     } while (0)
 
 /* T*CON prescaler, DS41364B §17.0: 00 -> 1:1, 01 -> 1:4, 1x -> 1:16.

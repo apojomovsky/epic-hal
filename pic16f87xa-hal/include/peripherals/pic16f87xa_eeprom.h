@@ -54,6 +54,6 @@ uint8_t EPIC_EEPROM_IsWriteComplete(void);
 /** Clear EEIF (must be cleared in the user's IRQ). */
 void EPIC_EEPROM_ClearITFlag(void);
 
-void EEPROM_IRQHandler(void) PIC8_WEAK;
+void EEPROM_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_EEPROM_H */

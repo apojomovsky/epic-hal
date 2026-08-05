@@ -14,12 +14,12 @@
 #include "epic_usb.h"
 #include "epic_usb_test_support.h"
 
-#define MASK              (PIC8_USB_RING_SZ - 1u)
+#define MASK              (EPIC_USB_RING_SZ - 1u)
 #define SENT_LOG_SZ       256u
 
-static uint8_t g_tx_buf[PIC8_USB_RING_SZ];
+static uint8_t g_tx_buf[EPIC_USB_RING_SZ];
 static uint8_t g_tx_head, g_tx_tail, g_tx_count;
-static uint8_t g_rx_buf[PIC8_USB_RING_SZ];
+static uint8_t g_rx_buf[EPIC_USB_RING_SZ];
 static uint8_t g_rx_head, g_rx_tail, g_rx_count;
 static bool    g_dtr;
 
@@ -49,7 +49,7 @@ void epic_usb_service(void)
 size_t epic_usb_write(const uint8_t *data, size_t len)
 {
     size_t n = 0;
-    while (n < len && g_tx_count < PIC8_USB_RING_SZ) {
+    while (n < len && g_tx_count < EPIC_USB_RING_SZ) {
         g_tx_buf[g_tx_head] = data[n++];
         g_tx_head = (uint8_t)((g_tx_head + 1u) & MASK);
         g_tx_count++;
@@ -97,7 +97,7 @@ void epic_usb_test_set_dtr(bool on)
 size_t epic_usb_test_inject_rx(const uint8_t *data, size_t len)
 {
     size_t n = 0;
-    while (n < len && g_rx_count < PIC8_USB_RING_SZ) {
+    while (n < len && g_rx_count < EPIC_USB_RING_SZ) {
         g_rx_buf[g_rx_head] = data[n++];
         g_rx_head = (uint8_t)((g_rx_head + 1u) & MASK);
         g_rx_count++;

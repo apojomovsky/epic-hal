@@ -21,9 +21,9 @@ static const TIMER0_HandleTypeDef *g_t0_handle = NULL;
 /** Read-modify-write helper for T0CON. */
 static void t0con_clr_set(uint8_t clr_mask, uint8_t set_mask)
 {
-    uint8_t t = PIC8_REG8(PIC_REG_T0CON);
+    uint8_t t = EPIC_REG8(PIC_REG_T0CON);
     t = (uint8_t)((t & (uint8_t)~clr_mask) | set_mask);
-    PIC8_REG8(PIC_REG_T0CON) = t;
+    EPIC_REG8(PIC_REG_T0CON) = t;
 }
 
 EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
@@ -31,7 +31,7 @@ EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
     if (!h) return EPIC_INVALID;
 
     /* Stop the timer before reconfiguring (TMR0ON = 0). */
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T0CON), PIC_T0CON_TMR0ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T0CON), PIC_T0CON_TMR0ON);
 
     /* Clear TMR0IF; configure TMR0IE if a callback is provided. */
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR0);
@@ -43,9 +43,9 @@ EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
 
     /* Set the 8/16-bit mode bit (T0CON<T08BIT>). */
     if (h->Mode == TIMER0_BITMODE_8BIT) {
-        PIC8_BIT_SET(PIC8_REG8(PIC_REG_T0CON), PIC_T0CON_T08BIT);
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_T0CON), PIC_T0CON_T08BIT);
     } else {
-        PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T0CON), PIC_T0CON_T08BIT);
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T0CON), PIC_T0CON_T08BIT);
     }
 
     g_t0_storage = *h;
@@ -57,9 +57,9 @@ EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR0);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR0);
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T0CON), PIC_T0CON_TMR0ON);
-    PIC8_REG8(PIC_REG_TMR0L) = 0x00U;
-    PIC8_REG8(PIC_REG_TMR0H) = 0x00U;
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T0CON), PIC_T0CON_TMR0ON);
+    EPIC_REG8(PIC_REG_TMR0L) = 0x00U;
+    EPIC_REG8(PIC_REG_TMR0H) = 0x00U;
     return EPIC_OK;
 }
 
@@ -69,9 +69,9 @@ EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
 
     /* Load the counter. In 8-bit mode only TMR0L is used; in 16-bit mode
      * TMR0H is the high byte (DS39632E §11.0). */
-    PIC8_REG8(PIC_REG_TMR0L) = h->ReloadValue;
+    EPIC_REG8(PIC_REG_TMR0L) = h->ReloadValue;
     if (h->Mode == TIMER0_BITMODE_16BIT) {
-        PIC8_REG8(PIC_REG_TMR0H) = 0x00U;
+        EPIC_REG8(PIC_REG_TMR0H) = 0x00U;
     }
 
     /* Program prescaler assignment + ratio + clock source + edge + mode in
@@ -88,13 +88,13 @@ EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
     t0con_clr_set(clr_mask, set_mask);
 
     /* Start the timer (TMR0ON = 1). */
-    PIC8_BIT_SET(PIC8_REG8(PIC_REG_T0CON), PIC_T0CON_TMR0ON);
+    EPIC_BIT_SET(EPIC_REG8(PIC_REG_T0CON), PIC_T0CON_TMR0ON);
     return EPIC_OK;
 }
 
 EPIC_StatusTypeDef EPIC_TIMER0_Stop(void)
 {
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T0CON), PIC_T0CON_TMR0ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T0CON), PIC_T0CON_TMR0ON);
     return EPIC_OK;
 }
 
@@ -102,12 +102,12 @@ uint8_t EPIC_TIMER0_ReadCounter(void)
 {
     /* Reading TMR0L latches TMR0H on real hardware (DS39632E §11.0); the
      * low byte is all this 8-bit API returns. */
-    return PIC8_REG8(PIC_REG_TMR0L);
+    return EPIC_REG8(PIC_REG_TMR0L);
 }
 
 void EPIC_TIMER0_WriteCounter(uint8_t value)
 {
-    PIC8_REG8(PIC_REG_TMR0L) = value;
+    EPIC_REG8(PIC_REG_TMR0L) = value;
 }
 
 uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)

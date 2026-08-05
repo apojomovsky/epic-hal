@@ -65,7 +65,7 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     uint8_t ta = tris_addr(port);
     uint8_t mask   = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
 
-    uint8_t tris = PIC8_REG8(ta);
+    uint8_t tris = EPIC_REG8(ta);
 
     switch (mode) {
         case GPIO_MODE_INPUT:
@@ -81,14 +81,14 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
         default:
             return;
     }
-    PIC8_REG8(ta) = tris;
+    EPIC_REG8(ta) = tris;
 }
 
 void EPIC_GPIO_DeInit(GPIO_TypeDef port)
 {
     uint8_t ta = tris_addr(port);
     /* Reset all implemented bits of TRISx to 1 = input. */
-    PIC8_REG8(ta) = (uint8_t)((1U << port_width(port)) - 1U);
+    EPIC_REG8(ta) = (uint8_t)((1U << port_width(port)) - 1U);
 }
 
 /* ───────────────────────── read / write / toggle ────────────────── */
@@ -97,17 +97,17 @@ void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint8_t pa = port_addr(port);
-    uint8_t cur = PIC8_REG8(pa);
+    uint8_t cur = EPIC_REG8(pa);
     if (state == GPIO_PIN_SET) cur |= mask;
     else                       cur &= (uint8_t)~mask;
-    PIC8_REG8(pa) = cur;
+    EPIC_REG8(pa) = cur;
 }
 
 void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint8_t pa = port_addr(port);
-    PIC8_REG8(pa) = PIC8_REG8(pa) ^ mask;
+    EPIC_REG8(pa) = EPIC_REG8(pa) ^ mask;
 }
 
 GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
@@ -119,31 +119,31 @@ GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
      * target the compiler lowers this to a single MOVF. */
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint8_t pa = port_addr(port);
-    return (PIC8_REG8(pa) & mask) ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    return (EPIC_REG8(pa) & mask) ? GPIO_PIN_SET : GPIO_PIN_RESET;
 }
 
 void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value)
 {
     uint8_t mask = (uint8_t)((1U << port_width(port)) - 1U);
-    PIC8_REG8(port_addr(port)) = (uint8_t)(value & mask);
+    EPIC_REG8(port_addr(port)) = (uint8_t)(value & mask);
 }
 
 uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
 {
-    return PIC8_REG8(port_addr(port));
+    return EPIC_REG8(port_addr(port));
 }
 
 /* ───────────────────────── PORTB pull-ups ───────────────────────── */
 
 void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 {
-    uint8_t opt = PIC8_REG8(PIC_REG_OPTION);
+    uint8_t opt = EPIC_REG8(PIC_REG_OPTION);
     if (pull == GPIO_PULLUP) {
-        PIC8_BIT_CLR(opt, (uint8_t)0x80);    /* RBPU = 0 → enabled */
+        EPIC_BIT_CLR(opt, (uint8_t)0x80);    /* RBPU = 0 → enabled */
     } else {
-        PIC8_BIT_SET(opt, (uint8_t)0x80);    /* RBPU = 1 → disabled */
+        EPIC_BIT_SET(opt, (uint8_t)0x80);    /* RBPU = 1 → disabled */
     }
-    PIC8_REG8(PIC_REG_OPTION) = opt;
+    EPIC_REG8(PIC_REG_OPTION) = opt;
 }
 
 /* ───────────────────────── PORTB change interrupt ───────────────────── */
@@ -165,7 +165,7 @@ void RB_IRQHandler(void)
     /* MUST read PORTB before clearing RBIF (DS39582B §14.11.3): the
      * mismatch comparator only re-arms once PORTB is read, so reading
      * after clearing risks a spurious re-interrupt or a missed change. */
-    uint8_t portb = PIC8_REG8(PIC_REG_PORTB);
+    uint8_t portb = EPIC_REG8(PIC_REG_PORTB);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_RB);
     if (s_rb_change_callback) s_rb_change_callback(portb);
 }

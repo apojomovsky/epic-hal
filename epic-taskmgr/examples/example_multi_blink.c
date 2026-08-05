@@ -76,7 +76,7 @@ static const char *led_name(uint8_t pin)
 static void task_blink(void *arg)
 {
     blink_arg_t *a = (blink_arg_t *)arg;
-    EPIC_GPIO_TogglePin(a->port, PIC8_BIT(a->pin));
+    EPIC_GPIO_TogglePin(a->port, EPIC_BIT(a->pin));
     a->count++;
     epic_harness_log("[t=%3u] %s  #%u\n",
                            (unsigned)task_manager_ticks(),

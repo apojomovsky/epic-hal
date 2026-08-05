@@ -7,8 +7,8 @@
  * fallback.
  */
 
-#ifndef PIC8_SDCARD_MMC_CONFIG_H__
-#define PIC8_SDCARD_MMC_CONFIG_H__
+#ifndef EPIC_SDCARD_MMC_CONFIG_H__
+#define EPIC_SDCARD_MMC_CONFIG_H__
 
 #define MMC_SPI_TRANSFER  epic_sdcard_spi_transfer
 #define MMC_SPI_SET_CS    epic_sdcard_spi_set_cs
@@ -19,4 +19,4 @@
 #define MMC_TIMER_EXPIRED epic_sdcard_timer_expired
 #define MMC_TIMER_STOP    epic_sdcard_timer_stop
 
-#endif /* PIC8_SDCARD_MMC_CONFIG_H__ */
+#endif /* EPIC_SDCARD_MMC_CONFIG_H__ */

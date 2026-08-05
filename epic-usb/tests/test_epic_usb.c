@@ -101,24 +101,24 @@ static void test_rx_read_is_nonblocking_and_partial(void)
 static void test_rx_overflow_drops(void)
 {
     reset();
-    uint8_t big[PIC8_USB_RING_SZ + 16u];
+    uint8_t big[EPIC_USB_RING_SZ + 16u];
     for (size_t i = 0; i < sizeof(big); i++) {
         big[i] = (uint8_t)i;
     }
     size_t n = epic_usb_test_inject_rx(big, sizeof(big));
-    CHECK(n == PIC8_USB_RING_SZ, "inject_rx: capped at ring capacity, extra bytes dropped");
-    CHECK(epic_usb_available() == PIC8_USB_RING_SZ, "available() caps at ring capacity too");
+    CHECK(n == EPIC_USB_RING_SZ, "inject_rx: capped at ring capacity, extra bytes dropped");
+    CHECK(epic_usb_available() == EPIC_USB_RING_SZ, "available() caps at ring capacity too");
 }
 
 static void test_tx_overflow_short_write_when_disconnected(void)
 {
     reset();
-    uint8_t big[PIC8_USB_RING_SZ + 16u];
+    uint8_t big[EPIC_USB_RING_SZ + 16u];
     memset(big, 0xAA, sizeof(big));
     /* Disconnected: nothing drains the TX ring, so write() can only enqueue
      * up to ring capacity before it has nowhere left to put more bytes. */
     size_t n = epic_usb_write(big, sizeof(big));
-    CHECK(n == PIC8_USB_RING_SZ,
+    CHECK(n == EPIC_USB_RING_SZ,
           "write while disconnected: short-completes at ring capacity, does not hang");
 }
 

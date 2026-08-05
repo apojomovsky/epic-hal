@@ -191,8 +191,8 @@ void EPIC_CCP_Restart(CCP_InstanceTypeDef inst);
 /* ───────────────────────── IRQ entries ──────────────────────────── */
 
 /** Weak CCP1 (ECCP1) ISR, override in user code. */
-void CCP1_IRQHandler(void) PIC8_WEAK;
+void CCP1_IRQHandler(void) EPIC_WEAK;
 /** Weak CCP2 ISR, override in user code. */
-void CCP2_IRQHandler(void) PIC8_WEAK;
+void CCP2_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_CCP_H */

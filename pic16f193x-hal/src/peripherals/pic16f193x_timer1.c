@@ -28,9 +28,9 @@ uint16_t EPIC_TIMER1_ReadCounter(void)
      * refreshed high. Standard PIC16 idiom (DS41364B §16.4.1). */
     uint8_t hi1, lo, hi2;
     do {
-        hi1 = PIC8_REG8(PIC_REG_TMR1H);
-        lo  = PIC8_REG8(PIC_REG_TMR1L);
-        hi2 = PIC8_REG8(PIC_REG_TMR1H);
+        hi1 = EPIC_REG8(PIC_REG_TMR1H);
+        lo  = EPIC_REG8(PIC_REG_TMR1L);
+        hi2 = EPIC_REG8(PIC_REG_TMR1H);
     } while (hi1 != hi2);
 
     return (uint16_t)(((uint16_t)hi2 << 8) | lo);
@@ -40,8 +40,8 @@ void EPIC_TIMER1_WriteCounter(uint16_t value)
 {
     /* Per DS41364B §16.8: writing TMR1H clears the prescaler. Write
      * high byte first. */
-    PIC8_REG8(PIC_REG_TMR1H) = (uint8_t)(value >> 8);
-    PIC8_REG8(PIC_REG_TMR1L) = (uint8_t)(value & 0xFFU);
+    EPIC_REG8(PIC_REG_TMR1H) = (uint8_t)(value >> 8);
+    EPIC_REG8(PIC_REG_TMR1L) = (uint8_t)(value & 0xFFU);
 }
 
 uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p)
@@ -58,7 +58,7 @@ EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
     if (h->ClockSource != TIMER1_CLOCK_INTERNAL) return EPIC_INVALID;
 
     /* Stop the timer before reconfiguring. */
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
 
     /* Configure the overflow interrupt. */
     EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR1);
@@ -76,9 +76,9 @@ EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16F193X_IRQ_TMR1);
     EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR1);
-    PIC8_REG8(PIC_REG_T1CON) = PIC_T1CON_POR_VALUE;
-    PIC8_REG8(PIC_REG_TMR1H) = 0x00U;
-    PIC8_REG8(PIC_REG_TMR1L) = 0x00U;
+    EPIC_REG8(PIC_REG_T1CON) = PIC_T1CON_POR_VALUE;
+    EPIC_REG8(PIC_REG_TMR1H) = 0x00U;
+    EPIC_REG8(PIC_REG_TMR1L) = 0x00U;
     g_t1_handle = NULL;
     return EPIC_OK;
 }
@@ -102,14 +102,14 @@ EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
      * T1SYNC: leave at 0 until the T1GCON/T1OSC work in the next
      * spec adds them. */
     v |= PIC_T1CON_TMR1ON;                        /* set last. */
-    PIC8_REG8(PIC_REG_T1CON) = v;
+    EPIC_REG8(PIC_REG_T1CON) = v;
 
     return EPIC_OK;
 }
 
 EPIC_StatusTypeDef EPIC_TIMER1_Stop(void)
 {
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
     return EPIC_OK;
 }
 

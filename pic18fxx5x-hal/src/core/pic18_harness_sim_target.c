@@ -21,7 +21,7 @@
 #define FOSC_HZ 48000000UL
 #endif
 
-#define PIC8_HARNESS_SIM_BAUD 9600UL
+#define EPIC_HARNESS_SIM_BAUD 9600UL
 
 static uint32_t g_cycles = 0U;
 
@@ -50,7 +50,7 @@ void epic_harness_init(uint32_t cycles)
      * (divisor 16) would need SPBRG=311, which doesn't fit. */
     USART_HandleTypeDef h = USART_HANDLE_DEFAULT;
     h.BaudHigh = USART_BRGH_LOW;
-    h.SPBRG = (uint8_t)USART_ComputeSPBRG(FOSC_HZ, PIC8_HARNESS_SIM_BAUD,
+    h.SPBRG = (uint8_t)USART_ComputeSPBRG(FOSC_HZ, EPIC_HARNESS_SIM_BAUD,
                                            USART_MODE_ASYNCHRONOUS,
                                            USART_BRGH_LOW,
                                            USART_BAUDGEN_8BIT);

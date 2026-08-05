@@ -44,14 +44,14 @@ typedef enum {
  * @brief Pin identifiers. Each port has up to 8 pins.
  *        Use @ref GPIO_PIN_All for whole-port operations.
  */
-#define GPIO_PIN_0    PIC8_BIT(0)
-#define GPIO_PIN_1    PIC8_BIT(1)
-#define GPIO_PIN_2    PIC8_BIT(2)
-#define GPIO_PIN_3    PIC8_BIT(3)
-#define GPIO_PIN_4    PIC8_BIT(4)
-#define GPIO_PIN_5    PIC8_BIT(5)
-#define GPIO_PIN_6    PIC8_BIT(6)
-#define GPIO_PIN_7    PIC8_BIT(7)
+#define GPIO_PIN_0    EPIC_BIT(0)
+#define GPIO_PIN_1    EPIC_BIT(1)
+#define GPIO_PIN_2    EPIC_BIT(2)
+#define GPIO_PIN_3    EPIC_BIT(3)
+#define GPIO_PIN_4    EPIC_BIT(4)
+#define GPIO_PIN_5    EPIC_BIT(5)
+#define GPIO_PIN_6    EPIC_BIT(6)
+#define GPIO_PIN_7    EPIC_BIT(7)
 #define GPIO_PIN_All  0xFFU
 
 /** Pin logical state. */
@@ -158,6 +158,6 @@ void EPIC_GPIO_EnableChangeDetect(uint8_t pos_mask, uint8_t neg_mask);
  *   callback. Read-before-clear order matches the datasheet's re-arm
  *   requirement.
  */
-void IOC_IRQHandler(void) PIC8_WEAK;
+void IOC_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F193X_GPIO_H */

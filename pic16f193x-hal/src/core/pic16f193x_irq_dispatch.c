@@ -8,7 +8,7 @@
  *   `__interrupt()` and the host's sim IRQ callback both call this one
  *   dispatcher. Each peripheral IRQHandler checks its own flag and
  *   returns immediately if not pending. Handlers are declared here
- *   with strong prototypes, not via their PIC8_WEAK headers, so the
+ *   with strong prototypes, not via their EPIC_WEAK headers, so the
  *   host linker is forced to pull every handler's object out of the
  *   static library instead of leaving an unreferenced weak symbol NULL.
  *

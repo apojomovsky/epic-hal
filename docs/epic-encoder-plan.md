@@ -66,7 +66,7 @@ void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
 
 /** Weak RB-change ISR, override in user code to add application logic
  *  (mirrors every other *_IRQHandler in this HAL). */
-void RB_IRQHandler(void) PIC8_WEAK;
+void RB_IRQHandler(void) EPIC_WEAK;
 ```
 
 ### Why the callback takes the already-read PORTB byte (read-before-clear is mandatory, not stylistic)
@@ -101,7 +101,7 @@ void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t))
 void RB_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC16_IRQ_RB)) return;
-    uint8_t portb = PIC8_REG8(PIC_REG_PORTB);  /* MUST read before ClearFlag, DS39582B §14.11.3 */
+    uint8_t portb = EPIC_REG8(PIC_REG_PORTB);  /* MUST read before ClearFlag, DS39582B §14.11.3 */
     EPIC_IRQ_ClearFlag(PIC16_IRQ_RB);
     if (s_rb_change_callback) s_rb_change_callback(portb);
 }

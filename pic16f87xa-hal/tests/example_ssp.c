@@ -38,13 +38,13 @@ int main(void)
     EPIC_SSP_Init(&h);
 
     /* Verify SSPCON. Mode 0000 (bits 0..3), CKP=0, SSPEN=1 (bit 5). */
-    uint8_t sspcon = PIC8_REG8(0x14U);
+    uint8_t sspcon = EPIC_REG8(0x14U);
     CHECK((sspcon & 0x3FU) == 0x20U,
           "SSPCON not programmed for SPI master Fosc/4 (expected 0x20)");
 
     /* 3. Write a byte to SSPBUF. */
     CHECK(EPIC_SSP_WriteByte(0xA5U) == 0U, "WriteByte returned error");
-    CHECK(PIC8_REG8(PIC_REG_SSPBUF) == 0xA5U, "SSPBUF did not capture 0xA5");
+    CHECK(EPIC_REG8(PIC_REG_SSPBUF) == 0xA5U, "SSPBUF did not capture 0xA5");
 
     /* 4. RX: drive a byte, read it back. */
     pic16f87xa_sim_drive_ssp_rx(0xC3U);
@@ -62,18 +62,18 @@ int main(void)
     EPIC_SSP_Start();
     /* SSPCON2 SEN bit should be set. */
     {
-        uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
-        uint8_t sspcon2 = PIC8_REG8(0x91U);
+        uint8_t sspcon2 = EPIC_REG8(0x91U);
         pic_select_bank(prev);
         CHECK((sspcon2 & PIC_SSPCON2_SEN) != 0U, "SEN not set after Start");
     }
 
     EPIC_SSP_Stop();
     {
-        uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
-        uint8_t sspcon2 = PIC8_REG8(0x91U);
+        uint8_t sspcon2 = EPIC_REG8(0x91U);
         pic_select_bank(prev);
         CHECK((sspcon2 & PIC_SSPCON2_PEN) != 0U, "PEN not set after Stop");
     }

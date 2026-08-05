@@ -99,9 +99,9 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     uint16_t la  = lat_addr(port);
     uint16_t aa  = ansel_addr(port);
 
-    uint8_t tris  = PIC8_REG8(ta);
-    uint8_t lat   = PIC8_REG8(la);
-    uint8_t ansel = (aa != 0xFFFFU) ? PIC8_REG8(aa) : 0U;
+    uint8_t tris  = EPIC_REG8(ta);
+    uint8_t lat   = EPIC_REG8(la);
+    uint8_t ansel = (aa != 0xFFFFU) ? EPIC_REG8(aa) : 0U;
 
     switch (mode) {
         case GPIO_MODE_INPUT:
@@ -120,9 +120,9 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
         default:
             return;
     }
-    PIC8_REG8(ta) = tris;
-    if (aa != 0xFFFFU) PIC8_REG8(aa) = ansel;
-    PIC8_REG8(la) = lat;
+    EPIC_REG8(ta) = tris;
+    if (aa != 0xFFFFU) EPIC_REG8(aa) = ansel;
+    EPIC_REG8(la) = lat;
 }
 
 void EPIC_GPIO_DeInit(GPIO_TypeDef port)
@@ -131,9 +131,9 @@ void EPIC_GPIO_DeInit(GPIO_TypeDef port)
     uint16_t la = lat_addr(port);
     uint16_t aa = ansel_addr(port);
     /* Reset to POR: input, analog, latch clear. */
-    PIC8_REG8(ta) = (uint8_t)((1U << port_width(port)) - 1U);
-    if (aa != 0xFFFFU) PIC8_REG8(aa) = (uint8_t)((1U << port_width(port)) - 1U);
-    PIC8_REG8(la) = 0x00U;
+    EPIC_REG8(ta) = (uint8_t)((1U << port_width(port)) - 1U);
+    if (aa != 0xFFFFU) EPIC_REG8(aa) = (uint8_t)((1U << port_width(port)) - 1U);
+    EPIC_REG8(la) = 0x00U;
 }
 
 /* ───────────────────────── read / write / toggle ────────────────── */
@@ -142,35 +142,35 @@ void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint16_t la = lat_addr(port);
-    uint8_t cur = PIC8_REG8(la);
+    uint8_t cur = EPIC_REG8(la);
     if (state == GPIO_PIN_SET) cur |= mask;
     else                       cur &= (uint8_t)~mask;
-    PIC8_REG8(la) = cur;
+    EPIC_REG8(la) = cur;
 }
 
 void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint16_t la = lat_addr(port);
-    PIC8_REG8(la) = PIC8_REG8(la) ^ mask;
+    EPIC_REG8(la) = EPIC_REG8(la) ^ mask;
 }
 
 GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint16_t pa = port_addr(port);
-    return (PIC8_REG8(pa) & mask) ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    return (EPIC_REG8(pa) & mask) ? GPIO_PIN_SET : GPIO_PIN_RESET;
 }
 
 void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value)
 {
     uint8_t mask = (uint8_t)((1U << port_width(port)) - 1U);
-    PIC8_REG8(lat_addr(port)) = (uint8_t)(value & mask);
+    EPIC_REG8(lat_addr(port)) = (uint8_t)(value & mask);
 }
 
 uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
 {
-    return PIC8_REG8(port_addr(port));
+    return EPIC_REG8(port_addr(port));
 }
 
 /* ───────────────────────── PORTB weak pull-ups ─────────────────── */
@@ -183,14 +183,14 @@ void EPIC_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
 
     if (state == GPIO_PIN_SET) {
-        PIC8_REG8(PIC_REG_WPUB) |= mask;
+        EPIC_REG8(PIC_REG_WPUB) |= mask;
         /* WPUEN = 0 enables the per-pin pull-ups. */
-        PIC8_BIT_CLR(PIC8_REG8(PIC_REG_OPTION), PIC_OPTION_WPUEN);
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_WPUEN);
     } else {
-        PIC8_REG8(PIC_REG_WPUB) &= (uint8_t)~mask;
+        EPIC_REG8(PIC_REG_WPUB) &= (uint8_t)~mask;
         /* If no PORTB pin still wants a pull-up, disable globally. */
-        if (PIC8_REG8(PIC_REG_WPUB) == 0U) {
-            PIC8_BIT_SET(PIC8_REG8(PIC_REG_OPTION), PIC_OPTION_WPUEN);
+        if (EPIC_REG8(PIC_REG_WPUB) == 0U) {
+            EPIC_BIT_SET(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_WPUEN);
         }
     }
 }
@@ -206,8 +206,8 @@ void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t, uint8_t))
 
 void EPIC_GPIO_EnableChangeDetect(uint8_t pos_mask, uint8_t neg_mask)
 {
-    PIC8_REG8(PIC_REG_IOCBP) = pos_mask;
-    PIC8_REG8(PIC_REG_IOCBN) = neg_mask;
+    EPIC_REG8(PIC_REG_IOCBP) = pos_mask;
+    EPIC_REG8(PIC_REG_IOCBN) = neg_mask;
 }
 
 void IOC_IRQHandler(void)
@@ -217,9 +217,9 @@ void IOC_IRQHandler(void)
     /* Read IOCBF (which pins changed) and PORTB before clearing, the
      * mismatch comparator only re-arms once PORTB is read (DS41364B
      * §7.0), matching classic PIC16's read-before-clear requirement. */
-    uint8_t iocbf = PIC8_REG8(PIC_REG_IOCBF);
-    uint8_t portb = PIC8_REG8(PIC_REG_PORTB);
-    PIC8_REG8(PIC_REG_IOCBF) = 0x00U;
+    uint8_t iocbf = EPIC_REG8(PIC_REG_IOCBF);
+    uint8_t portb = EPIC_REG8(PIC_REG_PORTB);
+    EPIC_REG8(PIC_REG_IOCBF) = 0x00U;
     EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_IOC);
     if (s_ioc_callback) s_ioc_callback(iocbf, portb);
 }

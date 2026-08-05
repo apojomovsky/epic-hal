@@ -11,8 +11,8 @@
  *   failure, both mean apply defaults.
  */
 
-#ifndef PIC8_SETTINGS_H
-#define PIC8_SETTINGS_H
+#ifndef EPIC_SETTINGS_H
+#define EPIC_SETTINGS_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -67,4 +67,4 @@ bool epic_settings_load(uint8_t eeprom_addr, void *data, uint8_t size);
 bool epic_settings_load_or_default(uint8_t eeprom_addr, void *data, uint8_t size,
                                    const void *default_data);
 
-#endif /* PIC8_SETTINGS_H */
+#endif /* EPIC_SETTINGS_H */

@@ -34,7 +34,7 @@ static void test_init_sequence(void)
     int8_t res = mmc_init_card(&card);
     CHECK(res == 0, "init_card: succeeds against the mock");
     CHECK(mmc_is_initialized(&card), "after init_card: initialized");
-    CHECK(mmc_get_num_blocks(&card) == PIC8_SDCARD_MOCK_REPORTED_BLOCKS,
+    CHECK(mmc_get_num_blocks(&card) == EPIC_SDCARD_MOCK_REPORTED_BLOCKS,
           "init_card: reports the mock's advertised block count");
     CHECK(mmc_ready(&card), "ready() true immediately after init");
 }
@@ -43,7 +43,7 @@ static void test_read_preseeded_block(void)
 {
     epic_sdcard_mock_reset();
     uint8_t *backing = epic_sdcard_mock_block(1);
-    for (uint16_t i = 0; i < PIC8_SDCARD_MOCK_BLOCK_SIZE; i++) {
+    for (uint16_t i = 0; i < EPIC_SDCARD_MOCK_BLOCK_SIZE; i++) {
         backing[i] = (uint8_t)(i * 3 + 7);
     }
 
@@ -51,11 +51,11 @@ static void test_read_preseeded_block(void)
     mmc_init(&card, 1u);
     CHECK(mmc_init_card(&card) == 0, "read test: init_card succeeds");
 
-    uint8_t data[PIC8_SDCARD_MOCK_BLOCK_SIZE];
+    uint8_t data[EPIC_SDCARD_MOCK_BLOCK_SIZE];
     memset(data, 0, sizeof(data));
     int8_t res = mmc_read_block(&card, 1u, data);
     CHECK(res == 0, "read_block: succeeds (CRC16 self-check passes)");
-    CHECK(memcmp(data, epic_sdcard_mock_block(1), PIC8_SDCARD_MOCK_BLOCK_SIZE) == 0,
+    CHECK(memcmp(data, epic_sdcard_mock_block(1), EPIC_SDCARD_MOCK_BLOCK_SIZE) == 0,
           "read_block: bytes match what was pre-seeded");
 }
 
@@ -66,21 +66,21 @@ static void test_write_then_read_round_trip(void)
     mmc_init(&card, 1u);
     CHECK(mmc_init_card(&card) == 0, "round-trip: init_card succeeds");
 
-    uint8_t written[PIC8_SDCARD_MOCK_BLOCK_SIZE];
-    for (uint16_t i = 0; i < PIC8_SDCARD_MOCK_BLOCK_SIZE; i++) {
+    uint8_t written[EPIC_SDCARD_MOCK_BLOCK_SIZE];
+    for (uint16_t i = 0; i < EPIC_SDCARD_MOCK_BLOCK_SIZE; i++) {
         written[i] = (uint8_t)(255 - i);
     }
 
     int8_t wres = mmc_write_block(&card, 2u, written);
     CHECK(wres == 0, "write_block: succeeds");
-    CHECK(memcmp(epic_sdcard_mock_block(2), written, PIC8_SDCARD_MOCK_BLOCK_SIZE) == 0,
+    CHECK(memcmp(epic_sdcard_mock_block(2), written, EPIC_SDCARD_MOCK_BLOCK_SIZE) == 0,
           "write_block: mock's backing store actually got the bytes");
 
-    uint8_t read_back[PIC8_SDCARD_MOCK_BLOCK_SIZE];
+    uint8_t read_back[EPIC_SDCARD_MOCK_BLOCK_SIZE];
     memset(read_back, 0, sizeof(read_back));
     int8_t rres = mmc_read_block(&card, 2u, read_back);
     CHECK(rres == 0, "round-trip: read_block succeeds");
-    CHECK(memcmp(read_back, written, PIC8_SDCARD_MOCK_BLOCK_SIZE) == 0,
+    CHECK(memcmp(read_back, written, EPIC_SDCARD_MOCK_BLOCK_SIZE) == 0,
           "round-trip: read-back bytes match what was written");
 }
 
@@ -91,13 +91,13 @@ static void test_two_blocks_independent(void)
     mmc_init(&card, 1u);
     CHECK(mmc_init_card(&card) == 0, "independence test: init_card succeeds");
 
-    uint8_t a[PIC8_SDCARD_MOCK_BLOCK_SIZE], b[PIC8_SDCARD_MOCK_BLOCK_SIZE];
+    uint8_t a[EPIC_SDCARD_MOCK_BLOCK_SIZE], b[EPIC_SDCARD_MOCK_BLOCK_SIZE];
     memset(a, 0xAA, sizeof(a));
     memset(b, 0x55, sizeof(b));
     CHECK(mmc_write_block(&card, 0u, a) == 0, "independence: write block 0");
     CHECK(mmc_write_block(&card, 3u, b) == 0, "independence: write block 3");
 
-    uint8_t read0[PIC8_SDCARD_MOCK_BLOCK_SIZE], read3[PIC8_SDCARD_MOCK_BLOCK_SIZE];
+    uint8_t read0[EPIC_SDCARD_MOCK_BLOCK_SIZE], read3[EPIC_SDCARD_MOCK_BLOCK_SIZE];
     CHECK(mmc_read_block(&card, 0u, read0) == 0, "independence: read block 0");
     CHECK(mmc_read_block(&card, 3u, read3) == 0, "independence: read block 3");
     CHECK(memcmp(read0, a, sizeof(a)) == 0, "independence: block 0 unaffected by block 3's write");
@@ -111,11 +111,11 @@ static void test_read_beyond_reported_size_fails(void)
     mmc_init(&card, 1u);
     CHECK(mmc_init_card(&card) == 0, "range test: init_card succeeds");
 
-    uint8_t data[PIC8_SDCARD_MOCK_BLOCK_SIZE];
+    uint8_t data[EPIC_SDCARD_MOCK_BLOCK_SIZE];
     /* mmc_read_block range-checks against card_size_blocks (the
      * *reported* 1024, not the mock's small backing store) before
      * touching SPI at all, mmc.c's own bounds check. */
-    int8_t res = mmc_read_block(&card, PIC8_SDCARD_MOCK_REPORTED_BLOCKS, data);
+    int8_t res = mmc_read_block(&card, EPIC_SDCARD_MOCK_REPORTED_BLOCKS, data);
     CHECK(res < 0, "read_block: rejects a block address at/past the reported size");
 }
 
@@ -127,7 +127,7 @@ static void test_read_before_init_fails(void)
     /* Never call mmc_init_card(): card_size_blocks is still 0 from
      * reset_state(), so any block address is "beyond the reported size". */
 
-    uint8_t data[PIC8_SDCARD_MOCK_BLOCK_SIZE];
+    uint8_t data[EPIC_SDCARD_MOCK_BLOCK_SIZE];
     CHECK(mmc_read_block(&card, 0u, data) < 0, "read_block before init: fails");
     CHECK(!mmc_ready(&card), "ready() false before init");
 }

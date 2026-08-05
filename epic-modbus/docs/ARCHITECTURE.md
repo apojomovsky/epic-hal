@@ -31,7 +31,7 @@ exactly the same call `epic-debounce` made about its own poll loop.
 ```
 avail = epic_serial_available()
 if avail > 0:
-    drain up to (PIC8_MODBUS_MAX_ADU - frame_len) bytes into frame[]
+    drain up to (EPIC_MODBUS_MAX_ADU - frame_len) bytes into frame[]
     discard anything beyond that (keeps the RX ring from wedging on an
     oversized frame; the frame fails length/CRC validation regardless)
     last_rx_tick = epic_tick_get()
@@ -90,14 +90,14 @@ there would be an unused, untested surface.
 ## RAM budget: PIC16F876A/877A and every PIC18 family member fit; 873A/874A don't
 
 Verified by building the real XC8 target: `MCU=16F877A` (368 B RAM) links
-with the default `PIC8_MODBUS_MAX_ADU=64` at 98.4% data space, snug but
+with the default `EPIC_MODBUS_MAX_ADU=64` at 98.4% data space, snug but
 fitting; every PIC18F2455/2550/4455/4550 target (2 KB RAM) has plenty of
 headroom (27.2% used). The 192 B PIC16F873A/874A variants **fail to link**
 at default settings, "could not find space" for the ring buffers. This is
 **inherited from `epic-serial` itself**: its own target build already fails
 on `MCU=16F873A` with zero Modbus code linked at all (`g_rx_buf` alone is
 32 B), confirmed by building `epic-serial/mcu/pic16f87xa-serial-mplabx`
-standalone. Shrinking `PIC8_MODBUS_MAX_ADU` and `PIC8_SERIAL_RING_SZ`
+standalone. Shrinking `EPIC_MODBUS_MAX_ADU` and `EPIC_SERIAL_RING_SZ`
 together helps but doesn't close the gap (tried down to 8 bytes each,
 still short by a handful of bytes once the full HAL peripheral set these
 Makefiles link is accounted for). Fixing that is a `epic-serial`-level
@@ -120,7 +120,7 @@ Optional, and family-neutral in the public header: `epic_modbus.h` takes
 plain `uint8_t port, pin` (mirroring `epic_bus_spi_init`'s `cs_port`/
 `cs_pin` convention), not a HAL `GPIO_TypeDef`, so the public header needs
 no HAL include at all. Internally, `src/epic_modbus.c` casts to
-`GPIO_TypeDef`/`PIC8_BIT(pin)`, the same idiom `epic-bus` uses for its SPI
+`GPIO_TypeDef`/`EPIC_BIT(pin)`, the same idiom `epic-bus` uses for its SPI
 chip-select pin.
 
 If never configured, responses go out through `epic_serial_write`
@@ -160,7 +160,7 @@ fixing the underlying estimate is out of scope for this module.
 RX bytes are injected through `*_sim_drive_usart_rx`, `epic_tick_delay_ms`
 (which pumps `epic_harness_tick()`) advances simulated time past T3.5, and
 TX bytes are captured by pumping `epic_dispatch_all_irqs` while reading
-`PIC8_REG8(PIC_REG_TXREG)`. Expected CRC-16 values are computed with a
+`EPIC_REG8(PIC_REG_TXREG)`. Expected CRC-16 values are computed with a
 second, independently written copy of the CRC-16/MODBUS algorithm
 (self-checked against the standard catalogue "123456789" → `0x4B37` test
 vector), so the test cannot share a CRC bug with `src/epic_modbus.c`.

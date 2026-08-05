@@ -183,7 +183,7 @@ installers eventually supplied by the user:**
 - All 19 host-sim modules (`git ls-files -- '*/CMakeLists.txt'`) build
   and pass their `ctest` suite via the real `make test`.
 - **The `mdb` gate itself runs and reports real
-  `PIC8_HARNESS_RESULT: PASS`** for `epic-tick`'s pilot module, both
+  `EPIC_HARNESS_RESULT: PASS`** for `epic-tick`'s pilot module, both
   families (`make mdb-test`, `PIC16F877A` and `PIC18F4550`), the actual
   reason this whole Docker effort exists.
 - `make ci-image-push`'s tag resolution and its missing-`GHCR_OWNER`

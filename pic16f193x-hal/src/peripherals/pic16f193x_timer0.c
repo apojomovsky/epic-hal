@@ -26,9 +26,9 @@ static const TIMER0_HandleTypeDef *g_t0_handle = NULL;
 /** Read-modify-write helper for OPTION_REG. */
 static void option_clr_set(uint8_t clr_mask, uint8_t set_mask)
 {
-    uint8_t opt = PIC8_REG8(PIC_REG_OPTION);
+    uint8_t opt = EPIC_REG8(PIC_REG_OPTION);
     opt = (uint8_t)((opt & (uint8_t)~clr_mask) | set_mask);
-    PIC8_REG8(PIC_REG_OPTION) = opt;
+    EPIC_REG8(PIC_REG_OPTION) = opt;
 }
 
 EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
@@ -36,7 +36,7 @@ EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
     if (!h) return EPIC_INVALID;
 
     /* Stop the timer before reconfiguring. */
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
 
     /* Clear TMR0IF; configure TMR0IE if a callback is provided. */
     EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR0);
@@ -55,8 +55,8 @@ EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16F193X_IRQ_TMR0);
     EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR0);
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
-    PIC8_REG8(PIC_REG_TMR0) = 0x00U;
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
+    EPIC_REG8(PIC_REG_TMR0) = 0x00U;
     return EPIC_OK;
 }
 
@@ -66,7 +66,7 @@ EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
 
     /* DS41364B §15.0: writing TMR0 when the prescaler is assigned to
      * Timer0 clears the prescaler. Reload before re-enabling. */
-    PIC8_REG8(PIC_REG_TMR0) = h->ReloadValue;
+    EPIC_REG8(PIC_REG_TMR0) = h->ReloadValue;
 
     /* Program prescaler assignment + ratio + clock source + edge in one
      * atomic read-modify-write. WPUEN and INTEDG are left untouched. */
@@ -84,18 +84,18 @@ EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
 
 EPIC_StatusTypeDef EPIC_TIMER0_Stop(void)
 {
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
     return EPIC_OK;
 }
 
 uint8_t EPIC_TIMER0_ReadCounter(void)
 {
-    return PIC8_REG8(PIC_REG_TMR0);
+    return EPIC_REG8(PIC_REG_TMR0);
 }
 
 void EPIC_TIMER0_WriteCounter(uint8_t value)
 {
-    PIC8_REG8(PIC_REG_TMR0) = value;
+    EPIC_REG8(PIC_REG_TMR0) = value;
 }
 
 uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)

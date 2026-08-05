@@ -26,8 +26,8 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Shared layer: status codes, harness, CMake helpers.
-set(PIC8_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-common)
-include(${PIC8_COMMON_DIR}/cmake/epic_family.cmake)
+set(EPIC_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-common)
+include(${EPIC_COMMON_DIR}/cmake/epic_family.cmake)
 
 # Default device, can be overridden with -DPIC16F87XA_DEVICE=873A.
 if(NOT DEFINED PIC16F87XA_DEVICE)
@@ -47,14 +47,14 @@ else()
 endif()
 
 # Variables consumed by the shared epic_family.cmake helpers.
-set(PIC8_EPIC_LIB              pic16f87xa_hal)
-set(PIC8_DEFAULT_DEVICE       ${PIC16F87XA_DEFAULT_DEVICE})
-set(PIC8_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(PIC8_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
-set(PIC8_COMMON_INCLUDE_DIR    ${PIC8_COMMON_DIR}/include)
-set(PIC8_FAMILY_DEVICES        PIC16F873A PIC16F874A PIC16F876A PIC16F877A)
+set(EPIC_LIB              pic16f87xa_hal)
+set(EPIC_DEFAULT_DEVICE       ${PIC16F87XA_DEFAULT_DEVICE})
+set(EPIC_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(EPIC_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
+set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
+set(EPIC_FAMILY_DEVICES        PIC16F873A PIC16F874A PIC16F876A PIC16F877A)
 
-set(PIC8_EPIC_SOURCES
+set(EPIC_SOURCES
     src/peripherals/pic16f87xa_gpio.c
     src/peripherals/pic16f87xa_timer0.c
     src/peripherals/pic16f87xa_timer1.c
@@ -76,10 +76,10 @@ set(PIC8_EPIC_SOURCES
 
 # PSP is only on 40/44-pin parts. PIC16F877A is the default.
 if(PIC16F87XA_FAMILY_HAS_PSP)
-    list(APPEND PIC8_EPIC_SOURCES src/peripherals/pic16f87xa_psp.c)
+    list(APPEND EPIC_SOURCES src/peripherals/pic16f87xa_psp.c)
 endif()
 
-epic_add_hal_library(${PIC8_EPIC_LIB})
+epic_add_hal_library(${EPIC_LIB})
 
 epic_add_example(example_blink       tests/example_blink.c)
 epic_add_example(example_idle_blink  tests/example_idle_blink.c)

@@ -47,7 +47,7 @@ contract.
   link both `epic-serial` and `epic-tick`).
 - **Host test pattern**: `epic-serial/examples/example_serial.c`'s RX
   injection (`pic16f87xa_sim_drive_usart_rx` / PIC18 equivalent) + TX
-  draining (`epic_dispatch_all_irqs` + reading `PIC8_REG8(PIC_REG_TXREG)`),
+  draining (`epic_dispatch_all_irqs` + reading `EPIC_REG8(PIC_REG_TXREG)`),
   combined with `epic_tick_delay_ms` to advance simulated time past T3.5.
 - **Considered and rejected**: `epic-fsm` for RTU frame assembly. RTU
   framing is silence-delimited, not event-delimited; a direct

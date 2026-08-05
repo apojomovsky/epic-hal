@@ -10,28 +10,28 @@
  *   state.
  */
 
-#ifndef PIC8_CONSOLE_H
-#define PIC8_CONSOLE_H
+#ifndef EPIC_CONSOLE_H
+#define EPIC_CONSOLE_H
 
 #include <stdint.h>
 #include <stdbool.h>
 
 /**
  * @brief  Maximum buffered line length including the terminating `\0`.
- *         Override by defining `PIC8_CONSOLE_LINE_MAX` before including the
+ *         Override by defining `EPIC_CONSOLE_LINE_MAX` before including the
  *         header.
  */
-#ifndef PIC8_CONSOLE_LINE_MAX
-#define PIC8_CONSOLE_LINE_MAX 32u
+#ifndef EPIC_CONSOLE_LINE_MAX
+#define EPIC_CONSOLE_LINE_MAX 32u
 #endif
 
 /**
  * @brief  Maximum number of in-place whitespace-delimited tokens placed in
  *         `argv[]` during dispatch. Override by defining
- *         `PIC8_CONSOLE_MAX_ARGS` before including the header.
+ *         `EPIC_CONSOLE_MAX_ARGS` before including the header.
  */
-#ifndef PIC8_CONSOLE_MAX_ARGS
-#define PIC8_CONSOLE_MAX_ARGS 8u
+#ifndef EPIC_CONSOLE_MAX_ARGS
+#define EPIC_CONSOLE_MAX_ARGS 8u
 #endif
 
 /**
@@ -64,7 +64,7 @@ typedef struct {
     const epic_console_cmd_t *table;       /**< Command table declared by the caller. */
     uint8_t                   table_len;   /**< Number of rows in `table`.            */
     void                     *ctx;         /**< Opaque pointer passed to handlers.    */
-    char                      line[PIC8_CONSOLE_LINE_MAX]; /**< Editable line buffer. */
+    char                      line[EPIC_CONSOLE_LINE_MAX]; /**< Editable line buffer. */
     uint8_t                   line_len;    /**< Bytes currently buffered in `line`.   */
     bool                      last_was_cr; /**< CR/LF coalescing flag.                */
 } epic_console_t;
@@ -87,7 +87,7 @@ void epic_console_init(epic_console_t *con, const epic_console_cmd_t *table,
  *
  * @warning `table` must be the actual array here, not a decayed pointer.
  */
-#define PIC8_CONSOLE_INIT(con, table, ctx) \
+#define EPIC_CONSOLE_INIT(con, table, ctx) \
     epic_console_init((con), (table), (uint8_t)(sizeof(table) / sizeof((table)[0])), (ctx))
 
 /**
@@ -109,4 +109,4 @@ void epic_console_poll(epic_console_t *con);
  */
 void epic_console_print_help(const epic_console_t *con);
 
-#endif /* PIC8_CONSOLE_H */
+#endif /* EPIC_CONSOLE_H */

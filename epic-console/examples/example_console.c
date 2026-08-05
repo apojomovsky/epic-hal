@@ -66,7 +66,7 @@ int main(void)
         { "help",   cmd_help,   "list commands" },
     };
     epic_console_t con;
-    PIC8_CONSOLE_INIT(&con, table, &ctx);
+    EPIC_CONSOLE_INIT(&con, table, &ctx);
     ctx.console = &con;
 
     const char *script = "status\rled on\rstatus\rhelp\r";

@@ -39,15 +39,15 @@ int main(void)
     ccp5.CompareValue = 0x0500U;
     EPIC_CCP_Init(&ccp5);
 
-    uint8_t c3con = PIC8_REG8(PIC_REG_CCP3CON);
-    uint8_t c3h = PIC8_REG8(PIC_REG_CCPR3H);
-    uint8_t c3l = PIC8_REG8(PIC_REG_CCPR3L);
-    uint8_t c4con = PIC8_REG8(PIC_REG_CCP4CON);
-    uint8_t c4h = PIC8_REG8(PIC_REG_CCPR4H);
-    uint8_t c4l = PIC8_REG8(PIC_REG_CCPR4L);
-    uint8_t c5con = PIC8_REG8(PIC_REG_CCP5CON);
-    uint8_t c5h = PIC8_REG8(PIC_REG_CCPR5H);
-    uint8_t c5l = PIC8_REG8(PIC_REG_CCPR5L);
+    uint8_t c3con = EPIC_REG8(PIC_REG_CCP3CON);
+    uint8_t c3h = EPIC_REG8(PIC_REG_CCPR3H);
+    uint8_t c3l = EPIC_REG8(PIC_REG_CCPR3L);
+    uint8_t c4con = EPIC_REG8(PIC_REG_CCP4CON);
+    uint8_t c4h = EPIC_REG8(PIC_REG_CCPR4H);
+    uint8_t c4l = EPIC_REG8(PIC_REG_CCPR4L);
+    uint8_t c5con = EPIC_REG8(PIC_REG_CCP5CON);
+    uint8_t c5h = EPIC_REG8(PIC_REG_CCPR5H);
+    uint8_t c5l = EPIC_REG8(PIC_REG_CCPR5L);
 
     epic_harness_log("CCP3=0x%02X%02X%02X CCP4=0x%02X%02X%02X CCP5=0x%02X%02X%02X\n",
                       c3con, c3h, c3l, c4con, c4h, c4l, c5con, c5h, c5l);

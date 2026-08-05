@@ -79,6 +79,6 @@ uint16_t EPIC_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p);
 uint16_t EPIC_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p);
 
 /** Weak Timer2 ISR, override in user code to add application logic. */
-void TIMER2_IRQHandler(void) PIC8_WEAK;
+void TIMER2_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_TIMER2_H */

@@ -31,7 +31,7 @@
     static void settings_sim_complete(uint8_t addr, uint8_t data)
     {
         pic16f87xa_sim_drive_eeprom_byte(addr, data);
-        PIC8_REG8(PIC_REG_PIR2) |= PIC_PIR2_EEIF;
+        EPIC_REG8(PIC_REG_PIR2) |= PIC_PIR2_EEIF;
     }
   #endif
 #endif

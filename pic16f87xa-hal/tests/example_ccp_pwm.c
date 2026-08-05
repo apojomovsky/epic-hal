@@ -69,9 +69,9 @@ int main(void)
     EPIC_TIMER2_Start(&th);
 
     /* 4. Verify the configuration went to the right registers. */
-    uint8_t con = PIC8_REG8(0x17U);  /* CCP1CON */
-    uint8_t rl  = PIC8_REG8(0x15U);  /* CCPR1L */
-    uint8_t pr2 = PIC8_REG8(0x92U);  /* PR2, Bank 1 */
+    uint8_t con = EPIC_REG8(0x17U);  /* CCP1CON */
+    uint8_t rl  = EPIC_REG8(0x15U);  /* CCPR1L */
+    uint8_t pr2 = EPIC_REG8(0x92U);  /* PR2, Bank 1 */
 
     /* 50% of 100 = 50 → 10-bit value 50 = 0x032.
      * CCPR1L = 0x0C (50 >> 2).

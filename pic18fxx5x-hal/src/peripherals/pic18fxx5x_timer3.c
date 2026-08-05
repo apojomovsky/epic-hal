@@ -39,7 +39,7 @@ EPIC_StatusTypeDef EPIC_TIMER3_Init(const TIMER3_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
 
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T3CON), PIC_T3CON_TMR3ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T3CON), PIC_T3CON_TMR3ON);
 
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR3);
     if (h->OverflowCallback) {
@@ -50,7 +50,7 @@ EPIC_StatusTypeDef EPIC_TIMER3_Init(const TIMER3_HandleTypeDef *h)
 
     /* Enable 16-bit read/write mode (RD16). Leave T3CCP2:T3CCP1 at reset
      * (00 = Timer1 is the CCP time base); the CCP/ECCP driver manages them. */
-    PIC8_BIT_SET(PIC8_REG8(PIC_REG_T3CON), PIC_T3CON_RD16);
+    EPIC_BIT_SET(EPIC_REG8(PIC_REG_T3CON), PIC_T3CON_RD16);
 
     g_t3_storage = *h;
     g_t3_handle = &g_t3_storage;
@@ -61,9 +61,9 @@ EPIC_StatusTypeDef EPIC_TIMER3_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR3);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR3);
-    PIC8_REG8(PIC_REG_T3CON) = PIC_T3CON_POR_VALUE;
-    PIC8_REG8(PIC_REG_TMR3H) = 0x00U;
-    PIC8_REG8(PIC_REG_TMR3L) = 0x00U;
+    EPIC_REG8(PIC_REG_T3CON) = PIC_T3CON_POR_VALUE;
+    EPIC_REG8(PIC_REG_TMR3H) = 0x00U;
+    EPIC_REG8(PIC_REG_TMR3L) = 0x00U;
     g_t3_handle = NULL;
     return EPIC_OK;
 }
@@ -85,14 +85,14 @@ EPIC_StatusTypeDef EPIC_TIMER3_Start(const TIMER3_HandleTypeDef *h)
     if (h->ClockSync   == TIMER3_ASYNC_EXTERNAL) v |= PIC_T3CON_T3SYNC;
     if (h->ClockSource == TIMER3_CLOCK_EXTERNAL) v |= PIC_T3CON_TMR3CS;
     v |= PIC_T3CON_TMR3ON;
-    PIC8_REG8(PIC_REG_T3CON) = v;
+    EPIC_REG8(PIC_REG_T3CON) = v;
 
     return EPIC_OK;
 }
 
 EPIC_StatusTypeDef EPIC_TIMER3_Stop(void)
 {
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T3CON), PIC_T3CON_TMR3ON);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T3CON), PIC_T3CON_TMR3ON);
     return EPIC_OK;
 }
 

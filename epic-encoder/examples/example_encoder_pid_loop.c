@@ -75,8 +75,8 @@ int main(void)
     /* Encoder on RB4/RB5, glitch gate off (the simulated motor is clean). */
     encoder_t enc;
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5, GPIO_MODE_INPUT);
-    PIC8_REG8(PIC_REG_PORTB) = port_byte(gray_state(0));
-    encoder_init(&enc, PIN_A, PIN_B, 0, PIC8_REG8(PIC_REG_PORTB));
+    EPIC_REG8(PIC_REG_PORTB) = port_byte(gray_state(0));
+    encoder_init(&enc, PIN_A, PIN_B, 0, EPIC_REG8(PIC_REG_PORTB));
 
     int32_t motor_angle = 0;
     int16_t setpoint    = 100;

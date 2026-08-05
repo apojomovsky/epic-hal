@@ -22,19 +22,19 @@ static uint8_t  g_acmd41_count;
 typedef enum { WRITE_PHASE_NONE, WRITE_PHASE_TOKEN, WRITE_PHASE_DATA, WRITE_PHASE_CRC } write_phase_t;
 static write_phase_t g_write_phase;
 static uint32_t       g_write_block_addr;
-static uint8_t         g_write_staging[PIC8_SDCARD_MOCK_BLOCK_SIZE];
+static uint8_t         g_write_staging[EPIC_SDCARD_MOCK_BLOCK_SIZE];
 
 #define RESP_QUEUE_CAP 520u
 static uint8_t  g_resp[RESP_QUEUE_CAP];
 static uint16_t g_resp_len;
 static uint16_t g_resp_pos;
 
-static uint8_t g_blocks[PIC8_SDCARD_MOCK_BACKING_BLOCKS][PIC8_SDCARD_MOCK_BLOCK_SIZE];
+static uint8_t g_blocks[EPIC_SDCARD_MOCK_BACKING_BLOCKS][EPIC_SDCARD_MOCK_BLOCK_SIZE];
 
 /* SDHC-style CSD v2.0: byte 0 top bits '01' = version 2.0; byte 3 =
  * TRAN_SPEED (nonzero, calculate_speed() just needs something present);
  * bytes 7-9 = 0 means C_SIZE=0, so mmc.c computes card_size_blocks =
- * (0+1)*1024 = PIC8_SDCARD_MOCK_REPORTED_BLOCKS. Everything else is
+ * (0+1)*1024 = EPIC_SDCARD_MOCK_REPORTED_BLOCKS. Everything else is
  * unread for a CCS=1 (SDHC) card, left zero. */
 static const uint8_t g_csd[16] = {
     0x40, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00,
@@ -137,8 +137,8 @@ static void handle_command(const uint8_t *cmd6)
 
     case 17:    /* CMD17: READ_SINGLE_BLOCK -- arg is already a block address (CCS=1) */
         q_byte(0x00u);
-        if (arg < PIC8_SDCARD_MOCK_BACKING_BLOCKS) {
-            q_data_block(g_blocks[arg], PIC8_SDCARD_MOCK_BLOCK_SIZE);
+        if (arg < EPIC_SDCARD_MOCK_BACKING_BLOCKS) {
+            q_data_block(g_blocks[arg], EPIC_SDCARD_MOCK_BLOCK_SIZE);
         }
         /* else: only R1 queued, no data block -- __read_data_block will
          * time out waiting for a start token it's never going to get,
@@ -168,9 +168,9 @@ static void handle_write_data(const uint8_t *out, uint16_t len)
         g_write_phase = WRITE_PHASE_DATA;
         break;
 
-    case WRITE_PHASE_DATA:                     /* len == PIC8_SDCARD_MOCK_BLOCK_SIZE */
-        if (len == PIC8_SDCARD_MOCK_BLOCK_SIZE) {
-            memcpy(g_write_staging, out, PIC8_SDCARD_MOCK_BLOCK_SIZE);
+    case WRITE_PHASE_DATA:                     /* len == EPIC_SDCARD_MOCK_BLOCK_SIZE */
+        if (len == EPIC_SDCARD_MOCK_BLOCK_SIZE) {
+            memcpy(g_write_staging, out, EPIC_SDCARD_MOCK_BLOCK_SIZE);
         }
         g_write_phase = WRITE_PHASE_CRC;
         break;
@@ -178,8 +178,8 @@ static void handle_write_data(const uint8_t *out, uint16_t len)
     case WRITE_PHASE_CRC:                      /* len == 2: trailing CRC16, not independently
                                                  * re-verified here -- mmc.c never reads it back
                                                  * either, so there's no "bad CRC" leg to model */
-        if (g_write_block_addr < PIC8_SDCARD_MOCK_BACKING_BLOCKS) {
-            memcpy(g_blocks[g_write_block_addr], g_write_staging, PIC8_SDCARD_MOCK_BLOCK_SIZE);
+        if (g_write_block_addr < EPIC_SDCARD_MOCK_BACKING_BLOCKS) {
+            memcpy(g_blocks[g_write_block_addr], g_write_staging, EPIC_SDCARD_MOCK_BLOCK_SIZE);
         }
         g_write_phase = WRITE_PHASE_NONE;
         q_reset();
@@ -249,7 +249,7 @@ void epic_sdcard_mock_reset(void)
 
 uint8_t *epic_sdcard_mock_block(uint32_t block_addr)
 {
-    if (block_addr >= PIC8_SDCARD_MOCK_BACKING_BLOCKS) {
+    if (block_addr >= EPIC_SDCARD_MOCK_BACKING_BLOCKS) {
         return NULL;
     }
     return g_blocks[block_addr];

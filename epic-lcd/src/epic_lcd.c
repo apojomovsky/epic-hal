@@ -69,7 +69,7 @@ static void cmd_long_wait(epic_lcd_t *lcd)
 /* Row-address defaults for the standard HD44780 layout.
  * 16x2: row 0 = 0x00, row 1 = 0x40
  * 20x4: row 0 = 0x00, row 1 = 0x40, row 2 = 0x14, row 3 = 0x54 */
-static const uint8_t default_row_addr[PIC8_LCD_MAX_ROWS] = {
+static const uint8_t default_row_addr[EPIC_LCD_MAX_ROWS] = {
     0x00u, 0x40u, 0x14u, 0x54u
 };
 
@@ -85,9 +85,9 @@ void epic_lcd_init(epic_lcd_t *lcd, const epic_lcd_ops_t *ops, void *ops_ctx,
     lcd->display_ctrl = 0u;
     lcd->entry_mode   = ENTRY_INCREMENT;
 
-    memcpy(lcd->row_addr, config->row_addr, PIC8_LCD_MAX_ROWS);
+    memcpy(lcd->row_addr, config->row_addr, EPIC_LCD_MAX_ROWS);
     if (config->row_addr[0] == 0u) {
-        memcpy(lcd->row_addr, default_row_addr, PIC8_LCD_MAX_ROWS);
+        memcpy(lcd->row_addr, default_row_addr, EPIC_LCD_MAX_ROWS);
     }
 
     /* HD44780 8-bit init sequence per datasheet §13; the 4-bit transport

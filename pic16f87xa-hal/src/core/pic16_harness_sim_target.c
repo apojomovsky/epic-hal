@@ -24,7 +24,7 @@
 #define FOSC_HZ 20000000UL
 #endif
 
-#define PIC8_HARNESS_SIM_BAUD 9600UL
+#define EPIC_HARNESS_SIM_BAUD 9600UL
 
 static uint32_t g_cycles = 0U;
 
@@ -53,7 +53,7 @@ void epic_harness_init(uint32_t cycles)
 
     s_usart_handle = (USART_HandleTypeDef)USART_HANDLE_DEFAULT;
     s_usart_handle.SPBRG = (uint8_t)USART_ComputeSPBRG(
-        FOSC_HZ, PIC8_HARNESS_SIM_BAUD, USART_MODE_ASYNCHRONOUS,
+        FOSC_HZ, EPIC_HARNESS_SIM_BAUD, USART_MODE_ASYNCHRONOUS,
         USART_BRGH_HIGH);
     s_usart_handle.TxCpltCallback = s_tx_cplt;
     (void)EPIC_USART_Init(&s_usart_handle);

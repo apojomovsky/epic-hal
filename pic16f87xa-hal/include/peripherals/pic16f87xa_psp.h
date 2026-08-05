@@ -41,6 +41,6 @@ uint8_t EPIC_PSP_HasInputOverflow(void);
 /** Clear the IBOV flag. Must be done in software. */
 void EPIC_PSP_ClearInputOverflow(void);
 
-void PSP_IRQHandler(void) PIC8_WEAK;
+void PSP_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_PSP_H */

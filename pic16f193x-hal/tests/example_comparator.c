@@ -28,8 +28,8 @@ int main(void)
     c2.Instance = COMP_INSTANCE_2;
     EPIC_COMP_Init(&c2);
 
-    uint8_t cm1con0 = PIC8_REG8(PIC_REG_CM1CON0);
-    uint8_t cm2con0 = PIC8_REG8(PIC_REG_CM2CON0);
+    uint8_t cm1con0 = EPIC_REG8(PIC_REG_CM1CON0);
+    uint8_t cm2con0 = EPIC_REG8(PIC_REG_CM2CON0);
 
     epic_harness_log("CM1CON0=0x%02X CM2CON0=0x%02X\n", cm1con0, cm2con0);
     /* C1OUT/C2OUT (bit 6) are read-only hardware status bits; mask

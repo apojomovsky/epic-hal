@@ -55,6 +55,6 @@ void EPIC_ADC_Start(void);
 uint8_t EPIC_ADC_IsConversionDone(void);
 uint16_t EPIC_ADC_Read(void);
 
-void ADC_IRQHandler(void) PIC8_WEAK;
+void ADC_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F193X_ADC_H */

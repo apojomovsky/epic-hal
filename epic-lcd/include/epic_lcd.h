@@ -11,8 +11,8 @@
  *   flag.
  */
 
-#ifndef PIC8_LCD_H
-#define PIC8_LCD_H
+#ifndef EPIC_LCD_H
+#define EPIC_LCD_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -40,16 +40,16 @@ typedef struct {
 
 /** Row-address table: DDRAM base address per logical row. Standard HD44780
  *  layout: row 0=0x00, row 1=0x40, row 2=0x14/0x10, row 3=0x54/0x50
- *  (20-col/16-col). PIC8_LCD_MAX_ROWS caps the table size. */
-#define PIC8_LCD_MAX_ROWS 4u
+ *  (20-col/16-col). EPIC_LCD_MAX_ROWS caps the table size. */
+#define EPIC_LCD_MAX_ROWS 4u
 
 /** LCD configuration, passed at init time. */
 typedef struct {
     uint8_t cols;  /**< columns per row (e.g. 16 or 20) */
     uint8_t rows;  /**< number of rows (e.g. 2 or 4)   */
     /** DDRAM base address per row; if row_addr[0]==0 at init, defaults to
-     *  the standard HD44780 layout (see PIC8_LCD_MAX_ROWS comment above). */
-    uint8_t row_addr[PIC8_LCD_MAX_ROWS];
+     *  the standard HD44780 layout (see EPIC_LCD_MAX_ROWS comment above). */
+    uint8_t row_addr[EPIC_LCD_MAX_ROWS];
 } epic_lcd_config_t;
 
 /** LCD instance. Caller-owned storage; one per display. */
@@ -58,7 +58,7 @@ typedef struct {
     void                 *ops_ctx;
     uint8_t               cols;
     uint8_t               rows;
-    uint8_t               row_addr[PIC8_LCD_MAX_ROWS];
+    uint8_t               row_addr[EPIC_LCD_MAX_ROWS];
     uint8_t               display_ctrl;  /**< cached Display/Cursor/Blink bits */
     uint8_t               entry_mode;    /**< cached I/D and S bits            */
 } epic_lcd_t;
@@ -148,4 +148,4 @@ void epic_lcd_data(epic_lcd_t *lcd, uint8_t data);
 
 /* See epic_lcd_transport.h. */
 
-#endif /* PIC8_LCD_H */
+#endif /* EPIC_LCD_H */

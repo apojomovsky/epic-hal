@@ -17,7 +17,7 @@ builds against `pic16f87xa-hal` or `pic18fxx5x-hal` and on the host sim.
 
 Through the USART handle's `RxCpltCallback` / `TxCpltCallback`, the HAL owns
 `USART_RX/TX_IRQHandler` (a **strong** definition on the XC8 target, where
-`PIC8_WEAK` expands to nothing, so redefining them would be a
+`EPIC_WEAK` expands to nothing, so redefining them would be a
 multiple-definition link error). The HAL's RX handler reads RCREG and calls
 `RxCpltCallback(byte)`; its TX handler calls `TxCpltCallback()` when TXIF is
 set. This module's callbacks push to / pop from the rings. This is the same
@@ -42,7 +42,7 @@ atomically, so `available`/`tx_pending` need no lock.
 
 The two USART peripherals differ in: the handle shape (PIC18 adds
 `BaudGen`/`SPBRGH`), `USART_ComputeSPBRG` (PIC18 takes a BRG16 arg), the
-TX/RX IRQ numbers, and the TXREG write (PIC16 `PIC8_REG8 =`, PIC18
+TX/RX IRQ numbers, and the TXREG write (PIC16 `EPIC_REG8 =`, PIC18
 `epic_sfr_write8`, XC8 can't lower `|=` on a volatile cast lvalue at a
 runtime SFR address). These are `#if`-gated on the family device define the
 build already passes; everything else is family-neutral through `epic_hal.h`.

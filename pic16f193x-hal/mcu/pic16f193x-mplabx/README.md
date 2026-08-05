@@ -52,7 +52,7 @@ sufficient: no peripheral counts as done until the §4 `mdb`
 register-readback gate passes for it specifically. The toolchain gap is
 closed, `mdb` (MPLAB SIM, headless, part of MPLAB X) is installed and
 confirmed working (verified against `epic-tick`'s pilot module, both
-existing families, both reaching a real `PIC8_HARNESS_RESULT: PASS` via
+existing families, both reaching a real `EPIC_HARNESS_RESULT: PASS` via
 the root `Makefile`'s `make mdb-test`, see `docs/docker-dev-plan.md`).
 
 That specific `make mdb-test`/`scripts/sim-mdb-run.sh` path needs a

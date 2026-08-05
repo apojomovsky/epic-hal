@@ -110,7 +110,7 @@ EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void);
  *         through `EPIC_TIMER0_Init`, the default implementation invokes
  *         it; otherwise it just clears TMR0IF and returns.
  */
-void TIMER0_IRQHandler(void) PIC8_WEAK;
+void TIMER0_IRQHandler(void) EPIC_WEAK;
 
 /**
  * @brief  Enable Timer0 counting. Sets T0CON<T0CS> / T0SE / T08BIT / PSA /

@@ -189,7 +189,7 @@ where the sim does not auto-assert RBIF on a PORTB mismatch:
 
 **Option 2 landed.** The faithful model would require intercepting
 every CPU read of PORTB, but on the host every SFR access is the
-`PIC8_REG8(addr)` macro indexing the memory-backed register file
+`EPIC_REG8(addr)` macro indexing the memory-backed register file
 (`pic8f87xa_sim_sfr[]`) directly, there is no function to hook. Modeling
 "snapshot on every PORTB read" would mean changing the platform header
 (`include/host/pic16f87xa_platform.h`, the macro every SFR access goes

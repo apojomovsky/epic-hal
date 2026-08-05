@@ -36,11 +36,11 @@ construction), literal tokens in non-mirrored banks get a correct
 The toolchain gap is closed: MPLAB X / `mdb` is installed
 (`docker/ci-toolchain/Dockerfile`, pushed to the private
 `ghcr.io/apojomovsky/pic8-hal-ci` GHCR image) and confirmed working via
-the root `Makefile`'s `make mdb-test`, real `PIC8_HARNESS_RESULT: PASS`
+the root `Makefile`'s `make mdb-test`, real `EPIC_HARNESS_RESULT: PASS`
 against `epic-tick`'s pilot module on both existing families. Timer1
 has since cleared the §4 gate for this family too (Task 11
 fix-round-1): `make mdb-test ... MODE=gpio WAIT_MS=60000` produces a
-real `PIC8_HARNESS_RESULT: PASS`, with `mdb` register readback
+real `EPIC_HARNESS_RESULT: PASS`, with `mdb` register readback
 confirming `PIE1=0x01`. What is **not** yet done: the other two
 `pir_index` branches (PIE2/PIE3, covering TMR2/4/6, CCP1-5, SSP,
 USART TX/RX, ADC, TMR1G, LCD, BCL, EEPROM, CMP1/2, OSF) still need the
@@ -222,7 +222,7 @@ the private `ghcr.io/apojomovsky/pic8-hal-ci` GHCR package that
 `xc8-build.yml`/`sim-tests.yml` pull. The root `Makefile`'s `make
 mdb-test` was run for real against `epic-tick`'s pilot module (both
 PIC16F87XA and PIC18F4550), both reaching a genuine
-`PIC8_HARNESS_RESULT: PASS`. See `docs/docker-dev-plan.md` for the full
+`EPIC_HARNESS_RESULT: PASS`. See `docs/docker-dev-plan.md` for the full
 account. The real-target build passing was necessary but not sufficient
 per the playbook; that half is now also closed.
 
@@ -243,7 +243,7 @@ New tree `pic16f193x-hal/` cloned from `pic16f87xa-hal/` (closest by
 interrupt architecture: single vector, no priority, table-driven flag/
 enable). The BSR banking is written fresh in the SFR/platform layer. The
 fixed contract (shared names/signatures, neutral-shim headers, the
-`PIC8_*` CMake/Makefile variable contract) is implemented unchanged.
+`EPIC_*` CMake/Makefile variable contract) is implemented unchanged.
 
 Foundation deliverables (everything needed for a minimal blink + host sim
 + `mdb`-smoke-ready skeleton):
@@ -251,14 +251,14 @@ Foundation deliverables (everything needed for a minimal blink + host sim
 1. `include/pic16f193x.h` device selection + per-device capability macros
    (`PIC16F193X_FAMILY_HAS_PORTD`/`_PORTE` on 40/44-pin 1934/1937/1939
    only; `FLASH_KW`, `RAM_BYTES`, `EEPROM_B`, `ADC_CH`, `DEVICE_NAME`,
-   `PIC8_FAMILY_RAM_BYTES` alias).
+   `EPIC_FAMILY_RAM_BYTES` alias).
 2. `include/pic16f193x_sfr.h` SFR addresses/bit masks/POR values from
    DS41364B Table 2-4/2-5, cited. Bank-select helper via BSR (`MOVLB` on
    target, no-op flat-array on host).
 3. `include/host/pic16f193x_platform.h` +
    `include/target/pic16f193x_platform.h` access-macro pair (host flat
-   array + `PIC8_WEAK=weak`; target volatile deref + `PIC8_WEAK` empty),
-   define `PIC8_REG8`, `epic_sfr_read8/write8`, `PIC8_SFR_PTR`, target
+   array + `EPIC_WEAK=weak`; target volatile deref + `EPIC_WEAK` empty),
+   define `EPIC_REG8`, `epic_sfr_read8/write8`, `EPIC_SFR_PTR`, target
    bank-switch inline-asm. Every SFR access stays a compile-time-constant
    `PIC_REG_*` token (the proven pattern from `pic18_irq.c`/
    `pic18fxx5x_ccp.c`); runtime dispatch branches before touching any
@@ -317,7 +317,7 @@ real-target build verified (§4); `mdb` gate not yet run for this family
   Timer1 cleared the §4 gate via `make mdb-test ... MODE=gpio
   WAIT_MS=60000`, with `mdb` reporting `PIE1=0x01` (TMR1IE bit 0 set)
   and `PORTA` bit 0 transitioning high so the harness reports
-  `PIC8_HARNESS_RESULT: PASS` (Task 11 fix-round-1). This is now also a
+  `EPIC_HARNESS_RESULT: PASS` (Task 11 fix-round-1). This is now also a
   CI gate, not just a manual check: `sim-tests.yml`'s matrix runs this
   exact `MODE=gpio WAIT_MS=60000` invocation on every push/PR
   (`docs/ci-plan.md`'s Phase 4 section). The other

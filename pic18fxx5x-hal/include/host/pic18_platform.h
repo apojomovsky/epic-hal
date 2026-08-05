@@ -23,15 +23,15 @@ extern uint8_t pic18_sim_sfr[0x1000];
 
 /* GCC/Clang weak attribute, lets user code override a peripheral's
  * IRQHandler if it ever needs to. */
-#define PIC8_WEAK   __attribute__((weak))
+#define EPIC_WEAK   __attribute__((weak))
 
 /* SFR access resolves to an index into the simulated register file. */
-#define PIC8_SFR_PTR(addr)       (&pic18_sim_sfr[(uint16_t)(addr)])
+#define EPIC_SFR_PTR(addr)       (&pic18_sim_sfr[(uint16_t)(addr)])
 #define epic_sfr_read8(addr)     (pic18_sim_sfr[(uint16_t)(addr)])
 #define epic_sfr_write8(addr, v) \
     do { pic18_sim_sfr[(uint16_t)(addr)] = (uint8_t)(v); } while (0)
 
 /* Address of a register as a uint8_t lvalue (read/write/RMW). */
-#define PIC8_REG8(addr)          (pic18_sim_sfr[(uint16_t)(addr)])
+#define EPIC_REG8(addr)          (pic18_sim_sfr[(uint16_t)(addr)])
 
 #endif /* PIC18_PLATFORM_H */

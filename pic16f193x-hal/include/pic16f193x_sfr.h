@@ -246,105 +246,105 @@
 
 /* DS41364B §2.2, Register 2-1. Enhanced Mid-range has no RP0/RP1/IRP
  * (BSR replaces them), so only C/DC/Z/PD/TO are defined. */
-#define PIC_STATUS_C          PIC8_BIT(0)
-#define PIC_STATUS_DC         PIC8_BIT(1)
-#define PIC_STATUS_Z          PIC8_BIT(2)
-#define PIC_STATUS_PD         PIC8_BIT(3)
-#define PIC_STATUS_TO         PIC8_BIT(4)
+#define PIC_STATUS_C          EPIC_BIT(0)
+#define PIC_STATUS_DC         EPIC_BIT(1)
+#define PIC_STATUS_Z          EPIC_BIT(2)
+#define PIC_STATUS_PD         EPIC_BIT(3)
+#define PIC_STATUS_TO         EPIC_BIT(4)
 
 /* ───────────────────────── INTCON register bits ────────────────── */
 
 /* DS41364B §4.0, Register 4-1. IOCIF/IOCIE replace classic RBIF/RBIE. */
-#define PIC_INTCON_IOCIF      PIC8_BIT(0)
-#define PIC_INTCON_INTF       PIC8_BIT(1)
-#define PIC_INTCON_TMR0IF     PIC8_BIT(2)
-#define PIC_INTCON_IOCIE      PIC8_BIT(3)
-#define PIC_INTCON_INTE       PIC8_BIT(4)
-#define PIC_INTCON_TMR0IE     PIC8_BIT(5)
-#define PIC_INTCON_PEIE       PIC8_BIT(6)
-#define PIC_INTCON_GIE        PIC8_BIT(7)
+#define PIC_INTCON_IOCIF      EPIC_BIT(0)
+#define PIC_INTCON_INTF       EPIC_BIT(1)
+#define PIC_INTCON_TMR0IF     EPIC_BIT(2)
+#define PIC_INTCON_IOCIE      EPIC_BIT(3)
+#define PIC_INTCON_INTE       EPIC_BIT(4)
+#define PIC_INTCON_TMR0IE     EPIC_BIT(5)
+#define PIC_INTCON_PEIE       EPIC_BIT(6)
+#define PIC_INTCON_GIE        EPIC_BIT(7)
 
 /* ───────────────────────── OPTION_REG bits (Timer0 + WDT) ───────── */
 
 /* DS41364B §2.2, Register 2-2. WPUEN (bit 7) is the global weak-pull-up
  * enable (active-low), replacing classic RBPU. */
-#define PIC_OPTION_WPUEN      PIC8_BIT(7)
-#define PIC_OPTION_INTEDG     PIC8_BIT(6)
-#define PIC_OPTION_T0CS       PIC8_BIT(5)
-#define PIC_OPTION_T0SE       PIC8_BIT(4)
-#define PIC_OPTION_PSA        PIC8_BIT(3)
+#define PIC_OPTION_WPUEN      EPIC_BIT(7)
+#define PIC_OPTION_INTEDG     EPIC_BIT(6)
+#define PIC_OPTION_T0CS       EPIC_BIT(5)
+#define PIC_OPTION_T0SE       EPIC_BIT(4)
+#define PIC_OPTION_PSA        EPIC_BIT(3)
 #define PIC_OPTION_PS_MASK    0x07U          /* PS2:PS0, prescaler ratio. */
 
 /* ───────────────────────── PIR1 / PIE1 ─────────────────────────── */
 
 /* DS41364B §4.5, Registers 4-2 (PIE1) / 4-5 (PIR1). */
-#define PIC_PIR1_TMR1IF       PIC8_BIT(0)
-#define PIC_PIR1_TMR2IF       PIC8_BIT(1)
-#define PIC_PIR1_CCP1IF       PIC8_BIT(2)
-#define PIC_PIR1_SSPIF       PIC8_BIT(3)
-#define PIC_PIR1_TXIF         PIC8_BIT(4)
-#define PIC_PIR1_RCIF         PIC8_BIT(5)
-#define PIC_PIR1_ADIF         PIC8_BIT(6)
-#define PIC_PIR1_TMR1GIF      PIC8_BIT(7)
+#define PIC_PIR1_TMR1IF       EPIC_BIT(0)
+#define PIC_PIR1_TMR2IF       EPIC_BIT(1)
+#define PIC_PIR1_CCP1IF       EPIC_BIT(2)
+#define PIC_PIR1_SSPIF       EPIC_BIT(3)
+#define PIC_PIR1_TXIF         EPIC_BIT(4)
+#define PIC_PIR1_RCIF         EPIC_BIT(5)
+#define PIC_PIR1_ADIF         EPIC_BIT(6)
+#define PIC_PIR1_TMR1GIF      EPIC_BIT(7)
 
-#define PIC_PIE1_TMR1IE       PIC8_BIT(0)
-#define PIC_PIE1_TMR2IE       PIC8_BIT(1)
-#define PIC_PIE1_CCP1IE       PIC8_BIT(2)
-#define PIC_PIE1_SSPIE        PIC8_BIT(3)
-#define PIC_PIE1_TXIE         PIC8_BIT(4)
-#define PIC_PIE1_RCIE         PIC8_BIT(5)
-#define PIC_PIE1_ADIE         PIC8_BIT(6)
-#define PIC_PIE1_TMR1GIE      PIC8_BIT(7)
+#define PIC_PIE1_TMR1IE       EPIC_BIT(0)
+#define PIC_PIE1_TMR2IE       EPIC_BIT(1)
+#define PIC_PIE1_CCP1IE       EPIC_BIT(2)
+#define PIC_PIE1_SSPIE        EPIC_BIT(3)
+#define PIC_PIE1_TXIE         EPIC_BIT(4)
+#define PIC_PIE1_RCIE         EPIC_BIT(5)
+#define PIC_PIE1_ADIE         EPIC_BIT(6)
+#define PIC_PIE1_TMR1GIE      EPIC_BIT(7)
 
 /* ───────────────────────── PIR2 / PIE2 ─────────────────────────── */
 
 /* DS41364B §4.5, Registers 4-3 (PIE2) / 4-6 (PIR2). */
-#define PIC_PIR2_CCP2IF       PIC8_BIT(0)
-#define PIC_PIR2_LCDIF        PIC8_BIT(2)
-#define PIC_PIR2_BCLIF        PIC8_BIT(3)
-#define PIC_PIR2_EEIF         PIC8_BIT(4)
-#define PIC_PIR2_C1IF         PIC8_BIT(5)
-#define PIC_PIR2_C2IF         PIC8_BIT(6)
-#define PIC_PIR2_OSFIF        PIC8_BIT(7)
+#define PIC_PIR2_CCP2IF       EPIC_BIT(0)
+#define PIC_PIR2_LCDIF        EPIC_BIT(2)
+#define PIC_PIR2_BCLIF        EPIC_BIT(3)
+#define PIC_PIR2_EEIF         EPIC_BIT(4)
+#define PIC_PIR2_C1IF         EPIC_BIT(5)
+#define PIC_PIR2_C2IF         EPIC_BIT(6)
+#define PIC_PIR2_OSFIF        EPIC_BIT(7)
 
-#define PIC_PIE2_CCP2IE       PIC8_BIT(0)
-#define PIC_PIE2_LCDIE        PIC8_BIT(2)
-#define PIC_PIE2_BCLIE        PIC8_BIT(3)
-#define PIC_PIE2_EEIE        PIC8_BIT(4)
-#define PIC_PIE2_C1IE         PIC8_BIT(5)
-#define PIC_PIE2_C2IE         PIC8_BIT(6)
-#define PIC_PIE2_OSFIE        PIC8_BIT(7)
+#define PIC_PIE2_CCP2IE       EPIC_BIT(0)
+#define PIC_PIE2_LCDIE        EPIC_BIT(2)
+#define PIC_PIE2_BCLIE        EPIC_BIT(3)
+#define PIC_PIE2_EEIE        EPIC_BIT(4)
+#define PIC_PIE2_C1IE         EPIC_BIT(5)
+#define PIC_PIE2_C2IE         EPIC_BIT(6)
+#define PIC_PIE2_OSFIE        EPIC_BIT(7)
 
 /* ───────────────────────── PIR3 / PIE3 ─────────────────────────── */
 
 /* DS41364B §4.5, Registers 4-4 (PIE3) / 4-7 (PIR3). */
-#define PIC_PIR3_TMR4IF       PIC8_BIT(1)
-#define PIC_PIR3_TMR6IF       PIC8_BIT(3)
-#define PIC_PIR3_CCP3IF       PIC8_BIT(4)
-#define PIC_PIR3_CCP4IF       PIC8_BIT(5)
-#define PIC_PIR3_CCP5IF       PIC8_BIT(6)
+#define PIC_PIR3_TMR4IF       EPIC_BIT(1)
+#define PIC_PIR3_TMR6IF       EPIC_BIT(3)
+#define PIC_PIR3_CCP3IF       EPIC_BIT(4)
+#define PIC_PIR3_CCP4IF       EPIC_BIT(5)
+#define PIC_PIR3_CCP5IF       EPIC_BIT(6)
 
-#define PIC_PIE3_TMR4IE       PIC8_BIT(1)
-#define PIC_PIE3_TMR6IE       PIC8_BIT(3)
-#define PIC_PIE3_CCP3IE       PIC8_BIT(4)
-#define PIC_PIE3_CCP4IE       PIC8_BIT(5)
-#define PIC_PIE3_CCP5IE       PIC8_BIT(6)
+#define PIC_PIE3_TMR4IE       EPIC_BIT(1)
+#define PIC_PIE3_TMR6IE       EPIC_BIT(3)
+#define PIC_PIE3_CCP3IE       EPIC_BIT(4)
+#define PIC_PIE3_CCP4IE       EPIC_BIT(5)
+#define PIC_PIE3_CCP5IE       EPIC_BIT(6)
 
 /* ───────────────────────── PCON bits (reset flags) ─────────────── */
 
 /* DS41364B §3.0, Register 3-3. */
-#define PIC_PCON_BOR          PIC8_BIT(0)
-#define PIC_PCON_POR          PIC8_BIT(1)
-#define PIC_PCON_RI           PIC8_BIT(2)
-#define PIC_PCON_RMCLR        PIC8_BIT(3)
-#define PIC_PCON_STKUNF       PIC8_BIT(6)
-#define PIC_PCON_STKOVF       PIC8_BIT(7)
+#define PIC_PCON_BOR          EPIC_BIT(0)
+#define PIC_PCON_POR          EPIC_BIT(1)
+#define PIC_PCON_RI           EPIC_BIT(2)
+#define PIC_PCON_RMCLR        EPIC_BIT(3)
+#define PIC_PCON_STKUNF       EPIC_BIT(6)
+#define PIC_PCON_STKOVF       EPIC_BIT(7)
 
 /* ───────────────────────── WDTCON bits ────────────────────────── */
 
 /* DS41364B §24.0, WDTCON register. SWDTEN (bit 0) is the software WDT
  * enable; WDTPS<4:0> (bits 5:1) the period select. */
-#define PIC_WDTCON_SWDTEN     PIC8_BIT(0)
+#define PIC_WDTCON_SWDTEN     EPIC_BIT(0)
 #define PIC_WDTCON_WDTPS_MASK 0x3EU          /* WDTPS4:WDTPS0, bits 5:1. */
 #define PIC_WDTCON_WDTPS_POS  1U
 
@@ -361,9 +361,9 @@
  * this phase"), so no TMR1CS bit mask is defined here yet, and
  * EPIC_TIMER1_Init/Start reject any ClockSource other than
  * TIMER1_CLOCK_INTERNAL. */
-#define PIC_T1CON_TMR1ON        PIC8_BIT(0)   /* T1CON<0>. */
-#define PIC_T1CON_T1CKPS0       PIC8_BIT(4)   /* T1CON<4>. */
-#define PIC_T1CON_T1CKPS1       PIC8_BIT(5)   /* T1CON<5>. */
+#define PIC_T1CON_TMR1ON        EPIC_BIT(0)   /* T1CON<0>. */
+#define PIC_T1CON_T1CKPS0       EPIC_BIT(4)   /* T1CON<4>. */
+#define PIC_T1CON_T1CKPS1       EPIC_BIT(5)   /* T1CON<5>. */
 
 /* POR value of T1CON, DS41364B Register 16-1 POR column. */
 #define PIC_T1CON_POR_VALUE      0x00U
@@ -386,19 +386,19 @@
  *   bits 1:0   T*CKPS<1:0>   prescaler select: 00=1:1, 01=1:4, 1x=1:16
  * POR value: 0x00 for all three (DS41364B Register 17-1 POR column). */
 #define PIC_T2CON_T2CKPS_MASK   0x03U         /* T2CON<1:0>. */
-#define PIC_T2CON_TMR2ON        PIC8_BIT(2)   /* T2CON<2>. */
+#define PIC_T2CON_TMR2ON        EPIC_BIT(2)   /* T2CON<2>. */
 #define PIC_T2CON_TOUTPS_MASK   0x78U         /* T2CON<6:3>. */
 #define PIC_T2CON_TOUTPS_POS    3U
 #define PIC_T2CON_POR_VALUE     0x00U
 
 #define PIC_T4CON_T4CKPS_MASK   0x03U         /* T4CON<1:0>. */
-#define PIC_T4CON_TMR4ON        PIC8_BIT(2)   /* T4CON<2>. */
+#define PIC_T4CON_TMR4ON        EPIC_BIT(2)   /* T4CON<2>. */
 #define PIC_T4CON_TOUTPS_MASK   0x78U         /* T4CON<6:3>. */
 #define PIC_T4CON_TOUTPS_POS    3U
 #define PIC_T4CON_POR_VALUE     0x00U
 
 #define PIC_T6CON_T6CKPS_MASK   0x03U         /* T6CON<1:0>. */
-#define PIC_T6CON_TMR6ON        PIC8_BIT(2)   /* T6CON<2>. */
+#define PIC_T6CON_TMR6ON        EPIC_BIT(2)   /* T6CON<2>. */
 #define PIC_T6CON_TOUTPS_MASK   0x78U         /* T6CON<6:3>. */
 #define PIC_T6CON_TOUTPS_POS    3U
 #define PIC_T6CON_POR_VALUE     0x00U
@@ -432,27 +432,27 @@
 /* PWM1CON/PWM2CON, CCP1AS/CCP2AS, PSTR1CON/PSTR2CON: PWM-only this
  * phase; macros defined for completeness and the CCP3/4/5 follow-up. */
 #define PIC_PWM1CON_P1DC_MASK   0x7FU
-#define PIC_PWM1CON_P1RSEN      PIC8_BIT(7)
+#define PIC_PWM1CON_P1RSEN      EPIC_BIT(7)
 #define PIC_PWM2CON_P2DC_MASK   0x7FU
-#define PIC_PWM2CON_P2RSEN      PIC8_BIT(7)
+#define PIC_PWM2CON_P2RSEN      EPIC_BIT(7)
 #define PIC_CCP1AS_PSS1BD_MASK  0x03U
 #define PIC_CCP1AS_PSS1AC_MASK  0x0CU
 #define PIC_CCP1AS_CCP1AS_MASK  0x70U
-#define PIC_CCP1AS_ECCP1ASE     PIC8_BIT(7)
+#define PIC_CCP1AS_ECCP1ASE     EPIC_BIT(7)
 #define PIC_CCP2AS_PSS2BD_MASK  0x03U
 #define PIC_CCP2AS_PSS2AC_MASK  0x0CU
 #define PIC_CCP2AS_CCP2AS_MASK  0x70U
-#define PIC_CCP2AS_ECCP2ASE     PIC8_BIT(7)
-#define PIC_PSTR1CON_STR1A      PIC8_BIT(0)
-#define PIC_PSTR1CON_STR1B      PIC8_BIT(1)
-#define PIC_PSTR1CON_STR1C      PIC8_BIT(2)
-#define PIC_PSTR1CON_STR1D      PIC8_BIT(3)
-#define PIC_PSTR1CON_STR1SYNC   PIC8_BIT(4)
-#define PIC_PSTR2CON_STR2A      PIC8_BIT(0)
-#define PIC_PSTR2CON_STR2B      PIC8_BIT(1)
-#define PIC_PSTR2CON_STR2C      PIC8_BIT(2)
-#define PIC_PSTR2CON_STR2D      PIC8_BIT(3)
-#define PIC_PSTR2CON_STR2SYNC   PIC8_BIT(4)
+#define PIC_CCP2AS_ECCP2ASE     EPIC_BIT(7)
+#define PIC_PSTR1CON_STR1A      EPIC_BIT(0)
+#define PIC_PSTR1CON_STR1B      EPIC_BIT(1)
+#define PIC_PSTR1CON_STR1C      EPIC_BIT(2)
+#define PIC_PSTR1CON_STR1D      EPIC_BIT(3)
+#define PIC_PSTR1CON_STR1SYNC   EPIC_BIT(4)
+#define PIC_PSTR2CON_STR2A      EPIC_BIT(0)
+#define PIC_PSTR2CON_STR2B      EPIC_BIT(1)
+#define PIC_PSTR2CON_STR2C      EPIC_BIT(2)
+#define PIC_PSTR2CON_STR2D      EPIC_BIT(3)
+#define PIC_PSTR2CON_STR2SYNC   EPIC_BIT(4)
 
 /* CCPTMRS0/1: PWM timebase select, PWM-only (also needed by CCP3/4/5). */
 #define PIC_CCPTMRS0_C1TSEL_MASK 0x03U
@@ -466,30 +466,30 @@
 /* RCSTA/TXSTA/BAUDCON, DS41364B Register 23-2/23-3/23-4. Cross-checked
  * against the DFP header: _RCSTA_SPEN_POSN=7, _RCSTA_CREN_POSN=4,
  * _TXSTA_TXEN_POSN=5, _TXSTA_BRGH_POSN=2, _TXSTA_TRMT_POSN=1. */
-#define PIC_RCSTA_RX9D          PIC8_BIT(0)
-#define PIC_RCSTA_OERR          PIC8_BIT(1)
-#define PIC_RCSTA_FERR          PIC8_BIT(2)
-#define PIC_RCSTA_ADDEN         PIC8_BIT(3)
-#define PIC_RCSTA_CREN          PIC8_BIT(4)
-#define PIC_RCSTA_SREN          PIC8_BIT(5)
-#define PIC_RCSTA_RX9           PIC8_BIT(6)
-#define PIC_RCSTA_SPEN          PIC8_BIT(7)
+#define PIC_RCSTA_RX9D          EPIC_BIT(0)
+#define PIC_RCSTA_OERR          EPIC_BIT(1)
+#define PIC_RCSTA_FERR          EPIC_BIT(2)
+#define PIC_RCSTA_ADDEN         EPIC_BIT(3)
+#define PIC_RCSTA_CREN          EPIC_BIT(4)
+#define PIC_RCSTA_SREN          EPIC_BIT(5)
+#define PIC_RCSTA_RX9           EPIC_BIT(6)
+#define PIC_RCSTA_SPEN          EPIC_BIT(7)
 
-#define PIC_TXSTA_TX9D          PIC8_BIT(0)
-#define PIC_TXSTA_TRMT          PIC8_BIT(1)
-#define PIC_TXSTA_BRGH          PIC8_BIT(2)
-#define PIC_TXSTA_SENDB         PIC8_BIT(3)
-#define PIC_TXSTA_SYNC          PIC8_BIT(4)
-#define PIC_TXSTA_TXEN          PIC8_BIT(5)
-#define PIC_TXSTA_TX9           PIC8_BIT(6)
-#define PIC_TXSTA_CSRC          PIC8_BIT(7)
+#define PIC_TXSTA_TX9D          EPIC_BIT(0)
+#define PIC_TXSTA_TRMT          EPIC_BIT(1)
+#define PIC_TXSTA_BRGH          EPIC_BIT(2)
+#define PIC_TXSTA_SENDB         EPIC_BIT(3)
+#define PIC_TXSTA_SYNC          EPIC_BIT(4)
+#define PIC_TXSTA_TXEN          EPIC_BIT(5)
+#define PIC_TXSTA_TX9           EPIC_BIT(6)
+#define PIC_TXSTA_CSRC          EPIC_BIT(7)
 
-#define PIC_BAUDCON_ABDEN       PIC8_BIT(0)
-#define PIC_BAUDCON_WUE         PIC8_BIT(1)
-#define PIC_BAUDCON_BRG16       PIC8_BIT(3)
-#define PIC_BAUDCON_SCKP        PIC8_BIT(4)
-#define PIC_BAUDCON_RCIDL       PIC8_BIT(6)
-#define PIC_BAUDCON_ABDOVF      PIC8_BIT(7)
+#define PIC_BAUDCON_ABDEN       EPIC_BIT(0)
+#define PIC_BAUDCON_WUE         EPIC_BIT(1)
+#define PIC_BAUDCON_BRG16       EPIC_BIT(3)
+#define PIC_BAUDCON_SCKP        EPIC_BIT(4)
+#define PIC_BAUDCON_RCIDL       EPIC_BIT(6)
+#define PIC_BAUDCON_ABDOVF      EPIC_BIT(7)
 
 /* POR values: TXSTA=0x02 (TRMT=1), RCSTA=0x00, BAUDCON=0x40 (RCIDL=1).
  * DS41364B Register 23-2/23-3/23-4 POR columns. */
@@ -503,15 +503,15 @@
  * Cross-checked against DFP: _SSPSTAT_BF_POSN=0, _SSPSTAT_CKE_POSN=6,
  * _SSPSTAT_SMP_POSN=7, _SSPCON1_SSPM_POSN=0, _SSPCON1_CKP_POSN=4,
  * _SSPCON1_SSPEN_POSN=5, _SSPCON1_WCOL_POSN=7. */
-#define PIC_SSPSTAT_BF          PIC8_BIT(0)
-#define PIC_SSPSTAT_CKE         PIC8_BIT(6)
-#define PIC_SSPSTAT_SMP         PIC8_BIT(7)
+#define PIC_SSPSTAT_BF          EPIC_BIT(0)
+#define PIC_SSPSTAT_CKE         EPIC_BIT(6)
+#define PIC_SSPSTAT_SMP         EPIC_BIT(7)
 
 #define PIC_SSPCON1_SSPM_MASK   0x0FU
-#define PIC_SSPCON1_CKP         PIC8_BIT(4)
-#define PIC_SSPCON1_SSPEN       PIC8_BIT(5)
-#define PIC_SSPCON1_SSPOV       PIC8_BIT(6)
-#define PIC_SSPCON1_WCOL        PIC8_BIT(7)
+#define PIC_SSPCON1_CKP         EPIC_BIT(4)
+#define PIC_SSPCON1_SSPEN       EPIC_BIT(5)
+#define PIC_SSPCON1_SSPOV       EPIC_BIT(6)
+#define PIC_SSPCON1_WCOL        EPIC_BIT(7)
 
 /* ───────────────── ADC bits (DS41364B ADC chapter) ──────────────── */
 
@@ -519,16 +519,16 @@
  * _ADCON0_GO_POSN=1, _ADCON0_CHS_POSN=2 (mask 0x7C, 5-bit),
  * _ADCON1_ADPREF_POSN=0 (mask 0x03), _ADCON1_ADNREF_POSN=2,
  * _ADCON1_ADCS_POSN=4 (mask 0x70), _ADCON1_ADFM_POSN=7. */
-#define PIC_ADCON0_ADON         PIC8_BIT(0)
-#define PIC_ADCON0_GO_NDONE     PIC8_BIT(1)
+#define PIC_ADCON0_ADON         EPIC_BIT(0)
+#define PIC_ADCON0_GO_NDONE     EPIC_BIT(1)
 #define PIC_ADCON0_CHS_MASK     0x7CU
 #define PIC_ADCON0_CHS_SHIFT    2U
 
 #define PIC_ADCON1_ADPREF_MASK  0x03U
-#define PIC_ADCON1_ADNREF       PIC8_BIT(2)
+#define PIC_ADCON1_ADNREF       EPIC_BIT(2)
 #define PIC_ADCON1_ADCS_MASK    0x70U
 #define PIC_ADCON1_ADCS_SHIFT   4U
-#define PIC_ADCON1_ADFM         PIC8_BIT(7)
+#define PIC_ADCON1_ADFM         EPIC_BIT(7)
 
 /* ───────────────── Comparator bits (DS41364B §9.0) ──────────────── */
 
@@ -536,77 +536,77 @@
  * CM1CON1/CM2CON1: CxPCH(5:4, mask 0x30), CxNCH(1:0, mask 0x03),
  * CxINTN(6), CxINTP(7).
  * CMOUT: MC1OUT(0), MC2OUT(1). */
-#define PIC_CM1CON0_C1HYS       PIC8_BIT(1)
-#define PIC_CM1CON0_C1POL       PIC8_BIT(4)
-#define PIC_CM1CON0_C1OE        PIC8_BIT(5)
-#define PIC_CM1CON0_C1ON        PIC8_BIT(7)
+#define PIC_CM1CON0_C1HYS       EPIC_BIT(1)
+#define PIC_CM1CON0_C1POL       EPIC_BIT(4)
+#define PIC_CM1CON0_C1OE        EPIC_BIT(5)
+#define PIC_CM1CON0_C1ON        EPIC_BIT(7)
 
 #define PIC_CM1CON1_C1NCH_MASK  0x03U
 #define PIC_CM1CON1_C1PCH_MASK  0x30U
-#define PIC_CM1CON1_C1INTN      PIC8_BIT(6)
-#define PIC_CM1CON1_C1INTP      PIC8_BIT(7)
+#define PIC_CM1CON1_C1INTN      EPIC_BIT(6)
+#define PIC_CM1CON1_C1INTP      EPIC_BIT(7)
 
-#define PIC_CM2CON0_C2HYS       PIC8_BIT(1)
-#define PIC_CM2CON0_C2POL       PIC8_BIT(4)
-#define PIC_CM2CON0_C2OE        PIC8_BIT(5)
-#define PIC_CM2CON0_C2ON        PIC8_BIT(7)
+#define PIC_CM2CON0_C2HYS       EPIC_BIT(1)
+#define PIC_CM2CON0_C2POL       EPIC_BIT(4)
+#define PIC_CM2CON0_C2OE        EPIC_BIT(5)
+#define PIC_CM2CON0_C2ON        EPIC_BIT(7)
 
 #define PIC_CM2CON1_C2NCH_MASK  0x03U
 #define PIC_CM2CON1_C2PCH_MASK  0x30U
-#define PIC_CM2CON1_C2INTN      PIC8_BIT(6)
-#define PIC_CM2CON1_C2INTP      PIC8_BIT(7)
+#define PIC_CM2CON1_C2INTN      EPIC_BIT(6)
+#define PIC_CM2CON1_C2INTP      EPIC_BIT(7)
 
-#define PIC_CMOUT_MC1OUT        PIC8_BIT(0)
-#define PIC_CMOUT_MC2OUT        PIC8_BIT(1)
+#define PIC_CMOUT_MC1OUT        EPIC_BIT(0)
+#define PIC_CMOUT_MC2OUT        EPIC_BIT(1)
 
 /* ───────────────── EEPROM bits (DS41364B §23.0) ──────────────────── */
 
-#define PIC_EECON1_RD           PIC8_BIT(0)
-#define PIC_EECON1_WR           PIC8_BIT(1)
-#define PIC_EECON1_WREN         PIC8_BIT(2)
-#define PIC_EECON1_WRERR        PIC8_BIT(3)
-#define PIC_EECON1_FREE         PIC8_BIT(4)
-#define PIC_EECON1_LWLO         PIC8_BIT(5)
-#define PIC_EECON1_CFGS         PIC8_BIT(6)
-#define PIC_EECON1_EEPGD        PIC8_BIT(7)
+#define PIC_EECON1_RD           EPIC_BIT(0)
+#define PIC_EECON1_WR           EPIC_BIT(1)
+#define PIC_EECON1_WREN         EPIC_BIT(2)
+#define PIC_EECON1_WRERR        EPIC_BIT(3)
+#define PIC_EECON1_FREE         EPIC_BIT(4)
+#define PIC_EECON1_LWLO         EPIC_BIT(5)
+#define PIC_EECON1_CFGS         EPIC_BIT(6)
+#define PIC_EECON1_EEPGD        EPIC_BIT(7)
 
 #define PIC_EEADRH_MASK         0x7FU
 #define PIC_EEDATH_MASK         0x3FU
 
 /* ───────────────── DAC bits (DS41364B §13.0) ───────────────────── */
-#define PIC_DACCON0_DACNSS     PIC8_BIT(0)
+#define PIC_DACCON0_DACNSS     EPIC_BIT(0)
 #define PIC_DACCON0_DACPSS_MASK 0x0CU
-#define PIC_DACCON0_DACOE      PIC8_BIT(5)
-#define PIC_DACCON0_DACLPS     PIC8_BIT(6)
-#define PIC_DACCON0_DACEN      PIC8_BIT(7)
+#define PIC_DACCON0_DACOE      EPIC_BIT(5)
+#define PIC_DACCON0_DACLPS     EPIC_BIT(6)
+#define PIC_DACCON0_DACEN      EPIC_BIT(7)
 #define PIC_DACCON1_DACR_MASK  0x1FU
 
 /* ───────────────── FVR bits (DS41364B §12.0) ───────────────────── */
 #define PIC_FVRCON_ADFVR_MASK   0x03U
 #define PIC_FVRCON_CDAFVR_MASK  0x0CU
 #define PIC_FVRCON_CDAFVR_SHIFT 2U
-#define PIC_FVRCON_TSRNG       PIC8_BIT(4)
-#define PIC_FVRCON_TSEN        PIC8_BIT(5)
-#define PIC_FVRCON_FVRRDY      PIC8_BIT(6)
-#define PIC_FVRCON_FVREN       PIC8_BIT(7)
+#define PIC_FVRCON_TSRNG       EPIC_BIT(4)
+#define PIC_FVRCON_TSEN        EPIC_BIT(5)
+#define PIC_FVRCON_FVRRDY      EPIC_BIT(6)
+#define PIC_FVRCON_FVREN       EPIC_BIT(7)
 
 /* ───────────────── SR latch bits (DS41364B §11.0) ──────────────── */
-#define PIC_SRCON0_SRPR        PIC8_BIT(0)
-#define PIC_SRCON0_SRPS        PIC8_BIT(1)
-#define PIC_SRCON0_SRNQEN      PIC8_BIT(2)
-#define PIC_SRCON0_SRQEN       PIC8_BIT(3)
+#define PIC_SRCON0_SRPR        EPIC_BIT(0)
+#define PIC_SRCON0_SRPS        EPIC_BIT(1)
+#define PIC_SRCON0_SRNQEN      EPIC_BIT(2)
+#define PIC_SRCON0_SRQEN       EPIC_BIT(3)
 #define PIC_SRCON0_SRCLK_MASK  0x70U
-#define PIC_SRCON0_SRLEN       PIC8_BIT(7)
-#define PIC_SRCON1_SRRC1E      PIC8_BIT(0)
-#define PIC_SRCON1_SRRC2E      PIC8_BIT(1)
-#define PIC_SRCON1_SRNQEN      PIC8_BIT(2)
-#define PIC_SRCON1_SRQEN       PIC8_BIT(3)
+#define PIC_SRCON0_SRLEN       EPIC_BIT(7)
+#define PIC_SRCON1_SRRC1E      EPIC_BIT(0)
+#define PIC_SRCON1_SRRC2E      EPIC_BIT(1)
+#define PIC_SRCON1_SRNQEN      EPIC_BIT(2)
+#define PIC_SRCON1_SRQEN       EPIC_BIT(3)
 
 /* ───────────────── CPS bits (DS41364B §18.0) ───────────────────── */
-#define PIC_CPSCON0_T0XCS      PIC8_BIT(0)
-#define PIC_CPSCON0_CPSOUT     PIC8_BIT(1)
+#define PIC_CPSCON0_T0XCS      EPIC_BIT(0)
+#define PIC_CPSCON0_CPSOUT     EPIC_BIT(1)
 #define PIC_CPSCON0_CPSRNG_MASK 0x0CU
-#define PIC_CPSCON0_CPSON      PIC8_BIT(7)
+#define PIC_CPSCON0_CPSON      EPIC_BIT(7)
 #define PIC_CPSCON1_CPSCH_MASK 0x0FU
 
 /* ───────────────── LCD bits (DS41364B LCD chapter) ──────────────── */
@@ -639,10 +639,10 @@
 #define PIC_REG_LCDDATA11       0x7ABU
 
 #define PIC_LCDCON_LMUX_MASK    0x03U
-#define PIC_LCDCON_LCDEN        PIC8_BIT(7)
+#define PIC_LCDCON_LCDEN        EPIC_BIT(7)
 #define PIC_LCDPS_LP_MASK       0x0FU
-#define PIC_LCDPS_WA            PIC8_BIT(4)
-#define PIC_LCDPS_LCDA          PIC8_BIT(5)
+#define PIC_LCDPS_WA            EPIC_BIT(4)
+#define PIC_LCDPS_LCDA          EPIC_BIT(5)
 #define PIC_LCDCST_LCDCST_MASK   0x07U
 
 /* ───────────────────────── Reset values (POR) ──────────────────── */
@@ -681,6 +681,6 @@
  *   it, per docs/adding-a-device.md. Until then every SFR access stays a
  *   compile-time-constant `PIC_REG_*` token with no runtime dispatch.
  */
-#define pic16f193x_select_bank(bank)   (PIC8_REG8(PIC_REG_BSR) = (uint8_t)(bank))
+#define pic16f193x_select_bank(bank)   (EPIC_REG8(PIC_REG_BSR) = (uint8_t)(bank))
 
 #endif /* PIC16F193X_SFR_H */

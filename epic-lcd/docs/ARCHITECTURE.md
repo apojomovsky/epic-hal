@@ -97,7 +97,7 @@ in 4-bit mode) requires six. At Fosc/64 SPI clock (750 kHz at 48 MHz),
 one transaction takes ~11 us, so a full byte takes ~66 us — well within
 the HD44780's execution time.
 
-`PIC8_LCD_SPI_LAYOUT_COMMON` provides the most common wiring
+`EPIC_LCD_SPI_LAYOUT_COMMON` provides the most common wiring
 (Q0=DB4, Q1=DB5, Q2=DB6, Q3=DB7, Q4=RS, Q5=E).
 
 ## Host testing

@@ -49,7 +49,7 @@ default (HAL) ops are used.
 
 `SSPCON2`, `ACKDT`, and `ACKSTAT` have the same bit names on both families;
 the register address differs (PIC16 bank-1 `0x91`, PIC18 `0xFC5`) and so does
-the access idiom (PIC16 `PIC8_REG8 =`, PIC18 `epic_sfr_read8`/`write8`, XC8
+the access idiom (PIC16 `EPIC_REG8 =`, PIC18 `epic_sfr_read8`/`write8`, XC8
 can't lower `|=` on a volatile cast lvalue at a runtime SFR address) and the
 SSP IRQ number. These are `#if`-gated on the family device define the build
 passes; everything else is family-neutral through `epic_hal.h`. The SPI CS

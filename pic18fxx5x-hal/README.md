@@ -42,7 +42,7 @@ implemented and cited against DS39632E. `example_blink` /
   IPR1, TMR0L / TMR0H / T0CON), addresses cross-checked against the
   PIC18Fxxxx DFP, every bit and reset value cited to DS39632E.
 - ✅ Platform layer (`include/host` + `include/target` `pic18_platform.h`):
-  the same `epic_sfr_read8` / `PIC8_REG8` / `PIC8_WEAK` contract as PIC16.
+  the same `epic_sfr_read8` / `EPIC_REG8` / `EPIC_WEAK` contract as PIC16.
   Per the plan's Phase 2 decision, the host sim is a flat 4096-byte array
   indexed by the physical 12-bit address (no BSR translation; every MVP
   SFR is in the Access Bank 0xF60-0xFFF).
@@ -222,7 +222,7 @@ Microchip recommends always specifying it. This is recorded in
 
 Same as the PIC16F87XA HAL (mirror STM32Cube): `HAL_PPP_Init/DeInit`,
 `HAL_PPP_MspInit` weak override, `GPIOA..` / `GPIO_PIN_*`, `EPIC_OK/ERROR/
-BUSY/TIMEOUT/INVALID`, `PIC8_BIT*`. The IRQ enum will be `PIC18_IRQ_*`
+BUSY/TIMEOUT/INVALID`, `EPIC_BIT*`. The IRQ enum will be `PIC18_IRQ_*`
 (Phase 2), taking the per-family `PIC18_IRQn` type, with the priority
 contract extension decided and recorded in the plan before the
 interrupt core is written.

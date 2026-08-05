@@ -15,20 +15,20 @@
 
 uint8_t EPIC_BOR_GetStatus(void)
 {
-    return (PIC8_REG8(PIC_REG_PCON) & PIC_PCON_BOR) ? 1U : 0U;
+    return (EPIC_REG8(PIC_REG_PCON) & PIC_PCON_BOR) ? 1U : 0U;
 }
 
 void EPIC_BOR_ClearFlag(void)
 {
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_PCON), PIC_PCON_BOR);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PCON), PIC_PCON_BOR);
 }
 
 uint8_t EPIC_POR_GetStatus(void)
 {
-    return (PIC8_REG8(PIC_REG_PCON) & PIC_PCON_POR) ? 1U : 0U;
+    return (EPIC_REG8(PIC_REG_PCON) & PIC_PCON_POR) ? 1U : 0U;
 }
 
 void EPIC_POR_ClearFlag(void)
 {
-    PIC8_BIT_CLR(PIC8_REG8(PIC_REG_PCON), PIC_PCON_POR);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PCON), PIC_PCON_POR);
 }

@@ -44,7 +44,7 @@ int main(void)
     int tn = 0;
     while (epic_serial_tx_pending() > 0 && tn < 8) {
         epic_dispatch_all_irqs();        /* fires the TX callback -> TXREG */
-        t[tn++] = PIC8_REG8(PIC_REG_TXREG);
+        t[tn++] = EPIC_REG8(PIC_REG_TXREG);
     }
     CHECK(tn == 2 && t[0] == 'O' && t[1] == 'k', "tx bytes == Ok");
     CHECK(epic_serial_tx_pending() == 0, "tx ring drained");

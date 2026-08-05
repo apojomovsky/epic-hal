@@ -11,47 +11,47 @@
 
 #define CCP_WRITE_CPRL(inst, value)                                     \
     do {                                                                \
-        if      ((inst) == CCP_INSTANCE_1) PIC8_REG8(PIC_REG_CCPR1L) = (uint8_t)(value); \
-        else if ((inst) == CCP_INSTANCE_2) PIC8_REG8(PIC_REG_CCPR2L) = (uint8_t)(value); \
-        else if ((inst) == CCP_INSTANCE_3) PIC8_REG8(PIC_REG_CCPR3L) = (uint8_t)(value); \
-        else if ((inst) == CCP_INSTANCE_4) PIC8_REG8(PIC_REG_CCPR4L) = (uint8_t)(value); \
-        else                               PIC8_REG8(PIC_REG_CCPR5L) = (uint8_t)(value); \
+        if      ((inst) == CCP_INSTANCE_1) EPIC_REG8(PIC_REG_CCPR1L) = (uint8_t)(value); \
+        else if ((inst) == CCP_INSTANCE_2) EPIC_REG8(PIC_REG_CCPR2L) = (uint8_t)(value); \
+        else if ((inst) == CCP_INSTANCE_3) EPIC_REG8(PIC_REG_CCPR3L) = (uint8_t)(value); \
+        else if ((inst) == CCP_INSTANCE_4) EPIC_REG8(PIC_REG_CCPR4L) = (uint8_t)(value); \
+        else                               EPIC_REG8(PIC_REG_CCPR5L) = (uint8_t)(value); \
     } while (0)
 
 #define CCP_WRITE_CPRH(inst, value)                                     \
     do {                                                                \
-        if      ((inst) == CCP_INSTANCE_1) PIC8_REG8(PIC_REG_CCPR1H) = (uint8_t)(value); \
-        else if ((inst) == CCP_INSTANCE_2) PIC8_REG8(PIC_REG_CCPR2H) = (uint8_t)(value); \
-        else if ((inst) == CCP_INSTANCE_3) PIC8_REG8(PIC_REG_CCPR3H) = (uint8_t)(value); \
-        else if ((inst) == CCP_INSTANCE_4) PIC8_REG8(PIC_REG_CCPR4H) = (uint8_t)(value); \
-        else                               PIC8_REG8(PIC_REG_CCPR5H) = (uint8_t)(value); \
+        if      ((inst) == CCP_INSTANCE_1) EPIC_REG8(PIC_REG_CCPR1H) = (uint8_t)(value); \
+        else if ((inst) == CCP_INSTANCE_2) EPIC_REG8(PIC_REG_CCPR2H) = (uint8_t)(value); \
+        else if ((inst) == CCP_INSTANCE_3) EPIC_REG8(PIC_REG_CCPR3H) = (uint8_t)(value); \
+        else if ((inst) == CCP_INSTANCE_4) EPIC_REG8(PIC_REG_CCPR4H) = (uint8_t)(value); \
+        else                               EPIC_REG8(PIC_REG_CCPR5H) = (uint8_t)(value); \
     } while (0)
 
 #define CCP_WRITE_CON(inst, value)                                      \
     do {                                                                \
-        if      ((inst) == CCP_INSTANCE_1) PIC8_REG8(PIC_REG_CCP1CON) = (uint8_t)(value); \
-        else if ((inst) == CCP_INSTANCE_2) PIC8_REG8(PIC_REG_CCP2CON) = (uint8_t)(value); \
-        else if ((inst) == CCP_INSTANCE_3) PIC8_REG8(PIC_REG_CCP3CON) = (uint8_t)(value); \
-        else if ((inst) == CCP_INSTANCE_4) PIC8_REG8(PIC_REG_CCP4CON) = (uint8_t)(value); \
-        else                               PIC8_REG8(PIC_REG_CCP5CON) = (uint8_t)(value); \
+        if      ((inst) == CCP_INSTANCE_1) EPIC_REG8(PIC_REG_CCP1CON) = (uint8_t)(value); \
+        else if ((inst) == CCP_INSTANCE_2) EPIC_REG8(PIC_REG_CCP2CON) = (uint8_t)(value); \
+        else if ((inst) == CCP_INSTANCE_3) EPIC_REG8(PIC_REG_CCP3CON) = (uint8_t)(value); \
+        else if ((inst) == CCP_INSTANCE_4) EPIC_REG8(PIC_REG_CCP4CON) = (uint8_t)(value); \
+        else                               EPIC_REG8(PIC_REG_CCP5CON) = (uint8_t)(value); \
     } while (0)
 
 #define CCP_READ_CPRL(inst, out)                                        \
     do {                                                                \
-        if      ((inst) == CCP_INSTANCE_1) (out) = PIC8_REG8(PIC_REG_CCPR1L); \
-        else if ((inst) == CCP_INSTANCE_2) (out) = PIC8_REG8(PIC_REG_CCPR2L); \
-        else if ((inst) == CCP_INSTANCE_3) (out) = PIC8_REG8(PIC_REG_CCPR3L); \
-        else if ((inst) == CCP_INSTANCE_4) (out) = PIC8_REG8(PIC_REG_CCPR4L); \
-        else                               (out) = PIC8_REG8(PIC_REG_CCPR5L); \
+        if      ((inst) == CCP_INSTANCE_1) (out) = EPIC_REG8(PIC_REG_CCPR1L); \
+        else if ((inst) == CCP_INSTANCE_2) (out) = EPIC_REG8(PIC_REG_CCPR2L); \
+        else if ((inst) == CCP_INSTANCE_3) (out) = EPIC_REG8(PIC_REG_CCPR3L); \
+        else if ((inst) == CCP_INSTANCE_4) (out) = EPIC_REG8(PIC_REG_CCPR4L); \
+        else                               (out) = EPIC_REG8(PIC_REG_CCPR5L); \
     } while (0)
 
 #define CCP_READ_CPRH(inst, out)                                        \
     do {                                                                \
-        if      ((inst) == CCP_INSTANCE_1) (out) = PIC8_REG8(PIC_REG_CCPR1H); \
-        else if ((inst) == CCP_INSTANCE_2) (out) = PIC8_REG8(PIC_REG_CCPR2H); \
-        else if ((inst) == CCP_INSTANCE_3) (out) = PIC8_REG8(PIC_REG_CCPR3H); \
-        else if ((inst) == CCP_INSTANCE_4) (out) = PIC8_REG8(PIC_REG_CCPR4H); \
-        else                               (out) = PIC8_REG8(PIC_REG_CCPR5H); \
+        if      ((inst) == CCP_INSTANCE_1) (out) = EPIC_REG8(PIC_REG_CCPR1H); \
+        else if ((inst) == CCP_INSTANCE_2) (out) = EPIC_REG8(PIC_REG_CCPR2H); \
+        else if ((inst) == CCP_INSTANCE_3) (out) = EPIC_REG8(PIC_REG_CCPR3H); \
+        else if ((inst) == CCP_INSTANCE_4) (out) = EPIC_REG8(PIC_REG_CCPR4H); \
+        else                               (out) = EPIC_REG8(PIC_REG_CCPR5H); \
     } while (0)
 
 static PIC16F193X_IRQn ccp_irq(CCP_InstanceTypeDef inst)

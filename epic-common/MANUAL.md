@@ -72,7 +72,7 @@ cleanly. See [§2](#2-the-sharedper-family-split) and [§4](#4-the-harness).
 
 ```
 epic-common/                     shared layer reused by every family
-├── include/core/              hal_status.h (EPIC_*, PIC8_BIT*),
+├── include/core/              hal_status.h (EPIC_*, EPIC_BIT*),
 │                              epic_harness.h (the 4-fn harness contract),
 │                              epic_irq.h (the shared EPIC_IRQ_Priority enum)
 ├── src/core/                  epic_harness_target.c (family-blind no-ops)
@@ -110,17 +110,17 @@ Every family header ends with one unconditional line pulling in a
 platform header, which exists in **two same-named copies**:
 
 - `include/host/<family>_platform.h`, every SFR access indexes an
-  in-memory array standing in for the register file, and `PIC8_WEAK` is
+  in-memory array standing in for the register file, and `EPIC_WEAK` is
   the real `__attribute__((weak))`.
 - `include/target/<family>_platform.h`, every SFR access is a direct
-  `*(volatile uint8_t *)(uintptr_t)addr` dereference, and `PIC8_WEAK` is
+  `*(volatile uint8_t *)(uintptr_t)addr` dereference, and `EPIC_WEAK` is
   empty (XC8 has no weak symbols).
 
 The CMake host build puts `include/host` *first* on the include path; the
 XC8 Makefile puts `include/target` first. So the single `#include`
 resolves to the right copy per build, with no preprocessor branching
-anywhere in the HAL or examples. The macros defined there (`PIC8_REG8`,
-`epic_sfr_read8/write8`, `PIC8_SFR_PTR`, or that family's equivalent
+anywhere in the HAL or examples. The macros defined there (`EPIC_REG8`,
+`epic_sfr_read8/write8`, `EPIC_SFR_PTR`, or that family's equivalent
 names, see your family's manual) are what every driver and every example
 ultimately touches.
 
@@ -174,7 +174,7 @@ Mirrors STM32Cube, across every family:
   by field (see [§3.3](#33-the-handle-pattern) for the one common
   exception, CCP/peripherals with no sane default).
 - `<FAMILY>_<NAME>` for HAL-wide types and macros
-  (`EPIC_StatusTypeDef`, `PIC8_REG8`).
+  (`EPIC_StatusTypeDef`, `EPIC_REG8`).
 - `PIC_REG_<NAME>` and `PIC_<REG>_<BIT>` for raw SFR addresses and bit
   masks (see your family's manual, "The SFR layer").
 
@@ -285,7 +285,7 @@ A real-target `epic_harness_log()` may dispatch on its format string.
 The family-blind `epic_harness_target.c` is a no-op; the PIC16F87XA
 and PIC18Fxxxx sim-target harnesses write bytes to the UART; the
 PIC16F193X sim-target harness drives RA0 (PORTA bit 0) from the
-exact `PIC8_HARNESS_RESULT: PASS\n` / `...: FAIL\n` marker passed
+exact `EPIC_HARNESS_RESULT: PASS\n` / `...: FAIL\n` marker passed
 by `epic_harness_report()` so the wrapper can read the result via
 `print PORTA` in `MODE=gpio`. Future sim-target harnesses may define
 their own dispatch.

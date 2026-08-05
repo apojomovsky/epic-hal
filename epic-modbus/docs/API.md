@@ -1,7 +1,7 @@
 # `epic-modbus` API reference
 
 Authoritative declarations: [`include/epic_modbus.h`](../include/epic_modbus.h).
-Override the frame buffer size with `-DPIC8_MODBUS_MAX_ADU=128` (bytes)
+Override the frame buffer size with `-DEPIC_MODBUS_MAX_ADU=128` (bytes)
 before including the header, if a larger register map needs bigger
 read/write-multiple responses than the 64-byte default allows.
 
@@ -68,7 +68,7 @@ in-range request whose address/quantity falls outside the configured table
 gets `ILLEGAL_DATA_ADDRESS` (0x02). An out-of-range quantity, a bad
 single-coil value, or a byte-count/quantity mismatch gets
 `ILLEGAL_DATA_VALUE` (0x03). A request whose read response wouldn't fit in
-`PIC8_MODBUS_MAX_ADU` also gets `ILLEGAL_DATA_VALUE`, a practical
+`EPIC_MODBUS_MAX_ADU` also gets `ILLEGAL_DATA_VALUE`, a practical
 buffer-size constraint (at the 64-byte default: up to ~29 holding/input
 registers, or ~475 coils/discrete inputs, per single read).
 

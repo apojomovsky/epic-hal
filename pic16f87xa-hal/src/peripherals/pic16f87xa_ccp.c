@@ -58,14 +58,14 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
         uint16_t duty = h->PWM.Duty & 0x03FFU;       /* 10-bit clamp. */
         uint8_t  con  = (uint8_t)(h->Mode & 0x0FU);  /* mode 1100, also handles 1101/1110/1111. */
         con |= (uint8_t)((duty & 0x03U) << 4);        /* CCPxY:CCPxX = duty[1:0]. */
-        PIC8_REG8(a->cprl) = (uint8_t)(duty >> 2);
-        PIC8_REG8(a->cprh) = 0U;
-        PIC8_REG8(a->con)  = con;
+        EPIC_REG8(a->cprl) = (uint8_t)(duty >> 2);
+        EPIC_REG8(a->cprh) = 0U;
+        EPIC_REG8(a->con)  = con;
     } else {
         /* For compare / capture, write the 16-bit value then enable mode. */
-        PIC8_REG8(a->cprl) = (uint8_t)(h->CompareValue & 0xFFU);
-        PIC8_REG8(a->cprh) = (uint8_t)(h->CompareValue >> 8);
-        PIC8_REG8(a->con)  = (uint8_t)(h->Mode & 0x0FU);
+        EPIC_REG8(a->cprl) = (uint8_t)(h->CompareValue & 0xFFU);
+        EPIC_REG8(a->cprh) = (uint8_t)(h->CompareValue >> 8);
+        EPIC_REG8(a->con)  = (uint8_t)(h->Mode & 0x0FU);
     }
 
     return EPIC_OK;
@@ -79,7 +79,7 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
     const ccp_addrs_t *a = ccp_sel(inst);
     EPIC_IRQ_DisableSrc(a->irq);
     EPIC_IRQ_ClearFlag(a->irq);
-    PIC8_REG8(a->con) = 0x00U;
+    EPIC_REG8(a->con) = 0x00U;
     g_ccp_handles[inst] = NULL;
     return EPIC_OK;
 }
@@ -91,8 +91,8 @@ void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
     /* DS39582B §8.x: in compare mode a write to CCPRxH could
      * trigger a spurious compare match if the low byte wrote first.
      * Standard PIC16 idiom: write high then low. */
-    PIC8_REG8(a->cprh) = (uint8_t)(value >> 8);
-    PIC8_REG8(a->cprl) = (uint8_t)(value & 0xFFU);
+    EPIC_REG8(a->cprh) = (uint8_t)(value >> 8);
+    EPIC_REG8(a->cprl) = (uint8_t)(value & 0xFFU);
 }
 
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
@@ -102,9 +102,9 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
     /* Same atomic-read idiom as Timer1. */
     uint8_t lo, hi1, hi2;
     do {
-        hi1 = PIC8_REG8(a->cprh);
-        lo  = PIC8_REG8(a->cprl);
-        hi2 = PIC8_REG8(a->cprh);
+        hi1 = EPIC_REG8(a->cprh);
+        lo  = EPIC_REG8(a->cprl);
+        hi2 = EPIC_REG8(a->cprh);
     } while (hi1 != hi2);
     return (uint16_t)(((uint16_t)hi2 << 8) | lo);
 }
@@ -117,10 +117,10 @@ void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
     /* The duty LSBs go into CCPxCON<5:4>; CCPRxL holds bits 9:2.
      * DS39582B §8.3.2: latch ordering is important; write LSBs
      * of duty first (in CCPxCON), then CCPRxL, to avoid a glitch. */
-    uint8_t con = (uint8_t)(PIC8_REG8(a->con) & 0xCFU); /* keep mode bits, clear Y:X. */
+    uint8_t con = (uint8_t)(EPIC_REG8(a->con) & 0xCFU); /* keep mode bits, clear Y:X. */
     con |= (uint8_t)((duty & 0x03U) << 4);
-    PIC8_REG8(a->con)  = con;
-    PIC8_REG8(a->cprl) = (uint8_t)(duty >> 2);
+    EPIC_REG8(a->con)  = con;
+    EPIC_REG8(a->cprl) = (uint8_t)(duty >> 2);
 }
 
 /* ───────────────────────── ISRs ─────────────────────────────────── */

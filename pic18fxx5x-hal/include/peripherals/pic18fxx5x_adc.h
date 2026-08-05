@@ -148,6 +148,6 @@ uint16_t EPIC_ADC_Read(void);
 
 /* ───────────────────────── interrupts ───────────────────────────── */
 
-void ADC_IRQHandler(void) PIC8_WEAK;
+void ADC_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_ADC_H */

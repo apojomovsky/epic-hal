@@ -72,7 +72,7 @@ ctest --test-dir build           # or just: cd build && ctest
 To also build the `epic-taskmgr` composition demo:
 
 ```sh
-cmake -B build -S . -DPIC8_FSM_BUILD_TASKMGR_EXAMPLE=ON
+cmake -B build -S . -DEPIC_FSM_BUILD_TASKMGR_EXAMPLE=ON
 cmake --build build
 ./build/example_taskmgr_integration
 ```

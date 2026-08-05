@@ -62,6 +62,6 @@ uint8_t EPIC_COMP_IsChangeFlag(void);
 /** Clear the CMIF flag (must be done in the change IRQ). */
 void EPIC_COMP_ClearChangeFlag(void);
 
-void COMP_IRQHandler(void) PIC8_WEAK;
+void COMP_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_COMP_H */

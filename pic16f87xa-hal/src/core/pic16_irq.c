@@ -58,16 +58,16 @@ static const irq_desc_t irq_table[] = {
 
 uint8_t EPIC_IRQ_Disable(void)
 {
-    uint8_t s = PIC8_REG8(PIC_REG_INTCON);
+    uint8_t s = EPIC_REG8(PIC_REG_INTCON);
     uint8_t prev = (s & PIC_INTCON_GIE) ? 1U : 0U;
-    PIC8_REG8(PIC_REG_INTCON) = s & (uint8_t)~PIC_INTCON_GIE;
+    EPIC_REG8(PIC_REG_INTCON) = s & (uint8_t)~PIC_INTCON_GIE;
     return prev;
 }
 
 void EPIC_IRQ_Restore(uint8_t prev_state)
 {
-    if (prev_state) PIC8_BIT_SET(PIC8_REG8(PIC_REG_INTCON), PIC_INTCON_GIE);
-    else            PIC8_BIT_CLR(PIC8_REG8(PIC_REG_INTCON), PIC_INTCON_GIE);
+    if (prev_state) EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_GIE);
+    else            EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_GIE);
 }
 
 void EPIC_IRQ_Enable(PIC16_IRQn irq)
@@ -82,16 +82,16 @@ void EPIC_IRQ_Enable(PIC16_IRQn irq)
     uint8_t in_intcon = d->in_intcon;
     uint8_t enable_mask = d->enable_mask;
     if (in_intcon) {
-        PIC8_BIT_SET(PIC8_REG8(PIC_REG_INTCON), enable_mask);
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), enable_mask);
         return;
     }
     /* Bank 1 (PIE1/PIE2): a plain C RMW here never persisted under XC8
-     * v4.00 (see PIC8_PIE_ENABLE_BIT's own comment). Lives in the
+     * v4.00 (see EPIC_PIE_ENABLE_BIT's own comment). Lives in the
      * per-platform header, not inline here, because this file is
      * shared with the host build and asm()/__at() are XC8-only. */
-    PIC8_PIE_ENABLE_BIT(d->pir_is_pir2, enable_mask);
+    EPIC_PIE_ENABLE_BIT(d->pir_is_pir2, enable_mask);
     /* Peripheral IRQs also need PEIE; auto-set it as a courtesy. */
-    PIC8_BIT_SET(PIC8_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
+    EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
 }
 
 void EPIC_IRQ_DisableSrc(PIC16_IRQn irq)
@@ -101,12 +101,12 @@ void EPIC_IRQ_DisableSrc(PIC16_IRQn irq)
     uint8_t in_intcon = d->in_intcon;
     uint8_t enable_mask = d->enable_mask;
     if (in_intcon) {
-        PIC8_BIT_CLR(PIC8_REG8(PIC_REG_INTCON), enable_mask);
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), enable_mask);
         return;
     }
-    /* Same fix as EPIC_IRQ_Enable, see PIC8_PIE_DISABLE_BIT's header
+    /* Same fix as EPIC_IRQ_Enable, see EPIC_PIE_DISABLE_BIT's header
      * comment (target/pic16f87xa_platform.h) for the full account. */
-    PIC8_PIE_DISABLE_BIT(d->pir_is_pir2, enable_mask);
+    EPIC_PIE_DISABLE_BIT(d->pir_is_pir2, enable_mask);
 }
 
 void EPIC_IRQ_ClearFlag(PIC16_IRQn irq)
@@ -116,13 +116,13 @@ void EPIC_IRQ_ClearFlag(PIC16_IRQn irq)
     uint8_t in_intcon = d->in_intcon;
     uint8_t flag_mask = d->flag_mask;
     if (in_intcon) {
-        PIC8_BIT_CLR(PIC8_REG8(PIC_REG_INTCON), flag_mask);
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), flag_mask);
     } else {
         /* PIR1/PIR2 are Bank 0, so no pic_select_bank needed here. */
         uint8_t addr = pir_reg_addr(d);
-        uint8_t v = PIC8_REG8(addr);
+        uint8_t v = EPIC_REG8(addr);
         v &= (uint8_t)~flag_mask;
-        PIC8_REG8(addr) = v;
+        EPIC_REG8(addr) = v;
     }
 }
 
@@ -133,7 +133,7 @@ uint8_t EPIC_IRQ_GetFlag(PIC16_IRQn irq)
     uint8_t in_intcon = d->in_intcon;
     uint8_t flag_mask = d->flag_mask;
     uint8_t addr = pir_reg_addr(d);
-    uint8_t reg = in_intcon ? PIC8_REG8(PIC_REG_INTCON) : PIC8_REG8(addr);
+    uint8_t reg = in_intcon ? EPIC_REG8(PIC_REG_INTCON) : EPIC_REG8(addr);
     return (reg & flag_mask) ? 1U : 0U;
 }
 

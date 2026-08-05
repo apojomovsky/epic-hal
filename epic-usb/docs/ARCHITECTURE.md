@@ -34,7 +34,7 @@ same ring-buffer discipline `epic-serial` uses on top of those primitives:
   re-arms the endpoint.
 - Ring size is a power of two (default 64 = one full-speed bulk packet),
   masked for O(1) index arithmetic. Override with
-  `-DPIC8_USB_RING_SZ=128` before including the header.
+  `-DEPIC_USB_RING_SZ=128` before including the header.
 
 ## Connection state: DTR, not enumeration
 

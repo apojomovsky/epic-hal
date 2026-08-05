@@ -60,7 +60,7 @@
                        * upstream): upstream relies on <xc.h> (included from
                        * mmc.c, not this header) pulling this in transitively;
                        * a host build doesn't include <xc.h> at all (see
-                       * mmc.c's PIC8_SDCARD_HOST_BUILD branch), so this
+                       * mmc.c's EPIC_SDCARD_HOST_BUILD branch), so this
                        * header needs its own explicit include. */
 #include "mmc_config.h"
 

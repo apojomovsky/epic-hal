@@ -73,10 +73,10 @@ EPIC_StatusTypeDef EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
 
 /** Weak CCP1/CCP2 ISRs, one per instance, override in user code. */
-void CCP1_IRQHandler(void) PIC8_WEAK;
-void CCP2_IRQHandler(void) PIC8_WEAK;
-void CCP3_IRQHandler(void) PIC8_WEAK;
-void CCP4_IRQHandler(void) PIC8_WEAK;
-void CCP5_IRQHandler(void) PIC8_WEAK;
+void CCP1_IRQHandler(void) EPIC_WEAK;
+void CCP2_IRQHandler(void) EPIC_WEAK;
+void CCP3_IRQHandler(void) EPIC_WEAK;
+void CCP4_IRQHandler(void) EPIC_WEAK;
+void CCP5_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F193X_CCP_H */

@@ -7,7 +7,7 @@ int main(void)
 {
     epic_harness_init(1UL);
     EPIC_SRLATCH_Enable();
-    uint8_t con0 = PIC8_REG8(PIC_REG_SRCON0);
+    uint8_t con0 = EPIC_REG8(PIC_REG_SRCON0);
     epic_harness_log("SRCON0=0x%02X\n", con0);
     int pass = (con0 == 0x80U);
     int rc = epic_harness_report(pass);

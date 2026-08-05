@@ -1,7 +1,7 @@
 # `epic-serial` API reference
 
 Authoritative declarations: [`include/epic_serial.h`](../include/epic_serial.h).
-Override the ring size with `-DPIC8_SERIAL_RING_SZ=64` (power of two) before
+Override the ring size with `-DEPIC_SERIAL_RING_SZ=64` (power of two) before
 including the header.
 
 ### `void epic_serial_init(uint32_t fosc_hz, uint32_t baud)`

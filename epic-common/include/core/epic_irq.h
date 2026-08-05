@@ -7,8 +7,8 @@
  *          two (DS39632E §9.0) and routes by IPR/INTCON2/INTCON3 bits.
  */
 
-#ifndef PIC8_IRQ_H
-#define PIC8_IRQ_H
+#ifndef EPIC_IRQ_H
+#define EPIC_IRQ_H
 
 /**
  * @brief   Interrupt priority level. Shared vocabulary; the effect is
@@ -20,4 +20,4 @@ typedef enum {
     EPIC_IRQ_PRIORITY_HIGH = 1   /**< High-priority vector (PIC18 0008h). */
 } EPIC_IRQ_Priority;
 
-#endif /* PIC8_IRQ_H */
+#endif /* EPIC_IRQ_H */

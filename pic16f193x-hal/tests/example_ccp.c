@@ -42,12 +42,12 @@ int main(void)
     ccp2.CompareValue = 0x0200U;
     EPIC_CCP_Init(&ccp2);
 
-    uint8_t c1con = PIC8_REG8(PIC_REG_CCP1CON);
-    uint8_t c1h = PIC8_REG8(PIC_REG_CCPR1H);
-    uint8_t c1l = PIC8_REG8(PIC_REG_CCPR1L);
-    uint8_t c2con = PIC8_REG8(PIC_REG_CCP2CON);
-    uint8_t c2h = PIC8_REG8(PIC_REG_CCPR2H);
-    uint8_t c2l = PIC8_REG8(PIC_REG_CCPR2L);
+    uint8_t c1con = EPIC_REG8(PIC_REG_CCP1CON);
+    uint8_t c1h = EPIC_REG8(PIC_REG_CCPR1H);
+    uint8_t c1l = EPIC_REG8(PIC_REG_CCPR1L);
+    uint8_t c2con = EPIC_REG8(PIC_REG_CCP2CON);
+    uint8_t c2h = EPIC_REG8(PIC_REG_CCPR2H);
+    uint8_t c2l = EPIC_REG8(PIC_REG_CCPR2L);
 
     epic_harness_log("CCP1CON=0x%02X CCPR1=0x%02X%02X CCP2CON=0x%02X CCPR2=0x%02X%02X\n",
                       c1con, c1h, c1l, c2con, c2h, c2l);

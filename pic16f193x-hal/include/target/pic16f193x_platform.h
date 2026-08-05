@@ -8,12 +8,12 @@
  *   host/pic16f193x_platform.h); the build's include path picks which
  *   resolves, so pic16f193x.h includes this name unconditionally with no
  *   `#ifdef`. SFR access is a direct volatile dereference of the literal
- *   address; XC8 has no weak symbols, so PIC8_WEAK is empty.
+ *   address; XC8 has no weak symbols, so EPIC_WEAK is empty.
  *
  *   Plain C reads against compile-time-constant SFR tokens compile to
  *   `movlb N; movf <sfr>,w` once XC8 sees which bank each token belongs
  *   to (it pulls the bank map from the DFP at -O2). That is why
- *   `PIC8_REG8(addr)` dereferences the literal address without bank
+ *   `EPIC_REG8(addr)` dereferences the literal address without bank
  *   switching: XC8 sets BSR itself. Verified on the Enhanced Mid-range
  *   core by the Foundation's codegen probe (`docs/adding-a-device.md` §4,
  *   Finding 1 of the foundation ARCHITECTURE.md).
@@ -39,16 +39,16 @@
 #include <stdint.h>
 
 /* XC8 has no concept of weak symbols. */
-#define PIC8_WEAK
+#define EPIC_WEAK
 
 /* SFR access resolves to a direct volatile dereference of the address. */
-#define PIC8_SFR_PTR(addr)       ((volatile uint8_t *)(uintptr_t)(addr))
+#define EPIC_SFR_PTR(addr)       ((volatile uint8_t *)(uintptr_t)(addr))
 #define epic_sfr_read8(addr)     (*(volatile uint8_t *)(uintptr_t)(addr))
 #define epic_sfr_write8(addr, v) \
     do { *(volatile uint8_t *)(uintptr_t)(addr) = (uint8_t)(v); } while (0)
 
 /* Address of a register as a uint8_t lvalue (read/write/RMW). */
-#define PIC8_REG8(addr)          (*(volatile uint8_t *)(uintptr_t)(addr))
+#define EPIC_REG8(addr)          (*(volatile uint8_t *)(uintptr_t)(addr))
 
 /* File-scope symbol the asm below needs (inline asm can only address
  * file-scope symbols, see epic-math/docs/ARCHITECTURE.md's "Inline-asm
@@ -69,7 +69,7 @@ extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
  * via the C switch. Bits go in via the `__at()`-pinned scratch byte so
  * the load of W can happen before the bank switch without disturbing
  * any C-level local (matches pic16f87xa-hal's proven pattern). */
-#define PIC8_PIE_ENABLE_BIT(pir_index, mask)                              \
+#define EPIC_PIE_ENABLE_BIT(pir_index, mask)                              \
     do {                                                                  \
         epic_irq_pie_scratch = (uint8_t)(mask);                          \
         if ((pir_index) == 2U) {                                         \
@@ -90,7 +90,7 @@ extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
         }                                                                \
     } while (0)
 
-#define PIC8_PIE_DISABLE_BIT(pir_index, mask)                             \
+#define EPIC_PIE_DISABLE_BIT(pir_index, mask)                             \
     do {                                                                  \
         epic_irq_pie_scratch = (uint8_t)~(uint8_t)(mask);                 \
         if ((pir_index) == 2U) {                                         \

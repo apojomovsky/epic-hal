@@ -4,8 +4,8 @@
  *          command and data byte sent, with RS state, for assertion.
  */
 
-#ifndef PIC8_LCD_MOCK_TRANSPORT_H
-#define PIC8_LCD_MOCK_TRANSPORT_H
+#ifndef EPIC_LCD_MOCK_TRANSPORT_H
+#define EPIC_LCD_MOCK_TRANSPORT_H
 
 #include "epic_lcd.h"
 #include <stdint.h>
@@ -29,4 +29,4 @@ void    mock_ops_init(epic_lcd_ops_t *ops, void **ctx);
 uint16_t       mock_log_len(void);
 const mock_entry_t *mock_log_entry(uint16_t i);
 
-#endif /* PIC8_LCD_MOCK_TRANSPORT_H */
+#endif /* EPIC_LCD_MOCK_TRANSPORT_H */

@@ -5,8 +5,8 @@
  * EP2 IN/OUT is the bulk pipe epic_usb_write/read actually use.
  */
 
-#ifndef PIC8_USB_CONFIG_H__
-#define PIC8_USB_CONFIG_H__
+#ifndef EPIC_USB_CONFIG_H__
+#define EPIC_USB_CONFIG_H__
 
 #define NUM_ENDPOINT_NUMBERS 2
 
@@ -59,4 +59,4 @@
 #define CDC_SET_CONTROL_LINE_STATE_CALLBACK    epic_usb_cdc_set_control_line_state_cb
 #define CDC_SEND_BREAK_CALLBACK                epic_usb_cdc_send_break_cb
 
-#endif /* PIC8_USB_CONFIG_H__ */
+#endif /* EPIC_USB_CONFIG_H__ */

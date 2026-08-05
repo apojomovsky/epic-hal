@@ -11,8 +11,8 @@
  *   card only, M-Stack's multi-card array isn't wrapped here.
  */
 
-#ifndef PIC8_SDCARD_H
-#define PIC8_SDCARD_H
+#ifndef EPIC_SDCARD_H
+#define EPIC_SDCARD_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -66,4 +66,4 @@ bool epic_sdcard_read_block(uint32_t block_addr, uint8_t *data);
  */
 bool epic_sdcard_write_block(uint32_t block_addr, const uint8_t *data);
 
-#endif /* PIC8_SDCARD_H */
+#endif /* EPIC_SDCARD_H */

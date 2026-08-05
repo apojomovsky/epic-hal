@@ -35,14 +35,14 @@ int main(void)
     EPIC_ADC_Init(&h);
 
     /* ADCON0 = ADON(0x01) | CHS=010(0x10) | ADCS=001(0x40) = 0x51 */
-    uint8_t adcon0 = PIC8_REG8(0x1FU);
+    uint8_t adcon0 = EPIC_REG8(0x1FU);
     CHECK((adcon0 & 0x51U) == 0x51U, "ADCON0 not programmed for AN2 Fosc/8");
 
     /* ADCON1 = PCFG=0010(0x02) | ADFM=1(0x80) = 0x82 */
     {
-        uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
-        uint8_t adcon1 = PIC8_REG8(0x9FU);
+        uint8_t adcon1 = EPIC_REG8(0x9FU);
         pic_select_bank(prev);
         CHECK((adcon1 & 0x82U) == 0x82U, "ADCON1 not programmed correctly");
     }
@@ -64,7 +64,7 @@ int main(void)
 
     /* DeInit. */
     EPIC_ADC_DeInit();
-    CHECK(PIC8_REG8(0x1FU) == 0x00U, "ADCON0 not zero after DeInit");
+    CHECK(EPIC_REG8(0x1FU) == 0x00U, "ADCON0 not zero after DeInit");
 
     printf("OK: ADC driver, channel/clock config, start, complete, read all pass.\n");
     return 0;

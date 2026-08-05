@@ -108,8 +108,8 @@ void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);
 /* ───────────────────────── IRQ entries ──────────────────────────── */
 
 /** Weak CCP1 ISR, override in user code. */
-void CCP1_IRQHandler(void) PIC8_WEAK;
+void CCP1_IRQHandler(void) EPIC_WEAK;
 /** Weak CCP2 ISR, override in user code. */
-void CCP2_IRQHandler(void) PIC8_WEAK;
+void CCP2_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_CCP_H */

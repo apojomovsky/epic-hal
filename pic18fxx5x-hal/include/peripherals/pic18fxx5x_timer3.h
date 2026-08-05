@@ -77,6 +77,6 @@ void EPIC_TIMER3_WriteCounter(uint16_t value);
 uint16_t EPIC_TIMER3_PrescalerToRatio(TIMER3_PrescalerTypeDef p);
 
 /** Weak Timer3 ISR, override in user code to add application logic. */
-void TIMER3_IRQHandler(void) PIC8_WEAK;
+void TIMER3_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_TIMER3_H */
