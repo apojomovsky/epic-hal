@@ -15,6 +15,12 @@ build*/
 *.swo
 .DS_Store
 
+# Python bytecode cache (scripts/ci-discover-*.py are run directly with
+# python3, no venv/install step, so a stray __pycache__/ can appear next
+# to them on any local run)
+__pycache__/
+*.pyc
+
 # Claude Code local state (personal settings, session/lock files)
 .claude/
 

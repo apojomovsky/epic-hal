@@ -107,3 +107,26 @@ changed, not the whole tree (which would also flag this repo's
 pre-existing violations from before the rules were adopted). Local,
 hook-driven runs are unaffected: the variable is unset there, so behavior
 is identical to before.
+
+## CI change-scoping (docs-only skip, affected-module narrowing)
+
+Two more scripts, each with a full header comment covering the "why",
+used by all three workflows to avoid paying for a docs-only PR or a PR
+that only touches one module:
+
+- `ci-docs-only-check.sh <base-ref>`: prints `true`/`false`, used by
+  `xc8-build.yml` and `sim-tests.yml` to skip their Docker-based jobs
+  (image pull already excepted, a `docker pull` against a cached tag is
+  cheap either way) entirely on a documentation-only PR diff.
+- `ci-discover-affected-modules.py [base-ref]`: used by
+  `host-tests.yml`'s `discover` job. Same docs-only concept as above,
+  plus a second question host-tests.yml specifically needs: which
+  modules were actually touched, directly or through a sibling
+  dependency (read straight from each module's own `CMakeLists.txt`,
+  no separately-maintained dependency graph to drift). Conservative on
+  both axes, falls back to the full, unfiltered module list the moment
+  it sees a changed file it can't attribute to a known module or
+  `pic8-common/`. Only ever applied to `pull_request` runs; every push
+  to `master` always gets the full matrix regardless of what changed,
+  so a wrong narrowing on some PR can only delay when a break is
+  caught, never let it merge unverified.

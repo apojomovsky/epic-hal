@@ -116,15 +116,34 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.discover.outputs.matrix }}
+      docs_only: ${{ steps.docs-only.outputs.result }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: discover
         run: |
           matrix="$(python3 scripts/ci-discover-xc8-matrix.py)"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+      # Docs-only PRs skip every real XC8 cross-compile in the `build`
+      # job below: a prose change cannot affect whether a .hex links.
+      # `toolchain-image` above stays unconditional on purpose (it's a
+      # `docker pull` against an already-published tag, seconds against
+      # GHCR's own cache, not worth a dependency edge just to skip it
+      # too). Always "false" on a push to master, the full matrix always
+      # runs there regardless of what changed.
+      - id: docs-only
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            result="$(bash scripts/ci-docs-only-check.sh '${{ github.event.pull_request.base.sha }}')"
+          else
+            result="false"
+          fi
+          echo "result=$result" >> "$GITHUB_OUTPUT"
 
   build:
     needs: [toolchain-image, discover]
+    if: needs.discover.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     container:
       image: ${{ needs.toolchain-image.outputs.image }}

@@ -83,8 +83,31 @@ jobs:
           fi
           echo "Using cached $image"
 
+  # Docs-only PRs skip the real mdb/MPLAB SIM run below (a prose change
+  # cannot affect register/UART output). Always "false" on a push to
+  # master. See scripts/ci-docs-only-check.sh's own header; host-
+  # tests.yml and xc8-build.yml apply the identical check to their own
+  # expensive jobs.
+  docs-check:
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.docs-only.outputs.result }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: docs-only
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            result="$(bash scripts/ci-docs-only-check.sh '${{ github.event.pull_request.base.sha }}')"
+          else
+            result="false"
+          fi
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+
   sim-test:
-    needs: [toolchain-image]
+    needs: [toolchain-image, docs-check]
+    if: needs.docs-check.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     container:
       image: ${{ needs.toolchain-image.outputs.image }}

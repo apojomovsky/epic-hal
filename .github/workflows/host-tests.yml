@@ -15,23 +15,53 @@ jobs:
   # `cmake -B build && cmake --build build && ctest`. Discover that set
   # from tracked files rather than hand-listing it here, so a new module
   # is picked up without a workflow edit.
+  #
+  # On a pull_request, also narrows that set: a docs-only diff (every
+  # changed file is a .md or lives under a docs/ dir) skips build-test
+  # entirely, and any other diff is narrowed to just the modules actually
+  # touched plus their transitive dependents (scripts/
+  # ci-discover-affected-modules.py walks each module's own CMakeLists.txt
+  # for its sibling deps, no separately-maintained graph to drift). A push
+  # to master always gets the full, unfiltered module list: this
+  # filtering exists to make PR iteration faster, not to ever be the only
+  # thing standing between a real break and master, so a wrong narrowing
+  # on some PR can only ever delay when a break is caught, not let it
+  # merge silently. Any change outside a known module dir and outside
+  # pic8-common/ (a workflow file, the root Makefile, docker/, scripts/
+  # itself) falls back to the full matrix rather than guessing.
   discover:
     runs-on: ubuntu-latest
     outputs:
       modules: ${{ steps.discover.outputs.modules }}
+      docs_only: ${{ steps.discover.outputs.docs_only }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: discover
         run: |
-          modules="$(git ls-files -- '*/CMakeLists.txt' \
+          full_modules="$(git ls-files -- '*/CMakeLists.txt' \
             | sed 's#/CMakeLists.txt$##' \
             | sort \
             | jq -R -s -c 'split("\n")[:-1]')"
+
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "modules=$full_modules" >> "$GITHUB_OUTPUT"
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+            echo "push to master: full $(echo "$full_modules" | jq 'length')-module matrix, no filtering"
+            exit 0
+          fi
+
+          base="${{ github.event.pull_request.base.sha }}"
+          result="$(python3 scripts/ci-discover-affected-modules.py "$base")"
+          docs_only="$(echo "$result" | jq -r '.docs_only')"
+          modules="$(echo "$result" | jq -c '.modules')"
           echo "modules=$modules" >> "$GITHUB_OUTPUT"
-          echo "Discovered modules: $modules"
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
 
   build-test:
     needs: discover
+    if: needs.discover.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
