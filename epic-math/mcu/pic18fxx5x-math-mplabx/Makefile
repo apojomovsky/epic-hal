@@ -101,13 +101,13 @@ EPIC_SOURCES := \
 # hardware-MULWF multiply path) plus the shared portable-C derived
 # routines (src/common/). The host src/host/ backend is NOT compiled here.
 MATH_SOURCES := \
-  $(APP_DIR)/src/pic18/pic_math_mul.c      \
-  $(APP_DIR)/src/pic18/pic_math_div.c      \
+  $(APP_DIR)/src/common/pic_math_numeric.c \
+  $(APP_DIR)/src/common/pic_math_rand.c    \
+  $(APP_DIR)/src/common/pic_math_sqrt.c    \
   $(APP_DIR)/src/pic18/pic_math_addsub.c   \
   $(APP_DIR)/src/pic18/pic_math_bcd.c      \
-  $(APP_DIR)/src/common/pic_math_sqrt.c    \
-  $(APP_DIR)/src/common/pic_math_numeric.c \
-  $(APP_DIR)/src/common/pic_math_rand.c
+  $(APP_DIR)/src/pic18/pic_math_div.c      \
+  $(APP_DIR)/src/pic18/pic_math_mul.c
 
 # The application: the on-target self-test (Tier 3). Phase 5 fills in the
 # golden_vectors.h replay + USART PASS/FAIL reporting; Phase 0 builds the
