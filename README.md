@@ -8,21 +8,24 @@
 [![xc8-build](https://github.com/apojomovsky/pic8-hal/actions/workflows/xc8-build.yml/badge.svg)](https://github.com/apojomovsky/pic8-hal/actions/workflows/xc8-build.yml)
 [![sim-tests](https://github.com/apojomovsky/pic8-hal/actions/workflows/sim-tests.yml/badge.svg)](https://github.com/apojomovsky/pic8-hal/actions/workflows/sim-tests.yml)
 
-A datasheet-faithful hardware abstraction layer and a set of firmware
-building blocks for 8-bit PIC microcontrollers, in the spirit of
-STM32Cube HAL but for parts with no vendor HAL of their own. 20 modules
-span three HALs plus scheduling, fixed-point math, serial/Modbus/USB,
-EEPROM and SD-card storage, PID, quadrature, debouncing, and character
-LCD.
+A datasheet-faithful hardware abstraction layer for 8-bit PIC
+microcontrollers, plus the higher-level building blocks that sit on top
+of it. Twenty modules span three HAL families, a cooperative scheduler,
+fixed-point math, serial and Modbus, USB, EEPROM and SD-card storage,
+PID, quadrature, debouncing, and character LCD.
 
-Every module dual-builds from the same source: a host simulation backend
-(gcc/CMake, runs as a normal program, no hardware required) and a
-real-target build (MPLAB XC8, produces a `.hex`). Applications never
-`#ifdef` between them, the split happens at build time via include-path
-and linked-file selection. Every claim here is backed by CI: host build
-+ test on every push, a real XC8 cross-compile of every module against
-every supported part, and a real run under MPLAB SIM (`mdb`, headless)
-checking actual register/UART output, not just "it compiled."
+8-bit PIC parts ship with no vendor HAL. This is the alternative:
+register-level drivers taken 1-to-1 from Microchip's datasheets, plus
+the scheduler, math, bus, and control-loop code that usually gets
+copy-pasted between projects. Written once, reused across families.
+
+Every module builds two ways from one source tree: as a host program
+under gcc/CMake (no hardware required) and as real firmware under
+MPLAB XC8 (produces a .hex). The build selects which target to link
+for, not the source code. CI runs all three stages on every push: host
+build and test, a real XC8 cross-compile of every module against every
+supported part, and a real run under MPLAB SIM (mdb, headless) that
+checks actual register and UART output, not just whether it compiled.
 
 ## Contents
 
@@ -64,20 +67,17 @@ on top of it, written once and reused across parts.
 
 | Family | Parts | HAL module | Notes |
 |---|---|---|---|
-| PIC16F87XA | 16F873A / 874A / 876A / 877A | [pic16f87xa-hal](pic16f87xa-hal/) | Tested on a 16F877A. Full peripheral coverage. DFP ships with XC8. |
-| PIC18F2455 family | 18F2455 / 2550 / 4455 / 4550 | [pic18fxx5x-hal](pic18fxx5x-hal/) | Tested on a 18F4550. Full peripheral coverage. Needs the PIC18Fxxxx DFP. |
+| PIC16F87XA | 16F873A / 874A / 876A / 877A | [pic16f87xa-hal](pic16f87xa-hal/) | Full peripheral coverage. DFP ships with XC8. |
+| PIC18F2455 family | 18F2455 / 2550 / 4455 / 4550 | [pic18fxx5x-hal](pic18fxx5x-hal/) | Full peripheral coverage. Needs the PIC18Fxxxx DFP. |
+| PIC16F193X | 16F1933 / 1934 / 1936 / 1937 / 1938 / 1939 | [pic16f193x-hal](pic16f193x-hal/) | Full peripheral coverage: GPIO, Timer0/1/2/4/6, CCP1-5, EUSART, MSSP, ADC, Comparator, EEPROM, DAC, FVR, SR latch, CPS, LCD. Needs the PIC12-16F1xxx DFP. |
 
-A third family, **PIC16F193X** (Enhanced Mid-range, [pic16f193x-hal](pic16f193x-hal/)),
-is in progress: foundation (GPIO, Timer0, interrupts) is real-target and
-`mdb`-verified, remaining peripherals land one at a time. See its
-[README](pic16f193x-hal/README.md) for current status before building
-on it.
-
-The examples use PORTB only, so they run on every part of both mature
-families. Family-agnostic modules (scheduler, math, serial, Modbus, ...)
-build against either family by selecting the HAL at build time; a few
-target one family only where the peripheral doesn't exist (USB, SD
-card), called out in the [Modules](#modules) table.
+All three families share a single API contract (pic8-common): same
+function names and signatures, family-specific register bodies. Family-agnostic
+modules (scheduler, math, serial, Modbus, ...) build against any family
+by selecting the HAL at build time; a few target one family only where
+the peripheral doesn't exist (USB, SD card), called out in the
+[Modules](#modules) table. Adding a new family follows the procedure in
+[docs/adding-a-device.md](docs/adding-a-device.md).
 
 ## Quick start
 
@@ -158,7 +158,7 @@ one family, that's called out.
 | [pic8-common](pic8-common/) | Shared layer every family reuses: status codes, host/target harness, CMake/Make fragments. |
 | [pic16f87xa-hal](pic16f87xa-hal/) | HAL for PIC16F873A/874A/876A/877A. Full peripheral coverage: GPIO, Timers, CCP, MSSP, ADC, Comparator, EEPROM, PSP, WDT. |
 | [pic18fxx5x-hal](pic18fxx5x-hal/) | HAL for PIC18F2455/2550/4455/4550. Full peripheral coverage: GPIO, Timer0-3, ECCP1/CCP2, MSSP, EUSART, Comparator, EEPROM, ADC, SPP. |
-| [pic16f193x-hal](pic16f193x-hal/) | HAL for PIC16F1933/1934/1936/1937/1938/1939 (Enhanced Mid-range). Foundation only so far: GPIO, Timer0, interrupts. |
+| [pic16f193x-hal](pic16f193x-hal/) | HAL for PIC16F1933/1934/1936/1937/1938/1939 (Enhanced Mid-range). Full peripheral coverage: GPIO, Timer0/1/2/4/6, CCP1-5, EUSART, MSSP, ADC, Comparator, EEPROM, DAC, FVR, SR latch, CPS, LCD. |
 
 **Scheduling & control flow**
 
@@ -206,10 +206,10 @@ one family, that's called out.
 |---|---|
 | [pic8-lcd](pic8-lcd/) | HD44780-compatible character LCD driver with configurable transport: 4-bit GPIO, 8-bit GPIO, or SPI via 74HC595. |
 
-Note: the higher-level modules above (taskmgr, tick, serial, ...)
-currently build against `pic16f87xa-hal`/`pic18fxx5x-hal`;
-`pic16f193x-hal` isn't wired into them yet, following naturally once
-its own peripheral coverage grows.
+Note: the higher-level modules (taskmgr, tick, serial, ...) build
+against the two mature families (PIC16F87XA, PIC18F2455). Wiring them
+to PIC16F193X is a natural follow-up now that its own peripheral
+coverage is complete.
 
 ## Documentation
 
