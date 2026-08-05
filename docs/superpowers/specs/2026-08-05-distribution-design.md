@@ -1,8 +1,17 @@
 # Distribution and consumption design
 
-Status: **designed, not started**. Design agreed 2026-08-05. Supersedes
-nothing; complements `docs/mplabx-link-gaps-plan.md` (see "Relationship
-to the link-gaps plan" below).
+Status: **planned, not started**. Design agreed 2026-08-05, implementation
+plans written 2026-08-05. Supersedes nothing; complements
+`docs/mplabx-link-gaps-plan.md` (see "Relationship to the link-gaps plan"
+below).
+
+Implementation plans, in order:
+
+1. `docs/superpowers/plans/2026-08-05-manifest-and-build-driver.md`
+   (phases 1 and 2)
+2. `docs/superpowers/plans/2026-08-06-bundle-generator.md` (phase 3)
+3. `docs/superpowers/plans/2026-08-07-mplabx-projects-and-release.md`
+   (phases 4 and 5)
 
 ## Problem
 
@@ -133,8 +142,32 @@ happens. It:
 2. validates `(module, MCU)` against `supported`, failing early and
    readably on an unsupported pair
 3. generates the config-word translation unit from manifest data
-4. compiles each source to `.p1` and links once to `.hex` via `xc8-cc`
-5. parses the XC8 memory summary and reports flash and RAM usage
+4. emits a self-contained POSIX `sh` script of `xc8-cc` invocations,
+   one `.p1` per source plus one link to `.hex`
+5. runs that script (`--run`) or leaves it for another runner to execute
+6. parses the XC8 memory summary from the build log and reports flash
+   and RAM usage
+
+### Why the driver emits a script instead of calling xc8-cc directly
+
+The toolchain image (`docker/ci-toolchain/Dockerfile`) is
+`debian:12-slim` with `ca-certificates curl unzip make tar`, the GTK
+runtime libraries, and `cmake build-essential`. It has **no python3**,
+deliberately, which is also why `ci-discover-xc8-matrix.py` packs its
+matrix into a bash-parseable flat string today. A Python driver therefore
+cannot run in the container where `xc8-cc` lives.
+
+Adding python3 to the image would work but makes every build depend on a
+human-gated `make ci-image-push`, since CI never builds the image itself.
+Emitting a script avoids that entirely: the resolution phase runs
+wherever python3 exists (a developer's host, or the GitHub runner, which
+already runs `ci-discover-xc8-matrix.py`), and the execution phase needs
+only `sh` and `xc8-cc`. No image change, and the container keeps the
+no-python3 property it was given on purpose.
+
+The emitted script is also a debugging artifact: it records the exact
+`xc8-cc` command line for every translation unit, which suits a codebase
+whose convention is to inspect generated output rather than assume it.
 
 Step 5 matters beyond ergonomics: it turns "this module is RAM-marginal"
 from folklore into a number CI can print and track, which is the
@@ -163,7 +196,9 @@ rather than done in one pass.
 
 ### What changes in CI
 
-- `xc8-build.yml`: calls `epic-build.py` instead of `make -C`.
+- `xc8-build.yml`: the `discover` job (which already runs python3 on a
+  bare runner) resolves builds and emits scripts; the containerised
+  `build` job runs `sh` over them instead of `make -C`.
 - `ci-discover-xc8-matrix.py`: `KNOWN_BROKEN` deleted, matrix derived
   from the manifest's `excluded` entries.
 - `sim-tests.yml`: `.hex` output paths retargeted.
