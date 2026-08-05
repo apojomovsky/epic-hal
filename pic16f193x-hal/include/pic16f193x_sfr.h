@@ -503,6 +503,23 @@
 #define PIC_SSPCON1_SSPOV       PIC8_BIT(6)
 #define PIC_SSPCON1_WCOL        PIC8_BIT(7)
 
+/* ───────────────── ADC bits (DS41364B ADC chapter) ──────────────── */
+
+/* ADCON0/ADCON1. Cross-checked against DFP: _ADCON0_ADON_POSN=0,
+ * _ADCON0_GO_POSN=1, _ADCON0_CHS_POSN=2 (mask 0x7C, 5-bit),
+ * _ADCON1_ADPREF_POSN=0 (mask 0x03), _ADCON1_ADNREF_POSN=2,
+ * _ADCON1_ADCS_POSN=4 (mask 0x70), _ADCON1_ADFM_POSN=7. */
+#define PIC_ADCON0_ADON         PIC8_BIT(0)
+#define PIC_ADCON0_GO_NDONE     PIC8_BIT(1)
+#define PIC_ADCON0_CHS_MASK     0x7CU
+#define PIC_ADCON0_CHS_SHIFT    2U
+
+#define PIC_ADCON1_ADPREF_MASK  0x03U
+#define PIC_ADCON1_ADNREF       PIC8_BIT(2)
+#define PIC_ADCON1_ADCS_MASK    0x70U
+#define PIC_ADCON1_ADCS_SHIFT   4U
+#define PIC_ADCON1_ADFM         PIC8_BIT(7)
+
 /* ───────────────────────── Reset values (POR) ──────────────────── */
 
 /* DS41364B §3 reset values and the per-register POR columns of the

@@ -331,7 +331,36 @@ SSPM mode select (bits 3:0): `0000`=Fosc/4, `0001`=Fosc/16,
 See `pic16f193x-hal/tests/example_mssp.c`: init at Fosc/4, CKE=1,
 register-state verification.
 
-## 16. The SFR layer
+## 16. ADC (DS41364B ADC chapter)
+
+10-bit ADC. DS80000479 errata: ADC may not complete at FOSC > 8 MHz.
+`ADC_HANDLE_DEFAULT` uses `ADC_CLOCK_FRC` (Fosc-independent) to sidestep
+this by default. Callers who pick an Fosc-derived clock are responsible
+for keeping the ADC clock period within the datasheet's safe threshold.
+
+### Register layout
+
+| Register | Address | Key bits |
+|---|---|---|
+| ADCON0 | 0x9D | ADON(0), GO/nDONE(1), CHS(6:2, 5-bit) |
+| ADCON1 | 0x9E | ADPREF(1:0), ADNREF(2), ADCS(6:4), ADFM(7) |
+| ADRESL/H | 0x9B/0x9C | 10-bit result, justified per ADFM |
+
+ADCS clock select (bits 6:4): `000`=Fosc/2, `001`=Fosc/8, `010`=Fosc/32,
+`011`=FRC (errata-safe), `100`=Fosc/4, `101`=Fosc/16, `110`=Fosc/64.
+
+### Driver API
+
+`HAL_ADC_Init`, `HAL_ADC_DeInit`, `HAL_ADC_SelectChannel`,
+`HAL_ADC_Start`, `HAL_ADC_IsConversionDone`, `HAL_ADC_Read`. Weak
+`ADC_IRQHandler`.
+
+### Example
+
+See `pic16f193x-hal/tests/example_adc.c`: init with FRC clock,
+register-state verification (ADCON0=0x01, ADCON1=0xB0).
+
+## 17. The SFR layer
 
 `include/pic16f193x_sfr.h` defines `PIC_REG_*` addresses, `PIC_*_BIT`
 masks, and `PIC_*_POR_VALUE` reset values, all DS41364B-cited. The
@@ -340,7 +369,7 @@ selected) defines `PIC8_REG8` / `pic8_sfr_read8` / `pic8_sfr_write8` /
 `PIC8_SFR_PTR` and the per-PIE-bank `PIC8_PIE_ENABLE_BIT` /
 `PIC8_PIE_DISABLE_BIT` macros (`pir_index` 0/1/2 for PIE1/2/3).
 
-## 17. Device selection
+## 18. Device selection
 
 `include/pic16f193x.h` selects exactly one of 1933/1934/1936/1937/1938/
 1939 via a `-D` define, default 1937, and sets per-device capability
@@ -348,7 +377,7 @@ macros (`PIC16F193X_FAMILY_HAS_PORTD`/`_PORTE` on 40/44-pin parts, plus
 flash/RAM/EEPROM/ADC sizes). `PIC8_FAMILY_RAM_BYTES` is the neutral
 alias consumers use.
 
-## 18. The examples
+## 19. The examples
 
 `example_blink.c`: Timer0 overflow drives an ISR that toggles RB0; the
 canonical dual-build smoke test, its header documents the expected
@@ -357,7 +386,7 @@ smoke test driving the sim directly. `example_timer1.c`: Timer1
 overflow drives an ISR that toggles RB0, the §4 gate's `HARNESS=sim
 MODE=gpio` payload (its header documents the expected register image).
 
-## 19. Known gaps and gotchas
+## 20. Known gaps and gotchas
 
 - The `Microchip.PIC12-16F1xxx_DFP` is installed and the real-target
   XC8 build passes for all six parts. Timer1 has cleared the §4 gate
@@ -381,7 +410,7 @@ MODE=gpio` payload (its header documents the expected register image).
   byte, not PIE1 in bank 1). See `docs/ARCHITECTURE.md` Finding 2
   for the codegen evidence and the fix.
 
-## 20. Appendix: datasheet section index
+## 21. Appendix: datasheet section index
 
 DS41364B §2.2 data memory, §3 resets, §4 interrupts, §6 I/O ports, §7
 interrupt-on-change, §8 oscillator, §10 device config, §11 ADC, §12
