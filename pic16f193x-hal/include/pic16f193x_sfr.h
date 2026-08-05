@@ -549,6 +549,20 @@
 #define PIC_CMOUT_MC1OUT        PIC8_BIT(0)
 #define PIC_CMOUT_MC2OUT        PIC8_BIT(1)
 
+/* ───────────────── EEPROM bits (DS41364B §23.0) ──────────────────── */
+
+#define PIC_EECON1_RD           PIC8_BIT(0)
+#define PIC_EECON1_WR           PIC8_BIT(1)
+#define PIC_EECON1_WREN         PIC8_BIT(2)
+#define PIC_EECON1_WRERR        PIC8_BIT(3)
+#define PIC_EECON1_FREE         PIC8_BIT(4)
+#define PIC_EECON1_LWLO         PIC8_BIT(5)
+#define PIC_EECON1_CFGS         PIC8_BIT(6)
+#define PIC_EECON1_EEPGD        PIC8_BIT(7)
+
+#define PIC_EEADRH_MASK         0x7FU
+#define PIC_EEDATH_MASK         0x3FU
+
 /* ───────────────────────── Reset values (POR) ──────────────────── */
 
 /* DS41364B §3 reset values and the per-register POR columns of the

@@ -143,6 +143,8 @@ HAL_SOURCES := \
   $(HAL_DIR)/src/peripherals/pic16f193x_usart.c \
   $(HAL_DIR)/src/peripherals/pic16f193x_ssp.c \
   $(HAL_DIR)/src/peripherals/pic16f193x_adc.c \
+  $(HAL_DIR)/src/peripherals/pic16f193x_comp.c \
+  $(HAL_DIR)/src/peripherals/pic16f193x_eeprom.c \
   $(HAL_DIR)/src/core/pic16f193x_irq.c             \
   $(HAL_DIR)/src/core/pic16f193x_wdt_sleep.c       \
   $(HAL_DIR)/src/core/pic16f193x_wdt_sleep_target.c \

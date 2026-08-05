@@ -388,7 +388,39 @@ See `pic16f193x-hal/tests/example_comparator.c`: init both instances,
 register-state verification (CM1CON0=0x80, CM2CON0=0x80, with
 C1OUT/C2OUT read-only bit 6 masked).
 
-## 18. The SFR layer
+## 18. EEPROM (DS41364B §23.0)
+
+Data EEPROM, 256 bytes on every variant. Data space only this phase
+(program-memory self-write deferred). The unlock sequence (0x55/0xAA
+to EECON2) is required before WR. The §4 gate confirmed the banked RMW
+of EECON1 (bank 3) works correctly with plain-C PIC8_BIT_SET/CLR,
+unlike PIE1/2/3 which needed the inline-asm fix (Finding 2).
+
+### Register layout
+
+| Register | Address | Key bits |
+|---|---|---|
+| EECON1 | 0x195 | RD(0), WR(1), WREN(2), WRERR(3), CFGS(6), EEPGD(7) |
+| EECON2 | 0x196 | Write-only unlock (0x55 then 0xAA) |
+| EEADRL/H | 0x191/0x192 | Address (H mask 0x7F) |
+| EEDATL/H | 0x193/0x194 | Data (H mask 0x3F) |
+
+### Driver API
+
+`HAL_EEPROM_Init`, `HAL_EEPROM_DeInit`, `HAL_EEPROM_ReadByte`,
+`HAL_EEPROM_WriteByte` (blocking, spins on WR),
+`HAL_EEPROM_IsWriteComplete`, `HAL_EEPROM_HasWriteError`. Weak
+`EEPROM_IRQHandler`.
+
+### Example
+
+See `pic16f193x-hal/tests/example_eeprom.c`: sets WREN on EECON1
+(bank 3) and verifies the banked RMW landed (the codegen risk the
+brief flagged). Full write/read cycle not exercised in the gate
+example (the while(WR) spin deadlocks the host sim's polled step
+model); the WREN test is the actual codegen verification.
+
+## 19. The SFR layer
 
 `include/pic16f193x_sfr.h` defines `PIC_REG_*` addresses, `PIC_*_BIT`
 masks, and `PIC_*_POR_VALUE` reset values, all DS41364B-cited. The

@@ -35,6 +35,7 @@ static void sim_step_timer0(void);
 static void sim_step_timer1(void);
 static void sim_step_timer246(void);
 static void sim_step_usart(void);
+static void sim_step_eeprom(void);
 static void sim_refresh_ports(void);
 static void sim_step_ioc(void);
 
@@ -137,6 +138,7 @@ void pic16f193x_sim_step(uint32_t ticks)
         sim_step_timer1();
         sim_step_timer246();
         sim_step_usart();
+        sim_step_eeprom();
         sim_refresh_ports();
         sim_step_ioc();
     }
@@ -292,6 +294,24 @@ static void sim_step_usart(void)
     }
     /* BAUDCON: RCIDL (bit 6) is read-only, stays 1 when receiver idle. */
     pic16f193x_sim_sfr[PIC_REG_BAUDCON] |= PIC_BAUDCON_RCIDL;
+}
+
+/* ───────────────────────── EEPROM step ──────────────────────────── */
+
+static uint8_t s_eeprom_data[256];
+
+static void sim_step_eeprom(void)
+{
+    uint8_t econ1 = pic16f193x_sim_sfr[PIC_REG_EECON1];
+    if (econ1 & PIC_EECON1_RD) {
+        uint8_t addr = pic16f193x_sim_sfr[PIC_REG_EEADRL];
+        pic16f193x_sim_sfr[PIC_REG_EEDATL] = s_eeprom_data[addr];
+        pic16f193x_sim_sfr[PIC_REG_EECON1] &= (uint8_t)~PIC_EECON1_RD;
+    } else if (econ1 & PIC_EECON1_WR) {
+        uint8_t addr = pic16f193x_sim_sfr[PIC_REG_EEADRL];
+        s_eeprom_data[addr] = pic16f193x_sim_sfr[PIC_REG_EEDATL];
+        pic16f193x_sim_sfr[PIC_REG_EECON1] &= (uint8_t)~PIC_EECON1_WR;
+    }
 }
 
 /* ───────────────────────── GPIO pin-level refresh ───────────────── */
