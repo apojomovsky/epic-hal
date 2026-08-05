@@ -24,10 +24,6 @@ register-level driver per peripheral, faithful to the datasheet, and one
 contract that holds across every family it's ported to, however little
 those families have in common.
 
-Twenty modules span three HAL families so far, a cooperative scheduler,
-fixed-point math, serial and Modbus, USB, EEPROM and SD-card storage,
-PID, quadrature, debouncing, and character LCD.
-
 Every module builds two ways from one source tree: as a host program
 under gcc/CMake (no hardware required) and as real firmware under
 MPLAB XC8 (produces a .hex). The build selects which target to link
