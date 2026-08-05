@@ -48,11 +48,14 @@ jobs:
       - id: pairs
         name: Emit a build script for every supported pair
         run: |
-          python3 - <<'PY' > pairs.txt
-          import subprocess, sys
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          xc8_install_dir="/opt/microchip/xc8/v${xc8_version}"
+          XC8_INSTALL_DIR="$xc8_install_dir" python3 - <<'PY' > pairs.txt
+          import os, subprocess, sys
           sys.path.insert(0, "scripts")
           import epicmanifest
           m = epicmanifest.load(epicmanifest.default_path())
+          xc8_install_dir = os.environ["XC8_INSTALL_DIR"]
           for name in sorted(m.modules):
               mod = m.modules[name]
               for fam_name, mcus in sorted(mod.supported.items()):
@@ -62,11 +65,13 @@ jobs:
                   key = fam.hal_dir.replace("-hal", "")
                   d = f"{name}/mcu/{key}-{name.replace('epic-','')}-mplabx"
                   print(f"{d}={','.join(mcus)}")
+                  dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
                   for mcu in mcus:
                       subprocess.run(
                           ["python3", "scripts/epic_build.py", "build",
                            "--module", name, "--mcu", mcu,
-                           "--build-dir", f"build-manifest/{name}"],
+                           "--build-dir", f"build-manifest/{name}",
+                           "--dfp-dir", dfp_dir],
                           check=True, stdout=subprocess.DEVNULL,
                       )
           PY
