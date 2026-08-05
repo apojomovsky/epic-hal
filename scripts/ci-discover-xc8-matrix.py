@@ -25,6 +25,7 @@ import sys
 
 PIC16_VARIANTS = ["16F873A", "16F874A", "16F876A", "16F877A"]
 PIC18_VARIANTS = ["18F2455", "18F2550", "18F4455", "18F4550"]
+PIC16F193X_VARIANTS = ["16F1933", "16F1934", "16F1936", "16F1937", "16F1938", "16F1939"]
 
 # Real, pre-existing bugs found by this workflow's first fully-working run
 # (see docs/mplabx-link-gaps-plan.md for root causes and the fix plan), not
@@ -96,6 +97,7 @@ KNOWN_BROKEN = {
 FAMILIES = {
     "pic16f87xa": (PIC16_VARIANTS, "Microchip.PIC16Fxxx_DFP"),
     "pic18fxx5x": (PIC18_VARIANTS, "Microchip.PIC18Fxxxx_DFP"),
+    "pic16f193x": (PIC16F193X_VARIANTS, "Microchip.PIC12-16F1xxx_DFP"),
 }
 
 
@@ -113,6 +115,8 @@ def main():
             family = "pic16f87xa"
         elif "pic18fxx5x" in d:
             family = "pic18fxx5x"
+        elif "pic16f193x" in d:
+            family = "pic16f193x"
         else:
             sys.exit(f"unrecognized family for {d}")
         variants, _dfp = FAMILIES[family]
