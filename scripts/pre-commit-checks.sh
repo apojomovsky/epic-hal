@@ -138,9 +138,16 @@ cppcheck_check() {
         includes+=(-I "$d")
     done < <(find . -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null)
 
+    # --suppress=preprocessorErrorDirective: a #error in #ifndef <build-define>
+    # is a common vendored pattern (e.g. m-stack's mmc.h requires the
+    # integrator to define MMC_SPI_TRANSFER) and is a false positive here,
+    # because this hook passes only -I dirs, no -D build defines (the real
+    # CMake/Make build defines them; host-sim + xc8 are the source of truth).
+    # Real "unsupported platform" #errors are caught by the actual build.
     if ! cppcheck --enable=warning,performance,portability --std=c99 --error-exitcode=1 \
         --suppress=missingInclude --suppress=missingIncludeSystem \
         --suppress=unmatchedSuppression \
+        --suppress=preprocessorErrorDirective \
         --quiet "${includes[@]}" "${c_files[@]}"; then
         echo "pre-commit: cppcheck found issues in the files above."
         fail=1
