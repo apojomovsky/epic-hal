@@ -1,0 +1,108 @@
+name: manifest-equivalence
+
+# Temporary gate for docs/superpowers/plans/2026-08-05-manifest-and-build-driver.md.
+# Proves scripts/epic_build.py reproduces every mcu/*-mplabx/Makefile's
+# .hex byte for byte before those Makefiles are deleted. Removed in that
+# plan's Task 11, once the Makefiles are gone and there is no longer an
+# old path to compare against.
+#
+# The manifest is resolved into build scripts on the runner (which has
+# python3) and only the resulting sh scripts are executed in the
+# toolchain container (which deliberately does not).
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  toolchain-image:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: resolve
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
+          echo "image=ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}" >> "$GITHUB_OUTPUT"
+      - run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - run: docker pull "${{ steps.resolve.outputs.image }}"
+
+  emit:
+    runs-on: ubuntu-latest
+    outputs:
+      pairs: ${{ steps.pairs.outputs.pairs }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: pairs
+        name: Emit a build script for every supported pair
+        run: |
+          python3 - <<'PY' > pairs.txt
+          import subprocess, sys
+          sys.path.insert(0, "scripts")
+          import epicmanifest
+          m = epicmanifest.load(epicmanifest.default_path())
+          for name in sorted(m.modules):
+              mod = m.modules[name]
+              for fam_name, mcus in sorted(mod.supported.items()):
+                  fam = m.families[fam_name]
+                  if m.example_for(name, fam_name) is None:
+                      continue
+                  key = fam.hal_dir.replace("-hal", "")
+                  d = f"{name}/mcu/{key}-{name.replace('epic-','')}-mplabx"
+                  print(f"{d}={','.join(mcus)}")
+                  for mcu in mcus:
+                      subprocess.run(
+                          ["python3", "scripts/epic_build.py", "build",
+                           "--module", name, "--mcu", mcu,
+                           "--build-dir", f"build-manifest/{name}"],
+                          check=True,
+                      )
+          PY
+          cat pairs.txt
+          echo "pairs<<EOF" >> "$GITHUB_OUTPUT"
+          cat pairs.txt >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: emitted-scripts
+          path: |
+            build-manifest/
+            pairs.txt
+
+  compare:
+    needs: [toolchain-image, emit]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ needs.toolchain-image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: emitted-scripts
+      - name: Compare .hex from both build paths
+        shell: bash
+        run: |
+          chmod +x scripts/equivalence-gate.sh
+          DFP_ROOT="$XC8_INSTALL_DIR/pic/packs" \
+            sh scripts/equivalence-gate.sh < pairs.txt | tee gate.log
+          {
+            echo '### Manifest equivalence'
+            echo '```'
+            tail -30 gate.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
