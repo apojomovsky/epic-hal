@@ -360,7 +360,35 @@ ADCS clock select (bits 6:4): `000`=Fosc/2, `001`=Fosc/8, `010`=Fosc/32,
 See `pic16f193x-hal/tests/example_adc.c`: init with FRC clock,
 register-state verification (ADCON0=0x01, ADCON1=0xB0).
 
-## 17. The SFR layer
+## 17. Comparator (DS41364B §9.0)
+
+Dual comparator (C1/C2). Each instance has its own CMxCON0
+(enable/config/output) and CMxCON1 (channel select/edge interrupt),
+plus shared read-only CMOUT mirror. C1OUT/C2OUT (CMxCON0 bit 6) are
+read-only hardware status bits.
+
+### Register layout
+
+| Register | Address | Key bits |
+|---|---|---|
+| CM1CON0 | 0x111 | C1ON(7), C1OUT(6, RO), C1OE(5), C1POL(4), C1HYS(1) |
+| CM1CON1 | 0x112 | C1PCH(5:4), C1NCH(1:0), C1INTP(7), C1INTN(6) |
+| CM2CON0 | 0x113 | C2ON(7), C2OUT(6, RO), C2OE(5), C2POL(4), C2HYS(1) |
+| CM2CON1 | 0x114 | C2PCH(5:4), C2NCH(1:0), C2INTP(7), C2INTN(6) |
+| CMOUT | 0x115 | MC1OUT(0, RO), MC2OUT(1, RO) |
+
+### Driver API
+
+`HAL_COMP_Init`, `HAL_COMP_DeInit`, `HAL_COMP_ReadOutput`. Weak
+`CMP1_IRQHandler`/`CMP2_IRQHandler`.
+
+### Example
+
+See `pic16f193x-hal/tests/example_comparator.c`: init both instances,
+register-state verification (CM1CON0=0x80, CM2CON0=0x80, with
+C1OUT/C2OUT read-only bit 6 masked).
+
+## 18. The SFR layer
 
 `include/pic16f193x_sfr.h` defines `PIC_REG_*` addresses, `PIC_*_BIT`
 masks, and `PIC_*_POR_VALUE` reset values, all DS41364B-cited. The

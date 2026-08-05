@@ -520,6 +520,35 @@
 #define PIC_ADCON1_ADCS_SHIFT   4U
 #define PIC_ADCON1_ADFM         PIC8_BIT(7)
 
+/* ───────────────── Comparator bits (DS41364B §9.0) ──────────────── */
+
+/* CM1CON0/CM2CON0: CxON(7), CxOE(5), CxPOL(4), CxHYS(1).
+ * CM1CON1/CM2CON1: CxPCH(5:4, mask 0x30), CxNCH(1:0, mask 0x03),
+ * CxINTN(6), CxINTP(7).
+ * CMOUT: MC1OUT(0), MC2OUT(1). */
+#define PIC_CM1CON0_C1HYS       PIC8_BIT(1)
+#define PIC_CM1CON0_C1POL       PIC8_BIT(4)
+#define PIC_CM1CON0_C1OE        PIC8_BIT(5)
+#define PIC_CM1CON0_C1ON        PIC8_BIT(7)
+
+#define PIC_CM1CON1_C1NCH_MASK  0x03U
+#define PIC_CM1CON1_C1PCH_MASK  0x30U
+#define PIC_CM1CON1_C1INTN      PIC8_BIT(6)
+#define PIC_CM1CON1_C1INTP      PIC8_BIT(7)
+
+#define PIC_CM2CON0_C2HYS       PIC8_BIT(1)
+#define PIC_CM2CON0_C2POL       PIC8_BIT(4)
+#define PIC_CM2CON0_C2OE        PIC8_BIT(5)
+#define PIC_CM2CON0_C2ON        PIC8_BIT(7)
+
+#define PIC_CM2CON1_C2NCH_MASK  0x03U
+#define PIC_CM2CON1_C2PCH_MASK  0x30U
+#define PIC_CM2CON1_C2INTN      PIC8_BIT(6)
+#define PIC_CM2CON1_C2INTP      PIC8_BIT(7)
+
+#define PIC_CMOUT_MC1OUT        PIC8_BIT(0)
+#define PIC_CMOUT_MC2OUT        PIC8_BIT(1)
+
 /* ───────────────────────── Reset values (POR) ──────────────────── */
 
 /* DS41364B §3 reset values and the per-register POR columns of the

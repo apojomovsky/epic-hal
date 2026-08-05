@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-Status: **written, not yet implemented.** Peripheral #6 in
+Status: **implemented and cleared the §4 gate.** Peripheral #6 in
 `docs/pic16f193x-plan.md` §7's roadmap table.
 
 **Goal:** Land a `HAL_COMP_*` driver for both comparators (DS41364B
