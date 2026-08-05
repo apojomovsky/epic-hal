@@ -1,109 +1,114 @@
-# pic16f193x-hal
+# PIC16F193X HAL
 
-Hardware-abstraction layer and host-simulation backend for the
-**PIC16F193X** family (PIC16F1933/1934/1936/1937/1938/1939, F + LF), the
-Enhanced Mid-range 8-bit PIC core with an LCD segment driver, per-pin
-interrupt-on-change, and 5 CCP modules. Datasheet: DS41364B.
+Register-level hardware abstraction layer for the PIC16F1933, 1934,
+1936, 1937, 1938, and 1939 (Enhanced Mid-range core, F and LF
+variants). Covers the full peripheral set: GPIO, Timer0/1/2/4/6, five
+CCP modules, EUSART, MSSP, ADC, dual comparators, DAC, FVR, SR latch,
+capacitive sensing, EEPROM, and the LCD segment driver. Register facts
+are taken from
+[DS41364B](https://ww1.microchip.com/downloads/en/DeviceDoc/41364B.pdf).
 
-This is the repo's third HAL family. It implements the shared
-`pic8-common` contract (same `HAL_GPIO_*` / `HAL_TIMER0_*` / `HAL_IRQ_*`
-names and signatures as `pic16f87xa-hal` and `pic18fxx5x-hal`) with
-family-shaped bodies for the Enhanced Mid-range core. Why a new family,
-not a variant of `pic16f87xa-hal`: the 193X banks data memory with the
-**BSR** (up to 32 banks x 128 bytes, not RP0/RP1's 4 banks), uses a
-single interrupt vector with **automatic context save** (no manual
-ISR push/pop), and an LATx/ANSELx I/O model. See
-[`docs/pic16f193x-plan.md`](../docs/pic16f193x-plan.md) and
-[`docs/adding-a-device.md`](../docs/adding-a-device.md) for the
-rationale and the procedure this addition follows.
+Third family in this repo, alongside the PIC16F87XA and PIC18F2455
+HALs. All three implement a shared API contract from pic8-common: same
+function names and signatures, family-specific register bodies
+underneath. Applications written against the shared API are portable
+across families at build time (include-path swap), not source time.
+The contract design and the procedure for adding a new family are
+documented in
+[docs/multi-family-plan.md](../docs/multi-family-plan.md) and
+[docs/adding-a-device.md](../docs/adding-a-device.md).
 
 ## Status
 
-**Foundation: host-sim verified and real-target-build verified.** The
-platform headers, SFR map, IRQ backend (23 sources across INTCON +
-PIR1/2/3 + PIE1/2/3), dispatch, single-vector ISR, harness, WDT/Sleep,
-GPIO (LAT/ANSEL/WPUB/IOC), Timer0, and the host simulation backend build
-clean (`-Wall -Wextra -Werror`) and pass on the host for all six parts.
-The `Microchip.PIC12-16F1xxx_DFP` (1.9.258) is now installed locally,
-and the real-target XC8 build (`mcu/pic16f193x-mplabx/Makefile`) also
-passes for all six parts, producing a valid Intel-HEX image each.
-Timer1 has cleared the §4 verification gate, including the `mdb`
-register-readback half (see below). The remaining peripherals
-(Timer2/4/6, 5x CCP, EUSART, MSSP, ADC, Comparator, DAC, FVR, SR latch,
-capacitive sensing, LCD driver, EEPROM) are added one at a time, each
-through the §4 verification gate.
+Every peripheral on the part is implemented and verified through three
+stages: host simulation, six-part real-target XC8 build, and the mdb
+(MPLAB SIM) register-readback gate.
 
-The XC8 codegen probe of the known-risky SFR-access patterns
-(docs/adding-a-device.md appendix) came back clean: disassembling the
-linked `example_blink` firmware shows every runtime-dispatched SFR
-address (the PIE1/2/3 pick in `HAL_IRQ_Enable` et al., the
-TRISx/LATx/ANSELx pick in `HAL_GPIO_Init`) compiles to FSR1:INDF1
-indirect addressing, which is BSR-independent by construction, neither
-the classic-PIC16 bank-bit failure nor the PIC18 program-memory-table
-failure. Literal SFR tokens in non-mirrored banks correctly get a
-`movlb` bank-select. See `docs/ARCHITECTURE.md` Finding 1.
+- [x] Family header, SFR map, platform layer (host + target)
+- [x] Interrupt core (23 sources, INTCON + PIR1/2/3 + PIE1/2/3, single
+      vector with automatic context save, no manual push/pop)
+- [x] GPIO (PORTA-E, LAT/ANSEL/WPUB/WPUE/IOC, init/read/write/toggle)
+- [x] Timer0, Timer1 (16-bit, prescaler, atomic read/write)
+- [x] Timer2 / Timer4 / Timer6 (PR-match + postscaler, one driver, three instances)
+- [x] CCP1-5 (capture/compare, CCP1-3 Enhanced, CCP4/5 plain, one driver, five instances)
+- [x] EUSART (async 8-bit, baud computation, TX/RX, weak ISRs)
+- [x] MSSP (SPI master, CKE=1 errata-safe default)
+- [x] ADC (10-bit, FRC errata-safe clock, channel select, right/left justify)
+- [x] Comparator C1/C2 (enable, hysteresis, polarity, output, edge interrupt)
+- [x] EEPROM (256 bytes, data space, 0x55/0xAA unlock, read/write)
+- [x] DAC (5-bit, output value, enable)
+- [x] FVR (fixed voltage reference, ADC/comp/DAC gain, ready flag)
+- [x] SR Latch (enable, set/reset pulse, output steering)
+- [x] Capacitive Sensing (channel select, range, Timer0 oscillator routing)
+- [x] LCD segment driver (24/16 segments per device, pixel-level set/clear,
+      DFP-derived segment-to-register mapping)
+- [x] WDT / Sleep / BOR / POR helpers
+- [x] Host simulation backend (flat-array register file, Timer0/1/2-6,
+      GPIO, IOC, EUSART TRMT, EEPROM 256-byte model)
+- [x] Test harness (bounded host run, real-target firmware, MODE=gpio
+      RA0 PASS/FAIL marker for the mdb gate)
+- [x] MPLAB X / XC8 project (`mcu/pic16f193x-mplabx/Makefile`, all 6 parts)
 
-The **toolchain gap is closed**: MPLAB X / `mdb` (MPLAB SIM, headless)
-is installed (`docker/ci-toolchain/Dockerfile`, pushed to
-`ghcr.io/apojomovsky/pic8-hal-ci`) and confirmed working end-to-end via
-the root `Makefile`'s `make mdb-test` (verified against `pic8-tick`'s
-pilot module, both existing families, real `PIC8_HARNESS_RESULT: PASS`).
-`make xc8-build MODULE=pic16f193x-hal MCU=16F1937` works today.
+## Quick start
 
-`make mdb-test` is now wired for PIC16F193X via `MODE=gpio`: the
-HARNESS=sim harness drives RA0 (PORTA bit 0) from the pass/fail
-marker (`pic8_harness_log()` magic-string dispatch), and the wrapper
-reads `print PORTA` to detect the result. Run
-`make mdb-test MODULE=pic16f193x-hal/mcu/pic16f193x-mplabx \
-   MCU=16F1937 DEVICE=PIC16F1937 \
-   DFP=Microchip.PIC12-16F1xxx_DFP MODE=gpio`
-(with `WAIT_MS=60000` on the Docker MPLAB SIM, since the simulator
-runs ~1/2000th real-time and the default 2000 ms is too short for
-the Timer1 example to overflow even once) to exercise the gate.
-PIC16F87XA and PIC18Fxxxx continue to use the default `MODE=uart`
-for their EUSART-based marker.
+Host simulation (no hardware, no toolchain):
+
+```sh
+cmake -B build && cmake --build build
+./build/example_blink        # Timer0 + GPIO + IRQ blink
+./build/example_timer246     # 3 timers, 3 RC pins, all at once
+./build/example_ccp         # CCP1 + CCP2 compare-set register check
+```
+
+Real target (needs XC8 + the PIC12-16F1xxx DFP):
+
+```sh
+export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
+make -C mcu/pic16f193x-mplabx MCU=16F1937
+```
 
 ## Layout
 
 ```
-include/      family + core/peripheral headers
-  host/       host platform header (memory-backed SFR)
-  target/     target platform header (volatile-deref SFR)
-  core/       IRQ, WDT/Sleep, neutral shims
-  peripherals/ GPIO, Timer0, Timer1, neutral shims
+include/
+  pic16f193x.h          device selection + per-device capability macros
+  pic16f193x_sfr.h      SFR addresses, bit masks, POR values (DS41364B-cited)
+  host/                 host platform header (memory-backed SFR array)
+  target/               target platform header (volatile-deref SFR)
+  core/                 IRQ, WDT/Sleep, harness, neutral shims
+  peripherals/          GPIO, Timer0-6, CCP1-5, EUSART, MSSP, ADC, etc.
 src/
-  core/       IRQ backend, dispatch, ISR vector, harness (host + sim-target), WDT/Sleep
-  peripherals/ GPIO, Timer0, Timer1
-  sim/        host simulation backend (flat-array register file)
-tests/       example_blink.c, example_gpio.c, example_timer1.c
-mcu/pic16f193x-mplabx/  XC8 Makefile (+ DFP pin, config words)
-docs/        ARCHITECTURE.md (XC8 codegen findings, filled as found)
+  core/                 IRQ backend, dispatch, ISR vector, harness, WDT/Sleep
+  peripherals/          all peripheral driver bodies
+  sim/                  host simulation backend (flat-array register file)
+tests/                  example_blink, example_timer1, example_timer246, ...
+mcu/pic16f193x-mplabx/  XC8 Makefile + config words (all 6 parts)
+docs/                   ARCHITECTURE.md (XC8 codegen findings)
 ```
 
-## Build (host simulation)
+## Build model
 
-```sh
-cmake -B build && cmake --build build && ctest --test-dir build --output-on-failure
-./build/example_blink
-./build/example_gpio
-```
-
-The host build puts `include/host` first on the include path, so
-`pic16f193x_platform.h` resolves to the memory-backed-SFR version and
-the harness/WDT-sim implementations link. No DFP, no hardware needed.
-
-## Build (real target)
-
-See [`mcu/pic16f193x-mplabx/README.md`](mcu/pic16f193x-mplabx/README.md).
-Needs the PIC12-16F1xxx DFP installed first.
+Two builds, one source tree, no `#ifdef` in driver or example code. The
+host build puts `include/host` first on the include path so
+`pic16f193x_platform.h` resolves to a memory-backed SFR array; the target
+build puts `include/target` first so it resolves to volatile-deref. The
+linked harness file (`pic16f193x_harness_sim.c` vs
+`pic16f193x_harness_sim_target.c`) and the sim backend (`src/sim/`,
+host-only) are selected by the build, not by preprocessor. Every example
+source compiles unchanged in both builds.
 
 ## Documentation
 
-- [`MANUAL.md`](MANUAL.md): per-family register-level reference
-  (datasheet-cited), points to `pic8-common/MANUAL.md` for shared
-  conventions.
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): XC8 codegen findings
-  for this family (filled as the §4 gate surfaces them).
-- [`../pic8-common/README.md`](../pic8-common/README.md) +
-  [`../pic8-common/MANUAL.md`](../pic8-common/MANUAL.md): the shared
-  contract every family implements.
+- [**MANUAL.md**](MANUAL.md): per-family register-level reference
+  (datasheet-cited), covering every peripheral's register layout, driver
+  API, and errata notes.
+- [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md): XC8 codegen findings
+  for this family (BSR banking, PIE1/2/3 RMW fix, FSR/INDF verification).
+- [**../pic8-common/README.md**](../pic8-common/README.md) +
+  [**../pic8-common/MANUAL.md**](../pic8-common/MANUAL.md): the shared
+  contract every family implements (status codes, harness, interrupt
+  model, naming conventions).
+- [**../docs/multi-family-plan.md**](../docs/multi-family-plan.md): the
+  fixed contract design and how families interoperate.
+- [**../docs/adding-a-device.md**](../docs/adding-a-device.md): the
+  verification-gated playbook for adding a new device or family.
