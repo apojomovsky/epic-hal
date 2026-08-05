@@ -67,6 +67,7 @@ set(PIC8_HAL_SOURCES
     src/peripherals/pic16f193x_timer246.c
     src/peripherals/pic16f193x_ccp.c
     src/peripherals/pic16f193x_usart.c
+    src/peripherals/pic16f193x_ssp.c
     src/core/pic16f193x_irq.c
     src/core/pic16f193x_wdt_sleep.c
     src/core/pic16f193x_wdt_sleep_sim.c
@@ -83,6 +84,7 @@ pic8_add_example(example_timer1 tests/example_timer1.c)
 pic8_add_example(example_timer246 tests/example_timer246.c)
 pic8_add_example(example_ccp tests/example_ccp.c)
 pic8_add_example(example_eusart tests/example_eusart.c)
+pic8_add_example(example_mssp tests/example_mssp.c)
 
 # Optional: example for every device in the family.
 pic8_add_example_per_device(example_blink tests/example_blink.c)
@@ -90,3 +92,4 @@ pic8_add_example_per_device(example_timer1 tests/example_timer1.c)
 pic8_add_example_per_device(example_timer246 tests/example_timer246.c)
 pic8_add_example_per_device(example_ccp tests/example_ccp.c)
 pic8_add_example_per_device(example_eusart tests/example_eusart.c)
+pic8_add_example_per_device(example_mssp tests/example_mssp.c)

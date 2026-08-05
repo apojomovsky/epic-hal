@@ -302,7 +302,36 @@ divisor=64 (BRGH=0) or 16 (BRGH=1). `USART_ComputeSPBRG` computes this.
 See `pic16f193x-hal/tests/example_eusart.c`: init at 9600 baud (32MHz
 Fosc, BRGH=1), transmit one byte, register-state verification.
 
-## 15. The SFR layer
+## 15. MSSP (SPI Master) (DS41364B §22.0)
+
+MSSP in SPI master mode only this phase. I2C (master/slave) and SPI
+slave are deferred (substantially different, larger scope). The default
+handle uses CKE=1 (errata-safe); CKE=0 carries a real DS80000479 errata
+(BF/SSPIF set half SCK early) but is not forbidden.
+
+### Register layout
+
+| Register | Address | Key bits |
+|---|---|---|
+| SSPSTAT | 0x214 | BF(0, read-only), CKE(6), SMP(7) |
+| SSPCON1 | 0x215 | SSPM(3:0), CKP(4), SSPEN(5), SSPOV(6), WCOL(7) |
+| SSPBUF | 0x211 | Read/write data buffer |
+
+SSPM mode select (bits 3:0): `0000`=Fosc/4, `0001`=Fosc/16,
+`0010`=Fosc/64, `0011`=Timer2 output (SPI master only this phase).
+
+### Driver API
+
+`HAL_SSP_Init`, `HAL_SSP_DeInit`, `HAL_SSP_WriteByte`, `HAL_SSP_ReadByte`,
+`HAL_SSP_IsBufferFull`, `HAL_SSP_HasWriteCollision`,
+`HAL_SSP_ClearWriteCollision`. Weak `SSP_IRQHandler`.
+
+### Example
+
+See `pic16f193x-hal/tests/example_mssp.c`: init at Fosc/4, CKE=1,
+register-state verification.
+
+## 16. The SFR layer
 
 `include/pic16f193x_sfr.h` defines `PIC_REG_*` addresses, `PIC_*_BIT`
 masks, and `PIC_*_POR_VALUE` reset values, all DS41364B-cited. The
@@ -311,7 +340,7 @@ selected) defines `PIC8_REG8` / `pic8_sfr_read8` / `pic8_sfr_write8` /
 `PIC8_SFR_PTR` and the per-PIE-bank `PIC8_PIE_ENABLE_BIT` /
 `PIC8_PIE_DISABLE_BIT` macros (`pir_index` 0/1/2 for PIE1/2/3).
 
-## 16. Device selection
+## 17. Device selection
 
 `include/pic16f193x.h` selects exactly one of 1933/1934/1936/1937/1938/
 1939 via a `-D` define, default 1937, and sets per-device capability
@@ -319,7 +348,7 @@ macros (`PIC16F193X_FAMILY_HAS_PORTD`/`_PORTE` on 40/44-pin parts, plus
 flash/RAM/EEPROM/ADC sizes). `PIC8_FAMILY_RAM_BYTES` is the neutral
 alias consumers use.
 
-## 17. The examples
+## 18. The examples
 
 `example_blink.c`: Timer0 overflow drives an ISR that toggles RB0; the
 canonical dual-build smoke test, its header documents the expected
@@ -328,7 +357,7 @@ smoke test driving the sim directly. `example_timer1.c`: Timer1
 overflow drives an ISR that toggles RB0, the §4 gate's `HARNESS=sim
 MODE=gpio` payload (its header documents the expected register image).
 
-## 18. Known gaps and gotchas
+## 19. Known gaps and gotchas
 
 - The `Microchip.PIC12-16F1xxx_DFP` is installed and the real-target
   XC8 build passes for all six parts. Timer1 has cleared the §4 gate
@@ -352,7 +381,7 @@ MODE=gpio` payload (its header documents the expected register image).
   byte, not PIE1 in bank 1). See `docs/ARCHITECTURE.md` Finding 2
   for the codegen evidence and the fix.
 
-## 19. Appendix: datasheet section index
+## 20. Appendix: datasheet section index
 
 DS41364B §2.2 data memory, §3 resets, §4 interrupts, §6 I/O ports, §7
 interrupt-on-change, §8 oscillator, §10 device config, §11 ADC, §12

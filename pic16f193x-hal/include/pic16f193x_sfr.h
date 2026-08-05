@@ -487,6 +487,22 @@
 #define PIC_RCSTA_POR_VALUE     0x00U
 #define PIC_BAUDCON_POR_VALUE   0x40U
 
+/* ───────────────── MSSP bits (DS41364B §22.0, SPI subset) ──────── */
+
+/* SSPSTAT/SSPCON1, SPI-relevant subset only (SSPCON2/3 are I2C-only).
+ * Cross-checked against DFP: _SSPSTAT_BF_POSN=0, _SSPSTAT_CKE_POSN=6,
+ * _SSPSTAT_SMP_POSN=7, _SSPCON1_SSPM_POSN=0, _SSPCON1_CKP_POSN=4,
+ * _SSPCON1_SSPEN_POSN=5, _SSPCON1_WCOL_POSN=7. */
+#define PIC_SSPSTAT_BF          PIC8_BIT(0)
+#define PIC_SSPSTAT_CKE         PIC8_BIT(6)
+#define PIC_SSPSTAT_SMP         PIC8_BIT(7)
+
+#define PIC_SSPCON1_SSPM_MASK   0x0FU
+#define PIC_SSPCON1_CKP         PIC8_BIT(4)
+#define PIC_SSPCON1_SSPEN       PIC8_BIT(5)
+#define PIC_SSPCON1_SSPOV       PIC8_BIT(6)
+#define PIC_SSPCON1_WCOL        PIC8_BIT(7)
+
 /* ───────────────────────── Reset values (POR) ──────────────────── */
 
 /* DS41364B §3 reset values and the per-register POR columns of the

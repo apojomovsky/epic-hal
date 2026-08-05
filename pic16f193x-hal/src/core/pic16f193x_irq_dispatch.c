@@ -29,6 +29,7 @@ extern void CCP1_IRQHandler(void);
 extern void CCP2_IRQHandler(void);
 extern void USART_TX_IRQHandler(void);
 extern void USART_RX_IRQHandler(void);
+extern void SSP_IRQHandler(void);
 extern void IOC_IRQHandler(void);
 
 void pic8_dispatch_all_irqs(void)
@@ -42,5 +43,6 @@ void pic8_dispatch_all_irqs(void)
     CCP2_IRQHandler();
     USART_TX_IRQHandler();
     USART_RX_IRQHandler();
+    SSP_IRQHandler();
     IOC_IRQHandler();
 }
