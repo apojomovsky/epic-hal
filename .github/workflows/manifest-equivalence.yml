@@ -71,12 +71,17 @@ jobs:
                   else:
                       d = f"{name}/mcu/{key}-{name.replace('epic-','')}-mplabx"
                   print(f"{d}={','.join(mcus)}")
+                  # --build-dir is keyed by mod.dir (the leading path
+                  # segment of d), not the manifest module name: the gate
+                  # script derives "module" the same way (cut -d/ -f1 of
+                  # d), and the two must agree so it finds the emitted
+                  # script.
                   dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
                   for mcu in mcus:
                       subprocess.run(
                           ["python3", "scripts/epic_build.py", "build",
                            "--module", name, "--mcu", mcu,
-                           "--build-dir", f"build-manifest/{name}",
+                           "--build-dir", f"build-manifest/{mod.dir}",
                            "--dfp-dir", dfp_dir],
                           check=True, stdout=subprocess.DEVNULL,
                       )
