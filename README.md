@@ -1,10 +1,5 @@
 # Epicurus
 
-*The GitHub repo, package/module names, and `HAL_` API prefix all stay
-`pic8-hal` throughout; Epicurus is the project's name, not a rename of
-its code. (Named for Epicurus: reduce everything down to the register,
-nothing more than the datasheet requires.)*
-
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Language: C99](https://img.shields.io/badge/C-99-555.svg)](https://en.cppreference.com/w/c)
 [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html)
