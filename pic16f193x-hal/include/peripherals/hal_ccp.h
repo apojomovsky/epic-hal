@@ -4,7 +4,7 @@
  *          PIC16F193X-specific header; consumers include this one so
  *          the same header resolves across families.
  */
-#ifndef HAL_CCP_H
-#define HAL_CCP_H
+#ifndef EPIC_CCP_H
+#define EPIC_CCP_H
 #include "peripherals/pic16f193x_ccp.h"
-#endif /* HAL_CCP_H */
+#endif /* EPIC_CCP_H */

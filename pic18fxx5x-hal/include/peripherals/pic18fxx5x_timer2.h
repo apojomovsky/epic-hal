@@ -64,19 +64,19 @@ typedef struct {
     .OverflowCallback = NULL,                                            \
 }
 
-HAL_StatusTypeDef HAL_TIMER2_Init(const TIMER2_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER2_DeInit(void);
-HAL_StatusTypeDef HAL_TIMER2_Start(const TIMER2_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER2_Stop(void);
+EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void);
+EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER2_Stop(void);
 
-uint8_t  HAL_TIMER2_ReadCounter(void);
-void     HAL_TIMER2_WriteCounter(uint8_t value);
+uint8_t  EPIC_TIMER2_ReadCounter(void);
+void     EPIC_TIMER2_WriteCounter(uint8_t value);
 
-uint8_t  HAL_TIMER2_ReadPeriod(void);
-void     HAL_TIMER2_WritePeriod(uint8_t period);
+uint8_t  EPIC_TIMER2_ReadPeriod(void);
+void     EPIC_TIMER2_WritePeriod(uint8_t period);
 
-uint16_t HAL_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p);
-uint16_t HAL_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p);
+uint16_t EPIC_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p);
+uint16_t EPIC_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p);
 
 /** Weak Timer2 ISR, override in user code to add application logic. */
 void TIMER2_IRQHandler(void) PIC8_WEAK;

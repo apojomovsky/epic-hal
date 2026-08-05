@@ -62,7 +62,7 @@ fixed-contract split):
  *  single shared source on this hardware generation, mirroring Timer2's
  *  one-callback-per-handle shape but simpler (no handle struct needed,
  *  there is only ever one PORTB). */
-void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
+void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
 
 /** Weak RB-change ISR, override in user code to add application logic
  *  (mirrors every other *_IRQHandler in this HAL). */
@@ -93,16 +93,16 @@ otherwise "simplify" into a bug.
 /* pic16f87xa_gpio.c (pic18fxx5x_gpio.c is the same shape) */
 static void (*s_rb_change_callback)(uint8_t) = NULL;
 
-void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t))
+void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t))
 {
     s_rb_change_callback = callback;
 }
 
 void RB_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16_IRQ_RB)) return;
+    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_RB)) return;
     uint8_t portb = PIC8_REG8(PIC_REG_PORTB);  /* MUST read before ClearFlag, DS39582B §14.11.3 */
-    HAL_IRQ_ClearFlag(PIC16_IRQ_RB);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_RB);
     if (s_rb_change_callback) s_rb_change_callback(portb);
 }
 ```
@@ -214,11 +214,11 @@ Only integer add/compare/shift are needed, no multiply, so unlike
 that the ISR writes asynchronously to the caller's mainline code, exactly
 `pic8_tick_get()`'s situation (a 4-byte read on an 8-bit core than an ISR
 can tear mid-read), and the fix is the same: wrap the read in
-`HAL_IRQ_Disable()`/`HAL_IRQ_Restore()` (`core/hal_irq.h`, family-neutral
-signature, `uint8_t HAL_IRQ_Disable(void)` / `void
-HAL_IRQ_Restore(uint8_t)`). That one call is the entire HAL surface this
+`EPIC_IRQ_Disable()`/`EPIC_IRQ_Restore()` (`core/hal_irq.h`, family-neutral
+signature, `uint8_t EPIC_IRQ_Disable(void)` / `void
+EPIC_IRQ_Restore(uint8_t)`). That one call is the entire HAL surface this
 module touches. `pic8-encoder/CMakeLists.txt` therefore needs a
-`HAL_FAMILY` selection and an `add_subdirectory` exactly like
+`EPIC_FAMILY` selection and an `add_subdirectory` exactly like
 `pic8-tick/CMakeLists.txt` already does, mirror that file, don't
 reinvent the selection mechanism.
 
@@ -262,7 +262,7 @@ once at init (`docs/pic8-debounce-plan.md`): if `last_state` defaulted to
 very first real edge could be misjudged (compared against a state the
 hardware was never actually in), or worse counted as the "impossible
 transition" case spuriously. The caller reads the port once (the same
-byte its `HAL_GPIO_RegisterChangeCallback` handler would receive, or a
+byte its `EPIC_GPIO_RegisterChangeCallback` handler would receive, or a
 one-off manual read at boot before interrupts are enabled) and passes it
 in.
 
@@ -302,7 +302,7 @@ void encoder_init(encoder_t *enc, uint8_t pin_a, uint8_t pin_b,
  * unchanged. For recovering after a fault without re-wiring the instance. */
 void encoder_reset(encoder_t *enc, uint8_t port_value);
 
-/* Call from the application's HAL_GPIO_RegisterChangeCallback handler,
+/* Call from the application's EPIC_GPIO_RegisterChangeCallback handler,
  * once per registered instance, passing the same received port byte. */
 void encoder_update(encoder_t *enc, uint8_t port_value);
 
@@ -348,9 +348,9 @@ does the same minus re-storing `pin_a`/`pin_b`/`min_edge_interval_ms`.
 ```c
 int32_t encoder_get_position(const encoder_t *enc)
 {
-    uint8_t s = HAL_IRQ_Disable();
+    uint8_t s = EPIC_IRQ_Disable();
     int32_t p = enc->position;
-    HAL_IRQ_Restore(s);
+    EPIC_IRQ_Restore(s);
     return p;
 }
 ```
@@ -363,14 +363,14 @@ way for consistency even though a torn diagnostic counter is low-stakes.)
 
 ```
 pic8-encoder/
-  CMakeLists.txt                    # HAL_FAMILY selection + add_subdirectory,
+  CMakeLists.txt                    # EPIC_FAMILY selection + add_subdirectory,
                                      # mirrors pic8-tick/CMakeLists.txt exactly
   include/encoder.h
   src/encoder.c                     # single implementation, no per-family variant
   examples/
     example_encoder_hal.c           # two encoder_t sharing one port's RB<7:4> IOC,
                                      # host-sim driven via pic16f87xa_sim_drive_input
-                                     # sequences, HAL_GPIO_RegisterChangeCallback wiring
+                                     # sequences, EPIC_GPIO_RegisterChangeCallback wiring
                                      # demonstrated end to end, logged via pic8_harness_log
     example_encoder_pid_loop.c      # one encoder_t feeding encoder_get_position() into
                                      # pid_update() as `measurement` each simulated cycle
@@ -392,7 +392,7 @@ under `pic8-encoder/`:
 
 ```
 pic16f87xa-hal/
-  include/peripherals/pic16f87xa_gpio.h   # + HAL_GPIO_RegisterChangeCallback, RB_IRQHandler
+  include/peripherals/pic16f87xa_gpio.h   # + EPIC_GPIO_RegisterChangeCallback, RB_IRQHandler
   include/peripherals/hal_gpio.h          # new neutral shim (mirrors hal_timer2.h)
   src/peripherals/pic16f87xa_gpio.c       # + the callback slot + RB_IRQHandler body
   src/core/pic16_irq_dispatch.c           # + RB_IRQHandler() in the fan-out
@@ -479,7 +479,7 @@ reasoning as every other pure-logic module in this repo. Cases:
   and the host tests listed above, landed and green in each HAL's own
   existing test suite before Phase 0b starts.
 - **Phase 0b, `pic8-encoder` scaffolding.** Repo layout above;
-  `CMakeLists.txt` mirroring `pic8-tick/CMakeLists.txt`'s `HAL_FAMILY`
+  `CMakeLists.txt` mirroring `pic8-tick/CMakeLists.txt`'s `EPIC_FAMILY`
   selection; empty `encoder.h` with the struct/prototypes above; `mcu/*/
   Makefile` stubs.
 - **Phase 1, core engine + full test suite.** `encoder_init`/`_reset`/
@@ -488,7 +488,7 @@ reasoning as every other pure-logic module in this repo. Cases:
   `tests/test_encoder.c` covering every case above. This is the only
   correctness-bearing phase for the module itself.
 - **Phase 2, examples.** `example_encoder_hal.c` (two instances, real
-  `HAL_GPIO_RegisterChangeCallback` wiring, sim-driven pin sequences) and
+  `EPIC_GPIO_RegisterChangeCallback` wiring, sim-driven pin sequences) and
   `example_encoder_pid_loop.c` (one instance feeding `pid_update()`,
   linking `pic8-pid`, the direct demonstration of this module's actual
   purpose).
@@ -504,7 +504,7 @@ reasoning as every other pure-logic module in this repo. Cases:
   direction-swap-via-pin-order note, the 1 ms glitch-gate resolution
   caveat), `pic8-encoder/README.md`, a root `README.md` component-table
   row, and a short addendum to each HAL's own `MANUAL.md` documenting the
-  new `HAL_GPIO_RegisterChangeCallback`/`RB_IRQHandler` surface (the
+  new `EPIC_GPIO_RegisterChangeCallback`/`RB_IRQHandler` surface (the
   manuals document per-peripheral register behavior already, this is a
   genuinely new piece of that surface, not implementation detail
   internal to `pic8-encoder`).

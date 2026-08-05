@@ -48,12 +48,12 @@ typedef struct {
     .NegRef = ADC_NEGREF_VSS, .Format = ADC_FORMAT_RIGHT_JUSTIFIED, \
 }
 
-HAL_StatusTypeDef HAL_ADC_Init(const ADC_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_ADC_DeInit(void);
-HAL_StatusTypeDef HAL_ADC_SelectChannel(uint8_t channel);
-void HAL_ADC_Start(void);
-uint8_t HAL_ADC_IsConversionDone(void);
-uint16_t HAL_ADC_Read(void);
+EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_ADC_DeInit(void);
+EPIC_StatusTypeDef EPIC_ADC_SelectChannel(uint8_t channel);
+void EPIC_ADC_Start(void);
+uint8_t EPIC_ADC_IsConversionDone(void);
+uint16_t EPIC_ADC_Read(void);
 
 void ADC_IRQHandler(void) PIC8_WEAK;
 

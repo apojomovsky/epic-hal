@@ -6,8 +6,8 @@ vendored M-Stack storage driver (`mmc.c`/`crc.c`).
 ## What it is
 
 `pic8-sdcard` binds M-Stack's portable `mmc.h`/`crc.h` to this repo's SSP
-HAL (`HAL_SSP_Init`/`WriteByte`/`ReadByte`), GPIO HAL
-(`HAL_GPIO_WritePin`), and `pic8-tick` (real wall-clock timeouts). The
+HAL (`EPIC_SSP_Init`/`WriteByte`/`ReadByte`), GPIO HAL
+(`EPIC_GPIO_WritePin`), and `pic8-tick` (real wall-clock timeouts). The
 public API is thin call-throughs to `mmc_init_card`/`mmc_read_block`/
 `mmc_write_block`; the real content is the binding layer.
 
@@ -31,16 +31,16 @@ enough RAM, the module can target it without rewriting `pic8_sdcard.c`.
 ### SPI byte transfer
 
 `pic8_sdcard_spi_transfer` implements `MMC_SPI_TRANSFER` by calling
-`HAL_SSP_WriteByte` in a loop (with write-collision retry — the SSP's WCOL
+`EPIC_SSP_WriteByte` in a loop (with write-collision retry: the SSP's WCOL
 bit must be cleared in software per DS39582E §19.2.2), then
-`HAL_SSP_ReadByte` for the response. When `out_buf` is NULL it clocks out
+`EPIC_SSP_ReadByte` for the response. When `out_buf` is NULL it clocks out
 0xFF (SD-over-SPI junk while reading); when `in_buf` is NULL it discards the
 response.
 
 ### CS pin control
 
 `pic8_sdcard_spi_set_cs` asserts/deasserts the card's CS line via
-`HAL_GPIO_WritePin`. The caller supplies the port/pin at init time — CS is
+`EPIC_GPIO_WritePin`. The caller supplies the port/pin at init time. CS is
 ordinary GPIO, different boards wire it differently, and the SSP peripheral
 only owns SCK/SDI/SDO.
 

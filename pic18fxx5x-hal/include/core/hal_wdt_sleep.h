@@ -8,7 +8,7 @@
  *   and the build's include path picks which one resolves.
  */
 
-#ifndef HAL_WDT_SLEEP_H
-#define HAL_WDT_SLEEP_H
+#ifndef EPIC_WDT_SLEEP_H
+#define EPIC_WDT_SLEEP_H
 #include "pic18fxx5x_wdt_sleep.h"
-#endif /* HAL_WDT_SLEEP_H */
+#endif /* EPIC_WDT_SLEEP_H */

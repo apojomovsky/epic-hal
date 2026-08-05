@@ -25,19 +25,19 @@ int main(void)
     ccp3.Instance = CCP_INSTANCE_3;
     ccp3.Mode = CCP_MODE_COMPARE_SET;
     ccp3.CompareValue = 0x0300U;
-    HAL_CCP_Init(&ccp3);
+    EPIC_CCP_Init(&ccp3);
 
     CCP_HandleTypeDef ccp4 = CCP_HANDLE_DEFAULT;
     ccp4.Instance = CCP_INSTANCE_4;
     ccp4.Mode = CCP_MODE_COMPARE_SET;
     ccp4.CompareValue = 0x0400U;
-    HAL_CCP_Init(&ccp4);
+    EPIC_CCP_Init(&ccp4);
 
     CCP_HandleTypeDef ccp5 = CCP_HANDLE_DEFAULT;
     ccp5.Instance = CCP_INSTANCE_5;
     ccp5.Mode = CCP_MODE_COMPARE_SET;
     ccp5.CompareValue = 0x0500U;
-    HAL_CCP_Init(&ccp5);
+    EPIC_CCP_Init(&ccp5);
 
     uint8_t c3con = PIC8_REG8(PIC_REG_CCP3CON);
     uint8_t c3h = PIC8_REG8(PIC_REG_CCPR3H);

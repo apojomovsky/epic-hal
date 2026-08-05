@@ -5,9 +5,9 @@
 
 #include "peripherals/pic16f193x_adc.h"
 
-HAL_StatusTypeDef HAL_ADC_Init(const ADC_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
 
     uint8_t con1 = (uint8_t)(h->PosRef & PIC_ADCON1_ADPREF_MASK);
     if (h->NegRef) con1 |= PIC_ADCON1_ADNREF;
@@ -17,37 +17,37 @@ HAL_StatusTypeDef HAL_ADC_Init(const ADC_HandleTypeDef *h)
 
     PIC8_REG8(PIC_REG_ADCON0) = PIC_ADCON0_ADON;
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_ADC_DeInit(void)
+EPIC_StatusTypeDef EPIC_ADC_DeInit(void)
 {
     PIC8_REG8(PIC_REG_ADCON0) = 0x00U;
     PIC8_REG8(PIC_REG_ADCON1) = 0x00U;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_ADC_SelectChannel(uint8_t channel)
+EPIC_StatusTypeDef EPIC_ADC_SelectChannel(uint8_t channel)
 {
-    if (channel >= PIC16F193X_FAMILY_ADC_CH) return HAL_INVALID;
+    if (channel >= PIC16F193X_FAMILY_ADC_CH) return EPIC_INVALID;
     uint8_t con0 = PIC8_REG8(PIC_REG_ADCON0);
     con0 = (uint8_t)((con0 & (uint8_t)~PIC_ADCON0_CHS_MASK)
                     | (uint8_t)((channel << PIC_ADCON0_CHS_SHIFT) & PIC_ADCON0_CHS_MASK));
     PIC8_REG8(PIC_REG_ADCON0) = con0;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-void HAL_ADC_Start(void)
+void EPIC_ADC_Start(void)
 {
     PIC8_BIT_SET(PIC8_REG8(PIC_REG_ADCON0), PIC_ADCON0_GO_NDONE);
 }
 
-uint8_t HAL_ADC_IsConversionDone(void)
+uint8_t EPIC_ADC_IsConversionDone(void)
 {
     return (PIC8_REG8(PIC_REG_ADCON0) & PIC_ADCON0_GO_NDONE) ? 0U : 1U;
 }
 
-uint16_t HAL_ADC_Read(void)
+uint16_t EPIC_ADC_Read(void)
 {
     uint8_t lo = PIC8_REG8(PIC_REG_ADRESL);
     uint8_t hi = PIC8_REG8(PIC_REG_ADRESH);

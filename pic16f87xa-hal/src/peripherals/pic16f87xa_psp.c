@@ -35,7 +35,7 @@ static void b1_trise_write(uint8_t v)
 #endif
 }
 
-HAL_StatusTypeDef HAL_PSP_Init(void (*callback)(void))
+EPIC_StatusTypeDef EPIC_PSP_Init(void (*callback)(void))
 {
     g_psp_cb = callback;
     /* Clear the read-only status flags (IBF, OBF, IBOV) by writing
@@ -43,54 +43,54 @@ HAL_StatusTypeDef HAL_PSP_Init(void (*callback)(void))
      * read-only; PSPIE/PSPMODE are left to the user. */
     b1_trise_write(b1_trise() &
                    (uint8_t)~(PIC_TRISE_IBF | PIC_TRISE_OBF | PIC_TRISE_IBOV));
-    HAL_IRQ_ClearFlag(PIC16_IRQ_PSP);
-    if (callback) HAL_IRQ_Enable(PIC16_IRQ_PSP);
-    else          HAL_IRQ_DisableSrc(PIC16_IRQ_PSP);
-    return HAL_OK;
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_PSP);
+    if (callback) EPIC_IRQ_Enable(PIC16_IRQ_PSP);
+    else          EPIC_IRQ_DisableSrc(PIC16_IRQ_PSP);
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_PSP_DeInit(void)
+EPIC_StatusTypeDef EPIC_PSP_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC16_IRQ_PSP);
-    HAL_IRQ_ClearFlag(PIC16_IRQ_PSP);
+    EPIC_IRQ_DisableSrc(PIC16_IRQ_PSP);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_PSP);
     b1_trise_write(0x07U);    /* POR default: I/O mode, no PSP. */
     g_psp_cb = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-void HAL_PSP_Enable(void)
+void EPIC_PSP_Enable(void)
 {
     b1_trise_write(b1_trise() | PIC_TRISE_PSPMODE);
 }
 
-void HAL_PSP_Disable(void)
+void EPIC_PSP_Disable(void)
 {
     b1_trise_write(b1_trise() & (uint8_t)~PIC_TRISE_PSPMODE);
 }
 
-uint8_t HAL_PSP_IsInputBufferFull(void)
+uint8_t EPIC_PSP_IsInputBufferFull(void)
 {
     return (b1_trise() & PIC_TRISE_IBF) ? 1U : 0U;
 }
 
-uint8_t HAL_PSP_IsOutputBufferFull(void)
+uint8_t EPIC_PSP_IsOutputBufferFull(void)
 {
     return (b1_trise() & PIC_TRISE_OBF) ? 1U : 0U;
 }
 
-uint8_t HAL_PSP_HasInputOverflow(void)
+uint8_t EPIC_PSP_HasInputOverflow(void)
 {
     return (b1_trise() & PIC_TRISE_IBOV) ? 1U : 0U;
 }
 
-void HAL_PSP_ClearInputOverflow(void)
+void EPIC_PSP_ClearInputOverflow(void)
 {
     b1_trise_write(b1_trise() & (uint8_t)~PIC_TRISE_IBOV);
 }
 
 void PSP_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16_IRQ_PSP)) return;
-    HAL_IRQ_ClearFlag(PIC16_IRQ_PSP);
+    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_PSP)) return;
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_PSP);
     if (g_psp_cb) g_psp_cb();
 }

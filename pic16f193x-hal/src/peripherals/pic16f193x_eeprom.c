@@ -10,18 +10,18 @@
 #include "peripherals/pic16f193x_eeprom.h"
 #include "core/pic16f193x_irq.h"
 
-HAL_StatusTypeDef HAL_EEPROM_Init(void)
+EPIC_StatusTypeDef EPIC_EEPROM_Init(void)
 {
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_EEPROM_DeInit(void)
+EPIC_StatusTypeDef EPIC_EEPROM_DeInit(void)
 {
     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_EECON1), PIC_EECON1_WREN);
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint8_t HAL_EEPROM_ReadByte(uint8_t addr)
+uint8_t EPIC_EEPROM_ReadByte(uint8_t addr)
 {
     PIC8_REG8(PIC_REG_EEADRL) = addr;
     PIC8_REG8(PIC_REG_EEADRH) = 0x00U;
@@ -29,32 +29,32 @@ uint8_t HAL_EEPROM_ReadByte(uint8_t addr)
     return PIC8_REG8(PIC_REG_EEDATL);
 }
 
-HAL_StatusTypeDef HAL_EEPROM_WriteByte(uint8_t addr, uint8_t data)
+EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data)
 {
     PIC8_REG8(PIC_REG_EEADRL) = addr;
     PIC8_REG8(PIC_REG_EEADRH) = 0x00U;
     PIC8_REG8(PIC_REG_EEDATL) = data;
     PIC8_BIT_SET(PIC8_REG8(PIC_REG_EECON1), PIC_EECON1_WREN);
 
-    uint8_t gie = HAL_IRQ_Disable();
+    uint8_t gie = EPIC_IRQ_Disable();
     PIC8_REG8(PIC_REG_EECON2) = 0x55U;
     PIC8_REG8(PIC_REG_EECON2) = 0xAAU;
     PIC8_BIT_SET(PIC8_REG8(PIC_REG_EECON1), PIC_EECON1_WR);
-    HAL_IRQ_Restore(gie);
+    EPIC_IRQ_Restore(gie);
 
     while (PIC8_REG8(PIC_REG_EECON1) & PIC_EECON1_WR) { }
     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_EECON1), PIC_EECON1_WREN);
 
-    if (PIC8_REG8(PIC_REG_EECON1) & PIC_EECON1_WRERR) return HAL_ERROR;
-    return HAL_OK;
+    if (PIC8_REG8(PIC_REG_EECON1) & PIC_EECON1_WRERR) return EPIC_ERROR;
+    return EPIC_OK;
 }
 
-uint8_t HAL_EEPROM_IsWriteComplete(void)
+uint8_t EPIC_EEPROM_IsWriteComplete(void)
 {
     return (PIC8_REG8(PIC_REG_EECON1) & PIC_EECON1_WR) ? 0U : 1U;
 }
 
-uint8_t HAL_EEPROM_HasWriteError(void)
+uint8_t EPIC_EEPROM_HasWriteError(void)
 {
     return (PIC8_REG8(PIC_REG_EECON1) & PIC_EECON1_WRERR) ? 1U : 0U;
 }

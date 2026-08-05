@@ -40,8 +40,8 @@ inspection half only.
 half. The RMW half is broken; see Finding 2.**
 
 Every function that dispatches a runtime value to one of several SFRs
-(`HAL_IRQ_Enable/DisableSrc/ClearFlag/GetFlag` picking PIE1/PIE2/PIE3 or
-PIR1/PIR2/PIR3 by `pir_index`; `HAL_GPIO_Init` picking TRISx/LATx/ANSELx
+(`EPIC_IRQ_Enable/DisableSrc/ClearFlag/GetFlag` picking PIE1/PIE2/PIE3 or
+PIR1/PIR2/PIR3 by `pir_index`; `EPIC_GPIO_Init` picking TRISx/LATx/ANSELx
 by `port`) computes the target's 12-bit data-memory address in a local
 (`_pa`, `ta`, `la`, `aa`) and then reads/writes through it. Disassembly
 of the linked `example_blink` firmware (XC8 v3.10, `-O2`,
@@ -63,8 +63,8 @@ acting as an IRP-style high bit). Because FSR1 holds the full address
 itself, no bank-select state is involved: so this is a true architectural
 "BSR-independent" access.
 
-**Confirmed clean for the read-only half (`HAL_IRQ_GetFlag`,
-`HAL_IRQ_ClearFlag` for the `pir_index=1` / `pir_index=2` branches, the
+**Confirmed clean for the read-only half (`EPIC_IRQ_GetFlag`,
+`EPIC_IRQ_ClearFlag` for the `pir_index=1` / `pir_index=2` branches, the
 PIR1-bank dispatch in `pic16f193x_irq.c`, and the port-register dispatch
 in `pic16f193x_gpio.c`).** The PIC18 failure mode (compiled to the
 program-memory table mechanism instead of a data access) does not apply
@@ -89,7 +89,7 @@ Method, for reproducing or extending this check: `xc8-cc -mdfp=<DFP>/xc8
 -mcpu=16f1937 -O2 <all HAL .c + one app .c> -o out.elf` (a full link, not
 a standalone `-c`/`-S` on one file) produces `out.s` alongside `out.elf`
 as a side effect; grep it for the function under test's label
-(`_HAL_IRQ_Enable:` etc.) and read the instructions between it and the
+(`_EPIC_IRQ_Enable:` etc.) and read the instructions between it and the
 next `global` line.
 
 ## Finding 2: PIC8_PIE_ENABLE_BIT FSR1:INDF1 route silently addresses the wrong byte for PIE1/2/3; replaced with `__at()`-pinned scratch + inline asm `movlb 1`/`iorwf PIE1,f`/`movlb 0`
@@ -163,41 +163,41 @@ classic `pic16_isr_vector.c`'s same-named byte at the same address).
 
 **Before** (broken, plain-C RMW, `make xc8-build ...MCU=16F1937
 HARNESS=sim` then `xxd build/16F1937-firmware-sim.s` near
-`_HAL_IRQ_Enable:`):
+`_EPIC_IRQ_Enable:`):
 
 ```
 l2400:                          ; pir_index = 0 branch (PIE1)
     movlw   091h
-    movwf   (_HAL_IRQ_Enable$410)
+    movwf   (_EPIC_IRQ_Enable$410)
     movlw   0
-    movwf   ((_HAL_IRQ_Enable$410))+1    ; _pa = 0x0091
+    movwf   ((_EPIC_IRQ_Enable$410))+1    ; _pa = 0x0091
 
 l223:
-    movf    (_HAL_IRQ_Enable$410),w
-    movwf   (??_HAL_IRQ_Enable)
-    clrf    (??_HAL_IRQ_Enable+1)
-    movf    (0+(??_HAL_IRQ_Enable)),w
+    movf    (_EPIC_IRQ_Enable$410),w
+    movwf   (??_EPIC_IRQ_Enable)
+    clrf    (??_EPIC_IRQ_Enable+1)
+    movf    (0+(??_EPIC_IRQ_Enable)),w
     movwf   fsr1l                   ; FSR1L = 0x91
-    movf    (1+(??_HAL_IRQ_Enable)),w
+    movf    (1+(??_EPIC_IRQ_Enable)),w
     movwf   fsr1h                   ; FSR1H = 0  <-  address = 0x0091
 
     movf    indf1,w                 ; read byte at FSR1 = 0x0091
-    movwf   (HAL_IRQ_Enable@_v)
+    movwf   (EPIC_IRQ_Enable@_v)
 
 l2404:
-    movf    (HAL_IRQ_Enable@enable_mask),w
-    iorwf   (HAL_IRQ_Enable@_v),f       ; v |= mask
+    movf    (EPIC_IRQ_Enable@enable_mask),w
+    iorwf   (EPIC_IRQ_Enable@_v),f       ; v |= mask
 
 l2406:
-    movf    (HAL_IRQ_Enable@_pa),w
-    movwf   (??_HAL_IRQ_Enable)
-    clrf    (??_HAL_IRQ_Enable+1)
-    movf    (0+(??_HAL_IRQ_Enable)),w
+    movf    (EPIC_IRQ_Enable@_pa),w
+    movwf   (??_EPIC_IRQ_Enable)
+    clrf    (??_EPIC_IRQ_Enable+1)
+    movf    (0+(??_EPIC_IRQ_Enable)),w
     movwf   fsr1l                   ; FSR1L = 0x91
-    movf    (1+(??_HAL_IRQ_Enable)),w
+    movf    (1+(??_EPIC_IRQ_Enable)),w
     movwf   fsr1h                   ; FSR1H = 0
 
-    movf    (HAL_IRQ_Enable@_v),w
+    movf    (EPIC_IRQ_Enable@_v),w
     movwf   indf1                   ; write byte at FSR1 = 0x0091
 ```
 
@@ -225,7 +225,7 @@ Three asm lines do what the C-level `_v = read8(); _v |= mask;
 write8(_v)` tried to do. The read half is implicit in `iorwf PIE1,f`
 (W is loaded with PIE1 OR'd against the scratch-mask value, then
 written back). The `movlb 0` at the end restores bank 0 because the
-*callers* of `HAL_IRQ_Enable` (e.g. `HAL_TIMER1_Init`) expect bank 0
+*callers* of `EPIC_IRQ_Enable` (e.g. `EPIC_TIMER1_Init`) expect bank 0
 to be active on return. The same defensive-restoring shape as
 `pic16f87xa-hal`'s `bcf STATUS,5` exit.
 
@@ -241,7 +241,7 @@ for all three.
 **Before** (Timer1 example on top of broken macro):
 ```
 TRISB  = 254 (0xFE)        ; GPIO path correct
-T1CON  = 49  (0x31)         ; HAL_TIMER1_Start ran (manual movlb)
+T1CON  = 49  (0x31)         ; EPIC_TIMER1_Start ran (manual movlb)
 PIE1   = 0                  ; <- BROKEN: TMR1IE bit 0 should be set
 PIR1   = 0
 INTCON = 194 (0xC2)         ; GIE=1, PEIE=1

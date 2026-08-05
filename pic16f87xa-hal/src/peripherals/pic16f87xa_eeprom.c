@@ -78,24 +78,24 @@ static uint8_t b2_read(uint16_t addr)
 }
 #endif
 
-HAL_StatusTypeDef HAL_EEPROM_Init(void (*callback)(void))
+EPIC_StatusTypeDef EPIC_EEPROM_Init(void (*callback)(void))
 {
     g_eeprom_cb = callback;
-    HAL_IRQ_ClearFlag(PIC16_IRQ_EEPROM);
-    if (callback) HAL_IRQ_Enable(PIC16_IRQ_EEPROM);
-    else          HAL_IRQ_DisableSrc(PIC16_IRQ_EEPROM);
-    return HAL_OK;
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_EEPROM);
+    if (callback) EPIC_IRQ_Enable(PIC16_IRQ_EEPROM);
+    else          EPIC_IRQ_DisableSrc(PIC16_IRQ_EEPROM);
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_EEPROM_DeInit(void)
+EPIC_StatusTypeDef EPIC_EEPROM_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC16_IRQ_EEPROM);
-    HAL_IRQ_ClearFlag(PIC16_IRQ_EEPROM);
+    EPIC_IRQ_DisableSrc(PIC16_IRQ_EEPROM);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_EEPROM);
     g_eeprom_cb = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint8_t HAL_EEPROM_ReadByte(uint8_t addr)
+uint8_t EPIC_EEPROM_ReadByte(uint8_t addr)
 {
     b2_write(0x0DU, addr);                  /* EEADR. */
     b3_write(0x18CU, 0x00U);                /* EECON1 = 0, set RD. */
@@ -106,10 +106,10 @@ uint8_t HAL_EEPROM_ReadByte(uint8_t addr)
     return b2_read(0x0CU);
 }
 
-HAL_StatusTypeDef HAL_EEPROM_WriteByte(uint8_t addr, uint8_t data)
+EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data)
 {
     /* §3.4: check WRERR before starting. */
-    if (b3_read(0x18CU) & PIC_EECON1_WRERR) return HAL_ERROR;
+    if (b3_read(0x18CU) & PIC_EECON1_WRERR) return EPIC_ERROR;
 
     b2_write(0x0CU, data);                  /* EEDATA. */
     b2_write(0x0DU, addr);                  /* EEADR. */
@@ -123,42 +123,42 @@ HAL_StatusTypeDef HAL_EEPROM_WriteByte(uint8_t addr, uint8_t data)
      * hardware the CPU sees it clear when the cycle completes; the
      * sim backend mirrors that in sim_step(). The caller polls EEIF
      * (PIR2<4>) to detect completion. */
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-void HAL_EEPROM_ReadBuffer(uint8_t start, uint8_t *buf, uint8_t len)
+void EPIC_EEPROM_ReadBuffer(uint8_t start, uint8_t *buf, uint8_t len)
 {
     for (uint8_t i = 0; i < len; i++) {
-        buf[i] = HAL_EEPROM_ReadByte((uint8_t)(start + i));
+        buf[i] = EPIC_EEPROM_ReadByte((uint8_t)(start + i));
     }
 }
 
-HAL_StatusTypeDef HAL_EEPROM_WriteBuffer(uint8_t start,
+EPIC_StatusTypeDef EPIC_EEPROM_WriteBuffer(uint8_t start,
                                                 const uint8_t *buf,
                                                 uint8_t len)
 {
-    HAL_StatusTypeDef st;
+    EPIC_StatusTypeDef st;
     for (uint8_t i = 0; i < len; i++) {
-        st = HAL_EEPROM_WriteByte((uint8_t)(start + i), buf[i]);
-        if (st != HAL_OK) return st;
+        st = EPIC_EEPROM_WriteByte((uint8_t)(start + i), buf[i]);
+        if (st != EPIC_OK) return st;
     }
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint8_t HAL_EEPROM_IsWriteComplete(void)
+uint8_t EPIC_EEPROM_IsWriteComplete(void)
 {
     /* EEIF lives in PIR2<4>. */
     return (PIC8_REG8(0x0DU) & 0x10U) ? 1U : 0U;
 }
 
-void HAL_EEPROM_ClearITFlag(void)
+void EPIC_EEPROM_ClearITFlag(void)
 {
-    HAL_IRQ_ClearFlag(PIC16_IRQ_EEPROM);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_EEPROM);
 }
 
 void EEPROM_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16_IRQ_EEPROM)) return;
-    HAL_IRQ_ClearFlag(PIC16_IRQ_EEPROM);
+    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_EEPROM)) return;
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_EEPROM);
     if (g_eeprom_cb) g_eeprom_cb();
 }

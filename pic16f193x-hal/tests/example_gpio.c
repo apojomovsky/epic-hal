@@ -41,28 +41,28 @@ int main(void)
     int ok = 1;
 
     /* 1. RB0 output: write high, observe via the sim's external view. */
-    HAL_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
     ok &= (pic16f193x_sim_read_output('B', 0) == 1U);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+    EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
     ok &= (pic16f193x_sim_read_output('B', 0) == 0U);
 
-    /* 2. RB1 input: drive it and read back through HAL_GPIO_ReadPin.
+    /* 2. RB1 input: drive it and read back through EPIC_GPIO_ReadPin.
      *    The sim refreshes PORTB from the input override each tick. */
-    HAL_GPIO_Init(GPIOB, GPIO_PIN_1, GPIO_MODE_INPUT);
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_1, GPIO_MODE_INPUT);
     pic16f193x_sim_drive_input('B', 1, 1);
     pic8_harness_tick();
-    ok &= (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_SET);
+    ok &= (EPIC_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_SET);
     pic16f193x_sim_drive_input('B', 1, 0);
     pic8_harness_tick();
-    ok &= (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_RESET);
+    ok &= (EPIC_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_RESET);
 
     /* 3. PORTB interrupt-on-change: positive edge on RB2. */
-    HAL_GPIO_Init(GPIOB, GPIO_PIN_2, GPIO_MODE_INPUT);
-    HAL_GPIO_RegisterChangeCallback(on_ioc);
-    HAL_GPIO_EnableChangeDetect(GPIO_PIN_2, 0);
-    HAL_IRQ_Enable(PIC16F193X_IRQ_IOC);
-    HAL_IRQ_Restore(1);
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_2, GPIO_MODE_INPUT);
+    EPIC_GPIO_RegisterChangeCallback(on_ioc);
+    EPIC_GPIO_EnableChangeDetect(GPIO_PIN_2, 0);
+    EPIC_IRQ_Enable(PIC16F193X_IRQ_IOC);
+    EPIC_IRQ_Restore(1);
 
     /* Drive RB2 low first so the sim's last-known level is low, then a
      * rising edge. Tick once after each drive to let sim_step_ioc run. */

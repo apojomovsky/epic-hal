@@ -10,7 +10,7 @@ project(pic8_console C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(HAL_FAMILY "PIC16" CACHE STRING "HAL family to link through pic8-serial: PIC16 or PIC18")
+set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link through pic8-serial: PIC16 or PIC18")
 
 set(SERIAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic8-serial
     CACHE PATH "Path to the pic8-serial source tree")
@@ -18,7 +18,7 @@ if(NOT TARGET pic8_serial)
     add_subdirectory(${SERIAL_DIR} ${CMAKE_CURRENT_BINARY_DIR}/serial)
 endif()
 
-if(HAL_FAMILY STREQUAL "PIC18")
+if(EPIC_FAMILY STREQUAL "PIC18")
     set(DEFAULT_DEVICE PIC18F4550)
 else()
     set(DEFAULT_DEVICE PIC16F877A)

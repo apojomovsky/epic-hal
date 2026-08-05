@@ -1,7 +1,7 @@
 # pic8-bus, MPLAB XC8 Makefile -- PIC18F2455 family variant.
 #
 # Builds the SAME pic8-bus + example_bus_target init smoke against the
-# pic18fxx5x-hal. pic8_bus.c is family-agnostic; only this Makefile's HAL_DIR,
+# pic18fxx5x-hal. pic8_bus.c is family-agnostic; only this Makefile's EPIC_DIR,
 # device list, DFP, source list, and config word differ from the PIC16 variant.
 #
 #   export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
@@ -31,8 +31,8 @@ else
   HAS_BLOCK3 :=
 endif
 
-HAL_DIR    ?= ../../../pic18fxx5x-hal
-COMMON_DIR ?= $(HAL_DIR)/../pic8-common
+EPIC_DIR    ?= ../../../pic18fxx5x-hal
+COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
 APP_DIR    ?= ../..
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-bus
@@ -45,34 +45,34 @@ else
 endif
 
 CC     := xc8-cc
-INC    := -I$(HAL_DIR)/include/target -I$(HAL_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include
+INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include
 CFLAGS := $(DFP_FLAG) -mcpu=$(shell echo $(MCU) | tr A-Z a-z) -O2 -std=c99 -Wall -Wextra \
           $(CFLAGS_DEVICE) $(INC) -DFOSC_HZ=$(FOSC_HZ)
 
-HAL_SOURCES := \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_gpio.c            \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer0.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer1.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer2.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer3.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_ccp.c             \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_usart.c           \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_ssp.c            \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_adc.c             \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_comp.c           \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_eeprom.c         \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_spp.c            \
-  $(HAL_DIR)/src/core/pic18_irq.c                         \
-  $(HAL_DIR)/src/core/pic18_irq_dispatch.c                \
-  $(HAL_DIR)/src/core/pic18_isr_vector.c                  \
-  $(HAL_DIR)/src/core/pic18fxx5x_wdt_sleep.c              \
-  $(HAL_DIR)/src/core/pic18fxx5x_wdt_sleep_target.c       \
+EPIC_SOURCES := \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_gpio.c            \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer0.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer1.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer2.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer3.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_ccp.c             \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_usart.c           \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_ssp.c            \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_adc.c             \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_comp.c           \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_eeprom.c         \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_spp.c            \
+  $(EPIC_DIR)/src/core/pic18_irq.c                         \
+  $(EPIC_DIR)/src/core/pic18_irq_dispatch.c                \
+  $(EPIC_DIR)/src/core/pic18_isr_vector.c                  \
+  $(EPIC_DIR)/src/core/pic18fxx5x_wdt_sleep.c              \
+  $(EPIC_DIR)/src/core/pic18fxx5x_wdt_sleep_target.c       \
   $(COMMON_DIR)/src/core/pic8_harness_target.c
 
 BUS_SOURCES  := $(APP_DIR)/src/pic8_bus.c
 APP_SOURCES  := $(APP_DIR)/examples/example_bus_target.c
 
-SRCS := $(HAL_SOURCES) $(BUS_SOURCES) $(APP_SOURCES)
+SRCS := $(EPIC_SOURCES) $(BUS_SOURCES) $(APP_SOURCES)
 OBJS := $(patsubst %.c,$(BUILD_DIR)/%.p1,$(notdir $(SRCS)))
 VPATH := $(sort $(dir $(SRCS)))
 

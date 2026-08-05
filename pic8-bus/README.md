@@ -27,7 +27,7 @@ address, then read/write N bytes" in one call, for both I2C and SPI.
 ```sh
 cmake -B build && cmake --build build
 ctest --test-dir build --output-on-failure   # example_bus: I2C+SPI MEM, fails=0
-cmake -B build18 -DHAL_FAMILY=PIC18 && ctest --test-dir build18
+cmake -B build18 -DEPIC_FAMILY=PIC18 && ctest --test-dir build18
 ```
 
 ### Real target (XC8), bus init smoke

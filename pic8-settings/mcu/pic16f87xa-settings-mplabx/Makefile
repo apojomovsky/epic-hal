@@ -17,8 +17,8 @@ else
   $(error Unsupported MCU=$(MCU); choose 873A, 874A, 876A or 877A)
 endif
 
-HAL_DIR    ?= ../../../pic16f87xa-hal
-COMMON_DIR ?= $(HAL_DIR)/../pic8-common
+EPIC_DIR    ?= ../../../pic16f87xa-hal
+COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
 APP_DIR    ?= ../..
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-settings-sizecheck
@@ -31,20 +31,20 @@ else
 endif
 
 CC     := xc8-cc
-INC    := -I$(HAL_DIR)/include/target -I$(HAL_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include
+INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include
 CFLAGS := $(DFP_FLAG) -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
           -O2 -std=c99 -Wall -Wextra $(CFLAGS_DEVICE) $(INC)
 
-HAL_SOURCES := \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_eeprom.c     \
-  $(HAL_DIR)/src/core/pic16_irq.c                    \
-  $(HAL_DIR)/src/core/pic16f87xa_wdt_sleep.c         \
-  $(HAL_DIR)/src/core/pic16f87xa_wdt_sleep_target.c  \
-  $(HAL_DIR)/src/core/pic16_isr_vector.c             \
-  $(HAL_DIR)/src/core/pic16_irq_dispatch.c           \
+EPIC_SOURCES := \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_eeprom.c     \
+  $(EPIC_DIR)/src/core/pic16_irq.c                    \
+  $(EPIC_DIR)/src/core/pic16f87xa_wdt_sleep.c         \
+  $(EPIC_DIR)/src/core/pic16f87xa_wdt_sleep_target.c  \
+  $(EPIC_DIR)/src/core/pic16_isr_vector.c             \
+  $(EPIC_DIR)/src/core/pic16_irq_dispatch.c           \
   $(COMMON_DIR)/src/core/pic8_harness_target.c
 
-SRCS  := $(HAL_SOURCES) $(APP_DIR)/src/pic8_settings.c $(APP_DIR)/mcu/target_sizecheck.c
+SRCS  := $(EPIC_SOURCES) $(APP_DIR)/src/pic8_settings.c $(APP_DIR)/mcu/target_sizecheck.c
 OBJS  := $(patsubst %.c,$(BUILD_DIR)/%.p1,$(notdir $(SRCS)))
 VPATH := $(sort $(dir $(SRCS)))
 

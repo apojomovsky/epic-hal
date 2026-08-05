@@ -42,9 +42,9 @@ static volatile uint32_t g_toggle_count = 0;
  */
 static void on_t1_overflow(void)
 {
-    HAL_TIMER1_WriteCounter(T1_RELOAD);
-    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-    HAL_WDT_Refresh();
+    EPIC_TIMER1_WriteCounter(T1_RELOAD);
+    EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    EPIC_WDT_Refresh();
     g_toggle_count++;
 }
 
@@ -53,8 +53,8 @@ int main(void)
     pic8_harness_init(SIM_CYCLES);
 
     /* 1. RB0 as output, start low. */
-    HAL_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 
     /* 2. Timer1 on the 32.768 kHz T1OSC crystal, asynchronous (keeps
      *    counting in Sleep), 1:1 prescaler, reload 0x8000 → 1 s overflow.
@@ -67,23 +67,23 @@ int main(void)
     h.Prescaler        = TIMER1_PRESCALER_1_1;
     h.ReloadValue      = T1_RELOAD;
     h.OverflowCallback = on_t1_overflow;
-    HAL_TIMER1_Init(&h);
-    HAL_TIMER1_Start(&h);
+    EPIC_TIMER1_Init(&h);
+    EPIC_TIMER1_Start(&h);
 
     /* 3. Wait for the T1OSC crystal to start ticking before sleeping (a
      *    32 kHz crystal can take a few hundred ms), refreshing the WDT
      *    meanwhile. pic8_harness_tick pumps the sim on the host (so
      *    the counter advances and the loop exits) and is a no-op on the
      *    target, where the real crystal advances the counter on its own. */
-    while (HAL_TIMER1_ReadCounter() <= T1_RELOAD) {
-        HAL_WDT_Refresh();
+    while (EPIC_TIMER1_ReadCounter() <= T1_RELOAD) {
+        EPIC_WDT_Refresh();
         pic8_harness_tick();
     }
 
-    /* 4. Enable global interrupts (HAL_TIMER1_Init already set TMR1IE
+    /* 4. Enable global interrupts (EPIC_TIMER1_Init already set TMR1IE
      *    and PEIE). On the sim this is harmless; on the target it arms the
      *    wake-up. */
-    HAL_IRQ_Restore(1);
+    EPIC_IRQ_Restore(1);
 
     /* 5. Idle loop, the heart of "CPU mostly idle". On the host the
      *    harness bounds the loop to SIM_CYCLES; on the target it runs
@@ -94,7 +94,7 @@ int main(void)
      *    and the CPU sleeps again. */
     for (uint32_t i = 0; pic8_harness_running(i); i++) {
         pic8_harness_tick();
-        HAL_Sleep_Enter();
+        EPIC_Sleep_Enter();
     }
 
     pic8_harness_log("RB0 toggled %u times; CPU idle between overflows.\n",

@@ -15,7 +15,7 @@ static const uint16_t ps_ratio[4] = { 1, 2, 4, 8 };
 static TIMER3_HandleTypeDef g_t3_storage;
 static const TIMER3_HandleTypeDef *g_t3_handle = NULL;
 
-uint16_t HAL_TIMER3_ReadCounter(void)
+uint16_t EPIC_TIMER3_ReadCounter(void)
 {
     /* With RD16 set, reading TMR3L latches TMR3H (DS39632E §14.0). */
     uint8_t lo = pic8_sfr_read8(PIC_REG_TMR3L);
@@ -23,29 +23,29 @@ uint16_t HAL_TIMER3_ReadCounter(void)
     return (uint16_t)(((uint16_t)hi << 8) | lo);
 }
 
-void HAL_TIMER3_WriteCounter(uint16_t value)
+void EPIC_TIMER3_WriteCounter(uint16_t value)
 {
     pic8_sfr_write8(PIC_REG_TMR3H, (uint8_t)(value >> 8));
     pic8_sfr_write8(PIC_REG_TMR3L, (uint8_t)(value & 0xFFU));
 }
 
-uint16_t HAL_TIMER3_PrescalerToRatio(TIMER3_PrescalerTypeDef p)
+uint16_t EPIC_TIMER3_PrescalerToRatio(TIMER3_PrescalerTypeDef p)
 {
     if ((unsigned)p > 3U) return 1U;
     return ps_ratio[p];
 }
 
-HAL_StatusTypeDef HAL_TIMER3_Init(const TIMER3_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_TIMER3_Init(const TIMER3_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
 
     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T3CON), PIC_T3CON_TMR3ON);
 
-    HAL_IRQ_ClearFlag(PIC18_IRQ_TMR3);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR3);
     if (h->OverflowCallback) {
-        HAL_IRQ_Enable(PIC18_IRQ_TMR3);
+        EPIC_IRQ_Enable(PIC18_IRQ_TMR3);
     } else {
-        HAL_IRQ_DisableSrc(PIC18_IRQ_TMR3);
+        EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR3);
     }
 
     /* Enable 16-bit read/write mode (RD16). Leave T3CCP2:T3CCP1 at reset
@@ -54,25 +54,25 @@ HAL_StatusTypeDef HAL_TIMER3_Init(const TIMER3_HandleTypeDef *h)
 
     g_t3_storage = *h;
     g_t3_handle = &g_t3_storage;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER3_DeInit(void)
+EPIC_StatusTypeDef EPIC_TIMER3_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC18_IRQ_TMR3);
-    HAL_IRQ_ClearFlag(PIC18_IRQ_TMR3);
+    EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR3);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR3);
     PIC8_REG8(PIC_REG_T3CON) = PIC_T3CON_POR_VALUE;
     PIC8_REG8(PIC_REG_TMR3H) = 0x00U;
     PIC8_REG8(PIC_REG_TMR3L) = 0x00U;
     g_t3_handle = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER3_Start(const TIMER3_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_TIMER3_Start(const TIMER3_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
 
-    HAL_TIMER3_WriteCounter(h->ReloadValue);
+    EPIC_TIMER3_WriteCounter(h->ReloadValue);
 
     /* Program T3CON in one write. RD16 stays set (from Init). T3CCP2:T3CCP1
      * (bits 6,3) are left at 0 (Timer1 as CCP time base).
@@ -87,19 +87,19 @@ HAL_StatusTypeDef HAL_TIMER3_Start(const TIMER3_HandleTypeDef *h)
     v |= PIC_T3CON_TMR3ON;
     PIC8_REG8(PIC_REG_T3CON) = v;
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER3_Stop(void)
+EPIC_StatusTypeDef EPIC_TIMER3_Stop(void)
 {
     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T3CON), PIC_T3CON_TMR3ON);
-    return HAL_OK;
+    return EPIC_OK;
 }
 
 void TIMER3_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC18_IRQ_TMR3)) return;
-    HAL_IRQ_ClearFlag(PIC18_IRQ_TMR3);
+    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_TMR3)) return;
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR3);
     if (g_t3_handle && g_t3_handle->OverflowCallback) {
         g_t3_handle->OverflowCallback();
     }

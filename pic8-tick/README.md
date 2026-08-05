@@ -25,7 +25,7 @@ the HAL's Timer2 (auto-reload, so the ISR just increments a counter).
 cmake -B build && cmake --build build
 ctest --test-dir build --output-on-failure   # example_tick: delay(10)->10 ms
 # PIC18 family instead:
-cmake -B build18 -DHAL_FAMILY=PIC18 && ctest --test-dir build18
+cmake -B build18 -DEPIC_FAMILY=PIC18 && ctest --test-dir build18
 ```
 
 ### Real target (XC8)

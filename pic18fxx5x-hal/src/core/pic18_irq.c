@@ -22,7 +22,7 @@
 
 /* ───────────────────────── public API ───────────────────────────── */
 
-uint8_t HAL_IRQ_Disable(void)
+uint8_t EPIC_IRQ_Disable(void)
 {
     uint8_t intcon = pic8_sfr_read8(PIC_REG_INTCON);
     uint8_t prev = (intcon & (PIC_INTCON_GIEH | PIC_INTCON_GIEL)) ? 1U : 0U;
@@ -31,7 +31,7 @@ uint8_t HAL_IRQ_Disable(void)
     return prev;
 }
 
-void HAL_IRQ_Restore(uint8_t prev_state)
+void EPIC_IRQ_Restore(uint8_t prev_state)
 {
     if (prev_state) {
         /* Activate the two-vector priority scheme (DS39632E §9.0, RCON<7>)
@@ -45,7 +45,7 @@ void HAL_IRQ_Restore(uint8_t prev_state)
     }
 }
 
-void HAL_IRQ_Enable(PIC18_IRQn irq)
+void EPIC_IRQ_Enable(PIC18_IRQn irq)
 {
     switch (irq) {
     case PIC18_IRQ_INT0:     SFR_SET_BIT(PIC_REG_INTCON,  PIC_INTCON_INT0IE);  break;
@@ -71,7 +71,7 @@ void HAL_IRQ_Enable(PIC18_IRQn irq)
     }
 }
 
-void HAL_IRQ_DisableSrc(PIC18_IRQn irq)
+void EPIC_IRQ_DisableSrc(PIC18_IRQn irq)
 {
     switch (irq) {
     case PIC18_IRQ_INT0:     SFR_CLR_BIT(PIC_REG_INTCON,  PIC_INTCON_INT0IE);  break;
@@ -97,7 +97,7 @@ void HAL_IRQ_DisableSrc(PIC18_IRQn irq)
     }
 }
 
-void HAL_IRQ_ClearFlag(PIC18_IRQn irq)
+void EPIC_IRQ_ClearFlag(PIC18_IRQn irq)
 {
     switch (irq) {
     case PIC18_IRQ_INT0:     SFR_CLR_BIT(PIC_REG_INTCON,  PIC_INTCON_INT0IF);  break;
@@ -123,7 +123,7 @@ void HAL_IRQ_ClearFlag(PIC18_IRQn irq)
     }
 }
 
-uint8_t HAL_IRQ_GetFlag(PIC18_IRQn irq)
+uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq)
 {
     switch (irq) {
     case PIC18_IRQ_INT0:     return (pic8_sfr_read8(PIC_REG_INTCON)  & PIC_INTCON_INT0IF)  ? 1U : 0U;
@@ -149,9 +149,9 @@ uint8_t HAL_IRQ_GetFlag(PIC18_IRQn irq)
     }
 }
 
-void HAL_IRQ_SetPriority(PIC18_IRQn irq, HAL_IRQ_Priority prio)
+void EPIC_IRQ_SetPriority(PIC18_IRQn irq, EPIC_IRQ_Priority prio)
 {
-    uint8_t high = (prio == HAL_IRQ_PRIORITY_HIGH) ? 1U : 0U;
+    uint8_t high = (prio == EPIC_IRQ_PRIORITY_HIGH) ? 1U : 0U;
     switch (irq) {
     case PIC18_IRQ_INT0:     break; /* always high, no bit to set. */
     case PIC18_IRQ_INT1:

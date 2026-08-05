@@ -87,8 +87,8 @@ typedef struct {
 
 /* ───────────────────────── init / deinit ────────────────────────── */
 
-HAL_StatusTypeDef HAL_USART_Init(const USART_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_USART_DeInit(void);
+EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_USART_DeInit(void);
 
 /* ───────────────────────── transmit ──────────────────────────────── */
 
@@ -101,16 +101,16 @@ HAL_StatusTypeDef HAL_USART_DeInit(void);
  * @note   TXIF is NOT cleared by reading, only by writing TXREG.
  *         DS39582B §10.2.1.
  */
-void HAL_USART_Transmit(uint8_t data);
+void EPIC_USART_Transmit(uint8_t data);
 
 /** Read the 9th bit (TX9D) just transmitted. */
-uint8_t HAL_USART_GetTX9D(void);
+uint8_t EPIC_USART_GetTX9D(void);
 
 /** Set the 9th bit to send NEXT. Must be set BEFORE writing TXREG. */
-void HAL_USART_SetTX9D(uint8_t bit9);
+void EPIC_USART_SetTX9D(uint8_t bit9);
 
 /** Returns 1 if the TSR is empty (TRMT = 1). */
-uint8_t HAL_USART_IsTxShiftRegisterEmpty(void);
+uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);
 
 /* ───────────────────────── receive ──────────────────────────────── */
 
@@ -119,10 +119,10 @@ uint8_t HAL_USART_IsTxShiftRegisterEmpty(void);
  *    - clears RCIF,
  *    - advances the 2-deep FIFO.
  */
-uint8_t HAL_USART_Receive(void);
+uint8_t EPIC_USART_Receive(void);
 
 /** Read RX9D, the 9th bit of the most recently received byte. */
-uint8_t HAL_USART_GetRX9D(void);
+uint8_t EPIC_USART_GetRX9D(void);
 
 /* ───────────────────────── interrupts ───────────────────────────── */
 

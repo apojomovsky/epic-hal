@@ -64,7 +64,7 @@ static const irq_desc_t irq_table[] = {
 
 /* ───────────────────────── public API ───────────────────────────── */
 
-uint8_t HAL_IRQ_Disable(void)
+uint8_t EPIC_IRQ_Disable(void)
 {
     uint8_t s = PIC8_REG8(PIC_REG_INTCON);
     uint8_t prev = (s & PIC_INTCON_GIE) ? 1U : 0U;
@@ -72,13 +72,13 @@ uint8_t HAL_IRQ_Disable(void)
     return prev;
 }
 
-void HAL_IRQ_Restore(uint8_t prev_state)
+void EPIC_IRQ_Restore(uint8_t prev_state)
 {
     if (prev_state) PIC8_BIT_SET(PIC8_REG8(PIC_REG_INTCON), PIC_INTCON_GIE);
     else            PIC8_BIT_CLR(PIC8_REG8(PIC_REG_INTCON), PIC_INTCON_GIE);
 }
 
-void HAL_IRQ_Enable(PIC16F193X_IRQn irq)
+void EPIC_IRQ_Enable(PIC16F193X_IRQn irq)
 {
     if ((unsigned)irq >= IRQ_TABLE_SIZE) return;
     const irq_desc_t *d = &irq_table[irq];
@@ -100,7 +100,7 @@ void HAL_IRQ_Enable(PIC16F193X_IRQn irq)
     PIC8_BIT_SET(PIC8_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
 }
 
-void HAL_IRQ_DisableSrc(PIC16F193X_IRQn irq)
+void EPIC_IRQ_DisableSrc(PIC16F193X_IRQn irq)
 {
     if ((unsigned)irq >= IRQ_TABLE_SIZE) return;
     const irq_desc_t *d = &irq_table[irq];
@@ -114,7 +114,7 @@ void HAL_IRQ_DisableSrc(PIC16F193X_IRQn irq)
     PIC8_PIE_DISABLE_BIT(pir_index, enable_mask);
 }
 
-void HAL_IRQ_ClearFlag(PIC16F193X_IRQn irq)
+void EPIC_IRQ_ClearFlag(PIC16F193X_IRQn irq)
 {
     if ((unsigned)irq >= IRQ_TABLE_SIZE) return;
     const irq_desc_t *d = &irq_table[irq];
@@ -130,7 +130,7 @@ void HAL_IRQ_ClearFlag(PIC16F193X_IRQn irq)
     }
 }
 
-uint8_t HAL_IRQ_GetFlag(PIC16F193X_IRQn irq)
+uint8_t EPIC_IRQ_GetFlag(PIC16F193X_IRQn irq)
 {
     if ((unsigned)irq >= IRQ_TABLE_SIZE) return 0U;
     const irq_desc_t *d = &irq_table[irq];
@@ -141,11 +141,11 @@ uint8_t HAL_IRQ_GetFlag(PIC16F193X_IRQn irq)
     return (reg & flag_mask) ? 1U : 0U;
 }
 
-void HAL_IRQ_SetPriority(PIC16F193X_IRQn irq, HAL_IRQ_Priority prio)
+void EPIC_IRQ_SetPriority(PIC16F193X_IRQn irq, EPIC_IRQ_Priority prio)
 {
     /* PIC16F193X has a single interrupt vector, no priority scheme
      * (DS41364B §4.0). This is the no-op half of the shared
-     * HAL_IRQ_SetPriority contract; PIC18's implementation writes the
+     * EPIC_IRQ_SetPriority contract; PIC18's implementation writes the
      * matching IPR bit. Both arguments are intentionally unused. */
     (void)irq;
     (void)prio;

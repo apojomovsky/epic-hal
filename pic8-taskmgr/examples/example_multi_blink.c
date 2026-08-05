@@ -76,7 +76,7 @@ static const char *led_name(uint8_t pin)
 static void task_blink(void *arg)
 {
     blink_arg_t *a = (blink_arg_t *)arg;
-    HAL_GPIO_TogglePin(a->port, PIC8_BIT(a->pin));
+    EPIC_GPIO_TogglePin(a->port, PIC8_BIT(a->pin));
     a->count++;
     pic8_harness_log("[t=%3u] %s  #%u\n",
                            (unsigned)task_manager_ticks(),
@@ -100,9 +100,9 @@ int main(void)
     task_manager_init();
 
     /* 1. RB0..RB3 as outputs, all starting low. */
-    HAL_GPIO_Init(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3,
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3,
                   GPIO_MODE_OUTPUT);
-    HAL_GPIO_WritePin(GPIOB,
+    EPIC_GPIO_WritePin(GPIOB,
                       GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3,
                       GPIO_PIN_RESET);
 
@@ -117,7 +117,7 @@ int main(void)
      *    arm it on the target by enabling global interrupts (harmless on
      *    the sim, where the IRQ fires regardless). */
     task_manager_attach_timer0(TICK_RELOAD, TICK_PRESCALER);
-    HAL_IRQ_Restore(1);
+    EPIC_IRQ_Restore(1);
 
     /* 4. Run the scheduler. On the host the harness bounds the loop to
      *    SIM_CYCLES; on the target it runs forever. */

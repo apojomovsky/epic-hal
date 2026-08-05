@@ -35,7 +35,7 @@ Timer2 handle on PIC16.)
 right after, TX is idle until `write` enables it. The TX callback drains one
 byte per TXIF and disables TXIE when the ring empties, so the idle TX ISR
 does not fire. Ring access shared between ISR and main is critical-sectioned
-(`HAL_IRQ_Disable`/`Restore`); the single-byte ring counters are read
+(`EPIC_IRQ_Disable`/`Restore`); the single-byte ring counters are read
 atomically, so `available`/`tx_pending` need no lock.
 
 ## The one family branch

@@ -24,7 +24,7 @@ int main(void)
 
     /* 1. Read: preload a byte at 0x42, then read it back. */
     pic18_sim_drive_eeprom_byte(0x42U, 0xA5U);
-    uint8_t r = HAL_EEPROM_ReadByte(0x42U);
+    uint8_t r = EPIC_EEPROM_ReadByte(0x42U);
     CHECK(r == 0xA5U, "Read 0x42 returned wrong value");
     CHECK(pic8_sfr_read8(PIC_REG_EEADR) == 0x42U, "EEADR != 0x42 after read");
     CHECK((pic8_sfr_read8(PIC_REG_EECON1) & PIC_EECON1_RD) != 0U,
@@ -32,7 +32,7 @@ int main(void)
     CHECK(pic8_sfr_read8(PIC_REG_EEDATA) == 0xA5U, "EEDATA != 0xA5 after read");
 
     /* 2. Write: do the unlock sequence. */
-    HAL_EEPROM_WriteByte(0x10U, 0xC3U);
+    EPIC_EEPROM_WriteByte(0x10U, 0xC3U);
     CHECK(pic8_sfr_read8(PIC_REG_EEDATA) == 0xC3U, "EEDATA != 0xC3 after write");
     CHECK(pic8_sfr_read8(PIC_REG_EEADR) == 0x10U, "EEADR != 0x10 after write");
     /* The unlock writes 0x55 then 0xAA to EECON2; the last is 0xAA. */
@@ -40,19 +40,19 @@ int main(void)
 
     /* 3. Sim completion -> EEIF set, then clear. */
     pic18_sim_drive_eeprom_done(0x10U, 0xC3U);
-    CHECK(HAL_EEPROM_IsWriteComplete() == 1U, "EEIF not set after done");
-    HAL_EEPROM_ClearITFlag();
-    CHECK(HAL_EEPROM_IsWriteComplete() == 0U, "EEIF not cleared");
+    CHECK(EPIC_EEPROM_IsWriteComplete() == 1U, "EEIF not set after done");
+    EPIC_EEPROM_ClearITFlag();
+    CHECK(EPIC_EEPROM_IsWriteComplete() == 0U, "EEIF not cleared");
 
     /* 4. Buffer round-trip. */
     static uint8_t data[3] = { 0x11U, 0x22U, 0x33U };
-    HAL_StatusTypeDef st = HAL_EEPROM_WriteBuffer(0x20U, data, 3);
-    CHECK(st == HAL_OK, "WriteBuffer returned error");
+    EPIC_StatusTypeDef st = EPIC_EEPROM_WriteBuffer(0x20U, data, 3);
+    CHECK(st == EPIC_OK, "WriteBuffer returned error");
     for (uint8_t i = 0; i < 3; i++) {
         pic18_sim_drive_eeprom_done((uint8_t)(0x20U + i), data[i]);
     }
     uint8_t buf[3] = { 0 };
-    HAL_EEPROM_ReadBuffer(0x20U, buf, 3);
+    EPIC_EEPROM_ReadBuffer(0x20U, buf, 3);
     CHECK(buf[0] == 0x11U && buf[1] == 0x22U && buf[2] == 0x33U,
           "Buffer read did not return written values");
 

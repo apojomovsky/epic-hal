@@ -21,7 +21,7 @@ Two parts, in dependency order:
    `pic8_harness_log()`'s format-string dispatch (see "Harness hook:
    magic-string in `log()`" below).
 
-2. **Timer1 peripheral.** A `HAL_TIMER1_*` driver for the PIC16F193X,
+2. **Timer1 peripheral.** A `EPIC_TIMER1_*` driver for the PIC16F193X,
    `HARNESS=target` real-target example + host-sim example, and the
    full §4 verification gate (`docs/adding-a-device.md`) run via the
    Phase-0 `MODE=gpio` wrapper.
@@ -92,7 +92,7 @@ rewrite per peripheral.
   forward to the script as the new positional arg, default `uart`.
 - `pic16f193x-hal/mcu/pic16f193x-mplabx/Makefile`: add `HARNESS=sim`
   conditional selecting
-  `$(HAL_DIR)/src/core/pic16f193x_harness_sim_target.c` and setting
+  `$(EPIC_DIR)/src/core/pic16f193x_harness_sim_target.c` and setting
   `CONFIG_WDTE := OFF` (mirroring PIC16F87XA's sim-target Makefile
   pattern: real-target firmware needs the watchdog; a diagnostic
   build that terminates and reports does not).
@@ -106,7 +106,7 @@ The existing `pic8_harness_report()` static inline (in
 bytes to the USART. The new PIC16F193X sim-target `log()` instead
 *inspects the format string*: when it is exactly the pass or fail
 marker, drive RA0 (PORTA bit 0) from the message's meaning. Call
-`HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, ok ? GPIO_PIN_SET :
+`EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, ok ? GPIO_PIN_SET :
 GPIO_PIN_RESET)`, then ignore variadic args; for any other `fmt`, it
 is a no-op.
 
@@ -210,7 +210,7 @@ All three verification runs PASS. PIC16F193X `HARNESS=sim` produces a
   API. Types: `TIMER1_ClockSourceTypeDef` (INTERNAL = `TMR1CS=0`,
   EXTERNAL = `TMR1CS=1`), `TIMER1_PrescalerTypeDef` (1:1, 1:2, 1:4,
   1:8), `TIMER1_HandleTypeDef` (ClockSource, Prescaler, ReloadValue,
-  OverflowCallback). API: `HAL_TIMER1_Init/DeInit/Start/Stop/
+  OverflowCallback). API: `EPIC_TIMER1_Init/DeInit/Start/Stop/
   ReadCounter/WriteCounter/PrescalerToRatio`. Weak `TIMER1_IRQHandler`.
   `TIMER1_HANDLE_DEFAULT` macro. **No T1OSC field** (T1GCON replaces
   it on this core and is the next spec's Timer1.1 scope).
@@ -229,10 +229,10 @@ All three verification runs PASS. PIC16F193X `HARNESS=sim` produces a
 - `pic16f193x-hal/src/sim/pic16f193x_sim.c`: add `sim_step_timer1`
   mirroring `sim_step_timer0`'s shape. Wire into the per-step loop.
 - `pic16f193x-hal/CMakeLists.txt`: add `pic16f193x_timer1.c` to
-  `PIC8_HAL_SOURCES`; add
+  `PIC8_EPIC_SOURCES`; add
   `pic8_add_example(example_timer1 tests/example_timer1.c)`.
 - `pic16f193x-hal/mcu/pic16f193x-mplabx/Makefile`: add the new
-  source to `HAL_SOURCES` (both `HARNESS=target` and `HARNESS=sim`
+  source to `EPIC_SOURCES` (both `HARNESS=target` and `HARNESS=sim`
   branches link it).
 - `pic16f193x-hal/MANUAL.md`: add Timer1 register reference,
   citing DS41364B §16.0.
@@ -305,14 +305,14 @@ Shape mirrors `example_blink.c`:
   digital output, drive low.
 - Timer1 handle with `TIMER1_CLOCK_INTERNAL`, `TIMER1_PRESCALER_1_8`,
   reload 0, OverflowCallback that toggles RB0.
-- HAL_TIMER1_Init + HAL_TIMER1_Start.
-- HAL_IRQ_Restore(1) to arm the global interrupt.
+- EPIC_TIMER1_Init + EPIC_TIMER1_Start.
+- EPIC_IRQ_Restore(1) to arm the global interrupt.
 - Main loop pumps sim/ticks.
 - Pass condition: toggle count >= 3.
 
 Expected register image (after init, before main loop runs):
 T1CON = `(T1CKPS=11, 1:8) | (T1OSCEN=0) | (T1SYNC=0) | (TMR1CS=0) | (TMR1ON=0)`
-= `0x30` (T1CKPS<5:4>=11, others 0, before `HAL_TIMER1_Start` writes the
+= `0x30` (T1CKPS<5:4>=11, others 0, before `EPIC_TIMER1_Start` writes the
 `TMR1ON=1` final value). PIE1 = `0x01` (TMR1IE bit 0). INTCON = `0xC0`
 (GIE=1, PEIE=1; TMR0IE=0 because `example_timer1.c` does not init
 Timer0; only `example_blink.c` does). These specific values are
@@ -347,7 +347,7 @@ Run inside the toolchain container, all four must PASS:
 The §4 control-register check: if any value above is wrong, first
 check a known-good control register (an unrelated plain
 compile-time-constant SFR access elsewhere in the same run, e.g.
-TRISB after `HAL_GPIO_Init`); if that reads correctly and the
+TRISB after `EPIC_GPIO_Init`); if that reads correctly and the
 Timer1 value doesn't, that's a real bug, not a timing issue. The
 established pattern from PIC16F87XA and PIC18 debug sessions.
 

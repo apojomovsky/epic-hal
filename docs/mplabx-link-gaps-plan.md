@@ -15,7 +15,7 @@ None of these `mcu/*-mplabx/Makefile`s had ever actually been linked
 against real XC8 before this CI effort. `pic16f87xa-hal`'s and
 `pic18fxx5x-hal`'s own top-level Makefiles had (informally, by whoever
 last touched them locally), and both link fine. Every per-module
-`pic8-*/mcu/*-mplabx/Makefile` (a `HAL_SOURCES` subset picked to build
+`pic8-*/mcu/*-mplabx/Makefile` (a `EPIC_SOURCES` subset picked to build
 just enough of the HAL for that module's example, plus config-word
 generation, same pattern as the two HALs) had not, until
 `xc8-build.yml` actually ran `make` for every declared MCU variant of
@@ -42,7 +42,7 @@ in. Quoting the file:
 The consequence, not spelled out there: **any Makefile that links
 `pic16_irq_dispatch.c` (or PIC18's `pic18_irq_dispatch.c`) must compile
 every peripheral source that defines one of those handlers, even if the
-module using it only exercises one peripheral.** A partial `HAL_SOURCES`
+module using it only exercises one peripheral.** A partial `EPIC_SOURCES`
 list plus the dispatch file is a guaranteed real-target link failure,
 `error: (2096) undefined symbol "_TIMER1_IRQHandler"` and similar, one
 per missing peripheral.
@@ -59,14 +59,14 @@ not MCU-specific, it's a fixed set of missing translation units)**:
   set and links fine)
 
 **Fix**: add the missing peripheral `.c` files to each Makefile's
-`HAL_SOURCES`, matching what `pic16f87xa-hal/mcu/pic16f87xa-mplabx/
+`EPIC_SOURCES`, matching what `pic16f87xa-hal/mcu/pic16f87xa-mplabx/
 Makefile` (or the PIC18 equivalent) already compiles, the two Makefiles
 that do link successfully. Before doing this at scale, worth deciding
 whether `pic16_irq_dispatch.c`'s "always require every handler" design
 is actually the right contract for a module that only cares about one
 peripheral, an alternative is a per-module or per-target dispatch that
 only calls the handlers actually compiled in, but that's a bigger
-design change than patching `HAL_SOURCES` lists, flagged here, not
+design change than patching `EPIC_SOURCES` lists, flagged here, not
 decided.
 
 ## Root cause 2: real RAM/resource overflow on the smaller MCU variants
@@ -116,12 +116,12 @@ needs looking at each module's actual data/stack usage, not assumed here.
 
 Different from root causes 1/2 above: these two weren't always broken,
 they regressed on `master` during `docs/ci-plan.md` Phase 4's PIE1/PIE2
-codegen-bug investigation. `HAL_IRQ_Enable`/`DisableSrc`'s fix for that
+codegen-bug investigation. `EPIC_IRQ_Enable`/`DisableSrc`'s fix for that
 bug (see Phase 4's Validation section for the full account) needed one
 new file-scope, `__at`-pinned scratch byte
 (`pic16_isr_vector.c`'s `pic8_irq_pie_scratch`), unconditionally linked
-into every module that calls `HAL_IRQ_Enable`/`DisableSrc` for a Bank 1
-IRQ source, which includes anything using `HAL_USART_Init` with a
+into every module that calls `EPIC_IRQ_Enable`/`DisableSrc` for a Bank 1
+IRQ source, which includes anything using `EPIC_USART_Init` with a
 callback, i.e. most modules. That one extra byte of Bank 0 RAM was
 enough to tip two already-marginal modules from "fits" to "genuine XC8
 linker error", confirmed via a real local XC8 v4.00 build:
@@ -154,9 +154,9 @@ angle worth checking first: is `pic8_irq_pie_scratch`'s permanent,
 unconditional 1-byte reservation avoidable for modules that don't
 actually need Bank 1 IRQ access at runtime (XC8's own dead-code
 elimination should already prune it for modules that never call
-`HAL_IRQ_Enable`/`DisableSrc` on a Bank 1 source at all; not yet checked
+`EPIC_IRQ_Enable`/`DisableSrc` on a Bank 1 source at all; not yet checked
 whether that's actually happening, or whether `pic16_irq.c` being
-unconditionally compiled into every module's `HAL_SOURCES` defeats it).
+unconditionally compiled into every module's `EPIC_SOURCES` defeats it).
 
 ## Next steps
 
@@ -164,7 +164,7 @@ unconditionally compiled into every module's `HAL_SOURCES` defeats it).
    are "never supported, fix the documented MCU list" or "fixable RAM
    waste, fix the build." Not obviously the same answer for every module
    in the table above.
-2. Fix root cause 1 by completing each affected Makefile's `HAL_SOURCES`
+2. Fix root cause 1 by completing each affected Makefile's `EPIC_SOURCES`
    (or revisit the dispatch contract first, see above).
 3. As each module gets fixed, remove its entries from
    `scripts/ci-discover-xc8-matrix.py`'s `KNOWN_BROKEN` list so

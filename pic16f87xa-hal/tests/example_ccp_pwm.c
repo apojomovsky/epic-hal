@@ -51,7 +51,7 @@ int main(void)
     th.Postscaler      = TIMER2_POSTSCALER_1_1;
     th.Period          = 99U;     /* PR2 = 99 → 100 ticks per period. */
     th.OverflowCallback = on_t2_overflow;
-    HAL_TIMER2_Init(&th);
+    EPIC_TIMER2_Init(&th);
 
     /* 2. Configure CCP1 in PWM mode at 50% duty.
      *    DS39582B §8.3.2:  duty = CCPR1L:CCP1CON<5:4>.
@@ -62,11 +62,11 @@ int main(void)
     ch.PWM.Period    = 99U;
     ch.PWM.Duty      = 50U;       /* 50 of 100 → 50%. */
     ch.EventCallback = NULL;      /* Don't need an IRQ. */
-    HAL_CCP_Init(&ch);
+    EPIC_CCP_Init(&ch);
 
     /* 3. Start Timer2, this writes PR2 + T2CON. PWM output is generated
      *    as soon as TMR2 starts incrementing (DS39582B §8.3.3 step 4). */
-    HAL_TIMER2_Start(&th);
+    EPIC_TIMER2_Start(&th);
 
     /* 4. Verify the configuration went to the right registers. */
     uint8_t con = PIC8_REG8(0x17U);  /* CCP1CON */

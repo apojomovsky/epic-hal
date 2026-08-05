@@ -92,7 +92,7 @@
  * `pic18fxx5x.h` defines the same names to its own values. */
 #define PIC8_FAMILY_RAM_BYTES   PIC16F87XA_FAMILY_RAM_BYTES
 
-/* HAL_StatusTypeDef/HAL_OK/... and the PIC8_BIT* macros are
+/* EPIC_StatusTypeDef/EPIC_OK/... and the PIC8_BIT* macros are
  * architecture-blind, so they live in the shared layer; pulled in here
  * so one `#include "pic16f87xa.h"` gives every consumer the same
  * status/bit vocabulary. */

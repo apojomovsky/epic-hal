@@ -53,14 +53,14 @@ else()
 endif()
 
 # Variables consumed by the shared pic8_family.cmake helpers.
-set(PIC8_HAL_LIB              pic16f193x_hal)
+set(PIC8_EPIC_LIB              pic16f193x_hal)
 set(PIC8_DEFAULT_DEVICE       ${PIC16F193X_DEFAULT_DEVICE})
 set(PIC8_FAMILY_INCLUDE_DIR   ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(PIC8_HOST_INCLUDE_DIR     ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(PIC8_COMMON_INCLUDE_DIR   ${PIC8_COMMON_DIR}/include)
 set(PIC8_FAMILY_DEVICES       PIC16F1933 PIC16F1934 PIC16F1936 PIC16F1937 PIC16F1938 PIC16F1939)
 
-set(PIC8_HAL_SOURCES
+set(PIC8_EPIC_SOURCES
     src/peripherals/pic16f193x_gpio.c
     src/peripherals/pic16f193x_timer0.c
     src/peripherals/pic16f193x_timer1.c
@@ -84,7 +84,7 @@ set(PIC8_HAL_SOURCES
     src/sim/pic16f193x_sim.c
 )
 
-pic8_add_hal_library(${PIC8_HAL_LIB})
+pic8_add_hal_library(${PIC8_EPIC_LIB})
 
 pic8_add_example(example_blink tests/example_blink.c)
 pic8_add_example(example_gpio tests/example_gpio.c)

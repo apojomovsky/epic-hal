@@ -62,8 +62,8 @@ typedef struct {
 
 /* ───────────────────────── init / deinit ────────────────────────── */
 
-HAL_StatusTypeDef HAL_SPP_Init(const SPP_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_SPP_DeInit(void);
+EPIC_StatusTypeDef EPIC_SPP_Init(const SPP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_SPP_DeInit(void);
 
 /* ───────────────────────── data access ───────────────────────────── */
 
@@ -72,29 +72,29 @@ HAL_StatusTypeDef HAL_SPP_DeInit(void);
  *         first, then loads SPPDATA). The CLK/CS outputs strobe per the
  *         SPPCFG configuration.
  */
-void HAL_SPP_WriteByte(uint8_t ep, uint8_t data);
+void EPIC_SPP_WriteByte(uint8_t ep, uint8_t data);
 
 /**
  * @brief  Read a byte from SPPDATA for endpoint `ep`. Returns the byte.
  */
-uint8_t HAL_SPP_ReadByte(uint8_t ep);
+uint8_t EPIC_SPP_ReadByte(uint8_t ep);
 
 /* ───────────────────────── status ─────────────────────────────────── */
 
 /** Returns 1 if the SPP is busy (SPPEPS<SPPBUSY>). */
-uint8_t HAL_SPP_IsBusy(void);
+uint8_t EPIC_SPP_IsBusy(void);
 
 /** Returns 1 if a write occurred since the flag was last cleared (SPPEPS<WRSPP>). */
-uint8_t HAL_SPP_HasWriteOccurred(void);
+uint8_t EPIC_SPP_HasWriteOccurred(void);
 
 /** Returns 1 if a read occurred since the flag was last cleared (SPPEPS<RDSPP>). */
-uint8_t HAL_SPP_HasReadOccurred(void);
+uint8_t EPIC_SPP_HasReadOccurred(void);
 
 /** Returns 1 if SPPIF is set. */
-uint8_t HAL_SPP_IsInterruptFlag(void);
+uint8_t EPIC_SPP_IsInterruptFlag(void);
 
 /** Clear the SPPIF flag (must be done in the transfer IRQ). */
-void HAL_SPP_ClearITFlag(void);
+void EPIC_SPP_ClearITFlag(void);
 
 /* ───────────────────────── interrupts ───────────────────────────── */
 

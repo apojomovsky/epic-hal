@@ -36,7 +36,7 @@ The HAL's SSP driver is **register-level**: it exposes `Start`/`Stop`/
 the **ACKDT** bit (to NACK the last read byte) and a **wait-for-idle** poll
 (the control functions return immediately). pic8-bus's default I2C ops add
 those: a read-modify-write of `SSPCON2<ACKDT>` (0=ACK, 1=NACK) and a poll of
-SSPIF (`HAL_IRQ_GetFlag`/`ClearFlag` on the SSP IRQ) before each step.
+SSPIF (`EPIC_IRQ_GetFlag`/`ClearFlag` on the SSP IRQ) before each step.
 
 The host sim has **no SSP slave model** (it never raises SSPIF for bus
 operations), so the default ops would hang there. `pic8_bus_set_i2c_ops` /
@@ -53,7 +53,7 @@ the access idiom (PIC16 `PIC8_REG8 =`, PIC18 `pic8_sfr_read8`/`write8`, XC8
 can't lower `|=` on a volatile cast lvalue at a runtime SFR address) and the
 SSP IRQ number. These are `#if`-gated on the family device define the build
 passes; everything else is family-neutral through `pic8_hal.h`. The SPI CS
-uses `HAL_GPIO_WritePin` (the HAL's GPIO abstraction), no raw PORTx pokes.
+uses `EPIC_GPIO_WritePin` (the HAL's GPIO abstraction), no raw PORTx pokes.
 
 ## Testing
 

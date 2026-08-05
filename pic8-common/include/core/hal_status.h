@@ -6,8 +6,8 @@
  *          family-specific status enum or bit macro.
  */
 
-#ifndef HAL_STATUS_H
-#define HAL_STATUS_H
+#ifndef EPIC_STATUS_H
+#define EPIC_STATUS_H
 
 #include <stdint.h>
 
@@ -19,12 +19,12 @@
  *          Identical on every 8-bit PIC family.
  */
 typedef enum {
-    HAL_OK      = 0x00U, /**< Operation completed successfully. */
-    HAL_ERROR   = 0x01U, /**< Generic error. */
-    HAL_BUSY    = 0x02U, /**< Resource busy with ongoing operation. */
-    HAL_TIMEOUT = 0x03U, /**< Operation timed out. */
-    HAL_INVALID = 0x04U  /**< Invalid parameter or state. */
-} HAL_StatusTypeDef;
+    EPIC_OK      = 0x00U, /**< Operation completed successfully. */
+    EPIC_ERROR   = 0x01U, /**< Generic error. */
+    EPIC_BUSY    = 0x02U, /**< Resource busy with ongoing operation. */
+    EPIC_TIMEOUT = 0x03U, /**< Operation timed out. */
+    EPIC_INVALID = 0x04U  /**< Invalid parameter or state. */
+} EPIC_StatusTypeDef;
 
 /* ───────────────────────── bit / register helpers ───────────────── */
 
@@ -41,4 +41,4 @@ typedef enum {
 #define PIC8_BIT_READ(reg, mask)     ((reg) &   (uint8_t)(mask))
 /** @} */
 
-#endif /* HAL_STATUS_H */
+#endif /* EPIC_STATUS_H */

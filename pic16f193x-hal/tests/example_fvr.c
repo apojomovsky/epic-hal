@@ -7,7 +7,7 @@ int main(void)
 {
     pic8_harness_init(1UL);
     FVR_HandleTypeDef fvr = FVR_HANDLE_DEFAULT;
-    HAL_FVR_Init(&fvr);
+    EPIC_FVR_Init(&fvr);
     uint8_t con = PIC8_REG8(PIC_REG_FVRCON);
     pic8_harness_log("FVRCON=0x%02X\n", con);
     /* FVREN=1 (bit7), FVRRDY=1 (bit6, read-only hw sets it), ADFVR=2 (bits1:0) */

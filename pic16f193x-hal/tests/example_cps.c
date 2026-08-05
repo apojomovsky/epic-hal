@@ -7,7 +7,7 @@ int main(void)
 {
     pic8_harness_init(1UL);
     CPS_HandleTypeDef cps = CPS_HANDLE_DEFAULT;
-    HAL_CPS_Init(&cps);
+    EPIC_CPS_Init(&cps);
     uint8_t con0 = PIC8_REG8(PIC_REG_CPSCON0);
     uint8_t con1 = PIC8_REG8(PIC_REG_CPSCON1);
     pic8_harness_log("CPSCON0=0x%02X CPSCON1=0x%02X\n", con0, con1);

@@ -74,7 +74,7 @@ int main(void)
 
     /* Encoder on RB4/RB5, glitch gate off (the simulated motor is clean). */
     encoder_t enc;
-    HAL_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5, GPIO_MODE_INPUT);
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5, GPIO_MODE_INPUT);
     PIC8_REG8(PIC_REG_PORTB) = port_byte(gray_state(0));
     encoder_init(&enc, PIN_A, PIN_B, 0, PIC8_REG8(PIC_REG_PORTB));
 

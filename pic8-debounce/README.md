@@ -47,7 +47,7 @@ make -C mcu/pic18fxx5x-debounce-mplabx MCU=18F4550
 #include "debounce.h"
 static bool read_btn(void *ctx) {
     (void)ctx;
-    return HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET;
+    return EPIC_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET;
 }
 debounce_t btn;
 debounce_init(&btn, read_btn, NULL, 20);   /* 20 ms window */

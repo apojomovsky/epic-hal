@@ -5,7 +5,7 @@ oversample-and-decimate (gain extra bits of resolution) and an O(1) moving
 average over a caller-owned ring buffer.
 
 - **Vendor-agnostic**: the core takes a `pic8_adcfilter_read_fn` callback,
-  never calls `HAL_ADC_Read` directly. Works over any HAL family's ADC, a
+  never calls `EPIC_ADC_Read` directly. Works over any HAL family's ADC, a
   mock in tests, or any 16-bit numeric source.
 - **Zero dependency**: both header and implementation need only `<stdint.h>`.
   The host suite tests the exact code that ships on-target.

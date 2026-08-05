@@ -35,21 +35,21 @@ static const CCP_HandleTypeDef *g_ccp_handles[3] = { NULL, NULL, NULL };
 
 /* ───────────────────────── public API ───────────────────────────── */
 
-HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     if (h->Instance != CCP_INSTANCE_1 && h->Instance != CCP_INSTANCE_2) {
-        return HAL_INVALID;
+        return EPIC_INVALID;
     }
     const ccp_addrs_t *a = ccp_sel(h->Instance);
     g_ccp_handles[h->Instance] = h;
 
     /* Clear the IRQ before reconfiguring. */
-    HAL_IRQ_ClearFlag(a->irq);
+    EPIC_IRQ_ClearFlag(a->irq);
     if (h->EventCallback) {
-        HAL_IRQ_Enable(a->irq);
+        EPIC_IRQ_Enable(a->irq);
     } else {
-        HAL_IRQ_DisableSrc(a->irq);
+        EPIC_IRQ_DisableSrc(a->irq);
     }
 
     /* For PWM, program duty (10-bit) into CCPRxL + CCPxCON<5:4>.
@@ -68,23 +68,23 @@ HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h)
         PIC8_REG8(a->con)  = (uint8_t)(h->Mode & 0x0FU);
     }
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_CCP_DeInit(CCP_InstanceTypeDef inst)
+EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) {
-        return HAL_INVALID;
+        return EPIC_INVALID;
     }
     const ccp_addrs_t *a = ccp_sel(inst);
-    HAL_IRQ_DisableSrc(a->irq);
-    HAL_IRQ_ClearFlag(a->irq);
+    EPIC_IRQ_DisableSrc(a->irq);
+    EPIC_IRQ_ClearFlag(a->irq);
     PIC8_REG8(a->con) = 0x00U;
     g_ccp_handles[inst] = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-void HAL_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
+void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
     const ccp_addrs_t *a = ccp_sel(inst);
@@ -95,7 +95,7 @@ void HAL_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
     PIC8_REG8(a->cprl) = (uint8_t)(value & 0xFFU);
 }
 
-uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst)
+uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return 0U;
     const ccp_addrs_t *a = ccp_sel(inst);
@@ -109,7 +109,7 @@ uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst)
     return (uint16_t)(((uint16_t)hi2 << 8) | lo);
 }
 
-void HAL_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
+void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
     const ccp_addrs_t *a = ccp_sel(inst);
@@ -127,8 +127,8 @@ void HAL_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 
 void CCP1_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16_IRQ_CCP1)) return;
-    HAL_IRQ_ClearFlag(PIC16_IRQ_CCP1);
+    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_CCP1)) return;
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_CCP1);
     if (g_ccp_handles[CCP_INSTANCE_1] &&
         g_ccp_handles[CCP_INSTANCE_1]->EventCallback) {
         g_ccp_handles[CCP_INSTANCE_1]->EventCallback();
@@ -137,8 +137,8 @@ void CCP1_IRQHandler(void)
 
 void CCP2_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16_IRQ_CCP2)) return;
-    HAL_IRQ_ClearFlag(PIC16_IRQ_CCP2);
+    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_CCP2)) return;
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_CCP2);
     if (g_ccp_handles[CCP_INSTANCE_2] &&
         g_ccp_handles[CCP_INSTANCE_2]->EventCallback) {
         g_ccp_handles[CCP_INSTANCE_2]->EventCallback();

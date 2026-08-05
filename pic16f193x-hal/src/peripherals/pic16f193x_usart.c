@@ -19,9 +19,9 @@ uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
     return (uint16_t)x;
 }
 
-HAL_StatusTypeDef HAL_USART_Init(const USART_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
 
     PIC8_REG8(PIC_REG_SPBRGL) = h->SPBRG;
     PIC8_REG8(PIC_REG_SPBRGH) = 0x00U;
@@ -33,33 +33,33 @@ HAL_StatusTypeDef HAL_USART_Init(const USART_HandleTypeDef *h)
     PIC8_REG8(PIC_REG_RCSTA) = (uint8_t)(PIC_RCSTA_SPEN | PIC_RCSTA_CREN);
     PIC8_REG8(PIC_REG_BAUDCON) = 0x00U;
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_USART_DeInit(void)
+EPIC_StatusTypeDef EPIC_USART_DeInit(void)
 {
     PIC8_REG8(PIC_REG_TXSTA) = PIC_TXSTA_POR_VALUE;
     PIC8_REG8(PIC_REG_RCSTA) = PIC_RCSTA_POR_VALUE;
     PIC8_REG8(PIC_REG_BAUDCON) = PIC_BAUDCON_POR_VALUE;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-void HAL_USART_Transmit(uint8_t data)
+void EPIC_USART_Transmit(uint8_t data)
 {
     PIC8_REG8(PIC_REG_TXREG) = data;
 }
 
-uint8_t HAL_USART_IsTxShiftRegisterEmpty(void)
+uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void)
 {
     return (PIC8_REG8(PIC_REG_TXSTA) & PIC_TXSTA_TRMT) ? 1U : 0U;
 }
 
-uint8_t HAL_USART_Receive(void)
+uint8_t EPIC_USART_Receive(void)
 {
     return PIC8_REG8(PIC_REG_RCREG);
 }
 
-uint8_t HAL_USART_HasOverrunError(void)
+uint8_t EPIC_USART_HasOverrunError(void)
 {
     return (PIC8_REG8(PIC_REG_RCSTA) & PIC_RCSTA_OERR) ? 1U : 0U;
 }

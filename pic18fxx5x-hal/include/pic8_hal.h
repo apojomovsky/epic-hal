@@ -10,8 +10,8 @@
  *   path decides which family's headers are pulled in.
  */
 
-#ifndef PIC8_HAL_H
-#define PIC8_HAL_H
+#ifndef PIC8_EPIC_H
+#define PIC8_EPIC_H
 
 #include "pic18fxx5x.h"       /* standard types, status codes, platform   */
 #include "pic18fxx5x_sfr.h"   /* SFR address map + bit definitions       */
@@ -36,4 +36,4 @@
 #include "peripherals/pic18fxx5x_spp.h"
 #endif
 
-#endif /* PIC8_HAL_H */
+#endif /* PIC8_EPIC_H */

@@ -9,7 +9,7 @@
  *   family has a QEI peripheral): wire A/B to two of RB4-RB7, forward the
  *   received port byte to `encoder_update()` from the HAL's RB-change
  *   callback. `encoder_get_position()` is the only HAL-touching call
- *   (atomic read via `HAL_IRQ_Disable`/`Restore`). See docs/ARCHITECTURE.md
+ *   (atomic read via `EPIC_IRQ_Disable`/`Restore`). See docs/ARCHITECTURE.md
  *   for the Gray-code table and docs/API.md for wiring conventions.
  */
 

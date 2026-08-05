@@ -31,26 +31,26 @@ int main(void)
     h.C1Inverted = true;
     h.C2Inverted = true;
     h.CIS        = true;
-    HAL_COMP_Init(&h);
+    EPIC_COMP_Init(&h);
 
     CHECK(pic8_sfr_read8(PIC_REG_CMCON) == 0x3AU,
           "CMCON not 0x3A for two-indep, both inverted, CIS");
 
     /* 2. Drive the comparator outputs. C1OUT is bit 6 (0x40), C2OUT bit 7. */
     pic18_sim_drive_comp(1U, 0U);
-    CHECK(HAL_COMP_C1Out() == 1U, "C1Out not 1 after drive_comp(1,0)");
-    CHECK(HAL_COMP_C2Out() == 0U, "C2Out not 0 after drive_comp(1,0)");
-    CHECK(HAL_COMP_IsChangeFlag() == 1U, "CMIF not set after drive_comp");
+    CHECK(EPIC_COMP_C1Out() == 1U, "C1Out not 1 after drive_comp(1,0)");
+    CHECK(EPIC_COMP_C2Out() == 0U, "C2Out not 0 after drive_comp(1,0)");
+    CHECK(EPIC_COMP_IsChangeFlag() == 1U, "CMIF not set after drive_comp");
 
     pic18_sim_drive_comp(1U, 1U);
-    CHECK(HAL_COMP_C2Out() == 1U, "C2Out not 1 after drive_comp(1,1)");
+    CHECK(EPIC_COMP_C2Out() == 1U, "C2Out not 1 after drive_comp(1,1)");
 
     /* 3. Clear the change flag. */
-    HAL_COMP_ClearChangeFlag();
-    CHECK(HAL_COMP_IsChangeFlag() == 0U, "CMIF not cleared after ClearChangeFlag");
+    EPIC_COMP_ClearChangeFlag();
+    CHECK(EPIC_COMP_IsChangeFlag() == 0U, "CMIF not cleared after ClearChangeFlag");
 
     /* 4. DeInit restores the POR default (comparators off). */
-    HAL_COMP_DeInit();
+    EPIC_COMP_DeInit();
     CHECK(pic8_sfr_read8(PIC_REG_CMCON) == 0x07U,
           "CMCON not 0x07 (off) after DeInit");
 

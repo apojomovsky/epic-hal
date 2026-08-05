@@ -13,9 +13,9 @@
  */
 
 #include "task_manager.h"
-#include "core/hal_irq.h"   /* HAL_IRQ_Disable/Restore (family-neutral) */
+#include "core/hal_irq.h"   /* EPIC_IRQ_Disable/Restore (family-neutral) */
 #include "core/pic8_harness.h"      /* harness_tick / harness_running */
-#include "core/hal_wdt_sleep.h"    /* HAL_WDT_Refresh (family-neutral) */
+#include "core/hal_wdt_sleep.h"    /* EPIC_WDT_Refresh (family-neutral) */
 
 /* ───────────────────────── state ─────────────────────────────────── */
 
@@ -41,7 +41,7 @@ static uint8_t g_tick_reload = 0U;
 
 void task_manager_init(void)
 {
-    uint8_t prev = HAL_IRQ_Disable();
+    uint8_t prev = EPIC_IRQ_Disable();
     for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
         g_tasks[i].fn        = NULL;
         g_tasks[i].arg       = NULL;
@@ -51,7 +51,7 @@ void task_manager_init(void)
         g_tasks[i].flags     = 0U;
     }
     g_ticks = 0U;
-    HAL_IRQ_Restore(prev);
+    EPIC_IRQ_Restore(prev);
 }
 
 task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
@@ -63,7 +63,7 @@ task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
 
     /* Claim and fill a free slot under a critical section so a tick ISR
      * can never observe a half-initialised TCB. */
-    uint8_t prev = HAL_IRQ_Disable();
+    uint8_t prev = EPIC_IRQ_Disable();
     task_id_t id = TASK_ID_INVALID;
     for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
         if (!(g_tasks[i].flags & TM_FLAG_USED)) {
@@ -77,30 +77,30 @@ task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
             break;
         }
     }
-    HAL_IRQ_Restore(prev);
+    EPIC_IRQ_Restore(prev);
     return id;
 }
 
 void task_start(task_id_t id)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
-    uint8_t prev = HAL_IRQ_Disable();
+    uint8_t prev = EPIC_IRQ_Disable();
     if (g_tasks[id].flags & TM_FLAG_USED) {
         g_tasks[id].countdown = arm_countdown(g_tasks[id].period);
         g_tasks[id].flags |=  TM_FLAG_ENABLED;
         g_tasks[id].flags &= (uint8_t)~TM_FLAG_READY;
     }
-    HAL_IRQ_Restore(prev);
+    EPIC_IRQ_Restore(prev);
 }
 
 void task_stop(task_id_t id)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
-    uint8_t prev = HAL_IRQ_Disable();
+    uint8_t prev = EPIC_IRQ_Disable();
     if (g_tasks[id].flags & TM_FLAG_USED) {
         g_tasks[id].flags &= (uint8_t)~(TM_FLAG_ENABLED | TM_FLAG_READY);
     }
-    HAL_IRQ_Restore(prev);
+    EPIC_IRQ_Restore(prev);
 }
 
 void task_reset(task_id_t id)
@@ -108,23 +108,23 @@ void task_reset(task_id_t id)
     /* Re-arm: restart the countdown and ensure the task is enabled; same
      * critical section as the other mutators, safe from a running task. */
     if (id >= TASK_MGR_MAX_TASKS) return;
-    uint8_t prev = HAL_IRQ_Disable();
+    uint8_t prev = EPIC_IRQ_Disable();
     if (g_tasks[id].flags & TM_FLAG_USED) {
         g_tasks[id].countdown = arm_countdown(g_tasks[id].period);
         g_tasks[id].flags |=  TM_FLAG_ENABLED;
         g_tasks[id].flags &= (uint8_t)~TM_FLAG_READY;
     }
-    HAL_IRQ_Restore(prev);
+    EPIC_IRQ_Restore(prev);
 }
 
 void task_set_period(task_id_t id, uint16_t period_ticks)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
-    uint8_t prev = HAL_IRQ_Disable();
+    uint8_t prev = EPIC_IRQ_Disable();
     if (g_tasks[id].flags & TM_FLAG_USED) {
         g_tasks[id].period = period_ticks;
     }
-    HAL_IRQ_Restore(prev);
+    EPIC_IRQ_Restore(prev);
 }
 
 /* ───────────────────────── the scheduler ─────────────────────────── */
@@ -155,9 +155,9 @@ uint16_t task_manager_ticks(void)
 {
     /* 16-bit read is not atomic on an 8-bit PIC; take a critical section so
      * a tick ISR landing between the byte reads can't tear the value. */
-    uint8_t  prev = HAL_IRQ_Disable();
+    uint8_t  prev = EPIC_IRQ_Disable();
     uint16_t v    = g_ticks;
-    HAL_IRQ_Restore(prev);
+    EPIC_IRQ_Restore(prev);
     return v;
 }
 
@@ -169,7 +169,7 @@ uint8_t task_manager_run_once(void)
     task_id_t order[TASK_MGR_MAX_TASKS];
     uint8_t   n = 0U;
 
-    uint8_t prev = HAL_IRQ_Disable();
+    uint8_t prev = EPIC_IRQ_Disable();
     for (;;) {
         /* Pick the lowest-numbered-priority ready task (ties: lowest slot). */
         int      best      = -1;
@@ -190,7 +190,7 @@ uint8_t task_manager_run_once(void)
         order[n] = (task_id_t)best;
         n++;
     }
-    HAL_IRQ_Restore(prev);
+    EPIC_IRQ_Restore(prev);
 
     /* Run with interrupts enabled. */
     for (uint8_t k = 0; k < n; k++) {
@@ -199,10 +199,10 @@ uint8_t task_manager_run_once(void)
         if (t->period == 0U) {
             /* One-shot: free the slot atomically so a periodic task that
              * re-spawns one-shots does not exhaust the table. */
-            uint8_t p = HAL_IRQ_Disable();
+            uint8_t p = EPIC_IRQ_Disable();
             t->flags = 0U;
             t->fn    = NULL;
-            HAL_IRQ_Restore(p);
+            EPIC_IRQ_Restore(p);
         }
     }
     return n;
@@ -213,20 +213,20 @@ void task_manager_run(void)
     for (uint32_t i = 0; pic8_harness_running(i); i++) {
         pic8_harness_tick();    /* host: pumps sim → Timer0 ISR → tick */
         (void)task_manager_run_once();
-        HAL_WDT_Refresh();            /* no-op on the host */
+        EPIC_WDT_Refresh();            /* no-op on the host */
     }
 }
 
 uint8_t task_manager_count(void)
 {
     uint8_t count = 0U;
-    uint8_t prev  = HAL_IRQ_Disable();
+    uint8_t prev  = EPIC_IRQ_Disable();
     for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
         if (g_tasks[i].flags & TM_FLAG_USED) {
             count++;
         }
     }
-    HAL_IRQ_Restore(prev);
+    EPIC_IRQ_Restore(prev);
     return count;
 }
 
@@ -237,7 +237,7 @@ uint8_t task_manager_count(void)
  *  same period, then advances the scheduler. */
 static void task_manager_on_timer0_overflow(void)
 {
-    HAL_TIMER0_WriteCounter(g_tick_reload);
+    EPIC_TIMER0_WriteCounter(g_tick_reload);
     task_manager_tick();
 }
 
@@ -250,6 +250,6 @@ void task_manager_attach_timer0(uint8_t reload, TIMER0_PrescalerTypeDef prescale
     h.PrescalerAssigned = true;
     h.ReloadValue       = reload;
     h.OverflowCallback  = task_manager_on_timer0_overflow;
-    HAL_TIMER0_Init(&h);
-    HAL_TIMER0_Start(&h);
+    EPIC_TIMER0_Init(&h);
+    EPIC_TIMER0_Start(&h);
 }

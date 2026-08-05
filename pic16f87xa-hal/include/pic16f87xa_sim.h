@@ -58,14 +58,14 @@ void pic16f87xa_sim_set_irq_callback(pic16f87xa_sim_irq_cb_t cb);
 /**
  * @brief Inject a byte into the USART receiver as if it had just been
  *        received off the wire. Sets PIR1<RCIF> and stores the byte in
- *        RCREG. The next call to HAL_USART_Receive() will return it.
+ *        RCREG. The next call to EPIC_USART_Receive() will return it.
  */
 void pic16f87xa_sim_drive_usart_rx(uint8_t data);
 
 /**
  * @brief Inject a byte into the SSP receiver (SPI slave or I²C target).
  *        Sets SSPSTAT<BF> and PIR1<SSPIF>. The next call to
- *        HAL_SSP_ReadByte() will return the byte.
+ *        EPIC_SSP_ReadByte() will return the byte.
  */
 void pic16f87xa_sim_drive_ssp_rx(uint8_t data);
 
@@ -73,13 +73,13 @@ void pic16f87xa_sim_drive_ssp_rx(uint8_t data);
  * @brief Drive an A/D conversion to completion with a given 10-bit
  *        result. Stores `result` in ADRESH:ADRESL (right-justified),
  *        clears GO/DONE, and sets PIR1<ADIF>. The next call to
- *        HAL_ADC_Read() will return the result.
+ *        EPIC_ADC_Read() will return the result.
  */
 void pic16f87xa_sim_drive_adc_done(uint16_t result);
 
 /**
  * @brief Place a byte in the simulated EEPROM. Subsequent calls to
- *        HAL_EEPROM_ReadByte(addr) return it.
+ *        EPIC_EEPROM_ReadByte(addr) return it.
  */
 void pic16f87xa_sim_drive_eeprom_byte(uint8_t addr, uint8_t data);
 

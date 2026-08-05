@@ -7,7 +7,7 @@
 # One family-agnostic implementation (src/pic8_settings.c) builds against
 # either HAL family. The public header is dependency-free; the implementation
 # pulls the neutral HAL EEPROM API through pic8_hal.h. Select the family with
-# -DHAL_FAMILY=PIC18 (default PIC16).
+# -DEPIC_FAMILY=PIC18 (default PIC16).
 
 cmake_minimum_required(VERSION 3.16)
 project(pic8_settings C)
@@ -15,28 +15,28 @@ project(pic8_settings C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(HAL_FAMILY "PIC16" CACHE STRING "HAL family to link: PIC16 or PIC18")
+set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link: PIC16 or PIC18")
 
-if(HAL_FAMILY STREQUAL "PIC18")
-    set(HAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic18fxx5x-hal
+if(EPIC_FAMILY STREQUAL "PIC18")
+    set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic18fxx5x-hal
         CACHE PATH "Path to the pic18fxx5x-hal source tree")
-    set(HAL_LIB         pic18fxx5x_hal)
+    set(EPIC_LIB         pic18fxx5x_hal)
     set(DEFAULT_DEVICE  PIC18F4550)
 else()
-    set(HAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic16f87xa-hal
+    set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic16f87xa-hal
         CACHE PATH "Path to the pic16f87xa-hal source tree")
-    set(HAL_LIB         pic16f87xa_hal)
+    set(EPIC_LIB         pic16f87xa_hal)
     set(DEFAULT_DEVICE  PIC16F877A)
 endif()
 
-if(NOT TARGET ${HAL_LIB})
-    add_subdirectory(${HAL_DIR} ${CMAKE_CURRENT_BINARY_DIR}/hal)
+if(NOT TARGET ${EPIC_LIB})
+    add_subdirectory(${EPIC_DIR} ${CMAKE_CURRENT_BINARY_DIR}/hal)
 endif()
 
 add_library(pic8_settings STATIC src/pic8_settings.c)
 target_include_directories(pic8_settings PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(pic8_settings PUBLIC ${HAL_LIB})
+target_link_libraries(pic8_settings PUBLIC ${EPIC_LIB})
 target_compile_definitions(pic8_settings PRIVATE -D${DEFAULT_DEVICE})
 
 enable_testing()

@@ -27,7 +27,7 @@ static uint32_t g_cycles = 0U;
 
 static void s_tx_cplt(void)
 {
-    /* Exists only so HAL_USART_Init's TXEN/TXIE gate sees a non-null
+    /* Exists only so EPIC_USART_Init's TXEN/TXIE gate sees a non-null
      * callback (see pic16_harness_sim_target.c's header comment).
      * Transmission below is polled, this is never actually called in a
      * way that matters. */
@@ -35,10 +35,10 @@ static void s_tx_cplt(void)
 
 static void s_uart_putc(char c)
 {
-    while (!HAL_USART_IsTxShiftRegisterEmpty()) {
+    while (!EPIC_USART_IsTxShiftRegisterEmpty()) {
         /* wait for the shift register to drain */
     }
-    HAL_USART_Transmit((uint8_t)c);
+    EPIC_USART_Transmit((uint8_t)c);
 }
 
 void pic8_harness_init(uint32_t cycles)
@@ -55,11 +55,11 @@ void pic8_harness_init(uint32_t cycles)
                                            USART_BRGH_LOW,
                                            USART_BAUDGEN_8BIT);
     h.TxCpltCallback = s_tx_cplt;
-    (void)HAL_USART_Init(&h);
+    (void)EPIC_USART_Init(&h);
     /* Transmission here is polled; TXIE is only a side effect of the
      * TxCpltCallback workaround above, turn the source back off (TXEN
      * stays untouched). Same pattern as pic16_harness_sim_target.c. */
-    HAL_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
+    EPIC_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
 }
 
 void pic8_harness_tick(void)

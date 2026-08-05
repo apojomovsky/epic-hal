@@ -17,7 +17,7 @@ static const uint16_t ps_ratio[4] = { 1, 2, 4, 8 };
 static TIMER1_HandleTypeDef g_t1_storage;
 static const TIMER1_HandleTypeDef *g_t1_handle = NULL;
 
-uint16_t HAL_TIMER1_ReadCounter(void)
+uint16_t EPIC_TIMER1_ReadCounter(void)
 {
     /* With RD16 set, reading TMR1L latches TMR1H into a shadow (DS39632E
      * §12.0); read low then high for a consistent 16-bit value. */
@@ -26,7 +26,7 @@ uint16_t HAL_TIMER1_ReadCounter(void)
     return (uint16_t)(((uint16_t)hi << 8) | lo);
 }
 
-void HAL_TIMER1_WriteCounter(uint16_t value)
+void EPIC_TIMER1_WriteCounter(uint16_t value)
 {
     /* With RD16 set, writing TMR1L latches TMR1H (DS39632E §12.0); write
      * high byte first via the shadow, then low to commit both. */
@@ -34,25 +34,25 @@ void HAL_TIMER1_WriteCounter(uint16_t value)
     pic8_sfr_write8(PIC_REG_TMR1L, (uint8_t)(value & 0xFFU));
 }
 
-uint16_t HAL_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p)
+uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p)
 {
     if ((unsigned)p > 3U) return 1U;
     return ps_ratio[p];
 }
 
-HAL_StatusTypeDef HAL_TIMER1_Init(const TIMER1_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
 
     /* Stop the timer before reconfiguring. */
     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
 
     /* Configure the overflow interrupt. */
-    HAL_IRQ_ClearFlag(PIC18_IRQ_TMR1);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR1);
     if (h->OverflowCallback) {
-        HAL_IRQ_Enable(PIC18_IRQ_TMR1);
+        EPIC_IRQ_Enable(PIC18_IRQ_TMR1);
     } else {
-        HAL_IRQ_DisableSrc(PIC18_IRQ_TMR1);
+        EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR1);
     }
 
     /* Enable 16-bit read/write mode (RD16) so the atomic 16-bit idiom works
@@ -61,25 +61,25 @@ HAL_StatusTypeDef HAL_TIMER1_Init(const TIMER1_HandleTypeDef *h)
 
     g_t1_storage = *h;
     g_t1_handle = &g_t1_storage;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER1_DeInit(void)
+EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC18_IRQ_TMR1);
-    HAL_IRQ_ClearFlag(PIC18_IRQ_TMR1);
+    EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR1);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR1);
     PIC8_REG8(PIC_REG_T1CON) = PIC_T1CON_POR_VALUE;
     PIC8_REG8(PIC_REG_TMR1H) = 0x00U;
     PIC8_REG8(PIC_REG_TMR1L) = 0x00U;
     g_t1_handle = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER1_Start(const TIMER1_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
 
-    HAL_TIMER1_WriteCounter(h->ReloadValue);
+    EPIC_TIMER1_WriteCounter(h->ReloadValue);
 
     /* Program T1CON in one write. RD16 stays set (from Init), T1RUN is
      * read-only and left clear.
@@ -96,19 +96,19 @@ HAL_StatusTypeDef HAL_TIMER1_Start(const TIMER1_HandleTypeDef *h)
     v |= PIC_T1CON_TMR1ON;
     PIC8_REG8(PIC_REG_T1CON) = v;
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER1_Stop(void)
+EPIC_StatusTypeDef EPIC_TIMER1_Stop(void)
 {
     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
-    return HAL_OK;
+    return EPIC_OK;
 }
 
 void TIMER1_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC18_IRQ_TMR1)) return;
-    HAL_IRQ_ClearFlag(PIC18_IRQ_TMR1);
+    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_TMR1)) return;
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR1);
     if (g_t1_handle && g_t1_handle->OverflowCallback) {
         g_t1_handle->OverflowCallback();
     }

@@ -14,28 +14,28 @@ static void gpio8_send(void *ctx, uint8_t rs, uint8_t byte)
 {
     gpio8_ctx_t *g = (gpio8_ctx_t *)ctx;
 
-    HAL_GPIO_WritePin(g->pins.rs_port, g->pins.rs_pin,
+    EPIC_GPIO_WritePin(g->pins.rs_port, g->pins.rs_pin,
                       rs ? GPIO_PIN_SET : GPIO_PIN_RESET);
 
-    HAL_GPIO_WritePin(g->pins.db0_port, g->pins.db0_pin,
+    EPIC_GPIO_WritePin(g->pins.db0_port, g->pins.db0_pin,
                       (byte & 0x01u) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(g->pins.db1_port, g->pins.db1_pin,
+    EPIC_GPIO_WritePin(g->pins.db1_port, g->pins.db1_pin,
                       (byte & 0x02u) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(g->pins.db2_port, g->pins.db2_pin,
+    EPIC_GPIO_WritePin(g->pins.db2_port, g->pins.db2_pin,
                       (byte & 0x04u) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(g->pins.db3_port, g->pins.db3_pin,
+    EPIC_GPIO_WritePin(g->pins.db3_port, g->pins.db3_pin,
                       (byte & 0x08u) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(g->pins.db4_port, g->pins.db4_pin,
+    EPIC_GPIO_WritePin(g->pins.db4_port, g->pins.db4_pin,
                       (byte & 0x10u) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(g->pins.db5_port, g->pins.db5_pin,
+    EPIC_GPIO_WritePin(g->pins.db5_port, g->pins.db5_pin,
                       (byte & 0x20u) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(g->pins.db6_port, g->pins.db6_pin,
+    EPIC_GPIO_WritePin(g->pins.db6_port, g->pins.db6_pin,
                       (byte & 0x40u) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(g->pins.db7_port, g->pins.db7_pin,
+    EPIC_GPIO_WritePin(g->pins.db7_port, g->pins.db7_pin,
                       (byte & 0x80u) ? GPIO_PIN_SET : GPIO_PIN_RESET);
 
-    HAL_GPIO_WritePin(g->pins.e_port, g->pins.e_pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(g->pins.e_port, g->pins.e_pin, GPIO_PIN_RESET);
+    EPIC_GPIO_WritePin(g->pins.e_port, g->pins.e_pin, GPIO_PIN_SET);
+    EPIC_GPIO_WritePin(g->pins.e_port, g->pins.e_pin, GPIO_PIN_RESET);
 }
 
 static void gpio8_delay_us(void *ctx, uint32_t us)
@@ -58,19 +58,19 @@ void pic8_lcd_gpio8_init(pic8_lcd_ops_t *ops, void **ctx,
     static gpio8_ctx_t g;
     g.pins = *pins;
 
-    HAL_GPIO_Init(g.pins.rs_port,  g.pins.rs_pin,  GPIO_MODE_OUTPUT);
-    HAL_GPIO_Init(g.pins.e_port,   g.pins.e_pin,   GPIO_MODE_OUTPUT);
-    HAL_GPIO_Init(g.pins.db0_port, g.pins.db0_pin,  GPIO_MODE_OUTPUT);
-    HAL_GPIO_Init(g.pins.db1_port, g.pins.db1_pin,  GPIO_MODE_OUTPUT);
-    HAL_GPIO_Init(g.pins.db2_port, g.pins.db2_pin,  GPIO_MODE_OUTPUT);
-    HAL_GPIO_Init(g.pins.db3_port, g.pins.db3_pin,  GPIO_MODE_OUTPUT);
-    HAL_GPIO_Init(g.pins.db4_port, g.pins.db4_pin,  GPIO_MODE_OUTPUT);
-    HAL_GPIO_Init(g.pins.db5_port, g.pins.db5_pin,  GPIO_MODE_OUTPUT);
-    HAL_GPIO_Init(g.pins.db6_port, g.pins.db6_pin,  GPIO_MODE_OUTPUT);
-    HAL_GPIO_Init(g.pins.db7_port, g.pins.db7_pin,  GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(g.pins.rs_port,  g.pins.rs_pin,  GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(g.pins.e_port,   g.pins.e_pin,   GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(g.pins.db0_port, g.pins.db0_pin,  GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(g.pins.db1_port, g.pins.db1_pin,  GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(g.pins.db2_port, g.pins.db2_pin,  GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(g.pins.db3_port, g.pins.db3_pin,  GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(g.pins.db4_port, g.pins.db4_pin,  GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(g.pins.db5_port, g.pins.db5_pin,  GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(g.pins.db6_port, g.pins.db6_pin,  GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(g.pins.db7_port, g.pins.db7_pin,  GPIO_MODE_OUTPUT);
 
-    HAL_GPIO_WritePin(g.pins.e_port, g.pins.e_pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(g.pins.rs_port, g.pins.rs_pin, GPIO_PIN_RESET);
+    EPIC_GPIO_WritePin(g.pins.e_port, g.pins.e_pin, GPIO_PIN_RESET);
+    EPIC_GPIO_WritePin(g.pins.rs_port, g.pins.rs_pin, GPIO_PIN_RESET);
 
     ops->send     = gpio8_send;
     ops->delay_us = gpio8_delay_us;

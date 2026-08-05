@@ -77,7 +77,7 @@ The configuration words in the `Makefile` set a conservative default
 
 - `FOSC = HS`, `PLLDIV = 5`, `CPUDIV = OSC1_PLL2`, `USBDIV = 2`
   (20 MHz crystal → 48 MHz CPU/USB via the PLL)
-- `WDT = ON`, `WDTPS = 32768` (refresh via `HAL_WDT_Refresh()` in Phase 2)
+- `WDT = ON`, `WDTPS = 32768` (refresh via `EPIC_WDT_Refresh()` in Phase 2)
 - `PWRT = ON`, `MCLRE = ON`, `LVP = OFF`, `XINST = OFF`, `DEBUG = OFF`
 - Code / write / read protection all `OFF`
 

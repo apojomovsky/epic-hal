@@ -33,9 +33,9 @@ else
 endif
 
 # ─────────────────────────── paths ────────────────────────────────
-HAL_DIR    ?= ../../../pic16f87xa-hal
-TICK_DIR   ?= $(HAL_DIR)/../pic8-tick
-COMMON_DIR ?= $(HAL_DIR)/../pic8-common
+EPIC_DIR    ?= ../../../pic16f87xa-hal
+TICK_DIR   ?= $(EPIC_DIR)/../pic8-tick
+COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
 APP_DIR    ?= ../..
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-encoder-sizecheck
@@ -48,7 +48,7 @@ else
 endif
 
 CC     := xc8-cc
-INC    := -I$(HAL_DIR)/include/target -I$(HAL_DIR)/include -I$(COMMON_DIR)/include \
+INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include \
           -I$(TICK_DIR)/include -I$(APP_DIR)/include
 CFLAGS := $(DFP_FLAG) \
           -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
@@ -58,27 +58,27 @@ CFLAGS := $(DFP_FLAG) \
           -DFOSC_HZ=$(FOSC_HZ)
 
 # ─────────────────────────── source layout ─────────────────────────
-HAL_SOURCES := \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_gpio.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer0.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer1.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer2.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_ccp.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_usart.c    \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_ssp.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_adc.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_comp.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_vref.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_eeprom.c   \
-  $(HAL_DIR)/src/core/pic16_irq.c                  \
-  $(HAL_DIR)/src/core/pic16f87xa_wdt_sleep.c       \
-  $(HAL_DIR)/src/core/pic16f87xa_wdt_sleep_target.c \
-  $(HAL_DIR)/src/core/pic16_isr_vector.c          \
-  $(HAL_DIR)/src/core/pic16_irq_dispatch.c        \
+EPIC_SOURCES := \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_gpio.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer0.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer1.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer2.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_ccp.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_usart.c    \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_ssp.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_adc.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_comp.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_vref.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_eeprom.c   \
+  $(EPIC_DIR)/src/core/pic16_irq.c                  \
+  $(EPIC_DIR)/src/core/pic16f87xa_wdt_sleep.c       \
+  $(EPIC_DIR)/src/core/pic16f87xa_wdt_sleep_target.c \
+  $(EPIC_DIR)/src/core/pic16_isr_vector.c          \
+  $(EPIC_DIR)/src/core/pic16_irq_dispatch.c        \
   $(COMMON_DIR)/src/core/pic8_harness_target.c
 
 ifeq ($(filter $(MCU),16F874A 16F877A),$(MCU))
-  HAL_SOURCES += $(HAL_DIR)/src/peripherals/pic16f87xa_psp.c
+  EPIC_SOURCES += $(EPIC_DIR)/src/peripherals/pic16f87xa_psp.c
 endif
 
 # pic8-tick (the glitch-gate timebase; same source builds on either family).
@@ -92,7 +92,7 @@ ENCODER_SOURCES := $(APP_DIR)/src/encoder.c
 # reports footprint. Not a correctness test (the host suite is).
 APP_SOURCES := $(APP_DIR)/mcu/target_sizecheck.c
 
-SRCS := $(HAL_SOURCES) $(TICK_SOURCES) $(ENCODER_SOURCES) $(APP_SOURCES)
+SRCS := $(EPIC_SOURCES) $(TICK_SOURCES) $(ENCODER_SOURCES) $(APP_SOURCES)
 OBJS := $(patsubst %.c,$(BUILD_DIR)/%.p1,$(notdir $(SRCS)))
 VPATH := $(sort $(dir $(SRCS)))
 

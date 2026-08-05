@@ -33,9 +33,9 @@ static const USART_HandleTypeDef *g_usart = NULL;
 
 /* ───────────────────────── public API ───────────────────────────── */
 
-HAL_StatusTypeDef HAL_USART_Init(const USART_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     g_usart = h;
 
     /* Program SPBRG (Bank 1, address 0x99, DS39582B §10.1). */
@@ -82,22 +82,22 @@ HAL_StatusTypeDef HAL_USART_Init(const USART_HandleTypeDef *h)
 
     /* TXIF is initially 1 (TXREG empty after reset, §10.2.1).
      * RCIF is initially 0 (RCREG empty after reset). */
-    HAL_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
 
-    if (h->TxCpltCallback) HAL_IRQ_Enable(PIC16_IRQ_USART_TX);
-    else                   HAL_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
-    if (h->RxCpltCallback) HAL_IRQ_Enable(PIC16_IRQ_USART_RX);
-    else                   HAL_IRQ_DisableSrc(PIC16_IRQ_USART_RX);
+    if (h->TxCpltCallback) EPIC_IRQ_Enable(PIC16_IRQ_USART_TX);
+    else                   EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
+    if (h->RxCpltCallback) EPIC_IRQ_Enable(PIC16_IRQ_USART_RX);
+    else                   EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_RX);
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_USART_DeInit(void)
+EPIC_StatusTypeDef EPIC_USART_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
-    HAL_IRQ_DisableSrc(PIC16_IRQ_USART_RX);
-    HAL_IRQ_ClearFlag(PIC16_IRQ_USART_TX);
-    HAL_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
+    EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
+    EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_RX);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_TX);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
     PIC8_REG8(PIC_REG_RCSTA) = 0x00U;
     PIC8_REG8(PIC_REG_TXSTA) = 0x02U;     /* keep TRMT=1 reset state. */
     {
@@ -107,43 +107,43 @@ HAL_StatusTypeDef HAL_USART_DeInit(void)
         pic_select_bank(prev);
     }
     g_usart = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-void HAL_USART_Transmit(uint8_t data)
+void EPIC_USART_Transmit(uint8_t data)
 {
     /* Writing TXREG clears TXIF (DS39582B §10.2.1). The hardware
      * simultaneously starts the TSR→line shift; the sim backend
      * re-asserts TXIF on the next pic16f87xa_sim_step() call. */
     PIC8_REG8(PIC_REG_TXREG) = data;
-    HAL_IRQ_ClearFlag(PIC16_IRQ_USART_TX);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_TX);
 }
 
-uint8_t HAL_USART_GetTX9D(void)
+uint8_t EPIC_USART_GetTX9D(void)
 {
     return (PIC8_REG8(PIC_REG_TXSTA) & PIC_TXSTA_TX9D) ? 1U : 0U;
 }
 
-void HAL_USART_SetTX9D(uint8_t bit9)
+void EPIC_USART_SetTX9D(uint8_t bit9)
 {
     if (bit9) PIC8_BIT_SET(PIC8_REG8(PIC_REG_TXSTA), PIC_TXSTA_TX9D);
     else      PIC8_BIT_CLR(PIC8_REG8(PIC_REG_TXSTA), PIC_TXSTA_TX9D);
 }
 
-uint8_t HAL_USART_IsTxShiftRegisterEmpty(void)
+uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void)
 {
     return (PIC8_REG8(PIC_REG_TXSTA) & PIC_TXSTA_TRMT) ? 1U : 0U;
 }
 
-uint8_t HAL_USART_Receive(void)
+uint8_t EPIC_USART_Receive(void)
 {
     /* Reading RCREG clears RCIF (DS39582B §10.2.2). */
     uint8_t data = PIC8_REG8(PIC_REG_RCREG);
-    HAL_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
     return data;
 }
 
-uint8_t HAL_USART_GetRX9D(void)
+uint8_t EPIC_USART_GetRX9D(void)
 {
     return (PIC8_REG8(PIC_REG_RCSTA) & PIC_RCSTA_RX9D) ? 1U : 0U;
 }
@@ -152,7 +152,7 @@ uint8_t HAL_USART_GetRX9D(void)
 
 void USART_TX_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16_IRQ_USART_TX)) return;
+    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_USART_TX)) return;
     /* TXIF is read-only and cleared by writing TXREG; there is nothing
      * to clear here, just call the user callback. */
     if (g_usart && g_usart->TxCpltCallback) g_usart->TxCpltCallback();
@@ -160,8 +160,8 @@ void USART_TX_IRQHandler(void)
 
 void USART_RX_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16_IRQ_USART_RX)) return;
+    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_USART_RX)) return;
     uint8_t data = PIC8_REG8(PIC_REG_RCREG);
-    HAL_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
     if (g_usart && g_usart->RxCpltCallback) g_usart->RxCpltCallback(data);
 }

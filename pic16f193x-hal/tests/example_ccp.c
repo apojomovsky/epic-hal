@@ -34,13 +34,13 @@ int main(void)
     ccp1.Instance = CCP_INSTANCE_1;
     ccp1.Mode = CCP_MODE_COMPARE_SET;
     ccp1.CompareValue = 0x0100U;
-    HAL_CCP_Init(&ccp1);
+    EPIC_CCP_Init(&ccp1);
 
     CCP_HandleTypeDef ccp2 = CCP_HANDLE_DEFAULT;
     ccp2.Instance = CCP_INSTANCE_2;
     ccp2.Mode = CCP_MODE_COMPARE_SET;
     ccp2.CompareValue = 0x0200U;
-    HAL_CCP_Init(&ccp2);
+    EPIC_CCP_Init(&ccp2);
 
     uint8_t c1con = PIC8_REG8(PIC_REG_CCP1CON);
     uint8_t c1h = PIC8_REG8(PIC_REG_CCPR1H);

@@ -47,14 +47,14 @@ else()
 endif()
 
 # Variables consumed by the shared pic8_family.cmake helpers.
-set(PIC8_HAL_LIB              pic18fxx5x_hal)
+set(PIC8_EPIC_LIB              pic18fxx5x_hal)
 set(PIC8_DEFAULT_DEVICE       ${PIC18FXX5X_DEFAULT_DEVICE})
 set(PIC8_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(PIC8_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(PIC8_COMMON_INCLUDE_DIR    ${PIC8_COMMON_DIR}/include)
 set(PIC8_FAMILY_DEVICES        PIC18F2455 PIC18F2550 PIC18F4455 PIC18F4550)
 
-set(PIC8_HAL_SOURCES
+set(PIC8_EPIC_SOURCES
     src/sim/pic18_sim.c
     src/core/pic18_harness_sim.c
     src/core/pic18_irq.c
@@ -78,10 +78,10 @@ set(PIC8_HAL_SOURCES
 # has it, so the library includes the SPP driver; 28-pin per-device examples
 # just don't use it (and don't include the gated header).
 if(PIC18FXX5X_FAMILY_HAS_SPP)
-    list(APPEND PIC8_HAL_SOURCES src/peripherals/pic18fxx5x_spp.c)
+    list(APPEND PIC8_EPIC_SOURCES src/peripherals/pic18fxx5x_spp.c)
 endif()
 
-pic8_add_hal_library(${PIC8_HAL_LIB})
+pic8_add_hal_library(${PIC8_EPIC_LIB})
 
 # Phase 2 MVP examples. example_blink is the canonical Timer0 + GPIO +
 # interrupt smoke test; example_smoke remains the bare harness-seam test.

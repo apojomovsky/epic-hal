@@ -334,7 +334,7 @@ assumes the previous ones are done and verified, not just written):
    session's two families were in or adjacent to interrupt/bank-select
    plumbing (PIC16's `pic_select_bank`-adjacent corruption, PIC18's
    `pic18_irq.c` table-driven dispatch), and every peripheral driver
-   depends on `HAL_IRQ_*` working correctly. Finding this bug on day
+   depends on `EPIC_IRQ_*` working correctly. Finding this bug on day
    one of a new family, isolated, is much cheaper than finding it after
    ten peripherals are built on top of a broken IRQ core.
 6. **Peripherals one at a time**, each through §4's verification gate in

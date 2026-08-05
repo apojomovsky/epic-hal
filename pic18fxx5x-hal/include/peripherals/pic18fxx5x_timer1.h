@@ -73,19 +73,19 @@ typedef struct {
     .OverflowCallback = NULL,                                           \
 }
 
-HAL_StatusTypeDef HAL_TIMER1_Init(const TIMER1_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER1_DeInit(void);
-HAL_StatusTypeDef HAL_TIMER1_Start(const TIMER1_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER1_Stop(void);
+EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void);
+EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER1_Stop(void);
 
 /** Atomically read the 16-bit counter (RD16 latches TMR1H on TMR1L read). */
-uint16_t HAL_TIMER1_ReadCounter(void);
+uint16_t EPIC_TIMER1_ReadCounter(void);
 
 /** Atomically write the 16-bit counter (RD16 latches TMR1H on TMR1L write). */
-void HAL_TIMER1_WriteCounter(uint16_t value);
+void EPIC_TIMER1_WriteCounter(uint16_t value);
 
 /** Convert a prescaler enum to its integer ratio (1, 2, 4, 8). */
-uint16_t HAL_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);
+uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);
 
 /** Weak Timer1 ISR, override in user code to add application logic. */
 void TIMER1_IRQHandler(void) PIC8_WEAK;

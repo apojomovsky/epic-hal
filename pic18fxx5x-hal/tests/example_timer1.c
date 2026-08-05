@@ -34,9 +34,9 @@ int main(void)
     h.ClockSource      = TIMER1_CLOCK_INTERNAL;
     h.ReloadValue      = 0x0000U;
     h.OverflowCallback = on_t1_overflow;
-    HAL_TIMER1_Init(&h);
-    HAL_TIMER1_Start(&h);
-    HAL_IRQ_Restore(1);
+    EPIC_TIMER1_Init(&h);
+    EPIC_TIMER1_Start(&h);
+    EPIC_IRQ_Restore(1);
 
     for (uint32_t i = 0; pic8_harness_running(i); i++) {
         pic8_harness_tick();

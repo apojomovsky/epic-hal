@@ -7,7 +7,7 @@ SSP/GPIO HAL and `pic8-tick`.
 - **Thin by design**: unlike `pic8-usb`, M-Stack's `mmc_read_block`/
   `mmc_write_block` are already the right shape — this module's real job is
   binding `MMC_SPI_TRANSFER`/`MMC_SPI_SET_CS`/`MMC_SPI_SET_SPEED` to
-  `HAL_SSP_*` and `HAL_GPIO_WritePin`, and the timer macros to `pic8-tick`,
+  `EPIC_SSP_*` and `EPIC_GPIO_WritePin`, and the timer macros to `pic8-tick`,
   not inventing new buffering.
 - **PIC18Fxx5x-only for a RAM reason**: `MMC_BLOCK_SIZE` is a fixed 512
   bytes; every PIC16F87XA family member's total RAM (192–368 B) is smaller

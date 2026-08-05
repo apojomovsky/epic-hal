@@ -10,7 +10,7 @@
 # so a new family's CMakeLists.txt is a thin caller.
 #
 # Variables the caller sets before including this file:
-#   PIC8_HAL_LIB              static library target name (e.g. pic16f87xa_hal)
+#   PIC8_EPIC_LIB              static library target name (e.g. pic16f87xa_hal)
 #   PIC8_DEFAULT_DEVICE       device macro for the default build (PIC16F877A)
 #   PIC8_FAMILY_INCLUDE_DIR   this family's include/ directory
 #   PIC8_HOST_INCLUDE_DIR     this family's include/host directory (resolved
@@ -21,8 +21,8 @@
 #   PIC8_FAMILY_DEVICES       list of every device macro in the family
 #
 # Variables the caller sets before calling pic8_add_hal_library:
-#   PIC8_HAL_SOURCES          the family's .c source list (per family)
-#   PIC8_HAL_COMPILE_DEFS     PRIVATE compile defs for the lib (optional)
+#   PIC8_EPIC_SOURCES          the family's .c source list (per family)
+#   PIC8_EPIC_COMPILE_DEFS     PRIVATE compile defs for the lib (optional)
 #
 # A family that has an optional peripheral only on some devices gates it
 # itself before calling pic8_add_hal_library (see pic16f87xa-hal's PSP).
@@ -33,14 +33,14 @@
 # links this library resolves them. The default device is a PRIVATE define
 # on the library so the host platform is chosen by include path, not #ifdef.
 function(pic8_add_hal_library name)
-    add_library(${name} STATIC ${PIC8_HAL_SOURCES})
+    add_library(${name} STATIC ${PIC8_EPIC_SOURCES})
     target_include_directories(${name} PUBLIC
         ${PIC8_HOST_INCLUDE_DIR}
         ${PIC8_FAMILY_INCLUDE_DIR}
         ${PIC8_COMMON_INCLUDE_DIR})
     target_compile_definitions(${name} PRIVATE -D${PIC8_DEFAULT_DEVICE})
-    if(PIC8_HAL_COMPILE_DEFS)
-        target_compile_definitions(${name} PRIVATE ${PIC8_HAL_COMPILE_DEFS})
+    if(PIC8_EPIC_COMPILE_DEFS)
+        target_compile_definitions(${name} PRIVATE ${PIC8_EPIC_COMPILE_DEFS})
     endif()
 endfunction()
 
@@ -50,7 +50,7 @@ endfunction()
 function(pic8_add_example name src)
     add_executable(${name} ${src})
     target_compile_definitions(${name} PRIVATE -D${PIC8_DEFAULT_DEVICE})
-    target_link_libraries(${name} PRIVATE ${PIC8_HAL_LIB})
+    target_link_libraries(${name} PRIVATE ${PIC8_EPIC_LIB})
 endfunction()
 
 # Build the same example source once per device in the family, each with
@@ -60,6 +60,6 @@ function(pic8_add_example_per_device base src)
     foreach(dev ${PIC8_FAMILY_DEVICES})
         add_executable(${base}_${dev} ${src})
         target_compile_definitions(${base}_${dev} PRIVATE -D${dev})
-        target_link_libraries(${base}_${dev} PRIVATE ${PIC8_HAL_LIB})
+        target_link_libraries(${base}_${dev} PRIVATE ${PIC8_EPIC_LIB})
     endforeach()
 endfunction()

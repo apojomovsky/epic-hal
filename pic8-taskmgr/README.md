@@ -12,8 +12,8 @@ priority order on each tick, like interrupt handlers.
 
 The same `task_manager.c`/`task_manager.h` builds against any 8-bit PIC HAL
 family (PIC16F87XA, PIC18F2455, ...) via the neutral `pic8_hal.h` contract;
-select the family at build time with `-DHAL_FAMILY=PIC16` (default) or
-`-DHAL_FAMILY=PIC18`. See [docs/multi-family-plan.md](../docs/multi-family-plan.md).
+select the family at build time with `-DEPIC_FAMILY=PIC16` (default) or
+`-DEPIC_FAMILY=PIC18`. See [docs/multi-family-plan.md](../docs/multi-family-plan.md).
 
 > 📖 **Documentation**: [Architecture](docs/ARCHITECTURE.md) · [API reference](docs/API.md)
 
@@ -53,10 +53,10 @@ contract headers (`pic8_hal.h`, `core/hal_irq.h`,
 `peripherals/hal_timer0.h`, `core/hal_wdt_sleep.h`) plus the shared
 `pic8_harness.h`, so the same `task_manager.c`/`.h` builds against any
 8-bit PIC family. To build against the PIC18F2455 family instead
-(`pic18fxx5x-hal`), pass `-DHAL_FAMILY=PIC18`:
+(`pic18fxx5x-hal`), pass `-DEPIC_FAMILY=PIC18`:
 
 ```sh
-cmake -B build18 -S . -DHAL_FAMILY=PIC18
+cmake -B build18 -S . -DEPIC_FAMILY=PIC18
 cmake --build build18
 
 ./build18/example_multi_blink               # default device (PIC18F4550)
@@ -139,7 +139,7 @@ int main(void) {
     task_spawn(my_task, NULL, /*period_ticks=*/10, /*priority=*/1);
 
     task_manager_attach_timer0(61, TIMER0_PRESCALER_1_256);  /* ~10 ms tick */
-    HAL_IRQ_Restore(1);   /* arm the Timer0 interrupt */
+    EPIC_IRQ_Restore(1);   /* arm the Timer0 interrupt */
 
     task_manager_run();          /* never returns on target */
 }

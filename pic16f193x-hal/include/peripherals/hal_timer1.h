@@ -6,9 +6,9 @@
  *          (cf. hal_timer0.h's convention).
  */
 
-#ifndef HAL_TIMER1_H
-#define HAL_TIMER1_H
+#ifndef EPIC_TIMER1_H
+#define EPIC_TIMER1_H
 
 #include "peripherals/pic16f193x_timer1.h"
 
-#endif /* HAL_TIMER1_H */
+#endif /* EPIC_TIMER1_H */

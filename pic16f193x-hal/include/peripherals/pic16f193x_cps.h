@@ -7,6 +7,6 @@ typedef struct {
     uint8_t Range;
 } CPS_HandleTypeDef;
 #define CPS_HANDLE_DEFAULT { .Channel = 0U, .Range = 0x00U }
-HAL_StatusTypeDef HAL_CPS_Init(const CPS_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_CPS_DeInit(void);
+EPIC_StatusTypeDef EPIC_CPS_Init(const CPS_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_CPS_DeInit(void);
 #endif

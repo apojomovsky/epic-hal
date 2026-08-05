@@ -7,7 +7,7 @@
 # The debounce core (src/debounce.c) depends on pic8-tick for its timebase
 # (pic8_tick_get / pic8_tick_elapsed_since). pic8-tick in turn pulls a HAL
 # family for its Timer2 host-sim backend. Select the family with
-# -DHAL_FAMILY=PIC18 (default PIC16), same convention as pic8-fsm's optional
+# -DEPIC_FAMILY=PIC18 (default PIC16), same convention as pic8-fsm's optional
 # taskmgr example. The public header debounce.h is dependency-free (only
 # <stdint.h>/<stdbool.h>); only src/debounce.c includes pic8_tick.h.
 
@@ -17,7 +17,7 @@ project(pic8_debounce C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(HAL_FAMILY "PIC16" CACHE STRING "HAL family for the pic8-tick timebase: PIC16 or PIC18")
+set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family for the pic8-tick timebase: PIC16 or PIC18")
 
 # Pull in pic8-tick (which add_subdirectory's the chosen HAL family).
 set(TICK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic8-tick

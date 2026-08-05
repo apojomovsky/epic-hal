@@ -71,24 +71,24 @@ noted in `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 9: headless
 `break`-set breakpoints don't reliably work in this toolchain):
 
 - `pic8_tick_init`'s call sequence (`compute_period` →
-  `HAL_TIMER2_Init` → `HAL_TIMER2_Start` → `HAL_IRQ_Restore(1)`)
+  `EPIC_TIMER2_Init` → `EPIC_TIMER2_Start` → `EPIC_IRQ_Restore(1)`)
   completes: confirmed by observing `PC` land inside
   `pic8_tick_delay_ms`'s busy-wait loop at a large step count, well past
   `pic8_tick_init`'s own address range.
 - Yet `INTCON` (`GIEH`/`GIEL`) and `RCON<IPEN>` never leave their POR
   values, `INTCON=0`, `RCON=0x5C` (`IPEN` clear), even deep into that
-  busy-wait, meaning `HAL_IRQ_Restore(1)` never actually took effect,
+  busy-wait, meaning `EPIC_IRQ_Restore(1)` never actually took effect,
   so Timer2's interrupt never fires, `g_tick_ms` never increments, and
   `pic8_tick_delay_ms` spins forever. Exactly PIC16's very first Phase 4
   bug in spirit ("nothing ever enabled GIE"), but here the code
-  unambiguously calls `HAL_IRQ_Restore(1)`; the call itself is not
+  unambiguously calls `EPIC_IRQ_Restore(1)`; the call itself is not
   taking effect.
-- Isolated with a minimal throwaway probe (`HAL_IRQ_Disable()` then
-  `HAL_IRQ_Restore(1)` then spin, nothing else): same result, `INTCON`
+- Isolated with a minimal throwaway probe (`EPIC_IRQ_Disable()` then
+  `EPIC_IRQ_Restore(1)` then spin, nothing else): same result, `INTCON`
   and `RCON` unchanged. A plain, unrelated SFR write in the same probe
   (`PIC8_REG8(PIC_REG_LATB) = 0x5AU`) *did* show up correctly
   (`LATB=0x5A`), ruling out an `mdb` display/caching issue and
-  confirming the problem is specific to how `HAL_IRQ_Restore` (via
+  confirming the problem is specific to how `EPIC_IRQ_Restore` (via
   `pic18_irq.c`'s internal `sfr_set`/`sfr_clr` helpers) accesses SFRs.
 - Manually inlining the exact same read-modify-write logic
   `sfr_set`/`sfr_clr` implement, but using a **compile-time-constant**
@@ -139,13 +139,13 @@ different placement/syntax than tried, not determined.
 equivalent PIC16 problem (`pic16f87xa-hal/docs/ARCHITECTURE.md`
 Finding 9's SSP/EEPROM follow-up). `pic18_irq.c`'s entire
 `pic18_irq_desc_t` lookup table and `sfr_set`/`sfr_clr` helpers were
-removed; every function (`HAL_IRQ_Disable`/`Restore`/`Enable`/
+removed; every function (`EPIC_IRQ_Disable`/`Restore`/`Enable`/
 `DisableSrc`/`ClearFlag`/`GetFlag`/`SetPriority`) is now a `switch` on
 `irq` with one `case` per source, each naming its register directly
 (a new `SFR_SET_BIT`/`SFR_CLR_BIT` macro pair, expanding to a plain
 `pic8_sfr_read8`/`write8` pair against a literal `PIC_REG_*` token, so
 the address is always a compile-time constant, never a value that
-crossed a function-call boundary as a `uint16_t`). `HAL_IRQ_Disable`/
+crossed a function-call boundary as a `uint16_t`). `EPIC_IRQ_Disable`/
 `Restore` needed the same treatment even though they already passed
 constant addresses at their own call sites: `sfr_set`/`sfr_clr` still
 received them as a genuine runtime parameter internally, so the bug
@@ -161,7 +161,7 @@ clean, no regressions.
 **Found, confirmed via `mdb`, and fixed, even though `pic8-tick` never
 exercised it.** Flagged in an earlier draft of this document as "very
 likely has the same bug" from a `grep` for the pattern alone; followed
-up rather than left as a guess. `HAL_CCP_Init`/`SetCompare`/
+up rather than left as a guess. `EPIC_CCP_Init`/`SetCompare`/
 `GetCapture`/`SetPWMDuty` read/wrote `CCPRxL`/`CCPRxH`/`CCPxCON` through
 a `const ccp_addrs_t *a = &addrs[inst]; PIC8_REG8(a->cprl) = ...`
 pattern, the exact same struct-member-derived-runtime-address shape
@@ -169,7 +169,7 @@ Finding 3 fixed in `pic18_irq.c`.
 
 Confirmed broken with the existing host-and-target `example_ccp_pwm.c`
 smoke test (already asserts the expected `CCPR1L`/`CCP1CON`/`ECCP1DEL`
-register image after `HAL_CCP_Init`, no new test needed): built for
+register image after `EPIC_CCP_Init`, no new test needed): built for
 real target, ran under `mdb`, `CCPR1L` and `CCP1CON` both read `0`
 after init (expected `0x0C`/`0xAC`), while `ECCP1DEL` (written through
 the compile-time-constant `PIC_REG_ECCP1DEL` directly, never through

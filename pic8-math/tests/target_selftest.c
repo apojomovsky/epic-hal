@@ -14,7 +14,7 @@
 #include "golden_vectors.h"
 
 /* ─── USART output helpers (target has no stdio) ────────────────── */
-static void putc_(uint8_t c) { HAL_USART_Transmit(c); }
+static void putc_(uint8_t c) { EPIC_USART_Transmit(c); }
 static void puts_(const char *s) { while (*s) putc_((uint8_t)*s++); }
 static void putx16(uint16_t v) {  /* 4-digit hex */
     static const char hex[] = "0123456789ABCDEF";
@@ -101,7 +101,7 @@ int main(void)
     h.Mode      = USART_MODE_ASYNCHRONOUS;
     h.BaudHigh  = USART_BRGH_HIGH;
     h.DataWidth = USART_DATA_8BITS;
-    HAL_USART_Init(&h);
+    EPIC_USART_Init(&h);
 
     puts_("\r\npic8-math target self-test\r\n");
 

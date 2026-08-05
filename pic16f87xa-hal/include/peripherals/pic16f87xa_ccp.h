@@ -55,7 +55,7 @@ typedef struct {
 /**
  * @brief Driver handle (Cube-style).
  *
- *   One HAL_CCP_HandleTypeDef is sufficient per CCP instance; the same
+ *   One EPIC_CCP_HandleTypeDef is sufficient per CCP instance; the same
  *   struct can also be reused for both.
  */
 typedef struct {
@@ -80,30 +80,30 @@ typedef struct {
  *
  * @param  h     handle with Instance, Mode, CompareValue, optional PWM.
  *
- * @note   For PWM, also call `HAL_TIMER2_Init` + `HAL_TIMER2_Start`
+ * @note   For PWM, also call `EPIC_TIMER2_Init` + `EPIC_TIMER2_Start`
  *         with a period matching `h->PWM.Period` before this call.
  *
  * @note   For capture, also start Timer1 manually.
  */
-HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
 
 /** Reset CCPxCON to 0x00 and clear the corresponding PIR flag. */
-HAL_StatusTypeDef HAL_CCP_DeInit(CCP_InstanceTypeDef inst);
+EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
 
 /* ───────────────────────── compare / capture / pwm ──────────────── */
 
 /** Set the 16-bit CCPRx value. */
-void HAL_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
+void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
 
 /** Atomically read the 16-bit CCPRx value. */
-uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst);
+uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
 
 /**
  * @brief  Set PWM duty in 10-bit units (0..1023).
  *         For duty=0 the output stays low for the entire period.
  *         For duty > period the output stays high (per §8.3.2 Note).
  */
-void HAL_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);
+void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);
 
 /* ───────────────────────── IRQ entries ──────────────────────────── */
 

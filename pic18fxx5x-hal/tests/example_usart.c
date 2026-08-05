@@ -80,7 +80,7 @@ int main(void)
     h.BaudGen  = USART_BAUDGEN_8BIT;
     h.SPBRG    = 103U;
     h.RxCpltCallback = NULL;   /* No callback -> CREN not set. */
-    HAL_USART_Init(&h);
+    EPIC_USART_Init(&h);
 
     /* TXSTA: reset 0x02 (TRMT) | BRGH(bit2) = 0x06. No TXEN (no callback). */
     CHECK(pic8_sfr_read8(PIC_REG_TXSTA) == 0x06U,
@@ -95,7 +95,7 @@ int main(void)
     CHECK(pic8_sfr_read8(PIC_REG_SPBRGH) == 0x00U, "SPBRGH not 0 after 8-bit init");
 
     /* 3. Transmit a byte. Verify TXREG holds it and TXIF cleared. */
-    HAL_USART_Transmit(0xA5U);
+    EPIC_USART_Transmit(0xA5U);
     CHECK(pic8_sfr_read8(PIC_REG_TXREG) == 0xA5U, "TXREG did not capture 0xA5");
     CHECK((pic8_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_TXIF) == 0U,
           "TXIF should be 0 after Transmit");
@@ -104,7 +104,7 @@ int main(void)
     pic18_sim_drive_usart_rx(0xC3U);
     CHECK((pic8_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_RCIF) != 0U,
           "RCIF not set after drive_usart_rx");
-    uint8_t got = HAL_USART_Receive();
+    uint8_t got = EPIC_USART_Receive();
     CHECK(got == 0xC3U, "Receive did not return 0xC3");
     CHECK((pic8_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_RCIF) == 0U,
           "RCIF not cleared after Receive");
@@ -113,20 +113,20 @@ int main(void)
     h.BaudGen = USART_BAUDGEN_16BIT;
     h.SPBRG   = 33U;
     h.SPBRGH  = 0U;
-    HAL_USART_Init(&h);
+    EPIC_USART_Init(&h);
     CHECK(pic8_sfr_read8(PIC_REG_BAUDCON) == PIC_BAUDCON_BRG16,
           "BAUDCON<BRG16> not set for 16-bit BRG");
     CHECK(pic8_sfr_read8(PIC_REG_SPBRG) == 33U, "SPBRG not 33 after 16-bit init");
     CHECK(pic8_sfr_read8(PIC_REG_SPBRGH) == 0x00U, "SPBRGH not 0 after 16-bit init");
 
     /* 6. Auto-baud: StartAutoBaud sets ABDEN; it stays busy; overflow clearable. */
-    HAL_USART_StartAutoBaud();
+    EPIC_USART_StartAutoBaud();
     CHECK((pic8_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDEN) != 0U,
           "ABDEN not set after StartAutoBaud");
-    CHECK(HAL_USART_IsAutoBaudBusy() == 1U, "IsAutoBaudBusy not 1");
+    CHECK(EPIC_USART_IsAutoBaudBusy() == 1U, "IsAutoBaudBusy not 1");
     /* ABDOVF is read/clear; clear it and confirm. */
-    HAL_USART_ClearAutoBaudOverflow();
-    CHECK(HAL_USART_HasAutoBaudOverflow() == 0U, "ABDOVF not cleared");
+    EPIC_USART_ClearAutoBaudOverflow();
+    CHECK(EPIC_USART_HasAutoBaudOverflow() == 0U, "ABDOVF not cleared");
 
     /* 7. 9-bit address-detect mode: a callback forces CREN; ADDEN + RX9 set.
      *    RCSTA = SPEN|RX9|CREN|ADDEN = 0x80|0x40|0x10|0x08 = 0xD8. */
@@ -135,7 +135,7 @@ int main(void)
     ha.DataWidth     = USART_DATA_9BITS;
     ha.AddressDetect = 1U;
     ha.RxCpltCallback = rx_dummy_cb;   /* non-NULL -> CREN set; not invoked. */
-    HAL_USART_Init(&ha);
+    EPIC_USART_Init(&ha);
     CHECK(pic8_sfr_read8(PIC_REG_RCSTA) == 0xD8U,
           "RCSTA not 0xD8 for 9-bit address-detect (SPEN|RX9|CREN|ADDEN)");
 

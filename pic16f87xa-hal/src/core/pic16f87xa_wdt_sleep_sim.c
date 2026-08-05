@@ -1,6 +1,6 @@
 /**
  * @file    pic16f87xa_wdt_sleep_sim.c
- * @brief   Host-simulation implementation of HAL_WDT_Refresh / HAL_Sleep_Enter.
+ * @brief   Host-simulation implementation of EPIC_WDT_Refresh / EPIC_Sleep_Enter.
  *
  * @details
  *   Linked by the CMake host build. The companion target implementation
@@ -12,12 +12,12 @@
 
 #include "core/pic16f87xa_wdt_sleep.h"
 
-void HAL_WDT_Refresh(void)
+void EPIC_WDT_Refresh(void)
 {
     /* No-op: the sim does not model a watchdog timer. */
 }
 
-void HAL_Sleep_Enter(void)
+void EPIC_Sleep_Enter(void)
 {
     /* No-op: the sim does not stop execution. Callers should keep driving
      * pic16f87xa_sim_step() to advance time. */

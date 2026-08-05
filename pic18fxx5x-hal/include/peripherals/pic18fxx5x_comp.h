@@ -51,22 +51,22 @@ typedef struct {
 
 /* ───────────────────────── init / deinit ────────────────────────── */
 
-HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_COMP_DeInit(void);
+EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_COMP_DeInit(void);
 
 /* ───────────────────────── outputs / status ────────────────────────── */
 
 /** Returns 1 if C1 output is high (CMCON<C1OUT>). */
-uint8_t HAL_COMP_C1Out(void);
+uint8_t EPIC_COMP_C1Out(void);
 
 /** Returns 1 if C2 output is high (CMCON<C2OUT>). */
-uint8_t HAL_COMP_C2Out(void);
+uint8_t EPIC_COMP_C2Out(void);
 
 /** Returns 1 if CMIF is set. */
-uint8_t HAL_COMP_IsChangeFlag(void);
+uint8_t EPIC_COMP_IsChangeFlag(void);
 
 /** Clear the CMIF flag (must be done in the change IRQ). */
-void HAL_COMP_ClearChangeFlag(void);
+void EPIC_COMP_ClearChangeFlag(void);
 
 /* ───────────────────────── interrupts ───────────────────────────── */
 

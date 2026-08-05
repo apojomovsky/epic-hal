@@ -89,19 +89,19 @@ static volatile uint8_t g_pass_marker_set = 0U;
 
 static void on_t2_overflow(void)
 {
-    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_0);
+    EPIC_GPIO_TogglePin(GPIOC, GPIO_PIN_0);
     g_toggle_count[0]++;
 }
 
 static void on_t4_overflow(void)
 {
-    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
+    EPIC_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
     g_toggle_count[1]++;
 }
 
 static void on_t6_overflow(void)
 {
-    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_2);
+    EPIC_GPIO_TogglePin(GPIOC, GPIO_PIN_2);
     g_toggle_count[2]++;
     /* Timer6 is the slowest instance (3200 cycles/flag). Once it has
      * fired MIN_OVERFLOWS times, all three have (the other two fire
@@ -114,7 +114,7 @@ static void on_t6_overflow(void)
         g_toggle_count[0] >= MIN_OVERFLOWS &&
         g_toggle_count[1] >= MIN_OVERFLOWS &&
         g_toggle_count[2] >= MIN_OVERFLOWS) {
-        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+        EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
         g_pass_marker_set = 1U;
     }
 }
@@ -126,10 +126,10 @@ int main(void)
     /* 1. RA0 as digital output (PASS/FAIL marker pin, driven by the
      *    harness's log() on the host and by on_t6_overflow on the
      *    target). RC0/RC1/RC2 as digital outputs, start low. */
-    HAL_GPIO_Init(GPIOA, GPIO_PIN_0, GPIO_MODE_OUTPUT);
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
-    HAL_GPIO_Init(GPIOC, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2, GPIO_MODE_OUTPUT);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2, GPIO_PIN_RESET);
+    EPIC_GPIO_Init(GPIOA, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+    EPIC_GPIO_Init(GPIOC, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOC, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2, GPIO_PIN_RESET);
 
     /* 2. Timer2: 1:1 prescaler, 1:1 postscaler, PR2=199. */
     TIMER246_HandleTypeDef h2 = TIMER246_HANDLE_DEFAULT;
@@ -138,8 +138,8 @@ int main(void)
     h2.Postscaler       = TIMER246_POSTSCALER_1_1;
     h2.Period           = 199U;
     h2.OverflowCallback = on_t2_overflow;
-    HAL_TIMER246_Init(&h2);
-    HAL_TIMER246_Start(&h2);
+    EPIC_TIMER246_Init(&h2);
+    EPIC_TIMER246_Start(&h2);
 
     /* 3. Timer4: 1:4 prescaler, 1:1 postscaler, PR4=124. */
     TIMER246_HandleTypeDef h4 = TIMER246_HANDLE_DEFAULT;
@@ -148,8 +148,8 @@ int main(void)
     h4.Postscaler       = TIMER246_POSTSCALER_1_1;
     h4.Period           = 124U;
     h4.OverflowCallback = on_t4_overflow;
-    HAL_TIMER246_Init(&h4);
-    HAL_TIMER246_Start(&h4);
+    EPIC_TIMER246_Init(&h4);
+    EPIC_TIMER246_Start(&h4);
 
     /* 4. Timer6: 1:16 prescaler, 1:4 postscaler, PR6=49. */
     TIMER246_HandleTypeDef h6 = TIMER246_HANDLE_DEFAULT;
@@ -158,12 +158,12 @@ int main(void)
     h6.Postscaler       = TIMER246_POSTSCALER_1_4;
     h6.Period           = 49U;
     h6.OverflowCallback = on_t6_overflow;
-    HAL_TIMER246_Init(&h6);
-    HAL_TIMER246_Start(&h6);
+    EPIC_TIMER246_Init(&h6);
+    EPIC_TIMER246_Start(&h6);
 
     /* 5. Arm the global interrupt (each Init already enabled its own
      *    PIE bit since each handle has an OverflowCallback). */
-    HAL_IRQ_Restore(1);
+    EPIC_IRQ_Restore(1);
 
     /* 6. Let time pass. Bounded on host, busy-spins refreshing the WDT
      *    on target. Exits early once all three instances have overflowed
@@ -172,7 +172,7 @@ int main(void)
      *    PASS marker (on_t6_overflow) may fire before this loop exits. */
     for (uint32_t i = 0; pic8_harness_running(i); i++) {
         pic8_harness_tick();
-        HAL_WDT_Refresh();
+        EPIC_WDT_Refresh();
         if (g_toggle_count[0] >= MIN_OVERFLOWS &&
             g_toggle_count[1] >= MIN_OVERFLOWS &&
             g_toggle_count[2] >= MIN_OVERFLOWS) {

@@ -28,7 +28,7 @@ int main(void)
 {
     pic8_harness_init(1UL);
 
-    HAL_EEPROM_Init();
+    EPIC_EEPROM_Init();
     /* Test the banked RMW: set WREN on EECON1 (bank 3) and verify. */
     PIC8_BIT_SET(PIC8_REG8(PIC_REG_EECON1), PIC_EECON1_WREN);
 

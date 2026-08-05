@@ -98,7 +98,7 @@ codebase so far.
   Link Microchip's own hosted copies, never a local path.
 - **Interrupt model differs per family.** Classic PIC16: one vector, no
   priority, manual context save. PIC18: two vectors (high/low),
-  `HAL_IRQ_SetPriority` real. Enhanced Mid-range: one vector, no
+  `EPIC_IRQ_SetPriority` real. Enhanced Mid-range: one vector, no
   priority, but *automatic* hardware context save (no manual push/pop).
   Enable/disable API shape is otherwise identical,
   `pic8-common/MANUAL.md` §6.

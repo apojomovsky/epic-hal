@@ -45,7 +45,7 @@ typedef enum {
  * @brief Prescaler ratio (T*CON<T*CKPS1:T*CKPS0>, DS41364B §17.0).
  *        Only 3 of the 4 encodings are distinct: 00=1:1, 01=1:4,
  *        1x=1:16 (both 10 and 11 give 1:16). No separate enum value
- *        for 0x3; HAL_TIMER246_PrescalerToRatio's lookup table has all
+ *        for 0x3; EPIC_TIMER246_PrescalerToRatio's lookup table has all
  *        4 entries, the enum only exposes the 3 distinct ratios.
  */
 typedef enum {
@@ -98,19 +98,19 @@ typedef struct {
     .OverflowCallback = NULL,                                          \
 }
 
-HAL_StatusTypeDef HAL_TIMER246_Init(const TIMER246_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER246_DeInit(TIMER246_InstanceTypeDef inst);
-HAL_StatusTypeDef HAL_TIMER246_Start(const TIMER246_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER246_Stop(TIMER246_InstanceTypeDef inst);
+EPIC_StatusTypeDef EPIC_TIMER246_Init(const TIMER246_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER246_DeInit(TIMER246_InstanceTypeDef inst);
+EPIC_StatusTypeDef EPIC_TIMER246_Start(const TIMER246_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER246_Stop(TIMER246_InstanceTypeDef inst);
 
-uint8_t  HAL_TIMER246_ReadCounter(TIMER246_InstanceTypeDef inst);
-void     HAL_TIMER246_WriteCounter(TIMER246_InstanceTypeDef inst, uint8_t value);
+uint8_t  EPIC_TIMER246_ReadCounter(TIMER246_InstanceTypeDef inst);
+void     EPIC_TIMER246_WriteCounter(TIMER246_InstanceTypeDef inst, uint8_t value);
 
-uint8_t  HAL_TIMER246_ReadPeriod(TIMER246_InstanceTypeDef inst);
-void     HAL_TIMER246_WritePeriod(TIMER246_InstanceTypeDef inst, uint8_t period);
+uint8_t  EPIC_TIMER246_ReadPeriod(TIMER246_InstanceTypeDef inst);
+void     EPIC_TIMER246_WritePeriod(TIMER246_InstanceTypeDef inst, uint8_t period);
 
-uint16_t HAL_TIMER246_PrescalerToRatio(TIMER246_PrescalerTypeDef p);
-uint16_t HAL_TIMER246_PostscalerToRatio(TIMER246_PostscalerTypeDef p);
+uint16_t EPIC_TIMER246_PrescalerToRatio(TIMER246_PrescalerTypeDef p);
+uint16_t EPIC_TIMER246_PostscalerToRatio(TIMER246_PostscalerTypeDef p);
 
 /** Weak Timer2/4/6 ISRs, one per instance, override in user code. */
 void TIMER2_IRQHandler(void) PIC8_WEAK;

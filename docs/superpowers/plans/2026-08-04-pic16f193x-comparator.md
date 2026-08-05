@@ -5,7 +5,7 @@
 Status: **implemented and cleared the §4 gate.** Peripheral #6 in
 `docs/pic16f193x-plan.md` §7's roadmap table.
 
-**Goal:** Land a `HAL_COMP_*` driver for both comparators (DS41364B
+**Goal:** Land a `EPIC_COMP_*` driver for both comparators (DS41364B
 Comparator chapter) through the §4 gate.
 
 **Architecture:** Two independent instances, each with its own
@@ -157,9 +157,9 @@ typedef struct {
 
 #define COMP_HANDLE_DEFAULT { .Instance = COMP_INSTANCE_1, .PosChannel = 0U, .NegChannel = 0U, .HysteresisOn = 0U, .InvertOutput = 0U, .OutputToPin = 0U, .InterruptEdge = COMP_INT_EDGE_NONE, .EventCallback = 0 }
 
-HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_COMP_DeInit(COMP_InstanceTypeDef inst);
-uint8_t HAL_COMP_ReadOutput(COMP_InstanceTypeDef inst);   /**< Reads CMOUT's synchronized mirror bit, not CxCON0<CxOUT> directly. */
+EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_COMP_DeInit(COMP_InstanceTypeDef inst);
+uint8_t EPIC_COMP_ReadOutput(COMP_InstanceTypeDef inst);   /**< Reads CMOUT's synchronized mirror bit, not CxCON0<CxOUT> directly. */
 
 void CMP1_IRQHandler(void) PIC8_WEAK;
 void CMP2_IRQHandler(void) PIC8_WEAK;
@@ -177,10 +177,10 @@ void CMP2_IRQHandler(void) PIC8_WEAK;
  * @file    hal_comp.h
  * @brief   Family-neutral comparator shim, mirrors hal_timer1.h's pattern.
  */
-#ifndef HAL_COMP_H
-#define HAL_COMP_H
+#ifndef EPIC_COMP_H
+#define EPIC_COMP_H
 #include "peripherals/pic16f193x_comp.h"
-#endif /* HAL_COMP_H */
+#endif /* EPIC_COMP_H */
 ```
 
 ## Task 3: Add `pic16f193x_comp.c` (driver implementation)
@@ -201,10 +201,10 @@ void CMP2_IRQHandler(void) PIC8_WEAK;
 static void (*s_comp1_cb)(void);
 static void (*s_comp2_cb)(void);
 
-HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
-    if (h->PosChannel > 0x03U || h->NegChannel > 0x03U) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
+    if (h->PosChannel > 0x03U || h->NegChannel > 0x03U) return EPIC_INVALID;
 
     uint8_t con1 = (uint8_t)(h->NegChannel & PIC_CM1CON1_C1NCH_MASK);
     con1 |= (uint8_t)((h->PosChannel << 4) & PIC_CM1CON1_C1PCH_MASK);
@@ -225,13 +225,13 @@ HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h)
         PIC8_REG8(PIC_REG_CM2CON0) = con0;
         s_comp2_cb = h->EventCallback;
     } else {
-        return HAL_INVALID;
+        return EPIC_INVALID;
     }
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_COMP_DeInit(COMP_InstanceTypeDef inst)
+EPIC_StatusTypeDef EPIC_COMP_DeInit(COMP_InstanceTypeDef inst)
 {
     if (inst == COMP_INSTANCE_1) {
         PIC8_REG8(PIC_REG_CM1CON0) = 0x00U;
@@ -242,12 +242,12 @@ HAL_StatusTypeDef HAL_COMP_DeInit(COMP_InstanceTypeDef inst)
         PIC8_REG8(PIC_REG_CM2CON1) = 0x00U;
         s_comp2_cb = 0;
     } else {
-        return HAL_INVALID;
+        return EPIC_INVALID;
     }
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint8_t HAL_COMP_ReadOutput(COMP_InstanceTypeDef inst)
+uint8_t EPIC_COMP_ReadOutput(COMP_InstanceTypeDef inst)
 {
     uint8_t cmout = PIC8_REG8(PIC_REG_CMOUT);
     if (inst == COMP_INSTANCE_1) return (cmout & PIC_CMOUT_MC1OUT) ? 1U : 0U;
@@ -270,7 +270,7 @@ Confirm the exact platform macro names against a fresh read of
 `pic16f193x_timer1.c` before finalizing. Confirm `CMOUT`'s two bits
 are indeed a synchronized mirror of `CxCON0<CxOUT>` (vs. some other
 relationship) against DS41364B before relying on
-`HAL_COMP_ReadOutput`'s choice to read `CMOUT` rather than each
+`EPIC_COMP_ReadOutput`'s choice to read `CMOUT` rather than each
 instance's own `CxCON0<CxOUT>` bit directly.
 
 ## Task 4: Wire `CMP1_IRQHandler`/`CMP2_IRQHandler` into `pic16f193x_irq_dispatch.c`
@@ -317,7 +317,7 @@ calls `sim_step_timer1()`.
 
 ## Task 6: Wire into `CMakeLists.txt` and the XC8 Makefile
 
-- [ ] **Step 1: Add `pic16f193x_comp.c`** to `PIC8_HAL_SOURCES`,
+- [ ] **Step 1: Add `pic16f193x_comp.c`** to `PIC8_EPIC_SOURCES`,
   mirroring Timer1's entry.
 
 - [ ] **Step 2: Register `example_comparator`** via
@@ -365,11 +365,11 @@ int main(void)
 
     COMP_HandleTypeDef c1 = COMP_HANDLE_DEFAULT;
     c1.Instance = COMP_INSTANCE_1;
-    HAL_COMP_Init(&c1);
+    EPIC_COMP_Init(&c1);
 
     COMP_HandleTypeDef c2 = COMP_HANDLE_DEFAULT;
     c2.Instance = COMP_INSTANCE_2;
-    HAL_COMP_Init(&c2);
+    EPIC_COMP_Init(&c2);
 
     pic16f193x_sim_comp_drive(1U, 1U);
     pic16f193x_sim_comp_drive(2U, 0U);
@@ -457,12 +457,12 @@ relationship is flagged as an explicit confirm-before-finalizing item
 
 **3. Type consistency:** `COMP_InstanceTypeDef`,
 `COMP_InterruptEdgeTypeDef`, `COMP_HandleTypeDef`,
-`COMP_HANDLE_DEFAULT`, `HAL_COMP_Init/DeInit/ReadOutput`,
+`COMP_HANDLE_DEFAULT`, `EPIC_COMP_Init/DeInit/ReadOutput`,
 `CMP1_IRQHandler`/`CMP2_IRQHandler` referenced identically across
 Tasks 2, 3, 4, 7.
 
 **4. Judgment calls flagged for the reviewer:**
-- `HAL_COMP_ReadOutput` reads `CMOUT` rather than each instance's own
+- `EPIC_COMP_ReadOutput` reads `CMOUT` rather than each instance's own
   `CxCON0<CxOUT>` bit; this choice (and whether `CMOUT` is truly just
   a synchronized mirror) needs confirming against DS41364B (Task 3's
   note).

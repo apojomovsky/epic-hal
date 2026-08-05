@@ -79,7 +79,7 @@ peripherals are added by their phases.
 23 sources (DS41364B §4.0, Figure 4-1/4-2): INTCON holds IOC/INT/TMR0;
 PIR1/PIE1 holds TMR1, TMR2, CCP1, SSP, USART_TX, USART_RX, ADC, TMR1G;
 PIR2/PIE2 holds CCP2, LCD, BCL, EEPROM, CMP1, CMP2, OSF; PIR3/PIE3
-holds TMR4, TMR6, CCP3, CCP4, CCP5. `HAL_IRQ_SetPriority` is a no-op
+holds TMR4, TMR6, CCP3, CCP4, CCP5. `EPIC_IRQ_SetPriority` is a no-op
 (single vector, no priority), the no-op half of the shared contract;
 PIC18 implements it for real. See `../pic8-common/MANUAL.md` §6 for the
 shared model; the family-specific half is the `PIC16F193X_IRQn` enum and
@@ -87,15 +87,15 @@ the 3-PIE-bank table in `src/core/pic16f193x_irq.c`.
 
 ## 8. Core: WDT, Sleep, BOR/POR
 
-`HAL_WDT_Refresh` = `clrwdt` (target) / no-op (host). `HAL_Sleep_Enter` =
+`EPIC_WDT_Refresh` = `clrwdt` (target) / no-op (host). `EPIC_Sleep_Enter` =
 `sleep` (target) / no-op (host). BOR/POR status reads PCON<0>/<1>
 (DS41364B §3.0, Register 3-3). The watchdog is enabled by the WDTEN
 config bits or by SWDTEN in WDTCON (DS41364B §24.1).
 
 ## 9. GPIO
 
-`HAL_GPIO_Init` programs TRISx (direction) + ANSELx (analog/digital) +
-LATx (output start low). Writes go to LATx (`HAL_GPIO_WritePin` /
+`EPIC_GPIO_Init` programs TRISx (direction) + ANSELx (analog/digital) +
+LATx (output start low). Writes go to LATx (`EPIC_GPIO_WritePin` /
 `TogglePin` / `WritePort`), reads come from PORTx (`ReadPin` / `ReadPort`)
 (DS41364B §6.0). PORTB weak pull-ups are per-pin via WPUB, gated by the
 global WPUEN (OPTION_REG<7>, active-low). The PORTB interrupt-on-change
@@ -105,7 +105,7 @@ only (1934/1937/1939); PORTE is 4-bit.
 
 ## 10. Timer0
 
-`HAL_TIMER0_*` configures OPTION_REG (T0CS/T0SE/PSA/PS<2:0>) and TMR0
+`EPIC_TIMER0_*` configures OPTION_REG (T0CS/T0SE/PSA/PS<2:0>) and TMR0
 (DS41364B §15.0). The prescaler is shared with the WDT; PSA=1 assigns it
 to the WDT and Timer0 runs 1:1. Writing TMR0 clears the prescaler. The
 overflow flag/enable are INTCON<TMR0IF>/<TMR0IE>.
@@ -120,7 +120,7 @@ TMR1H:TMR1L.
 ### Atomic read
 
 DS41364B §16.4.1: the 16-bit counter can return inconsistent
-values across the two reads. Use `HAL_TIMER1_ReadCounter()` rather
+values across the two reads. Use `EPIC_TIMER1_ReadCounter()` rather
 than reading TMR1H and TMR1L directly. The driver uses the standard
 high-low-high retry idiom (DS41364B §16.4.1).
 
@@ -144,14 +144,14 @@ the prescaler ratio (1:1, 1:2, 1:4, 1:8). T1OSCEN enables the
 dedicated Timer1 oscillator circuit; T1SYNC controls external-clock
 synchronization when TMR1CS<1:0> = 1X, ignored otherwise. Both are
 left at 0 this phase (see "Not in this phase" below). TMR1ON enables
-the timer. `HAL_TIMER1_Init`/`HAL_TIMER1_Start` return `HAL_INVALID`
+the timer. `EPIC_TIMER1_Init`/`EPIC_TIMER1_Start` return `EPIC_INVALID`
 for any `ClockSource` other than `TIMER1_CLOCK_INTERNAL`.
 
 ### Driver API
 
-`HAL_TIMER1_Init`, `HAL_TIMER1_DeInit`, `HAL_TIMER1_Start`,
-`HAL_TIMER1_Stop`, `HAL_TIMER1_ReadCounter`, `HAL_TIMER1_WriteCounter`,
-`HAL_TIMER1_PrescalerToRatio`. Weak `TIMER1_IRQHandler`.
+`EPIC_TIMER1_Init`, `EPIC_TIMER1_DeInit`, `EPIC_TIMER1_Start`,
+`EPIC_TIMER1_Stop`, `EPIC_TIMER1_ReadCounter`, `EPIC_TIMER1_WriteCounter`,
+`EPIC_TIMER1_PrescalerToRatio`. Weak `TIMER1_IRQHandler`.
 
 ### Example
 
@@ -170,7 +170,7 @@ to 0 on the cycle it would exceed PRx (never reaches PRx+1), unlike
 Timer0/Timer1's raw free-running overflow. TMRxIF fires once every
 prescaler x (PRx+1) x postscaler cycles: the PR match happens every
 prescaler x (PRx+1) cycles, the postscaler divides that further before
-setting the flag. One driver, `HAL_TIMER246_*`, covers all three via a
+setting the flag. One driver, `EPIC_TIMER246_*`, covers all three via a
 `TIMER246_InstanceTypeDef` selector (mirrors `pic18fxx5x_ccp.h`'s
 `CCP_InstanceTypeDef` convention).
 
@@ -200,11 +200,11 @@ documentation gap" section for the full account).
 
 ### Driver API
 
-`HAL_TIMER246_Init`, `HAL_TIMER246_DeInit`, `HAL_TIMER246_Start`,
-`HAL_TIMER246_Stop`, `HAL_TIMER246_ReadCounter`,
-`HAL_TIMER246_WriteCounter`, `HAL_TIMER246_ReadPeriod`,
-`HAL_TIMER246_WritePeriod`, `HAL_TIMER246_PrescalerToRatio`,
-`HAL_TIMER246_PostscalerToRatio`. Each takes a
+`EPIC_TIMER246_Init`, `EPIC_TIMER246_DeInit`, `EPIC_TIMER246_Start`,
+`EPIC_TIMER246_Stop`, `EPIC_TIMER246_ReadCounter`,
+`EPIC_TIMER246_WriteCounter`, `EPIC_TIMER246_ReadPeriod`,
+`EPIC_TIMER246_WritePeriod`, `EPIC_TIMER246_PrescalerToRatio`,
+`EPIC_TIMER246_PostscalerToRatio`. Each takes a
 `TIMER246_InstanceTypeDef` (or the handle carries it). Weak
 `TIMER2_IRQHandler`/`TIMER4_IRQHandler`/`TIMER6_IRQHandler`, one per
 instance. Every SFR access inside the driver branches on the instance
@@ -226,11 +226,11 @@ overflow ISR toggles a distinct RC pin (RC0/RC1/RC2).
 ## 13. CCP1 / CCP2 (DS41364B §15.0)
 
 Both instances are Enhanced CCP on this device (unlike PIC18 where
-only CCP1 is). One driver, `HAL_CCP_*`, covers both via a
+only CCP1 is). One driver, `EPIC_CCP_*`, covers both via a
 `CCP_InstanceTypeDef` selector (mirrors `pic18fxx5x_ccp.h`'s
 convention). This phase covers capture and compare modes only; PWM
 (enhanced output steering, dead-band, auto-shutdown) is deferred and
-rejected by `HAL_CCP_Init` with `HAL_INVALID` for `CCP_MODE_PWM`,
+rejected by `EPIC_CCP_Init` with `EPIC_INVALID` for `CCP_MODE_PWM`,
 mirroring Timer1's `TIMER1_CLOCK_EXTERNAL` rejection precedent.
 
 ### Register layout
@@ -251,8 +251,8 @@ CCPR2L=0x298, CCPR2H=0x299.
 
 ### Driver API
 
-`HAL_CCP_Init`, `HAL_CCP_DeInit`, `HAL_CCP_SetCompare`,
-`HAL_CCP_GetCapture`. Weak `CCP1_IRQHandler`/`CCP2_IRQHandler`, one per
+`EPIC_CCP_Init`, `EPIC_CCP_DeInit`, `EPIC_CCP_SetCompare`,
+`EPIC_CCP_GetCapture`. Weak `CCP1_IRQHandler`/`CCP2_IRQHandler`, one per
 instance. Every SFR access branches on the instance before touching any
 register (literal `PIC_REG_*` token per branch).
 
@@ -292,9 +292,9 @@ divisor=64 (BRGH=0) or 16 (BRGH=1). `USART_ComputeSPBRG` computes this.
 
 ### Driver API
 
-`HAL_USART_Init`, `HAL_USART_DeInit`, `HAL_USART_Transmit`,
-`HAL_USART_IsTxShiftRegisterEmpty`, `HAL_USART_Receive`,
-`HAL_USART_HasOverrunError`, `USART_ComputeSPBRG`. Weak
+`EPIC_USART_Init`, `EPIC_USART_DeInit`, `EPIC_USART_Transmit`,
+`EPIC_USART_IsTxShiftRegisterEmpty`, `EPIC_USART_Receive`,
+`EPIC_USART_HasOverrunError`, `USART_ComputeSPBRG`. Weak
 `USART_TX_IRQHandler`/`USART_RX_IRQHandler`.
 
 ### Example
@@ -322,9 +322,9 @@ SSPM mode select (bits 3:0): `0000`=Fosc/4, `0001`=Fosc/16,
 
 ### Driver API
 
-`HAL_SSP_Init`, `HAL_SSP_DeInit`, `HAL_SSP_WriteByte`, `HAL_SSP_ReadByte`,
-`HAL_SSP_IsBufferFull`, `HAL_SSP_HasWriteCollision`,
-`HAL_SSP_ClearWriteCollision`. Weak `SSP_IRQHandler`.
+`EPIC_SSP_Init`, `EPIC_SSP_DeInit`, `EPIC_SSP_WriteByte`, `EPIC_SSP_ReadByte`,
+`EPIC_SSP_IsBufferFull`, `EPIC_SSP_HasWriteCollision`,
+`EPIC_SSP_ClearWriteCollision`. Weak `SSP_IRQHandler`.
 
 ### Example
 
@@ -351,8 +351,8 @@ ADCS clock select (bits 6:4): `000`=Fosc/2, `001`=Fosc/8, `010`=Fosc/32,
 
 ### Driver API
 
-`HAL_ADC_Init`, `HAL_ADC_DeInit`, `HAL_ADC_SelectChannel`,
-`HAL_ADC_Start`, `HAL_ADC_IsConversionDone`, `HAL_ADC_Read`. Weak
+`EPIC_ADC_Init`, `EPIC_ADC_DeInit`, `EPIC_ADC_SelectChannel`,
+`EPIC_ADC_Start`, `EPIC_ADC_IsConversionDone`, `EPIC_ADC_Read`. Weak
 `ADC_IRQHandler`.
 
 ### Example
@@ -379,7 +379,7 @@ read-only hardware status bits.
 
 ### Driver API
 
-`HAL_COMP_Init`, `HAL_COMP_DeInit`, `HAL_COMP_ReadOutput`. Weak
+`EPIC_COMP_Init`, `EPIC_COMP_DeInit`, `EPIC_COMP_ReadOutput`. Weak
 `CMP1_IRQHandler`/`CMP2_IRQHandler`.
 
 ### Example
@@ -407,9 +407,9 @@ unlike PIE1/2/3 which needed the inline-asm fix (Finding 2).
 
 ### Driver API
 
-`HAL_EEPROM_Init`, `HAL_EEPROM_DeInit`, `HAL_EEPROM_ReadByte`,
-`HAL_EEPROM_WriteByte` (blocking, spins on WR),
-`HAL_EEPROM_IsWriteComplete`, `HAL_EEPROM_HasWriteError`. Weak
+`EPIC_EEPROM_Init`, `EPIC_EEPROM_DeInit`, `EPIC_EEPROM_ReadByte`,
+`EPIC_EEPROM_WriteByte` (blocking, spins on WR),
+`EPIC_EEPROM_IsWriteComplete`, `EPIC_EEPROM_HasWriteError`. Weak
 `EEPROM_IRQHandler`.
 
 ### Example
@@ -425,7 +425,7 @@ model); the WREN test is the actual codegen verification.
 5-bit DAC. DACCON0 (0x118): DACEN(7), DACLPS(6), DACOE(5), DACPSS(3:2),
 DACNSS(0). DACCON1 (0x119): DACR(4:0, 5-bit output value).
 
-`HAL_DAC_Init`, `HAL_DAC_DeInit`. See `tests/example_dac.c`.
+`EPIC_DAC_Init`, `EPIC_DAC_DeInit`. See `tests/example_dac.c`.
 
 ## 20. FVR (DS41364B §12.0)
 
@@ -433,7 +433,7 @@ Fixed Voltage Reference. FVRCON (0x117): FVREN(7), FVRRDY(6, RO),
 TSEN(5), TSRNG(4), CDAFVR(3:2), ADFVR(1:0). FVRRDY is read-only
 (hardware sets it when FVR is stable).
 
-`HAL_FVR_Init`, `HAL_FVR_DeInit`, `HAL_FVR_IsReady`. See
+`EPIC_FVR_Init`, `EPIC_FVR_DeInit`, `EPIC_FVR_IsReady`. See
 `tests/example_fvr.c`.
 
 ## 21. SR Latch (DS41364B §11.0)
@@ -441,7 +441,7 @@ TSEN(5), TSRNG(4), CDAFVR(3:2), ADFVR(1:0). FVRRDY is read-only
 SR latch. SRCON0 (0x11A): SRLEN(7), SRCLK(6:4), SRQEN(3), SRNQEN(2),
 SRPS(1, self-clearing), SRPR(0, self-clearing). SRCON1 (0x11B).
 
-`HAL_SRLATCH_Enable`, `HAL_SRLATCH_Disable`. See
+`EPIC_SRLATCH_Enable`, `EPIC_SRLATCH_Disable`. See
 `tests/example_srlatch.c`.
 
 ## 22. CPS (DS41364B §18.0)
@@ -449,7 +449,7 @@ SRPS(1, self-clearing), SRPR(0, self-clearing). SRCON1 (0x11B).
 Capacitive Sensing. CPSCON0 (0x1E): CPSON(7), CPSRNG(3:2), CPSOUT(1, RO),
 T0XCS(0). CPSCON1 (0x1F): CPSCH(3:0, channel select). CPSOUT is read-only.
 
-`HAL_CPS_Init`, `HAL_CPS_DeInit`. See `tests/example_cps.c`.
+`EPIC_CPS_Init`, `EPIC_CPS_DeInit`. See `tests/example_cps.c`.
 
 ## 23. The SFR layer
 

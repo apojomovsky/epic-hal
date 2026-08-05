@@ -1,7 +1,7 @@
 /**
  * @file    example_encoder_hal.c
  * @brief   Two quadrature encoders sharing one PORTB RB<7:4> interrupt-on-change,
- *          wired end to end through HAL_GPIO_RegisterChangeCallback.
+ *          wired end to end through EPIC_GPIO_RegisterChangeCallback.
  *
  * @details
  *   Encoder A on RB4/RB5, B on RB6/RB7 (the at-most-two-per-port ceiling,
@@ -59,12 +59,12 @@ int main(void)
     pic8_tick_init(FOSC_HZ);
 
     /* Seed PORTB to a known state before reading it for encoder_init. */
-    HAL_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7,
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7,
                   GPIO_MODE_INPUT);
     uint8_t start = make_portb(0, 0);
     PIC8_REG8(PIC_REG_PORTB) = start;
 
-    HAL_GPIO_RegisterChangeCallback(on_rb_change);
+    EPIC_GPIO_RegisterChangeCallback(on_rb_change);
     encoder_init(&g_enc_a, 4, 5, 0, start);   /* A on RB4/RB5, gate off */
     encoder_init(&g_enc_b, 6, 7, 0, start);   /* B on RB6/RB7, gate off */
 

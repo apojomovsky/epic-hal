@@ -5,9 +5,9 @@
  *   Verifies:
  *     1. After sim_reset, BOR and POR flags are set (POR default per
  *        §14.10, the sim models PCON as 0x0F after reset).
- *     2. HAL_BOR_ClearFlag() / HAL_POR_ClearFlag() clear the
+ *     2. EPIC_BOR_ClearFlag() / EPIC_POR_ClearFlag() clear the
  *        corresponding bits.
- *     3. HAL_WDT_Refresh() / HAL_Sleep_Enter() are no-ops on the
+ *     3. EPIC_WDT_Refresh() / EPIC_Sleep_Enter() are no-ops on the
  *        sim backend (no segfault).
  */
 
@@ -26,18 +26,18 @@ int main(void)
     pic16f87xa_sim_reset();
 
     /* After POR, both flags should be set. */
-    CHECK(HAL_POR_GetStatus() == 1U, "POR not set after reset");
-    CHECK(HAL_BOR_GetStatus() == 1U, "BOR not set after reset");
+    CHECK(EPIC_POR_GetStatus() == 1U, "POR not set after reset");
+    CHECK(EPIC_BOR_GetStatus() == 1U, "BOR not set after reset");
 
     /* Clear them. */
-    HAL_POR_ClearFlag();
-    CHECK(HAL_POR_GetStatus() == 0U, "POR not cleared");
-    HAL_BOR_ClearFlag();
-    CHECK(HAL_BOR_GetStatus() == 0U, "BOR not cleared");
+    EPIC_POR_ClearFlag();
+    CHECK(EPIC_POR_GetStatus() == 0U, "POR not cleared");
+    EPIC_BOR_ClearFlag();
+    CHECK(EPIC_BOR_GetStatus() == 0U, "BOR not cleared");
 
     /* WDT refresh and Sleep are no-ops on sim but must not crash. */
-    HAL_WDT_Refresh();
-    HAL_Sleep_Enter();
+    EPIC_WDT_Refresh();
+    EPIC_Sleep_Enter();
 
     printf("OK: WDT/Sleep/BOR/POR helpers, flags and no-op instructions.\n");
     return 0;

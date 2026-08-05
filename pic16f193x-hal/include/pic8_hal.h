@@ -13,8 +13,8 @@
  *   header include here as it is built.
  */
 
-#ifndef PIC8_HAL_H
-#define PIC8_HAL_H
+#ifndef PIC8_EPIC_H
+#define PIC8_EPIC_H
 
 #include "pic16f193x.h"       /* standard types, status codes, platform    */
 #include "pic16f193x_sfr.h"   /* SFR address map + bit definitions        */
@@ -27,4 +27,4 @@
 #include "peripherals/pic16f193x_gpio.h"
 #include "peripherals/pic16f193x_timer0.h"
 
-#endif /* PIC8_HAL_H */
+#endif /* PIC8_EPIC_H */

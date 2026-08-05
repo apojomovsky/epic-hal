@@ -92,7 +92,7 @@ static uint8_t port_width(GPIO_TypeDef port)
 
 /* ───────────────────────── init / deinit ────────────────────────── */
 
-void HAL_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
+void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint16_t ta  = tris_addr(port);
@@ -125,7 +125,7 @@ void HAL_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     PIC8_REG8(la) = lat;
 }
 
-void HAL_GPIO_DeInit(GPIO_TypeDef port)
+void EPIC_GPIO_DeInit(GPIO_TypeDef port)
 {
     uint16_t ta = tris_addr(port);
     uint16_t la = lat_addr(port);
@@ -138,7 +138,7 @@ void HAL_GPIO_DeInit(GPIO_TypeDef port)
 
 /* ───────────────────────── read / write / toggle ────────────────── */
 
-void HAL_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
+void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint16_t la = lat_addr(port);
@@ -148,34 +148,34 @@ void HAL_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
     PIC8_REG8(la) = cur;
 }
 
-void HAL_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
+void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint16_t la = lat_addr(port);
     PIC8_REG8(la) = PIC8_REG8(la) ^ mask;
 }
 
-GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
+GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint16_t pa = port_addr(port);
     return (PIC8_REG8(pa) & mask) ? GPIO_PIN_SET : GPIO_PIN_RESET;
 }
 
-void HAL_GPIO_WritePort(GPIO_TypeDef port, uint8_t value)
+void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value)
 {
     uint8_t mask = (uint8_t)((1U << port_width(port)) - 1U);
     PIC8_REG8(lat_addr(port)) = (uint8_t)(value & mask);
 }
 
-uint8_t HAL_GPIO_ReadPort(GPIO_TypeDef port)
+uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
 {
     return PIC8_REG8(port_addr(port));
 }
 
 /* ───────────────────────── PORTB weak pull-ups ─────────────────── */
 
-void HAL_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
+void EPIC_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
     /* Weak pull-ups on this family are PORTB-only via WPUB (DS41364B
      * §6.0), gated by the global WPUEN (OPTION_REG<7>, active-low). */
@@ -199,12 +199,12 @@ void HAL_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 
 static void (*s_ioc_callback)(uint8_t iocbf, uint8_t portb) = NULL;
 
-void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t, uint8_t))
+void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t, uint8_t))
 {
     s_ioc_callback = callback;
 }
 
-void HAL_GPIO_EnableChangeDetect(uint8_t pos_mask, uint8_t neg_mask)
+void EPIC_GPIO_EnableChangeDetect(uint8_t pos_mask, uint8_t neg_mask)
 {
     PIC8_REG8(PIC_REG_IOCBP) = pos_mask;
     PIC8_REG8(PIC_REG_IOCBN) = neg_mask;
@@ -212,7 +212,7 @@ void HAL_GPIO_EnableChangeDetect(uint8_t pos_mask, uint8_t neg_mask)
 
 void IOC_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16F193X_IRQ_IOC)) return;
+    if (!EPIC_IRQ_GetFlag(PIC16F193X_IRQ_IOC)) return;
 
     /* Read IOCBF (which pins changed) and PORTB before clearing, the
      * mismatch comparator only re-arms once PORTB is read (DS41364B
@@ -220,6 +220,6 @@ void IOC_IRQHandler(void)
     uint8_t iocbf = PIC8_REG8(PIC_REG_IOCBF);
     uint8_t portb = PIC8_REG8(PIC_REG_PORTB);
     PIC8_REG8(PIC_REG_IOCBF) = 0x00U;
-    HAL_IRQ_ClearFlag(PIC16F193X_IRQ_IOC);
+    EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_IOC);
     if (s_ioc_callback) s_ioc_callback(iocbf, portb);
 }

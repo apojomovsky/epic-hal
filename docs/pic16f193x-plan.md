@@ -130,7 +130,7 @@ Architecture, the parts that drive the HAL bodies:
   CCP2; PIR3/PIE3 = CCP5, CCP4, CCP3, TMR6, TMR4. **Automatic context
   save** to shadow registers in bank 31 on entry: W, STATUS (except
   TO/PD), BSR, FSR0, FSR1, PCLATH; `RETFIE` restores them and sets GIE.
-  No manual push/pop. `HAL_IRQ_SetPriority` is a no-op, like classic
+  No manual push/pop. `EPIC_IRQ_SetPriority` is a no-op, like classic
   PIC16.
 - **I/O model**: PORTx/TRISx/LATx/ANSELx/WPUB/WPUE/IOCBP/IOCBN/IOCBF.
   The LAT latch (classic PIC16 lacks it) avoids read-modify-write
@@ -265,7 +265,7 @@ Foundation deliverables (everything needed for a minimal blink + host sim
    SFR.
 4. `include/core/pic16f193x_irq.h` + `src/core/pic16f193x_irq.c` IRQ
    backend: `PIC16F193X_IRQn` (23 sources) +
-   `HAL_IRQ_Disable/Restore/Enable/DisableSrc/ClearFlag/GetFlag/SetPriority`,
+   `EPIC_IRQ_Disable/Restore/Enable/DisableSrc/ClearFlag/GetFlag/SetPriority`,
    table-driven descriptor extended to 3 PIR/PIE banks (`pir_index`
    0/1/2 for PIR1/2/3, INTCON-level for TMR0/INT/IOC). `SetPriority` =
    no-op. PIE1/2/3 in bank 1 via the PIE-bit macros.
@@ -374,7 +374,7 @@ a collision. `src/core/pic16f193x_irq_dispatch.c` needs exactly one
 23-source table and `src/core/pic16f193x_irq.c`'s descriptor array are
 already fully populated for all pending peripherals, zero changes
 needed there). Each `pic16f193x-hal/CMakeLists.txt` addition is one
-`HAL_SOURCES` line + one `pic8_add_example[_per_device]` call, same
+`EPIC_SOURCES` line + one `pic8_add_example[_per_device]` call, same
 shape as Timer1's.
 
 | # | Peripheral group | Plan doc | Registers (bank) | MANUAL § | Reference driver to mirror |

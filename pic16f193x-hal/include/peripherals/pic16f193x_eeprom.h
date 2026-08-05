@@ -13,12 +13,12 @@
 
 #define EEPROM_SIZE_BYTES 256U
 
-HAL_StatusTypeDef HAL_EEPROM_Init(void);
-HAL_StatusTypeDef HAL_EEPROM_DeInit(void);
-uint8_t HAL_EEPROM_ReadByte(uint8_t addr);
-HAL_StatusTypeDef HAL_EEPROM_WriteByte(uint8_t addr, uint8_t data);
-uint8_t HAL_EEPROM_IsWriteComplete(void);
-uint8_t HAL_EEPROM_HasWriteError(void);
+EPIC_StatusTypeDef EPIC_EEPROM_Init(void);
+EPIC_StatusTypeDef EPIC_EEPROM_DeInit(void);
+uint8_t EPIC_EEPROM_ReadByte(uint8_t addr);
+EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data);
+uint8_t EPIC_EEPROM_IsWriteComplete(void);
+uint8_t EPIC_EEPROM_HasWriteError(void);
 
 void EEPROM_IRQHandler(void) PIC8_WEAK;
 

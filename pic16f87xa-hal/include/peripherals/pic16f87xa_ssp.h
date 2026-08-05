@@ -5,8 +5,8 @@
  * @details
  *   Source: DS39582B §9.0. Full register reference: MANUAL.md §15.
  *   Register-level only, no I²C state machine: a master issues
- *   HAL_SSP_Start(), writes SSPBUF, polls SSPSTAT<BF>+ACKSTAT
- *   (SSPCON2<6>), then HAL_SSP_Stop(). SPI is automatic once SSPBUF is
+ *   EPIC_SSP_Start(), writes SSPBUF, polls SSPSTAT<BF>+ACKSTAT
+ *   (SSPCON2<6>), then EPIC_SSP_Stop(). SPI is automatic once SSPBUF is
  *   written; poll SSPSTAT<BF> for RX-ready.
  */
 
@@ -82,8 +82,8 @@ typedef struct {
 
 /* ───────────────────────── init / deinit ────────────────────────── */
 
-HAL_StatusTypeDef HAL_SSP_Init(const SSP_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_SSP_DeInit(void);
+EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_SSP_DeInit(void);
 
 /* ───────────────────────── SPI transfer ──────────────────────────── */
 
@@ -92,19 +92,19 @@ HAL_StatusTypeDef HAL_SSP_DeInit(void);
  *         Returns 0xFFFF if WCOL (write collision) was set, in which
  *         case the byte was *not* written and the user should retry.
  */
-uint16_t HAL_SSP_WriteByte(uint8_t data);
+uint16_t EPIC_SSP_WriteByte(uint8_t data);
 
 /** Read the most recently received byte from SSPBUF. */
-uint8_t  HAL_SSP_ReadByte(void);
+uint8_t  EPIC_SSP_ReadByte(void);
 
 /** Returns 1 if SSPBUF holds an unread byte (BF = 1). */
-uint8_t  HAL_SSP_IsBufferFull(void);
+uint8_t  EPIC_SSP_IsBufferFull(void);
 
 /** Returns 1 if a write collision was detected. */
-uint8_t  HAL_SSP_HasWriteCollision(void);
+uint8_t  EPIC_SSP_HasWriteCollision(void);
 
 /** Clear the WCOL flag (must be done in software per §9.3.2). */
-void     HAL_SSP_ClearWriteCollision(void);
+void     EPIC_SSP_ClearWriteCollision(void);
 
 /* ───────────────────────── I²C master helpers ────────────────────── */
 
@@ -116,22 +116,22 @@ void     HAL_SSP_ClearWriteCollision(void);
 uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz);
 
 /** Issue a Start condition (sets SSPCON2<SEN>). */
-void HAL_SSP_Start(void);
+void EPIC_SSP_Start(void);
 
 /** Issue a Repeated Start condition. */
-void HAL_SSP_RepeatedStart(void);
+void EPIC_SSP_RepeatedStart(void);
 
 /** Issue a Stop condition. */
-void HAL_SSP_Stop(void);
+void EPIC_SSP_Stop(void);
 
 /** Begin a receive (master mode). Sets SSPCON2<RCEN>. */
-void HAL_SSP_ReceiveEnable(void);
+void EPIC_SSP_ReceiveEnable(void);
 
 /** Transmit an ACK (master receive). */
-void HAL_SSP_AcknowledgeEnable(void);
+void EPIC_SSP_AcknowledgeEnable(void);
 
 /** Returns 1 if an ACK was received from the slave (ACKSTAT). */
-uint8_t HAL_SSP_AcknowledgeStatus(void);
+uint8_t EPIC_SSP_AcknowledgeStatus(void);
 
 /* ───────────────────────── interrupts ───────────────────────────── */
 

@@ -112,8 +112,8 @@ typedef struct {
 
 /* ───────────────────────── init / deinit ────────────────────────── */
 
-HAL_StatusTypeDef HAL_ADC_Init(const ADC_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_ADC_DeInit(void);
+EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_ADC_DeInit(void);
 
 /* ───────────────────────── conversion control ────────────────────── */
 
@@ -123,19 +123,19 @@ HAL_StatusTypeDef HAL_ADC_DeInit(void);
  *         then poll IsConversionDone() or wait for the IRQ.
  * @return 0 on success, 0xFFFF if a conversion was already in progress.
  */
-uint16_t HAL_ADC_Start(void);
+uint16_t EPIC_ADC_Start(void);
 
 /** Select the channel without starting conversion. */
-void HAL_ADC_SelectChannel(ADC_ChannelTypeDef ch);
+void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch);
 
 /** Returns 1 if a conversion is in progress (GO/DONE = 1). */
-uint8_t HAL_ADC_IsConversionInProgress(void);
+uint8_t EPIC_ADC_IsConversionInProgress(void);
 
 /** Returns 1 if the latest conversion has completed (ADIF = 1). */
-uint8_t HAL_ADC_IsConversionDone(void);
+uint8_t EPIC_ADC_IsConversionDone(void);
 
 /** Clear the ADIF flag (must be called in the conversion-complete IRQ). */
-void HAL_ADC_ClearITFlag(void);
+void EPIC_ADC_ClearITFlag(void);
 
 /* ───────────────────────── result ──────────────────────────────── */
 
@@ -144,7 +144,7 @@ void HAL_ADC_ClearITFlag(void);
  *         results (ADFM=0) are shifted down so the caller always gets a
  *         0..1023 value.
  */
-uint16_t HAL_ADC_Read(void);
+uint16_t EPIC_ADC_Read(void);
 
 /* ───────────────────────── interrupts ───────────────────────────── */
 

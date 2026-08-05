@@ -16,7 +16,7 @@ PIC16, and PIC18, the host unit suite tests the exact code that ships.
 The caller supplies a `debounce_read_fn` returning `true` when the pin reads
 "active", the callback resolves active-high vs. active-low. The debounce core
 never sees a HAL type, so it's equally useful over a HAL GPIO pin
-(`HAL_GPIO_ReadPin`), an I2C-expander bit (`pic8-bus`), or a mock pin in a
+(`EPIC_GPIO_ReadPin`), an I2C-expander bit (`pic8-bus`), or a mock pin in a
 test. This is the design choice that makes the module "reusable on any gpio."
 
 ## Depends on `pic8-tick` directly (not an injected clock)

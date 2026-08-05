@@ -14,7 +14,7 @@
 static const uint16_t ps_ratio[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 
 /** Per-handle storage. The PIC16F87XA has only one Timer0, so a single
- *  static slot is sufficient. `HAL_TIMER0_Init` COPIES the caller's handle
+ *  static slot is sufficient. `EPIC_TIMER0_Init` COPIES the caller's handle
  *  here (the caller's `TIMER0_HandleTypeDef` is typically a stack-local
  *  that is out of scope by the time the ISR reads it back, so storing a
  *  pointer to it would dangle). The weak ISR reads from this owned copy. */
@@ -29,38 +29,38 @@ static void option_clr_set(uint8_t clr_mask, uint8_t set_mask)
     PIC8_REG8(PIC_REG_OPTION) = opt;
 }
 
-HAL_StatusTypeDef HAL_TIMER0_Init(const TIMER0_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
 
     /* Stop the timer before reconfiguring. */
     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
 
     /* Clear TMR0IF; configure TMR0IE if a callback is provided. */
-    HAL_IRQ_ClearFlag(PIC16_IRQ_TMR0);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR0);
     if (h->OverflowCallback) {
-        HAL_IRQ_Enable(PIC16_IRQ_TMR0);
+        EPIC_IRQ_Enable(PIC16_IRQ_TMR0);
     } else {
-        HAL_IRQ_DisableSrc(PIC16_IRQ_TMR0);
+        EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR0);
     }
 
     g_t0_storage = *h;
     g_t0_handle = &g_t0_storage;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER0_DeInit(void)
+EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC16_IRQ_TMR0);
-    HAL_IRQ_ClearFlag(PIC16_IRQ_TMR0);
+    EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR0);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR0);
     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
     PIC8_REG8(PIC_REG_TMR0) = 0x00U;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER0_Start(const TIMER0_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
 
     /* DS39582B §5.3: writing TMR0 when the prescaler is assigned to
      * Timer0 clears the prescaler. Reload before re-enabling so the
@@ -79,26 +79,26 @@ HAL_StatusTypeDef HAL_TIMER0_Start(const TIMER0_HandleTypeDef *h)
                                  PIC_OPTION_T0CS  | PIC_OPTION_T0SE);
     option_clr_set(clr_mask, set_mask);
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER0_Stop(void)
+EPIC_StatusTypeDef EPIC_TIMER0_Stop(void)
 {
     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint8_t HAL_TIMER0_ReadCounter(void)
+uint8_t EPIC_TIMER0_ReadCounter(void)
 {
     return PIC8_REG8(PIC_REG_TMR0);
 }
 
-void HAL_TIMER0_WriteCounter(uint8_t value)
+void EPIC_TIMER0_WriteCounter(uint8_t value)
 {
     PIC8_REG8(PIC_REG_TMR0) = value;
 }
 
-uint16_t HAL_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)
+uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)
 {
     if ((unsigned)p > 7U) return 1U;
     return ps_ratio[p];
@@ -110,8 +110,8 @@ uint16_t HAL_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)
 
 void TIMER0_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16_IRQ_TMR0)) return;
-    HAL_IRQ_ClearFlag(PIC16_IRQ_TMR0);
+    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_TMR0)) return;
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR0);
     if (g_t0_handle && g_t0_handle->OverflowCallback) {
         g_t0_handle->OverflowCallback();
     }

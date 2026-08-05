@@ -37,7 +37,7 @@ typedef enum {
 } CCP_InstanceTypeDef;
 
 /** CCPxCON<3:0> mode select, capture/compare encodings only this phase
- *  (DS41364B Register 15-1); PWM (11xx) is rejected by HAL_CCP_Init,
+ *  (DS41364B Register 15-1); PWM (11xx) is rejected by EPIC_CCP_Init,
  *  not silently accepted, mirroring Timer1's TIMER1_CLOCK_EXTERNAL
  *  rejection precedent. */
 typedef enum {
@@ -67,10 +67,10 @@ typedef struct {
     .CompareValue = 0U, .EventCallback = 0, \
 }
 
-HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_CCP_DeInit(CCP_InstanceTypeDef inst);
-HAL_StatusTypeDef HAL_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
-uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst);
+EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
+EPIC_StatusTypeDef EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
+uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
 
 /** Weak CCP1/CCP2 ISRs, one per instance, override in user code. */
 void CCP1_IRQHandler(void) PIC8_WEAK;

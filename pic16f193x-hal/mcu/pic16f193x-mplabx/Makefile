@@ -63,8 +63,8 @@ else
 endif
 
 # ─────────────────────────── paths ────────────────────────────────
-HAL_DIR    ?= ../..
-COMMON_DIR ?= $(HAL_DIR)/../pic8-common
+EPIC_DIR    ?= ../..
+COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-firmware
 
@@ -77,7 +77,7 @@ TARGET     := $(BUILD_DIR)/$(MCU)-firmware
 HARNESS ?= target
 ifeq ($(HARNESS),sim)
   TARGET     := $(BUILD_DIR)/$(MCU)-firmware-sim
-  HARNESS_SRC := $(HAL_DIR)/src/core/pic16f193x_harness_sim_target.c
+  HARNESS_SRC := $(EPIC_DIR)/src/core/pic16f193x_harness_sim_target.c
   # HARNESS=sim exercises the Timer1 driver (the §4 gate's load-bearing
   # peripheral for Phase 0). The Timer1 example's main loop halts in a
   # tight `for(;;)` after pic8_harness_report() so the HARNESS=sim
@@ -90,7 +90,7 @@ ifeq ($(HARNESS),sim)
   # working unchanged; override per invocation for a different
   # peripheral's gate, e.g. make ... HARNESS=sim SIM_APP=example_timer246.c
   SIM_APP     ?= example_timer1.c
-  APP_SOURCES := $(HAL_DIR)/tests/$(SIM_APP)
+  APP_SOURCES := $(EPIC_DIR)/tests/$(SIM_APP)
   # WDTE=OFF only for this variant, see the config-word recipe below
   # for why: real-target firmware genuinely needs the watchdog
   # running unattended; a diagnostic build that terminates and
@@ -103,7 +103,7 @@ else
   # example_blink is the canonical "turn an LED on" smoke test for the
   # real-target (HARNESS=target, default) build. Replace it with your
   # project's main.c.
-  APP_SOURCES := $(HAL_DIR)/tests/example_blink.c
+  APP_SOURCES := $(EPIC_DIR)/tests/example_blink.c
   CONFIG_WDTE := ON
 endif
 
@@ -118,7 +118,7 @@ endif
 CC     := xc8-cc
 # include/target ahead of include so pic16f193x_platform.h resolves to the
 # real-target (volatile-dereference) version, not the host memory-backed one.
-INC    := -I$(HAL_DIR)/include/target -I$(HAL_DIR)/include -I$(COMMON_DIR)/include
+INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include
 CFLAGS := $(DFP_FLAG) \
           -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
           -O2 -std=c99 -Wall -Wextra \
@@ -134,31 +134,31 @@ CFLAGS := $(DFP_FLAG) \
 # implementations are simply absent from this source list. The
 # family-blind harness target impl lives in pic8-common.
 
-HAL_SOURCES := \
-  $(HAL_DIR)/src/peripherals/pic16f193x_gpio.c     \
-  $(HAL_DIR)/src/peripherals/pic16f193x_timer0.c   \
-  $(HAL_DIR)/src/peripherals/pic16f193x_timer1.c   \
-  $(HAL_DIR)/src/peripherals/pic16f193x_timer246.c \
-  $(HAL_DIR)/src/peripherals/pic16f193x_ccp.c \
-  $(HAL_DIR)/src/peripherals/pic16f193x_usart.c \
-  $(HAL_DIR)/src/peripherals/pic16f193x_ssp.c \
-  $(HAL_DIR)/src/peripherals/pic16f193x_adc.c \
-  $(HAL_DIR)/src/peripherals/pic16f193x_comp.c \
-  $(HAL_DIR)/src/peripherals/pic16f193x_eeprom.c \
-  $(HAL_DIR)/src/peripherals/pic16f193x_dac.c \
-  $(HAL_DIR)/src/peripherals/pic16f193x_fvr.c \
-  $(HAL_DIR)/src/peripherals/pic16f193x_srlatch.c \
-  $(HAL_DIR)/src/peripherals/pic16f193x_cps.c \
-  $(HAL_DIR)/src/peripherals/pic16f193x_lcd.c \
-  $(HAL_DIR)/src/core/pic16f193x_irq.c             \
-  $(HAL_DIR)/src/core/pic16f193x_wdt_sleep.c       \
-  $(HAL_DIR)/src/core/pic16f193x_wdt_sleep_target.c \
-  $(HAL_DIR)/src/core/pic16f193x_isr_vector.c      \
-  $(HAL_DIR)/src/core/pic16f193x_irq_dispatch.c    \
+EPIC_SOURCES := \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_gpio.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_timer0.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_timer1.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_timer246.c \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_ccp.c \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_usart.c \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_ssp.c \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_adc.c \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_comp.c \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_eeprom.c \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_dac.c \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_fvr.c \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_srlatch.c \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_cps.c \
+  $(EPIC_DIR)/src/peripherals/pic16f193x_lcd.c \
+  $(EPIC_DIR)/src/core/pic16f193x_irq.c             \
+  $(EPIC_DIR)/src/core/pic16f193x_wdt_sleep.c       \
+  $(EPIC_DIR)/src/core/pic16f193x_wdt_sleep_target.c \
+  $(EPIC_DIR)/src/core/pic16f193x_isr_vector.c      \
+  $(EPIC_DIR)/src/core/pic16f193x_irq_dispatch.c    \
   $(HARNESS_SRC)
 
 # All real .c sources (the config word is generated separately, below).
-SRCS := $(HAL_SOURCES) $(APP_SOURCES)
+SRCS := $(EPIC_SOURCES) $(APP_SOURCES)
 OBJS := $(patsubst %.c,$(BUILD_DIR)/%.p1,$(notdir $(SRCS)))
 VPATH := $(sort $(dir $(SRCS)))
 

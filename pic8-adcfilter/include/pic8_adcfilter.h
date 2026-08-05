@@ -8,7 +8,7 @@
  *   samples, right-shift by n) for n extra bits of resolution.
  *   `pic8_adcfilter_avg_push`: an O(1) moving average over a caller-owned
  *   ring buffer. Both take a `pic8_adcfilter_read_fn` callback instead of
- *   calling `HAL_ADC_Read` directly, so they work over any HAL family's
+ *   calling `EPIC_ADC_Read` directly, so they work over any HAL family's
  *   ADC or a mock source in tests.
  */
 

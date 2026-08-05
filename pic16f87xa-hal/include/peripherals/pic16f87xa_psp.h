@@ -20,26 +20,26 @@
 #error "pic16f87xa_psp.h is for 40/44-pin PIC16F87XA parts only"
 #endif
 
-HAL_StatusTypeDef HAL_PSP_Init(void (*callback)(void));
-HAL_StatusTypeDef HAL_PSP_DeInit(void);
+EPIC_StatusTypeDef EPIC_PSP_Init(void (*callback)(void));
+EPIC_StatusTypeDef EPIC_PSP_DeInit(void);
 
 /** Enable Parallel Slave Port mode (TRISE<PSPMODE> = 1). */
-void HAL_PSP_Enable(void);
+void EPIC_PSP_Enable(void);
 
 /** Disable Parallel Slave Port mode. */
-void HAL_PSP_Disable(void);
+void EPIC_PSP_Disable(void);
 
 /** Returns 1 if the PSP input buffer is full (TRISE<IBF>). */
-uint8_t HAL_PSP_IsInputBufferFull(void);
+uint8_t EPIC_PSP_IsInputBufferFull(void);
 
 /** Returns 1 if the PSP output buffer is full (TRISE<OBF>). */
-uint8_t HAL_PSP_IsOutputBufferFull(void);
+uint8_t EPIC_PSP_IsOutputBufferFull(void);
 
 /** Returns 1 if an input buffer overflow occurred (TRISE<IBOV>). */
-uint8_t HAL_PSP_HasInputOverflow(void);
+uint8_t EPIC_PSP_HasInputOverflow(void);
 
 /** Clear the IBOV flag. Must be done in software. */
-void HAL_PSP_ClearInputOverflow(void);
+void EPIC_PSP_ClearInputOverflow(void);
 
 void PSP_IRQHandler(void) PIC8_WEAK;
 

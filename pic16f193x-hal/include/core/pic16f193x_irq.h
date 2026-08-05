@@ -6,7 +6,7 @@
  *
  * @details
  *   Mirrors `HAL_NVIC_*` from STM32Cube: callers never touch
- *   INTCON/PIE1/PIE2/PIE3/PIR1/PIR2/PIR3 directly. `HAL_IRQ_*` names are
+ *   INTCON/PIE1/PIE2/PIE3/PIR1/PIR2/PIR3 directly. `EPIC_IRQ_*` names are
  *   shared across every 8-bit PIC family; `PIC16F193X_IRQn` and the
  *   registers behind it are PIC16F193X-specific.
  *
@@ -14,7 +14,7 @@
  *   in INTCON gates everything, PEIE gates the peripheral sources in
  *   PIE1/PIE2/PIE3. Hardware saves W/STATUS/BSR/FSR0/FSR1/PCLATH to
  *   shadow registers on entry, so no manual context save is needed
- *   (unlike classic PIC16F87XA). HAL_IRQ_SetPriority is a no-op.
+ *   (unlike classic PIC16F87XA). EPIC_IRQ_SetPriority is a no-op.
  *
  *   23 sources (DS41364B §4.0, Figure 4-1/4-2 and Registers 4-1..4-7):
  *     INTCON:  IOC (RB change), INT (RB0 edge), TMR0 (overflow)
@@ -28,7 +28,7 @@
 
 #include "pic16f193x.h"
 #include "pic16f193x_sfr.h"
-#include "core/pic8_irq.h"   /* shared HAL_IRQ_Priority enum (family-blind) */
+#include "core/pic8_irq.h"   /* shared EPIC_IRQ_Priority enum (family-blind) */
 
 /**
  * @brief Logical identity of every interrupt source on the part.
@@ -70,40 +70,40 @@ typedef enum {
  *        (DS41364B §4.1, INTCON<7>).
  * @return previous GIE state (1 = was enabled).
  */
-uint8_t HAL_IRQ_Disable(void);
+uint8_t EPIC_IRQ_Disable(void);
 
 /**
  * @brief Restore the global interrupt enable to `prev_state`, pair with
- *        @ref HAL_IRQ_Disable.
+ *        @ref EPIC_IRQ_Disable.
  */
-void HAL_IRQ_Restore(uint8_t prev_state);
+void EPIC_IRQ_Restore(uint8_t prev_state);
 
 /**
  * @brief Enable one interrupt source. The peripheral enable bit lives in
  *        the matching PIE register (or INTCON for IOC/INT/TMR0); PIE bits
  *        need both GIE and PEIE set to actually fire.
  */
-void HAL_IRQ_Enable(PIC16F193X_IRQn irq);
+void EPIC_IRQ_Enable(PIC16F193X_IRQn irq);
 
 /** Disable one interrupt source. */
-void HAL_IRQ_DisableSrc(PIC16F193X_IRQn irq);
+void EPIC_IRQ_DisableSrc(PIC16F193X_IRQn irq);
 
 /**
  * @brief Clear the interrupt flag of `irq`. **MUST** be called inside the
  *        ISR before re-enabling interrupts to avoid an infinite re-entry
  *        (DS41364B §4.1).
  */
-void HAL_IRQ_ClearFlag(PIC16F193X_IRQn irq);
+void EPIC_IRQ_ClearFlag(PIC16F193X_IRQn irq);
 
 /** Returns the current pending state of `irq` (1 = pending). */
-uint8_t HAL_IRQ_GetFlag(PIC16F193X_IRQn irq);
+uint8_t EPIC_IRQ_GetFlag(PIC16F193X_IRQn irq);
 
 /**
  * @brief Set the priority of `irq`. No-op on PIC16F193X (single vector, no
  *        priority scheme, DS41364B §4.0); declared with the shared
- *        @ref HAL_IRQ_Priority enum so callers stay portable to PIC18,
+ *        @ref EPIC_IRQ_Priority enum so callers stay portable to PIC18,
  *        which implements it for real.
  */
-void HAL_IRQ_SetPriority(PIC16F193X_IRQn irq, HAL_IRQ_Priority prio);
+void EPIC_IRQ_SetPriority(PIC16F193X_IRQn irq, EPIC_IRQ_Priority prio);
 
 #endif /* PIC16F193X_IRQ_H */

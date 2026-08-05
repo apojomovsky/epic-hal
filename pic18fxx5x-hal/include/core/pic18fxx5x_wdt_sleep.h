@@ -6,8 +6,8 @@
  *   Matches `pic16f87xa_wdt_sleep.h`'s API (DS39632E §4.0/§9.0/§14.x/§3.0);
  *   PIC18 folds the reset-status bits (TO/PD/POR/BOR) into RCON instead of
  *   PIC16's separate PCON. WDT is enabled via `#pragma config WDT = ON` at
- *   flash time; once on, the user must call @ref HAL_WDT_Refresh
- *   periodically or the chip resets. `HAL_WDT_Refresh`/`HAL_Sleep_Enter`
+ *   flash time; once on, the user must call @ref EPIC_WDT_Refresh
+ *   periodically or the chip resets. `EPIC_WDT_Refresh`/`EPIC_Sleep_Enter`
  *   are link-time-selected (`*_sim.c` host, `*_target.c` XC8).
  */
 
@@ -24,7 +24,7 @@
  *         On a real target this MUST be called more often than the WDT
  *         period (DS39632E §14.x). On the host simulator it's a no-op.
  */
-void HAL_WDT_Refresh(void);
+void EPIC_WDT_Refresh(void);
 
 /**
  * @brief  Enter Power-down (Sleep) mode. On a real target this is the
@@ -34,24 +34,24 @@ void HAL_WDT_Refresh(void);
  *         On the host simulator this is a no-op; callers should continue
  *         to drive pic18_sim_step().
  */
-void HAL_Sleep_Enter(void);
+void EPIC_Sleep_Enter(void);
 
 /**
  * @brief  Returns 1 if the last reset was a Brown-out Reset
- *         (RCON<BOR>). Clear after reading via @ref HAL_BOR_ClearFlag.
+ *         (RCON<BOR>). Clear after reading via @ref EPIC_BOR_ClearFlag.
  */
-uint8_t HAL_BOR_GetStatus(void);
+uint8_t EPIC_BOR_GetStatus(void);
 
 /** Clear RCON<BOR> (write 0). */
-void HAL_BOR_ClearFlag(void);
+void EPIC_BOR_ClearFlag(void);
 
 /**
  * @brief  Returns 1 if the device just powered on (RCON<POR>).
  *         Set on Power-on Reset (DS39632E Register 4-1).
  */
-uint8_t HAL_POR_GetStatus(void);
+uint8_t EPIC_POR_GetStatus(void);
 
 /** Clear RCON<POR> (write 0). */
-void HAL_POR_ClearFlag(void);
+void EPIC_POR_ClearFlag(void);
 
 #endif /* PIC18FXX5X_WDT_SLEEP_H */

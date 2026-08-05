@@ -8,9 +8,9 @@
 
 static const COMP_HandleTypeDef *g_comp = NULL;
 
-HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     g_comp = h;
 
     /* Build CMCON (Bank 1, address 0x9C). */
@@ -32,17 +32,17 @@ HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h)
 #endif
 
     /* Interrupt enable. */
-    HAL_IRQ_ClearFlag(PIC16_IRQ_CMP);
-    if (h->ChangeCallback) HAL_IRQ_Enable(PIC16_IRQ_CMP);
-    else                   HAL_IRQ_DisableSrc(PIC16_IRQ_CMP);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_CMP);
+    if (h->ChangeCallback) EPIC_IRQ_Enable(PIC16_IRQ_CMP);
+    else                   EPIC_IRQ_DisableSrc(PIC16_IRQ_CMP);
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_COMP_DeInit(void)
+EPIC_StatusTypeDef EPIC_COMP_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC16_IRQ_CMP);
-    HAL_IRQ_ClearFlag(PIC16_IRQ_CMP);
+    EPIC_IRQ_DisableSrc(PIC16_IRQ_CMP);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_CMP);
     {
         uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
@@ -50,10 +50,10 @@ HAL_StatusTypeDef HAL_COMP_DeInit(void)
         pic_select_bank(prev);
     }
     g_comp = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint8_t HAL_COMP_C1Out(void)
+uint8_t EPIC_COMP_C1Out(void)
 {
     uint8_t v = 0U;
 #ifdef PIC8_BANK1_READ8
@@ -68,7 +68,7 @@ uint8_t HAL_COMP_C1Out(void)
     return (v & PIC_CMCON_C1OUT) ? 1U : 0U;
 }
 
-uint8_t HAL_COMP_C2Out(void)
+uint8_t EPIC_COMP_C2Out(void)
 {
     uint8_t v = 0U;
 #ifdef PIC8_BANK1_READ8
@@ -82,20 +82,20 @@ uint8_t HAL_COMP_C2Out(void)
     return (v & PIC_CMCON_C2OUT) ? 1U : 0U;
 }
 
-uint8_t HAL_COMP_IsChangeFlag(void)
+uint8_t EPIC_COMP_IsChangeFlag(void)
 {
     /* CMIF lives in PIR2<6>. */
     return (PIC8_REG8(0x0DU) & 0x40U) ? 1U : 0U;
 }
 
-void HAL_COMP_ClearChangeFlag(void)
+void EPIC_COMP_ClearChangeFlag(void)
 {
-    HAL_IRQ_ClearFlag(PIC16_IRQ_CMP);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_CMP);
 }
 
 void COMP_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16_IRQ_CMP)) return;
-    HAL_IRQ_ClearFlag(PIC16_IRQ_CMP);
+    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_CMP)) return;
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_CMP);
     if (g_comp && g_comp->ChangeCallback) g_comp->ChangeCallback();
 }

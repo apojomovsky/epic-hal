@@ -26,7 +26,7 @@ The non-blocking serial layer STM32Cube's `HAL_UART_Transmit_DMA`/
 ```sh
 cmake -B build && cmake --build build
 ctest --test-dir build --output-on-failure   # example_serial: rx=2 tx=2
-cmake -B build18 -DHAL_FAMILY=PIC18 && ctest --test-dir build18
+cmake -B build18 -DEPIC_FAMILY=PIC18 && ctest --test-dir build18
 ```
 
 ### Real target (XC8), banner + echo demo

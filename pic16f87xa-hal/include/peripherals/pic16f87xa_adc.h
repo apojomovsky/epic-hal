@@ -6,7 +6,7 @@
  *   Source: DS39582B §11.0. Full register/wiring reference:
  *   `pic16f87xa-hal/MANUAL.md` §16. Acquisition time (§11.1) must
  *   elapse between channel select and GO, enforced by requiring an
- *   explicit HAL_ADC_Start() call rather than combining select+start.
+ *   explicit EPIC_ADC_Start() call rather than combining select+start.
  */
 
 #ifndef PIC16F87XA_ADC_H
@@ -102,35 +102,35 @@ typedef struct {
 
 /* ───────────────────────── init / deinit ────────────────────────── */
 
-HAL_StatusTypeDef HAL_ADC_Init(const ADC_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_ADC_DeInit(void);
+EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_ADC_DeInit(void);
 
 /* ───────────────────────── conversion control ────────────────────── */
 
 /**
  * @brief  Select the analog channel and start a conversion.
  *         Sets ADCON0<GO/DONE> = 1. The user is expected to:
- *           1. Select the channel (with HAL_ADC_SelectChannel)
+ *           1. Select the channel (with EPIC_ADC_SelectChannel)
  *           2. Wait for the acquisition time (§11.1, ~20 µs at 5 V)
- *           3. Call HAL_ADC_Start() to begin conversion
- *           4. Poll HAL_ADC_IsConversionDone() or wait for the IRQ
+ *           3. Call EPIC_ADC_Start() to begin conversion
+ *           4. Poll EPIC_ADC_IsConversionDone() or wait for the IRQ
  *
  *         Returns 0xFFFF if a conversion was already in progress
  *         (GO/DONE was 1).
  */
-uint16_t HAL_ADC_Start(void);
+uint16_t EPIC_ADC_Start(void);
 
 /** Select the channel without starting conversion. */
-void HAL_ADC_SelectChannel(ADC_ChannelTypeDef ch);
+void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch);
 
 /** Returns 1 if a conversion is in progress (GO/DONE = 1). */
-uint8_t HAL_ADC_IsConversionInProgress(void);
+uint8_t EPIC_ADC_IsConversionInProgress(void);
 
 /** Returns 1 if the latest conversion has completed (ADIF = 1). */
-uint8_t HAL_ADC_IsConversionDone(void);
+uint8_t EPIC_ADC_IsConversionDone(void);
 
 /** Clear the ADIF flag. Must be called in the conversion-complete IRQ. */
-void HAL_ADC_ClearITFlag(void);
+void EPIC_ADC_ClearITFlag(void);
 
 /* ───────────────────────── result ──────────────────────────────── */
 
@@ -139,7 +139,7 @@ void HAL_ADC_ClearITFlag(void);
  *         justified format; left-justified results are shifted down
  *         to 0..1023.
  */
-uint16_t HAL_ADC_Read(void);
+uint16_t EPIC_ADC_Read(void);
 
 /* ───────────────────────── interrupts ───────────────────────────── */
 

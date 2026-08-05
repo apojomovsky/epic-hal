@@ -1,6 +1,6 @@
 /**
  * @file    peripherals/hal_timer2.h
- * @brief   Family-neutral Timer2 driver contract (`HAL_TIMER2_*`).
+ * @brief   Family-neutral Timer2 driver contract (`EPIC_TIMER2_*`).
  *
  * @details
  *   Family-agnostic consumers include this neutral name instead of
@@ -8,7 +8,7 @@
  *   and the build's include path picks which one resolves.
  */
 
-#ifndef HAL_TIMER2_H
-#define HAL_TIMER2_H
+#ifndef EPIC_TIMER2_H
+#define EPIC_TIMER2_H
 #include "pic18fxx5x_timer2.h"
-#endif /* HAL_TIMER2_H */
+#endif /* EPIC_TIMER2_H */

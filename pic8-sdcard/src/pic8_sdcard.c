@@ -24,14 +24,14 @@ static uint8_t spi_byte(uint8_t out)
 {
     uint16_t w;
     do {
-        w = HAL_SSP_WriteByte(out);
+        w = EPIC_SSP_WriteByte(out);
         if (w == 0xFFFFu) {
-            HAL_SSP_ClearWriteCollision();     /* must be cleared in software, DS39632E §19.2.2 */
+            EPIC_SSP_ClearWriteCollision();     /* must be cleared in software, DS39632E §19.2.2 */
         }
     } while (w == 0xFFFFu);
-    while (!HAL_SSP_IsBufferFull()) {
+    while (!EPIC_SSP_IsBufferFull()) {
     }
-    return HAL_SSP_ReadByte();
+    return EPIC_SSP_ReadByte();
 }
 
 /* ---- MMC_SPI_* callbacks (named in src/target/mmc_config.h) ---- */
@@ -52,7 +52,7 @@ void pic8_sdcard_spi_transfer(uint8_t instance, const uint8_t *out_buf,
 void pic8_sdcard_spi_set_cs(uint8_t instance, uint8_t value)
 {
     (void)instance;
-    HAL_GPIO_WritePin(g_pins.cs_port, g_pins.cs_pin,
+    EPIC_GPIO_WritePin(g_pins.cs_port, g_pins.cs_pin,
                       value ? GPIO_PIN_SET : GPIO_PIN_RESET);   /* 0 = asserted, per mmc.h */
 }
 
@@ -93,7 +93,7 @@ void pic8_sdcard_spi_set_speed(uint8_t instance, uint32_t speed_hz)
 
     SSP_HandleTypeDef h = SSP_HANDLE_DEFAULT;   /* CKP=idle-low, CKE=idle->active: SPI mode 0,0, matches SD-over-SPI */
     h.Mode = mode;
-    HAL_SSP_Init(&h);
+    EPIC_SSP_Init(&h);
 }
 
 /* ---- MMC_TIMER_* callbacks: real wall-clock timeouts via pic8-tick ---- */
@@ -123,12 +123,12 @@ bool pic8_sdcard_init(const pic8_sdcard_pins_t *pins, uint32_t fosc_hz)
     g_pins = *pins;
     g_fosc_hz = fosc_hz;
 
-    HAL_GPIO_Init(g_pins.cs_port, g_pins.cs_pin, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(g_pins.cs_port, g_pins.cs_pin, GPIO_MODE_OUTPUT);
     pic8_sdcard_spi_set_cs(0, 1);   /* deasserted before the SSP is even configured */
 
     SSP_HandleTypeDef h = SSP_HANDLE_DEFAULT;
     h.Mode = SSP_MODE_SPI_MASTER_FOSC_64;   /* slow starting point; mmc_init_card re-speeds via MMC_SPI_SET_SPEED */
-    HAL_SSP_Init(&h);
+    EPIC_SSP_Init(&h);
 
     g_card.max_speed_hz = 20000000UL;       /* SSP/board ceiling; MIN()'d against the card's own negotiated speed */
     g_card.spi_instance = 0u;

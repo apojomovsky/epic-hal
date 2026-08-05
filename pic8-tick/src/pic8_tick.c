@@ -14,7 +14,7 @@
 
 #include "pic8_tick.h"
 #include "peripherals/hal_timer2.h"   /* family-neutral shim -> pic*_timer2.h */
-#include "core/hal_irq.h"             /* HAL_IRQ_Disable / Restore            */
+#include "core/hal_irq.h"             /* EPIC_IRQ_Disable / Restore            */
 #include "core/pic8_harness.h"        /* pic8_harness_tick (host sim pump)    */
 
 static volatile uint32_t g_tick_ms = 0u;
@@ -80,19 +80,19 @@ void pic8_tick_init(uint32_t fosc_hz)
     s_timer2.Postscaler       = post;
     s_timer2.Period           = pr2;
     s_timer2.OverflowCallback = pic8_tick_on_overflow;
-    HAL_TIMER2_Init(&s_timer2);
-    HAL_TIMER2_Start(&s_timer2);
-    /* HAL_TIMER2_Init only arms Timer2's own source enable; the global
+    EPIC_TIMER2_Init(&s_timer2);
+    EPIC_TIMER2_Start(&s_timer2);
+    /* EPIC_TIMER2_Init only arms Timer2's own source enable; the global
      * interrupt enable is separate, so without this the ISR never fires
      * and pic8_tick_delay_ms spins forever (pic8-common/MANUAL.md §6-7). */
-    HAL_IRQ_Restore(1);
+    EPIC_IRQ_Restore(1);
 }
 
 uint32_t pic8_tick_get(void)
 {
-    uint8_t prev = HAL_IRQ_Disable();          /* atomic 32-bit read          */
+    uint8_t prev = EPIC_IRQ_Disable();          /* atomic 32-bit read          */
     uint32_t t = g_tick_ms;
-    HAL_IRQ_Restore(prev);
+    EPIC_IRQ_Restore(prev);
     return t;
 }
 

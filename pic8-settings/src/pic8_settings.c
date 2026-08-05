@@ -3,7 +3,7 @@
  * @brief   EEPROM-backed settings blobs with CRC-16 validation.
  *
  * @details
- *   HAL_EEPROM_WriteBuffer is unsafe for multi-byte writes (it loops to
+ *   EPIC_EEPROM_WriteBuffer is unsafe for multi-byte writes (it loops to
  *   the next byte without waiting for EEIF completion), so this module
  *   sequences its own byte-at-a-time writes: start, wait, clear flag,
  *   repeat. The host sim has no timed EEPROM model, so it drives each
@@ -64,7 +64,7 @@ static bool settings_write_bytes(uint8_t start, const uint8_t *buf, uint8_t len)
         uint8_t addr = (uint8_t)(start + i);
         uint8_t data = buf[i];
 
-        if (HAL_EEPROM_WriteByte(addr, data) != HAL_OK) {
+        if (EPIC_EEPROM_WriteByte(addr, data) != EPIC_OK) {
             return false;
         }
 
@@ -72,10 +72,10 @@ static bool settings_write_bytes(uint8_t start, const uint8_t *buf, uint8_t len)
         settings_sim_complete(addr, data);
 #endif
 
-        while (HAL_EEPROM_IsWriteComplete() == 0u) {
+        while (EPIC_EEPROM_IsWriteComplete() == 0u) {
             pic8_harness_tick();
         }
-        HAL_EEPROM_ClearITFlag();
+        EPIC_EEPROM_ClearITFlag();
     }
     return true;
 }
@@ -101,17 +101,17 @@ bool pic8_settings_load(uint8_t eeprom_addr, void *data, uint8_t size)
     uint16_t crc = 0xFFFFu;
 
     for (uint8_t i = 0; i < size; i++) {
-        crc = settings_crc16_update(crc, HAL_EEPROM_ReadByte((uint8_t)(eeprom_addr + i)));
+        crc = settings_crc16_update(crc, EPIC_EEPROM_ReadByte((uint8_t)(eeprom_addr + i)));
     }
 
-    uint16_t stored_crc = (uint16_t)((uint16_t)HAL_EEPROM_ReadByte((uint8_t)(eeprom_addr + size)) << 8);
-    stored_crc |= HAL_EEPROM_ReadByte((uint8_t)(eeprom_addr + size + 1u));
+    uint16_t stored_crc = (uint16_t)((uint16_t)EPIC_EEPROM_ReadByte((uint8_t)(eeprom_addr + size)) << 8);
+    stored_crc |= EPIC_EEPROM_ReadByte((uint8_t)(eeprom_addr + size + 1u));
     if (stored_crc != crc) {
         return false;
     }
 
     for (uint8_t i = 0; i < size; i++) {
-        out[i] = HAL_EEPROM_ReadByte((uint8_t)(eeprom_addr + i));
+        out[i] = EPIC_EEPROM_ReadByte((uint8_t)(eeprom_addr + i));
     }
     return true;
 }

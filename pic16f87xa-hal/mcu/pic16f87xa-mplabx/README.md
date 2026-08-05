@@ -22,7 +22,7 @@ The HAL compiles on XC8 because:
 ### Command line
 
 ```sh
-# Adjust HAL_DIR if you place the firmware project differently.
+# Adjust EPIC_DIR if you place the firmware project differently.
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
 
 # Build for PIC16F877A (default).
@@ -67,7 +67,7 @@ The configuration word in the `Makefile` (and the `nbproject` project
 properties) sets:
 
 - FOSC = HS (high-speed crystal, ≤ 20 MHz)
-- WDTE = ON (Watchdog Timer enabled, refresh via `HAL_WDT_Refresh()`)
+- WDTE = ON (Watchdog Timer enabled, refresh via `EPIC_WDT_Refresh()`)
 - PWRTE = ON (Power-up Timer, 72 ms)
 - BOREN = ON (Brown-out Reset at 4.0 V)
 - LVP = OFF (low-voltage programming disabled)

@@ -5,9 +5,9 @@
 
 #include "peripherals/pic16f87xa_vref.h"
 
-HAL_StatusTypeDef HAL_VREF_Init(const VREF_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_VREF_Init(const VREF_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
 
     /* Build CVRCON (Bank 1, address 0x9D). */
     uint8_t v = h->Value & PIC_CVRCON_CVR_MASK;
@@ -26,19 +26,19 @@ HAL_StatusTypeDef HAL_VREF_Init(const VREF_HandleTypeDef *h)
         pic_select_bank(prev);
     }
 #endif
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_VREF_DeInit(void)
+EPIC_StatusTypeDef EPIC_VREF_DeInit(void)
 {
     uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
     PIC8_REG8(0x9DU) = 0x00U;
     pic_select_bank(prev);
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint32_t HAL_VREF_MilliVolts(uint32_t vdd_mv,
+uint32_t EPIC_VREF_MilliVolts(uint32_t vdd_mv,
                              VREF_RangeTypeDef range,
                              uint8_t value)
 {

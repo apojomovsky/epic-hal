@@ -46,11 +46,11 @@ else
 endif
 
 # ─────────────────────────── paths ────────────────────────────────
-# Adjust HAL_DIR if the firmware project is not a sibling of pic16f87xa-hal.
+# Adjust EPIC_DIR if the firmware project is not a sibling of pic16f87xa-hal.
 # pic8-common holds the shared harness target impl and headers; it is a
 # sibling of the HAL tree.
-HAL_DIR    ?= ../..
-COMMON_DIR ?= $(HAL_DIR)/../pic8-common
+EPIC_DIR    ?= ../..
+COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-firmware
 
@@ -67,7 +67,7 @@ CC     := xc8-cc
 # include/target ahead of include so pic16f87xa_platform.h resolves to the
 # real-target (volatile-dereference) version, not the host memory-backed one.
 # pic8-common/include provides the shared hal_status.h / pic8_harness.h.
-INC    := -I$(HAL_DIR)/include/target -I$(HAL_DIR)/include -I$(COMMON_DIR)/include
+INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include
 CFLAGS := $(DFP_FLAG) \
           -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
           -O2 -std=c99 -Wall -Wextra \
@@ -84,42 +84,42 @@ CFLAGS := $(DFP_FLAG) \
 # The family-blind harness target impl lives in pic8-common and is
 # linked here alongside the PIC16 core.
 
-HAL_SOURCES := \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_gpio.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer0.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer1.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer2.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_ccp.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_usart.c    \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_ssp.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_adc.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_comp.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_vref.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_eeprom.c   \
-  $(HAL_DIR)/src/core/pic16_irq.c                  \
-  $(HAL_DIR)/src/core/pic16f87xa_wdt_sleep.c       \
-  $(HAL_DIR)/src/core/pic16f87xa_wdt_sleep_target.c \
-  $(HAL_DIR)/src/core/pic16_isr_vector.c          \
-  $(HAL_DIR)/src/core/pic16_irq_dispatch.c        \
+EPIC_SOURCES := \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_gpio.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer0.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer1.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer2.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_ccp.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_usart.c    \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_ssp.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_adc.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_comp.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_vref.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_eeprom.c   \
+  $(EPIC_DIR)/src/core/pic16_irq.c                  \
+  $(EPIC_DIR)/src/core/pic16f87xa_wdt_sleep.c       \
+  $(EPIC_DIR)/src/core/pic16f87xa_wdt_sleep_target.c \
+  $(EPIC_DIR)/src/core/pic16_isr_vector.c          \
+  $(EPIC_DIR)/src/core/pic16_irq_dispatch.c        \
   $(COMMON_DIR)/src/core/pic8_harness_target.c
 
 # PSP is only on 40/44-pin parts.
 ifeq ($(filter $(MCU),16F874A 16F877A),$(MCU))
-  HAL_SOURCES += $(HAL_DIR)/src/peripherals/pic16f87xa_psp.c
+  EPIC_SOURCES += $(EPIC_DIR)/src/peripherals/pic16f87xa_psp.c
 endif
 
 # Add your application sources here. example_blink is the canonical
 # "turn an LED on" smoke test. Replace it with your project's main.c.
-APP_SOURCES := $(HAL_DIR)/tests/example_blink.c
+APP_SOURCES := $(EPIC_DIR)/tests/example_blink.c
 
 # All real .c sources (the config word is generated separately, below).
-SRCS := $(HAL_SOURCES) $(APP_SOURCES)
+SRCS := $(EPIC_SOURCES) $(APP_SOURCES)
 # xc8-cc -c emits <name>.p1; link from the .p1 set.
 OBJS := $(patsubst %.c,$(BUILD_DIR)/%.p1,$(notdir $(SRCS)))
 
 # Tell make where to find sources referenced by basename. The pattern
 # rule $(BUILD_DIR)/%.p1: %.c uses basename matching; without VPATH
-# make would not resolve HAL_DIR/.../pic16f87xa_gpio.c from the
+# make would not resolve EPIC_DIR/.../pic16f87xa_gpio.c from the
 # target name build/pic16f87xa_gpio.p1.
 VPATH := $(sort $(dir $(SRCS)))
 

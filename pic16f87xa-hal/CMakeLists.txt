@@ -47,14 +47,14 @@ else()
 endif()
 
 # Variables consumed by the shared pic8_family.cmake helpers.
-set(PIC8_HAL_LIB              pic16f87xa_hal)
+set(PIC8_EPIC_LIB              pic16f87xa_hal)
 set(PIC8_DEFAULT_DEVICE       ${PIC16F87XA_DEFAULT_DEVICE})
 set(PIC8_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(PIC8_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(PIC8_COMMON_INCLUDE_DIR    ${PIC8_COMMON_DIR}/include)
 set(PIC8_FAMILY_DEVICES        PIC16F873A PIC16F874A PIC16F876A PIC16F877A)
 
-set(PIC8_HAL_SOURCES
+set(PIC8_EPIC_SOURCES
     src/peripherals/pic16f87xa_gpio.c
     src/peripherals/pic16f87xa_timer0.c
     src/peripherals/pic16f87xa_timer1.c
@@ -76,10 +76,10 @@ set(PIC8_HAL_SOURCES
 
 # PSP is only on 40/44-pin parts. PIC16F877A is the default.
 if(PIC16F87XA_FAMILY_HAS_PSP)
-    list(APPEND PIC8_HAL_SOURCES src/peripherals/pic16f87xa_psp.c)
+    list(APPEND PIC8_EPIC_SOURCES src/peripherals/pic16f87xa_psp.c)
 endif()
 
-pic8_add_hal_library(${PIC8_HAL_LIB})
+pic8_add_hal_library(${PIC8_EPIC_LIB})
 
 pic8_add_example(example_blink       tests/example_blink.c)
 pic8_add_example(example_idle_blink  tests/example_idle_blink.c)

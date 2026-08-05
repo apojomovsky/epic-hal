@@ -30,7 +30,7 @@ committed state, not the raw/candidate state.
 /* A button on RA0, active-high, 20 ms debounce. */
 static bool read_button(void *ctx) {
     (void)ctx;
-    return HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET;
+    return EPIC_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET;
 }
 
 debounce_t btn;

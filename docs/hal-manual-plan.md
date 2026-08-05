@@ -66,7 +66,7 @@ the fixed code contract.
 | 3 | Quick start | Per-family | Exact commands/paths differ per family |
 | 4 | Build systems | Mixed | XC8 v3.x general behavior (`.p1`, `-mdfp`) is agnostic; CMake/Makefile variable names and config-word bits are per-family |
 | 5.1 | Naming | **Agnostic** | Move as-is |
-| 5.2 | Status codes | **Agnostic** | Move as-is (shared `HAL_StatusTypeDef` already lives in `pic8-common`) |
+| 5.2 | Status codes | **Agnostic** | Move as-is (shared `EPIC_StatusTypeDef` already lives in `pic8-common`) |
 | 5.3 | Handle pattern | **Agnostic** | Move as-is |
 | 5.4 | Interrupts and callbacks | **Agnostic** | The weak-handler/callback pattern is identical across families |
 | 5.5 | Datasheet citations | Mixed | The *practice* is agnostic; the "DS39582B" string is per-family |
@@ -74,7 +74,7 @@ the fixed code contract.
 | 6.2-6.4 | Sim API shape, dispatch, writing a sim test | **Agnostic** | Pattern reusable; function name prefixes (`pic16f87xa_sim_*`) differ per family but the shape doesn't |
 | 7 | The harness | **Agnostic** | Already lives in `pic8-common/pic8_harness.h` — the doc should too |
 | 8.1 | IRQ identity enum | Per-family | Contents differ per family |
-| 8.2, 8.3 | Enable/disable API, ISR-driven-peripheral recipe | **Agnostic** | Same shape both families already share (`HAL_IRQ_*`, `HAL_IRQ_SetPriority` per `multi-family-plan.md`) |
+| 8.2, 8.3 | Enable/disable API, ISR-driven-peripheral recipe | **Agnostic** | Same shape both families already share (`EPIC_IRQ_*`, `EPIC_IRQ_SetPriority` per `multi-family-plan.md`) |
 | 9-21 | Core (WDT/Sleep) + every peripheral chapter | Per-family | Register-level reference, stays in the family manual |
 | 22 | The SFR layer | Per-family | Raw addresses/bit names specific to that datasheet |
 | 23 | Device selection | Per-family | Macro table specific to that family's variants |

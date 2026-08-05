@@ -17,7 +17,7 @@
 ## Why this exists
 
 `pic8-common/MANUAL.md` documents this repo's *portable* interrupt
-contract (the four-function harness, `HAL_IRQ_*`, the dispatch pattern).
+contract (the four-function harness, `EPIC_IRQ_*`, the dispatch pattern).
 This document is narrower and lower-level: specific things XC8 v4.00
 does with *this family's* generated code around banking, interrupts, and
 the hardware call stack, discovered because Phase 3/4 of `docs/ci-plan.md`
@@ -45,8 +45,8 @@ fresh, correct bank-select regardless of what the asm actually did to
 `STATUS`.
 
 This directly validates `pic16f87xa_platform.h`'s `PIC8_PIE_ENABLE_BIT`/
-`PIC8_PIE_DISABLE_BIT` macros (the fix for `HAL_IRQ_Enable`/
-`HAL_IRQ_DisableSrc`'s PIE1/PIE2 read-modify-write): loading the operand
+`PIC8_PIE_DISABLE_BIT` macros (the fix for `EPIC_IRQ_Enable`/
+`EPIC_IRQ_DisableSrc`'s PIE1/PIE2 read-modify-write): loading the operand
 into W *before* the bank switch, doing the whole read-modify-write as a
 single `iorwf`/`andwf <SFR>,f` inside one `asm()` block, is not a
 workaround for a bug, it is the documented, intended way to hand-roll a
@@ -60,7 +60,7 @@ why the *original* `pic_select_bank` (a `static inline` function doing
 (bank&3)<<5; PIC8_REG8(PIC_REG_STATUS) = status;`, no `asm()` involved at
 all) reliably corrupted a caller's own live local value when called as a
 real out-of-line function (confirmed via a dedicated probe:
-`HAL_TIMER2_WritePeriod(200)` landed as `PR2=0` every time).
+`EPIC_TIMER2_WritePeriod(200)` landed as `PR2=0` every time).
 
 The compiler's bank-tracking optimizer (Finding 1) presumably recognizes
 specific, compiler-generated bank-select sequences (or `BANKSEL`-style
@@ -98,11 +98,11 @@ which explanation is correct.
 
 Duplicated symbols get an `i1_` prefix (`i2_` for a PIC18 high-priority
 interrupt). This is directly visible in this HAL's own generated `.s`:
-`HAL_IRQ_ClearFlag` is called from both main-line code (via
-`HAL_TIMER2_Init`) and from every peripheral `_IRQHandler` in the
+`EPIC_IRQ_ClearFlag` is called from both main-line code (via
+`EPIC_TIMER2_Init`) and from every peripheral `_IRQHandler` in the
 interrupt dispatch chain, and the call graph table shows exactly two
-compiled copies, `_HAL_IRQ_ClearFlag` (main-line) and
-`i1_HAL_IRQ_ClearFlag` (interrupt). This is the compiler correctly doing
+compiled copies, `_EPIC_IRQ_ClearFlag` (main-line) and
+`i1_EPIC_IRQ_ClearFlag` (interrupt). This is the compiler correctly doing
 its documented job, not a defect; seeing an `i1_`-prefixed symbol in a
 `.s`/`.sym`/`.map` file is expected and fine, not a red flag by itself.
 
@@ -124,7 +124,7 @@ interrupts is too deep, the stack will overflow (wraps around and
 overwrites previous entries). Code will then fail at a later point").
 The deepest interrupt-side path is
 `_PIC16_IRQ_Handler -> _pic8_dispatch_all_irqs -> *_IRQHandler ->
-i1_HAL_IRQ_ClearFlag`, i.e. the dispatch pattern's own design (every
+i1_EPIC_IRQ_ClearFlag`, i.e. the dispatch pattern's own design (every
 peripheral `_IRQHandler` gets a strong reference and is unconditionally
 called on any interrupt, `pic16_irq_dispatch.c`'s own documented
 contract), not anything specific to `pic8-tick` or this session's
@@ -146,8 +146,8 @@ Finding 3, or a red herring, is not yet determined.
 evidence that a genuine risk condition exists (a documented feature that
 exists specifically because unmitigated hardware-stack overflow "wraps
 around and overwrites previous entries," which is exactly the kind of
-failure that could explain `HAL_IRQ_Disable` never reaching its matching
-`HAL_IRQ_Restore`, observed as `GIE` staying disabled indefinitely after
+failure that could explain `EPIC_IRQ_Disable` never reaching its matching
+`EPIC_IRQ_Restore`, observed as `GIE` staying disabled indefinitely after
 the first successful interrupt cycle). It does not, by itself, prove
 that *this specific failure* is caused by *this specific* stack
 condition. **Finding 5 below tested this directly and the result argues
@@ -217,11 +217,11 @@ and this HAL has exactly one indirect (function-pointer) call sitting in
 the interrupt path: `USART_TX_IRQHandler` calling `g_usart->
 TxCpltCallback()` (`pic16f87xa_usart.c:150`), reachable because
 `pic16_harness_sim_target.c` registers a no-op callback purely to work
-around a separate, real bug (`HAL_USART_Init` only sets `TXEN` when a
+around a separate, real bug (`EPIC_USART_Init` only sets `TXEN` when a
 non-null `TxCpltCallback` is supplied, `pic16f87xa_usart.c:61`).
 
 Tested directly (throwaway, uncommitted): made `TXEN` unconditional in
-`HAL_USART_Init` and left `TxCpltCallback` `NULL` in the harness, so the
+`EPIC_USART_Init` and left `TxCpltCallback` `NULL` in the harness, so the
 indirect call is entirely absent from the compiled interrupt path for
 this binary. Rebuilt, ran under real `mdb`, checked both the UART output
 and register state directly (`run` + `wait 30000` + `halt` +
@@ -243,7 +243,7 @@ overlap.
 
 **Whack-a-mole, not a fix; strengthens Finding 5 rather than resolving
 the bug.** Tried the cheapest targeted mitigation available: make
-`HAL_IRQ_Disable`'s internal locals (`s`, `prev`) and `pic8_tick_get`'s
+`EPIC_IRQ_Disable`'s internal locals (`s`, `prev`) and `pic8_tick_get`'s
 locals (`prev`, `t`, the ones live across the disable/restore window)
 `static`, so they get a permanently dedicated address instead of
 participating in XC8's non-reentrant storage-overlap pool at all
@@ -256,7 +256,7 @@ produces no UART output at all, and register inspection shows `PR2`
 (Timer2's period register) reading `0`, which should hold a
 compiler-computed nonzero value, exactly the same corruption signature
 this session already fixed once before for a different call
-(`HAL_TIMER2_WritePeriod` landing `PR2=0` due to the original
+(`EPIC_TIMER2_WritePeriod` landing `PR2=0` due to the original
 `pic_select_bank`-as-function bug, unrelated to this specific edit).
 Reverted (`git checkout --`).
 
@@ -303,7 +303,7 @@ so it was tested directly: made `compute_period`'s locals `static`
 (throwaway). **`PR2` was still `0`.** Checked the next candidate from
 the same data, `pic8_tick_init`'s own locals (the caller that actually
 holds the value between `compute_period` returning and
-`HAL_TIMER2_Init` consuming it): no colliding function was found at any
+`EPIC_TIMER2_Init` consuming it): no colliding function was found at any
 of its addresses at all, ruling that candidate out without even needing
 to test it. Both throwaway edits reverted.
 
@@ -319,7 +319,7 @@ pair not yet checked (the `.sym` diff has ~15 multi-owner slots total,
 only 2 were tested), or (b) the mechanism isn't storage overlap at the
 C-variable level at all, and needs actual instruction-level tracing of
 the `PR2` write itself (single-stepping through
-`HAL_TIMER2_Init`/`HAL_TIMER2_WritePeriod`'s generated assembly from
+`EPIC_TIMER2_Init`/`EPIC_TIMER2_WritePeriod`'s generated assembly from
 reset, watching `PR2`'s value change) rather than more `.sym` inference.
 Neither was pursued further in this session.
 
@@ -331,8 +331,8 @@ depth and a systemic non-reentrant storage-overlap collision, based on
 symptoms (`GIE` stuck disabled, `PR2` reading `0`) observed downstream
 of where the real corruption happens. Both theories turned out to be
 wrong, or at best measuring a secondary effect. The deciding piece of
-evidence: `compute_period()` and `HAL_TIMER2_WritePeriod()` both run
-during `pic8_tick_init`, entirely *before* `HAL_IRQ_Restore(1)` ever
+evidence: `compute_period()` and `EPIC_TIMER2_WritePeriod()` both run
+during `pic8_tick_init`, entirely *before* `EPIC_IRQ_Restore(1)` ever
 enables `GIE`. No interrupt can be involved in corrupting `PR2` at that
 point, full stop, regardless of call-graph shape or storage overlap.
 That single fact ruled out every interrupt-timing-dependent theory this
@@ -351,10 +351,10 @@ step budget, reading each candidate variable's memory address directly
 - The actual `PR2` hardware register: `0` at the same point in time.
 
 The only thing left between "correct value sitting in a C variable" and
-"wrong value in the register" is `HAL_TIMER2_WritePeriod` itself:
+"wrong value in the register" is `EPIC_TIMER2_WritePeriod` itself:
 
 ```c
-void HAL_TIMER2_WritePeriod(uint8_t period)
+void EPIC_TIMER2_WritePeriod(uint8_t period)
 {
     uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
@@ -368,7 +368,7 @@ for `PIC8_PIE_ENABLE_BIT`/`PIC8_PIE_DISABLE_BIT`: a plain C-level access
 to something the compiler assumes is Bank-0-resident (here, the
 `period` parameter), performed after `pic_select_bank(1)`'s bank switch,
 gets misdirected. The only difference is *which* function it hit.
-`HAL_USART_Init`'s SPBRG write has the identical shape
+`EPIC_USART_Init`'s SPBRG write has the identical shape
 (`PIC8_REG8(PIC_REG_SPBRG) = h->SPBRG;` after its own
 `pic_select_bank(1)`) and was confirmed corrupted too (`SPBRG` read `4`,
 should be `129` for 9600 baud at 20 MHz), just masked until now because
@@ -383,7 +383,7 @@ touches nothing else. New `PIC8_BANK1_WRITE8(sfr, value)` macro
 (`target/pic16f87xa_platform.h`) with its own scratch byte
 (`pic8_bank1_scratch` at `0x71`, deliberately separate from
 `pic8_irq_pie_scratch` at `0x70`, unrelated subsystems). Applied to both
-`HAL_TIMER2_WritePeriod` and `HAL_USART_Init`. Verified: `PR2` reads
+`EPIC_TIMER2_WritePeriod` and `EPIC_USART_Init`. Verified: `PR2` reads
 `249`, `SPBRG` reads `129`, and `pic8-tick`'s PIC16 sim-target test
 reaches `PIC8_HARNESS_RESULT: PASS` reliably (5/5 runs). Full host
 suite and all 38 previously-passing PIC16 `(module, MCU)` real-target
@@ -426,13 +426,13 @@ left open (the same `pic_select_bank(N)` shape appearing in
 `pic16f87xa_adc.c`, `_eeprom.c`, `_ssp.c`, `_vref.c`, `_comp.c`, and
 `_psp.c`, unaudited) was carried out. Each site was checked empirically
 under real-target `mdb`, not assumed safe or unsafe from reading the
-source: a throwaway probe (`HAL_ADC_Init`/`HAL_VREF_Init`/
-`HAL_COMP_Init`/`HAL_PSP_Enable` with known values, and separately
-`HAL_SSP_Init`/`HAL_EEPROM_WriteByte`) confirmed every one of them was
+source: a throwaway probe (`EPIC_ADC_Init`/`EPIC_VREF_Init`/
+`EPIC_COMP_Init`/`EPIC_PSP_Enable` with known values, and separately
+`EPIC_SSP_Init`/`EPIC_EEPROM_WriteByte`) confirmed every one of them was
 actually corrupted, landing `0` (or another wrong value) in `ADCON1`,
 `CVRCON`, `CMCON`, `TRISE`, `SSPADD`, `SSPSTAT`, `SSPCON2`, `EEDATA`,
 `EEADR`, `EECON1`, and `EECON2`, the identical mechanism as `PR2`/
-`SPBRG`. One genuinely new data point: `HAL_SSP_Init`/`HAL_EEPROM_*`'s
+`SPBRG`. One genuinely new data point: `EPIC_SSP_Init`/`EPIC_EEPROM_*`'s
 internal bank-switch helpers (`ssp_b1_write`, `b2_write`/`b3_write`)
 are tiny `static` functions that XC8 fully inlines (confirmed: zero
 trace of their names survives in the generated `.s`), and the
@@ -459,7 +459,7 @@ Re-verified via the same probes with the fix applied: `ADCON1=0x80`,
 and all 38 previously-passing PIC16 `(module, MCU)` real-target builds
 re-verified clean.
 
-**Noticed but not fixed, unrelated bug**: `HAL_SSP_ReadByte`
+**Noticed but not fixed, unrelated bug**: `EPIC_SSP_ReadByte`
 (`pic16f87xa_ssp.c`) writes `SSPSTAT` (Bank 1, `0x94`) with no
 `pic_select_bank(1)` at all, relying on whatever bank happens to already
 be selected. Not the corruption class this document is about (nothing
@@ -473,7 +473,7 @@ one here); flagged for whoever next touches SSP.
   plausible-but-unconfirmed explanation for its own, separate symptom;
   not resolved by Finding 9's fix, which addresses a different call site
   entirely.
-- `HAL_SSP_ReadByte`'s missing `pic_select_bank(1)` (noted above): a
+- `EPIC_SSP_ReadByte`'s missing `pic_select_bank(1)` (noted above): a
   real, separate bug, not yet fixed.
 - This document itself should be checked for staleness against whatever
   XC8 version `docker/ci-toolchain/Dockerfile` pins if that version is

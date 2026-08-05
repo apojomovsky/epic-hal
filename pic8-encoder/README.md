@@ -15,7 +15,7 @@ one shared interrupt; decode with a software Gray-code transition table.
 - **One family-agnostic API** (`encoder_init` / `encoder_reset` /
   `encoder_update` / `encoder_get_position` / `encoder_get_error_count` /
   `encoder_get_glitch_count`), same `src/encoder.c` builds against
-  `pic16f87xa-hal` or `pic18fxx5x-hal` (`-DHAL_FAMILY=PIC18`).
+  `pic16f87xa-hal` or `pic18fxx5x-hal` (`-DEPIC_FAMILY=PIC18`).
 - **Push, not poll**: an edge-triggered decoder, called from the
   application's RB-change callback, so it does not miss counts the way a
   poll-driven design would.
@@ -23,7 +23,7 @@ one shared interrupt; decode with a software Gray-code transition table.
   always on) and `glitch_count` (edges rejected by the optional per-instance
   minimum-interval gate), kept separate so each tells a distinct story.
 - **Atomic reads**: `encoder_get_position()` wraps the 32-bit read in
-  `HAL_IRQ_Disable`/`Restore` (the ISR writes it asynchronously), mirroring
+  `EPIC_IRQ_Disable`/`Restore` (the ISR writes it asynchronously), mirroring
   `pic8_tick_get()`.
 - **No `pic8-math` link**: only integer add/compare/shift, no multiply.
 - **Works on the host simulator and real silicon**; the host test suite
@@ -49,7 +49,7 @@ ctest --test-dir build --output-on-failure   # test_encoder: 52 checks
 ./build/example_encoder_hal                  # two encoders on one PORTB
 ./build/example_encoder_pid_loop             # encoder -> pid_update loop
 # PIC18 family instead:
-cmake -B build18 -DHAL_FAMILY=PIC18 && cmake --build build18
+cmake -B build18 -DEPIC_FAMILY=PIC18 && cmake --build build18
 ctest --test-dir build18 --output-on-failure
 ```
 
@@ -72,7 +72,7 @@ per-family variant).
 ```c
 #include "encoder.h"
 #include "pic8_tick.h"
-#include "peripherals/hal_gpio.h"   /* HAL_GPIO_RegisterChangeCallback */
+#include "peripherals/hal_gpio.h"   /* EPIC_GPIO_RegisterChangeCallback */
 #include "core/hal_irq.h"
 
 static encoder_t enc;
@@ -81,11 +81,11 @@ static void on_rb_change(uint8_t portb) { encoder_update(&enc, portb); }
 
 void app_init(void) {
     pic8_tick_init(FOSC_HZ);
-    HAL_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5, GPIO_MODE_INPUT);
-    HAL_GPIO_RegisterChangeCallback(on_rb_change);
-    encoder_init(&enc, 4, 5, 5 /* ms gate */, HAL_GPIO_ReadPort(GPIOB));
-    HAL_IRQ_Enable(PIC16_IRQ_RB);   /* PIC18_IRQ_RB on the PIC18 family */
-    HAL_IRQ_Restore(1);
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5, GPIO_MODE_INPUT);
+    EPIC_GPIO_RegisterChangeCallback(on_rb_change);
+    encoder_init(&enc, 4, 5, 5 /* ms gate */, EPIC_GPIO_ReadPort(GPIOB));
+    EPIC_IRQ_Enable(PIC16_IRQ_RB);   /* PIC18_IRQ_RB on the PIC18 family */
+    EPIC_IRQ_Restore(1);
 }
 
 /* Each control cycle: */

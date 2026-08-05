@@ -81,7 +81,7 @@ pic16f87xa-hal/
 │   ├── target/                 platform header selected by the XC8 build
 │   │   └── pic16f87xa_platform.h   (SFRs → volatile deref, no weak)
 │   ├── core/                    CPU-level features (PIC16-specific)
-│   │   ├── pic16_irq.h                IRQn enum + HAL_IRQ_* backend
+│   │   ├── pic16_irq.h                IRQn enum + EPIC_IRQ_* backend
 │   │   └── pic16f87xa_wdt_sleep.h      WDT/Sleep/BOR/POR helpers
 │   └── peripherals/            one .h per peripheral, Cube-style
 ├── src/
@@ -194,7 +194,7 @@ Variables (all overridable on the command line):
 | `FOSC_HZ`       | `20000000`           | Oscillator frequency, passed as `-DFOSC_HZ`.           |
 | `DFP_DIR`       | XC8 v3.10 install path | Device Family Pack dir for `-mdfp`. Empty → omit.   |
 | `APP_SOURCES`   | `example_blink.c`    | Your application source(s).                            |
-| `HAL_DIR`       | `../..`              | Where the HAL tree lives.                              |
+| `EPIC_DIR`       | `../..`              | Where the HAL tree lives.                              |
 | `BUILD_DIR`     | `build`              | Output directory.                                      |
 
 Output: `build/<MCU>-firmware.hex` (Intel HEX, via `-ginhx32`).
@@ -204,7 +204,7 @@ The Makefile generates a Configuration Word source at build time
 
 ```c
 #pragma config FOSC = HS     // high-speed crystal (≤ 20 MHz)
-#pragma config WDTE = ON     // watchdog enabled, refresh with HAL_WDT_Refresh()
+#pragma config WDTE = ON     // watchdog enabled, refresh with EPIC_WDT_Refresh()
 #pragma config PWRTE = ON    // power-up timer 72 ms
 #pragma config BOREN = ON    // brown-out reset at 4.0 V
 #pragma config LVP = OFF     // low-voltage programming off
@@ -263,8 +263,8 @@ actually models, on this family, is:
 ## 7. Interrupts
 
 The PIC16F87XA has one interrupt vector at 0x0004 (DS39582B §14.11). See
-`pic8-common/MANUAL.md` §6 for the shared `HAL_IRQ_*` API, the priority
-vocabulary (unused on this single-vector family, `HAL_IRQ_SetPriority` is
+`pic8-common/MANUAL.md` §6 for the shared `EPIC_IRQ_*` API, the priority
+vocabulary (unused on this single-vector family, `EPIC_IRQ_SetPriority` is
 a no-op here), and §7 for the ISR-driven-peripheral recipe — both apply
 unchanged. The one per-family piece is the IRQ identity enum:
 
@@ -296,28 +296,28 @@ both host and target) calls every peripheral `*IRQHandler` in turn.
 ## 8. Core: WDT, Sleep, BOR/POR
 
 ```c
-void   HAL_WDT_Refresh(void);     // asm("clrwdt") on target; no-op on host
-void   HAL_Sleep_Enter(void);     // asm("sleep")  on target; no-op on host
-uint8_t HAL_BOR_GetStatus(void);  // PCON<BOR>, was the last reset a brown-out?
-void   HAL_BOR_ClearFlag(void);
-uint8_t HAL_POR_GetStatus(void);  // PCON<POR>, was the last reset a power-on?
-void   HAL_POR_ClearFlag(void);
+void   EPIC_WDT_Refresh(void);     // asm("clrwdt") on target; no-op on host
+void   EPIC_Sleep_Enter(void);     // asm("sleep")  on target; no-op on host
+uint8_t EPIC_BOR_GetStatus(void);  // PCON<BOR>, was the last reset a brown-out?
+void   EPIC_BOR_ClearFlag(void);
+uint8_t EPIC_POR_GetStatus(void);  // PCON<POR>, was the last reset a power-on?
+void   EPIC_POR_ClearFlag(void);
 ```
 
-`HAL_WDT_Refresh` executes `clrwdt`. If the configuration word has
+`EPIC_WDT_Refresh` executes `clrwdt`. If the configuration word has
 `WDTE = ON` (the Makefile's default), you **must** call this more often
 than the WDT timeout or the chip resets. In an interrupt-driven idle loop
 that sleeps, refresh the WDT from the wake-up ISR so it does not expire
 while the CPU is asleep (see `example_idle_blink`).
 
-`HAL_Sleep_Enter` executes `sleep`; the CPU halts until any enabled
+`EPIC_Sleep_Enter` executes `sleep`; the CPU halts until any enabled
 interrupt wakes it (DS39582B §14.14). Note that **Timer0 (internal clock)
 stops in Sleep**, it cannot wake the CPU. To wake from Sleep you need a
 peripheral with its own clock: Timer1 with the external 32.768 kHz T1OSC
 crystal (asynchronous mode) is the canonical choice, along with INT/RB
 change, the WDT, SSP (I²C slave), EEPROM-done, etc.
 
-`HAL_BOR_GetStatus` / `HAL_POR_GetStatus` read the PCON reset-reason bits
+`EPIC_BOR_GetStatus` / `EPIC_POR_GetStatus` read the PCON reset-reason bits
 (§14.10). Clear them after reading so you can distinguish the next reset's
 cause.
 
@@ -344,14 +344,14 @@ typedef enum { GPIO_NOPULL=0, GPIO_PULLUP=1 } GPIO_PullTypeDef;   // PORTB only
 ### 9.2 Functions
 
 ```c
-void HAL_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
-void HAL_GPIO_DeInit(GPIO_TypeDef port);                          // all pins → input, latch cleared
-void HAL_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
-void HAL_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);
-GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);
-void HAL_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
-uint8_t HAL_GPIO_ReadPort(GPIO_TypeDef port);
-void HAL_GPIO_SetPullups(GPIO_PullTypeDef pull);                  // OPTION_REG<RBPU>, PORTB only
+void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
+void EPIC_GPIO_DeInit(GPIO_TypeDef port);                          // all pins → input, latch cleared
+void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
+void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);
+GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);
+void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
+uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
+void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull);                  // OPTION_REG<RBPU>, PORTB only
 ```
 
 `pins` is a bitmask of `GPIO_PIN_*` (you can OR them to affect several
@@ -366,10 +366,10 @@ others 8-bit; out-of-range bits in `pins` are masked off.
   `BSF/BCF` idiom, it does not read back the pin to set a bit.
 - `GPIO_MODE_ANALOG` sets TRIS=1 (input) the same as `GPIO_MODE_INPUT`;
   the difference is documentary. To actually release a PORTA pin to the
-  ADC, set `ADCON1<PCFG3:PCFG0>` (via `HAL_ADC_Init`'s `Reference`
+  ADC, set `ADCON1<PCFG3:PCFG0>` (via `EPIC_ADC_Init`'s `Reference`
   field) **before** configuring the pin.
 - Pull-ups are PORTB-only and controlled by `OPTION_REG<RBPU>`, which is
-  inverted (`RBPU=1` disables). `HAL_GPIO_SetPullups` handles that.
+  inverted (`RBPU=1` disables). `EPIC_GPIO_SetPullups` handles that.
 
 ### 9.4 PORTB change interrupt (RB<7:4>)
 
@@ -383,11 +383,11 @@ family-specific include; the family-neutral shim `peripherals/hal_gpio.h`
 pulls this header in.
 
 ```c
-void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
+void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
 void RB_IRQHandler(void) PIC8_WEAK;
 ```
 
-`HAL_GPIO_RegisterChangeCallback` stores one callback slot (NULL is safe,
+`EPIC_GPIO_RegisterChangeCallback` stores one callback slot (NULL is safe,
 the handler no-ops). `RB_IRQHandler` is the weak ISR the dispatcher fans
 out to; the default body reads PORTB, clears RBIF, then calls the
 registered callback with that already-read byte.
@@ -397,14 +397,14 @@ value of PORTB at the last CPU read, so reading PORTB is what ends the
 current mismatch condition and re-arms the next one. Clearing RBIF first
 (or not reading at all) risks an immediate spurious re-interrupt or a
 silently-missed change. The handler therefore reads PORTB into a local
-*before* `HAL_IRQ_ClearFlag`, and the callback receives that already-read
+*before* `EPIC_IRQ_ClearFlag`, and the callback receives that already-read
 value, never a second later read (which by then may not reflect the byte
 the mismatch logic cleared against). Do not reorder this.
 
 The dispatcher calls `RB_IRQHandler` on every interrupt (it checks RBIF
 and returns immediately when not pending), so it costs only a flag test
 when the source is idle. To arm it on a real target, also
-`HAL_IRQ_Enable(PIC16_IRQ_RB)` and `HAL_IRQ_Restore(1)`.
+`EPIC_IRQ_Enable(PIC16_IRQ_RB)` and `EPIC_IRQ_Restore(1)`.
 
 **Host sim.** The sim does not auto-assert RBIF on a PORTB mismatch
 (faithfully modeling the datasheet "snapshot on every PORTB read" would
@@ -445,13 +445,13 @@ gives Timer0 the raw clock.
 ### 10.2 Functions
 
 ```c
-HAL_StatusTypeDef HAL_TIMER0_Init(const TIMER0_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER0_DeInit(void);
-HAL_StatusTypeDef HAL_TIMER0_Start(const TIMER0_HandleTypeDef *h);  // writes ReloadValue, sets T0CS
-HAL_StatusTypeDef HAL_TIMER0_Stop(void);
-uint8_t  HAL_TIMER0_ReadCounter(void);
-void     HAL_TIMER0_WriteCounter(uint8_t value);   // also clears the prescaler
-uint16_t HAL_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);  // 1, 2, …, 256
+EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void);
+EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h);  // writes ReloadValue, sets T0CS
+EPIC_StatusTypeDef EPIC_TIMER0_Stop(void);
+uint8_t  EPIC_TIMER0_ReadCounter(void);
+void     EPIC_TIMER0_WriteCounter(uint8_t value);   // also clears the prescaler
+uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);  // 1, 2, …, 256
 void     TIMER0_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -472,9 +472,9 @@ void     TIMER0_IRQHandler(void) PIC8_WEAK;
 ```c
 TIMER0_HandleTypeDef h = TIMER0_HANDLE_DEFAULT;     // internal, 1:256, reload 0
 h.OverflowCallback = on_t0_overflow;
-HAL_TIMER0_Init(&h);
-HAL_TIMER0_Start(&h);
-HAL_IRQ_Restore(1);                          // GIE on
+EPIC_TIMER0_Init(&h);
+EPIC_TIMER0_Start(&h);
+EPIC_IRQ_Restore(1);                          // GIE on
 ```
 
 At FOSC = 20 MHz (FCY = 5 MHz), 1:256 overflows every
@@ -505,13 +505,13 @@ typedef struct {
 ### 11.2 Functions
 
 ```c
-HAL_StatusTypeDef HAL_TIMER1_Init(const TIMER1_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER1_DeInit(void);
-HAL_StatusTypeDef HAL_TIMER1_Start(const TIMER1_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER1_Stop(void);
-uint16_t HAL_TIMER1_ReadCounter(void);    // atomic, read-twice idiom per §6.4.1
-void     HAL_TIMER1_WriteCounter(uint16_t value);
-uint16_t HAL_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);  // 1, 2, 4, 8
+EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void);
+EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER1_Stop(void);
+uint16_t EPIC_TIMER1_ReadCounter(void);    // atomic, read-twice idiom per §6.4.1
+void     EPIC_TIMER1_WriteCounter(uint16_t value);
+uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);  // 1, 2, 4, 8
 void     TIMER1_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -550,16 +550,16 @@ cycles. TMR2 resets to 0 when it matches PR2 (it never holds PR2+1).
 ### 12.2 Functions
 
 ```c
-HAL_StatusTypeDef HAL_TIMER2_Init(const TIMER2_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER2_DeInit(void);
-HAL_StatusTypeDef HAL_TIMER2_Start(const TIMER2_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER2_Stop(void);
-uint8_t  HAL_TIMER2_ReadCounter(void);
-void     HAL_TIMER2_WriteCounter(uint8_t value);
-uint8_t  HAL_TIMER2_ReadPeriod(void);
-void     HAL_TIMER2_WritePeriod(uint8_t period);
-uint16_t HAL_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p);
-uint16_t HAL_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p);
+EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void);
+EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER2_Stop(void);
+uint8_t  EPIC_TIMER2_ReadCounter(void);
+void     EPIC_TIMER2_WriteCounter(uint8_t value);
+uint8_t  EPIC_TIMER2_ReadPeriod(void);
+void     EPIC_TIMER2_WritePeriod(uint8_t period);
+uint16_t EPIC_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p);
+uint16_t EPIC_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p);
 void     TIMER2_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -610,11 +610,11 @@ load-bearing).
 ### 13.2 Functions
 
 ```c
-HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_CCP_DeInit(CCP_InstanceTypeDef inst);
-void     HAL_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
-uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst);
-void     HAL_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);  // 0..1023
+EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
+void     EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
+uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
+void     EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);  // 0..1023
 void     CCP1_IRQHandler(void) PIC8_WEAK;
 void     CCP2_IRQHandler(void) PIC8_WEAK;
 ```
@@ -625,13 +625,13 @@ void     CCP2_IRQHandler(void) PIC8_WEAK;
 TIMER2_HandleTypeDef t2 = TIMER2_HANDLE_DEFAULT;
 t2.Prescaler = TIMER2_PRESCALER_1_1;
 t2.Period    = 99;                 // PR2 = 99 → 100-cycle PWM period
-HAL_TIMER2_Init(&t2);
-HAL_TIMER2_Start(&t2);
+EPIC_TIMER2_Init(&t2);
+EPIC_TIMER2_Start(&t2);
 
 CCP_HandleTypeDef ccp = { .Instance = CCP_INSTANCE_1, .Mode = CCP_MODE_PWM,
                            .PWM = { .Period = 99, .Duty = 50 } };  // 50% of 100→ ~50%
-HAL_CCP_Init(&ccp);               // RC2/CCP1 now outputs PWM
-HAL_CCP_SetPWMDuty(CCP_INSTANCE_1, 512);   // later: 50% of 1024
+EPIC_CCP_Init(&ccp);               // RC2/CCP1 now outputs PWM
+EPIC_CCP_SetPWMDuty(CCP_INSTANCE_1, 512);   // later: 50% of 1024
 ```
 
 Duty is 10-bit (0..1023). For duty 0 the output stays low for the whole
@@ -670,14 +670,14 @@ returns 0..255, or `0xFFFF` if the desired baud needs X > 255.
 ### 14.2 Functions
 
 ```c
-HAL_StatusTypeDef HAL_USART_Init(const USART_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_USART_DeInit(void);
-void    HAL_USART_Transmit(uint8_t data);    // writes TXREG; clears TXIF
-uint8_t HAL_USART_GetTX9D(void);
-void    HAL_USART_SetTX9D(uint8_t bit9);     // set BEFORE Transmit for 9-bit
-uint8_t HAL_USART_IsTxShiftRegisterEmpty(void);   // TRMT
-uint8_t HAL_USART_Receive(void);              // reads RCREG; clears RCIF, advances FIFO
-uint8_t HAL_USART_GetRX9D(void);
+EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_USART_DeInit(void);
+void    EPIC_USART_Transmit(uint8_t data);    // writes TXREG; clears TXIF
+uint8_t EPIC_USART_GetTX9D(void);
+void    EPIC_USART_SetTX9D(uint8_t bit9);     // set BEFORE Transmit for 9-bit
+uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);   // TRMT
+uint8_t EPIC_USART_Receive(void);              // reads RCREG; clears RCIF, advances FIFO
+uint8_t EPIC_USART_GetRX9D(void);
 void    USART_RX_IRQHandler(void) PIC8_WEAK;
 void    USART_TX_IRQHandler(void) PIC8_WEAK;
 ```
@@ -722,33 +722,33 @@ typedef struct {
 ### 15.2 Functions
 
 ```c
-HAL_StatusTypeDef HAL_SSP_Init(const SSP_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_SSP_DeInit(void);
+EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_SSP_DeInit(void);
 
 /* SPI / common */
-uint16_t HAL_SSP_WriteByte(uint8_t data);   // returns 0xFFFF on WCOL (byte not written)
-uint8_t  HAL_SSP_ReadByte(void);
-uint8_t  HAL_SSP_IsBufferFull(void);         // SSPSTAT<BF>
-uint8_t  HAL_SSP_HasWriteCollision(void);
-void     HAL_SSP_ClearWriteCollision(void);
+uint16_t EPIC_SSP_WriteByte(uint8_t data);   // returns 0xFFFF on WCOL (byte not written)
+uint8_t  EPIC_SSP_ReadByte(void);
+uint8_t  EPIC_SSP_IsBufferFull(void);         // SSPSTAT<BF>
+uint8_t  EPIC_SSP_HasWriteCollision(void);
+void     EPIC_SSP_ClearWriteCollision(void);
 
 /* I²C master helpers */
 uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz);  // Fscl = Fosc/(4×(SSPADD+1))
-void     HAL_SSP_Start(void);          void     HAL_SSP_RepeatedStart(void);
-void     HAL_SSP_Stop(void);          void     HAL_SSP_ReceiveEnable(void);
-void     HAL_SSP_AcknowledgeEnable(void);
-uint8_t  HAL_SSP_AcknowledgeStatus(void);
+void     EPIC_SSP_Start(void);          void     EPIC_SSP_RepeatedStart(void);
+void     EPIC_SSP_Stop(void);          void     EPIC_SSP_ReceiveEnable(void);
+void     EPIC_SSP_AcknowledgeEnable(void);
+uint8_t  EPIC_SSP_AcknowledgeStatus(void);
 void     SSP_IRQHandler(void) PIC8_WEAK;
 ```
 
 ### 15.3 I²C master by hand
 
 ```c
-HAL_SSP_Start();
-HAL_SSP_WriteByte((addr << 1) | 1);          // read address
-while (!HAL_SSP_IsBufferFull()) { }
-(void)HAL_SSP_ReadByte();
-HAL_SSP_Stop();
+EPIC_SSP_Start();
+EPIC_SSP_WriteByte((addr << 1) | 1);          // read address
+while (!EPIC_SSP_IsBufferFull()) { }
+(void)EPIC_SSP_ReadByte();
+EPIC_SSP_Stop();
 ```
 
 You are responsible for polling `BF` and `ACKSTAT` and for the
@@ -782,19 +782,19 @@ typedef struct {
 (`ADC_REFERENCE_VDD_VSS_8CH`, `ADC_REFERENCE_VREF_2CH`, …) map 1:1 to the
 datasheet's configuration table, which also determines which analog pins
 are available. Pick the reference first, then configure the freed PORTA
-pins as analog via `HAL_GPIO_Init`.
+pins as analog via `EPIC_GPIO_Init`.
 
 ### 16.2 Functions
 
 ```c
-HAL_StatusTypeDef HAL_ADC_Init(const ADC_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_ADC_DeInit(void);
-uint16_t HAL_ADC_Start(void);                  // sets GO/DONE; 0xFFFF if already in progress
-void     HAL_ADC_SelectChannel(ADC_ChannelTypeDef ch);
-uint8_t  HAL_ADC_IsConversionInProgress(void);  // GO/DONE == 1
-uint8_t  HAL_ADC_IsConversionDone(void);         // ADIF == 1
-void     HAL_ADC_ClearITFlag(void);
-uint16_t HAL_ADC_Read(void);                    // 0..1023 (right-justified; left is shifted down)
+EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_ADC_DeInit(void);
+uint16_t EPIC_ADC_Start(void);                  // sets GO/DONE; 0xFFFF if already in progress
+void     EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch);
+uint8_t  EPIC_ADC_IsConversionInProgress(void);  // GO/DONE == 1
+uint8_t  EPIC_ADC_IsConversionDone(void);         // ADIF == 1
+void     EPIC_ADC_ClearITFlag(void);
+uint16_t EPIC_ADC_Read(void);                    // 0..1023 (right-justified; left is shifted down)
 void     ADC_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -804,11 +804,11 @@ The driver splits channel-select and start so the
 acquisition time (§11.1, ~20 µs at VDD = 5 V) can elapse between them:
 
 ```c
-HAL_ADC_SelectChannel(ADC_CHANNEL_AN0);
+EPIC_ADC_SelectChannel(ADC_CHANNEL_AN0);
 /* wait ≥ T_acq */
-HAL_ADC_Start();
-while (!HAL_ADC_IsConversionDone()) { }
-uint16_t val = HAL_ADC_Read();
+EPIC_ADC_Start();
+while (!EPIC_ADC_IsConversionDone()) { }
+uint16_t val = EPIC_ADC_Read();
 ```
 
 Or use the completion IRQ: set `ConvCpltCallback` and enable interrupts;
@@ -836,12 +836,12 @@ typedef struct {
     void (*ChangeCallback)(void);
 } COMP_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_COMP_DeInit(void);
-uint8_t HAL_COMP_C1Out(void);            // CMCON<C1OUT>
-uint8_t HAL_COMP_C2Out(void);
-uint8_t HAL_COMP_IsChangeFlag(void);
-void    HAL_COMP_ClearChangeFlag(void);
+EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_COMP_DeInit(void);
+uint8_t EPIC_COMP_C1Out(void);            // CMCON<C1OUT>
+uint8_t EPIC_COMP_C2Out(void);
+uint8_t EPIC_COMP_IsChangeFlag(void);
+void    EPIC_COMP_ClearChangeFlag(void);
 void    COMP_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -867,12 +867,12 @@ typedef struct {
     bool              Enabled;      // CVREN
 } VREF_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_VREF_Init(const VREF_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_VREF_DeInit(void);
-uint32_t HAL_VREF_MilliVolts(uint32_t vdd_mv, VREF_RangeTypeDef range, uint8_t value);
+EPIC_StatusTypeDef EPIC_VREF_Init(const VREF_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_VREF_DeInit(void);
+uint32_t EPIC_VREF_MilliVolts(uint32_t vdd_mv, VREF_RangeTypeDef range, uint8_t value);
 ```
 
-`HAL_VREF_MilliVolts` computes the nominal output for a given VDD (mV),
+`EPIC_VREF_MilliVolts` computes the nominal output for a given VDD (mV),
 range, and tap, handy for tests and for printing what you configured.
 
 ---
@@ -890,26 +890,26 @@ then 0xAA to EECON2 before WR, §3.4, Example 3-1).
 EEPROM takes a raw callback, not a handle:
 
 ```c
-HAL_StatusTypeDef HAL_EEPROM_Init(void (*callback)(void));   // enables PIE2<EEIE> if callback
-HAL_StatusTypeDef HAL_EEPROM_DeInit(void);
+EPIC_StatusTypeDef EPIC_EEPROM_Init(void (*callback)(void));   // enables PIE2<EEIE> if callback
+EPIC_StatusTypeDef EPIC_EEPROM_DeInit(void);
 
-uint8_t  HAL_EEPROM_ReadByte(uint8_t addr);                          // RD
-HAL_StatusTypeDef HAL_EEPROM_WriteByte(uint8_t addr, uint8_t data);  // unlock + WR
-void     HAL_EEPROM_ReadBuffer(uint8_t start, uint8_t *buf, uint8_t len);
-HAL_StatusTypeDef HAL_EEPROM_WriteBuffer(uint8_t start, const uint8_t *buf, uint8_t len);
+uint8_t  EPIC_EEPROM_ReadByte(uint8_t addr);                          // RD
+EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data);  // unlock + WR
+void     EPIC_EEPROM_ReadBuffer(uint8_t start, uint8_t *buf, uint8_t len);
+EPIC_StatusTypeDef EPIC_EEPROM_WriteBuffer(uint8_t start, const uint8_t *buf, uint8_t len);
 
-uint8_t  HAL_EEPROM_IsWriteComplete(void);   // EEIF
-void     HAL_EEPROM_ClearITFlag(void);
+uint8_t  EPIC_EEPROM_IsWriteComplete(void);   // EEIF
+void     EPIC_EEPROM_ClearITFlag(void);
 void     EEPROM_IRQHandler(void) PIC8_WEAK;
 ```
 
 ### 19.2 Notes
 
 - Writes are **non-blocking**: `WriteByte` returns as soon as `WR` is set.
-  Detect completion by polling `HAL_EEPROM_IsWriteComplete()` (EEIF,
+  Detect completion by polling `EPIC_EEPROM_IsWriteComplete()` (EEIF,
   PIR2<4>) or via the EEPROM interrupt. Do not start a new write before
   the previous one finishes.
-- `WriteByte` returns `HAL_ERROR` if a previous write was aborted
+- `WriteByte` returns `EPIC_ERROR` if a previous write was aborted
   (`WRERR` set).
 
 ---
@@ -923,13 +923,13 @@ PORTE: RE0/RD, RE1/WR, RE2/CS. An external master reads/writes the part
 through these pins when `TRISE<PSPMODE>` is set.
 
 ```c
-HAL_StatusTypeDef HAL_PSP_Init(void (*callback)(void));   // enables PSPIE if callback
-HAL_StatusTypeDef HAL_PSP_DeInit(void);
-void     HAL_PSP_Enable(void);          void     HAL_PSP_Disable(void);
-uint8_t  HAL_PSP_IsInputBufferFull(void);    // TRISE<IBF>
-uint8_t  HAL_PSP_IsOutputBufferFull(void);   // TRISE<OBF>
-uint8_t  HAL_PSP_HasInputOverflow(void);     // TRISE<IBOV>
-void     HAL_PSP_ClearInputOverflow(void);
+EPIC_StatusTypeDef EPIC_PSP_Init(void (*callback)(void));   // enables PSPIE if callback
+EPIC_StatusTypeDef EPIC_PSP_DeInit(void);
+void     EPIC_PSP_Enable(void);          void     EPIC_PSP_Disable(void);
+uint8_t  EPIC_PSP_IsInputBufferFull(void);    // TRISE<IBF>
+uint8_t  EPIC_PSP_IsOutputBufferFull(void);   // TRISE<OBF>
+uint8_t  EPIC_PSP_HasInputOverflow(void);     // TRISE<IBOV>
+void     EPIC_PSP_ClearInputOverflow(void);
 void     PSP_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -1082,7 +1082,7 @@ for t in build/example_*; do "$t"; done   # exit code 0 = pass
   deliberate `#error`.
 
 See `pic8-common/MANUAL.md` §6 for two HAL-wide design decisions that used
-to be listed here (`HAL_IRQ_Enable` not setting the global enable, and
+to be listed here (`EPIC_IRQ_Enable` not setting the global enable, and
 there being no `HAL_PPP_MspInit`) — they're true of every family, not a
 PIC16F87XA-specific gap, so they moved to the shared manual.
 

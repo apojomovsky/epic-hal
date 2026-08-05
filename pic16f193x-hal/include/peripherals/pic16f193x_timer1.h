@@ -26,8 +26,8 @@
  */
 typedef enum {
     TIMER1_CLOCK_INTERNAL  = 0x0U,   /**< Fosc/4 (timer mode). */
-    /** External pin or T1OSC. Not implemented this phase: HAL_TIMER1_Init/
-     *  Start return HAL_INVALID for this value (MANUAL.md §11 "Not in
+    /** External pin or T1OSC. Not implemented this phase: EPIC_TIMER1_Init/
+     *  Start return EPIC_INVALID for this value (MANUAL.md §11 "Not in
      *  this phase"). */
     TIMER1_CLOCK_EXTERNAL  = 0x1U,
 } TIMER1_ClockSourceTypeDef;
@@ -61,19 +61,19 @@ typedef struct {
     .OverflowCallback = NULL,                                           \
 }
 
-HAL_StatusTypeDef HAL_TIMER1_Init(const TIMER1_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER1_DeInit(void);
-HAL_StatusTypeDef HAL_TIMER1_Start(const TIMER1_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER1_Stop(void);
+EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void);
+EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER1_Stop(void);
 
 /** Atomically read the 16-bit counter value. */
-uint16_t HAL_TIMER1_ReadCounter(void);
+uint16_t EPIC_TIMER1_ReadCounter(void);
 
 /** Atomically write the 16-bit counter value. */
-void HAL_TIMER1_WriteCounter(uint16_t value);
+void EPIC_TIMER1_WriteCounter(uint16_t value);
 
 /** Convert a prescaler enum to its integer ratio (1, 2, 4, 8). */
-uint16_t HAL_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);
+uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);
 
 /** Weak Timer1 ISR, override in user code to add application logic. */
 void TIMER1_IRQHandler(void) PIC8_WEAK;

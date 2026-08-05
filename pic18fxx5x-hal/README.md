@@ -63,7 +63,7 @@ implemented and cited against DS39632E. `example_blink` /
   `T3CCP2:T3CCP1` at reset (CCP timer-select, managed by the CCP/ECCP
   driver). Overflow → PIR2<TMR3IF>.
 - ✅ ECCP1 + CCP2 driver (`peripherals/pic18fxx5x_ccp.h`): mirrors PIC16's
-  `HAL_CCP_*` API (capture/compare/PWM, weak ISRs) and adds the PIC18
+  `EPIC_CCP_*` API (capture/compare/PWM, weak ISRs) and adds the PIC18
   Enhanced CCP features PIC16 lacks — multi-output PWM (single /
   half-bridge / full-bridge forward/reverse via `P1M`), programmable
   dead-band + auto-restart (`ECCP1DEL`), and auto-shutdown with source
@@ -72,21 +72,21 @@ implemented and cited against DS39632E. `example_blink` /
   `T3CCP2:T3CCP1` Timer1/Timer3 capture/compare time-base select is left
   at reset (Timer1) for the driver; configurable via Timer3.
 - ✅ MSSP / SSP driver (`peripherals/pic18fxx5x_ssp.h`): SPI master/slave +
-  I²C master/slave, mirrors PIC16's `HAL_SSP_*` API; PIC18 MSSP registers
+  I²C master/slave, mirrors PIC16's `EPIC_SSP_*` API; PIC18 MSSP registers
   are all in the Access Bank (no bank switching) and the control register
   is SSPCON1 (PIC16's is SSPCON). Register-level only — the I²C state
   machine (Start/Stop/ACK, address matching) is left to the user.
 - ✅ EUSART driver (`peripherals/pic18fxx5x_usart.h`): Enhanced USART,
-  mirrors PIC16's `HAL_USART_*` API + the PIC18 additions via `BAUDCON` +
+  mirrors PIC16's `EPIC_USART_*` API + the PIC18 additions via `BAUDCON` +
   `SPBRGH` — 16-bit baud generator (`BRG16`), auto-baud detect (`ABDEN`),
   9-bit address-detect (`ADDEN`). `USART_ComputeSPBRG` encodes all four
   rows of Table 20-1.
 - ✅ Comparator driver (`peripherals/pic18fxx5x_comp.h`): two on-chip
-  comparators, mirrors PIC16's `HAL_COMP_*` API — the PIC18 `CMCON` has
+  comparators, mirrors PIC16's `EPIC_COMP_*` API: the PIC18 `CMCON` has
   the same bit layout and eight modes, just in the Access Bank. Added
   `PIC18_IRQ_CMP` (PIR2<CMIF>). CVRCON (comparator Vref) is separate.
 - ✅ Data EEPROM driver (`peripherals/pic18fxx5x_eeprom.h`): 256-byte
-  data EEPROM, mirrors PIC16's `HAL_EEPROM_*` API; PIC18 moves the
+  data EEPROM, mirrors PIC16's `EPIC_EEPROM_*` API; PIC18 moves the
   registers into the Access Bank and adds `EEPGD`/`CFGS` (kept 0 for
   data EEPROM). Write does the mandatory 0x55→0xAA unlock; the sim models
   the cell array.
@@ -100,15 +100,15 @@ implemented and cited against DS39632E. `example_blink` /
   only — fully gated through `PIC18FXX5X_FAMILY_HAS_SPP`. Register-level:
   programs SPPCON/SPPCFG/SPPEPS, byte-level SPPDATA access, busy/WR/RD
   status, SPPIF IRQ; the USB streaming protocol is left to the user.
-- ✅ Interrupt core (`core/pic18_irq.h`): `PIC18_IRQn` enum, `HAL_IRQ_*`
+- ✅ Interrupt core (`core/pic18_irq.h`): `PIC18_IRQn` enum, `EPIC_IRQ_*`
   against INTCON / INTCON2 / INTCON3 / PIE1 / PIR1 / IPR1, priority mode
-  (IPEN) enabled by `HAL_IRQ_Restore`. `HAL_IRQ_SetPriority` is the
+  (IPEN) enabled by `EPIC_IRQ_Restore`. `EPIC_IRQ_SetPriority` is the
   shared-contract extension (no-op on PIC16).
 - ✅ ISR vectors (`src/core/pic18_isr_vector.c`, XC8 only):
   `__interrupt(high_priority)` at 0008h and `__interrupt(low_priority)` at
   0018h, both delegating to `pic8_dispatch_all_irqs`.
-- ✅ WDT / Sleep (`core/pic18fxx5x_wdt_sleep.h`): `HAL_WDT_Refresh` /
-  `HAL_Sleep_Enter` (asm on target, no-op on host) + BOR/POR status from
+- ✅ WDT / Sleep (`core/pic18fxx5x_wdt_sleep.h`): `EPIC_WDT_Refresh` /
+  `EPIC_Sleep_Enter` (asm on target, no-op on host) + BOR/POR status from
   RCON (PIC18 folds TO/PD/POR/BOR into RCON, not a separate PCON).
 - ✅ Host simulation backend (`src/sim/pic18_sim.c`): Timer0/1/2/3 stepping
   (8/16-bit, prescalers, overflow → TMR0IF/PIR1/PIR2 flags) + GPIO
@@ -135,7 +135,7 @@ pic18fxx5x-hal/
 │   ├── host/pic18_platform.h     Host platform: memory-backed SFR + weak attr
 │   ├── target/pic18_platform.h   Target platform: volatile-deref SFR
 │   ├── core/                     (Phase 2: pic18_irq.h)
-│   └── peripherals/              (Phase 2: HAL_GPIO_*, HAL_TIMER0_*, ...)
+│   └── peripherals/              (Phase 2: EPIC_GPIO_*, EPIC_TIMER0_*, ...)
 ├── src/
 │   ├── core/                     harness_sim, irq_dispatch (Phase 2: isr_vector)
 │   ├── peripherals/              (Phase 2)
@@ -221,7 +221,7 @@ Microchip recommends always specifying it. This is recorded in
 ## API conventions
 
 Same as the PIC16F87XA HAL (mirror STM32Cube): `HAL_PPP_Init/DeInit`,
-`HAL_PPP_MspInit` weak override, `GPIOA..` / `GPIO_PIN_*`, `HAL_OK/ERROR/
+`HAL_PPP_MspInit` weak override, `GPIOA..` / `GPIO_PIN_*`, `EPIC_OK/ERROR/
 BUSY/TIMEOUT/INVALID`, `PIC8_BIT*`. The IRQ enum will be `PIC18_IRQ_*`
 (Phase 2), taking the per-family `PIC18_IRQn` type, with the priority
 contract extension decided and recorded in the plan before the

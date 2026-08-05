@@ -2,7 +2,7 @@
 #
 # Builds the SAME pic8-tick timebase + example_tick smoke against the
 # pic18fxx5x-hal. pic8_tick.c is family-agnostic and builds unmodified
-# against either family; only this Makefile's HAL_DIR, device list, DFP,
+# against either family; only this Makefile's EPIC_DIR, device list, DFP,
 # source list, and config word differ from the PIC16 variant.
 #
 # Tested with MPLAB X v6.x, XC8 v3.10, PIC18F4550.
@@ -36,8 +36,8 @@ else
 endif
 
 # ─────────────────────────── paths ────────────────────────────────
-HAL_DIR    ?= ../../../pic18fxx5x-hal
-COMMON_DIR ?= $(HAL_DIR)/../pic8-common
+EPIC_DIR    ?= ../../../pic18fxx5x-hal
+COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
 APP_DIR    ?= ../..
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-tick
@@ -57,7 +57,7 @@ endif
 HARNESS ?= target
 ifeq ($(HARNESS),sim)
   TARGET     := $(BUILD_DIR)/$(MCU)-tick-sim
-  HARNESS_SRC := $(HAL_DIR)/src/core/pic18_harness_sim_target.c
+  HARNESS_SRC := $(EPIC_DIR)/src/core/pic18_harness_sim_target.c
   # WDT=OFF only for this variant, mirroring
   # pic16f87xa-tick-mplabx/Makefile's own CONFIG_WDTE: real-target
   # firmware genuinely needs the watchdog running unattended; a
@@ -75,7 +75,7 @@ else
 endif
 
 CC     := xc8-cc
-INC    := -I$(HAL_DIR)/include/target -I$(HAL_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include
+INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include
 CFLAGS := $(DFP_FLAG) \
           -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
           -O2 -std=c99 -Wall -Wextra \
@@ -84,30 +84,30 @@ CFLAGS := $(DFP_FLAG) \
           -DFOSC_HZ=$(FOSC_HZ)
 
 # ─────────────────────────── source layout ─────────────────────────
-HAL_SOURCES := \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_gpio.c            \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer0.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer1.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer2.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer3.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_ccp.c             \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_usart.c           \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_ssp.c            \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_adc.c             \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_comp.c           \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_eeprom.c         \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_spp.c            \
-  $(HAL_DIR)/src/core/pic18_irq.c                         \
-  $(HAL_DIR)/src/core/pic18_irq_dispatch.c                \
-  $(HAL_DIR)/src/core/pic18_isr_vector.c                  \
-  $(HAL_DIR)/src/core/pic18fxx5x_wdt_sleep.c              \
-  $(HAL_DIR)/src/core/pic18fxx5x_wdt_sleep_target.c       \
+EPIC_SOURCES := \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_gpio.c            \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer0.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer1.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer2.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer3.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_ccp.c             \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_usart.c           \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_ssp.c            \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_adc.c             \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_comp.c           \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_eeprom.c         \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_spp.c            \
+  $(EPIC_DIR)/src/core/pic18_irq.c                         \
+  $(EPIC_DIR)/src/core/pic18_irq_dispatch.c                \
+  $(EPIC_DIR)/src/core/pic18_isr_vector.c                  \
+  $(EPIC_DIR)/src/core/pic18fxx5x_wdt_sleep.c              \
+  $(EPIC_DIR)/src/core/pic18fxx5x_wdt_sleep_target.c       \
   $(HARNESS_SRC)
 
 TICK_SOURCES := $(APP_DIR)/src/pic8_tick.c
 APP_SOURCES  := $(APP_DIR)/examples/example_tick.c
 
-SRCS := $(HAL_SOURCES) $(TICK_SOURCES) $(APP_SOURCES)
+SRCS := $(EPIC_SOURCES) $(TICK_SOURCES) $(APP_SOURCES)
 OBJS := $(patsubst %.c,$(BUILD_DIR)/%.p1,$(notdir $(SRCS)))
 VPATH := $(sort $(dir $(SRCS)))
 

@@ -258,7 +258,7 @@ static void sim_step_timer2(void)
 static void sim_step_usart(void)
 {
     /* Re-assert TXIF every cycle when TXEN is set.  TXIF is
-     * cleared by the user writing TXREG (see HAL_USART_Transmit);
+     * cleared by the user writing TXREG (see EPIC_USART_Transmit);
      * this step brings it back high to model the instantaneous
      * transmit completion.  RCIF is set by the host application
      * through pic16f87xa_sim_drive_usart_rx(). */

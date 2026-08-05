@@ -8,7 +8,7 @@
 # never a HAL header, and there is exactly one implementation for host,
 # PIC16, and PIC18 alike (see the Makefiles under mcu/ for the real-target XC8
 # builds, which compile this same src/fsm.c unchanged). Because of that,
-# there is no HAL_FAMILY selection needed for the core library or its
+# there is no EPIC_FAMILY selection needed for the core library or its
 # tests — only the optional taskmgr-composition example below needs one,
 # since it's the taskmgr (not the FSM engine) that is family-specific.
 
@@ -41,7 +41,7 @@ option(PIC8_FSM_BUILD_TASKMGR_EXAMPLE
        "Build examples/example_taskmgr_integration.c against pic8-taskmgr" OFF)
 
 if(PIC8_FSM_BUILD_TASKMGR_EXAMPLE)
-    set(HAL_FAMILY "PIC16" CACHE STRING "HAL family to link the taskmgr example against: PIC16 or PIC18")
+    set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link the taskmgr example against: PIC16 or PIC18")
     set(TASKMGR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic8-taskmgr
         CACHE PATH "Path to the pic8-taskmgr source tree")
     if(NOT TARGET task_manager)

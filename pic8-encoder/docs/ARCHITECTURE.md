@@ -44,7 +44,7 @@ Unlike `pic8-debounce`'s `debounce_poll()` (called once per scheduler
 tick), a quadrature signal can transition between poll calls faster than
 any reasonable poll period, a poll-driven design would just miss
 counts. This is edge-triggered: the application registers one function as
-the HAL's RB-change callback (`HAL_GPIO_RegisterChangeCallback`), that
+the HAL's RB-change callback (`EPIC_GPIO_RegisterChangeCallback`), that
 function forwards the received PORTB byte to `encoder_update()` for each
 `encoder_t` instance it owns. Fanning one byte out to N instances is
 application-level composition, not a HAL or encoder registry, exactly the
@@ -226,7 +226,7 @@ third encoder or one on another port is not possible on this hardware).
 int32_t` that the ISR writes asynchronously to the caller's mainline
 code, exactly `pic8_tick_get()`'s situation (a 4-byte read on an 8-bit
 core that an ISR can tear mid-read), and the fix is the same: wrap the
-read in `HAL_IRQ_Disable()` / `HAL_IRQ_Restore()` (the family-neutral
+read in `EPIC_IRQ_Disable()` / `EPIC_IRQ_Restore()` (the family-neutral
 `core/hal_irq.h` signature). That one call is the entire HAL surface
 this module touches. The 16-bit diagnostic counters are wrapped the same
 way for consistency even though a torn counter is low-stakes. Only

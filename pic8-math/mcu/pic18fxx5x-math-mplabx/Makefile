@@ -5,7 +5,7 @@
 # exploits the hardware `MULWF` 8x8->16 multiply that neither PIC16 nor
 # the PIC17C42 AN544 targeted had. The pic8-math header (pic_math.h/.c) is
 # family-agnostic and builds unmodified against either family; only this
-# Makefile's HAL_DIR, device list, DFP, source list, and config word differ
+# Makefile's EPIC_DIR, device list, DFP, source list, and config word differ
 # from the PIC16 variant under mcu/pic16f87xa-math-mplabx/.
 #
 # Tested with MPLAB X IDE v6.x, MPLAB XC8 v3.10, PIC18F4550.
@@ -47,8 +47,8 @@ else
 endif
 
 # ─────────────────────────── paths ────────────────────────────────
-HAL_DIR    ?= ../../../pic18fxx5x-hal
-COMMON_DIR ?= $(HAL_DIR)/../pic8-common
+EPIC_DIR    ?= ../../../pic18fxx5x-hal
+COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
 APP_DIR    ?= ../..
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-math-selftest
@@ -63,7 +63,7 @@ endif
 CC     := xc8-cc
 # include/target ahead of include so pic18_platform.h resolves to the
 # real-target version. APP_DIR/include is pic8-math's own header.
-INC    := -I$(HAL_DIR)/include/target -I$(HAL_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include -I$(APP_DIR)/tests
+INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include -I$(APP_DIR)/tests
 CFLAGS := $(DFP_FLAG) \
           -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
           -O2 -std=c99 -Wall -Wextra \
@@ -77,24 +77,24 @@ CFLAGS := $(DFP_FLAG) \
 # sim/harness-sim/wdt_sleep-sim files are absent; the family-blind harness
 # target impl lives in pic8-common.
 
-HAL_SOURCES := \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_gpio.c            \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer0.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer1.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer2.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer3.c          \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_ccp.c             \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_usart.c           \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_ssp.c            \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_adc.c             \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_comp.c           \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_eeprom.c         \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_spp.c            \
-  $(HAL_DIR)/src/core/pic18_irq.c                         \
-  $(HAL_DIR)/src/core/pic18_irq_dispatch.c                \
-  $(HAL_DIR)/src/core/pic18_isr_vector.c                  \
-  $(HAL_DIR)/src/core/pic18fxx5x_wdt_sleep.c              \
-  $(HAL_DIR)/src/core/pic18fxx5x_wdt_sleep_target.c       \
+EPIC_SOURCES := \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_gpio.c            \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer0.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer1.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer2.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer3.c          \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_ccp.c             \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_usart.c           \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_ssp.c            \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_adc.c             \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_comp.c           \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_eeprom.c         \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_spp.c            \
+  $(EPIC_DIR)/src/core/pic18_irq.c                         \
+  $(EPIC_DIR)/src/core/pic18_irq_dispatch.c                \
+  $(EPIC_DIR)/src/core/pic18_isr_vector.c                  \
+  $(EPIC_DIR)/src/core/pic18fxx5x_wdt_sleep.c              \
+  $(EPIC_DIR)/src/core/pic18fxx5x_wdt_sleep_target.c       \
   $(COMMON_DIR)/src/core/pic8_harness_target.c
 
 # pic8-math: the PIC18 inline-asm leaf primitives (src/pic18/, incl. the
@@ -114,7 +114,7 @@ MATH_SOURCES := \
 # harness-only stub to prove the XC8 pipeline links.
 APP_SOURCES := $(APP_DIR)/tests/target_selftest.c
 
-SRCS := $(HAL_SOURCES) $(MATH_SOURCES) $(APP_SOURCES)
+SRCS := $(EPIC_SOURCES) $(MATH_SOURCES) $(APP_SOURCES)
 OBJS := $(patsubst %.c,$(BUILD_DIR)/%.p1,$(notdir $(SRCS)))
 VPATH := $(sort $(dir $(SRCS)))
 

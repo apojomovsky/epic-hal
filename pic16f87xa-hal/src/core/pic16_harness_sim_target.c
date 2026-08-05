@@ -30,19 +30,19 @@ static uint32_t g_cycles = 0U;
 
 static void s_tx_cplt(void)
 {
-    /* Non-null so HAL_USART_Init arms TXEN (pic16f87xa_usart.c); never
+    /* Non-null so EPIC_USART_Init arms TXEN (pic16f87xa_usart.c); never
      * actually called, transmission below is polled. */
 }
 
 static void s_uart_putc(char c)
 {
-    while (!HAL_USART_IsTxShiftRegisterEmpty()) {
+    while (!EPIC_USART_IsTxShiftRegisterEmpty()) {
         /* wait for the shift register to drain */
     }
-    HAL_USART_Transmit((uint8_t)c);
+    EPIC_USART_Transmit((uint8_t)c);
 }
 
-/* static: HAL_USART_Init stores this pointer for the ISR's whole
+/* static: EPIC_USART_Init stores this pointer for the ISR's whole
  * lifetime (pic16f87xa_usart.c's g_usart), so a local here would be a
  * dangling-pointer hazard once this function returns. */
 static USART_HandleTypeDef s_usart_handle;
@@ -56,14 +56,14 @@ void pic8_harness_init(uint32_t cycles)
         FOSC_HZ, PIC8_HARNESS_SIM_BAUD, USART_MODE_ASYNCHRONOUS,
         USART_BRGH_HIGH);
     s_usart_handle.TxCpltCallback = s_tx_cplt;
-    (void)HAL_USART_Init(&s_usart_handle);
+    (void)EPIC_USART_Init(&s_usart_handle);
     /* A non-null TxCpltCallback also enables the TX interrupt source
      * (TXIE), not just TXEN. TXIF is pending immediately after reset
      * and only clears on a TXREG write, so once anything enables GIE
      * (pic8_tick_init does), TXIE+pending TXIF fires the ISR forever.
      * Transmission here is polled, never interrupt-driven, so turn the
      * source back off right after Init. */
-    HAL_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
+    EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
 }
 
 void pic8_harness_tick(void)

@@ -49,9 +49,9 @@ static const USART_HandleTypeDef *g_usart = NULL;
 
 /* ───────────────────────── public API ───────────────────────────── */
 
-HAL_StatusTypeDef HAL_USART_Init(const USART_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     g_usart_storage = *h;
     g_usart = &g_usart_storage;
 
@@ -97,46 +97,46 @@ HAL_StatusTypeDef HAL_USART_Init(const USART_HandleTypeDef *h)
     pic8_sfr_write8(PIC_REG_RCSTA, rcsta);
 
     /* TXIF is initially 1 (TXREG empty after reset, §20.2.1); RCIF is 0. */
-    HAL_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
 
-    if (h->TxCpltCallback) HAL_IRQ_Enable(PIC18_IRQ_USART_TX);
-    else                   HAL_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
-    if (h->RxCpltCallback) HAL_IRQ_Enable(PIC18_IRQ_USART_RX);
-    else                   HAL_IRQ_DisableSrc(PIC18_IRQ_USART_RX);
+    if (h->TxCpltCallback) EPIC_IRQ_Enable(PIC18_IRQ_USART_TX);
+    else                   EPIC_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
+    if (h->RxCpltCallback) EPIC_IRQ_Enable(PIC18_IRQ_USART_RX);
+    else                   EPIC_IRQ_DisableSrc(PIC18_IRQ_USART_RX);
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_USART_DeInit(void)
+EPIC_StatusTypeDef EPIC_USART_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
-    HAL_IRQ_DisableSrc(PIC18_IRQ_USART_RX);
-    HAL_IRQ_ClearFlag(PIC18_IRQ_USART_TX);
-    HAL_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
+    EPIC_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
+    EPIC_IRQ_DisableSrc(PIC18_IRQ_USART_RX);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_TX);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
     pic8_sfr_write8(PIC_REG_RCSTA,   PIC_RCSTA_POR_VALUE);    /* 0x00 */
     pic8_sfr_write8(PIC_REG_TXSTA,    PIC_TXSTA_POR_VALUE);   /* 0x02, keep TRMT */
     pic8_sfr_write8(PIC_REG_BAUDCON,  PIC_BAUDCON_POR_VALUE); /* 0x00 */
     pic8_sfr_write8(PIC_REG_SPBRG,    PIC_SPBRG_POR_VALUE);
     pic8_sfr_write8(PIC_REG_SPBRGH,   PIC_SPBRGH_POR_VALUE);
     g_usart = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-void HAL_USART_Transmit(uint8_t data)
+void EPIC_USART_Transmit(uint8_t data)
 {
     /* Writing TXREG clears TXIF (DS39632E §20.2.1). The hardware starts the
      * TSR→line shift; the sim backend re-asserts TXIF on the next
      * pic18_sim_step() call. */
     pic8_sfr_write8(PIC_REG_TXREG, data);
-    HAL_IRQ_ClearFlag(PIC18_IRQ_USART_TX);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_TX);
 }
 
-uint8_t HAL_USART_GetTX9D(void)
+uint8_t EPIC_USART_GetTX9D(void)
 {
     return (pic8_sfr_read8(PIC_REG_TXSTA) & PIC_TXSTA_TX9D) ? 1U : 0U;
 }
 
-void HAL_USART_SetTX9D(uint8_t bit9)
+void EPIC_USART_SetTX9D(uint8_t bit9)
 {
     uint8_t v = pic8_sfr_read8(PIC_REG_TXSTA);
     if (bit9) v |= PIC_TXSTA_TX9D;
@@ -144,30 +144,30 @@ void HAL_USART_SetTX9D(uint8_t bit9)
     pic8_sfr_write8(PIC_REG_TXSTA, v);
 }
 
-uint8_t HAL_USART_IsTxShiftRegisterEmpty(void)
+uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void)
 {
     return (pic8_sfr_read8(PIC_REG_TXSTA) & PIC_TXSTA_TRMT) ? 1U : 0U;
 }
 
-uint8_t HAL_USART_Receive(void)
+uint8_t EPIC_USART_Receive(void)
 {
     /* Reading RCREG clears RCIF (DS39632E §20.2.2). */
     uint8_t data = pic8_sfr_read8(PIC_REG_RCREG);
-    HAL_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
     return data;
 }
 
-uint8_t HAL_USART_GetRX9D(void)
+uint8_t EPIC_USART_GetRX9D(void)
 {
     return (pic8_sfr_read8(PIC_REG_RCSTA) & PIC_RCSTA_RX9D) ? 1U : 0U;
 }
 
-uint8_t HAL_USART_HasOverrun(void)
+uint8_t EPIC_USART_HasOverrun(void)
 {
     return (pic8_sfr_read8(PIC_REG_RCSTA) & PIC_RCSTA_OERR) ? 1U : 0U;
 }
 
-void HAL_USART_ClearOverrun(void)
+void EPIC_USART_ClearOverrun(void)
 {
     /* DS39632E §20.2.2: clear CREN, then set it again to reset the receiver. */
     uint8_t rcsta = (uint8_t)(pic8_sfr_read8(PIC_REG_RCSTA) & (uint8_t)~PIC_RCSTA_CREN);
@@ -178,23 +178,23 @@ void HAL_USART_ClearOverrun(void)
 
 /* ───────────────────────── auto-baud (BAUDCON) ───────────────────── */
 
-void HAL_USART_StartAutoBaud(void)
+void EPIC_USART_StartAutoBaud(void)
 {
     uint8_t v = (uint8_t)(pic8_sfr_read8(PIC_REG_BAUDCON) | PIC_BAUDCON_ABDEN);
     pic8_sfr_write8(PIC_REG_BAUDCON, v);
 }
 
-uint8_t HAL_USART_IsAutoBaudBusy(void)
+uint8_t EPIC_USART_IsAutoBaudBusy(void)
 {
     return (pic8_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDEN) ? 1U : 0U;
 }
 
-uint8_t HAL_USART_HasAutoBaudOverflow(void)
+uint8_t EPIC_USART_HasAutoBaudOverflow(void)
 {
     return (pic8_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDOVF) ? 1U : 0U;
 }
 
-void HAL_USART_ClearAutoBaudOverflow(void)
+void EPIC_USART_ClearAutoBaudOverflow(void)
 {
     uint8_t v = (uint8_t)(pic8_sfr_read8(PIC_REG_BAUDCON) & (uint8_t)~PIC_BAUDCON_ABDOVF);
     pic8_sfr_write8(PIC_REG_BAUDCON, v);
@@ -204,7 +204,7 @@ void HAL_USART_ClearAutoBaudOverflow(void)
 
 void USART_TX_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC18_IRQ_USART_TX)) return;
+    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_USART_TX)) return;
     /* TXIF is read-only and cleared by writing TXREG; nothing to clear
      * here, just call the user callback. */
     if (g_usart && g_usart->TxCpltCallback) g_usart->TxCpltCallback();
@@ -212,8 +212,8 @@ void USART_TX_IRQHandler(void)
 
 void USART_RX_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC18_IRQ_USART_RX)) return;
+    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_USART_RX)) return;
     uint8_t data = pic8_sfr_read8(PIC_REG_RCREG);
-    HAL_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
     if (g_usart && g_usart->RxCpltCallback) g_usart->RxCpltCallback(data);
 }

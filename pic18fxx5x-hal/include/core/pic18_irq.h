@@ -2,13 +2,13 @@
  * @file    core/pic18_irq.h
  * @brief   PIC18F2455 family interrupt controller: IRQn enum plus
  *          enable/disable/flag/priority helpers (DS39632E §9.0), mirroring
- *          STM32Cube's `HAL_NVIC_*` and the PIC16 `HAL_IRQ_*` API.
+ *          STM32Cube's `HAL_NVIC_*` and the PIC16 `EPIC_IRQ_*` API.
  *
  * @details
  *   IPEN (RCON<7>) selects single-vector PIC16-compatible mode (IPEN=0) or
  *   two-vector priority mode (IPEN=1, the default here), with GIEH/GIEL
  *   gating high/low priority sources; INT0 has no priority bit, always
- *   high. `HAL_IRQ_Restore(1)` is the drop-in for PIC16's `GIE = 1`.
+ *   high. `EPIC_IRQ_Restore(1)` is the drop-in for PIC16's `GIE = 1`.
  */
 
 #ifndef PIC18_IRQ_H
@@ -16,7 +16,7 @@
 
 #include "pic18fxx5x.h"
 #include "pic18fxx5x_sfr.h"
-#include "core/pic8_irq.h"   /* shared HAL_IRQ_Priority enum (family-blind) */
+#include "core/pic8_irq.h"   /* shared EPIC_IRQ_Priority enum (family-blind) */
 
 /**
  * @brief Logical identity of every interrupt source on the part.
@@ -53,45 +53,45 @@ typedef enum {
  *        GIEH and GIEL are cleared.
  * @return 1 if any master enable was set (interrupts were on), else 0.
  */
-uint8_t HAL_IRQ_Disable(void);
+uint8_t EPIC_IRQ_Disable(void);
 
 /**
  * @brief Restore the master interrupt enable(s). `prev_state` is the value
- *        returned by @ref HAL_IRQ_Disable. Restoring to "on" also ensures
+ *        returned by @ref EPIC_IRQ_Disable. Restoring to "on" also ensures
  *        IPEN = 1 (priority mode) so the two-vector scheme is active. Pair
- *        with @ref HAL_IRQ_Disable. `HAL_IRQ_Restore(1)` enables all
+ *        with @ref EPIC_IRQ_Disable. `EPIC_IRQ_Restore(1)` enables all
  *        interrupts (the drop-in for PIC16's `GIE = 1`).
  */
-void HAL_IRQ_Restore(uint8_t prev_state);
+void EPIC_IRQ_Restore(uint8_t prev_state);
 
 /**
  * @brief Enable one interrupt source. The peripheral enable bit lives in
  *        INTCON / INTCON3 / PIE1 per the source. The master enable(s) must
- *        still be set via @ref HAL_IRQ_Restore for the source to fire.
+ *        still be set via @ref EPIC_IRQ_Restore for the source to fire.
  */
-void HAL_IRQ_Enable(PIC18_IRQn irq);
+void EPIC_IRQ_Enable(PIC18_IRQn irq);
 
 /** Disable one interrupt source. */
-void HAL_IRQ_DisableSrc(PIC18_IRQn irq);
+void EPIC_IRQ_DisableSrc(PIC18_IRQn irq);
 
 /**
  * @brief Clear the interrupt flag of `irq`. **MUST** be called inside the
  *        ISR before re-enabling interrupts to avoid an infinite re-entry
  *        (DS39632E §9.0).
  */
-void HAL_IRQ_ClearFlag(PIC18_IRQn irq);
+void EPIC_IRQ_ClearFlag(PIC18_IRQn irq);
 
 /** Returns the current pending state of `irq` (1 = pending). */
-uint8_t HAL_IRQ_GetFlag(PIC18_IRQn irq);
+uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq);
 
 /**
  * @brief Set the priority of `irq` (high or low vector). Writes the
  *        matching bit in INTCON2 / INTCON3 / IPR1. INT0 has no priority
  *        bit (always high); setting its priority is a no-op. Takes effect
- *        only in priority mode (IPEN = 1, which @ref HAL_IRQ_Restore
- *        enables). Part of the shared `HAL_IRQ_*` contract (the PIC16
+ *        only in priority mode (IPEN = 1, which @ref EPIC_IRQ_Restore
+ *        enables). Part of the shared `EPIC_IRQ_*` contract (the PIC16
  *        implementation is a no-op).
  */
-void HAL_IRQ_SetPriority(PIC18_IRQn irq, HAL_IRQ_Priority prio);
+void EPIC_IRQ_SetPriority(PIC18_IRQn irq, EPIC_IRQ_Priority prio);
 
 #endif /* PIC18_IRQ_H */

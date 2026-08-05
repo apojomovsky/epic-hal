@@ -1,10 +1,10 @@
 /**
  * @file    example_rb_change.c
  * @brief   Smoke test for the RB<7:4> change-interrupt hook
- *          (HAL_GPIO_RegisterChangeCallback / RB_IRQHandler) on the sim.
+ *          (EPIC_GPIO_RegisterChangeCallback / RB_IRQHandler) on the sim.
  *
  * @details
- *   Exercises HAL_GPIO_RegisterChangeCallback/RB_IRQHandler: no-op when
+ *   Exercises EPIC_GPIO_RegisterChangeCallback/RB_IRQHandler: no-op when
  *   RBIF isn't pending, callback fires exactly once with the read
  *   PORTB byte when it is, a NULL callback doesn't crash, and
  *   pic8_dispatch_all_irqs reaches the handler. The host sim doesn't
@@ -54,10 +54,10 @@ static uint8_t rbif_pending(void)
 static void test_noop_when_not_pending(void)
 {
     reset_observed();
-    HAL_GPIO_RegisterChangeCallback(on_rb_change);
+    EPIC_GPIO_RegisterChangeCallback(on_rb_change);
 
     /* Ensure RBIF is clear, PORTB is some known value. */
-    HAL_IRQ_ClearFlag(PIC16_IRQ_RB);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_RB);
     PIC8_REG8(PIC_REG_PORTB) = 0xA5U;
 
     RB_IRQHandler();   /* RBIF not pending: must do nothing. */
@@ -70,9 +70,9 @@ static void test_noop_when_not_pending(void)
 static void test_fires_when_pending(void)
 {
     reset_observed();
-    HAL_GPIO_RegisterChangeCallback(on_rb_change);
+    EPIC_GPIO_RegisterChangeCallback(on_rb_change);
 
-    HAL_IRQ_ClearFlag(PIC16_IRQ_RB);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_RB);
     PIC8_REG8(PIC_REG_PORTB) = 0x3CU;   /* the byte the handler must read */
     assert_rbif();
     CHECK(rbif_pending() == 1, "fires: RBIF set before handler");
@@ -87,9 +87,9 @@ static void test_fires_when_pending(void)
 static void test_null_callback_safe(void)
 {
     reset_observed();
-    HAL_GPIO_RegisterChangeCallback(NULL);
+    EPIC_GPIO_RegisterChangeCallback(NULL);
 
-    HAL_IRQ_ClearFlag(PIC16_IRQ_RB);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_RB);
     PIC8_REG8(PIC_REG_PORTB) = 0x00U;
     assert_rbif();
 
@@ -102,9 +102,9 @@ static void test_null_callback_safe(void)
 static void test_dispatch_reaches_handler(void)
 {
     reset_observed();
-    HAL_GPIO_RegisterChangeCallback(on_rb_change);
+    EPIC_GPIO_RegisterChangeCallback(on_rb_change);
 
-    HAL_IRQ_ClearFlag(PIC16_IRQ_RB);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_RB);
     PIC8_REG8(PIC_REG_PORTB) = 0x96U;
     assert_rbif();
 

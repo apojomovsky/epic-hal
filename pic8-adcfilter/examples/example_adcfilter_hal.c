@@ -3,8 +3,8 @@
  * @brief   Demonstrates pic8-adcfilter with a real HAL ADC read callback.
  *
  * @details
- *   Host-sim runnable (build with -DPIC8_ADCFILTER_BUILD_HAL_EXAMPLE=ON).
- *   Wires `HAL_ADC_Read` through the `pic8_adcfilter_read_fn` callback,
+ *   Host-sim runnable (build with -DPIC8_ADCFILTER_BUILD_EPIC_EXAMPLE=ON).
+ *   Wires `EPIC_ADC_Read` through the `pic8_adcfilter_read_fn` callback,
  *   oversamples 16x (extra_bits=2), then feeds the oversampled readings into
  *   a moving-average filter. On the host sim, ADC results are injected via
  *   the family sim's `*_sim_drive_adc_done` helper.
@@ -25,7 +25,7 @@
 static uint16_t read_adc(void *ctx)
 {
     (void)ctx;
-    return HAL_ADC_Read();
+    return EPIC_ADC_Read();
 }
 
 int main(void)
@@ -33,7 +33,7 @@ int main(void)
     pic8_harness_init(100000UL);
 
     ADC_HandleTypeDef hadc = ADC_HANDLE_DEFAULT;
-    HAL_ADC_Init(&hadc);
+    EPIC_ADC_Init(&hadc);
 
     uint16_t buf[8];
     pic8_adcfilter_avg_t filter;

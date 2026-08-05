@@ -61,10 +61,10 @@
         else                       PIC8_REG8(PIC_REG_LCDDATA11) = (uint8_t)(value); \
     } while (0)
 
-HAL_StatusTypeDef HAL_LCD_Init(const LCD_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_LCD_Init(const LCD_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
-    if (h->Contrast > 0x07U) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
+    if (h->Contrast > 0x07U) return EPIC_INVALID;
 
     PIC8_REG8(PIC_REG_LCDCST) = (uint8_t)(h->Contrast & PIC_LCDCST_LCDCST_MASK);
     PIC8_REG8(PIC_REG_LCDREF) = 0x00U;
@@ -78,34 +78,34 @@ HAL_StatusTypeDef HAL_LCD_Init(const LCD_HandleTypeDef *h)
     PIC8_REG8(PIC_REG_LCDSE1) = (PIC16F193X_FAMILY_LCD_SEGMENTS >= 16U) ? 0xFFU : 0x00U;
     PIC8_REG8(PIC_REG_LCDSE2) = (PIC16F193X_FAMILY_LCD_SEGMENTS >= 24U) ? 0xFFU : 0x00U;
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_LCD_DeInit(void)
+EPIC_StatusTypeDef EPIC_LCD_DeInit(void)
 {
     PIC8_REG8(PIC_REG_LCDCON) = 0x00U;
     for (uint8_t i = 0U; i < 12U; i++) LCD_WRITE_DATA(i, 0x00U);
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_LCD_SetSegment(uint8_t seg, uint8_t com, uint8_t on)
+EPIC_StatusTypeDef EPIC_LCD_SetSegment(uint8_t seg, uint8_t com, uint8_t on)
 {
-    if (seg >= PIC16F193X_FAMILY_LCD_SEGMENTS || com >= LCD_COMMONS) return HAL_INVALID;
+    if (seg >= PIC16F193X_FAMILY_LCD_SEGMENTS || com >= LCD_COMMONS) return EPIC_INVALID;
     /* DFP-derived mapping: data_reg_index = com*3 + seg/8, bit = seg%8 */
     uint8_t reg_idx = (uint8_t)(com * 3U + (seg / 8U));
     uint8_t bit_mask = PIC8_BIT(seg % 8U);
     if (on) LCD_SET_BIT(reg_idx, bit_mask);
     else    LCD_CLR_BIT(reg_idx, bit_mask);
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_LCD_Clear(void)
+EPIC_StatusTypeDef EPIC_LCD_Clear(void)
 {
     for (uint8_t i = 0U; i < 12U; i++) LCD_WRITE_DATA(i, 0x00U);
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint8_t HAL_LCD_IsActive(void)
+uint8_t EPIC_LCD_IsActive(void)
 {
     return (PIC8_REG8(PIC_REG_LCDPS) & PIC_LCDPS_LCDA) ? 1U : 0U;
 }

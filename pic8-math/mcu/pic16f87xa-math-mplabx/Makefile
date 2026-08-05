@@ -45,11 +45,11 @@ else
 endif
 
 # ─────────────────────────── paths ────────────────────────────────
-# HAL_DIR points at the pic16f87xa-hal tree; APP_DIR at this pic8-math
+# EPIC_DIR points at the pic16f87xa-hal tree; APP_DIR at this pic8-math
 # tree; COMMON_DIR at the shared pic8-common layer. Adjust if the layout
 # differs from the default sibling layout.
-HAL_DIR    ?= ../../../pic16f87xa-hal
-COMMON_DIR ?= $(HAL_DIR)/../pic8-common
+EPIC_DIR    ?= ../../../pic16f87xa-hal
+COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
 APP_DIR    ?= ../..
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-math-selftest
@@ -68,7 +68,7 @@ CC     := xc8-cc
 # real-target (volatile-dereference) version, not the host memory-backed one.
 # pic8-math's own header lives under APP_DIR/include; the shared HAL
 # status / harness headers live under pic8-common/include.
-INC    := -I$(HAL_DIR)/include/target -I$(HAL_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include -I$(APP_DIR)/tests
+INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include -I$(APP_DIR)/tests
 CFLAGS := $(DFP_FLAG) \
           -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
           -O2 -std=c99 -Wall -Wextra \
@@ -89,28 +89,28 @@ CFLAGS := $(DFP_FLAG) \
 # target_selftest.c. The full Tier-3 self-test is the PIC18 artifact
 # (mcu/pic18fxx5x-math-mplabx). See docs/ARCHITECTURE.md "Testing tiers".
 
-HAL_SOURCES := \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_gpio.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer0.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer1.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer2.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_ccp.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_usart.c    \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_ssp.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_adc.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_comp.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_vref.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_eeprom.c   \
-  $(HAL_DIR)/src/core/pic16_irq.c                  \
-  $(HAL_DIR)/src/core/pic16f87xa_wdt_sleep.c       \
-  $(HAL_DIR)/src/core/pic16f87xa_wdt_sleep_target.c \
-  $(HAL_DIR)/src/core/pic16_isr_vector.c          \
-  $(HAL_DIR)/src/core/pic16_irq_dispatch.c        \
+EPIC_SOURCES := \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_gpio.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer0.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer1.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer2.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_ccp.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_usart.c    \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_ssp.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_adc.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_comp.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_vref.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_eeprom.c   \
+  $(EPIC_DIR)/src/core/pic16_irq.c                  \
+  $(EPIC_DIR)/src/core/pic16f87xa_wdt_sleep.c       \
+  $(EPIC_DIR)/src/core/pic16f87xa_wdt_sleep_target.c \
+  $(EPIC_DIR)/src/core/pic16_isr_vector.c          \
+  $(EPIC_DIR)/src/core/pic16_irq_dispatch.c        \
   $(COMMON_DIR)/src/core/pic8_harness_target.c
 
 # PSP is only on 40/44-pin parts.
 ifeq ($(filter $(MCU),16F874A 16F877A),$(MCU))
-  HAL_SOURCES += $(HAL_DIR)/src/peripherals/pic16f87xa_psp.c
+  EPIC_SOURCES += $(EPIC_DIR)/src/peripherals/pic16f87xa_psp.c
 endif
 
 # pic8-math: the PIC16 inline-asm leaf primitives (src/pic16/) plus the
@@ -138,7 +138,7 @@ MATH_SOURCES := \
 APP_SOURCES := $(APP_DIR)/tests/target_smoke16.c
 
 # All real .c sources (the config word is generated separately, below).
-SRCS := $(HAL_SOURCES) $(MATH_SOURCES) $(APP_SOURCES)
+SRCS := $(EPIC_SOURCES) $(MATH_SOURCES) $(APP_SOURCES)
 # xc8-cc -c emits <name>.p1; link from the .p1 set.
 OBJS := $(patsubst %.c,$(BUILD_DIR)/%.p1,$(notdir $(SRCS)))
 

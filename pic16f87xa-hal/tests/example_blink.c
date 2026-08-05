@@ -31,7 +31,7 @@ static volatile uint32_t g_toggle_count = 0;
  * sim IRQ callback (host). */
 static void on_t0_overflow(void)
 {
-    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
     g_toggle_count++;
 }
 
@@ -40,8 +40,8 @@ int main(void)
     pic8_harness_init(SIM_CYCLES);
 
     /* 1. RB0 as output, start low. */
-    HAL_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 
     /* 2. Timer0: internal Fosc/4, 1:256 prescaler, reload 0, toggle on
      *    each overflow. */
@@ -51,23 +51,23 @@ int main(void)
     h.PrescalerAssigned = true;
     h.ReloadValue       = 0x00U;
     h.OverflowCallback  = on_t0_overflow;
-    HAL_TIMER0_Init(&h);
-    HAL_TIMER0_Start(&h);
+    EPIC_TIMER0_Init(&h);
+    EPIC_TIMER0_Start(&h);
 
-    /* 3. Arm the Timer0 interrupt (HAL_TIMER0_Init set TMR0IE; now set GIE).
+    /* 3. Arm the Timer0 interrupt (EPIC_TIMER0_Init set TMR0IE; now set GIE).
      *    On the sim the IRQ fires regardless, so this is harmless there. */
-    HAL_IRQ_Restore(1);
+    EPIC_IRQ_Restore(1);
 
     /* 4. Let time pass. On the target this busy-spins forever, refreshing
      *    the WDT while the Timer0 ISR toggles RB0; on the host the harness
      *    bounds the loop to SIM_CYCLES and pumps the sim each iteration.
      *    pic8_harness_tick pumps the simulator on the host and is a
      *    no-op on the target, where real time advances on its own.
-     *    HAL_WDT_Refresh is a no-op on the host, so it is called
+     *    EPIC_WDT_Refresh is a no-op on the host, so it is called
      *    unconditionally. */
     for (uint32_t i = 0; pic8_harness_running(i); i++) {
         pic8_harness_tick();
-        HAL_WDT_Refresh();
+        EPIC_WDT_Refresh();
     }
 
     pic8_harness_log("RB0 toggled %u times.\n", (unsigned)g_toggle_count);

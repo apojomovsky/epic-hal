@@ -4,9 +4,9 @@
  *
  * @details
  *   Source: DS39582B §14.10 (PCON), §14.13 (WDT), §14.14 (Sleep). Once
- *   WDTEN=1 in the config word, call @ref HAL_WDT_Refresh periodically
+ *   WDTEN=1 in the config word, call @ref EPIC_WDT_Refresh periodically
  *   or the chip resets; config bits themselves are left to the user's
- *   MPLAB X/XC8 project setup, not emitted here. HAL_Sleep_Enter is a
+ *   MPLAB X/XC8 project setup, not emitted here. EPIC_Sleep_Enter is a
  *   no-op on host (no real CPU to stop).
  */
 
@@ -21,31 +21,31 @@
  *         called more often than the WDT period (typ. 18 ms x
  *         prescaler, §17.0 #31) on a real target.
  */
-void HAL_WDT_Refresh(void);
+void EPIC_WDT_Refresh(void);
 
 /**
  * @brief  Enter Sleep (`sleep` asm on target, no-op on host; callers
  *         should keep driving pic16f87xa_sim_step()). Real target
  *         halts until any enabled interrupt wakes it (§14.14).
  */
-void HAL_Sleep_Enter(void);
+void EPIC_Sleep_Enter(void);
 
 /**
  * @brief  Returns 1 if the last reset was a Brown-out Reset
- *         (PCON<BOR>).  Clear after reading via @ref HAL_BOR_ClearFlag.
+ *         (PCON<BOR>).  Clear after reading via @ref EPIC_BOR_ClearFlag.
  */
-uint8_t HAL_BOR_GetStatus(void);
+uint8_t EPIC_BOR_GetStatus(void);
 
 /** Clear PCON<BOR>. The POR bit is write-1-to-clear. */
-void HAL_BOR_ClearFlag(void);
+void EPIC_BOR_ClearFlag(void);
 
 /**
  * @brief  Returns 1 if the device just powered on (PCON<POR>).
  *         Set only on Power-on Reset.
  */
-uint8_t HAL_POR_GetStatus(void);
+uint8_t EPIC_POR_GetStatus(void);
 
 /** Clear PCON<POR>. */
-void HAL_POR_ClearFlag(void);
+void EPIC_POR_ClearFlag(void);
 
 #endif /* PIC16F87XA_WDT_SLEEP_H */

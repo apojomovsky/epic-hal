@@ -36,8 +36,8 @@ static uint8_t make_595_byte(const pic8_lcd_spi_layout_t *l,
 
 static void spi_latch(spi_ctx_t *s)
 {
-    HAL_GPIO_WritePin(s->cs_port, s->cs_pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(s->cs_port, s->cs_pin, GPIO_PIN_RESET);
+    EPIC_GPIO_WritePin(s->cs_port, s->cs_pin, GPIO_PIN_SET);
+    EPIC_GPIO_WritePin(s->cs_port, s->cs_pin, GPIO_PIN_RESET);
 }
 
 static void spi_send_nibble(spi_ctx_t *s, uint8_t rs, uint8_t nibble)
@@ -46,15 +46,15 @@ static void spi_send_nibble(spi_ctx_t *s, uint8_t rs, uint8_t nibble)
     uint8_t base = make_595_byte(l, rs, nibble, false);
 
     /* E=0: data setup */
-    HAL_SSP_WriteByte(base);
+    EPIC_SSP_WriteByte(base);
     spi_latch(s);
 
     /* E=1: write strobe */
-    HAL_SSP_WriteByte((uint8_t)(base | (1u << l->e_bit)));
+    EPIC_SSP_WriteByte((uint8_t)(base | (1u << l->e_bit)));
     spi_latch(s);
 
     /* E=0: end of strobe */
-    HAL_SSP_WriteByte(base);
+    EPIC_SSP_WriteByte(base);
     spi_latch(s);
 }
 
@@ -100,10 +100,10 @@ void pic8_lcd_spi_init(pic8_lcd_ops_t *ops, void **ctx,
 
     SSP_HandleTypeDef h = SSP_HANDLE_DEFAULT;
     h.Mode = SSP_MODE_SPI_MASTER_FOSC_64;
-    HAL_SSP_Init(&h);
+    EPIC_SSP_Init(&h);
 
-    HAL_GPIO_Init(s.cs_port, s.cs_pin, GPIO_MODE_OUTPUT);
-    HAL_GPIO_WritePin(s.cs_port, s.cs_pin, GPIO_PIN_RESET);
+    EPIC_GPIO_Init(s.cs_port, s.cs_pin, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(s.cs_port, s.cs_pin, GPIO_PIN_RESET);
 
     ops->send     = spi_send;
     ops->delay_us = spi_delay_us;

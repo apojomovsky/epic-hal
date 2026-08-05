@@ -45,14 +45,14 @@ static void pic8_serial_on_rx(uint8_t data)
 static void pic8_serial_on_tx(void)
 {
     if (g_tx_count > 0u) {
-        uint8_t prev = HAL_IRQ_Disable();   /* atomic pop + TXREG load */
+        uint8_t prev = EPIC_IRQ_Disable();   /* atomic pop + TXREG load */
         uint8_t b = g_tx_buf[g_tx_tail];
         g_tx_tail = (uint8_t)((g_tx_tail + 1u) & MASK);
         g_tx_count--;
-        HAL_IRQ_Restore(prev);
+        EPIC_IRQ_Restore(prev);
         SERIAL_TXREG_WRITE(b);              /* writing TXREG clears TXIF (HW) */
     } else {
-        HAL_IRQ_DisableSrc(SERIAL_IRQ_TX);  /* ring empty: stop the TX ISR */
+        EPIC_IRQ_DisableSrc(SERIAL_IRQ_TX);  /* ring empty: stop the TX ISR */
     }
 }
 
@@ -84,8 +84,8 @@ void pic8_serial_init(uint32_t fosc_hz, uint32_t baud)
     h.RxCpltCallback = pic8_serial_on_rx;
     h.TxCpltCallback = pic8_serial_on_tx;
     s_usart = h;
-    HAL_USART_Init(&s_usart);
-    HAL_IRQ_DisableSrc(SERIAL_IRQ_TX);
+    EPIC_USART_Init(&s_usart);
+    EPIC_IRQ_DisableSrc(SERIAL_IRQ_TX);
 
     g_tx_head = g_tx_tail = g_tx_count = 0u;
     g_rx_head = g_rx_tail = g_rx_count = 0u;
@@ -94,17 +94,17 @@ void pic8_serial_init(uint32_t fosc_hz, uint32_t baud)
 int pic8_serial_write(const uint8_t *data, int len)
 {
     for (int i = 0; i < len; i++) {
-        uint8_t prev = HAL_IRQ_Disable();
+        uint8_t prev = EPIC_IRQ_Disable();
         while (g_tx_count >= SZ) {           /* block until space */
-            HAL_IRQ_Restore(prev);
+            EPIC_IRQ_Restore(prev);
             pic8_dispatch_all_irqs();        /* drain (host pumps; target ISR drains) */
-            prev = HAL_IRQ_Disable();
+            prev = EPIC_IRQ_Disable();
         }
         g_tx_buf[g_tx_head] = data[i];
         g_tx_head = (uint8_t)((g_tx_head + 1u) & MASK);
         g_tx_count++;
-        HAL_IRQ_Restore(prev);
-        HAL_IRQ_Enable(SERIAL_IRQ_TX);       /* kick the TX ISR */
+        EPIC_IRQ_Restore(prev);
+        EPIC_IRQ_Enable(SERIAL_IRQ_TX);       /* kick the TX ISR */
     }
     return len;
 }
@@ -112,13 +112,13 @@ int pic8_serial_write(const uint8_t *data, int len)
 int pic8_serial_read(uint8_t *buf, int max)
 {
     int n = 0;
-    uint8_t prev = HAL_IRQ_Disable();
+    uint8_t prev = EPIC_IRQ_Disable();
     while (n < max && g_rx_count > 0u) {
         buf[n++] = g_rx_buf[g_rx_tail];
         g_rx_tail = (uint8_t)((g_rx_tail + 1u) & MASK);
         g_rx_count--;
     }
-    HAL_IRQ_Restore(prev);
+    EPIC_IRQ_Restore(prev);
     return n;
 }
 
@@ -137,7 +137,7 @@ void pic8_serial_flush(void)
     while (g_tx_count > 0u) {
         pic8_dispatch_all_irqs();            /* drain the TX ring */
     }
-    while (!HAL_USART_IsTxShiftRegisterEmpty()) {
+    while (!EPIC_USART_IsTxShiftRegisterEmpty()) {
         pic8_dispatch_all_irqs();            /* wait for the last byte to leave TSR */
     }
 }

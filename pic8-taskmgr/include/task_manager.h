@@ -142,7 +142,7 @@ uint8_t task_manager_run_once(void);
  *             for (;;) {
  *                 pic8_harness_tick();   // pump sim / no-op on target
  *                 task_manager_run_once();
- *                 HAL_WDT_Refresh();
+ *                 EPIC_WDT_Refresh();
  *             }
  *
  *         Bounded on host (harness reports pass/fail and returns), runs
@@ -159,7 +159,7 @@ uint8_t task_manager_count(void);
 /**
  * @brief  Wire a HAL Timer0 overflow to @ref task_manager_tick and start
  *         it (internal Fosc/4, TMR0 interrupt enable set). Call
- *         `HAL_IRQ_Restore(1)` afterwards to actually arm it.
+ *         `EPIC_IRQ_Restore(1)` afterwards to actually arm it.
  *
  * @param  reload      TMR0 reload value (0..255). On a 20 MHz target,
  *                     prescaler 1:256, reload 61 -> ~10 ms per tick.

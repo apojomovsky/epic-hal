@@ -77,7 +77,7 @@ static uint8_t port_width(GPIO_TypeDef port)
 
 /* ───────────────────────── init / deinit ────────────────────────── */
 
-void HAL_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
+void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 {
     uint16_t ta = tris_addr(port);
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
@@ -99,7 +99,7 @@ void HAL_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     PIC8_REG8(ta) = tris;
 }
 
-void HAL_GPIO_DeInit(GPIO_TypeDef port)
+void EPIC_GPIO_DeInit(GPIO_TypeDef port)
 {
     uint16_t ta = tris_addr(port);
     /* Reset all implemented bits of TRISx to 1 = input, clear the latch. */
@@ -109,7 +109,7 @@ void HAL_GPIO_DeInit(GPIO_TypeDef port)
 
 /* ───────────────────────── read / write / toggle ────────────────── */
 
-void HAL_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
+void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint16_t la = lat_addr(port);
@@ -119,14 +119,14 @@ void HAL_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
     PIC8_REG8(la) = cur;          /* write the latch, DS39632E §10.0 */
 }
 
-void HAL_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
+void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint16_t la = lat_addr(port);
     PIC8_REG8(la) = (uint8_t)(PIC8_REG8(la) ^ mask);
 }
 
-GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
+GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     /* Read PORTx: pin state for inputs, latched value for outputs. The sim
@@ -135,20 +135,20 @@ GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
     return (PIC8_REG8(port_addr(port)) & mask) ? GPIO_PIN_SET : GPIO_PIN_RESET;
 }
 
-void HAL_GPIO_WritePort(GPIO_TypeDef port, uint8_t value)
+void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value)
 {
     uint8_t mask = (uint8_t)((1U << port_width(port)) - 1U);
     PIC8_REG8(lat_addr(port)) = (uint8_t)(value & mask);
 }
 
-uint8_t HAL_GPIO_ReadPort(GPIO_TypeDef port)
+uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
 {
     return PIC8_REG8(port_addr(port));
 }
 
 /* ───────────────────────── PORTB pull-ups ───────────────────────── */
 
-void HAL_GPIO_SetPullups(GPIO_PullTypeDef pull)
+void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 {
     /* INTCON2<RBPU> (bit 7), active-low: 1 = disabled, 0 = enabled
      * (DS39632E §10.2, Register 9-2). */
@@ -166,14 +166,14 @@ void HAL_GPIO_SetPullups(GPIO_PullTypeDef pull)
  * one-callback-per-handle shape but simpler). NULL = unregistered/no-op. */
 static void (*s_rb_change_callback)(uint8_t) = NULL;
 
-void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t))
+void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t))
 {
     s_rb_change_callback = callback;
 }
 
 void RB_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC18_IRQ_RB)) return;
+    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_RB)) return;
 
     /* MUST read PORTB before clearing RBIF, DS39632E §9.0: the mismatch
      * comparator latches the value at the last CPU read of PORTB, so the
@@ -182,6 +182,6 @@ void RB_IRQHandler(void)
      * immediate spurious re-interrupt or a silently-missed change. The
      * callback gets this already-read byte, never a second later read. */
     uint8_t portb = PIC8_REG8(PIC_REG_PORTB);
-    HAL_IRQ_ClearFlag(PIC18_IRQ_RB);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_RB);
     if (s_rb_change_callback) s_rb_change_callback(portb);
 }

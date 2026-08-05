@@ -8,7 +8,7 @@
  *   in file-scope statics, not a caller-owned handle, same model
  *   pic8-serial/pic8-tick use. Family-neutral: the only family-specific
  *   surface is GPIO for the optional RS-485 pin, already neutral via
- *   pic8_hal.h's GPIO_TypeDef/HAL_GPIO_* contract, no #if needed here.
+ *   pic8_hal.h's GPIO_TypeDef/EPIC_GPIO_* contract, no #if needed here.
  */
 
 #include "pic8_modbus.h"
@@ -295,13 +295,13 @@ static uint16_t handle_write_multiple_regs(uint8_t *resp)
 static void send_response(const uint8_t *resp, uint16_t len)
 {
     if (s_dir_configured) {
-        HAL_GPIO_WritePin((GPIO_TypeDef)s_dir_port, (uint16_t)PIC8_BIT(s_dir_pin), GPIO_PIN_SET);
+        EPIC_GPIO_WritePin((GPIO_TypeDef)s_dir_port, (uint16_t)PIC8_BIT(s_dir_pin), GPIO_PIN_SET);
     }
     pic8_serial_write(resp, (int)len);
     if (s_dir_configured) {
         pic8_serial_flush(); /* wait for the ring AND the shift register to drain
                                  before dropping the driver enable */
-        HAL_GPIO_WritePin((GPIO_TypeDef)s_dir_port, (uint16_t)PIC8_BIT(s_dir_pin), GPIO_PIN_RESET);
+        EPIC_GPIO_WritePin((GPIO_TypeDef)s_dir_port, (uint16_t)PIC8_BIT(s_dir_pin), GPIO_PIN_RESET);
     }
 }
 
@@ -388,8 +388,8 @@ void pic8_modbus_slave_set_rs485_dir_pin(uint8_t port, uint8_t pin)
     s_dir_pin        = pin;
     s_dir_configured = true;
 
-    HAL_GPIO_Init((GPIO_TypeDef)port, (uint16_t)PIC8_BIT(pin), GPIO_MODE_OUTPUT);
-    HAL_GPIO_WritePin((GPIO_TypeDef)port, (uint16_t)PIC8_BIT(pin), GPIO_PIN_RESET); /* idle = receive */
+    EPIC_GPIO_Init((GPIO_TypeDef)port, (uint16_t)PIC8_BIT(pin), GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin((GPIO_TypeDef)port, (uint16_t)PIC8_BIT(pin), GPIO_PIN_RESET); /* idle = receive */
 }
 
 void pic8_modbus_slave_poll(void)

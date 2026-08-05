@@ -4,7 +4,7 @@
  *          on either toggles the LED on RB0.
  *
  * @details
- *   The read callback wraps `HAL_GPIO_ReadPin` through a small `pin_ctx_t`,
+ *   The read callback wraps `EPIC_GPIO_ReadPin` through a small `pin_ctx_t`,
  *   so the debounce core never sees a HAL type. Host sim drives RA0/RA1
  *   high/low to simulate presses; on target the pins read real switches.
  */
@@ -28,7 +28,7 @@ typedef struct { uint8_t port; uint16_t pin; } pin_ctx_t;
 static bool read_pin(void *ctx)
 {
     pin_ctx_t *p = (pin_ctx_t *)ctx;
-    return HAL_GPIO_ReadPin((GPIO_TypeDef)p->port, p->pin) == GPIO_PIN_SET;
+    return EPIC_GPIO_ReadPin((GPIO_TypeDef)p->port, p->pin) == GPIO_PIN_SET;
 }
 
 int main(void)
@@ -37,9 +37,9 @@ int main(void)
     pic8_tick_init(FOSC_HZ);
 
     /* Two button inputs on RA0, RA1; one LED output on RB0. */
-    HAL_GPIO_Init(GPIOA, GPIO_PIN_0 | GPIO_PIN_1, GPIO_MODE_INPUT);
-    HAL_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+    EPIC_GPIO_Init(GPIOA, GPIO_PIN_0 | GPIO_PIN_1, GPIO_MODE_INPUT);
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 
     pin_ctx_t pin_a = { GPIOA, GPIO_PIN_0 };
     pin_ctx_t pin_b = { GPIOA, GPIO_PIN_1 };
@@ -61,7 +61,7 @@ int main(void)
         if (ea != DEBOUNCE_EVENT_NONE) {
             pic8_harness_log("[t=%lu] A: %s\n", (unsigned long)t,
                              ea == DEBOUNCE_EVENT_PRESSED ? "PRESSED" : "RELEASED");
-            HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+            EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
             events++;
         }
         if (eb != DEBOUNCE_EVENT_NONE) {

@@ -73,7 +73,7 @@ pic18fxx5x-hal/
 │   ├── host/pic18_platform.h     SFRs -> memory array, real weak attribute
 │   ├── target/pic18_platform.h   SFRs -> volatile deref, no weak
 │   ├── core/
-│   │   ├── pic18_irq.h                 PIC18_IRQn enum + HAL_IRQ_* backend
+│   │   ├── pic18_irq.h                 PIC18_IRQn enum + EPIC_IRQ_* backend
 │   │   ├── hal_irq.h                   family-neutral pointer to pic18_irq.h
 │   │   ├── pic18fxx5x_wdt_sleep.h       WDT/Sleep/BOR/POR helpers (RCON-based)
 │   │   └── hal_wdt_sleep.h              family-neutral pointer
@@ -225,22 +225,22 @@ typedef enum {
 #endif
 } PIC18_IRQn;
 
-uint8_t HAL_IRQ_Disable(void);                              /* clears GIEH+GIEL, returns prior state */
-void    HAL_IRQ_Restore(uint8_t prev_state);                 /* also ensures IPEN=1 */
-void    HAL_IRQ_Enable(PIC18_IRQn irq);
-void    HAL_IRQ_DisableSrc(PIC18_IRQn irq);
-void    HAL_IRQ_ClearFlag(PIC18_IRQn irq);
-uint8_t HAL_IRQ_GetFlag(PIC18_IRQn irq);
-void    HAL_IRQ_SetPriority(PIC18_IRQn irq, HAL_IRQ_Priority prio);  /* no-op for INT0 */
+uint8_t EPIC_IRQ_Disable(void);                              /* clears GIEH+GIEL, returns prior state */
+void    EPIC_IRQ_Restore(uint8_t prev_state);                 /* also ensures IPEN=1 */
+void    EPIC_IRQ_Enable(PIC18_IRQn irq);
+void    EPIC_IRQ_DisableSrc(PIC18_IRQn irq);
+void    EPIC_IRQ_ClearFlag(PIC18_IRQn irq);
+uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq);
+void    EPIC_IRQ_SetPriority(PIC18_IRQn irq, EPIC_IRQ_Priority prio);  /* no-op for INT0 */
 ```
 
-`HAL_IRQ_Restore(1)` is the drop-in equivalent of PIC16's `GIE = 1` (see
+`EPIC_IRQ_Restore(1)` is the drop-in equivalent of PIC16's `GIE = 1` (see
 `pic8-common/MANUAL.md` §6 for the shared enable/disable API and §7 for
 the ISR-writing pattern, identical here) — it sets both master enables and ensures
-priority mode is active. `HAL_IRQ_SetPriority` writes the matching bit in
+priority mode is active. `EPIC_IRQ_SetPriority` writes the matching bit in
 `INTCON2`/`INTCON3`/`IPR1`/`IPR2`; sources reset to high priority
 (`INTCON2`/`INTCON3`/`IPR1`/`IPR2` reset all-ones, DS39632E Table 5-1).
-`HAL_IRQ_SetPriority` is the one shared-contract extension PIC18 needs and
+`EPIC_IRQ_SetPriority` is the one shared-contract extension PIC18 needs and
 PIC16 implements as a no-op (`docs/multi-family-plan.md`, Phase 2 resolved
 question).
 
@@ -269,12 +269,12 @@ PIC16's single-dispatcher shape — see `pic8-common/MANUAL.md` §2.3.
 *DS39632E §4.0 (RCON, Register 4-1), §9.0 (`RCON<IPEN>`), §3.0 (Sleep).*
 
 ```c
-void    HAL_WDT_Refresh(void);     // asm("clrwdt") on target; no-op on host
-void    HAL_Sleep_Enter(void);     // asm("sleep")  on target; no-op on host
-uint8_t HAL_BOR_GetStatus(void);   // RCON<BOR> (bit 0)
-void    HAL_BOR_ClearFlag(void);
-uint8_t HAL_POR_GetStatus(void);   // RCON<POR> (bit 1)
-void    HAL_POR_ClearFlag(void);
+void    EPIC_WDT_Refresh(void);     // asm("clrwdt") on target; no-op on host
+void    EPIC_Sleep_Enter(void);     // asm("sleep")  on target; no-op on host
+uint8_t EPIC_BOR_GetStatus(void);   // RCON<BOR> (bit 0)
+void    EPIC_BOR_ClearFlag(void);
+uint8_t EPIC_POR_GetStatus(void);   // RCON<POR> (bit 1)
+void    EPIC_POR_ClearFlag(void);
 ```
 
 Same function names/signatures as PIC16F87XA (portable caller code), but
@@ -287,7 +287,7 @@ PIC18 folds the reset-status bits into **`RCON`** rather than a separate
 
 *DS39632E §10.0.*
 
-Same `HAL_GPIO_*` names/signatures as PIC16F87XA, but a real hardware
+Same `EPIC_GPIO_*` names/signatures as PIC16F87XA, but a real hardware
 improvement: **writes go through `LATx`, not `PORTx`.** PIC18 exposes the
 output latch as its own mapped register, so there's no PORTx
 read-modify-write to corrupt an input pin's state on a shared write (the
@@ -304,14 +304,14 @@ typedef enum {
 #endif
 } GPIO_TypeDef;
 
-void HAL_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
-void HAL_GPIO_DeInit(GPIO_TypeDef port);
-void HAL_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);  // writes LATx
-void HAL_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);                      // LATx ^= mask
-GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);               // reads PORTx
-void HAL_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);                      // writes LATx
-uint8_t HAL_GPIO_ReadPort(GPIO_TypeDef port);                                   // reads PORTx
-void HAL_GPIO_SetPullups(GPIO_PullTypeDef pull);   // INTCON2<RBPU>, inverted, PORTB only
+void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
+void EPIC_GPIO_DeInit(GPIO_TypeDef port);
+void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);  // writes LATx
+void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);                      // LATx ^= mask
+GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);               // reads PORTx
+void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);                      // writes LATx
+uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);                                   // reads PORTx
+void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull);   // INTCON2<RBPU>, inverted, PORTB only
 ```
 
 PORTA is 6-bit (RA0-RA5), PORTE is 3-bit; PORTD/PORTE exist only on
@@ -331,33 +331,33 @@ can consume the RB-change interrupt without a family-specific include;
 the family-neutral shim `peripherals/hal_gpio.h` pulls this header in.
 
 ```c
-void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
+void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
 void RB_IRQHandler(void) PIC8_WEAK;
 ```
 
-`HAL_GPIO_RegisterChangeCallback` stores one callback slot (NULL is safe,
+`EPIC_GPIO_RegisterChangeCallback` stores one callback slot (NULL is safe,
 the handler no-ops). `RB_IRQHandler` is the weak ISR the dispatcher fans
 out to; the default body reads PORTB, clears RBIF, then calls the
 registered callback with that already-read byte. On PIC18 the RB source
 also has a priority bit (`INTCON2<RBIP>`), set via
-`HAL_IRQ_SetPriority(PIC18_IRQ_RB, prio)`; it defaults to high priority
+`EPIC_IRQ_SetPriority(PIC18_IRQ_RB, prio)`; it defaults to high priority
 after reset like every other source (INTCON2 resets to all-ones,
 DS39632E Table 5-1), and only takes effect in priority mode (`IPEN = 1`,
-the mode `HAL_IRQ_Restore` enables).
+the mode `EPIC_IRQ_Restore` enables).
 
 **Read before clear, mandatory.** The mismatch comparator latches the
 value of PORTB at the last CPU read, so reading PORTB is what ends the
 current mismatch condition and re-arms the next one. Clearing RBIF first
 (or not reading at all) risks an immediate spurious re-interrupt or a
 silently-missed change. The handler therefore reads PORTB into a local
-*before* `HAL_IRQ_ClearFlag`, and the callback receives that already-read
+*before* `EPIC_IRQ_ClearFlag`, and the callback receives that already-read
 value, never a second later read (which by then may not reflect the byte
 the mismatch logic cleared against). Do not reorder this.
 
 The dispatcher calls `RB_IRQHandler` on every interrupt (it checks RBIF
 and returns immediately when not pending), so it costs only a flag test
 when the source is idle. To arm it on a real target, also
-`HAL_IRQ_Enable(PIC18_IRQ_RB)` and `HAL_IRQ_Restore(1)`.
+`EPIC_IRQ_Enable(PIC18_IRQ_RB)` and `EPIC_IRQ_Restore(1)`.
 
 **Host sim.** The sim does not auto-assert RBIF on a PORTB mismatch
 (faithfully modeling the datasheet "snapshot on every PORTB read" would
@@ -388,13 +388,13 @@ typedef struct {
     void (*OverflowCallback)(void);
 } TIMER0_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_TIMER0_Init(const TIMER0_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER0_DeInit(void);
-HAL_StatusTypeDef HAL_TIMER0_Start(const TIMER0_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER0_Stop(void);
-uint8_t  HAL_TIMER0_ReadCounter(void);     // TMR0L only, even in 16-bit mode
-void     HAL_TIMER0_WriteCounter(uint8_t value);
-uint16_t HAL_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);
+EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void);
+EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER0_Stop(void);
+uint8_t  EPIC_TIMER0_ReadCounter(void);     // TMR0L only, even in 16-bit mode
+void     EPIC_TIMER0_WriteCounter(uint8_t value);
+uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);
 void     TIMER0_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -409,9 +409,9 @@ clock). Overflow sets `INTCON<TMR0IF>` (not a PIR bit).
 ```c
 TIMER0_HandleTypeDef h = TIMER0_HANDLE_DEFAULT;   // 8-bit, internal, 1:256, reload 0
 h.OverflowCallback = on_t0_overflow;
-HAL_TIMER0_Init(&h);
-HAL_TIMER0_Start(&h);
-HAL_IRQ_Restore(1);
+EPIC_TIMER0_Init(&h);
+EPIC_TIMER0_Start(&h);
+EPIC_IRQ_Restore(1);
 ```
 
 At FOSC = 20MHz (FCY = 5MHz), 1:256 overflows every 256 × 256 × 0.2µs ≈
@@ -438,10 +438,10 @@ typedef struct {
     void (*OverflowCallback)(void);
 } TIMER1_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_TIMER1_Init/DeInit/Start/Stop(...);
-uint16_t HAL_TIMER1_ReadCounter(void);      // atomic (RD16 latches TMR1H on TMR1L read)
-void     HAL_TIMER1_WriteCounter(uint16_t value);
-uint16_t HAL_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);
+EPIC_StatusTypeDef EPIC_TIMER1_Init/DeInit/Start/Stop(...);
+uint16_t EPIC_TIMER1_ReadCounter(void);      // atomic (RD16 latches TMR1H on TMR1L read)
+void     EPIC_TIMER1_WriteCounter(uint16_t value);
+uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);
 void     TIMER1_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -466,13 +466,13 @@ typedef struct {
     void (*OverflowCallback)(void);
 } TIMER2_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_TIMER2_Init/DeInit/Start/Stop(...);
-uint8_t  HAL_TIMER2_ReadCounter(void);
-void     HAL_TIMER2_WriteCounter(uint8_t value);
-uint8_t  HAL_TIMER2_ReadPeriod(void);
-void     HAL_TIMER2_WritePeriod(uint8_t period);
-uint16_t HAL_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p);
-uint16_t HAL_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p);
+EPIC_StatusTypeDef EPIC_TIMER2_Init/DeInit/Start/Stop(...);
+uint8_t  EPIC_TIMER2_ReadCounter(void);
+void     EPIC_TIMER2_WriteCounter(uint8_t value);
+uint8_t  EPIC_TIMER2_ReadPeriod(void);
+void     EPIC_TIMER2_WritePeriod(uint8_t period);
+uint16_t EPIC_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p);
+uint16_t EPIC_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p);
 void     TIMER2_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -487,7 +487,7 @@ cycles/period, 5 overflows verified, first overflow observed at cycle 250
 *DS39632E §14.0, Register 14-1 (T3CON).*
 
 A second 16-bit timer alongside Timer1, not present on PIC16F87XA. Mirrors
-Timer1's API (`TIMER3_HandleTypeDef`, `HAL_TIMER3_*`, weak
+Timer1's API (`TIMER3_HandleTypeDef`, `EPIC_TIMER3_*`, weak
 `TIMER3_IRQHandler`), differences:
 
 - No oscillator field — Timer3 shares Timer1's T1OSC crystal
@@ -508,10 +508,10 @@ typedef struct {
     void (*OverflowCallback)(void);
 } TIMER3_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_TIMER3_Init/DeInit/Start/Stop(...);
-uint16_t HAL_TIMER3_ReadCounter(void);
-void     HAL_TIMER3_WriteCounter(uint16_t value);
-uint16_t HAL_TIMER3_PrescalerToRatio(TIMER3_PrescalerTypeDef p);
+EPIC_StatusTypeDef EPIC_TIMER3_Init/DeInit/Start/Stop(...);
+uint16_t EPIC_TIMER3_ReadCounter(void);
+void     EPIC_TIMER3_WriteCounter(uint16_t value);
+uint16_t EPIC_TIMER3_PrescalerToRatio(TIMER3_PrescalerTypeDef p);
 void     TIMER3_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -526,7 +526,7 @@ cycles/overflow, 3 overflows verified.
 Register 16-3 (ECCP1AS).*
 
 Two CCP modules, asymmetric: **CCP1 is Enhanced (ECCP1)**, CCP2 is plain.
-The API mirrors PIC16's `HAL_CCP_*` (same `CCP_InstanceTypeDef`,
+The API mirrors PIC16's `EPIC_CCP_*` (same `CCP_InstanceTypeDef`,
 `CCP_ModeTypeDef`, `CCP_PWMConfigTypeDef`, weak `CCP1_IRQHandler`/
 `CCP2_IRQHandler`); the handle adds three ECCP-only fields CCP2 ignores.
 PIC18 also adds a `CCP_MODE_COMPARE_TOGGLE` (0010) mode PIC16 lacks.
@@ -538,7 +538,7 @@ plain CCP:
 - **Programmable dead-band delay + auto-restart** (`ECCP1DEL`): `Delay` is
   a 7-bit instruction-cycle count (`PDC6:PDC0`); `AutoRestart` (`PRSEN`)
   auto-clears the shutdown state when the source deasserts, vs. requiring
-  firmware to call `HAL_CCP_Restart`.
+  firmware to call `EPIC_CCP_Restart`.
 - **Auto-shutdown** (`ECCP1AS`): source select (comparators and/or the
   external `FLT0` pin) plus per-pin-pair states (drive 0, drive 1,
   tri-state) applied on a shutdown event.
@@ -555,16 +555,16 @@ typedef struct {
     void (*EventCallback)(void);
 } CCP_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_CCP_DeInit(CCP_InstanceTypeDef inst);
-void     HAL_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
-uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst);
-void     HAL_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);   // 0..1023
-void     HAL_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst, uint8_t delay, bool auto_restart);  // no-op for CCP2
-void     HAL_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst, CCP_AutoShutdownSourceTypeDef source,
+EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
+void     EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
+uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
+void     EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);   // 0..1023
+void     EPIC_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst, uint8_t delay, bool auto_restart);  // no-op for CCP2
+void     EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst, CCP_AutoShutdownSourceTypeDef source,
                                      CCP_PinStateTypeDef pins_ac, CCP_PinStateTypeDef pins_bd);  // no-op for CCP2
-uint8_t  HAL_CCP_IsShutdown(CCP_InstanceTypeDef inst);
-void     HAL_CCP_Restart(CCP_InstanceTypeDef inst);   // no-op for CCP2
+uint8_t  EPIC_CCP_IsShutdown(CCP_InstanceTypeDef inst);
+void     EPIC_CCP_Restart(CCP_InstanceTypeDef inst);   // no-op for CCP2
 void     CCP1_IRQHandler(void) PIC8_WEAK;
 void     CCP2_IRQHandler(void) PIC8_WEAK;
 ```
@@ -577,14 +577,14 @@ start it first with a period matching `h->PWM.Period`.
 
 ```c
 TIMER2_HandleTypeDef th = TIMER2_HANDLE_DEFAULT;
-th.Period = 99;  HAL_TIMER2_Init(&th);         // PR2=99 -> 100-cycle period
+th.Period = 99;  EPIC_TIMER2_Init(&th);         // PR2=99 -> 100-cycle period
 
 CCP_HandleTypeDef ch = { .Instance = CCP_INSTANCE_1, .Mode = CCP_MODE_PWM,
                           .PWM = { .Period = 99, .Duty = 50 },            // 50%
                           .PWMOutputMode = CCP_PWM_OUTPUT_HALF_BRIDGE,
                           .DeadBand = { .Delay = 12, .AutoRestart = true } };
-HAL_CCP_Init(&ch);
-HAL_TIMER2_Start(&th);
+EPIC_CCP_Init(&ch);
+EPIC_TIMER2_Start(&th);
 ```
 
 Verified register image: `CCPR1L = 50>>2 = 0x0C`, `CCP1CON =
@@ -595,7 +595,7 @@ P1M(10)<<6 | duty[1:0]<<4 | PWM(1100) = 0xAC`, `ECCP1DEL = PRSEN|12 = 0x8C`.
 *DS39632E §19.0, Registers 19-1..19-6.*
 
 One MSSP module (RC3/SCK/SCL, RC4/SDI/SDA, RC5/SDO). Same API as PIC16's
-`HAL_SSP_*`; the only real differences are that every MSSP register is in
+`EPIC_SSP_*`; the only real differences are that every MSSP register is in
 the Access Bank (no bank switching) and the control register is
 **`SSPCON1`** (PIC16's is `SSPCON`). ⚠ Register-level only — no I²C state
 machine; the caller drives Start/Stop/ACK by hand, same as PIC16.
@@ -610,16 +610,16 @@ typedef struct {
     void (*TransferCallback)(void);
 } SSP_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_SSP_Init/DeInit(...);
-uint16_t HAL_SSP_WriteByte(uint8_t data);   // 0xFFFF on WCOL (not written)
-uint8_t  HAL_SSP_ReadByte(void);
-uint8_t  HAL_SSP_IsBufferFull(void);
-uint8_t  HAL_SSP_HasWriteCollision(void);
-void     HAL_SSP_ClearWriteCollision(void);
+EPIC_StatusTypeDef EPIC_SSP_Init/DeInit(...);
+uint16_t EPIC_SSP_WriteByte(uint8_t data);   // 0xFFFF on WCOL (not written)
+uint8_t  EPIC_SSP_ReadByte(void);
+uint8_t  EPIC_SSP_IsBufferFull(void);
+uint8_t  EPIC_SSP_HasWriteCollision(void);
+void     EPIC_SSP_ClearWriteCollision(void);
 uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz);  // Fscl = Fosc/(4*(SSPADD+1))
-void     HAL_SSP_Start(void);  void HAL_SSP_RepeatedStart(void);  void HAL_SSP_Stop(void);
-void     HAL_SSP_ReceiveEnable(void);  void HAL_SSP_AcknowledgeEnable(void);
-uint8_t  HAL_SSP_AcknowledgeStatus(void);
+void     EPIC_SSP_Start(void);  void EPIC_SSP_RepeatedStart(void);  void EPIC_SSP_Stop(void);
+void     EPIC_SSP_ReceiveEnable(void);  void EPIC_SSP_AcknowledgeEnable(void);
+uint8_t  EPIC_SSP_AcknowledgeStatus(void);
 void     SSP_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -633,7 +633,7 @@ master `Start`/`Stop` set `SSPCON2<SEN>`/`<PEN>`.
 *DS39632E §20.0, Registers 20-1 (TXSTA), 20-2 (RCSTA), 20-3 (BAUDCON),
 §20.1 (BRG, Table 20-1).*
 
-Same API as PIC16's `HAL_USART_*`. The PIC18 EUSART adds, all via `BAUDCON`
+Same API as PIC16's `EPIC_USART_*`. The PIC18 EUSART adds, all via `BAUDCON`
 + the `SPBRGH` high byte:
 - **16-bit baud generator** (`BAUDCON<BRG16>`), extending the divisor range
   with `SPBRG:SPBRGH` (vs. PIC16's 8-bit-only `SPBRG`).
@@ -660,16 +660,16 @@ typedef struct {
     void (*RxCpltCallback)(uint8_t data);
 } USART_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_USART_Init/DeInit(...);
-void    HAL_USART_Transmit(uint8_t data);           // TXIF cleared by writing TXREG, not reading
-uint8_t HAL_USART_GetTX9D(void);  void HAL_USART_SetTX9D(uint8_t bit9);
-uint8_t HAL_USART_IsTxShiftRegisterEmpty(void);
-uint8_t HAL_USART_Receive(void);                     // clears RCIF, advances 2-deep FIFO
-uint8_t HAL_USART_GetRX9D(void);
-uint8_t HAL_USART_HasOverrun(void);  void HAL_USART_ClearOverrun(void);   // cycles CREN
-void    HAL_USART_StartAutoBaud(void);
-uint8_t HAL_USART_IsAutoBaudBusy(void);
-uint8_t HAL_USART_HasAutoBaudOverflow(void);  void HAL_USART_ClearAutoBaudOverflow(void);
+EPIC_StatusTypeDef EPIC_USART_Init/DeInit(...);
+void    EPIC_USART_Transmit(uint8_t data);           // TXIF cleared by writing TXREG, not reading
+uint8_t EPIC_USART_GetTX9D(void);  void EPIC_USART_SetTX9D(uint8_t bit9);
+uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);
+uint8_t EPIC_USART_Receive(void);                     // clears RCIF, advances 2-deep FIFO
+uint8_t EPIC_USART_GetRX9D(void);
+uint8_t EPIC_USART_HasOverrun(void);  void EPIC_USART_ClearOverrun(void);   // cycles CREN
+void    EPIC_USART_StartAutoBaud(void);
+uint8_t EPIC_USART_IsAutoBaudBusy(void);
+uint8_t EPIC_USART_HasAutoBaudOverflow(void);  void EPIC_USART_ClearAutoBaudOverflow(void);
 void    USART_RX_IRQHandler(void) PIC8_WEAK;
 void    USART_TX_IRQHandler(void) PIC8_WEAK;
 ```
@@ -701,13 +701,13 @@ typedef struct {
     void (*ConvCpltCallback)(uint16_t result);
 } ADC_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_ADC_Init/DeInit(...);
-uint16_t HAL_ADC_Start(void);                    // 0xFFFF if already in progress
-void     HAL_ADC_SelectChannel(ADC_ChannelTypeDef ch);
-uint8_t  HAL_ADC_IsConversionInProgress(void);   // GO/DONE
-uint8_t  HAL_ADC_IsConversionDone(void);         // ADIF
-void     HAL_ADC_ClearITFlag(void);
-uint16_t HAL_ADC_Read(void);                     // always returns 0..1023 regardless of ADFM
+EPIC_StatusTypeDef EPIC_ADC_Init/DeInit(...);
+uint16_t EPIC_ADC_Start(void);                    // 0xFFFF if already in progress
+void     EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch);
+uint8_t  EPIC_ADC_IsConversionInProgress(void);   // GO/DONE
+uint8_t  EPIC_ADC_IsConversionDone(void);         // ADIF
+void     EPIC_ADC_ClearITFlag(void);
+uint16_t EPIC_ADC_Read(void);                     // always returns 0..1023 regardless of ADFM
 void     ADC_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -739,9 +739,9 @@ typedef struct {
     void (*ChangeCallback)(void);   /* fires on CMIF, PIR2<6> */
 } COMP_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_COMP_Init/DeInit(...);
-uint8_t HAL_COMP_C1Out(void);  uint8_t HAL_COMP_C2Out(void);
-uint8_t HAL_COMP_IsChangeFlag(void);  void HAL_COMP_ClearChangeFlag(void);
+EPIC_StatusTypeDef EPIC_COMP_Init/DeInit(...);
+uint8_t EPIC_COMP_C1Out(void);  uint8_t EPIC_COMP_C2Out(void);
+uint8_t EPIC_COMP_IsChangeFlag(void);  void EPIC_COMP_ClearChangeFlag(void);
 void    COMP_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -754,21 +754,21 @@ POR default `CMCON = 0x07` (off). `example_comp` verifies
 
 *DS39632E §7.0, Register 7-1 (EECON1), §7.1 (read), §7.2 (write/unlock).*
 
-256 bytes. Same API as PIC16's `HAL_EEPROM_*`. PIC18 moves the registers
+256 bytes. Same API as PIC16's `EPIC_EEPROM_*`. PIC18 moves the registers
 into the Access Bank and adds `EEPGD`/`CFGS` select bits to `EECON1` (both
 kept 0 by this driver for data-EEPROM access, as opposed to program-memory
 access). No `EEADRH` on this family (`EEADR` is a full 8-bit address,
 0..255).
 
 ```c
-HAL_StatusTypeDef HAL_EEPROM_Init(void (*callback)(void));   // sets PIE2<EEIE> if non-NULL
-HAL_StatusTypeDef HAL_EEPROM_DeInit(void);
-uint8_t  HAL_EEPROM_ReadByte(uint8_t addr);
-HAL_StatusTypeDef HAL_EEPROM_WriteByte(uint8_t addr, uint8_t data);   // hides 0x55->0xAA unlock
-void     HAL_EEPROM_ReadBuffer(uint8_t start, uint8_t *buf, uint8_t len);
-HAL_StatusTypeDef HAL_EEPROM_WriteBuffer(uint8_t start, const uint8_t *buf, uint8_t len);
-uint8_t  HAL_EEPROM_IsWriteComplete(void);   // EEIF, PIR2<4>
-void     HAL_EEPROM_ClearITFlag(void);
+EPIC_StatusTypeDef EPIC_EEPROM_Init(void (*callback)(void));   // sets PIE2<EEIE> if non-NULL
+EPIC_StatusTypeDef EPIC_EEPROM_DeInit(void);
+uint8_t  EPIC_EEPROM_ReadByte(uint8_t addr);
+EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data);   // hides 0x55->0xAA unlock
+void     EPIC_EEPROM_ReadBuffer(uint8_t start, uint8_t *buf, uint8_t len);
+EPIC_StatusTypeDef EPIC_EEPROM_WriteBuffer(uint8_t start, const uint8_t *buf, uint8_t len);
+uint8_t  EPIC_EEPROM_IsWriteComplete(void);   // EEIF, PIR2<4>
+void     EPIC_EEPROM_ClearITFlag(void);
 void     EEPROM_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -802,13 +802,13 @@ typedef struct {
     void (*TransferCallback)(void);
 } SPP_HandleTypeDef;
 
-HAL_StatusTypeDef HAL_SPP_Init/DeInit(...);
-void    HAL_SPP_WriteByte(uint8_t ep, uint8_t data);
-uint8_t HAL_SPP_ReadByte(uint8_t ep);
-uint8_t HAL_SPP_IsBusy(void);                 // SPPEPS<SPPBUSY>
-uint8_t HAL_SPP_HasWriteOccurred(void);        // SPPEPS<WRSPP>
-uint8_t HAL_SPP_HasReadOccurred(void);         // SPPEPS<RDSPP>
-uint8_t HAL_SPP_IsInterruptFlag(void);  void HAL_SPP_ClearITFlag(void);
+EPIC_StatusTypeDef EPIC_SPP_Init/DeInit(...);
+void    EPIC_SPP_WriteByte(uint8_t ep, uint8_t data);
+uint8_t EPIC_SPP_ReadByte(uint8_t ep);
+uint8_t EPIC_SPP_IsBusy(void);                 // SPPEPS<SPPBUSY>
+uint8_t EPIC_SPP_HasWriteOccurred(void);        // SPPEPS<WRSPP>
+uint8_t EPIC_SPP_HasReadOccurred(void);         // SPPEPS<RDSPP>
+uint8_t EPIC_SPP_IsInterruptFlag(void);  void EPIC_SPP_ClearITFlag(void);
 void    SPP_IRQHandler(void) PIC8_WEAK;
 ```
 
@@ -906,7 +906,7 @@ build/example_*; do "$t"; done` (exit 0 = pass), same as PIC16F87XA.
   ([§14](#14-mssp-spi-and-i²c)).
 - **`IRQ_Enable` does not set the master enable(s).** Confirmed true here
   too (see `pic8-common/MANUAL.md`'s general interrupt gotcha): arming a
-  source via `HAL_IRQ_Enable` is not enough, `HAL_IRQ_Restore(1)` (which
+  source via `EPIC_IRQ_Enable` is not enough, `EPIC_IRQ_Restore(1)` (which
   also ensures `IPEN=1`) is what actually lets interrupts fire.
 - **No per-peripheral `HAL_PPP_MspInit`.** Confirmed true here too: ISR
   vector wiring is centralized in the one shared `pic8_dispatch_all_irqs()`

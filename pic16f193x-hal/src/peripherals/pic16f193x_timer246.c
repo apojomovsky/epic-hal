@@ -92,85 +92,85 @@ static uint8_t con_por_value(TIMER246_InstanceTypeDef inst)
     return PIC_T6CON_POR_VALUE;
 }
 
-uint8_t HAL_TIMER246_ReadCounter(TIMER246_InstanceTypeDef inst)
+uint8_t EPIC_TIMER246_ReadCounter(TIMER246_InstanceTypeDef inst)
 {
     uint8_t v;
     TIMER246_READ_TMR(inst, v);
     return v;
 }
 
-void HAL_TIMER246_WriteCounter(TIMER246_InstanceTypeDef inst, uint8_t value)
+void EPIC_TIMER246_WriteCounter(TIMER246_InstanceTypeDef inst, uint8_t value)
 {
     TIMER246_WRITE_TMR(inst, value);
 }
 
-uint8_t HAL_TIMER246_ReadPeriod(TIMER246_InstanceTypeDef inst)
+uint8_t EPIC_TIMER246_ReadPeriod(TIMER246_InstanceTypeDef inst)
 {
     uint8_t v;
     TIMER246_READ_PR(inst, v);
     return v;
 }
 
-void HAL_TIMER246_WritePeriod(TIMER246_InstanceTypeDef inst, uint8_t period)
+void EPIC_TIMER246_WritePeriod(TIMER246_InstanceTypeDef inst, uint8_t period)
 {
     TIMER246_WRITE_PR(inst, period);
 }
 
-uint16_t HAL_TIMER246_PrescalerToRatio(TIMER246_PrescalerTypeDef p)
+uint16_t EPIC_TIMER246_PrescalerToRatio(TIMER246_PrescalerTypeDef p)
 {
     if ((unsigned)p > 3U) return 1U;
     return pre_ratio[p];
 }
 
-uint16_t HAL_TIMER246_PostscalerToRatio(TIMER246_PostscalerTypeDef p)
+uint16_t EPIC_TIMER246_PostscalerToRatio(TIMER246_PostscalerTypeDef p)
 {
     if ((unsigned)p > 15U) return 1U;
     return post_ratio[p];
 }
 
-HAL_StatusTypeDef HAL_TIMER246_Init(const TIMER246_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_TIMER246_Init(const TIMER246_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     if (h->Instance != TIMER246_INSTANCE_2 &&
         h->Instance != TIMER246_INSTANCE_4 &&
         h->Instance != TIMER246_INSTANCE_6) {
-        return HAL_INVALID;
+        return EPIC_INVALID;
     }
 
     /* Stop the timer before reconfiguring. */
     TIMER246_STOP(h->Instance);
 
     PIC16F193X_IRQn irq = timer246_irq(h->Instance);
-    HAL_IRQ_ClearFlag(irq);
+    EPIC_IRQ_ClearFlag(irq);
     if (h->OverflowCallback) {
-        HAL_IRQ_Enable(irq);
+        EPIC_IRQ_Enable(irq);
     } else {
-        HAL_IRQ_DisableSrc(irq);
+        EPIC_IRQ_DisableSrc(irq);
     }
 
     g_handle[idx_of(h->Instance)] = h;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER246_DeInit(TIMER246_InstanceTypeDef inst)
+EPIC_StatusTypeDef EPIC_TIMER246_DeInit(TIMER246_InstanceTypeDef inst)
 {
     PIC16F193X_IRQn irq = timer246_irq(inst);
-    HAL_IRQ_DisableSrc(irq);
-    HAL_IRQ_ClearFlag(irq);
+    EPIC_IRQ_DisableSrc(irq);
+    EPIC_IRQ_ClearFlag(irq);
     TIMER246_WRITE_CON(inst, con_por_value(inst));
     TIMER246_WRITE_TMR(inst, 0x00U);
     TIMER246_WRITE_PR(inst, 0xFFU);   /* PRx POR value, DS41364B §17.0. */
     g_handle[idx_of(inst)] = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER246_Start(const TIMER246_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_TIMER246_Start(const TIMER246_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     if (h->Instance != TIMER246_INSTANCE_2 &&
         h->Instance != TIMER246_INSTANCE_4 &&
         h->Instance != TIMER246_INSTANCE_6) {
-        return HAL_INVALID;
+        return EPIC_INVALID;
     }
 
     /* Period register first, same rationale as pic16f87xa_timer2.c:
@@ -189,19 +189,19 @@ HAL_StatusTypeDef HAL_TIMER246_Start(const TIMER246_HandleTypeDef *h)
     v |= (uint8_t)(h->Prescaler & 0x3U);
     TIMER246_WRITE_CON(h->Instance, v);
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER246_Stop(TIMER246_InstanceTypeDef inst)
+EPIC_StatusTypeDef EPIC_TIMER246_Stop(TIMER246_InstanceTypeDef inst)
 {
     TIMER246_STOP(inst);
-    return HAL_OK;
+    return EPIC_OK;
 }
 
 static void timer246_irq_common(TIMER246_InstanceTypeDef inst, PIC16F193X_IRQn irq)
 {
-    if (!HAL_IRQ_GetFlag(irq)) return;
-    HAL_IRQ_ClearFlag(irq);
+    if (!EPIC_IRQ_GetFlag(irq)) return;
+    EPIC_IRQ_ClearFlag(irq);
     const TIMER246_HandleTypeDef *h = g_handle[idx_of(inst)];
     if (h && h->OverflowCallback) {
         h->OverflowCallback();

@@ -154,7 +154,7 @@ primitive as real inline asm per the task's requirement.
 
 ## Public API
 
-Follow `pic8-taskmgr`'s shape, not the peripheral-driver `HAL_ADC_*` shape —
+Follow `pic8-taskmgr`'s shape, not the peripheral-driver `EPIC_ADC_*` shape:
 this is a stateless computation library, not a peripheral, so plain
 `pic_math_*` snake_case functions with explicit parameters/return values, no
 hidden state. This is also a deliberate improvement over the source material:
@@ -241,7 +241,7 @@ they had a specific narrow-division use case in mind.
 
 ```
 pic8-math/
-  CMakeLists.txt              # family-selectable: -DHAL_FAMILY=PIC16|PIC18
+  CMakeLists.txt              # family-selectable: -DEPIC_FAMILY=PIC16|PIC18
   include/
     pic_math.h                # the public header above, no #ifdef
   src/
@@ -263,7 +263,7 @@ pic8-math/
     golden_vectors.h           # checked-in input/output tables, shared by
                                # host tests AND the on-target self-test below
     target_selftest.c          # Tier-3: runs golden_vectors on real silicon,
-                               # reports PASS/FAIL over USART (HAL_USART_*)
+                               # reports PASS/FAIL over USART (EPIC_USART_*)
   docs/
     ARCHITECTURE.md
     API.md
@@ -334,7 +334,7 @@ existing stance — see `docs/multi-family-plan.md`, "real-silicon deferred").**
 `tests/target_selftest.c` builds against each family's real HAL, runs every
 vector in `golden_vectors.h` through the real inline-asm routines on actual
 silicon, and streams a PASS/FAIL summary over USART using the already-proven
-`HAL_USART_*` driver (mirrors `tests/example_usart.c` in both HAL trees) —
+`EPIC_USART_*` driver (mirrors `tests/example_usart.c` in both HAL trees):
 no new hardware dependency, and it is the strongest available proof the
 shipped object code is correct on real chips of both families. Document it
 as the acceptance step before any firmware ships depending on this library,

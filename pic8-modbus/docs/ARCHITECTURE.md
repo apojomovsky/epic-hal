@@ -138,7 +138,7 @@ makes this safe.
 Unlike `pic8-bus` (whose SSP register access differs enough between PIC16
 and PIC18 to need an `#if`), `pic8-modbus` needs none at all: its only
 per-family surface is GPIO, and that's already neutral through
-`pic8_hal.h`'s `GPIO_TypeDef`/`HAL_GPIO_*` contract (same names, same
+`pic8_hal.h`'s `GPIO_TypeDef`/`EPIC_GPIO_*` contract (same names, same
 signatures, different bodies selected at the include-path/link level).
 `src/pic8_modbus.c` is the same file, unchanged, for both families.
 

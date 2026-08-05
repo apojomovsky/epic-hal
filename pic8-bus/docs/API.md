@@ -31,7 +31,7 @@ to wire in a mock MEM device.
 Configure the MSSP as an SPI master, picking the standard divider (Fosc/4,
 /16, /64) closest to `f_sclk_hz` (0 = fastest, Fosc/4). `cs_port`/`cs_pin`
 (GPIO port enum 0=A..4=E, pin bit index 0..7) is the chip-select, driven by
-`HAL_GPIO_WritePin` (asserted low, idle high). Selects the default (HAL) SPI
+`EPIC_GPIO_WritePin` (asserted low, idle high). Selects the default (HAL) SPI
 ops.
 
 ### `int pic8_bus_spi_mem_write(uint8_t reg, const uint8_t *data, int n)`

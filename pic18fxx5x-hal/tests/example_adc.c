@@ -34,43 +34,43 @@ int main(void)
     h.ResultFormat = ADC_FORMAT_RIGHT;
     h.VReference   = ADC_VREF_VDD_VSS;
     h.PinConfig    = 0x0U;
-    HAL_ADC_Init(&h);
+    EPIC_ADC_Init(&h);
 
     CHECK(pic8_sfr_read8(PIC_REG_ADCON0) == 0x09U, "ADCON0 not 0x09 for AN2/Fosc8");
     CHECK(pic8_sfr_read8(PIC_REG_ADCON1) == 0x00U, "ADCON1 not 0x00 for VDD/VSS, PCFG0");
     CHECK(pic8_sfr_read8(PIC_REG_ADCON2) == 0x89U, "ADCON2 not 0x89 for ADFM|ACQ2|Fosc8");
 
     /* 2. Start a conversion. */
-    CHECK(HAL_ADC_Start() == 0U, "HAL_ADC_Start returned error");
-    CHECK(HAL_ADC_IsConversionInProgress() == 1U, "GO/DONE not set after Start");
+    CHECK(EPIC_ADC_Start() == 0U, "EPIC_ADC_Start returned error");
+    CHECK(EPIC_ADC_IsConversionInProgress() == 1U, "GO/DONE not set after Start");
 
     /* 3. Sim conversion completion (0x1A3 = 419), right-justified. */
     pic18_sim_drive_adc_done(0x1A3U);
-    CHECK(HAL_ADC_IsConversionInProgress() == 0U, "GO/DONE not cleared after done");
-    CHECK(HAL_ADC_IsConversionDone() == 1U, "ADIF not set after done");
-    CHECK(HAL_ADC_Read() == 0x1A3U, "Read did not return 0x1A3 (right-justified)");
-    HAL_ADC_ClearITFlag();
-    CHECK(HAL_ADC_IsConversionDone() == 0U, "ADIF not cleared");
+    CHECK(EPIC_ADC_IsConversionInProgress() == 0U, "GO/DONE not cleared after done");
+    CHECK(EPIC_ADC_IsConversionDone() == 1U, "ADIF not set after done");
+    CHECK(EPIC_ADC_Read() == 0x1A3U, "Read did not return 0x1A3 (right-justified)");
+    EPIC_ADC_ClearITFlag();
+    CHECK(EPIC_ADC_IsConversionDone() == 0U, "ADIF not cleared");
 
     /* 4. Left-justified: the sim stores left, the driver right-shifts by 6. */
     h.ResultFormat = ADC_FORMAT_LEFT;
-    HAL_ADC_Init(&h);
+    EPIC_ADC_Init(&h);
     pic18_sim_drive_adc_done(0x1A3U);
-    CHECK(HAL_ADC_Read() == 0x1A3U, "Read did not return 0x1A3 (left-justified)");
+    CHECK(EPIC_ADC_Read() == 0x1A3U, "Read did not return 0x1A3 (left-justified)");
 
     /* 5. Vref = AN3/VSS -> ADCON1<VCFG0> (bit 4) set. */
     h.ResultFormat = ADC_FORMAT_RIGHT;
     h.VReference   = ADC_VREF_AN3_VSS;
-    HAL_ADC_Init(&h);
+    EPIC_ADC_Init(&h);
     CHECK((pic8_sfr_read8(PIC_REG_ADCON1) & PIC_ADCON1_VCFG0) != 0U,
           "VCFG0 not set for Vref+ = AN3");
 
     /* 6. SelectChannel(AN5) -> CHS = 5<<2 = 0x14, ADON stays -> 0x15. */
-    HAL_ADC_SelectChannel(ADC_CHANNEL_AN5);
+    EPIC_ADC_SelectChannel(ADC_CHANNEL_AN5);
     CHECK(pic8_sfr_read8(PIC_REG_ADCON0) == 0x15U, "ADCON0 CHS not AN5 (0x15)");
 
     /* 7. DeInit restores 0x00. */
-    HAL_ADC_DeInit();
+    EPIC_ADC_DeInit();
     CHECK(pic8_sfr_read8(PIC_REG_ADCON0) == 0x00U, "ADCON0 not 0x00 after DeInit");
     CHECK(pic8_sfr_read8(PIC_REG_ADCON2) == 0x00U, "ADCON2 not 0x00 after DeInit");
 

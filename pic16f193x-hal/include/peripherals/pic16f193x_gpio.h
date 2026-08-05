@@ -89,10 +89,10 @@ typedef enum {
  *         starts driving low. For ANALOG mode the relevant peripheral
  *         (ADC, comparator) is configured separately by its own driver.
  */
-void HAL_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
+void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
 
 /** Restore all pins of `port` to reset (input, analog, latch clear). */
-void HAL_GPIO_DeInit(GPIO_TypeDef port);
+void EPIC_GPIO_DeInit(GPIO_TypeDef port);
 
 /* ───────────────────────── read / write / toggle ────────────────── */
 
@@ -100,23 +100,23 @@ void HAL_GPIO_DeInit(GPIO_TypeDef port);
  * @brief  Drive a pin high or low; ORs/ANDs the mask onto the LATx latch
  *         (DS41364B §6.0), never reads back the pin level first.
  */
-void HAL_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
+void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
 
 /** Toggle a set of pins (LATx ^= mask). */
-void HAL_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);
+void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);
 
 /**
  * @brief  Read the current level seen on `pins` from PORTx (the actual
  *         pin level, DS41364B §6.0). For outputs this returns the driven
  *         level; for inputs it returns whatever the pin is driven to.
  */
-GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);
+GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);
 
 /** Atomically write the entire port LATx latch. */
-void HAL_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
+void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
 
 /** Read the entire port (PORTx, pin level). */
-uint8_t HAL_GPIO_ReadPort(GPIO_TypeDef port);
+uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
 
 /* ───────────────────────── PORTB weak pull-ups ─────────────────── */
 
@@ -127,7 +127,7 @@ uint8_t HAL_GPIO_ReadPort(GPIO_TypeDef port);
  *         GPIO_NOPULL disables all (WPUB &= ~pins, WPUEN=1); GPIO_PULLUP
  *         enables the selected pins (WPUB |= pins, WPUEN=0).
  */
-void HAL_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
+void EPIC_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
 
 /* ───────────────────────── PORTB change interrupt ─────────────────── */
 
@@ -140,14 +140,14 @@ void HAL_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
  *                   IOCBF mask (which pins changed) and the freshly-read
  *                   PORTB byte, or NULL to unregister.
  */
-void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t iocbf, uint8_t portb));
+void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t iocbf, uint8_t portb));
 
 /**
  * @brief  Enable per-pin positive/negative edge detection on PORTB
- *         (IOCBP / IOCBN, DS41364B §7.0). Call @ref HAL_IRQ_Enable with
+ *         (IOCBP / IOCBN, DS41364B §7.0). Call @ref EPIC_IRQ_Enable with
  *         @ref PIC16F193X_IRQ_IOC to arm the interrupt itself.
  */
-void HAL_GPIO_EnableChangeDetect(uint8_t pos_mask, uint8_t neg_mask);
+void EPIC_GPIO_EnableChangeDetect(uint8_t pos_mask, uint8_t neg_mask);
 
 /**
  * @brief  Weak PORTB change-interrupt ISR (DS41364B §7.0).

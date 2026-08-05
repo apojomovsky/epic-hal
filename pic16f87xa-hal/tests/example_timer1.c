@@ -39,9 +39,9 @@ int main(void)
     h.ReloadValue      = 0x0000U;
     h.OverflowCallback = on_t1_overflow;
 
-    HAL_StatusTypeDef st = HAL_TIMER1_Init(&h);
-    if (st != HAL_OK) { printf("FAIL: Init returned %u\n", (unsigned)st); return 1; }
-    HAL_TIMER1_Start(&h);
+    EPIC_StatusTypeDef st = EPIC_TIMER1_Init(&h);
+    if (st != EPIC_OK) { printf("FAIL: Init returned %u\n", (unsigned)st); return 1; }
+    EPIC_TIMER1_Start(&h);
 
     for (uint32_t i = 0; i < SIM_BUDGET; i++) {
         pic16f87xa_sim_step(1);

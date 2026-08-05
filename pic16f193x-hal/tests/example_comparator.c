@@ -22,11 +22,11 @@ int main(void)
 
     COMP_HandleTypeDef c1 = COMP_HANDLE_DEFAULT;
     c1.Instance = COMP_INSTANCE_1;
-    HAL_COMP_Init(&c1);
+    EPIC_COMP_Init(&c1);
 
     COMP_HandleTypeDef c2 = COMP_HANDLE_DEFAULT;
     c2.Instance = COMP_INSTANCE_2;
-    HAL_COMP_Init(&c2);
+    EPIC_COMP_Init(&c2);
 
     uint8_t cm1con0 = PIC8_REG8(PIC_REG_CM1CON0);
     uint8_t cm2con0 = PIC8_REG8(PIC_REG_CM2CON0);

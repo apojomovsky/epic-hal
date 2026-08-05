@@ -13,7 +13,7 @@
 
 #include "encoder.h"
 #include "pic8_tick.h"        /* glitch-gate timebase                       */
-#include "core/hal_irq.h"     /* HAL_IRQ_Disable / Restore (atomic reads)  */
+#include "core/hal_irq.h"     /* EPIC_IRQ_Disable / Restore (atomic reads)  */
 
 /* Gray-code quadrature step table, indexed by (last_state<<2)|new_state
  * where state = (A<<1)|B. +-1 = valid single-bit transition (one edge,
@@ -93,25 +93,25 @@ int32_t encoder_get_position(const encoder_t *enc)
 {
     /* Atomic 32-bit read: an 8-bit core reads it in 4 bytes and an ISR
      * update could tear it mid-read. */
-    uint8_t s = HAL_IRQ_Disable();
+    uint8_t s = EPIC_IRQ_Disable();
     int32_t p = enc->position;
-    HAL_IRQ_Restore(s);
+    EPIC_IRQ_Restore(s);
     return p;
 }
 
 uint16_t encoder_get_error_count(const encoder_t *enc)
 {
     /* Same tear-protection as encoder_get_position; low-stakes but consistent. */
-    uint8_t s = HAL_IRQ_Disable();
+    uint8_t s = EPIC_IRQ_Disable();
     uint16_t c = enc->error_count;
-    HAL_IRQ_Restore(s);
+    EPIC_IRQ_Restore(s);
     return c;
 }
 
 uint16_t encoder_get_glitch_count(const encoder_t *enc)
 {
-    uint8_t s = HAL_IRQ_Disable();
+    uint8_t s = EPIC_IRQ_Disable();
     uint16_t c = enc->glitch_count;
-    HAL_IRQ_Restore(s);
+    EPIC_IRQ_Restore(s);
     return c;
 }

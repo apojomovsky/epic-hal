@@ -13,7 +13,7 @@ job stays a single step:
   2. If not docs-only, which modules were actually touched, directly or
      transitively? Every module's own CMakeLists.txt already declares its
      sibling dependencies via a `<NAME>_DIR ... ../<module>` pattern
-     (HAL_DIR, SERIAL_DIR, TICK_DIR, TASKMGR_DIR, MATH_DIR); this script
+     (EPIC_DIR, SERIAL_DIR, TICK_DIR, TASKMGR_DIR, MATH_DIR); this script
      reads that straight from the tracked CMakeLists.txt files instead of
      hand-maintaining a graph that would drift the moment a module's own
      dependency changes. `pic8-common/` is a third, implicit dependency of
@@ -76,10 +76,10 @@ def build_dep_graph(modules):
     each module's own CMakeLists.txt. Pattern: a `<NAME>_DIR` CMake
     variable assigned `${CMAKE_CURRENT_SOURCE_DIR}/../<module>`, which is
     the one convention every module in this repo already follows for
-    pulling in a sibling (see pic8-tick/CMakeLists.txt's HAL_DIR for the
+    pulling in a sibling (see pic8-tick/CMakeLists.txt's EPIC_DIR for the
     canonical example)."""
     # Matches "../<module>" followed by a word boundary: either end of
-    # line (the multi-line `set(HAL_DIR ... ../pic8-tick` form, whose
+    # line (the multi-line `set(EPIC_DIR ... ../pic8-tick` form, whose
     # closing `CACHE PATH ...)` wraps to the next line) or a non-path
     # character (the single-line `... ../pic18fxx5x-hal CACHE PATH "")`
     # form). Module names in this repo are lowercase/digits/hyphen only,

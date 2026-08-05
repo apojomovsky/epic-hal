@@ -17,9 +17,9 @@ static const COMP_HandleTypeDef *g_comp = NULL;
 
 /* ───────────────────────── public API ───────────────────────────── */
 
-HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     g_comp_storage = *h;
     g_comp = &g_comp_storage;
 
@@ -36,47 +36,47 @@ HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h)
     pic8_sfr_write8(PIC_REG_CMCON, v);
 
     /* Interrupt enable. */
-    HAL_IRQ_ClearFlag(PIC18_IRQ_CMP);
-    if (h->ChangeCallback) HAL_IRQ_Enable(PIC18_IRQ_CMP);
-    else                   HAL_IRQ_DisableSrc(PIC18_IRQ_CMP);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_CMP);
+    if (h->ChangeCallback) EPIC_IRQ_Enable(PIC18_IRQ_CMP);
+    else                   EPIC_IRQ_DisableSrc(PIC18_IRQ_CMP);
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_COMP_DeInit(void)
+EPIC_StatusTypeDef EPIC_COMP_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC18_IRQ_CMP);
-    HAL_IRQ_ClearFlag(PIC18_IRQ_CMP);
+    EPIC_IRQ_DisableSrc(PIC18_IRQ_CMP);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_CMP);
     pic8_sfr_write8(PIC_REG_CMCON, PIC_CMCON_POR_VALUE);   /* 0x07, off. */
     g_comp = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint8_t HAL_COMP_C1Out(void)
+uint8_t EPIC_COMP_C1Out(void)
 {
     return (pic8_sfr_read8(PIC_REG_CMCON) & PIC_CMCON_C1OUT) ? 1U : 0U;
 }
 
-uint8_t HAL_COMP_C2Out(void)
+uint8_t EPIC_COMP_C2Out(void)
 {
     return (pic8_sfr_read8(PIC_REG_CMCON) & PIC_CMCON_C2OUT) ? 1U : 0U;
 }
 
-uint8_t HAL_COMP_IsChangeFlag(void)
+uint8_t EPIC_COMP_IsChangeFlag(void)
 {
     return (pic8_sfr_read8(PIC_REG_PIR2) & PIC_PIR2_CMIF) ? 1U : 0U;
 }
 
-void HAL_COMP_ClearChangeFlag(void)
+void EPIC_COMP_ClearChangeFlag(void)
 {
-    HAL_IRQ_ClearFlag(PIC18_IRQ_CMP);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_CMP);
 }
 
 /* ───────────────────────── ISR ───────────────────────────────────── */
 
 void COMP_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC18_IRQ_CMP)) return;
-    HAL_IRQ_ClearFlag(PIC18_IRQ_CMP);
+    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_CMP)) return;
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_CMP);
     if (g_comp && g_comp->ChangeCallback) g_comp->ChangeCallback();
 }

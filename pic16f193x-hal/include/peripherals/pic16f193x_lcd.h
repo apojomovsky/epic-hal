@@ -19,11 +19,11 @@ typedef struct {
 
 #define LCD_HANDLE_DEFAULT { .Contrast = 0U, .MuxMode = 3U }
 
-HAL_StatusTypeDef HAL_LCD_Init(const LCD_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_LCD_DeInit(void);
-HAL_StatusTypeDef HAL_LCD_SetSegment(uint8_t seg, uint8_t com, uint8_t on);
-HAL_StatusTypeDef HAL_LCD_Clear(void);
-uint8_t HAL_LCD_IsActive(void);
+EPIC_StatusTypeDef EPIC_LCD_Init(const LCD_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_LCD_DeInit(void);
+EPIC_StatusTypeDef EPIC_LCD_SetSegment(uint8_t seg, uint8_t com, uint8_t on);
+EPIC_StatusTypeDef EPIC_LCD_Clear(void);
+uint8_t EPIC_LCD_IsActive(void);
 
 void LCD_IRQHandler(void) PIC8_WEAK;
 

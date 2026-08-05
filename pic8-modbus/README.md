@@ -38,7 +38,7 @@ RS-485 driver-enable pin).
 ```sh
 cmake -B build && cmake --build build
 ctest --test-dir build --output-on-failure   # example_modbus: fails=0
-cmake -B build18 -DHAL_FAMILY=PIC18 && ctest --test-dir build18
+cmake -B build18 -DEPIC_FAMILY=PIC18 && ctest --test-dir build18
 ```
 
 ### Real target (XC8), a 4-holding-register RTU slave

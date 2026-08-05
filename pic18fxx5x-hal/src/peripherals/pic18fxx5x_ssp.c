@@ -36,9 +36,9 @@ uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz)
 
 /* ───────────────────────── public API ───────────────────────────── */
 
-HAL_StatusTypeDef HAL_SSP_Init(const SSP_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     g_ssp_storage = *h;
     g_ssp = &g_ssp_storage;
 
@@ -62,26 +62,26 @@ HAL_StatusTypeDef HAL_SSP_Init(const SSP_HandleTypeDef *h)
     pic8_sfr_write8(PIC_REG_SSPCON2, 0x00U);
 
     /* Interrupt enable. */
-    HAL_IRQ_ClearFlag(PIC18_IRQ_SSP);
-    if (h->TransferCallback) HAL_IRQ_Enable(PIC18_IRQ_SSP);
-    else                     HAL_IRQ_DisableSrc(PIC18_IRQ_SSP);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_SSP);
+    if (h->TransferCallback) EPIC_IRQ_Enable(PIC18_IRQ_SSP);
+    else                     EPIC_IRQ_DisableSrc(PIC18_IRQ_SSP);
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_SSP_DeInit(void)
+EPIC_StatusTypeDef EPIC_SSP_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC18_IRQ_SSP);
-    HAL_IRQ_ClearFlag(PIC18_IRQ_SSP);
+    EPIC_IRQ_DisableSrc(PIC18_IRQ_SSP);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_SSP);
     pic8_sfr_write8(PIC_REG_SSPCON1, 0x00U);
     pic8_sfr_write8(PIC_REG_SSPCON2, 0x00U);
     pic8_sfr_write8(PIC_REG_SSPSTAT, 0x00U);
     pic8_sfr_write8(PIC_REG_SSPADD, 0x00U);
     g_ssp = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint16_t HAL_SSP_WriteByte(uint8_t data)
+uint16_t EPIC_SSP_WriteByte(uint8_t data)
 {
     uint8_t con = pic8_sfr_read8(PIC_REG_SSPCON1);
     if (con & PIC_SSPCON1_WCOL) return 0xFFFFU;     /* write collision pending */
@@ -91,7 +91,7 @@ uint16_t HAL_SSP_WriteByte(uint8_t data)
     return 0U;
 }
 
-uint8_t HAL_SSP_ReadByte(void)
+uint8_t EPIC_SSP_ReadByte(void)
 {
     /* Reading SSPBUF clears BF (DS39632E Register 19-1). */
     uint8_t v = pic8_sfr_read8(PIC_REG_SSPBUF);
@@ -100,29 +100,29 @@ uint8_t HAL_SSP_ReadByte(void)
     return v;
 }
 
-uint8_t HAL_SSP_IsBufferFull(void)
+uint8_t EPIC_SSP_IsBufferFull(void)
 {
     return (pic8_sfr_read8(PIC_REG_SSPSTAT) & PIC_SSPSTAT_BF) ? 1U : 0U;
 }
 
-uint8_t HAL_SSP_HasWriteCollision(void)
+uint8_t EPIC_SSP_HasWriteCollision(void)
 {
     return (pic8_sfr_read8(PIC_REG_SSPCON1) & PIC_SSPCON1_WCOL) ? 1U : 0U;
 }
 
-void HAL_SSP_ClearWriteCollision(void)
+void EPIC_SSP_ClearWriteCollision(void)
 {
     uint8_t con = (uint8_t)(pic8_sfr_read8(PIC_REG_SSPCON1) & (uint8_t)~PIC_SSPCON1_WCOL);
     pic8_sfr_write8(PIC_REG_SSPCON1, con);
 }
 
-void HAL_SSP_Start(void)          { sspcon2_set(PIC_SSPCON2_SEN);  }
-void HAL_SSP_RepeatedStart(void)  { sspcon2_set(PIC_SSPCON2_RSEN); }
-void HAL_SSP_Stop(void)           { sspcon2_set(PIC_SSPCON2_PEN);  }
-void HAL_SSP_ReceiveEnable(void)  { sspcon2_set(PIC_SSPCON2_RCEN); }
-void HAL_SSP_AcknowledgeEnable(void) { sspcon2_set(PIC_SSPCON2_ACKEN); }
+void EPIC_SSP_Start(void)          { sspcon2_set(PIC_SSPCON2_SEN);  }
+void EPIC_SSP_RepeatedStart(void)  { sspcon2_set(PIC_SSPCON2_RSEN); }
+void EPIC_SSP_Stop(void)           { sspcon2_set(PIC_SSPCON2_PEN);  }
+void EPIC_SSP_ReceiveEnable(void)  { sspcon2_set(PIC_SSPCON2_RCEN); }
+void EPIC_SSP_AcknowledgeEnable(void) { sspcon2_set(PIC_SSPCON2_ACKEN); }
 
-uint8_t HAL_SSP_AcknowledgeStatus(void)
+uint8_t EPIC_SSP_AcknowledgeStatus(void)
 {
     return (pic8_sfr_read8(PIC_REG_SSPCON2) & PIC_SSPCON2_ACKSTAT) ? 1U : 0U;
 }
@@ -131,7 +131,7 @@ uint8_t HAL_SSP_AcknowledgeStatus(void)
 
 void SSP_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC18_IRQ_SSP)) return;
-    HAL_IRQ_ClearFlag(PIC18_IRQ_SSP);
+    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_SSP)) return;
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_SSP);
     if (g_ssp && g_ssp->TransferCallback) g_ssp->TransferCallback();
 }

@@ -58,13 +58,13 @@ void pic18_sim_set_irq_callback(pic18_sim_irq_cb_t cb);
 /**
  * @brief Inject a byte into the MSSP receiver (SPI slave or I2C target).
  *        Stores `data` in SSPBUF, sets SSPSTAT<BF>, and raises SSPIF
- *        (PIR1<3>). The next HAL_SSP_ReadByte() returns it.
+ *        (PIR1<3>). The next EPIC_SSP_ReadByte() returns it.
  */
 void pic18_sim_drive_ssp_rx(uint8_t data);
 
 /**
  * @brief Inject a byte into the EUSART receiver. Stores `data` in RCREG
- *        and raises RCIF (PIR1<5>). The next HAL_USART_Receive() returns
+ *        and raises RCIF (PIR1<5>). The next EPIC_USART_Receive() returns
  *        it. Mirrors pic16f87xa_sim_drive_usart_rx().
  */
 void pic18_sim_drive_usart_rx(uint8_t data);
@@ -72,7 +72,7 @@ void pic18_sim_drive_usart_rx(uint8_t data);
 /**
  * @brief Drive the comparator outputs from the test rig. Sets CMCON<C1OUT>
  *        and/or CMCON<C2OUT> and raises CMIF (PIR2<6>) to model a change of
- *        output level. The next HAL_COMP_C1Out()/C2Out() reads reflect it.
+ *        output level. The next EPIC_COMP_C1Out()/C2Out() reads reflect it.
  * @param c1out  0 or 1 for the C1 output level.
  * @param c2out  0 or 1 for the C2 output level.
  */
@@ -80,7 +80,7 @@ void pic18_sim_drive_comp(uint8_t c1out, uint8_t c2out);
 
 /**
  * @brief Preload the simulated EEPROM cell at `addr` with `data` (model a
- *        byte already stored in the part). The next HAL_EEPROM_ReadByte()
+ *        byte already stored in the part). The next EPIC_EEPROM_ReadByte()
  *        returns it.
  */
 void pic18_sim_drive_eeprom_byte(uint8_t addr, uint8_t data);
@@ -94,7 +94,7 @@ void pic18_sim_drive_eeprom_done(uint8_t addr, uint8_t data);
 
 /**
  * @brief Read the simulated EEPROM cell at `addr` (host backend for
- *        HAL_EEPROM_ReadByte). `addr` is a uint8_t (0..255), always a
+ *        EPIC_EEPROM_ReadByte). `addr` is a uint8_t (0..255), always a
  *        valid index into the 256-byte array.
  */
 uint8_t pic18_sim_eeprom_read(uint8_t addr);
@@ -103,7 +103,7 @@ uint8_t pic18_sim_eeprom_read(uint8_t addr);
  * @brief Model an A/D conversion completion: clears ADCON0<GO/DONE>, stores
  *        the 10-bit `result` into ADRESH:ADRESL in the format selected by
  *        ADCON2<ADFM> (right- or left-justified), and raises ADIF (PIR1<6>).
- *        The next HAL_ADC_Read() returns the value (un-justified to 0..1023).
+ *        The next EPIC_ADC_Read() returns the value (un-justified to 0..1023).
  */
 void pic18_sim_drive_adc_done(uint16_t result);
 

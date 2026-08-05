@@ -74,17 +74,17 @@ typedef struct {
 /**
  * @brief  Configure Timer0 from the handle. Programs OPTION_REG and
  *         INTCON<TMR0IE>. Does not start the timer, call @ref
- *         HAL_TIMER0_Start afterwards.
+ *         EPIC_TIMER0_Start afterwards.
  *
- * @return HAL_OK on success, HAL_INVALID if `h` is NULL.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
-HAL_StatusTypeDef HAL_TIMER0_Init(const TIMER0_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER0_DeInit(void);
+EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void);
 
 /**
  * @brief  Timer0 weak ISR. Forward-declared so user code can override it
  *         (Cube-style). When the user provides an `OverflowCallback`
- *         through `HAL_TIMER0_Init`, the default implementation invokes
+ *         through `EPIC_TIMER0_Init`, the default implementation invokes
  *         it; otherwise it just clears TMR0IF and returns.
  */
 void TIMER0_IRQHandler(void) PIC8_WEAK;
@@ -95,18 +95,18 @@ void TIMER0_IRQHandler(void) PIC8_WEAK;
  *
  *         Note: writing TMR0 clears the prescaler (DS41364B §15.0).
  */
-HAL_StatusTypeDef HAL_TIMER0_Start(const TIMER0_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h);
 
 /** Disable TMR0 counting (clears OPTION_REG<T0CS>, Timer0 halted). */
-HAL_StatusTypeDef HAL_TIMER0_Stop(void);
+EPIC_StatusTypeDef EPIC_TIMER0_Stop(void);
 
 /** Read the current counter value. */
-uint8_t HAL_TIMER0_ReadCounter(void);
+uint8_t EPIC_TIMER0_ReadCounter(void);
 
 /** Write `value` to the counter (also clears the prescaler). */
-void HAL_TIMER0_WriteCounter(uint8_t value);
+void EPIC_TIMER0_WriteCounter(uint8_t value);
 
 /** Convert a prescaler enum to its integer ratio (2, 4, ..., 256). */
-uint16_t HAL_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);
+uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);
 
 #endif /* PIC16F193X_TIMER0_H */

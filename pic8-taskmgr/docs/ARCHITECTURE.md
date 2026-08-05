@@ -96,7 +96,7 @@ thing: the task table. Three rules keep it race-free:
 3. A one-shot is freed atomically after it runs (the same critical section),
    so the tick ISR never observes a half-freed slot.
 
-The critical sections use the HAL's `HAL_IRQ_Disable/Restore`, which
+The critical sections use the HAL's `EPIC_IRQ_Disable/Restore`, which
 save and restore the GIE bit. On the host sim the tick is delivered
 synchronously from inside `pic8_harness_tick()`, so tick and `run_once`
 never truly overlap; the critical sections are a no-op there but remain

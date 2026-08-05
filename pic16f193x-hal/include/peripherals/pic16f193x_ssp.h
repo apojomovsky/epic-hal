@@ -51,13 +51,13 @@ typedef struct {
     .TransferCallback = 0, \
 }
 
-HAL_StatusTypeDef HAL_SSP_Init(const SSP_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_SSP_DeInit(void);
-uint16_t HAL_SSP_WriteByte(uint8_t data);
-uint8_t  HAL_SSP_ReadByte(void);
-uint8_t  HAL_SSP_IsBufferFull(void);
-uint8_t  HAL_SSP_HasWriteCollision(void);
-void     HAL_SSP_ClearWriteCollision(void);
+EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_SSP_DeInit(void);
+uint16_t EPIC_SSP_WriteByte(uint8_t data);
+uint8_t  EPIC_SSP_ReadByte(void);
+uint8_t  EPIC_SSP_IsBufferFull(void);
+uint8_t  EPIC_SSP_HasWriteCollision(void);
+void     EPIC_SSP_ClearWriteCollision(void);
 
 void SSP_IRQHandler(void) PIC8_WEAK;
 

@@ -20,7 +20,7 @@ Done so far:
 - ✅ SFR map with bit definitions
 - ✅ Pre-processor SFR mapping layer (host sim + XC8 target, same source)
 - ✅ Host simulation backend (Timer0/1/2 + GPIO + IRQ hook)
-- ✅ Interrupt core (HAL_NVIC-style enable/disable/clear/status)
+- ✅ Interrupt core (EPIC_NVIC-style enable/disable/clear/status)
 - ✅ GPIO driver (GPIOA..GPIOE, pull-ups, init/read/write/toggle)
 - ✅ **Timer0 driver** (handle, prescaler, clock source, weak ISR)
 - ✅ **Timer1 driver** (16-bit, prescaler, T1OSC, weak ISR)
@@ -114,8 +114,8 @@ Likewise the test/firmware harness (`pic8_harness.h`, shared via
 `pic8-common/`) and the WDT/Sleep helpers are each provided by two
 implementation files: a host `*_sim.c` linked by CMake and a target
 `*_target.c` linked by the XC8 Makefile, so examples call
-`pic8_harness_init/tick/running/log`, `HAL_WDT_Refresh`,
-`HAL_Sleep_Enter` unconditionally and the build picks the behaviour. The
+`pic8_harness_init/tick/running/log`, `EPIC_WDT_Refresh`,
+`EPIC_Sleep_Enter` unconditionally and the build picks the behaviour. The
 harness's target implementation is family-blind (four no-ops) and lives
 in `pic8-common/`; the harness's host implementation (`pic16_harness_sim.c`)
 and the WDT/Sleep pair stay in this tree. See `core/pic8_harness.h` for
@@ -146,7 +146,7 @@ Every register, bit name, reset value and reset condition is annotated
 with the section of DS39582B it came from. Examples:
 
 - `pic16f87xa_sfr.h` → `/* DS39582B Table 4-3, PORTB functions */`
-- `pic16f87xa_gpio.c` → `HAL_GPIO_Init()` cites §4.x
+- `pic16f87xa_gpio.c` → `EPIC_GPIO_Init()` cites §4.x
 - `core/pic16_irq.h` → every IRQn cites §14.11
 
 Any deviation from the datasheet is a bug.
@@ -160,7 +160,7 @@ Mirror STM32Cube as closely as makes sense for an 8-bit PIC:
 - `HAL_PPP_MspInit()`, `__weak` callback the user overrides to wire ISR vectors
 - Pin/port addressing: `GPIOA..GPIOE`, `GPIO_PIN_0..GPIO_PIN_All`,
   `GPIO_PIN_SET/RESET`
-- Status codes: `HAL_OK / ERROR / BUSY / TIMEOUT / INVALID`
+- Status codes: `EPIC_OK / ERROR / BUSY / TIMEOUT / INVALID`
 - IRQ enum: `PIC16_IRQ_TMR0 / _TMR1 / _CCP1 / ...`
 
 Cube users get a familiar API; PIC users get familiar peripherals with a

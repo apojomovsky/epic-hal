@@ -398,7 +398,7 @@ void pic18_sim_drive_ssp_rx(uint8_t data)
 static void sim_step_usart(void)
 {
     /* Re-assert TXIF every cycle when TXEN is set. TXIF is cleared by the
-     * user writing TXREG (see HAL_USART_Transmit); this step brings it
+     * user writing TXREG (see EPIC_USART_Transmit); this step brings it
      * back high to model the instantaneous transmit completion (mirrors
      * the PIC16 sim). RCIF is set by the host application through
      * pic18_sim_drive_usart_rx(). */

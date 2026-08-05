@@ -24,8 +24,8 @@
  *  with this software.  If not, see <http://www.apache.org/licenses/>.
  */
 
-#ifndef USB_HAL_H__
-#define UAB_HAL_H__
+#ifndef USB_EPIC_H__
+#define UAB_EPIC_H__
 
 #ifdef _PIC14E
 #define NEEDS_PULL /* Whether to pull up D+/D- with SFR_PULL_EN. */
@@ -596,4 +596,4 @@ struct buffer_descriptor {
 
 
 
-#endif /* USB_HAL_H__ */
+#endif /* USB_EPIC_H__ */

@@ -66,7 +66,7 @@ static inline int pic8_harness_report(int ok)
  * @brief  Fan out to every peripheral IRQHandler for the linked family.
  *         Each family implements this with the same name: it walks that
  *         family's interrupt sources and calls the matching
- *         `HAL_*_IRQHandler` weak handler whose flag is set. The host
+ *         `EPIC_*_IRQHandler` weak handler whose flag is set. The host
  *         harness registers it as the sim IRQ callback; the real target
  *         calls it from its interrupt vector. Declared here so the
  *         harness can name it without a family-specific include.

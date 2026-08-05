@@ -194,7 +194,7 @@ in it, the shared scratch is corrupted. This is the same limitation the
 PIC16 compiled-stack already imposes on any non-`reentrant` function, and
 AN526/AN544 had it too. Callers that need to call a `pic_math_*` primitive
 from both main-loop and ISR context should bracket the ISR call with
-`HAL_IRQ_Disable`/`HAL_IRQ_Restore` (the family-neutral contract the rest
+`EPIC_IRQ_Disable`/`EPIC_IRQ_Restore` (the family-neutral contract the rest
 of this repo already uses); a future `PIC_MATH_REENTRANT` build knob could
 add that bracket inside the wrappers if a caller needs it as a default.
 
@@ -217,7 +217,7 @@ add that bracket inside the wrappers if a caller needs it as a default.
   correctness relies on Tier 3 + the hand-traces.
 - **Tier 3, on-target validation** (manual/deferred): `tests/target_selftest.c`
   replays `golden_vectors.h` through the per-family inline-asm routines on
-  real silicon and streams `PASS=`/`FAIL=` over `HAL_USART_*`. It is the
+  real silicon and streams `PASS=`/`FAIL=` over `EPIC_USART_*`. It is the
   acceptance step before any firmware ships depending on this library.
   - **PIC18** (`mcu/pic18fxx5x-math-mplabx`): builds and links the full
     golden-vector self-test against the full HAL (28.9% of the 32 K-flash

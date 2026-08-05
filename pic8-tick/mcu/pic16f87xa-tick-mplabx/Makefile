@@ -29,8 +29,8 @@ else
 endif
 
 # ─────────────────────────── paths ────────────────────────────────
-HAL_DIR    ?= ../../../pic16f87xa-hal
-COMMON_DIR ?= $(HAL_DIR)/../pic8-common
+EPIC_DIR    ?= ../../../pic16f87xa-hal
+COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
 APP_DIR    ?= ../..
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-tick
@@ -50,7 +50,7 @@ endif
 HARNESS ?= target
 ifeq ($(HARNESS),sim)
   TARGET     := $(BUILD_DIR)/$(MCU)-tick-sim
-  HARNESS_SRC := $(HAL_DIR)/src/core/pic16_harness_sim_target.c
+  HARNESS_SRC := $(EPIC_DIR)/src/core/pic16_harness_sim_target.c
   # WDTE=OFF only for this variant, see the config-word recipe below for
   # why: real-target firmware genuinely needs the watchdog running
   # unattended; a diagnostic build that terminates and reports over USART
@@ -64,7 +64,7 @@ else
 endif
 
 CC     := xc8-cc
-INC    := -I$(HAL_DIR)/include/target -I$(HAL_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include
+INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include
 CFLAGS := $(DFP_FLAG) \
           -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
           -O2 -std=c99 -Wall -Wextra \
@@ -73,27 +73,27 @@ CFLAGS := $(DFP_FLAG) \
           -DFOSC_HZ=$(FOSC_HZ)
 
 # ─────────────────────────── source layout ─────────────────────────
-HAL_SOURCES := \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_gpio.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer0.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer1.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_timer2.c   \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_ccp.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_usart.c    \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_ssp.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_adc.c      \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_comp.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_vref.c     \
-  $(HAL_DIR)/src/peripherals/pic16f87xa_eeprom.c   \
-  $(HAL_DIR)/src/core/pic16_irq.c                  \
-  $(HAL_DIR)/src/core/pic16f87xa_wdt_sleep.c       \
-  $(HAL_DIR)/src/core/pic16f87xa_wdt_sleep_target.c \
-  $(HAL_DIR)/src/core/pic16_isr_vector.c          \
-  $(HAL_DIR)/src/core/pic16_irq_dispatch.c        \
+EPIC_SOURCES := \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_gpio.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer0.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer1.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_timer2.c   \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_ccp.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_usart.c    \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_ssp.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_adc.c      \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_comp.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_vref.c     \
+  $(EPIC_DIR)/src/peripherals/pic16f87xa_eeprom.c   \
+  $(EPIC_DIR)/src/core/pic16_irq.c                  \
+  $(EPIC_DIR)/src/core/pic16f87xa_wdt_sleep.c       \
+  $(EPIC_DIR)/src/core/pic16f87xa_wdt_sleep_target.c \
+  $(EPIC_DIR)/src/core/pic16_isr_vector.c          \
+  $(EPIC_DIR)/src/core/pic16_irq_dispatch.c        \
   $(HARNESS_SRC)
 
 ifeq ($(filter $(MCU),16F874A 16F877A),$(MCU))
-  HAL_SOURCES += $(HAL_DIR)/src/peripherals/pic16f87xa_psp.c
+  EPIC_SOURCES += $(EPIC_DIR)/src/peripherals/pic16f87xa_psp.c
 endif
 
 # pic8-tick itself (family-agnostic; same source builds on either family).
@@ -102,7 +102,7 @@ TICK_SOURCES := $(APP_DIR)/src/pic8_tick.c
 # The application: the tick smoke (delays, reports PASS/FAIL).
 APP_SOURCES := $(APP_DIR)/examples/example_tick.c
 
-SRCS := $(HAL_SOURCES) $(TICK_SOURCES) $(APP_SOURCES)
+SRCS := $(EPIC_SOURCES) $(TICK_SOURCES) $(APP_SOURCES)
 OBJS := $(patsubst %.c,$(BUILD_DIR)/%.p1,$(notdir $(SRCS)))
 VPATH := $(sort $(dir $(SRCS)))
 

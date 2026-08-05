@@ -190,7 +190,7 @@ static void sim_step_timer1(void)
      *   bit 3    T1OSCEN
      *   bit 5:4  T1CKPS1:T1CKPS0
      *   bit 7:6  TMR1CS1:TMR1CS0
-     * T1SYNC/T1OSCEN are 0 in this phase; HAL_TIMER1_Start() rejects
+     * T1SYNC/T1OSCEN are 0 in this phase; EPIC_TIMER1_Start() rejects
      * any ClockSource other than TIMER1_CLOCK_INTERNAL, so TMR1CS
      * bits 7:6 are always 00 (FOSC/4) coming from the driver. */
     uint8_t t1con = pic16f193x_sim_sfr[PIC_REG_T1CON];
@@ -316,7 +316,7 @@ static void sim_step_eeprom(void)
 
 /* ───────────────────────── GPIO pin-level refresh ───────────────── */
 
-/* Keep PORTx fresh for HAL_GPIO_ReadPin (which reads PORTx): for output
+/* Keep PORTx fresh for EPIC_GPIO_ReadPin (which reads PORTx): for output
  * pins mirror LATx, for input pins mirror the driven override. The
  * canonical blink example ticks between writing and reading, so this
  * per-step refresh is sufficient on the host. */

@@ -98,10 +98,10 @@ typedef enum {
  *         for PORTA analog pins, set ADCON1<PCFG3:PCFG0> before configuring
  *         the pin as analog (DS39582B §4.1, §11.x).
  */
-void HAL_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
+void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
 
 /** Restore all pins of `port` to input mode and clear the latch. */
-void HAL_GPIO_DeInit(GPIO_TypeDef port);
+void EPIC_GPIO_DeInit(GPIO_TypeDef port);
 
 /* ───────────────────────── read / write / toggle ────────────────── */
 
@@ -109,23 +109,23 @@ void HAL_GPIO_DeInit(GPIO_TypeDef port);
  * @brief  Drive a pin high or low; ORs/ANDs the mask onto the PORTx
  *         latch directly, never reads back the pin level first.
  */
-void HAL_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
+void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
 
 /** Toggle a set of pins (latch ^= mask). */
-void HAL_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);
+void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);
 
 /**
  * @brief  Read the current level seen on `pins`. For pins configured as
  *         outputs this returns the latch state; for input pins it returns
  *         whatever the pin is being driven to externally.
  */
-GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);
+GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);
 
 /** Atomically write the entire 8-bit port latch. */
-void HAL_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
+void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
 
 /** Read the entire port latch. */
-uint8_t HAL_GPIO_ReadPort(GPIO_TypeDef port);
+uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
 
 /* ───────────────────────── PORTB pull-ups ───────────────────────── */
 
@@ -135,7 +135,7 @@ uint8_t HAL_GPIO_ReadPort(GPIO_TypeDef port);
  *
  * @note   OPTION_REG<7> is inverted: RBPU = 1 disables pull-ups.
  */
-void HAL_GPIO_SetPullups(GPIO_PullTypeDef pull);
+void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull);
 
 /* ───────────────────────── PORTB change interrupt ─────────────────── */
 
@@ -152,7 +152,7 @@ void HAL_GPIO_SetPullups(GPIO_PullTypeDef pull);
  *   HAL registry. NULL is safe. @ref RB_IRQHandler reads PORTB before
  *   clearing RBIF, see its own doc for why that order is mandatory.
  */
-void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
+void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
 
 /**
  * @brief  Weak RB<7:4> change-interrupt ISR (DS39582B §14.11.3).

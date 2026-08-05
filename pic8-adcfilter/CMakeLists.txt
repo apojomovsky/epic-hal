@@ -10,7 +10,7 @@
 # read, exactly the way pic8-fsm's taskmgr-integration example is the one
 # thing in that module needing a family choice.
 #
-#   cmake -B build -DPIC8_ADCFILTER_BUILD_HAL_EXAMPLE=ON   # builds the example
+#   cmake -B build -DPIC8_ADCFILTER_BUILD_EPIC_EXAMPLE=ON   # builds the example
 
 cmake_minimum_required(VERSION 3.16)
 project(pic8_adcfilter C)
@@ -28,24 +28,24 @@ target_link_libraries(test_adcfilter PRIVATE adcfilter)
 add_test(NAME adcfilter_tests COMMAND test_adcfilter)
 
 # Optional: HAL example (links a HAL family for the ADC read callback).
-option(PIC8_ADCFILTER_BUILD_HAL_EXAMPLE
+option(PIC8_ADCFILTER_BUILD_EPIC_EXAMPLE
        "Build examples/example_adcfilter_hal.c against a real HAL ADC" OFF)
 
-if(PIC8_ADCFILTER_BUILD_HAL_EXAMPLE)
-    set(HAL_FAMILY "PIC16" CACHE STRING "HAL family: PIC16 or PIC18")
-    if(HAL_FAMILY STREQUAL "PIC18")
-        set(HAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic18fxx5x-hal CACHE PATH "")
-        set(HAL_LIB pic18fxx5x_hal)
+if(PIC8_ADCFILTER_BUILD_EPIC_EXAMPLE)
+    set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family: PIC16 or PIC18")
+    if(EPIC_FAMILY STREQUAL "PIC18")
+        set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic18fxx5x-hal CACHE PATH "")
+        set(EPIC_LIB pic18fxx5x_hal)
         set(DEFAULT_DEVICE PIC18F4550)
     else()
-        set(HAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic16f87xa-hal CACHE PATH "")
-        set(HAL_LIB pic16f87xa_hal)
+        set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic16f87xa-hal CACHE PATH "")
+        set(EPIC_LIB pic16f87xa_hal)
         set(DEFAULT_DEVICE PIC16F877A)
     endif()
-    if(NOT TARGET ${HAL_LIB})
-        add_subdirectory(${HAL_DIR} ${CMAKE_CURRENT_BINARY_DIR}/hal)
+    if(NOT TARGET ${EPIC_LIB})
+        add_subdirectory(${EPIC_DIR} ${CMAKE_CURRENT_BINARY_DIR}/hal)
     endif()
     add_executable(example_adcfilter_hal examples/example_adcfilter_hal.c)
     target_compile_definitions(example_adcfilter_hal PRIVATE -D${DEFAULT_DEVICE})
-    target_link_libraries(example_adcfilter_hal PRIVATE adcfilter ${HAL_LIB})
+    target_link_libraries(example_adcfilter_hal PRIVATE adcfilter ${EPIC_LIB})
 endif()

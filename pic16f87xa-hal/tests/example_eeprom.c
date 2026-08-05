@@ -3,11 +3,11 @@
  * @brief   Data EEPROM driver smoke test.
  *
  *   Verifies:
- *     1. HAL_EEPROM_ReadByte() places the address in EEADR then sets
+ *     1. EPIC_EEPROM_ReadByte() places the address in EEADR then sets
  *        EECON1<RD>.
  *     2. The sim is preloaded with a known byte at address 0x42; the
  *        read returns it.
- *     3. HAL_EEPROM_WriteByte() does the unlock sequence (0x55, 0xAA)
+ *     3. EPIC_EEPROM_WriteByte() does the unlock sequence (0x55, 0xAA)
  *        and clears WR.
  *     4. pic16f87xa_sim_drive_eeprom_done() simulates the write
  *        completion; the next read returns the value just written.
@@ -40,7 +40,7 @@ int main(void)
 
     /* 1. Read: load a byte at 0x42 first. */
     pic16f87xa_sim_drive_eeprom_byte(0x42U, 0xA5U);
-    uint8_t r = HAL_EEPROM_ReadByte(0x42U);
+    uint8_t r = EPIC_EEPROM_ReadByte(0x42U);
     CHECK(r == 0xA5U, "Read 0x42 returned wrong value");
     CHECK(b_read(2, 0x0DU) == 0x42U, "EEADR != 0x42 after read");
     /* RD is set by the read and clears on the next instruction
@@ -50,7 +50,7 @@ int main(void)
 
     /* 2. Write: do the unlock sequence. */
     pic16f87xa_sim_reset();
-    HAL_EEPROM_WriteByte(0x10U, 0xC3U);
+    EPIC_EEPROM_WriteByte(0x10U, 0xC3U);
     /* Verify EEDATA + EEADR. */
     CHECK(b_read(2, 0x0CU) == 0xC3U, "EEDATA not 0xC3 after write");
     CHECK(b_read(2, 0x0DU) == 0x10U, "EEADR not 0x10 after write");
@@ -59,15 +59,15 @@ int main(void)
 
     /* 3. Sim completion. */
     pic16f87xa_sim_drive_eeprom_done(0x10U, 0xC3U);
-    CHECK(HAL_EEPROM_IsWriteComplete() == 1U, "EEIF not set after done");
-    HAL_EEPROM_ClearITFlag();
-    CHECK(HAL_EEPROM_IsWriteComplete() == 0U, "EEIF not cleared");
+    CHECK(EPIC_EEPROM_IsWriteComplete() == 1U, "EEIF not set after done");
+    EPIC_EEPROM_ClearITFlag();
+    CHECK(EPIC_EEPROM_IsWriteComplete() == 0U, "EEIF not cleared");
 
     /* 4. Buffer write. */
     pic16f87xa_sim_reset();
     uint8_t data[3] = { 0x11, 0x22, 0x33 };
-    HAL_StatusTypeDef st = HAL_EEPROM_WriteBuffer(0x20U, data, 3);
-    CHECK(st == HAL_OK, "WriteBuffer returned error");
+    EPIC_StatusTypeDef st = EPIC_EEPROM_WriteBuffer(0x20U, data, 3);
+    CHECK(st == EPIC_OK, "WriteBuffer returned error");
     /* Drive the write-completion sim helper for each byte. */
     for (uint8_t i = 0; i < 3; i++) {
         pic16f87xa_sim_drive_eeprom_done((uint8_t)(0x20U + i), data[i]);
@@ -75,7 +75,7 @@ int main(void)
 
     /* 5. Buffer read. */
     uint8_t buf[3] = { 0 };
-    HAL_EEPROM_ReadBuffer(0x20U, buf, 3);
+    EPIC_EEPROM_ReadBuffer(0x20U, buf, 3);
     CHECK(buf[0] == 0x11U && buf[1] == 0x22U && buf[2] == 0x33U,
           "Buffer read did not return written values");
 

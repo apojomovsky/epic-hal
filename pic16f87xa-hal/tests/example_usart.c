@@ -5,11 +5,11 @@
  *   Verifies:
  *     1. SPBRG computation matches the datasheet formula
  *        (DS39582B Table 10-1).
- *     2. After HAL_USART_Init(), TXSTA reflects the configured mode
+ *     2. After EPIC_USART_Init(), TXSTA reflects the configured mode
  *        (sync/async, BRGH, 9-bit, TXEN) and SPBRG holds the divisor.
- *     3. HAL_USART_Transmit() writes TXREG.
+ *     3. EPIC_USART_Transmit() writes TXREG.
  *     4. RX: pic16f87xa_sim_drive_usart_rx() sets RCREG + RCIF, and
- *        HAL_USART_Receive() returns the byte + clears RCIF.
+ *        EPIC_USART_Receive() returns the byte + clears RCIF.
  */
 
 #include "pic16f87xa.h"
@@ -60,7 +60,7 @@ int main(void)
     h.BaudHigh   = USART_BRGH_HIGH;
     h.SPBRG      = 103U;
     h.RxCpltCallback = NULL;   /* No callback → CREN not set. */
-    HAL_USART_Init(&h);
+    EPIC_USART_Init(&h);
 
     /* TXSTA is at 0x98 (Bank 1); SPBRG is at 0x99 (Bank 1). */
     uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
@@ -75,7 +75,7 @@ int main(void)
     CHECK(txsta_b1 == 0x06U, "TXSTA not 0x06 after Init (BRGH expected)");
 
     /* 3. Transmit a byte. Verify TXREG holds it. */
-    HAL_USART_Transmit(0xA5U);
+    EPIC_USART_Transmit(0xA5U);
     CHECK(PIC8_REG8(PIC_REG_TXREG) == 0xA5U, "TXREG did not capture 0xA5");
     /* TXIF should be 0 right after the write. */
     CHECK((PIC8_REG8(0x0CU) & 0x10U) == 0U, "TXIF should be 0 after Transmit");
@@ -83,7 +83,7 @@ int main(void)
     /* 4. RX path: drive a byte, then Receive. */
     pic16f87xa_sim_drive_usart_rx(0xC3U);
     CHECK((PIC8_REG8(0x0CU) & 0x20U) != 0U, "RCIF not set after drive_usart_rx");
-    uint8_t got = HAL_USART_Receive();
+    uint8_t got = EPIC_USART_Receive();
     CHECK(got == 0xC3U, "Receive did not return 0xC3");
     CHECK((PIC8_REG8(0x0CU) & 0x20U) == 0U, "RCIF not cleared after Receive");
 

@@ -65,7 +65,7 @@ int main(void)
     (void)task_spawn(task_supervisor, NULL, SUPERVISOR_PERIOD, 0U);
 
     task_manager_attach_timer0(TICK_RELOAD, TICK_PRESCALER);
-    HAL_IRQ_Restore(1);
+    EPIC_IRQ_Restore(1);
 
     task_manager_run();
 

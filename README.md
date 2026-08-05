@@ -107,7 +107,7 @@ done: fast=12 med=6 slow=3 blips=1 (ticks=61, tasks=4)
 
 Four blinks at distinct rates on RB0-RB3, plus a priority-0 supervisor
 that spawns a one-shot blip at runtime at t=40. Point the same task
-manager at the PIC18 family with `-DHAL_FAMILY=PIC18` (see
+manager at the PIC18 family with `-DEPIC_FAMILY=PIC18` (see
 [pic8-taskmgr/README.md](pic8-taskmgr/README.md)).
 
 ### Docker (no local installs)

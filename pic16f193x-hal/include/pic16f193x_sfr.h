@@ -359,7 +359,7 @@
  * unimplemented. Everything but FOSC/4 (external clock, T1OSC,
  * CAPOSC) is out of scope for this phase (MANUAL.md §11 "Not in
  * this phase"), so no TMR1CS bit mask is defined here yet, and
- * HAL_TIMER1_Init/Start reject any ClockSource other than
+ * EPIC_TIMER1_Init/Start reject any ClockSource other than
  * TIMER1_CLOCK_INTERNAL. */
 #define PIC_T1CON_TMR1ON        PIC8_BIT(0)   /* T1CON<0>. */
 #define PIC_T1CON_T1CKPS0       PIC8_BIT(4)   /* T1CON<4>. */

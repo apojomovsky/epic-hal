@@ -29,8 +29,8 @@ Read this before assuming the SPI (SSP) HAL driver being genuinely
 portable means the module is too.
 
 `pic18fxx5x-hal` and `pic16f87xa-hal` **both** have a working SSP driver
-with the same neutral API (`HAL_SSP_Init`, `HAL_SSP_WriteByte`,
-`HAL_SSP_ReadByte`, ...) — confirmed by reading both headers;
+with the same neutral API (`EPIC_SSP_Init`, `EPIC_SSP_WriteByte`,
+`EPIC_SSP_ReadByte`, ...): confirmed by reading both headers;
 `pic18fxx5x_ssp.h`'s own doc comment says it "mirrors pic16f87xa_ssp.h ...
 so consumer code is portable." Unlike `pic8-usb`, there is no hardware
 reason this module couldn't link against either family.
@@ -142,7 +142,7 @@ Thin on purpose: `mmc.h`'s functions are already the right shape (unlike
 M-Stack's raw USB endpoint API, which genuinely needed `pic8-usb.c` to
 invent ring buffering on top). This module's real work is the *binding*
 layer — `mmc_config.h` pointing `MMC_SPI_TRANSFER`/`MMC_SPI_SET_CS` at
-`HAL_SSP_WriteByte`/`HAL_GPIO_WritePin`, `MMC_SPI_SET_SPEED` at a small
+`EPIC_SSP_WriteByte`/`EPIC_GPIO_WritePin`, `MMC_SPI_SET_SPEED` at a small
 Hz-to-`SSP_ModeTypeDef` divisor-picking helper (nearest-not-exceeding
 among Fosc/4, /16, /64), and the timer macros at `pic8-tick` — plus
 `pic8_sdcard_init/ready/num_blocks/read_block/write_block` as thin
@@ -219,7 +219,7 @@ pic8-sdcard/
   sketch is accurate (same "confirm before coding" discipline
   `pic8-usb-plan.md` used).
 - **Phase 2 — binding layer + mock-SPI host tests.** `pic8_sdcard.h/.c`,
-  the `HAL_SSP`/`HAL_GPIO`/`pic8-tick` bindings, the clock-divisor helper,
+  the `EPIC_SSP`/`EPIC_GPIO`/`pic8-tick` bindings, the clock-divisor helper,
   the mock SPI slave, `tests/test_pic8_sdcard.c`. Given this environment
   has XC8 actually installed (per `pic8-usb`'s Phase 2), also attempt a
   real `xc8-cc` compile+link against PIC18F4550 the same way, including
@@ -293,7 +293,7 @@ original "host tests only" scope, same as `pic8-usb` did):**
   transient stack frame.
 - `pic8_sdcard.c` also compiles clean standalone (after fixing a
   self-inflicted bug: a doc comment containing the literal text
-  `HAL_SSP_*/HAL_GPIO_WritePin` accidentally closed the block comment
+  `EPIC_SSP_*/EPIC_GPIO_WritePin` accidentally closed the block comment
   early at the `*/` substring, corrupting everything parsed after it --
   worth remembering as a gotcha for future doc comments in this repo).
 

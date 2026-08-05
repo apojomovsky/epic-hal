@@ -97,17 +97,17 @@ typedef struct {
 /**
  * @brief  Configure Timer0 from the handle. Programs T0CON and
  *         INTCON<TMR0IE>. Does not start the timer, call @ref
- *         HAL_TIMER0_Start afterwards.
+ *         EPIC_TIMER0_Start afterwards.
  *
- * @return HAL_OK on success, HAL_INVALID if `h` is NULL.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
-HAL_StatusTypeDef HAL_TIMER0_Init(const TIMER0_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_TIMER0_DeInit(void);
+EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void);
 
 /**
  * @brief  Timer0 weak ISR. Forward-declared so user code can override it
  *         (Cube-style). When the user provides an `OverflowCallback`
- *         through `HAL_TIMER0_Init`, the default implementation invokes
+ *         through `EPIC_TIMER0_Init`, the default implementation invokes
  *         it; otherwise it just clears TMR0IF and returns.
  */
 void TIMER0_IRQHandler(void) PIC8_WEAK;
@@ -117,10 +117,10 @@ void TIMER0_IRQHandler(void) PIC8_WEAK;
  *         T0PS, writes `h->ReloadValue` into TMR0L (and TMR0H in 16-bit
  *         mode), then sets TMR0ON.
  */
-HAL_StatusTypeDef HAL_TIMER0_Start(const TIMER0_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h);
 
 /** Disable Timer0 counting. Clears T0CON<TMR0ON> -> Timer0 halted. */
-HAL_StatusTypeDef HAL_TIMER0_Stop(void);
+EPIC_StatusTypeDef EPIC_TIMER0_Stop(void);
 
 /**
  * @brief Read the current counter low byte (TMR0L). In 16-bit mode this
@@ -128,14 +128,14 @@ HAL_StatusTypeDef HAL_TIMER0_Stop(void);
  *        (the API is 8-bit to match the PIC16 contract). Use the SFR
  *        directly for the full 16-bit value if needed.
  */
-uint8_t HAL_TIMER0_ReadCounter(void);
+uint8_t EPIC_TIMER0_ReadCounter(void);
 
 /** Write `value` to TMR0L (the low byte / 8-bit counter). */
-void HAL_TIMER0_WriteCounter(uint8_t value);
+void EPIC_TIMER0_WriteCounter(uint8_t value);
 
 /**
  * @brief  Convert a prescaler enum to its integer ratio (1, 2, 4, ..., 256).
  */
-uint16_t HAL_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);
+uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);
 
 #endif /* PIC18FXX5X_TIMER0_H */

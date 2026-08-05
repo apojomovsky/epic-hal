@@ -8,9 +8,9 @@
 
 static const ADC_HandleTypeDef *g_adc = NULL;
 
-HAL_StatusTypeDef HAL_ADC_Init(const ADC_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     g_adc = h;
 
     /* ADCON0, Bank 0, address 0x1F.
@@ -49,17 +49,17 @@ HAL_StatusTypeDef HAL_ADC_Init(const ADC_HandleTypeDef *h)
 #endif
 
     /* Interrupt enable. */
-    HAL_IRQ_ClearFlag(PIC16_IRQ_ADC);
-    if (h->ConvCpltCallback) HAL_IRQ_Enable(PIC16_IRQ_ADC);
-    else                     HAL_IRQ_DisableSrc(PIC16_IRQ_ADC);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_ADC);
+    if (h->ConvCpltCallback) EPIC_IRQ_Enable(PIC16_IRQ_ADC);
+    else                     EPIC_IRQ_DisableSrc(PIC16_IRQ_ADC);
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_ADC_DeInit(void)
+EPIC_StatusTypeDef EPIC_ADC_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC16_IRQ_ADC);
-    HAL_IRQ_ClearFlag(PIC16_IRQ_ADC);
+    EPIC_IRQ_DisableSrc(PIC16_IRQ_ADC);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_ADC);
     PIC8_REG8(0x1FU) = 0x00U;
     {
         uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
@@ -68,10 +68,10 @@ HAL_StatusTypeDef HAL_ADC_DeInit(void)
         pic_select_bank(prev);
     }
     g_adc = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-void HAL_ADC_SelectChannel(ADC_ChannelTypeDef ch)
+void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch)
 {
     uint8_t v = PIC8_REG8(0x1FU);
     v = (uint8_t)((v & (uint8_t)~PIC_ADCON0_CHS_MASK) |
@@ -79,7 +79,7 @@ void HAL_ADC_SelectChannel(ADC_ChannelTypeDef ch)
     PIC8_REG8(0x1FU) = v;
 }
 
-uint16_t HAL_ADC_Start(void)
+uint16_t EPIC_ADC_Start(void)
 {
     uint8_t v = PIC8_REG8(0x1FU);
     if (v & PIC_ADCON0_GO_DONE) return 0xFFFFU;
@@ -87,23 +87,23 @@ uint16_t HAL_ADC_Start(void)
     return 0U;
 }
 
-uint8_t HAL_ADC_IsConversionInProgress(void)
+uint8_t EPIC_ADC_IsConversionInProgress(void)
 {
     return (PIC8_REG8(0x1FU) & PIC_ADCON0_GO_DONE) ? 1U : 0U;
 }
 
-uint8_t HAL_ADC_IsConversionDone(void)
+uint8_t EPIC_ADC_IsConversionDone(void)
 {
     /* ADIF lives in PIR1<6>. */
     return (PIC8_REG8(0x0CU) & 0x40U) ? 1U : 0U;
 }
 
-void HAL_ADC_ClearITFlag(void)
+void EPIC_ADC_ClearITFlag(void)
 {
-    HAL_IRQ_ClearFlag(PIC16_IRQ_ADC);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_ADC);
 }
 
-uint16_t HAL_ADC_Read(void)
+uint16_t EPIC_ADC_Read(void)
 {
     /* Read ADRESL first, then ADRESH, in the active bank. */
     uint8_t lo = 0U, adfm_raw = 0U;
@@ -131,9 +131,9 @@ uint16_t HAL_ADC_Read(void)
 
 void ADC_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16_IRQ_ADC)) return;
-    HAL_IRQ_ClearFlag(PIC16_IRQ_ADC);
+    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_ADC)) return;
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_ADC);
     if (g_adc && g_adc->ConvCpltCallback) {
-        g_adc->ConvCpltCallback(HAL_ADC_Read());
+        g_adc->ConvCpltCallback(EPIC_ADC_Read());
     }
 }

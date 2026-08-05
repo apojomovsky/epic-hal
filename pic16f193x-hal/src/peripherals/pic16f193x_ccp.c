@@ -75,48 +75,48 @@ static int valid_instance(CCP_InstanceTypeDef inst)
     return (inst >= CCP_INSTANCE_1 && inst <= CCP_INSTANCE_5);
 }
 
-HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
-    if (h->Mode == CCP_MODE_PWM) return HAL_INVALID;
-    if (!valid_instance(h->Instance)) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
+    if (h->Mode == CCP_MODE_PWM) return EPIC_INVALID;
+    if (!valid_instance(h->Instance)) return EPIC_INVALID;
 
     CCP_WRITE_CPRH(h->Instance, (uint8_t)(h->CompareValue >> 8));
     CCP_WRITE_CPRL(h->Instance, (uint8_t)(h->CompareValue & 0xFFU));
     CCP_WRITE_CON(h->Instance, (uint8_t)((uint8_t)h->Mode & PIC_CCP1CON_CCPM_MASK));
 
     PIC16F193X_IRQn irq = ccp_irq(h->Instance);
-    HAL_IRQ_ClearFlag(irq);
+    EPIC_IRQ_ClearFlag(irq);
     if (h->EventCallback) {
-        HAL_IRQ_Enable(irq);
+        EPIC_IRQ_Enable(irq);
     } else {
-        HAL_IRQ_DisableSrc(irq);
+        EPIC_IRQ_DisableSrc(irq);
     }
 
     g_handle[idx_of(h->Instance)] = h;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_CCP_DeInit(CCP_InstanceTypeDef inst)
+EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
 {
-    if (!valid_instance(inst)) return HAL_INVALID;
+    if (!valid_instance(inst)) return EPIC_INVALID;
     PIC16F193X_IRQn irq = ccp_irq(inst);
-    HAL_IRQ_DisableSrc(irq);
-    HAL_IRQ_ClearFlag(irq);
+    EPIC_IRQ_DisableSrc(irq);
+    EPIC_IRQ_ClearFlag(irq);
     CCP_WRITE_CON(inst, 0x00U);
     g_handle[idx_of(inst)] = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
+EPIC_StatusTypeDef EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
 {
-    if (!valid_instance(inst)) return HAL_INVALID;
+    if (!valid_instance(inst)) return EPIC_INVALID;
     CCP_WRITE_CPRH(inst, (uint8_t)(value >> 8));
     CCP_WRITE_CPRL(inst, (uint8_t)(value & 0xFFU));
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst)
+uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (!valid_instance(inst)) return 0U;
     uint8_t hi1, lo, hi2;
@@ -130,8 +130,8 @@ uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst)
 
 static void ccp_irq_common(CCP_InstanceTypeDef inst, PIC16F193X_IRQn irq)
 {
-    if (!HAL_IRQ_GetFlag(irq)) return;
-    HAL_IRQ_ClearFlag(irq);
+    if (!EPIC_IRQ_GetFlag(irq)) return;
+    EPIC_IRQ_ClearFlag(irq);
     const CCP_HandleTypeDef *h = g_handle[idx_of(inst)];
     if (h && h->EventCallback) {
         h->EventCallback();

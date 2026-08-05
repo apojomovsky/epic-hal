@@ -42,9 +42,9 @@ int main(void)
     h.Period          = 249U;     /* PR2 = 249 → 250 ticks per period. */
     h.OverflowCallback = on_t2_overflow;
 
-    HAL_StatusTypeDef st = HAL_TIMER2_Init(&h);
-    if (st != HAL_OK) { printf("FAIL: Init returned %u\n", (unsigned)st); return 1; }
-    HAL_TIMER2_Start(&h);
+    EPIC_StatusTypeDef st = EPIC_TIMER2_Init(&h);
+    if (st != EPIC_OK) { printf("FAIL: Init returned %u\n", (unsigned)st); return 1; }
+    EPIC_TIMER2_Start(&h);
 
     for (uint32_t i = 0; i < SIM_BUDGET; i++) {
         cycle_counter = i + 1;

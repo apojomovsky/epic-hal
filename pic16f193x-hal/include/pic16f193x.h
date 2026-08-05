@@ -126,7 +126,7 @@
  * values. */
 #define PIC8_FAMILY_RAM_BYTES   PIC16F193X_FAMILY_RAM_BYTES
 
-/* HAL_StatusTypeDef/HAL_OK/... and the PIC8_BIT* macros are
+/* EPIC_StatusTypeDef/EPIC_OK/... and the PIC8_BIT* macros are
  * architecture-blind, so they live in the shared layer; pulled in here
  * so one `#include "pic16f193x.h"` gives every consumer the same
  * status/bit vocabulary. */

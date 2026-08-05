@@ -156,7 +156,7 @@ write of a function parameter. Six real bugs found and fixed en route
 (four variations on the Bank-1 theme: `pic_select_bank`'s and
 `pie_reg_addr`'s/`pir_reg_addr`'s own function-call-boundary corruption,
 a ROM-read interleaved with an SFR read-modify-write, and
-`HAL_IRQ_Enable`/`DisableSrc`'s PIE1/PIE2 read-modify-write itself, now
+`EPIC_IRQ_Enable`/`DisableSrc`'s PIE1/PIE2 read-modify-write itself, now
 hand-written inline asm; plus a genuine dangling-pointer bug in the
 sim-target harness's USART handle, and a WDT/config-word oversight),
 each verified individually via the local toolchain, none of them
@@ -169,15 +169,15 @@ hardware call stack; the XC8 v4.00 known-issue gap in `-mstackcall`'s
 indirect-call protection) were tested directly against this and ruled
 out, along with a `.sym`-diff-driven storage-overlap forensic pass that
 found real candidates but not the actual cause. The deciding realization
-that finally cracked it: `compute_period()`/`HAL_TIMER2_WritePeriod()`
+that finally cracked it: `compute_period()`/`EPIC_TIMER2_WritePeriod()`
 run entirely *before* `GIE` is ever enabled, so no interrupt could
 possibly be involved, ruling out every interrupt-timing theory in one
 step. `mdb` instruction-stepping (not `wait`, which turned out not to
 reliably respect breakpoints in this toolchain's headless mode) then
-localized the actual bug to `HAL_TIMER2_WritePeriod`'s own
+localized the actual bug to `EPIC_TIMER2_WritePeriod`'s own
 `pic_select_bank(1)` call misdirecting its `period` parameter, the exact
 same failure shape already proven and fixed for PIE1/PIE2 earlier in
-this phase, just hitting a different function. `HAL_USART_Init`'s SPBRG
+this phase, just hitting a different function. `EPIC_USART_Init`'s SPBRG
 write had the identical, previously-undetected bug (masked because
 MPLAB SIM's UART capture isn't baud-timing-sensitive). Fixed both with
 the same proven pattern (load into W through a bank-independent scratch
@@ -214,7 +214,7 @@ driver code was already correct. Found by reading the actual CI job logs
 via `gh` (not available earlier in this phase) and reproducing the exact
 failing GitHub Actions container locally with `docker run` against the
 same `ghcr.io/apojomovsky/pic8-hal-ci` image tag: `stepi`-based `mdb`
-stepping on that image confirmed `HAL_IRQ_Restore` sets `GIEH`/`GIEL`/
+stepping on that image confirmed `EPIC_IRQ_Restore` sets `GIEH`/`GIEL`/
 `IPEN` correctly (ruling out a driver regression), and re-running
 `scripts/sim-mdb-run.sh` locally at increasing `wait_ms` values showed
 80/500ms fail and 2000/5000ms reliably pass. Fixed by raising `wait_ms`
@@ -854,15 +854,15 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
       linked it):
       - `pic8_tick_init` never enabled the chip's global interrupt
         enable (GIE); fixed (`pic8-tick/src/pic8_tick.c`,
-        `HAL_IRQ_Restore(1)`), confirmed via host/target rebuilds, did
+        `EPIC_IRQ_Restore(1)`), confirmed via host/target rebuilds, did
         not by itself turn the sim-test jobs green.
-      - The sim-target harness's `HAL_USART_Init` TXEN workaround (a
+      - The sim-target harness's `EPIC_USART_Init` TXEN workaround (a
         non-null `TxCpltCallback`) has a side effect: it also enables
         the TX interrupt source (TXIE). TXIF is pending immediately
         after reset and is only cleared by writing TXREG, so the moment
         GIE turns on, TXIE + pending TXIF fire the TX ISR in an
         infinite storm (the no-op callback never clears TXIF). Fixed
-        (`HAL_IRQ_DisableSrc(..._IRQ_USART_TX)` right after Init, both
+        (`EPIC_IRQ_DisableSrc(..._IRQ_USART_TX)` right after Init, both
         families' `*_harness_sim_target.c`), also did not by itself
         turn the jobs green.
       - Both fixes are correct and staying in, but resolved a different
@@ -892,7 +892,7 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            under XC8 v4.00 (`__attribute__((always_inline))` was tried
            and ignored), and something about that call boundary
            corrupted the caller's own live value across it: a real
-           `HAL_TIMER2_WritePeriod(200)` call landed as PR2=0 every
+           `EPIC_TIMER2_WritePeriod(200)` call landed as PR2=0 every
            time, confirmed via a dedicated probe. **Fixed**: converted
            to a macro, forcing true preprocessor-level inlining, no call
            boundary possible regardless of what the optimizer does.
@@ -905,9 +905,9 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            runtime helper (`fcall stringdir` in the generated `.s`), and
            interleaving that ROM read with an in-progress SFR
            read-modify-write silently corrupted the SFR side. **Fixed**:
-           `HAL_IRQ_Enable`/`DisableSrc`/`ClearFlag`/`GetFlag` now pull
+           `EPIC_IRQ_Enable`/`DisableSrc`/`ClearFlag`/`GetFlag` now pull
            every field out of `d` into locals before touching any SFR.
-        4. **Fixed**: `HAL_IRQ_Enable`/`DisableSrc`'s PIE1/PIE2
+        4. **Fixed**: `EPIC_IRQ_Enable`/`DisableSrc`'s PIE1/PIE2
            read-modify-write, affected by the same symptom as item 1
            (a C-level local touched while banked into Bank 1 got
            misdirected), now hand-written inline asm following this
@@ -943,8 +943,8 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            that had worked before, apples-to-apples, before trusting a
            false alarm.
         5. **Found and fixed, unrelated but real**: `pic8_harness_init`
-           (`pic16_harness_sim_target.c`) called `HAL_USART_Init(&h)`
-           with `h` a plain local variable, but `HAL_USART_Init` stores
+           (`pic16_harness_sim_target.c`) called `EPIC_USART_Init(&h)`
+           with `h` a plain local variable, but `EPIC_USART_Init` stores
            that *pointer* (`pic16f87xa_usart.c`'s `g_usart`), dereferenced
            later from ISR context on every interrupt for the life of the
            program, not just for the duration of the call. Once
@@ -985,9 +985,9 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            disabled) while `PIE1`/`T2CON` still show Timer2 correctly
            configured and counting, `PIR1<TMR2IF>` pending but never
            serviced, i.e. something clears `GIE` without ever restoring
-           it, well after `pic8_tick_init`'s own `HAL_IRQ_Restore(1)`
+           it, well after `pic8_tick_init`'s own `EPIC_IRQ_Restore(1)`
            already ran successfully once (proven by the first delay
-           completing at all). `HAL_IRQ_Disable`/`Restore`'s own
+           completing at all). `EPIC_IRQ_Disable`/`Restore`'s own
            generated assembly was traced instruction-by-instruction and
            is logically correct. Earlier hypothesis, since tested and
            weakened: **PIC16F87XA's hardware call stack is only 8 levels
@@ -1024,7 +1024,7 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            after the hang, identical to baseline. Full account:
            `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 6. A third attempt,
            pinning the specific locals live across the disable/restore
-           window (`HAL_IRQ_Disable`'s and `pic8_tick_get`'s auto
+           window (`EPIC_IRQ_Disable`'s and `pic8_tick_get`'s auto
            variables made `static`, throwaway, reverted) actually removed
            the `GIE`-stuck symptom, but a *different* variable (`PR2`,
            Timer2's period register) came back corrupted instead, whack-a-
@@ -1040,8 +1040,8 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            (`pic8_tick_init`'s own locals) had no collision at all.
            Full account: `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 8.
            **Root cause found (Finding 9)**: `compute_period()` and
-           `HAL_TIMER2_WritePeriod()` both run entirely *before*
-           `HAL_IRQ_Restore(1)` ever enables `GIE`, so no interrupt could
+           `EPIC_TIMER2_WritePeriod()` both run entirely *before*
+           `EPIC_IRQ_Restore(1)` ever enables `GIE`, so no interrupt could
            be involved, ruling out every theory above at once. `mdb`
            instruction-stepping (`stepi`, not `wait`, which turned out
            not to reliably respect `break`-set breakpoints in this
@@ -1049,11 +1049,11 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            `compute_period@best_pr2` and `pic8_tick_init@pr2` both held
            the correct value (`249` for 20 MHz) throughout, but the
            actual `PR2` register read `0` at the same point. The only
-           thing between them is `HAL_TIMER2_WritePeriod` itself, whose
+           thing between them is `EPIC_TIMER2_WritePeriod` itself, whose
            `pic_select_bank(1)` bank switch misdirects its own `period`
            parameter, the identical failure shape already proven and
            fixed for PIE1/PIE2 earlier in this phase (item 4), just
-           hitting a different function. `HAL_USART_Init`'s SPBRG write
+           hitting a different function. `EPIC_USART_Init`'s SPBRG write
            had the same bug (`SPBRG` read `4`, should be `129`),
            previously undetected because MPLAB SIM's UART capture isn't
            baud-timing-sensitive. **Fixed**: same proven pattern (load
@@ -1100,7 +1100,7 @@ also met** (verified locally, 3/3 runs; not yet merged/observed green
 in CI itself). Three real bugs found and fixed: the sim-target
 harness's baud-rate math didn't fit `SPBRG`'s 8 bits at this file's
 48 MHz `FOSC_HZ`; the same missing `HARNESS=sim` → `WDT=OFF` Makefile
-knob PIC16 needed; and `pic18_irq.c`'s `HAL_IRQ_Restore`/`Enable`/
+knob PIC16 needed; and `pic18_irq.c`'s `EPIC_IRQ_Restore`/`Enable`/
 `DisableSrc`/`ClearFlag`/`GetFlag`, which dispatched off a runtime SFR
 address (from a lookup table, not a compile-time constant), which XC8
 compiled to PIC18's program-memory table read/write mechanism
@@ -1217,7 +1217,7 @@ deferral is documented in its own `docs/pic8-usb-plan.md`, not just here.
     quit
     ```
   - **Unrelated to `mdb`, but hit while writing the PIC16/PIC18 probes**:
-    this repo's own `HAL_USART_Init` (`pic16f87xa_usart.c` and
+    this repo's own `EPIC_USART_Init` (`pic16f87xa_usart.c` and
     `pic18fxx5x_usart.c`, both families, same pattern) only sets `TXEN`
     when a non-null `TxCpltCallback` is supplied
     (`if (h->TxCpltCallback) txsta |= PIC_TXSTA_TXEN;`). Without one, the

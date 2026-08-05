@@ -21,7 +21,7 @@ int main(void)
     pic8_harness_init(1UL);
 
     ADC_HandleTypeDef adc = ADC_HANDLE_DEFAULT;
-    HAL_ADC_Init(&adc);
+    EPIC_ADC_Init(&adc);
 
     uint8_t con0 = PIC8_REG8(PIC_REG_ADCON0);
     uint8_t con1 = PIC8_REG8(PIC_REG_ADCON1);

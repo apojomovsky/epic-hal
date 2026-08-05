@@ -38,12 +38,12 @@ typedef struct {
     .TxCpltCallback = 0, .RxCpltCallback = 0, \
 }
 
-HAL_StatusTypeDef HAL_USART_Init(const USART_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_USART_DeInit(void);
-void HAL_USART_Transmit(uint8_t data);
-uint8_t HAL_USART_IsTxShiftRegisterEmpty(void);
-uint8_t HAL_USART_Receive(void);
-uint8_t HAL_USART_HasOverrunError(void);
+EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_USART_DeInit(void);
+void EPIC_USART_Transmit(uint8_t data);
+uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);
+uint8_t EPIC_USART_Receive(void);
+uint8_t EPIC_USART_HasOverrunError(void);
 
 void USART_TX_IRQHandler(void) PIC8_WEAK;
 void USART_RX_IRQHandler(void) PIC8_WEAK;

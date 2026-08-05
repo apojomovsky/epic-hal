@@ -23,20 +23,20 @@ trailer, and only then copies the data bytes into the caller's buffer. This is
 how `pic8_settings_load` keeps `data` untouched on failure without heap use or
 stack-sized VLAs.
 
-## Why it does not call `HAL_EEPROM_WriteBuffer`
+## Why it does not call `EPIC_EEPROM_WriteBuffer`
 
-The underlying HAL's `HAL_EEPROM_WriteByte` starts a hardware write cycle and
+The underlying HAL's `EPIC_EEPROM_WriteByte` starts a hardware write cycle and
 returns immediately. Completion is reported separately through EEIF and
-`HAL_EEPROM_IsWriteComplete()`. Today `HAL_EEPROM_WriteBuffer` just loops over
-`HAL_EEPROM_WriteByte` without waiting between bytes, which is unsafe on real
+`EPIC_EEPROM_IsWriteComplete()`. Today `EPIC_EEPROM_WriteBuffer` just loops over
+`EPIC_EEPROM_WriteByte` without waiting between bytes, which is unsafe on real
 silicon because the next byte can be launched while the prior write cycle is
 still active.
 
 `pic8-settings` therefore performs its own byte-at-a-time sequence:
 
-1. Call `HAL_EEPROM_WriteByte(addr, data)`.
-2. Wait until `HAL_EEPROM_IsWriteComplete()` reports done.
-3. Call `HAL_EEPROM_ClearITFlag()`.
+1. Call `EPIC_EEPROM_WriteByte(addr, data)`.
+2. Wait until `EPIC_EEPROM_IsWriteComplete()` reports done.
+3. Call `EPIC_EEPROM_ClearITFlag()`.
 4. Move to the next byte.
 
 That wait/clear sequence is internal to this module because it is part of the

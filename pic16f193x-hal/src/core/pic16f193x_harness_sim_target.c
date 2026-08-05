@@ -43,8 +43,8 @@ void pic8_harness_init(uint32_t cycles)
     /* RA0 as digital output. ANSELA<0> = 0 (analog default at POR,
      * DS41364B §6.0), TRISA<0> = 0 (input default), LATA<0> starts
      * at 0 (POR). The pass/fail marker drives RA0 from log() below. */
-    HAL_GPIO_Init(GPIOA, GPIO_PIN_0, GPIO_MODE_OUTPUT);
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+    EPIC_GPIO_Init(GPIOA, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
 }
 
 void pic8_harness_tick(void)
@@ -73,7 +73,7 @@ void pic8_harness_log(const char *fmt, ...)
         fmt[18] == 'T' && fmt[19] == ':' && fmt[20] == ' ' &&
         fmt[21] == 'P' && fmt[22] == 'A' && fmt[23] == 'S' &&
         fmt[24] == 'S' && fmt[25] == '\n' && fmt[26] == '\0') {
-        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+        EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
     } else if (fmt && fmt[0] == 'P' && fmt[1] == 'I' && fmt[2] == 'C' &&
         fmt[3] == '8' && fmt[4] == '_' && fmt[5] == 'H' &&
         fmt[6] == 'A' && fmt[7] == 'R' && fmt[8] == 'N' &&
@@ -83,7 +83,7 @@ void pic8_harness_log(const char *fmt, ...)
         fmt[18] == 'T' && fmt[19] == ':' && fmt[20] == ' ' &&
         fmt[21] == 'F' && fmt[22] == 'A' && fmt[23] == 'I' &&
         fmt[24] == 'L' && fmt[25] == '\n' && fmt[26] == '\0') {
-        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+        EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
     }
     /* variadic args ignored; the marker has none. */
 }

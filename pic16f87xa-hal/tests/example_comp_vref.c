@@ -3,11 +3,11 @@
  * @brief   Comparator + Vref driver smoke test.
  *
  *   Verifies:
- *     1. HAL_COMP_Init() programs CMCON for two independent comparators
+ *     1. EPIC_COMP_Init() programs CMCON for two independent comparators
  *        with C1 inverted.
- *     2. HAL_VREF_Init() programs CVRCON for 0.25..0.75 VDD range,
+ *     2. EPIC_VREF_Init() programs CVRCON for 0.25..0.75 VDD range,
  *        tap 8, output enabled.
- *     3. HAL_VREF_MilliVolts() computes correct values:
+ *     3. EPIC_VREF_MilliVolts() computes correct values:
  *        - low range,  tap 0  → 0 mV
  *        - low range,  tap 12 → Vdd/2 = 2500 mV at 5 V
  *        - high range, tap 0  → Vdd/4 = 1250 mV at 5 V
@@ -33,7 +33,7 @@ int main(void)
     COMP_HandleTypeDef ch = COMP_HANDLE_DEFAULT;
     ch.Mode = COMP_MODE_TWO_INDEP;
     ch.C1Inverted = true;
-    HAL_COMP_Init(&ch);
+    EPIC_COMP_Init(&ch);
 
     {
         uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
@@ -44,7 +44,7 @@ int main(void)
         CHECK(cmcon == 0x12U, "CMCON not programmed for two indep with C1 inverted");
     }
 
-    HAL_COMP_DeInit();
+    EPIC_COMP_DeInit();
     {
         uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
@@ -61,7 +61,7 @@ int main(void)
     vh.Value = 8;
     vh.OutputEnable = true;
     vh.Enabled = true;
-    HAL_VREF_Init(&vh);
+    EPIC_VREF_Init(&vh);
 
     {
         uint8_t prev = (PIC8_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
@@ -74,13 +74,13 @@ int main(void)
     }
 
     /* MilliVolts helper. */
-    CHECK(HAL_VREF_MilliVolts(5000U, VREF_RANGE_LOW,  0U)  == 0U,
+    CHECK(EPIC_VREF_MilliVolts(5000U, VREF_RANGE_LOW,  0U)  == 0U,
           "Vref low tap 0 != 0 mV");
-    CHECK(HAL_VREF_MilliVolts(5000U, VREF_RANGE_LOW, 12U)  == 2500U,
+    CHECK(EPIC_VREF_MilliVolts(5000U, VREF_RANGE_LOW, 12U)  == 2500U,
           "Vref low tap 12 != 2500 mV at 5V");
-    CHECK(HAL_VREF_MilliVolts(5000U, VREF_RANGE_HIGH, 0U)  == 1250U,
+    CHECK(EPIC_VREF_MilliVolts(5000U, VREF_RANGE_HIGH, 0U)  == 1250U,
           "Vref high tap 0 != 1250 mV at 5V");
-    CHECK(HAL_VREF_MilliVolts(5000U, VREF_RANGE_HIGH, 8U)  == 2500U,
+    CHECK(EPIC_VREF_MilliVolts(5000U, VREF_RANGE_HIGH, 8U)  == 2500U,
           "Vref high tap 8 != 2500 mV at 5V");
 
     printf("OK: Comparator + Vref drivers, mode, inverted, milliVolts all pass.\n");

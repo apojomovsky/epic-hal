@@ -34,7 +34,7 @@ implement the same contract. See the design writeup in conversation for the
 full comparison table; the short version:
 
 **Shared across every family** (extract once, reuse forever):
-- Status codes and bit macros (`HAL_StatusTypeDef`, `PIC8_BIT*`)
+- Status codes and bit macros (`EPIC_StatusTypeDef`, `PIC8_BIT*`)
 - The host/target harness contract (`init/tick/running/log`) and its
   target-side no-op implementation (identical on every family, it's four
   functions that do nothing because real silicon needs no harness)
@@ -48,8 +48,8 @@ full comparison table; the short version:
   family)
 - IRQ vector layout and priority model (PIC16: one vector, no priority;
   PIC18: two vectors, per-source priority bit)
-- Peripheral driver register-level implementation (`HAL_GPIO_*`,
-  `HAL_TIMER0_*`, etc. keep the same *names* and *signatures*; the bodies
+- Peripheral driver register-level implementation (`EPIC_GPIO_*`,
+  `EPIC_TIMER0_*`, etc. keep the same *names* and *signatures*; the bodies
   differ because the registers differ)
 - Config Word generation (PIC16 has one config word; PIC18 has several,
   unrelated fields)
@@ -58,7 +58,7 @@ full comparison table; the short version:
 
 ```
 pic8-common/                         # NEW — thin, stable, rarely touched after Phase 0
-  include/core/hal_status.h          # HAL_StatusTypeDef, PIC8_BIT*
+  include/core/hal_status.h          # EPIC_StatusTypeDef, PIC8_BIT*
   include/core/pic8_harness.h        # the 4-function host/target contract
   src/core/pic8_harness_target.c     # the one shared no-op file
   cmake/pic8_family.cmake            # shared CMake helpers (add_example, etc.)
@@ -68,13 +68,13 @@ pic16f87xa-hal/                      # EXISTING tree, restructured in place
   include/{host,target}/...          # unchanged pattern; defines PIC8_REG8 etc.
   include/core/pic16_irq.h           # PIC16 IRQn enum + backend (renamed from
                                       # pic16f87xa_interrupt.h's family-specific half)
-  include/peripherals/...            # HAL_GPIO_*, HAL_TIMER0_* — names unchanged
+  include/peripherals/...            # EPIC_GPIO_*, EPIC_TIMER0_*, names unchanged
   src/...
 
 pic18fxx5x-hal/                      # NEW — same skeleton as pic16f87xa-hal
   include/{host,target}/...          # PIC18 BSR/Access-Bank addressing, LATx-aware GPIO
   include/core/pic18_irq.h           # PIC18 IRQn enum, 2-vector + priority backend
-  include/peripherals/...            # same HAL_GPIO_*/HAL_TIMER0_* names, PIC18-shaped bodies
+  include/peripherals/...            # same EPIC_GPIO_*/EPIC_TIMER0_* names, PIC18-shaped bodies
   src/...
   mcu/pic18fxx5x-mplabx/Makefile     # includes mk/pic8_family.mk
 
@@ -104,17 +104,17 @@ No new hardware support in this phase. Pure, behavior-preserving refactor
 of the existing PIC16F87XA HAL. **Done** (commit `3f33d48`).
 
 **Tasks**
-1. Create `pic8-common/` with `hal_status.h` (`HAL_StatusTypeDef`,
-   `HAL_OK/ERROR/BUSY/TIMEOUT/INVALID`, `PIC8_BIT/BIT_SET/BIT_CLR/BIT_TGL/
+1. Create `pic8-common/` with `hal_status.h` (`EPIC_StatusTypeDef`,
+   `EPIC_OK/ERROR/BUSY/TIMEOUT/INVALID`, `PIC8_BIT/BIT_SET/BIT_CLR/BIT_TGL/
    BIT_READ`) and `pic8_harness.h` (the existing 4-function contract, moved
    and renamed from `pic16f87xa_harness_*` to `pic8_harness_*`).
 2. Move `pic16f87xa_harness_target.c` to `pic8-common/src/core/
    pic8_harness_target.c` unchanged in substance (it's already
    family-blind: four no-ops).
 3. Rename in `pic16f87xa-hal`:
-   `PIC16F87XA_StatusTypeDef`/`_OK`/... → use the shared `HAL_*` from
+   `PIC16F87XA_StatusTypeDef`/`_OK`/... → use the shared `EPIC_*` from
    `pic8-common`; `PIC16F87XA_BIT*` → `PIC8_BIT*`; `PIC16F87XA_IRQ_Disable/
-   Restore/Enable/DisableSrc/ClearFlag/GetFlag` → `HAL_IRQ_*` (still taking
+   Restore/Enable/DisableSrc/ClearFlag/GetFlag` → `EPIC_IRQ_*` (still taking
    a PIC16-defined `IRQn` enum); `PIC16F87XA_WEAK` → `PIC8_WEAK`;
    `PIC16F87XA_REG8`/`_SFR_PTR` → `PIC8_REG8`/`PIC8_SFR_PTR`.
 4. Extract shared CMake helper functions (e.g. the `pic16f87xa_add_example`
@@ -124,7 +124,7 @@ of the existing PIC16F87XA HAL. **Done** (commit `3f33d48`).
    setup, the `.hex` link step) into `pic8-common/mk/pic8_family.mk`, and
    make `pic16f87xa-hal/mcu/pic16f87xa-mplabx/Makefile` include it.
 6. Update `pic8-taskmgr` to link against the renamed symbols
-   (`HAL_IRQ_Disable/Restore` instead of `PIC16F87XA_IRQ_Disable/Restore`,
+   (`EPIC_IRQ_Disable/Restore` instead of `PIC16F87XA_IRQ_Disable/Restore`,
    etc.).
 7. Update docs (`pic16f87xa-hal/README.md`, `MANUAL.md`,
    `pic8-taskmgr/README.md`, `docs/API.md`, `docs/ARCHITECTURE.md`,
@@ -242,16 +242,16 @@ DS39582B:
    have; decide the default and document the citation.
 5. Interrupt core: two vectors (0008h high-priority, 0018h low-priority),
    `IPEN` (RCON<7>) enabling the priority scheme, per-source priority bits
-   in `INTCON2`/`INTCON3`/`IPR1`/`IPR2`. Design the `HAL_IRQ_*` contract
+   in `INTCON2`/`INTCON3`/`IPR1`/`IPR2`. Design the `EPIC_IRQ_*` contract
    extension needed to express priority without breaking PIC16 callers,
    options: an optional priority parameter PIC16's implementation ignores,
-   or a separate `HAL_IRQ_SetPriority()` that's a no-op on PIC16. Pick one,
+   or a separate `EPIC_IRQ_SetPriority()` that's a no-op on PIC16. Pick one,
    document why, in this file, before implementing.
 6. ISR vector entry file(s): using the syntax confirmed in Phase 1, one
    entry point per vector, both delegating to the shared dispatch pattern
    already used by PIC16 (`pic8_dispatch_all_irqs` per vector, or per
    priority level, decide during implementation and record the choice).
-7. WDT/Sleep driver: port `HAL_WDT_Refresh`/`HAL_Sleep_Enter`/BOR/POR
+7. WDT/Sleep driver: port `EPIC_WDT_Refresh`/`EPIC_Sleep_Enter`/BOR/POR
    status against PIC18's equivalent registers (RCON's `TO`/`PD`/`BOR`/`POR`
    are laid out differently than PIC16's `PCON`, confirm exact bits against
    DS39632E before porting).
@@ -280,15 +280,15 @@ DS39582B:
       XC8 build places the vectors correctly; real-silicon blink
       confirmation is flagged as deferred per the open-questions rule, not
       silently skipped.
-- [x] `HAL_WDT_Refresh` / `HAL_Sleep_Enter` compile and, on host sim, behave
+- [x] `EPIC_WDT_Refresh` / `EPIC_Sleep_Enter` compile and, on host sim, behave
       as documented no-ops exactly like the PIC16 versions. (Host impls are
-      empty no-ops; `example_blink` calls `HAL_WDT_Refresh` every loop
+      empty no-ops; `example_blink` calls `EPIC_WDT_Refresh` every loop
       iteration without crashing; both compile on XC8 as `clrwdt`/`sleep`.)
 - [x] Re-run all of Phase 0's PIC16 validation checks, this phase must not
       have touched anything under `pic16f87xa-hal/` or `pic8-common/` in a
       way that regresses PIC16. (Touched `pic8-common/` to add
       `core/pic8_irq.h`, and `pic16f87xa-hal` to add the no-op
-      `HAL_IRQ_SetPriority` — both additive. PIC16 taskmgr host baseline
+      `EPIC_IRQ_SetPriority`, both additive. PIC16 taskmgr host baseline
       unchanged `fast=12 med=6 slow=3 blips=1 ticks=61 tasks=4`; PIC16 XC8
       `.hex` program space unchanged at 1783 words, the uncalled no-op
       dropped by the linker. One additional `(520) function never called`
@@ -326,7 +326,7 @@ XC8 build producing correct vector placement, and zero PIC16 regression.
   family resolves. `task_manager.c`/`.h` diff vs Phase 2 is exactly those
   3 include lines — zero scheduler-logic change.
 - *Build variant.* `pic8-taskmgr/CMakeLists.txt` gained a
-  `-DHAL_FAMILY=PIC18` switch (default PIC16) that points `HAL_DIR` at
+  `-DEPIC_FAMILY=PIC18` switch (default PIC16) that points `EPIC_DIR` at
   `pic18fxx5x-hal` and swaps the device list. A separate
   `mcu/pic18fxx5x-taskmgr-mplabx/Makefile` does the same for XC8.
 - *Timer0 handle ownership (a latent bug the litmus test exposed).* The
@@ -390,7 +390,7 @@ growth at the established one-peripheral-at-a-time pace.
   overflows at 1:8, 524288 cycles each) + XC8 all four devices. The
   PIC18F2455 family's full timer set (Timer0-3) is now covered.
 - **ECCP1 + CCP2** (done): the first genuinely PIC18-richer
-  peripheral. Mirrors PIC16's `HAL_CCP_*` API (capture/compare/PWM, weak
+  peripheral. Mirrors PIC16's `EPIC_CCP_*` API (capture/compare/PWM, weak
   CCP1/CCP2 ISRs) and adds the Enhanced CCP features PIC16's plain CCP
   lacks: multi-output PWM (single / half-bridge / full-bridge
   forward/reverse via P1M), programmable dead-band delay + auto-restart
@@ -402,7 +402,7 @@ growth at the established one-peripheral-at-a-time pace.
   + counts Timer2 PWM periods); no CCP pin-toggle sim. `example_ccp_pwm`
   exercises the half-bridge + dead-band path. XC8 all four devices.
 - **SSP / MSSP** (done): the Master Synchronous Serial Port
-  (SPI master/slave + I2C master/slave). Mirrors PIC16's `HAL_SSP_*` API
+  (SPI master/slave + I2C master/slave). Mirrors PIC16's `EPIC_SSP_*` API
   (same `SSP_HandleTypeDef`, `SSP_*TypeDef`, weak `SSP_IRQHandler`);
   simpler than the PIC16 driver because the PIC18 MSSP registers are all
   in the Access Bank (no bank switching), and the control register is
@@ -412,18 +412,18 @@ growth at the established one-peripheral-at-a-time pace.
   39, / 400 kHz → 9), SPI master programming, write/read loopback via the
   new `pic18_sim_drive_ssp_rx` hook, and I2C master Start/Stop (SEN/PEN).
   XC8 all four devices.
-- **EUSART** (done): Enhanced USART. Mirrors PIC16's `HAL_USART_*` API +
+- **EUSART** (done): Enhanced USART. Mirrors PIC16's `EPIC_USART_*` API +
   the PIC18 additions via `BAUDCON` + `SPBRGH` — 16-bit baud generator
   (`BRG16`), auto-baud detect (`ABDEN`), 9-bit address-detect (`ADDEN`).
   `USART_ComputeSPBRG` encodes all four rows of Table 20-1. SFRs:
   TXSTA/RCSTA/BAUDCON/SPBRG/SPBRGH/TXREG/RCREG. `example_usart` verifies
   the BRG math (8/16-bit), init, TX/RX, auto-baud, address-detect.
 - **Comparator** (done): two on-chip comparators, mirrors PIC16's
-  `HAL_COMP_*` API — PIC18 `CMCON` has the same bit layout and eight
+  `EPIC_COMP_*` API: PIC18 `CMCON` has the same bit layout and eight
   modes, just in the Access Bank. Added `PIC18_IRQ_CMP` (PIR2<CMIF>).
   `example_comp` verifies mode/inv/CIS, output readback, change flag.
 - **Data EEPROM** (done): 256-byte data EEPROM, mirrors PIC16's
-  `HAL_EEPROM_*` API; PIC18 moves the registers into the Access Bank and
+  `EPIC_EEPROM_*` API; PIC18 moves the registers into the Access Bank and
   adds `EEPGD`/`CFGS` (kept 0 for data EEPROM). Write does the mandatory
   0x55→0xAA unlock; the sim models the cell array. `example_eeprom`
   verifies read, write unlock, completion (EEIF), buffer round-trip.
@@ -504,13 +504,13 @@ checklist itself has moved.
   symmetric. The MVP slice's SFRs (STATUS, BSR, PORTB/LATB/TRISB,
   INTCON/2/3, PIR1/PIE1/IPR1, TMR0L/H/T0CON, RCON) are all in the
   Access Bank (0xF60-0xFFF), so no banking is needed for them at all.
-- **Shape of the `HAL_IRQ_*` priority contract extension** (optional
+- **Shape of the `EPIC_IRQ_*` priority contract extension** (optional
   parameter vs. separate setter) — resolve during Phase 2 task 5, before
   writing the interrupt core. **RESOLVED (Phase 2):** separate setter.
-  Add `HAL_IRQ_SetPriority(irq, prio)` to the shared `pic8-common`
-  contract with a shared `HAL_IRQ_PRIORITY_HIGH` / `HAL_IRQ_PRIORITY_LOW`
+  Add `EPIC_IRQ_SetPriority(irq, prio)` to the shared `pic8-common`
+  contract with a shared `EPIC_IRQ_PRIORITY_HIGH` / `EPIC_IRQ_PRIORITY_LOW`
   enum. PIC16's implementation is a no-op (single vector, no priority);
-  PIC18's writes the matching IPR bit. `HAL_IRQ_Enable` keeps its
+  PIC18's writes the matching IPR bit. `EPIC_IRQ_Enable` keeps its
   current signature, so `task_manager.c` and every existing PIC16
   example need zero changes — which is exactly what the Phase 3 litmus
   test demands. (An optional-parameter approach was rejected because it

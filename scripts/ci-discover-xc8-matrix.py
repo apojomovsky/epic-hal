@@ -73,9 +73,9 @@ KNOWN_BROKEN = {
 } | {
     # Root cause 3: docs/ci-plan.md Phase 4's PIE1/PIE2 read-modify-write
     # fix (pic16_isr_vector.c's pic8_irq_pie_scratch, one __at-pinned
-    # byte, needed by every module that calls HAL_IRQ_Enable/DisableSrc
+    # byte, needed by every module that calls EPIC_IRQ_Enable/DisableSrc
     # for a Bank 1 IRQ source, which includes anything using
-    # HAL_USART_Init with a callback) tipped these two, previously-green,
+    # EPIC_USART_Init with a callback) tipped these two, previously-green,
     # already RAM-marginal modules over the edge on their smaller PIC16
     # variants: confirmed via a real local XC8 v4.00 build, "fixup
     # overflow referencing psect bssBANK1" (other, unrelated large

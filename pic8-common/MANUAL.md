@@ -44,8 +44,8 @@ a pile of raw bit-twiddling. Every HAL in this repo absorbs that machinery
 so application code reads like an STM32Cube application:
 
 ```c
-HAL_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
-HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
 ```
 
 …rather than hand-rolled register bit twiddling. People who know
@@ -72,9 +72,9 @@ cleanly. See [§2](#2-the-sharedper-family-split) and [§4](#4-the-harness).
 
 ```
 pic8-common/                     shared layer reused by every family
-├── include/core/              hal_status.h (HAL_*, PIC8_BIT*),
+├── include/core/              hal_status.h (EPIC_*, PIC8_BIT*),
 │                              pic8_harness.h (the 4-fn harness contract),
-│                              pic8_irq.h (the shared HAL_IRQ_Priority enum)
+│                              pic8_irq.h (the shared EPIC_IRQ_Priority enum)
 ├── src/core/                  pic8_harness_target.c (family-blind no-ops)
 ├── cmake/  mk/                shared pic8_family.cmake / pic8_family.mk
 └── MANUAL.md                  this document
@@ -90,7 +90,7 @@ pic8-common/                     shared layer reused by every family
 │   ├── host/                    platform header selected by the host build
 │   ├── target/                  platform header selected by the XC8 build
 │   ├── core/                    CPU-level features specific to that family
-│   │                            (IRQn enum + HAL_IRQ_* backend, WDT/Sleep)
+│   │                            (IRQn enum + EPIC_IRQ_* backend, WDT/Sleep)
 │   └── peripherals/             one .h per peripheral, Cube-style
 ├── src/
 │   ├── core/                    implementations of core/ headers
@@ -164,8 +164,8 @@ interrupt story and your family's manual for the vector-count specifics.
 
 Mirrors STM32Cube, across every family:
 
-- `HAL_<PPP>_<Verb>(...)` for driver functions
-  (`HAL_GPIO_Init`, `HAL_TIMER0_Start`, `HAL_ADC_Read`).
+- `EPIC_<PPP>_<Verb>(...)` for driver functions
+  (`EPIC_GPIO_Init`, `EPIC_TIMER0_Start`, `EPIC_ADC_Read`).
 - `<PPP>_HandleTypeDef` for the configuration struct
   (`TIMER0_HandleTypeDef`, `ADC_HandleTypeDef`).
 - `<PPP>_<Feature>TypeDef` for enums
@@ -174,7 +174,7 @@ Mirrors STM32Cube, across every family:
   by field (see [§3.3](#33-the-handle-pattern) for the one common
   exception, CCP/peripherals with no sane default).
 - `<FAMILY>_<NAME>` for HAL-wide types and macros
-  (`HAL_StatusTypeDef`, `PIC8_REG8`).
+  (`EPIC_StatusTypeDef`, `PIC8_REG8`).
 - `PIC_REG_<NAME>` and `PIC_<REG>_<BIT>` for raw SFR addresses and bit
   masks (see your family's manual, "The SFR layer").
 
@@ -182,17 +182,17 @@ Mirrors STM32Cube, across every family:
 
 ```c
 typedef enum {
-    HAL_OK      = 0x00,   // success
-    HAL_ERROR   = 0x01,   // generic error
-    HAL_BUSY    = 0x02,   // resource busy
-    HAL_TIMEOUT = 0x03,   // operation timed out
-    HAL_INVALID = 0x04,   // bad parameter / state
-} HAL_StatusTypeDef;
+    EPIC_OK      = 0x00,   // success
+    EPIC_ERROR   = 0x01,   // generic error
+    EPIC_BUSY    = 0x02,   // resource busy
+    EPIC_TIMEOUT = 0x03,   // operation timed out
+    EPIC_INVALID = 0x04,   // bad parameter / state
+} EPIC_StatusTypeDef;
 ```
 
 Defined once in `pic8-common/include/core/hal_status.h`, shared by every
 family. `Init`/`Start`/`Stop`/`DeInit` return this. The most common check
-is `if (HAL_PPP_Init(&h) != HAL_OK) { ... }`. A few helpers return data
+is `if (HAL_PPP_Init(&h) != EPIC_OK) { ... }`. A few helpers return data
 directly with a sentinel instead (e.g. an ADC start that returns a
 reserved value if a conversion was already in progress, or an SPI write
 that returns a reserved value on a write collision — check your family's
@@ -207,8 +207,8 @@ caller and passed to `HAL_PPP_Init`:
 TIMER0_HandleTypeDef h = TIMER0_HANDLE_DEFAULT;   // start from sane defaults
 h.Prescaler         = TIMER0_PRESCALER_1_64;
 h.OverflowCallback  = on_t0_overflow;
-HAL_TIMER0_Init(&h);
-HAL_TIMER0_Start(&h);
+EPIC_TIMER0_Init(&h);
+EPIC_TIMER0_Start(&h);
 ```
 
 `Init` programs the SFRs but does **not** start the peripheral, call
@@ -219,7 +219,7 @@ their configuration is essentially just "do you want an interrupt or
 not" (EEPROM and a parallel port peripheral are the recurring examples):
 
 ```c
-HAL_EEPROM_Init(my_eeprom_callback);
+EPIC_EEPROM_Init(my_eeprom_callback);
 ```
 
 And at least one peripheral per family tends to have **no**
@@ -320,7 +320,7 @@ because real time advances on its own. On the **host**, the loop runs for
 `SIM_CYCLES` simulated cycles, `harness_tick` pumps the simulator each
 iteration, and the log/report produce a pass/fail exit code.
 
-`HAL_Sleep_Enter` and `HAL_WDT_Refresh` (or that family's equivalents) are
+`EPIC_Sleep_Enter` and `EPIC_WDT_Refresh` (or that family's equivalents) are
 no-ops on the host, so an example can call them unconditionally, they are
 real `sleep`/`clrwdt` instructions on the target and vanish on the host.
 That is what lets an idle-blink-style example, that genuinely sleeps, be
@@ -401,21 +401,21 @@ vector themselves.
 What's shared across every family:
 
 ```c
-uint8_t HAL_IRQ_Disable(void);                 // clears the global enable, returns previous state
-void    HAL_IRQ_Restore(uint8_t prev_state);   // restore the global enable to prev_state
-void    HAL_IRQ_Enable(<FAMILY>_IRQn irq);     // set the source's enable bit
-void    HAL_IRQ_DisableSrc(<FAMILY>_IRQn irq);
-void    HAL_IRQ_ClearFlag(<FAMILY>_IRQn irq);
-uint8_t HAL_IRQ_GetFlag(<FAMILY>_IRQn irq);
+uint8_t EPIC_IRQ_Disable(void);                 // clears the global enable, returns previous state
+void    EPIC_IRQ_Restore(uint8_t prev_state);   // restore the global enable to prev_state
+void    EPIC_IRQ_Enable(<FAMILY>_IRQn irq);     // set the source's enable bit
+void    EPIC_IRQ_DisableSrc(<FAMILY>_IRQn irq);
+void    EPIC_IRQ_ClearFlag(<FAMILY>_IRQn irq);
+uint8_t EPIC_IRQ_GetFlag(<FAMILY>_IRQn irq);
 ```
 
-`HAL_IRQ_Disable`/`HAL_IRQ_Restore` form a critical-section pair: disable
+`EPIC_IRQ_Disable`/`EPIC_IRQ_Restore` form a critical-section pair: disable
 around a sensitive sequence, restore the previous state afterwards.
 
-**Important gotcha, true on every family:** `HAL_IRQ_Enable` arms the
+**Important gotcha, true on every family:** `EPIC_IRQ_Enable` arms the
 *source* only, it does **not** set the chip's global interrupt enable. To
 actually take interrupts you must also enable interrupts globally
-(`HAL_IRQ_Restore(1)` is the idiomatic way, since it both sets the global
+(`EPIC_IRQ_Restore(1)` is the idiomatic way, since it both sets the global
 enable and reads naturally as "interrupts on").
 
 **Priority is shared vocabulary, family-specific effect.** The priority
@@ -423,12 +423,12 @@ enum lives in `pic8-common/include/core/pic8_irq.h`:
 
 ```c
 typedef enum {
-    HAL_IRQ_PRIORITY_LOW  = 0,
-    HAL_IRQ_PRIORITY_HIGH = 1
-} HAL_IRQ_Priority;
+    EPIC_IRQ_PRIORITY_LOW  = 0,
+    EPIC_IRQ_PRIORITY_HIGH = 1
+} EPIC_IRQ_Priority;
 ```
 
-`HAL_IRQ_SetPriority(irq, prio)` is declared per-family (its `irq`
+`EPIC_IRQ_SetPriority(irq, prio)` is declared per-family (its `irq`
 parameter is that family's own `*_IRQn` type) because the set of
 interrupt sources differs per family, but the two-value vocabulary is
 shared so every family spells "high" vs "low" the same way. On a
@@ -451,7 +451,7 @@ The same recipe, on every family:
 1. Fill a handle with an `OverflowCallback` / `ConvCpltCallback` / etc.
 2. `HAL_PPP_Init(&h)`, this enables the source's interrupt bit.
 3. `HAL_PPP_Start(&h)`.
-4. `HAL_IRQ_Restore(1)` (or your own global-enable call) to actually take
+4. `EPIC_IRQ_Restore(1)` (or your own global-enable call) to actually take
    interrupts.
 5. In the callback (which runs in interrupt context): do the work. The
    HAL's handler has already cleared the flag for you, **do not clear it
@@ -465,7 +465,7 @@ typical callback just does the application work:
 ```c
 static void on_t0_overflow(void) {
     g_ticks++;
-    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 }
 ```
 

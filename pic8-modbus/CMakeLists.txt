@@ -8,7 +8,7 @@
 # (the T3.5 silence timebase), the same sibling-link pattern pic8-debounce
 # uses for pic8-tick alone. pic8-tick in turn pulls in a HAL family for its
 # Timer2 host-sim backend; pic8-serial links the same family's USART. Select
-# the family with -DHAL_FAMILY=PIC18 (default PIC16). Real-target builds use
+# the family with -DEPIC_FAMILY=PIC18 (default PIC16). Real-target builds use
 # the XC8 Makefiles under mcu/.
 
 cmake_minimum_required(VERSION 3.16)
@@ -17,9 +17,9 @@ project(pic8_modbus C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(HAL_FAMILY "PIC16" CACHE STRING "HAL family to link: PIC16 or PIC18")
+set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link: PIC16 or PIC18")
 
-if(HAL_FAMILY STREQUAL "PIC18")
+if(EPIC_FAMILY STREQUAL "PIC18")
     set(DEFAULT_DEVICE   PIC18F4550)
     set(DEFAULT_FOSC_HZ  48000000UL)
 else()

@@ -11,8 +11,8 @@ boilerplate.
 
 ## What lives here
 
-- **`include/core/hal_status.h`** — `HAL_StatusTypeDef` / `HAL_OK` /
-  `HAL_ERROR` / `HAL_BUSY` / `HAL_TIMEOUT` / `HAL_INVALID`, and the
+- **`include/core/hal_status.h`**: `EPIC_StatusTypeDef` / `EPIC_OK` /
+  `EPIC_ERROR` / `EPIC_BUSY` / `EPIC_TIMEOUT` / `EPIC_INVALID`, and the
   `PIC8_BIT` / `PIC8_BIT_SET` / `PIC8_BIT_CLR` / `PIC8_BIT_TGL` /
   `PIC8_BIT_READ` helpers. Identical on every family.
 - **`include/core/pic8_harness.h`** — the four-function test/firmware

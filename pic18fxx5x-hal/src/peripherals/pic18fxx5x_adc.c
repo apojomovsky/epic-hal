@@ -17,9 +17,9 @@ static const ADC_HandleTypeDef *g_adc = NULL;
 
 /* ───────────────────────── public API ───────────────────────────── */
 
-HAL_StatusTypeDef HAL_ADC_Init(const ADC_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     g_adc_storage = *h;
     g_adc = &g_adc_storage;
 
@@ -41,25 +41,25 @@ HAL_StatusTypeDef HAL_ADC_Init(const ADC_HandleTypeDef *h)
     pic8_sfr_write8(PIC_REG_ADCON2, adcon2);
 
     /* Interrupt enable. */
-    HAL_IRQ_ClearFlag(PIC18_IRQ_ADC);
-    if (h->ConvCpltCallback) HAL_IRQ_Enable(PIC18_IRQ_ADC);
-    else                     HAL_IRQ_DisableSrc(PIC18_IRQ_ADC);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_ADC);
+    if (h->ConvCpltCallback) EPIC_IRQ_Enable(PIC18_IRQ_ADC);
+    else                     EPIC_IRQ_DisableSrc(PIC18_IRQ_ADC);
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_ADC_DeInit(void)
+EPIC_StatusTypeDef EPIC_ADC_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC18_IRQ_ADC);
-    HAL_IRQ_ClearFlag(PIC18_IRQ_ADC);
+    EPIC_IRQ_DisableSrc(PIC18_IRQ_ADC);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_ADC);
     pic8_sfr_write8(PIC_REG_ADCON0, PIC_ADCON0_POR_VALUE);
     pic8_sfr_write8(PIC_REG_ADCON1, PIC_ADCON1_POR_VALUE);
     pic8_sfr_write8(PIC_REG_ADCON2, PIC_ADCON2_POR_VALUE);
     g_adc = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-void HAL_ADC_SelectChannel(ADC_ChannelTypeDef ch)
+void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch)
 {
     uint8_t v = pic8_sfr_read8(PIC_REG_ADCON0);
     v = (uint8_t)((v & (uint8_t)~PIC_ADCON0_CHS_MASK) |
@@ -67,7 +67,7 @@ void HAL_ADC_SelectChannel(ADC_ChannelTypeDef ch)
     pic8_sfr_write8(PIC_REG_ADCON0, v);
 }
 
-uint16_t HAL_ADC_Start(void)
+uint16_t EPIC_ADC_Start(void)
 {
     uint8_t v = pic8_sfr_read8(PIC_REG_ADCON0);
     if (v & PIC_ADCON0_GO_DONE) return 0xFFFFU;     /* already in progress */
@@ -75,22 +75,22 @@ uint16_t HAL_ADC_Start(void)
     return 0U;
 }
 
-uint8_t HAL_ADC_IsConversionInProgress(void)
+uint8_t EPIC_ADC_IsConversionInProgress(void)
 {
     return (pic8_sfr_read8(PIC_REG_ADCON0) & PIC_ADCON0_GO_DONE) ? 1U : 0U;
 }
 
-uint8_t HAL_ADC_IsConversionDone(void)
+uint8_t EPIC_ADC_IsConversionDone(void)
 {
     return (pic8_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_ADIF) ? 1U : 0U;
 }
 
-void HAL_ADC_ClearITFlag(void)
+void EPIC_ADC_ClearITFlag(void)
 {
-    HAL_IRQ_ClearFlag(PIC18_IRQ_ADC);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_ADC);
 }
 
-uint16_t HAL_ADC_Read(void)
+uint16_t EPIC_ADC_Read(void)
 {
     /* Read ADRESL then ADRESH. */
     uint8_t lo  = pic8_sfr_read8(PIC_REG_ADRESL);
@@ -107,7 +107,7 @@ uint16_t HAL_ADC_Read(void)
 
 void ADC_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC18_IRQ_ADC)) return;
-    HAL_IRQ_ClearFlag(PIC18_IRQ_ADC);
-    if (g_adc && g_adc->ConvCpltCallback) g_adc->ConvCpltCallback(HAL_ADC_Read());
+    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_ADC)) return;
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_ADC);
+    if (g_adc && g_adc->ConvCpltCallback) g_adc->ConvCpltCallback(EPIC_ADC_Read());
 }

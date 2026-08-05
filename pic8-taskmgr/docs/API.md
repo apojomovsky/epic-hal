@@ -107,7 +107,7 @@ The canonical scheduler loop. Equivalent to:
 for (;;) {
     pic8_harness_tick();    /* host: pumps sim → Timer0 ISR → tick */
     task_manager_run_once();
-    HAL_WDT_Refresh();            /* no-op on the host */
+    EPIC_WDT_Refresh();            /* no-op on the host */
 }
 ```
 
@@ -127,7 +127,7 @@ Number of tasks currently registered (used slots), any state.
 Wire a HAL Timer0 overflow to `task_manager_tick` and start it. Configures
 Timer0 for internal Fosc/4, the given prescaler assigned to Timer0, the given
 reload, and `task_manager_tick` as the overflow callback. The TMR0 interrupt
-enable is set; arm it for real by calling `HAL_IRQ_Restore(1)`
+enable is set; arm it for real by calling `EPIC_IRQ_Restore(1)`
 afterwards.
 
 - `reload`, TMR0 reload value (0..255). On a 20 MHz target, prescaler 1:256,

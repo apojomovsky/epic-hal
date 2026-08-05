@@ -7,10 +7,10 @@
 #include "peripherals/pic16f193x_comp.h"
 #include "core/pic16f193x_irq.h"
 
-HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
-    if (h->PosChannel > 0x03U || h->NegChannel > 0x03U) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
+    if (h->PosChannel > 0x03U || h->NegChannel > 0x03U) return EPIC_INVALID;
 
     uint8_t con1 = (uint8_t)(h->NegChannel & 0x03U);
     con1 |= (uint8_t)((h->PosChannel << 4) & 0x30U);
@@ -29,12 +29,12 @@ HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h)
         PIC8_REG8(PIC_REG_CM2CON1) = con1;
         PIC8_REG8(PIC_REG_CM2CON0) = con0;
     } else {
-        return HAL_INVALID;
+        return EPIC_INVALID;
     }
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_COMP_DeInit(COMP_InstanceTypeDef inst)
+EPIC_StatusTypeDef EPIC_COMP_DeInit(COMP_InstanceTypeDef inst)
 {
     if (inst == COMP_INSTANCE_1) {
         PIC8_REG8(PIC_REG_CM1CON0) = 0x00U;
@@ -43,12 +43,12 @@ HAL_StatusTypeDef HAL_COMP_DeInit(COMP_InstanceTypeDef inst)
         PIC8_REG8(PIC_REG_CM2CON0) = 0x00U;
         PIC8_REG8(PIC_REG_CM2CON1) = 0x00U;
     } else {
-        return HAL_INVALID;
+        return EPIC_INVALID;
     }
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-uint8_t HAL_COMP_ReadOutput(COMP_InstanceTypeDef inst)
+uint8_t EPIC_COMP_ReadOutput(COMP_InstanceTypeDef inst)
 {
     uint8_t cmout = PIC8_REG8(PIC_REG_CMOUT);
     if (inst == COMP_INSTANCE_1) return (cmout & PIC_CMOUT_MC1OUT) ? 1U : 0U;

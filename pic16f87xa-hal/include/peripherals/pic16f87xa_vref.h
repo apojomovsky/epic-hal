@@ -38,14 +38,14 @@ typedef struct {
     .Enabled       = false,                                                \
 }
 
-HAL_StatusTypeDef HAL_VREF_Init(const VREF_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_VREF_DeInit(void);
+EPIC_StatusTypeDef EPIC_VREF_Init(const VREF_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_VREF_DeInit(void);
 
 /**
  * @brief  Compute the nominal output voltage (mV) for a given range +
  *         tap value. Assumes CVRSRC = Vdd_mv.
  */
-uint32_t HAL_VREF_MilliVolts(uint32_t vdd_mv,
+uint32_t EPIC_VREF_MilliVolts(uint32_t vdd_mv,
                              VREF_RangeTypeDef range,
                              uint8_t value);
 

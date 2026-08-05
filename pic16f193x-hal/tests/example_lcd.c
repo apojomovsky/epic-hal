@@ -15,7 +15,7 @@ int main(void)
 {
     pic8_harness_init(1UL);
     LCD_HandleTypeDef lcd = LCD_HANDLE_DEFAULT;
-    HAL_LCD_Init(&lcd);
+    EPIC_LCD_Init(&lcd);
     uint8_t con = PIC8_REG8(PIC_REG_LCDCON);
     pic8_harness_log("LCDCON=0x%02X\n", con);
     int pass = (con == (PIC_LCDCON_LCDEN | 0x03U));

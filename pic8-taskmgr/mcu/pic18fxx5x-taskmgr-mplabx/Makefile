@@ -3,7 +3,7 @@
 # Builds the SAME task manager + multi-blink example against the
 # pic18fxx5x-hal instead of pic16f87xa-hal. The task manager source
 # (task_manager.c/.h) is family-agnostic and builds unmodified against either
-# family; only this Makefile's HAL_DIR, device list, DFP, source list, and
+# family; only this Makefile's EPIC_DIR, device list, DFP, source list, and
 # config word differ from the PIC16 variant under
 # mcu/pic16f87xa-taskmgr-mplabx/.
 #
@@ -45,8 +45,8 @@ else
 endif
 
 # ─────────────────────────── paths ────────────────────────────────
-HAL_DIR    ?= ../../../pic18fxx5x-hal
-COMMON_DIR ?= $(HAL_DIR)/../pic8-common
+EPIC_DIR    ?= ../../../pic18fxx5x-hal
+COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
 APP_DIR    ?= ../..
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-multi-blink
@@ -61,7 +61,7 @@ endif
 CC     := xc8-cc
 # include/target ahead of include so pic18_platform.h resolves to the
 # real-target version. APP_DIR/include is the task-manager's own headers.
-INC    := -I$(HAL_DIR)/include/target -I$(HAL_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include
+INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include -I$(APP_DIR)/include
 CFLAGS := $(DFP_FLAG) \
           -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
           -O2 -std=c99 -Wall -Wextra \
@@ -74,14 +74,14 @@ CFLAGS := $(DFP_FLAG) \
 # vector, WDT/Sleep). The host-only sim/harness-sim/wdt_sleep-sim files
 # are absent; the family-blind harness target impl lives in pic8-common.
 
-HAL_SOURCES := \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_gpio.c            \
-  $(HAL_DIR)/src/peripherals/pic18fxx5x_timer0.c          \
-  $(HAL_DIR)/src/core/pic18_irq.c                         \
-  $(HAL_DIR)/src/core/pic18_irq_dispatch.c                \
-  $(HAL_DIR)/src/core/pic18_isr_vector.c                  \
-  $(HAL_DIR)/src/core/pic18fxx5x_wdt_sleep.c              \
-  $(HAL_DIR)/src/core/pic18fxx5x_wdt_sleep_target.c       \
+EPIC_SOURCES := \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_gpio.c            \
+  $(EPIC_DIR)/src/peripherals/pic18fxx5x_timer0.c          \
+  $(EPIC_DIR)/src/core/pic18_irq.c                         \
+  $(EPIC_DIR)/src/core/pic18_irq_dispatch.c                \
+  $(EPIC_DIR)/src/core/pic18_isr_vector.c                  \
+  $(EPIC_DIR)/src/core/pic18fxx5x_wdt_sleep.c              \
+  $(EPIC_DIR)/src/core/pic18fxx5x_wdt_sleep_target.c       \
   $(COMMON_DIR)/src/core/pic8_harness_target.c
 
 # The task manager itself (family-agnostic; same source as the PIC16 build).
@@ -90,7 +90,7 @@ TASKMGR_SOURCES := $(APP_DIR)/src/task_manager.c
 # The application: the multi-blink example.
 APP_SOURCES := $(APP_DIR)/examples/example_multi_blink.c
 
-SRCS := $(HAL_SOURCES) $(TASKMGR_SOURCES) $(APP_SOURCES)
+SRCS := $(EPIC_SOURCES) $(TASKMGR_SOURCES) $(APP_SOURCES)
 OBJS := $(patsubst %.c,$(BUILD_DIR)/%.p1,$(notdir $(SRCS)))
 VPATH := $(sort $(dir $(SRCS)))
 

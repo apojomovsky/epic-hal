@@ -38,7 +38,7 @@ int main(void)
     th.Postscaler      = TIMER2_POSTSCALER_1_1;
     th.Period          = 99U;            /* PR2 = 99 -> 100 ticks/period. */
     th.OverflowCallback = on_t2_overflow;
-    HAL_TIMER2_Init(&th);
+    EPIC_TIMER2_Init(&th);
 
     /* 2. ECCP1 in half-bridge PWM, 50% duty, dead-band=12, auto-restart. */
     CCP_HandleTypeDef ch = { 0 };
@@ -51,11 +51,11 @@ int main(void)
     ch.DeadBand.AutoRestart = true;
     ch.AutoShutdown.Source  = CCP_AUTOSHUTDOWN_DISABLED;
     ch.EventCallback   = NULL;
-    HAL_CCP_Init(&ch);
+    EPIC_CCP_Init(&ch);
 
     /* 3. Start Timer2 (writes PR2 + T2CON); PWM begins on the next period. */
-    HAL_TIMER2_Start(&th);
-    HAL_IRQ_Restore(1);
+    EPIC_TIMER2_Start(&th);
+    EPIC_IRQ_Restore(1);
 
     /* 4. Verify the register image. */
     uint8_t cprl = pic8_sfr_read8(PIC_REG_CCPR1L);

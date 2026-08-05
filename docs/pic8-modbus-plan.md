@@ -39,7 +39,7 @@ contract.
 - **`pic8-tick`**: 1 ms monotonic timebase
   (`pic8_tick_get/elapsed_since`) drives the T3.5 inter-frame silence
   detection.
-- **GPIO HAL** (`HAL_GPIO_WritePin`/`GPIO_TypeDef`, per-family): optional
+- **GPIO HAL** (`EPIC_GPIO_WritePin`/`GPIO_TypeDef`, per-family): optional
   RS-485 driver-enable pin.
 - **Module template**: `pic8-serial`'s file layout, and `pic8-debounce`'s
   `CMakeLists.txt`/Makefile pattern for linking a sibling `pic8-*` module
@@ -86,7 +86,7 @@ pic8-modbus/
 ## Verification
 
 - `cmake -B build && cmake --build build && ctest --test-dir build
-  --output-on-failure`, then `cmake -B build18 -DHAL_FAMILY=PIC18 && ctest
+  --output-on-failure`, then `cmake -B build18 -DEPIC_FAMILY=PIC18 && ctest
   --test-dir build18`, both green.
 - Host test asserts exact wire bytes (including computed CRC) for a read FC,
   a write FC, an exception path, and the broadcast no-reply path.

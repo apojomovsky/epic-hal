@@ -91,10 +91,10 @@ typedef enum {
  * @note   Does not configure alternate-function peripherals (e.g. ADC,
  *         USART); call the relevant peripheral driver first.
  */
-void HAL_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
+void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
 
 /** Restore all pins of `port` to input mode and clear the latch. */
-void HAL_GPIO_DeInit(GPIO_TypeDef port);
+void EPIC_GPIO_DeInit(GPIO_TypeDef port);
 
 /* ───────────────────────── read / write / toggle ────────────────── */
 
@@ -103,23 +103,23 @@ void HAL_GPIO_DeInit(GPIO_TypeDef port);
  *         (DS39632E §10.0), the PIC18-native way (no read-modify-write
  *         of PORTx).
  */
-void HAL_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
+void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
 
 /** Toggle a set of pins (LATx ^= mask). */
-void HAL_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);
+void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);
 
 /**
  * @brief  Read the current level seen on `pins` from PORTx. For pins
  *         configured as outputs this returns the latched value; for input
  *         pins it returns whatever the pin is being driven to externally.
  */
-GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);
+GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);
 
 /** Atomically write the entire 8-bit port latch (LATx). */
-void HAL_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
+void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
 
 /** Read the entire port (PORTx). */
-uint8_t HAL_GPIO_ReadPort(GPIO_TypeDef port);
+uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
 
 /* ───────────────────────── PORTB pull-ups ───────────────────────── */
 
@@ -129,7 +129,7 @@ uint8_t HAL_GPIO_ReadPort(GPIO_TypeDef port);
  *
  * @note   INTCON2<7> is inverted: RBPU = 1 disables pull-ups.
  */
-void HAL_GPIO_SetPullups(GPIO_PullTypeDef pull);
+void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull);
 
 /* ───────────────────────── PORTB change interrupt ─────────────────── */
 
@@ -147,7 +147,7 @@ void HAL_GPIO_SetPullups(GPIO_PullTypeDef pull);
  *   what re-arms the mismatch comparator, clearing first risks a missed
  *   or spurious interrupt). See @ref RB_IRQHandler.
  */
-void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
+void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
 
 /**
  * @brief  Weak RB<7:4> change-interrupt ISR (DS39632E §9.0/§10.2).
@@ -155,7 +155,7 @@ void HAL_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
  * @details
  *   Weak, like every other `*_IRQHandler` here: default body reads PORTB
  *   into a local, clears RBIF, then forwards that value to the callback
- *   from @ref HAL_GPIO_RegisterChangeCallback. The read-before-clear order
+ *   from @ref EPIC_GPIO_RegisterChangeCallback. The read-before-clear order
  *   is mandatory (datasheet "read PORTB to end the mismatch condition"),
  *   not stylistic.
  */

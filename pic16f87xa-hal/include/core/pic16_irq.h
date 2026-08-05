@@ -6,7 +6,7 @@
  *
  * @details
  *   Mirrors `HAL_NVIC_*` from STM32Cube: callers never touch
- *   INTCON/PIE1/PIE2/PIR1/PIR2 directly. `HAL_IRQ_*` names are shared
+ *   INTCON/PIE1/PIE2/PIR1/PIR2 directly. `EPIC_IRQ_*` names are shared
  *   across every 8-bit PIC family; `PIC16_IRQn` and the registers behind
  *   it are PIC16F87XA-specific.
  *
@@ -34,7 +34,7 @@
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sfr.h"
-#include "core/pic8_irq.h"   /* shared HAL_IRQ_Priority enum (family-blind) */
+#include "core/pic8_irq.h"   /* shared EPIC_IRQ_Priority enum (family-blind) */
 
 /**
  * @brief Logical identity of every interrupt source on the part.
@@ -67,42 +67,42 @@ typedef enum {
  *        (DS39582B §14.11, INTCON<7>).
  * @return previous GIE state (1 = was enabled).
  */
-uint8_t HAL_IRQ_Disable(void);
+uint8_t EPIC_IRQ_Disable(void);
 
 /**
  * @brief Restore the global interrupt enable to `prev_state`, pair with
- *        @ref HAL_IRQ_Disable.
+ *        @ref EPIC_IRQ_Disable.
  */
-void HAL_IRQ_Restore(uint8_t prev_state);
+void EPIC_IRQ_Restore(uint8_t prev_state);
 
 /**
  * @brief Enable one interrupt source. The peripheral enable bit lives in
  *        the matching PIE register; PIE bits need both GIE (or PEIE for
  *        peripherals) set to actually fire.
  */
-void HAL_IRQ_Enable(PIC16_IRQn irq);
+void EPIC_IRQ_Enable(PIC16_IRQn irq);
 
 /** Disable one interrupt source. */
-void HAL_IRQ_DisableSrc(PIC16_IRQn irq);
+void EPIC_IRQ_DisableSrc(PIC16_IRQn irq);
 
 /**
  * @brief Clear the interrupt flag of `irq`. **MUST** be called inside the
  *        ISR before re-enabling interrupts to avoid an infinite re-entry
  *        (DS39582B §14.11 explicit warning).
  */
-void HAL_IRQ_ClearFlag(PIC16_IRQn irq);
+void EPIC_IRQ_ClearFlag(PIC16_IRQn irq);
 
 /**
  * @brief Returns the current pending state of `irq` (1 = pending).
  */
-uint8_t HAL_IRQ_GetFlag(PIC16_IRQn irq);
+uint8_t EPIC_IRQ_GetFlag(PIC16_IRQn irq);
 
 /**
  * @brief Set the priority of `irq`. No-op on PIC16 (single vector, no
  *        priority scheme, DS39582B §14.11); declared with the shared
- *        @ref HAL_IRQ_Priority enum so callers stay portable to PIC18,
+ *        @ref EPIC_IRQ_Priority enum so callers stay portable to PIC18,
  *        which implements it for real.
  */
-void HAL_IRQ_SetPriority(PIC16_IRQn irq, HAL_IRQ_Priority prio);
+void EPIC_IRQ_SetPriority(PIC16_IRQn irq, EPIC_IRQ_Priority prio);
 
 #endif /* PIC16_IRQ_H */

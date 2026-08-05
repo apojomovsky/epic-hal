@@ -21,7 +21,7 @@ static const TIMER1_HandleTypeDef *g_t1_handle = NULL;
 
 /** Atomic 16-bit read. DS41364B §16.4.1 explicitly warns about
  *  TMR1H:TMR1L consistency issues; wrap that risk here. */
-uint16_t HAL_TIMER1_ReadCounter(void)
+uint16_t EPIC_TIMER1_ReadCounter(void)
 {
     /* Read high byte, then low byte, then high byte again; if the
      * second read differs, the low byte rolled over, so use the
@@ -36,7 +36,7 @@ uint16_t HAL_TIMER1_ReadCounter(void)
     return (uint16_t)(((uint16_t)hi2 << 8) | lo);
 }
 
-void HAL_TIMER1_WriteCounter(uint16_t value)
+void EPIC_TIMER1_WriteCounter(uint16_t value)
 {
     /* Per DS41364B §16.8: writing TMR1H clears the prescaler. Write
      * high byte first. */
@@ -44,53 +44,53 @@ void HAL_TIMER1_WriteCounter(uint16_t value)
     PIC8_REG8(PIC_REG_TMR1L) = (uint8_t)(value & 0xFFU);
 }
 
-uint16_t HAL_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p)
+uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p)
 {
     if ((unsigned)p > 3U) return 1U;
     return ps_ratio[p];
 }
 
-HAL_StatusTypeDef HAL_TIMER1_Init(const TIMER1_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     /* External clock / T1OSC / CAPOSC sources are out of scope for
      * this phase (MANUAL.md §11 "Not in this phase"). */
-    if (h->ClockSource != TIMER1_CLOCK_INTERNAL) return HAL_INVALID;
+    if (h->ClockSource != TIMER1_CLOCK_INTERNAL) return EPIC_INVALID;
 
     /* Stop the timer before reconfiguring. */
     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
 
     /* Configure the overflow interrupt. */
-    HAL_IRQ_ClearFlag(PIC16F193X_IRQ_TMR1);
+    EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR1);
     if (h->OverflowCallback) {
-        HAL_IRQ_Enable(PIC16F193X_IRQ_TMR1);
+        EPIC_IRQ_Enable(PIC16F193X_IRQ_TMR1);
     } else {
-        HAL_IRQ_DisableSrc(PIC16F193X_IRQ_TMR1);
+        EPIC_IRQ_DisableSrc(PIC16F193X_IRQ_TMR1);
     }
 
     g_t1_handle = h;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER1_DeInit(void)
+EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void)
 {
-    HAL_IRQ_DisableSrc(PIC16F193X_IRQ_TMR1);
-    HAL_IRQ_ClearFlag(PIC16F193X_IRQ_TMR1);
+    EPIC_IRQ_DisableSrc(PIC16F193X_IRQ_TMR1);
+    EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR1);
     PIC8_REG8(PIC_REG_T1CON) = PIC_T1CON_POR_VALUE;
     PIC8_REG8(PIC_REG_TMR1H) = 0x00U;
     PIC8_REG8(PIC_REG_TMR1L) = 0x00U;
     g_t1_handle = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER1_Start(const TIMER1_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     /* External clock / T1OSC / CAPOSC sources are out of scope for
      * this phase (MANUAL.md §11 "Not in this phase"). */
-    if (h->ClockSource != TIMER1_CLOCK_INTERNAL) return HAL_INVALID;
+    if (h->ClockSource != TIMER1_CLOCK_INTERNAL) return EPIC_INVALID;
 
-    HAL_TIMER1_WriteCounter(h->ReloadValue);
+    EPIC_TIMER1_WriteCounter(h->ReloadValue);
 
     /* Program T1CON in one write. The order of fields and the bit
      * positions MUST be transcribed from DS41364B Register 16-1;
@@ -104,19 +104,19 @@ HAL_StatusTypeDef HAL_TIMER1_Start(const TIMER1_HandleTypeDef *h)
     v |= PIC_T1CON_TMR1ON;                        /* set last. */
     PIC8_REG8(PIC_REG_T1CON) = v;
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_TIMER1_Stop(void)
+EPIC_StatusTypeDef EPIC_TIMER1_Stop(void)
 {
     PIC8_BIT_CLR(PIC8_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
-    return HAL_OK;
+    return EPIC_OK;
 }
 
 void TIMER1_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC16F193X_IRQ_TMR1)) return;
-    HAL_IRQ_ClearFlag(PIC16F193X_IRQ_TMR1);
+    if (!EPIC_IRQ_GetFlag(PIC16F193X_IRQ_TMR1)) return;
+    EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR1);
     if (g_t1_handle && g_t1_handle->OverflowCallback) {
         g_t1_handle->OverflowCallback();
     }

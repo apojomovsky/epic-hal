@@ -31,8 +31,8 @@ int main(void)
 
     USART_HandleTypeDef usart = USART_HANDLE_DEFAULT;
     usart.SPBRG = (uint8_t)USART_ComputeSPBRG(FOSC_HZ, 9600U, USART_BRGH_HIGH);
-    HAL_USART_Init(&usart);
-    HAL_USART_Transmit(0x55U);
+    EPIC_USART_Init(&usart);
+    EPIC_USART_Transmit(0x55U);
 
     /* Let the sim model TRMT=1 (shift register empty after TXEN). */
     pic8_harness_tick();

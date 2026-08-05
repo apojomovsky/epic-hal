@@ -136,28 +136,28 @@ typedef struct {
  *         (auto-shutdown) for ECCP1, and enables the matching interrupt if
  *         `EventCallback != NULL`.
  *
- * @note   For PWM, also call `HAL_TIMER2_Init` + `HAL_TIMER2_Start` with a
+ * @note   For PWM, also call `EPIC_TIMER2_Init` + `EPIC_TIMER2_Start` with a
  *         period matching `h->PWM.Period` before/after this call (Timer2 is
  *         the PWM time base). For capture/compare, start Timer1 (or Timer3).
  */
-HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
 
 /** Reset CCPxCON (and ECCP1DEL/ECCP1AS for ECCP1) to 0x00; clear the PIR flag. */
-HAL_StatusTypeDef HAL_CCP_DeInit(CCP_InstanceTypeDef inst);
+EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
 
 /* ───────────────────────── compare / capture / pwm ──────────────── */
 
 /** Set the 16-bit CCPRx value (high byte first, DS39632E §16.x idiom). */
-void HAL_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
+void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
 
 /** Atomically read the 16-bit CCPRx value (high-low-high idiom). */
-uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst);
+uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
 
 /**
  * @brief  Set PWM duty in 10-bit units (0..1023). Writes the LSBs into
  *         CCPxCON<5:4> then CCPRxL (bits 9:2), preserving the mode bits.
  */
-void HAL_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);
+void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);
 
 /* ───────────────────────── ECCP1-only controls ──────────────────── */
 
@@ -165,20 +165,20 @@ void HAL_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);
  * @brief  Configure the ECCP1 dead-band delay + auto-restart (ECCP1DEL).
  *         No-op for CCP2. Relevant in half-bridge / full-bridge PWM modes.
  */
-void HAL_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst,
+void EPIC_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst,
                             uint8_t delay, bool auto_restart);
 
 /**
  * @brief  Configure the ECCP1 auto-shutdown source + pin states (ECCP1AS).
  *         No-op for CCP2. Pass `CCP_AUTOSHUTDOWN_DISABLED` to turn it off.
  */
-void HAL_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
+void EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
                                 CCP_AutoShutdownSourceTypeDef source,
                                 CCP_PinStateTypeDef pins_ac,
                                 CCP_PinStateTypeDef pins_bd);
 
 /** Returns 1 if an ECCP1 auto-shutdown event is active (ECCP1AS<ECCPASE>). */
-uint8_t HAL_CCP_IsShutdown(CCP_InstanceTypeDef inst);
+uint8_t EPIC_CCP_IsShutdown(CCP_InstanceTypeDef inst);
 
 /**
  * @brief  Clear the ECCP1 auto-shutdown status (ECCPASE) to restart the PWM.
@@ -186,7 +186,7 @@ uint8_t HAL_CCP_IsShutdown(CCP_InstanceTypeDef inst);
  *         hardware auto-clears when the shutdown source deasserts. No-op for
  *         CCP2.
  */
-void HAL_CCP_Restart(CCP_InstanceTypeDef inst);
+void EPIC_CCP_Restart(CCP_InstanceTypeDef inst);
 
 /* ───────────────────────── IRQ entries ──────────────────────────── */
 

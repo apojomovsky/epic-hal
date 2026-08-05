@@ -18,7 +18,7 @@ only by `src/encoder.c`, so a unit including `encoder.h` does not drag in
 the HAL or the timebase.
 
 Build (host): `cmake -B build && cmake --build build` (default PIC16;
-`-DHAL_FAMILY=PIC18` selects the PIC18 family). The CMake build links
+`-DEPIC_FAMILY=PIC18` selects the PIC18 family). The CMake build links
 `pic8-tick` (the glitch-gate timebase) and the chosen HAL family
 (`encoder_get_position`'s atomic read is the one HAL call this module
 makes), and `pic8-pid` for the `example_encoder_pid_loop` example. Real
@@ -29,7 +29,7 @@ targets use the XC8 Makefiles under `mcu/`.
 An `encoder_t` does not hold a port or a HAL pin handle, it holds two **bit
 positions** (0-7) within the port byte the RB-change callback receives.
 The HAL's `RB_IRQHandler` reads PORTB into a byte and forwards it to the
-callback registered via `HAL_GPIO_RegisterChangeCallback`; the application
+callback registered via `EPIC_GPIO_RegisterChangeCallback`; the application
 callback fans that one byte out to every `encoder_t` it owns by calling
 `encoder_update(&enc, portb)`, and `encoder_update` extracts this
 instance's 2-bit state as `((portb >> pin_a) & 1) << 1 | ((portb >> pin_b) & 1)`.
@@ -44,13 +44,13 @@ static void on_rb_change(uint8_t portb) {
     encoder_update(&enc_a, portb);   /* pins 4,5 */
     encoder_update(&enc_b, portb);   /* pins 6,7 */
 }
-HAL_GPIO_RegisterChangeCallback(on_rb_change);
-HAL_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7,
+EPIC_GPIO_RegisterChangeCallback(on_rb_change);
+EPIC_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7,
               GPIO_MODE_INPUT);
-uint8_t start = HAL_GPIO_ReadPort(GPIOB);
+uint8_t start = EPIC_GPIO_ReadPort(GPIOB);
 encoder_init(&enc_a, 4, 5, 0, start);
 encoder_init(&enc_b, 6, 7, 0, start);
-/* On a real target also: HAL_IRQ_Enable(<family>_IRQ_RB); HAL_IRQ_Restore(1); */
+/* On a real target also: EPIC_IRQ_Enable(<family>_IRQ_RB); EPIC_IRQ_Restore(1); */
 ```
 
 ## Types
@@ -120,7 +120,7 @@ the freshly-read state, not spuriously as an impossible transition.
 void encoder_update(encoder_t *enc, uint8_t port_value);
 ```
 
-Call from the application's `HAL_GPIO_RegisterChangeCallback` handler,
+Call from the application's `EPIC_GPIO_RegisterChangeCallback` handler,
 once per registered instance, passing the same received port byte. It
 extracts this instance's 2-bit state, no-ops if it equals `last_state`
 (another instance's pins changed on the same byte, not an error), then

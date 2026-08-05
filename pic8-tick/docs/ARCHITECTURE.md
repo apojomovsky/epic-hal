@@ -19,7 +19,7 @@ Timer2 is auto-reload (PR2): on a period match it raises TMR2IF, the HAL's
 `TIMER2_IRQHandler` clears the flag and calls the handle's `OverflowCallback`,
 which is `pic8_tick_on_overflow` here, it increments a `volatile uint32`
 millisecond counter. The module installs the callback through the Timer2
-handle (`OverflowCallback` field set before `HAL_TIMER2_Init`), exactly the
+handle (`OverflowCallback` field set before `EPIC_TIMER2_Init`), exactly the
 pattern `pic8-taskmgr` uses for its Timer0 tick. It does **not** redefine
 `TIMER2_IRQHandler`, the HAL driver owns that handler.
 

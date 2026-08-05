@@ -65,21 +65,21 @@ static uint8_t pss_encode(CCP_PinStateTypeDef s)
 
 /* ───────────────────────── public API ───────────────────────────── */
 
-HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h)
+EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
-    if (!h) return HAL_INVALID;
+    if (!h) return EPIC_INVALID;
     if (h->Instance != CCP_INSTANCE_1 && h->Instance != CCP_INSTANCE_2) {
-        return HAL_INVALID;
+        return EPIC_INVALID;
     }
     g_ccp_storage[h->Instance] = *h;
     g_ccp_handles[h->Instance] = &g_ccp_storage[h->Instance];
 
     /* Clear/rearm the IRQ before reconfiguring. */
-    HAL_IRQ_ClearFlag(ccp_irq(h->Instance));
+    EPIC_IRQ_ClearFlag(ccp_irq(h->Instance));
     if (h->EventCallback) {
-        HAL_IRQ_Enable(ccp_irq(h->Instance));
+        EPIC_IRQ_Enable(ccp_irq(h->Instance));
     } else {
-        HAL_IRQ_DisableSrc(ccp_irq(h->Instance));
+        EPIC_IRQ_DisableSrc(ccp_irq(h->Instance));
     }
 
     if (h->Mode == CCP_MODE_PWM) {
@@ -119,24 +119,24 @@ HAL_StatusTypeDef HAL_CCP_Init(const CCP_HandleTypeDef *h)
         PIC8_REG8(PIC_REG_ECCP1AS) = asv;
     }
 
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-HAL_StatusTypeDef HAL_CCP_DeInit(CCP_InstanceTypeDef inst)
+EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
 {
-    if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return HAL_INVALID;
-    HAL_IRQ_DisableSrc(ccp_irq(inst));
-    HAL_IRQ_ClearFlag(ccp_irq(inst));
+    if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return EPIC_INVALID;
+    EPIC_IRQ_DisableSrc(ccp_irq(inst));
+    EPIC_IRQ_ClearFlag(ccp_irq(inst));
     CCP_WRITE_CON(inst, 0x00U);
     if (inst == CCP_INSTANCE_1) {
         PIC8_REG8(PIC_REG_ECCP1DEL) = PIC_ECCP1DEL_POR_VALUE;
         PIC8_REG8(PIC_REG_ECCP1AS) = PIC_ECCP1AS_POR_VALUE;
     }
     g_ccp_handles[inst] = NULL;
-    return HAL_OK;
+    return EPIC_OK;
 }
 
-void HAL_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
+void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
     /* High byte first to avoid a spurious compare match (DS39632E §16.x). */
@@ -144,7 +144,7 @@ void HAL_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
     CCP_WRITE_CPRL(inst, value & 0xFFU);
 }
 
-uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst)
+uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return 0U;
     uint8_t lo, hi1, hi2;
@@ -156,7 +156,7 @@ uint16_t HAL_CCP_GetCapture(CCP_InstanceTypeDef inst)
     return (uint16_t)(((uint16_t)hi2 << 8) | lo);
 }
 
-void HAL_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
+void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
     duty &= 0x03FFU;
@@ -172,7 +172,7 @@ void HAL_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 
 /* ───────────────────────── ECCP1-only controls ──────────────────── */
 
-void HAL_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst,
+void EPIC_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst,
                             uint8_t delay, bool auto_restart)
 {
     if (inst != CCP_INSTANCE_1) return;     /* ECCP1 only */
@@ -181,7 +181,7 @@ void HAL_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst,
     PIC8_REG8(PIC_REG_ECCP1DEL) = del;
 }
 
-void HAL_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
+void EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
                                 CCP_AutoShutdownSourceTypeDef source,
                                 CCP_PinStateTypeDef pins_ac,
                                 CCP_PinStateTypeDef pins_bd)
@@ -195,13 +195,13 @@ void HAL_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
     pic8_sfr_write8(PIC_REG_ECCP1AS, asv);
 }
 
-uint8_t HAL_CCP_IsShutdown(CCP_InstanceTypeDef inst)
+uint8_t EPIC_CCP_IsShutdown(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1) return 0U;
     return (PIC8_REG8(PIC_REG_ECCP1AS) & PIC_ECCP1AS_ECCPASE) ? 1U : 0U;
 }
 
-void HAL_CCP_Restart(CCP_InstanceTypeDef inst)
+void EPIC_CCP_Restart(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1) return;
     /* Clear ECCPASE, preserving the source/pin-state configuration. */
@@ -213,8 +213,8 @@ void HAL_CCP_Restart(CCP_InstanceTypeDef inst)
 
 void CCP1_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC18_IRQ_CCP1)) return;
-    HAL_IRQ_ClearFlag(PIC18_IRQ_CCP1);
+    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_CCP1)) return;
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_CCP1);
     if (g_ccp_handles[CCP_INSTANCE_1] &&
         g_ccp_handles[CCP_INSTANCE_1]->EventCallback) {
         g_ccp_handles[CCP_INSTANCE_1]->EventCallback();
@@ -223,8 +223,8 @@ void CCP1_IRQHandler(void)
 
 void CCP2_IRQHandler(void)
 {
-    if (!HAL_IRQ_GetFlag(PIC18_IRQ_CCP2)) return;
-    HAL_IRQ_ClearFlag(PIC18_IRQ_CCP2);
+    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_CCP2)) return;
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_CCP2);
     if (g_ccp_handles[CCP_INSTANCE_2] &&
         g_ccp_handles[CCP_INSTANCE_2]->EventCallback) {
         g_ccp_handles[CCP_INSTANCE_2]->EventCallback();

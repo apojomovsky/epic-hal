@@ -39,9 +39,9 @@ int main(void)
     h.Postscaler       = TIMER2_POSTSCALER_1_1;
     h.Period           = 249U;     /* PR2 = 249 -> 250 ticks per period. */
     h.OverflowCallback = on_t2_overflow;
-    HAL_TIMER2_Init(&h);
-    HAL_TIMER2_Start(&h);
-    HAL_IRQ_Restore(1);
+    EPIC_TIMER2_Init(&h);
+    EPIC_TIMER2_Start(&h);
+    EPIC_IRQ_Restore(1);
 
     for (uint32_t i = 0; pic8_harness_running(i); i++) {
         g_cycle = i + 1;

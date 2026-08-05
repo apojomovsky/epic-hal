@@ -37,9 +37,9 @@ typedef struct {
     .InterruptEdge = COMP_INT_EDGE_NONE, .EventCallback = 0, \
 }
 
-HAL_StatusTypeDef HAL_COMP_Init(const COMP_HandleTypeDef *h);
-HAL_StatusTypeDef HAL_COMP_DeInit(COMP_InstanceTypeDef inst);
-uint8_t HAL_COMP_ReadOutput(COMP_InstanceTypeDef inst);
+EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h);
+EPIC_StatusTypeDef EPIC_COMP_DeInit(COMP_InstanceTypeDef inst);
+uint8_t EPIC_COMP_ReadOutput(COMP_InstanceTypeDef inst);
 
 void CMP1_IRQHandler(void) PIC8_WEAK;
 void CMP2_IRQHandler(void) PIC8_WEAK;

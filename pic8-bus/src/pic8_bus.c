@@ -26,8 +26,8 @@
 /* ─── default I2C ops (HAL SSP + ACKDT + SSPIF wait) ────────────── */
 static void i2c_wait_ssp(void)
 {
-    while (!HAL_IRQ_GetFlag(BUS_IRQ_SSP)) { }   /* block until the SSP op completes */
-    HAL_IRQ_ClearFlag(BUS_IRQ_SSP);
+    while (!EPIC_IRQ_GetFlag(BUS_IRQ_SSP)) { }   /* block until the SSP op completes */
+    EPIC_IRQ_ClearFlag(BUS_IRQ_SSP);
 }
 
 static void i2c_set_ackdt(int ack)   /* ack=1 -> ACK (ACKDT=0); ack=0 -> NACK (ACKDT=1) */
@@ -38,22 +38,22 @@ static void i2c_set_ackdt(int ack)   /* ack=1 -> ACK (ACKDT=0); ack=0 -> NACK (A
     BUS_SSPCON2_WRITE(c);
 }
 
-static void i2c_real_start(void)          { HAL_SSP_Start();          i2c_wait_ssp(); }
-static void i2c_real_repeated_start(void) { HAL_SSP_RepeatedStart();  i2c_wait_ssp(); }
-static void i2c_real_stop(void)           { HAL_SSP_Stop();           i2c_wait_ssp(); }
+static void i2c_real_start(void)          { EPIC_SSP_Start();          i2c_wait_ssp(); }
+static void i2c_real_repeated_start(void) { EPIC_SSP_RepeatedStart();  i2c_wait_ssp(); }
+static void i2c_real_stop(void)           { EPIC_SSP_Stop();           i2c_wait_ssp(); }
 static int  i2c_real_write_byte(uint8_t b)
 {
-    (void)HAL_SSP_WriteByte(b);
+    (void)EPIC_SSP_WriteByte(b);
     i2c_wait_ssp();
-    return (HAL_SSP_AcknowledgeStatus() == 0u) ? 1 : 0;   /* ACKSTAT=0 -> ACK */
+    return (EPIC_SSP_AcknowledgeStatus() == 0u) ? 1 : 0;   /* ACKSTAT=0 -> ACK */
 }
 static uint8_t i2c_real_read_byte(int ack)
 {
     i2c_set_ackdt(ack);
-    HAL_SSP_ReceiveEnable();
+    EPIC_SSP_ReceiveEnable();
     i2c_wait_ssp();
-    uint8_t b = HAL_SSP_ReadByte();
-    HAL_SSP_AcknowledgeEnable();
+    uint8_t b = EPIC_SSP_ReadByte();
+    EPIC_SSP_AcknowledgeEnable();
     i2c_wait_ssp();
     return b;
 }
@@ -76,7 +76,7 @@ void pic8_bus_i2c_init(uint32_t fosc_hz, uint32_t fscl_hz)
     h.Mode   = SSP_MODE_I2C_MASTER_FOSC;
     h.SSPADD = (uint8_t)SSP_ComputeSSPADD(fosc_hz, fscl_hz);
     s_ssp = h;
-    HAL_SSP_Init(&s_ssp);
+    EPIC_SSP_Init(&s_ssp);
     g_i2c_ops = &g_i2c_default;
 }
 
@@ -86,17 +86,17 @@ static uint8_t s_cs_pin;
 
 static void spi_real_select(void)
 {
-    HAL_GPIO_WritePin((GPIO_TypeDef)s_cs_port, (uint16_t)PIC8_BIT(s_cs_pin), GPIO_PIN_RESET);
+    EPIC_GPIO_WritePin((GPIO_TypeDef)s_cs_port, (uint16_t)PIC8_BIT(s_cs_pin), GPIO_PIN_RESET);
 }
 static void spi_real_deselect(void)
 {
-    HAL_GPIO_WritePin((GPIO_TypeDef)s_cs_port, (uint16_t)PIC8_BIT(s_cs_pin), GPIO_PIN_SET);
+    EPIC_GPIO_WritePin((GPIO_TypeDef)s_cs_port, (uint16_t)PIC8_BIT(s_cs_pin), GPIO_PIN_SET);
 }
 static uint8_t spi_real_exchange(uint8_t b)
 {
-    (void)HAL_SSP_WriteByte(b);
-    while (!HAL_SSP_IsBufferFull()) { }    /* wait for the shift to complete */
-    return HAL_SSP_ReadByte();
+    (void)EPIC_SSP_WriteByte(b);
+    while (!EPIC_SSP_IsBufferFull()) { }    /* wait for the shift to complete */
+    return EPIC_SSP_ReadByte();
 }
 
 static const pic8_bus_spi_ops_t g_spi_default = {
@@ -120,11 +120,11 @@ void pic8_bus_spi_init(uint32_t fosc_hz, uint32_t f_sclk_hz, uint8_t cs_port, ui
     else                                                     mode = SSP_MODE_SPI_MASTER_FOSC_64;
     h.Mode = mode;
     s_ssp = h;
-    HAL_SSP_Init(&s_ssp);
+    EPIC_SSP_Init(&s_ssp);
     s_cs_port = cs_port;
     s_cs_pin  = cs_pin;
-    HAL_GPIO_Init((GPIO_TypeDef)cs_port, (uint16_t)PIC8_BIT(cs_pin), GPIO_MODE_OUTPUT);
-    HAL_GPIO_WritePin((GPIO_TypeDef)cs_port, (uint16_t)PIC8_BIT(cs_pin), GPIO_PIN_SET);
+    EPIC_GPIO_Init((GPIO_TypeDef)cs_port, (uint16_t)PIC8_BIT(cs_pin), GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin((GPIO_TypeDef)cs_port, (uint16_t)PIC8_BIT(cs_pin), GPIO_PIN_SET);
     g_spi_ops = &g_spi_default;
 }
 

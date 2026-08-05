@@ -21,7 +21,7 @@ int main(void)
     pic8_harness_init(1UL);
 
     SSP_HandleTypeDef ssp = SSP_HANDLE_DEFAULT;
-    HAL_SSP_Init(&ssp);
+    EPIC_SSP_Init(&ssp);
 
     uint8_t stat = PIC8_REG8(PIC_REG_SSPSTAT);
     uint8_t con1 = PIC8_REG8(PIC_REG_SSPCON1);

@@ -1,7 +1,7 @@
 /**
  * @file    example_rb_change.c
  * @brief   Smoke test for the RB<7:4> change-interrupt hook
- *          (HAL_GPIO_RegisterChangeCallback / RB_IRQHandler) on the sim.
+ *          (EPIC_GPIO_RegisterChangeCallback / RB_IRQHandler) on the sim.
  *
  * @details
  *   The host sim doesn't assert RBIF on a PORTB mismatch (would require
@@ -48,9 +48,9 @@ static uint8_t rbif_pending(void)
 static void test_noop_when_not_pending(void)
 {
     reset_observed();
-    HAL_GPIO_RegisterChangeCallback(on_rb_change);
+    EPIC_GPIO_RegisterChangeCallback(on_rb_change);
 
-    HAL_IRQ_ClearFlag(PIC18_IRQ_RB);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_RB);
     PIC8_REG8(PIC_REG_PORTB) = 0xA5U;
 
     RB_IRQHandler();   /* RBIF not pending: must do nothing. */
@@ -63,9 +63,9 @@ static void test_noop_when_not_pending(void)
 static void test_fires_when_pending(void)
 {
     reset_observed();
-    HAL_GPIO_RegisterChangeCallback(on_rb_change);
+    EPIC_GPIO_RegisterChangeCallback(on_rb_change);
 
-    HAL_IRQ_ClearFlag(PIC18_IRQ_RB);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_RB);
     PIC8_REG8(PIC_REG_PORTB) = 0x3CU;   /* the byte the handler must read */
     assert_rbif();
     CHECK(rbif_pending() == 1, "fires: RBIF set before handler");
@@ -80,9 +80,9 @@ static void test_fires_when_pending(void)
 static void test_null_callback_safe(void)
 {
     reset_observed();
-    HAL_GPIO_RegisterChangeCallback(NULL);
+    EPIC_GPIO_RegisterChangeCallback(NULL);
 
-    HAL_IRQ_ClearFlag(PIC18_IRQ_RB);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_RB);
     PIC8_REG8(PIC_REG_PORTB) = 0x00U;
     assert_rbif();
 
@@ -95,9 +95,9 @@ static void test_null_callback_safe(void)
 static void test_dispatch_reaches_handler(void)
 {
     reset_observed();
-    HAL_GPIO_RegisterChangeCallback(on_rb_change);
+    EPIC_GPIO_RegisterChangeCallback(on_rb_change);
 
-    HAL_IRQ_ClearFlag(PIC18_IRQ_RB);
+    EPIC_IRQ_ClearFlag(PIC18_IRQ_RB);
     PIC8_REG8(PIC_REG_PORTB) = 0x96U;
     assert_rbif();
 
