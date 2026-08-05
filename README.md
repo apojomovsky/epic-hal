@@ -38,56 +38,6 @@ build and test, a real XC8 cross-compile of every module against every
 supported part, and a real run under MPLAB SIM (mdb, headless) that
 checks actual register and UART output, not just whether it compiled.
 
-### Logo, still deciding
-
-The wreath-temple above is the current pick, kept here for comparison
-while it's still up for grabs. All six share the same idea (an IC
-package doing double duty as something classical) with a different
-execution:
-
-<table>
-<tr>
-<td align="center" width="33%">
-
-<img src="docs/assets/epicurus-logo-light-mode.svg" width="100" alt="A: wreath-temple"><br>
-<b>A</b>: wreath-temple (current)
-
-</td>
-<td align="center" width="33%">
-
-<img src="docs/assets/logo-concepts/omega-chip.svg" width="100" alt="1: omega as chip"><br>
-<b>1</b>: omega as chip
-
-</td>
-<td align="center" width="33%">
-
-<img src="docs/assets/logo-concepts/atom-die.svg" width="100" alt="3: atom orbiting a chip die"><br>
-<b>3</b>: atom + die
-
-</td>
-</tr>
-<tr>
-<td align="center" width="33%">
-
-<img src="docs/assets/logo-concepts/e-pins.svg" width="100" alt="5: E built from IC pins"><br>
-<b>5</b>: "E" from pins
-
-</td>
-<td align="center" width="33%">
-
-<img src="docs/assets/logo-concepts/wreath-of-pins.svg" width="100" alt="B: wreath made of pins"><br>
-<b>B</b>: wreath of pins
-
-</td>
-<td align="center" width="33%">
-
-<img src="docs/assets/logo-concepts/half-wreath.svg" width="100" alt="C: half-wreath under the temple"><br>
-<b>C</b>: half-wreath
-
-</td>
-</tr>
-</table>
-
 ## Contents
 
 - [Why](#why)
