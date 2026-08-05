@@ -76,6 +76,106 @@ class Manifest:
     families: dict[str, Family]
     modules: dict[str, Module]
 
+    def _module(self, name):
+        mod = self.modules.get(name)
+        if mod is None:
+            raise ManifestError(f"unknown module '{name}'")
+        return mod
+
+    def resolve_deps(self, module_name: str) -> list[str]:
+        """The module plus every transitive dependency, dependencies first.
+
+        Order is deterministic (depth-first over `depends_on` as written),
+        so a source list is reproducible and a .hex is byte-comparable
+        across runs. Cycles are already rejected at load time.
+        """
+        seen, ordered = set(), []
+
+        def visit(name):
+            if name in seen:
+                return
+            seen.add(name)
+            for dep in self._module(name).depends_on:
+                visit(dep)
+            ordered.append(name)
+
+        visit(module_name)
+        return ordered
+
+    def family_of(self, mcu: str) -> Family:
+        for fam in self.families.values():
+            if mcu in fam.variants:
+                return fam
+        known = sorted(v for f in self.families.values() for v in f.variants)
+        raise ManifestError(f"unknown MCU '{mcu}'; known parts: {', '.join(known)}")
+
+    def is_supported(self, module_name: str, family: str, mcu: str) -> bool:
+        return mcu in self._module(module_name).supported.get(family, [])
+
+    def exclusion_reason(self, module_name: str, mcu: str) -> str | None:
+        return self._module(module_name).excluded.get(mcu)
+
+    def example_for(self, module_name: str, family_name: str):
+        """This module's example program for a family, or None."""
+        return self._module(module_name).examples.get(family_name)
+
+    def uses_hal(self, module_name: str, mcu: str) -> bool:
+        """Does this (module, MCU) build need the family HAL?
+
+        The example decides, because the HAL requirement belongs to the
+        program: epic-math's library touches no HAL, but its smoke test
+        includes the harness. Falls back to the module's own needs_hal
+        when there is no example for this family.
+        """
+        fam = self.family_of(mcu)
+        example = self.example_for(module_name, fam.name)
+        if example is not None:
+            return example.hal
+        return self._module(module_name).needs_hal
+
+    def sources_for(self, module_name: str, mcu: str) -> list[str]:
+        """Repo-root-relative sources for one (module, MCU) build.
+
+        Order: family HAL sources and applicable conditional sources (only
+        when the build uses the HAL), each resolved module's own sources
+        plus its per-family sources, then the requested module's example.
+        Only the requested module's example is included; a dependency's
+        example is a separate program.
+        """
+        fam = self.family_of(mcu)
+        out = []
+        if self.uses_hal(module_name, mcu):
+            out += list(fam.hal_sources)
+            out += [c.path for c in fam.conditional_sources if mcu in c.variants]
+
+        for name in self.resolve_deps(module_name):
+            mod = self._module(name)
+            out += [f"{mod.dir}/{s}" for s in mod.sources]
+            out += [f"{mod.dir}/{s}"
+                    for s in mod.sources_by_family.get(fam.name, [])]
+
+        example = self.example_for(module_name, fam.name)
+        if example is not None:
+            mod = self._module(module_name)
+            out += [f"{mod.dir}/{s}" for s in example.sources]
+
+        return _dedupe(out)
+
+    def includes_for(self, module_name: str, mcu: str) -> list[str]:
+        """Repo-root-relative include dirs, family first when the HAL is used.
+
+        Family order is preserved verbatim: include/target must precede
+        include so the platform header resolves to the real-target
+        (volatile-dereference) version, not the host memory-backed one.
+        A build that does not use the HAL gets none of the family includes.
+        """
+        fam = self.family_of(mcu)
+        out = list(fam.includes) if self.uses_hal(module_name, mcu) else []
+        for name in self.resolve_deps(module_name):
+            mod = self._module(name)
+            out += [f"{mod.dir}/{i}" for i in mod.includes]
+        return _dedupe(out)
+
 
 def _dedupe(items):
     """Order-preserving de-duplication."""

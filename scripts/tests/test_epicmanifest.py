@@ -232,5 +232,127 @@ class TestValidation(unittest.TestCase):
         self.assertIn("fosc_hz", str(cm.exception))
 
 
+class TestResolution(unittest.TestCase):
+    def setUp(self):
+        self.m = epicmanifest.load(write(MINIMAL))
+
+    def test_resolve_deps_puts_dependencies_first(self):
+        self.assertEqual(self.m.resolve_deps("epic-serial"), ["epic-tick", "epic-serial"])
+
+    def test_resolve_deps_of_a_leaf_is_just_itself(self):
+        self.assertEqual(self.m.resolve_deps("epic-tick"), ["epic-tick"])
+
+    def test_resolve_deps_rejects_unknown_module(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            self.m.resolve_deps("epic-nope")
+
+    def test_family_of_maps_a_part_to_its_family(self):
+        self.assertEqual(self.m.family_of("16F877A").name, "PIC16F87XA")
+        self.assertEqual(self.m.family_of("18F4550").name, "PIC18Fxx5x")
+
+    def test_family_of_rejects_unknown_part(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            self.m.family_of("16F999X")
+
+    def test_is_supported(self):
+        self.assertTrue(self.m.is_supported("epic-serial", "PIC16F87XA", "16F877A"))
+        self.assertFalse(self.m.is_supported("epic-serial", "PIC16F87XA", "16F873A"))
+
+    def test_exclusion_reason(self):
+        self.assertEqual(
+            self.m.exclusion_reason("epic-serial", "16F873A"),
+            "RAM: 32-byte rx buffer does not fit",
+        )
+        self.assertIsNone(self.m.exclusion_reason("epic-serial", "16F877A"))
+
+    def test_example_for_returns_the_family_example(self):
+        self.assertEqual(self.m.example_for("epic-math", "PIC16F87XA").name, "math-smoke")
+        self.assertEqual(self.m.example_for("epic-math", "PIC18Fxx5x").name, "math-selftest")
+
+    def test_example_for_returns_none_when_absent(self):
+        self.assertIsNone(self.m.example_for("epic-serial", "PIC16F87XA"))
+
+    def test_uses_hal_falls_back_to_needs_hal_without_an_example(self):
+        # epic-serial has no example; uses_hal falls back to needs_hal (true)
+        self.assertTrue(self.m.uses_hal("epic-serial", "16F877A"))
+
+    def test_uses_hal_follows_the_example_override_when_present(self):
+        # epic-math: needs_hal=false but example hal=true
+        self.assertTrue(self.m.uses_hal("epic-math", "16F877A"))
+        # epic-adcfilter: needs_hal=false, no override
+        self.assertFalse(self.m.uses_hal("epic-adcfilter", "16F877A"))
+
+    def test_hal_true_build_includes_family_hal_sources(self):
+        srcs = self.m.sources_for("epic-tick", "16F877A")
+        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
+
+    def test_needs_hal_false_with_no_override_omits_family_hal_sources(self):
+        srcs = self.m.sources_for("epic-adcfilter", "16F877A")
+        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
+
+    def test_needs_hal_false_but_example_hal_true_includes_family_hal_sources(self):
+        srcs = self.m.sources_for("epic-math", "16F877A")
+        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
+
+    def test_needs_hal_false_omits_family_includes(self):
+        incs = self.m.includes_for("epic-adcfilter", "16F877A")
+        self.assertNotIn("pic16f87xa-hal/include", incs)
+        self.assertNotIn("epic-common/include", incs)
+        self.assertIn("epic-adcfilter/include", incs)
+
+    def test_conditional_source_included_only_on_matching_variant(self):
+        psp = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+        self.assertIn(psp, self.m.sources_for("epic-tick", "16F877A"))
+        self.assertNotIn(psp, self.m.sources_for("epic-tick", "16F873A"))
+
+    def test_conditional_source_omitted_when_hal_not_used(self):
+        psp = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+        self.assertNotIn(psp, self.m.sources_for("epic-adcfilter", "16F877A"))
+
+    def test_sources_include_module_and_example(self):
+        srcs = self.m.sources_for("epic-tick", "16F877A")
+        self.assertIn("epic-tick/src/epic_tick.c", srcs)
+        self.assertIn("epic-tick/examples/example_tick.c", srcs)
+
+    def test_sources_pull_in_dependency_sources(self):
+        srcs = self.m.sources_for("epic-serial", "16F877A")
+        self.assertIn("epic-tick/src/epic_tick.c", srcs)
+        self.assertIn("epic-serial/src/epic_serial.c", srcs)
+
+    def test_sources_only_include_the_requested_modules_example(self):
+        srcs = self.m.sources_for("epic-serial", "16F877A")
+        self.assertNotIn("epic-tick/examples/example_tick.c", srcs)
+
+    def test_sources_by_family_contributes_only_the_matching_family(self):
+        srcs16 = self.m.sources_for("epic-math", "16F877A")
+        self.assertIn("epic-math/src/pic16/pic_math_mul.c", srcs16)
+        self.assertIn("epic-math/src/pic16/pic_math_scratch.c", srcs16)
+        self.assertNotIn("epic-math/src/pic18/pic_math_mul.c", srcs16)
+        self.assertIn("epic-math/src/common/pic_math_sqrt.c", srcs16)
+        srcs18 = self.m.sources_for("epic-math", "18F4550")
+        self.assertIn("epic-math/src/pic18/pic_math_mul.c", srcs18)
+        self.assertNotIn("epic-math/src/pic16/pic_math_mul.c", srcs18)
+        self.assertIn("epic-math/src/common/pic_math_sqrt.c", srcs18)
+
+    def test_the_right_example_is_used_per_family(self):
+        self.assertIn("epic-math/tests/target_smoke16.c",
+                      self.m.sources_for("epic-math", "16F877A"))
+        self.assertIn("epic-math/tests/target_selftest.c",
+                      self.m.sources_for("epic-math", "18F4550"))
+        self.assertNotIn("epic-math/tests/target_selftest.c",
+                         self.m.sources_for("epic-math", "16F877A"))
+
+    def test_sources_have_no_duplicates(self):
+        srcs = self.m.sources_for("epic-math", "16F877A")
+        self.assertEqual(len(srcs), len(set(srcs)))
+
+    def test_includes_preserve_family_order_then_modules(self):
+        incs = self.m.includes_for("epic-serial", "16F877A")
+        self.assertEqual(incs[0], "pic16f87xa-hal/include")
+        self.assertEqual(incs[1], "epic-common/include")
+        self.assertIn("epic-tick/include", incs)
+        self.assertIn("epic-serial/include", incs)
+
+
 if __name__ == "__main__":
     unittest.main()
