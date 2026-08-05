@@ -49,14 +49,14 @@ INC    := -I$(APP_DIR)/include -I$(MATH_DIR)/include
 CFLAGS := $(DFP_FLAG) -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
           -O2 -std=c99 -Wall -Wextra $(CFLAGS_DEVICE) $(INC)
 
-SRCS  := $(APP_DIR)/src/pid.c                         \
-         $(MATH_DIR)/src/pic18/pic_math_mul.c          \
+SRCS  := $(MATH_DIR)/src/pic18/pic_math_mul.c          \
          $(MATH_DIR)/src/pic18/pic_math_div.c          \
          $(MATH_DIR)/src/pic18/pic_math_addsub.c       \
          $(MATH_DIR)/src/pic18/pic_math_bcd.c          \
          $(MATH_DIR)/src/common/pic_math_sqrt.c        \
          $(MATH_DIR)/src/common/pic_math_numeric.c     \
          $(MATH_DIR)/src/common/pic_math_rand.c        \
+         $(APP_DIR)/src/pid.c                          \
          $(APP_DIR)/mcu/target_sizecheck.c
 OBJS  := $(patsubst %.c,$(BUILD_DIR)/%.p1,$(notdir $(SRCS)))
 VPATH := $(sort $(dir $(SRCS)))
