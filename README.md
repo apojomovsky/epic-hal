@@ -5,14 +5,12 @@
   </picture>
 </p>
 
-# Epicurus
+<h1 align="center">Epicurus</h1>
 
-*Built down to what the datasheet requires.*
+<p align="center"><em>Built down to what the datasheet requires.</em></p>
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Language: C99](https://img.shields.io/badge/C-99-555.svg)](https://en.cppreference.com/w/c)
 [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html)
-[![Runs on: host & silicon](https://img.shields.io/badge/runs%20on-host%20%26%20silicon-orange.svg)](#quick-start)
 [![host-tests](https://github.com/apojomovsky/pic8-hal/actions/workflows/host-tests.yml/badge.svg)](https://github.com/apojomovsky/pic8-hal/actions/workflows/host-tests.yml)
 [![xc8-build](https://github.com/apojomovsky/pic8-hal/actions/workflows/xc8-build.yml/badge.svg)](https://github.com/apojomovsky/pic8-hal/actions/workflows/xc8-build.yml)
 [![sim-tests](https://github.com/apojomovsky/pic8-hal/actions/workflows/sim-tests.yml/badge.svg)](https://github.com/apojomovsky/pic8-hal/actions/workflows/sim-tests.yml)
