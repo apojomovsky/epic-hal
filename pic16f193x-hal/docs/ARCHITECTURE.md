@@ -145,11 +145,11 @@ with bank-1 offsets 0x11/0x12/0x13).
 1. `pic16f193x-hal/include/target/pic16f193x_platform.h`: replace
    the plain-C `PIC8_PIE_ENABLE_BIT` / `PIC8_PIE_DISABLE_BIT` macros
    with the inline-asm shape. Add the
-   `extern volatile uint8_t pic8_irq_pie_scratch __at(0x70);`
+   `extern volatile uint8_t epic_irq_pie_scratch __at(0x70);`
    declaration. Update the file header to point at this finding for
    the failure mode.
 2. `pic16f193x-hal/src/core/pic16f193x_isr_vector.c`: add the
-   `volatile uint8_t pic8_irq_pie_scratch __at(0x70);` definition
+   `volatile uint8_t epic_irq_pie_scratch __at(0x70);` definition
    that the platform header's `extern` needs, plus a header-comment
    update that removes the old "no bank-switch scratch bytes are
    pinned" assertion (it was the assumption that hid the bug).
@@ -212,7 +212,7 @@ addressing `movf 091h,w` / `movwf 091h` after `movlb 1`).
 ```
 l224:
 # 98 "../../src/core/pic16f193x_irq.c"
-    movf    _pic8_irq_pie_scratch,w      ; W = mask
+    movf    _epic_irq_pie_scratch,w      ; W = mask
 # 98 "../../src/core/pic16f193x_irq.c"
     movlb   1                              ; BSR = 1 (bank 1)
 # 98 "../../src/core/pic16f193x_irq.c"
@@ -313,6 +313,6 @@ PIE2 and PIE3. All 13 peripherals in `docs/pic16f193x-plan.md` §7's
 roadmap have landed and cleared the §4 gate; there is no remaining
 open peripheral work for this family as of this note. Future work here
 is either a new device variant (Path A, `docs/adding-a-device.md` §3)
-or wiring the family-agnostic `pic8-*` modules (taskmgr, tick, serial,
+or wiring the family-agnostic `epic-*` modules (taskmgr, tick, serial,
 ...) against it for the first time, per the main `README.md`'s status
 table.

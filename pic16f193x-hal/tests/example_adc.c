@@ -12,13 +12,13 @@
 #include "pic16f193x.h"
 #include "pic16f193x_sfr.h"
 #include "peripherals/pic16f193x_adc.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
 extern void pic16f193x_harness_halt(void);
 
 int main(void)
 {
-    pic8_harness_init(1UL);
+    epic_harness_init(1UL);
 
     ADC_HandleTypeDef adc = ADC_HANDLE_DEFAULT;
     EPIC_ADC_Init(&adc);
@@ -26,9 +26,9 @@ int main(void)
     uint8_t con0 = PIC8_REG8(PIC_REG_ADCON0);
     uint8_t con1 = PIC8_REG8(PIC_REG_ADCON1);
 
-    pic8_harness_log("ADCON0=0x%02X ADCON1=0x%02X\n", con0, con1);
+    epic_harness_log("ADCON0=0x%02X ADCON1=0x%02X\n", con0, con1);
     int pass = (con0 == 0x01U) && (con1 == 0xB0U);
-    int rc = pic8_harness_report(pass);
+    int rc = epic_harness_report(pass);
     pic16f193x_harness_halt();
     return rc;
 }

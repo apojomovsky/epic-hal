@@ -51,7 +51,7 @@ Per `docs/adding-a-device.md`, "it compiled" is necessary but not
 sufficient: no peripheral counts as done until the §4 `mdb`
 register-readback gate passes for it specifically. The toolchain gap is
 closed, `mdb` (MPLAB SIM, headless, part of MPLAB X) is installed and
-confirmed working (verified against `pic8-tick`'s pilot module, both
+confirmed working (verified against `epic-tick`'s pilot module, both
 existing families, both reaching a real `PIC8_HARNESS_RESULT: PASS` via
 the root `Makefile`'s `make mdb-test`, see `docs/docker-dev-plan.md`).
 
@@ -61,6 +61,6 @@ driver yet, so that convenience wrapper doesn't apply here directly. The
 real §4 gate doesn't need it: `stepi <N>` + `print <REGISTER>` against a
 plain `mdb.sh` script, run against this Makefile's existing
 `HARNESS=target`-shaped build (there's no `HARNESS=sim` variant here
-yet, unlike `pic8-tick`'s Makefile). No `pic16f193x-hal` peripheral has
+yet, unlike `epic-tick`'s Makefile). No `pic16f193x-hal` peripheral has
 been run through the gate yet, that is the next real step, not a
 toolchain blocker.

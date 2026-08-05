@@ -10,13 +10,13 @@
  *   sim only, calls `pic18_sim_*` host-only hooks.
  */
 
-#include "pic8_hal.h"
-#include "core/pic8_harness.h"
+#include "epic_hal.h"
+#include "core/epic_harness.h"
 #include "pic18fxx5x_sim.h"
 #include <stdio.h>
 
 #define CHECK(cond, msg) do { \
-    if (!(cond)) { pic8_harness_log("FAIL: %s\n", msg); return pic8_harness_report(0); } \
+    if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
 } while (0)
 
 /* A non-NULL RX callback forces CREN on in RCSTA; it is never invoked here
@@ -69,7 +69,7 @@ int main(void)
     CHECK(sp == 832U, "SPBRG 16-bit should reach 832 at 1200 baud");
 
     /* 2. Init async 8-bit BRG, no callbacks (poll mode). */
-    pic8_harness_init(16U);
+    epic_harness_init(16U);
     /* Disable the sim IRQ callback so the RX handler does not consume the
      * byte before the polling checks read it. */
     pic18_sim_set_irq_callback(NULL);
@@ -83,30 +83,30 @@ int main(void)
     EPIC_USART_Init(&h);
 
     /* TXSTA: reset 0x02 (TRMT) | BRGH(bit2) = 0x06. No TXEN (no callback). */
-    CHECK(pic8_sfr_read8(PIC_REG_TXSTA) == 0x06U,
+    CHECK(epic_sfr_read8(PIC_REG_TXSTA) == 0x06U,
           "TXSTA not 0x06 after async 8-bit init (BRGH expected)");
     /* RCSTA: SPEN(bit7) only, no CREN/RX9/ADDEN -> 0x80. */
-    CHECK(pic8_sfr_read8(PIC_REG_RCSTA) == 0x80U,
+    CHECK(epic_sfr_read8(PIC_REG_RCSTA) == 0x80U,
           "RCSTA not 0x80 after async 8-bit init (SPEN only)");
     /* BAUDCON: BRG16=0, no ABDEN -> 0x00. */
-    CHECK(pic8_sfr_read8(PIC_REG_BAUDCON) == 0x00U,
+    CHECK(epic_sfr_read8(PIC_REG_BAUDCON) == 0x00U,
           "BAUDCON not 0x00 for 8-bit BRG");
-    CHECK(pic8_sfr_read8(PIC_REG_SPBRG) == 103U, "SPBRG not 103 after init");
-    CHECK(pic8_sfr_read8(PIC_REG_SPBRGH) == 0x00U, "SPBRGH not 0 after 8-bit init");
+    CHECK(epic_sfr_read8(PIC_REG_SPBRG) == 103U, "SPBRG not 103 after init");
+    CHECK(epic_sfr_read8(PIC_REG_SPBRGH) == 0x00U, "SPBRGH not 0 after 8-bit init");
 
     /* 3. Transmit a byte. Verify TXREG holds it and TXIF cleared. */
     EPIC_USART_Transmit(0xA5U);
-    CHECK(pic8_sfr_read8(PIC_REG_TXREG) == 0xA5U, "TXREG did not capture 0xA5");
-    CHECK((pic8_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_TXIF) == 0U,
+    CHECK(epic_sfr_read8(PIC_REG_TXREG) == 0xA5U, "TXREG did not capture 0xA5");
+    CHECK((epic_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_TXIF) == 0U,
           "TXIF should be 0 after Transmit");
 
     /* 4. RX path: drive a byte, then Receive. */
     pic18_sim_drive_usart_rx(0xC3U);
-    CHECK((pic8_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_RCIF) != 0U,
+    CHECK((epic_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_RCIF) != 0U,
           "RCIF not set after drive_usart_rx");
     uint8_t got = EPIC_USART_Receive();
     CHECK(got == 0xC3U, "Receive did not return 0xC3");
-    CHECK((pic8_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_RCIF) == 0U,
+    CHECK((epic_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_RCIF) == 0U,
           "RCIF not cleared after Receive");
 
     /* 5. 16-bit BRG mode (BRG16=1, BRGH=1, SPBRG=33). BAUDCON<BRG16>=bit3=0x08. */
@@ -114,14 +114,14 @@ int main(void)
     h.SPBRG   = 33U;
     h.SPBRGH  = 0U;
     EPIC_USART_Init(&h);
-    CHECK(pic8_sfr_read8(PIC_REG_BAUDCON) == PIC_BAUDCON_BRG16,
+    CHECK(epic_sfr_read8(PIC_REG_BAUDCON) == PIC_BAUDCON_BRG16,
           "BAUDCON<BRG16> not set for 16-bit BRG");
-    CHECK(pic8_sfr_read8(PIC_REG_SPBRG) == 33U, "SPBRG not 33 after 16-bit init");
-    CHECK(pic8_sfr_read8(PIC_REG_SPBRGH) == 0x00U, "SPBRGH not 0 after 16-bit init");
+    CHECK(epic_sfr_read8(PIC_REG_SPBRG) == 33U, "SPBRG not 33 after 16-bit init");
+    CHECK(epic_sfr_read8(PIC_REG_SPBRGH) == 0x00U, "SPBRGH not 0 after 16-bit init");
 
     /* 6. Auto-baud: StartAutoBaud sets ABDEN; it stays busy; overflow clearable. */
     EPIC_USART_StartAutoBaud();
-    CHECK((pic8_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDEN) != 0U,
+    CHECK((epic_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDEN) != 0U,
           "ABDEN not set after StartAutoBaud");
     CHECK(EPIC_USART_IsAutoBaudBusy() == 1U, "IsAutoBaudBusy not 1");
     /* ABDOVF is read/clear; clear it and confirm. */
@@ -136,10 +136,10 @@ int main(void)
     ha.AddressDetect = 1U;
     ha.RxCpltCallback = rx_dummy_cb;   /* non-NULL -> CREN set; not invoked. */
     EPIC_USART_Init(&ha);
-    CHECK(pic8_sfr_read8(PIC_REG_RCSTA) == 0xD8U,
+    CHECK(epic_sfr_read8(PIC_REG_RCSTA) == 0xD8U,
           "RCSTA not 0xD8 for 9-bit address-detect (SPEN|RX9|CREN|ADDEN)");
 
-    pic8_harness_log("OK: EUSART driver, BRG math (8/16-bit), init, TX, RX, "
+    epic_harness_log("OK: EUSART driver, BRG math (8/16-bit), init, TX, RX, "
                      "auto-baud, address-detect all pass.\n");
-    return pic8_harness_report(1);
+    return epic_harness_report(1);
 }

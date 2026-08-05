@@ -14,9 +14,9 @@
 # docs/ci-plan.md's redistribution-fix account for why).
 #
 # Usage: sim-test-local.sh <family> <mcu> <device> <dir> <dfp> [wait_ms]
-# Example (the pic8-tick pilot, PIC16 side):
+# Example (the epic-tick pilot, PIC16 side):
 #   scripts/sim-test-local.sh pic16f87xa 16F877A PIC16F877A \
-#     pic8-tick/mcu/pic16f87xa-tick-mplabx Microchip.PIC16Fxxx_DFP
+#     epic-tick/mcu/pic16f87xa-tick-mplabx Microchip.PIC16Fxxx_DFP
 
 set -euo pipefail
 

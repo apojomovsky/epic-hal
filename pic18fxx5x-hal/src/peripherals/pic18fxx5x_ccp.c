@@ -188,11 +188,11 @@ void EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
 {
     if (inst != CCP_INSTANCE_1) return;     /* ECCP1 only */
     /* Preserve ECCPASE (status); reprogram source + pin states. */
-    uint8_t asv = (uint8_t)(pic8_sfr_read8(PIC_REG_ECCP1AS) & PIC_ECCP1AS_ECCPASE);
+    uint8_t asv = (uint8_t)(epic_sfr_read8(PIC_REG_ECCP1AS) & PIC_ECCP1AS_ECCPASE);
     asv |= (uint8_t)(((source & 0x7U) << 4) |
                      (pss_encode(pins_ac) << 2) |
                      pss_encode(pins_bd));
-    pic8_sfr_write8(PIC_REG_ECCP1AS, asv);
+    epic_sfr_write8(PIC_REG_ECCP1AS, asv);
 }
 
 uint8_t EPIC_CCP_IsShutdown(CCP_InstanceTypeDef inst)
@@ -205,8 +205,8 @@ void EPIC_CCP_Restart(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1) return;
     /* Clear ECCPASE, preserving the source/pin-state configuration. */
-    uint8_t asv = (uint8_t)(pic8_sfr_read8(PIC_REG_ECCP1AS) & ~PIC_ECCP1AS_ECCPASE);
-    pic8_sfr_write8(PIC_REG_ECCP1AS, asv);
+    uint8_t asv = (uint8_t)(epic_sfr_read8(PIC_REG_ECCP1AS) & ~PIC_ECCP1AS_ECCPASE);
+    epic_sfr_write8(PIC_REG_ECCP1AS, asv);
 }
 
 /* ───────────────────────── ISRs ─────────────────────────────────── */

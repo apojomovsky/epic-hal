@@ -16,7 +16,7 @@
 
 ## Why this exists
 
-`pic8-common/MANUAL.md` documents this repo's *portable* interrupt
+`epic-common/MANUAL.md` documents this repo's *portable* interrupt
 contract (the four-function harness, `EPIC_IRQ_*`, the dispatch pattern).
 This document is narrower and lower-level: specific things XC8 v4.00
 does with *this family's* generated code around banking, interrupts, and
@@ -111,7 +111,7 @@ its documented job, not a defect; seeing an `i1_`-prefixed symbol in a
 **Confirmed via the compiler's own call-graph analysis, not yet
 confirmed as the actual root cause of the remaining sim-target hang.**
 
-`pic8-tick`'s sim-target build (`pic8-tick/mcu/pic16f87xa-tick-mplabx`,
+`epic-tick`'s sim-target build (`epic-tick/mcu/pic16f87xa-tick-mplabx`,
 `HARNESS=sim`) produces two separate call-graph tables in the generated
 `.s` (`;!Call Graph Tables:`), one rooted at `_main` (estimated maximum
 stack depth **5**, well within budget) and a separate one rooted at
@@ -123,18 +123,18 @@ limited hardware stack... If the nesting of function calls and
 interrupts is too deep, the stack will overflow (wraps around and
 overwrites previous entries). Code will then fail at a later point").
 The deepest interrupt-side path is
-`_PIC16_IRQ_Handler -> _pic8_dispatch_all_irqs -> *_IRQHandler ->
+`_PIC16_IRQ_Handler -> _epic_dispatch_all_irqs -> *_IRQHandler ->
 i1_EPIC_IRQ_ClearFlag`, i.e. the dispatch pattern's own design (every
 peripheral `_IRQHandler` gets a strong reference and is unconditionally
 called on any interrupt, `pic16_irq_dispatch.c`'s own documented
-contract), not anything specific to `pic8-tick` or this session's
+contract), not anything specific to `epic-tick` or this session's
 changes.
 
 The compiler is aware of this class of problem and has a documented
 mitigation, the `-mstackcall` option (§4.6.1.25: "the compiler will
 revert to using a look-up table method of calling functions once the
 stack is full"), off by default. A quick trial adding it to
-`pic8-tick`'s PIC16 Makefile did **not** cleanly fix the sim-target
+`epic-tick`'s PIC16 Makefile did **not** cleanly fix the sim-target
 hang (the captured UART output went from "first delay completes, hangs
 on the second" to "no output at all", i.e. some other change in
 behavior, not obviously better); reverted rather than committed
@@ -158,11 +158,11 @@ against depth being the (sole) mechanism.**
 **A direct, reproducible experiment against Finding 4's hypothesis;
 result contradicts a pure stack-depth explanation.** If the hang really
 were "interrupt-path call depth 10 exceeds the 8-level hardware stack,"
-shrinking `pic8_dispatch_all_irqs` (`pic16_irq_dispatch.c`) down to only
-the one handler `pic8-tick`'s test actually needs (`TIMER2_IRQHandler`)
+shrinking `epic_dispatch_all_irqs` (`pic16_irq_dispatch.c`) down to only
+the one handler `epic-tick`'s test actually needs (`TIMER2_IRQHandler`)
 should reduce worst-case interrupt-side depth well under 8 and fix the
 hang. Tested directly (throwaway, uncommitted edits to
-`pic8_dispatch_all_irqs`, rebuilt and run under real `mdb`/MPLAB SIM each
+`epic_dispatch_all_irqs`, rebuilt and run under real `mdb`/MPLAB SIM each
 time, `run` + real-time `wait 10000` + `halt`, checking for the first
 delay's `"tick: delay(10) -> %lu ms"` log line as the pass signal, since
 that's what the known-good baseline reliably produces before it hangs):
@@ -243,11 +243,11 @@ overlap.
 
 **Whack-a-mole, not a fix; strengthens Finding 5 rather than resolving
 the bug.** Tried the cheapest targeted mitigation available: make
-`EPIC_IRQ_Disable`'s internal locals (`s`, `prev`) and `pic8_tick_get`'s
+`EPIC_IRQ_Disable`'s internal locals (`s`, `prev`) and `epic_tick_get`'s
 locals (`prev`, `t`, the ones live across the disable/restore window)
 `static`, so they get a permanently dedicated address instead of
 participating in XC8's non-reentrant storage-overlap pool at all
-(throwaway, uncommitted, `pic16_irq.c` and `pic8_tick.c`). Rebuilt, ran
+(throwaway, uncommitted, `pic16_irq.c` and `epic_tick.c`). Rebuilt, ran
 under real `mdb`.
 
 Result: the *original* symptom is gone. `INTCON` reads `192`
@@ -297,11 +297,11 @@ The diff found `compute_period`'s storage shifted by 4 bytes between
 configs (an incidental consequence of `CCP1_IRQHandler` changing the
 interrupt call graph's own footprint), and in the *broken* config only,
 `compute_period`'s `best_pr2` lands on the exact same `(BANK1, 176)`
-address as `pic8_harness_init`'s `cycles` parameter. This looked like
+address as `epic_harness_init`'s `cycles` parameter. This looked like
 the smoking gun (`best_pr2` is the value that ultimately becomes `PR2`),
 so it was tested directly: made `compute_period`'s locals `static`
 (throwaway). **`PR2` was still `0`.** Checked the next candidate from
-the same data, `pic8_tick_init`'s own locals (the caller that actually
+the same data, `epic_tick_init`'s own locals (the caller that actually
 holds the value between `compute_period` returning and
 `EPIC_TIMER2_Init` consuming it): no colliding function was found at any
 of its addresses at all, ruling that candidate out without even needing
@@ -332,7 +332,7 @@ symptoms (`GIE` stuck disabled, `PR2` reading `0`) observed downstream
 of where the real corruption happens. Both theories turned out to be
 wrong, or at best measuring a secondary effect. The deciding piece of
 evidence: `compute_period()` and `EPIC_TIMER2_WritePeriod()` both run
-during `pic8_tick_init`, entirely *before* `EPIC_IRQ_Restore(1)` ever
+during `epic_tick_init`, entirely *before* `EPIC_IRQ_Restore(1)` ever
 enables `GIE`. No interrupt can be involved in corrupting `PR2` at that
 point, full stop, regardless of call-graph shape or storage overlap.
 That single fact ruled out every interrupt-timing-dependent theory this
@@ -346,7 +346,7 @@ step budget, reading each candidate variable's memory address directly
 - `compute_period@best_pr2` (the search loop's own result): correct
   (`249`, matching the datasheet-formula hand calculation for 20 MHz),
   stays correct long after the function returns.
-- `pic8_tick_init@pr2` (the caller's copy, received via the `uint8_t
+- `epic_tick_init@pr2` (the caller's copy, received via the `uint8_t
   *pr2` output parameter): also correct (`249`).
 - The actual `PR2` hardware register: `0` at the same point in time.
 
@@ -381,10 +381,10 @@ value into W through a bank-independent common-RAM scratch byte
 *before* switching banks, then a single `movwf <SFR>` while banked
 touches nothing else. New `PIC8_BANK1_WRITE8(sfr, value)` macro
 (`target/pic16f87xa_platform.h`) with its own scratch byte
-(`pic8_bank1_scratch` at `0x71`, deliberately separate from
-`pic8_irq_pie_scratch` at `0x70`, unrelated subsystems). Applied to both
+(`epic_bank1_scratch` at `0x71`, deliberately separate from
+`epic_irq_pie_scratch` at `0x70`, unrelated subsystems). Applied to both
 `EPIC_TIMER2_WritePeriod` and `EPIC_USART_Init`. Verified: `PR2` reads
-`249`, `SPBRG` reads `129`, and `pic8-tick`'s PIC16 sim-target test
+`249`, `SPBRG` reads `129`, and `epic-tick`'s PIC16 sim-target test
 reaches `PIC8_HARNESS_RESULT: PASS` reliably (5/5 runs). Full host
 suite and all 38 previously-passing PIC16 `(module, MCU)` real-target
 builds re-verified clean, no regressions from the new scratch byte

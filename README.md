@@ -9,11 +9,15 @@
 
 <p align="center"><em>Built down to what the datasheet requires.</em></p>
 
+<p align="center">
+
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html)
-[![host-tests](https://github.com/apojomovsky/pic8-hal/actions/workflows/host-tests.yml/badge.svg)](https://github.com/apojomovsky/pic8-hal/actions/workflows/host-tests.yml)
-[![xc8-build](https://github.com/apojomovsky/pic8-hal/actions/workflows/xc8-build.yml/badge.svg)](https://github.com/apojomovsky/pic8-hal/actions/workflows/xc8-build.yml)
-[![sim-tests](https://github.com/apojomovsky/pic8-hal/actions/workflows/sim-tests.yml/badge.svg)](https://github.com/apojomovsky/pic8-hal/actions/workflows/sim-tests.yml)
+[![host-tests](https://github.com/apojomovsky/epicurus/actions/workflows/host-tests.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/host-tests.yml)
+[![xc8-build](https://github.com/apojomovsky/epicurus/actions/workflows/xc8-build.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/xc8-build.yml)
+[![sim-tests](https://github.com/apojomovsky/epicurus/actions/workflows/sim-tests.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/sim-tests.yml)
+
+</p>
 
 8-bit PIC microcontrollers are not glamorous. They ship by the billion
 into thermostats, motor controllers, and blinking status LEDs, with no
@@ -47,7 +51,7 @@ The shape of that, concretely:
 - **The host is a first-class target.** Every module builds and runs as
   a host program under CMake/ctest, so logic gets exercised long before
   it touches a programmer.
-- **One contract, several families.** `pic8-common/` holds everything
+- **One contract, several families.** `epic-common/` holds everything
   architecture-blind; each family HAL implements the same names and
   signatures over different registers, so higher-level modules are
   written once and build against any of them unchanged.
@@ -67,7 +71,7 @@ The shape of that, concretely:
 | PIC18F2455 family | 18F2455 / 2550 / 4455 / 4550 | [pic18fxx5x-hal](pic18fxx5x-hal/) | Full peripheral coverage. Needs the PIC18Fxxxx DFP. |
 | PIC16F193X | 16F1933 / 1934 / 1936 / 1937 / 1938 / 1939 | [pic16f193x-hal](pic16f193x-hal/) | Full peripheral coverage: GPIO, Timer0/1/2/4/6, CCP1-5, EUSART, MSSP, ADC, Comparator, EEPROM, DAC, FVR, SR latch, CPS, LCD. Needs the PIC12-16F1xxx DFP. |
 
-All three families share a single API contract (pic8-common): same
+All three families share a single API contract (epic-common): same
 function names and signatures, family-specific register bodies. Family-agnostic
 modules (scheduler, math, serial, Modbus, ...) build against any family
 by selecting the HAL at build time; a few target one family only where
@@ -82,7 +86,7 @@ the peripheral doesn't exist (USB, SD card), called out in the
 No hardware, no MPLAB tooling, just CMake 3.16+ and a C99 compiler:
 
 ```sh
-cmake -B build -S pic8-taskmgr
+cmake -B build -S epic-taskmgr
 cmake --build build
 ./build/example_multi_blink
 ```
@@ -104,7 +108,7 @@ done: fast=12 med=6 slow=3 blips=1 (ticks=61, tasks=4)
 Four blinks at distinct rates on RB0-RB3, plus a priority-0 supervisor
 that spawns a one-shot blip at runtime at t=40. Point the same task
 manager at the PIC18 family with `-DEPIC_FAMILY=PIC18` (see
-[pic8-taskmgr/README.md](pic8-taskmgr/README.md)).
+[epic-taskmgr/README.md](epic-taskmgr/README.md)).
 
 ### Docker (no local installs)
 
@@ -128,12 +132,12 @@ One Makefile per family under each module's `mcu/` dir:
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-cd pic8-taskmgr/mcu/pic16f87xa-taskmgr-mplabx
+cd epic-taskmgr/mcu/pic16f87xa-taskmgr-mplabx
 make MCU=16F877A        # also 873A / 874A / 876A
 ```
 
 Produces `build/<MCU>-multi-blink.hex`, program with MPLAB X or any
-programmer. See [pic8-taskmgr/README.md](pic8-taskmgr/README.md) for
+programmer. See [epic-taskmgr/README.md](epic-taskmgr/README.md) for
 wiring, the family `MANUAL.md` (e.g.
 [pic16f87xa-hal/MANUAL.md](pic16f87xa-hal/MANUAL.md)) for peripheral
 bring-up, and [docs/adding-a-device.md](docs/adding-a-device.md) for
@@ -151,7 +155,7 @@ one family, that's called out.
 
 | Module | Description |
 |---|---|
-| [pic8-common](pic8-common/) | Shared layer every family reuses: status codes, host/target harness, CMake/Make fragments. |
+| [epic-common](epic-common/) | Shared layer every family reuses: status codes, host/target harness, CMake/Make fragments. |
 | [pic16f87xa-hal](pic16f87xa-hal/) | HAL for PIC16F873A/874A/876A/877A. Full peripheral coverage: GPIO, Timers, CCP, MSSP, ADC, Comparator, EEPROM, PSP, WDT. |
 | [pic18fxx5x-hal](pic18fxx5x-hal/) | HAL for PIC18F2455/2550/4455/4550. Full peripheral coverage: GPIO, Timer0-3, ECCP1/CCP2, MSSP, EUSART, Comparator, EEPROM, ADC, SPP. |
 | [pic16f193x-hal](pic16f193x-hal/) | HAL for PIC16F1933/1934/1936/1937/1938/1939 (Enhanced Mid-range). Full peripheral coverage: GPIO, Timer0/1/2/4/6, CCP1-5, EUSART, MSSP, ADC, Comparator, EEPROM, DAC, FVR, SR latch, CPS, LCD. |
@@ -160,47 +164,47 @@ one family, that's called out.
 
 | Module | Description |
 |---|---|
-| [pic8-taskmgr](pic8-taskmgr/) | Cooperative scheduler: periodic and one-shot tasks, priority-ordered, race-free. Family-agnostic. |
-| [pic8-fsm](pic8-fsm/) | Table-driven finite state machine, the whole machine is one `static const` transition table. No HAL dependency. |
+| [epic-taskmgr](epic-taskmgr/) | Cooperative scheduler: periodic and one-shot tasks, priority-ordered, race-free. Family-agnostic. |
+| [epic-fsm](epic-fsm/) | Table-driven finite state machine, the whole machine is one `static const` transition table. No HAL dependency. |
 
 **Timing & math**
 
 | Module | Description |
 |---|---|
-| [pic8-tick](pic8-tick/) | 1 ms timebase (`HAL_GetTick`/`HAL_Delay` equivalent) on a Timer2 auto-reload ISR. Family-agnostic. |
-| [pic8-math](pic8-math/) | Fixed-point math: multiply, divide, BCD, sqrt, numerical diff/integration, RNGs. Host reference plus PIC16/PIC18 inline-asm backends behind one API. |
+| [epic-tick](epic-tick/) | 1 ms timebase (`HAL_GetTick`/`HAL_Delay` equivalent) on a Timer2 auto-reload ISR. Family-agnostic. |
+| [epic-math](epic-math/) | Fixed-point math: multiply, divide, BCD, sqrt, numerical diff/integration, RNGs. Host reference plus PIC16/PIC18 inline-asm backends behind one API. |
 
 **Communication**
 
 | Module | Description |
 |---|---|
-| [pic8-serial](pic8-serial/) | Interrupt-driven ring-buffered UART + `printf` retarget. Family-agnostic. |
-| [pic8-bus](pic8-bus/) | I2C/SPI "MEM" register-access idiom on top of MSSP/SSP. Family-agnostic. |
-| [pic8-modbus](pic8-modbus/) | Modbus RTU slave: core function codes, T3.5 framing, CRC-16, optional RS-485 driver-enable. Built on `pic8-serial` + `pic8-tick`. |
-| [pic8-console](pic8-console/) | Line-based serial command dispatcher over `pic8-serial`: tokenization, table-driven dispatch, echo/backspace editing. |
-| [pic8-usb](pic8-usb/) | USB CDC-ACM virtual serial port, wraps the vendored M-Stack USB device stack. PIC18Fxx5x-only (no USB peripheral on PIC16F87XA). |
+| [epic-serial](epic-serial/) | Interrupt-driven ring-buffered UART + `printf` retarget. Family-agnostic. |
+| [epic-bus](epic-bus/) | I2C/SPI "MEM" register-access idiom on top of MSSP/SSP. Family-agnostic. |
+| [epic-modbus](epic-modbus/) | Modbus RTU slave: core function codes, T3.5 framing, CRC-16, optional RS-485 driver-enable. Built on `epic-serial` + `epic-tick`. |
+| [epic-console](epic-console/) | Line-based serial command dispatcher over `epic-serial`: tokenization, table-driven dispatch, echo/backspace editing. |
+| [epic-usb](epic-usb/) | USB CDC-ACM virtual serial port, wraps the vendored M-Stack USB device stack. PIC18Fxx5x-only (no USB peripheral on PIC16F87XA). |
 
 **Storage**
 
 | Module | Description |
 |---|---|
-| [pic8-settings](pic8-settings/) | EEPROM-backed settings blobs with CRC-16 validation and first-boot defaults. Family-agnostic. |
-| [pic8-sdcard](pic8-sdcard/) | SD/MMC-over-SPI block storage, wraps the vendored M-Stack storage driver. PIC18Fxx5x-only (RAM constraint). |
+| [epic-settings](epic-settings/) | EEPROM-backed settings blobs with CRC-16 validation and first-boot defaults. Family-agnostic. |
+| [epic-sdcard](epic-sdcard/) | SD/MMC-over-SPI block storage, wraps the vendored M-Stack storage driver. PIC18Fxx5x-only (RAM constraint). |
 
 **Signal processing & control**
 
 | Module | Description |
 |---|---|
-| [pic8-adcfilter](pic8-adcfilter/) | ADC oversample-and-decimate plus an O(1) moving-average filter. No HAL dependency. |
-| [pic8-debounce](pic8-debounce/) | Instantiable digital-input debouncer, poll-driven, built on `pic8-tick`'s real timebase. No HAL dependency. |
-| [pic8-pid](pic8-pid/) | Fixed-point (Q8.8) single-loop PID with anti-windup, derivative-on-measurement, and bumpless auto/manual transfer. No HAL dependency. |
-| [pic8-encoder](pic8-encoder/) | Interrupt-driven x4 quadrature decoder, instantiable, built on the HAL's GPIO change-interrupt. No HAL family split. |
+| [epic-adcfilter](epic-adcfilter/) | ADC oversample-and-decimate plus an O(1) moving-average filter. No HAL dependency. |
+| [epic-debounce](epic-debounce/) | Instantiable digital-input debouncer, poll-driven, built on `epic-tick`'s real timebase. No HAL dependency. |
+| [epic-pid](epic-pid/) | Fixed-point (Q8.8) single-loop PID with anti-windup, derivative-on-measurement, and bumpless auto/manual transfer. No HAL dependency. |
+| [epic-encoder](epic-encoder/) | Interrupt-driven x4 quadrature decoder, instantiable, built on the HAL's GPIO change-interrupt. No HAL family split. |
 
 **Peripherals**
 
 | Module | Description |
 |---|---|
-| [pic8-lcd](pic8-lcd/) | HD44780-compatible character LCD driver with configurable transport: 4-bit GPIO, 8-bit GPIO, or SPI via 74HC595. |
+| [epic-lcd](epic-lcd/) | HD44780-compatible character LCD driver with configurable transport: 4-bit GPIO, 8-bit GPIO, or SPI via 74HC595. |
 
 Note: the higher-level modules (taskmgr, tick, serial, ...) build
 against the two mature families (PIC16F87XA, PIC18F2455). Wiring them
@@ -209,7 +213,7 @@ coverage is complete.
 
 ## Documentation
 
-- [pic8-common/MANUAL.md](pic8-common/MANUAL.md), family-agnostic
+- [epic-common/MANUAL.md](epic-common/MANUAL.md), family-agnostic
   conventions, the harness, the handle pattern, the shared interrupt
   model. Read this first.
 - Per-family `MANUAL.md` ([PIC16F87XA](pic16f87xa-hal/MANUAL.md),
@@ -217,7 +221,7 @@ coverage is complete.
   [PIC16F193X](pic16f193x-hal/MANUAL.md)), datasheet-cited
   per-peripheral register reference.
 - [docs/multi-family-plan.md](docs/multi-family-plan.md), the refactor
-  that extracted `pic8-common/` and added the PIC18F2455 family behind a
+  that extracted `epic-common/` and added the PIC18F2455 family behind a
   fixed contract.
 - [docs/adding-a-device.md](docs/adding-a-device.md), the operational,
   verification-gated guide for adding a new device variant or family
@@ -249,10 +253,10 @@ make check-vendor    # confirms the 2 required installer files are present
 
 make image            # build the toolchain image locally (once; cached after)
 make test             # host-sim build + test, every module
-make test MODULE=pic8-lcd   # ... or just one
+make test MODULE=epic-lcd   # ... or just one
 
 make xc8-build MODULE=pic16f193x-hal MCU=16F1937   # real-target build
-make mdb-test MODULE=pic8-tick/mcu/pic16f87xa-tick-mplabx \
+make mdb-test MODULE=epic-tick/mcu/pic16f87xa-tick-mplabx \
   MCU=16F877A DEVICE=PIC16F877A DFP=Microchip.PIC16Fxxx_DFP  # the mdb gate
 
 make shell             # interactive shell, repo mounted at /repo

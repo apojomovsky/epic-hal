@@ -1,17 +1,17 @@
 /**
  * @file    pic16_harness_sim.c
  * @brief   PIC16F87XA host-simulation implementation of the test harness
- *          (see core/pic8_harness.h).
+ *          (see core/epic_harness.h).
  *
  * @details
  *   Linked by the CMake host build. The companion target implementation
- *   is the family-blind pic8_harness_target.c in pic8-common; the build
+ *   is the family-blind epic_harness_target.c in epic-common; the build
  *   picks one, so neither this file nor the examples need `#ifdef`. This
  *   file is PIC16-specific only because it pumps the PIC16 simulator; the
  *   harness contract it implements is shared by every family.
  */
 
-#include "core/pic8_harness.h"   /* pic8_dispatch_all_irqs is declared here */
+#include "core/epic_harness.h"   /* epic_dispatch_all_irqs is declared here */
 #include "pic16f87xa_sim.h"
 
 #include <stdio.h>
@@ -20,26 +20,26 @@
 /** Bounded run length set by the last harness_init() call. */
 static uint32_t g_cycles = 0U;
 
-void pic8_harness_init(uint32_t cycles)
+void epic_harness_init(uint32_t cycles)
 {
     g_cycles = cycles;
     pic16f87xa_sim_reset();
     /* One sim callback that fans out to every peripheral handler, the
      * host analogue of the real target's single interrupt vector. */
-    pic16f87xa_sim_set_irq_callback(pic8_dispatch_all_irqs);
+    pic16f87xa_sim_set_irq_callback(epic_dispatch_all_irqs);
 }
 
-void pic8_harness_tick(void)
+void epic_harness_tick(void)
 {
     pic16f87xa_sim_step(1);
 }
 
-int pic8_harness_running(uint32_t iteration)
+int epic_harness_running(uint32_t iteration)
 {
     return (iteration < g_cycles) ? 1 : 0;
 }
 
-void pic8_harness_log(const char *fmt, ...)
+void epic_harness_log(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);

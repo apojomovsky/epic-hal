@@ -19,9 +19,9 @@ static const SSP_HandleTypeDef *g_ssp = NULL;
 /** Set bits in SSPCON2 (RMW via split read+write). */
 static void sspcon2_set(uint8_t mask)
 {
-    uint8_t v = pic8_sfr_read8(PIC_REG_SSPCON2);
+    uint8_t v = epic_sfr_read8(PIC_REG_SSPCON2);
     v |= (uint8_t)mask;
-    pic8_sfr_write8(PIC_REG_SSPCON2, v);
+    epic_sfr_write8(PIC_REG_SSPCON2, v);
 }
 
 /* ───────────────────────── SSPADD computation ───────────────────── */
@@ -43,23 +43,23 @@ EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h)
     g_ssp = &g_ssp_storage;
 
     /* SSPADD (I2C slave address, or I2C master baud reload). */
-    pic8_sfr_write8(PIC_REG_SSPADD, h->SSPADD);
+    epic_sfr_write8(PIC_REG_SSPADD, h->SSPADD);
 
     /* SSPSTAT: SMP + CKE (SPI). */
     uint8_t stat = 0U;
     if (h->ClockEdge   == SSP_SPI_CKE_IDLE_ACTIVE) stat |= PIC_SSPSTAT_CKE;
     if (h->SamplePhase == SSP_SPI_SMP_END)        stat |= PIC_SSPSTAT_SMP;
-    pic8_sfr_write8(PIC_REG_SSPSTAT, stat);
+    epic_sfr_write8(PIC_REG_SSPSTAT, stat);
 
     /* SSPCON1: SSPM3:0 (mode) + CKP + SSPEN. (WCOL/SSPOV are cleared by
      * writing the register; reset value 0x00.) */
     uint8_t con = (uint8_t)(h->Mode & PIC_SSPCON1_SSPM_MASK);
     if (h->ClockPolarity == SSP_SPI_CKP_IDLE_HIGH) con |= PIC_SSPCON1_CKP;
     con |= PIC_SSPCON1_SSPEN;
-    pic8_sfr_write8(PIC_REG_SSPCON1, con);
+    epic_sfr_write8(PIC_REG_SSPCON1, con);
 
     /* SSPCON2: idle (all clear). */
-    pic8_sfr_write8(PIC_REG_SSPCON2, 0x00U);
+    epic_sfr_write8(PIC_REG_SSPCON2, 0x00U);
 
     /* Interrupt enable. */
     EPIC_IRQ_ClearFlag(PIC18_IRQ_SSP);
@@ -73,19 +73,19 @@ EPIC_StatusTypeDef EPIC_SSP_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC18_IRQ_SSP);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_SSP);
-    pic8_sfr_write8(PIC_REG_SSPCON1, 0x00U);
-    pic8_sfr_write8(PIC_REG_SSPCON2, 0x00U);
-    pic8_sfr_write8(PIC_REG_SSPSTAT, 0x00U);
-    pic8_sfr_write8(PIC_REG_SSPADD, 0x00U);
+    epic_sfr_write8(PIC_REG_SSPCON1, 0x00U);
+    epic_sfr_write8(PIC_REG_SSPCON2, 0x00U);
+    epic_sfr_write8(PIC_REG_SSPSTAT, 0x00U);
+    epic_sfr_write8(PIC_REG_SSPADD, 0x00U);
     g_ssp = NULL;
     return EPIC_OK;
 }
 
 uint16_t EPIC_SSP_WriteByte(uint8_t data)
 {
-    uint8_t con = pic8_sfr_read8(PIC_REG_SSPCON1);
+    uint8_t con = epic_sfr_read8(PIC_REG_SSPCON1);
     if (con & PIC_SSPCON1_WCOL) return 0xFFFFU;     /* write collision pending */
-    pic8_sfr_write8(PIC_REG_SSPBUF, data);
+    epic_sfr_write8(PIC_REG_SSPBUF, data);
     /* On a real target the transfer starts and BF + SSPIF assert when it
      * completes; on the host sim, BF/SSPIF are set via the drive hook. */
     return 0U;
@@ -94,26 +94,26 @@ uint16_t EPIC_SSP_WriteByte(uint8_t data)
 uint8_t EPIC_SSP_ReadByte(void)
 {
     /* Reading SSPBUF clears BF (DS39632E Register 19-1). */
-    uint8_t v = pic8_sfr_read8(PIC_REG_SSPBUF);
-    uint8_t stat = (uint8_t)(pic8_sfr_read8(PIC_REG_SSPSTAT) & (uint8_t)~PIC_SSPSTAT_BF);
-    pic8_sfr_write8(PIC_REG_SSPSTAT, stat);
+    uint8_t v = epic_sfr_read8(PIC_REG_SSPBUF);
+    uint8_t stat = (uint8_t)(epic_sfr_read8(PIC_REG_SSPSTAT) & (uint8_t)~PIC_SSPSTAT_BF);
+    epic_sfr_write8(PIC_REG_SSPSTAT, stat);
     return v;
 }
 
 uint8_t EPIC_SSP_IsBufferFull(void)
 {
-    return (pic8_sfr_read8(PIC_REG_SSPSTAT) & PIC_SSPSTAT_BF) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_SSPSTAT) & PIC_SSPSTAT_BF) ? 1U : 0U;
 }
 
 uint8_t EPIC_SSP_HasWriteCollision(void)
 {
-    return (pic8_sfr_read8(PIC_REG_SSPCON1) & PIC_SSPCON1_WCOL) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_SSPCON1) & PIC_SSPCON1_WCOL) ? 1U : 0U;
 }
 
 void EPIC_SSP_ClearWriteCollision(void)
 {
-    uint8_t con = (uint8_t)(pic8_sfr_read8(PIC_REG_SSPCON1) & (uint8_t)~PIC_SSPCON1_WCOL);
-    pic8_sfr_write8(PIC_REG_SSPCON1, con);
+    uint8_t con = (uint8_t)(epic_sfr_read8(PIC_REG_SSPCON1) & (uint8_t)~PIC_SSPCON1_WCOL);
+    epic_sfr_write8(PIC_REG_SSPCON1, con);
 }
 
 void EPIC_SSP_Start(void)          { sspcon2_set(PIC_SSPCON2_SEN);  }
@@ -124,7 +124,7 @@ void EPIC_SSP_AcknowledgeEnable(void) { sspcon2_set(PIC_SSPCON2_ACKEN); }
 
 uint8_t EPIC_SSP_AcknowledgeStatus(void)
 {
-    return (pic8_sfr_read8(PIC_REG_SSPCON2) & PIC_SSPCON2_ACKSTAT) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_SSPCON2) & PIC_SSPCON2_ACKSTAT) ? 1U : 0U;
 }
 
 /* ───────────────────────── ISR ───────────────────────────────────── */

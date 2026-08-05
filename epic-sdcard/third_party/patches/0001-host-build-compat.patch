@@ -1,0 +1,34 @@
+--- epic-sdcard/third_party/m-stack-storage/src/mmc.c	2026-07-15 14:29:02.948282858 -0300
++++ epic-sdcard/third_party/m-stack-storage/src/mmc.c	2026-07-15 15:59:06.165992025 -0300
+@@ -26,6 +26,15 @@
+ 
+ #if defined(__XC32__) || defined(__XC16__) || defined(__XC8)
+ #include <xc.h>
++#elif defined(PIC8_SDCARD_HOST_BUILD)
++/* Deviation from upstream (epic-sdcard, not sent upstream): upstream only
++ * allows XC8/XC16/XC32. Nothing below this line actually uses anything
++ * from <xc.h> (no SFR names, no __delay_*, no interrupt keyword -- grepped
++ * to confirm before patching); the guard is a defensive compiler
++ * allowlist, not a real dependency. PIC8_SDCARD_HOST_BUILD (set by this
++ * module's host CMakeLists.txt, never by the real-target build) skips the
++ * include so this exact file can be host-compiled and tested directly.
++ * See epic-sdcard/docs/epic-sdcard-plan.md, "Host build story". */
+ #else
+ #error "Compiler not supported"
+ #endif
+--- epic-sdcard/third_party/m-stack-storage/include/mmc.h	2026-07-15 14:29:02.948178716 -0300
++++ epic-sdcard/third_party/m-stack-storage/include/mmc.h	2026-07-15 16:00:20.001744758 -0300
+@@ -55,6 +55,13 @@
+ 
+ #include <stdbool.h>
+ #include <stdint.h>
++#include <stddef.h>   /* size_t, used by mmc_multiblock_write_data() below --
++                       * deviation from upstream (epic-sdcard, not sent
++                       * upstream): upstream relies on <xc.h> (included from
++                       * mmc.c, not this header) pulling this in transitively;
++                       * a host build doesn't include <xc.h> at all (see
++                       * mmc.c's PIC8_SDCARD_HOST_BUILD branch), so this
++                       * header needs its own explicit include. */
+ #include "mmc_config.h"
+ 
+ /** @brief MMC Block Size

@@ -1,7 +1,7 @@
 # PIC18F2455 family HAL, Manual
 
 Family-agnostic conventions, the handle pattern, status codes, the harness,
-and the host-sim/target build-time split: see `pic8-common/MANUAL.md`. This
+and the host-sim/target build-time split: see `epic-common/MANUAL.md`. This
 manual covers only what is genuinely specific to the **PIC18F2455 / 2550 /
 4455 / 4550** family, verified against the Microchip datasheet **DS39632E**.
 
@@ -64,10 +64,10 @@ not a Vref equivalent.
 pic18fxx5x-hal/
 ├── include/
 │   ├── pic18fxx5x.h              family header: device select, SFR mapping;
-│   │                              pulls shared status codes from pic8-common
+│   │                              pulls shared status codes from epic-common
 │   ├── pic18fxx5x_sfr.h          SFR address map + bit names (1:1 DS39632E)
 │   ├── pic18fxx5x_sim.h          simulation backend public API
-│   ├── pic8_hal.h                 family-neutral top-level include (pulls in
+│   ├── epic_hal.h                 family-neutral top-level include (pulls in
 │   │                              every peripheral, used by family-agnostic
 │   │                              consumers like the task manager)
 │   ├── host/pic18_platform.h     SFRs -> memory array, real weak attribute
@@ -87,13 +87,13 @@ pic18fxx5x-hal/
 │   └── sim/pic18_sim.c            host simulation backend (host build only)
 ├── tests/                        example_blink, example_smoke, one
 │                                  per-peripheral host-sim smoke test
-├── mcu/pic18fxx5x-mplabx/        XC8 Makefile (thin caller of pic8-common/mk)
-└── CMakeLists.txt                host build (thin caller of pic8-common/cmake)
+├── mcu/pic18fxx5x-mplabx/        XC8 Makefile (thin caller of epic-common/mk)
+└── CMakeLists.txt                host build (thin caller of epic-common/cmake)
 ```
 
-The `pic8-common`/per-family split, the include-path-selected platform
+The `epic-common`/per-family split, the include-path-selected platform
 header trick, and the host/target execution-model split are identical in
-substance to PIC16F87XA's — see `pic8-common/MANUAL.md` §2. The one thing
+substance to PIC16F87XA's, see `epic-common/MANUAL.md` §2. The one thing
 that genuinely differs at this level is interrupt vectoring:
 
 ### 2.1 Two interrupt vectors, priority-gated
@@ -101,7 +101,7 @@ that genuinely differs at this level is interrupt vectoring:
 Unlike PIC16F87XA's single vector at 0004h, this family has **two**
 vectors: 0008h (high-priority) and 0018h (low-priority), gated by
 `RCON<IPEN>` (DS39632E §9.0). Both vectors delegate to the same shared
-`pic8_dispatch_all_irqs()` (`src/core/pic18_isr_vector.c` on target, the
+`epic_dispatch_all_irqs()` (`src/core/pic18_isr_vector.c` on target, the
 harness's registered sim callback on host) — the hardware has already
 separated high- from low-priority sources by which vector it took, so
 calling the full dispatch from both is correct; each peripheral handler
@@ -137,7 +137,7 @@ Requires the **PIC18Fxxxx Device Family Pack**, which XC8 does not bundle
 ## 4. Build systems
 
 Same CMake/Makefile shape as PIC16F87XA, including the no-`#ifdef`
-host/target link-time split described in `pic8-common/MANUAL.md` §2. The
+host/target link-time split described in `epic-common/MANUAL.md` §2. The
 `xc8-cc` driver compiles each translation unit to a `.p1` (p-code)
 intermediate, not a `.o`, and needs `-mdfp` for a Device Family Pack, same
 as the PIC16 build (see `pic16f87xa-hal/MANUAL.md` §4.2 for those XC8 v3.x
@@ -197,7 +197,7 @@ flag), GPIO drive/read (`pic18_sim_read_output` reads `LATx` for output
 pins, per the LATx-not-PORTx GPIO model, [§8](#8-gpio)). The `drive_*` hooks
 let a test act as the outside world for MSSP, EUSART, the comparator,
 EEPROM, ADC and (40/44-pin only) SPP, the same role the PIC16 sim's
-`drive_*` helpers play — see `pic8-common/MANUAL.md` §5 for the generic
+`drive_*` helpers play, see `epic-common/MANUAL.md` §5 for the generic
 dispatch/writing-a-sim-test pattern, identical here.
 
 ## 6. Interrupts
@@ -235,7 +235,7 @@ void    EPIC_IRQ_SetPriority(PIC18_IRQn irq, EPIC_IRQ_Priority prio);  /* no-op 
 ```
 
 `EPIC_IRQ_Restore(1)` is the drop-in equivalent of PIC16's `GIE = 1` (see
-`pic8-common/MANUAL.md` §6 for the shared enable/disable API and §7 for
+`epic-common/MANUAL.md` §6 for the shared enable/disable API and §7 for
 the ISR-writing pattern, identical here) — it sets both master enables and ensures
 priority mode is active. `EPIC_IRQ_SetPriority` writes the matching bit in
 `INTCON2`/`INTCON3`/`IPR1`/`IPR2`; sources reset to high priority
@@ -254,15 +254,15 @@ Resolved against the XC8 C Compiler User Guide for PIC (DS50002737K)
 §5.9.1.2 "Writing Dual-priority or Legacy Mode ISRs":
 
 ```c
-void __interrupt(high_priority) PIC18_IRQ_HandlerHigh(void) { pic8_dispatch_all_irqs(); }
-void __interrupt(low_priority)  PIC18_IRQ_HandlerLow(void)  { pic8_dispatch_all_irqs(); }
+void __interrupt(high_priority) PIC18_IRQ_HandlerHigh(void) { epic_dispatch_all_irqs(); }
+void __interrupt(low_priority)  PIC18_IRQ_HandlerLow(void)  { epic_dispatch_all_irqs(); }
 ```
 
 No priority argument defaults to high priority; Microchip recommends always
 specifying it. The legacy `#pragma interrupt`/`#pragma interruptlow` form is
 obsolete in XC8 v2+. Both vectors delegate to the one shared
-`pic8_dispatch_all_irqs()` (`src/core/pic18_irq_dispatch.c`), matching
-PIC16's single-dispatcher shape — see `pic8-common/MANUAL.md` §2.3.
+`epic_dispatch_all_irqs()` (`src/core/pic18_irq_dispatch.c`), matching
+PIC16's single-dispatcher shape, see `epic-common/MANUAL.md` §2.3.
 
 ## 7. Core: WDT, Sleep, BOR/POR
 
@@ -326,7 +326,7 @@ Same names/signatures as PIC16F87XA's hook (the fixed contract across
 families), PIC18 register-level body. A whole-port callback for the
 RB<7:4> interrupt-on-change source, the same shape as Timer2's
 one-callback-per-handle but simpler (there is only one PORTB, so no
-handle struct). Added so family-agnostic modules (notably `pic8-encoder`)
+handle struct). Added so family-agnostic modules (notably `epic-encoder`)
 can consume the RB-change interrupt without a family-specific include;
 the family-neutral shim `peripherals/hal_gpio.h` pulls this header in.
 
@@ -364,10 +364,10 @@ when the source is idle. To arm it on a real target, also
 require intercepting every CPU read of PORTB through the `PIC8_REG8`
 macro, disproportionate for the one feature that needs it). Tests that
 exercise the handler assert RBIF directly in INTCON, then call
-`RB_IRQHandler` / `pic8_dispatch_all_irqs` and check the callback's byte
+`RB_IRQHandler` / `epic_dispatch_all_irqs` and check the callback's byte
 and the post-call flag state. This proves the handler's read/clear/callback
 ordering, the part that actually matters. See
-`tests/example_rb_change.c` and `pic8-encoder/docs/ARCHITECTURE.md`.
+`tests/example_rb_change.c` and `epic-encoder/docs/ARCHITECTURE.md`.
 
 ## 9. Timer0
 
@@ -830,8 +830,8 @@ register this HAL uses.
 ```c
 PIC8_REG8(addr)                 // lvalue for the register at addr
 PIC8_SFR_PTR(addr)              // address of that register
-pic8_sfr_read8(addr)            // read
-pic8_sfr_write8(addr, value)    // write (used over compound RMW where XC8
+epic_sfr_read8(addr)            // read
+epic_sfr_write8(addr, value)    // write (used over compound RMW where XC8
                                  // can't lower a compound assignment on a
                                  // volatile cast-lvalue at a runtime SFR
                                  // address — the Phase 2 EUSART codegen lesson)
@@ -871,7 +871,7 @@ of the target build.
 
 - **`example_blink`** — Timer0 (8-bit, 1:256) + GPIO + interrupt, `RB0`
   toggled 9 times in 600k cycles. The one example built for XC8.
-- **`example_smoke`** — harness seam only (`pic8_harness_init/tick/
+- **`example_smoke`**, harness seam only (`epic_harness_init/tick/
   running/log/report`), proves an empty family backend links.
 - **`example_timer1`** — internal clock, 1:1, 3 overflows at 65536 cycles
   each.
@@ -905,11 +905,11 @@ build/example_*; do "$t"; done` (exit 0 = pass), same as PIC16F87XA.
   state machine; drive Start/Stop/ACK and poll `BF`/`ACKSTAT` yourself
   ([§14](#14-mssp-spi-and-i²c)).
 - **`IRQ_Enable` does not set the master enable(s).** Confirmed true here
-  too (see `pic8-common/MANUAL.md`'s general interrupt gotcha): arming a
+  too (see `epic-common/MANUAL.md`'s general interrupt gotcha): arming a
   source via `EPIC_IRQ_Enable` is not enough, `EPIC_IRQ_Restore(1)` (which
   also ensures `IPEN=1`) is what actually lets interrupts fire.
 - **No per-peripheral `HAL_PPP_MspInit`.** Confirmed true here too: ISR
-  vector wiring is centralized in the one shared `pic8_dispatch_all_irqs()`
+  vector wiring is centralized in the one shared `epic_dispatch_all_irqs()`
   called from both the high- and low-priority vectors; extension is via
   handle callbacks, not per-peripheral weak vector hooks.
 - **CCP2 silently ignores ECCP-only handle fields.** `PWMOutputMode`,

@@ -177,13 +177,13 @@ installers eventually supplied by the user:**
   DFPs, including the new `PIC12-16F1xxx_DFP` for `pic16f193x-hal`.
 - `mdb.sh` runs inside the built image.
 - A full real-target build of `pic16f193x-hal` (`MCU=16F1937`),
-  `pic8-tick`'s PIC16F87XA leg (`MCU=16F877A`), and its PIC18 leg
+  `epic-tick`'s PIC16F87XA leg (`MCU=16F877A`), and its PIC18 leg
   (`MCU=18F4550`) all complete and produce valid `.hex` files via the
   real `make xc8-build`.
 - All 19 host-sim modules (`git ls-files -- '*/CMakeLists.txt'`) build
   and pass their `ctest` suite via the real `make test`.
 - **The `mdb` gate itself runs and reports real
-  `PIC8_HARNESS_RESULT: PASS`** for `pic8-tick`'s pilot module, both
+  `PIC8_HARNESS_RESULT: PASS`** for `epic-tick`'s pilot module, both
   families (`make mdb-test`, `PIC16F877A` and `PIC18F4550`), the actual
   reason this whole Docker effort exists.
 - `make ci-image-push`'s tag resolution and its missing-`GHCR_OWNER`

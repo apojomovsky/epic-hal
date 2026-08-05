@@ -10,17 +10,17 @@
  *   Host sim only; the XC8 target build uses example_blink.
  */
 
-#include "pic8_hal.h"
-#include "core/pic8_harness.h"
+#include "epic_hal.h"
+#include "core/epic_harness.h"
 #include "pic18fxx5x_sim.h"
 
 #define CHECK(cond, msg) do { \
-    if (!(cond)) { pic8_harness_log("FAIL: %s\n", msg); return pic8_harness_report(0); } \
+    if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
 } while (0)
 
 int main(void)
 {
-    pic8_harness_init(16U);
+    epic_harness_init(16U);
     pic18_sim_set_irq_callback(NULL);
 
     /* 1. Init: AN2, Fosc/8, 2 Tad, right-justified, VDD/VSS, PCFG=0.
@@ -36,9 +36,9 @@ int main(void)
     h.PinConfig    = 0x0U;
     EPIC_ADC_Init(&h);
 
-    CHECK(pic8_sfr_read8(PIC_REG_ADCON0) == 0x09U, "ADCON0 not 0x09 for AN2/Fosc8");
-    CHECK(pic8_sfr_read8(PIC_REG_ADCON1) == 0x00U, "ADCON1 not 0x00 for VDD/VSS, PCFG0");
-    CHECK(pic8_sfr_read8(PIC_REG_ADCON2) == 0x89U, "ADCON2 not 0x89 for ADFM|ACQ2|Fosc8");
+    CHECK(epic_sfr_read8(PIC_REG_ADCON0) == 0x09U, "ADCON0 not 0x09 for AN2/Fosc8");
+    CHECK(epic_sfr_read8(PIC_REG_ADCON1) == 0x00U, "ADCON1 not 0x00 for VDD/VSS, PCFG0");
+    CHECK(epic_sfr_read8(PIC_REG_ADCON2) == 0x89U, "ADCON2 not 0x89 for ADFM|ACQ2|Fosc8");
 
     /* 2. Start a conversion. */
     CHECK(EPIC_ADC_Start() == 0U, "EPIC_ADC_Start returned error");
@@ -62,19 +62,19 @@ int main(void)
     h.ResultFormat = ADC_FORMAT_RIGHT;
     h.VReference   = ADC_VREF_AN3_VSS;
     EPIC_ADC_Init(&h);
-    CHECK((pic8_sfr_read8(PIC_REG_ADCON1) & PIC_ADCON1_VCFG0) != 0U,
+    CHECK((epic_sfr_read8(PIC_REG_ADCON1) & PIC_ADCON1_VCFG0) != 0U,
           "VCFG0 not set for Vref+ = AN3");
 
     /* 6. SelectChannel(AN5) -> CHS = 5<<2 = 0x14, ADON stays -> 0x15. */
     EPIC_ADC_SelectChannel(ADC_CHANNEL_AN5);
-    CHECK(pic8_sfr_read8(PIC_REG_ADCON0) == 0x15U, "ADCON0 CHS not AN5 (0x15)");
+    CHECK(epic_sfr_read8(PIC_REG_ADCON0) == 0x15U, "ADCON0 CHS not AN5 (0x15)");
 
     /* 7. DeInit restores 0x00. */
     EPIC_ADC_DeInit();
-    CHECK(pic8_sfr_read8(PIC_REG_ADCON0) == 0x00U, "ADCON0 not 0x00 after DeInit");
-    CHECK(pic8_sfr_read8(PIC_REG_ADCON2) == 0x00U, "ADCON2 not 0x00 after DeInit");
+    CHECK(epic_sfr_read8(PIC_REG_ADCON0) == 0x00U, "ADCON0 not 0x00 after DeInit");
+    CHECK(epic_sfr_read8(PIC_REG_ADCON2) == 0x00U, "ADCON2 not 0x00 after DeInit");
 
-    pic8_harness_log("OK: ADC driver, init (3 ADCON regs), start/done, read (both "
+    epic_harness_log("OK: ADC driver, init (3 ADCON regs), start/done, read (both "
                      "justifications), Vref, channel select all pass.\n");
-    return pic8_harness_report(1);
+    return epic_harness_report(1);
 }

@@ -19,7 +19,7 @@
 #include "peripherals/pic16f87xa_timer1.h"
 #include "core/pic16_irq.h"
 #include "core/pic16f87xa_wdt_sleep.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
 /**
  * @brief  Timer1 reload, 0x8000 (32768). On the T1OSC timebase that is
@@ -50,7 +50,7 @@ static void on_t1_overflow(void)
 
 int main(void)
 {
-    pic8_harness_init(SIM_CYCLES);
+    epic_harness_init(SIM_CYCLES);
 
     /* 1. RB0 as output, start low. */
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
@@ -72,12 +72,12 @@ int main(void)
 
     /* 3. Wait for the T1OSC crystal to start ticking before sleeping (a
      *    32 kHz crystal can take a few hundred ms), refreshing the WDT
-     *    meanwhile. pic8_harness_tick pumps the sim on the host (so
+     *    meanwhile. epic_harness_tick pumps the sim on the host (so
      *    the counter advances and the loop exits) and is a no-op on the
      *    target, where the real crystal advances the counter on its own. */
     while (EPIC_TIMER1_ReadCounter() <= T1_RELOAD) {
         EPIC_WDT_Refresh();
-        pic8_harness_tick();
+        epic_harness_tick();
     }
 
     /* 4. Enable global interrupts (EPIC_TIMER1_Init already set TMR1IE
@@ -92,12 +92,12 @@ int main(void)
      *    CPU; the vector dispatcher calls TIMER1_IRQHandler, which clears
      *    the flag and runs on_t1_overflow (reload + toggle + WDT refresh),
      *    and the CPU sleeps again. */
-    for (uint32_t i = 0; pic8_harness_running(i); i++) {
-        pic8_harness_tick();
+    for (uint32_t i = 0; epic_harness_running(i); i++) {
+        epic_harness_tick();
         EPIC_Sleep_Enter();
     }
 
-    pic8_harness_log("RB0 toggled %u times; CPU idle between overflows.\n",
+    epic_harness_log("RB0 toggled %u times; CPU idle between overflows.\n",
                            (unsigned)g_toggle_count);
-    return pic8_harness_report(g_toggle_count >= 2U);
+    return epic_harness_report(g_toggle_count >= 2U);
 }

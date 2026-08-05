@@ -27,8 +27,8 @@ extern uint8_t pic16f87xa_sim_sfr[0x200];
 
 /* SFR access resolves to an index into the simulated register file. */
 #define PIC8_SFR_PTR(addr)       (&pic16f87xa_sim_sfr[(uint16_t)(addr)])
-#define pic8_sfr_read8(addr)     (pic16f87xa_sim_sfr[(uint16_t)(addr)])
-#define pic8_sfr_write8(addr, v) \
+#define epic_sfr_read8(addr)     (pic16f87xa_sim_sfr[(uint16_t)(addr)])
+#define epic_sfr_write8(addr, v) \
     do { pic16f87xa_sim_sfr[(uint16_t)(addr)] = (uint8_t)(v); } while (0)
 
 /* Address of a register as a uint8_t lvalue (read/write/RMW). */

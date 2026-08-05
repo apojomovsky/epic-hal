@@ -110,7 +110,7 @@
 #endif
 /** @} */
 
-/* ─────────── family-neutral capability aliases (pic8-common contract) ── */
+/* ─────────── family-neutral capability aliases (epic-common contract) ── */
 /**
  * Family-neutral aliases of the capability macros above, so family-agnostic
  * consumers (e.g. the task manager) can scale without a family-specific
@@ -118,9 +118,9 @@
  */
 #define PIC8_FAMILY_RAM_BYTES   PIC18FXX5X_FAMILY_RAM_BYTES
 
-/* ─────────── shared HAL status codes + bit helpers (pic8-common) ── */
+/* ─────────── shared HAL status codes + bit helpers (epic-common) ── */
 /** Status enum and bit macros are architecture-blind, shared across
- *  every 8-bit PIC family; see pic8-common/include/core/hal_status.h. */
+ *  every 8-bit PIC family; see epic-common/include/core/hal_status.h. */
 #include "core/hal_status.h"
 
 /* ───────────── platform: SFR mapping + weak attribute ───────────── */
@@ -128,7 +128,7 @@
  * @defgroup PIC18FXX5X_SFR Special Function Register mapping
  * @brief   How every SFR is stored and how the weak attribute is spelled.
  *
- * The same source reads `pic8_sfr_read8(addr)` (or `PIC8_REG8`) on both
+ * The same source reads `epic_sfr_read8(addr)` (or `PIC8_REG8`) on both
  * builds; the implementation is chosen by include path, not `#ifdef`: host
  * CMake resolves `pic18_platform.h` to `include/host/...` (a memory-backed
  * register file), the XC8 Makefile to `include/target/...` (direct

@@ -21,8 +21,8 @@ uint16_t EPIC_TIMER1_ReadCounter(void)
 {
     /* With RD16 set, reading TMR1L latches TMR1H into a shadow (DS39632E
      * §12.0); read low then high for a consistent 16-bit value. */
-    uint8_t lo = pic8_sfr_read8(PIC_REG_TMR1L);
-    uint8_t hi = pic8_sfr_read8(PIC_REG_TMR1H);
+    uint8_t lo = epic_sfr_read8(PIC_REG_TMR1L);
+    uint8_t hi = epic_sfr_read8(PIC_REG_TMR1H);
     return (uint16_t)(((uint16_t)hi << 8) | lo);
 }
 
@@ -30,8 +30,8 @@ void EPIC_TIMER1_WriteCounter(uint16_t value)
 {
     /* With RD16 set, writing TMR1L latches TMR1H (DS39632E §12.0); write
      * high byte first via the shadow, then low to commit both. */
-    pic8_sfr_write8(PIC_REG_TMR1H, (uint8_t)(value >> 8));
-    pic8_sfr_write8(PIC_REG_TMR1L, (uint8_t)(value & 0xFFU));
+    epic_sfr_write8(PIC_REG_TMR1H, (uint8_t)(value >> 8));
+    epic_sfr_write8(PIC_REG_TMR1L, (uint8_t)(value & 0xFFU));
 }
 
 uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p)

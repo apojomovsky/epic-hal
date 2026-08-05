@@ -10,8 +10,8 @@
  *   `ECCP1DEL=0x8C`) and counts Timer2 overflows as the PWM period marker.
  */
 
-#include "pic8_hal.h"
-#include "core/pic8_harness.h"
+#include "epic_hal.h"
+#include "core/epic_harness.h"
 #include <stdio.h>
 
 #define EXPECTED_PERIOD_CYCLES  100UL
@@ -30,7 +30,7 @@ static void on_t2_overflow(void)
 
 int main(void)
 {
-    pic8_harness_init(SIM_CYCLES);
+    epic_harness_init(SIM_CYCLES);
 
     /* 1. Timer2 as the PWM time base (DS39632E §16.4.3 step 4). */
     TIMER2_HandleTypeDef th = TIMER2_HANDLE_DEFAULT;
@@ -58,34 +58,34 @@ int main(void)
     EPIC_IRQ_Restore(1);
 
     /* 4. Verify the register image. */
-    uint8_t cprl = pic8_sfr_read8(PIC_REG_CCPR1L);
-    uint8_t con  = pic8_sfr_read8(PIC_REG_CCP1CON);
-    uint8_t del  = pic8_sfr_read8(PIC_REG_ECCP1DEL);
+    uint8_t cprl = epic_sfr_read8(PIC_REG_CCPR1L);
+    uint8_t con  = epic_sfr_read8(PIC_REG_CCP1CON);
+    uint8_t del  = epic_sfr_read8(PIC_REG_ECCP1DEL);
     if (cprl != 12U) {
-        pic8_harness_log("FAIL: CCPR1L=0x%02X, expected 0x0C\n", (unsigned)cprl);
-        return pic8_harness_report(0);
+        epic_harness_log("FAIL: CCPR1L=0x%02X, expected 0x0C\n", (unsigned)cprl);
+        return epic_harness_report(0);
     }
     if (con != 0xACU) {
-        pic8_harness_log("FAIL: CCP1CON=0x%02X, expected 0xAC\n", (unsigned)con);
-        return pic8_harness_report(0);
+        epic_harness_log("FAIL: CCP1CON=0x%02X, expected 0xAC\n", (unsigned)con);
+        return epic_harness_report(0);
     }
     if (del != 0x8CU) {
-        pic8_harness_log("FAIL: ECCP1DEL=0x%02X, expected 0x8C\n", (unsigned)del);
-        return pic8_harness_report(0);
+        epic_harness_log("FAIL: ECCP1DEL=0x%02X, expected 0x8C\n", (unsigned)del);
+        return epic_harness_report(0);
     }
 
     /* 5. Run the sim and count TMR2 overflows (one per PWM period). */
-    for (uint32_t i = 0; pic8_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++) {
         g_cycle = i + 1;
-        pic8_harness_tick();
+        epic_harness_tick();
         if (g_overflows >= EXPECTED_OVERFLOWS) break;
     }
 
     int32_t delta = (int32_t)g_first_cycle - (int32_t)EXPECTED_PERIOD_CYCLES;
     if (delta < 0) delta = -delta;
 
-    pic8_harness_log("ECCP1 half-bridge PWM: %u periods, first at cycle %u "
+    epic_harness_log("ECCP1 half-bridge PWM: %u periods, first at cycle %u "
                      "(expected ~%u)\n", (unsigned)g_overflows,
                      (unsigned)g_first_cycle, (unsigned)EXPECTED_PERIOD_CYCLES);
-    return pic8_harness_report(g_overflows >= EXPECTED_OVERFLOWS && delta <= 4);
+    return epic_harness_report(g_overflows >= EXPECTED_OVERFLOWS && delta <= 4);
 }

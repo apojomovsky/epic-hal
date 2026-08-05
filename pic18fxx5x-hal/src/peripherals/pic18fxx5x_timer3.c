@@ -18,15 +18,15 @@ static const TIMER3_HandleTypeDef *g_t3_handle = NULL;
 uint16_t EPIC_TIMER3_ReadCounter(void)
 {
     /* With RD16 set, reading TMR3L latches TMR3H (DS39632E §14.0). */
-    uint8_t lo = pic8_sfr_read8(PIC_REG_TMR3L);
-    uint8_t hi = pic8_sfr_read8(PIC_REG_TMR3H);
+    uint8_t lo = epic_sfr_read8(PIC_REG_TMR3L);
+    uint8_t hi = epic_sfr_read8(PIC_REG_TMR3H);
     return (uint16_t)(((uint16_t)hi << 8) | lo);
 }
 
 void EPIC_TIMER3_WriteCounter(uint16_t value)
 {
-    pic8_sfr_write8(PIC_REG_TMR3H, (uint8_t)(value >> 8));
-    pic8_sfr_write8(PIC_REG_TMR3L, (uint8_t)(value & 0xFFU));
+    epic_sfr_write8(PIC_REG_TMR3H, (uint8_t)(value >> 8));
+    epic_sfr_write8(PIC_REG_TMR3L, (uint8_t)(value & 0xFFU));
 }
 
 uint16_t EPIC_TIMER3_PrescalerToRatio(TIMER3_PrescalerTypeDef p)

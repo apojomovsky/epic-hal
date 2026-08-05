@@ -24,8 +24,8 @@
 #   make MCU=16F1937            # default; also 1933/1934/1936/1938/1939
 #   make clean
 #
-# This file is a thin caller of the shared pic8_family.mk fragment
-# (pic8-common/mk/). Only what is genuinely PIC16F193X-specific stays
+# This file is a thin caller of the shared epic_family.mk fragment
+# (epic-common/mk/). Only what is genuinely PIC16F193X-specific stays
 # here: device selection, the DFP flag, the source list, the include
 # path, and the configuration-word directives.
 #
@@ -64,7 +64,7 @@ endif
 
 # ─────────────────────────── paths ────────────────────────────────
 EPIC_DIR    ?= ../..
-COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
+COMMON_DIR ?= $(EPIC_DIR)/../epic-common
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-firmware
 
@@ -80,7 +80,7 @@ ifeq ($(HARNESS),sim)
   HARNESS_SRC := $(EPIC_DIR)/src/core/pic16f193x_harness_sim_target.c
   # HARNESS=sim exercises the Timer1 driver (the §4 gate's load-bearing
   # peripheral for Phase 0). The Timer1 example's main loop halts in a
-  # tight `for(;;)` after pic8_harness_report() so the HARNESS=sim
+  # tight `for(;;)` after epic_harness_report() so the HARNESS=sim
   # marker's RA0 stays set across the mdb `print PORTA` readback; the
   # default real-target example (example_blink) returns the report's
   # result and re-enters main via `ljmp start`, which flickers RA0 in
@@ -99,7 +99,7 @@ ifeq ($(HARNESS),sim)
   # the only place it can be turned off for this variant.
   CONFIG_WDTE := OFF
 else
-  HARNESS_SRC := $(COMMON_DIR)/src/core/pic8_harness_target.c
+  HARNESS_SRC := $(COMMON_DIR)/src/core/epic_harness_target.c
   # example_blink is the canonical "turn an LED on" smoke test for the
   # real-target (HARNESS=target, default) build. Replace it with your
   # project's main.c.
@@ -132,7 +132,7 @@ CFLAGS := $(DFP_FLAG) \
 # pic16f193x_sim.c). The host/target SFR mapping is chosen by the include
 # path (include/target first); the host-only harness / wdt_sleep-sim
 # implementations are simply absent from this source list. The
-# family-blind harness target impl lives in pic8-common.
+# family-blind harness target impl lives in epic-common.
 
 EPIC_SOURCES := \
   $(EPIC_DIR)/src/peripherals/pic16f193x_gpio.c     \
@@ -169,7 +169,7 @@ CONFIG_SRC := $(BUILD_DIR)/config_$(MCU).c
 CONFIG_OBJ := $(BUILD_DIR)/config_$(MCU).p1
 
 # ─────────────────────────── shared build rules ────────────────────
-include $(COMMON_DIR)/mk/pic8_family.mk
+include $(COMMON_DIR)/mk/epic_family.mk
 
 # Family-specific: the PIC16F193X config-word directives.
 $(CONFIG_SRC): | $(BUILD_DIR)

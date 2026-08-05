@@ -9,7 +9,7 @@ are taken from
 [DS41364B](https://ww1.microchip.com/downloads/en/DeviceDoc/41364B.pdf).
 
 Third family in this repo, alongside the PIC16F87XA and PIC18F2455
-HALs. All three implement a shared API contract from pic8-common: same
+HALs. All three implement a shared API contract from epic-common: same
 function names and signatures, family-specific register bodies
 underneath. Applications written against the shared API are portable
 across families at build time (include-path swap), not source time.
@@ -104,8 +104,8 @@ source compiles unchanged in both builds.
   API, and errata notes.
 - [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md): XC8 codegen findings
   for this family (BSR banking, PIE1/2/3 RMW fix, FSR/INDF verification).
-- [**../pic8-common/README.md**](../pic8-common/README.md) +
-  [**../pic8-common/MANUAL.md**](../pic8-common/MANUAL.md): the shared
+- [**../epic-common/README.md**](../epic-common/README.md) +
+  [**../epic-common/MANUAL.md**](../epic-common/MANUAL.md): the shared
   contract every family implements (status codes, harness, interrupt
   model, naming conventions).
 - [**../docs/multi-family-plan.md**](../docs/multi-family-plan.md): the

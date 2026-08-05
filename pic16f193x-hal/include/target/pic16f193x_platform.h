@@ -43,22 +43,22 @@
 
 /* SFR access resolves to a direct volatile dereference of the address. */
 #define PIC8_SFR_PTR(addr)       ((volatile uint8_t *)(uintptr_t)(addr))
-#define pic8_sfr_read8(addr)     (*(volatile uint8_t *)(uintptr_t)(addr))
-#define pic8_sfr_write8(addr, v) \
+#define epic_sfr_read8(addr)     (*(volatile uint8_t *)(uintptr_t)(addr))
+#define epic_sfr_write8(addr, v) \
     do { *(volatile uint8_t *)(uintptr_t)(addr) = (uint8_t)(v); } while (0)
 
 /* Address of a register as a uint8_t lvalue (read/write/RMW). */
 #define PIC8_REG8(addr)          (*(volatile uint8_t *)(uintptr_t)(addr))
 
 /* File-scope symbol the asm below needs (inline asm can only address
- * file-scope symbols, see pic8-math/docs/ARCHITECTURE.md's "Inline-asm
+ * file-scope symbols, see epic-math/docs/ARCHITECTURE.md's "Inline-asm
  * binding"). `__at()`-pinned into bank-independent common RAM (0x70,
  * PIC16F193X Table 2-3, accessable across all banks) in
  * pic16f193x_isr_vector.c rather than left to the linker's default
  * placement, which scatters unpinned statics by best-fit, not
  * declaration order (AGENTS.md). Same shape as
  * pic16f87xa-hal/include/target/pic16f87xa_platform.h. */
-extern volatile uint8_t pic8_irq_pie_scratch __at(0x70);
+extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
 
 /* PIE1/PIE2/PIE3 enable/disable via inline asm on the Enhanced
  * Mid-range core. `pir_index` is 0 for PIE1, 1 for PIE2, 2 for PIE3
@@ -71,19 +71,19 @@ extern volatile uint8_t pic8_irq_pie_scratch __at(0x70);
  * any C-level local (matches pic16f87xa-hal's proven pattern). */
 #define PIC8_PIE_ENABLE_BIT(pir_index, mask)                              \
     do {                                                                  \
-        pic8_irq_pie_scratch = (uint8_t)(mask);                          \
+        epic_irq_pie_scratch = (uint8_t)(mask);                          \
         if ((pir_index) == 2U) {                                         \
-            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movf _epic_irq_pie_scratch,w");                          \
             asm("movlb 1");                                              \
             asm("iorwf PIE3,f");                                         \
             asm("movlb 0");                                              \
         } else if ((pir_index) == 1U) {                                  \
-            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movf _epic_irq_pie_scratch,w");                          \
             asm("movlb 1");                                              \
             asm("iorwf PIE2,f");                                         \
             asm("movlb 0");                                              \
         } else {                                                         \
-            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movf _epic_irq_pie_scratch,w");                          \
             asm("movlb 1");                                              \
             asm("iorwf PIE1,f");                                         \
             asm("movlb 0");                                              \
@@ -92,19 +92,19 @@ extern volatile uint8_t pic8_irq_pie_scratch __at(0x70);
 
 #define PIC8_PIE_DISABLE_BIT(pir_index, mask)                             \
     do {                                                                  \
-        pic8_irq_pie_scratch = (uint8_t)~(uint8_t)(mask);                 \
+        epic_irq_pie_scratch = (uint8_t)~(uint8_t)(mask);                 \
         if ((pir_index) == 2U) {                                         \
-            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movf _epic_irq_pie_scratch,w");                          \
             asm("movlb 1");                                              \
             asm("andwf PIE3,f");                                         \
             asm("movlb 0");                                              \
         } else if ((pir_index) == 1U) {                                  \
-            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movf _epic_irq_pie_scratch,w");                          \
             asm("movlb 1");                                              \
             asm("andwf PIE2,f");                                         \
             asm("movlb 0");                                              \
         } else {                                                         \
-            asm("movf _pic8_irq_pie_scratch,w");                          \
+            asm("movf _epic_irq_pie_scratch,w");                          \
             asm("movlb 1");                                              \
             asm("andwf PIE1,f");                                         \
             asm("movlb 0");                                              \

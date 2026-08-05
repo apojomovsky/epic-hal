@@ -6,12 +6,12 @@ name: sim-tests
 # Phase 3 left open (build-verified locally, never actually run under a
 # simulator, since this environment has no local mdb/GHCR access).
 #
-# Scoped to the pic8-tick pilot for PIC16F87XA/PIC18Fxxxx (Phase 5 rolls
+# Scoped to the epic-tick pilot for PIC16F87XA/PIC18Fxxxx (Phase 5 rolls
 # this out to every module, discovered the same dynamic way xc8-build.yml
 # already discovers its own matrix), plus PIC16F193X's own diagnostic
-# example directly (pic16f193x-hal has no pic8-tick port yet): its
+# example directly (pic16f193x-hal has no epic-tick port yet): its
 # harness has no UART, so it reports over MODE=gpio instead (RA0 driven
-# high/low by pic8_harness_report, read back via mdb `print PORTA`, see
+# high/low by epic_harness_report, read back via mdb `print PORTA`, see
 # scripts/sim-mdb-run.sh's own header comment).
 #
 # toolchain-image below is a deliberate, verbatim copy of xc8-build.yml's
@@ -125,12 +125,12 @@ jobs:
           - family: pic16f87xa
             mcu: 16F877A
             device: PIC16F877A
-            dir: pic8-tick/mcu/pic16f87xa-tick-mplabx
+            dir: epic-tick/mcu/pic16f87xa-tick-mplabx
             dfp: Microchip.PIC16Fxxx_DFP
           - family: pic18fxx5x
             mcu: 18F4550
             device: PIC18F4550
-            dir: pic8-tick/mcu/pic18fxx5x-tick-mplabx
+            dir: epic-tick/mcu/pic18fxx5x-tick-mplabx
             dfp: Microchip.PIC18Fxxxx_DFP
           - family: pic16f193x
             mcu: 16F1937

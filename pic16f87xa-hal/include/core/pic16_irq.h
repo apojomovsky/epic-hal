@@ -2,7 +2,7 @@
  * @file    core/pic16_irq.h
  * @brief   PIC16F87XA interrupt controller: the IRQn enum and the
  *          enable / disable / flag helpers. The family-blind dispatch
- *          contract (pic8_dispatch_all_irqs) lives in pic8_harness.h.
+ *          contract (epic_dispatch_all_irqs) lives in epic_harness.h.
  *
  * @details
  *   Mirrors `HAL_NVIC_*` from STM32Cube: callers never touch
@@ -34,7 +34,7 @@
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sfr.h"
-#include "core/pic8_irq.h"   /* shared EPIC_IRQ_Priority enum (family-blind) */
+#include "core/epic_irq.h"   /* shared EPIC_IRQ_Priority enum (family-blind) */
 
 /**
  * @brief Logical identity of every interrupt source on the part.

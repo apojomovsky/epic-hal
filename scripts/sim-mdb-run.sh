@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build a module's sim-target .hex and run it under MPLAB SIM (mdb),
 # checking for the PIC8_HARNESS_RESULT marker (see
-# pic8-common/include/core/pic8_harness.h). Shared by
+# epic-common/include/core/epic_harness.h). Shared by
 # .github/workflows/sim-tests.yml and scripts/sim-test-local.sh, so CI
 # and a local run go through the exact same build+mdb+grep sequence,
 # not two copies that can drift apart (docs/ci-plan.md's local
@@ -15,7 +15,7 @@
 #   family    matrix label, only used to namespace temp files (e.g. pic16f87xa)
 #   mcu       Makefile MCU= value (e.g. 16F877A)
 #   device    mdb `device` command's part name (e.g. PIC16F877A)
-#   dir       module's mcu/*-mplabx dir (e.g. pic8-tick/mcu/pic16f87xa-tick-mplabx)
+#   dir       module's mcu/*-mplabx dir (e.g. epic-tick/mcu/pic16f87xa-tick-mplabx)
 #   dfp       DFP pack name (e.g. Microchip.PIC16Fxxx_DFP)
 #   wait_ms   real-time ms to let mdb run before halting (default 2000;
 #             MPLAB SIM runs noticeably slower than real-time, see

@@ -20,7 +20,7 @@
 #include "pic16f193x_sfr.h"
 #include "peripherals/pic16f193x_gpio.h"
 #include "core/pic16f193x_irq.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 #include "pic16f193x_sim.h"
 
 static volatile uint8_t g_ioc_seen = 0;
@@ -36,7 +36,7 @@ static void on_ioc(uint8_t iocbf, uint8_t portb)
 int main(void)
 {
     /* Bound generous; the test is event-driven, not time-driven. */
-    pic8_harness_init(10000UL);
+    epic_harness_init(10000UL);
 
     int ok = 1;
 
@@ -51,10 +51,10 @@ int main(void)
      *    The sim refreshes PORTB from the input override each tick. */
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_1, GPIO_MODE_INPUT);
     pic16f193x_sim_drive_input('B', 1, 1);
-    pic8_harness_tick();
+    epic_harness_tick();
     ok &= (EPIC_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_SET);
     pic16f193x_sim_drive_input('B', 1, 0);
-    pic8_harness_tick();
+    epic_harness_tick();
     ok &= (EPIC_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_RESET);
 
     /* 3. PORTB interrupt-on-change: positive edge on RB2. */
@@ -67,13 +67,13 @@ int main(void)
     /* Drive RB2 low first so the sim's last-known level is low, then a
      * rising edge. Tick once after each drive to let sim_step_ioc run. */
     pic16f193x_sim_drive_input('B', 2, 0);
-    pic8_harness_tick();          /* no edge yet: iocbf stays 0. */
+    epic_harness_tick();          /* no edge yet: iocbf stays 0. */
     ok &= (g_ioc_seen == 0U);
     pic16f193x_sim_drive_input('B', 2, 1);
-    pic8_harness_tick();          /* rising edge on RB2 -> IOCIF -> handler. */
+    epic_harness_tick();          /* rising edge on RB2 -> IOCIF -> handler. */
     ok &= (g_ioc_seen  == 1U);
     ok &= (g_ioc_iocbf == GPIO_PIN_2);
 
-    pic8_harness_log("gpio/IOC smoke: %s\n", ok ? "PASS" : "FAIL");
-    return pic8_harness_report(ok);
+    epic_harness_log("gpio/IOC smoke: %s\n", ok ? "PASS" : "FAIL");
+    return epic_harness_report(ok);
 }

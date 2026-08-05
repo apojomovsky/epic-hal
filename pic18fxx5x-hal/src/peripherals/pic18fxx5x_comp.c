@@ -33,7 +33,7 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
     if (h->CIS)        v |= PIC_CMCON_CIS;
     if (h->C1Inverted) v |= PIC_CMCON_C1INV;
     if (h->C2Inverted) v |= PIC_CMCON_C2INV;
-    pic8_sfr_write8(PIC_REG_CMCON, v);
+    epic_sfr_write8(PIC_REG_CMCON, v);
 
     /* Interrupt enable. */
     EPIC_IRQ_ClearFlag(PIC18_IRQ_CMP);
@@ -47,24 +47,24 @@ EPIC_StatusTypeDef EPIC_COMP_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC18_IRQ_CMP);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_CMP);
-    pic8_sfr_write8(PIC_REG_CMCON, PIC_CMCON_POR_VALUE);   /* 0x07, off. */
+    epic_sfr_write8(PIC_REG_CMCON, PIC_CMCON_POR_VALUE);   /* 0x07, off. */
     g_comp = NULL;
     return EPIC_OK;
 }
 
 uint8_t EPIC_COMP_C1Out(void)
 {
-    return (pic8_sfr_read8(PIC_REG_CMCON) & PIC_CMCON_C1OUT) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_CMCON) & PIC_CMCON_C1OUT) ? 1U : 0U;
 }
 
 uint8_t EPIC_COMP_C2Out(void)
 {
-    return (pic8_sfr_read8(PIC_REG_CMCON) & PIC_CMCON_C2OUT) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_CMCON) & PIC_CMCON_C2OUT) ? 1U : 0U;
 }
 
 uint8_t EPIC_COMP_IsChangeFlag(void)
 {
-    return (pic8_sfr_read8(PIC_REG_PIR2) & PIC_PIR2_CMIF) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_PIR2) & PIC_PIR2_CMIF) ? 1U : 0U;
 }
 
 void EPIC_COMP_ClearChangeFlag(void)

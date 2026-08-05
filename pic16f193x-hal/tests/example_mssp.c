@@ -12,13 +12,13 @@
 #include "pic16f193x.h"
 #include "pic16f193x_sfr.h"
 #include "peripherals/pic16f193x_ssp.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
 extern void pic16f193x_harness_halt(void);
 
 int main(void)
 {
-    pic8_harness_init(1UL);
+    epic_harness_init(1UL);
 
     SSP_HandleTypeDef ssp = SSP_HANDLE_DEFAULT;
     EPIC_SSP_Init(&ssp);
@@ -26,9 +26,9 @@ int main(void)
     uint8_t stat = PIC8_REG8(PIC_REG_SSPSTAT);
     uint8_t con1 = PIC8_REG8(PIC_REG_SSPCON1);
 
-    pic8_harness_log("SSPSTAT=0x%02X SSPCON1=0x%02X\n", stat, con1);
+    epic_harness_log("SSPSTAT=0x%02X SSPCON1=0x%02X\n", stat, con1);
     int pass = (stat == 0x40U) && (con1 == 0x20U);
-    int rc = pic8_harness_report(pass);
+    int rc = epic_harness_report(pass);
     pic16f193x_harness_halt();
     return rc;
 }

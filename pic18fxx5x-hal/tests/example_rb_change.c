@@ -10,8 +10,8 @@
  *   read/clear/callback ordering, the part that actually matters.
  */
 
-#include "pic8_hal.h"
-#include "core/pic8_harness.h"
+#include "epic_hal.h"
+#include "core/epic_harness.h"
 
 #include <stdio.h>
 
@@ -102,7 +102,7 @@ static void test_dispatch_reaches_handler(void)
     assert_rbif();
 
     /* A full dispatch pass must route to RB_IRQHandler. */
-    pic8_dispatch_all_irqs();
+    epic_dispatch_all_irqs();
 
     CHECK(g_cb_calls == 1, "dispatch: fan-out reached RB_IRQHandler");
     CHECK(g_cb_last == 0x96U, "dispatch: correct byte delivered");
@@ -111,9 +111,9 @@ static void test_dispatch_reaches_handler(void)
 
 int main(void)
 {
-    /* pic8_harness_init resets the sim SFRs to POR and wires the family
+    /* epic_harness_init resets the sim SFRs to POR and wires the family
      * dispatcher as the sim IRQ callback. */
-    pic8_harness_init(1024UL);
+    epic_harness_init(1024UL);
 
     test_noop_when_not_pending();
     test_fires_when_pending();

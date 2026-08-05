@@ -2,7 +2,7 @@
 
 > Status: **all four bugs found and fixed (including a fourth found by
 > following up on this document's own "very likely affected" flag
-> rather than leaving it as a guess); `pic8-tick`'s PIC18 sim-target
+> rather than leaving it as a guess); `epic-tick`'s PIC18 sim-target
 > test reaches a full `PASS`.** Written up during
 > `docs/ci-plan.md` Phase 4's PIC18 follow-up, after the PIC16 side of
 > the same phase reached a full fix (see `pic16f87xa-hal/docs/
@@ -46,7 +46,7 @@ whose correctness doesn't depend on precise timing). Verified via `mdb`:
 
 **Confirmed by inspection, fixed by analogy to PIC16's own fix, not
 independently proven to be the cause of any specific symptom here.**
-`pic8-tick/mcu/pic18fxx5x-tick-mplabx/Makefile` hardcoded
+`epic-tick/mcu/pic18fxx5x-tick-mplabx/Makefile` hardcoded
 `#pragma config WDT = ON` unconditionally, unlike
 `pic16f87xa-tick-mplabx/Makefile`, which already had a `HARNESS=sim` →
 `CONFIG_WDTE=OFF` override (`docs/ci-plan.md` Phase 4, item 6, in the
@@ -63,23 +63,23 @@ from PIC16's own reasoning.
 ## Finding 3: a runtime-computed SFR address compiles to program-memory table access, not data-memory access
 
 **Root cause of the remaining sim-target hang, found, precisely
-localized, and fixed.** With Findings 1 and 2 applied, `pic8-tick`'s
+localized, and fixed.** With Findings 1 and 2 applied, `epic-tick`'s
 PIC18 sim-target test still produces no UART output at all. Traced via
 `mdb`
 instruction-stepping (`stepi`, not `run`+`wait`, for the same reason
 noted in `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 9: headless
 `break`-set breakpoints don't reliably work in this toolchain):
 
-- `pic8_tick_init`'s call sequence (`compute_period` →
+- `epic_tick_init`'s call sequence (`compute_period` →
   `EPIC_TIMER2_Init` → `EPIC_TIMER2_Start` → `EPIC_IRQ_Restore(1)`)
   completes: confirmed by observing `PC` land inside
-  `pic8_tick_delay_ms`'s busy-wait loop at a large step count, well past
-  `pic8_tick_init`'s own address range.
+  `epic_tick_delay_ms`'s busy-wait loop at a large step count, well past
+  `epic_tick_init`'s own address range.
 - Yet `INTCON` (`GIEH`/`GIEL`) and `RCON<IPEN>` never leave their POR
   values, `INTCON=0`, `RCON=0x5C` (`IPEN` clear), even deep into that
   busy-wait, meaning `EPIC_IRQ_Restore(1)` never actually took effect,
   so Timer2's interrupt never fires, `g_tick_ms` never increments, and
-  `pic8_tick_delay_ms` spins forever. Exactly PIC16's very first Phase 4
+  `epic_tick_delay_ms` spins forever. Exactly PIC16's very first Phase 4
   bug in spirit ("nothing ever enabled GIE"), but here the code
   unambiguously calls `EPIC_IRQ_Restore(1)`; the call itself is not
   taking effect.
@@ -113,7 +113,7 @@ a plain (unqualified) pointer's target memory space is determined by
 *scanning what addresses get assigned to it across the whole program*
 unless "local optimizations" are in effect, in which case the `__ram`/
 `__rom` pointer-target qualifiers (§5.3.6.3.2) can force a specific
-classification. `pic8_sfr_read8`/`pic8_sfr_write8`
+classification. `epic_sfr_read8`/`epic_sfr_write8`
 (`include/target/pic18_platform.h`) are defined as a bare
 `(volatile uint8_t *)(uintptr_t)(addr)` cast with no such qualifier,
 and the underlying value being cast is a **runtime integer**
@@ -126,7 +126,7 @@ the *same* generated code can transparently reach either data or
 program memory depending on the runtime value.
 
 **Tried, did not fix it**: adding the `__ram` qualifier directly to
-`pic8_sfr_read8`/`write8`'s cast, and separately adding `-flocal` to
+`epic_sfr_read8`/`write8`'s cast, and separately adding `-flocal` to
 the build (the flag §5.3.6.3.2 says gates whether `__ram`/`__rom` are
 even honored), together and individually. Neither changed the generated
 code at all, still `tblrd`/`tblwt` in both cases (checked the `.s`
@@ -143,7 +143,7 @@ removed; every function (`EPIC_IRQ_Disable`/`Restore`/`Enable`/
 `DisableSrc`/`ClearFlag`/`GetFlag`/`SetPriority`) is now a `switch` on
 `irq` with one `case` per source, each naming its register directly
 (a new `SFR_SET_BIT`/`SFR_CLR_BIT` macro pair, expanding to a plain
-`pic8_sfr_read8`/`write8` pair against a literal `PIC_REG_*` token, so
+`epic_sfr_read8`/`write8` pair against a literal `PIC_REG_*` token, so
 the address is always a compile-time constant, never a value that
 crossed a function-call boundary as a `uint16_t`). `EPIC_IRQ_Disable`/
 `Restore` needed the same treatment even though they already passed
@@ -151,14 +151,14 @@ constant addresses at their own call sites: `sfr_set`/`sfr_clr` still
 received them as a genuine runtime parameter internally, so the bug
 applied there too, not just to the table-driven per-source functions.
 
-Verified via `mdb`: `pic8-tick`'s PIC18 sim-target test reaches
+Verified via `mdb`: `epic-tick`'s PIC18 sim-target test reaches
 `PIC8_HARNESS_RESULT: PASS` reliably (3/3 runs). Host suite and all 22
 previously-passing PIC18 `(module, MCU)` real-target builds re-verified
 clean, no regressions.
 
 ## Finding 4: `pic18fxx5x_ccp.c` had the identical bug, confirmed and fixed too
 
-**Found, confirmed via `mdb`, and fixed, even though `pic8-tick` never
+**Found, confirmed via `mdb`, and fixed, even though `epic-tick` never
 exercised it.** Flagged in an earlier draft of this document as "very
 likely has the same bug" from a `grep` for the pattern alone; followed
 up rather than left as a guess. `EPIC_CCP_Init`/`SetCompare`/

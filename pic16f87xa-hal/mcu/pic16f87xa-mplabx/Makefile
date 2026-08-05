@@ -23,8 +23,8 @@
 # and use the "Make and Program" button. The .hex output here
 # is suitable for any external programmer (PK2CMD, ippe, MPLAB IPE).
 #
-# This file is a thin caller of the shared pic8_family.mk fragment
-# (pic8-common/mk/): the `.c` -> `.p1` pattern rule, the `.hex` link
+# This file is a thin caller of the shared epic_family.mk fragment
+# (epic-common/mk/): the `.c` -> `.p1` pattern rule, the `.hex` link
 # step, and clean all live there. Only what is genuinely PIC16F87XA-
 # specific stays here: device selection, the DFP flag, the source list,
 # the include path, and the configuration-word directives.
@@ -47,10 +47,10 @@ endif
 
 # ─────────────────────────── paths ────────────────────────────────
 # Adjust EPIC_DIR if the firmware project is not a sibling of pic16f87xa-hal.
-# pic8-common holds the shared harness target impl and headers; it is a
+# epic-common holds the shared harness target impl and headers; it is a
 # sibling of the HAL tree.
 EPIC_DIR    ?= ../..
-COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
+COMMON_DIR ?= $(EPIC_DIR)/../epic-common
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-firmware
 
@@ -66,7 +66,7 @@ endif
 CC     := xc8-cc
 # include/target ahead of include so pic16f87xa_platform.h resolves to the
 # real-target (volatile-dereference) version, not the host memory-backed one.
-# pic8-common/include provides the shared hal_status.h / pic8_harness.h.
+# epic-common/include provides the shared hal_status.h / epic_harness.h.
 INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include
 CFLAGS := $(DFP_FLAG) \
           -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
@@ -81,7 +81,7 @@ CFLAGS := $(DFP_FLAG) \
 # links pic16f87xa_sim.c. The host/target SFR mapping is chosen by the
 # include path (include/target first), and the host-only harness /
 # wdt_sleep-sim implementations are simply absent from this source list.
-# The family-blind harness target impl lives in pic8-common and is
+# The family-blind harness target impl lives in epic-common and is
 # linked here alongside the PIC16 core.
 
 EPIC_SOURCES := \
@@ -101,7 +101,7 @@ EPIC_SOURCES := \
   $(EPIC_DIR)/src/core/pic16f87xa_wdt_sleep_target.c \
   $(EPIC_DIR)/src/core/pic16_isr_vector.c          \
   $(EPIC_DIR)/src/core/pic16_irq_dispatch.c        \
-  $(COMMON_DIR)/src/core/pic8_harness_target.c
+  $(COMMON_DIR)/src/core/epic_harness_target.c
 
 # PSP is only on 40/44-pin parts.
 ifeq ($(filter $(MCU),16F874A 16F877A),$(MCU))
@@ -138,10 +138,10 @@ CONFIG_OBJ := $(BUILD_DIR)/config_$(MCU).p1
 # make expands explicit-rule prerequisites at parse time; included
 # BEFORE the family-specific config-word recipe below, so `all` (from
 # the fragment) stays the default goal.
-include $(COMMON_DIR)/mk/pic8_family.mk
+include $(COMMON_DIR)/mk/epic_family.mk
 
 # Family-specific: the PIC16 config-word directives. The shared
-# pic8_family.mk provides the rule that compiles $(CONFIG_SRC) to
+# epic_family.mk provides the rule that compiles $(CONFIG_SRC) to
 # $(CONFIG_OBJ) and links it into the hex.
 $(CONFIG_SRC): | $(BUILD_DIR)
 	@printf '/* Auto-generated. Do not edit. */\n' > $@

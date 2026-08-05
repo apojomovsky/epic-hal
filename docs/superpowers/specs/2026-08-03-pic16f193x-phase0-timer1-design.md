@@ -18,7 +18,7 @@ Two parts, in dependency order:
    alongside the existing UART mode, and adds the matching
    `HARNESS=sim` target implementation for PIC16F193X that drives a
    single pin (RA0, bit 0) instead of UART, by reusing
-   `pic8_harness_log()`'s format-string dispatch (see "Harness hook:
+   `epic_harness_log()`'s format-string dispatch (see "Harness hook:
    magic-string in `log()`" below).
 
 2. **Timer1 peripheral.** A `EPIC_TIMER1_*` driver for the PIC16F193X,
@@ -53,7 +53,7 @@ rewrite per peripheral.
 - No migration of PIC16F87XA or PIC18Fxxxx off UART. Those families
   keep their `pic16_harness_sim_target.c`/`pic18_harness_sim_target.c`
   UART path. The hook mechanism (`log()` magic-string dispatch) is
-  opt-in per file; nothing in `pic8-common/` or the other families'
+  opt-in per file; nothing in `epic-common/` or the other families'
   sim-target harnesses changes.
 - No CI workflow changes. `.github/workflows/host-tests.yml`,
   `xc8-build.yml`, `sim-tests.yml` are not touched in this phase.
@@ -67,17 +67,17 @@ rewrite per peripheral.
 ### Files added
 
 - `pic16f193x-hal/src/core/pic16f193x_harness_sim_target.c`: target
-  implementation of `pic8_harness_*` for `HARNESS=sim` builds.
+  implementation of `epic_harness_*` for `HARNESS=sim` builds.
   Mirrors `pic16_harness_sim_target.c`'s shape but without USART
   init. `log()` is not a pure no-op: when `fmt` is the pass/fail
   marker string (`"PIC8_HARNESS_RESULT: PASS\n"` or
   `"PIC8_HARNESS_RESULT: FAIL\n"`), it drives RA0 (PORTA bit 0) and
   ignores variadic args; for any other `fmt`, it is a no-op. See
   "Harness hook: magic-string in `log()`" below for the rationale.
-- **No changes to `pic8-common/`.** The family-blind no-op
-  `pic8_harness_target.c` (and its sibling two PIC16F87XA and PIC18
+- **No changes to `epic-common/`.** The family-blind no-op
+  `epic_harness_target.c` (and its sibling two PIC16F87XA and PIC18
   UART-mode sim-target harnesses) keep working unchanged. No new
-  function in `pic8_harness.h`, no new file in `pic8-common/src/`.
+  function in `epic_harness.h`, no new file in `epic-common/src/`.
 
 ### Files modified
 
@@ -99,9 +99,9 @@ rewrite per peripheral.
 
 ### Harness hook: magic-string in `log()`
 
-The existing `pic8_harness_report()` static inline (in
-`pic8_harness.h`) emits its PASS/FAIL marker line by calling
-`pic8_harness_log(ok ? "PIC8_HARNESS_RESULT: PASS\n" :
+The existing `epic_harness_report()` static inline (in
+`epic_harness.h`) emits its PASS/FAIL marker line by calling
+`epic_harness_log(ok ? "PIC8_HARNESS_RESULT: PASS\n" :
 "PIC8_HARNESS_RESULT: FAIL\n")`. The UART-mode `log()` writes those
 bytes to the USART. The new PIC16F193X sim-target `log()` instead
 *inspects the format string*: when it is exactly the pass or fail
@@ -112,20 +112,20 @@ is a no-op.
 
 This works because:
 
-- `pic8_harness_report()` is the only call site in the codebase that
+- `epic_harness_report()` is the only call site in the codebase that
   passes one of these exact strings (verified by grep over
-  `pic8-common/`, every family HAL, and every `pic8-*` module under
+  `epic-common/`, every family HAL, and every `epic-*` module under
   `tests/` and `examples/`).
 - `log()` on a real-target no-stdout build is already an
   implementation detail with no observable contract beyond the
   marker line; making it inspect that one string is a small step, not
   a category change.
 - No new public API surface, no shared-header change, no edit to
-  `pic8_harness.h`, no new file in `pic8-common/`. The hook lives
+  `epic_harness.h`, no new file in `epic-common/`. The hook lives
   entirely inside the one new file.
 
 Trade-off considered and rejected: a separate weak
-`pic8_harness_signal_result()` called from `report()`. That's cleaner
+`epic_harness_signal_result()` called from `report()`. That's cleaner
 in concept but introduces a new function for one call site and
 touches every family for no behavior change. The magic-string-inspect
 path is strictly less work and strictly less code; it lands in one
@@ -160,7 +160,7 @@ three must PASS:
 1. **Regression: PIC16F87XA `HARNESS=sim` UART path.**
    ```
    make mdb-test \
-     MODULE=pic8-tick/mcu/pic16f87xa-tick-mplabx \
+     MODULE=epic-tick/mcu/pic16f87xa-tick-mplabx \
      MCU=16F877A DEVICE=PIC16F877A \
      DFP=Microchip.PIC16Fxxx_DFP
    ```
@@ -169,7 +169,7 @@ three must PASS:
 2. **Regression: PIC18Fxxxx `HARNESS=sim` UART path.**
    ```
    make mdb-test \
-     MODULE=pic8-tick/mcu/pic18fxx5x-tick-mplabx \
+     MODULE=epic-tick/mcu/pic18fxx5x-tick-mplabx \
      MCU=18F4550 DEVICE=PIC18F4550 \
      DFP=Microchip.PIC18Fxxxx_DFP
    ```
@@ -187,7 +187,7 @@ three must PASS:
    ```
    Expect PASS. The wrapper's captured output should show the GPIO
    pin toggled. The example's ISR drives LATB<0> on every Timer0
-   overflow; the harness init leaves RA0 low; on `pic8_harness_log()`
+   overflow; the harness init leaves RA0 low; on `epic_harness_log()`
    with the pass/fail marker, the harness writes LATA<0> from `ok`.
    The deterministic read is whatever LATA<0> was last driven to by
    the harness (RA0, bit 0). Both are observable via `print LATA`
@@ -230,7 +230,7 @@ All three verification runs PASS. PIC16F193X `HARNESS=sim` produces a
   mirroring `sim_step_timer0`'s shape. Wire into the per-step loop.
 - `pic16f193x-hal/CMakeLists.txt`: add `pic16f193x_timer1.c` to
   `PIC8_EPIC_SOURCES`; add
-  `pic8_add_example(example_timer1 tests/example_timer1.c)`.
+  `epic_add_example(example_timer1 tests/example_timer1.c)`.
 - `pic16f193x-hal/mcu/pic16f193x-mplabx/Makefile`: add the new
   source to `EPIC_SOURCES` (both `HARNESS=target` and `HARNESS=sim`
   branches link it).
@@ -288,14 +288,14 @@ Mirrors `pic16f87xa_timer1.c` per peripheral:
 - Increment an internal prescaler counter; when it hits `ratio`,
   reset to 0 and increment TMR1H:TMR1L as a single 16-bit value.
 - On wrap from 0xFFFF to 0x0000: set `PIR1<TMR1IF>` and fire the sim
-  IRQ callback (which runs `pic8_dispatch_all_irqs`, which routes
+  IRQ callback (which runs `epic_dispatch_all_irqs`, which routes
   TMR1IF to `TIMER1_IRQHandler` via the IRQ descriptor table).
 
 ### Example: `tests/example_timer1.c`
 
 Shape mirrors `example_blink.c`:
 
-- `pic8_harness_init(SIM_CYCLES)` with a `SIM_CYCLES` chosen so 1:8
+- `epic_harness_init(SIM_CYCLES)` with a `SIM_CYCLES` chosen so 1:8
   prescaler + FOSC/4 = 8 MHz at 32 MHz FOSC gives 3-9 Timer1 overflows
   in the run. (256 ticks prescale-counter isn't right for Timer1; use
   the same ratio-from-OPTION_REG derivation pattern, but the math
@@ -324,7 +324,7 @@ Run inside the toolchain container, all four must PASS:
 
 1. **Host sim.** `cmake -B build && cmake --build build && ./build/
    example_timer1`. Exit 0; expected toggle count. Run per-device
-   loop via `pic8_add_example_per_device(example_timer1 ...)`.
+   loop via `epic_add_example_per_device(example_timer1 ...)`.
 
 2. **Real-target XC8 build for every part.** `make -C
    pic16f193x-hal/mcu/pic16f193x-mplabx clean MCU=16F1937 HARNESS=
@@ -342,7 +342,7 @@ Run inside the toolchain container, all four must PASS:
    read: T1CON, TMR1H, TMR1L, PIR1 (TMR1IF after overflow), PIE1
    (TMR1IE), INTCON (GIE/PEIE), LATB (RB0 driven by Timer1 ISR),
    LATA (RA0 driven by the harness's `log()`-marker path on
-   `pic8_harness_report(ok)`).
+   `epic_harness_report(ok)`).
 
 The §4 control-register check: if any value above is wrong, first
 check a known-good control register (an unrelated plain
@@ -369,8 +369,8 @@ appropriate, re-run the gate, document the finding in
   driver yet."
 - `pic16f193x-hal/MANUAL.md`: add Timer1 register reference.
 - `pic16f193x-hal/docs/ARCHITECTURE.md`: append any codegen findings.
-- `pic8-common/MANUAL.md`: note in the harness section that
-  real-target `pic8_harness_log()` implementations may dispatch on
+- `epic-common/MANUAL.md`: note in the harness section that
+  real-target `epic_harness_log()` implementations may dispatch on
   the format string (the existing UART-mode ones write bytes; the
   PIC16F193X GPIO-mode one drives RA0 from the marker). No code or
   API contract changes; just documenting the convention so future

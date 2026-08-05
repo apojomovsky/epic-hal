@@ -5,11 +5,11 @@ inspired by the STM32Cube HAL API and structured as a sibling of the
 PIC16F87XA HAL. Every constant, register address and behaviour is taken
 1-to-1 from the datasheet [DS39632E](https://ww1.microchip.com/downloads/en/DeviceDoc/39632e.pdf).
 
-This tree is the second family under the shared `pic8-common/` layer
+This tree is the second family under the shared `epic-common/` layer
 (see [docs/multi-family-plan.md](../docs/multi-family-plan.md)). The status
 codes, bit helpers, the host/target harness contract, and the shared
-interrupt-dispatch name (`pic8_dispatch_all_irqs`) all come from
-`pic8-common/` unchanged; only the register-specific parts (SFR map,
+interrupt-dispatch name (`epic_dispatch_all_irqs`) all come from
+`epic-common/` unchanged; only the register-specific parts (SFR map,
 BSR/Access-Bank platform, dual-priority interrupt backend, peripheral
 drivers) live here.
 
@@ -42,7 +42,7 @@ implemented and cited against DS39632E. `example_blink` /
   IPR1, TMR0L / TMR0H / T0CON), addresses cross-checked against the
   PIC18Fxxxx DFP, every bit and reset value cited to DS39632E.
 - ✅ Platform layer (`include/host` + `include/target` `pic18_platform.h`):
-  the same `pic8_sfr_read8` / `PIC8_REG8` / `PIC8_WEAK` contract as PIC16.
+  the same `epic_sfr_read8` / `PIC8_REG8` / `PIC8_WEAK` contract as PIC16.
   Per the plan's Phase 2 decision, the host sim is a flat 4096-byte array
   indexed by the physical 12-bit address (no BSR translation; every MVP
   SFR is in the Access Bank 0xF60-0xFFF).
@@ -106,7 +106,7 @@ implemented and cited against DS39632E. `example_blink` /
   shared-contract extension (no-op on PIC16).
 - ✅ ISR vectors (`src/core/pic18_isr_vector.c`, XC8 only):
   `__interrupt(high_priority)` at 0008h and `__interrupt(low_priority)` at
-  0018h, both delegating to `pic8_dispatch_all_irqs`.
+  0018h, both delegating to `epic_dispatch_all_irqs`.
 - ✅ WDT / Sleep (`core/pic18fxx5x_wdt_sleep.h`): `EPIC_WDT_Refresh` /
   `EPIC_Sleep_Enter` (asm on target, no-op on host) + BOR/POR status from
   RCON (PIC18 folds TO/PD/POR/BOR into RCON, not a separate PCON).
@@ -130,7 +130,7 @@ pic18fxx5x-hal/
 ├── include/
 │   ├── pic18fxx5x.h              Family header, device selection, platform
 │   │                             include; pulls in shared status codes /
-│   │                             bit helpers from pic8-common/hal_status.h
+│   │                             bit helpers from epic-common/hal_status.h
 │   ├── pic18fxx5x_sim.h          Simulation backend public API (Phase 1 minimal)
 │   ├── host/pic18_platform.h     Host platform: memory-backed SFR + weak attr
 │   ├── target/pic18_platform.h   Target platform: volatile-deref SFR
@@ -141,8 +141,8 @@ pic18fxx5x-hal/
 │   ├── peripherals/              (Phase 2)
 │   └── sim/                      Host simulation backend
 ├── tests/                        example_smoke (Phase 2: example_blink, ...)
-├── mcu/pic18fxx5x-mplabx/        XC8 Makefile (thin caller of pic8-common/mk)
-└── CMakeLists.txt                Host build (thin caller of pic8-common/cmake)
+├── mcu/pic18fxx5x-mplabx/        XC8 Makefile (thin caller of epic-common/mk)
+└── CMakeLists.txt                Host build (thin caller of epic-common/cmake)
 ```
 
 ## Build (host simulation)
@@ -161,7 +161,7 @@ cmake --build build
 
 `example_blink` exits 0 with `RB0 toggled 9 times` (600k sim cycles /
 256×256 ≈ 9 Timer0 overflows). `example_smoke` exits 0 with
-`smoke: 10 ticks, device <PART>`. Both prove the shared `pic8_harness_*`
+`smoke: 10 ticks, device <PART>`. Both prove the shared `epic_harness_*`
 contract is family-blind: PIC18 links against the exact same header and
 contract PIC16 uses.
 

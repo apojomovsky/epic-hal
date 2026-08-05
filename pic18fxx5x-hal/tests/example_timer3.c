@@ -9,8 +9,8 @@
  *   XC8 target with no `#ifdef`.
  */
 
-#include "pic8_hal.h"
-#include "core/pic8_harness.h"
+#include "epic_hal.h"
+#include "core/epic_harness.h"
 #include <stdio.h>
 
 /** 16-bit, 1:8 prescaler -> overflow every 0x10000 x 8 = 524288 cycles. */
@@ -27,7 +27,7 @@ static void on_t3_overflow(void)
 
 int main(void)
 {
-    pic8_harness_init(SIM_CYCLES);
+    epic_harness_init(SIM_CYCLES);
 
     TIMER3_HandleTypeDef h = TIMER3_HANDLE_DEFAULT;
     h.Prescaler        = TIMER3_PRESCALER_1_8;
@@ -38,12 +38,12 @@ int main(void)
     EPIC_TIMER3_Start(&h);
     EPIC_IRQ_Restore(1);
 
-    for (uint32_t i = 0; pic8_harness_running(i); i++) {
-        pic8_harness_tick();
+    for (uint32_t i = 0; epic_harness_running(i); i++) {
+        epic_harness_tick();
         if (g_overflows >= EXPECTED_OVERFLOWS) break;
     }
 
-    pic8_harness_log("Timer3: %u overflows (expected >= %u)\n",
+    epic_harness_log("Timer3: %u overflows (expected >= %u)\n",
                      (unsigned)g_overflows, (unsigned)EXPECTED_OVERFLOWS);
-    return pic8_harness_report(g_overflows >= EXPECTED_OVERFLOWS);
+    return epic_harness_report(g_overflows >= EXPECTED_OVERFLOWS);
 }

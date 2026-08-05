@@ -37,7 +37,7 @@ The toolchain gap is closed: MPLAB X / `mdb` is installed
 (`docker/ci-toolchain/Dockerfile`, pushed to the private
 `ghcr.io/apojomovsky/pic8-hal-ci` GHCR image) and confirmed working via
 the root `Makefile`'s `make mdb-test`, real `PIC8_HARNESS_RESULT: PASS`
-against `pic8-tick`'s pilot module on both existing families. Timer1
+against `epic-tick`'s pilot module on both existing families. Timer1
 has since cleared the §4 gate for this family too (Task 11
 fix-round-1): `make mdb-test ... MODE=gpio WAIT_MS=60000` produces a
 real `PIC8_HARNESS_RESULT: PASS`, with `mdb` register readback
@@ -220,7 +220,7 @@ User supplied the MPLAB X IDE installer; `docker/ci-toolchain/Dockerfile`
 now builds the full image (XC8 + all three DFPs + MPLAB X), pushed to
 the private `ghcr.io/apojomovsky/pic8-hal-ci` GHCR package that
 `xc8-build.yml`/`sim-tests.yml` pull. The root `Makefile`'s `make
-mdb-test` was run for real against `pic8-tick`'s pilot module (both
+mdb-test` was run for real against `epic-tick`'s pilot module (both
 PIC16F87XA and PIC18F4550), both reaching a genuine
 `PIC8_HARNESS_RESULT: PASS`. See `docs/docker-dev-plan.md` for the full
 account. The real-target build passing was necessary but not sufficient
@@ -258,7 +258,7 @@ Foundation deliverables (everything needed for a minimal blink + host sim
 3. `include/host/pic16f193x_platform.h` +
    `include/target/pic16f193x_platform.h` access-macro pair (host flat
    array + `PIC8_WEAK=weak`; target volatile deref + `PIC8_WEAK` empty),
-   define `PIC8_REG8`, `pic8_sfr_read8/write8`, `PIC8_SFR_PTR`, target
+   define `PIC8_REG8`, `epic_sfr_read8/write8`, `PIC8_SFR_PTR`, target
    bank-switch inline-asm. Every SFR access stays a compile-time-constant
    `PIC_REG_*` token (the proven pattern from `pic18_irq.c`/
    `pic18fxx5x_ccp.c`); runtime dispatch branches before touching any
@@ -269,18 +269,18 @@ Foundation deliverables (everything needed for a minimal blink + host sim
    table-driven descriptor extended to 3 PIR/PIE banks (`pir_index`
    0/1/2 for PIR1/2/3, INTCON-level for TMR0/INT/IOC). `SetPriority` =
    no-op. PIE1/2/3 in bank 1 via the PIE-bit macros.
-5. `src/core/pic16f193x_irq_dispatch.c` (`pic8_dispatch_all_irqs` strong
+5. `src/core/pic16f193x_irq_dispatch.c` (`epic_dispatch_all_irqs` strong
    extern fan-out) + `src/core/pic16f193x_isr_vector.c` (single
    `__interrupt()` at 0x0004, hardware auto-saves context).
 6. `src/core/pic16f193x_harness_sim.c` (host harness pumps sim, registers
-   `pic8_dispatch_all_irqs` as the IRQ callback) + shared
-   `pic8-common/.../pic8_harness_target.c` target no-op.
+   `epic_dispatch_all_irqs` as the IRQ callback) + shared
+   `epic-common/.../epic_harness_target.c` target no-op.
 7. `include/core/pic16f193x_wdt_sleep.h` +
    `src/core/pic16f193x_wdt_sleep.c`/`_sim.c`/`_target.c`.
 8. `include/peripherals/pic16f193x_gpio.h` + `src/peripherals/pic16f193x_gpio.c`
    (PORTA-E, LAT, TRIS, ANSEL, WPUB/WPUE, IOC handle pattern) +
    `pic16f193x_timer0` (for blink).
-9. Neutral shims `pic8_hal.h`, `core/hal_irq.h`, `core/hal_wdt_sleep.h`,
+9. Neutral shims `epic_hal.h`, `core/hal_irq.h`, `core/hal_wdt_sleep.h`,
    `peripherals/hal_gpio.h`, `peripherals/hal_timer0.h`.
 10. `include/pic16f193x_sim.h` + `src/sim/pic16f193x_sim.c` host sim: flat
     array register file, `sim_reset/step/drive_input/read_output/
@@ -294,7 +294,7 @@ Foundation deliverables (everything needed for a minimal blink + host sim
     `Microchip.PIC12-16F1xxx_DFP`, target-first include path, the §10
     `#pragma config` recipe for CONFIG1/CONFIG2).
 13. `README.md`, `MANUAL.md` (per-family register ref, points to
-    `pic8-common/MANUAL.md` for shared conventions), `docs/ARCHITECTURE.md`
+    `epic-common/MANUAL.md` for shared conventions), `docs/ARCHITECTURE.md`
     (codegen findings, filled as the §4 gate surfaces them).
 
 Solved. Foundation implemented, host-verified and committed (`786e9db`);
@@ -304,9 +304,9 @@ real-target build verified (§4); `mdb` gate not yet run for this family
 ## §6. Verification (partly solved)
 
 - **Host sim** (solved): `cmake -B build && cmake --build build`, then
-  running each example directly (the shared `pic8_family.cmake` doesn't
+  running each example directly (the shared `epic_family.cmake` doesn't
   register `ctest` targets; examples self-report pass/fail via
-  `pic8_harness_report`'s exit code). Clean with `-Wall -Wextra -Werror`
+  `epic_harness_report`'s exit code). Clean with `-Wall -Wextra -Werror`
   for every foundation piece. Catches logic bugs; does not catch the
   codegen bugs the gate exists for.
 - **Real-target XC8 build** (solved): `make MCU=16F193{3,4,6,7,8,9}` all
@@ -374,7 +374,7 @@ a collision. `src/core/pic16f193x_irq_dispatch.c` needs exactly one
 23-source table and `src/core/pic16f193x_irq.c`'s descriptor array are
 already fully populated for all pending peripherals, zero changes
 needed there). Each `pic16f193x-hal/CMakeLists.txt` addition is one
-`EPIC_SOURCES` line + one `pic8_add_example[_per_device]` call, same
+`EPIC_SOURCES` line + one `epic_add_example[_per_device]` call, same
 shape as Timer1's.
 
 | # | Peripheral group | Plan doc | Registers (bank) | MANUAL § | Reference driver to mirror |
@@ -444,7 +444,7 @@ each one, same as Timer1.
   `multi-family-plan.md`'s add-family checklist).
 - `docs/multi-family-plan.md` (the fixed contract; open questions are a
   historical PIC18 record).
-- `pic8-common/README.md` + `pic8-common/MANUAL.md` (shared conventions).
+- `epic-common/README.md` + `epic-common/MANUAL.md` (shared conventions).
 - DS41364B §2.2 (data memory), §4 (interrupts), §6 (I/O ports), §8
   (oscillator), §10 (device config), §11-§22 (peripherals), §26
   (instruction set).

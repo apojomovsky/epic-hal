@@ -2,30 +2,30 @@
  * @file    pic16f193x_harness_sim_target.c
  * @brief   PIC16F193X sim-target implementation of the test harness.
  *          Mirrors pic16_harness_sim_target.c's shape but with no
- *          USART init: instead, pic8_harness_log() inspects its
+ *          USART init: instead, epic_harness_log() inspects its
  *          format string and, on the PIC8_HARNESS_RESULT marker,
  *          drives RA0 (PORTA bit 0) so the mdb wrapper can read the
  *          result via 'print PORTA' in MODE=gpio. This is the
  *          documented "magic-string dispatch" hook from the spec.
  *
  * @details
- *   The marker strings are passed verbatim from pic8_harness_report()
- *   (static inline in pic8_harness.h). They are the only call sites
+ *   The marker strings are passed verbatim from epic_harness_report()
+ *   (static inline in epic_harness.h). They are the only call sites
  *   in the codebase that ever pass these literals; verified by grep
- *   over pic8-common/, every family HAL, and every pic8-* module.
+ *   over epic-common/, every family HAL, and every epic-* module.
  *
  *   init() leaves RA0 driving low (it is the default after the
  *   analog->digital transition). The toggle happens on log(): the
  *   marker line drives RA0 to ok's value, and every other log line
  *   is a no-op as on the family-blind no-op target.
  *
- *   Not in pic8-common: unlike pic8_harness_target.c's four no-ops,
+ *   Not in epic-common: unlike epic_harness_target.c's four no-ops,
  *   this needs GPIO pin access for the marker line to reach mdb's
  *   register readback. running() is bounded by `cycles` so a run
  *   terminates on its own.
  */
 
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 #include "peripherals/pic16f193x_gpio.h"
 
 #include <stdint.h>
@@ -36,7 +36,7 @@
 
 static uint32_t g_cycles = 0U;
 
-void pic8_harness_init(uint32_t cycles)
+void epic_harness_init(uint32_t cycles)
 {
     g_cycles = cycles;
 
@@ -47,20 +47,20 @@ void pic8_harness_init(uint32_t cycles)
     EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
 }
 
-void pic8_harness_tick(void)
+void epic_harness_tick(void)
 {
     /* Real time advances on its own under MPLAB SIM too, nothing to pump. */
 }
 
-int pic8_harness_running(uint32_t iteration)
+int epic_harness_running(uint32_t iteration)
 {
     return (iteration < g_cycles) ? 1 : 0;
 }
 
-void pic8_harness_log(const char *fmt, ...)
+void epic_harness_log(const char *fmt, ...)
 {
     /* Magic-string dispatch: the only two pass/fail markers come
-     * from pic8_harness_report() (static inline in pic8_harness.h).
+     * from epic_harness_report() (static inline in epic_harness.h).
      * On those, drive RA0 from the meaning (PASS = high, FAIL = low).
      * Every other log line is a no-op, same as the family-blind four
      * no-ops. */
@@ -90,7 +90,7 @@ void pic8_harness_log(const char *fmt, ...)
 
 /* Freeze here so RA0 stays at its post-report value: XC8's `ljmp
  * start` epilogue would otherwise re-enter main() on return, and
- * pic8_harness_init() would drive RA0 low again, flickering
+ * epic_harness_init() would drive RA0 low again, flickering
  * PORTA<0> across the mdb `print PORTA` readback window. */
 void pic16f193x_harness_halt(void)
 {

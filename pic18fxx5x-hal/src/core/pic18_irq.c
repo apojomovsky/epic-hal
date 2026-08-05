@@ -14,17 +14,17 @@
 #include "core/pic18_irq.h"
 
 /* `reg` must be a literal `PIC_REG_*` token so it stays a compile-time
- * constant through `pic8_sfr_read8`/`write8` (see file header). */
+ * constant through `epic_sfr_read8`/`write8` (see file header). */
 #define SFR_SET_BIT(reg, mask) \
-    pic8_sfr_write8((reg), (uint8_t)(pic8_sfr_read8(reg) | (mask)))
+    epic_sfr_write8((reg), (uint8_t)(epic_sfr_read8(reg) | (mask)))
 #define SFR_CLR_BIT(reg, mask) \
-    pic8_sfr_write8((reg), (uint8_t)(pic8_sfr_read8(reg) & (uint8_t)~(mask)))
+    epic_sfr_write8((reg), (uint8_t)(epic_sfr_read8(reg) & (uint8_t)~(mask)))
 
 /* ───────────────────────── public API ───────────────────────────── */
 
 uint8_t EPIC_IRQ_Disable(void)
 {
-    uint8_t intcon = pic8_sfr_read8(PIC_REG_INTCON);
+    uint8_t intcon = epic_sfr_read8(PIC_REG_INTCON);
     uint8_t prev = (intcon & (PIC_INTCON_GIEH | PIC_INTCON_GIEL)) ? 1U : 0U;
     SFR_CLR_BIT(PIC_REG_INTCON, PIC_INTCON_GIEH);
     SFR_CLR_BIT(PIC_REG_INTCON, PIC_INTCON_GIEL);
@@ -126,24 +126,24 @@ void EPIC_IRQ_ClearFlag(PIC18_IRQn irq)
 uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq)
 {
     switch (irq) {
-    case PIC18_IRQ_INT0:     return (pic8_sfr_read8(PIC_REG_INTCON)  & PIC_INTCON_INT0IF)  ? 1U : 0U;
-    case PIC18_IRQ_INT1:     return (pic8_sfr_read8(PIC_REG_INTCON3) & PIC_INTCON3_INT1IF) ? 1U : 0U;
-    case PIC18_IRQ_INT2:     return (pic8_sfr_read8(PIC_REG_INTCON3) & PIC_INTCON3_INT2IF) ? 1U : 0U;
-    case PIC18_IRQ_RB:       return (pic8_sfr_read8(PIC_REG_INTCON)  & PIC_INTCON_RBIF)    ? 1U : 0U;
-    case PIC18_IRQ_TMR0:     return (pic8_sfr_read8(PIC_REG_INTCON)  & PIC_INTCON_TMR0IF)  ? 1U : 0U;
-    case PIC18_IRQ_TMR1:     return (pic8_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_TMR1IF)    ? 1U : 0U;
-    case PIC18_IRQ_TMR2:     return (pic8_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_TMR2IF)    ? 1U : 0U;
-    case PIC18_IRQ_TMR3:     return (pic8_sfr_read8(PIC_REG_PIR2)    & PIC_PIR2_TMR3IF)    ? 1U : 0U;
-    case PIC18_IRQ_CCP1:     return (pic8_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_CCP1IF)    ? 1U : 0U;
-    case PIC18_IRQ_SSP:      return (pic8_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_SSPIF)     ? 1U : 0U;
-    case PIC18_IRQ_USART_TX: return (pic8_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_TXIF)      ? 1U : 0U;
-    case PIC18_IRQ_USART_RX: return (pic8_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_RCIF)      ? 1U : 0U;
-    case PIC18_IRQ_ADC:      return (pic8_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_ADIF)      ? 1U : 0U;
-    case PIC18_IRQ_CCP2:     return (pic8_sfr_read8(PIC_REG_PIR2)    & PIC_PIR2_CCP2IF)    ? 1U : 0U;
-    case PIC18_IRQ_CMP:      return (pic8_sfr_read8(PIC_REG_PIR2)    & PIC_PIR2_CMIF)      ? 1U : 0U;
-    case PIC18_IRQ_EEPROM:   return (pic8_sfr_read8(PIC_REG_PIR2)    & PIC_PIR2_EEIF)      ? 1U : 0U;
+    case PIC18_IRQ_INT0:     return (epic_sfr_read8(PIC_REG_INTCON)  & PIC_INTCON_INT0IF)  ? 1U : 0U;
+    case PIC18_IRQ_INT1:     return (epic_sfr_read8(PIC_REG_INTCON3) & PIC_INTCON3_INT1IF) ? 1U : 0U;
+    case PIC18_IRQ_INT2:     return (epic_sfr_read8(PIC_REG_INTCON3) & PIC_INTCON3_INT2IF) ? 1U : 0U;
+    case PIC18_IRQ_RB:       return (epic_sfr_read8(PIC_REG_INTCON)  & PIC_INTCON_RBIF)    ? 1U : 0U;
+    case PIC18_IRQ_TMR0:     return (epic_sfr_read8(PIC_REG_INTCON)  & PIC_INTCON_TMR0IF)  ? 1U : 0U;
+    case PIC18_IRQ_TMR1:     return (epic_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_TMR1IF)    ? 1U : 0U;
+    case PIC18_IRQ_TMR2:     return (epic_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_TMR2IF)    ? 1U : 0U;
+    case PIC18_IRQ_TMR3:     return (epic_sfr_read8(PIC_REG_PIR2)    & PIC_PIR2_TMR3IF)    ? 1U : 0U;
+    case PIC18_IRQ_CCP1:     return (epic_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_CCP1IF)    ? 1U : 0U;
+    case PIC18_IRQ_SSP:      return (epic_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_SSPIF)     ? 1U : 0U;
+    case PIC18_IRQ_USART_TX: return (epic_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_TXIF)      ? 1U : 0U;
+    case PIC18_IRQ_USART_RX: return (epic_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_RCIF)      ? 1U : 0U;
+    case PIC18_IRQ_ADC:      return (epic_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_ADIF)      ? 1U : 0U;
+    case PIC18_IRQ_CCP2:     return (epic_sfr_read8(PIC_REG_PIR2)    & PIC_PIR2_CCP2IF)    ? 1U : 0U;
+    case PIC18_IRQ_CMP:      return (epic_sfr_read8(PIC_REG_PIR2)    & PIC_PIR2_CMIF)      ? 1U : 0U;
+    case PIC18_IRQ_EEPROM:   return (epic_sfr_read8(PIC_REG_PIR2)    & PIC_PIR2_EEIF)      ? 1U : 0U;
 #if PIC18FXX5X_FAMILY_HAS_SPP
-    case PIC18_IRQ_SPP:      return (pic8_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_SPPIF)     ? 1U : 0U;
+    case PIC18_IRQ_SPP:      return (epic_sfr_read8(PIC_REG_PIR1)    & PIC_PIR1_SPPIF)     ? 1U : 0U;
 #endif
     default: return 0U;
     }

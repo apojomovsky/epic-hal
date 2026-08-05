@@ -7,7 +7,7 @@
  *   Exercises EPIC_GPIO_RegisterChangeCallback/RB_IRQHandler: no-op when
  *   RBIF isn't pending, callback fires exactly once with the read
  *   PORTB byte when it is, a NULL callback doesn't crash, and
- *   pic8_dispatch_all_irqs reaches the handler. The host sim doesn't
+ *   epic_dispatch_all_irqs reaches the handler. The host sim doesn't
  *   model RBIF-on-mismatch, so the test asserts RBIF directly and
  *   checks the handler's read/clear/callback ordering instead.
  */
@@ -17,7 +17,7 @@
 #include "pic16f87xa_sfr.h"
 #include "peripherals/pic16f87xa_gpio.h"
 #include "core/pic16_irq.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
 #include <stdio.h>
 
@@ -109,7 +109,7 @@ static void test_dispatch_reaches_handler(void)
     assert_rbif();
 
     /* A full dispatch pass must route to RB_IRQHandler. */
-    pic8_dispatch_all_irqs();
+    epic_dispatch_all_irqs();
 
     CHECK(g_cb_calls == 1, "dispatch: fan-out reached RB_IRQHandler");
     CHECK(g_cb_last == 0x96U, "dispatch: correct byte delivered");

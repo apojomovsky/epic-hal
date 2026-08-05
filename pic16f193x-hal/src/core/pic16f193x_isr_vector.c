@@ -4,7 +4,7 @@
  *
  * @details
  *   Single PIC16F193X vector at 0x0004 (DS41364B §4.0): this file's
- *   `__interrupt()` handler calls the shared @ref pic8_dispatch_all_irqs
+ *   `__interrupt()` handler calls the shared @ref epic_dispatch_all_irqs
  *   fan-out. XC8-only build (the host has no interrupt vector); the host
  *   harness registers the same dispatcher as its sim IRQ callback instead.
  *
@@ -20,7 +20,7 @@
  *   gap. The plain-C RMW that the foundation shipped silently
  *   produced `movwf fsr1l; clrf fsr1h` indirect addressing with
  *   FSR1H=0 (the wrong bank for PIE registers, which all live in
- *   bank 1); pin `pic8_irq_pie_scratch` to bank-independent common
+ *   bank 1); pin `epic_irq_pie_scratch` to bank-independent common
  *   RAM at 0x70 (DS41364B Table 2-3, accessible from any bank) so
  *   the inline-asm PIE bit helpers can move the value through W
  *   without disturbing any C-level local. Mirrors the fix in
@@ -35,14 +35,14 @@
 #include "core/pic16f193x_irq.h"
 
 /* Definition for target/pic16f193x_platform.h's
- * `extern volatile uint8_t pic8_irq_pie_scratch`; `__at()`-pinned into
+ * `extern volatile uint8_t epic_irq_pie_scratch`; `__at()`-pinned into
  * PIC16F193X's bank-independent common RAM (Table 2-3, 0x70). The same
  * shape as pic16_isr_vector.c in pic16f87xa-hal. */
-volatile uint8_t pic8_irq_pie_scratch __at(0x70);
+volatile uint8_t epic_irq_pie_scratch __at(0x70);
 
-/* Strong extern prototype instead of including pic8_harness.h, same
+/* Strong extern prototype instead of including epic_harness.h, same
  * pattern pic16f193x_irq_dispatch.c uses for the peripheral handlers. */
-extern void pic8_dispatch_all_irqs(void);
+extern void epic_dispatch_all_irqs(void);
 
 /**
  * @brief  Single PIC16F193X interrupt-vector handler. Delegates to the
@@ -50,5 +50,5 @@ extern void pic8_dispatch_all_irqs(void);
  */
 void __interrupt() PIC16F193X_IRQ_Handler(void)
 {
-    pic8_dispatch_all_irqs();
+    epic_dispatch_all_irqs();
 }

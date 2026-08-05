@@ -10,12 +10,12 @@ include-path and linked-file selection.
 
 ## The one idea that matters most
 
-`pic8-common/` holds everything architecture-blind (status codes, the
+`epic-common/` holds everything architecture-blind (status codes, the
 4-function harness, shared CMake/Make fragments). Everything
 register-specific (SFR maps, bank/BSR addressing, IRQ vectors,
 peripheral bodies) lives per-family under a **fixed contract**: same
 names/signatures across families, different bodies. Read
-`pic8-common/README.md` + `pic8-common/MANUAL.md` before touching HAL
+`epic-common/README.md` + `epic-common/MANUAL.md` before touching HAL
 code; family manuals point back there instead of repeating it. Full
 design: `docs/multi-family-plan.md`. `docs/adding-a-device.md` is the
 verification-gated playbook for a new device or family (used to add
@@ -23,12 +23,12 @@ PIC16F193X, see `docs/pic16f193x-plan.md`).
 
 ## Module anatomy
 
-Every `pic8-*` module: `README.md`, often `docs/ARCHITECTURE.md` +
+Every `epic-*` module: `README.md`, often `docs/ARCHITECTURE.md` +
 `docs/API.md`, host-testable via CMake (`cmake -B build && cmake
 --build build && ctest`), real-target via `mcu/<family>-*-mplabx/
 Makefile` (`make MCU=...`). No top-level build, build each module
 directly. Each HAL additionally has `MANUAL.md`, datasheet-cited
-per-peripheral register reference; `pic8-common/MANUAL.md` covers
+per-peripheral register reference; `epic-common/MANUAL.md` covers
 shared conventions (naming, handle pattern, harness, interrupt model),
 family manuals only cover what's actually per-family.
 
@@ -85,7 +85,7 @@ codebase so far.
   Only file-scope `static volatile` symbols are addressable. PIC16 user
   globals need a leading `_` in the asm string; SFRs don't. STATUS bits
   are numeric (`STATUS,0`), never aliased. Full writeup:
-  `pic8-math/docs/ARCHITECTURE.md`.
+  `epic-math/docs/ARCHITECTURE.md`.
 - **Banking differs per family, not just "PIC16 vs PIC18."** Classic
   PIC16 (87XA): RP0/RP1 bank bits, `STATUS,7`=IRP selects a bank-*pair*.
   PIC18: Access Bank, no BSR. Enhanced Mid-range (193X): real BSR (32
@@ -101,7 +101,7 @@ codebase so far.
   `EPIC_IRQ_SetPriority` real. Enhanced Mid-range: one vector, no
   priority, but *automatic* hardware context save (no manual push/pop).
   Enable/disable API shape is otherwise identical,
-  `pic8-common/MANUAL.md` §6.
+  `epic-common/MANUAL.md` §6.
 
 ## Conventions
 
@@ -120,7 +120,7 @@ codebase so far.
 - **Before trusting an uncertain compiler/hardware behavior**, write a
   throwaway probe and inspect the generated `.s`/`.map`, don't assume
   from the datasheet alone. Has caught real wrong assumptions every
-  time it's been tried (`pic8-math`'s XC8 round-trip probe, the
+  time it's been tried (`epic-math`'s XC8 round-trip probe, the
   PIC16F193X BSR-addressing probe).
 - **No em-dashes (—).** Not in docs, not in commit messages, not in code
   comments. Use a comma, a colon, or a period and a new sentence instead.

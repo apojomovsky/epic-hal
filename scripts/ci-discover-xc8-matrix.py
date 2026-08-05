@@ -39,40 +39,40 @@ KNOWN_BROKEN = {
     # contract (pic16_irq_dispatch.c / pic18_irq_dispatch.c require every
     # peripheral's IRQHandler to be strongly linked in). All MCU variants
     # affected, this isn't size-dependent.
-    ("pic8-console/mcu/pic16f87xa-console-mplabx", mcu) for mcu in PIC16_VARIANTS
+    ("epic-console/mcu/pic16f87xa-console-mplabx", mcu) for mcu in PIC16_VARIANTS
 } | {
-    ("pic8-console/mcu/pic18fxx5x-console-mplabx", mcu) for mcu in PIC18_VARIANTS
+    ("epic-console/mcu/pic18fxx5x-console-mplabx", mcu) for mcu in PIC18_VARIANTS
 } | {
-    ("pic8-settings/mcu/pic16f87xa-settings-mplabx", mcu) for mcu in PIC16_VARIANTS
+    ("epic-settings/mcu/pic16f87xa-settings-mplabx", mcu) for mcu in PIC16_VARIANTS
 } | {
-    ("pic8-settings/mcu/pic18fxx5x-settings-mplabx", mcu) for mcu in PIC18_VARIANTS
+    ("epic-settings/mcu/pic18fxx5x-settings-mplabx", mcu) for mcu in PIC18_VARIANTS
 } | {
-    ("pic8-taskmgr/mcu/pic18fxx5x-taskmgr-mplabx", mcu) for mcu in PIC18_VARIANTS
+    ("epic-taskmgr/mcu/pic18fxx5x-taskmgr-mplabx", mcu) for mcu in PIC18_VARIANTS
 } | {
     # Root cause 2: genuine RAM/resource overflow on the smaller variant(s)
     # in each affected family (larger variants build fine).
-    ("pic8-bus/mcu/pic18fxx5x-bus-mplabx", mcu) for mcu in ("18F2455", "18F2550")
+    ("epic-bus/mcu/pic18fxx5x-bus-mplabx", mcu) for mcu in ("18F2455", "18F2550")
 } | {
-    ("pic8-debounce/mcu/pic16f87xa-debounce-mplabx", mcu) for mcu in ("16F873A", "16F874A")
+    ("epic-debounce/mcu/pic16f87xa-debounce-mplabx", mcu) for mcu in ("16F873A", "16F874A")
 } | {
-    ("pic8-debounce/mcu/pic18fxx5x-debounce-mplabx", mcu) for mcu in ("18F2455", "18F2550")
+    ("epic-debounce/mcu/pic18fxx5x-debounce-mplabx", mcu) for mcu in ("18F2455", "18F2550")
 } | {
-    ("pic8-encoder/mcu/pic18fxx5x-encoder-mplabx", mcu) for mcu in ("18F2455", "18F2550")
+    ("epic-encoder/mcu/pic18fxx5x-encoder-mplabx", mcu) for mcu in ("18F2455", "18F2550")
 } | {
-    ("pic8-math/mcu/pic18fxx5x-math-mplabx", mcu) for mcu in ("18F2455", "18F2550")
+    ("epic-math/mcu/pic18fxx5x-math-mplabx", mcu) for mcu in ("18F2455", "18F2550")
 } | {
-    ("pic8-modbus/mcu/pic16f87xa-modbus-mplabx", mcu) for mcu in ("16F873A", "16F874A")
+    ("epic-modbus/mcu/pic16f87xa-modbus-mplabx", mcu) for mcu in ("16F873A", "16F874A")
 } | {
-    ("pic8-modbus/mcu/pic18fxx5x-modbus-mplabx", mcu) for mcu in ("18F2455", "18F2550")
+    ("epic-modbus/mcu/pic18fxx5x-modbus-mplabx", mcu) for mcu in ("18F2455", "18F2550")
 } | {
-    ("pic8-serial/mcu/pic16f87xa-serial-mplabx", mcu) for mcu in ("16F873A", "16F874A")
+    ("epic-serial/mcu/pic16f87xa-serial-mplabx", mcu) for mcu in ("16F873A", "16F874A")
 } | {
-    ("pic8-serial/mcu/pic18fxx5x-serial-mplabx", mcu) for mcu in ("18F2455", "18F2550")
+    ("epic-serial/mcu/pic18fxx5x-serial-mplabx", mcu) for mcu in ("18F2455", "18F2550")
 } | {
-    ("pic8-tick/mcu/pic18fxx5x-tick-mplabx", mcu) for mcu in ("18F2455", "18F2550")
+    ("epic-tick/mcu/pic18fxx5x-tick-mplabx", mcu) for mcu in ("18F2455", "18F2550")
 } | {
     # Root cause 3: docs/ci-plan.md Phase 4's PIE1/PIE2 read-modify-write
-    # fix (pic16_isr_vector.c's pic8_irq_pie_scratch, one __at-pinned
+    # fix (pic16_isr_vector.c's epic_irq_pie_scratch, one __at-pinned
     # byte, needed by every module that calls EPIC_IRQ_Enable/DisableSrc
     # for a Bank 1 IRQ source, which includes anything using
     # EPIC_USART_Init with a callback) tipped these two, previously-green,
@@ -80,7 +80,7 @@ KNOWN_BROKEN = {
     # variants: confirmed via a real local XC8 v4.00 build, "fixup
     # overflow referencing psect bssBANK1" (other, unrelated large
     # buffers spilling into Bank 1 once one more byte of Bank 0 got
-    # claimed). pic8-math's own docs/ARCHITECTURE.md already documents
+    # claimed). epic-math's own docs/ARCHITECTURE.md already documents
     # this family's RAM as marginal ("cannot hold math + full HAL +
     # golden_vectors.h + the self-test... spills to bank 1 and
     # overflows"); this fix pushed it from marginal to broken. Larger
@@ -89,9 +89,9 @@ KNOWN_BROKEN = {
     # unrelated RAM reason) still build fine. Not investigated further
     # here, tracked in docs/mplabx-link-gaps-plan.md alongside the other
     # RAM-tightness entries above.
-    ("pic8-math/mcu/pic16f87xa-math-mplabx", mcu) for mcu in ("16F873A", "16F874A")
+    ("epic-math/mcu/pic16f87xa-math-mplabx", mcu) for mcu in ("16F873A", "16F874A")
 } | {
-    ("pic8-modbus/mcu/pic16f87xa-modbus-mplabx", mcu) for mcu in ("16F876A", "16F877A")
+    ("epic-modbus/mcu/pic16f87xa-modbus-mplabx", mcu) for mcu in ("16F876A", "16F877A")
 }
 
 FAMILIES = {

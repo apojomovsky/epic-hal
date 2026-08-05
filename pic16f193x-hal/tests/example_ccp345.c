@@ -13,13 +13,13 @@
 #include "pic16f193x.h"
 #include "pic16f193x_sfr.h"
 #include "peripherals/pic16f193x_ccp.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
 extern void pic16f193x_harness_halt(void);
 
 int main(void)
 {
-    pic8_harness_init(1UL);
+    epic_harness_init(1UL);
 
     CCP_HandleTypeDef ccp3 = CCP_HANDLE_DEFAULT;
     ccp3.Instance = CCP_INSTANCE_3;
@@ -49,12 +49,12 @@ int main(void)
     uint8_t c5h = PIC8_REG8(PIC_REG_CCPR5H);
     uint8_t c5l = PIC8_REG8(PIC_REG_CCPR5L);
 
-    pic8_harness_log("CCP3=0x%02X%02X%02X CCP4=0x%02X%02X%02X CCP5=0x%02X%02X%02X\n",
+    epic_harness_log("CCP3=0x%02X%02X%02X CCP4=0x%02X%02X%02X CCP5=0x%02X%02X%02X\n",
                       c3con, c3h, c3l, c4con, c4h, c4l, c5con, c5h, c5l);
     int pass = (c3con == 0x08U) && (c3h == 0x03U) && (c3l == 0x00U)
             && (c4con == 0x08U) && (c4h == 0x04U) && (c4l == 0x00U)
             && (c5con == 0x08U) && (c5h == 0x05U) && (c5l == 0x00U);
-    int rc = pic8_harness_report(pass);
+    int rc = epic_harness_report(pass);
     pic16f193x_harness_halt();
     return rc;
 }

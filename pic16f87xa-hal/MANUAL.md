@@ -10,7 +10,7 @@ is wrong, please treat that as a bug.
 This manual covers what's genuinely specific to this family: the device
 variants, the peripheral register reference, the SFR map, and this
 family's own known gaps. **Read
-[`pic8-common/MANUAL.md`](../pic8-common/MANUAL.md) first** — naming
+[`epic-common/MANUAL.md`](../epic-common/MANUAL.md) first**, naming
 conventions, the handle pattern, status codes, the harness, the host/
 target build-time split, the host-sim API shape, and the shared interrupt
 model are explained there once and apply here unchanged.
@@ -60,7 +60,7 @@ flash/RAM/EEPROM size, and how many analog channels and ports they expose:
 | 16F876A  | 28   | 8 KW  | 368B | 256B   | 5      | no          | no  |
 | 16F877A  | 40   | 8 KW  | 368B | 256B   | 8      | yes         | yes |
 
-See `pic8-common/MANUAL.md` §1 for why this HAL exists at all (the general
+See `epic-common/MANUAL.md` §1 for why this HAL exists at all (the general
 "absorbs the register-level machinery" pitch) — it's the same reasoning
 for every family in this repo, not repeated here.
 
@@ -73,7 +73,7 @@ pic16f87xa-hal/
 ├── include/
 │   ├── pic16f87xa.h            family header: device select, SFR mapping;
 │   │                           pulls shared status codes / bit helpers from
-│   │                           pic8-common/hal_status.h, includes platform hdr
+│   │                           epic-common/hal_status.h, includes platform hdr
 │   ├── pic16f87xa_sfr.h        SFR address map + bit names (1:1 DS39582B)
 │   ├── pic16f87xa_sim.h        simulation backend public API
 │   ├── host/                   platform header selected by the host build
@@ -94,20 +94,20 @@ pic16f87xa-hal/
 ```
 
 The general shape of this tree, the SFR-access-by-include-path trick, the
-host/target link-time split, is explained once in `pic8-common/MANUAL.md`
+host/target link-time split, is explained once in `epic-common/MANUAL.md`
 §2 and applies here unchanged. The one genuinely PIC16-specific piece:
 
 ### 2.1 One interrupt vector, one dispatcher
 
 The PIC16F87XA has a **single** interrupt vector at 0x0004 (DS39582B
 §14.11). On a real target, `src/core/pic16_isr_vector.c` installs the XC8
-`__interrupt()` handler, which calls `pic8_dispatch_all_irqs()`. On
+`__interrupt()` handler, which calls `epic_dispatch_all_irqs()`. On
 the host, the harness registers that same function as the simulator's IRQ
 callback. Either way, the one dispatcher fans out to every peripheral's
 `*IRQHandler`, and each of those is a no-op unless its own flag is set.
 Applications never wire interrupt vectors themselves. (Contrast with
 `pic18fxx5x-hal`, which has two vectors and a priority model — see its own
-manual §2 and `pic8-common/MANUAL.md` §6 for what's shared about the
+manual §2 and `epic-common/MANUAL.md` §6 for what's shared about the
 interrupt story across families.)
 
 ---
@@ -236,7 +236,7 @@ bug.
 
 The simulator (`src/sim/pic16f87xa_sim.c`, public API in
 `pic16f87xa_sim.h`) is a 512-byte memory array (`pic16f87xa_sim_sfr[]`)
-standing in for the PIC's banked register file. See `pic8-common/MANUAL.md`
+standing in for the PIC's banked register file. See `epic-common/MANUAL.md`
 §5 for the shape of its public API and how host tests use it; what it
 actually models, on this family, is:
 
@@ -263,7 +263,7 @@ actually models, on this family, is:
 ## 7. Interrupts
 
 The PIC16F87XA has one interrupt vector at 0x0004 (DS39582B §14.11). See
-`pic8-common/MANUAL.md` §6 for the shared `EPIC_IRQ_*` API, the priority
+`epic-common/MANUAL.md` §6 for the shared `EPIC_IRQ_*` API, the priority
 vocabulary (unused on this single-vector family, `EPIC_IRQ_SetPriority` is
 a no-op here), and §7 for the ISR-driven-peripheral recipe — both apply
 unchanged. The one per-family piece is the IRQ identity enum:
@@ -288,7 +288,7 @@ typedef enum {
 } PIC16_IRQn;
 ```
 
-`pic8_dispatch_all_irqs()` (in `src/core/pic16_irq_dispatch.c`, built on
+`epic_dispatch_all_irqs()` (in `src/core/pic16_irq_dispatch.c`, built on
 both host and target) calls every peripheral `*IRQHandler` in turn.
 
 ---
@@ -378,7 +378,7 @@ others 8-bit; out-of-range bits in `pins` are masked off.
 A whole-port callback hook for the RB<7:4> interrupt-on-change source,
 the same shape as Timer2's one-callback-per-handle but simpler (there is
 only one PORTB, so no handle struct). Added so family-agnostic modules
-(notably `pic8-encoder`) can consume the RB-change interrupt without a
+(notably `epic-encoder`) can consume the RB-change interrupt without a
 family-specific include; the family-neutral shim `peripherals/hal_gpio.h`
 pulls this header in.
 
@@ -411,10 +411,10 @@ when the source is idle. To arm it on a real target, also
 require intercepting every CPU read of PORTB through the `PIC8_REG8`
 macro, disproportionate for the one feature that needs it). Tests that
 exercise the handler assert RBIF directly in INTCON, then call
-`RB_IRQHandler` / `pic8_dispatch_all_irqs` and check the callback's byte
+`RB_IRQHandler` / `epic_dispatch_all_irqs` and check the callback's byte
 and the post-call flag state. This proves the handler's read/clear/callback
 ordering, the part that actually matters. See
-`tests/example_rb_change.c` and `pic8-encoder/docs/ARCHITECTURE.md`.
+`tests/example_rb_change.c` and `epic-encoder/docs/ARCHITECTURE.md`.
 
 ---
 
@@ -967,8 +967,8 @@ directly through the platform macros and the SFR map
 ```c
 PIC8_REG8(addr)                 // an lvalue for the register at addr
 PIC8_SFR_PTR(addr)              // address of that register
-pic8_sfr_read8(addr)            // read
-pic8_sfr_write8(addr, value)    // write
+epic_sfr_read8(addr)            // read
+epic_sfr_write8(addr, value)    // write
 PIC8_BIT_SET(reg, mask)         // reg |= mask
 PIC8_BIT_CLR(reg, mask)         // reg &= ~mask
 PIC8_BIT_TGL(reg, mask)         // reg ^= mask
@@ -1024,7 +1024,7 @@ default device; the XC8 Makefile compiles it for `MCU`.
 ## 23. The examples
 
 All live under `tests/`. The first two build for **both** host and target
-(via the harness, `pic8-common/MANUAL.md` §4); the rest are host-only
+(via the harness, `epic-common/MANUAL.md` §4); the rest are host-only
 smoke tests that talk to the simulator directly.
 
 - **`example_blink`**, Timer0 overflow ISR toggles RB0. The canonical
@@ -1081,7 +1081,7 @@ for t in build/example_*; do "$t"; done   # exit code 0 = pass
 - **PSP is 40/44-pin only**, including its header on a 28-pin part is a
   deliberate `#error`.
 
-See `pic8-common/MANUAL.md` §6 for two HAL-wide design decisions that used
+See `epic-common/MANUAL.md` §6 for two HAL-wide design decisions that used
 to be listed here (`EPIC_IRQ_Enable` not setting the global enable, and
 there being no `HAL_PPP_MspInit`) — they're true of every family, not a
 PIC16F87XA-specific gap, so they moved to the shared manual.

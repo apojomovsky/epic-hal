@@ -7,7 +7,7 @@
  * @details
  *   Timer1 overflows drive an interrupt; the ISR toggles RB0. The
  *   main loop just lets time pass (pumping the sim on host,
- *   busy-spinning on target, via core/pic8_harness.h) and refreshes
+ *   busy-spinning on target, via core/epic_harness.h) and refreshes
  *   the WDT.
  *
  *   Wiring: LED + resistor between RB0 and GND. The 193X has a
@@ -29,7 +29,7 @@
  *     ANSELA = 0xFE                        (RA0 digital, rest analog)
  *     LATA   = 0x00                        (RA0 start low; flipped by
  *                                          the harness's log() hook
- *                                          on pic8_harness_report)
+ *                                          on epic_harness_report)
  *   The ISR flips LATB<0> on every overflow; g_toggle_count counts
  *   them.
  *
@@ -44,9 +44,9 @@
 #include "peripherals/pic16f193x_timer1.h"
 #include "core/pic16f193x_irq.h"
 #include "core/pic16f193x_wdt_sleep.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
-/** Family-local harness extension, not part of core/pic8_harness.h
+/** Family-local harness extension, not part of core/epic_harness.h
  *  since only pic16f193x's RA0-marker mechanism needs it: no-op on
  *  the CMake host build (pic16f193x_harness_sim.c), infinite loop on
  *  the mdb-under-MPLAB-SIM build (pic16f193x_harness_sim_target.c). */
@@ -73,7 +73,7 @@ static void on_t1_overflow(void)
 
 int main(void)
 {
-    pic8_harness_init(SIM_CYCLES);
+    epic_harness_init(SIM_CYCLES);
 
     /* 1. RB0 as digital output, start low. */
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
@@ -98,16 +98,16 @@ int main(void)
      *    the host the harness bounds the loop to SIM_CYCLES and
      *    pumps the sim each iteration. EPIC_WDT_Refresh is a no-op
      *    on the host, so it is called unconditionally. */
-    for (uint32_t i = 0; pic8_harness_running(i); i++) {
-        pic8_harness_tick();
+    for (uint32_t i = 0; epic_harness_running(i); i++) {
+        epic_harness_tick();
         EPIC_WDT_Refresh();
     }
 
-    pic8_harness_log("RB0 toggled %u times.\n", (unsigned)g_toggle_count);
-    int rc = pic8_harness_report(g_toggle_count >= 2U);
+    epic_harness_log("RB0 toggled %u times.\n", (unsigned)g_toggle_count);
+    int rc = epic_harness_report(g_toggle_count >= 2U);
     /* Freeze here so the HARNESS=sim marker's RA0 stays set across
      * the mdb `print PORTA` readback: without this, XC8's `ljmp
-     * start` epilogue would re-enter main() and pic8_harness_init()
+     * start` epilogue would re-enter main() and epic_harness_init()
      * would drive RA0 low again, flickering PORTA<0> (see the
      * mcu/pic16f193x-mplabx/Makefile HARNESS=sim comment). On the
      * CMake host build this is a no-op and falls through to

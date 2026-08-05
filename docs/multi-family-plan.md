@@ -27,7 +27,7 @@ shrink that diff, each new family re-derives the same harness contract,
 build boilerplate, and status-code enum from scratch.
 
 Chosen instead: extract the parts of the current HAL that are genuinely
-architecture-blind into a shared layer (`pic8-common/`), and keep everything
+architecture-blind into a shared layer (`epic-common/`), and keep everything
 that is genuinely register-specific (SFR maps, bank/BSR addressing, IRQ
 vector layout, peripheral register semantics) in per-family trees that all
 implement the same contract. See the design writeup in conversation for the
@@ -57,12 +57,12 @@ full comparison table; the short version:
 ## Target tree layout
 
 ```
-pic8-common/                         # NEW — thin, stable, rarely touched after Phase 0
+epic-common/                         # NEW: thin, stable, rarely touched after Phase 0
   include/core/hal_status.h          # EPIC_StatusTypeDef, PIC8_BIT*
-  include/core/pic8_harness.h        # the 4-function host/target contract
-  src/core/pic8_harness_target.c     # the one shared no-op file
-  cmake/pic8_family.cmake            # shared CMake helpers (add_example, etc.)
-  mk/pic8_family.mk                  # shared Makefile include (pattern rules, VPATH)
+  include/core/epic_harness.h        # the 4-function host/target contract
+  src/core/epic_harness_target.c     # the one shared no-op file
+  cmake/epic_family.cmake            # shared CMake helpers (add_example, etc.)
+  mk/epic_family.mk                  # shared Makefile include (pattern rules, VPATH)
 
 pic16f87xa-hal/                      # EXISTING tree, restructured in place
   include/{host,target}/...          # unchanged pattern; defines PIC8_REG8 etc.
@@ -76,9 +76,9 @@ pic18fxx5x-hal/                      # NEW — same skeleton as pic16f87xa-hal
   include/core/pic18_irq.h           # PIC18 IRQn enum, 2-vector + priority backend
   include/peripherals/...            # same EPIC_GPIO_*/EPIC_TIMER0_* names, PIC18-shaped bodies
   src/...
-  mcu/pic18fxx5x-mplabx/Makefile     # includes mk/pic8_family.mk
+  mcu/pic18fxx5x-mplabx/Makefile     # includes mk/epic_family.mk
 
-pic8-taskmgr/                  # UNCHANGED in scope — must become provably
+epic-taskmgr/                  # UNCHANGED in scope, must become provably
                                       # family-agnostic (see Phase 3 validation)
 ```
 
@@ -88,7 +88,7 @@ After Phase 3, the task manager's build can point at `pic18fxx5x-hal`
 instead of `pic16f87xa-hal` with **zero changes to `task_manager.c` or
 `task_manager.h`**, and `example_multi_blink` passes on the PIC18 host sim
 and on real PIC18 silicon. If that requires touching the task manager, the
-contract in `pic8-common/` isn't right yet and Phase 0-2 need revisiting
+contract in `epic-common/` isn't right yet and Phase 0-2 need revisiting
 before peripheral coverage grows further.
 
 ## Phases
@@ -104,30 +104,30 @@ No new hardware support in this phase. Pure, behavior-preserving refactor
 of the existing PIC16F87XA HAL. **Done** (commit `3f33d48`).
 
 **Tasks**
-1. Create `pic8-common/` with `hal_status.h` (`EPIC_StatusTypeDef`,
+1. Create `epic-common/` with `hal_status.h` (`EPIC_StatusTypeDef`,
    `EPIC_OK/ERROR/BUSY/TIMEOUT/INVALID`, `PIC8_BIT/BIT_SET/BIT_CLR/BIT_TGL/
-   BIT_READ`) and `pic8_harness.h` (the existing 4-function contract, moved
-   and renamed from `pic16f87xa_harness_*` to `pic8_harness_*`).
-2. Move `pic16f87xa_harness_target.c` to `pic8-common/src/core/
-   pic8_harness_target.c` unchanged in substance (it's already
+   BIT_READ`) and `epic_harness.h` (the existing 4-function contract, moved
+   and renamed from `pic16f87xa_harness_*` to `epic_harness_*`).
+2. Move `pic16f87xa_harness_target.c` to `epic-common/src/core/
+   epic_harness_target.c` unchanged in substance (it's already
    family-blind: four no-ops).
 3. Rename in `pic16f87xa-hal`:
    `PIC16F87XA_StatusTypeDef`/`_OK`/... → use the shared `EPIC_*` from
-   `pic8-common`; `PIC16F87XA_BIT*` → `PIC8_BIT*`; `PIC16F87XA_IRQ_Disable/
+   `epic-common`; `PIC16F87XA_BIT*` → `PIC8_BIT*`; `PIC16F87XA_IRQ_Disable/
    Restore/Enable/DisableSrc/ClearFlag/GetFlag` → `EPIC_IRQ_*` (still taking
    a PIC16-defined `IRQn` enum); `PIC16F87XA_WEAK` → `PIC8_WEAK`;
    `PIC16F87XA_REG8`/`_SFR_PTR` → `PIC8_REG8`/`PIC8_SFR_PTR`.
 4. Extract shared CMake helper functions (e.g. the `pic16f87xa_add_example`
-   pattern) into `pic8-common/cmake/pic8_family.cmake`, parameterized so
+   pattern) into `epic-common/cmake/epic_family.cmake`, parameterized so
    `pic16f87xa-hal/CMakeLists.txt` becomes a thin caller.
 5. Extract shared Makefile pattern rules (the `.c` → `.p1` rule, VPATH
-   setup, the `.hex` link step) into `pic8-common/mk/pic8_family.mk`, and
+   setup, the `.hex` link step) into `epic-common/mk/epic_family.mk`, and
    make `pic16f87xa-hal/mcu/pic16f87xa-mplabx/Makefile` include it.
-6. Update `pic8-taskmgr` to link against the renamed symbols
+6. Update `epic-taskmgr` to link against the renamed symbols
    (`EPIC_IRQ_Disable/Restore` instead of `PIC16F87XA_IRQ_Disable/Restore`,
    etc.).
 7. Update docs (`pic16f87xa-hal/README.md`, `MANUAL.md`,
-   `pic8-taskmgr/README.md`, `docs/API.md`, `docs/ARCHITECTURE.md`,
+   `epic-taskmgr/README.md`, `docs/API.md`, `docs/ARCHITECTURE.md`,
    root `README.md`) for the renamed public API surface.
 
 **Explicitly out of scope for Phase 0**: no PIC18 code, no new directory
@@ -143,7 +143,7 @@ changes, that's a bug in the refactor, not an intended improvement.
       `example_wdt_sleep`) passes with **identical** stdout/exit-code to
       before the refactor. Diff the captured output pre- and post-refactor,
       don't just check exit codes.
-- [x] `pic8-taskmgr` host-sim build succeeds; `example_multi_blink`
+- [x] `epic-taskmgr` host-sim build succeeds; `example_multi_blink`
       produces identical output to the pre-refactor baseline (`fast=12
       med=6 slow=3 blips=1 (ticks=61, tasks=4)`).
 - [x] XC8 real-target build succeeds for all four devices (873A/874A/876A/
@@ -181,9 +181,9 @@ any real PIC18 register code exists. **Done.**
    dereference. Both can be minimal/incomplete at this stage, they exist so
    the build wires up, not so registers work yet.
 4. `CMakeLists.txt` and `mcu/pic18fxx5x-mplabx/Makefile`, both including
-   `pic8-common`'s shared CMake/Makefile fragments from Phase 0.
+   `epic-common`'s shared CMake/Makefile fragments from Phase 0.
 5. One trivial smoke source (`tests/example_smoke.c`) that does nothing but
-   call `pic8_harness_init/tick/running/log/report`, to prove the harness
+   call `epic_harness_init/tick/running/log/report`, to prove the harness
    contract links against an empty family backend.
 
 **Explicitly out of scope**: no real SFR addresses, no working GPIO or
@@ -195,7 +195,7 @@ Timer0 yet. This phase proves the *build* seam, not the *hardware*.
       avoid colliding with the taskmgr build at the repo-root `build/`;
       `-Wall -Wextra -Werror` clean.)
 - [x] `./build/example_smoke` runs and reports pass via the shared harness
-      (proves `pic8_harness_*` really is family-blind, since PIC18's
+      (proves `epic_harness_*` really is family-blind, since PIC18's
       backend links against the exact same header/contract PIC16 uses).
       Passes on all four devices, each printing its own part name.
 - [x] XC8 build of the skeleton (empty peripheral set) produces a `.hex`
@@ -220,7 +220,7 @@ exists, and the interrupt-syntax open question is resolved and recorded.
 The smallest slice that lets the task manager run: GPIO, Timer0, interrupts
 (two vectors + priority), WDT/sleep. Chosen because it's exactly the task
 manager's entire HAL dependency surface (confirmed by grepping
-`pic8-taskmgr/src/task_manager.c` and the example), so finishing it
+`epic-taskmgr/src/task_manager.c` and the example), so finishing it
 is both useful on its own and sets up Phase 3 directly. **Done.**
 
 **Tasks**, each cited against DS39632E the way the PIC16 drivers cite
@@ -249,7 +249,7 @@ DS39582B:
    document why, in this file, before implementing.
 6. ISR vector entry file(s): using the syntax confirmed in Phase 1, one
    entry point per vector, both delegating to the shared dispatch pattern
-   already used by PIC16 (`pic8_dispatch_all_irqs` per vector, or per
+   already used by PIC16 (`epic_dispatch_all_irqs` per vector, or per
    priority level, decide during implementation and record the choice).
 7. WDT/Sleep driver: port `EPIC_WDT_Refresh`/`EPIC_Sleep_Enter`/BOR/POR
    status against PIC18's equivalent registers (RCON's `TO`/`PD`/`BOR`/`POR`
@@ -257,7 +257,7 @@ DS39582B:
    DS39632E before porting).
 8. Host sim backend (`pic18_sim.c`): Timer0 stepping + GPIO drive/read
    hooks, mirroring `pic16f87xa_sim.c`'s approach and public API shape
-   (`pic8_sim_reset/step/drive_input/read_output/set_irq_callback`, moved
+   (`epic_sim_reset/step/drive_input/read_output/set_irq_callback`, moved
    to the shared naming from Phase 0 where the API is actually
    family-blind).
 9. Example: a PIC18 `example_blink` analog exercising Timer0 + GPIO +
@@ -274,7 +274,7 @@ DS39582B:
       just "it compiled"). (Built a `.hex` for all four devices; the
       symbol map places `_PIC18_IRQ_HandlerHigh` at 0x0008 and
       `_PIC18_IRQ_HandlerLow` at 0x0018, both calling
-      `pic8_dispatch_all_irqs`.)
+      `epic_dispatch_all_irqs`.)
 - [ ] On real PIC18 hardware: **deferred — no PIC18 board on hand.** The
       Timer0 + interrupt + GPIO chain is verified on the host sim and the
       XC8 build places the vectors correctly; real-silicon blink
@@ -285,9 +285,9 @@ DS39582B:
       empty no-ops; `example_blink` calls `EPIC_WDT_Refresh` every loop
       iteration without crashing; both compile on XC8 as `clrwdt`/`sleep`.)
 - [x] Re-run all of Phase 0's PIC16 validation checks, this phase must not
-      have touched anything under `pic16f87xa-hal/` or `pic8-common/` in a
-      way that regresses PIC16. (Touched `pic8-common/` to add
-      `core/pic8_irq.h`, and `pic16f87xa-hal` to add the no-op
+      have touched anything under `pic16f87xa-hal/` or `epic-common/` in a
+      way that regresses PIC16. (Touched `epic-common/` to add
+      `core/epic_irq.h`, and `pic16f87xa-hal` to add the no-op
       `EPIC_IRQ_SetPriority`, both additive. PIC16 taskmgr host baseline
       unchanged `fast=12 med=6 slow=3 blips=1 ticks=61 tasks=4`; PIC16 XC8
       `.hex` program space unchanged at 1783 words, the uncalled no-op
@@ -303,7 +303,7 @@ XC8 build producing correct vector placement, and zero PIC16 regression.
 ### Phase 3 — Point the task manager at PIC18 (the litmus test) — **done**
 
 **Tasks**
-1. Add a `pic8-taskmgr` build variant (or a build-time switch) that
+1. Add a `epic-taskmgr` build variant (or a build-time switch) that
    links against `pic18fxx5x-hal` instead of `pic16f87xa-hal`.
 2. Do **not** modify `task_manager.c`/`task_manager.h` to make this work.
    If a modification seems necessary, stop and treat it as a Phase 0-2 gap:
@@ -319,13 +319,13 @@ XC8 build producing correct vector placement, and zero PIC16 regression.
   `peripherals/pic16f87xa_timer0.h`, `core/pic16f87xa_wdt_sleep.h`). The
   contract fix: each family now provides family-neutral public headers
   under those names — `core/hal_irq.h`, `peripherals/hal_timer0.h`,
-  `core/hal_wdt_sleep.h`, and a neutral top `pic8_hal.h` — that pull in
+  `core/hal_wdt_sleep.h`, and a neutral top `epic_hal.h`, that pull in
   that family's specific header. The task manager's 3 include lines switch
-  to the neutral names; `example_multi_blink.c` switches to `pic8_hal.h`.
+  to the neutral names; `example_multi_blink.c` switches to `epic_hal.h`.
   The build's include path (which family's HAL is added) decides which
   family resolves. `task_manager.c`/`.h` diff vs Phase 2 is exactly those
   3 include lines — zero scheduler-logic change.
-- *Build variant.* `pic8-taskmgr/CMakeLists.txt` gained a
+- *Build variant.* `epic-taskmgr/CMakeLists.txt` gained a
   `-DEPIC_FAMILY=PIC18` switch (default PIC16) that points `EPIC_DIR` at
   `pic18fxx5x-hal` and swaps the device list. A separate
   `mcu/pic18fxx5x-taskmgr-mplabx/Makefile` does the same for XC8.
@@ -507,7 +507,7 @@ checklist itself has moved.
 - **Shape of the `EPIC_IRQ_*` priority contract extension** (optional
   parameter vs. separate setter) — resolve during Phase 2 task 5, before
   writing the interrupt core. **RESOLVED (Phase 2):** separate setter.
-  Add `EPIC_IRQ_SetPriority(irq, prio)` to the shared `pic8-common`
+  Add `EPIC_IRQ_SetPriority(irq, prio)` to the shared `epic-common`
   contract with a shared `EPIC_IRQ_PRIORITY_HIGH` / `EPIC_IRQ_PRIORITY_LOW`
   enum. PIC16's implementation is a no-op (single vector, no priority);
   PIC18's writes the matching IPR bit. `EPIC_IRQ_Enable` keeps its

@@ -56,15 +56,15 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     g_usart = &g_usart_storage;
 
     /* BRG: SPBRG (low) always; SPBRGH (high) only used when BRG16=1. */
-    pic8_sfr_write8(PIC_REG_SPBRG,  h->SPBRG);
-    pic8_sfr_write8(PIC_REG_SPBRGH, h->SPBRGH);
+    epic_sfr_write8(PIC_REG_SPBRG,  h->SPBRG);
+    epic_sfr_write8(PIC_REG_SPBRGH, h->SPBRGH);
 
     /* BAUDCON: BRG16 + ABDEN. The polarity / wake-up bits default to 0.
      * Reset value 0x00. */
     uint8_t baudcon = 0U;
     if (h->BaudGen  == USART_BAUDGEN_16BIT) baudcon |= PIC_BAUDCON_BRG16;
     if (h->AutoBaud)                         baudcon |= PIC_BAUDCON_ABDEN;
-    pic8_sfr_write8(PIC_REG_BAUDCON, baudcon);
+    epic_sfr_write8(PIC_REG_BAUDCON, baudcon);
 
     /* Build TXSTA (Register 20-1).
      *   CSRC  bit 7, sync clock source
@@ -82,7 +82,7 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     if (h->BaudHigh   == USART_BRGH_HIGH)  txsta |= PIC_TXSTA_BRGH;
     if (h->DataWidth  == USART_DATA_9BITS) txsta |= PIC_TXSTA_TX9;
     if (h->TxCpltCallback) txsta |= PIC_TXSTA_TXEN;  /* TXEN implied if user has a callback. */
-    pic8_sfr_write8(PIC_REG_TXSTA, txsta);
+    epic_sfr_write8(PIC_REG_TXSTA, txsta);
 
     /* Build RCSTA (Register 20-2).
      *   SPEN  bit 7, enable serial port
@@ -94,7 +94,7 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     if (h->DataWidth    == USART_DATA_9BITS) rcsta |= PIC_RCSTA_RX9;
     if (h->AddressDetect)                     rcsta |= PIC_RCSTA_ADDEN;
     if (h->RxCpltCallback)                    rcsta |= PIC_RCSTA_CREN;
-    pic8_sfr_write8(PIC_REG_RCSTA, rcsta);
+    epic_sfr_write8(PIC_REG_RCSTA, rcsta);
 
     /* TXIF is initially 1 (TXREG empty after reset, §20.2.1); RCIF is 0. */
     EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
@@ -113,11 +113,11 @@ EPIC_StatusTypeDef EPIC_USART_DeInit(void)
     EPIC_IRQ_DisableSrc(PIC18_IRQ_USART_RX);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_TX);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
-    pic8_sfr_write8(PIC_REG_RCSTA,   PIC_RCSTA_POR_VALUE);    /* 0x00 */
-    pic8_sfr_write8(PIC_REG_TXSTA,    PIC_TXSTA_POR_VALUE);   /* 0x02, keep TRMT */
-    pic8_sfr_write8(PIC_REG_BAUDCON,  PIC_BAUDCON_POR_VALUE); /* 0x00 */
-    pic8_sfr_write8(PIC_REG_SPBRG,    PIC_SPBRG_POR_VALUE);
-    pic8_sfr_write8(PIC_REG_SPBRGH,   PIC_SPBRGH_POR_VALUE);
+    epic_sfr_write8(PIC_REG_RCSTA,   PIC_RCSTA_POR_VALUE);    /* 0x00 */
+    epic_sfr_write8(PIC_REG_TXSTA,    PIC_TXSTA_POR_VALUE);   /* 0x02, keep TRMT */
+    epic_sfr_write8(PIC_REG_BAUDCON,  PIC_BAUDCON_POR_VALUE); /* 0x00 */
+    epic_sfr_write8(PIC_REG_SPBRG,    PIC_SPBRG_POR_VALUE);
+    epic_sfr_write8(PIC_REG_SPBRGH,   PIC_SPBRGH_POR_VALUE);
     g_usart = NULL;
     return EPIC_OK;
 }
@@ -127,77 +127,77 @@ void EPIC_USART_Transmit(uint8_t data)
     /* Writing TXREG clears TXIF (DS39632E §20.2.1). The hardware starts the
      * TSR→line shift; the sim backend re-asserts TXIF on the next
      * pic18_sim_step() call. */
-    pic8_sfr_write8(PIC_REG_TXREG, data);
+    epic_sfr_write8(PIC_REG_TXREG, data);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_TX);
 }
 
 uint8_t EPIC_USART_GetTX9D(void)
 {
-    return (pic8_sfr_read8(PIC_REG_TXSTA) & PIC_TXSTA_TX9D) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_TXSTA) & PIC_TXSTA_TX9D) ? 1U : 0U;
 }
 
 void EPIC_USART_SetTX9D(uint8_t bit9)
 {
-    uint8_t v = pic8_sfr_read8(PIC_REG_TXSTA);
+    uint8_t v = epic_sfr_read8(PIC_REG_TXSTA);
     if (bit9) v |= PIC_TXSTA_TX9D;
     else      v &= (uint8_t)~PIC_TXSTA_TX9D;
-    pic8_sfr_write8(PIC_REG_TXSTA, v);
+    epic_sfr_write8(PIC_REG_TXSTA, v);
 }
 
 uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void)
 {
-    return (pic8_sfr_read8(PIC_REG_TXSTA) & PIC_TXSTA_TRMT) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_TXSTA) & PIC_TXSTA_TRMT) ? 1U : 0U;
 }
 
 uint8_t EPIC_USART_Receive(void)
 {
     /* Reading RCREG clears RCIF (DS39632E §20.2.2). */
-    uint8_t data = pic8_sfr_read8(PIC_REG_RCREG);
+    uint8_t data = epic_sfr_read8(PIC_REG_RCREG);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
     return data;
 }
 
 uint8_t EPIC_USART_GetRX9D(void)
 {
-    return (pic8_sfr_read8(PIC_REG_RCSTA) & PIC_RCSTA_RX9D) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_RCSTA) & PIC_RCSTA_RX9D) ? 1U : 0U;
 }
 
 uint8_t EPIC_USART_HasOverrun(void)
 {
-    return (pic8_sfr_read8(PIC_REG_RCSTA) & PIC_RCSTA_OERR) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_RCSTA) & PIC_RCSTA_OERR) ? 1U : 0U;
 }
 
 void EPIC_USART_ClearOverrun(void)
 {
     /* DS39632E §20.2.2: clear CREN, then set it again to reset the receiver. */
-    uint8_t rcsta = (uint8_t)(pic8_sfr_read8(PIC_REG_RCSTA) & (uint8_t)~PIC_RCSTA_CREN);
-    pic8_sfr_write8(PIC_REG_RCSTA, rcsta);
+    uint8_t rcsta = (uint8_t)(epic_sfr_read8(PIC_REG_RCSTA) & (uint8_t)~PIC_RCSTA_CREN);
+    epic_sfr_write8(PIC_REG_RCSTA, rcsta);
     rcsta |= PIC_RCSTA_CREN;
-    pic8_sfr_write8(PIC_REG_RCSTA, rcsta);
+    epic_sfr_write8(PIC_REG_RCSTA, rcsta);
 }
 
 /* ───────────────────────── auto-baud (BAUDCON) ───────────────────── */
 
 void EPIC_USART_StartAutoBaud(void)
 {
-    uint8_t v = (uint8_t)(pic8_sfr_read8(PIC_REG_BAUDCON) | PIC_BAUDCON_ABDEN);
-    pic8_sfr_write8(PIC_REG_BAUDCON, v);
+    uint8_t v = (uint8_t)(epic_sfr_read8(PIC_REG_BAUDCON) | PIC_BAUDCON_ABDEN);
+    epic_sfr_write8(PIC_REG_BAUDCON, v);
 }
 
 uint8_t EPIC_USART_IsAutoBaudBusy(void)
 {
-    return (pic8_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDEN) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDEN) ? 1U : 0U;
 }
 
 uint8_t EPIC_USART_HasAutoBaudOverflow(void)
 {
-    return (pic8_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDOVF) ? 1U : 0U;
+    return (epic_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDOVF) ? 1U : 0U;
 }
 
 void EPIC_USART_ClearAutoBaudOverflow(void)
 {
-    uint8_t v = (uint8_t)(pic8_sfr_read8(PIC_REG_BAUDCON) & (uint8_t)~PIC_BAUDCON_ABDOVF);
-    pic8_sfr_write8(PIC_REG_BAUDCON, v);
+    uint8_t v = (uint8_t)(epic_sfr_read8(PIC_REG_BAUDCON) & (uint8_t)~PIC_BAUDCON_ABDOVF);
+    epic_sfr_write8(PIC_REG_BAUDCON, v);
 }
 
 /* ───────────────────────── ISRs ─────────────────────────────────── */
@@ -213,7 +213,7 @@ void USART_TX_IRQHandler(void)
 void USART_RX_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC18_IRQ_USART_RX)) return;
-    uint8_t data = pic8_sfr_read8(PIC_REG_RCREG);
+    uint8_t data = epic_sfr_read8(PIC_REG_RCREG);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
     if (g_usart && g_usart->RxCpltCallback) g_usart->RxCpltCallback(data);
 }

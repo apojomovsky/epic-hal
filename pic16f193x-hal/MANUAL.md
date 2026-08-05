@@ -4,7 +4,7 @@ Per-family register-level reference for the PIC16F193X HAL. Every
 register fact here is cited to **DS41364B** (the PIC16F193X/LF193X data
 sheet). The family-agnostic conventions, the status codes, the
 handle pattern, the harness, and the interrupt model's shared half live
-in [`../pic8-common/MANUAL.md`](../pic8-common/MANUAL.md); this file
+in [`../epic-common/MANUAL.md`](../epic-common/MANUAL.md); this file
 covers only what is genuinely PIC16F193X-specific and points back there
 instead of repeating.
 
@@ -18,7 +18,7 @@ where they matter.
 ## 1. What this is
 
 The PIC16F193X HAL is the repo's third family, implementing the shared
-`pic8-common` contract with bodies for the Enhanced Mid-range core. It
+`epic-common` contract with bodies for the Enhanced Mid-range core. It
 is a new family, not a variant of `pic16f87xa-hal`, because the
 addressing model (BSR), interrupt entry (auto context save), and I/O
 model (LAT/ANSEL) differ (DS41364B §2.2, §4.0, §6.0).
@@ -28,7 +28,7 @@ model (LAT/ANSEL) differ (DS41364B §2.2, §4.0, §6.0).
 Single interrupt vector at 0x0004, no priority. Hardware saves
 W/STATUS/BSR/FSR0/FSR1/PCLATH to shadow registers on entry and restores
 them on RETFIE (DS41364B §4.1), so ISRs need no manual push/pop. The
-`pic8_dispatch_all_irqs` fan-out (one call per peripheral handler) is
+`epic_dispatch_all_irqs` fan-out (one call per peripheral handler) is
 shared by the target vector and the host sim IRQ callback, same shape
 as the other families.
 
@@ -51,10 +51,10 @@ make -C mcu/pic16f193x-mplabx MCU=16F1937
 ## 4. Build systems
 
 Host build: `CMakeLists.txt`, a thin caller of
-`pic8-common/cmake/pic8_family.cmake`. Include path puts `include/host`
+`epic-common/cmake/epic_family.cmake`. Include path puts `include/host`
 first (memory-backed SFR), links the `_sim.c` halves. Target build:
 `mcu/pic16f193x-mplabx/Makefile`, a thin caller of
-`pic8-common/mk/pic8_family.mk`, puts `include/target` first
+`epic-common/mk/epic_family.mk`, puts `include/target` first
 (volatile-deref SFR), links the `_target.c` halves. The split is by
 include path + linked file, never `#ifdef`.
 
@@ -81,7 +81,7 @@ PIR1/PIE1 holds TMR1, TMR2, CCP1, SSP, USART_TX, USART_RX, ADC, TMR1G;
 PIR2/PIE2 holds CCP2, LCD, BCL, EEPROM, CMP1, CMP2, OSF; PIR3/PIE3
 holds TMR4, TMR6, CCP3, CCP4, CCP5. `EPIC_IRQ_SetPriority` is a no-op
 (single vector, no priority), the no-op half of the shared contract;
-PIC18 implements it for real. See `../pic8-common/MANUAL.md` §6 for the
+PIC18 implements it for real. See `../epic-common/MANUAL.md` §6 for the
 shared model; the family-specific half is the `PIC16F193X_IRQn` enum and
 the 3-PIE-bank table in `src/core/pic16f193x_irq.c`.
 
@@ -456,7 +456,7 @@ T0XCS(0). CPSCON1 (0x1F): CPSCH(3:0, channel select). CPSOUT is read-only.
 `include/pic16f193x_sfr.h` defines `PIC_REG_*` addresses, `PIC_*_BIT`
 masks, and `PIC_*_POR_VALUE` reset values, all DS41364B-cited. The
 platform pair (`include/host` + `include/target`, same name, include-path
-selected) defines `PIC8_REG8` / `pic8_sfr_read8` / `pic8_sfr_write8` /
+selected) defines `PIC8_REG8` / `epic_sfr_read8` / `epic_sfr_write8` /
 `PIC8_SFR_PTR` and the per-PIE-bank `PIC8_PIE_ENABLE_BIT` /
 `PIC8_PIE_DISABLE_BIT` macros (`pir_index` 0/1/2 for PIE1/2/3).
 

@@ -2,7 +2,7 @@
 
 Status: **identified, not started**. Found by `xc8-build.yml` (Phase 1 of
 `docs/ci-plan.md`)'s first fully-working run
-(https://github.com/apojomovsky/pic8-hal/actions/runs/30719090416): 40 of
+(https://github.com/apojomovsky/epicurus/actions/runs/30719090416): 40 of
 112 `(module, MCU)` build legs failed, all with real XC8 compiler/linker
 errors, not CI plumbing. Excluded from `xc8-build.yml`'s matrix for now
 (`scripts/ci-discover-xc8-matrix.py`'s `KNOWN_BROKEN` list) so Phase 1
@@ -15,7 +15,7 @@ None of these `mcu/*-mplabx/Makefile`s had ever actually been linked
 against real XC8 before this CI effort. `pic16f87xa-hal`'s and
 `pic18fxx5x-hal`'s own top-level Makefiles had (informally, by whoever
 last touched them locally), and both link fine. Every per-module
-`pic8-*/mcu/*-mplabx/Makefile` (a `EPIC_SOURCES` subset picked to build
+`epic-*/mcu/*-mplabx/Makefile` (a `EPIC_SOURCES` subset picked to build
 just enough of the HAL for that module's example, plus config-word
 generation, same pattern as the two HALs) had not, until
 `xc8-build.yml` actually ran `make` for every declared MCU variant of
@@ -50,11 +50,11 @@ per missing peripheral.
 **Affected (all MCU variants, both families where applicable, this is
 not MCU-specific, it's a fixed set of missing translation units)**:
 
-- `pic8-console/mcu/pic16f87xa-console-mplabx` and
-  `pic8-console/mcu/pic18fxx5x-console-mplabx` (only compiles USART)
-- `pic8-settings/mcu/pic16f87xa-settings-mplabx` and
-  `pic8-settings/mcu/pic18fxx5x-settings-mplabx` (only compiles EEPROM)
-- `pic8-taskmgr/mcu/pic18fxx5x-taskmgr-mplabx` **only** (only compiles
+- `epic-console/mcu/pic16f87xa-console-mplabx` and
+  `epic-console/mcu/pic18fxx5x-console-mplabx` (only compiles USART)
+- `epic-settings/mcu/pic16f87xa-settings-mplabx` and
+  `epic-settings/mcu/pic18fxx5x-settings-mplabx` (only compiles EEPROM)
+- `epic-taskmgr/mcu/pic18fxx5x-taskmgr-mplabx` **only** (only compiles
   GPIO + Timer0; the PIC16 side already compiles the full peripheral
   set and links fine)
 
@@ -82,24 +82,24 @@ build fine)**:
 
 | Module | PIC16 fails on | PIC18 fails on |
 |---|---|---|
-| `pic8-bus` | (builds fine) | 18F2455, 18F2550 |
-| `pic8-debounce` | 16F873A, 16F874A | 18F2455, 18F2550 |
-| `pic8-encoder` | (builds fine) | 18F2455, 18F2550 |
-| `pic8-math` | (builds fine) | 18F2455, 18F2550 |
-| `pic8-modbus` | 16F873A, 16F874A | 18F2455, 18F2550 |
-| `pic8-serial` | 16F873A, 16F874A | 18F2455, 18F2550 |
-| `pic8-tick` | (builds fine) | 18F2455, 18F2550 |
+| `epic-bus` | (builds fine) | 18F2455, 18F2550 |
+| `epic-debounce` | 16F873A, 16F874A | 18F2455, 18F2550 |
+| `epic-encoder` | (builds fine) | 18F2455, 18F2550 |
+| `epic-math` | (builds fine) | 18F2455, 18F2550 |
+| `epic-modbus` | 16F873A, 16F874A | 18F2455, 18F2550 |
+| `epic-serial` | 16F873A, 16F874A | 18F2455, 18F2550 |
+| `epic-tick` | (builds fine) | 18F2455, 18F2550 |
 
-Reproduced locally (`pic8-debounce`, `MCU=16F874A`):
+Reproduced locally (`epic-debounce`, `MCU=16F874A`):
 
 ```
 ../../../pic16f87xa-hal/src/core/pic16_irq.c:56:: error: (1360) no space for auto/param main@db_b
 ```
 
-and (`pic8-serial`, `MCU=16F873A`):
+and (`epic-serial`, `MCU=16F873A`):
 
 ```
-../../src/pic8_serial.c:51:: error: (1250) could not find space (32 bytes) for variable _g_rx_buf
+../../src/epic_serial.c:51:: error: (1250) could not find space (32 bytes) for variable _g_rx_buf
 ```
 
 **Fix**: needs a real decision, not just a patch, this is either (a) the
@@ -119,7 +119,7 @@ they regressed on `master` during `docs/ci-plan.md` Phase 4's PIE1/PIE2
 codegen-bug investigation. `EPIC_IRQ_Enable`/`DisableSrc`'s fix for that
 bug (see Phase 4's Validation section for the full account) needed one
 new file-scope, `__at`-pinned scratch byte
-(`pic16_isr_vector.c`'s `pic8_irq_pie_scratch`), unconditionally linked
+(`pic16_isr_vector.c`'s `epic_irq_pie_scratch`), unconditionally linked
 into every module that calls `EPIC_IRQ_Enable`/`DisableSrc` for a Bank 1
 IRQ source, which includes anything using `EPIC_USART_Init` with a
 callback, i.e. most modules. That one extra byte of Bank 0 RAM was
@@ -131,26 +131,26 @@ linker error", confirmed via a real local XC8 v4.00 build:
 fixup overflow referencing psect bssBANK1 (0xA4) into 1 byte at ...
 ```
 
-(Some other, unrelated large buffer, not `pic8_irq_pie_scratch` itself,
+(Some other, unrelated large buffer, not `epic_irq_pie_scratch` itself,
 spilling into Bank 1 once one more byte of Bank 0 got claimed.)
 
 **Affected**:
 
-- `pic8-math/mcu/pic16f87xa-math-mplabx`: 16F873A, 16F874A now fail
+- `epic-math/mcu/pic16f87xa-math-mplabx`: 16F873A, 16F874A now fail
   (16F876A, 16F877A still build fine). Consistent with this module's own
   `docs/ARCHITECTURE.md` already documenting PIC16 RAM as marginal
   ("cannot hold math + full HAL + `golden_vectors.h` + the self-test...
   spills to bank 1 and overflows"); this pushed marginal to broken.
-- `pic8-modbus/mcu/pic16f87xa-modbus-mplabx`: 16F876A, 16F877A now also
+- `epic-modbus/mcu/pic16f87xa-modbus-mplabx`: 16F876A, 16F877A now also
   fail, on top of 16F873A/16F874A already excluded under root cause 2
   above; this module now has **zero** surviving PIC16 variants and has
   dropped out of `xc8-build.yml`'s matrix entirely (same as
-  `pic8-console`/`pic8-settings` already do for both families).
+  `epic-console`/`epic-settings` already do for both families).
 
 **Fix**: same open question as root cause 2 (is the smaller-variant RAM
 budget genuinely too tight for this feature set, or is there RAM being
 wasted somewhere that can be trimmed), plus one PIE1/PIE2-fix-specific
-angle worth checking first: is `pic8_irq_pie_scratch`'s permanent,
+angle worth checking first: is `epic_irq_pie_scratch`'s permanent,
 unconditional 1-byte reservation avoidable for modules that don't
 actually need Bank 1 IRQ access at runtime (XC8's own dead-code
 elimination should already prune it for modules that never call

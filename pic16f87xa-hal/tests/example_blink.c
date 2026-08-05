@@ -6,7 +6,7 @@
  * @details
  *   Timer0 overflows drive an interrupt; the ISR toggles RB0. The main
  *   loop just lets time pass (pumping the sim on host, busy-spinning
- *   on target, via core/pic8_harness.h) and refreshes the WDT.
+ *   on target, via core/epic_harness.h) and refreshes the WDT.
  *   Wiring: LED+resistor between RB0 and GND, 20 MHz crystal (FOSC=HS,
  *   FCY=5 MHz). Timer0 Fosc/4, 1:256 prescaler, reload 0, overflows
  *   every ~13 ms (~76 Hz toggle).
@@ -18,7 +18,7 @@
 #include "peripherals/pic16f87xa_timer0.h"
 #include "core/pic16_irq.h"
 #include "core/pic16f87xa_wdt_sleep.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
 /** Simulated run length (host only). 256 × 256 = 65536 cycles per Timer0
  *  overflow at 1:256, so 600k cycles give ~9 toggles. */
@@ -37,7 +37,7 @@ static void on_t0_overflow(void)
 
 int main(void)
 {
-    pic8_harness_init(SIM_CYCLES);
+    epic_harness_init(SIM_CYCLES);
 
     /* 1. RB0 as output, start low. */
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
@@ -61,15 +61,15 @@ int main(void)
     /* 4. Let time pass. On the target this busy-spins forever, refreshing
      *    the WDT while the Timer0 ISR toggles RB0; on the host the harness
      *    bounds the loop to SIM_CYCLES and pumps the sim each iteration.
-     *    pic8_harness_tick pumps the simulator on the host and is a
+     *    epic_harness_tick pumps the simulator on the host and is a
      *    no-op on the target, where real time advances on its own.
      *    EPIC_WDT_Refresh is a no-op on the host, so it is called
      *    unconditionally. */
-    for (uint32_t i = 0; pic8_harness_running(i); i++) {
-        pic8_harness_tick();
+    for (uint32_t i = 0; epic_harness_running(i); i++) {
+        epic_harness_tick();
         EPIC_WDT_Refresh();
     }
 
-    pic8_harness_log("RB0 toggled %u times.\n", (unsigned)g_toggle_count);
-    return pic8_harness_report(g_toggle_count >= 2U);
+    epic_harness_log("RB0 toggled %u times.\n", (unsigned)g_toggle_count);
+    return epic_harness_report(g_toggle_count >= 2U);
 }

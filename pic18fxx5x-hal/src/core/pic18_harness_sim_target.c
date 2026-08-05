@@ -1,7 +1,7 @@
 /**
  * @file    pic18_harness_sim_target.c
  * @brief   PIC18F2455-family sim-target implementation of the test harness
- *          (see core/pic8_harness.h). Runs as real compiled firmware under
+ *          (see core/epic_harness.h). Runs as real compiled firmware under
  *          MPLAB SIM, driven headlessly via mdb.
  *
  * @details
@@ -11,7 +11,7 @@
  *   `USART_ComputeSPBRG` takes an extra BRG-width argument here.
  */
 
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 #include "core/pic18_irq.h"
 #include "peripherals/pic18fxx5x_usart.h"
 
@@ -41,7 +41,7 @@ static void s_uart_putc(char c)
     EPIC_USART_Transmit((uint8_t)c);
 }
 
-void pic8_harness_init(uint32_t cycles)
+void epic_harness_init(uint32_t cycles)
 {
     g_cycles = cycles;
 
@@ -62,17 +62,17 @@ void pic8_harness_init(uint32_t cycles)
     EPIC_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
 }
 
-void pic8_harness_tick(void)
+void epic_harness_tick(void)
 {
     /* Real time advances on its own under MPLAB SIM too, nothing to pump. */
 }
 
-int pic8_harness_running(uint32_t iteration)
+int epic_harness_running(uint32_t iteration)
 {
     return (iteration < g_cycles) ? 1 : 0;
 }
 
-void pic8_harness_log(const char *fmt, ...)
+void epic_harness_log(const char *fmt, ...)
 {
     while (*fmt) {
         s_uart_putc(*fmt);

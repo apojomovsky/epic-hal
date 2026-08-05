@@ -8,13 +8,13 @@
  *   Builds for host sim and XC8 target with no `#ifdef`.
  */
 
-#include "pic8_hal.h"
-#include "core/pic8_harness.h"
+#include "epic_hal.h"
+#include "core/epic_harness.h"
 #include "pic18fxx5x_sim.h"
 #include <stdio.h>
 
 #define CHECK(cond, msg) do { \
-    if (!(cond)) { pic8_harness_log("FAIL: %s\n", msg); return pic8_harness_report(0); } \
+    if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
 } while (0)
 
 int main(void)
@@ -26,19 +26,19 @@ int main(void)
     CHECK(add == 9U, "SSPADD 16MHz 400kHz != 9");
 
     /* 2. Init in SPI master mode, Fosc/4. */
-    pic8_harness_init(16U);
+    epic_harness_init(16U);
 
     SSP_HandleTypeDef h = SSP_HANDLE_DEFAULT;
     h.Mode = SSP_MODE_SPI_MASTER_FOSC_4;
     EPIC_SSP_Init(&h);
 
     /* Verify SSPCON1 = SSPEN(bit5) | mode 0000 = 0x20. */
-    CHECK(pic8_sfr_read8(PIC_REG_SSPCON1) == 0x20U,
+    CHECK(epic_sfr_read8(PIC_REG_SSPCON1) == 0x20U,
           "SSPCON1 not 0x20 for SPI master Fosc/4");
 
     /* 3. Write a byte to SSPBUF. */
     CHECK(EPIC_SSP_WriteByte(0xA5U) == 0U, "WriteByte returned error");
-    CHECK(pic8_sfr_read8(PIC_REG_SSPBUF) == 0xA5U,
+    CHECK(epic_sfr_read8(PIC_REG_SSPBUF) == 0xA5U,
           "SSPBUF did not capture 0xA5");
 
     /* 4. RX: drive a byte, read it back. */
@@ -54,13 +54,13 @@ int main(void)
     EPIC_SSP_Init(&h);
 
     EPIC_SSP_Start();
-    CHECK((pic8_sfr_read8(PIC_REG_SSPCON2) & PIC_SSPCON2_SEN) != 0U,
+    CHECK((epic_sfr_read8(PIC_REG_SSPCON2) & PIC_SSPCON2_SEN) != 0U,
           "SEN not set after Start");
 
     EPIC_SSP_Stop();
-    CHECK((pic8_sfr_read8(PIC_REG_SSPCON2) & PIC_SSPCON2_PEN) != 0U,
+    CHECK((epic_sfr_read8(PIC_REG_SSPCON2) & PIC_SSPCON2_PEN) != 0U,
           "PEN not set after Stop");
 
-    pic8_harness_log("OK: SSP driver, SSPADD math, SPI master, I2C master all pass.\n");
-    return pic8_harness_report(1);
+    epic_harness_log("OK: SSP driver, SSPADD math, SPI master, I2C master all pass.\n");
+    return epic_harness_report(1);
 }

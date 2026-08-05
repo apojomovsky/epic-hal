@@ -16,7 +16,7 @@
 
 #include "pic18fxx5x.h"
 #include "pic18fxx5x_sfr.h"
-#include "core/pic8_irq.h"   /* shared EPIC_IRQ_Priority enum (family-blind) */
+#include "core/epic_irq.h"   /* shared EPIC_IRQ_Priority enum (family-blind) */
 
 /**
  * @brief Logical identity of every interrupt source on the part.

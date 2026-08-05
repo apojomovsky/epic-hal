@@ -1,0 +1,122 @@
+diff --git a/epic-usb/third_party/m-stack/usb/include/usb_cdc.h b/epic-usb/third_party/m-stack/usb/include/usb_cdc.h
+index 3a65133..8e28cfb 100644
+--- a/epic-usb/third_party/m-stack/usb/include/usb_cdc.h
++++ b/epic-usb/third_party/m-stack/usb/include/usb_cdc.h
+@@ -226,16 +226,24 @@ struct cdc_notification_header {
+ struct cdc_serial_state_notification {
+ 	struct cdc_notification_header header;
+ 	union {
++		/* Deviation from upstream (epic-usb, not sent upstream): upstream
++		 * bit-fields are typed uint16_t. XC8 v3.10's Clang-based frontend
++		 * rejects sized stdint types as a bit-field base type ("bit-field
++		 * ... has bad bitfield type 'uint16_t'") -- only plain int/unsigned
++		 * int is accepted, which matches strict ISO C's bit-field base type
++		 * rule anyway. unsigned int is 16 bits on PIC18/XC8, so the 16
++		 * declared bits below still total 16 and match the union's flat
++		 * uint16_t sibling member. See epic-usb/docs/epic-usb-plan.md. */
+ 		struct {
+-			uint16_t bRxCarrier : 1; /**< Indicates DCD */
+-			uint16_t bTxCarrier : 1; /**< Indicates DSR */
+-			uint16_t bBreak : 1;
+-			uint16_t bRingSignal : 1;
+-			uint16_t bFraming : 1;
+-			uint16_t bParity : 1;
+-			uint16_t bOverrun : 1;
+-			uint16_t : 1;
+-			uint16_t : 8; /* XC8 can't handle a 9-bit bitfield */
++			unsigned int bRxCarrier : 1; /**< Indicates DCD */
++			unsigned int bTxCarrier : 1; /**< Indicates DSR */
++			unsigned int bBreak : 1;
++			unsigned int bRingSignal : 1;
++			unsigned int bFraming : 1;
++			unsigned int bParity : 1;
++			unsigned int bOverrun : 1;
++			unsigned int : 1;
++			unsigned int : 8; /* XC8 can't handle a 9-bit bitfield */
+ 		} bits;
+ 		uint16_t serial_state;
+ 	} data;
+diff --git a/epic-usb/third_party/m-stack/usb/src/usb_cdc.c b/epic-usb/third_party/m-stack/usb/src/usb_cdc.c
+index 1971ab6..286109a 100644
+--- a/epic-usb/third_party/m-stack/usb/src/usb_cdc.c
++++ b/epic-usb/third_party/m-stack/usb/src/usb_cdc.c
+@@ -160,7 +160,7 @@ uint8_t process_cdc_setup_request(const struct setup_packet *setup)
+ 			return -1;
+ 
+ 		usb_send_data_stage((void*)response,
+-		                    min(len, setup->wLength),
++		                    MIN(len, setup->wLength),
+ 		                    callback, context);
+ 		return 0;
+ 	}
+@@ -228,7 +228,7 @@ uint8_t process_cdc_setup_request(const struct setup_packet *setup)
+ 				(uint16_t) data_multiplexed_state << 1;
+ 
+ 		usb_send_data_stage((char*)&transfer_data.comm_feature,
+-		                    min(setup->wLength,
++		                    MIN(setup->wLength,
+ 		                        sizeof(transfer_data.comm_feature)),
+ 		                    NULL/*callback*/, NULL);
+ 		return 0;
+@@ -242,7 +242,7 @@ uint8_t process_cdc_setup_request(const struct setup_packet *setup)
+ 		transfer_interface = interface;
+ 		usb_start_receive_ep0_data_stage(
+ 		                      (char*)&transfer_data.line_coding,
+-		                      min(setup->wLength,
++		                      MIN(setup->wLength,
+ 		                          sizeof(transfer_data.line_coding)),
+ 		                      set_line_coding, NULL);
+ 		return 0;
+@@ -261,7 +261,7 @@ uint8_t process_cdc_setup_request(const struct setup_packet *setup)
+ 			return -1;
+ 
+ 		usb_send_data_stage((char*)&transfer_data.line_coding,
+-		                    min(setup->wLength,
++		                    MIN(setup->wLength,
+ 		                        sizeof(transfer_data.line_coding)),
+ 		                    /*callback*/NULL, NULL);
+ 		return 0;
+diff --git a/epic-usb/third_party/m-stack/usb/src/usb_hal.h b/epic-usb/third_party/m-stack/usb/src/usb_hal.h
+index eb9a42f..efe6a33 100644
+--- a/epic-usb/third_party/m-stack/usb/src/usb_hal.h
++++ b/epic-usb/third_party/m-stack/usb/src/usb_hal.h
+@@ -285,7 +285,15 @@ struct buffer_descriptor {
+ #define BDN_LENGTH(REG) (REG.BDnCNT)
+ #endif
+ 
+-#ifdef _18F46J50
++#if defined(_18F46J50) || defined(_18F4550) || defined(_18F4455) || \
++    defined(_18F2550) || defined(_18F2455)
++/* PIC18F2455/2550/4455/4550: USB RAM is banks 4-7 (0x400-0x7FF), BDT at
++ * bank 4 (0x400-0x4FF) -- DS39632E Section 17.3 "USB RAM". Same address as
++ * the already-supported J50, confirmed identical layout by datasheet
++ * cross-reference (see epic-usb/docs/epic-usb-plan.md); the generic _PIC18
++ * SFR macros above this #ifdef already apply unchanged to the 2455/2550/
++ * 4455/4550 family, this was the only chip-specific gap. Added for
++ * epic-usb (github.com/apojomovsky/pic -- vendored copy, not upstreamed). */
+ #define BD_ADDR 0x400
+ //#undef BUFFER_ADDR
+ #else
+@@ -306,9 +314,20 @@ struct buffer_descriptor {
+ #elif defined __XC8
+ 	#define memcpy_from_rom(x,y,z) memcpy(x,y,z)
+ 	#define FAR
+-	#define BD_ATTR_TAG @##BD_ADDR
++	/* Deviation from upstream (epic-usb, not sent upstream): upstream reads
++	 * "@##BD_ADDR" -- the legacy PIC18 pic-cc placement syntax
++	 * ("var @ address"), pasted into one token via ##. XC8 v3.10's
++	 * Clang-based PIC18 frontend accepts neither: ## on '@' and an
++	 * expanded hex literal is an invalid preprocessing token, and even
++	 * unpasted "var @ address;" no longer parses ("expected ';' after top
++	 * level declarator") -- confirmed with a standalone repro. The
++	 * replacement, __at(address), is the syntax this compiler's own
++	 * headers use (see e.g. proc/pic16f59.h's "__at(0x000)"), confirmed
++	 * working the same way. See epic-usb/docs/epic-usb-plan.md for how
++	 * this was found. */
++	#define BD_ATTR_TAG __at(BD_ADDR)
+ 	#ifdef BUFFER_ADDR
+-		#define XC8_BUFFER_ADDR_TAG @##BUFFER_ADDR
++		#define XC8_BUFFER_ADDR_TAG __at(BUFFER_ADDR)
+ 	#else
+ 		#define XC8_BUFFER_ADDR_TAG
+ 	#endif

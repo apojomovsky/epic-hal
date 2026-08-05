@@ -1,0 +1,25 @@
+# The 17 pic8-<name> module directory names (hyphenated) that rename to
+# epic-<name>. One bare module name per line (the part after "pic8-"),
+# consumed by scripts/rename-pic8-epic.awk to build the hyphen whitelist.
+# Anything pic8- that is NOT in this list is preserved by construction:
+# pic8-hal / pic8-hal-ci / pic8-hal-ci-assets / pic8-hal-toolchain /
+# pic8-hal-toolchain-home (repo identity + Docker image names), pic8-vga
+# (planned, nonexistent module), pic8-ramp (hypothetical), pic8-family
+# (prose typo for pic8_family.mk). See docs/pic8-epic-rename-plan.md.
+common
+tick
+math
+taskmgr
+serial
+bus
+modbus
+console
+usb
+settings
+sdcard
+adcfilter
+debounce
+pid
+encoder
+lcd
+fsm

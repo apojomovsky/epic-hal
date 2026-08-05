@@ -16,15 +16,15 @@ job stays a single step:
      (EPIC_DIR, SERIAL_DIR, TICK_DIR, TASKMGR_DIR, MATH_DIR); this script
      reads that straight from the tracked CMakeLists.txt files instead of
      hand-maintaining a graph that would drift the moment a module's own
-     dependency changes. `pic8-common/` is a third, implicit dependency of
+     dependency changes. `epic-common/` is a third, implicit dependency of
      all three HALs (included via `include()`, not `add_subdirectory()`, so
      it never appears as its own module and never appears in the graph
-     above): a change under `pic8-common/` is treated as touching every HAL
+     above): a change under `epic-common/` is treated as touching every HAL
      directly, same as if all three HAL directories had changed.
 
 Conservative by construction, on both axes:
   - Any changed file that is not (a) a .md file, (b) inside a discovered
-    module's own directory, or (c) inside pic8-common/ falls back to "not
+    module's own directory, or (c) inside epic-common/ falls back to "not
     docs-only, every module affected" — a Makefile, workflow, script, or
     Docker change is exactly the kind of change this script cannot reason
     about safely, so it doesn't try.
@@ -76,10 +76,10 @@ def build_dep_graph(modules):
     each module's own CMakeLists.txt. Pattern: a `<NAME>_DIR` CMake
     variable assigned `${CMAKE_CURRENT_SOURCE_DIR}/../<module>`, which is
     the one convention every module in this repo already follows for
-    pulling in a sibling (see pic8-tick/CMakeLists.txt's EPIC_DIR for the
+    pulling in a sibling (see epic-tick/CMakeLists.txt's EPIC_DIR for the
     canonical example)."""
     # Matches "../<module>" followed by a word boundary: either end of
-    # line (the multi-line `set(EPIC_DIR ... ../pic8-tick` form, whose
+    # line (the multi-line `set(EPIC_DIR ... ../epic-tick` form, whose
     # closing `CACHE PATH ...)` wraps to the next line) or a non-path
     # character (the single-line `... ../pic18fxx5x-hal CACHE PATH "")`
     # form). Module names in this repo are lowercase/digits/hyphen only,
@@ -137,8 +137,8 @@ def main():
     module_set = set(modules)
 
     def owning_module(path):
-        # Longest matching module-dir prefix, so e.g. pic8-tick/mcu/...
-        # attributes correctly even though pic8-tick contains subdirs.
+        # Longest matching module-dir prefix, so e.g. epic-tick/mcu/...
+        # attributes correctly even though epic-tick contains subdirs.
         best = None
         for m in module_set:
             if path == m or path.startswith(m + "/"):
@@ -151,7 +151,7 @@ def main():
     for p in changed:
         if is_docs(p):
             continue
-        if p.startswith("pic8-common/"):
+        if p.startswith("epic-common/"):
             # Implicit dependency of every HAL (include()'d, not its own
             # module): treat as touching all three HAL directories.
             touched_modules.update(m for m in modules if m.endswith("-hal"))
@@ -166,7 +166,7 @@ def main():
         print(json.dumps({"docs_only": False, "modules": modules}))
         print(
             f"'{fallback_reason}' is outside any known module and outside "
-            f"pic8-common/, falling back to the full {len(modules)}-module matrix",
+            f"epic-common/, falling back to the full {len(modules)}-module matrix",
             file=sys.stderr,
         )
         return

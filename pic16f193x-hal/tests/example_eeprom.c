@@ -20,13 +20,13 @@
 #include "pic16f193x.h"
 #include "pic16f193x_sfr.h"
 #include "peripherals/pic16f193x_eeprom.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
 extern void pic16f193x_harness_halt(void);
 
 int main(void)
 {
-    pic8_harness_init(1UL);
+    epic_harness_init(1UL);
 
     EPIC_EEPROM_Init();
     /* Test the banked RMW: set WREN on EECON1 (bank 3) and verify. */
@@ -34,9 +34,9 @@ int main(void)
 
     uint8_t econ1 = PIC8_REG8(PIC_REG_EECON1);
 
-    pic8_harness_log("EECON1=0x%02X\n", econ1);
+    epic_harness_log("EECON1=0x%02X\n", econ1);
     int pass = ((econ1 & PIC_EECON1_WREN) != 0U);
-    int rc = pic8_harness_report(pass);
+    int rc = epic_harness_report(pass);
     pic16f193x_harness_halt();
     return rc;
 }

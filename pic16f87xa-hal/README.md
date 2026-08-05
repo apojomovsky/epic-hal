@@ -34,8 +34,8 @@ Done so far:
 - ✅ **EEPROM driver** (read/write/buffer, mandatory 0x55/0xAA unlock, weak ISR)
 - ✅ **PSP driver** (40/44-pin only, TRISE PSPMODE, IBF/OBF/IBOV flag helpers)
 - ✅ **WDT / BOR / Sleep helpers** (clrwdt / sleep asm, PCON BOR/POR flags)
-- ✅ **Shared interrupt dispatch** (`pic8_dispatch_all_irqs`), fans the single vector at 0x0004 out to every peripheral IRQHandler. On a real target the XC8 `__interrupt()` (`src/core/pic16_isr_vector.c`) calls it; on the host the harness registers it as the sim IRQ callback. One source of truth.
-- ✅ **Test/firmware harness** (`pic8_harness.h`, in the shared `pic8-common/` layer, included as `core/pic8_harness.h`), lets every example build for the host sim and a real XC8 target with **no `#ifdef` in the example code**. The build links the host harness (`pic16_harness_sim.c`, this tree) or the target harness (`pic8_harness_target.c`, family-blind no-ops shared in `pic8-common/`); the harness abstracts the only two execution-model differences (pumping simulated time vs. real time, terminating test vs. firmware that runs forever).
+- ✅ **Shared interrupt dispatch** (`epic_dispatch_all_irqs`), fans the single vector at 0x0004 out to every peripheral IRQHandler. On a real target the XC8 `__interrupt()` (`src/core/pic16_isr_vector.c`) calls it; on the host the harness registers it as the sim IRQ callback. One source of truth.
+- ✅ **Test/firmware harness** (`epic_harness.h`, in the shared `epic-common/` layer, included as `core/epic_harness.h`), lets every example build for the host sim and a real XC8 target with **no `#ifdef` in the example code**. The build links the host harness (`pic16_harness_sim.c`, this tree) or the target harness (`epic_harness_target.c`, family-blind no-ops shared in `epic-common/`); the harness abstracts the only two execution-model differences (pumping simulated time vs. real time, terminating test vs. firmware that runs forever).
 - ✅ **MPLAB X / XC8 project template** (Makefile + `nbproject/configurations.xml`)
 - ✅ End-to-end tests: `example_blink`, `example_idle_blink`, `example_timer1`, `example_timer2`, `example_ccp_pwm`, `example_usart`, `example_ssp`, `example_adc`, `example_comp_vref`, `example_eeprom`, `example_psp`, `example_wdt_sleep`
 
@@ -48,7 +48,7 @@ pic16f87xa-hal/
 ├── include/
 │   ├── pic16f87xa.h              Family header, device selection, SFR mapping
 │   │                             macros; pulls in the shared status codes /
-│   │                             bit helpers from pic8-common/hal_status.h
+│   │                             bit helpers from epic-common/hal_status.h
 │   ├── pic16f87xa_sfr.h          SFR address map + bit names (1-to-1 with DS39582B)
 │   ├── pic16f87xa_sim.h          Simulation backend public API
 │   ├── core/                     CPU-level features (interrupts, config bits)
@@ -97,12 +97,12 @@ two same-named copies:
 ```c
 /* include/host/pic16f87xa_platform.h  (CMake build) */
 extern uint8_t pic16f87xa_sim_sfr[0x200];
-#define pic8_sfr_read8(addr)   (pic16f87xa_sim_sfr[(uint16_t)(addr)])
-#define pic8_sfr_write8(addr, v) pic16f87xa_sim_sfr[(uint16_t)(addr)] = (v)
+#define epic_sfr_read8(addr)   (pic16f87xa_sim_sfr[(uint16_t)(addr)])
+#define epic_sfr_write8(addr, v) pic16f87xa_sim_sfr[(uint16_t)(addr)] = (v)
 
 /* include/target/pic16f87xa_platform.h  (XC8 build) */
-#define pic8_sfr_read8(addr)   (*(volatile uint8_t *)(uintptr_t)(addr))
-#define pic8_sfr_write8(addr, v) (*(volatile uint8_t *)(uintptr_t)(addr)) = (v)
+#define epic_sfr_read8(addr)   (*(volatile uint8_t *)(uintptr_t)(addr))
+#define epic_sfr_write8(addr, v) (*(volatile uint8_t *)(uintptr_t)(addr)) = (v)
 ```
 
 CMake puts `include/host` first on the include path; the XC8 Makefile puts
@@ -110,15 +110,15 @@ CMake puts `include/host` first on the include path; the XC8 Makefile puts
 `pic16f87xa.h` resolves to the right copy per build, with no preprocessor
 branching.
 
-Likewise the test/firmware harness (`pic8_harness.h`, shared via
-`pic8-common/`) and the WDT/Sleep helpers are each provided by two
+Likewise the test/firmware harness (`epic_harness.h`, shared via
+`epic-common/`) and the WDT/Sleep helpers are each provided by two
 implementation files: a host `*_sim.c` linked by CMake and a target
 `*_target.c` linked by the XC8 Makefile, so examples call
-`pic8_harness_init/tick/running/log`, `EPIC_WDT_Refresh`,
+`epic_harness_init/tick/running/log`, `EPIC_WDT_Refresh`,
 `EPIC_Sleep_Enter` unconditionally and the build picks the behaviour. The
 harness's target implementation is family-blind (four no-ops) and lives
-in `pic8-common/`; the harness's host implementation (`pic16_harness_sim.c`)
-and the WDT/Sleep pair stay in this tree. See `core/pic8_harness.h` for
+in `epic-common/`; the harness's host implementation (`pic16_harness_sim.c`)
+and the WDT/Sleep pair stay in this tree. See `core/epic_harness.h` for
 the rationale.
 
 On host, every SFR read/write is a memory access into a 512-byte array
@@ -135,7 +135,7 @@ The simulation backend additionally:
   (`pic16f87xa_sim_drive_input`) and observe what the chip is
   driving (`pic16f87xa_sim_read_output`).
 - Forwards simulated interrupts to the shared dispatcher
-  (`pic8_dispatch_all_irqs`, registered by the host harness).
+  (`epic_dispatch_all_irqs`, registered by the host harness).
 
 This means **the same `tests/example_blink.c` compiles unchanged for
 host simulation or for an XC8-built firmware targeting a real PIC**.

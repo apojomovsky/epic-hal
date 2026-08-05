@@ -3,7 +3,7 @@
 Status: **exploratory design — feasibility and the riskiest mechanism
 validated; no module scaffolded, no implementation started.** This is a
 record of a design conversation, not an approved plan like
-`pic8-debounce-plan.md`/`multi-family-plan.md` — read it as "here's what we
+`epic-debounce-plan.md`/`multi-family-plan.md`, read it as "here's what we
 know before writing code," and pick up from the pending list below.
 
 ## The idea
@@ -21,8 +21,8 @@ Validated against the
 [DS39582B](https://ww1.microchip.com/downloads/en/DeviceDoc/39582b.pdf)
 datasheet (not vendored in this repo — Microchip vendor documentation,
 linked instead), this repo's existing `pic16f87xa_psp.h`/`.c` driver and
-`pic8-math`'s documented XC8 inline-asm conventions
-(`pic8-math/docs/ARCHITECTURE.md`), a live web search, and hands-on probes
+`epic-math`'s documented XC8 inline-asm conventions
+(`epic-math/docs/ARCHITECTURE.md`), a live web search, and hands-on probes
 compiled with the pinned XC8 v3.10 toolchain (`xc8-cc -mcpu=16f877a`,
 scratch-only, nothing below is in the repo tree):
 
@@ -58,7 +58,7 @@ scratch-only, nothing below is in the repo tree):
   simply by reading `PORTD`. The write side never stalls waiting on the PIC
   core — confirms the "6502 writes, PIC drains later during vblank" model.
 - **`FSR`/`INDF` indirect addressing and bank selection** — this was the
-  one open risk (the repo's own `pic8-math` had needed its own empirical
+  one open risk (the repo's own `epic-math` had needed its own empirical
   XC8 probe for a *different* bank-selection case, direct addressing via
   `banksel`, which doesn't apply to our indirect case). Resolved by
   compiling real probes:
@@ -77,7 +77,7 @@ scratch-only, nothing below is in the repo tree):
     framebuffer/row-buffers at addresses we choose, so the IRP value for
     each is a hardcoded compile-time constant, never something to detect
     at runtime or re-derive from a `.map`.
-  - Confirms `pic8-math`'s underscore rule the hard way: `asm("movf
+  - Confirms `epic-math`'s underscore rule the hard way: `asm("movf
     fsr_lo,w")` (no underscore) compiles clean at `-S` but fails to *link*
     (`undefined symbol "fsr_lo"`) — PIC16 user globals need `_name` in the
     asm string; SFRs (`FSR`, `INDF`, `PORTD`, `STATUS`) are unprefixed.
@@ -91,12 +91,12 @@ Nothing below has been implemented, host-tested, or run on real silicon.
   bytes/cell against the ~240-byte budget, informed by what's actually
   useful for a 6502 host to draw.
 - **Module scaffold.** No `pic8-vga/` directory exists yet. Following this
-  repo's convention (`pic8-lcd`, `pic8-sdcard`): README, ARCHITECTURE.md,
+  repo's convention (`epic-lcd`, `epic-sdcard`): README, ARCHITECTURE.md,
   API.md, host-sim + hardware backend split, `mcu/pic16f87xa-vga-mplabx/`
   Makefile.
-- **Framebuffer / PSP-drain C API + host tests.** `pic8_vga_init`,
-  `pic8_vga_set_cell`, `pic8_vga_service_psp` (or equivalent), with an
-  injectable-ops seam like `pic8-bus`'s mock MEM device, and host tests
+- **Framebuffer / PSP-drain C API + host tests.** `epic_vga_init`,
+  `epic_vga_set_cell`, `epic_vga_service_psp` (or equivalent), with an
+  injectable-ops seam like `epic-bus`'s mock MEM device, and host tests
   covering cell writes, PSP byte parsing/overflow, and buffer bounds —
   none of this exists yet.
 - **The actual scanout routine and frame super-loop.** Only the 32-column
@@ -118,6 +118,6 @@ Nothing below has been implemented, host-tested, or run on real silicon.
 
 - Datasheet: [DS39582B](https://ww1.microchip.com/downloads/en/DeviceDoc/39582b.pdf) (not vendored in this repo).
 - PSP driver: `pic16f87xa-hal/include/peripherals/pic16f87xa_psp.h` (+ `.c`).
-- XC8 inline-asm conventions: `pic8-math/docs/ARCHITECTURE.md`, "Inline-asm
+- XC8 inline-asm conventions: `epic-math/docs/ARCHITECTURE.md`, "Inline-asm
   binding, the XC8 round-trip probe".
 - VGA timing: VESA DMT 1.13; http://www.tinyvga.com/vga-timing.

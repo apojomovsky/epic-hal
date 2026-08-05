@@ -321,7 +321,7 @@ calls `sim_step_timer1()`.
   mirroring Timer1's entry.
 
 - [ ] **Step 2: Register `example_comparator`** via
-  `pic8_add_example(example_comparator tests/example_comparator.c)`.
+  `epic_add_example(example_comparator tests/example_comparator.c)`.
 
 - [ ] **Step 3: Mirror both in the XC8 Makefile's HAL sources and
   `SIM_APP` selection.**
@@ -354,14 +354,14 @@ calls `sim_step_timer1()`.
 #include "peripherals/pic16f193x_gpio.h"
 #include "peripherals/pic16f193x_comp.h"
 #include "core/pic16f193x_wdt_sleep.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
 extern void pic16f193x_harness_halt(void);
 extern void pic16f193x_sim_comp_drive(uint8_t instance_1_or_2, uint8_t out);
 
 int main(void)
 {
-    pic8_harness_init();
+    epic_harness_init();
 
     COMP_HandleTypeDef c1 = COMP_HANDLE_DEFAULT;
     c1.Instance = COMP_INSTANCE_1;
@@ -377,8 +377,8 @@ int main(void)
     uint8_t con1 = PIC8_REG8(PIC_REG_CM1CON0);
     uint8_t con2 = PIC8_REG8(PIC_REG_CM2CON0);
     uint8_t cmout = PIC8_REG8(PIC_REG_CMOUT);
-    pic8_harness_log("CM1CON0=0x%02X CM2CON0=0x%02X CMOUT=0x%02X\n", con1, con2, cmout);
-    int rc = pic8_harness_report((con1 == 0x80U) && (con2 == 0x80U) && (cmout == 0x01U));
+    epic_harness_log("CM1CON0=0x%02X CM2CON0=0x%02X CMOUT=0x%02X\n", con1, con2, cmout);
+    int rc = epic_harness_report((con1 == 0x80U) && (con2 == 0x80U) && (cmout == 0x01U));
     pic16f193x_harness_halt();
     return rc;
 }

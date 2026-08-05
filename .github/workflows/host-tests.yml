@@ -27,7 +27,7 @@ jobs:
   # thing standing between a real break and master, so a wrong narrowing
   # on some PR can only ever delay when a break is caught, not let it
   # merge silently. Any change outside a known module dir and outside
-  # pic8-common/ (a workflow file, the root Makefile, docker/, scripts/
+  # epic-common/ (a workflow file, the root Makefile, docker/, scripts/
   # itself) falls back to the full matrix rather than guessing.
   discover:
     runs-on: ubuntu-latest

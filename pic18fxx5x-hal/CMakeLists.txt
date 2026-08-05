@@ -12,8 +12,8 @@
 # the host-side harness implementation. The XC8 Makefile does the mirror
 # with include/target and the target implementations.
 #
-# This file is a thin caller of the shared pic8_family.cmake helpers
-# (pic8-common/cmake/). Everything identical between families lives there;
+# This file is a thin caller of the shared epic_family.cmake helpers
+# (epic-common/cmake/). Everything identical between families lives there;
 # only what is genuinely PIC18F2455-specific stays here: the source list
 # and the device list. (Phase 1: no peripheral sources yet, and no
 # optional-peripheral gate; both grow in Phase 2.)
@@ -25,8 +25,8 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Shared layer: status codes, harness, CMake helpers.
-set(PIC8_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic8-common)
-include(${PIC8_COMMON_DIR}/cmake/pic8_family.cmake)
+set(PIC8_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-common)
+include(${PIC8_COMMON_DIR}/cmake/epic_family.cmake)
 
 # Default device, can be overridden with -DPIC18FXX5X_DEVICE=... The default
 # is PIC18F4550, the family's most-featured (40/44-pin) part.
@@ -46,7 +46,7 @@ else()
     set(PIC18FXX5X_FAMILY_HAS_SPP 0)
 endif()
 
-# Variables consumed by the shared pic8_family.cmake helpers.
+# Variables consumed by the shared epic_family.cmake helpers.
 set(PIC8_EPIC_LIB              pic18fxx5x_hal)
 set(PIC8_DEFAULT_DEVICE       ${PIC18FXX5X_DEFAULT_DEVICE})
 set(PIC8_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -81,26 +81,26 @@ if(PIC18FXX5X_FAMILY_HAS_SPP)
     list(APPEND PIC8_EPIC_SOURCES src/peripherals/pic18fxx5x_spp.c)
 endif()
 
-pic8_add_hal_library(${PIC8_EPIC_LIB})
+epic_add_hal_library(${PIC8_EPIC_LIB})
 
 # Phase 2 MVP examples. example_blink is the canonical Timer0 + GPIO +
 # interrupt smoke test; example_smoke remains the bare harness-seam test.
-pic8_add_example(example_blink  tests/example_blink.c)
-pic8_add_example(example_timer1 tests/example_timer1.c)
-pic8_add_example(example_timer2 tests/example_timer2.c)
-pic8_add_example(example_timer3 tests/example_timer3.c)
-pic8_add_example(example_ccp_pwm tests/example_ccp_pwm.c)
-pic8_add_example(example_ssp tests/example_ssp.c)
-pic8_add_example(example_usart tests/example_usart.c)
-pic8_add_example(example_comp tests/example_comp.c)
-pic8_add_example(example_eeprom tests/example_eeprom.c)
-pic8_add_example(example_adc tests/example_adc.c)
-pic8_add_example(example_rb_change tests/example_rb_change.c)
+epic_add_example(example_blink  tests/example_blink.c)
+epic_add_example(example_timer1 tests/example_timer1.c)
+epic_add_example(example_timer2 tests/example_timer2.c)
+epic_add_example(example_timer3 tests/example_timer3.c)
+epic_add_example(example_ccp_pwm tests/example_ccp_pwm.c)
+epic_add_example(example_ssp tests/example_ssp.c)
+epic_add_example(example_usart tests/example_usart.c)
+epic_add_example(example_comp tests/example_comp.c)
+epic_add_example(example_eeprom tests/example_eeprom.c)
+epic_add_example(example_adc tests/example_adc.c)
+epic_add_example(example_rb_change tests/example_rb_change.c)
 if(PIC18FXX5X_FAMILY_HAS_SPP)
-    pic8_add_example(example_spp tests/example_spp.c)
+    epic_add_example(example_spp tests/example_spp.c)
 endif()
-pic8_add_example(example_smoke tests/example_smoke.c)
+epic_add_example(example_smoke tests/example_smoke.c)
 
 # Optional: the blink example for every device in the family, proving every
 # part compiles and links against the shared contract.
-pic8_add_example_per_device(example_blink tests/example_blink.c)
+epic_add_example_per_device(example_blink tests/example_blink.c)

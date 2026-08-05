@@ -86,7 +86,7 @@
 #endif
 /** @} */
 
-/* Family-neutral capability aliases (pic8-common contract): exposed
+/* Family-neutral capability aliases (epic-common contract): exposed
  * under family-neutral names too, so family-agnostic consumers (the
  * task manager) can scale without referencing a family-specific macro.
  * `pic18fxx5x.h` defines the same names to its own values. */
@@ -103,7 +103,7 @@
  * @defgroup PIC16F87XA_SFR Special Function Register mapping
  * @brief   How every SFR is stored and how the weak attribute is spelled.
  *
- * Same source reads `pic8_sfr_read8()`/`PIC8_REG8()` on both builds;
+ * Same source reads `epic_sfr_read8()`/`PIC8_REG8()` on both builds;
  * the build's include path picks `include/host/...` (memory-backed) or
  * `include/target/...` (direct volatile deref), not `#ifdef`.
  * @{

@@ -31,12 +31,12 @@ The skeleton compiles on XC8 because:
   ahead of `include` on the include path).
 - `pic18_sim.c` and the host-side harness implementation are not in this
   build's source list, XC8 never links them.
-- The family-blind harness target impl (`pic8_harness_target.c`, from
-  `pic8-common/`) and the shared interrupt dispatch
+- The family-blind harness target impl (`epic_harness_target.c`, from
+  `epic-common/`) and the shared interrupt dispatch
   (`pic18_irq_dispatch.c`, empty body in Phase 1) link here.
 
 Phase 1 produces a `.hex` with no link errors, proving the shared
-`pic8_family.mk` fragment and the config-word generation plumbing work
+`epic_family.mk` fragment and the config-word generation plumbing work
 end to end for PIC18. No peripherals are wired yet; Phase 2 adds the
 ISR vector (`pic18_isr_vector.c`, using the
 `__interrupt(high_priority)` / `__interrupt(low_priority)` syntax
@@ -66,9 +66,9 @@ tool (`ippe`, `PK2CMD`, MPLAB IPE, ...).
 
 Open this directory as a Standalone Project (or create a new Standalone
 Project for the chosen device + XC8 toolchain, then add the HAL sources
-under `../../src/`, `../../../pic8-common/src/`, and one application
+under `../../src/`, `../../../epic-common/src/`, and one application
 `.c` from `../../tests/`, plus the include dirs `../../include`,
-`../../include/target`, `../../../pic8-common/include`).
+`../../include/target`, `../../../epic-common/include`).
 
 ## Adjusting for your board
 

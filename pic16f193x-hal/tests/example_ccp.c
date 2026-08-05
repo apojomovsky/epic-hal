@@ -22,13 +22,13 @@
 #include "pic16f193x.h"
 #include "pic16f193x_sfr.h"
 #include "peripherals/pic16f193x_ccp.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
 extern void pic16f193x_harness_halt(void);
 
 int main(void)
 {
-    pic8_harness_init(1UL);
+    epic_harness_init(1UL);
 
     CCP_HandleTypeDef ccp1 = CCP_HANDLE_DEFAULT;
     ccp1.Instance = CCP_INSTANCE_1;
@@ -49,11 +49,11 @@ int main(void)
     uint8_t c2h = PIC8_REG8(PIC_REG_CCPR2H);
     uint8_t c2l = PIC8_REG8(PIC_REG_CCPR2L);
 
-    pic8_harness_log("CCP1CON=0x%02X CCPR1=0x%02X%02X CCP2CON=0x%02X CCPR2=0x%02X%02X\n",
+    epic_harness_log("CCP1CON=0x%02X CCPR1=0x%02X%02X CCP2CON=0x%02X CCPR2=0x%02X%02X\n",
                       c1con, c1h, c1l, c2con, c2h, c2l);
     int pass = (c1con == 0x08U) && (c1h == 0x01U) && (c1l == 0x00U)
             && (c2con == 0x08U) && (c2h == 0x02U) && (c2l == 0x00U);
-    int rc = pic8_harness_report(pass);
+    int rc = epic_harness_report(pass);
     pic16f193x_harness_halt();
     return rc;
 }

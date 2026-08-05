@@ -37,10 +37,10 @@
  *   (mirrors pic18fxx5x-hal's example_timer2.c and pic16f87xa-hal's
  *   example_timer2.c, both of which break out of their bounded loop
  *   once `overflows >= EXPECTED_OVERFLOWS`). On the host sim the loop
- *   exits this way and pic8_harness_report() drives RA0 high. On the
+ *   exits this way and epic_harness_report() drives RA0 high. On the
  *   MPLAB SIM target, three timers firing continuously consume most
  *   of the simulated CPU in ISRs, so the bounded loop may not reach
- *   pic8_harness_report() within the 60s wall-clock `wait`. To make
+ *   epic_harness_report() within the 60s wall-clock `wait`. To make
  *   the PASS marker reliable under the gpio gate regardless, the
  *   slowest instance's ISR (Timer6) also drives RA0 high directly once
  *   all three counts reach the threshold. Both paths set RA0=1 on
@@ -57,7 +57,7 @@
 #include "peripherals/pic16f193x_timer246.h"
 #include "core/pic16f193x_irq.h"
 #include "core/pic16f193x_wdt_sleep.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
 /** Family-local harness extension, see example_timer1.c for the full
  *  rationale: no-op on the CMake host build, freezes in a tight loop
@@ -107,7 +107,7 @@ static void on_t6_overflow(void)
      * fired MIN_OVERFLOWS times, all three have (the other two fire
      * faster), so this is the earliest point the pass condition can
      * be met. Drive RA0 high here so the MODE=gpio gate sees PASS
-     * without depending on the main loop reaching pic8_harness_report,
+     * without depending on the main loop reaching epic_harness_report,
      * which the MPLAB SIM may not let it do in the 60s wait window
      * when three timer ISRs are continuously firing. */
     if (!g_pass_marker_set &&
@@ -121,7 +121,7 @@ static void on_t6_overflow(void)
 
 int main(void)
 {
-    pic8_harness_init(SIM_CYCLES);
+    epic_harness_init(SIM_CYCLES);
 
     /* 1. RA0 as digital output (PASS/FAIL marker pin, driven by the
      *    harness's log() on the host and by on_t6_overflow on the
@@ -170,8 +170,8 @@ int main(void)
      *    at least MIN_OVERFLOWS times, mirroring pic18fxx5x-hal's
      *    example_timer2.c early-exit shape. On the target the ISR-driven
      *    PASS marker (on_t6_overflow) may fire before this loop exits. */
-    for (uint32_t i = 0; pic8_harness_running(i); i++) {
-        pic8_harness_tick();
+    for (uint32_t i = 0; epic_harness_running(i); i++) {
+        epic_harness_tick();
         EPIC_WDT_Refresh();
         if (g_toggle_count[0] >= MIN_OVERFLOWS &&
             g_toggle_count[1] >= MIN_OVERFLOWS &&
@@ -180,14 +180,14 @@ int main(void)
         }
     }
 
-    pic8_harness_log("Timer2/4/6 toggled %u/%u/%u times.\n",
+    epic_harness_log("Timer2/4/6 toggled %u/%u/%u times.\n",
                       (unsigned)g_toggle_count[0],
                       (unsigned)g_toggle_count[1],
                       (unsigned)g_toggle_count[2]);
     int pass = (g_toggle_count[0] >= MIN_OVERFLOWS) &&
                (g_toggle_count[1] >= MIN_OVERFLOWS) &&
                (g_toggle_count[2] >= MIN_OVERFLOWS);
-    int rc = pic8_harness_report(pass);
+    int rc = epic_harness_report(pass);
     /* Freeze here so the HARNESS=sim marker's RA0 stays set across the
      * mdb `print PORTA` readback, same rationale as example_timer1.c. */
     pic16f193x_harness_halt();

@@ -69,7 +69,7 @@ for one commit with `git commit --no-verify`.
 ### What it deliberately does not check yet: `clang-format`
 
 A starter `.clang-format` is in the repo root, but it is **not** wired
-into the hook. Tested against a real file (`pic8-pid/src/pid.c`) before
+into the hook. Tested against a real file (`epic-pid/src/pid.c`) before
 deciding this: even a style hand-picked to match this codebase's actual
 conventions (4-space indent, `Stroustrup` brace style: own-line brace for
 functions, attached brace for `if`/`while`/`else`) still reformatted
@@ -126,7 +126,7 @@ that only touches one module:
   no separately-maintained dependency graph to drift). Conservative on
   both axes, falls back to the full, unfiltered module list the moment
   it sees a changed file it can't attribute to a known module or
-  `pic8-common/`. Only ever applied to `pull_request` runs; every push
+  `epic-common/`. Only ever applied to `pull_request` runs; every push
   to `master` always gets the full matrix regardless of what changed,
   so a wrong narrowing on some PR can only delay when a break is
   caught, never let it merge unverified.

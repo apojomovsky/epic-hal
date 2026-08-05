@@ -10,7 +10,7 @@
 # code (see docs/hal-epic-rename-plan.md's survey): our I2C driver is
 # HAL_SSP_*, not HAL_I2C_*; our serial driver is HAL_USART_*, not
 # HAL_UART_*; our IRQ API is HAL_IRQ_*, not HAL_NVIC_*; this project has
-# no "PPP" peripheral; pic8-tick's own API is pic8_-prefixed, never
+# no "PPP" peripheral; epic-tick's own API is epic_-prefixed, never
 # HAL_GetTick/HAL_Delay.
 #
 # An exact path+line entry (not "*") is for a token that is genuinely
@@ -27,5 +27,5 @@
 *	*	HAL_UART_
 *	*	HAL_GetTick
 *	*	HAL_Delay
-pic8-common/include/core/hal_status.h	5	HAL_StatusTypeDef
-pic8-common/include/core/hal_status.h	17	HAL_StatusTypeDef
+epic-common/include/core/hal_status.h	5	HAL_StatusTypeDef
+epic-common/include/core/hal_status.h	17	HAL_StatusTypeDef

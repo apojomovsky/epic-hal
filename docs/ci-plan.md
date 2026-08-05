@@ -18,10 +18,10 @@ and debugged, not a description of the current job set; read
 Status: **Phase 0 done** (`.github/workflows/host-tests.yml`,
 `scripts/pre-commit-checks.sh` extended with `PRE_COMMIT_BASE_REF` for CI
 reuse; first push to `master` after landing it went green, all 20 jobs,
-https://github.com/apojomovsky/pic8-hal/actions/runs/30717451172).
+https://github.com/apojomovsky/epicurus/actions/runs/30717451172).
 **Phase 1 done** (XC8 v4.00, `docker/ci-toolchain/Dockerfile`,
 `.github/workflows/xc8-build.yml`, `scripts/ci-discover-xc8-matrix.py`),
-green on run https://github.com/apojomovsky/pic8-hal/actions/runs/30720162258
+green on run https://github.com/apojomovsky/epicurus/actions/runs/30720162258
 (74/74 jobs: `toolchain-image`, `discover`, 72 `build` legs). Took four
 real GitHub Actions runs to land: Microchip's installer CDN being behind
 an Akamai bot-challenge (fixed by self-hosting the installer as a GitHub
@@ -40,7 +40,7 @@ redistributing Microchip's software with no EULA authorization to do so
 (confirmed: an unauthenticated `docker pull` worked). Fixed with
 `docker/ci-assets/`, a private blob-carrier image, both GHCR packages
 manually confirmed private, and a real green run
-(https://github.com/apojomovsky/pic8-hal/actions/runs/30722374627)
+(https://github.com/apojomovsky/epicurus/actions/runs/30722374627)
 against the simplified pipeline. See the "Correction" note under
 Decision, and Phase 1's follow-up validation checklist, for the full
 account. The now-redundant public `ci-toolchain-assets` release has
@@ -81,12 +81,12 @@ tracked as deliberately deferred follow-up, see the Dockerfile's own
 header comment), following the same private-GHCR-asset pattern Phase 1's
 redistribution fix established (`ci-assets-mplabx` job in
 `xc8-build.yml`). Confirmed on a real run
-(https://github.com/apojomovsky/pic8-hal/actions/runs/30723598436,
+(https://github.com/apojomovsky/epicurus/actions/runs/30723598436,
 76/76 jobs green), both new GHCR tags confirmed private. The temporary
 bootstrap fallback has since been removed from the workflow (same
 lifecycle as `ci-assets`'s original one), and that removal is confirmed
 on a fresh run too
-(https://github.com/apojomovsky/pic8-hal/actions/runs/30724128114,
+(https://github.com/apojomovsky/epicurus/actions/runs/30724128114,
 76/76 jobs green). **Phase 2 is done.** Only remaining step: deleting
 the now-redundant `ci-mplabx-assets-tmp` GitHub Release, a human's call,
 not done as part of this fix.
@@ -137,7 +137,7 @@ step to `shell: bash` explicitly (confirmed present in the
 **Phase 3 (sim-target harness): build side done, `mdb`-driven signal
 pending.** See Phase 3's own section below for the full account: the
 harness contract, wire format, and Makefile opt-in are implemented and
-build-verified for the pilot module (`pic8-tick`, both families); the
+build-verified for the pilot module (`epic-tick`, both families); the
 actual run-under-MPLAB-SIM verification is deferred to Phase 4, since
 this environment has no local `mdb`/GHCR access to do it by hand the way
 Phase 2's own probes did.
@@ -147,7 +147,7 @@ an eight-bug detour.** `sim-tests.yml` and local-reproduction tooling
 (`scripts/sim-mdb-run.sh`, `scripts/sim-test-local.sh`) are built and
 working; local Docker/GHCR access was set up mid-phase specifically to
 debug this faster than repeated CI round trips, and paid off. The pilot
-module's failure turned out to be much bigger than pic8-tick: any
+module's failure turned out to be much bigger than epic-tick: any
 C-level local variable or parameter accessed while a PIC16 bank switch
 (`pic_select_bank`) is in effect gets misdirected, silently breaking any
 Bank 1 SFR access that needs a value to survive the switch, whether a
@@ -196,7 +196,7 @@ mechanism instead of a data-memory access, fixed by rewriting
 `pic18_irq.c`'s table-driven dispatch into named, compile-time-constant
 SFR accesses per IRQ source). Not the same bug class as PIC16's at all
 (PIC18's own drivers have no `pic_select_bank` equivalent), a genuinely
-separate investigation. `pic8-tick`'s PIC18 sim-target test now reaches
+separate investigation. `epic-tick`'s PIC18 sim-target test now reaches
 `PIC8_HARNESS_RESULT: PASS` reliably. See
 `pic18fxx5x-hal/docs/ARCHITECTURE.md`.
 
@@ -229,7 +229,7 @@ hasn't been pushed yet.
 `sim-tests.yml`'s matrix, same root-cause class as the wait_ms bug
 above.** `pic16f193x-hal`'s `example_timer1.c` (the family's `HARNESS=sim`
 diagnostic, `MODE=gpio`) loops `SIM_CYCLES=2_000_000` C-level iterations
-before calling `pic8_harness_report`, far more wall-clock time under
+before calling `epic_harness_report`, far more wall-clock time under
 MPLAB SIM than the default `5000`ms budget: confirmed locally that
 20000ms still fails (halts mid-loop, `PORTA` never set) while
 30000/40000/60000ms reliably pass, matching the `WAIT_MS=60000` value
@@ -242,7 +242,7 @@ Actions run.
 
 ## Motivation
 
-There is no CI today. Every `pic8-*` module and both HALs are host-testable
+There is no CI today. Every `epic-*` module and both HALs are host-testable
 (`cmake -B build && cmake --build build && ctest`) and real-target
 buildable (`mcu/*-mplabx/Makefile` via `xc8-cc`), but nothing runs either
 path automatically on push or PR. The goal, in order of value delivered
@@ -263,9 +263,9 @@ per unit of risk taken on:
    without paying for anything.
 
 Steps 1 and 2 are close to mechanical. Step 3 needs real design work: the
-shared harness (`pic8-common/include/core/pic8_harness.h`) currently has
+shared harness (`epic-common/include/core/epic_harness.h`) currently has
 no way to terminate or report a result on real target
-(`pic8_harness_target.c` is four no-ops, the loop never exits, there is no
+(`epic_harness_target.c` is four no-ops, the loop never exits, there is no
 stdout). That gap is what most of this plan is about closing.
 
 ## Decision: MPLAB SIM via `mdb`, our own Dockerfile, GitHub Actions + GHCR
@@ -274,7 +274,7 @@ stdout). That gap is what most of this plan is about closing.
 (fully open source, tiny CI footprint, well-supported for classic PIC16
 parts like the 877A). Rejected as the primary tool because it does not
 support PIC18F2455/2550/4455/4550 at all, and `pic18fxx5x-hal` targets
-exactly that family (it's the reason `pic8-usb` exists). A single
+exactly that family (it's the reason `epic-usb` exists). A single
 simulator that covers both families uniformly is worth more than a
 lighter but PIC16-only one. MPLAB SIM, reached through the `mdb`
 command-line debugger (a separate headless binary from the MPLAB X IDE
@@ -397,11 +397,11 @@ scripts/
                                # name) discovery, used by xc8-build.yml's
                                # discover job
 
-pic8-common/
-  include/core/pic8_harness.h        # unchanged contract, cycles param already exists
-  src/core/pic8_harness_target.c     # existing: real-target no-op variant (untouched)
-  src/core/pic8_harness_sim_target.c # NEW (Phase 3): bounded, USART-reporting variant
-  mk/pic8_family.mk                  # extended (Phase 3) to opt into the sim-target variant
+epic-common/
+  include/core/epic_harness.h        # unchanged contract, cycles param already exists
+  src/core/epic_harness_target.c     # existing: real-target no-op variant (untouched)
+  src/core/epic_harness_sim_target.c # NEW (Phase 3): bounded, USART-reporting variant
+  mk/epic_family.mk                  # extended (Phase 3) to opt into the sim-target variant
 
 <family>-hal/mcu/*-mplabx/
   mdb-sim-script.txt         # NEW (Phase 4): per-module or per-family mdb script
@@ -428,7 +428,7 @@ way locally.
 **Tasks**
 1. `.github/workflows/host-tests.yml`: on push and PR, discover every
    directory with a top-level `CMakeLists.txt` (both HALs, every
-   `pic8-*` module) and matrix over them: `cmake -B build -S <dir> &&
+   `epic-*` module) and matrix over them: `cmake -B build -S <dir> &&
    cmake --build build && ctest --test-dir build --output-on-failure`.
    Discover the module list at workflow run time (a `find`/`ls` step
    feeding a dynamic matrix) rather than hand-listing modules in the
@@ -458,7 +458,7 @@ tooling, matching what `scripts/bootstrap.sh` already sets up.
 - [x] A clean push against current `master` is fully green. Confirmed on
       the first real run after landing this workflow: 20/20 jobs
       (`discover`, `lint`, 18 `build-test` legs), all `success`,
-      https://github.com/apojomovsky/pic8-hal/actions/runs/30717451172.
+      https://github.com/apojomovsky/epicurus/actions/runs/30717451172.
 - [ ] Removing a module's `CMakeLists.txt` (test in a throwaway branch)
       shrinks the matrix automatically, confirming discovery isn't
       hardcoded. Not yet exercised.
@@ -532,14 +532,14 @@ working from both the sandbox and a real GitHub Actions run.
       Dockerfile using a local HTTP server standing in for the release
       asset URL) and for real, `toolchain-image` succeeded on GitHub
       Actions once the `ci-toolchain-assets` release existed
-      (https://github.com/apojomovsky/pic8-hal/actions/runs/30718807266).
+      (https://github.com/apojomovsky/epicurus/actions/runs/30718807266).
 - [~] Every existing module/MCU combination that builds locally today
       also builds green in this workflow. Two real bugs found across two
       runs, both fixed:
       1. Run 30718807266: `make` itself succeeded on every leg, but the
          workflow's own "Confirm .hex was produced" step assumed every
          module names its output `<MCU>-firmware.hex`, true only of the
-         two top-level HAL Makefiles (each `pic8-*` module's `TARGET` has
+         two top-level HAL Makefiles (each `epic-*` module's `TARGET` has
          its own suffix, `-debounce`, `-adcfilter-sizecheck`,
          `-multi-blink`, ..., no shared convention). Fixed by globbing
          `build/*.hex` and asserting exactly one match.
@@ -555,7 +555,7 @@ working from both the sandbox and a real GitHub Actions run.
          meaningfully green rather than either permanently red or
          silently wrong. **Confirmed on run 30720162258**: all 74 jobs
          green (`toolchain-image`, `discover`, all 72 `build` legs),
-         https://github.com/apojomovsky/pic8-hal/actions/runs/30720162258.
+         https://github.com/apojomovsky/epicurus/actions/runs/30720162258.
          Marked `[~]`, not `[x]`: this is "green on the
          72 legs that are known to actually work," not literally "every
          module/MCU combination," 40 are deliberately, visibly excluded
@@ -571,7 +571,7 @@ working from both the sandbox and a real GitHub Actions run.
 - [x] `ci-assets` job succeeds: seeded `pic8-hal-ci-assets` from the
       (still public at the time, now needs deleting) `ci-toolchain-assets`
       release, pushed it. Confirmed on run
-      https://github.com/apojomovsky/pic8-hal/actions/runs/30722036149.
+      https://github.com/apojomovsky/epicurus/actions/runs/30722036149.
 - [x] `toolchain-image` job's extraction step (`docker create` + `docker
       cp` from the private asset image into `docker/ci-toolchain/vendor/`)
       confirmed working on that same real run, not just locally.
@@ -605,7 +605,7 @@ working from both the sandbox and a real GitHub Actions run.
 - [x] A real CI run confirming the simplified `ci-assets`/`toolchain-image`
       jobs (no bootstrap fallback, no visibility-API steps) still work
       end to end against the now-private, already-cached images. Confirmed
-      on run https://github.com/apojomovsky/pic8-hal/actions/runs/30722374627,
+      on run https://github.com/apojomovsky/epicurus/actions/runs/30722374627,
       all 75 jobs green (`ci-assets`, `toolchain-image`, `discover`, all
       72 `build` legs). The redistribution fix is done: both packages
       private, workflow doesn't lie about it, cache-hit path works.
@@ -678,7 +678,7 @@ below.
 - [x] `ci-assets-mplabx` job succeeded on a real run: seeded
       `pic8-hal-ci-assets:mplabx-v6.35-installer` from the temporary
       `ci-mplabx-assets-tmp` release. Confirmed on run
-      https://github.com/apojomovsky/pic8-hal/actions/runs/30723598436
+      https://github.com/apojomovsky/epicurus/actions/runs/30723598436
       (76/76 jobs green: `ci-assets`, `ci-assets-mplabx`,
       `toolchain-image`, `discover`, all 72 `build` legs).
 - [x] `toolchain-image`'s extraction step pulled both asset images and
@@ -701,7 +701,7 @@ below.
       fallback gone (same discipline as `ci-assets`'s own removal:
       removing dead code that would have failed silently isn't the same
       as confirming the remaining code still works). Confirmed on run
-      https://github.com/apojomovsky/pic8-hal/actions/runs/30724128114,
+      https://github.com/apojomovsky/epicurus/actions/runs/30724128114,
       76/76 jobs green.
 - [ ] The temporary `ci-mplabx-assets-tmp` GitHub Release can now be
       deleted (all of the above confirmed, the bootstrap that depended on
@@ -718,29 +718,29 @@ the existing infinite-loop, no-stdout contract that real hardware still
 needs.
 
 **Tasks**
-1. ~~Add `pic8-common/src/core/pic8_harness_sim_target.c`~~ Done, but per
-   family, not in `pic8-common`: see "Where the sim-target harness file
+1. ~~Add `epic-common/src/core/epic_harness_sim_target.c`~~ Done, but per
+   family, not in `epic-common`: see "Where the sim-target harness file
    lives" in Open questions for why. `pic16f87xa-hal/src/core/
    pic16_harness_sim_target.c` and `pic18fxx5x-hal/src/core/
    pic18_harness_sim_target.c`, both mirroring
-   `pic8_harness_target.c`'s init/tick no-ops, but with
-   `pic8_harness_running` bounded by `cycles` (like the host build) and
-   `pic8_harness_log` doing a real, polled USART write (not a real
+   `epic_harness_target.c`'s init/tick no-ops, but with
+   `epic_harness_running` bounded by `cycles` (like the host build) and
+   `epic_harness_log` doing a real, polled USART write (not a real
    `printf`, see the files' own header comments: it walks `fmt` and
    transmits its raw bytes, ignoring any variadic args, deliberately, to
    avoid a `vsnprintf`-over-USART flash cost for a wire format that only
-   ever needs to carry `pic8_harness_report`'s own fixed marker line
-   reliably). `pic8_harness_report` itself (`pic8_harness.h`) changed
-   too: it now calls `pic8_harness_log` with that marker before
+   ever needs to carry `epic_harness_report`'s own fixed marker line
+   reliably). `epic_harness_report` itself (`epic_harness.h`) changed
+   too: it now calls `epic_harness_log` with that marker before
    returning, see "Wire format" in Open questions.
-2. ~~Extend `pic8-common/mk/pic8_family.mk`~~ Done, and it turned out
-   `pic8_family.mk` itself needed no changes at all: see "Mechanism for
+2. ~~Extend `epic-common/mk/epic_family.mk`~~ Done, and it turned out
+   `epic_family.mk` itself needed no changes at all: see "Mechanism for
    a module to opt in" in Open questions, a `HARNESS ?= target` variable
    in the module's own Makefile is enough.
-3. Pilot module: `pic8-tick`, both families. Already buildable, no
+3. Pilot module: `epic-tick`, both families. Already buildable, no
    USART dependency of its own (so no conflict with the harness
    borrowing the family's one physical USART for reporting), and its
-   `example_tick.c` doesn't use the `pic8_harness_running` loop pattern
+   `example_tick.c` doesn't use the `epic_harness_running` loop pattern
    at all (a straight-line delay/check/report test), so the pilot
    doesn't happen to exercise the bounded-`running()` path; that path is
    still implemented correctly for Phase 5's other modules that do use
@@ -784,13 +784,13 @@ before the hardware worked.
       here: `sim-tests.yml` will prove this against a real GitHub
       Actions run, the same ground-truth-over-local-assumption pattern
       Phase 1/2 already used when local reproduction wasn't available.
-- [x] Real-target build of the same module (`pic8_harness_target.c`
+- [x] Real-target build of the same module (`epic_harness_target.c`
       variant) is unchanged, confirming the new variant is additive, not
       a modification of the existing target contract. Confirmed for both
       families (`HARNESS=target`, the default, still produces the exact
       same `$(MCU)-tick.hex` target name it always did). One small,
-      repo-wide, deliberately-accepted side effect: `pic8_harness_report`
-      now calls `pic8_harness_log` with the marker string on every
+      repo-wide, deliberately-accepted side effect: `epic_harness_report`
+      now calls `epic_harness_log` with the marker string on every
       build, including real-target; since target's `log()` stays a
       no-op, this costs a few bytes of program space everywhere (two
       string literals + a call site), confirmed on PIC16F877A: A22h ->
@@ -815,7 +815,7 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
    one runs first, and a `workflow_call` refactor is reasonable future
    cleanup once a second consumer exists beyond these two, not forced
    now). `sim-test` matrices over the 2 families (hardcoded pilot entries
-   for now, `pic8-tick` only; Phase 5 makes this dynamic the way
+   for now, `epic-tick` only; Phase 5 makes this dynamic the way
    `xc8-build.yml`'s `discover` job already is), builds the sim-target
    `.hex` and runs `mdb.sh` via `scripts/sim-mdb-run.sh` (moved out of
    the workflow's own inline YAML once local reproduction, see below,
@@ -852,8 +852,8 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
       bugs along the way (the actual point of Phase 2-4: nothing had
       ever *executed* this repo's compiled firmware before now, only
       linked it):
-      - `pic8_tick_init` never enabled the chip's global interrupt
-        enable (GIE); fixed (`pic8-tick/src/pic8_tick.c`,
+      - `epic_tick_init` never enabled the chip's global interrupt
+        enable (GIE); fixed (`epic-tick/src/epic_tick.c`,
         `EPIC_IRQ_Restore(1)`), confirmed via host/target rebuilds, did
         not by itself turn the sim-test jobs green.
       - The sim-target harness's `EPIC_USART_Init` TXEN workaround (a
@@ -871,7 +871,7 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
         3): any Bank-1 SFR access (PIE1/PIE2, SPBRG, PR2, i.e.
         everything this family's `pic_select_bank` helper exists for)
         was at risk of corruption, not something specific to
-        pic8-tick.** (See `pic16f87xa-hal/docs/ARCHITECTURE.md` for the
+        epic-tick.** (See `pic16f87xa-hal/docs/ARCHITECTURE.md` for the
         cross-check against XC8's own User's Guide done after this
         phase's initial debugging; item 1 below is a plausible, but not
         confirmed, explanation rather than a proven compiler defect,
@@ -912,7 +912,7 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            (a C-level local touched while banked into Bank 1 got
            misdirected), now hand-written inline asm following this
            repo's established binding convention
-           (`pic8-math/docs/ARCHITECTURE.md`'s "Inline-asm binding"
+           (`epic-math/docs/ARCHITECTURE.md`'s "Inline-asm binding"
            section): the operand is copied into a file-scope,
            `__at`-pinned scratch byte and loaded into W *before* the
            bank switch, so nothing Bank-0-assumed is ever touched while
@@ -942,19 +942,19 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            regression, caught by re-testing the isolated minimal probe
            that had worked before, apples-to-apples, before trusting a
            false alarm.
-        5. **Found and fixed, unrelated but real**: `pic8_harness_init`
+        5. **Found and fixed, unrelated but real**: `epic_harness_init`
            (`pic16_harness_sim_target.c`) called `EPIC_USART_Init(&h)`
            with `h` a plain local variable, but `EPIC_USART_Init` stores
            that *pointer* (`pic16f87xa_usart.c`'s `g_usart`), dereferenced
            later from ISR context on every interrupt for the life of the
            program, not just for the duration of the call. Once
-           `pic8_harness_init` returned, `h`'s storage was fair game for
+           `epic_harness_init` returned, `h`'s storage was fair game for
            XC8's non-reentrant model to hand to some other function's
            locals, leaving `g_usart` dangling. Fixed: `h` is now `static`
            (permanent storage, never reused).
         6. **Found and fixed, unrelated but real**: the sim-target
            harness's `log()` actually transmits (unlike the no-op
-           real-target build), and `pic8-tick`'s config word bakes
+           real-target build), and `epic-tick`'s config word bakes
            `WDTE = ON` unconditionally with nothing ever clearing the
            watchdog; a module with more than a trivial amount of
            delay-plus-log work reliably outran the default WDT period
@@ -964,7 +964,7 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            config-word fuse burned at program time (unlike PIC18's
            runtime-togglable `SWDTEN`), so the only place to turn it off
            for this variant is the config-word generation itself. Fixed:
-           `pic8-tick/mcu/pic16f87xa-tick-mplabx/Makefile`'s
+           `epic-tick/mcu/pic16f87xa-tick-mplabx/Makefile`'s
            `$(CONFIG_SRC)` recipe now sets `WDTE = OFF` when
            `HARNESS=sim`, `WDTE = ON` (unchanged) otherwise. (An earlier
            attempt tried extending the WDT postscaler via `OPTION_REG`
@@ -978,14 +978,14 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            reliable.)
         7. **Still open, current blocker, a different bug than 1-6**:
            with fixes 1-6 all applied and verified individually correct,
-           `pic8-tick`'s real test now gets further than ever before
-           (the first `pic8_tick_delay_ms(10)` completes, and its log
+           `epic-tick`'s real test now gets further than ever before
+           (the first `epic_tick_delay_ms(10)` completes, and its log
            line transmits correctly) but hangs partway through the
            *second* delay: `INTCON` shows `GIE=0` (global interrupts
            disabled) while `PIE1`/`T2CON` still show Timer2 correctly
            configured and counting, `PIR1<TMR2IF>` pending but never
            serviced, i.e. something clears `GIE` without ever restoring
-           it, well after `pic8_tick_init`'s own `EPIC_IRQ_Restore(1)`
+           it, well after `epic_tick_init`'s own `EPIC_IRQ_Restore(1)`
            already ran successfully once (proven by the first delay
            completing at all). `EPIC_IRQ_Disable`/`Restore`'s own
            generated assembly was traced instruction-by-instruction and
@@ -1002,7 +1002,7 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            the main-line graph tops out at a safe 5
            (`pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 4). **Directly
            tested and not confirmed**: shrinking the dispatcher
-           (`pic16_irq_dispatch.c`'s `pic8_dispatch_all_irqs`, which
+           (`pic16_irq_dispatch.c`'s `epic_dispatch_all_irqs`, which
            really does unconditionally call all 13 peripheral handlers on
            every interrupt, not just in the compiler's worst-case
            estimate) down to only the one handler this test needs should
@@ -1024,7 +1024,7 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            after the hang, identical to baseline. Full account:
            `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 6. A third attempt,
            pinning the specific locals live across the disable/restore
-           window (`EPIC_IRQ_Disable`'s and `pic8_tick_get`'s auto
+           window (`EPIC_IRQ_Disable`'s and `epic_tick_get`'s auto
            variables made `static`, throwaway, reverted) actually removed
            the `GIE`-stuck symptom, but a *different* variable (`PR2`,
            Timer2's period register) came back corrupted instead, whack-a-
@@ -1034,10 +1034,10 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            `TIMER2_IRQHandler`+`CCP1_IRQHandler` configs, diffed every
            local variable's storage assignment, and found a real
            candidate collision (`compute_period`'s `best_pr2` landing on
-           `pic8_harness_init`'s `cycles` parameter address in the broken
+           `epic_harness_init`'s `cycles` parameter address in the broken
            config only). Tested directly (pinned `compute_period`'s
            locals `static`): `PR2` was still `0`. A second candidate
-           (`pic8_tick_init`'s own locals) had no collision at all.
+           (`epic_tick_init`'s own locals) had no collision at all.
            Full account: `pic16f87xa-hal/docs/ARCHITECTURE.md` Finding 8.
            **Root cause found (Finding 9)**: `compute_period()` and
            `EPIC_TIMER2_WritePeriod()` both run entirely *before*
@@ -1046,7 +1046,7 @@ needed. Build side confirmed; the actual `mdb`-driven signal is Phase
            instruction-stepping (`stepi`, not `wait`, which turned out
            not to reliably respect `break`-set breakpoints in this
            toolchain's headless mode) traced a fixed step count directly:
-           `compute_period@best_pr2` and `pic8_tick_init@pr2` both held
+           `compute_period@best_pr2` and `epic_tick_init@pr2` both held
            the correct value (`249` for 20 MHz) throughout, but the
            actual `PR2` register read `0` at the same point. The only
            thing between them is `EPIC_TIMER2_WritePeriod` itself, whose
@@ -1119,11 +1119,11 @@ same way. Full account: `pic18fxx5x-hal/docs/ARCHITECTURE.md`.
 
 **Tasks**
 1. Apply Phase 3's harness-variant + Makefile pattern to each remaining
-   `pic8-*` module and both HALs' own example set, module by module,
+   `epic-*` module and both HALs' own example set, module by module,
    each as its own commit per this repo's convention.
 2. Extend `sim-tests.yml`'s matrix the same way `xc8-build.yml` discovers
    modules dynamically in Phase 0/1, rather than hand-listing them.
-3. `pic8-usb` is explicitly deferred, not silently skipped: its host
+3. `epic-usb` is explicitly deferred, not silently skipped: its host
    stub already tests ring-buffer/connection-state logic, not USB
    enumeration, and this plan does not currently establish that MPLAB
    SIM's USB SIE peripheral model is faithful enough to trust for
@@ -1132,13 +1132,13 @@ same way. Full account: `pic18fxx5x-hal/docs/ARCHITECTURE.md`.
    resolved separately.
 
 **Validation**
-- [ ] Every module (except `pic8-usb`, tracked separately) has a green
+- [ ] Every module (except `epic-usb`, tracked separately) has a green
       sim-tests matrix leg, both families where applicable (some modules
       are already family-agnostic at the host level; confirm the same
       holds for the sim-target variant).
 
-**Exit criterion**: `sim-tests.yml` covers every module, `pic8-usb`'s
-deferral is documented in its own `docs/pic8-usb-plan.md`, not just here.
+**Exit criterion**: `sim-tests.yml` covers every module, `epic-usb`'s
+deferral is documented in its own `docs/epic-usb-plan.md`, not just here.
 
 ## Open questions (resolve during the phase noted)
 
@@ -1227,13 +1227,13 @@ deferral is documented in its own `docs/pic8-usb-plan.md`, not just here.
     no-op one, or `TXEN` never gets set.
 - **Wire format for the sim-target harness's PASS/FAIL report.**
   **RESOLVED (Phase 3): a single terminating line, not Unity.**
-  `pic8_harness_report` (`pic8_harness.h`, previously a bare `ok ? 0 :
-  1`) now also calls `pic8_harness_log` with a fixed marker
+  `epic_harness_report` (`epic_harness.h`, previously a bare `ok ? 0 :
+  1`) now also calls `epic_harness_log` with a fixed marker
   (`PIC8_HARNESS_RESULT: PASS\n` / `...FAIL\n`) before returning. Since
-  `pic8_harness_log` already differs per build (no-op on target, printf
+  `epic_harness_log` already differs per build (no-op on target, printf
   on host, and now a real USART write on sim-target), every module gets
   the marker for free through its existing `return
-  pic8_harness_report(...)` call, no per-example changes needed, and no
+  epic_harness_report(...)` call, no per-example changes needed, and no
   third-party framework pulled in.
 - **Mechanism for a module to opt a build into the sim-target harness
   variant.** **RESOLVED (Phase 3): a `HARNESS ?= target` Makefile
@@ -1243,17 +1243,17 @@ deferral is documented in its own `docs/pic8-usb-plan.md`, not just here.
   list) that swaps in the sim-target harness source and gives `TARGET`
   a `-sim` suffix so a sim build never clobbers a target build's `.hex`
   in the same `build/` dir. No change needed to the shared
-  `pic8_family.mk` fragment at all: which harness `.c` file lands in
+  `epic_family.mk` fragment at all: which harness `.c` file lands in
   `SRCS` is decided by the caller before `include`-ing it, exactly like
   every other per-module source choice already works.
 - **Where the sim-target harness file lives.** **CORRECTED from this
   plan's original Phase 3 task 1**, which named
-  `pic8-common/src/core/pic8_harness_sim_target.c`. That's wrong once
+  `epic-common/src/core/epic_harness_sim_target.c`. That's wrong once
   you account for what the file actually has to do: unlike
-  `pic8_harness_target.c`'s four architecture-blind no-ops, the
+  `epic_harness_target.c`'s four architecture-blind no-ops, the
   sim-target variant needs real USART SFR access to make the report
   marker reach `mdb`'s `uart1io` capture, and USART access is
-  family-specific. Per this repo's own rule (`pic8-common/` holds only
+  family-specific. Per this repo's own rule (`epic-common/` holds only
   architecture-blind code, register-specific code lives per-family), it
   lives per-family instead: `pic16f87xa-hal/src/core/
   pic16_harness_sim_target.c` and `pic18fxx5x-hal/src/core/
@@ -1262,9 +1262,9 @@ deferral is documented in its own `docs/pic8-usb-plan.md`, not just here.
   `pic18_harness_sim.c`).
 - **MPLAB SIM's fidelity for the PIC18 SIE (USB) peripheral.** Not
   expected to be trustworthy enough for enumeration-level testing of
-  `pic8-usb`; not going to be chased down as part of this plan. If it
+  `epic-usb`; not going to be chased down as part of this plan. If it
   turns out MPLAB SIM does model the SIE well enough to be useful,
-  that's a separate follow-up, tracked in `docs/pic8-usb-plan.md`, not a
+  that's a separate follow-up, tracked in `docs/epic-usb-plan.md`, not a
   blocker here.
 - **GHCR image naming/ownership.** **RESOLVED (Phase 1):**
   `ghcr.io/${{ github.repository_owner }}/pic8-hal-ci`, resolved at

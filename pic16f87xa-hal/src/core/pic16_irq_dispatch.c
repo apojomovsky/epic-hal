@@ -31,7 +31,7 @@ extern void RB_IRQHandler(void);
 extern void PSP_IRQHandler(void);
 #endif
 
-void pic8_dispatch_all_irqs(void)
+void epic_dispatch_all_irqs(void)
 {
     TIMER0_IRQHandler();
     TIMER1_IRQHandler();

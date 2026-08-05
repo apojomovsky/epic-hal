@@ -21,8 +21,8 @@
 
 /* SFR access resolves to a direct volatile dereference of the address. */
 #define PIC8_SFR_PTR(addr)       ((volatile uint8_t *)(uintptr_t)(addr))
-#define pic8_sfr_read8(addr)     (*(volatile uint8_t *)(uintptr_t)(addr))
-#define pic8_sfr_write8(addr, v) \
+#define epic_sfr_read8(addr)     (*(volatile uint8_t *)(uintptr_t)(addr))
+#define epic_sfr_write8(addr, v) \
     do { *(volatile uint8_t *)(uintptr_t)(addr) = (uint8_t)(v); } while (0)
 
 /* Address of a register as a uint8_t lvalue (read/write/RMW). */
@@ -37,24 +37,24 @@
  * and that file is shared with the host build. */
 
 /* File-scope symbol the asm above needs (inline asm can only address
- * file-scope symbols, see pic8-math/docs/ARCHITECTURE.md's "Inline-asm
+ * file-scope symbols, see epic-math/docs/ARCHITECTURE.md's "Inline-asm
  * binding"); `__at`-pinned into bank-independent common RAM (0x70) in
  * pic16_isr_vector.c rather than left to the linker's default
  * placement, which scatters unpinned statics by best-fit, not
  * declaration order (AGENTS.md). */
-extern volatile uint8_t pic8_irq_pie_scratch __at(0x70);
+extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
 
 /* Same fix shape as PIE1/PIE2 above, for plain Bank 1 SFR writes whose
  * source is a C-level local or parameter (ARCHITECTURE.md Finding 9):
  * load into W through a bank-independent scratch byte before switching
  * banks, then a single `movwf <SFR>` while banked touches nothing else
  * C-level. Separate scratch byte from PIE's own; unrelated subsystems. */
-extern volatile uint8_t pic8_bank1_scratch __at(0x71);
+extern volatile uint8_t epic_bank1_scratch __at(0x71);
 
 #define PIC8_BANK1_WRITE8(sfr_name, value)                              \
     do {                                                                \
-        pic8_bank1_scratch = (uint8_t)(value);                         \
-        asm("movf _pic8_bank1_scratch,w");                             \
+        epic_bank1_scratch = (uint8_t)(value);                         \
+        asm("movf _epic_bank1_scratch,w");                             \
         asm("bsf STATUS,5");                                           \
         asm("movwf " #sfr_name);                                       \
         asm("bcf STATUS,5");                                           \
@@ -69,8 +69,8 @@ extern volatile uint8_t pic8_bank1_scratch __at(0x71);
         asm("bsf STATUS,5");                                           \
         asm("movf " #sfr_name ",w");                                   \
         asm("bcf STATUS,5");                                           \
-        asm("movwf _pic8_bank1_scratch");                              \
-        (out_var) = pic8_bank1_scratch;                                \
+        asm("movwf _epic_bank1_scratch");                              \
+        (out_var) = epic_bank1_scratch;                                \
     } while (0)
 
 /* Same fix, Banks 2/3 (pic16f87xa_eeprom.c's EEDATA/EEADR/EECON1/
@@ -81,8 +81,8 @@ extern volatile uint8_t pic8_bank1_scratch __at(0x71);
  * codebase selects its own bank before touching an SFR. */
 #define PIC8_BANK2_WRITE8(sfr_name, value)                              \
     do {                                                                \
-        pic8_bank1_scratch = (uint8_t)(value);                         \
-        asm("movf _pic8_bank1_scratch,w");                             \
+        epic_bank1_scratch = (uint8_t)(value);                         \
+        asm("movf _epic_bank1_scratch,w");                             \
         asm("bcf STATUS,5");                                           \
         asm("bsf STATUS,6");                                           \
         asm("movwf " #sfr_name);                                       \
@@ -97,14 +97,14 @@ extern volatile uint8_t pic8_bank1_scratch __at(0x71);
         asm("movf " #sfr_name ",w");                                   \
         asm("bcf STATUS,5");                                           \
         asm("bcf STATUS,6");                                           \
-        asm("movwf _pic8_bank1_scratch");                              \
-        (out_var) = pic8_bank1_scratch;                                \
+        asm("movwf _epic_bank1_scratch");                              \
+        (out_var) = epic_bank1_scratch;                                \
     } while (0)
 
 #define PIC8_BANK3_WRITE8(sfr_name, value)                              \
     do {                                                                \
-        pic8_bank1_scratch = (uint8_t)(value);                         \
-        asm("movf _pic8_bank1_scratch,w");                             \
+        epic_bank1_scratch = (uint8_t)(value);                         \
+        asm("movf _epic_bank1_scratch,w");                             \
         asm("bsf STATUS,5");                                           \
         asm("bsf STATUS,6");                                           \
         asm("movwf " #sfr_name);                                       \
@@ -119,20 +119,20 @@ extern volatile uint8_t pic8_bank1_scratch __at(0x71);
         asm("movf " #sfr_name ",w");                                   \
         asm("bcf STATUS,5");                                           \
         asm("bcf STATUS,6");                                           \
-        asm("movwf _pic8_bank1_scratch");                              \
-        (out_var) = pic8_bank1_scratch;                                \
+        asm("movwf _epic_bank1_scratch");                              \
+        (out_var) = epic_bank1_scratch;                                \
     } while (0)
 
 #define PIC8_PIE_ENABLE_BIT(is_pir2, mask)                              \
     do {                                                                \
-        pic8_irq_pie_scratch = (uint8_t)(mask);                        \
+        epic_irq_pie_scratch = (uint8_t)(mask);                        \
         if (is_pir2) {                                                 \
-            asm("movf _pic8_irq_pie_scratch,w");                       \
+            asm("movf _epic_irq_pie_scratch,w");                       \
             asm("bsf STATUS,5");                                       \
             asm("iorwf PIE2,f");                                       \
             asm("bcf STATUS,5");                                       \
         } else {                                                       \
-            asm("movf _pic8_irq_pie_scratch,w");                       \
+            asm("movf _epic_irq_pie_scratch,w");                       \
             asm("bsf STATUS,5");                                       \
             asm("iorwf PIE1,f");                                       \
             asm("bcf STATUS,5");                                       \
@@ -141,14 +141,14 @@ extern volatile uint8_t pic8_bank1_scratch __at(0x71);
 
 #define PIC8_PIE_DISABLE_BIT(is_pir2, mask)                             \
     do {                                                                \
-        pic8_irq_pie_scratch = (uint8_t)~(mask);                       \
+        epic_irq_pie_scratch = (uint8_t)~(mask);                       \
         if (is_pir2) {                                                 \
-            asm("movf _pic8_irq_pie_scratch,w");                       \
+            asm("movf _epic_irq_pie_scratch,w");                       \
             asm("bsf STATUS,5");                                       \
             asm("andwf PIE2,f");                                       \
             asm("bcf STATUS,5");                                       \
         } else {                                                       \
-            asm("movf _pic8_irq_pie_scratch,w");                       \
+            asm("movf _epic_irq_pie_scratch,w");                       \
             asm("bsf STATUS,5");                                       \
             asm("andwf PIE1,f");                                       \
             asm("bcf STATUS,5");                                       \

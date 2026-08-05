@@ -6,7 +6,7 @@
  * @details
  *   Timer0 overflow drives an interrupt; the ISR toggles RB0, the main
  *   loop just lets time pass and refreshes the WDT. One source builds for
- *   host sim and real XC8 target with no `#ifdef`, via `core/pic8_harness.h`.
+ *   host sim and real XC8 target with no `#ifdef`, via `core/epic_harness.h`.
  *   Real target: LED + resistor on RB0 (active-high), 20 MHz crystal,
  *   Timer0 8-bit/Fosc/4/1:256, overflow every ~13 ms (~76 Hz blink).
  */
@@ -17,7 +17,7 @@
 #include "peripherals/pic18fxx5x_timer0.h"
 #include "core/pic18_irq.h"
 #include "core/pic18fxx5x_wdt_sleep.h"
-#include "core/pic8_harness.h"
+#include "core/epic_harness.h"
 
 /** Simulated run length (host only). 256 x 256 = 65536 cycles per Timer0
  *  overflow at 1:256 in 8-bit mode, so 600k cycles give ~9 toggles. */
@@ -36,7 +36,7 @@ static void on_t0_overflow(void)
 
 int main(void)
 {
-    pic8_harness_init(SIM_CYCLES);
+    epic_harness_init(SIM_CYCLES);
 
     /* 1. RB0 as output, start low (writes go through LATB, DS39632E §10.0). */
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
@@ -64,11 +64,11 @@ int main(void)
      *    bounds the loop to SIM_CYCLES and pumps the sim each iteration.
      *    EPIC_WDT_Refresh is a no-op on the host, so it is called
      *    unconditionally. */
-    for (uint32_t i = 0; pic8_harness_running(i); i++) {
-        pic8_harness_tick();
+    for (uint32_t i = 0; epic_harness_running(i); i++) {
+        epic_harness_tick();
         EPIC_WDT_Refresh();
     }
 
-    pic8_harness_log("RB0 toggled %u times.\n", (unsigned)g_toggle_count);
-    return pic8_harness_report(g_toggle_count >= 2U);
+    epic_harness_log("RB0 toggled %u times.\n", (unsigned)g_toggle_count);
+    return epic_harness_report(g_toggle_count >= 2U);
 }

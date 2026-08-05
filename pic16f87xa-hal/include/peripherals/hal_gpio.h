@@ -8,7 +8,7 @@
  *   which family's copy resolves. Beyond the portable `EPIC_GPIO_Init/
  *   Read/Write/...`, this also carries the RB<7:4> change-interrupt hook
  *   (@ref EPIC_GPIO_RegisterChangeCallback / @ref RB_IRQHandler) that
- *   `pic8-encoder` builds on.
+ *   `epic-encoder` builds on.
  */
 
 #ifndef EPIC_GPIO_H

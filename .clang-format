@@ -1,6 +1,6 @@
 # Starter config for `git clang-format` (manual, opt-in use only, see
 # scripts/README.md). NOT wired into the pre-commit hook: tested against
-# real files in this repo (pic8-pid/src/pid.c) and it still reformats
+# real files in this repo (epic-pid/src/pid.c) and it still reformats
 # deliberate hand-tuned style this codebase relies on, aligned struct-field
 # comments, single-line `if (x) { y; }` clamp idioms, `} else {` spacing,
 # even collapsing a one-line function body onto its signature. Fix those

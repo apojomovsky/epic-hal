@@ -21,16 +21,16 @@ macros, the shared `HAL_StatusTypeDef` type, and the build-system
 variables named after it, e.g. CMake's `HAL_DIR`/`HAL_SOURCES`/
 `HAL_FAMILY`/`HAL_LIB`) becomes `EPIC_`. Out of scope, not touched by
 this: the repo slug and every module/package directory name
-(`pic8-hal`, `pic16f193x-hal`, etc.), the family-blind `pic8_`-prefixed
-harness/module functions (`pic8_harness_report`, `pic8_dispatch_all_irqs`,
-`pic8_tick.h`'s own API, ...), which are a different naming convention
+(`pic8-hal`, `pic16f193x-hal`, etc.), the family-blind `epic_`-prefixed
+harness/module functions (`epic_harness_report`, `epic_dispatch_all_irqs`,
+`epic_tick.h`'s own API, ...), which are a different naming convention
 entirely and were never part of the "HAL_" contract.
 
 ## Survey (done)
 
 `git ls-files -z | xargs -0 grep -o 'HAL_' | wc -l`: **3953 occurrences
 across 309 tracked files** (116 `.c`, 90 `.h`, 63 `.md`, 14
-`CMakeLists.txt`, 1 `pic8_family.cmake`, 20 real-target `Makefile`s, 2
+`CMakeLists.txt`, 1 `epic_family.cmake`, 20 real-target `Makefile`s, 2
 `scripts/*.py`, plus `AGENTS.md` itself, one clean occurrence:
 `HAL_IRQ_SetPriority`). No filename contains `HAL_` (case-sensitive),
 so this is a content-only rename, no `git mv` needed. No pre-existing
@@ -50,7 +50,7 @@ claims about a competitor's product. Full list, found by grepping for
 `HAL_` co-occurring with `STM32`/`Cube` (including lines where the
 comparison and the token wrap across adjacent lines in a doc comment,
 which a same-line grep alone misses, confirmed by manually reading
-`pic8-common/include/core/hal_status.h`):
+`epic-common/include/core/hal_status.h`):
 
 - `HAL_NVIC_*` (3 files: both classic-PIC16 `pic16_irq.h`/
   `pic16f193x_irq.h` and PIC18's `pic18_irq.h`, each "mirrors
@@ -67,10 +67,10 @@ which a same-line grep alone misses, confirmed by manually reading
   are spelled differently on purpose, so `HAL_UART_` is unambiguously
   foreign)
 - `HAL_GetTick`/`HAL_Delay` (this project's own equivalent,
-  `pic8-tick`, uses the `pic8_`-prefixed family-blind convention, not
+  `epic-tick`, uses the `epic_`-prefixed family-blind convention, not
   `HAL_`, so these two exact tokens never occur here as our own code)
 - `HAL_StatusTypeDef`, the hard case: this is genuinely both. It's our
-  own declared type (`pic8-common/include/core/hal_status.h`, ~369 of
+  own declared type (`epic-common/include/core/hal_status.h`, ~369 of
   the 371 total occurrences) *and*, on exactly two lines in that same
   file's own header comment (lines 5 and 17, "mirrors STM32Cube's
   `HAL_StatusTypeDef`" / "Mirrors `HAL_StatusTypeDef` from STM32Cube"),

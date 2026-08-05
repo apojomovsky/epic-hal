@@ -144,7 +144,7 @@ test: image
 
 # ─────────────────────────── real-target XC8 build ───────────────────
 # MODULE is the module dir (e.g. pic16f193x-hal); most modules have TWO
-# mcu/*-mplabx dirs, one per family (see pic8-tick and friends), so which
+# mcu/*-mplabx dirs, one per family (see epic-tick and friends), so which
 # one to build can't be inferred from MODULE alone. Disambiguate by the
 # MCU value's own shape instead: classic PIC16 variants end in a letter
 # after 3 digits (873A/874A/876A/877A), PIC18 variants start with 18F,
@@ -179,7 +179,7 @@ mdb-test: image
 		echo "  MODE=uart (default) for PIC16F87XA/PIC18Fxxxx (UART capture);" >&2; \
 		echo "  MODE=gpio for PIC16F193X (RA0 register readback)." >&2; \
 		echo "  SIM_APP=<tests/*.c file> to pick which peripheral's HARNESS=sim example is gated (default: whatever pic16f193x-mplabx/Makefile's own SIM_APP default is, currently example_timer1.c)." >&2; \
-		echo "  e.g. make mdb-test MODULE=pic8-tick/mcu/pic16f87xa-tick-mplabx MCU=16F877A DEVICE=PIC16F877A DFP=Microchip.PIC16Fxxx_DFP" >&2; \
+		echo "  e.g. make mdb-test MODULE=epic-tick/mcu/pic16f87xa-tick-mplabx MCU=16F877A DEVICE=PIC16F877A DFP=Microchip.PIC16Fxxx_DFP" >&2; \
 		exit 1; \
 	fi
 	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(DFP) $(or $(WAIT_MS),2000) $(or $(MODE),uart) $(SIM_APP)

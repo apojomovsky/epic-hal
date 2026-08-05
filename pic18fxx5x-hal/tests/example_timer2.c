@@ -10,8 +10,8 @@
  *   with no `#ifdef`.
  */
 
-#include "pic8_hal.h"
-#include "core/pic8_harness.h"
+#include "epic_hal.h"
+#include "core/epic_harness.h"
 #include <stdio.h>
 
 #define EXPECTED_PERIOD_CYCLES  250UL
@@ -32,7 +32,7 @@ static void on_t2_overflow(void)
 
 int main(void)
 {
-    pic8_harness_init(SIM_CYCLES);
+    epic_harness_init(SIM_CYCLES);
 
     TIMER2_HandleTypeDef h = TIMER2_HANDLE_DEFAULT;
     h.Prescaler        = TIMER2_PRESCALER_1_1;
@@ -43,9 +43,9 @@ int main(void)
     EPIC_TIMER2_Start(&h);
     EPIC_IRQ_Restore(1);
 
-    for (uint32_t i = 0; pic8_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++) {
         g_cycle = i + 1;
-        pic8_harness_tick();
+        epic_harness_tick();
         if (g_overflows >= EXPECTED_OVERFLOWS) break;
     }
 
@@ -54,8 +54,8 @@ int main(void)
     int32_t delta = (int32_t)g_first_cycle - (int32_t)EXPECTED_PERIOD_CYCLES;
     if (delta < 0) delta = -delta;
 
-    pic8_harness_log("Timer2: %u overflows, first at cycle %u (expected ~%u)\n",
+    epic_harness_log("Timer2: %u overflows, first at cycle %u (expected ~%u)\n",
                      (unsigned)g_overflows, (unsigned)g_first_cycle,
                      (unsigned)EXPECTED_PERIOD_CYCLES);
-    return pic8_harness_report(g_overflows >= EXPECTED_OVERFLOWS && delta <= 2);
+    return epic_harness_report(g_overflows >= EXPECTED_OVERFLOWS && delta <= 2);
 }

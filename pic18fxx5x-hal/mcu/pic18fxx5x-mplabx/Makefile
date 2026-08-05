@@ -26,8 +26,8 @@
 # and use the "Make and Program" button. The .hex output here
 # is suitable for any external programmer (PK2CMD, ippe, MPLAB IPE).
 #
-# This file is a thin caller of the shared pic8_family.mk fragment
-# (pic8-common/mk/): the `.c` -> `.p1` pattern rule, the `.hex` link
+# This file is a thin caller of the shared epic_family.mk fragment
+# (epic-common/mk/): the `.c` -> `.p1` pattern rule, the `.hex` link
 # step, and clean all live there. Only what is genuinely PIC18F2455-
 # specific stays here: device selection, the DFP flag, the source list,
 # the include path, and the configuration-word directives.
@@ -76,10 +76,10 @@ endif
 
 # ─────────────────────────── paths ────────────────────────────────
 # Adjust EPIC_DIR if the firmware project is not a sibling of pic18fxx5x-hal.
-# pic8-common holds the shared harness target impl and headers; it is a
+# epic-common holds the shared harness target impl and headers; it is a
 # sibling of the HAL tree.
 EPIC_DIR    ?= ../..
-COMMON_DIR ?= $(EPIC_DIR)/../pic8-common
+COMMON_DIR ?= $(EPIC_DIR)/../epic-common
 BUILD_DIR  ?= build
 TARGET     := $(BUILD_DIR)/$(MCU)-firmware
 
@@ -97,7 +97,7 @@ endif
 CC     := xc8-cc
 # include/target ahead of include so pic18_platform.h resolves to the
 # real-target (volatile-dereference) version, not the host memory-backed one.
-# pic8-common/include provides the shared hal_status.h / pic8_harness.h.
+# epic-common/include provides the shared hal_status.h / epic_harness.h.
 INC    := -I$(EPIC_DIR)/include/target -I$(EPIC_DIR)/include -I$(COMMON_DIR)/include
 CFLAGS := $(DFP_FLAG) \
           -mcpu=$(shell echo $(MCU) | tr A-Z a-z) \
@@ -112,7 +112,7 @@ CFLAGS := $(DFP_FLAG) \
 # pic18_sim.c. The host/target SFR mapping is chosen by the include path
 # (include/target first), and the host-only harness implementation is
 # simply absent from this source list. The family-blind harness target
-# impl lives in pic8-common and is linked here alongside the PIC18 core.
+# impl lives in epic-common and is linked here alongside the PIC18 core.
 # Phase 2 MVP: GPIO, Timer0, interrupt core + ISR vector, WDT/Sleep. The
 # host-only files (pic18_sim.c, pic18_harness_sim.c,
 # pic18fxx5x_wdt_sleep_sim.c) are absent from this list; the host/target
@@ -135,7 +135,7 @@ EPIC_SOURCES := \
   $(EPIC_DIR)/src/core/pic18_isr_vector.c                  \
   $(EPIC_DIR)/src/core/pic18fxx5x_wdt_sleep.c              \
   $(EPIC_DIR)/src/core/pic18fxx5x_wdt_sleep_target.c       \
-  $(COMMON_DIR)/src/core/pic8_harness_target.c
+  $(COMMON_DIR)/src/core/epic_harness_target.c
 
 # SPP source only on the 40/44-pin parts that have the peripheral.
 ifeq ($(HAS_SPP),1)
@@ -175,10 +175,10 @@ CONFIG_OBJ := $(BUILD_DIR)/config_$(MCU).p1
 # make expands explicit-rule prerequisites at parse time; included
 # BEFORE the family-specific config-word recipe below, so `all` (from
 # the fragment) stays the default goal.
-include $(COMMON_DIR)/mk/pic8_family.mk
+include $(COMMON_DIR)/mk/epic_family.mk
 
 # Family-specific: the PIC18F4550-family config-word directives. The
-# shared pic8_family.mk provides the rule that compiles $(CONFIG_SRC)
+# shared epic_family.mk provides the rule that compiles $(CONFIG_SRC)
 # to $(CONFIG_OBJ) and links it into the hex. Labels per DS39632E
 # §23.1; the XC8 spelling comes from the PIC18F DFP device header.
 $(CONFIG_SRC): | $(BUILD_DIR)

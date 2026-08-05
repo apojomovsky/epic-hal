@@ -8,17 +8,17 @@
  *   clears CMIF, so polling checks disable the sim IRQ callback.
  */
 
-#include "pic8_hal.h"
-#include "core/pic8_harness.h"
+#include "epic_hal.h"
+#include "core/epic_harness.h"
 #include "pic18fxx5x_sim.h"
 
 #define CHECK(cond, msg) do { \
-    if (!(cond)) { pic8_harness_log("FAIL: %s\n", msg); return pic8_harness_report(0); } \
+    if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
 } while (0)
 
 int main(void)
 {
-    pic8_harness_init(16U);
+    epic_harness_init(16U);
     /* Disable the sim IRQ callback so the COMP handler does not clear CMIF
      * before the polling checks read it. */
     pic18_sim_set_irq_callback(NULL);
@@ -33,7 +33,7 @@ int main(void)
     h.CIS        = true;
     EPIC_COMP_Init(&h);
 
-    CHECK(pic8_sfr_read8(PIC_REG_CMCON) == 0x3AU,
+    CHECK(epic_sfr_read8(PIC_REG_CMCON) == 0x3AU,
           "CMCON not 0x3A for two-indep, both inverted, CIS");
 
     /* 2. Drive the comparator outputs. C1OUT is bit 6 (0x40), C2OUT bit 7. */
@@ -51,9 +51,9 @@ int main(void)
 
     /* 4. DeInit restores the POR default (comparators off). */
     EPIC_COMP_DeInit();
-    CHECK(pic8_sfr_read8(PIC_REG_CMCON) == 0x07U,
+    CHECK(epic_sfr_read8(PIC_REG_CMCON) == 0x07U,
           "CMCON not 0x07 (off) after DeInit");
 
-    pic8_harness_log("OK: Comparator driver, mode/inv/CIS, outputs, change flag all pass.\n");
-    return pic8_harness_report(1);
+    epic_harness_log("OK: Comparator driver, mode/inv/CIS, outputs, change flag all pass.\n");
+    return epic_harness_report(1);
 }

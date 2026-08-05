@@ -15,8 +15,8 @@
 # links the host-side harness/wdt_sleep implementations. The XC8 Makefile
 # does the mirror with include/target and the target implementations.
 #
-# This file is a thin caller of the shared pic8_family.cmake helpers
-# (pic8-common/cmake/). Everything identical between families, the
+# This file is a thin caller of the shared epic_family.cmake helpers
+# (epic-common/cmake/). Everything identical between families, the
 # host-include-first convention, the per-target device define, the
 # example/link boilerplate, the per-device example loop, lives there;
 # only what is genuinely PIC16F193X-specific stays here: the source list,
@@ -29,8 +29,8 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Shared layer: status codes, harness, CMake helpers.
-set(PIC8_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic8-common)
-include(${PIC8_COMMON_DIR}/cmake/pic8_family.cmake)
+set(PIC8_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-common)
+include(${PIC8_COMMON_DIR}/cmake/epic_family.cmake)
 
 # Default device, can be overridden with -DPIC16F193X_DEVICE=1936.
 if(NOT DEFINED PIC16F193X_DEVICE)
@@ -52,7 +52,7 @@ else()
     set(PIC16F193X_FAMILY_HAS_PORTE 0)
 endif()
 
-# Variables consumed by the shared pic8_family.cmake helpers.
+# Variables consumed by the shared epic_family.cmake helpers.
 set(PIC8_EPIC_LIB              pic16f193x_hal)
 set(PIC8_DEFAULT_DEVICE       ${PIC16F193X_DEFAULT_DEVICE})
 set(PIC8_FAMILY_INCLUDE_DIR   ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -84,38 +84,38 @@ set(PIC8_EPIC_SOURCES
     src/sim/pic16f193x_sim.c
 )
 
-pic8_add_hal_library(${PIC8_EPIC_LIB})
+epic_add_hal_library(${PIC8_EPIC_LIB})
 
-pic8_add_example(example_blink tests/example_blink.c)
-pic8_add_example(example_gpio tests/example_gpio.c)
-pic8_add_example(example_timer1 tests/example_timer1.c)
-pic8_add_example(example_timer246 tests/example_timer246.c)
-pic8_add_example(example_ccp tests/example_ccp.c)
-pic8_add_example(example_eusart tests/example_eusart.c)
-pic8_add_example(example_mssp tests/example_mssp.c)
-pic8_add_example(example_adc tests/example_adc.c)
-pic8_add_example(example_comparator tests/example_comparator.c)
-pic8_add_example(example_eeprom tests/example_eeprom.c)
-pic8_add_example(example_dac tests/example_dac.c)
-pic8_add_example(example_fvr tests/example_fvr.c)
-pic8_add_example(example_srlatch tests/example_srlatch.c)
-pic8_add_example(example_cps tests/example_cps.c)
-pic8_add_example(example_ccp345 tests/example_ccp345.c)
-pic8_add_example(example_lcd tests/example_lcd.c)
+epic_add_example(example_blink tests/example_blink.c)
+epic_add_example(example_gpio tests/example_gpio.c)
+epic_add_example(example_timer1 tests/example_timer1.c)
+epic_add_example(example_timer246 tests/example_timer246.c)
+epic_add_example(example_ccp tests/example_ccp.c)
+epic_add_example(example_eusart tests/example_eusart.c)
+epic_add_example(example_mssp tests/example_mssp.c)
+epic_add_example(example_adc tests/example_adc.c)
+epic_add_example(example_comparator tests/example_comparator.c)
+epic_add_example(example_eeprom tests/example_eeprom.c)
+epic_add_example(example_dac tests/example_dac.c)
+epic_add_example(example_fvr tests/example_fvr.c)
+epic_add_example(example_srlatch tests/example_srlatch.c)
+epic_add_example(example_cps tests/example_cps.c)
+epic_add_example(example_ccp345 tests/example_ccp345.c)
+epic_add_example(example_lcd tests/example_lcd.c)
 
 # Optional: example for every device in the family.
-pic8_add_example_per_device(example_blink tests/example_blink.c)
-pic8_add_example_per_device(example_timer1 tests/example_timer1.c)
-pic8_add_example_per_device(example_timer246 tests/example_timer246.c)
-pic8_add_example_per_device(example_ccp tests/example_ccp.c)
-pic8_add_example_per_device(example_eusart tests/example_eusart.c)
-pic8_add_example_per_device(example_mssp tests/example_mssp.c)
-pic8_add_example_per_device(example_adc tests/example_adc.c)
-pic8_add_example_per_device(example_comparator tests/example_comparator.c)
-pic8_add_example_per_device(example_eeprom tests/example_eeprom.c)
-pic8_add_example_per_device(example_dac tests/example_dac.c)
-pic8_add_example_per_device(example_fvr tests/example_fvr.c)
-pic8_add_example_per_device(example_srlatch tests/example_srlatch.c)
-pic8_add_example_per_device(example_cps tests/example_cps.c)
-pic8_add_example_per_device(example_ccp345 tests/example_ccp345.c)
-pic8_add_example_per_device(example_lcd tests/example_lcd.c)
+epic_add_example_per_device(example_blink tests/example_blink.c)
+epic_add_example_per_device(example_timer1 tests/example_timer1.c)
+epic_add_example_per_device(example_timer246 tests/example_timer246.c)
+epic_add_example_per_device(example_ccp tests/example_ccp.c)
+epic_add_example_per_device(example_eusart tests/example_eusart.c)
+epic_add_example_per_device(example_mssp tests/example_mssp.c)
+epic_add_example_per_device(example_adc tests/example_adc.c)
+epic_add_example_per_device(example_comparator tests/example_comparator.c)
+epic_add_example_per_device(example_eeprom tests/example_eeprom.c)
+epic_add_example_per_device(example_dac tests/example_dac.c)
+epic_add_example_per_device(example_fvr tests/example_fvr.c)
+epic_add_example_per_device(example_srlatch tests/example_srlatch.c)
+epic_add_example_per_device(example_cps tests/example_cps.c)
+epic_add_example_per_device(example_ccp345 tests/example_ccp345.c)
+epic_add_example_per_device(example_lcd tests/example_lcd.c)

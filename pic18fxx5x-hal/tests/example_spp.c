@@ -9,17 +9,17 @@
  *   SPPIF, so polling checks disable the sim IRQ callback.
  */
 
-#include "pic8_hal.h"
-#include "core/pic8_harness.h"
+#include "epic_hal.h"
+#include "core/epic_harness.h"
 #include "pic18fxx5x_sim.h"
 
 #define CHECK(cond, msg) do { \
-    if (!(cond)) { pic8_harness_log("FAIL: %s\n", msg); return pic8_harness_report(0); } \
+    if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
 } while (0)
 
 int main(void)
 {
-    pic8_harness_init(16U);
+    epic_harness_init(16U);
     pic18_sim_set_irq_callback(NULL);
 
     /* 1. Init: MCU ownership, CLKCFG=addr-write/data-rw, no CS/CLK1, WS=0, ep=0.
@@ -32,15 +32,15 @@ int main(void)
     h.Endpoint    = 0U;
     EPIC_SPP_Init(&h);
 
-    CHECK(pic8_sfr_read8(PIC_REG_SPPCON) == 0x01U, "SPPCON not 0x01 (SPPEN, MCU-owned)");
-    CHECK(pic8_sfr_read8(PIC_REG_SPPCFG) == 0x00U, "SPPCFG not 0x00 for default config");
-    CHECK(pic8_sfr_read8(PIC_REG_SPPEPS) == 0x00U, "SPPEPS not 0x00 for ep 0");
+    CHECK(epic_sfr_read8(PIC_REG_SPPCON) == 0x01U, "SPPCON not 0x01 (SPPEN, MCU-owned)");
+    CHECK(epic_sfr_read8(PIC_REG_SPPCFG) == 0x00U, "SPPCFG not 0x00 for default config");
+    CHECK(epic_sfr_read8(PIC_REG_SPPEPS) == 0x00U, "SPPEPS not 0x00 for ep 0");
 
     /* 2. Write a byte to endpoint 2. */
     EPIC_SPP_WriteByte(2U, 0xA5U);
-    CHECK((pic8_sfr_read8(PIC_REG_SPPEPS) & PIC_SPPEPS_ADDR_MASK) == 0x02U,
+    CHECK((epic_sfr_read8(PIC_REG_SPPEPS) & PIC_SPPEPS_ADDR_MASK) == 0x02U,
           "SPPEPS addr not 2 after WriteByte");
-    CHECK(pic8_sfr_read8(PIC_REG_SPPDATA) == 0xA5U, "SPPDATA not 0xA5 after WriteByte");
+    CHECK(epic_sfr_read8(PIC_REG_SPPDATA) == 0xA5U, "SPPDATA not 0xA5 after WriteByte");
 
     /* 3. Sim a write event: WRSPP set + SPPIF set. */
     pic18_sim_drive_spp(1U, 0U);
@@ -69,16 +69,16 @@ int main(void)
     h.WaitStates  = 4U;
     h.Endpoint   = 5U;
     EPIC_SPP_Init(&h);
-    CHECK(pic8_sfr_read8(PIC_REG_SPPCON) == 0x03U, "SPPCON not 0x03 for USB-owned");
-    CHECK(pic8_sfr_read8(PIC_REG_SPPCFG) == 0x74U, "SPPCFG not 0x74 for write-read/CS/CLK1/WS4");
-    CHECK((pic8_sfr_read8(PIC_REG_SPPEPS) & PIC_SPPEPS_ADDR_MASK) == 0x05U,
+    CHECK(epic_sfr_read8(PIC_REG_SPPCON) == 0x03U, "SPPCON not 0x03 for USB-owned");
+    CHECK(epic_sfr_read8(PIC_REG_SPPCFG) == 0x74U, "SPPCFG not 0x74 for write-read/CS/CLK1/WS4");
+    CHECK((epic_sfr_read8(PIC_REG_SPPEPS) & PIC_SPPEPS_ADDR_MASK) == 0x05U,
           "SPPEPS addr not 5 after init");
 
     /* 7. DeInit restores 0x00. */
     EPIC_SPP_DeInit();
-    CHECK(pic8_sfr_read8(PIC_REG_SPPCON) == 0x00U, "SPPCON not 0x00 after DeInit");
-    CHECK(pic8_sfr_read8(PIC_REG_SPPCFG) == 0x00U, "SPPCFG not 0x00 after DeInit");
+    CHECK(epic_sfr_read8(PIC_REG_SPPCON) == 0x00U, "SPPCON not 0x00 after DeInit");
+    CHECK(epic_sfr_read8(PIC_REG_SPPCFG) == 0x00U, "SPPCFG not 0x00 after DeInit");
 
-    pic8_harness_log("OK: SPP driver, init (SPPCON/CFG/EPS), write/read, status flags all pass.\n");
-    return pic8_harness_report(1);
+    epic_harness_log("OK: SPP driver, init (SPPCON/CFG/EPS), write/read, status flags all pass.\n");
+    return epic_harness_report(1);
 }

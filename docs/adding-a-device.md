@@ -112,7 +112,7 @@ against an already-supported sibling in `pic16f87xa-hal/` or
   apply).
 - Same peripheral module identities (Timer2 is Timer2, EUSART is
   EUSART), even if some are present/absent (that's normal, PSP is
-  40/44-pin-only within PIC16F87XA already, `pic8-tick`'s own family
+  40/44-pin-only within PIC16F87XA already, `epic-tick`'s own family
   guard `PIC16F87XA_FAMILY_HAS_PSP` is the existing pattern for this).
 - Register addresses for shared peripherals are the same, or
   differences are small enough to express as a per-MCU `#if` inside the
@@ -179,7 +179,7 @@ it done.
 
 1. **Implement the driver**, citing the datasheet section for every
    register, bit, and computed value. Match this repo's existing
-   convention: family-neutral logic in `pic8-common/`, register-specific
+   convention: family-neutral logic in `epic-common/`, register-specific
    bodies per family, same names/signatures across families (the
    "fixed contract" root `CLAUDE.md` describes).
 2. **Extend the host-sim model** if the peripheral needs simulated
@@ -209,7 +209,7 @@ it done.
    USART output file. For families without an EUSART driver yet
    (currently PIC16F193X, exercised via RA0/GPIO), pass `MODE=gpio`;
    the wrapper then reads the marker via `print PORTA` and checks bit
-   0. The matching `pic8_harness_log()` magic-string dispatch lives
+   0. The matching `epic_harness_log()` magic-string dispatch lives
    in `pic16f193x-hal/src/core/pic16f193x_harness_sim_target.c`.
    Use this exact protocol, established the hard way this session:
    - Use `stepi <N>` with a generous instruction count, **not**
@@ -234,7 +234,7 @@ it done.
    - **For `MODE=gpio` families, when the peripheral has real hardware
      timing (a timer, a continuously-running conversion), don't rely
      solely on the main loop's bounded iteration count to reach
-     `pic8_harness_report()`.** Confirmed on PIC16F193X's Timer2/4/6:
+     `epic_harness_report()`.** Confirmed on PIC16F193X's Timer2/4/6:
      with three timers firing ISRs continuously, the MPLAB SIM's
      interrupt-servicing overhead starved the bounded main loop badly
      enough that it never reached the report call inside the `mdb`
@@ -324,8 +324,8 @@ assumes the previous ones are done and verified, not just written):
    still one file, not ten.
 3. **SFR map**, datasheet-cited, matching the existing families'
    `<family>fxx_sfr.h` convention.
-4. **`pic8-common`'s four-function harness target implementation** for
-   the new family (mirrors `pic8_harness_target.c`).
+4. **`epic-common`'s four-function harness target implementation** for
+   the new family (mirrors `epic_harness_target.c`).
 5. **IRQ backend next, before any peripheral that needs it**, and give
    it its own dedicated `mdb` smoke test (enable one timer interrupt,
    confirm it actually fires and the flag/enable bits read back
@@ -374,7 +374,7 @@ assumes the previous ones are done and verified, not just written):
 7. **`<family>-hal/MANUAL.md`** as you go, matching
    `pic16f87xa-hal/MANUAL.md`/`pic18fxx5x-hal/MANUAL.md`'s shape:
    datasheet-cited peripheral/register reference, pointing to
-   `pic8-common/MANUAL.md` for every family-agnostic convention instead
+   `epic-common/MANUAL.md` for every family-agnostic convention instead
    of re-explaining it (see `docs/hal-manual-plan.md` for why that split
    exists and how it was carved out).
 8. **`<family>-hal/docs/ARCHITECTURE.md`** for any compiler/codegen
@@ -410,9 +410,9 @@ assumes the previous ones are done and verified, not just written):
    design, see its own header comment, so it needs an explicit edit,
    unlike `xc8-build.yml`).
 10. **Litmus test**: point an existing family-agnostic consumer (a
-    `pic8-*` module, the task manager, whatever exists by then) at the
+    `epic-*` module, the task manager, whatever exists by then) at the
     new family and confirm zero changes are needed to the consumer
-    itself. If something in `pic8-common/` needed to change to fit the
+    itself. If something in `epic-common/` needed to change to fit the
     new family, that's a signal the shared contract was accidentally
     family-specific somewhere, fix that contract, not a sign the whole
     approach is wrong (`docs/multi-family-plan.md`'s own framing, still
@@ -443,7 +443,7 @@ exist and are accurate, not just present:
       `docs/mplabx-link-gaps-plan.md` with a real root cause, not just
       silently excluded.
 - [ ] Full regression run: every module, every MCU variant in the
-      affected family (or families, if a shared `pic8-common` change
+      affected family (or families, if a shared `epic-common` change
       was needed), host and real-target, immediately before the final
       commit, not from memory of an earlier run.
 - [ ] User has signed off on the final state before anything gets
@@ -465,7 +465,7 @@ account lives.
 | Missing `HARNESS=sim` → watchdog-off Makefile override, WDT resets a bounded diagnostic build mid-run | PIC16, PIC18 | `docs/ci-plan.md` Phase 4 |
 | Dangling pointer: a HAL `_Init` stores the caller's pointer instead of copying the handle, and the caller's storage is a non-`static` local | PIC16 (fixed); PIC18's own driver already copies the handle, not affected | `docs/ci-plan.md` Phase 4 |
 | Read-only status/flag bits (RCIDL, CxOUT, FVRRDY, CPSOUT, ...) reading back set even though the driver never wrote them, mistaken for a write not landing | PIC16F193X (Enhanced Mid-range) | `pic16f193x-hal/docs/ARCHITECTURE.md`; §4 step 8 above |
-| `MODE=gpio` bounded-loop example starved by continuously-firing ISRs on MPLAB SIM, never reaching `pic8_harness_report()` inside the `mdb` wait window, despite every ISR and the peripheral logic being correct | PIC16F193X (Timer2/4/6, 3 concurrent timer ISRs) | §4 step 6's sub-bullet above; the fix (early-exit + ISR-driven marker) is in `pic16f193x-hal/tests/example_timer246.c` |
+| `MODE=gpio` bounded-loop example starved by continuously-firing ISRs on MPLAB SIM, never reaching `epic_harness_report()` inside the `mdb` wait window, despite every ISR and the peripheral logic being correct | PIC16F193X (Timer2/4/6, 3 concurrent timer ISRs) | §4 step 6's sub-bullet above; the fix (early-exit + ISR-driven marker) is in `pic16f193x-hal/tests/example_timer246.c` |
 | CI matrix discovery script (`scripts/ci-discover-xc8-matrix.py`) not updated when a new family's first `mcu/*-mplabx/Makefile` lands, so local real-target builds pass indefinitely while `xc8-build.yml` fails outright on every push | PIC16F193X | §5 step 9 above; §6's CI-wiring checklist item |
 
 This table is deliberately family-specific in its "confirmed on" column

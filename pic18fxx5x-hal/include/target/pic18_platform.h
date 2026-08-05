@@ -23,8 +23,8 @@
 
 /* SFR access resolves to a direct volatile dereference of the address. */
 #define PIC8_SFR_PTR(addr)       ((volatile uint8_t *)(uintptr_t)(addr))
-#define pic8_sfr_read8(addr)     (*(volatile uint8_t *)(uintptr_t)(addr))
-#define pic8_sfr_write8(addr, v) \
+#define epic_sfr_read8(addr)     (*(volatile uint8_t *)(uintptr_t)(addr))
+#define epic_sfr_write8(addr, v) \
     do { *(volatile uint8_t *)(uintptr_t)(addr) = (uint8_t)(v); } while (0)
 
 /* Address of a register as a uint8_t lvalue (read/write/RMW). */
