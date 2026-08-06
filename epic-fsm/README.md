@@ -85,8 +85,8 @@ not a second correctness gate — correctness is already fully proven on host.
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
 
-cd mcu/pic16f87xa-fsm-mplabx && make MCU=16F877A && make clean
-cd ../pic18fxx5x-fsm-mplabx  && make MCU=18F4550 && make clean
+python3 scripts/epic_build.py build --module epic-fsm --mcu 16F877A --run
+python3 scripts/epic_build.py build --module epic-fsm --mcu 18F4550 --run
 ```
 
 ## Use it in your own firmware

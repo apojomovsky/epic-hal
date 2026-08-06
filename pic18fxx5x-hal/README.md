@@ -168,12 +168,13 @@ contract PIC16 uses.
 ## Build (real target)
 
 The HAL compiles against XC8 via the same sources, with the host/target
-split done at **build time, not with `#ifdef`**: the XC8 Makefile puts
-`include/target` ahead of `include` on the include path, so
-`pic18_platform.h` resolves to the real-target version (SFR macros =
-direct volatile dereference) and the family-blind target harness is
-linked. The MPLAB X project lives under `mcu/pic18fxx5x-mplabx/`; its
-Makefile produces `<MCU>-firmware.hex` via `xc8-cc`.
+split done at **build time, not with `#ifdef`**: the manifest
+(`epic-common/manifest/modules.toml`) puts `include/target` ahead of
+`include` on the include path, so `pic18_platform.h` resolves to the
+real-target version (SFR macros = direct volatile dereference) and the
+family-blind target harness is linked. `mcu/pic18fxx5x-mplabx/` seeds
+this family's reference MPLAB X project (no build of its own any
+more); the real build is manifest-driven, via a module.
 
 ### PIC18F DFP requirement
 
@@ -184,17 +185,18 @@ DFP is not bundled with XC8** (unlike the PIC16Fxxx DFP); install it once:
 - Or manually: download `Microchip.PIC18Fxxxx_DFP.<ver>.atpack` from
   [packs.download.microchip.com](https://packs.download.microchip.com/)
   and unzip it into
-  `/opt/microchip/xc8/v3.10/pic/packs/Microchip.PIC18Fxxxx_DFP/`
-  (the Makefile's `DFP_DIR` defaults to the `xc8/` subdir there).
+  `/opt/microchip/xc8/v3.10/pic/packs/Microchip.PIC18Fxxxx_DFP/`.
+  `epic_build.py build --dfp-dir <dir>` points at the `xc8/` subdir
+  there; `make xc8-build`/`make mdb-test` resolve this automatically.
 
 Then:
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-make MCU=18F4550    # default; also 18F2455 / 18F2550 / 18F4455
+python3 scripts/epic_build.py build --module epic-tick --mcu 18F4550 --run   # also 18F2455 / 18F2550 / 18F4455
 ```
 
-The result is `build/18F4550-firmware.hex`. The Phase 1 config-word set
+The result is `build/18F4550-tick.hex`. The Phase 1 config-word set
 is a conservative default (HS oscillator, WDT on, LVP off, XINST off,
 code/write/read protection off); adjust per your hardware. The block-3
 code-protection settings (`CP3` / `WRT3` / `EBTR3`) are emitted only for

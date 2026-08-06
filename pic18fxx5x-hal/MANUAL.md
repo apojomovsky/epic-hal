@@ -124,30 +124,37 @@ seam only, prints `smoke: 10 ticks, device <PART>`).
 
 ### Real target (XC8)
 
+The HAL has no standalone real-target build of its own any more
+(`pic18fxx5x-hal/mcu/pic18fxx5x-mplabx/Makefile` is gone); build it
+through one of this family's modules, which compile the full HAL
+either way:
+
 ```sh
-cd pic18fxx5x-hal/mcu/pic18fxx5x-mplabx
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-make MCU=18F4550        # default; also 18F2455 / 18F2550 / 18F4455
+python3 scripts/epic_build.py build --module epic-tick --mcu 18F4550 --run   # also 18F2455 / 18F2550 / 18F4455
 ```
 
-Produces `build/<MCU>-firmware.hex` with vectors placed at 0008h/0018h.
-Requires the **PIC18Fxxxx Device Family Pack**, which XC8 does not bundle
-(unlike the PIC16Fxxx DFP) — see §4 and `mcu/pic18fxx5x-mplabx/README.md`.
+Produces `build/18F4550-tick.hex` with vectors placed at 0008h/0018h.
+Requires the **PIC18Fxxxx Device Family Pack**, which XC8 does not
+bundle (unlike the PIC16Fxxx DFP): see §4 and
+`mcu/pic18fxx5x-mplabx/README.md`.
 
 ## 4. Build systems
 
-Same CMake/Makefile shape as PIC16F87XA, including the no-`#ifdef`
-host/target link-time split described in `epic-common/MANUAL.md` §2. The
-`xc8-cc` driver compiles each translation unit to a `.p1` (p-code)
-intermediate, not a `.o`, and needs `-mdfp` for a Device Family Pack, same
-as the PIC16 build (see `pic16f87xa-hal/MANUAL.md` §4.2 for those XC8 v3.x
-mechanics, identical here). PIC18-specific variables:
+Same CMake shape as PIC16F87XA for the host side, including the
+no-`#ifdef` host/target link-time split described in
+`epic-common/MANUAL.md` §2. The real-target side is manifest-driven
+(`epic-common/manifest/README.md`); the `xc8-cc` driver compiles each
+translation unit to a `.p1` (p-code) intermediate, not a `.o`, and
+needs `-mdfp` for a Device Family Pack, same as the PIC16 build (see
+`pic16f87xa-hal/MANUAL.md` §4.2 for those XC8 v3.x mechanics, identical
+here). PIC18-specific `epic_build.py build` flags:
 
-| Variable  | Default    | Meaning                                    |
-|-----------|------------|---------------------------------------------|
-| `MCU`     | `18F4550`  | Target part (2455/2550/4455/4550).          |
-| `FOSC_HZ` | `20000000` | Oscillator frequency.                        |
-| `DFP_DIR` | see below  | PIC18Fxxxx DFP path for `-mdfp`.             |
+| Flag        | Default    | Meaning                                    |
+|-------------|------------|---------------------------------------------|
+| `--mcu`     | (required) | Target part (2455/2550/4455/4550).          |
+| `--fosc-hz` | `48000000` (the family's default) | Oscillator frequency. |
+| `--dfp-dir` | see below  | PIC18Fxxxx DFP path for `-mdfp`.             |
 
 **The PIC18Fxxxx DFP is not bundled with XC8** and must be installed once
 (via MPLAB X *Tools → Packs → Pack Manager*, search `PIC18Fxxxx_DFP`, or

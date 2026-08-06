@@ -98,20 +98,16 @@ HAL family:
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
 
 # PIC16F87XA family:
-cd mcu/pic16f87xa-taskmgr-mplabx
-make MCU=16F877A          # default; also 873A / 874A / 876A
-make MCU=16F873A          # 192 B part
-make clean
+python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F877A --run
+python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F873A --run   # 192 B part
 
 # PIC18F2455 family (needs the PIC18Fxxxx DFP installed; see
 # pic18fxx5x-hal/mcu/pic18fxx5x-mplabx/README.md):
-cd ../pic18fxx5x-taskmgr-mplabx
-make MCU=18F4550          # default; also 2455 / 2550 / 4455
-make clean
+python3 scripts/epic_build.py build --module epic-taskmgr --mcu 18F4550 --run
 ```
 
-This produces `build/<MCU>-multi-blink.hex`. Program it with MPLAB X or any
-external programmer (PICkit, ICD, IPE).
+This produces `build/16F877A-multi-blink.hex` (or the MCU you built for).
+Program it with MPLAB X or any external programmer (PICkit, ICD, IPE).
 
 ### Wiring (real target)
 

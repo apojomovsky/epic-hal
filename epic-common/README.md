@@ -29,10 +29,13 @@ boilerplate.
 - **`cmake/epic_family.cmake`** — shared CMake helpers
   (`epic_add_hal_library`, `epic_add_example`, `epic_add_example_per_device`)
   so a family's `CMakeLists.txt` is a thin caller.
-- **`mk/epic_family.mk`** — shared Makefile fragment (the `.c` -> `.p1`
-  p-code pattern rule, the generated config-word translation unit, the
-  single `.hex` link step, and clean) so each family's XC8 Makefile only
-  states what is family-specific.
+- **`manifest/modules.toml`**: the single source of truth for the
+  real-target build: per family, its HAL source set, includes, and DFP;
+  per module, its sources, dependencies, and supported parts. Read by
+  `scripts/epic_build.py`, the manifest-driven build driver that
+  replaced the 29 hand-maintained `mcu/*-mplabx/Makefile`s (and the
+  `mk/epic_family.mk` fragment they shared). See
+  `epic-common/manifest/README.md` for the schema.
 
 ## What does NOT live here
 
