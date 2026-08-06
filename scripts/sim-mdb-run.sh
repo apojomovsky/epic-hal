@@ -47,16 +47,17 @@ if [ "$mode" != "uart" ] && [ "$mode" != "gpio" ]; then
   exit 1
 fi
 
-build_dir="build-sim/${module}/${mcu}"
-script="${build_dir}/build.sh"
+build_dir="build-sim/${module}"
+objdir="${build_dir}/${mcu}"
+script="${objdir}/build.sh"
 if [ ! -f "$script" ]; then
   echo "::error::no emitted build script at ${script}." \
        "Run 'python3 scripts/epic_build.py build --module ${module}" \
-       "--mcu ${mcu} --variant sim --build-dir build-sim/${module}'" \
+       "--mcu ${mcu} --variant sim --build-dir ${build_dir}'" \
        "first (needs python3, so outside this container)." >&2
   exit 1
 fi
-rm -f "$build_dir"/*.p1
+rm -f "$objdir"/*.p1
 EPIC_REPO_ROOT="$PWD" sh "$script"
 
 hexes=("$build_dir"/"$mcu"-*.hex)
