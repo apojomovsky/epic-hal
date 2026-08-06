@@ -154,7 +154,9 @@ scripts themselves run in).
   list (one per family), via `sim-mdb-run.sh`.
 - `ci-target-bundle.sh [bundles-dir] [summary.md]`: the isolated bundle
   build, proving each generated bundle is self-contained by building it
-  from `/isolated` (no repo above it) rather than in place.
+  from `/isolated` (no repo above it) rather than in place. Also builds
+  each bundle's reference MPLAB X project headlessly (see
+  `docs/superpowers/plans/probe-mplabx-headless.md`).
 
 ## `epic_build.py`, the real-target build driver
 
