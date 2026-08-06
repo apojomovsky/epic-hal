@@ -118,7 +118,8 @@ One error counter per handle, not split by cause (splitting later is a
 small, backward-compatible change if it turns out to matter):
 
 - Bad stop bit (framing error): byte dropped, counter incremented, RX
-  resyncs to idle and resumes scanning for the next start-bit edge.
+  resyncs to idle and resumes sampling the RX pin for the next low-level
+  start-bit indication.
 - RX ring full: new byte dropped, counter incremented.
 - `EPIC_SWUART_GetErrorCount(h)` exposes the running total.
 - No runtime detection of a Timer1 resource conflict with application
@@ -150,10 +151,10 @@ new one:
 Per `docs/superpowers/plans/probe-swuart-isr-budget.md`: worst-case ISR
 on PIC16F87XA at 20 MHz is 122 cycles. Budget at N=4 is 130 cycles
 (6.2% headroom); budget at N=3 is 174 cycles (29.9% headroom). The
-implementation adopts N=3 as the production default for its larger safety
-margin. N=4 is technically feasible with real headroom, but not enough
-margin to add much more per-tick work without re-measuring; N=3's ~30%
-margin is the fallback with far more slack.
+implementation adopts N=3 as the production default for its substantially
+larger safety margin. N=4 is technically feasible with real headroom, but
+not enough margin to add much more per-tick work without re-measuring;
+N=3's ~30% margin provides the safety buffer needed for robust operation.
 
 ## What this design deliberately does not do
 

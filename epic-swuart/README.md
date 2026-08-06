@@ -36,7 +36,7 @@ cmake -B build193x -DEPIC_FAMILY=PIC16F193X && cmake --build build193x && ctest 
 ### Real target (XC8), loopback demo
 
 ```sh
-export PATH=$PATH:/opt/microchip/xc8/v4.00/bin
+export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
 python3 scripts/epic_build.py build --module epic-swuart --mcu 16F877A --run
 ```
 
