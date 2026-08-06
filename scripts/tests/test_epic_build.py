@@ -16,7 +16,8 @@ variants = ["16F873A", "16F877A"]
 dfp      = "Microchip.PIC16Fxxx_DFP"
 fosc_hz  = 20000000
 includes = ["pic16f87xa-hal/include/target", "pic16f87xa-hal/include"]
-hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c"]
+hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
+harness_src = "epic-common/src/core/epic_harness_target.c"
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
@@ -38,6 +39,11 @@ PIC16F87XA = ["16F877A"]
 name    = "tick-blink"
 sources = ["examples/example_tick.c"]
 config  = { FOSC = "HS", WDTE = "ON" }
+
+[modules.epic-tick.example.PIC16F87XA.sim]
+name        = "tick-blink-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { FOSC = "HS", WDTE = "OFF" }
 
 [modules.epic-adcfilter]
 dir        = "epic-adcfilter"
@@ -79,12 +85,18 @@ class TestConfigSource(unittest.TestCase):
         out = epic_build.emit_config_source(load(), "epic-adcfilter", "16F877A")
         self.assertIsNone(out)
 
+    def test_sim_variant_uses_its_own_config_override(self):
+        out = epic_build.emit_config_source(load(), "epic-tick", "16F877A", variant="sim")
+        self.assertIn("#pragma config WDTE = OFF", out)
+        self.assertNotIn("#pragma config WDTE = ON", out)
+
 
 class TestBuildScript(unittest.TestCase):
-    def script(self, module="epic-tick", mcu="16F877A", dfp_dir="/opt/dfp", fosc_hz=None):
+    def script(self, module="epic-tick", mcu="16F877A", dfp_dir="/opt/dfp", fosc_hz=None,
+              variant="target"):
         return epic_build.emit_build_script(
             load(), module, mcu,
-            build_dir="build", dfp_dir=dfp_dir, fosc_hz=fosc_hz,
+            build_dir="build", dfp_dir=dfp_dir, fosc_hz=fosc_hz, variant=variant,
         )
 
     def test_starts_with_a_posix_shebang_and_errexit(self):
@@ -148,6 +160,20 @@ class TestBuildScript(unittest.TestCase):
         s = self.script()
         self.assertIn("config_16F877A.c", s)
         self.assertIn("config_16F877A.p1", s)
+
+    def test_sim_variant_swaps_the_harness_source_and_hex_name(self):
+        target = self.script(variant="target")
+        sim = self.script(variant="sim")
+        self.assertIn("epic-common/src/core/epic_harness_target.c", target)
+        self.assertNotIn("pic16f87xa-hal/src/core/pic16_harness_sim_target.c", target)
+        self.assertIn("pic16f87xa-hal/src/core/pic16_harness_sim_target.c", sim)
+        self.assertNotIn("epic-common/src/core/epic_harness_target.c", sim)
+        self.assertIn("build/16F877A-tick-blink-sim.hex", sim)
+
+    def test_sim_variant_without_one_raises(self):
+        with self.assertRaises(epic_build.UnsupportedError) as cm:
+            self.script(module="epic-adcfilter", mcu="16F877A", variant="sim")
+        self.assertIn("no sim variant", str(cm.exception))
 
 
 class TestReport(unittest.TestCase):

@@ -54,7 +54,25 @@ def _check_supported(manifest, module, mcu):
     )
 
 
-def emit_config_source(manifest, module, mcu):
+def _example_name_and_config(manifest, module, mcu, variant):
+    """The (name, config-pragmas) pair for this build, honouring variant.
+
+    variant="sim" uses the sim variant's own name and config (a full
+    override, see epicmanifest.SimVariant), and raises if the requested
+    (module, family) has no sim variant, the same "fail loudly" posture
+    as an unsupported (module, MCU) pair.
+    """
+    fam = manifest.family_of(mcu)
+    example = manifest.example_for(module, fam.name)
+    if variant == "sim":
+        sim = manifest.sim_variant_for(module, fam.name)
+        if sim is None:
+            raise UnsupportedError(f"{module} has no sim variant for {fam.name}")
+        return sim.name, sim.config
+    return (example.name, example.config) if example is not None else (None, {})
+
+
+def emit_config_source(manifest, module, mcu, variant="target"):
     """The #pragma config translation unit, from manifest data.
 
     Returns None when the example has no config table at all (rather than
@@ -64,9 +82,7 @@ def emit_config_source(manifest, module, mcu):
     link they never produced, which is a hex diff waiting to happen
     (Amendment 2's correction).
     """
-    fam = manifest.family_of(mcu)
-    example = manifest.example_for(module, fam.name)
-    pragmas = {} if example is None else example.config
+    _, pragmas = _example_name_and_config(manifest, module, mcu, variant)
     if not pragmas:
         return None
     lines = [
@@ -77,7 +93,8 @@ def emit_config_source(manifest, module, mcu):
     return "\n".join(lines) + "\n"
 
 
-def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None) -> str:
+def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
+                      variant="target") -> str:
     """A self-contained POSIX sh script that produces the .hex.
 
     Flag order reproduces the Makefiles this replaces exactly (DFP, then
@@ -88,15 +105,24 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None) -
 
     fosc_hz defaults to the family's own value (a required manifest key,
     family-uniform); pass a value to override for a different crystal.
+
+    variant="sim" builds the HARNESS=sim diagnostic firmware sim-tests.yml
+    drives under MPLAB SIM instead of the real-target HARNESS=target
+    build: a different harness source (spliced into sources_for at the
+    swapped-out entry's position), a full config override, and a
+    variant-specific .hex basename so the two builds never collide in
+    the same build dir.
     """
     fam = _check_supported(manifest, module, mcu)
     example = manifest.example_for(module, fam.name)
     if example is None:
         raise UnsupportedError(f"{module} has no example for {fam.name} to build")
+    if variant == "sim" and manifest.sim_variant_for(module, fam.name) is None:
+        raise UnsupportedError(f"{module} has no sim variant for {fam.name}")
     if fosc_hz is None:
         fosc_hz = fam.fosc_hz
 
-    sources = manifest.sources_for(module, mcu)
+    sources = manifest.sources_for(module, mcu, variant=variant)
     includes = manifest.includes_for(module, mcu)
     objdir = f"{build_dir}/{mcu}"
 
@@ -109,8 +135,9 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None) -
     flags.append(f"-DFOSC_HZ={fosc_hz}")
     cflags = " ".join(flags)
 
-    target = f"{build_dir}/{mcu}-{example.name}.hex"
-    config_source = emit_config_source(manifest, module, mcu)
+    example_name, _ = _example_name_and_config(manifest, module, mcu, variant)
+    target = f"{build_dir}/{mcu}-{example_name}.hex"
+    config_source = emit_config_source(manifest, module, mcu, variant=variant)
 
     out = [
         "#!/bin/sh",
@@ -166,13 +193,14 @@ def cmd_build(args):
         script = emit_build_script(
             manifest, args.module, args.mcu,
             build_dir=args.build_dir, dfp_dir=args.dfp_dir, fosc_hz=args.fosc_hz,
+            variant=args.variant,
         )
     except (UnsupportedError, epicmanifest.ManifestError) as exc:
         sys.exit(f"error: {exc}")
 
     objdir = REPO / args.build_dir / args.mcu
     objdir.mkdir(parents=True, exist_ok=True)
-    config_source = emit_config_source(manifest, args.module, args.mcu)
+    config_source = emit_config_source(manifest, args.module, args.mcu, variant=args.variant)
     if config_source is not None:
         (objdir / f"config_{args.mcu}.c").write_text(config_source)
     script_path = objdir / "build.sh"
@@ -242,6 +270,10 @@ def main():
     b.add_argument("--dfp-dir", default="")
     b.add_argument("--fosc-hz", type=int, default=None,
                    help="override the family's default oscillator frequency")
+    b.add_argument("--variant", choices=["target", "sim"], default="target",
+                   help="target (default): real-target firmware. sim: the "
+                        "bounded, self-reporting build sim-tests.yml drives "
+                        "under MPLAB SIM.")
     b.add_argument("--run", action="store_true", help="execute the script (needs xc8-cc)")
     b.set_defaults(func=cmd_build)
 
