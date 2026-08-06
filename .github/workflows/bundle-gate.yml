@@ -92,6 +92,33 @@ jobs:
             tar xzf "$tarball" -C /isolated
             cd "/isolated/$name"
 
+            # Reference MPLAB X project. Built headlessly via the same
+            # generated makefile MPLAB X itself uses; see
+            # docs/superpowers/plans/probe-mplabx-headless.md for why
+            # this is possible in this image. Runs for every bundle,
+            # including HAL-only ones, since every family ships one.
+            if [ -d examples/epicurus-demo.X ]; then
+              (
+                cd examples/epicurus-demo.X
+                "$MPLABX_INSTALL_DIR/mplab_platform/bin/prjMakefilesGenerator.sh" . \
+                  >/dev/null 2>&1 || true
+                if make -f nbproject/Makefile-default.mk SUBPROJECTS= .build-conf \
+                     >project.log 2>&1; then
+                  echo "| $name | epicurus-demo.X | (project) | PASS |" \
+                    >> "$GITHUB_STEP_SUMMARY"
+                else
+                  echo "| $name | epicurus-demo.X | (project) | FAIL |" \
+                    >> "$GITHUB_STEP_SUMMARY"
+                  echo "::group::$name project log"; cat project.log; echo "::endgroup::"
+                  exit 1
+                fi
+              ) || fail=1
+            else
+              echo "| $name | epicurus-demo.X | (project) | FAIL: missing |" \
+                >> "$GITHUB_STEP_SUMMARY"
+              fail=1
+            fi
+
             # Pick the first supported (module, part) pair straight out
             # of the bundle's own SUPPORT.md table, so this tests what a
             # consumer would actually be told to do.
