@@ -42,6 +42,7 @@ hal_sources = [
   "pic16f193x-hal/src/core/pic16f193x_irq_dispatch.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
+harness_src = "epic-common/src/core/epic_harness_target.c"
 
 [families.PIC16F87XA]
 hal_dir  = "pic16f87xa-hal"
@@ -77,6 +78,7 @@ hal_sources = [
   "pic16f87xa-hal/src/core/pic16_irq_dispatch.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
+harness_src = "epic-common/src/core/epic_harness_target.c"
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
@@ -119,6 +121,7 @@ hal_sources = [
   "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep_target.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
+harness_src = "epic-common/src/core/epic_harness_target.c"
 
 # The eight PIC18 module Makefiles agree exactly on this order, which
 # differs from pic18fxx5x-hal's own top-level Makefile (that one is a
@@ -165,6 +168,23 @@ sources = [
   "tests/example_blink.c",
 ]
 config  = { FOSC = "INTOSC", WDTE = "ON", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "OFF", WRT = "OFF" }
+
+# HARNESS=sim (see sim-tests.yml, MODE=gpio): a bounded diagnostic
+# build, distinct from the real-target example_blink.c above. Its
+# default SIM_APP is tests/example_timer1.c (Timer1 is the family's
+# Phase 0 load-bearing peripheral for this gate, see
+# pic16f193x-hal/mcu/pic16f193x-mplabx/Makefile's own HARNESS=sim
+# branch), which is why sources overrides the target example's rather
+# than reusing it. WDTE=OFF for the same reason as every other family's
+# sim variant: a diagnostic build that terminates and reports does not
+# need the watchdog running unattended.
+[modules.epic-pic16f193x-firmware.example.PIC16F193X.sim]
+name        = "firmware-sim"
+harness_src = "pic16f193x-hal/src/core/pic16f193x_harness_sim_target.c"
+sources     = [
+  "tests/example_timer1.c",
+]
+config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "OFF", WRT = "OFF" }
 
 [modules.epic-adcfilter]
 dir        = "epic-adcfilter"
@@ -686,10 +706,30 @@ sources = [
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
 
+# HARNESS=sim (see sim-tests.yml): a bounded, self-reporting firmware
+# build driven under MPLAB SIM, distinct from the real-target
+# HARNESS=target build above. Same example_tick.c (no sources
+# override); only the harness source and WDTE differ, mirroring
+# epic-tick/mcu/pic16f87xa-tick-mplabx/Makefile's HARNESS=sim branch
+# (real-target firmware needs the watchdog running unattended, a
+# diagnostic build that terminates and reports over USART does not).
+[modules.epic-tick.example.PIC16F87XA.sim]
+name        = "tick-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
 [modules.epic-tick.example.PIC18Fxx5x]
 name    = "tick"
 sources = [
   "examples/example_tick.c",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# HARNESS=sim, mirroring epic-tick/mcu/pic18fxx5x-tick-mplabx/Makefile's
+# own HARNESS=sim branch: same example_tick.c, only the harness source
+# and WDT (PIC18's watchdog config bit) differ.
+[modules.epic-tick.example.PIC18Fxx5x.sim]
+name        = "tick-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
