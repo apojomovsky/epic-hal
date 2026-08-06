@@ -349,6 +349,17 @@ def emit_quickstart_md(manifest, family_name: str, version: str) -> str:
     ]) + "\n"
 
 
+def reference_project_dir(manifest, family_name: str) -> str:
+    """Where this family's reference MPLAB X project lives in the repo.
+
+    Derived from the family's hal_dir so adding a family does not need a
+    second lookup table to be kept in sync.
+    """
+    fam = _family(manifest, family_name)
+    slug = fam.hal_dir.removesuffix("-hal")
+    return f"examples/epicurus-demo-{slug}.X"
+
+
 def emit_mplabx_md(manifest, family_name: str, version: str) -> str:
     """Instructions for MPLAB X and the MPLAB extension for VS Code.
 
