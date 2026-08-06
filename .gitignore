@@ -47,3 +47,6 @@ cmake_install.cmake
 # ...); ignore the whole directory rather than chasing extensions one at
 # a time, *.run above already missed the .tar MPLAB X IDE installer once.
 docker/ci-toolchain/vendor/
+
+# Release bundles are build output, never committed.
+bundles/
