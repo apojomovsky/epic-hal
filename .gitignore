@@ -59,3 +59,8 @@ bundles/
 # PASS/FAIL summaries, all repo-root-relative build output.
 /matrix.txt
 /ci-summary-*.md
+
+# superpowers:subagent-driven-development's per-plan scratch workspace
+# (ledger, briefs, review packages). The git history is the record once
+# a plan finishes; this directory is deleted at that point anyway.
+/.superpowers/
