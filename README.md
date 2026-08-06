@@ -13,9 +13,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html)
-[![host-tests](https://github.com/apojomovsky/epicurus/actions/workflows/host-tests.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/host-tests.yml)
-[![xc8-build](https://github.com/apojomovsky/epicurus/actions/workflows/xc8-build.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/xc8-build.yml)
-[![sim-tests](https://github.com/apojomovsky/epicurus/actions/workflows/sim-tests.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/sim-tests.yml)
+[![ci](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml)
 
 </p>
 

@@ -98,7 +98,7 @@ Runs the exact same checks the hook runs, without committing.
 
 ### CI
 
-`.github/workflows/host-tests.yml`'s `lint` job runs this same script
+`.github/workflows/ci.yml`'s `host` job runs this same script
 against a fresh checkout, which has nothing staged (everything is already
 committed). Setting `PRE_COMMIT_BASE_REF=<ref>` switches every check from
 "staged index vs. `HEAD`" to "`<ref>` vs. `HEAD`", so a PR gets exactly the
@@ -111,16 +111,16 @@ is identical to before.
 ## CI change-scoping (docs-only skip, affected-module narrowing)
 
 Two more scripts, each with a full header comment covering the "why",
-used by all three workflows to avoid paying for a docs-only PR or a PR
+used by `ci.yml`'s two jobs to avoid paying for a docs-only PR or a PR
 that only touches one module:
 
-- `ci-docs-only-check.sh <base-ref>`: prints `true`/`false`, used by
-  `xc8-build.yml` and `sim-tests.yml` to skip their Docker-based jobs
-  (image pull already excepted, a `docker pull` against a cached tag is
-  cheap either way) entirely on a documentation-only PR diff.
-- `ci-discover-affected-modules.py [base-ref]`: used by
-  `host-tests.yml`'s `discover` job. Same docs-only concept as above,
-  plus a second question host-tests.yml specifically needs: which
+- `ci-docs-only-check.sh <base-ref>`: prints `true`/`false`, used by the
+  `target` job to skip its Docker-based steps (image pull already
+  excepted, a `docker pull` against a cached tag is cheap either way)
+  entirely on a documentation-only PR diff.
+- `ci-discover-affected-modules.py [base-ref]`: used by the `host` job's
+  own discovery step. Same docs-only concept as above,
+  plus a second question the `host` job specifically needs: which
   modules were actually touched, directly or through a sibling
   dependency (read straight from each module's own `CMakeLists.txt`,
   no separately-maintained dependency graph to drift). Conservative on
@@ -130,6 +130,31 @@ that only touches one module:
   to `master` always gets the full matrix regardless of what changed,
   so a wrong narrowing on some PR can only delay when a break is
   caught, never let it merge unverified.
+
+## CI target-job scripts (`ci-target-*.sh`)
+
+Committed shell scripts, not inline workflow YAML, so they can be
+shellchecked and dry-run locally against the real toolchain rather than
+only ever exercised inside a GitHub Actions run. `ci.yml`'s `target` job
+runs each one via `docker run --rm -v "$PWD:/work" -w /work <image>
+bash scripts/ci-target-*.sh`, bind-mounting the checkout instead of the
+old per-job `container:` field (this job also needs `python3`, which the
+toolchain image deliberately doesn't have, so no single `container:`
+value could cover every step in the job). None of the three stop at the
+first failure; each writes a `ci-summary-*.md` PASS/FAIL table the
+calling workflow step cats into `$GITHUB_STEP_SUMMARY` afterward (a file
+on the runner, not reliably reachable from inside the container the
+scripts themselves run in).
+
+- `ci-target-build.sh [matrix.txt] [summary.md]`: real XC8 build for
+  every `family module mcu` triple in `matrix.txt` (plain text, one
+  triple per line, emitted by `ci.yml`'s emit step; deliberately not
+  JSON, since the container has no `jq` either).
+- `ci-target-sim.sh [summary.md]`: the fixed 3-entry `mdb`/MPLAB SIM run
+  list (one per family), via `sim-mdb-run.sh`.
+- `ci-target-bundle.sh [bundles-dir] [summary.md]`: the isolated bundle
+  build, proving each generated bundle is self-contained by building it
+  from `/isolated` (no repo above it) rather than in place.
 
 ## `epic_build.py`, the real-target build driver
 
@@ -171,6 +196,7 @@ Output lands in `bundles/`, which is gitignored: bundles are build
 output, attached to a GitHub Release, never committed.
 
 `bundlegen.py` holds the generation logic and is where every emitted
-file's format lives. `.github/workflows/bundle-gate.yml` proves a bundle
-is self-contained by building it from a scratch directory outside the
-repo.
+file's format lives. `.github/workflows/ci.yml`'s `target` job (its
+"Isolated bundle build" step, `scripts/ci-target-bundle.sh`) proves a
+bundle is self-contained by building it from a scratch directory
+outside the repo.

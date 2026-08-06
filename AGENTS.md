@@ -47,11 +47,12 @@ is pushed to a **private** GHCR package CI pulls from
 (`make ci-image-push`, human-triggered only; see that doc for why it
 must stay private, EULA redistribution terms).
 
-CI (`.github/workflows/`): `host-tests.yml` (host build+ctest, every
-module), `xc8-build.yml` (real XC8 cross-compile, every MCU variant),
-`sim-tests.yml` (real `mdb`/MPLAB SIM run, checks actual register/UART
-output, not just "compiled"). All pull the private image, never build
-it.
+CI (`.github/workflows/ci.yml`): two jobs, `host` (host build+ctest,
+every module, plus lint, no Docker) and `target` (one Docker pull, then
+real XC8 cross-compile for every MCU variant, real `mdb`/MPLAB SIM runs
+that check actual register/UART output not just "compiled", and the
+isolated bundle-gate build). `target` pulls the private image; neither
+job ever builds it.
 
 ## Development cycle
 

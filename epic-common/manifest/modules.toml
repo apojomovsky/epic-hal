@@ -407,6 +407,14 @@ PIC18Fxx5x = [
   "18F4455",
   "18F4550",
 ]
+PIC16F193X = [
+  "16F1933",
+  "16F1934",
+  "16F1936",
+  "16F1937",
+  "16F1938",
+  "16F1939",
+]
 
 [modules.epic-fsm.example.PIC16F87XA]
 name    = "fsm-sizecheck"
@@ -415,6 +423,12 @@ sources = [
 ]
 
 [modules.epic-fsm.example.PIC18Fxx5x]
+name    = "fsm-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+
+[modules.epic-fsm.example.PIC16F193X]
 name    = "fsm-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
