@@ -35,7 +35,14 @@ int main(void)
         if (EPIC_SWUART_Write(&h, &next, 1) == 1u) {
             uint8_t back;
             while (EPIC_SWUART_Read(&h, &back, 1) != 1) {
-                /* wait for our own byte to loop back */
+                /* wait for our own byte to loop back. WDTE/WDT is ON in
+                 * this example's config table (same as every other
+                 * WDTE=ON example in this repo), so refresh it every
+                 * iteration: without this, a missing or miswired
+                 * loopback jumper leaves the wait unbounded and the
+                 * watchdog resets the chip mid-wait, over and over,
+                 * instead of just waiting here as intended. */
+                EPIC_WDT_Refresh();
             }
             if (back == next) {
                 EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_1);
