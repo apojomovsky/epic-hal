@@ -276,6 +276,24 @@ void pic16f87xa_sim_drive_input(char port, uint8_t pin, uint8_t level)
     sim_input_override[idx] |= mask;
     if (level) sim_input_value[idx] |= mask;
     else       sim_input_value[idx] &= (uint8_t)~mask;
+
+    /* Also update the PORT register so that EPIC_GPIO_ReadPin sees the
+     * externally driven value for input pins. This ensures that the
+     * simulator behavior matches the real hardware where reading a PORT
+     * pin returns the pin's external state when TRIS=1 (input). */
+    uint8_t pa;
+    switch (port) {
+        case 'A': case 'a': pa = PIC_REG_PORTA; break;
+        case 'B': case 'b': pa = PIC_REG_PORTB; break;
+        case 'C': case 'c': pa = PIC_REG_PORTC; break;
+        case 'D': case 'd': pa = PIC_REG_PORTD; break;
+        case 'E': case 'e': pa = PIC_REG_PORTE; break;
+        default:             pa = PIC_REG_PORTA; break;
+    }
+    uint8_t portval = pic16f87xa_sim_sfr[pa];
+    if (level) portval |= mask;
+    else portval &= (uint8_t)~mask;
+    pic16f87xa_sim_sfr[pa] = portval;
 }
 
 uint8_t pic16f87xa_sim_read_output(char port, uint8_t pin)
