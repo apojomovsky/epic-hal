@@ -15,7 +15,8 @@ variants = ["16F873A", "16F877A"]
 dfp      = "Microchip.PIC16Fxxx_DFP"
 fosc_hz  = 20000000
 includes = ["pic16f87xa-hal/include", "epic-common/include"]
-hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c"]
+hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
+harness_src = "epic-common/src/core/epic_harness_target.c"
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
@@ -43,6 +44,11 @@ PIC18Fxx5x = ["18F4550"]
 name    = "tick-blink"
 sources = ["examples/example_tick.c"]
 config  = { FOSC = "HS", WDTE = "ON" }
+
+[modules.epic-tick.example.PIC16F87XA.sim]
+name        = "tick-blink-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { FOSC = "HS", WDTE = "OFF" }
 
 [modules.epic-tick.example.PIC18Fxx5x]
 name    = "tick-blink"
@@ -352,6 +358,38 @@ class TestResolution(unittest.TestCase):
         self.assertEqual(incs[1], "epic-common/include")
         self.assertIn("epic-tick/include", incs)
         self.assertIn("epic-serial/include", incs)
+
+    def test_sim_variant_for_returns_the_sim_data(self):
+        sim = self.m.sim_variant_for("epic-tick", "PIC16F87XA")
+        self.assertEqual(sim.name, "tick-blink-sim")
+        self.assertEqual(sim.harness_src,
+                         "pic16f87xa-hal/src/core/pic16_harness_sim_target.c")
+
+    def test_sim_variant_for_returns_none_without_one(self):
+        self.assertIsNone(self.m.sim_variant_for("epic-tick", "PIC18Fxx5x"))
+
+    def test_sources_for_sim_variant_swaps_the_harness_source(self):
+        target = self.m.sources_for("epic-tick", "16F877A", variant="target")
+        sim = self.m.sources_for("epic-tick", "16F877A", variant="sim")
+        self.assertIn("epic-common/src/core/epic_harness_target.c", target)
+        self.assertNotIn("pic16f87xa-hal/src/core/pic16_harness_sim_target.c", target)
+        self.assertIn("pic16f87xa-hal/src/core/pic16_harness_sim_target.c", sim)
+        self.assertNotIn("epic-common/src/core/epic_harness_target.c", sim)
+
+    def test_sources_for_sim_variant_keeps_the_harness_source_position(self):
+        sim = self.m.sources_for("epic-tick", "16F877A", variant="sim")
+        target = self.m.sources_for("epic-tick", "16F877A", variant="target")
+        target_pos = target.index("epic-common/src/core/epic_harness_target.c")
+        sim_pos = sim.index("pic16f87xa-hal/src/core/pic16_harness_sim_target.c")
+        self.assertEqual(target_pos, sim_pos)
+
+    def test_sources_for_sim_variant_reuses_example_sources_when_no_override(self):
+        sim = self.m.sources_for("epic-tick", "16F877A", variant="sim")
+        self.assertIn("epic-tick/examples/example_tick.c", sim)
+
+    def test_sources_for_sim_variant_raises_without_one(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            self.m.sources_for("epic-tick", "18F4550", variant="sim")
 
 
 if __name__ == "__main__":

@@ -48,6 +48,31 @@ class Family:
     includes: list[str]
     hal_sources: list[str]
     conditional_sources: list[ConditionalSource]
+    harness_src: str | None = None
+
+
+@dataclasses.dataclass(frozen=True)
+class SimVariant:
+    """The HARNESS=sim build: a bounded, self-reporting firmware used to
+    drive MPLAB SIM (see sim-tests.yml), distinct from the real-target
+    HARNESS=target build the same example otherwise produces.
+
+    harness_src replaces the family's harness_src at its recorded
+    position in hal_sources (not appended: XC8 lays out psects in link
+    order). sources, when set, replaces the target example's own
+    sources entirely (pic16f193x-hal's sim variant links a different
+    diagnostic program than its target example); when unset the target
+    example's sources are reused unchanged (epic-tick's sim variant
+    links the same example_tick.c, only the harness and config differ).
+    config is a full override, not a merge: PIC16's WDTE / PIC18's WDT
+    is off in every sim variant seen so far, and restating the whole
+    config table keeps this dataclass's contract simple (no partial-
+    override merge logic to get subtly wrong).
+    """
+    name: str
+    harness_src: str
+    config: dict[str, str]
+    sources: list[str] | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -56,6 +81,7 @@ class Example:
     sources: list[str]
     config: dict[str, str]
     hal: bool
+    sim: SimVariant | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -134,7 +160,17 @@ class Manifest:
             return example.hal
         return self._module(module_name).needs_hal
 
-    def sources_for(self, module_name: str, mcu: str) -> list[str]:
+    def sim_variant_for(self, module_name: str, family_name: str) -> SimVariant | None:
+        """This module's HARNESS=sim variant for a family, or None.
+
+        Only three (module, family) pairs have one today: epic-tick on
+        PIC16F87XA and PIC18Fxx5x, and the PIC16F193X bare-HAL firmware
+        module, mirroring the three sim-tests.yml legs that exist.
+        """
+        example = self.example_for(module_name, family_name)
+        return None if example is None else example.sim
+
+    def sources_for(self, module_name: str, mcu: str, variant: str = "target") -> list[str]:
         """Repo-root-relative sources for one (module, MCU) build.
 
         Order: family HAL sources with applicable conditional sources
@@ -151,13 +187,28 @@ class Manifest:
         sibling path; one with no `after` is appended at the end (the
         historical default, still correct for the one family that needs
         it that way).
+
+        variant="sim" (see sim-tests.yml) swaps the family's harness_src
+        for the sim variant's own harness_src, at the same position
+        (same link-order reasoning as conditional sources), and uses the
+        sim variant's own sources in place of the example's, when it
+        overrides them.
         """
         fam = self.family_of(mcu)
+        sim = self.sim_variant_for(module_name, fam.name) if variant == "sim" else None
+        if variant == "sim" and sim is None:
+            raise ManifestError(
+                f"{module_name} has no sim variant for {fam.name}"
+            )
+
         out = []
         if self.uses_hal(module_name, mcu):
             applicable = [c for c in fam.conditional_sources if mcu in c.variants]
             for hal_src in fam.hal_sources:
-                out.append(hal_src)
+                if sim is not None and hal_src == fam.harness_src:
+                    out.append(sim.harness_src)
+                else:
+                    out.append(hal_src)
                 for c in applicable:
                     if c.after == hal_src:
                         out.append(c.path)
@@ -172,7 +223,10 @@ class Manifest:
         example = self.example_for(module_name, fam.name)
         if example is not None:
             mod = self._module(module_name)
-            out += [f"{mod.dir}/{s}" for s in example.sources]
+            example_sources = example.sources
+            if sim is not None and sim.sources is not None:
+                example_sources = sim.sources
+            out += [f"{mod.dir}/{s}" for s in example_sources]
 
         return _dedupe(out)
 
@@ -222,6 +276,19 @@ def _parse_family(name, table):
                               after=c.get("after"))
             for c in table.get("conditional_sources", [])
         ],
+        harness_src=table.get("harness_src"),
+    )
+
+
+def _parse_sim_variant(module_name, family_name, table):
+    if table is None:
+        return None
+    where = f"modules.{module_name}.example.{family_name}.sim"
+    return SimVariant(
+        name=_require(table, "name", where),
+        harness_src=_require(table, "harness_src", where),
+        config=dict(_require(table, "config", where)),
+        sources=(list(table["sources"]) if "sources" in table else None),
     )
 
 
@@ -232,6 +299,7 @@ def _parse_example(module_name, family_name, table, default_hal):
                               f"modules.{module_name}.example.{family_name}")),
         config=dict(table.get("config", {})),
         hal=bool(table.get("hal", default_hal)),
+        sim=_parse_sim_variant(module_name, family_name, table.get("sim")),
     )
 
 
@@ -293,10 +361,15 @@ def _validate(manifest):
                     f"modules.{mod.name}.sources_by_family: "
                     f"unknown family '{fam_name}'"
                 )
-        for fam_name in mod.examples:
+        for fam_name, example in mod.examples.items():
             if fam_name not in manifest.families:
                 raise ManifestError(
                     f"modules.{mod.name}.example: unknown family '{fam_name}'"
+                )
+            if example.sim is not None and manifest.families[fam_name].harness_src is None:
+                raise ManifestError(
+                    f"modules.{mod.name}.example.{fam_name}.sim: "
+                    f"families.{fam_name} has no harness_src to swap"
                 )
         for fam_name, variants in mod.supported.items():
             fam = manifest.families.get(fam_name)
