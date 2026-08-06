@@ -1,6 +1,6 @@
 # Bit-banged software UART (epic-swuart), design
 
-Status: **agreed 2026-08-06, not started**.
+Status: **implemented, 2026-08-06**.
 
 ## Problem
 
@@ -103,10 +103,13 @@ ring-buffered write in this repo uses.
    static registry, the timer is already running at the right rate.
 3. Every tick, the one shared ISR walks each active handle: steps its TX
    bit-clock (drives the pin, pulls the next queued byte when the
-   current one finishes) and its RX sampler (watches for the start-bit
-   edge, samples at bit-center offsets, and on a complete byte either
-   pushes it to the RX ring or bumps the error counter on a bad stop
-   bit).
+   current one finishes) and its RX sampler (detects a start bit by sampling
+   the pin for a low level, then confirms it with a resample at half-bit
+   time to reject noise; samples the data bits at bit-center offsets; and on
+   a complete byte either pushes it to the RX ring or bumps the error counter
+   on a bad stop bit). The RX line must idle high whenever the channel is not
+   actively receiving; a floating or held-low RX pin will be misread as a
+   continuous stream of start bits.
 4. `EPIC_SWUART_Read` drains the RX ring, non-blocking.
 
 ## Error handling
@@ -142,19 +145,15 @@ new one:
   (jumper TX to RX, or two channels crossed) as the manual verification
   path.
 
-## Open verification items
+## Oversample-factor cycle budget, probed and verified
 
-- **Oversample-factor cycle budget.** The ~4x-baud tick needs to be
-  checked against real compiled ISR cycle counts on the slowest family
-  (PIC16F87XA at 20 MHz) before it is trusted for two concurrent
-  channels, the same "probe before trusting an uncertain
-  compiler/hardware behaviour" discipline this repo already applies
-  (`epic-math`'s XC8 round-trip probe, the PIC16F193X BSR-addressing
-  probe, this session's MPLAB X headless-build probe). If 4x is too
-  tight once compiled, the fallback is 3x oversampling, still inside
-  UART's roughly 5%-per-byte tolerance, not a redesign. This probe is
-  the implementation plan's first task, before the state machine is
-  written for real.
+Per `docs/superpowers/plans/probe-swuart-isr-budget.md`: worst-case ISR
+on PIC16F87XA at 20 MHz is 122 cycles. Budget at N=4 is 130 cycles
+(6.2% headroom); budget at N=3 is 174 cycles (29.9% headroom). The
+implementation adopts N=3 as the production default for its larger safety
+margin. N=4 is technically feasible with real headroom, but not enough
+margin to add much more per-tick work without re-measuring; N=3's ~30%
+margin is the fallback with far more slack.
 
 ## What this design deliberately does not do
 

@@ -61,6 +61,12 @@ typedef struct {
  * @brief  Register a channel and, on the first call, start the shared
  *         Timer1 tick. `baud` is validated only at 9600; anything else
  *         is accepted but unsupported (see docs/API.md).
+ *
+ *         Precondition: the RX pin must idle high (pulled up, or connected
+ *         to a live transmitter) whenever the channel is not actively
+ *         receiving; a floating or held-low RX pin will be misread as a
+ *         continuous stream of start bits.
+ *
  * @return EPIC_OK, or EPIC_INVALID if `h` is NULL or the channel
  *         registry (EPIC_SWUART_MAX_CHANNELS) is full.
  */
