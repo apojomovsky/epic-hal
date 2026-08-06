@@ -1,7 +1,8 @@
 # PIC16F193X higher-level module rollout, design
 
-Status: **agreed 2026-08-06, not started**. Roadmap only; each module
-gets its own `docs/superpowers/plans/<date>-pic16f193x-<module>.md`
+Status: **agreed 2026-08-06, module 1 of 13 landed**. `epic-fsm` is done
+(`docs/superpowers/plans/2026-08-06-pic16f193x-fsm.md`). Each remaining
+module gets its own `docs/superpowers/plans/<date>-pic16f193x-<module>.md`
 written and executed one at a time, confirmed with the user before each,
 same discipline `docs/pic16f193x-plan.md` §7 used for the 13 peripherals.
 
@@ -47,7 +48,7 @@ Two modules are excluded, one permanently:
 
 | # | Module | Depends on | HAL readiness | Real work |
 |---|---|---|---|---|
-| 1 | `epic-fsm` | none | `needs_hal=false`, pure logic | Near-zero: add to `supported`, add an example. Warm-up, proves the manifest-only (no HAL glue) path. |
+| 1 | `epic-fsm` | none | `needs_hal=false`, pure logic | Done, `docs/superpowers/plans/2026-08-06-pic16f193x-fsm.md`. |
 | 2 | `epic-tick` | none | Timer0/Timer1 already landed | Family-specific tick source selection, mirrors the other two families' `epic_tick.c` backend split. |
 | 3 | `epic-serial` | none | EUSART already landed | Family-specific ring-buffer wiring to `pic16f193x_usart`. |
 | 4 | `epic-math` | none | `needs_hal=false`, but has `sources_by_family` | Real: new enhanced-mid-range assembly for addsub/bcd/div/mul (49-instruction ISA, not a copy of the PIC16 classic or PIC18 asm; XC8 inline-asm rules per `epic-math/docs/ARCHITECTURE.md`). |
