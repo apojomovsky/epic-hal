@@ -14,6 +14,7 @@ See docs/superpowers/specs/2026-08-05-distribution-design.md.
 """
 from __future__ import annotations
 
+import json
 import pathlib
 import sys
 
@@ -183,6 +184,98 @@ def emit_epicurus_mk(manifest, family_name: str, version: str) -> str:
         "$(foreach m,$(EPICURUS_ALL),-I$(EPICURUS_INCS_$(m)))",
         "",
         "EPICURUS_CFLAGS := $(EPICURUS_INCLUDES) -DPIC$(EPICURUS_MCU)",
+        "",
+    ]
+    return "\n".join(out) + "\n"
+
+
+def emit_sources_json(manifest, family_name: str, version: str) -> str:
+    """The same resolved data as epicurus.mk, for non-make consumers.
+
+    MPLAB X users cannot include a .mk, and neither can someone driving
+    XC8 from CMake or a shell script. MPLABX.md is generated from this,
+    so its instructions cannot go stale when a source file moves.
+    """
+    fam = _family(manifest, family_name)
+    modules = {}
+    for name in modules_for_family(manifest, family_name):
+        mod = manifest.modules[name]
+        own_srcs = list(mod.sources) + list(mod.sources_by_family.get(family_name, []))
+        example = mod.examples.get(family_name)
+        modules[name] = {
+            "resolved": manifest.resolve_deps(name),
+            "sources": [f"{mod.dir}/{s}" for s in own_srcs],
+            "includes": [f"{mod.dir}/{i}" for i in mod.includes],
+            "supported": mod.supported.get(family_name, []),
+            "excluded": {
+                mcu: reason for mcu, reason in sorted(mod.excluded.items())
+                if mcu in fam.variants
+            },
+            "example": None if example is None else {
+                "name": example.name,
+                "sources": [f"{mod.dir}/{s}" for s in example.sources],
+                "config": dict(example.config),
+            },
+        }
+
+    doc = {
+        "version": version,
+        "family": family_name,
+        "dfp": fam.dfp,
+        "variants": fam.variants,
+        "hal_sources": fam.hal_sources,
+        "conditional_sources": [
+            {"path": c.path, "variants": c.variants}
+            for c in fam.conditional_sources
+        ],
+        "family_includes": fam.includes,
+        "modules": modules,
+    }
+    return json.dumps(doc, indent=2, sort_keys=True) + "\n"
+
+
+def emit_support_md(manifest, family_name: str, version: str) -> str:
+    """The per-module, per-part support table, with reasons."""
+    fam = _family(manifest, family_name)
+    modules = modules_for_family(manifest, family_name)
+
+    out = [
+        f"# Supported parts, Epicurus {version} ({family_name})",
+        "",
+        "Generated from `epic-common/manifest/modules.toml`. A `no` here",
+        "is a combination that genuinely does not build, not one that is",
+        "merely untested: asking for it fails immediately with the reason",
+        "rather than as a wall of XC8 linker errors.",
+        "",
+        "| Module | " + " | ".join(fam.variants) + " |",
+        "|---" * (len(fam.variants) + 1) + "|",
+    ]
+    for name in modules:
+        mod = manifest.modules[name]
+        supported = mod.supported.get(family_name, [])
+        cells = ["yes" if v in supported else "no" for v in fam.variants]
+        out.append(f"| `{name}` | " + " | ".join(cells) + " |")
+
+    reasons = [
+        (name, mcu, reason)
+        for name in modules
+        for mcu, reason in sorted(manifest.modules[name].excluded.items())
+        if mcu in fam.variants
+    ]
+    if reasons:
+        out += ["", "## Why not", "", "| Module | Part | Reason |", "|---|---|---|"]
+        out += [f"| `{n}` | {m} | {r} |" for n, m, r in reasons]
+
+    out += [
+        "",
+        "## Selecting modules",
+        "",
+        "Dependencies resolve automatically: naming `modbus` pulls in",
+        "`serial` and `tick`. List only what you use directly.",
+        "",
+        "```make",
+        "EPICURUS_MODULES := serial tick",
+        "```",
         "",
     ]
     return "\n".join(out) + "\n"

@@ -1,4 +1,5 @@
 """Unit tests for scripts/bundlegen.py."""
+import json
 import pathlib
 import sys
 import tempfile
@@ -230,6 +231,80 @@ class TestEpicurusMk(unittest.TestCase):
         # not map a short name for epic-pic16f193x-firmware.
         mk193x = bundlegen.emit_epicurus_mk(load(), "PIC16F193X", "v0.1.0")
         self.assertNotIn("EPICURUS_MODULE_pic16f193x-firmware", mk193x)
+
+
+class TestSourcesJson(unittest.TestCase):
+    def setUp(self):
+        self.doc = json.loads(
+            bundlegen.emit_sources_json(load(), "PIC16F87XA", "v0.1.0")
+        )
+
+    def test_carries_version_family_and_dfp(self):
+        self.assertEqual(self.doc["version"], "v0.1.0")
+        self.assertEqual(self.doc["family"], "PIC16F87XA")
+        self.assertEqual(self.doc["dfp"], "Microchip.PIC16Fxxx_DFP")
+
+    def test_lists_hal_and_conditional_sources(self):
+        self.assertIn(
+            "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+            self.doc["hal_sources"],
+        )
+        self.assertIsInstance(self.doc["conditional_sources"], list)
+
+    def test_module_entry_is_complete(self):
+        entry = self.doc["modules"]["epic-serial"]
+        self.assertEqual(entry["resolved"], ["epic-tick", "epic-serial"])
+        self.assertEqual(entry["sources"], ["epic-serial/src/epic_serial.c"])
+        self.assertEqual(entry["includes"], ["epic-serial/include"])
+        self.assertEqual(entry["supported"], ["16F877A"])
+        self.assertEqual(
+            entry["excluded"]["16F873A"], "RAM: 32-byte g_rx_buf does not fit"
+        )
+
+    def test_module_entry_carries_its_family_example(self):
+        entry = self.doc["modules"]["epic-tick"]
+        self.assertEqual(entry["example"]["name"], "tick-blink")
+        self.assertEqual(
+            entry["example"]["sources"], ["epic-tick/examples/example_tick.c"]
+        )
+        self.assertEqual(entry["example"]["config"], {"FOSC": "HS"})
+
+    def test_omits_modules_from_other_families(self):
+        self.assertNotIn("epic-usb", self.doc["modules"])
+
+    def test_omits_the_family_hal_wrapper_pseudo_module(self):
+        doc193x = json.loads(
+            bundlegen.emit_sources_json(load(), "PIC16F193X", "v0.1.0")
+        )
+        self.assertNotIn("epic-pic16f193x-firmware", doc193x["modules"])
+
+    def test_paths_are_bundle_relative(self):
+        for path in self.doc["hal_sources"]:
+            self.assertFalse(path.startswith("/"))
+            self.assertNotIn("..", path)
+
+
+class TestSupportMd(unittest.TestCase):
+    def setUp(self):
+        self.md = bundlegen.emit_support_md(load(), "PIC16F87XA", "v0.1.0")
+
+    def test_has_a_row_per_module(self):
+        self.assertIn("epic-serial", self.md)
+        self.assertIn("epic-tick", self.md)
+
+    def test_marks_supported_and_unsupported_parts(self):
+        self.assertIn("yes", self.md)
+        self.assertIn("no", self.md)
+
+    def test_lists_every_exclusion_reason(self):
+        self.assertIn("RAM: 32-byte g_rx_buf does not fit", self.md)
+
+    def test_names_the_variants_as_columns(self):
+        self.assertIn("16F873A", self.md)
+        self.assertIn("16F877A", self.md)
+
+    def test_has_no_em_dash(self):
+        self.assertNotIn(chr(0x2014), self.md)  # em-dash, repo convention
 
 
 if __name__ == "__main__":
