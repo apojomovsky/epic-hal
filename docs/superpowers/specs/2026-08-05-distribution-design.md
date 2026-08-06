@@ -1,7 +1,14 @@
 # Distribution and consumption design
 
-Status: **planned, not started**. Design agreed 2026-08-05, implementation
-plans written 2026-08-05. Supersedes nothing; complements
+Status: **phases 1 to 3 implemented**. Design agreed 2026-08-05,
+implementation plans written 2026-08-05. Phases 1 and 2 (the manifest and
+build driver, CI cutover) landed via
+`docs/superpowers/plans/2026-08-05-manifest-and-build-driver.md`. Phase 3
+(the bundle generator) landed via
+`docs/superpowers/plans/2026-08-06-bundle-generator.md`: its exit
+criterion, every bundle's demo building from a scratch copy outside the
+repo, is met (`bundle-gate` green). Phases 4 and 5 (MPLAB X projects,
+release) are next. Supersedes nothing; complements
 `docs/mplabx-link-gaps-plan.md` (see "Relationship to the link-gaps plan"
 below).
 
@@ -328,16 +335,23 @@ green:
    `epic-common/manifest/modules.toml` for PIC16F87XA only, plus
    `scripts/epic-build.py`. Nothing is deleted and no CI changes. Exit
    criterion: every green PIC16F87XA pair produces a `.hex` byte-identical
-   to its Makefile's.
+   to its Makefile's. **Done**, along with phase 2's rollout in the same
+   plan; see
+   `docs/superpowers/plans/2026-08-05-manifest-and-build-driver.md`.
 2. **Family rollout and CI cutover.** Extend the manifest to PIC18Fxx5x
    and PIC16F193X under the same hex-diff gate, delete each family's
    Makefiles once its pairs match, then retarget `xc8-build.yml` and
    `sim-tests.yml` and derive `ci-discover-xc8-matrix.py`'s matrix from
-   `excluded`. Exit criterion: no `mcu/*/Makefile` remains and CI is green.
-3. **Bundle generator.** `scripts/make-bundle.sh` plus the generated
-   `epicurus.mk`, `epicurus-sources.json`, `SUPPORT.md`, `MPLABX.md`, and
-   `QUICKSTART.md`. Exit criterion: each bundle's demo builds from a
-   scratch copy outside the repo.
+   `excluded`. Exit criterion: no `mcu/*/Makefile` remains and CI is
+   green. **Done.**
+3. **Bundle generator.** `scripts/make-bundle.sh` (implemented as
+   `scripts/make_bundle.py`, see that plan's naming note) plus the
+   generated `epicurus.mk`, `epicurus-sources.json`, `SUPPORT.md`,
+   `MPLABX.md`, and `QUICKSTART.md`. Exit criterion: each bundle's demo
+   builds from a scratch copy outside the repo. **Done**, `bundle-gate`
+   green (PIC16F87XA and PIC18Fxx5x built and linked in isolation,
+   PIC16F193X correctly reported HAL-only); see
+   `docs/superpowers/plans/2026-08-06-bundle-generator.md`.
 4. **MPLAB X projects.** Run the headless-build probe first, then commit
    three reference `.X` projects seeded from the surviving
    `pic16f87xa-mplabx/nbproject`. Exit criterion: each opens and builds,
