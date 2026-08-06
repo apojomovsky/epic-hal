@@ -307,5 +307,59 @@ class TestSupportMd(unittest.TestCase):
         self.assertNotIn(chr(0x2014), self.md)  # em-dash, repo convention
 
 
+class TestQuickstart(unittest.TestCase):
+    def setUp(self):
+        self.md = bundlegen.emit_quickstart_md(load(), "PIC16F87XA", "v0.1.0")
+
+    def test_shows_a_complete_consumer_makefile(self):
+        self.assertIn("EPICURUS_DIR :=", self.md)
+        self.assertIn("EPICURUS_MCU :=", self.md)
+        self.assertIn("EPICURUS_MODULES :=", self.md)
+        self.assertIn("include $(EPICURUS_DIR)/epicurus.mk", self.md)
+
+    def test_names_a_real_part_from_this_family(self):
+        self.assertIn("16F877A", self.md)
+
+    def test_names_a_real_module_from_this_family(self):
+        self.assertIn("tick", self.md)
+
+    def test_mentions_the_dfp_flag(self):
+        self.assertIn("-mdfp", self.md)
+
+    def test_has_no_em_dash(self):
+        self.assertNotIn(chr(0x2014), self.md)  # em-dash, repo convention
+
+    def test_raises_for_a_hal_only_family(self):
+        # PIC16F193X has no consumer-facing module (its sole entry is the
+        # excluded HAL-wrapper pseudo-module), so a quickstart cannot
+        # name a working EPICURUS_MODULES value.
+        with self.assertRaises(bundlegen.BundleError):
+            bundlegen.emit_quickstart_md(load(), "PIC16F193X", "v0.1.0")
+
+
+class TestMplabxMd(unittest.TestCase):
+    def setUp(self):
+        self.md = bundlegen.emit_mplabx_md(load(), "PIC16F87XA", "v0.1.0")
+
+    def test_lists_the_source_folders_to_add(self):
+        self.assertIn("pic16f87xa-hal/src", self.md)
+        self.assertIn("epic-serial/src", self.md)
+
+    def test_lists_the_include_paths_in_order(self):
+        self.assertIn("pic16f87xa-hal/include/target", self.md)
+        idx_target = self.md.index("pic16f87xa-hal/include/target")
+        idx_plain = self.md.index("epic-common/include")
+        self.assertLess(idx_target, idx_plain)
+
+    def test_names_the_dfp_pack(self):
+        self.assertIn("Microchip.PIC16Fxxx_DFP", self.md)
+
+    def test_points_at_the_reference_project(self):
+        self.assertIn("examples/epicurus-demo.X", self.md)
+
+    def test_has_no_em_dash(self):
+        self.assertNotIn(chr(0x2014), self.md)  # em-dash, repo convention
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -279,3 +279,160 @@ def emit_support_md(manifest, family_name: str, version: str) -> str:
         "",
     ]
     return "\n".join(out) + "\n"
+
+
+def _sample_module(manifest, family_name, mcu):
+    """A module that actually builds on `mcu`, for use in examples."""
+    for name in modules_for_family(manifest, family_name):
+        if mcu in manifest.modules[name].supported.get(family_name, []):
+            return name.removeprefix("epic-")
+    raise BundleError(f"no module supports {mcu}; cannot write a quickstart")
+
+
+def emit_quickstart_md(manifest, family_name: str, version: str) -> str:
+    fam = _family(manifest, family_name)
+    mcu = fam.variants[-1]
+    module = _sample_module(manifest, family_name, mcu)
+
+    return "\n".join([
+        f"# Quick start, Epicurus {version} ({family_name})",
+        "",
+        "You need MPLAB XC8 (`xc8-cc`) on your PATH and GNU make. No",
+        "MPLAB X, no licence, no IDE.",
+        "",
+        "## 1. Put the bundle in your project",
+        "",
+        "```sh",
+        "mkdir -p third_party",
+        f"tar xzf epicurus-{fam.hal_dir.removesuffix('-hal')}-{version}.tar.gz \\",
+        "  -C third_party",
+        "mv third_party/epicurus-* third_party/epicurus",
+        "```",
+        "",
+        "## 2. Write your Makefile",
+        "",
+        "```make",
+        "EPICURUS_DIR := third_party/epicurus",
+        f"EPICURUS_MCU := {mcu}",
+        f"EPICURUS_MODULES := {module}",
+        "include $(EPICURUS_DIR)/epicurus.mk",
+        "",
+        "DFP := /opt/microchip/xc8/v4.00/pic/packs/$(EPICURUS_DFP)/xc8",
+        "",
+        "SRCS := main.c $(EPICURUS_SRCS)",
+        "CFLAGS := -mdfp=$(DFP) -mcpu=$(shell echo $(EPICURUS_MCU) | tr A-Z a-z) \\",
+        f"          -O2 -std=c99 -Wall -Wextra $(EPICURUS_CFLAGS) -DFOSC_HZ={fam.fosc_hz}",
+        "",
+        "app.hex: $(SRCS)",
+        "\txc8-cc $(CFLAGS) $^ -o $@ -ginhx32",
+        "```",
+        "",
+        "## 3. Build",
+        "",
+        "```sh",
+        "make",
+        "```",
+        "",
+        "Program `app.hex` with MPLAB X, MPLAB IPE, or any programmer.",
+        "",
+        "## Notes",
+        "",
+        "- Module names drop the `epic-` prefix in `EPICURUS_MODULES`.",
+        "- Dependencies resolve automatically: `modbus` pulls in `serial`",
+        "  and `tick`.",
+        "- Asking for a module on a part it does not fit fails immediately",
+        "  with the reason. See `SUPPORT.md` for the full table.",
+        f"- Supported parts in this bundle: {', '.join(fam.variants)}.",
+        "- You still supply your own `#pragma config` words. The reference",
+        "  project under `examples/` has a working set to copy.",
+        "",
+    ]) + "\n"
+
+
+def emit_mplabx_md(manifest, family_name: str, version: str) -> str:
+    """Instructions for MPLAB X and the MPLAB extension for VS Code.
+
+    Generated from the same resolved data epicurus.mk uses, because an
+    MPLAB X user cannot include a .mk and a hand-written list of folders
+    would go stale the first time a source moved.
+    """
+    fam = _family(manifest, family_name)
+    modules = modules_for_family(manifest, family_name)
+
+    src_dirs = sorted({str(pathlib.PurePosixPath(s).parent) for s in fam.hal_sources})
+    for name in modules:
+        mod = manifest.modules[name]
+        own_srcs = list(mod.sources) + list(mod.sources_by_family.get(family_name, []))
+        src_dirs += sorted({
+            f"{mod.dir}/{pathlib.PurePosixPath(s).parent}" for s in own_srcs
+        })
+    src_dirs = sorted(set(src_dirs))
+
+    out = [
+        f"# Using Epicurus {version} from MPLAB X ({family_name})",
+        "",
+        "Two ways in. The reference project is the fast one.",
+        "",
+        "## Option 1: open the reference project",
+        "",
+        "```",
+        "examples/epicurus-demo.X",
+        "```",
+        "",
+        "Open it in MPLAB X (File > Open Project), pick your part under",
+        "Project Properties, and Build. Confirm it produces a `.hex`, then",
+        "either build your application inside it or copy its settings into",
+        "your own project using Option 2.",
+        "",
+        "This also works in the MPLAB extension for VS Code, which opens",
+        "the same `.X` project format.",
+        "",
+        "## Option 2: add Epicurus to an existing project",
+        "",
+        "### Add the sources",
+        "",
+        "Right-click `Source Files` > `Add Existing Items from Folders...`,",
+        "then add each of these from this bundle:",
+        "",
+    ]
+    out += [f"- `{d}`" for d in src_dirs]
+    out += [
+        "",
+        "Add only the module folders you actually use. The HAL folders are",
+        "not optional: the interrupt dispatch takes strong references to",
+        "every peripheral handler, so a partial set will not link.",
+        "",
+        "### Set the include paths",
+        "",
+        "Project Properties > XC8 Compiler > Include directories, in this",
+        "order (the order matters: `include/target` must come first so the",
+        "platform header resolves to the real-target version rather than",
+        "the host one):",
+        "",
+    ]
+    out += [f"{i + 1}. `{inc}`" for i, inc in enumerate(fam.includes)]
+    for name in modules:
+        mod = manifest.modules[name]
+        for inc in mod.includes:
+            out.append(f"   plus `{mod.dir}/{inc}` if you use `{name}`")
+    out += [
+        "",
+        "### Set the device pack",
+        "",
+        f"This family needs the `{fam.dfp}` pack. Install it through MPLAB",
+        "X's Tools > Packs manager if the part does not appear in the",
+        "device list.",
+        "",
+        "### Define the part macro",
+        "",
+        "Project Properties > XC8 Compiler > Preprocessor macros, add",
+        "`PIC<part>`, for example `PIC" + fam.variants[-1] + "`.",
+        "",
+        "## Which parts work",
+        "",
+        "See `SUPPORT.md`. MPLAB X will not warn you about an unsupported",
+        "combination the way `epicurus.mk` does; it will fail at link time",
+        "with an XC8 memory error instead.",
+        "",
+    ]
+    return "\n".join(out) + "\n"
