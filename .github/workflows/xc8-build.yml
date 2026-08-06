@@ -26,13 +26,17 @@ name: xc8-build
 #     resulting image can ever be public; confirmed the hard way when an
 #     earlier version of this pipeline made both reachable by an
 #     unauthenticated `docker pull`).
-#   - discover: finds every mcu/*-mplabx/Makefile from tracked files (no
-#     hardcoded module list, same discipline as host-tests.yml's module
-#     discovery), one matrix entry per FAMILY (not per module, and not per
-#     module x MCU) with that family's modules (each module's dir + its
-#     allowed MCU variants, packed into one bash-parseable string, see
-#     scripts/ci-discover-xc8-matrix.py's header) and DFP pack name
-#     attached.
+#   - discover: reads epic-common/manifest/modules.toml (the single
+#     source of truth for what builds where, see
+#     epic-common/manifest/README.md), one matrix entry per FAMILY (not
+#     per module, and not per module x MCU) with that family's modules
+#     (each module's name + its allowed MCU variants, packed into one
+#     bash-parseable string, see scripts/epic_build.py's `matrix`
+#     subcommand) and DFP pack name attached. Also emits a build script
+#     per (module, MCU) pair via scripts/epic_build.py, uploaded as an
+#     artifact: resolution needs python3 (this job runs on a bare
+#     runner), execution needs only sh (the `build` job's container has
+#     no python3, see docker/ci-toolchain/Dockerfile).
 #   - build: matrices over discover's output, ONE JOB PER FAMILY (not per
 #     module, not per MCU variant): the container image is pulled once
 #     per job either way, so even one job per module (23 of them, an
@@ -123,8 +127,38 @@ jobs:
           fetch-depth: 0
       - id: discover
         run: |
-          matrix="$(python3 scripts/ci-discover-xc8-matrix.py)"
+          matrix="$(python3 scripts/epic_build.py matrix)"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+      - name: Emit a build script for every matrix pair
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          xc8_install_dir="/opt/microchip/xc8/v${xc8_version}"
+          XC8_INSTALL_DIR="$xc8_install_dir" python3 - <<'PY'
+          import os, subprocess, sys
+          sys.path.insert(0, "scripts")
+          import epicmanifest
+          m = epicmanifest.load(epicmanifest.default_path())
+          xc8_install_dir = os.environ["XC8_INSTALL_DIR"]
+          for name in sorted(m.modules):
+              mod = m.modules[name]
+              for fam_name, mcus in sorted(mod.supported.items()):
+                  fam = m.families[fam_name]
+                  if m.example_for(name, fam_name) is None:
+                      continue
+                  dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
+                  for mcu in mcus:
+                      subprocess.run(
+                          ["python3", "scripts/epic_build.py", "build",
+                           "--module", name, "--mcu", mcu,
+                           "--build-dir", f"build/{name}",
+                           "--dfp-dir", dfp_dir],
+                          check=True, stdout=subprocess.DEVNULL,
+                      )
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-scripts
+          path: build/
       # Docs-only PRs skip every real XC8 cross-compile in the `build`
       # job below: a prose change cannot affect whether a .hex links.
       # `toolchain-image` above stays unconditional on purpose (it's a
@@ -156,6 +190,10 @@ jobs:
         include: ${{ fromJson(needs.discover.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-scripts
+          path: build/
       - name: Build and verify every module/MCU in ${{ matrix.family }}
         # Explicit shell: bash, not this job's implicit default. A
         # `container:` job defaults to `sh`, unlike a bare `runs-on` job
@@ -178,15 +216,12 @@ jobs:
         # the family, and a broken MCU variant doesn't hide the rest of
         # that module's variants. The job still fails overall if anything
         # failed ($fail below), and $GITHUB_STEP_SUMMARY lists exactly
-        # which module/MCU. matrix.modules is "dir=mcu,mcu;dir=mcu,..."
-        # (see scripts/ci-discover-xc8-matrix.py's header for why it's a
+        # which module/MCU. matrix.modules is "name=mcu,mcu;name=mcu,..."
+        # (see scripts/epic_build.py's `matrix` subcommand for why it's a
         # flat string and not nested JSON: no python3/jq in this
-        # container). DFP_DIR: neither DFP is bundled with the standalone
-        # XC8 v4.00 install (see docker/ci-toolchain/Dockerfile), and each
-        # Makefile's own DFP_DIR default still points at the repo's
-        # documented v3.10 path, so it has to be overridden
-        # ($XC8_INSTALL_DIR is set by the image itself, matrix.dfp by
-        # scripts/ci-discover-xc8-matrix.py).
+        # container). The DFP path is already baked into each emitted
+        # script by the discover job (which has python3 and can read the
+        # manifest), so this job never touches DFP_DIR itself.
         run: |
           fail=0
           {
@@ -195,28 +230,19 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           IFS=';' read -ra module_entries <<< "${{ matrix.modules }}"
           for entry in "${module_entries[@]}"; do
-            dir="${entry%%=*}"
+            name="${entry%%=*}"
             mcus="${entry#*=}"
             IFS=',' read -ra mcu_list <<< "$mcus"
             for mcu in "${mcu_list[@]}"; do
-              echo "::group::${dir} MCU=${mcu}"
-              # build/ is shared across every MCU a module's inner loop
-              # builds (same checkout, same job), so a bare *.hex glob
-              # after the second iteration matches every prior MCU's .hex
-              # too, not just this one, caught by testing this locally
-              # before trusting it. Every module's TARGET starts with
-              # $(MCU)-, confirmed across all Makefiles, so glob on that
-              # prefix instead of "*.hex", on top of a clean between
-              # iterations for a truly fresh compile.
-              make -C "$dir" clean >/dev/null 2>&1 || true
-              if make -C "$dir" MCU="${mcu}" \
-                   DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${{ matrix.dfp }}/xc8" \
-                 && [ "$(ls "$dir"/build/${mcu}-*.hex 2>/dev/null | wc -l)" -eq 1 ]; then
-                echo "PASS: ${dir} ${mcu}"
-                echo "| ${dir} | ${mcu} | PASS |" >> "$GITHUB_STEP_SUMMARY"
+              echo "::group::${name} MCU=${mcu}"
+              rm -f "build/${name}/${mcu}"/*.p1
+              if EPIC_REPO_ROOT="$PWD" sh "build/${name}/${mcu}/build.sh" \
+                 && [ "$(ls build/${name}/${mcu}-*.hex 2>/dev/null | wc -l)" -eq 1 ]; then
+                echo "PASS: ${name} ${mcu}"
+                echo "| ${name} | ${mcu} | PASS |" >> "$GITHUB_STEP_SUMMARY"
               else
-                echo "FAIL: ${dir} ${mcu}"
-                echo "| ${dir} | ${mcu} | FAIL |" >> "$GITHUB_STEP_SUMMARY"
+                echo "FAIL: ${name} ${mcu}"
+                echo "| ${name} | ${mcu} | FAIL |" >> "$GITHUB_STEP_SUMMARY"
                 fail=1
               fi
               echo "::endgroup::"
