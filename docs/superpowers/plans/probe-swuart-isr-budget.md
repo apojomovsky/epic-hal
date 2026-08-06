@@ -1,11 +1,20 @@
 # Probe: does a 4x-oversample tick fit the ISR cycle budget on PIC16F87XA?
 
-Verdict: **NO**. The worst-case two-channel TX+RX tick ISR measures
-**299 cycles**, 2.3x over the N=4 budget (130 cycles) and, more
-importantly, also 1.7x over the more forgiving N=3 budget (174 cycles).
-Neither oversample factor fits as this probe's code is structured.
-Task 2 cannot just flip a constant from 4 to 3, it has to restructure
-the per-channel work (see "What this means" below).
+Verdict, **array-of-structs probe (probe.c)**: **NO**. 299 cycles,
+2.3x over the N=4 budget and 1.7x over N=3.
+
+Verdict, **straight-line two-named-channel probe (probe2.c, follow-up)**:
+**YES for N=4**, with a slim margin. Measured worst case 122 cycles
+against a 130-cycle budget, roughly 6% headroom. See "Follow-up probe"
+below for the full measurement; this is the number Task 2 should treat
+as authoritative, since it's the shape closer to what a real
+compile-time-bounded 2-channel implementation looks like. The
+array-of-structs probe's failure was real but was driven by two
+avoidable properties (a non-unrolled loop and a runtime multiply for
+array indexing) that a hand-written 2-channel module has no reason to
+have. Task 2 can use N=4, but the margin is tight enough that it
+should not add materially more per-tick work than this probe's shape
+without re-measuring.
 
 Run on 2026-08-06 against XC8 v3.10 (native,
 `/opt/microchip/xc8/v3.10/bin`), `-mcpu=16f877a -O2 -std=c99`. Codegen
@@ -119,10 +128,19 @@ skips, 1 when it doesn't; everything else = 1 cycle):
 | segment | words | cycles |
 |---|---|---|
 | interrupt vector trampoline + ISR header (flag check, TMR1 reload, `i=0`) | 21 | 23 |
-| loop iteration `i=0` (incl. `___bmul` call site + its body) | 121+12 | 133+16 |
-| loop iteration `i=1` (incl. `___bmul` call site + its body) | 121+13 | 135+16 |
+| loop iteration `i=0` (incl. `___bmul` call site + its body) | 121 | 133 |
+| loop iteration `i=1` (incl. `___bmul` call site + its body) | 121 | 135 |
 | epilogue (context restore + `retfie`) | 11 | 12 |
-| **total** | **≈299** | **≈303** |
+| **total** | **274** | **303** |
+
+The `___bmul` cost buried inside each loop-iteration row above, itemized
+for traceability: the call site itself (2 `PCLATH` setup instructions +
+the `CALL` + 2 `PCLATH` restore instructions) is 5 words / 6 cycles per
+call; the `___bmul` body (Step 3's disassembly) is 12 words / 16 cycles
+for the `i=0` call (multiplier 0) and 13 words / 16 cycles for the
+`i=1` call (multiplier 1). Total attributable to the multiply across
+both calls: `(6 + 16) x 2 = 44 cycles`, `(5 + 12) + (5 + 13) = 35`
+words. This is the source of the "~44 cycles" figure used below.
 
 ### Step 5: simulator measurement (authoritative)
 
@@ -183,7 +201,7 @@ data-dependent branch (`tx_shift`'s bit, the RX pin sample) the manual
 trace assumed versus what the simulator's actual reset-state values
 took, not a methodology error.
 
-## What this means
+## What this means (probe.c, array-of-structs)
 
 Budget at 4x/9600 baud, 20 MHz: **130 cycles/tick** (`26.0417 us x 5
 cycles/us`). Budget at 3x: **174 cycles/tick** (`34.7222 us x 5
@@ -208,21 +226,169 @@ selects, each compiling to several `goto`s (2 cycles each) that a
 hand-unrolled, straight-line per-channel implementation would not
 need.
 
-**Consequence for Task 2 onward:** this is not a "change one constant
-from 4 to 3" situation. Whatever data structure and control flow Task
-2 designs for the two-channel state machine, it needs to avoid: (a)
-looping over an array of channel structs with a runtime-computed
-index (forces a multiply or at least non-constant addressing), and
-(b) deeply nested `if`/`else`/ternary chains per channel that don't
-collapse to straight-line code under `-O2`. A manually-unrolled,
-two-named-channel version of this same worst-case body (no loop, no
-array, no `___bmul`) is worth a follow-up probe before Task 2 commits
-to a state machine shape; this task's job was only to answer whether
-N=4 is safe, and the answer, with real numbers, is no.
+**Consequence:** this is not a "change one constant from 4 to 3"
+situation for the *array-of-structs* shape. But the failure here
+turned out to be dominated by two properties of the probe code, not
+an inherent property of the workload: looping over an array of
+channel structs with a runtime-computed index (forces a multiply or
+at least non-constant addressing), and deeply nested `if`/`else`/
+ternary chains that don't collapse to straight-line code under `-O2`.
+A manually-unrolled, two-named-channel rewrite (no loop, no array, no
+`___bmul`) was approved as follow-up work and is measured next.
 
-Reload-value formula (unchanged by this finding, still needed by
-whichever N ends up viable once Task 2's real state machine is
-measured): `reload = 65536 - round(FOSC_HZ / 4 / (baud * N))`. Sanity
+## Follow-up probe: straight-line two-named-channel version (probe2.c)
+
+Same worst-case shape as `probe.c` (both channels' TX bit-clock and RX
+sampler on tick expiry), rewritten as straight-line code: two named
+channel variable sets (`a_*`/`b_*`, separate `static volatile uint8_t`
+globals, not a struct or array), no loop, each channel's TX/RX
+handling written out once, sequentially. This is closer to what the
+real Task 2 module will look like for a compile-time-bounded 2-channel
+count than the array-of-structs version was.
+
+### Compile
+
+```sh
+cd /tmp/swuart-probe
+export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
+xc8-cc -mcpu=16f877a \
+  -mdfp=/opt/microchip/mplabx/v6.35/packs/Microchip/PIC16Fxxx_DFP/1.8.167/xc8 \
+  -O2 -std=c99 -fasmfile -Wa,-a probe2.c -o probe2.hex -ginhx32
+```
+
+Output:
+
+```
+16F877A Memory Summary:
+    Program space        used    ABh (   171) of  2000h words   (  2.1%)
+    Data space           used    1Bh (    27) of   170h bytes   (  7.3%)
+    EEPROM space         used     0h (     0) of   100h bytes   (  0.0%)
+    Configuration bits   used     1h (     1) of     1h word    (100.0%)
+    ID Location space    used     0h (     0) of     4h bytes   (  0.0%)
+```
+
+171 words total (vs 226 for the array-of-structs version) even before
+looking at the ISR in isolation, one signal this shape is cheaper.
+
+Cross-checked against XC8 v4.00 (Docker) the same way as `probe.c`:
+same 171-word memory summary, `diff` of the opcode columns produced no
+output (byte-identical).
+
+### Simulator measurement
+
+`probe2.lst` puts the interrupt vector trampoline at `0x0004` and
+`retfie` at `0x00A0`. Same method as `probe.c`: let TMR1 free-run from
+reset so it overflows naturally, firing the interrupt with the real
+zero-initialized worst-case state (every `*_ticks_left` starts at 0,
+i.e. already "expired" on the first tick, for both channels' TX and
+RX).
+
+```sh
+export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
+/opt/microchip/mplabx/v6.35/mplab_platform/bin/mdb.sh mdb_cmds2.txt
+```
+
+`mdb_cmds2.txt`:
+
+```
+Device PIC16F877A
+Hwtool sim
+Program "probe2.hex"
+break *0x0004
+break *0x00A0
+Run
+Wait 5000
+Stopwatch clear
+Continue
+Wait 5000
+Stopwatch
+quit
+```
+
+Relevant output:
+
+```
+break *0x0004
+Breakpoint 0 at 0x4.
+break *0x00A0
+Breakpoint 1 at 0xa0.
+Run
+Running
+Single breakpoint: @0x4
+Simulator halted
+Stopwatch clear
+Stopwatch cleared. Stopwatch cycle count = 0 (0 ns)
+Continue
+Running
+Single breakpoint: @0xA0
+Simulator halted
+Stopwatch
+Stopwatch cycle count = 118 (118 us)
+```
+
+118 cycles from the vector to just before `retfie`; +2 cycles for
+`retfie` itself = **120 cycles** for the reset-state path actually
+exercised.
+
+### Checking this is really the worst case, not just the reset-state path
+
+The reset-state run above took specific data-dependent branches (TX
+shift register's LSB was 0; both RX input pins read as 0 in the
+simulator). Inspected `probe2.lst` for whether the untaken alternative
+of each data-dependent branch costs more:
+
+- TX bit-select (`if (bit) PORTB |= mask; else PORTB &= ~mask;`,
+  `probe2.lst` around `0x0036`-`0x003D` for channel A, same shape for
+  channel B): compiles to a direct `bsf`/`bcf`-style pair either way.
+  Traced both arms by hand: **6 cycles regardless of which way `bit`
+  goes.** No asymmetry, because this version indexes `PORTB` directly
+  (a compile-time-constant address) instead of through the
+  array-of-structs version's FSR-indirect `INDF` access.
+- RX sample ternary (`rx_shift = (rx_shift>>1) | (sample?0x80:0)`,
+  `probe2.lst` `0x004D`-`0x0056` for channel A, `0x0084`-`0x008D` for
+  channel B): **asymmetric**, traced by hand: the `sample == 0` arm is
+  7 cycles (`movf`+`btfss`(skip taken, 2)+`clrf`+`clrf`+`goto`), the
+  `sample != 0` arm is 8 cycles (`movf`+`btfss`(no skip, 1)+`goto`(2)+
+  `movlw`+`movwf`+`movlw`+`movwf`). One extra cycle when the sampled
+  bit is a 1. This pattern is identical for both channels (confirmed
+  by reading both call sites in the listing).
+
+So the true worst case (both RX samples read as 1, not 0 as the reset
+state happened to produce) adds 1 cycle per channel: **120 + 2 = 122
+cycles** total, worst case, entry through `retfie` inclusive.
+
+### Verdict
+
+Budget at N=4: 130 cycles. Budget at N=3: 174 cycles. Worst-case
+measured: **122 cycles**.
+
+- vs N=4 (130): 122/130 = 0.94x, **margin +6.2%** (8 cycles headroom).
+- vs N=3 (174): 122/174 = 0.70x, **margin +29.9%** (52 cycles headroom).
+
+**YES for N=4.** The straight-line, two-named-channel shape fits the
+4x-oversample budget on the slowest supported chip (PIC16F87XA at 20
+MHz), with real headroom, though only about 8 cycles (roughly 6%) of
+it at N=4. That is enough to call N=4 viable, but not enough to add
+much more per-tick work without re-measuring: the real Task 2 state
+machine will have more states than "mid-byte, ticks expired" (start-bit
+detection, stop-bit/framing checks, idle detection), and if any of
+those add meaningfully more than ~8 cycles to the worst-case tick,
+N=4's margin is gone. If Task 2's real implementation grows
+noticeably heavier than this probe's body, re-run this same
+measurement against the real code before trusting N=4; N=3's ~30%
+margin is the fallback with far more slack.
+
+**Consequence for Task 2:** use N=4, with the shape demonstrated here,
+two named per-channel variable sets (or two channel structs accessed
+through compile-time-constant pointers, not an array indexed by a
+loop variable), each channel's TX/RX logic written out directly
+rather than through a shared loop body. Avoid re-introducing a
+runtime-indexed loop over the channels or a helper function called
+per-channel in a way that isn't inlined, either would reintroduce the
+overhead this follow-up probe eliminated.
+
+Reload-value formula (unchanged by either measurement, still needed by
+Task 2): `reload = 65536 - round(FOSC_HZ / 4 / (baud * N))`. Sanity
 check against the probe's own `TMR1H=0xFF, TMR1L=0x7E` (`0xFF7E` =
 65406 = `65536 - 130`): matches N=4 exactly, confirming the brief's
 example reload value was computed with this same formula. For N=3:
