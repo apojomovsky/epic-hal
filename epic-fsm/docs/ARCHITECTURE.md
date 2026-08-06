@@ -127,16 +127,17 @@ check, not a second correctness gate.
 
 ## Footprint
 
-Measured via `mcu/*/Makefile` with a 2-row table (`target_sizecheck.c`),
-real XC8 v3.10:
+Measured via `scripts/epic_build.py` (real XC8 v3.10), a 2-row table
+(`target_sizecheck.c`):
 
 | Target | Program space | Data space |
 |---|---|---|
 | PIC16F877A | 165 words (2.0% of 8 KW) | 14 B (3.8% of 368 B) |
 | PIC18F4550 | 320 B (1.0% of 32 KB) | 11 B (0.5% of 2 KB) |
+| PIC16F1937 | 208 words (2.5% of 8 KW) | 24 B (4.7% of 512 B) |
 
 Data space is just the `fsm_t` handle (a table pointer, a length byte, a
-state byte, a context pointer) — the transition table itself is `static
+state byte, a context pointer), the transition table itself is `static
 const`, so XC8 places it in flash, not RAM. Program space scales with the
 number of distinct `fsm_dispatch` call sites' surrounding code and the
 guard/action bodies a real machine defines, not with table row count (more
