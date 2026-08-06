@@ -1,22 +1,29 @@
 #!/usr/bin/env bash
-# Build a module's sim-target .hex and run it under MPLAB SIM (mdb),
-# checking for the EPIC_HARNESS_RESULT marker (see
+# Run a module's already-emitted HARNESS=sim (--variant sim) build under
+# MPLAB SIM (mdb), checking for the EPIC_HARNESS_RESULT marker (see
 # epic-common/include/core/epic_harness.h). Shared by
 # .github/workflows/sim-tests.yml and scripts/sim-test-local.sh, so CI
 # and a local run go through the exact same build+mdb+grep sequence,
 # not two copies that can drift apart (docs/ci-plan.md's local
 # reproduction plan).
 #
-# Must run inside the toolchain container (docker/ci-toolchain/), or
-# anywhere xc8-cc/mdb.sh are on PATH and $XC8_INSTALL_DIR is set the
-# same way that image's Dockerfile sets it.
+# Container-only on purpose: needs xc8-cc and mdb.sh on PATH plus
+# $XC8_INSTALL_DIR, nothing else. It does NOT read the manifest itself
+# (no python3 call), because it runs inside the toolchain container
+# (docker/ci-toolchain/Dockerfile), which deliberately has none. The
+# build script it runs (build-sim/<module>/<mcu>/build.sh) must already
+# exist, emitted beforehand by `epic_build.py build --variant sim`
+# wherever python3 is available: sim-tests.yml's emit job (bare
+# runner), or scripts/sim-test-local.sh (the host, before its `docker
+# run` into this same container).
 #
-# Usage: sim-mdb-run.sh <family> <mcu> <device> <dir> <dfp> [wait_ms] [mode] [sim_app] [extra_mdb]
+# Usage: sim-mdb-run.sh <family> <mcu> <device> <module> [wait_ms] [mode] [extra_mdb]
 #   family    matrix label, only used to namespace temp files (e.g. pic16f87xa)
-#   mcu       Makefile MCU= value (e.g. 16F877A)
+#   mcu       manifest MCU value (e.g. 16F877A)
 #   device    mdb `device` command's part name (e.g. PIC16F877A)
-#   dir       module's mcu/*-mplabx dir (e.g. epic-tick/mcu/pic16f87xa-tick-mplabx)
-#   dfp       DFP pack name (e.g. Microchip.PIC16Fxxx_DFP)
+#   module    manifest module name (e.g. epic-tick, or
+#             epic-pic16f193x-firmware for the bare-HAL smoke); looks
+#             for its pre-emitted script at build-sim/<module>/<mcu>/build.sh
 #   wait_ms   real-time ms to let mdb run before halting (default 2000;
 #             MPLAB SIM runs noticeably slower than real-time, see
 #             docs/ci-plan.md Phase 4's findings, so this is a wall-clock
@@ -26,37 +33,36 @@
 #             marker from a PORTA register via mdb `print` and checks
 #             bit 0. Only pic16f193x currently uses gpio; pic16f87xa
 #             and pic18fxx5x keep uart.
-#   sim_app   optional: which tests/*.c file HARNESS=sim links as the
-#             diagnostic firmware, forwarded to the nested make as
-#             SIM_APP=<value>. Empty (default) leaves the Makefile's
-#             own SIM_APP default (example_timer1.c) in place. Only
-#             needed when gating a peripheral other than Timer1.
 #   extra_mdb extra mdb commands (e.g. `print`s), inserted right before
 #             `quit`, for register-level debugging without hardcoding
 #             device-specific diagnostics into this generic script.
 
 set -euo pipefail
 
-family="$1"; mcu="$2"; device="$3"; dir="$4"; dfp="$5"
-wait_ms="${6:-2000}"; mode="${7:-uart}"; sim_app="${8:-}"; extra_mdb="${9:-}"
+family="$1"; mcu="$2"; device="$3"; module="$4"
+wait_ms="${5:-2000}"; mode="${6:-uart}"; extra_mdb="${7:-}"
 
 if [ "$mode" != "uart" ] && [ "$mode" != "gpio" ]; then
   echo "::error::mode must be 'uart' or 'gpio', got '$mode'" >&2
   exit 1
 fi
 
-make -C "$dir" clean
-if [ -n "$sim_app" ]; then
-  make -C "$dir" MCU="$mcu" HARNESS=sim SIM_APP="$sim_app" \
-    DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${dfp}/xc8"
-else
-  make -C "$dir" MCU="$mcu" HARNESS=sim \
-    DFP_DIR="${XC8_INSTALL_DIR}/pic/packs/${dfp}/xc8"
+build_dir="build-sim/${module}"
+objdir="${build_dir}/${mcu}"
+script="${objdir}/build.sh"
+if [ ! -f "$script" ]; then
+  echo "::error::no emitted build script at ${script}." \
+       "Run 'python3 scripts/epic_build.py build --module ${module}" \
+       "--mcu ${mcu} --variant sim --build-dir ${build_dir}'" \
+       "first (needs python3, so outside this container)." >&2
+  exit 1
 fi
+rm -f "$objdir"/*.p1
+EPIC_REPO_ROOT="$PWD" sh "$script"
 
-hexes=("$dir"/build/"$mcu"-*-sim.hex)
+hexes=("$build_dir"/"$mcu"-*.hex)
 if [ ! -e "${hexes[0]}" ] || [ "${#hexes[@]}" -ne 1 ]; then
-  echo "::error::expected exactly one ${dir}/build/${mcu}-*-sim.hex, found: ${hexes[*]}" >&2
+  echo "::error::expected exactly one ${build_dir}/${mcu}-*.hex, found: ${hexes[*]}" >&2
   exit 1
 fi
 hex="${hexes[0]}"

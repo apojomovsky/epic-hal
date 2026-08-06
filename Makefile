@@ -143,46 +143,38 @@ test: image
 	exit $$fail
 
 # ─────────────────────────── real-target XC8 build ───────────────────
-# MODULE is the module dir (e.g. pic16f193x-hal); most modules have TWO
-# mcu/*-mplabx dirs, one per family (see epic-tick and friends), so which
-# one to build can't be inferred from MODULE alone. Disambiguate by the
-# MCU value's own shape instead: classic PIC16 variants end in a letter
-# after 3 digits (873A/874A/876A/877A), PIC18 variants start with 18F,
-# Enhanced Mid-range (193X) variants are 16F19xx with no trailing letter.
-# Same three families scripts/ci-discover-xc8-matrix.py already encodes.
+# Real-target build. Resolution runs on the host (needs python3), the
+# emitted sh script runs in the container (which has xc8-cc and no
+# python3, see docker/ci-toolchain/Dockerfile). MODULE is a manifest
+# module name, e.g. epic-serial, not a path: the mcu/*-mplabx dirs it
+# used to name are gone.
 xc8-build: image
-	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ]; then \
-		echo "usage: make xc8-build MODULE=<dir> MCU=<mcu> (e.g. MODULE=pic16f193x-hal MCU=16F1937)" >&2; \
-		exit 1; \
-	fi
-	@case "$(MCU)" in \
-		18F*) family_glob='pic18fxx5x*-mplabx'; dfp=Microchip.PIC18Fxxxx_DFP ;; \
-		16F19[0-9][0-9]) family_glob='pic16f193x*-mplabx'; dfp=Microchip.PIC12-16F1xxx_DFP ;; \
-		16F*) family_glob='pic16f87xa*-mplabx'; dfp=Microchip.PIC16Fxxx_DFP ;; \
-		*) echo "error: MCU=$(MCU) does not match any known family shape" >&2; exit 1 ;; \
-	esac; \
-	mcu_dir=$$(find "$(MODULE)/mcu" -maxdepth 1 -type d -iname "$$family_glob" | head -1); \
-	if [ -z "$$mcu_dir" ]; then \
-		echo "error: no $$family_glob dir found under $(MODULE)/mcu (does this module support MCU=$(MCU)'s family?)" >&2; \
-		exit 1; \
-	fi; \
-	echo "=== $$mcu_dir MCU=$(MCU) (DFP=$$dfp) ==="; \
-	$(DOCKER_RUN) bash -c "make -C $$mcu_dir clean && make -C $$mcu_dir MCU=$(MCU) DFP_DIR=\$$XC8_INSTALL_DIR/pic/packs/$$dfp/xc8"
+	@test -n "$(MODULE)" || { echo "usage: make xc8-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
+	@test -n "$(MCU)" || { echo "usage: make xc8-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
+	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) \
+	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
+	$(DOCKER_RUN) sh build/$(MCU)/build.sh
 
 # ─────────────────────────── mdb / MPLAB SIM gate ────────────────────
 # Thin wrapper around scripts/sim-mdb-run.sh, the exact same script CI
 # and scripts/sim-test-local.sh call, so there is one source of truth
-# for the mdb command sequence, not a fourth copy of it here.
+# for the mdb command sequence, not a fourth copy of it here. Resolution
+# (epic_build.py build --variant sim, needs python3) runs on the host,
+# before $(DOCKER_RUN); sim-mdb-run.sh itself only ever executes the
+# pre-emitted script plus mdb.sh inside the container, which has no
+# python3.
 mdb-test: image
-	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ] || [ -z "$(DFP)" ]; then \
-		echo "usage: make mdb-test MODULE=<mcu/*-mplabx dir> MCU=<mcu> DEVICE=<device> DFP=<pack> [WAIT_MS=<ms>] [MODE=uart|gpio]" >&2; \
+	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
+		echo "usage: make mdb-test MODULE=<manifest module> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio]" >&2; \
 		echo "  MODE=uart (default) for PIC16F87XA/PIC18Fxxxx (UART capture);" >&2; \
 		echo "  MODE=gpio for PIC16F193X (RA0 register readback)." >&2; \
-		echo "  SIM_APP=<tests/*.c file> to pick which peripheral's HARNESS=sim example is gated (default: whatever pic16f193x-mplabx/Makefile's own SIM_APP default is, currently example_timer1.c)." >&2; \
-		echo "  e.g. make mdb-test MODULE=epic-tick/mcu/pic16f87xa-tick-mplabx MCU=16F877A DEVICE=PIC16F877A DFP=Microchip.PIC16Fxxx_DFP" >&2; \
+		echo "  e.g. make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A" >&2; \
 		exit 1; \
 	fi
-	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(DFP) $(or $(WAIT_MS),2000) $(or $(MODE),uart) $(SIM_APP)
+	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --variant sim \
+	  --build-dir build-sim/$(MODULE) \
+	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
+	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(or $(WAIT_MS),2000) $(or $(MODE),uart)
 
 # ─────────────────────────── dev shell ───────────────────────────────
 # Same --user/passwd/HOME fix as DOCKER_RUN (see its comment); a plain

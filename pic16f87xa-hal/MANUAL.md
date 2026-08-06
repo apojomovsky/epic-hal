@@ -129,22 +129,19 @@ in-memory simulator, no PIC hardware involved.
 
 ### Real target (XC8)
 
-Assuming MPLAB XC8 v3.10 is installed:
+Assuming MPLAB XC8 v3.10 is installed. The HAL has no standalone
+real-target build of its own any more (`pic16f87xa-hal/mcu/
+pic16f87xa-mplabx/Makefile` is gone); build it through one of this
+family's modules, which compile the full HAL either way:
 
 ```sh
-cd pic16f87xa-hal/mcu/pic16f87xa-mplabx
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-make MCU=16F877A
-# → build/16F877A-firmware.hex, program with MPLAB X, ippe, PK2CMD, …
+python3 scripts/epic_build.py build --module epic-tick --mcu 16F877A --run
+# → build/16F877A-tick.hex, program with MPLAB X, ippe, PK2CMD, …
 ```
 
-To build a different example for the target, override `APP_SOURCES`:
-
-```sh
-make MCU=16F876A APP_SOURCES=../../tests/example_idle_blink.c
-```
-
-See [§4](#4-build-systems) for the full set of build variables.
+See [§4](#4-build-systems) and `epic-common/manifest/README.md` for the
+manifest-driven build.
 
 ---
 
@@ -179,28 +176,30 @@ The helper `pic16f87xa_add_example` adds the executable, gives it the
 device define, and links the HAL library (which propagates the
 `include/host` include path).
 
-### 4.2 Target build, XC8 Makefile
+### 4.2 Target build, manifest-driven
 
 ```sh
-make MCU=16F877A            # default; also 873A / 874A / 876A
-make clean
+python3 scripts/epic_build.py build --module epic-tick --mcu 16F877A --run   # also 873A / 874A / 876A
 ```
 
-Variables (all overridable on the command line):
+CLI flags (see `python3 scripts/epic_build.py build --help`):
 
-| Variable        | Default              | Meaning                                                |
-|-----------------|----------------------|--------------------------------------------------------|
-| `MCU`           | `16F877A`            | Target part (873A/874A/876A/877A).                     |
-| `FOSC_HZ`       | `20000000`           | Oscillator frequency, passed as `-DFOSC_HZ`.           |
-| `DFP_DIR`       | XC8 v3.10 install path | Device Family Pack dir for `-mdfp`. Empty → omit.   |
-| `APP_SOURCES`   | `example_blink.c`    | Your application source(s).                            |
-| `EPIC_DIR`       | `../..`              | Where the HAL tree lives.                              |
-| `BUILD_DIR`     | `build`              | Output directory.                                      |
+| Flag            | Default                          | Meaning                                    |
+|-----------------|-----------------------------------|---------------------------------------------|
+| `--module`      | (required)                        | Manifest module name, e.g. `epic-tick`.    |
+| `--mcu`         | (required)                        | Target part (873A/874A/876A/877A).         |
+| `--fosc-hz`     | the family's `fosc_hz` (20000000) | Oscillator frequency, passed as `-DFOSC_HZ`. |
+| `--dfp-dir`     | empty (omit `-mdfp`)              | Device Family Pack dir.                    |
+| `--build-dir`   | `build`                           | Output directory.                          |
 
-Output: `build/<MCU>-firmware.hex` (Intel HEX, via `-ginhx32`).
+Output: `<build-dir>/<MCU>-<example-name>.hex` (Intel HEX, via
+`-ginhx32`). The example name comes from the manifest
+(`epic-common/manifest/modules.toml`), e.g. `16F877A-tick.hex`.
 
-The Makefile generates a Configuration Word source at build time
-(`build/config_<MCU>.c`) with these directives; adjust to your board:
+The driver generates a Configuration Word source at build time
+(`<build-dir>/<MCU>/config_<MCU>.c`) from the manifest's per-module,
+per-family `example.config` table; adjust it there for your board. A
+typical example (`epic-tick`'s):
 
 ```c
 #pragma config FOSC = HS     // high-speed crystal (≤ 20 MHz)
@@ -216,9 +215,7 @@ The full Configuration Word layout is DS39582B §14.1 (Register 14-1).
 **XC8 v3.x notes.** The `xc8-cc` driver compiles each translation unit to
 a `.p1` (p-code) intermediate, not a `.o`; the hex comes from a single
 link step over the `.p1` set with `-ginhx32`. v3.x also moved device
-support into a Device Family Pack, so the compiler needs `-mdfp`. If your
-XC8 install lives elsewhere, pass `make DFP_DIR=/path/to/dfp` (or empty
-to omit the flag for an older toolchain).
+support into a Device Family Pack, so the compiler needs `-mdfp`.
 
 ---
 

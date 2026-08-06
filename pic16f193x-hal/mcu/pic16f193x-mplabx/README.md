@@ -1,4 +1,4 @@
-# PIC16F193X HAL, XC8 / MPLAB X real-target build
+# PIC16F193X HAL, XC8 real-target build
 
 Builds the HAL for real PIC16F193X silicon via MPLAB XC8 (`xc8-cc`).
 
@@ -16,34 +16,34 @@ DFP setup is needed if you're using the root `Makefile`'s Docker flow
 If building outside that image, it needs installing locally at
 `.../pic/packs/Microchip.PIC12-16F1xxx_DFP/` (from the `.atpack`
 unpacked into both the flat and versioned pack layout, matching the
-existing PIC16Fxxx_DFP/PIC18Fxxxx_DFP convention). `DFP_DIR` in the
-`Makefile` defaults to the v3.10 local-install path; override it if your
-install lives elsewhere (via MPLAB X's *Tools > Packs* panel, or by
-unpacking a `.atpack` from `packs.download.microchip.com` into your own
-`.mchp_packs` / `xc8/pic/packs` tree).
+existing PIC16Fxxx_DFP/PIC18Fxxxx_DFP convention).
 
 ## Build
 
+Build this example with the manifest-driven driver, from the repo root:
+
 ```sh
-export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-make MCU=16F1937          # default; also 1933/1934/1936/1938/1939
-make clean
+python3 scripts/epic_build.py build --module epic-pic16f193x-firmware --mcu 16F1937 --run
 ```
 
-Output is `build/16F1937-firmware.hex`, program it with MPLAB X, MPLAB
-IPE, or any external programmer (PICkit, ICD). Default app is
-`tests/example_blink.c`; replace `APP_SOURCES` in the `Makefile` with
-your project's `main.c`.
+Also 16F1933/1934/1936/1938/1939. Output is
+`build/16F1937-firmware.hex`, program it with MPLAB X, MPLAB IPE, or
+any external programmer (PICkit, ICD). Default app is
+`tests/example_blink.c`; replace the manifest's example sources
+(`epic-common/manifest/README.md`) with your project's `main.c`.
+
+The `Makefile` this directory used to hold is gone; see
+`epic-common/manifest/README.md`.
 
 ## Status
 
-**Real-target build passes** for all six parts (`make MCU=16F193{3,4,6,7,8,9}`),
-each producing a valid Intel-HEX firmware image, with the DFP above
-installed. One datasheet/DFP disagreement was found and fixed getting
-here: the DFP's `PIC16F1937.PIC` marks the `DEBUG` config-word field
-`islanghidden`, meaning XC8 rejects it as a user `#pragma config`
-(error 1363, reserved for debugger tooling); it is not emitted by this
-Makefile's config-word recipe. The other 12 directives
+**Real-target build passes** for all six parts, each producing a valid
+Intel-HEX firmware image, with the DFP above installed. One
+datasheet/DFP disagreement was found and fixed getting here: the DFP's
+`PIC16F1937.PIC` marks the `DEBUG` config-word field `islanghidden`,
+meaning XC8 rejects it as a user `#pragma config` (error 1363, reserved
+for debugger tooling); it is not emitted by the manifest's config-word
+data. The other 12 directives
 (FOSC/WDTE/PWRTE/MCLRE/CP/CPD/BOREN/CLKOUTEN/IESO/FCMEN/LVP/STVREN/
 PLLEN/WRT) are confirmed accepted by the DFP.
 
@@ -53,14 +53,8 @@ register-readback gate passes for it specifically. The toolchain gap is
 closed, `mdb` (MPLAB SIM, headless, part of MPLAB X) is installed and
 confirmed working (verified against `epic-tick`'s pilot module, both
 existing families, both reaching a real `EPIC_HARNESS_RESULT: PASS` via
-the root `Makefile`'s `make mdb-test`, see `docs/docker-dev-plan.md`).
-
-That specific `make mdb-test`/`scripts/sim-mdb-run.sh` path needs a
-`HARNESS=sim` build that reports over EUSART; this family has no EUSART
-driver yet, so that convenience wrapper doesn't apply here directly. The
-real §4 gate doesn't need it: `stepi <N>` + `print <REGISTER>` against a
-plain `mdb.sh` script, run against this Makefile's existing
-`HARNESS=target`-shaped build (there's no `HARNESS=sim` variant here
-yet, unlike `epic-tick`'s Makefile). No `pic16f193x-hal` peripheral has
-been run through the gate yet, that is the next real step, not a
-toolchain blocker.
+`.github/workflows/sim-tests.yml`, see `docs/docker-dev-plan.md`). This
+family's own `HARNESS=sim` (`epic-pic16f193x-firmware`'s sim variant,
+`epic-common/manifest/modules.toml`) reports over `MODE=gpio` (RA0
+PASS/FAIL marker, this family has no EUSART driver yet) and is gated
+in `sim-tests.yml` alongside `epic-tick`'s two families.

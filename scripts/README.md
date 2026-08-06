@@ -130,3 +130,29 @@ that only touches one module:
   to `master` always gets the full matrix regardless of what changed,
   so a wrong narrowing on some PR can only delay when a break is
   caught, never let it merge unverified.
+
+## `epic_build.py`, the real-target build driver
+
+Reads `epic-common/manifest/modules.toml`, resolves a module's
+dependencies and sources, and emits a POSIX `sh` script of `xc8-cc`
+invocations. Replaces the `mcu/*-mplabx/Makefile`s.
+
+```sh
+python3 scripts/epic_build.py build --module epic-serial --mcu 16F877A --run
+python3 scripts/epic_build.py matrix          # CI matrix JSON
+python3 scripts/epic_build.py report --log build/16F877A/build.log
+```
+
+Without `--run` it only writes `build/<MCU>/build.sh`, which is the mode
+CI uses: resolution needs python3, execution does not, and the toolchain
+container has no python3 in it (`docker/ci-toolchain/Dockerfile`).
+Reading that script is also the fastest way to see the exact command
+line for any translation unit.
+
+An unsupported `(module, MCU)` pair fails immediately with the reason
+recorded in the manifest, rather than as a wall of XC8 linker errors.
+`--fosc-hz` overrides the family's default oscillator frequency; an
+example with no `config` table in the manifest compiles with no config
+translation unit at all, matching the Makefiles that never had one
+either. `epic-common/manifest/README.md` documents the schema this
+driver reads.

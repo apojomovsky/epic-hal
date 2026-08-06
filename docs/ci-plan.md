@@ -15,6 +15,20 @@ as-is, a historical record of how the image and its jobs were designed
 and debugged, not a description of the current job set; read
 `docs/docker-dev-plan.md` for that.
 
+**Post-manifest-migration update, see
+`docs/superpowers/specs/2026-08-05-distribution-design.md` and
+`docs/superpowers/plans/2026-08-05-manifest-and-build-driver.md`:**
+`scripts/ci-discover-xc8-matrix.py` (Phase 1's discovery script, below)
+is gone. `xc8-build.yml`'s `discover` job now runs `scripts/epic_build.py
+matrix`, reading `epic-common/manifest/modules.toml` instead of scanning
+for `mcu/*-mplabx/Makefile`s (all 29 deleted). The `build` job's per-
+module `make -C <dir> MCU=<variant> ...` also changed shape: resolution
+(reading the manifest, computing sources) needs python3 and runs in a
+preceding `discover`-job step on the bare runner; the emitted POSIX `sh`
+script is what actually runs inside the toolchain container, which has
+no python3 (`docker/ci-toolchain/Dockerfile`, deliberate). Below is
+Phase 1's own account of the pre-manifest design, left as history.
+
 Status: **Phase 0 done** (`.github/workflows/host-tests.yml`,
 `scripts/pre-commit-checks.sh` extended with `PRE_COMMIT_BASE_REF` for CI
 reuse; first push to `master` after landing it went green, all 20 jobs,

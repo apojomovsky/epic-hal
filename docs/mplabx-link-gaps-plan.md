@@ -1,13 +1,16 @@
 # `mcu/*-mplabx/Makefile` link gaps: real bugs found by first real CI, fix plan
 
-Status: **identified, not started**. Found by `xc8-build.yml` (Phase 1 of
-`docs/ci-plan.md`)'s first fully-working run
+Status: **identified, not started; tracking moved**. Found by
+`xc8-build.yml` (Phase 1 of `docs/ci-plan.md`)'s first fully-working run
 (https://github.com/apojomovsky/epicurus/actions/runs/30719090416): 40 of
 112 `(module, MCU)` build legs failed, all with real XC8 compiler/linker
-errors, not CI plumbing. Excluded from `xc8-build.yml`'s matrix for now
-(`scripts/ci-discover-xc8-matrix.py`'s `KNOWN_BROKEN` list) so Phase 1
-could land green; this document is where that exclusion list's debt
-actually gets paid down.
+errors, not CI plumbing. Originally excluded from `xc8-build.yml`'s
+matrix via `scripts/ci-discover-xc8-matrix.py`'s `KNOWN_BROKEN` list so
+Phase 1 could land green; that list has since been replaced by
+`excluded` entries in `epic-common/manifest/modules.toml` (see
+`docs/superpowers/plans/2026-08-05-manifest-and-build-driver.md`), which
+is where this debt is now tracked. This document is still where the fix
+plan for each root cause lives.
 
 ## Why this exists
 
@@ -58,16 +61,15 @@ not MCU-specific, it's a fixed set of missing translation units)**:
   GPIO + Timer0; the PIC16 side already compiles the full peripheral
   set and links fine)
 
-**Fix**: add the missing peripheral `.c` files to each Makefile's
-`EPIC_SOURCES`, matching what `pic16f87xa-hal/mcu/pic16f87xa-mplabx/
-Makefile` (or the PIC18 equivalent) already compiles, the two Makefiles
-that do link successfully. Before doing this at scale, worth deciding
-whether `pic16_irq_dispatch.c`'s "always require every handler" design
-is actually the right contract for a module that only cares about one
-peripheral, an alternative is a per-module or per-target dispatch that
-only calls the handlers actually compiled in, but that's a bigger
-design change than patching `EPIC_SOURCES` lists, flagged here, not
-decided.
+**Fix**: `EPIC_SOURCES` lists no longer exist; the manifest
+(`epic-common/manifest/modules.toml`) compiles the family's full
+`hal_sources` set for every module unconditionally, so this specific
+class of failure (a module's own source list quietly omitting a
+peripheral) cannot recur. What remains is the design question of
+whether `pic16_irq_dispatch.c`'s "always require every handler"
+contract is worth replacing with a per-module or per-target dispatch
+that only calls the handlers actually compiled in, an open design
+change, not decided here.
 
 ## Root cause 2: real RAM/resource overflow on the smaller MCU variants
 
@@ -164,9 +166,13 @@ unconditionally compiled into every module's `EPIC_SOURCES` defeats it).
    are "never supported, fix the documented MCU list" or "fixable RAM
    waste, fix the build." Not obviously the same answer for every module
    in the table above.
-2. Fix root cause 1 by completing each affected Makefile's `EPIC_SOURCES`
-   (or revisit the dispatch contract first, see above).
-3. As each module gets fixed, remove its entries from
-   `scripts/ci-discover-xc8-matrix.py`'s `KNOWN_BROKEN` list so
-   `xc8-build.yml` starts actually covering it again, that list shrinking
-   to empty is this document's exit criterion.
+2. Fix root cause 1, either by revisiting the dispatch contract (see
+   above) or, once that's settled, adding the module's real per-family
+   `hal_sources` need to the manifest.
+3. As each module gets fixed, remove its entry from the `excluded`
+   table in `epic-common/manifest/modules.toml` and add the part back to
+   that module's `supported` list, so `xc8-build.yml` starts covering it
+   again. Every `excluded` table being empty is this document's exit
+   criterion. (Was `scripts/ci-discover-xc8-matrix.py`'s `KNOWN_BROKEN`
+   set before the build manifest replaced it, see
+   `epic-common/manifest/README.md`.)

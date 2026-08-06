@@ -76,7 +76,8 @@ epic-common/                     shared layer reused by every family
 │                              epic_harness.h (the 4-fn harness contract),
 │                              epic_irq.h (the shared EPIC_IRQ_Priority enum)
 ├── src/core/                  epic_harness_target.c (family-blind no-ops)
-├── cmake/  mk/                shared epic_family.cmake / epic_family.mk
+├── cmake/                     shared epic_family.cmake (host build)
+├── manifest/                  modules.toml (real-target build, see its own README.md)
 └── MANUAL.md                  this document
 
 <family>-hal/                    e.g. pic16f87xa-hal/, pic18fxx5x-hal/

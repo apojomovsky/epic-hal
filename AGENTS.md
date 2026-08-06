@@ -25,9 +25,9 @@ PIC16F193X, see `docs/pic16f193x-plan.md`).
 
 Every `epic-*` module: `README.md`, often `docs/ARCHITECTURE.md` +
 `docs/API.md`, host-testable via CMake (`cmake -B build && cmake
---build build && ctest`), real-target via `mcu/<family>-*-mplabx/
-Makefile` (`make MCU=...`). No top-level build, build each module
-directly. Each HAL additionally has `MANUAL.md`, datasheet-cited
+--build build && ctest`), real-target via `python3 scripts/epic_build.py
+build --module <name> --mcu <MCU> --run`. No top-level build, build each
+module directly. Each HAL additionally has `MANUAL.md`, datasheet-cited
 per-peripheral register reference; `epic-common/MANUAL.md` covers
 shared conventions (naming, handle pattern, harness, interrupt model),
 family manuals only cover what's actually per-family.
@@ -36,7 +36,7 @@ family manuals only cover what's actually per-family.
 
 Two paths, pick either. **Native**: XC8/MPLAB X installed by hand
 (license-gated), `export PATH=$PATH:/opt/microchip/xc8/v3.10/bin`,
-`make MCU=...` in a module's `mcu/*-mplabx/` dir;
+`python3 scripts/epic_build.py build --module <name> --mcu <MCU> --run`;
 `./scripts/bootstrap.sh` covers the host-sim side only. **Docker** (no
 local installs beyond two vendor files only a human can fetch,
 Microchip's CDN blocks scripted downloads): root `Makefile`, `make
@@ -60,10 +60,10 @@ cmake --build build && ctest` (native) or `make test MODULE=<dir>`
 (Docker), repeat. Only move to real-target + `mdb` once the host-sim
 example passes, that loop is much slower.
 
-Real-target build: `make MCU=...` in the module's `mcu/*-mplabx/` dir
-(native) or `make xc8-build MODULE=<dir> MCU=<mcu>` (Docker).
-`scripts/sim-mdb-run.sh` runs the `mdb` gate either way, inside the
-container or directly if `xc8-cc`/`mdb.sh` are on `PATH` and
+Real-target build: `python3 scripts/epic_build.py build --module <name>
+--mcu <mcu> --run` (native) or `make xc8-build MODULE=<name> MCU=<mcu>`
+(Docker). `scripts/sim-mdb-run.sh` runs the `mdb` gate either way, inside
+the container or directly if `xc8-cc`/`mdb.sh` are on `PATH` and
 `$XC8_INSTALL_DIR` is set the same way (its own header comment covers
 direct use); `make mdb-test` is just the Docker-wrapped call to it.
 
@@ -81,6 +81,10 @@ codebase so far.
 
 ## Non-obvious things that will bite you
 
+- **The toolchain container has no python3.** `epic_build.py` therefore
+  resolves the manifest and emits a `sh` script rather than calling
+  `xc8-cc` itself; resolution runs on the host or CI runner, execution
+  runs in the container. Do not "simplify" this into a direct call.
 - **XC8 inline asm is not GNU extended asm.** No operand constraints.
   Only file-scope `static volatile` symbols are addressable. PIC16 user
   globals need a leading `_` in the asm string; SFRs don't. STATUS bits

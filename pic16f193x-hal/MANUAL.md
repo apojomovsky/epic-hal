@@ -45,7 +45,7 @@ Real target (needs the PIC12-16F1xxx DFP):
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-make -C mcu/pic16f193x-mplabx MCU=16F1937
+python3 scripts/epic_build.py build --module epic-pic16f193x-firmware --mcu 16F1937 --run
 ```
 
 ## 4. Build systems
@@ -53,10 +53,10 @@ make -C mcu/pic16f193x-mplabx MCU=16F1937
 Host build: `CMakeLists.txt`, a thin caller of
 `epic-common/cmake/epic_family.cmake`. Include path puts `include/host`
 first (memory-backed SFR), links the `_sim.c` halves. Target build:
-`mcu/pic16f193x-mplabx/Makefile`, a thin caller of
-`epic-common/mk/epic_family.mk`, puts `include/target` first
-(volatile-deref SFR), links the `_target.c` halves. The split is by
-include path + linked file, never `#ifdef`.
+manifest-driven (`epic-common/manifest/modules.toml`'s
+`families.PIC16F193X`), puts `include/target` first (volatile-deref
+SFR), links the `_target.c` halves. The split is by include path +
+linked file, never `#ifdef`.
 
 ## 5. Datasheet citations
 

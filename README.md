@@ -128,20 +128,21 @@ See [Development](#development) for the full command reference and
 
 ### Real hardware
 
-One Makefile per family under each module's `mcu/` dir:
+A manifest-driven build driver, not per-module Makefiles: `epic-common/manifest/modules.toml` is the single source of truth for what
+each module compiles and which parts it supports.
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-cd epic-taskmgr/mcu/pic16f87xa-taskmgr-mplabx
-make MCU=16F877A        # also 873A / 874A / 876A
+python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F877A --run
 ```
 
-Produces `build/<MCU>-multi-blink.hex`, program with MPLAB X or any
-programmer. See [epic-taskmgr/README.md](epic-taskmgr/README.md) for
-wiring, the family `MANUAL.md` (e.g.
-[pic16f87xa-hal/MANUAL.md](pic16f87xa-hal/MANUAL.md)) for peripheral
-bring-up, and [docs/adding-a-device.md](docs/adding-a-device.md) for
-adding a new part or family.
+Also 873A / 874A / 876A. Produces `build/16F877A-multi-blink.hex`,
+program with MPLAB X or any programmer. See
+[epic-taskmgr/README.md](epic-taskmgr/README.md) for wiring, the family
+`MANUAL.md` (e.g. [pic16f87xa-hal/MANUAL.md](pic16f87xa-hal/MANUAL.md))
+for peripheral bring-up, [epic-common/manifest/README.md](epic-common/manifest/README.md)
+for the manifest schema, and [docs/adding-a-device.md](docs/adding-a-device.md)
+for adding a new part or family.
 
 ## Modules
 
@@ -255,9 +256,8 @@ make image            # build the toolchain image locally (once; cached after)
 make test             # host-sim build + test, every module
 make test MODULE=epic-lcd   # ... or just one
 
-make xc8-build MODULE=pic16f193x-hal MCU=16F1937   # real-target build
-make mdb-test MODULE=epic-tick/mcu/pic16f87xa-tick-mplabx \
-  MCU=16F877A DEVICE=PIC16F877A DFP=Microchip.PIC16Fxxx_DFP  # the mdb gate
+make xc8-build MODULE=epic-tick MCU=16F877A   # real-target build
+make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A  # the mdb gate
 
 make shell             # interactive shell, repo mounted at /repo
 ```

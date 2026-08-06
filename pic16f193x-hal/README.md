@@ -47,7 +47,8 @@ stages: host simulation, six-part real-target XC8 build, and the mdb
       GPIO, IOC, EUSART TRMT, EEPROM 256-byte model)
 - [x] Test harness (bounded host run, real-target firmware, MODE=gpio
       RA0 PASS/FAIL marker for the mdb gate)
-- [x] MPLAB X / XC8 project (`mcu/pic16f193x-mplabx/Makefile`, all 6 parts)
+- [x] Real-target build (manifest-driven, `epic-pic16f193x-firmware`
+      module, all 6 parts)
 
 ## Quick start
 
