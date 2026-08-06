@@ -166,5 +166,71 @@ class TestFileSelection(unittest.TestCase):
         self.assertEqual(self.files, sorted(set(self.files)))
 
 
+class TestEpicurusMk(unittest.TestCase):
+    def setUp(self):
+        self.mk = bundlegen.emit_epicurus_mk(load(), "PIC16F87XA", "v0.1.0")
+
+    def test_declares_the_family_and_version(self):
+        self.assertIn("PIC16F87XA", self.mk)
+        self.assertIn("v0.1.0", self.mk)
+
+    def test_maps_short_module_names_to_full_ones(self):
+        self.assertIn("EPICURUS_MODULE_serial := epic-serial", self.mk)
+        self.assertIn("EPICURUS_MODULE_tick := epic-tick", self.mk)
+
+    def test_flattens_dependencies_at_generation_time(self):
+        self.assertIn(
+            "EPICURUS_RESOLVED_epic-serial := epic-tick epic-serial", self.mk
+        )
+
+    def test_lists_supported_parts_per_module(self):
+        self.assertIn(
+            "EPICURUS_SUPPORTED_epic-serial := 16F877A", self.mk
+        )
+        self.assertIn(
+            "EPICURUS_SUPPORTED_epic-tick := 16F873A 16F877A", self.mk
+        )
+
+    def test_carries_the_exclusion_reason(self):
+        self.assertIn(
+            "EPICURUS_WHYNOT_epic-serial_16F873A := "
+            "RAM: 32-byte g_rx_buf does not fit",
+            self.mk,
+        )
+
+    def test_hal_sources_are_prefixed_with_the_bundle_dir(self):
+        self.assertIn(
+            "$(EPICURUS_DIR)/pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+            self.mk,
+        )
+
+    def test_module_sources_are_prefixed_with_the_bundle_dir(self):
+        self.assertIn("$(EPICURUS_DIR)/epic-serial/src/epic_serial.c", self.mk)
+
+    def test_includes_are_prefixed_and_ordered(self):
+        self.assertIn(
+            "-I$(EPICURUS_DIR)/pic16f87xa-hal/include/target "
+            "-I$(EPICURUS_DIR)/pic16f87xa-hal/include",
+            self.mk,
+        )
+
+    def test_errors_on_an_unset_mcu(self):
+        self.assertIn("EPICURUS_MCU is not set", self.mk)
+
+    def test_errors_on_an_unsupported_pair(self):
+        self.assertIn("$(error", self.mk)
+        self.assertIn("is not supported on", self.mk)
+
+    def test_defines_the_part_macro_and_dfp(self):
+        self.assertIn("-DPIC$(EPICURUS_MCU)", self.mk)
+        self.assertIn("Microchip.PIC16Fxxx_DFP", self.mk)
+
+    def test_excludes_the_family_hal_wrapper_pseudo_module(self):
+        # Same rule as modules_for_family: PIC16F193X's epicurus.mk must
+        # not map a short name for epic-pic16f193x-firmware.
+        mk193x = bundlegen.emit_epicurus_mk(load(), "PIC16F193X", "v0.1.0")
+        self.assertNotIn("EPICURUS_MODULE_pic16f193x-firmware", mk193x)
+
+
 if __name__ == "__main__":
     unittest.main()
