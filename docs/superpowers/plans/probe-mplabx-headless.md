@@ -1,12 +1,15 @@
 # Probe: can MPLAB X projects be built headlessly in the toolchain image?
 
-Verdict: **UNTESTED** (mechanism confirmed present; not yet exercised
-against a real project). Re-probe once Task 2 creates a genuine,
-complete `.X` project, before Task 4 needs the final YES/NO answer.
+Verdict: **YES**. Re-run against the real `examples/epicurus-demo-pic16f87xa.X`
+project (PIC16F87XA, XC8 v4.00) on 2026-08-06: `prjMakefilesGenerator.sh`
+plus `make -f nbproject/Makefile-default.mk SUBPROJECTS= .build-conf`
+compiles every source, links, and emits a real `.hex` under `dist/`, with
+no MPLAB X GUI involved.
 
-Run on 2026-08-06 against image tag
+First run: 2026-08-06 against image tag
 `ghcr.io/apojomovsky/pic8-hal-ci:xc8-v4.00-dfp1.7.162-1.7.171-1.9.258-mplabx6.35`
-(local cache, same tag CI resolves).
+(local cache, same tag CI resolves). Re-run: same tag, same day, once
+Task 2's first real project existed.
 
 ## What was run
 
@@ -97,12 +100,42 @@ shape, but it cannot stand in for a real project in this probe.
 The toolchain mechanism (`prjMakefilesGenerator.sh` + `make -f
 nbproject/Makefile-default.mk`) is present and runnable in the
 container; whether it actually **builds** a real Epicurus reference
-project headlessly is not yet known, because there is no complete
-project to test it against. That is exactly what Task 2 creates.
+project headlessly was not yet known when Step 2 above was written,
+because there was no complete project to test it against. Task 2
+created one (`examples/epicurus-demo-pic16f87xa.X`), which made the
+re-probe below possible.
 
-**Action for Task 4:** re-run this probe against one of Task 2's real
-`.X` projects (once a human has created it in the MPLAB X GUI and
-committed it) before deciding which of Task 4's two branches to take.
-Until then, Task 4 should default to the presence-check path (Step 1b)
-rather than assume Step 1a works, and the probe should be updated with
-a real YES/NO once re-run.
+### Step 3: re-run against a real project
+
+```sh
+cd examples/epicurus-demo-pic16f87xa.X
+"$MPLABX_INSTALL_DIR/mplab_platform/bin/prjMakefilesGenerator.sh" .
+make -f nbproject/Makefile-default.mk SUBPROJECTS= .build-conf
+find dist -iname '*.hex'
+```
+
+Output (trimmed to the parts that matter):
+
+```
+16F877A Memory Summary:
+    Program space        used   E93h (  3731) of  2000h words   ( 45.5%)
+    Data space           used   16Bh (   363) of   170h bytes   ( 98.6%)
+    EEPROM space         used     0h (     0) of   100h bytes   (  0.0%)
+    Configuration bits   used     1h (     1) of     1h word    (100.0%)
+    ID Location space    used     0h (     0) of     4h bytes   (  0.0%)
+
+make[1]: Leaving directory '/repo/examples/epicurus-demo-pic16f87xa.X'
+```
+
+```
+dist/default/production/epicurus-demo-pic16f87xa.X.production.hex
+```
+
+The generator produced `nbproject/Makefile-default.mk` with no errors,
+`make .build-conf` compiled every linked module and the project's own
+`main.c`, and a real `.hex` landed under `dist/default/production/`.
+No MPLAB X GUI, `mdb`, or any other interactive step was involved.
+
+**Action for Task 4:** take the Step 1a branch (build the project in
+CI), not the presence-check fallback. The `.build-conf` target above is
+exactly what CI should invoke per bundle.
