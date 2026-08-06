@@ -90,12 +90,52 @@ jobs:
           echo "pairs<<EOF" >> "$GITHUB_OUTPUT"
           cat pairs.txt >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
+      - name: Emit a build script for every sim variant
+        # Only the three (module, family) pairs sim-tests.yml actually
+        # drives have a sim variant, hence a separate, much shorter list
+        # from the full target matrix above. build_key mirrors the gate
+        # script's own convention (module-sim), a distinct build dir
+        # since the sim variant's generated config_<mcu>.c differs from
+        # the target variant's and both would otherwise collide.
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          xc8_install_dir="/opt/microchip/xc8/v${xc8_version}"
+          XC8_INSTALL_DIR="$xc8_install_dir" python3 - <<'PY' > sim-pairs.txt
+          import os, subprocess, sys
+          sys.path.insert(0, "scripts")
+          import epicmanifest
+          m = epicmanifest.load(epicmanifest.default_path())
+          xc8_install_dir = os.environ["XC8_INSTALL_DIR"]
+          for name in sorted(m.modules):
+              mod = m.modules[name]
+              for fam_name, mcus in sorted(mod.supported.items()):
+                  fam = m.families[fam_name]
+                  for mcu in mcus:
+                      if m.sim_variant_for(name, fam_name) is None:
+                          continue
+                      key = fam.hal_dir.replace("-hal", "")
+                      if mod.dir == fam.hal_dir:
+                          d = f"{mod.dir}/mcu/{key}-mplabx"
+                      else:
+                          d = f"{name}/mcu/{key}-{name.replace('epic-','')}-mplabx"
+                      print(f"{d}={mcu}")
+                      dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
+                      subprocess.run(
+                          ["python3", "scripts/epic_build.py", "build",
+                           "--module", name, "--mcu", mcu,
+                           "--build-dir", f"build-manifest/{mod.dir}-sim",
+                           "--dfp-dir", dfp_dir, "--variant", "sim"],
+                          check=True, stdout=subprocess.DEVNULL,
+                      )
+          PY
+          cat sim-pairs.txt
       - uses: actions/upload-artifact@v4
         with:
           name: emitted-scripts
           path: |
             build-manifest/
             pairs.txt
+            sim-pairs.txt
 
   compare:
     needs: [toolchain-image, emit]
@@ -114,7 +154,7 @@ jobs:
         shell: bash
         run: |
           chmod +x scripts/equivalence-gate.sh
-          DFP_ROOT="$XC8_INSTALL_DIR/pic/packs" \
+          DFP_ROOT="$XC8_INSTALL_DIR/pic/packs" SIM_PAIRS_FILE="sim-pairs.txt" \
             sh scripts/equivalence-gate.sh < pairs.txt | tee gate.log
           {
             echo '### Manifest equivalence'
