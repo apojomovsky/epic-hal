@@ -1,5 +1,22 @@
 # CI: host tests, XC8 cross-compile, MPLAB SIM target tests, implementation plan
 
+**Post-consolidation update, see
+`docs/superpowers/plans/2026-08-06-ci-consolidation.md`:** the four
+workflow files this document describes (`host-tests.yml`, `xc8-build.yml`,
+`sim-tests.yml`, `bundle-gate.yml`) were later merged into one,
+`.github/workflows/ci.yml`, two jobs (`host`, `target`) instead of the
+~14 job definitions (several matrixed per family or per module) the
+four files had grown to, which produced 26+ individual PR checks for
+even a one-line change. `target` absorbs the old `xc8-build`/`sim-tests`/
+`bundle-gate` jobs as sequential steps, invoking `docker run` directly
+per step (bind-mounting the checkout) instead of the job-level
+`container:` field each of those used, since mixing python3-only steps
+(manifest resolution, unavailable inside the toolchain image) with
+`xc8-cc`/`mdb.sh` steps in one job needs that. The phase-by-phase
+history below is left as-is, a historical record of how the original
+four-workflow split was designed, not a description of the current job
+set.
+
 **Post-Phase-4 update, see `docs/docker-dev-plan.md`:** the toolchain
 image `ci-assets`/`ci-assets-mplabx`/`toolchain-image` jobs documented
 below (Phase 1/2's own account) were later simplified: CI now only

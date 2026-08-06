@@ -50,3 +50,8 @@ docker/ci-toolchain/vendor/
 
 # Release bundles are build output, never committed.
 bundles/
+
+# CI's ci.yml target job: manifest-resolved build matrix and per-step
+# PASS/FAIL summaries, all repo-root-relative build output.
+/matrix.txt
+/ci-summary-*.md
