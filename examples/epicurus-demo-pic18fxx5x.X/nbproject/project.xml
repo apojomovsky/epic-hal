@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>com.microchip.mplab.nbide.embedded.makeproject</type>
+    <configuration>
+        <data xmlns="http://www.netbeans.org/ns/make-project/1">
+            <name>epicurus-demo-pic18fxx5x</name>
+            <creation-uuid>d6c8e830-df42-493a-aa91-15deaf3faa29</creation-uuid>
+            <make-project-type>0</make-project-type>
+            <sourceEncoding>ISO-8859-1</sourceEncoding>
+            <make-dep-projects/>
+            <sourceRootList>
+                <sourceRootElem>../../epic-adcfilter/src</sourceRootElem>
+                <sourceRootElem>../../epic-bus/src</sourceRootElem>
+                <sourceRootElem>../../epic-common/src/core</sourceRootElem>
+                <sourceRootElem>../../epic-debounce/src</sourceRootElem>
+                <sourceRootElem>../../epic-encoder/src</sourceRootElem>
+                <sourceRootElem>../../epic-fsm/src</sourceRootElem>
+                <sourceRootElem>../../epic-math/src/common</sourceRootElem>
+                <sourceRootElem>../../epic-math/src/pic18</sourceRootElem>
+                <sourceRootElem>../../epic-modbus/src</sourceRootElem>
+                <sourceRootElem>../../epic-pid/src</sourceRootElem>
+                <sourceRootElem>../../epic-serial/src</sourceRootElem>
+                <sourceRootElem>../../epic-tick/src</sourceRootElem>
+                <sourceRootElem>../../pic18fxx5x-hal/src/core</sourceRootElem>
+                <sourceRootElem>../../pic18fxx5x-hal/src/peripherals</sourceRootElem>
+            </sourceRootList>
+            <confList>
+                <confElem>
+                    <name>default</name>
+                    <type>2</type>
+                </confElem>
+            </confList>
+            <formatting>
+                <project-formatting-style>false</project-formatting-style>
+            </formatting>
+        </data>
+    </configuration>
+</project>

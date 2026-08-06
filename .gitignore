@@ -50,3 +50,7 @@ docker/ci-toolchain/vendor/
 
 # Release bundles are build output, never committed.
 bundles/
+
+# Reference MPLAB X projects' build output (build*/ above already
+# catches build/, dist/ is MPLAB X's own separate output dir).
+/examples/*/dist/
