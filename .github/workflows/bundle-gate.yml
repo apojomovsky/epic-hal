@@ -1,0 +1,151 @@
+name: bundle-gate
+
+# Proves each generated bundle is genuinely self-contained: it is copied
+# to a scratch directory OUTSIDE the repo checkout and built there. In
+# place, a file missing from the bundle could still resolve through the
+# repo's own sibling layout and the build would pass while the bundle
+# was broken for every real consumer.
+#
+# Bundles are generated on the runner (python3) and built in the
+# toolchain container (xc8-cc, no python3).
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  toolchain-image:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: resolve
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
+          echo "image=ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}" >> "$GITHUB_OUTPUT"
+      - run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - run: docker pull "${{ steps.resolve.outputs.image }}"
+
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate every bundle
+        run: |
+          python3 - <<'PY' > families.txt
+          import sys
+          sys.path.insert(0, "scripts")
+          import epicmanifest
+          m = epicmanifest.load(epicmanifest.default_path())
+          for name in sorted(m.families):
+              print(name)
+          PY
+          while read -r fam; do
+            python3 scripts/make_bundle.py --family "$fam" --version ci-test
+          done < families.txt
+          ls -la bundles/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bundles
+          path: bundles/
+
+  build-isolated:
+    needs: [toolchain-image, generate]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ needs.toolchain-image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: bundles
+          path: /tmp/bundles
+      - name: Build each bundle from outside any repo checkout
+        shell: bash
+        run: |
+          # /isolated deliberately has no repo above it: a path escaping
+          # the bundle cannot accidentally resolve.
+          mkdir -p /isolated && cd /isolated
+          fail=0
+          {
+            echo "| Bundle | Module | Part | Result |"
+            echo "|---|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          for tarball in /tmp/bundles/*.tar.gz; do
+            name="$(basename "$tarball" .tar.gz)"
+            rm -rf "/isolated/$name"
+            tar xzf "$tarball" -C /isolated
+            cd "/isolated/$name"
+
+            # Pick the first supported (module, part) pair straight out
+            # of the bundle's own SUPPORT.md table, so this tests what a
+            # consumer would actually be told to do.
+            module=""
+            part=""
+            while IFS= read -r row; do
+              case "$row" in
+                "| \`epic-"*)
+                  m="$(echo "$row" | sed 's/^| `\([^`]*\)`.*/\1/' | sed 's/^epic-//')"
+                  col=0
+                  IFS='|' read -ra cells <<< "$row"
+                  for cell in "${cells[@]:2}"; do
+                    trimmed="$(echo "$cell" | tr -d ' ')"
+                    if [ "$trimmed" = "yes" ]; then
+                      part="$(sed -n 's/^| Module | //p' SUPPORT.md \
+                        | head -1 | tr -d ' ' | cut -d'|' -f$((col + 1)))"
+                      module="$m"
+                      break
+                    fi
+                    col=$((col + 1))
+                  done
+                  ;;
+              esac
+              [ -n "$module" ] && break
+            done < SUPPORT.md
+
+            if [ -z "$module" ]; then
+              echo "| $name | (none) | (none) | SKIP: HAL-only bundle |" \
+                >> "$GITHUB_STEP_SUMMARY"
+              cd /isolated
+              continue
+            fi
+
+            dfp_name="$(grep -m1 '^EPICURUS_DFP' epicurus.mk | awk '{print $3}')"
+            cat > Makefile <<EOF
+          EPICURUS_DIR := .
+          EPICURUS_MCU := $part
+          EPICURUS_MODULES := $module
+          include \$(EPICURUS_DIR)/epicurus.mk
+          DFP := $XC8_INSTALL_DIR/pic/packs/$dfp_name/xc8
+          all:
+          	xc8-cc -mdfp=\$(DFP) -mcpu=\$(shell echo \$(EPICURUS_MCU) | tr A-Z a-z) \\
+          	  -O2 -std=c99 -Wall -Wextra \$(EPICURUS_CFLAGS) -DFOSC_HZ=20000000 \\
+          	  \$(EPICURUS_SRCS) main.c -o app.hex -ginhx32
+          EOF
+            printf 'void main(void) { for (;;) { } }\n' > main.c
+
+            if make >build.log 2>&1 && [ -f app.hex ]; then
+              echo "| $name | $module | $part | PASS |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| $name | $module | $part | FAIL |" >> "$GITHUB_STEP_SUMMARY"
+              echo "::group::$name build log"; cat build.log; echo "::endgroup::"
+              fail=1
+            fi
+            cd /isolated
+          done
+          exit "$fail"
