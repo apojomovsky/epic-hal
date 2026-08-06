@@ -158,17 +158,23 @@ xc8-build: image
 # ─────────────────────────── mdb / MPLAB SIM gate ────────────────────
 # Thin wrapper around scripts/sim-mdb-run.sh, the exact same script CI
 # and scripts/sim-test-local.sh call, so there is one source of truth
-# for the mdb command sequence, not a fourth copy of it here.
+# for the mdb command sequence, not a fourth copy of it here. Resolution
+# (epic_build.py build --variant sim, needs python3) runs on the host,
+# before $(DOCKER_RUN); sim-mdb-run.sh itself only ever executes the
+# pre-emitted script plus mdb.sh inside the container, which has no
+# python3.
 mdb-test: image
-	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ] || [ -z "$(DFP)" ]; then \
-		echo "usage: make mdb-test MODULE=<mcu/*-mplabx dir> MCU=<mcu> DEVICE=<device> DFP=<pack> [WAIT_MS=<ms>] [MODE=uart|gpio]" >&2; \
+	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
+		echo "usage: make mdb-test MODULE=<manifest module> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio]" >&2; \
 		echo "  MODE=uart (default) for PIC16F87XA/PIC18Fxxxx (UART capture);" >&2; \
 		echo "  MODE=gpio for PIC16F193X (RA0 register readback)." >&2; \
-		echo "  SIM_APP=<tests/*.c file> to pick which peripheral's HARNESS=sim example is gated (default: whatever pic16f193x-mplabx/Makefile's own SIM_APP default is, currently example_timer1.c)." >&2; \
-		echo "  e.g. make mdb-test MODULE=epic-tick/mcu/pic16f87xa-tick-mplabx MCU=16F877A DEVICE=PIC16F877A DFP=Microchip.PIC16Fxxx_DFP" >&2; \
+		echo "  e.g. make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A" >&2; \
 		exit 1; \
 	fi
-	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(DFP) $(or $(WAIT_MS),2000) $(or $(MODE),uart) $(SIM_APP)
+	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --variant sim \
+	  --build-dir build-sim/$(MODULE) \
+	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
+	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(or $(WAIT_MS),2000) $(or $(MODE),uart)
 
 # ─────────────────────────── dev shell ───────────────────────────────
 # Same --user/passwd/HOME fix as DOCKER_RUN (see its comment); a plain

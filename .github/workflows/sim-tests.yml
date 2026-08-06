@@ -34,6 +34,12 @@ name: sim-tests
 # see Phase 2's `set`-before-`hwtool` gotcha) in one place instead of
 # duplicated across a growing number of near-identical files once Phase
 # 5 rolls this out to every module.
+#
+# matrix.module names a manifest module (epic-common/manifest/
+# modules.toml), not an mcu/*-mplabx path: sim-mdb-run.sh resolves the
+# HARNESS=sim build via scripts/epic_build.py build --variant sim,
+# which reads the module's DFP and sim-variant sources straight from
+# the manifest, so neither is a separate matrix field any more.
 
 on:
   push:
@@ -109,8 +115,49 @@ jobs:
           fi
           echo "result=$result" >> "$GITHUB_OUTPUT"
 
+  # Resolution runs here, on a bare runner with python3, not inside the
+  # toolchain container sim-test uses below (which deliberately has
+  # none, docker/ci-toolchain/Dockerfile). Emits one HARNESS=sim build
+  # script per matrix entry via scripts/epic_build.py build --variant
+  # sim; sim-mdb-run.sh (inside the container) only ever executes a
+  # pre-emitted script plus mdb.sh, mirroring the split xc8-build.yml
+  # and manifest-equivalence.yml already use.
+  emit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Emit a HARNESS=sim build script for each sim-tests entry
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          xc8_install_dir="/opt/microchip/xc8/v${xc8_version}"
+          XC8_INSTALL_DIR="$xc8_install_dir" python3 - <<'PY'
+          import os, subprocess, sys
+          sys.path.insert(0, "scripts")
+          import epicmanifest
+          m = epicmanifest.load(epicmanifest.default_path())
+          xc8_install_dir = os.environ["XC8_INSTALL_DIR"]
+          for module, mcu in [
+              ("epic-tick", "16F877A"),
+              ("epic-tick", "18F4550"),
+              ("epic-pic16f193x-firmware", "16F1937"),
+          ]:
+              fam = m.family_of(mcu)
+              dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
+              subprocess.run(
+                  ["python3", "scripts/epic_build.py", "build",
+                   "--module", module, "--mcu", mcu, "--variant", "sim",
+                   "--build-dir", f"build-sim/{module}",
+                   "--dfp-dir", dfp_dir],
+                  check=True,
+              )
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sim-build-scripts
+          path: build-sim/
+
   sim-test:
-    needs: [toolchain-image, docs-check]
+    needs: [toolchain-image, docs-check, emit]
     if: needs.docs-check.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     container:
@@ -125,22 +172,23 @@ jobs:
           - family: pic16f87xa
             mcu: 16F877A
             device: PIC16F877A
-            dir: epic-tick/mcu/pic16f87xa-tick-mplabx
-            dfp: Microchip.PIC16Fxxx_DFP
+            module: epic-tick
           - family: pic18fxx5x
             mcu: 18F4550
             device: PIC18F4550
-            dir: epic-tick/mcu/pic18fxx5x-tick-mplabx
-            dfp: Microchip.PIC18Fxxxx_DFP
+            module: epic-tick
           - family: pic16f193x
             mcu: 16F1937
             device: PIC16F1937
-            dir: pic16f193x-hal/mcu/pic16f193x-mplabx
-            dfp: Microchip.PIC12-16F1xxx_DFP
+            module: epic-pic16f193x-firmware
             mode: gpio
             wait_ms: 60000
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sim-build-scripts
+          path: build-sim/
       - name: Build + run under MPLAB SIM (mdb), check the PASS/FAIL marker
         # scripts/sim-mdb-run.sh: the exact same script scripts/sim-test-
         # local.sh calls for a local repro run against the same toolchain
@@ -179,7 +227,7 @@ jobs:
         shell: bash
         run: |
           scripts/sim-mdb-run.sh ${{ matrix.family }} ${{ matrix.mcu }} \
-            ${{ matrix.device }} ${{ matrix.dir }} ${{ matrix.dfp }} \
+            ${{ matrix.device }} ${{ matrix.module }} \
             ${{ matrix.wait_ms || 5000 }} ${{ matrix.mode || 'uart' }}
       - name: Upload captured sim output (debugging aid on failure)
         if: failure()
