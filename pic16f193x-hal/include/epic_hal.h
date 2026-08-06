@@ -8,9 +8,9 @@
  *   provides its own `epic_hal.h` under the same name, selected by
  *   which family's HAL tree is on the include path.
  *
- *   Foundation scope: only the core (IRQ, WDT/Sleep) and the GPIO +
- *   Timer0 peripherals are present. Each peripheral phase appends its
- *   header include here as it is built.
+ *   Foundation scope: core (IRQ, WDT/Sleep), GPIO, Timer0, and Timer1
+ *   peripherals. Each additional peripheral phase appends its header
+ *   include here as it is built.
  */
 
 #ifndef EPIC_H
@@ -26,5 +26,6 @@
 /* Peripherals. */
 #include "peripherals/pic16f193x_gpio.h"
 #include "peripherals/pic16f193x_timer0.h"
+#include "peripherals/pic16f193x_timer1.h"
 
 #endif /* EPIC_H */
