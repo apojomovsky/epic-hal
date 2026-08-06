@@ -4,7 +4,8 @@ One declarative description of what every module needs and where it
 builds. Three consumers read it and nothing else encodes the knowledge:
 
 - `scripts/epic_build.py`, the real-target build driver
-- `scripts/epic_build.py matrix`, which feeds `xc8-build.yml`
+- `scripts/epic_build.py matrix`, which feeds `.github/workflows/ci.yml`'s
+  `target` job
 - `scripts/make_bundle.py`, which generates release bundles
 
 ## Path conventions
