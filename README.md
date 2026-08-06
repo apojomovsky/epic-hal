@@ -36,6 +36,7 @@ those families have in common.
   - [Host simulation](#host-simulation)
   - [Docker (no local installs)](#docker-no-local-installs)
   - [Real hardware](#real-hardware)
+  - [Using Epicurus in your own project](#using-epicurus-in-your-own-project)
 - [Modules](#modules)
 - [Documentation](#documentation)
 - [Development](#development)
@@ -143,6 +144,32 @@ program with MPLAB X or any programmer. See
 for peripheral bring-up, [epic-common/manifest/README.md](epic-common/manifest/README.md)
 for the manifest schema, and [docs/adding-a-device.md](docs/adding-a-device.md)
 for adding a new part or family.
+
+### Using Epicurus in your own project
+
+Grab the bundle for your family from
+[Releases](https://github.com/apojomovsky/epicurus/releases), unpack it,
+and point one variable at it:
+
+```make
+EPICURUS_DIR := third_party/epicurus
+EPICURUS_MCU := 16F877A
+EPICURUS_MODULES := serial tick
+include $(EPICURUS_DIR)/epicurus.mk
+
+SRCS := main.c $(EPICURUS_SRCS)
+CFLAGS += $(EPICURUS_CFLAGS)
+```
+
+Dependencies resolve automatically, and asking for a module on a part it
+does not fit fails immediately with the reason rather than as a wall of
+XC8 linker errors. Each bundle carries its own `QUICKSTART.md`,
+`SUPPORT.md`, and `MPLABX.md`, plus a reference MPLAB X project under
+`examples/`.
+
+MPLAB X and the MPLAB extension for VS Code are supported too: open
+`examples/epicurus-demo.X`, or follow `MPLABX.md` to add Epicurus to an
+existing project.
 
 ## Modules
 

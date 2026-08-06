@@ -156,3 +156,21 @@ example with no `config` table in the manifest compiles with no config
 translation unit at all, matching the Makefiles that never had one
 either. `epic-common/manifest/README.md` documents the schema this
 driver reads.
+
+## `make_bundle.py`, the release bundle generator
+
+Assembles a self-contained, per-family source tree from the manifest,
+plus the generated consumer files (`epicurus.mk`,
+`epicurus-sources.json`, `SUPPORT.md`, `QUICKSTART.md`, `MPLABX.md`).
+
+```sh
+python3 scripts/make_bundle.py --family PIC16F87XA --version v0.1.0
+```
+
+Output lands in `bundles/`, which is gitignored: bundles are build
+output, attached to a GitHub Release, never committed.
+
+`bundlegen.py` holds the generation logic and is where every emitted
+file's format lives. `.github/workflows/bundle-gate.yml` proves a bundle
+is self-contained by building it from a scratch directory outside the
+repo.
