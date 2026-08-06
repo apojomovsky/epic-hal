@@ -29,6 +29,16 @@
  * snapshot without ring-buffer or parameter-passing overhead. N=3 has
  * a comfortable 29.9% margin (122/174) and is the production default. */
 #define OVERSAMPLE_N 3u
+#define BAUD 9600u
+
+#define CYCLES_PER_TICK \
+    ((uint32_t)((FOSC_HZ / 4u + ((uint32_t)BAUD * OVERSAMPLE_N) / 2u) \
+                / ((uint32_t)BAUD * OVERSAMPLE_N)))
+
+static void run_ticks(uint32_t software_ticks)
+{
+    for (uint32_t i = 0; i < software_ticks * CYCLES_PER_TICK; i++) epic_harness_tick();
+}
 
 static int g_fails = 0;
 #define CHECK(c, m) do { if (!(c)) { epic_harness_log("FAIL: %s\n", m); g_fails++; } } while (0)
@@ -56,9 +66,9 @@ int main(void)
 
     for (size_t bit = 0; bit < 10; bit++) {
         /* Sample mid-bit: run half the bit's ticks, sample, run the rest. */
-        for (uint32_t t = 0; t < OVERSAMPLE_N / 2u; t++) epic_harness_tick();
+        run_ticks(OVERSAMPLE_N / 2u);
         observed[bit] = SIM_READ('B', 0);
-        for (uint32_t t = OVERSAMPLE_N / 2u; t < OVERSAMPLE_N; t++) epic_harness_tick();
+        run_ticks(OVERSAMPLE_N - OVERSAMPLE_N / 2u);
     }
 
     for (size_t bit = 0; bit < 10; bit++) {
