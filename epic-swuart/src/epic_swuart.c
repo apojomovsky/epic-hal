@@ -241,10 +241,17 @@ static void on_port_change(uint8_t iocbf, uint8_t portb)
     if (g_chan_a != NULL) on_rx_edge_start(g_chan_a);
     if (g_chan_b != NULL) on_rx_edge_start(g_chan_b);
 }
+/* Accumulates the negative-edge mask across every registered channel's
+ * RX pin: unlike classic PIC16/PIC18's RBIF (fires on any RB4:7 change
+ * regardless of a per-pin mask), PIC16F193X's IOC only interrupts on
+ * pins actually set in IOCBN. Called once per registration (see
+ * EPIC_SWUART_Init), so a second channel's pin gets OR'd in rather than
+ * overwriting the first channel's. */
+static uint8_t g_ioc_neg_mask = 0u;
 static void arm_rx_change_interrupt(EPIC_SWUART_HandleTypeDef *h)
 {
-    uint8_t neg_mask = (uint8_t)h->rx_pin;
-    EPIC_GPIO_EnableChangeDetect(0u, neg_mask);
+    g_ioc_neg_mask |= (uint8_t)h->rx_pin;
+    EPIC_GPIO_EnableChangeDetect(0u, g_ioc_neg_mask);
     EPIC_GPIO_RegisterChangeCallback(on_port_change);
     EPIC_IRQ_Enable(PIC16F193X_IRQ_IOC);
 }
@@ -288,13 +295,22 @@ EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
         s_timer1.OverflowCallback = on_timer1_overflow;
         EPIC_TIMER1_Init(&s_timer1);
         EPIC_IRQ_Restore(1);
+    }
+    /* Runs on every successful registration, not just the first: on
+     * PIC16F193X the IOC negative-edge mask must accumulate each
+     * channel's RX pin (see arm_rx_change_interrupt's comment), so the
+     * second channel needs this call too. Re-registering the same
+     * callback and re-enabling an already-enabled IRQ is harmless on
+     * all three families (RegisterChangeCallback is a plain pointer
+     * store, IRQ_Enable only ORs bits), so PIC16F87XA/PIC18Fxx5x's
+     * no-arg variant runs here unconditionally too rather than being
+     * split out to first-registration-only. */
 #if defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
     defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)
-        arm_rx_change_interrupt(h);
+    arm_rx_change_interrupt(h);
 #else
-        arm_rx_change_interrupt();
+    arm_rx_change_interrupt();
 #endif
-    }
 
     uint8_t prev_reg = EPIC_IRQ_Disable();
     if (g_chan_a == NULL) {
