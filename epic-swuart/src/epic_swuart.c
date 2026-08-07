@@ -42,7 +42,6 @@ static uint16_t compute_cycles_per_bit(uint32_t fosc_hz, uint32_t baud)
 static uint16_t g_cycles_per_bit = 0u;
 static uint16_t g_last_delta = 0u;
 static uint8_t  g_timer_running = 0u;
-static uint8_t  g_oversample_n = 3u; /* Still used by rx_step (Task 3 replaces RX's scheduling). */
 
 /* 0xFFFFu is the "not scheduled" sentinel: larger than any real
  * countdown (max 65535 only if FOSC_HZ/baud rounds to exactly that,
@@ -105,19 +104,6 @@ static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 
 static void rx_step(EPIC_SWUART_HandleTypeDef *h)
 {
-    if (h->rx_state == RX_IDLE) {
-        if (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) == GPIO_PIN_RESET) {
-            h->rx_state = RX_CONFIRM_START;
-            h->rx_ticks_left = g_oversample_n / 2u - 1u;
-        }
-        return;
-    }
-
-    if (h->rx_ticks_left != 0u) {
-        h->rx_ticks_left--;
-        return;
-    }
-
     if (h->rx_state == RX_CONFIRM_START) {
         if (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) != GPIO_PIN_RESET) {
             h->rx_state = RX_IDLE; /* noise, not a real start bit */
@@ -126,7 +112,7 @@ static void rx_step(EPIC_SWUART_HandleTypeDef *h)
         h->rx_shift = 0u;
         h->rx_bit_index = 0u;
         h->rx_state = RX_DATA0;
-        h->rx_ticks_left = g_oversample_n - 1u;
+        h->rx_ticks_left = g_cycles_per_bit;
         return;
     }
 
@@ -145,7 +131,7 @@ static void rx_step(EPIC_SWUART_HandleTypeDef *h)
     h->rx_shift = (uint8_t)((h->rx_shift >> 1) | (sample ? 0x80u : 0u));
     h->rx_bit_index++;
     h->rx_state = (h->rx_bit_index < 8u) ? (uint8_t)(RX_DATA0 + h->rx_bit_index) : RX_STOP;
-    h->rx_ticks_left = g_oversample_n - 1u;
+    h->rx_ticks_left = g_cycles_per_bit;
 }
 
 static TIMER1_HandleTypeDef s_timer1 = TIMER1_HANDLE_DEFAULT;
@@ -155,8 +141,8 @@ static EPIC_SWUART_HandleTypeDef *g_chan_b = NULL;
 
 static uint16_t rx_due_in(const EPIC_SWUART_HandleTypeDef *h)
 {
-    (void)h;
-    return SWUART_NOT_SCHEDULED; /* Task 3 replaces this function's body. */
+    if (h->rx_state != RX_IDLE) return h->rx_ticks_left;
+    return SWUART_NOT_SCHEDULED;
 }
 
 static void reschedule(void)
@@ -226,6 +212,56 @@ static void on_timer1_overflow(void)
     reschedule();
 }
 
+static void on_rx_edge_start(EPIC_SWUART_HandleTypeDef *h)
+{
+    if (h->rx_state != RX_IDLE) return; /* mid-frame, not a new start */
+    if (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) != GPIO_PIN_RESET) return;
+    h->rx_state = RX_CONFIRM_START;
+    h->rx_ticks_left = g_cycles_per_bit / 2u;
+    reschedule();
+}
+
+#if defined(PIC18F2455) || defined(PIC18F2550) || defined(PIC18F4455) || defined(PIC18F4550)
+static void on_port_change(uint8_t portb)
+{
+    (void)portb;
+    if (g_chan_a != NULL) on_rx_edge_start(g_chan_a);
+    if (g_chan_b != NULL) on_rx_edge_start(g_chan_b);
+}
+static void arm_rx_change_interrupt(void)
+{
+    EPIC_GPIO_RegisterChangeCallback(on_port_change);
+    EPIC_IRQ_Enable(PIC18_IRQ_RB);
+}
+#elif defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
+      defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)
+static void on_port_change(uint8_t iocbf, uint8_t portb)
+{
+    (void)iocbf; (void)portb;
+    if (g_chan_a != NULL) on_rx_edge_start(g_chan_a);
+    if (g_chan_b != NULL) on_rx_edge_start(g_chan_b);
+}
+static void arm_rx_change_interrupt(EPIC_SWUART_HandleTypeDef *h)
+{
+    uint8_t neg_mask = (uint8_t)h->rx_pin;
+    EPIC_GPIO_EnableChangeDetect(0u, neg_mask);
+    EPIC_GPIO_RegisterChangeCallback(on_port_change);
+    EPIC_IRQ_Enable(PIC16F193X_IRQ_IOC);
+}
+#else
+static void on_port_change(uint8_t portb)
+{
+    (void)portb;
+    if (g_chan_a != NULL) on_rx_edge_start(g_chan_a);
+    if (g_chan_b != NULL) on_rx_edge_start(g_chan_b);
+}
+static void arm_rx_change_interrupt(void)
+{
+    EPIC_GPIO_RegisterChangeCallback(on_port_change);
+    EPIC_IRQ_Enable(PIC16_IRQ_RB);
+}
+#endif
+
 EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
                                      GPIO_TypeDef tx_port, uint16_t tx_pin,
                                      GPIO_TypeDef rx_port, uint16_t rx_pin,
@@ -252,6 +288,12 @@ EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
         s_timer1.OverflowCallback = on_timer1_overflow;
         EPIC_TIMER1_Init(&s_timer1);
         EPIC_IRQ_Restore(1);
+#if defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
+    defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)
+        arm_rx_change_interrupt(h);
+#else
+        arm_rx_change_interrupt();
+#endif
     }
 
     uint8_t prev_reg = EPIC_IRQ_Disable();
