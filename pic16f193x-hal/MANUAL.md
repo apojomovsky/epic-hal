@@ -254,6 +254,7 @@ CCPR2L=0x298, CCPR2H=0x299.
 ### Driver API
 
 `EPIC_CCP_Init`, `EPIC_CCP_DeInit`, `EPIC_CCP_SetCompare`,
+`EPIC_CCP_SetMode` (CCPxCON mode nibble only, no IRQ bookkeeping),
 `EPIC_CCP_GetCapture`. Weak `CCP1_IRQHandler`/`CCP2_IRQHandler`, one per
 instance. Every SFR access branches on the instance before touching any
 register (literal `PIC_REG_*` token per branch).

@@ -617,6 +617,7 @@ load-bearing).
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
 void     EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
+void     EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode);  // CCPxCON mode nibble only, no IRQ bookkeeping
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
 void     EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);  // 0..1023
 void     CCP1_IRQHandler(void) EPIC_WEAK;
