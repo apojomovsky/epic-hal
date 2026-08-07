@@ -104,8 +104,11 @@ vectors: 0008h (high-priority) and 0018h (low-priority), gated by
 `epic_dispatch_all_irqs()` (`src/core/pic18_isr_vector.c` on target, the
 harness's registered sim callback on host) — the hardware has already
 separated high- from low-priority sources by which vector it took, so
-calling the full dispatch from both is correct; each peripheral handler
-still checks its own flag. See [§6](#6-interrupts) for the priority API.
+calling the full dispatch from both is correct. The dispatcher itself
+reads INTCON/PIR1/PIR2 once each and only calls the peripheral
+handlers whose bit is actually set, not every handler unconditionally;
+each handler called still checks its own flag. See [§6](#6-interrupts)
+for the priority API.
 
 ## 3. Quick start
 

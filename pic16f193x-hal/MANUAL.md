@@ -28,9 +28,11 @@ model (LAT/ANSEL) differ (DS41364B §2.2, §4.0, §6.0).
 Single interrupt vector at 0x0004, no priority. Hardware saves
 W/STATUS/BSR/FSR0/FSR1/PCLATH to shadow registers on entry and restores
 them on RETFIE (DS41364B §4.1), so ISRs need no manual push/pop. The
-`epic_dispatch_all_irqs` fan-out (one call per peripheral handler) is
-shared by the target vector and the host sim IRQ callback, same shape
-as the other families.
+`epic_dispatch_all_irqs` fan-out is shared by the target vector and the
+host sim IRQ callback, same shape as the other families: it reads
+INTCON/PIR1/PIR2/PIR3 once each and only calls the peripheral handlers
+whose bit is actually set, not every handler unconditionally; each
+handler called still checks (and clears) its own flag internally.
 
 ## 3. Quick start
 
