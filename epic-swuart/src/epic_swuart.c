@@ -254,11 +254,13 @@ EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
         EPIC_IRQ_Restore(1);
     }
 
+    uint8_t prev_reg = EPIC_IRQ_Disable();
     if (g_chan_a == NULL) {
         g_chan_a = h;
     } else {
         g_chan_b = h;
     }
+    EPIC_IRQ_Restore(prev_reg);
     return EPIC_OK;
 }
 
