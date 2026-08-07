@@ -141,46 +141,25 @@ static void rx_step(EPIC_SWUART_HandleTypeDef *h)
     h->rx_ticks_left = g_oversample_n - 1u;
 }
 
-/* Straight-line, not a loop indexed by a runtime variable: a probe
- * done earlier in this project's history
- * (docs/superpowers/plans/probe-swuart-isr-budget.md) measured that an
- * array-of-pointers loop over the channel registry compiles to a real
- * goto-based loop under XC8 at -O2, expensive per invocation even
- * though this array is only ever 2 pointers long by default. Two
- * explicit, unrolled blocks (one per slot) call the same tx_step/
- * rx_step bodies without duplicating their logic. EPIC_SWUART_MAX_CHANNELS
- * stays a configurable compile-time value; anything other than 2 falls
- * back to the loop shape so behavior is unchanged for a legal
- * override, just not on the measured-fast path. */
-#if EPIC_SWUART_MAX_CHANNELS == 2u
-static void shared_tick(void)
-{
-    EPIC_TIMER1_WriteCounter(g_reload);
-
-    EPIC_SWUART_HandleTypeDef *h0 = g_channels[0];
-    if (h0 && h0->active) {
-        tx_step(h0);
-        rx_step(h0);
-    }
-
-    EPIC_SWUART_HandleTypeDef *h1 = g_channels[1];
-    if (h1 && h1->active) {
-        tx_step(h1);
-        rx_step(h1);
-    }
-}
-#else
+/* Bounded by g_channel_count, not EPIC_SWUART_MAX_CHANNELS: a
+ * straight-line unrolled version (fixed access to g_channels[0]/[1])
+ * was tried for the interrupt-cycle savings a runtime loop costs under
+ * XC8 at -O2 (docs/superpowers/plans/probe-swuart-isr-budget.md), but
+ * DeInit's registry compaction shifts surviving channels down and
+ * leaves the vacated top slot holding a stale pointer, so straight-line
+ * code with no count check served the surviving channel twice per
+ * tick, doubling its effective bit rate. The measured real-hardware
+ * saving from unrolling was only 6 cycles out of 562 (about 1%), not
+ * worth that failure mode. */
 static void shared_tick(void)
 {
     EPIC_TIMER1_WriteCounter(g_reload);
     for (uint8_t i = 0; i < g_channel_count; i++) {
         EPIC_SWUART_HandleTypeDef *h = g_channels[i];
-        if (!h->active) continue;
         tx_step(h);
         rx_step(h);
     }
 }
-#endif
 
 static TIMER1_HandleTypeDef s_timer1 = TIMER1_HANDLE_DEFAULT;
 

@@ -69,3 +69,8 @@ add_executable(test_swuart_deinit tests/test_swuart_deinit.c)
 target_compile_definitions(test_swuart_deinit PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
 target_link_libraries(test_swuart_deinit PRIVATE epic_swuart)
 add_test(NAME swuart_deinit COMMAND test_swuart_deinit)
+
+add_executable(test_swuart_dual_deinit tests/test_swuart_dual_deinit.c)
+target_compile_definitions(test_swuart_dual_deinit PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
+target_link_libraries(test_swuart_dual_deinit PRIVATE epic_swuart)
+add_test(NAME swuart_dual_deinit COMMAND test_swuart_dual_deinit)
