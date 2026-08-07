@@ -14,8 +14,9 @@
  *   invoking every handler and letting each one pay its own
  *   table-driven `EPIC_IRQ_GetFlag` lookup (`pic16_irq.c`) to find out
  *   it wasn't the one that fired. Measured on real hardware under
- *   MPLAB SIM: this was the dominant cost of the shared ISR path (see
- *   `docs/superpowers/sdd/2026-08-06-swuart/final-fix-wave-report.md`).
+ *   MPLAB SIM: 409 of 674 ISR cycles on PIC16F87XA were spent on the
+ *   old unconditional fan-out before this fix, see git commit
+ *   b679e21's message for the full measurement.
  *   Handlers are declared here with strong prototypes, not via their
  *   EPIC_WEAK headers, so the host linker is forced to pull every
  *   handler's object out of the static library instead of leaving an

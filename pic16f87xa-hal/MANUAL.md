@@ -291,8 +291,9 @@ typedef enum {
 `epic_dispatch_all_irqs()` (in `src/core/pic16_irq_dispatch.c`, built on
 both host and target) reads INTCON/PIR1/PIR2 once each and calls only
 the peripheral `*IRQHandler`s whose bit is set, not every one
-unconditionally (measured to matter: see
-`docs/superpowers/sdd/2026-08-06-swuart/final-fix-wave-report.md`).
+unconditionally (measured to matter: a real mdb run found 409 of 674
+ISR cycles on PIC16F87XA were spent on the old unconditional fan-out,
+see git commit b679e21's message for the full measurement).
 
 ---
 

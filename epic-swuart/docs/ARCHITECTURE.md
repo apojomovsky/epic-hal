@@ -8,20 +8,27 @@ rewrites Timer1's counter (Timer1 has no period register, unlike
 Timer2's peripheral-driven reload: it is a free-running 16-bit counter,
 so the ISR must rewrite `TMR1H:TMR1L` on every overflow or the period
 degrades to a full 65536-count wraparound after the first tick), then
-services every active handle's `tx_step`/`rx_step`.
+loops over the channel registry, bounded by `g_channel_count`, calling
+each registered handle's `tx_step`/`rx_step`.
 
-For the default (and required) two-channel case, `shared_tick()` is
-straight-line code, not a loop indexed by a runtime variable: two
-explicit `if (g_channels[N] && g_channels[N]->active) { tx_step(...);
-rx_step(...); }` blocks, one per slot, calling the same functions a
-loop would rather than duplicating their bodies. A probe
-(`docs/superpowers/plans/probe-swuart-isr-budget.md`) measured that a
-runtime-indexed loop over the channel registry compiles to a real
-`goto`-based loop under XC8 at `-O2`, real overhead even for a
-two-element array. `EPIC_SWUART_MAX_CHANNELS` stays a configurable
-compile-time value; anything other than 2 falls back to the loop
-shape, so behavior for a legal override is unchanged, just not on the
-measured-fast path.
+A straight-line, unrolled-for-two-channels variant (fixed,
+unconditional `g_channels[0]`/`g_channels[1]` accesses instead of a
+`g_channel_count`-bounded loop) was tried to shave the interrupt
+cycles a runtime loop costs under XC8 at `-O2`
+(`docs/superpowers/plans/probe-swuart-isr-budget.md` measured a
+runtime-indexed loop compiling to a real `goto`-based loop, real
+overhead even for a two-element array). It was reverted: since it
+never consulted `g_channel_count`, and `DeInit`'s registry compaction
+shifts surviving channels down while leaving the vacated top slot
+holding a stale pointer, the straight-line code serviced the
+surviving channel twice per tick after a `DeInit`, doubling its
+effective bit rate and corrupting its frame. The measured saving was
+only 6 cycles out of 562 (about 1%), not worth that failure mode,
+especially with the module already roughly 3x over its cycle budget
+(see "Known gap" below) and likely headed toward a larger
+architectural redesign regardless. `EPIC_SWUART_MAX_CHANNELS` stays a
+configurable compile-time value; the loop shape works unchanged for
+any legal value.
 
 Ring-buffer index math (`tx_head`/`tx_tail`/`rx_head`/`rx_tail`) masks
 with `(EPIC_SWUART_RING_SZ - 1u)` rather than using `%`, guarded by a
@@ -35,23 +42,38 @@ ring-buffer or parameter-passing overhead; N=3 (29.9% margin) is the
 production default. At 9600 baud and N=3: a tick every 34.72
 microseconds.
 
-**Known gap, not closed by this pass:** a real-target `mdb` measurement
-(`docs/superpowers/sdd/2026-08-06-swuart/final-fix-wave-report.md`)
-found the real single-channel worst-case ISR, from interrupt vector
-entry through returning to the interrupted code, costs roughly 560-680
-cycles depending on the shared-dispatch shape, against this 174-cycle
-N=3 budget, still well over budget even after the grouped-read
-dispatch fix (`pic16_irq_dispatch.c` et al.) and this straight-line
-`shared_tick()`/ring-mask combination. Do not treat N=3 as verified to
-fit on real hardware; that report's measurements are the current
-authoritative numbers. That same real-target measurement also hit a
-`mdb` symptom (`GIE` never observed set again after the first
-interrupt, `run`+`wait` not reliably stopping at breakpoints) matching
-this repo's own prior, unrelated investigation into a non-reentrant
-storage-overlap/bank-misdirection bug class
-(`pic16f87xa-hal/docs/ARCHITECTURE.md` Findings 4-9); whether the same
-mechanism is at play here was not confirmed, see the report for what
-was and wasn't ruled out.
+**Known gap, not closed by this pass:** a real-target `mdb`
+measurement found the real single-channel worst-case ISR, from
+interrupt vector entry through returning to the interrupted code,
+costs roughly 562 cycles against this 174-cycle N=3 budget, still
+well over budget even after the grouped-read dispatch fix
+(`pic16_irq_dispatch.c` et al., see git commit b679e21's message for
+the full session: it found 409 of 674 cycles were being spent on an
+unconditional 12-handler fan-out) and the ring-mask fix in this file
+(see git commit a9a7370's message for the full session: combined with
+the dispatch fix, that brought the worst case from 677 down to 562
+cycles). Do not treat N=3 as verified to fit on real hardware; those
+commit messages carry the current authoritative numbers.
+
+That same real-target measurement also hit a `mdb` symptom (`GIE`
+observed disabled almost every time it was sampled after the first
+interrupt). The explanation is simpler than it first looks, and does
+not involve this repo's prior, unrelated storage-overlap/
+bank-misdirection bug class (`pic16f87xa-hal/docs/ARCHITECTURE.md`
+Findings 4-9): neither `pic16f87xa_gpio.c` nor `pic16f87xa_timer1.c`,
+which together are swuart's entire real-target call path, contain a
+single `pic_select_bank`/`EPIC_BANK*` call, so Finding 9's actual
+documented mechanism (a bank-misdirected write) cannot apply to this
+code path at all. Instead: Timer1's reload value gives an overflow
+every 174 instruction cycles, but the ISR itself takes ~562 cycles
+(measured) to run start to finish, including rewriting the Timer1
+counter at ISR entry. `TMR1IF` therefore re-asserts roughly three
+times before the ISR even returns; the moment `retfie` sets `GIE`
+back to 1, the still-pending flag re-vectors within an instruction or
+two, so the CPU spends the overwhelming majority of its time in
+interrupt context. Observing `GIE` disabled almost every time it is
+read is the expected, predictable consequence of an ISR that takes
+longer than its own reload period, not a hardware or compiler bug.
 
 ## Why Timer1, not an edge interrupt
 
