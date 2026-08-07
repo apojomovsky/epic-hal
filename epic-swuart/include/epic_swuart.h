@@ -1,7 +1,7 @@
 /**
  * @file    epic_swuart.h
- * @brief   Bit-banged full-duplex UART, any GPIO pin, up to
- *          EPIC_SWUART_MAX_CHANNELS channels active at once.
+ * @brief   Bit-banged full-duplex UART, any GPIO pin, up to two channels
+ *          active at once.
  *
  * @details
  *   One shared Timer1 tick (see docs/ARCHITECTURE.md for the oversample
@@ -20,10 +20,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "epic_hal.h"
-
-#ifndef EPIC_SWUART_MAX_CHANNELS
-#define EPIC_SWUART_MAX_CHANNELS 2u
-#endif
 
 #ifndef EPIC_SWUART_RING_SZ
 #define EPIC_SWUART_RING_SZ 8u
@@ -45,7 +41,7 @@ typedef struct {
     volatile uint8_t tx_state;
     volatile uint8_t tx_shift;
     volatile uint8_t tx_bit_index;
-    volatile uint8_t tx_ticks_left;
+    volatile uint16_t tx_ticks_left;
     uint8_t          tx_ring[EPIC_SWUART_RING_SZ];
     volatile uint8_t tx_head;
     volatile uint8_t tx_tail;
@@ -54,7 +50,7 @@ typedef struct {
     volatile uint8_t rx_state;
     volatile uint8_t rx_shift;
     volatile uint8_t rx_bit_index;
-    volatile uint8_t rx_ticks_left;
+    volatile uint16_t rx_ticks_left;
     uint8_t          rx_ring[EPIC_SWUART_RING_SZ];
     volatile uint8_t rx_head;
     volatile uint8_t rx_tail;
@@ -74,8 +70,8 @@ typedef struct {
  *         receiving; a floating or held-low RX pin will be misread as a
  *         continuous stream of start bits.
  *
- * @return EPIC_OK, or EPIC_INVALID if `h` is NULL or the channel
- *         registry (EPIC_SWUART_MAX_CHANNELS) is full.
+ * @return EPIC_OK, or EPIC_INVALID if `h` is NULL or both channel slots
+ *         are already in use.
  */
 EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
                                      GPIO_TypeDef tx_port, uint16_t tx_pin,

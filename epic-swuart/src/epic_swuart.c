@@ -28,30 +28,37 @@ enum {
     RX_STOP,
 };
 
-static EPIC_SWUART_HandleTypeDef *g_channels[EPIC_SWUART_MAX_CHANNELS];
-static uint8_t g_channel_count = 0;
-static uint16_t g_reload = 0;
-static uint8_t g_oversample_n = 3u; /* Task 1's probe verdict + safety margin, see OVERSAMPLE_N above. */
-
-/* reload = 65536 - round(fosc_hz / 4 / (baud * N)), Timer1 prescaler
- * 1:1. Timer1 does not auto-reload on overflow (it is a free-running
- * 16-bit counter, unlike Timer2's period-register peripherals), so the
- * ISR below rewrites TMR1H:TMR1L on every tick, not just at Start. */
-static uint16_t compute_reload(uint32_t fosc_hz, uint32_t baud, uint8_t n)
+/* One bit period in instruction cycles: round(FOSC_HZ / 4 / baud).
+ * Timer1 prescaler stays 1:1 (unchanged from v1) so this is directly
+ * the Timer1 counter delta for one bit. */
+static uint16_t compute_cycles_per_bit(uint32_t fosc_hz, uint32_t baud)
 {
-    uint32_t ticks_per_period = (fosc_hz / 4u + (baud * n) / 2u) / (baud * n);
-    if (ticks_per_period > 65535u) ticks_per_period = 65535u;
-    if (ticks_per_period < 1u) ticks_per_period = 1u;
-    return (uint16_t)(65536u - ticks_per_period);
+    uint32_t cycles = (fosc_hz / 4u + baud / 2u) / baud;
+    if (cycles > 65535u) cycles = 65535u;
+    if (cycles < 1u) cycles = 1u;
+    return (uint16_t)cycles;
+}
+
+static uint16_t g_cycles_per_bit = 0u;
+static uint16_t g_last_delta = 0u;
+static uint8_t  g_timer_running = 0u;
+static uint8_t  g_oversample_n = 3u; /* Still used by rx_step (Task 3 replaces RX's scheduling). */
+
+/* 0xFFFFu is the "not scheduled" sentinel: larger than any real
+ * countdown (max 65535 only if FOSC_HZ/baud rounds to exactly that,
+ * which never happens at any real family/baud combination this module
+ * supports, so this sentinel is safe). */
+#define SWUART_NOT_SCHEDULED 0xFFFFu
+
+static uint16_t tx_due_in(const EPIC_SWUART_HandleTypeDef *h)
+{
+    if (h->tx_state != TX_IDLE || h->tx_count > 0u) return h->tx_ticks_left;
+    return SWUART_NOT_SCHEDULED;
 }
 
 static void tx_step(EPIC_SWUART_HandleTypeDef *h)
 {
-    if (h->tx_ticks_left != 0u) {
-        h->tx_ticks_left--;
-        return;
-    }
-    h->tx_ticks_left = g_oversample_n - 1u;
+    h->tx_ticks_left = g_cycles_per_bit;
 
     switch (h->tx_state) {
     case TX_IDLE:
@@ -141,34 +148,90 @@ static void rx_step(EPIC_SWUART_HandleTypeDef *h)
     h->rx_ticks_left = g_oversample_n - 1u;
 }
 
-/* Bounded by g_channel_count, not EPIC_SWUART_MAX_CHANNELS: a
- * straight-line unrolled version (fixed access to g_channels[0]/[1])
- * was tried for the interrupt-cycle savings a runtime loop costs under
- * XC8 at -O2 (docs/superpowers/plans/probe-swuart-isr-budget.md), but
- * DeInit's registry compaction shifts surviving channels down and
- * leaves the vacated top slot holding a stale pointer, so straight-line
- * code with no count check served the surviving channel twice per
- * tick, doubling its effective bit rate. The measured real-hardware
- * saving from unrolling was only 6 cycles out of 562 (about 1%), not
- * worth that failure mode. */
-static void shared_tick(void)
+static TIMER1_HandleTypeDef s_timer1 = TIMER1_HANDLE_DEFAULT;
+
+static EPIC_SWUART_HandleTypeDef *g_chan_a = NULL;
+static EPIC_SWUART_HandleTypeDef *g_chan_b = NULL;
+
+static uint16_t rx_due_in(const EPIC_SWUART_HandleTypeDef *h)
 {
-    EPIC_TIMER1_WriteCounter(g_reload);
-    for (uint8_t i = 0; i < g_channel_count; i++) {
-        EPIC_SWUART_HandleTypeDef *h = g_channels[i];
-        tx_step(h);
-        rx_step(h);
-    }
+    (void)h;
+    return SWUART_NOT_SCHEDULED; /* Task 3 replaces this function's body. */
 }
 
-static TIMER1_HandleTypeDef s_timer1 = TIMER1_HANDLE_DEFAULT;
+static void reschedule(void)
+{
+    uint16_t min_delta = SWUART_NOT_SCHEDULED;
+
+    if (g_chan_a != NULL) {
+        uint16_t t = tx_due_in(g_chan_a);
+        if (t < min_delta) min_delta = t;
+        uint16_t r = rx_due_in(g_chan_a);
+        if (r < min_delta) min_delta = r;
+    }
+    if (g_chan_b != NULL) {
+        uint16_t t = tx_due_in(g_chan_b);
+        if (t < min_delta) min_delta = t;
+        uint16_t r = rx_due_in(g_chan_b);
+        if (r < min_delta) min_delta = r;
+    }
+
+    if (min_delta == SWUART_NOT_SCHEDULED) {
+        EPIC_TIMER1_Stop();
+        g_timer_running = 0u;
+        return;
+    }
+    /* A "due immediately" request (Write() sets tx_ticks_left = 0) means
+     * zero cycles of *waiting*, not a zero-cycle timer arm: hardware
+     * cannot fire in 0 cycles, and 65536u - 0u truncates to 0x0000,
+     * which would arm a full 65536-cycle wait instead of firing on the
+     * next tick (confirmed with a throwaway probe against the sim: TMR1
+     * stayed at the written value with no overflow for 600+ ticks).
+     * Floor at 1 so "due now" really means "next tick", and g_last_delta
+     * stays consistent with what was actually armed. */
+    if (min_delta == 0u) min_delta = 1u;
+    g_last_delta = min_delta;
+    if (!g_timer_running) {
+        EPIC_TIMER1_Start(&s_timer1);
+        g_timer_running = 1u;
+    }
+    EPIC_TIMER1_WriteCounter((uint16_t)(65536u - min_delta));
+}
+
+static void on_timer1_overflow(void)
+{
+    uint16_t elapsed = g_last_delta;
+
+    if (g_chan_a != NULL) {
+        if (tx_due_in(g_chan_a) != SWUART_NOT_SCHEDULED) {
+            if (g_chan_a->tx_ticks_left <= elapsed) tx_step(g_chan_a);
+            else g_chan_a->tx_ticks_left = (uint16_t)(g_chan_a->tx_ticks_left - elapsed);
+        }
+        if (rx_due_in(g_chan_a) != SWUART_NOT_SCHEDULED) {
+            if (g_chan_a->rx_ticks_left <= elapsed) rx_step(g_chan_a);
+            else g_chan_a->rx_ticks_left = (uint16_t)(g_chan_a->rx_ticks_left - elapsed);
+        }
+    }
+    if (g_chan_b != NULL) {
+        if (tx_due_in(g_chan_b) != SWUART_NOT_SCHEDULED) {
+            if (g_chan_b->tx_ticks_left <= elapsed) tx_step(g_chan_b);
+            else g_chan_b->tx_ticks_left = (uint16_t)(g_chan_b->tx_ticks_left - elapsed);
+        }
+        if (rx_due_in(g_chan_b) != SWUART_NOT_SCHEDULED) {
+            if (g_chan_b->rx_ticks_left <= elapsed) rx_step(g_chan_b);
+            else g_chan_b->rx_ticks_left = (uint16_t)(g_chan_b->rx_ticks_left - elapsed);
+        }
+    }
+
+    reschedule();
+}
 
 EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
                                      GPIO_TypeDef tx_port, uint16_t tx_pin,
                                      GPIO_TypeDef rx_port, uint16_t rx_pin,
                                      uint32_t fosc_hz, uint32_t baud)
 {
-    if (!h || g_channel_count >= EPIC_SWUART_MAX_CHANNELS) return EPIC_INVALID;
+    if (!h || (g_chan_a != NULL && g_chan_b != NULL)) return EPIC_INVALID;
 
     h->tx_port = tx_port; h->tx_pin = tx_pin;
     h->rx_port = rx_port; h->rx_pin = rx_pin;
@@ -183,50 +246,41 @@ EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
     EPIC_GPIO_WritePin(tx_port, tx_pin, GPIO_PIN_SET); /* idle = mark */
     EPIC_GPIO_Init(rx_port, rx_pin, GPIO_MODE_INPUT);
 
-    if (g_channel_count == 0u) {
-        g_reload = compute_reload(fosc_hz, baud, g_oversample_n);
+    if (g_chan_a == NULL && g_chan_b == NULL) {
+        g_cycles_per_bit = compute_cycles_per_bit(fosc_hz, baud);
         s_timer1 = (TIMER1_HandleTypeDef)TIMER1_HANDLE_DEFAULT;
-        s_timer1.ReloadValue = g_reload;
-        s_timer1.OverflowCallback = shared_tick;
+        s_timer1.OverflowCallback = on_timer1_overflow;
         EPIC_TIMER1_Init(&s_timer1);
-        EPIC_TIMER1_Start(&s_timer1);
         EPIC_IRQ_Restore(1);
     }
 
-    g_channels[g_channel_count] = h;
-    g_channel_count++;
+    if (g_chan_a == NULL) {
+        g_chan_a = h;
+    } else {
+        g_chan_b = h;
+    }
     return EPIC_OK;
 }
 
 EPIC_StatusTypeDef EPIC_SWUART_DeInit(EPIC_SWUART_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
-    for (uint8_t i = 0; i < g_channel_count; i++) {
-        if (g_channels[i] == h) {
-            h->active = 0u;
-            /* Protect the shift + decrement together: a tick landing
-             * between them would see the array still holding a
-             * duplicate pointer while the count is stale, servicing
-             * the surviving channel twice in one tick (same hazard
-             * Write/Read's ring mutations are already protected
-             * against). */
-            uint8_t prev = EPIC_IRQ_Disable();
-            for (uint8_t j = i; j + 1u < g_channel_count; j++) {
-                g_channels[j] = g_channels[j + 1u];
-            }
-            g_channel_count--;
-            EPIC_IRQ_Restore(prev);
-            break;
-        }
+    uint8_t prev = EPIC_IRQ_Disable();
+    if (g_chan_a == h) {
+        g_chan_a = NULL;
+    } else if (g_chan_b == h) {
+        g_chan_b = NULL;
     }
+    EPIC_IRQ_Restore(prev);
     /* Idle/mark, not whatever level the state machine was at mid-frame:
      * leaving TX low here would be a break condition on the wire. */
     EPIC_GPIO_WritePin(h->tx_port, h->tx_pin, GPIO_PIN_SET);
-    if (g_channel_count == 0u) {
+    if (g_chan_a == NULL && g_chan_b == NULL) {
         /* EPIC_TIMER1_Stop() only clears TMR1ON; the module claims to
          * fully release Timer1 when the registry goes empty, so the
          * interrupt source must go with it, not just the counter. */
         EPIC_TIMER1_DeInit();
+        g_timer_running = 0u;
     }
     return EPIC_OK;
 }
@@ -242,6 +296,10 @@ size_t EPIC_SWUART_Write(EPIC_SWUART_HandleTypeDef *h, const uint8_t *data, size
         h->tx_count++;
         EPIC_IRQ_Restore(prev);
         written++;
+    }
+    if (written > 0u && h->tx_state == TX_IDLE) {
+        h->tx_ticks_left = 0u; /* due immediately: start the frame now */
+        reschedule();
     }
     return written;
 }
