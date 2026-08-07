@@ -29,8 +29,16 @@ or held-low RX pin will be misread as a continuous stream of start bits.
 EPIC_StatusTypeDef EPIC_SWUART_DeInit(EPIC_SWUART_HandleTypeDef *h);
 ```
 
-Removes `h` from the registry. Stops Timer1 once no channel is left
-active.
+Removes `h` from the registry (the shift-and-decrement is IRQ-protected,
+matching `Write`/`Read`'s ring-mutation protection: a tick landing
+mid-removal would otherwise see a stale count and service the
+surviving channel twice). Leaves `h`'s TX pin at idle/mark
+(`GPIO_PIN_SET`) regardless of what the state machine was doing
+mid-frame, so a channel removed mid-transmission doesn't leave the
+wire held low (a break condition). Fully releases Timer1
+(`EPIC_TIMER1_DeInit`, not just `EPIC_TIMER1_Stop`) once no channel is
+left active, so the interrupt source goes with it, not just the
+counter; a later `Init` restarts it from a clean state.
 
 ## `EPIC_SWUART_Write`
 
@@ -59,4 +67,6 @@ uint16_t EPIC_SWUART_GetErrorCount(const EPIC_SWUART_HandleTypeDef *h);
 
 Running total of dropped bytes since `Init`: a bad stop bit (framing
 error) or an RX ring that was full when a byte finished receiving. Not
-split by cause; both increment the same counter.
+split by cause; both increment the same counter. The read is
+IRQ-protected (`error_count` is a 16-bit field the ISR writes; an
+unprotected two-byte read could observe a torn value mid-increment).
