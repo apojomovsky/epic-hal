@@ -29,6 +29,13 @@
 #define EPIC_SWUART_RING_SZ 8u
 #endif
 
+/* Ring index math masks with (EPIC_SWUART_RING_SZ - 1u) instead of
+ * using '%', which only works if the size is a power of two. Catch a
+ * future override that breaks that at compile time, not at runtime
+ * with a silently wrong wraparound. */
+_Static_assert((EPIC_SWUART_RING_SZ & (EPIC_SWUART_RING_SZ - 1u)) == 0u,
+               "EPIC_SWUART_RING_SZ must be a power of two");
+
 typedef struct {
     GPIO_TypeDef tx_port;
     uint16_t     tx_pin;

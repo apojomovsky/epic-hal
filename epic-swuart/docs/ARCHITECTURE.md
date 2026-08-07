@@ -8,7 +8,25 @@ rewrites Timer1's counter (Timer1 has no period register, unlike
 Timer2's peripheral-driven reload: it is a free-running 16-bit counter,
 so the ISR must rewrite `TMR1H:TMR1L` on every overflow or the period
 degrades to a full 65536-count wraparound after the first tick), then
-walks every active handle's `tx_step`/`rx_step`.
+services every active handle's `tx_step`/`rx_step`.
+
+For the default (and required) two-channel case, `shared_tick()` is
+straight-line code, not a loop indexed by a runtime variable: two
+explicit `if (g_channels[N] && g_channels[N]->active) { tx_step(...);
+rx_step(...); }` blocks, one per slot, calling the same functions a
+loop would rather than duplicating their bodies. A probe
+(`docs/superpowers/plans/probe-swuart-isr-budget.md`) measured that a
+runtime-indexed loop over the channel registry compiles to a real
+`goto`-based loop under XC8 at `-O2`, real overhead even for a
+two-element array. `EPIC_SWUART_MAX_CHANNELS` stays a configurable
+compile-time value; anything other than 2 falls back to the loop
+shape, so behavior for a legal override is unchanged, just not on the
+measured-fast path.
+
+Ring-buffer index math (`tx_head`/`tx_tail`/`rx_head`/`rx_tail`) masks
+with `(EPIC_SWUART_RING_SZ - 1u)` rather than using `%`, guarded by a
+compile-time check (`_Static_assert` in `epic_swuart.h`) that
+`EPIC_SWUART_RING_SZ` is a power of two.
 
 The tick rate is `baud * N`. `docs/superpowers/plans/probe-swuart-isr-budget.md`
 measured N=4 as technically reachable on the worst case (PIC16F87XA at
@@ -16,6 +34,24 @@ measured N=4 as technically reachable on the worst case (PIC16F87XA at
 ring-buffer or parameter-passing overhead; N=3 (29.9% margin) is the
 production default. At 9600 baud and N=3: a tick every 34.72
 microseconds.
+
+**Known gap, not closed by this pass:** a real-target `mdb` measurement
+(`docs/superpowers/sdd/2026-08-06-swuart/final-fix-wave-report.md`)
+found the real single-channel worst-case ISR, from interrupt vector
+entry through returning to the interrupted code, costs roughly 560-680
+cycles depending on the shared-dispatch shape, against this 174-cycle
+N=3 budget, still well over budget even after the grouped-read
+dispatch fix (`pic16_irq_dispatch.c` et al.) and this straight-line
+`shared_tick()`/ring-mask combination. Do not treat N=3 as verified to
+fit on real hardware; that report's measurements are the current
+authoritative numbers. That same real-target measurement also hit a
+`mdb` symptom (`GIE` never observed set again after the first
+interrupt, `run`+`wait` not reliably stopping at breakpoints) matching
+this repo's own prior, unrelated investigation into a non-reentrant
+storage-overlap/bank-misdirection bug class
+(`pic16f87xa-hal/docs/ARCHITECTURE.md` Findings 4-9); whether the same
+mechanism is at play here was not confirmed, see the report for what
+was and wasn't ruled out.
 
 ## Why Timer1, not an edge interrupt
 

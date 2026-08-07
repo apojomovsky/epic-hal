@@ -60,7 +60,7 @@ static void tx_step(EPIC_SWUART_HandleTypeDef *h)
             return;
         }
         h->tx_shift = h->tx_ring[h->tx_tail];
-        h->tx_tail = (uint8_t)((h->tx_tail + 1u) % EPIC_SWUART_RING_SZ);
+        h->tx_tail = (uint8_t)((h->tx_tail + 1u) & (EPIC_SWUART_RING_SZ - 1u));
         h->tx_count--;
         h->tx_bit_index = 0u;
         EPIC_GPIO_WritePin(h->tx_port, h->tx_pin, GPIO_PIN_RESET); /* start bit */
@@ -92,7 +92,7 @@ static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
         return;
     }
     h->rx_ring[h->rx_head] = byte;
-    h->rx_head = (uint8_t)((h->rx_head + 1u) % EPIC_SWUART_RING_SZ);
+    h->rx_head = (uint8_t)((h->rx_head + 1u) & (EPIC_SWUART_RING_SZ - 1u));
     h->rx_count++;
 }
 
@@ -141,6 +141,35 @@ static void rx_step(EPIC_SWUART_HandleTypeDef *h)
     h->rx_ticks_left = g_oversample_n - 1u;
 }
 
+/* Straight-line, not a loop indexed by a runtime variable: a probe
+ * done earlier in this project's history
+ * (docs/superpowers/plans/probe-swuart-isr-budget.md) measured that an
+ * array-of-pointers loop over the channel registry compiles to a real
+ * goto-based loop under XC8 at -O2, expensive per invocation even
+ * though this array is only ever 2 pointers long by default. Two
+ * explicit, unrolled blocks (one per slot) call the same tx_step/
+ * rx_step bodies without duplicating their logic. EPIC_SWUART_MAX_CHANNELS
+ * stays a configurable compile-time value; anything other than 2 falls
+ * back to the loop shape so behavior is unchanged for a legal
+ * override, just not on the measured-fast path. */
+#if EPIC_SWUART_MAX_CHANNELS == 2u
+static void shared_tick(void)
+{
+    EPIC_TIMER1_WriteCounter(g_reload);
+
+    EPIC_SWUART_HandleTypeDef *h0 = g_channels[0];
+    if (h0 && h0->active) {
+        tx_step(h0);
+        rx_step(h0);
+    }
+
+    EPIC_SWUART_HandleTypeDef *h1 = g_channels[1];
+    if (h1 && h1->active) {
+        tx_step(h1);
+        rx_step(h1);
+    }
+}
+#else
 static void shared_tick(void)
 {
     EPIC_TIMER1_WriteCounter(g_reload);
@@ -151,6 +180,7 @@ static void shared_tick(void)
         rx_step(h);
     }
 }
+#endif
 
 static TIMER1_HandleTypeDef s_timer1 = TIMER1_HANDLE_DEFAULT;
 
@@ -195,15 +225,29 @@ EPIC_StatusTypeDef EPIC_SWUART_DeInit(EPIC_SWUART_HandleTypeDef *h)
     for (uint8_t i = 0; i < g_channel_count; i++) {
         if (g_channels[i] == h) {
             h->active = 0u;
+            /* Protect the shift + decrement together: a tick landing
+             * between them would see the array still holding a
+             * duplicate pointer while the count is stale, servicing
+             * the surviving channel twice in one tick (same hazard
+             * Write/Read's ring mutations are already protected
+             * against). */
+            uint8_t prev = EPIC_IRQ_Disable();
             for (uint8_t j = i; j + 1u < g_channel_count; j++) {
                 g_channels[j] = g_channels[j + 1u];
             }
             g_channel_count--;
+            EPIC_IRQ_Restore(prev);
             break;
         }
     }
+    /* Idle/mark, not whatever level the state machine was at mid-frame:
+     * leaving TX low here would be a break condition on the wire. */
+    EPIC_GPIO_WritePin(h->tx_port, h->tx_pin, GPIO_PIN_SET);
     if (g_channel_count == 0u) {
-        EPIC_TIMER1_Stop();
+        /* EPIC_TIMER1_Stop() only clears TMR1ON; the module claims to
+         * fully release Timer1 when the registry goes empty, so the
+         * interrupt source must go with it, not just the counter. */
+        EPIC_TIMER1_DeInit();
     }
     return EPIC_OK;
 }
@@ -215,7 +259,7 @@ size_t EPIC_SWUART_Write(EPIC_SWUART_HandleTypeDef *h, const uint8_t *data, size
     while (written < len && h->tx_count < EPIC_SWUART_RING_SZ) {
         uint8_t prev = EPIC_IRQ_Disable();
         h->tx_ring[h->tx_head] = data[written];
-        h->tx_head = (uint8_t)((h->tx_head + 1u) % EPIC_SWUART_RING_SZ);
+        h->tx_head = (uint8_t)((h->tx_head + 1u) & (EPIC_SWUART_RING_SZ - 1u));
         h->tx_count++;
         EPIC_IRQ_Restore(prev);
         written++;
@@ -230,7 +274,7 @@ int EPIC_SWUART_Read(EPIC_SWUART_HandleTypeDef *h, uint8_t *buf, size_t maxlen)
     while (n < maxlen && h->rx_count > 0u) {
         uint8_t prev = EPIC_IRQ_Disable();
         buf[n] = h->rx_ring[h->rx_tail];
-        h->rx_tail = (uint8_t)((h->rx_tail + 1u) % EPIC_SWUART_RING_SZ);
+        h->rx_tail = (uint8_t)((h->rx_tail + 1u) & (EPIC_SWUART_RING_SZ - 1u));
         h->rx_count--;
         EPIC_IRQ_Restore(prev);
         n++;
@@ -240,5 +284,9 @@ int EPIC_SWUART_Read(EPIC_SWUART_HandleTypeDef *h, uint8_t *buf, size_t maxlen)
 
 uint16_t EPIC_SWUART_GetErrorCount(const EPIC_SWUART_HandleTypeDef *h)
 {
-    return h ? h->error_count : 0u;
+    if (!h) return 0u;
+    uint8_t prev = EPIC_IRQ_Disable();          /* atomic 16-bit read */
+    uint16_t count = h->error_count;
+    EPIC_IRQ_Restore(prev);
+    return count;
 }
