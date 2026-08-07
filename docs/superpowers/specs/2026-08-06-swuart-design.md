@@ -1,6 +1,17 @@
 # Bit-banged software UART (epic-swuart), design
 
-Status: **implemented, 2026-08-06**.
+Status: **implemented 2026-08-06, timing engine superseded 2026-08-07**.
+A final review measured the real compiled ISR on hardware at roughly 3x
+over its cycle budget (continuous 3x-oversampling divides the CPU's
+response budget by 3 for no benefit the design actually needed). The
+API, framing, error handling, and module boundaries below are still
+accurate and unchanged; the timing engine (Decisions: "Timing mechanism"
+row, and the Architecture section below) is replaced by
+`docs/superpowers/specs/2026-08-07-swuart-v2-design.md`'s edge-triggered,
+one-timer-event-per-bit design. Read that document for the current
+timing architecture; this one is kept for the parts still in force and
+as the historical record of why the original approach was chosen and
+where it fell short in practice.
 
 ## Problem
 
