@@ -62,10 +62,16 @@ by any higher-level module in this repo.
 Idle: the channel's CCP module sits in `CCP_MODE_CAPTURE_FALLING`. A
 start bit's falling edge latches Timer1's count into `CCPRx` in
 hardware. On that capture interrupt, the handler reads `CCPRx` (the
-exact edge time), computes `edge_time + 1.5 * cycles_per_bit` (the
-deglitch/first-sample deadline, same half-bit-later confirm timing v1
-and v2 both already used), writes it back into the same module's
-`CCPRx`, and switches `CCPxCON` to `CCP_MODE_COMPARE_SOFT_IF`. Each
+exact edge time) and computes `edge_time + 0.5 * cycles_per_bit`, the
+mid-start-bit deglitch confirm point, the same half-bit-later timing v1
+and v2 both already used, writing it back into the same module's
+`CCPRx` and switching `CCPxCON` to `CCP_MODE_COMPARE_SOFT_IF`. That
+confirm match, if the pin is still low, advances the deadline by one
+more full `cycles_per_bit` (landing at `edge_time + 1.5 *
+cycles_per_bit`, d0's own center) before the first real data-bit
+sample; collapsing this into a single 1.5x hop would skip the deglitch
+check entirely, since at 1.5x post-edge the pin already reflects d0's
+value, not the start bit's stability. Each
 subsequent compare match samples the RX pin, shifts the bit in,
 advances the deadline by one `cycles_per_bit`, and rewrites `CCPRx`.
 After the stop bit, the module switches back to `CCP_MODE_CAPTURE_
