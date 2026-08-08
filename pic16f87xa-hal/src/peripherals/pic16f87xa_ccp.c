@@ -97,6 +97,7 @@ void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
 
 void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode)
 {
+    if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
     const ccp_addrs_t *a = ccp_sel(inst);
     EPIC_REG8(a->con) = (uint8_t)(mode & 0x0FU);
 }

@@ -98,7 +98,8 @@ void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
 /** Change only CCPxCON's mode field, leaving CCPRx and IRQ enable state
  *  untouched. Cheap: no flag-clear or IRQ-enable bookkeeping, unlike
  *  EPIC_CCP_Init. For repeated in-frame mode switches (bit-banged
- *  protocols reprogramming the module every bit), not one-time setup. */
+ *  protocols reprogramming the module every bit), not one-time setup.
+ *  No-op if `inst` is not a valid CCP instance. */
 void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode);
 
 /** Atomically read the 16-bit CCPRx value. */
