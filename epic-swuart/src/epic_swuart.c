@@ -264,12 +264,18 @@ static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef r
 /* Cycles elapsed, on real PIC16F87XA hardware, between the real
  * falling edge and the point inside rx_capture_event_fast() where
  * Timer1 is read fresh (the AN555-style _Cycle_Offset1 correction).
- * Starts at 0 (no correction) until Task 2's real mdb probe replaces
- * it with a measured value. Do not trust this number, or add a guessed
- * nonzero value, before that probe has run: this exact kind of
- * unverified-arithmetic mistake is what produced the 404-vs-260 race
- * this fix exists to close. */
-#define RX_CAPTURE_OVERHEAD_CYCLES 0u
+ * Measured via a real mdb probe on PIC16F877A (MPLAB SIM, XC8 v3.10,
+ * -O2, the exact build this module ships with): 3 cycles of
+ * edge-to-vector interrupt response plus 322 cycles of
+ * vector-to-Timer1-read software latency, reproduced identically
+ * across three runs (see
+ * docs/superpowers/plans/probe-swuart-rx-hotpath.md). With this
+ * value, d0's sample deadline lands at 1.499 bit periods after the
+ * real edge, mid-d0; with the old 0u placeholder it landed at 2.12
+ * bit periods, inside d1's window, a guaranteed mis-sample. Do not
+ * re-derive or "improve" this number without a fresh probe: it
+ * describes this exact code path on this exact toolchain. */
+#define RX_CAPTURE_OVERHEAD_CYCLES 325u
 
 #if EPIC_SWUART_TEST_HOOKS
 /* Writes straight into the same two registers rx_capture_event_fast
