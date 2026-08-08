@@ -465,6 +465,8 @@ PIC18Fxx5x = [
 
 [modules.epic-math.supported]
 PIC16F87XA = [
+  "16F873A",
+  "16F874A",
   "16F876A",
   "16F877A",
 ]
@@ -474,8 +476,6 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-math.excluded]
-"16F873A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over (docs/mplabx-link-gaps-plan.md root cause 3)"
-"16F874A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over (docs/mplabx-link-gaps-plan.md root cause 3)"
 "18F2455" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
 "18F2550" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
 

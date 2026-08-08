@@ -480,13 +480,20 @@ def emit_epicurus_mk(manifest, family_name: str, version: str) -> str:
         "EPICURUS_SRCS := $(EPICURUS_HAL_SRCS) "
         "$(foreach m,$(EPICURUS_ALL),$(EPICURUS_SRCS_$(m)))",
         "EPICURUS_INCLUDES := $(EPICURUS_FAMILY_INCLUDES) "
-        "$(foreach m,$(EPICURUS_ALL),-I$(EPICURUS_INCS_$(m)))",
+        "$(foreach m,$(EPICURUS_ALL),$(addprefix -I,$(EPICURUS_INCS_$(m))))",
         "",
         "EPICURUS_CFLAGS := $(EPICURUS_INCLUDES) -DPIC$(EPICURUS_MCU)",
         "",
     ]
     return "\n".join(out) + "\n"
 ```
+
+> Implementation note (2026-08-08): the `-I` prefix is applied per include
+> dir via `$(addprefix ...)`, not once before the whole space-joined list.
+> The original single `-I` broke any module with two include dirs (epic-math
+> ships `include` + `tests`): the second dir reached `xc8-cc` as a source
+> file (error 894). Regression test:
+> `TestEpicurusMk.test_every_module_include_dir_gets_its_own_prefix`.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
