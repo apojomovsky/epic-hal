@@ -143,6 +143,11 @@ spilling into Bank 1 once one more byte of Bank 0 got claimed.)
   `docs/ARCHITECTURE.md` already documenting PIC16 RAM as marginal
   ("cannot hold math + full HAL + `golden_vectors.h` + the self-test...
   spills to bank 1 and overflows"); this pushed marginal to broken.
+  **Resolved 2026-08-08**: pinning the shared `pic16_mscratch` buffer
+  into common RAM (docs/superpowers/specs/2026-08-08-epic-math-bank1-fixup-design.md)
+  moved 16 bytes out of banked RAM, and both parts now build in the CI
+  toolchain; removed from this module's `excluded` table and added back
+  to `supported`.
 - `epic-modbus/mcu/pic16f87xa-modbus-mplabx`: 16F876A, 16F877A now also
   fail, on top of 16F873A/16F874A already excluded under root cause 2
   above; this module now has **zero** surviving PIC16 variants and has

@@ -146,6 +146,13 @@ The file-scratch convention has one per-family wrinkle the probe surfaced:
   The fix is to make each routine's scratch a **single struct** -- one
   object, which XC8 cannot split across banks, so it lands whole in one bank
   and one `banksel` covers every member, accessed by byte offset `(_m_x)+N`.
+  The one shared object, the 16-byte `pic16_mscratch` buffer every PIC16
+  asm leaf routine operates on (pic_math_scratch.h), is `__at`-pinned to
+  common RAM (0x70-0x7F) instead of left to the linker: an unpinned
+  placement landed at 0xA0 (bank 1) on PIC16F876A/877A and the operand
+  fixups overflowed at link time. Common RAM is the same physical
+  addresses in every bank, so the per-routine `banksel` is a harmless
+  no-op and the whole window is reachable regardless of bank selection.
   Mid-range also lacks `setf` (carry/borrow-out is recorded with `incf`,
   read back as a bool) and lacks `addwfc`/`subwfb`/`rlcf`/`bra` (uses the
   `btfsc/btfss STATUS,0` + `incf` carry idiom, `rlf`/`rrf`, `goto`).

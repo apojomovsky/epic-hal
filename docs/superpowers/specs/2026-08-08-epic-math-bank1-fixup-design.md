@@ -1,6 +1,31 @@
 # epic-math: pin pic16_mscratch to fix a real PIC16F876A/877A link failure
 
-Status: **agreed 2026-08-08, not started**.
+Status: **implemented 2026-08-08, verified in the CI Docker toolchain
+(`ghcr.io/apojomovsky/pic8-hal-ci:xc8-v4.00-dfp1.7.162-1.7.171-1.9.258-mplabx6.35`)**.
+
+## Verification outcome (2026-08-08)
+
+- PIC16F877A reproduced the quoted fixup overflow byte-for-byte with the
+  unpinned buffer (`bssBANK1 (0xA2)`, `pic16_isr_vector.c:30`, spanning
+  `0xA0-0xAD`). PIC16F876A linked even unpinned in the current tree (one
+  static of allocator margin), same mechanism, same cure.
+- All four PIC16F87XA variants now link in the CI toolchain:
+  `16F876A` (1262 words flash, 108 B data), `16F877A` (1287/109),
+  `16F873A` (1174/108), `16F874A` (1194/109).
+- The 16F873A/16F874A manifest `excluded` entries (root cause 3 in
+  `docs/mplabx-link-gaps-plan.md`, stale even without this fix: control
+  builds of the unpinned buffer linked at 62% RAM) were removed and the
+  parts added back to `supported`, per that document's own procedure.
+- Host-sim: all 8 ctest tests pass unchanged.
+- Known cost of the chosen address, accepted per the disclosure below:
+  the epic-math selftest image (`hal = true`) links the HAL core, so
+  every PIC16 build emits XC8 warning 1482 (`_epic_irq_pie_scratch`,
+  `_epic_bank1_scratch`, and XC8's own `btemp`/`wtemp` at `0x7E`/`0x7F`
+  overlap the 16-byte window). Runtime-benign in the selftest by
+  construction: no HAL macro touching those bytes runs there, and every
+  math routine rewrites its working bytes (offsets 0-7) before reading
+  them. Constraint recorded in `pic_math_scratch.c`: offsets 8-15 must
+  stay unused (they cover XC8's temporaries).
 
 ## Problem
 
@@ -56,18 +81,30 @@ for an unrelated, already-merged `epic-swuart` fix. `pic16_mscratch`
 needs the entire 16-byte common RAM window, including those same two
 addresses. There is no manifest dependency between `epic-math` and
 `epic-swuart` (confirmed by reading `epic-common/manifest/modules.toml`),
-so they are never linked into the same real firmware image today. If
-they ever were combined manually, outside this repo's own build
-system, both would collide on `0x70`/`0x71`. This is documented as a
-known, narrow limitation, not fixed here.
+but the two scratch bytes live in the **HAL core**, which epic-math's
+own selftest links (`hal = true`), so the overlap is present in this
+repo's builds, not just manual combinations: XC8 emits warning 1482 for
+`_epic_irq_pie_scratch`/`_epic_bank1_scratch` in every PIC16 epic-math
+build. The selftest never writes those bytes concurrently with a math
+call, so this is a documented hazard for user firmware (a PIE-enable or
+bank1-SFR macro running while a math routine is mid-computation
+corrupts `pic16_mscratch[0]`/`[1]`), same class as the already-
+documented interrupt re-entrancy limitation, not a defect in the
+selftest. One further occupant of the window the design did not
+anticipate: XC8's own `btemp`/`wtemp`/`btemp1` temporaries at
+`0x7E`/`0x7F`. Safe because the asm routines use only offsets 0-7;
+offsets 8-15 are now off-limits for future routines (recorded in
+`pic_math_scratch.c`). Documented as a known, narrow limitation, not
+fixed here.
 
 ## Testing
 
 Real-target: rebuild all four PIC16F87XA variants
 (873A/874A/876A/877A) in the actual CI Docker toolchain, the same
 discipline that found the bug in the first place, not a local build.
-876A/877A must now link successfully; 873A/874A must keep working
-unchanged.
+876A/877A must now link successfully; 873A/874A were found to build
+already (their manifest `excluded` entries were stale) and are added
+back to `supported` so CI covers all four.
 
 Host-sim: the existing math test suite (`epic-math`'s CMake/ctest
 build) must pass unchanged, since this only changes a target-side
