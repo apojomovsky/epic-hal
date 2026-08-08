@@ -1,8 +1,8 @@
 /**
  * @file    epic_swuart.c
- * @brief   Bit-banged full-duplex UART. See docs/ARCHITECTURE.md for
- *          the shared-tick design and docs/API.md for per-function
- *          semantics.
+ * @brief   Bit-banged full-duplex UART, CCP hardware capture/compare
+ *          timing. See docs/ARCHITECTURE.md for the shared-tick design
+ *          and docs/API.md for per-function semantics.
  */
 #include "epic_swuart.h"
 
@@ -28,6 +28,24 @@ enum {
     RX_STOP,
 };
 
+/* Forward declaration: defined in Task 5 (RX state machine). Stubbed
+ * empty for this task only so the TX-only rewrite compiles and links
+ * standalone; Task 5 replaces the stub with the real definition. */
+static void on_rx_event_a(void);
+
+/* TODO(Task 5): replace this empty stub with the real RX compare/capture
+ * event handler. Kept here only so this task's TX rewrite compiles and
+ * links standalone without RX logic existing yet. */
+static void on_rx_event_a(void) { }
+
+/* Cycles of lead time between EPIC_SWUART_Write() arming the start bit's
+ * compare deadline and that deadline actually landing: must be large
+ * enough that EPIC_CCP_SetCompare/SetMode land before Timer1 reaches the
+ * armed value, confirmed on real PIC16F877A hardware (see
+ * docs/superpowers/plans/probe-swuart-v3-ccp-cost.md) to need 120
+ * cycles, not the original 40-cycle guess. */
+#define SWUART_LEAD_CYCLES 120u
+
 /* One bit period in instruction cycles: round(FOSC_HZ / 4 / baud).
  * Timer1 prescaler stays 1:1 (unchanged from v1) so this is directly
  * the Timer1 counter delta for one bit. */
@@ -40,56 +58,69 @@ static uint16_t compute_cycles_per_bit(uint32_t fosc_hz, uint32_t baud)
 }
 
 static uint16_t g_cycles_per_bit = 0u;
-static uint16_t g_last_delta = 0u;
-static uint8_t  g_timer_running = 0u;
+static EPIC_SWUART_HandleTypeDef *g_chan_a = NULL;
+static TIMER1_HandleTypeDef s_timer1 = TIMER1_HANDLE_DEFAULT;
 
-/* 0xFFFFu is the "not scheduled" sentinel: larger than any real
- * countdown (max 65535 only if FOSC_HZ/baud rounds to exactly that,
- * which never happens at any real family/baud combination this module
- * supports, so this sentinel is safe). */
-#define SWUART_NOT_SCHEDULED 0xFFFFu
+#define SWUART_CCP_RX CCP_INSTANCE_1
+#define SWUART_CCP_TX CCP_INSTANCE_2
 
-static uint16_t tx_due_in(const EPIC_SWUART_HandleTypeDef *h)
+/* Arms the mode for the *next* compare match, not the one that just
+ * fired (hardware already toggled the pin per whatever was armed
+ * ahead of time; this function's job is only to decide what happens
+ * at the deadline it is about to write). Traced against 'A' = 0x41,
+ * LSB first (start=0, d0=1, d1..d5=0, d6=1, d7=0, stop=1): Write()
+ * arms CLEAR for the start bit; this handler then arms SET (d0=1),
+ * CLEAR x5 (d1..d5=0), SET (d6=1), CLEAR (d7=0), SET (stop=1), in that
+ * order, landing back in TX_IDLE exactly at the stop bit's deadline. */
+static void tx_compare_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef tx_inst)
 {
-    if (h->tx_state != TX_IDLE || h->tx_count > 0u) return h->tx_ticks_left;
-    return SWUART_NOT_SCHEDULED;
-}
-
-static void tx_step(EPIC_SWUART_HandleTypeDef *h)
-{
-    h->tx_ticks_left = g_cycles_per_bit;
+    CCP_ModeTypeDef next_mode;
 
     switch (h->tx_state) {
     case TX_IDLE:
         if (h->tx_count == 0u) {
-            EPIC_GPIO_WritePin(h->tx_port, h->tx_pin, GPIO_PIN_SET);
+            EPIC_CCP_SetMode(tx_inst, CCP_MODE_OFF);
             return;
         }
         h->tx_shift = h->tx_ring[h->tx_tail];
         h->tx_tail = (uint8_t)((h->tx_tail + 1u) & (EPIC_SWUART_RING_SZ - 1u));
         h->tx_count--;
         h->tx_bit_index = 0u;
-        EPIC_GPIO_WritePin(h->tx_port, h->tx_pin, GPIO_PIN_RESET); /* start bit */
+        next_mode = CCP_MODE_COMPARE_CLEAR;
         h->tx_state = TX_DATA;
         break;
     case TX_DATA:
-        EPIC_GPIO_WritePin(h->tx_port, h->tx_pin,
-                            (h->tx_shift & 0x01u) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        next_mode = (h->tx_shift & 0x01u) ? CCP_MODE_COMPARE_SET : CCP_MODE_COMPARE_CLEAR;
         h->tx_shift >>= 1;
         h->tx_bit_index++;
-        if (h->tx_bit_index >= 8u) {
-            h->tx_state = TX_STOP;
-        }
+        if (h->tx_bit_index >= 8u) h->tx_state = TX_STOP;
         break;
     case TX_STOP:
-        EPIC_GPIO_WritePin(h->tx_port, h->tx_pin, GPIO_PIN_SET);
-        h->tx_state = TX_IDLE;
-        break;
     default:
+        next_mode = CCP_MODE_COMPARE_SET;
         h->tx_state = TX_IDLE;
         break;
     }
+
+    h->tx_deadline = (uint16_t)(h->tx_deadline + g_cycles_per_bit);
+    EPIC_CCP_SetCompare(tx_inst, h->tx_deadline);
+    EPIC_CCP_SetMode(tx_inst, next_mode);
 }
+
+static void on_tx_event_a(void) { tx_compare_event(g_chan_a, SWUART_CCP_TX); }
+
+/* Test-only hooks (see test_swuart_tx.c): default-enabled, same guard
+ * pattern the test file uses, so a CMake host-sim build gets them
+ * without a separate compile-definition wire-up; a real-target build
+ * that wants them compiled out can predefine EPIC_SWUART_TEST_HOOKS=0. */
+#ifndef EPIC_SWUART_TEST_HOOKS
+#define EPIC_SWUART_TEST_HOOKS 1
+#endif
+#if EPIC_SWUART_TEST_HOOKS
+uint8_t swuart_test_last_tx_mode(void) { return (uint8_t)EPIC_REG8(0x1DU); }
+uint16_t swuart_test_last_tx_compare(void) { return g_chan_a->tx_deadline; }
+void swuart_test_fire_tx_event(void) { on_tx_event_a(); }
+#endif
 
 static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 {
@@ -102,246 +133,52 @@ static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
     h->rx_count++;
 }
 
-static void rx_step(EPIC_SWUART_HandleTypeDef *h)
-{
-    if (h->rx_state == RX_CONFIRM_START) {
-        if (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) != GPIO_PIN_RESET) {
-            h->rx_state = RX_IDLE; /* noise, not a real start bit */
-            return;
-        }
-        h->rx_shift = 0u;
-        h->rx_bit_index = 0u;
-        h->rx_state = RX_DATA0;
-        h->rx_ticks_left = g_cycles_per_bit;
-        return;
-    }
-
-    uint8_t sample = (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) == GPIO_PIN_SET) ? 1u : 0u;
-
-    if (h->rx_state == RX_STOP) {
-        if (sample != 0u) {
-            rx_push(h, h->rx_shift);
-        } else {
-            h->error_count++; /* bad stop bit, drop the byte */
-        }
-        h->rx_state = RX_IDLE;
-        return;
-    }
-
-    h->rx_shift = (uint8_t)((h->rx_shift >> 1) | (sample ? 0x80u : 0u));
-    h->rx_bit_index++;
-    h->rx_state = (h->rx_bit_index < 8u) ? (uint8_t)(RX_DATA0 + h->rx_bit_index) : RX_STOP;
-    h->rx_ticks_left = g_cycles_per_bit;
-}
-
-static TIMER1_HandleTypeDef s_timer1 = TIMER1_HANDLE_DEFAULT;
-
-static EPIC_SWUART_HandleTypeDef *g_chan_a = NULL;
-static EPIC_SWUART_HandleTypeDef *g_chan_b = NULL;
-
-static uint16_t rx_due_in(const EPIC_SWUART_HandleTypeDef *h)
-{
-    if (h->rx_state != RX_IDLE) return h->rx_ticks_left;
-    return SWUART_NOT_SCHEDULED;
-}
-
-static void reschedule(void)
-{
-    uint16_t min_delta = SWUART_NOT_SCHEDULED;
-
-    if (g_chan_a != NULL) {
-        uint16_t t = tx_due_in(g_chan_a);
-        if (t < min_delta) min_delta = t;
-        uint16_t r = rx_due_in(g_chan_a);
-        if (r < min_delta) min_delta = r;
-    }
-    if (g_chan_b != NULL) {
-        uint16_t t = tx_due_in(g_chan_b);
-        if (t < min_delta) min_delta = t;
-        uint16_t r = rx_due_in(g_chan_b);
-        if (r < min_delta) min_delta = r;
-    }
-
-    if (min_delta == SWUART_NOT_SCHEDULED) {
-        EPIC_TIMER1_Stop();
-        g_timer_running = 0u;
-        return;
-    }
-    /* A "due immediately" request (Write() sets tx_ticks_left = 0) means
-     * zero cycles of *waiting*, not a zero-cycle timer arm: hardware
-     * cannot fire in 0 cycles, and 65536u - 0u truncates to 0x0000,
-     * which would arm a full 65536-cycle wait instead of firing on the
-     * next tick (confirmed with a throwaway probe against the sim: TMR1
-     * stayed at the written value with no overflow for 600+ ticks).
-     * Floor at 1 so "due now" really means "next tick", and g_last_delta
-     * stays consistent with what was actually armed. */
-    if (min_delta == 0u) min_delta = 1u;
-    g_last_delta = min_delta;
-    if (!g_timer_running) {
-        EPIC_TIMER1_Start(&s_timer1);
-        g_timer_running = 1u;
-    }
-    EPIC_TIMER1_WriteCounter((uint16_t)(65536u - min_delta));
-}
-
-static void on_timer1_overflow(void)
-{
-    uint16_t elapsed = g_last_delta;
-
-    if (g_chan_a != NULL) {
-        if (tx_due_in(g_chan_a) != SWUART_NOT_SCHEDULED) {
-            if (g_chan_a->tx_ticks_left <= elapsed) tx_step(g_chan_a);
-            else g_chan_a->tx_ticks_left = (uint16_t)(g_chan_a->tx_ticks_left - elapsed);
-        }
-        if (rx_due_in(g_chan_a) != SWUART_NOT_SCHEDULED) {
-            if (g_chan_a->rx_ticks_left <= elapsed) rx_step(g_chan_a);
-            else g_chan_a->rx_ticks_left = (uint16_t)(g_chan_a->rx_ticks_left - elapsed);
-        }
-    }
-    if (g_chan_b != NULL) {
-        if (tx_due_in(g_chan_b) != SWUART_NOT_SCHEDULED) {
-            if (g_chan_b->tx_ticks_left <= elapsed) tx_step(g_chan_b);
-            else g_chan_b->tx_ticks_left = (uint16_t)(g_chan_b->tx_ticks_left - elapsed);
-        }
-        if (rx_due_in(g_chan_b) != SWUART_NOT_SCHEDULED) {
-            if (g_chan_b->rx_ticks_left <= elapsed) rx_step(g_chan_b);
-            else g_chan_b->rx_ticks_left = (uint16_t)(g_chan_b->rx_ticks_left - elapsed);
-        }
-    }
-
-    reschedule();
-}
-
-static void on_rx_edge_start(EPIC_SWUART_HandleTypeDef *h)
-{
-    if (h->rx_state != RX_IDLE) return; /* mid-frame, not a new start */
-    if (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) != GPIO_PIN_RESET) return;
-    h->rx_state = RX_CONFIRM_START;
-    h->rx_ticks_left = g_cycles_per_bit / 2u;
-    reschedule();
-}
-
-#if defined(PIC18F2455) || defined(PIC18F2550) || defined(PIC18F4455) || defined(PIC18F4550)
-static void on_port_change(uint8_t portb)
-{
-    (void)portb;
-    if (g_chan_a != NULL) on_rx_edge_start(g_chan_a);
-    if (g_chan_b != NULL) on_rx_edge_start(g_chan_b);
-}
-static void arm_rx_change_interrupt(void)
-{
-    EPIC_GPIO_RegisterChangeCallback(on_port_change);
-    EPIC_IRQ_Enable(PIC18_IRQ_RB);
-}
-#elif defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
-      defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)
-static void on_port_change(uint8_t iocbf, uint8_t portb)
-{
-    (void)iocbf; (void)portb;
-    if (g_chan_a != NULL) on_rx_edge_start(g_chan_a);
-    if (g_chan_b != NULL) on_rx_edge_start(g_chan_b);
-}
-/* Accumulates the negative-edge mask across every registered channel's
- * RX pin: unlike classic PIC16/PIC18's RBIF (fires on any RB4:7 change
- * regardless of a per-pin mask), PIC16F193X's IOC only interrupts on
- * pins actually set in IOCBN. Called once per registration (see
- * EPIC_SWUART_Init), so a second channel's pin gets OR'd in rather than
- * overwriting the first channel's. */
-static uint8_t g_ioc_neg_mask = 0u;
-static void arm_rx_change_interrupt(EPIC_SWUART_HandleTypeDef *h)
-{
-    g_ioc_neg_mask |= (uint8_t)h->rx_pin;
-    EPIC_GPIO_EnableChangeDetect(0u, g_ioc_neg_mask);
-    EPIC_GPIO_RegisterChangeCallback(on_port_change);
-    EPIC_IRQ_Enable(PIC16F193X_IRQ_IOC);
-}
-#else
-static void on_port_change(uint8_t portb)
-{
-    (void)portb;
-    if (g_chan_a != NULL) on_rx_edge_start(g_chan_a);
-    if (g_chan_b != NULL) on_rx_edge_start(g_chan_b);
-}
-static void arm_rx_change_interrupt(void)
-{
-    EPIC_GPIO_RegisterChangeCallback(on_port_change);
-    EPIC_IRQ_Enable(PIC16_IRQ_RB);
-}
-#endif
-
 EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
                                      GPIO_TypeDef tx_port, uint16_t tx_pin,
                                      GPIO_TypeDef rx_port, uint16_t rx_pin,
                                      uint32_t fosc_hz, uint32_t baud)
 {
-    if (!h || (g_chan_a != NULL && g_chan_b != NULL)) return EPIC_INVALID;
+    if (!h || g_chan_a != NULL) return EPIC_INVALID;
+    /* PIC16F87XA: CCP1 = RC2 (RX), CCP2 = RC1 (TX). */
+    if (tx_port != GPIOC || tx_pin != GPIO_PIN_1) return EPIC_INVALID;
+    if (rx_port != GPIOC || rx_pin != GPIO_PIN_2) return EPIC_INVALID;
 
     h->tx_port = tx_port; h->tx_pin = tx_pin;
     h->rx_port = rx_port; h->rx_pin = rx_pin;
-    h->tx_state = TX_IDLE; h->tx_ticks_left = 0u;
+    h->tx_state = TX_IDLE; h->tx_deadline = 0u;
     h->tx_head = h->tx_tail = h->tx_count = 0u;
-    h->rx_state = RX_IDLE; h->rx_ticks_left = 0u;
+    h->rx_state = RX_IDLE; h->rx_deadline = 0u;
     h->rx_head = h->rx_tail = h->rx_count = 0u;
     h->error_count = 0u;
-    h->active = 1u;
+
+    g_cycles_per_bit = compute_cycles_per_bit(fosc_hz, baud);
 
     EPIC_GPIO_Init(tx_port, tx_pin, GPIO_MODE_OUTPUT);
-    EPIC_GPIO_WritePin(tx_port, tx_pin, GPIO_PIN_SET); /* idle = mark */
     EPIC_GPIO_Init(rx_port, rx_pin, GPIO_MODE_INPUT);
 
-    if (g_chan_a == NULL && g_chan_b == NULL) {
-        g_cycles_per_bit = compute_cycles_per_bit(fosc_hz, baud);
-        s_timer1 = (TIMER1_HandleTypeDef)TIMER1_HANDLE_DEFAULT;
-        s_timer1.OverflowCallback = on_timer1_overflow;
-        EPIC_TIMER1_Init(&s_timer1);
-        EPIC_IRQ_Restore(1);
-    }
-    /* Runs on every successful registration, not just the first: on
-     * PIC16F193X the IOC negative-edge mask must accumulate each
-     * channel's RX pin (see arm_rx_change_interrupt's comment), so the
-     * second channel needs this call too. Re-registering the same
-     * callback and re-enabling an already-enabled IRQ is harmless on
-     * all three families (RegisterChangeCallback is a plain pointer
-     * store, IRQ_Enable only ORs bits), so PIC16F87XA/PIC18Fxx5x's
-     * no-arg variant runs here unconditionally too rather than being
-     * split out to first-registration-only. */
-#if defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
-    defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)
-    arm_rx_change_interrupt(h);
-#else
-    arm_rx_change_interrupt();
-#endif
+    s_timer1 = (TIMER1_HandleTypeDef)TIMER1_HANDLE_DEFAULT;
+    EPIC_TIMER1_Init(&s_timer1);
+    EPIC_TIMER1_Start(&s_timer1);
 
-    uint8_t prev_reg = EPIC_IRQ_Disable();
-    if (g_chan_a == NULL) {
-        g_chan_a = h;
-    } else {
-        g_chan_b = h;
-    }
-    EPIC_IRQ_Restore(prev_reg);
+    CCP_HandleTypeDef ccp_rx = { .Instance = SWUART_CCP_RX, .Mode = CCP_MODE_CAPTURE_FALLING,
+                                 .CompareValue = 0u, .EventCallback = on_rx_event_a };
+    EPIC_CCP_Init(&ccp_rx);
+    CCP_HandleTypeDef ccp_tx = { .Instance = SWUART_CCP_TX, .Mode = CCP_MODE_OFF,
+                                 .CompareValue = 0u, .EventCallback = on_tx_event_a };
+    EPIC_CCP_Init(&ccp_tx);
+
+    EPIC_IRQ_Restore(1);
+    g_chan_a = h;
     return EPIC_OK;
 }
 
 EPIC_StatusTypeDef EPIC_SWUART_DeInit(EPIC_SWUART_HandleTypeDef *h)
 {
-    if (!h) return EPIC_INVALID;
-    uint8_t prev = EPIC_IRQ_Disable();
-    if (g_chan_a == h) {
-        g_chan_a = NULL;
-    } else if (g_chan_b == h) {
-        g_chan_b = NULL;
-    }
-    EPIC_IRQ_Restore(prev);
-    /* Idle/mark, not whatever level the state machine was at mid-frame:
-     * leaving TX low here would be a break condition on the wire. */
-    EPIC_GPIO_WritePin(h->tx_port, h->tx_pin, GPIO_PIN_SET);
-    if (g_chan_a == NULL && g_chan_b == NULL) {
-        /* EPIC_TIMER1_Stop() only clears TMR1ON; the module claims to
-         * fully release Timer1 when the registry goes empty, so the
-         * interrupt source must go with it, not just the counter. */
-        EPIC_TIMER1_DeInit();
-        g_timer_running = 0u;
-    }
+    if (!h || g_chan_a != h) return EPIC_INVALID;
+    EPIC_CCP_DeInit(SWUART_CCP_RX);
+    EPIC_CCP_DeInit(SWUART_CCP_TX);
+    EPIC_TIMER1_DeInit();
+    g_chan_a = NULL;
     return EPIC_OK;
 }
 
@@ -358,8 +195,14 @@ size_t EPIC_SWUART_Write(EPIC_SWUART_HandleTypeDef *h, const uint8_t *data, size
         written++;
     }
     if (written > 0u && h->tx_state == TX_IDLE) {
-        h->tx_ticks_left = 0u; /* due immediately: start the frame now */
-        reschedule();
+        h->tx_shift = h->tx_ring[h->tx_tail];
+        h->tx_tail = (uint8_t)((h->tx_tail + 1u) & (EPIC_SWUART_RING_SZ - 1u));
+        h->tx_count--;
+        h->tx_bit_index = 0u;
+        h->tx_state = TX_DATA;
+        h->tx_deadline = (uint16_t)(EPIC_TIMER1_ReadCounter() + SWUART_LEAD_CYCLES);
+        EPIC_CCP_SetCompare(SWUART_CCP_TX, h->tx_deadline);
+        EPIC_CCP_SetMode(SWUART_CCP_TX, CCP_MODE_COMPARE_CLEAR);
     }
     return written;
 }
