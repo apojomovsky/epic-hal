@@ -50,7 +50,7 @@ static int g_fails = 0;
 extern uint8_t swuart_test_last_tx_mode(void);
 extern void swuart_test_fire_tx_event(void);
 extern void swuart_test_fire_rx_event(void);
-extern void swuart_test_set_capture(uint16_t value);
+extern void swuart_test_set_capture_fast(uint16_t value);
 
 int main(void)
 {
@@ -133,9 +133,10 @@ int main(void)
     /* RX: an inbound 'A' (0x41), same technique test_swuart_rx.c uses. */
     static const uint8_t rx_bits[] = {0, 1, 0, 0, 0, 0, 0, 1, 0, 1};
     SIM_DRIVE('C', 2, rx_bits[0]);
-    swuart_test_set_capture(1000u);
-    swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
-    swuart_test_fire_rx_event(); /* confirm event, half a bit later */
+    swuart_test_set_capture_fast(1000u);
+    swuart_test_fire_rx_event(); /* one fire: deglitch check + arm d0,
+                                   * IDLE -> DATA0 (see test_swuart_rx.c
+                                   * for why this collapsed from two). */
     for (size_t i = 1; i < 10; i++) {
         SIM_DRIVE('C', 2, rx_bits[i]);
         swuart_test_fire_rx_event(); /* compare event: sample + arm next */

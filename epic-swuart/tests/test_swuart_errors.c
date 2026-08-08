@@ -6,10 +6,16 @@
  *          this drives the capture/compare event handler directly via
  *          the same test hooks test_swuart_rx.c uses, single channel
  *          (slot A's fixed pins), not through epic_harness_tick().
- *          PIC16F193X's channel B shares the identical handler body
- *          (rx_capture_event/rx_push are parameterised by handle, not
- *          duplicated per slot), so this coverage applies there too
- *          without a second copy of the test.
+ *          The error-handling *logic* (bad-stop-bit and ring-overflow
+ *          counting) is still shared in spirit between
+ *          rx_capture_event_fast (channel A) and rx_capture_event
+ *          (channel B), but after the RX hot-path fix the two are
+ *          separate functions, not one shared body, so this file's
+ *          coverage speaks only to channel A's path here. Channel B's
+ *          own coverage still comes from this same file running
+ *          unmodified on PIC16F193X (it never touches channel A's
+ *          changed code either way, so no new gap, just a less precise
+ *          old claim).
  */
 #include <stdio.h>
 #include "epic_swuart.h"
@@ -39,22 +45,24 @@ static int g_fails = 0;
 /* Test-only hooks: see test_swuart_rx.c. Defined in epic_swuart.c
  * behind EPIC_SWUART_TEST_HOOKS. */
 extern void swuart_test_fire_rx_event(void);
-extern void swuart_test_set_capture(uint16_t value);
+extern void swuart_test_set_capture_fast(uint16_t value);
 
 /* Drives one full byte (start + 8 data + stop, LSB first) onto slot A's
  * RX pin and fires the matching sequence of capture/compare events:
- * capture (IDLE -> CONFIRM_START), confirm (half a bit later, still
- * CONFIRM_START -> DATA0), then one compare event per remaining bit
- * (d0..d7, stop), exactly test_swuart_rx.c's technique. The capture
- * value itself is arbitrary (host-sim only, no real Timer1 behind it)
- * and can be reused unchanged across repeated bytes: each call starts
- * from a fresh RX_IDLE, so nothing carries over between bytes. */
+ * one capture fire for the start bit (deglitch check + arm d0 in a
+ * single synchronous pass, IDLE -> DATA0), then one compare event per
+ * remaining bit (d0..d7, stop), exactly test_swuart_rx.c's technique.
+ * The capture value itself is arbitrary (host-sim only, no real Timer1
+ * behind it) and can be reused unchanged across repeated bytes: each
+ * call starts from a fresh RX_IDLE, so nothing carries over between
+ * bytes. */
 static void receive_byte(const uint8_t *bits)
 {
     SIM_DRIVE('C', 2, bits[0]);
-    swuart_test_set_capture(1000u);
-    swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
-    swuart_test_fire_rx_event(); /* confirm event, half a bit later */
+    swuart_test_set_capture_fast(1000u);
+    swuart_test_fire_rx_event(); /* one fire: deglitch check + arm d0,
+                                   * IDLE -> DATA0 (see test_swuart_rx.c
+                                   * for why this collapsed from two). */
     for (size_t i = 1; i < 10; i++) {
         SIM_DRIVE('C', 2, bits[i]);
         swuart_test_fire_rx_event(); /* compare event: sample + arm next */
