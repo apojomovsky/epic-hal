@@ -111,4 +111,22 @@ extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
         }                                                                \
     } while (0)
 
+/* Read the TMR1IE bit (PIE1 bit 0, Bank 1) into a uint8_t output
+ * variable, via the same `movlb 1` bank-switch idiom as the
+ * enable/disable macros above. Used by the shared interrupt dispatcher
+ * to skip TIMER1_IRQHandler when TMR1IE is disabled: Timer1 free-runs
+ * with its overflow interrupt off (epic-swuart needs the counter but
+ * never the overflow), so TMR1IF latches at every 65536-cycle wrap and
+ * would otherwise make every subsequent CCP event pay the full handler
+ * cost before its own dispatch (the same hazard measured on PIC16F87XA,
+ * see docs/superpowers/plans/probe-swuart-rx-hotpath.md). */
+#define EPIC_PIE1_READ_TMR1IE(out_var)                                   \
+    do {                                                                  \
+        asm("movlb 1");                                                  \
+        asm("movf PIE1,w");                                              \
+        asm("movlb 0");                                                  \
+        asm("movwf _epic_irq_pie_scratch");                              \
+        (out_var) = epic_irq_pie_scratch;                                \
+    } while (0)
+
 #endif /* PIC16F193X_PLATFORM_H */

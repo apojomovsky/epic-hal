@@ -35,7 +35,11 @@ static int g_fails = 0;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); g_fails++; } } while (0)
 
 extern void swuart_test_fire_rx_event(void);
+#if EPIC_SWUART_HAS_RX_FAST_PATH
 extern void swuart_test_set_capture_fast(uint16_t value);
+#else
+extern void swuart_test_set_capture(uint16_t value);
+#endif
 
 int main(void)
 {
@@ -46,6 +50,7 @@ int main(void)
     static const uint8_t bits[] = {0, 1, 0, 0, 0, 0, 0, 1, 0, 1};
 
     SIM_DRIVE('C', 2, bits[0]);
+#if EPIC_SWUART_HAS_RX_FAST_PATH
     swuart_test_set_capture_fast(1000u);
     swuart_test_fire_rx_event(); /* one fire: deglitch check (bits[0]=0,
                                    * still on the line, passes) AND arms
@@ -55,6 +60,13 @@ int main(void)
                                    * confirm) collapses into this one
                                    * synchronous pass; see
                                    * rx_capture_event_fast. */
+#else
+    /* PIC18Fxx5x/PIC16F193X channel A keeps the generic two-fire
+     * capture-then-confirm sequence; see rx_capture_event. */
+    swuart_test_set_capture(1000u);
+    swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
+    swuart_test_fire_rx_event(); /* confirm event, half a bit later */
+#endif
 
     for (size_t i = 1; i < 10; i++) {
         SIM_DRIVE('C', 2, bits[i]);

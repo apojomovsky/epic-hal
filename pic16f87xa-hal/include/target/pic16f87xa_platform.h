@@ -73,6 +73,17 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
         (out_var) = epic_bank1_scratch;                                \
     } while (0)
 
+/* Read the TMR1IE bit (PIE1 bit 0, Bank 1) into a uint8_t output
+ * variable, through the same bank-in/read/bank-out scratch mechanism
+ * as EPIC_BANK1_READ8. Used by the shared interrupt dispatcher to
+ * skip TIMER1_IRQHandler when TMR1IE is disabled: Timer1 free-runs
+ * with its overflow interrupt off (epic-swuart needs the counter but
+ * never the overflow), so TMR1IF latches at every 65536-cycle wrap
+ * and would otherwise make every subsequent CCP event pay the full
+ * handler cost before its own dispatch (measured ~250 cycles under
+ * MPLAB SIM, see docs/superpowers/plans/probe-swuart-rx-hotpath.md). */
+#define EPIC_PIE1_READ_TMR1IE(out_var) EPIC_BANK1_READ8(PIE1, (out_var))
+
 /* Same fix, Banks 2/3 (pic16f87xa_eeprom.c's EEDATA/EEADR/EECON1/
  * EECON2). Unlike EPIC_BANK1_*, these set/clear *both* RP1:RP0 bits
  * explicitly since EEPROM interleaves Bank 2 and Bank 3 back to back,

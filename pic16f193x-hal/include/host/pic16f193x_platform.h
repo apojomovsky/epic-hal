@@ -48,4 +48,15 @@ extern uint8_t pic16f193x_sim_sfr[0x1000];
 #define EPIC_PIE_DISABLE_BIT(pir_index, mask) \
     do { pic16f193x_sim_sfr[EPIC_PIE_REG_ADDR(pir_index)] &= (uint8_t)~(mask); } while (0)
 
+/* Read the TMR1IE bit (PIE1 bit 0, 0x91) into a uint8_t output
+ * variable. Host twin of target/pic16f193x_platform.h's
+ * EPIC_PIE1_READ_TMR1IE (which uses the `movlb 1` bank-switch idiom):
+ * the simulated register file is a plain array, so no banking path is
+ * needed here. Used by the shared interrupt dispatcher to skip
+ * TIMER1_IRQHandler when TMR1IE is off (a free-running Timer1 with the
+ * overflow interrupt disabled latches TMR1IF at every wrap; see the
+ * target header's comment for why that must not dispatch the handler). */
+#define EPIC_PIE1_READ_TMR1IE(out_var) \
+    ((out_var) = pic16f193x_sim_sfr[EPIC_PIE_REG_ADDR(0U)])
+
 #endif /* PIC16F193X_PLATFORM_H */

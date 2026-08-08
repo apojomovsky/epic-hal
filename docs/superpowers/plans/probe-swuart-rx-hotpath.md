@@ -1,6 +1,7 @@
 # Probe: measure the real RX hot-path overhead and verify the fix
 
-**Verdict: the fix works, with one honest caveat.** `rx_capture_event_fast`'s
+**Verdict: the fix works, with one honest caveat, and a second hazard
+found and fixed during follow-up measurement.** `rx_capture_event_fast`'s
 RX_IDLE branch costs 494 cycles edge-to-retfie on real PIC16F877A
 (MPLAB SIM, XC8 v3.10, `-O2`, DFP 1.8.167), and with
 `RX_CAPTURE_OVERHEAD_CYCLES = 325` the first (d0) sample deadline
@@ -12,6 +13,20 @@ per-bit re-arm has only **34 cycles of margin** against the 521-cycle
 budget, far tighter than the 233-cycle margin the plan's TX-side
 288-cycle estimate implied. It fits deterministically, but this is a
 real number to know about, not "fine".
+
+**Second finding, fixed in the same follow-up:** while measuring
+post-wrap behaviour (the probe below only ever ran ~3000 cycles, far
+short of Timer1's first 65536-cycle wrap), a latched `TMR1IF` on a
+disabled `TMR1IE` was shown to inject a ~251-cycle
+`TIMER1_IRQHandler()` detour before every CCP event after each wrap
+(~13 ms at 20 MHz, ~12.6 bytes at 9600 baud), blowing the RX re-arm
+margin on that byte. Fixed by gating the TMR1 dispatch on `TMR1IE` in
+all three families' interrupt dispatchers (and dropping the stale flag
+with the same single-instruction PIR1 clear the CCP handlers use).
+Post-fix re-measurement: vector-to-Timer1-read on the wrap-coincident
+event is 332 cycles (was 571, clean baseline 320), the d0 sample shifts
+to ~1.53 bit periods (still mid-d0), and the steady-state re-arm stays
+at 483 cycles with the full 34-cycle margin. All details below.
 
 ## What was run
 
@@ -137,6 +152,41 @@ build's edge-to-read is 323, a 2-cycle codegen shift; 325 still lands
 the sample at 1.50 bit periods because the deadline arithmetic consumes
 the constant at compile time and the residual is sub-bit-period).
 
+## The TMR1IF wrap detour: found and fixed (follow-up probe)
+
+All measurements above ran within Timer1's first 65536-cycle window
+(~3000 cycles total), so they never exercised a wrap. Extending the
+run past a wrap exposed a second, pre-existing hazard:
+
+- Timer1 free-runs with `TMR1IE` disabled (the swuart's
+  `TIMER1_HANDLE_DEFAULT` has no overflow callback), so `TMR1IF`
+  latches at every wrap (~13 ms at 20 MHz, ~12.6 bytes at 9600 baud)
+  and stays set: nothing clears it.
+- The shared dispatcher is flag-driven, not IE-driven:
+  `if (pir1 & PIC_PIR1_TMR1IF) TIMER1_IRQHandler();` runs even though
+  `TMR1IE` is clear. Measured post-wrap: vector-to-Timer1-read jumped
+  from 320 to **571 cycles** (PIR1 = 5 at the RX vector, i.e. TMR1IF +
+  CCP1IF both latched). The ~251-cycle detour blew the steady-state
+  re-arm margin (34 cycles) on whichever byte's event came first after
+  a wrap, corrupting ~1 in 12.6 bytes under sustained traffic.
+- v3's "TX byte-exact" gate never caught this: it runs ~2 bytes of
+  sim time, far short of the first wrap.
+
+Fix (committed with this probe): gate the TMR1 dispatch on `TMR1IE`
+in all three families' `*_irq_dispatch.c`, dropping the stale flag via
+the same single-instruction `EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), …)`
+the CCP handlers use (not the table-driven `EPIC_IRQ_ClearFlag`, whose
+lookup would itself delay the re-arm). Re-measured post-fix:
+
+| Metric | Pre-fix (post-wrap) | Post-fix (post-wrap) | Clean baseline |
+|---|---|---|---|
+| vector-to-Timer1-read (RX_IDLE) | 571 | 332 | 320 |
+| steady-state d0 vector-to-re-arm | miss (detour) | 483 | 483 |
+
+Post-wrap d0 sample lands at ~1.53 bit periods (still mid-d0); the
+steady-state re-arm keeps its full 34-cycle margin. The stale flag is
+dropped on the first post-wrap event, so subsequent events pay nothing.
+
 ## Verdict
 
 - **Race removed.** The d0 deadline is a relative reload off a fresh
@@ -146,6 +196,9 @@ the constant at compile time and the residual is sub-bit-period).
   2090), not ~65000 cycles later.
 - **Sample point correct.** d0 lands at 1.503 bit periods after the
   edge, mid-d0, with the measured constant.
+- **Wrap detour removed.** The latched-TMR1IF detour (which would have
+  corrupted ~8% of bytes under sustained traffic) is gated out at the
+  dispatcher; re-measured 332 vs 571 post-wrap.
 - **Margin honest.** RX_IDLE itself fits 494/521 (94.9%). The
   steady-state per-bit path fits with only 34 cycles of margin, not
   the comfortable margin the TX-side estimate suggested. Worth a

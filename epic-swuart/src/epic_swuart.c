@@ -162,12 +162,15 @@ static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 }
 
 /* Channel B (PIC16F193X only, CCP3) keeps the original two-fire
- * capture-then-confirm sequence; only channel A (PIC16F87XA's CCP1)
- * gets the collapsed fast path below. On single-channel families
- * (PIC16F87XA/PIC18Fxx5x) nothing calls rx_capture_event/test_get_capture
- * any more after this change, so both are scoped out to avoid dead code
- * with no caller. */
-#if EPIC_SWUART_MAX_CHANNELS >= 2
+ * capture-then-confirm sequence; only channel A on PIC16F87XA gets the
+ * collapsed fast path below (rx_capture_event_fast hardcodes CCP1's
+ * 87XA SFR addresses; see EPIC_SWUART_HAS_RX_FAST_PATH). On 87XA
+ * single-channel builds nothing calls rx_capture_event/test_get_capture
+ * any more after the hot-path change, so both are scoped out there to
+ * avoid dead code with no caller. PIC18Fxx5x and PIC16F193X channel A
+ * still use the generic path (the fast-path port is a follow-up), so
+ * the guard is "channel B exists OR no fast path exists". */
+#if EPIC_SWUART_MAX_CHANNELS >= 2 || !EPIC_SWUART_HAS_RX_FAST_PATH
 /* test_get_capture takes the RX CCP instance (not hardcoded to channel
  * A's) so the shared rx_capture_event body below reads the right
  * hardware capture register for whichever channel is firing; the test
@@ -242,7 +245,7 @@ static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef r
     h->rx_deadline = (uint16_t)(h->rx_deadline + g_cycles_per_bit);
     EPIC_CCP_SetCompare(rx_inst, h->rx_deadline);
 }
-#endif /* EPIC_SWUART_MAX_CHANNELS >= 2 */
+#endif /* EPIC_SWUART_MAX_CHANNELS >= 2 || !EPIC_SWUART_HAS_RX_FAST_PATH */
 
 /* Direct SFR addresses for PIC16F87XA's CCP1 (channel A's RX capture),
  * confirmed against pic16f87xa_ccp.c's own addrs[0] entry. Bypasses
@@ -257,6 +260,7 @@ static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef r
  * fix (see docs/ARCHITECTURE.md's "Known limitations" section).
  * Porting this same pattern to channel B and to PIC18Fxx5x/PIC16F193X's
  * own literal addresses is a follow-up, not this fix. */
+#if EPIC_SWUART_HAS_RX_FAST_PATH
 #define CCP1_CPRL_ADDR 0x15U
 #define CCP1_CPRH_ADDR 0x16U
 #define CCP1_CON_ADDR  0x17U
@@ -343,8 +347,17 @@ static void rx_capture_event_fast(EPIC_SWUART_HandleTypeDef *h)
     EPIC_REG8(CCP1_CPRH_ADDR) = (uint8_t)(h->rx_deadline >> 8);
     EPIC_REG8(CCP1_CON_ADDR) = (uint8_t)CCP_MODE_COMPARE_SOFT_IF;
 }
+#endif /* EPIC_SWUART_HAS_RX_FAST_PATH */
 
+/* Channel A's handler is the fast path on PIC16F87XA only; on
+ * PIC18Fxx5x and PIC16F193X it stays on the generic rx_capture_event
+ * (which reads/writes CCP1 through the family-correct EPIC_CCP_* SFR
+ * accessors) until a follow-up ports the fast pattern. */
+#if EPIC_SWUART_HAS_RX_FAST_PATH
 static void on_rx_event_a(void) { rx_capture_event_fast(g_chan_a); }
+#else
+static void on_rx_event_a(void) { rx_capture_event(g_chan_a, SWUART_CCP_RX); }
+#endif
 #if EPIC_SWUART_MAX_CHANNELS >= 2
 static void on_rx_event_b(void) { rx_capture_event(g_chan_b, SWUART_CCP_RX_B); }
 #endif

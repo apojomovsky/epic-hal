@@ -36,6 +36,21 @@
 #define EPIC_SWUART_MAX_CHANNELS 1u
 #endif
 
+/* PIC16F87XA detection for the RX hot-path fix (rx_capture_event_fast
+ * hardcodes CCP1's literal SFR addresses, 0x15/0x16/0x17, which are
+ * only valid on this family). PIC18Fxx5x's CCPR1L is 0xFBE and
+ * PIC16F193X's is 0x291, so the fast path must not compile there;
+ * channel A on those families keeps the generic rx_capture_event until
+ * a follow-up ports the pattern with their own literal addresses. */
+#if defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
+    defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939) || \
+    defined(PIC18F2455) || defined(PIC18F2550) || defined(PIC18F4455) || \
+    defined(PIC18F4550)
+#define EPIC_SWUART_HAS_RX_FAST_PATH 0u
+#else
+#define EPIC_SWUART_HAS_RX_FAST_PATH 1u
+#endif
+
 #ifndef EPIC_SWUART_RING_SZ
 #define EPIC_SWUART_RING_SZ 8u
 #endif

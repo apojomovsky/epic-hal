@@ -45,7 +45,11 @@ static int g_fails = 0;
 /* Test-only hooks: see test_swuart_rx.c. Defined in epic_swuart.c
  * behind EPIC_SWUART_TEST_HOOKS. */
 extern void swuart_test_fire_rx_event(void);
+#if EPIC_SWUART_HAS_RX_FAST_PATH
 extern void swuart_test_set_capture_fast(uint16_t value);
+#else
+extern void swuart_test_set_capture(uint16_t value);
+#endif
 
 /* Drives one full byte (start + 8 data + stop, LSB first) onto slot A's
  * RX pin and fires the matching sequence of capture/compare events:
@@ -59,10 +63,18 @@ extern void swuart_test_set_capture_fast(uint16_t value);
 static void receive_byte(const uint8_t *bits)
 {
     SIM_DRIVE('C', 2, bits[0]);
+#if EPIC_SWUART_HAS_RX_FAST_PATH
     swuart_test_set_capture_fast(1000u);
     swuart_test_fire_rx_event(); /* one fire: deglitch check + arm d0,
                                    * IDLE -> DATA0 (see test_swuart_rx.c
                                    * for why this collapsed from two). */
+#else
+    /* PIC18Fxx5x/PIC16F193X channel A keeps the generic two-fire
+     * capture-then-confirm sequence; see rx_capture_event. */
+    swuart_test_set_capture(1000u);
+    swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
+    swuart_test_fire_rx_event(); /* confirm event, half a bit later */
+#endif
     for (size_t i = 1; i < 10; i++) {
         SIM_DRIVE('C', 2, bits[i]);
         swuart_test_fire_rx_event(); /* compare event: sample + arm next */

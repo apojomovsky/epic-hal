@@ -51,19 +51,20 @@ extern void swuart_test_fire_tx_event(void);
 extern void swuart_test_fire_rx_event(void);
 extern void swuart_test_fire_rx_event_b(void);
 extern void swuart_test_set_capture(uint16_t value);
-extern void swuart_test_set_capture_fast(uint16_t value);
 
 /* Drives one full byte (start + 8 data + stop, LSB first) onto channel
  * A's RX pin (RC2) and fires the matching capture-then-compare event
  * sequence, same technique test_swuart_rx.c/test_swuart_errors.c use.
- * Channel A's path is the fast path (rx_capture_event_fast): the
- * deglitch check and d0 arm happen in one synchronous fire. */
+ * PIC16F193X channel A uses the generic two-fire path (the RX hot-path
+ * fix is PIC16F87XA-only; see EPIC_SWUART_HAS_RX_FAST_PATH), so this
+ * is the capture-then-confirm sequence rx_capture_event expects. */
 static void receive_byte_a(const uint8_t *bits)
 {
     pic16f193x_sim_drive_input('C', 2, bits[0]);
     pic16f193x_sim_step(1);
-    swuart_test_set_capture_fast(2000u);
-    swuart_test_fire_rx_event(); /* one fire: deglitch check + arm d0 */
+    swuart_test_set_capture(2000u);
+    swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
+    swuart_test_fire_rx_event(); /* confirm event, half a bit later */
     for (size_t i = 1; i < 10; i++) {
         pic16f193x_sim_drive_input('C', 2, bits[i]);
         pic16f193x_sim_step(1);
