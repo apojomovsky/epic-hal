@@ -29,8 +29,17 @@
 #include <stddef.h>
 #include "epic_hal.h"
 
-#if defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
-    defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)
+/* Channel B needs GPIOD (RD1, its TX pin): only the 40/44-pin
+ * PIC16F193X variants (1934/1937/1939) have a PORTD at all
+ * (PIC16F193X_FAMILY_HAS_PORTD, defined per-device in pic16f193x.h).
+ * The 28-pin variants (1933/1936/1938) have no PORTD, so channel B
+ * must not exist there: referencing GPIOD unconditionally on those
+ * devices doesn't compile (undeclared identifier), a real bug found
+ * via a real-target CI build across every PIC16F193X variant, not
+ * caught by v3's own verification, which only ever built 16F1937. */
+#if (defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
+     defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)) && \
+    PIC16F193X_FAMILY_HAS_PORTD
 #define EPIC_SWUART_MAX_CHANNELS 2u
 #else
 #define EPIC_SWUART_MAX_CHANNELS 1u
