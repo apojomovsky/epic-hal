@@ -90,10 +90,22 @@ void epic_tick_init(uint32_t fosc_hz)
 
 uint32_t epic_tick_get(void)
 {
-    uint8_t prev = EPIC_IRQ_Disable();          /* atomic 32-bit read          */
-    uint32_t t = g_tick_ms;
-    EPIC_IRQ_Restore(prev);
-    return t;
+    /* Read the 32-bit counter twice and retry while it changes. The
+     * ISR can update it between the 8-bit byte reads, and disabling
+     * GIE around the read is not reliable under MPLAB SIM: the
+     * simulator's interrupt delivery can still vector inside the
+     * disabled window (a request latched while GIE was set is
+     * delivered even after EPIC_IRQ_Disable clears it), tearing the
+     * read and, worse, leaving GIE cleared when the ISR returns, which
+     * stops the tick dead (epic-tick's sim-target gate froze mid-delay
+     * with exactly this signature). The retry loop is race-free on
+     * real silicon too, at the cost of an occasional re-read. */
+    uint32_t a, b;
+    do {
+        a = g_tick_ms;
+        b = g_tick_ms;
+    } while (a != b);
+    return a;
 }
 
 uint32_t epic_tick_elapsed_since(uint32_t t0)

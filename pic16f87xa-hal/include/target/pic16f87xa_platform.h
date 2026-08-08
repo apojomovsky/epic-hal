@@ -84,6 +84,14 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
  * MPLAB SIM, see docs/superpowers/plans/probe-swuart-rx-hotpath.md). */
 #define EPIC_PIE1_READ_TMR1IE(out_var) EPIC_BANK1_READ8(PIE1, (out_var))
 
+/* Same shape as EPIC_PIE1_READ_TMR1IE, for the TXIE bit (PIE1 bit 4).
+ * The dispatcher gates the USART TX branch on TXIE: TXIF is a
+ * read-only status bit that stays set whenever TXREG is empty, so
+ * without the gate every ISR would dispatch the TX handler (and its
+ * callback, through XC8's PC-relative function-pointer table, which
+ * requires the callback to share the table's flash page). */
+#define EPIC_PIE1_READ_TXIE(out_var) EPIC_BANK1_READ8(PIE1, (out_var))
+
 /* Same fix, Banks 2/3 (pic16f87xa_eeprom.c's EEDATA/EEADR/EECON1/
  * EECON2). Unlike EPIC_BANK1_*, these set/clear *both* RP1:RP0 bits
  * explicitly since EEPROM interleaves Bank 2 and Bank 3 back to back,

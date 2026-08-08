@@ -42,10 +42,17 @@ Fosc values it is exact:
 
 ## Atomicity and the host/target execution models
 
-`epic_tick_get()` disables interrupts around the 32-bit read (an 8-bit core
-reads it in four bytes; the ISR could update it mid-read). On the host sim
-the ISR fires synchronously inside `epic_harness_tick()`, so the
-disable/restore is harmless there.
+`epic_tick_get()` reads the 32-bit counter twice and retries while the two
+reads differ (an 8-bit core reads it in four bytes; the ISR can update it
+mid-read). It deliberately does **not** disable interrupts around the read:
+under MPLAB SIM the interrupt delivery can still vector inside a `GIE=0`
+critical section (a request latched while `GIE` was set is delivered even
+after `EPIC_IRQ_Disable` clears it), which both tears the read and, worse,
+can leave `GIE` cleared when the ISR returns, stopping the tick dead
+(`epic-tick`'s sim-target gate froze with exactly that signature). The retry
+loop is race-free on real silicon too, at the cost of an occasional
+re-read. On the host sim the ISR fires synchronously inside
+`epic_harness_tick()`, so the retry is a no-op there.
 
 `epic_tick_delay_ms()` pumps `epic_harness_tick()` while it waits, so on the
 **host** simulated time advances (the sim only advances when pumped; one tick
