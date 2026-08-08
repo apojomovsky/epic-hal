@@ -1,18 +1,26 @@
 /**
  * @file    epic_swuart.h
- * @brief   Bit-banged full-duplex UART, any GPIO pin, up to two channels
- *          active at once.
+ * @brief   Bit-banged full-duplex UART, CCP hardware capture/compare
+ *          timing. Channel capacity is a real per-family hardware
+ *          ceiling (CCP module count), not configurable: 1 channel on
+ *          PIC16F87XA/PIC18Fxx5x, 2 on PIC16F193X.
  *
  * @details
- *   One shared Timer1 tick (see docs/ARCHITECTURE.md for the oversample
- *   factor and why Timer1) drives every active channel's TX bit-clock
- *   and RX sampler. 9600 baud only is validated; 8 data bits, no
- *   parity, 1 stop bit, not configurable. Non-blocking, ring-buffered,
- *   same shape as epic-serial's read/write.
+ *   RX uses CCP Capture mode to hardware-timestamp the start-bit edge,
+ *   TX uses CCP Compare mode to hardware-toggle the pin at a scheduled
+ *   Timer1 count. Both are immune to ISR service latency: the physical
+ *   event happens in hardware at the programmed instant regardless of
+ *   how late software reprograms the *next* one. Timer1 free-runs
+ *   continuously as the shared time base; see docs/ARCHITECTURE.md.
+ *   9600 baud only is validated; 8 data bits, no parity, 1 stop bit,
+ *   not configurable. Non-blocking, ring-buffered.
  *
- *   This module owns Timer1 for as long as any channel is active, the
- *   same way epic_tick owns Timer2: do not also drive Timer1 directly
- *   from application code while a channel is initialised.
+ *   This module owns Timer1 and the CCP instances listed in
+ *   docs/ARCHITECTURE.md for as long as any channel is active: do not
+ *   also drive Timer1 or those CCP instances directly from application
+ *   code while a channel is initialised. RX/TX pins are fixed by which
+ *   physical pin each CCP instance is wired to, not freely choosable;
+ *   EPIC_SWUART_Init validates the caller's pins match.
  */
 #ifndef EPIC_SWUART_H
 #define EPIC_SWUART_H
@@ -20,6 +28,13 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "epic_hal.h"
+
+#if defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
+    defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)
+#define EPIC_SWUART_MAX_CHANNELS 2u
+#else
+#define EPIC_SWUART_MAX_CHANNELS 1u
+#endif
 
 #ifndef EPIC_SWUART_RING_SZ
 #define EPIC_SWUART_RING_SZ 8u
@@ -38,40 +53,47 @@ typedef struct {
     GPIO_TypeDef rx_port;
     uint16_t     rx_pin;
 
-    volatile uint8_t tx_state;
-    volatile uint8_t tx_shift;
-    volatile uint8_t tx_bit_index;
-    volatile uint16_t tx_ticks_left;
+    volatile uint8_t  tx_state;
+    volatile uint8_t  tx_shift;
+    volatile uint8_t  tx_bit_index;
+    volatile uint16_t tx_deadline;   /**< Absolute Timer1 count, valid
+                                       *   only while tx_state != TX_IDLE
+                                       *   or the TX CCP module is armed. */
     uint8_t          tx_ring[EPIC_SWUART_RING_SZ];
     volatile uint8_t tx_head;
     volatile uint8_t tx_tail;
     volatile uint8_t tx_count;
 
-    volatile uint8_t rx_state;
-    volatile uint8_t rx_shift;
-    volatile uint8_t rx_bit_index;
-    volatile uint16_t rx_ticks_left;
+    volatile uint8_t  rx_state;
+    volatile uint8_t  rx_shift;
+    volatile uint8_t  rx_bit_index;
+    volatile uint16_t rx_deadline;   /**< Absolute Timer1 count, valid
+                                       *   only while rx_state != RX_IDLE. */
     uint8_t          rx_ring[EPIC_SWUART_RING_SZ];
     volatile uint8_t rx_head;
     volatile uint8_t rx_tail;
     volatile uint8_t rx_count;
 
     volatile uint16_t error_count;
-    uint8_t           active;
 } EPIC_SWUART_HandleTypeDef;
 
 /**
- * @brief  Register a channel and, on the first call, start the shared
- *         Timer1 tick. `baud` is validated only at 9600; anything else
- *         is accepted but unsupported (see docs/API.md).
+ * @brief  Register a channel. `tx_port`/`tx_pin`/`rx_port`/`rx_pin`
+ *         must match the fixed pins wired to this channel slot's CCP
+ *         instances (see docs/ARCHITECTURE.md for the per-family
+ *         table); a mismatch returns EPIC_INVALID, the same as a NULL
+ *         handle or an already-full channel registry.
+ *         `baud` is validated only at 9600; anything else is accepted
+ *         but unsupported (see docs/API.md).
  *
  *         Precondition: the RX pin must idle high (pulled up, or connected
  *         to a live transmitter) whenever the channel is not actively
  *         receiving; a floating or held-low RX pin will be misread as a
- *         continuous stream of start bits.
+ *         start bit.
  *
- * @return EPIC_OK, or EPIC_INVALID if `h` is NULL or both channel slots
- *         are already in use.
+ * @return EPIC_OK, or EPIC_INVALID if `h` is NULL, the pins don't match
+ *         this slot's fixed CCP pins, or all EPIC_SWUART_MAX_CHANNELS
+ *         slots are already in use.
  */
 EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
                                      GPIO_TypeDef tx_port, uint16_t tx_pin,
