@@ -478,3 +478,55 @@ one here); flagged for whoever next touches SSP.
 - This document itself should be checked for staleness against whatever
   XC8 version `docker/ci-toolchain/Dockerfile` pins if that version is
   ever bumped; these findings are cited against v4.00 specifically.
+
+## Finding 10: the remaining sim-target hang, root-caused and fixed
+
+**Finding 9's fix (the `pic_select_bank` misdirection in
+`EPIC_TIMER2_WritePeriod`/`EPIC_USART_Init`) was necessary but not
+sufficient: the merged PR #6 state still hangs the `epic-tick` sim-target
+gate** (verified 0/3 at the merge commit `87848c2`; the "5/5 PASS" in
+Finding 9 was evidently measured on an unmerged branch state). The hang
+survived Findings 4-9's theories because it has three independent
+contributors, each fixed in this session:
+
+1. **MPLAB SIM can vector inside a `GIE=0` critical section.** A request
+   latched while `GIE` was set is delivered even after
+   `EPIC_IRQ_Disable` clears it, so `epic_tick_get`'s disable-around-
+   read neither prevents the interrupt (tearing the 4-byte counter read,
+   observed as `E10=2` for a 10 ms delay) nor reliably survives it (the
+   ISR's return can leave `GIE` cleared, stopping the tick dead). Fix:
+   `epic_tick_get` reads the counter twice and retries on change (the
+   HAL's own CCP-capture pattern), no `GIE` manipulation at all.
+2. **TXIF is a read-only status bit that stays set whenever TXREG is
+   empty, so the dispatcher's `if (pir1 & TXIF)` branch fired the
+   USART TX handler (and its callback, through XC8's PC-relative
+   function-pointer table `i1fptable`, whose targets must share the
+   table's flash page) on *every* ISR.** Once the linker scattered the
+   callback (`s_tx_cplt`) to a different page than the table, the ISR
+   jumped into garbage and wedged interrupt delivery. Finding 6's
+   falsification was incomplete: it removed the callback but kept the
+   handler (and its `GetFlag`/`stringdir` call) running every ISR. Fix:
+   gate the TX branch on `TXIE` (the same flag-gating shape as the TMR1
+   branch), so a disabled source's always-set status bit never
+   dispatches anything.
+3. **The dispatcher's PCLATH-less handler calls are genuinely
+   layout-sensitive** (Finding 5's overlap observation was the visible
+   symptom of the page scatter): XC8 emits no PCLATH setup for the
+   interrupt call-graph's calls, assuming the linker co-locates them,
+   and best-fit scatters them across pages. Fix: pin
+   `epic_dispatch_all_irqs` to `0x900` (`__at`), co-locating it with
+   the handlers (the ones in the failing layout were all page 1; the
+   pin makes the co-location deterministic regardless of the linker's
+   mood).
+
+**Verification (all in the exact CI Docker toolchain)**: `epic-tick`
+16F877A sim gate 8/8, `epic-tick` 18F4550, `epic-swuart` 16F877A, and
+`epic-pic16f193x-firmware` 16F1937 (gpio mode) all PASS; the full
+real-target matrix 84/84; all affected modules' host ctests pass;
+pre-commit checks clean. The stringdir PCLATH-clobber class (Finding
+10.2's second half) remains a latent hazard in the un-refactored
+handlers' `GetFlag`/`ClearFlag` table lookups, but is no longer
+reachable from `epic-tick`'s ISR (the TX branch is gated and the TMR2
+handler's table lookups co-locate in current layouts); converting the
+remaining handlers to the CCP1/CCP2 direct-flag pattern is tracked as
+follow-up hardening, not required for the gate.

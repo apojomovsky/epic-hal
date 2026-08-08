@@ -41,7 +41,21 @@ extern void RB_IRQHandler(void);
 extern void PSP_IRQHandler(void);
 #endif
 
+/* The dispatcher runs in the ISR. XC8 emits no PCLATH setup for the
+ * handler calls below (it assumes the interrupt call-graph is linked
+ * into one flash page), so the dispatch and the handlers must share a
+ * page. Best-fit placement scatters them (the dispatch has linked into
+ * page 0 while the handlers sit in page 1, and each call then lands
+ * 0x800 past its target, executing garbage); pin the dispatch into
+ * page 1 with the handlers, which are already co-located there (this
+ * build's layout was verified page-sensitive: the identical dispatch
+ * logic passes or fails the sim gates purely on the linker's
+ * placement). Host build: no pages, no pin. */
+#if defined(__XC8)
+void epic_dispatch_all_irqs(void) __at(0x900)
+#else
 void epic_dispatch_all_irqs(void)
+#endif
 {
     uint8_t intcon = EPIC_REG8(PIC_REG_INTCON);
     if (intcon & PIC_INTCON_TMR0IF) TIMER0_IRQHandler();
@@ -75,7 +89,24 @@ void epic_dispatch_all_irqs(void)
     if (pir1 & PIC_PIR1_CCP1IF) CCP1_IRQHandler();
     if (pir1 & PIC_PIR1_SSPIF)  SSP_IRQHandler();
     if (pir1 & PIC_PIR1_RCIF)   USART_RX_IRQHandler();
-    if (pir1 & PIC_PIR1_TXIF)   USART_TX_IRQHandler();
+    /* TXIF is a read-only status bit that stays set whenever TXREG is
+     * empty, so dispatch the TX handler only when the source is
+     * actually enabled (same flag-gating shape as the TMR1 branch
+     * above). Without the TXIE gate every ISR calls the TX handler and
+     * its callback, which goes through XC8's PC-relative
+     * function-pointer table: the callback must share the table's
+     * flash page, and when the linker scatters it elsewhere the jump
+     * lands in garbage, corrupting the ISR and wedging interrupt
+     * delivery (epic-tick's sim-target gate froze with exactly this
+     * signature once s_tx_cplt landed in a different page than the
+     * handlers). */
+    if (pir1 & PIC_PIR1_TXIF) {
+        uint8_t txie;
+        EPIC_PIE1_READ_TXIE(txie);
+        if (txie & PIC_PIE1_TXIE) {
+            USART_TX_IRQHandler();
+        }
+    }
     if (pir1 & PIC_PIR1_ADIF)   ADC_IRQHandler();
 #if PIC16F87XA_FAMILY_HAS_PSP
     if (pir1 & PIC_PIR1_PSPIF)  PSP_IRQHandler();
