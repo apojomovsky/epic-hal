@@ -36,10 +36,19 @@
  * must not exist there: referencing GPIOD unconditionally on those
  * devices doesn't compile (undeclared identifier), a real bug found
  * via a real-target CI build across every PIC16F193X variant, not
- * caught by v3's own verification, which only ever built 16F1937. */
+ * caught by v3's own verification, which only ever built 16F1937.
+ *
+ * PORTD alone isn't enough, though: PIC16F1934 has PORTD but only 4KW
+ * of flash (PIC16F193X_FAMILY_FLASH_KW, same tier as the smallest
+ * 28-pin parts), and the compiled real-target example (with channel B
+ * enabled) needs 4127 words, 31 over 1934's 4096-word budget, measured
+ * via a real XC8 build, not estimated. PIC16F1937 (8KW) and PIC16F1939
+ * (16KW) both build with real headroom (50.4% and 25.2% used
+ * respectively). Requiring >=8KW alongside PORTD excludes exactly
+ * 1934 and nothing else. */
 #if (defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
      defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)) && \
-    PIC16F193X_FAMILY_HAS_PORTD
+    PIC16F193X_FAMILY_HAS_PORTD && (PIC16F193X_FAMILY_FLASH_KW >= 8)
 #define EPIC_SWUART_MAX_CHANNELS 2u
 #else
 #define EPIC_SWUART_MAX_CHANNELS 1u
