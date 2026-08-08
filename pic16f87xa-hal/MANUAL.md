@@ -103,9 +103,12 @@ The PIC16F87XA has a **single** interrupt vector at 0x0004 (DS39582B
 §14.11). On a real target, `src/core/pic16_isr_vector.c` installs the XC8
 `__interrupt()` handler, which calls `epic_dispatch_all_irqs()`. On
 the host, the harness registers that same function as the simulator's IRQ
-callback. Either way, the one dispatcher fans out to every peripheral's
-`*IRQHandler`, and each of those is a no-op unless its own flag is set.
-Applications never wire interrupt vectors themselves. (Contrast with
+callback. Either way, the one dispatcher reads INTCON/PIR1/PIR2 once
+each and only calls the peripheral `*IRQHandler`s whose bit is
+actually set in that snapshot, instead of calling all of them
+unconditionally; each handler that *is* called still checks (and
+clears) its own flag internally, so it stays correct when called from
+anywhere else too. Applications never wire interrupt vectors themselves. (Contrast with
 `pic18fxx5x-hal`, which has two vectors and a priority model — see its own
 manual §2 and `epic-common/MANUAL.md` §6 for what's shared about the
 interrupt story across families.)
@@ -286,7 +289,11 @@ typedef enum {
 ```
 
 `epic_dispatch_all_irqs()` (in `src/core/pic16_irq_dispatch.c`, built on
-both host and target) calls every peripheral `*IRQHandler` in turn.
+both host and target) reads INTCON/PIR1/PIR2 once each and calls only
+the peripheral `*IRQHandler`s whose bit is set, not every one
+unconditionally (measured to matter: a real mdb run found 409 of 674
+ISR cycles on PIC16F87XA were spent on the old unconditional fan-out,
+see git commit b679e21's message for the full measurement).
 
 ---
 
@@ -610,6 +617,7 @@ load-bearing).
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
 void     EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
+void     EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode);  // CCPxCON mode nibble only, no IRQ bookkeeping
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
 void     EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);  // 0..1023
 void     CCP1_IRQHandler(void) EPIC_WEAK;

@@ -51,7 +51,16 @@ docker/ci-toolchain/vendor/
 # Release bundles are build output, never committed.
 bundles/
 
+# Reference MPLAB X projects' build output (build*/ above already
+# catches build/, dist/ is MPLAB X's own separate output dir).
+/examples/*/dist/
+
 # CI's ci.yml target job: manifest-resolved build matrix and per-step
 # PASS/FAIL summaries, all repo-root-relative build output.
 /matrix.txt
 /ci-summary-*.md
+
+# superpowers:subagent-driven-development's per-plan scratch workspace
+# (ledger, briefs, review packages). The git history is the record once
+# a plan finishes; this directory is deleted at that point anyway.
+/.superpowers/

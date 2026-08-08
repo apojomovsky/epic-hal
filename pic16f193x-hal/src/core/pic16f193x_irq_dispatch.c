@@ -16,6 +16,17 @@
  *   TIMER6, and IOC (the GPIO change interrupt) have drivers. Each
  *   peripheral phase appends its handler extern and its call here, in
  *   the same shape.
+ *
+ *   Each peripheral IRQHandler still checks (and clears) its own flag
+ *   internally and is safe to call from anywhere else, but this
+ *   dispatcher only *calls* a handler when its bit is already known
+ *   to be set: it reads INTCON/PIR1/PIR2/PIR3 once each into locals
+ *   and branches directly on those bits, instead of unconditionally
+ *   invoking every handler and letting each one pay its own
+ *   table-driven `EPIC_IRQ_GetFlag` lookup (`pic16f193x_irq.c`) to
+ *   find out it wasn't the one that fired. Same shape as the
+ *   PIC16F87XA fix (`pic16_irq_dispatch.c`), adapted to this family's
+ *   own three-PIR-bank register layout.
  */
 
 #include "core/pic16f193x_irq.h"
@@ -42,23 +53,30 @@ extern void IOC_IRQHandler(void);
 
 void epic_dispatch_all_irqs(void)
 {
-    TIMER0_IRQHandler();
-    TIMER1_IRQHandler();
-    TIMER2_IRQHandler();
-    TIMER4_IRQHandler();
-    TIMER6_IRQHandler();
-    CCP1_IRQHandler();
-    CCP2_IRQHandler();
-    USART_TX_IRQHandler();
-    USART_RX_IRQHandler();
-    SSP_IRQHandler();
-    ADC_IRQHandler();
-    CMP1_IRQHandler();
-    CMP2_IRQHandler();
-    EEPROM_IRQHandler();
-    CCP3_IRQHandler();
-    CCP4_IRQHandler();
-    CCP5_IRQHandler();
-    LCD_IRQHandler();
-    IOC_IRQHandler();
+    uint8_t intcon = EPIC_REG8(PIC_REG_INTCON);
+    if (intcon & PIC_INTCON_TMR0IF) TIMER0_IRQHandler();
+    if (intcon & PIC_INTCON_IOCIF)  IOC_IRQHandler();
+
+    uint8_t pir1 = EPIC_REG8(PIC_REG_PIR1);
+    if (pir1 & PIC_PIR1_TMR1IF) TIMER1_IRQHandler();
+    if (pir1 & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
+    if (pir1 & PIC_PIR1_CCP1IF) CCP1_IRQHandler();
+    if (pir1 & PIC_PIR1_SSPIF)  SSP_IRQHandler();
+    if (pir1 & PIC_PIR1_TXIF)   USART_TX_IRQHandler();
+    if (pir1 & PIC_PIR1_RCIF)   USART_RX_IRQHandler();
+    if (pir1 & PIC_PIR1_ADIF)   ADC_IRQHandler();
+
+    uint8_t pir2 = EPIC_REG8(PIC_REG_PIR2);
+    if (pir2 & PIC_PIR2_CCP2IF) CCP2_IRQHandler();
+    if (pir2 & PIC_PIR2_LCDIF)  LCD_IRQHandler();
+    if (pir2 & PIC_PIR2_EEIF)   EEPROM_IRQHandler();
+    if (pir2 & PIC_PIR2_C1IF)   CMP1_IRQHandler();
+    if (pir2 & PIC_PIR2_C2IF)   CMP2_IRQHandler();
+
+    uint8_t pir3 = EPIC_REG8(PIC_REG_PIR3);
+    if (pir3 & PIC_PIR3_TMR4IF) TIMER4_IRQHandler();
+    if (pir3 & PIC_PIR3_TMR6IF) TIMER6_IRQHandler();
+    if (pir3 & PIC_PIR3_CCP3IF) CCP3_IRQHandler();
+    if (pir3 & PIC_PIR3_CCP4IF) CCP4_IRQHandler();
+    if (pir3 & PIC_PIR3_CCP5IF) CCP5_IRQHandler();
 }

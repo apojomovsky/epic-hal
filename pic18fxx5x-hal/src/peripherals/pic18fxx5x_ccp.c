@@ -144,6 +144,12 @@ void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
     CCP_WRITE_CPRL(inst, value & 0xFFU);
 }
 
+void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode)
+{
+    if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
+    CCP_WRITE_CON(inst, (uint8_t)(mode & 0x0FU));
+}
+
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return 0U;
@@ -213,8 +219,7 @@ void EPIC_CCP_Restart(CCP_InstanceTypeDef inst)
 
 void CCP1_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_CCP1)) return;
-    EPIC_IRQ_ClearFlag(PIC18_IRQ_CCP1);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
     if (g_ccp_handles[CCP_INSTANCE_1] &&
         g_ccp_handles[CCP_INSTANCE_1]->EventCallback) {
         g_ccp_handles[CCP_INSTANCE_1]->EventCallback();
@@ -223,8 +228,7 @@ void CCP1_IRQHandler(void)
 
 void CCP2_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC18_IRQ_CCP2)) return;
-    EPIC_IRQ_ClearFlag(PIC18_IRQ_CCP2);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
     if (g_ccp_handles[CCP_INSTANCE_2] &&
         g_ccp_handles[CCP_INSTANCE_2]->EventCallback) {
         g_ccp_handles[CCP_INSTANCE_2]->EventCallback();

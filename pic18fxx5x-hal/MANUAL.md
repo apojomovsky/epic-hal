@@ -104,8 +104,11 @@ vectors: 0008h (high-priority) and 0018h (low-priority), gated by
 `epic_dispatch_all_irqs()` (`src/core/pic18_isr_vector.c` on target, the
 harness's registered sim callback on host) — the hardware has already
 separated high- from low-priority sources by which vector it took, so
-calling the full dispatch from both is correct; each peripheral handler
-still checks its own flag. See [§6](#6-interrupts) for the priority API.
+calling the full dispatch from both is correct. The dispatcher itself
+reads INTCON/PIR1/PIR2 once each and only calls the peripheral
+handlers whose bit is actually set, not every handler unconditionally;
+each handler called still checks its own flag. See [§6](#6-interrupts)
+for the priority API.
 
 ## 3. Quick start
 
@@ -565,6 +568,7 @@ typedef struct {
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
 void     EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
+void     EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode);  // CCPxCON mode nibble only, no IRQ bookkeeping
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
 void     EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);   // 0..1023
 void     EPIC_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst, uint8_t delay, bool auto_restart);  // no-op for CCP2

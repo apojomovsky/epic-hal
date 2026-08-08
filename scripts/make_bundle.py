@@ -62,6 +62,24 @@ def _copy_tree(src: pathlib.Path, dst: pathlib.Path) -> None:
         shutil.copy2(path, target)
 
 
+def _copy_project(src: pathlib.Path, dst: pathlib.Path) -> None:
+    """Copy an MPLAB X .X project wholesale.
+
+    Unlike a source tree, everything here matters: nbproject holds .xml,
+    .mk, and .properties files, and a project missing any of them opens
+    broken. Only build output is skipped.
+    """
+    for path in sorted(src.rglob("*")):
+        parts = path.relative_to(src).parts
+        if "build" in parts or "dist" in parts or "__pycache__" in parts:
+            continue
+        if path.is_dir():
+            continue
+        target = dst / path.relative_to(src)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, target)
+
+
 def _quickstart(manifest, family_name: str, version: str) -> str:
     """QUICKSTART.md, or a HAL-only fallback for a family with no module.
 
@@ -135,6 +153,11 @@ def main():
         bundlegen.emit_mplabx_md(manifest, args.family, args.version))
     (root / "VERSION").write_text(args.version + "\n")
     shutil.copy2(REPO / "LICENSE", root / "LICENSE")
+
+    project_src = REPO / bundlegen.reference_project_dir(manifest, args.family)
+    if not project_src.is_dir():
+        sys.exit(f"error: no reference project at {project_src.relative_to(REPO)}")
+    _copy_project(project_src, root / "examples" / "epicurus-demo.X")
 
     # Every source epicurus.mk names must actually be in the bundle. A
     # bundle that ships a source list referring to a file it does not

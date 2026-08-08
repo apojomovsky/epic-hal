@@ -1,0 +1,233 @@
+name: release-bundles
+
+# Tag-triggered: builds one source bundle per family, proves each one
+# builds from a scratch directory outside any repo checkout, and only
+# then attaches the tarballs to a GitHub Release.
+#
+# Nothing generated is committed; bundles exist only as release assets.
+# The gate is the same idea as bundle-gate.yml, repeated here because a
+# release must never publish an artifact it has not itself built.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build (e.g. v0.1.0), for a dry run"
+        required: true
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  toolchain-image:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: resolve
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
+          echo "image=ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}" >> "$GITHUB_OUTPUT"
+      - run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - run: docker pull "${{ steps.resolve.outputs.image }}"
+
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Building $version"
+      - name: Generate every family's bundle
+        run: |
+          python3 - <<'PY' > families.txt
+          import sys
+          sys.path.insert(0, "scripts")
+          import epicmanifest
+          m = epicmanifest.load(epicmanifest.default_path())
+          for name in sorted(m.families):
+              print(name)
+          PY
+          while read -r fam; do
+            python3 scripts/make_bundle.py \
+              --family "$fam" --version "${{ steps.version.outputs.version }}"
+          done < families.txt
+      - name: Checksum the tarballs
+        run: |
+          cd bundles
+          sha256sum ./*.tar.gz > SHA256SUMS
+          cat SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-bundles
+          path: bundles/
+
+  gate:
+    needs: [toolchain-image, build]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ needs.toolchain-image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-bundles
+          path: /tmp/bundles
+      - name: Verify the checksums
+        run: cd /tmp/bundles && sha256sum -c SHA256SUMS
+      - name: Build every bundle outside any repo checkout
+        shell: bash
+        run: |
+          # /isolated has no repo above it, so a path escaping a bundle
+          # cannot accidentally resolve through the source tree.
+          mkdir -p /isolated && cd /isolated
+          fail=0
+          for tarball in /tmp/bundles/*.tar.gz; do
+            name="$(basename "$tarball" .tar.gz)"
+            tar xzf "$tarball" -C /isolated
+            cd "/isolated/$name"
+
+            for required in epicurus.mk epicurus-sources.json SUPPORT.md \
+                            QUICKSTART.md MPLABX.md VERSION LICENSE; do
+              if [ ! -f "$required" ]; then
+                echo "FAIL $name: missing $required"
+                fail=1
+              fi
+            done
+            if [ ! -d examples/epicurus-demo.X ]; then
+              echo "FAIL $name: missing examples/epicurus-demo.X"
+              fail=1
+            else
+              (
+                cd examples/epicurus-demo.X
+                "$MPLABX_INSTALL_DIR/mplab_platform/bin/prjMakefilesGenerator.sh" . \
+                  >/dev/null 2>&1 || true
+                if make -f nbproject/Makefile-default.mk SUBPROJECTS= .build-conf \
+                     >project.log 2>&1; then
+                  echo "PASS $name (epicurus-demo.X)"
+                else
+                  echo "FAIL $name: epicurus-demo.X did not build"
+                  cat project.log
+                  exit 1
+                fi
+              ) || fail=1
+            fi
+
+            module="$(grep -m1 '^EPICURUS_MODULE_' epicurus.mk \
+              | sed 's/^EPICURUS_MODULE_\([^ ]*\).*/\1/' || true)"
+            if [ -z "$module" ]; then
+              echo "SKIP $name: HAL-only bundle, nothing to link"
+              cd /isolated
+              continue
+            fi
+            part="$(grep -m1 "^EPICURUS_SUPPORTED_epic-$module " epicurus.mk \
+              | awk '{print $3}')"
+            dfp_name="$(grep -m1 '^EPICURUS_DFP' epicurus.mk | awk '{print $3}')"
+
+            cat > Makefile <<EOF
+          EPICURUS_DIR := .
+          EPICURUS_MCU := $part
+          EPICURUS_MODULES := $module
+          include \$(EPICURUS_DIR)/epicurus.mk
+          DFP := $XC8_INSTALL_DIR/pic/packs/$dfp_name/xc8
+          all:
+          	xc8-cc -mdfp=\$(DFP) -mcpu=\$(shell echo \$(EPICURUS_MCU) | tr A-Z a-z) \\
+          	  -O2 -std=c99 -Wall -Wextra \$(EPICURUS_CFLAGS) -DFOSC_HZ=20000000 \\
+          	  \$(EPICURUS_SRCS) main.c -o app.hex -ginhx32
+          EOF
+            printf 'void main(void) { for (;;) { } }\n' > main.c
+
+            if make >build.log 2>&1 && [ -f app.hex ]; then
+              echo "PASS $name ($module on $part)"
+            else
+              echo "FAIL $name ($module on $part)"
+              cat build.log
+              fail=1
+            fi
+            cd /isolated
+          done
+          exit "$fail"
+
+  publish:
+    needs: [build, gate]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-bundles
+          path: bundles
+      - name: Write the release notes
+        run: |
+          version="${{ needs.build.outputs.version }}"
+          {
+            echo "## Epicurus $version"
+            echo
+            echo "Source bundles, one per family. Download the one for your"
+            echo "part, unpack it, and point \`EPICURUS_DIR\` at it. Each"
+            echo "bundle carries its own \`QUICKSTART.md\`, \`SUPPORT.md\`,"
+            echo "\`MPLABX.md\`, and a reference MPLAB X project under"
+            echo "\`examples/\`."
+            echo
+            echo '```make'
+            echo 'EPICURUS_DIR := third_party/epicurus'
+            echo 'EPICURUS_MCU := 16F877A'
+            echo 'EPICURUS_MODULES := serial tick'
+            echo 'include $(EPICURUS_DIR)/epicurus.mk'
+            echo
+            echo 'SRCS := main.c $(EPICURUS_SRCS)'
+            echo 'CFLAGS += $(EPICURUS_CFLAGS)'
+            echo '```'
+            echo
+            echo "### Stability"
+            echo
+            echo "This is a 0.x release: the \`epicurus.mk\` interface may"
+            echo "still change. Pin this tag rather than tracking a branch."
+            echo
+            echo "### Support"
+            echo
+            echo "Not every module builds on every part; the smaller parts"
+            echo "in each family run out of RAM for the larger modules."
+            echo "Each bundle's \`SUPPORT.md\` has the full table with a"
+            echo "reason for every exclusion, and \`epicurus.mk\` fails"
+            echo "immediately with that reason rather than as a wall of XC8"
+            echo "linker errors."
+            echo
+            echo "### Verification"
+            echo
+            echo "Every bundle in this release was built from a scratch"
+            echo "directory outside the repository before publication."
+            echo
+            echo '```'
+            cat bundles/SHA256SUMS
+            echo '```'
+          } > notes.md
+          cat notes.md
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ needs.build.outputs.version }}" \
+            --title "Epicurus ${{ needs.build.outputs.version }}" \
+            --notes-file notes.md \
+            bundles/*.tar.gz bundles/SHA256SUMS

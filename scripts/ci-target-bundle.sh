@@ -5,15 +5,19 @@
 # bundle can't accidentally resolve through this checkout's own sibling
 # layout. Ported verbatim from the old bundle-gate.yml's build-isolated
 # job, just as a standalone script instead of inline workflow YAML.
+# Also builds each bundle's reference MPLAB X project headlessly
+# (prjMakefilesGenerator.sh + make .build-conf), ported from the same
+# old bundle-gate.yml once docs/superpowers/plans/probe-mplabx-headless.md
+# confirmed the toolchain image can do that without the GUI.
 #
 # Usage: ci-target-bundle.sh [bundles-dir] [summary.md]
 #   bundles-dir  default: bundles (in cwd), *.tar.gz produced by
 #                make_bundle.py in ci.yml's emit step
 #   summary.md   default: ci-summary-bundle.md (in cwd)
 #
-# Needs $XC8_INSTALL_DIR (set by docker/ci-toolchain/Dockerfile's own
-# ENV, inherited automatically by any shell running inside that image).
-# Exits 1 if anything failed.
+# Needs $XC8_INSTALL_DIR and $MPLABX_INSTALL_DIR (set by
+# docker/ci-toolchain/Dockerfile's own ENV, inherited automatically by
+# any shell running inside that image). Exits 1 if anything failed.
 
 set -uo pipefail
 
@@ -34,6 +38,31 @@ for tarball in "$repo_root/$bundles_dir"/*.tar.gz; do
   rm -rf "/isolated/$name"
   tar xzf "$tarball" -C /isolated
   cd "/isolated/$name"
+
+  # Reference MPLAB X project. Built headlessly via the same generated
+  # makefile MPLAB X itself uses; see
+  # docs/superpowers/plans/probe-mplabx-headless.md for why this is
+  # possible in this image. Runs for every bundle, including HAL-only
+  # ones, since every family ships one regardless of whether it has a
+  # higher-level module to link.
+  if [ -d examples/epicurus-demo.X ]; then
+    (
+      cd examples/epicurus-demo.X
+      "$MPLABX_INSTALL_DIR/mplab_platform/bin/prjMakefilesGenerator.sh" . \
+        >/dev/null 2>&1 || true
+      if make -f nbproject/Makefile-default.mk SUBPROJECTS= .build-conf \
+           >project.log 2>&1; then
+        echo "| $name | epicurus-demo.X | (project) | PASS |" >> "$repo_root/$summary"
+      else
+        echo "| $name | epicurus-demo.X | (project) | FAIL |" >> "$repo_root/$summary"
+        echo "::group::$name project log"; cat project.log; echo "::endgroup::"
+        exit 1
+      fi
+    ) || fail=1
+  else
+    echo "| $name | epicurus-demo.X | (project) | FAIL: missing |" >> "$repo_root/$summary"
+    fail=1
+  fi
 
   # Pick the first supported (module, part) pair straight out of the
   # bundle's own SUPPORT.md table, so this tests what a consumer would

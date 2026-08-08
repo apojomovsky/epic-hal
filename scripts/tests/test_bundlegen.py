@@ -361,5 +361,23 @@ class TestMplabxMd(unittest.TestCase):
         self.assertNotIn(chr(0x2014), self.md)  # em-dash, repo convention
 
 
+class TestReferenceProjectPath(unittest.TestCase):
+    """The repo-side .X directory name for a family."""
+
+    def test_maps_family_to_its_project_dir(self):
+        self.assertEqual(
+            bundlegen.reference_project_dir(load(), "PIC16F87XA"),
+            "examples/epicurus-demo-pic16f87xa.X",
+        )
+        self.assertEqual(
+            bundlegen.reference_project_dir(load(), "PIC18Fxx5x"),
+            "examples/epicurus-demo-pic18fxx5x.X",
+        )
+
+    def test_unknown_family_raises(self):
+        with self.assertRaises(bundlegen.BundleError):
+            bundlegen.reference_project_dir(load(), "PIC99XXXX")
+
+
 if __name__ == "__main__":
     unittest.main()
