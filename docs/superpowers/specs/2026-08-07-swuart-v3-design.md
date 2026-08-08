@@ -1,6 +1,16 @@
 # epic-swuart v3: CCP hardware capture/compare timing engine, design
 
-Status: **agreed 2026-08-07, not started**.
+Status: **implemented 2026-08-08**. Real `mdb`-measured verdict
+(`docs/superpowers/plans/probe-swuart-v3-ccp-cost.md`): both a CCP
+compare event (288 cycles, 55% of the 521-cycle budget) and a CCP
+capture event (404 cycles, 78% of budget, verified via real pin
+injection) fit with real margin on PIC16F877A at 20 MHz/9600 baud,
+resolving this design's own open verification question. One real
+limitation surfaced during implementation and is disclosed rather than
+hidden: the module's real-hardware `mdb` gate proves TX is byte-exact
+correct but does not prove RX correctness on real hardware, see
+`epic-swuart/docs/ARCHITECTURE.md`'s "Real-hardware verification"
+section.
 
 Supersedes the timing-engine portions of
 `docs/superpowers/specs/2026-08-07-swuart-v2-design.md` (v2). Not a
@@ -137,10 +147,23 @@ category of deferred work v2 already logged for RBIF/IOC.
 **Real-target**: the `mdb` gate work from v2's own (unexecuted) Task 6
 carries forward unchanged in spirit: real compiled firmware, run under
 MPLAB SIM, checked for a real pass/fail marker. The specific probe that
-motivated this whole redesign (measuring the real ISR's cycle cost)
-should be re-run against the CCP-based implementation before trusting
-it, the same "probe before trusting" discipline that has now caught a
-real gap twice in this module's history.
+motivated this whole redesign (measuring the real ISR's cycle cost) was
+re-run against the CCP-based implementation before trusting it, the
+same "probe before trusting" discipline that had already caught a real
+gap twice in this module's history: **resolved, real-margin verdict**
+(`docs/superpowers/plans/probe-swuart-v3-ccp-cost.md`, measured on real
+PIC16F877A hardware via `mdb`, not estimated): a CCP2 compare event
+costs 288 cycles (55% of the 521-cycle budget, 233-cycle margin), and a
+CCP1 capture event, verified with real pin injection rather than a
+compare-only fallback, costs 404 cycles (78% of budget, 117-cycle
+margin). Both fit comfortably, a completely different outcome from v2's
+own measured 1019-cycle failure against the same budget. The module's
+shipped `mdb` gate (`epic-swuart/tests/sim_target_swuart.c`, wired into
+`scripts/ci-target-sim.sh`) additionally confirmed real compiled TX
+firmware runs to completion without hanging and is byte-exact correct
+by hand-trace, but does not cover real-hardware RX correctness, an
+open, disclosed gap (see `epic-swuart/docs/ARCHITECTURE.md`), not an
+oversight in this closeout.
 
 ## A documented hazard, unrelated to CCP, found during this investigation
 

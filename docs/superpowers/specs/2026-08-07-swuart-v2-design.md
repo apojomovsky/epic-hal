@@ -1,6 +1,21 @@
 # epic-swuart v2: edge-triggered timing engine, design
 
-Status: **agreed 2026-08-07, not started**.
+Status: **agreed 2026-08-07, superseded 2026-08-07 before its own
+Tasks 5-7 were ever executed**. Only Tasks 1-4 of this design's plan
+(`docs/superpowers/plans/2026-08-07-swuart-v2.md`) shipped (scheduler
+core, straight-line dispatch, edge-triggered RX); a real `mdb`
+measurement of the actual compiled result taken after those four tasks
+landed (1019 cycles against the 521-cycle budget, 196% over) is what
+triggered the second timing-engine supersession recorded below, before
+Tasks 5-7 (error-handling/DeInit test carry-forward, the real-target
+`mdb` gate, and documentation) were ever started under this plan. The
+API, framing, and error-handling contract described below are still
+accurate and unchanged; the timing engine is replaced by
+`docs/superpowers/specs/2026-08-07-swuart-v3-design.md`'s CCP hardware
+capture/compare design. Read that document for the current timing
+architecture; this one is kept for the parts still in force and as the
+historical record of why the pin-change-interrupt/software-scheduler
+approach was chosen and where it fell short in practice.
 
 Supersedes the timing-engine portions of
 `docs/superpowers/specs/2026-08-06-swuart-design.md` (the v1 design). Not
