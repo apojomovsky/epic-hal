@@ -181,7 +181,7 @@ def emit_epicurus_mk(manifest, family_name: str, version: str) -> str:
         "EPICURUS_SRCS := $(EPICURUS_HAL_SRCS) "
         "$(foreach m,$(EPICURUS_ALL),$(EPICURUS_SRCS_$(m)))",
         "EPICURUS_INCLUDES := $(EPICURUS_FAMILY_INCLUDES) "
-        "$(foreach m,$(EPICURUS_ALL),-I$(EPICURUS_INCS_$(m)))",
+        "$(foreach m,$(EPICURUS_ALL),$(addprefix -I,$(EPICURUS_INCS_$(m))))",
         "",
         "EPICURUS_CFLAGS := $(EPICURUS_INCLUDES) -DPIC$(EPICURUS_MCU)",
         "",
