@@ -90,6 +90,8 @@ build fine)**:
 | `epic-math` | (builds fine) | 18F2455, 18F2550 |
 | `epic-modbus` | 16F873A, 16F874A | 18F2455, 18F2550 |
 | `epic-serial` | 16F873A, 16F874A | 18F2455, 18F2550 |
+| `epic-swuart` | 16F873A, 16F874A | (builds fine) |
+| `epic-taskmgr` | 16F873A, 16F874A | (excluded, root cause 1) |
 | `epic-tick` | (builds fine) | 18F2455, 18F2550 |
 
 Reproduced locally (`epic-debounce`, `MCU=16F874A`):
