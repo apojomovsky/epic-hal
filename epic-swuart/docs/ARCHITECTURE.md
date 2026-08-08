@@ -55,40 +55,78 @@ a configurable value, and `EPIC_SWUART_Init` returns `EPIC_INVALID`
 both for a pin combination that doesn't match a known slot and for a
 slot that's already in use.
 
-## RX: capture, then compare, then capture again
+## RX: capture, deglitch and arm in one pass (PIC16F87XA channel A)
 
 Idle: the channel's RX CCP module sits in `CCP_MODE_CAPTURE_FALLING`.
 A start bit's falling edge latches Timer1's exact count into `CCPRx`
-in hardware. The capture event handler (`rx_capture_event` in
-`src/epic_swuart.c`) reads that latched edge time, computes
-`edge_time + cycles_per_bit / 2` (the mid-start-bit deglitch confirm
-point, the same half-bit-later timing v1 and v2 both already used),
-writes it back into `CCPRx`, and switches the module to
-`CCP_MODE_COMPARE_SOFT_IF` (compare-triggered interrupt only, no pin
-action).
+in hardware. The capture event handler for channel A
+(`rx_capture_event_fast` in `src/epic_swuart.c`) does the deglitch
+check and the first-sample arm in one synchronous pass, with no
+second scheduled event:
 
-At that confirm match, if the RX pin is still low, the deadline
-advances by one more full `cycles_per_bit`, landing at
-`edge_time + 1.5 * cycles_per_bit`, d0's own center, before the first
-real data-bit sample. Collapsing the confirm-then-sample sequence into
-a single 1.5x hop (tried and rejected during design) would skip the
-deglitch check entirely: at 1.5x post-edge the pin already reflects
-d0's own value, not the start bit's stability, so a one-hop version
-would silently stop rejecting noise starts. If the confirm sample
-finds the pin has gone high again, the byte is abandoned as noise and
-the module returns straight to `CCP_MODE_CAPTURE_FALLING`.
+1. Immediately check the RX pin. If it has already gone back high,
+   this is noise, not a start bit: stay in
+   `CCP_MODE_CAPTURE_FALLING` and return.
+2. Read Timer1 *fresh* (`EPIC_TIMER1_ReadCounter`) and arm d0's
+   deadline as a relative reload:
+   `now + 1.5 * cycles_per_bit - RX_CAPTURE_OVERHEAD_CYCLES`.
+3. Switch to `CCP_MODE_COMPARE_SOFT_IF`.
+
+`RX_CAPTURE_OVERHEAD_CYCLES` (325 on PIC16F877A, see
+`docs/superpowers/plans/probe-swuart-rx-hotpath.md`) corrects for the
+cycles already elapsed between the real edge and the fresh Timer1
+read: without it, d0's deadline lands at 2.12 bit periods after the
+edge (inside d1's window) instead of the intended 1.5 (mid-d0). It is
+a measured constant, not a guess, derived the same way
+`SWUART_LEAD_CYCLES` was (real `mdb` probe, see the "Measured margins"
+section below).
+
+Why relative-reload and not `edge_time + 1.5 * cycles_per_bit`: the
+edge time captured in `CCPRx` is not used at all. `now` is read after
+the handler's own real latency has already elapsed, so the armed
+deadline can never be in the past, unlike the old confirm-then-arm
+scheme (see the Known limitations section). This is the AN555-style
+`_Cycle_Offset1` correction against a much larger real overhead.
 
 Each subsequent compare match samples the RX pin, shifts the bit into
-`rx_shift` (LSB first), advances the deadline by one `cycles_per_bit`,
-and rewrites `CCPRx`. After the stop bit is sampled (pushed to the RX
-ring if high, dropped with `error_count` incremented if low), the
-module switches back to `CCP_MODE_CAPTURE_FALLING` for the next byte.
+`rx_shift` (LSB first), advances the deadline by one
+`cycles_per_bit`, and rewrites `CCPRx` directly. After the stop bit is
+sampled (pushed to the RX ring if high, dropped with `error_count`
+incremented if low), the module switches back to
+`CCP_MODE_CAPTURE_FALLING` for the next byte.
 
-Because every deadline programmed into `CCPRx` is an absolute Timer1
-count, not a relative countdown, a handler that runs late does not
-drift the schedule: `EPIC_CCP_SetCompare`/`SetMode` only need to land
-before the *next* match's real time arrives, not exactly on time for
-the one that just fired.
+Channel A's handler bypasses `EPIC_CCP_GetCapture`'s atomic
+retry-loop and `EPIC_CCP_SetCompare`/`SetMode`'s generic call
+overhead, reading and writing CCP1's SFRs directly
+(`CCPR1L`/`CCPR1H`/`CCP1CON` at `0x15`/`0x16`/`0x17` on PIC16F87XA).
+This is safe here: the earliest a second real capture could land is a
+full `cycles_per_bit` away, vastly longer than the plain 2-byte read
+takes. The generic accessors keep their protections for every other
+caller.
+
+## Known limitations
+
+- **The RX hot-path fix applies to PIC16F87XA channel A only.**
+  PIC18Fxx5x's channel A and PIC16F193X's channel B (via
+  `on_rx_event_b` / `rx_capture_event`) still use the older
+  confirm-then-arm scheme: the capture handler arms a second compare
+  event at `edge_time + cycles_per_bit / 2` (260 cycles at 9600 baud),
+  racing a free-running Timer1 that takes 404 cycles to service. The
+  deadline is already in the past by the time software arms it, on
+  every received byte, recoverable only via a 65536-cycle Timer1
+  wraparound. This is a real, currently-true limitation; porting the
+  fast-path pattern (with each family's own literal SFR addresses) to
+  those two is an explicit follow-up, and each port must re-measure
+  `RX_CAPTURE_OVERHEAD_CYCLES` rather than inherit PIC16F87XA's 325.
+- **The steady-state per-bit re-arm margin is real but modest.** The
+  d0 compare event costs 534 cycles vector-to-retfie, with the re-arm
+  write landing 483 cycles after vector entry, 34 cycles before the
+  next 521-cycle deadline passes. Deterministic (fixed instruction
+  count), so it fits, but it is not the comfortable margin the
+  TX-side 288-cycle measurement suggested; the RX per-bit path pays a
+  `EPIC_GPIO_ReadPin` call the TX path does not. Worth a follow-up
+  (e.g. a direct-SFR GPIO read in the steady-state branch, the same
+  trick this fix already applies to CCP1).
 
 ## TX: compare-driven bit generation, SET/CLEAR per bit
 
@@ -286,7 +324,7 @@ TX is byte-exact but leaves RX correctness on real silicon an open
 question**, exactly the same honesty standard the rest of this
 redesign has held to.
 
-## Measured margins (Task 2 probe, PIC16F877A, 20 MHz, 9600 baud)
+## Measured margins (probes, PIC16F877A, 20 MHz, 9600 baud)
 
 One bit period at 9600 baud / 20 MHz is 521 instruction cycles.
 `docs/superpowers/plans/probe-swuart-v3-ccp-cost.md` measured the real,
@@ -304,3 +342,22 @@ own real measurement of 1019 cycles against the same 521-cycle budget
 `EPIC_IRQ_GetFlag`/`ClearFlag` the shared dispatcher had already made
 redundant) measured at just 30 cycles of handler-level overhead and is
 a meaningful share of why these numbers fit.
+
+The RX hot-path fix
+(`docs/superpowers/plans/probe-swuart-rx-hotpath.md`) then measured
+the new channel-A fast path on the real compiled module:
+
+| Event | Measured cycles | % of 521-cycle budget | Margin |
+|---|---|---|---|
+| RX_IDLE branch (edge to retfie, start-bit sync) | 494 | 95% | 27 cycles |
+| Steady-state per-bit event (vector to retfie) | 534 | 103% total | 34 cycles to re-arm |
+
+The RX_IDLE branch fits under the bit-period budget; the steady-state
+event's total exceeds it, but the load-bearing number is the re-arm
+write, which lands 483 cycles after vector entry, 34 cycles before the
+next deadline passes. Deterministic, so it fits, but the margin is
+modest: see the Known limitations section. The same probe derived
+`RX_CAPTURE_OVERHEAD_CYCLES = 325` (3 cycles edge-to-vector plus 322
+vector-to-Timer1-read, reproduced identically across three runs) and
+confirmed d0's sample deadline lands at 1.503 bit periods after the
+edge, mid-d0, with no 65536-cycle wraparound.

@@ -1,6 +1,13 @@
 # epic-swuart RX hot-path fix: relative-reload timing + direct SFR access
 
-Status: **agreed 2026-08-08, not started**.
+Status: **implemented 2026-08-08**. PIC16F87XA channel A ships the
+collapsed one-pass RX state machine with the measured
+`RX_CAPTURE_OVERHEAD_CYCLES = 325`; see
+`docs/superpowers/plans/probe-swuart-rx-hotpath.md` for the real `mdb`
+measurements and verdict, and `docs/superpowers/plans/2026-08-08-swuart-rx-hotpath.md`
+for the plan that executed it. PIC18Fxx5x and PIC16F193X's channel B
+still carry the old confirm-then-arm scheme until a follow-up ports
+this pattern.
 
 A refinement of `docs/superpowers/specs/2026-08-07-swuart-v3-design.md` (v3),
 not a new timing-engine generation. v3's CCP capture/compare architecture
@@ -81,7 +88,9 @@ real, neither racing anything.
  * _Cycle_Offset1 correction). Measured via a real mdb probe, the first
  * task of this spec's plan; do not guess this value or carry over the
  * old 404-cycle capture-handler total, which describes different code. */
-#define RX_CAPTURE_OVERHEAD_CYCLES 0u /* placeholder: the plan's Task 1 replaces this with a real number */
+#define RX_CAPTURE_OVERHEAD_CYCLES 325u /* measured on PIC16F877A, see
+  docs/superpowers/plans/probe-swuart-rx-hotpath.md: 3 cycles edge-to-vector
+  plus 322 vector-to-Timer1-read */
 
 static void rx_capture_event_fast(EPIC_SWUART_HandleTypeDef *h)
 {
