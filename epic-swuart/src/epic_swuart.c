@@ -32,6 +32,9 @@ enum {
  * after g_chan_a/g_cycles_per_bit/SWUART_CCP_RX exist; EPIC_SWUART_Init
  * needs the symbol earlier when it builds ccp_rx's EventCallback. */
 static void on_rx_event_a(void);
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+static void on_rx_event_b(void);
+#endif
 
 /* Cycles of lead time between EPIC_SWUART_Write() arming the start bit's
  * compare deadline and that deadline actually landing: must be large
@@ -58,6 +61,18 @@ static TIMER1_HandleTypeDef s_timer1 = TIMER1_HANDLE_DEFAULT;
 
 #define SWUART_CCP_RX CCP_INSTANCE_1
 #define SWUART_CCP_TX CCP_INSTANCE_2
+
+/* Second channel, PIC16F193X only: the only family with five CCP
+ * modules, enough for two full RX+TX pairs (PIC16F87XA/PIC18Fxx5x have
+ * exactly two CCP modules total, already spent on channel A).
+ * CCP3 = RX (RB5), CCP4 = TX (RD1), DS41364D pin diagram (40-pin PDIP,
+ * PIC16F1937), neither remapped by pic16f193x_ccp.c (no APFCON writes
+ * anywhere in that driver), so the POR default pin applies. */
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+static EPIC_SWUART_HandleTypeDef *g_chan_b = NULL;
+#define SWUART_CCP_RX_B CCP_INSTANCE_3
+#define SWUART_CCP_TX_B CCP_INSTANCE_4
+#endif
 
 /* Arms the mode for the *next* compare match, not the one that just
  * fired (hardware already toggled the pin per whatever was armed
@@ -103,6 +118,9 @@ static void tx_compare_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef t
 }
 
 static void on_tx_event_a(void) { tx_compare_event(g_chan_a, SWUART_CCP_TX); }
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+static void on_tx_event_b(void) { tx_compare_event(g_chan_b, SWUART_CCP_TX_B); }
+#endif
 
 /* Test-only hooks (see test_swuart_tx.c): default-disabled. Undefined
  * unless a build explicitly opts in, so real-target builds (which never
@@ -110,7 +128,14 @@ static void on_tx_event_a(void) { tx_compare_event(g_chan_a, SWUART_CCP_TX); }
  * test executables that need it get EPIC_SWUART_TEST_HOOKS=1 from
  * epic-swuart/CMakeLists.txt, scoped to just those targets. */
 #ifdef EPIC_SWUART_TEST_HOOKS
-uint8_t swuart_test_last_tx_mode(void) { return (uint8_t)EPIC_REG8(0x1DU); }
+/* PIC_REG_CCP2CON: every family's own sfr.h defines this name at that
+ * family's actual CCP2CON address (0x1D on PIC16F87XA, 0xFBA on
+ * PIC18Fxx5x, 0x29A on PIC16F193X), reached transitively via
+ * epic_hal.h. Previously hardcoded to PIC16F87XA's 0x1D with no family
+ * guard (deferred finding from Task 4); only channel A's CCP2 is ever
+ * read here, so this stays correct even on PIC16F193X where channel B
+ * exists too. */
+uint8_t swuart_test_last_tx_mode(void) { return (uint8_t)EPIC_REG8(PIC_REG_CCP2CON); }
 uint16_t swuart_test_last_tx_compare(void) { return g_chan_a->tx_deadline; }
 void swuart_test_fire_tx_event(void) { on_tx_event_a(); }
 #endif
@@ -126,23 +151,29 @@ static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
     h->rx_count++;
 }
 
+/* test_get_capture takes the RX CCP instance (not hardcoded to channel
+ * A's) so the shared rx_capture_event body below reads the right
+ * hardware capture register for whichever channel is firing; the test
+ * double still returns one shared value regardless of instance, since
+ * no existing test exercises both channels' RX side at once. */
 #if EPIC_SWUART_TEST_HOOKS
 static uint16_t g_test_capture_value = 0u;
 void swuart_test_set_capture(uint16_t value) { g_test_capture_value = value; }
-static uint16_t test_get_capture(void) { return g_test_capture_value; }
+static uint16_t test_get_capture(CCP_InstanceTypeDef rx_inst) { (void)rx_inst; return g_test_capture_value; }
 #else
-static uint16_t test_get_capture(void) { return EPIC_CCP_GetCapture(SWUART_CCP_RX); }
+static uint16_t test_get_capture(CCP_InstanceTypeDef rx_inst) { return EPIC_CCP_GetCapture(rx_inst); }
 #endif
 
-static void on_rx_event_a(void)
+/* Shared RX capture/compare event body, parameterised by handle and CCP
+ * instance the same way tx_compare_event is: on_rx_event_a/_b below are
+ * thin per-slot wrappers over this. */
+static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef rx_inst)
 {
-    EPIC_SWUART_HandleTypeDef *h = g_chan_a;
-
     if (h->rx_state == RX_IDLE) {
         /* Capture-mode event: a start-bit falling edge just arrived,
          * hardware-timestamped, immune to how late this handler
          * actually runs. */
-        uint16_t edge_time = test_get_capture();
+        uint16_t edge_time = test_get_capture(rx_inst);
         /* Half a bit period: the mid-start-bit deglitch confirm point,
          * matching v1/v2's own on_rx_edge_start exactly (rx_ticks_left
          * = g_cycles_per_bit / 2u there). This is NOT d0's sample
@@ -156,22 +187,22 @@ static void on_rx_event_a(void)
          * one-hop version would silently stop rejecting noise starts. */
         h->rx_deadline = (uint16_t)(edge_time + g_cycles_per_bit / 2u);
         h->rx_state = RX_CONFIRM_START;
-        EPIC_CCP_SetCompare(SWUART_CCP_RX, h->rx_deadline);
-        EPIC_CCP_SetMode(SWUART_CCP_RX, CCP_MODE_COMPARE_SOFT_IF);
+        EPIC_CCP_SetCompare(rx_inst, h->rx_deadline);
+        EPIC_CCP_SetMode(rx_inst, CCP_MODE_COMPARE_SOFT_IF);
         return;
     }
 
     if (h->rx_state == RX_CONFIRM_START) {
         if (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) != GPIO_PIN_RESET) {
             h->rx_state = RX_IDLE; /* noise, not a real start bit */
-            EPIC_CCP_SetMode(SWUART_CCP_RX, CCP_MODE_CAPTURE_FALLING);
+            EPIC_CCP_SetMode(rx_inst, CCP_MODE_CAPTURE_FALLING);
             return;
         }
         h->rx_shift = 0u;
         h->rx_bit_index = 0u;
         h->rx_state = RX_DATA0;
         h->rx_deadline = (uint16_t)(h->rx_deadline + g_cycles_per_bit);
-        EPIC_CCP_SetCompare(SWUART_CCP_RX, h->rx_deadline);
+        EPIC_CCP_SetCompare(rx_inst, h->rx_deadline);
         return;
     }
 
@@ -184,7 +215,7 @@ static void on_rx_event_a(void)
             h->error_count++;
         }
         h->rx_state = RX_IDLE;
-        EPIC_CCP_SetMode(SWUART_CCP_RX, CCP_MODE_CAPTURE_FALLING);
+        EPIC_CCP_SetMode(rx_inst, CCP_MODE_CAPTURE_FALLING);
         return;
     }
 
@@ -192,11 +223,19 @@ static void on_rx_event_a(void)
     h->rx_bit_index++;
     h->rx_state = (h->rx_bit_index < 8u) ? (uint8_t)(RX_DATA0 + h->rx_bit_index) : RX_STOP;
     h->rx_deadline = (uint16_t)(h->rx_deadline + g_cycles_per_bit);
-    EPIC_CCP_SetCompare(SWUART_CCP_RX, h->rx_deadline);
+    EPIC_CCP_SetCompare(rx_inst, h->rx_deadline);
 }
+
+static void on_rx_event_a(void) { rx_capture_event(g_chan_a, SWUART_CCP_RX); }
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+static void on_rx_event_b(void) { rx_capture_event(g_chan_b, SWUART_CCP_RX_B); }
+#endif
 
 #if EPIC_SWUART_TEST_HOOKS
 void swuart_test_fire_rx_event(void) { on_rx_event_a(); }
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+void swuart_test_fire_rx_event_b(void) { on_rx_event_b(); }
+#endif
 #endif
 
 EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
@@ -204,10 +243,41 @@ EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
                                      GPIO_TypeDef rx_port, uint16_t rx_pin,
                                      uint32_t fosc_hz, uint32_t baud)
 {
-    if (!h || g_chan_a != NULL) return EPIC_INVALID;
-    /* PIC16F87XA: CCP1 = RC2 (RX), CCP2 = RC1 (TX). */
-    if (tx_port != GPIOC || tx_pin != GPIO_PIN_1) return EPIC_INVALID;
-    if (rx_port != GPIOC || rx_pin != GPIO_PIN_2) return EPIC_INVALID;
+    if (!h) return EPIC_INVALID;
+
+    /* Slot A, every family: CCP1 = RC2 (RX), CCP2 = RC1 (TX). Same port
+     * and pin numbers on PIC16F87XA and PIC16F193X (checked against
+     * both families' own datasheets, not assumed from the shared
+     * macro names). */
+    uint8_t slot_a_match = (tx_port == GPIOC && tx_pin == GPIO_PIN_1 &&
+                             rx_port == GPIOC && rx_pin == GPIO_PIN_2) ? 1u : 0u;
+    CCP_InstanceTypeDef rx_inst;
+    CCP_InstanceTypeDef tx_inst;
+    void (*rx_cb)(void);
+    void (*tx_cb)(void);
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+    uint8_t use_slot_b = 0u;
+#endif
+
+    if (slot_a_match && g_chan_a == NULL) {
+        rx_inst = SWUART_CCP_RX; tx_inst = SWUART_CCP_TX;
+        rx_cb = on_rx_event_a; tx_cb = on_tx_event_a;
+    }
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+    /* Slot B, PIC16F193X only (5 CCP modules, enough for a second
+     * RX+TX pair): CCP3 = RB5 (RX), CCP4 = RD1 (TX), DS41364D 40-pin
+     * PDIP pin diagram (PIC16F1937). Neither is APFCON-remapped by
+     * pic16f193x_ccp.c, so the POR default location applies to both. */
+    else if (tx_port == GPIOD && tx_pin == GPIO_PIN_1 &&
+             rx_port == GPIOB && rx_pin == GPIO_PIN_5 && g_chan_b == NULL) {
+        rx_inst = SWUART_CCP_RX_B; tx_inst = SWUART_CCP_TX_B;
+        rx_cb = on_rx_event_b; tx_cb = on_tx_event_b;
+        use_slot_b = 1u;
+    }
+#endif
+    else {
+        return EPIC_INVALID;
+    }
 
     h->tx_port = tx_port; h->tx_pin = tx_pin;
     h->rx_port = rx_port; h->rx_pin = rx_pin;
@@ -231,29 +301,59 @@ EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
     EPIC_TIMER1_Init(&s_timer1);
     EPIC_TIMER1_Start(&s_timer1);
 
-    CCP_HandleTypeDef ccp_rx = { .Instance = SWUART_CCP_RX, .Mode = CCP_MODE_CAPTURE_FALLING,
-                                 .CompareValue = 0u, .EventCallback = on_rx_event_a };
+    CCP_HandleTypeDef ccp_rx = { .Instance = rx_inst, .Mode = CCP_MODE_CAPTURE_FALLING,
+                                 .CompareValue = 0u, .EventCallback = rx_cb };
     EPIC_CCP_Init(&ccp_rx);
-    CCP_HandleTypeDef ccp_tx = { .Instance = SWUART_CCP_TX, .Mode = CCP_MODE_OFF,
-                                 .CompareValue = 0u, .EventCallback = on_tx_event_a };
+    CCP_HandleTypeDef ccp_tx = { .Instance = tx_inst, .Mode = CCP_MODE_OFF,
+                                 .CompareValue = 0u, .EventCallback = tx_cb };
     EPIC_CCP_Init(&ccp_tx);
 
     EPIC_IRQ_Restore(1);
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+    if (use_slot_b) { g_chan_b = h; } else { g_chan_a = h; }
+#else
     g_chan_a = h;
+#endif
     return EPIC_OK;
 }
 
 EPIC_StatusTypeDef EPIC_SWUART_DeInit(EPIC_SWUART_HandleTypeDef *h)
 {
-    if (!h || g_chan_a != h) return EPIC_INVALID;
-    EPIC_CCP_DeInit(SWUART_CCP_RX);
-    EPIC_CCP_DeInit(SWUART_CCP_TX);
+    if (!h) return EPIC_INVALID;
+    if (g_chan_a == h) {
+        EPIC_CCP_DeInit(SWUART_CCP_RX);
+        EPIC_CCP_DeInit(SWUART_CCP_TX);
+        g_chan_a = NULL;
+    }
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+    else if (g_chan_b == h) {
+        EPIC_CCP_DeInit(SWUART_CCP_RX_B);
+        EPIC_CCP_DeInit(SWUART_CCP_TX_B);
+        g_chan_b = NULL;
+    }
+#endif
+    else {
+        return EPIC_INVALID;
+    }
     /* EPIC_CCP_DeInit only zeroes CCPxCON; it doesn't touch the pin's
      * latch. Force the TX line back to mark (idle) so it doesn't linger
      * at whatever level the last bit left it, which can be low. */
     EPIC_GPIO_WritePin(h->tx_port, h->tx_pin, GPIO_PIN_SET);
-    EPIC_TIMER1_DeInit();
-    g_chan_a = NULL;
+    /* Timer1 is a shared resource: on PIC16F193X both channels run off
+     * the same instance, so it may only be torn down once neither slot
+     * is using it any more (both branches above already cleared their
+     * own slot before reaching here). Single-channel families never
+     * compile g_chan_b at all, so the condition there collapses to
+     * exactly what Tasks 4-5 already had: g_chan_a == NULL. */
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+    if (g_chan_a == NULL && g_chan_b == NULL) {
+        EPIC_TIMER1_DeInit();
+    }
+#else
+    if (g_chan_a == NULL) {
+        EPIC_TIMER1_DeInit();
+    }
+#endif
     return EPIC_OK;
 }
 
