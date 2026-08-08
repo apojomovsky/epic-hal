@@ -1,9 +1,10 @@
 /**
  * @file    example_swuart.c
- * @brief   Real-target loopback demo. Wire RB0 (TX) to RB2 (RX) with a
- *          jumper: the chip talks to itself, toggling RB1 on every
- *          successfully round-tripped byte so a scope or LED on RB1
- *          shows it working without needing a second UART to watch.
+ * @brief   Real-target loopback demo. Wire RC1 (TX/CCP2) to RC2
+ *          (RX/CCP1) with a jumper: the chip talks to itself, toggling
+ *          RB1 on every successfully round-tripped byte so a scope or
+ *          LED on RB1 shows it working without needing a second UART
+ *          to watch.
  *
  * See MANUAL.md / docs/API.md for the real function contracts; this
  * file has no host-sim dependency, the manifest builds it with XC8
@@ -28,7 +29,7 @@ int main(void)
     EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
 
     EPIC_SWUART_HandleTypeDef h;
-    EPIC_SWUART_Init(&h, GPIOB, GPIO_PIN_0, GPIOB, GPIO_PIN_2, FOSC_HZ, 9600u);
+    EPIC_SWUART_Init(&h, GPIOC, GPIO_PIN_1, GPIOC, GPIO_PIN_2, FOSC_HZ, 9600u);
 
     uint8_t next = 0u;
     for (;;) {

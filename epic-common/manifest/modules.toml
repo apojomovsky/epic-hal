@@ -689,6 +689,24 @@ sources = [
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
 
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# CCP TX+RX round-trip, distinct from the real-target example_swuart.c
+# above (an unbounded loop, no core/epic_harness.h dependency). This
+# module's first-ever real mdb gate coverage; only PIC16F87XA/16F877A
+# is wired up for now (channel A's pins are identical across all three
+# families per epic_swuart.c's own Init validation, so this exercises
+# the shared logic, not something PIC16F87XA-specific). WDTE=OFF for
+# the same reason as every other family's own sim variant: a
+# diagnostic build that terminates and reports does not need the
+# watchdog running unattended.
+[modules.epic-swuart.example.PIC16F87XA.sim]
+name        = "swuart-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_target_swuart.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
 [modules.epic-swuart.example.PIC18Fxx5x]
 name    = "swuart"
 sources = [
