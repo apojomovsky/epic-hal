@@ -138,6 +138,16 @@ static void on_tx_event_b(void) { tx_compare_event(g_chan_b, SWUART_CCP_TX_B); }
 uint8_t swuart_test_last_tx_mode(void) { return (uint8_t)EPIC_REG8(PIC_REG_CCP2CON); }
 uint16_t swuart_test_last_tx_compare(void) { return g_chan_a->tx_deadline; }
 void swuart_test_fire_tx_event(void) { on_tx_event_a(); }
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+/* Channel B's own TX hooks: PIC_REG_CCP4CON is channel B's real TX CCP
+ * control register (0x31A on PIC16F193X, the only family this branch
+ * ever compiles for), so a test reading this instead of CCP2CON can
+ * tell whether a Write() on channel B actually armed channel B's own
+ * hardware, not channel A's (see EPIC_SWUART_Write's dispatch fix). */
+uint8_t swuart_test_last_tx_mode_b(void) { return (uint8_t)EPIC_REG8(PIC_REG_CCP4CON); }
+uint16_t swuart_test_last_tx_compare_b(void) { return g_chan_b->tx_deadline; }
+void swuart_test_fire_tx_event_b(void) { on_tx_event_b(); }
+#endif
 #endif
 
 static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
@@ -370,14 +380,27 @@ size_t EPIC_SWUART_Write(EPIC_SWUART_HandleTypeDef *h, const uint8_t *data, size
         written++;
     }
     if (written > 0u && h->tx_state == TX_IDLE) {
+        /* Dispatch to the handle's own slot, the same way DeInit already
+         * does (g_chan_a vs g_chan_b), instead of hardcoding channel A's
+         * CCP instance: a Write() on channel B must arm CCP4, not CCP2.
+         * Defaults to slot A's instance so single-channel families (no
+         * g_chan_b symbol at all) compile this down to a plain
+         * assignment, zero branches, matching how the #if guard already
+         * keeps DeInit's dual-channel branch out of their build. */
+        CCP_InstanceTypeDef tx_inst = SWUART_CCP_TX;
+#if EPIC_SWUART_MAX_CHANNELS >= 2
+        if (g_chan_b == h) {
+            tx_inst = SWUART_CCP_TX_B;
+        }
+#endif
         h->tx_shift = h->tx_ring[h->tx_tail];
         h->tx_tail = (uint8_t)((h->tx_tail + 1u) & (EPIC_SWUART_RING_SZ - 1u));
         h->tx_count--;
         h->tx_bit_index = 0u;
         h->tx_state = TX_DATA;
         h->tx_deadline = (uint16_t)(EPIC_TIMER1_ReadCounter() + SWUART_LEAD_CYCLES);
-        EPIC_CCP_SetCompare(SWUART_CCP_TX, h->tx_deadline);
-        EPIC_CCP_SetMode(SWUART_CCP_TX, CCP_MODE_COMPARE_CLEAR);
+        EPIC_CCP_SetCompare(tx_inst, h->tx_deadline);
+        EPIC_CCP_SetMode(tx_inst, CCP_MODE_COMPARE_CLEAR);
     }
     return written;
 }

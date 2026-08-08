@@ -28,11 +28,21 @@ static int g_fails = 0;
  * channel-A originals. swuart_test_fire_rx_event_b/on_tx_event_b's
  * peer for channel A (swuart_test_fire_tx_event) is reused as-is;
  * channel B needs its own RX-side hook since this scenario only
- * receives on B. Defined in epic_swuart.c behind EPIC_SWUART_TEST_HOOKS. */
+ * receives on B. Defined in epic_swuart.c behind EPIC_SWUART_TEST_HOOKS.
+ *
+ * swuart_test_fire_tx_event_b/swuart_test_last_tx_mode_b are channel
+ * B's own TX-side hooks, added alongside the EPIC_SWUART_Write() CCP
+ * dispatch fix (a final-review bug: Write() used to hardcode channel
+ * A's CCP2 for every handle, so a Write() on channel B silently armed
+ * channel A's hardware instead of channel B's own CCP4). The "channel B
+ * transmits" scenario below exercises channel B's TX path specifically
+ * to catch a regression of that bug. */
 #ifndef EPIC_SWUART_TEST_HOOKS
 #define EPIC_SWUART_TEST_HOOKS 1
 #endif
 extern void swuart_test_fire_tx_event(void);
+extern void swuart_test_fire_tx_event_b(void);
+extern uint8_t swuart_test_last_tx_mode_b(void);
 extern void swuart_test_fire_rx_event_b(void);
 extern void swuart_test_set_capture(uint16_t value);
 
@@ -91,6 +101,34 @@ int main(void)
     CHECK(n == 1, "channel B received one byte");
     CHECK(rx_buf[0] == 0x41u, "channel B byte == 'A'");
     CHECK(EPIC_SWUART_GetErrorCount(&chan_b) == 0u, "channel B no errors");
+
+    /* ---- Regression coverage: channel B transmits 'B' (0x42) via
+     * EPIC_SWUART_Write(&chan_b, ...). This is the exact scenario the
+     * original bug (EPIC_SWUART_Write hardcoding SWUART_CCP_TX/CCP2 for
+     * every handle, regardless of h) was never caught by: no existing
+     * test called Write() on channel B at all. Confirmed by inspection
+     * (and by temporarily reintroducing the bug) that with it present,
+     * this Write() would arm channel A's CCP2CON instead of channel B's
+     * own CCP4CON, which the two checks right after Write() below would
+     * both have caught: swuart_test_last_tx_mode_b() would have stayed
+     * at CCP_MODE_OFF (0, its Init-time value, since the buggy Write()
+     * never touches CCP4CON at all) instead of becoming CLEAR (9), and
+     * swuart_test_last_tx_mode() (channel A's own CCP2CON) would have
+     * been clobbered from its post-scenario-1 value (8, SET/stop bit)
+     * to 9 (CLEAR), since the bug would arm channel A's real hardware
+     * with channel B's start bit. */
+    uint8_t byte_b = 0x42u; /* 'B' = 0b01000010, LSB first: start=0,
+                                d0=0, d1=1, d2..d5=0, d6=1, d7=0, stop=1 */
+    uint8_t chan_a_mode_before = swuart_test_last_tx_mode();
+    size_t queued_b = EPIC_SWUART_Write(&chan_b, &byte_b, 1);
+    CHECK(queued_b == 1u, "channel B queued one byte");
+    CHECK(swuart_test_last_tx_mode_b() == 9u,
+          "channel B start bit armed as CLEAR on its OWN CCP4 (not left at CCP_MODE_OFF)");
+    CHECK(swuart_test_last_tx_mode() == chan_a_mode_before,
+          "channel A's own CCP2 left untouched by channel B's Write()");
+    for (size_t i = 0; i < 9; i++) swuart_test_fire_tx_event_b();
+    CHECK(chan_b.tx_count == 0u, "channel B finished transmitting");
+    CHECK(EPIC_SWUART_GetErrorCount(&chan_b) == 0u, "channel B TX no errors");
 
     /* ---- EPIC_SWUART_Init: NULL handle and a full channel registry
      * both return EPIC_INVALID. Both slots (A, B) are already occupied
