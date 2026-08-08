@@ -5,9 +5,12 @@ collapsed one-pass RX state machine with the measured
 `RX_CAPTURE_OVERHEAD_CYCLES = 325`; see
 `docs/superpowers/plans/probe-swuart-rx-hotpath.md` for the real `mdb`
 measurements and verdict, and `docs/superpowers/plans/2026-08-08-swuart-rx-hotpath.md`
-for the plan that executed it. PIC18Fxx5x and PIC16F193X's channel B
-still carry the old confirm-then-arm scheme until a follow-up ports
-this pattern.
+for the plan that executed it. PIC18Fxx5x's channel A, PIC16F193X's
+channel A, and PIC16F193X's channel B all still carry the old
+confirm-then-arm scheme until a follow-up ports this pattern to each
+(PIC16F87XA's `rx_capture_event_fast` hardcodes literal SFR addresses
+specific to that family, so it does not apply as-is to any other
+family or channel).
 
 A refinement of `docs/superpowers/specs/2026-08-07-swuart-v3-design.md` (v3),
 not a new timing-engine generation. v3's CCP capture/compare architecture

@@ -207,5 +207,6 @@ dropped on the first post-wrap event, so subsequent events pay nothing.
   deterministic and it fits; the port to PIC18Fxx5x / PIC16F193X
   channel B should re-measure rather than inherit this number.
 - **Known limitation restated:** this probe measures PIC16F87XA channel
-  A only. PIC18Fxx5x and PIC16F193X channel B still carry the old,
-  racy confirm-then-arm mechanism until a follow-up ports this pattern.
+  A only. PIC18Fxx5x's channel A, PIC16F193X's channel A, and
+  PIC16F193X's channel B all still carry the old, racy confirm-then-arm
+  mechanism until a follow-up ports this pattern to each.

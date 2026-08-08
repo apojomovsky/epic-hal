@@ -107,9 +107,11 @@ caller.
 ## Known limitations
 
 - **The RX hot-path fix applies to PIC16F87XA channel A only.**
-  PIC18Fxx5x's channel A and PIC16F193X's channel B (via
-  `on_rx_event_b` / `rx_capture_event`) still use the older
-  confirm-then-arm scheme: the capture handler arms a second compare
+  PIC18Fxx5x's channel A, PIC16F193X's channel A, and PIC16F193X's
+  channel B (all three via `rx_capture_event`, PIC16F193X's channel A
+  falling back to it since `rx_capture_event_fast` hardcodes
+  PIC16F87XA-specific CCP1 addresses that don't apply there) still use
+  the older confirm-then-arm scheme: the capture handler arms a second compare
   event at `edge_time + cycles_per_bit / 2` (260 cycles at 9600 baud),
   racing a free-running Timer1 that takes 404 cycles to service. The
   deadline is already in the past by the time software arms it, on
