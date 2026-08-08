@@ -12,6 +12,20 @@ correct but does not prove RX correctness on real hardware, see
 `epic-swuart/docs/ARCHITECTURE.md`'s "Real-hardware verification"
 section.
 
+That RX limitation is now **resolved for PIC16F87XA channel A
+specifically** by the RX hot-path fix
+(`docs/superpowers/specs/2026-08-08-swuart-rx-hotpath-design.md`,
+executed and probe-verified in
+`docs/superpowers/plans/probe-swuart-rx-hotpath.md`): the
+confirm-then-arm race this v3 design's 404-cycle capture cost
+created against its 260-cycle confirm deadline is replaced on that
+channel by a one-pass deglitch check and relative-reload arm, with a
+real measured `RX_CAPTURE_OVERHEAD_CYCLES = 325` landing d0's sample
+at 1.503 bit periods. The original disclosure remains accurate for
+PIC18Fxx5x and PIC16F193X's channel B, which still carry the old
+mechanism until a follow-up ports the same pattern (each port must
+re-measure the constant).
+
 Supersedes the timing-engine portions of
 `docs/superpowers/specs/2026-08-07-swuart-v2-design.md` (v2). Not a
 rewrite of the module: the public API, framing, error handling, and

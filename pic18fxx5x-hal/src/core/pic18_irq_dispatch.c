@@ -47,7 +47,28 @@ void epic_dispatch_all_irqs(void)
     if (intcon & PIC_INTCON_RBIF)   RB_IRQHandler();
 
     uint8_t pir1 = epic_sfr_read8(PIC_REG_PIR1);
-    if (pir1 & PIC_PIR1_TMR1IF) TIMER1_IRQHandler();
+    /* TMR1 is flag-gated on TMR1IE, not just TMR1IF: Timer1 free-runs
+     * with its overflow interrupt disabled (epic-swuart needs the
+     * counter but never the overflow), so TMR1IF latches at every
+     * 65536-cycle wrap and stays set. Without this check the next CCP
+     * event would pay TIMER1_IRQHandler's full table-driven cost
+     * (~250 cycles) before its own dispatch, blowing the swuart RX
+     * re-arm margin (same hazard as PIC16F87XA, see
+     * docs/superpowers/plans/probe-swuart-rx-hotpath.md). When the
+     * source is disabled the stale flag is dropped so it does not
+     * re-trigger this branch on every later event. */
+    if (pir1 & PIC_PIR1_TMR1IF) {
+        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TMR1IE) {
+            TIMER1_IRQHandler();
+        } else {
+            /* Source disabled: drop the stale flag with the same
+             * single-instruction PIR1 bit clear the CCP handlers use
+             * (EPIC_BIT_CLR on PIC_REG_PIR1), not the table-driven
+             * EPIC_IRQ_ClearFlag, whose lookup would itself delay the
+             * swuart RX re-arm on this event. */
+            EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR1IF);
+        }
+    }
     if (pir1 & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
     if (pir1 & PIC_PIR1_CCP1IF) CCP1_IRQHandler();
     if (pir1 & PIC_PIR1_SSPIF)  SSP_IRQHandler();

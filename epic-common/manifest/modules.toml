@@ -662,8 +662,6 @@ needs_hal  = true
 
 [modules.epic-swuart.supported]
 PIC16F87XA = [
-  "16F873A",
-  "16F874A",
   "16F876A",
   "16F877A",
 ]
@@ -681,6 +679,10 @@ PIC16F193X = [
   "16F1938",
   "16F1939",
 ]
+
+[modules.epic-swuart.excluded]
+"16F873A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"16F874A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
 
 [modules.epic-swuart.example.PIC16F87XA]
 name    = "swuart"
@@ -733,13 +735,13 @@ depends_on = []
 
 [modules.epic-taskmgr.supported]
 PIC16F87XA = [
-  "16F873A",
-  "16F874A",
   "16F876A",
   "16F877A",
 ]
 
 [modules.epic-taskmgr.excluded]
+"16F873A" = "RAM: 54-byte task table does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"16F874A" = "RAM: 54-byte task table does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
 "18F2455" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
 "18F2550" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
 "18F4455" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"

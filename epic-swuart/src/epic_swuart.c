@@ -161,6 +161,16 @@ static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
     h->rx_count++;
 }
 
+/* Channel B (PIC16F193X only, CCP3) keeps the original two-fire
+ * capture-then-confirm sequence; only channel A on PIC16F87XA gets the
+ * collapsed fast path below (rx_capture_event_fast hardcodes CCP1's
+ * 87XA SFR addresses; see EPIC_SWUART_HAS_RX_FAST_PATH). On 87XA
+ * single-channel builds nothing calls rx_capture_event/test_get_capture
+ * any more after the hot-path change, so both are scoped out there to
+ * avoid dead code with no caller. PIC18Fxx5x and PIC16F193X channel A
+ * still use the generic path (the fast-path port is a follow-up), so
+ * the guard is "channel B exists OR no fast path exists". */
+#if EPIC_SWUART_MAX_CHANNELS >= 2 || !EPIC_SWUART_HAS_RX_FAST_PATH
 /* test_get_capture takes the RX CCP instance (not hardcoded to channel
  * A's) so the shared rx_capture_event body below reads the right
  * hardware capture register for whichever channel is firing; the test
@@ -175,8 +185,8 @@ static uint16_t test_get_capture(CCP_InstanceTypeDef rx_inst) { return EPIC_CCP_
 #endif
 
 /* Shared RX capture/compare event body, parameterised by handle and CCP
- * instance the same way tx_compare_event is: on_rx_event_a/_b below are
- * thin per-slot wrappers over this. */
+ * instance the same way tx_compare_event is: on_rx_event_b below is a
+ * thin wrapper over this. */
 static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef rx_inst)
 {
     if (h->rx_state == RX_IDLE) {
@@ -235,8 +245,119 @@ static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef r
     h->rx_deadline = (uint16_t)(h->rx_deadline + g_cycles_per_bit);
     EPIC_CCP_SetCompare(rx_inst, h->rx_deadline);
 }
+#endif /* EPIC_SWUART_MAX_CHANNELS >= 2 || !EPIC_SWUART_HAS_RX_FAST_PATH */
 
+/* Direct SFR addresses for PIC16F87XA's CCP1 (channel A's RX capture),
+ * confirmed against pic16f87xa_ccp.c's own addrs[0] entry. Bypasses
+ * EPIC_CCP_GetCapture's atomic retry-loop (unnecessary here: the
+ * earliest a second real capture could land is a full cycles_per_bit
+ * away, ~521 cycles at 9600 baud, vastly longer than the ~10-15 cycles
+ * this plain 2-byte read takes) and EPIC_CCP_SetCompare/SetMode's
+ * generic call overhead, for this one hot path only. Hardcoded to
+ * CCP1 specifically, not parameterised by instance: channel B
+ * (PIC16F193X, CCP3) keeps using the slower, generic rx_capture_event
+ * above via on_rx_event_b, a disclosed, deliberate scope limit of this
+ * fix (see docs/ARCHITECTURE.md's "Known limitations" section).
+ * Porting this same pattern to channel B and to PIC18Fxx5x/PIC16F193X's
+ * own literal addresses is a follow-up, not this fix. */
+#if EPIC_SWUART_HAS_RX_FAST_PATH
+#define CCP1_CPRL_ADDR 0x15U
+#define CCP1_CPRH_ADDR 0x16U
+#define CCP1_CON_ADDR  0x17U
+
+/* Cycles elapsed, on real PIC16F87XA hardware, between the real
+ * falling edge and the point inside rx_capture_event_fast() where
+ * Timer1 is read fresh (the AN555-style _Cycle_Offset1 correction).
+ * Measured via a real mdb probe on PIC16F877A (MPLAB SIM, XC8 v3.10,
+ * -O2, the exact build this module ships with): 3 cycles of
+ * edge-to-vector interrupt response plus 322 cycles of
+ * vector-to-Timer1-read software latency, reproduced identically
+ * across three runs (see
+ * docs/superpowers/plans/probe-swuart-rx-hotpath.md). With this
+ * value, d0's sample deadline lands at 1.499 bit periods after the
+ * real edge, mid-d0; with the old 0u placeholder it landed at 2.12
+ * bit periods, inside d1's window, a guaranteed mis-sample. Do not
+ * re-derive or "improve" this number without a fresh probe: it
+ * describes this exact code path on this exact toolchain. */
+#define RX_CAPTURE_OVERHEAD_CYCLES 325u
+
+#if EPIC_SWUART_TEST_HOOKS
+/* Writes straight into the same two registers rx_capture_event_fast
+ * itself reads, so an injected test value flows through the exact
+ * production code path, not a separate indirection layer. */
+void swuart_test_set_capture_fast(uint16_t value)
+{
+    EPIC_REG8(CCP1_CPRH_ADDR) = (uint8_t)(value >> 8);
+    EPIC_REG8(CCP1_CPRL_ADDR) = (uint8_t)(value & 0xFFu);
+}
+#endif
+
+static void rx_capture_event_fast(EPIC_SWUART_HandleTypeDef *h)
+{
+    if (h->rx_state != RX_IDLE) {
+        /* Steady-state per-bit sampling, unchanged from v3's own
+         * arithmetic: each event only needs to beat the *next* one by
+         * a full cycles_per_bit, already proven to fit with real
+         * margin (v3's TX-side measurement). */
+        uint8_t sample = (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) == GPIO_PIN_SET) ? 1u : 0u;
+
+        if (h->rx_state == RX_STOP) {
+            if (sample != 0u) {
+                rx_push(h, h->rx_shift);
+            } else {
+                h->error_count++;
+            }
+            h->rx_state = RX_IDLE;
+            EPIC_REG8(CCP1_CON_ADDR) = (uint8_t)CCP_MODE_CAPTURE_FALLING;
+            return;
+        }
+
+        h->rx_shift = (uint8_t)((h->rx_shift >> 1) | (sample ? 0x80u : 0u));
+        h->rx_bit_index++;
+        h->rx_state = (h->rx_bit_index < 8u) ? (uint8_t)(RX_DATA0 + h->rx_bit_index) : RX_STOP;
+        h->rx_deadline = (uint16_t)(h->rx_deadline + g_cycles_per_bit);
+        EPIC_REG8(CCP1_CPRL_ADDR) = (uint8_t)(h->rx_deadline & 0xFFu);
+        EPIC_REG8(CCP1_CPRH_ADDR) = (uint8_t)(h->rx_deadline >> 8);
+        return;
+    }
+
+    /* RX_IDLE: a start-bit falling edge just latched into CCPR1.
+     * Immediate, synchronous deglitch check, no second scheduled
+     * event (see docs/superpowers/specs/2026-08-08-swuart-rx-hotpath-design.md
+     * for why this removes the v3 timing race). */
+    if (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) != GPIO_PIN_RESET) {
+        return; /* noise: pin already back high, stay in Capture mode */
+    }
+
+    h->rx_shift = 0u;
+    h->rx_bit_index = 0u;
+    h->rx_state = RX_DATA0;
+
+    /* Relative reload: "now" is read after this handler's own real
+     * latency has already elapsed, so the deadline can never be in
+     * the past, unlike v3's edge_time + 0.5*cycles_per_bit scheme.
+     * RX_CAPTURE_OVERHEAD_CYCLES corrects for that already-elapsed
+     * latency so the arm still lands close to the intended 1.5-bit
+     * mark relative to the real edge, not relative to "now". */
+    uint16_t now = EPIC_TIMER1_ReadCounter();
+    uint16_t target_offset = (uint16_t)(g_cycles_per_bit + g_cycles_per_bit / 2u);
+    h->rx_deadline = (uint16_t)(now + target_offset - RX_CAPTURE_OVERHEAD_CYCLES);
+
+    EPIC_REG8(CCP1_CPRL_ADDR) = (uint8_t)(h->rx_deadline & 0xFFu);
+    EPIC_REG8(CCP1_CPRH_ADDR) = (uint8_t)(h->rx_deadline >> 8);
+    EPIC_REG8(CCP1_CON_ADDR) = (uint8_t)CCP_MODE_COMPARE_SOFT_IF;
+}
+#endif /* EPIC_SWUART_HAS_RX_FAST_PATH */
+
+/* Channel A's handler is the fast path on PIC16F87XA only; on
+ * PIC18Fxx5x and PIC16F193X it stays on the generic rx_capture_event
+ * (which reads/writes CCP1 through the family-correct EPIC_CCP_* SFR
+ * accessors) until a follow-up ports the fast pattern. */
+#if EPIC_SWUART_HAS_RX_FAST_PATH
+static void on_rx_event_a(void) { rx_capture_event_fast(g_chan_a); }
+#else
 static void on_rx_event_a(void) { rx_capture_event(g_chan_a, SWUART_CCP_RX); }
+#endif
 #if EPIC_SWUART_MAX_CHANNELS >= 2
 static void on_rx_event_b(void) { rx_capture_event(g_chan_b, SWUART_CCP_RX_B); }
 #endif

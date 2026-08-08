@@ -28,7 +28,10 @@ select the family at build time with `-DEPIC_FAMILY=PIC16` (default) or
   target with no `#ifdef`, via the HAL's harness seam.
 - **RAM-aware**: 6 task slots on the 192 B PIC16F873A/874A, 8 on the 368 B
   PIC16F876A/877A; banks cleanly into every part. Override with
-  `-DTASK_MGR_MAX_TASKS=N`.
+  `-DTASK_MGR_MAX_TASKS=N`. Note: the real-target example build is
+  manifest-excluded on the 192 B parts (the full-HAL build's 54-byte
+  default table does not fit; `docs/mplabx-link-gaps-plan.md` root
+  cause 2), so CI covers 16F876A/16F877A only.
 - **Race-free**: the tick (interrupt context) and the run loop (main context)
   share the task table through short critical sections; a tick that lands
   during a long task arms it for the next round instead of being lost.
@@ -97,9 +100,11 @@ HAL family:
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
 
-# PIC16F87XA family:
+# PIC16F87XA family (16F873A/16F874A are manifest-excluded from the
+# real-target build: the full-HAL example does not fit their 192 B RAM,
+# see docs/mplabx-link-gaps-plan.md root cause 2):
 python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F877A --run
-python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F873A --run   # 192 B part
+python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F876A --run
 
 # PIC18F2455 family (needs the PIC18Fxxxx DFP installed; see
 # pic18fxx5x-hal/mcu/pic18fxx5x-mplabx/README.md):

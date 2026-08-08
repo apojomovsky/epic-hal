@@ -54,7 +54,10 @@ extern void swuart_test_set_capture(uint16_t value);
 
 /* Drives one full byte (start + 8 data + stop, LSB first) onto channel
  * A's RX pin (RC2) and fires the matching capture-then-compare event
- * sequence, same technique test_swuart_rx.c/test_swuart_errors.c use. */
+ * sequence, same technique test_swuart_rx.c/test_swuart_errors.c use.
+ * PIC16F193X channel A uses the generic two-fire path (the RX hot-path
+ * fix is PIC16F87XA-only; see EPIC_SWUART_HAS_RX_FAST_PATH), so this
+ * is the capture-then-confirm sequence rx_capture_event expects. */
 static void receive_byte_a(const uint8_t *bits)
 {
     pic16f193x_sim_drive_input('C', 2, bits[0]);

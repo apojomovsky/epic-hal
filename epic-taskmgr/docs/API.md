@@ -24,7 +24,10 @@ calls.
 Maximum number of simultaneously registered tasks. Each slot costs ~12 B of
 RAM (two 3-byte PIC16 pointers + two `uint16` + a flags byte). The default
 scales to the part, 6 on the 192 B PIC16F873A/874A, 8 on the 368 B
-PIC16F876A/877A, so the table banks cleanly into every device in the family.
+PIC16F876A/877A, so the table banks cleanly into every device in the
+family when it fits alongside the rest of the image (the real-target
+full-HAL example overflows the 192 B parts and is manifest-excluded
+there; see `docs/mplabx-link-gaps-plan.md` root cause 2).
 Override by defining `TASK_MGR_MAX_TASKS` before including the header.
 
 One-shot tasks free their slot after they run (see `task_manager_run_once`),
