@@ -11,10 +11,7 @@
 
 <p align="center">
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html)
-[![Release: v0.1.0](https://img.shields.io/badge/release-v0.1.0-purple.svg)](https://github.com/apojomovsky/epicurus/releases)
-[![ci](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html) [![Release: v0.1.0](https://img.shields.io/badge/release-v0.1.0-purple.svg)](https://github.com/apojomovsky/epicurus/releases) [![ci](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml)
 
 </p>
 
@@ -101,7 +98,7 @@ Four programs, each complete. The same source builds against any of the
 three families: swap the include path at build time, nothing else
 changes.
 
-### Blink an LED on a 1 ms timebase
+### Blink a LED on a 1 ms timebase
 
 ```c
 #include <xc.h>
