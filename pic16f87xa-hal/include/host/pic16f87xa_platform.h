@@ -49,4 +49,17 @@ extern uint8_t pic16f87xa_sim_sfr[0x200];
         else         { pic16f87xa_sim_sfr[0x8CU] &= (uint8_t)~(mask); } \
     } while (0)
 
+/* Read the TMR1IE bit (PIE1 bit 0) into a uint8_t output variable.
+ * Host twin of target/pic16f87xa_platform.h's EPIC_PIE1_READ_TMR1IE
+ * (which uses EPIC_BANK1_READ8): the simulated register file is a
+ * plain array, so no banking path is needed here. Used by the shared
+ * interrupt dispatcher to skip TIMER1_IRQHandler when TMR1IE is off
+ * (a free-running Timer1 with the overflow interrupt disabled latches
+ * TMR1IF at every wrap; see the target header's comment for why that
+ * must not dispatch the handler). */
+#define EPIC_PIE1_READ_TMR1IE(out_var) ((out_var) = pic16f87xa_sim_sfr[0x8CU])
+
+/* Host twin of the target header's EPIC_PIE1_READ_TXIE. */
+#define EPIC_PIE1_READ_TXIE(out_var)   ((out_var) = pic16f87xa_sim_sfr[0x8CU])
+
 #endif /* PIC16F87XA_PLATFORM_H */

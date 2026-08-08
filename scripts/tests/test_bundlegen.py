@@ -215,6 +215,43 @@ class TestEpicurusMk(unittest.TestCase):
             self.mk,
         )
 
+    def test_every_module_include_dir_gets_its_own_prefix(self):
+        # Regression: EPICURUS_INCLUDES used to emit one -I before the
+        # whole space-joined per-module dir list, so the second dir of a
+        # module with two includes (epic-math ships include + tests) was
+        # passed to xc8-cc as a source file (error 894) and the bundle
+        # was unbuildable for that module. Each dir needs its own -I.
+        two_inc = MANIFEST + """
+[modules.epic-math]
+dir        = "epic-math"
+sources    = ["src/pic_math.c"]
+includes   = ["include", "tests"]
+depends_on = []
+
+[modules.epic-math.supported]
+PIC16F87XA = ["16F873A", "16F877A"]
+
+[modules.epic-math.sources_by_family]
+PIC16F87XA = ["src/pic16/pic_math_mul.c"]
+"""
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False)
+        tmp.write(two_inc)
+        tmp.close()
+        mk = bundlegen.emit_epicurus_mk(
+            epicmanifest.load(pathlib.Path(tmp.name)), "PIC16F87XA", "v0.1.0"
+        )
+        self.assertIn(
+            "EPICURUS_INCLUDES := $(EPICURUS_FAMILY_INCLUDES) "
+            "$(foreach m,$(EPICURUS_ALL),$(addprefix -I,$(EPICURUS_INCS_$(m))))",
+            mk,
+        )
+        self.assertIn(
+            "EPICURUS_INCS_epic-math := "
+            "$(EPICURUS_DIR)/epic-math/include "
+            "$(EPICURUS_DIR)/epic-math/tests",
+            mk,
+        )
+
     def test_errors_on_an_unset_mcu(self):
         self.assertIn("EPICURUS_MCU is not set", self.mk)
 

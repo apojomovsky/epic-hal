@@ -116,6 +116,12 @@ EPIC_StatusTypeDef EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
     return EPIC_OK;
 }
 
+void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode)
+{
+    if (!valid_instance(inst)) return;
+    CCP_WRITE_CON(inst, (uint8_t)((uint8_t)mode & PIC_CCP1CON_CCPM_MASK));
+}
+
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (!valid_instance(inst)) return 0U;
@@ -130,8 +136,13 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 
 static void ccp_irq_common(CCP_InstanceTypeDef inst, PIC16F193X_IRQn irq)
 {
-    if (!EPIC_IRQ_GetFlag(irq)) return;
-    EPIC_IRQ_ClearFlag(irq);
+    switch (irq) {
+    case PIC16F193X_IRQ_CCP1: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF); break;
+    case PIC16F193X_IRQ_CCP2: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF); break;
+    case PIC16F193X_IRQ_CCP3: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CCP3IF); break;
+    case PIC16F193X_IRQ_CCP4: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CCP4IF); break;
+    default: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CCP5IF); break;
+    }
     const CCP_HandleTypeDef *h = g_handle[idx_of(inst)];
     if (h && h->EventCallback) {
         h->EventCallback();

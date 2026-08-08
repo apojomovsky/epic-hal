@@ -88,6 +88,23 @@ static uint16_t tris_addr(char port)
     }
 }
 
+/** PORTx address for a port letter. */
+static uint16_t port_addr(char port)
+{
+    switch (port) {
+        case 'A': case 'a': return PIC_REG_PORTA;
+        case 'B': case 'b': return PIC_REG_PORTB;
+        case 'C': case 'c': return PIC_REG_PORTC;
+#if PIC18FXX5X_FAMILY_HAS_PORTD
+        case 'D': case 'd': return PIC_REG_PORTD;
+#endif
+#if PIC18FXX5X_FAMILY_HAS_PORTE
+        case 'E': case 'e': return PIC_REG_PORTE;
+#endif
+        default:             return PIC_REG_PORTA;
+    }
+}
+
 /* ───────────────────────── public API ───────────────────────────── */
 
 void pic18_sim_reset(void)
@@ -360,6 +377,16 @@ void pic18_sim_drive_input(char port, uint8_t pin, uint8_t level)
     sim_input_override[idx] |= mask;
     if (level) sim_input_value[idx] |= mask;
     else       sim_input_value[idx] &= (uint8_t)~mask;
+
+    /* Also update the PORT register so that EPIC_GPIO_ReadPin sees the
+     * externally driven value for input pins. This ensures that the
+     * simulator behavior matches the real hardware where reading a PORT
+     * pin returns the pin's external state when TRIS=1 (input). */
+    uint16_t pa = port_addr(port);
+    uint8_t portval = pic18_sim_sfr[pa];
+    if (level) portval |= mask;
+    else portval &= (uint8_t)~mask;
+    pic18_sim_sfr[pa] = portval;
 }
 
 uint8_t pic18_sim_read_output(char port, uint8_t pin)
