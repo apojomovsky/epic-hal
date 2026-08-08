@@ -1,18 +1,28 @@
 /**
  * @file    test_swuart_deinit.c
- * @brief   EPIC_SWUART_DeInit host test: never exercised before this
- *          test existed (XC8 warned "_EPIC_SWUART_DeInit is never
- *          called" on every real-target build). Covers the scenario
- *          the module's design always claimed to support but nothing
- *          verified: init one channel, use it briefly, DeInit it
- *          mid-frame, then init a *new* channel and confirm it works
- *          correctly, proving the lazy Timer1 restart when the
- *          registry goes from 0 back to active.
+ * @brief   EPIC_SWUART_DeInit host test, v3: confirms it actually tears
+ *          down both of the channel's CCP instances and Timer1 (not
+ *          just that it returns EPIC_OK), and that a second Init after
+ *          DeInit works cleanly (register, write, read a byte again).
+ *          No real CCP hardware exists in the host sim, so TX/RX are
+ *          driven directly via the same test hooks
+ *          test_swuart_tx.c/test_swuart_rx.c use; CCP/Timer1 teardown
+ *          is checked by reading the underlying SFRs directly
+ *          (EPIC_REG8 plus the PIC_REG_ and PIC_..._POR_VALUE names), the same
+ *          mechanism epic_swuart.c's own swuart_test_last_tx_mode hook
+ *          uses, available here because epic_swuart.h pulls in
+ *          epic_hal.h (and therefore the family's own sfr.h)
+ *          transitively.
  */
 #include <stdio.h>
 #include "epic_swuart.h"
-#include "core/epic_harness.h"
 
+/* Family dispatch for the sim's drive_input, same set of families/macro
+ * shape as test_swuart_rx.c/test_swuart_errors.c use. PIC16F193X's sim
+ * only stages the driven level; unlike PIC16F87XA/PIC18Fxx5x's sim it
+ * does not itself refresh the PORT register that EPIC_GPIO_ReadPin
+ * reads (that refresh only happens inside pic16f193x_sim_step()), so
+ * SIM_DRIVE for that family pumps one cycle of it immediately after. */
 #if defined(PIC18F2455) || defined(PIC18F2550) || defined(PIC18F4455) || defined(PIC18F4550)
   #include "pic18fxx5x_sim.h"
   #define SIM_DRIVE(port, pin, lvl) pic18_sim_drive_input((port), (pin), (lvl))
@@ -20,7 +30,8 @@
 #elif defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
       defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)
   #include "pic16f193x_sim.h"
-  #define SIM_DRIVE(port, pin, lvl) pic16f193x_sim_drive_input((port), (pin), (lvl))
+  #define SIM_DRIVE(port, pin, lvl) \
+      do { pic16f193x_sim_drive_input((port), (pin), (lvl)); pic16f193x_sim_step(1); } while (0)
   #define SIM_READ(port, pin) pic16f193x_sim_read_output((port), (pin))
 #else
   #include "pic16f87xa_sim.h"
@@ -28,93 +39,107 @@
   #define SIM_READ(port, pin) pic16f87xa_sim_read_output((port), (pin))
 #endif
 
-#define OVERSAMPLE_N 3u
-#define BAUD 9600u
-
-/* epic_harness_tick() advances one instruction cycle per call (see
- * core/epic_harness.h); a real Timer1 tick takes CYCLES_PER_TICK such
- * cycles, the same value epic_swuart.c's compute_reload() computes
- * internally. run_ticks() below advances in units of software UART
- * ticks, not raw cycles: see test_swuart_tx.c's version of this same
- * comment for why the distinction matters. */
-#define CYCLES_PER_TICK \
-    ((uint32_t)((FOSC_HZ / 4u + ((uint32_t)BAUD * OVERSAMPLE_N) / 2u) \
-                / ((uint32_t)BAUD * OVERSAMPLE_N)))
-
 static int g_fails = 0;
-#define CHECK(c, m) do { if (!(c)) { epic_harness_log("FAIL: %s\n", m); g_fails++; } } while (0)
+#define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); g_fails++; } } while (0)
 
-static void run_ticks(uint32_t software_ticks)
-{
-    for (uint32_t i = 0; i < software_ticks * CYCLES_PER_TICK; i++) epic_harness_tick();
-}
+/* Test-only hooks: see test_swuart_tx.c/test_swuart_rx.c. Defined in
+ * epic_swuart.c behind EPIC_SWUART_TEST_HOOKS. swuart_test_last_tx_mode
+ * always reads slot A's TX CCP (CCP2CON), which is exactly the slot
+ * both channels in this test occupy in turn (only one channel is ever
+ * live at a time here). */
+extern uint8_t swuart_test_last_tx_mode(void);
+extern void swuart_test_fire_tx_event(void);
+extern void swuart_test_fire_rx_event(void);
+extern void swuart_test_set_capture(uint16_t value);
 
 int main(void)
 {
-    epic_harness_init(2000000UL);
-
-    /* ---- Channel 1: use it briefly, then DeInit it mid-frame. ---- */
+    /* ---- Channel 1: register, start a TX frame, DeInit mid-frame. ---- */
     EPIC_SWUART_HandleTypeDef chan1;
-    EPIC_StatusTypeDef st = EPIC_SWUART_Init(&chan1, GPIOB, GPIO_PIN_0,
-                                              GPIOB, GPIO_PIN_2,
+    EPIC_StatusTypeDef st = EPIC_SWUART_Init(&chan1, GPIOC, GPIO_PIN_1, GPIOC, GPIO_PIN_2,
                                               FOSC_HZ, 9600u);
     CHECK(st == EPIC_OK, "channel 1 init ok");
-    SIM_DRIVE('B', 2, 1); /* channel 1's unused RX: idle (mark) */
 
-    /* 0x00: every data bit is 0, so the line stays low through the
-     * whole data field, guaranteeing DeInit below catches it mid-low
-     * rather than by coincidence already back at mark. */
+    /* Sanity: Init actually programmed both CCP instances and started
+     * Timer1, so DeInit below has something real to tear down instead
+     * of coincidentally finding zeroed registers already. RX (CCP1) is
+     * armed for CAPTURE_FALLING at Init time, a non-zero encoding;
+     * TX (CCP2) starts at CCP_MODE_OFF (0) until the first Write, so
+     * check it only after queuing a byte below. */
+    CHECK(EPIC_REG8(PIC_REG_CCP1CON) != 0x00u, "channel 1 RX CCP armed after init");
+    CHECK((EPIC_REG8(PIC_REG_T1CON) & PIC_T1CON_TMR1ON) != 0u,
+          "Timer1 running after channel 1 init");
+
     uint8_t zero_byte = 0x00u;
     size_t queued = EPIC_SWUART_Write(&chan1, &zero_byte, 1);
     CHECK(queued == 1u, "channel 1 queued one byte");
+    CHECK(EPIC_REG8(PIC_REG_CCP2CON) != 0x00u, "channel 1 TX CCP armed after Write");
 
-    /* Run into the middle of the start bit: the line should be low
-     * here, confirming the DeInit below really does interrupt a
-     * frame in progress, not one that already finished. */
-    run_ticks(OVERSAMPLE_N / 2u);
-    CHECK(SIM_READ('B', 0) == 0, "channel 1 mid-frame: TX genuinely low before DeInit");
+    /* Fire two of the nine events (start bit already armed by Write();
+     * this lands mid-frame, not at a coincidentally-idle boundary).
+     * tx_state's numeric encoding (0 = TX_IDLE) is epic_swuart.c-local,
+     * not exposed via the header, but the handle struct itself is not
+     * opaque; checking != 0 here is enough to prove "still mid-frame,
+     * not idle" without needing the name. */
+    swuart_test_fire_tx_event();
+    swuart_test_fire_tx_event();
+    CHECK(chan1.tx_state != 0u, "channel 1 genuinely mid-frame before DeInit");
 
     EPIC_StatusTypeDef deinit_st = EPIC_SWUART_DeInit(&chan1);
     CHECK(deinit_st == EPIC_OK, "DeInit returns EPIC_OK");
-    CHECK(SIM_READ('B', 0) == 1, "DeInit leaves TX at idle/mark, not stuck low");
 
-    /* ---- Channel 2: a *new* channel, registered after the registry
-     * emptied out. This only works if DeInit's Timer1 release didn't
-     * leave the peripheral in a state that blocks a fresh Init, and
-     * if Init's lazy restart (g_channel_count 0 -> 1) actually re-arms
-     * Timer1 and its interrupt correctly. ---- */
+    /* ---- The actual regression this test exists for: DeInit must
+     * really call EPIC_CCP_DeInit on both of the channel's CCP
+     * instances (both CON registers zeroed, not just "some" register
+     * touched) and EPIC_TIMER1_DeInit (T1CON back to its POR value,
+     * TMR1ON cleared), not merely return EPIC_OK while leaving
+     * hardware armed. Only one channel is active in this test (both
+     * families' single-channel case and PIC16F193X's g_chan_b == NULL
+     * from never having been used), so Timer1 teardown is unconditional
+     * here; the conditional (survivor-preserving) case is
+     * test_swuart_dual_deinit.c's job. ---- */
+    CHECK(EPIC_REG8(PIC_REG_CCP1CON) == 0x00u, "DeInit zeroed the RX CCP (CCP1)");
+    CHECK(EPIC_REG8(PIC_REG_CCP2CON) == 0x00u, "DeInit zeroed the TX CCP (CCP2)");
+    CHECK(EPIC_REG8(PIC_REG_T1CON) == PIC_T1CON_POR_VALUE,
+          "DeInit reset Timer1 (T1CON) to its POR value");
+    CHECK(SIM_READ('C', 1) == 1, "DeInit leaves TX at idle/mark, not stuck low");
+
+    /* ---- Channel 2: a *new* registration in the same slot, after the
+     * registry emptied out. This only works if DeInit's Timer1 release
+     * didn't leave the peripheral in a state that blocks a fresh Init,
+     * and if Init's lazy restart actually re-arms Timer1 and the CCP
+     * instances correctly. ---- */
     EPIC_SWUART_HandleTypeDef chan2;
-    st = EPIC_SWUART_Init(&chan2, GPIOC, GPIO_PIN_0, GPIOC, GPIO_PIN_1,
-                           FOSC_HZ, 9600u);
+    st = EPIC_SWUART_Init(&chan2, GPIOC, GPIO_PIN_1, GPIOC, GPIO_PIN_2, FOSC_HZ, 9600u);
     CHECK(st == EPIC_OK, "channel 2 init ok after channel 1's DeInit");
-    SIM_DRIVE('C', 1, 1); /* channel 2's unused RX: idle (mark) */
+    CHECK((EPIC_REG8(PIC_REG_T1CON) & PIC_T1CON_TMR1ON) != 0u,
+          "Timer1 running again after channel 2 init");
 
-    /* TX: 'A' (0x41), same framing check as test_swuart_tx.c. */
+    /* Register, write, read a byte again: TX 'A' (0x41), same mode
+     * sequence test_swuart_tx.c checks. */
     uint8_t a_byte = 0x41u;
     queued = EPIC_SWUART_Write(&chan2, &a_byte, 1);
     CHECK(queued == 1u, "channel 2 queued one byte");
 
-    static const uint8_t expected_tx[] = {0, 1, 0, 0, 0, 0, 0, 1, 0, 1};
-    uint8_t observed_tx[10];
-    for (size_t bit = 0; bit < 10; bit++) {
-        run_ticks(OVERSAMPLE_N / 2u);
-        observed_tx[bit] = SIM_READ('C', 0);
-        run_ticks(OVERSAMPLE_N - OVERSAMPLE_N / 2u);
-    }
+    static const uint8_t expected_modes[] = {8, 9, 9, 9, 9, 9, 8, 9, 8};
     int tx_ok = 1;
-    for (size_t bit = 0; bit < 10; bit++) {
-        if (observed_tx[bit] != expected_tx[bit]) tx_ok = 0;
+    for (size_t i = 0; i < 9; i++) {
+        swuart_test_fire_tx_event();
+        if (swuart_test_last_tx_mode() != expected_modes[i]) tx_ok = 0;
     }
-    CHECK(tx_ok, "channel 2 transmits correctly after the lazy Timer1 restart");
+    CHECK(tx_ok, "channel 2 transmits the correct mode sequence after re-init");
     CHECK(chan2.tx_count == 0u, "channel 2 finished transmitting");
 
-    /* RX: drive an inbound 'A' onto channel 2's RX pin. */
+    /* RX: an inbound 'A' (0x41), same technique test_swuart_rx.c uses. */
     static const uint8_t rx_bits[] = {0, 1, 0, 0, 0, 0, 0, 1, 0, 1};
-    for (size_t i = 0; i < 10; i++) {
-        SIM_DRIVE('C', 1, rx_bits[i]);
-        run_ticks(OVERSAMPLE_N);
+    SIM_DRIVE('C', 2, rx_bits[0]);
+    swuart_test_set_capture(1000u);
+    swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
+    swuart_test_fire_rx_event(); /* confirm event, half a bit later */
+    for (size_t i = 1; i < 10; i++) {
+        SIM_DRIVE('C', 2, rx_bits[i]);
+        swuart_test_fire_rx_event(); /* compare event: sample + arm next */
     }
-    run_ticks(OVERSAMPLE_N * 2u); /* let the stop-bit sample land */
 
     uint8_t rx_buf[4] = {0};
     int n = EPIC_SWUART_Read(&chan2, rx_buf, sizeof(rx_buf));
@@ -122,6 +147,6 @@ int main(void)
     CHECK(rx_buf[0] == 0x41u, "channel 2 byte == 'A'");
     CHECK(EPIC_SWUART_GetErrorCount(&chan2) == 0u, "channel 2 no errors");
 
-    epic_harness_log("swuart_deinit: fails=%d\n", g_fails);
-    return epic_harness_report(g_fails == 0);
+    printf("swuart_deinit: fails=%d\n", g_fails);
+    return g_fails == 0 ? 0 : 1;
 }

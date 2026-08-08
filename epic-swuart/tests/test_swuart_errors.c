@@ -1,82 +1,98 @@
 /**
  * @file    test_swuart_errors.c
- * @brief   Two error paths: a bad stop bit (framing error) and an RX
- *          ring flooded past EPIC_SWUART_RING_SZ without being drained.
+ * @brief   Two error paths, v3: a bad stop bit (framing error) and an
+ *          RX ring flooded past EPIC_SWUART_RING_SZ without being
+ *          drained. No real CCP hardware exists in the host sim, so
+ *          this drives the capture/compare event handler directly via
+ *          the same test hooks test_swuart_rx.c uses, single channel
+ *          (slot A's fixed pins), not through epic_harness_tick().
+ *          PIC16F193X's channel B shares the identical handler body
+ *          (rx_capture_event/rx_push are parameterised by handle, not
+ *          duplicated per slot), so this coverage applies there too
+ *          without a second copy of the test.
  */
 #include <stdio.h>
 #include "epic_swuart.h"
-#include "core/epic_harness.h"
 
+/* Family dispatch for the sim's drive_input, same set of families/macro
+ * shape as test_swuart_rx.c/test_swuart_dual.c use. PIC16F193X's sim
+ * only stages the driven level; unlike PIC16F87XA/PIC18Fxx5x's sim it
+ * does not itself refresh the PORT register that EPIC_GPIO_ReadPin
+ * reads (that refresh only happens inside pic16f193x_sim_step()), so
+ * SIM_DRIVE for that family pumps one cycle of it immediately after. */
 #if defined(PIC18F2455) || defined(PIC18F2550) || defined(PIC18F4455) || defined(PIC18F4550)
   #include "pic18fxx5x_sim.h"
   #define SIM_DRIVE(port, pin, lvl) pic18_sim_drive_input((port), (pin), (lvl))
 #elif defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
       defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)
   #include "pic16f193x_sim.h"
-  #define SIM_DRIVE(port, pin, lvl) pic16f193x_sim_drive_input((port), (pin), (lvl))
+  #define SIM_DRIVE(port, pin, lvl) \
+      do { pic16f193x_sim_drive_input((port), (pin), (lvl)); pic16f193x_sim_step(1); } while (0)
 #else
   #include "pic16f87xa_sim.h"
   #define SIM_DRIVE(port, pin, lvl) pic16f87xa_sim_drive_input((port), (pin), (lvl))
 #endif
 
-#define OVERSAMPLE_N 3u
-#define BAUD 9600u
-
-/* epic_harness_tick() advances one instruction cycle per call (see
- * core/epic_harness.h); a real Timer1 tick takes CYCLES_PER_TICK such
- * cycles, the same value epic_swuart.c's compute_reload() computes
- * internally. run_ticks() below advances in units of software UART
- * ticks, not raw cycles: see test_swuart_tx.c's version of this same
- * comment for why the distinction matters. */
-#define CYCLES_PER_TICK \
-    ((uint32_t)((FOSC_HZ / 4u + ((uint32_t)BAUD * OVERSAMPLE_N) / 2u) \
-                / ((uint32_t)BAUD * OVERSAMPLE_N)))
-
 static int g_fails = 0;
-#define CHECK(c, m) do { if (!(c)) { epic_harness_log("FAIL: %s\n", m); g_fails++; } } while (0)
+#define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); g_fails++; } } while (0)
 
-static void run_ticks(uint32_t software_ticks)
-{
-    for (uint32_t i = 0; i < software_ticks * CYCLES_PER_TICK; i++) epic_harness_tick();
-}
+/* Test-only hooks: see test_swuart_rx.c. Defined in epic_swuart.c
+ * behind EPIC_SWUART_TEST_HOOKS. */
+extern void swuart_test_fire_rx_event(void);
+extern void swuart_test_set_capture(uint16_t value);
 
-static void send_bits(char port, uint8_t pin, const uint8_t *bits, size_t n)
+/* Drives one full byte (start + 8 data + stop, LSB first) onto slot A's
+ * RX pin and fires the matching sequence of capture/compare events:
+ * capture (IDLE -> CONFIRM_START), confirm (half a bit later, still
+ * CONFIRM_START -> DATA0), then one compare event per remaining bit
+ * (d0..d7, stop), exactly test_swuart_rx.c's technique. The capture
+ * value itself is arbitrary (host-sim only, no real Timer1 behind it)
+ * and can be reused unchanged across repeated bytes: each call starts
+ * from a fresh RX_IDLE, so nothing carries over between bytes. */
+static void receive_byte(const uint8_t *bits)
 {
-    for (size_t i = 0; i < n; i++) {
-        SIM_DRIVE(port, pin, bits[i]);
-        run_ticks(OVERSAMPLE_N);
+    SIM_DRIVE('C', 2, bits[0]);
+    swuart_test_set_capture(1000u);
+    swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
+    swuart_test_fire_rx_event(); /* confirm event, half a bit later */
+    for (size_t i = 1; i < 10; i++) {
+        SIM_DRIVE('C', 2, bits[i]);
+        swuart_test_fire_rx_event(); /* compare event: sample + arm next */
     }
-    run_ticks(OVERSAMPLE_N * 2u);
 }
 
 int main(void)
 {
-    epic_harness_init(4000000UL);
+    /* ---- Bad stop bit: hold the line low instead of returning to
+     * mark. Slot A's fixed pins (see epic_swuart.c EPIC_SWUART_Init). ---- */
+    EPIC_SWUART_HandleTypeDef h;
+    EPIC_StatusTypeDef st = EPIC_SWUART_Init(&h, GPIOC, GPIO_PIN_1, GPIOC, GPIO_PIN_2,
+                                              FOSC_HZ, 9600u);
+    CHECK(st == EPIC_OK, "init ok");
 
-    /* ---- Bad stop bit: hold the line low instead of returning to mark. ---- */
-    EPIC_SWUART_HandleTypeDef bad_stop;
-    EPIC_SWUART_Init(&bad_stop, GPIOB, GPIO_PIN_0, GPIOB, GPIO_PIN_2, FOSC_HZ, 9600u);
     static const uint8_t framing_err_bits[] = {0, 1, 0, 0, 0, 0, 0, 1, 0, 0}; /* stop=0 */
-    send_bits('B', 2, framing_err_bits, 10);
+    receive_byte(framing_err_bits);
 
     uint8_t buf[4];
-    CHECK(EPIC_SWUART_Read(&bad_stop, buf, sizeof(buf)) == 0, "bad-stop byte dropped");
-    CHECK(EPIC_SWUART_GetErrorCount(&bad_stop) == 1u, "one framing error counted");
+    CHECK(EPIC_SWUART_Read(&h, buf, sizeof(buf)) == 0, "bad-stop byte dropped");
+    CHECK(EPIC_SWUART_GetErrorCount(&h) == 1u, "one framing error counted");
 
     /* ---- RX ring overflow: send more bytes than EPIC_SWUART_RING_SZ
-     * without draining. ---- */
-    EPIC_SWUART_HandleTypeDef flood;
-    EPIC_SWUART_Init(&flood, GPIOB, GPIO_PIN_1, GPIOB, GPIO_PIN_3, FOSC_HZ, 9600u);
+     * without draining. Same handle/slot: a fresh DeInit/Init cycle
+     * would reset error_count, but this scenario wants exactly one
+     * more error source layered on top, not a clean slate, so reuse
+     * the handle from above unchanged. ---- */
     static const uint8_t ok_bits[] = {0, 1, 0, 0, 0, 0, 0, 1, 0, 1}; /* 'A', valid framing */
     for (unsigned i = 0; i < EPIC_SWUART_RING_SZ + 2u; i++) {
-        send_bits('B', 3, ok_bits, 10);
+        receive_byte(ok_bits);
     }
-    CHECK(EPIC_SWUART_GetErrorCount(&flood) == 2u, "two overflow drops counted");
+    CHECK(EPIC_SWUART_GetErrorCount(&h) == 3u,
+          "one framing drop plus two overflow drops counted");
 
     int total = 0, n;
-    while ((n = EPIC_SWUART_Read(&flood, buf, sizeof(buf))) > 0) total += n;
+    while ((n = EPIC_SWUART_Read(&h, buf, sizeof(buf))) > 0) total += n;
     CHECK(total == (int)EPIC_SWUART_RING_SZ, "ring held exactly RING_SZ bytes");
 
-    epic_harness_log("swuart_errors: fails=%d\n", g_fails);
-    return epic_harness_report(g_fails == 0);
+    printf("swuart_errors: fails=%d\n", g_fails);
+    return g_fails == 0 ? 0 : 1;
 }
