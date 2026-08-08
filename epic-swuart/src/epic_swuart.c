@@ -28,15 +28,10 @@ enum {
     RX_STOP,
 };
 
-/* Forward declaration: defined in Task 5 (RX state machine). Stubbed
- * empty for this task only so the TX-only rewrite compiles and links
- * standalone; Task 5 replaces the stub with the real definition. */
+/* Forward declaration: real definition (RX state machine) is below,
+ * after g_chan_a/g_cycles_per_bit/SWUART_CCP_RX exist; EPIC_SWUART_Init
+ * needs the symbol earlier when it builds ccp_rx's EventCallback. */
 static void on_rx_event_a(void);
-
-/* TODO(Task 5): replace this empty stub with the real RX compare/capture
- * event handler. Kept here only so this task's TX rewrite compiles and
- * links standalone without RX logic existing yet. */
-static void on_rx_event_a(void) { }
 
 /* Cycles of lead time between EPIC_SWUART_Write() arming the start bit's
  * compare deadline and that deadline actually landing: must be large
@@ -130,6 +125,79 @@ static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
     h->rx_head = (uint8_t)((h->rx_head + 1u) & (EPIC_SWUART_RING_SZ - 1u));
     h->rx_count++;
 }
+
+#if EPIC_SWUART_TEST_HOOKS
+static uint16_t g_test_capture_value = 0u;
+void swuart_test_set_capture(uint16_t value) { g_test_capture_value = value; }
+static uint16_t test_get_capture(void) { return g_test_capture_value; }
+#else
+static uint16_t test_get_capture(void) { return EPIC_CCP_GetCapture(SWUART_CCP_RX); }
+#endif
+
+static void on_rx_event_a(void)
+{
+    EPIC_SWUART_HandleTypeDef *h = g_chan_a;
+
+    if (h->rx_state == RX_IDLE) {
+        /* Capture-mode event: a start-bit falling edge just arrived,
+         * hardware-timestamped, immune to how late this handler
+         * actually runs. */
+        uint16_t edge_time = test_get_capture();
+        /* Half a bit period: the mid-start-bit deglitch confirm point,
+         * matching v1/v2's own on_rx_edge_start exactly (rx_ticks_left
+         * = g_cycles_per_bit / 2u there). This is NOT d0's sample
+         * point yet; the RX_CONFIRM_START branch below adds one more
+         * full bit period on top of this once the confirm passes,
+         * landing at edge_time + 1.5 * cycles_per_bit for d0, the same
+         * two-hop sequence v1/v2 used. Collapsing this into a single
+         * 1.5x hop (an earlier draft of this exact function did) skips
+         * the deglitch check entirely: at 1.5x post-edge the pin
+         * reflects d0's own value, not the start bit's stability, so a
+         * one-hop version would silently stop rejecting noise starts. */
+        h->rx_deadline = (uint16_t)(edge_time + g_cycles_per_bit / 2u);
+        h->rx_state = RX_CONFIRM_START;
+        EPIC_CCP_SetCompare(SWUART_CCP_RX, h->rx_deadline);
+        EPIC_CCP_SetMode(SWUART_CCP_RX, CCP_MODE_COMPARE_SOFT_IF);
+        return;
+    }
+
+    if (h->rx_state == RX_CONFIRM_START) {
+        if (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) != GPIO_PIN_RESET) {
+            h->rx_state = RX_IDLE; /* noise, not a real start bit */
+            EPIC_CCP_SetMode(SWUART_CCP_RX, CCP_MODE_CAPTURE_FALLING);
+            return;
+        }
+        h->rx_shift = 0u;
+        h->rx_bit_index = 0u;
+        h->rx_state = RX_DATA0;
+        h->rx_deadline = (uint16_t)(h->rx_deadline + g_cycles_per_bit);
+        EPIC_CCP_SetCompare(SWUART_CCP_RX, h->rx_deadline);
+        return;
+    }
+
+    uint8_t sample = (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) == GPIO_PIN_SET) ? 1u : 0u;
+
+    if (h->rx_state == RX_STOP) {
+        if (sample != 0u) {
+            rx_push(h, h->rx_shift);
+        } else {
+            h->error_count++;
+        }
+        h->rx_state = RX_IDLE;
+        EPIC_CCP_SetMode(SWUART_CCP_RX, CCP_MODE_CAPTURE_FALLING);
+        return;
+    }
+
+    h->rx_shift = (uint8_t)((h->rx_shift >> 1) | (sample ? 0x80u : 0u));
+    h->rx_bit_index++;
+    h->rx_state = (h->rx_bit_index < 8u) ? (uint8_t)(RX_DATA0 + h->rx_bit_index) : RX_STOP;
+    h->rx_deadline = (uint16_t)(h->rx_deadline + g_cycles_per_bit);
+    EPIC_CCP_SetCompare(SWUART_CCP_RX, h->rx_deadline);
+}
+
+#if EPIC_SWUART_TEST_HOOKS
+void swuart_test_fire_rx_event(void) { on_rx_event_a(); }
+#endif
 
 EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
                                      GPIO_TypeDef tx_port, uint16_t tx_pin,
