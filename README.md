@@ -11,143 +11,64 @@
 
 <p align="center">
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html)
-[![ci](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html) [![Release: v0.1.0](https://img.shields.io/badge/release-v0.1.0-purple.svg)](https://github.com/apojomovsky/epicurus/releases) [![ci](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml)
 
 </p>
 
-8-bit PIC microcontrollers are not glamorous. They ship by the billion
-into thermostats, motor controllers, and blinking status LEDs, with no
-vendor HAL and no abstraction, just a register map and a datasheet PDF.
-Epicurus argued that a good life comes from reducing things to their
-essentials, not adding to them. This library takes that literally: one
-register-level driver per peripheral, faithful to the datasheet, and one
-contract that holds across every family it's ported to, however little
-those families have in common.
+A register-level HAL and a shelf of drop-in modules for 8-bit PIC
+microcontrollers. Download the bundle for your family, open the
+reference MPLAB X project, and you are building against a
+datasheet-faithful driver layer with one API across three PIC families,
+plus the things firmware always needs: a scheduler, a 1 ms timebase,
+UART and bit-banged serial, Modbus, PID, fixed-point math, and more.
 
-## Contents
+## What you get
 
-- [Why](#why)
-- [Supported devices](#supported-devices)
-- [Quick start](#quick-start)
-  - [Host simulation](#host-simulation)
-  - [Docker (no local installs)](#docker-no-local-installs)
-  - [Real hardware](#real-hardware)
-  - [Using Epicurus in your own project](#using-epicurus-in-your-own-project)
-- [Modules](#modules)
-- [Documentation](#documentation)
-- [Development](#development)
-- [License](#license)
+- **One API, three families.** The same names and signatures on
+  [PIC16F87XA](pic16f87xa-hal/), [PIC18F2455](pic18fxx5x-hal/), and
+  [PIC16F193X](pic16f193x-hal/). Each family HAL implements the contract
+  over its own registers, every bit cited to Microchip's datasheet.
+  Code written against one builds against the others unchanged.
+- **No framework tax.** Plain C99, static storage, no RTOS, no dynamic
+  allocation, no C++. A module is a folder of `.c` files you can read.
+- **Logic proven before silicon.** Every module also builds and runs as
+  a host program, and CI cross-compiles everything for real parts and
+  runs it under MPLAB SIM, checking actual registers and UART output.
+- **Five minutes to a `.hex`.** Release bundles carry a reference MPLAB
+  X project and a Makefile fragment. Download, unpack, build, program.
 
-## Why
+## Quick start (5 minutes)
 
-The shape of that, concretely:
+### 1. Grab the bundle for your part
 
-- **Datasheet-faithful, not clever.** Every register, bit name, and
-  reset value is taken 1-to-1 from Microchip's own datasheets, cited in
-  the source and in each family's `MANUAL.md`.
-- **The host is a first-class target.** Every module builds and runs as
-  a host program under CMake/ctest, so logic gets exercised long before
-  it touches a programmer.
-- **One contract, several families.** `epic-common/` holds everything
-  architecture-blind; each family HAL implements the same names and
-  signatures over different registers, so higher-level modules are
-  written once and build against any of them unchanged.
-- **Zero framework tax.** No RTOS, no dynamic allocation, no C++. Plain
-  C99, cooperative scheduling, static storage, every module usable on
-  its own.
-- **Proven on real silicon, not just compiled.** CI runs three stages on
-  every push: host build and test, a real XC8 cross-compile of every
-  module against every supported part, and a real run under MPLAB SIM
-  (mdb, headless) that checks actual register and UART output.
+Download your family's bundle from
+[Releases](https://github.com/apojomovsky/epicurus/releases):
 
-## Supported devices
+| Bundle | Parts inside |
+|---|---|
+| `epicurus-pic16f87xa-v0.1.0.tar.gz` | 16F873A / 874A / 876A / 877A |
+| `epicurus-pic18fxx5x-v0.1.0.tar.gz` | 18F2455 / 2550 / 4455 / 4550 |
+| `epicurus-pic16f193x-v0.1.0.tar.gz` | 16F1933 / 1934 / 1936 / 1937 / 1938 / 1939 |
 
-| Family | Parts | HAL module | Notes |
-|---|---|---|---|
-| PIC16F87XA | 16F873A / 874A / 876A / 877A | [pic16f87xa-hal](pic16f87xa-hal/) | Full peripheral coverage. DFP ships with XC8. |
-| PIC18F2455 family | 18F2455 / 2550 / 4455 / 4550 | [pic18fxx5x-hal](pic18fxx5x-hal/) | Full peripheral coverage. Needs the PIC18Fxxxx DFP. |
-| PIC16F193X | 16F1933 / 1934 / 1936 / 1937 / 1938 / 1939 | [pic16f193x-hal](pic16f193x-hal/) | Full peripheral coverage: GPIO, Timer0/1/2/4/6, CCP1-5, EUSART, MSSP, ADC, Comparator, EEPROM, DAC, FVR, SR latch, CPS, LCD. Needs the PIC12-16F1xxx DFP. |
+### 2. Open the reference project in MPLAB X
 
-All three families share a single API contract (epic-common): same
-function names and signatures, family-specific register bodies. Family-agnostic
-modules (scheduler, math, serial, Modbus, ...) build against any family
-by selecting the HAL at build time; a few target one family only where
-the peripheral doesn't exist (USB, SD card), called out in the
-[Modules](#modules) table. Adding a new family follows the procedure in
-[docs/adding-a-device.md](docs/adding-a-device.md).
+Unpack the bundle, then open `examples/epicurus-demo.X` (File > Open
+Project). Pick your exact part under Project Properties, and Build. It
+produces a `.hex` you can program with MPLAB IPE or any PICkit.
 
-## Quick start
+<details>
+<summary>New to MPLAB X?</summary>
 
-### Host simulation
+You need MPLAB X IDE and the MPLAB XC8 compiler, both free from
+Microchip (the free XC8 tier is enough). The reference project is
+pre-wired: sources, include paths, and configuration words are already
+set. Selecting your part under Project Properties is the only manual
+step.
+</details>
 
-No hardware, no MPLAB tooling, just CMake 3.16+ and a C99 compiler:
+### 3. Or skip the IDE: a six-line Makefile
 
-```sh
-cmake -B build -S epic-taskmgr
-cmake --build build
-./build/example_multi_blink
-```
-
-```
-[t=  5] fast  #1
-[t= 10] fast  #2
-[t= 10] med   #1
-[t= 20] fast  #4
-[t= 20] med   #2
-[t= 20] slow  #1
-[t= 40] super  spawned blip
-[t= 40] fast  #8
-[t= 41] blip  #1
-[t= 60] slow  #3
-done: fast=12 med=6 slow=3 blips=1 (ticks=61, tasks=4)
-```
-
-Four blinks at distinct rates on RB0-RB3, plus a priority-0 supervisor
-that spawns a one-shot blip at runtime at t=40. Point the same task
-manager at the PIC18 family with `-DEPIC_FAMILY=PIC18` (see
-[epic-taskmgr/README.md](epic-taskmgr/README.md)).
-
-### Docker (no local installs)
-
-Don't want XC8/MPLAB X/CMake on your own machine? The root `Makefile`
-runs the whole workflow, host tests, real-target XC8 builds, the `mdb`
-verification gate, and a dev shell, inside one Docker image:
-
-```sh
-make check-vendor    # one-time: tells you which 2 files to grab from Microchip
-make image           # build the toolchain image locally
-make test            # every module's host-sim tests
-make shell           # interactive shell, repo mounted at /repo
-```
-
-See [Development](#development) for the full command reference and
-[docs/docker-dev-plan.md](docs/docker-dev-plan.md) for the design.
-
-### Real hardware
-
-A manifest-driven build driver, not per-module Makefiles: `epic-common/manifest/modules.toml` is the single source of truth for what
-each module compiles and which parts it supports.
-
-```sh
-export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F877A --run
-```
-
-Also 873A / 874A / 876A. Produces `build/16F877A-multi-blink.hex`,
-program with MPLAB X or any programmer. See
-[epic-taskmgr/README.md](epic-taskmgr/README.md) for wiring, the family
-`MANUAL.md` (e.g. [pic16f87xa-hal/MANUAL.md](pic16f87xa-hal/MANUAL.md))
-for peripheral bring-up, [epic-common/manifest/README.md](epic-common/manifest/README.md)
-for the manifest schema, and [docs/adding-a-device.md](docs/adding-a-device.md)
-for adding a new part or family.
-
-### Using Epicurus in your own project
-
-Grab the bundle for your family from
-[Releases](https://github.com/apojomovsky/epicurus/releases), unpack it,
-and point one variable at it:
+Just `xc8-cc` and `make`, no MPLAB X and no license:
 
 ```make
 EPICURUS_DIR := third_party/epicurus
@@ -157,152 +78,236 @@ include $(EPICURUS_DIR)/epicurus.mk
 
 SRCS := main.c $(EPICURUS_SRCS)
 CFLAGS += $(EPICURUS_CFLAGS)
+
+app.hex: $(SRCS)
+	xc8-cc $(CFLAGS) $^ -o $@ -ginhx32
 ```
 
-Dependencies resolve automatically, and asking for a module on a part it
-does not fit fails immediately with the reason rather than as a wall of
-XC8 linker errors. Each bundle carries its own `QUICKSTART.md`,
-`SUPPORT.md`, and `MPLABX.md`, plus a reference MPLAB X project under
-`examples/`.
+Run `make`, program the result. Dependencies resolve automatically
+(`modbus` pulls in `serial` and `tick`), and asking for a module on a
+part it does not fit fails immediately with the reason instead of a
+wall of XC8 linker errors. Each bundle's `SUPPORT.md` has the full
+per-part table.
 
-MPLAB X and the MPLAB extension for VS Code are supported too: open
-`examples/epicurus-demo.X`, or follow `MPLABX.md` to add Epicurus to an
-existing project.
+Adding Epicurus to an existing MPLAB X project instead? The bundle's
+`MPLABX.md` walks through it.
 
-## Modules
+## What the API feels like
 
-Every module below ships its own `README.md` (what/why), most also have
-`docs/ARCHITECTURE.md` and `docs/API.md`; the HALs additionally have a
-per-peripheral `MANUAL.md`. "Family-agnostic" means one implementation
-builds unchanged against multiple families; where a module targets only
-one family, that's called out.
+Four programs, each complete. The same source builds against any of the
+three families: swap the include path at build time, nothing else
+changes.
 
-**Core & HALs**
+### Blink a LED on a 1 ms timebase
 
-| Module | Description |
+```c
+#include <xc.h>
+#include "epic_tick.h"
+#include "peripherals/pic16f87xa_gpio.h"
+
+#pragma config FOSC = HS
+#pragma config WDTE = OFF
+#pragma config PWRTE = ON
+#pragma config BOREN = ON
+#pragma config LVP = OFF
+
+int main(void)
+{
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    epic_tick_init(FOSC_HZ);            /* FOSC_HZ comes from the build */
+
+    uint32_t last = epic_tick_get();
+    for (;;) {
+        if (epic_tick_get() - last >= 500u) {
+            last = epic_tick_get();
+            EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+        }
+    }
+}
+```
+
+`epic_tick_init` sets up a Timer2 auto-reload interrupt that keeps a
+millisecond counter; `epic_tick_get` reads it. This is the reference
+project's `main.c` in full, the smallest thing that proves your toolchain
+is wired up.
+
+### Echo bytes over UART
+
+```c
+#include <xc.h>
+#include "epic_serial.h"
+
+int main(void)
+{
+    epic_serial_init(FOSC_HZ, 115200u);
+
+    uint8_t buf[16];
+    for (;;) {
+        int n = epic_serial_read(buf, sizeof buf);
+        if (n > 0) {
+            epic_serial_write(buf, n);
+        }
+    }
+}
+```
+
+`epic_serial` is interrupt-driven with a ring buffer; it also retargets
+`printf` through the same pipe. Everything the code above calls is
+plain C functions, no IDE glue.
+
+### Run four tasks on a cooperative scheduler
+
+```c
+#include <xc.h>
+#include "epic_hal.h"
+#include "task_manager.h"
+
+static void toggle(void *arg)
+{
+    EPIC_GPIO_TogglePin(GPIOB, (uint16_t)(uintptr_t)arg);
+}
+
+int main(void)
+{
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0 | GPIO_PIN_1, GPIO_MODE_OUTPUT);
+    task_manager_init();
+
+    task_spawn(toggle, (void *)(uintptr_t)GPIO_PIN_0, 100u, 0u);
+    task_spawn(toggle, (void *)(uintptr_t)GPIO_PIN_1, 300u, 0u);
+
+    task_manager_attach_timer0(61u, TIMER0_PRESCALER_1_256); /* ~10 ms tick */
+    EPIC_IRQ_Restore(1);                                     /* arm IRQs    */
+    task_manager_run();                                      /* never returns */
+}
+```
+
+`task_manager` is a priority-ordered, race-free cooperative scheduler:
+periodic and one-shot tasks, `TASK_MGR_MAX_TASKS` fixed slots, no
+per-task stack. The 10-line core of
+[example_multi_blink](epic-taskmgr/examples/example_multi_blink.c).
+
+### Oversample and average an ADC channel
+
+```c
+#include <xc.h>
+#include "peripherals/pic16f87xa_adc.h"
+#include "epic_adcfilter.h"
+
+static uint16_t read_ch3(void *ctx)
+{
+    (void)ctx;
+    EPIC_ADC_SelectChannel(ADC_CHANNEL_AN3);
+    EPIC_ADC_Start();
+    while (EPIC_ADC_IsConversionInProgress()) { }
+    return EPIC_ADC_Read();
+}
+
+int main(void)
+{
+    ADC_HandleTypeDef adc = ADC_HANDLE_DEFAULT;
+    EPIC_ADC_Init(&adc);
+
+    static uint16_t buf[8];
+    epic_adcfilter_avg_t avg;
+    epic_adcfilter_avg_init(&avg, buf, 8u);
+
+    for (;;) {
+        uint16_t v = epic_adcfilter_avg_push(
+            &avg, epic_adcfilter_oversample(read_ch3, NULL, 1u));
+        (void)v;
+    }
+}
+```
+
+`epic_adcfilter` decimates the raw samples and keeps an O(1) moving
+average, both over a callback you provide. The HAL layer is just
+select, start, poll, read.
+
+## What you can build
+
+Modules are grouped by what they do for you. Everything below is
+family-agnostic unless noted; each ships its own README, and the HALs
+carry a datasheet-cited register reference.
+
+**Timing & control**
+
+| Module | What it does |
 |---|---|
-| [epic-common](epic-common/) | Shared layer every family reuses: status codes, host/target harness, CMake/Make fragments. |
-| [pic16f87xa-hal](pic16f87xa-hal/) | HAL for PIC16F873A/874A/876A/877A. Full peripheral coverage: GPIO, Timers, CCP, MSSP, ADC, Comparator, EEPROM, PSP, WDT. |
-| [pic18fxx5x-hal](pic18fxx5x-hal/) | HAL for PIC18F2455/2550/4455/4550. Full peripheral coverage: GPIO, Timer0-3, ECCP1/CCP2, MSSP, EUSART, Comparator, EEPROM, ADC, SPP. |
-| [pic16f193x-hal](pic16f193x-hal/) | HAL for PIC16F1933/1934/1936/1937/1938/1939 (Enhanced Mid-range). Full peripheral coverage: GPIO, Timer0/1/2/4/6, CCP1-5, EUSART, MSSP, ADC, Comparator, EEPROM, DAC, FVR, SR latch, CPS, LCD. |
-
-**Scheduling & control flow**
-
-| Module | Description |
-|---|---|
-| [epic-taskmgr](epic-taskmgr/) | Cooperative scheduler: periodic and one-shot tasks, priority-ordered, race-free. Family-agnostic. |
-| [epic-fsm](epic-fsm/) | Table-driven finite state machine, the whole machine is one `static const` transition table. No HAL dependency. |
-
-**Timing & math**
-
-| Module | Description |
-|---|---|
-| [epic-tick](epic-tick/) | 1 ms timebase (`HAL_GetTick`/`HAL_Delay` equivalent) on a Timer2 auto-reload ISR. Family-agnostic. |
-| [epic-math](epic-math/) | Fixed-point math: multiply, divide, BCD, sqrt, numerical diff/integration, RNGs. Host reference plus PIC16/PIC18 inline-asm backends behind one API. |
+| [epic-tick](epic-tick/) | 1 ms timebase on a Timer2 auto-reload ISR (`HAL_GetTick` equivalent). |
+| [epic-taskmgr](epic-taskmgr/) | Cooperative scheduler: periodic and one-shot tasks, priority-ordered, race-free. |
+| [epic-debounce](epic-debounce/) | Instantiable digital-input debouncer on the real timebase. |
+| [epic-encoder](epic-encoder/) | Interrupt-driven x4 quadrature decoder, instantiable. |
+| [epic-fsm](epic-fsm/) | Table-driven finite state machine, the whole machine is one `static const` table. |
+| [epic-pid](epic-pid/) | Fixed-point (Q8.8) PID with anti-windup, derivative-on-measurement, bumpless auto/manual. |
+| [epic-adcfilter](epic-adcfilter/) | ADC oversample-and-decimate plus an O(1) moving-average filter. |
 
 **Communication**
 
-| Module | Description |
+| Module | What it does |
 |---|---|
-| [epic-serial](epic-serial/) | Interrupt-driven ring-buffered UART + `printf` retarget. Family-agnostic. |
-| [epic-bus](epic-bus/) | I2C/SPI "MEM" register-access idiom on top of MSSP/SSP. Family-agnostic. |
-| [epic-modbus](epic-modbus/) | Modbus RTU slave: core function codes, T3.5 framing, CRC-16, optional RS-485 driver-enable. Built on `epic-serial` + `epic-tick`. |
-| [epic-console](epic-console/) | Line-based serial command dispatcher over `epic-serial`: tokenization, table-driven dispatch, echo/backspace editing. |
-| [epic-usb](epic-usb/) | USB CDC-ACM virtual serial port, wraps the vendored M-Stack USB device stack. PIC18Fxx5x-only (no USB peripheral on PIC16F87XA). |
+| [epic-serial](epic-serial/) | Interrupt-driven ring-buffered UART + `printf` retarget. |
+| [epic-swuart](epic-swuart/) | Bit-banged software UART on CCP capture/compare, two channels on PIC16F193X. |
+| [epic-bus](epic-bus/) | I2C/SPI register-access idiom on top of MSSP/SSP. |
+| [epic-modbus](epic-modbus/) | Modbus RTU slave: core function codes, T3.5 framing, CRC-16, RS-485 driver-enable. |
+| [epic-console](epic-console/) | Line-based serial command dispatcher over `epic-serial`. |
+| [epic-usb](epic-usb/) | USB CDC-ACM virtual serial port. PIC18Fxx5x only. |
 
 **Storage**
 
-| Module | Description |
+| Module | What it does |
 |---|---|
-| [epic-settings](epic-settings/) | EEPROM-backed settings blobs with CRC-16 validation and first-boot defaults. Family-agnostic. |
-| [epic-sdcard](epic-sdcard/) | SD/MMC-over-SPI block storage, wraps the vendored M-Stack storage driver. PIC18Fxx5x-only (RAM constraint). |
+| [epic-settings](epic-settings/) | EEPROM-backed settings blobs with CRC-16 validation and first-boot defaults. |
+| [epic-sdcard](epic-sdcard/) | SD/MMC over SPI block storage. PIC18Fxx5x only (RAM constraint). |
 
-**Signal processing & control**
+**Math**
 
-| Module | Description |
+| Module | What it does |
 |---|---|
-| [epic-adcfilter](epic-adcfilter/) | ADC oversample-and-decimate plus an O(1) moving-average filter. No HAL dependency. |
-| [epic-debounce](epic-debounce/) | Instantiable digital-input debouncer, poll-driven, built on `epic-tick`'s real timebase. No HAL dependency. |
-| [epic-pid](epic-pid/) | Fixed-point (Q8.8) single-loop PID with anti-windup, derivative-on-measurement, and bumpless auto/manual transfer. No HAL dependency. |
-| [epic-encoder](epic-encoder/) | Interrupt-driven x4 quadrature decoder, instantiable, built on the HAL's GPIO change-interrupt. No HAL family split. |
+| [epic-math](epic-math/) | Fixed-point math: multiply, divide, BCD, sqrt, numerical diff/integration, RNGs, with PIC16/PIC18 inline-asm backends behind one API. |
 
 **Peripherals**
 
-| Module | Description |
+| Module | What it does |
 |---|---|
-| [epic-lcd](epic-lcd/) | HD44780-compatible character LCD driver with configurable transport: 4-bit GPIO, 8-bit GPIO, or SPI via 74HC595. |
+| [epic-lcd](epic-lcd/) | HD44780-compatible character LCD: 4-bit GPIO, 8-bit GPIO, or SPI via 74HC595. |
 
-Note: the higher-level modules (taskmgr, tick, serial, ...) build
-against the two mature families (PIC16F87XA, PIC18F2455). Wiring them
-to PIC16F193X is a natural follow-up now that its own peripheral
-coverage is complete.
+The full catalog, including the three HALs and `epic-common`, lives in
+the table below. The higher-level modules build against the two mature
+families today; wiring them to PIC16F193X is in progress now that its
+peripheral coverage is complete.
+
+## Supported devices
+
+| Family | Parts | HAL | Peripheral coverage |
+|---|---|---|---|
+| PIC16F87XA | 16F873A / 874A / 876A / 877A | [pic16f87xa-hal](pic16f87xa-hal/) | GPIO, Timers 0-2, CCP, MSSP, EUSART, ADC, Comparator, EEPROM, PSP, WDT |
+| PIC18F2455 | 18F2455 / 2550 / 4455 / 4550 | [pic18fxx5x-hal](pic18fxx5x-hal/) | GPIO, Timers 0-3, ECCP1/CCP2, MSSP, EUSART, Comparator, EEPROM, ADC, SPP |
+| PIC16F193X | 16F1933 / 1934 / 1936 / 1937 / 1938 / 1939 | [pic16f193x-hal](pic16f193x-hal/) | GPIO, Timers 0/1/2/4/6, CCP1-5, EUSART, MSSP, ADC, Comparator, EEPROM, DAC, FVR, SR latch, CPS, LCD |
 
 ## Documentation
 
-- [epic-common/MANUAL.md](epic-common/MANUAL.md), family-agnostic
-  conventions, the harness, the handle pattern, the shared interrupt
-  model. Read this first.
-- Per-family `MANUAL.md` ([PIC16F87XA](pic16f87xa-hal/MANUAL.md),
+- [epic-common/MANUAL.md](epic-common/MANUAL.md): the shared conventions,
+  the handle pattern, the harness, the interrupt model. Read this first.
+- Per-family `MANUAL.md`:
+  [PIC16F87XA](pic16f87xa-hal/MANUAL.md),
   [PIC18Fxx5x](pic18fxx5x-hal/MANUAL.md),
-  [PIC16F193X](pic16f193x-hal/MANUAL.md)), datasheet-cited
-  per-peripheral register reference.
-- [docs/multi-family-plan.md](docs/multi-family-plan.md), the refactor
-  that extracted `epic-common/` and added the PIC18F2455 family behind a
-  fixed contract.
-- [docs/adding-a-device.md](docs/adding-a-device.md), the operational,
-  verification-gated guide for adding a new device variant or family
-  (used for PIC16F193X, see [docs/pic16f193x-plan.md](docs/pic16f193x-plan.md)).
-- [docs/ci-plan.md](docs/ci-plan.md), the CI design and its
-  phase-by-phase findings; [docs/docker-dev-plan.md](docs/docker-dev-plan.md),
-  the Docker-first local dev flow and the same toolchain image CI uses.
-- Datasheet references (not vendored in this repo) are listed under
-  [License](#license).
+  [PIC16F193X](pic16f193x-hal/MANUAL.md): datasheet-cited register
+  reference, one page per peripheral.
+- [docs/multi-family-plan.md](docs/multi-family-plan.md): how the shared
+  contract was extracted and the PIC18F2455 family added behind it.
 
-## Development
+## Contributing
 
-**Native.** `./scripts/bootstrap.sh` sets up a fresh clone: installs the
-host toolchain the CMake builds need and a pre-commit hook (trailing
-newline/whitespace, no-em-dash, `cppcheck` on staged `.c` files).
-`--check-only` reports what's missing without installing anything. See
-[scripts/README.md](scripts/README.md) for what the hook checks. Real
-targets additionally need MPLAB X IDE v6.x and MPLAB XC8 v3.x
-(`xc8-cc`), installed by hand (proprietary, license-gated); PIC18 also
-needs the PIC18Fxxxx DFP, PIC16F193X the PIC12-16F1xxx DFP (neither
-ships with XC8).
-
-**Docker**, avoids all of the above except two files only a human can
-fetch (Microchip's download pages block scripted access):
-
-```sh
-make check-vendor    # confirms the 2 required installer files are present
-                      # and tells you where to get them if not
-
-make image            # build the toolchain image locally (once; cached after)
-make test             # host-sim build + test, every module
-make test MODULE=epic-lcd   # ... or just one
-
-make xc8-build MODULE=epic-tick MCU=16F877A   # real-target build
-make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A  # the mdb gate
-
-make shell             # interactive shell, repo mounted at /repo
-```
-
-Maintainers with `write:packages` access to this repo's GHCR packages
-can publish an updated toolchain image with `make ci-image-push
-GHCR_OWNER=<owner>` (after `docker login ghcr.io`), the same private tag
-CI's workflows pull from; CI itself never builds this image. Full design
-and the "why" behind every piece: [docs/docker-dev-plan.md](docs/docker-dev-plan.md).
+Bug reports, datasheet-cited corrections, and new devices are welcome.
+The repo is agent-friendly and plan-first: non-trivial work starts with
+a design doc under `docs/superpowers/`, and everything is verified by
+the CI pipeline (host tests, real XC8 cross-compiles, MPLAB SIM runs).
+See [AGENTS.md](AGENTS.md) for the conventions and
+[DEVELOPMENT.md](DEVELOPMENT.md) for the toolchain and build workflow.
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
-
-The Microchip datasheets
-[DS39582B](https://ww1.microchip.com/downloads/en/DeviceDoc/39582b.pdf)
-(c) 2003 Microchip Technology Inc.,
-[DS39632E](https://ww1.microchip.com/downloads/en/DeviceDoc/39632e.pdf)
-(c) 2009 Microchip Technology Inc., and
-[DS41364B](https://ww1.microchip.com/downloads/en/DeviceDoc/41364B.pdf)
-(c) 2009 Microchip Technology Inc. are vendor documentation; register
-and bit names in the code follow them directly. They are not vendored in
-this repo, follow the links above to Microchip's own hosted copies.
+MIT, see [LICENSE](LICENSE). The Microchip datasheets and application
+notes this library is built from are Microchip's property and are not
+vendored in this repository; links to Microchip's own hosted copies are
+listed in each module's `MANUAL.md`.
