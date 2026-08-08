@@ -50,6 +50,19 @@ target_compile_definitions(test_swuart_tx PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=
 target_link_libraries(test_swuart_tx PRIVATE epic_swuart)
 add_test(NAME swuart_tx COMMAND test_swuart_tx)
 
+# test_swuart_tx pokes the TX state machine directly (swuart_test_*
+# accessors in epic_swuart.c) to drive compare events without waiting on
+# real Timer1/CCP hardware timing. That code is compiled out of
+# epic_swuart.c by default (see the EPIC_SWUART_TEST_HOOKS guard there),
+# so it must be opted into for the library object this test links
+# against. This adds the define to the epic_swuart *target*, which
+# means it also applies to every other test executable below that links
+# the same target/build of the library; none of them currently call the
+# hooks, so this is harmless, but if that changes, split epic_swuart
+# into a separate test-hooks-enabled library target instead of widening
+# this comment's claim.
+target_compile_definitions(epic_swuart PRIVATE EPIC_SWUART_TEST_HOOKS=1)
+
 add_executable(test_swuart_rx tests/test_swuart_rx.c)
 target_compile_definitions(test_swuart_rx PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
 target_link_libraries(test_swuart_rx PRIVATE epic_swuart)

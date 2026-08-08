@@ -109,14 +109,12 @@ static void tx_compare_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef t
 
 static void on_tx_event_a(void) { tx_compare_event(g_chan_a, SWUART_CCP_TX); }
 
-/* Test-only hooks (see test_swuart_tx.c): default-enabled, same guard
- * pattern the test file uses, so a CMake host-sim build gets them
- * without a separate compile-definition wire-up; a real-target build
- * that wants them compiled out can predefine EPIC_SWUART_TEST_HOOKS=0. */
-#ifndef EPIC_SWUART_TEST_HOOKS
-#define EPIC_SWUART_TEST_HOOKS 1
-#endif
-#if EPIC_SWUART_TEST_HOOKS
+/* Test-only hooks (see test_swuart_tx.c): default-disabled. Undefined
+ * unless a build explicitly opts in, so real-target builds (which never
+ * touch epic-swuart/CMakeLists.txt) never compile this in. Host-sim
+ * test executables that need it get EPIC_SWUART_TEST_HOOKS=1 from
+ * epic-swuart/CMakeLists.txt, scoped to just those targets. */
+#ifdef EPIC_SWUART_TEST_HOOKS
 uint8_t swuart_test_last_tx_mode(void) { return (uint8_t)EPIC_REG8(0x1DU); }
 uint16_t swuart_test_last_tx_compare(void) { return g_chan_a->tx_deadline; }
 void swuart_test_fire_tx_event(void) { on_tx_event_a(); }
@@ -154,6 +152,11 @@ EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
     g_cycles_per_bit = compute_cycles_per_bit(fosc_hz, baud);
 
     EPIC_GPIO_Init(tx_port, tx_pin, GPIO_MODE_OUTPUT);
+    /* Idle = mark (high). The TX CCP module starts in CCP_MODE_OFF and
+     * won't drive the pin until the first real bit's compare event
+     * fires, so without this the pin sits at whatever the latch last
+     * held, which can be low, i.e. a break condition on a real wire. */
+    EPIC_GPIO_WritePin(tx_port, tx_pin, GPIO_PIN_SET);
     EPIC_GPIO_Init(rx_port, rx_pin, GPIO_MODE_INPUT);
 
     s_timer1 = (TIMER1_HandleTypeDef)TIMER1_HANDLE_DEFAULT;
@@ -177,6 +180,10 @@ EPIC_StatusTypeDef EPIC_SWUART_DeInit(EPIC_SWUART_HandleTypeDef *h)
     if (!h || g_chan_a != h) return EPIC_INVALID;
     EPIC_CCP_DeInit(SWUART_CCP_RX);
     EPIC_CCP_DeInit(SWUART_CCP_TX);
+    /* EPIC_CCP_DeInit only zeroes CCPxCON; it doesn't touch the pin's
+     * latch. Force the TX line back to mark (idle) so it doesn't linger
+     * at whatever level the last bit left it, which can be low. */
+    EPIC_GPIO_WritePin(h->tx_port, h->tx_pin, GPIO_PIN_SET);
     EPIC_TIMER1_DeInit();
     g_chan_a = NULL;
     return EPIC_OK;
