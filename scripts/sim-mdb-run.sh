@@ -17,7 +17,7 @@
 # runner), or scripts/sim-test-local.sh (the host, before its `docker
 # run` into this same container).
 #
-# Usage: sim-mdb-run.sh <family> <mcu> <device> <module> [wait_ms] [mode] [extra_mdb]
+# Usage: sim-mdb-run.sh <family> <mcu> <device> <module> [wait_ms] [mode] [extra_mdb] [eeprom_writes]
 #   family    matrix label, only used to namespace temp files (e.g. pic16f87xa)
 #   mcu       manifest MCU value (e.g. 16F877A)
 #   device    mdb `device` command's part name (e.g. PIC16F877A)
@@ -36,11 +36,33 @@
 #   extra_mdb extra mdb commands (e.g. `print`s), inserted right before
 #             `quit`, for register-level debugging without hardcoding
 #             device-specific diagnostics into this generic script.
+#   eeprom_writes
+#             number of halt+complete EEPROM-write cycles to emit
+#             before the final run/wait/halt (default 0, i.e. off).
+#             MPLAB SIM never completes a CPU-executed data-EEPROM
+#             write (verified on PIC18F4550 and PIC16F877A): after the
+#             firmware sets EECON1<WR> the simulator holds WR set and
+#             never raises EEIF, so firmware that blocks on EEIF (e.g.
+#             epic-settings' byte-at-a-time save) stalls on every
+#             byte. mdb `write` commands do complete such a write, so
+#             each cycle here halts the target, clears WR, replays the
+#             EECON2 0x55/0xAA unlock, re-asserts WR (the simulator
+#             then completes the write from the firmware's own
+#             EEDATA/EEADR) and resumes. The gate's sim test documents
+#             the exact number of writes its scenario performs; keep
+#             this >= that count (extra cycles are harmless: the
+#             firmware has already finished and the spurious writes
+#             land after the checks).
 
 set -euo pipefail
 
 family="$1"; mcu="$2"; device="$3"; module="$4"
 wait_ms="${5:-2000}"; mode="${6:-uart}"; extra_mdb="${7:-}"
+eeprom_writes="${8:-0}"
+# PIC18 EECON1/EECON2 Access-Bank addresses (PIC18F4550); override for
+# other families if a future gate needs them.
+eeprom_econ1_addr="${EECON1_ADDR:-0xFA6}"
+eeprom_econ2_addr="${EECON2_ADDR:-0xFA7}"
 
 if [ "$mode" != "uart" ] && [ "$mode" != "gpio" ]; then
   echo "::error::mode must be 'uart' or 'gpio', got '$mode'" >&2
@@ -67,6 +89,24 @@ if [ ! -e "${hexes[0]}" ] || [ "${#hexes[@]}" -ne 1 ]; then
 fi
 hex="${hexes[0]}"
 
+# Each cycle: let the target run until it stalls on an EEPROM write,
+# halt, and complete the write through the debugger (see the
+# eeprom_writes argument's comment). Emitted before the final
+# run/wait/halt so a gate that blocks on EEIF gets every write done.
+eeprom_cycles=""
+i=0
+while [ "$i" -lt "$eeprom_writes" ]; do
+  eeprom_cycles="${eeprom_cycles}
+run
+wait 500
+halt
+write /r ${eeprom_econ1_addr} 0x04
+write /r ${eeprom_econ2_addr} 0x55
+write /r ${eeprom_econ2_addr} 0xAA
+write /r ${eeprom_econ1_addr} 0x06"
+  i=$((i + 1))
+done
+
 if [ "$mode" = "gpio" ]; then
   out="/tmp/${family}-gpio.txt"
   rm -f "$out"
@@ -75,6 +115,7 @@ if [ "$mode" = "gpio" ]; then
 device ${device}
 hwtool SIM
 program ${hex}
+${eeprom_cycles}
 run
 wait ${wait_ms}
 halt
@@ -93,6 +134,7 @@ set uart1io.output file
 set uart1io.outputfile ${out}
 hwtool SIM
 program ${hex}
+${eeprom_cycles}
 run
 wait ${wait_ms}
 halt

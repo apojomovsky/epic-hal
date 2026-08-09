@@ -1,8 +1,16 @@
 # Active validation hunt: exercise every pre-toolchain-era module under real XC8 + MPLAB SIM
 
-Status: **approved 2026-08-09. Phase 0 (audit) complete**; findings and
-probe checklist in `docs/toolchain-coverage.md`. Phase 1 (gates) in
-progress.
+Status: **approved 2026-08-09. Phases 0-3 complete**; findings in
+`docs/toolchain-coverage.md`. All 20 mdb gates PASS (100/100 real-target
+builds, 6/6 bundles), full host suite green. Bugs fixed: TXIE dispatch
+gates (PIC18/193X), the banked-SFR read/RMW misdirection class (13
+sites + bank-absolute macros + the PIE2 bank-select flaw), the
+selftest TXEN/drain bug, the EEPROM ReadByte host-only call (both
+families), epic-lcd's never-compiled includes and example signature.
+Simulator limits mapped (no RX injection, MSSP/EEPROM-write models,
+GIE persistence, layout budget). Remaining follow-ups recorded in
+docs/toolchain-coverage.md: the stringdir class-F conversion, the PIC16
+math __at pinning, usb/sdcard real-target entries.
 
 ## Problem
 

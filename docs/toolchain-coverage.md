@@ -19,23 +19,24 @@ Compile = real-target build in the CI matrix (manifest-driven).
 | epic-tick | yes | 87XA (4) + PIC18 4455/4550 | 16F877A + 18F4550 | reference gate pair |
 | epic-swuart | 6 tests | 87XA 876A/877A, PIC18 (4), 193X (6) | 16F877A | RX path not simulatable (no pin injection) |
 | epic-pic16f193x-firmware | no | 193X (6) | 16F1937 (gpio) | bare-HAL smoke |
-| epic-math | 8 tests | 87XA (4) + PIC18 4455/4550 | 16F877A smoke-sim + 18F4550 full replay | PIC18: PASS=62 FAIL=0 golden vectors; PIC16: smoke (layout-limited, see note) |
-| epic-serial | yes | 87XA 876A/877A, PIC18 4455/4550 | gate in progress | Disable/Restore race class + PIC18 TX path |
-| epic-taskmgr | **no** (examples only) | 87XA 876A/877A only | gate in progress | PIC18 excluded (stale rc1) |
-| epic-modbus | yes | PIC18 4455/4550 only | gate in progress | PIC16 excluded for RAM (rc2/rc3) |
-| epic-bus | yes | 87XA (4), PIC18 4455/4550 | gate in progress | PIC18 GPIO runtime-addr path exercised here |
-| epic-console | yes | **none (supported=empty)** | gate in progress (PIC18) | stale rc1 exclusion, re-enableable |
-| epic-settings | yes | **none (supported=empty)** | gate in progress (PIC18) | stale rc1 exclusion, re-enableable |
-| epic-adcfilter | yes | 87XA (4), PIC18 (4) | gate in progress | |
-| epic-debounce | yes | 87XA 876A/877A, PIC18 4455/4550 | gate in progress | |
-| epic-pid | yes | 87XA (4), PIC18 (4) | **16F877A PASS** (5693w) | pure logic, Q8.8 |
-| epic-encoder | yes | 87XA (4), PIC18 4455/4550 | gate in progress | 32-bit read under Disable/Restore |
-| epic-fsm | yes | all 3 families (14) | **16F877A PASS** (3116w) | |
-| epic-lcd | yes | **not in manifest** | gate in progress (manifest added) | never real-target built before |
-| epic-usb | yes | **not in manifest** | none | PIC18-only; USB not simulatable |
-| epic-sdcard | yes | **not in manifest** | none | PIC18-only; needs a block device |
+| epic-math | 8 tests | 87XA (4) + PIC18 4455/4550 | **16F877A smoke + 18F4550 full replay** | PIC18 PASS=62 FAIL=0 golden vectors; PIC16 smoke (layout-limited) |
+| epic-serial | 1 test | 87XA 876A/877A, PIC18 4455/4550 | **16F877A PASS** (4870w) | TX path + class-G paths under live ISR; RX not simulatable |
+| epic-taskmgr | 2 tests (added) | 87XA 876A/877A, PIC18 4455/4550 (re-enabled) | **18F4550 PASS** (7378B) | PIC16 Timer0-tick ISR storm + GIE persistence findings |
+| epic-modbus | 3 tests | PIC18 4455/4550 only | **18F4550 PASS** (16392B) | TX framing + CRC verified in uart1io capture |
+| epic-bus | 1 test | 87XA (4), PIC18 4455/4550 | **16F877A PASS** (7848w) | MSSP data path not modeled by MPLAB SIM |
+| epic-console | 2 tests | 87XA 876A/877A, PIC18 4455/4550 (re-enabled) | **18F4550 PASS** (12100B) | RX injection impossible (SCL stim crashes mdb) |
+| epic-settings | 1 test | PIC18 4550 (re-enabled) | **18F4550 PASS** (7321B) | needs eeprom_writes runner arg (sim never completes EEPROM writes) |
+| epic-adcfilter | 1 test | 87XA (4), PIC18 (4) | **16F877A PASS** (4215w) | |
+| epic-debounce | 2 tests | 87XA 876A/877A, PIC18 4455/4550 | **16F877A PASS** (4076w) | |
+| epic-pid | 9 tests | 87XA (4), PIC18 (4) | **18F4550 PASS** (8055B) | PIC16 gate moved (layout budget) |
+| epic-encoder | 11 tests | 87XA (4), PIC18 4455/4550 | **16F877A PASS** (5555w) | class-G race did not manifest |
+| epic-fsm | 1 test | all 3 families (14) | **16F877A PASS** (3116w) | |
+| epic-lcd | 1 test | 87XA 16F877A (manifest added) | **16F877A PASS** (5170w) | 3 compile bugs fixed; fptable + stack findings |
+| epic-usb | 2 tests | **not in manifest** | none | PIC18-only; USB not simulatable; host tests only |
+| epic-sdcard | 1 test | **not in manifest** | none | PIC18-only; needs a block device; host tests only |
 | pic16f87xa-hal | no | (pseudo-module) | **bank-probe PASS** (3082w) | permanent banked-SFR regression gate |
 | pic18fxx5x-hal | no | (pseudo-module) | **gpio-probe PASS** (6623B) | class-C runtime-address verification |
+| pic16f193x-hal | no | (firmware pseudo-module) | **16F1937 PASS** (gpio) | class-D route verified by existing gate |
 
 ## Audit findings (the bug inventory)
 
@@ -146,23 +147,86 @@ symbols. 193X: 6 symbols. PIC18: bank-agnostic, exempt.
 - `epic-lcd`, `epic-usb`, `epic-sdcard`: not in the manifest at all;
   host ctests run, but no real-target build ever happens.
 
-## Probe checklist (Phase 2)
+## Simulator and toolchain findings (2026-08-09, all evidence-backed)
+
+The gate campaign also mapped the limits of the verification vehicle itself.
+These are environment facts, not module bugs; gates are designed around them
+and each is documented at its source (the sim files' headers):
+
+- **No RX injection, period.** Firmware RCREG writes, RCIF writes, and mdb
+  `set RCREG`/`set PIR1` are all masked by MPLAB SIM 6.35; the documented
+  SCL `stim` + `packetin()` path fails to parse even the guide's minimal
+  testbench and crashes the simulator; bit-banging a 9600 waveform onto the
+  RX pin raises FERR without setting RCIF (the model's receive data path
+  consumes a stimulus buffer, not the pin). All gates are TX-side or
+  internal-state.
+- **The MSSP data path is not modeled.** SSPIF/BF never set; SEN/PEN latch
+  forever. SSPBUF captures written bytes (no WCOL). Bounded waits only.
+- **CPU-executed data-EEPROM writes never complete** on either family (WR
+  holds, EEIF never raises; the EECON2 write-only SFR never reaches the
+  sim's lock observer). mdb `write` commands do complete them: the
+  sim-mdb-run.sh `eeprom_writes` opt-in arg (default 0) emits
+  halt+complete cycles for gates whose firmware blocks on EEIF.
+- **TXIF never clears on TXREG write** under the sim, so TXREG readback is
+  unreliable; verify TX from the uart1io capture instead.
+- **Short tick periods starve the main loop** under the sim (ISR cost
+  exceeds the period; TMR0IF pending at every retfie, ISR storm). Tick
+  periods of ~1 ms and up behave.
+- **GIE can be left cleared** after ISR return under the sim (the
+  epic-tick Finding 10(a) class), observed on PIC16 Timer0-tick builds;
+  PIC18 gates are unaffected.
+- **PIC16F87XA sim builds have a layout budget**: the `__interrupt` body
+  must stay in flash page 0 (the vector's PCLATH-less goto) and the
+  hand-asm routines' internal gotos likewise; past ~4.2 K words the linker
+  scatters them and aborts with fixup-overflow 1356. Family-agnostic pure-
+  logic gates run on PIC18 instead (absolute calls, no constraint); the
+  epic-math PIC16 gate uses the minimal smoke (see the manifest comment).
+- **The lcd gpio4 transport's ops-function-pointer send** cannot be invoked
+  under XC8 v4.00/PIC16 (fptable ABI + bank-1 frame collision parks the
+  machine in bank 3); pin data paths need real hardware. The 8-level
+  hardware stack also constrains the driver send path with a live tick ISR.
+
+## Remaining follow-up (recorded, not done)
+
+- The stringdir `GetFlag`/`ClearFlag` PCLATH-clobber class (class F):
+  87XA (10 handlers) and 193X (4 handlers) still route ISR-path flag
+  handling through the table; converting to the direct-flag pattern is the
+  PR #9 follow-up hardening. No gate failure has exposed it, but it remains
+  the documented latent hazard.
+- `__at()` pinning of the PIC16 math asm routines below 0x800 would enable
+  a full golden-vector PIC16 replay (currently layout-limited to the smoke).
+- epic-usb and epic-sdcard real-target manifest entries (compile-only) are
+  the remaining coverage gap; their host tests run in CI.
+
+## Probe checklist (Phase 2), with resolutions
+
+The probes became permanent gates; each is resolved:
 
 P1. DeInit/read probe for the 5 class-A sites: known value through the
-     API, SFR readback under mdb.
-P2. Per-site probe for the class-B sites: same shape, plus
-     `EPIC_SSP_ReadByte` specifically (write known byte to SSPBUF,
-     read back, verify SSPSTAT/SSPBUF).
+     API, SFR readback under mdb. **Done** (sim_bank_probe.c): DeInit
+     writes SAFE, ReadPeriod fixed.
+P2. Per-site probe for the class-B sites, plus `EPIC_SSP_ReadByte`.
+     **Done** (sim_bank_probe.c): all class-B sites fixed.
 P3. PIC18 GPIO probe: `EPIC_GPIO_WritePin`/`ReadPin` on both ports,
-     register readback (the class-C route).
+     register readback (the class-C route). **Done** (sim_gpio_probe.c):
+     SAFE.
 P4. 193X GPIO probe: same for TRISx/LATx writes (class-D route).
-P5. PIC18 TX-path gate: the tick-sim PIC18 gate plus an
-     epic-serial-driven example; verify the every-ISR callback firing
-     (class E) and fix with the TXIE gate.
+     **Covered by the existing firmware-sim gate** (the harness drives
+     RA0 through the class-D route); no dedicated module added.
+P5. PIC18 TX-path gate (class E). **Done**: the TXIE-gate fix landed and
+     every PIC18 gate exercises it.
 P6. ISR-load probes per family (the tick methodology): INTCON/PIR/
      PCLATH at halts under a timer-driven load, exercising the class-F
      handlers; then convert handlers to the direct-flag pattern.
+     **Partial**: the serial/encoder/taskmgr gates run live-ISR loads
+     (tick survived, no tear). The class-F stringdir conversion remains
+     follow-up (see above).
 P7. GIE-race probes: for each class-G site, hammer the protected read
      under a live tick ISR and check for torn values and GIE state.
+     **Done** for epic-encoder (5000 hammer reads under a 1 ms tick:
+     no tear, tick survived); the other class-G sites are exercised by
+     their gates. The PIC16 GIE-persistence sim limitation is recorded
+     above.
 P8. epic-math: full golden-vector replay under mdb on PIC18; curated
-     subset on PIC16.
+     subset on PIC16. **Done**: PIC18 PASS=62 FAIL=0; PIC16 limited to
+     the smoke by the layout budget (follow-up: __at pinning).

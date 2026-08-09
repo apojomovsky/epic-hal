@@ -430,6 +430,33 @@ name    = "console-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
+# HARNESS=sim needs the family HAL for the harness USART (the module
+# defaults to needs_hal = true anyway; explicit for the same reason as
+# epic-fsm's and epic-pid's examples with a .sim variant).
+hal     = true
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# diagnostic build (tests/sim_console.c) that runs the real compiled
+# epic_console.c under MPLAB SIM on an 18F4550. MPLAB SIM cannot inject
+# UART RX data (firmware and mdb RCREG/RCIF writes are masked; see the
+# sim file header), so the gate is TX-side / framing / internal-state:
+# it verifies the EPIC_CONSOLE_INIT contract, that
+# epic_console_print_help emits exactly the documented "name - help"
+# CRLF framing through the real epic-serial TX ring and drains it
+# through the real TX ISR (paced per byte), that a zero-row table
+# prints nothing, and that an idle epic_console_poll is a no-op. The
+# RX-bound parser contracts (dispatch, unknown-command error path,
+# arguments) stay covered by the host tests. WDT = "OFF" for the same
+# reason as every other family's own sim variant: a diagnostic build
+# that terminates and reports does not need the watchdog running
+# unattended.
+[modules.epic-console.example.PIC18Fxx5x.sim]
+name        = "console-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+sources     = [
+  "tests/sim_console.c",
+]
+config      = { BOR = "OFF", FOSC = "HS", WDT = "OFF" }
 
 [modules.epic-debounce]
 dir        = "epic-debounce"
@@ -615,6 +642,64 @@ sources = [
   "mcu/target_sizecheck.c",
 ]
 
+# epic-lcd's first manifest slot: transport-agnostic HD44780 driver.
+# The module core (src/epic_lcd.c) is HAL-free, so needs_hal is false;
+# the example opts in (hal = true) because the GPIO 4-bit transport
+# (src/epic_lcd_gpio4.c) uses the family HAL's EPIC_GPIO_* and
+# epic-tick's ms delays (hence depends_on = epic-tick), and the sim
+# gate needs the family HAL for the harness USART. The module had no
+# real-target build before this entry, so PIC16F87XA/16F877A only.
+[modules.epic-lcd]
+dir        = "epic-lcd"
+sources    = [
+  "src/epic_lcd.c",
+]
+includes   = [
+  "include",
+]
+depends_on = [
+  "epic-tick",
+]
+needs_hal  = false
+
+[modules.epic-lcd.supported]
+PIC16F87XA = [
+  "16F877A",
+]
+
+[modules.epic-lcd.example.PIC16F87XA]
+name    = "lcd"
+sources = [
+  "examples/example_hd44780_hello.c",
+  "src/epic_lcd_gpio4.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# gate (tests/sim_lcd.c), distinct from the real-target hello example
+# above (an unbounded demo with no core/epic_harness.h dependency).
+# Runs the real compiled driver under MPLAB SIM through the real ops
+# interface, verifying the exact HD44780 byte stream (init preamble,
+# commands, data) and delay pattern the driver emits, plus the real
+# transport init's pin configuration (TRISB via EPIC_BANK1_READ8 and
+# the E/RS low state). The transport's send path cannot be driven
+# through the ops function pointer under XC8 v4.00 on PIC16 (fptable
+# ABI corrupts the callee's bank state and arguments; see the test
+# file's finding), so the send calls are counted by a recorder rather
+# than forwarded to the real gpio4_send. WDTE=OFF for the same reason
+# as every other family's own sim variant: a diagnostic build that
+# terminates and reports does not need the watchdog running
+# unattended.
+[modules.epic-lcd.example.PIC16F87XA.sim]
+name        = "lcd-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_lcd.c",
+  "src/epic_lcd_gpio4.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
 [modules.epic-math]
 dir        = "epic-math"
 sources    = [
@@ -743,7 +828,23 @@ name    = "modbus"
 sources = [
   "examples/example_modbus_target.c",
 ]
+hal     = true
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# diagnostic build (tests/sim_modbus.c) that runs the real compiled
+# epic_modbus.c under MPLAB SIM on an 18F4550. MPLAB SIM cannot inject
+# UART RX, so the gate drives a real FC03 request through the module's
+# RX ISR path (RCREG + RCIF pokes), captures the response bytes from
+# the real TX path, and cross-checks the frame and CRC against an
+# independent reference. WDT is off for the same reason every other
+# sim variant disables it: the gate needs the tick-based waits to be
+# the only timing authority in the image.
+[modules.epic-modbus.example.PIC18Fxx5x.sim]
+name        = "modbus-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+sources     = [ "tests/sim_modbus.c", ]
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-pid]
 dir        = "epic-pid"
@@ -835,7 +936,24 @@ name    = "serial"
 sources = [
   "examples/example_serial_target.c",
 ]
+hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# gate that runs the real compiled epic_serial.c under MPLAB SIM on a
+# 16F877A, exercising the audited class-G paths (Disable/Restore inside
+# the TX ISR callback and in the blocking write, docs/toolchain-
+# coverage.md) plus the TXIE-gated dispatch. PIC16F87XA/16F877A only.
+# WDTE=OFF for the same reason as every other sim variant: a diagnostic
+# build that terminates and reports does not need the watchdog running
+# unattended.
+[modules.epic-serial.example.PIC16F87XA.sim]
+name        = "serial-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_serial.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-serial.example.PIC18Fxx5x]
 name    = "serial"
@@ -986,14 +1104,16 @@ PIC16F87XA = [
   "16F876A",
   "16F877A",
 ]
+PIC18Fxx5x = [
+  "18F4455",
+  "18F4550",
+]
 
 [modules.epic-taskmgr.excluded]
 "16F873A" = "RAM: 54-byte task table does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
 "16F874A" = "RAM: 54-byte task table does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
 "18F2455" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
 "18F2550" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"18F4455" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"18F4550" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
 
 [modules.epic-taskmgr.example.PIC16F87XA]
 name    = "multi-blink"
@@ -1002,28 +1122,33 @@ sources = [
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
 
-# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
-# diagnostic distinct from the real-target example_multi_blink.c above
-# (an unbounded LED demo with no core/epic_harness.h dependency). This
-# module's first-ever real mdb gate coverage; PIC16F87XA/16F877A only
-# (the module's supported list for this family). WDTE=OFF for the same
-# reason as every other family's own sim variant: a diagnostic build
-# that terminates and reports does not need the watchdog running
-# unattended.
-[modules.epic-taskmgr.example.PIC16F87XA.sim]
-name        = "taskmgr-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
-sources     = [
-  "tests/sim_taskmgr.c",
-]
-config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-
 [modules.epic-taskmgr.example.PIC18Fxx5x]
 name    = "multi-blink"
 sources = [
   "examples/example_multi_blink.c",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# diagnostic distinct from the real-target example_multi_blink.c above
+# (an unbounded LED demo with no core/epic_harness.h dependency). This
+# module's first-ever real mdb gate coverage. Wired on PIC18Fxx5x
+# (18F4550), not PIC16F87XA: SIM's PIC16 leg has a hard layout budget
+# (interrupt-handler body must stay in flash page 0, see the epic-pid
+# 1356 finding) and the PIC16 Timer0-tick ISR path proved unusable
+# under SIM for this module (ISR-storm at short ticks, and a GIE bit
+# set on INTCON that never persisted at longer ticks); PIC18's absolute
+# calls sidestep both, and the epic-tick PIC18 sim gate already proves
+# PIC18 Timer interrupts work under SIM. WDT=OFF for the same reason as
+# every other family's own sim variant: a diagnostic build that
+# terminates and reports does not need the watchdog running unattended.
+[modules.epic-taskmgr.example.PIC18Fxx5x.sim]
+name        = "taskmgr-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+sources     = [
+  "tests/sim_taskmgr.c",
+]
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-tick]
 dir        = "epic-tick"
