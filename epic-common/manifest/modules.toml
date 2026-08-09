@@ -228,6 +228,45 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
+# pic18fxx5x-hal's own manifest slot, mirroring the 87XA and 193X
+# pseudo-modules: the family's real-target smoke (tests/example_blink.c)
+# and the HARNESS=sim GPIO probe gate. The probe
+# (tests/sim_gpio_probe.c) exercises the runtime-computed SFR address
+# path in pic18fxx5x_gpio.c (docs/toolchain-coverage.md class C, the
+# PIC18 Finding 3 shape) with known values and verifies through the
+# literal-token path, so a program-memory-table misdirection fails the
+# gate instead of corrupting silently.
+[modules.pic18fxx5x-hal]
+dir        = "pic18fxx5x-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.pic18fxx5x-hal.supported]
+PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
+  "18F4455",
+  "18F4550",
+]
+
+[modules.pic18fxx5x-hal.example.PIC18Fxx5x]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# HARNESS=sim: the GPIO probe. WDT=OFF like every other sim variant.
+[modules.pic18fxx5x-hal.example.PIC18Fxx5x.sim]
+name        = "gpio-probe"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+sources     = [
+  "tests/sim_gpio_probe.c",
+]
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
 [modules.epic-adcfilter]
 dir        = "epic-adcfilter"
 sources    = [
