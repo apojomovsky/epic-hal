@@ -101,9 +101,22 @@ image at all.
 - `make xc8-build MODULE=<name> MCU=<mcu>`: real-target build for one
   module/MCU pair inside the container; output lands in that module's
   `mcu/*/build/` on the host (bind-mounted).
-- `make mdb-test MODULE=<name> MCU=<mcu> DEVICE=<device> DFP=<pack> [WAIT_MS=<ms>]`:
+- `make mdb-test MODULE=<name> MCU=<mcu> DEVICE=<device> DFP=<pack> [WAIT_MS=<ms>] [MODE=uart|gpio] [EXTRA_MDB=<mdb commands>]`:
   runs `scripts/sim-mdb-run.sh` inside the container with those
-  arguments.
+  arguments. `MODE=gpio` for PIC16F193X (it reports via RA0, not UART);
+  `EXTRA_MDB` inserts extra `mdb` commands (register prints and the
+  like) before `quit`, e.g. `EXTRA_MDB=$'print INTCON\nprint PIR1'`.
+- `make target-ci`: one-command local replica of CI's `target` job.
+  Emits the real-target matrix, the fixed sim variants, and the
+  per-family bundles (host, via `scripts/ci-local-emit.py`), then runs
+  `scripts/ci-target-build.sh`, `scripts/ci-target-sim.sh`, and
+  `scripts/ci-target-bundle.sh` in the container, exactly the scripts
+  CI runs. Summaries land in `ci-summary-*.md` (gitignored). Use this
+  before merging anything that touches the HAL or the manifest.
+- `make exec CMD='...'`: escape hatch for one-off container work
+  (probes, clean rebuilds, custom mdb sessions) with the same
+  `--user`/passwd/`HOME` mount plumbing as every other target. The
+  `CMD` is handed to `bash -c`, so avoid double quotes inside it.
 - `make shell`: interactive shell in the container, repo bind-mounted at
   `/repo`, `$XC8_INSTALL_DIR`/`PATH` already set by the image.
 
