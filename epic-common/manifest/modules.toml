@@ -297,6 +297,26 @@ name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
+# HARNESS=sim needs the family HAL for the harness USART, so the
+# PIC16F87XA example (the only one with a .sim variant) opts in
+# despite the module being pure logic.
+hal     = true
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# diagnostic build (tests/sim_adcfilter.c) that runs the real compiled
+# epic_adcfilter.c under MPLAB SIM, feeding a scripted sample stream
+# through the oversampler and the moving-average filter and checking the
+# documented host-test values, step settling within the window, and the
+# reset path. WDTE=OFF for the same reason as every other family's own
+# sim variant: a diagnostic build that terminates and reports does not
+# need the watchdog running unattended.
+[modules.epic-adcfilter.example.PIC16F87XA.sim]
+name        = "adcfilter-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_adcfilter.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-adcfilter.example.PIC18Fxx5x]
 name    = "adcfilter-sizecheck"
@@ -335,7 +355,27 @@ name    = "bus"
 sources = [
   "examples/example_bus_target.c",
 ]
+hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# diagnostic build (tests/sim_bus.c) that runs the real compiled
+# epic_bus.c under MPLAB SIM on a 16F877A, exercising the master-side
+# path: real SSP config readback, real SSP register traffic with
+# bounded SSPIF polls (the default ops' own waits are unbounded), and
+# the MEM transaction logic through the documented ops seam (MPLAB SIM
+# has no slave device to inject on the I2C/SPI bus, same constraint as
+# epic-swuart's sim build). hal = true because the build links the
+# family HAL for the harness USART. WDTE=OFF for the same reason as
+# every other family's own sim variant: a diagnostic build that
+# terminates and reports does not need the watchdog running unattended.
+[modules.epic-bus.example.PIC16F87XA.sim]
+name        = "bus-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_bus.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-bus.example.PIC18Fxx5x]
 name    = "bus"
@@ -357,16 +397,27 @@ depends_on = [
 ]
 
 [modules.epic-console.supported]
+PIC16F87XA = [
+  "16F876A",
+  "16F877A",
+]
+PIC18Fxx5x = [
+  "18F4455",
+  "18F4550",
+]
 
 [modules.epic-console.excluded]
-"16F873A" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"16F874A" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"16F876A" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"16F877A" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"18F2455" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"18F2550" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"18F4455" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"18F4550" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
+# The old all-MCU exclusion ("link: irq dispatch needs every peripheral
+# handler", docs/mplabx-link-gaps-plan.md root cause 1) is stale: that
+# failure class cannot recur since the manifest links the family's full
+# hal_sources set for every HAL build (same doc's fix note). The smaller
+# parts stay excluded because the module pulls in epic-serial, which
+# does not fit there (root cause 2, same reason epic-serial and
+# epic-debounce exclude them).
+"16F873A" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"16F874A" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"18F2455" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"18F2550" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
 
 [modules.epic-console.example.PIC16F87XA]
 name    = "console-sizecheck"
@@ -473,6 +524,19 @@ sources = [
   "mcu/target_sizecheck.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim: the module's first real mdb gate (the class-G probe of
+# encoder_get_position's Disable/Restore read). WDTE=OFF for the same
+# reason as every other family's own sim variant: a diagnostic build
+# that terminates and reports does not need the watchdog running
+# unattended.
+[modules.epic-encoder.example.PIC16F87XA.sim]
+name        = "encoder-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_encoder.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-encoder.example.PIC18Fxx5x]
 name    = "encoder-sizecheck"
@@ -713,31 +777,32 @@ name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-# HARNESS=sim needs the family HAL for the harness USART, so the
-# PIC16F87XA example (the only one with a .sim variant) opts in
-# despite the module being pure logic.
-hal     = true
-
-# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
-# diagnostic build (tests/sim_pid.c) that runs the real compiled pid.c
-# under MPLAB SIM, driving a scripted step-then-settle trajectory and
-# checking bounded output, steady-state convergence, and that gain
-# changes take effect. WDTE=OFF for the same reason as every other
-# family's own sim variant: a diagnostic build that terminates and
-# reports does not need the watchdog running unattended.
-[modules.epic-pid.example.PIC16F87XA.sim]
-name        = "pid-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
-sources     = [
-  "tests/sim_pid.c",
-]
-config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-pid.example.PIC18Fxx5x]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
+# HARNESS=sim needs the family HAL for the harness USART. The gate runs
+# on PIC18 deliberately: pid.c is family-agnostic pure logic, and the
+# PIC16F87XA sim build exceeds XC8's flash-page-0 constraint for the
+# interrupt handler body (fixup-overflow 1356 at pic16_isr_vector.c:30
+# once the total passes ~4.2 K words; measured 2026-08-09). PIC18 has
+# absolute calls, so no such constraint.
+hal     = true
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# diagnostic build (tests/sim_pid.c) that runs the real compiled pid.c
+# under MPLAB SIM, driving a scripted step-then-settle trajectory and
+# checking steady-state convergence and that gain changes take effect.
+# WDT=OFF for the same reason as every other family's sim variant.
+[modules.epic-pid.example.PIC18Fxx5x.sim]
+name        = "pid-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+sources     = [
+  "tests/sim_pid.c",
+]
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-serial]
 dir        = "epic-serial"
@@ -790,6 +855,9 @@ includes   = [
 depends_on = []
 
 [modules.epic-settings.supported]
+PIC18Fxx5x = [
+  "18F4550",
+]
 
 [modules.epic-settings.excluded]
 "16F873A" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
@@ -799,7 +867,6 @@ depends_on = []
 "18F2455" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
 "18F2550" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
 "18F4455" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"18F4550" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
 
 [modules.epic-settings.example.PIC16F87XA]
 name    = "settings-sizecheck"
@@ -812,6 +879,23 @@ name    = "settings-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
+hal     = true
+
+# HARNESS=sim: the bounded EEPROM round-trip + corruption gate
+# (tests/sim_settings.c). The module's own real-target example was
+# excluded on every part since rc1 (stale mplabx Makefile-era
+# exclusion, docs/mplabx-link-gaps-plan.md root cause 1, which the
+# manifest's family-wide hal_sources no longer hits), so the gate runs
+# on the PIC18Fxx5x side with the PIC18 sim harness. WDT=OFF like every
+# other sim variant (a diagnostic build that terminates and reports
+# does not need the watchdog running unattended).
+[modules.epic-settings.example.PIC18Fxx5x.sim]
+name        = "settings-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+sources     = [
+  "tests/sim_settings.c",
+]
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-swuart]
 dir        = "epic-swuart"

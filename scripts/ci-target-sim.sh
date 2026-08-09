@@ -44,5 +44,7 @@ run_one pic16f87xa 16F877A PIC16F877A epic-swuart 60000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-math 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-math 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A pic16f87xa-hal 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 epic-pid 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A epic-fsm 5000 uart
 
 exit "$fail"
