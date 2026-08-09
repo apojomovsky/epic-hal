@@ -186,6 +186,48 @@ sources     = [
 ]
 config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "OFF", WRT = "OFF" }
 
+# pic16f87xa-hal's own manifest slot, mirroring the 193X firmware
+# pseudo-module: no application code, just the family's real-target
+# smoke (tests/example_blink.c) and the HARNESS=sim banked-SFR probe
+# gate. The probe (tests/sim_bank_probe.c) exercises every ungated
+# `pic_select_bank` + plain EPIC_REG8 site and every plain Bank-1 SFR
+# access from the Phase 0 audit (docs/toolchain-coverage.md classes A
+# and B) with known values and reads them back, so XC8 v4.00 bank
+# misdirection (Finding 9's mechanism) fails the gate instead of
+# corrupting silently.
+[modules.pic16f87xa-hal]
+dir        = "pic16f87xa-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.pic16f87xa-hal.supported]
+PIC16F87XA = [
+  "16F873A",
+  "16F874A",
+  "16F876A",
+  "16F877A",
+]
+
+[modules.pic16f87xa-hal.example.PIC16F87XA]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim: the banked-SFR probe. WDTE=OFF like every other sim
+# variant (a diagnostic build that terminates and reports does not need
+# the watchdog).
+[modules.pic16f87xa-hal.example.PIC16F87XA.sim]
+name        = "bank-probe"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_bank_probe.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
 [modules.epic-adcfilter]
 dir        = "epic-adcfilter"
 sources    = [
@@ -334,6 +376,23 @@ sources = [
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
 
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# debounce gate under MPLAB SIM. Feeds a scripted noisy level sequence
+# through the module's own debounce_read_fn callback (the sim drives a
+# synthetic level from epic_tick_get(), not a GPIO pin, so no MPLAB SIM
+# pin-injection limitation applies) and verifies one PRESSED and one
+# RELEASED, each committed only after the full debounce window. WDTE=OFF
+# for the same reason as every other family's sim variant: a diagnostic
+# build that terminates and reports does not need the watchdog running
+# unattended.
+[modules.epic-debounce.example.PIC16F87XA.sim]
+name        = "debounce-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_debounce.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
 [modules.epic-debounce.example.PIC18Fxx5x]
 name    = "debounce"
 sources = [
@@ -421,6 +480,25 @@ name    = "fsm-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
+hal     = true
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# 3-state FSM driven through a scripted event sequence over the real
+# API, distinct from the real-target sizecheck example above (a pure
+# footprint build, no core/epic_harness.h dependency). This module's
+# first real mdb gate; PIC16F87XA/16F877A only. hal = true because the
+# sim build links the family HAL for the harness USART (the module
+# itself is needs_hal = false; epicmanifest.py uses_hal() reads the
+# example's hal flag). WDTE=OFF for the same reason as every other
+# family's own sim variant: a diagnostic build that terminates and
+# reports does not need the watchdog running unattended.
+[modules.epic-fsm.example.PIC16F87XA.sim]
+name        = "fsm-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_fsm.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-fsm.example.PIC18Fxx5x]
 name    = "fsm-sizecheck"
@@ -596,6 +674,25 @@ name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
+# HARNESS=sim needs the family HAL for the harness USART, so the
+# PIC16F87XA example (the only one with a .sim variant) opts in
+# despite the module being pure logic.
+hal     = true
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# diagnostic build (tests/sim_pid.c) that runs the real compiled pid.c
+# under MPLAB SIM, driving a scripted step-then-settle trajectory and
+# checking bounded output, steady-state convergence, and that gain
+# changes take effect. WDTE=OFF for the same reason as every other
+# family's own sim variant: a diagnostic build that terminates and
+# reports does not need the watchdog running unattended.
+[modules.epic-pid.example.PIC16F87XA.sim]
+name        = "pid-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_pid.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-pid.example.PIC18Fxx5x]
 name    = "pid-sizecheck"
@@ -781,6 +878,22 @@ sources = [
   "examples/example_multi_blink.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# diagnostic distinct from the real-target example_multi_blink.c above
+# (an unbounded LED demo with no core/epic_harness.h dependency). This
+# module's first-ever real mdb gate coverage; PIC16F87XA/16F877A only
+# (the module's supported list for this family). WDTE=OFF for the same
+# reason as every other family's own sim variant: a diagnostic build
+# that terminates and reports does not need the watchdog running
+# unattended.
+[modules.epic-taskmgr.example.PIC16F87XA.sim]
+name        = "taskmgr-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_taskmgr.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-taskmgr.example.PIC18Fxx5x]
 name    = "multi-blink"

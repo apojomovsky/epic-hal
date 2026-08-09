@@ -28,13 +28,15 @@
 /* Address of a register as a uint8_t lvalue (read/write/RMW). */
 #define EPIC_REG8(addr)          (*(volatile uint8_t *)(uintptr_t)(addr))
 
-/* PIE1/PIE2 (Bank 1) enable/disable via inline asm, not a plain C RMW:
- * while Bank 1 is selected, XC8 v4.00 can misdirect an ordinary C local
- * assumed to live in Bank 0 (pic16f87xa-hal/docs/ARCHITECTURE.md,
- * Finding 1). Loads the operand into W before the bank switch, then
- * does the whole RMW as one `iorwf`/`andwf` against W and the SFR only;
- * lives here (not pic16_irq.c) because inline asm is XC8-only syntax,
- * and that file is shared with the host build. */
+/* PIE1 (Bank 1) / PIE2 (Bank 2) enable/disable via inline asm, not a
+ * plain C RMW: while a bank is selected, XC8 v4.00 can misdirect an
+ * ordinary C local assumed to live in Bank 0 (pic16f87xa-hal/docs/
+ * ARCHITECTURE.md, Finding 1). Loads the operand into W before the
+ * bank switch, then does the whole RMW as one `iorwf`/`andwf` against
+ * W and the SFR only; selects the target bank absolutely (both RP
+ * bits) and exits to Bank 0, the same discipline as the EPIC_BANK*_8
+ * macros below. Lives here (not pic16_irq.c) because inline asm is
+ * XC8-only syntax, and that file is shared with the host build. */
 
 /* File-scope symbol the asm above needs (inline asm can only address
  * file-scope symbols, see epic-math/docs/ARCHITECTURE.md's "Inline-asm
@@ -55,20 +57,29 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
     do {                                                                \
         epic_bank1_scratch = (uint8_t)(value);                         \
         asm("movf _epic_bank1_scratch,w");                             \
+        asm("bcf STATUS,6");                                           \
         asm("bsf STATUS,5");                                           \
         asm("movwf " #sfr_name);                                       \
         asm("bcf STATUS,5");                                           \
+        asm("bcf STATUS,6");                                           \
     } while (0)
 
 /* Read side of the same fix: bank in, read the SFR into W, bank out,
  * then hand the value to the caller through the same scratch byte.
  * Statement macro with an output parameter, matching
- * EPIC_BANK1_WRITE8's own shape. */
+ * EPIC_BANK1_WRITE8's own shape. Both macros select Bank 1 absolutely
+ * (clearing RP1 as well as setting RP0) and exit to Bank 0: an
+ * incoming RP1=1 state (observed after the sim harness init, see
+ * pic16f87xa-hal/tests/sim_bank_probe.c) would otherwise route the
+ * access to Bank 3 GPR instead of the SFR. Same discipline the
+ * EPIC_BANK2/3_* macros document below. */
 #define EPIC_BANK1_READ8(sfr_name, out_var)                             \
     do {                                                                \
+        asm("bcf STATUS,6");                                           \
         asm("bsf STATUS,5");                                           \
         asm("movf " #sfr_name ",w");                                   \
         asm("bcf STATUS,5");                                           \
+        asm("bcf STATUS,6");                                           \
         asm("movwf _epic_bank1_scratch");                              \
         (out_var) = epic_bank1_scratch;                                \
     } while (0)
@@ -147,14 +158,18 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
         epic_irq_pie_scratch = (uint8_t)(mask);                        \
         if (is_pir2) {                                                 \
             asm("movf _epic_irq_pie_scratch,w");                       \
-            asm("bsf STATUS,5");                                       \
+            asm("bsf STATUS,6");                                       \
+            asm("bcf STATUS,5");                                       \
             asm("iorwf PIE2,f");                                       \
             asm("bcf STATUS,5");                                       \
+            asm("bcf STATUS,6");                                       \
         } else {                                                       \
             asm("movf _epic_irq_pie_scratch,w");                       \
+            asm("bcf STATUS,6");                                       \
             asm("bsf STATUS,5");                                       \
             asm("iorwf PIE1,f");                                       \
             asm("bcf STATUS,5");                                       \
+            asm("bcf STATUS,6");                                       \
         }                                                              \
     } while (0)
 
@@ -163,14 +178,18 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
         epic_irq_pie_scratch = (uint8_t)~(mask);                       \
         if (is_pir2) {                                                 \
             asm("movf _epic_irq_pie_scratch,w");                       \
-            asm("bsf STATUS,5");                                       \
+            asm("bsf STATUS,6");                                       \
+            asm("bcf STATUS,5");                                       \
             asm("andwf PIE2,f");                                       \
             asm("bcf STATUS,5");                                       \
+            asm("bcf STATUS,6");                                       \
         } else {                                                       \
             asm("movf _epic_irq_pie_scratch,w");                       \
+            asm("bcf STATUS,6");                                       \
             asm("bsf STATUS,5");                                       \
             asm("andwf PIE1,f");                                       \
             asm("bcf STATUS,5");                                       \
+            asm("bcf STATUS,6");                                       \
         }                                                              \
     } while (0)
 

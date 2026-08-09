@@ -24,9 +24,21 @@ static const TIMER0_HandleTypeDef *g_t0_handle = NULL;
 /** Read-modify-write helper for OPTION_REG. */
 static void option_clr_set(uint8_t clr_mask, uint8_t set_mask)
 {
+#ifdef EPIC_BANK1_READ8
+    /* See target/pic16f87xa_platform.h: a plain EPIC_REG8 RMW on the
+     * Bank-1 OPTION_REG (0x81) silently misdirects the read to the
+     * Bank-0 alias (0x01, TMR0) under XC8 v4.00, corrupting the
+     * counter and writing garbage back to OPTION_REG. Probed and
+     * confirmed 2026-08-09 by pic16f87xa-hal/tests/sim_bank_probe.c. */
+    uint8_t opt = 0u;
+    EPIC_BANK1_READ8(OPTION_REG, opt);
+    opt = (uint8_t)((opt & (uint8_t)~clr_mask) | set_mask);
+    EPIC_BANK1_WRITE8(OPTION_REG, opt);
+#else
     uint8_t opt = EPIC_REG8(PIC_REG_OPTION);
     opt = (uint8_t)((opt & (uint8_t)~clr_mask) | set_mask);
     EPIC_REG8(PIC_REG_OPTION) = opt;
+#endif
 }
 
 EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
@@ -34,7 +46,7 @@ EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
     if (!h) return EPIC_INVALID;
 
     /* Stop the timer before reconfiguring. */
-    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
+    option_clr_set(PIC_OPTION_T0CS, 0u);
 
     /* Clear TMR0IF; configure TMR0IE if a callback is provided. */
     EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR0);
@@ -53,7 +65,7 @@ EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR0);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR0);
-    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
+    option_clr_set(PIC_OPTION_T0CS, 0u);
     EPIC_REG8(PIC_REG_TMR0) = 0x00U;
     return EPIC_OK;
 }

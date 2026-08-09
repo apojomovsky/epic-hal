@@ -67,7 +67,15 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     if (h->BaudHigh == USART_BRGH_HIGH) txsta |= PIC_TXSTA_BRGH;
     if (h->DataWidth == USART_DATA_9BITS) txsta |= PIC_TXSTA_TX9;
     if (h->TxCpltCallback) txsta |= PIC_TXSTA_TXEN;  /* TXEN implied if user has a callback. */
+#ifdef EPIC_BANK1_WRITE8
+    /* See target/pic16f87xa_platform.h: a plain EPIC_REG8 write to the
+     * Bank-1 TXSTA (0x98) silently misdirects under XC8 v4.00 (hits
+     * the Bank-0 alias 0x18, RCSTA). Probed and confirmed 2026-08-09
+     * by pic16f87xa-hal/tests/sim_bank_probe.c. */
+    EPIC_BANK1_WRITE8(TXSTA, txsta);
+#else
     EPIC_REG8(PIC_REG_TXSTA) = txsta;
+#endif
 
     /* Build RCSTA (Bank 0, address 0x18).
      *   SPEN bit 7, enable serial port
@@ -121,18 +129,44 @@ void EPIC_USART_Transmit(uint8_t data)
 
 uint8_t EPIC_USART_GetTX9D(void)
 {
+#ifdef EPIC_BANK1_READ8
+    uint8_t txsta = 0u;
+    EPIC_BANK1_READ8(TXSTA, txsta);
+    return (txsta & PIC_TXSTA_TX9D) ? 1U : 0U;
+#else
     return (EPIC_REG8(PIC_REG_TXSTA) & PIC_TXSTA_TX9D) ? 1U : 0U;
+#endif
 }
 
 void EPIC_USART_SetTX9D(uint8_t bit9)
 {
+#ifdef EPIC_BANK1_READ8
+    /* Plain EPIC_REG8 RMWs on the Bank-1 TXSTA silently misdirect to
+     * the Bank-0 alias (RCSTA) under XC8 v4.00; see the probe note in
+     * EPIC_USART_Init. */
+    uint8_t txsta = 0u;
+    EPIC_BANK1_READ8(TXSTA, txsta);
+    if (bit9) {
+        txsta |= PIC_TXSTA_TX9D;
+    } else {
+        txsta &= (uint8_t)~PIC_TXSTA_TX9D;
+    }
+    EPIC_BANK1_WRITE8(TXSTA, txsta);
+#else
     if (bit9) EPIC_BIT_SET(EPIC_REG8(PIC_REG_TXSTA), PIC_TXSTA_TX9D);
     else      EPIC_BIT_CLR(EPIC_REG8(PIC_REG_TXSTA), PIC_TXSTA_TX9D);
+#endif
 }
 
 uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void)
 {
+#ifdef EPIC_BANK1_READ8
+    uint8_t txsta = 0u;
+    EPIC_BANK1_READ8(TXSTA, txsta);
+    return (txsta & PIC_TXSTA_TRMT) ? 1U : 0U;
+#else
     return (EPIC_REG8(PIC_REG_TXSTA) & PIC_TXSTA_TRMT) ? 1U : 0U;
+#endif
 }
 
 uint8_t EPIC_USART_Receive(void)
