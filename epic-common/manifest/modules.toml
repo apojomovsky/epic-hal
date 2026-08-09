@@ -487,6 +487,27 @@ sources = [
 hal    = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
 
+# HARNESS=sim for PIC16: the minimal smoke16 (same source as the
+# real-target example). The golden-value replay for PIC16 is blocked by
+# an XC8 v4.00 layout constraint, measured 2026-08-09: the hand-asm
+# routines' internal `goto`s carry no PCLATH management, so the linker
+# must keep them in flash page 0; any build over ~2.5 K words (four
+# checked structures tried: helper-function, single-function-inline,
+# immediate-compare, and smoke16-shaped volatile parking) spills them
+# to page 1 and aborts with fixup-overflow 1356. The gate still proves
+# every asm body links and executes under the real toolchain without
+# hanging; value correctness on PIC16 asm is carried by the PIC18 gate
+# (full golden-vector replay) and the exhaustive host ctests. The
+# recorded follow-up is pinning the PIC16 math routines below 0x800
+# with __at(), the repo's established fix for this class.
+[modules.epic-math.example.PIC16F87XA.sim]
+name        = "math-selftest-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/target_smoke16.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
 [modules.epic-math.example.PIC18Fxx5x]
 name    = "math-selftest"
 sources = [
@@ -494,6 +515,13 @@ sources = [
 ]
 hal    = true
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# HARNESS=sim, mirroring the PIC16 section: same target_selftest.c,
+# only the harness source and the WDT config bit differ.
+[modules.epic-math.example.PIC18Fxx5x.sim]
+name        = "math-selftest-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-modbus]
 dir        = "epic-modbus"
