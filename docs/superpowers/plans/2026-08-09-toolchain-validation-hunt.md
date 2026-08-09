@@ -1,6 +1,8 @@
 # Active validation hunt: exercise every pre-toolchain-era module under real XC8 + MPLAB SIM
 
-Status: **draft 2026-08-09, pending approval**.
+Status: **approved 2026-08-09. Phase 0 (audit) complete**; findings and
+probe checklist in `docs/toolchain-coverage.md`. Phase 1 (gates) in
+progress.
 
 ## Problem
 
