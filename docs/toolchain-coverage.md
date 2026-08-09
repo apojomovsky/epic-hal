@@ -19,82 +19,80 @@ Compile = real-target build in the CI matrix (manifest-driven).
 | epic-tick | yes | 87XA (4) + PIC18 4455/4550 | 16F877A + 18F4550 | reference gate pair |
 | epic-swuart | 6 tests | 87XA 876A/877A, PIC18 (4), 193X (6) | 16F877A | RX path not simulatable (no pin injection) |
 | epic-pic16f193x-firmware | no | 193X (6) | 16F1937 (gpio) | bare-HAL smoke |
-| epic-math | 8 tests | 87XA (4) + PIC18 4455/4550 | none | PIC18 golden-vector selftest exists, never run under mdb; PIC16 smoke runs 1 call per group |
-| epic-serial | yes | 87XA 876A/877A, PIC18 4455/4550 | none | Disable/Restore race class + PIC18 TX path |
-| epic-taskmgr | **no** (examples only) | 87XA 876A/877A only | none | PIC18 excluded (stale rc1) |
-| epic-modbus | yes | PIC18 4455/4550 only | none | PIC16 excluded for RAM (rc2/rc3) |
-| epic-bus | yes | 87XA (4), PIC18 4455/4550 | none | PIC18 GPIO runtime-addr path exercised here |
-| epic-console | yes | **none (supported=empty)** | none | stale rc1 exclusion, re-enableable |
-| epic-settings | yes | **none (supported=empty)** | none | stale rc1 exclusion, re-enableable |
-| epic-adcfilter | yes | 87XA (4), PIC18 (4) | none | |
-| epic-debounce | yes | 87XA 876A/877A, PIC18 4455/4550 | none | |
-| epic-pid | yes | 87XA (4), PIC18 (4) | none | |
-| epic-encoder | yes | 87XA (4), PIC18 4455/4550 | none | 32-bit read under Disable/Restore |
-| epic-fsm | yes | all 3 families (14) | none | |
-| epic-lcd | yes | **not in manifest** | none | never real-target builds |
+| epic-math | 8 tests | 87XA (4) + PIC18 4455/4550 | 16F877A smoke-sim + 18F4550 full replay | PIC18: PASS=62 FAIL=0 golden vectors; PIC16: smoke (layout-limited, see note) |
+| epic-serial | yes | 87XA 876A/877A, PIC18 4455/4550 | gate in progress | Disable/Restore race class + PIC18 TX path |
+| epic-taskmgr | **no** (examples only) | 87XA 876A/877A only | gate in progress | PIC18 excluded (stale rc1) |
+| epic-modbus | yes | PIC18 4455/4550 only | gate in progress | PIC16 excluded for RAM (rc2/rc3) |
+| epic-bus | yes | 87XA (4), PIC18 4455/4550 | gate in progress | PIC18 GPIO runtime-addr path exercised here |
+| epic-console | yes | **none (supported=empty)** | gate in progress (PIC18) | stale rc1 exclusion, re-enableable |
+| epic-settings | yes | **none (supported=empty)** | gate in progress (PIC18) | stale rc1 exclusion, re-enableable |
+| epic-adcfilter | yes | 87XA (4), PIC18 (4) | gate in progress | |
+| epic-debounce | yes | 87XA 876A/877A, PIC18 4455/4550 | gate in progress | |
+| epic-pid | yes | 87XA (4), PIC18 (4) | **16F877A PASS** (5693w) | pure logic, Q8.8 |
+| epic-encoder | yes | 87XA (4), PIC18 4455/4550 | gate in progress | 32-bit read under Disable/Restore |
+| epic-fsm | yes | all 3 families (14) | **16F877A PASS** (3116w) | |
+| epic-lcd | yes | **not in manifest** | gate in progress (manifest added) | never real-target built before |
 | epic-usb | yes | **not in manifest** | none | PIC18-only; USB not simulatable |
 | epic-sdcard | yes | **not in manifest** | none | PIC18-only; needs a block device |
+| pic16f87xa-hal | no | (pseudo-module) | **bank-probe PASS** (3082w) | permanent banked-SFR regression gate |
+| pic18fxx5x-hal | no | (pseudo-module) | **gpio-probe PASS** (6623B) | class-C runtime-address verification |
 
 ## Audit findings (the bug inventory)
 
 ### A. Finding-9 class, 87XA: ungated `pic_select_bank` + plain `EPIC_REG8` (5 sites)
 
-The Finding 9 follow-up fixed 8 sites but missed the DeInit/read
-paths. Same mechanism (plain-C banked write after an unrecognized bank
-switch is misdirected by XC8's stale bank tracking). None of these run
-in any current gate. Probe: call DeInit/Read with known values, read
-the SFR back under mdb.
+The Finding 9 follow-up fixed 8 sites but left the DeInit/read paths.
+The banked-SFR probe (`pic16f87xa-hal/tests/sim_bank_probe.c`, permanent
+gate) settled each one under mdb, 2026-08-09:
 
-- `pic16f87xa_adc.c:44-47` `EPIC_ADC_DeInit` writes 0x9F (ADCON1)
-- `pic16f87xa_comp.c:46-50` `EPIC_COMP_DeInit` writes CMCON
-- `pic16f87xa_usart.c:103-107` `EPIC_USART_DeInit` writes SPBRG
-- `pic16f87xa_timer2.c:33-36` `EPIC_TIMER2_ReadPeriod` reads PR2
-- `pic16f87xa_vref.c:34-38` `EPIC_VREF_DeInit` writes CVRCON
+- The four DeInit write sites (ADC/COMP/USART/VREF) are **SAFE**:
+  `pic_select_bank` is now an asm macro, so the tracking reset makes
+  the following plain write's banksel correct.
+- `EPIC_TIMER2_ReadPeriod` (PR2 read) was **corrupted** (returned the
+  bank-0 alias SSPBUF value); **fixed** with `EPIC_BANK1_READ8`.
 
 ### B. SSP_ReadByte class, 87XA: plain Bank-1 SFR access with no bank select (~17 sites)
 
-`EPIC_SSP_ReadByte` (`pic16f87xa_ssp.c:134` SSPSTAT RMW, documented
-open item) plus the same shape elsewhere. Some of these provably work
-(Init-time TXSTA/TRISx writes are exercised by the passing tick/swuart
-gates, which fail if TX never enables), so this class needs per-site
-probe confirmation rather than blanket fixing.
+**Confirmed corrupted and fixed**, all sites, 2026-08-09 (the probe's
+register evidence: PR2 read hit SSPBUF, OPTION_REG RMW read TMR0 and
+wrote `count & ~0x20` back, TXSTA read hit RCSTA, SSP_ReadByte's
+BF-clear hit SSPCON and cleared CKP, PCON reads hit PIR1). Plain Bank-1
+*reads* and *RMWs* misdirect to their bank-0 aliases; plain *writes*
+land. Fixed sites: `EPIC_SSP_ReadByte` (BF-clear), `EPIC_SSP_
+IsBufferFull`, `EPIC_TIMER0_Init`/`DeInit` (OPTION_REG), `EPIC_USART_
+Init` (TXSTA write), `GetTX9D`/`SetTX9D`/`IsTxShiftRegisterEmpty`,
+`EPIC_GPIO_SetPullups` (OPTION_REG), the `wdt_sleep` PCON reads and
+clears. The GPIO TRISx runtime-address path is **SAFE** (FSR-indirect,
+probe-confirmed).
 
-- `pic16f87xa_ssp.c:134,140` SSPSTAT (documented unfixed)
-- `pic16f87xa_usart.c:70,102,124,129-130,135` TXSTA writes/RMW
-- `pic16f87xa_gpio.c:68,84,91,140,146` TRISx (Bank 1) runtime-addr RMW + OPTION_REG
-- `pic16f87xa_timer0.c:27-29,37,56` OPTION_REG RMW
-- `pic16f87xa_wdt_sleep.c:22,27,32,37` PCON reads/RMW
+### B2. Flaws found inside the Finding-9 fix macros themselves (fixed)
+
+- `EPIC_BANK1_*` and `EPIC_PIE_*` only managed RP0; an incoming
+  RP1=1 state (observed right after the sim harness init, STATUS=0x41)
+  routed their accesses to bank-3 GPR. Now bank-absolute (both RP
+  bits), matching the `EPIC_BANK2/3_*` discipline.
+- `EPIC_PIE_ENABLE/DISABLE_BIT`'s PIE2 branch never selected bank 2
+  (it RMW'd the bank-1 alias of PIE2, PCON). Now selects bank 2.
 
 ### C. PIC18 Finding-3 class: runtime-computed SFR addresses (gpio.c)
 
-`pic18fxx5x_gpio.c` dereferences runtime `tris_addr`/`lat_addr`/
-`port_addr` values (Init 72,84,99; DeInit 106-107; WritePin 116,119;
-TogglePin 126; ReadPin 135; WritePort 141; ReadPort 146). This is the
-exact shape `pic18_irq.c` and `pic18fxx5x_ccp.c` were fixed to avoid
-(runtime SFR address compiles to program-memory table access). The
-PIC18 tick gate never touches GPIO, so this path has never run under
-mdb. HIGH suspicion.
+**Verified SAFE** by the permanent `pic18fxx5x-hal` GPIO probe gate
+(18F4550, 11 checks): the runtime-address TRIS/LAT/PORT path does not
+exhibit the program-memory-table misdirection in this driver.
 
 ### D. 193X Finding-2 class: runtime-address writes to Bank-1/2/3 SFRs (gpio.c)
 
-`pic16f193x_gpio.c` routes runtime-address RMW writes to TRISx/LATx/
-ANSELx (banks 1/2/3) through FSR1:INDF1, the route Finding 2 proved
-silently addresses the wrong byte for PIE1/2/3. The file header claims
-a branch-before-touch pattern the code does not implement. The 193X
-gpio-mode gate passes, so either the harness drives RA0 through a
-literal-token path or the route works for these SFRs; needs a direct
-probe. HIGH suspicion.
+**Verified by the existing firmware-sim gate**: the 193X harness drives
+RA0 through `EPIC_GPIO_WritePin` (runtime `lat_addr` route) and the
+gpio-mode gate reads it back, so the LATA/TRISA class-D route works
+under XC8. TogglePin/WritePort/DeInit remain covered by usage.
 
 ### E. TXIF un-gated dispatch branches (Finding 10(b) class)
 
-- `pic18fxx5x-hal/src/core/pic18_irq_dispatch.c:75` LIVE: TXIF is
-  always set when TXREG is empty, so every ISR from any source fires
-  `USART_TX_IRQHandler`, whose GetFlag check passes, so the callback
-  (`epic_serial_on_tx` etc.) runs every ISR. This is Finding 10(b)
-  unfixed on PIC18. Fix: gate on PIE1 TXIE like the 87XA reference.
-- `pic16f193x-hal/src/core/pic16f193x_irq_dispatch.c:88` LATENT: same
-  branch, handler is an empty stub today, but the every-ISR call is
-  already wasted and any real handler inherits the defect.
+**Fixed** (PIC18 `pic18_irq_dispatch.c:75` live defect, 193X
+`pic16f193x_irq_dispatch.c:88` latent): both branches now gate on PIE1
+TXIE like the 87XA reference (`EPIC_PIE1_READ_TXIE` added to the 193X
+platform headers).
 
 ### F. Table-driven GetFlag/ClearFlag in ISR context (stringdir class)
 
