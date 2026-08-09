@@ -267,6 +267,37 @@ sources     = [
 ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
+[modules.epic-combo-uart-ssp]
+dir        = "epic-combo-uart-ssp"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+# C1 of the combination matrix
+# (docs/superpowers/plans/2026-08-09-combination-matrix.md): USART +
+# SSP + EEPROM interleaved under a fast TIMER2 ISR. The gate hunts the
+# banksel-less ISR read class (an interrupt inside a bank-macro window
+# makes the dispatch read PIE1 instead of PIR1 and the misdirected
+# clears disable the source).
+[modules.epic-combo-uart-ssp.supported]
+PIC16F87XA = [
+  "16F877A",
+]
+
+[modules.epic-combo-uart-ssp.example.PIC16F87XA]
+name    = "combo-uart-ssp"
+sources = [
+  "tests/combo_uart_ssp.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim, WDTE=OFF like every other sim variant.
+[modules.epic-combo-uart-ssp.example.PIC16F87XA.sim]
+name        = "combo-uart-ssp-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
 [modules.epic-adcfilter]
 dir        = "epic-adcfilter"
 sources    = [
