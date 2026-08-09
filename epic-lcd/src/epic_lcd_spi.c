@@ -8,7 +8,7 @@
  *          register-addressed device.
  */
 
-#include "epic_lcd.h"
+#include "epic_lcd_transport.h"
 #include "epic_hal.h"
 #include "epic_tick.h"
 

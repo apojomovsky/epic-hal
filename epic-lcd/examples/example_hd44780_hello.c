@@ -11,7 +11,7 @@
 
 int main(void)
 {
-    epic_tick_init();
+    epic_tick_init(FOSC_HZ);
 
     epic_lcd_ops_t ops;
     void *ops_ctx;

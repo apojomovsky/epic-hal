@@ -131,13 +131,33 @@ uint8_t EPIC_SSP_ReadByte(void)
 {
     /* Reading SSPBUF clears BF (Register 9-1). */
     uint8_t v = EPIC_REG8(PIC_REG_SSPBUF);
+#ifdef EPIC_BANK1_READ8
+    /* See target/pic16f87xa_platform.h: a plain EPIC_REG8 RMW on the
+     * Bank-1 SSPSTAT (0x94) silently misdirects to the Bank-0 alias
+     * (0x14, SSPCON) under XC8 v4.00, clearing SSPCON's CKP instead
+     * of BF. Probed and confirmed 2026-08-09 by
+     * pic16f87xa-hal/tests/sim_bank_probe.c. */
+    {
+        uint8_t stat = 0u;
+        EPIC_BANK1_READ8(SSPSTAT, stat);
+        stat &= (uint8_t)~PIC_SSPSTAT_BF;
+        EPIC_BANK1_WRITE8(SSPSTAT, stat);
+    }
+#else
     EPIC_REG8(0x94U) &= (uint8_t)~PIC_SSPSTAT_BF;
+#endif
     return v;
 }
 
 uint8_t EPIC_SSP_IsBufferFull(void)
 {
+#ifdef EPIC_BANK1_READ8
+    uint8_t stat = 0u;
+    EPIC_BANK1_READ8(SSPSTAT, stat);
+    return (stat & PIC_SSPSTAT_BF) ? 1U : 0U;
+#else
     return (EPIC_REG8(0x94U) & PIC_SSPSTAT_BF) ? 1U : 0U;
+#endif
 }
 
 uint8_t EPIC_SSP_HasWriteCollision(void)

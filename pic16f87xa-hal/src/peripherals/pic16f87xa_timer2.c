@@ -29,12 +29,22 @@ void EPIC_TIMER2_WriteCounter(uint8_t value)
 
 uint8_t EPIC_TIMER2_ReadPeriod(void)
 {
+#ifdef EPIC_BANK1_READ8
+    /* See target/pic16f87xa_platform.h: a plain bank-switch read here
+     * silently misdirects under XC8 v4.00 (reads the bank-0 alias
+     * instead of PR2). Probed and confirmed 2026-08-09 by
+     * pic16f87xa-hal/tests/sim_bank_probe.c. */
+    uint8_t pr2 = 0u;
+    EPIC_BANK1_READ8(PR2, pr2);
+    return pr2;
+#else
     /* PR2 lives in Bank 1 (DS39582B Register 7-2, address 0x92). */
     uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
     uint8_t pr2 = EPIC_REG8(PIC_REG_PR2);
     pic_select_bank(prev);
     return pr2;
+#endif
 }
 
 void EPIC_TIMER2_WritePeriod(uint8_t period)

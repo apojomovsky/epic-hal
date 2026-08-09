@@ -38,11 +38,18 @@ uint8_t EPIC_EEPROM_ReadByte(uint8_t addr)
     epic_sfr_write8(PIC_REG_EEADR,  addr);
     epic_sfr_write8(PIC_REG_EECON1, 0x00U);                /* clear, EEPGD=0. */
     epic_sfr_write8(PIC_REG_EECON1, PIC_EECON1_RD);       /* RD = 1. */
-    /* Sim backend: pull the byte from the simulated EEPROM array. */
+#if !defined(__XC8)
+    /* Host sim backend: pull the byte from the simulated EEPROM
+     * array (the flat-array sim has no RD strobe model). */
     extern uint8_t pic18_sim_eeprom_read(uint8_t addr);
     uint8_t data = pic18_sim_eeprom_read(addr);
     epic_sfr_write8(PIC_REG_EEDATA, data);
     return data;
+#else
+    /* Real target: the RD strobe loads the addressed byte into
+     * EEDATA (DS39632E §7.1). */
+    return epic_sfr_read8(PIC_REG_EEDATA);
+#endif
 }
 
 EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data)

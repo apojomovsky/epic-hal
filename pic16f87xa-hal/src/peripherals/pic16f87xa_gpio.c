@@ -137,6 +137,19 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
 
 void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 {
+#ifdef EPIC_BANK1_READ8
+    /* Plain EPIC_REG8 RMWs on the Bank-1 OPTION_REG silently misdirect
+     * to the Bank-0 alias (TMR0) under XC8 v4.00; see the probe note
+     * in pic16f87xa_timer0.c's option_clr_set. */
+    uint8_t opt = 0u;
+    EPIC_BANK1_READ8(OPTION_REG, opt);
+    if (pull == GPIO_PULLUP) {
+        opt &= (uint8_t)0x7F;    /* RBPU = 0 → enabled */
+    } else {
+        opt |= (uint8_t)0x80;    /* RBPU = 1 → disabled */
+    }
+    EPIC_BANK1_WRITE8(OPTION_REG, opt);
+#else
     uint8_t opt = EPIC_REG8(PIC_REG_OPTION);
     if (pull == GPIO_PULLUP) {
         EPIC_BIT_CLR(opt, (uint8_t)0x80);    /* RBPU = 0 → enabled */
@@ -144,6 +157,7 @@ void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
         EPIC_BIT_SET(opt, (uint8_t)0x80);    /* RBPU = 1 → disabled */
     }
     EPIC_REG8(PIC_REG_OPTION) = opt;
+#endif
 }
 
 /* ───────────────────────── PORTB change interrupt ───────────────────── */

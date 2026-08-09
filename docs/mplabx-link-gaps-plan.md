@@ -91,7 +91,9 @@ build fine)**:
 | `epic-modbus` | 16F873A, 16F874A | 18F2455, 18F2550 |
 | `epic-serial` | 16F873A, 16F874A | 18F2455, 18F2550 |
 | `epic-swuart` | 16F873A, 16F874A | (builds fine) |
-| `epic-taskmgr` | 16F873A, 16F874A | (excluded, root cause 1) |
+| `epic-taskmgr` | 16F873A, 16F874A | (18F4455/4550 re-enabled 2026-08-09; 18F2455/2550 RAM) |
+| `epic-console` | 16F873A, 16F874A | (18F4455/4550 re-enabled 2026-08-09; 18F2455/2550 RAM) |
+| `epic-settings` | (PIC16 excluded, RAM) | (18F4550 re-enabled 2026-08-09; others RAM) |
 | `epic-tick` | (builds fine) | 18F2455, 18F2550 |
 
 Reproduced locally (`epic-debounce`, `MCU=16F874A`):

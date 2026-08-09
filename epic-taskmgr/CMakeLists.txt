@@ -75,6 +75,15 @@ add_executable(example_timer_reset examples/example_timer_reset.c)
 target_compile_definitions(example_timer_reset PRIVATE -D${DEFAULT_DEVICE})
 target_link_libraries(example_timer_reset PRIVATE task_manager)
 
+# Both examples are bounded, self-reporting host-sim runs (the harness
+# contract: epic_harness_report exit code), so they register as ctests
+# the same way epic-tick's example_tick does. The multi-blink verifies
+# four tasks at four distinct rates; timer_reset verifies task_reset
+# re-arms a task from the full period.
+enable_testing()
+add_test(NAME example_multi_blink COMMAND example_multi_blink)
+add_test(NAME example_timer_reset COMMAND example_timer_reset)
+
 # Optional: the example for every device in the family. PORTB-only, so it
 # runs on all parts; the scheduler's TASK_MGR_MAX_TASKS default scales to
 # the family's RAM (6 slots on the 192 B PIC16 873A/874A, 8 on the 368 B

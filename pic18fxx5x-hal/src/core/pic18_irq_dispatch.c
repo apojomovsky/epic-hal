@@ -72,7 +72,16 @@ void epic_dispatch_all_irqs(void)
     if (pir1 & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
     if (pir1 & PIC_PIR1_CCP1IF) CCP1_IRQHandler();
     if (pir1 & PIC_PIR1_SSPIF)  SSP_IRQHandler();
-    if (pir1 & PIC_PIR1_TXIF)   USART_TX_IRQHandler();
+    /* TX is gated on TXIE, not just TXIF: TXIF is a read-only status
+     * bit that stays set whenever TXREG is empty, so an un-gated
+     * branch fires USART_TX_IRQHandler (and its callback) on every
+     * ISR from any source. Same hazard and same fix shape as
+     * PIC16F87XA (pic16_irq_dispatch.c). */
+    if (pir1 & PIC_PIR1_TXIF) {
+        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TXIE) {
+            USART_TX_IRQHandler();
+        }
+    }
     if (pir1 & PIC_PIR1_RCIF)   USART_RX_IRQHandler();
     if (pir1 & PIC_PIR1_ADIF)   ADC_IRQHandler();
 #if PIC18FXX5X_FAMILY_HAS_SPP

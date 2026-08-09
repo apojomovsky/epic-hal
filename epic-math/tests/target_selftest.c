@@ -14,7 +14,23 @@
 #include "golden_vectors.h"
 
 /* ─── USART output helpers (target has no stdio) ────────────────── */
-static void putc_(uint8_t c) { EPIC_USART_Transmit(c); }
+/* Non-null so EPIC_USART_Init arms TXEN (both families gate TXEN on
+ * the callback being present); transmission here is polled and GIE
+ * stays off, so this is never actually invoked. */
+static void s_tx_noop(void)
+{
+}
+/* Poll-drain before each byte: EPIC_USART_Transmit without waiting for
+ * the shift register overruns on real hardware (TXREG is one deep) and
+ * garble the report under MPLAB SIM. Same pattern as every family's
+ * sim harness. */
+static void putc_(uint8_t c)
+{
+    while (!EPIC_USART_IsTxShiftRegisterEmpty()) {
+        /* wait for the shift register to drain */
+    }
+    EPIC_USART_Transmit(c);
+}
 static void puts_(const char *s) { while (*s) putc_((uint8_t)*s++); }
 static void putx16(uint16_t v) {  /* 4-digit hex */
     static const char hex[] = "0123456789ABCDEF";
@@ -86,6 +102,10 @@ int main(void)
     /* USART @ 9600 8N1. Family branch: PIC18 has the 16-bit BRG + 5-arg
      * compute; PIC16 has the 8-bit BRG + 4-arg compute. */
     USART_HandleTypeDef h = USART_HANDLE_DEFAULT;
+    h.TxCpltCallback = s_tx_noop;   /* TXEN is only armed when the
+                                     * callback is non-null; never
+                                     * actually called (GIE stays off,
+                                     * transmission is polled). */
 #if defined(PIC18F2455) || defined(PIC18F2550) || defined(PIC18F4455) || defined(PIC18F4550)
     h.BaudGen = USART_BAUDGEN_16BIT;
     uint16_t sp = USART_ComputeSPBRG((uint32_t)FOSC_HZ, 9600u,

@@ -100,10 +100,19 @@ uint8_t EPIC_EEPROM_ReadByte(uint8_t addr)
     b2_write(0x0DU, addr);                  /* EEADR. */
     b3_write(0x18CU, 0x00U);                /* EECON1 = 0, set RD. */
     b3_write(0x18CU, 0x01U);                /* EECON1<RD>=1. */
-    /* Sim backend: pull the byte from the simulated EEPROM array. */
+#if !defined(__XC8)
+    /* Host sim backend: pull the byte from the simulated EEPROM
+     * array (the flat-array sim has no RD strobe model). */
     extern uint8_t pic16f87xa_sim_eeprom_read(uint8_t addr);
     b2_write(0x0CU, pic16f87xa_sim_eeprom_read(addr));
     return b2_read(0x0CU);
+#else
+    /* Real target: the RD strobe loads the addressed byte into
+     * EEDATA (DS39582B §5.5). Same latent host-only call fix as
+     * pic18fxx5x_eeprom.c (found by the epic-settings gate,
+     * 2026-08-09). */
+    return b2_read(0x0CU);
+#endif
 }
 
 EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data)

@@ -225,16 +225,31 @@ jobs:
                               check=True, stdout=subprocess.DEVNULL,
                           )
 
-          # Sim build scripts: sim-tests.yml's original fixed 3 entries,
-          # plus epic-swuart's own real mdb gate (Task 8 of
-          # docs/superpowers/plans/2026-08-07-swuart-v3.md). Must stay in
-          # sync by hand with scripts/ci-target-sim.sh's own hardcoded
-          # run_one list (see that file's header).
+          # Sim build scripts: one per sim gate in
+          # scripts/ci-target-sim.sh's run_one list (keep both in sync
+          # by hand; scripts/ci-local-emit.py's SIM_VARIANTS is the
+          # local-replica twin of this list).
           for module, mcu in [
               ("epic-tick", "16F877A"),
               ("epic-tick", "18F4550"),
               ("epic-pic16f193x-firmware", "16F1937"),
               ("epic-swuart", "16F877A"),
+              ("epic-math", "16F877A"),
+              ("epic-math", "18F4550"),
+              ("pic16f87xa-hal", "16F877A"),
+              ("pic18fxx5x-hal", "18F4550"),
+              ("epic-pid", "18F4550"),
+              ("epic-fsm", "16F877A"),
+              ("epic-adcfilter", "16F877A"),
+              ("epic-encoder", "16F877A"),
+              ("epic-bus", "16F877A"),
+              ("epic-serial", "16F877A"),
+              ("epic-lcd", "16F877A"),
+              ("epic-debounce", "16F877A"),
+              ("epic-console", "18F4550"),
+              ("epic-taskmgr", "18F4550"),
+              ("epic-settings", "18F4550"),
+              ("epic-modbus", "18F4550"),
           ]:
               fam = m.family_of(mcu)
               dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"

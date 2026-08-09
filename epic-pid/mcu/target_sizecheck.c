@@ -4,11 +4,16 @@
  *          XC8/PIC16/PIC18 silicon and reporting flash/RAM footprint; not
  *          a correctness test (see ../tests/test_pid.c for that).
  *
- * Measured footprint (XC8 -O2, full epic-math linked in, `pid_t` = 21 B):
+ * Measured footprint (XC8 -O2; PIC16 rows include the family HAL and
+ * full epic-math, since the PIC16F87XA example now opts into
+ * hal = true for its .sim gate's USART harness; PIC18Fxx5x row is
+ * still pure-logic, no HAL. `pid_t` = 21 B):
  *
  *     Target       Program space              Data space (full)
- *     PIC16F877A   1787 words (21.8% of 8 KW)  142 B (38.6% of 368 B)
- *     PIC16F873A   1789 words (43.7% of 4 KW)  140 B (72.9% of 192 B)
+ *     PIC16F877A   2555 words (31.2% of 8 KW)  180 B (48.9% of 368 B)
+ *     PIC16F876A   2530 words (30.9% of 8 KW)  179 B (48.6% of 368 B)
+ *     PIC16F873A   2200 words (53.7% of 4 KW)  179 B (93.2% of 192 B)
+ *     PIC16F874A   2220 words (54.2% of 4 KW)  180 B (93.8% of 192 B)
  *     PIC18F4550   1734 B    (5.3%  of 32 KB)  163 B (8.0%  of 2 KB)
  */
 

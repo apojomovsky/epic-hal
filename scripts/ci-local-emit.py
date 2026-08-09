@@ -33,6 +33,22 @@ SIM_VARIANTS = [
     ("epic-tick", "18F4550"),
     ("epic-pic16f193x-firmware", "16F1937"),
     ("epic-swuart", "16F877A"),
+    ("epic-math", "16F877A"),
+    ("epic-math", "18F4550"),
+    ("pic16f87xa-hal", "16F877A"),
+    ("pic18fxx5x-hal", "18F4550"),
+    ("epic-pid", "18F4550"),
+    ("epic-fsm", "16F877A"),
+    ("epic-adcfilter", "16F877A"),
+    ("epic-encoder", "16F877A"),
+    ("epic-bus", "16F877A"),
+    ("epic-serial", "16F877A"),
+    ("epic-lcd", "16F877A"),
+    ("epic-debounce", "16F877A"),
+    ("epic-console", "18F4550"),
+    ("epic-taskmgr", "18F4550"),
+    ("epic-settings", "18F4550"),
+    ("epic-modbus", "18F4550"),
 ]
 
 
