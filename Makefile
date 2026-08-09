@@ -30,7 +30,7 @@
 #                  DEVICE=<device> DFP=<pack> [WAIT_MS=<ms>]
 #   shell          interactive shell in the toolchain container
 
-.PHONY: check-vendor image ci-image-push test xc8-build mdb-test shell
+.PHONY: check-vendor image ci-image-push test xc8-build mdb-test target-ci exec shell
 
 # ─────────────────────────── image identity ─────────────────────────
 # Same tag-resolution formula CI and scripts/sim-test-local.sh already
@@ -165,16 +165,18 @@ xc8-build: image
 # python3.
 mdb-test: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
-		echo "usage: make mdb-test MODULE=<manifest module> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio]" >&2; \
+		echo "usage: make mdb-test MODULE=<manifest module> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio] [EXTRA_MDB=<mdb commands>]" >&2; \
 		echo "  MODE=uart (default) for PIC16F87XA/PIC18Fxxxx (UART capture);" >&2; \
 		echo "  MODE=gpio for PIC16F193X (RA0 register readback)." >&2; \
+		echo "  EXTRA_MDB: extra mdb commands inserted before quit, e.g." >&2; \
+		echo "    EXTRA_MDB=\$'print INTCON\\nprint PIR1' for register-level debugging." >&2; \
 		echo "  e.g. make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A" >&2; \
 		exit 1; \
 	fi
 	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --variant sim \
 	  --build-dir build-sim/$(MODULE) \
 	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
-	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(or $(WAIT_MS),2000) $(or $(MODE),uart)
+	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)"
 
 # ─────────────────────────── dev shell ───────────────────────────────
 # Same --user/passwd/HOME fix as DOCKER_RUN (see its comment); a plain
@@ -185,3 +187,36 @@ shell: image
 		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		-v $(HOME_MOUNT):$(HOME) \
 		-v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) bash
+
+# ─────────────────────── one-off container command ──────────────────
+# Escape hatch for any ad-hoc command inside the toolchain container,
+# with the same --user/passwd/HOME mount plumbing as every other target
+# (probes, clean rebuilds, custom mdb sessions). The CMD is handed to
+# `bash -c`, so avoid double quotes inside it:
+#   make exec CMD='bash scripts/sim-mdb-run.sh pic16f87xa 16F877A PIC16F877A epic-tick 60000 gpio'
+exec: image
+	@test -n "$(CMD)" || { echo "usage: make exec CMD='bash scripts/... args'" >&2; exit 1; }
+	$(DOCKER_RUN) bash -c "$(CMD)"
+
+# ──────────────────── local replica of CI's target job ──────────────
+# One command to reproduce the whole "target" CI job locally: emit the
+# real-target matrix, the sim variants, and the bundles (host, needs
+# python3), then run the build loop, the mdb gate loop, and the bundle
+# gate in the toolchain container, using the exact scripts CI runs, in
+# the same order. Summaries land in ci-summary-*.md (gitignored).
+# The bundle gate extracts to /isolated, which is container-internal and
+# not bind-mounted, so that one step runs as root exactly like CI (a
+# --user container cannot create /isolated); everything else uses
+# DOCKER_RUN so build artifacts stay host-owned.
+target-ci: image
+	python3 scripts/ci-local-emit.py
+	$(DOCKER_RUN) bash scripts/ci-target-build.sh matrix.txt ci-summary-build.md
+	$(DOCKER_RUN) bash scripts/ci-target-sim.sh ci-summary-sim.md
+	docker run --rm -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) \
+		bash scripts/ci-target-bundle.sh bundles ci-summary-bundle.md
+	@cat ci-summary-build.md ci-summary-sim.md ci-summary-bundle.md
+	$(DOCKER_RUN) bash scripts/ci-target-build.sh matrix.txt ci-summary-build.md
+	$(DOCKER_RUN) bash scripts/ci-target-sim.sh ci-summary-sim.md
+	docker run --rm -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) \
+		bash scripts/ci-target-bundle.sh bundles ci-summary-bundle.md
+	@cat ci-summary-build.md ci-summary-sim.md ci-summary-bundle.md
