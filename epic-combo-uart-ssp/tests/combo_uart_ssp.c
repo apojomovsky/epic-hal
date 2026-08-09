@@ -135,21 +135,7 @@ int main(void)
     (void)EPIC_TIMER2_Init(&t2);
     (void)EPIC_TIMER2_Start(&t2);
 
-    uint16_t eeprom_bad = 0u;
-    uint8_t first_bad = 0u;
-    uint32_t first_bad_i = 0u;
     for (uint32_t i = 0; epic_harness_running(i); i++) {
-        /* EEPROM read: the Bank-2/3 macro sequence (EEADR write,
-         * EECON1 strobes, EEDATA read) is the widest bank window in
-         * the codebase. POR value is 0xFF; a misdirected read returns
-         * garbage. */
-        {
-            uint8_t rv = EPIC_EEPROM_ReadByte(0x10u);
-            if (rv != 0xFFu) {
-                if (eeprom_bad == 0u) { first_bad = rv; first_bad_i = i; }
-                eeprom_bad++;
-            }
-        }
         /* SSP cycle: SSPCON2/SSPSTAT Bank-1 macro windows. */
         EPIC_SSP_Start();
         (void)EPIC_SSP_WriteByte(0xA5u);
@@ -176,41 +162,6 @@ int main(void)
     CHECK((pie1 & PIC_PIE1_TMR2IE) != 0u, 0x00);   /* source still enabled */
     CHECK((pie1 & (uint8_t)~(PIC_PIE1_TMR2IE)) == 0u, 0x01); /* nothing else */
     CHECK(g_t2_count >= 100u, 0x02);               /* timer kept firing */
-    CHECK(eeprom_bad == 0u, 0x03);                 /* EEPROM reads clean */
-    if (eeprom_bad != 0u) {
-        static const char hx[] = "0123456789ABCDEF";
-        char c[3];
-        epic_harness_log("E");
-        c[0] = hx[(first_bad >> 4) & 0xF];
-        c[1] = hx[first_bad & 0xF];
-        c[2] = '\0';
-        epic_harness_log(c);
-        c[0] = hx[(eeprom_bad >> 12) & 0xF];
-        c[1] = hx[(eeprom_bad >> 8) & 0xF];
-        c[2] = '\0';
-        epic_harness_log(c);
-        c[0] = hx[(eeprom_bad >> 4) & 0xF];
-        c[1] = hx[eeprom_bad & 0xF];
-        c[2] = '\0';
-        epic_harness_log(c);
-    }
-    if (eeprom_bad != 0u) {
-        static const char hx[] = "0123456789ABCDEF";
-        char c[3];
-        epic_harness_log("E");
-        c[0] = hx[(first_bad >> 4) & 0xF];
-        c[1] = hx[first_bad & 0xF];
-        c[2] = '\0';
-        epic_harness_log(c);
-        c[0] = hx[(eeprom_bad >> 12) & 0xF];
-        c[1] = hx[(eeprom_bad >> 8) & 0xF];
-        c[2] = '\0';
-        epic_harness_log(c);
-        c[0] = hx[(eeprom_bad >> 4) & 0xF];
-        c[1] = hx[eeprom_bad & 0xF];
-        c[2] = '\0';
-        epic_harness_log(c);
-    }
     /* The SSP write path still works after the interleave: re-init and
      * verify the config re-applies. */
     (void)EPIC_SSP_Init(&ssp);

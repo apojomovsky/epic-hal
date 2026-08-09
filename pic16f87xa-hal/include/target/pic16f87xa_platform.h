@@ -28,15 +28,20 @@
 /* Address of a register as a uint8_t lvalue (read/write/RMW). */
 #define EPIC_REG8(addr)          (*(volatile uint8_t *)(uintptr_t)(addr))
 
-/* PIE1 (Bank 1) / PIE2 (Bank 2) enable/disable via inline asm, not a
- * plain C RMW: while a bank is selected, XC8 v4.00 can misdirect an
- * ordinary C local assumed to live in Bank 0 (pic16f87xa-hal/docs/
- * ARCHITECTURE.md, Finding 1). Loads the operand into W before the
- * bank switch, then does the whole RMW as one `iorwf`/`andwf` against
- * W and the SFR only; selects the target bank absolutely (both RP
- * bits) and exits to Bank 0, the same discipline as the EPIC_BANK*_8
- * macros below. Lives here (not pic16_irq.c) because inline asm is
- * XC8-only syntax, and that file is shared with the host build. */
+/* PIE1 / PIE2 (both Bank 1: 0x8C / 0x8D, DS39582B Figure 2-3)
+ * enable/disable via inline asm, not a plain C RMW: while a bank is
+ * selected, XC8 v4.00 can misdirect an ordinary C local assumed to
+ * live in Bank 0 (pic16f87xa-hal/docs/ARCHITECTURE.md, Finding 1).
+ * Loads the operand into W before the bank switch, then does the
+ * whole RMW as one `iorwf`/`andwf` against W and the SFR only;
+ * selects Bank 1 absolutely (both RP bits) and exits to Bank 0, the
+ * same discipline as the EPIC_BANK*_8 macros below. Note: Bank 2's
+ * matching offset (0x10D) is EEADR, NOT PIE2, so a Bank-2 select here
+ * silently ORs the mask into EEADR and never arms the PIR2 source
+ * (introduced in commit 83e4486, exposed by the C11 combo gate:
+ * CCP2IE stayed 0 and EEADR read 1). Lives here (not pic16_irq.c)
+ * because inline asm is XC8-only syntax, and that file is shared with
+ * the host build. */
 
 /* File-scope symbol the asm above needs (inline asm can only address
  * file-scope symbols, see epic-math/docs/ARCHITECTURE.md's "Inline-asm
@@ -158,8 +163,8 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
         epic_irq_pie_scratch = (uint8_t)(mask);                        \
         if (is_pir2) {                                                 \
             asm("movf _epic_irq_pie_scratch,w");                       \
-            asm("bsf STATUS,6");                                       \
-            asm("bcf STATUS,5");                                       \
+            asm("bcf STATUS,6");                                       \
+            asm("bsf STATUS,5");                                       \
             asm("iorwf PIE2,f");                                       \
             asm("bcf STATUS,5");                                       \
             asm("bcf STATUS,6");                                       \
@@ -178,8 +183,8 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
         epic_irq_pie_scratch = (uint8_t)~(mask);                       \
         if (is_pir2) {                                                 \
             asm("movf _epic_irq_pie_scratch,w");                       \
-            asm("bsf STATUS,6");                                       \
-            asm("bcf STATUS,5");                                       \
+            asm("bcf STATUS,6");                                       \
+            asm("bsf STATUS,5");                                       \
             asm("andwf PIE2,f");                                       \
             asm("bcf STATUS,5");                                       \
             asm("bcf STATUS,6");                                       \

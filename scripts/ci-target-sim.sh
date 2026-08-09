@@ -56,9 +56,22 @@ run_one pic16f87xa 16F877A PIC16F877A epic-bus 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-serial 60000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-lcd 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-debounce 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A epic-combo-uart-ssp 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-console 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-taskmgr 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-settings 5000 uart 24
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-modbus 5000 uart
+
+run_one pic16f87xa 16F877A PIC16F877A epic-combo-multitimer 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A epic-combo-adc-uart 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A epic-combo-rb-uart 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A epic-combo-tick-serial 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A epic-combo-encoder-tick 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A epic-combo-lcd-tick 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A epic-combo-swuart-tick 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-eeprom-isr 5000 uart 32
+run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-tick-settings 5000 uart 32
+run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-taskmgr-serial 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-modbus-full 5000 uart
 
 exit "$fail"

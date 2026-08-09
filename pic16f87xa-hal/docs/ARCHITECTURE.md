@@ -556,10 +556,18 @@ uncovered beyond them:
    to Bank 0, the discipline the `EPIC_BANK2/3_*` macros already
    documented.
 
-3. **`EPIC_PIE_ENABLE/DISABLE_BIT`'s PIE2 branch never selected Bank
-   2** (it only set RP0, so it read-modify-wrote the Bank-1 alias of
-   PIE2, i.e. PCON). Now selects Bank 2 explicitly. No PIE2 source was
-   exercised before, so this never surfaced.
+3. **CORRECTION (2026-08-09, combination-matrix C11): the PIE2
+   branches were originally CORRECT and this document's earlier claim
+   ("PIE2 is in Bank 2", added in the 2026-08-09 bank-probe work) was
+   wrong.** PIE2 is at 0x8D, Bank 1 (DS39582B Reg 9-5), like PIE1. The
+   hunt-era change to select Bank 2 made every PIR2-source
+   Enable/DisableSrc (CCP2, BCL, EEPROM, CMP) read-modify-write
+   EEADR (0x10D, Bank 2) instead of PIE2 - a regression the
+   epic-combo-swuart-tick gate exposed (CCP2IE never set, the swuart
+   TX chain broke). Reverted to Bank 1 (keeping the bank-absolute
+   RP1-clear discipline: `bcf STATUS,6; bsf STATUS,5`). The bank-probe
+   gate's check numbering in the 2026-08-09 commit was unaffected
+   because no gate exercised a PIR2 source before C11.
 
 ## Finding 12: the ISR path must normalize its own bank (interrupt inside a bank-macro window)
 
