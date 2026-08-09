@@ -59,4 +59,12 @@ extern uint8_t pic16f193x_sim_sfr[0x1000];
 #define EPIC_PIE1_READ_TMR1IE(out_var) \
     ((out_var) = pic16f193x_sim_sfr[EPIC_PIE_REG_ADDR(0U)])
 
+/* Same shape as EPIC_PIE1_READ_TMR1IE, for the TXIE bit (PIE1 bit 4).
+ * Host twin of the target header's EPIC_PIE1_READ_TXIE. Used by the
+ * shared interrupt dispatcher to skip USART_TX_IRQHandler when TXIE
+ * is off (TXIF is a read-only status bit that stays set whenever
+ * TXREG is empty). */
+#define EPIC_PIE1_READ_TXIE(out_var) \
+    ((out_var) = pic16f193x_sim_sfr[EPIC_PIE_REG_ADDR(0U)])
+
 #endif /* PIC16F193X_PLATFORM_H */

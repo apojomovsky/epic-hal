@@ -129,4 +129,11 @@ extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
         (out_var) = epic_irq_pie_scratch;                                \
     } while (0)
 
+/* Same shape as EPIC_PIE1_READ_TMR1IE, for the TXIE bit (PIE1 bit 4,
+ * Bank 1). Used by the shared interrupt dispatcher to skip
+ * USART_TX_IRQHandler when TXIE is disabled: TXIF is a read-only
+ * status bit that stays set whenever TXREG is empty, so an un-gated
+ * TXIF branch fires the TX handler on every ISR from any source. */
+#define EPIC_PIE1_READ_TXIE(out_var) EPIC_PIE1_READ_TMR1IE(out_var)
+
 #endif /* PIC16F193X_PLATFORM_H */
