@@ -530,3 +530,33 @@ reachable from `epic-tick`'s ISR (the TX branch is gated and the TMR2
 handler's table lookups co-locate in current layouts); converting the
 remaining handlers to the CCP1/CCP2 direct-flag pattern is tracked as
 follow-up hardening, not required for the gate.
+
+## Finding 11: plain Bank-1 reads and RMWs misdirect; the Finding-9 macro family itself was only RP0-safe (fixed)
+
+**Confirmed and fixed, 2026-08-09**, by the permanent banked-SFR probe
+gate (`tests/sim_bank_probe.c`, pic16f87xa-hal pseudo-module). Finding 9
+fixed the bank-switch WRITE sites; this finding covers what the probe
+uncovered beyond them:
+
+1. **Plain Bank-1 READS and RMWs (no bank management) misdirect to
+   their Bank-0 aliases; plain writes land.** Register evidence under
+   mdb: `EPIC_TIMER2_ReadPeriod`'s `pic_select_bank(1)` + plain
+   `EPIC_REG8(PR2)` read returned the Bank-0 alias (SSPBUF) value;
+   `EPIC_TIMER0_Init`'s OPTION_REG RMW read TMR0 and wrote
+   `count & ~0x20` (0xDF) back to OPTION_REG; `EPIC_SSP_ReadByte`'s
+   SSPSTAT BF-clear RMW hit SSPCON and cleared CKP; TXSTA reads hit
+   RCSTA; PCON reads hit PIR1. All fixed with the `EPIC_BANK1_READ8/
+   WRITE8` pattern (guarded `#ifdef` so host sim keeps the plain path).
+
+2. **The Finding-9 macro family managed only RP0 (STATUS,5).** An
+   incoming RP1=1 state (observed right after the sim harness init,
+   STATUS=0x41, from XC8's bank tracking around the asm blocks) routed
+   `EPIC_BANK1_*`/`EPIC_PIE_*` accesses to Bank-3 GPR instead of the
+   SFR. All now select their bank absolutely (both RP bits) and exit
+   to Bank 0, the discipline the `EPIC_BANK2/3_*` macros already
+   documented.
+
+3. **`EPIC_PIE_ENABLE/DISABLE_BIT`'s PIE2 branch never selected Bank
+   2** (it only set RP0, so it read-modify-wrote the Bank-1 alias of
+   PIE2, i.e. PCON). Now selects Bank 2 explicitly. No PIE2 source was
+   exercised before, so this never surfaced.
