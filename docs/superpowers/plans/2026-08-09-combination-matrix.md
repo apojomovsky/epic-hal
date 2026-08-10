@@ -5,7 +5,9 @@ Status: **complete 2026-08-09**. All 12 combo gates land and PASS
 fixed: the PIE2 bank regression (C11) and the un-gated EEIF dispatch
 branch (C7). Simulator limits mapped (inert 16F877A EEPROM, TMR0IF,
 the wedge classes). Follow-ups recorded in docs/toolchain-coverage.md:
-the swuart/CCP 8-bit-handle-pointer hardening and the PIC16 math pin.
+the swuart/CCP 8-bit-handle-pointer hardening (landed 2026-08-10: the
+CCP driver stores driver-owned callbacks, so the C11 gate no longer
+pins its handle) and the PIC16 math pin.
 
 ## Problem
 
