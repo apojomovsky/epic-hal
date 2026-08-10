@@ -20,11 +20,21 @@
 # is the flake-hardening harness (quality task 10): a flake-hunt is
 # `REPEAT=5 bash scripts/ci-target-sim.sh`, and the workflow_dispatch
 # CI job drives the same command without slowing the PR target job.
+#
+# FAMILY=<pic16f87xa|pic18fxx5x|pic16f193x> runs only that family's
+# gates (the sharded CI jobs); unset runs everything.
+#
+# PARALLEL=N (default 1) runs N gates concurrently. The runner has 2
+# cores and each mdb session is single-threaded; sim-mdb-run.sh's temp
+# files are PID-suffixed so concurrent same-family gates do not
+# collide.
 
 set -uo pipefail
 
 summary="${1:-ci-summary-sim.md}"
 repeat="${REPEAT:-1}"
+family_filter="${FAMILY:-}"
+parallel="${PARALLEL:-1}"
 
 fail=0
 {
@@ -34,6 +44,12 @@ fail=0
 
 run_one() {
   family="$1"; mcu="$2"; device="$3"; module="$4"; wait_ms="$5"; mode="$6"; eeprom_writes="${7:-}"
+  # The manifest family names (PIC16F87XA etc.) are uppercase; the
+  # run_one labels below are lowercase, so compare case-insensitively.
+  [ -z "$family_filter" ] \
+    || [ "$(printf '%s' "$family" | tr 'A-Z' 'a-z')" \
+         = "$(printf '%s' "$family_filter" | tr 'A-Z' 'a-z')" ] \
+    || return 0
   # Args 7 (extra_mdb) and 8 (eeprom_writes) of sim-mdb-run.sh: no gate
   # here uses extra_mdb, so it stays empty and the 7th run_one arg maps
   # to the 8th runner arg (eeprom_writes), which epic-settings needs.
@@ -51,10 +67,12 @@ run_one() {
   else
     echo "FAIL: ${family} ${mcu} ${module} (${pass}/${repeat} runs passed)"
     echo "| ${family} | ${mcu} | ${module} | FAIL (${pass}/${repeat}) |" >> "$summary"
-    fail=1
+    return 1
   fi
+  return 0
 }
 
+if [ "$parallel" -le 1 ]; then
 run_one pic16f87xa 16F877A PIC16F877A epic-tick 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-tick 5000 uart
 run_one pic16f193x 16F1937 PIC16F1937 epic-pic16f193x-firmware 60000 gpio
@@ -89,5 +107,18 @@ run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-eeprom-isr 5000 uart 32
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-tick-settings 5000 uart 32
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-taskmgr-serial 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-modbus-full 5000 uart
+fi
+
+if [ "$parallel" -gt 1 ]; then
+  # The run_one calls above are the single spec list; extract and
+  # dispatch them concurrently (run_one applies the FAMILY filter).
+  export -f run_one
+  export summary repeat family_filter
+  specs="$(sed -n 's/^[[:space:]]*run_one //p' "$0")"
+  if ! printf '%s\n' "$specs" \
+       | xargs -P"$parallel" -L1 bash -c 'run_one "$@"' _; then
+    fail=1
+  fi
+fi
 
 exit "$fail"

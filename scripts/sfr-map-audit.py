@@ -201,8 +201,20 @@ SKIP_REGS = {"TMR0L"}
 
 
 def main() -> int:
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
+                                         "PIC16F193X"), default=None,
+                    help="only this manifest family (the sharded CI jobs)")
+    args = ap.parse_args()
+    hal_label = {"PIC16F87XA": "pic16f87xa-hal",
+                 "PIC18Fxx5x": "pic18fxx5x-hal",
+                 "PIC16F193X": "pic16f193x-hal"}[args.family] \
+        if args.family else None
     bad = 0
     for family, (sfr_path, mcus) in FAMILIES.items():
+        if hal_label is not None and family != hal_label:
+            continue
         hal_regs, hal_bits = parse_hal(sfr_path)
         for mcu, pack, header in mcus:
             dfp_regs, dfp_bits = parse_dfp(read_dfp_header(pack, header))
