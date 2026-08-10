@@ -165,6 +165,7 @@ is byte-identical across a rebuild.
    inject RX; the only real-toolchain RX coverage is firmware talking
    to a host through the actual UART (or the USB CDC path). Largest
    uncovered surface.
+   Status: harness landed (2026-08-11); silicon leg pending (task 1).
 9. **Pin or verify the 20 unpinned IRQ-shared statics** (the audit's
    RISK set in docs/toolchain-coverage.md) - the multi-byte struct
    copies are the scatter-sensitive ones.
