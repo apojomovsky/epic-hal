@@ -173,8 +173,10 @@ is byte-identical across a rebuild.
    is worse than scatter: XC8 bakes a constant IRP select into 87XA
    ISR pointer derefs and the Timer0 and USART ISRs bake OPPOSITE
    windows, so the unpinned storage passed gates only by scatter luck.
-   g_t0_storage (bank 2) and s_usart_handle (bank 1) are now
-   EPIC_PLACE-pinned into their ISR's window; the 193X statics and the
+   g_t0_storage (bank 3) and s_usart_handle (bank 1) are now
+   EPIC_PLACE-pinned into their ISR's window; the taskmgr TCB array
+   is pinned to bank 2 (the bundle's 64-byte object needs one
+   contiguous bank); the 193X statics and the
    87XA CCP callbacks are verified safe (FSR1 indirect and direct
    banksel'd access) and allowlisted.
 10. **Gate flake hardening** - several gates documented the sim-wedge

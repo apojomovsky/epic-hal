@@ -19,8 +19,14 @@
 
 /* ───────────────────────── state ─────────────────────────────────── */
 
-/** The task table. Slot 0 is claimed first by task_spawn. */
-static task_t g_tasks[TASK_MGR_MAX_TASKS];
+/** The task table. Slot 0 is claimed first by task_spawn.
+ *  Pinned to bank 2 (0x110, 64 bytes) on the 87XA: the TCBs are read
+ *  from interrupt context (the Timer0 tick callback runs
+ *  task_manager_tick) and the 64-byte object needs one contiguous
+ *  bank; best-fit fragmentation made the epicurus-demo bundle fail
+ *  the link (error 1250) once the surrounding layout shifted. Bank 2
+ *  keeps the object whole and the placement deterministic. */
+static task_t g_tasks[TASK_MGR_MAX_TASKS] EPIC_PLACE(0x110);
 
 /** Monotonic tick counter since the last init (wraps at 65535). */
 static uint16_t g_ticks = 0U;

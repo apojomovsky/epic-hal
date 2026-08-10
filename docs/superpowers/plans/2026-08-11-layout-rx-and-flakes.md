@@ -11,7 +11,11 @@ nets, never paper over).
 
 ## Task 9: pin or verify the 20 unpinned IRQ-shared statics
 
-Status: done (2026-08-11).
+Status: done (2026-08-11). The audit also caught a coverage bug in
+itself: module sources are module-relative, so every module was
+silently skipped; fixed, and the module scan now flags the serial
+ring buffers and the tick counter (allowlisted, direct banksel'd
+access) and drove the g_tasks bank-2 pin.
 
 ### Solved
 

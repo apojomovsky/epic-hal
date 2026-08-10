@@ -80,6 +80,11 @@ SIZE_HINTS = {  # type token -> bytes
 # - The 87XA g_ccp_callbacks: the CCP ISRs read the array DIRECTLY
 #   (auto-banksel), never through a pointer; the PR #19 disassembly
 #   shows the direct read + null check + functab call, no IRP/FSR.
+# - The module objects (epic-serial's ring buffers, epic-tick's tick
+#   counter): the ISR path touches them by direct symbol access
+#   (auto-banksel), never through a pointer, so any bank works; the
+#   193X FSR1 mechanism covers the pointer derefs. Same verified
+#   mechanism as the CCP callbacks.
 ALLOWLIST = {
     ("pic16f193x-hal/src/peripherals/pic16f193x_ccp.c", "g_handle"):
         "193X FSR1-indirect derefs, bank-agnostic (verified)",
@@ -89,15 +94,25 @@ ALLOWLIST = {
         "193X FSR1-indirect derefs, bank-agnostic (verified)",
     ("pic16f87xa-hal/src/peripherals/pic16f87xa_ccp.c", "g_ccp_callbacks"):
         "87XA CCP ISR reads the array directly, auto-banksel (verified)",
+    ("epic-serial/src/epic_serial.c", "g_tx_buf"):
+        "direct symbol access, auto-banksel (verified)",
+    ("epic-tick/src/epic_tick.c", "g_tick_ms"):
+        "direct symbol access, auto-banksel (verified)",
 }
 
 
 def module_sources(m, module: str, family: str) -> list[str]:
+    """Repo-root-relative sources one build compiles for (module, family).
+
+    Module sources are stored module-relative (src/foo.c); the HAL
+    family sources are already repo-root-relative.
+    """
     out = []
     for dep in m.resolve_deps(module):
         mod = m.modules[dep]
-        out += list(mod.sources)
-        out += list(mod.sources_by_family.get(family, []))
+        out += [f"{mod.dir}/{s}" for s in mod.sources]
+        out += [f"{mod.dir}/{s}"
+                for s in mod.sources_by_family.get(family, [])]
     return list(dict.fromkeys(out))
 
 
@@ -182,7 +197,10 @@ def parse_static_decl(line: str):
         if pm:
             names.append(pm.group(1))
             continue
-        ids = re.findall(r"[a-zA-Z_]\w*", part)
+        # The declarator name is the last identifier before any
+        # array-size expression: g_tx_buf[SZ] names g_tx_buf, not SZ.
+        part_no_array = re.sub(r"\[[^\]]*\]", "", part)
+        ids = re.findall(r"[a-zA-Z_]\w*", part_no_array)
         if ids:
             names.append(ids[-1])
     # Type = the declaration minus the first declarator's name.

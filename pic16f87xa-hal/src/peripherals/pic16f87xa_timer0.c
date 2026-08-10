@@ -19,15 +19,18 @@ static const uint16_t ps_ratio[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
  *  that is out of scope by the time the ISR reads it back, so storing a
  *  pointer to it would dangle). The weak ISR reads from this owned copy.
  *
- *  Pinned to bank 2 (0x130, 6 bytes) because the ISR's deref of
+ *  Pinned to bank 3 (0x190, 6 bytes) because the ISR's deref of
  *  `g_t0_handle` bakes `bsf STATUS,7` (IRP=1, banks 2/3 only): XC8
  *  v4.00 emits the IRP select as a constant, so the storage must live
  *  in the bank that constant selects or the ISR reads the wrong RAM.
+ *  Bank 3 keeps bank 2's full 112 bytes contiguous for the big
+ *  module statics (the epicurus-demo bundle's 64-byte taskmgr TCB
+ *  array could not fit with the pin in bank 2, error 1250).
  *  Verified 2026-08-11 by disassembly (epic-tick 16F877A); the unpinned
  *  placement landed in whatever bank best-fit happened to choose
  *  (bank 1 in some builds, bank 3 in others) and the gates only passed
  *  by scatter luck. */
-static TIMER0_HandleTypeDef g_t0_storage EPIC_PLACE(0x130);
+static TIMER0_HandleTypeDef g_t0_storage EPIC_PLACE(0x190);
 static const TIMER0_HandleTypeDef *g_t0_handle = NULL;
 
 /** Read-modify-write helper for OPTION_REG. */
