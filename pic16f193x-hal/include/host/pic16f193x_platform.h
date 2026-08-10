@@ -67,4 +67,9 @@ extern uint8_t pic16f193x_sim_sfr[0x1000];
 #define EPIC_PIE1_READ_TXIE(out_var) \
     ((out_var) = pic16f193x_sim_sfr[EPIC_PIE_REG_ADDR(0U)])
 
+/* Same shape as EPIC_PIE1_READ_TXIE, for the EEIE bit (PIE2 bit 4).
+ * Host twin of the target header's EPIC_PIE2_READ_EEIE. */
+#define EPIC_PIE2_READ_EEIE(out_var) \
+    ((out_var) = pic16f193x_sim_sfr[EPIC_PIE_REG_ADDR(1U)])
+
 #endif /* PIC16F193X_PLATFORM_H */

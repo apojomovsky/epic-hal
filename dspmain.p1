@@ -1,0 +1,13 @@
+Version 4.0 HI-TECH Software Intermediate Code
+[p mainexit ]
+"1 /tmp/dspmain.c
+[v _epic_dispatch_all_irqs `(v ~T0 @X0 0 ef ]
+[v $root$_main `(v ~T0 @X0 0 e ]
+"2 /tmp/dspmain.c
+[v _main `(v ~T0 @X0 1 ef ]
+{
+[e :U _main ]
+[f ]
+[e ( _epic_dispatch_all_irqs ..  ]
+[e :UE 1 ]
+}

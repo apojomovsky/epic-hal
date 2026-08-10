@@ -1,0 +1,25 @@
+Version 4.0 HI-TECH Software Intermediate Code
+[t ~ __interrupt . k ]
+[t T1 __interrupt ]
+"24 pic16f87xa-hal/src/core/pic16_isr_vector.c
+[v _epic_dispatch_all_irqs `(v ~T0 @X0 0 ef ]
+"19 pic16f87xa-hal/src/core/pic16_isr_vector.c
+[v _epic_irq_pie_scratch `Vuc ~T0 @X0 1 e@112 ]
+"20
+[v _epic_bank1_scratch `Vuc ~T0 @X0 1 e@113 ]
+[v $root$_PIC16_IRQ_Handler `(v ~T0 @X0 0 e ]
+"42
+[v _PIC16_IRQ_Handler `(v ~T1 @X0 1 ef ]
+"43
+{
+[e :U _PIC16_IRQ_Handler ]
+[f ]
+"44
+[; <" bcf STATUS,6 ;# ">
+"45
+[; <" bcf STATUS,5 ;# ">
+"46
+[e ( _epic_dispatch_all_irqs ..  ]
+"47
+[e :UE 1 ]
+}

@@ -556,7 +556,39 @@ uncovered beyond them:
    to Bank 0, the discipline the `EPIC_BANK2/3_*` macros already
    documented.
 
-3. **`EPIC_PIE_ENABLE/DISABLE_BIT`'s PIE2 branch never selected Bank
-   2** (it only set RP0, so it read-modify-wrote the Bank-1 alias of
-   PIE2, i.e. PCON). Now selects Bank 2 explicitly. No PIE2 source was
-   exercised before, so this never surfaced.
+3. **CORRECTION (2026-08-09, combination-matrix C11): the PIE2
+   branches were originally CORRECT and this document's earlier claim
+   ("PIE2 is in Bank 2", added in the 2026-08-09 bank-probe work) was
+   wrong.** PIE2 is at 0x8D, Bank 1 (DS39582B Reg 9-5), like PIE1. The
+   hunt-era change to select Bank 2 made every PIR2-source
+   Enable/DisableSrc (CCP2, BCL, EEPROM, CMP) read-modify-write
+   EEADR (0x10D, Bank 2) instead of PIE2 - a regression the
+   epic-combo-swuart-tick gate exposed (CCP2IE never set, the swuart
+   TX chain broke). Reverted to Bank 1 (keeping the bank-absolute
+   RP1-clear discipline: `bcf STATUS,6; bsf STATUS,5`). The bank-probe
+   gate's check numbering in the 2026-08-09 commit was unaffected
+   because no gate exercised a PIR2 source before C11.
+
+## Finding 12: the ISR path must normalize its own bank (interrupt inside a bank-macro window)
+
+**Confirmed and fixed, 2026-08-09**, by the combination-matrix C1 gate
+(`epic-combo-uart-ssp`). XC8 v4.00 emits NO banksel for the dispatch's
+PIR1/PIR2 reads (verified in the generated .s: `movf (12),w` /
+`movf (13),w` with no preceding bank select, and the handlers' static
+accesses likewise assume RP=0). When an interrupt is taken while the
+preempted main line is inside a bank-macro window (RP1:RP0 != 00, a
+~5-instruction window per macro), the ISR path runs with the wrong
+bank: the dispatch reads PIE1 (0x8C) instead of PIR1 (0x0C) and PCON
+(0x8D) instead of PIR2 (0x0D), and static increments land in the wrong
+bank's GPR, freezing observably.
+
+Fix: the `__interrupt` entry (pic16_isr_vector.c) normalizes to bank 0
+(`bcf STATUS,6; bcf STATUS,5`) before delegating to the dispatcher.
+The XC8 prologue/epilogue save and restore STATUS around the body, so
+the preempted context resumes its window unchanged.
+
+The gate holds RP=01 open for a stretch each iteration to exercise the
+preempted-RP path deterministically, and also pinned down a related
+MPLAB SIM behavior: enabling GIE while a timer interrupt is already
+pending wedges the sim's ISR path (count freezes, GIE left cleared;
+the Finding 10.1 class). Sim gates clear pending flags before GIE-on.

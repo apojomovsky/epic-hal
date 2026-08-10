@@ -49,6 +49,18 @@ SIM_VARIANTS = [
     ("epic-taskmgr", "18F4550"),
     ("epic-settings", "18F4550"),
     ("epic-modbus", "18F4550"),
+    ("epic-combo-uart-ssp", "16F877A"),
+    ("epic-combo-multitimer", "16F877A"),
+    ("epic-combo-adc-uart", "16F877A"),
+    ("epic-combo-rb-uart", "16F877A"),
+    ("epic-combo-eeprom-isr", "18F4550"),
+    ("epic-combo-tick-serial", "16F877A"),
+    ("epic-combo-tick-settings", "18F4550"),
+    ("epic-combo-taskmgr-serial", "18F4550"),
+    ("epic-combo-encoder-tick", "16F877A"),
+    ("epic-combo-lcd-tick", "18F4550"),
+    ("epic-combo-swuart-tick", "16F877A"),
+    ("epic-combo-modbus-full", "18F4550"),
 ]
 
 

@@ -267,6 +267,308 @@ sources     = [
 ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
+[modules.epic-combo-uart-ssp]
+dir        = "epic-combo-uart-ssp"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+# C1 of the combination matrix
+# (docs/superpowers/plans/2026-08-09-combination-matrix.md): USART +
+# SSP + EEPROM interleaved under a fast TIMER2 ISR. The gate hunts the
+# banksel-less ISR read class (an interrupt inside a bank-macro window
+# makes the dispatch read PIE1 instead of PIR1 and the misdirected
+# clears disable the source).
+[modules.epic-combo-uart-ssp.supported]
+PIC16F87XA = [
+  "16F877A",
+]
+
+[modules.epic-combo-uart-ssp.example.PIC16F87XA]
+name    = "combo-uart-ssp"
+sources = [
+  "tests/combo_uart_ssp.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim, WDTE=OFF like every other sim variant.
+[modules.epic-combo-uart-ssp.example.PIC16F87XA.sim]
+name        = "combo-uart-ssp-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-combo-multitimer]
+dir        = "epic-combo-multitimer"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+# C2 of the combination matrix
+# (docs/superpowers/plans/2026-08-09-combination-matrix.md): TMR0 +
+# TMR1 + TMR2 + USART, all interrupt-driven in one firmware. The gate
+# hunts the three-way ISR interleave: the dispatch's per-source gating
+# (TMR1's TMR1IE flag-gate, TXIF's TXIE gate) under load, GIE wedging
+# (the Finding 10.1 class), and cross-timer corruption (a dropped
+# TMR1 dispatch or a misdirected callback breaks the exact 2:1
+# TMR1/TMR0 and the 65:1 TMR2/TMR0 count ratios). The combined
+# peripherals are all pic16f87xa-hal drivers, so there are no separate
+# module dependencies; needs_hal builds on the HAL like C1.
+[modules.epic-combo-multitimer.supported]
+PIC16F87XA = [
+  "16F877A",
+]
+
+[modules.epic-combo-multitimer.example.PIC16F87XA]
+name    = "combo-multitimer"
+sources = [
+  "tests/combo_multitimer.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim, WDTE=OFF like every other sim variant.
+[modules.epic-combo-multitimer.example.PIC16F87XA.sim]
+name        = "combo-multitimer-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-combo-adc-uart]
+dir        = "epic-combo-adc-uart"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+# C3 of the combination matrix
+# (docs/superpowers/plans/2026-08-09-combination-matrix.md): ADC
+# conversion loop + TIMER1 + USART TX interleaved under a live TIMER1
+# ISR. The gate hunts the bank-window preemption class with the ADC
+# read path (two EPIC_BANK1_READ8 windows plus the Bank-0 ADRESH read
+# per EPIC_ADC_Read) competing with the polled-USART Bank-1 TXSTA
+# reads. The combined peripherals are all pic16f87xa-hal drivers, so
+# there are no separate module dependencies; needs_hal builds on the
+# HAL like C1.
+[modules.epic-combo-adc-uart.supported]
+PIC16F87XA = [
+  "16F877A",
+]
+
+[modules.epic-combo-adc-uart.example.PIC16F87XA]
+name    = "combo-adc-uart"
+sources = [
+  "tests/combo_adc_uart.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim, WDTE=OFF like every other sim variant.
+[modules.epic-combo-adc-uart.example.PIC16F87XA.sim]
+name        = "combo-adc-uart-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-combo-rb-uart]
+dir        = "epic-combo-rb-uart"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+# C4 of the combination matrix
+# (docs/superpowers/plans/2026-08-09-combination-matrix.md): PORTB
+# change ISR + USART TX + TIMER2 interleaved. The gate hunts the
+# multi-source dispatch class (RBIF and TMR2IF serviced in the same
+# ISR entry), the RB read-before-clear ordering, and the polled-TX
+# path under ISR load (a misdirected Bank-1 TXSTA read wedges the
+# TSR-empty wait).
+[modules.epic-combo-rb-uart.supported]
+PIC16F87XA = [
+  "16F877A",
+]
+
+[modules.epic-combo-rb-uart.example.PIC16F87XA]
+name    = "combo-rb-uart"
+sources = [
+  "tests/combo_rb_uart.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim, WDTE=OFF like every other sim variant.
+[modules.epic-combo-rb-uart.example.PIC16F87XA.sim]
+name        = "combo-rb-uart-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-combo-eeprom-isr]
+dir        = "epic-combo-eeprom-isr"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+# C5 of the combination matrix
+# (docs/superpowers/plans/2026-08-09-combination-matrix.md): EEPROM
+# writes through the HAL's EECON2/EECON1 unlock sequence while a fast
+# TIMER2 ISR runs throughout; completion is taken through the EEIF
+# dispatch branch (EEIE armed, callback flag). The gate hunts
+# preemption corruption of the unlock sequence and the EEIF dispatch
+# under the live timer ISR. Hosted on the 18F4550 (not the 16F877A
+# the matrix row was drafted for): MPLAB SIM's PIC16F87XA EEPROM
+# model is inert (no write completion via CPU or debugger, RD strobe
+# never refreshes EEDATA; verified 2026-08-09), while the runner's
+# EEPROM_WRITES mechanism and the default EECON1/EECON2 addresses
+# (0xFA6/0xFA7) are proven on PIC18 by the epic-settings gate. Run
+# with EEPROM_WRITES=32 (the gate writes 8 bytes per main pass and
+# the CRT re-runs main, up to 4 passes per 32 cycles).
+[modules.epic-combo-eeprom-isr.supported]
+PIC18Fxx5x = [
+  "18F4550",
+]
+
+[modules.epic-combo-eeprom-isr.example.PIC18Fxx5x]
+name    = "combo-eeprom-isr"
+sources = [
+  "tests/combo_eeprom_isr.c",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# HARNESS=sim, WDT=OFF like every other sim variant.
+[modules.epic-combo-eeprom-isr.example.PIC18Fxx5x.sim]
+name        = "combo-eeprom-isr-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# C9 of the combination matrix: epic-encoder + epic-tick. The gate
+# interleaves scripted quadrature edges with real epic_tick_delay_ms
+# waits and reads the 32-bit position (the class-G Disable/Restore
+# site) under the live 1 ms tick ISR, checking every read against the
+# scripted net and that the tick survived.
+[modules.epic-combo-encoder-tick]
+dir        = "epic-combo-encoder-tick"
+sources    = []
+includes   = []
+depends_on = [
+  "epic-encoder",
+  "epic-tick",
+]
+needs_hal  = true
+
+[modules.epic-combo-encoder-tick.supported]
+PIC16F87XA = [
+  "16F877A",
+]
+
+[modules.epic-combo-encoder-tick.example.PIC16F87XA]
+name    = "combo-encoder-tick"
+sources = [
+  "tests/combo_encoder_tick.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim, WDTE=OFF like every other sim variant.
+[modules.epic-combo-encoder-tick.example.PIC16F87XA.sim]
+name        = "combo-encoder-tick-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-combo-swuart-tick]
+dir        = "epic-combo-swuart-tick"
+sources    = []
+includes   = []
+depends_on = ["epic-swuart", "epic-tick"]
+needs_hal  = true
+
+# C11 of the combination matrix: epic-swuart + epic-tick. The gate
+# transmits a known payload through the real CCP2-compare-driven swuart
+# TX path (Timer1 free-running, overflow interrupt off) while the tick's
+# 1 ms Timer2 ISR preempts it, then verifies the payload drains back to
+# TX_IDLE, the tick kept counting through every transmission, GIE
+# stayed alive, and PIE1/PIE2 hold exactly the armed sources.
+[modules.epic-combo-swuart-tick.supported]
+PIC16F87XA = [
+  "16F877A",
+]
+
+[modules.epic-combo-swuart-tick.example.PIC16F87XA]
+name    = "combo-swuart-tick"
+sources = [
+  "tests/combo_swuart_tick.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim, WDTE=OFF like every other sim variant.
+[modules.epic-combo-swuart-tick.example.PIC16F87XA.sim]
+name        = "combo-swuart-tick-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-combo-tick-serial]
+dir        = "epic-combo-tick-serial"
+sources    = []
+includes   = []
+depends_on = ["epic-tick", "epic-serial"]
+needs_hal  = true
+
+# C6 of the combination matrix
+# (docs/superpowers/plans/2026-08-09-combination-matrix.md): epic-tick's
+# live 1 ms Timer2 ISR churning against epic-serial's ring-buffered TX
+# path. The gate hunts the class-G race surface (the tick ISR vs the
+# serial layer's Disable/Restore sites) and the TXIE-gated dispatch
+# under a live tick vector.
+[modules.epic-combo-tick-serial.supported]
+PIC16F87XA = [
+  "16F877A",
+]
+
+[modules.epic-combo-tick-serial.example.PIC16F87XA]
+name    = "combo-tick-serial"
+sources = [
+  "tests/combo_tick_serial.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim, WDTE=OFF like every other sim variant.
+[modules.epic-combo-tick-serial.example.PIC16F87XA.sim]
+name        = "combo-tick-serial-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-combo-lcd-tick]
+dir        = "epic-combo-lcd-tick"
+sources    = []
+includes   = []
+depends_on = ["epic-lcd", "epic-tick"]
+needs_hal  = true
+
+# C10 of the combination matrix
+# (docs/superpowers/plans/2026-08-09-combination-matrix.md): the real
+# HD44780 driver (epic-lcd) running its init + print sequence through
+# the gpio4 transport ops while epic-tick's live 1 ms Timer2 ISR
+# churns underneath. The gate verifies the driver's byte-exact
+# emission contract (the lcd gate's oracle) and that the tick stayed
+# alive through the LCD work. The gpio4 transport is an epic-lcd
+# example-level source (deliberately not in the module's sources: it
+# pulls in the HAL), so this example references it across module dirs.
+# PIC16F87XA/16F877A only, like epic-lcd.
+[modules.epic-combo-lcd-tick.supported]
+PIC18Fxx5x = [
+  "18F4550",
+]
+
+[modules.epic-combo-lcd-tick.example.PIC18Fxx5x]
+name    = "combo-lcd-tick"
+sources = [
+  "tests/combo_lcd_tick.c",
+  "../epic-lcd/src/epic_lcd_gpio4.c",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# HARNESS=sim, WDTE=OFF like every other sim variant.
+[modules.epic-combo-lcd-tick.example.PIC18Fxx5x.sim]
+name        = "combo-lcd-tick-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
 [modules.epic-adcfilter]
 dir        = "epic-adcfilter"
 sources    = [
@@ -1210,3 +1512,120 @@ name        = "tick-sim"
 harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
+
+# C7 of the combination matrix
+# (docs/superpowers/plans/2026-08-09-combination-matrix.md): epic-tick +
+# epic-settings on PIC18 (18F4550, the only part epic-settings supports).
+# The gate (tests/combo_tick_settings.c) saves a blob through the real
+# epic_settings.c while the 1 ms tick ISR is live, corrupts one stored
+# byte, verifies the load detects it and defaults are persisted, and
+# checks the tick kept advancing with GIE alive. The sim runner needs
+# EEPROM_WRITES=32 (the scenario performs 13 writes; the spare cycles
+# absorb the ISR/EEIF race documented in the gate's header).
+[modules.epic-combo-tick-settings]
+dir        = "epic-combo-tick-settings"
+sources    = []
+includes   = []
+depends_on = [
+  "epic-tick",
+  "epic-settings",
+]
+needs_hal  = true
+
+[modules.epic-combo-tick-settings.supported]
+PIC18Fxx5x = [
+  "18F4550",
+]
+
+[modules.epic-combo-tick-settings.example.PIC18Fxx5x]
+name    = "combo-tick-settings"
+sources = [
+  "tests/combo_tick_settings.c",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# HARNESS=sim, WDT=OFF like every other sim variant.
+[modules.epic-combo-tick-settings.example.PIC18Fxx5x.sim]
+name        = "combo-tick-settings-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# C12 of the combination matrix
+# (docs/superpowers/plans/2026-08-09-combination-matrix.md): epic-modbus
+# + epic-serial + epic-tick on PIC18 (18F4550, modbus is PIC18-only).
+# The gate (tests/combo_modbus_full.c) pushes an FC03 read-holding-
+# registers request through the module's real TX path (epic_serial_write
+# into the ring, drained by the real TX ISR into TXREG) while the 1 ms
+# tick ISR is live: one byte per tick so every transmission is
+# interleaved with real timer vectors, then the whole frame in one
+# write (the modbus gate's exact push), and verifies the frame is
+# byte-exact against the modbus gate's oracle (11 03 00 00 00 02 C6 9B)
+# with the tick still advancing and GIE alive.
+[modules.epic-combo-modbus-full]
+dir        = "epic-combo-modbus-full"
+sources    = []
+includes   = []
+depends_on = [
+  "epic-modbus",
+  "epic-serial",
+  "epic-tick",
+]
+needs_hal  = true
+
+[modules.epic-combo-modbus-full.supported]
+PIC18Fxx5x = [
+  "18F4550",
+]
+
+[modules.epic-combo-modbus-full.example.PIC18Fxx5x]
+name    = "combo-modbus-full"
+sources = [
+  "tests/combo_modbus_full.c",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# HARNESS=sim, WDT=OFF like every other sim variant.
+[modules.epic-combo-modbus-full.example.PIC18Fxx5x.sim]
+name        = "combo-modbus-full-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+[modules.epic-combo-taskmgr-serial]
+dir        = "epic-combo-taskmgr-serial"
+sources    = []
+includes   = []
+depends_on = [
+  "epic-taskmgr",
+  "epic-serial",
+]
+needs_hal  = true
+
+# C8 of the combination matrix
+# (docs/superpowers/plans/2026-08-09-combination-matrix.md): the
+# taskmgr scheduler and the epic-serial TX ring interleaved in one
+# firmware. Three scheduler tasks with distinct periods push distinct
+# payloads through epic_serial_write every time they run; the ring is
+# drained between scheduler rounds (the serial gate's GIE-managed
+# drain pattern, see tests/combo_taskmgr_serial.c) and the cross-
+# checks verify the run counts match the period ratios, every pushed
+# byte was popped exactly once, the ring drained fully, and the tick
+# counter advanced. PIC18Fxx5x (18F4550) only: the PIC16 Timer0-tick
+# ISR path is unreliable under SIM (same reason as epic-taskmgr's own
+# sim gate).
+[modules.epic-combo-taskmgr-serial.supported]
+PIC18Fxx5x = [
+  "18F4550",
+]
+
+[modules.epic-combo-taskmgr-serial.example.PIC18Fxx5x]
+name    = "combo-taskmgr-serial"
+sources = [
+  "tests/combo_taskmgr_serial.c",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# HARNESS=sim, WDT=OFF like every other sim variant.
+[modules.epic-combo-taskmgr-serial.example.PIC18Fxx5x.sim]
+name        = "combo-taskmgr-serial-sim"
+harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }

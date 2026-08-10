@@ -62,4 +62,8 @@ extern uint8_t pic16f87xa_sim_sfr[0x200];
 /* Host twin of the target header's EPIC_PIE1_READ_TXIE. */
 #define EPIC_PIE1_READ_TXIE(out_var)   ((out_var) = pic16f87xa_sim_sfr[0x8CU])
 
+/* Host twin of the target header's EPIC_PIE2_READ_EEIE (PIE2 at
+ * 0x8D). */
+#define EPIC_PIE2_READ_EEIE(out_var)   ((out_var) = pic16f87xa_sim_sfr[0x8DU])
+
 #endif /* PIC16F87XA_PLATFORM_H */

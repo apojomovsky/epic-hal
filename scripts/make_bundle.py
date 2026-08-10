@@ -140,6 +140,22 @@ def main():
     for name in modules:
         _copy_tree(REPO / manifest.modules[name].dir, root / manifest.modules[name].dir)
 
+    # Cross-module references: a combo-module example can name a source
+    # in another module's dir (epic-combo-lcd-tick references
+    # epic-lcd/src/epic_lcd_gpio4.c, which epic-lcd's own supported set
+    # may keep out of this family's bundle). Copy any file the
+    # reference list names that no module-dir copy already provided,
+    # so the missing-files check below passes and the emitted
+    # epicurus.mk names a file that exists.
+    for f in bundlegen.files_for_family(manifest, args.family):
+        if not (root / f).exists():
+            src = REPO / f
+            if not src.is_file():
+                sys.exit(f"error: referenced source {f} does not exist")
+            target = root / f
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, target)
+
     # Generated files.
     (root / "epicurus.mk").write_text(
         bundlegen.emit_epicurus_mk(manifest, args.family, args.version))

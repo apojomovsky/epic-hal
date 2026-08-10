@@ -92,5 +92,15 @@ void epic_dispatch_all_irqs(void)
     if (pir2 & PIC_PIR2_TMR3IF) TIMER3_IRQHandler();
     if (pir2 & PIC_PIR2_CCP2IF) CCP2_IRQHandler();
     if (pir2 & PIC_PIR2_CMIF)   COMP_IRQHandler();
-    if (pir2 & PIC_PIR2_EEIF)   EEPROM_IRQHandler();
+    /* EEIF is gated on EEIE and left untouched when the source is
+     * disabled: EEPROM completion is often polled (epic-settings spins
+     * on EEIF with EEIE off), and an unconditional dispatch would
+     * clear the flag from a live ISR and hang the poller (found by the
+     * combination-matrix C7 gate, 2026-08-09). No stale-flag drop:
+     * the polling consumer owns EEIF. */
+    if (pir2 & PIC_PIR2_EEIF) {
+        if (epic_sfr_read8(PIC_REG_PIE2) & PIC_PIE2_EEIE) {
+            EEPROM_IRQHandler();
+        }
+    }
 }
