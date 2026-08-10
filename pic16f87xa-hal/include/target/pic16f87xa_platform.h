@@ -19,6 +19,10 @@
 /* XC8 has no concept of weak symbols. */
 #define EPIC_WEAK
 
+/* Placement pins map to XC8's __at(addr) extension; the host header
+ * defines EPIC_PLACE as a no-op. */
+#define EPIC_PLACE(addr)         __at(addr)
+
 /* SFR access resolves to a direct volatile dereference of the address. */
 #define EPIC_SFR_PTR(addr)       ((volatile uint8_t *)(uintptr_t)(addr))
 #define epic_sfr_read8(addr)     (*(volatile uint8_t *)(uintptr_t)(addr))

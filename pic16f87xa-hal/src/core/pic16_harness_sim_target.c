@@ -44,8 +44,15 @@ static void s_uart_putc(char c)
 
 /* static: EPIC_USART_Init stores this pointer for the ISR's whole
  * lifetime (pic16f87xa_usart.c's g_usart), so a local here would be a
- * dangling-pointer hazard once this function returns. */
-static USART_HandleTypeDef s_usart_handle;
+ * dangling-pointer hazard once this function returns.
+ *
+ * Pinned to bank 1 (0xA0, 7 bytes) because the USART ISR's deref of
+ * g_usart bakes `bcf STATUS,7` (IRP=0, banks 0/1 only), the opposite
+ * window from the Timer0 ISR's baked `bsf`. Verified 2026-08-11 by
+ * disassembly (epic-serial 16F877A); the unpinned placement scattered
+ * to bank 3 in some builds, where the ISR's constant IRP=0 read
+ * silently addressed the wrong RAM. */
+static USART_HandleTypeDef s_usart_handle EPIC_PLACE(0xA0);
 
 void epic_harness_init(uint32_t cycles)
 {
