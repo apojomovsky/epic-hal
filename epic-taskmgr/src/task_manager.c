@@ -61,9 +61,10 @@ task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
         return TASK_ID_INVALID;
     }
 
-    /* Claim and fill a free slot under a critical section so a tick ISR
-     * can never observe a half-initialised TCB. */
-    uint8_t prev = EPIC_IRQ_Disable();
+    /* Publish-last, no GIE manipulation (class-G conversion): the TCB
+     * is fully written before the slot's USED bit is set, and the tick
+     * ISR gates every access on USED, so it can never observe a
+     * half-initialised TCB. */
     task_id_t id = TASK_ID_INVALID;
     for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
         if (!(g_tasks[i].flags & TM_FLAG_USED)) {
@@ -77,13 +78,19 @@ task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
             break;
         }
     }
-    EPIC_IRQ_Restore(prev);
     return id;
 }
 
 void task_start(task_id_t id)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
+    /* RETAINED critical section (class-G conversion, deliberate): the
+     * countdown write below is a 16-bit store racing the tick ISR's
+     * 16-bit countdown RMW; the read-twice-retry pattern cannot make a
+     * write atomic, and the publish-last toggle of ENABLED leaves the
+     * ISR's check-then-act window open. This is the correct silicon
+     * idiom (the Finding 10.1 sim-wedge class does not reproduce on
+     * PIC18, where this module's sim gates run). */
     uint8_t prev = EPIC_IRQ_Disable();
     if (g_tasks[id].flags & TM_FLAG_USED) {
         g_tasks[id].countdown = arm_countdown(g_tasks[id].period);
@@ -96,17 +103,19 @@ void task_start(task_id_t id)
 void task_stop(task_id_t id)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
-    uint8_t prev = EPIC_IRQ_Disable();
+    /* Single-byte flag RMW, atomic on both families (class-G
+     * conversion): no GIE manipulation needed. */
     if (g_tasks[id].flags & TM_FLAG_USED) {
         g_tasks[id].flags &= (uint8_t)~(TM_FLAG_ENABLED | TM_FLAG_READY);
     }
-    EPIC_IRQ_Restore(prev);
 }
 
 void task_reset(task_id_t id)
 {
-    /* Re-arm: restart the countdown and ensure the task is enabled; same
-     * critical section as the other mutators, safe from a running task. */
+    /* Re-arm: restart the countdown and ensure the task is enabled. The
+     * critical section is retained (class-G conversion, same rationale
+     * as task_start: a 16-bit countdown write cannot be made atomic by
+     * retry). */
     if (id >= TASK_MGR_MAX_TASKS) return;
     uint8_t prev = EPIC_IRQ_Disable();
     if (g_tasks[id].flags & TM_FLAG_USED) {
@@ -120,6 +129,9 @@ void task_reset(task_id_t id)
 void task_set_period(task_id_t id, uint16_t period_ticks)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
+    /* RETAINED critical section (class-G conversion, same rationale as
+     * task_start): the 16-bit period write races the tick ISR's period
+     * read when a task fires; a torn value would mis-time one fire. */
     uint8_t prev = EPIC_IRQ_Disable();
     if (g_tasks[id].flags & TM_FLAG_USED) {
         g_tasks[id].period = period_ticks;
@@ -153,11 +165,14 @@ void task_manager_tick(void)
 
 uint16_t task_manager_ticks(void)
 {
-    /* 16-bit read is not atomic on an 8-bit PIC; take a critical section so
-     * a tick ISR landing between the byte reads can't tear the value. */
-    uint8_t  prev = EPIC_IRQ_Disable();
-    uint16_t v    = g_ticks;
-    EPIC_IRQ_Restore(prev);
+    /* Read-twice-retry (class-G conversion, the epic_tick_get pattern):
+     * the tick ISR increments g_ticks as a 16-bit RMW, so a single
+     * read can tear; retry until two consecutive reads agree. No GIE
+     * manipulation. */
+    uint16_t v;
+    do {
+        v = g_ticks;
+    } while (v != g_ticks);
     return v;
 }
 
@@ -169,7 +184,11 @@ uint8_t task_manager_run_once(void)
     task_id_t order[TASK_MGR_MAX_TASKS];
     uint8_t   n = 0U;
 
-    uint8_t prev = EPIC_IRQ_Disable();
+    /* No GIE manipulation (class-G conversion): every flags access here
+     * is a single-byte read or RMW (atomic), and the snapshot is
+     * timing-tolerant by design - a tick that arms a task after its
+     * slot was scanned simply runs it next round ("a new tick re-arms",
+     * the documented behavior for tasks that overrun). */
     for (;;) {
         /* Pick the lowest-numbered-priority ready task (ties: lowest slot). */
         int      best      = -1;
@@ -190,19 +209,21 @@ uint8_t task_manager_run_once(void)
         order[n] = (task_id_t)best;
         n++;
     }
-    EPIC_IRQ_Restore(prev);
 
     /* Run with interrupts enabled. */
     for (uint8_t k = 0; k < n; k++) {
         task_t *t = &g_tasks[order[k]];
         t->fn(t->arg);
         if (t->period == 0U) {
-            /* One-shot: free the slot atomically so a periodic task that
-             * re-spawns one-shots does not exhaust the table. */
-            uint8_t p = EPIC_IRQ_Disable();
+            /* One-shot: free the slot so a periodic task that re-spawns
+             * one-shots does not exhaust the table. The USED gate makes
+             * this safe without a critical section (class-G conversion):
+             * the tick ISR skips a slot whose USED bit is clear, and at
+             * worst a tick that read USED before the clear touches a
+             * freed slot's countdown and sets READY, which run_once
+             * gates out via USED. */
             t->flags = 0U;
             t->fn    = NULL;
-            EPIC_IRQ_Restore(p);
         }
     }
     return n;
@@ -219,14 +240,16 @@ void task_manager_run(void)
 
 uint8_t task_manager_count(void)
 {
+    /* Single-byte flag reads (atomic); no GIE manipulation (class-G
+     * conversion). A spawn/free mid-scan only shifts the count by one
+     * in the racy direction, which is a timing artifact, not a safety
+     * issue for the scheduler. */
     uint8_t count = 0U;
-    uint8_t prev  = EPIC_IRQ_Disable();
     for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
         if (g_tasks[i].flags & TM_FLAG_USED) {
             count++;
         }
     }
-    EPIC_IRQ_Restore(prev);
     return count;
 }
 
