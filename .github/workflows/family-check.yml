@@ -1,0 +1,271 @@
+name: family-check
+
+# Reusable family-check job, called once per family by ci.yml (the
+# calls run concurrently on separate runners, so the PR wait is the
+# largest family's time, not the sum). Sharded 2026-08-11 to cut the
+# old single target job from ~23 min to ~8-10: the build and gate
+# loops inside run PARALLEL=2 (the runner has 2 cores, each xc8 build
+# and mdb session is single-threaded), the audits are family-scoped,
+# and the hex-rebuild identity audit builds only this family's matrix
+# twice.
+#
+# Inputs:
+#   family: the manifest family name (PIC16F87XA / PIC18Fxx5x /
+#           PIC16F193X)
+
+on:
+  workflow_call:
+    inputs:
+      family:
+        type: string
+        required: true
+
+env:
+  FAMILY: ${{ inputs.family }}
+
+jobs:
+  family-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine docs-only
+        id: docs
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            result="$(bash scripts/ci-docs-only-check.sh '${{ github.event.pull_request.base.sha }}')"
+          else
+            result="false"
+          fi
+          echo "docs_only=$result" >> "$GITHUB_OUTPUT"
+
+      # This workflow no longer builds or pushes the toolchain image
+      # itself: the root Makefile (`make image`, `make ci-image-push`)
+      # is the only path that publishes a new tag, from installers a
+      # human drops in docker/ci-toolchain/vendor/. Fails loudly, with
+      # those exact instructions, if the resolved tag isn't on GHCR yet.
+      - name: Resolve + pull the toolchain image
+        if: steps.docs.outputs.docs_only != 'true'
+        id: image
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
+          image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          if ! docker pull "$image"; then
+            echo "error: no cached $image on GHCR." >&2
+            echo "  1. drop the Microchip installers in docker/ci-toolchain/vendor/" >&2
+            echo "     (see 'make check-vendor' for exact filenames)" >&2
+            echo "  2. docker login ghcr.io -u <you> (needs a PAT with write:packages)" >&2
+            echo "  3. make ci-image-push GHCR_OWNER=${{ github.repository_owner }}" >&2
+            exit 1
+          fi
+
+      # Audits of the static device data, scoped to this family: the
+      # HAL SFR maps against the DFP proc headers, and every manifest
+      # example's #pragma config keys/values against the compiler's
+      # config database (validated at link time by a minimal config-TU
+      # link). Host-side python3 that shells into the toolchain
+      # container for the DFP headers / xc8-cc.
+      - name: Device-data audits (sfr-map, config-key, statics)
+        if: steps.docs.outputs.docs_only != 'true'
+        env:
+          EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          python3 scripts/sfr-map-audit.py --family "$FAMILY" || audit_status=$?
+          python3 scripts/config-key-audit.py --family "$FAMILY" || audit_status=$?
+          python3 scripts/statics-audit.py || audit_status=$?
+          exit "${audit_status:-0}"
+
+      # The rebuild-identity audit: this family's matrix .hex built
+      # twice into separate dirs and sha256-compared, so codegen or
+      # layout drift shows up as a reviewable diff instead of a flaky
+      # gate (the deterministic-layout hardening roadmap task 5c).
+      - name: Hex-rebuild identity audit
+        if: steps.docs.outputs.docs_only != 'true'
+        env:
+          EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
+        run: python3 scripts/hex-identity-audit.py --family "$FAMILY"
+
+      # Resolution (reading the manifest, computing sources, generating
+      # bundles) needs python3 and runs here, on the bare runner;
+      # everything the container executes below is a pre-emitted POSIX
+      # sh script, a plain-text matrix.txt, or an already-generated
+      # bundle directory, since the toolchain image deliberately has no
+      # python3 AND no jq (docker/ci-toolchain/Dockerfile), so the
+      # scripts that run inside it (scripts/ci-target-*.sh) can't parse
+      # JSON either; matrix.txt is one "family module mcu" triple per
+      # line for exactly that reason. Emits this family only:
+      #   - build/<module>/<mcu>/build.sh for every (module, family,
+      #     mcu) in the manifest with an example, plus matrix.txt.
+      #   - build-sim/<module>/<mcu>/build.sh for the family's sim
+      #     gates (matches scripts/ci-target-sim.sh's run_one list; keep
+      #     both in sync by hand if either changes).
+      #   - bundles/<family>-*.tar.gz via make_bundle.py.
+      - name: Emit real-target + sim build scripts, generate the bundle
+        if: steps.docs.outputs.docs_only != 'true'
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          xc8_install_dir="/opt/microchip/xc8/v${xc8_version}"
+          XC8_INSTALL_DIR="$xc8_install_dir" python3 - <<'PY'
+          import json, os, subprocess, sys
+          sys.path.insert(0, "scripts")
+          import epicmanifest
+
+          m = epicmanifest.load(epicmanifest.default_path())
+          xc8_install_dir = os.environ["XC8_INSTALL_DIR"]
+          family = os.environ["FAMILY"]
+
+          # Real-target build scripts for this family only, plus
+          # matrix.txt the build step below loops over. Reuses
+          # `epic_build.py matrix`'s own family/module/mcu filter.
+          matrix_json = subprocess.run(
+              ["python3", "scripts/epic_build.py", "matrix"],
+              check=True, capture_output=True, text=True,
+          ).stdout
+          with open("matrix.txt", "w") as matrix_f:
+              for entry in json.loads(matrix_json):
+                  fam_name = entry["family"]
+                  if fam_name != family:
+                      continue
+                  fam = m.families[fam_name]
+                  dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
+                  for pair in entry["modules"].split(";"):
+                      name, mcus = pair.split("=")
+                      for mcu in mcus.split(","):
+                          matrix_f.write(f"{fam_name} {name} {mcu}\n")
+                          subprocess.run(
+                              ["python3", "scripts/epic_build.py", "build",
+                               "--module", name, "--mcu", mcu,
+                               "--build-dir", f"build/{name}",
+                               "--dfp-dir", dfp_dir],
+                              check=True, stdout=subprocess.DEVNULL,
+                          )
+
+          # Sim build scripts for this family's gates (the run_one list
+          # in scripts/ci-target-sim.sh is the source of truth).
+          for module, mcu in [
+              ("epic-tick", "16F877A"),
+              ("epic-tick", "18F4550"),
+              ("epic-pic16f193x-firmware", "16F1937"),
+              ("epic-swuart", "16F877A"),
+              ("epic-math", "16F877A"),
+              ("epic-math", "18F4550"),
+              ("pic16f87xa-hal", "16F877A"),
+              ("pic18fxx5x-hal", "18F4550"),
+              ("epic-pid", "18F4550"),
+              ("epic-fsm", "16F877A"),
+              ("epic-adcfilter", "16F877A"),
+              ("epic-encoder", "16F877A"),
+              ("epic-bus", "16F877A"),
+              ("epic-serial", "16F877A"),
+              ("epic-lcd", "16F877A"),
+              ("epic-debounce", "16F877A"),
+              ("epic-console", "18F4550"),
+              ("epic-taskmgr", "18F4550"),
+              ("epic-settings", "18F4550"),
+              ("epic-modbus", "18F4550"),
+              ("epic-combo-uart-ssp", "16F877A"),
+              ("epic-combo-multitimer", "16F877A"),
+              ("epic-combo-adc-uart", "16F877A"),
+              ("epic-combo-rb-uart", "16F877A"),
+              ("epic-combo-eeprom-isr", "18F4550"),
+              ("epic-combo-tick-serial", "16F877A"),
+              ("epic-combo-tick-settings", "18F4550"),
+              ("epic-combo-taskmgr-serial", "18F4550"),
+              ("epic-combo-encoder-tick", "16F877A"),
+              ("epic-combo-lcd-tick", "18F4550"),
+              ("epic-combo-swuart-tick", "16F877A"),
+              ("epic-combo-modbus-full", "18F4550"),
+              ("epic-combo-rx-loopback", "16F877A"),
+          ]:
+              if module not in m.modules:
+                  continue
+              fam = m.family_of(mcu)
+              if fam.name != family:
+                  continue
+              dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
+              subprocess.run(
+                  ["python3", "scripts/epic_build.py", "build",
+                   "--module", module, "--mcu", mcu, "--variant", "sim",
+                   "--build-dir", f"build-sim/{module}",
+                   "--dfp-dir", dfp_dir],
+                  check=True,
+              )
+
+          # This family's bundle.
+          subprocess.run(
+              ["python3", "scripts/make_bundle.py",
+               "--family", family, "--version", "ci-test"],
+              check=True,
+          )
+          PY
+
+      # docker run, not this job's container: the job also needs python3
+      # (the emit step) and the toolchain image has none, so no single
+      # container: value could cover every step. Bind-mounting $PWD
+      # instead of upload/download-artifact works because everything
+      # above already ran on this same runner's filesystem.
+      # EPIC_REPO_ROOT=/work matches build.sh's own
+      # 'cd "${EPIC_REPO_ROOT:-.}"' convention; every path inside it is
+      # relative from there, so the mount point doesn't matter otherwise.
+      #
+      # The actual loop logic lives in scripts/ci-target-*.sh (committed,
+      # shellcheck-able files), not inlined here: this same payload used
+      # to be a docker-run-with-inline-bash-c string, which meant the
+      # loop's own quoting had to survive being embedded inside this
+      # step's already-quoted YAML `run:` block, a fragile double layer.
+      # A real script file has no such problem and can be tested on its
+      # own. Neither jq nor python3 exists inside the toolchain image,
+      # so ci-target-build.sh reads matrix.txt's plain "family module
+      # mcu" lines (this job's family only) rather than JSON. PARALLEL=2
+      # runs the builds concurrently on the runner's 2 cores.
+      - name: Real XC8 builds, this family
+        if: steps.docs.outputs.docs_only != 'true'
+        env:
+          PARALLEL: "2"
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work \
+            -e PARALLEL="$PARALLEL" \
+            "${{ steps.image.outputs.image }}" \
+            bash scripts/ci-target-build.sh || build_status=$?
+          cat ci-summary-build.md >> "$GITHUB_STEP_SUMMARY"
+          exit "${build_status:-0}"
+
+      # scripts/ci-target-sim.sh calls scripts/sim-mdb-run.sh, the same
+      # script scripts/sim-test-local.sh also calls for a local repro,
+      # so CI and a local run go through one source of truth. FAMILY
+      # filters this job's gates; PARALLEL=2 runs them concurrently.
+      # wait_ms values (5000, 60000 for pic16f193x) are confirmed-
+      # passing wall-clock budgets under MPLAB SIM.
+      - name: MPLAB SIM (mdb) runs
+        if: steps.docs.outputs.docs_only != 'true'
+        env:
+          PARALLEL: "2"
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work \
+            -e PARALLEL="$PARALLEL" -e FAMILY="$FAMILY" \
+            "${{ steps.image.outputs.image }}" \
+            bash scripts/ci-target-sim.sh || sim_status=$?
+          cat ci-summary-sim.md >> "$GITHUB_STEP_SUMMARY"
+          exit "${sim_status:-0}"
+
+      # scripts/ci-target-bundle.sh: proves the generated bundle is
+      # genuinely self-contained by copying it to /isolated (no repo
+      # above it) and building there, ported verbatim from the old
+      # bundle-gate.yml's build-isolated job.
+      - name: Isolated bundle build
+        if: steps.docs.outputs.docs_only != 'true'
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work \
+            "${{ steps.image.outputs.image }}" \
+            bash scripts/ci-target-bundle.sh || bundle_status=$?
+          cat ci-summary-bundle.md >> "$GITHUB_STEP_SUMMARY"
+          exit "${bundle_status:-0}"
