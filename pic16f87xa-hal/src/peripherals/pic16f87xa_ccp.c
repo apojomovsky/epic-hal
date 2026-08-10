@@ -30,8 +30,19 @@ static const ccp_addrs_t *ccp_sel(CCP_InstanceTypeDef inst)
     return &addrs[0];
 }
 
-/* Static handle storage, one per CCP instance. */
-static const CCP_HandleTypeDef *g_ccp_handles[3] = { NULL, NULL, NULL };
+/* Driver-owned callback storage, one slot per CCP instance (indexed
+ * by CCP_InstanceTypeDef; index 0 unused). The IRQ handlers call the
+ * stored callback directly and never dereference a caller-provided
+ * handle: on XC8 v4.00 the CCP driver's handle pointers are 8-bit
+ * values whose dereferences are baked to IRP=1 (RAM banks 2/3 only),
+ * so an ISR that read EventCallback through a stored handle would
+ * misread the slot whenever the caller's handle lives in bank 0/1
+ * (the C11 combo-gate fragility; see docs/toolchain-coverage.md).
+ * A direct access to this static array is bank-correct regardless of
+ * where the array itself lands, and the caller's handle is only
+ * dereferenced inside EPIC_CCP_Init, where XC8 emits the runtime
+ * bank-select form. */
+static void (*g_ccp_callbacks[3])(void) = { NULL, NULL, NULL };
 
 /* ───────────────────────── public API ───────────────────────────── */
 
@@ -42,11 +53,15 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
         return EPIC_INVALID;
     }
     const ccp_addrs_t *a = ccp_sel(h->Instance);
-    g_ccp_handles[h->Instance] = h;
+    /* Copy the callback into driver-owned storage before any use:
+     * the IRQ handlers call this copy directly, and the caller's
+     * handle is not retained (it may be a stack object whose
+     * lifetime ends when Init returns). */
+    g_ccp_callbacks[h->Instance] = h->EventCallback;
 
     /* Clear the IRQ before reconfiguring. */
     EPIC_IRQ_ClearFlag(a->irq);
-    if (h->EventCallback) {
+    if (g_ccp_callbacks[h->Instance]) {
         EPIC_IRQ_Enable(a->irq);
     } else {
         EPIC_IRQ_DisableSrc(a->irq);
@@ -80,7 +95,7 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
     EPIC_IRQ_DisableSrc(a->irq);
     EPIC_IRQ_ClearFlag(a->irq);
     EPIC_REG8(a->con) = 0x00U;
-    g_ccp_handles[inst] = NULL;
+    g_ccp_callbacks[inst] = NULL;
     return EPIC_OK;
 }
 
@@ -135,17 +150,15 @@ void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 void CCP1_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
-    if (g_ccp_handles[CCP_INSTANCE_1] &&
-        g_ccp_handles[CCP_INSTANCE_1]->EventCallback) {
-        g_ccp_handles[CCP_INSTANCE_1]->EventCallback();
+    if (g_ccp_callbacks[CCP_INSTANCE_1]) {
+        g_ccp_callbacks[CCP_INSTANCE_1]();
     }
 }
 
 void CCP2_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
-    if (g_ccp_handles[CCP_INSTANCE_2] &&
-        g_ccp_handles[CCP_INSTANCE_2]->EventCallback) {
-        g_ccp_handles[CCP_INSTANCE_2]->EventCallback();
+    if (g_ccp_callbacks[CCP_INSTANCE_2]) {
+        g_ccp_callbacks[CCP_INSTANCE_2]();
     }
 }

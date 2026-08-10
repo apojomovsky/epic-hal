@@ -80,6 +80,11 @@ typedef struct {
  *
  * @param  h     handle with Instance, Mode, CompareValue, optional PWM.
  *
+ * @note   The EventCallback is copied into driver-owned storage: the
+ *         IRQ handlers call the driver's copy directly, so `h` does
+ *         not need to outlive this call, and the callback keeps
+ *         firing until EPIC_CCP_DeInit clears it.
+ *
  * @note   For PWM, also call `EPIC_TIMER2_Init` + `EPIC_TIMER2_Start`
  *         with a period matching `h->PWM.Period` before this call.
  *
