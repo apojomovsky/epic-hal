@@ -30,7 +30,7 @@
 #                  DEVICE=<device> DFP=<pack> [WAIT_MS=<ms>]
 #   shell          interactive shell in the toolchain container
 
-.PHONY: check-vendor image ci-image-push test xc8-build mdb-test target-ci exec shell
+.PHONY: check-vendor image ci-image-push test xc8-build mdb-test target-ci exec audit shell
 
 # ─────────────────────────── image identity ─────────────────────────
 # Same tag-resolution formula CI and scripts/sim-test-local.sh already
@@ -199,6 +199,16 @@ shell: image
 exec: image
 	@test -n "$(CMD)" || { echo "usage: make exec CMD='bash scripts/... args'" >&2; exit 1; }
 	$(DOCKER_RUN) bash -c "$(CMD)"
+
+# ─────────────────────────────── audits ─────────────────────────────
+# The static device-data audits (the CI target job's SFR-map +
+# config-key step, reproduced locally): HAL SFR maps against the DFP
+# proc headers, and every manifest example's config keys/values against
+# the compiler's config database. Host-side python3, shells into the
+# toolchain container for the DFP headers and xc8-cc.
+audit: image
+	python3 scripts/sfr-map-audit.py
+	python3 scripts/config-key-audit.py
 
 # ──────────────────── local replica of CI's target job ──────────────
 # One command to reproduce the whole "target" CI job locally: emit the
