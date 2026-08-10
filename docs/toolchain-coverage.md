@@ -133,7 +133,7 @@ All IRQ-shared statics live in banked GPR (linker best-fit); none is
 pinned except the two scratch bytes. Pure-C accesses get auto-banksel
 (low residual risk), but the epic-math incident proved the class is
 real when asm or multi-byte interleaving is involved. The multi-byte
-struct copies (`g_t0_storage`, `g_ccp_handles[3]`, `g_handle[5]`,
+struct copies (`g_t0_storage`, `g_ccp_callbacks[3]`, `g_handle[5]`,
 `g_t1_handle`, `g_usart`) are the worst scatter cases. 87XA: 14
 symbols. 193X: 6 symbols. PIC18: bank-agnostic, exempt.
 
@@ -249,7 +249,7 @@ combination-matrix.md) added 12 permanent interleave gates
 | C8 | epic-taskmgr + epic-serial | PIC18 | period ratios + ring push/pop exactness + byte-exact capture |
 | C9 | epic-encoder + epic-tick | 87XA | unbounded tick delays freeze under the sim wedge (bounded probes) |
 | C10 | epic-lcd + epic-tick | PIC18 | moved off 87XA: RAM edge + 8-level stack + wedge; PIC18 spins delays on the live tick |
-| C11 | epic-swuart + epic-tick | 87XA | found the PIE2 bank regression (see Finding 11 correction); handle pinned __at(0x140) for the 8-bit bank-2/3-relative pointer issue |
+| C11 | epic-swuart + epic-tick | 87XA | found the PIE2 bank regression (see Finding 11 correction); swuart/CCP 8-bit handle-pointer fragility fixed at source (CCP driver now stores driver-owned callbacks), gate runs unpinned |
 | C12 | epic-modbus + epic-serial + epic-tick | PIC18 | frame byte-exact under a live tick; PIC18 has no TX-storm GIE wedge |
 
 Bugs found and fixed by the matrix:

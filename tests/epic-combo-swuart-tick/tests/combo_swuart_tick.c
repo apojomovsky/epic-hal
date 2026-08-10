@@ -22,19 +22,21 @@
  *   (TMR2IE, CCP1IE, CCP2IE; TXIE stays off because the harness
  *   reports by polling).
  *
- *   The handle is pinned to bank 2 (`__at(0x140)`), not left to the
- *   auto pool. XC8 v4.00 represents the swuart module's handle
- *   pointers (`g_chan_a`, the CCP driver's `g_ccp_handles`) as 8-bit
- *   bank-2/3-relative values dereferenced with IRP=1, so the whole
- *   ISR path only works when the handle structs live in RAM banks 2/3
- *   (0x100-0x1FF). The linker's best-fit placement of the auto pool
- *   is layout-dependent: without the pin, adding epic-tick's code to
- *   the gate build moved the handles to bank 0/1, the CCP2 handler's
- *   callback read landed in the wrong bank, and the TX chain stalled
- *   at the first compare event (the deadline never advanced; the
- *   EventCallback slot resolved to the tick's own counter increment,
- *   so every CCP2 event silently bumped g_tick_ms). This gate is the
- *   regression for that fragility; see the C11 section of
+ *   The swuart/CCP handle-pointer fragility this gate was built to
+ *   catch is fixed at the source: XC8 v4.00 compiles the CCP driver's
+ *   stored handle pointers as 8-bit values dereferenced with IRP=1
+ *   (RAM banks 2/3 only), so the ISR path only worked when the CCP
+ *   handle structs happened to land in 0x100-0x1FF. The linker's
+ *   best-fit placement of the auto pool is layout-dependent: in an
+ *   early build, adding epic-tick's code moved the handles to bank
+ *   0/1, the CCP2 handler's callback read landed in the wrong bank,
+ *   and the TX chain stalled at the first compare event (the deadline
+ *   never advanced; the EventCallback slot resolved to the tick's own
+ *   counter increment, so every CCP2 event silently bumped g_tick_ms).
+ *   The CCP driver now stores its own per-instance callback copy and
+ *   the IRQ handlers call that copy directly, never dereferencing a
+ *   caller handle, so this gate runs with the handle unpinned. It is
+ *   the regression gate for that fragility; see the C11 section of
  *   docs/superpowers/plans/2026-08-09-combination-matrix.md.
  *
  *   MPLAB SIM lessons applied from the C1 gate: pending timer flags
@@ -67,9 +69,10 @@
 #define TX_BYTES  4u
 #define TX_ROUNDS 4u
 
-/* Pinned to bank 2 (see the file header: XC8's 8-bit handle pointers
- * require the handle in banks 2/3 for the ISR path to deref it). */
-static EPIC_SWUART_HandleTypeDef g_h __at(0x140);
+/* Deliberately unpinned (see the file header): the CCP driver no
+ * longer dereferences this handle (or its own CCP handle copies)
+ * through the 8-bit pointer path, so its bank is irrelevant. */
+static EPIC_SWUART_HandleTypeDef g_h;
 
 static uint16_t g_fail = 0u;
 
