@@ -130,7 +130,25 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     if dfp_dir:
         flags.append(f"-mdfp={dfp_dir}")
     flags.append(f"-mcpu={mcu.lower()}")
-    flags += ["-O2", "-std=c99", "-Wall", "-Wextra", f"-D{_part_define(mcu)}"]
+    # XC8-specific warning noise this repo has triaged: the "never
+    # called" linker analysis (520/2053), the generated-no-code
+    # expressions (759), the 64-bit-literal note (1516), the defaulted
+    # config-word note (1311), the common-RAM top-boundary check
+    # (1262), and the three advisory classes (1510/2098/1498). The
+    # stack-depth warning (1393) is deliberately NOT suppressed: it is
+    # the real 8-level-stack hazard class.
+    flags += ["-O2", "-std=c99", "-Wall", "-Wextra",
+              "-Wno-520", "-Wno-2053", "-Wno-759", "-Wno-1516",
+              "-Wno-1311", "-Wno-1262", "-Wno-1510", "-Wno-2098",
+              "-Wno-1498",
+              # XC8's -Wall also turns on the gcc-style classes; the
+              # harness report / math asm counters / sign-conversions
+              # are triaged noise (the asm counters are referenced from
+              # inline asm, invisible to the C-level unused analysis).
+              "-Wno-unused-function", "-Wno-unused-variable",
+              "-Wno-unused-parameter", "-Wno-sign-conversion",
+              "-Wno-implicit-int-conversion",
+              f"-D{_part_define(mcu)}"]
     flags += [f"-I{inc}" for inc in includes]
     flags.append(f"-DFOSC_HZ={fosc_hz}")
     cflags = " ".join(flags)

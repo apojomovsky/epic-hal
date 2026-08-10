@@ -81,7 +81,8 @@ uint16_t pic_math_mul_u8(uint8_t a, uint8_t b) __at(0x100)
 /* ─── pic_math_mul_u16 ───────────────────────────────────────────
  * 16x16 -> 32 shift-add, 16 iterations. tmp = a in a 32-bit register
  * (shifted left -> a<<i); for each set bit of b, r += tmp (32-bit add, carry
- * idiom across 4 bytes). Offsets a@0-1,b@2-3,bk@4-5,r@6-9,t@10-13,cnt@14.
+ * idiom across 4 bytes). Offsets a@0-1 (a_lo reused as cnt after
+ * the t copy),b@2-3,bk@4-5,r@6-9,t@10-13.
  * Hand-trace a=0x0102 b=0x0103 (258*259=66822=0x00010506): b bits 0,1,8 set.
  *   r += a<<0 (0x102) + a<<1 (0x204) + a<<8 (0x10200) = 0x10506.           */
 uint32_t pic_math_mul_u16(uint16_t a, uint16_t b) __at(0x130)
@@ -106,7 +107,8 @@ uint32_t pic_math_mul_u16(uint16_t a, uint16_t b) __at(0x130)
     asm("movf  _pic16_mscratch+3,w");
     asm("movwf _pic16_mscratch+5");           /* bk = b                             */
     asm("movlw 16");
-    asm("movwf _pic16_mscratch+14");          /* cnt = 16                           */
+    asm("movwf _pic16_mscratch+0");           /* cnt = 16 (a_lo slot, dead after
+                                                 the t = a copy above)              */
     asm("_m16_loop:");
     /* if bk LSB set, r += tmp (32-bit add, carry idiom across 4 bytes) */
     asm("btfss _pic16_mscratch+4,0");
@@ -136,7 +138,7 @@ uint32_t pic_math_mul_u16(uint16_t a, uint16_t b) __at(0x130)
     asm("bcf   STATUS,0");
     asm("rrf   _pic16_mscratch+5,f");
     asm("rrf   _pic16_mscratch+4,f");
-    asm("decfsz _pic16_mscratch+14,f");
+    asm("decfsz _pic16_mscratch+0,f");
     asm("goto  _m16_loop");
 
     return (uint32_t)pic16_mscratch[6] | ((uint32_t)pic16_mscratch[7] << 8)

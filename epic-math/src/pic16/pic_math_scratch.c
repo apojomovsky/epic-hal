@@ -30,4 +30,4 @@
 
 #include "pic_math_scratch.h"
 
-volatile uint8_t pic16_mscratch[16] __at(0x70);
+volatile uint8_t pic16_mscratch[14] __at(0x20);
