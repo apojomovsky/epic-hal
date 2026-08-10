@@ -180,7 +180,7 @@ jobs:
       # python3 that shells into the toolchain container for the DFP
       # headers / xc8-cc, so this step sits right after the pull, next
       # to the other container-dependent steps.
-      - name: SFR-map + config-key audits
+      - name: Device-data audits (sfr-map, config-key, statics)
         if: steps.docs.outputs.docs_only != 'true'
         env:
           EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
