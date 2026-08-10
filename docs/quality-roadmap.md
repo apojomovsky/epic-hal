@@ -127,6 +127,8 @@ docs/layout-budgets.md collects the flash, stack, and GPR budgets in
 one place; (c) scripts/hex-identity-audit.py proves every matrix hex
 is byte-identical across a rebuild.
 
+   Status: (c) hex-rebuild identity audit done (2026-08-11, scripts/hex-identity-audit.py in CI's target job and make audit); (a) and (b) land separately.
+
 ## Honorable mentions
 
 - epic-usb / epic-sdcard real-target manifest entries (compile-only

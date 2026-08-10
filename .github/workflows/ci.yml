@@ -190,6 +190,16 @@ jobs:
           python3 scripts/statics-audit.py || audit_status=$?
           exit "${audit_status:-0}"
 
+      # The rebuild-identity audit: every matrix .hex built twice into
+      # separate dirs and sha256-compared, so codegen or layout drift
+      # shows up as a reviewable diff instead of a flaky gate (the
+      # deterministic-layout hardening roadmap task 5c).
+      - name: Hex-rebuild identity audit
+        if: steps.docs.outputs.docs_only != 'true'
+        env:
+          EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
+        run: python3 scripts/hex-identity-audit.py
+
       # Resolution (reading the manifest, computing sources, generating
       # bundles) needs python3 and runs here, on the bare runner;
       # everything the container executes below is a pre-emitted POSIX
