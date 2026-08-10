@@ -63,7 +63,7 @@ def _example_name_and_config(manifest, module, mcu, variant):
     as an unsupported (module, MCU) pair.
     """
     fam = manifest.family_of(mcu)
-    example = manifest.example_for(module, fam.name)
+    example = manifest.example_for(module, fam.name, mcu)
     if variant == "sim":
         sim = manifest.sim_variant_for(module, fam.name)
         if sim is None:
@@ -114,7 +114,7 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     the same build dir.
     """
     fam = _check_supported(manifest, module, mcu)
-    example = manifest.example_for(module, fam.name)
+    example = manifest.example_for(module, fam.name, mcu)
     if example is None:
         raise UnsupportedError(f"{module} has no example for {fam.name} to build")
     if variant == "sim" and manifest.sim_variant_for(module, fam.name) is None:

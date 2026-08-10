@@ -52,6 +52,13 @@ nets, never paper over).
 
 ## Task 5a: PIC16 math asm pinning, full golden-vector replay
 
+Status: done (2026-08-11). The 10 asm leaves are __at-pinned at
+0x100-0x490 (page 0); the full golden-vector replay runs on the
+16F876A/16F877A under mdb and PASSED 62/62, which exposed and fixed
+two real asm bugs (mul_u16's rrf shift order, and the incf-wrap carry
+loss in every carry-into-next-byte site, fixed with incfsz). The
+4K-word parts keep the smoke via new per-MCU example variants.
+
 ### Solved
 
 - The PIC16 math gate runs the smoke (target_smoke16.c) because the

@@ -222,6 +222,11 @@ and each is documented at its source (the sim files' headers):
   the documented latent hazard.
 - `__at()` pinning of the PIC16 math asm routines below 0x800 would enable
   a full golden-vector PIC16 replay (currently layout-limited to the smoke).
+  **Done 2026-08-11** (quality task 5a): the leaves are pinned 0x100-0x490,
+  the replay runs on the 8 K-word parts under mdb (62/62 vectors PASS) and
+  exposed two real asm bugs that are fixed (the mul_u16 rrf shift order and
+  the incf-wrap carry loss); the 4 K-word parts keep the smoke via per-MCU
+  example variants.
 - epic-usb and epic-sdcard real-target manifest entries (compile-only) are
   the remaining coverage gap; their host tests run in CI.
 

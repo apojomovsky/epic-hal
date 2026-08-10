@@ -53,7 +53,7 @@ uint32_t pic_math_bin_to_bcd16(uint16_t value)
  * Offsets a@0,b@1,r@2,co@3,lo@4,hi@5. Hand-trace a=0x55 b=0x55 (110 ->
  * 0x10, carry=1): lo=5+5=0xA(10)>9 -> lo=16, adj_low=0, cy=1; hi=5+5+1=0xB
  * (11)>9 -> hi=17, adj_high=1, co=1; r=(1<<4)|0=0x10, co=1. Matches host. */
-uint8_t pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out)
+uint8_t pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out) __at(0x400)
 {
     pic16_mscratch[0] = a; pic16_mscratch[1] = b;
     pic16_mscratch[3] = 0u;
@@ -110,7 +110,7 @@ uint8_t pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out)
  * aL@4,bL@5,br@6,aH@7. Hand-trace a=0x12 b=0x34 (12-34 = -22 -> 78, bo=1):
  *   aL=2,bL=4; 2-4 borrow -> aL=8, br=1; aH=1; bH+br=3+1=4; 1-4 borrow ->
  *   aH=7, bo=1; r=(7<<4)|8=0x78, bo=1. Matches host: 12-34+100=78, bo=1.   */
-uint8_t pic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out)
+uint8_t pic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out) __at(0x450)
 {
     pic16_mscratch[0] = a; pic16_mscratch[1] = b;
     pic16_mscratch[3] = 0u; pic16_mscratch[6] = 0u;

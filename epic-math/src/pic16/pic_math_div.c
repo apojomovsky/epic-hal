@@ -16,7 +16,7 @@
  * cnt@6. Mirrors ref_divmod_u16_algo:
  *   c = num>>15; num <<= 1; rem = (rem<<1)|c; if(rem>=den){rem-=den; num|=1;}
  * Hand-trace 0x0007/0x0002 = 3 r 1 -- see the PIC18 backend comment. */
-pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
+pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __at(0x1C0)
 {
     pic_math_udiv16_t res = { 0u, 0u };
     if (den == 0u) { if (ok) *ok = false; return res; }
@@ -40,7 +40,7 @@ pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
     asm("subwf _pic16_mscratch+2,f");
     asm("movf  _pic16_mscratch+5,w");
     asm("btfss STATUS,0");
-    asm("incf  _pic16_mscratch+5,w");
+    asm("incfsz _pic16_mscratch+5,w");  /* den_hi + borrow; skip if wrapped */
     asm("subwf _pic16_mscratch+3,f");
     /* C=1: set quotient bit; C=0: restore rem += den */
     asm("btfss STATUS,0");
@@ -52,7 +52,7 @@ pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
     asm("addwf _pic16_mscratch+2,f");
     asm("movf  _pic16_mscratch+5,w");
     asm("btfsc STATUS,0");
-    asm("incf  _pic16_mscratch+5,w");
+    asm("incfsz _pic16_mscratch+5,w");  /* den_hi + carry; skip if wrapped */
     asm("addwf _pic16_mscratch+3,f");
     asm("_du16_next:");
     asm("decfsz _pic16_mscratch+6,f");
@@ -70,7 +70,7 @@ pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
  * subtract unconditionally (rem wraps to the low-16 of extended-den) and set
  * the bit; else do the plain 16-bit restoring subtract. Quotient truncated
  * to 16 bits (low word). Mirrors ref_divmod_u32_16_algo. */
-pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
+pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok) __at(0x240)
 {
     pic_math_udiv16_t res = { 0u, 0u };
     if (den == 0u) { if (ok) *ok = false; return res; }
@@ -99,7 +99,7 @@ pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
     asm("subwf _pic16_mscratch+4,f");
     asm("movf  _pic16_mscratch+7,w");
     asm("btfss STATUS,0");
-    asm("incf  _pic16_mscratch+7,w");
+    asm("incfsz _pic16_mscratch+7,w");
     asm("subwf _pic16_mscratch+5,f");
     asm("bsf   _pic16_mscratch+0,0");
     asm("goto  _du32_next");
@@ -109,7 +109,7 @@ pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
     asm("subwf _pic16_mscratch+4,f");
     asm("movf  _pic16_mscratch+7,w");
     asm("btfss STATUS,0");
-    asm("incf  _pic16_mscratch+7,w");
+    asm("incfsz _pic16_mscratch+7,w");
     asm("subwf _pic16_mscratch+5,f");
     asm("btfss STATUS,0");
     asm("goto  _du32_restore");
@@ -120,7 +120,7 @@ pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
     asm("addwf _pic16_mscratch+4,f");
     asm("movf  _pic16_mscratch+7,w");
     asm("btfsc STATUS,0");
-    asm("incf  _pic16_mscratch+7,w");
+    asm("incfsz _pic16_mscratch+7,w");
     asm("addwf _pic16_mscratch+5,f");
     asm("_du32_next:");
     asm("decfsz _pic16_mscratch+8,f");

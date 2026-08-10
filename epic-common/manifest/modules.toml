@@ -1050,29 +1050,45 @@ PIC18Fxx5x = [
 [modules.epic-math.example.PIC16F87XA]
 name    = "math-selftest"
 sources = [
-  "tests/target_smoke16.c",
+  "tests/target_selftest.c",
 ]
 hal    = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
 
-# HARNESS=sim for PIC16: the minimal smoke16 (same source as the
-# real-target example). The golden-value replay for PIC16 is blocked by
-# an XC8 v4.00 layout constraint, measured 2026-08-09: the hand-asm
-# routines' internal `goto`s carry no PCLATH management, so the linker
-# must keep them in flash page 0; any build over ~2.5 K words (four
-# checked structures tried: helper-function, single-function-inline,
-# immediate-compare, and smoke16-shaped volatile parking) spills them
-# to page 1 and aborts with fixup-overflow 1356. The gate still proves
-# every asm body links and executes under the real toolchain without
-# hanging; value correctness on PIC16 asm is carried by the PIC18 gate
-# (full golden-vector replay) and the exhaustive host ctests. The
-# recorded follow-up is pinning the PIC16 math routines below 0x800
-# with __at(), the repo's established fix for this class.
+# The 4K-word parts (16F873A/16F874A) cannot hold the golden-vector
+# replay: the selftest plus the page-0-pinned asm leaves fragments the
+# CODE space and the link fails with 1347 (measured 2026-08-11). They
+# keep the smoke, which still proves every asm body links and executes.
+[modules.epic-math.example.PIC16F87XA.variants.16F873A]
+name    = "math-selftest"
+sources = [
+  "tests/target_smoke16.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+[modules.epic-math.example.PIC16F87XA.variants.16F874A]
+name    = "math-selftest"
+sources = [
+  "tests/target_smoke16.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim for PIC16: the full golden-vector replay (same source
+# as the real-target example and the PIC18 gate). The replay was
+# blocked by an XC8 v4.00 layout constraint, measured 2026-08-09: the
+# hand-asm routines' internal `goto`s carry no PCLATH management, so
+# the linker must keep them in flash page 0; past ~2.5 K words it
+# spilled them to page 1 and aborted with fixup-overflow 1356. The
+# fix, applied 2026-08-11 (quality task 5a): every asm leaf is
+# __at-pinned below 0x800 (0x100-0x420, see docs/layout-budgets.md),
+# so the page-0 requirement holds regardless of the build size.
 [modules.epic-math.example.PIC16F87XA.sim]
 name        = "math-selftest-sim"
 harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
 sources     = [
-  "tests/target_smoke16.c",
+  "tests/target_selftest.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 

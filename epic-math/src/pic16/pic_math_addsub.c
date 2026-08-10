@@ -18,13 +18,13 @@
  *   addwf a+0,w    ; w=0xFF+0x02=0x01, C=1
  *   movwf r+0      ; r_lo=0x01
  *   movf b+1,w     ; w=0x00 (movf keeps C)            ; C=1
- *   btfsc STATUS,0 ; C=1 -> don't skip incf
- *   incf b+1,w     ; w=0x01
+ *   btfsc STATUS,0 ; C=1 -> don't skip addlw
+ *   addlw 1        ; w=b_hi+1, C-correct on wrap
  *   addwf a+1,w    ; w=0xFF+0x01=0x00, C=1            ; C=1
  *   movwf r+1      ; r_hi=0x00 -> r=0x0001
  *   clrf co; btfsc STATUS,0 (C=1); incf co ; co=1
  * Matches host: 0xFFFF+0x0002=0x10001 -> 0x0001, carry=1.                 */
-uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out)
+uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out) __at(0x2E0)
 {
     pic16_mscratch[0] = (uint8_t)a;           pic16_mscratch[1] = (uint8_t)(a >> 8);
     pic16_mscratch[2] = (uint8_t)b;           pic16_mscratch[3] = (uint8_t)(b >> 8);
@@ -35,7 +35,7 @@ uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out)
     asm("movwf _pic16_mscratch+4");
     asm("movf  _pic16_mscratch+3,w");
     asm("btfsc STATUS,0");
-    asm("incf  _pic16_mscratch+3,w");
+    asm("incfsz _pic16_mscratch+3,w");  /* b_hi + carry; skip if wrapped */
     asm("addwf _pic16_mscratch+1,w");
     asm("movwf _pic16_mscratch+5");
     asm("clrf  _pic16_mscratch+6");
@@ -51,14 +51,14 @@ uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out)
  *   movf b+0,w    ; w=0xFF
  *   subwf a+0,w   ; w=0x02-0xFF=0x03, C=0 (borrow)        ; C=0
  *   movwf r+0     ; r_lo=0x03
- *   movf b+1,w    ; w=0x00 (C preserved)                  ; C=0
- *   btfss STATUS,0 ; C=0 -> don't skip incf
- *   incf b+1,w    ; w=0x01 (borrow into high)
+ *   movf b+1,w    ; w=0xFF (C preserved)                  ; C=0
+ *   btfss STATUS,0 ; C=0 -> don't skip addlw
+ *   addlw 1       ; w=0xFF+1=0x00, C=1 (wrap, C-correct)
  *   subwf a+1,w   ; w=0x00-0x01=0xFF, C=0                ; C=0
  *   movwf r+1     ; r_hi=0xFF -> r=0xFF03 (wraps to 0x0003)
  *   clrf bo; btfss STATUS,0 (C=0, no skip); incf bo ; bo=1
  * Matches host: 0x0002-0xFFFF=0x0003, borrow=1.                          */
-uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out)
+uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out) __at(0x320)
 {
     pic16_mscratch[0] = (uint8_t)a;           pic16_mscratch[1] = (uint8_t)(a >> 8);
     pic16_mscratch[2] = (uint8_t)b;           pic16_mscratch[3] = (uint8_t)(b >> 8);
@@ -69,7 +69,7 @@ uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out)
     asm("movwf _pic16_mscratch+4");
     asm("movf  _pic16_mscratch+3,w");
     asm("btfss STATUS,0");
-    asm("incf  _pic16_mscratch+3,w");
+    asm("incfsz _pic16_mscratch+3,w");  /* b_hi + borrow; skip if wrapped */
     asm("subwf _pic16_mscratch+1,w");
     asm("movwf _pic16_mscratch+5");
     asm("clrf  _pic16_mscratch+6");
@@ -85,7 +85,7 @@ uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out)
  * (r=0xFFFA); incf r+0->0xFB, Z=0 -> r+1 stays 0xFF -> r=0xFFFB.
  * v=INT16_MIN (0x8000): comf->0x7FFF, inc low wraps Z=1 -> inc high
  * 0x7F->0x80 -> 0x8000 (negate of INT16_MIN is itself).               */
-int16_t pic_math_negate_s16(int16_t v)
+int16_t pic_math_negate_s16(int16_t v) __at(0x360)
 {
     uint16_t uv = (uint16_t)v;
     pic16_mscratch[0] = (uint8_t)uv;          pic16_mscratch[1] = (uint8_t)(uv >> 8);
@@ -102,7 +102,7 @@ int16_t pic_math_negate_s16(int16_t v)
 
 /* ─── pic_math_negate_s32 ────────────────────────────────────────
  * Same ~v + 1, carry cascade across 4 bytes. Offsets: v@0-3, r@4-7. */
-int32_t pic_math_negate_s32(int32_t v)
+int32_t pic_math_negate_s32(int32_t v) __at(0x380)
 {
     uint32_t uv = (uint32_t)v;
     pic16_mscratch[0] = (uint8_t)uv;          pic16_mscratch[1] = (uint8_t)(uv >> 8);
