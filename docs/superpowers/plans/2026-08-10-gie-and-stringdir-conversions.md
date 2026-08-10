@@ -1,7 +1,12 @@
 # GIE-race conversion (class G) + stringdir ISR-handler conversion (class F)
 
-Status: **approved 2026-08-10**. Executes quality-roadmap tasks 2 and 3
-(docs/quality-roadmap.md) in one PR.
+Status: **complete 2026-08-10**. Both conversions land (see the PR).
+Task 3: all 14 ISR handlers use direct flag ops. Task 2: epic-serial
+(all 3 sites), epic-swuart (3), epic-encoder (3), and epic-taskmgr
+(7 of 10; task_start/task_reset/task_set_period retain their critical
+sections with documented rationale - a 16-bit TCB write cannot be made
+atomic by retry). Verification: 112/112 builds, 32/32 gates, 6/6
+bundles, host suite green.
 
 ## Task 3: stringdir ISR-handler conversion (class F)
 
