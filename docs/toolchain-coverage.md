@@ -137,6 +137,31 @@ struct copies (`g_t0_storage`, `g_ccp_callbacks[3]`, `g_handle[5]`,
 `g_t1_handle`, `g_usart`) are the worst scatter cases. 87XA: 14
 symbols. 193X: 6 symbols. PIC18: bank-agnostic, exempt.
 
+Status: audited and pinned 2026-08-11 (scripts/statics-audit.py, in
+CI's target job and `make audit`). The mechanical scan flags every
+IRQ-shared multi-byte static that is neither pinned nor allowlisted;
+the disassembly probe that drove the pinning found the class is WORSE
+than scatter: XC8 v4.00 bakes a constant IRP select into ISR pointer
+derefs on the 87XA, and the two ISRs bake OPPOSITE windows:
+
+- TIMER0_IRQHandler derefs `g_t0_handle` with `bsf STATUS,7` (IRP=1,
+  banks 2/3 only); `g_t0_storage` is now `__at`-pinned to bank 2
+  (0x130, 6 bytes) via EPIC_PLACE. Unpinned, it scattered to bank 1
+  or bank 3 depending on the build, and the gates passed only when
+  the scatter landed in the baked window.
+- USART_TX_IRQHandler derefs `g_usart` with `bcf STATUS,7` (IRP=0,
+  banks 0/1 only); the harness's `s_usart_handle` is now pinned to
+  bank 1 (0xA0, 7 bytes). Unpinned it landed in bank 3 in the tick
+  build, where the IRP=0 read silently addressed the wrong RAM.
+- Verified-safe and allowlisted (disassembly or documented codegen):
+  the 193X statics (pointer derefs compile to FSR1 indirect, which
+  reaches any bank; matches Finding 1) and the 87XA `g_ccp_callbacks`
+  (the CCP ISRs read the array directly, auto-banksel, never through
+  a pointer).
+- The caller-owned handle class (e.g. TIMER1/2 handles kept by the
+  caller while the ISR derefs them through a baked-IRP pointer) is
+  outside the file-scope scan; the C2 multitimer gate is its net.
+
 ### I. Coverage gaps (manifest)
 
 - `epic-console`, `epic-settings`: `supported` is empty. The rc1
@@ -177,7 +202,9 @@ and each is documented at its source (the sim files' headers):
 - **GIE can be left cleared** after ISR return under the sim (the
   epic-tick Finding 10(a) class), observed on PIC16 Timer0-tick builds;
   PIC18 gates are unaffected.
-- **PIC16F87XA sim builds have a layout budget**: the `__interrupt` body
+- **PIC16F87XA sim builds have a layout budget** (see
+  docs/layout-budgets.md for the full budget record, including the
+  2026-08-11 EPIC_PLACE pins): the `__interrupt` body
   must stay in flash page 0 (the vector's PCLATH-less goto) and the
   hand-asm routines' internal gotos likewise; past ~4.2 K words the linker
   scatters them and aborts with fixup-overflow 1356. Family-agnostic pure-
@@ -197,6 +224,11 @@ and each is documented at its source (the sim files' headers):
   the documented latent hazard.
 - `__at()` pinning of the PIC16 math asm routines below 0x800 would enable
   a full golden-vector PIC16 replay (currently layout-limited to the smoke).
+  **Done 2026-08-11** (quality task 5a): the leaves are pinned 0x100-0x490,
+  the replay runs on the 8 K-word parts under mdb (62/62 vectors PASS) and
+  exposed two real asm bugs that are fixed (the mul_u16 rrf shift order and
+  the incf-wrap carry loss); the 4 K-word parts keep the smoke via per-MCU
+  example variants.
 - epic-usb and epic-sdcard real-target manifest entries (compile-only) are
   the remaining coverage gap; their host tests run in CI.
 

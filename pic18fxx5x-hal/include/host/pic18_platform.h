@@ -25,6 +25,9 @@ extern uint8_t pic18_sim_sfr[0x1000];
  * IRQHandler if it ever needs to. */
 #define EPIC_WEAK   __attribute__((weak))
 
+/* Placement pins are an XC8 extension; the host build is a no-op. */
+#define EPIC_PLACE(addr)
+
 /* SFR access resolves to an index into the simulated register file. */
 #define EPIC_SFR_PTR(addr)       (&pic18_sim_sfr[(uint16_t)(addr)])
 #define epic_sfr_read8(addr)     (pic18_sim_sfr[(uint16_t)(addr)])

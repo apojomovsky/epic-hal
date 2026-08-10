@@ -14,10 +14,17 @@
 # Usage: ci-target-sim.sh [summary.md]
 #
 # Does not stop at the first failure. Exits 1 if anything failed.
+#
+# REPEAT=N runs every gate N times (default 1); any failed run fails
+# the gate, and the summary records "PASS (n/N)" or "FAIL (n/N)". This
+# is the flake-hardening harness (quality task 10): a flake-hunt is
+# `REPEAT=5 bash scripts/ci-target-sim.sh`, and the workflow_dispatch
+# CI job drives the same command without slowing the PR target job.
 
 set -uo pipefail
 
 summary="${1:-ci-summary-sim.md}"
+repeat="${REPEAT:-1}"
 
 fail=0
 {
@@ -30,12 +37,20 @@ run_one() {
   # Args 7 (extra_mdb) and 8 (eeprom_writes) of sim-mdb-run.sh: no gate
   # here uses extra_mdb, so it stays empty and the 7th run_one arg maps
   # to the 8th runner arg (eeprom_writes), which epic-settings needs.
-  if scripts/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
+  local n pass=0
+  for n in $(seq 1 "$repeat"); do
+    if scripts/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
+      pass=$((pass + 1))
+    else
+      echo "FAIL (run ${n}/${repeat}): ${family} ${mcu} ${module}"
+    fi
+  done
+  if [ "$pass" -eq "$repeat" ]; then
     echo "PASS: ${family} ${mcu} ${module}"
-    echo "| ${family} | ${mcu} | ${module} | PASS |" >> "$summary"
+    echo "| ${family} | ${mcu} | ${module} | PASS (${pass}/${repeat}) |" >> "$summary"
   else
-    echo "FAIL: ${family} ${mcu} ${module}"
-    echo "| ${family} | ${mcu} | ${module} | FAIL |" >> "$summary"
+    echo "FAIL: ${family} ${mcu} ${module} (${pass}/${repeat} runs passed)"
+    echo "| ${family} | ${mcu} | ${module} | FAIL (${pass}/${repeat}) |" >> "$summary"
     fail=1
   fi
 }

@@ -25,6 +25,11 @@ extern uint8_t pic16f87xa_sim_sfr[0x200];
  * IRQHandler if it ever needs to. */
 #define EPIC_WEAK   __attribute__((weak))
 
+/* Placement pins are an XC8 extension (__at); the host has no concept
+ * of absolute GPR placement, so the pin is a no-op here. The target
+ * header maps it to XC8's __at(addr). */
+#define EPIC_PLACE(addr)
+
 /* SFR access resolves to an index into the simulated register file. */
 #define EPIC_SFR_PTR(addr)       (&pic16f87xa_sim_sfr[(uint16_t)(addr)])
 #define epic_sfr_read8(addr)     (pic16f87xa_sim_sfr[(uint16_t)(addr)])

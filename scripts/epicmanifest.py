@@ -82,6 +82,11 @@ class Example:
     config: dict[str, str]
     hal: bool
     sim: SimVariant | None = None
+    # Per-MCU overrides: a variant replaces the family example for one
+    # MCU (flash budgets differ within a family, e.g. the 4K-word
+    # 16F873A/16F874A cannot hold epic-math's golden-vector replay).
+    # example_for(module, family, mcu) resolves the variant.
+    variants: dict[str, Example] | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -142,9 +147,17 @@ class Manifest:
     def exclusion_reason(self, module_name: str, mcu: str) -> str | None:
         return self._module(module_name).excluded.get(mcu)
 
-    def example_for(self, module_name: str, family_name: str):
-        """This module's example program for a family, or None."""
-        return self._module(module_name).examples.get(family_name)
+    def example_for(self, module_name: str, family_name: str,
+                    mcu: str | None = None):
+        """This module's example program for a family, or None.
+
+        With mcu, a per-MCU variant override (Example.variants) wins;
+        without one the family example is returned unchanged.
+        """
+        example = self._module(module_name).examples.get(family_name)
+        if example is not None and mcu is not None and example.variants:
+            return example.variants.get(mcu, example)
+        return example
 
     def uses_hal(self, module_name: str, mcu: str) -> bool:
         """Does this (module, MCU) build need the family HAL?
@@ -155,7 +168,7 @@ class Manifest:
         when there is no example for this family.
         """
         fam = self.family_of(mcu)
-        example = self.example_for(module_name, fam.name)
+        example = self.example_for(module_name, fam.name, mcu)
         if example is not None:
             return example.hal
         return self._module(module_name).needs_hal
@@ -220,7 +233,7 @@ class Manifest:
             out += [f"{mod.dir}/{s}"
                     for s in mod.sources_by_family.get(fam.name, [])]
 
-        example = self.example_for(module_name, fam.name)
+        example = self.example_for(module_name, fam.name, mcu)
         if example is not None:
             mod = self._module(module_name)
             example_sources = example.sources
@@ -293,6 +306,7 @@ def _parse_sim_variant(module_name, family_name, table):
 
 
 def _parse_example(module_name, family_name, table, default_hal):
+    variants = table.get("variants", {})
     return Example(
         name=_require(table, "name", f"modules.{module_name}.example.{family_name}"),
         sources=list(_require(table, "sources",
@@ -300,6 +314,9 @@ def _parse_example(module_name, family_name, table, default_hal):
         config=dict(table.get("config", {})),
         hal=bool(table.get("hal", default_hal)),
         sim=_parse_sim_variant(module_name, family_name, table.get("sim")),
+        variants={vname: _parse_example(
+            module_name, f"{family_name}.variants.{vname}", vtable, default_hal)
+            for vname, vtable in variants.items()} or None,
     )
 
 

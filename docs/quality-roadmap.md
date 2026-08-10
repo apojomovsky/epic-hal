@@ -117,6 +117,17 @@ up as a reviewable diff instead of a flaky gate.
 
 **Why**: removes the class of failure that has produced the most
 churn, and makes the gate suite stable against future codegen changes.
+Status: all three parts done (2026-08-11). (a) the PIC16 math asm
+leaves are pinned below 0x800 and the full golden-vector replay runs
+on the 8K-word parts under mdb (62/62 PASS), exposing and fixing two
+real asm bugs (the mul_u16 rrf shift order, the incf-wrap carry loss
+in every carry-into-next-byte site, fixed with incfsz; the 4K-word
+parts keep the smoke via per-MCU example variants); (b)
+docs/layout-budgets.md collects the flash, stack, and GPR budgets in
+one place; (c) scripts/hex-identity-audit.py proves every matrix hex
+is byte-identical across a rebuild.
+
+   Status: (c) hex-rebuild identity audit done (2026-08-11, scripts/hex-identity-audit.py in CI's target job and make audit); (a) and (b) land separately.
 
 ## Honorable mentions
 
@@ -158,6 +169,23 @@ churn, and makes the gate suite stable against future codegen changes.
 9. **Pin or verify the 20 unpinned IRQ-shared statics** (the audit's
    RISK set in docs/toolchain-coverage.md) - the multi-byte struct
    copies are the scatter-sensitive ones.
+   Status: done (2026-08-11, scripts/statics-audit.py in CI's target
+   job and make audit). The disassembly probe behind it found the class
+   is worse than scatter: XC8 bakes a constant IRP select into 87XA
+   ISR pointer derefs and the Timer0 and USART ISRs bake OPPOSITE
+   windows, so the unpinned storage passed gates only by scatter luck.
+   g_t0_storage (bank 3) and s_usart_handle (bank 1) are now
+   EPIC_PLACE-pinned into their ISR's window; the taskmgr TCB array
+   is pinned to bank 2 (the bundle's 64-byte object needs one
+   contiguous bank); the 193X statics and the
+   87XA CCP callbacks are verified safe (FSR1 indirect and direct
+   banksel'd access) and allowlisted.
 10. **Gate flake hardening** - several gates documented the sim-wedge
     landing zones; a CI repeat-run (each gate N times) surfaces the
     remaining flakes and drives the wedge-proofing pass.
+    Status: done (2026-08-11). ci-target-sim.sh runs every gate REPEAT
+    times (summary shows PASS (n/N)); the workflow_dispatch flake-hunt
+    job drives REPEAT=5 in CI. The hunt surfaced one real flake class:
+    the epic-settings gate re-ran after its main returned (reset
+    vector), and the stateful re-run failed; the firmware now idles
+    forever after reporting. Wedge-class gates: 0 flakes in 35 runs.
