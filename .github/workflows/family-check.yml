@@ -245,10 +245,15 @@ jobs:
       # filters this job's gates; PARALLEL=2 runs them concurrently.
       # wait_ms values (5000, 60000 for pic16f193x) are confirmed-
       # passing wall-clock budgets under MPLAB SIM.
+      # The gates stay SEQUENTIAL: at PARALLEL=2 on the 2-core runner
+      # the concurrent mdb sessions halved the effective sim speed and
+      # two marginal 5s-budget gates (epic-bus, epic-combo-encoder-tick)
+      # missed their markers (2026-08-11, PR #25 first sharded run). A
+      # new contention-flake class would undo the task-10 hardening, so
+      # the gates keep their deterministic budgets; the builds above
+      # still parallelize.
       - name: MPLAB SIM (mdb) runs
         if: steps.docs.outputs.docs_only != 'true'
-        env:
-          PARALLEL: "2"
         run: |
           docker run --rm -v "$PWD:/work" -w /work \
             -e PARALLEL="$PARALLEL" -e FAMILY="$FAMILY" \
