@@ -73,6 +73,7 @@ pic_math_add_test(test_bcd    tests/test_bcd.c)
 pic_math_add_test(test_sqrt   tests/test_sqrt.c)
 pic_math_add_test(test_numeric tests/test_numeric.c)
 pic_math_add_test(test_rand   tests/test_rand.c)
+pic_math_add_test(test_properties tests/test_properties.c)
 
 # ─── golden-vector generator (host tool) ─────────────────────────
 # Builds against the host oracle and emits tests/golden_vectors.h: the
