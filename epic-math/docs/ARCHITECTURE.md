@@ -148,7 +148,9 @@ The file-scratch convention has one per-family wrinkle the probe surfaced:
   and one `banksel` covers every member, accessed by byte offset `(_m_x)+N`.
   The one shared object, the 16-byte `pic16_mscratch` buffer every PIC16
   asm leaf routine operates on (pic_math_scratch.h), is `__at`-pinned to
-  bank 0 (0x20-0x2D) instead of left to the linker: an unpinned
+  common RAM (0x72-0x7D, 12 bytes, clear of the HAL RMW scratches at
+  0x70/0x71 and the compiler's top-of-common-RAM area) instead of
+  left to the linker: an unpinned
   placement landed at 0xA0 (bank 1) on PIC16F876A/877A and the operand
   fixups overflowed at link time. Common RAM is the same physical
   addresses in every bank, so the per-routine `banksel` is a harmless

@@ -90,59 +90,56 @@ uint32_t pic_math_mul_u16(uint16_t a, uint16_t b) __at(0x130)
     pic16_mscratch[0] = (uint8_t)a;           pic16_mscratch[1] = (uint8_t)(a >> 8);
     pic16_mscratch[2] = (uint8_t)b;           pic16_mscratch[3] = (uint8_t)(b >> 8);
     asm("banksel _pic16_mscratch");
-    asm("clrf  _pic16_mscratch+6");           /* r = 0                              */
+    asm("clrf  _pic16_mscratch+4");           /* r = 0                              */
+    asm("clrf  _pic16_mscratch+5");
+    asm("clrf  _pic16_mscratch+6");
     asm("clrf  _pic16_mscratch+7");
-    asm("clrf  _pic16_mscratch+8");
+    asm("clrf  _pic16_mscratch+8");          /* t = 0                              */
     asm("clrf  _pic16_mscratch+9");
-    asm("clrf  _pic16_mscratch+10");          /* t = 0                              */
+    asm("clrf  _pic16_mscratch+10");
     asm("clrf  _pic16_mscratch+11");
-    asm("clrf  _pic16_mscratch+12");
-    asm("clrf  _pic16_mscratch+13");
     asm("movf  _pic16_mscratch+0,w");
-    asm("movwf _pic16_mscratch+10");
+    asm("movwf _pic16_mscratch+8");
     asm("movf  _pic16_mscratch+1,w");
-    asm("movwf _pic16_mscratch+11");          /* t = a (32-bit, low 16)              */
-    asm("movf  _pic16_mscratch+2,w");
-    asm("movwf _pic16_mscratch+4");
-    asm("movf  _pic16_mscratch+3,w");
-    asm("movwf _pic16_mscratch+5");           /* bk = b                             */
+    asm("movwf _pic16_mscratch+9");          /* t = a (32-bit, low 16)              */
+    /* bk = b: b lives at 2-3, which is bk's own slot. */
     asm("movlw 16");
     asm("movwf _pic16_mscratch+0");           /* cnt = 16 (a_lo slot, dead after
                                                  the t = a copy above)              */
     asm("_m16_loop:");
     /* if bk LSB set, r += tmp (32-bit add, carry idiom across 4 bytes) */
-    asm("btfss _pic16_mscratch+4,0");
+    asm("btfss _pic16_mscratch+2,0");
     asm("goto  _m16_skip");
+    asm("movf  _pic16_mscratch+8,w");
+    asm("addwf _pic16_mscratch+4,f");
+    asm("movf  _pic16_mscratch+9,w");
+    asm("btfsc STATUS,0");
+    asm("incfsz _pic16_mscratch+9,w");
+    asm("addwf _pic16_mscratch+5,f");
     asm("movf  _pic16_mscratch+10,w");
+    asm("btfsc STATUS,0");
+    asm("incfsz _pic16_mscratch+10,w");
     asm("addwf _pic16_mscratch+6,f");
     asm("movf  _pic16_mscratch+11,w");
     asm("btfsc STATUS,0");
     asm("incfsz _pic16_mscratch+11,w");
     asm("addwf _pic16_mscratch+7,f");
-    asm("movf  _pic16_mscratch+12,w");
-    asm("btfsc STATUS,0");
-    asm("incfsz _pic16_mscratch+12,w");
-    asm("addwf _pic16_mscratch+8,f");
-    asm("movf  _pic16_mscratch+13,w");
-    asm("btfsc STATUS,0");
-    asm("incfsz _pic16_mscratch+13,w");
-    asm("addwf _pic16_mscratch+9,f");
     asm("_m16_skip:");
     /* tmp <<= 1 (32-bit left shift through carry, LSB <- 0) */
     asm("bcf   STATUS,0");
+    asm("rlf   _pic16_mscratch+8,f");
+    asm("rlf   _pic16_mscratch+9,f");
     asm("rlf   _pic16_mscratch+10,f");
     asm("rlf   _pic16_mscratch+11,f");
-    asm("rlf   _pic16_mscratch+12,f");
-    asm("rlf   _pic16_mscratch+13,f");
     /* bk >>= 1 (test the next multiplier bit) */
     asm("bcf   STATUS,0");
-    asm("rrf   _pic16_mscratch+5,f");
-    asm("rrf   _pic16_mscratch+4,f");
+    asm("rrf   _pic16_mscratch+3,f");
+    asm("rrf   _pic16_mscratch+2,f");
     asm("decfsz _pic16_mscratch+0,f");
     asm("goto  _m16_loop");
 
-    return (uint32_t)pic16_mscratch[6] | ((uint32_t)pic16_mscratch[7] << 8)
-         | ((uint32_t)pic16_mscratch[8] << 16) | ((uint32_t)pic16_mscratch[9] << 24);
+    return (uint32_t)pic16_mscratch[4] | ((uint32_t)pic16_mscratch[5] << 8)
+         | ((uint32_t)pic16_mscratch[6] << 16) | ((uint32_t)pic16_mscratch[7] << 24);
 }
 
 /* ─── pic_math_mul_s16 ──────────────────────────────────────────
