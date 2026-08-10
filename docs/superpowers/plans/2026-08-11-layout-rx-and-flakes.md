@@ -11,6 +11,8 @@ nets, never paper over).
 
 ## Task 9: pin or verify the 20 unpinned IRQ-shared statics
 
+Status: done (2026-08-11).
+
 ### Solved
 
 - The RISK set (docs/toolchain-coverage.md section H) is hand-audited:
@@ -118,6 +120,8 @@ v4.00 determinism first (the Makefile-to-epic_build migration was
 verified byte-identical, so determinism is expected).
 
 ## Task 10: gate flake hardening
+
+Status: done (2026-08-11).
 
 ### Design
 
