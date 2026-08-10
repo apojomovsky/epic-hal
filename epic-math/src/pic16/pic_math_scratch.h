@@ -13,6 +13,6 @@
 #include <stdint.h>
 
 /** Shared 16-byte scratch for all PIC16 asm leaf routines (see file header). */
-extern volatile uint8_t pic16_mscratch[16];
+extern volatile uint8_t pic16_mscratch[12];
 
 #endif /* PIC16_MATH_SCRATCH_H */

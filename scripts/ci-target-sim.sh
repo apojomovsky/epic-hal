@@ -5,11 +5,12 @@
 # swuart-v3.md Task 8), now a plain loop calling scripts/sim-mdb-run.sh,
 # the exact script scripts/sim-test-local.sh also calls for a local
 # repro, so CI and a local run go through one source of truth. wait_ms
-# values (5000, 60000 for pic16f193x and epic-swuart) are confirmed-
-# passing wall-clock budgets under MPLAB SIM (MPLAB SIM runs noticeably
-# slower than real-time); see git history on the old sim-tests.yml for
-# how the first 3 were established, and epic-swuart's own entry's own
-# commit for how 60000 was confirmed for it.
+# values are wall-clock budgets under MPLAB SIM (MPLAB SIM runs
+# noticeably slower than real-time). Most gates run at 5000; the three
+# slower scenarios were measured 2026-08-11 (floors: epic-serial ~4s,
+# epic-swuart ~8s, 193X firmware ~25s) and set with roughly 2x margin
+# for a loaded runner, pragmatically not 60s: epic-serial 10000,
+# epic-swuart 15000, epic-pic16f193x-firmware 40000.
 #
 # Usage: ci-target-sim.sh [summary.md]
 #
@@ -75,8 +76,8 @@ run_one() {
 if [ "$parallel" -le 1 ]; then
 run_one pic16f87xa 16F877A PIC16F877A epic-tick 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-tick 5000 uart
-run_one pic16f193x 16F1937 PIC16F1937 epic-pic16f193x-firmware 60000 gpio
-run_one pic16f87xa 16F877A PIC16F877A epic-swuart 60000 uart
+run_one pic16f193x 16F1937 PIC16F1937 epic-pic16f193x-firmware 40000 gpio
+run_one pic16f87xa 16F877A PIC16F877A epic-swuart 15000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-math 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-math 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A pic16f87xa-hal 5000 uart
@@ -86,7 +87,7 @@ run_one pic16f87xa 16F877A PIC16F877A epic-fsm 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-adcfilter 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-encoder 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-bus 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-serial 60000 uart
+run_one pic16f87xa 16F877A PIC16F877A epic-serial 10000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-lcd 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-debounce 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-combo-uart-ssp 5000 uart

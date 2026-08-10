@@ -342,7 +342,7 @@
  * PIC_PIR2_EEIF. A bogus PIC_EECON1_EEIF constant was removed by the
  * sfr-map audit, 2026-08-11.)
 
-/* ───────────────────────── TRISE bits (PORT E / PSP) ─────────────── */
+/* ---------------- TRISE bits (PORT E and PSP) ---------------- */
 
 /* DS39582B §4.5, Register 4-9. PSP is 40/44-pin only. The status bits
  * are the UPPER half (IBF bit 7, OBF bit 6, IBOV bit 5, PSPMODE bit 4);

@@ -52,11 +52,14 @@ inspect the .s / .sym / .map (AGENTS.md).
   address on classic PIC16 compiles to FSR1:INDF1, which needs IRP
   set for banks 2/3; the 87XA CCP incident (baked IRP=1) is the
   cautionary record.
-- **Math scratch (epic-math)**: the shared 16-byte
-  `pic16_mscratch` is pinned to common RAM 0x70-0x7F (reachable from
-  every bank); per-routine scratch is a single struct per routine so
-  the linker cannot split it across banks
-  (epic-math/docs/ARCHITECTURE.md).
+- **Math scratch (epic-math)**: the shared 12-byte
+  `pic16_mscratch` is pinned to common RAM 0x72-0x7D, clear of the
+  HAL RMW scratches (0x70/0x71) and the compiler's top-of-common-RAM
+  working area (0x7E/0x7F). The 16-byte original at 0x70 overlapped
+  all three (XC8 1262/1482/2084, found 2026-08-11); the mul_u16
+  layout was compressed to 12 bytes (bk reuses b's bytes) to fit.
+  Per-routine scratch is a single struct per routine so the linker
+  cannot split it across banks (epic-math/docs/ARCHITECTURE.md).
 - **Linker best-fit**: unpinned `static` GPR is scattered by
   best-fit, not declaration order. Anything bank-sensitive gets
   `EPIC_PLACE`; the statics audit (scripts/statics-audit.py) flags
@@ -79,7 +82,9 @@ inspect the .s / .sym / .map (AGENTS.md).
 
 | Address | Size | Object | Why |
 |---|---|---|---|
-| 0x70-0x7F | 16 | pic16_mscratch (epic-math) | common RAM, asm operand reach |
+| 0x72-0x7D | 12 | pic16_mscratch (epic-math) | common RAM, clear of HAL/compiler |
+| 0x70 | 1 | epic_irq_pie_scratch (HAL) | common RAM, asm operand reach |
+| 0x71 | 1 | epic_bank1_scratch (HAL) | common RAM, asm operand reach |
 | 0xA0 | 7 | s_usart_handle (harness) | USART ISR bakes IRP=0 |
 | 0x100-0x490 | ~0x390 | epic-math PIC16 asm leaves (10 fns) | internal gotos, page 0 only |
 | 0x190 | 6 | g_t0_storage (timer0) | Timer0 ISR bakes IRP=1; bank 3 keeps bank 2 contiguous |
