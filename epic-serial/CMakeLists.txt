@@ -51,3 +51,11 @@ target_link_libraries(example_serial PRIVATE epic_serial)
 
 enable_testing()
 add_test(NAME example_serial COMMAND example_serial)
+
+# Host property test: randomized producer/consumer stress through the
+# real public API over the sim's USART model, byte-exact against an
+# independent model plus the full/empty ring boundaries.
+add_executable(test_serial_stress tests/test_serial_stress.c)
+target_compile_definitions(test_serial_stress PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
+target_link_libraries(test_serial_stress PRIVATE epic_serial)
+add_test(NAME serial_stress COMMAND test_serial_stress)

@@ -35,6 +35,14 @@ target_compile_definitions(test_console PRIVATE -D${DEFAULT_DEVICE})
 target_link_libraries(test_console PRIVATE epic_console)
 add_test(NAME console_tests COMMAND test_console)
 
+# Host fuzz test: random byte streams through the line state machine;
+# the parser must never wedge, must echo byte-exactly per the modeled
+# edit behavior, and must recover so a sentinel command dispatches.
+add_executable(test_console_fuzz tests/test_console_fuzz.c)
+target_compile_definitions(test_console_fuzz PRIVATE -D${DEFAULT_DEVICE})
+target_link_libraries(test_console_fuzz PRIVATE epic_console)
+add_test(NAME console_fuzz COMMAND test_console_fuzz)
+
 add_executable(example_console examples/example_console.c)
 target_compile_definitions(example_console PRIVATE -D${DEFAULT_DEVICE})
 target_link_libraries(example_console PRIVATE epic_console)
