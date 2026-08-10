@@ -95,7 +95,9 @@ void EPIC_COMP_ClearChangeFlag(void)
 
 void COMP_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_CMP)) return;
-    EPIC_IRQ_ClearFlag(PIC16_IRQ_CMP);
+    /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
+     * context; see the CCP handlers). CMIF is PIR2 bit 5. */
+    if (!(EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_CMIF)) return;
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CMIF);
     if (g_comp && g_comp->ChangeCallback) g_comp->ChangeCallback();
 }

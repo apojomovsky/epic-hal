@@ -167,7 +167,9 @@ void EPIC_EEPROM_ClearITFlag(void)
 
 void EEPROM_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_EEPROM)) return;
-    EPIC_IRQ_ClearFlag(PIC16_IRQ_EEPROM);
+    /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
+     * context; see the CCP handlers). EEIF is PIR2 bit 4. */
+    if (!(EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_EEIF)) return;
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_EEIF);
     if (g_eeprom_cb) g_eeprom_cb();
 }

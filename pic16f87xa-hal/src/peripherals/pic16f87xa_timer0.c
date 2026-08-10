@@ -122,8 +122,13 @@ uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)
 
 void TIMER0_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_TMR0)) return;
-    EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR0);
+    /* Direct flag ops, not the table-driven EPIC_IRQ_GetFlag/ClearFlag:
+     * the table read routes through XC8's stringdir/retlw path, which
+     * clobbers PCLATH in ISR context when the table sits on another
+     * page (the class-F hazard; see the CCP1/CCP2 handlers for the
+     * reference pattern). TMR0IF is INTCON bit 2 (bank-independent). */
+    if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_TMR0IF)) return;
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_TMR0IF);
     if (g_t0_handle && g_t0_handle->OverflowCallback) {
         g_t0_handle->OverflowCallback();
     }

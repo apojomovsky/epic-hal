@@ -186,7 +186,10 @@ uint8_t EPIC_USART_GetRX9D(void)
 
 void USART_TX_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_USART_TX)) return;
+    /* Direct flag read (class-F: the table route clobbers PCLATH in
+     * ISR context). TXIF is PIR1 bit 4; read-only, cleared by writing
+     * TXREG. */
+    if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TXIF)) return;
     /* TXIF is read-only and cleared by writing TXREG; there is nothing
      * to clear here, just call the user callback. */
     if (g_usart && g_usart->TxCpltCallback) g_usart->TxCpltCallback();
@@ -194,8 +197,11 @@ void USART_TX_IRQHandler(void)
 
 void USART_RX_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_USART_RX)) return;
+    /* Direct flag ops (class-F). RCIF is PIR1 bit 5; reading RCREG
+     * clears it by hardware, the explicit clear is belt-and-suspenders
+     * for callers that arrive without the read. */
+    if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_RCIF)) return;
     uint8_t data = EPIC_REG8(PIC_REG_RCREG);
-    EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_RCIF);
     if (g_usart && g_usart->RxCpltCallback) g_usart->RxCpltCallback(data);
 }

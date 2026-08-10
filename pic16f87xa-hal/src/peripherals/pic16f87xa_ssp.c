@@ -207,7 +207,9 @@ uint8_t EPIC_SSP_AcknowledgeStatus(void)
 
 void SSP_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_SSP)) return;
-    EPIC_IRQ_ClearFlag(PIC16_IRQ_SSP);
+    /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
+     * context; see the CCP handlers). SSPIF is PIR1 bit 3. */
+    if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_SSPIF)) return;
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_SSPIF);
     if (g_ssp && g_ssp->TransferCallback) g_ssp->TransferCallback();
 }

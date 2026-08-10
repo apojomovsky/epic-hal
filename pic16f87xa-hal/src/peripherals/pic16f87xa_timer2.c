@@ -130,8 +130,10 @@ EPIC_StatusTypeDef EPIC_TIMER2_Stop(void)
 
 void TIMER2_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_TMR2)) return;
-    EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR2);
+    /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
+     * context; see the CCP handlers). TMR2IF is PIR1 bit 1. */
+    if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF)) return;
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR2IF);
     if (g_t2_handle && g_t2_handle->OverflowCallback) {
         g_t2_handle->OverflowCallback();
     }

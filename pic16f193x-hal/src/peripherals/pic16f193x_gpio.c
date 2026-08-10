@@ -212,7 +212,10 @@ void EPIC_GPIO_EnableChangeDetect(uint8_t pos_mask, uint8_t neg_mask)
 
 void IOC_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC16F193X_IRQ_IOC)) return;
+    /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
+     * context; the ccp_irq_common switch is the reference). IOCIF is
+     * INTCON bit 0. */
+    if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_IOCIF)) return;
 
     /* Read IOCBF (which pins changed) and PORTB before clearing, the
      * mismatch comparator only re-arms once PORTB is read (DS41364B
@@ -220,6 +223,6 @@ void IOC_IRQHandler(void)
     uint8_t iocbf = EPIC_REG8(PIC_REG_IOCBF);
     uint8_t portb = EPIC_REG8(PIC_REG_PORTB);
     EPIC_REG8(PIC_REG_IOCBF) = 0x00U;
-    EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_IOC);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_IOCIF);
     if (s_ioc_callback) s_ioc_callback(iocbf, portb);
 }
