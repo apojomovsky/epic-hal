@@ -8,9 +8,10 @@
 # values are wall-clock budgets under MPLAB SIM (MPLAB SIM runs
 # noticeably slower than real-time). Most gates run at 5000; the three
 # slower scenarios were measured 2026-08-11 (floors: epic-serial ~4s,
-# epic-swuart ~8s, 193X firmware ~25s) and set with roughly 2x margin
-# for a loaded runner, pragmatically not 60s: epic-serial 10000,
-# epic-swuart 15000, epic-pic16f193x-firmware 40000.
+# epic-swuart ~8s, 193X firmware ~25s locally) and set with margin:
+# epic-serial 10000, epic-swuart 15000. The 193X firmware gate stays at
+# 60000: its 40000 budget flaked once in CI (2026-08-11), so the
+# proven-safe value wins over the measured floor.
 #
 # Usage: ci-target-sim.sh [summary.md]
 #
@@ -76,7 +77,7 @@ run_one() {
 if [ "$parallel" -le 1 ]; then
 run_one pic16f87xa 16F877A PIC16F877A epic-tick 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-tick 5000 uart
-run_one pic16f193x 16F1937 PIC16F1937 epic-pic16f193x-firmware 40000 gpio
+run_one pic16f193x 16F1937 PIC16F1937 epic-pic16f193x-firmware 60000 gpio
 run_one pic16f87xa 16F877A PIC16F877A epic-swuart 15000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-math 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-math 5000 uart

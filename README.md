@@ -11,7 +11,7 @@
 
 <p align="center">
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html) [![Release: v0.1.0](https://img.shields.io/badge/release-v0.1.0-purple.svg)](https://github.com/apojomovsky/epicurus/releases) [![ci](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html) [![Release](https://img.shields.io/github/v/release/apojomovsky/epicurus)](https://github.com/apojomovsky/epicurus/releases) [![ci](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml)
 
 </p>
 
@@ -46,9 +46,12 @@ Download your family's bundle from
 
 | Bundle | Parts inside |
 |---|---|
-| `epicurus-pic16f87xa-v0.1.0.tar.gz` | 16F873A / 874A / 876A / 877A |
-| `epicurus-pic18fxx5x-v0.1.0.tar.gz` | 18F2455 / 2550 / 4455 / 4550 |
-| `epicurus-pic16f193x-v0.1.0.tar.gz` | 16F1933 / 1934 / 1936 / 1937 / 1938 / 1939 |
+| `epicurus-pic16f87xa-<version>.tar.gz` | 16F873A / 874A / 876A / 877A |
+| `epicurus-pic18fxx5x-<version>.tar.gz` | 18F2455 / 2550 / 4455 / 4550 |
+| `epicurus-pic16f193x-<version>.tar.gz` | 16F1933 / 1934 / 1936 / 1937 / 1938 / 1939 |
+
+The `<version>` is the release tag (e.g. `v0.1.0`); the badge above
+always shows the latest one.
 
 ### 2. Open the reference project in MPLAB X
 
@@ -155,7 +158,7 @@ int main(void)
 `printf` through the same pipe. Everything the code above calls is
 plain C functions, no IDE glue.
 
-### Run four tasks on a cooperative scheduler
+### Run two tasks on a cooperative scheduler
 
 ```c
 #include <xc.h>
