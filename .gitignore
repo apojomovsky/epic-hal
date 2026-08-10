@@ -64,3 +64,12 @@ bundles/
 # (ledger, briefs, review packages). The git history is the record once
 # a plan finishes; this directory is deleted at that point anyway.
 /.superpowers/
+
+# XC8 codegen-probe byproducts at the repo root (from -S / one-shot
+# compiler invocations writing into the working tree): dependency
+# files, preprocessed listings, and symbol-data. They are regenerable
+# build output, not source; see the 2026-08-10 cleanup of the 11
+# stray files that PR #12/#13 accidentally swept in.
+/*.d
+/*.p1
+/*.sdb
