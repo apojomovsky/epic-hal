@@ -278,7 +278,12 @@ jobs:
               ("epic-combo-lcd-tick", "18F4550"),
               ("epic-combo-swuart-tick", "16F877A"),
               ("epic-combo-modbus-full", "18F4550"),
+              ("epic-combo-rx-loopback", "16F877A"),
           ]:
+              # The sim list is shared across merge orders; skip
+              # modules this branch does not have yet.
+              if module not in m.modules:
+                  continue
               fam = m.family_of(mcu)
               dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
               subprocess.run(
