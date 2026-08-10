@@ -293,6 +293,11 @@ jobs:
               ("epic-combo-modbus-full", "18F4550"),
               ("epic-combo-rx-loopback", "16F877A"),
           ]:
+              # The sim list is shared across merge orders (the
+              # rx-loopback module lands on its own PR); skip modules
+              # this branch does not have yet.
+              if module not in m.modules:
+                  continue
               fam = m.family_of(mcu)
               dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
               subprocess.run(
@@ -431,6 +436,11 @@ jobs:
               ("epic-combo-modbus-full", "18F4550"),
               ("epic-combo-rx-loopback", "16F877A"),
           ]:
+              # The sim list is shared across merge orders (the
+              # rx-loopback module lands on its own PR); skip modules
+              # this branch does not have yet.
+              if module not in m.modules:
+                  continue
               fam = m.family_of(mcu)
               dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
               subprocess.run(
