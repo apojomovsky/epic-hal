@@ -84,6 +84,14 @@ enable_testing()
 add_test(NAME example_multi_blink COMMAND example_multi_blink)
 add_test(NAME example_timer_reset COMMAND example_timer_reset)
 
+# Host property test: random spawn/stop/start/reset/set_period
+# sequences driven through the real scheduler API, fires verified
+# against a model of the documented semantics (deterministic).
+add_executable(test_taskmgr_fuzz tests/test_taskmgr_fuzz.c)
+target_compile_definitions(test_taskmgr_fuzz PRIVATE -D${DEFAULT_DEVICE})
+target_link_libraries(test_taskmgr_fuzz PRIVATE task_manager)
+add_test(NAME taskmgr_fuzz COMMAND test_taskmgr_fuzz)
+
 # Optional: the example for every device in the family. PORTB-only, so it
 # runs on all parts; the scheduler's TASK_MGR_MAX_TASKS default scales to
 # the family's RAM (6 slots on the 192 B PIC16 873A/874A, 8 on the 368 B
