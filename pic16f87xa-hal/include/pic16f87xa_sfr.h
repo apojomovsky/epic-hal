@@ -340,7 +340,7 @@
 #define PIC_EECON1_WRERR       EPIC_BIT(3)    /* Write error.    */
 /* (No EEIF in EECON1: the EEPROM write-done flag is PIR2<EEIF>, see
  * PIC_PIR2_EEIF. A bogus PIC_EECON1_EEIF constant was removed by the
- * sfr-map audit, 2026-08-11.)
+ * sfr-map audit, 2026-08-11.) */
 
 /* ---------------- TRISE bits (PORT E and PSP) ---------------- */
 

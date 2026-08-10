@@ -43,7 +43,7 @@ static volatile uint8_t g_rx_head, g_rx_tail, g_rx_count;
  * Disable/Restore pairs that used to guard these sites exposed the
  * Finding 10.1 hazard (a latched interrupt delivered inside a GIE=0
  * window tears the protected region and can leave GIE cleared after
- * ISR return; the epic-tick gate's read-retry is the same class).
+ * ISR return; the epic-tick gate's read-retry is the same class). */
 
 /* ---- ISR callbacks (called by the HAL's USART handlers) ---- */
 
