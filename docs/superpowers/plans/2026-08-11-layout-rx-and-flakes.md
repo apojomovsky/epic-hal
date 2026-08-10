@@ -187,3 +187,10 @@ verified byte-identical, so determinism is expected).
 - The silicon leg of task 8 (run serial-rx-loop.py against a real
   board) is task 1's domain.
 - epic-usb / epic-sdcard real-target manifest entries remain.
+- **CI target-job speed (2026-08-11, user note)**: the target job is
+  the long pole (16+ min vs ~1 min host); investigate options after
+  tasks 5, 8-10 land: the 112-build matrix (parallelize? per-family
+  sharding? build cache?), the 32 mdb gates (sequential by design,
+  wait_ms budgets), the audits (hex-identity doubles the matrix cost),
+  and the single image pull. Capture the options, tradeoffs, and a
+  recommendation in docs/superpowers/plans/2026-08-11-ci-speed.md.
