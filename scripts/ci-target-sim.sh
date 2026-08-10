@@ -88,6 +88,7 @@ run_one pic16f87xa 16F877A PIC16F877A epic-fsm 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-adcfilter 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-encoder 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-bus 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A epic-mcp23x17 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-serial 10000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-lcd 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-debounce 5000 uart

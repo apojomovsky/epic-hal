@@ -715,6 +715,44 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
+[modules.epic-mcp23x17]
+dir        = "epic-mcp23x17"
+sources    = [
+  "src/epic_mcp23x17.c",
+]
+includes   = [
+  "include",
+]
+depends_on = ["epic-bus"]
+
+[modules.epic-mcp23x17.supported]
+PIC16F87XA = [
+  "16F873A",
+  "16F874A",
+  "16F876A",
+  "16F877A",
+]
+
+[modules.epic-mcp23x17.example.PIC16F87XA]
+name    = "mcp23x17"
+sources = [
+  "examples/example_mcp23x17_target.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim: the same bounded, self-reporting shape as epic-bus's
+# gate (the sim SSP data path is unmodeled, so the gate proves the
+# module links and the init runs; the register semantics are
+# host-tested against the mock device).
+[modules.epic-mcp23x17.example.PIC16F87XA.sim]
+name        = "mcp23x17-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+sources     = [
+  "tests/sim_mcp23x17.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
 [modules.epic-bus.example.PIC18Fxx5x]
 name    = "bus"
 sources = [

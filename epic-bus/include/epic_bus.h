@@ -32,6 +32,9 @@ void epic_bus_i2c_init(uint32_t fosc_hz, uint32_t fscl_hz);
 /** Use a custom I2C ops table (NULL restores the default HAL ops). */
 void epic_bus_set_i2c_ops(const epic_bus_i2c_ops_t *ops);
 
+/** The active I2C ops table (the default HAL ops unless overridden). */
+const epic_bus_i2c_ops_t *epic_bus_get_i2c_ops(void);
+
 /** Write @p n bytes to register @p reg on I2C device @p dev (7-bit address).
  *  Transaction: START, (dev<<1)|W, reg, data..., STOP. Returns n on success
  *  (all ACKed), or -1 if the device NACKed the address or register. */
@@ -58,6 +61,9 @@ void epic_bus_spi_init(uint32_t fosc_hz, uint32_t f_sclk_hz, uint8_t cs_port, ui
 
 /** Use a custom SPI ops table (NULL restores the default HAL ops). */
 void epic_bus_set_spi_ops(const epic_bus_spi_ops_t *ops);
+
+/** The active SPI ops table (the default HAL ops unless overridden). */
+const epic_bus_spi_ops_t *epic_bus_get_spi_ops(void);
 
 /** Write @p n bytes to register @p reg over SPI: CS low, exchange(reg),
  *  exchange(data[0..n-1]), CS high. Returns n. */
