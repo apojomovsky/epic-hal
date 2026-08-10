@@ -109,6 +109,7 @@ layout drift shows up as a reviewable diff instead of a flaky gate.
 Runs in the CI target job and `make audit`. Empirically confirm XC8
 v4.00 determinism first (the Makefile-to-epic_build migration was
 verified byte-identical, so determinism is expected).
+Status: done (2026-08-11, PR pending).
 
 ## Task 10: gate flake hardening
 

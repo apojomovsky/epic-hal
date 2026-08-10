@@ -118,6 +118,8 @@ up as a reviewable diff instead of a flaky gate.
 **Why**: removes the class of failure that has produced the most
 churn, and makes the gate suite stable against future codegen changes.
 
+   Status: (c) hex-rebuild identity audit done (2026-08-11, scripts/hex-identity-audit.py in CI's target job and make audit); (a) and (b) land separately.
+
 ## Honorable mentions
 
 - epic-usb / epic-sdcard real-target manifest entries (compile-only
