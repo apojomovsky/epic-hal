@@ -209,6 +209,7 @@ exec: image
 audit: image
 	python3 scripts/sfr-map-audit.py
 	python3 scripts/config-key-audit.py
+	python3 scripts/statics-audit.py
 
 # ──────────────────── local replica of CI's target job ──────────────
 # One command to reproduce the whole "target" CI job locally: emit the

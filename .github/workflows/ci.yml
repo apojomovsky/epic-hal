@@ -185,6 +185,7 @@ jobs:
         run: |
           python3 scripts/sfr-map-audit.py || audit_status=$?
           python3 scripts/config-key-audit.py || audit_status=$?
+          python3 scripts/statics-audit.py || audit_status=$?
           exit "${audit_status:-0}"
 
       # Resolution (reading the manifest, computing sources, generating
