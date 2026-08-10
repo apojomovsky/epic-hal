@@ -493,11 +493,16 @@ size_t EPIC_SWUART_Write(EPIC_SWUART_HandleTypeDef *h, const uint8_t *data, size
     if (!h) return 0u;
     size_t written = 0u;
     while (written < len && h->tx_count < EPIC_SWUART_RING_SZ) {
-        uint8_t prev = EPIC_IRQ_Disable();
+        /* No GIE manipulation (class-G conversion): the ring fields are
+         * single bytes (atomic RMWs) and the write-before-increment
+         * ordering holds (see EPIC_SWUART_Read's discipline note), and
+         * the TX-arm pop below is mutually exclusive with the ISR's
+         * per-bit pop: the arm only runs at TX_IDLE, the ISR only pops
+         * during TX_DATA, and the state transition happens before the
+         * ISR's first event. */
         h->tx_ring[h->tx_head] = data[written];
         h->tx_head = (uint8_t)((h->tx_head + 1u) & (EPIC_SWUART_RING_SZ - 1u));
         h->tx_count++;
-        EPIC_IRQ_Restore(prev);
         written++;
     }
     if (written > 0u && h->tx_state == TX_IDLE) {
@@ -531,11 +536,14 @@ int EPIC_SWUART_Read(EPIC_SWUART_HandleTypeDef *h, uint8_t *buf, size_t maxlen)
     if (!h) return 0;
     size_t n = 0u;
     while (n < maxlen && h->rx_count > 0u) {
-        uint8_t prev = EPIC_IRQ_Disable();
+        /* Single-byte ring discipline, no GIE manipulation (class-G
+         * conversion): rx_head/tail/count are single bytes (atomic
+         * RMWs), the ISR push writes the slot before incrementing
+         * count, and this read consumes a slot only after the count
+         * check, so a torn or half-written slot cannot be observed. */
         buf[n] = h->rx_ring[h->rx_tail];
         h->rx_tail = (uint8_t)((h->rx_tail + 1u) & (EPIC_SWUART_RING_SZ - 1u));
         h->rx_count--;
-        EPIC_IRQ_Restore(prev);
         n++;
     }
     return (int)n;
@@ -544,8 +552,14 @@ int EPIC_SWUART_Read(EPIC_SWUART_HandleTypeDef *h, uint8_t *buf, size_t maxlen)
 uint16_t EPIC_SWUART_GetErrorCount(const EPIC_SWUART_HandleTypeDef *h)
 {
     if (!h) return 0u;
-    uint8_t prev = EPIC_IRQ_Disable();          /* atomic 16-bit read */
-    uint16_t count = h->error_count;
-    EPIC_IRQ_Restore(prev);
+    /* 16-bit read, no GIE manipulation (class-G conversion, the
+     * epic_tick_get read-twice-retry pattern): a single Disable-guarded
+     * read can tear (the ISR increments error_count as a multi-byte
+     * RMW) and the Disable exposes the Finding 10.1 hazard. Retry until
+     * two consecutive reads agree. */
+    uint16_t count;
+    do {
+        count = h->error_count;
+    } while (count != h->error_count);
     return count;
 }

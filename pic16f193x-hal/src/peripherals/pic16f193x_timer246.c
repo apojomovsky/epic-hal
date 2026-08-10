@@ -200,8 +200,23 @@ EPIC_StatusTypeDef EPIC_TIMER246_Stop(TIMER246_InstanceTypeDef inst)
 
 static void timer246_irq_common(TIMER246_InstanceTypeDef inst, PIC16F193X_IRQn irq)
 {
-    if (!EPIC_IRQ_GetFlag(irq)) return;
-    EPIC_IRQ_ClearFlag(irq);
+    /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
+     * context; the ccp_irq_common switch is the reference). TMR2IF is
+     * PIR1 bit 1, TMR4IF/TMR6IF are PIR3 bits 1/5. */
+    switch (irq) {
+    case PIC16F193X_IRQ_TMR2:
+        if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF)) return;
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR2IF);
+        break;
+    case PIC16F193X_IRQ_TMR4:
+        if (!(EPIC_REG8(PIC_REG_PIR3) & PIC_PIR3_TMR4IF)) return;
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_TMR4IF);
+        break;
+    default:
+        if (!(EPIC_REG8(PIC_REG_PIR3) & PIC_PIR3_TMR6IF)) return;
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_TMR6IF);
+        break;
+    }
     const TIMER246_HandleTypeDef *h = g_handle[idx_of(inst)];
     if (h && h->OverflowCallback) {
         h->OverflowCallback();

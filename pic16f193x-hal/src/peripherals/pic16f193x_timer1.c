@@ -115,8 +115,9 @@ EPIC_StatusTypeDef EPIC_TIMER1_Stop(void)
 
 void TIMER1_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC16F193X_IRQ_TMR1)) return;
-    EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR1);
+    /* Direct flag ops (class-F). TMR1IF is PIR1 bit 0. */
+    if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR1IF)) return;
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR1IF);
     if (g_t1_handle && g_t1_handle->OverflowCallback) {
         g_t1_handle->OverflowCallback();
     }

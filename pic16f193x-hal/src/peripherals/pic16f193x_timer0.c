@@ -110,8 +110,9 @@ uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)
 
 void TIMER0_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC16F193X_IRQ_TMR0)) return;
-    EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR0);
+    /* Direct flag ops (class-F). TMR0IF is INTCON bit 2. */
+    if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_TMR0IF)) return;
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_TMR0IF);
     if (g_t0_handle && g_t0_handle->OverflowCallback) {
         g_t0_handle->OverflowCallback();
     }

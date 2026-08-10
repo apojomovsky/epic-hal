@@ -31,6 +31,20 @@ static volatile uint8_t g_tx_buf[SZ], g_rx_buf[SZ];
 static volatile uint8_t g_tx_head, g_tx_tail, g_tx_count;
 static volatile uint8_t g_rx_head, g_rx_tail, g_rx_count;
 
+/* Ring discipline (class-G conversion, 2026-08-10): every field is a
+ * single byte, so each increment/decrement compiles to one atomic RMW
+ * on both families and cannot tear. The ordering rule is
+ * write-before-increment: a producer writes the buffer slot and then
+ * updates its index/count, a consumer reads the slot only after the
+ * count check (which the producer's increment made visible), so a
+ * consumer can never observe a half-written slot. The only ISR writer
+ * of the TX ring is the USART TX handler (the RX handler touches only
+ * the RX ring), so no GIE manipulation is needed anywhere: the
+ * Disable/Restore pairs that used to guard these sites exposed the
+ * Finding 10.1 hazard (a latched interrupt delivered inside a GIE=0
+ * window tears the protected region and can leave GIE cleared after
+ * ISR return; the epic-tick gate's read-retry is the same class).
+
 /* ---- ISR callbacks (called by the HAL's USART handlers) ---- */
 
 static void epic_serial_on_rx(uint8_t data)
@@ -45,11 +59,16 @@ static void epic_serial_on_rx(uint8_t data)
 static void epic_serial_on_tx(void)
 {
     if (g_tx_count > 0u) {
-        uint8_t prev = EPIC_IRQ_Disable();   /* atomic pop + TXREG load */
+        /* No GIE manipulation here (class-G conversion, see the ring
+         * discipline note on the fields below): the pop is the only
+         * ISR writer of the TX ring's tail/count, no other ISR touches
+         * them, and each field update is a single-byte atomic store, so
+         * a Disable/Restore would protect nothing while exposing the
+         * Finding 10.1 hazard (a latched interrupt delivered inside a
+         * GIE=0 window can tear the read and leave GIE cleared). */
         uint8_t b = g_tx_buf[g_tx_tail];
         g_tx_tail = (uint8_t)((g_tx_tail + 1u) & MASK);
         g_tx_count--;
-        EPIC_IRQ_Restore(prev);
         SERIAL_TXREG_WRITE(b);              /* writing TXREG clears TXIF (HW) */
     } else {
         EPIC_IRQ_DisableSrc(SERIAL_IRQ_TX);  /* ring empty: stop the TX ISR */
@@ -94,16 +113,12 @@ void epic_serial_init(uint32_t fosc_hz, uint32_t baud)
 int epic_serial_write(const uint8_t *data, int len)
 {
     for (int i = 0; i < len; i++) {
-        uint8_t prev = EPIC_IRQ_Disable();
         while (g_tx_count >= SZ) {           /* block until space */
-            EPIC_IRQ_Restore(prev);
             epic_dispatch_all_irqs();        /* drain (host pumps; target ISR drains) */
-            prev = EPIC_IRQ_Disable();
         }
         g_tx_buf[g_tx_head] = data[i];
         g_tx_head = (uint8_t)((g_tx_head + 1u) & MASK);
         g_tx_count++;
-        EPIC_IRQ_Restore(prev);
         EPIC_IRQ_Enable(SERIAL_IRQ_TX);       /* kick the TX ISR */
     }
     return len;
@@ -112,13 +127,11 @@ int epic_serial_write(const uint8_t *data, int len)
 int epic_serial_read(uint8_t *buf, int max)
 {
     int n = 0;
-    uint8_t prev = EPIC_IRQ_Disable();
     while (n < max && g_rx_count > 0u) {
         buf[n++] = g_rx_buf[g_rx_tail];
         g_rx_tail = (uint8_t)((g_rx_tail + 1u) & MASK);
         g_rx_count--;
     }
-    EPIC_IRQ_Restore(prev);
     return n;
 }
 

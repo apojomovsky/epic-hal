@@ -91,27 +91,35 @@ void encoder_update(encoder_t *enc, uint8_t port_value)
 
 int32_t encoder_get_position(const encoder_t *enc)
 {
-    /* Atomic 32-bit read: an 8-bit core reads it in 4 bytes and an ISR
-     * update could tear it mid-read. */
-    uint8_t s = EPIC_IRQ_Disable();
-    int32_t p = enc->position;
-    EPIC_IRQ_Restore(s);
+    /* Read-twice-retry (class-G conversion, the epic_tick_get pattern):
+     * the ISR updates position as a multi-byte RMW, so a single read
+     * can tear; retry until two consecutive reads agree. The previous
+     * Disable-guarded read exposed the Finding 10.1 hazard (a latched
+     * interrupt delivered inside a GIE=0 window can tear the protected
+     * read and leave GIE cleared after ISR return). */
+    int32_t p;
+    do {
+        p = enc->position;
+    } while (p != enc->position);
     return p;
 }
 
 uint16_t encoder_get_error_count(const encoder_t *enc)
 {
-    /* Same tear-protection as encoder_get_position; low-stakes but consistent. */
-    uint8_t s = EPIC_IRQ_Disable();
-    uint16_t c = enc->error_count;
-    EPIC_IRQ_Restore(s);
+    /* Read-twice-retry, same discipline as encoder_get_position. */
+    uint16_t c;
+    do {
+        c = enc->error_count;
+    } while (c != enc->error_count);
     return c;
 }
 
 uint16_t encoder_get_glitch_count(const encoder_t *enc)
 {
-    uint8_t s = EPIC_IRQ_Disable();
-    uint16_t c = enc->glitch_count;
-    EPIC_IRQ_Restore(s);
+    /* Read-twice-retry, same discipline as encoder_get_position. */
+    uint16_t c;
+    do {
+        c = enc->glitch_count;
+    } while (c != enc->glitch_count);
     return c;
 }

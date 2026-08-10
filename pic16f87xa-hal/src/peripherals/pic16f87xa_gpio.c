@@ -174,12 +174,15 @@ void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t))
 
 void RB_IRQHandler(void)
 {
-    if (!EPIC_IRQ_GetFlag(PIC16_IRQ_RB)) return;
+    /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
+     * context; see the CCP handlers). RBIF is INTCON bit 0
+     * (bank-independent). */
+    if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_RBIF)) return;
 
     /* MUST read PORTB before clearing RBIF (DS39582B §14.11.3): the
      * mismatch comparator only re-arms once PORTB is read, so reading
      * after clearing risks a spurious re-interrupt or a missed change. */
     uint8_t portb = EPIC_REG8(PIC_REG_PORTB);
-    EPIC_IRQ_ClearFlag(PIC16_IRQ_RB);
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_RBIF);
     if (s_rb_change_callback) s_rb_change_callback(portb);
 }
