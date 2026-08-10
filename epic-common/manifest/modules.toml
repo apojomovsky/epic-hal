@@ -268,7 +268,7 @@ sources     = [
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-combo-uart-ssp]
-dir        = "epic-combo-uart-ssp"
+dir        = "tests/epic-combo-uart-ssp"
 sources    = []
 includes   = []
 depends_on = []
@@ -299,7 +299,7 @@ harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-multitimer]
-dir        = "epic-combo-multitimer"
+dir        = "tests/epic-combo-multitimer"
 sources    = []
 includes   = []
 depends_on = []
@@ -334,7 +334,7 @@ harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-adc-uart]
-dir        = "epic-combo-adc-uart"
+dir        = "tests/epic-combo-adc-uart"
 sources    = []
 includes   = []
 depends_on = []
@@ -368,7 +368,7 @@ harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-rb-uart]
-dir        = "epic-combo-rb-uart"
+dir        = "tests/epic-combo-rb-uart"
 sources    = []
 includes   = []
 depends_on = []
@@ -400,7 +400,7 @@ harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-eeprom-isr]
-dir        = "epic-combo-eeprom-isr"
+dir        = "tests/epic-combo-eeprom-isr"
 sources    = []
 includes   = []
 depends_on = []
@@ -444,7 +444,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # site) under the live 1 ms tick ISR, checking every read against the
 # scripted net and that the tick survived.
 [modules.epic-combo-encoder-tick]
-dir        = "epic-combo-encoder-tick"
+dir        = "tests/epic-combo-encoder-tick"
 sources    = []
 includes   = []
 depends_on = [
@@ -472,7 +472,7 @@ harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-swuart-tick]
-dir        = "epic-combo-swuart-tick"
+dir        = "tests/epic-combo-swuart-tick"
 sources    = []
 includes   = []
 depends_on = ["epic-swuart", "epic-tick"]
@@ -503,7 +503,7 @@ harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-tick-serial]
-dir        = "epic-combo-tick-serial"
+dir        = "tests/epic-combo-tick-serial"
 sources    = []
 includes   = []
 depends_on = ["epic-tick", "epic-serial"]
@@ -534,7 +534,7 @@ harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-lcd-tick]
-dir        = "epic-combo-lcd-tick"
+dir        = "tests/epic-combo-lcd-tick"
 sources    = []
 includes   = []
 depends_on = ["epic-lcd", "epic-tick"]
@@ -559,7 +559,7 @@ PIC18Fxx5x = [
 name    = "combo-lcd-tick"
 sources = [
   "tests/combo_lcd_tick.c",
-  "../epic-lcd/src/epic_lcd_gpio4.c",
+  "../../epic-lcd/src/epic_lcd_gpio4.c",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
@@ -1523,7 +1523,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # EEPROM_WRITES=32 (the scenario performs 13 writes; the spare cycles
 # absorb the ISR/EEIF race documented in the gate's header).
 [modules.epic-combo-tick-settings]
-dir        = "epic-combo-tick-settings"
+dir        = "tests/epic-combo-tick-settings"
 sources    = []
 includes   = []
 depends_on = [
@@ -1562,7 +1562,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # byte-exact against the modbus gate's oracle (11 03 00 00 00 02 C6 9B)
 # with the tick still advancing and GIE alive.
 [modules.epic-combo-modbus-full]
-dir        = "epic-combo-modbus-full"
+dir        = "tests/epic-combo-modbus-full"
 sources    = []
 includes   = []
 depends_on = [
@@ -1591,7 +1591,7 @@ harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-combo-taskmgr-serial]
-dir        = "epic-combo-taskmgr-serial"
+dir        = "tests/epic-combo-taskmgr-serial"
 sources    = []
 includes   = []
 depends_on = [
