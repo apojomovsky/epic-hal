@@ -39,8 +39,9 @@ EPIC_StatusTypeDef EPIC_PSP_Init(void (*callback)(void))
 {
     g_psp_cb = callback;
     /* Clear the read-only status flags (IBF, OBF, IBOV) by writing
-     * TRISE with them clear. The lower 4 bits of TRISE are
-     * read-only; PSPIE/PSPMODE are left to the user. */
+     * TRISE with them clear. The upper status bits (TRISE<7:5>) are
+     * cleared by writing 0; the direction bits (TRISE<2:0>) and
+     * PSPMODE are left to the user. */
     b1_trise_write(b1_trise() &
                    (uint8_t)~(PIC_TRISE_IBF | PIC_TRISE_OBF | PIC_TRISE_IBOV));
     EPIC_IRQ_ClearFlag(PIC16_IRQ_PSP);

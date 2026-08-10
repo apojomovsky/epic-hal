@@ -182,8 +182,9 @@
 #define PIC_PIR2_BCLIF        EPIC_BIT(3)
 #define PIC_PIR2_EEIF         EPIC_BIT(4)
 #define PIC_PIR2_CMIF         EPIC_BIT(6)
-#define PIC_PIR2_OSFIF        EPIC_BIT(7)
-
+/* (No OSFIF on the 87XA: PIR2 bit 7 is unimplemented. A bogus
+ * PIC_PIR2_OSFIF constant copied from the 193X pattern was removed by
+ * the sfr-map audit, 2026-08-11.) */
 #define PIC_PIE2_CCP2IE       EPIC_BIT(0)
 #define PIC_PIE2_BCLIE        EPIC_BIT(3)
 #define PIC_PIE2_EEIE         EPIC_BIT(4)
@@ -337,15 +338,23 @@
 #define PIC_EECON1_WR          EPIC_BIT(1)    /* Write control.  */
 #define PIC_EECON1_WREN        EPIC_BIT(2)    /* Write enable.   */
 #define PIC_EECON1_WRERR       EPIC_BIT(3)    /* Write error.    */
-#define PIC_EECON1_EEIF        EPIC_BIT(4)    /* EEPROM IRQ.     */
+/* (No EEIF in EECON1: the EEPROM write-done flag is PIR2<EEIF>, see
+ * PIC_PIR2_EEIF. A bogus PIC_EECON1_EEIF constant was removed by the
+ * sfr-map audit, 2026-08-11.)
 
 /* ───────────────────────── TRISE bits (PORT E / PSP) ─────────────── */
 
-/* DS39582B §4.5, Register 4-9. PSP is 40/44-pin only. */
-#define PIC_TRISE_PSPIE        EPIC_BIT(0)    /* PSP read/write IRQ enable. */
-#define PIC_TRISE_IBF          EPIC_BIT(1)    /* Input buffer full.        */
-#define PIC_TRISE_OBF          EPIC_BIT(2)    /* Output buffer full.       */
-#define PIC_TRISE_IBOV         EPIC_BIT(3)    /* Input buffer overflow.    */
+/* DS39582B §4.5, Register 4-9. PSP is 40/44-pin only. The status bits
+ * are the UPPER half (IBF bit 7, OBF bit 6, IBOV bit 5, PSPMODE bit 4);
+ * bits 2:0 are the RE2:RE0 direction controls and bit 3 is
+ * unimplemented. Corrected 2026-08-11 by the sfr-map audit
+ * (scripts/sfr-map-audit.py): the previous values (IBF=1, OBF=2,
+ * IBOV=3) were the 16C74-era layout and would read/clear the wrong
+ * bits on real silicon. The PSP interrupt enable is PIE1<7>
+ * (PIC_PIE1_PSPIE), not a TRISE bit. */
+#define PIC_TRISE_IBF          EPIC_BIT(7)    /* Input buffer full.        */
+#define PIC_TRISE_OBF          EPIC_BIT(6)    /* Output buffer full.       */
+#define PIC_TRISE_IBOV         EPIC_BIT(5)    /* Input buffer overflow.    */
 #define PIC_TRISE_PSPMODE      EPIC_BIT(4)    /* PSP mode select.          */
 
 /* ───────────────────────── Bank-selection helper ───────────────── */

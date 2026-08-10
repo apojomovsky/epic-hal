@@ -111,3 +111,37 @@ churn, and makes the gate suite stable against future codegen changes.
   docs/toolchain-coverage.md).
 - A firmware-in-the-loop RX harness for the modules whose RX paths the
   sim cannot reach (epic-serial RX, console, modbus RX, swuart RX).
+
+## Extended list (2026-08-11, from the follow-up discussion)
+
+6. **SFR-map audit against the DFP** - the PIE2 bug was a misread
+   memory map (PIE2 = Bank 1, "fixed" to Bank 2). A mechanical script
+   that cross-checks every SFR address/bit constant in the HALs
+   against the DFP headers kills that bug class. Cheap, and would have
+   caught the regression before the combination matrix did.
+   Status: done (2026-08-11, scripts/sfr-map-audit.py in CI's target
+   job, `make audit` locally). First run caught three real bugs: the
+   TRISE IBF/OBF/IBOV layout was the 16C74-era one (IBF=1, OBF=2,
+   IBOV=3) instead of the 16F87XA's (IBF=7, OBF=6, IBOV=5); a bogus
+   PIC_EECON1_EEIF (EECON1 has no EEIF, the flag is PIR2<EEIF>); and a
+   bogus PIC_PIR2_OSFIF (PIR2 bit 7 is unimplemented on the 87XA; OSF
+   is 193X-only). All 14 MCUs now match the DFP.
+7. **Config-key audit** - the PIC16/PIC18 config-key mixup silently
+   broke 4 matrix legs. A CI check that each manifest example's config
+   keys exist for the target MCU's DFP config options.
+   Status: done (2026-08-11, scripts/config-key-audit.py in CI's
+   target job, `make audit` locally). XC8 validates pragmas at link
+   time, so the audit links each example's config TU with a trivial
+   main per supported MCU and fails on diagnostic 1363; 149 config TUs
+   link clean, and the planted-key repro proves the gate catches a
+   mixup.
+8. **The RX wall, via a target-in-the-loop harness** - the sim cannot
+   inject RX; the only real-toolchain RX coverage is firmware talking
+   to a host through the actual UART (or the USB CDC path). Largest
+   uncovered surface.
+9. **Pin or verify the 20 unpinned IRQ-shared statics** (the audit's
+   RISK set in docs/toolchain-coverage.md) - the multi-byte struct
+   copies are the scatter-sensitive ones.
+10. **Gate flake hardening** - several gates documented the sim-wedge
+    landing zones; a CI repeat-run (each gate N times) surfaces the
+    remaining flakes and drives the wedge-proofing pass.

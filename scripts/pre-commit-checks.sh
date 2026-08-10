@@ -74,13 +74,17 @@ stray_files_check() {
                 fi
                 ;;
         esac
-        top="${f%%/*}"
-        if ! printf '%s' "$top" | grep -qE "$dir_whitelist"; then
-            echo "pre-commit: unexpected top-level directory: $top"
-            echo "pre-commit:   the repo root is reserved for modules, the HALs, and the known"
-            echo "pre-commit:   infra directories; put test scaffolding under tests/ instead"
-            bad=1
-        fi
+        case "$f" in
+            */*)
+                top="${f%%/*}"
+                if ! printf '%s' "$top" | grep -qE "$dir_whitelist"; then
+                    echo "pre-commit: unexpected top-level directory: $top"
+                    echo "pre-commit:   the repo root is reserved for modules, the HALs, and the known"
+                    echo "pre-commit:   infra directories; put test scaffolding under tests/ instead"
+                    bad=1
+                fi
+                ;;
+        esac
         case "$f" in
             *.p1|*.sdb)
                 echo "pre-commit: XC8 byproduct committed: $f"
