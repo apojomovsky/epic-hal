@@ -159,7 +159,9 @@ and each is documented at its source (the sim files' headers):
   testbench and crashes the simulator; bit-banging a 9600 waveform onto the
   RX pin raises FERR without setting RCIF (the model's receive data path
   consumes a stimulus buffer, not the pin). All gates are TX-side or
-  internal-state.
+  internal-state. The RX-loopback harness (task 8,
+  tests/epic-combo-rx-loopback) exists: host-sim RX logic verified;
+  real-UART leg silicon-pending (task 1).
 - **The MSSP data path is not modeled.** SSPIF/BF never set; SEN/PEN latch
   forever. SSPBUF captures written bytes (no WCOL). Bounded waits only.
 - **CPU-executed data-EEPROM writes never complete** on either family (WR
