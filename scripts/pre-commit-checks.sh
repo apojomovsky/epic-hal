@@ -36,6 +36,50 @@ staged_files() {
     git_diff --name-only --diff-filter=ACM
 }
 
+# ---- 1a. unexpected files at the repo root (probe/build byproducts) ----
+#
+# The 2026-08-10 cleanup removed 11 XC8 codegen-probe byproducts
+# (root-level *.d/*.p1/*.sdb) that a blanket `git add -A` swept into
+# PR #12/#13: one-shot `-S` compiler invocations writing into the
+# working tree produced them and nothing tracked them. This check
+# catches the class BEFORE a commit, regardless of name or extension:
+# (a) any staged file at the repo root that is not in the known
+# whitelist, and (b) any staged XC8-byproduct extension (*.p1, *.sdb,
+# or a root-level *.d - compiler dependency files). Build output under
+# build*/ is already gitignored, so it never reaches the staged set.
+
+stray_files_check() {
+    local whitelist='^\.gitignore$|^\.clang-format$|^AGENTS\.md$|^CLAUDE\.md$|^DEVELOPMENT\.md$|^LICENSE$|^Makefile$|^README\.md$'
+    local bad=0
+    local f
+    while IFS= read -r f; do
+        case "$f" in
+            */*) ;;                      # subdirectory file: fine
+            *)  if ! printf '%s' "$f" | grep -qE "$whitelist"; then
+                    echo "pre-commit: unexpected file at the repo root: $f"
+                    echo "pre-commit:   remove it, move it under a directory, or add it to .gitignore"
+                    bad=1
+                fi
+                ;;
+        esac
+        case "$f" in
+            *.p1|*.sdb)
+                echo "pre-commit: XC8 byproduct committed: $f"
+                echo "pre-commit:   these are regenerable compiler output; remove them"
+                bad=1
+                ;;
+            *.d)
+                if [ "${f%/*}" = "$f" ]; then
+                    echo "pre-commit: root-level compiler dependency file: $f"
+                    echo "pre-commit:   regenerable build output; remove it"
+                    bad=1
+                fi
+                ;;
+        esac
+    done < <(staged_files)
+    [ "$bad" = 1 ] && fail=1
+}
+
 # ---- 1. trailing newline + trailing whitespace (auto-fix, then block) ----
 
 newline_whitespace_check() {
@@ -157,6 +201,7 @@ cppcheck_check() {
 newline_whitespace_check
 emdash_check
 cppcheck_check
+stray_files_check
 
 if [ "$fail" -ne 0 ]; then
     echo "pre-commit: blocked, see messages above."
