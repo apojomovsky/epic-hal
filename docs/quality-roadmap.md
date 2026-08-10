@@ -2,9 +2,9 @@
 
 Status: **reference document, 2026-08-10**. Ranked by risk-reduction per
 effort, grounded in what the validation-hunt and combination-matrix
-campaigns (PR #12/#13) actually uncovered. Task 2 and 3 are being
-executed together in one PR (docs/superpowers/plans/2026-08-10-gie-and-
-stringdir-conversions.md).
+campaigns (PR #12/#13) actually uncovered. Tasks 2-4 and 6-7 are done
+as of 2026-08-11 (see per-task Status lines); the extended list after
+the honorable mentions tracks the newer tasks.
 
 ## 1. Real-silicon bring-up pass (the compatibility task)
 
@@ -49,6 +49,11 @@ existing gates exercise most sites, so each conversion is verifiable.
 
 **Why**: direct reduction of real-silicon unexpected behavior; the
 pattern is proven and the conversion is mechanical.
+Status: done (2026-08-11, PR #16). All epic-serial/epic-swuart/
+epic-encoder/epic-taskmgr sites converted to read-twice-retry or
+publish-last single-byte disciplines; task_start/task_reset/
+task_set_period retain documented critical sections (a retry cannot
+atomicize a multi-byte TCB write).
 
 ## 3. The stringdir ISR-handler conversion (class F)
 
@@ -65,6 +70,9 @@ gates are the regression net.
 
 **Why**: closes the last known PCLATH hazard in the ISR path,
 mechanically, with full regression coverage.
+Status: done (2026-08-11, PR #16). All 14 handlers (10 87XA, 4 193X)
+converted to direct flag ops; the CCP1/CCP2 direct-flag pattern is now
+the family norm.
 
 ## 4. Host-sim property and fuzz testing
 
@@ -83,6 +91,13 @@ state machine).
 **Why**: cheapest bug-finding per unit effort in the list; the host
 tests run in seconds, so the property space is bounded only by what we
 write.
+Status: done (2026-08-11, PR #20). Seeded-deterministic property and
+fuzz tests landed for epic-math, epic-serial, epic-taskmgr,
+epic-settings, epic-console, and epic-swuart (algebraic identities,
+ring stress, scheduler invariants vs a semantics model, CRC
+round-trips + corruption sweeps, line-machine fuzzing, TX/RX ring and
+error-count fuzzing); every test was mutation-verified against a
+deliberately broken implementation.
 
 ## 5. Deterministic-layout hardening
 
