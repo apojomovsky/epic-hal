@@ -569,6 +569,42 @@ name        = "combo-lcd-tick-sim"
 harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
+[modules.epic-combo-rx-loopback]
+dir        = "tests/epic-combo-rx-loopback"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+# Task 8 of the quality roadmap (docs/quality-roadmap.md): the RX wall,
+# via a target-in-the-loop harness. MPLAB SIM cannot inject RX of any
+# kind (the RX-wall finding in docs/toolchain-coverage.md), so this
+# gate is the mdb leg of the RX-loopback harness: USART RX armed
+# (SPEN + CREN + RCIE) with a line-framing echo callback, boot banner
+# over TX, and a TX-free run loop (the polled-TX TSR-empty wait is an
+# ISR-wedge landing zone, C4's finding). The echo path itself cannot
+# fire under MPLAB SIM (no RX injection), so the line logic is verified
+# on the host sim instead: this module is the first combo with a host
+# CMake test, driving the same firmware through
+# pic16f87xa_sim_drive_usart_rx (tests/test_rx_loopback.c).
+[modules.epic-combo-rx-loopback.supported]
+PIC16F87XA = [
+  "16F877A",
+]
+
+[modules.epic-combo-rx-loopback.example.PIC16F87XA]
+name    = "rx_loopback"
+sources = [
+  "tests/combo_rx_loopback.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim, WDTE=OFF like every other sim variant.
+[modules.epic-combo-rx-loopback.example.PIC16F87XA.sim]
+name        = "rx_loopback-sim"
+harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
 [modules.epic-adcfilter]
 dir        = "epic-adcfilter"
 sources    = [
