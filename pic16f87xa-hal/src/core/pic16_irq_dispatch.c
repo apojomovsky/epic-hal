@@ -123,9 +123,9 @@ void epic_dispatch_all_irqs(void)
      * flag, there is no stale-flag drop here: the polling consumer
      * owns EEIF. */
     if (pir2 & PIC_PIR2_EEIF) {
-        uint8_t pie2 = 0u;
-        EPIC_BANK1_READ8(PIE2, pie2);
-        if (pie2 & PIC_PIE2_EEIE) {
+        uint8_t eeie = 0u;
+        EPIC_PIE2_READ_EEIE(eeie);
+        if (eeie & PIC_PIE2_EEIE) {
             EEPROM_IRQHandler();
         }
     }

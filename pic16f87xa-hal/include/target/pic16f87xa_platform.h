@@ -108,6 +108,13 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
  * requires the callback to share the table's flash page). */
 #define EPIC_PIE1_READ_TXIE(out_var) EPIC_BANK1_READ8(PIE1, (out_var))
 
+/* Same shape, for the EEIE bit (PIE2 bit 4, Bank 1). Used by the
+ * shared interrupt dispatcher to skip EEPROM_IRQHandler when EEIE is
+ * off: EEPROM completion is often polled with EEIE disabled, and an
+ * unconditional dispatch would clear the polled flag from a live ISR
+ * (combination-matrix C7 finding). */
+#define EPIC_PIE2_READ_EEIE(out_var) EPIC_BANK1_READ8(PIE2, (out_var))
+
 /* Same fix, Banks 2/3 (pic16f87xa_eeprom.c's EEDATA/EEADR/EECON1/
  * EECON2). Unlike EPIC_BANK1_*, these set/clear *both* RP1:RP0 bits
  * explicitly since EEPROM interleaves Bank 2 and Bank 3 back to back,
