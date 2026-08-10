@@ -50,9 +50,16 @@
 #             then completes the write from the firmware's own
 #             EEDATA/EEADR) and resumes. The gate's sim test documents
 #             the exact number of writes its scenario performs; keep
-#             this >= that count (extra cycles are harmless: the
-#             firmware has already finished and the spurious writes
-#             land after the checks).
+#             this >= that count. Extra cycles are NOT automatically
+#             harmless: each cycle adds a run window, and a firmware
+#             whose main returns (bounded harness loop) can fall
+#             through to the reset vector and re-run within those
+#             windows; a re-run of a stateful scenario (e.g.
+#             epic-settings' corruption step) reports the carried-over
+#             state as a failure. The settings gate found this at
+#             EEPROM_WRITES=32 (2026-08-11); its firmware now idles
+#             forever after reporting so the gate is single-pass at any
+#             count, and the runner value stays at the scenario's count.
 
 set -euo pipefail
 

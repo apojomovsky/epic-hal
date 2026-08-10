@@ -169,5 +169,15 @@ int main(void)
 
     epic_harness_log(ok ? "settings sim: save/load/corrupt/default sequence ok\n"
                         : "settings sim: sequence failed\n");
-    return epic_harness_report(ok);
+    (void)epic_harness_report(ok);
+
+    /* NEVER return: on a real target the firmware runs forever, and
+     * under MPLAB SIM a return would fall through to the reset vector
+     * and RE-RUN the sequence. The checks are deliberately stateful
+     * (pass 1 corrupts a stored byte), so a re-run would report the
+     * corruption as a failure. An idle loop keeps the gate single-pass
+     * no matter how long the runner lets the target run. */
+    for (;;) {
+        epic_harness_tick();
+    }
 }
