@@ -45,6 +45,14 @@ target_compile_definitions(test_settings PRIVATE -D${DEFAULT_DEVICE})
 target_link_libraries(test_settings PRIVATE epic_settings)
 add_test(NAME settings_tests COMMAND test_settings)
 
+# Host property test: randomized save/load round trips, per-byte
+# corruption sweep (any flipped stored byte must be detected), defaults
+# on blank regions, region isolation, top-of-EEPROM boundary.
+add_executable(test_settings_fuzz tests/test_settings_fuzz.c)
+target_compile_definitions(test_settings_fuzz PRIVATE -D${DEFAULT_DEVICE})
+target_link_libraries(test_settings_fuzz PRIVATE epic_settings)
+add_test(NAME settings_fuzz COMMAND test_settings_fuzz)
+
 add_executable(example_settings examples/example_settings.c)
 target_compile_definitions(example_settings PRIVATE -D${DEFAULT_DEVICE})
 target_link_libraries(example_settings PRIVATE epic_settings)
