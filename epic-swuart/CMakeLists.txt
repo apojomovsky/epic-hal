@@ -87,3 +87,12 @@ add_executable(test_swuart_dual_deinit tests/test_swuart_dual_deinit.c)
 target_compile_definitions(test_swuart_dual_deinit PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
 target_link_libraries(test_swuart_dual_deinit PRIVATE epic_swuart)
 add_test(NAME swuart_dual_deinit COMMAND test_swuart_dual_deinit)
+
+# Host property test: randomized TX/RX through the test hooks, decoding
+# the transmitted bytes from the armed CCP modes and reading injected
+# RX bytes back byte-exact, plus the TX short-write boundary, RX
+# ring-full drop and bad-stop-bit error paths.
+add_executable(test_swuart_fuzz tests/test_swuart_fuzz.c)
+target_compile_definitions(test_swuart_fuzz PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
+target_link_libraries(test_swuart_fuzz PRIVATE epic_swuart)
+add_test(NAME swuart_fuzz COMMAND test_swuart_fuzz)
