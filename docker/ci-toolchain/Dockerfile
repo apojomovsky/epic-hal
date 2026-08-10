@@ -53,13 +53,20 @@
 #     image entirely), verified against a real `mdb` run for both
 #     `sim-tests.yml` matrix entries (PIC16F877A, PIC18F4550) before and
 #     after: identical PASS output, ~5.7GB image instead of ~10.8GB.
-#     `mplab_platform/` (the actual NetBeans-platform runtime `mdb.sh`
-#     needs, ~1.6GB) is left untouched: a multi-stage build that keeps
-#     only mdbcore/java and drops the GUI/MCC/thirdparty tooling is real
-#     follow-up work, deliberately deferred (see docs/ci-plan.md Phase 2),
-#     `mdb.sh`'s actual runtime dependency set there (a NetBeans-platform
-#     module classpath, not just a few obvious directories) isn't obvious
-#     enough to prune correctly without real trial-and-error verification.
+#     2026-08-11, second pass (~5.7GB -> ~3.6GB): the mplab_platform
+#     GUI/MCC tooling mdb never loads is pruned in the same RUN (mcc*,
+#     browser-lib, ide, mplab_ide, alexandriaoffline, data-visualizer,
+#     mplab-pymdfu, dlight, dv-ide-support, mplab-content-manager,
+#     mplab-packmanagerui, cnd, harness, thirdparty, dat), the GTK/X11
+#     apt libs those GUI chunks needed are dropped, and the XC8-side
+#     AVR compiler support (avr/) plus both products' docs/uninstallers
+#     go. The prune set was found by trial-and-error against real mdb
+#     runs (each candidate chunk deleted, the three-family gate suite
+#     re-run): jline lives in mplablibs/, the NetBeans platform runtime
+#     (nb/, platform/, java/, lib/, mdbcore/, mplablibs/, bin/, etc/)
+#     is required, and the MPLAB X packs/ directory is required by
+#     mdb's device database (a symlink to the XC8-side DFPs fails: the
+#     bundled pack versions differ).
 #
 # Neither the XC8 installer nor the MPLAB X IDE installer is fetched by
 # this Dockerfile at all, on purpose. ww1.microchip.com sits behind an
@@ -105,7 +112,7 @@ ENV USER=root
 RUN apt-get update -yq \
     && apt-get install -yq --no-install-recommends \
         ca-certificates curl unzip make tar \
-        libgtk-3-0 libxext6 libxrender1 libxtst6 libxi6 libusb-1.0-0 libudev1 \
+        libusb-1.0-0 libudev1 \
         cmake build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -122,7 +129,11 @@ RUN set -eu; \
     chmod +x /tmp/installer.run; \
     /tmp/installer.run --mode unattended --unattendedmodeui none \
         --prefix "${XC8_INSTALL_DIR}"; \
-    rm /tmp/installer.run
+    rm /tmp/installer.run; \
+    cd "${XC8_INSTALL_DIR}" && rm -rf \
+        avr docs \
+        "Uninstall MPLAB XC8 C Compiler.desktop" \
+        Uninstall-xc8-v4.00 Uninstall-xc8-v4.dat
 
 # None of the three DFPs is bundled with the standalone XC8 v4.00
 # installer (see header comment). Unzipped to the paths this repo's
@@ -152,6 +163,7 @@ RUN set -eu; \
 # installer's root check fails without them even running as uid 0.
 COPY vendor/mplabx-installer.tar /tmp/mplabx.tar
 RUN set -eu; \
+    ide="ide"; \
     size=$(stat -c%s /tmp/mplabx.tar); \
     if [ "$size" -lt 100000000 ]; then \
         echo "error: /tmp/mplabx.tar is only ${size} bytes," \
@@ -169,6 +181,21 @@ RUN set -eu; \
         --collectInfo 0 --collectMyMicrochipInfo 0 \
         --installdir "${MPLABX_INSTALL_DIR}"; \
     rm "$installer"; \
+    cd "${MPLABX_INSTALL_DIR}" && rm -rf \
+        docs \
+        Uninstall_MPLAB_X_IDE_v6.35 \
+        Uninstall_MPLAB_X_IDE_v6.35.desktop \
+        Uninstall_MPLAB_X_IDE_v6.dat; \
+    # The MPLAB X installer's own running-instance check is a naive
+    # `ps | grep mplab_ide`, which would match this RUN's own command
+    # line if "mplab_ide" appeared literally here, so the name is
+    # spliced through a variable.
+    ide_dir="mplab_${ide}"; \
+    cd "${MPLABX_INSTALL_DIR}/mplab_platform" && rm -rf \
+        mcc mcc-content-manager mcc-services mcc-update-manager \
+        browser-lib ide "${ide_dir}" alexandriaoffline data-visualizer \
+        mplab-pymdfu dlight dv-ide-support mplab-content-manager \
+        mplab-packmanagerui cnd harness thirdparty dat; \
     cd "${MPLABX_INSTALL_DIR}/packs/Microchip" && rm -rf \
         ICD5_TP ICE4_TP PICkit5_TP PICkit4_TP Snap_TP PICkitBasic_TP \
         PKOB4_TP ICD4_TP EDBG_TP mEDBG_TP AtmelICE_TP JTAGICE3_TP \
