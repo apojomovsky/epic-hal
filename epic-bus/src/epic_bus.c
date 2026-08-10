@@ -69,6 +69,11 @@ void epic_bus_set_i2c_ops(const epic_bus_i2c_ops_t *ops)
     g_i2c_ops = ops ? ops : &g_i2c_default;
 }
 
+const epic_bus_i2c_ops_t *epic_bus_get_i2c_ops(void)
+{
+    return g_i2c_ops;
+}
+
 void epic_bus_i2c_init(uint32_t fosc_hz, uint32_t fscl_hz)
 {
     static SSP_HandleTypeDef s_ssp;        /* static: Init may store the pointer */
@@ -107,6 +112,11 @@ static const epic_bus_spi_ops_t *g_spi_ops = &g_spi_default;
 void epic_bus_set_spi_ops(const epic_bus_spi_ops_t *ops)
 {
     g_spi_ops = ops ? ops : &g_spi_default;
+}
+
+const epic_bus_spi_ops_t *epic_bus_get_spi_ops(void)
+{
+    return g_spi_ops;
 }
 
 void epic_bus_spi_init(uint32_t fosc_hz, uint32_t f_sclk_hz, uint8_t cs_port, uint8_t cs_pin)

@@ -42,6 +42,7 @@ SIM_VARIANTS = [
     ("epic-adcfilter", "16F877A"),
     ("epic-encoder", "16F877A"),
     ("epic-bus", "16F877A"),
+              ("epic-mcp23x17", "16F877A"),
     ("epic-serial", "16F877A"),
     ("epic-lcd", "16F877A"),
     ("epic-debounce", "16F877A"),
