@@ -203,12 +203,15 @@ exec: image
 # ─────────────────────────────── audits ─────────────────────────────
 # The static device-data audits (the CI target job's SFR-map +
 # config-key step, reproduced locally): HAL SFR maps against the DFP
-# proc headers, and every manifest example's config keys/values against
-# the compiler's config database. Host-side python3, shells into the
-# toolchain container for the DFP headers and xc8-cc.
+# proc headers, every manifest example's config keys/values against
+# the compiler's config database, and every matrix .hex rebuilt twice
+# into separate dirs and sha256-compared (layout drift as a reviewable
+# diff, not a flaky gate). Host-side python3, shells into the toolchain
+# container for the DFP headers and xc8-cc.
 audit: image
 	python3 scripts/sfr-map-audit.py
 	python3 scripts/config-key-audit.py
+	python3 scripts/hex-identity-audit.py
 
 # ──────────────────── local replica of CI's target job ──────────────
 # One command to reproduce the whole "target" CI job locally: emit the
