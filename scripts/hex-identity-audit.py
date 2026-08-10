@@ -77,6 +77,12 @@ def sha256_of(dir_hex: pathlib.Path) -> str:
 
 
 def main() -> int:
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
+                                         "PIC16F193X"), default=None,
+                    help="only this manifest family (the sharded CI jobs)")
+    args = ap.parse_args()
     matrix = json.loads(subprocess.run(
         ["python3", "scripts/epic_build.py", "matrix"],
         check=True, capture_output=True, text=True, cwd=REPO,
@@ -85,6 +91,8 @@ def main() -> int:
     bad = 0
     audited = 0
     for entry in matrix:
+        if args.family is not None and entry["family"] != args.family:
+            continue
         dfp_dir = f"{XC8_ROOT}/pic/packs/{entry['dfp']}/xc8"
         for pair in entry["modules"].split(";"):
             module, mcus = pair.split("=")

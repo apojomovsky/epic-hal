@@ -33,6 +33,8 @@
 #             marker from a PORTA register via mdb `print` and checks
 #             bit 0. Only pic16f193x currently uses gpio; pic16f87xa
 #             and pic18fxx5x keep uart.
+#   Temp capture files are PID-suffixed so concurrent same-family
+#   gates (the PARALLEL loop in ci-target-sim.sh) do not collide.
 #   extra_mdb extra mdb commands (e.g. `print`s), inserted right before
 #             `quit`, for register-level debugging without hardcoding
 #             device-specific diagnostics into this generic script.
@@ -115,9 +117,9 @@ write /r ${eeprom_econ1_addr} 0x06"
 done
 
 if [ "$mode" = "gpio" ]; then
-  out="/tmp/${family}-gpio.txt"
+  out="/tmp/${family}-gpio-$$.txt"
   rm -f "$out"
-  mdb_script="/tmp/${family}-mdb.txt"
+  mdb_script="/tmp/${family}-mdb-$$.txt"
   cat > "$mdb_script" <<SCRIPT
 device ${device}
 hwtool SIM
@@ -131,9 +133,9 @@ ${extra_mdb}
 quit
 SCRIPT
 else
-  out="/tmp/${family}-uart.txt"
+  out="/tmp/${family}-uart-$$.txt"
   rm -f "$out"
-  mdb_script="/tmp/${family}-mdb.txt"
+  mdb_script="/tmp/${family}-mdb-$$.txt"
   cat > "$mdb_script" <<SCRIPT
 device ${device}
 set uart1io.uartioenabled true

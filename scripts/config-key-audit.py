@@ -24,6 +24,7 @@ with EPIC_TOOLCHAIN_IMAGE) and the XC8 root inside it (default
 
 from __future__ import annotations
 
+import concurrent.futures
 import os
 import pathlib
 import re
@@ -65,15 +66,22 @@ def link_config_tu(mcu: str, dfp_pack: str, rel_path: str) -> str:
 
 
 def main() -> int:
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
+                                         "PIC16F193X"), default=None,
+                    help="only this manifest family (the sharded CI jobs)")
+    args = ap.parse_args()
     m = manifest_lib.load(manifest_lib.default_path())
     out_root = OUT_ROOT
     out_root.mkdir(parents=True, exist_ok=True)
 
-    bad = 0
-    audited = 0
+    jobs = []
     for module_name in sorted(m.modules):
         module = m.modules[module_name]
         for family_name, mcus in sorted(module.supported.items()):
+            if args.family is not None and family_name != args.family:
+                continue
             for mcu in sorted(mcus):
                 for variant in ("target", "sim"):
                     if variant == "sim" and m.family_of(mcu).name != family_name:
@@ -85,27 +93,36 @@ def main() -> int:
                         m, module_name, mcu, variant=variant)
                     if src is None:
                         continue
-                    audited += 1
                     rel = pathlib.Path("build-sim") / "audit-config" / (
                         f"{module_name}__{variant}__{mcu}.c")
                     (REPO / rel).write_text(src)
                     fam = m.family_of(mcu)
-                    output = link_config_tu(mcu, fam.dfp, str(rel))
-                    hits = UNKNOWN_KEY_RE.findall(output)
-                    if "1363" in output or "error" in output.lower():
-                        if hits:
-                            print(f"config-key mismatch in {module_name} "
-                                  f"({mcu}, {variant}): "
-                                  + ", ".join(f"'{k}'" for k in hits))
-                        else:
-                            print(f"config link failed in {module_name} "
-                                  f"({mcu}, {variant}):\n{output.strip()}")
-                        bad += 1
+                    jobs.append((module_name, mcu, variant, fam.dfp, str(rel)))
+
+    # The links are independent docker runs; thread them (the runner's
+    # cores) so the ~150 links do not serialize on docker's startup.
+    workers = min(4, len(jobs))
+    bad = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
+        results = ex.map(
+            lambda j: (j[0], j[1], j[2], link_config_tu(j[1], j[3], j[4])),
+            jobs)
+        for module_name, mcu, variant, output in results:
+            hits = UNKNOWN_KEY_RE.findall(output)
+            if "1363" in output or "error" in output.lower():
+                if hits:
+                    print(f"config-key mismatch in {module_name} "
+                          f"({mcu}, {variant}): "
+                          + ", ".join(f"'{k}'" for k in hits))
+                else:
+                    print(f"config link failed in {module_name} "
+                          f"({mcu}, {variant}):\n{output.strip()}")
+                bad += 1
 
     if bad:
         print(f"config-key audit: {bad} example(s) with invalid config keys")
         return 1
-    print(f"config-key audit: {audited} config TU(s) link clean for every "
+    print(f"config-key audit: {len(jobs)} config TU(s) link clean for every "
           "supported MCU")
     return 0
 
