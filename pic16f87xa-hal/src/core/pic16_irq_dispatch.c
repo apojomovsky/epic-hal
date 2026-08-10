@@ -114,6 +114,20 @@ void epic_dispatch_all_irqs(void)
 
     uint8_t pir2 = EPIC_REG8(PIC_REG_PIR2);
     if (pir2 & PIC_PIR2_CCP2IF) CCP2_IRQHandler();
-    if (pir2 & PIC_PIR2_EEIF)   EEPROM_IRQHandler();
+    /* EEIF is gated on EEIE, not dispatched unconditionally, and the
+     * flag is left untouched when the source is disabled: EEPROM
+     * completion is often POLLED (epic-settings spins on EEIF with
+     * EEIE off), so clearing it from a live ISR would steal the
+     * completion signal and hang the poller (found by the
+     * combination-matrix C7 gate, 2026-08-09). Unlike the TMR1 stale
+     * flag, there is no stale-flag drop here: the polling consumer
+     * owns EEIF. */
+    if (pir2 & PIC_PIR2_EEIF) {
+        uint8_t pie2 = 0u;
+        EPIC_BANK1_READ8(PIE2, pie2);
+        if (pie2 & PIC_PIE2_EEIE) {
+            EEPROM_IRQHandler();
+        }
+    }
     if (pir2 & PIC_PIR2_CMIF)   COMP_IRQHandler();
 }

@@ -228,13 +228,10 @@ int main(void)
          * visible one spin before GO/DONE clears on the first
          * conversion) and every later byte is 'L'/'M'/'N'/'O' (both
          * flags set, iteration low nibble). */
-        if ((i & (STATUS_PERIOD - 1u)) == 0u) {
-            s_tx_status((uint8_t)(0x40u | (go_clears ? 0x08u : 0u) |
-                                  (adif_seen ? 0x04u : 0u) |
-                                  (uint8_t)(i & 0x07u)),
-                        &tx_stall);
-            tx_count++;
-        }
+        /* NOTE: no polled USART TX here. C4 (epic-combo-rb-uart) proved
+         * the polled-TX TSR-empty wait is a landing zone for MPLAB
+         * SIM's ISR wedge under a live ISR; the run loop stays TX-free
+         * and the status byte goes out after the checks (GIE off). */
     }
 
     /* GIE must still be alive at loop end: the sim wedges it on the
@@ -256,9 +253,8 @@ int main(void)
     CHECK((pie1 & (uint8_t)~(PIC_PIE1_TMR1IE)) == 0u, 0x01); /* nothing else */
     CHECK(gie_alive != 0u, 0x02);                  /* GIE alive at loop end */
     CHECK(g_t1_count >= 100u, 0x03);               /* timer kept firing */
-    CHECK(tx_stall == 0u, 0x04);                   /* TX never stalled */
-    CHECK(tx_count == (uint16_t)((SIM_ITERATIONS + STATUS_PERIOD - 1u) /
-                                 STATUS_PERIOD), 0x05); /* every status byte went out */
+    /* (the in-loop status TX was removed: C4's wedge-landing-zone
+     * discipline; a final status byte goes out below with GIE off) */
     CHECK(first_start_ok != 0u, 0x06);             /* first Start accepted */
 
     /* ADC conversion contract (what the sim's model honors, probed
@@ -271,6 +267,10 @@ int main(void)
     CHECK(first_result < 1024u, 0x08);             /* 10-bit result */
     CHECK(adc_stable != 0u, 0x08);                 /* readback stable */
     CHECK(EPIC_ADC_IsConversionInProgress() == 0u, 0x08); /* GO cleared */
+
+    /* Final TX with GIE off (the C4 discipline): the polled USART path
+     * still runs under this build, just not inside the live-ISR loop. */
+    s_tx_status(0x5Au, &tx_stall);
 
     /* TX path still live after the interleave: one more polled byte,
      * shift register must report empty (the harness's own marker

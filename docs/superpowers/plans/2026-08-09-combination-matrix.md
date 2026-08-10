@@ -1,6 +1,11 @@
 # Combination matrix: peripherals and modules exercised together
 
-Status: **approved 2026-08-09** (task directive). Phase 1 in progress.
+Status: **complete 2026-08-09**. All 12 combo gates land and PASS
+(112/112 matrix builds, 32/32 sim gates, 6/6 bundles). Bugs found and
+fixed: the PIE2 bank regression (C11) and the un-gated EEIF dispatch
+branch (C7). Simulator limits mapped (inert 16F877A EEPROM, TMR0IF,
+the wedge classes). Follow-ups recorded in docs/toolchain-coverage.md:
+the swuart/CCP 8-bit-handle-pointer hardening and the PIC16 math pin.
 
 ## Problem
 

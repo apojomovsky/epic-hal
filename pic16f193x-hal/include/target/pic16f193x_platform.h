@@ -136,4 +136,19 @@ extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
  * TXIF branch fires the TX handler on every ISR from any source. */
 #define EPIC_PIE1_READ_TXIE(out_var) EPIC_PIE1_READ_TMR1IE(out_var)
 
+/* Same shape, for the EEIE bit (PIE2 bit 4, Bank 1; all three PIEs
+ * live in bank 1 on this family, DS41364B Tables 2-4). Used by the
+ * shared interrupt dispatcher to skip EEPROM_IRQHandler when EEIE is
+ * off: EEPROM completion is often polled with EEIE disabled, and an
+ * unconditional dispatch would clear the polled flag from a live ISR
+ * (combination-matrix C7 finding). */
+#define EPIC_PIE2_READ_EEIE(out_var)                                   \
+    do {                                                                \
+        asm("movlb 1");                                                \
+        asm("movf PIE2,w");                                            \
+        asm("movlb 0");                                                \
+        asm("movwf _epic_irq_pie_scratch");                            \
+        (out_var) = epic_irq_pie_scratch;                              \
+    } while (0)
+
 #endif /* PIC16F193X_PLATFORM_H */

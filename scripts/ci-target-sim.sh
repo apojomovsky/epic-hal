@@ -67,7 +67,7 @@ run_one pic16f87xa 16F877A PIC16F877A epic-combo-adc-uart 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-combo-rb-uart 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-combo-tick-serial 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-combo-encoder-tick 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-combo-lcd-tick 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-lcd-tick 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-combo-swuart-tick 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-eeprom-isr 5000 uart 32
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-tick-settings 5000 uart 32

@@ -230,3 +230,40 @@ P7. GIE-race probes: for each class-G site, hammer the protected read
 P8. epic-math: full golden-vector replay under mdb on PIC18; curated
      subset on PIC16. **Done**: PIC18 PASS=62 FAIL=0; PIC16 limited to
      the smoke by the layout budget (follow-up: __at pinning).
+
+## Combination matrix (2026-08-09, all 12 gates PASS)
+
+The combination campaign (docs/superpowers/plans/2026-08-09-
+combination-matrix.md) added 12 permanent interleave gates
+(epic-combo-*, 112/112 matrix builds, 32/32 sim gates, 6/6 bundles):
+
+| Gate | Combo | Family | Notes |
+|---|---|---|---|
+| C1 | USART + SSP + EEPROM + TMR2 ISR | 87XA | EEPROM reads removed (inert 16F877A model); manual RP window exercises the preempted-bank ISR path |
+| C2 | TMR0 + TMR1 + TMR2 + USART | 87XA | TMR0IF does not latch under the sim with PSA=0 (verified via the counter instead) |
+| C3 | ADC + TMR1 + USART | 87XA | sim models the ADC (conversion completes, GO clears, ADIF sets) |
+| C4 | RB change + TMR2 + USART | 87XA | polled-TX TSR-empty wait is an ISR-wedge landing zone (run loop TX-free) |
+| C5 | EEPROM write + TMR2 ISR | PIC18 | 16F877A EEPROM model fully inert (writes never complete, RD never refreshes EEDATA); needs eeprom_writes |
+| C6 | epic-tick + epic-serial | 87XA | byte-exact 50-line capture through the ring + dispatch |
+| C7 | epic-tick + epic-settings | PIC18 | found the un-gated EEIF dispatch branch (see below) |
+| C8 | epic-taskmgr + epic-serial | PIC18 | period ratios + ring push/pop exactness + byte-exact capture |
+| C9 | epic-encoder + epic-tick | 87XA | unbounded tick delays freeze under the sim wedge (bounded probes) |
+| C10 | epic-lcd + epic-tick | PIC18 | moved off 87XA: RAM edge + 8-level stack + wedge; PIC18 spins delays on the live tick |
+| C11 | epic-swuart + epic-tick | 87XA | found the PIE2 bank regression (see Finding 11 correction); handle pinned __at(0x140) for the 8-bit bank-2/3-relative pointer issue |
+| C12 | epic-modbus + epic-serial + epic-tick | PIC18 | frame byte-exact under a live tick; PIC18 has no TX-storm GIE wedge |
+
+Bugs found and fixed by the matrix:
+- The 87XA PIE2 enable/disable selected Bank 2; PIE2 is at 0x8D =
+  Bank 1, so every PIR2-source Enable/DisableSrc RMW'd EEADR instead
+  (a hunt-era regression, exposed by C11). Reverted to Bank 1.
+- The dispatches' EEPROM branches dispatched EEPROM_IRQHandler on
+  PIR2<EEIF> without gating on EEIE, and the handler clears EEIF: a
+  polling consumer (epic-settings) can lose the completion signal to a
+  live ISR. All three dispatches now gate EEIF on EEIE and leave the
+  flag untouched when disabled (the poller owns it).
+
+Simulator limits added by the combos: 16F877A data-EEPROM model inert;
+TMR0IF not a reliable event source (PSA=0); the GIE-on-with-pending-
+interrupt wedge (re-confirmed by C4/C9); the polled-TX wait as a wedge
+landing zone; unbounded tick delays hang under a wedge (bounded probes
+are the discipline); the PIC18 sim arms extra PIE bits on its own.

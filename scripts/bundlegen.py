@@ -15,6 +15,7 @@ See docs/superpowers/specs/2026-08-05-distribution-design.md.
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import sys
 
@@ -65,11 +66,16 @@ def files_for_family(manifest, family_name: str) -> list[str]:
 
     for name in modules_for_family(manifest, family_name):
         mod = manifest.modules[name]
-        files |= {f"{mod.dir}/{s}" for s in mod.sources}
-        files |= {f"{mod.dir}/{s}" for s in mod.sources_by_family.get(family_name, [])}
+        # normpath: combo-module examples reference sources across
+        # module dirs ("../epic-lcd/src/epic_lcd_gpio4.c"), which is
+        # valid for the filesystem and must collapse to a clean
+        # repo-root-relative path for the bundle copy and the
+        # emitted epicurus.mk (the epic-combo-lcd-tick gate).
+        files |= {os.path.normpath(f"{mod.dir}/{s}") for s in mod.sources}
+        files |= {os.path.normpath(f"{mod.dir}/{s}") for s in mod.sources_by_family.get(family_name, [])}
         example = mod.examples.get(family_name)
         if example is not None:
-            files |= {f"{mod.dir}/{s}" for s in example.sources}
+            files |= {os.path.normpath(f"{mod.dir}/{s}") for s in example.sources}
 
     return sorted(files)
 
