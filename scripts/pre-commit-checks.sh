@@ -36,32 +36,51 @@ staged_files() {
     git_diff --name-only --diff-filter=ACM
 }
 
-# ---- 1a. unexpected files at the repo root (probe/build byproducts) ----
+# ---- 1a. unexpected files and directories at the repo root ----
 #
-# The 2026-08-10 cleanup removed 11 XC8 codegen-probe byproducts
-# (root-level *.d/*.p1/*.sdb) that a blanket `git add -A` swept into
-# PR #12/#13: one-shot `-S` compiler invocations writing into the
-# working tree produced them and nothing tracked them. This check
-# catches the class BEFORE a commit, regardless of name or extension:
-# (a) any staged file at the repo root that is not in the known
-# whitelist, and (b) any staged XC8-byproduct extension (*.p1, *.sdb,
-# or a root-level *.d - compiler dependency files). Build output under
-# build*/ is already gitignored, so it never reaches the staged set.
+# Two incident-driven rules:
+# (a) 2026-08-10: 11 XC8 codegen-probe byproducts (root-level
+#     *.d/*.p1/*.sdb) were swept into PR #12/#13 by a blanket
+#     `git add -A`. Any staged XC8-byproduct extension (*.p1, *.sdb,
+#     or a root-level *.d) fails, as does any staged root-level file
+#     outside the file whitelist.
+# (b) 2026-08-11: the 12 epic-combo-* test modules lived at the root
+#     and were moved under tests/. The root is reserved for modules
+#     (epic-*), the three HALs, and the known infra directories
+#     (dir_whitelist below); a staged file whose top-level directory is
+#     outside it fails the commit, so new test scaffolding or a stray
+#     directory cannot pollute the root.
+# Build output under build*/ is already gitignored, so it never
+# reaches the staged set.
 
 stray_files_check() {
-    local whitelist='^\.gitignore$|^\.clang-format$|^AGENTS\.md$|^CLAUDE\.md$|^DEVELOPMENT\.md$|^LICENSE$|^Makefile$|^README\.md$'
+    local file_whitelist='^\.gitignore$|^\.clang-format$|^AGENTS\.md$|^CLAUDE\.md$|^DEVELOPMENT\.md$|^LICENSE$|^Makefile$|^README\.md$'
+    # Top-level directories: modules (epic-*), the three HALs, and the
+    # known infra directories. Anything else at the root is a stray
+    # (probe output, a dropped directory, an unplanned module): the
+    # 2026-08-11 cleanup moved the 12 epic-combo-* test modules under
+    # tests/ precisely so the root stays readable. A new module is
+    # added by extending this list deliberately, not by accident.
+    local dir_whitelist='^epic-[a-z0-9-]+$|^pic16f87xa-hal$|^pic18fxx5x-hal$|^pic16f193x-hal$|^docs$|^scripts$|^docker$|^examples$|^tests$|^\.github$'
     local bad=0
     local f
     while IFS= read -r f; do
         case "$f" in
-            */*) ;;                      # subdirectory file: fine
-            *)  if ! printf '%s' "$f" | grep -qE "$whitelist"; then
+            */*) ;;
+            *)  if ! printf '%s' "$f" | grep -qE "$file_whitelist"; then
                     echo "pre-commit: unexpected file at the repo root: $f"
                     echo "pre-commit:   remove it, move it under a directory, or add it to .gitignore"
                     bad=1
                 fi
                 ;;
         esac
+        top="${f%%/*}"
+        if ! printf '%s' "$top" | grep -qE "$dir_whitelist"; then
+            echo "pre-commit: unexpected top-level directory: $top"
+            echo "pre-commit:   the repo root is reserved for modules, the HALs, and the known"
+            echo "pre-commit:   infra directories; put test scaffolding under tests/ instead"
+            bad=1
+        fi
         case "$f" in
             *.p1|*.sdb)
                 echo "pre-commit: XC8 byproduct committed: $f"
