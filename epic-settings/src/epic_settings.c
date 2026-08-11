@@ -16,6 +16,12 @@
 #if !defined(__XC8)
   #if defined(PIC18F2455) || defined(PIC18F2550) || defined(PIC18F4455) || defined(PIC18F4550)
     #include "pic18fxx5x_sim.h"
+    /**
+     * @brief Drive one sim EEPROM byte write and raise EEIF (PIC18).
+     *
+     * @param addr EEPROM address written
+     * @param data byte written
+     */
     static void settings_sim_complete(uint8_t addr, uint8_t data)
     {
         pic18_sim_drive_eeprom_byte(addr, data);
@@ -23,6 +29,12 @@
     }
   #else
     #include "pic16f87xa_sim.h"
+    /**
+     * @brief Drive one sim EEPROM byte write and raise EEIF (PIC16).
+     *
+     * @param addr EEPROM address written
+     * @param data byte written
+     */
     static void settings_sim_complete(uint8_t addr, uint8_t data)
     {
         pic16f87xa_sim_drive_eeprom_byte(addr, data);
@@ -31,6 +43,13 @@
   #endif
 #endif
 
+/**
+ * @brief Feed one byte into a CRC-16-CCITT (poly 0x1021) accumulator.
+ *
+ * @param crc  current CRC value
+ * @param byte byte to fold in
+ * @return the updated CRC
+ */
 static uint16_t settings_crc16_update(uint16_t crc, uint8_t byte)
 {
     crc ^= (uint16_t)((uint16_t)byte << 8);
@@ -44,6 +63,13 @@ static uint16_t settings_crc16_update(uint16_t crc, uint8_t byte)
     return crc;
 }
 
+/**
+ * @brief Compute the CRC-16-CCITT of a byte buffer, initial value 0xFFFF.
+ *
+ * @param data buffer to checksum
+ * @param size number of bytes
+ * @return the CRC value
+ */
 static uint16_t settings_crc16(const uint8_t *data, uint8_t size)
 {
     uint16_t crc = 0xFFFFu;
@@ -53,6 +79,17 @@ static uint16_t settings_crc16(const uint8_t *data, uint8_t size)
     return crc;
 }
 
+/**
+ * @brief Write len bytes sequentially, waiting for each write to complete.
+ *
+ * The EEPROM driver's WriteBuffer is unsafe for multi-byte writes, so
+ * each byte is written and polled to completion before the next.
+ *
+ * @param start first EEPROM address to write
+ * @param buf   bytes to write
+ * @param len   number of bytes
+ * @return true if every byte wrote; false if any write was rejected
+ */
 static bool settings_write_bytes(uint8_t start, const uint8_t *buf, uint8_t len)
 {
     for (uint8_t i = 0; i < len; i++) {
@@ -75,6 +112,15 @@ static bool settings_write_bytes(uint8_t start, const uint8_t *buf, uint8_t len)
     return true;
 }
 
+/**
+ * @brief Save size bytes from data to EEPROM at eeprom_addr, followed by
+ *        a trailing CRC-16-CCITT.
+ *
+ * @param eeprom_addr  EEPROM address of the blob
+ * @param data         payload to save
+ * @param size         payload size in bytes
+ * @return true if the payload and CRC trailer were written
+ */
 bool epic_settings_save(uint8_t eeprom_addr, const void *data, uint8_t size)
 {
     const uint8_t *bytes = (const uint8_t *)data;
@@ -90,6 +136,17 @@ bool epic_settings_save(uint8_t eeprom_addr, const void *data, uint8_t size)
     return settings_write_bytes((uint8_t)(eeprom_addr + size), trailer, 2u);
 }
 
+/**
+ * @brief Load size bytes from EEPROM at eeprom_addr into data, validating
+ *        the trailing CRC-16-CCITT first.
+ *
+ * On failure (blank/corrupt region) data is left untouched.
+ *
+ * @param eeprom_addr  EEPROM address of the blob
+ * @param data         buffer to receive the payload
+ * @param size         payload size in bytes
+ * @return true if the stored blob was valid and copied
+ */
 bool epic_settings_load(uint8_t eeprom_addr, void *data, uint8_t size)
 {
     uint8_t *out = (uint8_t *)data;
@@ -111,6 +168,17 @@ bool epic_settings_load(uint8_t eeprom_addr, void *data, uint8_t size)
     return true;
 }
 
+/**
+ * @brief Load if valid, otherwise copy default_data into data and persist
+ *        it to EEPROM so the next boot sees it as already valid.
+ *
+ * @param eeprom_addr   EEPROM address of the blob
+ * @param data          buffer to receive the payload
+ * @param size          payload size in bytes
+ * @param default_data  fallback payload, applied and saved on load failure
+ * @return true if a valid stored blob existed, false if defaults were
+ *         applied
+ */
 bool epic_settings_load_or_default(uint8_t eeprom_addr, void *data, uint8_t size,
                                    const void *default_data)
 {

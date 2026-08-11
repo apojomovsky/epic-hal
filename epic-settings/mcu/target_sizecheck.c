@@ -7,6 +7,11 @@ typedef struct {
     unsigned char b;
 } tiny_settings_t;
 
+/**
+ * @brief Cross-compile sizecheck: touch every epic-settings entry point.
+ *
+ * @return the last settings byte, so the call results are observable
+ */
 int main(void)
 {
     tiny_settings_t cfg = { 1u, 2u };

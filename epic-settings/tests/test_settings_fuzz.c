@@ -14,6 +14,7 @@
 #else
   #include "pic16f87xa_sim.h"
   #define SIM_EEPROM_BYTE(addr, data)  pic16f87xa_sim_drive_eeprom_byte((addr), (data))
+  /** @brief Read one EEPROM byte from the PIC16F87XA simulator. */
   extern uint8_t pic16f87xa_sim_eeprom_read(uint8_t addr);
   #define SIM_EEPROM_READ(addr)        pic16f87xa_sim_eeprom_read((addr))
 #endif
@@ -35,6 +36,7 @@ static int g_fail = 0;
     } while (0)
 
 static uint32_t g_seed = 0xE57E0001u;
+/** @brief Next value of the deterministic LCG. */
 static uint32_t rnd(void)
 {
     g_seed = (1664525u * g_seed + 1013904223u);
@@ -46,11 +48,13 @@ static uint32_t rnd(void)
 
 static uint8_t g_blob[MAX_BLOB];
 
+/** @brief Re-initialize the harness before each test. */
 static void reset_env(void)
 {
     epic_harness_init(1000000UL);
 }
 
+/** @brief Fill a buffer with random bytes from the LCG. */
 static void fill_random(uint8_t *buf, uint8_t len)
 {
     for (uint8_t i = 0; i < len; i++) {
@@ -58,9 +62,13 @@ static void fill_random(uint8_t *buf, uint8_t len)
     }
 }
 
-/* Save/load round trip plus the per-byte corruption sweep: for every
- * stored byte position (payload and both CRC bytes), flip one bit and
- * verify load fails with the caller buffer untouched, then restore. */
+/**
+ * @brief Save/load round trip plus the per-byte corruption sweep.
+ *
+ * For every stored byte position (payload and both CRC bytes), flip one
+ * bit and verify load fails with the caller buffer untouched, then
+ * restore.
+ */
 static void roundtrip_and_corrupt(uint8_t addr, uint8_t size)
 {
     uint8_t out[MAX_BLOB + 2u];
@@ -95,6 +103,7 @@ static void roundtrip_and_corrupt(uint8_t addr, uint8_t size)
     CHECK(memcmp(out, g_blob, size) == 0, "blob intact after sweep");
 }
 
+/** @brief Verify many random save/load round trips all succeed. */
 static void test_random_roundtrips(void)
 {
     reset_env();
@@ -105,6 +114,7 @@ static void test_random_roundtrips(void)
     }
 }
 
+/** @brief Verify defaults are applied on blank regions. */
 static void test_defaults_on_blank(void)
 {
     reset_env();
@@ -132,6 +142,7 @@ static void test_defaults_on_blank(void)
     CHECK(memcmp(out, def, size) == 0, "existing blob preserved");
 }
 
+/** @brief Verify a blob at the top of EEPROM round-trips. */
 static void test_top_of_eeprom(void)
 {
     reset_env();
@@ -143,6 +154,7 @@ static void test_top_of_eeprom(void)
     }
 }
 
+/** @brief Verify separate regions remain isolated under fuzzing. */
 static void test_region_isolation(void)
 {
     reset_env();
@@ -167,6 +179,7 @@ static void test_region_isolation(void)
     }
 }
 
+/** @brief Run all epic-settings fuzz tests and report pass/fail counts. */
 int main(void)
 {
     test_random_roundtrips();

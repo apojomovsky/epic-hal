@@ -19,6 +19,9 @@ typedef struct {
     uint8_t flags;
 } app_settings_t;
 
+/**
+ * @brief Smoke-test saving, loading, and defaulting a settings blob.
+ */
 int main(void)
 {
     epic_harness_init(1000u);
