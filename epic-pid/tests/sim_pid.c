@@ -5,7 +5,7 @@
  * the real `pid_update` API, checking (a) every output stays in
  * [out_min, out_max] and the anti-windup invariant holds, (b) convergence
  * to the setpoint, and (c) pid_set_gains takes effect. Reports PASS/FAIL
- * over the harness USART (see pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
+ * over the harness USART (see pic16f87xa-hal/src/mdb/pic16_harness_mdb.c).
  */
 
 #include "pid.h"

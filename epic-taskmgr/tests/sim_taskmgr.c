@@ -5,7 +5,7 @@
  * canonical scheduler loop, and verifies both periodics executed, the
  * tick counter advanced, the one-shot fired exactly once and freed its
  * slot, and task_set_period took effect. Reports PASS/FAIL over the
- * harness EUSART (see pic18fxx5x-hal/src/core/pic18_harness_sim_target.c).
+ * harness EUSART (see pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c).
  */
 
 #include "task_manager.h"

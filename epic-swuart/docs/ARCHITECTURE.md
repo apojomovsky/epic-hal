@@ -294,7 +294,7 @@ where that verification's own limits show up.
 ## Real-hardware verification: what is proven, and what is not
 
 `epic-swuart` has a real `mdb` gate
-(`epic-swuart/tests/sim_target_swuart.c`, wired into
+(`epic-swuart/tests/sim_mdb_swuart.c`, wired into
 `scripts/ci-target-sim.sh`), the first real-hardware behavioral
 verification this module has ever had, on PIC16F877A. What it actually
 proves:

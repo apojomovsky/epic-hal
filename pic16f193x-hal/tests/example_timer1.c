@@ -37,7 +37,7 @@
 /** @brief Family-local harness extension, not part of core/epic_harness.h
  *  since only pic16f193x's RA0-marker mechanism needs it: no-op on
  *  the CMake host build (pic16f193x_harness_sim.c), infinite loop on
- *  the mdb-under-MPLAB-SIM build (pic16f193x_harness_sim_target.c) so
+ *  the mdb-under-MPLAB-SIM build (pic16f193x_harness_mdb.c) so
  *  the HARNESS=sim marker's RA0 stays set across the mdb `print PORTA`
  *  readback. */
 extern void pic16f193x_harness_halt(void);

@@ -47,7 +47,7 @@ config  = { FOSC = "HS", WDTE = "ON" }
 
 [modules.epic-tick.example.PIC16F87XA.sim]
 name        = "tick-blink-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { FOSC = "HS", WDTE = "OFF" }
 
 [modules.epic-tick.example.PIC18Fxx5x]
@@ -363,7 +363,7 @@ class TestResolution(unittest.TestCase):
         sim = self.m.sim_variant_for("epic-tick", "PIC16F87XA")
         self.assertEqual(sim.name, "tick-blink-sim")
         self.assertEqual(sim.harness_src,
-                         "pic16f87xa-hal/src/core/pic16_harness_sim_target.c")
+                         "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c")
 
     def test_sim_variant_for_returns_none_without_one(self):
         self.assertIsNone(self.m.sim_variant_for("epic-tick", "PIC18Fxx5x"))
@@ -372,15 +372,15 @@ class TestResolution(unittest.TestCase):
         target = self.m.sources_for("epic-tick", "16F877A", variant="target")
         sim = self.m.sources_for("epic-tick", "16F877A", variant="sim")
         self.assertIn("epic-common/src/core/epic_harness_target.c", target)
-        self.assertNotIn("pic16f87xa-hal/src/core/pic16_harness_sim_target.c", target)
-        self.assertIn("pic16f87xa-hal/src/core/pic16_harness_sim_target.c", sim)
+        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", target)
+        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", sim)
         self.assertNotIn("epic-common/src/core/epic_harness_target.c", sim)
 
     def test_sources_for_sim_variant_keeps_the_harness_source_position(self):
         sim = self.m.sources_for("epic-tick", "16F877A", variant="sim")
         target = self.m.sources_for("epic-tick", "16F877A", variant="target")
         target_pos = target.index("epic-common/src/core/epic_harness_target.c")
-        sim_pos = sim.index("pic16f87xa-hal/src/core/pic16_harness_sim_target.c")
+        sim_pos = sim.index("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c")
         self.assertEqual(target_pos, sim_pos)
 
     def test_sources_for_sim_variant_reuses_example_sources_when_no_override(self):

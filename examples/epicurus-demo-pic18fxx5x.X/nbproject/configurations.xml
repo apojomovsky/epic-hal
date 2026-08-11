@@ -25,10 +25,10 @@
       <logicalFolder name="core" displayName="core" projectFiles="true">
         <itemPath>../../epic-common/src/core/epic_harness_target.c</itemPath>
         <itemPath>../../pic18fxx5x-hal/src/core/pic18_irq.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/core/pic18_isr_vector.c</itemPath>
+        <itemPath>../../pic18fxx5x-hal/src/target/pic18_isr_vector.c</itemPath>
         <itemPath>../../pic18fxx5x-hal/src/core/pic18_irq_dispatch.c</itemPath>
         <itemPath>../../pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep_target.c</itemPath>
+        <itemPath>../../pic18fxx5x-hal/src/target/pic18fxx5x_wdt_sleep_target.c</itemPath>
       </logicalFolder>
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
         <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_adc.c</itemPath>
@@ -78,6 +78,7 @@
     <Elem>../../epic-serial/src</Elem>
     <Elem>../../epic-tick/src</Elem>
     <Elem>../../pic18fxx5x-hal/src/core</Elem>
+    <Elem>../../pic18fxx5x-hal/src/target</Elem>
     <Elem>../../pic18fxx5x-hal/src/peripherals</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>

@@ -209,7 +209,7 @@ it done.
    (currently PIC16F193X, exercised via RA0/GPIO), pass `MODE=gpio`;
    the wrapper then reads the marker via `print PORTA` and checks bit
    0. The matching `epic_harness_log()` magic-string dispatch lives
-   in `pic16f193x-hal/src/core/pic16f193x_harness_sim_target.c`.
+   in `pic16f193x-hal/src/mdb/pic16f193x_harness_mdb.c`.
    Use this exact protocol, established the hard way this session:
    - Use `stepi <N>` with a generous instruction count, **not**
      `run` + `wait`. `run`+`wait` does not reliably respect `break`-set
@@ -460,7 +460,7 @@ account lives.
 |---|---|---|
 | SFR access while a `pic_select_bank`-style bank switch is in effect, via a plain C local/parameter | PIC16 (classic mid-range) | `pic16f87xa-hal/README.md` (XC8 codegen gotchas) |
 | SFR address that is a runtime variable/struct-field/parameter at the point of access (not a literal token) | PIC18 | `pic18fxx5x-hal/README.md` (XC8 codegen gotchas) |
-| Baud-rate/timing divisor math that can silently overflow the target register width | PIC18 (found in `pic18_harness_sim_target.c`) | `pic18fxx5x-hal/README.md` (XC8 codegen gotchas) |
+| Baud-rate/timing divisor math that can silently overflow the target register width | PIC18 (found in `pic18_harness_mdb.c`) | `pic18fxx5x-hal/README.md` (XC8 codegen gotchas) |
 | Missing `HARNESS=sim` → watchdog-off Makefile override, WDT resets a bounded diagnostic build mid-run | PIC16, PIC18 | manifest `example.*.sim` configs (`WDTE=OFF`/`WDT=OFF`) |
 | Dangling pointer: a HAL `_Init` stores the caller's pointer instead of copying the handle, and the caller's storage is a non-`static` local | PIC16 (fixed); PIC18's own driver already copies the handle, not affected | `epic-common/MANUAL.md` (handle pattern) |
 | Read-only status/flag bits (RCIDL, CxOUT, FVRRDY, CPSOUT, ...) reading back set even though the driver never wrote them, mistaken for a write not landing | PIC16F193X (Enhanced Mid-range) | `pic16f193x-hal/docs/ARCHITECTURE.md`; §4 step 8 above |

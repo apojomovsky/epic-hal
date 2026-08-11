@@ -5,7 +5,7 @@
  * sequence matches exactly, including rejected events (a guard block and
  * several invalid-event rejections), and that the entry/exit callbacks
  * counted correctly. Reports PASS/FAIL over the harness USART (see
- * pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
+ * pic16f87xa-hal/src/mdb/pic16_harness_mdb.c).
  */
 #include "fsm.h"
 #include "core/epic_harness.h"

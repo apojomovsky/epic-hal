@@ -42,7 +42,7 @@ config  = { FOSC = "HS", WDTE = "ON" }
 
 [modules.epic-tick.example.PIC16F87XA.sim]
 name        = "tick-blink-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { FOSC = "HS", WDTE = "OFF" }
 
 [modules.epic-adcfilter]
@@ -165,8 +165,8 @@ class TestBuildScript(unittest.TestCase):
         target = self.script(variant="target")
         sim = self.script(variant="sim")
         self.assertIn("epic-common/src/core/epic_harness_target.c", target)
-        self.assertNotIn("pic16f87xa-hal/src/core/pic16_harness_sim_target.c", target)
-        self.assertIn("pic16f87xa-hal/src/core/pic16_harness_sim_target.c", sim)
+        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", target)
+        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", sim)
         self.assertNotIn("epic-common/src/core/epic_harness_target.c", sim)
         self.assertIn("build/16F877A-tick-blink-sim.hex", sim)
 

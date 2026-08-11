@@ -1,7 +1,7 @@
 /* Bounded, self-reporting HARNESS=sim `mdb` gate: writes one byte
  * through the real CCP2 compare-driven TX state machine and confirms
  * it drains, reporting PASS/FAIL over the target's real USART (same
- * pattern as pic16_harness_sim_target.c). TX-only: MPLAB SIM cannot
+ * pattern as pic16_harness_mdb.c). TX-only: MPLAB SIM cannot
  * inject an RX bitstream (SCL stimulus never registers a CCP1
  * capture; breakpoint-driven pin writes never reproduced the byte, see
  * epic-swuart/docs/ARCHITECTURE.md, "Real-hardware verification: what

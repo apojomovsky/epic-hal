@@ -78,9 +78,9 @@ set(EPIC_SOURCES
     src/peripherals/pic16f193x_lcd.c
     src/core/pic16f193x_irq.c
     src/core/pic16f193x_wdt_sleep.c
-    src/core/pic16f193x_wdt_sleep_sim.c
+    src/sim/pic16f193x_wdt_sleep_sim.c
     src/core/pic16f193x_irq_dispatch.c
-    src/core/pic16f193x_harness_sim.c
+    src/sim/pic16f193x_harness_sim.c
     src/sim/pic16f193x_sim.c
 )
 

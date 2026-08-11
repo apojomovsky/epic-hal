@@ -81,10 +81,11 @@ pic18fxx5x-hal/
 │                                  hal_<ppp>.h family-neutral pointer for the
 │                                  ones a family-agnostic consumer needs
 ├── src/
-│   ├── core/                     pic18_irq.c, pic18_irq_dispatch.c,
-│   │                              pic18_isr_vector.c (XC8 only), wdt/sleep
+│   ├── core/                     pic18_irq.c, pic18_irq_dispatch.c, wdt/sleep
 │   ├── peripherals/              implementations of peripherals/ headers
-│   └── sim/pic18_sim.c            host simulation backend (host build only)
+│   ├── target/                   isr_vector + wdt_sleep_target (XC8 only)
+│   ├── sim/                      harness_sim, sim backend (host build only)
+│   └── mdb/                      harness_mdb (MPLAB SIM gate)
 ├── tests/                        example_blink, example_smoke, one
 │                                  per-peripheral host-sim smoke test
 ├── mcu/pic18fxx5x-mplabx/        XC8 Makefile (thin caller of epic-common/mk)
@@ -101,7 +102,7 @@ that genuinely differs at this level is interrupt vectoring:
 Unlike PIC16F87XA's single vector at 0004h, this family has **two**
 vectors: 0008h (high-priority) and 0018h (low-priority), gated by
 `RCON<IPEN>` (DS39632E §9.0). Both vectors delegate to the same shared
-`epic_dispatch_all_irqs()` (`src/core/pic18_isr_vector.c` on target, the
+`epic_dispatch_all_irqs()` (`src/target/pic18_isr_vector.c` on target, the
 harness's registered sim callback on host) — the hardware has already
 separated high- from low-priority sources by which vector it took, so
 calling the full dispatch from both is correct. The dispatcher itself

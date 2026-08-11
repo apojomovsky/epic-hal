@@ -1,7 +1,7 @@
 /*
  * PIC18F2455-family sim-target implementation of the test harness (see
  * core/epic_harness.h): runs as real compiled firmware under MPLAB SIM,
- * driven headlessly via mdb. Mirrors `pic16_harness_sim_target.c`; only
+ * driven headlessly via mdb. Mirrors `pic16_harness_mdb.c`; only
  * the EUSART surface differs (`USART_ComputeSPBRG` takes an extra
  * BRG-width argument here).
  */
@@ -23,7 +23,7 @@ static uint32_t g_cycles = 0U;
 /**
  * @brief  USART transmit-complete callback stub. Exists only so
  *         EPIC_USART_Init's TXEN/TXIE gate sees a non-null callback (see
- *         pic16_harness_sim_target.c's header comment). Transmission
+ *         pic16_harness_mdb.c's header comment). Transmission
  *         below is polled; this is never actually called in a way that
  *         matters.
  */
@@ -68,7 +68,7 @@ void epic_harness_init(uint32_t cycles)
     (void)EPIC_USART_Init(&h);
     /* Transmission here is polled; TXIE is only a side effect of the
      * TxCpltCallback workaround above, turn the source back off (TXEN
-     * stays untouched). Same pattern as pic16_harness_sim_target.c. */
+     * stays untouched). Same pattern as pic16_harness_mdb.c. */
     EPIC_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
 }
 

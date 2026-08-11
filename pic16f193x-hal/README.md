@@ -95,7 +95,7 @@ host build puts `include/host` first on the include path so
 `pic16f193x_platform.h` resolves to a memory-backed SFR array; the target
 build puts `include/target` first so it resolves to volatile-deref. The
 linked harness file (`pic16f193x_harness_sim.c` vs
-`pic16f193x_harness_sim_target.c`) and the sim backend (`src/sim/`,
+`pic16f193x_harness_mdb.c`) and the sim backend (`src/sim/`,
 host-only) are selected by the build, not by preprocessor. Every example
 source compiles unchanged in both builds.
 
@@ -115,3 +115,12 @@ source compiles unchanged in both builds.
   contract design and how families interoperate.
 - [**../docs/adding-a-device.md**](../docs/adding-a-device.md): the
   verification-gated playbook for adding a new device or family.
+
+## Environment split
+
+`src/` mirrors the three build environments: `src/core/` and
+`src/peripherals/` are shared (host and target builds compile them),
+`src/target/` is real-hardware-only, `src/sim/` is host-simulation-only,
+`src/mdb/` is the MPLAB SIM gate variant. Never glob a `src/`
+directory into your build; select files through the manifest (the
+bundle's `epicurus.mk` or the reference project).

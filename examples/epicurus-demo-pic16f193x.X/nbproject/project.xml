@@ -11,6 +11,7 @@
             <sourceRootList>
                 <sourceRootElem>../../epic-common/src/core</sourceRootElem>
                 <sourceRootElem>../../pic16f193x-hal/src/core</sourceRootElem>
+                <sourceRootElem>../../pic16f193x-hal/src/target</sourceRootElem>
                 <sourceRootElem>../../pic16f193x-hal/src/peripherals</sourceRootElem>
             </sourceRootList>
             <confList>

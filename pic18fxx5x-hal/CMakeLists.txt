@@ -56,11 +56,11 @@ set(EPIC_FAMILY_DEVICES        PIC18F2455 PIC18F2550 PIC18F4455 PIC18F4550)
 
 set(EPIC_SOURCES
     src/sim/pic18_sim.c
-    src/core/pic18_harness_sim.c
+    src/sim/pic18_harness_sim.c
     src/core/pic18_irq.c
     src/core/pic18_irq_dispatch.c
     src/core/pic18fxx5x_wdt_sleep.c
-    src/core/pic18fxx5x_wdt_sleep_sim.c
+    src/sim/pic18fxx5x_wdt_sleep_sim.c
     src/peripherals/pic18fxx5x_gpio.c
     src/peripherals/pic18fxx5x_timer0.c
     src/peripherals/pic18fxx5x_timer1.c

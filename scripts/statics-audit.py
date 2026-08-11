@@ -280,9 +280,9 @@ def main() -> int:
             if p.exists() and p.suffix == ".c":
                 files[p] = fam.hal_dir
         # The HARNESS=sim variant swaps the family harness source for
-        # the sim-target harness (the mdb gates build these); its
-        # statics are in the same banked GPR as the rest.
-        for p in sorted((REPO / fam.hal_dir / "src").glob("core/*harness_sim_target.c")):
+        # the mdb harness (the sim gates build these); its statics are
+        # in the same banked GPR as the rest.
+        for p in sorted((REPO / fam.hal_dir / "src").glob("mdb/*harness_mdb.c")):
             files[p] = fam.hal_dir
     for module in sorted(m.modules):
         fam = next((f for f in BANKED_FAMILIES

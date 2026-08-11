@@ -4,7 +4,7 @@
  * payload and CRC on load, corrupts one stored byte via a direct HAL EEPROM
  * write, verifies the next load detects it and falls back to (and persists)
  * defaults. Reports PASS/FAIL over the harness USART (see
- * pic18_harness_sim_target.c).
+ * pic18_harness_mdb.c).
  *
  * EEPROM is real device state under MPLAB SIM, so the actual hardware path
  * is exercised. Simulator limitation: a CPU-executed EEPROM write never

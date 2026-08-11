@@ -45,11 +45,38 @@ def _is_mplabx_dir(part: str) -> bool:
     return part.endswith("-mplabx")
 
 
+def _is_sim_mdb(rel: str) -> bool:
+    """True when a bundle-relative path names a sim or mdb artifact.
+
+    The split src/ layout mirrors the build environments: src/sim/ holds
+    host-simulation sources, src/mdb/ holds the MPLAB SIM gate harness,
+    and every such file carries _sim/_mdb in its name (including the
+    include/pic16f87xa_sim.h API headers) or a sim_ fixture prefix
+    (tests/sim_bus.c and friends). None of it is consumer-facing.
+    """
+    parts = rel.split("/")
+    if "_sim" in rel or "_mdb" in rel:
+        return True
+    if any(part.startswith("sim_") for part in parts):
+        return True
+    return any(parts[i] == "src" and parts[i + 1] in ("sim", "mdb")
+               for i in range(len(parts) - 1))
+
+
+def _sim_mdb_offenders(paths) -> list[str]:
+    """Bundle-relative paths that must never ship, in sorted order."""
+    return sorted(p for p in paths if _is_sim_mdb(p))
+
+
 def _copy_tree(src: pathlib.Path, dst: pathlib.Path) -> None:
-    """Copy a module or HAL directory, minus build output and mcu/*-mplabx/."""
+    """Copy a module or HAL directory, minus build output, mcu/*-mplabx/,
+    and sim/mdb sources (the gate below makes the exclusion load-bearing).
+    """
     for path in sorted(src.rglob("*")):
         rel_parts = path.relative_to(src).parts
         if any(part in SKIP_DIRS or _is_mplabx_dir(part) for part in rel_parts):
+            continue
+        if _is_sim_mdb(path.relative_to(src).as_posix()):
             continue
         if path.is_dir():
             continue
@@ -172,6 +199,17 @@ def main():
     if not project_src.is_dir():
         sys.exit(f"error: no reference project at {project_src.relative_to(REPO)}")
     _copy_project(project_src, root / "examples" / "epicurus-demo.X")
+
+    # Gate: sim/mdb files must never ship in a release bundle. They are
+    # CI plumbing (host-simulation backends, MPLAB SIM gate harnesses),
+    # not consumer-facing, and _copy_tree skips them; this assertion
+    # turns an accidental inclusion into a hard build error instead of
+    # a silent packaging bug.
+    offenders = _sim_mdb_offenders(
+        p.relative_to(root).as_posix() for p in root.rglob("*"))
+    if offenders:
+        sys.exit("error: sim/mdb files must never ship in a release bundle:\n  " +
+                 "\n  ".join(offenders))
 
     # Every source epicurus.mk names must actually be in the bundle. A
     # bundle that ships a source list referring to a file it does not

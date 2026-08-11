@@ -40,7 +40,7 @@ Done so far:
 - ✅ **EEPROM driver** (read/write/buffer, mandatory 0x55/0xAA unlock, weak ISR)
 - ✅ **PSP driver** (40/44-pin only, TRISE PSPMODE, IBF/OBF/IBOV flag helpers)
 - ✅ **WDT / BOR / Sleep helpers** (clrwdt / sleep asm, PCON BOR/POR flags)
-- ✅ **Shared interrupt dispatch** (`epic_dispatch_all_irqs`), fans the single vector at 0x0004 out to every peripheral IRQHandler. On a real target the XC8 `__interrupt()` (`src/core/pic16_isr_vector.c`) calls it; on the host the harness registers it as the sim IRQ callback. One source of truth.
+- ✅ **Shared interrupt dispatch** (`epic_dispatch_all_irqs`), fans the single vector at 0x0004 out to every peripheral IRQHandler. On a real target the XC8 `__interrupt()` (`src/target/pic16_isr_vector.c`) calls it; on the host the harness registers it as the sim IRQ callback. One source of truth.
 - ✅ **Test/firmware harness** (`epic_harness.h`, in the shared `epic-common/` layer, included as `core/epic_harness.h`), lets every example build for the host sim and a real XC8 target with **no `#ifdef` in the example code**. The build links the host harness (`pic16_harness_sim.c`, this tree) or the target harness (`epic_harness_target.c`, family-blind no-ops shared in `epic-common/`); the harness abstracts the only two execution-model differences (pumping simulated time vs. real time, terminating test vs. firmware that runs forever).
 - ✅ **MPLAB X / XC8 project template** (Makefile + `nbproject/configurations.xml`)
 - ✅ End-to-end tests: `example_blink`, `example_idle_blink`, `example_timer1`, `example_timer2`, `example_ccp_pwm`, `example_usart`, `example_ssp`, `example_adc`, `example_comp_vref`, `example_eeprom`, `example_psp`, `example_wdt_sleep`
@@ -87,9 +87,10 @@ is done at **build time, not with `#ifdef`**: the XC8 Makefile puts
 `include/target` ahead of `include` on the include path, so
 `pic16f87xa_platform.h` resolves to the real-target version (SFR macros
 = direct volatile dereference) and the target-side harness / WDT-sleep /
-interrupt-vector implementations are linked. The MPLAB X project lives
-under `mcu/pic16f87xa-mplabx/`; its Makefile produces `<MCU>-firmware.hex`
-via `xc8-cc`.
+interrupt-vector implementations are linked. Real-target builds are
+selected through the manifest: the bundle's `epicurus.mk` (or the
+reference project `examples/epicurus-demo-pic16f87xa.X`) drives `xc8-cc`
+to produce `<MCU>-firmware.hex`.
 
 ## The simulation middleware
 
@@ -171,3 +172,12 @@ Mirror STM32Cube as closely as makes sense for an 8-bit PIC:
 
 Cube users get a familiar API; PIC users get familiar peripherals with a
 consistent abstraction.
+
+## Environment split
+
+`src/` mirrors the three build environments: `src/core/` and
+`src/peripherals/` are shared (host and target builds compile them),
+`src/target/` is real-hardware-only, `src/sim/` is host-simulation-only,
+`src/mdb/` is the MPLAB SIM gate variant. Never glob a `src/`
+directory into your build; select files through the manifest (the
+bundle's `epicurus.mk` or the reference project).

@@ -22,6 +22,7 @@
                 <sourceRootElem>../../epic-taskmgr/src</sourceRootElem>
                 <sourceRootElem>../../epic-tick/src</sourceRootElem>
                 <sourceRootElem>../../pic16f87xa-hal/src/core</sourceRootElem>
+                <sourceRootElem>../../pic16f87xa-hal/src/target</sourceRootElem>
                 <sourceRootElem>../../pic16f87xa-hal/src/peripherals</sourceRootElem>
             </sourceRootList>
             <confList>
