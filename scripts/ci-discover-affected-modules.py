@@ -9,7 +9,7 @@ job stays a single step:
      truth), the build-test matrix is empty and the whole build-test job
      is skipped (a real cmake configure+build+ctest run cannot be
      affected by prose or by dev-only tooling).
-  2. If not docs-only, which modules were actually touched, directly or
+  2. If not non-code, which modules were actually touched, directly or
      transitively? Every module's own CMakeLists.txt already declares its
      sibling dependencies via a `<NAME>_DIR ... ../<module>` pattern
      (EPIC_DIR, SERIAL_DIR, TICK_DIR, TASKMGR_DIR, MATH_DIR); this script
@@ -53,7 +53,7 @@ def git(*args):
 
 def resolve_base_ref():
     """Mirror host-tests.yml's lint-job base-ref resolution exactly, so a
-    docs-only decision and the pre-commit em-dash/whitespace diff scan
+    non-code decision and the pre-commit em-dash/whitespace diff scan
     always agree on what range they're looking at."""
     base = sys.argv[1] if len(sys.argv) > 1 else ""
     if not base or base == "0" * 40:
