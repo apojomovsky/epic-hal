@@ -15,8 +15,15 @@ static uint32_t           g_fosc_hz;
 static uint32_t           g_timer_start_tick;
 static uint16_t           g_timer_timeout_ms;
 
-/* SPI byte-level primitive */
-
+/**
+ * @brief Exchange one byte over the SSP in SPI mode.
+ *
+ * SPI byte-level primitive: writes out, clearing any write collision,
+ * waits for the buffer to fill, and returns the received byte.
+ *
+ * @param out byte to transmit
+ * @return byte received from the card
+ */
 static uint8_t spi_byte(uint8_t out)
 {
     uint16_t w;
@@ -33,6 +40,17 @@ static uint8_t spi_byte(uint8_t out)
 
 /* MMC_SPI_* callbacks, named in src/target/mmc_config.h */
 
+/**
+ * @brief MMC_SPI_TRANSFER callback: move len bytes between the card and
+ *        the caller.
+ *
+ * Reads clock junk (0xFF) when out_buf is NULL, per SD-over-SPI.
+ *
+ * @param instance SPI instance (unused, single card)
+ * @param out_buf  bytes to send, or NULL to clock out 0xFF
+ * @param in_buf   buffer to receive bytes, or NULL to discard
+ * @param len      number of bytes to transfer
+ */
 void epic_sdcard_spi_transfer(uint8_t instance, const uint8_t *out_buf,
                               uint8_t *in_buf, uint16_t len)
 {
@@ -46,6 +64,12 @@ void epic_sdcard_spi_transfer(uint8_t instance, const uint8_t *out_buf,
     }
 }
 
+/**
+ * @brief MMC_SPI_CS callback: assert or deassert the card's CS pin.
+ *
+ * @param instance SPI instance (unused, single card)
+ * @param value    0 = asserted, nonzero = deasserted, per mmc.h
+ */
 void epic_sdcard_spi_set_cs(uint8_t instance, uint8_t value)
 {
     (void)instance;
@@ -53,11 +77,20 @@ void epic_sdcard_spi_set_cs(uint8_t instance, uint8_t value)
                       value ? GPIO_PIN_SET : GPIO_PIN_RESET);   /* 0 = asserted, per mmc.h */
 }
 
-/* Picks the fastest of the SSP's 3 fixed divisors (Fosc/4, /16, /64) that
- * still meets target_hz, falling back to the slowest if none do. Known
- * gap: at 48 MHz (this family's USB clock), the slowest available divisor
- * is 750 kHz, above the SD spec's 400 kHz bring-up ceiling; unverified
- * whether real cards tolerate that without a board to test on. */
+/**
+ * @brief Pick the fastest SSP divisor meeting target_hz.
+ *
+ * The SSP has 3 fixed divisors (Fosc/4, /16, /64); the fastest that
+ * still meets target_hz is chosen, falling back to the slowest if none
+ * do. Known gap: at 48 MHz (this family's USB clock), the slowest
+ * available divisor is 750 kHz, above the SD spec's 400 kHz bring-up
+ * ceiling; unverified whether real cards tolerate that without a board
+ * to test on.
+ *
+ * @param target_hz   desired SPI clock rate
+ * @param achieved_hz receives the achieved rate
+ * @return the SSP mode for the chosen divisor
+ */
 static SSP_ModeTypeDef pick_divisor(uint32_t target_hz, uint32_t *achieved_hz)
 {
     static const uint8_t          divs[3]  = {4u, 16u, 64u};
@@ -82,6 +115,12 @@ static SSP_ModeTypeDef pick_divisor(uint32_t target_hz, uint32_t *achieved_hz)
     return modes[(uint8_t)best];
 }
 
+/**
+ * @brief MMC_SPI_SET_SPEED callback: reconfigure the SPI clock rate.
+ *
+ * @param instance SPI instance (unused, single card)
+ * @param speed_hz desired SPI clock rate
+ */
 void epic_sdcard_spi_set_speed(uint8_t instance, uint32_t speed_hz)
 {
     (void)instance;
@@ -95,6 +134,12 @@ void epic_sdcard_spi_set_speed(uint8_t instance, uint32_t speed_hz)
 
 /* MMC_TIMER_* callbacks: real wall-clock timeouts via epic-tick */
 
+/**
+ * @brief MMC_TIMER_START callback: arm the card timeout.
+ *
+ * @param instance   timer instance (unused, single card)
+ * @param timeout_ms timeout duration in milliseconds
+ */
 void epic_sdcard_timer_start(uint8_t instance, uint16_t timeout_ms)
 {
     (void)instance;
@@ -102,17 +147,39 @@ void epic_sdcard_timer_start(uint8_t instance, uint16_t timeout_ms)
     g_timer_timeout_ms = timeout_ms;
 }
 
+/**
+ * @brief MMC_TIMER_EXPIRED callback: report whether the timeout elapsed.
+ *
+ * @param instance timer instance (unused, single card)
+ * @return true when timeout_ms have elapsed since timer_start
+ */
 bool epic_sdcard_timer_expired(uint8_t instance)
 {
     (void)instance;
     return epic_tick_elapsed_since(g_timer_start_tick) >= g_timer_timeout_ms;
 }
 
+/**
+ * @brief MMC_TIMER_STOP callback: disarm the card timeout.
+ *
+ * @param instance timer instance (unused, single card)
+ */
 void epic_sdcard_timer_stop(uint8_t instance)
 {
     (void)instance;
 }
 
+/**
+ * @brief Configure SPI mode 0,0, assert CS idle, and run the SD/MMC
+ *        bring-up sequence (CMD0/CMD8/ACMD41/CMD58/CMD9).
+ *
+ * Blocks until the card responds or M-Stack's retry/timeout bounds are
+ * hit.
+ *
+ * @param pins     CS pin assignment
+ * @param fosc_hz  system oscillator frequency in Hz
+ * @return true when read/write/num_blocks are usable
+ */
 bool epic_sdcard_init(const epic_sdcard_pins_t *pins, uint32_t fosc_hz)
 {
     g_pins = *pins;
@@ -132,21 +199,48 @@ bool epic_sdcard_init(const epic_sdcard_pins_t *pins, uint32_t fosc_hz)
     return mmc_init_card(&g_card) == 0;
 }
 
+/**
+ * @brief Re-query the card's status (SEND_STATUS-adjacent, see mmc_ready()
+ *        in the vendored mmc.h).
+ *
+ * @return true when the card reports ready
+ */
 bool epic_sdcard_ready(void)
 {
     return mmc_ready(&g_card);
 }
 
+/**
+ * @brief Return the number of 512-byte blocks on the card, cached from
+ *        init.
+ *
+ * @return block count, or 0 if not initialized
+ */
 uint32_t epic_sdcard_num_blocks(void)
 {
     return mmc_get_num_blocks(&g_card);
 }
 
+/**
+ * @brief Read one 512-byte block into data (must be at least 512 bytes).
+ *
+ * @param block_addr block address to read
+ * @param data       destination buffer (>= 512 bytes)
+ * @return true on success, including the CRC16 check passing
+ */
 bool epic_sdcard_read_block(uint32_t block_addr, uint8_t *data)
 {
     return mmc_read_block(&g_card, block_addr, data) == 0;
 }
 
+/**
+ * @brief Write one 512-byte block from data (must be exactly 512 bytes).
+ *
+ * @param block_addr block address to write
+ * @param data       source buffer (exactly 512 bytes)
+ * @return true if the card accepted the data and reported no write error
+ *         via the follow-up SEND_STATUS check
+ */
 bool epic_sdcard_write_block(uint32_t block_addr, const uint8_t *data)
 {
     return mmc_write_block(&g_card, block_addr, (uint8_t *)data) == 0;

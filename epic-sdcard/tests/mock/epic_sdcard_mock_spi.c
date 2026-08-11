@@ -38,12 +38,18 @@ static const uint8_t g_csd[16] = {
 
 /* response queue */
 
+/**
+ * @brief Clear the mock's response queue.
+ */
 static void q_reset(void)
 {
     g_resp_len = 0u;
     g_resp_pos = 0u;
 }
 
+/**
+ * @brief Append one byte to the mock's response queue.
+ */
 static void q_byte(uint8_t b)
 {
     if (g_resp_len < RESP_QUEUE_CAP) {
@@ -51,6 +57,9 @@ static void q_byte(uint8_t b)
     }
 }
 
+/**
+ * @brief Append len bytes to the mock's response queue.
+ */
 static void q_bytes(const uint8_t *data, uint16_t len)
 {
     for (uint16_t i = 0; i < len; i++) {
@@ -58,11 +67,14 @@ static void q_bytes(const uint8_t *data, uint16_t len)
     }
 }
 
-/* Data-block reply: idle gap, start token (7.3.3.2), bytes, then CRC16
- * MSB-first: __read_data_block's self-check only holds for
- * [high_byte, low_byte] order (mmc_write_block sends the opposite order
- * on the write side, but that path is never self-checked, so it doesn't
- * apply here). */
+/**
+ * @brief Queue a full data-block reply: idle gap, start token, bytes,
+ *        then CRC16 MSB-first.
+ *
+ * __read_data_block's self-check only holds for [high_byte, low_byte]
+ * order (mmc_write_block sends the opposite order on the write side, but
+ * that path is never self-checked, so it doesn't apply here).
+ */
 static void q_data_block(const uint8_t *data, uint16_t len)
 {
     q_byte(0xFF);
@@ -76,6 +88,9 @@ static void q_data_block(const uint8_t *data, uint16_t len)
 
 /* command decode */
 
+/**
+ * @brief Decode one 6-byte SPI command and queue the card's response.
+ */
 static void handle_command(const uint8_t *cmd6)
 {
     uint8_t  idx = cmd6[0] & 0x3fu;
@@ -156,6 +171,9 @@ static void handle_command(const uint8_t *cmd6)
     }
 }
 
+/**
+ * @brief Consume one write-phase SPI payload (token, data, or CRC).
+ */
 static void handle_write_data(const uint8_t *out, uint16_t len)
 {
     switch (g_write_phase) {
@@ -190,6 +208,9 @@ static void handle_write_data(const uint8_t *out, uint16_t len)
 
 /* MMC_SPI_* bindings, named in tests/mock/mmc_config.h */
 
+/**
+ * @brief Mock MMC_SPI_TRANSFER: decode commands, serve queued responses.
+ */
 void epic_sdcard_mock_spi_transfer(uint8_t instance, const uint8_t *out_buf,
                                    uint8_t *in_buf, uint16_t len)
 {
@@ -218,12 +239,18 @@ void epic_sdcard_mock_spi_transfer(uint8_t instance, const uint8_t *out_buf,
     /* both NULL: pure clock filler (blank_clock(), the "8 extra clocks"), no-op */
 }
 
+/**
+ * @brief Mock MMC_SPI_CS: no-op (the mock ignores CS).
+ */
 void epic_sdcard_mock_spi_set_cs(uint8_t instance, uint8_t value)
 {
     (void)instance;
     (void)value;
 }
 
+/**
+ * @brief Mock MMC_SPI_SET_SPEED: no-op (the mock runs at any speed).
+ */
 void epic_sdcard_mock_spi_set_speed(uint8_t instance, uint32_t speed_hz)
 {
     (void)instance;
@@ -232,6 +259,9 @@ void epic_sdcard_mock_spi_set_speed(uint8_t instance, uint32_t speed_hz)
 
 /* test-only setup/inspection (epic_sdcard_mock_spi.h) */
 
+/**
+ * @brief Reset the mock to a freshly-inserted, uninitialized card.
+ */
 void epic_sdcard_mock_reset(void)
 {
     g_idle = true;
@@ -242,6 +272,9 @@ void epic_sdcard_mock_reset(void)
     memset(g_blocks, 0, sizeof(g_blocks));
 }
 
+/**
+ * @brief Return direct access to a backing block, or NULL past the end.
+ */
 uint8_t *epic_sdcard_mock_block(uint32_t block_addr)
 {
     if (block_addr >= EPIC_SDCARD_MOCK_BACKING_BLOCKS) {

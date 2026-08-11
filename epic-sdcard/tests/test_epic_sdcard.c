@@ -12,6 +12,7 @@
 static int g_pass = 0, g_fail = 0;
 #define CHECK(c, m) do { if (c) { g_pass++; } else { printf("FAIL: %s\n", m); g_fail++; } } while (0)
 
+/** @brief Build a fresh, uninitialized mmc_card. */
 static struct mmc_card new_card(void)
 {
     struct mmc_card card = {0};
@@ -20,6 +21,7 @@ static struct mmc_card new_card(void)
     return card;
 }
 
+/** @brief Verify the mock card completes the init sequence and reports the expected size. */
 static void test_init_sequence(void)
 {
     epic_sdcard_mock_reset();
@@ -36,6 +38,7 @@ static void test_init_sequence(void)
     CHECK(mmc_ready(&card), "ready() true immediately after init");
 }
 
+/** @brief Verify a pre-seeded block reads back byte-for-byte. */
 static void test_read_preseeded_block(void)
 {
     epic_sdcard_mock_reset();
@@ -56,6 +59,7 @@ static void test_read_preseeded_block(void)
           "read_block: bytes match what was pre-seeded");
 }
 
+/** @brief Verify a write followed by a read round-trips the block. */
 static void test_write_then_read_round_trip(void)
 {
     epic_sdcard_mock_reset();
@@ -81,6 +85,7 @@ static void test_write_then_read_round_trip(void)
           "round-trip: read-back bytes match what was written");
 }
 
+/** @brief Verify writes to one block do not affect another. */
 static void test_two_blocks_independent(void)
 {
     epic_sdcard_mock_reset();
@@ -101,6 +106,7 @@ static void test_two_blocks_independent(void)
     CHECK(memcmp(read3, b, sizeof(b)) == 0, "independence: block 3 has its own data");
 }
 
+/** @brief Verify reads beyond the reported size fail. */
 static void test_read_beyond_reported_size_fails(void)
 {
     epic_sdcard_mock_reset();
@@ -116,6 +122,7 @@ static void test_read_beyond_reported_size_fails(void)
     CHECK(res < 0, "read_block: rejects a block address at/past the reported size");
 }
 
+/** @brief Verify reads before init fail. */
 static void test_read_before_init_fails(void)
 {
     epic_sdcard_mock_reset();
@@ -129,6 +136,7 @@ static void test_read_before_init_fails(void)
     CHECK(!mmc_ready(&card), "ready() false before init");
 }
 
+/** @brief Verify the CRC16 self-check property on the card data. */
 static void test_crc16_self_check_property(void)
 {
     /* The same identity mmc.c's __read_data_block relies on: CRC16 over
@@ -145,6 +153,7 @@ static void test_crc16_self_check_property(void)
     CHECK(check == 0, "crc16: data + its own [high,low] CRC bytes self-checks to 0");
 }
 
+/** @brief Verify array CRC16 matches byte-by-byte accumulation. */
 static void test_crc16_array_matches_byte_by_byte(void)
 {
     uint8_t data[8] = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -157,6 +166,7 @@ static void test_crc16_array_matches_byte_by_byte(void)
     CHECK(via_array == via_bytes, "crc16: add_crc16_array matches repeated add_crc16 calls");
 }
 
+/** @brief Verify CRC7 is nonzero and deterministic. */
 static void test_crc7_nonzero_and_deterministic(void)
 {
     uint8_t csum = 0;
@@ -171,6 +181,7 @@ static void test_crc7_nonzero_and_deterministic(void)
     CHECK(on_wire == 0x95u, "crc7: CMD0's frame produces the spec-known 0x95 CRC byte");
 }
 
+/** @brief Run all epic-sdcard tests and report pass/fail counts. */
 int main(void)
 {
     test_init_sequence();
