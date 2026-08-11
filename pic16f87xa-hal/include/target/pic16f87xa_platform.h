@@ -96,7 +96,7 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
 /* Same shape, for the EEIE bit (PIE2 bit 4, Bank 1). The dispatcher
  * skips EEPROM_IRQHandler when EEIE is off: EEPROM completion is often
  * polled with EEIE disabled, and an unconditional dispatch would clear
- * the polled flag from a live ISR (combination-matrix C7 finding). */
+ * the polled flag from a live ISR. */
 #define EPIC_PIE2_READ_EEIE(out_var) EPIC_BANK1_READ8(PIE2, (out_var))
 
 /* Same fix, Banks 2/3 (pic16f87xa_eeprom.c's EEDATA/EEADR/EECON1/

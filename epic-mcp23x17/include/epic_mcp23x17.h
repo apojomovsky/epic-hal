@@ -116,8 +116,6 @@ int EPIC_MCP23X17_GPIO_ReadPin(epic_mcp23x17_handle_t *h,
                                epic_mcp23x17_port_t port,
                                uint16_t pin);
 
-/* ---- lifecycle ---- */
-
 /** Bind @p h to @p bus with device address @p dev, using the built-in
  *  transport. Returns 0. */
 int EPIC_MCP23X17_Init(epic_mcp23x17_handle_t *h,
@@ -126,8 +124,6 @@ int EPIC_MCP23X17_Init(epic_mcp23x17_handle_t *h,
 /** Bind @p h to a custom transport (h->bus is informational). */
 int EPIC_MCP23X17_InitTransport(epic_mcp23x17_handle_t *h,
                                 const epic_mcp23x17_transport_t *t);
-
-/* ---- per-port register access ---- */
 
 int EPIC_MCP23X17_SetDirection(epic_mcp23x17_handle_t *h,
                                epic_mcp23x17_port_t port, uint8_t dir);
@@ -152,20 +148,14 @@ int EPIC_MCP23X17_ReadPort(epic_mcp23x17_handle_t *h,
 int EPIC_MCP23X17_ReadOutputLatch(epic_mcp23x17_handle_t *h,
                                   epic_mcp23x17_port_t port, uint8_t *val);
 
-/* ---- 16-bit composite helpers ---- */
-
 int EPIC_MCP23X17_SetDirectionAll(epic_mcp23x17_handle_t *h, uint16_t dir);
 int EPIC_MCP23X17_GetDirectionAll(epic_mcp23x17_handle_t *h, uint16_t *dir);
 int EPIC_MCP23X17_WriteAll(epic_mcp23x17_handle_t *h, uint16_t val);
 int EPIC_MCP23X17_ReadAll(epic_mcp23x17_handle_t *h, uint16_t *val);
 int EPIC_MCP23X17_SetPullUpsAll(epic_mcp23x17_handle_t *h, uint16_t pu);
 
-/* ---- IOCON configuration ---- */
-
 int EPIC_MCP23X17_SetConfig(epic_mcp23x17_handle_t *h, uint8_t iocon);
 int EPIC_MCP23X17_GetConfig(epic_mcp23x17_handle_t *h, uint8_t *iocon);
-
-/* ---- interrupt support ---- */
 
 int EPIC_MCP23X17_SetInterruptEnable(epic_mcp23x17_handle_t *h,
                                      epic_mcp23x17_port_t port, uint8_t mask);

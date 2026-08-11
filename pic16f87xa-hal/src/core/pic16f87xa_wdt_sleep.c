@@ -10,7 +10,7 @@
 #define PIC_PCON_POR   EPIC_BIT(1)
 
 /* PCON lives in Bank 1 (0x8E). Plain EPIC_REG8 accesses silently
- * misdirect to the Bank-0 alias (PIR1) under XC8 v4.00 (same class as
+ * misdirect to the Bank-0 alias (TMR1L) under XC8 v4.00 (same class as
  * the TXSTA/OPTION_REG sites in tests/sim_bank_probe.c), so reads and
  * RMWs go through the safe Bank-1 macros where they exist. */
 
