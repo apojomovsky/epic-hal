@@ -18,21 +18,32 @@ static int g_pass = 0, g_fail = 0;
 
 static bool g_script[512];
 static int  g_idx;
+/** @brief  Mock pin-read: replay the next scripted level. */
 static bool mock_read(void *ctx) { (void)ctx; return g_script[g_idx++]; }
 
+/**
+ * @brief  Advance simulated time by exactly one millisecond.
+ */
 static void advance_one_tick(void)
 {
     uint32_t t0 = epic_tick_get();
     while (epic_tick_get() == t0) { epic_harness_tick(); }
 }
+/** @brief  Advance simulated time by `ms` milliseconds. */
 static void advance_ms(uint32_t ms) { for (uint32_t i = 0; i < ms; i++) advance_one_tick(); }
 
+/**
+ * @brief  Advance one millisecond and poll the debounce instance.
+ */
 static debounce_event_t step(debounce_t *db)
 {
     advance_ms(1);
     return debounce_poll(db);
 }
 
+/**
+ * @brief  Clean single press and release commits exactly one edge each.
+ */
 static void test_clean_transition(void)
 {
     /* Script: false for calls 0..14, true for 15..29, false for 30+.
@@ -58,6 +69,9 @@ static void test_clean_transition(void)
     CHECK(!debounce_is_active(&db), "clean: inactive after release");
 }
 
+/**
+ * @brief  Bouncy input commits one PRESSED, not one per flip.
+ */
 static void test_bouncy_transition(void)
 {
     /* Script: false for calls 0..9, then bouncy: true,false,true,false,
@@ -84,6 +98,9 @@ static void test_bouncy_transition(void)
     CHECK(debounce_is_active(&db), "bouncy: active after settle");
 }
 
+/**
+ * @brief  A candidate that reverses before the window never commits.
+ */
 static void test_reversed_before_window(void)
 {
     /* Script: false for 0..9, true for 10..12, false for 13+. The true
@@ -106,6 +123,9 @@ static void test_reversed_before_window(void)
     CHECK(!debounce_is_active(&db), "reversed: stayed inactive");
 }
 
+/**
+ * @brief  An input already active at init never fires a spurious PRESSED.
+ */
 static void test_init_already_active(void)
 {
     /* Script: true throughout. Init reads true, sets stable=candidate=true.
@@ -126,6 +146,9 @@ static void test_init_already_active(void)
     CHECK(debounce_is_active(&db), "init-active: still active");
 }
 
+/**
+ * @brief  Instances run sequentially do not share state.
+ */
 static void test_two_independent_instances(void)
 {
     /* Run A fully, then B fully with a fresh script, confirming the
@@ -158,8 +181,12 @@ static void test_two_independent_instances(void)
 
 static bool g_script2[512];
 static int  g_idx2;
+/** @brief  Mock pin-read for a second instance: replay g_script2. */
 static bool mock_read2(void *ctx) { (void)ctx; return g_script2[g_idx2++]; }
 
+/**
+ * @brief  Two instances polled interleaved do not interfere.
+ */
 static void test_concurrent_independence(void)
 {
     /* Two instances polled interleaved, each with its own script + read fn,
@@ -189,6 +216,9 @@ static void test_concurrent_independence(void)
     CHECK(debounce_is_active(&dbB),  "concurrent: B still active");
 }
 
+/**
+ * @brief  Run all debounce scenarios and report pass/fail counts.
+ */
 int main(void)
 {
     epic_harness_init(2000000UL);

@@ -18,12 +18,18 @@
 
 typedef struct { uint8_t port; uint16_t pin; } pin_ctx_t;
 
+/**
+ * @brief  HAL pin-read callback: report whether the configured pin is set.
+ */
 static bool read_pin(void *ctx)
 {
     pin_ctx_t *p = (pin_ctx_t *)ctx;
     return EPIC_GPIO_ReadPin((GPIO_TypeDef)p->port, p->pin) == GPIO_PIN_SET;
 }
 
+/**
+ * @brief  Debounce demo: presses on RA0/RA1 toggle the LED on RB0.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);
