@@ -19,16 +19,24 @@
 /* Two encoders on RB<7:4>: A on RB4/RB5, B on RB6/RB7. */
 static encoder_t g_enc_a, g_enc_b;
 
-/* The one RB-change callback the HAL calls. Fans the already-read PORTB byte
- * out to both instances; the HAL does not know how many consumers there are. */
+/**
+ * @brief RB-change callback: fan the received PORTB byte out to both encoders.
+ *
+ * The one RB-change callback the HAL calls. Fans the already-read PORTB byte
+ * out to both instances; the HAL does not know how many consumers there are.
+ */
 static void on_rb_change(uint8_t portb_value)
 {
     encoder_update(&g_enc_a, portb_value);
     encoder_update(&g_enc_b, portb_value);
 }
 
-/* Build a PORTB byte putting `state_a` (a<<1|b) on RB4/RB5 and `state_b` on
- * RB6/RB7 (the same bit-position convention encoder_init is given). */
+/**
+ * @brief Build a PORTB byte with the two encoders' states at their pin positions.
+ *
+ * Puts `state_a` (a<<1|b) on RB4/RB5 and `state_b` on RB6/RB7 (the same
+ * bit-position convention encoder_init is given).
+ */
 static uint8_t make_portb(uint8_t state_a, uint8_t state_b)
 {
     uint8_t v = 0U;
@@ -39,9 +47,12 @@ static uint8_t make_portb(uint8_t state_a, uint8_t state_b)
     return v;
 }
 
-/* Simulate one RB-change interrupt: drive the byte, assert RBIF, dispatch.
+/**
+ * @brief Simulate one RB-change interrupt: drive the byte, assert RBIF, dispatch.
+ *
  * The host sim does not auto-assert RBIF on a mismatch, so the example
- * sets it by hand. */
+ * sets it by hand.
+ */
 static void sim_rb_edge(uint8_t portb)
 {
     EPIC_REG8(PIC_REG_PORTB)   = portb;
@@ -49,6 +60,7 @@ static void sim_rb_edge(uint8_t portb)
     epic_dispatch_all_irqs();                        /* -> RB_IRQHandler -> on_rb_change */
 }
 
+/** @brief Drive two encoders through one shared RB-change callback and report. */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

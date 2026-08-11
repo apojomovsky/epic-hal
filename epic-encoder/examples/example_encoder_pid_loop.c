@@ -22,17 +22,20 @@
 #define PIN_B   5u
 #define PLANT_N 4       /* first-order-lag time constant in control steps */
 
-/* Q8.8 helper (host-side convenience; the library takes pre-scaled gains). */
+/** @brief Q8.8 helper (host-side convenience; the library takes pre-scaled gains). */
 static int16_t q8(float x) { return (int16_t)(x * 256.0f); }
 
-/* Gray state for a count, in the table's positive direction
- * (count: 0->00, 1->10, 2->11, 3->01, 4->00, ...). */
+/**
+ * @brief Gray state for a count, in the table's positive direction
+ * (count: 0->00, 1->10, 2->11, 3->01, 4->00, ...).
+ */
 static uint8_t gray_state(int32_t count)
 {
     static const uint8_t g[4] = { 0, 2, 3, 1 };
     return g[(uint32_t)count & 3U];
 }
 
+/** @brief Build a port byte putting the 2-bit `state` at PIN_A/PIN_B. */
 static uint8_t port_byte(uint8_t state)
 {
     uint8_t v = 0U;
@@ -41,10 +44,14 @@ static uint8_t port_byte(uint8_t state)
     return v;
 }
 
-/* Drive the encoder to `target` counts by feeding one Gray edge at a time,
- * so the decoder sees every single-bit transition (never a diagonal jump)
- * and encoder_get_position() == target exactly. */
 static int32_t g_driven = 0;
+
+/**
+ * @brief Drive the encoder to `target` counts by feeding one Gray edge at a time.
+ *
+ * The decoder sees every single-bit transition (never a diagonal jump)
+ * and encoder_get_position() == target exactly.
+ */
 static void drive_encoder_to(encoder_t *enc, int32_t target)
 {
     while (g_driven < target) {
@@ -57,6 +64,7 @@ static void drive_encoder_to(encoder_t *enc, int32_t target)
     }
 }
 
+/** @brief Close a PID loop on encoder_get_position() and check convergence. */
 int main(void)
 {
     epic_harness_init(4000000UL);

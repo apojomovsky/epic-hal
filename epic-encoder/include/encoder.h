@@ -32,47 +32,77 @@ typedef struct {
 } encoder_t;
 
 /**
- * Initialize an encoder instance.
- *
- * @param  min_edge_interval_ms  0 disables the glitch gate; otherwise two
- *                               edges closer than this (ms) drop the second.
- * @param  port_value            current port byte; seeds `last_state` so the
- *                               first real edge isn't misjudged.
+ * @brief Initialize an encoder instance.
  *
  * Swapping `pin_a`/`pin_b` inverts count direction (see docs/API.md).
+ *
+ * @param enc                  the encoder instance to initialize
+ * @param pin_a                bit position 0-7 of channel A in the port byte
+ * @param pin_b                bit position 0-7 of channel B in the port byte
+ * @param min_edge_interval_ms 0 disables the glitch gate; otherwise two
+ *                             edges closer than this (ms) drop the second
+ * @param port_value           current port byte; seeds `last_state` so the
+ *                             first real edge isn't misjudged
  */
 void encoder_init(encoder_t *enc, uint8_t pin_a, uint8_t pin_b,
                   uint16_t min_edge_interval_ms, uint8_t port_value);
 
 /**
- * Re-sync `last_state` from `port_value` and zero `position`,
+ * @brief Re-sync an encoder instance from a fresh port sample.
+ *
+ * Re-syncs `last_state` from `port_value` and zeroes `position`,
  * `error_count`, `glitch_count`, `last_edge_tick`; pins and
  * `min_edge_interval_ms` unchanged. For fault recovery without re-wiring
  * the instance.
+ *
+ * @param enc         the encoder instance to reset
+ * @param port_value  current port byte; re-seeds `last_state`
  */
 void encoder_reset(encoder_t *enc, uint8_t port_value);
 
 /**
- * Decode one port sample; call from the application's RB-change callback,
- * once per registered instance, with the received byte. No-ops if this
- * instance's 2-bit state didn't change; drops a too-soon edge as a glitch
- * when the interval gate is armed; an impossible Gray transition
- * increments `error_count` and leaves `position` unchanged.
+ * @brief Decode one port sample.
+ *
+ * Call from the application's RB-change callback, once per registered
+ * instance, with the received byte. No-ops if this instance's 2-bit
+ * state didn't change; drops a too-soon edge as a glitch when the
+ * interval gate is armed; an impossible Gray transition increments
+ * `error_count` and leaves `position` unchanged.
+ *
+ * @param enc         the encoder instance to update
+ * @param port_value  the port byte just sampled
  */
 void encoder_update(encoder_t *enc, uint8_t port_value);
 
 /**
- * Read `position` atomically: the ISR updates it as a multi-byte RMW, so
- * the read retries until two consecutive reads agree (no tear on an 8-bit
- * core).
+ * @brief Read the accumulated position atomically.
+ *
+ * The ISR updates it as a multi-byte RMW, so the read retries until two
+ * consecutive reads agree (no tear on an 8-bit core).
+ *
+ * @param enc the encoder instance to read
+ * @return the current position count
  */
 int32_t  encoder_get_position(const encoder_t *enc);
 
-/** Read the impossible-transition counter atomically (same retry as
- *  encoder_get_position). */
+/**
+ * @brief Read the impossible-transition counter atomically.
+ *
+ * Same retry as encoder_get_position.
+ *
+ * @param enc the encoder instance to read
+ * @return the current error count
+ */
 uint16_t encoder_get_error_count(const encoder_t *enc);
 
-/** Read the rejected-by-gate counter atomically (see @ref encoder_get_error_count). */
+/**
+ * @brief Read the rejected-by-gate counter atomically.
+ *
+ * Same retry as encoder_get_position (see @ref encoder_get_error_count).
+ *
+ * @param enc the encoder instance to read
+ * @return the current glitch count
+ */
 uint16_t encoder_get_glitch_count(const encoder_t *enc);
 
 #endif /* ENCODER_H */
