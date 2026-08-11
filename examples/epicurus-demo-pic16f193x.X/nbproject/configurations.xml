@@ -21,9 +21,9 @@
         <itemPath>../../epic-common/src/core/epic_harness_target.c</itemPath>
         <itemPath>../../pic16f193x-hal/src/core/pic16f193x_irq.c</itemPath>
         <itemPath>../../pic16f193x-hal/src/core/pic16f193x_irq_dispatch.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/core/pic16f193x_isr_vector.c</itemPath>
+        <itemPath>../../pic16f193x-hal/src/target/pic16f193x_isr_vector.c</itemPath>
         <itemPath>../../pic16f193x-hal/src/core/pic16f193x_wdt_sleep.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/core/pic16f193x_wdt_sleep_target.c</itemPath>
+        <itemPath>../../pic16f193x-hal/src/target/pic16f193x_wdt_sleep_target.c</itemPath>
       </logicalFolder>
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
         <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_adc.c</itemPath>

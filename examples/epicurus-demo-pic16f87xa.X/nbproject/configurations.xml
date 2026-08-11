@@ -25,10 +25,10 @@
       <logicalFolder name="core" displayName="core" projectFiles="true">
         <itemPath>../../epic-common/src/core/epic_harness_target.c</itemPath>
         <itemPath>../../pic16f87xa-hal/src/core/pic16_irq.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/core/pic16_isr_vector.c</itemPath>
+        <itemPath>../../pic16f87xa-hal/src/target/pic16_isr_vector.c</itemPath>
         <itemPath>../../pic16f87xa-hal/src/core/pic16_irq_dispatch.c</itemPath>
         <itemPath>../../pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep_target.c</itemPath>
+        <itemPath>../../pic16f87xa-hal/src/target/pic16f87xa_wdt_sleep_target.c</itemPath>
       </logicalFolder>
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
         <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_timer0.c</itemPath>

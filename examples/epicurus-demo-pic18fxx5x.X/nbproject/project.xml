@@ -22,6 +22,7 @@
                 <sourceRootElem>../../epic-serial/src</sourceRootElem>
                 <sourceRootElem>../../epic-tick/src</sourceRootElem>
                 <sourceRootElem>../../pic18fxx5x-hal/src/core</sourceRootElem>
+                <sourceRootElem>../../pic18fxx5x-hal/src/target</sourceRootElem>
                 <sourceRootElem>../../pic18fxx5x-hal/src/peripherals</sourceRootElem>
             </sourceRootList>
             <confList>
