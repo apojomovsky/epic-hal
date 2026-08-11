@@ -1,35 +1,19 @@
-/**
- * @file    pic16f87xa.h
- * @brief   PIC16F87XA family, top-level types, status codes, build-time device
- *          selection, and the simulated/real-target SFR mapping layer.
- *
- * @details
- *   Single entry point for the PIC16F87XA HAL, mirrors `stm32fxxx_hal.h`'s
- *   role in ST's HAL: standard types, status enums, and the
- *   device-specific SFR include. DS39582B is authoritative for every
- *   constant; each peripheral header cites its own section.
- *
- * Target family (DS39582B §1.0, Table 1-1):
- *   - PIC16F873A, 28-pin,  4 KW flash, 192 B RAM, 128 B EEPROM, 5 ADC ch.
- *   - PIC16F874A, 40-pin,  4 KW flash, 192 B RAM, 128 B EEPROM, 8 ADC ch.,
- *                   PORTD + PORTE (with PSP).
- *   - PIC16F876A, 28-pin,  8 KW flash, 368 B RAM, 256 B EEPROM, 5 ADC ch.
- *   - PIC16F877A, 40-pin,  8 KW flash, 368 B RAM, 256 B EEPROM, 8 ADC ch.,
- *                   PORTD + PORTE (with PSP).
- *
- * @copyright © 2003 Microchip Technology Inc. (datasheet DS39582B).
- */
+/* PIC16F87XA top-level entry: standard types, status codes, build-time
+ * device selection, and the SFR mapping layer. DS39582B is authoritative
+ * for every constant; each peripheral header cites its own section.
+ * Devices (DS39582B §1.0, Table 1-1): 873A/874A/876A/877A, 4/8 KW flash,
+ * 192/368 B RAM, 128/256 B EEPROM, 5/8 ADC channels. */
 
 #ifndef PIC16F87XA_H
 #define PIC16F87XA_H
 
-/* ───────────────────────── standard types ───────────────────────── */
+/* standard types. */
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 
-/* ───────────────────────── build-time device selection ──────────── */
+/* build-time device selection. */
 
 /**
  * @defgroup  PIC16F87XA_Device Device Selection
@@ -98,7 +82,7 @@
  * status/bit vocabulary. */
 #include "core/hal_status.h"
 
-/* ───────────── platform: SFR mapping + weak attribute ───────────── */
+/* platform: SFR mapping + weak attribute. */
 /**
  * @defgroup PIC16F87XA_SFR Special Function Register mapping
  * @brief   How every SFR is stored and how the weak attribute is spelled.

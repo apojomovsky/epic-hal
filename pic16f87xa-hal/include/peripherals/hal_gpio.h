@@ -1,15 +1,7 @@
-/**
- * @file    peripherals/hal_gpio.h
- * @brief   Family-neutral GPIO contract (`EPIC_GPIO_*` + RB-change hook).
- *
- * @details
- *   Family-agnostic consumers include this neutral name instead of the
- *   family-specific `pic16f87xa_gpio.h`; the build's include path picks
- *   which family's copy resolves. Beyond the portable `EPIC_GPIO_Init/
- *   Read/Write/...`, this also carries the RB<7:4> change-interrupt hook
- *   (@ref EPIC_GPIO_RegisterChangeCallback / @ref RB_IRQHandler) that
- *   `epic-encoder` builds on.
- */
+/* Family-neutral GPIO contract (EPIC_GPIO_* + RB-change hook). Pulls
+ * in the family-specific gpio header; the include path picks which
+ * family's copy resolves. epic-encoder builds on the RB<7:4> change
+ * hook carried here. */
 
 #ifndef EPIC_GPIO_H
 #define EPIC_GPIO_H

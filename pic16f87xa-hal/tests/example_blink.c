@@ -1,16 +1,7 @@
-/**
- * @file    example_blink.c
- * @brief   Blink an LED on RB0 from a Timer0 overflow, the canonical
- *          "the HAL drives a real application" smoke test.
- *
- * @details
- *   Timer0 overflows drive an interrupt; the ISR toggles RB0. The main
- *   loop just lets time pass (pumping the sim on host, busy-spinning
- *   on target, via core/epic_harness.h) and refreshes the WDT.
- *   Wiring: LED+resistor between RB0 and GND, 20 MHz crystal (FOSC=HS,
- *   FCY=5 MHz). Timer0 Fosc/4, 1:256 prescaler, reload 0, overflows
- *   every ~13 ms (~76 Hz toggle).
- */
+/* Blink an LED on RB0 from a Timer0 overflow: the canonical "the HAL
+ * drives a real application" smoke test. Wiring: LED+resistor between
+ * RB0 and GND, 20 MHz HS crystal. Timer0 Fosc/4, 1:256 prescaler,
+ * reload 0, overflows every ~13 ms (~76 Hz toggle). */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sfr.h"
@@ -58,13 +49,10 @@ int main(void)
      *    On the sim the IRQ fires regardless, so this is harmless there. */
     EPIC_IRQ_Restore(1);
 
-    /* 4. Let time pass. On the target this busy-spins forever, refreshing
-     *    the WDT while the Timer0 ISR toggles RB0; on the host the harness
-     *    bounds the loop to SIM_CYCLES and pumps the sim each iteration.
-     *    epic_harness_tick pumps the simulator on the host and is a
-     *    no-op on the target, where real time advances on its own.
-     *    EPIC_WDT_Refresh is a no-op on the host, so it is called
-     *    unconditionally. */
+    /* 4. Let time pass: the harness bounds the loop on the host and
+     *    pumps the sim each iteration (no-op on target, where real
+     *    time advances on its own). WDT refresh is a host no-op, so it
+     *    is called unconditionally. */
     for (uint32_t i = 0; epic_harness_running(i); i++) {
         epic_harness_tick();
         EPIC_WDT_Refresh();

@@ -1,33 +1,8 @@
-/**
- * @file    core/pic16_irq.h
- * @brief   PIC16F87XA interrupt controller: the IRQn enum and the
- *          enable / disable / flag helpers. The family-blind dispatch
- *          contract (epic_dispatch_all_irqs) lives in epic_harness.h.
- *
- * @details
- *   Mirrors `HAL_NVIC_*` from STM32Cube: callers never touch
- *   INTCON/PIE1/PIE2/PIR1/PIR2 directly. `EPIC_IRQ_*` names are shared
- *   across every 8-bit PIC family; `PIC16_IRQn` and the registers behind
- *   it are PIC16F87XA-specific.
- *
- *   Sources (15 on 40/44-pin, 14 on 28-pin) follow DS39582B Figure 14-10
- *   "Interrupt Logic" and §14.11 "Interrupts":
- *     - INTCON<RBIF>  RB port change   (§14.11.3)
- *     - INTCON<INTF>  INT external     (§14.11.1)
- *     - INTCON<TMR0IF> Timer0 overflow (§14.11.2)
- *     - PIR1<PSPIF>   Parallel Slave   (40/44-pin, §8.x PSP)
- *     - PIR1<ADIF>    A/D completion   (§11.x)
- *     - PIR1<RCIF>    USART RX         (§10.x)
- *     - PIR1<TXIF>    USART TX         (§10.x)
- *     - PIR1<SSPIF>   SSP event        (§9.x)
- *     - PIR1<CCP1IF>  CCP1 event       (§8.x)
- *     - PIR1<TMR2IF>  Timer2 match     (§7.x)
- *     - PIR1<TMR1IF>  Timer1 overflow  (§6.x)
- *     - PIR2<CCP2IF>  CCP2 event
- *     - PIR2<BCLIF>   SSP bus collision (I²C)
- *     - PIR2<EEIF>    EEPROM write done (§3.0)
- *     - PIR2<CMIF>    Comparator change (§12.x)
- */
+/* PIC16F87XA interrupt controller: the IRQn enum and enable/disable/
+ * flag helpers (mirrors STM32Cube HAL_NVIC_*; callers never touch
+ * INTCON/PIE/PIR directly). The family-blind dispatch contract lives
+ * in epic_harness.h. Sources (15 on 40/44-pin, 14 on 28-pin) follow
+ * DS39582B Figure 14-10 / §14.11. */
 
 #ifndef PIC16_IRQ_H
 #define PIC16_IRQ_H
@@ -60,7 +35,7 @@ typedef enum {
 #endif
 } PIC16_IRQn;
 
-/* ───────────────────────── enable / disable ─────────────────────── */
+/* enable / disable. */
 
 /**
  * @brief Globally mask all interrupts by clearing the GIE bit

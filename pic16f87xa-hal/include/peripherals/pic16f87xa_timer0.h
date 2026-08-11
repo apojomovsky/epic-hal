@@ -1,14 +1,8 @@
-/**
- * @file    peripherals/pic16f87xa_timer0.h
- * @brief   Timer0 driver, 8-bit timer/counter with shared prescaler.
- *
- * @details
- *   Source: DS39582B §5.0, §5.3. Full reference: MANUAL.md §10.
- *   Writing TMR0 clears the prescaler (§5.3 Note). The driver never
- *   touches PSA while WDT is active; switching the shared prescaler
- *   from TMR0 to WDT needs the exact sequence in §5.3 footnote 1 to
- *   avoid a spurious reset.
- */
+/* Timer0 driver, 8-bit timer/counter with the shared prescaler.
+ * Source: DS39582B §5.0, §5.3; full reference: MANUAL.md §10. Writing
+ * TMR0 clears the prescaler (§5.3 Note); the driver never touches PSA
+ * while WDT is active (switching prescalers needs §5.3 footnote 1's
+ * sequence to avoid a spurious reset). */
 
 #ifndef PIC16F87XA_TIMER0_H
 #define PIC16F87XA_TIMER0_H

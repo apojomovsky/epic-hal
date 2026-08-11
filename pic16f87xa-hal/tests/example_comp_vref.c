@@ -1,18 +1,7 @@
-/**
- * @file    example_comp_vref.c
- * @brief   Comparator + Vref driver smoke test.
- *
- *   Verifies:
- *     1. EPIC_COMP_Init() programs CMCON for two independent comparators
- *        with C1 inverted.
- *     2. EPIC_VREF_Init() programs CVRCON for 0.25..0.75 VDD range,
- *        tap 8, output enabled.
- *     3. EPIC_VREF_MilliVolts() computes correct values:
- *        - low range,  tap 0  → 0 mV
- *        - low range,  tap 12 → Vdd/2 = 2500 mV at 5 V
- *        - high range, tap 0  → Vdd/4 = 1250 mV at 5 V
- *        - high range, tap 8  → Vdd/4 + Vdd/4 = Vdd/2 = 2500 mV at 5 V
- */
+/* Comparator + Vref driver smoke test: COMP Init programs CMCON (two
+ * independent comparators, C1 inverted), VREF Init programs CVRCON
+ * (0.25..0.75 VDD range, tap 8, output enabled), and
+ * EPIC_VREF_MilliVolts computes the expected mV values. */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sim.h"

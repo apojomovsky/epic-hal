@@ -1,14 +1,7 @@
-/**
- * @file    example_ssp.c
- * @brief   MSSP driver smoke test on the sim backend.
- *
- *   Verifies:
- *     1. SSPADD computation: 16 MHz / 100 kHz I²C → 39 (Fosc/(4*Fscl)-1).
- *     2. EPIC_SSP_Init() in SPI master mode programs SSPCON correctly.
- *     3. SPI write goes to SSPBUF, write collision reporting works.
- *     4. pic16f87xa_sim_drive_ssp_rx() injects a byte, EPIC_SSP_ReadByte
- *        returns it, and BF is cleared.
- */
+/* MSSP driver smoke test on the sim backend: SSPADD math (16 MHz /
+ * 100 kHz -> 39), SPI master Init programs SSPCON, write goes to
+ * SSPBUF, write-collision reporting, and a simulated RX byte clears
+ * BF on read. */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sim.h"

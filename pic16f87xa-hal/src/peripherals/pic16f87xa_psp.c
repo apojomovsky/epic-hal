@@ -1,7 +1,4 @@
-/**
- * @file    pic16f87xa_psp.c
- * @brief   Parallel Slave Port driver, implementation (DS39582B §4.5).
- */
+/* Parallel Slave Port driver implementation (DS39582B §4.5). */
 
 #include "peripherals/pic16f87xa_psp.h"
 #include "core/pic16_irq.h"

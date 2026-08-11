@@ -1,14 +1,6 @@
-/**
- * @file    pic16f87xa_wdt_sleep_sim.c
- * @brief   Host-simulation implementation of EPIC_WDT_Refresh / EPIC_Sleep_Enter.
- *
- * @details
- *   Linked by the CMake host build. The companion target implementation
- *   is pic16f87xa_wdt_sleep_target.c; the build picks one, so neither
- *   this file nor the examples need `#ifdef`. On the host there is no
- *   watchdog and execution does not stop, so both are no-ops. The shared
- *   BOR/POR status helpers live in pic16f87xa_wdt_sleep.c.
- */
+/* Host-simulation implementation of EPIC_WDT_Refresh / EPIC_Sleep_Enter.
+ * Linked by the CMake host build; the target twin is the _target.c.
+ * No watchdog and no halted execution on the host, so both are no-ops. */
 
 #include "core/pic16f87xa_wdt_sleep.h"
 

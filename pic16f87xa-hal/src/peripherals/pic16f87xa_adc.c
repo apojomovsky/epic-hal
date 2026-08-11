@@ -1,7 +1,4 @@
-/**
- * @file    pic16f87xa_adc.c
- * @brief   A/D converter driver, implementation (DS39582B §11.0).
- */
+/* A/D converter driver implementation (DS39582B §11.0). */
 
 #include "peripherals/pic16f87xa_adc.h"
 #include "core/pic16_irq.h"
@@ -127,7 +124,7 @@ uint16_t EPIC_ADC_Read(void)
     return raw & 0x03FFU;
 }
 
-/* ───────────────────────── ISRs ─────────────────────────────────── */
+/* ISRs. */
 
 void ADC_IRQHandler(void)
 {

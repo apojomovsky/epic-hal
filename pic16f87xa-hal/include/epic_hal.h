@@ -1,13 +1,6 @@
-/**
- * @file    epic_hal.h
- * @brief   Family-neutral top-level entry point to the PIC16F87XA HAL.
- *
- * @details
- *   A consumer that builds unchanged against any 8-bit PIC family
- *   includes this neutral name instead of `pic16f87xa.h`; each family
- *   provides its own `epic_hal.h` under the same name, selected by
- *   which family's HAL tree is on the include path.
- */
+/* Family-neutral entry point to the PIC16F87XA HAL. Consumers that must
+ * build unchanged across 8-bit PIC families include this name instead
+ * of pic16f87xa.h; the build's include path selects the family's copy. */
 
 #ifndef EPIC_H
 #define EPIC_H

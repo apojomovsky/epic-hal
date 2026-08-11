@@ -1,7 +1,4 @@
-/**
- * @file    pic16f87xa_timer2.c
- * @brief   Timer2 driver, implementation (DS39582B §7.0).
- */
+/* Timer2 driver implementation (DS39582B §7.0). */
 
 #include "peripherals/pic16f87xa_timer2.h"
 #include "core/pic16_irq.h"
@@ -30,10 +27,8 @@ void EPIC_TIMER2_WriteCounter(uint8_t value)
 uint8_t EPIC_TIMER2_ReadPeriod(void)
 {
 #ifdef EPIC_BANK1_READ8
-    /* See target/pic16f87xa_platform.h: a plain bank-switch read here
-     * silently misdirects under XC8 v4.00 (reads the bank-0 alias
-     * instead of PR2). Probed and confirmed 2026-08-09 by
-     * pic16f87xa-hal/tests/sim_bank_probe.c. */
+    /* Plain bank-switch read misdirects to the Bank-0 alias under XC8
+     * v4.00 (see target/pic16f87xa_platform.h). */
     uint8_t pr2 = 0u;
     EPIC_BANK1_READ8(PR2, pr2);
     return pr2;

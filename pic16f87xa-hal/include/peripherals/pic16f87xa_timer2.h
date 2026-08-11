@@ -1,13 +1,7 @@
-/**
- * @file    peripherals/pic16f87xa_timer2.h
- * @brief   Timer2 driver, 8-bit timer with PR2 period register and postscaler.
- *
- * @details
- *   Source: DS39582B §7.0. Full reference: MANUAL.md §12. TMR2 resets
- *   to 0 on TMR2==PR2 (never reaches PR2+1). TMR2IF fires every
- *   prescaler x postscaler x (PR2+1) cycles and drives the CCP PWM
- *   time base.
- */
+/* Timer2 driver, 8-bit timer with PR2 period register and postscaler.
+ * Source: DS39582B §7.0; full reference: MANUAL.md §12. TMR2 resets to
+ * 0 on TMR2==PR2 (never reaches PR2+1); TMR2IF fires every prescaler x
+ * postscaler x (PR2+1) cycles and drives the CCP PWM time base. */
 
 #ifndef PIC16F87XA_TIMER2_H
 #define PIC16F87XA_TIMER2_H

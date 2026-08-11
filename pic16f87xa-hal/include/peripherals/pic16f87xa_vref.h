@@ -1,13 +1,8 @@
-/**
- * @file    peripherals/pic16f87xa_vref.h
- * @brief   Comparator Voltage Reference driver.
- *
- * @details
- *   Source: DS39582B §13.0, Register 13-1. 16-tap resistor ladder:
- *   CVRR=0 gives 0..0.75 VDD in VDD/24 steps; CVRR=1 gives
- *   0.25..0.75 VDD in VDD/32 steps. CVROE routes the output to
- *   RA2/AN2/VREF-, shared with the comparator/ADC reference.
- */
+/* Comparator Voltage Reference driver. Source: DS39582B §13.0,
+ * Register 13-1. 16-tap resistor ladder: CVRR=0 gives 0..0.75 VDD in
+ * VDD/24 steps; CVRR=1 gives 0.25..0.75 VDD in VDD/32 steps. CVROE
+ * routes the output to RA2/AN2/VREF-, shared with the comparator/ADC
+ * reference. */
 
 #ifndef PIC16F87XA_VREF_H
 #define PIC16F87XA_VREF_H

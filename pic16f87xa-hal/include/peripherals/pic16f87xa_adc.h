@@ -1,13 +1,7 @@
-/**
- * @file    peripherals/pic16f87xa_adc.h
- * @brief   A/D converter driver, 10-bit, 5/8 channels.
- *
- * @details
- *   Source: DS39582B §11.0. Full register/wiring reference:
- *   `pic16f87xa-hal/MANUAL.md` §16. Acquisition time (§11.1) must
- *   elapse between channel select and GO, enforced by requiring an
- *   explicit EPIC_ADC_Start() call rather than combining select+start.
- */
+/* A/D converter driver, 10-bit, 5/8 channels. Source: DS39582B §11.0;
+ * full register/wiring reference: pic16f87xa-hal/MANUAL.md §16. The
+ * acquisition time (§11.1) between channel select and GO is enforced by
+ * requiring an explicit EPIC_ADC_Start() call. */
 
 #ifndef PIC16F87XA_ADC_H
 #define PIC16F87XA_ADC_H
@@ -100,12 +94,12 @@ typedef struct {
     .ConvCpltCallback = NULL,                                             \
 }
 
-/* ───────────────────────── init / deinit ────────────────────────── */
+/* init / deinit. */
 
 EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_ADC_DeInit(void);
 
-/* ───────────────────────── conversion control ────────────────────── */
+/* conversion control. */
 
 /**
  * @brief  Select the analog channel and start a conversion.
@@ -132,7 +126,7 @@ uint8_t EPIC_ADC_IsConversionDone(void);
 /** Clear the ADIF flag. Must be called in the conversion-complete IRQ. */
 void EPIC_ADC_ClearITFlag(void);
 
-/* ───────────────────────── result ──────────────────────────────── */
+/* result. */
 
 /**
  * @brief  Read the latest 10-bit result. Returns 0..1023 in right-
@@ -141,7 +135,7 @@ void EPIC_ADC_ClearITFlag(void);
  */
 uint16_t EPIC_ADC_Read(void);
 
-/* ───────────────────────── interrupts ───────────────────────────── */
+/* interrupts. */
 
 void ADC_IRQHandler(void) EPIC_WEAK;
 

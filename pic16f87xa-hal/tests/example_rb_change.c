@@ -1,16 +1,7 @@
-/**
- * @file    example_rb_change.c
- * @brief   Smoke test for the RB<7:4> change-interrupt hook
- *          (EPIC_GPIO_RegisterChangeCallback / RB_IRQHandler) on the sim.
- *
- * @details
- *   Exercises EPIC_GPIO_RegisterChangeCallback/RB_IRQHandler: no-op when
- *   RBIF isn't pending, callback fires exactly once with the read
- *   PORTB byte when it is, a NULL callback doesn't crash, and
- *   epic_dispatch_all_irqs reaches the handler. The host sim doesn't
- *   model RBIF-on-mismatch, so the test asserts RBIF directly and
- *   checks the handler's read/clear/callback ordering instead.
- */
+/* Smoke test for the RB<7:4> change-interrupt hook
+ * (EPIC_GPIO_RegisterChangeCallback / RB_IRQHandler) on the sim. The
+ * host sim does not model RBIF-on-mismatch, so the test asserts RBIF
+ * directly and checks the handler's read/clear/callback ordering. */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sim.h"

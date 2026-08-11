@@ -1,11 +1,6 @@
-/**
- * @file    example_timer1.c
- * @brief   End-to-end smoke test for the Timer1 driver on the sim backend.
- *
- *   Timer1 is a 16-bit counter clocked from Fosc/4 with a 1:1 prescaler
- *   in this test. Expected behaviour: TMR1IF fires every 65 536 instruction
- *   cycles; the test counts the number of overflows.
- */
+/* End-to-end smoke test for the Timer1 driver on the sim backend.
+ * Timer1 counts Fosc/4 at 1:1; TMR1IF fires every 65 536 instruction
+ * cycles and the test counts overflows. */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sim.h"
@@ -14,11 +9,9 @@
 #include "core/pic16_irq.h"
 #include <stdio.h>
 
-/** Expected overflow count. */
 #define EXPECTED_OVERFLOWS  3U
 /** Cycles between overflows at 1:1 prescaler = 0x10000 = 65536. */
 #define OVERFLOW_CYCLES     65536UL
-/** Safety margin for the simulator loop. */
 #define SIM_BUDGET          ((OVERFLOW_CYCLES * EXPECTED_OVERFLOWS) + 1024UL)
 
 static volatile uint32_t overflows = 0;

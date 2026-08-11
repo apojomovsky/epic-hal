@@ -1,19 +1,8 @@
-/**
- * @file    example_ccp_pwm.c
- * @brief   End-to-end smoke test: PWM output on RC2/CCP1.
- *
- *   Setup:
- *     - Timer2 with PR2=99, prescaler 1:1, postscaler 1:1
- *       → PWM period = (99+1) × 4 × Tosc × 1 = 400 instruction cycles
- *         (DS39582B §8.3.1).
- *     - CCP1 in PWM mode, 50% duty.
- *     - RC2/CCP1 pin configured as output.
- *
- *   The sim backend does not toggle the RC2/CCP1 pin on each PWM
- *   period, so this test reads the underlying CCP1CON register +
- *   PR2 / T2CON to verify the driver configured everything correctly,
- *   and counts TMR2 overflows to confirm the period.
- */
+/* End-to-end smoke test: PWM output on RC2/CCP1. Timer2 PR2=99, 1:1
+ * prescaler/postscaler gives a 100-cycle period; CCP1 in PWM mode at
+ * 50% duty. The sim does not toggle the RC2/CCP1 pin, so the test
+ * verifies the configured registers (CCP1CON, PR2, T2CON) and counts
+ * TMR2 overflows for the period. */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sim.h"

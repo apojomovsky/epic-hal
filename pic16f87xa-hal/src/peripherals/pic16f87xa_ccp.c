@@ -1,7 +1,4 @@
-/**
- * @file    pic16f87xa_ccp.c
- * @brief   CCP1 / CCP2 driver, implementation (DS39582B §8.0).
- */
+/* CCP1 / CCP2 driver implementation (DS39582B §8.0). */
 
 #include "peripherals/pic16f87xa_ccp.h"
 #include "core/pic16_irq.h"
@@ -30,21 +27,17 @@ static const ccp_addrs_t *ccp_sel(CCP_InstanceTypeDef inst)
     return &addrs[0];
 }
 
-/* Driver-owned callback storage, one slot per CCP instance (indexed
- * by CCP_InstanceTypeDef; index 0 unused). The IRQ handlers call the
- * stored callback directly and never dereference a caller-provided
- * handle: on XC8 v4.00 the CCP driver's handle pointers are 8-bit
- * values whose dereferences are baked to IRP=1 (RAM banks 2/3 only),
- * so an ISR that read EventCallback through a stored handle would
- * misread the slot whenever the caller's handle lives in bank 0/1
- * (the C11 combo-gate fragility; see docs/toolchain-coverage.md).
- * A direct access to this static array is bank-correct regardless of
- * where the array itself lands, and the caller's handle is only
+/* Driver-owned callback storage, one slot per CCP instance (index 0
+ * unused). The IRQ handlers call the stored callback directly: XC8
+ * v4.00 bakes handle derefs to IRP=1 (banks 2/3 only), so reading
+ * through a caller-provided handle would misread the slot when the
+ * handle lives in bank 0/1. A direct array access is bank-correct
+ * regardless of where the array lands; the caller's handle is only
  * dereferenced inside EPIC_CCP_Init, where XC8 emits the runtime
  * bank-select form. */
 static void (*g_ccp_callbacks[3])(void) = { NULL, NULL, NULL };
 
-/* ───────────────────────── public API ───────────────────────────── */
+/* public API. */
 
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
@@ -53,10 +46,9 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
         return EPIC_INVALID;
     }
     const ccp_addrs_t *a = ccp_sel(h->Instance);
-    /* Copy the callback into driver-owned storage before any use:
-     * the IRQ handlers call this copy directly, and the caller's
-     * handle is not retained (it may be a stack object whose
-     * lifetime ends when Init returns). */
+    /* Copy the callback into driver-owned storage: the IRQ handlers
+     * call this copy directly and the caller's handle is not retained
+     * (it may be a stack object whose lifetime ends at return). */
     g_ccp_callbacks[h->Instance] = h->EventCallback;
 
     /* Clear the IRQ before reconfiguring. */
@@ -145,7 +137,7 @@ void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
     EPIC_REG8(a->cprl) = (uint8_t)(duty >> 2);
 }
 
-/* ───────────────────────── ISRs ─────────────────────────────────── */
+/* ISRs. */
 
 void CCP1_IRQHandler(void)
 {

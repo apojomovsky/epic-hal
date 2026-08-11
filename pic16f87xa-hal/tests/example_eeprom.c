@@ -1,17 +1,6 @@
-/**
- * @file    example_eeprom.c
- * @brief   Data EEPROM driver smoke test.
- *
- *   Verifies:
- *     1. EPIC_EEPROM_ReadByte() places the address in EEADR then sets
- *        EECON1<RD>.
- *     2. The sim is preloaded with a known byte at address 0x42; the
- *        read returns it.
- *     3. EPIC_EEPROM_WriteByte() does the unlock sequence (0x55, 0xAA)
- *        and clears WR.
- *     4. pic16f87xa_sim_drive_eeprom_done() simulates the write
- *        completion; the next read returns the value just written.
- */
+/* Data EEPROM driver smoke test: read (EEADR then EECON1<RD>), the
+ * 0x55/0xAA unlock sequence on write, simulated write completion, and
+ * buffer round-trips. */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sim.h"

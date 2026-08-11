@@ -1,41 +1,11 @@
-/**
- * @file    sim_bank_probe.c
- * @brief   HARNESS=sim probe for the pic16f87xa-hal banked-SFR audit
- *          (docs/toolchain-coverage.md classes A and B): exercises
- *          every ungated `pic_select_bank` + plain EPIC_REG8 site and
- *          every plain Bank-1 SFR access with known values and reads
- *          them back, so XC8 v4.00's bank misdirection (Finding 9's
- *          mechanism) shows up as a FAIL instead of silent corruption.
- *
- * @details
- *   Each suspect site is first pre-set to a non-default value through
- *   the SAFE atomic macro (EPIC_BANK1_WRITE8), so a misdirected write
- *   leaves the pre-set value in place and the readback check fails:
- *   DeInit targets whose expected result equals the POR default (0x00)
- *   are otherwise indistinguishable from a write that went to the
- *   wrong address. Readbacks go through EPIC_BANK1_READ8 (safe), never
- *   plain EPIC_REG8 on a Bank-1 SFR, so the probe itself cannot
- *   exhibit the class it is testing for.
- *
- *   Findings (2026-08-09, all confirmed by this probe and fixed):
- *   - TIMER2_ReadPeriod's plain bank-switch read misdirected (read the
- *     Bank-0 alias). Fixed with EPIC_BANK1_READ8.
- *   - The Finding-9 safe macros only managed RP0; an incoming RP1=1
- *     state (observed right after the sim harness init) routed their
- *     accesses to Bank 3 GPR. Fixed: EPIC_BANK1_* and EPIC_PIE_*
- *     macros now select their bank absolutely and exit to Bank 0.
- *   - The EPIC_PIE_* PIE2 branch never selected Bank 2 (it RMW'd the
- *     Bank-1 alias of PIE2). Fixed: selects Bank 2 explicitly.
- *   - Plain Bank-1 reads (TXSTA, SSPSTAT, OPTION_REG, PCON) and RMWs
- *     misdirected to their Bank-0 aliases (RCSTA, SSPCON, TMR0, PIR1)
- *     and corrupted them. Fixed with the safe-macro pattern.
- *
- *   Runs as the sim variant of the pic16f87xa-hal pseudo-module under
- *   MPLAB SIM (the real XC8 v4.00 code), reporting through the 87XA
- *   sim harness. Order matters: the USART DeInit probe is last because
- *   it kills the marker USART, and the probe re-inits the USART (the
- *   harness's own shape) before the final report.
- */
+/* HARNESS=sim probe for the pic16f87xa-hal banked-SFR audit
+ * (docs/toolchain-coverage.md classes A and B): runs every ungated
+ * pic_select_bank + plain EPIC_REG8 site and every plain Bank-1 SFR
+ * access with known values under real XC8 v4.00, so bank misdirection
+ * shows up as a FAIL instead of silent corruption. Each site is
+ * pre-set through the SAFE macro (a misdirected write leaves the
+ * pre-set value, failing the readback); readbacks go through
+ * EPIC_BANK1_READ8 only. */
 
 #include "core/epic_harness.h"
 #include "core/pic16_irq.h"

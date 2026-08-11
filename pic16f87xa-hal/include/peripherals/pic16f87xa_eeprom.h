@@ -1,13 +1,7 @@
-/**
- * @file    peripherals/pic16f87xa_eeprom.h
- * @brief   Data EEPROM driver.
- *
- * @details
- *   Source: DS39582B §3.0. Full register reference: MANUAL.md §19. The
- *   driver hides the mandatory 0x55/0xAA unlock sequence; writes are
- *   non-blocking, poll EEIF (PIR2<4>) or use the callback for
- *   completion.
- */
+/* Data EEPROM driver. Source: DS39582B §3.0; full register reference:
+ * MANUAL.md §19. The driver hides the mandatory 0x55/0xAA unlock
+ * sequence; writes are non-blocking, poll EEIF (PIR2<4>) or use the
+ * callback for completion. */
 
 #ifndef PIC16F87XA_EEPROM_H
 #define PIC16F87XA_EEPROM_H

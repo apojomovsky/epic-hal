@@ -1,13 +1,7 @@
-/**
- * @file    peripherals/pic16f87xa_comp.h
- * @brief   Comparator driver, two on-chip comparators.
- *
- * @details
- *   Source: DS39582B §12.0, Register 12-1, Figure 12-1. Full reference:
- *   MANUAL.md §17. The 8 operating modes are documented on
- *   @ref COMP_ModeTypeDef below. Inputs multiplex onto PORTA
- *   (RA0-RA3, RA5, or VREF); outputs on RA4/RA5 when enabled.
- */
+/* Comparator driver, two on-chip comparators. Source: DS39582B §12.0,
+ * Register 12-1, Figure 12-1; full reference: MANUAL.md §17. Inputs
+ * multiplex onto PORTA (RA0-RA3, RA5, or VREF); outputs on RA4/RA5
+ * when enabled. The 8 operating modes are on COMP_ModeTypeDef below. */
 
 #ifndef PIC16F87XA_COMP_H
 #define PIC16F87XA_COMP_H
