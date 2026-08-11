@@ -1,8 +1,7 @@
 /**
- * @file    target_sizecheck.c
- * @brief   Minimal on-target build proving fsm.c cross-compiles for real
- *          XC8/PIC16/PIC18 silicon and reporting flash/RAM footprint; not
- *          a correctness test (see ../tests/test_fsm.c for that).
+ * Minimal on-target build proving fsm.c cross-compiles for real
+ * XC8/PIC16/PIC18 silicon and reports flash/RAM footprint; not a
+ * correctness test (see ../tests/test_fsm.c).
  */
 
 #include "fsm.h"

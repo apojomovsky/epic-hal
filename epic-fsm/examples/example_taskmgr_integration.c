@@ -1,8 +1,7 @@
 /**
- * @file    example_taskmgr_integration.c
- * @brief   epic-fsm composed with epic-taskmgr: a task callback just owns
- *          an fsm_t and dispatches into it, no special integration needed.
- *          Built only when -DEPIC_FSM_BUILD_TASKMGR_EXAMPLE=ON.
+ * epic-fsm composed with epic-taskmgr: a task callback owns an fsm_t and
+ * dispatches into it, no special integration needed. Built only with
+ * -DEPIC_FSM_BUILD_TASKMGR_EXAMPLE=ON.
  */
 
 #include <stddef.h>
@@ -32,8 +31,8 @@ static const fsm_transition_t button_transitions[] = {
 
 static button_t g_button;
 
-/* The task callback knows nothing about fsm.h's internals beyond calling
- * fsm_dispatch — this is the entire integration surface. */
+/* The task callback knows nothing of fsm.h's internals beyond calling
+ * fsm_dispatch: that is the entire integration surface. */
 static void button_task(void *arg)
 {
     button_t *b = arg;

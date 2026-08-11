@@ -1,30 +1,11 @@
 /**
- * @file    sim_fsm.c
- * @brief   Bounded, self-reporting HARNESS=sim build: epic-fsm's
- *          first-ever real `mdb` gate. Drives a small 3-state machine
- *          (IDLE -> RUN -> DONE) through a scripted event sequence via
- *          the real API, records the observed state after every
- *          dispatch, and verifies the recorded sequence matches the
- *          expected one exactly, including rejected events (a guard
- *          block and several invalid-event rejections). The entry/exit
- *          transition callbacks count their invocations in volatile
- *          counters, which the final check also compares. Reports
- *          PASS/FAIL over the target's real hardware USART the same way
- *          every other family's own `.sim` variant does (see
- *          pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
- *
- * @details
- *   Distinct from `tests/test_fsm.c` (the host unit tests, which run on
- *   the build machine) and `mcu/target_sizecheck.c` (the real-target
- *   footprint build, an unbounded loop with no
- *   `core/epic_harness.h` dependency). This file follows the bounded
- *   host/target-agnostic contract `core/epic_harness.h` defines
- *   instead, the same pattern `epic-swuart/tests/sim_target_swuart.c`
- *   and `epic-tick/examples/example_tick.c` use for their own `.sim`
- *   entries. Pure computation only: no hardware waits, no MPLAB SIM RX
- *   injection needed (the gate exercises the transition engine, guard
- *   fall-through, and invalid-event rejection, all TX-of-record over
- *   the harness USART).
+ * Bounded, self-reporting HARNESS=sim build, the module's mdb gate:
+ * drives a small 3-state machine (IDLE -> RUN -> DONE) through a
+ * scripted event sequence via the real API, verifying the recorded state
+ * sequence matches exactly, including rejected events (a guard block and
+ * several invalid-event rejections), and that the entry/exit callbacks
+ * counted correctly. Reports PASS/FAIL over the harness USART (see
+ * pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
  */
 #include "fsm.h"
 #include "core/epic_harness.h"
@@ -78,8 +59,6 @@ static const fsm_transition_t transitions[] = {
     { ST_DONE, EV_RESET, NULL,            act_reset, ST_IDLE },
 };
 
-/* One scripted step: set the guard flag, dispatch, record the state,
- * return whether a row fired. */
 static uint8_t step(fsm_t *fsm, fsm_ctx_t *ctx, fsm_event_t ev,
                     uint8_t allow_start)
 {
