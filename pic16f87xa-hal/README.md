@@ -171,3 +171,11 @@ Mirror STM32Cube as closely as makes sense for an 8-bit PIC:
 
 Cube users get a familiar API; PIC users get familiar peripherals with a
 consistent abstraction.
+## Environment split
+
+`src/` mirrors the three build environments: `src/core/` and
+`src/peripherals/` are shared (host and target builds compile them),
+`src/target/` is real-hardware-only, `src/sim/` is host-simulation-only,
+`src/mdb/` is the MPLAB SIM gate variant. Never glob a `src/`
+directory into your build; select files through the manifest (the
+bundle's `epicurus.mk` or the reference project).
