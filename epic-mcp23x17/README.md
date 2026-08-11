@@ -28,6 +28,24 @@ uint16_t port;
 EPIC_MCP23X17_ReadAll(&h, &port);
 ```
 
+The GPIO-mimic layer mirrors the HAL's per-pin API:
+
+```c
+EPIC_MCP23X17_GPIO_Init(&h, EPIC_MCP23X17_PORTA, MCP23X17_PIN_0,
+                        MCP23X17_MODE_OUTPUT);
+EPIC_MCP23X17_GPIO_WritePin(&h, EPIC_MCP23X17_PORTA, MCP23X17_PIN_0,
+                            MCP23X17_PIN_SET);
+EPIC_MCP23X17_GPIO_TogglePin(&h, EPIC_MCP23X17_PORTA, MCP23X17_PIN_0);
+int s = EPIC_MCP23X17_GPIO_ReadPin(&h, EPIC_MCP23X17_PORTA,
+                                   MCP23X17_PIN_1);
+```
+
+The pin masks and state values match the HAL's `GPIO_PIN_*` and
+`GPIO_PinState`, so switching code between the MCU's pins and the
+expander is a prefix change. The per-pin writes are read-modify-writes
+of the output latch (two bus transactions; see
+docs/ARCHITECTURE.md).
+
 For the MCP23S17 (SPI): `epic_bus_spi_init(fosc, sclk, cs_port,
 cs_pin)` then `EPIC_MCP23X17_Init(&h, EPIC_MCP23X17_BUS_SPI, a2a1a0)`.
 Every accessor returns 0 on success or -1 when the device NACKs, so a

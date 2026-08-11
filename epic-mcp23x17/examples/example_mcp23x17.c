@@ -81,7 +81,18 @@ int main(void)
     (void)EPIC_MCP23X17_ReadOutputLatch(&h, EPIC_MCP23X17_PORTA, &latch);
     (void)EPIC_MCP23X17_ReadAll(&h, &port);
 
-    printf("latch A=0x%02X port=0x%04X\n", (unsigned)latch,
-           (unsigned)port);
-    return (latch == 0xAAu && port == 0x00AAu) ? 0 : 1;
+    /* The GPIO-mimic layer: the HAL-shaped per-pin calls. */
+    (void)EPIC_MCP23X17_GPIO_Init(&h, EPIC_MCP23X17_PORTB, MCP23X17_PIN_All,
+                                  MCP23X17_MODE_OUTPUT);
+    (void)EPIC_MCP23X17_GPIO_WritePin(&h, EPIC_MCP23X17_PORTB,
+                                      MCP23X17_PIN_2, MCP23X17_PIN_SET);
+    (void)EPIC_MCP23X17_GPIO_TogglePin(&h, EPIC_MCP23X17_PORTB,
+                                       MCP23X17_PIN_2);
+    int pb2 = EPIC_MCP23X17_GPIO_ReadPin(&h, EPIC_MCP23X17_PORTB,
+                                         MCP23X17_PIN_2);
+
+    printf("latch A=0x%02X port=0x%04X PB2=%d\n", (unsigned)latch,
+           (unsigned)port, pb2);
+    return (latch == 0xAAu && port == 0x00AAu && pb2 == MCP23X17_PIN_RESET)
+               ? 0 : 1;
 }

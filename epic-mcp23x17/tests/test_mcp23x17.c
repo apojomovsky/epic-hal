@@ -286,6 +286,78 @@ static void run_semantics(epic_mcp23x17_handle_t *h, const char *label)
     (void)label;
 }
 
+/* ─── the GPIO-mimic suite (RMW + mode mapping semantics) ───────── */
+
+static void run_mimic(epic_mcp23x17_handle_t *h)
+{
+    uint8_t dir, pu;
+    int st;
+
+    /* Init OUTPUT: only the masked direction bits clear, others keep
+     * the POR default (input). */
+    st = EPIC_MCP23X17_GPIO_Init(h, EPIC_MCP23X17_PORTA,
+                                 MCP23X17_PIN_0 | MCP23X17_PIN_1,
+                                 MCP23X17_MODE_OUTPUT);
+    CHECK(st > 0);
+    st = EPIC_MCP23X17_GetDirection(h, EPIC_MCP23X17_PORTA, &dir);
+    CHECK(st > 0 && dir == 0xFCu);   /* bits 0,1 out; rest still in */
+
+    /* Init INPUT_PULLUP: the pins go input with the pull-ups on. */
+    st = EPIC_MCP23X17_GPIO_Init(h, EPIC_MCP23X17_PORTA,
+                                 MCP23X17_PIN_2, MCP23X17_MODE_INPUT_PULLUP);
+    CHECK(st > 0);
+    st = EPIC_MCP23X17_GetDirection(h, EPIC_MCP23X17_PORTA, &dir);
+    CHECK(st > 0 && (dir & MCP23X17_PIN_2) != 0u);
+    st = EPIC_MCP23X17_GetPullUps(h, EPIC_MCP23X17_PORTA, &pu);
+    CHECK(st > 0 && (pu & MCP23X17_PIN_2) != 0u);
+
+    /* Init INPUT clears the pull-up of a previously-pulled pin. */
+    st = EPIC_MCP23X17_GPIO_Init(h, EPIC_MCP23X17_PORTA,
+                                 MCP23X17_PIN_2, MCP23X17_MODE_INPUT);
+    CHECK(st > 0);
+    st = EPIC_MCP23X17_GetPullUps(h, EPIC_MCP23X17_PORTA, &pu);
+    CHECK(st > 0 && (pu & MCP23X17_PIN_2) == 0u);
+
+    /* WritePin: masked RMW of the latch, others preserved. */
+    st = EPIC_MCP23X17_GPIO_Init(h, EPIC_MCP23X17_PORTB, MCP23X17_PIN_All,
+                                 MCP23X17_MODE_OUTPUT);
+    CHECK(st > 0);
+    st = EPIC_MCP23X17_WritePort(h, EPIC_MCP23X17_PORTB, 0x0Fu);
+    CHECK(st > 0);
+    st = EPIC_MCP23X17_GPIO_WritePin(h, EPIC_MCP23X17_PORTB,
+                                     MCP23X17_PIN_4, MCP23X17_PIN_SET);
+    CHECK(st > 0);
+    st = EPIC_MCP23X17_ReadOutputLatch(h, EPIC_MCP23X17_PORTB, &pu);
+    CHECK(st > 0 && pu == 0x1Fu);   /* 0x0F plus bit 4, bits 5-7 kept */
+    st = EPIC_MCP23X17_GPIO_WritePin(h, EPIC_MCP23X17_PORTB,
+                                     MCP23X17_PIN_0, MCP23X17_PIN_RESET);
+    CHECK(st > 0);
+    st = EPIC_MCP23X17_ReadOutputLatch(h, EPIC_MCP23X17_PORTB, &pu);
+    CHECK(st > 0 && pu == 0x1Eu);
+
+    /* TogglePin flips only the masked bits. */
+    st = EPIC_MCP23X17_GPIO_TogglePin(h, EPIC_MCP23X17_PORTB,
+                                      MCP23X17_PIN_1 | MCP23X17_PIN_4);
+    CHECK(st > 0);
+    st = EPIC_MCP23X17_ReadOutputLatch(h, EPIC_MCP23X17_PORTB, &pu);
+    CHECK(st > 0 && pu == 0x0Cu);   /* bits 1 and 4 toggled off */
+
+    /* ReadPin extracts the bit state from the port. */
+    st = EPIC_MCP23X17_GPIO_ReadPin(h, EPIC_MCP23X17_PORTB, MCP23X17_PIN_2);
+    CHECK(st == MCP23X17_PIN_SET);
+    st = EPIC_MCP23X17_GPIO_ReadPin(h, EPIC_MCP23X17_PORTB, MCP23X17_PIN_0);
+    CHECK(st == MCP23X17_PIN_RESET);
+
+    /* NACK surfaces as -1 on the mimic too. */
+    g_mock.nack = 1;
+    st = EPIC_MCP23X17_GPIO_WritePin(h, EPIC_MCP23X17_PORTA,
+                                     MCP23X17_PIN_0, MCP23X17_PIN_SET);
+    CHECK(st == -1);
+    st = EPIC_MCP23X17_GPIO_ReadPin(h, EPIC_MCP23X17_PORTA, MCP23X17_PIN_0);
+    CHECK(st == -1);
+    g_mock.nack = 0;
+}
+
 int main(void)
 {
     epic_mcp23x17_handle_t h;
@@ -326,6 +398,10 @@ int main(void)
     g_mock.regs[0x01] = 0xFFu;
     CHECK(EPIC_MCP23X17_InitTransport(&h, &g_mock_transport) == 0);
     run_semantics(&h, "transport");
+    memset(&g_mock, 0, sizeof(g_mock));
+    g_mock.regs[0x00] = 0xFFu;   /* back to the POR defaults */
+    g_mock.regs[0x01] = 0xFFu;
+    run_mimic(&h);
     g_mock.nack = 1;
     CHECK(EPIC_MCP23X17_ReadPort(&h, EPIC_MCP23X17_PORTA, &(uint8_t){0}) == -1);
 

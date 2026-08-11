@@ -14,6 +14,26 @@ single register, 2 for a 16-bit composite), `-1` on a device NACK.
   built-in epic-bus transport for the handle's bus.
 - `epic_mcp23x17_handle_t`: the caller-owned handle.
 
+## GPIO-mimic layer (HAL-shaped per-pin convenience)
+
+- `MCP23X17_PIN_0..7` / `MCP23X17_PIN_All` : pin masks, values match
+  the HAL's `GPIO_PIN_*` so the swap between the MCU's pins and the
+  expander is a prefix change.
+- `epic_mcp23x17_pin_state_t`: `MCP23X17_PIN_RESET` / `SET` (0/1,
+  matching `GPIO_PinState`).
+- `epic_mcp23x17_mode_t`: `MCP23X17_MODE_OUTPUT`, `MODE_INPUT`,
+  `MODE_INPUT_PULLUP`.
+- `EPIC_MCP23X17_GPIO_Init(h, port, pins, mode)` : sets the direction
+  (+ pull-ups for INPUT_PULLUP) for the masked pins only; pins
+  outside the mask keep their configuration.
+- `EPIC_MCP23X17_GPIO_WritePin(h, port, pins, state)` : masked write;
+  a read-modify-write of the output latch (two bus transactions, see
+  ARCHITECTURE.md).
+- `EPIC_MCP23X17_GPIO_TogglePin(h, port, pins)` : masked toggle, same
+  RMW.
+- `EPIC_MCP23X17_GPIO_ReadPin(h, port, pin)` : returns
+  `MCP23X17_PIN_SET`/`RESET` (1/0) or -1 on a NACK.
+
 ## Lifecycle
 
 - `EPIC_MCP23X17_Init(h, bus, dev)` : bind to the built-in transport.
