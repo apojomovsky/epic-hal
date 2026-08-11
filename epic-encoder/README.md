@@ -31,9 +31,6 @@ one shared interrupt; decode with a software Gray-code transition table.
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md): why software decode, why push, the
-  Gray-code table, the two-counter error model, the read-before-clear
-  ordering, which RBIF host-sim approach landed and why, footprint.
 - [API reference](docs/API.md): per-function semantics, the port-byte
   bit-position wiring convention, the at-most-two-encoders-per-port /
   PORTB-only ceiling, the 1 ms glitch-gate resolution, direction-swap
@@ -108,3 +105,6 @@ host-runnable wiring.
 - **Swap `pin_a`/`pin_b` to invert direction**: the count sign is fixed
   by the shipped `QUAD_TABLE`; invert by swapping the two pin arguments at
   `encoder_init`, not by a flag.
+- **Never re-read PORTB in the RB-change callback**: use the byte the
+  handler read before clearing RBIF; a later read may not reflect the byte
+  the mismatch comparator actually cleared against.

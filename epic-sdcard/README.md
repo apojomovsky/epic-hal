@@ -22,14 +22,13 @@ SSP/GPIO HAL and `epic-tick`.
   command/response protocol well enough that the **actual vendored
   `mmc.c`/`crc.c`** are compiled and tested directly — not a hand-written
   stand-in for them, unlike `epic-usb`'s host stub.
+- **Bring-up clock gap**: at 48 MHz the SSP's slowest fixed divisor is
+  750 kHz, above the SD spec's 400 kHz bring-up ceiling; many cards
+  tolerate it, unverified on real hardware.
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md), the binding layer, clock divisor
-  constraints, the mock SPI slave, host vs. target build stories.
 - [API reference](docs/API.md), per-function semantics + usage.
-- [Implementation plan](../docs/epic-sdcard-plan.md), M-Stack storage
-  vendoring, chip scope rationale, Phase 2 XC8 findings, open risks.
 
 ## Quick start
 

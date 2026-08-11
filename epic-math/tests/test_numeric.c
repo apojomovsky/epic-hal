@@ -1,11 +1,9 @@
-/**
- * @file    test_numeric.c
- * @brief   Host tests for `pic_math_diff3` and
- *          `pic_math_integrate_simpson38` against analytic functions:
- *          both are exact up to their respective polynomial degree
- *          (diff3: <=2, Simpson's 3/8: <=3), checked for an exact
- *          Q-format result there and within a documented error bound
- *          for higher-degree inputs.
+/*
+ * Host tests for pic_math_diff3 and pic_math_integrate_simpson38
+ * against analytic functions: both are exact up to their respective
+ * polynomial degree (diff3: <=2, Simpson's 3/8: <=3), checked for an
+ * exact Q-format result there and within a documented error bound for
+ * higher-degree inputs.
  */
 
 #include "pic_math.h"
@@ -60,19 +58,10 @@ static void test_diff3_cubic_bound(void)
 
 static void test_diff3_noninteger_slope(void)
 {
-    /* f(x) = (1/2)x via Q8.8 samples: pick a slope that is not an integer in
-     * Q8.8, e.g. 0.1 -> Q8.8 = 26 (0.1015625). f(x)=0.1*x sampled at integer
-     * x: f(0)=0, f(2)=0.2. diff3 = 0.2 * inv_2h(0.5) = 0.1. In Q8.8 with
-     * inv_2h_q8=128: (f2-f0)*128 where f0,f1,f2 are the raw samples. Use raw
-     * samples 0 and 2 (representing 0.0 and 0.2 if slope=0.1 and we keep the
-     * /10 implicit)... simpler: just verify the arithmetic matches the
-     * formula within one ULP for a value with a fractional Q8.8 result. */
-    int16_t got = pic_math_diff3(1, 2, 4, INV_2H_Q8);   /* (4-1)*128 = 384 */
+    /* Fractional-slope sanity: (4-1)*128 = 384 Q8.8, confirming the raw
+     * integer product (the caller scales to real units). */
+    int16_t got = pic_math_diff3(1, 2, 4, INV_2H_Q8);
     CHECK(got == 384, "diff3 formula arithmetic");
-    /* 0.5 slope: samples 0,1,2 (f(0)=0,f(1)=0.5,f(2)=1.0 in real). raw 0,1,2
-     * give diff=(2-0)*128=256 = 1.0 Q8.8 -- but true slope 0.5 -> Q8.8 128.
-     * The samples here are the raw integers; diff3 = (raw_now-raw_prev2)*128.
-     * This just confirms the integer product, not the slope unit. */
 }
 
 static void test_simpson38_exact(void)

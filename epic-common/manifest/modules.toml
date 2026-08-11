@@ -138,9 +138,9 @@ variants = [
   "18F4550",
 ]
 
-# PIC16F193X has no higher-level modules yet (out of scope, see
-# docs/superpowers/specs/2026-08-05-distribution-design.md), so nothing
-# else exercises its family HAL. This module is the family's own
+# PIC16F193X has no higher-level modules yet (out of scope for the
+# distribution work), so nothing else exercises its family HAL. This
+# module is the family's own
 # top-level Makefile in manifest form: it links no application code of
 # its own, just tests/example_blink.c, the same real-target smoke every
 # xc8-build.yml run has always covered for this family. dir points at
@@ -191,8 +191,8 @@ config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = 
 # smoke (tests/example_blink.c) and the HARNESS=sim banked-SFR probe
 # gate. The probe (tests/sim_bank_probe.c) exercises every ungated
 # `pic_select_bank` + plain EPIC_REG8 site and every plain Bank-1 SFR
-# access from the Phase 0 audit (docs/toolchain-coverage.md classes A
-# and B) with known values and reads them back, so XC8 v4.00 bank
+# access from the Phase 0 audit with known values and reads them back,
+# so XC8 v4.00 bank
 # misdirection (Finding 9's mechanism) fails the gate instead of
 # corrupting silently.
 [modules.pic16f87xa-hal]
@@ -232,8 +232,8 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # pseudo-modules: the family's real-target smoke (tests/example_blink.c)
 # and the HARNESS=sim GPIO probe gate. The probe
 # (tests/sim_gpio_probe.c) exercises the runtime-computed SFR address
-# path in pic18fxx5x_gpio.c (docs/toolchain-coverage.md class C, the
-# PIC18 Finding 3 shape) with known values and verifies through the
+# path in pic18fxx5x_gpio.c (the PIC18 Finding 3 shape) with known
+# values and verifies through the
 # literal-token path, so a program-memory-table misdirection fails the
 # gate instead of corrupting silently.
 [modules.pic18fxx5x-hal]
@@ -274,8 +274,7 @@ includes   = []
 depends_on = []
 needs_hal  = true
 
-# C1 of the combination matrix
-# (docs/superpowers/plans/2026-08-09-combination-matrix.md): USART +
+# C1 of the combination matrix: USART +
 # SSP + EEPROM interleaved under a fast TIMER2 ISR. The gate hunts the
 # banksel-less ISR read class (an interrupt inside a bank-macro window
 # makes the dispatch read PIE1 instead of PIR1 and the misdirected
@@ -305,8 +304,7 @@ includes   = []
 depends_on = []
 needs_hal  = true
 
-# C2 of the combination matrix
-# (docs/superpowers/plans/2026-08-09-combination-matrix.md): TMR0 +
+# C2 of the combination matrix: TMR0 +
 # TMR1 + TMR2 + USART, all interrupt-driven in one firmware. The gate
 # hunts the three-way ISR interleave: the dispatch's per-source gating
 # (TMR1's TMR1IE flag-gate, TXIF's TXIE gate) under load, GIE wedging
@@ -340,8 +338,7 @@ includes   = []
 depends_on = []
 needs_hal  = true
 
-# C3 of the combination matrix
-# (docs/superpowers/plans/2026-08-09-combination-matrix.md): ADC
+# C3 of the combination matrix: ADC
 # conversion loop + TIMER1 + USART TX interleaved under a live TIMER1
 # ISR. The gate hunts the bank-window preemption class with the ADC
 # read path (two EPIC_BANK1_READ8 windows plus the Bank-0 ADRESH read
@@ -374,8 +371,7 @@ includes   = []
 depends_on = []
 needs_hal  = true
 
-# C4 of the combination matrix
-# (docs/superpowers/plans/2026-08-09-combination-matrix.md): PORTB
+# C4 of the combination matrix: PORTB
 # change ISR + USART TX + TIMER2 interleaved. The gate hunts the
 # multi-source dispatch class (RBIF and TMR2IF serviced in the same
 # ISR entry), the RB read-before-clear ordering, and the polled-TX
@@ -406,8 +402,7 @@ includes   = []
 depends_on = []
 needs_hal  = true
 
-# C5 of the combination matrix
-# (docs/superpowers/plans/2026-08-09-combination-matrix.md): EEPROM
+# C5 of the combination matrix: EEPROM
 # writes through the HAL's EECON2/EECON1 unlock sequence while a fast
 # TIMER2 ISR runs throughout; completion is taken through the EEIF
 # dispatch branch (EEIE armed, callback flag). The gate hunts
@@ -509,8 +504,7 @@ includes   = []
 depends_on = ["epic-tick", "epic-serial"]
 needs_hal  = true
 
-# C6 of the combination matrix
-# (docs/superpowers/plans/2026-08-09-combination-matrix.md): epic-tick's
+# C6 of the combination matrix: epic-tick's
 # live 1 ms Timer2 ISR churning against epic-serial's ring-buffered TX
 # path. The gate hunts the class-G race surface (the tick ISR vs the
 # serial layer's Disable/Restore sites) and the TXIE-gated dispatch
@@ -540,8 +534,7 @@ includes   = []
 depends_on = ["epic-lcd", "epic-tick"]
 needs_hal  = true
 
-# C10 of the combination matrix
-# (docs/superpowers/plans/2026-08-09-combination-matrix.md): the real
+# C10 of the combination matrix: the real
 # HD44780 driver (epic-lcd) running its init + print sequence through
 # the gpio4 transport ops while epic-tick's live 1 ms Timer2 ISR
 # churns underneath. The gate verifies the driver's byte-exact
@@ -576,9 +569,9 @@ includes   = []
 depends_on = []
 needs_hal  = true
 
-# Task 8 of the quality roadmap (docs/quality-roadmap.md): the RX wall,
-# via a target-in-the-loop harness. MPLAB SIM cannot inject RX of any
-# kind (the RX-wall finding in docs/toolchain-coverage.md), so this
+# Task 8 of the quality roadmap: the RX wall, via a
+# target-in-the-loop harness. MPLAB SIM cannot inject RX of any kind
+# (the RX-wall finding), so this
 # gate is the mdb leg of the RX-loopback harness: USART RX armed
 # (SPEN + CREN + RCIE) with a line-framing echo callback, boot banner
 # over TX, and a TX-free run loop (the polled-TX TSR-empty wait is an
@@ -685,8 +678,8 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-bus.excluded]
-"18F2455" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"18F2550" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"18F2455" = "RAM: does not fit on this smaller part"
+"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-bus.example.PIC16F87XA]
 name    = "bus"
@@ -784,16 +777,15 @@ PIC18Fxx5x = [
 
 [modules.epic-console.excluded]
 # The old all-MCU exclusion ("link: irq dispatch needs every peripheral
-# handler", docs/mplabx-link-gaps-plan.md root cause 1) is stale: that
-# failure class cannot recur since the manifest links the family's full
-# hal_sources set for every HAL build (same doc's fix note). The smaller
-# parts stay excluded because the module pulls in epic-serial, which
-# does not fit there (root cause 2, same reason epic-serial and
-# epic-debounce exclude them).
-"16F873A" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"16F874A" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"18F2455" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"18F2550" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+# handler") is stale: that failure class cannot recur since the
+# manifest links the family's full hal_sources set for every HAL build.
+# The smaller parts stay excluded because the module pulls in
+# epic-serial, which does not fit there (the same RAM reason
+# epic-serial and epic-debounce exclude them).
+"16F873A" = "RAM: does not fit on this smaller part"
+"16F874A" = "RAM: does not fit on this smaller part"
+"18F2455" = "RAM: does not fit on this smaller part"
+"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-console.example.PIC16F87XA]
 name    = "console-sizecheck"
@@ -857,10 +849,10 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-debounce.excluded]
-"16F873A" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"16F874A" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"18F2455" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"18F2550" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"16F873A" = "RAM: does not fit on this smaller part"
+"16F874A" = "RAM: does not fit on this smaller part"
+"18F2455" = "RAM: does not fit on this smaller part"
+"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-debounce.example.PIC16F87XA]
 name    = "debounce"
@@ -918,8 +910,8 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-encoder.excluded]
-"18F2455" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"18F2550" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"18F2455" = "RAM: does not fit on this smaller part"
+"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-encoder.example.PIC16F87XA]
 name    = "encoder-sizecheck"
@@ -1118,8 +1110,8 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-math.excluded]
-"18F2455" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"18F2550" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"18F2455" = "RAM: does not fit on this smaller part"
+"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-math.example.PIC16F87XA]
 name    = "math-selftest"
@@ -1201,12 +1193,12 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-modbus.excluded]
-"16F873A" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"16F874A" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"16F876A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over (docs/mplabx-link-gaps-plan.md root cause 3)"
-"16F877A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over (docs/mplabx-link-gaps-plan.md root cause 3)"
-"18F2455" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"18F2550" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"16F873A" = "RAM: does not fit on this smaller part"
+"16F874A" = "RAM: does not fit on this smaller part"
+"16F876A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
+"16F877A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
+"18F2455" = "RAM: does not fit on this smaller part"
+"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-modbus.example.PIC16F87XA]
 name    = "modbus"
@@ -1318,10 +1310,10 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-serial.excluded]
-"16F873A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250, mplabx-link-gaps root cause 2)"
-"16F874A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250, mplabx-link-gaps root cause 2)"
-"18F2455" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"18F2550" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"16F873A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
+"16F874A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
+"18F2455" = "RAM: does not fit on this smaller part"
+"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-serial.example.PIC16F87XA]
 name    = "serial"
@@ -1370,13 +1362,13 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-settings.excluded]
-"16F873A" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"16F874A" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"16F876A" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"16F877A" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"18F2455" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"18F2550" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"18F4455" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
+"16F873A" = "link: irq dispatch needs every peripheral handler"
+"16F874A" = "link: irq dispatch needs every peripheral handler"
+"16F876A" = "link: irq dispatch needs every peripheral handler"
+"16F877A" = "link: irq dispatch needs every peripheral handler"
+"18F2455" = "link: irq dispatch needs every peripheral handler"
+"18F2550" = "link: irq dispatch needs every peripheral handler"
+"18F4455" = "link: irq dispatch needs every peripheral handler"
 
 [modules.epic-settings.example.PIC16F87XA]
 name    = "settings-sizecheck"
@@ -1394,8 +1386,8 @@ hal     = true
 # HARNESS=sim: the bounded EEPROM round-trip + corruption gate
 # (tests/sim_settings.c). The module's own real-target example was
 # excluded on every part since rc1 (stale mplabx Makefile-era
-# exclusion, docs/mplabx-link-gaps-plan.md root cause 1, which the
-# manifest's family-wide hal_sources no longer hits), so the gate runs
+# exclusion, which the manifest's family-wide hal_sources no longer
+# hits), so the gate runs
 # on the PIC18Fxx5x side with the PIC18 sim harness. WDT=OFF like every
 # other sim variant (a diagnostic build that terminates and reports
 # does not need the watchdog running unattended).
@@ -1439,8 +1431,8 @@ PIC16F193X = [
 ]
 
 [modules.epic-swuart.excluded]
-"16F873A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"16F874A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"16F873A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
+"16F874A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 
 [modules.epic-swuart.example.PIC16F87XA]
 name    = "swuart"
@@ -1502,10 +1494,10 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-taskmgr.excluded]
-"16F873A" = "RAM: 54-byte task table does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"16F874A" = "RAM: 54-byte task table does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"18F2455" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
-"18F2550" = "link: irq dispatch needs every peripheral handler (docs/mplabx-link-gaps-plan.md root cause 1)"
+"16F873A" = "RAM: 54-byte task table does not fit on this smaller part"
+"16F874A" = "RAM: 54-byte task table does not fit on this smaller part"
+"18F2455" = "link: irq dispatch needs every peripheral handler"
+"18F2550" = "link: irq dispatch needs every peripheral handler"
 
 [modules.epic-taskmgr.example.PIC16F87XA]
 name    = "multi-blink"
@@ -1565,8 +1557,8 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-tick.excluded]
-"18F2455" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
-"18F2550" = "RAM: does not fit on this smaller part (docs/mplabx-link-gaps-plan.md root cause 2)"
+"18F2455" = "RAM: does not fit on this smaller part"
+"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-tick.example.PIC16F87XA]
 name    = "tick"
@@ -1603,8 +1595,7 @@ harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 
-# C7 of the combination matrix
-# (docs/superpowers/plans/2026-08-09-combination-matrix.md): epic-tick +
+# C7 of the combination matrix: epic-tick +
 # epic-settings on PIC18 (18F4550, the only part epic-settings supports).
 # The gate (tests/combo_tick_settings.c) saves a blob through the real
 # epic_settings.c while the 1 ms tick ISR is live, corrupts one stored
@@ -1640,8 +1631,7 @@ name        = "combo-tick-settings-sim"
 harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# C12 of the combination matrix
-# (docs/superpowers/plans/2026-08-09-combination-matrix.md): epic-modbus
+# C12 of the combination matrix: epic-modbus
 # + epic-serial + epic-tick on PIC18 (18F4550, modbus is PIC18-only).
 # The gate (tests/combo_modbus_full.c) pushes an FC03 read-holding-
 # registers request through the module's real TX path (epic_serial_write
@@ -1690,8 +1680,7 @@ depends_on = [
 ]
 needs_hal  = true
 
-# C8 of the combination matrix
-# (docs/superpowers/plans/2026-08-09-combination-matrix.md): the
+# C8 of the combination matrix: the
 # taskmgr scheduler and the epic-serial TX ring interleaved in one
 # firmware. Three scheduler tasks with distinct periods push distinct
 # payloads through epic_serial_write every time they run; the ring is

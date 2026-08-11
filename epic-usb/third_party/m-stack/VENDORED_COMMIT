@@ -11,8 +11,7 @@ Three MPLAB XC8 v3.10 compatibility fixes are applied on top (a token-paste
 placement macro, a min()/MIN() typo, a bit-field base type) -- see
 epic-usb/third_party/patches/0001-xc8-v3.10-compat.patch, which is this
 exact diff, kept reapplicable for when this vendored copy is upgraded.
-Details and why each was needed: epic-usb/docs/epic-usb-plan.md, "Phase 2
-findings".
+Details and why each was needed: epic-usb/README.md.
 
 To upgrade to a newer upstream commit:
   1. git clone the URL above at the new commit.
@@ -27,6 +26,6 @@ To upgrade to a newer upstream commit:
      re-derive the fix against the new code.
   4. Re-run the real compile validation (xc8-cc against usb.c, usb_cdc.c,
      this module's usb_descriptors.c and epic_usb.c, targeting 18f4550 --
-     see epic-usb-plan.md's Phase 2 findings for the exact flags used) and
-     the host test suite (ctest --test-dir epic-usb/build) before trusting
-     the upgrade.
+     see epic-usb/README.md's "Real target (XC8)" section) and the host
+     test suite (ctest --test-dir epic-usb/build) before trusting the
+     upgrade.

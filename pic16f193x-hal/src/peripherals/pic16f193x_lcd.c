@@ -1,13 +1,8 @@
 /**
- * @file    pic16f193x_lcd.c
- * @brief   PIC16F193X LCD segment driver implementation.
- * @details Segment-to-register mapping derived from the installed
- *          DFP header (pic16f1937.h) _LCDDATAn_SEGxCOMy_POSN macros:
- *            data_reg_index = com * 3 + (seg / 8)
- *            bit_position   = seg % 8
- *          Verified against the first 30 entries of the DFP's mapping
- *          table. NOT the plan's placeholder arithmetic; this is the
- *          real DFP-derived formula.
+ * PIC16F193X LCD segment driver implementation. Segment-to-register
+ * mapping derived from the installed DFP header (pic16f1937.h)
+ * _LCDDATAn_SEGxCOMy_POSN macros: data_reg_index = com*3 + seg/8,
+ * bit_position = seg%8.
  */
 #include "peripherals/pic16f193x_lcd.h"
 

@@ -1,12 +1,8 @@
-/**
- * @file    epic_bus.c
- * @brief   I2C/SPI MEM register-access transactions on the MSSP/SSP HAL,
- *          family-neutral via a small "bus ops" interface. The default
- *          ops wrap the HAL's SSP primitives plus a poll for SSPIF (the
- *          HAL's own calls only set control bits and return). The host
- *          sim has no SSP slave model, so `epic_bus_set_i2c_ops`/
- *          `_set_spi_ops` let the host test inject a mock device instead.
- */
+/* I2C/SPI MEM register-access transactions on the MSSP/SSP HAL via a
+ * small injectable "bus ops" interface. The default ops wrap the HAL's
+ * SSP primitives plus an SSPIF poll (the HAL's own calls only set
+ * control bits and return); `epic_bus_set_i2c_ops`/`_set_spi_ops` let
+ * the host test inject a mock device instead. */
 
 #include "epic_bus.h"
 #include "epic_hal.h"               /* SSP, GPIO, SFR, IRQ, platform */
@@ -23,7 +19,7 @@
   #define BUS_SSPCON2_WRITE(c) (EPIC_REG8(PIC_REG_SSPCON2) = (uint8_t)(c))
 #endif
 
-/* ─── default I2C ops (HAL SSP + ACKDT + SSPIF wait) ────────────── */
+/* default I2C ops (HAL SSP + ACKDT + SSPIF wait) */
 static void i2c_wait_ssp(void)
 {
     while (!EPIC_IRQ_GetFlag(BUS_IRQ_SSP)) { }   /* block until the SSP op completes */
@@ -85,7 +81,7 @@ void epic_bus_i2c_init(uint32_t fosc_hz, uint32_t fscl_hz)
     g_i2c_ops = &g_i2c_default;
 }
 
-/* ─── default SPI ops (HAL SSP exchange + GPIO CS) ──────────────── */
+/* default SPI ops (HAL SSP exchange + GPIO CS) */
 static uint8_t s_cs_port;
 static uint8_t s_cs_pin;
 
@@ -138,7 +134,7 @@ void epic_bus_spi_init(uint32_t fosc_hz, uint32_t f_sclk_hz, uint8_t cs_port, ui
     g_spi_ops = &g_spi_default;
 }
 
-/* ─── MEM transactions (family-neutral, via the ops interface) ──── */
+/* MEM transactions (family-neutral, via the ops interface) */
 
 int epic_bus_i2c_mem_write(uint8_t dev, uint8_t reg, const uint8_t *data, int n)
 {

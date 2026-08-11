@@ -1,14 +1,13 @@
 /**
  * @file    combo_encoder_tick.c
- * @brief   C9 of the combination matrix
- *          (docs/superpowers/plans/2026-08-09-combination-matrix.md):
+ * @brief   C9 of the combination matrix:
  *          epic-encoder + epic-tick. Scripted quadrature edges are fed
  *          through the encoder's own `encoder_update` API, interleaved
  *          with 1 ms tick-delay waits, while every position read is
  *          checked against the running scripted expectation under the
  *          live 1 ms tick ISR. The 32-bit `encoder_get_position` read
- *          (EPIC_IRQ_Disable/Restore, docs/toolchain-coverage.md class
- *          G) is the point: an interrupt delivered inside the disabled
+ *          (EPIC_IRQ_Disable/Restore) is the point: an interrupt
+ *          delivered inside the disabled
  *          window can tear the 4-byte read and, under MPLAB SIM, leave
  *          GIE cleared (the epic_tick.c read-twice-retry comment
  *          documents the signature), stopping the tick dead.

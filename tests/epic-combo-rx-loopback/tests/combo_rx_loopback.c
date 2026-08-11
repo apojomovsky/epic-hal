@@ -1,57 +1,27 @@
 /**
- * @file    combo_rx_loopback.c
- * @brief   Task 8 of the quality roadmap (docs/quality-roadmap.md): the
- *          RX wall, via a target-in-the-loop harness. This file is the
- *          harness firmware: a real USART RX path (interrupt-driven,
- *          line-framing echo) that a host can talk to through the
- *          actual UART pins, the only real-toolchain RX coverage the
- *          sim cannot provide.
+ * Task 8 of the quality roadmap: the RX wall, via a
+ * target-in-the-loop harness. This file is the firmware: a real USART
+ * RX path (interrupt-driven, line-framing echo) a host can talk to
+ * through the actual UART pins. MPLAB SIM cannot inject RX, so the
+ * mdb leg checks what the sim CAN show (RX arm state, boot banner
+ * over TX); the echo path is
+ * driven on the host sim, where pic16f87xa_sim_drive_usart_rx()
+ * injects bytes through the same dispatch and callback the real
+ * vector runs (tests/test_rx_loopback.c).
  *
- * @details
- *   MPLAB SIM cannot inject RX of any kind (the RX-wall finding in
- *   docs/toolchain-coverage.md: RCREG/RCIF writes masked, stim +
- *   packetin crashes, pin waveforms raise FERR), so the mdb leg of
- *   this gate verifies what the sim CAN show: the USART RX arm state
- *   (RCSTA SPEN+CREN, PIE1 RCIE), the boot banner over TX, and a
- *   healthy TX-free run loop. The echo path itself can never fire
- *   under MPLAB SIM, so the SAME firmware logic is driven on the host
- *   sim instead, where pic16f87xa_sim_drive_usart_rx() injects bytes
- *   through the same dispatch and callback the real vector runs (see
- *   tests/test_rx_loopback.c, this module's host test; this is the
- *   first combo with a host CMake build for exactly that reason).
+ * Line protocol (the byte-exact contract the host test and
+ * scripts/serial-rx-loop.py both check): boot emits "RXLOOP UP\r\n";
+ * a line is a byte run terminated by '\n' (a lone '\r' is a plain
+ * payload byte); well-formed = non-empty payload, CRLF-terminated,
+ * never over 32 bytes; the echo is "OK:<payload>\r\n" or
+ * "ERR:<payload>\r\n", where an over-long line echoes its first 32
+ * buffered bytes and discards the rest until the '\n'. Line state
+ * resets after every frame.
  *
- *   Line protocol (the byte-exact contract the host test and
- *   scripts/serial-rx-loop.py both check against):
- *   - Boot: after USART init the firmware emits "RXLOOP UP\r\n".
- *   - A line is a byte run terminated by '\n'; the payload is every
- *     byte before the '\n'. Only '\n' terminates: a lone '\r' is a
- *     plain payload byte (a CR-only "terminator" does not end a line).
- *   - Well-formed: payload non-empty, last byte '\r' (CRLF
- *     terminator), and the line never exceeded the 32-byte payload
- *     buffer.
- *   - Echo: "OK:<payload>\r\n" for a well-formed line, where the
- *     payload is echoed without the CRLF terminator's CR; "ERR:<
- *     payload>\r\n" otherwise (bare LF, missing CR, or over-long). An
- *     over-long line echoes its first 32 buffered bytes and discards
- *     the rest until the '\n'. After the echo the line state resets,
- *     so lines can be sent back to back.
- *
- *   MPLAB SIM wedge rules this gate follows (documented in the other
- *   combo headers): the run loop is TX-free, because the polled-TX
- *   TSR-empty wait is an ISR-wedge landing zone under the sim (C4's
- *   finding). All polled TX happens either before GIE is enabled (the
- *   boot banner) or inside the RX callback, which cannot fire under
- *   MPLAB SIM, or after EPIC_IRQ_Disable() (the PASS marker). GIE is
- *   enabled only after USART init, and no timer runs, so no source is
- *   ever pending in this gate.
- *
- *   Build seam: the host test compiles this file with
- *   RX_LOOPBACK_HOST_TEST defined, which drops main() and the target
- *   polled-TX implementation (rx_loopback_tx is then provided by the
- *   test as a byte recorder). The XC8 builds compile the file as-is.
- *
- *   Bounded and self-reporting (the harness contract); RX cannot be
- *   injected under MPLAB SIM, so the mdb leg checks state, not bytes.
+ * Build seam: the host test compiles this file with
+ * RX_LOOPBACK_HOST_TEST, which drops main() and the target polled-TX
+ * implementation (rx_loopback_tx is then provided by the test as a
+ * byte recorder); the XC8 builds compile the file as-is.
  */
 
 #include "core/epic_harness.h"
@@ -165,8 +135,6 @@ int main(void)
 }
 
 #endif /* !RX_LOOPBACK_HOST_TEST */
-
-/* ───────────────────────── shared firmware logic ────────────────── */
 
 static void s_tx_noop(void)
 {

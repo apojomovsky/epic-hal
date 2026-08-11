@@ -1,11 +1,8 @@
-/*
- * M-Stack mmc.h config for the host test build: binds MMC_SPI_* to
+/* M-Stack mmc.h config for the host test build: binds MMC_SPI_* to
  * epic_sdcard_mock_spi.c instead of real hardware. MMC_USE_TIMER is
  * deliberately not defined: a host mock has no real SPI latency to time
- * out against, so mmc.c's bounded-retry-count fallback is sufficient
- * here (the real target's mmc_config.h does define it, bound to
- * epic-tick).
- */
+ * out against, so mmc.c's bounded-retry-count fallback suffices (the real
+ * target mmc_config.h defines it, bound to epic-tick). */
 
 #ifndef EPIC_SDCARD_MOCK_MMC_CONFIG_H__
 #define EPIC_SDCARD_MOCK_MMC_CONFIG_H__

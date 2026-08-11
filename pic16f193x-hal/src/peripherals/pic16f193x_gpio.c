@@ -1,20 +1,14 @@
 /**
- * @file    pic16f193x_gpio.c
- * @brief   GPIO driver, implementation matching datasheet §6.0/§7.0.
- *
- * @details
- *   Enhanced Mid-range I/O model: writes target LATx, reads come from
- *   PORTx (pin level); ANSELx selects analog/digital per pin; WPUB gives
- *   per-pin PORTB weak pull-ups gated by the global WPUEN (OPTION_REG<7>).
- *   All SFR accesses use compile-time-constant `PIC_REG_*` tokens; the
- *   per-port dispatch branches before touching any SFR (the proven
- *   pattern from pic18_irq.c / pic18fxx5x_ccp.c).
+ * GPIO driver, implementation matching datasheet §6.0/§7.0: writes
+ * target LATx, reads come from PORTx (pin level); ANSELx selects
+ * analog/digital per pin; WPUB gives per-pin PORTB weak pull-ups gated
+ * by the global WPUEN (OPTION_REG<7>). All SFR accesses use
+ * compile-time-constant `PIC_REG_*` tokens; the per-port dispatch
+ * branches before touching any SFR.
  */
 
 #include "peripherals/pic16f193x_gpio.h"
 #include "core/pic16f193x_irq.h"
-
-/* ───────────────────────── per-port register addresses ─────────── */
 
 static uint16_t tris_addr(GPIO_TypeDef port)
 {
@@ -90,8 +84,6 @@ static uint8_t port_width(GPIO_TypeDef port)
     return 8U;
 }
 
-/* ───────────────────────── init / deinit ────────────────────────── */
-
 void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
@@ -136,8 +128,6 @@ void EPIC_GPIO_DeInit(GPIO_TypeDef port)
     EPIC_REG8(la) = 0x00U;
 }
 
-/* ───────────────────────── read / write / toggle ────────────────── */
-
 void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
@@ -173,8 +163,6 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
     return EPIC_REG8(port_addr(port));
 }
 
-/* ───────────────────────── PORTB weak pull-ups ─────────────────── */
-
 void EPIC_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
     /* Weak pull-ups on this family are PORTB-only via WPUB (DS41364B
@@ -194,8 +182,6 @@ void EPIC_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
         }
     }
 }
-
-/* ───────────────────────── PORTB change interrupt ───────────────────── */
 
 static void (*s_ioc_callback)(uint8_t iocbf, uint8_t portb) = NULL;
 

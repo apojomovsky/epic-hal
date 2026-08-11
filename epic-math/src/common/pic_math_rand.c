@@ -1,11 +1,10 @@
-/**
- * @file    pic_math_rand.c (shared portable-C, no asm)
- * @brief   `pic_math_rand_next`: a 16-bit Fibonacci LFSR (taps {0,2,3,5},
- *          period 65535), not cryptographic. A zero `*state` maps to a
- *          fixed nonzero seed, escaping the LFSR's unrecoverable
- *          all-zero fixed point. `pic_math_rand_gauss` sums four samples
- *          (Central Limit Theorem) for an approximately bell-shaped
- *          distribution, mirroring AN544 Figure 3.
+/*
+ * Shared portable-C RNG (no asm): pic_math_rand_next is a 16-bit
+ * Fibonacci LFSR (taps {0,2,3,5}, period 65535), not cryptographic. A
+ * zero *state maps to a fixed nonzero seed, escaping the LFSR's
+ * unrecoverable all-zero fixed point. pic_math_rand_gauss sums four
+ * samples (Central Limit Theorem) for an approximately bell-shaped
+ * distribution, mirroring AN544 Figure 3.
  */
 
 #include "pic_math.h"

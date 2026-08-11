@@ -1,18 +1,10 @@
 /**
- * @file    example_mcp23x17_target.c
- * @brief   epic-mcp23x17 on-target example: drives a real MCP23017 on
- *          the PIC's I2C bus (and the register configuration for the
- *          MCP23S17 SPI twin), proving the module links against the
- *          real HAL and that the transactions are framed correctly.
- *
- * @details
- *   The MSSP data path is unmodeled under MPLAB SIM (the same wall as
- *   the epic-bus gate: SEN latches, SSPIF never sets, so the default
- *   ops' SSPIF waits would block with no real device attached). This
- *   example therefore configures the bus and the expander handle but
- *   issues no MEM transaction at runtime; the transaction logic is
- *   host-tested against the mock device instead. On real silicon, the
- *   same calls with a device attached are the full bring-up path.
+ * epic-mcp23x17 on-target example: drives a real MCP23017 on the
+ * PIC's I2C bus (plus the MCP23S17 SPI twin's config), proving the
+ * module links against the real HAL. The MSSP data path is unmodeled
+ * under MPLAB SIM (SEN latches, SSPIF never sets), so no MEM
+ * transaction is issued at runtime; the transaction logic is
+ * host-tested against the mock device instead.
  */
 
 #include "epic_mcp23x17.h"
@@ -36,11 +28,9 @@ int main(void)
     epic_mcp23x17_handle_t h;
     (void)EPIC_MCP23X17_Init(&h, EPIC_MCP23X17_BUS_I2C, 0x20u);
 
-    /* The full bring-up sequence, host-verified against the mock:
-     * all 16 pins as outputs, then drive a pattern. On a real board
-     * the expander answers and the calls return the byte counts; the
-     * results are deliberately not acted on here (no device on the
-     * sim bus). */
+    /* Full bring-up sequence (host-verified against the mock): all
+     * 16 pins as outputs, then drive a pattern. Results are
+     * deliberately not acted on here (no device on the sim bus). */
     (void)EPIC_MCP23X17_SetDirectionAll(&h, 0x0000u);
     (void)EPIC_MCP23X17_WriteAll(&h, 0x00AAu);
 

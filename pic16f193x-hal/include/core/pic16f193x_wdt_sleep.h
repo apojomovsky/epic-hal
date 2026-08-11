@@ -1,14 +1,10 @@
 /**
- * @file    core/pic16f193x_wdt_sleep.h
- * @brief   CPU-level helpers: Watchdog Timer, Brown-out Reset, Sleep.
- *
- * @details
- *   Source: DS41364B §3.0 (PCON), §24.0 (WDT, WDTCON), §24.2 (Sleep). The
- *   watchdog is enabled by the WDTEN config bit (or per-window via the
- *   SWDTEN bit in WDTCON, DS41364B §24.1); either way call
- *   @ref EPIC_WDT_Refresh periodically or the chip resets. Config bits
- *   themselves are emitted by the mcu Makefile, not here. EPIC_Sleep_Enter
- *   is a no-op on host (no real CPU to stop).
+ * CPU-level helpers: Watchdog Timer, Brown-out Reset, Sleep
+ * (DS41364B §3.0 PCON, §24.0 WDT/WDTCON, §24.2 Sleep). The watchdog is
+ * enabled by the WDTEN config bit, or per-window via SWDTEN in WDTCON
+ * (§24.1); either way call EPIC_WDT_Refresh periodically or the chip
+ * resets. Config bits themselves are emitted by the mcu Makefile, not
+ * here. EPIC_Sleep_Enter is a no-op on host (no real CPU to stop).
  */
 
 #ifndef PIC16F193X_WDT_SLEEP_H

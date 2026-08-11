@@ -1,13 +1,8 @@
-/**
- * @file    example_adc.c
- * @brief   A/D converter driver smoke test on the PIC18 host sim.
- *
- * @details
- *   Verifies init register programming (ADCON0/1/2, DS39632E §21.0),
- *   start/complete via GO/DONE and ADIF, 10-bit read in both ADFM
- *   justifications, Vref/channel select, and deinit. The conversion IRQ
- *   handler clears ADIF, so polling checks disable the sim IRQ callback.
- *   Host sim only; the XC8 target build uses example_blink.
+/*
+ * A/D converter driver smoke test on the PIC18 host sim: init register
+ * programming (ADCON0/1/2, DS39632E §21.0), start/complete via GO/DONE
+ * and ADIF, 10-bit read in both ADFM justifications, Vref/channel
+ * select, deinit. Host sim only; the XC8 target build uses example_blink.
  */
 
 #include "epic_hal.h"

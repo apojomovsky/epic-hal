@@ -1,10 +1,8 @@
 /**
- * @file    peripherals/pic16f193x_adc.h
- * @brief   PIC16F193X 10-bit ADC driver.
- * @details Source: DS41364B ADC chapter. DS80000479 errata: ADC may
- *          not complete at FOSC > 8 MHz; ADC_HANDLE_DEFAULT uses
- *          ADC_CLOCK_FRC (Fosc-independent) to sidestep it by default.
- *          Full reference: MANUAL.md.
+ * PIC16F193X 10-bit ADC driver (DS41364B ADC chapter). DS80000479 errata:
+ * ADC may not complete at FOSC > 8 MHz; ADC_HANDLE_DEFAULT uses
+ * ADC_CLOCK_FRC (Fosc-independent) to sidestep it by default. Full
+ * reference: MANUAL.md.
  */
 #ifndef PIC16F193X_ADC_H
 #define PIC16F193X_ADC_H

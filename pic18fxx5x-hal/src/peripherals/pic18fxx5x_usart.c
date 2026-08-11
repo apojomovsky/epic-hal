@@ -1,20 +1,15 @@
-/**
- * @file    pic18fxx5x_usart.c
- * @brief   EUSART driver, implementation (DS39632E §20.0).
- *
- *   The driver only programs the SFRs; it does not model bit shifts or
- *   auto-baud measurement. The sim backend re-asserts TXIF each cycle
- *   when TXEN is set and dispatches RCREG values from
- *   `pic18_sim_drive_usart_rx()`. RMW on TXSTA/RCSTA/BAUDCON uses split
- *   read+write because XC8 cannot lower a compound assignment on a
- *   volatile cast-lvalue. The handle is copied into owned storage so a
- *   caller may stack-allocate it.
+/*
+ * EUSART driver, implementation (DS39632E §20.0). The driver only
+ * programs the SFRs; it does not model bit shifts or auto-baud
+ * measurement. The sim backend re-asserts TXIF each cycle when TXEN is
+ * set and dispatches RCREG values from `pic18_sim_drive_usart_rx()`. RMW
+ * on TXSTA/RCSTA/BAUDCON uses split read+write because XC8 cannot lower
+ * a compound assignment on a volatile cast-lvalue. The handle is copied
+ * into owned storage so a caller may stack-allocate it.
  */
 
 #include "peripherals/pic18fxx5x_usart.h"
 #include "core/pic18_irq.h"
-
-/* ───────────────────────── BRG computation ───────────────────────── */
 
 uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
                             USART_ModeTypeDef mode,
@@ -42,12 +37,8 @@ uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
     return (uint16_t)x;
 }
 
-/* ───────────────────────── handle storage ───────────────────────── */
-
 static USART_HandleTypeDef        g_usart_storage;
 static const USART_HandleTypeDef *g_usart = NULL;
-
-/* ───────────────────────── public API ───────────────────────────── */
 
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
 {
@@ -176,8 +167,6 @@ void EPIC_USART_ClearOverrun(void)
     epic_sfr_write8(PIC_REG_RCSTA, rcsta);
 }
 
-/* ───────────────────────── auto-baud (BAUDCON) ───────────────────── */
-
 void EPIC_USART_StartAutoBaud(void)
 {
     uint8_t v = (uint8_t)(epic_sfr_read8(PIC_REG_BAUDCON) | PIC_BAUDCON_ABDEN);
@@ -199,8 +188,6 @@ void EPIC_USART_ClearAutoBaudOverflow(void)
     uint8_t v = (uint8_t)(epic_sfr_read8(PIC_REG_BAUDCON) & (uint8_t)~PIC_BAUDCON_ABDOVF);
     epic_sfr_write8(PIC_REG_BAUDCON, v);
 }
-
-/* ───────────────────────── ISRs ─────────────────────────────────── */
 
 void USART_TX_IRQHandler(void)
 {

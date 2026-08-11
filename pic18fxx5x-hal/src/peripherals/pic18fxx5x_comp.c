@@ -1,21 +1,14 @@
-/**
- * @file    pic18fxx5x_comp.c
- * @brief   Comparator driver, implementation (DS39632E §22.0).
- *
- *   Simpler than the PIC16 driver: CMCON is in the Access Bank (0xFB4),
- *   no bank switching needed. The sim backend sets C1OUT/C2OUT + CMIF
- *   from `pic18_sim_drive_comp()`.
+/*
+ * Comparator driver, implementation (DS39632E §22.0). Simpler than the
+ * PIC16 driver: CMCON is in the Access Bank (0xFB4), no bank switching.
+ * The sim backend sets C1OUT/C2OUT + CMIF from `pic18_sim_drive_comp()`.
  */
 
 #include "peripherals/pic18fxx5x_comp.h"
 #include "core/pic18_irq.h"
 
-/* ───────────────────────── handle storage ───────────────────────── */
-
 static COMP_HandleTypeDef        g_comp_storage;
 static const COMP_HandleTypeDef *g_comp = NULL;
-
-/* ───────────────────────── public API ───────────────────────────── */
 
 EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
 {
@@ -71,8 +64,6 @@ void EPIC_COMP_ClearChangeFlag(void)
 {
     EPIC_IRQ_ClearFlag(PIC18_IRQ_CMP);
 }
-
-/* ───────────────────────── ISR ───────────────────────────────────── */
 
 void COMP_IRQHandler(void)
 {

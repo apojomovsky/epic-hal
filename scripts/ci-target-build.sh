@@ -1,22 +1,12 @@
 #!/usr/bin/env bash
-# Real-target XC8 build loop, driven by matrix.txt (one "family module
-# mcu" triple per line, emitted by ci.yml's "target" job before this
-# script runs, since building that list needs python3/the manifest and
-# this script runs inside the toolchain container, which has neither
-# python3 nor jq, see docker/ci-toolchain/Dockerfile). Each pre-emitted
-# build.sh already has its DFP path baked in from emission time, so this
-# script never touches DFP_DIR itself.
+# Real-target XC8 build loop for ci.yml's "target" job and the local
+# `make target-ci` replica: reads matrix.txt (emitted beforehand, since
+# this script runs in the toolchain container with no python3/jq) and runs
+# each pre-emitted build.sh, whose DFP path was baked in at emission time.
+# Does not stop at the first failure (fail-fast:false equivalent); exits 1
+# if anything failed.
 #
 # Usage: ci-target-build.sh [matrix.txt] [summary.md]
-#   matrix.txt   default: matrix.txt (in cwd)
-#   summary.md   default: ci-summary-build.md (in cwd); ci.yml cats this
-#                into $GITHUB_STEP_SUMMARY after this script returns,
-#                since GITHUB_STEP_SUMMARY is a path on the runner, not
-#                reliably reachable from inside this container.
-#
-# Does not stop at the first failure (fail-fast:false equivalent): a
-# broken module doesn't hide results for the rest of the family, a
-# broken family doesn't hide the rest. Exits 1 if anything failed.
 
 set -uo pipefail
 

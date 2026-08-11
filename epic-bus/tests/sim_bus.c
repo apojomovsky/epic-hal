@@ -1,43 +1,12 @@
-/**
- * @file    sim_bus.c
- * @brief   Bounded, self-reporting HARNESS=sim build for epic-bus:
- *          the module's first real `mdb` gate. Runs the actual
- *          compiled epic_bus.c (I2C/SPI MEM transactions over the
- *          injectable bus-ops seam) under MPLAB SIM on a 16F877A,
- *          exercising the master-side path, then reports PASS/FAIL
- *          over the target's real hardware USART (see
- *          pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
- *
- * @details
- *   MPLAB SIM has no slave device to inject on the I2C/SPI bus (the
- *   same class of limitation as the RX injection documented in
- *   epic-swuart/tests/sim_target_swuart.c), so the gate covers the
- *   master side in three parts:
- *
- *   (a) real SSP configuration through the real API: epic_bus_i2c_init
- *       and epic_bus_spi_init, then read back SSPCON (Bank 0, literal-
- *       token path) and SSPADD (Bank 1, safe EPIC_BANK1_READ8 macro)
- *       to verify the documented master modes and baud reload.
- *   (b) real SSP register traffic through the exact HAL primitives the
- *       default bus ops wrap (EPIC_SSP_Start / EPIC_SSP_WriteByte /
- *       EPIC_SSP_Stop), all waits bounded: the written byte must land
- *       in SSPBUF with no write collision. Whether the MSSP state
- *       machine advances is logged as diagnostic evidence: probed
- *       under this exact mdb/MPLAB SIM (xc8 v4.00, MPLAB X 6.35),
- *       SEN stays latched, SSPIF never sets, and SPI BF never sets,
- *       i.e. this sim models the MSSP register file but not the data
- *       path, so the default ops' SSPIF/BF waits cannot complete here
- *       and the one full epic_bus_i2c_mem_write through the default
- *       (real SSP) ops only runs when the probe proves the model
- *       completes every phase (its documented return value would then
- *       be checked against ACKSTAT: n on ACK, -1 on address NACK).
- *   (c) the MEM transaction logic through the documented ops seam
- *       (epic_bus_set_i2c_ops / epic_bus_set_spi_ops): a small mock
- *       MEM device records the exact call sequence, and mem_write /
- *       mem_read return values are checked against their documented
- *       contracts (n on success, -1 on address NACK), mirroring the
- *       host test examples/example_bus.c.
- */
+/* Bounded, self-reporting HARNESS=sim `mdb` gate for epic-bus: runs the
+ * compiled epic_bus.c under MPLAB SIM on a 16F877A, then reports
+ * PASS/FAIL over the target's real USART (pic16_harness_sim_target.c).
+ * MPLAB SIM has no slave to inject on the bus (probed: SEN stays
+ * latched, SSPIF/BF never set, i.e. the model has the MSSP register
+ * file but not the data path), so the gate covers the master side in
+ * three parts: (a) real init config readback, (b) bounded real SSP
+ * register traffic, (c) MEM transaction logic through the mock ops
+ * seam, mirroring examples/example_bus.c. */
 
 #include "epic_bus.h"
 #include "core/epic_harness.h"
@@ -67,7 +36,7 @@
 #define I2C_ADDR_BYTE(dev, rd) ((uint8_t)(((dev) << 1) | (rd)))
 #define SSPADD_100K 49u   /* 20e6 / (4 * 100e3) - 1 */
 
-/* ─── mock MEM device for the ops-seam phase (mirrors example_bus.c) ─ */
+/* mock MEM device for the ops-seam phase (mirrors example_bus.c) */
 
 static uint8_t g_reg[16];
 static uint8_t g_seq_op[20];
@@ -124,7 +93,7 @@ static const epic_bus_spi_ops_t mock_spi = {
     mock_spi_select, mock_spi_deselect, mock_spi_exchange
 };
 
-/* ─── register diagnostics (the sim harness prints raw strings) ──── */
+/* register diagnostics (the sim harness prints raw strings) */
 
 static void log_reg(const char *label, uint8_t v)
 {
@@ -139,7 +108,7 @@ static void log_reg(const char *label, uint8_t v)
     epic_harness_log("\n");
 }
 
-/* ─── bounded SSPIF poll (the default ops' wait, made bounded) ────── */
+/* bounded SSPIF poll (the default ops' wait, made bounded) */
 
 static uint8_t ssp_wait(uint32_t polls)
 {
@@ -159,7 +128,7 @@ int main(void)
 
     uint8_t ok = 1u;
 
-    /* ── (a) real init: I2C master config readback ───────────────── */
+    /* (a) real init: I2C master config readback */
     epic_bus_i2c_init(FOSC_HZ, 100000UL);
 
     uint8_t sspcon = EPIC_REG8(PIC_REG_SSPCON);
@@ -176,7 +145,7 @@ int main(void)
     else            { epic_harness_log("bus sim: i2c master config WRONG\n"); }
     ok &= i2c_cfg_ok;
 
-    /* ── (b) real SSP register traffic (bounded) ─────────────────── */
+    /* (b) real SSP register traffic (bounded) */
     /* Start condition: SEN is latched by the hardware write. Whether
      * it ever completes is MPLAB SIM model behavior, logged below as
      * evidence (probed: SEN stays 1, SSPIF stays 0, BF stays 0 for
@@ -245,7 +214,7 @@ int main(void)
         epic_harness_log("bus sim: default-ops mem_write skipped (no SSP model)\n");
     }
 
-    /* ── (c) transaction logic through the ops seam ──────────────── */
+    /* (c) transaction logic through the ops seam */
     epic_bus_set_i2c_ops(&mock_i2c);
     g_seq_n = 0u;
     for (uint8_t i = 0; i < 16u; i++) { g_reg[i] = (uint8_t)(0x10u + i); }
@@ -295,7 +264,7 @@ int main(void)
     else        { epic_harness_log("bus sim: i2c addr NACK WRONG\n"); }
     ok &= nak_ok;
 
-    /* ── SPI: real init readback + ops-seam transaction logic ────── */
+    /* SPI: real init readback + ops-seam transaction logic */
     epic_bus_spi_init(FOSC_HZ, 0UL, 1u, 0u);     /* SPI master, CS = GPIOB0 */
     sspcon = EPIC_REG8(PIC_REG_SSPCON);
     uint8_t spi_cfg_ok = (uint8_t)(((sspcon & PIC_SSPCON_SSPM_MASK) == SSP_MODE_SPI_MASTER_FOSC_4) &&

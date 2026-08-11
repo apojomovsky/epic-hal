@@ -1,30 +1,15 @@
 /**
- * @file    test_rx_loopback.c
- * @brief   Host-sim test for the RX-loopback harness firmware
- *          (combo_rx_loopback.c): drives the SAME firmware logic
- *          through the host sim's USART RX-injection hook.
- *
- * @details
- *   MPLAB SIM cannot inject RX (the RX-wall finding in
- *   docs/toolchain-coverage.md), so the echo path of the gate firmware
- *   never fires under mdb. The host sim CAN: pic16f87xa_sim_drive_
- *   usart_rx() stores the byte in RCREG, sets PIR1<RCIF> and fires the
- *   sim IRQ callback, which epic_harness_init wires to
- *   epic_dispatch_all_irqs, the same dispatch the real interrupt vector
- *   runs. An injected byte therefore walks the real path: sim hook ->
- *   dispatch -> USART_RX_IRQHandler -> the firmware's RxCpltCallback
- *   (rx_loopback_on_rx_byte) -> the polled-TX helper.
- *
- *   The TX helper is the build seam: this test provides its own
- *   rx_loopback_tx() that records bytes, so every transmission the
- *   firmware makes (boot banner included) is captured byte-exact. The
- *   firmware file is compiled with RX_LOOPBACK_HOST_TEST, which drops
- *   the target's main() and its polled-TX implementation (see the
- *   firmware's file header for the protocol this test checks against).
- *
- *   The test covers: the boot banner, byte-exact echoes for
- *   well-formed lines, ERR for over-long lines and bad terminators,
- *   and the framing edge cases (empty line, CR-only "terminator").
+ * Host-sim test for the RX-loopback harness firmware
+ * (combo_rx_loopback.c): drives the SAME firmware logic through the
+ * host sim's USART RX-injection hook. MPLAB SIM cannot inject RX, so
+ * the echo path never fires under mdb; the host sim CAN:
+ * pic16f87xa_sim_drive_usart_rx() stores the
+ * byte in RCREG, sets RCIF and fires the sim IRQ callback, which
+ * epic_harness_init wires to epic_dispatch_all_irqs, the same
+ * dispatch the real interrupt vector runs. The TX helper is the
+ * build seam: this test provides its own rx_loopback_tx() byte
+ * recorder, so every transmission (boot banner included) is captured
+ * byte-exact.
  */
 
 #include "core/epic_harness.h"
@@ -36,8 +21,6 @@
 
 /* The firmware's shared entry points (combo_rx_loopback.c). */
 void rx_loopback_init(void);
-
-/* ─────────────── the TX seam (firmware calls this per byte) ─────────────── */
 
 static uint8_t g_tx[256];
 static size_t  g_tx_len;
@@ -54,8 +37,6 @@ static void tx_reset(void)
     g_tx_len = 0u;
 }
 
-/* ──────────────────────────── assertions ─────────────────────────── */
-
 static int g_fail = 0;
 
 static void check_tx(const char *expected, const char *what)
@@ -67,8 +48,6 @@ static void check_tx(const char *expected, const char *what)
         g_fail++;
     }
 }
-
-/* ───────────────────────── injection helpers ─────────────────────── */
 
 /** Inject one line byte by byte through the sim hook (each injection
  *  dispatches synchronously); a couple of ticks between bytes mirrors

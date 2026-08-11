@@ -1,7 +1,6 @@
 /**
  * @file    combo_modbus_full.c
- * @brief   C12 of the combination matrix
- *          (docs/superpowers/plans/2026-08-09-combination-matrix.md):
+ * @brief   C12 of the combination matrix:
  *          epic-modbus + epic-serial + epic-tick, the full stack
  *          under a live 1 ms tick ISR, all real code, one firmware,
  *          one interrupt state.

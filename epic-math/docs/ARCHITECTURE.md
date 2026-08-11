@@ -2,8 +2,7 @@
 
 > Status: **Phases 0-5 complete.** The inline-asm operand-binding convention
 > (the XC8 round-trip probe), the per-family backend write-up, and the
-> testing-tier status are all filled in below. See `docs/epic-math-plan.md`
-> (repo root) for the source material and the original implementation plan.
+> testing-tier status are all filled in below.
 
 ## What it is
 
@@ -11,8 +10,7 @@
 PIC families this repo already supports (PIC16F87XA, PIC18F2455/2550/4455/
 4550), ported from Microchip application notes AN526 and AN544 and
 modernized into one family-agnostic C library with a hand-written
-inline-asm core. See `docs/epic-math-plan.md` (repo root) for the source
-material and the full implementation plan.
+inline-asm core.
 
 ## Backend split (one API, three implementations)
 

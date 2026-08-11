@@ -1,7 +1,6 @@
-/**
- * @file    test_sqrt.c
- * @brief   Host test for `pic_math_sqrt_u16`: exhaustive over 0..65535
- *          against `(uint16_t)floor(sqrt((double)v))`.
+/*
+ * Host test for pic_math_sqrt_u16: exhaustive over 0..65535 against
+ * (uint16_t)floor(sqrt((double)v)).
  */
 
 #include "pic_math.h"

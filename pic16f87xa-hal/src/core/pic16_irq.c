@@ -1,25 +1,13 @@
-/**
- * @file    pic16_irq.c
- * @brief   Implementation of @ref pic16_irq.h.
- *
- * @details
- *   Each IRQ source maps to a specific bit in INTCON / PIE1 / PIE2
- *   (DS39582B §14.11 + Figure 14-10). The translation table lives at the
- *   top of this file, every other function is a thin wrapper.
- */
+/* Implementation of core/pic16_irq.h. Each IRQ source maps to a bit in
+ * INTCON / PIE1 / PIE2 (DS39582B §14.11 + Figure 14-10); the
+ * translation table lives at the top of this file. */
 
 #include "core/pic16_irq.h"
 
-/**
- * @brief Per-IRQ descriptor: which bank the enable / flag bit lives in,
- *        and at which position.
- *
- * PIC16F87XA interrupt layout:
- *   - RBIF, INTF, TMR0IF, plus their enable bits + GIE/PEIE → INTCON.
- *   - Peripheral flags → PIR1 (Bank 0) / PIR2 (Bank 0).
- *   - Peripheral enables → PIE1 (Bank 1) / PIE2 (Bank 1).
- *   - Bank 1 mirrors of PIR1/PIR2 are at 0x8C / 0x8D (DS39582B Figure 2-3).
- */
+/* Per-IRQ descriptor: which register the enable / flag bit lives in and
+ * at which position. Flags and enables sit in INTCON, PIR1/PIR2 (Bank
+ * 0), and PIE1/PIE2 (Bank 1); Bank-1 mirrors of PIR1/PIR2 are at
+ * 0x8C/0x8D (DS39582B Figure 2-3). */
 typedef struct {
     uint8_t flag_mask;     /**< PIR/INTCON bit to test/clear. */
     uint8_t enable_mask;   /**< PIE/INTCON bit to set/clear. */
@@ -51,10 +39,10 @@ static const irq_desc_t irq_table[] = {
 
 /* Macro, not a `static` function: a function-call boundary here lost
  * the returned address before it reached the caller's read/write
- * (ARCHITECTURE.md Finding 2). PIR1 = 0x0C, PIR2 = 0x0D. */
+ * (see README.md, XC8 codegen gotchas). PIR1 = 0x0C, PIR2 = 0x0D. */
 #define pir_reg_addr(d) ((d)->pir_is_pir2 ? PIC_REG_PIR2 : PIC_REG_PIR1)
 
-/* ───────────────────────── public API ───────────────────────────── */
+/* public API. */
 
 uint8_t EPIC_IRQ_Disable(void)
 {
@@ -74,11 +62,10 @@ void EPIC_IRQ_Enable(PIC16_IRQn irq)
 {
     if ((unsigned)irq >= IRQ_TABLE_SIZE) return;
     const irq_desc_t *d = &irq_table[irq];
-    /* irq_table is ROM-resident; XC8 reads each field through a
-     * runtime helper, not a plain load, and interleaving that read
-     * with an in-progress SFR RMW silently corrupted the SFR side.
-     * Fix: pull every field this function needs into locals first,
-     * before touching any SFR. */
+    /* irq_table is ROM-resident; XC8 reads each field through a runtime
+     * helper, and interleaving that read with an in-progress SFR RMW
+     * silently corrupted the SFR side. Pull every needed field into
+     * locals before touching any SFR. */
     uint8_t in_intcon = d->in_intcon;
     uint8_t enable_mask = d->enable_mask;
     if (in_intcon) {

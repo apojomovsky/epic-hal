@@ -1,9 +1,7 @@
 /**
- * @file    example_mcp23x17.c
- * @brief   Host-side example: drives the MCP23017 through the module
- *          with a mock device injected at the epic-bus ops seam (the
- *          host sim has no SSP slave model), printing each step.
- *          The real-target analog is example_mcp23x17_target.c.
+ * Host-side example: drives the MCP23017 through the module with a
+ * mock device injected at the epic-bus ops seam (the host sim has no
+ * SSP slave model). The real-target analog is example_mcp23x17_target.c.
  */
 
 #include "epic_mcp23x17.h"
@@ -67,8 +65,8 @@ int main(void)
     epic_mcp23x17_handle_t h;
     EPIC_MCP23X17_Init(&h, EPIC_MCP23X17_BUS_I2C, 0x20);
 
-    /* GPA0-3 out, GPA4-7 in; GPB all out. */
-    uint16_t dir = 0x00F0u;   /* low byte = PORTA: bits 4-7 input */
+    /* dir low byte = PORTA (GPA0-3 out, GPA4-7 in); GPB all out. */
+    uint16_t dir = 0x00F0u;
     if (EPIC_MCP23X17_SetDirectionAll(&h, dir) < 0) {
         printf("expander not on the bus\n");
         return 1;

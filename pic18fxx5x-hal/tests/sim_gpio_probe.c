@@ -1,19 +1,12 @@
-/**
- * @file    sim_gpio_probe.c
- * @brief   HARNESS=sim probe for the pic18fxx5x-hal GPIO audit
- *          (docs/toolchain-coverage.md class C): the GPIO driver
- *          computes TRIS/LAT/PORT addresses at runtime and derefs
- *          them, the exact shape pic18_irq.c and pic18fxx5x_ccp.c were
- *          fixed to avoid (a runtime-computed SFR address compiles to
- *          program-memory table access under XC8 v4.00, PIC18 Finding
- *          3). Every GPIO operation is exercised with known values and
- *          verified through the literal-token access path
- *          (epic_sfr_read8/write8 with compile-time PIC_REG_*
- *          constants), which is the proven-safe side.
- *
- *   Runs as the sim variant of the pic18fxx5x-hal pseudo-module under
- *   MPLAB SIM (real XC8 v4.00 code), reporting through the PIC18 sim
- *   harness.
+/*
+ * HARNESS=sim probe for the pic18fxx5x-hal GPIO audit: the GPIO driver
+ * computes
+ * TRIS/LAT/PORT addresses at runtime and derefs them, the exact shape
+ * pic18_irq.c and pic18fxx5x_ccp.c were fixed to avoid (a runtime SFR
+ * address compiles to program-memory table access under XC8 v4.00).
+ * Every GPIO operation is exercised with known values and verified
+ * through the literal-token access path, the proven-safe side. Runs as
+ * the sim variant of the pic18fxx5x-hal pseudo-module under MPLAB SIM.
  */
 
 #include "core/epic_harness.h"

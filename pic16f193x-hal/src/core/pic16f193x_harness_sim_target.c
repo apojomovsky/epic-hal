@@ -1,28 +1,15 @@
 /**
- * @file    pic16f193x_harness_sim_target.c
- * @brief   PIC16F193X sim-target implementation of the test harness.
- *          Mirrors pic16_harness_sim_target.c's shape but with no
- *          USART init: instead, epic_harness_log() inspects its
- *          format string and, on the EPIC_HARNESS_RESULT marker,
- *          drives RA0 (PORTA bit 0) so the mdb wrapper can read the
- *          result via 'print PORTA' in MODE=gpio. This is the
- *          documented "magic-string dispatch" hook from the spec.
- *
- * @details
- *   The marker strings are passed verbatim from epic_harness_report()
- *   (static inline in epic_harness.h). They are the only call sites
- *   in the codebase that ever pass these literals; verified by grep
- *   over epic-common/, every family HAL, and every epic-* module.
- *
- *   init() leaves RA0 driving low (it is the default after the
- *   analog->digital transition). The toggle happens on log(): the
- *   marker line drives RA0 to ok's value, and every other log line
- *   is a no-op as on the family-blind no-op target.
- *
- *   Not in epic-common: unlike epic_harness_target.c's four no-ops,
- *   this needs GPIO pin access for the marker line to reach mdb's
- *   register readback. running() is bounded by `cycles` so a run
- *   terminates on its own.
+ * PIC16F193X sim-target implementation of the test harness
+ * (core/epic_harness.h): epic_harness_log() inspects its format string
+ * and, on the EPIC_HARNESS_RESULT marker, drives RA0 (PORTA bit 0) so
+ * the mdb wrapper can read the result via 'print PORTA' in MODE=gpio.
+ * The marker strings are passed verbatim from epic_harness_report()
+ * (static inline in epic_harness.h) and are the only call sites in the
+ * codebase that ever pass these literals. init() leaves RA0 driving low;
+ * the toggle happens on log() (marker line drives RA0 to ok's value,
+ * every other log line is a no-op). running() is bounded by `cycles` so
+ * a run terminates on its own. Not in epic-common: the marker line needs
+ * GPIO pin access, unlike epic_harness_target.c's four no-ops.
  */
 
 #include "core/epic_harness.h"
@@ -59,11 +46,9 @@ int epic_harness_running(uint32_t iteration)
 
 void epic_harness_log(const char *fmt, ...)
 {
-    /* Magic-string dispatch: the only two pass/fail markers come
-     * from epic_harness_report() (static inline in epic_harness.h).
-     * On those, drive RA0 from the meaning (PASS = high, FAIL = low).
-     * Every other log line is a no-op, same as the family-blind four
-     * no-ops. */
+    /* Magic-string dispatch: on the two pass/fail markers from
+     * epic_harness_report() drive RA0 from the meaning (PASS = high,
+     * FAIL = low); every other log line is a no-op. */
     if (fmt && fmt[0] == 'E' && fmt[1] == 'P' && fmt[2] == 'I' &&
         fmt[3] == 'C' && fmt[4] == '_' && fmt[5] == 'H' &&
         fmt[6] == 'A' && fmt[7] == 'R' && fmt[8] == 'N' &&

@@ -1,16 +1,9 @@
 /**
- * @file    pid.h
- * @brief   Vendor-agnostic, single-loop, fixed-point (Q8.8) PID controller
- *          with anti-windup, derivative-on-measurement, and bumpless
- *          auto/manual transfer.
- *
- * @details
- *   One caller-owned `pid_t` per control loop; call `pid_update()` once per
- *   fixed period `Ts`. Pure arithmetic, no HAL dependency, compiles
- *   unchanged for host/PIC16/PIC18 (uses `epic-math` for the 16x16->32
- *   multiply). Gains are caller-pre-scaled by `Ts` so `pid_update` needs no
- *   division; see `docs/ARCHITECTURE.md` for the full design rationale and
- *   `docs/API.md` for the Kp/Ki/Kd/Ts -> kp_q8/ki_q8/kd_q8 conversion.
+ * Vendor-agnostic, single-loop, fixed-point (Q8.8) PID controller with
+ * anti-windup, derivative-on-measurement, and bumpless auto/manual
+ * transfer. Pure arithmetic, no HAL dependency; gains are pre-scaled by
+ * Ts so pid_update needs no division. See docs/API.md for the gain
+ * conversion.
  */
 
 #ifndef PID_H
@@ -26,12 +19,9 @@ typedef enum {
 } pid_mode_t;
 
 /**
- * @brief  One PID control loop, caller-owned storage.
- *
- * Fields are written by `pid_init` / `pid_set_*` and by `pid_update` (the
- * integrator, the D-term history, and the mode's back-calculation). The
- * caller reads them through the API; reading them directly is unsupported
- * but harmless.
+ * One PID control loop, caller-owned storage. Fields are written by
+ * pid_init / pid_set_* and by pid_update; the caller reads them through
+ * the API.
  */
 typedef struct {
     int16_t    kp_q8, ki_q8, kd_q8;   /* Q8.8 gains; ki_q8 includes *Ts, kd_q8 includes /Ts */
@@ -49,17 +39,13 @@ typedef struct {
 } pid_t;
 
 /**
- * @brief  Initialize a PID instance: stores gains and clamp range, sets
- *         AUTO mode, zeroes the integrator and D-term history.
+ * Initialize a PID instance: stores gains and clamp range, sets AUTO
+ * mode, zeroes the integrator and D-term history.
  *
- * @param  pid       the instance (caller-owned storage).
- * @param  kp_q8     Q8.8 proportional gain (= round(Kp * 256)).
- * @param  ki_q8     Q8.8 integral gain, pre-multiplied by sample period Ts
- *                   (= round(Ki * Ts * 256)).
- * @param  kd_q8     Q8.8 derivative gain, pre-divided by Ts
- *                   (= round(Kd / Ts * 256)).
- * @param  out_min   minimum output (clamp rail; out_min <= out_max).
- * @param  out_max   maximum output (clamp rail).
+ * @param kp_q8  Q8.8 proportional gain (= round(Kp * 256)).
+ * @param ki_q8  Q8.8 integral gain, pre-multiplied by Ts (= round(Ki * Ts * 256)).
+ * @param kd_q8  Q8.8 derivative gain, pre-divided by Ts (= round(Kd / Ts * 256)).
+ * @param out_min / out_max  actuator clamp rails (out_min <= out_max).
  */
 void pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
               int16_t out_min, int16_t out_max);
@@ -85,22 +71,20 @@ void pid_set_gains(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8);
 void pid_set_mode(pid_t *pid, pid_mode_t mode);
 
 /**
- * @brief  Set the target output used while `mode == PID_MODE_MANUAL`.
- *         Only consulted by `pid_update()` while in MANUAL; ignored in AUTO.
- *         Call every cycle the operator/supervisor wants a new manual
- *         output in effect.
+ * Set the target output used while mode == PID_MODE_MANUAL; only
+ * consulted by pid_update() in MANUAL, ignored in AUTO. Call every cycle
+ * the operator wants a new manual output in effect.
  */
 void pid_set_manual_output(pid_t *pid, int16_t value);
 
 /**
- * @brief  Step the controller once per fixed control-loop period, in
- *         either mode; the single per-cycle entry point.
- *
- * AUTO: `clamp((P+I+D) >> 8, out_min, out_max)`, D from
- * `-d(measurement)/dt`, integrator clamped to `[out_min, out_max] << 8`
- * for anti-windup. MANUAL: `clamp(manual_output, out_min, out_max)`, and
- * back-calculates the integrator so resuming AUTO is bumpless. Precondition
- * (not runtime-checked): `|setpoint - measurement| <= 32767`.
+ * Step the controller once per fixed control-loop period; the single
+ * per-cycle entry point. AUTO: `clamp((P+I+D) >> 8, out_min, out_max)`
+ * with D from `-d(measurement)/dt` and the integrator clamped to
+ * `[out_min, out_max] << 8` (anti-windup). MANUAL: `clamp(manual_output,
+ * out_min, out_max)`, back-calculating the integrator so resuming AUTO is
+ * bumpless. Precondition (not runtime-checked):
+ * `|setpoint - measurement| <= 32767`.
  *
  * @return  the clamped output, always in `[out_min, out_max]`.
  */

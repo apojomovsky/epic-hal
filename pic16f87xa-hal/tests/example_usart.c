@@ -1,16 +1,6 @@
-/**
- * @file    example_usart.c
- * @brief   USART driver smoke test on the sim backend.
- *
- *   Verifies:
- *     1. SPBRG computation matches the datasheet formula
- *        (DS39582B Table 10-1).
- *     2. After EPIC_USART_Init(), TXSTA reflects the configured mode
- *        (sync/async, BRGH, 9-bit, TXEN) and SPBRG holds the divisor.
- *     3. EPIC_USART_Transmit() writes TXREG.
- *     4. RX: pic16f87xa_sim_drive_usart_rx() sets RCREG + RCIF, and
- *        EPIC_USART_Receive() returns the byte + clears RCIF.
- */
+/* USART driver smoke test on the sim backend: SPBRG math vs DS39582B
+ * Table 10-1, Init programs TXSTA/SPBRG, Transmit writes TXREG, and a
+ * simulated RX byte is returned with RCIF cleared. */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sim.h"

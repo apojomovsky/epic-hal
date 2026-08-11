@@ -1,16 +1,7 @@
-/**
- * @file    example_adc.c
- * @brief   A/D driver smoke test on the sim backend.
- *
- *   Verifies:
- *     1. EPIC_ADC_Init() programs ADCON0 + ADCON1 correctly for
- *        channel AN2, Fosc/8, right-justified, VDD/VSS reference.
- *     2. EPIC_ADC_Start() sets GO/DONE.
- *     3. pic16f87xa_sim_drive_adc_done(0x1A3) simulates conversion
- *        completion; EPIC_ADC_Read() returns 0x1A3, GO/DONE clears,
- *        and ADIF is set.
- *     4. The default ADRESH:ADRESL are 0/0 after DeInit.
- */
+/* A/D driver smoke test on the sim backend: Init programs ADCON0+ADCON1
+ * (AN2, Fosc/8, right-justified, VDD/VSS), Start sets GO/DONE, and a
+ * simulated conversion (pic16f87xa_sim_drive_adc_done) returns 0x1A3
+ * and sets ADIF; DeInit zeroes the ADC registers. */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sim.h"

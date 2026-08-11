@@ -1,14 +1,8 @@
-/**
- * @file    peripherals/pic18fxx5x_adc.h
- * @brief   10-bit A/D converter driver.
- *
- * @details
- *   10-bit successive-approximation ADC (DS39632E §21.0), 10 channels on
- *   28-pin parts, 13 on 40/44-pin. Mirrors `pic16f87xa_adc.h`'s API shape
- *   but uses a third control register, ADCON2, for the clock (ADCS) and
- *   acquisition-time (ACQT) fields; `PinConfig` is the raw 4-bit ADCON1
- *   PCFG code from Table 21-3 rather than a curated enum, the table is too
- *   large to usefully encode.
+/*
+ * 10-bit SAR ADC (DS39632E §21.0), 10 channels on 28-pin parts, 13 on
+ * 40/44-pin. Mirrors `pic16f87xa_adc.h`'s API but adds a third control
+ * register, ADCON2, for clock (ADCS) and acquisition (ACQT); `PinConfig`
+ * is the raw 4-bit PCFG code from Table 21-3, not a curated enum.
  */
 
 #ifndef PIC18FXX5X_ADC_H
@@ -110,12 +104,8 @@ typedef struct {
     .ConvCpltCallback = NULL,                                             \
 }
 
-/* ───────────────────────── init / deinit ────────────────────────── */
-
 EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_ADC_DeInit(void);
-
-/* ───────────────────────── conversion control ────────────────────── */
 
 /**
  * @brief  Start a conversion: sets ADCON0<GO/DONE>. The caller is expected
@@ -137,16 +127,12 @@ uint8_t EPIC_ADC_IsConversionDone(void);
 /** Clear the ADIF flag (must be called in the conversion-complete IRQ). */
 void EPIC_ADC_ClearITFlag(void);
 
-/* ───────────────────────── result ──────────────────────────────── */
-
 /**
  * @brief  Read the latest 10-bit result. Returns 0..1023; left-justified
  *         results (ADFM=0) are shifted down so the caller always gets a
  *         0..1023 value.
  */
 uint16_t EPIC_ADC_Read(void);
-
-/* ───────────────────────── interrupts ───────────────────────────── */
 
 void ADC_IRQHandler(void) EPIC_WEAK;
 

@@ -1,33 +1,28 @@
-/**
- * @file    pic_math_mul.c (PIC16 inline-asm backend)
- * @brief   Multiply primitives via AN526's shift-and-add (PIC16F87XA has
- *          no hardware multiply): accumulate a<<i for each set bit i of
- *          the multiplier. All operands live in the shared scratch buffer
- *          (pic_math_scratch.h), one `banksel` per routine. STATUS bits
- *          by number (C=0, Z=2).
+/*
+ * PIC16 inline-asm multiply primitives via AN526's shift-and-add
+ * (PIC16F87XA has no hardware multiply): accumulate a<<i for each set bit
+ * i of the multiplier. All operands live in the shared scratch buffer
+ * (pic_math_scratch.h), one banksel per routine. STATUS bits by number
+ * (C=0, Z=2).
  */
 
 #include <xc.h>
 #include "pic_math.h"
 #include "pic_math_scratch.h"
 
-/* ─── pic_math_mul_u8 ────────────────────────────────────────────
- * 8x8 -> 16 shift-add. tmp = a (16-bit, shifted left each step -> a<<i); for
- * each set bit i of b, r += tmp. Offsets a@0,b@1,bk@2,cnt@3,r@4-5,t@6-7.
- * Hand-trace a=0x0C b=0x14 (12*20=240=0x00F0): b=0b00010100, bits 2,4 set.
- *   t=0x000C. bit0,1 clear (t->0x30). bit2 set: r+=0x30; t->0x60. bit3 clear
- *   (t->0xC0). bit4 set: r+=0xC0 -> 0x30+0xC0=0xF0 -> r=0x00F0.            */
+/* 8x8 -> 16 shift-add. tmp = a (16-bit, shifted left each step -> a<<i);
+ * for each set bit i of b, r += tmp. Offsets a@0, b@1, bk@2, cnt@3,
+ * r@4-5, t@6-7. */
 
 /* Straight-line (speed) form: one inlined step per multiplier bit. */
 #define MUL8_STEP(bit) do {                                   \
     asm("btfss _pic16_mscratch+1," #bit);                      \
     asm("goto  _m8_skip_" #bit);                               \
-    asm("movf  _pic16_mscratch+6,w");   /* tLO */               \
+    asm("movf  _pic16_mscratch+6,w");                          \
     asm("addwf _pic16_mscratch+4,f");   /* rLO += tLO, C */      \
-    asm("movf  _pic16_mscratch+7,w");   /* tHI */               \
+    asm("movf  _pic16_mscratch+7,w");                          \
     asm("btfsc STATUS,0");                                     \
-    asm("incfsz _pic16_mscratch+7,w");  /* tHI + carry; skip if  \
-                                             wrapped (C stays 1) */ \
+    asm("incfsz _pic16_mscratch+7,w");  /* tHI + carry; skip if wrapped */ \
     asm("addwf _pic16_mscratch+5,f");   /* rHI += tHI + carry */  \
     asm("_m8_skip_" #bit ":");                                \
     asm("bcf   STATUS,0");                                     \
@@ -78,13 +73,10 @@ uint16_t pic_math_mul_u8(uint8_t a, uint8_t b) __at(0x100)
     return (uint16_t)pic16_mscratch[4] | ((uint16_t)pic16_mscratch[5] << 8);
 }
 
-/* ─── pic_math_mul_u16 ───────────────────────────────────────────
- * 16x16 -> 32 shift-add, 16 iterations. tmp = a in a 32-bit register
- * (shifted left -> a<<i); for each set bit of b, r += tmp (32-bit add, carry
- * idiom across 4 bytes). Offsets a@0-1 (a_lo reused as cnt after
- * the t copy),b@2-3,bk@4-5,r@6-9,t@10-13.
- * Hand-trace a=0x0102 b=0x0103 (258*259=66822=0x00010506): b bits 0,1,8 set.
- *   r += a<<0 (0x102) + a<<1 (0x204) + a<<8 (0x10200) = 0x10506.           */
+/* 16x16 -> 32 shift-add, 16 iterations. tmp = a in a 32-bit register
+ * (shifted left -> a<<i); for each set bit of b, r += tmp (32-bit add,
+ * carry idiom across 4 bytes). Offsets a@0-1 (a_lo reused as cnt after
+ * the t copy), b@2-3, bk@4-5, r@6-9, t@10-13. */
 uint32_t pic_math_mul_u16(uint16_t a, uint16_t b) __at(0x130)
 {
     pic16_mscratch[0] = (uint8_t)a;           pic16_mscratch[1] = (uint8_t)(a >> 8);
@@ -142,11 +134,9 @@ uint32_t pic_math_mul_u16(uint16_t a, uint16_t b) __at(0x130)
          | ((uint32_t)pic16_mscratch[6] << 16) | ((uint32_t)pic16_mscratch[7] << 24);
 }
 
-/* ─── pic_math_mul_s16 ──────────────────────────────────────────
- * Signed 16x16 on top of the asm unsigned path: abs the operands (unsigned,
+/* Signed 16x16 on top of the asm unsigned path: abs the operands (unsigned,
  * so INT16_MIN abs = 0x8000 with no 16-bit-int overflow), call mul_u16, and
- * negate the 32-bit result if the signs differed. Plain C calling this
- * backend's asm primitives (mul_u16 + negate_s32). */
+ * negate the 32-bit result if the signs differed. */
 int32_t pic_math_mul_s16(int16_t a, int16_t b)
 {
     int neg = ((a < 0) != 0) ^ ((b < 0) != 0);

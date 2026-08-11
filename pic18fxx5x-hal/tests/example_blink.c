@@ -1,14 +1,9 @@
-/**
- * @file    example_blink.c
- * @brief   Blink an LED on RB0 from a Timer0 overflow, the PIC18 analog of
- *          the PIC16F87XA canonical HAL smoke test.
- *
- * @details
- *   Timer0 overflow drives an interrupt; the ISR toggles RB0, the main
- *   loop just lets time pass and refreshes the WDT. One source builds for
- *   host sim and real XC8 target with no `#ifdef`, via `core/epic_harness.h`.
- *   Real target: LED + resistor on RB0 (active-high), 20 MHz crystal,
- *   Timer0 8-bit/Fosc/4/1:256, overflow every ~13 ms (~76 Hz blink).
+/*
+ * Blink an LED on RB0 from a Timer0 overflow, the PIC18 analog of the
+ * PIC16F87XA canonical HAL smoke test. One source builds for host sim
+ * and real XC8 target via `core/epic_harness.h`; on real hardware:
+ * LED + resistor on RB0 (active-high), 20 MHz crystal, Timer0
+ * 8-bit/Fosc/4/1:256, overflow every ~13 ms (~76 Hz blink).
  */
 
 #include "pic18fxx5x.h"

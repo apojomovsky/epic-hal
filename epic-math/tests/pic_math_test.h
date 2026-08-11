@@ -1,9 +1,8 @@
-/**
- * @file    pic_math_test.h
- * @brief   Tiny shared host-test harness for epic-math, no external
- *          framework: a CHECK macro, a fixed-seed deterministic LCG for
- *          reproducible randomized tests, and a pass/fail exit-code
- *          reporter. Host-only; not built by the XC8 target Makefiles.
+/*
+ * Tiny shared host-test harness for epic-math, no external framework: a
+ * CHECK macro, a fixed-seed deterministic LCG for reproducible
+ * randomized tests, and a pass/fail exit-code reporter. Host-only; not
+ * built by the XC8 target Makefiles.
  */
 
 #ifndef PIC_MATH_TEST_H

@@ -1,8 +1,5 @@
-/**
- * @file    example_lcd_hello.c
- * @brief   "Hello, World!" on both lines of a 16x2 LCD, using 4-bit GPIO.
- *          Real-target only (depends on HAL). Adapt pins to your board.
- */
+/** "Hello, World!" on both lines of a 16x2 LCD via the 4-bit GPIO
+ *  transport. Real-target only (depends on HAL); adapt pins to your board. */
 
 #include "epic_lcd.h"
 #include "epic_lcd_transport.h"

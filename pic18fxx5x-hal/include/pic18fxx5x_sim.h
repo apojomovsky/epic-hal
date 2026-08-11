@@ -1,13 +1,11 @@
-/**
- * @file    pic18fxx5x_sim.h
- * @brief   Public API for the PIC18F2455 family host simulation backend.
- *
- * @details
- *   On the host build every SFR access indexes a host-side register file
- *   (`include/host/pic18_platform.h`). These hooks let the host application
- *   drive input pins, read output-pin levels, advance simulated peripherals
- *   by N instruction cycles, and register an interrupt callback. Function
- *   names mirror `pic16f87xa_sim_*` for symmetry with the PIC16 tree.
+/*
+ * Public API for the PIC18F2455 family host simulation backend. On the
+ * host build every SFR access indexes a host-side register file
+ * (`include/host/pic18_platform.h`); these hooks let the host application
+ * drive input pins, read output-pin levels, advance simulated
+ * peripherals by N instruction cycles, and register an interrupt
+ * callback. Names mirror `pic16f87xa_sim_*` for symmetry with the PIC16
+ * tree.
  */
 
 #ifndef PIC18FXX5X_SIM_H

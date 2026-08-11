@@ -1,9 +1,6 @@
-/**
- * @file    test_epic_sdcard.c
- * @brief   Host tests for the vendored mmc.c/crc.c against
- *          epic_sdcard_mock_spi.c: exercises the actual shipped protocol
- *          logic, not epic_sdcard.c's HAL binding (real-target-only).
- */
+/** Host tests for the vendored mmc.c/crc.c against epic_sdcard_mock_spi.c:
+ *  the actual shipped protocol logic, not epic_sdcard.c's HAL binding
+ *  (real-target-only). */
 
 #include "mmc.h"
 #include "crc.h"

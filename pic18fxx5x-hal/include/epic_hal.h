@@ -1,13 +1,9 @@
-/**
- * @file    epic_hal.h
- * @brief   Family-neutral top-level entry point to the PIC18F2455 HAL.
- *
- * @details
- *   A consumer that should build unchanged against any 8-bit PIC family
- *   (e.g. the cooperative task manager) includes this single neutral header
- *   instead of the family-specific `pic18fxx5x.h`. Each family provides its
- *   own `epic_hal.h` under the same neutral name, so the build's include
- *   path decides which family's headers are pulled in.
+/*
+ * Family-neutral top-level entry point to the PIC18F2455 HAL. Consumers
+ * that must build unchanged against any 8-bit PIC family include this
+ * instead of `pic18fxx5x.h`; each family ships its own `epic_hal.h`
+ * under the same neutral name and the build's include path decides
+ * which family's headers are pulled in.
  */
 
 #ifndef EPIC_H

@@ -1,26 +1,14 @@
-/**
- * @file    pic16f87xa_sfr.h
- * @brief   Special Function Register (SFR) address map for the
- *          PIC16F87XA family.
- *
- * @details
- *   Every address, bit mask and reset value in this file is taken 1-to-1
- *   from the DS39582B datasheet register maps:
- *     - Figure 2-3 / 2-4, Register File Map (Bank 0-3).
- *     - Table 3-1, Data EEPROM and Flash program registers.
- *     - Table 4-2..4-10, PORTA..PORTE register summaries.
- *     - Table 14-1, Configuration Word (Register 14-1).
- *   Address conflicts that are family-dependent (PORTD/PORTE/TRISD/TRISE
- *   do not exist on 28-pin parts) are guarded with PIC16F87XA_FAMILY_HAS_*
- *   macros so the same header compiles for any of the four parts.
- */
+/* SFR address map for the PIC16F87XA family. Every address, bit mask
+ * and reset value is 1-to-1 from DS39582B (Figures 2-3/2-4, Tables 3-1,
+ * 4-2..4-10, 14-1); family-dependent registers (PORTD/E on 28-pin
+ * parts) are guarded by PIC16F87XA_FAMILY_HAS_*. */
 
 #ifndef PIC16F87XA_SFR_H
 #define PIC16F87XA_SFR_H
 
 #include "pic16f87xa.h"
 
-/* ───────────────────────── Bank 0, core SFRs ───────────────────── */
+/* Bank 0, core SFRs. */
 
 /** Indirect address pointer.                    DS39582B §2.2, addr 00h. */
 #define PIC_REG_INDF          0x00U
@@ -87,7 +75,7 @@
 #define PIC_REG_ADRESH        0x1EU
 #define PIC_REG_ADCON0        0x1FU
 
-/* ───────────────────────── Bank 1 ──────────────────────────────── */
+/* Bank 1. */
 
 /* SSP, DS39582B §9.0, Bank 1. */
 #define PIC_REG_SSPCON2       0x91U
@@ -107,7 +95,7 @@
 #define PIC_REG_ADRESL        0x9EU
 #define PIC_REG_ADCON1        0x9FU
 
-/* ───────────────────────── Bank 2, EEPROM ─────────────────────── */
+/* Bank 2, EEPROM. */
 
 /* DS39582B §3.0, Table 3-1. */
 #define PIC_REG_EEDATA        0x10CU
@@ -117,7 +105,7 @@
 #define PIC_REG_EECON1        0x18CU
 #define PIC_REG_EECON2        0x18DU
 
-/* ───────────────────────── STATUS register bits ────────────────── */
+/* STATUS register bits. */
 
 /** Carry / Borrow.                              DS39582B §2.2 / Register 2-1. */
 #define PIC_STATUS_C          EPIC_BIT(0)
@@ -135,7 +123,7 @@
 /** IRP, unused on PIC16F87XA, reads as 0.       DS39582B Register 2-1. */
 #define PIC_STATUS_IRP        EPIC_BIT(7)
 
-/* ───────────────────────── INTCON register bits ────────────────── */
+/* INTCON register bits. */
 
 /** RB0/INT external interrupt flag.             DS39582B §14.11.1, Reg 14-3. */
 #define PIC_INTCON_INTF       EPIC_BIT(1)
@@ -154,7 +142,7 @@
 /** Global interrupt enable.                     DS39582B §14.11, Reg 14-3. */
 #define PIC_INTCON_GIE        EPIC_BIT(7)
 
-/* ───────────────────────── PIR1 / PIE1 ──────────────────────────── */
+/* PIR1 / PIE1. */
 
 /* DS39582B §14.11, Register 14-3. */
 #define PIC_PIR1_TMR1IF       EPIC_BIT(0)
@@ -175,22 +163,20 @@
 #define PIC_PIE1_ADIE         EPIC_BIT(6)
 #define PIC_PIE1_PSPIE        EPIC_BIT(7)
 
-/* ───────────────────────── PIR2 / PIE2 ──────────────────────────── */
+/* PIR2 / PIE2. */
 
 /* DS39582B §14.11, Register 14-4. */
 #define PIC_PIR2_CCP2IF       EPIC_BIT(0)
 #define PIC_PIR2_BCLIF        EPIC_BIT(3)
 #define PIC_PIR2_EEIF         EPIC_BIT(4)
 #define PIC_PIR2_CMIF         EPIC_BIT(6)
-/* (No OSFIF on the 87XA: PIR2 bit 7 is unimplemented. A bogus
- * PIC_PIR2_OSFIF constant copied from the 193X pattern was removed by
- * the sfr-map audit, 2026-08-11.) */
+/* No OSFIF on the 87XA: PIR2 bit 7 is unimplemented. */
 #define PIC_PIE2_CCP2IE       EPIC_BIT(0)
 #define PIC_PIE2_BCLIE        EPIC_BIT(3)
 #define PIC_PIE2_EEIE         EPIC_BIT(4)
 #define PIC_PIE2_CMIE         EPIC_BIT(6)
 
-/* ───────────────────────── Reset values (POR) ───────────────────── */
+/* Reset values (POR). */
 
 /* DS39582B §14, Table 14-6. */
 #define PIC_STATUS_POR_VALUE     0x18U  /* 0001 1xxx, IRP=0,RP1=0,RP0=0,TO=1,PD=1,... */
@@ -205,7 +191,7 @@
 #define PIC_ADCON0_POR_VALUE     0x00U
 #define PIC_ADCON1_POR_VALUE     0x00U
 
-/* ───────────────────────── OPTION_REG bits (Timer0 + WDT) ──────── */
+/* OPTION_REG bits (Timer0 + WDT). */
 
 /* DS39582B §5.3, Register 5-1. */
 #define PIC_OPTION_RBPU         EPIC_BIT(7)   /* PORTB pull-up enable (active-low). */
@@ -215,7 +201,7 @@
 #define PIC_OPTION_PSA          EPIC_BIT(3)   /* Prescaler assignment.           */
 #define PIC_OPTION_PS_MASK      0x07U                /* PS2:PS0, prescaler ratio.     */
 
-/* ───────────────────────── T1CON bits (Timer1) ─────────────────── */
+/* T1CON bits (Timer1). */
 
 /* DS39582B §6.0, Register 6-1. */
 #define PIC_T1CON_TMR1ON        EPIC_BIT(0)
@@ -225,7 +211,7 @@
 #define PIC_T1CON_T1CKPS0       EPIC_BIT(4)
 #define PIC_T1CON_T1CKPS1       EPIC_BIT(5)
 
-/* ───────────────────────── T2CON bits (Timer2) ─────────────────── */
+/* T2CON bits (Timer2). */
 
 /* DS39582B §7.0, Register 7-1. */
 #define PIC_T2CON_T2CKPS_MASK   0x03U                /* T2CKPS1:T2CKPS0, bits 0..1. */
@@ -233,7 +219,7 @@
 #define PIC_T2CON_TOUTPS_MASK   0x78U                /* TOUTPS3:TOUTPS0, bits 3..6. */
 #define PIC_T2CON_TOUTPS_POS    3U
 
-/* ───────────────────────── CCPxCON bits ────────────────────────── */
+/* CCPxCON bits. */
 
 /* DS39582B §8.0, Register 8-1.
  * The two LSBs of the 10-bit PWM duty cycle live in CCPxCON<5:4>
@@ -245,7 +231,7 @@
 #define PIC_CCP_CCPX_Y          EPIC_BIT(4)    /* PWM duty LSB bit 0.         */
 #define PIC_CCP_CCPX_X          EPIC_BIT(5)    /* PWM duty LSB bit 1.         */
 
-/* ───────────────────────── TXSTA bits (USART) ────────────────────── */
+/* TXSTA bits (USART). */
 
 /* DS39582B §10.0, Register 10-1. */
 #define PIC_TXSTA_TX9D         EPIC_BIT(0)    /* 9th bit of TX data. */
@@ -256,7 +242,7 @@
 #define PIC_TXSTA_TX9          EPIC_BIT(6)    /* 9-bit TX. */
 #define PIC_TXSTA_CSRC         EPIC_BIT(7)    /* Clock source (sync). */
 
-/* ───────────────────────── RCSTA bits (USART) ────────────────────── */
+/* RCSTA bits (USART). */
 
 /* DS39582B §10.0, Register 10-2. */
 #define PIC_RCSTA_RX9D         EPIC_BIT(0)    /* 9th bit of RX data. */
@@ -268,7 +254,7 @@
 #define PIC_RCSTA_RX9          EPIC_BIT(6)    /* 9-bit RX. */
 #define PIC_RCSTA_SPEN         EPIC_BIT(7)    /* Serial port enable. */
 
-/* ───────────────────────── SSPCON / SSPSTAT bits (MSSP) ──────────── */
+/* SSPCON / SSPSTAT bits (MSSP). */
 
 /* DS39582B §9.0, Registers 9-1 (SSPSTAT), 9-2/9-4 (SSPCON),
  * 9-5 (SSPCON2). The same SSPCON<3:0> field selects mode in both
@@ -299,7 +285,7 @@
 #define PIC_SSPSTAT_CKE        EPIC_BIT(6)    /* Clock edge (SPI).    */
 #define PIC_SSPSTAT_SMP        EPIC_BIT(7)    /* Sample bit (SPI).    */
 
-/* ───────────────────────── ADCON0 / ADCON1 bits (A/D) ─────────────── */
+/* ADCON0 / ADCON1 bits (A/D). */
 
 /* DS39582B §11.0, Registers 11-1 (ADCON0) and 11-2 (ADCON1). */
 #define PIC_ADCON0_ADON        EPIC_BIT(0)    /* A/D on.        */
@@ -313,7 +299,7 @@
 #define PIC_ADCON1_ADCS2       EPIC_BIT(6)    /* ADCS2, bit 6. */
 #define PIC_ADCON1_ADFM        EPIC_BIT(7)    /* Result format. */
 
-/* ───────────────────────── CMCON bits (Comparator) ────────────────── */
+/* CMCON bits (Comparator). */
 
 /* DS39582B §12.0, Register 12-1. */
 #define PIC_CMCON_CM_MASK      0x07U                /* CM2:CM0, bits 2:0. */
@@ -323,7 +309,7 @@
 #define PIC_CMCON_C1OUT        EPIC_BIT(6)    /* C1 output (read-only). */
 #define PIC_CMCON_C2OUT        EPIC_BIT(7)    /* C2 output (read-only). */
 
-/* ───────────────────────── CVRCON bits (Vref) ────────────────────── */
+/* CVRCON bits (Vref). */
 
 /* DS39582B §13.0, Register 13-1. */
 #define PIC_CVRCON_CVR_MASK    0x0FU                /* CVR3:CVR0, bits 3:0. */
@@ -331,46 +317,34 @@
 #define PIC_CVRCON_CVROE        EPIC_BIT(6)    /* Vref output enable. */
 #define PIC_CVRCON_CVREN        EPIC_BIT(7)    /* Vref circuit enable. */
 
-/* ───────────────────────── EECON1 bits (EEPROM) ──────────────────── */
+/* EECON1 bits (EEPROM). */
 
 /* DS39582B §3.0, Register 3-1. */
 #define PIC_EECON1_RD          EPIC_BIT(0)    /* Read control.   */
 #define PIC_EECON1_WR          EPIC_BIT(1)    /* Write control.  */
 #define PIC_EECON1_WREN        EPIC_BIT(2)    /* Write enable.   */
 #define PIC_EECON1_WRERR       EPIC_BIT(3)    /* Write error.    */
-/* (No EEIF in EECON1: the EEPROM write-done flag is PIR2<EEIF>, see
- * PIC_PIR2_EEIF. A bogus PIC_EECON1_EEIF constant was removed by the
- * sfr-map audit, 2026-08-11.) */
+/* No EEIF in EECON1: the EEPROM write-done flag is PIR2<EEIF>
+ * (PIC_PIR2_EEIF). */
 
-/* ---------------- TRISE bits (PORT E and PSP) ---------------- */
+/* TRISE bits (PORT E and PSP). */
 
 /* DS39582B §4.5, Register 4-9. PSP is 40/44-pin only. The status bits
  * are the UPPER half (IBF bit 7, OBF bit 6, IBOV bit 5, PSPMODE bit 4);
  * bits 2:0 are the RE2:RE0 direction controls and bit 3 is
- * unimplemented. Corrected 2026-08-11 by the sfr-map audit
- * (scripts/sfr-map-audit.py): the previous values (IBF=1, OBF=2,
- * IBOV=3) were the 16C74-era layout and would read/clear the wrong
- * bits on real silicon. The PSP interrupt enable is PIE1<7>
- * (PIC_PIE1_PSPIE), not a TRISE bit. */
+ * unimplemented. The PSP interrupt enable is PIE1<7> (PIC_PIE1_PSPIE),
+ * not a TRISE bit. */
 #define PIC_TRISE_IBF          EPIC_BIT(7)    /* Input buffer full.        */
 #define PIC_TRISE_OBF          EPIC_BIT(6)    /* Output buffer full.       */
 #define PIC_TRISE_IBOV         EPIC_BIT(5)    /* Input buffer overflow.    */
 #define PIC_TRISE_PSPMODE      EPIC_BIT(4)    /* PSP mode select.          */
 
-/* ───────────────────────── Bank-selection helper ───────────────── */
+/* Bank-selection helper. */
 
-/**
- * @brief  Set the bank-select bits RP1:RP0 in STATUS to access a given bank.
- *         DS39582B §2.2, Table 2-1.
- *
- * @details
- *   A macro, not a `static inline` function: XC8 v4.00 compiling this
- *   as a function corrupted values written to Bank 1 registers across
- *   the call boundary (ARCHITECTURE.md Finding 2); expanding at the
- *   preprocessor stage sidesteps it entirely. Also: multiple calls
- *   combined with certain surrounding code can hang XC8's `cgpic` pass
- *   outright, a known issue here, not a fluke.
- */
+/* Set the bank-select bits RP1:RP0 in STATUS to access a given bank
+ * (DS39582B §2.2, Table 2-1). A macro, not a static inline: a call
+ * boundary corrupts Bank 1 writes under XC8 v4.00 (see README.md, XC8
+ * codegen gotchas), and combined calls can hang XC8's cgpic pass. */
 #define pic_select_bank(bank)                                          \
     do {                                                               \
         uint8_t pic_select_bank_status_ = EPIC_REG8(PIC_REG_STATUS);   \

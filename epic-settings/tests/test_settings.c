@@ -1,7 +1,4 @@
-/**
- * @file    test_settings.c
- * @brief   Host tests for epic-settings over the simulated EEPROM backend.
- */
+/** Host tests for epic-settings over the simulated EEPROM backend. */
 
 #include "epic_settings.h"
 #include "core/epic_harness.h"

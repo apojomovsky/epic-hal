@@ -1,18 +1,14 @@
 /**
- * @file    test_mcp23x17.c
- * @brief   Host test for epic-mcp23x17: the full module + epic-bus +
- *          mock-device stack, through the epic-bus ops seam.
+ * Host test for epic-mcp23x17: the full module + epic-bus +
+ * mock-device stack, through the epic-bus ops seam. A mock MCP23017
+ * (a 22-byte register file with the I2C framing) and an SPI twin
+ * (control-byte framing) are injected as the epic-bus i2c/spi ops;
+ * a third case drives the module's own injectable transport directly.
  *
- * A mock MCP23017 (a 22-byte register file with the I2C framing and
- * an SPI twin with the control-byte framing) is injected as the
- * epic-bus i2c/spi ops, so the module's built-in transports, the
- * epic-bus MEM transactions, and the mock device all run host-side.
- * A third case drives the module's own injectable transport directly.
- *
- * Register map under test (BANK=0 sequential, DS20001952E section
- * 3.5): IODIR 0x00, IPOL 0x02, GPINTEN 0x04, DEFVAL 0x06, INTCON
- * 0x08, IOCON 0x0A, GPPU 0x0B, INTF 0x0D, INTCAP 0x0F, GPIO 0x11,
- * OLAT 0x13 (each pair is base + port).
+ * Register map under test (BANK=0 sequential, DS20001952E 3.5): IODIR
+ * 0x00, IPOL 0x02, GPINTEN 0x04, DEFVAL 0x06, INTCON 0x08, IOCON 0x0A,
+ * GPPU 0x0B, INTF 0x0D, INTCAP 0x0F, GPIO 0x11, OLAT 0x13 (each pair
+ * is base + port).
  */
 
 #include "epic_mcp23x17.h"
@@ -32,8 +28,6 @@ static int g_fail = 0;
             g_fail = 1;                                                 \
         }                                                               \
     } while (0)
-
-/* ─── the mock MCP23017 (I2C framing) ───────────────────────────── */
 
 typedef struct {
     uint8_t regs[22];       /* BANK=0 sequential register file */
@@ -94,8 +88,6 @@ static uint8_t mock_i2c_read_byte(int ack)
     return v;
 }
 
-/* ─── the mock MCP23S17 (SPI framing, control byte first) ───────── */
-
 typedef struct {
     uint8_t regs[22];
     uint8_t dev;            /* A2A1A0 value the mock answers to */
@@ -146,8 +138,6 @@ static uint8_t mock_spi_exchange(uint8_t b)
     return 0xFFu;
 }
 
-/* ─── the direct (custom) transport mock ────────────────────────── */
-
 typedef struct {
     uint8_t regs[22];
     int nack;
@@ -187,8 +177,6 @@ static const epic_mcp23x17_transport_t g_mock_transport = {
     mock_read_reg, mock_write_reg, &g_mock
 };
 
-/* ─── helpers ───────────────────────────────────────────────────── */
-
 static void setup_i2c(uint8_t dev)
 {
     memset(&g_i2c, 0, sizeof(g_i2c));
@@ -214,8 +202,6 @@ static void setup_spi(uint8_t dev)
     };
     epic_bus_set_spi_ops(&ops);
 }
-
-/* ─── the register-semantics suite, run against any handle ──────── */
 
 static void run_semantics(epic_mcp23x17_handle_t *h, const char *label)
 {
@@ -247,7 +233,7 @@ static void run_semantics(epic_mcp23x17_handle_t *h, const char *label)
     st = EPIC_MCP23X17_ReadOutputLatch(h, EPIC_MCP23X17_PORTB, &v);
     CHECK(st > 0 && v == 0xA5u);
 
-    /* 16-bit read: poke the mock's GPIOB directly (a pin change). */
+    /* 16-bit read returns both ports (GPIOA low byte). */
     st = EPIC_MCP23X17_ReadAll(h, &w);
     CHECK(st > 0 && w == 0xA5A5u);
     st = EPIC_MCP23X17_ReadPort(h, EPIC_MCP23X17_PORTA, &v);
@@ -285,8 +271,6 @@ static void run_semantics(epic_mcp23x17_handle_t *h, const char *label)
 
     (void)label;
 }
-
-/* ─── the GPIO-mimic suite (RMW + mode mapping semantics) ───────── */
 
 static void run_mimic(epic_mcp23x17_handle_t *h)
 {

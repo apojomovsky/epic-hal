@@ -1,13 +1,9 @@
-/**
- * @file    example_rb_change.c
- * @brief   Smoke test for the RB<7:4> change-interrupt hook
- *          (EPIC_GPIO_RegisterChangeCallback / RB_IRQHandler) on the sim.
- *
- * @details
- *   The host sim doesn't assert RBIF on a PORTB mismatch (would require
- *   intercepting every CPU read of PORTB through `EPIC_REG8`), so this
- *   test sets RBIF directly in INTCON, then checks the handler's own
- *   read/clear/callback ordering, the part that actually matters.
+/*
+ * Smoke test for the RB<7:4> change-interrupt hook
+ * (EPIC_GPIO_RegisterChangeCallback / RB_IRQHandler). The host sim does
+ * not assert RBIF on a PORTB mismatch (would require intercepting every
+ * CPU read of PORTB), so the test sets RBIF directly in INTCON and
+ * checks the handler's own read/clear/callback ordering.
  */
 
 #include "epic_hal.h"

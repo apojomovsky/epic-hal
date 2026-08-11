@@ -1,15 +1,7 @@
-/**
- * @file    pic16f87xa_wdt_sleep.c
- * @brief   BOR / POR status helpers, shared by both builds.
- *
- * @details
- *   The build-mode-specific helpers EPIC_WDT_Refresh and EPIC_Sleep_Enter
- *   live in pic16f87xa_wdt_sleep_sim.c (host) and
- *   pic16f87xa_wdt_sleep_target.c (XC8), selected at link time. The BOR/POR
- *   status helpers below are identical on both builds, they just read and
- *   clear bits in PCON through the platform SFR macro, so they stay here
- *   as one shared translation unit.
- */
+/* BOR / POR status helpers, shared by both builds. The build-specific
+ * EPIC_WDT_Refresh / EPIC_Sleep_Enter live in the _sim / _target twins,
+ * selected at link time; the helpers here only read and clear PCON
+ * bits through the platform SFR macro. */
 
 #include "core/pic16f87xa_wdt_sleep.h"
 
@@ -17,11 +9,10 @@
 #define PIC_PCON_BOR   EPIC_BIT(0)
 #define PIC_PCON_POR   EPIC_BIT(1)
 
-/* PCON lives in Bank 1 (address 0x8E). Plain EPIC_REG8 accesses
- * silently misdirect to the Bank-0 alias (PIR1) under XC8 v4.00 (same
- * class as the TXSTA/OPTION_REG sites probed 2026-08-09 by
- * pic16f87xa-hal/tests/sim_bank_probe.c), so reads and read-modify-
- * writes go through the safe Bank-1 macros where they exist. */
+/* PCON lives in Bank 1 (0x8E). Plain EPIC_REG8 accesses silently
+ * misdirect to the Bank-0 alias (TMR1L) under XC8 v4.00 (same class as
+ * the TXSTA/OPTION_REG sites in tests/sim_bank_probe.c), so reads and
+ * RMWs go through the safe Bank-1 macros where they exist. */
 
 uint8_t EPIC_BOR_GetStatus(void)
 {

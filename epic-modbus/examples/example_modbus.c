@@ -1,16 +1,9 @@
-/**
- * @file    example_modbus.c
- * @brief   epic-modbus host smoke test: inject full RTU request frames via
- *          the family sim's UART RX hook, advance simulated time past T3.5,
- *          and assert the exact response bytes on the wire.
- *
- * @details
- *   Host-sim test: RX bytes go in via *_sim_drive_usart_rx, TX bytes are
- *   captured via epic_dispatch_all_irqs + TXREG reads, and
- *   epic_tick_delay_ms advances simulated time past the T3.5 timeout.
- *   CRC-16 expected values use an independently written copy of the
- *   algorithm, so this test can't share a CRC bug with epic_modbus.c.
- */
+/* epic-modbus host smoke test: inject full RTU request frames via the
+ * family sim's UART RX hook, advance simulated time past T3.5, and
+ * assert the exact response bytes on the wire (TX captured via
+ * epic_dispatch_all_irqs + TXREG reads). CRC-16 expected values use an
+ * independently written copy of the algorithm, so this test can't
+ * share a CRC bug with epic_modbus.c. */
 
 #include "epic_modbus.h"
 #include "core/epic_harness.h"
@@ -104,7 +97,7 @@ int main(void)
     uint8_t resp[16];
     int     n;
 
-    /* ---- FC03 Read Holding Registers: regs[0..1] = 0x1234, 0x5678 ---- */
+    /* FC03 Read Holding Registers: regs[0..1] = 0x1234, 0x5678 */
     req[0] = SLAVE_ADDR; req[1] = 0x03u;
     req[2] = 0x00u; req[3] = 0x00u;  /* start = 0 */
     req[4] = 0x00u; req[5] = 0x02u;  /* qty   = 2 */
@@ -123,7 +116,7 @@ int main(void)
           resp[8] == (uint8_t)(ref_crc16(resp, 7) >> 8),
           "FC03 response CRC-16 matches the independent reference");
 
-    /* ---- FC06 Write Single Register: regs[2] = 0xBEEF, echoed back ---- */
+    /* FC06 Write Single Register: regs[2] = 0xBEEF, echoed back */
     req[0] = SLAVE_ADDR; req[1] = 0x06u;
     req[2] = 0x00u; req[3] = 0x02u;  /* addr  = 2 */
     req[4] = 0xBEu; req[5] = 0xEFu;  /* value = 0xBEEF */
@@ -143,7 +136,7 @@ int main(void)
           resp[7] == (uint8_t)(ref_crc16(resp, 6) >> 8),
           "FC06 response CRC-16 matches the independent reference");
 
-    /* ---- FC03 out of range -> ILLEGAL DATA ADDRESS exception ---- */
+    /* FC03 out of range -> ILLEGAL DATA ADDRESS exception */
     req[0] = SLAVE_ADDR; req[1] = 0x03u;
     req[2] = 0x00u; req[3] = 0x64u;  /* start = 100, past num_holding_regs=4 */
     req[4] = 0x00u; req[5] = 0x01u;  /* qty   = 1 */
@@ -161,7 +154,7 @@ int main(void)
           resp[4] == (uint8_t)(ref_crc16(resp, 3) >> 8),
           "exception response CRC-16 matches the independent reference");
 
-    /* ---- Broadcast (addr 0) write: applied, but never answered ---- */
+    /* Broadcast (addr 0) write: applied, but never answered */
     req[0] = 0x00u; req[1] = 0x06u;
     req[2] = 0x00u; req[3] = 0x00u;  /* addr  = 0 */
     req[4] = 0xABu; req[5] = 0xCDu;  /* value = 0xABCD */

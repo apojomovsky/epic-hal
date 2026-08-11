@@ -1,22 +1,14 @@
-/**
- * @file    test_console_fuzz.c
- * @brief   Host fuzz test for epic-console's line state machine:
- *          random byte streams fed through epic_console_poll must never
- *          wedge the parser, must keep the line buffer in bounds, must
- *          hit the unknown-command error path without calling any
- *          handler, and must recover to a sane state (a sentinel
- *          "ping\r" line always dispatches, exactly as many times as
- *          the line model says it should). The echo stream is verified
- *          byte-exact against a model of the documented edit behavior
- *          (echo accepted chars, "\r\n" on a terminator, "\b \b" on
- *          backspace, CRLF suppression, silent drop past
- *          EPIC_CONSOLE_LINE_MAX-1).
- *
- *          Deterministic: fixed-seed LCG. One RX byte is injected and
- *          one poll runs per step, and the TX ring is drained after
- *          every poll, so the host sim's single-pop-per-step TX limit
- *          can never be exceeded (see test_serial_stress.c's header
- *          note for the same constraint).
+/*
+ * Host fuzz test for epic-console's line state machine: random byte
+ * streams through epic_console_poll must never wedge the parser, keep
+ * the line buffer in bounds, hit the unknown-command error path without
+ * calling a handler, and recover to a sane state (a sentinel "ping\r"
+ * line always dispatches, as often as the line model says). The echo
+ * stream is verified byte-exact against a model of the documented edit
+ * behavior. Deterministic: fixed-seed LCG. One RX byte and one poll per
+ * step, TX drained after every poll, so the host sim's
+ * single-pop-per-step TX limit is never exceeded (same constraint as
+ * test_serial_stress.c).
  */
 
 #include "epic_console.h"

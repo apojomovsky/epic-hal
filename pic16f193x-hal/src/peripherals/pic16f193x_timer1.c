@@ -1,20 +1,13 @@
 /**
- * @file    pic16f193x_timer1.c
- * @brief   Timer1 driver, implementation (DS41364B §16.0).
- *
- * @details
- *   Mirrors pic16f87xa_timer1.c's shape. Every T1CON bit mask and
- *   the POR value are transcribed from DS41364B Register 16-1;
- *   verify against the datasheet before relying on any literal here.
+ * Timer1 driver, implementation (DS41364B §16.0). Every T1CON bit mask
+ * and the POR value are transcribed from DS41364B Register 16-1.
  */
 
 #include "peripherals/pic16f193x_timer1.h"
 #include "core/pic16f193x_irq.h"
 
-/* T1CON prescaler ratios, DS41364B Register 16-1. Verify the
- * T1CKPS<1:0> -> ratio mapping against the datasheet's table
- * before relying on these values; the §4 gate will catch any
- * wrong literal. */
+/* T1CON prescaler ratios, DS41364B Register 16-1: T1CKPS<1:0> ->
+ * ratio mapping, transcribed from the datasheet's table. */
 static const uint16_t ps_ratio[4] = { 1, 2, 4, 8 };
 
 static const TIMER1_HandleTypeDef *g_t1_handle = NULL;
@@ -92,10 +85,8 @@ EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
 
     EPIC_TIMER1_WriteCounter(h->ReloadValue);
 
-    /* Program T1CON in one write. The order of fields and the bit
-     * positions MUST be transcribed from DS41364B Register 16-1;
-     * do not ship until the §4 gate confirms the literal values
-     * are correct. */
+    /* Program T1CON in one write: fields and bit positions per
+     * DS41364B Register 16-1. */
     uint8_t v = 0U;
     v |= (uint8_t)((h->Prescaler & 0x3U) << 4);   /* T1CKPS<1:0>. */
     /* TMR1CS<1:0> = 00 (FOSC/4): both bits left at 0. T1OSCEN,

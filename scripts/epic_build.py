@@ -1,24 +1,10 @@
 #!/usr/bin/env python3
-"""Real-target build driver: manifest in, xc8-cc build script out.
+"""Real-target build driver: manifest in, xc8-cc build script out. Called by
+CI's emit steps, scripts/ci-local-emit.py, and scripts/sim-test-local.sh.
+Resolution runs wherever python3 exists; execution is a plain sh script
+because the toolchain container deliberately has no python3.
 
-Replaces the 29 hand-maintained mcu/*-mplabx/Makefiles. Resolution
-(reading the manifest, resolving dependencies, computing the source and
-include lists) happens here in Python; execution is a plain POSIX sh
-script of xc8-cc invocations.
-
-That split is not incidental. The toolchain container
-(docker/ci-toolchain/Dockerfile) has no python3 in it, deliberately, so
-a driver that called xc8-cc directly could not run where xc8-cc lives.
-Emitting a script means resolution runs wherever python3 exists (a dev
-host, or the GitHub runner, which already runs Python for CI discovery)
-and execution needs only sh. The script is also a debugging artifact: it
-records the exact command line for every translation unit, which suits a
-codebase whose convention is to inspect generated output.
-
-Usage:
-  epic_build.py build --module epic-tick --mcu 16F877A --run
-  epic_build.py matrix
-  epic_build.py report --log build/16F877A/build.log
+Usage: epic_build.py build|matrix|report (see --help).
 """
 from __future__ import annotations
 

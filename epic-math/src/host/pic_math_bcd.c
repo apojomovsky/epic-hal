@@ -1,10 +1,9 @@
-/**
- * @file    pic_math_bcd.c (host reference backend)
- * @brief   Portable-C BCD primitives, the independent oracle for the
- *          PIC16/PIC18 asm backends. BCD is packed (one nibble per
- *          digit: decimal 42 is the byte 0x42); an invalid nibble (> 9)
- *          is processed arithmetically, e.g. `bcd8_to_bin(0x0A) == 10`,
- *          the documented behavior for out-of-range input.
+/*
+ * Host reference backend: portable-C BCD primitives, the independent
+ * oracle for the PIC16/PIC18 asm backends. BCD is packed (one nibble per
+ * digit: decimal 42 is the byte 0x42); an invalid nibble (> 9) is
+ * processed arithmetically, e.g. bcd8_to_bin(0x0A) == 10, the documented
+ * behavior for out-of-range input.
  */
 
 #include "pic_math.h"

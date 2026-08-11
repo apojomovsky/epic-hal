@@ -1,7 +1,4 @@
-/**
- * @file    example_settings.c
- * @brief   Host-sim smoke for saving, loading, and defaulting a settings blob.
- */
+/** Host-sim smoke for saving, loading, and defaulting a settings blob. */
 
 #include "epic_settings.h"
 #include "core/epic_harness.h"

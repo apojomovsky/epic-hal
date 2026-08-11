@@ -1,14 +1,9 @@
-/**
- * @file    pic18_harness_sim_target.c
- * @brief   PIC18F2455-family sim-target implementation of the test harness
- *          (see core/epic_harness.h). Runs as real compiled firmware under
- *          MPLAB SIM, driven headlessly via mdb.
- *
- * @details
- *   Mirrors `pic16_harness_sim_target.c`; see that file's header for the
- *   full rationale (per-family placement, why `init`/`tick` stay no-ops,
- *   why `log()` is a raw byte writer). Only the EUSART surface differs:
- *   `USART_ComputeSPBRG` takes an extra BRG-width argument here.
+/*
+ * PIC18F2455-family sim-target implementation of the test harness (see
+ * core/epic_harness.h): runs as real compiled firmware under MPLAB SIM,
+ * driven headlessly via mdb. Mirrors `pic16_harness_sim_target.c`; only
+ * the EUSART surface differs (`USART_ComputeSPBRG` takes an extra
+ * BRG-width argument here).
  */
 
 #include "core/epic_harness.h"

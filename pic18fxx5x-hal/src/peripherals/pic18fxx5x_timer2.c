@@ -1,6 +1,5 @@
-/**
- * @file    pic18fxx5x_timer2.c
- * @brief   Timer2 driver, implementation (DS39632E §12.0, Register 12-2).
+/*
+ * Timer2 driver, implementation (DS39632E §12.0, Register 12-2).
  */
 
 #include "peripherals/pic18fxx5x_timer2.h"

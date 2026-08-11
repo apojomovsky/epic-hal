@@ -1,10 +1,9 @@
-/**
- * @file    pic_math_mul.c (host reference backend)
- * @brief   Portable-C multiply primitives, linked by the CMake host
- *          build; the PIC16/PIC18 asm backends provide the same symbols
- *          for XC8 target builds, the build selects one. Native wider
- *          types make this the independent oracle the tests cross-check
- *          the asm algorithms against.
+/*
+ * Host reference backend: portable-C multiply primitives, linked by the
+ * CMake host build; the PIC16/PIC18 asm backends provide the same
+ * symbols for XC8 target builds, the build selects one. Native wider
+ * types make this the independent oracle the tests cross-check the asm
+ * algorithms against.
  */
 
 #include "pic_math.h"

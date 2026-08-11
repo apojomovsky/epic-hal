@@ -1,17 +1,12 @@
-/**
- * @file    pic16f87xa_usart.c
- * @brief   USART driver, implementation (DS39582B §10.0).
- *
- *   The driver only programs the SFRs; it does not model the bit
- *   shifts. The sim backend (src/sim/pic16f87xa_sim.c) re-asserts
- *   TXIF each cycle when TXEN is set and dispatches RCREG values
- *   from pic16f87xa_sim_drive_usart_rx().
- */
+/* USART driver implementation (DS39582B §10.0). Programs the SFRs
+ * only, does not model the bit shifts; the sim backend re-asserts TXIF
+ * each cycle when TXEN is set and dispatches RCREG values from
+ * pic16f87xa_sim_drive_usart_rx(). */
 
 #include "peripherals/pic16f87xa_usart.h"
 #include "core/pic16_irq.h"
 
-/* ───────────────────────── SPBRG computation ────────────────────── */
+/* SPBRG computation. */
 
 uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
                             USART_ModeTypeDef mode,
@@ -21,29 +16,28 @@ uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
     uint32_t divisor = (mode == USART_MODE_ASYNCHRONOUS)
                        ? (brgh == USART_BRGH_HIGH ? 16U : 64U)
                        : 4U;
-    /* SPBRG = (Fosc / (divisor × baud)) - 1 */
     uint32_t x = (fosc_hz / (divisor * baud)) - 1U;
     if (x > 255U) return 0xFFFFU;
     return (uint16_t)x;
 }
 
-/* ───────────────────────── handle storage ───────────────────────── */
+/* handle storage. */
 
 static const USART_HandleTypeDef *g_usart = NULL;
 
-/* ───────────────────────── public API ───────────────────────────── */
+/* public API. */
 
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
     g_usart = h;
 
-    /* Program SPBRG (Bank 1, address 0x99, DS39582B §10.1). */
+    /* Program SPBRG (Bank 1, 0x99, DS39582B §10.1). Plain bank-switch
+     * writes silently corrupt under XC8 v4.00 (see
+     * target/pic16f87xa_platform.h). MPLAB SIM's UART capture is not
+     * baud-timing-sensitive, so only a real receiver shows a wrong
+     * SPBRG. */
 #ifdef EPIC_BANK1_WRITE8
-    /* See target/pic16f87xa_platform.h: a plain bank-switch write here
-     * silently corrupts under XC8 v4.00. A wrong SPBRG is masked in
-     * sim-target testing since MPLAB SIM's UART capture isn't
-     * baud-timing-sensitive; only a real receiver would show it. */
     EPIC_BANK1_WRITE8(SPBRG, h->SPBRG);
 #else
     uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
@@ -68,10 +62,9 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     if (h->DataWidth == USART_DATA_9BITS) txsta |= PIC_TXSTA_TX9;
     if (h->TxCpltCallback) txsta |= PIC_TXSTA_TXEN;  /* TXEN implied if user has a callback. */
 #ifdef EPIC_BANK1_WRITE8
-    /* See target/pic16f87xa_platform.h: a plain EPIC_REG8 write to the
-     * Bank-1 TXSTA (0x98) silently misdirects under XC8 v4.00 (hits
-     * the Bank-0 alias 0x18, RCSTA). Probed and confirmed 2026-08-09
-     * by pic16f87xa-hal/tests/sim_bank_probe.c. */
+    /* Plain EPIC_REG8 write to Bank-1 TXSTA (0x98) misdirects to the
+     * Bank-0 alias (0x18, RCSTA) under XC8 v4.00 (see
+     * target/pic16f87xa_platform.h). */
     EPIC_BANK1_WRITE8(TXSTA, txsta);
 #else
     EPIC_REG8(PIC_REG_TXSTA) = txsta;
@@ -182,16 +175,14 @@ uint8_t EPIC_USART_GetRX9D(void)
     return (EPIC_REG8(PIC_REG_RCSTA) & PIC_RCSTA_RX9D) ? 1U : 0U;
 }
 
-/* ───────────────────────── ISRs ─────────────────────────────────── */
+/* ISRs. */
 
 void USART_TX_IRQHandler(void)
 {
     /* Direct flag read (class-F: the table route clobbers PCLATH in
-     * ISR context). TXIF is PIR1 bit 4; read-only, cleared by writing
-     * TXREG. */
+     * ISR context). TXIF is PIR1 bit 4, read-only, cleared by writing
+     * TXREG, so there is nothing to clear here. */
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TXIF)) return;
-    /* TXIF is read-only and cleared by writing TXREG; there is nothing
-     * to clear here, just call the user callback. */
     if (g_usart && g_usart->TxCpltCallback) g_usart->TxCpltCallback();
 }
 

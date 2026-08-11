@@ -1,18 +1,14 @@
-/**
- * @file    pic16f87xa_eeprom.c
- * @brief   Data EEPROM driver, implementation (DS39582B §3.0).
- */
+/* Data EEPROM driver implementation (DS39582B §3.0). */
 
 #include "peripherals/pic16f87xa_eeprom.h"
 #include "core/pic16_irq.h"
 
 static void (*g_eeprom_cb)(void) = NULL;
 
-/* EEPROM registers live in Banks 2/3. EPIC_BANK2/3_WRITE8/READ8 need a
- * literal SFR name at compile time (inline-asm operands), not a
- * runtime `addr`, so this dispatches on `addr` *before* any bank
- * switch begins, then invokes the named macro for the matching
- * register; every real call site passes a compile-time constant, so
+/* EEPROM registers live in Banks 2/3. EPIC_BANK2/3_* need a literal SFR
+ * name at compile time (inline-asm operands), not a runtime addr, so
+ * this dispatches on `addr` before any bank switch, then invokes the
+ * named macro; every real call site passes a compile-time constant, so
  * XC8 folds this to the single matching branch either way. */
 #ifdef EPIC_BANK3_WRITE8
 static void b3_write(uint16_t addr, uint8_t v)
@@ -107,10 +103,8 @@ uint8_t EPIC_EEPROM_ReadByte(uint8_t addr)
     b2_write(0x0CU, pic16f87xa_sim_eeprom_read(addr));
     return b2_read(0x0CU);
 #else
-    /* Real target: the RD strobe loads the addressed byte into
-     * EEDATA (DS39582B §5.5). Same latent host-only call fix as
-     * pic18fxx5x_eeprom.c (found by the epic-settings gate,
-     * 2026-08-09). */
+    /* Real target: the RD strobe loads the addressed byte into EEDATA
+     * (DS39582B §5.5). */
     return b2_read(0x0CU);
 #endif
 }

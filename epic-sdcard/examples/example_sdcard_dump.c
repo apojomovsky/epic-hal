@@ -1,10 +1,6 @@
-/**
- * @file    example_sdcard_dump.c
- * @brief   Read block 0 and print its first 16 bytes over epic-serial.
- *          Real-target only: host tests exercise mmc.c/crc.c directly
- *          against a mock (tests/test_epic_sdcard.c) instead of this
- *          wrapper, since epic_sdcard.c depends on real HAL/SPI.
- */
+/** Read block 0 and print its first 16 bytes over epic-serial. Real-target
+ *  only: host tests exercise mmc.c/crc.c directly against a mock
+ *  (tests/test_epic_sdcard.c), since epic_sdcard.c needs real HAL/SPI. */
 
 #include "epic_sdcard.h"
 #include "epic_serial.h"

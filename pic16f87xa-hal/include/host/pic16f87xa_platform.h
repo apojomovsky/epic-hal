@@ -1,16 +1,8 @@
-/**
- * @file    host/pic16f87xa_platform.h
- * @brief   Host-simulation platform: how SFRs are stored and how the weak
- *          attribute is spelled, for the CMake host build.
- *
- * @details
- *   Host half of the SFR mapping layer (paired with
- *   target/pic16f87xa_platform.h for the XC8 build); the build's include
- *   path picks which one resolves, so pic16f87xa.h includes this name
- *   unconditionally with no `#ifdef`. SFR access indexes the 512-byte
- *   memory-backed pic16f87xa_sim_sfr[] (src/sim/pic16f87xa_sim.c), so
- *   tests can poke registers directly.
- */
+/* Host-simulation half of the SFR mapping layer (paired with
+ * target/pic16f87xa_platform.h); the include path picks which resolves,
+ * so pic16f87xa.h includes this name unconditionally with no #ifdef.
+ * SFR access indexes the 512-byte memory-backed pic16f87xa_sim_sfr[]
+ * (src/sim/pic16f87xa_sim.c), so tests can poke registers directly. */
 
 #ifndef PIC16F87XA_PLATFORM_H
 #define PIC16F87XA_PLATFORM_H
@@ -54,12 +46,10 @@ extern uint8_t pic16f87xa_sim_sfr[0x200];
         else         { pic16f87xa_sim_sfr[0x8CU] &= (uint8_t)~(mask); } \
     } while (0)
 
-/* Read the TMR1IE bit (PIE1 bit 0) into a uint8_t output variable.
- * Host twin of target/pic16f87xa_platform.h's EPIC_PIE1_READ_TMR1IE
- * (which uses EPIC_BANK1_READ8): the simulated register file is a
- * plain array, so no banking path is needed here. Used by the shared
- * interrupt dispatcher to skip TIMER1_IRQHandler when TMR1IE is off
- * (a free-running Timer1 with the overflow interrupt disabled latches
+/* Host twin of the target header's EPIC_PIE1_READ_TMR1IE: the sim
+ * register file is a plain array, so no banking path is needed. The
+ * dispatcher skips TIMER1_IRQHandler when TMR1IE is off (a
+ * free-running Timer1 with the overflow interrupt disabled latches
  * TMR1IF at every wrap; see the target header's comment for why that
  * must not dispatch the handler). */
 #define EPIC_PIE1_READ_TMR1IE(out_var) ((out_var) = pic16f87xa_sim_sfr[0x8CU])

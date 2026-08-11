@@ -1,7 +1,6 @@
 /**
- * @file    epic_adcfilter.c
- * @brief   ADC oversampling and moving-average filter, one implementation
- *          for host, PIC16, and PIC18 alike (zero hardware dependency).
+ * ADC oversampling and moving-average filter, one implementation for
+ * host, PIC16, and PIC18 alike (zero hardware dependency).
  */
 
 #include "epic_adcfilter.h"

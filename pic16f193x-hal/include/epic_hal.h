@@ -1,16 +1,9 @@
 /**
- * @file    epic_hal.h
- * @brief   Family-neutral top-level entry point to the PIC16F193X HAL.
- *
- * @details
- *   A consumer that builds unchanged against any 8-bit PIC family
- *   includes this neutral name instead of `pic16f193x.h`; each family
- *   provides its own `epic_hal.h` under the same name, selected by
- *   which family's HAL tree is on the include path.
- *
- *   Foundation scope: core (IRQ, WDT/Sleep), GPIO, Timer0, Timer1, and
- *   CCP peripherals. Each additional peripheral phase appends its
- *   header include here as it is built.
+ * Family-neutral top-level entry point to the PIC16F193X HAL: consumers
+ * that build unchanged against any 8-bit PIC family include this neutral
+ * name instead of `pic16f193x.h`. Each family provides its own `epic_hal.h`
+ * under the same name, selected by which family's HAL tree is on the
+ * include path.
  */
 
 #ifndef EPIC_H

@@ -1,14 +1,7 @@
-/**
- * @file    peripherals/pic16f87xa_timer1.h
- * @brief   Timer1 driver, 16-bit timer/counter.
- *
- * @details
- *   Source: DS39582B §6.0. Full reference: MANUAL.md §11. T1OSCEN
- *   enables a 32.768 kHz crystal on RC0/RC1 for RTC use; T1SYNC
- *   selects sync-to-Fosc vs free-running for the external clock. The
- *   CCP special-event trigger (§6.6) can reset TMR1H:L; configured by
- *   the CCP driver, not here.
- */
+/* Timer1 driver, 16-bit timer/counter. Source: DS39582B §6.0; full
+ * reference: MANUAL.md §11. T1OSCEN enables a 32.768 kHz crystal on
+ * RC0/RC1 for RTC use; the CCP special-event trigger (§6.6) can reset
+ * TMR1H:L, configured by the CCP driver, not here. */
 
 #ifndef PIC16F87XA_TIMER1_H
 #define PIC16F87XA_TIMER1_H

@@ -1,11 +1,9 @@
-/**
- * @file    pic_math_bcd.c (PIC18 inline-asm backend)
- * @brief   BCD conversions are C built on this backend's asm mul/div
- *          primitives. The digit-adjust is new asm: PIC18 has `daw`
- *          (one-instruction packed-BCD adjust after an add), so
- *          `bcd_add8` is `addwf`+`daw`; `bcd_sub8` has no hardware
- *          equivalent on any core, so it does the manual nibble-wise
- *          subtract-with-borrow.
+/*
+ * PIC18 inline-asm BCD primitives. Conversions are C built on this
+ * backend's asm mul/div; only the digit adjust is asm: PIC18 has daw
+ * (one-instruction packed-BCD adjust after an add), so bcd_add8 is
+ * addwf + daw; bcd_sub8 has no hardware equivalent on any core, so it
+ * does the manual nibble-wise subtract-with-borrow.
  */
 
 #include <xc.h>
@@ -47,17 +45,8 @@ uint32_t pic_math_bin_to_bcd16(uint16_t value)
     return bcd;
 }
 
-/* ─── pic_math_bcd_add8 ──────────────────────────────────────────
- * addwf then DAW (PIC18 packed-BCD adjust), C set if the BCD sum > 99.
- * Scratch struct m_ba offsets: a@0, b@1, r@2, co@3 (4 bytes).
- * Hand-trace a=0x55 b=0x55 (55+55=110 -> r=0x10, carry=1):
- *   movf a,w ; w=0x55
- *   addwf b,w ; w=0xAA (binary sum)
- *   daw       ; low nibble 0xA>9 -> +6 -> 0x10 (carry to high); high 0xA+1=0xB
- *            ; >9 -> +6 -> 0x11 (C=1). W=0x10, C=1
- *   movwf r+2 ; r=0x10
- *   clrf co; btfsc STATUS,0 (C=1); incf co ; co=1
- * Matches host: 55+55=110 -> 110 mod 100 = 10 = 0x10, carry=1.            */
+/* addwf then daw (PIC18 packed-BCD adjust), C set if the BCD sum > 99.
+ * Scratch struct m_ba offsets: a@0, b@1, r@2, co@3 (4 bytes). */
 static volatile struct { uint8_t a, b, r, co; } m_ba;
 
 uint8_t pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out)
@@ -75,17 +64,14 @@ uint8_t pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out)
     return m_ba.r;
 }
 
-/* ─── pic_math_bcd_sub8 ──────────────────────────────────────────
- * a - b, BCD, nibble-wise subtract with borrow. borrow_out = (a < b) in
+/* a - b, BCD, nibble-wise subtract with borrow. borrow_out = (a < b) in
  * decimal. Scratch struct m_bs offsets: a@0, b@1, r@2, bo@3, aL@4, bL@5,
  * br@6, aH@7 (8 bytes).
- *   dL = aL - bL; if aL<bL (borrow): dL += 10, br=1 else br=0
- *   dH = aH - bH - br; if borrow: dH += 10, bo=1 else bo=0
+ *   dL = aL - bL; if borrow: dL += 10, br=1
+ *   dH = aH - bH - br; if borrow: dH += 10, bo=1
  *   r = (dH<<4)|dL
- * Hand-trace a=0x12 b=0x34 (12-34 = -22 -> 78, borrow=1):
- *   aL=2,bL=4; dL=2-4 borrow -> dL=2-4+10=8, br=1
- *   aH=1,bH=3; dH=1-3-1=-3 borrow -> dH=-3+10=7, bo=1
- *   r=(7<<4)|8 = 0x78, bo=1. Matches host: 12-34+100=78, borrow=1.        */
+ * Worked example 0x12-0x34 -> 0x78, borrow 1 pins the +10 adjust and
+ * the borrow ripple from low to high nibble. */
 static volatile struct { uint8_t a, b, r, bo, aL, bL, br, aH; } m_bs;
 
 uint8_t pic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out)

@@ -1,12 +1,8 @@
-/**
- * @file    example_spp.c
- * @brief   Streaming Parallel Port driver smoke test on the PIC18 host sim.
- *
- * @details
- *   40/44-pin parts only (DS39632E §18.0). Verifies init register
- *   programming, byte read/write through SPPDATA/SPPEPS, sim-driven
- *   status/flag helpers, and deinit. The transfer IRQ handler clears
- *   SPPIF, so polling checks disable the sim IRQ callback.
+/*
+ * Streaming Parallel Port driver smoke test on the PIC18 host sim,
+ * 40/44-pin parts only (DS39632E §18.0): init register programming,
+ * byte read/write through SPPDATA/SPPEPS, sim-driven status/flag
+ * helpers, deinit.
  */
 
 #include "epic_hal.h"

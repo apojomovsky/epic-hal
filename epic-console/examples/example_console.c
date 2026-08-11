@@ -1,7 +1,4 @@
-/**
- * @file    example_console.c
- * @brief   Host-sim smoke for epic-console with a few injected commands.
- */
+/* Host-sim smoke for epic-console with a few injected commands. */
 
 #include "epic_console.h"
 #include "epic_serial.h"

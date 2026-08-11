@@ -1,20 +1,12 @@
 /**
- * @file    example_eeprom.c
- * @brief   EEPROM smoke test: set WREN on EECON1 (bank 3), read back,
- *          verify the banked read-modify-write landed correctly. This
- *          is the specific risk the brief flagged (same class as the
- *          PIE1/2/3 Finding 2 bug). The §4 gate payload.
+ * EEPROM smoke test: set WREN on EECON1 (bank 3), read back, verify the
+ * banked read-modify-write landed correctly. Does NOT do a full EEPROM
+ * write/read cycle (which would require the while(WR) spin that
+ * deadlocks the host sim's polled step model); it only tests the banked
+ * RMW of EECON1, the actual codegen risk.
  *
- * @details
- *   Expected register image (after WREN set):
- *     EECON1 = 0x04   (WREN=1 at bit 2, rest 0)
- *
- *   This test does NOT do a full EEPROM write/read cycle (which would
- *   require the while(WR) spin that deadlocks the host sim's polled
- *   step model). It only tests the banked RMW of EECON1, which is the
- *   actual codegen risk. If the §4 gate shows WREN not landing, apply
- *   the __at(0x70) scratch + inline-asm movlb fix per ARCHITECTURE.md
- *   Finding 2.
+ * Expected register image (after WREN set):
+ *   EECON1 = 0x04   (WREN=1 at bit 2, rest 0)
  */
 
 #include "pic16f193x.h"

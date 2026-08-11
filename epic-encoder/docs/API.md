@@ -2,8 +2,8 @@
 
 Per-function semantics, the port-byte/bit-position wiring convention, and
 the hard constraints (`at most two encoders per port`, `PORTB only`, the
-glitch-gate's 1 ms resolution). The design rationale behind each choice is
-in `docs/ARCHITECTURE.md`; the full plan is `docs/epic-encoder-plan.md`.
+glitch-gate's 1 ms resolution). The design rationale lives in the
+module's [README](../README.md).
 
 ## Headers and linkage
 
@@ -95,7 +95,7 @@ because `encoder_init` calls `epic_tick_get()` to seed `last_edge_tick`
 until the gate is armed).
 
 **Direction:** the count sign for a given physical rotation is fixed by
-the shipped `QUAD_TABLE` (see `docs/ARCHITECTURE.md`). If your wiring
+the shipped Gray-code `QUAD_TABLE`. If your wiring
 produces the opposite sign (turns clockwise but the count goes down),
 **swap `pin_a` and `pin_b`** in this call to invert direction. Do not add a
 `direction_invert` flag, swapping two constructor arguments already
@@ -153,8 +153,7 @@ same tear risk in principle on an 8-bit core, wrapped the same way for
 consistency even though a torn diagnostic counter is low-stakes). A
 climbing `error_count` means the software isn't keeping up or samples are
 being corrupted; a climbing `glitch_count` means the gate is doing its job
-filtering real mechanical bounce. See `docs/ARCHITECTURE.md` for why they
-are kept separate.
+filtering real mechanical bounce.
 
 ## Hard constraints
 
@@ -175,8 +174,8 @@ is coarse relative to true electrical bounce timescales (sub-ms) but
 adequate for mechanical detent bounce, which typically resolves within a
 few ms. Do not treat the gate as a precision sub-ms filter; if a concrete
 encoder's bounce characteristics demand sub-millisecond filtering, that
-needs a free-running Timer1 microsecond capture, a separate piece of work
-(see `docs/ARCHITECTURE.md` "out of scope"). The gate is per-instance and
+that needs a free-running Timer1 microsecond capture, a separate piece of work.
+The gate is per-instance and
 optional (`min_edge_interval_ms == 0` disables it), so a clean Hall-effect
 channel is not held to a timing gate a bouncy mechanical one needs.
 

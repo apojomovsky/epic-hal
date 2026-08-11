@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""Assemble a per-family Epicurus bundle.
+"""Assemble a per-family Epicurus bundle (a build output, attached to a
+GitHub Release, never committed): copy one family's HAL, epic-common, and
+every module that builds on it into a self-contained tree with the
+generated consumer files. Called by CI's emit step and
+scripts/ci-local-emit.py.
 
-Copies one family's HAL, epic-common, and every module that builds on
-that family into a self-contained tree, then writes the generated
-consumer files into it. Nothing here is committed: bundles are build
-outputs, attached to a GitHub Release.
-
-Usage:
-  python3 scripts/make_bundle.py --family PIC16F87XA --version v0.1.0
+Usage: python3 scripts/make_bundle.py --family <FAMILY> --version <VERSION>
 """
 from __future__ import annotations
 

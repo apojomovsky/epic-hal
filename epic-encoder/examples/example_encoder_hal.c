@@ -1,14 +1,8 @@
 /**
- * @file    example_encoder_hal.c
- * @brief   Two quadrature encoders sharing one PORTB RB<7:4> interrupt-on-change,
- *          wired end to end through EPIC_GPIO_RegisterChangeCallback.
- *
- * @details
- *   Encoder A on RB4/RB5, B on RB6/RB7 (the at-most-two-per-port ceiling,
- *   see docs/API.md); one callback fans the PORTB byte out to both via
- *   `encoder_update`. The host sim doesn't auto-assert RBIF on a mismatch,
- *   so this example drives PORTB, sets RBIF, and calls
- *   `epic_dispatch_all_irqs()` directly to simulate an edge.
+ * Two quadrature encoders sharing one PORTB RB<7:4> interrupt-on-change,
+ * wired end to end through EPIC_GPIO_RegisterChangeCallback. Encoder A on
+ * RB4/RB5, B on RB6/RB7 (the at-most-two-per-port ceiling, see
+ * docs/API.md); one callback fans the PORTB byte out to both.
  */
 
 #include "encoder.h"
@@ -45,7 +39,9 @@ static uint8_t make_portb(uint8_t state_a, uint8_t state_b)
     return v;
 }
 
-/* Simulate one RB-change interrupt: drive the byte, assert RBIF, dispatch. */
+/* Simulate one RB-change interrupt: drive the byte, assert RBIF, dispatch.
+ * The host sim does not auto-assert RBIF on a mismatch, so the example
+ * sets it by hand. */
 static void sim_rb_edge(uint8_t portb)
 {
     EPIC_REG8(PIC_REG_PORTB)   = portb;

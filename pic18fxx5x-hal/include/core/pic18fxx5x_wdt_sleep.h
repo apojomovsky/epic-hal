@@ -1,14 +1,9 @@
-/**
- * @file    core/pic18fxx5x_wdt_sleep.h
- * @brief   CPU-level helpers: Watchdog Timer, Brown-out Reset, Sleep.
- *
- * @details
- *   Matches `pic16f87xa_wdt_sleep.h`'s API (DS39632E §4.0/§9.0/§14.x/§3.0);
- *   PIC18 folds the reset-status bits (TO/PD/POR/BOR) into RCON instead of
- *   PIC16's separate PCON. WDT is enabled via `#pragma config WDT = ON` at
- *   flash time; once on, the user must call @ref EPIC_WDT_Refresh
- *   periodically or the chip resets. `EPIC_WDT_Refresh`/`EPIC_Sleep_Enter`
- *   are link-time-selected (`*_sim.c` host, `*_target.c` XC8).
+/*
+ * CPU-level helpers: Watchdog Timer, Brown-out Reset, Sleep. Matches
+ * `pic16f87xa_wdt_sleep.h`'s API (DS39632E §4.0/§9.0/§14.x/§3.0); PIC18
+ * folds the reset-status bits (TO/PD/POR/BOR) into RCON instead of PIC16's
+ * separate PCON. `EPIC_WDT_Refresh`/`EPIC_Sleep_Enter` are link-time-
+ * selected (`*_sim.c` host, `*_target.c` XC8).
  */
 
 #ifndef PIC18FXX5X_WDT_SLEEP_H

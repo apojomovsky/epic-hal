@@ -1,36 +1,23 @@
 /**
- * @file    target/pic16f193x_platform.h
- * @brief   Real-target platform: how SFRs are accessed and how the weak
- *          attribute is spelled, for the XC8 build.
+ * Real-target platform: how SFRs are accessed and how the weak attribute
+ * is spelled, for the XC8 build. Target half of the SFR mapping layer
+ * (paired with host/pic16f193x_platform.h); the build's include path
+ * picks which resolves, so pic16f193x.h includes this name
+ * unconditionally with no `#ifdef`.
  *
- * @details
- *   Target half of the SFR mapping layer (paired with
- *   host/pic16f193x_platform.h); the build's include path picks which
- *   resolves, so pic16f193x.h includes this name unconditionally with no
- *   `#ifdef`. SFR access is a direct volatile dereference of the literal
- *   address; XC8 has no weak symbols, so EPIC_WEAK is empty.
+ * XC8 auto-banks literal SFR tokens on this core (it pulls the bank map
+ * from the DFP at -O2), so `EPIC_REG8(addr)` dereferences the literal
+ * address with no manual bank switching (BSR convention,
+ * docs/ARCHITECTURE.md).
  *
- *   Plain C reads against compile-time-constant SFR tokens compile to
- *   `movlb N; movf <sfr>,w` once XC8 sees which bank each token belongs
- *   to (it pulls the bank map from the DFP at -O2). That is why
- *   `EPIC_REG8(addr)` dereferences the literal address without bank
- *   switching: XC8 sets BSR itself. Verified on the Enhanced Mid-range
- *   core by the Foundation's codegen probe (`docs/adding-a-device.md` §4,
- *   Finding 1 of the foundation ARCHITECTURE.md).
- *
- *   PIE1/PIE2/PIE3 enable/disable is NOT a plain-C read-modify-write:
- *   on this core, the original plain-C RMW shape silently produced
- *   `movwf fsr1l; clrf fsr1h` indirect addressing with FSR1H=0, which
- *   is not what PIE1 lives behind (PIE1 is at 0x91 in bank 1, not in
- *   the linear address space FSR1 reads with FSR1H=0). The fix mirrors
- *   pic16f87xa-hal's proven `__at()`-pinned scratch byte +
- *   inline-asm bank-switch pattern, on the Enhanced Mid-range idiom
- *   (`movlb 1` sets BSR=1 in one instruction). All three PIEs are in
- *   bank 1 (DS41364B Tables 2-4), so a single `movlb 1` covers all
- *   three pir_index values (0/1/2). See
- *   pic16f193x-hal/docs/ARCHITECTURE.md Finding 2 for the failing
- *   codegen evidence (FSR1H=0 read of address 0x91) and the fixed
- *   assembly (`movlb 1; iorwf PIE1,f; movlb 0`).
+ * PIE1/PIE2/PIE3 enable/disable is NOT a plain-C read-modify-write: the
+ * plain-C RMW shape compiles to FSR1:INDF1 indirect addressing with
+ * FSR1H=0, which addresses the linear space, not the PIE registers (all
+ * in bank 1, DS41364B Tables 2-4). The fix is the `__at()`-pinned
+ * scratch byte + inline-asm `movlb 1` bank switch, on the Enhanced
+ * Mid-range idiom; a single `movlb 1` covers all three pir_index values
+ * (0/1/2). See docs/ARCHITECTURE.md for the failing codegen evidence
+ * and the fixed assembly (`movlb 1; iorwf PIE1,f; movlb 0`).
  */
 
 #ifndef PIC16F193X_PLATFORM_H
@@ -121,8 +108,7 @@ extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
  * with its overflow interrupt off (epic-swuart needs the counter but
  * never the overflow), so TMR1IF latches at every 65536-cycle wrap and
  * would otherwise make every subsequent CCP event pay the full handler
- * cost before its own dispatch (the same hazard measured on PIC16F87XA,
- * see docs/superpowers/plans/probe-swuart-rx-hotpath.md). */
+ * cost before its own dispatch. */
 #define EPIC_PIE1_READ_TMR1IE(out_var)                                   \
     do {                                                                  \
         asm("movlb 1");                                                  \
@@ -143,8 +129,7 @@ extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
  * live in bank 1 on this family, DS41364B Tables 2-4). Used by the
  * shared interrupt dispatcher to skip EEPROM_IRQHandler when EEIE is
  * off: EEPROM completion is often polled with EEIE disabled, and an
- * unconditional dispatch would clear the polled flag from a live ISR
- * (combination-matrix C7 finding). */
+ * unconditional dispatch would clear the polled flag from a live ISR. */
 #define EPIC_PIE2_READ_EEIE(out_var)                                   \
     do {                                                                \
         asm("movlb 1");                                                \

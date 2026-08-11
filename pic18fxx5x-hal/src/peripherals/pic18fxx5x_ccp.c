@@ -1,7 +1,5 @@
-/**
- * @file    pic18fxx5x_ccp.c
- * @brief   ECCP1 (Enhanced CCP) + CCP2 driver, implementation
- *          (DS39632E §16.0).
+/*
+ * ECCP1 (Enhanced CCP) + CCP2 driver, implementation (DS39632E §16.0).
  */
 
 #include "peripherals/pic18fxx5x_ccp.h"
@@ -62,8 +60,6 @@ static uint8_t pss_encode(CCP_PinStateTypeDef s)
     /* DRIVE_0 -> 00, DRIVE_1 -> 01, TRISTATE -> 10 (1x). */
     return (uint8_t)(s & 0x3U);
 }
-
-/* ───────────────────────── public API ───────────────────────────── */
 
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
@@ -176,8 +172,6 @@ void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
     CCP_WRITE_CPRL(inst, duty >> 2);
 }
 
-/* ───────────────────────── ECCP1-only controls ──────────────────── */
-
 void EPIC_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst,
                             uint8_t delay, bool auto_restart)
 {
@@ -214,8 +208,6 @@ void EPIC_CCP_Restart(CCP_InstanceTypeDef inst)
     uint8_t asv = (uint8_t)(epic_sfr_read8(PIC_REG_ECCP1AS) & ~PIC_ECCP1AS_ECCPASE);
     epic_sfr_write8(PIC_REG_ECCP1AS, asv);
 }
-
-/* ───────────────────────── ISRs ─────────────────────────────────── */
 
 void CCP1_IRQHandler(void)
 {

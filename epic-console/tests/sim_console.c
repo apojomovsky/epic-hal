@@ -1,46 +1,17 @@
-/**
- * @file    sim_console.c
- * @brief   Bounded, self-reporting HARNESS=sim build for epic-console:
- *          the module's first real `mdb` gate (18F4550/MPLAB SIM).
- *
- * @details
- *   TX-side / framing / internal-state gate, the documented shape for
- *   RX-bound modules (same constraint as epic-swuart's sim build).
- *   MPLAB SIM cannot inject UART RX data into this program's run:
- *   firmware writes to RCREG are ignored, firmware writes to the RCIF
- *   flag are masked, and mdb's own `set PIR1` / `set RCREG` are
- *   ignored as well (all three verified by probe against this exact
- *   .hex: the simulator's EUSART model owns those registers). The one
- *   sanctioned injection path (SCL `stim` with `packetin(..., RCREG,
- *   true)`, baud-paced) is unusable here: the fixed sim-mdb-run.sh
- *   mdb script has no slot to load a stimulus file before `run` (its
- *   only hook, extra_mdb, runs after `halt`), and this mdb version's
- *   `stim` command fails to parse even the SCL guide's minimal
- *   testbench, crashing the simulator. So the gate exercises the
- *   module headlessly on its output side, mirroring the host tests
- *   where the platform allows:
- *
- *   (a) init contract: EPIC_CONSOLE_INIT wires table/table_len/ctx and
- *       leaves the line buffer empty (line_len == 0, line[0] == 0,
- *       last_was_cr == false).
- *   (b) help framing: epic_console_print_help emits exactly one
- *       "name - help\r\n" line per table row (including the NULL-help
- *       fallback) through the real epic-serial TX ring; the gate
- *       counts every byte that leaves the ring through the real TX
- *       ISR (epic_dispatch_all_irqs, the same pump the host harness
- *       uses), paced so each byte is shifted out before the next
- *       (polling TRMT, exactly like the harness's own polled TX), and
- *       compares the total against the documented framing. The
- *       uart1io capture in the mdb log shows the emitted bytes.
- *   (c) empty-table edge: a zero-row console prints nothing.
- *   (d) idle poll: epic_console_poll with an empty RX ring is a no-op
- *       (no echo, no dispatch, line buffer untouched).
- *
- *   The RX-bound parser contracts (known-command dispatch, unknown
- *   command hitting the no-match error path, argument tokenization,
- *   backspace editing, CR/LF coalescing) stay covered by the host
- *   tests (tests/test_console.c), which feed the RX ring through
- *   pic18_sim_drive_usart_rx.
+/*
+ * Bounded, self-reporting HARNESS=sim build for epic-console: the
+ * module's first real mdb gate (18F4550/MPLAB SIM), a TX-side/framing
+ * gate. MPLAB SIM cannot inject UART RX data: firmware writes to RCREG
+ * are ignored, RCIF writes are masked, mdb's set PIR1/set RCREG are
+ * ignored, and the one sanctioned SCL stim injection path is unusable
+ * with the fixed sim-mdb-run.sh script (its only hook runs after halt,
+ * and this mdb's stim crashes the simulator). So the gate exercises the
+ * module headlessly on its output side: init contract, byte-exact
+ * print_help framing through the real TX ISR (paced per byte, polling
+ * TRMT), empty-table edge, and idle poll. RX-bound parser contracts
+ * (dispatch, unknown-command, tokenization, backspace, CR/LF) stay
+ * covered by the host tests, which feed the RX ring via
+ * pic18_sim_drive_usart_rx.
  */
 
 #include "epic_console.h"
@@ -54,18 +25,17 @@
 #define FOSC_HZ 48000000UL
 #endif
 
-/** Loop-iteration bound, not a real time unit (see core/epic_harness.h).
- *  All gate work happens before the loop; the bound only lets the
- *  simulator idle a moment before the report TX, mirroring every other
- *  family's .sim build. */
+/* Loop-iteration bound, not a real time unit (see core/epic_harness.h).
+ * All gate work happens before the loop; the bound only lets the
+ * simulator idle a moment before the report TX. */
 #define SIM_ITERATIONS 1000UL
 
-/** Outer guard on the paced TX drain: one pop per in-flight byte, 74
- *  bytes in the gate's own help table plus slack. */
+/* Outer guard on the paced TX drain: one pop per in-flight byte, 74
+ * bytes in the gate's own help table plus slack. */
 #define TX_POP_GUARD 200UL
-/** Inner guard on the per-byte TRMT wait: a 9600-baud byte takes ~5000
- *  cycles to shift, each spin iteration a few instructions, so 100000
- *  is a comfortable ceiling that fails loudly instead of hanging. */
+/* Inner guard on the per-byte TRMT wait: a 9600-baud byte takes ~5000
+ * cycles to shift, so 100000 is a comfortable ceiling that fails
+ * loudly instead of hanging. */
 #define TX_TRMT_GUARD 100000UL
 
 typedef struct {
@@ -75,10 +45,10 @@ typedef struct {
     uint8_t help_count;
 } con_ctx_t;
 
-/* Handlers mirror the module's example table. They are never invoked
- * under MPLAB SIM (no RX injection, see file header); they exist so
- * the table is the real shape a firmware would wire, and the help
- * framing gate walks their name/help rows for real. */
+/* Handlers mirror the module's example table. Never invoked under MPLAB
+ * SIM (no RX injection, see header); they exist so the table is the real
+ * shape a firmware would wire, and the help-framing gate walks their
+ * name/help rows for real. */
 static void cmd_status(uint8_t argc, char **argv, void *ctx_)
 {
     con_ctx_t *ctx = (con_ctx_t *)ctx_;
@@ -114,8 +84,8 @@ static void cmd_help(uint8_t argc, char **argv, void *ctx_)
 static uint16_t g_tx_pops;
 static uint8_t g_drain_failed;
 
-/** Oracle for the documented print_help framing: one
- *  "name - help\r\n" line per row, NULL help rendered as "". */
+/* Oracle for the documented print_help framing: one "name - help\r\n"
+ * line per row, NULL help rendered as "". */
 static uint8_t help_len(const epic_console_t *con)
 {
     uint8_t n = 0u;
@@ -127,11 +97,10 @@ static uint8_t help_len(const epic_console_t *con)
     return n;
 }
 
-/** Paced drain of the epic-serial TX ring through the real TX ISR
- *  entry: wait for the shift register to empty (so the byte in TXREG
- *  has fully left), then pop one ring byte (which loads TXREG), and
- *  repeat. Same per-byte pacing the harness's own polled report TX
- *  uses, so the uart1io capture receives every byte intact. */
+/* Paced drain of the epic-serial TX ring through the real TX ISR
+ * entry: wait for the shift register to empty, pop one ring byte (which
+ * loads TXREG), repeat. Same per-byte pacing the harness's polled
+ * report TX uses, so the uart1io capture receives every byte intact. */
 static void drain_tx(void)
 {
     uint32_t outer = 0UL;
@@ -179,9 +148,8 @@ int main(void)
 
     /* Phase 1: exact framing oracle. This table's framed help output is
      * exactly EPIC_SERIAL_RING_SZ (32) bytes, so print_help never hits
-     * the ring-full blocking interlock: every byte that leaves the ring
-     * is popped by the paced drain below and counted, and the count
-     * must equal the documented framing length exactly. */
+     * the ring-full blocking interlock: the paced drain pops and counts
+     * every byte, and the count must equal the framing length exactly. */
     {
         static const epic_console_cmd_t t_small[] = {
             { "status", cmd_status, "st" },   /* 6 + 3 + 2 + 2 = 13 */
@@ -211,10 +179,8 @@ int main(void)
         ok = ok && (con1.line_len == 0u);
         ok = ok && (epic_serial_tx_pending() == 0);
 
-        /* (b) exact help framing through the real TX path. The output
-         * fits the ring exactly, so print_help never hits the blocking
-         * interlock: the ring must hold all 32 bytes afterwards and
-         * the paced drain must pop all 32. */
+        /* (b) Exact help framing through the real TX path: the ring
+         * must hold all 32 bytes and the paced drain pop all 32. */
         uint8_t expected = help_len(&con1);
         g_tx_pops = 0u;
         epic_console_print_help(&con1);
@@ -235,8 +201,7 @@ int main(void)
     /* Phase 2: realistic table whose framed output (74 bytes) exceeds
      * the ring size, exercising the ring-full blocking interlock inside
      * epic_serial_write; verify the ring never wedges and the paced
-     * drain empties it completely. The uart1io capture shows all four
-     * lines. */
+     * drain empties it. */
     {
         static const epic_console_cmd_t table[] = {
             { "status", cmd_status, "show status" },

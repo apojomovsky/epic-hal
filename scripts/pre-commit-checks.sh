@@ -1,21 +1,14 @@
 #!/usr/bin/env bash
-# scripts/pre-commit-checks.sh, the actual pre-commit logic. Installed into
-# .git/hooks/pre-commit by scripts/install-git-hooks.sh (see scripts/README.md
-# for what each check does and why clang-format is not one of them yet).
+# The pre-commit checks: trailing whitespace/newline, em-dashes on added
+# lines, cppcheck on staged .c files, stray root-level files. Installed into
+# .git/hooks/pre-commit by scripts/install-git-hooks.sh; see scripts/README.md
+# for what each check does and why.
 #
-# Every check here operates on staged content, not the working tree, except
-# the newline/whitespace fixer, which edits the working tree file in place
-# and then asks you to re-`git add` it (never silently changes what gets
-# committed without you seeing it). If you staged only part of a file with
-# `git add -p`, the fixer still touches the whole working-tree file; review
-# `git diff` before re-adding in that case.
-#
-# CI reuses this same script (see .github/workflows/host-tests.yml) against
-# an already-committed ref range instead of a staged index: a fresh CI
-# checkout has nothing staged, everything is already committed. Set
-# PRE_COMMIT_BASE_REF to the commit/ref to diff against (the PR base SHA, or
-# the previous commit on a push); when unset, behavior is unchanged from the
-# local staged-index hook.
+# Operates on staged content, except the whitespace fixer, which edits the
+# working-tree file in place and asks you to re-`git add` it. CI reuses this
+# same script (ci.yml's host job) against a committed ref range: set
+# PRE_COMMIT_BASE_REF to the ref to diff against; unset = local staged-index
+# hook.
 
 set -u
 fail=0
@@ -186,6 +179,25 @@ emdash_check() {
 # headers and cross-module headers are not always on the include path this
 # script builds); it does not stop cppcheck from analyzing the function
 # bodies it can see.
+#
+# nullPointerRedundantCheck and the third-party syntaxError are suppressed
+# because cppcheck 2.19+ (newer than CI's 2.13) reports them as false
+# positives: the CHECK(ptr != NULL) macro pattern trips the redundant-null
+# check, and the vendored m-stack mmc.h #error pattern that 2.13 classified
+# as preprocessorErrorDirective (suppressed below) is reclassified as
+# syntaxError, always inside third_party/ paths this repo does not own.
+#
+# -D'__at(x)=': XC8's __at(addr) placement attribute (direct in epic-math's
+# pic16 backends, via EPIC_PLACE/..._PLACE macros in the target platform
+# headers elsewhere) is not C99; cppcheck 2.19 fails on it, cppcheck 2.13
+# did not. The hook analyzes code the way the host build compiles it, and
+# the host build never places anything, so the empty define is the correct
+# host semantics, not a lie to the analyzer.
+#
+# The include list is sorted so each HAL's include/host precedes its
+# include/target: header resolution then matches the host build (target
+# headers carry the XC8 placement macros the host never sees), which keeps
+# EPIC_PLACE-style macros from expanding to __at inside cppcheck.
 
 cppcheck_check() {
     command -v cppcheck >/dev/null 2>&1 || {
@@ -203,7 +215,7 @@ cppcheck_check() {
     local includes=()
     while IFS= read -r d; do
         includes+=(-I "$d")
-    done < <(find . -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null)
+    done < <(find . -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort)
 
     # --suppress=preprocessorErrorDirective: a #error in #ifndef <build-define>
     # is a common vendored pattern (e.g. m-stack's mmc.h requires the
@@ -215,6 +227,9 @@ cppcheck_check() {
         --suppress=missingInclude --suppress=missingIncludeSystem \
         --suppress=unmatchedSuppression \
         --suppress=preprocessorErrorDirective \
+        --suppress=nullPointerRedundantCheck \
+        --suppress=syntaxError:*/third_party/* \
+        -D'__at(x)=' \
         --quiet "${includes[@]}" "${c_files[@]}"; then
         echo "pre-commit: cppcheck found issues in the files above."
         fail=1

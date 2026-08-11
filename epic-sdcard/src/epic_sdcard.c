@@ -1,9 +1,6 @@
-/**
- * @file    epic_sdcard.c
- * @brief   Binds M-Stack's mmc.c to this repo's SSP/GPIO HAL and
- *          epic-tick: SPI byte transfer, CS control, clock-speed
- *          selection, and timeout timing, against one owned mmc_card.
- */
+/** Binds M-Stack's mmc.c to this repo's SSP/GPIO HAL and epic-tick: SPI
+ *  byte transfer, CS control, clock-speed selection, and timeout timing,
+ *  against one owned mmc_card. */
 
 #include "epic_sdcard.h"
 #include "epic_hal.h"
@@ -18,7 +15,7 @@ static uint32_t           g_fosc_hz;
 static uint32_t           g_timer_start_tick;
 static uint16_t           g_timer_timeout_ms;
 
-/* ---- SPI byte-level primitive ---- */
+/* SPI byte-level primitive */
 
 static uint8_t spi_byte(uint8_t out)
 {
@@ -34,7 +31,7 @@ static uint8_t spi_byte(uint8_t out)
     return EPIC_SSP_ReadByte();
 }
 
-/* ---- MMC_SPI_* callbacks (named in src/target/mmc_config.h) ---- */
+/* MMC_SPI_* callbacks, named in src/target/mmc_config.h */
 
 void epic_sdcard_spi_transfer(uint8_t instance, const uint8_t *out_buf,
                               uint8_t *in_buf, uint16_t len)
@@ -96,7 +93,7 @@ void epic_sdcard_spi_set_speed(uint8_t instance, uint32_t speed_hz)
     EPIC_SSP_Init(&h);
 }
 
-/* ---- MMC_TIMER_* callbacks: real wall-clock timeouts via epic-tick ---- */
+/* MMC_TIMER_* callbacks: real wall-clock timeouts via epic-tick */
 
 void epic_sdcard_timer_start(uint8_t instance, uint16_t timeout_ms)
 {
@@ -115,8 +112,6 @@ void epic_sdcard_timer_stop(uint8_t instance)
 {
     (void)instance;
 }
-
-/* ---- public API ---- */
 
 bool epic_sdcard_init(const epic_sdcard_pins_t *pins, uint32_t fosc_hz)
 {

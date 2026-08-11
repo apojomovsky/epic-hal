@@ -1,8 +1,7 @@
-/**
- * @file    example_serial.c
- * @brief   epic-serial host smoke test: RX ring fills from injected bytes
- *          via the family sim's `*_sim_drive_usart_rx`, and TX drains
- *          through `epic_dispatch_all_irqs` into a captured TXREG.
+/*
+ * epic-serial host smoke test: RX ring fills from injected bytes via the
+ * family sim's *_sim_drive_usart_rx, and TX drains through
+ * epic_dispatch_all_irqs into a captured TXREG.
  */
 
 #include "epic_serial.h"
@@ -27,7 +26,7 @@ int main(void)
     epic_harness_init(1000000UL);
     epic_serial_init(FOSC_HZ_, 9600u);
 
-    /* ---- RX: inject "Hi", read it back ---- */
+    /* RX: inject "Hi", read it back. */
     SIM_RX('H');
     SIM_RX('i');
     CHECK(epic_serial_available() == 2, "rx available=2");
@@ -36,7 +35,7 @@ int main(void)
     CHECK(n == 2 && r[0] == 'H' && r[1] == 'i', "rx bytes == Hi");
     CHECK(epic_serial_available() == 0, "rx ring drained");
 
-    /* ---- TX: enqueue "Ok", drain via the IRQ dispatch, capture TXREG ---- */
+    /* TX: enqueue "Ok", drain via the IRQ dispatch, capture TXREG. */
     epic_serial_write((const uint8_t *)"Ok", 2);
     CHECK(epic_serial_tx_pending() == 2, "tx enqueued=2");
     epic_harness_tick();                 /* sim_step_usart sets TXIF */

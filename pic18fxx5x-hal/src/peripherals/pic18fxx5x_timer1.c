@@ -1,6 +1,5 @@
-/**
- * @file    pic18fxx5x_timer1.c
- * @brief   Timer1 driver, implementation (DS39632E §12.0, Register 12-1).
+/*
+ * Timer1 driver, implementation (DS39632E §12.0, Register 12-1).
  */
 
 #include "peripherals/pic18fxx5x_timer1.h"
@@ -10,10 +9,9 @@
  *   00 -> 1:1, 01 -> 1:2, 10 -> 1:4, 11 -> 1:8 */
 static const uint16_t ps_ratio[4] = { 1, 2, 4, 8 };
 
-/** Per-handle storage. COPIES the caller's handle (the caller's
- *  `TIMER1_HandleTypeDef` is typically a stack-local that is out of scope by
- *  the time the ISR reads it back, so storing a pointer to it would dangle).
- *  The weak ISR reads from this owned copy. */
+/** Per-handle storage. COPIES the caller's handle (typically a stack-local
+ *  out of scope by the time the ISR reads it back; storing a pointer would
+ *  dangle). The weak ISR reads from this owned copy. */
 static TIMER1_HandleTypeDef g_t1_storage;
 static const TIMER1_HandleTypeDef *g_t1_handle = NULL;
 

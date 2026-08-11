@@ -1,13 +1,9 @@
 /**
- * @file    peripherals/pic16f193x_usart.h
- * @brief   PIC16F193X EUSART driver, asynchronous 8-bit mode only this
- *          phase (9-bit, auto-baud, synchronous deferred, see the
- *          plan's Non-goals; auto-baud specifically due to a real
- *          DS80000479 SPBRG errata, not convenience).
- *
- * @details
- *   Source: DS41364B §23.0, Registers 23-2/23-3/23-4. API shape
- *   mirrors pic16f87xa_usart.h. Full reference: MANUAL.md.
+ * PIC16F193X EUSART driver (DS41364B §23.0, Registers 23-2/23-3/23-4),
+ * asynchronous 8-bit mode only this phase (9-bit, auto-baud, synchronous
+ * deferred; auto-baud specifically due to a real DS80000479 SPBRG
+ * errata, not convenience). API shape mirrors pic16f87xa_usart.h. Full
+ * reference: MANUAL.md.
  */
 #ifndef PIC16F193X_USART_H
 #define PIC16F193X_USART_H

@@ -1,8 +1,7 @@
-/**
- * @file    test_mul.c
- * @brief   Host tests for `pic_math_mul_u8` (exhaustive over all 256x256
- *          pairs) and `_u16`/`_s16` (randomized plus boundary values)
- *          against native wider-integer arithmetic.
+/*
+ * Host tests for pic_math_mul_u8 (exhaustive over all 256x256 pairs)
+ * and _u16/_s16 (randomized plus boundary values) against native
+ * wider-integer arithmetic.
  */
 
 #include "pic_math.h"

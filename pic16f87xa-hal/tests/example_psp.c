@@ -1,13 +1,6 @@
-/**
- * @file    example_psp.c
- * @brief   Parallel Slave Port driver smoke test.
- *
- *   Verifies that EPIC_PSP_Enable() sets TRISE<PSPMODE> and that
- *   the buffer flag helpers return 0 before any external transfer.
- *
- *   Note: requires a 40/44-pin part (compile-time check in the
- *   driver).  The example_psp target is only built for those parts.
- */
+/* Parallel Slave Port driver smoke test: EPIC_PSP_Enable sets
+ * TRISE<PSPMODE>, the buffer-flag helpers read 0 before any external
+ * transfer. 40/44-pin only (compile-time check in the driver). */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sim.h"

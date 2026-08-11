@@ -1,8 +1,4 @@
-/**
- * @file    pic16f193x_ssp.c
- * @brief   PIC16F193X MSSP driver implementation, SPI master only
- *          (DS41364B MSSP chapter).
- */
+/** PIC16F193X MSSP driver implementation, SPI master only (DS41364B MSSP chapter). */
 
 #include "peripherals/pic16f193x_ssp.h"
 #include "core/pic16f193x_irq.h"

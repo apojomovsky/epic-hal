@@ -1,12 +1,11 @@
-/**
- * @file    pic_math.h
- * @brief   Family-agnostic fixed-point math utility library for 8-bit
- *          PICs, ported from AN526/AN544 into a stateless API (everything
- *          by value/pointer, no fixed operand addresses, explicit RNG
- *          state). One neutral public API; a portable-C host backend, a
- *          PIC16 inline-asm backend, and a PIC18 inline-asm backend
- *          (exploiting hardware `MULWF` the app notes' chips lacked) sit
- *          behind it. See docs/ARCHITECTURE.md for the backend split.
+/*
+ * Family-agnostic fixed-point math utility library for 8-bit PICs,
+ * ported from AN526/AN544 into a stateless API (everything by
+ * value/pointer, no fixed operand addresses, explicit RNG state). One
+ * neutral public API; a portable-C host backend, a PIC16 inline-asm
+ * backend, and a PIC18 inline-asm backend (exploiting hardware MULWF the
+ * app notes' chips lacked) sit behind it. See docs/ARCHITECTURE.md for
+ * the backend split.
  */
 
 #ifndef PIC_MATH_H
@@ -14,8 +13,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
-/* ─── configuration ────────────────────────────────────────────── */
 
 /**
  * @brief  PIC16 8x8 multiply code-size vs speed trade-off: default 1
@@ -25,8 +22,6 @@
 #ifndef PIC_MATH_OPTIMIZE_FOR_SIZE
 #define PIC_MATH_OPTIMIZE_FOR_SIZE 1
 #endif
-
-/* ─── multiply ─────────────────────────────────────────────────── */
 
 /**
  * @brief  8x8 -> 16 unsigned multiply.
@@ -43,7 +38,7 @@ uint16_t pic_math_mul_u8(uint8_t a, uint8_t b);
 
 /**
  * @brief  16x16 -> 32 unsigned multiply.
- * @return a*b as a 32-bit value. PIC18 builds this from three 8x8 partial
+ * @return a*b as a 32-bit value. PIC18 builds this from four 8x8 partial
  *         products via `MULWF`; PIC16 uses AN526's 16x16 shift-add.
  */
 uint32_t pic_math_mul_u16(uint16_t a, uint16_t b);
@@ -55,12 +50,13 @@ uint32_t pic_math_mul_u16(uint16_t a, uint16_t b);
  */
 int32_t  pic_math_mul_s16(int16_t a, int16_t b);
 
-/* ─── divide / modulo ─────────────────────────────────────────────
- * `ok` is set false and the result fields are zeroed on divide-by-zero,
- * instead of AN526/AN544's documented "produces incorrect results, caller
- * must ensure denominator != 0" behavior. A NULL `ok` pointer is allowed:
- * the divide-by-zero check still runs, the result is still zeroed, but no
- * flag is written back. */
+/*
+ * Divide/modulo: `ok` is set false and the result fields are zeroed on
+ * divide-by-zero, instead of AN526/AN544's documented "produces incorrect
+ * results, caller must ensure denominator != 0" behavior. A NULL `ok`
+ * pointer is allowed: the divide-by-zero check still runs, the result is
+ * still zeroed, but no flag is written back.
+ */
 
 /** Unsigned 16/16 quotient+remainder. */
 typedef struct { uint16_t quotient, remainder; } pic_math_udiv16_t;
@@ -93,7 +89,9 @@ pic_math_sdiv16_t pic_math_divmod_s16(int16_t  num, int16_t  den, bool *ok);
  */
 pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok);
 
-/* ─── add / sub / negate, with explicit carry/borrow out ───────── */
+/*
+ * Add/sub/negate with explicit carry/borrow out.
+ */
 
 /**
  * @brief  16-bit unsigned add with carry out.
@@ -115,11 +113,12 @@ int16_t  pic_math_negate_s16(int16_t v);
 /** @brief 32-bit two's-complement negate (INT32_MIN negates to itself). */
 int32_t  pic_math_negate_s32(int32_t v);
 
-/* ─── BCD ─────────────────────────────────────────────────────────
- * "16"/"8" name the *binary* width; BCD width follows (5 digits / 2
+/*
+ * BCD: "16"/"8" name the *binary* width; BCD width follows (5 digits / 2
  * digits). BCD values are packed BCD (one nibble per digit), not ASCII --
  * e.g. the decimal value 42 is the byte 0x42, and 9999 is 0x009999 packed
- * into the low 3 nibbles of a uint32_t. */
+ * into the low 3 nibbles of a uint32_t.
+ */
 
 /**
  * @brief  5-digit packed BCD (0x00000..0x99999) -> binary, returned as
@@ -160,7 +159,10 @@ uint8_t  pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out);
  */
 uint8_t  pic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out);
 
-/* ─── built on the above; portable C, one implementation ────────── */
+/*
+ * Built on the above; portable C, one implementation shared by every
+ * backend.
+ */
 
 /** @brief floor(sqrt(value)) for 0..65535, via 16-bit Newton-Raphson on
  *        the division primitive (as AN544 does -- sqrt calls div, not asm). */
@@ -190,10 +192,12 @@ int32_t pic_math_integrate_simpson38(int16_t f0, int16_t f1, int16_t f2,
                                      int16_t f3,
                                      int32_t three_h_over_8_q16);
 
-/* ─── RNGs: explicit state, reentrant, no hidden global ───────────
- * The LFSR never gets stuck at the all-zero state it could not otherwise
- * recover from: a zero `*state` is mapped to the LFSR's documented nonzero
- * seed on the first call, so the period is the full 2^16-1 sequence. */
+/*
+ * RNGs: explicit state, reentrant, no hidden global. The LFSR never gets
+ * stuck at the all-zero state it could not otherwise recover from: a zero
+ * *state is mapped to the LFSR's documented nonzero seed on the first
+ * call, so the period is the full 2^16-1 sequence.
+ */
 
 /**
  * @brief  16-bit maximal-length LFSR pseudo-random step.

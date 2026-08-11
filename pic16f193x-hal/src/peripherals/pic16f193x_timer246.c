@@ -1,13 +1,10 @@
 /**
- * @file    pic16f193x_timer246.c
- * @brief   Timer2/Timer4/Timer6 driver, implementation (DS41364B section 17.0).
- *
- * @details
- *   One driver, three instances. Every macro below branches on `inst`
- *   before touching any SFR, so each branch's own register access is a
- *   literal PIC_REG_* token, mirroring pic18fxx5x_ccp.c's CCP_WRITE_*
- *   and CCP_READ_* shape (docs/adding-a-device.md section 4.8's
- *   proven pattern for runtime-selected-instance dispatch).
+ * Timer2/Timer4/Timer6 driver, implementation (DS41364B §17.0). One
+ * driver, three instances. Every macro below branches on `inst` before
+ * touching any SFR, so each branch's own register access is a literal
+ * PIC_REG_* token, mirroring pic18fxx5x_ccp.c's CCP_WRITE_* and
+ * CCP_READ_* shape (docs/adding-a-device.md §4.8's proven pattern for
+ * runtime-selected-instance dispatch).
  */
 
 #include "peripherals/pic16f193x_timer246.h"
@@ -182,10 +179,9 @@ EPIC_StatusTypeDef EPIC_TIMER246_Start(const TIMER246_HandleTypeDef *h)
      * T*CKPS<1:0> -> bits 1:0. */
     uint8_t v = 0U;
     v |= (uint8_t)((h->Postscaler & 0xFU) << 3);
-    v |= (uint8_t)(1U << 2);              /* TMR*ON. Same bit (2) on all
-                                            * three registers, so this
-                                            * literal is safe without an
-                                            * instance branch. */
+    v |= (uint8_t)(1U << 2);              /* TMR*ON; bit 2 on all
+                                            * three registers, so no
+                                            * instance branch needed. */
     v |= (uint8_t)(h->Prescaler & 0x3U);
     TIMER246_WRITE_CON(h->Instance, v);
 

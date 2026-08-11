@@ -1,19 +1,16 @@
 /**
- * @file    example_gpio.c
- * @brief   GPIO + interrupt-on-change host-sim smoke test.
+ * GPIO + interrupt-on-change host-sim smoke test. Host-only: drives the
+ * simulator directly (pic16f193x_sim_*), so it is not in the XC8
+ * Makefile's APP_SOURCES. Exercises the LAT/ANSEL/TRIS write path, the
+ * PORTx read path, and the PORTB interrupt-on-change (IOCBP/IOCBN/
+ * IOCBF/IOCIF) plumbing.
  *
- * @details
- *   Host-only: drives the simulator directly (pic16f193x_sim_*), so it
- *   is not in the XC8 Makefile's APP_SOURCES. Exercises the
- *   LAT/ANSEL/TRIS write path, the PORTx read path, and the PORTB
- *   interrupt-on-change (IOCBP/IOCBN/IOCBF/IOCIF) plumbing.
- *
- *   Expected register image (host sim, after init):
- *     RB0 output, ANSELB<0>=0, TRISB<0>=0, LATB<0> follows writes
- *     RB1 input,  ANSELB<1>=0, TRISB<1>=1, PORTB<1> follows drive_input
- *     RB2 IOC positive-edge: IOCBP<2>=1, IOCIE=1, GIE=1
- *   A rising edge on RB2 sets IOCBF<2> + IOCIF, the IOC_IRQHandler fires
- *   the registered callback with iocbf=0x04, and the test passes.
+ * Expected register image (host sim, after init):
+ *   RB0 output, ANSELB<0>=0, TRISB<0>=0, LATB<0> follows writes
+ *   RB1 input,  ANSELB<1>=0, TRISB<1>=1, PORTB<1> follows drive_input
+ *   RB2 IOC positive-edge: IOCBP<2>=1, IOCIE=1, GIE=1
+ * A rising edge on RB2 sets IOCBF<2> + IOCIF, the IOC_IRQHandler fires
+ * the registered callback with iocbf=0x04, and the test passes.
  */
 
 #include "pic16f193x.h"

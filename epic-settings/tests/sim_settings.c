@@ -1,53 +1,20 @@
 /**
- * @file    sim_settings.c
- * @brief   Bounded, self-reporting HARNESS=sim build: epic-settings'
- *          first-ever real `mdb` gate. Saves a known settings blob
- *          through the real compiled epic_settings.c, reads it back
- *          and verifies both the payload and the CRC-16 validation
- *          result, corrupts one stored byte via a direct HAL EEPROM
- *          write, and verifies the next load detects the corruption
- *          and falls back to (and persists) defaults. Reports
- *          PASS/FAIL over the target's real hardware USART the same
- *          way every other family's own `.sim` variant does (see
- *          pic18fxx5x-hal/src/core/pic18_harness_sim_target.c).
+ * Bounded, self-reporting HARNESS=sim build (epic-settings' `mdb` gate):
+ * saves a known blob through the real compiled epic_settings.c, verifies
+ * payload and CRC on load, corrupts one stored byte via a direct HAL EEPROM
+ * write, verifies the next load detects it and falls back to (and persists)
+ * defaults. Reports PASS/FAIL over the harness USART (see
+ * pic18_harness_sim_target.c).
  *
- * @details
- *   The module is stateless (a blob is just (eeprom_addr, size, data)
- *   passed explicitly, see epic_settings.h), so "reset" is a fresh
- *   read of the stored region: after the save, every subsequent load
- *   re-reads EEPROM from scratch, exactly the path a power-cycle
- *   would take.
+ * EEPROM is real device state under MPLAB SIM, so the actual hardware path
+ * is exercised. Simulator limitation: a CPU-executed EEPROM write never
+ * completes (WR held set, EEIF never raised), so scripts/sim-mdb-run.sh
+ * (EEPROM_WRITES=24) halts at each stalled write, replays the EECON2
+ * unlock, and resumes. This scenario makes exactly 19 writes; keep
+ * EEPROM_WRITES >= 19 if the scenario changes.
  *
- *   EEPROM is real device state under MPLAB SIM (the 18F4550's 256
- *   bytes are part of the simulated die), so the write/readback here
- *   exercises the actual EEPROM hardware path, not a host array:
- *   `epic_settings_save` sequences byte writes through
- *   EPIC_EEPROM_WriteByte and waits on EEIF, and the corruption is a
- *   direct EPIC_EEPROM_WriteByte through the HAL's literal-token
- *   path. No MPLAB SIM RX injection needed (same constraint
- *   documented in epic-swuart's sim build): the gate is entirely
- *   TX-of-record / internal-state.
- *
- *   One MPLAB SIM limitation this gate works around, verified by hand
- *   against both PIC18F4550 and PIC16F877A (MPLAB X 6.35): the
- *   simulator never completes a CPU-executed data-EEPROM write cycle.
- *   After the firmware sets EECON1<WR>, the simulator holds WR set
- *   forever and never raises EEIF, so any firmware that blocks on
- *   EEIF hangs (the EEPROM *read* path, RD strobe into EEDATA, works,
- *   and mdb `write` commands do complete writes). The gate runner
- *   (scripts/sim-mdb-run.sh, EEPROM_WRITES=24) compensates by halting
- *   the firmware at each stalled write, clearing WR, replaying the
- *   EECON2 unlock, re-asserting WR, and resuming; the simulator then
- *   completes the write from the firmware's own EEDATA/EEADR. This
- *   scenario performs exactly 19 EEPROM writes (6 payload+CRC bytes of
- *   the first save, 1 corruption byte, 6 of the persisted-default
- *   save, 6 of the blank-region default save); keep EEPROM_WRITES >=
- *   19 if the scenario below changes.
- *
- *   Distinct from `tests/test_settings.c` (the host unit tests over
- *   the pic18fxx5x sim backend) and `mcu/target_sizecheck.c` (the
- *   real-target footprint build, an unbounded loop with no harness
- *   dependency).
+ * Distinct from tests/test_settings.c (host unit tests over the sim
+ * backend) and mcu/target_sizecheck.c (real-target footprint build).
  */
 #include "epic_settings.h"
 #include "core/epic_harness.h"
@@ -55,13 +22,11 @@
 
 #include <string.h>
 
-/** Loop-iteration bound, not a real time unit (see core/epic_harness.h).
- *  On target `epic_harness_tick` is a no-op, so this loop only paces
- *  the run; 1000 iterations is a rounding error next to the UART
- *  report, comfortably inside the 5000 ms wait_ms budget. */
+/** Loop-iteration bound, not a real time unit (see core/epic_harness.h);
+ *  on target `epic_harness_tick` is a no-op, so this only paces the run. */
 #define SIM_ITERATIONS 1000UL
 
-/* 4-byte payload + 2-byte CRC-16 trailer = 6 bytes of EEPROM. All
+/* 4-byte payload + 2-byte CRC-16 trailer = 6 bytes of EEPROM; all
  * uint8_t members so the layout is explicit on the target. */
 typedef struct {
     uint8_t mode;
@@ -171,12 +136,9 @@ int main(void)
                         : "settings sim: sequence failed\n");
     (void)epic_harness_report(ok);
 
-    /* NEVER return: on a real target the firmware runs forever, and
-     * under MPLAB SIM a return would fall through to the reset vector
-     * and RE-RUN the sequence. The checks are deliberately stateful
-     * (pass 1 corrupts a stored byte), so a re-run would report the
-     * corruption as a failure. An idle loop keeps the gate single-pass
-     * no matter how long the runner lets the target run. */
+    /* NEVER return: under MPLAB SIM a return re-runs main, and pass 1
+     * corrupts a stored byte, so a re-run would report a false failure.
+     * Idle instead, keeping the gate single-pass. */
     for (;;) {
         epic_harness_tick();
     }

@@ -1,15 +1,12 @@
 /**
- * @file    pic16f193x_timer0.c
- * @brief   Timer0 driver, implementation (DS41364B §15.0).
- *
- * @details
- *   OPTION_REG (Register 2-2) holds T0CS/T0SE/PSA/PS<2:0>; TMR0 is at
- *   0x15. XC8 auto-banks both (TMR0 in bank 0, OPTION_REG in bank 1) on
- *   this core, so every access is a plain literal `PIC_REG_*` write. The
- *   handle is copied into owned static storage in EPIC_TIMER0_Init (the
- *   caller's handle is typically a stack local that is gone by the time
- *   the ISR reads it back; storing a pointer would dangle, the same
- *   fix as the classic family's dangling-pointer finding).
+ * Timer0 driver, implementation (DS41364B §15.0). OPTION_REG (Register
+ * 2-2) holds T0CS/T0SE/PSA/PS<2:0>; TMR0 is at 0x15. XC8 auto-banks
+ * both (TMR0 in bank 0, OPTION_REG in bank 1) on this core, so every
+ * access is a plain literal `PIC_REG_*` write. The handle is copied
+ * into owned static storage in EPIC_TIMER0_Init (the caller's handle is
+ * typically a stack local that is gone by the time the ISR reads it
+ * back; storing a pointer would dangle, the same fix as the classic
+ * family's dangling-pointer finding).
  */
 
 #include "peripherals/pic16f193x_timer0.h"
@@ -103,10 +100,6 @@ uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)
     if ((unsigned)p > 7U) return 1U;
     return ps_ratio[p];
 }
-
-/* ------------------------------------------------------------------ */
-/* Interrupt entry point                                               */
-/* ------------------------------------------------------------------ */
 
 void TIMER0_IRQHandler(void)
 {

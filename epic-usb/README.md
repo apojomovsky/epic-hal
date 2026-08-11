@@ -22,12 +22,7 @@ vendored M-Stack USB device stack (`third_party/m-stack`).
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md), why this module breaks the
-  family-agnostic pattern, the host-build boundary, ring-buffer design,
-  polling vs interrupts.
 - [API reference](docs/API.md), per-function semantics + usage.
-- [Implementation plan](../docs/epic-usb-plan.md), M-Stack vendoring
-  rationale, the `usb_hal.h` port, Phase 2 XC8 findings, open risks.
 
 ## Quick start
 

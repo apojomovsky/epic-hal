@@ -1,7 +1,6 @@
 /**
- * @file    test_fsm.c
- * @brief   Unit tests for epic-fsm; exercises the exact fsm.c that ships
- *          on-target (no per-family variant, no test-framework dependency).
+ * Unit tests for epic-fsm; exercises the exact fsm.c that ships on-target
+ * (no per-family variant, no test-framework dependency).
  */
 
 #include <stdio.h>
@@ -71,8 +70,6 @@ static void test_any_state_wildcard(void)
     light_ctx_t ctx = { 0, 0 };
     fsm_t fsm;
 
-    /* Fault fires from every state, including one never reached by TIMER
-     * alone (drive to GREEN first, then fault from there). */
     FSM_INIT(&fsm, light_transitions, ST_RED, &ctx);
     CHECK(fsm_dispatch(&fsm, EV_FAULT) == true, "FAULT fires from RED");
     CHECK(fsm_state(&fsm) == ST_FAULT, "RED+FAULT -> FAULT");
@@ -164,9 +161,7 @@ static void test_guard_fallthrough(void)
     CHECK(fsm_state(&fsm) == ST_LOCKED, "PUSH -> LOCKED");
 }
 
-/* ------------------------------------------------------------------ */
-/* Multiple instances sharing one table must never interfere.          */
-/* ------------------------------------------------------------------ */
+/* Multiple instances sharing one table must never interfere. */
 
 static void test_independent_instances(void)
 {
@@ -186,9 +181,7 @@ static void test_independent_instances(void)
     CHECK(fsm_state(&fsm_a) == ST_GREEN, "instance A untouched by B's dispatch");
 }
 
-/* ------------------------------------------------------------------ */
-/* FSM_INIT's sizeof/sizeof table_len computation.                     */
-/* ------------------------------------------------------------------ */
+/* FSM_INIT's sizeof/sizeof table_len computation. */
 
 static void test_fsm_init_table_len(void)
 {

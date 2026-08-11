@@ -13,9 +13,10 @@ HALs. All three implement a shared API contract from epic-common: same
 function names and signatures, family-specific register bodies
 underneath. Applications written against the shared API are portable
 across families at build time (include-path swap), not source time.
-The contract design and the procedure for adding a new family are
-documented in
-[docs/multi-family-plan.md](../docs/multi-family-plan.md) and
+The contract design is documented in
+[epic-common/README.md](../epic-common/README.md) +
+[epic-common/MANUAL.md](../epic-common/MANUAL.md), and the procedure
+for adding a new family in
 [docs/adding-a-device.md](../docs/adding-a-device.md).
 
 ## Status
@@ -109,7 +110,8 @@ source compiles unchanged in both builds.
   [**../epic-common/MANUAL.md**](../epic-common/MANUAL.md): the shared
   contract every family implements (status codes, harness, interrupt
   model, naming conventions).
-- [**../docs/multi-family-plan.md**](../docs/multi-family-plan.md): the
-  fixed contract design and how families interoperate.
+- [**../epic-common/README.md**](../epic-common/README.md) +
+  [**../epic-common/MANUAL.md**](../epic-common/MANUAL.md): the fixed
+  contract design and how families interoperate.
 - [**../docs/adding-a-device.md**](../docs/adding-a-device.md): the
   verification-gated playbook for adding a new device or family.

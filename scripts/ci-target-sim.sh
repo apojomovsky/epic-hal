@@ -1,35 +1,14 @@
 #!/usr/bin/env bash
-# MPLAB SIM (mdb) run loop for ci.yml's "target" job: the original 3
-# entries the old sim-tests.yml matrixed (one per family) plus
-# epic-swuart's own real mdb gate (docs/superpowers/plans/2026-08-07-
-# swuart-v3.md Task 8), now a plain loop calling scripts/sim-mdb-run.sh,
-# the exact script scripts/sim-test-local.sh also calls for a local
-# repro, so CI and a local run go through one source of truth. wait_ms
-# values are wall-clock budgets under MPLAB SIM (MPLAB SIM runs
-# noticeably slower than real-time). Most gates run at 5000; the three
-# slower scenarios were measured 2026-08-11 (floors: epic-serial ~4s,
-# epic-swuart ~8s, 193X firmware ~25s locally) and set with margin:
-# epic-serial 10000, epic-swuart 15000. The 193X firmware gate stays at
-# 60000: its 40000 budget flaked once in CI (2026-08-11), so the
-# proven-safe value wins over the measured floor.
+# MPLAB SIM (mdb) run loop for ci.yml's "target" job and `make target-ci`:
+# a plain loop over scripts/sim-mdb-run.sh, the same script sim-test-local.sh
+# uses. wait_ms budgets are wall-clock (MPLAB SIM runs slower than real
+# time). Does not stop at the first failure; exits 1 if anything failed.
 #
 # Usage: ci-target-sim.sh [summary.md]
-#
-# Does not stop at the first failure. Exits 1 if anything failed.
-#
-# REPEAT=N runs every gate N times (default 1); any failed run fails
-# the gate, and the summary records "PASS (n/N)" or "FAIL (n/N)". This
-# is the flake-hardening harness (quality task 10): a flake-hunt is
-# `REPEAT=5 bash scripts/ci-target-sim.sh`, and the workflow_dispatch
-# CI job drives the same command without slowing the PR target job.
-#
-# FAMILY=<pic16f87xa|pic18fxx5x|pic16f193x> runs only that family's
-# gates (the sharded CI jobs); unset runs everything.
-#
-# PARALLEL=N (default 1) runs N gates concurrently. The runner has 2
-# cores and each mdb session is single-threaded; sim-mdb-run.sh's temp
-# files are PID-suffixed so concurrent same-family gates do not
-# collide.
+#   REPEAT=N   run every gate N times (default 1); any failed run fails the
+#              gate, summary records "PASS (n/N)"
+#   FAMILY=<pic16f87xa|pic18fxx5x|pic16f193x> only that family (sharded CI);
+#   PARALLEL=N concurrent gates (sim-mdb-run.sh temps are PID-suffixed)
 
 set -uo pipefail
 

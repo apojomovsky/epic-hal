@@ -15,8 +15,6 @@ The non-blocking serial layer STM32Cube's `HAL_UART_Transmit_DMA`/
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md), ISR install via callbacks, demand-driven
-  TX, the family branch, host testing.
 - [API reference](docs/API.md), per-function semantics + usage.
 
 ## Quick start

@@ -1,12 +1,8 @@
-/**
- * @file    example_timer3.c
- * @brief   End-to-end smoke test for the PIC18 Timer3 driver on the host sim.
- *
- * @details
- *   Timer3 is a 16-bit counter clocked from Fosc/4 with a 1:8 prescaler.
- *   Expected: TMR3IF (PIR2<1>) fires every 65 536 x 8 = 524 288 instruction
- *   cycles; the test counts overflows. One source builds for host sim and
- *   XC8 target with no `#ifdef`.
+/*
+ * End-to-end smoke test for the PIC18 Timer3 driver on the host sim:
+ * 16-bit counter at Fosc/4 with a 1:8 prescaler, TMR3IF (PIR2<1>) fires
+ * every 524288 instruction cycles; overflow count checked. One source
+ * builds for host sim and XC8 target.
  */
 
 #include "epic_hal.h"

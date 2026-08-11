@@ -1,17 +1,13 @@
 /**
- * @file    example_eusart.c
- * @brief   EUSART smoke test: init at a known baud, transmit one byte,
- *          confirm control-register state. The §4 gate payload.
+ * EUSART smoke test: init at a known baud, transmit one byte, confirm
+ * control-register state. FOSC=32MHz, BRGH=1 (divisor 16), target 9600
+ * baud: SPBRG = (32000000 / (16*9600)) - 1 = 207 (0xCF).
  *
- * @details
- *   FOSC=32MHz, BRGH=1 (divisor 16), target 9600 baud:
- *     SPBRG = (32000000 / (16*9600)) - 1 = 207 (0xCF).
- *
- *   Expected register image (after init + one Transmit):
- *     TXSTA   = 0x26   (TXEN=1, BRGH=1, TRMT=1)
- *     RCSTA   = 0x90   (SPEN=1, CREN=1)
- *     SPBRGL  = 0xCF
- *     BAUDCON = 0x40   (RCIDL=1, read-only; driver writes 0 but RCIDL stays)
+ * Expected register image (after init + one Transmit):
+ *   TXSTA   = 0x26   (TXEN=1, BRGH=1, TRMT=1)
+ *   RCSTA   = 0x90   (SPEN=1, CREN=1)
+ *   SPBRGL  = 0xCF
+ *   BAUDCON = 0x40   (RCIDL=1, read-only; driver writes 0 but RCIDL stays)
  */
 
 #include "pic16f193x.h"

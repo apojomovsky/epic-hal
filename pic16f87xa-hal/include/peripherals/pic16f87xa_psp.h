@@ -1,14 +1,8 @@
-/**
- * @file    peripherals/pic16f87xa_psp.h
- * @brief   Parallel Slave Port driver (40/44-pin only).
- *
- * @details
- *   Source: DS39582B §4.5. Full reference: MANUAL.md §20. 40/44-pin
- *   only (PIC16F873A/876A have no PSP); gated by
- *   `PIC16F87XA_FAMILY_HAS_PSP`. Manages PSPMODE, IBF/OBF/IBOV flags,
- *   and the PSP interrupt; an external master drives CS/RD/WR on real
- *   silicon, the sim backend drives them via pic16f87xa_sim.h.
- */
+/* Parallel Slave Port driver, 40/44-pin only (PIC16F873A/876A have no
+ * PSP); gated by PIC16F87XA_FAMILY_HAS_PSP. Source: DS39582B §4.5;
+ * full reference: MANUAL.md §20. Manages PSPMODE, IBF/OBF/IBOV and the
+ * PSP interrupt; an external master drives CS/RD/WR on real silicon,
+ * the sim backend via pic16f87xa_sim.h. */
 
 #ifndef PIC16F87XA_PSP_H
 #define PIC16F87XA_PSP_H

@@ -1,12 +1,6 @@
-/**
- * @file    peripherals/pic16f87xa_usart.h
- * @brief   USART driver, async + sync master/slave.
- *
- * @details
- *   Source: DS39582B §10.0, §10.1 (BRG). Full reference: MANUAL.md
- *   §14. One USART instance on this family; async and sync
- *   master/slave, 8/9-bit data, address-detect mode via ADDEN.
- */
+/* USART driver, async + sync master/slave. Source: DS39582B §10.0,
+ * §10.1 (BRG); full reference: MANUAL.md §14. One USART instance on
+ * this family; 8/9-bit data, address-detect mode via ADDEN. */
 
 #ifndef PIC16F87XA_USART_H
 #define PIC16F87XA_USART_H
@@ -85,12 +79,12 @@ typedef struct {
     .RxCpltCallback = NULL,                                            \
 }
 
-/* ───────────────────────── init / deinit ────────────────────────── */
+/* init / deinit. */
 
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_USART_DeInit(void);
 
-/* ───────────────────────── transmit ──────────────────────────────── */
+/* transmit. */
 
 /**
  * @brief  Write one byte to TXREG. The write:
@@ -112,7 +106,7 @@ void EPIC_USART_SetTX9D(uint8_t bit9);
 /** Returns 1 if the TSR is empty (TRMT = 1). */
 uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);
 
-/* ───────────────────────── receive ──────────────────────────────── */
+/* receive. */
 
 /**
  * @brief  Read the latest byte from RCREG. Reading:
@@ -124,7 +118,7 @@ uint8_t EPIC_USART_Receive(void);
 /** Read RX9D, the 9th bit of the most recently received byte. */
 uint8_t EPIC_USART_GetRX9D(void);
 
-/* ───────────────────────── interrupts ───────────────────────────── */
+/* interrupts. */
 
 /** Weak USART RX ISR, override in user code. */
 void USART_RX_IRQHandler(void) EPIC_WEAK;

@@ -1,29 +1,18 @@
-/**
- * @file    pic16f87xa_sim.c
- * @brief   Host simulation backend for the PIC16F87XA HAL.
- *
- * @details
- *   Provides `pic16f87xa_sim_sfr[]`, the 512-byte memory-backed
- *   register file that the host SFR macros (in
- *   include/host/pic16f87xa_platform.h) dereference.  The peripheral models
- *   (Timer0/1/2, ADC, USART, MSSP, EEPROM, etc.) are listed in the
- *   functions below; the sim never bit-bangs external pins, the test
- *   rig drives and observes them through the public helpers in
- *   pic16f87xa_sim.h.
- */
+/* Host simulation backend for the PIC16F87XA HAL: provides the 512-byte
+ * memory-backed register file the host SFR macros dereference and the
+ * peripheral models (Timer0/1/2, ADC, USART, MSSP, EEPROM). The sim
+ * never bit-bangs external pins; the test rig drives and observes them
+ * through pic16f87xa_sim.h's helpers. */
 
 #include "pic16f87xa_sim.h"
 #include "pic16f87xa_sfr.h"
 #include <string.h>
 
-/* ───────────────────────── register file ────────────────────────── */
+/* register file. */
 
-/** SFR backing store. Indices match the datasheet register map (Bank 0
- *  occupies 0x00..0x1F, Bank 1 0x80..0x9F, etc.).
- *
- *  Defined as `extern` in pic16f87xa.h and provided here. The total size
- *  covers the EEPROM bank (Bank 2 = 0x100..0x11F) plus Bank 3 reserved.
- */
+/* SFR backing store; indices match the datasheet register map (Bank 0
+ * = 0x00..0x1F, Bank 1 = 0x80..0x9F, etc.). Size covers the EEPROM bank
+ * (Bank 2 = 0x100..0x11F) plus Bank 3 reserved. */
 uint8_t pic16f87xa_sim_sfr[0x200];
 
 /** Pin latch overrides set by the host application (per pin, A..E). */
@@ -39,7 +28,7 @@ static void sim_step_timer1(void);
 static void sim_step_timer2(void);
 static void sim_step_usart(void);
 
-/* ───────────────────────── GPIO model ───────────────────────────── */
+/* GPIO model. */
 
 /* Helper: read the latched value of port `port` (0=A..4=E) honoring
  * read-modify-write: writes only update the latch, reads return the pin
@@ -80,7 +69,7 @@ static uint8_t port_index(char port)
     }
 }
 
-/* ───────────────────────── public API ───────────────────────────── */
+/* public API. */
 
 void pic16f87xa_sim_reset(void)
 {
@@ -129,7 +118,7 @@ void pic16f87xa_sim_step(uint32_t ticks)
     }
 }
 
-/* ───────────────────────── Timer0 step ──────────────────────────── */
+/* Timer0 step. */
 
 static void sim_step_timer0(void)
 {
@@ -140,10 +129,8 @@ static void sim_step_timer0(void)
     uint8_t psa    = (option >> 3) & 0x01U;           /* PSA */
 
     static uint16_t t0_prescaler = 0U;
-    /* Prescaler assignment to WDT (psa=1) means Timer0 is stopped
-     * (T0CS=0 with no prescaler) or free-running from T0CKI (T0CS=1).
-     * PSA=1 assigns the prescaler to the WDT; TMR0 then runs with
-     * no prescaler.  The sim mirrors that. */
+    /* PSA=1 assigns the prescaler to the WDT; TMR0 then runs with no
+     * prescaler, so psa does not gate the counter here. */
     (void)psa;
 
     /* OPTION_REG<PS2:PS0> prescaler mapping (DS39582B §5.0, Table 5-1). */
@@ -163,7 +150,7 @@ static void sim_step_timer0(void)
     pic16f87xa_sim_sfr[PIC_REG_TMR0] = t0;
 }
 
-/* ───────────────────────── Timer1 step ──────────────────────────── */
+/* Timer1 step. */
 
 static void sim_step_timer1(void)
 {
@@ -177,12 +164,11 @@ static void sim_step_timer1(void)
      */
     uint8_t t1con = pic16f87xa_sim_sfr[PIC_REG_T1CON];
     if (!(t1con & 0x01U)) return;     /* TMR1ON = 0 → stopped. */
-    /* TMR1CS = 1 (external clock / T1OSC): the sim does not model a real
-     * external signal, so it advances the counter at the configured
-     * prescaler rate per instruction cycle. This lets T1OSC-based firmware
-     * (e.g. example_idle_blink) run on the host with the same Timer1
-     * configuration a real target uses. The 32 kHz crystal's actual rate is
-     * not reproduced; only the overflow/IRQ plumbing is exercised. */
+    /* TMR1CS = 1 (external / T1OSC): the sim does not model a real
+     * signal, so it advances at the configured prescaler rate per
+     * instruction cycle. T1OSC firmware (example_idle_blink) then runs
+     * on the host; the 32 kHz rate itself is not reproduced, only the
+     * overflow/IRQ plumbing. */
 
     static const uint8_t ps_idx[4] = {1, 2, 4, 8};
     uint32_t rate = ps_idx[(t1con >> 4) & 0x3U];
@@ -206,7 +192,7 @@ static void sim_step_timer1(void)
     }
 }
 
-/* ───────────────────────── Timer2 step ──────────────────────────── */
+/* Timer2 step. */
 
 static void sim_step_timer2(void)
 {
@@ -253,15 +239,14 @@ static void sim_step_timer2(void)
     pic16f87xa_sim_sfr[PIC_REG_TMR2] = t2;
 }
 
-/* ───────────────────────── USART step ───────────────────────────── */
+/* USART step. */
 
 static void sim_step_usart(void)
 {
-    /* Re-assert TXIF every cycle when TXEN is set.  TXIF is
-     * cleared by the user writing TXREG (see EPIC_USART_Transmit);
-     * this step brings it back high to model the instantaneous
-     * transmit completion.  RCIF is set by the host application
-     * through pic16f87xa_sim_drive_usart_rx(). */
+    /* Re-assert TXIF every cycle when TXEN is set: writing TXREG clears
+     * it (EPIC_USART_Transmit), and this step models the instantaneous
+     * transmit completion. RCIF is set by
+     * pic16f87xa_sim_drive_usart_rx(). */
     uint8_t txsta = EPIC_REG8(PIC_REG_TXSTA);
     if (txsta & PIC_TXSTA_TXEN) {
         EPIC_REG8(0x0CU) |= 0x10U;     /* PIR1<TXIF> */
@@ -277,10 +262,9 @@ void pic16f87xa_sim_drive_input(char port, uint8_t pin, uint8_t level)
     if (level) sim_input_value[idx] |= mask;
     else       sim_input_value[idx] &= (uint8_t)~mask;
 
-    /* Also update the PORT register so that EPIC_GPIO_ReadPin sees the
-     * externally driven value for input pins. This ensures that the
-     * simulator behavior matches the real hardware where reading a PORT
-     * pin returns the pin's external state when TRIS=1 (input). */
+    /* Also update the PORT register so EPIC_GPIO_ReadPin sees the
+     * externally driven value for input pins, matching real hardware
+     * (TRIS=1 reads return the pin's external state). */
     uint8_t pa;
     switch (port) {
         case 'A': case 'a': pa = PIC_REG_PORTA; break;

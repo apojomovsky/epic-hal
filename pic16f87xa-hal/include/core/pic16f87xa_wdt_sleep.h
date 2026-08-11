@@ -1,14 +1,7 @@
-/**
- * @file    core/pic16f87xa_wdt_sleep.h
- * @brief   CPU-level helpers: Watchdog Timer, Brown-out Reset, Sleep.
- *
- * @details
- *   Source: DS39582B §14.10 (PCON), §14.13 (WDT), §14.14 (Sleep). Once
- *   WDTEN=1 in the config word, call @ref EPIC_WDT_Refresh periodically
- *   or the chip resets; config bits themselves are left to the user's
- *   MPLAB X/XC8 project setup, not emitted here. EPIC_Sleep_Enter is a
- *   no-op on host (no real CPU to stop).
- */
+/* CPU-level helpers: Watchdog Timer, Brown-out Reset, Sleep. Source:
+ * DS39582B §14.10 (PCON), §14.13 (WDT), §14.14 (Sleep). Config bits
+ * are left to the user's MPLAB X/XC8 setup; EPIC_Sleep_Enter is a
+ * no-op on host. */
 
 #ifndef PIC16F87XA_WDT_SLEEP_H
 #define PIC16F87XA_WDT_SLEEP_H

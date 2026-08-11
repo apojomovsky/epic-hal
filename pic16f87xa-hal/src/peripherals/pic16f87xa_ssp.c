@@ -1,26 +1,21 @@
-/**
- * @file    pic16f87xa_ssp.c
- * @brief   MSSP driver, implementation (DS39582B §9.0).
- *
- *   This is a register-level driver: the actual I²C state machine
- *   (Start/Stop/ACK timing, slave address matching) is left to the
- *   user. The driver configures SSPCON / SSPCON2 / SSPSTAT / SSPADD
- *   and provides the byte-level transmit / receive primitives.
- */
+/* MSSP driver implementation (DS39582B §9.0). Register-level only: the
+ * I²C state machine (Start/Stop/ACK timing, slave address matching) is
+ * left to the user; this configures SSPCON / SSPCON2 / SSPSTAT / SSPADD
+ * and provides the byte-level transmit / receive primitives. */
 
 #include "peripherals/pic16f87xa_ssp.h"
 #include "core/pic16_irq.h"
 
-/* ───────────────────────── handle storage ───────────────────────── */
+/* handle storage. */
 
 static const SSP_HandleTypeDef *g_ssp = NULL;
 
 /* SSPCON2/SSPSTAT/SSPADD are Bank 1 (SSPSTAT=0x94, SSPCON2=0x91,
- * SSPADD=0x93, DS39582B Figure 2-4). EPIC_BANK1_WRITE8/READ8 need a
- * literal SFR name at compile time (inline-asm operands), not a
- * runtime `addr`, so this dispatches on `addr` before any bank switch
- * begins, then invokes the named macro; every real call site passes a
- * compile-time constant, so XC8 folds this to one branch either way. */
+ * SSPADD=0x93, DS39582B Figure 2-4). EPIC_BANK1_* need a literal SFR
+ * name at compile time (inline-asm operands), not a runtime addr, so
+ * this dispatches on `addr` before any bank switch, then invokes the
+ * named macro; every real call site passes a compile-time constant, so
+ * XC8 folds this to one branch either way. */
 #ifdef EPIC_BANK1_READ8
 static uint8_t ssp_b1_read(uint8_t addr)
 {
@@ -56,7 +51,7 @@ static void ssp_b1_write(uint8_t addr, uint8_t v)
 }
 #endif
 
-/* ───────────────────────── SSPADD computation ───────────────────── */
+/* SSPADD computation. */
 
 uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz)
 {
@@ -66,7 +61,7 @@ uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz)
     return (uint16_t)x;
 }
 
-/* ───────────────────────── public API ───────────────────────────── */
+/* public API. */
 
 EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h)
 {
@@ -132,11 +127,9 @@ uint8_t EPIC_SSP_ReadByte(void)
     /* Reading SSPBUF clears BF (Register 9-1). */
     uint8_t v = EPIC_REG8(PIC_REG_SSPBUF);
 #ifdef EPIC_BANK1_READ8
-    /* See target/pic16f87xa_platform.h: a plain EPIC_REG8 RMW on the
-     * Bank-1 SSPSTAT (0x94) silently misdirects to the Bank-0 alias
-     * (0x14, SSPCON) under XC8 v4.00, clearing SSPCON's CKP instead
-     * of BF. Probed and confirmed 2026-08-09 by
-     * pic16f87xa-hal/tests/sim_bank_probe.c. */
+    /* Plain EPIC_REG8 RMW on Bank-1 SSPSTAT (0x94) misdirects to the
+     * Bank-0 alias (0x14, SSPCON) under XC8 v4.00, clearing CKP instead
+     * of BF (see target/pic16f87xa_platform.h). */
     {
         uint8_t stat = 0u;
         EPIC_BANK1_READ8(SSPSTAT, stat);
@@ -203,7 +196,7 @@ uint8_t EPIC_SSP_AcknowledgeStatus(void)
     return (ssp_b1_read(0x91U) & PIC_SSPCON2_ACKSTAT) ? 1U : 0U;
 }
 
-/* ───────────────────────── ISRs ─────────────────────────────────── */
+/* ISRs. */
 
 void SSP_IRQHandler(void)
 {

@@ -1,8 +1,7 @@
-/**
- * @file    example_serial_target.c
- * @brief   epic-serial on-target demo: send a banner, then loop forever
- *          echoing received bytes back to TX. Connect a serial terminal
- *          at the configured baud to see it.
+/*
+ * epic-serial on-target demo: send a banner, then loop forever echoing
+ * received bytes back to TX. Connect a serial terminal at the
+ * configured baud to see it.
  */
 
 #include "epic_serial.h"

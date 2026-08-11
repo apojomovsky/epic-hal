@@ -1,14 +1,9 @@
-/**
- * @file    test_swuart_rx.c
- * @brief   RX-only host test, PIC16F87XA channel A, RX hot-path fix:
- *          the deglitch check and the first-sample arm now happen in
- *          one synchronous pass (rx_capture_event_fast), not two
- *          separately-scheduled events. One fire now does what used
- *          to take two. No real CCP hardware in host sim, so this test
- *          drives the state machine directly via test-only hooks and
- *          injects the captured edge value straight into the same
- *          CCP1 registers rx_capture_event_fast itself reads.
- */
+/* RX-only host test for the RX hot-path fix: the deglitch check and
+ * the first-sample arm happen in one synchronous pass
+ * (rx_capture_event_fast), so one fire does what used to take two.
+ * Drives the state machine via test-only hooks and injects the
+ * captured edge value into the same CCP1 registers the fast path
+ * reads. */
 #include <stdio.h>
 #include "epic_swuart.h"
 

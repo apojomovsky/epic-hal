@@ -1,9 +1,7 @@
 /**
- * @file    peripherals/pic16f193x_eeprom.h
- * @brief   PIC16F193X data EEPROM driver (DS41364B §23.0).
- * @details 256 bytes on every variant. Data space only this phase
- *          (program-memory self-write deferred). Full reference:
- *          MANUAL.md.
+ * PIC16F193X data EEPROM driver (DS41364B §23.0). 256 bytes on every
+ * variant. Data space only this phase (program-memory self-write
+ * deferred). Full reference: MANUAL.md.
  */
 #ifndef PIC16F193X_EEPROM_H
 #define PIC16F193X_EEPROM_H

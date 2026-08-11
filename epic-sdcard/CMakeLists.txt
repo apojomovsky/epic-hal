@@ -12,8 +12,8 @@
 #
 # The host test binary links mmc.c/crc.c against tests/mock/mmc_config.h
 # (a mock SD-over-SPI card), so tests exercise the actual shipped protocol
-# logic, not a hand-written stand-in for it -- see
-# epic-sdcard/docs/epic-sdcard-plan.md, "Host build story".
+# logic, not a hand-written stand-in for it -- see epic-sdcard/README.md's
+# "Host tests exercise the real protocol logic" bullet.
 #
 # The real target build goes entirely through the XC8 Makefile under
 # mcu/pic18fxx5x-sdcard-mplabx/ (Phase 3, not written yet), which compiles

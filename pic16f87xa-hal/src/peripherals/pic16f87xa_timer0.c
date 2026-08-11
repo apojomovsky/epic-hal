@@ -1,35 +1,18 @@
-/**
- * @file    pic16f87xa_timer0.c
- * @brief   Timer0 driver, implementation (DS39582B §5.0).
- */
+/* Timer0 driver implementation (DS39582B §5.0). */
 
 #include "peripherals/pic16f87xa_timer0.h"
 #include "core/pic16_irq.h"
 
-/* Prescaler ratios, DS39582B Table 5-1.
- *   000 → 1:2
- *   001 → 1:4
- *   ...
- *   111 → 1:256 */
+/* Prescaler ratios, DS39582B Table 5-1: 000=1:2 ... 111=1:256. */
 static const uint16_t ps_ratio[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 
-/** Per-handle storage. The PIC16F87XA has only one Timer0, so a single
- *  static slot is sufficient. `EPIC_TIMER0_Init` COPIES the caller's handle
- *  here (the caller's `TIMER0_HandleTypeDef` is typically a stack-local
- *  that is out of scope by the time the ISR reads it back, so storing a
- *  pointer to it would dangle). The weak ISR reads from this owned copy.
- *
- *  Pinned to bank 3 (0x190, 6 bytes) because the ISR's deref of
- *  `g_t0_handle` bakes `bsf STATUS,7` (IRP=1, banks 2/3 only): XC8
- *  v4.00 emits the IRP select as a constant, so the storage must live
- *  in the bank that constant selects or the ISR reads the wrong RAM.
- *  Bank 3 keeps bank 2's full 112 bytes contiguous for the big
- *  module statics (the epicurus-demo bundle's 64-byte taskmgr TCB
- *  array could not fit with the pin in bank 2, error 1250).
- *  Verified 2026-08-11 by disassembly (epic-tick 16F877A); the unpinned
- *  placement landed in whatever bank best-fit happened to choose
- *  (bank 1 in some builds, bank 3 in others) and the gates only passed
- *  by scatter luck. */
+/* Owned copy of the caller's handle for the weak ISR (the caller's is
+ * typically stack-local, out of scope by the time the ISR reads it).
+ * Pinned to bank 3 (0x190) because the ISR deref bakes a constant
+ * IRP=1 select (banks 2/3 only) under XC8 v4.00, so the storage must
+ * live in that bank. Bank 3 keeps bank 2's 112 bytes contiguous for
+ * the big module statics (the demo bundle's 64-byte taskmgr TCB would
+ * not fit with the pin in bank 2, error 1250). */
 static TIMER0_HandleTypeDef g_t0_storage EPIC_PLACE(0x190);
 static const TIMER0_HandleTypeDef *g_t0_handle = NULL;
 
@@ -37,11 +20,9 @@ static const TIMER0_HandleTypeDef *g_t0_handle = NULL;
 static void option_clr_set(uint8_t clr_mask, uint8_t set_mask)
 {
 #ifdef EPIC_BANK1_READ8
-    /* See target/pic16f87xa_platform.h: a plain EPIC_REG8 RMW on the
-     * Bank-1 OPTION_REG (0x81) silently misdirects the read to the
-     * Bank-0 alias (0x01, TMR0) under XC8 v4.00, corrupting the
-     * counter and writing garbage back to OPTION_REG. Probed and
-     * confirmed 2026-08-09 by pic16f87xa-hal/tests/sim_bank_probe.c. */
+    /* Plain EPIC_REG8 RMW on Bank-1 OPTION_REG (0x81) misdirects to the
+     * Bank-0 alias (0x01, TMR0) under XC8 v4.00 (see
+     * target/pic16f87xa_platform.h). */
     uint8_t opt = 0u;
     EPIC_BANK1_READ8(OPTION_REG, opt);
     opt = (uint8_t)((opt & (uint8_t)~clr_mask) | set_mask);
@@ -60,7 +41,6 @@ EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
     /* Stop the timer before reconfiguring. */
     option_clr_set(PIC_OPTION_T0CS, 0u);
 
-    /* Clear TMR0IF; configure TMR0IE if a callback is provided. */
     EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR0);
     if (h->OverflowCallback) {
         EPIC_IRQ_Enable(PIC16_IRQ_TMR0);
@@ -128,17 +108,11 @@ uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)
     return ps_ratio[p];
 }
 
-/* ------------------------------------------------------------------ */
-/* Interrupt entry point                                               */
-/* ------------------------------------------------------------------ */
-
 void TIMER0_IRQHandler(void)
 {
-    /* Direct flag ops, not the table-driven EPIC_IRQ_GetFlag/ClearFlag:
-     * the table read routes through XC8's stringdir/retlw path, which
-     * clobbers PCLATH in ISR context when the table sits on another
-     * page (the class-F hazard; see the CCP1/CCP2 handlers for the
-     * reference pattern). TMR0IF is INTCON bit 2 (bank-independent). */
+    /* Direct flag ops, not the table-driven EPIC_IRQ_* path: the retlw
+     * table clobbers PCLATH in ISR context when on another page
+     * (class-F hazard; see the CCP handlers). TMR0IF is INTCON bit 2. */
     if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_TMR0IF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_TMR0IF);
     if (g_t0_handle && g_t0_handle->OverflowCallback) {

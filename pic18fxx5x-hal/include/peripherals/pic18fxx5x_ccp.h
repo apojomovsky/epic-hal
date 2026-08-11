@@ -1,15 +1,9 @@
-/**
- * @file    peripherals/pic18fxx5x_ccp.h
- * @brief   ECCP1 (Enhanced CCP) + CCP2 driver: Capture / Compare / PWM.
- *
- * @details
- *   CCP1 is the Enhanced CCP (ECCP1, DS39632E §16.0): beyond plain
- *   capture/compare/PWM it adds multi-output PWM, programmable dead-band
- *   (ECCP1DEL), and auto-shutdown/restart (ECCP1AS). CCP2 is the plain CCP.
- *   Mirrors `pic16f87xa_ccp.h`'s API; the handle adds the three ECCP-only
- *   fields, which CCP2 ignores. Capture/Compare use Timer1 or Timer3
- *   (T3CON<T3CCP2:T3CCP1>, left at reset default Timer1); PWM always uses
- *   Timer2.
+/*
+ * ECCP1 (Enhanced CCP) + CCP2 driver (DS39632E §16.0): capture/compare/
+ * PWM. CCP1 is the Enhanced CCP, adding multi-output PWM, programmable
+ * dead-band (ECCP1DEL) and auto-shutdown/restart (ECCP1AS); CCP2 is plain.
+ * Capture/Compare use Timer1 or Timer3 (T3CON<T3CCP2:T3CCP1>, reset
+ * default Timer1); PWM always uses Timer2.
  */
 
 #ifndef PIC18FXX5X_CCP_H
@@ -128,8 +122,6 @@ typedef struct {
     void (*EventCallback)(void);                  /**< Fires on CCP1IF / CCP2IF. */
 } CCP_HandleTypeDef;
 
-/* ───────────────────────── init / deinit ────────────────────────── */
-
 /**
  * @brief  Configure the CCP/ECCP module. Programs CCPxCON (mode + P1M for
  *         ECCP1 + duty LSBs), CCPRxL/H, ECCP1DEL (dead-band) and ECCP1AS
@@ -144,8 +136,6 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
 
 /** Reset CCPxCON (and ECCP1DEL/ECCP1AS for ECCP1) to 0x00; clear the PIR flag. */
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
-
-/* ───────────────────────── compare / capture / pwm ──────────────── */
 
 /** Set the 16-bit CCPRx value (high byte first, DS39632E §16.x idiom). */
 void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
@@ -164,8 +154,6 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
  *         CCPxCON<5:4> then CCPRxL (bits 9:2), preserving the mode bits.
  */
 void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);
-
-/* ───────────────────────── ECCP1-only controls ──────────────────── */
 
 /**
  * @brief  Configure the ECCP1 dead-band delay + auto-restart (ECCP1DEL).
@@ -193,8 +181,6 @@ uint8_t EPIC_CCP_IsShutdown(CCP_InstanceTypeDef inst);
  *         CCP2.
  */
 void EPIC_CCP_Restart(CCP_InstanceTypeDef inst);
-
-/* ───────────────────────── IRQ entries ──────────────────────────── */
 
 /** Weak CCP1 (ECCP1) ISR, override in user code. */
 void CCP1_IRQHandler(void) EPIC_WEAK;

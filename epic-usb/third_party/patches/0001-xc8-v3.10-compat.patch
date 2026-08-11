@@ -13,7 +13,7 @@ index 3a65133..8e28cfb 100644
 +		 * int is accepted, which matches strict ISO C's bit-field base type
 +		 * rule anyway. unsigned int is 16 bits on PIC18/XC8, so the 16
 +		 * declared bits below still total 16 and match the union's flat
-+		 * uint16_t sibling member. See epic-usb/docs/epic-usb-plan.md. */
++		 * uint16_t sibling member. See epic-usb/README.md. */
  		struct {
 -			uint16_t bRxCarrier : 1; /**< Indicates DCD */
 -			uint16_t bTxCarrier : 1; /**< Indicates DSR */
@@ -42,7 +42,7 @@ index 1971ab6..286109a 100644
 +++ b/epic-usb/third_party/m-stack/usb/src/usb_cdc.c
 @@ -160,7 +160,7 @@ uint8_t process_cdc_setup_request(const struct setup_packet *setup)
  			return -1;
- 
+
  		usb_send_data_stage((void*)response,
 -		                    min(len, setup->wLength),
 +		                    MIN(len, setup->wLength),
@@ -51,7 +51,7 @@ index 1971ab6..286109a 100644
  	}
 @@ -228,7 +228,7 @@ uint8_t process_cdc_setup_request(const struct setup_packet *setup)
  				(uint16_t) data_multiplexed_state << 1;
- 
+
  		usb_send_data_stage((char*)&transfer_data.comm_feature,
 -		                    min(setup->wLength,
 +		                    MIN(setup->wLength,
@@ -69,7 +69,7 @@ index 1971ab6..286109a 100644
  		return 0;
 @@ -261,7 +261,7 @@ uint8_t process_cdc_setup_request(const struct setup_packet *setup)
  			return -1;
- 
+
  		usb_send_data_stage((char*)&transfer_data.line_coding,
 -		                    min(setup->wLength,
 +		                    MIN(setup->wLength,
@@ -83,14 +83,14 @@ index eb9a42f..efe6a33 100644
 @@ -285,7 +285,15 @@ struct buffer_descriptor {
  #define BDN_LENGTH(REG) (REG.BDnCNT)
  #endif
- 
+
 -#ifdef _18F46J50
 +#if defined(_18F46J50) || defined(_18F4550) || defined(_18F4455) || \
 +    defined(_18F2550) || defined(_18F2455)
 +/* PIC18F2455/2550/4455/4550: USB RAM is banks 4-7 (0x400-0x7FF), BDT at
 + * bank 4 (0x400-0x4FF) -- DS39632E Section 17.3 "USB RAM". Same address as
 + * the already-supported J50, confirmed identical layout by datasheet
-+ * cross-reference (see epic-usb/docs/epic-usb-plan.md); the generic _PIC18
++ * cross-reference (see epic-usb/README.md); the generic _PIC18
 + * SFR macros above this #ifdef already apply unchanged to the 2455/2550/
 + * 4455/4550 family, this was the only chip-specific gap. Added for
 + * epic-usb (github.com/apojomovsky/pic -- vendored copy, not upstreamed). */
@@ -111,8 +111,8 @@ index eb9a42f..efe6a33 100644
 +	 * level declarator") -- confirmed with a standalone repro. The
 +	 * replacement, __at(address), is the syntax this compiler's own
 +	 * headers use (see e.g. proc/pic16f59.h's "__at(0x000)"), confirmed
-+	 * working the same way. See epic-usb/docs/epic-usb-plan.md for how
-+	 * this was found. */
++	 * working the same way. See epic-usb/README.md for how this was
++	 * found. */
 +	#define BD_ATTR_TAG __at(BD_ADDR)
  	#ifdef BUFFER_ADDR
 -		#define XC8_BUFFER_ADDR_TAG @##BUFFER_ADDR

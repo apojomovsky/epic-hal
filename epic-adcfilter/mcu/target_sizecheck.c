@@ -1,6 +1,6 @@
-/* Cross-compile sizecheck for epic-adcfilter: a minimal main that exercises
- * both the oversampler and the moving-average filter, so the XC8 build links
- * the real code and reports flash/RAM footprint. No HAL, no config word. */
+/* Cross-compile sizecheck: a minimal main exercising both filters so
+ * the XC8 build links the real code and reports flash/RAM footprint.
+ * No HAL, no config word. */
 #include "epic_adcfilter.h"
 #include <stddef.h>     /* NULL */
 

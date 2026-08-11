@@ -1,21 +1,21 @@
-/**
- * @file    pic_math_div.c (PIC16 inline-asm backend)
- * @brief   Divide/modulo primitives via a restoring shift-subtract loop
- *          (same algorithm as the PIC18 backend and AN526/AN544), using
- *          mid-range PIC16 instructions (no `subwfb`, so borrow is the
- *          `btfss STATUS,0`/`incf` idiom). Mirrors the machine-verified C
- *          reference in tests/test_div.c. STATUS bits by number (C=0, Z=2).
+/*
+ * PIC16 inline-asm divide/modulo primitives: a restoring shift-subtract
+ * loop (same algorithm as the PIC18 backend and AN526/AN544), using
+ * mid-range PIC16 instructions (no subwfb, so borrow is the btfss
+ * STATUS,0/incf idiom). Mirrors the machine-verified C reference in
+ * tests/test_div.c. STATUS bits by number (C=0, Z=2).
  */
 
 #include <xc.h>
 #include "pic_math.h"
 #include "pic_math_scratch.h"
 
-/* ─── pic_math_divmod_u16 ────────────────────────────────────────
- * 16/16 restoring division, 16 iterations. Offsets num@0-1,rem@2-3,den@4-5,
- * cnt@6. Mirrors ref_divmod_u16_algo:
- *   c = num>>15; num <<= 1; rem = (rem<<1)|c; if(rem>=den){rem-=den; num|=1;}
- * Hand-trace 0x0007/0x0002 = 3 r 1 -- see the PIC18 backend comment. */
+/* 16/16 restoring division, 16 iterations. Offsets num@0-1, rem@2-3,
+ * den@4-5, cnt@6. One iteration, mirroring ref_divmod_u16_algo:
+ *   c = num>>15; num <<= 1; rem = (rem<<1)|c;
+ *   if (rem>=den) { rem -= den; num |= 1; }
+ * For a 16-bit dividend the partial remainder never reaches 0x8000, so
+ * the rem shift never carries out and the 16-bit compare is exact. */
 pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __at(0x1C0)
 {
     pic_math_udiv16_t res = { 0u, 0u };
@@ -63,13 +63,13 @@ pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __at
     return res;
 }
 
-/* ─── pic_math_divmod_u32_16 ─────────────────────────────────────
- * 32/16 restoring division, 32 iterations. Offsets num@0-3,rem@4-5,den@6-7,
- * cnt@8. The partial remainder can reach 0x8000, so the rem shift can carry
- * out: the extended remainder is C:rem (17 bits). If C=1 after the shift,
- * subtract unconditionally (rem wraps to the low-16 of extended-den) and set
- * the bit; else do the plain 16-bit restoring subtract. Quotient truncated
- * to 16 bits (low word). Mirrors ref_divmod_u32_16_algo. */
+/* 32/16 restoring division, 32 iterations. Offsets num@0-3, rem@4-5,
+ * den@6-7, cnt@8. The partial remainder can reach 0x8000, so the rem
+ * shift can carry out: the extended remainder is C:rem (17 bits). If C=1
+ * after the shift, subtract unconditionally (rem wraps to the low-16 of
+ * extended-den) and set the bit; else do the plain 16-bit restoring
+ * subtract. Quotient truncated to 16 bits (low word). Mirrors
+ * ref_divmod_u32_16_algo. */
 pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok) __at(0x240)
 {
     pic_math_udiv16_t res = { 0u, 0u };
@@ -131,8 +131,7 @@ pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok) _
     return res;
 }
 
-/* ─── pic_math_divmod_s16 ────────────────────────────────────────
- * Signed 16/16 over the asm unsigned path. Quotient sign = sign(num)^
+/* Signed 16/16 over the asm unsigned path. Quotient sign = sign(num) ^
  * sign(den); remainder sign follows the dividend (C99 truncated division).
  * INT16_MIN / -1 -> quotient 0x8000 (wrap of 32768), remainder 0. */
 pic_math_sdiv16_t pic_math_divmod_s16(int16_t num, int16_t den, bool *ok)

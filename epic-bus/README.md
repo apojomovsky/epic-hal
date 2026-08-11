@@ -16,8 +16,6 @@ address, then read/write N bytes" in one call, for both I2C and SPI.
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md), transaction shapes, the ops seam,
-  the family branch, testing.
 - [API reference](docs/API.md), per-function semantics + usage.
 
 ## Quick start

@@ -290,7 +290,7 @@ struct buffer_descriptor {
 /* PIC18F2455/2550/4455/4550: USB RAM is banks 4-7 (0x400-0x7FF), BDT at
  * bank 4 (0x400-0x4FF) -- DS39632E Section 17.3 "USB RAM". Same address as
  * the already-supported J50, confirmed identical layout by datasheet
- * cross-reference (see epic-usb/docs/epic-usb-plan.md); the generic _PIC18
+ * cross-reference (see epic-usb/README.md); the generic _PIC18
  * SFR macros above this #ifdef already apply unchanged to the 2455/2550/
  * 4455/4550 family, this was the only chip-specific gap. Added for
  * epic-usb (github.com/apojomovsky/pic -- vendored copy, not upstreamed). */
@@ -323,8 +323,8 @@ struct buffer_descriptor {
 	 * level declarator") -- confirmed with a standalone repro. The
 	 * replacement, __at(address), is the syntax this compiler's own
 	 * headers use (see e.g. proc/pic16f59.h's "__at(0x000)"), confirmed
-	 * working the same way. See epic-usb/docs/epic-usb-plan.md for how
-	 * this was found. */
+	 * working the same way. See epic-usb/README.md for how this was
+	 * found. */
 	#define BD_ATTR_TAG __at(BD_ADDR)
 	#ifdef BUFFER_ADDR
 		#define XC8_BUFFER_ADDR_TAG __at(BUFFER_ADDR)

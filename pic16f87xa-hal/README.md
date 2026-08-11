@@ -8,9 +8,15 @@ behaviour is taken 1-to-1 from the datasheet [DS39582B](https://ww1.microchip.co
 architecture, both builds, the simulator, the harness, and a per-peripheral
 reference. Start there if you are new to the HAL.
 
-➜ **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** covers XC8 codegen
-gotchas found empirically on this family (bank-switch pitfalls and their
-fixes), not datasheet material, so it lives apart from `MANUAL.md`.
+## XC8 codegen gotchas (settled)
+
+Banked SFR access must go through the `EPIC_BANKn_READ8/WRITE8` (and PIE)
+inline-asm macros, never plain C: under XC8 v4.00 a banked C
+read/write/RMW misdirects to the Bank 0 alias. Load the operand into W
+before the switch; the asm selects the bank absolutely and restores Bank
+0 on exit. The `__interrupt` entry normalizes to Bank 0 before dispatch,
+so an interrupt taken mid-window never runs in the wrong bank.
+`i1_`-prefixed symbols in `.s`/`.map` are XC8's per-call-graph function duplication, expected.
 
 ## Status
 

@@ -1,7 +1,6 @@
 /**
  * @file    combo_rb_uart.c
- * @brief   C4 of the combination matrix
- *          (docs/superpowers/plans/2026-08-09-combination-matrix.md):
+ * @brief   C4 of the combination matrix:
  *          PORTB change ISR + USART TX + TIMER2 interleaved, all real
  *          code, one firmware, one bank state.
  *

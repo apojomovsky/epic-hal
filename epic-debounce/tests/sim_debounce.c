@@ -1,33 +1,10 @@
 /**
- * @file    sim_debounce.c
- * @brief   Bounded, self-reporting HARNESS=sim build: epic-debounce's
- *          real `mdb` gate. Feeds a scripted noisy level sequence (a
- *          bouncy press and a bouncy release, rapid toggles around
- *          each transition) through the module's own `debounce_read_fn`
- *          callback and verifies the debounced output settles exactly
- *          like the module's host tests (tests/test_debounce.c) say it
- *          must: one PRESSED and one RELEASED, each only after the full
- *          debounce window, no mid-bounce flapping, then reports
- *          PASS/FAIL over the target's real USART the same way every
- *          other family's own `.sim` variant does (see
- *          pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
- *
- * @details
- *   The debounce engine reads its input through a caller-supplied
- *   callback, so unlike a GPIO-pin module there is nothing MPLAB SIM
- *   cannot drive (no pin-injection limitation applies): `sim_level()`
- *   synthesizes the raw pin level from `epic_tick_get()` simulated
- *   time, the same trick the host tests use, re-keyed from a call-count
- *   script to a time script because this sim loop polls far faster than
- *   once per simulated ms. Script (simulated ms: raw level):
- *     0-9:   0 (idle)
- *     10-15: 1,0,1,0,1,0 (bouncy press)
- *     16-39: 1 (stably held)
- *     40-45: 0,1,0,1,0,1 (bouncy release)
- *     46+:   0 (released)
- *   With DB_MS=20 the engine must commit PRESSED at t=36 (20 ms after
- *   the last bounce at t=16) and RELEASED at t=66 (20 ms after the
- *   last bounce at t=46), exactly once each.
+ * Bounded, self-reporting HARNESS=sim build: epic-debounce's real mdb
+ * gate. `sim_level()` synthesizes the raw level from `epic_tick_get()`
+ * time, since the sim loop polls faster than once per ms (bouncy press
+ * 10..15 ms, stable high to 39, bouncy release 40..45, low after).
+ * With DB_MS=20 the engine must emit PRESSED at t=36 and RELEASED at
+ * t=66, once each, then report PASS/FAIL over the target's real USART.
  */
 
 #include "debounce.h"

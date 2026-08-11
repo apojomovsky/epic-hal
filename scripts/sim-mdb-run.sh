@@ -1,67 +1,15 @@
 #!/usr/bin/env bash
-# Run a module's already-emitted HARNESS=sim (--variant sim) build under
-# MPLAB SIM (mdb), checking for the EPIC_HARNESS_RESULT marker (see
-# epic-common/include/core/epic_harness.h). Shared by
-# .github/workflows/sim-tests.yml and scripts/sim-test-local.sh, so CI
-# and a local run go through the exact same build+mdb+grep sequence,
-# not two copies that can drift apart (docs/ci-plan.md's local
-# reproduction plan).
-#
-# Container-only on purpose: needs xc8-cc and mdb.sh on PATH plus
-# $XC8_INSTALL_DIR, nothing else. It does NOT read the manifest itself
-# (no python3 call), because it runs inside the toolchain container
-# (docker/ci-toolchain/Dockerfile), which deliberately has none. The
-# build script it runs (build-sim/<module>/<mcu>/build.sh) must already
-# exist, emitted beforehand by `epic_build.py build --variant sim`
-# wherever python3 is available: sim-tests.yml's emit job (bare
-# runner), or scripts/sim-test-local.sh (the host, before its `docker
-# run` into this same container).
+# Run a module's pre-emitted HARNESS=sim build under MPLAB SIM (mdb) and check
+# the EPIC_HARNESS_RESULT marker. Shared by ci.yml's target job, family-check.yml,
+# and scripts/sim-test-local.sh. Container-only (xc8-cc + mdb.sh, no python3): the
+# pre-emitted build-sim/<module>/<mcu>/build.sh from `epic_build.py build --variant sim`.
 #
 # Usage: sim-mdb-run.sh <family> <mcu> <device> <module> [wait_ms] [mode] [extra_mdb] [eeprom_writes]
-#   family    matrix label, only used to namespace temp files (e.g. pic16f87xa)
-#   mcu       manifest MCU value (e.g. 16F877A)
-#   device    mdb `device` command's part name (e.g. PIC16F877A)
-#   module    manifest module name (e.g. epic-tick, or
-#             epic-pic16f193x-firmware for the bare-HAL smoke); looks
-#             for its pre-emitted script at build-sim/<module>/<mcu>/build.sh
-#   wait_ms   real-time ms to let mdb run before halting (default 2000;
-#             MPLAB SIM runs noticeably slower than real-time, see
-#             docs/ci-plan.md Phase 4's findings, so this is a wall-clock
-#             budget, not a simulated-time one)
-#   mode      reporting mode: "uart" (default) or "gpio". uart captures
-#             EPIC_HARNESS_RESULT marker from the UART; gpio reads the
-#             marker from a PORTA register via mdb `print` and checks
-#             bit 0. Only pic16f193x currently uses gpio; pic16f87xa
-#             and pic18fxx5x keep uart.
-#   Temp capture files are PID-suffixed so concurrent same-family
-#   gates (the PARALLEL loop in ci-target-sim.sh) do not collide.
-#   extra_mdb extra mdb commands (e.g. `print`s), inserted right before
-#             `quit`, for register-level debugging without hardcoding
-#             device-specific diagnostics into this generic script.
-#   eeprom_writes
-#             number of halt+complete EEPROM-write cycles to emit
-#             before the final run/wait/halt (default 0, i.e. off).
-#             MPLAB SIM never completes a CPU-executed data-EEPROM
-#             write (verified on PIC18F4550 and PIC16F877A): after the
-#             firmware sets EECON1<WR> the simulator holds WR set and
-#             never raises EEIF, so firmware that blocks on EEIF (e.g.
-#             epic-settings' byte-at-a-time save) stalls on every
-#             byte. mdb `write` commands do complete such a write, so
-#             each cycle here halts the target, clears WR, replays the
-#             EECON2 0x55/0xAA unlock, re-asserts WR (the simulator
-#             then completes the write from the firmware's own
-#             EEDATA/EEADR) and resumes. The gate's sim test documents
-#             the exact number of writes its scenario performs; keep
-#             this >= that count. Extra cycles are NOT automatically
-#             harmless: each cycle adds a run window, and a firmware
-#             whose main returns (bounded harness loop) can fall
-#             through to the reset vector and re-run within those
-#             windows; a re-run of a stateful scenario (e.g.
-#             epic-settings' corruption step) reports the carried-over
-#             state as a failure. The settings gate found this at
-#             EEPROM_WRITES=32 (2026-08-11); its firmware now idles
-#             forever after reporting so the gate is single-pass at any
-#             count, and the runner value stays at the scenario's count.
+#   wait_ms=2000 wall-clock (SIM slower than real time); mode=uart|gpio (gpio:
+#   PORTA bit 0, pic16f193x only); extra_mdb: commands before `quit`;
+#   eeprom_writes=0: SIM never completes a CPU-executed EEPROM write; each cycle
+#   halts, clears WR, replays the EECON2 unlock, re-asserts WR. Keep >= the
+#   scenario's count; extra cycles can re-run stateful firmware.
 
 set -euo pipefail
 

@@ -1,14 +1,9 @@
-/**
- * @file    peripherals/pic18fxx5x_timer0.h
- * @brief   Timer0 driver, 8-bit or 16-bit timer/counter with dedicated
- *          prescaler.
- *
- * @details
- *   Matches `pic16f87xa_timer0.h`'s names/signatures (DS39632E §11.0);
- *   bodies differ because PIC18's Timer0 is controlled by the dedicated
- *   T0CON register (not PIC16's OPTION_REG) and adds an 8/16-bit mode bit
- *   and its own prescaler (not shared with the WDT). Default is 8-bit
- *   (T08BIT=1), matching PIC16's model so existing caller code is a drop-in.
+/*
+ * Timer0 driver, 8-bit or 16-bit timer/counter with a dedicated
+ * prescaler (DS39632E §11.0). PIC18's Timer0 is controlled by the
+ * dedicated T0CON register (not PIC16's OPTION_REG) and has its own
+ * prescaler, not shared with the WDT. Default is 8-bit (T08BIT=1),
+ * matching PIC16's model so existing caller code is a drop-in.
  */
 
 #ifndef PIC18FXX5X_TIMER0_H

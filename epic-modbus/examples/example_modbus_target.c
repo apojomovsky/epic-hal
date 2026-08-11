@@ -1,14 +1,7 @@
-/**
- * @file    example_modbus_target.c
- * @brief   epic-modbus on-target demo: a 4-holding-register RTU slave.
- *
- * @details
- *   The XC8 Makefiles build this (the host smoke test uses a host-sim
- *   RX-injection API not compiled on target). Initializes the tick
- *   timebase and a 4-holding-register Modbus slave (address 0x11, 9600
- *   baud), then polls forever. This is a link/init smoke, not a live
- *   transaction, connect a real RTU master to exercise it for real.
- */
+/* epic-modbus on-target demo: a 4-holding-register RTU slave (address
+ * 0x11, 9600 baud) that polls forever. Built by the XC8 Makefiles (the
+ * host smoke test uses a host-sim RX-injection API not compiled on
+ * target). Link/init smoke, not a live transaction. */
 
 #include "epic_modbus.h"
 #include "epic_tick.h"

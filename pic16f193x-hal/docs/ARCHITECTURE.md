@@ -5,7 +5,8 @@
 This file records compiler/codegen behavior on the PIC16F193X
 (Enhanced Mid-range) that is invisible to code review, the host
 simulator, and a clean `xc8-cc` compile-and-link, in the same spirit as
-`pic16f87xa-hal/docs/ARCHITECTURE.md` and `pic18fxx5x-hal/docs/ARCHITECTURE.md`.
+the XC8 codegen sections of `pic16f87xa-hal/README.md` and
+`pic18fxx5x-hal/README.md`.
 It is filled in as the §4 verification gate (`docs/adding-a-device.md`)
 surfaces real findings, not from assumption.
 
@@ -272,7 +273,7 @@ real-time, see Phase 0 notes); passing `WAIT_MS=60000` to
 
 `pic16f87xa-hal/include/target/pic16f87xa_platform.h` carries the same
 fix shape because the same codegen trap existed on the classic PIC16
-core (Finding 1 of that family's `docs/ARCHITECTURE.md`). The
+core (see that family's README, XC8 codegen gotchas). The
 Enhanced Mid-range port uses the same `__at(0x70)` scratch + asm
 pattern, just with `movlb 1` (BSR-byte select) instead of
 `bsf STATUS,5` (RP0 bit select). pic18_irq.c uses an equivalent
@@ -309,9 +310,9 @@ The real *register-readback* half of the §4 gate has now run for at
 least one peripheral routed through every PIE/PIR bank: PIE1 (Timer1,
 Timer2, CCP1/2, ADC), PIE2 (comparators C1/C2), and PIE3 (Timer4/6,
 CCP3/4/5), closing the verification gap this section used to flag for
-PIE2 and PIE3. All 13 peripherals in `docs/pic16f193x-plan.md` §7's
-roadmap have landed and cleared the §4 gate; there is no remaining
-open peripheral work for this family as of this note. Future work here
+PIE2 and PIE3. All 13 peripherals on the family's rollout roadmap have
+landed and cleared the §4 gate; there is no remaining open peripheral
+work for this family as of this note. Future work here
 is either a new device variant (Path A, `docs/adding-a-device.md` §3)
 or wiring the family-agnostic `epic-*` modules (taskmgr, tick, serial,
 ...) against it for the first time, per the main `README.md`'s status

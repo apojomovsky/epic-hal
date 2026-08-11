@@ -1,14 +1,10 @@
-/**
- * @file    pic18_sim.c
- * @brief   PIC18F2455 family host simulation backend.
- *
- * @details
- *   Linked by the CMake host build only. Provides `pic18_sim_sfr[]`, the
- *   4096-byte memory-backed register file the host SFR macros
- *   (`include/host/pic18_platform.h`) dereference, and the hooks declared
- *   in `pic18fxx5x_sim.h`. Every SFR the drivers touch is in the Access
- *   Bank (0xF60-0xFFF), so it's just an index into this array, no BSR
- *   translation needed.
+/*
+ * PIC18F2455 family host simulation backend, linked by the CMake host
+ * build only. Provides `pic18_sim_sfr[]`, the 4096-byte memory-backed
+ * register file the host SFR macros (`include/host/pic18_platform.h`)
+ * dereference, and the hooks declared in `pic18fxx5x_sim.h`. Every SFR
+ * the drivers touch is in the Access Bank (0xF60-0xFFF), so it is just
+ * an index into this array, no BSR translation needed.
  */
 
 #include "pic18fxx5x_sim.h"
@@ -16,8 +12,6 @@
 #include "pic18_platform.h"
 
 #include <string.h>
-
-/* ───────────────────────── register file ────────────────────────── */
 
 /* 4096-byte memory-backed register file, referenced by
  * include/host/pic18_platform.h. Provisionally the full 12-bit data-memory
@@ -40,8 +34,6 @@ static void sim_step_timer2(void);
 static void sim_step_timer3(void);
 static void sim_step_usart(void);
 
-/* ───────────────────────── helpers ──────────────────────────────── */
-
 static uint8_t port_index(char port)
 {
     switch (port) {
@@ -54,7 +46,6 @@ static uint8_t port_index(char port)
     }
 }
 
-/** LATx address for a port letter. */
 static uint16_t lat_addr(char port)
 {
     switch (port) {
@@ -71,7 +62,6 @@ static uint16_t lat_addr(char port)
     }
 }
 
-/** TRISx address for a port letter. */
 static uint16_t tris_addr(char port)
 {
     switch (port) {
@@ -88,7 +78,6 @@ static uint16_t tris_addr(char port)
     }
 }
 
-/** PORTx address for a port letter. */
 static uint16_t port_addr(char port)
 {
     switch (port) {
@@ -104,8 +93,6 @@ static uint16_t port_addr(char port)
         default:             return PIC_REG_PORTA;
     }
 }
-
-/* ───────────────────────── public API ───────────────────────────── */
 
 void pic18_sim_reset(void)
 {
@@ -131,9 +118,9 @@ void pic18_sim_reset(void)
     pic18_sim_sfr[PIC_REG_IPR2]    = PIC_IPR2_POR_VALUE;      /* 0xFF */
 
     /* EUSART reset values (DS39632E Table 5-1). TXSTA resets to 0x02
-     * (TRMT=1, TSR empty); the rest are clear. TXIF (PIR1<4>) is set
-     * after POR because TXREG is empty (§20.2.1); PIR1 already 0x00 here,
-     * so the sim_step_usart() re-assert path raises it on the first step. */
+     * (TRMT=1, TSR empty); the rest are clear. PIR1<TXIF> is a level, not
+     * a latched flag: it reads 1 after POR because TXREG is empty
+     * (§20.2.1), even though Table 5-1 lists PIR1 = 0x00. */
     pic18_sim_sfr[PIC_REG_BAUDCON] = PIC_BAUDCON_POR_VALUE;  /* 0x00 */
     pic18_sim_sfr[PIC_REG_RCSTA]   = PIC_RCSTA_POR_VALUE;    /* 0x00 */
     pic18_sim_sfr[PIC_REG_TXSTA]   = PIC_TXSTA_POR_VALUE;    /* 0x02 */
@@ -154,10 +141,9 @@ void pic18_sim_reset(void)
     pic18_sim_sfr[PIC_REG_SPPEPS]  = PIC_SPPEPS_POR_VALUE;
 #endif
 
-    /* PIR1<TXIF> resets to 1 (TXREG empty after POR, §20.2.1). The Table 5-1
-     * POR value for PIR1 is 0x00, but TXIF is a level (set when TXREG is
-     * empty), not a latched flag — so it reads 1 right after reset, the same
-     * way the PIC16 sim models it. */
+    /* PIR1<TXIF> reads 1 right after POR (TXREG empty, §20.2.1) even
+     * though Table 5-1 lists PIR1 = 0x00; the PIC16 sim models it the
+     * same way. */
     pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TXIF;
 
     /* TRIS defaults: 1 = input. PORTA is 6-bit, PORTE 3-bit. */
@@ -170,7 +156,6 @@ void pic18_sim_reset(void)
 #if PIC18FXX5X_FAMILY_HAS_PORTE
     pic18_sim_sfr[PIC_REG_TRISE] = 0x07U;
 #endif
-    /* Latches clear. */
     pic18_sim_sfr[PIC_REG_LATA] = PIC_LAT_POR_VALUE;
     pic18_sim_sfr[PIC_REG_LATB] = PIC_LAT_POR_VALUE;
     pic18_sim_sfr[PIC_REG_LATC] = PIC_LAT_POR_VALUE;
@@ -198,7 +183,6 @@ void pic18_sim_step(uint32_t ticks)
     }
 }
 
-/* ───────────────────────── Timer0 step ──────────────────────────── */
 
 static void sim_step_timer0(void)
 {
@@ -211,7 +195,7 @@ static void sim_step_timer0(void)
      *   bit 2..0 T0PS2:T0PS0
      */
     uint8_t t0con = pic18_sim_sfr[PIC_REG_T0CON];
-    if (!(t0con & PIC_T0CON_TMR0ON)) return;     /* stopped */
+    if (!(t0con & PIC_T0CON_TMR0ON)) return;
 
     uint8_t ps  = (uint8_t)(t0con & PIC_T0CON_T0PS_MASK);
     uint8_t psa = (t0con & PIC_T0CON_PSA) ? 1U : 0U;
@@ -248,7 +232,6 @@ static void sim_step_timer0(void)
     }
 }
 
-/* ───────────────────────── Timer1 step ──────────────────────────── */
 
 static void sim_step_timer1(void)
 {
@@ -262,7 +245,7 @@ static void sim_step_timer1(void)
      *   bit 0  TMR1ON
      */
     uint8_t t1con = pic18_sim_sfr[PIC_REG_T1CON];
-    if (!(t1con & PIC_T1CON_TMR1ON)) return;     /* stopped */
+    if (!(t1con & PIC_T1CON_TMR1ON)) return;
 
     /* Prescaler 1:1/1:2/1:4/1:8 (T1CKPS1:T1CKPS0). TMR1CS = 1 (external/T1OSC):
      * the sim does not model a real external signal, so it advances at the
@@ -290,7 +273,6 @@ static void sim_step_timer1(void)
     }
 }
 
-/* ───────────────────────── Timer2 step ──────────────────────────── */
 
 static void sim_step_timer2(void)
 {
@@ -300,7 +282,7 @@ static void sim_step_timer2(void)
      *   bit 1..0 T2CKPS1:T2CKPS0
      */
     uint8_t t2con = pic18_sim_sfr[PIC_REG_T2CON];
-    if (!(t2con & PIC_T2CON_TMR2ON)) return;     /* stopped */
+    if (!(t2con & PIC_T2CON_TMR2ON)) return;
 
     /* T2CKPS1:T2CKPS0 -> 1:1, 1:4, 1:16, 1:16. */
     static const uint8_t pre_idx[4] = {1, 4, 16, 16};
@@ -332,7 +314,6 @@ static void sim_step_timer2(void)
     pic18_sim_sfr[PIC_REG_TMR2] = t2;
 }
 
-/* ───────────────────────── Timer3 step ──────────────────────────── */
 
 static void sim_step_timer3(void)
 {
@@ -346,7 +327,7 @@ static void sim_step_timer3(void)
      *   bit 0  TMR3ON
      */
     uint8_t t3con = pic18_sim_sfr[PIC_REG_T3CON];
-    if (!(t3con & PIC_T3CON_TMR3ON)) return;     /* stopped */
+    if (!(t3con & PIC_T3CON_TMR3ON)) return;
 
     static const uint8_t ps_idx[4] = {1, 2, 4, 8};
     uint32_t rate = ps_idx[(t3con >> 4) & 0x3U];
@@ -367,7 +348,6 @@ static void sim_step_timer3(void)
     }
 }
 
-/* ───────────────────────── GPIO drive / read ────────────────────── */
 
 void pic18_sim_drive_input(char port, uint8_t pin, uint8_t level)
 {
@@ -378,10 +358,9 @@ void pic18_sim_drive_input(char port, uint8_t pin, uint8_t level)
     if (level) sim_input_value[idx] |= mask;
     else       sim_input_value[idx] &= (uint8_t)~mask;
 
-    /* Also update the PORT register so that EPIC_GPIO_ReadPin sees the
-     * externally driven value for input pins. This ensures that the
-     * simulator behavior matches the real hardware where reading a PORT
-     * pin returns the pin's external state when TRIS=1 (input). */
+    /* Also update PORTx so EPIC_GPIO_ReadPin sees the external level on
+     * input pins, matching real hardware (PORT reads return pin state
+     * when TRIS=1). */
     uint16_t pa = port_addr(port);
     uint8_t portval = pic18_sim_sfr[pa];
     if (level) portval |= mask;
@@ -420,7 +399,6 @@ void pic18_sim_drive_ssp_rx(uint8_t data)
     if (sim_irq_cb) sim_irq_cb();
 }
 
-/* ───────────────────────────────── EUSART step ─────────────────────── */
 
 static void sim_step_usart(void)
 {
@@ -443,7 +421,6 @@ void pic18_sim_drive_usart_rx(uint8_t data)
     if (sim_irq_cb) sim_irq_cb();
 }
 
-/* ───────────────────────────────── Comparator drive ──────────────────── */
 
 void pic18_sim_drive_comp(uint8_t c1out, uint8_t c2out)
 {
@@ -457,7 +434,6 @@ void pic18_sim_drive_comp(uint8_t c1out, uint8_t c2out)
     if (sim_irq_cb) sim_irq_cb();
 }
 
-/* ───────────────────────────────── EEPROM drive ─────────────────────── */
 
 void pic18_sim_drive_eeprom_byte(uint8_t addr, uint8_t data)
 {
@@ -477,7 +453,6 @@ uint8_t pic18_sim_eeprom_read(uint8_t addr)
     return sim_eeprom[addr];
 }
 
-/* ───────────────────────────────── A/D drive ────────────────────────── */
 
 void pic18_sim_drive_adc_done(uint16_t result)
 {
@@ -504,7 +479,6 @@ void pic18_sim_drive_adc_done(uint16_t result)
 }
 
 #if PIC18FXX5X_FAMILY_HAS_SPP
-/* ───────────────────────────────── SPP drive ────────────────────────── */
 
 void pic18_sim_drive_spp(uint8_t wrspp, uint8_t rdspp)
 {

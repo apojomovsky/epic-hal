@@ -1,13 +1,7 @@
 /*
- * Epicurus reference project, PIC16F87XA.
- *
- * The smallest thing that proves the bundle is wired up correctly: set
- * up a 1 ms tick and toggle RB0 from it. If this builds and runs, your
- * include paths, source folders, and device pack are all right, and you
- * can copy this project's settings into your own.
- *
- * See MPLABX.md in this bundle for adding Epicurus to an existing
- * project instead.
+ * Epicurus reference project, PIC16F87XA: a 1 ms tick toggles RB0,
+ * the minimal build smoke test. See MPLABX.md to add Epicurus to an
+ * existing project.
  */
 #include <xc.h>
 

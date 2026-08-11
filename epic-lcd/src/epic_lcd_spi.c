@@ -1,12 +1,7 @@
-/**
- * @file    epic_lcd_spi.c
- * @brief   SPI transport for epic_lcd via 74HC595 shift register.
- *
- *          A layout struct maps each 74HC595 Q output to an LCD signal
- *          (RS, E, DB4-DB7). Uses the HAL SSP driver directly, not
- *          epic-bus, since the 595 is a raw shift register, not a
- *          register-addressed device.
- */
+/** SPI transport for epic_lcd via a 74HC595 shift register: a layout
+ *  struct maps each Q output to an LCD signal (RS, E, DB4-DB7). Uses the
+ *  HAL SSP driver directly, not epic-bus, since the 595 is a raw shift
+ *  register, not a register-addressed device. */
 
 #include "epic_lcd_transport.h"
 #include "epic_hal.h"

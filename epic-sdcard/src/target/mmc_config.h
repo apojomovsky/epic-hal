@@ -1,11 +1,9 @@
-/*
- * M-Stack mmc.h config for the real PIC18Fxx5x target, private to this
+/* M-Stack mmc.h config for the real PIC18Fxx5x target, private to this
  * module (included only by the vendored mmc.c for real-silicon builds;
- * tests/mock/mmc_config.h is the host-build equivalent). Binds
- * the MMC_SPI_ and timer macros to epic_sdcard.c's HAL-backed functions, using
- * epic-tick for real wall-clock timeouts instead of mmc.c's bounded-retry
- * fallback.
- */
+ * tests/mock/mmc_config.h is the host-build equivalent). Binds the
+ * MMC_SPI_ and timer macros to epic_sdcard.c's HAL-backed functions,
+ * using epic-tick for real wall-clock timeouts instead of mmc.c's
+ * bounded-retry fallback. */
 
 #ifndef EPIC_SDCARD_MMC_CONFIG_H__
 #define EPIC_SDCARD_MMC_CONFIG_H__

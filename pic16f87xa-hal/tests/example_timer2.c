@@ -1,11 +1,6 @@
-/**
- * @file    example_timer2.c
- * @brief   End-to-end smoke test for the Timer2 driver on the sim backend.
- *
- *   Timer2 with PR2=249, prescaler 1:1, postscaler 1:1 should fire every
- *   250 instruction cycles (DS39582B §7.0: period = (PR2+1) × prescaler
- *   × postscaler = 250 × 1 × 1 = 250).
- */
+/* End-to-end smoke test for the Timer2 driver on the sim backend.
+ * PR2=249, prescaler 1:1, postscaler 1:1: period = (PR2+1) x pre x
+ * post = 250 instruction cycles (DS39582B §7.0). */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sim.h"

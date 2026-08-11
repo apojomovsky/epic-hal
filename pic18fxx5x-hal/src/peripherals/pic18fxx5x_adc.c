@@ -1,21 +1,15 @@
-/**
- * @file    pic18fxx5x_adc.c
- * @brief   A/D converter driver, implementation (DS39632E §21.0).
- *
- *   No bank switching (all ADC registers are in the Access Bank), but
- *   three control registers (ADCON0/1/2) versus PIC16's two. The sim
- *   backend models conversion completion via `pic18_sim_drive_adc_done()`.
+/*
+ * A/D converter driver, implementation (DS39632E §21.0). No bank
+ * switching (all ADC registers are in the Access Bank), but three control
+ * registers (ADCON0/1/2) versus PIC16's two. The sim backend models
+ * conversion completion via `pic18_sim_drive_adc_done()`.
  */
 
 #include "peripherals/pic18fxx5x_adc.h"
 #include "core/pic18_irq.h"
 
-/* ───────────────────────── handle storage ───────────────────────── */
-
 static ADC_HandleTypeDef        g_adc_storage;
 static const ADC_HandleTypeDef *g_adc = NULL;
-
-/* ───────────────────────── public API ───────────────────────────── */
 
 EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
 {
@@ -102,8 +96,6 @@ uint16_t EPIC_ADC_Read(void)
     if (!adfm) raw = (uint16_t)(raw >> 6);
     return (uint16_t)(raw & 0x03FFU);
 }
-
-/* ───────────────────────── ISR ───────────────────────────────────── */
 
 void ADC_IRQHandler(void)
 {

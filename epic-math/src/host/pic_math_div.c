@@ -1,10 +1,9 @@
-/**
- * @file    pic_math_div.c (host reference backend)
- * @brief   Portable-C divide/modulo primitives, the independent oracle
- *          for the PIC16/PIC18 asm backends. Divide-by-zero returns
- *          zeroed fields with `*ok=false`; `INT16_MIN / -1` (the one
- *          signed divide whose true quotient overflows int16) wraps to
- *          `(INT16_MIN, 0)`, documented in docs/API.md.
+/*
+ * Host reference backend: portable-C divide/modulo primitives, the
+ * independent oracle for the PIC16/PIC18 asm backends. Divide-by-zero
+ * returns zeroed fields with *ok=false; INT16_MIN / -1 (the one signed
+ * divide whose true quotient overflows int16) wraps to (INT16_MIN, 0),
+ * documented in docs/API.md.
  */
 
 #include "pic_math.h"

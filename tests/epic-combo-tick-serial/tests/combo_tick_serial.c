@@ -1,7 +1,6 @@
 /**
  * @file    combo_tick_serial.c
- * @brief   C6 of the combination matrix
- *          (docs/superpowers/plans/2026-08-09-combination-matrix.md):
+ * @brief   C6 of the combination matrix:
  *          epic-tick's live 1 ms Timer2 ISR churning against
  *          epic-serial's ring-buffered TX path, both real modules,
  *          one firmware, one bank state.

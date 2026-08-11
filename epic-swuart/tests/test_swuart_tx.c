@@ -1,11 +1,7 @@
-/**
- * @file    test_swuart_tx.c
- * @brief   TX-only host test, v3: no CCP hardware exists in the host
- *          sim (Global Constraints), so this test drives the compare
- *          event handler directly and inspects the mode/compare-value
- *          sequence it arms at each step, rather than sampling a
- *          simulated output pin.
- */
+/* TX-only host test: no CCP hardware exists in the host sim, so this
+ * drives the compare event handler directly and inspects the
+ * mode/compare-value sequence it arms at each step, rather than
+ * sampling a simulated output pin. */
 #include <stdio.h>
 #include "epic_swuart.h"
 

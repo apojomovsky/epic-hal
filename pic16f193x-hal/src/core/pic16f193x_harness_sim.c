@@ -1,14 +1,10 @@
 /**
- * @file    pic16f193x_harness_sim.c
- * @brief   PIC16F193X host-simulation implementation of the test harness
- *          (see core/epic_harness.h).
- *
- * @details
- *   Linked by the CMake host build. The companion target implementation
- *   is the family-blind epic_harness_target.c in epic-common; the build
- *   picks one, so neither this file nor the examples need `#ifdef`. This
- *   file is PIC16F193X-specific only because it pumps the PIC16F193X
- *   simulator; the harness contract it implements is shared by every family.
+ * PIC16F193X host-simulation implementation of the test harness
+ * (core/epic_harness.h), linked by the CMake host build. The companion
+ * target implementation is the family-blind epic_harness_target.c in
+ * epic-common; the build picks one, so neither this file nor the
+ * examples need `#ifdef`. PIC16F193X-specific only because it pumps the
+ * PIC16F193X simulator; the harness contract is shared by every family.
  */
 
 #include "core/epic_harness.h"   /* epic_dispatch_all_irqs is declared here */

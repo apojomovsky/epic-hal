@@ -1,14 +1,9 @@
 /**
- * @file    example_timer_reset.c
- * @brief   Verify @ref task_reset re-arms a task from the full period.
- *
- * @details
- *   A period-10 marker task records the scheduler tick at each fire; a
- *   period-25 supervisor calls `task_reset(marker)` on its first fire.
- *   Marker fires at 10, 20, then the reset lands at 25 and the next fire
- *   is at 35 (reset_tick + period), not the originally-scheduled 30, so
- *   the gap across the reset widens to 15 before resuming at 10. Host sim
- *   only; the XC8 target build uses example_multi_blink.
+ * Verify task_reset re-arms a task from the full period. A period-10
+ * marker records the scheduler tick at each fire; a period-25 supervisor
+ * calls task_reset(marker) on its first fire. Marker fires at 10, 20,
+ * then 35 (reset_tick + period), not the originally scheduled 30. Host
+ * sim only; the XC8 target build uses example_multi_blink.
  */
 
 #include "epic_hal.h"

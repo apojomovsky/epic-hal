@@ -1,13 +1,8 @@
 /**
- * @file    debounce.h
- * @brief   Vendor-agnostic, instantiable digital-input debouncer.
- *
- * @details
- *   One instance per input (button, limit switch, ...), plain data, no
- *   global state. The caller supplies a `debounce_read_fn` callback that
- *   resolves active-high/low, so this module works equally over a HAL
- *   GPIO pin, an I2C-expander bit, or a mock in a host test. Poll-driven:
- *   call `debounce_poll()` once per tick; uses `epic-tick` for timing.
+ * Vendor-agnostic, instantiable digital-input debouncer: one instance
+ * per input, plain data, no global state. The caller supplies a
+ * `debounce_read_fn` resolving active-high/low, so the module works
+ * over a HAL GPIO pin, an I2C-expander bit, or a host-test mock.
  */
 
 #ifndef DEBOUNCE_H
@@ -34,13 +29,12 @@ typedef enum {
 #define DEBOUNCE_FLAG_STABLE     0x01U  /**< current committed (debounced) state */
 #define DEBOUNCE_FLAG_CANDIDATE  0x02U  /**< last raw read being watched for stability */
 
-/** One debounce instance, plain data, no hidden global state. One per input. */
 typedef struct {
-    debounce_read_fn read;           /**< pin-read callback               */
-    void            *read_ctx;       /**< opaque context for the callback */
-    uint16_t         debounce_ms;    /**< stability window, e.g. 20-50 ms */
+    debounce_read_fn read;
+    void            *read_ctx;
+    uint16_t         debounce_ms;
     uint32_t         candidate_since; /**< epic_tick_get() timestamp of last raw change */
-    uint8_t          flags;          /**< DEBOUNCE_FLAG_*                 */
+    uint8_t          flags;           /**< DEBOUNCE_FLAG_* */
 } debounce_t;
 
 /**

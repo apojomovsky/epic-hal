@@ -1,13 +1,11 @@
 /**
- * @file    example_ccp345.c
- * @brief   CCP3/CCP4/CCP5 smoke test: all three in compare-set mode,
- *          confirm control-register + compare-value state.
+ * CCP3/CCP4/CCP5 smoke test: all three in compare-set mode, confirm
+ * control-register + compare-value state.
  *
- * @details
- *   Expected register image (after init):
- *     CCP3CON = 0x08, CCPR3 = 0x0300
- *     CCP4CON = 0x08, CCPR4 = 0x0400
- *     CCP5CON = 0x08, CCPR5 = 0x0500
+ * Expected register image (after init):
+ *   CCP3CON = 0x08, CCPR3 = 0x0300
+ *   CCP4CON = 0x08, CCPR4 = 0x0400
+ *   CCP5CON = 0x08, CCPR5 = 0x0500
  */
 
 #include "pic16f193x.h"

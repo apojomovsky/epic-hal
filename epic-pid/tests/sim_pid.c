@@ -1,46 +1,11 @@
 /**
- * @file    sim_pid.c
- * @brief   Bounded, self-reporting HARNESS=sim build for epic-pid:
- *          the module's first real `mdb` gate. Runs the actual
- *          compiled pid.c (Q8.8 fixed point, pic_math 16x16->32
- *          multiply) under MPLAB SIM on a 16F877A, driving a
- *          scripted step-then-settle trajectory through the real
- *          `pid_update` API, then reports PASS/FAIL over the target's
- *          real hardware USART (see
- *          pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
- *
- * @details
- *   Pure computation, no MPLAB SIM RX injection needed (same
- *   constraint documented in epic-swuart's sim build): the gate
- *   exercises the controller arithmetic end to end through a
- *   first-order-lag integer "plant" (`measurement += (output -
- *   measurement) / 4`, the same plant shape
- *   examples/example_pid_setpoint_step.c uses), checking three
- *   observable contracts of the real compiled arithmetic:
- *
- *   (a) bounded: every `pid_update` return stays in [out_min,
- *       out_max], and the anti-windup invariant holds: integrator_q8
- *       never leaves [out_min, out_max] << 8 (both documented in
- *       pid.h / pid.c).
- *   (b) convergence: after the setpoint step 0 -> 100 and a settle
- *       window, the recorded steady-state measurement is within a
- *       couple of Q8.8 counts of the setpoint (the host oracle run
- *       lands on exactly 100; the check is deliberately looser).
- *   (c) gain changes take effect: with the plant frozen at steady
- *       state, `pid_set_gains` doubles kp (256 -> 512) and zeroes
- *       ki; a 10-count setpoint step then moves the output by
- *       exactly (512 * 10) >> 8 = 20 counts (the old gain would have
- *       moved it 10), since 5120 is an exact multiple of 256 so no
- *       carry leaks out of the Q8.8 low byte. A second, fresh
- *       P-only instance checks the documented host-test results
- *       verbatim: kp=256, error=100 -> output 100, and after
- *       set_gains(512) -> output 200 (tests/test_pid.c
- *       test_pure_p / test_two_independent_instances).
- *
- *   Loop-iteration bound: phase A runs 200 control steps (the step
- *   fully settles in ~60), phase B adds a handful more; the budget
- *   below is pure arithmetic on integer types, trivially finished
- *   inside the 5000 ms wait_ms budget on PIC16F877A/MPLAB SIM.
+ * Bounded, self-reporting HARNESS=sim build, the module's mdb gate
+ * (PIC16F877A/MPLAB SIM): runs the compiled pid.c (Q8.8, pic_math
+ * 16x16->32 multiply) through a scripted step-then-settle trajectory via
+ * the real `pid_update` API, checking (a) every output stays in
+ * [out_min, out_max] and the anti-windup invariant holds, (b) convergence
+ * to the setpoint, and (c) pid_set_gains takes effect. Reports PASS/FAIL
+ * over the harness USART (see pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
  */
 
 #include "pid.h"

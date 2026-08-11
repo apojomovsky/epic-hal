@@ -6,8 +6,7 @@ RS-485 driver-enable pin).
 
 - **RTU slave, core function codes**: 01/02/03/04/05/06/15/16 (read/write
   coils, discrete inputs, holding and input registers). No ASCII, no TCP,
-  no master role, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for what's
-  deliberately out of scope.
+  no master role.
 - **Plain-array register map**: `epic_modbus_slave_map_t` points straight at
   caller-owned coil/discrete-input/holding-register/input-register arrays,
   no callback indirection, no dynamic allocation.
@@ -24,12 +23,15 @@ RS-485 driver-enable pin).
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md), the framing algorithm, CRC-16
-  choice, the RS-485 timing, and the known timing-resolution caveat above
-  19200 baud.
 - [API reference](docs/API.md), per-function semantics + usage.
-- [Implementation plan](../docs/epic-modbus-plan.md), scope, external
-  library survey, and the design decisions made before writing code.
+
+### T3.5 caveat
+
+Above 19200 baud the spec fixes T3.5 at 1.75 ms and `epic-tick`'s 1 ms
+granularity rounds it up to ~2 ms: framing stays correct, silence
+detection just fires later (latency, not a correctness bug).
+PIC16F873A/874A (192 B RAM) cannot link this module at default ring
+sizes; realistic targets are 16F876A/877A and the PIC18Fxx5x family.
 
 ## Quick start
 

@@ -1,23 +1,18 @@
 /**
- * @file    pic16f193x.h
- * @brief   PIC16F193X family, top-level types, status codes, build-time device
- *          selection, and the simulated/real-target SFR mapping layer.
+ * PIC16F193X family, top-level types, status codes, build-time device
+ * selection, and the simulated/real-target SFR mapping layer. DS41364B
+ * is authoritative for every constant; each peripheral header cites its
+ * own section.
  *
- * @details
- *   Single entry point for the PIC16F193X HAL: standard types, status enums,
- *   and the device-specific SFR include. DS41364B is authoritative for every
- *   constant; each peripheral header cites its own section.
+ * Enhanced Mid-range core (DS41364B §2.0, §4.0): BSR banked data memory
+ * (up to 32 banks x 128 bytes), single interrupt vector at 0x0004 with
+ * no priority and automatic context save. Distinct from classic
+ * PIC16F87XA (RP0/RP1 banking, manual ISR save) and from PIC18 (Access
+ * Bank, two vectors with priority), so this is its own family, not a
+ * variant.
  *
- *   Enhanced Mid-range core (DS41364B §2.0, §4.0): BSR banked data memory
- *   (up to 32 banks x 128 bytes), single interrupt vector at 0x0004 with no
- *   priority and automatic context save. Distinct from classic PIC16F87XA
- *   (RP0/RP1 banking, manual ISR save) and from PIC18 (Access Bank, two
- *   vectors with priority), so this is its own family, not a variant.
- *
- * Target family (DS41364B §1.0, Table 1-1; the preliminary rev B datasheet
- * documented all six parts; current Microchip revisions split them across
- * DS41364C, DS40001574D, DS41575, but the SFR/peripheral layout is identical
- * across all six, so one HAL covers every variant):
+ * Target family (DS41364B §1.0, Table 1-1): all six parts share the same
+ * SFR/peripheral layout, so one HAL covers every variant.
  *   - PIC16F1933, 28-pin,  4 KW flash, 256 B RAM, 256 B EEPROM, 11 ADC ch.
  *   - PIC16F1934, 40/44-pin, 4 KW flash, 256 B RAM, 256 B EEPROM, 14 ADC ch.,
  *                   PORTD + PORTE.
@@ -27,20 +22,14 @@
  *   - PIC16F1938, 28-pin, 16 KW flash, 1024 B RAM, 256 B EEPROM, 11 ADC ch.
  *   - PIC16F1939, 40/44-pin, 16 KW flash, 1024 B RAM, 256 B EEPROM, 14 ADC ch.,
  *                   PORTD + PORTE.
- *
- * @copyright © 2009 Microchip Technology Inc. (datasheet DS41364B).
  */
 
 #ifndef PIC16F193X_H
 #define PIC16F193X_H
 
-/* ───────────────────────── standard types ───────────────────────── */
-
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-
-/* ───────────────────────── build-time device selection ──────────── */
 
 /**
  * @defgroup  PIC16F193X_Device Device Selection
@@ -132,7 +121,6 @@
  * status/bit vocabulary. */
 #include "core/hal_status.h"
 
-/* ───────────── platform: SFR mapping + weak attribute ───────────── */
 /**
  * @defgroup PIC16F193X_SFR Special Function Register mapping
  * @brief   How every SFR is stored and how the weak attribute is spelled.

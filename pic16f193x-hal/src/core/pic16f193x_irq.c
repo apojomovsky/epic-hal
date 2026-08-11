@@ -1,23 +1,18 @@
 /**
- * @file    pic16f193x_irq.c
- * @brief   Implementation of @ref pic16f193x_irq.h.
- *
- * @details
- *   Each IRQ source maps to a specific bit in INTCON / PIE1 / PIE2 / PIE3
- *   (DS41364B §4.0 + Figure 4-1/4-2). The translation table lives at the
- *   top of this file, every other function is a thin wrapper. The
- *   descriptor extends the classic PIC16 two-bank layout to three (PIR1/2/3,
- *   PIE1/2/3): `pir_index` selects the bank (0/1/2), `in_intcon` selects the
- *   INTCON-level sources (IOC/INT/TMR0).
+ * Implementation of pic16f193x_irq.h: each IRQ source maps to a specific
+ * bit in INTCON / PIE1 / PIE2 / PIE3 (DS41364B §4.0 + Figure 4-1/4-2).
+ * The translation table lives at the top of this file; every other
+ * function is a thin wrapper. The descriptor extends the classic PIC16
+ * two-bank layout to three (PIR1/2/3, PIE1/2/3): `pir_index` selects the
+ * bank (0/1/2), `in_intcon` selects the INTCON-level sources
+ * (IOC/INT/TMR0).
  */
 
 #include "core/pic16f193x_irq.h"
 
 /**
- * @brief Per-IRQ descriptor: which bank the enable / flag bit lives in,
- *        and at which position.
- *
- * PIC16F193X interrupt layout (DS41364B §4.0):
+ * Per-IRQ descriptor: which bank the enable / flag bit lives in, and at
+ * which position. PIC16F193X interrupt layout (DS41364B §4.0):
  *   - IOCIF, INTF, TMR0IF, plus their enable bits + GIE/PEIE -> INTCON.
  *   - Peripheral flags -> PIR1 (0x11) / PIR2 (0x12) / PIR3 (0x13).
  *   - Peripheral enables -> PIE1 (0x91) / PIE2 (0x92) / PIE3 (0x93), bank 1.
@@ -62,8 +57,6 @@ static const irq_desc_t irq_table[] = {
     ((d)->pir_index == 0 ? PIC_REG_PIR1 : \
      (d)->pir_index == 1 ? PIC_REG_PIR2 : PIC_REG_PIR3)
 
-/* ───────────────────────── public API ───────────────────────────── */
-
 uint8_t EPIC_IRQ_Disable(void)
 {
     uint8_t s = EPIC_REG8(PIC_REG_INTCON);
@@ -85,8 +78,8 @@ void EPIC_IRQ_Enable(PIC16F193X_IRQn irq)
     /* Pull every field this function needs into locals before touching
      * any SFR: the classic-PIC16 build interleaved a ROM-table field
      * read with an in-progress SFR RMW and corrupted the SFR side
-     * (pic16f87xa-hal/docs/ARCHITECTURE.md Finding 2). Same defensive
-     * shape here until the §4 codegen probe clears this core. */
+     * (pic16f87xa-hal/README.md). Same defensive shape here
+     * until the §4 codegen probe clears this core. */
     uint8_t in_intcon   = d->in_intcon;
     uint8_t enable_mask = d->enable_mask;
     uint8_t pir_index   = d->pir_index;

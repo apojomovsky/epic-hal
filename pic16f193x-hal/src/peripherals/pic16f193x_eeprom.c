@@ -1,10 +1,6 @@
 /**
- * @file    pic16f193x_eeprom.c
- * @brief   PIC16F193X data EEPROM driver (DS41364B §23.0).
- * @details Data space only. The unlock sequence (0x55/0xAA to EECON2)
- *          is required before WR. If the §4 gate shows WREN/WR not
- *          landing on real hardware, apply the __at(0x70) scratch +
- *          inline-asm movlb fix per ARCHITECTURE.md Finding 2.
+ * PIC16F193X data EEPROM driver (DS41364B §23.0). Data space only. The
+ * unlock sequence (0x55/0xAA to EECON2) is required before WR.
  */
 
 #include "peripherals/pic16f193x_eeprom.h"

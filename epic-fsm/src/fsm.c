@@ -1,10 +1,6 @@
 /**
- * @file    fsm.c
- * @brief   Implementation of the table-driven FSM engine (see fsm.h).
- *
- * @details
- *   One implementation, no per-family variant: this file has no hardware
- *   dependency, so it compiles unchanged for the host, PIC16, and PIC18.
+ * Implementation of the table-driven FSM engine (see fsm.h). No hardware
+ * dependency: one implementation compiles unchanged for host, PIC16, PIC18.
  */
 
 #include "fsm.h"

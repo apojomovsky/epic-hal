@@ -1,54 +1,45 @@
 /**
- * @file    example_timer246.c
- * @brief   Timer2/Timer4/Timer6 all run at once, each overflow ISR
- *          toggles a distinct RC pin. The §4 gate payload for the
- *          Timer2/4/6 driver, exercising all three instance-dispatch
- *          branches in one binary.
+ * Timer2/Timer4/Timer6 all run at once, each overflow ISR toggles a
+ * distinct RC pin, exercising all three instance-dispatch branches in
+ * one binary. Three independent T*CON configurations (different
+ * prescaler, postscaler, and PR value each) so the three instances
+ * overflow at visibly different rates, proving the driver's per-instance
+ * state doesn't cross-contaminate:
  *
- * @details
- *   Three independent T*CON configurations (different prescaler,
- *   postscaler, and PR value each) so the three instances overflow at
- *   visibly different rates, proving the driver's per-instance state
- *   doesn't cross-contaminate:
+ *   Timer2: 1:1 prescaler, 1:1 postscaler, PR2=199  -> 200 cycles/flag
+ *   Timer4: 1:4 prescaler, 1:1 postscaler, PR4=124  -> 500 cycles/flag
+ *   Timer6: 1:16 prescaler, 1:4 postscaler, PR6=49  -> 3200 cycles/flag
  *
- *     Timer2: 1:1 prescaler, 1:1 postscaler, PR2=199  -> 200 cycles/flag
- *     Timer4: 1:4 prescaler, 1:1 postscaler, PR4=124  -> 500 cycles/flag
- *     Timer6: 1:16 prescaler, 1:4 postscaler, PR6=49  -> 3200 cycles/flag
+ * Expected register image (host sim, after Start() x3, before the main
+ * loop runs):
+ *   T2CON  = 0x04   (TOUTPS=0000, TMR2ON=1, T2CKPS=00)
+ *   PR2    = 0xC7   (199)
+ *   T4CON  = 0x05   (TOUTPS=0000, TMR4ON=1, T4CKPS=01)
+ *   PR4    = 0x7C   (124)
+ *   T6CON  = 0x1E   (TOUTPS=0011, TMR6ON=1, T6CKPS=10)
+ *   PR6    = 0x31   (49)
+ *   PIE1   = 0x02   (TMR2IE, bit 1)
+ *   PIE3   = 0x0A   (TMR4IE bit 1 | TMR6IE bit 3)
+ *   INTCON = 0xC0   (GIE=1, PEIE=1, TMR0IE=0)
+ *   TRISC  = 0xF8   (RC0/RC1/RC2 output, rest input; PORTC has no
+ *                    ANSELC on this family, all digital)
+ *   LATC   = 0x00   (all three start low)
+ *   TRISA  = 0xFE   (RA0 output, driven by the HARNESS=sim harness)
+ *   LATA   = 0x00   (start low, flipped to 0x01 on PASS)
  *
- *   Expected register image (host sim, after Start() x3, before the
- *   main loop runs):
- *     T2CON  = 0x04   (TOUTPS=0000, TMR2ON=1, T2CKPS=00)
- *     PR2    = 0xC7   (199)
- *     T4CON  = 0x05   (TOUTPS=0000, TMR4ON=1, T4CKPS=01)
- *     PR4    = 0x7C   (124)
- *     T6CON  = 0x1E   (TOUTPS=0011, TMR6ON=1, T6CKPS=10)
- *     PR6    = 0x31   (49)
- *     PIE1   = 0x02   (TMR2IE, bit 1)
- *     PIE3   = 0x0A   (TMR4IE bit 1 | TMR6IE bit 3)
- *     INTCON = 0xC0   (GIE=1, PEIE=1, TMR0IE=0)
- *     TRISC  = 0xF8   (RC0/RC1/RC2 output, rest input; PORTC has no
- *                      ANSELC on this family, all digital)
- *     LATC   = 0x00   (all three start low)
- *     TRISA  = 0xFE   (RA0 output, driven by the HARNESS=sim harness)
- *     LATA   = 0x00   (start low, flipped to 0x01 on PASS)
+ * Loop termination and the PASS marker: the loop exits early once all
+ * three instances have overflowed at least MIN_OVERFLOWS times. On the
+ * host sim the loop exits this way and epic_harness_report() drives RA0
+ * high. On the MPLAB SIM target, three timers firing continuously
+ * consume most of the simulated CPU in ISRs, so the bounded loop may
+ * not reach epic_harness_report() within the 60s wall-clock `wait`; to
+ * make the PASS marker reliable under the gpio gate regardless, the
+ * slowest instance's ISR (Timer6) also drives RA0 high directly once
+ * all three counts reach the threshold. Both paths set RA0=1 on PASS.
  *
- *   Loop termination and the PASS marker: the loop exits early once
- *   all three instances have overflowed at least MIN_OVERFLOWS times
- *   (mirrors pic18fxx5x-hal's example_timer2.c and pic16f87xa-hal's
- *   example_timer2.c, both of which break out of their bounded loop
- *   once `overflows >= EXPECTED_OVERFLOWS`). On the host sim the loop
- *   exits this way and epic_harness_report() drives RA0 high. On the
- *   MPLAB SIM target, three timers firing continuously consume most
- *   of the simulated CPU in ISRs, so the bounded loop may not reach
- *   epic_harness_report() within the 60s wall-clock `wait`. To make
- *   the PASS marker reliable under the gpio gate regardless, the
- *   slowest instance's ISR (Timer6) also drives RA0 high directly once
- *   all three counts reach the threshold. Both paths set RA0=1 on
- *   PASS; the MODE=gpio gate reads PORTA bit 0.
- *
- *   SIM_CYCLES = 20000 gives approximately Timer2=100, Timer4=40,
- *   Timer6=6 overflows on the host sim. Pass condition: all three
- *   toggle counts >= MIN_OVERFLOWS (2).
+ * SIM_CYCLES = 20000 gives approximately Timer2=100, Timer4=40,
+ * Timer6=6 overflows on the host sim. Pass condition: all three toggle
+ * counts >= MIN_OVERFLOWS (2).
  */
 
 #include "pic16f193x.h"
@@ -59,19 +50,19 @@
 #include "core/pic16f193x_wdt_sleep.h"
 #include "core/epic_harness.h"
 
-/** Family-local harness extension, see example_timer1.c for the full
- *  rationale: no-op on the CMake host build, freezes in a tight loop
- *  on the mdb-under-MPLAB-SIM build so the HARNESS=sim marker's RA0
- *  stays set across the mdb `print PORTA` readback. */
+/** Family-local harness extension (see example_timer1.c): no-op on the
+ *  CMake host build, freezes in a tight loop on the mdb-under-MPLAB-SIM
+ *  build so the HARNESS=sim marker's RA0 stays set across the mdb
+ *  `print PORTA` readback. */
 extern void pic16f193x_harness_halt(void);
 
 #ifndef FOSC_HZ
 #define FOSC_HZ 32000000UL
 #endif
 
-/** Simulated run length (host only). See the file header table for the
- *  per-instance cycles/flag math; 20000 gives every instance several
- *  overflows within one bounded run. */
+/** Simulated run length (host only). 20000 gives every instance several
+ *  overflows within one bounded run (see the file header table for the
+ *  per-instance cycles/flag math). */
 #define SIM_CYCLES  20000UL
 
 /** Minimum overflows per instance before the loop exits early and
@@ -103,13 +94,11 @@ static void on_t6_overflow(void)
 {
     EPIC_GPIO_TogglePin(GPIOC, GPIO_PIN_2);
     g_toggle_count[2]++;
-    /* Timer6 is the slowest instance (3200 cycles/flag). Once it has
-     * fired MIN_OVERFLOWS times, all three have (the other two fire
-     * faster), so this is the earliest point the pass condition can
-     * be met. Drive RA0 high here so the MODE=gpio gate sees PASS
-     * without depending on the main loop reaching epic_harness_report,
-     * which the MPLAB SIM may not let it do in the 60s wait window
-     * when three timer ISRs are continuously firing. */
+    /* Timer6 is the slowest instance (3200 cycles/flag), so once it
+     * has fired MIN_OVERFLOWS times, all three have. Drive RA0 high
+     * here so the MODE=gpio gate sees PASS even if the main loop
+     * cannot reach epic_harness_report within the MPLAB SIM wait
+     * window while three timer ISRs fire continuously. */
     if (!g_pass_marker_set &&
         g_toggle_count[0] >= MIN_OVERFLOWS &&
         g_toggle_count[1] >= MIN_OVERFLOWS &&
@@ -166,10 +155,9 @@ int main(void)
     EPIC_IRQ_Restore(1);
 
     /* 6. Let time pass. Bounded on host, busy-spins refreshing the WDT
-     *    on target. Exits early once all three instances have overflowed
-     *    at least MIN_OVERFLOWS times, mirroring pic18fxx5x-hal's
-     *    example_timer2.c early-exit shape. On the target the ISR-driven
-     *    PASS marker (on_t6_overflow) may fire before this loop exits. */
+     *    on target. Exits early once all three instances have
+     *    overflowed at least MIN_OVERFLOWS times; on the target the
+     *    ISR-driven PASS marker (on_t6_overflow) may fire first. */
     for (uint32_t i = 0; epic_harness_running(i); i++) {
         epic_harness_tick();
         EPIC_WDT_Refresh();

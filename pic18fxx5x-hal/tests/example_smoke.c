@@ -1,14 +1,7 @@
-/**
- * @file    example_smoke.c
- * @brief   Trivial smoke test: prove the shared harness contract links and
- *          runs against an empty PIC18 family backend.
- *
- * @details
- *   Exercises only the four-function host/target harness contract
- *   (`core/epic_harness.h`): init, a bounded tick loop, a log line, a
- *   pass/fail report. No GPIO, Timer0, or interrupts touched; proves
- *   `epic_harness_*` is genuinely family-blind, since PIC18 links against
- *   the exact same header and contract PIC16 uses.
+/*
+ * Trivial smoke test: prove the shared harness contract links and runs
+ * against an empty PIC18 family backend (no GPIO, Timer0, or interrupts
+ * touched), so `epic_harness_*` is genuinely family-blind.
  */
 
 #include "pic18fxx5x.h"

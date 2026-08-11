@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
-# scripts/bootstrap.sh, one-time (idempotent) dev-environment setup: the
-# host-toolchain packages every module's CMake host build needs, plus the
-# pre-commit hook (scripts/install-git-hooks.sh). Linux only, developed
-# against Debian/Ubuntu's apt; see "Other package managers" below if
-# that's not you.
+# One-time (idempotent) dev-environment setup, run by hand on a fresh
+# checkout: installs the host-toolchain packages every module's CMake host
+# build needs, then the pre-commit hook (scripts/install-git-hooks.sh).
+# Linux only (Debian/Ubuntu apt). Real-target builds run in the
+# docker/ci-toolchain/ image; only the vendor/ installers need a human
+# (their CDN blocks scripted downloads).
 #
-#   ./scripts/bootstrap.sh              install what's missing, then the hook
-#   ./scripts/bootstrap.sh --check-only report only, install nothing, exit
-#                                        nonzero if anything is missing
-#
-# Real-target (XC8) builds run inside the docker/ci-toolchain/ image
-# built by the root Makefile; only the two Microchip installers in
-# vendor/ need a human (their CDN blocks scripted downloads).
+#   ./scripts/bootstrap.sh [--check-only]   --check-only: report only, exit
+#                                            nonzero if anything is missing
 
 set -euo pipefail
 
@@ -74,7 +70,7 @@ fi
 toolchain_ok=1
 if ! command -v docker >/dev/null 2>&1; then
     echo "bootstrap: docker not found. Real-target builds run in a Docker image, see"
-    echo "  docs/docker-dev-plan.md; install Docker first."
+    echo "  DEVELOPMENT.md's Docker section; install Docker first."
     toolchain_ok=0
 elif ! docker info >/dev/null 2>&1; then
     echo "bootstrap: docker found but the daemon is not reachable (is it running? are"

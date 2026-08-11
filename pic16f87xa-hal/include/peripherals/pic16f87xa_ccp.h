@@ -1,14 +1,7 @@
-/**
- * @file    peripherals/pic16f87xa_ccp.h
- * @brief   CCP1 / CCP2 driver, Capture / Compare / PWM.
- *
- * @details
- *   Source: DS39582B §8.0. Full register reference: MANUAL.md §13.
- *   CCP1 and CCP2 are identical except their special-event trigger:
- *   CCP1 resets Timer1; CCP2 resets Timer1 *and* starts an A/D
- *   conversion (§8.2.4). Capture/Compare need Timer1 running; PWM
- *   needs Timer2 running.
- */
+/* CCP1 / CCP2 driver, Capture / Compare / PWM. Source: DS39582B §8.0;
+ * full register reference: MANUAL.md §13. CCP1's special-event trigger
+ * resets Timer1; CCP2's also starts an A/D conversion (§8.2.4).
+ * Capture/Compare need Timer1 running; PWM needs Timer2. */
 
 #ifndef PIC16F87XA_CCP_H
 #define PIC16F87XA_CCP_H
@@ -71,7 +64,7 @@ typedef struct {
     void (*EventCallback)(void);
 } CCP_HandleTypeDef;
 
-/* ───────────────────────── init / deinit ────────────────────────── */
+/* init / deinit. */
 
 /**
  * @brief  Configure the CCP module. Programs CCPxCON, sets the initial
@@ -95,7 +88,7 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
 /** Reset CCPxCON to 0x00 and clear the corresponding PIR flag. */
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
 
-/* ───────────────────────── compare / capture / pwm ──────────────── */
+/* compare / capture / pwm. */
 
 /** Set the 16-bit CCPRx value. */
 void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
@@ -117,7 +110,7 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
  */
 void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);
 
-/* ───────────────────────── IRQ entries ──────────────────────────── */
+/* IRQ entries. */
 
 /** Weak CCP1 ISR, override in user code. */
 void CCP1_IRQHandler(void) EPIC_WEAK;

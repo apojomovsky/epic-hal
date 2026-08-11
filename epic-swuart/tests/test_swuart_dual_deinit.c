@@ -1,34 +1,9 @@
-/**
- * @file    test_swuart_dual_deinit.c
- * @brief   Regression for the Timer1-teardown bug found and fixed while
- *          building the second channel (Task 6): EPIC_SWUART_DeInit
- *          used to call EPIC_TIMER1_DeInit() unconditionally, tearing
- *          down the shared Timer1 regardless of which channel was being
- *          removed. On PIC16F193X, where both channels share one
- *          Timer1 instance, that would silently break a still-active
- *          sibling channel. The fix (current epic_swuart.c) makes
- *          Timer1 teardown conditional on BOTH channel slots being
- *          empty (`g_chan_a == NULL && g_chan_b == NULL`).
- *
- *          This test inits two channels, uses both, DeInits one, and
- *          then genuinely exercises the survivor: not just "does its
- *          handle struct look untouched" but "does it still transmit
- *          and receive a correct byte", the only way software running
- *          entirely on directly-fired test hooks (no real Timer1/CCP
- *          hardware exists in the host sim) can actually catch a
- *          regression here. It also reads the Timer1 (T1CON) and CCP
- *          CON SFRs directly (same EPIC_REG8 mechanism
- *          swuart_test_last_tx_mode uses internally) to confirm the
- *          *hardware* state matches: Timer1 still running and the
- *          survivor's own CCP instances untouched right after the
- *          sibling's DeInit, and Timer1 actually torn down once the
- *          survivor itself is later DeInit'd too.
- *
- *          PIC16F193X only, the only family with two full CCP RX+TX
- *          pairs; compiles to an empty, trivially-passing translation
- *          unit on the other two families instead of failing to build
- *          there (same pattern as test_swuart_dual.c).
- */
+/* Regression test for the Timer1-teardown rule: EPIC_SWUART_DeInit
+ * must only tear down the shared Timer1 once BOTH channel slots are
+ * empty (g_chan_a == NULL && g_chan_b == NULL); the old unconditional
+ * teardown silently broke a still-active sibling on PIC16F193X. Inits
+ * two channels, DeInits one, then exercises the survivor (TX+RX and
+ * T1CON/CCP CON SFR readback). PIC16F193X only; empty TU elsewhere. */
 #include "epic_swuart.h"
 
 #if EPIC_SWUART_MAX_CHANNELS >= 2
@@ -89,9 +64,9 @@ int main(void)
     CHECK((EPIC_REG8(PIC_REG_T1CON) & PIC_T1CON_TMR1ON) != 0u,
           "Timer1 running with both channels active");
 
-    /* ---- Establish both channels actually work before touching
-     * DeInit: channel A transmits 'Z', channel B receives 'A', same
-     * technique and bytes test_swuart_dual.c uses. ---- */
+    /* Establish both channels actually work before touching DeInit:
+     * channel A transmits 'Z', channel B receives 'A', same technique
+     * and bytes test_swuart_dual.c uses. */
     size_t queued = EPIC_SWUART_Write(&chan_a, (const uint8_t *)"Z", 1);
     CHECK(queued == 1u, "channel A queued one byte");
     for (size_t i = 0; i < 9; i++) swuart_test_fire_tx_event();
@@ -121,7 +96,7 @@ int main(void)
     uint8_t ccp1_before = EPIC_REG8(PIC_REG_CCP1CON);
     uint8_t ccp2_before = EPIC_REG8(PIC_REG_CCP2CON);
 
-    /* ---- DeInit channel B. Channel A is the survivor. ---- */
+    /* DeInit channel B. Channel A is the survivor. */
     EPIC_StatusTypeDef deinit_b = EPIC_SWUART_DeInit(&chan_b);
     CHECK(deinit_b == EPIC_OK, "DeInit(B) returns EPIC_OK");
 
@@ -129,11 +104,10 @@ int main(void)
     CHECK(EPIC_REG8(PIC_REG_CCP3CON) == 0x00u, "channel B RX CCP (CCP3) zeroed by DeInit");
     CHECK(EPIC_REG8(PIC_REG_CCP4CON) == 0x00u, "channel B TX CCP (CCP4) zeroed by DeInit");
 
-    /* ---- The actual regression this test exists for: with channel A
-     * still active, Timer1 must NOT have been torn down. A buggy
-     * unconditional-teardown DeInit (the pre-fix behaviour) would clear
-     * TMR1ON and reset T1CON to its POR value here even though channel
-     * A was never touched. ---- */
+    /* The actual regression this test exists for: with channel A still
+     * active, Timer1 must NOT have been torn down. The pre-fix
+     * unconditional-teardown DeInit would clear TMR1ON and reset T1CON
+     * to its POR value here even though channel A was never touched. */
     CHECK((EPIC_REG8(PIC_REG_T1CON) & PIC_T1CON_TMR1ON) != 0u,
           "Timer1 still running after DeInit(B): shared with surviving channel A");
     CHECK(EPIC_REG8(PIC_REG_T1CON) != PIC_T1CON_POR_VALUE,
@@ -150,11 +124,10 @@ int main(void)
     CHECK(chan_a.tx_count == 0u, "channel A tx ring state untouched by DeInit(B)");
     CHECK(EPIC_SWUART_GetErrorCount(&chan_a) == 0u, "channel A error count untouched by DeInit(B)");
 
-    /* ---- The real proof: the survivor still works, both directions.
-     * If the Timer1 fix ever regressed and a sibling's DeInit yanked
-     * Timer1 out from under channel A, this would be the first place
-     * that could plausibly show it (a fresh Write() reads
-     * EPIC_TIMER1_ReadCounter() to arm the next deadline). ---- */
+    /* The real proof: the survivor still works, both directions. A
+     * regression that yanked Timer1 out from under channel A would
+     * show here first (a fresh Write() reads EPIC_TIMER1_ReadCounter()
+     * to arm the next deadline). */
     uint8_t byte_x = 0x96u; /* 1001 0110: mixed bits in every position */
     size_t qx = EPIC_SWUART_Write(&chan_a, &byte_x, 1);
     CHECK(qx == 1u, "channel A queues a byte after sibling DeInit");
@@ -169,9 +142,9 @@ int main(void)
     CHECK(rx_buf_a[0] == 0x41u, "channel A byte == 'A' after sibling DeInit");
     CHECK(EPIC_SWUART_GetErrorCount(&chan_a) == 0u, "channel A RX no errors after sibling DeInit");
 
-    /* ---- Close the loop: DeInit the survivor too, and confirm Timer1
-     * *is* torn down once both slots are genuinely empty, proving the
-     * conditional cuts both ways rather than just never firing. ---- */
+    /* Close the loop: DeInit the survivor too, and confirm Timer1 *is*
+     * torn down once both slots are genuinely empty, proving the
+     * conditional cuts both ways rather than just never firing. */
     EPIC_StatusTypeDef deinit_a = EPIC_SWUART_DeInit(&chan_a);
     CHECK(deinit_a == EPIC_OK, "DeInit(A) returns EPIC_OK");
     CHECK(EPIC_REG8(PIC_REG_T1CON) == PIC_T1CON_POR_VALUE,

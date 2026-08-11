@@ -1,19 +1,15 @@
-/**
- * @file    epic_bus.h
- * @brief   Family-agnostic I2C/SPI "MEM" register-access idiom, the
- *          `HAL_I2C_Mem_Read`/`Mem_Write` layer Cube sensor code uses, for
- *          8-bit PICs. Sits on the HAL's MSSP/SSP driver through a small
- *          injectable "bus ops" interface, which is also how the host
- *          test wires in a mock device (the host sim has no SSP slave
- *          model). See docs/ARCHITECTURE.md for the transaction shapes.
- */
+/* Family-agnostic I2C/SPI "MEM" register-access idiom (the
+ * HAL_I2C_Mem_Read/Mem_Write layer Cube sensor code uses) on the
+ * MSSP/SSP HAL, via a small injectable "bus ops" interface that also
+ * lets the host test wire in a mock device. See docs/API.md
+ * for the transaction shapes. */
 
 #ifndef EPIC_BUS_H
 #define EPIC_BUS_H
 
 #include <stdint.h>
 
-/* ---- I2C ---- */
+/* I2C */
 
 /** I2C bus operations (the MEM logic calls these). The default implementation
  *  wraps the HAL SSP driver; inject your own (e.g. a mock) for testing. */
@@ -46,7 +42,7 @@ int epic_bus_i2c_mem_write(uint8_t dev, uint8_t reg, const uint8_t *data, int n)
  *  address/register NACK. */
 int epic_bus_i2c_mem_read(uint8_t dev, uint8_t reg, uint8_t *buf, int n);
 
-/* ---- SPI ---- */
+/* SPI */
 
 /** SPI bus operations. The default wraps the HAL SSP driver + a GPIO CS. */
 typedef struct {

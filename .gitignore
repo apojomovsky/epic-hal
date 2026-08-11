@@ -60,10 +60,10 @@ bundles/
 /matrix.txt
 /ci-summary-*.md
 
-# superpowers:subagent-driven-development's per-plan scratch workspace
-# (ledger, briefs, review packages). The git history is the record once
-# a plan finishes; this directory is deleted at that point anyway.
-/.superpowers/
+# subagent-driven-development's per-plan scratch workspace (ledger,
+# briefs, review packages). The git history is the record once a plan
+# finishes; this directory is deleted at that point anyway.
+/.superpower[s]/
 
 # XC8 codegen-probe byproducts at the repo root (from -S / one-shot
 # compiler invocations writing into the working tree): dependency

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# scripts/install-git-hooks.sh, one-time setup: symlinks the pre-commit hook
-# into .git/hooks/ (not itself tracked by git, so this install step is
-# needed once per clone). See scripts/README.md for what the hook checks.
+# One-time setup, called by scripts/bootstrap.sh (or by hand after a clone):
+# symlinks scripts/pre-commit-checks.sh into .git/hooks/pre-commit (that
+# dir is not tracked by git, so this is needed once per clone). See
+# scripts/README.md for what the hook checks.
 
 set -euo pipefail
 

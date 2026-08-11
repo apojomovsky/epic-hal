@@ -11,13 +11,12 @@ then read your family's manual for the register-level reference; the
 family manual will point back here for anything conceptual instead of
 re-explaining it.
 
-This split exists because `docs/multi-family-plan.md` already applied the
-same reasoning to *code*: extract what's architecture-blind into
+This split exists because the multi-family design work already applied
+the same reasoning to *code*: extract what's architecture-blind into
 `epic-common/` once, keep what's genuinely register-specific per family
 under a fixed contract (same names/signatures, different bodies). This
-document is the documentation half of that same split; see
-`docs/hal-manual-plan.md` for how it was carved out of what used to be one
-PIC16-only manual.
+document is the documentation half of that same split, carved out of
+what used to be one PIC16-only manual.
 
 ---
 

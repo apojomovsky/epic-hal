@@ -30,8 +30,8 @@ The HAL compiles on XC8 because:
 ## nbproject/
 
 `nbproject/` stays, unlike the `Makefile`: it seeds this family's
-reference MPLAB X project in a later plan
-(`docs/superpowers/plans/2026-08-07-mplabx-projects-and-release.md`).
+reference MPLAB X project, which the bundle generator
+(`scripts/make_bundle.py`) builds headlessly into the release bundles.
 Do not delete it.
 
 ## Adjusting for your board

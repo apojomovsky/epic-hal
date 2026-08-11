@@ -1,11 +1,10 @@
-/**
- * @file    target_selftest.c
- * @brief   On-target self-test: replays golden_vectors.h through the real
- *          inline-asm routines on silicon, comparing against the
- *          host-oracle expectations (tools/gen_golden_vectors.c), and
- *          streams a PASS/FAIL summary over the family HAL's USART. Runs
- *          once at startup, then idles. The USART baud setup is the only
- *          family-specific branch; everything else is family-neutral.
+/*
+ * On-target self-test: replays golden_vectors.h through the real
+ * inline-asm routines on silicon, comparing against the host-oracle
+ * expectations (tools/gen_golden_vectors.c), and streams a PASS/FAIL
+ * summary over the family HAL's USART. Runs once at startup, then
+ * idles. The USART baud setup is the only family-specific branch;
+ * everything else is family-neutral.
  */
 
 #include "epic_hal.h"
@@ -13,17 +12,15 @@
 #include "pic_math.h"
 #include "golden_vectors.h"
 
-/* ─── USART output helpers (target has no stdio) ────────────────── */
-/* Non-null so EPIC_USART_Init arms TXEN (both families gate TXEN on
- * the callback being present); transmission here is polled and GIE
- * stays off, so this is never actually invoked. */
+/* USART output helpers (target has no stdio). s_tx_noop is non-null so
+ * EPIC_USART_Init arms TXEN (both families gate TXEN on the callback
+ * being present); transmission here is polled and GIE stays off, so it
+ * is never actually invoked. putc_ polls the shift register first:
+ * EPIC_USART_Transmit without waiting overruns on real hardware (TXREG
+ * is one deep) and garbles the report under MPLAB SIM. */
 static void s_tx_noop(void)
 {
 }
-/* Poll-drain before each byte: EPIC_USART_Transmit without waiting for
- * the shift register overruns on real hardware (TXREG is one deep) and
- * garble the report under MPLAB SIM. Same pattern as every family's
- * sim harness. */
 static void putc_(uint8_t c)
 {
     while (!EPIC_USART_IsTxShiftRegisterEmpty()) {
@@ -51,10 +48,9 @@ static void putd(uint32_t v) {  /* unsigned decimal */
 
 static uint32_t g_pass = 0u, g_fail = 0u;
 
-/* Fail reporting is a FUNCTION, not an inlined macro body: CHECK_EQ appears
- * at ~150 call sites, so inlining the print there would balloon the code
- * size past the 8 K-word PIC16F87XA flash. One copy of the print keeps the
- * self-test small. */
+/* Fail reporting is a FUNCTION, not an inlined macro body: CHECK_EQ
+ * appears at ~150 call sites, so inlining the print would balloon the
+ * code size past the 8 K-word PIC16F87XA flash. */
 static void report_fail(const char *label, uint32_t got, uint32_t exp)
 {
     g_fail++;
@@ -72,7 +68,7 @@ static void report_fail(const char *label, uint32_t got, uint32_t exp)
     else report_fail(label, (uint32_t)(got), (uint32_t)(exp)); \
 } while (0)
 
-/* ─── per-table runners ─────────────────────────────────────────── */
+/* Per-table runners. */
 static void run_mul_u8(void)   { for (int i=0;i<(int)GV_MUL_U8_N;i++)   CHECK_EQ(pic_math_mul_u8(gv_mul_u8[i].a,gv_mul_u8[i].b), gv_mul_u8[i].e, "mul_u8"); }
 static void run_mul_u16(void)  { for (int i=0;i<(int)GV_MUL_U16_N;i++)  CHECK_EQ(pic_math_mul_u16(gv_mul_u16[i].a,gv_mul_u16[i].b), gv_mul_u16[i].e, "mul_u16"); }
 static void run_div_u16(void)  { for (int i=0;i<(int)GV_DIV_U16_N;i++)  { pic_math_udiv16_t r=pic_math_divmod_u16(gv_div_u16[i].n,gv_div_u16[i].d,0);

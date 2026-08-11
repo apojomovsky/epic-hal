@@ -1,7 +1,4 @@
-/**
- * @file    epic_lcd_gpio4.c
- * @brief   4-bit parallel GPIO transport for epic_lcd. R/W tied low.
- */
+/** 4-bit parallel GPIO transport for epic_lcd; R/W tied low. */
 
 #include "epic_lcd_transport.h"
 #include "epic_hal.h"
@@ -33,7 +30,6 @@ static void gpio4_send(void *ctx, uint8_t rs, uint8_t byte)
     EPIC_GPIO_WritePin(g->pins.e_port, g->pins.e_pin, GPIO_PIN_SET);
     EPIC_GPIO_WritePin(g->pins.e_port, g->pins.e_pin, GPIO_PIN_RESET);
 
-    /* Low nibble */
     uint8_t lo = (uint8_t)(byte & 0x0Fu);
     EPIC_GPIO_WritePin(g->pins.db4_port, g->pins.db4_pin,
                       (lo & 0x01u) ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -48,22 +44,18 @@ static void gpio4_send(void *ctx, uint8_t rs, uint8_t byte)
     EPIC_GPIO_WritePin(g->pins.e_port, g->pins.e_pin, GPIO_PIN_RESET);
 }
 
-/* On target, use epic-tick for ms delays and a busy-wait for us.
- * On host (when built via the HAL's host sim), EPIC_GPIO_WritePin is
- * a no-op and delays are irrelevant -- the mock transport is used instead. */
-
 static void gpio4_delay_us(void *ctx, uint32_t us)
 {
     (void)ctx;
-    /* Best-effort busy wait. epic-tick's resolution is 1ms; for sub-ms
-     * delays we approximate. For most HD44780 commands this is fine --
-     * the timing is a minimum, not exact. */
+    /* epic-tick's resolution is 1 ms; sub-ms delays are a best-effort
+     * busy wait. Fine for HD44780 commands, since the timing is a
+     * minimum, not exact. */
     if (us >= 1000u) {
         epic_tick_delay_ms(us / 1000u);
     }
-    /* Sub-ms: no precise timer available on 8-bit PIC without Timer
-     * intervention. The E-pulse setup/hold time is already satisfied by
-     * the EPIC_GPIO_WritePin call overhead (several us at 20-48 MHz). */
+    /* Sub-ms: no precise timer on 8-bit PIC without Timer intervention;
+     * the E-pulse setup/hold time is already satisfied by the
+     * EPIC_GPIO_WritePin call overhead (several us at 20-48 MHz). */
 }
 
 static void gpio4_delay_ms(void *ctx, uint32_t ms)
@@ -72,11 +64,9 @@ static void gpio4_delay_ms(void *ctx, uint32_t ms)
     epic_tick_delay_ms(ms);
 }
 
-/* No special cold-start handling here: nibble-splitting 0x38 three times
- * (as epic_lcd_init does before switching modes) reproduces the HD44780's
- * 4-bit init preamble (0x3, 0x3, 0x3, then 0x28 for 4-bit/2-line) on its
- * own, since the LCD only reads the first nibble of each 0x3X send while
- * still in 8-bit mode. */
+/* No special cold-start handling: the 4-bit init preamble (0x3, 0x3, 0x3,
+ * then 0x28) falls out of epic_lcd_init's three 0x38 sends, since the LCD
+ * only reads the first nibble of each 0x3X send while still in 8-bit mode. */
 
 void epic_lcd_gpio4_init(epic_lcd_ops_t *ops, void **ctx,
                          const epic_lcd_gpio4_pins_t *pins)

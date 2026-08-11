@@ -417,8 +417,7 @@ macro, disproportionate for the one feature that needs it). Tests that
 exercise the handler assert RBIF directly in INTCON, then call
 `RB_IRQHandler` / `epic_dispatch_all_irqs` and check the callback's byte
 and the post-call flag state. This proves the handler's read/clear/callback
-ordering, the part that actually matters. See
-`tests/example_rb_change.c` and `epic-encoder/docs/ARCHITECTURE.md`.
+ordering, the part that actually matters. See `tests/example_rb_change.c`.
 
 ---
 

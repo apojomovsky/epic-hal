@@ -194,11 +194,9 @@ Prescaler `T*CKPS<1:0>`: `00`=1:1, `01`=1:4, `1x`=1:16 (both `10` and
 linear, all 16 encodings distinct.
 
 TMR2/PR2/T2CON live in bank 0 (0x1A-0x1C). TMR4/PR4/T4CON and
-TMR6/PR6/T6CON live in bank 8 (0x415-0x417, 0x41C-0x41E), a bank not
-documented in this repo's `docs/pic16f193x-plan.md` §2 bank-map table
-before this peripheral landed (that table only covered banks 0-7; see
-`docs/superpowers/plans/2026-08-04-pic16f193x-timer246.md`'s "Known
-documentation gap" section for the full account).
+TMR6/PR6/T6CON live in bank 8 (0x415-0x417, 0x41C-0x41E), a bank
+outside the original bank-map table (it only covered banks 0-7);
+this bank layout was recorded when the driver landed.
 
 ### Driver API
 

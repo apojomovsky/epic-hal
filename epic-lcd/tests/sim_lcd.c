@@ -1,68 +1,23 @@
 /**
- * @file    sim_lcd.c
- * @brief   Bounded, self-reporting HARNESS=sim build for epic-lcd:
- *          the module's first real `mdb` gate. Runs the real compiled
- *          driver (src/epic_lcd.c) under MPLAB SIM on a 16F877A,
- *          driving the HD44780 init sequence plus a small print
- *          through the real ops interface, and verifies the exact
- *          command/data byte stream and delay pattern the driver
- *          emitted, reporting PASS/FAIL over the target's real
- *          hardware USART (see
- *          pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
+ * Bounded, self-reporting HARNESS=sim build: epic-lcd's `mdb` gate. Runs
+ * the real compiled driver (src/epic_lcd.c) under MPLAB SIM on a 16F877A
+ * and verifies the emitted command/data byte stream and delay pattern over
+ * the harness USART (see pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
  *
- * @details
- *   Verification is by transport-call counting, the gate brief's
- *   fallback clause ("or by counting the transport's calls if a
- *   probeable transport exists"): the transport's ops are installed
- *   by the real epic_lcd_gpio4_init (so the real transport init code,
- *   pin configuration and initial E/RS writes run and are checked),
- *   then the send/delay ops are replaced by recorders that log the
- *   (rs, byte) / (kind, value) pairs the driver emits. The recorded
- *   streams are checked byte-for-byte against the driver's documented
- *   contract (init preamble, function/display/entry commands, DDRAM
- *   addressing, data bytes, and the 50 ms / 4.5 ms / 1.6 ms / 40 us
- *   timing constants), and TRISB is checked through EPIC_BANK1_READ8
- *   (all six LCD pins outputs, RB2/RB3 untouched) plus the E/RS
- *   low-after-init state via the literal-token path.
+ * Verification is by transport-call counting: the real epic_lcd_gpio4_init
+ * runs (its pin configuration and initial E/RS writes are checked), then
+ * the send/delay ops are replaced by recorders. Two toolchain constraints
+ * force this (XC8 v4.00, PIC16 indirect-call ABI):
+ *  - calling gpio4_send through the ops pointer corrupts its bank-1 frame
+ *    (warning 1481; observed under mdb), so the transport's nibble-splitting
+ *    pin path is left to real hardware;
+ *  - spinning the real delays busy-waits on the Timer2 ISR, whose 4-level
+ *    vector+dispatch+callback overflows the 8-level hardware stack while
+ *    the driver's send path is 6-7 levels deep (observed: reset loop).
  *
- *   Finding (why the gate records the send calls instead of driving
- *   the real gpio4_send, MPLAB SIM + XC8 v4.00, 16F877A): the
- *   transport's send functions cannot be invoked through the ops
- *   function-pointer mechanism in this build. XC8's PIC16 indirect
- *   calls go through its PC-relative fptable and pass arguments in
- *   shared non-reentrant parameter storage, and gpio4_send's
- *   bank-1-local frame collides with that ABI: the compiler itself
- *   warns "call from non-reentrant function ... might corrupt
- *   parameters" (warning 1481) at the wrapper call site. Measured
- *   under mdb, calling gpio4_send through ops.send left PORTB
- *   untouched, left STATUS at 0xF8 (RP1:RP0 = 11, IRP set, i.e. the
- *   machine parked in Bank 3, which then hangs the harness's polled
- *   USART report), and a driver + real-send probe reset the part
- *   before reaching report. The same calls made DIRECTLY work
- *   perfectly: a probe calling EPIC_GPIO_WritePin directly (the
- *   transport's own building block) produced the exact expected
- *   PORTB state (0x30), clean STATUS, and a PASS report. The
- *   transport's nibble-splitting send code is therefore not
- *   verifiable end to end under this toolchain; the gate verifies
- *   the driver's full emission contract instead and leaves the
- *   transport's pin data path to real hardware.
- *
- *   Second finding (why the delays are recorded rather than spun,
- *   same toolchain): the transport's real delay functions busy-wait
- *   on the epic-tick Timer2 ISR, and that ISR (vector + dispatch +
- *   TIMER2_IRQHandler + callback, 4 hardware stack levels) firing
- *   while the driver's send path is 6-7 levels deep overflows the
- *   PIC16F877A's 8-level hardware call stack (observed: the run
- *   completed and printed its marker, then main's return address,
- *   the oldest clobbered stack slot, took the part to a reset and
- *   re-ran the whole build repeatedly in the 5000 ms mdb wait).
- *   Real-target firmware driving this transport with epic_tick
- *   running concurrently should expect the same constraint.
- *
- *   LCD pins are all on PORTB (RB0=RS, RB1=E, RB4..RB7=DB4..DB7),
- *   deliberately clear of the harness's USART pins (RC6/RC7). MPLAB
- *   SIM cannot inject RX input (same constraint documented in
- *   epic-swuart's sim build), so the gate is TX-side only.
+ * LCD pins are all on PORTB (RB0=RS, RB1=E, RB4..RB7=DB4..DB7), clear of
+ * the harness USART pins (RC6/RC7). MPLAB SIM cannot inject RX, so the
+ * gate is TX-side only.
  */
 
 #include "epic_lcd.h"
@@ -143,7 +98,7 @@ static const delay_expect_t EXPECT_DELAY[] = {
 };
 #define EXPECT_DELAY_LEN (sizeof(EXPECT_DELAY) / sizeof(EXPECT_DELAY[0]))
 
-/* ---- recorders: count the transport ops the driver emits ---- */
+/* recorders: count the transport ops the driver emits */
 
 /* One guard slot beyond the expected counts so a driver that sends
  * MORE than the expected sequence still trips the length check
@@ -211,7 +166,7 @@ static uint8_t portb_latch_read(void)
     return v;
 }
 
-/* ---- failure reporting (same shape as pic16f87xa-hal's probe) ---- */
+/* failure reporting (same shape as pic16f87xa-hal's probe) */
 
 static uint16_t g_fail = 0u;
 

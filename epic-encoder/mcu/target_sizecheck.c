@@ -1,14 +1,7 @@
 /**
- * @file    target_sizecheck.c
- * @brief   Minimal on-target build proving encoder.c (and the epic-tick
- *          timebase it links) cross-compiles for real XC8/PIC16/PIC18
- *          silicon and reporting flash/RAM footprint; not a correctness
- *          test (see ../tests/test_encoder.c for that).
- *
- * Exercises the glitch-gate path, the QUAD_TABLE decode path, and all
- * three atomic getters, so the linker pulls in every code path an
- * on-target application would use. Measured footprint is recorded in
- * docs/ARCHITECTURE.md.
+ * Minimal on-target build proving encoder.c (and the epic-tick timebase
+ * it links) cross-compiles for real XC8/PIC16/PIC18 silicon and reports
+ * flash/RAM footprint; not a correctness test (see ../tests/test_encoder.c).
  */
 
 #include "encoder.h"

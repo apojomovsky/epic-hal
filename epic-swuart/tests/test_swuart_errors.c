@@ -1,22 +1,9 @@
-/**
- * @file    test_swuart_errors.c
- * @brief   Two error paths, v3: a bad stop bit (framing error) and an
- *          RX ring flooded past EPIC_SWUART_RING_SZ without being
- *          drained. No real CCP hardware exists in the host sim, so
- *          this drives the capture/compare event handler directly via
- *          the same test hooks test_swuart_rx.c uses, single channel
- *          (slot A's fixed pins), not through epic_harness_tick().
- *          The error-handling *logic* (bad-stop-bit and ring-overflow
- *          counting) is still shared in spirit between
- *          rx_capture_event_fast (channel A) and rx_capture_event
- *          (channel B), but after the RX hot-path fix the two are
- *          separate functions, not one shared body, so this file's
- *          coverage speaks only to channel A's path here. Channel B's
- *          own coverage still comes from this same file running
- *          unmodified on PIC16F193X (it never touches channel A's
- *          changed code either way, so no new gap, just a less precise
- *          old claim).
- */
+/* Two RX error paths: a bad stop bit (framing error) and an RX ring
+ * flooded past EPIC_SWUART_RING_SZ without being drained. Drives the
+ * capture/compare event handler directly via the test hooks
+ * test_swuart_rx.c uses, single channel (slot A's fixed pins). After
+ * the RX hot-path fix rx_capture_event_fast and rx_capture_event are
+ * separate functions, so this file's coverage is channel A's path. */
 #include <stdio.h>
 #include "epic_swuart.h"
 
@@ -83,8 +70,8 @@ static void receive_byte(const uint8_t *bits)
 
 int main(void)
 {
-    /* ---- Bad stop bit: hold the line low instead of returning to
-     * mark. Slot A's fixed pins (see epic_swuart.c EPIC_SWUART_Init). ---- */
+    /* Bad stop bit: hold the line low instead of returning to mark.
+     * Slot A's fixed pins (see epic_swuart.c EPIC_SWUART_Init). */
     EPIC_SWUART_HandleTypeDef h;
     EPIC_StatusTypeDef st = EPIC_SWUART_Init(&h, GPIOC, GPIO_PIN_1, GPIOC, GPIO_PIN_2,
                                               FOSC_HZ, 9600u);
@@ -97,11 +84,10 @@ int main(void)
     CHECK(EPIC_SWUART_Read(&h, buf, sizeof(buf)) == 0, "bad-stop byte dropped");
     CHECK(EPIC_SWUART_GetErrorCount(&h) == 1u, "one framing error counted");
 
-    /* ---- RX ring overflow: send more bytes than EPIC_SWUART_RING_SZ
-     * without draining. Same handle/slot: a fresh DeInit/Init cycle
-     * would reset error_count, but this scenario wants exactly one
-     * more error source layered on top, not a clean slate, so reuse
-     * the handle from above unchanged. ---- */
+    /* RX ring overflow: send more bytes than EPIC_SWUART_RING_SZ
+     * without draining. Reuse the handle from above unchanged: a fresh
+     * DeInit/Init cycle would reset error_count, and this scenario
+     * wants exactly one more error source layered on top. */
     static const uint8_t ok_bits[] = {0, 1, 0, 0, 0, 0, 0, 1, 0, 1}; /* 'A', valid framing */
     for (unsigned i = 0; i < EPIC_SWUART_RING_SZ + 2u; i++) {
         receive_byte(ok_bits);

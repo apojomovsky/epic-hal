@@ -1,14 +1,10 @@
 /**
- * @file    pic16f193x_wdt_sleep.c
- * @brief   BOR / POR status helpers, shared by both builds.
- *
- * @details
- *   The build-mode-specific helpers EPIC_WDT_Refresh and EPIC_Sleep_Enter
- *   live in pic16f193x_wdt_sleep_sim.c (host) and
- *   pic16f193x_wdt_sleep_target.c (XC8), selected at link time. The BOR/POR
- *   status helpers below are identical on both builds, they just read and
- *   clear bits in PCON (DS41364B §3.0, Register 3-3) through the platform
- *   SFR macro, so they stay here as one shared translation unit.
+ * BOR / POR status helpers, shared by both builds: they only read and
+ * clear bits in PCON (DS41364B §3.0, Register 3-3) through the platform
+ * SFR macro, so they stay here as one shared translation unit. The
+ * build-mode-specific helpers EPIC_WDT_Refresh and EPIC_Sleep_Enter
+ * live in pic16f193x_wdt_sleep_sim.c (host) and
+ * pic16f193x_wdt_sleep_target.c (XC8), selected at link time.
  */
 
 #include "core/pic16f193x_wdt_sleep.h"

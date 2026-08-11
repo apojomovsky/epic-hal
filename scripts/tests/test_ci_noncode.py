@@ -13,7 +13,7 @@ class TestIsNonCode(unittest.TestCase):
         return ci_noncode_check.is_non_code(files)
 
     def test_docs_only(self):
-        self.assertTrue(self.check(["README.md", "docs/ci-plan.md", "AGENTS.md"]))
+        self.assertTrue(self.check(["README.md", "docs/adding-a-device.md", "AGENTS.md"]))
 
     def test_docs_dir_at_any_depth(self):
         self.assertTrue(self.check(["a/b/docs/guide.md", "docs/x.md"]))

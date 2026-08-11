@@ -1,7 +1,6 @@
 /**
- * @file    example_traffic_light.c
- * @brief   Minimal, dependency-free demonstration of epic-fsm: no HAL, no
- *          task manager, host-only, prints each transition to stdout.
+ * Minimal, dependency-free demonstration of epic-fsm: no HAL, no task
+ * manager, host-only, prints each transition to stdout.
  */
 
 #include <stdio.h>

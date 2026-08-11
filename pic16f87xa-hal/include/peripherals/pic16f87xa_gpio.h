@@ -1,14 +1,6 @@
-/**
- * @file    peripherals/pic16f87xa_gpio.h
- * @brief   General-Purpose I/O port driver for the PIC16F87XA family.
- *
- * @details
- *   Cube-style API: every pin is (GPIOx, GPIO_PIN_n). Writes only
- *   OR/AND a mask onto the PORTx latch, never read-modify the pin level
- *   first (DS39582B §4.x). PORTA is 6-bit, PORTB/C/D are 8-bit, PORTE
- *   is 3-bit (40/44-pin only); pin names match the datasheet pinout
- *   tables across every part in the family.
- */
+/* GPIO port driver, Cube-style (GPIOx, GPIO_PIN_n). Writes OR/AND the
+ * PORTx latch and never read-modify the pin level first (DS39582B §4.x).
+ * PORTA is 6-bit, PORTB/C/D 8-bit, PORTE 3-bit (40/44-pin only). */
 
 #ifndef PIC16F87XA_GPIO_H
 #define PIC16F87XA_GPIO_H
@@ -84,7 +76,7 @@ typedef enum {
     GPIO_PULLUP   = 1U    /**< Weak pull-ups enabled  (RBPU = 0). */
 } GPIO_PullTypeDef;
 
-/* ───────────────────────── init / deinit ────────────────────────── */
+/* init / deinit. */
 
 /**
  * @brief  Configure one or more pins of a port to the same direction.
@@ -103,7 +95,7 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
 /** Restore all pins of `port` to input mode and clear the latch. */
 void EPIC_GPIO_DeInit(GPIO_TypeDef port);
 
-/* ───────────────────────── read / write / toggle ────────────────── */
+/* read / write / toggle. */
 
 /**
  * @brief  Drive a pin high or low; ORs/ANDs the mask onto the PORTx
@@ -127,7 +119,7 @@ void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
 /** Read the entire port latch. */
 uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
 
-/* ───────────────────────── PORTB pull-ups ───────────────────────── */
+/* PORTB pull-ups. */
 
 /**
  * @brief  Enable or disable PORTB internal weak pull-ups.
@@ -137,7 +129,7 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
  */
 void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull);
 
-/* ───────────────────────── PORTB change interrupt ─────────────────── */
+/* PORTB change interrupt. */
 
 /**
  * @brief  Register a single whole-port callback fired from the RB<7:4>

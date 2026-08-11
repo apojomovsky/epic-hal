@@ -1,7 +1,4 @@
-/**
- * @file    pic16f87xa_timer1.c
- * @brief   Timer1 driver, implementation (DS39582B §6.0).
- */
+/* Timer1 driver implementation (DS39582B §6.0). */
 
 #include "peripherals/pic16f87xa_timer1.h"
 #include "core/pic16_irq.h"
@@ -51,7 +48,6 @@ EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
     /* Stop the timer before reconfiguring. */
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
 
-    /* Configure the overflow interrupt. */
     EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR1);
     if (h->OverflowCallback) {
         EPIC_IRQ_Enable(PIC16_IRQ_TMR1);

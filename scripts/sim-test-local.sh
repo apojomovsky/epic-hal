@@ -1,25 +1,13 @@
 #!/usr/bin/env bash
-# Local reproduction of .github/workflows/sim-tests.yml's sim-test job,
-# for fast iteration without a GitHub Actions round trip (docs/ci-
-# plan.md's local-reproduction plan). Resolves the HARNESS=sim build
-# script on the host (needs python3, see scripts/epic_build.py), pulls
-# the exact same private GHCR toolchain image xc8-build.yml/sim-
-# tests.yml build+cache (same tag formula, read straight from
-# docker/ci-toolchain/Dockerfile's ARGs, so a cache hit is expected:
-# this never rebuilds the image locally), then runs
-# scripts/sim-mdb-run.sh inside it, bind-mounting this repo so the
-# .hex output lands in the real working tree (inspectable after,
-# gitignored either way). sim-mdb-run.sh only ever executes a
-# pre-emitted script plus mdb.sh, since the container deliberately has
-# no python3.
-#
-# Needs `docker login ghcr.io` first, with a PAT that has at least
-# read:packages (this repo's GHCR packages are private, see
-# docs/ci-plan.md's redistribution-fix account for why).
+# Local reproduction of the MPLAB SIM gate in ci.yml's target job, for
+# fast iteration without a GH Actions round trip: emits the HARNESS=sim
+# build script on the host (python3), pulls the same private GHCR toolchain
+# image CI uses (tag formula read from the Dockerfile ARGs, so a cache hit
+# is expected), then runs scripts/sim-mdb-run.sh inside it with this repo
+# bind-mounted. Needs `docker login ghcr.io` with read:packages first.
 #
 # Usage: sim-test-local.sh <family> <mcu> <device> <module> [wait_ms] [mode]
-# Example (the epic-tick pilot, PIC16 side):
-#   scripts/sim-test-local.sh pic16f87xa 16F877A PIC16F877A epic-tick
+#   e.g. scripts/sim-test-local.sh pic16f87xa 16F877A PIC16F877A epic-tick
 
 set -euo pipefail
 

@@ -1,13 +1,9 @@
-/**
- * @file    example_usb_echo.c
- * @brief   Minimal echo: read a byte from the host, write it back.
- *
- * @details
- *   Only calls epic_usb.h's public API, so this same source builds
- *   against either the host stub or the real target's epic_usb.c.
- *   EPIC_USB_EXAMPLE_HOST_ITERS bounds the host loop (there's no real
- *   host to connect, so connected() would otherwise never go true); on
- *   target the loop runs forever, as firmware does.
+/*
+ * Minimal USB echo: read a byte from the host, write it back. Uses only
+ * the public epic_usb.h API, so it builds against either the host stub
+ * or the real target. EPIC_USB_EXAMPLE_HOST_ITERS bounds the host loop
+ * (no real host to connect, so connected() would never go true); on
+ * target the loop runs forever.
  */
 
 #include "epic_usb.h"

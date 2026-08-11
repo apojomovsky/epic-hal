@@ -1,12 +1,8 @@
 /**
- * @file    example_mssp.c
- * @brief   MSSP SPI-master smoke test: init at Fosc/4, confirm
- *          control-register state. The §4 gate payload.
- *
- * @details
- *   Expected register image (after init):
- *     SSPSTAT = 0x40   (CKE=1 at bit 6, SMP=0)
- *     SSPCON1 = 0x20   (SSPM=0000 Fosc/4, CKP=0, SSPEN=1 at bit 5)
+ * MSSP SPI-master smoke test: init at Fosc/4, confirm control-register
+ * state. Expected register image (after init):
+ *   SSPSTAT = 0x40   (CKE=1 at bit 6, SMP=0)
+ *   SSPCON1 = 0x20   (SSPM=0000 Fosc/4, CKP=0, SSPEN=1 at bit 5)
  */
 
 #include "pic16f193x.h"

@@ -1,17 +1,9 @@
-/**
- * @file    example_idle_blink.c
- * @brief   Blink an LED on RB0 with the CPU asleep, fully peripheral
- *          driven, so the CPU is mostly idle.
- *
- * @details
- *   Hardware timebase, not a software delay loop: the CPU spends
- *   almost all its time in Sleep, a Timer1 overflow interrupt wakes it
- *   just long enough to toggle the LED. Timer1 runs on the 32.768 kHz
- *   watch crystal (T1OSC), asynchronous (the only mode that keeps
- *   counting in Sleep, DS39582B §6.5), reload 0x8000 for a 1 s period.
- *   Wiring: LED+resistor on RB0, 32.768 kHz crystal on T1OSO/T1OSI,
- *   20 MHz HS crystal still required for the CPU clock.
- */
+/* Blink an LED on RB0 with the CPU asleep, fully peripheral driven.
+ * Timer1 on the 32.768 kHz T1OSC crystal, asynchronous (the only mode
+ * that keeps counting in Sleep, DS39582B §6.5), reload 0x8000 for a
+ * 1 s period; the overflow interrupt wakes the CPU just long enough to
+ * toggle the LED. Wiring: LED+resistor on RB0, 32.768 kHz crystal on
+ * T1OSO/T1OSI, 20 MHz HS crystal for the CPU clock. */
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sfr.h"
@@ -21,11 +13,8 @@
 #include "core/pic16f87xa_wdt_sleep.h"
 #include "core/epic_harness.h"
 
-/**
- * @brief  Timer1 reload, 0x8000 (32768). On the T1OSC timebase that is
- *         exactly 1 s of the 32.768 kHz crystal; the ISR writes it back
- *         after each overflow to re-arm the 1 s period.
- */
+/* Timer1 reload, 0x8000 (32768): exactly 1 s on the 32.768 kHz T1OSC
+ * timebase; the ISR writes it back after each overflow to re-arm. */
 #define T1_RELOAD  0x8000U
 
 /** Simulated run length (host only). The sim advances T1OSC Timer1 one
@@ -35,11 +24,9 @@
 /* Toggle count, the ISR is the only writer. */
 static volatile uint32_t g_toggle_count = 0;
 
-/**
- * @brief  Timer1 overflow callback, re-arms the period, toggles the LED,
- *         and refreshes the WDT (a no-op on the host). Runs in interrupt
- *         context on the target and in the sim IRQ callback on the host.
- */
+/* Timer1 overflow callback: re-arms the period, toggles the LED, and
+ * refreshes the WDT (a no-op on the host). Runs in interrupt context
+ * on the target and in the sim IRQ callback on the host. */
 static void on_t1_overflow(void)
 {
     EPIC_TIMER1_WriteCounter(T1_RELOAD);
@@ -57,9 +44,9 @@ int main(void)
     EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 
     /* 2. Timer1 on the 32.768 kHz T1OSC crystal, asynchronous (keeps
-     *    counting in Sleep), 1:1 prescaler, reload 0x8000 → 1 s overflow.
-     *    The same configuration builds for the sim, which models the
-     *    external clock at a simplified rate. */
+     *    counting in Sleep), 1:1 prescaler, reload 0x8000 -> 1 s
+     *    overflow. The sim models the external clock at a simplified
+     *    rate. */
     TIMER1_HandleTypeDef h = TIMER1_HANDLE_DEFAULT;
     h.ClockSource      = TIMER1_CLOCK_EXTERNAL;
     h.ClockSync        = TIMER1_ASYNC_EXTERNAL;
@@ -70,28 +57,24 @@ int main(void)
     EPIC_TIMER1_Init(&h);
     EPIC_TIMER1_Start(&h);
 
-    /* 3. Wait for the T1OSC crystal to start ticking before sleeping (a
-     *    32 kHz crystal can take a few hundred ms), refreshing the WDT
-     *    meanwhile. epic_harness_tick pumps the sim on the host (so
-     *    the counter advances and the loop exits) and is a no-op on the
-     *    target, where the real crystal advances the counter on its own. */
+    /* 3. Wait for the T1OSC crystal to start ticking before sleeping
+     *    (a 32 kHz crystal can take a few hundred ms), refreshing the
+     *    WDT meanwhile. On the host the sim advances the counter so
+     *    the loop exits. */
     while (EPIC_TIMER1_ReadCounter() <= T1_RELOAD) {
         EPIC_WDT_Refresh();
         epic_harness_tick();
     }
 
-    /* 4. Enable global interrupts (EPIC_TIMER1_Init already set TMR1IE
-     *    and PEIE). On the sim this is harmless; on the target it arms the
+    /* 4. Enable global interrupts (TMR1IE and PEIE already set by
+     *    Init). On the sim this is harmless; on the target it arms the
      *    wake-up. */
     EPIC_IRQ_Restore(1);
 
-    /* 5. Idle loop, the heart of "CPU mostly idle". On the host the
-     *    harness bounds the loop to SIM_CYCLES; on the target it runs
-     *    forever. Each iteration pumps the sim (host) / is empty (target),
-     *    then sleeps (a no-op on the host). Each Timer1 overflow wakes the
-     *    CPU; the vector dispatcher calls TIMER1_IRQHandler, which clears
-     *    the flag and runs on_t1_overflow (reload + toggle + WDT refresh),
-     *    and the CPU sleeps again. */
+    /* 5. Idle loop: each iteration pumps the sim (host) or is empty
+     *    (target), then sleeps. Each Timer1 overflow wakes the CPU;
+     *    the dispatcher runs the callback and the CPU sleeps again.
+     *    The harness bounds the loop on the host. */
     for (uint32_t i = 0; epic_harness_running(i); i++) {
         epic_harness_tick();
         EPIC_Sleep_Enter();

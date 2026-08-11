@@ -1,9 +1,8 @@
-/**
- * @file    pic_math_sqrt.c (shared portable-C, no asm)
- * @brief   `pic_math_sqrt_u16`: integer square root via Newton-Raphson,
- *          built on `pic_math_divmod_u16` rather than fresh asm, one
- *          implementation linked by every backend. Converges to
- *          floor(sqrt(value)) for the full 0..65535 range.
+/*
+ * Shared portable-C integer square root (no asm): Newton-Raphson built
+ * on pic_math_divmod_u16 rather than fresh asm, one implementation
+ * linked by every backend. Converges to floor(sqrt(value)) for the full
+ * 0..65535 range.
  */
 
 #include "pic_math.h"

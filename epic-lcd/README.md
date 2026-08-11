@@ -24,8 +24,6 @@ GPIO and SPI backends, built on the HAL.
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md), transport ops, 4-bit init handling,
-  SPI/74HC595 protocol, host testing.
 - [API reference](docs/API.md), per-function semantics + usage.
 
 ## Quick start

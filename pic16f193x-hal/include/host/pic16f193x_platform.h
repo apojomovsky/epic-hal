@@ -1,16 +1,13 @@
 /**
- * @file    host/pic16f193x_platform.h
- * @brief   Host-simulation platform: how SFRs are stored and how the weak
- *          attribute is spelled, for the CMake host build.
+ * Host-simulation platform: how SFRs are stored and how the weak
+ * attribute is spelled, for the CMake host build.
  *
- * @details
- *   Host half of the SFR mapping layer (paired with
- *   target/pic16f193x_platform.h for the XC8 build); the build's include
- *   path picks which one resolves, so pic16f193x.h includes this name
- *   unconditionally with no `#ifdef`. SFR access indexes the 4096-byte
- *   memory-backed pic16f193x_sim_sfr[] (src/sim/pic16f193x_sim.c), one
- *   byte per physical 12-bit data-memory address (DS41364B §2.2, up to
- *   32 banks x 128 bytes), so tests can poke registers directly.
+ * Host half of the SFR mapping layer (paired with
+ * target/pic16f193x_platform.h for the XC8 build); the build's include
+ * path picks which one resolves, so pic16f193x.h includes this name
+ * unconditionally with no `#ifdef`. SFR access indexes the 4096-byte
+ * memory-backed pic16f193x_sim_sfr[] (src/sim/pic16f193x_sim.c), one
+ * byte per physical 12-bit data-memory address (DS41364B §2.2).
  */
 
 #ifndef PIC16F193X_PLATFORM_H

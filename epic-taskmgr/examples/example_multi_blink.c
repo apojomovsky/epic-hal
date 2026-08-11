@@ -1,16 +1,9 @@
 /**
- * @file    example_multi_blink.c
- * @brief   Four independent LED blinks at distinct rates driven by the
- *          cooperative task manager, one source for the host simulator
- *          and a real XC8 target, with no `#ifdef` in the code.
- *
- * @details
- *   Demonstrates periodic tasks at different periods, priority ordering
- *   (the supervisor runs first each round), and runtime one-shot spawning
- *   (the supervisor spawns "blip" children that free their slot after one
- *   run). PORTB is used so the example builds unchanged for every device
- *   in the family, including the 28-pin parts with no PORTD/PORTE. Wiring:
- *   an LED and resistor on each of RB0..RB3 to GND, 20 MHz HS crystal.
+ * Four independent LED blinks at distinct rates driven by the cooperative
+ * task manager, one source for host sim and real XC8 target (no
+ * `#ifdef`). Demonstrates priority ordering (supervisor first) and
+ * runtime one-shot spawning. PORTB is used so it builds on every device
+ * in the family (28-pin parts have no PORTD/PORTE).
  */
 
 #include "epic_hal.h"          /* family-neutral HAL entry point         */
@@ -18,31 +11,27 @@
 
 #include "task_manager.h"
 
-/* ───────────────────────── timing ────────────────────────────────── */
-
 /** Timer0 reload for a ~10 ms tick on a 20 MHz target: Fosc/4=5 MHz,
  *  prescaler 1:256 (51.2 us/count), reload 61 -> 195 counts ~= 9.98 ms. */
 #define TICK_RELOAD       61U
 #define TICK_PRESCALER    TIMER0_PRESCALER_1_256
 
 /** Host run length: long enough for the period-40 supervisor to fire, its
- *  one-shot blip to land, and the period-20 slow blink to toggle a few times.
- *  Override with -DSIM_CYCLES=. */
+ *  one-shot blip to land, and the period-20 slow blink to toggle a few
+ *  times. Override with -DSIM_CYCLES=. */
 #ifndef SIM_CYCLES
 #define SIM_CYCLES        4000000UL
 #endif
 
-/* Task periods in ticks (~10 ms each). Chosen for clearly distinct visible
- * rates on hardware and comfortable margins on the sim (counts need only be
+/* Task periods in ticks (~10 ms each): clearly distinct visible rates on
+ * hardware, comfortable margins on the sim (counts need only be
  * monotonic: fast > med > slow >= 2, plus >= 1 blip). */
-#define PERIOD_FAST        5U    /* ~50 ms  → RB0 (fastest) */
-#define PERIOD_MED        10U    /* ~100 ms → RB1 */
-#define PERIOD_SLOW       20U    /* ~200 ms → RB2 */
-#define PERIOD_SUPERVISOR 40U    /* ~400 ms → spawns a blip on RB3 */
+#define PERIOD_FAST        5U    /* ~50 ms  -> RB0 (fastest) */
+#define PERIOD_MED        10U    /* ~100 ms -> RB1 */
+#define PERIOD_SLOW       20U    /* ~200 ms -> RB2 */
+#define PERIOD_SUPERVISOR 40U    /* ~400 ms -> spawns a blip on RB3 */
 
-/* ───────────────────────── per-task state ─────────────────────────── */
-
-/** Per-LED state carried through each blink task's @ref task_spawn `arg`,
+/** Per-LED state carried through each blink task's task_spawn `arg`,
  *  since locals don't survive between calls. Pointer-free to fit the
  *  192 B 28-pin parts. */
 typedef struct {
@@ -55,8 +44,6 @@ static blink_arg_t arg_fast = { GPIOB, 0U, 0U };   /* RB0 */
 static blink_arg_t arg_med  = { GPIOB, 1U, 0U };   /* RB1 */
 static blink_arg_t arg_slow = { GPIOB, 2U, 0U };   /* RB2 */
 static blink_arg_t arg_blip = { GPIOB, 3U, 0U };   /* RB3 (spawned at runtime) */
-
-/* ───────────────────────── tasks ──────────────────────────────────── */
 
 /** Map a LED's pin index to a short label for the log, padded to 4 chars
  *  so the columns line up. */
@@ -99,32 +86,31 @@ int main(void)
     epic_harness_init(SIM_CYCLES);
     task_manager_init();
 
-    /* 1. RB0..RB3 as outputs, all starting low. */
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3,
                   GPIO_MODE_OUTPUT);
     EPIC_GPIO_WritePin(GPIOB,
                       GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3,
                       GPIO_PIN_RESET);
 
-    /* 2. Priority 0 = supervisor runs first; the three blinks share
-     *    priority 1 and run in spawn order. */
+    /* Priority 0 = supervisor runs first; the three blinks share
+     * priority 1 and run in spawn order. */
     task_spawn(task_supervisor, NULL, PERIOD_SUPERVISOR, 0U);
     task_spawn(task_blink, &arg_fast, PERIOD_FAST, 1U);
     task_spawn(task_blink, &arg_med,  PERIOD_MED,  1U);
     task_spawn(task_blink, &arg_slow, PERIOD_SLOW, 1U);
 
-    /* 3. Wire the ~10 ms Timer0 tick to the scheduler. This sets TMR0IE;
-     *    arm it on the target by enabling global interrupts (harmless on
-     *    the sim, where the IRQ fires regardless). */
+    /* Wire the ~10 ms Timer0 tick to the scheduler. This sets TMR0IE;
+     * arm it on the target by enabling global interrupts (harmless on
+     * the sim, where the IRQ fires regardless). */
     task_manager_attach_timer0(TICK_RELOAD, TICK_PRESCALER);
     EPIC_IRQ_Restore(1);
 
-    /* 4. Run the scheduler. On the host the harness bounds the loop to
-     *    SIM_CYCLES; on the target it runs forever. */
+    /* Run the scheduler: on the host the harness bounds the loop to
+     * SIM_CYCLES; on the target it runs forever. */
     task_manager_run();
 
-    /* 5. Host-only epilogue: the verdict after the dispatch stream. On the
-     *    target these lines are unreachable (the loop never returns). */
+    /* Host-only epilogue: the verdict after the dispatch stream. On the
+     * target these lines are unreachable (the loop never returns). */
     epic_harness_log("done: fast=%u med=%u slow=%u blips=%u "
                            "(ticks=%u, tasks=%u)\n",
                            (unsigned)arg_fast.count, (unsigned)arg_med.count,

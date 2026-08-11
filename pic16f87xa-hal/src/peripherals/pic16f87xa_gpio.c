@@ -1,7 +1,4 @@
-/**
- * @file    pic16f87xa_gpio.c
- * @brief   GPIO driver, implementation matching datasheet §4.1..§4.5.
- */
+/* GPIO driver implementation (DS39582B §4.1..§4.5). */
 
 #include "peripherals/pic16f87xa_gpio.h"
 #include "core/pic16_irq.h"
@@ -58,7 +55,7 @@ static uint8_t port_width(GPIO_TypeDef port)
     return 8U;
 }
 
-/* ───────────────────────── init / deinit ────────────────────────── */
+/* init / deinit. */
 
 void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 {
@@ -91,7 +88,7 @@ void EPIC_GPIO_DeInit(GPIO_TypeDef port)
     EPIC_REG8(ta) = (uint8_t)((1U << port_width(port)) - 1U);
 }
 
-/* ───────────────────────── read / write / toggle ────────────────── */
+/* read / write / toggle. */
 
 void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
@@ -112,11 +109,9 @@ void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
 
 GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
 {
-    /* Reading the PIN level semantics:
-     *   - If TRIS bit is 1 (input) → returns pin state.
-     *   - If TRIS bit is 0 (output) → returns the latch.
-     * The sim backend implements the same behavior; on a real XC8
-     * target the compiler lowers this to a single MOVF. */
+    /* TRIS=1 (input) returns the pin state; TRIS=0 (output) the latch.
+     * The sim backend implements the same behavior; XC8 lowers this to
+     * a single MOVF on the real target. */
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint8_t pa = port_addr(port);
     return (EPIC_REG8(pa) & mask) ? GPIO_PIN_SET : GPIO_PIN_RESET;
@@ -133,7 +128,7 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
     return EPIC_REG8(port_addr(port));
 }
 
-/* ───────────────────────── PORTB pull-ups ───────────────────────── */
+/* PORTB pull-ups. */
 
 void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 {
@@ -160,7 +155,7 @@ void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 #endif
 }
 
-/* ───────────────────────── PORTB change interrupt ───────────────────── */
+/* PORTB change interrupt. */
 
 /* One callback slot for the whole-port RB<7:4> change interrupt. There is
  * only one PORTB, so there is no handle struct (mirrors Timer2's

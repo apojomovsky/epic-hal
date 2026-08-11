@@ -16,10 +16,10 @@ register-specific (SFR maps, bank/BSR addressing, IRQ vectors,
 peripheral bodies) lives per-family under a **fixed contract**: same
 names/signatures across families, different bodies. Read
 `epic-common/README.md` + `epic-common/MANUAL.md` before touching HAL
-code; family manuals point back there instead of repeating it. Full
-design: `docs/multi-family-plan.md`. `docs/adding-a-device.md` is the
-verification-gated playbook for a new device or family (used to add
-PIC16F193X, see `docs/pic16f193x-plan.md`).
+code; family manuals point back there instead of repeating it. Those
+two are the shared-contract design docs. `docs/adding-a-device.md` is
+the verification-gated playbook for a new device or family (used to
+add PIC16F193X).
 
 ## Module anatomy
 
@@ -43,10 +43,10 @@ local installs beyond two vendor files only a human can fetch,
 Microchip's CDN blocks scripted downloads): root `Makefile`, `make
 check-vendor` -> `make image` -> `make test` / `make xc8-build
 MODULE=... MCU=...` / `make mdb-test MODULE=... MCU=... DEVICE=...
-DFP=...` / `make shell`. Details: `docs/docker-dev-plan.md`. Same image
-is pushed to a **private** GHCR package CI pulls from
-(`make ci-image-push`, human-triggered only; see that doc for why it
-must stay private, EULA redistribution terms).
+DFP=...` / `make shell`. Details: DEVELOPMENT.md's Docker section.
+Same image is pushed to a **private** GHCR package CI pulls from
+(`make ci-image-push`, human-triggered only; see DEVELOPMENT.md for
+why it must stay private, EULA redistribution terms).
 
 CI (`.github/workflows/ci.yml`): two jobs, `host` (host build+ctest,
 every module, plus lint, no Docker) and `target` (one Docker pull, then
@@ -116,13 +116,12 @@ codebase so far.
   Scope is usually the module or `phaseN`. Don't batch unrelated changes.
 - **Update the docs a change touches before calling it done**: the
   module's `README.md`/`docs/API.md`/`docs/ARCHITECTURE.md` if
-  behavior changed, `MANUAL.md` if a register fact changed, the
-  `Status:` line of the relevant `docs/<name>-plan.md`. A repo-wide
-  audit once found stale `Status: not started` lines on shipped modules
-  as the norm, not the exception, because this step kept getting
-  skipped.
-- **Non-trivial work gets a plan doc first**: `docs/<name>-plan.md`, a
-  `Status:` line, explicit solved-vs-pending framing.
+  behavior changed, `MANUAL.md` if a register fact changed.
+- **Non-trivial work gets a plan doc first**, and the plan is
+  **ephemeral**: it lives during the work and is deleted when the work
+  lands. Git history is the archive. No
+  `Status:` line bookkeeping; a design doc for implemented work is a
+  bitacore, not documentation.
 - **Before trusting an uncertain compiler/hardware behavior**, write a
   throwaway probe and inspect the generated `.s`/`.map`, don't assume
   from the datasheet alone. Has caught real wrong assumptions every
@@ -130,3 +129,41 @@ codebase so far.
   PIC16F193X BSR-addressing probe).
 - **No em-dashes (—).** Not in docs, not in commit messages, not in code
   comments. Use a comma, a colon, or a period and a new sentence instead.
+
+## Expression conventions (comments and docs)
+
+### Comments
+
+1. **Why, not what.** Code says what it does; comments carry what the
+   code cannot: the non-obvious reason, the datasheet fact, the
+   invariant. A comment that restates the line below it is deleted.
+2. **A comment must earn its lines.** More comment lines than code
+   lines is a smell. Hard cap ~8 lines per block; longer needs a real
+   justification (a hand-trace of non-obvious asm, a race or
+   side-effect proof). Hand-traces survive only where behavior cannot
+   be read from the code, compressed to the essential steps.
+3. **No decoration.** No `/* ---- name ---- */` separators, no
+   `@file`/`@brief` boilerplate that repeats the filename. A 1-3 line
+   file header is fine when it adds context (which backend, what it
+   rides on).
+4. **No narrative.** No "fixed X by doing Y", no iteration or session
+   prose. Git history owns that.
+5. **Register maps and datasheet citations stay.** The
+   datasheet-faithful contract is the exception to "why not what":
+   bit-field encodings and SFR facts keep their citations.
+6. `TODO`/`FIXME` carry a concrete reason or do not exist.
+
+### Docs lifecycle
+
+1. `README.md` = what a human needs to use and maintain the module:
+   purpose, usage, build/test commands, links. Living.
+2. `MANUAL.md` = the datasheet-cited register/peripheral reference.
+   Living.
+3. Design docs are ephemeral: written during the work, deleted on
+   completion. Git history is the archive.
+4. No bitacores: findings narratives and session logs describing
+   completed work are deleted. Live gotchas (asm rules, banking,
+   debug protocol, tag formulas) live in README/DEVELOPMENT/MANUAL,
+   the places a future maintainer actually reads.
+5. Third-party code keeps its own style; these rules are first-party
+   only.

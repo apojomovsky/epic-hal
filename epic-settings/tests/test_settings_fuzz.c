@@ -1,13 +1,8 @@
-/**
- * @file    test_settings_fuzz.c
- * @brief   Host property test for epic-settings over the simulated
- *          EEPROM backend: randomized save/load round trips, a
- *          per-byte corruption sweep proving that flipping ANY stored
- *          byte (payload or CRC) is detected with the output buffer
- *          left untouched, defaults on blank regions, region
- *          isolation, and the top-of-EEPROM boundary. Deterministic
- *          (fixed-seed LCG).
- */
+/** Host property tests for epic-settings over the simulated EEPROM backend:
+ *  randomized save/load round trips, a per-byte corruption sweep proving
+ *  that flipping ANY stored byte (payload or CRC) is detected with the
+ *  output buffer untouched, defaults on blank regions, region isolation,
+ *  and the top-of-EEPROM boundary. Deterministic (fixed-seed LCG). */
 
 #include "epic_settings.h"
 #include "core/epic_harness.h"

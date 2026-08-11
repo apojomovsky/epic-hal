@@ -1,10 +1,7 @@
-/**
- * @file    example_bus_target.c
- * @brief   epic-bus on-target link smoke: configures an I2C master and an
- *          SPI master, proving the module links against the real HAL.
- *          Deliberately issues no MEM transaction, since the default
- *          ops' SSPIF wait would block with no device attached.
- */
+/* epic-bus on-target link smoke: configures an I2C master and an SPI
+ * master, proving the module links against the real HAL. Issues no MEM
+ * transaction: the default ops' SSPIF wait would block with no device
+ * attached. */
 
 #include "epic_bus.h"
 #include "core/epic_harness.h"

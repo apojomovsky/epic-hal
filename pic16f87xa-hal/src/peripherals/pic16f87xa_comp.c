@@ -1,7 +1,4 @@
-/**
- * @file    pic16f87xa_comp.c
- * @brief   Comparator driver, implementation (DS39582B §12.0).
- */
+/* Comparator driver implementation (DS39582B §12.0). */
 
 #include "peripherals/pic16f87xa_comp.h"
 #include "core/pic16_irq.h"

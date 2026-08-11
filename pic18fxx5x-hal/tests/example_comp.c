@@ -1,11 +1,7 @@
-/**
- * @file    example_comp.c
- * @brief   Comparator driver smoke test on the PIC18 host sim.
- *
- * @details
- *   Verifies init CMCON programming (DS39632E §22.0), sim-driven C1/C2
- *   output + CMIF, flag tracking, and deinit. The change IRQ handler
- *   clears CMIF, so polling checks disable the sim IRQ callback.
+/*
+ * Comparator driver smoke test on the PIC18 host sim: init CMCON
+ * programming (DS39632E §22.0), sim-driven C1/C2 output + CMIF, flag
+ * tracking, deinit.
  */
 
 #include "epic_hal.h"

@@ -1,23 +1,17 @@
-/**
- * @file    pic18fxx5x_spp.c
- * @brief   Streaming Parallel Port driver, implementation (DS39632E §18.0).
- *
- *   Register-level only: the USB streaming protocol itself (endpoint
- *   management, CLK1/CLK2 toggling, ownership handoff) is left to the
- *   user. The handle is copied into owned storage so a caller may
- *   stack-allocate it; the sim backend drives status via
- *   `pic18_sim_drive_spp()`.
+/*
+ * Streaming Parallel Port driver, implementation (DS39632E §18.0).
+ * Register-level only: the USB streaming protocol itself (endpoint
+ * management, CLK1/CLK2 toggling, ownership handoff) is left to the
+ * user. The handle is copied into owned storage so a caller may
+ * stack-allocate it; the sim backend drives status via
+ * `pic18_sim_drive_spp()`.
  */
 
 #include "peripherals/pic18fxx5x_spp.h"
 #include "core/pic18_irq.h"
 
-/* ───────────────────────── handle storage ───────────────────────── */
-
 static SPP_HandleTypeDef        g_spp_storage;
 static const SPP_HandleTypeDef *g_spp = NULL;
-
-/* ───────────────────────── public API ───────────────────────────── */
 
 EPIC_StatusTypeDef EPIC_SPP_Init(const SPP_HandleTypeDef *h)
 {
@@ -96,8 +90,6 @@ void EPIC_SPP_ClearITFlag(void)
 {
     EPIC_IRQ_ClearFlag(PIC18_IRQ_SPP);
 }
-
-/* ───────────────────────── ISR ───────────────────────────────────── */
 
 void SPP_IRQHandler(void)
 {

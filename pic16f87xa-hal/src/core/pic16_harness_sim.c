@@ -1,15 +1,7 @@
-/**
- * @file    pic16_harness_sim.c
- * @brief   PIC16F87XA host-simulation implementation of the test harness
- *          (see core/epic_harness.h).
- *
- * @details
- *   Linked by the CMake host build. The companion target implementation
- *   is the family-blind epic_harness_target.c in epic-common; the build
- *   picks one, so neither this file nor the examples need `#ifdef`. This
- *   file is PIC16-specific only because it pumps the PIC16 simulator; the
- *   harness contract it implements is shared by every family.
- */
+/* Host-simulation implementation of the test harness (core/epic_harness.h).
+ * Linked by the CMake host build; the family-blind target twin is
+ * epic_harness_target.c in epic-common. PIC16-specific only because it
+ * pumps the PIC16 simulator. */
 
 #include "core/epic_harness.h"   /* epic_dispatch_all_irqs is declared here */
 #include "pic16f87xa_sim.h"

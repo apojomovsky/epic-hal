@@ -1,6 +1,5 @@
-/**
- * @file    pic18fxx5x_timer0.c
- * @brief   Timer0 driver, implementation (DS39632E §11.0, Register 11-1).
+/*
+ * Timer0 driver, implementation (DS39632E §11.0, Register 11-1).
  */
 
 #include "peripherals/pic18fxx5x_timer0.h"
@@ -10,15 +9,12 @@
  *   T0PS 000 -> 1:2, 001 -> 1:4, ... 111 -> 1:256. */
 static const uint16_t ps_ratio[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 
-/** Per-handle storage. One Timer0, one static slot. `EPIC_TIMER0_Init`
- *  COPIES the caller's handle here (the caller's `TIMER0_HandleTypeDef`
- *  is typically a stack-local that is out of scope by the time the ISR
- *  reads it back, so storing a pointer to it would dangle). The weak ISR
- *  reads from this owned copy. */
+/** Per-handle storage; `EPIC_TIMER0_Init` COPIES the caller's handle here
+ *  (the caller's struct is typically stack-local, out of scope by the time
+ *  the ISR reads it back, so storing a pointer would dangle). */
 static TIMER0_HandleTypeDef g_t0_storage;
 static const TIMER0_HandleTypeDef *g_t0_handle = NULL;
 
-/** Read-modify-write helper for T0CON. */
 static void t0con_clr_set(uint8_t clr_mask, uint8_t set_mask)
 {
     uint8_t t = EPIC_REG8(PIC_REG_T0CON);
@@ -115,10 +111,6 @@ uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)
     if ((unsigned)p > 7U) return 1U;
     return ps_ratio[p];
 }
-
-/* ------------------------------------------------------------------ */
-/* Interrupt entry point                                               */
-/* ------------------------------------------------------------------ */
 
 void TIMER0_IRQHandler(void)
 {

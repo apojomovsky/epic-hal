@@ -1,14 +1,10 @@
-/**
- * @file    core/pic18_irq.h
- * @brief   PIC18F2455 family interrupt controller: IRQn enum plus
- *          enable/disable/flag/priority helpers (DS39632E §9.0), mirroring
- *          STM32Cube's `HAL_NVIC_*` and the PIC16 `EPIC_IRQ_*` API.
- *
- * @details
- *   IPEN (RCON<7>) selects single-vector PIC16-compatible mode (IPEN=0) or
- *   two-vector priority mode (IPEN=1, the default here), with GIEH/GIEL
- *   gating high/low priority sources; INT0 has no priority bit, always
- *   high. `EPIC_IRQ_Restore(1)` is the drop-in for PIC16's `GIE = 1`.
+/*
+ * PIC18F2455-family interrupt controller (DS39632E §9.0): IRQn enum plus
+ * enable/disable/flag/priority helpers mirroring STM32Cube's HAL_NVIC_*
+ * and the PIC16 EPIC_IRQ_* API. Two-vector priority mode (IPEN=1) is the
+ * default here, with GIEH/GIEL gating high/low sources; INT0 has no
+ * priority bit (always high). `EPIC_IRQ_Restore(1)` is the drop-in for
+ * PIC16's `GIE = 1`.
  */
 
 #ifndef PIC18_IRQ_H
@@ -44,8 +40,6 @@ typedef enum {
     PIC18_IRQ_SPP       = 16, /**< Streaming Parallel Port (PIR1<SPPIF>).  */
 #endif
 } PIC18_IRQn;
-
-/* ───────────────────────── enable / disable ─────────────────────── */
 
 /**
  * @brief Globally mask all interrupts by clearing the master enable(s)

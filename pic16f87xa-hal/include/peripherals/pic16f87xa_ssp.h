@@ -1,14 +1,8 @@
-/**
- * @file    peripherals/pic16f87xa_ssp.h
- * @brief   MSSP driver, SPI master/slave + I²C master/slave.
- *
- * @details
- *   Source: DS39582B §9.0. Full register reference: MANUAL.md §15.
- *   Register-level only, no I²C state machine: a master issues
- *   EPIC_SSP_Start(), writes SSPBUF, polls SSPSTAT<BF>+ACKSTAT
- *   (SSPCON2<6>), then EPIC_SSP_Stop(). SPI is automatic once SSPBUF is
- *   written; poll SSPSTAT<BF> for RX-ready.
- */
+/* MSSP driver, SPI master/slave + I²C master/slave. Source: DS39582B
+ * §9.0; full register reference: MANUAL.md §15. Register-level only, no
+ * I²C state machine: a master issues Start, writes SSPBUF, polls
+ * SSPSTAT<BF> + ACKSTAT (SSPCON2<6>), then Stop. SPI is automatic once
+ * SSPBUF is written; poll SSPSTAT<BF> for RX-ready. */
 
 #ifndef PIC16F87XA_SSP_H
 #define PIC16F87XA_SSP_H
@@ -80,12 +74,12 @@ typedef struct {
     .TransferCallback = NULL,                                              \
 }
 
-/* ───────────────────────── init / deinit ────────────────────────── */
+/* init / deinit. */
 
 EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_SSP_DeInit(void);
 
-/* ───────────────────────── SPI transfer ──────────────────────────── */
+/* SPI transfer. */
 
 /**
  * @brief  Write a byte to SSPBUF (and thus to the SSPSR if idle).
@@ -106,7 +100,7 @@ uint8_t  EPIC_SSP_HasWriteCollision(void);
 /** Clear the WCOL flag (must be done in software per §9.3.2). */
 void     EPIC_SSP_ClearWriteCollision(void);
 
-/* ───────────────────────── I²C master helpers ────────────────────── */
+/* I²C master helpers. */
 
 /**
  * @brief  Compute SSPADD for an I²C master baud rate.
@@ -133,7 +127,7 @@ void EPIC_SSP_AcknowledgeEnable(void);
 /** Returns 1 if an ACK was received from the slave (ACKSTAT). */
 uint8_t EPIC_SSP_AcknowledgeStatus(void);
 
-/* ───────────────────────── interrupts ───────────────────────────── */
+/* interrupts. */
 
 void SSP_IRQHandler(void) EPIC_WEAK;
 

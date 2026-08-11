@@ -1,40 +1,11 @@
 #!/usr/bin/env python3
-"""Decide which CMake modules host-tests.yml actually needs to build+test.
-
-Two independent questions, both answered here so host-tests.yml's `discover`
-job stays a single step:
-
-  1. Is this change non-code? If every changed file is on the shared
-     non-code allowlist (see ci_noncode_check.py, the single source of
-     truth), the build-test matrix is empty and the whole build-test job
-     is skipped (a real cmake configure+build+ctest run cannot be
-     affected by prose or by dev-only tooling).
-  2. If not non-code, which modules were actually touched, directly or
-     transitively? Every module's own CMakeLists.txt already declares its
-     sibling dependencies via a `<NAME>_DIR ... ../<module>` pattern
-     (EPIC_DIR, SERIAL_DIR, TICK_DIR, TASKMGR_DIR, MATH_DIR); this script
-     reads that straight from the tracked CMakeLists.txt files instead of
-     hand-maintaining a graph that would drift the moment a module's own
-     dependency changes. `epic-common/` is a third, implicit dependency of
-     all three HALs (included via `include()`, not `add_subdirectory()`, so
-     it never appears as its own module and never appears in the graph
-     above): a change under `epic-common/` is treated as touching every HAL
-     directly, same as if all three HAL directories had changed.
-
-Conservative by construction, on both axes:
-  - Any changed file that is not (a) on the shared non-code allowlist,
-    (b) inside a discovered module's own directory, or (c) inside
-    epic-common/ falls back to "not non-code, every module affected": a
-    workflow, CI script, or Docker change is exactly the kind of change
-    this script cannot reason about safely, so it doesn't try.
-  - The graph walk only ever grows the affected set (transitive closure),
-    never prunes based on which specific files inside a dependency changed.
-  - This filtering is meant for pull_request runs only (see host-tests.yml):
-    every push to master still runs the unfiltered matrix, so a wrong
-    closure on a PR can only ever cause an extra CI run later, never let a
-    real break merge unverified.
-
-Prints one JSON object to stdout: {"non_code": bool, "modules": [...]}.
+"""Decide which CMake modules ci.yml's host job must build and
+test: if every changed file is on the shared non-code allowlist
+(ci_noncode_check.py), the matrix is empty and the job is skipped;
+otherwise the affected set is the transitive closure of the modules each
+CMakeLists.txt declares via its sibling <NAME>_DIR deps, plus every HAL
+for epic-common/ changes. Conservative: anything unrecognized means every
+module. Prints {"non_code": bool, "modules": [...]}.
 """
 
 import json
