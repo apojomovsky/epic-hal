@@ -1,7 +1,4 @@
-/**
- * @file    epic_console.c
- * @brief   Line-based serial command dispatcher over epic-serial.
- */
+/* Line-based serial command dispatcher over epic-serial. */
 
 #include "epic_console.h"
 #include "epic_serial.h"

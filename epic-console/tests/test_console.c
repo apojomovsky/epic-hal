@@ -1,7 +1,4 @@
-/**
- * @file    test_console.c
- * @brief   Host tests for epic-console over injected serial RX bytes.
- */
+/* Host tests for epic-console over injected serial RX bytes. */
 
 #include "epic_console.h"
 #include "epic_serial.h"
