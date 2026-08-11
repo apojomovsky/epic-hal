@@ -74,6 +74,9 @@ static EPIC_SWUART_HandleTypeDef g_h;
 
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -96,6 +99,9 @@ static void fail(uint8_t idx)
 /* Known payload: 'A','B','C','D', shifted LSB-first on the wire. */
 static const uint8_t g_payload[TX_BYTES] = { 0x41u, 0x42u, 0x43u, 0x44u };
 
+/**
+ * @brief Run the epic-swuart + epic-tick interleave gate (C11).
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

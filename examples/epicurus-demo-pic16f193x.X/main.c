@@ -25,11 +25,17 @@
 #pragma config PLLEN = OFF
 #pragma config WRT = OFF
 
+/**
+ * @brief Toggle RB0 on every Timer0 overflow (the weak-ISR dispatch).
+ */
 static void on_t0_overflow(void)
 {
     EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 }
 
+/**
+ * @brief Blink RB0 via Timer0 overflow interrupts and refresh the WDT.
+ */
 int main(void)
 {
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);

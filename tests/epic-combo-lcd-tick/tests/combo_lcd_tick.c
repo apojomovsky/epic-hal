@@ -168,9 +168,13 @@ static uint8_t     g_log_len;
 static delay_expect_t g_dlog[DELAY_CAP];
 static uint8_t        g_dlog_len;
 
-/* The send op is recorded, not forwarded to the real transport: the
+/**
+ * @brief Record one transport send (rs, byte) into the expectation log.
+ *
+ * The send op is recorded, not forwarded to the real transport: the
  * real gpio4_send cannot be invoked through the ops pointer under
- * this toolchain (see the file comment's finding). */
+ * this toolchain (see the file comment's finding).
+ */
 static void recorder_send(void *ctx, uint8_t rs, uint8_t byte)
 {
     (void)ctx;
@@ -181,12 +185,15 @@ static void recorder_send(void *ctx, uint8_t rs, uint8_t byte)
     }
 }
 
-/* Record a delay call and then execute it for real on the tick
- * timebase. Spun inline (not via epic_tick_delay_ms): its
- * elapsed_since/get frames would put the spin at depth 6 and the live
- * 4-level tick ISR overflows the 8-level hardware stack (see the file
- * comment's stack math); at depth 3-4 the ISR fits exactly. Every
- * completed spin is itself proof the tick stayed alive mid-delay. */
+/**
+ * @brief Record a delay_ms call and execute it for real on the tick timebase.
+ *
+ * Spun inline (not via epic_tick_delay_ms): its elapsed_since/get
+ * frames would put the spin at depth 6 and the live 4-level tick ISR
+ * overflows the 8-level hardware stack (see the file comment's stack
+ * math); at depth 3-4 the ISR fits exactly. Every completed spin is
+ * itself proof the tick stayed alive mid-delay.
+ */
 static void combo_delay_ms(void *ctx, uint32_t ms)
 {
     (void)ctx;
@@ -208,7 +215,10 @@ static void combo_delay_ms(void *ctx, uint32_t ms)
     }
 }
 
-/* Same policy as the real gpio4_delay_us: epic-tick's resolution is
+/**
+ * @brief Record a delay_us call and spin on the tick for delays >= 2 ms.
+ *
+ * Same policy as the real gpio4_delay_us: epic-tick's resolution is
  * 1 ms, so only >= 1000 us spin (the E-pulse setup/hold time is
  * already met by the pin-write overhead). Two exceptions, both the
  * lcd gate's documented stack constraint, not firmware bugs: the
@@ -219,7 +229,8 @@ static void combo_delay_ms(void *ctx, uint32_t ms)
  * epic_tick_get call then sits at stack depth 5, where the live ISR
  * overwrites the caller's return address (measured under mdb). The
  * >= 2-tick spins (the 4500 us init delay) stay real: they arrive
- * through the direct ops call at depth 3, get at 4, safe. */
+ * through the direct ops call at depth 3, get at 4, safe.
+ */
 static void combo_delay_us(void *ctx, uint32_t us)
 {
     (void)ctx;
@@ -237,10 +248,13 @@ static void combo_delay_us(void *ctx, uint32_t us)
     }
 }
 
-/* Absolute Bank-0 read of PORTB (address 0x06) through the
- * literal-token path: clear both RP bits, read, bank out, hand the
+/**
+ * @brief Read LATB through the literal-token SFR path (PIC18 Finding-3-safe).
+ *
+ * Absolute Bank-0 read: clear both RP bits, read, bank out, hand the
  * value over through the common-RAM scratch byte, the same discipline
- * as EPIC_BANK1_READ8. */
+ * as EPIC_BANK1_READ8.
+ */
 static uint8_t portb_latch_read(void)
 {
     /* LATB via the literal-token path (PIC18 Finding-3-safe). */
@@ -251,6 +265,9 @@ static uint8_t portb_latch_read(void)
 
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -271,6 +288,9 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
+/**
+ * @brief Run the epic-lcd + epic-tick interleave gate (C10).
+ */
 int main(void)
 {
     uint8_t trisb;

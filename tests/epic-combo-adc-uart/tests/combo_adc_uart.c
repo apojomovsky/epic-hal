@@ -71,6 +71,9 @@
 static uint16_t g_t1_count = 0u;
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief TIMER1 overflow callback: count the overflow and re-arm the reload.
+ */
 static void t1_overflow_cb(void)
 {
     g_t1_count++;
@@ -84,6 +87,9 @@ static void t1_overflow_cb(void)
     EPIC_REG8(PIC_REG_TMR1L) = (uint8_t)(T1_RELOAD & 0xFFu);
 }
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -103,11 +109,17 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
+/**
+ * @brief No-op USART TX-complete callback (transmission is polled).
+ */
 static void s_tx_noop(void)
 {
 }
 
-/* Polled status-byte transmit with a bounded TRMT wait: a wedged or
+/**
+ * @brief Polled status-byte transmit with a bounded TRMT wait.
+ *
+ * A wedged or
  * corrupted TX path (e.g. the Bank-1 TXSTA read misdirecting to the
  * Bank-0 alias RCSTA, which has no TRMT bit) makes the wait time out
  * and increments *stall instead of hanging the gate. */
@@ -121,6 +133,9 @@ static void s_tx_status(uint8_t data, uint16_t *stall)
     EPIC_USART_Transmit(data);
 }
 
+/**
+ * @brief Run the ADC + TIMER1 + USART interleave gate (C3).
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

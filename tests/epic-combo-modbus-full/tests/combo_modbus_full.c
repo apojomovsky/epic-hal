@@ -81,9 +81,13 @@ static const uint8_t ORACLE[8] = {
 static uint16_t holding_regs[4];
 static uint8_t  g_fail = 0u;
 
-/* Independent CRC-16/MODBUS reference (poly 0xA001, init 0xFFFF),
- * written separately from src/epic_modbus.c's copy so the gate cannot
- * share a CRC bug with the module. */
+/**
+ * @brief Independent CRC-16/MODBUS reference over a byte buffer.
+ *
+ * Poly 0xA001, init 0xFFFF, written separately from
+ * src/epic_modbus.c's copy so the gate cannot share a CRC bug with
+ * the module.
+ */
 static uint16_t ref_crc16(const uint8_t *buf, int len)
 {
     uint16_t crc = 0xFFFFu;
@@ -97,6 +101,9 @@ static uint16_t ref_crc16(const uint8_t *buf, int len)
     return crc;
 }
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -116,8 +123,11 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
-/* Diagnostic: log one byte as two hex digits (the sim harness logs the
- * string's raw bytes, varargs are ignored). */
+/**
+ * @brief Diagnostic: log one byte as two hex digits.
+ *
+ * The sim harness logs the string's raw bytes, varargs are ignored.
+ */
 static void log_hex8(uint8_t v)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -128,6 +138,9 @@ static void log_hex8(uint8_t v)
     epic_harness_log(s);
 }
 
+/**
+ * @brief Log a buffer as space-separated hex digits followed by a newline.
+ */
 static void log_hex_buf(const uint8_t *buf, int n)
 {
     char s[2];
@@ -140,8 +153,11 @@ static void log_hex_buf(const uint8_t *buf, int n)
     epic_harness_log("\n");
 }
 
-/* Bounded wait for the tick to advance at least @p ms milliseconds.
- * Returns 1 on success; 0 if the guard trips (tick wedged, GIE lost). */
+/**
+ * @brief Bounded wait for the tick to advance at least @p ms milliseconds.
+ *
+ * Returns 1 on success; 0 if the guard trips (tick wedged, GIE lost).
+ */
 static int wait_ticks(uint32_t ms)
 {
     uint32_t t0 = epic_tick_get();
@@ -155,9 +171,12 @@ static int wait_ticks(uint32_t ms)
     return 1;
 }
 
-/* Bounded wait for the TX ring to drain (the ISR popped the byte).
+/**
+ * @brief Bounded wait for the TX ring to drain (the ISR popped the byte).
+ *
  * With GIE live the vector is delivered automatically; this is only
- * the bounded completion wait. Returns 1 on success. */
+ * the bounded completion wait. Returns 1 on success.
+ */
 static int wait_drained(void)
 {
     uint32_t guard = 0UL;
@@ -170,6 +189,9 @@ static int wait_drained(void)
     return 1;
 }
 
+/**
+ * @brief Run the epic-modbus + epic-serial + epic-tick full-stack gate (C12).
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

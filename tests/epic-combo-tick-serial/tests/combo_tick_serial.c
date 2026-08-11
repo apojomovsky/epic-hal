@@ -68,6 +68,9 @@
 
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -87,9 +90,12 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
-/* Build the n-th TX line: "C6-<hex n>:" plus 28 pattern chars, so
- * every line's bytes in the captured UART stream are distinct and
- * deterministically verifiable. */
+/**
+ * @brief Build the n-th TX line: "C6-<hex n>:" plus 28 pattern chars.
+ *
+ * Every line's bytes in the captured UART stream are distinct and
+ * deterministically verifiable.
+ */
 static void build_line(uint8_t *line, uint8_t n)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -107,9 +113,11 @@ static void build_line(uint8_t *line, uint8_t n)
     }
 }
 
-/* Log the "TX:<hex n>" header that precedes each line's payload bytes
- * in the captured UART stream (the sim harness prints fmt verbatim,
- * no varargs). */
+/**
+ * @brief Log the "TX:<hex n>" header preceding each line's payload bytes.
+ *
+ * The sim harness prints fmt verbatim, no varargs.
+ */
 static void log_tx_header(uint8_t n)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -125,6 +133,9 @@ static void log_tx_header(uint8_t n)
     epic_harness_log(s);
 }
 
+/**
+ * @brief Run the epic-tick + epic-serial ring-buffered TX gate (C6).
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

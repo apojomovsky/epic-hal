@@ -94,17 +94,26 @@ static uint16_t g_rb_count = 0u;
 static uint8_t  g_rb_last = 0u;
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief TIMER2 overflow callback: count the overflow.
+ */
 static void t2_overflow_cb(void)
 {
     g_t2_count++;
 }
 
+/**
+ * @brief PORTB change callback: count the event and capture the read-back value.
+ */
 static void rb_change_cb(uint8_t portb_value)
 {
     g_rb_count++;
     g_rb_last = portb_value;
 }
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -124,12 +133,18 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
+/**
+ * @brief No-op USART TX-complete callback (transmission is polled).
+ */
 static void s_tx_noop(void)
 {
 }
 
-/* Two hex digits for the frame index / checksum fields, computed
- * arithmetically. */
+/**
+ * @brief Log two hex digits for a frame index / checksum field.
+ *
+ * Computed arithmetically, not from a lookup table.
+ */
 static void tx_hex2(uint8_t v)
 {
     char c[2];
@@ -143,8 +158,11 @@ static void tx_hex2(uint8_t v)
     epic_harness_log(c);
 }
 
-/* Deterministic polled-TX frame: 'T' <idx:2 hex> <idx^0x5A:2 hex> '.'
- * The checksum byte lets the capture be verified byte-exact. */
+/**
+ * @brief Log a deterministic polled-TX frame: 'T' <idx:2 hex> <idx^0x5A:2 hex> '.'.
+ *
+ * The checksum byte lets the capture be verified byte-exact.
+ */
 static void send_frame(uint8_t idx)
 {
     epic_harness_log("T");
@@ -153,6 +171,9 @@ static void send_frame(uint8_t idx)
     epic_harness_log(".");
 }
 
+/**
+ * @brief Run the PORTB-change + USART + TIMER2 interleave gate (C4).
+ */
 int main(void)
 {
     /* Per-pass reset: on this target main re-runs from the start
