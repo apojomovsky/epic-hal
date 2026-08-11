@@ -2,7 +2,9 @@
 
 Status: **implemented and fully verified against real builds**,
 including the full image (XC8 + all three DFPs + MPLAB X) and a real
-`mdb` gate run. The user supplied both installers (see "What the user
+`mdb` gate run. `scripts/bootstrap.sh` now runs `check-vendor` and
+`image` itself when the installers are present (design:
+`docs/superpowers/specs/2026-08-11-bootstrap-docker-toolchain-design.md`). The user supplied both installers (see "What the user
 must provide" below; the Akamai bot-challenge is a hard, confirmed wall,
 not a gap in effort). Root `Makefile` covers host tests, real-target XC8
 builds, the `mdb` gate, and a dev shell, all through the existing
@@ -68,11 +70,14 @@ image at all.
   private tag, it does not change visibility. A human with a
   `write:packages`-scoped PAT runs it deliberately; this Makefile never
   pushes as a side effect of any other target.
-- `scripts/bootstrap.sh`, `scripts/sim-test-local.sh`,
-  `scripts/sim-mdb-run.sh` are unchanged; the root Makefile's `mdb-test`
-  target calls the same `scripts/sim-mdb-run.sh`, so CI, the old local
-  script, and the new Makefile path all share one source of truth for
-  the actual `mdb` command sequence.
+- `scripts/sim-test-local.sh` and `scripts/sim-mdb-run.sh` are
+  unchanged; `scripts/bootstrap.sh` now verifies Docker and the vendor
+  installers and builds the toolchain image as part of setup (design:
+  `docs/superpowers/specs/2026-08-11-bootstrap-docker-toolchain-design.md`).
+  The root Makefile's `mdb-test` target calls the same
+  `scripts/sim-mdb-run.sh`, so CI, the old local script, and the new
+  Makefile path all share one source of truth for the actual `mdb`
+  command sequence.
 - No top-level *build*: `AGENTS.md`'s "no top-level build, build each
   module directly" still holds inside the container; the Makefile loops
   over modules by shelling into per-module `cmake`/`make` invocations,

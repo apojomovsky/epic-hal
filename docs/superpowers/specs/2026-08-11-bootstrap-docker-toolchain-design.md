@@ -1,6 +1,6 @@
 # Bootstrap: Docker-first real-target setup, self-instructive vendor handling
 
-Status: **approved 2026-08-11, not started**.
+Status: **implemented 2026-08-11**.
 
 ## Problem
 

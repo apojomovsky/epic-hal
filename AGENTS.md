@@ -37,7 +37,8 @@ family manuals only cover what's actually per-family.
 Two paths, pick either. **Native**: XC8/MPLAB X installed by hand
 (license-gated), `export PATH=$PATH:/opt/microchip/xc8/v3.10/bin`,
 `python3 scripts/epic_build.py build --module <name> --mcu <MCU> --run`;
-`./scripts/bootstrap.sh` covers the host-sim side only. **Docker** (no
+`./scripts/bootstrap.sh` covers the host-sim side plus the Docker
+toolchain readiness checks. **Docker** (no
 local installs beyond two vendor files only a human can fetch,
 Microchip's CDN blocks scripted downloads): root `Makefile`, `make
 check-vendor` -> `make image` -> `make test` / `make xc8-build
