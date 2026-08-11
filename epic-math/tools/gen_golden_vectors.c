@@ -111,8 +111,9 @@ static void addsub(void)
     struct { uint16_t a,b; } in[] = {
         {0xFFFF,0x0002},{0x0002,0xFFFF},{0x8000,0x8000},{0,0},
         /* Issue 34: the PIC16 carry-fold dropped a_hi when b_hi==0xFF and
-         * the low add carried/borrowed. These pin the wrap class with
-         * a_hi != 0 so the PIC16 mdb gate catches a regression. */
+         * the low add carried/borrowed. These pin the wrap class (a_hi
+         * nonzero in all but the {0x00FF,0xFFFF} boundary rows, which
+         * pass even pre-fix) so the PIC16 mdb gate catches a regression. */
         {0x0101,0xFFFF},{0x1234,0xFFFF},{0x8102,0xFFFF},{0x0102,0xFFFF},
         {0xFF01,0x00FF},{0x0101,0x00FF},{0x00FF,0xFFFF},{0x7FFF,0x0001},
     };
