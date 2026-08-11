@@ -1,5 +1,7 @@
 # Bootstrap Docker-first Real-target Setup Implementation Plan
 
+Status: **implemented 2026-08-11**.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make `scripts/bootstrap.sh` the Docker-first setup for real-target work: verify Docker, handle the two vendor-sourced Microchip installers self-instructively (what, from where, where to place it, what next), and build the toolchain image when the installers are present, deleting the manual-install prose.
@@ -166,8 +168,8 @@ git commit -m "feat(bootstrap): docker-first real-target setup with self-instruc
 ### Task 2: State minimum installer sizes in check-vendor guidance
 
 **Files:**
-- Modify: `Makefile:91` (XC8 "missing (or too small)" message)
-- Modify: `Makefile:99` (MPLAB X "missing (or too small)" message)
+- Modify: `Makefile:89` (XC8 "missing (or too small)" message)
+- Modify: `Makefile:96` (MPLAB X "missing (or too small)" message)
 
 **Interfaces:**
 - Consumes: nothing new; same thresholds as today (>= 10,000,000 bytes XC8, >= 100,000,000 bytes MPLAB X), matching the Dockerfile's own assertions.
