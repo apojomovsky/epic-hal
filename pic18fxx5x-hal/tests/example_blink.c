@@ -21,14 +21,22 @@
 /* Toggle count, the ISR is the only writer. */
 static volatile uint32_t g_toggle_count = 0;
 
-/* Timer0 overflow callback, runs in interrupt context (target) or the
- * sim IRQ callback (host). */
+/** @brief  Timer0 overflow callback.
+ *
+ *          Runs in interrupt context (target) or the sim IRQ callback
+ *          (host); toggles RB0 and bumps the toggle count.
+ */
 static void on_t0_overflow(void)
 {
     EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
     g_toggle_count++;
 }
 
+/** @brief  Blink an LED on RB0 from a Timer0 overflow.
+ *
+ *          Runs SIM_CYCLES harness cycles on the host, or busy-spins
+ *          forever on target hardware while the Timer0 ISR toggles RB0.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

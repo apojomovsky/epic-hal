@@ -58,21 +58,57 @@ typedef struct {
     .OverflowCallback = NULL,                                            \
 }
 
+/**
+ * @brief  Configure Timer3 from the handle: clock source, sync, prescaler
+ *         and reload value, then set RD16 for atomic 16-bit access. Does
+ *         not start the timer, call @ref EPIC_TIMER3_Start.
+ * @param h the Timer3 handle describing the desired configuration.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER3_Init(const TIMER3_HandleTypeDef *h);
+
+/**
+ * @brief  Disable Timer3 counting and clear TMR3IF.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER3_DeInit(void);
+
+/**
+ * @brief  Enable Timer3 counting: writes the reload value then sets
+ *         T3CON<TMR3ON>.
+ * @param h the handle used to configure the timer.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER3_Start(const TIMER3_HandleTypeDef *h);
+
+/**
+ * @brief  Disable Timer3 counting. Clears T3CON<TMR3ON>.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER3_Stop(void);
 
-/** Atomically read the 16-bit counter (RD16 latches TMR3H on TMR3L read). */
+/**
+ * @brief Atomically read the 16-bit counter (RD16 latches TMR3H on TMR3L read).
+ * @return the current 16-bit TMR3 value.
+ */
 uint16_t EPIC_TIMER3_ReadCounter(void);
 
-/** Atomically write the 16-bit counter (RD16 latches TMR3H on TMR3L write). */
+/**
+ * @brief Atomically write the 16-bit counter (RD16 latches TMR3H on TMR3L write).
+ * @param value the 16-bit value to load into the counter.
+ */
 void EPIC_TIMER3_WriteCounter(uint16_t value);
 
-/** Convert a prescaler enum to its integer ratio (1, 2, 4, 8). */
+/**
+ * @brief Convert a prescaler enum to its integer ratio (1, 2, 4, 8).
+ * @param p the prescaler enum value.
+ * @return the integer division ratio (1, 2, 4 or 8).
+ */
 uint16_t EPIC_TIMER3_PrescalerToRatio(TIMER3_PrescalerTypeDef p);
 
-/** Weak Timer3 ISR, override in user code to add application logic. */
+/**
+ * @brief Weak Timer3 ISR, override in user code to add application logic.
+ */
 void TIMER3_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_TIMER3_H */

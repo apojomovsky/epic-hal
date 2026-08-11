@@ -55,6 +55,8 @@ uint8_t EPIC_IRQ_Disable(void);
  *        IPEN = 1 (priority mode) so the two-vector scheme is active. Pair
  *        with @ref EPIC_IRQ_Disable. `EPIC_IRQ_Restore(1)` enables all
  *        interrupts (the drop-in for PIC16's `GIE = 1`).
+ * @param prev_state the value returned by @ref EPIC_IRQ_Disable; 1 enables
+ *        all interrupts, 0 keeps them masked.
  */
 void EPIC_IRQ_Restore(uint8_t prev_state);
 
@@ -62,20 +64,29 @@ void EPIC_IRQ_Restore(uint8_t prev_state);
  * @brief Enable one interrupt source. The peripheral enable bit lives in
  *        INTCON / INTCON3 / PIE1 per the source. The master enable(s) must
  *        still be set via @ref EPIC_IRQ_Restore for the source to fire.
+ * @param irq the interrupt source to enable (a @ref PIC18_IRQn value).
  */
 void EPIC_IRQ_Enable(PIC18_IRQn irq);
 
-/** Disable one interrupt source. */
+/**
+ * @brief Disable one interrupt source.
+ * @param irq the interrupt source to disable (a @ref PIC18_IRQn value).
+ */
 void EPIC_IRQ_DisableSrc(PIC18_IRQn irq);
 
 /**
  * @brief Clear the interrupt flag of `irq`. **MUST** be called inside the
  *        ISR before re-enabling interrupts to avoid an infinite re-entry
  *        (DS39632E §9.0).
+ * @param irq the interrupt source whose flag is cleared.
  */
 void EPIC_IRQ_ClearFlag(PIC18_IRQn irq);
 
-/** Returns the current pending state of `irq` (1 = pending). */
+/**
+ * @brief Returns the current pending state of `irq` (1 = pending).
+ * @param irq the interrupt source to query (a @ref PIC18_IRQn value).
+ * @return 1 if the interrupt flag is set (pending), else 0.
+ */
 uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq);
 
 /**
@@ -85,6 +96,9 @@ uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq);
  *        only in priority mode (IPEN = 1, which @ref EPIC_IRQ_Restore
  *        enables). Part of the shared `EPIC_IRQ_*` contract (the PIC16
  *        implementation is a no-op).
+ * @param irq the interrupt source to configure (a @ref PIC18_IRQn value).
+ * @param prio the priority to assign (EPIC_IRQ_PRIORITY_HIGH or
+ *        EPIC_IRQ_PRIORITY_LOW).
  */
 void EPIC_IRQ_SetPriority(PIC18_IRQn irq, EPIC_IRQ_Priority prio);
 

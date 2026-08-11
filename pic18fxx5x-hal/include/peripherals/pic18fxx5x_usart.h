@@ -70,6 +70,12 @@ typedef enum {
  * requested baud rate is unattainable (X would exceed the BRG range).
  * The caller splits the result into SPBRG (low byte) and SPBRGH (high
  * byte, BRG16=1 only).
+ * @param fosc_hz the system oscillator frequency in Hz.
+ * @param baud the desired baud rate in bits per second.
+ * @param mode the USART mode (async or sync).
+ * @param brgh the high/low baud-rate divisor select.
+ * @param brg16 the baud-generator width (8- or 16-bit).
+ * @return the BRG divisor (0..65535), or 0xFFFF if unattainable.
  */
 uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
                             USART_ModeTypeDef mode,
@@ -107,7 +113,19 @@ typedef struct {
     .RxCpltCallback  = NULL,                                            \
 }
 
+/**
+ * @brief  Configure the EUSART: mode, baud-rate generator (SPBRG:SPBRGH),
+ *         data width, address-detect and auto-baud, then enable the
+ *         transmitter/receiver and optional callbacks.
+ * @param h the USART handle describing the desired configuration.
+ * @return 0 on success, 0xFFFF on invalid configuration.
+ */
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h);
+
+/**
+ * @brief  Disable the EUSART (transmitter, receiver and interrupts).
+ * @return 0 on success, 0xFFFF if the module was not initialized.
+ */
 EPIC_StatusTypeDef EPIC_USART_DeInit(void);
 
 /**
@@ -118,32 +136,51 @@ EPIC_StatusTypeDef EPIC_USART_DeInit(void);
  *
  * @note   TXIF is NOT cleared by reading, only by writing TXREG.
  *         DS39632E §20.2.1.
+ * @param data the byte to transmit.
  */
 void EPIC_USART_Transmit(uint8_t data);
 
-/** Read the 9th bit (TX9D) just transmitted. */
+/**
+ * @brief Read the 9th bit (TX9D) just transmitted.
+ * @return the 9th data bit of the last transmitted byte.
+ */
 uint8_t EPIC_USART_GetTX9D(void);
 
-/** Set the 9th bit to send NEXT. Must be set BEFORE writing TXREG. */
+/**
+ * @brief Set the 9th bit to send NEXT. Must be set BEFORE writing TXREG.
+ * @param bit9 the 9th data bit value (0 or 1).
+ */
 void EPIC_USART_SetTX9D(uint8_t bit9);
 
-/** Returns 1 if the TSR is empty (TRMT = 1). */
+/**
+ * @brief Returns 1 if the TSR is empty (TRMT = 1).
+ * @return 1 when the transmit shift register is empty, else 0.
+ */
 uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);
 
 /**
  * @brief  Read the latest byte from RCREG. Reading clears RCIF and
  *         advances the 2-deep FIFO.
+ * @return the received byte.
  */
 uint8_t EPIC_USART_Receive(void);
 
-/** Read RX9D, the 9th bit of the most recently received byte. */
+/**
+ * @brief Read RX9D, the 9th bit of the most recently received byte.
+ * @return the 9th data bit of the last received byte.
+ */
 uint8_t EPIC_USART_GetRX9D(void);
 
-/** Returns 1 if an overrun was detected (RCSTA<OERR>). Clear it with
- *  @ref EPIC_USART_ClearOverrun (which cycles CREN). */
+/**
+ * @brief Returns 1 if an overrun was detected (RCSTA<OERR>). Clear it with
+ *        @ref EPIC_USART_ClearOverrun (which cycles CREN).
+ * @return 1 when an overrun occurred, else 0.
+ */
 uint8_t EPIC_USART_HasOverrun(void);
 
-/** Clear an overrun: clear CREN, then re-set it (DS39632E §20.2.2). */
+/**
+ * @brief Clear an overrun: clear CREN, then re-set it (DS39632E §20.2.2).
+ */
 void EPIC_USART_ClearOverrun(void);
 
 /**
@@ -153,18 +190,31 @@ void EPIC_USART_ClearOverrun(void);
  */
 void EPIC_USART_StartAutoBaud(void);
 
-/** Returns 1 while auto-baud detection is in progress (ABDEN = 1). */
+/**
+ * @brief Returns 1 while auto-baud detection is in progress (ABDEN = 1).
+ * @return 1 while auto-baud detection is active, else 0.
+ */
 uint8_t EPIC_USART_IsAutoBaudBusy(void);
 
-/** Returns 1 if auto-baud overflowed (ABDOVF set — measurement exceeded range). */
+/**
+ * @brief Returns 1 if auto-baud overflowed (ABDOVF set - measurement
+ *        exceeded range).
+ * @return 1 when the auto-baud measurement overflowed, else 0.
+ */
 uint8_t EPIC_USART_HasAutoBaudOverflow(void);
 
-/** Clear the auto-baud overflow flag (ABDOVF). */
+/**
+ * @brief Clear the auto-baud overflow flag (ABDOVF).
+ */
 void EPIC_USART_ClearAutoBaudOverflow(void);
 
-/** Weak USART RX ISR, override in user code. */
+/**
+ * @brief Weak USART RX ISR, override in user code.
+ */
 void USART_RX_IRQHandler(void) EPIC_WEAK;
-/** Weak USART TX ISR, override in user code. */
+/**
+ * @brief Weak USART TX ISR, override in user code.
+ */
 void USART_TX_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_USART_H */

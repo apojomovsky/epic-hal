@@ -17,6 +17,12 @@
 #define SFR_CLR_BIT(reg, mask) \
     epic_sfr_write8((reg), (uint8_t)(epic_sfr_read8(reg) & (uint8_t)~(mask)))
 
+/**
+ * @brief  Globally mask all interrupts by clearing the master enable(s)
+ *         (INTCON<GIEH/GIEL>, DS39632E §9.0). In priority mode both GIEH
+ *         and GIEL are cleared.
+ * @return 1 if any master enable was set (interrupts were on), else 0.
+ */
 uint8_t EPIC_IRQ_Disable(void)
 {
     uint8_t intcon = epic_sfr_read8(PIC_REG_INTCON);
@@ -26,6 +32,13 @@ uint8_t EPIC_IRQ_Disable(void)
     return prev;
 }
 
+/**
+ * @brief  Restore the master interrupt enable(s). `prev_state` is the
+ *         value returned by @ref EPIC_IRQ_Disable. Restoring to "on"
+ *         also ensures IPEN = 1 (priority mode) so the two-vector scheme
+ *         is active.
+ * @param prev_state 1 to enable all interrupts, 0 to keep them masked.
+ */
 void EPIC_IRQ_Restore(uint8_t prev_state)
 {
     if (prev_state) {
@@ -40,6 +53,13 @@ void EPIC_IRQ_Restore(uint8_t prev_state)
     }
 }
 
+/**
+ * @brief  Enable one interrupt source. The peripheral enable bit lives in
+ *         INTCON / INTCON3 / PIE1 per the source. The master enable(s)
+ *         must still be set via @ref EPIC_IRQ_Restore for the source to
+ *         fire.
+ * @param irq the interrupt source to enable.
+ */
 void EPIC_IRQ_Enable(PIC18_IRQn irq)
 {
     switch (irq) {
@@ -66,6 +86,11 @@ void EPIC_IRQ_Enable(PIC18_IRQn irq)
     }
 }
 
+/**
+ * @brief  Disable one interrupt source. The peripheral enable bit lives
+ *         in INTCON / INTCON3 / PIE1 per the source.
+ * @param irq the interrupt source to disable.
+ */
 void EPIC_IRQ_DisableSrc(PIC18_IRQn irq)
 {
     switch (irq) {
@@ -92,6 +117,12 @@ void EPIC_IRQ_DisableSrc(PIC18_IRQn irq)
     }
 }
 
+/**
+ * @brief  Clear the interrupt flag of `irq`. MUST be called inside the
+ *         ISR before re-enabling interrupts to avoid an infinite
+ *         re-entry (DS39632E §9.0).
+ * @param irq the interrupt source whose flag is cleared.
+ */
 void EPIC_IRQ_ClearFlag(PIC18_IRQn irq)
 {
     switch (irq) {
@@ -118,6 +149,11 @@ void EPIC_IRQ_ClearFlag(PIC18_IRQn irq)
     }
 }
 
+/**
+ * @brief  Return the current pending state of `irq`.
+ * @param irq the interrupt source to query.
+ * @return 1 if the source's flag is set (pending), else 0.
+ */
 uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq)
 {
     switch (irq) {
@@ -144,6 +180,15 @@ uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq)
     }
 }
 
+/**
+ * @brief  Set the priority of `irq` (high or low vector). Writes the
+ *         matching bit in INTCON2 / INTCON3 / IPR1. INT0 has no priority
+ *         bit (always high); setting its priority is a no-op. Takes
+ *         effect only in priority mode (IPEN = 1, which @ref
+ *         EPIC_IRQ_Restore enables).
+ * @param irq  the interrupt source.
+ * @param prio the desired priority (high or low vector).
+ */
 void EPIC_IRQ_SetPriority(PIC18_IRQn irq, EPIC_IRQ_Priority prio)
 {
     uint8_t high = (prio == EPIC_IRQ_PRIORITY_HIGH) ? 1U : 0U;

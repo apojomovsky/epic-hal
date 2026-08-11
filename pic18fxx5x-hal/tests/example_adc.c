@@ -13,6 +13,12 @@
     if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
 } while (0)
 
+/** @brief  A/D converter driver smoke test on the PIC18 host sim.
+ *
+ *          Exercises init register programming (ADCON0/1/2), start/complete
+ *          via GO/DONE and ADIF, 10-bit reads in both ADFM justifications,
+ *          Vref/channel select, and deinit.
+ */
 int main(void)
 {
     epic_harness_init(16U);

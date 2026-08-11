@@ -13,6 +13,11 @@
     if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
 } while (0)
 
+/** @brief  Streaming Parallel Port driver smoke test.
+ *
+ *          Verifies init register programming, byte read/write through
+ *          SPPDATA/SPPEPS, sim-driven status/flag helpers, and deinit.
+ */
 int main(void)
 {
     epic_harness_init(16U);

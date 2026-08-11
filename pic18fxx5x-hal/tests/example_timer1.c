@@ -16,11 +16,16 @@
 
 static volatile uint32_t g_overflows = 0;
 
+/** @brief  Timer1 overflow callback, counts overflows. */
 static void on_t1_overflow(void)
 {
     g_overflows++;
 }
 
+/** @brief  Timer1 driver smoke test.
+ *
+ *          Counts TMR1IF overflows over the sim run and checks the total.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

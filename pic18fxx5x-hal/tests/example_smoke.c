@@ -10,6 +10,11 @@
 /** Bounded run length (host only). */
 #define SIM_CYCLES  10UL
 
+/** @brief  Trivial harness contract smoke test.
+ *
+ *          Runs SIM_CYCLES ticks against an empty PIC18 family backend,
+ *          proving the shared harness is family-blind.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

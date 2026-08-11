@@ -20,14 +20,22 @@
 
 static uint32_t g_cycles = 0U;
 
+/**
+ * @brief  USART transmit-complete callback stub. Exists only so
+ *         EPIC_USART_Init's TXEN/TXIE gate sees a non-null callback (see
+ *         pic16_harness_sim_target.c's header comment). Transmission
+ *         below is polled; this is never actually called in a way that
+ *         matters.
+ */
 static void s_tx_cplt(void)
 {
-    /* Exists only so EPIC_USART_Init's TXEN/TXIE gate sees a non-null
-     * callback (see pic16_harness_sim_target.c's header comment).
-     * Transmission below is polled, this is never actually called in a
-     * way that matters. */
 }
 
+/**
+ * @brief  Transmit one character on the EUSART, blocking until the shift
+ *         register drains.
+ * @param c character to transmit.
+ */
 static void s_uart_putc(char c)
 {
     while (!EPIC_USART_IsTxShiftRegisterEmpty()) {
@@ -36,6 +44,13 @@ static void s_uart_putc(char c)
     EPIC_USART_Transmit((uint8_t)c);
 }
 
+/**
+ * @brief  Harness start-up (sim-target build): configures the EUSART for
+ *         polled 9600-baud output and stores `cycles` as the run bound.
+ *         The USART TX interrupt source is turned back off after init
+ *         because transmission here is polled.
+ * @param cycles bound on the run; unused on the real target.
+ */
 void epic_harness_init(uint32_t cycles)
 {
     g_cycles = cycles;
@@ -57,16 +72,32 @@ void epic_harness_init(uint32_t cycles)
     EPIC_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
 }
 
+/**
+ * @brief  Advance simulated time by one instruction cycle (sim-target
+ *         build): real time advances on its own under MPLAB SIM, so this
+ *         is a no-op.
+ */
 void epic_harness_tick(void)
 {
     /* Real time advances on its own under MPLAB SIM too, nothing to pump. */
 }
 
+/**
+ * @brief  Loop-continuation test (sim-target build): returns 1 while the
+ *         bounded run is in progress, 0 when it is over.
+ * @param iteration the current loop index.
+ * @return 1 while the run should continue, 0 when the host run is over.
+ */
 int epic_harness_running(uint32_t iteration)
 {
     return (iteration < g_cycles) ? 1 : 0;
 }
 
+/**
+ * @brief  printf-style log line (sim-target build): transmits the format
+ *         string over the EUSART, one character at a time.
+ * @param fmt printf-style format string.
+ */
 void epic_harness_log(const char *fmt, ...)
 {
     while (*fmt) {

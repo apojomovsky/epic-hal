@@ -34,19 +34,25 @@ void EPIC_Sleep_Enter(void);
 /**
  * @brief  Returns 1 if the last reset was a Brown-out Reset
  *         (RCON<BOR>). Clear after reading via @ref EPIC_BOR_ClearFlag.
+ * @return 1 if the last reset was a Brown-out Reset, else 0.
  */
 uint8_t EPIC_BOR_GetStatus(void);
 
-/** Clear RCON<BOR> (write 0). */
+/**
+ * @brief Clear RCON<BOR> (write 0).
+ */
 void EPIC_BOR_ClearFlag(void);
 
 /**
  * @brief  Returns 1 if the device just powered on (RCON<POR>).
  *         Set on Power-on Reset (DS39632E Register 4-1).
+ * @return 1 if the device just powered on, else 0.
  */
 uint8_t EPIC_POR_GetStatus(void);
 
-/** Clear RCON<POR> (write 0). */
+/**
+ * @brief Clear RCON<POR> (write 0).
+ */
 void EPIC_POR_ClearFlag(void);
 
 #endif /* PIC18FXX5X_WDT_SLEEP_H */

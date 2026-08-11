@@ -12,6 +12,11 @@
     if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
 } while (0)
 
+/** @brief  Data EEPROM driver smoke test.
+ *
+ *          Verifies read (EEADR + RD strobe), the 0x55/0xAA write unlock,
+ *          sim-driven write completion via EEIF, and a buffer round-trip.
+ */
 int main(void)
 {
     epic_harness_init(16U);

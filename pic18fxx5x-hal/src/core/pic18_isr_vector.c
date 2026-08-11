@@ -6,9 +6,12 @@
  * The host build registers the same dispatcher as its sim IRQ callback.
  */
 
-/* Declared here as a strong extern instead of via epic_harness.h, to keep
- * the harness's unused inline (epic_harness_report) out of this unit's
- * warning surface; same pattern as pic16_isr_vector.c. */
+/**
+ * @brief  Shared IRQ fan-out dispatcher, declared here as a strong extern
+ *         instead of via epic_harness.h, to keep the harness's unused
+ *         inline (epic_harness_report) out of this unit's warning
+ *         surface; same pattern as pic16_isr_vector.c.
+ */
 extern void epic_dispatch_all_irqs(void);
 
 /**

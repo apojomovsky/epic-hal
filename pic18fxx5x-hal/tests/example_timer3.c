@@ -16,11 +16,16 @@
 
 static volatile uint32_t g_overflows = 0;
 
+/** @brief  Timer3 overflow callback, counts overflows. */
 static void on_t3_overflow(void)
 {
     g_overflows++;
 }
 
+/** @brief  Timer3 driver smoke test.
+ *
+ *          Counts TMR3IF overflows over the sim run and checks the total.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

@@ -104,7 +104,19 @@ typedef struct {
     .ConvCpltCallback = NULL,                                             \
 }
 
+/**
+ * @brief  Configure the ADC: channel select, clock, acquisition time,
+ *         result format and voltage reference from `h`, then enable the
+ *         module (ADCON0<ADON>). Does not start a conversion.
+ * @param h the ADC handle describing the desired configuration.
+ * @return 0 on success, 0xFFFF on invalid configuration.
+ */
 EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h);
+
+/**
+ * @brief  Disable the ADC module (ADCON0<ADON> = 0) and clear ADIF.
+ * @return 0 on success, 0xFFFF if the module was not initialized.
+ */
 EPIC_StatusTypeDef EPIC_ADC_DeInit(void);
 
 /**
@@ -115,25 +127,40 @@ EPIC_StatusTypeDef EPIC_ADC_DeInit(void);
  */
 uint16_t EPIC_ADC_Start(void);
 
-/** Select the channel without starting conversion. */
+/**
+ * @brief Select the channel without starting conversion.
+ * @param ch the channel to select (a @ref ADC_ChannelTypeDef value).
+ */
 void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch);
 
-/** Returns 1 if a conversion is in progress (GO/DONE = 1). */
+/**
+ * @brief Returns 1 if a conversion is in progress (GO/DONE = 1).
+ * @return 1 while a conversion runs, else 0.
+ */
 uint8_t EPIC_ADC_IsConversionInProgress(void);
 
-/** Returns 1 if the latest conversion has completed (ADIF = 1). */
+/**
+ * @brief Returns 1 if the latest conversion has completed (ADIF = 1).
+ * @return 1 when the conversion-complete flag is set, else 0.
+ */
 uint8_t EPIC_ADC_IsConversionDone(void);
 
-/** Clear the ADIF flag (must be called in the conversion-complete IRQ). */
+/**
+ * @brief Clear the ADIF flag (must be called in the conversion-complete IRQ).
+ */
 void EPIC_ADC_ClearITFlag(void);
 
 /**
  * @brief  Read the latest 10-bit result. Returns 0..1023; left-justified
  *         results (ADFM=0) are shifted down so the caller always gets a
  *         0..1023 value.
+ * @return the latest conversion result, 0..1023.
  */
 uint16_t EPIC_ADC_Read(void);
 
+/**
+ * @brief ADC conversion-complete interrupt handler (weak default).
+ */
 void ADC_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_ADC_H */

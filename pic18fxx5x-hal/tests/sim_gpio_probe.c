@@ -17,6 +17,7 @@
 
 static uint16_t g_fail = 0u;
 
+/** @brief  Log a failing check index and bump the failure count. */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -36,6 +37,11 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
+/** @brief  GPIO audit probe.
+ *
+ *          Exercises every GPIO operation through the literal-token access
+ *          path with known values and reports each failure.
+ */
 int main(void)
 {
     epic_harness_init(0UL);

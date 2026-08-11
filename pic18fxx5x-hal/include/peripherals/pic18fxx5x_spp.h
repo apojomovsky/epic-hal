@@ -56,36 +56,71 @@ typedef struct {
     .TransferCallback = NULL,                                             \
 }
 
+/**
+ * @brief  Configure the Streaming Parallel Port: ownership, clock config,
+ *         CS/CLK1 enables, wait states and endpoint, then enable the
+ *         module (SPPCON<SPPEN>).
+ * @param h the SPP handle describing the desired configuration.
+ * @return 0 on success, 0xFFFF on invalid configuration.
+ */
 EPIC_StatusTypeDef EPIC_SPP_Init(const SPP_HandleTypeDef *h);
+
+/**
+ * @brief  Disable the SPP module (SPPCON<SPPEN> = 0) and clear SPPIF.
+ * @return 0 on success, 0xFFFF if the module was not initialized.
+ */
 EPIC_StatusTypeDef EPIC_SPP_DeInit(void);
 
 /**
  * @brief  Write a byte to SPPDATA for endpoint `ep` (sets SPPEPS<ADDR>
  *         first, then loads SPPDATA). The CLK/CS outputs strobe per the
  *         SPPCFG configuration.
+ * @param ep the endpoint address, 0..15.
+ * @param data the byte to write.
  */
 void EPIC_SPP_WriteByte(uint8_t ep, uint8_t data);
 
 /**
  * @brief  Read a byte from SPPDATA for endpoint `ep`. Returns the byte.
+ * @param ep the endpoint address, 0..15.
+ * @return the byte read from SPPDATA.
  */
 uint8_t EPIC_SPP_ReadByte(uint8_t ep);
 
-/** Returns 1 if the SPP is busy (SPPEPS<SPPBUSY>). */
+/**
+ * @brief Returns 1 if the SPP is busy (SPPEPS<SPPBUSY>).
+ * @return 1 while the SPP is busy, else 0.
+ */
 uint8_t EPIC_SPP_IsBusy(void);
 
-/** Returns 1 if a write occurred since the flag was last cleared (SPPEPS<WRSPP>). */
+/**
+ * @brief Returns 1 if a write occurred since the flag was last cleared
+ *        (SPPEPS<WRSPP>).
+ * @return 1 when a write has occurred, else 0.
+ */
 uint8_t EPIC_SPP_HasWriteOccurred(void);
 
-/** Returns 1 if a read occurred since the flag was last cleared (SPPEPS<RDSPP>). */
+/**
+ * @brief Returns 1 if a read occurred since the flag was last cleared
+ *        (SPPEPS<RDSPP>).
+ * @return 1 when a read has occurred, else 0.
+ */
 uint8_t EPIC_SPP_HasReadOccurred(void);
 
-/** Returns 1 if SPPIF is set. */
+/**
+ * @brief Returns 1 if SPPIF is set.
+ * @return 1 when the SPP interrupt flag is set, else 0.
+ */
 uint8_t EPIC_SPP_IsInterruptFlag(void);
 
-/** Clear the SPPIF flag (must be done in the transfer IRQ). */
+/**
+ * @brief Clear the SPPIF flag (must be done in the transfer IRQ).
+ */
 void EPIC_SPP_ClearITFlag(void);
 
+/**
+ * @brief SPP transfer interrupt handler (weak default).
+ */
 void SPP_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_SPP_H */

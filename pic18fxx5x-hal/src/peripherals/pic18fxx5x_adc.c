@@ -11,6 +11,15 @@
 static ADC_HandleTypeDef        g_adc_storage;
 static const ADC_HandleTypeDef *g_adc = NULL;
 
+/**
+ * @brief  Initialize the A/D converter from a handle.
+ *
+ *         Programs ADCON0/1/2 (channel, voltage reference, pin config,
+ *         result format, acquisition time, clock source) and arms the
+ *         conversion-complete interrupt if a callback is provided.
+ * @param h Handle describing the ADC configuration.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -42,6 +51,12 @@ EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief  De-initialize the A/D converter: disable its interrupt, clear
+ *         the flag, restore ADCON0/1/2 to their power-on values and drop
+ *         the stored handle.
+ * @return EPIC_OK.
+ */
 EPIC_StatusTypeDef EPIC_ADC_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC18_IRQ_ADC);
@@ -53,6 +68,10 @@ EPIC_StatusTypeDef EPIC_ADC_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief  Select the analog input channel without starting a conversion.
+ * @param ch Channel number (0..13, 4-bit CHS field).
+ */
 void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch)
 {
     uint8_t v = epic_sfr_read8(PIC_REG_ADCON0);
@@ -61,6 +80,12 @@ void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch)
     epic_sfr_write8(PIC_REG_ADCON0, v);
 }
 
+/**
+ * @brief  Start a conversion by setting ADCON0<GO/DONE>. The caller is
+ *         expected to select the channel, wait the acquisition time,
+ *         call Start, then poll IsConversionDone() or wait for the IRQ.
+ * @return 0 on success, 0xFFFF if a conversion was already in progress.
+ */
 uint16_t EPIC_ADC_Start(void)
 {
     uint8_t v = epic_sfr_read8(PIC_REG_ADCON0);
@@ -69,21 +94,39 @@ uint16_t EPIC_ADC_Start(void)
     return 0U;
 }
 
+/**
+ * @brief  Return 1 if a conversion is in progress (GO/DONE = 1).
+ * @return 1 if converting, else 0.
+ */
 uint8_t EPIC_ADC_IsConversionInProgress(void)
 {
     return (epic_sfr_read8(PIC_REG_ADCON0) & PIC_ADCON0_GO_DONE) ? 1U : 0U;
 }
 
+/**
+ * @brief  Return 1 if the latest conversion has completed (ADIF = 1).
+ * @return 1 if complete, else 0.
+ */
 uint8_t EPIC_ADC_IsConversionDone(void)
 {
     return (epic_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_ADIF) ? 1U : 0U;
 }
 
+/**
+ * @brief  Clear the ADIF flag; must be called in the conversion-complete
+ *         IRQ handler.
+ */
 void EPIC_ADC_ClearITFlag(void)
 {
     EPIC_IRQ_ClearFlag(PIC18_IRQ_ADC);
 }
 
+/**
+ * @brief  Read the latest 10-bit conversion result (0..1023). Left-
+ *         justified results (ADFM = 0) are shifted down so the caller
+ *         always gets a 0..1023 value.
+ * @return The 10-bit ADC result.
+ */
 uint16_t EPIC_ADC_Read(void)
 {
     /* Read ADRESL then ADRESH. */
@@ -97,6 +140,10 @@ uint16_t EPIC_ADC_Read(void)
     return (uint16_t)(raw & 0x03FFU);
 }
 
+/**
+ * @brief  Weak ADC interrupt handler: clears ADIF and forwards the result
+ *         to the conversion-complete callback registered via Init.
+ */
 void ADC_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC18_IRQ_ADC)) return;
