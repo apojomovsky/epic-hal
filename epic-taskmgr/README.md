@@ -15,7 +15,7 @@ family (PIC16F87XA, PIC18F2455, ...) via the neutral `epic_hal.h` contract;
 select the family at build time with `-DEPIC_FAMILY=PIC16` (default) or
 `-DEPIC_FAMILY=PIC18`. See [docs/multi-family-plan.md](../docs/multi-family-plan.md).
 
-> 📖 **Documentation**: [Architecture](docs/ARCHITECTURE.md) · [API reference](docs/API.md)
+> 📖 **Documentation**: [API reference](docs/API.md)
 
 ## Features
 
@@ -150,7 +150,7 @@ For a custom main loop, call `task_manager_run_once()` directly instead of
 `task_manager_run()`. To drive the tick from another timer, call
 `task_manager_tick()` from that timer's ISR instead of using
 `task_manager_attach_timer0()`; the scheduler is agnostic to the tick source.
-See the [API reference](docs/API.md) and [architecture notes](docs/ARCHITECTURE.md).
+See the [API reference](docs/API.md).
 
 ## License
 

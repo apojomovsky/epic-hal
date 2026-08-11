@@ -78,7 +78,7 @@ void EPIC_IRQ_Enable(PIC16F193X_IRQn irq)
     /* Pull every field this function needs into locals before touching
      * any SFR: the classic-PIC16 build interleaved a ROM-table field
      * read with an in-progress SFR RMW and corrupted the SFR side
-     * (pic16f87xa-hal/docs/ARCHITECTURE.md). Same defensive shape here
+     * (pic16f87xa-hal/README.md). Same defensive shape here
      * until the §4 codegen probe clears this core. */
     uint8_t in_intcon   = d->in_intcon;
     uint8_t enable_mask = d->enable_mask;

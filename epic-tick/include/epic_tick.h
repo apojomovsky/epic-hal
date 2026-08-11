@@ -1,7 +1,7 @@
 /**
  * Family-agnostic 1 ms timebase (`epic_tick_get`/`epic_tick_delay_ms`,
  * the STM32Cube `HAL_GetTick`/`HAL_Delay` equivalent) on the HAL's
- * auto-reload Timer2. See docs/ARCHITECTURE.md for the timebase math.
+ * auto-reload Timer2.
  */
 
 #ifndef EPIC_TICK_H

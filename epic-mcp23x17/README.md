@@ -43,8 +43,9 @@ int s = EPIC_MCP23X17_GPIO_ReadPin(&h, EPIC_MCP23X17_PORTA,
 The pin masks and state values match the HAL's `GPIO_PIN_*` and
 `GPIO_PinState`, so switching code between the MCU's pins and the
 expander is a prefix change. The per-pin writes are read-modify-writes
-of the output latch (two bus transactions; see
-docs/ARCHITECTURE.md).
+of the output latch (two bus transactions with a window between them):
+a concurrent writer to the same port inside that window can be lost,
+use the whole-port `WritePort` for atomic single-transaction writes.
 
 For the MCP23S17 (SPI): `epic_bus_spi_init(fosc, sclk, cs_port,
 cs_pin)` then `EPIC_MCP23X17_Init(&h, EPIC_MCP23X17_BUS_SPI, a2a1a0)`.
@@ -65,8 +66,6 @@ Real-target builds use the manifest + `scripts/epic_build.py`.
 
 ## Documentation
 
-- `docs/ARCHITECTURE.md`: the register map, the transport seam, and
-  the transaction shapes.
 - `docs/API.md`: the full API reference.
 - The datasheet: Microchip DS20001952 (16-Bit I/O Expander with
   Serial Interface), linked from the Microchip site.

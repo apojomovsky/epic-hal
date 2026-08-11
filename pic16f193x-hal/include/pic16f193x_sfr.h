@@ -656,8 +656,8 @@
  * setup via FSR and for hand-written sequences that must hold a bank
  * across several SFR touches. BSR is a plain core-register write (BSR
  * is in the 0x00-0x0B core region mirrored in every bank), no inline
- * asm. The classic-PIC16 RP0/RP1 codegen failure mode
- * (pic16f87xa-hal/docs/ARCHITECTURE.md) is not assumed away here:
+ * The classic-PIC16 RP0/RP1 codegen failure mode
+ * (pic16f87xa-hal/README.md) is not assumed away here:
  * every SFR access stays a compile-time-constant `PIC_REG_*` token.
  */
 #define pic16f193x_select_bank(bank)   (EPIC_REG8(PIC_REG_BSR) = (uint8_t)(bank))

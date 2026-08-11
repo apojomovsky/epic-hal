@@ -5,7 +5,8 @@
 This file records compiler/codegen behavior on the PIC16F193X
 (Enhanced Mid-range) that is invisible to code review, the host
 simulator, and a clean `xc8-cc` compile-and-link, in the same spirit as
-`pic16f87xa-hal/docs/ARCHITECTURE.md` and `pic18fxx5x-hal/docs/ARCHITECTURE.md`.
+the XC8 codegen sections of `pic16f87xa-hal/README.md` and
+`pic18fxx5x-hal/README.md`.
 It is filled in as the §4 verification gate (`docs/adding-a-device.md`)
 surfaces real findings, not from assumption.
 
@@ -272,7 +273,7 @@ real-time, see Phase 0 notes); passing `WAIT_MS=60000` to
 
 `pic16f87xa-hal/include/target/pic16f87xa_platform.h` carries the same
 fix shape because the same codegen trap existed on the classic PIC16
-core (Finding 1 of that family's `docs/ARCHITECTURE.md`). The
+core (see that family's README, XC8 codegen gotchas). The
 Enhanced Mid-range port uses the same `__at(0x70)` scratch + asm
 pattern, just with `movlb 1` (BSR-byte select) instead of
 `bsf STATUS,5` (RP0 bit select). pic18_irq.c uses an equivalent

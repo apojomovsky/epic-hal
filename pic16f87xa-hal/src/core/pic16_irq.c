@@ -39,7 +39,7 @@ static const irq_desc_t irq_table[] = {
 
 /* Macro, not a `static` function: a function-call boundary here lost
  * the returned address before it reached the caller's read/write
- * (ARCHITECTURE.md Finding 2). PIR1 = 0x0C, PIR2 = 0x0D. */
+ * (see README.md, XC8 codegen gotchas). PIR1 = 0x0C, PIR2 = 0x0D. */
 #define pir_reg_addr(d) ((d)->pir_is_pir2 ? PIC_REG_PIR2 : PIC_REG_PIR1)
 
 /* public API. */

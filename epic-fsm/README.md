@@ -10,7 +10,7 @@ backend** — a state machine is pure control-flow logic, so the same
 with [epic-taskmgr](../epic-taskmgr) (or anything else) by staying decoupled
 from it: a task callback just owns an `fsm_t` and calls `fsm_dispatch()`.
 
-> 📖 **Documentation**: [Architecture](docs/ARCHITECTURE.md) · [API reference](docs/API.md) · [Implementation plan](../docs/epic-fsm-plan.md)
+> 📖 **Documentation**: [API reference](docs/API.md) · [Implementation plan](../docs/epic-fsm-plan.md)
 
 ## Why
 
@@ -35,9 +35,8 @@ fsm_dispatch(&light, EV_TIMER);
 ```
 
 Four columns — `state`, `event`, `guard`, `action`/`next_state` — tell the
-whole story. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the
-reasoning behind the wildcard row, the `void *ctx` convention, and the
-guard-fallthrough dispatch semantics.
+whole story. The wildcard row, the `void *ctx` convention, and the
+guard-fallthrough dispatch semantics are covered in the [API reference](docs/API.md).
 
 ## Features
 
@@ -53,8 +52,7 @@ guard-fallthrough dispatch semantics.
 - **One implementation, every target**: no `#ifdef`, no per-family variant —
   the host test suite proves the exact code that ships on PIC16 and PIC18.
 - **Tiny footprint**: ~14 B RAM per instance on PIC16F877A, ~11 B on
-  PIC18F4550 (measured, see ARCHITECTURE.md); table size doesn't touch RAM
-  at all.
+  PIC18F4550 (measured); table size doesn't touch RAM at all.
 
 ## Quick start
 
@@ -117,8 +115,7 @@ int main(void) {
 }
 ```
 
-See the [API reference](docs/API.md) for the full surface and
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for why it's shaped this way.
+See the [API reference](docs/API.md) for the full surface.
 
 ## License
 

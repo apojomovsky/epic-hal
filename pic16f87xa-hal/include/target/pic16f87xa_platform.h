@@ -27,8 +27,9 @@
 
 /* PIE1/PIE2 (Bank 1: 0x8C/0x8D) enable/disable via inline asm, not a
  * plain C RMW: while a bank is selected, XC8 v4.00 can misdirect an
- * ordinary C local assumed to live in Bank 0 (ARCHITECTURE.md Finding
- * 1). Loads the operand into W before the bank switch, does the whole
+ * ordinary C local assumed to live in Bank 0 (see README.md, XC8
+ * codegen gotchas). Loads the operand into W before the bank switch,
+ * does the whole
  * RMW as one iorwf/andwf, selects Bank 1 absolutely and exits to
  * Bank 0. Bank 2's matching offset (0x10D) is EEADR, NOT PIE2, so a
  * Bank-2 select here silently ORs the mask into EEADR and never arms
@@ -42,9 +43,9 @@
 extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
 
 /* Same fix shape as PIE1/PIE2 above, for plain Bank 1 SFR writes whose
- * source is a C-level local or parameter (ARCHITECTURE.md Finding 9):
- * load into W through a bank-independent scratch byte, then a single
- * movwf while banked. Separate scratch from PIE's own. */
+ * source is a C-level local or parameter (see README.md, XC8 codegen
+ * gotchas): load into W through a bank-independent scratch byte, then a
+ * single movwf while banked. Separate scratch from PIE's own. */
 extern volatile uint8_t epic_bank1_scratch __at(0x71);
 
 #define EPIC_BANK1_WRITE8(sfr_name, value)                              \

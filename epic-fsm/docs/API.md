@@ -1,9 +1,7 @@
 # API reference
 
-Full surface of the FSM engine. Header: `include/fsm.h`. Design rationale
-and the semantics behind each decision are covered in
-[ARCHITECTURE.md](ARCHITECTURE.md); a quick start is in the
-[README](../README.md).
+Full surface of the FSM engine. Header: `include/fsm.h`.
+A quick start is in the [README](../README.md).
 
 ## Types & constants
 
@@ -97,8 +95,8 @@ the length passed in.
 Feed one event to the machine. Scans `table` top-to-bottom for the first row
 whose `state` matches the current state (or is `FSM_ANY_STATE`) *and* whose
 `event` matches, skipping rows whose `guard` rejects the event and
-continuing the scan (see ARCHITECTURE.md for why this fall-through is the
-chosen behavior, with the canonical example). When a row fires: its
+continuing the scan (guards let one `(state, event)` pair have several
+candidate rows; a rejected row falls through to the next). When a row fires: its
 `action` runs (if non-`NULL`), then the state becomes that row's
 `next_state`.
 

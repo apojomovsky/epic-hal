@@ -1,9 +1,7 @@
 # API reference
 
 Full surface of the task manager. Headers: `include/task_manager.h`.
-Configuration and the concurrency model are covered in
-[ARCHITECTURE.md](ARCHITECTURE.md); a quick start is in the
-[README](../README.md).
+A quick start is in the [README](../README.md).
 
 ## Types & constants
 

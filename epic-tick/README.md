@@ -7,14 +7,15 @@ the HAL's Timer2 (auto-reload, so the ISR just increments a counter).
 - **One family-agnostic API** (`epic_tick_init` / `epic_tick_get` /
   `epic_tick_delay_ms` / `epic_tick_elapsed_since`), same `src/epic_tick.c`
   builds against `pic16f87xa-hal` or `pic18fxx5x-hal`.
-- **Atomic 32-bit tick read** (interrupts disabled around the read).
+- **Atomic 32-bit tick read** via double-read retry: disabling GIE is
+  unreliable under MPLAB SIM (a latched request can still vector and can
+  leave GIE cleared, killing the tick), so the read retries while two
+  reads differ instead.
 - **Works on the host simulator**, `epic_tick_delay_ms` pumps
   `epic_harness_tick()` so simulated time advances, and on real silicon.
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md), Timer2 timebase, period math,
-  atomicity, host vs target.
 - [API reference](docs/API.md), per-function semantics + usage.
 
 ## Quick start

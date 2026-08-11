@@ -1,9 +1,8 @@
 # `epic-pid` API reference
 
 Authoritative declarations: [`include/pid.h`](../include/pid.h).
-Design rationale and the per-decision reasoning are in
-[`ARCHITECTURE.md`](ARCHITECTURE.md); the implementation plan
-that motivated the design is in [`docs/epic-pid-plan.md`](../../docs/epic-pid-plan.md).
+The implementation plan that motivated the design is in
+[`docs/epic-pid-plan.md`](../../docs/epic-pid-plan.md).
 
 ## Types & constants
 
@@ -38,9 +37,7 @@ caller reads them through the API; reading them directly is
 unsupported but harmless.
 
 `pid_t` is 21 bytes on both PIC16 and PIC18 (XC8 packs the bools
-and the post-`int32_t` `int16_t` without padding). See
-[`ARCHITECTURE.md`](ARCHITECTURE.md#footprint) for the measured
-per-target footprint.
+and the post-`int32_t` `int16_t` without padding).
 
 ## Gain conversion: continuous-time Kp/Ki/Kd to Q8.8 discrete-time
 
@@ -147,8 +144,7 @@ In `AUTO`: integrates `ki_q8 * error`, adds the P, I, and
 clamped to `[out_min << 8, out_max << 8]` so it can recover
 immediately when the error reverses sign. If the previous MANUAL
 call set `skip_next_i_increment`, this AUTO call skips the I
-increment and clears the flag (the bumpless-transfer detail;
-see `ARCHITECTURE.md`).
+increment and clears the flag (the bumpless-transfer detail).
 
 In `MANUAL`: returns `clamp(manual_output, out_min, out_max)`, and
 back-calculates the integrator so that resuming AUTO is bumpless (the

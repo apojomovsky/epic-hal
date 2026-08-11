@@ -2,7 +2,7 @@
  * Vendor-agnostic, table-driven FSM engine: one `static const
  * fsm_transition_t[]` table plus one `fsm_t` handle per machine. No HAL
  * dependency; `ctx` is an opaque `void *` each guard/action casts back.
- * See README for a worked example and docs/ARCHITECTURE.md for the design.
+ * See README for a worked example and docs/API.md for the full surface.
  */
 
 #ifndef FSM_H

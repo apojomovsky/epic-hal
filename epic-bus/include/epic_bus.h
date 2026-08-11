@@ -1,7 +1,7 @@
 /* Family-agnostic I2C/SPI "MEM" register-access idiom (the
  * HAL_I2C_Mem_Read/Mem_Write layer Cube sensor code uses) on the
  * MSSP/SSP HAL, via a small injectable "bus ops" interface that also
- * lets the host test wire in a mock device. See docs/ARCHITECTURE.md
+ * lets the host test wire in a mock device. See docs/API.md
  * for the transaction shapes. */
 
 #ifndef EPIC_BUS_H

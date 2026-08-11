@@ -10,9 +10,9 @@ record of specific decisions made for PIC18, not a checklist.
 
 ## Why this document is stricter than it looks
 
-Every peripheral driver bug found in this repo so far (`docs/ci-plan.md`
-Phase 4, `pic16f87xa-hal/docs/ARCHITECTURE.md`,
-`pic18fxx5x-hal/docs/ARCHITECTURE.md`) was invisible to code review, to
+Every peripheral driver bug found in this repo so far (the XC8 codegen
+sections of `pic16f87xa-hal/README.md` and `pic18fxx5x-hal/README.md`)
+was invisible to code review, to
 the host simulator, and to a clean `xc8-cc` compile-and-link. Every one
 of them was only caught by actually running the compiled firmware under
 `mdb` (MPLAB SIM, headless) and reading back real register values. Two
@@ -377,10 +377,12 @@ assumes the previous ones are done and verified, not just written):
    `epic-common/MANUAL.md` for every family-agnostic convention instead
    of re-explaining it (see `docs/hal-manual-plan.md` for why that split
    exists and how it was carved out).
-8. **`<family>-hal/docs/ARCHITECTURE.md`** for any compiler/codegen
-   quirks discovered along the way, in the `## Finding N` format
-   established in `pic16f87xa-hal/docs/ARCHITECTURE.md` and
-   `pic18fxx5x-hal/docs/ARCHITECTURE.md`: cross-check any claimed
+8. **Any compiler/codegen quirks discovered along the way** recorded as
+   a live-gotcha section in `<family>-hal/README.md`, in the format
+   established in `pic16f87xa-hal/README.md` and
+   `pic18fxx5x-hal/README.md` (a standalone `docs/ARCHITECTURE.md` is
+   only kept while it holds live conventions, as `pic16f193x-hal` does
+   for its AGENTS.md-cited BSR findings): cross-check any claimed
    compiler "bug" against the actual XC8 User's Guide (extract it from
    the toolchain image, don't assume from general PIC knowledge) before
    writing it down as one, and cite the section. An earlier pass of this
@@ -427,10 +429,10 @@ exist and are accurate, not just present:
       just "looks right" or "builds".
 - [ ] `<family>-hal/MANUAL.md` covers every peripheral touched,
       datasheet-cited.
-- [ ] `<family>-hal/docs/ARCHITECTURE.md` exists (create it if this is
-      the family's first real codegen finding) and records anything
-      genuinely surprising found along the way, with manual citations,
-      not bare assertions.
+- [ ] Any genuinely surprising codegen finding is recorded in
+      `<family>-hal/README.md` (or a kept `docs/ARCHITECTURE.md`, per
+      the docs-lifecycle rules) with manual citations, not bare
+      assertions.
 - [ ] `scripts/ci-discover-xc8-matrix.py` reflects the new MCU(s)/family,
       verified by actually running `python3
       scripts/ci-discover-xc8-matrix.py` and finding the new family in
@@ -459,9 +461,9 @@ account lives.
 
 | Pattern | Confirmed on | Full account |
 |---|---|---|
-| SFR access while a `pic_select_bank`-style bank switch is in effect, via a plain C local/parameter | PIC16 (classic mid-range) | `pic16f87xa-hal/docs/ARCHITECTURE.md` Findings 1, 2, 9 |
-| SFR address that is a runtime variable/struct-field/parameter at the point of access (not a literal token) | PIC18 | `pic18fxx5x-hal/docs/ARCHITECTURE.md` Findings 3, 4 |
-| Baud-rate/timing divisor math that can silently overflow the target register width | PIC18 (found in `pic18_harness_sim_target.c`) | `pic18fxx5x-hal/docs/ARCHITECTURE.md` Finding 1 |
+| SFR access while a `pic_select_bank`-style bank switch is in effect, via a plain C local/parameter | PIC16 (classic mid-range) | `pic16f87xa-hal/README.md` (XC8 codegen gotchas) |
+| SFR address that is a runtime variable/struct-field/parameter at the point of access (not a literal token) | PIC18 | `pic18fxx5x-hal/README.md` (XC8 codegen gotchas) |
+| Baud-rate/timing divisor math that can silently overflow the target register width | PIC18 (found in `pic18_harness_sim_target.c`) | `pic18fxx5x-hal/README.md` (XC8 codegen gotchas) |
 | Missing `HARNESS=sim` → watchdog-off Makefile override, WDT resets a bounded diagnostic build mid-run | PIC16, PIC18 | `docs/ci-plan.md` Phase 4 |
 | Dangling pointer: a HAL `_Init` stores the caller's pointer instead of copying the handle, and the caller's storage is a non-`static` local | PIC16 (fixed); PIC18's own driver already copies the handle, not affected | `docs/ci-plan.md` Phase 4 |
 | Read-only status/flag bits (RCIDL, CxOUT, FVRRDY, CPSOUT, ...) reading back set even though the driver never wrote them, mistaken for a write not landing | PIC16F193X (Enhanced Mid-range) | `pic16f193x-hal/docs/ARCHITECTURE.md`; §4 step 8 above |

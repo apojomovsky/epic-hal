@@ -1,7 +1,7 @@
 /* Family-agnostic Modbus RTU slave on epic-serial (UART), epic-tick
  * (T3.5 silence timing), and the HAL's GPIO (optional RS-485 driver
- * enable). RTU only, slave role only, FC 01-06/15/16 (see
- * docs/ARCHITECTURE.md for scope). Register access is plain caller-owned
+ * enable). RTU only, slave role only, FC 01-06/15/16. Register access
+ * is plain caller-owned
  * arrays (epic_modbus_slave_map_t); poll() dispatches once the T3.5
  * inter-frame gap elapses. */
 
@@ -43,7 +43,7 @@ typedef struct {
  *         @p map. Call once at startup, after `epic_tick_init`.
  * @param  fosc_hz     system oscillator frequency in Hz.
  * @param  baud        RTU baud rate, e.g. 9600. Also drives the T3.5 timing,
- *                     see docs/ARCHITECTURE.md for the >19200 baud caveat.
+ *                     see README.md for the >19200 baud caveat.
  * @param  slave_addr  this slave's Modbus address, 1..247. 0 is reserved
  *                     for broadcast requests, do not pass it here.
  * @param  map         the register map (see @ref epic_modbus_slave_map_t).

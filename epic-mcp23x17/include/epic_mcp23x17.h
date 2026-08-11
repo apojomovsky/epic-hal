@@ -94,7 +94,7 @@ int EPIC_MCP23X17_GPIO_Init(epic_mcp23x17_handle_t *h,
  * register is a whole byte, this is a read-modify-write of the output
  * latch: two bus transactions with a window between them. A concurrent
  * writer to the same port in that window can be lost (documented in
- * docs/ARCHITECTURE.md); use the whole-port WritePort for atomic
+ * README.md); use the whole-port WritePort for atomic
  * single-transaction writes. Returns the transfer status.
  */
 int EPIC_MCP23X17_GPIO_WritePin(epic_mcp23x17_handle_t *h,

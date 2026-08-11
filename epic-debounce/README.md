@@ -19,8 +19,6 @@ plain data, cover multiple inputs.
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md), the algorithm, the read-callback
-  design, why epic-tick directly, poll vs interrupt, why not epic-fsm.
 - [API reference](docs/API.md), per-function semantics + usage.
 
 ## Quick start

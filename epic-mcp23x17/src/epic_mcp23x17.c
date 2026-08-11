@@ -1,6 +1,6 @@
 /**
  * MCP23017 / MCP23S17 16-bit I/O expander driver (see the header and
- * docs/ARCHITECTURE.md): one family-agnostic source; the only family
+ * README.md): one family-agnostic source; the only family
  * dimension is the transport, which rides on epic-bus.
  */
 

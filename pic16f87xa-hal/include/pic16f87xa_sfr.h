@@ -343,8 +343,8 @@
 
 /* Set the bank-select bits RP1:RP0 in STATUS to access a given bank
  * (DS39582B §2.2, Table 2-1). A macro, not a static inline: a call
- * boundary corrupts Bank 1 writes under XC8 v4.00 (ARCHITECTURE.md
- * Finding 2), and combined calls can hang XC8's cgpic pass. */
+ * boundary corrupts Bank 1 writes under XC8 v4.00 (see README.md, XC8
+ * codegen gotchas), and combined calls can hang XC8's cgpic pass. */
 #define pic_select_bank(bank)                                          \
     do {                                                               \
         uint8_t pic_select_bank_status_ = EPIC_REG8(PIC_REG_STATUS);   \

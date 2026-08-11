@@ -17,9 +17,15 @@ drivers) live here.
 architecture, both builds, the simulator, the harness, and a per-peripheral
 reference. Start there if you are new to this HAL.
 
-➜ **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** covers XC8 codegen
-gotchas found empirically on this family (runtime-SFR-address pitfalls and
-their fixes), not datasheet material, so it lives apart from `MANUAL.md`.
+## XC8 codegen gotchas (settled)
+
+Never pass an SFR address as a runtime value on PIC18: XC8 compiles a
+runtime-computed SFR pointer to the program-memory table mechanism
+(`tblrd`/`tblwt`), silently writing nowhere. Every SFR access names a
+compile-time-constant `PIC_REG_*` token; branch on the instance before
+touching SFRs (the `pic18_irq.c` switch and the CCP macros are the
+pattern). Baud/timing divisor math must fit the register width: honor
+`USART_ComputeSPBRG`'s `0xFFFF` error sentinel rather than truncating it.
 
 ## Status
 

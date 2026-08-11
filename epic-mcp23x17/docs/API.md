@@ -27,8 +27,8 @@ single register, 2 for a 16-bit composite), `-1` on a device NACK.
   (+ pull-ups for INPUT_PULLUP) for the masked pins only; pins
   outside the mask keep their configuration.
 - `EPIC_MCP23X17_GPIO_WritePin(h, port, pins, state)` : masked write;
-  a read-modify-write of the output latch (two bus transactions, see
-  ARCHITECTURE.md).
+  a read-modify-write of the output latch (two bus transactions; use
+  the whole-port WritePort for atomic single-transaction writes).
 - `EPIC_MCP23X17_GPIO_TogglePin(h, port, pins)` : masked toggle, same
   RMW.
 - `EPIC_MCP23X17_GPIO_ReadPin(h, port, pin)` : returns

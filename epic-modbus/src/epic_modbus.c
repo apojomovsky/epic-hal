@@ -54,7 +54,7 @@ static uint16_t modbus_crc16(const uint8_t *buf, uint16_t len)
     return crc;
 }
 
-/* T3.5 inter-frame silence timeout, see docs/ARCHITECTURE.md */
+/* T3.5 inter-frame silence timeout (see README for the >19200 baud caveat) */
 static uint32_t compute_t3_5_ms(uint32_t baud)
 {
     if (baud > 19200u) {
