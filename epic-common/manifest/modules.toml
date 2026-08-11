@@ -37,8 +37,8 @@ hal_sources = [
   "pic16f193x-hal/src/peripherals/pic16f193x_lcd.c",
   "pic16f193x-hal/src/core/pic16f193x_irq.c",
   "pic16f193x-hal/src/core/pic16f193x_wdt_sleep.c",
-  "pic16f193x-hal/src/core/pic16f193x_wdt_sleep_target.c",
-  "pic16f193x-hal/src/core/pic16f193x_isr_vector.c",
+  "pic16f193x-hal/src/target/pic16f193x_wdt_sleep_target.c",
+  "pic16f193x-hal/src/target/pic16f193x_isr_vector.c",
   "pic16f193x-hal/src/core/pic16f193x_irq_dispatch.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
@@ -73,8 +73,8 @@ hal_sources = [
   "pic16f87xa-hal/src/peripherals/pic16f87xa_eeprom.c",
   "pic16f87xa-hal/src/core/pic16_irq.c",
   "pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep.c",
-  "pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep_target.c",
-  "pic16f87xa-hal/src/core/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/target/pic16f87xa_wdt_sleep_target.c",
+  "pic16f87xa-hal/src/target/pic16_isr_vector.c",
   "pic16f87xa-hal/src/core/pic16_irq_dispatch.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
@@ -116,9 +116,9 @@ hal_sources = [
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c",
   "pic18fxx5x-hal/src/core/pic18_irq.c",
   "pic18fxx5x-hal/src/core/pic18_irq_dispatch.c",
-  "pic18fxx5x-hal/src/core/pic18_isr_vector.c",
+  "pic18fxx5x-hal/src/target/pic18_isr_vector.c",
   "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
-  "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep_target.c",
+  "pic18fxx5x-hal/src/target/pic18fxx5x_wdt_sleep_target.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
@@ -180,7 +180,7 @@ config  = { FOSC = "INTOSC", WDTE = "ON", PWRTE = "ON", MCLRE = "ON", CP = "OFF"
 # need the watchdog running unattended.
 [modules.epic-pic16f193x-firmware.example.PIC16F193X.sim]
 name        = "firmware-sim"
-harness_src = "pic16f193x-hal/src/core/pic16f193x_harness_sim_target.c"
+harness_src = "pic16f193x-hal/src/mdb/pic16f193x_harness_mdb.c"
 sources     = [
   "tests/example_timer1.c",
 ]
@@ -222,7 +222,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # the watchdog).
 [modules.pic16f87xa-hal.example.PIC16F87XA.sim]
 name        = "bank-probe"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_bank_probe.c",
 ]
@@ -261,7 +261,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # HARNESS=sim: the GPIO probe. WDT=OFF like every other sim variant.
 [modules.pic18fxx5x-hal.example.PIC18Fxx5x.sim]
 name        = "gpio-probe"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 sources     = [
   "tests/sim_gpio_probe.c",
 ]
@@ -294,7 +294,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-uart-ssp.example.PIC16F87XA.sim]
 name        = "combo-uart-ssp-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-multitimer]
@@ -328,7 +328,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-multitimer.example.PIC16F87XA.sim]
 name        = "combo-multitimer-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-adc-uart]
@@ -361,7 +361,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-adc-uart.example.PIC16F87XA.sim]
 name        = "combo-adc-uart-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-rb-uart]
@@ -392,7 +392,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-rb-uart.example.PIC16F87XA.sim]
 name        = "combo-rb-uart-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-eeprom-isr]
@@ -430,7 +430,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # HARNESS=sim, WDT=OFF like every other sim variant.
 [modules.epic-combo-eeprom-isr.example.PIC18Fxx5x.sim]
 name        = "combo-eeprom-isr-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # C9 of the combination matrix: epic-encoder + epic-tick. The gate
@@ -463,7 +463,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-encoder-tick.example.PIC16F87XA.sim]
 name        = "combo-encoder-tick-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-swuart-tick]
@@ -494,7 +494,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-swuart-tick.example.PIC16F87XA.sim]
 name        = "combo-swuart-tick-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-tick-serial]
@@ -524,7 +524,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-tick-serial.example.PIC16F87XA.sim]
 name        = "combo-tick-serial-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-combo-lcd-tick]
@@ -559,7 +559,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-lcd-tick.example.PIC18Fxx5x.sim]
 name        = "combo-lcd-tick-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-combo-rx-loopback]
@@ -595,7 +595,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-rx-loopback.example.PIC16F87XA.sim]
 name        = "rx_loopback-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-adcfilter]
@@ -643,7 +643,7 @@ hal     = true
 # need the watchdog running unattended.
 [modules.epic-adcfilter.example.PIC16F87XA.sim]
 name        = "adcfilter-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_adcfilter.c",
 ]
@@ -702,7 +702,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # terminates and reports does not need the watchdog running unattended.
 [modules.epic-bus.example.PIC16F87XA.sim]
 name        = "bus-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_bus.c",
 ]
@@ -740,7 +740,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # host-tested against the mock device).
 [modules.epic-mcp23x17.example.PIC16F87XA.sim]
 name        = "mcp23x17-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_mcp23x17.c",
 ]
@@ -820,7 +820,7 @@ hal     = true
 # unattended.
 [modules.epic-console.example.PIC18Fxx5x.sim]
 name        = "console-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 sources     = [
   "tests/sim_console.c",
 ]
@@ -872,7 +872,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # unattended.
 [modules.epic-debounce.example.PIC16F87XA.sim]
 name        = "debounce-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_debounce.c",
 ]
@@ -927,7 +927,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # unattended.
 [modules.epic-encoder.example.PIC16F87XA.sim]
 name        = "encoder-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_encoder.c",
 ]
@@ -992,7 +992,7 @@ hal     = true
 # reports does not need the watchdog running unattended.
 [modules.epic-fsm.example.PIC16F87XA.sim]
 name        = "fsm-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_fsm.c",
 ]
@@ -1061,7 +1061,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # unattended.
 [modules.epic-lcd.example.PIC16F87XA.sim]
 name        = "lcd-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_lcd.c",
   "src/epic_lcd_gpio4.c",
@@ -1152,7 +1152,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # so the page-0 requirement holds regardless of the build size.
 [modules.epic-math.example.PIC16F87XA.sim]
 name        = "math-selftest-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/target_selftest.c",
 ]
@@ -1170,7 +1170,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # only the harness source and the WDT config bit differ.
 [modules.epic-math.example.PIC18Fxx5x.sim]
 name        = "math-selftest-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-modbus]
@@ -1226,7 +1226,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # the only timing authority in the image.
 [modules.epic-modbus.example.PIC18Fxx5x.sim]
 name        = "modbus-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 sources     = [ "tests/sim_modbus.c", ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
@@ -1283,7 +1283,7 @@ hal     = true
 # WDT=OFF for the same reason as every other family's sim variant.
 [modules.epic-pid.example.PIC18Fxx5x.sim]
 name        = "pid-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 sources     = [
   "tests/sim_pid.c",
 ]
@@ -1333,7 +1333,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # unattended.
 [modules.epic-serial.example.PIC16F87XA.sim]
 name        = "serial-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_serial.c",
 ]
@@ -1393,7 +1393,7 @@ hal     = true
 # does not need the watchdog running unattended).
 [modules.epic-settings.example.PIC18Fxx5x.sim]
 name        = "settings-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 sources     = [
   "tests/sim_settings.c",
 ]
@@ -1453,7 +1453,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # watchdog running unattended.
 [modules.epic-swuart.example.PIC16F87XA.sim]
 name        = "swuart-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_target_swuart.c",
 ]
@@ -1528,7 +1528,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # terminates and reports does not need the watchdog running unattended.
 [modules.epic-taskmgr.example.PIC18Fxx5x.sim]
 name        = "taskmgr-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 sources     = [
   "tests/sim_taskmgr.c",
 ]
@@ -1576,7 +1576,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # diagnostic build that terminates and reports over USART does not).
 [modules.epic-tick.example.PIC16F87XA.sim]
 name        = "tick-sim"
-harness_src = "pic16f87xa-hal/src/core/pic16_harness_sim_target.c"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-tick.example.PIC18Fxx5x]
@@ -1591,7 +1591,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # and WDT (PIC18's watchdog config bit) differ.
 [modules.epic-tick.example.PIC18Fxx5x.sim]
 name        = "tick-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 
@@ -1628,7 +1628,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # HARNESS=sim, WDT=OFF like every other sim variant.
 [modules.epic-combo-tick-settings.example.PIC18Fxx5x.sim]
 name        = "combo-tick-settings-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # C12 of the combination matrix: epic-modbus
@@ -1667,7 +1667,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # HARNESS=sim, WDT=OFF like every other sim variant.
 [modules.epic-combo-modbus-full.example.PIC18Fxx5x.sim]
 name        = "combo-modbus-full-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-combo-taskmgr-serial]
@@ -1706,5 +1706,5 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # HARNESS=sim, WDT=OFF like every other sim variant.
 [modules.epic-combo-taskmgr-serial.example.PIC18Fxx5x.sim]
 name        = "combo-taskmgr-serial-sim"
-harness_src = "pic18fxx5x-hal/src/core/pic18_harness_sim_target.c"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
