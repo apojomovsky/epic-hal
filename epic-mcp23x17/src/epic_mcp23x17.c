@@ -77,6 +77,87 @@ static int reg_write(epic_mcp23x17_handle_t *h, uint8_t reg,
     return n;
 }
 
+/* ─── GPIO-mimic layer ──────────────────────────────────────────── */
+
+int EPIC_MCP23X17_GPIO_Init(epic_mcp23x17_handle_t *h,
+                            epic_mcp23x17_port_t port,
+                            uint16_t pins, epic_mcp23x17_mode_t mode)
+{
+    uint8_t mask = (uint8_t)(pins & 0xFFu);
+    uint8_t dir;
+    int st = EPIC_MCP23X17_GetDirection(h, port, &dir);
+    if (st < 0) {
+        return st;
+    }
+    if (mode == MCP23X17_MODE_OUTPUT) {
+        dir &= (uint8_t)~mask;
+    } else {
+        dir |= mask;
+    }
+    st = EPIC_MCP23X17_SetDirection(h, port, dir);
+    if (st < 0) {
+        return st;
+    }
+    /* the pull-ups follow the mode for the affected pins only. */
+    uint8_t pu;
+    st = EPIC_MCP23X17_GetPullUps(h, port, &pu);
+    if (st < 0) {
+        return st;
+    }
+    if (mode == MCP23X17_MODE_INPUT_PULLUP) {
+        pu |= mask;
+    } else {
+        pu &= (uint8_t)~mask;
+    }
+    return EPIC_MCP23X17_SetPullUps(h, port, pu);
+}
+
+int EPIC_MCP23X17_GPIO_WritePin(epic_mcp23x17_handle_t *h,
+                                epic_mcp23x17_port_t port,
+                                uint16_t pins,
+                                epic_mcp23x17_pin_state_t state)
+{
+    uint8_t mask = (uint8_t)(pins & 0xFFu);
+    uint8_t latch;
+    int st = EPIC_MCP23X17_ReadOutputLatch(h, port, &latch);
+    if (st < 0) {
+        return st;
+    }
+    if (state == MCP23X17_PIN_SET) {
+        latch |= mask;
+    } else {
+        latch &= (uint8_t)~mask;
+    }
+    return EPIC_MCP23X17_WritePort(h, port, latch);
+}
+
+int EPIC_MCP23X17_GPIO_TogglePin(epic_mcp23x17_handle_t *h,
+                                 epic_mcp23x17_port_t port,
+                                 uint16_t pins)
+{
+    uint8_t mask = (uint8_t)(pins & 0xFFu);
+    uint8_t latch;
+    int st = EPIC_MCP23X17_ReadOutputLatch(h, port, &latch);
+    if (st < 0) {
+        return st;
+    }
+    latch ^= mask;
+    return EPIC_MCP23X17_WritePort(h, port, latch);
+}
+
+int EPIC_MCP23X17_GPIO_ReadPin(epic_mcp23x17_handle_t *h,
+                               epic_mcp23x17_port_t port,
+                               uint16_t pin)
+{
+    uint8_t port_val;
+    int st = EPIC_MCP23X17_ReadPort(h, port, &port_val);
+    if (st < 0) {
+        return st;
+    }
+    return (port_val & (uint8_t)(pin & 0xFFu)) ? MCP23X17_PIN_SET
+                                               : MCP23X17_PIN_RESET;
+}
+
 /* ─── lifecycle ─────────────────────────────────────────────────── */
 
 int EPIC_MCP23X17_Init(epic_mcp23x17_handle_t *h,

@@ -70,6 +70,70 @@ typedef struct {
     const epic_mcp23x17_transport_t *transport;  /**< NULL = built-in */
 } epic_mcp23x17_handle_t;
 
+/* ---- GPIO-mimic layer (HAL-shaped convenience) ---------------- */
+
+/** Pin masks, matching the HAL GPIO_PIN_* values so the swap between
+ *  the MCU's own pins and the expander is a prefix change. */
+#define MCP23X17_PIN_0     ((uint16_t)1u << 0)
+#define MCP23X17_PIN_1     ((uint16_t)1u << 1)
+#define MCP23X17_PIN_2     ((uint16_t)1u << 2)
+#define MCP23X17_PIN_3     ((uint16_t)1u << 3)
+#define MCP23X17_PIN_4     ((uint16_t)1u << 4)
+#define MCP23X17_PIN_5     ((uint16_t)1u << 5)
+#define MCP23X17_PIN_6     ((uint16_t)1u << 6)
+#define MCP23X17_PIN_7     ((uint16_t)1u << 7)
+#define MCP23X17_PIN_All   ((uint16_t)0xFFu)
+
+/** Pin state, mirroring the HAL's GPIO_PinState values. */
+typedef enum {
+    MCP23X17_PIN_RESET = 0,
+    MCP23X17_PIN_SET   = 1,
+} epic_mcp23x17_pin_state_t;
+
+/** Direction modes for the GPIO-mimic Init, mapping to IODIR and
+ *  GPPU (INPUT_PULLUP enables the 100k pull-ups on the pins). */
+typedef enum {
+    MCP23X17_MODE_OUTPUT = 0,
+    MCP23X17_MODE_INPUT  = 1,
+    MCP23X17_MODE_INPUT_PULLUP = 2,
+} epic_mcp23x17_mode_t;
+
+/**
+ * Configure @p pins on @p port as @p mode. The direction and pull-up
+ * registers are read-modify-written so pins outside @p pins keep
+ * their configuration. Returns the transfer status.
+ */
+int EPIC_MCP23X17_GPIO_Init(epic_mcp23x17_handle_t *h,
+                            epic_mcp23x17_port_t port,
+                            uint16_t pins, epic_mcp23x17_mode_t mode);
+
+/**
+ * Write @p state to @p pins on @p port. Because the expander's GPIO
+ * register is a whole byte, this is a read-modify-write of the output
+ * latch: two bus transactions with a window between them. A concurrent
+ * writer to the same port in that window can be lost (documented in
+ * docs/ARCHITECTURE.md); use the whole-port WritePort for atomic
+ * single-transaction writes. Returns the transfer status.
+ */
+int EPIC_MCP23X17_GPIO_WritePin(epic_mcp23x17_handle_t *h,
+                                epic_mcp23x17_port_t port,
+                                uint16_t pins,
+                                epic_mcp23x17_pin_state_t state);
+
+/** Toggle @p pins on @p port (read-modify-write of the latch, same
+ *  non-atomic window as WritePin). Returns the transfer status. */
+int EPIC_MCP23X17_GPIO_TogglePin(epic_mcp23x17_handle_t *h,
+                                 epic_mcp23x17_port_t port,
+                                 uint16_t pins);
+
+/**
+ * Read the state of @p pin (a single pin) on @p port. Returns
+ * MCP23X17_PIN_SET/RESET (1/0) or -1 when the device NACKs.
+ */
+int EPIC_MCP23X17_GPIO_ReadPin(epic_mcp23x17_handle_t *h,
+                               epic_mcp23x17_port_t port,
+                               uint16_t pin);
+
 /* ---- lifecycle ---- */
 
 /** Bind @p h to @p bus with device address @p dev, using the built-in

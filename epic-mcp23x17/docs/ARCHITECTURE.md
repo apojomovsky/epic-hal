@@ -51,6 +51,20 @@ I2C/SPI framing) at the epic-bus ops seam, so the full module +
 epic-bus + mock-device stack runs host-side; the same seam that
 epic-bus's own gate uses under MPLAB SIM.
 
+## The GPIO-mimic layer and the RMW window
+
+The GPIO-mimic calls (`EPIC_MCP23X17_GPIO_WritePin`/`TogglePin`)
+present the HAL's per-pin shape, but the expander's GPIO register is
+a whole byte, so a masked write is a read-modify-write of the output
+latch: read OLAT, modify, write GPIO. That is two bus transactions
+with a window between them, and a concurrent writer to the same port
+inside that window can be lost. The whole-port `WritePort`/`WriteAll`
+remain single-transaction and atomic; use them when two contexts
+touch the same port. The MCU's own GPIO pin write is one (mostly
+atomic) instruction, so this is the one place the mimic is genuinely
+weaker than the native API; it is the caller's call to make, hence
+the documentation here rather than a hidden serialization layer.
+
 ## Return values
 
 Every accessor returns the transport's status: the byte count
