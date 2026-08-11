@@ -1,16 +1,7 @@
 /*
- * Epicurus reference project, PIC16F193X.
- *
- * This family has no higher-level modules yet (HAL only), so this uses
- * GPIO and Timer0 directly: RB0 as output, Timer0 overflow toggles it
- * from interrupt context via the HAL's own weak-ISR dispatch (no
- * hand-written vector needed, see pic16f193x-hal's core sources). If
- * this builds and runs, your include paths, source folders, and device
- * pack are all right, and you can copy this project's settings into
- * your own.
- *
- * See MPLABX.md in this bundle for adding Epicurus to an existing
- * project instead.
+ * Epicurus reference project, PIC16F193X: Timer0 overflow toggles RB0
+ * via the HAL's weak-ISR dispatch (HAL-only family, no hand-written
+ * vector). See MPLABX.md to add Epicurus to an existing project.
  */
 #include <xc.h>
 
