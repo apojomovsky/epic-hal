@@ -1,7 +1,7 @@
 /**
  * @file    combo_uart_ssp.c
  * @brief   C1 of the combination matrix:
- *          USART + SSP + EEPROM interleaved under a fast TIMER2 ISR.
+ *          USART + SSP + EEPROM interleaved under a fast TIMER2 ISR,
  *          all real code, one firmware, one bank state.
  *
  * @details

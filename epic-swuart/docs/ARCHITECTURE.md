@@ -190,9 +190,8 @@ by which point the frame is long since garbled.
 `EPIC_SWUART_Write` adds to "now" when arming the very first deadline
 of a new transmission, to guarantee the write lands before the
 deadline it names. It is `120`, not the original design guess of `40`:
-Task 2's real `mdb` probe (the first table in "Measured margins"
-below) measured 73-95 cycles of pure ISR dispatch latency alone on
-PIC16F877A (vector entry
+Task 2's real `mdb` probe measured 73-95 cycles of pure ISR dispatch
+latency alone on PIC16F877A (vector entry
 to the first instruction of the event callback), before any of the
 callback's own work. A 40-cycle margin would already be consumed by
 dispatch latency alone, before `Write`'s own mainline code even runs;
@@ -309,9 +308,8 @@ proves:
 
 **It does not prove real-hardware RX correctness.** Two different
 full TX+RX loopback approaches were attempted for this gate and both
-hit real, unresolved obstacles (see
-`epic-swuart/tests/sim_target_swuart.c`'s header comment for the full
-write-up): an MPLAB SIM SCL stimulus process driving RC2 from
+hit real, unresolved obstacles: an MPLAB SIM SCL stimulus process
+driving RC2 from
 RC1 never registered a CCP1 capture at all, and a breakpoint-driven
 `write pin RC2 <level>` approach (matching each TX transition observed
 on RC1) did make CCP1 capture real edges and run the whole

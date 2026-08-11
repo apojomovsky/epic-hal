@@ -1,7 +1,7 @@
 /**
  * @file    combo_rb_uart.c
  * @brief   C4 of the combination matrix:
- *          PORTB change ISR + USART TX + TIMER2 interleaved. The gate
+ *          PORTB change ISR + USART TX + TIMER2 interleaved, all real
  *          code, one firmware, one bank state.
  *
  * @details
