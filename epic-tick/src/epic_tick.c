@@ -1,15 +1,8 @@
 /**
- * @file    epic_tick.c
- * @brief   1 ms timebase on Timer2, family-agnostic.
- *
- * @details
- *   The tick ISR is the Timer2 handle's `OverflowCallback`; the HAL's own
- *   strong `TIMER2_IRQHandler` clears TMR2IF and calls it, so this module
- *   never redefines the handler. `compute_period()` searches the
- *   prescaler/postscaler/PR2 space for the configuration closest to a 1 ms
- *   period at the given Fosc (exact for common values). `epic_tick_get()`
- *   disables interrupts around the 32-bit read since an 8-bit core reads
- *   it in 4 bytes and the ISR could update it mid-read.
+ * 1 ms timebase on the HAL's Timer2, family-agnostic. The tick ISR is
+ * the handle's `OverflowCallback`: the HAL's own `TIMER2_IRQHandler`
+ * clears TMR2IF and calls it, so this module never redefines the
+ * handler.
  */
 
 #include "epic_tick.h"
@@ -90,16 +83,12 @@ void epic_tick_init(uint32_t fosc_hz)
 
 uint32_t epic_tick_get(void)
 {
-    /* Read the 32-bit counter twice and retry while it changes. The
-     * ISR can update it between the 8-bit byte reads, and disabling
-     * GIE around the read is not reliable under MPLAB SIM: the
-     * simulator's interrupt delivery can still vector inside the
-     * disabled window (a request latched while GIE was set is
-     * delivered even after EPIC_IRQ_Disable clears it), tearing the
-     * read and, worse, leaving GIE cleared when the ISR returns, which
-     * stops the tick dead (epic-tick's sim-target gate froze mid-delay
-     * with exactly this signature). The retry loop is race-free on
-     * real silicon too, at the cost of an occasional re-read. */
+    /* Double-read retry: the ISR can update the 32-bit counter between
+     * the 8-bit byte reads, and disabling GIE is not reliable under
+     * MPLAB SIM (a request latched while GIE was set can still vector,
+     * and can leave GIE cleared, killing the tick). The retry is
+     * race-free on real silicon too, at the cost of an occasional
+     * re-read. */
     uint32_t a, b;
     do {
         a = g_tick_ms;

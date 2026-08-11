@@ -1,9 +1,7 @@
 /**
- * @file    example_tick.c
- * @brief   epic-tick smoke test: delays 10 ms and 5 ms, checks the elapsed
- *          counts land within one tick of the requested value, then
- *          reports PASS/FAIL via the harness. Builds and runs on both the
- *          host simulator and a real target.
+ * epic-tick smoke test: delay 10 ms and 5 ms, check the elapsed counts
+ * land within one tick of the requested value, report PASS/FAIL via the
+ * harness. Builds and runs on host sim and a real target.
  */
 
 #include "epic_tick.h"

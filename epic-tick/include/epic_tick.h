@@ -1,10 +1,7 @@
 /**
- * @file    epic_tick.h
- * @brief   Family-agnostic 1 ms timebase (`epic_tick_get`/`epic_tick_delay_ms`,
- *          the STM32Cube `HAL_GetTick`/`HAL_Delay` equivalent) built on the
- *          HAL's auto-reload Timer2: a period-match ISR increments a
- *          volatile 32-bit counter this header's functions read. See
- *          docs/ARCHITECTURE.md for the timebase math.
+ * Family-agnostic 1 ms timebase (`epic_tick_get`/`epic_tick_delay_ms`,
+ * the STM32Cube `HAL_GetTick`/`HAL_Delay` equivalent) on the HAL's
+ * auto-reload Timer2. See docs/ARCHITECTURE.md for the timebase math.
  */
 
 #ifndef EPIC_TICK_H
@@ -21,10 +18,9 @@
 void epic_tick_init(uint32_t fosc_hz);
 
 /**
- * @brief  Read the elapsed milliseconds since `epic_tick_init`. Monotonic;
- *         wraps every ~49.7 days (2^32 ms). The 32-bit read is made atomic
- *         against the ISR (interrupts disabled around the read) so a
- *         mid-update tear cannot occur.
+ * Read the elapsed milliseconds since `epic_tick_init`. Monotonic;
+ * wraps every ~49.7 days (2^32 ms). The 32-bit read is race-free
+ * against a mid-read ISR update (double-read retry).
  * @return the millisecond tick count.
  */
 uint32_t epic_tick_get(void);
