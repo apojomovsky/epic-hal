@@ -179,6 +179,13 @@ emdash_check() {
 # headers and cross-module headers are not always on the include path this
 # script builds); it does not stop cppcheck from analyzing the function
 # bodies it can see.
+#
+# nullPointerRedundantCheck and the third-party syntaxError are suppressed
+# because cppcheck 2.19+ (newer than CI's 2.13) reports them as false
+# positives: the CHECK(ptr != NULL) macro pattern trips the redundant-null
+# check, and the vendored m-stack mmc.h #error pattern that 2.13 classified
+# as preprocessorErrorDirective (suppressed below) is reclassified as
+# syntaxError, always inside third_party/ paths this repo does not own.
 
 cppcheck_check() {
     command -v cppcheck >/dev/null 2>&1 || {
@@ -208,6 +215,8 @@ cppcheck_check() {
         --suppress=missingInclude --suppress=missingIncludeSystem \
         --suppress=unmatchedSuppression \
         --suppress=preprocessorErrorDirective \
+        --suppress=nullPointerRedundantCheck \
+        --suppress=syntaxError:*/third_party/* \
         --quiet "${includes[@]}" "${c_files[@]}"; then
         echo "pre-commit: cppcheck found issues in the files above."
         fail=1
