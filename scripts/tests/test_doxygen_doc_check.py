@@ -73,7 +73,11 @@ void reset(void);
  */
 void write(uint8_t data);
 """
-        self.assertIn(("param-direction", "write"), violations(src))
+        seen = violations(src)
+        self.assertIn(("param-direction", "write"), seen)
+        # The bracket tag is the single report; `data` is still matched.
+        self.assertEqual(len([k for (k, _) in seen if k == "param-direction"]), 1)
+        self.assertNotIn(("missing-param", "write"), seen)
 
     def test_nonvoid_without_return_fails(self):
         src = """/**
@@ -298,6 +302,38 @@ int open_stream(struct stream *s);
 """
         self.assertEqual(violations(src), [])
 
+    def test_unsigned_return(self):
+        src = """/**
+ * @brief  Hash a byte.
+ * @param  x  byte to hash
+ * @return hash of x
+ */
+unsigned hash_byte(unsigned x);
+"""
+        self.assertEqual(violations(src), [])
+        self.assertIn(("missing-doc", "hash_byte"),
+                      violations("unsigned hash_byte(unsigned x);\n"))
+
+    def test_unsigned_long_return(self):
+        src = """/**
+ * @brief  Combine two words.
+ * @param  hi  high word
+ * @param  lo  low word
+ * @return hi:lo
+ */
+unsigned long combine(unsigned long hi, unsigned long lo);
+"""
+        self.assertEqual(violations(src), [])
+
+    def test_unsigned_return_missing_return_fails(self):
+        src = """/**
+ * @brief  Hash a byte.
+ * @param  x  byte to hash
+ */
+static unsigned rx_send_byte(const uint8_t *data, size_t len);
+"""
+        self.assertIn(("missing-return", "rx_send_byte"), violations(src))
+
 
 class TestBriefOnly(unittest.TestCase):
     def test_brief_only_passes_brief_only_block(self):
@@ -372,8 +408,8 @@ uint8_t add(uint8_t a, uint8_t b);
 
     def test_preprocessor_conditional_signature_variants(self):
         # The same function appears in both arms of a #if/#else with a
-        # different attribute; both are real functions and neither may be
-        # reported as unparseable.
+        # different attribute; it is one logical function (never unparseable,
+        # never double-counted).
         src = """#if defined(__XC8)
 void dispatch(void) __at(0x900)
 #else
@@ -383,9 +419,27 @@ void dispatch(void)
     (void)0;
 }
 """
-        kinds_seen = [k for (k, _) in violations(src)]
-        self.assertNotIn("unparseable", kinds_seen)
-        self.assertEqual(kinds_seen.count("missing-doc"), 2)
+        seen = violations(src)
+        self.assertNotIn("unparseable", [k for (k, _) in seen])
+        self.assertEqual(seen.count(("missing-doc", "dispatch")), 1)
+        self.assertEqual(doxygen_doc_check.check_source(src)[1], 1)
+
+    def test_doc_above_if_covers_both_arms(self):
+        # A single doc above the #if associates through the preprocessor
+        # lines and documents the one logical function.
+        src = """/**
+ * @brief  Dispatch all IRQs.
+ */
+#if defined(__XC8)
+void dispatch(void) __at(0x900)
+#else
+void dispatch(void)
+#endif
+{
+    (void)0;
+}
+"""
+        self.assertEqual(violations(src), [])
 
 
 if __name__ == "__main__":

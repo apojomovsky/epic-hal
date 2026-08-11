@@ -49,7 +49,7 @@ _NON_TYPE_KEYWORDS = frozenset(
     "if while for switch case default do else goto return break continue "
     "sizeof _Alignof _Alignas _Static_assert _Generic typedef struct union "
     "enum asm __asm __asm__ extern register auto static inline const "
-    "volatile unsigned signed long short"
+    "volatile"
     .split()
 )
 
@@ -302,6 +302,27 @@ def _line_starts(text):
     return starts
 
 
+_PP_CONDITIONAL_RE = re.compile(
+    r"^\s*#\s*(?:if|ifdef|ifndef|elif|else|endif)\b", re.MULTILINE)
+
+
+def _gap_is_whitespace_or_conditional(text, start, end):
+    """True when text[start:end] is only whitespace, or whitespace plus
+    conditional preprocessor directives (#if/#ifdef/#ifndef/#elif/#else/
+    #endif).  A doc block may associate through such a guarded-declaration
+    gap, but not through #include/#define setup (a file-level doc)."""
+    gap = text[start:end]
+    if gap.strip() == "":
+        return True
+    for line in gap.splitlines():
+        s = line.strip()
+        if s == "":
+            continue
+        if not _PP_CONDITIONAL_RE.match(s):
+            return False
+    return True
+
+
 # --- signature scanning -----------------------------------------------------
 
 def _find_signatures(masked, unparseable):
@@ -386,11 +407,15 @@ def _check_function(sig, doc, brief_only):
         return out
     if _PARAM_DIR_RE.search(content):
         out.append(("param-direction", "[in]/[out] direction tags are not allowed"))
+    # Match @param names against a copy with [in]/[out]/[in,out] tags
+    # stripped, so `@param[in] data` satisfies the `data` requirement and
+    # param-direction is the only report for the bracket style.
+    clean = _PARAM_DIR_RE.sub(" ", content)
     named = [n for n in (_param_name(p) for p in sig["params"]) if n]
     for pname in named:
-        if not re.search(r"@param\s+" + re.escape(pname) + r"\b", content):
+        if not re.search(r"@param\s+" + re.escape(pname) + r"\b", clean):
             out.append(("missing-param", "missing @param %s" % pname))
-    for m in _PARAM_TAG_RE.finditer(content):
+    for m in _PARAM_TAG_RE.finditer(clean):
         tag = m.group(1)
         if tag not in named:
             out.append(("extra-param", "@param %s is not a named parameter" % tag))
@@ -413,6 +438,16 @@ def check_source(text, brief_only=False):
     starts = _line_starts(text)
     unparseable = []
     sigs = list(_find_signatures(masked, unparseable))
+    # Merge same-name signatures separated only by masked (preprocessor/
+    # whitespace) lines: the two arms of a `#if/#else` are one logical
+    # function, checked and counted once.
+    merged = []
+    for sig in sigs:
+        if (merged and sig["name"] == merged[-1]["name"]
+                and masked[merged[-1]["close"]:sig["decl_start"]].strip() == ""):
+            continue
+        merged.append(sig)
+    sigs = merged
     violations = []
     for offset, name, detail in unparseable:
         line = bisect.bisect_right(starts, offset)
@@ -425,8 +460,11 @@ def check_source(text, brief_only=False):
         doc = None
         if cidx > 0:
             cand = comments[cidx - 1]
-            gap = text[cand[1]:sig["decl_start"]]
-            if gap.strip() == "":
+            # A doc may associate through whitespace or through a
+            # guarded-declaration gap (#if/#ifdef/#ifndef/#elif/#else/
+            # #endif), so a doc above a `#if`-wrapped signature covers it.
+            # File-level docs followed by #include/#define setup do not.
+            if _gap_is_whitespace_or_conditional(text, cand[1], sig["decl_start"]):
                 # A comment that has code before it on its own start line is
                 # a trailing comment, not a doc attempt.
                 line_start = text.rfind("\n", 0, cand[0]) + 1
