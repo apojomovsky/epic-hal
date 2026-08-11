@@ -31,15 +31,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Determine docs-only
-        id: docs
+      - name: Determine non-code
+        id: noncode
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            result="$(bash scripts/ci-docs-only-check.sh '${{ github.event.pull_request.base.sha }}')"
+            result="$(python3 scripts/ci_noncode_check.py '${{ github.event.pull_request.base.sha }}')"
           else
             result="false"
           fi
-          echo "docs_only=$result" >> "$GITHUB_OUTPUT"
+          echo "non_code=$result" >> "$GITHUB_OUTPUT"
 
       # This workflow no longer builds or pushes the toolchain image
       # itself: the root Makefile (`make image`, `make ci-image-push`)
@@ -47,7 +47,7 @@ jobs:
       # human drops in docker/ci-toolchain/vendor/. Fails loudly, with
       # those exact instructions, if the resolved tag isn't on GHCR yet.
       - name: Resolve + pull the toolchain image
-        if: steps.docs.outputs.docs_only != 'true'
+        if: steps.noncode.outputs.non_code != 'true'
         id: image
         run: |
           xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
@@ -75,7 +75,7 @@ jobs:
       # link). Host-side python3 that shells into the toolchain
       # container for the DFP headers / xc8-cc.
       - name: Device-data audits (sfr-map, config-key, statics)
-        if: steps.docs.outputs.docs_only != 'true'
+        if: steps.noncode.outputs.non_code != 'true'
         env:
           EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
         run: |
@@ -89,7 +89,7 @@ jobs:
       # layout drift shows up as a reviewable diff instead of a flaky
       # gate (the deterministic-layout hardening roadmap task 5c).
       - name: Hex-rebuild identity audit
-        if: steps.docs.outputs.docs_only != 'true'
+        if: steps.noncode.outputs.non_code != 'true'
         env:
           EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
         run: python3 scripts/hex-identity-audit.py --family "$FAMILY"
@@ -110,7 +110,7 @@ jobs:
       #     both in sync by hand if either changes).
       #   - bundles/<family>-*.tar.gz via make_bundle.py.
       - name: Emit real-target + sim build scripts, generate the bundle
-        if: steps.docs.outputs.docs_only != 'true'
+        if: steps.noncode.outputs.non_code != 'true'
         run: |
           xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           xc8_install_dir="/opt/microchip/xc8/v${xc8_version}"
@@ -229,7 +229,7 @@ jobs:
       # mcu" lines (this job's family only) rather than JSON. PARALLEL=2
       # runs the builds concurrently on the runner's 2 cores.
       - name: Real XC8 builds, this family
-        if: steps.docs.outputs.docs_only != 'true'
+        if: steps.noncode.outputs.non_code != 'true'
         env:
           PARALLEL: "2"
         run: |
@@ -254,7 +254,7 @@ jobs:
       # the gates keep their deterministic budgets; the builds above
       # still parallelize.
       - name: MPLAB SIM (mdb) runs
-        if: steps.docs.outputs.docs_only != 'true'
+        if: steps.noncode.outputs.non_code != 'true'
         run: |
           docker run --rm -v "$PWD:/work" -w /work \
             -e PARALLEL="$PARALLEL" -e FAMILY="$FAMILY" \
@@ -268,7 +268,7 @@ jobs:
       # above it) and building there, ported verbatim from the old
       # bundle-gate.yml's build-isolated job.
       - name: Isolated bundle build
-        if: steps.docs.outputs.docs_only != 'true'
+        if: steps.noncode.outputs.non_code != 'true'
         run: |
           docker run --rm -v "$PWD:/work" -w /work \
             "${{ steps.image.outputs.image }}" \

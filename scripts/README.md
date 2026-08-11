@@ -110,28 +110,31 @@ pre-existing violations from before the rules were adopted). Local,
 hook-driven runs are unaffected: the variable is unset there, so behavior
 is identical to before.
 
-## CI change-scoping (docs-only skip, affected-module narrowing)
+## CI change-scoping (non-code skip, affected-module narrowing)
 
-Two more scripts, each with a full header comment covering the "why",
-used by `ci.yml`'s two jobs to avoid paying for a docs-only PR or a PR
-that only touches one module:
+Two classifiers keep cheap PRs cheap, both fail-closed (anything they
+cannot attribute means full CI, so a wrong call can only cause an extra
+run, never let a real break merge unverified):
 
-- `ci-docs-only-check.sh <base-ref>`: prints `true`/`false`, used by the
-  `target` job to skip its Docker-based steps (image pull already
-  excepted, a `docker pull` against a cached tag is cheap either way)
-  entirely on a documentation-only PR diff.
-- `ci-discover-affected-modules.py [base-ref]`: used by the `host` job's
-  own discovery step. Same docs-only concept as above,
-  plus a second question the `host` job specifically needs: which
-  modules were actually touched, directly or through a sibling
-  dependency (read straight from each module's own `CMakeLists.txt`,
-  no separately-maintained dependency graph to drift). Conservative on
-  both axes, falls back to the full, unfiltered module list the moment
-  it sees a changed file it can't attribute to a known module or
-  `epic-common/`. Only ever applied to `pull_request` runs; every push
-  to `master` always gets the full matrix regardless of what changed,
-  so a wrong narrowing on some PR can only delay when a break is
-  caught, never let it merge unverified.
+- `ci_noncode_check.py <base-ref>`: the single source of truth for "can
+  this change affect the build?". Prints `true` only when every changed
+  file is on its explicit non-code allowlist (markdown, any `docs/`
+  directory, `LICENSE*`, repo config files, image assets, and the
+  dev-only `scripts/bootstrap.sh` / `scripts/install-git-hooks.sh` /
+  repo-root `Makefile`). Workflow files and everything else are code by
+  default. `family-check.yml` calls it to skip all real-target steps on
+  a non-code PR; `ci-discover-affected-modules.py` imports
+  `is_non_code()` for the host job.
+- `ci-discover-affected-modules.py [base-ref]`: used by `ci.yml`'s
+  `host` job. Answers two questions: is the change non-code (imports
+  `ci_noncode_check`), and which modules were actually touched,
+  directly or through a sibling dependency (read straight from each
+  module's own `CMakeLists.txt`, no separately-maintained dependency
+  graph to drift). Conservative on both axes, falls back to the full,
+  unfiltered module list the moment it sees a changed file it can't
+  attribute to a known module or `epic-common/`. Only ever applied to
+  `pull_request` runs; every push to `master` always gets the full
+  matrix regardless of what changed.
 
 ## CI target-job scripts (`ci-target-*.sh`)
 
