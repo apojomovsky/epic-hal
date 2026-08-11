@@ -1,43 +1,11 @@
 /**
- * @file    sim_adcfilter.c
- * @brief   Bounded, self-reporting HARNESS=sim build for epic-adcfilter:
- *          the module's first real `mdb` gate. Runs the actual compiled
- *          epic_adcfilter.c under MPLAB SIM on a 16F877A, feeding a
- *          scripted sample stream through the real API and checking the
- *          documented host-test expectations, then reports PASS/FAIL
- *          over the target's real hardware USART (see
- *          pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
- *
- * @details
- *   Pure computation, no MPLAB SIM RX injection needed (same constraint
- *   documented in epic-swuart's sim build): the gate exercises the
- *   filter arithmetic end to end through the real compiled code,
- *   checking three observable contracts:
- *
- *   (a) documented oracle values (tests/test_adcfilter.c):
- *       oversampling a constant 512 with extra_bits=2 yields 512 << 2
- *       = 2048 from exactly 16 reads; alternating 0/1023 with
- *       extra_bits=2 yields 2046 from 16 reads; extra_bits=0 returns
- *       the single sample from exactly 1 read; the moving average
- *       warms up over the samples actually pushed (100/200/300/400
- *       into a 4-deep window -> 100/150/200/250) and evicts the
- *       oldest once full (10/20/30, then 40 -> 30, then 50 -> 40); a
- *       1-deep window tracks the last sample; two instances share no
- *       state.
- *   (b) step settling: a moving-average window settles within `count`
- *       pushes (the documented window). A window prefilled with
- *       8 x 100 then stepped to 8 x 1000 outputs 550 at the halfway
- *       point and exactly 1000 after the 8th push, with every output
- *       monotone non-decreasing toward the step value.
- *   (c) reset path: epic_adcfilter_avg_init restores the initial state
- *       (filled == 0, index == 0, sum == 0), and the first push after
- *       a re-init behaves exactly like a fresh filter (averaged over
- *       one sample, not divided by the window length).
- *
- *   Loop-iteration bound: the whole run is a few dozen API calls, all
- *   pure integer arithmetic on the filter's own uint32 accumulator;
- *   trivially finished inside the 5000 ms wait_ms budget on
- *   PIC16F877A/MPLAB SIM.
+ * HARNESS=sim build for epic-adcfilter: the module's `mdb` gate. Runs
+ * the actual compiled epic_adcfilter.c under MPLAB SIM on a 16F877A,
+ * feeding a scripted sample stream through the real API and checking
+ * the host-test oracle values, then reports PASS/FAIL over the
+ * target's real hardware USART (pic16_harness_sim_target.c). Pure
+ * computation, no RX injection needed. The oracle, step-settling, and
+ * reset contracts are enumerated inline at each check below.
  */
 
 #include "epic_adcfilter.h"

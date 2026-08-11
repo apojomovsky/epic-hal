@@ -1,7 +1,6 @@
 /**
- * @file    test_adcfilter.c
- * @brief   Host tests for the ADC oversampling and moving-average filter.
- * @details  Zero HAL dependency, pure host. Tests the exact code that ships.
+ * Host tests for the ADC oversampling and moving-average filter.
+ * Zero HAL dependency, pure host; tests the exact code that ships.
  */
 
 #include "epic_adcfilter.h"
@@ -10,7 +9,6 @@
 static int g_pass = 0, g_fail = 0;
 #define CHECK(c, m) do { if (c) { g_pass++; } else { printf("FAIL: %s\n", m); g_fail++; } } while (0)
 
-/* ---- scripted mock read ---- */
 static uint16_t g_mock_val;
 static int      g_mock_calls;
 static uint16_t mock_const(void *ctx) { (void)ctx; g_mock_calls++; return g_mock_val; }
