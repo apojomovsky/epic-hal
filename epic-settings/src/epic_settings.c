@@ -1,14 +1,9 @@
 /**
- * @file    epic_settings.c
- * @brief   EEPROM-backed settings blobs with CRC-16 validation.
- *
- * @details
- *   EPIC_EEPROM_WriteBuffer is unsafe for multi-byte writes (it loops to
- *   the next byte without waiting for EEIF completion), so this module
- *   sequences its own byte-at-a-time writes: start, wait, clear flag,
- *   repeat. The host sim has no timed EEPROM model, so it drives each
- *   simulated write to completion immediately, then follows the same
- *   poll/clear contract as target code.
+ * EEPROM-backed settings blobs with CRC-16 validation. EPIC_EEPROM_WriteBuffer
+ * is unsafe for multi-byte writes (it loops to the next byte without waiting
+ * for EEIF completion), so this module sequences byte-at-a-time writes: start,
+ * wait, clear flag, repeat. The host sim drives each write to completion
+ * immediately, then follows the same poll/clear contract as target code.
  */
 
 #include "epic_settings.h"
