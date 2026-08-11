@@ -24,8 +24,6 @@ static void setup(void)
     epic_lcd_init(&lcd, &ops, ops_ctx, &cfg);
 }
 
-/* ---- tests ---- */
-
 static void test_init_sequence(void)
 {
     setup();

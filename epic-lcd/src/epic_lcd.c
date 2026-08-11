@@ -1,14 +1,10 @@
-/**
- * @file    epic_lcd.c
- * @brief   HD44780-compatible character LCD driver core -- transport-agnostic
- *          command logic, init sequence, cursor/display control, and print.
- */
+/** HD44780 command core, transport-agnostic (ops injected at init). */
 
 #include "epic_lcd.h"
 
 #include <string.h>
 
-/* ---- HD44780 instruction bits ---- */
+/* HD44780 instruction bits */
 
 #define CMD_CLEAR_DISPLAY      0x01u
 #define CMD_RETURN_HOME        0x02u
@@ -44,7 +40,7 @@
 #define DELAY_INIT_MS          50u     /* >40 ms after power-on */
 #define DELAY_INIT4_US        4500u   /* >4.1 ms             */
 
-/* ---- helpers ---- */
+/* helpers */
 
 static void send_cmd(epic_lcd_t *lcd, uint8_t cmd)
 {
@@ -72,8 +68,6 @@ static void cmd_long_wait(epic_lcd_t *lcd)
 static const uint8_t default_row_addr[EPIC_LCD_MAX_ROWS] = {
     0x00u, 0x40u, 0x14u, 0x54u
 };
-
-/* ---- public API ---- */
 
 void epic_lcd_init(epic_lcd_t *lcd, const epic_lcd_ops_t *ops, void *ops_ctx,
                    const epic_lcd_config_t *config)
@@ -105,11 +99,10 @@ void epic_lcd_init(epic_lcd_t *lcd, const epic_lcd_ops_t *ops, void *ops_ctx,
     send_cmd(lcd, CMD_FUNCTION_SET | FS_8BIT | FS_2LINE);
     cmd_short_wait(lcd);
 
-    /* Display off (will turn on below via epic_lcd_display_on) */
+    /* Display off (D=0); re-enabled after clear */
     send_cmd(lcd, CMD_DISPLAY_CTRL);
     cmd_short_wait(lcd);
 
-    /* Clear */
     send_cmd(lcd, CMD_CLEAR_DISPLAY);
     cmd_long_wait(lcd);
 
@@ -117,7 +110,7 @@ void epic_lcd_init(epic_lcd_t *lcd, const epic_lcd_ops_t *ops, void *ops_ctx,
     send_cmd(lcd, CMD_ENTRY_MODE_SET | lcd->entry_mode);
     cmd_short_wait(lcd);
 
-    /* Turn display on (cursor off, blink off) */
+    /* Display on (cursor off, blink off) */
     lcd->display_ctrl = DISPLAY_ON;
     send_cmd(lcd, CMD_DISPLAY_CTRL | lcd->display_ctrl);
     cmd_short_wait(lcd);

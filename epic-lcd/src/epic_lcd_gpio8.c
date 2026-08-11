@@ -1,7 +1,4 @@
-/**
- * @file    epic_lcd_gpio8.c
- * @brief   8-bit parallel GPIO transport for epic_lcd. R/W tied low.
- */
+/** 8-bit parallel GPIO transport for epic_lcd; R/W tied low. */
 
 #include "epic_lcd_transport.h"
 #include "epic_hal.h"

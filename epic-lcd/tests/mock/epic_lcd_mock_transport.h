@@ -1,8 +1,5 @@
-/**
- * @file    epic_lcd_mock_transport.h
- * @brief   Host-only mock transport for epic_lcd tests. Records every
- *          command and data byte sent, with RS state, for assertion.
- */
+/** Host-only mock transport for epic_lcd tests: records every command and
+ *  data byte sent, with RS state, for assertion. */
 
 #ifndef EPIC_LCD_MOCK_TRANSPORT_H
 #define EPIC_LCD_MOCK_TRANSPORT_H

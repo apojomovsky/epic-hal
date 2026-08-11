@@ -1,10 +1,7 @@
 /**
- * @file    epic_lcd_transport.h
- * @brief   HAL-dependent transport type definitions and init functions for
- *          epic_lcd. Separated from epic_lcd.h so the host test build (no HAL)
- *          only needs the ops/config types.
- *
- *          Include this header when using GPIO or SPI transports on target.
+ * HAL-dependent transport types and init functions for epic_lcd, kept out
+ * of epic_lcd.h so the host test build (no HAL) only needs the ops/config
+ * types. Include when using the GPIO or SPI transports on target.
  */
 
 #ifndef EPIC_LCD_TRANSPORT_H
@@ -12,8 +9,6 @@
 
 #include "epic_lcd.h"
 #include "epic_hal.h"
-
-/* ---- GPIO 4-bit transport ---- */
 
 typedef struct {
     GPIO_TypeDef rs_port;  uint16_t rs_pin;
@@ -26,8 +21,6 @@ typedef struct {
 
 void epic_lcd_gpio4_init(epic_lcd_ops_t *ops, void **ctx,
                          const epic_lcd_gpio4_pins_t *pins);
-
-/* ---- GPIO 8-bit transport ---- */
 
 typedef struct {
     GPIO_TypeDef rs_port;  uint16_t rs_pin;
@@ -44,8 +37,6 @@ typedef struct {
 
 void epic_lcd_gpio8_init(epic_lcd_ops_t *ops, void **ctx,
                          const epic_lcd_gpio8_pins_t *pins);
-
-/* ---- SPI transport (74HC595) ---- */
 
 typedef struct {
     uint8_t rs_bit;
