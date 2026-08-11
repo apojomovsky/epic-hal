@@ -9,9 +9,12 @@
 #include "pic_math_test.h"
 
 /* Reference helpers (decimal), independent of the implementation under test. */
+/** @brief Reference decimal -> packed-BCD helper. */
 static uint8_t ref_bcd8(uint8_t v) { return (uint8_t)(((v/10u)<<4)|(v%10u)); }
+/** @brief Reference packed-BCD -> decimal helper. */
 static uint8_t ref_bin8(uint8_t b) { return (uint8_t)((b>>4)*10u + (b&0x0Fu)); }
 
+/** @brief Exhaustive 0..99 roundtrip of pic_math_bin_to_bcd8/pic_math_bcd8_to_bin. */
 static void test_bcd8_roundtrip(void)
 {
     for (uint32_t v = 0; v <= 99u; v++) {
@@ -22,6 +25,7 @@ static void test_bcd8_roundtrip(void)
     }
 }
 
+/** @brief Documented invalid-nibble behavior of pic_math_bcd8_to_bin. */
 static void test_bcd8_invalid_nibble(void)
 {
     /* Documented: each nibble processed arithmetically. 0x0A -> 0*10+10 = 10. */
@@ -30,6 +34,7 @@ static void test_bcd8_invalid_nibble(void)
     CHECK(pic_math_bcd8_to_bin(0xAA) == 110u, "bcd8_to_bin both nibbles invalid");
 }
 
+/** @brief Exhaustive 0..65535 roundtrip of pic_math_bin_to_bcd16/pic_math_bcd16_to_bin. */
 static void test_bcd16_roundtrip(void)
 {
     /* Exhaustive over the whole uint16_t input range 0..65535 (the binary
@@ -47,6 +52,7 @@ static void test_bcd16_roundtrip(void)
     }
 }
 
+/** @brief Documented invalid-nibble and oversize-truncation behavior of pic_math_bcd16_to_bin. */
 static void test_bcd16_invalid_nibble(void)
 {
     /* 0x0000A -> 10; 0xABCDE has every nibble >9 -> 10+11*10+12*100+13*1000+14*10000. */
@@ -62,6 +68,7 @@ static void test_bcd16_invalid_nibble(void)
     CHECK(pic_math_bcd16_to_bin(0x99999u) == (uint16_t)99999u, "bcd16 oversize truncates");
 }
 
+/** @brief Exhaustive 0..99 x 0..99 add of pic_math_bcd_add8 incl. carry and NULL pointer. */
 static void test_bcd_add8(void)
 {
     for (uint32_t a = 0; a <= 99u; a++)
@@ -79,6 +86,7 @@ static void test_bcd_add8(void)
     (void)pic_math_bcd_add8(0x99u, 0x01u, NULL);
 }
 
+/** @brief Exhaustive 0..99 x 0..99 subtract of pic_math_bcd_sub8 incl. borrow and NULL pointer. */
 static void test_bcd_sub8(void)
 {
     for (uint32_t a = 0; a <= 99u; a++)
@@ -96,6 +104,7 @@ static void test_bcd_sub8(void)
     (void)pic_math_bcd_sub8(0x00u, 0x01u, NULL);
 }
 
+/** @brief Run all BCD tests and report the failure count. */
 int main(void)
 {
     test_bcd8_roundtrip();

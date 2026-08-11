@@ -15,6 +15,7 @@
 /* 3h/8 = 3/8 = 0.375 -> Q16.16 = 0x00006000 = 24576. */
 #define THREE_H_OVER_8_Q16 ((int32_t)0x00006000L)
 
+/** @brief diff3 is exact for linear f(x)=m*x; checks the Q8.8 result. */
 static void test_diff3_linear(void)
 {
     /* f(x) = m*x, derivative = m (constant). Central diff is exact. */
@@ -28,6 +29,7 @@ static void test_diff3_linear(void)
     }
 }
 
+/** @brief diff3 is exact for quadratic f(x)=x^2; checks the Q8.8 result. */
 static void test_diff3_quadratic(void)
 {
     /* f(x) = x^2, derivative = 2x. Central diff (f(x+h)-f(x-h))/2h = 2x exact. */
@@ -40,6 +42,7 @@ static void test_diff3_quadratic(void)
     }
 }
 
+/** @brief diff3 on cubic f(x)=x^3 stays within the documented O(h^2) error bound. */
 static void test_diff3_cubic_bound(void)
 {
     /* f(x) = x^3. Central diff = (f(x+h)-f(x-h))/2h = 3x^2 + h^2 (the O(h^2)
@@ -56,6 +59,7 @@ static void test_diff3_cubic_bound(void)
     }
 }
 
+/** @brief Fractional-slope sanity check on diff3's raw integer arithmetic. */
 static void test_diff3_noninteger_slope(void)
 {
     /* Fractional-slope sanity: (4-1)*128 = 384 Q8.8, confirming the raw
@@ -64,6 +68,7 @@ static void test_diff3_noninteger_slope(void)
     CHECK(got == 384, "diff3 formula arithmetic");
 }
 
+/** @brief Simpson's 3/8 is exact for degree <=3 integrands; checks constant/linear/cubic. */
 static void test_simpson38_exact(void)
 {
     /* f(x)=c (constant), [0,3], h=1: integral = 3c. */
@@ -88,6 +93,7 @@ static void test_simpson38_exact(void)
     }
 }
 
+/** @brief Simpson's 3/8 on quartic f(x)=x^4 stays within the documented O(h^4) error bound. */
 static void test_simpson38_quartic_bound(void)
 {
     /* f(x)=x^4, [0,3], h=1: true integral = 243/5 = 48.6. Simpson 3/8 is
@@ -100,6 +106,7 @@ static void test_simpson38_quartic_bound(void)
     CHECK(err <= 65536.0, "simpson38 quartic O(h^4) bound");
 }
 
+/** @brief Run all numeric tests and report the failure count. */
 int main(void)
 {
     test_diff3_linear();

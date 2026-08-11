@@ -29,6 +29,29 @@
 static volatile uint16_t m_du16_num, m_du16_rem, m_du16_den;
 static volatile uint8_t  m_du16_cnt;
 
+/**
+ * @brief  Unsigned 16/16 divide with remainder (PIC18 inline asm,
+ *         restoring shift-subtract).
+ * @param  num  numerator,   0..65535
+ * @param  den  denominator, 1..65535 (0 -> *ok=false, fields zeroed)
+ * @param  ok   out: true if den != 0; may be NULL
+ * @return { quotient = num/den, remainder = num%den }.
+ *
+ * 16/16 restoring division, 16 iterations. For a 16-bit dividend the
+ * partial remainder never reaches 0x8000 (the partial dividend is
+ * <= 0xFFFF, so remainder = partial mod den < 0x8000), so the rem shift
+ * never carries out and a plain 16-bit compare/subtract is correct.
+ *
+ * One iteration, mirroring ref_divmod_u16_algo:
+ *   c = num>>15; num <<= 1;            -- bcf C; rlcf num+0; rlcf num+1
+ *   rem = (rem<<1)|c;                  -- rlcf rem+0; rlcf rem+1 (C was c)
+ *   if (rem >= den) { rem -= den; num |= 1; }
+ *     done in place: subtract den from rem (C=1 if rem>=den); if C=1 set
+ *     num LSB and keep, else restore rem += den (quotient bit stays 0).
+ *
+ * Worked example 0x0007/0x0002 -> 3 r 1: only the dividend's three 1-bits
+ * can make rem >= 2, and each produces a quotient bit; the final three
+ * iterations give num 0xE000 -> 0xC000 -> 0x8001 -> 0x0003, rem 1. */
 pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
 {
     pic_math_udiv16_t res = { 0u, 0u };
@@ -88,6 +111,24 @@ static volatile uint32_t m_du32_num;
 static volatile uint16_t m_du32_rem, m_du32_den;
 static volatile uint8_t  m_du32_cnt;
 
+/**
+ * @brief  Wide unsigned 32/16 divide with remainder (PIC18 inline asm,
+ *         restoring shift-subtract); quotient truncated to 16 bits
+ *         (documented contract).
+ * @param  num  numerator,   0..0xFFFFFFFF
+ * @param  den  denominator, 1..65535 (0 -> *ok=false, fields zeroed)
+ * @param  ok   out: true if den != 0; may be NULL
+ * @return { quotient = low 16 bits of num/den, remainder = num%den }.
+ *
+ * 32/16 restoring division, 32 iterations. Unlike 16/16, the partial
+ * remainder CAN reach 0x8000 (partial dividend up to 0xFFFFFFFF), so the
+ * rem shift can carry out of bit 15: the extended remainder is C:rem
+ * (17 bits), and the compare is "extended >= den", i.e. C==1 OR rem>=den.
+ * If the shift carried, subtract unconditionally (the 16-bit rem wraps to
+ * the correct low-16 of extended-den) and set the bit; otherwise do the
+ * plain 16-bit restoring subtract. Mirrors ref_divmod_u32_16_algo
+ * (tested). Quotient is truncated to 16 bits by returning the low word of
+ * the 32-bit quotient accumulator. */
 pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
 {
     pic_math_udiv16_t res = { 0u, 0u };
@@ -147,12 +188,20 @@ pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
     return res;
 }
 
-/* Signed 16/16 over the asm unsigned path: abs the operands (unsigned, so
- * INT16_MIN abs = 0x8000 with no 16-bit-int overflow), call divmod_u16,
- * then apply the sign. Quotient sign = sign(num) ^ sign(den); remainder
- * sign follows the dividend (C99 truncated division: (a/b)*b + a%b == a).
- * INT16_MIN / -1 -> quotient 0x8000 (the wrap of 32768), remainder 0 --
- * the one signed divide that can overflow int16, documented in the header. */
+/**
+ * @brief  Signed 16/16 divide with remainder over the asm unsigned path
+ *         (PIC18).
+ * @param  num  numerator,   -32768..32767
+ * @param  den  denominator, nonzero (0 -> *ok=false, fields zeroed)
+ * @param  ok   out: true if den != 0; may be NULL
+ * @return { quotient = num/den, remainder = num%den }.
+ *
+ * abs the operands (unsigned, so INT16_MIN abs = 0x8000 with no
+ * 16-bit-int overflow), call divmod_u16, then apply the sign. Quotient
+ * sign = sign(num) ^ sign(den); remainder sign follows the dividend (C99
+ * truncated division: (a/b)*b + a%b == a). INT16_MIN / -1 -> quotient
+ * 0x8000 (the wrap of 32768), remainder 0 -- the one signed divide that
+ * can overflow int16, documented in the header. */
 pic_math_sdiv16_t pic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
 {
     pic_math_sdiv16_t res = { 0, 0 };

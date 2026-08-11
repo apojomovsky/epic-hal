@@ -16,7 +16,7 @@ static const uint16_t U16_BOUNDS[] = {
     0x00FF, 0x0100, 0x0101, 0x7FFF, 0x8000, 0xFFFE, 0xFFFF
 };
 
-/* Reference decimal helper (independent of the implementation). */
+/** @brief Reference decimal -> packed-BCD helper (independent of the implementation). */
 static uint8_t ref_bcd8(uint8_t v) { return (uint8_t)(((v/10u)<<4)|(v%10u)); }
 
 /**
@@ -160,6 +160,7 @@ static void test_bcd_inverse(void)
     }
 }
 
+/** @brief Run all property tests and report the failure count. */
 int main(void)
 {
     test_addsub_roundtrip();

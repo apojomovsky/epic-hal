@@ -38,6 +38,8 @@ uint16_t pic_math_mul_u8(uint8_t a, uint8_t b);
 
 /**
  * @brief  16x16 -> 32 unsigned multiply.
+ * @param  a  multiplicand, 0..65535
+ * @param  b  multiplier,   0..65535
  * @return a*b as a 32-bit value. PIC18 builds this from four 8x8 partial
  *         products via `MULWF`; PIC16 uses AN526's 16x16 shift-add.
  */
@@ -45,6 +47,8 @@ uint32_t pic_math_mul_u16(uint16_t a, uint16_t b);
 
 /**
  * @brief  16x16 -> 32 signed multiply.
+ * @param  a  multiplicand, -32768..32767
+ * @param  b  multiplier,   -32768..32767
  * @return (int32_t)a*b. Built on the unsigned path with the app notes'
  *         negate-operands/negate-result sign handling.
  */
@@ -74,6 +78,11 @@ pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok);
 
 /**
  * @brief  Signed 16/16 divide with remainder.
+ * @param  num  numerator,   -32768..32767
+ * @param  den  denominator, nonzero (0 -> *ok=false, fields zeroed)
+ * @param  ok   out: true if den != 0; may be NULL
+ * @return { quotient = num/den, remainder = num%den } with C99 truncated
+ *         division (remainder sign follows the dividend).
  * @note   INT16_MIN / -1 is the one signed divide that can overflow the
  *         16-bit quotient; it does not crash or wrap silently -- see
  *         docs/API.md for the documented result.
@@ -83,6 +92,9 @@ pic_math_sdiv16_t pic_math_divmod_s16(int16_t  num, int16_t  den, bool *ok);
 /**
  * @brief  Wide unsigned 32/16 divide -- the "scale a 16-bit ADC reading by
  *         a 16-bit factor without overflow" convenience form.
+ * @param  num  numerator,   0..0xFFFFFFFF
+ * @param  den  denominator, 1..65535 (0 -> *ok=false, fields zeroed)
+ * @param  ok   out: true if den != 0; may be NULL
  * @return { quotient = num/den, remainder = num%den } (16-bit quotient;
  *         caller must ensure num < den*65536 or the quotient is truncated
  *         to 16 bits, as documented).
@@ -95,6 +107,8 @@ pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok);
 
 /**
  * @brief  16-bit unsigned add with carry out.
+ * @param  a           augend, 0..65535
+ * @param  b           addend, 0..65535
  * @param  carry_out  set true on overflow (sum > 65535); may be NULL.
  * @return (a + b) truncated to 16 bits.
  */
@@ -102,15 +116,25 @@ uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out);
 
 /**
  * @brief  16-bit unsigned subtract with borrow out.
+ * @param  a           minuend, 0..65535
+ * @param  b           subtrahend, 0..65535
  * @param  borrow_out  set true on underflow (a < b); may be NULL.
  * @return (a - b) truncated to 16 bits.
  */
 uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out);
 
-/** @brief 16-bit two's-complement negate (INT16_MIN negates to itself). */
+/**
+ * @brief 16-bit two's-complement negate.
+ * @param  v  value to negate, -32768..32767
+ * @return -v; INT16_MIN negates to itself (two's-complement wrap).
+ */
 int16_t  pic_math_negate_s16(int16_t v);
 
-/** @brief 32-bit two's-complement negate (INT32_MIN negates to itself). */
+/**
+ * @brief 32-bit two's-complement negate.
+ * @param  v  value to negate, -2147483648..2147483647
+ * @return -v; INT32_MIN negates to itself (two's-complement wrap).
+ */
 int32_t  pic_math_negate_s32(int32_t v);
 
 /*
@@ -126,6 +150,8 @@ int32_t  pic_math_negate_s32(int32_t v);
  *         is 16-bit: BCD representing 0..65535 returns exactly; 65536..99999
  *         wrap to the low 16 bits (documented truncation, mirroring the
  *         library's other 16-bit-width forms).
+ * @param  bcd5  5-digit packed BCD (one nibble per digit), 0..0x99999
+ * @return binary value of the BCD input, truncated to 16 bits.
  * @note   A nibble > 9 is invalid input; the conversion treats each nibble
  *         independently (each contributes its value times its place), so
  *         bcd8_to_bin(0x0A) = 10 and bcd16_to_bin(0xABCDE) is well-defined.
@@ -136,17 +162,29 @@ uint16_t pic_math_bcd16_to_bin(uint32_t bcd5);
  * @brief  0..65535 (the uint16_t range) -> 5-digit packed BCD
  *         (0x00000..0x65535). The "16" names the binary width; a uint16_t
  *         cannot reach 99999, so the BCD output tops out at 0x65535.
+ * @param  value  binary value to convert, 0..65535
+ * @return 5-digit packed BCD representation of @p value.
  */
 uint32_t pic_math_bin_to_bcd16(uint16_t value);
 
-/** @brief 2-digit packed BCD (0x00..0x99) -> binary 0..99. */
+/**
+ * @brief 2-digit packed BCD (0x00..0x99) -> binary 0..99.
+ * @param  bcd2  2-digit packed BCD (one nibble per digit), 0..0x99
+ * @return binary value of the BCD input, 0..99.
+ */
 uint8_t  pic_math_bcd8_to_bin(uint8_t bcd2);
 
-/** @brief 0..99 -> 2-digit packed BCD. */
+/**
+ * @brief 0..99 -> 2-digit packed BCD.
+ * @param  value  binary value to convert, 0..99
+ * @return 2-digit packed BCD representation of @p value.
+ */
 uint8_t  pic_math_bin_to_bcd8(uint8_t value);
 
 /**
  * @brief  Packed-BCD 2-digit add with carry out (DAW-style +/-6 adjust).
+ * @param  a           BCD augend, 0..0x99 (valid BCD)
+ * @param  b           BCD addend, 0..0x99 (valid BCD)
  * @param  carry_out  set true if the BCD sum exceeds 99; may be NULL.
  * @return packed-BCD 2-digit sum.
  */
@@ -154,8 +192,10 @@ uint8_t  pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out);
 
 /**
  * @brief  Packed-BCD 2-digit subtract with borrow out.
+ * @param  a           BCD minuend, 0..0x99 (valid BCD)
+ * @param  b           BCD subtrahend, 0..0x99 (valid BCD)
  * @param  borrow_out  set true on BCD underflow (a < b in BCD); may be NULL.
- * @return packed-BCD 2-digit difference.
+ * @return packed-BCD 2-digit difference (modulo 100 on underflow).
  */
 uint8_t  pic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out);
 
@@ -164,13 +204,21 @@ uint8_t  pic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out);
  * backend.
  */
 
-/** @brief floor(sqrt(value)) for 0..65535, via 16-bit Newton-Raphson on
- *        the division primitive (as AN544 does -- sqrt calls div, not asm). */
+/**
+ * @brief floor(sqrt(value)) for 0..65535, via 16-bit Newton-Raphson on
+ *        the division primitive (as AN544 does -- sqrt calls div, not asm).
+ * @param  value  value to take the square root of, 0..65535
+ * @return floor(sqrt(value)), 0..255.
+ */
 uint16_t pic_math_sqrt_u16(uint16_t value);
 
 /**
  * @brief  3-point numerical first derivative: (x_now - x_prev2) / (2h),
  *         computed in fixed point.
+ * @param  x_prev2     sample at t - h
+ * @param  x_prev1     sample at t (midpoint; unused by the formula, kept
+ *         for the 3-sample window context)
+ * @param  x_now       sample at t + h
  * @param  inv_2h_q8  Q8.8 fixed-point representation of 1/(2h) (the caller
  *         precomputes this once, as AN544 does, since multiply is cheaper
  *         than divide). E.g. h=1 -> inv_2h = 0.5 -> 0x0080.
@@ -184,6 +232,10 @@ int16_t pic_math_diff3(int16_t x_prev2, int16_t x_prev1, int16_t x_now,
 /**
  * @brief  Simpson's-3/8-rule numerical integration over four samples:
  *           integral ~= (3h/8) * (f0 + 3*f1 + 3*f2 + f3).
+ * @param  f0  sample at t
+ * @param  f1  sample at t + h
+ * @param  f2  sample at t + 2h
+ * @param  f3  sample at t + 3h
  * @param  three_h_over_8_q16  Q16.16 fixed-point representation of 3h/8
  *         (caller precomputes once). E.g. h=1 -> 3h/8 = 0.375 -> 0x6000.
  * @return Q16.16 fixed-point estimate of the integral.

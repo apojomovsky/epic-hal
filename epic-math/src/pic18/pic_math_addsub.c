@@ -16,6 +16,14 @@
 static volatile uint16_t m_add_a, m_add_b, m_add_r;
 static volatile uint8_t  m_add_co;
 
+/**
+ * @brief  16-bit unsigned add with carry out (PIC18 inline asm, using
+ *         addwfc).
+ * @param  a           augend, 0..65535
+ * @param  b           addend, 0..65535
+ * @param  carry_out  set true on overflow (sum > 65535); may be NULL.
+ * @return (a + b) truncated to 16 bits.
+ */
 uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out)
 {
     m_add_a = a; m_add_b = b; m_add_co = 0;
@@ -39,6 +47,14 @@ uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out)
 static volatile uint16_t m_sub_a, m_sub_b, m_sub_r;
 static volatile uint8_t  m_sub_bo;
 
+/**
+ * @brief  16-bit unsigned subtract with borrow out (PIC18 inline asm,
+ *         using subwfb).
+ * @param  a           minuend, 0..65535
+ * @param  b           subtrahend, 0..65535
+ * @param  borrow_out  set true on underflow (a < b); may be NULL.
+ * @return (a - b) truncated to 16 bits.
+ */
 uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out)
 {
     m_sub_a = a; m_sub_b = b; m_sub_bo = 0;
@@ -61,6 +77,11 @@ uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out)
 static volatile int16_t m_neg_v;
 static volatile int16_t m_neg_r;
 
+/**
+ * @brief  16-bit two's-complement negate (PIC18 inline asm).
+ * @param  v  value to negate, -32768..32767
+ * @return -v; INT16_MIN negates to itself (two's-complement wrap).
+ */
 int16_t pic_math_negate_s16(int16_t v)
 {
     m_neg_v = v;
@@ -81,6 +102,11 @@ int16_t pic_math_negate_s16(int16_t v)
 static volatile int32_t m_neg32_v;
 static volatile int32_t m_neg32_r;
 
+/**
+ * @brief  32-bit two's-complement negate (PIC18 inline asm).
+ * @param  v  value to negate, -2147483648..2147483647
+ * @return -v; INT32_MIN negates to itself (two's-complement wrap).
+ */
 int32_t pic_math_negate_s32(int32_t v)
 {
     m_neg32_v = v;

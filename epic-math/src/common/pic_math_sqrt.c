@@ -8,6 +8,12 @@
 #include "pic_math.h"
 #include <stddef.h>     /* NULL (passed to divmod_u16 for the ok-out flag) */
 
+/**
+ * @brief  floor(sqrt(value)) for 0..65535 via 16-bit Newton-Raphson
+ *         built on pic_math_divmod_u16.
+ * @param  value  value to take the square root of, 0..65535
+ * @return floor(sqrt(value)), 0..255.
+ */
 uint16_t pic_math_sqrt_u16(uint16_t value)
 {
     if (value < 2u) {

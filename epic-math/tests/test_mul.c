@@ -7,6 +7,7 @@
 #include "pic_math.h"
 #include "pic_math_test.h"
 
+/** @brief Exhaustive 256x256 check of pic_math_mul_u8 against native arithmetic. */
 static void test_mul_u8_exhaustive(void)
 {
     for (uint32_t a = 0; a <= 0xFFu; a++) {
@@ -32,6 +33,7 @@ static const int16_t S16_BOUNDS[] = {
     -1, -2, -128, -129, -255, -256, 32767, -32768
 };
 
+/** @brief Boundary cross-product plus randomized fuzz for pic_math_mul_u16. */
 static void test_mul_u16(void)
 {
     /* Exhaustive over the boundary cross-product (169 pairs). */
@@ -54,6 +56,7 @@ static void test_mul_u16(void)
     }
 }
 
+/** @brief Boundary cross-product incl. INT16_MIN cases plus randomized fuzz for pic_math_mul_s16. */
 static void test_mul_s16(void)
 {
     /* Boundary cross-product (324 pairs), incl. INT16_MIN*INT16_MIN and
@@ -76,6 +79,7 @@ static void test_mul_s16(void)
     }
 }
 
+/** @brief Run all multiply tests and report the failure count. */
 int main(void)
 {
     test_mul_u8_exhaustive();

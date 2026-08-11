@@ -8,6 +8,13 @@
 
 #include "pic_math.h"
 
+/**
+ * @brief  Unsigned 16/16 divide with remainder (host oracle).
+ * @param  num  numerator,   0..65535
+ * @param  den  denominator, 1..65535 (0 -> *ok=false, fields zeroed)
+ * @param  ok   out: true if den != 0; may be NULL
+ * @return { quotient = num/den, remainder = num%den }.
+ */
 pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
 {
     pic_math_udiv16_t r = { 0u, 0u };
@@ -18,6 +25,15 @@ pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
     return r;
 }
 
+/**
+ * @brief  Signed 16/16 divide with remainder (host oracle). Computed in
+ *         int32 to avoid INT16_MIN / -1 UB; the quotient cast back to
+ *         int16 wraps 32768 -> INT16_MIN (documented).
+ * @param  num  numerator,   -32768..32767
+ * @param  den  denominator, nonzero (0 -> *ok=false, fields zeroed)
+ * @param  ok   out: true if den != 0; may be NULL
+ * @return { quotient = num/den, remainder = num%den } (C99 truncation).
+ */
 pic_math_sdiv16_t pic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
 {
     pic_math_sdiv16_t r = { 0, 0 };
@@ -32,6 +48,15 @@ pic_math_sdiv16_t pic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
     return r;
 }
 
+/**
+ * @brief  Wide unsigned 32/16 divide with remainder (host oracle).
+ *         Quotient truncated to 16 bits: caller must ensure
+ *         num < den*65536 or the high quotient bits are lost.
+ * @param  num  numerator,   0..0xFFFFFFFF
+ * @param  den  denominator, 1..65535 (0 -> *ok=false, fields zeroed)
+ * @param  ok   out: true if den != 0; may be NULL
+ * @return { quotient = (uint16_t)(num/den), remainder = num%den }.
+ */
 pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
 {
     pic_math_udiv16_t r = { 0u, 0u };

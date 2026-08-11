@@ -30,6 +30,13 @@
     asm("rlf   _pic16_mscratch+7,f");                          \
 } while (0)
 
+/**
+ * @brief  8x8 -> 16 unsigned multiply via AN526 shift-add (PIC16 inline
+ *         asm; PIC16F87XA has no hardware multiply).
+ * @param  a  multiplicand, 0..255
+ * @param  b  multiplier,   0..255
+ * @return a*b as a 16-bit value, 0..65535.
+ */
 uint16_t pic_math_mul_u8(uint8_t a, uint8_t b) __at(0x100)
 {
     pic16_mscratch[0] = a;
@@ -73,7 +80,14 @@ uint16_t pic_math_mul_u8(uint8_t a, uint8_t b) __at(0x100)
     return (uint16_t)pic16_mscratch[4] | ((uint16_t)pic16_mscratch[5] << 8);
 }
 
-/* 16x16 -> 32 shift-add, 16 iterations. tmp = a in a 32-bit register
+/**
+ * @brief  16x16 -> 32 unsigned multiply via AN526 shift-add (PIC16
+ *         inline asm).
+ * @param  a  multiplicand, 0..65535
+ * @param  b  multiplier,   0..65535
+ * @return a*b as a 32-bit value.
+ *
+ * 16x16 -> 32 shift-add, 16 iterations. tmp = a in a 32-bit register
  * (shifted left -> a<<i); for each set bit of b, r += tmp (32-bit add,
  * carry idiom across 4 bytes). Offsets a@0-1 (a_lo reused as cnt after
  * the t copy), b@2-3, bk@4-5, r@6-9, t@10-13. */
@@ -134,9 +148,16 @@ uint32_t pic_math_mul_u16(uint16_t a, uint16_t b) __at(0x130)
          | ((uint32_t)pic16_mscratch[6] << 16) | ((uint32_t)pic16_mscratch[7] << 24);
 }
 
-/* Signed 16x16 on top of the asm unsigned path: abs the operands (unsigned,
- * so INT16_MIN abs = 0x8000 with no 16-bit-int overflow), call mul_u16, and
- * negate the 32-bit result if the signs differed. */
+/**
+ * @brief  16x16 -> 32 signed multiply on top of the asm unsigned path
+ *         (PIC16).
+ * @param  a  multiplicand, -32768..32767
+ * @param  b  multiplier,   -32768..32767
+ * @return (int32_t)a*b.
+ *
+ * abs the operands (unsigned, so INT16_MIN abs = 0x8000 with no
+ * 16-bit-int overflow), call mul_u16, and negate the 32-bit result if
+ * the signs differed. */
 int32_t pic_math_mul_s16(int16_t a, int16_t b)
 {
     int neg = ((a < 0) != 0) ^ ((b < 0) != 0);

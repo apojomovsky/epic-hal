@@ -10,7 +10,14 @@
 #include "pic_math.h"
 #include "pic_math_scratch.h"
 
-/* 16/16 restoring division, 16 iterations. Offsets num@0-1, rem@2-3,
+/**
+ * @brief  Unsigned 16/16 divide with remainder (PIC16 inline asm).
+ * @param  num  numerator,   0..65535
+ * @param  den  denominator, 1..65535 (0 -> *ok=false, fields zeroed)
+ * @param  ok   out: true if den != 0; may be NULL
+ * @return { quotient = num/den, remainder = num%den }.
+ *
+ * 16/16 restoring division, 16 iterations. Offsets num@0-1, rem@2-3,
  * den@4-5, cnt@6. One iteration, mirroring ref_divmod_u16_algo:
  *   c = num>>15; num <<= 1; rem = (rem<<1)|c;
  *   if (rem>=den) { rem -= den; num |= 1; }
@@ -63,7 +70,15 @@ pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __at
     return res;
 }
 
-/* 32/16 restoring division, 32 iterations. Offsets num@0-3, rem@4-5,
+/**
+ * @brief  Wide unsigned 32/16 divide with remainder (PIC16 inline asm);
+ *         quotient truncated to 16 bits (documented contract).
+ * @param  num  numerator,   0..0xFFFFFFFF
+ * @param  den  denominator, 1..65535 (0 -> *ok=false, fields zeroed)
+ * @param  ok   out: true if den != 0; may be NULL
+ * @return { quotient = low 16 bits of num/den, remainder = num%den }.
+ *
+ * 32/16 restoring division, 32 iterations. Offsets num@0-3, rem@4-5,
  * den@6-7, cnt@8. The partial remainder can reach 0x8000, so the rem
  * shift can carry out: the extended remainder is C:rem (17 bits). If C=1
  * after the shift, subtract unconditionally (rem wraps to the low-16 of
@@ -131,9 +146,17 @@ pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok) _
     return res;
 }
 
-/* Signed 16/16 over the asm unsigned path. Quotient sign = sign(num) ^
- * sign(den); remainder sign follows the dividend (C99 truncated division).
- * INT16_MIN / -1 -> quotient 0x8000 (wrap of 32768), remainder 0. */
+/**
+ * @brief  Signed 16/16 divide with remainder over the asm unsigned path
+ *         (PIC16).
+ * @param  num  numerator,   -32768..32767
+ * @param  den  denominator, nonzero (0 -> *ok=false, fields zeroed)
+ * @param  ok   out: true if den != 0; may be NULL
+ * @return { quotient = num/den, remainder = num%den }.
+ *
+ * Quotient sign = sign(num) ^ sign(den); remainder sign follows the
+ * dividend (C99 truncated division). INT16_MIN / -1 -> quotient 0x8000
+ * (wrap of 32768), remainder 0. */
 pic_math_sdiv16_t pic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
 {
     pic_math_sdiv16_t res = { 0, 0 };

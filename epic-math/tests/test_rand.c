@@ -10,6 +10,7 @@
 
 #define PIC_MATH_RAND_SEED 0xACE1u
 
+/** @brief Asserts the LFSR's maximal-length period (65535) and that 0 never appears. */
 static void test_rand_period_and_zero(void)
 {
     /* Period: 65535 steps return to the seed, and 0 never appears. */
@@ -28,6 +29,7 @@ static void test_rand_period_and_zero(void)
     CHECK(saw_zero == 0, "rand_next never returns 0 over the period");
 }
 
+/** @brief A zero state maps to the seed and is not stuck. */
 static void test_rand_zero_state_escape(void)
 {
     /* A zero state maps to the seed and is not stuck. */
@@ -43,6 +45,7 @@ static void test_rand_zero_state_escape(void)
     CHECK(v2 != 0u, "not stuck at zero after the escape");
 }
 
+/** @brief Two independent states advance independently (reentrant API). */
 static void test_rand_reentrance(void)
 {
     uint16_t a = 1, b = 2;
@@ -54,6 +57,7 @@ static void test_rand_reentrance(void)
     CHECK(sa != sb, "two independent states diverge (reentrant)");
 }
 
+/** @brief Coarse bell-shape sanity check on pic_math_rand_gauss (not a chi-square test). */
 static void test_gauss_distribution(void)
 {
     /* Coarse bell-shape sanity: 32 buckets across int16, central bucket
@@ -85,6 +89,7 @@ static void test_gauss_distribution(void)
     CHECK(dead == 0, "no empty buckets in the central range");
 }
 
+/** @brief Run all RNG tests and report the failure count. */
 int main(void)
 {
     test_rand_period_and_zero();
