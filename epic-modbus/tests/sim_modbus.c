@@ -38,6 +38,8 @@ static uint16_t holding_regs[4];
 /* Independent CRC-16/MODBUS reference (poly 0xA001, init 0xFFFF),
  * written separately from src/epic_modbus.c's copy so the gate cannot
  * share a CRC bug with the module. */
+/** @brief Independent CRC-16/MODBUS reference so the gate cannot share
+ *         a CRC bug with the module. */
 static uint16_t ref_crc16(const uint8_t *buf, int len)
 {
     uint16_t crc = 0xFFFFu;
@@ -53,6 +55,7 @@ static uint16_t ref_crc16(const uint8_t *buf, int len)
 
 /* Diagnostic: log one byte as two hex digits (the sim harness logs the
  * string's raw bytes, varargs are ignored). */
+/** @brief Log one byte as two hex digits. */
 static void log_hex8(uint8_t v)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -63,6 +66,7 @@ static void log_hex8(uint8_t v)
     epic_harness_log(s);
 }
 
+/** @brief Log a buffer as space-separated hex bytes. */
 static void log_hex_buf(const uint8_t *buf, int n)
 {
     char s[2];
@@ -81,6 +85,7 @@ static void log_hex_buf(const uint8_t *buf, int n)
  * per TXIF pumps exactly one byte. Bounded by a hard iteration guard:
  * if MPLAB SIM never re-arms TXIF the loop bails out and the frame
  * check fails instead of hanging. */
+/** @brief Service the TX ISR by hand and capture each TXREG byte. */
 static int drain_tx(uint8_t *out, int max)
 {
     int n = 0;
@@ -95,6 +100,8 @@ static int drain_tx(uint8_t *out, int max)
     return n;
 }
 
+/** @brief Sim gate main: verify init SFRs, TX path, frame/CRC, and the
+ *         RS-485 dir pin. */
 int main(void)
 {
     epic_harness_init(0UL);

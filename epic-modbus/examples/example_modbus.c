@@ -26,6 +26,7 @@ static int g_fails = 0;
 
 /* Independent CRC-16/MODBUS reference (poly 0xA001, init 0xFFFF), written
  * separately from src/epic_modbus.c's copy for genuine cross-checking. */
+/** @brief Independent CRC-16/MODBUS reference for cross-checking. */
 static uint16_t ref_crc16(const uint8_t *buf, int len)
 {
     uint16_t crc = 0xFFFFu;
@@ -38,6 +39,7 @@ static uint16_t ref_crc16(const uint8_t *buf, int len)
     return crc;
 }
 
+/** @brief Append the reference CRC-16 to a frame. */
 static void append_crc(uint8_t *frame, int len)
 {
     uint16_t crc = ref_crc16(frame, len);
@@ -45,6 +47,7 @@ static void append_crc(uint8_t *frame, int len)
     frame[len + 1] = (uint8_t)(crc >> 8);
 }
 
+/** @brief Drive a full RTU frame into the sim UART RX hook. */
 static void inject_frame(const uint8_t *frame, int len)
 {
     for (int i = 0; i < len; i++) {
@@ -52,6 +55,7 @@ static void inject_frame(const uint8_t *frame, int len)
     }
 }
 
+/** @brief Drain pending TX bytes by dispatching IRQs and reading TXREG. */
 static int drain_tx(uint8_t *out, int max)
 {
     int n = 0;
@@ -67,6 +71,7 @@ static int drain_tx(uint8_t *out, int max)
 
 static uint16_t holding_regs[4];
 
+/** @brief Host smoke main: inject RTU frames and assert the responses. */
 int main(void)
 {
     epic_harness_init(1000000UL);
