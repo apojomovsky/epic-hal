@@ -9,6 +9,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
 import bundlegen  # noqa: E402
 import epicmanifest  # noqa: E402
+import make_bundle  # noqa: E402
 
 MANIFEST = """
 [families.PIC16F87XA]
@@ -414,6 +415,38 @@ class TestReferenceProjectPath(unittest.TestCase):
     def test_unknown_family_raises(self):
         with self.assertRaises(bundlegen.BundleError):
             bundlegen.reference_project_dir(load(), "PIC99XXXX")
+
+
+class TestBundleGate(unittest.TestCase):
+    """make_bundle's sim/mdb gate: the family file set must be clean,
+    and the assertion function must reject any injected offender."""
+
+    def setUp(self):
+        self.files = bundlegen.files_for_family(load(), "PIC16F87XA")
+
+    def test_family_file_set_has_no_sim_or_mdb_paths(self):
+        self.assertEqual(make_bundle._sim_mdb_offenders(self.files), [])
+
+    def test_gate_rejects_an_injected_sim_source(self):
+        offenders = make_bundle._sim_mdb_offenders(self.files + ["src/sim/foo.c"])
+        self.assertEqual(offenders, ["src/sim/foo.c"])
+
+    def test_gate_rejects_mdb_sources_and_sim_named_headers(self):
+        offenders = make_bundle._sim_mdb_offenders([
+            "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+            "pic16f87xa-hal/include/pic16f87xa_sim.h",
+        ])
+        self.assertEqual(offenders, [
+            "pic16f87xa-hal/include/pic16f87xa_sim.h",
+            "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+        ])
+
+    def test_gate_passes_legit_target_sources(self):
+        offenders = make_bundle._sim_mdb_offenders([
+            "pic16f87xa-hal/src/target/pic16_isr_vector.c",
+            "epic-common/src/core/epic_harness_target.c",
+        ])
+        self.assertEqual(offenders, [])
 
 
 if __name__ == "__main__":
