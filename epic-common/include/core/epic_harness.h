@@ -14,6 +14,9 @@
  *         wires the sim IRQ callback to the family dispatcher; `cycles`
  *         bounds the upcoming run. On a real target this is a no-op
  *         (the CPU starts itself; `cycles` is ignored).
+ * @param cycles bound on the host run: simulated instruction cycles to
+ *               pump before the harness reports the run over; ignored
+ *               on a real target.
  */
 void epic_harness_init(uint32_t cycles);
 
@@ -29,6 +32,8 @@ void epic_harness_tick(void);
  * @brief  Loop-continuation test. On the host returns 1 while the
  *         bounded run is in progress, 0 when it is over. On a real
  *         target always returns 1 (firmware runs forever).
+ * @param iteration the current loop index; unused on a real target.
+ * @return 1 while the run should continue, 0 when the host run is over.
  */
 int epic_harness_running(uint32_t iteration);
 
@@ -36,6 +41,7 @@ int epic_harness_running(uint32_t iteration);
  * @brief  printf-style log line. On the host this prints to stdout; on a
  *         real target it is a no-op (no stdout), so examples can log
  *         unconditionally without dragging in <stdio.h> or #ifdef.
+ * @param fmt printf-style format string; remaining arguments follow.
  */
 void epic_harness_log(const char *fmt, ...);
 
@@ -44,6 +50,8 @@ void epic_harness_log(const char *fmt, ...);
  *         fail), first emitting a fixed marker line through @ref
  *         epic_harness_log so any build's captured output (including a
  *         sim-target UART capture) has one reliable line to grep.
+ * @param ok 1 for pass, 0 for fail.
+ * @return 0 when `ok` is set, 1 otherwise.
  */
 static inline int epic_harness_report(int ok)
 {
