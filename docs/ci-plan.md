@@ -478,7 +478,7 @@ way locally.
    break on correct, intentional code.
 
 **Explicitly out of scope**: no XC8, no MPLAB X, no Docker. Pure host
-tooling, matching what `scripts/bootstrap.sh` already sets up.
+tooling, matching the host-tooling subset of `scripts/bootstrap.sh`.
 
 **Validation**
 - [ ] A PR that breaks one module's host test fails only that module's

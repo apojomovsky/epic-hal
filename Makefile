@@ -86,14 +86,14 @@ MPLABX_INSTALLER := $(VENDOR_DIR)/mplabx-installer.tar
 check-vendor:
 	@ok=1; \
 	if [ ! -f "$(XC8_INSTALLER)" ] || [ "$$(stat -c%s "$(XC8_INSTALLER)" 2>/dev/null || echo 0)" -lt 10000000 ]; then \
-		echo "missing (or too small): $(XC8_INSTALLER)"; \
+		echo "missing (or too small, expected at least ~10 MB): $(XC8_INSTALLER)"; \
 		echo "  -> download the XC8 v$(XC8_VERSION) Linux installer (.run) from"; \
 		echo "     https://www.microchip.com/mplab/compilers"; \
 		echo "     and save it as $(XC8_INSTALLER)"; \
 		ok=0; \
 	fi; \
 	if [ ! -f "$(MPLABX_INSTALLER)" ] || [ "$$(stat -c%s "$(MPLABX_INSTALLER)" 2>/dev/null || echo 0)" -lt 100000000 ]; then \
-		echo "missing (or too small): $(MPLABX_INSTALLER)"; \
+		echo "missing (or too small, expected at least ~100 MB): $(MPLABX_INSTALLER)"; \
 		echo "  -> download the MPLAB X IDE v$(MPLABX_VERSION) Linux installer,"; \
 		echo "     tar it up as a single .tar (matching docker/ci-toolchain/"; \
 		echo "     Dockerfile's own extraction step), from"; \

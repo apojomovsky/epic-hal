@@ -22,11 +22,13 @@ One-time (idempotent) setup for a fresh clone: installs the host toolchain
 the CMake builds need (`cmake`, `build-essential`, `cppcheck`,
 `clang-format`, via `apt-get`, so Debian/Ubuntu; other package managers
 get a printed package list instead of an auto-install), then runs
-`install-git-hooks.sh` below. Also checks whether `xc8-cc` is on `PATH`
-and points at the README if it isn't. Real-target (XC8) builds need
-MPLAB X + MPLAB XC8 v3.x installed manually (proprietary, license-gated,
-an interactive installer, not something this script attempts); host
-builds work fine without it.
+`install-git-hooks.sh` below, and finally verifies the Docker toolchain
+for real-target work: it checks Docker is installed and reachable,
+tells you which two Microchip installer files to download and where to
+put them (`docker/ci-toolchain/vendor/`), and builds the toolchain
+image once they are in place. Real-target (XC8) builds and the `mdb`
+gate run inside that image (root `Makefile`), so nothing MPLAB-ish is
+installed on the host; host builds work with or without it.
 
 ## Pre-commit hook
 

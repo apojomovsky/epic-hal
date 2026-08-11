@@ -22,12 +22,17 @@ verification.
 
 `./scripts/bootstrap.sh` sets up a fresh clone: installs the host
 toolchain the CMake builds need and a pre-commit hook (trailing
-newline/whitespace, no em-dash, `cppcheck` on staged `.c` files).
-`--check-only` reports what's missing without installing anything. See
+newline/whitespace, no em-dash, `cppcheck` on staged `.c` files), then
+verifies the Docker toolchain: it checks Docker is installed and
+reachable, handles the two Microchip installer files
+(`docker/ci-toolchain/vendor/`) self-instructively, and builds the
+toolchain image once they are in place. `--check-only` reports what's
+missing without installing anything. See
 [scripts/README.md](scripts/README.md) for what the hook checks.
 
-Real targets additionally need MPLAB X IDE v6.x and MPLAB XC8 v3.x
-(`xc8-cc`), installed by hand (proprietary, license-gated); PIC18 also
+Docker is the default path for real-target work (next section); the
+native exception path needs MPLAB X IDE and MPLAB XC8 (`xc8-cc`)
+installed by hand (proprietary, license-gated): PIC18 additionally
 needs the PIC18Fxxxx DFP, PIC16F193X the PIC12-16F1xxx DFP (neither
 ships with XC8).
 
