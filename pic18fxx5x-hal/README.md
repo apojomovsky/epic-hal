@@ -232,6 +232,16 @@ Microchip recommends always specifying it. This is recorded in
 Same as the PIC16F87XA HAL (mirror STM32Cube): `HAL_PPP_Init/DeInit`,
 `HAL_PPP_MspInit` weak override, `GPIOA..` / `GPIO_PIN_*`, `EPIC_OK/ERROR/
 BUSY/TIMEOUT/INVALID`, `EPIC_BIT*`. The IRQ enum will be `PIC18_IRQ_*`
-(Phase 2), taking the per-family `PIC18_IRQn` type, with the priority
+  (Phase 2), taking the per-family `PIC18_IRQn` type, with the priority
 contract extension decided and recorded in the plan before the
 interrupt core is written.
+
+## Environment split
+
+`src/` mirrors the three build environments: `src/core/` and
+`src/peripherals/` are shared (host and target builds compile them),
+`src/target/` is real-hardware-only, `src/sim/` is host-simulation-only,
+`src/mdb/` is the MPLAB SIM gate variant. Never glob a `src/`
+directory into your build; select files through the manifest (the
+bundle's `epicurus.mk` or the reference project).
+
