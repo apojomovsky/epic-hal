@@ -196,7 +196,7 @@ if __name__ == "__main__":
 - [ ] **Step 3: Run the tests**
 
 Run: `python3 scripts/tests/test_ci_noncode.py`
-Expected: all 15 tests pass (`OK`).
+Expected: all 16 tests pass (`OK`).
 
 - [ ] **Step 4: Commit**
 
@@ -572,7 +572,7 @@ git commit -m "refactor(ci): remove ci-docs-only-check.sh, refresh CI change-sco
 - [ ] **Step 1: Full test suite for the change**
 
 Run: `python3 scripts/tests/test_ci_noncode.py`
-Expected: 15 tests pass.
+Expected: 16 tests pass.
 
 - [ ] **Step 2: Re-run the real-diff checks**
 
