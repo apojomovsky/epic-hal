@@ -1,9 +1,7 @@
 /**
- * @file    epic_mcp23x17.c
- * @brief   MCP23017 / MCP23S17 16-bit I/O expander driver (see the
- *          header and docs/ARCHITECTURE.md). One family-agnostic
- *          source; the only family dimension is the transport, which
- *          rides on epic-bus.
+ * MCP23017 / MCP23S17 16-bit I/O expander driver (see the header and
+ * docs/ARCHITECTURE.md): one family-agnostic source; the only family
+ * dimension is the transport, which rides on epic-bus.
  */
 
 #include "epic_mcp23x17.h"
@@ -76,8 +74,6 @@ static int reg_write(epic_mcp23x17_handle_t *h, uint8_t reg,
     ops->deselect();
     return n;
 }
-
-/* ─── GPIO-mimic layer ──────────────────────────────────────────── */
 
 int EPIC_MCP23X17_GPIO_Init(epic_mcp23x17_handle_t *h,
                             epic_mcp23x17_port_t port,
@@ -158,8 +154,6 @@ int EPIC_MCP23X17_GPIO_ReadPin(epic_mcp23x17_handle_t *h,
                                                : MCP23X17_PIN_RESET;
 }
 
-/* ─── lifecycle ─────────────────────────────────────────────────── */
-
 int EPIC_MCP23X17_Init(epic_mcp23x17_handle_t *h,
                        epic_mcp23x17_bus_t bus, uint8_t dev)
 {
@@ -177,8 +171,6 @@ int EPIC_MCP23X17_InitTransport(epic_mcp23x17_handle_t *h,
     h->transport = t;
     return 0;
 }
-
-/* ─── per-port register access ──────────────────────────────────── */
 
 int EPIC_MCP23X17_SetDirection(epic_mcp23x17_handle_t *h,
                                epic_mcp23x17_port_t port, uint8_t dir)
@@ -234,8 +226,6 @@ int EPIC_MCP23X17_ReadOutputLatch(epic_mcp23x17_handle_t *h,
     return reg_read(h, reg_of(port, REG_OLAT), val, 1);
 }
 
-/* ─── 16-bit composite helpers (low byte = PORTA) ───────────────── */
-
 int EPIC_MCP23X17_SetDirectionAll(epic_mcp23x17_handle_t *h, uint16_t dir)
 {
     uint8_t pair[2] = { (uint8_t)dir, (uint8_t)(dir >> 8) };
@@ -276,8 +266,6 @@ int EPIC_MCP23X17_SetPullUpsAll(epic_mcp23x17_handle_t *h, uint16_t pu)
     return reg_write(h, REG_GPPU, pair, 2);
 }
 
-/* ─── IOCON configuration ───────────────────────────────────────── */
-
 int EPIC_MCP23X17_SetConfig(epic_mcp23x17_handle_t *h, uint8_t iocon)
 {
     return reg_write(h, REG_IOCON, &iocon, 1);
@@ -287,8 +275,6 @@ int EPIC_MCP23X17_GetConfig(epic_mcp23x17_handle_t *h, uint8_t *iocon)
 {
     return reg_read(h, REG_IOCON, iocon, 1);
 }
-
-/* ─── interrupt support ─────────────────────────────────────────── */
 
 int EPIC_MCP23X17_SetInterruptEnable(epic_mcp23x17_handle_t *h,
                                      epic_mcp23x17_port_t port, uint8_t mask)

@@ -1,26 +1,10 @@
 /**
- * @file    epic_mcp23x17.h
- * @brief   MCP23017 (I2C) / MCP23S17 (SPI) 16-bit remote I/O expander
- *          driver (Microchip DS20001952), on top of the HAL via the
- *          epic-bus transport layer.
- *
- * @details
- *   One family-agnostic driver covers both parts: the register map is
- *   identical, only the transport differs. The MCP23017 is accessed
- *   over I2C with the epic-bus I2C "MEM" idiom (7-bit device address
- *   0b0100A2A1A0); the MCP23S17 is accessed over SPI with the
- *   control-byte idiom (CS low, 0b0100_0A2A1A0_RW, reg, data, CS
- *   high), built from epic-bus's raw SPI ops because the SPI MEM
- *   idiom sends the register as the first byte.
- *
- *   The transport is injectable (the handle carries a transport
- *   struct or NULL for the built-in epic-bus defaults), so the host
- *   tests drive the full module + epic-bus + mock-device stack
- *   through the epic-bus ops seam.
- *
- *   All accessors return 0 on success or -1 when the transport
- *   reports a NACK/error, so a missing device is surfaced, never
- *   swallowed.
+ * MCP23017 (I2C) / MCP23S17 (SPI) 16-bit remote I/O expander driver
+ * (Microchip DS20001952) on the HAL via epic-bus. One family-agnostic
+ * driver covers both parts: the register map is identical, only the
+ * transport differs. All accessors return 0 on success or -1 when the
+ * transport reports a NACK/error, so a missing device is surfaced,
+ * never swallowed.
  */
 
 #ifndef EPIC_MCP23X17_H
@@ -69,8 +53,6 @@ typedef struct {
     uint8_t dev;
     const epic_mcp23x17_transport_t *transport;  /**< NULL = built-in */
 } epic_mcp23x17_handle_t;
-
-/* ---- GPIO-mimic layer (HAL-shaped convenience) ---------------- */
 
 /** Pin masks, matching the HAL GPIO_PIN_* values so the swap between
  *  the MCU's own pins and the expander is a prefix change. */
