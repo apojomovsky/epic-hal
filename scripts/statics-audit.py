@@ -1,41 +1,10 @@
 #!/usr/bin/env python3
-"""Statics audit: enumerate the file-scope mutable statics that the
-banked families' builds place in GPR and flag the IRQ-shared ones that
-are neither single-byte nor __at-pinned.
-
-Why: docs/toolchain-coverage.md section H records the risk set: all
-IRQ-shared statics live in banked GPR under linker best-fit, and a
-codegen shift can silently move one into a wedged layout (the CCP
-8-bit-handle/IRP incident, the epic-math scratch overflow, the
-1356 fixup aborts). The check is the mechanical version of that
-hand audit: it must run after any change that adds a static or a pin,
-in CI, like the SFR-map and config-key audits.
-
-Scope: the two banked families (PIC16F87XA, PIC16F193X) and the
-modules that build on them. PIC18 is bank-agnostic (Access Bank +
-absolute addresses) and exempt, matching section H. The source lists
-come from the manifest, so the scan tracks the real builds.
-
-IRQ-shared means: a file-scope mutable static referenced from at least
-one interrupt-context function and at least one other function.
-Interrupt context is recognized two ways, both name-based: names that
-match the dispatch/ISR naming (IRQHandler, *_isr, *_irq, Isr) and
-names assigned to a HAL callback slot (`.<...>Callback = <name>` or
-`.EventCallback = <name>`), which is how the modules register their
-ISR entry points. The approximation is conservative: the declaration
-itself counts as a main-context reference, so a multi-byte static used
-only by the ISR is still flagged (the safe direction: pinning it
-cannot hurt).
-
-Multi-byte means: any array, any HAL handle typedef / struct / union
-type, or a type wider than one byte (uint16/32, int16/32, float,
-double). Plain pointers and function pointers are single-byte on PIC16
-(8-bit data pointers); the CCP IRP-baked deref class was removed at
-the source (PR #19), so a single-byte pointer is not flagged.
-
-Exit 0 = clean; exit 1 = unpinned IRQ-shared multi-byte statics.
---list prints every file-scope mutable static with its classification
-(1 = single-byte, M = multi-byte, I = IRQ-shared, pin = __at-pinned).
+"""Statics audit: flag file-scope mutable statics that are IRQ-shared and
+neither single-byte nor __at-pinned (the banked families' best-fit GPR
+risk set; PIC16F87XA/PIC16F193X only). IRQ-shared = referenced from an
+interrupt-context function (dispatch/ISR names or HAL callback slots) and
+elsewhere; multi-byte = arrays, HAL handle typedefs, or >1-byte types.
+Exit 1 on unpinned IRQ-shared multi-byte statics. Runs in CI and `make audit`.
 """
 
 from __future__ import annotations

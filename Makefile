@@ -1,34 +1,12 @@
-# Docker-first entry point for this whole repo: host-sim tests,
-# real-target XC8 builds, the mdb (MPLAB SIM) verification gate, and a
-# dev shell, all run inside docker/ci-toolchain/'s image so nobody needs
-# XC8/MPLAB X/CMake installed on their own machine. See
-# docs/docker-dev-plan.md for the design and docs/ci-plan.md for the
-# image's own history (why it's built the way it is, the EULA
-# redistribution constraint that keeps the pushed image private).
+# Docker-first entry point for the whole repo: host-sim tests, real-target
+# XC8 builds, the mdb (MPLAB SIM) gate, and a dev shell all run inside the
+# docker/ci-toolchain/ image, so nobody needs XC8/MPLAB X/CMake installed
+# locally. Not a top-level build (AGENTS.md): every target shells into
+# per-module cmake/make invocations in the container.
 #
-# This is NOT a top-level build (AGENTS.md: "No top-level build, build
-# each module directly"); every target below shells into per-module
-# cmake/make invocations inside the container, it does not introduce a
-# unified CMake super-build.
-#
-# Quick start:
-#   1. Drop the Microchip installers in docker/ci-toolchain/vendor/
-#      (see `make check-vendor` for exact filenames and where to get them).
-#   2. make image        # builds the toolchain image once, locally
-#   3. make test          # every module's host-sim tests
-#      make shell         # interactive shell, repo mounted at /repo
-#
-# Targets:
-#   check-vendor   verify the vendor/ installer files are present
-#   image          build the toolchain image locally (tag: pic8-hal-toolchain:local)
-#   ci-image-push  push the local image to the private GHCR tag CI pulls
-#                  (needs `docker login ghcr.io` with write:packages first;
-#                  never run automatically by any other target)
-#   test           host-sim build+test, every module (or MODULE=<name>)
-#   xc8-build      real-target XC8 build for MODULE=<name> MCU=<mcu>
-#   mdb-test       the mdb/MPLAB SIM gate for MODULE=<name> MCU=<mcu>
-#                  DEVICE=<device> DFP=<pack> [WAIT_MS=<ms>]
-#   shell          interactive shell in the toolchain container
+# LOCAL_IMAGE is pic8-hal-toolchain:local; the pushed CI tag is derived
+# from the Dockerfile's ARGs (IMAGE_TAG below), so ci-image-push pushes
+# exactly what CI resolves and pulls.
 
 .PHONY: check-vendor image ci-image-push test xc8-build mdb-test target-ci exec audit shell
 
@@ -54,24 +32,12 @@ LOCAL_IMAGE     := pic8-hal-toolchain:local
 GHCR_OWNER      ?=
 CI_IMAGE        := ghcr.io/$(GHCR_OWNER)/pic8-hal-ci:$(IMAGE_TAG)
 
-# --user matches the container process to the invoking host user, so
-# build artifacts written to the bind-mounted repo (build/ dirs, .hex
-# files, etc.) are owned by you, not root. Confirmed the hard way: without
-# this, every container write lands as root and `rm -rf` from the host
-# fails with Permission denied.
-#
-# The passwd/group bind-mounts + a writable HOME are needed on top of
-# that, specifically for mdb-test/mdb.sh (MPLAB X's JVM): an arbitrary
-# --user UID with no /etc/passwd entry makes Java's getpwuid()-based home
-# directory lookup fail, and mdb.sh's own preference-directory creation
-# then writes into a literal `?` directory at the container's CWD (which
-# is the bind-mounted repo, so this corrupted the actual working tree
-# during testing). Bind-mounting the real /etc/passwd + /etc/group lets
-# the UID resolve to a real user (with the host's real $HOME path), and
-# HOME_MOUNT gives that path something writable to land in, kept in
-# ~/.cache (not the repo, not a Docker volume, since anonymous/named
-# volumes default to root-owned and hit the exact same permission
-# problem this is fixing). Confirmed fixed against a real mdb-test run.
+# --user + passwd/group bind-mounts + a writable HOME_MOUNT (~/.cache):
+# --user keeps build artifacts in the bind-mounted repo host-owned (root-
+# owned files break host `rm -rf`); the mounts let mdb.sh's JVM resolve the
+# UID and give its preferences a writable home, without which it wrote a
+# literal `?` dir into the repo during testing. Every target that writes to
+# the mounted repo needs this combo (shell/exec/audit reuse it).
 HOME_MOUNT := $(HOME)/.cache/pic8-hal-toolchain-home
 DOCKER_RUN := mkdir -p $(HOME_MOUNT) && docker run --rm --user $$(id -u):$$(id -g) \
 	-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \

@@ -1,24 +1,10 @@
 #!/usr/bin/env python3
-"""SFR-map audit: cross-check every SFR address and bit constant in the
-three HALs' sfr.h files against the Microchip DFP proc headers, the
-ground truth for the device memory maps.
-
-Why: the PIE2 bug (2026-08-09) was a misread memory map: PIE2 is at
-0x8D (Bank 1) but was "fixed" to Bank 2, silently rerouting every
-PIR2-source Enable/DisableSrc into EEADR. A mechanical check against
-the DFP kills that class. Run this after any change to the sfr.h
-files, and in CI (the target job, which has the toolchain container).
-
-The DFP headers live inside the toolchain container image (the host
-has no XC8 install), so each header is read via `docker run ... cat`.
-The script is host-side python3, matching the repo's split (the
-toolchain container deliberately has no python3).
-
-Usage: python3 scripts/sfr-map-audit.py
-Exit 0 = no mismatches; exit 1 = mismatches found (reported per MCU).
-Env: EPIC_TOOLCHAIN_IMAGE (default pic8-hal-toolchain:local, the CI
-step passes the GHCR image) and EPIC_XC8_ROOT (default
-/opt/microchip/xc8/v4.00).
+"""SFR-map audit: cross-check every SFR address/bit constant in the three
+HALs' sfr.h files against the DFP proc headers (the ground truth; this
+mechanizes the PIE2 misread-memory-map bug class). Runs in CI's target job
+and `make audit`; host-side python3, DFP headers read via `docker run cat`
+(the toolchain container has no python3). Exit 0 = no mismatches. Env:
+EPIC_TOOLCHAIN_IMAGE, EPIC_XC8_ROOT.
 """
 
 from __future__ import annotations

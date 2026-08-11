@@ -1,36 +1,9 @@
 #!/usr/bin/env python3
-"""serial-rx-loop.py: drive the RX-loopback harness over a real UART.
-
-REQUIRES REAL HARDWARE: this script is the silicon leg of the
-RX-loopback harness (quality roadmap task 8; the board bring-up is
-task 1). It talks to the firmware in
-tests/epic-combo-rx-loopback/tests/combo_rx_loopback.c running on a
-real PIC through its UART pins. MPLAB SIM cannot inject RX, so no
-simulator can satisfy this script: only silicon can.
-
-Protocol (documented in the firmware's file header):
-  boot:    the firmware emits "RXLOOP UP\\r\\n" once after USART init.
-  line:    a byte run terminated by '\\n'. The payload is everything
-           before the '\\n'; only '\\n' terminates, a lone '\\r' is a
-           plain payload byte (a CR-only "terminator" does not end a
-           line).
-  echo:    "OK:<payload>\\r\\n" when the payload is non-empty, ends
-           with '\\r' (CRLF terminator) and never exceeded 32 bytes;
-           "ERR:<payload>\\r\\n" otherwise (bare LF, missing CR, or
-           over-long). An over-long line echoes its first 32 buffered
-           bytes; the rest are discarded until the '\\n'.
-  framing: after every frame the line state resets, so lines can be
-           sent back to back.
-
-Usage:
-  python3 scripts/serial-rx-loop.py /dev/ttyUSB0 [baud] [--inter-byte-ms 5]
-
-The script opens the port, waits for the boot banner, then sends each
-framing vector byte by byte (paced to keep the firmware's shallow
-receive path from overrunning) and compares the echo byte-exact.
-Exits 0 when every vector passes.
-
-pyserial is required (pip install pyserial).
+"""Drive the RX-loopback harness over a real UART; REQUIRES REAL HARDWARE
+(MPLAB SIM cannot inject RX). Talks to tests/epic-combo-rx-loopback's
+combo_rx_loopback firmware, sends each framing vector byte by byte, and
+compares the echo byte-exact (protocol details in that firmware's file
+header). Run by hand with the board on a serial port; needs pyserial.
 """
 
 import argparse

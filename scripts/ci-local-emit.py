@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """Emit everything the local `make target-ci` replica of CI's target job
-needs, on the host (this script needs python3; the toolchain container
-has none): the real-target matrix and build scripts, the fixed sim
-variants, and the per-family bundles. Mirrors the emit step in
-.github/workflows/ci.yml so the local replica and CI agree on what gets
-built; the container-side loops (ci-target-build.sh / ci-target-sim.sh /
-ci-target-bundle.sh) are the same scripts CI runs.
+needs, on the host (python3; the toolchain container has none): the
+real-target matrix and build scripts, the fixed sim variants, and the
+per-family bundles. Mirrors ci.yml's emit step so the local replica and CI
+agree on what the container-side loops (ci-target-*.sh) build.
 """
 from __future__ import annotations
 

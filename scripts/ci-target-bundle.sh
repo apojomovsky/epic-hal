@@ -1,23 +1,13 @@
 #!/usr/bin/env bash
-# Isolated bundle build for ci.yml's "target" job: proves each generated
-# bundle is genuinely self-contained by copying it to /isolated (which
-# has no repo above it) and building there, so a file missing from the
-# bundle can't accidentally resolve through this checkout's own sibling
-# layout. Ported verbatim from the old bundle-gate.yml's build-isolated
-# job, just as a standalone script instead of inline workflow YAML.
-# Also builds each bundle's reference MPLAB X project headlessly
-# (prjMakefilesGenerator.sh + make .build-conf), ported from the same
-# old bundle-gate.yml once docs/superpowers/plans/probe-mplabx-headless.md
-# confirmed the toolchain image can do that without the GUI.
+# Isolated bundle build for ci.yml's "target" job and the local
+# `make target-ci` replica: extracts each generated bundle to /isolated
+# (no repo above it) and builds there, so a missing file cannot resolve
+# through this checkout's own sibling layout; also builds each bundle's
+# reference MPLAB X project headlessly (prjMakefilesGenerator.sh + make).
+# Needs $XC8_INSTALL_DIR/$MPLABX_INSTALL_DIR (set by the toolchain image's
+# ENV). Exits 1 if anything failed.
 #
 # Usage: ci-target-bundle.sh [bundles-dir] [summary.md]
-#   bundles-dir  default: bundles (in cwd), *.tar.gz produced by
-#                make_bundle.py in ci.yml's emit step
-#   summary.md   default: ci-summary-bundle.md (in cwd)
-#
-# Needs $XC8_INSTALL_DIR and $MPLABX_INSTALL_DIR (set by
-# docker/ci-toolchain/Dockerfile's own ENV, inherited automatically by
-# any shell running inside that image). Exits 1 if anything failed.
 
 set -uo pipefail
 

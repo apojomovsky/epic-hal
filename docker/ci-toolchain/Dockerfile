@@ -1,99 +1,13 @@
-# CI toolchain image for docs/ci-plan.md Phase 1 (XC8) and Phase 2 (MPLAB X
-# IDE, for `mdb`/MPLAB SIM). Tagged by the version pins below.
+# CI toolchain image for this repo's real-target builds and the MPLAB SIM gate:
+# XC8 plus MPLAB X IDE (for mdb.sh only). Version pins are the ARGs below;
+# the tag formula lives in the root Makefile and the workflows, not here.
 #
-# Two consumers, one image (docs/docker-dev-plan.md):
-#   - CI: `.github/workflows/xc8-build.yml`/`sim-tests.yml` `docker pull`
-#     the version-pinned tag from GHCR; they do NOT build this image
-#     themselves anymore (see that plan's "CI simplification").
-#   - Local dev: the root `Makefile` (`make image`) builds this image
-#     directly from `vendor/` (populated by hand, see that directory's
-#     own notes and `make check-vendor`), and `make ci-image-push` can
-#     push the result to the same private GHCR tag CI pulls, so a human
-#     with `write:packages` access is how this image actually gets
-#     updated; CI never builds or pushes it.
+# Installers are never fetched here: ww1.microchip.com blocks scripted
+# downloads with an Akamai JS bot-challenge, so CI extracts them from a
+# private GHCR assets image into vendor/ and this Dockerfile just COPYs them in.
 #
-# `cmake`/`build-essential` (below) are for local dev's `make test`
-# (host-sim builds), not for CI: `.github/workflows/host-tests.yml`
-# installs those itself on a bare `ubuntu-latest` runner and never uses
-# this image at all. Confirmed missing the hard way: an early version of
-# the root Makefile's `make test` failed with `cmake: command not found`
-# against an image that only had the XC8/MPLAB X install dependencies.
-#
-# Versions:
-#   - XC8 v4.00: license-free (no PRO gate at all, so no --LicenseType flag
-#     below, unlike older XC8), newer than what the rest of this repo's
-#     Makefiles/docs currently name (v3.10). Deliberately bumped ahead of
-#     the repo's documented pin rather than matching it: see "which XC8
-#     version to pin" in docs/ci-plan.md's open questions for the tradeoff.
-#   - Microchip.PIC16Fxxx_DFP.1.7.162, Microchip.PIC18Fxxxx_DFP.1.7.171,
-#     Microchip.PIC12-16F1xxx_DFP.1.9.258 (pic16f193x-hal, Enhanced
-#     Mid-range, added when that family's real-target build was verified
-#     locally against this exact version): none of the three is bundled
-#     with the standalone XC8 v4.00 installer (verified locally: `find
-#     /opt/microchip/xc8/v4.00/pic` has no `packs/` directory at all).
-#     This repo's mcu/*-mplabx/README.md files assumed PIC16Fxxx_DFP
-#     ships bundled, that was true of the full MPLAB X IDE's pack
-#     manager, not the bare compiler installer used here.
-#   - MPLAB X IDE v6.35: installed only for `mplab_platform/bin/mdb.sh`
-#     (headless, scriptable, distinct from the NetBeans GUI, see
-#     docs/ci-plan.md's Phase 2 findings). Component selection installs
-#     just IDE + 8-bit MCU device support (`--ipe 0 --16bitmcu 0
-#     --32bitmcu 0`), skipping ~8GB of dsPIC/PIC24/PIC32/ARM support this
-#     repo will never touch. Even with that flag, the installer's bundled
-#     `packs/` still ships every 8-bit device family plus every hardware
-#     debug-probe tool pack (ICD, ICE, PICkit, Snap, PKOB, JTAGICE3,
-#     EDBG/mEDBG/AtmelICE) and every Atmel/AVR DFP (Microchip's Atmel
-#     acquisition), none of which this repo needs: `mdb` here only ever
-#     drives the built-in Simulator (`hwtool SIM`, never real hardware),
-#     and only three DFPs (PIC16Fxxx, PIC18Fxxxx, PIC12-16F1xxx, the same
-#     three the XC8-side pack install above fetches) cover the three
-#     families this repo targets. Pruned in the same `RUN` as the install
-#     itself (a later `RUN rm` would still leave the bytes in an earlier
-#     layer; deleting before that `RUN` commits keeps them out of the
-#     image entirely), verified against a real `mdb` run for both
-#     `sim-tests.yml` matrix entries (PIC16F877A, PIC18F4550) before and
-#     after: identical PASS output, ~5.7GB image instead of ~10.8GB.
-#     2026-08-11, second pass (~5.7GB -> ~3.6GB): the mplab_platform
-#     GUI/MCC tooling mdb never loads is pruned in the same RUN (mcc*,
-#     browser-lib, ide, mplab_ide, alexandriaoffline, data-visualizer,
-#     mplab-pymdfu, dlight, dv-ide-support, mplab-content-manager,
-#     mplab-packmanagerui, cnd, harness, thirdparty, dat), the GTK/X11
-#     apt libs those GUI chunks needed are dropped, and the XC8-side
-#     AVR compiler support (avr/) plus both products' docs/uninstallers
-#     go. The prune set was found by trial-and-error against real mdb
-#     runs (each candidate chunk deleted, the three-family gate suite
-#     re-run): jline lives in mplablibs/, the NetBeans platform runtime
-#     (nb/, platform/, java/, lib/, mdbcore/, mplablibs/, bin/, etc/)
-#     is required, and the MPLAB X packs/ directory is required by
-#     mdb's device database (a symlink to the XC8-side DFPs fails: the
-#     bundled pack versions differ).
-#
-# Neither the XC8 installer nor the MPLAB X IDE installer is fetched by
-# this Dockerfile at all, on purpose. ww1.microchip.com sits behind an
-# Akamai bot-challenge that returns a JavaScript challenge page (not the
-# file) to any non-browser client, confirmed against both a local `docker
-# build` and a real GitHub Actions run for XC8, and curl-impersonate
-# (spoofs Chrome's TLS fingerprint) still didn't get past it, it's a JS
-# challenge, not just TLS/header fingerprinting, so trying to automate
-# past it was abandoned. The first fix for XC8 (re-hosting the installer
-# as a public GitHub Release asset) turned out to itself be a licensing
-# problem: Microchip's EULA (pulled from the installed product's own
-# docs/MPLABIDELicense.htm) grants a *use* license, not a redistribution
-# one, and `docker pull`ing the resulting image worked with zero
-# authentication, i.e. we were redistributing it. See docs/ci-plan.md for
-# the full account.
-#
-# Fix, applied to both installers: `.github/workflows/xc8-build.yml`'s
-# `ci-assets`/`ci-assets-mplabx` jobs extract each installer from a
-# PRIVATE `ghcr.io/.../pic8-hal-ci-assets` image (built by
-# docker/ci-assets/Dockerfile, a plain file carrier, see its own header)
-# into vendor/ in this Dockerfile's build context, purely local files on
-# the runner's disk at that point, never a public URL. This Dockerfile
-# just COPYs them in. DFPs are unaffected by any of this, fetched straight
-# from packs.download.microchip.com (a different, S3/CloudFront-backed
-# host, no bot-challenge, and Microchip's own DFP distribution terms are
-# separate from the compiler EULA, confirmed working both locally and
-# from a real GitHub Actions run).
+# cmake/build-essential: for local `make test` only (host-tests.yml installs
+# its own). MPLAB X: 8-bit-only, pruned in the same RUN as the install.
 
 FROM debian:12-slim
 
@@ -136,7 +50,7 @@ RUN set -eu; \
         Uninstall-xc8-v4.00 Uninstall-xc8-v4.dat
 
 # None of the three DFPs is bundled with the standalone XC8 v4.00
-# installer (see header comment). Unzipped to the paths this repo's
+# installer. Unzipped to the paths this repo's
 # mcu/*-mplabx/Makefile DFP_DIR override targets (xc8-build.yml passes
 # DFP_DIR explicitly, these paths don't match the Makefiles' own
 # v3.10-pinned defaults).

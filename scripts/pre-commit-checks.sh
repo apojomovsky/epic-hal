@@ -1,21 +1,14 @@
 #!/usr/bin/env bash
-# scripts/pre-commit-checks.sh, the actual pre-commit logic. Installed into
-# .git/hooks/pre-commit by scripts/install-git-hooks.sh (see scripts/README.md
-# for what each check does and why clang-format is not one of them yet).
+# The pre-commit checks: trailing whitespace/newline, em-dashes on added
+# lines, cppcheck on staged .c files, stray root-level files. Installed into
+# .git/hooks/pre-commit by scripts/install-git-hooks.sh; see scripts/README.md
+# for what each check does and why.
 #
-# Every check here operates on staged content, not the working tree, except
-# the newline/whitespace fixer, which edits the working tree file in place
-# and then asks you to re-`git add` it (never silently changes what gets
-# committed without you seeing it). If you staged only part of a file with
-# `git add -p`, the fixer still touches the whole working-tree file; review
-# `git diff` before re-adding in that case.
-#
-# CI reuses this same script (see .github/workflows/host-tests.yml) against
-# an already-committed ref range instead of a staged index: a fresh CI
-# checkout has nothing staged, everything is already committed. Set
-# PRE_COMMIT_BASE_REF to the commit/ref to diff against (the PR base SHA, or
-# the previous commit on a push); when unset, behavior is unchanged from the
-# local staged-index hook.
+# Operates on staged content, except the whitespace fixer, which edits the
+# working-tree file in place and asks you to re-`git add` it. CI reuses this
+# same script (host-tests.yml) against a committed ref range: set
+# PRE_COMMIT_BASE_REF to the ref to diff against; unset = local staged-index
+# hook.
 
 set -u
 fail=0

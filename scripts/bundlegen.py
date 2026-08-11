@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
-"""Generate a self-contained, per-family source bundle.
-
-A bundle is what someone outside this repo actually consumes: one
-family's HAL, epic-common, every module that builds on that family, and
-a set of generated files that tell their build system what to compile.
-
-Module dependencies are flattened here, at generation time, so the
-emitted epicurus.mk is a table of precomputed variables plus a guard.
-Recursive dependency resolution in GNU make is possible and unpleasant;
-doing it in Python and emitting the answer is neither.
-
-See docs/superpowers/specs/2026-08-05-distribution-design.md.
+"""Generate the file lists and consumer files for a self-contained
+per-family source bundle (what someone outside the repo consumes).
+Dependencies are flattened here at generation time, so the emitted
+epicurus.mk is precomputed tables, not recursive make. Called by
+scripts/make_bundle.py.
 """
 from __future__ import annotations
 

@@ -1,25 +1,9 @@
 #!/usr/bin/env python3
 """Config-key audit: every manifest example's #pragma config keys and
-values must be valid XC8 config settings for every MCU that example's
-family supports.
-
-XC8 keeps its config-option database inside the compiler binary (no
-file ground truth to parse), and it validates pragmas at LINK time, not
-compile time (`xc8-cc -c` accepts any pragma silently; the (1363)
-"unknown configuration setting/register" diagnostic only fires when the
-linker resolves the config words). So this audit links each example's
-generated config translation unit together with a trivial main and
-fails on (1363), the exact check the real build performs, minus
-compiling and linking the module's sources. The same diagnostic also
-catches invalid VALUES for otherwise-valid keys.
-
-Both variants are audited: the real-target config and the sim config
-(the MPLAB SIM diagnostic builds link their own config TU too).
-
-Run: python3 scripts/config-key-audit.py
-Needs: the toolchain image (default pic8-hal-toolchain:local, override
-with EPIC_TOOLCHAIN_IMAGE) and the XC8 root inside it (default
-/opt/microchip/xc8/v4.00, override with EPIC_XC8_ROOT).
+values must be valid XC8 settings for every MCU the family supports. XC8
+validates config pragmas at link time, so this links each example's config
+TU with a trivial main and fails on diagnostic (1363). Runs in CI's target
+job and `make audit`. Env: EPIC_TOOLCHAIN_IMAGE, EPIC_XC8_ROOT.
 """
 
 from __future__ import annotations

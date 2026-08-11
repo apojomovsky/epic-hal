@@ -1,24 +1,9 @@
-"""Load, validate, and resolve epic-common/manifest/modules.toml.
-
-This is the only module that knows the manifest's schema. Everything
-else (the build driver, the CI matrix, the bundle generator) goes
-through the dataclasses here, so a schema change has exactly one place
-to land.
-
-Paths are relative to two different roots by design, see the manifest's
-own README.md: family-level paths are repo-root-relative because family
-data spans directories; module-level paths are relative to that module's
-`dir` because module data does not.
-
-Two amendments over the original design live here and are load-bearing:
-  - `needs_hal` (module) plus a per-example `hal` override, because
-    whether the family HAL is needed is a property of the program, not
-    the module: epic-math's library touches no HAL, but its smoke test
-    includes the harness.
-  - `sources_by_family`, because a module's sources can differ per
-    family (epic-math compiles src/pic16 on PIC16, src/pic18 on PIC18).
-  - `fosc_hz` (family), because the oscillator frequency is
-    family-uniform and the emitter's default must match the Makefiles.
+"""Load, validate, and resolve epic-common/manifest/modules.toml; the only
+module that knows the manifest's schema (build driver, CI matrix, and
+bundle generator all go through these dataclasses). Family paths are
+repo-root-relative, module paths module-dir-relative. Load-bearing
+amendments: needs_hal (with per-example hal override), sources_by_family,
+fosc_hz.
 """
 from __future__ import annotations
 

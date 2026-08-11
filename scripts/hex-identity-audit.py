@@ -1,24 +1,9 @@
 #!/usr/bin/env python3
 """Hex-rebuild identity audit: every matrix .hex must be byte-identical
-across a rebuild, so codegen or layout drift shows up as a reviewable
-diff instead of a flaky gate.
-
-Each (module, mcu) matrix pair is built twice into separate build dirs
-(build-ident/<module>/<mcu>/a and .../b, both gitignored via build*/)
-from freshly emitted build scripts, and the two .hex files are compared
-by sha256. Any mismatch or build failure fails the audit with exit 1.
-
-Determinism probe (2026-08-11, XC8 v4.00 in pic8-hal-toolchain:local):
-epic-tick 16F877A emitted into build/a and build/b and built twice in
-the container; both runs produced the identical .hex
-(sha256 c09a3b9a74c8d92b85e9ee454cd00ccfaba54bad131cba2bb734d654b42ad498).
-Same sources, same flags, same bytes: XC8 v4.00 is deterministic, so
-the whole-matrix comparison below is meaningful.
-
-Run: python3 scripts/hex-identity-audit.py
-Needs: the toolchain image (default pic8-hal-toolchain:local, override
-with EPIC_TOOLCHAIN_IMAGE) and the XC8 root inside it (default
-/opt/microchip/xc8/v4.00, override with EPIC_XC8_ROOT).
+across a rebuild, so codegen/layout drift shows up as a reviewable diff.
+Each (module, mcu) pair is built twice into separate dirs from freshly
+emitted scripts and the .hex files are sha256-compared; any mismatch or
+build failure exits 1. Runs in CI's target job and `make audit`.
 """
 
 from __future__ import annotations
