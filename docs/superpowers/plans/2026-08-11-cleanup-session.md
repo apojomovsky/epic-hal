@@ -172,71 +172,121 @@ git commit -m "style: trim toolchain file headers to the expression rules"
 
 ---
 
+### Phase 2 recipe (shared by Tasks 3-13)
+
+Every Phase 2 task applies the same steps to its module(s). A task's
+"apply the Phase 2 recipe" means all four steps below, with the task's
+module list, gate command, and commit message:
+
+- [ ] **Step 1: Apply the rules** (Global Constraints, the 7 comment
+  rules) to every first-party `.c`/`.h` in the task's files: trim file
+  headers to 1-3 context lines (what the file is for, which backend it
+  rides on; keep MANUAL/ARCHITECTURE citations that point at live
+  conventions), delete box separators (`/* ---- name ---- */`) and
+  `@file`/`@brief` boilerplate, delete changelog/narrative prose
+  ("fixed X", "we iterated", session logs), keep every register map,
+  bit-field encoding, and datasheet citation (rule 5), compress long
+  hand-traces to the essential steps or a one-line invariant statement,
+  and drop `TODO`/`FIXME` without a concrete reason.
+- [ ] **Step 2: Run the task's gate** (the module's host cmake build +
+  ctest). Expected: PASS. A gate failure means the comment edit broke a
+  build (e.g. a `/*` accidentally closed inside a string) or the diff
+  was not comment-only; fix and re-run.
+- [ ] **Step 3: Confirm comment-only**: `git diff --stat` shows the
+  `.c`/`.h` diffs; spot-check that no line of code outside comments
+  changed (`git diff -U0 <file> | grep '^[+-]' | grep -vE '^(\+\+\+|---|[+-]\s*(/\*|\*|//))'` should find nothing except
+  legitimately reflowed comment bodies).
+- [ ] **Step 4: Commit** with the task's message.
+
 ### Task 3: Comment pass, pic16f87xa-hal
 
 **Files:** all first-party `.c`/`.h` under `pic16f87xa-hal/` (~60 files)
 **Gate:** `cmake -B build-host/pic16f87xa-hal -S pic16f87xa-hal && cmake --build build-host/pic16f87xa-hal && ctest --test-dir build-host/pic16f87xa-hal --output-on-failure`
-
-- [ ] **Step 1: Apply the rules** to every file: trim file headers to 1-3 context lines (family, peripheral set, MANUAL link stays), delete box separators and `@file`/`@brief` boilerplate, delete changelog/narrative prose, keep every register map, bit-field encoding, and datasheet citation (rule 5), compress any long hand-traces or keep only the essential invariant statement.
-- [ ] **Step 2: Run the gate** (command above). Expected: PASS.
-- [ ] **Step 3: Commit** with message `style(pic16f87xa-hal): comment pass per expression rules`.
+**Commit:** `style(pic16f87xa-hal): comment pass per expression rules`
+Apply the Phase 2 recipe to this module.
 
 ### Task 4: Comment pass, pic18fxx5x-hal
 
-Same as Task 3, module `pic18fxx5x-hal` (~60 files), gate on `pic18fxx5x-hal`, commit `style(pic18fxx5x-hal): comment pass per expression rules`.
+**Files:** all first-party `.c`/`.h` under `pic18fxx5x-hal/` (~60 files)
+**Gate:** `cmake -B build-host/pic18fxx5x-hal -S pic18fxx5x-hal && cmake --build build-host/pic18fxx5x-hal && ctest --test-dir build-host/pic18fxx5x-hal --output-on-failure`
+**Commit:** `style(pic18fxx5x-hal): comment pass per expression rules`
+Apply the Phase 2 recipe to this module.
 
 ### Task 5: Comment pass, pic16f193x-hal
 
-Same as Task 3, module `pic16f193x-hal` (~80 files), gate on `pic16f193x-hal`, commit `style(pic16f193x-hal): comment pass per expression rules`. Note: the file header comments in this HAL reference the 193X architecture doc; keep citations to `docs/ARCHITECTURE.md` where the live BSR convention is cited, drop the "Finding N" narrative.
+**Files:** all first-party `.c`/`.h` under `pic16f193x-hal/` (~80 files)
+**Gate:** `cmake -B build-host/pic16f193x-hal -S pic16f193x-hal && cmake --build build-host/pic16f193x-hal && ctest --test-dir build-host/pic16f193x-hal --output-on-failure`
+**Commit:** `style(pic16f193x-hal): comment pass per expression rules`
+Apply the Phase 2 recipe to this module. Note: file-header comments
+here reference the 193X architecture doc; keep citations to
+`docs/ARCHITECTURE.md` where the live BSR convention is cited, drop the
+"Finding N" narrative.
 
 ### Task 6: Comment pass, epic-common + epic-tick + epic-debounce
 
 **Files:** all first-party `.c`/`.h` under `epic-common/` (4), `epic-tick/` (3), `epic-debounce/` (5)
-**Gate:** epic-common has no CMakeLists (it is include()'d by the HALs); gate it through the HALs that consume it, i.e. run the pic16f87xa-hal gate from Task 3's command plus the module gates for epic-tick and epic-debounce. If epic-tick or epic-debounce lacks a CMakeLists, gate through `tests/` or skip with a note in the report.
-Commit: `style(epic-common): comment pass per expression rules` (one commit; the other two modules get their own commits: `style(epic-tick): comment pass per expression rules`, `style(epic-debounce): comment pass per expression rules`).
+**Gate:** epic-common has no CMakeLists (it is include()'d by the HALs); gate it through pic16f87xa-hal using a DEDICATED build dir so it cannot race Task 3's build: `cmake -B build-host-epic-common -S pic16f87xa-hal && cmake --build build-host-epic-common && ctest --test-dir build-host-epic-common --output-on-failure`. Plus the module gates for epic-tick and epic-debounce (`cmake -B build-host/<m> -S <m> && cmake --build build-host/<m> && ctest --test-dir build-host/<m> --output-on-failure`). If a module lacks a CMakeLists, gate through `tests/` or skip with a note in the report.
+**Commits:** one per module: `style(epic-common): comment pass per expression rules`, `style(epic-tick): comment pass per expression rules`, `style(epic-debounce): comment pass per expression rules`.
+Apply the Phase 2 recipe to all three modules.
 
 ### Task 7: Comment pass, epic-math
 
 **Files:** all first-party `.c`/`.h` under `epic-math/` (~32 files)
 **Gate:** `cmake -B build-host/epic-math -S epic-math && cmake --build build-host/epic-math && ctest --test-dir build-host/epic-math --output-on-failure`
-Commit: `style(epic-math): comment pass per expression rules`.
-Note: this is the delicate one. The asm hand-traces in `src/pic16/` and `src/pic18/` prove carry/borrow semantics that cannot be read from the code. Compress each hand-trace to the essential steps (drop the decorative `/* ---- name ---- */` separators and the box art), keep the concrete worked example ONLY where it pins an invariant (e.g. the add-with-carry example), and keep the ARCHITECTURE.md citation for the inline-asm binding rules.
+**Commit:** `style(epic-math): comment pass per expression rules`
+Apply the Phase 2 recipe to this module. Note: this is the delicate
+one. The asm hand-traces in `src/pic16/` and `src/pic18/` prove
+carry/borrow semantics that cannot be read from the code. Compress each
+hand-trace to the essential steps (drop the decorative
+`/* ---- name ---- */` separators and the box art), keep the concrete
+worked example ONLY where it pins an invariant (e.g. the add-with-carry
+example), and keep the ARCHITECTURE.md citation for the inline-asm
+binding rules.
 
 ### Task 8: Comment pass, epic-swuart + epic-bus + epic-modbus
 
 **Files:** `epic-swuart/` (11), `epic-bus/` (5), `epic-modbus/` (5) first-party `.c`/`.h`
 **Gate:** the three module gates (each `cmake -B build-host/<m> -S <m> && cmake --build build-host/<m> && ctest --test-dir build-host/<m> --output-on-failure`)
-Commits: one per module, `style(epic-swuart): ...` / `style(epic-bus): ...` / `style(epic-modbus): ...`.
+**Commits:** one per module, `style(epic-swuart): comment pass per expression rules` / `style(epic-bus): ...` / `style(epic-modbus): ...`.
+Apply the Phase 2 recipe to all three modules.
 
 ### Task 9: Comment pass, epic-lcd + epic-sdcard + epic-settings
 
 **Files:** `epic-lcd/` (11), `epic-sdcard/` (8), `epic-settings/` (7)
 **Gate:** the three module gates. Note epic-sdcard is PIC18-only (RAM constraint): its host test may be a sim build; run whatever ctest the module defines.
-Commits: one per module.
+**Commits:** one per module (`style(epic-lcd): comment pass per expression rules` / `style(epic-sdcard): ...` / `style(epic-settings): ...`).
+Apply the Phase 2 recipe to all three modules.
 
 ### Task 10: Comment pass, epic-fsm + epic-encoder + epic-taskmgr + epic-pid
 
 **Files:** `epic-fsm/` (7), `epic-encoder/` (7), `epic-taskmgr/` (6), `epic-pid/` (6)
 **Gate:** the four module gates.
-Commits: one per module. Note epic-taskmgr's `include/task_manager.h` has a 6-line comment run; check whether it is invariant-carrying (the priority/race-free claims) and keep the invariant, drop the rest.
+**Commits:** one per module (`style(epic-fsm): ...` / `style(epic-encoder): ...` / `style(epic-taskmgr): ...` / `style(epic-pid): ...`).
+Apply the Phase 2 recipe to all four modules. Note epic-taskmgr's
+`include/task_manager.h` has a 6-line comment run; check whether it is
+invariant-carrying (the priority/race-free claims) and keep the
+invariant, drop the rest.
 
 ### Task 11: Comment pass, epic-mcp23x17 + epic-adcfilter + tests/epic-combo-rx-loopback
 
 **Files:** `epic-mcp23x17/` (6), `epic-adcfilter/` (6), `tests/epic-combo-rx-loopback/` (14, first-party; this is the only combo with its own CMakeLists)
 **Gate:** the three gates (`tests/epic-combo-rx-loopback` has a CMakeLists, gate it with `cmake -B build-host/epic-combo-rx-loopback -S tests/epic-combo-rx-loopback`).
-Commits: one per unit.
+**Commits:** one per unit (`style(epic-mcp23x17): ...` / `style(epic-adcfilter): ...` / `style(tests): comment pass per expression rules`).
+Apply the Phase 2 recipe to all three units.
 
 ### Task 12: Comment pass, epic-usb + epic-serial + epic-console
 
 **Files:** first-party `.c`/`.h` under `epic-usb/` (8, EXCLUDING `third_party/`), `epic-serial/` (6), `epic-console/` (7)
 **Gate:** the module gates for epic-usb (if its CMakeLists builds the third-party stack too, that is fine, the gate still passes; the third-party files themselves stay untouched), epic-serial, epic-console.
-Commits: one per module.
+**Commits:** one per module (`style(epic-usb): ...` / `style(epic-serial): ...` / `style(epic-console): ...`).
+Apply the Phase 2 recipe to all three modules.
 
 ### Task 13: Comment pass, examples/
 
 **Files:** `examples/epicurus-demo-*.X/main.c` (the reference project mains, 3 files) and any other first-party source in `examples/`
 **Gate:** none. The demo mains include `<xc.h>` (XC8-only), so no host build exists for them; the "no semantics change" constraint is the gate. Report the files as comment-only in the task report.
-Commit: `style(examples): comment pass per expression rules`.
+**Commit:** `style(examples): comment pass per expression rules`
+Apply the Phase 2 recipe to these files (Steps 1, 3, 4; Step 2's gate is not applicable, note it in the report).
 
 ---
 
