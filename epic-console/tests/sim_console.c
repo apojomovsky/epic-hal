@@ -122,7 +122,7 @@ static uint8_t help_len(const epic_console_t *con)
 /**
  * @brief Paced drain of the TX ring through the real TX ISR entry.
  *
- * @return void; sets g_drain_failed and logs on timeout
+ * Sets g_drain_failed and logs on timeout.
  */
 static void drain_tx(void)
 {

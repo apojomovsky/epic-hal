@@ -321,7 +321,7 @@ void epic_lcd_scroll_right(epic_lcd_t *lcd)
  *
  * Slot range is 0-7, mapped to character codes 0x00-0x07. Glyph: 8 bytes,
  * one per row, bottom 5 bits are the pixel row (bit 4 = leftmost pixel,
- * bit 0 = rightmost). After defining, returns the address pointer to
+ * bit 0 = rightmost). After defining, the address counter returns to
  * DDRAM.
  *
  * @param lcd   LCD instance

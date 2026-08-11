@@ -163,7 +163,8 @@ Every first-party function carries a Doxygen-style docstring:
   in/out semantics in the prose; never `@param[in]`/`@param[out]`.
 - `@return` for non-void functions, nothing for void.
 - The block is `/** ... */`, never `/*` or `//`.
-- Placement: headers for public API; `.c` for `static` functions.
+- Placement: every signature in every checked file needs a doc block
+  before it; the header remains the canonical public-API doc.
   Tests and examples: `@brief`-only.
 - `scripts/doxygen_doc_check.py` is the compliance checker; run it
   before finishing work that touches functions.
