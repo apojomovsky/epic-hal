@@ -34,7 +34,7 @@
 #include "core/pic16f193x_wdt_sleep.h"
 #include "core/epic_harness.h"
 
-/** Family-local harness extension, not part of core/epic_harness.h
+/** @brief Family-local harness extension, not part of core/epic_harness.h
  *  since only pic16f193x's RA0-marker mechanism needs it: no-op on
  *  the CMake host build (pic16f193x_harness_sim.c), infinite loop on
  *  the mdb-under-MPLAB-SIM build (pic16f193x_harness_sim_target.c) so
@@ -53,14 +53,20 @@ extern void pic16f193x_harness_halt(void);
 /* Toggle count, the ISR is the only writer. */
 static volatile uint32_t g_toggle_count = 0;
 
-/* Timer1 overflow callback, runs in interrupt context (target) or
- * the sim IRQ callback (host). */
+/**
+ * @brief Timer1 overflow callback, runs in interrupt context (target) or
+ * the sim IRQ callback (host).
+ */
 static void on_t1_overflow(void)
 {
     EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
     g_toggle_count++;
 }
 
+/**
+ * @brief Timer1 smoke test: Timer1 overflows toggle RB0 through the
+ * registered ISR; pump time and report the toggle count.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

@@ -3,6 +3,12 @@
 #include "peripherals/pic16f193x_ssp.h"
 #include "core/pic16f193x_irq.h"
 
+/**
+ * @brief Configure the MSSP as SPI master from the handle and enable it.
+ * @param h handle with mode, clock edge, polarity and sample phase
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL or the mode
+ *         is out of range
+ */
 EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -21,6 +27,10 @@ EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Disable the MSSP and return it to its reset state.
+ * @return EPIC_OK on success
+ */
 EPIC_StatusTypeDef EPIC_SSP_DeInit(void)
 {
     EPIC_REG8(PIC_REG_SSPCON1) = 0x00U;
@@ -28,6 +38,11 @@ EPIC_StatusTypeDef EPIC_SSP_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief Write one byte to the SPI bus and return the shifted-in byte.
+ * @param data byte to transmit
+ * @return the received byte, or 0xFFFF if a write collision occurred
+ */
 uint16_t EPIC_SSP_WriteByte(uint8_t data)
 {
     if (EPIC_REG8(PIC_REG_SSPCON1) & PIC_SSPCON1_WCOL) return 0xFFFFU;
@@ -36,24 +51,42 @@ uint16_t EPIC_SSP_WriteByte(uint8_t data)
     return (uint16_t)data;
 }
 
+/**
+ * @brief Read the most recent byte received on the SPI bus.
+ * @return the byte in SSPBUF
+ */
 uint8_t EPIC_SSP_ReadByte(void)
 {
     return EPIC_REG8(PIC_REG_SSPBUF);
 }
 
+/**
+ * @brief Report whether the receive buffer holds unread data.
+ * @return 1 if SSPBUF is full (BF set), 0 otherwise
+ */
 uint8_t EPIC_SSP_IsBufferFull(void)
 {
     return (EPIC_REG8(PIC_REG_SSPSTAT) & PIC_SSPSTAT_BF) ? 1U : 0U;
 }
 
+/**
+ * @brief Report whether a write collision occurred.
+ * @return 1 if a write collision is flagged (WCOL set), 0 otherwise
+ */
 uint8_t EPIC_SSP_HasWriteCollision(void)
 {
     return (EPIC_REG8(PIC_REG_SSPCON1) & PIC_SSPCON1_WCOL) ? 1U : 0U;
 }
 
+/**
+ * @brief Clear the write-collision flag.
+ */
 void EPIC_SSP_ClearWriteCollision(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_SSPCON1), PIC_SSPCON1_WCOL);
 }
 
+/**
+ * @brief MSSP interrupt handler (weak, override in user code).
+ */
 void SSP_IRQHandler(void) {}

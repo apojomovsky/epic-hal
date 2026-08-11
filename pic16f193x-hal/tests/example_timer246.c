@@ -50,7 +50,7 @@
 #include "core/pic16f193x_wdt_sleep.h"
 #include "core/epic_harness.h"
 
-/** Family-local harness extension (see example_timer1.c): no-op on the
+/** @brief Family-local harness extension (see example_timer1.c): no-op on the
  *  CMake host build, freezes in a tight loop on the mdb-under-MPLAB-SIM
  *  build so the HARNESS=sim marker's RA0 stays set across the mdb
  *  `print PORTA` readback. */
@@ -78,18 +78,28 @@ static volatile uint32_t g_toggle_count[3] = { 0, 0, 0 };
  * continuously-firing timer ISRs on MPLAB SIM (see file header). */
 static volatile uint8_t g_pass_marker_set = 0U;
 
+/**
+ * @brief Timer2 overflow callback: toggles RC0 and counts overflows.
+ */
 static void on_t2_overflow(void)
 {
     EPIC_GPIO_TogglePin(GPIOC, GPIO_PIN_0);
     g_toggle_count[0]++;
 }
 
+/**
+ * @brief Timer4 overflow callback: toggles RC1 and counts overflows.
+ */
 static void on_t4_overflow(void)
 {
     EPIC_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
     g_toggle_count[1]++;
 }
 
+/**
+ * @brief Timer6 overflow callback: toggles RC2, counts overflows, and
+ * drives the RA0 PASS marker once all three instances have passed.
+ */
 static void on_t6_overflow(void)
 {
     EPIC_GPIO_TogglePin(GPIOC, GPIO_PIN_2);
@@ -108,6 +118,11 @@ static void on_t6_overflow(void)
     }
 }
 
+/**
+ * @brief Timer2/4/6 smoke test: run all three timers at once, each
+ * overflow ISR toggles its RC pin; pump time and report the toggle
+ * counts.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

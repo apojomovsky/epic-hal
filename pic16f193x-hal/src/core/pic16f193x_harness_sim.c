@@ -16,6 +16,12 @@
 /** Bounded run length set by the last harness_init() call. */
 static uint32_t g_cycles = 0U;
 
+/**
+ * @brief Harness start-up (host): stores the cycle bound, resets the
+ *        simulated CPU, and wires the sim IRQ callback to the shared
+ *        dispatcher.
+ * @param cycles simulated instruction cycles to pump before the run ends.
+ */
 void epic_harness_init(uint32_t cycles)
 {
     g_cycles = cycles;
@@ -25,16 +31,28 @@ void epic_harness_init(uint32_t cycles)
     pic16f193x_sim_set_irq_callback(epic_dispatch_all_irqs);
 }
 
+/**
+ * @brief Advance simulated time by one instruction cycle.
+ */
 void epic_harness_tick(void)
 {
     pic16f193x_sim_step(1);
 }
 
+/**
+ * @brief Loop-continuation test: 1 while the bounded run is in progress.
+ * @param iteration the current loop index.
+ * @return 1 while the run should continue, 0 when it is over.
+ */
 int epic_harness_running(uint32_t iteration)
 {
     return (iteration < g_cycles) ? 1 : 0;
 }
 
+/**
+ * @brief printf-style log line written to stdout.
+ * @param fmt printf-style format string; remaining arguments follow.
+ */
 void epic_harness_log(const char *fmt, ...)
 {
     va_list ap;
@@ -43,8 +61,11 @@ void epic_harness_log(const char *fmt, ...)
     va_end(ap);
 }
 
-/* No-op on the host: example_timer1.c falls through to `return rc`
- * and the process exits normally, same as every other example. */
+/**
+ * @brief Stop the run. No-op on the host: example_timer1.c falls through
+ *        to `return rc` and the process exits normally, same as every
+ *        other example.
+ */
 void pic16f193x_harness_halt(void)
 {
 }

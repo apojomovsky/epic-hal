@@ -15,12 +15,20 @@
 #include "peripherals/pic16f193x_usart.h"
 #include "core/epic_harness.h"
 
+/**
+ * @brief Freeze the target so the harness PASS marker stays set; no-op
+ * on the host build.
+ */
 extern void pic16f193x_harness_halt(void);
 
 #ifndef FOSC_HZ
 #define FOSC_HZ 32000000UL
 #endif
 
+/**
+ * @brief EUSART smoke test: init at 9600 baud, transmit one byte, and
+ * verify the control-register state.
+ */
 int main(void)
 {
     epic_harness_init(1UL);

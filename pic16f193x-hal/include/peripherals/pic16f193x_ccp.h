@@ -58,23 +58,72 @@ typedef struct {
     .CompareValue = 0U, .EventCallback = 0, \
 }
 
+/**
+ * @brief Configure a CCP module from the handle and enable it: loads the
+ *        compare/capture value into CCPRxH:L, programs the mode into
+ *        CCPxCON, and enables or disables the instance IRQ based on
+ *        `EventCallback`. CCP_MODE_PWM is rejected this phase.
+ * @param h handle with instance, mode, compare value and callback
+ * @return EPIC_OK on success, EPIC_INVALID for a NULL handle, an
+ *         out-of-range instance, or CCP_MODE_PWM
+ */
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
+/**
+ * @brief Disable a CCP module: disables the instance IRQ, clears its
+ *        flag, resets CCPxCON, and releases the stored handle.
+ * @param inst which CCP instance (1-5)
+ * @return EPIC_OK on success, EPIC_INVALID for an out-of-range instance
+ */
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
+/**
+ * @brief Load a new 16-bit compare/capture value into CCPRxH:L.
+ * @param inst which CCP instance (1-5)
+ * @param value 16-bit value to write to the CCPR registers
+ * @return EPIC_OK on success, EPIC_INVALID for an out-of-range instance
+ */
 EPIC_StatusTypeDef EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
 
-/** Change only CCPxCON's mode field, leaving CCPRx and IRQ enable state
- *  untouched. Cheap: no flag-clear or IRQ-enable bookkeeping, unlike
- *  EPIC_CCP_Init. For repeated in-frame mode switches (bit-banged
- *  protocols reprogramming the module every bit), not one-time setup. */
+/**
+ * @brief Change only CCPxCON's mode field, leaving CCPRx and IRQ enable
+ *        state untouched.
+ *
+ * Cheap: no flag-clear or IRQ-enable bookkeeping, unlike EPIC_CCP_Init.
+ * For repeated in-frame mode switches (bit-banged protocols reprogramming
+ * the module every bit), not one-time setup.
+ *
+ * @param inst which CCP instance (1-5)
+ * @param mode new capture/compare mode (CCP_MODE_PWM rejected at Init)
+ */
 void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode);
 
+/**
+ * @brief Read the latched capture value with a consistency retry: the
+ *        high byte is read twice around the low byte and re-read until
+ *        stable, so the returned 16-bit value is coherent.
+ * @param inst which CCP instance (1-5)
+ * @return the captured 16-bit value, or 0 for an out-of-range instance
+ */
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
 
-/** Weak CCP1/CCP2 ISRs, one per instance, override in user code. */
+/**
+ * @brief Weak CCP1/CCP2 ISRs, one per instance, override in user code.
+ */
 void CCP1_IRQHandler(void) EPIC_WEAK;
+/**
+ * @brief Weak CCP2 ISR, override in user code.
+ */
 void CCP2_IRQHandler(void) EPIC_WEAK;
+/**
+ * @brief Weak CCP3 ISR, override in user code.
+ */
 void CCP3_IRQHandler(void) EPIC_WEAK;
+/**
+ * @brief Weak CCP4 ISR, override in user code.
+ */
 void CCP4_IRQHandler(void) EPIC_WEAK;
+/**
+ * @brief Weak CCP5 ISR, override in user code.
+ */
 void CCP5_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F193X_CCP_H */

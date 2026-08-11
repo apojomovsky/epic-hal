@@ -67,6 +67,7 @@ uint8_t EPIC_IRQ_Disable(void);
 /**
  * @brief Restore the global interrupt enable to `prev_state`, pair with
  *        @ref EPIC_IRQ_Disable.
+ * @param prev_state the GIE state captured by @ref EPIC_IRQ_Disable
  */
 void EPIC_IRQ_Restore(uint8_t prev_state);
 
@@ -74,20 +75,29 @@ void EPIC_IRQ_Restore(uint8_t prev_state);
  * @brief Enable one interrupt source. The peripheral enable bit lives in
  *        the matching PIE register (or INTCON for IOC/INT/TMR0); PIE bits
  *        need both GIE and PEIE set to actually fire.
+ * @param irq the interrupt source to enable
  */
 void EPIC_IRQ_Enable(PIC16F193X_IRQn irq);
 
-/** Disable one interrupt source. */
+/**
+ * @brief Disable one interrupt source.
+ * @param irq the interrupt source to disable
+ */
 void EPIC_IRQ_DisableSrc(PIC16F193X_IRQn irq);
 
 /**
  * @brief Clear the interrupt flag of `irq`. **MUST** be called inside the
  *        ISR before re-enabling interrupts to avoid an infinite re-entry
  *        (DS41364B §4.1).
+ * @param irq the interrupt source whose flag to clear
  */
 void EPIC_IRQ_ClearFlag(PIC16F193X_IRQn irq);
 
-/** Returns the current pending state of `irq` (1 = pending). */
+/**
+ * @brief Returns the current pending state of `irq` (1 = pending).
+ * @param irq the interrupt source whose flag to read
+ * @return 1 if the interrupt flag is set, 0 otherwise
+ */
 uint8_t EPIC_IRQ_GetFlag(PIC16F193X_IRQn irq);
 
 /**
@@ -95,6 +105,8 @@ uint8_t EPIC_IRQ_GetFlag(PIC16F193X_IRQn irq);
  *        priority scheme, DS41364B §4.0); declared with the shared
  *        @ref EPIC_IRQ_Priority enum so callers stay portable to PIC18,
  *        which implements it for real.
+ * @param irq the interrupt source
+ * @param prio the requested priority (ignored)
  */
 void EPIC_IRQ_SetPriority(PIC16F193X_IRQn irq, EPIC_IRQ_Priority prio);
 

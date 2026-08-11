@@ -29,8 +29,11 @@
  * shape as pic16_isr_vector.c in pic16f87xa-hal. */
 volatile uint8_t epic_irq_pie_scratch __at(0x70);
 
-/* Strong extern prototype instead of including epic_harness.h, same
- * pattern pic16f193x_irq_dispatch.c uses for the peripheral handlers. */
+/**
+ * @brief Strong extern prototype instead of including epic_harness.h,
+ *        same pattern pic16f193x_irq_dispatch.c uses for the peripheral
+ *        handlers.
+ */
 extern void epic_dispatch_all_irqs(void);
 
 /**

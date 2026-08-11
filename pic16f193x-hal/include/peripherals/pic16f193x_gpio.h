@@ -82,29 +82,57 @@ typedef enum {
  */
 void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
 
-/** Restore all pins of `port` to reset (input, analog, latch clear). */
+/**
+ * @brief  Restore all pins of `port` to reset (input, analog, latch
+ *         clear).
+ *
+ * @param  port   GPIOA..GPIOE
+ */
 void EPIC_GPIO_DeInit(GPIO_TypeDef port);
 
 /**
  * @brief  Drive a pin high or low; ORs/ANDs the mask onto the LATx latch
  *         (DS41364B §6.0), never reads back the pin level first.
+ *
+ * @param  port   GPIOA..GPIOE
+ * @param  pins   Bitmask of @ref GPIO_PIN_0 .. GPIO_PIN_All
+ * @param  state  GPIO_PIN_RESET (low) or GPIO_PIN_SET (high)
  */
 void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
 
-/** Toggle a set of pins (LATx ^= mask). */
+/**
+ * @brief  Toggle a set of pins (LATx ^= mask).
+ *
+ * @param  port   GPIOA..GPIOE
+ * @param  pins   Bitmask of @ref GPIO_PIN_0 .. GPIO_PIN_All
+ */
 void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);
 
 /**
  * @brief  Read the current level seen on `pins` from PORTx (the actual
  *         pin level, DS41364B §6.0). For outputs this returns the driven
  *         level; for inputs it returns whatever the pin is driven to.
+ *
+ * @param  port   GPIOA..GPIOE
+ * @param  pins   Bitmask of @ref GPIO_PIN_0 .. GPIO_PIN_All
+ * @return GPIO_PIN_SET if any selected pin is high, else GPIO_PIN_RESET
  */
 GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);
 
-/** Atomically write the entire port LATx latch. */
+/**
+ * @brief  Atomically write the entire port LATx latch.
+ *
+ * @param  port   GPIOA..GPIOE
+ * @param  value  8-bit value written to the port latch
+ */
 void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
 
-/** Read the entire port (PORTx, pin level). */
+/**
+ * @brief  Read the entire port (PORTx, pin level).
+ *
+ * @param  port   GPIOA..GPIOE
+ * @return The 8-bit port input value
+ */
 uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
 
 /**
@@ -113,6 +141,10 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
  *         (active-low). `pins` selects which PORTB pins get pull-ups.
  *         GPIO_NOPULL disables all (WPUB &= ~pins, WPUEN=1); GPIO_PULLUP
  *         enables the selected pins (WPUB |= pins, WPUEN=0).
+ *
+ * @param  port   GPIOA..GPIOE (only GPIOB has pull-ups on this family)
+ * @param  pins   Bitmask of @ref GPIO_PIN_0 .. GPIO_PIN_All
+ * @param  state  GPIO_PIN_SET enables, GPIO_PIN_RESET disables
  */
 void EPIC_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
 
@@ -131,6 +163,9 @@ void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t iocbf, uint8_t po
  * @brief  Enable per-pin positive/negative edge detection on PORTB
  *         (IOCBP / IOCBN, DS41364B §7.0). Call @ref EPIC_IRQ_Enable with
  *         @ref PIC16F193X_IRQ_IOC to arm the interrupt itself.
+ *
+ * @param  pos_mask  Bitmask of PORTB pins detecting rising edges
+ * @param  neg_mask  Bitmask of PORTB pins detecting falling edges
  */
 void EPIC_GPIO_EnableChangeDetect(uint8_t pos_mask, uint8_t neg_mask);
 

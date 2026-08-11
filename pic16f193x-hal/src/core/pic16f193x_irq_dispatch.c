@@ -13,26 +13,50 @@
 
 #include "core/pic16f193x_irq.h"
 
+/** @brief Weak handler for the Timer0 overflow interrupt source. */
 extern void TIMER0_IRQHandler(void);
+/** @brief Weak handler for the Timer1 overflow interrupt source. */
 extern void TIMER1_IRQHandler(void);
+/** @brief Weak handler for the Timer2 == PR2 match interrupt source. */
 extern void TIMER2_IRQHandler(void);
+/** @brief Weak handler for the Timer4 == PR4 match interrupt source. */
 extern void TIMER4_IRQHandler(void);
+/** @brief Weak handler for the Timer6 == PR6 match interrupt source. */
 extern void TIMER6_IRQHandler(void);
+/** @brief Weak handler for the ECCP1 capture/compare/PWM interrupt source. */
 extern void CCP1_IRQHandler(void);
+/** @brief Weak handler for the ECCP2 capture/compare/PWM interrupt source. */
 extern void CCP2_IRQHandler(void);
+/** @brief Weak handler for the EUSART TX shift-done interrupt source. */
 extern void USART_TX_IRQHandler(void);
+/** @brief Weak handler for the EUSART RX byte-ready interrupt source. */
 extern void USART_RX_IRQHandler(void);
+/** @brief Weak handler for the MSSP (SPI/I2C) event interrupt source. */
 extern void SSP_IRQHandler(void);
+/** @brief Weak handler for the A/D conversion-done interrupt source. */
 extern void ADC_IRQHandler(void);
+/** @brief Weak handler for the Comparator C1 change interrupt source. */
 extern void CMP1_IRQHandler(void);
+/** @brief Weak handler for the Comparator C2 change interrupt source. */
 extern void CMP2_IRQHandler(void);
+/** @brief Weak handler for the EEPROM/Flash write-done interrupt source. */
 extern void EEPROM_IRQHandler(void);
+/** @brief Weak handler for the ECCP3 capture/compare/PWM interrupt source. */
 extern void CCP3_IRQHandler(void);
+/** @brief Weak handler for the CCP4 capture/compare interrupt source. */
 extern void CCP4_IRQHandler(void);
+/** @brief Weak handler for the CCP5 capture/compare interrupt source. */
 extern void CCP5_IRQHandler(void);
+/** @brief Weak handler for the LCD driver frame interrupt source. */
 extern void LCD_IRQHandler(void);
+/** @brief Weak handler for the PORTB interrupt-on-change source. */
 extern void IOC_IRQHandler(void);
 
+/**
+ * @brief Fan out from the single PIC16F193X interrupt vector to every
+ *        peripheral IRQHandler whose flag is set, shared by the target
+ *        ISR and the host sim IRQ callback.
+ */
 void epic_dispatch_all_irqs(void)
 {
     uint8_t intcon = EPIC_REG8(PIC_REG_INTCON);

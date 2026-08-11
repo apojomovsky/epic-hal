@@ -53,6 +53,11 @@
         else                               (out) = EPIC_REG8(PIC_REG_CCPR5H); \
     } while (0)
 
+/**
+ * @brief Map a CCP instance to its interrupt request number.
+ * @param inst CCP instance (1-5)
+ * @return the PIC16F193X_IRQn for the instance
+ */
 static PIC16F193X_IRQn ccp_irq(CCP_InstanceTypeDef inst)
 {
     if (inst == CCP_INSTANCE_1) return PIC16F193X_IRQ_CCP1;
@@ -62,6 +67,11 @@ static PIC16F193X_IRQn ccp_irq(CCP_InstanceTypeDef inst)
     return PIC16F193X_IRQ_CCP5;
 }
 
+/**
+ * @brief Convert an instance number to the 0-based g_handle index.
+ * @param inst CCP instance (1-5)
+ * @return index into g_handle (0-4)
+ */
 static int idx_of(CCP_InstanceTypeDef inst)
 {
     return (int)inst - 1;  /* 1->0, 2->1, 3->2, 4->3, 5->4 */
@@ -69,11 +79,23 @@ static int idx_of(CCP_InstanceTypeDef inst)
 
 static const CCP_HandleTypeDef *g_handle[5] = { NULL, NULL, NULL, NULL, NULL };
 
+/**
+ * @brief Check whether a CCP instance number is supported.
+ * @param inst CCP instance to validate
+ * @return 1 if in range CCP_INSTANCE_1..CCP_INSTANCE_5, 0 otherwise
+ */
 static int valid_instance(CCP_InstanceTypeDef inst)
 {
     return (inst >= CCP_INSTANCE_1 && inst <= CCP_INSTANCE_5);
 }
 
+/**
+ * @brief Configure a CCP module from `h` and arm its interrupt if a
+ *        callback is registered. PWM mode is rejected this phase.
+ * @param h handle with instance, mode and compare value
+ * @return EPIC_OK on success, EPIC_INVALID for a null handle, PWM mode
+ *         or out-of-range instance
+ */
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -96,6 +118,12 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Disable a CCP module's interrupt, clear its flag, zero its
+ *        control register and drop the stored handle.
+ * @param inst CCP instance (1-5)
+ * @return EPIC_OK on success, EPIC_INVALID for an out-of-range instance
+ */
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
 {
     if (!valid_instance(inst)) return EPIC_INVALID;
@@ -107,6 +135,12 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
     return EPIC_OK;
 }
 
+/**
+ * @brief Load a new compare value into a CCP module's CCPRxL/H pair.
+ * @param inst CCP instance (1-5)
+ * @param value 16-bit compare value to write
+ * @return EPIC_OK on success, EPIC_INVALID for an out-of-range instance
+ */
 EPIC_StatusTypeDef EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
 {
     if (!valid_instance(inst)) return EPIC_INVALID;
@@ -115,12 +149,24 @@ EPIC_StatusTypeDef EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
     return EPIC_OK;
 }
 
+/**
+ * @brief Change only CCPxCON's mode field, leaving CCPRx and IRQ state
+ *        untouched.
+ * @param inst CCP instance (1-5)
+ * @param mode capture/compare mode to select
+ */
 void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode)
 {
     if (!valid_instance(inst)) return;
     CCP_WRITE_CON(inst, (uint8_t)((uint8_t)mode & PIC_CCP1CON_CCPM_MASK));
 }
 
+/**
+ * @brief Read the last captured value, retrying until the high byte is
+ *        stable across the 16-bit read.
+ * @param inst CCP instance (1-5)
+ * @return the captured 16-bit value, 0 for an out-of-range instance
+ */
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (!valid_instance(inst)) return 0U;
@@ -133,6 +179,12 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
     return (uint16_t)(((uint16_t)hi1 << 8) | lo);
 }
 
+/**
+ * @brief Shared CCP ISR body: clear the instance's flag in PIR1/PIR2/
+ *        PIR3, then fire the registered event callback if any.
+ * @param inst CCP instance (1-5)
+ * @param irq interrupt request number matching the instance
+ */
 static void ccp_irq_common(CCP_InstanceTypeDef inst, PIC16F193X_IRQn irq)
 {
     switch (irq) {
@@ -148,8 +200,23 @@ static void ccp_irq_common(CCP_InstanceTypeDef inst, PIC16F193X_IRQn irq)
     }
 }
 
+/**
+ * @brief CCP1 interrupt handler (weak, override in user code).
+ */
 void CCP1_IRQHandler(void) { ccp_irq_common(CCP_INSTANCE_1, PIC16F193X_IRQ_CCP1); }
+/**
+ * @brief CCP2 interrupt handler (weak, override in user code).
+ */
 void CCP2_IRQHandler(void) { ccp_irq_common(CCP_INSTANCE_2, PIC16F193X_IRQ_CCP2); }
+/**
+ * @brief CCP3 interrupt handler (weak, override in user code).
+ */
 void CCP3_IRQHandler(void) { ccp_irq_common(CCP_INSTANCE_3, PIC16F193X_IRQ_CCP3); }
+/**
+ * @brief CCP4 interrupt handler (weak, override in user code).
+ */
 void CCP4_IRQHandler(void) { ccp_irq_common(CCP_INSTANCE_4, PIC16F193X_IRQ_CCP4); }
+/**
+ * @brief CCP5 interrupt handler (weak, override in user code).
+ */
 void CCP5_IRQHandler(void) { ccp_irq_common(CCP_INSTANCE_5, PIC16F193X_IRQ_CCP5); }

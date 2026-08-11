@@ -68,6 +68,11 @@ static const uint8_t post_ratio[16] = {
  * reasoning as pic18fxx5x_ccp.c's ccp_irq() helper). */
 static const TIMER246_HandleTypeDef *g_handle[3] = { NULL, NULL, NULL };
 
+/**
+ * @brief Convert an instance to its 0-based g_handle index.
+ * @param inst timer instance (2, 4 or 6)
+ * @return index into g_handle (0-2)
+ */
 static int idx_of(TIMER246_InstanceTypeDef inst)
 {
     if (inst == TIMER246_INSTANCE_2) return 0;
@@ -75,6 +80,11 @@ static int idx_of(TIMER246_InstanceTypeDef inst)
     return 2;
 }
 
+/**
+ * @brief Map a timer instance to its interrupt request number.
+ * @param inst timer instance (2, 4 or 6)
+ * @return the PIC16F193X_IRQn for the instance
+ */
 static PIC16F193X_IRQn timer246_irq(TIMER246_InstanceTypeDef inst)
 {
     if (inst == TIMER246_INSTANCE_2) return PIC16F193X_IRQ_TMR2;
@@ -82,6 +92,11 @@ static PIC16F193X_IRQn timer246_irq(TIMER246_InstanceTypeDef inst)
     return PIC16F193X_IRQ_TMR6;
 }
 
+/**
+ * @brief Return the POR value of the instance's T*CON register.
+ * @param inst timer instance (2, 4 or 6)
+ * @return the T*CON power-on reset value
+ */
 static uint8_t con_por_value(TIMER246_InstanceTypeDef inst)
 {
     if (inst == TIMER246_INSTANCE_2) return PIC_T2CON_POR_VALUE;
@@ -89,6 +104,11 @@ static uint8_t con_por_value(TIMER246_InstanceTypeDef inst)
     return PIC_T6CON_POR_VALUE;
 }
 
+/**
+ * @brief Read the current counter value of a timer instance.
+ * @param inst timer instance (2, 4 or 6)
+ * @return the 8-bit TMRx value
+ */
 uint8_t EPIC_TIMER246_ReadCounter(TIMER246_InstanceTypeDef inst)
 {
     uint8_t v;
@@ -96,11 +116,21 @@ uint8_t EPIC_TIMER246_ReadCounter(TIMER246_InstanceTypeDef inst)
     return v;
 }
 
+/**
+ * @brief Write a new counter value to a timer instance.
+ * @param inst timer instance (2, 4 or 6)
+ * @param value counter value to write, 0..255
+ */
 void EPIC_TIMER246_WriteCounter(TIMER246_InstanceTypeDef inst, uint8_t value)
 {
     TIMER246_WRITE_TMR(inst, value);
 }
 
+/**
+ * @brief Read the period register (PRx) of a timer instance.
+ * @param inst timer instance (2, 4 or 6)
+ * @return the 8-bit period value
+ */
 uint8_t EPIC_TIMER246_ReadPeriod(TIMER246_InstanceTypeDef inst)
 {
     uint8_t v;
@@ -108,23 +138,44 @@ uint8_t EPIC_TIMER246_ReadPeriod(TIMER246_InstanceTypeDef inst)
     return v;
 }
 
+/**
+ * @brief Write a new period value (PRx) to a timer instance.
+ * @param inst timer instance (2, 4 or 6)
+ * @param period period value to write, 0..255
+ */
 void EPIC_TIMER246_WritePeriod(TIMER246_InstanceTypeDef inst, uint8_t period)
 {
     TIMER246_WRITE_PR(inst, period);
 }
 
+/**
+ * @brief Convert a prescaler enum to its integer ratio (1, 4 or 16).
+ * @param p prescaler selection
+ * @return the divider ratio, or 1 for an out-of-range value
+ */
 uint16_t EPIC_TIMER246_PrescalerToRatio(TIMER246_PrescalerTypeDef p)
 {
     if ((unsigned)p > 3U) return 1U;
     return pre_ratio[p];
 }
 
+/**
+ * @brief Convert a postscaler enum to its integer ratio (1..16, linear).
+ * @param p postscaler selection
+ * @return the divider ratio, or 1 for an out-of-range value
+ */
 uint16_t EPIC_TIMER246_PostscalerToRatio(TIMER246_PostscalerTypeDef p)
 {
     if ((unsigned)p > 15U) return 1U;
     return post_ratio[p];
 }
 
+/**
+ * @brief Configure one timer instance from the handle and store it.
+ * @param h handle with instance, prescaler, postscaler and callback
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL or the
+ *         instance is not 2, 4 or 6
+ */
 EPIC_StatusTypeDef EPIC_TIMER246_Init(const TIMER246_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -149,6 +200,11 @@ EPIC_StatusTypeDef EPIC_TIMER246_Init(const TIMER246_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Disable one timer instance and restore its reset state.
+ * @param inst timer instance (2, 4 or 6)
+ * @return EPIC_OK on success
+ */
 EPIC_StatusTypeDef EPIC_TIMER246_DeInit(TIMER246_InstanceTypeDef inst)
 {
     PIC16F193X_IRQn irq = timer246_irq(inst);
@@ -161,6 +217,13 @@ EPIC_StatusTypeDef EPIC_TIMER246_DeInit(TIMER246_InstanceTypeDef inst)
     return EPIC_OK;
 }
 
+/**
+ * @brief Enable counting on a timer instance: set PRx, clear TMRx and
+ *        program T*CON (postscaler, on bit, prescaler).
+ * @param h handle with instance, period, prescaler and postscaler
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL or the
+ *         instance is not 2, 4 or 6
+ */
 EPIC_StatusTypeDef EPIC_TIMER246_Start(const TIMER246_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -188,12 +251,23 @@ EPIC_StatusTypeDef EPIC_TIMER246_Start(const TIMER246_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Disable counting on a timer instance (clears TMRxON).
+ * @param inst timer instance (2, 4 or 6)
+ * @return EPIC_OK on success
+ */
 EPIC_StatusTypeDef EPIC_TIMER246_Stop(TIMER246_InstanceTypeDef inst)
 {
     TIMER246_STOP(inst);
     return EPIC_OK;
 }
 
+/**
+ * @brief Shared Timer2/4/6 ISR body: clear the flag for `irq` and
+ *        invoke the stored instance callback.
+ * @param inst timer instance (2, 4 or 6)
+ * @param irq interrupt request for the instance
+ */
 static void timer246_irq_common(TIMER246_InstanceTypeDef inst, PIC16F193X_IRQn irq)
 {
     /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
@@ -219,6 +293,15 @@ static void timer246_irq_common(TIMER246_InstanceTypeDef inst, PIC16F193X_IRQn i
     }
 }
 
+/**
+ * @brief Timer2 overflow ISR (weak, override in user code).
+ */
 void TIMER2_IRQHandler(void) { timer246_irq_common(TIMER246_INSTANCE_2, PIC16F193X_IRQ_TMR2); }
+/**
+ * @brief Timer4 overflow ISR (weak, override in user code).
+ */
 void TIMER4_IRQHandler(void) { timer246_irq_common(TIMER246_INSTANCE_4, PIC16F193X_IRQ_TMR4); }
+/**
+ * @brief Timer6 overflow ISR (weak, override in user code).
+ */
 void TIMER6_IRQHandler(void) { timer246_irq_common(TIMER246_INSTANCE_6, PIC16F193X_IRQ_TMR6); }

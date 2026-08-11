@@ -10,8 +10,16 @@
 #include "peripherals/pic16f193x_ssp.h"
 #include "core/epic_harness.h"
 
+/**
+ * @brief Freeze the target so the harness PASS marker stays set; no-op
+ * on the host build.
+ */
 extern void pic16f193x_harness_halt(void);
 
+/**
+ * @brief MSSP SPI-master smoke test: init at Fosc/4 and verify the
+ * SSPSTAT/SSPCON1 register state.
+ */
 int main(void)
 {
     epic_harness_init(1UL);
