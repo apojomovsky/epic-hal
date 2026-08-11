@@ -1,23 +1,9 @@
 /**
- * @file    test_taskmgr_fuzz.c
- * @brief   Host property test for the cooperative scheduler: random
- *          spawn/stop/start/reset/set_period sequences driven through
- *          the real public API, with every fire verified against a
- *          model of the documented semantics. No timers involved: the
- *          test drives task_manager_tick()/task_manager_run_once()
- *          directly, so the checks are deterministic and exact.
- *
- *          Modeled semantics (task_manager.c + task_manager.h docs):
- *          - a periodic task spawned at tick t fires at t+p, t+2p, ...
- *          - a one-shot (period 0) fires on the first tick after
- *            spawn and then frees its slot
- *          - task_start/task_reset re-arm from the full period
- *          - task_stop freezes the countdown; set_period applies on
- *            the next arming
- *          - task_manager_ticks() advances exactly once per tick
- *          - task_spawn claims the first free slot ("slot 0 is
- *            claimed first"), and returns TASK_ID_INVALID only when
- *            the table is full
+ * Host property test for the cooperative scheduler: random
+ * spawn/stop/start/reset/set_period sequences through the real public
+ * API, every fire verified against a model of the documented semantics.
+ * No timers: the test drives task_manager_tick()/run_once() directly, so
+ * the checks are deterministic and exact.
  */
 
 #include "task_manager.h"
@@ -36,8 +22,7 @@ static uint32_t rnd(void)
     return g_seed;
 }
 
-/* ───────────── per-slot model of the documented semantics ───────── */
-
+/* Per-slot model of the documented semantics. */
 typedef struct {
     uint8_t  used;
     uint8_t  enabled;

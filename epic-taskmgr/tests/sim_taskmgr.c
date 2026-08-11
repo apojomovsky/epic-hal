@@ -1,65 +1,21 @@
 /**
- * @file    sim_taskmgr.c
- * @brief   Bounded, self-reporting HARNESS=sim build: epic-taskmgr's
- *          first-ever real `mdb` gate. Spawns two cooperative periodic
- *          tasks with known periods plus a one-shot, runs the canonical
- *          scheduler loop for a bounded iteration count, and verifies
- *          (a) both periodic tasks executed, (b) the 16-bit tick
- *          counter advanced, (c) the one-shot fired exactly once and
- *          freed its slot, and (d) task_set_period took effect.
- *          Reports PASS/FAIL over the target's real hardware EUSART via
- *          epic_harness_report, the same way every other family's own
- *          `.sim` variant does (see
- *          pic18fxx5x-hal/src/core/pic18_harness_sim_target.c).
- *
- * @details
- *   Follows the bounded host/target-agnostic contract
- *   `core/epic_harness.h` defines: on the sim target the Timer0
- *   overflow ISR (wired by task_manager_attach_timer0) drives
- *   `task_manager_tick()` in real simulated time, `task_manager_run()`
- *   terminates when `epic_harness_running()` runs out of iterations,
- *   and `epic_harness_report` emits the marker line the gate greps for.
- *
- *   Family choice: PIC18Fxx5x (18F4550). The module is pure logic, and
- *   MPLAB SIM's PIC16F87XA leg has a hard layout constraint: the
- *   interrupt-handler body must stay in flash page 0 (the vector's
- *   PCLATH-less goto), and the Timer0-tick ISR path proved unusable
- *   under SIM for this module (measured while tuning this gate: a
- *   512-cycle tick made the ISR longer than the tick period, so TMR0IF
- *   was pending at every retfie and the ISR re-entered continuously,
- *   starving the main loop; longer ticks then exposed a GIE bit-set on
- *   INTCON that never persisted under the xc8 v4.00 PIC16 codegen).
- *   PIC18 uses absolute calls and a different INTCON model, sidestepping
- *   both, and the epic-tick PIC18 sim gate already proves PIC18 Timer
- *   interrupts work under SIM.
- *
- *   Tick rate: 1:16 prescaler, reload 0 -> 256 counts x 16 = 4096
- *   instruction cycles per tick (~341 us at the 48 MHz / 12 MHz
- *   instruction rate this family's sim harness builds with). That
- *   accumulates ~50-100 ticks per run, far past the 25 ticks the
- *   checks below need, and leaves the ISR a small fraction of the tick
- *   period so the scheduler loop makes progress between interrupts.
- *   The scheduler is tick-rate agnostic: periods are counted in ticks.
- *
- *   The one-shot task is spawned at init (period 0, countdown 0, so it
- *   is due on the first tick), and its single run calls
- *   `task_set_period` on task C, lengthening C's period far beyond the
- *   run. C fires once more (the current countdown was armed at spawn)
- *   and then stops, so `runs_c == 1` proves the runtime period change
- *   took effect: without it C would fire every 5 ticks for the whole
- *   run. The scheduler frees the one-shot's slot after its single run,
- *   so `task_manager_count() == 3` at the end is the exact-once check.
+ * Bounded, self-reporting HARNESS=sim build, the module's mdb gate.
+ * PIC18F4550 (the PIC16 leg's Timer0-tick ISR path is unusable under
+ * MPLAB SIM): spawns two periodic tasks plus a one-shot, runs the
+ * canonical scheduler loop, and verifies both periodics executed, the
+ * tick counter advanced, the one-shot fired exactly once and freed its
+ * slot, and task_set_period took effect. Reports PASS/FAIL over the
+ * harness EUSART (see pic18fxx5x-hal/src/core/pic18_harness_sim_target.c).
  */
 
 #include "task_manager.h"
 #include "core/epic_harness.h"
 #include "core/hal_irq.h"      /* EPIC_IRQ_Restore: enable GIE for TMR0 */
 
-/** Loop-iteration bound, not a real time unit (see core/epic_harness.h).
- *  1500 iterations is a few hundred thousand instructions, which
- *  finishes well inside a 5000 ms mdb wait budget while accumulating
- *  ~50-100 ticks (see the tick-rate note above), far past the 25 ticks
- *  the checks below need. */
+/** Loop-iteration bound, not a real time unit (see core/epic_harness.h):
+ *  a few hundred thousand instructions, well inside the 5000 ms mdb wait
+ *  budget, while accumulating ~50-100 ticks (far past the 25 the checks
+ *  need). */
 #define SIM_ITERATIONS 1500UL
 
 /** Task periods in ticks: distinct rates so the two periodic tasks'
@@ -73,13 +29,10 @@
  *  run produces, so C's countdown never reaches 0 again. */
 #define PERIOD_FROZEN 0xFFF0U
 
-/** Timer0 tick for the diagnostic run: 1:16 prescaler, reload 0 ->
- *  256 counts x 16 = 4096 instruction cycles per tick (~341 us at
- *  48 MHz). See the tick-rate note above. */
+/** Timer0 tick: 1:16 prescaler, reload 0 -> 256 counts x 16 = 4096
+ *  instruction cycles per tick (~341 us at the 48 MHz instruction rate). */
 #define TICK_RELOAD    0U
 #define TICK_PRESCALER TIMER0_PRESCALER_1_16
-
-/* ───────────────────────── per-task state ─────────────────────────── */
 
 /** Counter carried through a periodic task's `arg`, since locals don't
  *  survive between runs. */
@@ -98,9 +51,6 @@ static run_count_t   arg_b   = { 0U };
 static run_count_t   arg_c   = { 0U };
 static oneshot_arg_t arg_one = { 0U, TASK_ID_INVALID };
 
-/* ───────────────────────── tasks ──────────────────────────────────── */
-
-/** Periodic counter task: bump the count and return. */
 static void task_count(void *arg)
 {
     run_count_t *r = (run_count_t *)arg;
@@ -116,8 +66,6 @@ static void task_oneshot(void *arg)
     o->runs++;
     task_set_period(o->freeze_id, PERIOD_FROZEN);
 }
-
-/* ───────────────────────── main ───────────────────────────────────── */
 
 int main(void)
 {

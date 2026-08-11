@@ -1,15 +1,8 @@
 /**
- * @file    task_manager.c
- * @brief   Cooperative task scheduler implementation (see task_manager.h).
- *
- * @details
- *   `task_manager_tick()` (usually a Timer0 ISR) decrements each enabled
- *   task's countdown and marks due tasks ready; `run_once()` then runs the
- *   ready set in priority order with interrupts re-enabled, so a tick
- *   during a long task arms it for the next round rather than being lost.
- *   The TCB array is the only state shared with interrupt context:
- *   run_once, the mutators, and one-shot slot-freeing each take a brief
- *   critical section so a tick ISR never observes a half-updated TCB.
+ * Cooperative task scheduler (see task_manager.h). The TCB array is the
+ * only state shared with interrupt context: single-byte flag ops are
+ * atomic, and the 16-bit TCB field writes (countdown/period) take a brief
+ * critical section so a tick ISR never observes a torn value.
  */
 
 #include "task_manager.h"
@@ -17,15 +10,10 @@
 #include "core/epic_harness.h"      /* harness_tick / harness_running */
 #include "core/hal_wdt_sleep.h"    /* EPIC_WDT_Refresh (family-neutral) */
 
-/* ───────────────────────── state ─────────────────────────────────── */
-
-/** The task table. Slot 0 is claimed first by task_spawn.
- *  Pinned to bank 2 (0x110, 64 bytes) on the 87XA: the TCBs are read
- *  from interrupt context (the Timer0 tick callback runs
- *  task_manager_tick) and the 64-byte object needs one contiguous
- *  bank; best-fit fragmentation made the epicurus-demo bundle fail
- *  the link (error 1250) once the surrounding layout shifted. Bank 2
- *  keeps the object whole and the placement deterministic. */
+/** The task table. Pinned to bank 2 (0x110, 64 bytes) on the 87XA: the
+ *  TCBs are read from interrupt context and the 64-byte object needs one
+ *  contiguous bank, so the placement is explicit rather than left to
+ *  best-fit fragmentation. */
 static task_t g_tasks[TASK_MGR_MAX_TASKS] EPIC_PLACE(0x110);
 
 /** Monotonic tick counter since the last init (wraps at 65535). */
@@ -42,8 +30,6 @@ static uint16_t arm_countdown(uint16_t period)
 /** TMR0 reload value, rewritten each overflow since Timer0 has no
  *  hardware auto-reload; set by task_manager_attach_timer0. */
 static uint8_t g_tick_reload = 0U;
-
-/* ───────────────────────── lifecycle ─────────────────────────────── */
 
 void task_manager_init(void)
 {
@@ -67,10 +53,8 @@ task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
         return TASK_ID_INVALID;
     }
 
-    /* Publish-last, no GIE manipulation (class-G conversion): the TCB
-     * is fully written before the slot's USED bit is set, and the tick
-     * ISR gates every access on USED, so it can never observe a
-     * half-initialised TCB. */
+    /* Publish-last: the TCB is fully written before the slot's USED bit
+     * is set, and the tick ISR gates every access on USED. */
     task_id_t id = TASK_ID_INVALID;
     for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
         if (!(g_tasks[i].flags & TM_FLAG_USED)) {
@@ -90,13 +74,10 @@ task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
 void task_start(task_id_t id)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
-    /* RETAINED critical section (class-G conversion, deliberate): the
-     * countdown write below is a 16-bit store racing the tick ISR's
-     * 16-bit countdown RMW; the read-twice-retry pattern cannot make a
-     * write atomic, and the publish-last toggle of ENABLED leaves the
-     * ISR's check-then-act window open. This is the correct silicon
-     * idiom (the Finding 10.1 sim-wedge class does not reproduce on
-     * PIC18, where this module's sim gates run). */
+    /* Critical section retained: countdown is a 16-bit store racing the
+     * tick ISR's 16-bit countdown RMW, and retry cannot make a write
+     * atomic; the ENABLED toggle alone leaves the ISR's check-then-act
+     * window open. */
     uint8_t prev = EPIC_IRQ_Disable();
     if (g_tasks[id].flags & TM_FLAG_USED) {
         g_tasks[id].countdown = arm_countdown(g_tasks[id].period);
@@ -109,8 +90,7 @@ void task_start(task_id_t id)
 void task_stop(task_id_t id)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
-    /* Single-byte flag RMW, atomic on both families (class-G
-     * conversion): no GIE manipulation needed. */
+    /* Single-byte flag RMW, atomic on both families: no critical section. */
     if (g_tasks[id].flags & TM_FLAG_USED) {
         g_tasks[id].flags &= (uint8_t)~(TM_FLAG_ENABLED | TM_FLAG_READY);
     }
@@ -118,10 +98,8 @@ void task_stop(task_id_t id)
 
 void task_reset(task_id_t id)
 {
-    /* Re-arm: restart the countdown and ensure the task is enabled. The
-     * critical section is retained (class-G conversion, same rationale
-     * as task_start: a 16-bit countdown write cannot be made atomic by
-     * retry). */
+    /* Same rationale as task_start: the 16-bit countdown write cannot be
+     * made atomic by retry. */
     if (id >= TASK_MGR_MAX_TASKS) return;
     uint8_t prev = EPIC_IRQ_Disable();
     if (g_tasks[id].flags & TM_FLAG_USED) {
@@ -135,17 +113,15 @@ void task_reset(task_id_t id)
 void task_set_period(task_id_t id, uint16_t period_ticks)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
-    /* RETAINED critical section (class-G conversion, same rationale as
-     * task_start): the 16-bit period write races the tick ISR's period
-     * read when a task fires; a torn value would mis-time one fire. */
+    /* Critical section retained: the 16-bit period write races the tick
+     * ISR's period read when a task fires; a torn value mis-times one
+     * fire. */
     uint8_t prev = EPIC_IRQ_Disable();
     if (g_tasks[id].flags & TM_FLAG_USED) {
         g_tasks[id].period = period_ticks;
     }
     EPIC_IRQ_Restore(prev);
 }
-
-/* ───────────────────────── the scheduler ─────────────────────────── */
 
 void task_manager_tick(void)
 {
@@ -158,7 +134,6 @@ void task_manager_tick(void)
             continue;
         }
         if (t->countdown == 0U) {
-            /* Due now; see arm_countdown for the period-1 reload reasoning. */
             t->flags |= TM_FLAG_READY;
             if (t->period != 0U) {
                 t->countdown = arm_countdown(t->period);
@@ -171,10 +146,9 @@ void task_manager_tick(void)
 
 uint16_t task_manager_ticks(void)
 {
-    /* Read-twice-retry (class-G conversion, the epic_tick_get pattern):
-     * the tick ISR increments g_ticks as a 16-bit RMW, so a single
-     * read can tear; retry until two consecutive reads agree. No GIE
-     * manipulation. */
+    /* Read-twice-retry (the epic_tick_get pattern): the tick ISR
+     * increments g_ticks as a 16-bit RMW, so a single read can tear;
+     * retry until two consecutive reads agree. */
     uint16_t v;
     do {
         v = g_ticks;
@@ -184,17 +158,15 @@ uint16_t task_manager_ticks(void)
 
 uint8_t task_manager_run_once(void)
 {
-    /* Snapshot the ready set in priority order and clear each ready flag
-     * under a critical section, then run the tasks with interrupts enabled
-     * so a tick during a long task arms the task for the next round. */
+    /* Snapshot the ready set in priority order, clearing each READY flag,
+     * then run the tasks with interrupts enabled so a tick during a long
+     * task arms the task for the next round. */
     task_id_t order[TASK_MGR_MAX_TASKS];
     uint8_t   n = 0U;
 
-    /* No GIE manipulation (class-G conversion): every flags access here
-     * is a single-byte read or RMW (atomic), and the snapshot is
-     * timing-tolerant by design - a tick that arms a task after its
-     * slot was scanned simply runs it next round ("a new tick re-arms",
-     * the documented behavior for tasks that overrun). */
+    /* No critical section: every flags access here is a single-byte read
+     * or RMW (atomic), and the snapshot is timing-tolerant: a tick that
+     * arms a task after its slot was scanned runs it next round. */
     for (;;) {
         /* Pick the lowest-numbered-priority ready task (ties: lowest slot). */
         int      best      = -1;
@@ -221,13 +193,11 @@ uint8_t task_manager_run_once(void)
         task_t *t = &g_tasks[order[k]];
         t->fn(t->arg);
         if (t->period == 0U) {
-            /* One-shot: free the slot so a periodic task that re-spawns
-             * one-shots does not exhaust the table. The USED gate makes
-             * this safe without a critical section (class-G conversion):
-             * the tick ISR skips a slot whose USED bit is clear, and at
-             * worst a tick that read USED before the clear touches a
-             * freed slot's countdown and sets READY, which run_once
-             * gates out via USED. */
+            /* One-shot: free the slot so a periodic task re-spawning
+             * one-shots cannot exhaust the table. Safe without a
+             * critical section: the ISR skips slots with USED clear,
+             * and a tick that read USED before the clear can only set
+             * READY on a freed slot, which run_once gates out. */
             t->flags = 0U;
             t->fn    = NULL;
         }
@@ -246,10 +216,9 @@ void task_manager_run(void)
 
 uint8_t task_manager_count(void)
 {
-    /* Single-byte flag reads (atomic); no GIE manipulation (class-G
-     * conversion). A spawn/free mid-scan only shifts the count by one
-     * in the racy direction, which is a timing artifact, not a safety
-     * issue for the scheduler. */
+    /* Single-byte flag reads (atomic), no critical section. A spawn/free
+     * mid-scan shifts the count by one at worst: a timing artifact, not
+     * a scheduler safety issue. */
     uint8_t count = 0U;
     for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
         if (g_tasks[i].flags & TM_FLAG_USED) {
@@ -259,11 +228,8 @@ uint8_t task_manager_count(void)
     return count;
 }
 
-/* ───────────────────────── optional tick source ──────────────────── */
-
-/** Trampoline matching the HAL's `void (*)(void)` overflow callback shape.
- *  Reloads TMR0 first (no hardware auto-reload) so every tick has the
- *  same period, then advances the scheduler. */
+/** Timer0 overflow callback: reload TMR0 first (no hardware auto-reload)
+ *  so every tick has the same period, then advance the scheduler. */
 static void task_manager_on_timer0_overflow(void)
 {
     EPIC_TIMER0_WriteCounter(g_tick_reload);
