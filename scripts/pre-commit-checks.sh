@@ -186,6 +186,18 @@ emdash_check() {
 # check, and the vendored m-stack mmc.h #error pattern that 2.13 classified
 # as preprocessorErrorDirective (suppressed below) is reclassified as
 # syntaxError, always inside third_party/ paths this repo does not own.
+#
+# -D'__at(x)=': XC8's __at(addr) placement attribute (direct in epic-math's
+# pic16 backends, via EPIC_PLACE/..._PLACE macros in the target platform
+# headers elsewhere) is not C99; cppcheck 2.19 fails on it, cppcheck 2.13
+# did not. The hook analyzes code the way the host build compiles it, and
+# the host build never places anything, so the empty define is the correct
+# host semantics, not a lie to the analyzer.
+#
+# The include list is sorted so each HAL's include/host precedes its
+# include/target: header resolution then matches the host build (target
+# headers carry the XC8 placement macros the host never sees), which keeps
+# EPIC_PLACE-style macros from expanding to __at inside cppcheck.
 
 cppcheck_check() {
     command -v cppcheck >/dev/null 2>&1 || {
@@ -203,7 +215,7 @@ cppcheck_check() {
     local includes=()
     while IFS= read -r d; do
         includes+=(-I "$d")
-    done < <(find . -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null)
+    done < <(find . -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort)
 
     # --suppress=preprocessorErrorDirective: a #error in #ifndef <build-define>
     # is a common vendored pattern (e.g. m-stack's mmc.h requires the
@@ -217,6 +229,7 @@ cppcheck_check() {
         --suppress=preprocessorErrorDirective \
         --suppress=nullPointerRedundantCheck \
         --suppress=syntaxError:*/third_party/* \
+        -D'__at(x)=' \
         --quiet "${includes[@]}" "${c_files[@]}"; then
         echo "pre-commit: cppcheck found issues in the files above."
         fail=1
