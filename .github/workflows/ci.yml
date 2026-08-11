@@ -130,7 +130,7 @@ jobs:
   # calls run concurrently on separate runners, so the PR wait is the
   # largest family's time, not the sum. Sharded 2026-08-11 (was one
   # ~23 min target job; the per-family jobs land ~8-10 min wall). A
-  # docs-only PR skips everything past the pull in every family.
+  # non-code PR skips everything past the pull in every family.
   family-87xa:
     uses: ./.github/workflows/family-check.yml
     with:
