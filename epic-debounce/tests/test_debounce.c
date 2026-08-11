@@ -1,15 +1,7 @@
 /**
- * @file    test_debounce.c
- * @brief   Host tests for the debounce engine, using epic_tick_init +
- *          epic_harness_tick() to advance real simulated time and a scripted
- *          mock read callback for bounce sequences.
- *
- * @details
- *   Exercises the exact code that ships on-target under genuinely real
- *   timing semantics (simulated tick advancement, not an injected clock).
- *   A scripted `debounce_read_fn` returns a sequence of raw reads (the
- *   "bounce pattern") indexed by call count; the test advances 1 ms
- *   between polls.
+ * Host tests for the debounce engine: scripted bounce sequences through
+ * a mock `debounce_read_fn`, with real simulated time advanced 1 ms per
+ * poll via epic_tick_init + epic_harness_tick.
  */
 
 #include "debounce.h"
@@ -24,12 +16,10 @@
 static int g_pass = 0, g_fail = 0;
 #define CHECK(c, m) do { if (c) { g_pass++; } else { printf("FAIL: %s\n", m); g_fail++; } } while (0)
 
-/* ---- scripted mock read ---- */
 static bool g_script[512];
 static int  g_idx;
 static bool mock_read(void *ctx) { (void)ctx; return g_script[g_idx++]; }
 
-/* ---- time advancement (pump until the tick counter increments by 1) ---- */
 static void advance_one_tick(void)
 {
     uint32_t t0 = epic_tick_get();
@@ -37,14 +27,12 @@ static void advance_one_tick(void)
 }
 static void advance_ms(uint32_t ms) { for (uint32_t i = 0; i < ms; i++) advance_one_tick(); }
 
-/* ---- helper: one poll step (advance 1 ms, poll, return event) ---- */
 static debounce_event_t step(debounce_t *db)
 {
     advance_ms(1);
     return debounce_poll(db);
 }
 
-/* ================================================================ */
 static void test_clean_transition(void)
 {
     /* Script: false for calls 0..14, true for 15..29, false for 30+.
@@ -168,7 +156,6 @@ static void test_two_independent_instances(void)
     CHECK(debounce_is_active(&dbB) == false, "indep: B stays inactive");
 }
 
-/* ---- a second read fn for the true-concurrent-independence test ---- */
 static bool g_script2[512];
 static int  g_idx2;
 static bool mock_read2(void *ctx) { (void)ctx; return g_script2[g_idx2++]; }

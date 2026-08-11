@@ -1,12 +1,7 @@
 /**
- * @file    example_debounce_hal.c
- * @brief   Two debounce instances on two HAL GPIO pins (RA0/RA1), a press
- *          on either toggles the LED on RB0.
- *
- * @details
- *   The read callback wraps `EPIC_GPIO_ReadPin` through a small `pin_ctx_t`,
- *   so the debounce core never sees a HAL type. Host sim drives RA0/RA1
- *   high/low to simulate presses; on target the pins read real switches.
+ * Two debounce instances on HAL GPIO pins RA0/RA1; a press on either
+ * toggles the LED on RB0. The read callback wraps `EPIC_GPIO_ReadPin`
+ * in a `pin_ctx_t`, so the debounce core never sees a HAL type.
  */
 
 #include "debounce.h"
@@ -21,8 +16,6 @@
 #define SIM_CYCLES 3000000UL
 #define DB_MS      20u
 
-/* The pin context the read callback uses, demonstrates "any gpio": the
- * debounce core never sees GPIO_TypeDef, only the bool the callback returns. */
 typedef struct { uint8_t port; uint16_t pin; } pin_ctx_t;
 
 static bool read_pin(void *ctx)
@@ -36,7 +29,6 @@ int main(void)
     epic_harness_init(SIM_CYCLES);
     epic_tick_init(FOSC_HZ);
 
-    /* Two button inputs on RA0, RA1; one LED output on RB0. */
     EPIC_GPIO_Init(GPIOA, GPIO_PIN_0 | GPIO_PIN_1, GPIO_MODE_INPUT);
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
     EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
