@@ -1,17 +1,7 @@
 /**
- * @file    core/epic_harness.h
- * @brief   Build-agnostic test/firmware harness: four functions let one
- *          example source build for the host simulator and a real XC8
- *          target with no `#ifdef`, via a per-family host implementation
- *          and the family-blind target no-ops in this shared layer.
- *
- * @details
- *   Host: a bounded, terminating program that pumps simulated time and
- *   reports pass/fail to stdout. Target: firmware, time advances on its
- *   own, `main()` never returns, no stdout. The host harness also wires
- *   @ref epic_dispatch_all_irqs (each family's own IRQ fan-out, same
- *   name everywhere) as the simulator's IRQ callback; on target, the
- *   interrupt vector calls the same function directly.
+ * Build-agnostic test/firmware harness: one example source builds for
+ * the host simulator and a real XC8 target with no `#ifdef`; host is a
+ * bounded program that pumps simulated time, target runs forever.
  */
 
 #ifndef EPIC_HARNESS_H
