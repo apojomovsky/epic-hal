@@ -6,7 +6,7 @@
 # downloads with an Akamai JS bot-challenge, so CI extracts them from a
 # private GHCR assets image into vendor/ and this Dockerfile just COPYs them in.
 #
-# cmake/build-essential: for local `make test` only (host-tests.yml installs
+# cmake/build-essential: for local `make test` only (ci.yml's host job installs
 # its own). MPLAB X: 8-bit-only, pruned in the same RUN as the install.
 
 FROM debian:12-slim

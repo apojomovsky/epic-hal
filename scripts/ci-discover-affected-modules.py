@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Decide which CMake modules host-tests.yml's discover job must build and
+"""Decide which CMake modules ci.yml's host job must build and
 test: if every changed file is on the shared non-code allowlist
 (ci_noncode_check.py), the matrix is empty and the job is skipped;
 otherwise the affected set is the transitive closure of the modules each

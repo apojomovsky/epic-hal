@@ -6,7 +6,7 @@
 #
 # Operates on staged content, except the whitespace fixer, which edits the
 # working-tree file in place and asks you to re-`git add` it. CI reuses this
-# same script (host-tests.yml) against a committed ref range: set
+# same script (ci.yml's host job) against a committed ref range: set
 # PRE_COMMIT_BASE_REF to the ref to diff against; unset = local staged-index
 # hook.
 

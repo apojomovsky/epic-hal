@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Local reproduction of .github/workflows/sim-tests.yml's sim-test job, for
+# Local reproduction of the MPLAB SIM gate in ci.yml's target job, for
 # fast iteration without a GH Actions round trip: emits the HARNESS=sim
 # build script on the host (python3), pulls the same private GHCR toolchain
 # image CI uses (tag formula read from the Dockerfile ARGs, so a cache hit

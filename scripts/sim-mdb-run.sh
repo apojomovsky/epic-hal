@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run a module's pre-emitted HARNESS=sim build under MPLAB SIM (mdb) and check
-# the EPIC_HARNESS_RESULT marker. Shared by sim-tests.yml, ci-target-sim.sh, and
-# sim-test-local.sh. Container-only (xc8-cc + mdb.sh, no python3): the
+# the EPIC_HARNESS_RESULT marker. Shared by ci.yml's target job, family-check.yml,
+# and scripts/sim-test-local.sh. Container-only (xc8-cc + mdb.sh, no python3): the
 # pre-emitted build-sim/<module>/<mcu>/build.sh from `epic_build.py build --variant sim`.
 #
 # Usage: sim-mdb-run.sh <family> <mcu> <device> <module> [wait_ms] [mode] [extra_mdb] [eeprom_writes]
