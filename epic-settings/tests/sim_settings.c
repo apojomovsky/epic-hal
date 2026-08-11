@@ -41,9 +41,12 @@ typedef struct {
 static const settings_blob_t g_saved    = { 2u, 0x77u, 0x01u, 0x05u };
 static const settings_blob_t g_defaults = { 1u, 0xFAu, 0x00u, 0x03u };
 
-/* Direct byte write through the HAL, mirroring the module's own write
- * path (start, wait for EEIF, clear flag) so the corruption is a real
- * EEPROM write, not a register poke. */
+/**
+ * @brief Direct byte write through the HAL.
+ *
+ * Mirrors the module's own write path (start, wait for EEIF, clear flag)
+ * so the corruption is a real EEPROM write, not a register poke.
+ */
 static void eeprom_write_byte(uint8_t addr, uint8_t data)
 {
     (void)EPIC_EEPROM_WriteByte(addr, data);
@@ -53,11 +56,18 @@ static void eeprom_write_byte(uint8_t addr, uint8_t data)
     EPIC_EEPROM_ClearITFlag();
 }
 
+/**
+ * @brief Compare two settings blobs byte-for-byte.
+ */
 static int blob_eq(const settings_blob_t *a, const settings_blob_t *b)
 {
     return memcmp(a, b, sizeof(settings_blob_t)) == 0;
 }
 
+/**
+ * @brief Run the sim: save, load, corrupt, and fall back to defaults,
+ *        reporting PASS/FAIL over the harness USART.
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

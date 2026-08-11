@@ -117,9 +117,12 @@ static uint8_t     g_log_len;
 static delay_expect_t g_dlog[DELAY_CAP];
 static uint8_t        g_dlog_len;
 
-/* The send op is recorded, not forwarded to the real transport: the
- * real gpio4_send cannot be invoked through the ops pointer under
- * this toolchain (see the file comment's finding). */
+/**
+ * @brief Record a send op instead of forwarding to the real transport.
+ *
+ * The real gpio4_send cannot be invoked through the ops pointer under
+ * this toolchain (see the file comment's finding).
+ */
 static void recorder_send(void *ctx, uint8_t rs, uint8_t byte)
 {
     (void)ctx;
@@ -130,6 +133,9 @@ static void recorder_send(void *ctx, uint8_t rs, uint8_t byte)
     }
 }
 
+/**
+ * @brief Record a delay_us op (kind 0) for later assertion.
+ */
 static void recorder_delay_us(void *ctx, uint32_t us)
 {
     (void)ctx;
@@ -140,6 +146,9 @@ static void recorder_delay_us(void *ctx, uint32_t us)
     }
 }
 
+/**
+ * @brief Record a delay_ms op (kind 1) for later assertion.
+ */
 static void recorder_delay_ms(void *ctx, uint32_t ms)
 {
     (void)ctx;
@@ -150,10 +159,13 @@ static void recorder_delay_ms(void *ctx, uint32_t ms)
     }
 }
 
-/* Absolute Bank-0 read of PORTB (address 0x06) through the
- * literal-token path: clear both RP bits, read, bank out, hand the
- * value over through the common-RAM scratch byte, the same discipline
- * as EPIC_BANK1_READ8. */
+/**
+ * @brief Read PORTB (address 0x06) through the literal-token path.
+ *
+ * Clears both RP bits, reads, banks out, and hands the value over
+ * through the common-RAM scratch byte, the same discipline as
+ * EPIC_BANK1_READ8.
+ */
 static uint8_t portb_latch_read(void)
 {
     uint8_t v;
@@ -166,10 +178,14 @@ static uint8_t portb_latch_read(void)
     return v;
 }
 
-/* failure reporting (same shape as pic16f87xa-hal's probe) */
-
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief Report a check failure over the harness USART.
+ *
+ * Same shape as pic16f87xa-hal's probe: logs 'F' plus the failing
+ * index in hex.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -190,6 +206,10 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
+/**
+ * @brief Run the sim: drive the LCD via the recorder transport and
+ *        report PASS/FAIL over the harness USART.
+ */
 int main(void)
 {
     uint8_t trisb;

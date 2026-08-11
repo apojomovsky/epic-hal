@@ -10,6 +10,7 @@
 #define FOSC_HZ 20000000UL
 #endif
 
+/** @brief On-target link smoke: configure I2C and SPI masters. */
 int main(void)
 {
     epic_harness_init(0UL);

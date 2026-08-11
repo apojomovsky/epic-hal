@@ -14,6 +14,10 @@
     if (!(cond)) { printf("FAIL: %s\n", msg); return 1; } \
 } while (0)
 
+/**
+ * @brief Smoke-test the comparator and voltage-reference drivers on the
+ *        sim backend.
+ */
 int main(void)
 {
     /* --- Comparator --- */

@@ -12,6 +12,11 @@
     if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
 } while (0)
 
+/** @brief  Comparator driver smoke test.
+ *
+ *          Verifies CMCON programming, sim-driven C1/C2 outputs with CMIF,
+ *          flag tracking, and deinit.
+ */
 int main(void)
 {
     epic_harness_init(16U);

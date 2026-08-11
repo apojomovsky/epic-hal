@@ -12,6 +12,10 @@
     if (!(cond)) { printf("FAIL: %s\n", msg); return 1; } \
 } while (0)
 
+/**
+ * @brief Smoke-test the Parallel Slave Port driver: enable/disable,
+ *        buffer flags and TRISE state.
+ */
 int main(void)
 {
     pic16f87xa_sim_reset();

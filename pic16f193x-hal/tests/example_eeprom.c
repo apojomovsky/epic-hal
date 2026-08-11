@@ -14,8 +14,16 @@
 #include "peripherals/pic16f193x_eeprom.h"
 #include "core/epic_harness.h"
 
+/**
+ * @brief Freeze the target so the harness PASS marker stays set; no-op
+ * on the host build.
+ */
 extern void pic16f193x_harness_halt(void);
 
+/**
+ * @brief EEPROM smoke test: set WREN on EECON1 via a banked
+ * read-modify-write and verify it landed.
+ */
 int main(void)
 {
     epic_harness_init(1UL);

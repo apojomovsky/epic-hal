@@ -7,6 +7,9 @@
 
 #include <stdio.h>
 
+/**
+ * @brief Read block 0 and print its first 16 bytes over epic-serial.
+ */
 int main(void)
 {
     epic_serial_init(48000000UL, 9600UL);

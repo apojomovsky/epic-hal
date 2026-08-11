@@ -76,7 +76,21 @@ typedef struct {
 
 /* init / deinit. */
 
+/**
+ * @brief  Initialize the MSSP module with the given handle. Programs
+ *         SSPCON/SSPSTAT (mode, clock edge/polarity/sample) and installs
+ *         the transfer callback.
+ * @param h handle with Mode, ClockEdge, ClockPolarity, SamplePhase,
+ *        SSPADD, TransferCallback.
+ * @return EPIC_OK on success, EPIC_ERROR if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h);
+
+/**
+ * @brief  De-initialize the MSSP module. Disables the module, clears
+ *         the callback and returns SSPCON/SSPSTAT to reset.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_SSP_DeInit(void);
 
 /* SPI transfer. */
@@ -85,19 +99,33 @@ EPIC_StatusTypeDef EPIC_SSP_DeInit(void);
  * @brief  Write a byte to SSPBUF (and thus to the SSPSR if idle).
  *         Returns 0xFFFF if WCOL (write collision) was set, in which
  *         case the byte was *not* written and the user should retry.
+ * @param data the byte to transmit.
+ * @return 0xFFFF on write collision, else the received byte in the
+ *         low 8 bits (undefined for a pure transmit).
  */
 uint16_t EPIC_SSP_WriteByte(uint8_t data);
 
-/** Read the most recently received byte from SSPBUF. */
+/**
+ * @brief Read the most recently received byte from SSPBUF.
+ * @return the byte in SSPBUF.
+ */
 uint8_t  EPIC_SSP_ReadByte(void);
 
-/** Returns 1 if SSPBUF holds an unread byte (BF = 1). */
+/**
+ * @brief Returns 1 if SSPBUF holds an unread byte (BF = 1).
+ * @return 1 if the buffer holds data, 0 otherwise.
+ */
 uint8_t  EPIC_SSP_IsBufferFull(void);
 
-/** Returns 1 if a write collision was detected. */
+/**
+ * @brief Returns 1 if a write collision was detected.
+ * @return 1 if WCOL is set, 0 otherwise.
+ */
 uint8_t  EPIC_SSP_HasWriteCollision(void);
 
-/** Clear the WCOL flag (must be done in software per §9.3.2). */
+/**
+ * @brief Clear the WCOL flag (must be done in software per §9.3.2).
+ */
 void     EPIC_SSP_ClearWriteCollision(void);
 
 /* I²C master helpers. */
@@ -106,29 +134,48 @@ void     EPIC_SSP_ClearWriteCollision(void);
  * @brief  Compute SSPADD for an I²C master baud rate.
  *         DS39582B §9.4.2: Fscl = Fosc / (4 × (SSPADD + 1))
  *         → SSPADD = (Fosc / (4 × Fscl)) - 1.
+ * @param fosc_hz the oscillator frequency in Hz.
+ * @param fscl_hz the desired I²C clock frequency in Hz.
+ * @return the SSPADD value to load, or 0xFFFF if `fscl_hz` is 0.
  */
 uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz);
 
-/** Issue a Start condition (sets SSPCON2<SEN>). */
+/**
+ * @brief Issue a Start condition (sets SSPCON2<SEN>).
+ */
 void EPIC_SSP_Start(void);
 
-/** Issue a Repeated Start condition. */
+/**
+ * @brief Issue a Repeated Start condition.
+ */
 void EPIC_SSP_RepeatedStart(void);
 
-/** Issue a Stop condition. */
+/**
+ * @brief Issue a Stop condition.
+ */
 void EPIC_SSP_Stop(void);
 
-/** Begin a receive (master mode). Sets SSPCON2<RCEN>. */
+/**
+ * @brief Begin a receive (master mode). Sets SSPCON2<RCEN>.
+ */
 void EPIC_SSP_ReceiveEnable(void);
 
-/** Transmit an ACK (master receive). */
+/**
+ * @brief Transmit an ACK (master receive).
+ */
 void EPIC_SSP_AcknowledgeEnable(void);
 
-/** Returns 1 if an ACK was received from the slave (ACKSTAT). */
+/**
+ * @brief Returns 1 if an ACK was received from the slave (ACKSTAT).
+ * @return 1 if the slave acknowledged, 0 otherwise.
+ */
 uint8_t EPIC_SSP_AcknowledgeStatus(void);
 
 /* interrupts. */
 
+/**
+ * @brief Weak SSP ISR, override in user code.
+ */
 void SSP_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_SSP_H */

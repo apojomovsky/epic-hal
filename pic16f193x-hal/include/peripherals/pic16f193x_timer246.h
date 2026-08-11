@@ -84,23 +84,103 @@ typedef struct {
     .OverflowCallback = NULL,                                          \
 }
 
+/**
+ * @brief  Configure one Timer2/4/6 instance from the handle: halt the
+ *         timer, clear the TMRxIF flag and enable/disable the TMRx
+ *         interrupt according to the OverflowCallback. Does not start
+ *         the timer.
+ *
+ * @param  h  handle with Instance, prescaler, postscaler and callback
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL or the
+ *         instance is not Timer2/4/6
+ */
 EPIC_StatusTypeDef EPIC_TIMER246_Init(const TIMER246_HandleTypeDef *h);
+
+/**
+ * @brief  Disable the TMRx interrupt, clear its flag, restore T*CON to
+ *         the POR value, zero TMRx, restore PRx to 0xFF and drop the
+ *         stored handle for the instance.
+ *
+ * @param  inst  TIMER246_INSTANCE_2, _4 or _6
+ * @return EPIC_OK
+ */
 EPIC_StatusTypeDef EPIC_TIMER246_DeInit(TIMER246_InstanceTypeDef inst);
+
+/**
+ * @brief  Start the instance: write PRx before enabling TMRxON (to
+ *         avoid a spurious first match), zero TMRx and program T*CON
+ *         with postscaler, TMRxON and prescaler.
+ *
+ * @param  h  handle holding the instance, period, prescaler and
+ *            postscaler
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL or the
+ *         instance is not Timer2/4/6
+ */
 EPIC_StatusTypeDef EPIC_TIMER246_Start(const TIMER246_HandleTypeDef *h);
+
+/**
+ * @brief  Stop the instance by clearing T*CON<TMRxON>.
+ *
+ * @param  inst  TIMER246_INSTANCE_2, _4 or _6
+ * @return EPIC_OK
+ */
 EPIC_StatusTypeDef EPIC_TIMER246_Stop(TIMER246_InstanceTypeDef inst);
 
+/**
+ * @brief  Read the current counter value of the instance.
+ *
+ * @param  inst  TIMER246_INSTANCE_2, _4 or _6
+ * @return The current TMRx value, 0..255
+ */
 uint8_t  EPIC_TIMER246_ReadCounter(TIMER246_InstanceTypeDef inst);
+
+/**
+ * @brief  Write the counter value of the instance.
+ *
+ * @param  inst   TIMER246_INSTANCE_2, _4 or _6
+ * @param  value  counter value 0..255
+ */
 void     EPIC_TIMER246_WriteCounter(TIMER246_InstanceTypeDef inst, uint8_t value);
 
+/**
+ * @brief  Read the period register (PRx) of the instance.
+ *
+ * @param  inst  TIMER246_INSTANCE_2, _4 or _6
+ * @return The current PRx value, 0..255
+ */
 uint8_t  EPIC_TIMER246_ReadPeriod(TIMER246_InstanceTypeDef inst);
+
+/**
+ * @brief  Write the period register (PRx) of the instance.
+ *
+ * @param  inst    TIMER246_INSTANCE_2, _4 or _6
+ * @param  period  period value 0..255
+ */
 void     EPIC_TIMER246_WritePeriod(TIMER246_InstanceTypeDef inst, uint8_t period);
 
+/**
+ * @brief  Convert a prescaler enum to its integer ratio (1, 4, 16).
+ *
+ * @param  p  one of @ref TIMER246_PrescalerTypeDef
+ * @return The prescaler divider ratio, or 1 for an invalid enum value
+ */
 uint16_t EPIC_TIMER246_PrescalerToRatio(TIMER246_PrescalerTypeDef p);
+
+/**
+ * @brief  Convert a postscaler enum to its integer ratio (1..16).
+ *
+ * @param  p  one of @ref TIMER246_PostscalerTypeDef
+ * @return The postscaler divider ratio, or 1 for an invalid enum value
+ */
 uint16_t EPIC_TIMER246_PostscalerToRatio(TIMER246_PostscalerTypeDef p);
 
-/** Weak Timer2/4/6 ISRs, one per instance, override in user code. */
+/** @brief Weak Timer2 ISR, override in user code. */
 void TIMER2_IRQHandler(void) EPIC_WEAK;
+
+/** @brief Weak Timer4 ISR, override in user code. */
 void TIMER4_IRQHandler(void) EPIC_WEAK;
+
+/** @brief Weak Timer6 ISR, override in user code. */
 void TIMER6_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F193X_TIMER246_H */

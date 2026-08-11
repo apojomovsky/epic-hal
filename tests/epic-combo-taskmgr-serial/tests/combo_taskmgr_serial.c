@@ -149,6 +149,9 @@ static uint8_t g_drain_failed = 0u;
 
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -170,9 +173,13 @@ static void fail(uint8_t idx)
 
 /* ───────────────────────── tasks ──────────────────────────────────── */
 
-/** Periodic writer task: bump its run count and push its payload into
- *  the epic-serial TX ring (never blocks: one round pushes at most
- *  9 bytes into a 32-byte ring that the drain empties every round). */
+/**
+ * @brief Periodic writer task: bump its run count and push its payload.
+ *
+ * Pushes into the epic-serial TX ring (never blocks: one round pushes
+ * at most 9 bytes into a 32-byte ring that the drain empties every
+ * round).
+ */
 static void task_writer_a(void *arg)
 {
     run_count_t *r = (run_count_t *)arg;
@@ -183,6 +190,9 @@ static void task_writer_a(void *arg)
     g_pushed = (uint16_t)(g_pushed + PAYLOAD_LEN);
 }
 
+/**
+ * @brief Periodic writer task: bump its run count and push its payload.
+ */
 static void task_writer_b(void *arg)
 {
     run_count_t *r = (run_count_t *)arg;
@@ -193,6 +203,9 @@ static void task_writer_b(void *arg)
     g_pushed = (uint16_t)(g_pushed + PAYLOAD_LEN);
 }
 
+/**
+ * @brief Periodic writer task: bump its run count and push its payload.
+ */
 static void task_writer_c(void *arg)
 {
     run_count_t *r = (run_count_t *)arg;
@@ -205,13 +218,16 @@ static void task_writer_c(void *arg)
 
 /* ───────────────────────── TX drain ───────────────────────────────── */
 
-/** Paced drain of the epic-serial TX ring through the real TX ISR
- *  entry: wait for the shift register to empty (so the byte in TXREG
- *  has fully left), then pop one ring byte via the manual dispatch
- *  (which loads TXREG), and repeat. Same per-byte pacing the console
- *  gate's drain uses, so the uart1io capture receives every byte
- *  intact. Each dispatch also services any pending TMR0IF, so the
- *  scheduler tick advances in real simulated time here too. */
+/**
+ * @brief Paced drain of the epic-serial TX ring through the real TX ISR entry.
+ *
+ * Wait for the shift register to empty (so the byte in TXREG has
+ * fully left), then pop one ring byte via the manual dispatch (which
+ * loads TXREG), and repeat. Same per-byte pacing the console gate's
+ * drain uses, so the uart1io capture receives every byte intact. Each
+ * dispatch also services any pending TMR0IF, so the scheduler tick
+ * advances in real simulated time here too.
+ */
 static void drain_tx(void)
 {
     uint32_t outer = 0UL;
@@ -234,8 +250,11 @@ static void drain_tx(void)
     }
 }
 
-/** Log a 16-bit value as four hex digits (the sim harness prints
- *  fmt verbatim, no varargs). */
+/**
+ * @brief Log a 16-bit value as four hex digits.
+ *
+ * The sim harness prints fmt verbatim, no varargs.
+ */
 static void log_u16(uint16_t v)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -250,6 +269,9 @@ static void log_u16(uint16_t v)
 
 /* ───────────────────────── main ───────────────────────────────────── */
 
+/**
+ * @brief Run the epic-taskmgr + epic-serial cooperative-scheduler gate (C8).
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

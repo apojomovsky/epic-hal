@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
+/** @brief Emit the golden-vector header prologue (guard, includes). */
 static void hdr(void)
 {
     printf("/*\n");
@@ -26,8 +27,10 @@ static void hdr(void)
     printf("#include <stdint.h>\n\n");
 }
 
+/** @brief Emit the golden-vector header epilogue (endif). */
 static void ftr(void) { printf("#endif /* PIC_MATH_GOLDEN_VECTORS_H */\n"); }
 
+/** @brief Emit the mul_u8 golden-vector table. */
 static void mul_u8(void)
 {
     static const uint8_t a[] = {0,0x0C,0xFF,0x80};
@@ -39,6 +42,7 @@ static void mul_u8(void)
     printf("};\n#define GV_MUL_U8_N (sizeof(gv_mul_u8)/sizeof(gv_mul_u8[0]))\n\n");
 }
 
+/** @brief Emit the mul_u16 golden-vector table. */
 static void mul_u16(void)
 {
     static const uint16_t a[] = {1,0x0102,0xFFFF,0x8000};
@@ -50,6 +54,7 @@ static void mul_u16(void)
     printf("};\n#define GV_MUL_U16_N (sizeof(gv_mul_u16)/sizeof(gv_mul_u16[0]))\n\n");
 }
 
+/** @brief Emit the mul_s16 golden-vector table. */
 static void mul_s16(void)
 {
     static const int16_t a[] = {1,-258,INT16_MIN,-1};
@@ -61,6 +66,7 @@ static void mul_s16(void)
     printf("};\n#define GV_MUL_S16_N (sizeof(gv_mul_s16)/sizeof(gv_mul_s16[0]))\n\n");
 }
 
+/** @brief Emit the divmod_u16 golden-vector table. */
 static void divmod_u16(void)
 {
     struct { uint16_t n, d; } in[] = {{7,2},{0xFFFF,2},{0x8000,0x8000},{1234,0}};
@@ -73,6 +79,7 @@ static void divmod_u16(void)
     printf("};\n#define GV_DIV_U16_N (sizeof(gv_div_u16)/sizeof(gv_div_u16[0]))\n\n");
 }
 
+/** @brief Emit the divmod_s16 golden-vector table. */
 static void divmod_s16(void)
 {
     struct { int16_t n, d; } in[] = {{-7,2},{7,-2},{INT16_MIN,-1},{1234,0}};
@@ -85,6 +92,7 @@ static void divmod_s16(void)
     printf("};\n#define GV_DIV_S16_N (sizeof(gv_div_s16)/sizeof(gv_div_s16[0]))\n\n");
 }
 
+/** @brief Emit the divmod_u32_16 golden-vector table. */
 static void divmod_u32_16(void)
 {
     struct { uint32_t n; uint16_t d; } in[] = {{0x00020000u,1u},{0x00010506u,0x0103u},{1000u,0u}};
@@ -97,6 +105,7 @@ static void divmod_u32_16(void)
     printf("};\n#define GV_DIV_U32_16_N (sizeof(gv_div_u32_16)/sizeof(gv_div_u32_16[0]))\n\n");
 }
 
+/** @brief Emit the add_u16 and sub_u16 golden-vector tables. */
 static void addsub(void)
 {
     struct { uint16_t a,b; } in[] = {{0xFFFF,0x0002},{0x0002,0xFFFF},{0x8000,0x8000},{0,0}};
@@ -112,6 +121,7 @@ static void addsub(void)
     printf("};\n#define GV_SUB_U16_N (sizeof(gv_sub_u16)/sizeof(gv_sub_u16[0]))\n\n");
 }
 
+/** @brief Emit the negate_s16 and negate_s32 golden-vector tables. */
 static void negate(void)
 {
     int16_t s[] = {0,5,INT16_MIN,-1};
@@ -126,6 +136,7 @@ static void negate(void)
     printf("};\n#define GV_NEG_S32_N (sizeof(gv_neg_s32)/sizeof(gv_neg_s32[0]))\n\n");
 }
 
+/** @brief Emit the bcd_add8 and bcd_sub8 golden-vector tables. */
 static void bcd_adjust(void)
 {
     struct { uint8_t a, b; } ab[] = {{0x55,0x55},{0x12,0x34},{0x99,0x01},{0x00,0x00}};
@@ -141,6 +152,7 @@ static void bcd_adjust(void)
     printf("};\n#define GV_BCD_SUB8_N (sizeof(gv_bcd_sub8)/sizeof(gv_bcd_sub8[0]))\n\n");
 }
 
+/** @brief Emit the complete golden-vector header to stdout. */
 int main(void)
 {
     hdr();

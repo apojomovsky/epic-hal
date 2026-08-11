@@ -17,6 +17,10 @@ static volatile uint32_t g_overflows   = 0;
 static volatile uint32_t g_first_cycle = 0;
 static uint32_t g_cycle = 0;
 
+/** @brief  Timer2 overflow callback.
+ *
+ *          Counts overflows and records the cycle of the first one.
+ */
 static void on_t2_overflow(void)
 {
     g_overflows++;
@@ -25,6 +29,10 @@ static void on_t2_overflow(void)
     }
 }
 
+/** @brief  Timer2 driver smoke test.
+ *
+ *          Counts overflows and the first-overflow cycle over the sim run.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

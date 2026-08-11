@@ -47,10 +47,14 @@ enum {
 
 static mock_i2c_t g_i2c;
 
+/** @brief Mock I2C start: enter the address phase. */
 static void mock_i2c_start(void)        { g_i2c.phase = MOCK_I2C_ADDR; }
+/** @brief Mock I2C repeated start: enter the read-address phase. */
 static void mock_i2c_repeated_start(void) { g_i2c.phase = MOCK_I2C_RADDR; }
+/** @brief Mock I2C stop: no-op. */
 static void mock_i2c_stop(void)         { }
 
+/** @brief Mock I2C write byte: drive the mock register file. */
 static int mock_i2c_write_byte(uint8_t b)
 {
     if (g_i2c.phase == MOCK_I2C_ADDR || g_i2c.phase == MOCK_I2C_RADDR) {
@@ -77,6 +81,7 @@ static int mock_i2c_write_byte(uint8_t b)
     return 1;
 }
 
+/** @brief Mock I2C read byte: return from the register file. */
 static uint8_t mock_i2c_read_byte(int ack)
 {
     (void)ack;
@@ -100,14 +105,17 @@ typedef struct {
 static mock_spi_t g_spi;
 static int g_spi_sel_count = 0;
 
+/** @brief Mock SPI select: expect the control byte next. */
 static void mock_spi_select(void)
 {
     g_spi_sel_count++;
     g_spi.expect_ctrl = 1;
     g_spi.expect_reg = 0;
 }
+/** @brief Mock SPI deselect: no-op. */
 static void mock_spi_deselect(void) { }
 
+/** @brief Mock SPI exchange: handle control, register, and data bytes. */
 static uint8_t mock_spi_exchange(uint8_t b)
 {
     if (g_spi.expect_ctrl) {
@@ -145,6 +153,7 @@ typedef struct {
 
 static mock_transport_t g_mock;
 
+/** @brief Injectable transport read: serve the mock register file. */
 static int mock_read_reg(void *ctx, uint8_t reg, uint8_t *buf, int n)
 {
     mock_transport_t *m = (mock_transport_t *)ctx;
@@ -157,6 +166,7 @@ static int mock_read_reg(void *ctx, uint8_t reg, uint8_t *buf, int n)
     return n;
 }
 
+/** @brief Injectable transport write: store into the mock register file. */
 static int mock_write_reg(void *ctx, uint8_t reg, const uint8_t *buf, int n)
 {
     mock_transport_t *m = (mock_transport_t *)ctx;
@@ -177,6 +187,7 @@ static const epic_mcp23x17_transport_t g_mock_transport = {
     mock_read_reg, mock_write_reg, &g_mock
 };
 
+/** @brief Reset and wire the mock I2C device as the epic-bus ops. */
 static void setup_i2c(uint8_t dev)
 {
     memset(&g_i2c, 0, sizeof(g_i2c));
@@ -190,6 +201,7 @@ static void setup_i2c(uint8_t dev)
     epic_bus_set_i2c_ops(&ops);
 }
 
+/** @brief Reset and wire the mock SPI device as the epic-bus ops. */
 static void setup_spi(uint8_t dev)
 {
     memset(&g_spi, 0, sizeof(g_spi));
@@ -203,6 +215,7 @@ static void setup_spi(uint8_t dev)
     epic_bus_set_spi_ops(&ops);
 }
 
+/** @brief Exercise the register accessors' semantics on a handle. */
 static void run_semantics(epic_mcp23x17_handle_t *h, const char *label)
 {
     uint8_t v;
@@ -272,6 +285,7 @@ static void run_semantics(epic_mcp23x17_handle_t *h, const char *label)
     (void)label;
 }
 
+/** @brief Exercise the GPIO-mimic layer (Init/WritePin/TogglePin). */
 static void run_mimic(epic_mcp23x17_handle_t *h)
 {
     uint8_t dir, pu;
@@ -342,6 +356,7 @@ static void run_mimic(epic_mcp23x17_handle_t *h)
     g_mock.nack = 0;
 }
 
+/** @brief Run the I2C, SPI, and injectable-transport test paths. */
 int main(void)
 {
     epic_mcp23x17_handle_t h;

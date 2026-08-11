@@ -11,9 +11,10 @@
 
 /* C reference of the restoring algorithm the asm mirrors. */
 
-/* 16/16: AN526 layout -- acca=num becomes the quotient, accb=0 becomes the
- * remainder; each iteration shifts accb:acca left (acca MSB -> accb LSB),
- * compares accb to den, subtracts and ORs a 1 into acca LSB if it fits. */
+/** @brief C reference of the 16/16 restoring divide the asm mirrors.
+ *  AN526 layout -- acca=num becomes the quotient, accb=0 becomes the
+ *  remainder; each iteration shifts accb:acca left (acca MSB -> accb LSB),
+ *  compares accb to den, subtracts and ORs a 1 into acca LSB if it fits. */
 static pic_math_udiv16_t ref_divmod_u16_algo(uint16_t num, uint16_t den)
 {
     uint16_t acca = num, accb = 0;
@@ -27,13 +28,14 @@ static pic_math_udiv16_t ref_divmod_u16_algo(uint16_t num, uint16_t den)
     return r;
 }
 
-/* 32/16: 32 iterations; the 32-bit quotient builds in `acc`, the remainder
- * in `rem`. The remainder is kept in a 32-bit variable because the shift
- * `rem = rem*2 + bit` can produce up to 2*den-1, which overflows 16 bits
- * when den > 0x8000 -- the 17th bit is the carry the asm version handles via
- * STATUS.C. After the subtract, rem < den <= 0xFFFF so the low 16 bits are
- * the remainder. We return the low 16 bits of the quotient (truncated per the
- * documented contract). */
+/** @brief C reference of the 32/16 restoring divide the asm mirrors.
+ *  32 iterations; the 32-bit quotient builds in `acc`, the remainder
+ *  in `rem`. The remainder is kept in a 32-bit variable because the shift
+ *  `rem = rem*2 + bit` can produce up to 2*den-1, which overflows 16 bits
+ *  when den > 0x8000 -- the 17th bit is the carry the asm version handles via
+ *  STATUS.C. After the subtract, rem < den <= 0xFFFF so the low 16 bits are
+ *  the remainder. We return the low 16 bits of the quotient (truncated per the
+ *  documented contract). */
 static pic_math_udiv16_t ref_divmod_u32_16_algo(uint32_t num, uint16_t den)
 {
     uint32_t acc = num;
@@ -53,6 +55,7 @@ static const uint16_t U16_BOUNDS[] = {
     0xFFFE, 0xFFFF
 };
 
+/** @brief Exhaustive numerator x boundary denominator plus randomized pairs for pic_math_divmod_u16. */
 static void test_divmod_u16(void)
 {
     /* Exhaustive numerator x boundary denominator, plus randomized pairs. */
@@ -83,6 +86,7 @@ static void test_divmod_u16(void)
     }
 }
 
+/** @brief Boundary denominators x randomized 32-bit numerators for pic_math_divmod_u32_16. */
 static void test_divmod_u32_16(void)
 {
     /* Boundary denominators x randomized 32-bit numerators (incl. overflow
@@ -110,6 +114,7 @@ static const int16_t S16_BOUNDS[] = {
     32767, -32768
 };
 
+/** @brief Boundary cross-product plus randomized pairs for pic_math_divmod_s16. */
 static void test_divmod_s16(void)
 {
     /* Boundary cross-product + randomized, vs native int32 division. */
@@ -136,8 +141,7 @@ static void test_divmod_s16(void)
     }
 }
 
-/* Documented edge contracts. */
-
+/** @brief The documented edge contracts: divide-by-zero, NULL ok, INT16_MIN / -1, u32_16 truncation. */
 static void test_div_edges(void)
 {
     bool ok = true;
@@ -174,6 +178,7 @@ static void test_div_edges(void)
     CHECK(w.quotient == 0, "u32_16 truncates high quotient bits");
 }
 
+/** @brief Run all divide tests and report the failure count. */
 int main(void)
 {
     test_divmod_u16();

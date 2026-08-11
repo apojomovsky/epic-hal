@@ -70,6 +70,9 @@ static const settings_blob_t g_defaults = { 1u, 0xFAu, 0x00u, 0x03u };
 
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -89,9 +92,12 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
-/* Direct byte write through the HAL, mirroring the module's own write
- * path (start, wait for EEIF, clear flag) so the corruption is a real
- * EEPROM write, not a register poke. */
+/**
+ * @brief Write one byte through the HAL EEPROM path, blocking on completion.
+ *
+ * Mirrors the module's own write path (start, wait for EEIF, clear
+ * flag) so the corruption is a real EEPROM write, not a register poke.
+ */
 static void eeprom_write_byte(uint8_t addr, uint8_t data)
 {
     (void)EPIC_EEPROM_WriteByte(addr, data);
@@ -101,11 +107,17 @@ static void eeprom_write_byte(uint8_t addr, uint8_t data)
     EPIC_EEPROM_ClearITFlag();
 }
 
+/**
+ * @brief Compare two settings blobs for byte equality.
+ */
 static int blob_eq(const settings_blob_t *a, const settings_blob_t *b)
 {
     return memcmp(a, b, sizeof(settings_blob_t)) == 0;
 }
 
+/**
+ * @brief Run the epic-tick + epic-settings EEPROM-under-tick gate (C7).
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

@@ -19,29 +19,45 @@ static int g_pass = 0, g_fail = 0;
 static volatile int    g_cb_calls;
 static volatile uint8_t g_cb_last;
 
+/**
+ * @brief Record the callback invocation and its PORTB argument.
+ * @param portb_value the PORTB byte passed by the handler.
+ */
 static void on_rb_change(uint8_t portb_value)
 {
     g_cb_calls++;
     g_cb_last = portb_value;
 }
 
+/**
+ * @brief Reset the observed callback state to its sentinel values.
+ */
 static void reset_observed(void)
 {
     g_cb_calls = 0;
     g_cb_last  = 0xFFU;   /* sentinel, no real PORTB read yields 0xFF */
 }
 
-/* Assert RBIF directly (the documented test-only fallback). */
+/**
+ * @brief Assert RBIF directly (the documented test-only fallback).
+ */
 static void assert_rbif(void)
 {
     EPIC_REG8(PIC_REG_INTCON) |= PIC_INTCON_RBIF;
 }
 
+/**
+ * @brief Report whether RBIF is pending.
+ * @return 1 if RBIF is set, 0 otherwise.
+ */
 static uint8_t rbif_pending(void)
 {
     return (EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_RBIF) ? 1U : 0U;
 }
 
+/**
+ * @brief Verify the handler is a no-op when RBIF is clear.
+ */
 static void test_noop_when_not_pending(void)
 {
     reset_observed();
@@ -58,6 +74,10 @@ static void test_noop_when_not_pending(void)
     CHECK(g_cb_last == 0xFFU, "noop: callback arg untouched");
 }
 
+/**
+ * @brief Verify the handler fires the callback once with the PORTB
+ *        byte and clears RBIF.
+ */
 static void test_fires_when_pending(void)
 {
     reset_observed();
@@ -75,6 +95,9 @@ static void test_fires_when_pending(void)
     CHECK(rbif_pending() == 0, "fires: RBIF cleared by handler");
 }
 
+/**
+ * @brief Verify a NULL callback is safe and the flag is still cleared.
+ */
 static void test_null_callback_safe(void)
 {
     reset_observed();
@@ -90,6 +113,9 @@ static void test_null_callback_safe(void)
     CHECK(rbif_pending() == 0, "null: flag still cleared");
 }
 
+/**
+ * @brief Verify the full interrupt dispatch reaches RB_IRQHandler.
+ */
 static void test_dispatch_reaches_handler(void)
 {
     reset_observed();
@@ -107,6 +133,9 @@ static void test_dispatch_reaches_handler(void)
     CHECK(rbif_pending() == 0, "dispatch: RBIF cleared");
 }
 
+/**
+ * @brief Run the RB<7:4> change-interrupt smoke tests.
+ */
 int main(void)
 {
     pic16f87xa_sim_reset();

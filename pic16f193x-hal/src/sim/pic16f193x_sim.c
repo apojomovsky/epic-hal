@@ -27,14 +27,27 @@ static uint8_t sim_last_portb = 0xFFU;
 /* Optional ISR hook. */
 static pic16f193x_sim_irq_cb_t sim_irq_cb = 0;
 
+/** @brief Timer0 step helper (one instruction cycle). */
 static void sim_step_timer0(void);
+/** @brief Timer1 step helper (one instruction cycle). */
 static void sim_step_timer1(void);
+/** @brief Timer2/4/6 step helper (one instruction cycle). */
 static void sim_step_timer246(void);
+/** @brief USART status step helper (one instruction cycle). */
 static void sim_step_usart(void);
+/** @brief EEPROM read/write step helper (one instruction cycle). */
 static void sim_step_eeprom(void);
+/** @brief GPIO pin-level refresh helper (one instruction cycle). */
 static void sim_refresh_ports(void);
+/** @brief PORTB interrupt-on-change step helper (one instruction cycle). */
 static void sim_step_ioc(void);
 
+/**
+ * @brief Map a port letter to the sim's internal port index.
+ *
+ * @param port One of 'A'..'E' (case-insensitive).
+ * @return 0..4 for ports A..E; 0 for any other letter.
+ */
 static uint8_t port_index(char port)
 {
     switch (port) {
@@ -47,8 +60,9 @@ static uint8_t port_index(char port)
     }
 }
 
-/* public API */
-
+/**
+ * @brief Reset every SFR to its power-on-reset value (public API).
+ */
 void pic16f193x_sim_reset(void)
 {
     memset(pic16f193x_sim_sfr, 0, sizeof pic16f193x_sim_sfr);
@@ -127,6 +141,11 @@ void pic16f193x_sim_reset(void)
     sim_last_portb = 0xFFU;
 }
 
+/**
+ * @brief Advance the simulated peripherals by `ticks` instruction cycles.
+ *
+ * @param ticks Number of instruction cycles to simulate.
+ */
 void pic16f193x_sim_step(uint32_t ticks)
 {
     for (uint32_t i = 0; i < ticks; i++) {
@@ -140,8 +159,9 @@ void pic16f193x_sim_step(uint32_t ticks)
     }
 }
 
-/* Timer0 step */
-
+/**
+ * @brief Timer0 step: advance the Timer0 model by one instruction cycle.
+ */
 static void sim_step_timer0(void)
 {
     /* OPTION_REG layout (DS41364B Register 2-2): T0CS(5), T0SE(4),
@@ -175,8 +195,9 @@ static void sim_step_timer0(void)
     pic16f193x_sim_sfr[PIC_REG_TMR0] = t0;
 }
 
-/* Timer1 step */
-
+/**
+ * @brief Timer1 step: advance the Timer1 model by one instruction cycle.
+ */
 static void sim_step_timer1(void)
 {
     /* T1CON layout (DS41364B Register 16-1):
@@ -221,8 +242,10 @@ static void sim_step_timer1(void)
     }
 }
 
-/* Timer2/4/6 step */
-
+/**
+ * @brief Timer2/4/6 step: advance the Timer2/4/6 models by one
+ *        instruction cycle.
+ */
 static void sim_step_timer246(void)
 {
     /* T*CON layout (DS41364B §17.0), identical for T2CON/T4CON/T6CON:
@@ -275,8 +298,9 @@ static void sim_step_timer246(void)
     }
 }
 
-/* USART step */
-
+/**
+ * @brief USART step: refresh the read-only TXSTA/BAUDCON status bits.
+ */
 static void sim_step_usart(void)
 {
     /* TXSTA: TRMT is a hardware-read-only bit (DS41364B §23.0) that
@@ -296,6 +320,9 @@ static void sim_step_usart(void)
 
 static uint8_t s_eeprom_data[256];
 
+/**
+ * @brief EEPROM step: service a pending EEPROM read or write request.
+ */
 static void sim_step_eeprom(void)
 {
     uint8_t econ1 = pic16f193x_sim_sfr[PIC_REG_EECON1];
@@ -312,10 +339,15 @@ static void sim_step_eeprom(void)
 
 /* GPIO pin-level refresh */
 
-/* Keep PORTx fresh for EPIC_GPIO_ReadPin (which reads PORTx): for output
+/**
+ * @brief Refresh the PORTx pin-level registers from LATx/TRIS and the
+ *        driven input overrides.
+ *
+ * Keep PORTx fresh for EPIC_GPIO_ReadPin (which reads PORTx): for output
  * pins mirror LATx, for input pins mirror the driven override. The
  * canonical blink example ticks between writing and reading, so this
- * per-step refresh is sufficient on the host. */
+ * per-step refresh is sufficient on the host.
+ */
 static void sim_refresh_ports(void)
 {
     static const uint16_t port_addr[5] = { PIC_REG_PORTA, PIC_REG_PORTB,
@@ -345,8 +377,10 @@ static void sim_refresh_ports(void)
     }
 }
 
-/* PORTB interrupt-on-change */
-
+/**
+ * @brief PORTB interrupt-on-change step: detect pin edges and set the
+ *        IOCBF flags.
+ */
 static void sim_step_ioc(void)
 {
     /* DS41364B §7.0: IOCBP enables positive-edge detection per pin,
@@ -377,8 +411,13 @@ static void sim_step_ioc(void)
     }
 }
 
-/* input / output */
-
+/**
+ * @brief Drive a digital input pin from the host (input / output API).
+ *
+ * @param port   One of 'A'..'E'.
+ * @param pin    Pin number 0..7.
+ * @param level  0 = low, 1 = high.
+ */
 void pic16f193x_sim_drive_input(char port, uint8_t pin, uint8_t level)
 {
     if (pin > 7U) return;
@@ -389,6 +428,13 @@ void pic16f193x_sim_drive_input(char port, uint8_t pin, uint8_t level)
     else       sim_input_value[idx] &= (uint8_t)~mask;
 }
 
+/**
+ * @brief Read the level currently driven onto a pin.
+ *
+ * @param port One of 'A'..'E'.
+ * @param pin  Pin number 0..7.
+ * @return 1 when the pin reads high, 0 when low or not driven.
+ */
 uint8_t pic16f193x_sim_read_output(char port, uint8_t pin)
 {
     if (pin > 7U) return 0U;
@@ -410,6 +456,12 @@ uint8_t pic16f193x_sim_read_output(char port, uint8_t pin)
     return (pic16f193x_sim_sfr[lat_addr[idx]] & mask) ? 1U : 0U;
 }
 
+/**
+ * @brief Hook a callback fired whenever the simulated CPU would take an
+ *        interrupt.
+ *
+ * @param cb The callback to invoke, or NULL to clear the hook.
+ */
 void pic16f193x_sim_set_irq_callback(pic16f193x_sim_irq_cb_t cb)
 {
     sim_irq_cb = cb;

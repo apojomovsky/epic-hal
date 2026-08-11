@@ -14,10 +14,18 @@
     if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
 } while (0)
 
-/* A non-NULL RX callback forces CREN on in RCSTA; it is never invoked here
- * because the sim IRQ callback is disabled, so the body is irrelevant. */
+/** @brief  Dummy RX callback that forces CREN on in RCSTA.
+ *
+ *          It is never invoked here because the sim IRQ callback is
+ *          disabled, so the body is irrelevant.
+ */
 static void rx_dummy_cb(uint8_t data) { (void)data; }
 
+/** @brief  EUSART driver smoke test.
+ *
+ *          Verifies BRG math (8/16-bit, Table 20-1), init register
+ *          programming, TX/RX, auto-baud, and 9-bit address-detect.
+ */
 int main(void)
 {
     /* 1. BRG math (DS39632E Table 20-1).

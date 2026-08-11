@@ -39,13 +39,17 @@ typedef struct {
 } pid_t;
 
 /**
- * Initialize a PID instance: stores gains and clamp range, sets AUTO
- * mode, zeroes the integrator and D-term history.
+ * @brief Initialize a PID instance.
  *
- * @param kp_q8  Q8.8 proportional gain (= round(Kp * 256)).
- * @param ki_q8  Q8.8 integral gain, pre-multiplied by Ts (= round(Ki * Ts * 256)).
- * @param kd_q8  Q8.8 derivative gain, pre-divided by Ts (= round(Kd / Ts * 256)).
- * @param out_min / out_max  actuator clamp rails (out_min <= out_max).
+ * Stores gains and clamp range, sets AUTO mode, zeroes the integrator
+ * and D-term history.
+ *
+ * @param pid       the controller instance to initialize
+ * @param kp_q8     Q8.8 proportional gain (= round(Kp * 256))
+ * @param ki_q8     Q8.8 integral gain, pre-multiplied by Ts (= round(Ki * Ts * 256))
+ * @param kd_q8     Q8.8 derivative gain, pre-divided by Ts (= round(Kd / Ts * 256))
+ * @param out_min   lower actuator clamp rail (out_min <= out_max)
+ * @param out_max   upper actuator clamp rail
  */
 void pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
               int16_t out_min, int16_t out_max);
@@ -54,39 +58,60 @@ void pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
  * @brief  Zero the integrator and clear the D-term history, without losing
  *         tuning (gains/clamp/mode untouched), for recovering from an
  *         external fault (e-stop, sensor dropout).
+ *
+ * @param pid the controller instance to reset
  */
 void pid_reset(pid_t *pid);
 
 /**
  * @brief  Replace the three gains, leaving the integrator, D-term history,
  *         and mode untouched.
+ *
+ * @param pid   the controller instance to retune
+ * @param kp_q8 Q8.8 proportional gain (= round(Kp * 256))
+ * @param ki_q8 Q8.8 integral gain, pre-multiplied by Ts (= round(Ki * Ts * 256))
+ * @param kd_q8 Q8.8 derivative gain, pre-divided by Ts (= round(Kd / Ts * 256))
  */
 void pid_set_gains(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8);
 
 /**
- * @brief  Switch between AUTO and MANUAL. Does NOT reset the integrator
- *         or D-term history; switching mode is not a fault, and bumpless
- *         transfer depends on integrator state carrying across the switch.
+ * @brief  Switch between AUTO and MANUAL.
+ *
+ * Does NOT reset the integrator or D-term history; switching mode is not
+ * a fault, and bumpless transfer depends on integrator state carrying
+ * across the switch.
+ *
+ * @param pid   the controller instance to switch
+ * @param mode  the new mode (PID_MODE_AUTO or PID_MODE_MANUAL)
  */
 void pid_set_mode(pid_t *pid, pid_mode_t mode);
 
 /**
- * Set the target output used while mode == PID_MODE_MANUAL; only
- * consulted by pid_update() in MANUAL, ignored in AUTO. Call every cycle
- * the operator wants a new manual output in effect.
+ * @brief Set the target output used while mode == PID_MODE_MANUAL.
+ *
+ * Only consulted by pid_update() in MANUAL, ignored in AUTO. Call every
+ * cycle the operator wants a new manual output in effect.
+ *
+ * @param pid    the controller instance to drive
+ * @param value  the manual output target
  */
 void pid_set_manual_output(pid_t *pid, int16_t value);
 
 /**
- * Step the controller once per fixed control-loop period; the single
- * per-cycle entry point. AUTO: `clamp((P+I+D) >> 8, out_min, out_max)`
- * with D from `-d(measurement)/dt` and the integrator clamped to
- * `[out_min, out_max] << 8` (anti-windup). MANUAL: `clamp(manual_output,
- * out_min, out_max)`, back-calculating the integrator so resuming AUTO is
- * bumpless. Precondition (not runtime-checked):
- * `|setpoint - measurement| <= 32767`.
+ * @brief Step the controller once per fixed control-loop period.
  *
- * @return  the clamped output, always in `[out_min, out_max]`.
+ * The single per-cycle entry point. AUTO: `clamp((P+I+D) >> 8,
+ * out_min, out_max)` with D from `-d(measurement)/dt` and the
+ * integrator clamped to `[out_min, out_max] << 8` (anti-windup).
+ * MANUAL: `clamp(manual_output, out_min, out_max)`, back-calculating
+ * the integrator so resuming AUTO is bumpless. Precondition (not
+ * runtime-checked): `|setpoint - measurement| <= 32767`.
+ *
+ * @param pid          the controller instance to step
+ * @param setpoint     the target value
+ * @param measurement  the measured process value
+ *
+ * @return the clamped output, always in `[out_min, out_max]`
  */
 int16_t pid_update(pid_t *pid, int16_t setpoint, int16_t measurement);
 

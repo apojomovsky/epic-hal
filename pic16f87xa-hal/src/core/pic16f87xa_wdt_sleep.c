@@ -14,6 +14,10 @@
  * the TXSTA/OPTION_REG sites in tests/sim_bank_probe.c), so reads and
  * RMWs go through the safe Bank-1 macros where they exist. */
 
+/**
+ * @brief Return whether the last reset was a Brown-out Reset (PCON<BOR>).
+ * @return 1 if BOR was the reset cause, 0 otherwise.
+ */
 uint8_t EPIC_BOR_GetStatus(void)
 {
 #ifdef EPIC_BANK1_READ8
@@ -25,6 +29,9 @@ uint8_t EPIC_BOR_GetStatus(void)
 #endif
 }
 
+/**
+ * @brief Clear PCON<BOR>.
+ */
 void EPIC_BOR_ClearFlag(void)
 {
 #ifdef EPIC_BANK1_READ8
@@ -37,6 +44,11 @@ void EPIC_BOR_ClearFlag(void)
 #endif
 }
 
+/**
+ * @brief Return whether the device powered on via a Power-on Reset
+ *        (PCON<POR>).
+ * @return 1 if POR was the reset cause, 0 otherwise.
+ */
 uint8_t EPIC_POR_GetStatus(void)
 {
 #ifdef EPIC_BANK1_READ8
@@ -48,6 +60,9 @@ uint8_t EPIC_POR_GetStatus(void)
 #endif
 }
 
+/**
+ * @brief Clear PCON<POR>.
+ */
 void EPIC_POR_ClearFlag(void)
 {
 #ifdef EPIC_BANK1_READ8

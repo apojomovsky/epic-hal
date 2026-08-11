@@ -10,7 +10,14 @@
 #include "pic_math.h"
 #include "pic_math_scratch.h"
 
-/* 16-bit add. Low bytes add (sets C); the high addend is folded with the
+/**
+ * @brief  16-bit unsigned add with carry out (PIC16 inline asm).
+ * @param  a           augend, 0..65535
+ * @param  b           addend, 0..65535
+ * @param  carry_out  set true on overflow (sum > 65535); may be NULL.
+ * @return (a + b) truncated to 16 bits.
+ *
+ * 16-bit add. Low bytes add (sets C); the high addend is folded with the
  * carry through the btfsc/incfsz idiom, since movf preserves C. Worked
  * example 0xFFFF+0x0002 -> 0x0001, carry 1; the fold is correct for this
  * example (b_hi=0, so incfsz yields b_hi+1 and addwf sums a_hi, while
@@ -36,7 +43,14 @@ uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out) __at(0x2E0)
     return (uint16_t)pic16_mscratch[4] | ((uint16_t)pic16_mscratch[5] << 8);
 }
 
-/* a - b, borrow_out = (a < b). Low bytes subtract (C=0 on borrow); the
+/**
+ * @brief  16-bit unsigned subtract with borrow out (PIC16 inline asm).
+ * @param  a           minuend, 0..65535
+ * @param  b           subtrahend, 0..65535
+ * @param  borrow_out  set true on underflow (a < b); may be NULL.
+ * @return (a - b) truncated to 16 bits.
+ *
+ * a - b, borrow_out = (a < b). Low bytes subtract (C=0 on borrow); the
  * high byte subtracts b_hi plus the borrow, folded via the btfss/incfsz
  * idiom. Borrow is the final C inverted. Offsets a@0, b@2, r@4, bo@6. */
 uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out) __at(0x320)
@@ -60,7 +74,12 @@ uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out) __at(0x320)
     return (uint16_t)pic16_mscratch[4] | ((uint16_t)pic16_mscratch[5] << 8);
 }
 
-/* -v = ~v + 1: complement both bytes, inc low, and inc high only if the
+/**
+ * @brief  16-bit two's-complement negate (PIC16 inline asm).
+ * @param  v  value to negate, -32768..32767
+ * @return -v; INT16_MIN negates to itself (two's-complement wrap).
+ *
+ * -v = ~v + 1: complement both bytes, inc low, and inc high only if the
  * low inc wrapped (Z). INT16_MIN negates to itself. Offsets v@0, r@2. */
 int16_t pic_math_negate_s16(int16_t v) __at(0x360)
 {
@@ -77,7 +96,12 @@ int16_t pic_math_negate_s16(int16_t v) __at(0x360)
     return (int16_t)((uint16_t)pic16_mscratch[2] | ((uint16_t)pic16_mscratch[3] << 8));
 }
 
-/* Same ~v + 1 with the carry cascade across 4 bytes. Offsets v@0-3, r@4-7. */
+/**
+ * @brief  32-bit two's-complement negate (PIC16 inline asm).
+ * @param  v  value to negate, -2147483648..2147483647
+ * @return -v; INT32_MIN negates to itself (two's-complement wrap).
+ *
+ * Same ~v + 1 with the carry cascade across 4 bytes. Offsets v@0-3, r@4-7. */
 int32_t pic_math_negate_s32(int32_t v) __at(0x380)
 {
     uint32_t uv = (uint32_t)v;

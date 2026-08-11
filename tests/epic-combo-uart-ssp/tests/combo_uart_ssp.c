@@ -57,11 +57,17 @@
 static uint16_t g_t2_count = 0u;
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief TIMER2 overflow callback: count the overflow.
+ */
 static void t2_overflow_cb(void)
 {
     g_t2_count++;
 }
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -81,10 +87,16 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
+/**
+ * @brief No-op USART TX-complete callback (transmission is polled).
+ */
 static void s_tx_noop(void)
 {
 }
 
+/**
+ * @brief Run the USART + SSP + EEPROM under TIMER2 ISR gate (C1).
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

@@ -29,24 +29,30 @@
 static int g_fails = 0;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); g_fails++; } } while (0)
 
-/* Test-only hooks: see test_swuart_rx.c. Defined in epic_swuart.c
- * behind EPIC_SWUART_TEST_HOOKS. */
+/** @brief Test-only hooks: see test_swuart_rx.c. Defined in
+ *         epic_swuart.c behind EPIC_SWUART_TEST_HOOKS. */
 extern void swuart_test_fire_rx_event(void);
 #if EPIC_SWUART_HAS_RX_FAST_PATH
+/** @brief Test hook: inject the fast-path RX capture value. */
 extern void swuart_test_set_capture_fast(uint16_t value);
 #else
+/** @brief Test hook: inject the generic RX capture value. */
 extern void swuart_test_set_capture(uint16_t value);
 #endif
 
-/* Drives one full byte (start + 8 data + stop, LSB first) onto slot A's
- * RX pin and fires the matching sequence of capture/compare events:
- * one capture fire for the start bit (deglitch check + arm d0 in a
- * single synchronous pass, IDLE -> DATA0), then one compare event per
- * remaining bit (d0..d7, stop), exactly test_swuart_rx.c's technique.
- * The capture value itself is arbitrary (host-sim only, no real Timer1
- * behind it) and can be reused unchanged across repeated bytes: each
- * call starts from a fresh RX_IDLE, so nothing carries over between
- * bytes. */
+/**
+ * @brief  Drives one full byte (start + 8 data + stop, LSB first) onto
+ *         slot A's RX pin and fires the matching sequence of
+ *         capture/compare events: one capture fire for the start bit
+ *         (deglitch check + arm d0 in a single synchronous pass, IDLE
+ *         -> DATA0), then one compare event per remaining bit
+ *         (d0..d7, stop), exactly test_swuart_rx.c's technique. The
+ *         capture value itself is arbitrary (host-sim only, no real
+ *         Timer1 behind it) and can be reused unchanged across repeated
+ *         bytes: each call starts from a fresh RX_IDLE, so nothing
+ *         carries over between bytes.
+ * @param bits the 10 bit levels (start, d0..d7, stop), LSB first.
+ */
 static void receive_byte(const uint8_t *bits)
 {
     SIM_DRIVE('C', 2, bits[0]);
@@ -68,6 +74,7 @@ static void receive_byte(const uint8_t *bits)
     }
 }
 
+/** @brief RX error-path host test main: bad stop bit and ring overflow. */
 int main(void)
 {
     /* Bad stop bit: hold the line low instead of returning to mark.

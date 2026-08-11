@@ -31,6 +31,7 @@ static volatile uint8_t  did_reset = 0U;
 static volatile uint16_t reset_tick = 0U;
 static task_id_t g_marker_id = TASK_ID_INVALID;
 
+/** @brief Periodic marker: record the scheduler tick of each fire. */
 static void task_marker(void *arg)
 {
     (void)arg;
@@ -40,6 +41,7 @@ static void task_marker(void *arg)
     }
 }
 
+/** @brief Supervisor: on its first fire, reset the marker task. */
 static void task_supervisor(void *arg)
 {
     (void)arg;
@@ -51,6 +53,7 @@ static void task_supervisor(void *arg)
     }
 }
 
+/** @brief Verify task_reset re-arms from the full period via tick assertions. */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

@@ -95,8 +95,14 @@ typedef struct {
  *         EPIC_TIMER0_Start afterwards.
  *
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ * @param h the Timer0 handle describing the desired configuration.
  */
 EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h);
+
+/**
+ * @brief  Disable Timer0 counting and clear TMR0IF.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void);
 
 /**
@@ -110,11 +116,16 @@ void TIMER0_IRQHandler(void) EPIC_WEAK;
 /**
  * @brief  Enable Timer0 counting. Sets T0CON<T0CS> / T0SE / T08BIT / PSA /
  *         T0PS, writes `h->ReloadValue` into TMR0L (and TMR0H in 16-bit
- *         mode), then sets TMR0ON.
+ *         then sets TMR0ON.
+ * @param h the handle used to configure the timer.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
 EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h);
 
-/** Disable Timer0 counting. Clears T0CON<TMR0ON> -> Timer0 halted. */
+/**
+ * @brief Disable Timer0 counting. Clears T0CON<TMR0ON> -> Timer0 halted.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_Stop(void);
 
 /**
@@ -122,14 +133,20 @@ EPIC_StatusTypeDef EPIC_TIMER0_Stop(void);
  *        latches TMR0H on the hardware; only the low byte is returned
  *        (the API is 8-bit to match the PIC16 contract). Use the SFR
  *        directly for the full 16-bit value if needed.
+ * @return the current TMR0L value.
  */
 uint8_t EPIC_TIMER0_ReadCounter(void);
 
-/** Write `value` to TMR0L (the low byte / 8-bit counter). */
+/**
+ * @brief Write `value` to TMR0L (the low byte / 8-bit counter).
+ * @param value the value to load into the counter.
+ */
 void EPIC_TIMER0_WriteCounter(uint8_t value);
 
 /**
  * @brief  Convert a prescaler enum to its integer ratio (1, 2, 4, ..., 256).
+ * @param p the prescaler enum value.
+ * @return the integer division ratio (2..256; 1:1 if unassigned).
  */
 uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);
 

@@ -22,17 +22,25 @@ static int g_fails = 0;
 #ifndef EPIC_SWUART_TEST_HOOKS
 #define EPIC_SWUART_TEST_HOOKS 1
 #endif
+/** @brief Test hook: fire one channel A TX compare event. */
 extern void swuart_test_fire_tx_event(void);
+/** @brief Test hook: fire one channel A RX capture/compare event. */
 extern void swuart_test_fire_rx_event(void);
+/** @brief Test hook: fire one channel B RX capture/compare event. */
 extern void swuart_test_fire_rx_event_b(void);
+/** @brief Test hook: inject the generic RX capture value. */
 extern void swuart_test_set_capture(uint16_t value);
 
-/* Drives one full byte (start + 8 data + stop, LSB first) onto channel
- * A's RX pin (RC2) and fires the matching capture-then-compare event
- * sequence, same technique test_swuart_rx.c/test_swuart_errors.c use.
- * PIC16F193X channel A uses the generic two-fire path (the RX hot-path
- * fix is PIC16F87XA-only; see EPIC_SWUART_HAS_RX_FAST_PATH), so this
- * is the capture-then-confirm sequence rx_capture_event expects. */
+/**
+ * @brief  Drives one full byte (start + 8 data + stop, LSB first) onto
+ *         channel A's RX pin (RC2) and fires the matching
+ *         capture-then-compare event sequence, same technique
+ *         test_swuart_rx.c/test_swuart_errors.c use. PIC16F193X channel
+ *         A uses the generic two-fire path (the RX hot-path fix is
+ *         PIC16F87XA-only; see EPIC_SWUART_HAS_RX_FAST_PATH), so this
+ *         is the capture-then-confirm sequence rx_capture_event expects.
+ * @param bits the 10 bit levels (start, d0..d7, stop), LSB first.
+ */
 static void receive_byte_a(const uint8_t *bits)
 {
     pic16f193x_sim_drive_input('C', 2, bits[0]);
@@ -47,6 +55,7 @@ static void receive_byte_a(const uint8_t *bits)
     }
 }
 
+/** @brief Dual-channel DeInit host test main: survivor keeps Timer1. */
 int main(void)
 {
     pic16f193x_sim_reset();
@@ -158,6 +167,7 @@ int main(void)
 
 #else /* EPIC_SWUART_MAX_CHANNELS < 2: not a PIC16F193X build. */
 
+/** @brief Empty TU main for single-channel families. */
 int main(void) { return 0; }
 
 #endif

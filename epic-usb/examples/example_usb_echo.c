@@ -13,6 +13,9 @@
 #include <stdio.h>
 #endif
 
+/**
+ * @brief Run the USB echo demo (host smoke or target loop).
+ */
 int main(void)
 {
     epic_usb_init();

@@ -51,6 +51,11 @@ typedef enum {
  *
  * Returns 0..255 (the SPBRG range), or 0xFFFF if the requested baud
  * rate is unattainable (X would have to exceed 255).
+ * @param fosc_hz the oscillator frequency in Hz.
+ * @param baud the desired baud rate in bits/s.
+ * @param mode USART_MODE_ASYNCHRONOUS or USART_MODE_SYNCHRONOUS.
+ * @param brgh USART_BRGH_LOW or USART_BRGH_HIGH (async only).
+ * @return the SPBRG value 0..255, or 0xFFFF if unattainable.
  */
 uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
                             USART_ModeTypeDef mode,
@@ -81,7 +86,20 @@ typedef struct {
 
 /* init / deinit. */
 
+/**
+ * @brief  Initialize the USART with the given handle. Programs TXSTA,
+ *         RCSTA, SPBRG and the interrupt enables for the callbacks.
+ * @param h handle with Mode, ClockSource, BaudHigh, DataWidth, SPBRG,
+ *        TxCpltCallback, RxCpltCallback.
+ * @return EPIC_OK on success, EPIC_ERROR if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h);
+
+/**
+ * @brief  De-initialize the USART. Disables the module and returns
+ *         TXSTA/RCSTA to reset.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_USART_DeInit(void);
 
 /* transmit. */
@@ -94,16 +112,26 @@ EPIC_StatusTypeDef EPIC_USART_DeInit(void);
  *
  * @note   TXIF is NOT cleared by reading, only by writing TXREG.
  *         DS39582B §10.2.1.
+ * @param data the byte to transmit.
  */
 void EPIC_USART_Transmit(uint8_t data);
 
-/** Read the 9th bit (TX9D) just transmitted. */
+/**
+ * @brief Read the 9th bit (TX9D) just transmitted.
+ * @return the TX9D bit value.
+ */
 uint8_t EPIC_USART_GetTX9D(void);
 
-/** Set the 9th bit to send NEXT. Must be set BEFORE writing TXREG. */
+/**
+ * @brief Set the 9th bit to send NEXT. Must be set BEFORE writing TXREG.
+ * @param bit9 the 9th data bit value (0 or 1).
+ */
 void EPIC_USART_SetTX9D(uint8_t bit9);
 
-/** Returns 1 if the TSR is empty (TRMT = 1). */
+/**
+ * @brief Returns 1 if the TSR is empty (TRMT = 1).
+ * @return 1 if the transmit shift register is empty, 0 otherwise.
+ */
 uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);
 
 /* receive. */
@@ -112,17 +140,25 @@ uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);
  * @brief  Read the latest byte from RCREG. Reading:
  *    - clears RCIF,
  *    - advances the 2-deep FIFO.
+ * @return the received byte.
  */
 uint8_t EPIC_USART_Receive(void);
 
-/** Read RX9D, the 9th bit of the most recently received byte. */
+/**
+ * @brief Read RX9D, the 9th bit of the most recently received byte.
+ * @return the RX9D bit value.
+ */
 uint8_t EPIC_USART_GetRX9D(void);
 
 /* interrupts. */
 
-/** Weak USART RX ISR, override in user code. */
+/**
+ * @brief Weak USART RX ISR, override in user code.
+ */
 void USART_RX_IRQHandler(void) EPIC_WEAK;
-/** Weak USART TX ISR, override in user code. */
+/**
+ * @brief Weak USART TX ISR, override in user code.
+ */
 void USART_TX_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_USART_H */

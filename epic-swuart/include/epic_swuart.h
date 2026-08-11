@@ -96,7 +96,14 @@ typedef struct {
  *         to a live transmitter) whenever the channel is not actively
  *         receiving; a floating or held-low RX pin will be misread as a
  *         start bit.
- *
+ * @param h        handle to register; its ring/state fields are reset.
+ * @param tx_port  GPIO port of the channel's fixed TX pin (CCP compare output).
+ * @param tx_pin   GPIO pin of the channel's fixed TX pin.
+ * @param rx_port  GPIO port of the channel's fixed RX pin (CCP capture input).
+ * @param rx_pin   GPIO pin of the channel's fixed RX pin.
+ * @param fosc_hz  system oscillator frequency in Hz, drives bit timing.
+ * @param baud     desired baud rate; validated only at 9600, other values
+ *                 are accepted but unsupported (see docs/API.md).
  * @return EPIC_OK, or EPIC_INVALID if `h` is NULL, the pins don't match
  *         this slot's fixed CCP pins, or all EPIC_SWUART_MAX_CHANNELS
  *         slots are already in use.
@@ -106,20 +113,42 @@ EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
                                      GPIO_TypeDef rx_port, uint16_t rx_pin,
                                      uint32_t fosc_hz, uint32_t baud);
 
-/** Remove `h` from the shared registry. Stops Timer1 if no channel is
- *  left active. */
+/**
+ * @brief  Remove `h` from the shared registry. Stops Timer1 if no channel
+ *         is left active.
+ * @param h the handle previously registered with EPIC_SWUART_Init.
+ * @return EPIC_OK, or EPIC_INVALID if `h` is NULL or not a registered
+ *         channel.
+ */
 EPIC_StatusTypeDef EPIC_SWUART_DeInit(EPIC_SWUART_HandleTypeDef *h);
 
-/** Enqueue up to `len` bytes. Returns the number actually queued (a
- *  short write when the TX ring is nearly full), never blocks. */
+/**
+ * @brief  Enqueue up to `len` bytes. Returns the number actually queued (a
+ *         short write when the TX ring is nearly full), never blocks.
+ * @param h    registered channel handle.
+ * @param data bytes to transmit.
+ * @param len  number of bytes in `data`.
+ * @return the number of bytes actually queued, less than `len` only when
+ *         the TX ring is nearly full.
+ */
 size_t EPIC_SWUART_Write(EPIC_SWUART_HandleTypeDef *h, const uint8_t *data, size_t len);
 
-/** Drain up to `maxlen` received bytes into `buf`. Returns the number
- *  read, never blocks. */
+/**
+ * @brief  Drain up to `maxlen` received bytes into `buf`. Returns the number
+ *         read, never blocks.
+ * @param h      registered channel handle.
+ * @param buf    destination buffer for the received bytes.
+ * @param maxlen capacity of `buf`.
+ * @return the number of bytes read, 0 when the RX ring is empty.
+ */
 int EPIC_SWUART_Read(EPIC_SWUART_HandleTypeDef *h, uint8_t *buf, size_t maxlen);
 
-/** Running total of dropped bytes (bad stop bit or RX ring full) since
- *  Init. */
+/**
+ * @brief  Running total of dropped bytes (bad stop bit or RX ring full)
+ *         since Init.
+ * @param h registered channel handle.
+ * @return the channel's accumulated dropped-byte count.
+ */
 uint16_t EPIC_SWUART_GetErrorCount(const EPIC_SWUART_HandleTypeDef *h);
 
 #endif /* EPIC_SWUART_H */

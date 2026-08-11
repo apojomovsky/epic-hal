@@ -18,6 +18,7 @@
 
 static uint16_t holding_regs[4];
 
+/** @brief On-target demo: a 4-holding-register RTU slave polling forever. */
 int main(void)
 {
     epic_harness_init(0UL);

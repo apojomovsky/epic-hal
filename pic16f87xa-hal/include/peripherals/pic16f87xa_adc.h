@@ -96,7 +96,20 @@ typedef struct {
 
 /* init / deinit. */
 
+/**
+ * @brief  Initialize the A/D converter with the given handle.
+ *         Programs ADCON0/ADCON1 (clock, format, reference) and
+ *         installs the conversion-complete callback.
+ * @param h handle with Channel, ClockSource, ResultFormat, Reference.
+ * @return EPIC_OK on success, EPIC_ERROR if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h);
+
+/**
+ * @brief  De-initialize the A/D converter. Clears the callback and
+ *         returns ADCON0/ADCON1 to their reset state.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_ADC_DeInit(void);
 
 /* conversion control. */
@@ -111,19 +124,32 @@ EPIC_StatusTypeDef EPIC_ADC_DeInit(void);
  *
  *         Returns 0xFFFF if a conversion was already in progress
  *         (GO/DONE was 1).
+ * @return 0xFFFF if a conversion was already running, else the raw
+ *         ADRESH/ADRESL pair (low byte undefined until conversion ends).
  */
 uint16_t EPIC_ADC_Start(void);
 
-/** Select the channel without starting conversion. */
+/**
+ * @brief Select the channel without starting conversion.
+ * @param ch the analog channel to select.
+ */
 void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch);
 
-/** Returns 1 if a conversion is in progress (GO/DONE = 1). */
+/**
+ * @brief Returns 1 if a conversion is in progress (GO/DONE = 1).
+ * @return 1 if a conversion is in progress, 0 otherwise.
+ */
 uint8_t EPIC_ADC_IsConversionInProgress(void);
 
-/** Returns 1 if the latest conversion has completed (ADIF = 1). */
+/**
+ * @brief Returns 1 if the latest conversion has completed (ADIF = 1).
+ * @return 1 if the conversion has completed, 0 otherwise.
+ */
 uint8_t EPIC_ADC_IsConversionDone(void);
 
-/** Clear the ADIF flag. Must be called in the conversion-complete IRQ. */
+/**
+ * @brief Clear the ADIF flag. Must be called in the conversion-complete IRQ.
+ */
 void EPIC_ADC_ClearITFlag(void);
 
 /* result. */
@@ -132,11 +158,15 @@ void EPIC_ADC_ClearITFlag(void);
  * @brief  Read the latest 10-bit result. Returns 0..1023 in right-
  *         justified format; left-justified results are shifted down
  *         to 0..1023.
+ * @return the latest 10-bit conversion result, 0..1023.
  */
 uint16_t EPIC_ADC_Read(void);
 
 /* interrupts. */
 
+/**
+ * @brief Weak ADC ISR, override in user code.
+ */
 void ADC_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_ADC_H */

@@ -41,9 +41,14 @@
         else                          (out) = EPIC_REG8(PIC_REG_CCP2CON); \
     } while (0)
 
-/* The interrupt ID isn't an SFR address (just a small enum passed into
- * pic18_irq.c's own, already-fixed dispatch), so a plain lookup is fine
- * here, nothing at risk. */
+/**
+ * @brief  Map a CCP instance to its interrupt ID. The interrupt ID is not
+ *         an SFR address (just a small enum passed into pic18_irq.c's own,
+ *         already-fixed dispatch), so a plain lookup is fine here, nothing
+ *         at risk.
+ * @param inst CCP instance (CCP_INSTANCE_1 or CCP_INSTANCE_2).
+ * @return PIC18_IRQ_CCP1 for instance 1, else PIC18_IRQ_CCP2.
+ */
 static PIC18_IRQn ccp_irq(CCP_InstanceTypeDef inst)
 {
     return (inst == CCP_INSTANCE_1) ? PIC18_IRQ_CCP1 : PIC18_IRQ_CCP2;
@@ -54,13 +59,28 @@ static PIC18_IRQn ccp_irq(CCP_InstanceTypeDef inst)
 static CCP_HandleTypeDef        g_ccp_storage[3];
 static const CCP_HandleTypeDef *g_ccp_handles[3] = { NULL, NULL, NULL };
 
-/** Encode a PinState enum into the 2-bit PSS field value (0b00/01/10). */
+/**
+ * @brief  Encode a PinState enum into the 2-bit PSS field value
+ *         (0b00/01/10).
+ * @param s Pin state to encode (DRIVE_0, DRIVE_1 or TRISTATE).
+ * @return The 2-bit PSS encoding of `s`.
+ */
 static uint8_t pss_encode(CCP_PinStateTypeDef s)
 {
     /* DRIVE_0 -> 00, DRIVE_1 -> 01, TRISTATE -> 10 (1x). */
     return (uint8_t)(s & 0x3U);
 }
 
+/**
+ * @brief  Initialize a CCP module from a handle. Stores an owned copy of
+ *         the handle, clears and optionally enables the instance IRQ, then
+ *         programs the 16-bit CCPRx value and mode (PWM duty or
+ *         capture/compare). ECCP1 additionally gets dead-band and
+ *         auto-shutdown configuration.
+ * @param h Handle describing the CCP instance and its configuration.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL or its Instance
+ *         is not CCP_INSTANCE_1/2.
+ */
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -118,6 +138,13 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief  Reset a CCP module: clear the PIR flag, disable the IRQ, reset
+ *         CCPxCON (and ECCP1DEL/ECCP1AS for ECCP1) to 0x00 and drop the
+ *         stored handle.
+ * @param inst CCP instance to de-initialize.
+ * @return EPIC_OK on success, EPIC_INVALID for an unknown instance.
+ */
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return EPIC_INVALID;
@@ -132,6 +159,13 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
     return EPIC_OK;
 }
 
+/**
+ * @brief  Set the 16-bit CCPRx compare value, high byte first to avoid a
+ *         spurious compare match (DS39632E §16.x). No-op for an unknown
+ *         instance.
+ * @param inst CCP instance.
+ * @param value 16-bit compare value to load.
+ */
 void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
@@ -140,12 +174,26 @@ void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
     CCP_WRITE_CPRL(inst, value & 0xFFU);
 }
 
+/**
+ * @brief  Change only the CCPxCON mode field, leaving CCPRx and the IRQ
+ *         enable state untouched. Cheap, so it suits repeated in-frame
+ *         mode switches (bit-banged protocols reprogramming the module
+ *         every bit). No-op for an unknown instance.
+ * @param inst CCP instance.
+ * @param mode New CCP mode to write into the mode field.
+ */
 void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
     CCP_WRITE_CON(inst, (uint8_t)(mode & 0x0FU));
 }
 
+/**
+ * @brief  Atomically read the 16-bit CCPRx capture value using the
+ *         high-low-high idiom.
+ * @param inst CCP instance.
+ * @return The 16-bit captured value, or 0 for an unknown instance.
+ */
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return 0U;
@@ -158,6 +206,13 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
     return (uint16_t)(((uint16_t)hi2 << 8) | lo);
 }
 
+/**
+ * @brief  Set the PWM duty in 10-bit units (0..1023). Writes the LSBs into
+ *         CCPxCON<5:4> then CCPRxL (bits 9:2), preserving the mode and P1M
+ *         bits (DS39632E §16.4.4).
+ * @param inst CCP instance.
+ * @param duty 10-bit duty cycle value.
+ */
 void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
@@ -172,6 +227,15 @@ void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
     CCP_WRITE_CPRL(inst, duty >> 2);
 }
 
+/**
+ * @brief  Configure the ECCP1 dead-band delay and auto-restart
+ *         (ECCP1DEL). No-op for CCP2. Relevant in half-bridge /
+ *         full-bridge PWM modes.
+ * @param inst CCP instance (only CCP_INSTANCE_1 is acted on).
+ * @param delay Dead-band delay count (PDC<6:0> field).
+ * @param auto_restart Whether to auto-restart the PWM after shutdown
+ *                     (PRSEN bit).
+ */
 void EPIC_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst,
                             uint8_t delay, bool auto_restart)
 {
@@ -181,6 +245,15 @@ void EPIC_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst,
     EPIC_REG8(PIC_REG_ECCP1DEL) = del;
 }
 
+/**
+ * @brief  Configure the ECCP1 auto-shutdown source and pin states
+ *         (ECCP1AS). No-op for CCP2. Pass `CCP_AUTOSHUTDOWN_DISABLED` to
+ *         turn it off.
+ * @param inst CCP instance (only CCP_INSTANCE_1 is acted on).
+ * @param source Auto-shutdown trigger source (SS<2:0> field).
+ * @param pins_ac Pin states for the P1A/P1C pins on shutdown (PSSAC).
+ * @param pins_bd Pin states for the P1B/P1D pins on shutdown (PSSBD).
+ */
 void EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
                                 CCP_AutoShutdownSourceTypeDef source,
                                 CCP_PinStateTypeDef pins_ac,
@@ -195,12 +268,25 @@ void EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
     epic_sfr_write8(PIC_REG_ECCP1AS, asv);
 }
 
+/**
+ * @brief  Return 1 if an ECCP1 auto-shutdown event is active
+ *         (ECCP1AS<ECCPASE>). Always 0 for CCP2.
+ * @param inst CCP instance.
+ * @return 1 if shutdown is active, else 0.
+ */
 uint8_t EPIC_CCP_IsShutdown(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1) return 0U;
     return (EPIC_REG8(PIC_REG_ECCP1AS) & PIC_ECCP1AS_ECCPASE) ? 1U : 0U;
 }
 
+/**
+ * @brief  Clear the ECCP1 auto-shutdown status (ECCPASE) to restart the
+ *         PWM. Only effective when PRSEN = 0 (manual restart); with
+ *         PRSEN = 1 the hardware auto-clears when the shutdown source
+ *         deasserts. No-op for CCP2.
+ * @param inst CCP instance.
+ */
 void EPIC_CCP_Restart(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1) return;
@@ -209,6 +295,10 @@ void EPIC_CCP_Restart(CCP_InstanceTypeDef inst)
     epic_sfr_write8(PIC_REG_ECCP1AS, asv);
 }
 
+/**
+ * @brief  Weak CCP1 (ECCP1) interrupt handler: clears CCP1IF and invokes
+ *         the event callback registered via Init.
+ */
 void CCP1_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
@@ -218,6 +308,10 @@ void CCP1_IRQHandler(void)
     }
 }
 
+/**
+ * @brief  Weak CCP2 interrupt handler: clears CCP2IF and invokes the
+ *         event callback registered via Init.
+ */
 void CCP2_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);

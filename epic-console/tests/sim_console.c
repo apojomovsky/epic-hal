@@ -49,6 +49,9 @@ typedef struct {
  * SIM (no RX injection, see header); they exist so the table is the real
  * shape a firmware would wire, and the help-framing gate walks their
  * name/help rows for real. */
+/**
+ * @brief Sample handler mirroring the module's example table.
+ */
 static void cmd_status(uint8_t argc, char **argv, void *ctx_)
 {
     con_ctx_t *ctx = (con_ctx_t *)ctx_;
@@ -57,6 +60,9 @@ static void cmd_status(uint8_t argc, char **argv, void *ctx_)
     ctx->status_count++;
 }
 
+/**
+ * @brief Sample handler recording the dispatched argc.
+ */
 static void cmd_set(uint8_t argc, char **argv, void *ctx_)
 {
     con_ctx_t *ctx = (con_ctx_t *)ctx_;
@@ -65,6 +71,9 @@ static void cmd_set(uint8_t argc, char **argv, void *ctx_)
     ctx->set_argc = argc;
 }
 
+/**
+ * @brief Sample handler counting pings.
+ */
 static void cmd_ping(uint8_t argc, char **argv, void *ctx_)
 {
     con_ctx_t *ctx = (con_ctx_t *)ctx_;
@@ -73,6 +82,9 @@ static void cmd_ping(uint8_t argc, char **argv, void *ctx_)
     ctx->ping_count++;
 }
 
+/**
+ * @brief Sample handler counting help requests.
+ */
 static void cmd_help(uint8_t argc, char **argv, void *ctx_)
 {
     con_ctx_t *ctx = (con_ctx_t *)ctx_;
@@ -86,6 +98,12 @@ static uint8_t g_drain_failed;
 
 /* Oracle for the documented print_help framing: one "name - help\r\n"
  * line per row, NULL help rendered as "". */
+/**
+ * @brief Compute the exact print_help byte count for a table.
+ *
+ * @param con the console whose table to measure
+ * @return the framed help length in bytes
+ */
 static uint8_t help_len(const epic_console_t *con)
 {
     uint8_t n = 0u;
@@ -101,6 +119,11 @@ static uint8_t help_len(const epic_console_t *con)
  * entry: wait for the shift register to empty, pop one ring byte (which
  * loads TXREG), repeat. Same per-byte pacing the harness's polled
  * report TX uses, so the uart1io capture receives every byte intact. */
+/**
+ * @brief Paced drain of the TX ring through the real TX ISR entry.
+ *
+ * Sets g_drain_failed and logs on timeout.
+ */
 static void drain_tx(void)
 {
     uint32_t outer = 0UL;
@@ -125,6 +148,9 @@ static void drain_tx(void)
     }
 }
 
+/**
+ * @brief Log a 16-bit value as four hex digits (vararg-free).
+ */
 static void log_u16(uint16_t v)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -137,6 +163,11 @@ static void log_u16(uint16_t v)
     epic_harness_log(c);
 }
 
+/**
+ * @brief Run the MPLAB SIM gate phases for epic-console.
+ *
+ * @return 0 when all checks pass, 1 otherwise
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

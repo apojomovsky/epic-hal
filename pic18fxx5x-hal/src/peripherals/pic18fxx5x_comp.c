@@ -10,6 +10,13 @@
 static COMP_HandleTypeDef        g_comp_storage;
 static const COMP_HandleTypeDef *g_comp = NULL;
 
+/**
+ * @brief  Initialize the comparator module from a handle. Programs CMCON
+ *         (mode, CIS, C1INV, C2INV) and arms the change interrupt if a
+ *         callback is provided.
+ * @param h Handle describing the comparator configuration.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -36,6 +43,12 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief  De-initialize the comparator: disable its interrupt, clear the
+ *         flag, restore CMCON to its power-on value (0x07, comparators
+ *         off) and drop the stored handle.
+ * @return EPIC_OK.
+ */
 EPIC_StatusTypeDef EPIC_COMP_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC18_IRQ_CMP);
@@ -45,26 +58,45 @@ EPIC_StatusTypeDef EPIC_COMP_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief  Return 1 if the C1 comparator output is high (CMCON<C1OUT>).
+ * @return 1 if C1OUT is set, else 0.
+ */
 uint8_t EPIC_COMP_C1Out(void)
 {
     return (epic_sfr_read8(PIC_REG_CMCON) & PIC_CMCON_C1OUT) ? 1U : 0U;
 }
 
+/**
+ * @brief  Return 1 if the C2 comparator output is high (CMCON<C2OUT>).
+ * @return 1 if C2OUT is set, else 0.
+ */
 uint8_t EPIC_COMP_C2Out(void)
 {
     return (epic_sfr_read8(PIC_REG_CMCON) & PIC_CMCON_C2OUT) ? 1U : 0U;
 }
 
+/**
+ * @brief  Return 1 if the comparator change flag (CMIF) is set.
+ * @return 1 if CMIF is set, else 0.
+ */
 uint8_t EPIC_COMP_IsChangeFlag(void)
 {
     return (epic_sfr_read8(PIC_REG_PIR2) & PIC_PIR2_CMIF) ? 1U : 0U;
 }
 
+/**
+ * @brief  Clear the CMIF flag; must be done in the change IRQ handler.
+ */
 void EPIC_COMP_ClearChangeFlag(void)
 {
     EPIC_IRQ_ClearFlag(PIC18_IRQ_CMP);
 }
 
+/**
+ * @brief  Weak comparator interrupt handler: clears CMIF and invokes the
+ *         change callback registered via Init.
+ */
 void COMP_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC18_IRQ_CMP)) return;

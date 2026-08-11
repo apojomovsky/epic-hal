@@ -15,6 +15,13 @@
 /** Bounded run length set by the last harness_init() call. */
 static uint32_t g_cycles = 0U;
 
+/**
+ * @brief  Harness start-up (host-sim build): resets the simulated CPU,
+ *         wires the sim IRQ callback to the family dispatcher and stores
+ *         `cycles` as the bound for the upcoming run.
+ * @param cycles bound on the run: simulated instruction cycles to pump
+ *               before the harness reports the run over.
+ */
 void epic_harness_init(uint32_t cycles)
 {
     g_cycles = cycles;
@@ -24,16 +31,30 @@ void epic_harness_init(uint32_t cycles)
     pic18_sim_set_irq_callback(epic_dispatch_all_irqs);
 }
 
+/**
+ * @brief  Advance simulated time by one instruction cycle (host-sim
+ *         build): pumps the simulator.
+ */
 void epic_harness_tick(void)
 {
     pic18_sim_step(1);
 }
 
+/**
+ * @brief  Loop-continuation test (host-sim build): returns 1 while the
+ *         bounded run is in progress, 0 when it is over.
+ * @param iteration the current loop index.
+ * @return 1 while the run should continue, 0 when the host run is over.
+ */
 int epic_harness_running(uint32_t iteration)
 {
     return (iteration < g_cycles) ? 1 : 0;
 }
 
+/**
+ * @brief  printf-style log line (host-sim build): prints to stdout.
+ * @param fmt printf-style format string; remaining arguments follow.
+ */
 void epic_harness_log(const char *fmt, ...)
 {
     va_list ap;

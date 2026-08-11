@@ -23,12 +23,19 @@ static volatile uint32_t t2_overflows   = 0;
 static volatile uint32_t first_t2_cycle = 0;
 static uint32_t cycle_counter = 0;
 
+/**
+ * @brief Count Timer2 overflows, recording the first overflow cycle.
+ */
 static void on_t2_overflow(void)
 {
     if (t2_overflows == 0U) first_t2_cycle = cycle_counter;
     t2_overflows++;
 }
 
+/**
+ * @brief Verify CCP1 PWM configuration registers and Timer2 period
+ *        overflows on the sim backend.
+ */
 int main(void)
 {
     pic16f87xa_sim_reset();

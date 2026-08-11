@@ -14,16 +14,28 @@ static const uint8_t post_ratio[16] = {
 
 static const TIMER2_HandleTypeDef *g_t2_handle = NULL;
 
+/**
+ * @brief Read the current TMR2 value.
+ * @return the 8-bit counter value.
+ */
 uint8_t EPIC_TIMER2_ReadCounter(void)
 {
     return EPIC_REG8(PIC_REG_TMR2);
 }
 
+/**
+ * @brief Write the TMR2 counter.
+ * @param value the 8-bit value to load.
+ */
 void EPIC_TIMER2_WriteCounter(uint8_t value)
 {
     EPIC_REG8(PIC_REG_TMR2) = value;
 }
 
+/**
+ * @brief Read the PR2 period register (Bank 1).
+ * @return the current PR2 value.
+ */
 uint8_t EPIC_TIMER2_ReadPeriod(void)
 {
 #ifdef EPIC_BANK1_READ8
@@ -42,6 +54,10 @@ uint8_t EPIC_TIMER2_ReadPeriod(void)
 #endif
 }
 
+/**
+ * @brief Write the PR2 period register (Bank 1).
+ * @param period the 8-bit PR2 value, 0..255.
+ */
 void EPIC_TIMER2_WritePeriod(uint8_t period)
 {
 #ifdef EPIC_BANK1_WRITE8
@@ -56,18 +72,34 @@ void EPIC_TIMER2_WritePeriod(uint8_t period)
 #endif
 }
 
+/**
+ * @brief Convert a prescaler enum to its integer ratio.
+ * @param p the prescaler enum value.
+ * @return the ratio (1, 4 or 16), or 1 for an out-of-range value.
+ */
 uint16_t EPIC_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p)
 {
     if ((unsigned)p > 3U) return 1U;
     return pre_ratio[p];
 }
 
+/**
+ * @brief Convert a postscaler enum to its integer ratio.
+ * @param p the postscaler enum value.
+ * @return the ratio (1..16), or 1 for an out-of-range value.
+ */
 uint16_t EPIC_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p)
 {
     if ((unsigned)p > 15U) return 1U;
     return post_ratio[p];
 }
 
+/**
+ * @brief Configure Timer2: stop it, arm the overflow interrupt if a
+ *        callback is given, and record the handle.
+ * @param h handle with Prescaler, Postscaler, Period, OverflowCallback.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -85,6 +117,11 @@ EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief De-initialize Timer2: disable the interrupt and restore T2CON
+ *        and PR2 to reset values.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR2);
@@ -95,6 +132,12 @@ EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief Start Timer2 counting: write PR2 first, then program T2CON
+ *        (postscaler, prescaler) and set TMR2ON.
+ * @param h handle whose Period and prescaler/postscaler are applied.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -117,12 +160,20 @@ EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Stop Timer2 counting by clearing TMR2ON.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_Stop(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
     return EPIC_OK;
 }
 
+/**
+ * @brief Weak Timer2 ISR: clears TMR2IF and fires the overflow
+ *        callback.
+ */
 void TIMER2_IRQHandler(void)
 {
     /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR

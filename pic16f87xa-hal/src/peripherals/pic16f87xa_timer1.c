@@ -9,9 +9,13 @@ static const uint16_t ps_ratio[4] = { 1, 2, 4, 8 };
 
 static const TIMER1_HandleTypeDef *g_t1_handle = NULL;
 
-/** Atomic 16-bit read. The datasheet warns that reading TMR1H:TMR1L
- *  in asynchronous counter mode can return inconsistent values
- *  (DS39582B §6.4.1). Wrap that risk here so callers don't have to. */
+/**
+ * @brief Atomically read the 16-bit counter. The datasheet warns that
+ *        reading TMR1H:TMR1L in asynchronous counter mode can return
+ *        inconsistent values (DS39582B §6.4.1). Wrap that risk here so
+ *        callers don't have to.
+ * @return the current 16-bit TMR1H:L value.
+ */
 uint16_t EPIC_TIMER1_ReadCounter(void)
 {
     /* Read high byte, then low byte, then high byte again; if the
@@ -27,6 +31,11 @@ uint16_t EPIC_TIMER1_ReadCounter(void)
     return (uint16_t)(((uint16_t)hi2 << 8) | lo);
 }
 
+/**
+ * @brief Atomically write the 16-bit counter (high byte first; writing
+ *        either byte clears the prescaler).
+ * @param value the 16-bit value to load.
+ */
 void EPIC_TIMER1_WriteCounter(uint16_t value)
 {
     /* Per DS39582B §6.8: writing TMR1H or TMR1L clears the prescaler.
@@ -35,12 +44,24 @@ void EPIC_TIMER1_WriteCounter(uint16_t value)
     EPIC_REG8(PIC_REG_TMR1L) = (uint8_t)(value & 0xFFU);
 }
 
+/**
+ * @brief Convert a prescaler enum to its integer ratio.
+ * @param p the prescaler enum value.
+ * @return the ratio (1, 2, 4 or 8), or 1 for an out-of-range value.
+ */
 uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p)
 {
     if ((unsigned)p > 3U) return 1U;
     return ps_ratio[p];
 }
 
+/**
+ * @brief Configure Timer1: stop it, arm the overflow interrupt if a
+ *        callback is given, and record the handle.
+ * @param h handle with ClockSource, ClockSync, Oscillator, Prescaler,
+ *        ReloadValue, OverflowCallback.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -59,6 +80,11 @@ EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief De-initialize Timer1: disable the interrupt and restore T1CON
+ *        and the counter to reset values.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR1);
@@ -70,6 +96,12 @@ EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief Start Timer1 counting: reload the counter and program T1CON
+ *        (prescaler, oscillator, sync, clock source), setting TMR1ON.
+ * @param h handle whose ReloadValue and config are applied.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -93,12 +125,20 @@ EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Stop Timer1 counting by clearing TMR1ON.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Stop(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
     return EPIC_OK;
 }
 
+/**
+ * @brief Weak Timer1 ISR: clears TMR1IF and fires the overflow
+ *        callback.
+ */
 void TIMER1_IRQHandler(void)
 {
     /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR

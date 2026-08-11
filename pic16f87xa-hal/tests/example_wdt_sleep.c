@@ -12,6 +12,9 @@
     if (!(cond)) { printf("FAIL: %s\n", msg); return 1; } \
 } while (0)
 
+/**
+ * @brief Smoke-test the WDT/Sleep/BOR/POR helpers on the sim backend.
+ */
 int main(void)
 {
     pic16f87xa_sim_reset();

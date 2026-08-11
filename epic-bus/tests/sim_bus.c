@@ -48,9 +48,13 @@ enum { I_IDLE, I_ADDR, I_REG, I_DATA };
 static uint8_t g_i2c_state;
 static uint8_t g_i2c_reg;
 
+/** @brief Mock I2C: record a START and enter the address phase. */
 static void mock_i2c_start(void)          { g_seq_op[g_seq_n] = OP_START;  g_seq_n++; g_i2c_state = I_ADDR; }
+/** @brief Mock I2C: record a REPEATED-START and enter the address phase. */
 static void mock_i2c_repeated_start(void) { g_seq_op[g_seq_n] = OP_RSTART; g_seq_n++; g_i2c_state = I_ADDR; }
+/** @brief Mock I2C: record a STOP and return to idle. */
 static void mock_i2c_stop(void)           { g_seq_op[g_seq_n] = OP_STOP;   g_seq_n++; g_i2c_state = I_IDLE; }
+/** @brief Mock I2C: record and process one written byte. */
 static int  mock_i2c_write_byte(uint8_t b)
 {
     g_seq_op[g_seq_n] = OP_WRITE; g_seq_val[g_seq_n] = b; g_seq_n++;
@@ -63,6 +67,7 @@ static int  mock_i2c_write_byte(uint8_t b)
     if (g_i2c_state == I_DATA) { g_reg[g_i2c_reg & 0x0Fu] = b; g_i2c_reg++; return 1; }
     return 0;
 }
+/** @brief Mock I2C: record and serve one read byte. */
 static uint8_t mock_i2c_read_byte(int ack)
 {
     g_seq_op[g_seq_n] = OP_READ; g_seq_val[g_seq_n] = (uint8_t)ack; g_seq_n++;
@@ -78,8 +83,11 @@ static const epic_bus_i2c_ops_t mock_i2c = {
 enum { S_IDLE, S_REG, S_XFER };
 static uint8_t g_spi_state;
 static uint8_t g_spi_reg;
+/** @brief Mock SPI: record a select and enter the register phase. */
 static void mock_spi_select(void)   { g_seq_op[g_seq_n] = OP_START;  g_seq_n++; g_spi_state = S_REG; }
+/** @brief Mock SPI: record a deselect and return to idle. */
 static void mock_spi_deselect(void) { g_seq_op[g_seq_n] = OP_STOP;   g_seq_n++; g_spi_state = S_IDLE; }
+/** @brief Mock SPI: record and exchange one byte. */
 static uint8_t mock_spi_exchange(uint8_t b)
 {
     g_seq_op[g_seq_n] = OP_WRITE; g_seq_val[g_seq_n] = b; g_seq_n++;
@@ -95,6 +103,7 @@ static const epic_bus_spi_ops_t mock_spi = {
 
 /* register diagnostics (the sim harness prints raw strings) */
 
+/** @brief Log one register value as a hex string. */
 static void log_reg(const char *label, uint8_t v)
 {
     static const char hex[] = "0123456789ABCDEF";
@@ -110,6 +119,7 @@ static void log_reg(const char *label, uint8_t v)
 
 /* bounded SSPIF poll (the default ops' wait, made bounded) */
 
+/** @brief Poll SSPIF up to `polls` times, clearing it when set. */
 static uint8_t ssp_wait(uint32_t polls)
 {
     uint32_t i;
@@ -122,6 +132,8 @@ static uint8_t ssp_wait(uint32_t polls)
     return 0u;
 }
 
+/** @brief Sim gate main: exercise init readback, SSP traffic, and the
+ *         ops-seam transaction logic. */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

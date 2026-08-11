@@ -21,6 +21,11 @@
 static int g_fails = 0;
 #define CHECK(c, m) do { if (!(c)) { epic_harness_log("FAIL: %s\n", m); g_fails++; } } while (0)
 
+/**
+ * @brief Run the epic-serial host smoke test.
+ *
+ * @return 0 when all checks pass, 1 otherwise
+ */
 int main(void)
 {
     epic_harness_init(1000000UL);

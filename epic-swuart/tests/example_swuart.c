@@ -6,6 +6,7 @@
 
 #include "epic_swuart.h"
 
+/** @brief Real-target loopback demo: wire RC1 to RC2 and echo bytes. */
 int main(void)
 {
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_1, GPIO_MODE_OUTPUT);

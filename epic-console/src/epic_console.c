@@ -6,11 +6,26 @@
 #include <stddef.h>
 #include <string.h>
 
+/**
+ * @brief Write a NUL-terminated string through epic-serial.
+ *
+ * @param s the string to write
+ */
 static void console_write_str(const char *s)
 {
     (void)epic_serial_write((const uint8_t *)s, (int)strlen(s));
 }
 
+/**
+ * @brief Tokenize a line in place into argv.
+ *
+ * Whitespace-delimited tokens are NUL-terminated in line and their
+ * start pointers collected in argv, up to EPIC_CONSOLE_MAX_ARGS.
+ *
+ * @param line the NUL-terminated line to tokenize (modified in place)
+ * @param argv array receiving the token start pointers
+ * @return the number of tokens found
+ */
 static uint8_t console_tokenize(char *line, char **argv)
 {
     uint8_t argc = 0u;
@@ -40,6 +55,14 @@ static uint8_t console_tokenize(char *line, char **argv)
     return argc;
 }
 
+/**
+ * @brief Tokenize the current line and dispatch it to the command table.
+ *
+ * Matches argv[0] against the table; an empty line is cleared without
+ * dispatch. The line buffer is reset after dispatch.
+ *
+ * @param con the console whose line to dispatch
+ */
 static void console_dispatch(epic_console_t *con)
 {
     char *argv[EPIC_CONSOLE_MAX_ARGS];
@@ -64,6 +87,17 @@ static void console_dispatch(epic_console_t *con)
     con->line_len = 0u;
 }
 
+/**
+ * @brief Initialize a console instance with a caller-owned command table.
+ *
+ * Stores the table, context, and line state. See epic_console.h for the
+ * full contract.
+ *
+ * @param con the console instance to initialize
+ * @param table the caller-owned command table
+ * @param table_len number of rows in table
+ * @param ctx opaque context passed to every handler
+ */
 void epic_console_init(epic_console_t *con, const epic_console_cmd_t *table,
                        uint8_t table_len, void *ctx)
 {
@@ -77,6 +111,13 @@ void epic_console_init(epic_console_t *con, const epic_console_cmd_t *table,
     }
 }
 
+/**
+ * @brief Drain serial input, echo/edit it, and dispatch complete lines.
+ *
+ * See epic_console.h for the full contract.
+ *
+ * @param con the console instance to poll
+ */
 void epic_console_poll(epic_console_t *con)
 {
     uint8_t ch;
@@ -117,6 +158,13 @@ void epic_console_poll(epic_console_t *con)
     }
 }
 
+/**
+ * @brief Print one "name - help" line per command-table row.
+ *
+ * See epic_console.h for the full contract.
+ *
+ * @param con the console whose table to print
+ */
 void epic_console_print_help(const epic_console_t *con)
 {
     for (uint8_t i = 0; i < con->table_len; i++) {

@@ -16,6 +16,7 @@
 #define FOSC_HZ 20000000UL
 #endif
 
+/** @brief Sim gate: link and initialize the module under MPLAB SIM. */
 int main(void)
 {
     epic_harness_init(0UL);

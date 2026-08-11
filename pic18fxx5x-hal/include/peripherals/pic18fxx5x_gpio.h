@@ -87,30 +87,51 @@ typedef enum {
  */
 void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
 
-/** Restore all pins of `port` to input mode and clear the latch. */
+/**
+ * @brief Restore all pins of `port` to input mode and clear the latch.
+ * @param port the port to deinitialize (GPIOA..GPIOE).
+ */
 void EPIC_GPIO_DeInit(GPIO_TypeDef port);
 
 /**
  * @brief  Drive a pin high or low. Writes the LATx latch directly
  *         (DS39632E §10.0), the PIC18-native way (no read-modify-write
  *         of PORTx).
+ * @param port the port containing the pins.
+ * @param pins bitmask of pins to drive (@ref GPIO_PIN_0 .. GPIO_PIN_All).
+ * @param state the level to drive (GPIO_PIN_RESET or GPIO_PIN_SET).
  */
 void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
 
-/** Toggle a set of pins (LATx ^= mask). */
+/**
+ * @brief Toggle a set of pins (LATx ^= mask).
+ * @param port the port containing the pins.
+ * @param pins bitmask of pins to toggle (@ref GPIO_PIN_0 .. GPIO_PIN_All).
+ */
 void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins);
 
 /**
  * @brief  Read the current level seen on `pins` from PORTx. For pins
  *         configured as outputs this returns the latched value; for input
  *         pins it returns whatever the pin is being driven to externally.
+ * @param port the port to read.
+ * @param pins bitmask of pins to sample (@ref GPIO_PIN_0 .. GPIO_PIN_All).
+ * @return GPIO_PIN_SET if any sampled pin reads high, else GPIO_PIN_RESET.
  */
 GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins);
 
-/** Atomically write the entire 8-bit port latch (LATx). */
+/**
+ * @brief Atomically write the entire 8-bit port latch (LATx).
+ * @param port the port to write.
+ * @param value the 8-bit value to latch.
+ */
 void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
 
-/** Read the entire port (PORTx). */
+/**
+ * @brief Read the entire port (PORTx).
+ * @param port the port to read.
+ * @return the current 8-bit PORTx value.
+ */
 uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
 
 /**
@@ -118,6 +139,7 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
  *         Maps to INTCON2<RBPU> (DS39632E §10.2).
  *
  * @note   INTCON2<7> is inverted: RBPU = 1 disables pull-ups.
+ * @param pull GPIO_PULLUP to enable the pull-ups, GPIO_NOPULL to disable.
  */
 void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull);
 

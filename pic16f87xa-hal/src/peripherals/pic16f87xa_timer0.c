@@ -16,7 +16,12 @@ static const uint16_t ps_ratio[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 static TIMER0_HandleTypeDef g_t0_storage EPIC_PLACE(0x190);
 static const TIMER0_HandleTypeDef *g_t0_handle = NULL;
 
-/** Read-modify-write helper for OPTION_REG. */
+/**
+ * @brief Read-modify-write helper for OPTION_REG: clear `clr_mask`
+ *        bits, set `set_mask` bits, atomically.
+ * @param clr_mask bits to clear.
+ * @param set_mask bits to set.
+ */
 static void option_clr_set(uint8_t clr_mask, uint8_t set_mask)
 {
 #ifdef EPIC_BANK1_READ8
@@ -34,6 +39,13 @@ static void option_clr_set(uint8_t clr_mask, uint8_t set_mask)
 #endif
 }
 
+/**
+ * @brief Configure Timer0: stop it, arm the overflow interrupt if a
+ *        callback is given, and copy the handle into driver storage.
+ * @param h handle with ClockSource, ClockEdge, Prescaler,
+ *        PrescalerAssigned, ReloadValue, OverflowCallback.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -53,6 +65,11 @@ EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief De-initialize Timer0: disable the interrupt, stop counting
+ *        and reset TMR0.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR0);
@@ -62,6 +79,12 @@ EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief Start Timer0 counting: reload TMR0 and program the prescaler
+ *        assignment/ratio, clock source and edge.
+ * @param h handle whose ReloadValue and config are applied.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -86,28 +109,49 @@ EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Stop Timer0 counting by clearing T0CS.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_Stop(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
     return EPIC_OK;
 }
 
+/**
+ * @brief Read the current TMR0 value.
+ * @return the 8-bit counter value.
+ */
 uint8_t EPIC_TIMER0_ReadCounter(void)
 {
     return EPIC_REG8(PIC_REG_TMR0);
 }
 
+/**
+ * @brief Write the TMR0 counter (also clears the prescaler).
+ * @param value the 8-bit value to load.
+ */
 void EPIC_TIMER0_WriteCounter(uint8_t value)
 {
     EPIC_REG8(PIC_REG_TMR0) = value;
 }
 
+/**
+ * @brief Convert a prescaler enum to its integer ratio.
+ * @param p the prescaler enum value.
+ * @return the ratio (2..256), or 1 for an out-of-range value.
+ */
 uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)
 {
     if ((unsigned)p > 7U) return 1U;
     return ps_ratio[p];
 }
 
+/**
+ * @brief Weak Timer0 ISR: clears TMR0IF and fires the overflow
+ *        callback.
+ */
 void TIMER0_IRQHandler(void)
 {
     /* Direct flag ops, not the table-driven EPIC_IRQ_* path: the retlw

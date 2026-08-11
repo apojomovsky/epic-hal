@@ -6,6 +6,7 @@
 
 #include "pic_math.h"
 
+/** @brief Link/compile smoke: proves the host build links and the header types are visible. */
 int main(void)
 {
     /* The API types must be visible from the header alone. */

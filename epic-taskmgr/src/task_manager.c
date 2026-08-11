@@ -19,9 +19,16 @@ static task_t g_tasks[TASK_MGR_MAX_TASKS] EPIC_PLACE(0x110);
 /** Monotonic tick counter since the last init (wraps at 65535). */
 static uint16_t g_ticks = 0U;
 
-/** Countdown that fires a task after exactly `period` ticks: periodic
- *  tasks reload to period-1, not period (else every fire would take
- *  period+1 ticks); a one-shot (period 0) uses 0, ready on the first tick. */
+/**
+ * @brief Countdown that fires a task after exactly `period` ticks.
+ *
+ * Periodic tasks reload to period-1, not period (else every fire would
+ * take period+1 ticks); a one-shot (period 0) uses 0, ready on the first
+ * tick.
+ *
+ * @param period the task's period in ticks
+ * @return the countdown value to arm the task with
+ */
 static uint16_t arm_countdown(uint16_t period)
 {
     return (period == 0U) ? 0U : (uint16_t)(period - 1U);
@@ -31,6 +38,11 @@ static uint16_t arm_countdown(uint16_t period)
  *  hardware auto-reload; set by task_manager_attach_timer0. */
 static uint8_t g_tick_reload = 0U;
 
+/**
+ * @brief Initialise the scheduler (see task_manager.h).
+ *
+ * Clears every task slot and zeroes the tick counter; idempotent.
+ */
 void task_manager_init(void)
 {
     uint8_t prev = EPIC_IRQ_Disable();
@@ -46,6 +58,15 @@ void task_manager_init(void)
     EPIC_IRQ_Restore(prev);
 }
 
+/**
+ * @brief Register a task and arm it (see task_manager.h).
+ *
+ * @param fn            the task entry point; must not be NULL
+ * @param arg           opaque pointer passed to `fn` on every run
+ * @param period_ticks  firing period in ticks; 0 = one-shot
+ * @param priority      lower runs first within a round
+ * @return the new task's id, or TASK_ID_INVALID on failure
+ */
 task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
                      uint8_t priority)
 {
@@ -71,6 +92,11 @@ task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
     return id;
 }
 
+/**
+ * @brief Enable a previously stopped task (see task_manager.h).
+ *
+ * @param id the task to start
+ */
 void task_start(task_id_t id)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
@@ -87,6 +113,11 @@ void task_start(task_id_t id)
     EPIC_IRQ_Restore(prev);
 }
 
+/**
+ * @brief Disable a task so the scheduler skips it until @ref task_start (see task_manager.h).
+ *
+ * @param id the task to stop
+ */
 void task_stop(task_id_t id)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
@@ -96,6 +127,11 @@ void task_stop(task_id_t id)
     }
 }
 
+/**
+ * @brief Re-arm a task from its full period (see task_manager.h).
+ *
+ * @param id the task to re-arm
+ */
 void task_reset(task_id_t id)
 {
     /* Same rationale as task_start: the 16-bit countdown write cannot be
@@ -110,6 +146,12 @@ void task_reset(task_id_t id)
     EPIC_IRQ_Restore(prev);
 }
 
+/**
+ * @brief Change a task's period at runtime (see task_manager.h).
+ *
+ * @param id            the task to retune
+ * @param period_ticks  new period in ticks
+ */
 void task_set_period(task_id_t id, uint16_t period_ticks)
 {
     if (id >= TASK_MGR_MAX_TASKS) return;
@@ -123,6 +165,11 @@ void task_set_period(task_id_t id, uint16_t period_ticks)
     EPIC_IRQ_Restore(prev);
 }
 
+/**
+ * @brief Advance the scheduler one tick (see task_manager.h).
+ *
+ * Safe in interrupt context; never runs user code.
+ */
 void task_manager_tick(void)
 {
     g_ticks++;
@@ -144,6 +191,11 @@ void task_manager_tick(void)
     }
 }
 
+/**
+ * @brief Current tick counter since task_manager_init (see task_manager.h).
+ *
+ * @return the tick count
+ */
 uint16_t task_manager_ticks(void)
 {
     /* Read-twice-retry (the epic_tick_get pattern): the tick ISR
@@ -156,6 +208,11 @@ uint16_t task_manager_ticks(void)
     return v;
 }
 
+/**
+ * @brief Run every task ready now, in priority order (see task_manager.h).
+ *
+ * @return number of tasks actually run this round
+ */
 uint8_t task_manager_run_once(void)
 {
     /* Snapshot the ready set in priority order, clearing each READY flag,
@@ -205,6 +262,11 @@ uint8_t task_manager_run_once(void)
     return n;
 }
 
+/**
+ * @brief The canonical scheduler loop (see task_manager.h).
+ *
+ * Bounded on host; runs forever on target.
+ */
 void task_manager_run(void)
 {
     for (uint32_t i = 0; epic_harness_running(i); i++) {
@@ -214,6 +276,11 @@ void task_manager_run(void)
     }
 }
 
+/**
+ * @brief Number of tasks currently registered (used slots), any state (see task_manager.h).
+ *
+ * @return the count of used slots
+ */
 uint8_t task_manager_count(void)
 {
     /* Single-byte flag reads (atomic), no critical section. A spawn/free
@@ -228,14 +295,24 @@ uint8_t task_manager_count(void)
     return count;
 }
 
-/** Timer0 overflow callback: reload TMR0 first (no hardware auto-reload)
- *  so every tick has the same period, then advance the scheduler. */
+/**
+ * @brief Timer0 overflow callback.
+ *
+ * Reloads TMR0 first (no hardware auto-reload) so every tick has the
+ * same period, then advances the scheduler.
+ */
 static void task_manager_on_timer0_overflow(void)
 {
     EPIC_TIMER0_WriteCounter(g_tick_reload);
     task_manager_tick();
 }
 
+/**
+ * @brief Wire a HAL Timer0 overflow to task_manager_tick and start it (see task_manager.h).
+ *
+ * @param reload     TMR0 reload value (0..255)
+ * @param prescaler  a TIMER0_PrescalerTypeDef (1:2 .. 1:256)
+ */
 void task_manager_attach_timer0(uint8_t reload, TIMER0_PrescalerTypeDef prescaler)
 {
     g_tick_reload = reload;

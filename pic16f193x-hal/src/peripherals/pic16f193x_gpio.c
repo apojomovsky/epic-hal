@@ -10,6 +10,11 @@
 #include "peripherals/pic16f193x_gpio.h"
 #include "core/pic16f193x_irq.h"
 
+/**
+ * @brief Map a port to the address of its TRISx direction register.
+ * @param port GPIO port identifier
+ * @return the PIC_REG_TRISx token for the port (TRISA for unknown ports)
+ */
 static uint16_t tris_addr(GPIO_TypeDef port)
 {
     switch (port) {
@@ -26,6 +31,11 @@ static uint16_t tris_addr(GPIO_TypeDef port)
     }
 }
 
+/**
+ * @brief Map a port to the address of its LATx output latch register.
+ * @param port GPIO port identifier
+ * @return the PIC_REG_LATx token for the port (LATA for unknown ports)
+ */
 static uint16_t lat_addr(GPIO_TypeDef port)
 {
     switch (port) {
@@ -42,6 +52,11 @@ static uint16_t lat_addr(GPIO_TypeDef port)
     }
 }
 
+/**
+ * @brief Map a port to the address of its PORTx pin-level register.
+ * @param port GPIO port identifier
+ * @return the PIC_REG_PORTx token for the port (PORTA for unknown ports)
+ */
 static uint16_t port_addr(GPIO_TypeDef port)
 {
     switch (port) {
@@ -58,6 +73,12 @@ static uint16_t port_addr(GPIO_TypeDef port)
     }
 }
 
+/**
+ * @brief Map a port to the address of its ANSELx analog-select register.
+ * @param port GPIO port identifier
+ * @return the PIC_REG_ANSELx token for the port, or 0xFFFF for PORTC
+ *         which has no ANSEL on this family
+ */
 static uint16_t ansel_addr(GPIO_TypeDef port)
 {
     switch (port) {
@@ -75,7 +96,11 @@ static uint16_t ansel_addr(GPIO_TypeDef port)
     }
 }
 
-/** Upper pin bound for a port. PORTA/B/C/D = 8, PORTE = 4. */
+/**
+ * @brief Upper pin bound for a port. PORTA/B/C/D = 8, PORTE = 4.
+ * @param port GPIO port identifier
+ * @return the number of pins on the port
+ */
 static uint8_t port_width(GPIO_TypeDef port)
 {
 #if PIC16F193X_FAMILY_HAS_PORTE
@@ -84,6 +109,12 @@ static uint8_t port_width(GPIO_TypeDef port)
     return 8U;
 }
 
+/**
+ * @brief Configure one or more pins of a port to the same mode.
+ * @param port GPIOA..GPIOE
+ * @param pins bitmask of GPIO_PIN_0 .. GPIO_PIN_All
+ * @param mode one of GPIO_ModeTypeDef
+ */
 void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
@@ -117,6 +148,11 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     EPIC_REG8(la) = lat;
 }
 
+/**
+ * @brief Restore all pins of `port` to reset (input, analog, latch
+ *        clear).
+ * @param port GPIOA..GPIOE
+ */
 void EPIC_GPIO_DeInit(GPIO_TypeDef port)
 {
     uint16_t ta = tris_addr(port);
@@ -128,6 +164,12 @@ void EPIC_GPIO_DeInit(GPIO_TypeDef port)
     EPIC_REG8(la) = 0x00U;
 }
 
+/**
+ * @brief Drive a pin high or low; ORs/ANDs the mask onto the LATx latch.
+ * @param port GPIOA..GPIOE
+ * @param pins bitmask of pins to drive
+ * @param state GPIO_PIN_SET or GPIO_PIN_RESET
+ */
 void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
@@ -138,6 +180,11 @@ void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
     EPIC_REG8(la) = cur;
 }
 
+/**
+ * @brief Toggle a set of pins (LATx ^= mask).
+ * @param port GPIOA..GPIOE
+ * @param pins bitmask of pins to toggle
+ */
 void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
@@ -145,6 +192,13 @@ void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
     EPIC_REG8(la) = EPIC_REG8(la) ^ mask;
 }
 
+/**
+ * @brief Read the current level seen on `pins` from PORTx.
+ * @param port GPIOA..GPIOE
+ * @param pins bitmask of pins to read
+ * @return GPIO_PIN_SET if any selected pin reads high, GPIO_PIN_RESET
+ *         otherwise
+ */
 GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
@@ -152,17 +206,35 @@ GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
     return (EPIC_REG8(pa) & mask) ? GPIO_PIN_SET : GPIO_PIN_RESET;
 }
 
+/**
+ * @brief Atomically write the entire port LATx latch.
+ * @param port GPIOA..GPIOE
+ * @param value byte to write, masked to the port width
+ */
 void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value)
 {
     uint8_t mask = (uint8_t)((1U << port_width(port)) - 1U);
     EPIC_REG8(lat_addr(port)) = (uint8_t)(value & mask);
 }
 
+/**
+ * @brief Read the entire port (PORTx, pin level).
+ * @param port GPIOA..GPIOE
+ * @return the port's current pin levels
+ */
 uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
 {
     return EPIC_REG8(port_addr(port));
 }
 
+/**
+ * @brief Enable or disable the PORTB per-pin weak pull-ups via WPUB,
+ *        gated by the global WPUEN enable. Non-PORTB ports are ignored.
+ * @param port GPIO port identifier (only GPIOB is affected)
+ * @param pins bitmask of PORTB pins to select
+ * @param state GPIO_PIN_SET enables the selected pull-ups, GPIO_PIN_RESET
+ *        disables them
+ */
 void EPIC_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
     /* Weak pull-ups on this family are PORTB-only via WPUB (DS41364B
@@ -185,17 +257,31 @@ void EPIC_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 
 static void (*s_ioc_callback)(uint8_t iocbf, uint8_t portb) = NULL;
 
+/**
+ * @brief Register a callback fired from the PORTB interrupt-on-change.
+ * @param callback function called with the IOCBF mask and the freshly
+ *        read PORTB byte, or NULL to unregister
+ */
 void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t, uint8_t))
 {
     s_ioc_callback = callback;
 }
 
+/**
+ * @brief Enable per-pin positive/negative edge detection on PORTB.
+ * @param pos_mask bitmask of pins to detect rising edges on
+ * @param neg_mask bitmask of pins to detect falling edges on
+ */
 void EPIC_GPIO_EnableChangeDetect(uint8_t pos_mask, uint8_t neg_mask)
 {
     EPIC_REG8(PIC_REG_IOCBP) = pos_mask;
     EPIC_REG8(PIC_REG_IOCBN) = neg_mask;
 }
 
+/**
+ * @brief Weak PORTB change-interrupt ISR: reads IOCBF and PORTB, clears
+ *        IOCBF/IOCIF, then forwards (iocbf, portb) to the callback.
+ */
 void IOC_IRQHandler(void)
 {
     /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR

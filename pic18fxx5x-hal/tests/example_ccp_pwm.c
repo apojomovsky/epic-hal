@@ -18,12 +18,23 @@ static volatile uint32_t g_overflows   = 0;
 static volatile uint32_t g_first_cycle = 0;
 static uint32_t g_cycle = 0;
 
+/** @brief  Timer2 overflow callback.
+ *
+ *          Records the cycle of the first overflow and counts overflows,
+ *          one per PWM period.
+ */
 static void on_t2_overflow(void)
 {
     if (g_overflows == 0U) g_first_cycle = g_cycle;
     g_overflows++;
 }
 
+/** @brief  ECCP1 half-bridge PWM smoke test.
+ *
+ *          Programs PR2, 50% duty and dead-band, verifies the register
+ *          image, then runs the sim counting Timer2 overflows as period
+ *          markers.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

@@ -29,12 +29,18 @@ static int g_fails = 0;
 #ifndef EPIC_SWUART_TEST_HOOKS
 #define EPIC_SWUART_TEST_HOOKS 1
 #endif
+/** @brief Test hook: fire one channel A TX compare event. */
 extern void swuart_test_fire_tx_event(void);
+/** @brief Test hook: fire one channel B TX compare event. */
 extern void swuart_test_fire_tx_event_b(void);
+/** @brief Test hook: channel B's last armed TX mode (CCP4CON). */
 extern uint8_t swuart_test_last_tx_mode_b(void);
+/** @brief Test hook: fire one channel B RX capture/compare event. */
 extern void swuart_test_fire_rx_event_b(void);
+/** @brief Test hook: inject the generic RX capture value. */
 extern void swuart_test_set_capture(uint16_t value);
 
+/** @brief Dual-channel host test main: A transmits while B receives. */
 int main(void)
 {
     /* pic16f193x_sim_drive_input only stages the driven level; unlike
@@ -129,6 +135,7 @@ int main(void)
 
 #else /* EPIC_SWUART_MAX_CHANNELS < 2: not a PIC16F193X build. */
 
+/** @brief Empty TU main for single-channel families. */
 int main(void) { return 0; }
 
 #endif

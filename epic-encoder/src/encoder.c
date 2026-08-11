@@ -20,7 +20,13 @@ static const int8_t QUAD_TABLE[16] = {
      0, +1, -1,  0,
 };
 
-/* Extract this instance's 2-bit (a<<1)|b state from a port byte. */
+/**
+ * @brief Extract this instance's 2-bit (a<<1)|b state from a port byte.
+ *
+ * @param enc         the encoder instance whose pin positions to use
+ * @param port_value  the port byte to extract from
+ * @return the 2-bit state (a<<1)|b for this instance
+ */
 static uint8_t extract_state(const encoder_t *enc, uint8_t port_value)
 {
     uint8_t a = (uint8_t)((port_value >> enc->pin_a) & 1U);
@@ -28,6 +34,17 @@ static uint8_t extract_state(const encoder_t *enc, uint8_t port_value)
     return (uint8_t)((a << 1) | b);
 }
 
+/**
+ * @brief Initialize an encoder instance (see encoder.h).
+ *
+ * @param enc                  the encoder instance to initialize
+ * @param pin_a                bit position 0-7 of channel A in the port byte
+ * @param pin_b                bit position 0-7 of channel B in the port byte
+ * @param min_edge_interval_ms 0 disables the glitch gate; otherwise two
+ *                             edges closer than this (ms) drop the second
+ * @param port_value           current port byte; seeds `last_state` so the
+ *                             first real edge isn't misjudged
+ */
 void encoder_init(encoder_t *enc, uint8_t pin_a, uint8_t pin_b,
                   uint16_t min_edge_interval_ms, uint8_t port_value)
 {
@@ -41,6 +58,15 @@ void encoder_init(encoder_t *enc, uint8_t pin_a, uint8_t pin_b,
     enc->last_state           = extract_state(enc, port_value);
 }
 
+/**
+ * @brief Re-sync an encoder instance from a fresh port sample (see encoder.h).
+ *
+ * Pins and min_edge_interval_ms unchanged; only accumulators and
+ * resync state reset.
+ *
+ * @param enc         the encoder instance to reset
+ * @param port_value  current port byte; re-seeds `last_state`
+ */
 void encoder_reset(encoder_t *enc, uint8_t port_value)
 {
     /* Pins and min_edge_interval_ms unchanged; only accumulators and
@@ -52,6 +78,12 @@ void encoder_reset(encoder_t *enc, uint8_t port_value)
     enc->last_state     = extract_state(enc, port_value);
 }
 
+/**
+ * @brief Decode one port sample (see encoder.h).
+ *
+ * @param enc         the encoder instance to update
+ * @param port_value  the port byte just sampled
+ */
 void encoder_update(encoder_t *enc, uint8_t port_value)
 {
     uint8_t new_state = extract_state(enc, port_value);
@@ -82,6 +114,16 @@ void encoder_update(encoder_t *enc, uint8_t port_value)
     enc->last_state = new_state;
 }
 
+/**
+ * @brief Read the accumulated position atomically (see encoder.h).
+ *
+ * Read-twice-retry (the epic_tick_get pattern): the ISR updates
+ * position as a multi-byte RMW, so a single read can tear; retry
+ * until two consecutive reads agree.
+ *
+ * @param enc the encoder instance to read
+ * @return the current position count
+ */
 int32_t encoder_get_position(const encoder_t *enc)
 {
     /* Read-twice-retry (the epic_tick_get pattern): the ISR updates
@@ -94,6 +136,14 @@ int32_t encoder_get_position(const encoder_t *enc)
     return p;
 }
 
+/**
+ * @brief Read the impossible-transition counter atomically (see encoder.h).
+ *
+ * Read-twice-retry, same discipline as encoder_get_position.
+ *
+ * @param enc the encoder instance to read
+ * @return the current error count
+ */
 uint16_t encoder_get_error_count(const encoder_t *enc)
 {
     /* Read-twice-retry, same discipline as encoder_get_position. */
@@ -104,6 +154,14 @@ uint16_t encoder_get_error_count(const encoder_t *enc)
     return c;
 }
 
+/**
+ * @brief Read the rejected-by-gate counter atomically (see encoder.h).
+ *
+ * Read-twice-retry, same discipline as encoder_get_position.
+ *
+ * @param enc the encoder instance to read
+ * @return the current glitch count
+ */
 uint16_t encoder_get_glitch_count(const encoder_t *enc)
 {
     /* Read-twice-retry, same discipline as encoder_get_position. */

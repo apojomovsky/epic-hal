@@ -131,33 +131,58 @@ typedef struct {
  * @note   For PWM, also call `EPIC_TIMER2_Init` + `EPIC_TIMER2_Start` with a
  *         period matching `h->PWM.Period` before/after this call (Timer2 is
  *         the PWM time base). For capture/compare, start Timer1 (or Timer3).
+ * @param h the CCP handle describing the desired configuration.
+ * @return 0 on success, 0xFFFF on invalid configuration.
  */
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
 
-/** Reset CCPxCON (and ECCP1DEL/ECCP1AS for ECCP1) to 0x00; clear the PIR flag. */
+/**
+ * @brief Reset CCPxCON (and ECCP1DEL/ECCP1AS for ECCP1) to 0x00; clear the
+ *        PIR flag.
+ * @param inst which CCP module to reset (CCP_INSTANCE_1 or CCP_INSTANCE_2).
+ * @return 0 on success, 0xFFFF on invalid instance.
+ */
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
 
-/** Set the 16-bit CCPRx value (high byte first, DS39632E §16.x idiom). */
+/**
+ * @brief Set the 16-bit CCPRx value (high byte first, DS39632E §16.x idiom).
+ * @param inst which CCP module to configure.
+ * @param value the 16-bit compare/capture value to load.
+ */
 void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
 
-/** Change only CCPxCON's mode field, leaving CCPRx and IRQ enable state
- *  untouched. Cheap: no flag-clear or IRQ-enable bookkeeping, unlike
- *  EPIC_CCP_Init. For repeated in-frame mode switches (bit-banged
- *  protocols reprogramming the module every bit), not one-time setup. */
+/**
+ * @brief Change only CCPxCON's mode field, leaving CCPRx and IRQ enable
+ *        state untouched. Cheap: no flag-clear or IRQ-enable bookkeeping,
+ *        unlike EPIC_CCP_Init. For repeated in-frame mode switches
+ *        (bit-banged protocols reprogramming the module every bit), not
+ *        one-time setup.
+ * @param inst which CCP module to configure.
+ * @param mode the new operating mode (a @ref CCP_ModeTypeDef value).
+ */
 void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode);
 
-/** Atomically read the 16-bit CCPRx value (high-low-high idiom). */
+/**
+ * @brief Atomically read the 16-bit CCPRx value (high-low-high idiom).
+ * @param inst which CCP module to read.
+ * @return the current 16-bit CCPRx value.
+ */
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
 
 /**
  * @brief  Set PWM duty in 10-bit units (0..1023). Writes the LSBs into
  *         CCPxCON<5:4> then CCPRxL (bits 9:2), preserving the mode bits.
+ * @param inst which CCP module to configure.
+ * @param duty the 10-bit duty value, 0..1023.
  */
 void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);
 
 /**
  * @brief  Configure the ECCP1 dead-band delay + auto-restart (ECCP1DEL).
  *         No-op for CCP2. Relevant in half-bridge / full-bridge PWM modes.
+ * @param inst which CCP module to configure (only CCP1 applies).
+ * @param delay the 7-bit dead-band count, 0..127.
+ * @param auto_restart true to auto-restart PWM after auto-shutdown (PRSEN).
  */
 void EPIC_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst,
                             uint8_t delay, bool auto_restart);
@@ -165,13 +190,22 @@ void EPIC_CCP_ConfigDeadBand(CCP_InstanceTypeDef inst,
 /**
  * @brief  Configure the ECCP1 auto-shutdown source + pin states (ECCP1AS).
  *         No-op for CCP2. Pass `CCP_AUTOSHUTDOWN_DISABLED` to turn it off.
+ * @param inst which CCP module to configure (only CCP1 applies).
+ * @param source the auto-shutdown source (a @ref CCP_AutoShutdownSourceTypeDef value).
+ * @param pins_ac the P1A/P1C shutdown pin state.
+ * @param pins_bd the P1B/P1D shutdown pin state.
  */
 void EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
                                 CCP_AutoShutdownSourceTypeDef source,
                                 CCP_PinStateTypeDef pins_ac,
                                 CCP_PinStateTypeDef pins_bd);
 
-/** Returns 1 if an ECCP1 auto-shutdown event is active (ECCP1AS<ECCPASE>). */
+/**
+ * @brief Returns 1 if an ECCP1 auto-shutdown event is active
+ *        (ECCP1AS<ECCPASE>).
+ * @param inst which CCP module to query (only CCP1 applies).
+ * @return 1 while an auto-shutdown event is active, else 0.
+ */
 uint8_t EPIC_CCP_IsShutdown(CCP_InstanceTypeDef inst);
 
 /**
@@ -179,12 +213,17 @@ uint8_t EPIC_CCP_IsShutdown(CCP_InstanceTypeDef inst);
  *         Only effective when PRSEN = 0 (manual restart); with PRSEN = 1 the
  *         hardware auto-clears when the shutdown source deasserts. No-op for
  *         CCP2.
+ * @param inst which CCP module to restart (only CCP1 applies).
  */
 void EPIC_CCP_Restart(CCP_InstanceTypeDef inst);
 
-/** Weak CCP1 (ECCP1) ISR, override in user code. */
+/**
+ * @brief Weak CCP1 (ECCP1) ISR, override in user code.
+ */
 void CCP1_IRQHandler(void) EPIC_WEAK;
-/** Weak CCP2 ISR, override in user code. */
+/**
+ * @brief Weak CCP2 ISR, override in user code.
+ */
 void CCP2_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_CCP_H */

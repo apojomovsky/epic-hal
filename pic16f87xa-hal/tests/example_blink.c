@@ -20,12 +20,18 @@ static volatile uint32_t g_toggle_count = 0;
 
 /* Timer0 overflow callback, runs in interrupt context (target) or the
  * sim IRQ callback (host). */
+/**
+ * @brief Toggle RB0 and bump the toggle counter on each Timer0 overflow.
+ */
 static void on_t0_overflow(void)
 {
     EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
     g_toggle_count++;
 }
 
+/**
+ * @brief Blink RB0 from a Timer0 overflow-driven loop.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

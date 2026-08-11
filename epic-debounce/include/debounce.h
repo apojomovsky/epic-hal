@@ -56,6 +56,7 @@ void debounce_init(debounce_t *db, debounce_read_fn read, void *read_ctx,
  *         iteration. Reads the pin via the callback, applies the debounce
  *         algorithm, and returns an edge event if the stable state just
  *         committed a transition.
+ * @param db the debounce instance to poll.
  * @return `DEBOUNCE_EVENT_PRESSED`, `DEBOUNCE_EVENT_RELEASED`, or
  *         `DEBOUNCE_EVENT_NONE`.
  */
@@ -63,6 +64,7 @@ debounce_event_t debounce_poll(debounce_t *db);
 
 /**
  * @brief  Query the last committed (debounced) state.
+ * @param db the debounce instance to query.
  * @return `true` if the stable state is "active," `false` if "inactive."
  * @note   Reflects the committed stable state, not the raw/candidate state.
  */

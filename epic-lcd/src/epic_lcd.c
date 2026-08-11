@@ -42,21 +42,43 @@
 
 /* helpers */
 
+/**
+ * @brief Send an instruction byte (RS=0) through the transport.
+ *
+ * @param lcd LCD instance whose transport to use
+ * @param cmd HD44780 instruction byte
+ */
 static void send_cmd(epic_lcd_t *lcd, uint8_t cmd)
 {
     lcd->ops->send(lcd->ops_ctx, 0, cmd);
 }
 
+/**
+ * @brief Send a data byte (RS=1) through the transport.
+ *
+ * @param lcd  LCD instance whose transport to use
+ * @param data DDRAM/CGRAM data byte
+ */
 static void send_data(epic_lcd_t *lcd, uint8_t data)
 {
     lcd->ops->send(lcd->ops_ctx, 1, data);
 }
 
+/**
+ * @brief Wait the short inter-command execution time (40 us).
+ *
+ * @param lcd LCD instance whose transport delay op to use
+ */
 static void cmd_short_wait(epic_lcd_t *lcd)
 {
     lcd->ops->delay_us(lcd->ops_ctx, DELAY_CMD_US);
 }
 
+/**
+ * @brief Wait the long clear/home execution time (1.53 ms).
+ *
+ * @param lcd LCD instance whose transport delay op to use
+ */
 static void cmd_long_wait(epic_lcd_t *lcd)
 {
     lcd->ops->delay_us(lcd->ops_ctx, DELAY_CLEAR_US);
@@ -69,6 +91,18 @@ static const uint8_t default_row_addr[EPIC_LCD_MAX_ROWS] = {
     0x00u, 0x40u, 0x14u, 0x54u
 };
 
+/**
+ * @brief Run the full HD44780 init sequence and apply the caller's
+ *        display/cursor/blink and entry-mode defaults.
+ *
+ * Call once before any other function; ops/ops_ctx must outlive the lcd
+ * instance.
+ *
+ * @param lcd      LCD instance to initialize
+ * @param ops      transport ops (send/delay) the driver will use
+ * @param ops_ctx  transport context passed to each ops call
+ * @param config   display geometry and entry-mode configuration
+ */
 void epic_lcd_init(epic_lcd_t *lcd, const epic_lcd_ops_t *ops, void *ops_ctx,
                    const epic_lcd_config_t *config)
 {
@@ -116,18 +150,42 @@ void epic_lcd_init(epic_lcd_t *lcd, const epic_lcd_ops_t *ops, void *ops_ctx,
     cmd_short_wait(lcd);
 }
 
+/**
+ * @brief Clear the entire display and return the cursor to row 0, col 0.
+ *
+ * Takes ~1.53 ms to execute (the driver waits internally).
+ *
+ * @param lcd LCD instance
+ */
 void epic_lcd_clear(epic_lcd_t *lcd)
 {
     send_cmd(lcd, CMD_CLEAR_DISPLAY);
     cmd_long_wait(lcd);
 }
 
+/**
+ * @brief Return the cursor to row 0, col 0.
+ *
+ * Display contents are not changed. Takes ~1.53 ms.
+ *
+ * @param lcd LCD instance
+ */
 void epic_lcd_home(epic_lcd_t *lcd)
 {
     send_cmd(lcd, CMD_RETURN_HOME);
     cmd_long_wait(lcd);
 }
 
+/**
+ * @brief Move the cursor to (col, row).
+ *
+ * Row 0 is the top row. Out-of-range coordinates clamp to the display
+ * edge.
+ *
+ * @param lcd LCD instance
+ * @param col column to move to
+ * @param row row to move to
+ */
 void epic_lcd_set_cursor(epic_lcd_t *lcd, uint8_t col, uint8_t row)
 {
     if (row >= lcd->rows) {
@@ -141,12 +199,25 @@ void epic_lcd_set_cursor(epic_lcd_t *lcd, uint8_t col, uint8_t row)
     cmd_short_wait(lcd);
 }
 
+/**
+ * @brief Write one character at the current cursor position.
+ *
+ * @param lcd LCD instance
+ * @param c   character to write
+ */
 void epic_lcd_write_char(epic_lcd_t *lcd, char c)
 {
     send_data(lcd, (uint8_t)c);
     cmd_short_wait(lcd);
 }
 
+/**
+ * @brief Write len bytes from str at the current cursor position.
+ *
+ * @param lcd LCD instance
+ * @param str buffer to write
+ * @param len number of bytes to write
+ */
 void epic_lcd_write(epic_lcd_t *lcd, const char *str, size_t len)
 {
     for (size_t i = 0; i < len; i++) {
@@ -155,11 +226,25 @@ void epic_lcd_write(epic_lcd_t *lcd, const char *str, size_t len)
     }
 }
 
+/**
+ * @brief Write a NUL-terminated string at the current cursor position.
+ *
+ * @param lcd LCD instance
+ * @param str NUL-terminated string to write
+ */
 void epic_lcd_print(epic_lcd_t *lcd, const char *str)
 {
     epic_lcd_write(lcd, str, strlen(str));
 }
 
+/**
+ * @brief Turn the entire display on or off.
+ *
+ * Cursor and blink settings are preserved; nothing is cleared.
+ *
+ * @param lcd LCD instance
+ * @param on  true to turn the display on, false to turn it off
+ */
 void epic_lcd_display_on(epic_lcd_t *lcd, bool on)
 {
     if (on) {
@@ -171,6 +256,12 @@ void epic_lcd_display_on(epic_lcd_t *lcd, bool on)
     cmd_short_wait(lcd);
 }
 
+/**
+ * @brief Show or hide the cursor underline.
+ *
+ * @param lcd LCD instance
+ * @param on  true to show the cursor, false to hide it
+ */
 void epic_lcd_cursor_on(epic_lcd_t *lcd, bool on)
 {
     if (on) {
@@ -182,6 +273,12 @@ void epic_lcd_cursor_on(epic_lcd_t *lcd, bool on)
     cmd_short_wait(lcd);
 }
 
+/**
+ * @brief Enable or disable cursor blinking.
+ *
+ * @param lcd LCD instance
+ * @param on  true to blink the cursor, false to stop blinking
+ */
 void epic_lcd_cursor_blink(epic_lcd_t *lcd, bool on)
 {
     if (on) {
@@ -193,18 +290,44 @@ void epic_lcd_cursor_blink(epic_lcd_t *lcd, bool on)
     cmd_short_wait(lcd);
 }
 
+/**
+ * @brief Shift the entire display one position to the left.
+ *
+ * The cursor does not move.
+ *
+ * @param lcd LCD instance
+ */
 void epic_lcd_scroll_left(epic_lcd_t *lcd)
 {
     send_cmd(lcd, CMD_CURSOR_SHIFT | SHIFT_DISPLAY);
     cmd_short_wait(lcd);
 }
 
+/**
+ * @brief Shift the entire display one position to the right.
+ *
+ * The cursor does not move.
+ *
+ * @param lcd LCD instance
+ */
 void epic_lcd_scroll_right(epic_lcd_t *lcd)
 {
     send_cmd(lcd, CMD_CURSOR_SHIFT | SHIFT_DISPLAY | SHIFT_RIGHT);
     cmd_short_wait(lcd);
 }
 
+/**
+ * @brief Define a custom character in CGRAM slot @p slot.
+ *
+ * Slot range is 0-7, mapped to character codes 0x00-0x07. Glyph: 8 bytes,
+ * one per row, bottom 5 bits are the pixel row (bit 4 = leftmost pixel,
+ * bit 0 = rightmost). After defining, the address counter returns to
+ * DDRAM.
+ *
+ * @param lcd   LCD instance
+ * @param slot  CGRAM slot to define (0-7); out-of-range is ignored
+ * @param glyph 8-byte glyph pattern, one byte per row
+ */
 void epic_lcd_create_char(epic_lcd_t *lcd, uint8_t slot, const uint8_t glyph[8])
 {
     if (slot > 7u) {
@@ -221,12 +344,28 @@ void epic_lcd_create_char(epic_lcd_t *lcd, uint8_t slot, const uint8_t glyph[8])
     cmd_short_wait(lcd);
 }
 
+/**
+ * @brief Send a raw instruction byte.
+ *
+ * For commands not covered by the API above.
+ *
+ * @param lcd LCD instance
+ * @param cmd raw HD44780 instruction byte
+ */
 void epic_lcd_command(epic_lcd_t *lcd, uint8_t cmd)
 {
     send_cmd(lcd, cmd);
     cmd_short_wait(lcd);
 }
 
+/**
+ * @brief Send a raw data byte.
+ *
+ * Writes to DDRAM/CGRAM at the current address.
+ *
+ * @param lcd  LCD instance
+ * @param data data byte to write
+ */
 void epic_lcd_data(epic_lcd_t *lcd, uint8_t data)
 {
     send_data(lcd, data);

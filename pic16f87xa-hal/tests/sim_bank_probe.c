@@ -27,6 +27,10 @@
 
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief Log a failed check index as a hex pair and bump the counter.
+ * @param idx the check index (0x00..0x0F).
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -51,10 +55,16 @@ static void fail(uint8_t idx)
 /* Bank-1 readback helper. */
 #define RD1(sfr, out) EPIC_BANK1_READ8(sfr, (out))
 
+/**
+ * @brief TX-complete callback: non-null only to arm TXEN.
+ */
 static void s_tx_noop(void)
 {
 }
 
+/**
+ * @brief Run the banked-SFR access probes and report pass/fail.
+ */
 int main(void)
 {
     epic_harness_init(0UL);

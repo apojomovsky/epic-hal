@@ -11,6 +11,13 @@
 
 #define PIC_MATH_RAND_SEED 0xACE1u   /* documented nonzero seed for state==0 */
 
+/**
+ * @brief  16-bit maximal-length LFSR pseudo-random step.
+ * @param  state  in/out LFSR state; must point at a persistent uint16_t.
+ *                A zero state is treated as the documented nonzero seed.
+ * @return the next 16-bit pseudo-random value (also written back to
+ *         *state). Never 0 over the full 65535-period cycle.
+ */
 uint16_t pic_math_rand_next(uint16_t *state)
 {
     uint16_t s = *state;
@@ -24,6 +31,12 @@ uint16_t pic_math_rand_next(uint16_t *state)
     return s;
 }
 
+/**
+ * @brief  Approximate Gaussian (mean 0) pseudo-random sample via the
+ *         Central Limit Theorem: the sum of four LFSR samples, normalized.
+ * @param  state  in/out LFSR state shared with pic_math_rand_next.
+ * @return a signed sample with an approximately bell-shaped distribution.
+ */
 int16_t pic_math_rand_gauss(uint16_t *state)
 {
     int32_t sum = 0;

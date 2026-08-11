@@ -68,21 +68,57 @@ typedef struct {
     .OverflowCallback = NULL,                                           \
 }
 
+/**
+ * @brief  Configure Timer1 from the handle: clock source, sync, oscillator,
+ *         prescaler and reload value, then set RD16 for atomic 16-bit
+ *         access. Does not start the timer, call @ref EPIC_TIMER1_Start.
+ * @param h the Timer1 handle describing the desired configuration.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h);
+
+/**
+ * @brief  Disable Timer1 counting and clear TMR1IF.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void);
+
+/**
+ * @brief  Enable Timer1 counting: writes the reload value then sets
+ *         T1CON<TMR1ON>.
+ * @param h the handle used to configure the timer.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h);
+
+/**
+ * @brief  Disable Timer1 counting. Clears T1CON<TMR1ON>.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Stop(void);
 
-/** Atomically read the 16-bit counter (RD16 latches TMR1H on TMR1L read). */
+/**
+ * @brief Atomically read the 16-bit counter (RD16 latches TMR1H on TMR1L read).
+ * @return the current 16-bit TMR1 value.
+ */
 uint16_t EPIC_TIMER1_ReadCounter(void);
 
-/** Atomically write the 16-bit counter (RD16 latches TMR1H on TMR1L write). */
+/**
+ * @brief Atomically write the 16-bit counter (RD16 latches TMR1H on TMR1L write).
+ * @param value the 16-bit value to load into the counter.
+ */
 void EPIC_TIMER1_WriteCounter(uint16_t value);
 
-/** Convert a prescaler enum to its integer ratio (1, 2, 4, 8). */
+/**
+ * @brief Convert a prescaler enum to its integer ratio (1, 2, 4, 8).
+ * @param p the prescaler enum value.
+ * @return the integer division ratio (1, 2, 4 or 8).
+ */
 uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);
 
-/** Weak Timer1 ISR, override in user code to add application logic. */
+/**
+ * @brief Weak Timer1 ISR, override in user code to add application logic.
+ */
 void TIMER1_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_TIMER1_H */

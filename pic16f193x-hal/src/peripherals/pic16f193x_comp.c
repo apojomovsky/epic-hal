@@ -6,6 +6,14 @@
 #include "peripherals/pic16f193x_comp.h"
 #include "core/pic16f193x_irq.h"
 
+/**
+ * @brief Configure a comparator from `h` and enable it. Per-instance
+ *        CMxCON0/CMxCON1 are written with branch-before-touch access.
+ * @param h handle with instance, channel selection, hysteresis,
+ *        output options and interrupt edge
+ * @return EPIC_OK on success, EPIC_INVALID for a null handle, invalid
+ *         channel or unknown instance
+ */
 EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -33,6 +41,11 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Disable a comparator by clearing its CMxCON0/CMxCON1 registers.
+ * @param inst comparator instance (1-2)
+ * @return EPIC_OK on success, EPIC_INVALID for an unknown instance
+ */
 EPIC_StatusTypeDef EPIC_COMP_DeInit(COMP_InstanceTypeDef inst)
 {
     if (inst == COMP_INSTANCE_1) {
@@ -47,6 +60,11 @@ EPIC_StatusTypeDef EPIC_COMP_DeInit(COMP_InstanceTypeDef inst)
     return EPIC_OK;
 }
 
+/**
+ * @brief Read the comparator's current output level from CMOUT.
+ * @param inst comparator instance (1-2)
+ * @return 1 if the output is high, 0 if low (0 for an unknown instance)
+ */
 uint8_t EPIC_COMP_ReadOutput(COMP_InstanceTypeDef inst)
 {
     uint8_t cmout = EPIC_REG8(PIC_REG_CMOUT);
@@ -55,5 +73,11 @@ uint8_t EPIC_COMP_ReadOutput(COMP_InstanceTypeDef inst)
     return 0U;
 }
 
+/**
+ * @brief Comparator 1 interrupt handler (weak, override in user code).
+ */
 void CMP1_IRQHandler(void) {}
+/**
+ * @brief Comparator 2 interrupt handler (weak, override in user code).
+ */
 void CMP2_IRQHandler(void) {}

@@ -43,6 +43,14 @@ static volatile uint8_t g_rx_head, g_rx_tail, g_rx_count;
 
 /* ISR callbacks (called by the HAL's USART handlers). */
 
+/**
+ * @brief Store one received byte into the RX ring.
+ *
+ * Called by the HAL's USART RX handler. Bytes are dropped on ring
+ * overflow.
+ *
+ * @param data the received byte
+ */
 static void epic_serial_on_rx(uint8_t data)
 {
     if (g_rx_count < SZ) {                  /* drop on overflow */
@@ -52,6 +60,12 @@ static void epic_serial_on_rx(uint8_t data)
     }
 }
 
+/**
+ * @brief Load the next queued TX byte into TXREG.
+ *
+ * Called by the HAL's USART TX handler. Disarms the TX interrupt when
+ * the ring is empty.
+ */
 static void epic_serial_on_tx(void)
 {
     if (g_tx_count > 0u) {
@@ -67,6 +81,16 @@ static void epic_serial_on_tx(void)
     }
 }
 
+/**
+ * @brief Initialize the USART for async 8N1 at baud.
+ *
+ * Configures the family USART with the computed SPBRG value and installs
+ * the RX/TX ISR callbacks; RX stays always-on and TX demand-driven.
+ * See epic_serial.h for the full contract.
+ *
+ * @param fosc_hz the system oscillator frequency in Hz
+ * @param baud the desired baud rate
+ */
 void epic_serial_init(uint32_t fosc_hz, uint32_t baud)
 {
     /* Static: the USART driver stores the handle pointer for ISR use, so
@@ -99,6 +123,16 @@ void epic_serial_init(uint32_t fosc_hz, uint32_t baud)
     g_rx_head = g_rx_tail = g_rx_count = 0u;
 }
 
+/**
+ * @brief Enqueue len bytes for background TX.
+ *
+ * Blocks (dispatching IRQs) while the TX ring is full so the whole
+ * buffer is enqueued. See epic_serial.h for the full contract.
+ *
+ * @param data bytes to transmit
+ * @param len number of bytes to enqueue
+ * @return the number of bytes enqueued (len unless len is 0)
+ */
 int epic_serial_write(const uint8_t *data, int len)
 {
     for (int i = 0; i < len; i++) {
@@ -113,6 +147,15 @@ int epic_serial_write(const uint8_t *data, int len)
     return len;
 }
 
+/**
+ * @brief Pull up to max received bytes from the RX ring.
+ *
+ * Non-blocking. See epic_serial.h for the full contract.
+ *
+ * @param buf destination buffer
+ * @param max maximum number of bytes to read
+ * @return the number of bytes actually read (0 if nothing received)
+ */
 int epic_serial_read(uint8_t *buf, int max)
 {
     int n = 0;
@@ -124,16 +167,32 @@ int epic_serial_read(uint8_t *buf, int max)
     return n;
 }
 
+/**
+ * @brief Report the number of bytes available to read from the RX ring.
+ *
+ * @return the number of received bytes buffered
+ */
 int epic_serial_available(void)
 {
     return (int)g_rx_count;                  /* single-byte read: atomic */
 }
 
+/**
+ * @brief Report the number of bytes still pending in the TX ring.
+ *
+ * @return the number of bytes not yet loaded into TXREG
+ */
 int epic_serial_tx_pending(void)
 {
     return (int)g_tx_count;
 }
 
+/**
+ * @brief Block until every enqueued TX byte has been transmitted.
+ *
+ * Dispatches IRQs until the TX ring drains and the shift register
+ * empties. See epic_serial.h for the full contract.
+ */
 void epic_serial_flush(void)
 {
     while (g_tx_count > 0u) {
@@ -144,6 +203,11 @@ void epic_serial_flush(void)
     }
 }
 
+/**
+ * @brief Emit one char through the TX ring (XC8 printf retarget).
+ *
+ * @param c the character to emit
+ */
 void putch(char c)
 {
     uint8_t b = (uint8_t)c;

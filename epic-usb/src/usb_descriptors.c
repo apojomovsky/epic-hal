@@ -182,6 +182,16 @@ static const struct {uint8_t bLength; uint8_t bDescriptorType; uint16_t chars[29
 	 'F','O','R',' ','S','H','I','P','P','I','N','G','.'}
 };
 
+/**
+ * @brief Return one USB string descriptor.
+ *
+ * Supplies the language ID table (index 0) and the vendor, product, and
+ * serial strings (indexes 1-3).
+ *
+ * @param string_number the descriptor index requested by the host
+ * @param ptr out-pointer for the descriptor
+ * @return the descriptor length in bytes, or -1 for an unknown index
+ */
 int16_t usb_application_get_string(uint8_t string_number, const void **ptr)
 {
 	if (string_number == 0) {

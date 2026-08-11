@@ -17,6 +17,7 @@ typedef struct {
     uint8_t  arm_count;
 } button_t;
 
+/** @brief Button action: count and log the arming. */
 static void on_arm(void *ctx)
 {
     button_t *b = ctx;
@@ -31,8 +32,12 @@ static const fsm_transition_t button_transitions[] = {
 
 static button_t g_button;
 
-/* The task callback knows nothing of fsm.h's internals beyond calling
- * fsm_dispatch: that is the entire integration surface. */
+/**
+ * @brief Task callback that dispatches button events into the FSM.
+ *
+ * The task callback knows nothing of fsm.h's internals beyond calling
+ * fsm_dispatch: that is the entire integration surface.
+ */
 static void button_task(void *arg)
 {
     button_t *b = arg;
@@ -46,6 +51,7 @@ static void button_task(void *arg)
     }
 }
 
+/** @brief Compose an fsm_t with epic-taskmgr and drive it via the harness. */
 int main(void)
 {
     FSM_INIT(&g_button.fsm, button_transitions, ST_IDLE, &g_button);

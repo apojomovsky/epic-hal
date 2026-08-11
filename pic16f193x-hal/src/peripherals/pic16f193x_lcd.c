@@ -56,6 +56,12 @@
         else                       EPIC_REG8(PIC_REG_LCDDATA11) = (uint8_t)(value); \
     } while (0)
 
+/**
+ * @brief Configure the LCD controller from the handle and enable it.
+ * @param h handle with contrast and mux mode
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL or the
+ *         contrast is out of range
+ */
 EPIC_StatusTypeDef EPIC_LCD_Init(const LCD_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -76,6 +82,10 @@ EPIC_StatusTypeDef EPIC_LCD_Init(const LCD_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Disable the LCD controller and clear all segment data.
+ * @return EPIC_OK on success
+ */
 EPIC_StatusTypeDef EPIC_LCD_DeInit(void)
 {
     EPIC_REG8(PIC_REG_LCDCON) = 0x00U;
@@ -83,6 +93,13 @@ EPIC_StatusTypeDef EPIC_LCD_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief Set or clear one LCD segment.
+ * @param seg segment number (0..PIC16F193X_FAMILY_LCD_SEGMENTS-1)
+ * @param com common line (0..LCD_COMMONS-1)
+ * @param on 1 to turn the segment on, 0 to turn it off
+ * @return EPIC_OK on success, EPIC_INVALID if seg or com is out of range
+ */
 EPIC_StatusTypeDef EPIC_LCD_SetSegment(uint8_t seg, uint8_t com, uint8_t on)
 {
     if (seg >= PIC16F193X_FAMILY_LCD_SEGMENTS || com >= LCD_COMMONS) return EPIC_INVALID;
@@ -94,15 +111,26 @@ EPIC_StatusTypeDef EPIC_LCD_SetSegment(uint8_t seg, uint8_t com, uint8_t on)
     return EPIC_OK;
 }
 
+/**
+ * @brief Clear all LCD segment data.
+ * @return EPIC_OK on success
+ */
 EPIC_StatusTypeDef EPIC_LCD_Clear(void)
 {
     for (uint8_t i = 0U; i < 12U; i++) LCD_WRITE_DATA(i, 0x00U);
     return EPIC_OK;
 }
 
+/**
+ * @brief Report whether the LCD module is active.
+ * @return 1 if the LCD is active (LCDA set), 0 otherwise
+ */
 uint8_t EPIC_LCD_IsActive(void)
 {
     return (EPIC_REG8(PIC_REG_LCDPS) & PIC_LCDPS_LCDA) ? 1U : 0U;
 }
 
+/**
+ * @brief LCD interrupt handler (weak, override in user code).
+ */
 void LCD_IRQHandler(void) {}

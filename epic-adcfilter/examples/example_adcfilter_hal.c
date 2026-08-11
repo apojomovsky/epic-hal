@@ -19,12 +19,14 @@
   #define SIM_ADC(r) pic16f87xa_sim_drive_adc_done((uint16_t)(r))
 #endif
 
+/** @brief ADC read callback wrapping EPIC_ADC_Read. */
 static uint16_t read_adc(void *ctx)
 {
     (void)ctx;
     return EPIC_ADC_Read();
 }
 
+/** @brief Demo: oversample then moving-average a simulated ADC. */
 int main(void)
 {
     epic_harness_init(100000UL);

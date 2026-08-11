@@ -44,21 +44,46 @@ typedef struct {
     .ChangeCallback  = NULL,                                               \
 }
 
+/**
+ * @brief  Configure the comparators: mode, inversion, input switch and
+ *         change callback, then enable the module (CMCON).
+ * @param h the comparator handle describing the desired configuration.
+ * @return 0 on success, 0xFFFF on invalid configuration.
+ */
 EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h);
+
+/**
+ * @brief  Disable the comparators (CMCON = COMP_MODE_OFF) and clear CMIF.
+ * @return 0 on success, 0xFFFF if the module was not initialized.
+ */
 EPIC_StatusTypeDef EPIC_COMP_DeInit(void);
 
-/** Returns 1 if C1 output is high (CMCON<C1OUT>). */
+/**
+ * @brief Returns 1 if C1 output is high (CMCON<C1OUT>).
+ * @return 1 when comparator 1 output is high, else 0.
+ */
 uint8_t EPIC_COMP_C1Out(void);
 
-/** Returns 1 if C2 output is high (CMCON<C2OUT>). */
+/**
+ * @brief Returns 1 if C2 output is high (CMCON<C2OUT>).
+ * @return 1 when comparator 2 output is high, else 0.
+ */
 uint8_t EPIC_COMP_C2Out(void);
 
-/** Returns 1 if CMIF is set. */
+/**
+ * @brief Returns 1 if CMIF is set.
+ * @return 1 when the comparator-change flag is set, else 0.
+ */
 uint8_t EPIC_COMP_IsChangeFlag(void);
 
-/** Clear the CMIF flag (must be done in the change IRQ). */
+/**
+ * @brief Clear the CMIF flag (must be done in the change IRQ).
+ */
 void EPIC_COMP_ClearChangeFlag(void);
 
+/**
+ * @brief Comparator change interrupt handler (weak default).
+ */
 void COMP_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_COMP_H */

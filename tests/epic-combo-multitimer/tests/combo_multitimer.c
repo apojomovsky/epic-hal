@@ -127,26 +127,39 @@ static volatile uint16_t g_t1_count = 0u;
 static volatile uint16_t g_t2_count = 0u;
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief TIMER0 overflow callback: count the overflow.
+ */
 static void t0_overflow_cb(void)
 {
     g_t0_count++;
 }
 
+/**
+ * @brief TIMER1 overflow callback: re-arm the reload and count the overflow.
+ *
+ * Re-arm the 16-bit reload: the timer free-runs to 0x0000 after
+ * an overflow, so without this write the steady-state period
+ * would be 65536 cycles, not 32768 (see the header). Writing
+ * TMR1H then TMR1L also clears the TMR1 prescaler (none here).
+ */
 static void t1_overflow_cb(void)
 {
-    /* Re-arm the 16-bit reload: the timer free-runs to 0x0000 after
-     * an overflow, so without this write the steady-state period
-     * would be 65536 cycles, not 32768 (see the header). Writing
-     * TMR1H then TMR1L also clears the TMR1 prescaler (none here). */
     EPIC_TIMER1_WriteCounter(T1_RELOAD);
     g_t1_count++;
 }
 
+/**
+ * @brief TIMER2 overflow callback: count the overflow.
+ */
 static void t2_overflow_cb(void)
 {
     g_t2_count++;
 }
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -166,14 +179,20 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
+/**
+ * @brief No-op USART TX-complete callback (transmission is polled).
+ */
 static void s_tx_noop(void)
 {
 }
 
-/* 16-bit counter read with torn-read protection: g_t1_count and
- * g_t2_count are incremented by the ISR (a 2-byte sequence), so a
- * main-line read can straddle an increment. A retry converges: the
- * ISR's next increment is at least a full period away. */
+/**
+ * @brief 16-bit counter read with torn-read protection.
+ *
+ * g_t1_count and g_t2_count are incremented by the ISR (a 2-byte
+ * sequence), so a main-line read can straddle an increment. A retry
+ * converges: the ISR's next increment is at least a full period away.
+ */
 static uint16_t stable_read16(const volatile uint16_t *p)
 {
     uint16_t a = *p;
@@ -182,6 +201,9 @@ static uint16_t stable_read16(const volatile uint16_t *p)
     return *p;
 }
 
+/**
+ * @brief Log a 16-bit value as four hex digits over the harness UART.
+ */
 static void log_hex16(uint16_t v)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -197,6 +219,9 @@ static void log_hex16(uint16_t v)
     epic_harness_log(c);
 }
 
+/**
+ * @brief Run the TMR0 + TMR1 + TMR2 + USART interrupt gate (C2).
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

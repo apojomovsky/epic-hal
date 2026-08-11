@@ -11,6 +11,7 @@ static const uint16_t U16_BOUNDS[] = {
     0x0000, 0x0001, 0x0002, 0x7FFF, 0x8000, 0xFFFE, 0xFFFF
 };
 
+/** @brief Boundary cross-product plus randomized pairs for pic_math_add_u16. */
 static void test_add_u16(void)
 {
     for (size_t i = 0; i < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); i++)
@@ -36,6 +37,7 @@ static void test_add_u16(void)
     (void)pic_math_add_u16(0xFFFFu, 0x0001u, NULL);
 }
 
+/** @brief Boundary cross-product plus randomized pairs for pic_math_sub_u16. */
 static void test_sub_u16(void)
 {
     for (size_t i = 0; i < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); i++)
@@ -58,6 +60,7 @@ static void test_sub_u16(void)
     (void)pic_math_sub_u16(0x0000u, 0x0001u, NULL);
 }
 
+/** @brief Boundary values incl. INT16_MIN/INT32_MIN for pic_math_negate_s16/_s32. */
 static void test_negate(void)
 {
     const int16_t s16[] = { 0, 1, -1, 2, -2, 127, -128, 128, -129,
@@ -82,6 +85,7 @@ static void test_negate(void)
     }
 }
 
+/** @brief Run all add/sub/negate tests and report the failure count. */
 int main(void)
 {
     test_add_u16();

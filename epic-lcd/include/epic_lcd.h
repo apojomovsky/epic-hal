@@ -49,48 +49,150 @@ typedef struct {
     uint8_t               entry_mode;    /**< cached I/D and S bits            */
 } epic_lcd_t;
 
-/** Run the full HD44780 init sequence and apply the caller's
- *  display/cursor/blink and entry-mode defaults. Call once before any
- *  other function; ops/ops_ctx must outlive the lcd instance. */
+/**
+ * @brief Run the full HD44780 init sequence and apply the caller's
+ *        display/cursor/blink and entry-mode defaults.
+ *
+ * Call once before any other function; ops/ops_ctx must outlive the lcd
+ * instance.
+ *
+ * @param lcd      LCD instance to initialize
+ * @param ops      transport ops (send/delay) the driver will use
+ * @param ops_ctx  transport context passed to each ops call
+ * @param config   display geometry and entry-mode configuration
+ */
 void epic_lcd_init(epic_lcd_t *lcd, const epic_lcd_ops_t *ops, void *ops_ctx,
                    const epic_lcd_config_t *config);
 
-/** Clear the entire display and return the cursor to row 0, col 0.
- *  Takes ~1.53 ms to execute (the driver waits internally). */
+/**
+ * @brief Clear the entire display and return the cursor to row 0, col 0.
+ *
+ * Takes ~1.53 ms to execute (the driver waits internally).
+ *
+ * @param lcd LCD instance
+ */
 void epic_lcd_clear(epic_lcd_t *lcd);
 
-/** Return the cursor to row 0, col 0. Display contents are not changed.
- *  Takes ~1.53 ms. */
+/**
+ * @brief Return the cursor to row 0, col 0.
+ *
+ * Display contents are not changed. Takes ~1.53 ms.
+ *
+ * @param lcd LCD instance
+ */
 void epic_lcd_home(epic_lcd_t *lcd);
 
-/** Move the cursor to (col, row). Row 0 is the top row. */
+/**
+ * @brief Move the cursor to (col, row).
+ *
+ * Row 0 is the top row.
+ *
+ * @param lcd LCD instance
+ * @param col column to move to
+ * @param row row to move to
+ */
 void epic_lcd_set_cursor(epic_lcd_t *lcd, uint8_t col, uint8_t row);
 
+/**
+ * @brief Write one character at the current cursor position.
+ *
+ * @param lcd LCD instance
+ * @param c   character to write
+ */
 void epic_lcd_write_char(epic_lcd_t *lcd, char c);
+
+/**
+ * @brief Write len bytes from str at the current cursor position.
+ *
+ * @param lcd LCD instance
+ * @param str buffer to write
+ * @param len number of bytes to write
+ */
 void epic_lcd_write(epic_lcd_t *lcd, const char *str, size_t len);
+
+/**
+ * @brief Write a NUL-terminated string at the current cursor position.
+ *
+ * @param lcd LCD instance
+ * @param str NUL-terminated string to write
+ */
 void epic_lcd_print(epic_lcd_t *lcd, const char *str);
 
-/** Turn the entire display on or off. Cursor and blink settings are
- *  preserved; nothing is cleared. */
+/**
+ * @brief Turn the entire display on or off.
+ *
+ * Cursor and blink settings are preserved; nothing is cleared.
+ *
+ * @param lcd LCD instance
+ * @param on  true to turn the display on, false to turn it off
+ */
 void epic_lcd_display_on(epic_lcd_t *lcd, bool on);
 
+/**
+ * @brief Show or hide the cursor underline.
+ *
+ * @param lcd LCD instance
+ * @param on  true to show the cursor, false to hide it
+ */
 void epic_lcd_cursor_on(epic_lcd_t *lcd, bool on);
+
+/**
+ * @brief Enable or disable cursor blinking.
+ *
+ * @param lcd LCD instance
+ * @param on  true to blink the cursor, false to stop blinking
+ */
 void epic_lcd_cursor_blink(epic_lcd_t *lcd, bool on);
 
-/** Shift the entire display one position to the left (cursor doesn't move). */
+/**
+ * @brief Shift the entire display one position to the left.
+ *
+ * The cursor does not move.
+ *
+ * @param lcd LCD instance
+ */
 void epic_lcd_scroll_left(epic_lcd_t *lcd);
 
+/**
+ * @brief Shift the entire display one position to the right.
+ *
+ * The cursor does not move.
+ *
+ * @param lcd LCD instance
+ */
 void epic_lcd_scroll_right(epic_lcd_t *lcd);
 
-/** Define a custom character in CGRAM slot @p slot (0-7, mapped to
- *  character codes 0x00-0x07). Glyph: 8 bytes, one per row, bottom 5
- *  bits are the pixel row (bit 4 = leftmost pixel, bit 0 = rightmost). */
+/**
+ * @brief Define a custom character in CGRAM slot @p slot.
+ *
+ * Slot range is 0-7, mapped to character codes 0x00-0x07. Glyph: 8 bytes,
+ * one per row, bottom 5 bits are the pixel row (bit 4 = leftmost pixel,
+ * bit 0 = rightmost).
+ *
+ * @param lcd   LCD instance
+ * @param slot  CGRAM slot to define (0-7)
+ * @param glyph 8-byte glyph pattern, one byte per row
+ */
 void epic_lcd_create_char(epic_lcd_t *lcd, uint8_t slot, const uint8_t glyph[8]);
 
-/** Send a raw instruction byte; for commands not covered by the API above. */
+/**
+ * @brief Send a raw instruction byte.
+ *
+ * For commands not covered by the API above.
+ *
+ * @param lcd LCD instance
+ * @param cmd raw HD44780 instruction byte
+ */
 void epic_lcd_command(epic_lcd_t *lcd, uint8_t cmd);
 
-/** Send a raw data byte. Writes to DDRAM/CGRAM at the current address. */
+/**
+ * @brief Send a raw data byte.
+ *
+ * Writes to DDRAM/CGRAM at the current address.
+ *
+ * @param lcd  LCD instance
+ * @param data data byte to write
+ */
 void epic_lcd_data(epic_lcd_t *lcd, uint8_t data);
 
 /* GPIO/SPI transport pin structs and init functions live in

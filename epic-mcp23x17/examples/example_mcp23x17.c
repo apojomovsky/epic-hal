@@ -19,10 +19,14 @@ static int     s_phase;
 
 enum { MOCK_ADDR, MOCK_REG, MOCK_DATA, MOCK_RADDR, MOCK_READ };
 
+/** @brief Mock I2C start: enter the address phase. */
 static void mock_start(void)               { s_phase = MOCK_ADDR; }
+/** @brief Mock I2C repeated start: enter the read-address phase. */
 static void mock_repeated_start(void)      { s_phase = MOCK_RADDR; }
+/** @brief Mock I2C stop: no-op. */
 static void mock_stop(void)                { }
 
+/** @brief Mock I2C write byte: drive the mock register file. */
 static int mock_write_byte(uint8_t b)
 {
     if (s_phase == MOCK_ADDR || s_phase == MOCK_RADDR) {
@@ -46,6 +50,7 @@ static int mock_write_byte(uint8_t b)
     return 1;
 }
 
+/** @brief Mock I2C read byte: return from the register file. */
 static uint8_t mock_read_byte(int ack)
 {
     (void)ack;
@@ -54,6 +59,7 @@ static uint8_t mock_read_byte(int ack)
     return v;
 }
 
+/** @brief Demo: drive the expander through the mock I2C device. */
 int main(void)
 {
     static const epic_bus_i2c_ops_t ops = {

@@ -37,7 +37,12 @@ static uint8_t s_dir_port;
 static uint8_t s_dir_pin;
 static bool    s_dir_configured;
 
-/* CRC-16 (Modbus/ANSI, poly 0xA001, init 0xFFFF), bit-loop */
+/**
+ * @brief  CRC-16 (Modbus/ANSI, poly 0xA001, init 0xFFFF), bit-loop.
+ * @param buf the bytes to checksum.
+ * @param len number of bytes in `buf`.
+ * @return the CRC-16 value.
+ */
 static uint16_t modbus_crc16(const uint8_t *buf, uint16_t len)
 {
     uint16_t crc = 0xFFFFu;
@@ -54,7 +59,13 @@ static uint16_t modbus_crc16(const uint8_t *buf, uint16_t len)
     return crc;
 }
 
-/* T3.5 inter-frame silence timeout (see README for the >19200 baud caveat) */
+/**
+ * @brief  T3.5 inter-frame silence timeout in milliseconds (see README
+ *         for the >19200 baud caveat).
+ * @param baud the RTU baud rate.
+ * @return the silence timeout in ms, rounded up so it never falls short
+ *         of the true requirement.
+ */
 static uint32_t compute_t3_5_ms(uint32_t baud)
 {
     if (baud > 19200u) {
@@ -67,11 +78,23 @@ static uint32_t compute_t3_5_ms(uint32_t baud)
 }
 
 /* bit-packed coil/discrete-input helpers */
+/**
+ * @brief  Read one bit from a bit-packed table.
+ * @param arr the bit-packed array.
+ * @param idx the bit index (LSB of arr[0] is index 0).
+ * @return the bit's value.
+ */
 static bool bit_get(const uint8_t *arr, uint16_t idx)
 {
     return (bool)((arr[idx >> 3] >> (idx & 7u)) & 1u);
 }
 
+/**
+ * @brief  Write one bit into a bit-packed table.
+ * @param arr the bit-packed array.
+ * @param idx the bit index (LSB of arr[0] is index 0).
+ * @param v   the value to set.
+ */
 static void bit_set(uint8_t *arr, uint16_t idx, bool v)
 {
     if (v) {
@@ -81,11 +104,21 @@ static void bit_set(uint8_t *arr, uint16_t idx, bool v)
     }
 }
 
+/**
+ * @brief  Read a big-endian uint16_t from a byte pair.
+ * @param p pointer to the two bytes (high byte first).
+ * @return the value.
+ */
 static uint16_t be16(const uint8_t *p)
 {
     return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
 }
 
+/**
+ * @brief  Write a uint16_t as a big-endian byte pair.
+ * @param p the destination byte pair (high byte written first).
+ * @param v the value to write.
+ */
 static void put_be16(uint8_t *p, uint16_t v)
 {
     p[0] = (uint8_t)(v >> 8);
@@ -97,6 +130,13 @@ static void put_be16(uint8_t *p, uint16_t v)
  * frame whose length doesn't match its own function code, which passing
  * CRC makes vanishingly unlikely, this is defensive, not spec-driven). */
 
+/**
+ * @brief  Build an exception response (addr, fc|0x80, exception code).
+ * @param resp     the response buffer to fill.
+ * @param fc       the function code being answered.
+ * @param exc_code the Modbus exception code.
+ * @return the PDU length written (always 3).
+ */
 static uint16_t build_exception(uint8_t *resp, uint8_t fc, uint8_t exc_code)
 {
     resp[0] = s_slave_addr;
@@ -105,6 +145,15 @@ static uint16_t build_exception(uint8_t *resp, uint8_t fc, uint8_t exc_code)
     return 3u;
 }
 
+/**
+ * @brief  Handle an FC01/FC02 read-bits request: validate, pack the
+ *         requested bits, and build the response.
+ * @param fc        the function code (echoed into the response).
+ * @param table     the bit-packed table to read, or NULL if absent.
+ * @param table_len the table's bit count.
+ * @param resp      the response buffer to fill.
+ * @return the PDU length written, or 0 to drop the request.
+ */
 static uint16_t handle_read_bits(uint8_t fc, const uint8_t *table, uint16_t table_len,
                                   uint8_t *resp)
 {
@@ -139,6 +188,15 @@ static uint16_t handle_read_bits(uint8_t fc, const uint8_t *table, uint16_t tabl
     return (uint16_t)(3u + byte_count);
 }
 
+/**
+ * @brief  Handle an FC03/FC04 read-registers request: validate, copy
+ *         the requested registers big-endian, and build the response.
+ * @param fc        the function code (echoed into the response).
+ * @param table     the register table to read, or NULL if absent.
+ * @param table_len the table's register count.
+ * @param resp      the response buffer to fill.
+ * @return the PDU length written, or 0 to drop the request.
+ */
 static uint16_t handle_read_regs(uint8_t fc, const uint16_t *table, uint16_t table_len,
                                    uint8_t *resp)
 {
@@ -168,6 +226,12 @@ static uint16_t handle_read_regs(uint8_t fc, const uint16_t *table, uint16_t tab
     return (uint16_t)(3u + byte_count);
 }
 
+/**
+ * @brief  Handle an FC05 write-single-coil request: validate the value,
+ *         set the coil, and echo the request.
+ * @param resp the response buffer to fill.
+ * @return the PDU length written (6), or 0 to drop the request.
+ */
 static uint16_t handle_write_single_coil(uint8_t *resp)
 {
     if (s_frame_len != 8u) {
@@ -194,6 +258,12 @@ static uint16_t handle_write_single_coil(uint8_t *resp)
     return 6u;
 }
 
+/**
+ * @brief  Handle an FC06 write-single-register request: validate the
+ *         address, store the value, and echo the request.
+ * @param resp the response buffer to fill.
+ * @return the PDU length written (6), or 0 to drop the request.
+ */
 static uint16_t handle_write_single_reg(uint8_t *resp)
 {
     if (s_frame_len != 8u) {
@@ -216,6 +286,12 @@ static uint16_t handle_write_single_reg(uint8_t *resp)
     return 6u;
 }
 
+/**
+ * @brief  Handle an FC0F write-multiple-coils request: validate the
+ *         frame, write the coils, and build the response.
+ * @param resp the response buffer to fill.
+ * @return the PDU length written (6), or 0 to drop the request.
+ */
 static uint16_t handle_write_multiple_coils(uint8_t *resp)
 {
     if (s_frame_len < 9u) { /* addr+fc+start(2)+qty(2)+bytecount(1)+>=1 data+crc(2) */
@@ -250,6 +326,12 @@ static uint16_t handle_write_multiple_coils(uint8_t *resp)
     return 6u;
 }
 
+/**
+ * @brief  Handle an FC10 write-multiple-registers request: validate the
+ *         frame, store the registers, and build the response.
+ * @param resp the response buffer to fill.
+ * @return the PDU length written (6), or 0 to drop the request.
+ */
 static uint16_t handle_write_multiple_regs(uint8_t *resp)
 {
     if (s_frame_len < 9u) {
@@ -284,6 +366,12 @@ static uint16_t handle_write_multiple_regs(uint8_t *resp)
 }
 
 /* RS-485 direction control + transmit */
+/**
+ * @brief  Transmit a response: assert the RS-485 driver enable (if
+ *         configured), write the bytes, flush, and release the enable.
+ * @param resp the response bytes to transmit (addr+fc+payload+CRC).
+ * @param len  number of bytes in `resp`.
+ */
 static void send_response(const uint8_t *resp, uint16_t len)
 {
     if (s_dir_configured) {
@@ -298,6 +386,12 @@ static void send_response(const uint8_t *resp, uint16_t len)
 }
 
 /* frame validation + dispatch */
+/**
+ * @brief  Validate the accumulated frame (length, CRC-16, address match
+ *         or broadcast) and dispatch it: build the response through the
+ *         per-function-code handler and transmit it. Broadcast requests
+ *         are applied but never answered.
+ */
 static void process_frame(void)
 {
     if (s_frame_len < 4u) {
@@ -361,6 +455,15 @@ static void process_frame(void)
 }
 
 /* public API */
+/**
+ * @brief  Initialize the Modbus RTU slave (see the header for the full
+ *         contract): configure the UART, precompute the T3.5 timeout,
+ *         and store the address and register map.
+ * @param fosc_hz    system oscillator frequency in Hz.
+ * @param baud       RTU baud rate.
+ * @param slave_addr this slave's Modbus address, 1..247.
+ * @param map        the register map (stored by pointer, not copied).
+ */
 void epic_modbus_slave_init(uint32_t fosc_hz, uint32_t baud,
                              uint8_t slave_addr,
                              const epic_modbus_slave_map_t *map)
@@ -374,6 +477,13 @@ void epic_modbus_slave_init(uint32_t fosc_hz, uint32_t baud,
     s_dir_configured = false;
 }
 
+/**
+ * @brief  Configure the optional RS-485 driver-enable pin (see the
+ *         header for the full contract): store it, set it as an output,
+ *         and leave it low (idle = receive).
+ * @param port HAL GPIO port index.
+ * @param pin  bit index 0..7 within that port.
+ */
 void epic_modbus_slave_set_rs485_dir_pin(uint8_t port, uint8_t pin)
 {
     s_dir_port       = port;
@@ -384,6 +494,12 @@ void epic_modbus_slave_set_rs485_dir_pin(uint8_t port, uint8_t pin)
     EPIC_GPIO_WritePin((GPIO_TypeDef)port, (uint16_t)EPIC_BIT(pin), GPIO_PIN_RESET); /* idle = receive */
 }
 
+/**
+ * @brief  Poll the slave once (see the header for the full contract):
+ *         drain newly received UART bytes into the frame buffer,
+ *         dispatch once the T3.5 silence has elapsed, and reset the
+ *         frame buffer after every dispatch attempt.
+ */
 void epic_modbus_slave_poll(void)
 {
     int avail = epic_serial_available();

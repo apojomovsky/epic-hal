@@ -15,9 +15,13 @@ static uint8_t g_reg[16];
 static enum { I_IDLE, I_ADDR, I_REG, I_DATA, I_READ } g_i2c_state;
 static uint8_t g_i2c_reg;
 
+/** @brief Mock I2C: enter the address phase on START. */
 static void mock_i2c_start(void)          { g_i2c_state = I_ADDR; }
+/** @brief Mock I2C: enter the address phase on REPEATED-START. */
 static void mock_i2c_repeated_start(void) { g_i2c_state = I_ADDR; }
+/** @brief Mock I2C: return to idle on STOP. */
 static void mock_i2c_stop(void)           { g_i2c_state = I_IDLE; }
+/** @brief Mock I2C: process one written byte (address, register, data). */
 static int  mock_i2c_write_byte(uint8_t b)
 {
     if (g_i2c_state == I_ADDR) {
@@ -30,6 +34,7 @@ static int  mock_i2c_write_byte(uint8_t b)
     if (g_i2c_state == I_DATA) { g_reg[g_i2c_reg & 0x0F] = b; g_i2c_reg++; return 1; }
     return 0;
 }
+/** @brief Mock I2C: read one byte from the register map. */
 static uint8_t mock_i2c_read_byte(int ack)
 {
     (void)ack;
@@ -45,8 +50,11 @@ static const epic_bus_i2c_ops_t mock_i2c = {
 /* mock SPI MEM device */
 static enum { S_IDLE, S_REG, S_XFER } g_spi_state;
 static uint8_t g_spi_reg;
+/** @brief Mock SPI: enter the register phase on select. */
 static void mock_spi_select(void)   { g_spi_state = S_REG; }
+/** @brief Mock SPI: return to idle on deselect. */
 static void mock_spi_deselect(void) { g_spi_state = S_IDLE; }
+/** @brief Mock SPI: exchange one byte (register byte or data byte). */
 static uint8_t mock_spi_exchange(uint8_t b)
 {
     if (g_spi_state == S_REG) { g_spi_reg = b; g_spi_state = S_XFER; return 0xFFu; }
@@ -59,6 +67,7 @@ static const epic_bus_spi_ops_t mock_spi = {
     mock_spi_select, mock_spi_deselect, mock_spi_exchange
 };
 
+/** @brief Host test main: verify I2C/SPI MEM transactions against the mocks. */
 int main(void)
 {
     epic_harness_init(0UL);

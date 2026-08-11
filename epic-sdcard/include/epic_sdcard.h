@@ -21,29 +21,60 @@ typedef struct {
     uint16_t     cs_pin;
 } epic_sdcard_pins_t;
 
-/** Configure SPI mode 0,0, assert CS idle, and run the SD/MMC bring-up
- *  sequence (CMD0/CMD8/ACMD41/CMD58/CMD9). Blocks until the card responds
- *  or M-Stack's retry/timeout bounds are hit. `fosc_hz` is the system
- *  oscillator frequency, needed for the SPI clock divisor. Returns true
- *  when read/write/num_blocks are usable. */
+/**
+ * @brief Configure SPI mode 0,0, assert CS idle, and run the SD/MMC
+ *        bring-up sequence (CMD0/CMD8/ACMD41/CMD58/CMD9).
+ *
+ * Blocks until the card responds or M-Stack's retry/timeout bounds are
+ * hit. `fosc_hz` is the system oscillator frequency, needed for the SPI
+ * clock divisor.
+ *
+ * @param pins     CS pin assignment
+ * @param fosc_hz  system oscillator frequency in Hz
+ * @return true when read/write/num_blocks are usable
+ */
 bool epic_sdcard_init(const epic_sdcard_pins_t *pins, uint32_t fosc_hz);
 
-/** Re-query the card's status (SEND_STATUS-adjacent, see mmc_ready() in
- *  the vendored mmc.h). Has real SPI traffic cost; don't call in a tight
- *  loop. */
+/**
+ * @brief Re-query the card's status.
+ *
+ * SEND_STATUS-adjacent, see mmc_ready() in the vendored mmc.h. Has real
+ * SPI traffic cost; don't call in a tight loop.
+ *
+ * @return true when the card reports ready
+ */
 bool epic_sdcard_ready(void);
 
-/** Number of 512-byte blocks on the card, cached from init. 0 if not
- *  initialized. */
+/**
+ * @brief Return the number of 512-byte blocks on the card.
+ *
+ * Cached from init.
+ *
+ * @return block count, or 0 if not initialized
+ */
 uint32_t epic_sdcard_num_blocks(void);
 
-/** Read one 512-byte block into @p data (must be at least 512 bytes).
- *  Returns true on success, including the CRC16 check passing. */
+/**
+ * @brief Read one 512-byte block into data.
+ *
+ * data must be at least 512 bytes.
+ *
+ * @param block_addr block address to read
+ * @param data       destination buffer (>= 512 bytes)
+ * @return true on success, including the CRC16 check passing
+ */
 bool epic_sdcard_read_block(uint32_t block_addr, uint8_t *data);
 
-/** Write one 512-byte block from @p data (must be exactly 512 bytes).
- *  Returns true if the card accepted the data and reported no write error
- *  via the follow-up SEND_STATUS check. */
+/**
+ * @brief Write one 512-byte block from data.
+ *
+ * data must be exactly 512 bytes.
+ *
+ * @param block_addr block address to write
+ * @param data       source buffer (exactly 512 bytes)
+ * @return true if the card accepted the data and reported no write error
+ *         via the follow-up SEND_STATUS check
+ */
 bool epic_sdcard_write_block(uint32_t block_addr, const uint8_t *data);
 
 #endif /* EPIC_SDCARD_H */

@@ -15,6 +15,12 @@ static const uint16_t ps_ratio[4] = { 1, 2, 4, 8 };
 static TIMER1_HandleTypeDef g_t1_storage;
 static const TIMER1_HandleTypeDef *g_t1_handle = NULL;
 
+/**
+ * @brief  Read the 16-bit Timer1 counter. With RD16 set, reading TMR1L
+ *         latches TMR1H into a shadow, so reading low then high yields a
+ *         consistent 16-bit value.
+ * @return The current TMR1H:TMR1L value.
+ */
 uint16_t EPIC_TIMER1_ReadCounter(void)
 {
     /* With RD16 set, reading TMR1L latches TMR1H into a shadow (DS39632E
@@ -24,6 +30,12 @@ uint16_t EPIC_TIMER1_ReadCounter(void)
     return (uint16_t)(((uint16_t)hi << 8) | lo);
 }
 
+/**
+ * @brief  Write the 16-bit Timer1 counter. With RD16 set, writing TMR1L
+ *         latches TMR1H, so the high byte is written first via the shadow
+ *         and the low byte commits both.
+ * @param value 16-bit value to load into TMR1H:TMR1L.
+ */
 void EPIC_TIMER1_WriteCounter(uint16_t value)
 {
     /* With RD16 set, writing TMR1L latches TMR1H (DS39632E §12.0); write
@@ -32,12 +44,26 @@ void EPIC_TIMER1_WriteCounter(uint16_t value)
     epic_sfr_write8(PIC_REG_TMR1L, (uint8_t)(value & 0xFFU));
 }
 
+/**
+ * @brief  Map a Timer1 prescaler enum to its ratio (DS39632E Register
+ *         12-1: 00 -> 1:1, 01 -> 1:2, 10 -> 1:4, 11 -> 1:8).
+ * @param p Prescaler selection (T1CKPS<1:0> value).
+ * @return The divide ratio (1..8), or 1 for an out-of-range value.
+ */
 uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p)
 {
     if ((unsigned)p > 3U) return 1U;
     return ps_ratio[p];
 }
 
+/**
+ * @brief  Initialize Timer1 from a handle: stop the timer, clear TMR1IF,
+ *         enable the overflow interrupt if a callback is given, enable
+ *         16-bit read/write mode (RD16) and store an owned copy of the
+ *         handle.
+ * @param h Handle describing the Timer1 configuration.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -62,6 +88,12 @@ EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief  De-initialize Timer1: disable its interrupt, clear the flag,
+ *         restore T1CON to its power-on value, zero TMR1H/TMR1L and drop
+ *         the stored handle.
+ * @return EPIC_OK.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR1);
@@ -73,6 +105,13 @@ EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief  Start Timer1: load the reload value and program T1CON
+ *         (prescaler, oscillator enable, sync, clock source) in one
+ *         write, setting TMR1ON last.
+ * @param h Handle whose configuration is applied.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -97,12 +136,20 @@ EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief  Stop Timer1 by clearing TMR1ON.
+ * @return EPIC_OK.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Stop(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
     return EPIC_OK;
 }
 
+/**
+ * @brief  Weak Timer1 interrupt handler: clears TMR1IF and invokes the
+ *         overflow callback registered via Init.
+ */
 void TIMER1_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC18_IRQ_TMR1)) return;

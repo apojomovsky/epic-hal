@@ -14,6 +14,10 @@
     if (!(cond)) { printf("FAIL: %s\n", msg); return 1; } \
 } while (0)
 
+/**
+ * @brief Exercise the A/D driver on the sim backend: init, start,
+ *        simulated completion, read and deinit.
+ */
 int main(void)
 {
     pic16f87xa_sim_reset();

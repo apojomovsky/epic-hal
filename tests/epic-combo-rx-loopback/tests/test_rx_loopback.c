@@ -19,12 +19,13 @@
 #include <stdio.h>
 #include <string.h>
 
-/* The firmware's shared entry points (combo_rx_loopback.c). */
+/** @brief The firmware's shared entry points (combo_rx_loopback.c). */
 void rx_loopback_init(void);
 
 static uint8_t g_tx[256];
 static size_t  g_tx_len;
 
+/** @brief Byte recorder replacing the firmware's polled TX. */
 void rx_loopback_tx(uint8_t b)
 {
     if (g_tx_len < sizeof(g_tx)) {
@@ -32,6 +33,7 @@ void rx_loopback_tx(uint8_t b)
     }
 }
 
+/** @brief Clear the recorded TX bytes. */
 static void tx_reset(void)
 {
     g_tx_len = 0u;
@@ -39,6 +41,7 @@ static void tx_reset(void)
 
 static int g_fail = 0;
 
+/** @brief Assert the recorded TX matches @p expected, else fail. */
 static void check_tx(const char *expected, const char *what)
 {
     size_t n = strlen(expected);
@@ -49,9 +52,12 @@ static void check_tx(const char *expected, const char *what)
     }
 }
 
-/** Inject one line byte by byte through the sim hook (each injection
- *  dispatches synchronously); a couple of ticks between bytes mirrors
- *  wire timing. */
+/**
+ * @brief Inject one line byte by byte through the sim RX hook.
+ *
+ * Each injection dispatches synchronously; a couple of ticks between
+ * bytes mirrors wire timing.
+ */
 static void inject_line(const char *line)
 {
     while (*line) {
@@ -62,6 +68,7 @@ static void inject_line(const char *line)
     }
 }
 
+/** @brief Run the framing vectors against the loopback firmware. */
 int main(void)
 {
     epic_harness_init(100000UL);

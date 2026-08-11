@@ -11,6 +11,20 @@
 #include "peripherals/pic18fxx5x_usart.h"
 #include "core/pic18_irq.h"
 
+/**
+ * @brief  Compute the SPBRG reload value for a target baud rate:
+ *         SPBRG = (Fosc / (divisor * baud)) - 1, integer-truncated, with
+ *         the divisor taken from DS39632E Table 20-1 (sync = 4, async
+ *         depends on BRG16/BRGH).
+ * @param fosc_hz System oscillator frequency in Hz.
+ * @param baud Desired baud rate in bits per second.
+ * @param mode USART_MODE_SYNCHRONOUS or USART_MODE_ASYNCHRONOUS.
+ * @param brgh High-baud-rate select (USART_BRGH_HIGH or USART_BRGH_LOW).
+ * @param brg16 16-bit baud generator select (USART_BAUDGEN_16BIT or
+ *              USART_BAUDGEN_8BIT).
+ * @return The SPBRG value, or 0xFFFF if `baud` is 0 or the ratio exceeds
+ *         the register width.
+ */
 uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
                             USART_ModeTypeDef mode,
                             USART_BaudRateHighTypeDef brgh,
@@ -40,6 +54,14 @@ uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
 static USART_HandleTypeDef        g_usart_storage;
 static const USART_HandleTypeDef *g_usart = NULL;
 
+/**
+ * @brief  Initialize the EUSART from a handle. Programs SPBRG/SPBRGH,
+ *         BAUDCON (BRG16, ABDEN), TXSTA (sync, CSRC, BRGH, TX9, TXEN) and
+ *         RCSTA (SPEN, RX9, ADDEN, CREN), then arms the TX/RX interrupts
+ *         according to the registered callbacks.
+ * @param h Handle describing the USART configuration.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -98,6 +120,12 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief  De-initialize the EUSART: disable the TX/RX interrupts, clear
+ *         their flags, restore RCSTA/TXSTA/BAUDCON/SPBRG/SPBRGH to their
+ *         power-on values and drop the stored handle.
+ * @return EPIC_OK.
+ */
 EPIC_StatusTypeDef EPIC_USART_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
@@ -113,6 +141,11 @@ EPIC_StatusTypeDef EPIC_USART_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief  Transmit one byte: writing TXREG clears TXIF and starts the
+ *         TSR-to-line shift.
+ * @param data Byte to transmit.
+ */
 void EPIC_USART_Transmit(uint8_t data)
 {
     /* Writing TXREG clears TXIF (DS39632E §20.2.1). The hardware starts the
@@ -122,11 +155,19 @@ void EPIC_USART_Transmit(uint8_t data)
     EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_TX);
 }
 
+/**
+ * @brief  Return the 9th transmit data bit (TXSTA<TX9D>).
+ * @return 1 if the TX9D bit is set, else 0.
+ */
 uint8_t EPIC_USART_GetTX9D(void)
 {
     return (epic_sfr_read8(PIC_REG_TXSTA) & PIC_TXSTA_TX9D) ? 1U : 0U;
 }
 
+/**
+ * @brief  Set the 9th transmit data bit (TXSTA<TX9D>).
+ * @param bit9 Value to write: nonzero sets, zero clears.
+ */
 void EPIC_USART_SetTX9D(uint8_t bit9)
 {
     uint8_t v = epic_sfr_read8(PIC_REG_TXSTA);
@@ -135,11 +176,19 @@ void EPIC_USART_SetTX9D(uint8_t bit9)
     epic_sfr_write8(PIC_REG_TXSTA, v);
 }
 
+/**
+ * @brief  Return 1 if the transmit shift register is empty (TXSTA<TRMT>).
+ * @return 1 if TRMT is set, else 0.
+ */
 uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void)
 {
     return (epic_sfr_read8(PIC_REG_TXSTA) & PIC_TXSTA_TRMT) ? 1U : 0U;
 }
 
+/**
+ * @brief  Receive one byte: reading RCREG clears RCIF (DS39632E §20.2.2).
+ * @return The received byte.
+ */
 uint8_t EPIC_USART_Receive(void)
 {
     /* Reading RCREG clears RCIF (DS39632E §20.2.2). */
@@ -148,16 +197,28 @@ uint8_t EPIC_USART_Receive(void)
     return data;
 }
 
+/**
+ * @brief  Return the 9th received data bit (RCSTA<RX9D>).
+ * @return 1 if the RX9D bit is set, else 0.
+ */
 uint8_t EPIC_USART_GetRX9D(void)
 {
     return (epic_sfr_read8(PIC_REG_RCSTA) & PIC_RCSTA_RX9D) ? 1U : 0U;
 }
 
+/**
+ * @brief  Return 1 if a receive overrun has occurred (RCSTA<OERR>).
+ * @return 1 if OERR is set, else 0.
+ */
 uint8_t EPIC_USART_HasOverrun(void)
 {
     return (epic_sfr_read8(PIC_REG_RCSTA) & PIC_RCSTA_OERR) ? 1U : 0U;
 }
 
+/**
+ * @brief  Clear a receive overrun by toggling CREN off and back on
+ *         (DS39632E §20.2.2).
+ */
 void EPIC_USART_ClearOverrun(void)
 {
     /* DS39632E §20.2.2: clear CREN, then set it again to reset the receiver. */
@@ -167,28 +228,47 @@ void EPIC_USART_ClearOverrun(void)
     epic_sfr_write8(PIC_REG_RCSTA, rcsta);
 }
 
+/**
+ * @brief  Start auto-baud detection by setting BAUDCON<ABDEN>.
+ */
 void EPIC_USART_StartAutoBaud(void)
 {
     uint8_t v = (uint8_t)(epic_sfr_read8(PIC_REG_BAUDCON) | PIC_BAUDCON_ABDEN);
     epic_sfr_write8(PIC_REG_BAUDCON, v);
 }
 
+/**
+ * @brief  Return 1 if auto-baud detection is in progress (BAUDCON<ABDEN>).
+ * @return 1 if ABDEN is set, else 0.
+ */
 uint8_t EPIC_USART_IsAutoBaudBusy(void)
 {
     return (epic_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDEN) ? 1U : 0U;
 }
 
+/**
+ * @brief  Return 1 if an auto-baud overflow occurred (BAUDCON<ABDOVF>).
+ * @return 1 if ABDOVF is set, else 0.
+ */
 uint8_t EPIC_USART_HasAutoBaudOverflow(void)
 {
     return (epic_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDOVF) ? 1U : 0U;
 }
 
+/**
+ * @brief  Clear the auto-baud overflow flag (BAUDCON<ABDOVF>).
+ */
 void EPIC_USART_ClearAutoBaudOverflow(void)
 {
     uint8_t v = (uint8_t)(epic_sfr_read8(PIC_REG_BAUDCON) & (uint8_t)~PIC_BAUDCON_ABDOVF);
     epic_sfr_write8(PIC_REG_BAUDCON, v);
 }
 
+/**
+ * @brief  Weak USART TX interrupt handler. TXIF is read-only and cleared
+ *         by writing TXREG, so nothing is cleared here; the registered
+ *         TX-complete callback is invoked directly.
+ */
 void USART_TX_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC18_IRQ_USART_TX)) return;
@@ -197,6 +277,11 @@ void USART_TX_IRQHandler(void)
     if (g_usart && g_usart->TxCpltCallback) g_usart->TxCpltCallback();
 }
 
+/**
+ * @brief  Weak USART RX interrupt handler: reads RCREG (clearing RCIF)
+ *         and forwards the byte to the RX-complete callback registered
+ *         via Init.
+ */
 void USART_RX_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC18_IRQ_USART_RX)) return;

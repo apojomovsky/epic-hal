@@ -7,6 +7,16 @@
 #include "pid.h"
 #include "pic_math.h"
 
+/**
+ * @brief Initialize a PID instance (see pid.h).
+ *
+ * @param pid       the controller instance to initialize
+ * @param kp_q8     Q8.8 proportional gain (= round(Kp * 256))
+ * @param ki_q8     Q8.8 integral gain, pre-multiplied by Ts (= round(Ki * Ts * 256))
+ * @param kd_q8     Q8.8 derivative gain, pre-divided by Ts (= round(Kd / Ts * 256))
+ * @param out_min   lower actuator clamp rail (out_min <= out_max)
+ * @param out_max   upper actuator clamp rail
+ */
 void pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
               int16_t out_min, int16_t out_max)
 {
@@ -24,6 +34,14 @@ void pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
     pid->manual_output         = 0;
 }
 
+/**
+ * @brief Zero the integrator and clear the D-term history (see pid.h).
+ *
+ * Fault-recovery reset: zero integrator/D-history/skip-flag, keep
+ * gains, clamp, and mode untouched.
+ *
+ * @param pid the controller instance to reset
+ */
 void pid_reset(pid_t *pid)
 {
     /* Fault-recovery reset: zero integrator/D-history/skip-flag, keep
@@ -33,6 +51,14 @@ void pid_reset(pid_t *pid)
     pid->skip_next_i_increment = false;
 }
 
+/**
+ * @brief Replace the three gains (see pid.h).
+ *
+ * @param pid   the controller instance to retune
+ * @param kp_q8 Q8.8 proportional gain (= round(Kp * 256))
+ * @param ki_q8 Q8.8 integral gain, pre-multiplied by Ts (= round(Ki * Ts * 256))
+ * @param kd_q8 Q8.8 derivative gain, pre-divided by Ts (= round(Kd / Ts * 256))
+ */
 void pid_set_gains(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8)
 {
     pid->kp_q8 = kp_q8;
@@ -40,16 +66,36 @@ void pid_set_gains(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8)
     pid->kd_q8 = kd_q8;
 }
 
+/**
+ * @brief Switch between AUTO and MANUAL (see pid.h).
+ *
+ * @param pid   the controller instance to switch
+ * @param mode  the new mode (PID_MODE_AUTO or PID_MODE_MANUAL)
+ */
 void pid_set_mode(pid_t *pid, pid_mode_t mode)
 {
     pid->mode = mode;
 }
 
+/**
+ * @brief Set the target output used while mode == PID_MODE_MANUAL (see pid.h).
+ *
+ * @param pid    the controller instance to drive
+ * @param value  the manual output target
+ */
 void pid_set_manual_output(pid_t *pid, int16_t value)
 {
     pid->manual_output = value;
 }
 
+/**
+ * @brief Step the controller once per fixed control-loop period (see pid.h).
+ *
+ * @param pid          the controller instance to step
+ * @param setpoint     the target value
+ * @param measurement  the measured process value
+ * @return the clamped output, always in `[out_min, out_max]`
+ */
 int16_t pid_update(pid_t *pid, int16_t setpoint, int16_t measurement)
 {
     /* P term: Kp * error in Q8.8; fits int32_t without an overflow guard

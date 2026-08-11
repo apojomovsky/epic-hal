@@ -5,6 +5,15 @@
 
 #include "fsm.h"
 
+/**
+ * @brief Initialize a machine instance (see fsm.h).
+ *
+ * @param fsm            the machine instance to initialize
+ * @param table          the transition table backing the machine
+ * @param table_len      number of rows in `table`
+ * @param initial_state  state the machine starts in
+ * @param ctx            opaque context passed to guards/actions, or NULL
+ */
 void fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len,
               fsm_state_t initial_state, void *ctx)
 {
@@ -14,6 +23,13 @@ void fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len,
     fsm->ctx       = ctx;
 }
 
+/**
+ * @brief Feed one event to the machine (see fsm.h).
+ *
+ * @param fsm    the machine to dispatch into
+ * @param event  the event to feed
+ * @return true if a row fired; false if none matched
+ */
 bool fsm_dispatch(fsm_t *fsm, fsm_event_t event)
 {
     uint8_t i;
@@ -41,6 +57,12 @@ bool fsm_dispatch(fsm_t *fsm, fsm_event_t event)
     return false;
 }
 
+/**
+ * @brief Current state of the machine (see fsm.h).
+ *
+ * @param fsm the machine to query
+ * @return the state the machine is currently in
+ */
 fsm_state_t fsm_state(const fsm_t *fsm)
 {
     return fsm->state;

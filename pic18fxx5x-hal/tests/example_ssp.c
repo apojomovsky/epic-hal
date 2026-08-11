@@ -13,6 +13,11 @@
     if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
 } while (0)
 
+/** @brief  MSSP driver smoke test.
+ *
+ *          Verifies SSPADD baud math, SPI master init/write/collision,
+ *          sim-injected RX with BF clear, and I2C Start/Stop.
+ */
 int main(void)
 {
     /* 1. SSPADD formula: Fosc / (4*Fscl) - 1. */

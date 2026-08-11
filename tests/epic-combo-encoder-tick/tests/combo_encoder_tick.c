@@ -87,6 +87,9 @@ static encoder_t g_seq;    /* scripted quadrature, position changes */
 static encoder_t g_ham;    /* class-G read hammer, position constant */
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -106,7 +109,9 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
-/* Build a port byte putting the 2-bit state (a<<1|b) at pins PIN_A/PIN_B. */
+/**
+ * @brief Build a port byte putting the 2-bit state (a<<1|b) at pins PIN_A/PIN_B.
+ */
 static uint8_t port_byte(uint8_t state)
 {
     uint8_t v = 0U;
@@ -115,8 +120,12 @@ static uint8_t port_byte(uint8_t state)
     return v;
 }
 
-/* Wait for the tick counter to advance 1 ms, bounded. Returns 1 if the
- * tick advanced (GIE intact), 0 if the tick stalled (class-G GIE loss). */
+/**
+ * @brief Wait for the tick counter to advance 1 ms, bounded.
+ *
+ * Returns 1 if the tick advanced (GIE intact), 0 if the tick stalled
+ * (class-G GIE loss).
+ */
 static uint8_t wait_1ms_bounded(void)
 {
     uint32_t t0 = epic_tick_get();
@@ -128,8 +137,11 @@ static uint8_t wait_1ms_bounded(void)
     return 1u;
 }
 
-/* Feed one scripted edge, then read position on both sides of a 1 ms
- * tick-delay wait; every read must equal the running expectation. */
+/**
+ * @brief Feed one scripted edge and verify reads on both sides of a 1 ms wait.
+ *
+ * Every read must equal the running expectation.
+ */
 static void edge_with_delay(encoder_t *enc, uint8_t state, int32_t expected)
 {
     encoder_update(enc, port_byte(state));
@@ -138,6 +150,9 @@ static void edge_with_delay(encoder_t *enc, uint8_t state, int32_t expected)
     CHECK(encoder_get_position(enc) == expected, 0x01);
 }
 
+/**
+ * @brief Run the epic-encoder + epic-tick interleave gate (C9).
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

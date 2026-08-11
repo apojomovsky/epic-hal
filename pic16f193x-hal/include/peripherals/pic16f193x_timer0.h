@@ -72,9 +72,17 @@ typedef struct {
  *         INTCON<TMR0IE>. Does not start the timer, call @ref
  *         EPIC_TIMER0_Start afterwards.
  *
+ * @param  h  handle with clock source, edge, prescaler, callback
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
 EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h);
+
+/**
+ * @brief  Disable the Timer0 interrupt, clear TMR0IF, halt the timer
+ *         (clears OPTION_REG<T0CS>) and zero TMR0.
+ *
+ * @return EPIC_OK
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void);
 
 /**
@@ -90,19 +98,40 @@ void TIMER0_IRQHandler(void) EPIC_WEAK;
  *         writes `h->ReloadValue` into TMR0.
  *
  *         Note: writing TMR0 clears the prescaler (DS41364B §15.0).
+ *
+ * @param  h  handle holding the reload value, prescaler and clock
+ *            source/edge programmed in @ref EPIC_TIMER0_Init
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL
  */
 EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h);
 
-/** Disable TMR0 counting (clears OPTION_REG<T0CS>, Timer0 halted). */
+/**
+ * @brief  Disable TMR0 counting (clears OPTION_REG<T0CS>, Timer0 halted).
+ *
+ * @return EPIC_OK
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_Stop(void);
 
-/** Read the current counter value. */
+/**
+ * @brief  Read the current counter value.
+ *
+ * @return The current TMR0 value, 0..255
+ */
 uint8_t EPIC_TIMER0_ReadCounter(void);
 
-/** Write `value` to the counter (also clears the prescaler). */
+/**
+ * @brief  Write `value` to the counter (also clears the prescaler).
+ *
+ * @param  value  counter value 0..255
+ */
 void EPIC_TIMER0_WriteCounter(uint8_t value);
 
-/** Convert a prescaler enum to its integer ratio (2, 4, ..., 256). */
+/**
+ * @brief  Convert a prescaler enum to its integer ratio (2, 4, ..., 256).
+ *
+ * @param  p  one of @ref TIMER0_PrescalerTypeDef
+ * @return The prescaler divider ratio, or 1 for an invalid enum value
+ */
 uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);
 
 #endif /* PIC16F193X_TIMER0_H */

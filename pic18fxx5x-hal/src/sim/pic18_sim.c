@@ -28,12 +28,35 @@ static uint8_t sim_eeprom[256] = {0};
 /* Optional ISR hook (the family dispatcher, registered by the harness). */
 static pic18_sim_irq_cb_t sim_irq_cb = 0;
 
+/**
+ * @brief Advance the simulated Timer0 by one instruction cycle.
+ */
 static void sim_step_timer0(void);
+/**
+ * @brief Advance the simulated Timer1 by one instruction cycle.
+ */
 static void sim_step_timer1(void);
+/**
+ * @brief Advance the simulated Timer2 by one instruction cycle.
+ */
 static void sim_step_timer2(void);
+/**
+ * @brief Advance the simulated Timer3 by one instruction cycle.
+ */
 static void sim_step_timer3(void);
+/**
+ * @brief Advance the simulated EUSART state machine by one instruction cycle.
+ */
 static void sim_step_usart(void);
 
+/**
+ * @brief Map a port letter (A..E, case-insensitive) to a 0-based index.
+ *
+ * Unknown letters map to index 0, matching port A.
+ *
+ * @param port the port letter to map
+ * @return the 0-based port index (0..4)
+ */
 static uint8_t port_index(char port)
 {
     switch (port) {
@@ -46,6 +69,13 @@ static uint8_t port_index(char port)
     }
 }
 
+/**
+ * @brief Return the register-file address of the LAT register for a port.
+ *
+ * @param port the port letter (A..E, case-insensitive)
+ * @return the register-file index of the port's LAT register, or LATA for
+ *         unknown or unpopulated ports
+ */
 static uint16_t lat_addr(char port)
 {
     switch (port) {
@@ -62,6 +92,13 @@ static uint16_t lat_addr(char port)
     }
 }
 
+/**
+ * @brief Return the register-file address of the TRIS register for a port.
+ *
+ * @param port the port letter (A..E, case-insensitive)
+ * @return the register-file index of the port's TRIS register, or TRISA
+ *         for unknown or unpopulated ports
+ */
 static uint16_t tris_addr(char port)
 {
     switch (port) {
@@ -78,6 +115,13 @@ static uint16_t tris_addr(char port)
     }
 }
 
+/**
+ * @brief Return the register-file address of the PORT register for a port.
+ *
+ * @param port the port letter (A..E, case-insensitive)
+ * @return the register-file index of the port's PORT register, or PORTA
+ *         for unknown or unpopulated ports
+ */
 static uint16_t port_addr(char port)
 {
     switch (port) {
@@ -94,6 +138,13 @@ static uint16_t port_addr(char port)
     }
 }
 
+/**
+ * @brief Reset the simulated device to its power-on state.
+ *
+ * Loads the datasheet POR values into the register file, clears the input
+ * overrides, the data EEPROM cells, and the IRQ callback, and sets
+ * PIR1<TXIF> as on real hardware.
+ */
 void pic18_sim_reset(void)
 {
     memset(pic18_sim_sfr, 0, sizeof pic18_sim_sfr);
@@ -172,6 +223,13 @@ void pic18_sim_reset(void)
     sim_irq_cb = 0;
 }
 
+/**
+ * @brief Advance the simulated device by a number of instruction cycles.
+ *
+ * Each cycle steps the enabled timers and the EUSART state machine.
+ *
+ * @param ticks the number of instruction cycles to simulate
+ */
 void pic18_sim_step(uint32_t ticks)
 {
     for (uint32_t i = 0; i < ticks; i++) {
@@ -184,6 +242,12 @@ void pic18_sim_step(uint32_t ticks)
 }
 
 
+/**
+ * @brief Step the simulated Timer0 by one instruction cycle.
+ *
+ * Applies the T0CON prescaler, increments the timer in 8- or 16-bit mode
+ * per T08BIT, and raises TMR0IF on overflow.
+ */
 static void sim_step_timer0(void)
 {
     /* T0CON layout (DS39632E Register 11-1):
@@ -233,6 +297,12 @@ static void sim_step_timer0(void)
 }
 
 
+/**
+ * @brief Step the simulated Timer1 by one instruction cycle.
+ *
+ * Applies the T1CON prescaler, increments the 16-bit timer value, and
+ * raises TMR1IF on overflow.
+ */
 static void sim_step_timer1(void)
 {
     /* T1CON layout (DS39632E Register 12-1):
@@ -274,6 +344,12 @@ static void sim_step_timer1(void)
 }
 
 
+/**
+ * @brief Step the simulated Timer2 by one instruction cycle.
+ *
+ * Applies the T2CON prescaler, increments TMR2 until it matches PR2, then
+ * resets and raises TMR2IF after the postscaler.
+ */
 static void sim_step_timer2(void)
 {
     /* T2CON layout (DS39632E Register 12-2):
@@ -315,6 +391,12 @@ static void sim_step_timer2(void)
 }
 
 
+/**
+ * @brief Step the simulated Timer3 by one instruction cycle.
+ *
+ * Applies the T3CON prescaler, increments the 16-bit timer value, and
+ * raises TMR3IF on overflow.
+ */
 static void sim_step_timer3(void)
 {
     /* T3CON layout (DS39632E Register 14-1):
@@ -349,6 +431,16 @@ static void sim_step_timer3(void)
 }
 
 
+/**
+ * @brief Drive a port pin to an external input level.
+ *
+ * Records the override so input-pin reads return the level, and updates
+ * PORTx to match real hardware (PORT reads return pin state when TRIS=1).
+ *
+ * @param port the port letter (A..E)
+ * @param pin the pin number (0..7); values above 7 are ignored
+ * @param level the level to drive (nonzero = high, zero = low)
+ */
 void pic18_sim_drive_input(char port, uint8_t pin, uint8_t level)
 {
     if (pin > 7U) return;
@@ -368,6 +460,16 @@ void pic18_sim_drive_input(char port, uint8_t pin, uint8_t level)
     pic18_sim_sfr[pa] = portval;
 }
 
+/**
+ * @brief Read the current logic level of a port pin.
+ *
+ * Returns the externally driven level for pins configured as inputs and
+ * the LATx bit for pins configured as outputs.
+ *
+ * @param port the port letter (A..E)
+ * @param pin the pin number (0..7); values above 7 read as 0
+ * @return 1 if the pin reads high, else 0
+ */
 uint8_t pic18_sim_read_output(char port, uint8_t pin)
 {
     if (pin > 7U) return 0U;
@@ -384,11 +486,24 @@ uint8_t pic18_sim_read_output(char port, uint8_t pin)
     return (pic18_sim_sfr[lat_addr(port)] & mask) ? 1U : 0U;
 }
 
+/**
+ * @brief Register the ISR hook invoked when a simulated interrupt fires.
+ *
+ * @param cb the callback to invoke on a simulated interrupt, or 0 for none
+ */
 void pic18_sim_set_irq_callback(pic18_sim_irq_cb_t cb)
 {
     sim_irq_cb = cb;
 }
 
+/**
+ * @brief Deliver a received SSP byte to the simulated hardware.
+ *
+ * Places the byte in SSPBUF, sets SSPSTAT<BF> and PIR1<SSPIF>, and raises
+ * the IRQ hook.
+ *
+ * @param data the byte received on the SSP bus
+ */
 void pic18_sim_drive_ssp_rx(uint8_t data)
 {
     /* Place the byte in SSPBUF, set SSPSTAT<BF> + PIR1<SSPIF>. */
@@ -400,6 +515,12 @@ void pic18_sim_drive_ssp_rx(uint8_t data)
 }
 
 
+/**
+ * @brief Step the simulated EUSART state machine by one instruction cycle.
+ *
+ * Re-asserts PIR1<TXIF> every cycle while TXEN is set to model the
+ * instantaneous transmit completion.
+ */
 static void sim_step_usart(void)
 {
     /* Re-assert TXIF every cycle when TXEN is set. TXIF is cleared by the
@@ -413,6 +534,13 @@ static void sim_step_usart(void)
     }
 }
 
+/**
+ * @brief Deliver a received USART byte to the simulated hardware.
+ *
+ * Places the byte in RCREG, sets PIR1<RCIF>, and raises the IRQ hook.
+ *
+ * @param data the byte received on the USART
+ */
 void pic18_sim_drive_usart_rx(uint8_t data)
 {
     /* Place the byte in RCREG (DS39632E §20.2.2), set PIR1<RCIF>. */
@@ -422,6 +550,15 @@ void pic18_sim_drive_usart_rx(uint8_t data)
 }
 
 
+/**
+ * @brief Drive the comparator output levels and raise the comparator IRQ.
+ *
+ * Sets CMCON<C1OUT>/<C2OUT> (read-only in real hardware) and PIR2<CMIF>
+ * to model an output change.
+ *
+ * @param c1out nonzero to set C1OUT high, zero for low
+ * @param c2out nonzero to set C2OUT high, zero for low
+ */
 void pic18_sim_drive_comp(uint8_t c1out, uint8_t c2out)
 {
     /* Set CMCON<C1OUT>/<C2OUT> (the comparator output levels, read-only in
@@ -435,11 +572,25 @@ void pic18_sim_drive_comp(uint8_t c1out, uint8_t c2out)
 }
 
 
+/**
+ * @brief Write a byte to the simulated data EEPROM.
+ *
+ * @param addr the EEPROM address (0..255)
+ * @param data the byte to store
+ */
 void pic18_sim_drive_eeprom_byte(uint8_t addr, uint8_t data)
 {
     sim_eeprom[addr] = data;
 }
 
+/**
+ * @brief Complete a simulated data EEPROM write cycle.
+ *
+ * Stores the byte and sets PIR2<EEIF> to model the write cycle finishing.
+ *
+ * @param addr the EEPROM address (0..255)
+ * @param data the byte to store
+ */
 void pic18_sim_drive_eeprom_done(uint8_t addr, uint8_t data)
 {
     sim_eeprom[addr] = data;
@@ -448,12 +599,26 @@ void pic18_sim_drive_eeprom_done(uint8_t addr, uint8_t data)
     if (sim_irq_cb) sim_irq_cb();
 }
 
+/**
+ * @brief Read a byte from the simulated data EEPROM.
+ *
+ * @param addr the EEPROM address (0..255)
+ * @return the byte stored at that address
+ */
 uint8_t pic18_sim_eeprom_read(uint8_t addr)
 {
     return sim_eeprom[addr];
 }
 
 
+/**
+ * @brief Complete a simulated A/D conversion.
+ *
+ * Clears ADCON0<GO/DONE>, stores the 10-bit result in ADRESH:ADRESL per
+ * ADFM, and sets PIR1<ADIF>.
+ *
+ * @param result the 10-bit conversion result (0..1023)
+ */
 void pic18_sim_drive_adc_done(uint16_t result)
 {
     /* Clear GO/DONE in ADCON0. */
@@ -480,6 +645,15 @@ void pic18_sim_drive_adc_done(uint16_t result)
 
 #if PIC18FXX5X_FAMILY_HAS_SPP
 
+/**
+ * @brief Model an SPP transfer event.
+ *
+ * Sets SPPEPS<WRSPP>/<RDSPP> to the given levels and raises PIR1<SPPIF>.
+ * SPPBUSY is left for a dedicated hook.
+ *
+ * @param wrspp nonzero to set the WRSPP status bit, zero for clear
+ * @param rdspp nonzero to set the RDSPP status bit, zero for clear
+ */
 void pic18_sim_drive_spp(uint8_t wrspp, uint8_t rdspp)
 {
     /* Set the SPPEPS<WRSPP>/<RDSPP> status bits to model a transfer event,

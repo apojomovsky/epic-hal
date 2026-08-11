@@ -10,8 +10,16 @@
 #include "peripherals/pic16f193x_adc.h"
 #include "core/epic_harness.h"
 
+/**
+ * @brief Freeze the target so the harness PASS marker stays set; no-op
+ * on the host build.
+ */
 extern void pic16f193x_harness_halt(void);
 
+/**
+ * @brief ADC smoke test: init the ADC and verify ADCON0/ADCON1 against
+ * the expected register image, then report pass/fail.
+ */
 int main(void)
 {
     epic_harness_init(1UL);

@@ -20,7 +20,11 @@ static const uint16_t ps_ratio[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 static TIMER0_HandleTypeDef g_t0_storage;
 static const TIMER0_HandleTypeDef *g_t0_handle = NULL;
 
-/** Read-modify-write helper for OPTION_REG. */
+/**
+ * @brief Read-modify-write helper for OPTION_REG.
+ * @param clr_mask bits to clear in OPTION_REG
+ * @param set_mask bits to set in OPTION_REG
+ */
 static void option_clr_set(uint8_t clr_mask, uint8_t set_mask)
 {
     uint8_t opt = EPIC_REG8(PIC_REG_OPTION);
@@ -28,6 +32,11 @@ static void option_clr_set(uint8_t clr_mask, uint8_t set_mask)
     EPIC_REG8(PIC_REG_OPTION) = opt;
 }
 
+/**
+ * @brief Configure Timer0 from the handle and store it for the ISR.
+ * @param h handle with clock source, edge, prescaler and callback
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -48,6 +57,10 @@ EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Stop Timer0, disable its interrupt and clear the counter.
+ * @return EPIC_OK on success
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16F193X_IRQ_TMR0);
@@ -57,6 +70,12 @@ EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief Enable TMR0 counting: reload the counter and program the
+ *        prescaler, clock source and edge in OPTION_REG.
+ * @param h handle with prescaler, clock source, edge and reload value
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -79,28 +98,48 @@ EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Disable TMR0 counting (Timer0 halted).
+ * @return EPIC_OK on success
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_Stop(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
     return EPIC_OK;
 }
 
+/**
+ * @brief Read the current TMR0 counter value.
+ * @return the 8-bit counter value
+ */
 uint8_t EPIC_TIMER0_ReadCounter(void)
 {
     return EPIC_REG8(PIC_REG_TMR0);
 }
 
+/**
+ * @brief Write a new value to the counter (also clears the prescaler).
+ * @param value counter value to write, 0..255
+ */
 void EPIC_TIMER0_WriteCounter(uint8_t value)
 {
     EPIC_REG8(PIC_REG_TMR0) = value;
 }
 
+/**
+ * @brief Convert a prescaler enum to its integer ratio (2, 4, ..., 256).
+ * @param p prescaler selection
+ * @return the divider ratio, or 1 for an out-of-range value
+ */
 uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p)
 {
     if ((unsigned)p > 7U) return 1U;
     return ps_ratio[p];
 }
 
+/**
+ * @brief Timer0 overflow ISR: clears TMR0IF and invokes the callback.
+ */
 void TIMER0_IRQHandler(void)
 {
     /* Direct flag ops (class-F). TMR0IF is INTCON bit 2. */

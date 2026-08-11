@@ -4,8 +4,17 @@
 #include "epic_adcfilter.h"
 #include <stddef.h>     /* NULL */
 
+/**
+ * @brief Stub read callback returning a fixed mid-scale sample.
+ *
+ * @param ctx unused
+ * @return 512 (a mid-scale 10-bit reading)
+ */
 static uint16_t stub_read(void *ctx) { (void)ctx; return 512u; }
 
+/**
+ * @brief Sizecheck main: link both filters and report footprint.
+ */
 void main(void)
 {
     uint16_t r = epic_adcfilter_oversample(stub_read, NULL, 2);

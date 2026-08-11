@@ -44,6 +44,9 @@
 #pragma config DEBUG = OFF
 #pragma config CPD = OFF
 
+/**
+ * @brief Toggle RB0 every 500 ms using the 1 ms epic-tick timebase.
+ */
 int main(void)
 {
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);

@@ -44,11 +44,17 @@ static uint8_t g_line[RX_LINE_MAX];
 static uint8_t g_line_len;
 static uint8_t g_line_overflow;
 
-/* Forward declarations: rx_loopback_tx is the build seam (defined by
- * this file on the XC8 builds, by the host test on the host build);
- * the others are defined below and called from main/init. */
+/**
+ * @brief Forward declarations of the firmware's shared entry points.
+ *
+ * rx_loopback_tx is the build seam (defined by this file on the XC8
+ * builds, by the host test on the host build); the others are defined
+ * below and called from main/init.
+ */
 void rx_loopback_tx(uint8_t b);
+/** @brief Initialize the USART and print the boot banner. */
 void rx_loopback_init(void);
+/** @brief RX callback: frame lines and echo them back. */
 void rx_loopback_on_rx_byte(uint8_t b);
 
 #ifndef RX_LOOPBACK_HOST_TEST
@@ -60,6 +66,7 @@ static uint32_t g_loop_ticks = 0u;
  *  serial combo): a wedged TX path must time out, not hang the gate. */
 #define TX_TRMT_GUARD 100000UL
 
+/** @brief Record a check failure and log its index as hex. */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -79,9 +86,13 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
-/** The polled-TX helper. Target implementation: bounded TSR-empty
- *  wait, then TXREG write. The host test build replaces this with a
- *  recorder (see the file header's build-seam note). */
+/**
+ * @brief Polled-TX helper.
+ *
+ * Target implementation: bounded TSR-empty wait, then TXREG write.
+ * The host test build replaces this with a recorder (see the file
+ * header's build-seam note).
+ */
 void rx_loopback_tx(uint8_t b)
 {
     uint32_t guard = 0UL;
@@ -91,6 +102,7 @@ void rx_loopback_tx(uint8_t b)
     EPIC_USART_Transmit(b);
 }
 
+/** @brief Target gate main: init, arm RX, tick, and check state. */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);
@@ -136,10 +148,12 @@ int main(void)
 
 #endif /* !RX_LOOPBACK_HOST_TEST */
 
+/** @brief No-op TX completion callback. */
 static void s_tx_noop(void)
 {
 }
 
+/** @brief Transmit a NUL-terminated string through rx_loopback_tx. */
 static void rx_loopback_tx_str(const char *s)
 {
     while (*s) {
@@ -148,12 +162,16 @@ static void rx_loopback_tx_str(const char *s)
     }
 }
 
-/** USART init (family-generic via epic_hal.h, mirroring the other
- *  combos): 9600 8N1, RX interrupt armed (CREN + RCIE through the
- *  RxCpltCallback), TX polled (TXIE off), then the boot banner. The
- *  handle is static because EPIC_USART_Init stores its pointer for
- *  the ISR's whole lifetime (the same dangling-pointer hazard the
- *  sim-target harness documents). */
+/**
+ * @brief USART init: 9600 8N1, RX interrupt armed, TX polled.
+ *
+ * Family-generic via epic_hal.h, mirroring the other combos: RX
+ * interrupt armed (CREN + RCIE through the RxCpltCallback), TX polled
+ * (TXIE off), then the boot banner. The handle is static because
+ * EPIC_USART_Init stores its pointer for the ISR's whole lifetime
+ * (the same dangling-pointer hazard the sim-target harness
+ * documents).
+ */
 void rx_loopback_init(void)
 {
     static USART_HandleTypeDef s_usart_handle;
@@ -176,11 +194,14 @@ void rx_loopback_init(void)
     rx_loopback_tx_str("RXLOOP UP\r\n");
 }
 
-/** The RX callback (registered as RxCpltCallback, fired by
- *  USART_RX_IRQHandler from the interrupt path): line framing + echo
- *  per the protocol in the file header. Runs in ISR context on the
- *  target; the echo's polled TX is safe there because this callback
- *  cannot fire under MPLAB SIM (no RX injection). */
+/**
+ * @brief RX callback: line framing + echo per the line protocol.
+ *
+ * Registered as RxCpltCallback, fired by USART_RX_IRQHandler from the
+ * interrupt path. Runs in ISR context on the target; the echo's
+ * polled TX is safe there because this callback cannot fire under
+ * MPLAB SIM (no RX injection).
+ */
 void rx_loopback_on_rx_byte(uint8_t b)
 {
     if (b == (uint8_t)'\n') {

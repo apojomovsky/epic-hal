@@ -23,6 +23,10 @@
 static volatile uint8_t g_ioc_seen = 0;
 static volatile uint8_t g_ioc_iocbf = 0;
 
+/**
+ * @brief PORTB interrupt-on-change callback: records the IOCBF mask and
+ * the PORTB value for the main loop to assert on.
+ */
 static void on_ioc(uint8_t iocbf, uint8_t portb)
 {
     (void)portb;
@@ -30,6 +34,11 @@ static void on_ioc(uint8_t iocbf, uint8_t portb)
     g_ioc_iocbf = iocbf;
 }
 
+/**
+ * @brief GPIO and interrupt-on-change smoke test: exercise the
+ * LAT/ANSEL/TRIS write path, the PORTx read path, and a PORTB IOC edge
+ * through the registered callback.
+ */
 int main(void)
 {
     /* Bound generous; the test is event-driven, not time-driven. */

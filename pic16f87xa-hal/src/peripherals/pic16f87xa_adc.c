@@ -5,6 +5,14 @@
 
 static const ADC_HandleTypeDef *g_adc = NULL;
 
+/**
+ * @brief Initialize the A/D converter: program ADCON0/ADCON1 from the
+ *        handle and arm the conversion-complete interrupt if a callback
+ *        is set.
+ * @param h handle with Channel, ClockSource, ResultFormat, Reference,
+ *        ConvCpltCallback.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -53,6 +61,11 @@ EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief De-initialize the A/D converter: disable its interrupt, clear
+ *        the pending flag, and reset ADCON0/ADCON1.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_ADC_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16_IRQ_ADC);
@@ -68,6 +81,10 @@ EPIC_StatusTypeDef EPIC_ADC_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief Select the analog channel without starting a conversion.
+ * @param ch the analog channel to select.
+ */
 void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch)
 {
     uint8_t v = EPIC_REG8(0x1FU);
@@ -76,6 +93,10 @@ void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch)
     EPIC_REG8(0x1FU) = v;
 }
 
+/**
+ * @brief Start a conversion by setting GO/DONE.
+ * @return 0 on success, 0xFFFF if a conversion was already running.
+ */
 uint16_t EPIC_ADC_Start(void)
 {
     uint8_t v = EPIC_REG8(0x1FU);
@@ -84,22 +105,37 @@ uint16_t EPIC_ADC_Start(void)
     return 0U;
 }
 
+/**
+ * @brief Report whether a conversion is in progress.
+ * @return 1 if GO/DONE is set, 0 otherwise.
+ */
 uint8_t EPIC_ADC_IsConversionInProgress(void)
 {
     return (EPIC_REG8(0x1FU) & PIC_ADCON0_GO_DONE) ? 1U : 0U;
 }
 
+/**
+ * @brief Report whether the latest conversion completed.
+ * @return 1 if ADIF (PIR1<6>) is set, 0 otherwise.
+ */
 uint8_t EPIC_ADC_IsConversionDone(void)
 {
     /* ADIF lives in PIR1<6>. */
     return (EPIC_REG8(0x0CU) & 0x40U) ? 1U : 0U;
 }
 
+/**
+ * @brief Clear the ADIF flag via the IRQ table.
+ */
 void EPIC_ADC_ClearITFlag(void)
 {
     EPIC_IRQ_ClearFlag(PIC16_IRQ_ADC);
 }
 
+/**
+ * @brief Read the latest 10-bit result (0..1023), right-justified.
+ * @return the conversion result.
+ */
 uint16_t EPIC_ADC_Read(void)
 {
     /* Read ADRESL first, then ADRESH, in the active bank. */
@@ -126,6 +162,10 @@ uint16_t EPIC_ADC_Read(void)
 
 /* ISRs. */
 
+/**
+ * @brief Weak ADC conversion-complete ISR; clears ADIF and invokes the
+ *        registered callback.
+ */
 void ADC_IRQHandler(void)
 {
     /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR

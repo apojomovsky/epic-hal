@@ -16,6 +16,13 @@ static const fsm_transition_t transitions[] = {
 
 static fsm_t g_fsm;
 
+/**
+ * @brief On-target build proof and footprint report.
+ *
+ * Runs the machine forever on real silicon; never returns.
+ *
+ * @return never returns on target
+ */
 int main(void)
 {
     FSM_INIT(&g_fsm, transitions, ST_A, NULL);

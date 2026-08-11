@@ -44,6 +44,10 @@ static const irq_desc_t irq_table[] = {
 
 /* public API. */
 
+/**
+ * @brief Globally mask all interrupts by clearing the GIE bit.
+ * @return the previous GIE state (1 = was enabled).
+ */
 uint8_t EPIC_IRQ_Disable(void)
 {
     uint8_t s = EPIC_REG8(PIC_REG_INTCON);
@@ -52,12 +56,22 @@ uint8_t EPIC_IRQ_Disable(void)
     return prev;
 }
 
+/**
+ * @brief Restore the global interrupt enable to `prev_state`, the pair
+ *        of @ref EPIC_IRQ_Disable.
+ * @param prev_state the GIE state returned by @ref EPIC_IRQ_Disable.
+ */
 void EPIC_IRQ_Restore(uint8_t prev_state)
 {
     if (prev_state) EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_GIE);
     else            EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_GIE);
 }
 
+/**
+ * @brief Enable one interrupt source (sets the matching PIE/INTCON bit
+ *        and PEIE for peripheral sources).
+ * @param irq the interrupt source to enable.
+ */
 void EPIC_IRQ_Enable(PIC16_IRQn irq)
 {
     if ((unsigned)irq >= IRQ_TABLE_SIZE) return;
@@ -81,6 +95,10 @@ void EPIC_IRQ_Enable(PIC16_IRQn irq)
     EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
 }
 
+/**
+ * @brief Disable one interrupt source (clears the matching PIE/INTCON bit).
+ * @param irq the interrupt source to disable.
+ */
 void EPIC_IRQ_DisableSrc(PIC16_IRQn irq)
 {
     if ((unsigned)irq >= IRQ_TABLE_SIZE) return;
@@ -96,6 +114,10 @@ void EPIC_IRQ_DisableSrc(PIC16_IRQn irq)
     EPIC_PIE_DISABLE_BIT(d->pir_is_pir2, enable_mask);
 }
 
+/**
+ * @brief Clear the interrupt flag of `irq` (PIR/INTCON bit).
+ * @param irq the interrupt source whose flag to clear.
+ */
 void EPIC_IRQ_ClearFlag(PIC16_IRQn irq)
 {
     if ((unsigned)irq >= IRQ_TABLE_SIZE) return;
@@ -113,6 +135,11 @@ void EPIC_IRQ_ClearFlag(PIC16_IRQn irq)
     }
 }
 
+/**
+ * @brief Return the pending state of `irq` (1 = flag set).
+ * @param irq the interrupt source to query.
+ * @return 1 if the flag is set, 0 otherwise.
+ */
 uint8_t EPIC_IRQ_GetFlag(PIC16_IRQn irq)
 {
     if ((unsigned)irq >= IRQ_TABLE_SIZE) return 0U;
@@ -124,6 +151,12 @@ uint8_t EPIC_IRQ_GetFlag(PIC16_IRQn irq)
     return (reg & flag_mask) ? 1U : 0U;
 }
 
+/**
+ * @brief Set the priority of `irq`. No-op on PIC16 (single vector, no
+ *        priority scheme); present for portability with PIC18.
+ * @param irq the interrupt source (ignored on PIC16).
+ * @param prio the requested priority (ignored on PIC16).
+ */
 void EPIC_IRQ_SetPriority(PIC16_IRQn irq, EPIC_IRQ_Priority prio)
 {
     /* PIC16F87XA has a single interrupt vector, no priority scheme

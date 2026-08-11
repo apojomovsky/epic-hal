@@ -7,6 +7,7 @@
 #include "pic_math_test.h"
 #include <math.h>
 
+/** @brief Exhaustive 0..65535 check of pic_math_sqrt_u16 against (uint16_t)floor(sqrt((double)v)). */
 static void test_sqrt_exhaustive(void)
 {
     for (uint32_t v = 0; v <= 0xFFFFu; v++) {
@@ -21,6 +22,7 @@ static void test_sqrt_exhaustive(void)
     }
 }
 
+/** @brief Run the sqrt test and report the failure count. */
 int main(void)
 {
     test_sqrt_exhaustive();

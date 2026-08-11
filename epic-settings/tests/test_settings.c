@@ -35,11 +35,13 @@ typedef struct {
     uint8_t flags;
 } settings_blob_t;
 
+/** @brief Re-initialize the harness before each test. */
 static void reset_env(void)
 {
     epic_harness_init(1000u);
 }
 
+/** @brief Verify save followed by load round-trips the blob. */
 static void test_save_then_load_roundtrip(void)
 {
     reset_env();
@@ -52,6 +54,7 @@ static void test_save_then_load_roundtrip(void)
     CHECK(memcmp(&in, &out, sizeof(in)) == 0, "roundtrip: blob matches exactly");
 }
 
+/** @brief Verify loading a blank region fails without touching the output buffer. */
 static void test_blank_region_fails_without_touching_output(void)
 {
     reset_env();
@@ -63,6 +66,7 @@ static void test_blank_region_fails_without_touching_output(void)
     CHECK(memcmp(&out, &before, sizeof(out)) == 0, "blank: output untouched");
 }
 
+/** @brief Verify corruption is detected without partially overwriting the output. */
 static void test_corruption_detected_without_partial_overwrite(void)
 {
     reset_env();
@@ -78,6 +82,7 @@ static void test_corruption_detected_without_partial_overwrite(void)
     CHECK(memcmp(&out, &before, sizeof(out)) == 0, "corrupt: output untouched");
 }
 
+/** @brief Verify load_or_default persists defaults on a blank region. */
 static void test_load_or_default_persists_default(void)
 {
     reset_env();
@@ -94,6 +99,7 @@ static void test_load_or_default_persists_default(void)
     CHECK(memcmp(&verify, &def, sizeof(def)) == 0, "default: persisted blob matches defaults");
 }
 
+/** @brief Verify two blobs in separate EEPROM regions do not interfere. */
 static void test_two_regions_do_not_interfere(void)
 {
     reset_env();
@@ -111,6 +117,7 @@ static void test_two_regions_do_not_interfere(void)
     CHECK(memcmp(&out_b, &b, sizeof(b)) == 0, "regions: B preserved");
 }
 
+/** @brief Verify CRC edge patterns (all-zero and all-0xFF payloads). */
 static void test_crc_edge_patterns(void)
 {
     reset_env();
@@ -131,6 +138,7 @@ static void test_crc_edge_patterns(void)
     CHECK(memcmp(out, ones, sizeof(out)) == 0, "crc edge: 0xFF data round-trips");
 }
 
+/** @brief Verify load_or_default returns true when a valid blob exists. */
 static void test_load_or_default_returns_true_when_valid(void)
 {
     reset_env();
@@ -145,6 +153,7 @@ static void test_load_or_default_returns_true_when_valid(void)
     CHECK(memcmp(&out, &in, sizeof(in)) == 0, "valid default: existing blob preserved");
 }
 
+/** @brief Run all epic-settings tests and report pass/fail counts. */
 int main(void)
 {
     test_save_then_load_roundtrip();

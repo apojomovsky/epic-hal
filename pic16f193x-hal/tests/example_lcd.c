@@ -8,7 +8,15 @@
 #include "pic16f193x_sfr.h"
 #include "peripherals/pic16f193x_lcd.h"
 #include "core/epic_harness.h"
+/**
+ * @brief Freeze the target so the harness PASS marker stays set; no-op
+ * on the host build.
+ */
 extern void pic16f193x_harness_halt(void);
+/**
+ * @brief LCD smoke test: init with 1:4 mux and verify the LCDCON
+ * register state.
+ */
 int main(void)
 {
     epic_harness_init(1UL);

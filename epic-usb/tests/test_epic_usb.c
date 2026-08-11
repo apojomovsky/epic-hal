@@ -13,12 +13,18 @@
 static int g_pass = 0, g_fail = 0;
 #define CHECK(c, m) do { if (c) { g_pass++; } else { printf("FAIL: %s\n", m); g_fail++; } } while (0)
 
+/**
+ * @brief Reset the stub to a pristine state for a test.
+ */
 static void reset(void)
 {
     epic_usb_init();
     epic_usb_test_reset_sent();
 }
 
+/**
+ * @brief Verify the post-init state of the stub.
+ */
 static void test_initial_state(void)
 {
     reset();
@@ -27,6 +33,9 @@ static void test_initial_state(void)
     CHECK(epic_usb_test_sent_len() == 0u, "init: nothing sent");
 }
 
+/**
+ * @brief Verify writes queue while disconnected and drain on connect.
+ */
 static void test_write_holds_until_connected(void)
 {
     reset();
@@ -43,6 +52,9 @@ static void test_write_holds_until_connected(void)
           "connected: sent bytes match what was written");
 }
 
+/**
+ * @brief Verify writes while connected drain without an extra service call.
+ */
 static void test_write_after_connect_drains_on_write(void)
 {
     reset();
@@ -53,6 +65,9 @@ static void test_write_after_connect_drains_on_write(void)
           "write while already connected: drains without an extra service() call");
 }
 
+/**
+ * @brief Verify disconnecting stops TX draining.
+ */
 static void test_disconnect_stops_draining(void)
 {
     reset();
@@ -68,6 +83,9 @@ static void test_disconnect_stops_draining(void)
     CHECK(epic_usb_test_sent_len() == 0u, "disconnected: service() does not drain either");
 }
 
+/**
+ * @brief Verify an injected RX byte round-trips back out through read.
+ */
 static void test_rx_round_trip(void)
 {
     reset();
@@ -83,6 +101,9 @@ static void test_rx_round_trip(void)
     CHECK(epic_usb_available() == 0u, "read: RX ring now empty");
 }
 
+/**
+ * @brief Verify read is non-blocking and honors the max parameter.
+ */
 static void test_rx_read_is_nonblocking_and_partial(void)
 {
     reset();
@@ -96,6 +117,9 @@ static void test_rx_read_is_nonblocking_and_partial(void)
     CHECK(epic_usb_available() == 3u, "read: remaining bytes still available");
 }
 
+/**
+ * @brief Verify RX injection caps at ring capacity and drops the rest.
+ */
 static void test_rx_overflow_drops(void)
 {
     reset();
@@ -108,6 +132,9 @@ static void test_rx_overflow_drops(void)
     CHECK(epic_usb_available() == EPIC_USB_RING_SZ, "available() caps at ring capacity too");
 }
 
+/**
+ * @brief Verify a disconnected write short-completes at ring capacity.
+ */
 static void test_tx_overflow_short_write_when_disconnected(void)
 {
     reset();
@@ -120,6 +147,9 @@ static void test_tx_overflow_short_write_when_disconnected(void)
           "write while disconnected: short-completes at ring capacity, does not hang");
 }
 
+/**
+ * @brief Verify flush fully drains the TX ring when connected.
+ */
 static void test_flush_drains_when_connected(void)
 {
     reset();
@@ -130,6 +160,9 @@ static void test_flush_drains_when_connected(void)
     CHECK(epic_usb_test_sent_len() == sizeof(data) - 1u, "flush: fully drains the TX ring");
 }
 
+/**
+ * @brief Verify a second init resets all stub state.
+ */
 static void test_two_independent_calls_to_reset(void)
 {
     /* epic_usb_init() resets all state, including a previous connection. */
@@ -141,6 +174,11 @@ static void test_two_independent_calls_to_reset(void)
     CHECK(epic_usb_available() == 0u, "re-init: RX ring cleared");
 }
 
+/**
+ * @brief Run all epic-usb host stub tests.
+ *
+ * @return 0 when all tests pass, 1 otherwise
+ */
 int main(void)
 {
     test_initial_state();

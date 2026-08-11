@@ -23,9 +23,11 @@
 #define SCENARIO_END_MS 100u  /* past the expected RELEASED at ~66 */
 #define SIM_ITERATIONS  200000UL
 
-/* Scripted raw input level as a function of simulated time (ms).
- * Mirrors the host tests' bouncy-transition scripts, keyed to time
- * instead of poll count. */
+/**
+ * @brief  Scripted raw input level as a function of simulated time (ms).
+ *         Mirrors the host tests' bouncy-transition scripts, keyed to
+ *         time instead of poll count.
+ */
 static bool sim_level(void *ctx)
 {
     (void)ctx;
@@ -38,6 +40,9 @@ static bool sim_level(void *ctx)
     return false;
 }
 
+/**
+ * @brief  Run the scripted bounce scenario and report PASS/FAIL.
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

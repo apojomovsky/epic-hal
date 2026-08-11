@@ -45,8 +45,11 @@ static blink_arg_t arg_med  = { GPIOB, 1U, 0U };   /* RB1 */
 static blink_arg_t arg_slow = { GPIOB, 2U, 0U };   /* RB2 */
 static blink_arg_t arg_blip = { GPIOB, 3U, 0U };   /* RB3 (spawned at runtime) */
 
-/** Map a LED's pin index to a short label for the log, padded to 4 chars
- *  so the columns line up. */
+/**
+ * @brief Map a LED's pin index to a short label for the log.
+ *
+ * Padded to 4 chars so the columns line up.
+ */
 static const char *led_name(uint8_t pin)
 {
     switch (pin) {
@@ -58,8 +61,11 @@ static const char *led_name(uint8_t pin)
     }
 }
 
-/** Periodic blink task: toggle the LED, bump its count, log a line. The
- *  same function serves all four LEDs, each with its own arg. */
+/**
+ * @brief Periodic blink task: toggle the LED, bump its count, log a line.
+ *
+ * The same function serves all four LEDs, each with its own arg.
+ */
 static void task_blink(void *arg)
 {
     blink_arg_t *a = (blink_arg_t *)arg;
@@ -70,9 +76,12 @@ static void task_blink(void *arg)
                            led_name(a->pin), (unsigned)a->count);
 }
 
-/** Periodic supervisor (priority 0, runs first each round): every
- *  PERIOD_SUPERVISOR ticks, spawns a fresh one-shot blip on RB3, which
- *  fires once and frees its own slot. */
+/**
+ * @brief Periodic supervisor (priority 0, runs first each round).
+ *
+ * Every PERIOD_SUPERVISOR ticks, spawns a fresh one-shot blip on RB3,
+ * which fires once and frees its own slot.
+ */
 static void task_supervisor(void *arg)
 {
     (void)arg;
@@ -81,6 +90,7 @@ static void task_supervisor(void *arg)
                            (unsigned)task_manager_ticks());
 }
 
+/** @brief Run four LED blinks at distinct rates and report the verdict. */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

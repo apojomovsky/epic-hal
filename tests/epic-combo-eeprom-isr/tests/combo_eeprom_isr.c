@@ -93,18 +93,27 @@ static volatile uint16_t g_t2_count = 0u;
 static volatile uint8_t  g_eeprom_done = 0u;
 static uint16_t g_fail = 0u;
 
+/**
+ * @brief TIMER2 overflow callback: count the overflow.
+ */
 static void t2_overflow_cb(void)
 {
     g_t2_count++;
 }
 
-/* EEPROM completion callback, fired by EEPROM_IRQHandler from the ISR
- * (the dispatcher's EEIF branch clears the flag, then calls this). */
+/**
+ * @brief EEPROM completion callback fired by EEPROM_IRQHandler from the ISR.
+ *
+ * The dispatcher's EEIF branch clears the flag, then calls this.
+ */
 static void eeprom_done_cb(void)
 {
     g_eeprom_done = 1u;
 }
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -124,11 +133,14 @@ static void fail(uint8_t idx)
     if (!(cond)) fail(idx);            \
 } while (0)
 
-/* Start one EEPROM write through the real HAL API and block on the
- * ISR-mediated EEIF completion. The done flag is cleared before the
- * write is launched so a stale completion (a spurious EEPROM_WRITES
- * cycle landing while the firmware is not stalled) can never be
- * mistaken for the current write's completion. */
+/**
+ * @brief Start one EEPROM write and block on the ISR-mediated EEIF completion.
+ *
+ * The done flag is cleared before the write is launched so a stale
+ * completion (a spurious EEPROM_WRITES cycle landing while the
+ * firmware is not stalled) can never be mistaken for the current
+ * write's completion.
+ */
 static void eeprom_write_byte(uint8_t addr, uint8_t data)
 {
     g_eeprom_done = 0u;
@@ -140,6 +152,9 @@ static void eeprom_write_byte(uint8_t addr, uint8_t data)
     }
 }
 
+/**
+ * @brief Log a 16-bit value as four hex digits over the harness UART.
+ */
 static void tx_hex4(uint16_t v)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -158,6 +173,9 @@ static void tx_hex4(uint16_t v)
     epic_harness_log(c);
 }
 
+/**
+ * @brief Run the EEPROM + TIMER2 interrupt-interleave gate (C5).
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

@@ -41,21 +41,48 @@ typedef struct {
     .ChangeCallback  = NULL,                                               \
 }
 
+/**
+ * @brief  Initialize the comparator driver with the given handle.
+ *         Programs CMCON (mode, inversions, input switch) and installs
+ *         the change callback.
+ * @param h handle with Mode, C1Inverted, C2Inverted, CIS, ChangeCallback.
+ * @return EPIC_OK on success, EPIC_ERROR if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h);
+
+/**
+ * @brief  De-initialize the comparator driver. Returns CMCON to reset
+ *         and clears the change callback.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_COMP_DeInit(void);
 
-/** Returns 1 if C1 output is high (CMCON<C1OUT>). */
+/**
+ * @brief Returns 1 if C1 output is high (CMCON<C1OUT>).
+ * @return 1 if C1 output is high, 0 otherwise.
+ */
 uint8_t EPIC_COMP_C1Out(void);
 
-/** Returns 1 if C2 output is high (CMCON<C2OUT>). */
+/**
+ * @brief Returns 1 if C2 output is high (CMCON<C2OUT>).
+ * @return 1 if C2 output is high, 0 otherwise.
+ */
 uint8_t EPIC_COMP_C2Out(void);
 
-/** Returns 1 if CMIF is set. */
+/**
+ * @brief Returns 1 if CMIF is set.
+ * @return 1 if the comparator change flag is set, 0 otherwise.
+ */
 uint8_t EPIC_COMP_IsChangeFlag(void);
 
-/** Clear the CMIF flag (must be done in the change IRQ). */
+/**
+ * @brief Clear the CMIF flag (must be done in the change IRQ).
+ */
 void EPIC_COMP_ClearChangeFlag(void);
 
+/**
+ * @brief Weak comparator ISR, override in user code.
+ */
 void COMP_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_COMP_H */

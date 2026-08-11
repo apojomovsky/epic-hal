@@ -43,6 +43,9 @@ static int g_fail = 0;
     } while (0)
 
 static uint32_t g_seed = 0xC0A50001u;
+/**
+ * @brief Return the next fixed-seed LCG random value.
+ */
 static uint32_t rnd(void)
 {
     g_seed = (1664525u * g_seed + 1013904223u);
@@ -53,6 +56,9 @@ static uint32_t rnd(void)
 static int g_calls = 0;
 static char g_last_cmd[EPIC_CONSOLE_LINE_MAX];
 
+/**
+ * @brief Handler recording dispatched pings for the sentinel check.
+ */
 static void cmd_ping(uint8_t argc, char **argv, void *ctx)
 {
     (void)argc;
@@ -66,6 +72,13 @@ static void cmd_ping(uint8_t argc, char **argv, void *ctx)
  * sim's free-running Timer0 can pop a TX byte inside the tick, so
  * capture after each pending-count drop (same pattern as
  * test_serial_stress.c). */
+/**
+ * @brief Drain the TX ring (echo stream), capturing bytes in order.
+ *
+ * @param out buffer receiving the captured bytes
+ * @param max capacity of out
+ * @return the number of bytes captured
+ */
 static int drain_tx(char *out, int max)
 {
     int n = 0;
@@ -98,6 +111,12 @@ typedef struct {
     int      dispatches;
 } line_model_t;
 
+/**
+ * @brief Feed one byte to the console-behavior model.
+ *
+ * @param m the line model to update
+ * @param ch the byte to process
+ */
 static void model_feed(line_model_t *m, uint8_t ch)
 {
     m->echo_len = 0u;
@@ -142,6 +161,11 @@ static void model_feed(line_model_t *m, uint8_t ch)
     /* past line capacity: dropped silently */
 }
 
+/**
+ * @brief Run the console line-state-machine fuzz test.
+ *
+ * @return 0 when all checks pass, 1 otherwise
+ */
 int main(void)
 {
     epic_harness_init(4000000UL);

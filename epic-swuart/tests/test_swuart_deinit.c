@@ -31,20 +31,26 @@
 static int g_fails = 0;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); g_fails++; } } while (0)
 
-/* Test-only hooks: see test_swuart_tx.c/test_swuart_rx.c. Defined in
- * epic_swuart.c behind EPIC_SWUART_TEST_HOOKS. swuart_test_last_tx_mode
- * always reads slot A's TX CCP (CCP2CON), which is exactly the slot
- * both channels in this test occupy in turn (only one channel is ever
- * live at a time here). */
+/** @brief Test-only hooks: see test_swuart_tx.c/test_swuart_rx.c.
+ *         Defined in epic_swuart.c behind EPIC_SWUART_TEST_HOOKS.
+ *         swuart_test_last_tx_mode always reads slot A's TX CCP
+ *         (CCP2CON), which is exactly the slot both channels in this
+ *         test occupy in turn (only one channel is ever live at a time
+ *         here). */
 extern uint8_t swuart_test_last_tx_mode(void);
+/** @brief Test hook: fire one channel A TX compare event. */
 extern void swuart_test_fire_tx_event(void);
+/** @brief Test hook: fire one channel A RX capture/compare event. */
 extern void swuart_test_fire_rx_event(void);
 #if EPIC_SWUART_HAS_RX_FAST_PATH
+/** @brief Test hook: inject the fast-path RX capture value. */
 extern void swuart_test_set_capture_fast(uint16_t value);
 #else
+/** @brief Test hook: inject the generic RX capture value. */
 extern void swuart_test_set_capture(uint16_t value);
 #endif
 
+/** @brief DeInit host test main: teardown, SFR readback, re-init. */
 int main(void)
 {
     /* Channel 1: register, start a TX frame, DeInit mid-frame. */

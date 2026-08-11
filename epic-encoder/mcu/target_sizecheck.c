@@ -9,6 +9,13 @@
 
 static encoder_t g_enc;
 
+/**
+ * @brief On-target build proof and footprint report.
+ *
+ * Runs the decode loop forever on real silicon; never returns.
+ *
+ * @return never returns on target
+ */
 int main(void)
 {
     epic_tick_init(FOSC_HZ);

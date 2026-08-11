@@ -36,7 +36,9 @@ static encoder_t g_dec;    /* phase 1+2: decode + impossible transition */
 static encoder_t g_gate;   /* phase 3:   glitch gate against real time   */
 static encoder_t g_ham;    /* phase 4:   class-G read hammer             */
 
-/* Build a port byte putting the 2-bit state (a<<1|b) at pins PIN_A/PIN_B. */
+/**
+ * @brief Build a port byte putting the 2-bit state (a<<1|b) at pins PIN_A/PIN_B.
+ */
 static uint8_t port_byte(uint8_t state)
 {
     uint8_t v = 0U;
@@ -45,8 +47,12 @@ static uint8_t port_byte(uint8_t state)
     return v;
 }
 
-/* Wait for the tick counter to advance 1 ms, bounded. Returns 1 if the
- * tick advanced (GIE intact), 0 if the tick stalled (class-G GIE loss). */
+/**
+ * @brief Wait for the tick counter to advance 1 ms, bounded.
+ *
+ * Returns 1 if the tick advanced (GIE intact), 0 if the tick stalled
+ * (class-G GIE loss).
+ */
 static uint8_t wait_1ms_bounded(void)
 {
     uint32_t t0 = epic_tick_get();
@@ -58,6 +64,7 @@ static uint8_t wait_1ms_bounded(void)
     return 1u;
 }
 
+/** @brief Run the scripted decode/glitch/class-G sequence and report PASS/FAIL. */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

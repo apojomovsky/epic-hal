@@ -25,6 +25,7 @@
 
 #define TEST_BYTE 0x41u
 
+/** @brief Sim gate main: write one byte and confirm the TX drains. */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

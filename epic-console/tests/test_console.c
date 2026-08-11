@@ -38,6 +38,9 @@ typedef struct {
     int help_count;
 } console_ctx_t;
 
+/**
+ * @brief Copy the dispatched tokens into the test context.
+ */
 static void copy_args(console_ctx_t *ctx, uint8_t argc, char **argv)
 {
     ctx->argc = argc;
@@ -47,6 +50,9 @@ static void copy_args(console_ctx_t *ctx, uint8_t argc, char **argv)
     }
 }
 
+/**
+ * @brief Handler that records each dispatch into the test context.
+ */
 static void cmd_capture(uint8_t argc, char **argv, void *ctx_)
 {
     console_ctx_t *ctx = (console_ctx_t *)ctx_;
@@ -54,17 +60,26 @@ static void cmd_capture(uint8_t argc, char **argv, void *ctx_)
     copy_args(ctx, argc, argv);
 }
 
+/**
+ * @brief Zero the test context.
+ */
 static void reset_ctx(console_ctx_t *ctx)
 {
     memset(ctx, 0, sizeof(*ctx));
 }
 
+/**
+ * @brief Reinitialize the harness and serial layers for a test.
+ */
 static void reset_env(void)
 {
     epic_harness_init(1000000UL);
     epic_serial_init(TEST_FOSC_HZ, 9600u);
 }
 
+/**
+ * @brief Inject a string of RX bytes without polling.
+ */
 static void drive_input(const char *s)
 {
     while (*s != '\0') {
@@ -72,6 +87,9 @@ static void drive_input(const char *s)
     }
 }
 
+/**
+ * @brief Inject RX bytes one at a time, polling after each.
+ */
 static void drive_input_polled(epic_console_t *con, const char *s)
 {
     while (*s != '\0') {
@@ -80,6 +98,13 @@ static void drive_input_polled(epic_console_t *con, const char *s)
     }
 }
 
+/**
+ * @brief Drain the TX ring into out, capturing bytes.
+ *
+ * @param out buffer receiving the captured bytes
+ * @param max capacity of out
+ * @return the number of bytes captured
+ */
 static int drain_tx(char *out, int max)
 {
     int n = 0;
@@ -92,6 +117,9 @@ static int drain_tx(char *out, int max)
     return n;
 }
 
+/**
+ * @brief Verify dispatch of a no-arg command line.
+ */
 static void test_no_arg_dispatch(void)
 {
     reset_env();
@@ -112,6 +140,9 @@ static void test_no_arg_dispatch(void)
     CHECK(strcmp(ctx.args[0], "status") == 0, "no-arg: argv[0] is command");
 }
 
+/**
+ * @brief Verify multi-arg tokenization with extra whitespace.
+ */
 static void test_multi_arg_tokenization(void)
 {
     reset_env();
@@ -134,6 +165,9 @@ static void test_multi_arg_tokenization(void)
     CHECK(strcmp(ctx.args[2], "12") == 0, "argv: argv2");
 }
 
+/**
+ * @brief Verify backspace edits the line and echoes the erase sequence.
+ */
 static void test_backspace_behavior(void)
 {
     reset_env();
@@ -157,6 +191,9 @@ static void test_backspace_behavior(void)
     CHECK(strstr(tx, "\b \b") != NULL, "backspace: terminal erase sequence emitted");
 }
 
+/**
+ * @brief Verify backspace on an empty line is a safe no-op.
+ */
 static void test_backspace_at_empty_line(void)
 {
     reset_env();
@@ -178,6 +215,9 @@ static void test_backspace_at_empty_line(void)
     CHECK(n == 2 && tx[0] == '\r' && tx[1] == '\n', "empty backspace: only terminator echoed");
 }
 
+/**
+ * @brief Verify an overlong line truncates without crashing.
+ */
 static void test_overlong_line_truncates_without_crashing(void)
 {
     reset_env();
@@ -199,6 +239,9 @@ static void test_overlong_line_truncates_without_crashing(void)
           "overflow: line preserves the input prefix that fit");
 }
 
+/**
+ * @brief Verify CRLF is a single line terminator.
+ */
 static void test_crlf_is_one_terminator(void)
 {
     reset_env();
@@ -217,6 +260,9 @@ static void test_crlf_is_one_terminator(void)
     CHECK(ctx.call_count == 1, "crlf: one dispatch only");
 }
 
+/**
+ * @brief Verify an unknown command is ignored.
+ */
 static void test_unknown_command_ignored(void)
 {
     reset_env();
@@ -235,6 +281,9 @@ static void test_unknown_command_ignored(void)
     CHECK(ctx.call_count == 0, "unknown: no handler called");
 }
 
+/**
+ * @brief Verify EPIC_CONSOLE_INIT computes the table length.
+ */
 static void test_init_macro_table_len(void)
 {
     reset_env();
@@ -252,6 +301,11 @@ static void test_init_macro_table_len(void)
     CHECK(con.table_len == 3u, "init macro: table_len matches array size");
 }
 
+/**
+ * @brief Run all epic-console host tests.
+ *
+ * @return 0 when all tests pass, 1 otherwise
+ */
 int main(void)
 {
     test_no_arg_dispatch();

@@ -38,11 +38,17 @@
 
 static volatile uint32_t g_tick_us = 0u;
 
+/**
+ * @brief Advance the tick counter (Timer2 overflow callback).
+ */
 static void s_tick_inc(void)
 {
     g_tick_us++;
 }
 
+/**
+ * @brief Read the tick counter with tear-safe 32-bit reads.
+ */
 static uint32_t tick_now(void)
 {
     /* 32-bit read the ISR can tear mid-update on the 8-bit core (same
@@ -57,6 +63,9 @@ static uint32_t tick_now(void)
 
 static int g_fails = 0;
 
+/**
+ * @brief Log a check result and count failures.
+ */
 static void check(int cond, const char *what)
 {
     epic_harness_log(what);
@@ -66,6 +75,9 @@ static void check(int cond, const char *what)
 
 /* Raw-string hex logging (the sim harness prints fmt verbatim, no
  * varargs): logs " T=xx R=xx" for the TXIF flag and TXREG readback. */
+/**
+ * @brief Log a two-digit hex value with a tag char (vararg-free).
+ */
 static void log_hex_pair(uint8_t tag, uint8_t v)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -79,6 +91,11 @@ static void log_hex_pair(uint8_t tag, uint8_t v)
     epic_harness_log(s);
 }
 
+/**
+ * @brief Run the MPLAB SIM gate phases for epic-serial.
+ *
+ * @return 0 when all checks pass, 1 otherwise
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

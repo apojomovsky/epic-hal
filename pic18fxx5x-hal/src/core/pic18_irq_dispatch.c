@@ -10,23 +10,45 @@
 
 #include "core/pic18_irq.h"
 
+/** @brief Timer0 overflow interrupt handler. */
 extern void TIMER0_IRQHandler(void);
+/** @brief Timer1 overflow interrupt handler. */
 extern void TIMER1_IRQHandler(void);
+/** @brief Timer2 == PR2 match interrupt handler. */
 extern void TIMER2_IRQHandler(void);
+/** @brief Timer3 overflow interrupt handler. */
 extern void TIMER3_IRQHandler(void);
+/** @brief CCP1 event interrupt handler. */
 extern void CCP1_IRQHandler(void);
+/** @brief CCP2 event interrupt handler. */
 extern void CCP2_IRQHandler(void);
+/** @brief MSSP event interrupt handler. */
 extern void SSP_IRQHandler(void);
+/** @brief USART TX shift-done interrupt handler. */
 extern void USART_TX_IRQHandler(void);
+/** @brief USART RX byte-ready interrupt handler. */
 extern void USART_RX_IRQHandler(void);
+/** @brief Comparator change interrupt handler. */
 extern void COMP_IRQHandler(void);
+/** @brief EEPROM write-complete interrupt handler. */
 extern void EEPROM_IRQHandler(void);
+/** @brief A/D conversion-done interrupt handler. */
 extern void ADC_IRQHandler(void);
+/** @brief RB<7:4> change interrupt handler. */
 extern void RB_IRQHandler(void);
 #if PIC18FXX5X_FAMILY_HAS_SPP
+/** @brief Streaming Parallel Port interrupt handler. */
 extern void SPP_IRQHandler(void);
 #endif
 
+/**
+ * @brief  Fan out from the PIC18 interrupt vectors to every peripheral
+ *         IRQHandler whose flag is set. Reads INTCON/PIR1/PIR2 once into
+ *         locals and only calls a handler whose bit is set, so each
+ *         handler does not pay its own table-driven @ref EPIC_IRQ_GetFlag
+ *         lookup. Shared by both builds: both vectors call this on
+ *         target; the host harness registers it as the sim IRQ callback.
+ */
 void epic_dispatch_all_irqs(void)
 {
     uint8_t intcon = epic_sfr_read8(PIC_REG_INTCON);

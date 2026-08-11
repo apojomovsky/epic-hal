@@ -19,14 +19,20 @@
   #define BUS_SSPCON2_WRITE(c) (EPIC_REG8(PIC_REG_SSPCON2) = (uint8_t)(c))
 #endif
 
-/* default I2C ops (HAL SSP + ACKDT + SSPIF wait) */
+/** @brief Default I2C ops (HAL SSP + ACKDT + SSPIF wait): block until
+ *         the current SSP operation completes, then clear SSPIF. */
 static void i2c_wait_ssp(void)
 {
     while (!EPIC_IRQ_GetFlag(BUS_IRQ_SSP)) { }   /* block until the SSP op completes */
     EPIC_IRQ_ClearFlag(BUS_IRQ_SSP);
 }
 
-static void i2c_set_ackdt(int ack)   /* ack=1 -> ACK (ACKDT=0); ack=0 -> NACK (ACKDT=1) */
+/**
+ * @brief  Program the ACKDT bit for the next I2C acknowledge phase:
+ *         ack=1 -> ACK (ACKDT=0); ack=0 -> NACK (ACKDT=1).
+ * @param ack nonzero to ACK, zero to NACK.
+ */
+static void i2c_set_ackdt(int ack)
 {
     uint8_t c = BUS_SSPCON2_READ();
     if (ack) { c &= (uint8_t)~PIC_SSPCON2_ACKDT; }
@@ -34,15 +40,30 @@ static void i2c_set_ackdt(int ack)   /* ack=1 -> ACK (ACKDT=0); ack=0 -> NACK (A
     BUS_SSPCON2_WRITE(c);
 }
 
+/** @brief Default I2C start: issue a hardware START and wait for SSPIF. */
 static void i2c_real_start(void)          { EPIC_SSP_Start();          i2c_wait_ssp(); }
+/** @brief Default I2C repeated start: issue a hardware RESTART and wait. */
 static void i2c_real_repeated_start(void) { EPIC_SSP_RepeatedStart();  i2c_wait_ssp(); }
+/** @brief Default I2C stop: issue a hardware STOP and wait for SSPIF. */
 static void i2c_real_stop(void)           { EPIC_SSP_Stop();           i2c_wait_ssp(); }
+/**
+ * @brief  Default I2C write byte: shift out `b` and report the slave's
+ *         acknowledge.
+ * @param b the byte to write.
+ * @return 1 if the slave ACKed (ACKSTAT=0), 0 if it NACKed.
+ */
 static int  i2c_real_write_byte(uint8_t b)
 {
     (void)EPIC_SSP_WriteByte(b);
     i2c_wait_ssp();
     return (EPIC_SSP_AcknowledgeStatus() == 0u) ? 1 : 0;   /* ACKSTAT=0 -> ACK */
 }
+/**
+ * @brief  Default I2C read byte: set the ACK/NACK policy, receive, and
+ *         re-arm the acknowledge enable.
+ * @param ack nonzero to ACK this byte, zero to NACK it.
+ * @return the received byte.
+ */
 static uint8_t i2c_real_read_byte(int ack)
 {
     i2c_set_ackdt(ack);
@@ -60,16 +81,31 @@ static const epic_bus_i2c_ops_t g_i2c_default = {
 };
 static const epic_bus_i2c_ops_t *g_i2c_ops = &g_i2c_default;
 
+/**
+ * @brief  Install a custom I2C ops table (see the header for the full
+ *         contract); NULL restores the HAL default.
+ * @param ops the ops table to install, or NULL for the HAL default.
+ */
 void epic_bus_set_i2c_ops(const epic_bus_i2c_ops_t *ops)
 {
     g_i2c_ops = ops ? ops : &g_i2c_default;
 }
 
+/**
+ * @brief  Return the active I2C ops table (see the header).
+ * @return the currently installed I2C ops table.
+ */
 const epic_bus_i2c_ops_t *epic_bus_get_i2c_ops(void)
 {
     return g_i2c_ops;
 }
 
+/**
+ * @brief  Configure the MSSP as an I2C master (see the header for the
+ *         full contract) and install the HAL default I2C ops.
+ * @param fosc_hz system oscillator frequency in Hz.
+ * @param fscl_hz desired I2C SCL frequency in Hz.
+ */
 void epic_bus_i2c_init(uint32_t fosc_hz, uint32_t fscl_hz)
 {
     static SSP_HandleTypeDef s_ssp;        /* static: Init may store the pointer */
@@ -85,14 +121,22 @@ void epic_bus_i2c_init(uint32_t fosc_hz, uint32_t fscl_hz)
 static uint8_t s_cs_port;
 static uint8_t s_cs_pin;
 
+/** @brief Default SPI select: assert the configured chip-select low. */
 static void spi_real_select(void)
 {
     EPIC_GPIO_WritePin((GPIO_TypeDef)s_cs_port, (uint16_t)EPIC_BIT(s_cs_pin), GPIO_PIN_RESET);
 }
+/** @brief Default SPI deselect: release the configured chip-select high. */
 static void spi_real_deselect(void)
 {
     EPIC_GPIO_WritePin((GPIO_TypeDef)s_cs_port, (uint16_t)EPIC_BIT(s_cs_pin), GPIO_PIN_SET);
 }
+/**
+ * @brief  Default SPI exchange: shift out `b`, wait for the shift to
+ *         complete, and return the byte shifted in.
+ * @param b the MOSI byte to transmit.
+ * @return the MISO byte received.
+ */
 static uint8_t spi_real_exchange(uint8_t b)
 {
     (void)EPIC_SSP_WriteByte(b);
@@ -105,16 +149,35 @@ static const epic_bus_spi_ops_t g_spi_default = {
 };
 static const epic_bus_spi_ops_t *g_spi_ops = &g_spi_default;
 
+/**
+ * @brief  Install a custom SPI ops table (see the header for the full
+ *         contract); NULL restores the HAL default.
+ * @param ops the ops table to install, or NULL for the HAL default.
+ */
 void epic_bus_set_spi_ops(const epic_bus_spi_ops_t *ops)
 {
     g_spi_ops = ops ? ops : &g_spi_default;
 }
 
+/**
+ * @brief  Return the active SPI ops table (see the header).
+ * @return the currently installed SPI ops table.
+ */
 const epic_bus_spi_ops_t *epic_bus_get_spi_ops(void)
 {
     return g_spi_ops;
 }
 
+/**
+ * @brief  Configure the MSSP as an SPI master (see the header for the
+ *         full contract) with the closest standard clock divider, set up
+ *         the GPIO chip-select, and install the HAL default SPI ops.
+ * @param fosc_hz   system oscillator frequency in Hz.
+ * @param f_sclk_hz desired SPI SCLK frequency in Hz (0 selects the
+ *                  coarsest available divider).
+ * @param cs_port   GPIO port index of the chip-select pin.
+ * @param cs_pin    bit index 0..7 of the chip-select pin.
+ */
 void epic_bus_spi_init(uint32_t fosc_hz, uint32_t f_sclk_hz, uint8_t cs_port, uint8_t cs_pin)
 {
     static SSP_HandleTypeDef s_ssp;
@@ -136,6 +199,16 @@ void epic_bus_spi_init(uint32_t fosc_hz, uint32_t f_sclk_hz, uint8_t cs_port, ui
 
 /* MEM transactions (family-neutral, via the ops interface) */
 
+/**
+ * @brief  Write `n` bytes to register `reg` on I2C device `dev` (see
+ *         the header for the full transaction shape), driving the
+ *         installed I2C ops.
+ * @param dev  the 7-bit I2C device address.
+ * @param reg  the register address to write.
+ * @param data the bytes to write.
+ * @param n    number of bytes in `data`.
+ * @return n on success, -1 on an address or register NACK.
+ */
 int epic_bus_i2c_mem_write(uint8_t dev, uint8_t reg, const uint8_t *data, int n)
 {
     const epic_bus_i2c_ops_t *o = g_i2c_ops;
@@ -149,6 +222,16 @@ int epic_bus_i2c_mem_write(uint8_t dev, uint8_t reg, const uint8_t *data, int n)
     return n;
 }
 
+/**
+ * @brief  Read `n` bytes from register `reg` on I2C device `dev` (see
+ *         the header for the full transaction shape), driving the
+ *         installed I2C ops.
+ * @param dev the 7-bit I2C device address.
+ * @param reg the register address to read.
+ * @param buf the buffer that receives the read bytes.
+ * @param n   number of bytes to read.
+ * @return n on success, -1 on an address or register NACK.
+ */
 int epic_bus_i2c_mem_read(uint8_t dev, uint8_t reg, uint8_t *buf, int n)
 {
     const epic_bus_i2c_ops_t *o = g_i2c_ops;
@@ -164,6 +247,15 @@ int epic_bus_i2c_mem_read(uint8_t dev, uint8_t reg, uint8_t *buf, int n)
     return n;
 }
 
+/**
+ * @brief  Write `n` bytes to register `reg` over SPI (see the header
+ *         for the full transaction shape), driving the installed SPI
+ *         ops.
+ * @param reg  the register address to write.
+ * @param data the bytes to write.
+ * @param n    number of bytes in `data`.
+ * @return n.
+ */
 int epic_bus_spi_mem_write(uint8_t reg, const uint8_t *data, int n)
 {
     const epic_bus_spi_ops_t *o = g_spi_ops;
@@ -174,6 +266,15 @@ int epic_bus_spi_mem_write(uint8_t reg, const uint8_t *data, int n)
     return n;
 }
 
+/**
+ * @brief  Read `n` bytes from register `reg` over SPI (see the header
+ *         for the full transaction shape), driving the installed SPI
+ *         ops.
+ * @param reg the register address to read.
+ * @param buf the buffer that receives the read bytes.
+ * @param n   number of bytes to read.
+ * @return n.
+ */
 int epic_bus_spi_mem_read(uint8_t reg, uint8_t *buf, int n)
 {
     const epic_bus_spi_ops_t *o = g_spi_ops;

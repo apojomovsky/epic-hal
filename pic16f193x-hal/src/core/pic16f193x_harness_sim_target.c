@@ -23,6 +23,12 @@
 
 static uint32_t g_cycles = 0U;
 
+/**
+ * @brief Harness start-up (sim target): stores the cycle bound and
+ *        configures RA0 (PORTA bit 0) as a digital output driven low.
+ * @param cycles bound on the run: simulated instruction cycles to pump
+ *               before the run is reported over.
+ */
 void epic_harness_init(uint32_t cycles)
 {
     g_cycles = cycles;
@@ -34,16 +40,33 @@ void epic_harness_init(uint32_t cycles)
     EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
 }
 
+/**
+ * @brief Advance simulated time. No-op: real time advances on its own
+ *        under MPLAB SIM too, nothing to pump.
+ */
 void epic_harness_tick(void)
 {
     /* Real time advances on its own under MPLAB SIM too, nothing to pump. */
 }
 
+/**
+ * @brief Loop-continuation test: 1 while the bounded run is in progress,
+ *        so a run terminates on its own.
+ * @param iteration the current loop index.
+ * @return 1 while the run should continue, 0 when it is over.
+ */
 int epic_harness_running(uint32_t iteration)
 {
     return (iteration < g_cycles) ? 1 : 0;
 }
 
+/**
+ * @brief Log line: on the two pass/fail markers from
+ *        epic_harness_report() drives RA0 from the meaning (PASS = high,
+ *        FAIL = low); every other line is a no-op.
+ * @param fmt printf-style format string; variadic arguments are ignored
+ *            (the markers have none).
+ */
 void epic_harness_log(const char *fmt, ...)
 {
     /* Magic-string dispatch: on the two pass/fail markers from
@@ -73,10 +96,12 @@ void epic_harness_log(const char *fmt, ...)
     /* variadic args ignored; the marker has none. */
 }
 
-/* Freeze here so RA0 stays at its post-report value: XC8's `ljmp
- * start` epilogue would otherwise re-enter main() on return, and
- * epic_harness_init() would drive RA0 low again, flickering
- * PORTA<0> across the mdb `print PORTA` readback window. */
+/**
+ * @brief Freeze here so RA0 stays at its post-report value: XC8's `ljmp
+ *        start` epilogue would otherwise re-enter main() on return, and
+ *        epic_harness_init() would drive RA0 low again, flickering
+ *        PORTA<0> across the mdb `print PORTA` readback window.
+ */
 void pic16f193x_harness_halt(void)
 {
     for (;;) {

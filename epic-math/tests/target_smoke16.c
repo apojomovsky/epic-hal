@@ -11,6 +11,7 @@
 #include "core/epic_harness.h"
 #include "pic_math.h"
 
+/** @brief Calls one representative primitive per asm-leaf group so the linker pulls in the real asm bodies. */
 int main(void)
 {
     epic_harness_init(0UL);

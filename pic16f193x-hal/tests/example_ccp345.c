@@ -13,8 +13,17 @@
 #include "peripherals/pic16f193x_ccp.h"
 #include "core/epic_harness.h"
 
+/**
+ * @brief Freeze the target so the harness PASS marker stays set; no-op
+ * on the host build.
+ */
 extern void pic16f193x_harness_halt(void);
 
+/**
+ * @brief CCP3/CCP4/CCP5 smoke test: init all three instances in
+ * compare-set mode and verify the control-register and compare-value
+ * state.
+ */
 int main(void)
 {
     epic_harness_init(1UL);

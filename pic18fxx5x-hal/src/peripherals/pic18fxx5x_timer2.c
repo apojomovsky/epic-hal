@@ -19,39 +19,74 @@ static const uint8_t post_ratio[16] = {
 static TIMER2_HandleTypeDef g_t2_storage;
 static const TIMER2_HandleTypeDef *g_t2_handle = NULL;
 
+/**
+ * @brief  Read the Timer2 counter register (TMR2).
+ * @return The current TMR2 value.
+ */
 uint8_t EPIC_TIMER2_ReadCounter(void)
 {
     return EPIC_REG8(PIC_REG_TMR2);
 }
 
+/**
+ * @brief  Write the Timer2 counter register (TMR2).
+ * @param value Byte to load into TMR2.
+ */
 void EPIC_TIMER2_WriteCounter(uint8_t value)
 {
     EPIC_REG8(PIC_REG_TMR2) = value;
 }
 
+/**
+ * @brief  Read the Timer2 period register (PR2).
+ * @return The current PR2 value.
+ */
 uint8_t EPIC_TIMER2_ReadPeriod(void)
 {
     /* PR2 is in the Access Bank (0xFCB), no bank switching needed. */
     return EPIC_REG8(PIC_REG_PR2);
 }
 
+/**
+ * @brief  Write the Timer2 period register (PR2).
+ * @param period Byte to load into PR2.
+ */
 void EPIC_TIMER2_WritePeriod(uint8_t period)
 {
     EPIC_REG8(PIC_REG_PR2) = period;
 }
 
+/**
+ * @brief  Map a Timer2 prescaler enum to its ratio (DS39632E Register
+ *         12-2: 00 -> 1:1, 01 -> 1:4, 1x -> 1:16).
+ * @param p Prescaler selection (T2CKPS<1:0> value).
+ * @return The divide ratio (1..16), or 1 for an out-of-range value.
+ */
 uint16_t EPIC_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p)
 {
     if ((unsigned)p > 3U) return 1U;
     return pre_ratio[p];
 }
 
+/**
+ * @brief  Map a Timer2 postscaler enum to its ratio (DS39632E Register
+ *         12-2: 1:(N+1)).
+ * @param p Postscaler selection (T2OUTPS<3:0> value).
+ * @return The divide ratio (1..16), or 1 for an out-of-range value.
+ */
 uint16_t EPIC_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p)
 {
     if ((unsigned)p > 15U) return 1U;
     return post_ratio[p];
 }
 
+/**
+ * @brief  Initialize Timer2 from a handle: stop the timer, clear TMR2IF,
+ *         enable the overflow interrupt if a callback is given and store
+ *         an owned copy of the handle.
+ * @param h Handle describing the Timer2 configuration.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -70,6 +105,12 @@ EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief  De-initialize Timer2: disable its interrupt, clear the flag,
+ *         restore T2CON to its power-on value, reset PR2 and drop the
+ *         stored handle.
+ * @return EPIC_OK.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR2);
@@ -80,6 +121,13 @@ EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief  Start Timer2: write the period register first (to avoid
+ *         spurious matches) then program T2CON (postscaler, prescaler)
+ *         and set TMR2ON.
+ * @param h Handle whose configuration is applied.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -102,12 +150,20 @@ EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief  Stop Timer2 by clearing TMR2ON.
+ * @return EPIC_OK.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_Stop(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
     return EPIC_OK;
 }
 
+/**
+ * @brief  Weak Timer2 interrupt handler: clears TMR2IF and invokes the
+ *         overflow callback registered via Init.
+ */
 void TIMER2_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC18_IRQ_TMR2)) return;

@@ -14,6 +14,10 @@
     if (!(cond)) { printf("FAIL: %s\n", msg); return 1; } \
 } while (0)
 
+/**
+ * @brief Smoke-test the USART driver: SPBRG math, init register state,
+ *        transmit and receive.
+ */
 int main(void)
 {
     /* 1. SPBRG formula check.

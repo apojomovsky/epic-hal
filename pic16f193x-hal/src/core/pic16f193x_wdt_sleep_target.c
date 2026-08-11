@@ -9,11 +9,18 @@
 
 #include "core/pic16f193x_wdt_sleep.h"
 
+/**
+ * @brief Refresh the Watchdog Timer: native `clrwdt` instruction.
+ */
 void EPIC_WDT_Refresh(void)
 {
     asm("clrwdt");
 }
 
+/**
+ * @brief Enter Sleep: native `sleep` instruction; the part halts until
+ *        any enabled interrupt wakes it (DS41364B §24.2).
+ */
 void EPIC_Sleep_Enter(void)
 {
     asm("sleep");

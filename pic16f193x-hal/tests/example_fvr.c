@@ -2,7 +2,14 @@
 #include "pic16f193x_sfr.h"
 #include "peripherals/pic16f193x_fvr.h"
 #include "core/epic_harness.h"
+/**
+ * @brief Freeze the target so the harness PASS marker stays set; no-op
+ * on the host build.
+ */
 extern void pic16f193x_harness_halt(void);
+/**
+ * @brief FVR smoke test: init and verify the FVRCON register state.
+ */
 int main(void)
 {
     epic_harness_init(1UL);

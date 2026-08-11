@@ -76,52 +76,96 @@ typedef struct {
     .TransferCallback = NULL,                                              \
 }
 
+/**
+ * @brief  Configure the MSSP module: mode, SPI clock edge/polarity/sample
+ *         phase and SSPADD, then enable the module and (optionally) the
+ *         SSPIF interrupt.
+ * @param h the SSP handle describing the desired configuration.
+ * @return 0 on success, 0xFFFF on invalid configuration.
+ */
 EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h);
+
+/**
+ * @brief  Disable the MSSP module and clear SSPIF.
+ * @return 0 on success, 0xFFFF if the module was not initialized.
+ */
 EPIC_StatusTypeDef EPIC_SSP_DeInit(void);
 
 /**
  * @brief  Write a byte to SSPBUF. Returns 0xFFFF if WCOL (write collision)
  *         was set, in which case the byte was *not* written; retry.
+ * @param data the byte to transmit.
+ * @return 0 on success, 0xFFFF on write collision.
  */
 uint16_t EPIC_SSP_WriteByte(uint8_t data);
 
-/** Read the most recently received byte from SSPBUF (clears BF). */
+/**
+ * @brief Read the most recently received byte from SSPBUF (clears BF).
+ * @return the received byte.
+ */
 uint8_t  EPIC_SSP_ReadByte(void);
 
-/** Returns 1 if SSPBUF holds an unread byte (BF = 1). */
+/**
+ * @brief Returns 1 if SSPBUF holds an unread byte (BF = 1).
+ * @return 1 when a byte is available, else 0.
+ */
 uint8_t  EPIC_SSP_IsBufferFull(void);
 
-/** Returns 1 if a write collision was detected. */
+/**
+ * @brief Returns 1 if a write collision was detected.
+ * @return 1 when WCOL is set, else 0.
+ */
 uint8_t  EPIC_SSP_HasWriteCollision(void);
 
-/** Clear the WCOL flag (must be done in software per §19.2.2). */
+/**
+ * @brief Clear the WCOL flag (must be done in software per §19.2.2).
+ */
 void     EPIC_SSP_ClearWriteCollision(void);
 
 /**
  * @brief  Compute SSPADD for an I²C master baud rate.
  *         DS39632E §19.4.2: Fscl = Fosc / (4 x (SSPADD + 1))
  *         -> SSPADD = (Fosc / (4 x Fscl)) - 1.
+ * @param fosc_hz the system oscillator frequency in Hz.
+ * @param fscl_hz the desired I²C clock frequency in Hz.
+ * @return the SSPADD reload value.
  */
 uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz);
 
-/** Issue a Start condition (sets SSPCON2<SEN>). */
+/**
+ * @brief Issue a Start condition (sets SSPCON2<SEN>).
+ */
 void EPIC_SSP_Start(void);
 
-/** Issue a Repeated Start condition. */
+/**
+ * @brief Issue a Repeated Start condition.
+ */
 void EPIC_SSP_RepeatedStart(void);
 
-/** Issue a Stop condition. */
+/**
+ * @brief Issue a Stop condition.
+ */
 void EPIC_SSP_Stop(void);
 
-/** Begin a receive (master mode). Sets SSPCON2<RCEN>. */
+/**
+ * @brief Begin a receive (master mode). Sets SSPCON2<RCEN>.
+ */
 void EPIC_SSP_ReceiveEnable(void);
 
-/** Transmit an ACK (master receive). */
+/**
+ * @brief Transmit an ACK (master receive).
+ */
 void EPIC_SSP_AcknowledgeEnable(void);
 
-/** Returns 1 if an ACK was received from the slave (ACKSTAT). */
+/**
+ * @brief Returns 1 if an ACK was received from the slave (ACKSTAT).
+ * @return 1 when the slave acknowledged, else 0.
+ */
 uint8_t EPIC_SSP_AcknowledgeStatus(void);
 
+/**
+ * @brief MSSP transfer interrupt handler (weak default).
+ */
 void SSP_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC18FXX5X_SSP_H */

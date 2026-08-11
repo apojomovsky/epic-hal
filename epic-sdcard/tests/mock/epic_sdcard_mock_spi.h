@@ -22,14 +22,24 @@
 #define EPIC_SDCARD_MOCK_REPORTED_BLOCKS 1024u
 #define EPIC_SDCARD_MOCK_BLOCK_SIZE      512u
 
-/** Reset the mock to a freshly-inserted, uninitialized card: clears all
- *  protocol state (idle/ACMD41 retry count/pending write phase) AND
- *  zeroes the backing store. Call before every test. */
+/**
+ * @brief Reset the mock to a freshly-inserted, uninitialized card.
+ *
+ * Clears all protocol state (idle/ACMD41 retry count/pending write
+ * phase) AND zeroes the backing store. Call before every test.
+ */
 void epic_sdcard_mock_reset(void);
 
-/** Direct access to a backing block's 512 bytes, for pre-seeding data
- *  before a read test or inspecting it after a write test. Returns NULL
- *  if block_addr >= EPIC_SDCARD_MOCK_BACKING_BLOCKS. */
+/**
+ * @brief Direct access to a backing block's 512 bytes.
+ *
+ * For pre-seeding data before a read test or inspecting it after a write
+ * test.
+ *
+ * @param block_addr block to access
+ * @return pointer to the block, or NULL if block_addr >=
+ *         EPIC_SDCARD_MOCK_BACKING_BLOCKS
+ */
 uint8_t *epic_sdcard_mock_block(uint32_t block_addr);
 
 #endif /* EPIC_SDCARD_MOCK_SPI_H */

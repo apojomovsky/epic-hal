@@ -11,6 +11,11 @@
 #define FOSC_HZ 20000000UL
 #endif
 
+/**
+ * @brief Run the on-target serial echo demo.
+ *
+ * @return 0 when the demo exits (never on target)
+ */
 int main(void)
 {
     epic_harness_init(0UL);

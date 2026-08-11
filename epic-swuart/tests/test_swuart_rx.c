@@ -29,13 +29,17 @@
 static int g_fails = 0;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); g_fails++; } } while (0)
 
+/** @brief Test hook: fire one channel A RX capture/compare event. */
 extern void swuart_test_fire_rx_event(void);
 #if EPIC_SWUART_HAS_RX_FAST_PATH
+/** @brief Test hook: inject the fast-path RX capture value. */
 extern void swuart_test_set_capture_fast(uint16_t value);
 #else
+/** @brief Test hook: inject the generic RX capture value. */
 extern void swuart_test_set_capture(uint16_t value);
 #endif
 
+/** @brief RX-only host test main for the fast-path hot fix. */
 int main(void)
 {
     EPIC_SWUART_HandleTypeDef h;
