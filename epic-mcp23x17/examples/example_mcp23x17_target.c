@@ -16,6 +16,7 @@
 #define FOSC_HZ 20000000UL
 #endif
 
+/** @brief Target demo: bring up a real MCP23017 on the I2C bus. */
 int main(void)
 {
     epic_harness_init(0UL);
