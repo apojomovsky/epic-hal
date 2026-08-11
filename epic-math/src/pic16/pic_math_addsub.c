@@ -1,9 +1,9 @@
 /*
  * PIC16 inline-asm add/sub/negate primitives. Mid-range PIC16 has no
- * addwfc/subwfb, so carry propagation uses AN526's idiom: btfsc STATUS,0
- * + incf to fold carry into the high byte's addend. STATUS bits by number
- * (C=0, Z=2). Operands live in the shared scratch buffer
- * (pic_math_scratch.h), one banksel per routine.
+ * addwfc/subwfb, so carry propagation uses AN526's idiom: btfsc/btfss
+ * STATUS,0 + incfsz to fold carry/borrow into the high byte's addend.
+ * STATUS bits by number (C=0, Z=2). Operands live in the shared scratch
+ * buffer (pic_math_scratch.h), one banksel per routine.
  */
 
 #include <xc.h>
@@ -12,9 +12,9 @@
 
 /* 16-bit add. Low bytes add (sets C); the high addend is folded with the
  * carry through the btfsc/incfsz idiom, since movf preserves C. Worked
- * example 0xFFFF+0x0002 -> 0x0001, carry 1 pins the invariant that the
- * fold stays C-correct when the low add overflows. Offsets a@0, b@2, r@4,
- * co@6. */
+ * example 0xFFFF+0x0002 -> 0x0001, carry 1; the fold is correct for this
+ * example (b_hi=0, so incfsz yields b_hi+1 and addwf sums a_hi, while
+ * movf keeps C set for the final carry). Offsets a@0, b@2, r@4, co@6. */
 uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out) __at(0x2E0)
 {
     pic16_mscratch[0] = (uint8_t)a;           pic16_mscratch[1] = (uint8_t)(a >> 8);
