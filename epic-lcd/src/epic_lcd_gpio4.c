@@ -8,6 +8,16 @@ typedef struct {
     epic_lcd_gpio4_pins_t pins;
 } gpio4_ctx_t;
 
+/**
+ * @brief Send one byte over the 4-bit parallel bus.
+ *
+ * Drives RS, writes the high nibble, pulses E, writes the low nibble,
+ * pulses E again (HD44780 4-bit protocol).
+ *
+ * @param ctx  transport context (gpio4_ctx_t)
+ * @param rs   register select: 0 = instruction, 1 = data
+ * @param byte byte to send
+ */
 static void gpio4_send(void *ctx, uint8_t rs, uint8_t byte)
 {
     gpio4_ctx_t *g = (gpio4_ctx_t *)ctx;
@@ -44,12 +54,19 @@ static void gpio4_send(void *ctx, uint8_t rs, uint8_t byte)
     EPIC_GPIO_WritePin(g->pins.e_port, g->pins.e_pin, GPIO_PIN_RESET);
 }
 
+/**
+ * @brief Delay a number of microseconds using epic-tick.
+ *
+ * epic-tick's resolution is 1 ms; sub-ms delays are a best-effort busy
+ * wait. Fine for HD44780 commands, since the timing is a minimum, not
+ * exact.
+ *
+ * @param ctx transport context (unused)
+ * @param us  microseconds to wait
+ */
 static void gpio4_delay_us(void *ctx, uint32_t us)
 {
     (void)ctx;
-    /* epic-tick's resolution is 1 ms; sub-ms delays are a best-effort
-     * busy wait. Fine for HD44780 commands, since the timing is a
-     * minimum, not exact. */
     if (us >= 1000u) {
         epic_tick_delay_ms(us / 1000u);
     }
@@ -58,16 +75,31 @@ static void gpio4_delay_us(void *ctx, uint32_t us)
      * EPIC_GPIO_WritePin call overhead (several us at 20-48 MHz). */
 }
 
+/**
+ * @brief Delay a number of milliseconds using epic-tick.
+ *
+ * @param ctx transport context (unused)
+ * @param ms  milliseconds to wait
+ */
 static void gpio4_delay_ms(void *ctx, uint32_t ms)
 {
     (void)ctx;
     epic_tick_delay_ms(ms);
 }
 
-/* No special cold-start handling: the 4-bit init preamble (0x3, 0x3, 0x3,
- * then 0x28) falls out of epic_lcd_init's three 0x38 sends, since the LCD
- * only reads the first nibble of each 0x3X send while still in 8-bit mode. */
-
+/**
+ * @brief Initialize the 4-bit parallel GPIO transport.
+ *
+ * Configures the RS/E/DB4-DB7 pins as outputs, asserts E low, and binds
+ * the transport's send/delay ops into ops. No special cold-start
+ * handling: the 4-bit init preamble (0x3, 0x3, 0x3, then 0x28) falls out
+ * of epic_lcd_init's three 0x38 sends, since the LCD only reads the first
+ * nibble of each 0x3X send while still in 8-bit mode.
+ *
+ * @param ops   transport ops struct to fill in
+ * @param ctx   receives the transport context pointer to pass to ops calls
+ * @param pins  GPIO pin assignments for RS, E, and DB4-DB7
+ */
 void epic_lcd_gpio4_init(epic_lcd_ops_t *ops, void **ctx,
                          const epic_lcd_gpio4_pins_t *pins)
 {

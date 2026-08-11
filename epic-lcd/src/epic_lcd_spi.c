@@ -13,6 +13,18 @@ typedef struct {
     uint16_t                     cs_pin;
 } spi_ctx_t;
 
+/**
+ * @brief Build the 595 output byte for one LCD nibble transfer.
+ *
+ * Maps RS, the data nibble, and the E strobe state onto the 595 Q
+ * outputs per the layout.
+ *
+ * @param l          layout mapping Q outputs to LCD signals
+ * @param rs         register select: 0 = instruction, 1 = data
+ * @param nibble     4 data bits (bottom 4 bits used)
+ * @param e_asserted true to assert E in the output byte
+ * @return the byte to shift into the 595
+ */
 static uint8_t make_595_byte(const epic_lcd_spi_layout_t *l,
                              uint8_t rs, uint8_t nibble, bool e_asserted)
 {
@@ -29,12 +41,27 @@ static uint8_t make_595_byte(const epic_lcd_spi_layout_t *l,
     return b;
 }
 
+/**
+ * @brief Strobe the 595 latch pin (CS) to present the shifted byte.
+ *
+ * @param s SPI transport context
+ */
 static void spi_latch(spi_ctx_t *s)
 {
     EPIC_GPIO_WritePin(s->cs_port, s->cs_pin, GPIO_PIN_SET);
     EPIC_GPIO_WritePin(s->cs_port, s->cs_pin, GPIO_PIN_RESET);
 }
 
+/**
+ * @brief Shift one nibble into the 595 with an E strobe.
+ *
+ * Writes E=0 (data setup), latches, writes E=1 (write strobe), latches,
+ * then returns E to 0.
+ *
+ * @param s      SPI transport context
+ * @param rs     register select: 0 = instruction, 1 = data
+ * @param nibble 4 data bits (bottom 4 bits used)
+ */
 static void spi_send_nibble(spi_ctx_t *s, uint8_t rs, uint8_t nibble)
 {
     const epic_lcd_spi_layout_t *l = s->layout;
@@ -53,6 +80,13 @@ static void spi_send_nibble(spi_ctx_t *s, uint8_t rs, uint8_t nibble)
     spi_latch(s);
 }
 
+/**
+ * @brief Send one byte over SPI as two nibbles with E strobes.
+ *
+ * @param ctx  transport context (spi_ctx_t)
+ * @param rs   register select: 0 = instruction, 1 = data
+ * @param byte byte to send
+ */
 static void spi_send(void *ctx, uint8_t rs, uint8_t byte)
 {
     spi_ctx_t *s = (spi_ctx_t *)ctx;
@@ -60,6 +94,15 @@ static void spi_send(void *ctx, uint8_t rs, uint8_t byte)
     spi_send_nibble(s, rs, (uint8_t)(byte & 0x0Fu));
 }
 
+/**
+ * @brief Delay a number of microseconds using epic-tick.
+ *
+ * Sub-ms delays are a best-effort busy wait: epic-tick's resolution is
+ * 1 ms.
+ *
+ * @param ctx transport context (unused)
+ * @param us  microseconds to wait
+ */
 static void spi_delay_us(void *ctx, uint32_t us)
 {
     (void)ctx;
@@ -68,6 +111,12 @@ static void spi_delay_us(void *ctx, uint32_t us)
     }
 }
 
+/**
+ * @brief Delay a number of milliseconds using epic-tick.
+ *
+ * @param ctx transport context (unused)
+ * @param ms  milliseconds to wait
+ */
 static void spi_delay_ms(void *ctx, uint32_t ms)
 {
     (void)ctx;
@@ -84,6 +133,17 @@ const epic_lcd_spi_layout_t EPIC_LCD_SPI_LAYOUT_COMMON = {
     .rw_bit  = 6,
 };
 
+/**
+ * @brief Initialize the SPI transport via a 74HC595 shift register.
+ *
+ * Configures the SSP as SPI master (Fosc/64), drives CS idle, and binds
+ * the transport's send/delay ops into ops.
+ *
+ * @param ops    transport ops struct to fill in
+ * @param ctx    receives the transport context pointer to pass to ops calls
+ * @param config CS pin and clock configuration
+ * @param layout mapping of 595 Q outputs to LCD signals
+ */
 void epic_lcd_spi_init(epic_lcd_ops_t *ops, void **ctx,
                        const epic_lcd_spi_config_t *config,
                        const epic_lcd_spi_layout_t *layout)

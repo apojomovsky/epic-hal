@@ -6,6 +6,10 @@
 #include "epic_hal.h"
 #include "epic_tick.h"
 
+/**
+ * @brief Print "Hello, World!" on both lines of a 16x2 LCD, then blink
+ *        the cursor forever.
+ */
 int main(void)
 {
     epic_tick_init(FOSC_HZ);

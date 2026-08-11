@@ -19,6 +19,16 @@ typedef struct {
     GPIO_TypeDef db7_port; uint16_t db7_pin;
 } epic_lcd_gpio4_pins_t;
 
+/**
+ * @brief Initialize the 4-bit parallel GPIO transport.
+ *
+ * Configures the RS/E/DB4-DB7 pins as outputs, asserts E low, and binds
+ * the transport's send/delay ops into ops.
+ *
+ * @param ops   transport ops struct to fill in
+ * @param ctx   receives the transport context pointer to pass to ops calls
+ * @param pins  GPIO pin assignments for RS, E, and DB4-DB7
+ */
 void epic_lcd_gpio4_init(epic_lcd_ops_t *ops, void **ctx,
                          const epic_lcd_gpio4_pins_t *pins);
 
@@ -35,6 +45,16 @@ typedef struct {
     GPIO_TypeDef db7_port; uint16_t db7_pin;
 } epic_lcd_gpio8_pins_t;
 
+/**
+ * @brief Initialize the 8-bit parallel GPIO transport.
+ *
+ * Configures the RS/E/DB0-DB7 pins as outputs, asserts E low, and binds
+ * the transport's send/delay ops into ops.
+ *
+ * @param ops   transport ops struct to fill in
+ * @param ctx   receives the transport context pointer to pass to ops calls
+ * @param pins  GPIO pin assignments for RS, E, and DB0-DB7
+ */
 void epic_lcd_gpio8_init(epic_lcd_ops_t *ops, void **ctx,
                          const epic_lcd_gpio8_pins_t *pins);
 
@@ -56,6 +76,17 @@ typedef struct {
     uint32_t spi_hz;
 } epic_lcd_spi_config_t;
 
+/**
+ * @brief Initialize the SPI transport via a 74HC595 shift register.
+ *
+ * Configures the SSP as SPI master, drives CS idle, and binds the
+ * transport's send/delay ops into ops.
+ *
+ * @param ops    transport ops struct to fill in
+ * @param ctx    receives the transport context pointer to pass to ops calls
+ * @param config CS pin and clock configuration
+ * @param layout mapping of 595 Q outputs to LCD signals
+ */
 void epic_lcd_spi_init(epic_lcd_ops_t *ops, void **ctx,
                        const epic_lcd_spi_config_t *config,
                        const epic_lcd_spi_layout_t *layout);
