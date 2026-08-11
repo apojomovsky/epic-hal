@@ -16,10 +16,14 @@ static int g_fails = 0;
 #ifndef EPIC_SWUART_TEST_HOOKS
 #define EPIC_SWUART_TEST_HOOKS 1
 #endif
+/** @brief Test hook: channel A's last armed TX mode (CCP2CON). */
 extern uint8_t swuart_test_last_tx_mode(void);
+/** @brief Test hook: channel A's last armed TX deadline. */
 extern uint16_t swuart_test_last_tx_compare(void);
+/** @brief Test hook: fire one channel A TX compare event. */
 extern void swuart_test_fire_tx_event(void);
 
+/** @brief TX-only host test main: inspect the armed mode sequence. */
 int main(void)
 {
     EPIC_SWUART_HandleTypeDef h;

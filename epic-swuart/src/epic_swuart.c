@@ -22,11 +22,17 @@ enum {
     RX_STOP,
 };
 
-/* Forward declaration: real definition (RX state machine) is below,
- * after g_chan_a/g_cycles_per_bit/SWUART_CCP_RX exist; EPIC_SWUART_Init
- * needs the symbol earlier when it builds ccp_rx's EventCallback. */
+/**
+ * @brief  Forward declaration of channel A's RX event handler. The real
+ *         definition (RX state machine) is below, after
+ *         g_chan_a/g_cycles_per_bit/SWUART_CCP_RX exist;
+ *         EPIC_SWUART_Init needs the symbol earlier when it builds
+ *         ccp_rx's EventCallback.
+ */
 static void on_rx_event_a(void);
 #if EPIC_SWUART_MAX_CHANNELS >= 2
+/** @brief Forward declaration of channel B's RX event handler (see
+ *         on_rx_event_a). */
 static void on_rx_event_b(void);
 #endif
 
@@ -37,9 +43,15 @@ static void on_rx_event_b(void);
  * cycles, not the original 40-cycle guess. */
 #define SWUART_LEAD_CYCLES 120u
 
-/* One bit period in instruction cycles: round(FOSC_HZ / 4 / baud).
- * Timer1 prescaler stays 1:1 (unchanged from v1) so this is directly
- * the Timer1 counter delta for one bit. */
+/**
+ * @brief  Compute one bit period in instruction cycles:
+ *         round(FOSC_HZ / 4 / baud). Timer1 prescaler stays 1:1
+ *         (unchanged from v1) so this is directly the Timer1 counter
+ *         delta for one bit.
+ * @param fosc_hz system oscillator frequency in Hz.
+ * @param baud    desired baud rate.
+ * @return the per-bit Timer1 counter delta, clamped to [1, 65535].
+ */
 static uint16_t compute_cycles_per_bit(uint32_t fosc_hz, uint32_t baud)
 {
     uint32_t cycles = (fosc_hz / 4u + baud / 2u) / baud;
@@ -67,12 +79,17 @@ static EPIC_SWUART_HandleTypeDef *g_chan_b = NULL;
 #define SWUART_CCP_TX_B CCP_INSTANCE_4
 #endif
 
-/* Arms the mode for the *next* compare match, not the one that just
- * fired: the hardware already toggled the pin per what was armed
- * ahead, so this only decides the deadline it is about to write.
- * Traced against 'A' = 0x41, LSB first: Write() arms CLEAR (start),
- * then SET/CLEAR per data bit, SET (stop), landing in TX_IDLE exactly
- * at the stop bit's deadline. */
+/**
+ * @brief  One TX compare event: advance the TX state machine one bit.
+ *         Arms the mode for the *next* compare match, not the one that
+ *         just fired: the hardware already toggled the pin per what was
+ *         armed ahead, so this only decides the deadline it is about to
+ *         write. Traced against 'A' = 0x41, LSB first: Write() arms
+ *         CLEAR (start), then SET/CLEAR per data bit, SET (stop),
+ *         landing in TX_IDLE exactly at the stop bit's deadline.
+ * @param h       the channel whose TX state machine advances.
+ * @param tx_inst the channel's TX CCP instance to arm.
+ */
 static void tx_compare_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef tx_inst)
 {
     CCP_ModeTypeDef next_mode;
@@ -108,8 +125,10 @@ static void tx_compare_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef t
     EPIC_CCP_SetMode(tx_inst, next_mode);
 }
 
+/** @brief TX compare-event handler for channel A (CCP2). */
 static void on_tx_event_a(void) { tx_compare_event(g_chan_a, SWUART_CCP_TX); }
 #if EPIC_SWUART_MAX_CHANNELS >= 2
+/** @brief TX compare-event handler for channel B (CCP4, PIC16F193X). */
 static void on_tx_event_b(void) { tx_compare_event(g_chan_b, SWUART_CCP_TX_B); }
 #endif
 
@@ -119,28 +138,47 @@ static void on_tx_event_b(void) { tx_compare_event(g_chan_b, SWUART_CCP_TX_B); }
  * test executables that need it get EPIC_SWUART_TEST_HOOKS=1 from
  * epic-swuart/CMakeLists.txt, scoped to just those targets. */
 #ifdef EPIC_SWUART_TEST_HOOKS
-/* PIC_REG_CCP2CON: every family's own sfr.h defines this name at that
- * family's actual CCP2CON address (0x1D on PIC16F87XA, 0xFBA on
- * PIC18Fxx5x, 0x29A on PIC16F193X), reached transitively via
- * epic_hal.h. Previously hardcoded to PIC16F87XA's 0x1D with no family
- * guard (deferred finding from Task 4); only channel A's CCP2 is ever
- * read here, so this stays correct even on PIC16F193X where channel B
- * exists too. */
+/** @brief Test hook: the mode currently armed on channel A's TX CCP.
+ *         PIC_REG_CCP2CON: every family's own sfr.h defines this name
+ *         at that family's actual CCP2CON address (0x1D on PIC16F87XA,
+ *         0xFBA on PIC18Fxx5x, 0x29A on PIC16F193X), reached
+ *         transitively via epic_hal.h. Previously hardcoded to
+ *         PIC16F87XA's 0x1D with no family guard (deferred finding
+ *         from Task 4); only channel A's CCP2 is ever read here, so
+ *         this stays correct even on PIC16F193X where channel B exists
+ *         too.
+ * @return the raw CCP2CON register value. */
 uint8_t swuart_test_last_tx_mode(void) { return (uint8_t)EPIC_REG8(PIC_REG_CCP2CON); }
+/** @brief Test hook: channel A's last armed TX deadline.
+ * @return g_chan_a->tx_deadline. */
 uint16_t swuart_test_last_tx_compare(void) { return g_chan_a->tx_deadline; }
+/** @brief Test hook: fire one channel A TX compare event. */
 void swuart_test_fire_tx_event(void) { on_tx_event_a(); }
 #if EPIC_SWUART_MAX_CHANNELS >= 2
-/* Channel B's own TX hooks: PIC_REG_CCP4CON is channel B's real TX CCP
- * control register (0x31A on PIC16F193X, the only family this branch
- * ever compiles for), so a test reading this instead of CCP2CON can
- * tell whether a Write() on channel B actually armed channel B's own
- * hardware, not channel A's (see EPIC_SWUART_Write's dispatch fix). */
+/**
+ * @brief  Channel B's own TX hooks. PIC_REG_CCP4CON is channel B's real
+ *         TX CCP control register (0x31A on PIC16F193X, the only family
+ *         this branch ever compiles for), so a test reading this
+ *         instead of CCP2CON can tell whether a Write() on channel B
+ *         actually armed channel B's own hardware, not channel A's (see
+ *         EPIC_SWUART_Write's dispatch fix).
+ * @return the raw CCP4CON register value.
+ */
 uint8_t swuart_test_last_tx_mode_b(void) { return (uint8_t)EPIC_REG8(PIC_REG_CCP4CON); }
+/** @brief Test hook: channel B's last armed TX deadline.
+ * @return g_chan_b->tx_deadline. */
 uint16_t swuart_test_last_tx_compare_b(void) { return g_chan_b->tx_deadline; }
+/** @brief Test hook: fire one channel B TX compare event. */
 void swuart_test_fire_tx_event_b(void) { on_tx_event_b(); }
 #endif
 #endif
 
+/**
+ * @brief  Push one received byte into the channel's RX ring, dropping it
+ *         (and counting an error) when the ring is full.
+ * @param h    the channel whose RX ring receives the byte.
+ * @param byte the received byte.
+ */
 static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 {
     if (h->rx_count >= EPIC_SWUART_RING_SZ) {
@@ -166,15 +204,29 @@ static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
  * no existing test exercises both channels' RX side at once. */
 #if EPIC_SWUART_TEST_HOOKS
 static uint16_t g_test_capture_value = 0u;
+/** @brief Test hook: override the RX capture value the next
+ *         rx_capture_event reads.
+ * @param value the value to return from test_get_capture. */
 void swuart_test_set_capture(uint16_t value) { g_test_capture_value = value; }
+/** @brief Test hook: the capture value for the RX instance, served from
+ *         the injected test value instead of real hardware.
+ * @param rx_inst the RX CCP instance (unused: one shared test value).
+ * @return g_test_capture_value. */
 static uint16_t test_get_capture(CCP_InstanceTypeDef rx_inst) { (void)rx_inst; return g_test_capture_value; }
 #else
+/** @brief Read the RX CCP instance's capture register.
+ * @param rx_inst the RX CCP instance to read.
+ * @return the hardware capture value latched by the last falling edge. */
 static uint16_t test_get_capture(CCP_InstanceTypeDef rx_inst) { return EPIC_CCP_GetCapture(rx_inst); }
 #endif
 
-/* Shared RX capture/compare event body, parameterised by handle and CCP
- * instance the same way tx_compare_event is: on_rx_event_b below is a
- * thin wrapper over this. */
+/**
+ * @brief  Shared RX capture/compare event body, parameterised by handle
+ *         and CCP instance the same way tx_compare_event is:
+ *         on_rx_event_b below is a thin wrapper over this.
+ * @param h       the channel whose RX state machine advances.
+ * @param rx_inst the channel's RX CCP instance (capture/compare).
+ */
 static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef rx_inst)
 {
     if (h->rx_state == RX_IDLE) {
@@ -254,9 +306,12 @@ static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef r
 #define RX_CAPTURE_OVERHEAD_CYCLES 325u
 
 #if EPIC_SWUART_TEST_HOOKS
-/* Writes straight into the same two registers rx_capture_event_fast
- * itself reads, so an injected test value flows through the exact
- * production code path, not a separate indirection layer. */
+/** @brief Test hook: inject the RX capture value for the fast path.
+ *         Writes straight into the same two registers
+ *         rx_capture_event_fast itself reads, so an injected test value
+ *         flows through the exact production code path, not a separate
+ *         indirection layer.
+ * @param value the capture value to inject. */
 void swuart_test_set_capture_fast(uint16_t value)
 {
     EPIC_REG8(CCP1_CPRH_ADDR) = (uint8_t)(value >> 8);
@@ -264,6 +319,14 @@ void swuart_test_set_capture_fast(uint16_t value)
 }
 #endif
 
+/**
+ * @brief  RX capture/compare event for the PIC16F87XA collapsed fast
+ *         path: the deglitch check and the first-sample arm happen in
+ *         one synchronous pass. Writes CCP1's SFRs directly (see the
+ *         register-address block above); see rx_capture_event for the
+ *         generic two-fire behavior.
+ * @param h the channel whose RX state machine advances.
+ */
 static void rx_capture_event_fast(EPIC_SWUART_HandleTypeDef *h)
 {
     if (h->rx_state != RX_IDLE) {
@@ -326,21 +389,41 @@ static void rx_capture_event_fast(EPIC_SWUART_HandleTypeDef *h)
  * (which reads/writes CCP1 through the family-correct EPIC_CCP_* SFR
  * accessors) until a follow-up ports the fast pattern. */
 #if EPIC_SWUART_HAS_RX_FAST_PATH
+/** @brief RX event handler for channel A (fast path on PIC16F87XA). */
 static void on_rx_event_a(void) { rx_capture_event_fast(g_chan_a); }
 #else
+/** @brief RX event handler for channel A (generic path on the other
+ *         families). */
 static void on_rx_event_a(void) { rx_capture_event(g_chan_a, SWUART_CCP_RX); }
 #endif
 #if EPIC_SWUART_MAX_CHANNELS >= 2
+/** @brief RX event handler for channel B (CCP3, PIC16F193X). */
 static void on_rx_event_b(void) { rx_capture_event(g_chan_b, SWUART_CCP_RX_B); }
 #endif
 
 #if EPIC_SWUART_TEST_HOOKS
+/** @brief Test hook: fire one channel A RX capture/compare event. */
 void swuart_test_fire_rx_event(void) { on_rx_event_a(); }
 #if EPIC_SWUART_MAX_CHANNELS >= 2
+/** @brief Test hook: fire one channel B RX capture/compare event. */
 void swuart_test_fire_rx_event_b(void) { on_rx_event_b(); }
 #endif
 #endif
 
+/**
+ * @brief  Register a channel (see the header for the full contract).
+ *         Validates the fixed pin wiring against the channel slot,
+ *         resets the handle state, computes bit timing, and arms the
+ *         channel's RX CCP for capture and TX CCP off.
+ * @param h        handle to register; its ring/state fields are reset.
+ * @param tx_port  GPIO port of the channel's fixed TX pin.
+ * @param tx_pin   GPIO pin of the channel's fixed TX pin.
+ * @param rx_port  GPIO port of the channel's fixed RX pin.
+ * @param rx_pin   GPIO pin of the channel's fixed RX pin.
+ * @param fosc_hz  system oscillator frequency in Hz.
+ * @param baud     desired baud rate.
+ * @return EPIC_OK, or EPIC_INVALID per the header contract.
+ */
 EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
                                      GPIO_TypeDef tx_port, uint16_t tx_pin,
                                      GPIO_TypeDef rx_port, uint16_t rx_pin,
@@ -420,6 +503,13 @@ EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
     return EPIC_OK;
 }
 
+/**
+ * @brief  Remove a channel from the shared registry (see the header for
+ *         the full contract). Tears down the channel's CCP instances
+ *         and, once no slot is left active, the shared Timer1.
+ * @param h the handle previously registered with EPIC_SWUART_Init.
+ * @return EPIC_OK, or EPIC_INVALID if `h` is NULL or not registered.
+ */
 EPIC_StatusTypeDef EPIC_SWUART_DeInit(EPIC_SWUART_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -460,6 +550,16 @@ EPIC_StatusTypeDef EPIC_SWUART_DeInit(EPIC_SWUART_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief  Enqueue up to `len` bytes (see the header for the full
+ *         contract). Copies bytes into the TX ring and, if the channel
+ *         is idle, immediately dequeues the first byte into the shift
+ *         register and arms the TX CCP.
+ * @param h    registered channel handle.
+ * @param data bytes to transmit.
+ * @param len  number of bytes in `data`.
+ * @return the number of bytes actually queued.
+ */
 size_t EPIC_SWUART_Write(EPIC_SWUART_HandleTypeDef *h, const uint8_t *data, size_t len)
 {
     if (!h) return 0u;
@@ -503,6 +603,15 @@ size_t EPIC_SWUART_Write(EPIC_SWUART_HandleTypeDef *h, const uint8_t *data, size
     return written;
 }
 
+/**
+ * @brief  Drain up to `maxlen` received bytes (see the header for the
+ *         full contract). Consumes bytes from the RX ring under the
+ *         single-byte ring discipline.
+ * @param h      registered channel handle.
+ * @param buf    destination buffer for the received bytes.
+ * @param maxlen capacity of `buf`.
+ * @return the number of bytes read.
+ */
 int EPIC_SWUART_Read(EPIC_SWUART_HandleTypeDef *h, uint8_t *buf, size_t maxlen)
 {
     if (!h) return 0;
@@ -521,6 +630,12 @@ int EPIC_SWUART_Read(EPIC_SWUART_HandleTypeDef *h, uint8_t *buf, size_t maxlen)
     return (int)n;
 }
 
+/**
+ * @brief  Read the channel's running dropped-byte count (see the header
+ *         for the full contract). Read-twice-retry against ISR tearing.
+ * @param h registered channel handle.
+ * @return the accumulated error count, 0 for a NULL handle.
+ */
 uint16_t EPIC_SWUART_GetErrorCount(const EPIC_SWUART_HandleTypeDef *h)
 {
     if (!h) return 0u;

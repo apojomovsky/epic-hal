@@ -33,25 +33,34 @@ static int g_fails = 0;
 #ifndef EPIC_SWUART_TEST_HOOKS
 #define EPIC_SWUART_TEST_HOOKS 1
 #endif
+/** @brief Test hook: fire one channel A TX compare event. */
 extern void swuart_test_fire_tx_event(void);
+/** @brief Test hook: fire one channel A RX capture/compare event. */
 extern void swuart_test_fire_rx_event(void);
+/** @brief Test hook: channel A's last armed TX mode (CCP2CON). */
 extern uint8_t swuart_test_last_tx_mode(void);
 #if EPIC_SWUART_HAS_RX_FAST_PATH
+/** @brief Test hook: inject the fast-path RX capture value. */
 extern void swuart_test_set_capture_fast(uint16_t value);
 #else
+/** @brief Test hook: inject the generic RX capture value. */
 extern void swuart_test_set_capture(uint16_t value);
 #endif
 
 static uint32_t g_seed = 0x5EED0001u;
+/** @brief Fixed-seed LCG step for reproducible fuzz sequences. */
 static uint32_t rnd(void)
 {
     g_seed = (1664525u * g_seed + 1013904223u);
     return g_seed;
 }
 
-/* Queue `len` bytes and transmit them by firing compare events,
- * decoding each byte from the armed CCP mode sequence (data bits LSB
- * first: SET = 1, CLEAR = 0; one stop event per byte). */
+/** @brief Queue `len` bytes and transmit them by firing compare events,
+ *         decoding each byte from the armed CCP mode sequence (data
+ *         bits LSB first: SET = 1, CLEAR = 0; one stop event per byte).
+ * @param h    the channel to transmit on.
+ * @param data the bytes to transmit.
+ * @param len  number of bytes in `data`. */
 static void tx_send_decode(EPIC_SWUART_HandleTypeDef *h,
                            const uint8_t *data, size_t len)
 {
@@ -81,8 +90,11 @@ static void tx_send_decode(EPIC_SWUART_HandleTypeDef *h,
     CHECK(EPIC_SWUART_GetErrorCount(h) == 0u, "tx produced no errors");
 }
 
-/* Inject one byte on the RX pin and drive the state machine to a
- * complete frame. Returns the number of events fired. */
+/** @brief Inject one byte on the RX pin and drive the state machine to
+ *         a complete frame.
+ * @param h    the channel to receive on.
+ * @param byte the byte to inject.
+ * @return the number of events fired. */
 static unsigned rx_send_byte(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 {
     uint8_t bits[10];
@@ -115,8 +127,10 @@ static unsigned rx_send_byte(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 #endif
 }
 
-/* Same frame shape but with the stop bit driven low: the byte must be
- * dropped and the error count bumped. */
+/** @brief Same frame shape but with the stop bit driven low: the byte
+ *         must be dropped and the error count bumped.
+ * @param h    the channel to receive on.
+ * @param byte the byte whose stop bit is driven low. */
 static void rx_send_bad_stop(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 {
     uint8_t bits[10];
@@ -140,6 +154,7 @@ static void rx_send_bad_stop(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
     }
 }
 
+/** @brief Randomized TX fuzz over 300 iterations. */
 static void test_tx_fuzz(EPIC_SWUART_HandleTypeDef *h)
 {
     for (int it = 0; it < 300; it++) {
@@ -152,6 +167,7 @@ static void test_tx_fuzz(EPIC_SWUART_HandleTypeDef *h)
     }
 }
 
+/** @brief TX short-write boundary: ring capacity and drain order. */
 static void test_tx_short_write(EPIC_SWUART_HandleTypeDef *h)
 {
     /* Fill the ring: a full Write pops one byte into the shift
@@ -193,6 +209,7 @@ static void test_tx_short_write(EPIC_SWUART_HandleTypeDef *h)
     CHECK(EPIC_SWUART_GetErrorCount(h) == 0u, "short-write: no errors");
 }
 
+/** @brief Randomized RX fuzz: inject bytes and read them back exact. */
 static void test_rx_fuzz(EPIC_SWUART_HandleTypeDef *h)
 {
     uint8_t expect[EPIC_SWUART_RING_SZ + 2u];
@@ -225,6 +242,7 @@ static void test_rx_fuzz(EPIC_SWUART_HandleTypeDef *h)
     CHECK(expect_len == 0u && h->rx_count == 0u, "rx ring empty at end");
 }
 
+/** @brief RX ring overflow and bad-stop-bit error accounting. */
 static void test_rx_overflow_and_errors(EPIC_SWUART_HandleTypeDef *h)
 {
     /* Fill the RX ring exactly. */
@@ -264,6 +282,7 @@ static void test_rx_overflow_and_errors(EPIC_SWUART_HandleTypeDef *h)
     CHECK(ok, "rx overflow: bytes preserved in order");
 }
 
+/** @brief Fuzz test main: run all four property scenarios. */
 int main(void)
 {
     EPIC_SWUART_HandleTypeDef h;
