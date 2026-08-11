@@ -22,6 +22,9 @@ typedef struct {
     epic_console_t *console;
 } app_ctx_t;
 
+/**
+ * @brief Toggle the demo LED on or off.
+ */
 static void cmd_led(uint8_t argc, char **argv, void *ctx_)
 {
     app_ctx_t *ctx = (app_ctx_t *)ctx_;
@@ -34,6 +37,9 @@ static void cmd_led(uint8_t argc, char **argv, void *ctx_)
     }
 }
 
+/**
+ * @brief Report the demo LED state and status count.
+ */
 static void cmd_status(uint8_t argc, char **argv, void *ctx_)
 {
     app_ctx_t *ctx = (app_ctx_t *)ctx_;
@@ -43,6 +49,9 @@ static void cmd_status(uint8_t argc, char **argv, void *ctx_)
     epic_harness_log("status: led=%u count=%u\n", ctx->led_on, ctx->status_count);
 }
 
+/**
+ * @brief Print the command table help.
+ */
 static void cmd_help(uint8_t argc, char **argv, void *ctx_)
 {
     app_ctx_t *ctx = (app_ctx_t *)ctx_;
@@ -51,6 +60,11 @@ static void cmd_help(uint8_t argc, char **argv, void *ctx_)
     epic_console_print_help(ctx->console);
 }
 
+/**
+ * @brief Run the epic-console host-sim smoke demo.
+ *
+ * @return 0 when the scripted commands produced the expected state
+ */
 int main(void)
 {
     epic_harness_init(1000000UL);

@@ -49,8 +49,16 @@ typedef struct {
     bool                      last_was_cr; /* CR/LF coalescing flag.                 */
 } epic_console_t;
 
-/* Initialize a console instance with a caller-owned command table
- * (typically a static const array). */
+/**
+ * @brief Initialize a console instance with a caller-owned command table.
+ *
+ * The table is typically a static const array.
+ *
+ * @param con the console instance to initialize
+ * @param table the caller-owned command table
+ * @param table_len number of rows in table
+ * @param ctx opaque context passed to every handler
+ */
 void epic_console_init(epic_console_t *con, const epic_console_cmd_t *table,
                        uint8_t table_len, void *ctx);
 
@@ -60,13 +68,26 @@ void epic_console_init(epic_console_t *con, const epic_console_cmd_t *table,
 #define EPIC_CONSOLE_INIT(con, table, ctx) \
     epic_console_init((con), (table), (uint8_t)(sizeof(table) / sizeof((table)[0])), (ctx))
 
-/* Drain all bytes currently available from epic-serial, echo/edit them,
- * and dispatch any complete lines found during that drain. */
+/**
+ * @brief Drain serial input, echo/edit it, and dispatch complete lines.
+ *
+ * Drains all bytes currently available from epic-serial, echoes and
+ * edits them into the line buffer, and dispatches any complete lines
+ * found during that drain.
+ *
+ * @param con the console instance to poll
+ */
 void epic_console_poll(epic_console_t *con);
 
-/* Print one "name - help" line per command-table row through
- * epic-serial. Not auto-bound to any command name: a caller wanting a
- * help command wires this function to its own "help" table row. */
+/**
+ * @brief Print one "name - help" line per command-table row.
+ *
+ * Output goes through epic-serial. Not auto-bound to any command name:
+ * a caller wanting a help command wires this function to its own "help"
+ * table row.
+ *
+ * @param con the console whose table to print
+ */
 void epic_console_print_help(const epic_console_t *con);
 
 #endif /* EPIC_CONSOLE_H */
