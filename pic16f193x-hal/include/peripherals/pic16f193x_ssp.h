@@ -1,11 +1,9 @@
 /**
- * @file    peripherals/pic16f193x_ssp.h
- * @brief   PIC16F193X MSSP driver, SPI master mode only this phase
- *          (I2C and SPI slave deferred). CKE=0 carries a real
- *          DS80000479 errata (BF/SSPIF set half SCK early); the default
- *          handle uses CKE=1, away from it, but CKE=0 is not forbidden.
- *
- * @details Source: DS41364B MSSP chapter. Full reference: MANUAL.md.
+ * PIC16F193X MSSP driver (DS41364B MSSP chapter), SPI master mode only
+ * this phase (I2C and SPI slave deferred). CKE=0 carries a real
+ * DS80000479 errata (BF/SSPIF set half SCK early); the default handle
+ * uses CKE=1, away from it, but CKE=0 is not forbidden. Full reference:
+ * MANUAL.md.
  */
 #ifndef PIC16F193X_SSP_H
 #define PIC16F193X_SSP_H

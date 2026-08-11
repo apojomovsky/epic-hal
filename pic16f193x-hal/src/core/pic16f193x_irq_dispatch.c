@@ -1,32 +1,14 @@
 /**
- * @file    pic16f193x_irq_dispatch.c
- * @brief   Fan-out from the single PIC16F193X interrupt vector to every
- *          peripheral IRQHandler. Shared by both builds.
- *
- * @details
- *   Single PIC16F193X vector (0x0004, DS41364B §4.0): the target's
- *   `__interrupt()` and the host's sim IRQ callback both call this one
- *   dispatcher. Each peripheral IRQHandler checks its own flag and
- *   returns immediately if not pending. Handlers are declared here
- *   with strong prototypes, not via their EPIC_WEAK headers, so the
- *   host linker is forced to pull every handler's object out of the
- *   static library instead of leaving an unreferenced weak symbol NULL.
- *
- *   Foundation + Timer1 + Timer2/4/6: TIMER0, TIMER1, TIMER2, TIMER4,
- *   TIMER6, and IOC (the GPIO change interrupt) have drivers. Each
- *   peripheral phase appends its handler extern and its call here, in
- *   the same shape.
- *
- *   Each peripheral IRQHandler still checks (and clears) its own flag
- *   internally and is safe to call from anywhere else, but this
- *   dispatcher only *calls* a handler when its bit is already known
- *   to be set: it reads INTCON/PIR1/PIR2/PIR3 once each into locals
- *   and branches directly on those bits, instead of unconditionally
- *   invoking every handler and letting each one pay its own
- *   table-driven `EPIC_IRQ_GetFlag` lookup (`pic16f193x_irq.c`) to
- *   find out it wasn't the one that fired. Same shape as the
- *   PIC16F87XA fix (`pic16_irq_dispatch.c`), adapted to this family's
- *   own three-PIR-bank register layout.
+ * Fan-out from the single PIC16F193X interrupt vector to every
+ * peripheral IRQHandler, shared by both builds: the target's
+ * `__interrupt()` and the host's sim IRQ callback both call this one
+ * dispatcher. Reads INTCON/PIR1/PIR2/PIR3 once each into locals and
+ * branches directly on those bits, calling a handler only when its bit
+ * is already known to be set, instead of unconditionally invoking every
+ * handler and letting each one pay its own table-driven
+ * `EPIC_IRQ_GetFlag` lookup. Handlers are declared here with strong
+ * prototypes, not via their EPIC_WEAK headers, so the host linker is
+ * forced to pull every handler's object out of the static library.
  */
 
 #include "core/pic16f193x_irq.h"
@@ -64,10 +46,9 @@ void epic_dispatch_all_irqs(void)
      * 65536-cycle wrap and stays set. Without this check the next CCP
      * event would pay TIMER1_IRQHandler's full table-driven cost
      * (~250 cycles) before its own dispatch, blowing the swuart RX
-     * re-arm margin (same hazard as PIC16F87XA, see
-     * docs/superpowers/plans/probe-swuart-rx-hotpath.md). When the
-     * source is disabled the stale flag is dropped so it does not
-     * re-trigger this branch on every later event. */
+     * re-arm margin. When the source is disabled the stale flag is
+     * dropped so it does not re-trigger this branch on every later
+     * event. */
     if (pir1 & PIC_PIR1_TMR1IF) {
         uint8_t tmr1ie;
         EPIC_PIE1_READ_TMR1IE(tmr1ie);
@@ -87,10 +68,9 @@ void epic_dispatch_all_irqs(void)
     if (pir1 & PIC_PIR1_SSPIF)  SSP_IRQHandler();
     /* TX is gated on TXIE, not just TXIF: TXIF is a read-only status
      * bit that stays set whenever TXREG is empty, so an un-gated
-     * branch fires USART_TX_IRQHandler on every ISR from any source.
-     * Same hazard and same fix shape as PIC16F87XA (the handler is an
-     * empty stub today, but the every-ISR call is already wasted and
-     * any real handler inherits the defect). */
+     * branch fires USART_TX_IRQHandler on every ISR from any source
+     * (the handler is an empty stub today, but the every-ISR call is
+     * already wasted and any real handler inherits the defect). */
     if (pir1 & PIC_PIR1_TXIF) {
         uint8_t txie;
         EPIC_PIE1_READ_TXIE(txie);
@@ -107,9 +87,8 @@ void epic_dispatch_all_irqs(void)
     /* EEIF is gated on EEIE and left untouched when the source is
      * disabled: EEPROM completion is often polled (epic-settings spins
      * on EEIF with EEIE off), and an unconditional dispatch would
-     * clear the flag from a live ISR and hang the poller (found by the
-     * combination-matrix C7 gate, 2026-08-09). No stale-flag drop:
-     * the polling consumer owns EEIF. */
+     * clear the flag from a live ISR and hang the poller. No
+     * stale-flag drop: the polling consumer owns EEIF. */
     if (pir2 & PIC_PIR2_EEIF) {
         uint8_t eeie = 0u;
         EPIC_PIE2_READ_EEIE(eeie);

@@ -1,16 +1,10 @@
 /**
- * @file    pic16f193x_sim.h
- * @brief   Public API for the PIC16F193X host simulation backend.
- *
- * @details
- *   On the host build every SFR access indexes a host-side register
- *   file (include/host/pic16f193x_platform.h), one byte per 12-bit
- *   data-memory address (DS41364B §2.2). These hooks let test code drive
- *   input pins, read output-pin levels, advance simulated time via
- *   pic16f193x_sim_step(), and hook the interrupt callback; see
- *   src/sim/pic16f193x_sim.c for the peripheral coverage. Foundation
- *   scope models Timer0, GPIO (PORT/TRIS/LAT/ANSEL) and the PORTB
- *   interrupt-on-change; the other peripherals are added by their phases.
+ * Public API for the PIC16F193X host simulation backend. On the host
+ * build every SFR access indexes a host-side register file
+ * (include/host/pic16f193x_platform.h), one byte per 12-bit data-memory
+ * address (DS41364B §2.2). These hooks let test code drive input pins,
+ * read output-pin levels, advance simulated time via
+ * pic16f193x_sim_step(), and hook the interrupt callback.
  */
 
 #ifndef PIC16F193X_SIM_H

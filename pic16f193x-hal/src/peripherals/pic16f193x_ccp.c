@@ -1,9 +1,8 @@
 /**
- * @file    pic16f193x_ccp.c
- * @brief   PIC16F193X CCP1-5 driver implementation (DS41364B §15.0).
- * @details CCP1-3 are Enhanced CCP, CCP4/5 are plain. All
- *          capture/compare only this phase (PWM rejected by Init).
- *          Branch-before-touch per-instance macros, 5 instances.
+ * PIC16F193X CCP1-5 driver implementation (DS41364B §15.0). CCP1-3 are
+ * Enhanced CCP, CCP4/5 are plain. All capture/compare only this phase
+ * (PWM rejected by Init). Branch-before-touch per-instance macros, 5
+ * instances.
  */
 
 #include "peripherals/pic16f193x_ccp.h"

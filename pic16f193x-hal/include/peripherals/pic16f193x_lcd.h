@@ -1,9 +1,7 @@
 /**
- * @file    peripherals/pic16f193x_lcd.h
- * @brief   PIC16F193X LCD segment driver (DS41364B LCD chapter).
- * @details Segment-to-register mapping derived from the DFP header's
- *          _LCDDATAn_SEGxCOMy_POSN macros: data_reg_index = com*3 +
- *          seg/8, bit = seg%8. Full reference: MANUAL.md.
+ * PIC16F193X LCD segment driver (DS41364B LCD chapter). Segment-to-register
+ * mapping derived from the DFP header's _LCDDATAn_SEGxCOMy_POSN macros:
+ * data_reg_index = com*3 + seg/8, bit = seg%8. Full reference: MANUAL.md.
  */
 #ifndef PIC16F193X_LCD_H
 #define PIC16F193X_LCD_H

@@ -1,17 +1,11 @@
 /**
- * @file    peripherals/pic16f193x_timer1.h
- * @brief   Timer1 driver, 16-bit timer/counter.
- *
- * @details
- *   Source: DS41364B §16.0. Full reference: MANUAL.md §11. T1CON
- *   (DS41364B Register 16-1) holds the clock source, prescaler, and
- *   on bit; T1GCON (DS41364B Register 16-2) is the gate control,
- *   out of scope for this phase. The CCP special-event trigger
- *   (DS41364B §19.0) can reset TMR1H:L; configured by the CCP
- *   driver, not here.
- *
- *   All register accesses use literal PIC_REG_* tokens; XC8
- *   auto-banks on this core (plan §6 codegen probe clean).
+ * PIC16F193X Timer1 driver (DS41364B §16.0): 16-bit timer/counter.
+ * T1CON (Register 16-1) holds the clock source, prescaler, and on bit;
+ * T1GCON (Register 16-2) is the gate control, out of scope this phase.
+ * The CCP special-event trigger (§19.0) can reset TMR1H:L; configured
+ * by the CCP driver, not here. All register accesses use literal
+ * PIC_REG_* tokens; XC8 auto-banks on this core. Full reference:
+ * MANUAL.md §11.
  */
 
 #ifndef PIC16F193X_TIMER1_H

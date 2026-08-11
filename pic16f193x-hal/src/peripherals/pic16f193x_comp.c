@@ -1,7 +1,6 @@
 /**
- * @file    pic16f193x_comp.c
- * @brief   PIC16F193X dual comparator driver (DS41364B §9.0).
- * @details Two instances, branch-before-touch per-instance access.
+ * PIC16F193X dual comparator driver implementation (DS41364B §9.0).
+ * Two instances, branch-before-touch per-instance access.
  */
 
 #include "peripherals/pic16f193x_comp.h"

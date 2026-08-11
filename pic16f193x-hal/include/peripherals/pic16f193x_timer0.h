@@ -1,14 +1,10 @@
 /**
- * @file    peripherals/pic16f193x_timer0.h
- * @brief   Timer0 driver, 8-bit timer/counter with shared prescaler.
- *
- * @details
- *   Source: DS41364B §15.0. Timer0 is configured through OPTION_REG
- *   (Register 2-2): T0CS (clock source), T0SE (edge), PSA (prescaler
- *   assignment), PS<2:0> (ratio). Writing TMR0 clears the prescaler
- *   (§15.0). The prescaler is shared with the WDT; PSA=1 assigns it to the
- *   WDT and Timer0 runs at 1:1. Interrupt flag/enable are INTCON<TMR0IF>/
- *   <TMR0IE> (DS41364B §4.0).
+ * PIC16F193X Timer0 driver (DS41364B §15.0): 8-bit timer/counter with
+ * shared prescaler. Timer0 is configured through OPTION_REG (Register
+ * 2-2): T0CS (clock source), T0SE (edge), PSA (prescaler assignment),
+ * PS<2:0> (ratio). Writing TMR0 clears the prescaler (§15.0). The
+ * prescaler is shared with the WDT; PSA=1 assigns it to the WDT and
+ * Timer0 runs at 1:1. Interrupt flag/enable are INTCON<TMR0IF>/<TMR0IE>.
  */
 
 #ifndef PIC16F193X_TIMER0_H

@@ -1,20 +1,11 @@
 /**
- * @file    peripherals/pic16f193x_ccp.h
- * @brief   PIC16F193X CCP1/CCP2 driver, capture and compare modes
- *          only this phase (PWM deferred, see the plan's Non-goals).
- *
- * @details
- *   Source: DS41364B §15.0, Registers 15-1/15-2. Both instances are
- *   Enhanced CCP on this device (unlike PIC18 where only CCP1 is).
- *   Handle shape mirrors pic18fxx5x_ccp.h's Cube-style API, adapted
- *   for this family. Full reference: MANUAL.md (see that file's table
- *   of contents for the current section number).
- *
- *   Every SFR access inside the driver branches on the instance before
- *   touching any register, so each branch's own access stays a literal
- *   PIC_REG_* token (mirrors pic18fxx5x_ccp.c's CCP_WRITE_* and
- *   CCP_READ_* macros, docs/adding-a-device.md section 4.8's proven
- *   pattern).
+ * PIC16F193X CCP1-5 driver (DS41364B §15.0, Registers 15-1/15-2),
+ * capture and compare modes only this phase (PWM deferred). Both
+ * CCP1/CCP2 are Enhanced CCP on this device. Every SFR access inside
+ * the driver branches on the instance before touching any register, so
+ * each branch's own access stays a literal PIC_REG_* token (mirrors
+ * pic18fxx5x_ccp.c's CCP_WRITE_* / CCP_READ_* macros,
+ * docs/adding-a-device.md §4.8). Full reference: MANUAL.md.
  */
 
 #ifndef PIC16F193X_CCP_H

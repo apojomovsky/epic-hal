@@ -1,12 +1,8 @@
 /**
- * @file    example_adc.c
- * @brief   ADC smoke test: init (errata-safe FRC clock), confirm
- *          control-register state. The §4 gate payload.
- *
- * @details
- *   Expected register image (after init):
- *     ADCON0 = 0x01   (ADON=1, CHS=00000)
- *     ADCON1 = 0xB0   (ADFM=1, ADCS=011 FRC, ADPREF=00, ADNREF=0)
+ * ADC smoke test: init (errata-safe FRC clock), confirm control-register
+ * state. Expected register image (after init):
+ *   ADCON0 = 0x01   (ADON=1, CHS=00000)
+ *   ADCON1 = 0xB0   (ADFM=1, ADCS=011 FRC, ADPREF=00, ADNREF=0)
  */
 
 #include "pic16f193x.h"

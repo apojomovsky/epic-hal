@@ -1,26 +1,20 @@
 /**
- * @file    core/pic16f193x_irq.h
- * @brief   PIC16F193X interrupt controller: the IRQn enum and the
- *          enable / disable / flag helpers. The family-blind dispatch
- *          contract (epic_dispatch_all_irqs) lives in epic_harness.h.
+ * PIC16F193X interrupt controller: the `PIC16F193X_IRQn` enum and the
+ * enable / disable / flag helpers (mirrors `HAL_NVIC_*` from STM32Cube).
+ * The family-blind dispatch contract (epic_dispatch_all_irqs) lives in
+ * epic_harness.h.
  *
- * @details
- *   Mirrors `HAL_NVIC_*` from STM32Cube: callers never touch
- *   INTCON/PIE1/PIE2/PIE3/PIR1/PIR2/PIR3 directly. `EPIC_IRQ_*` names are
- *   shared across every 8-bit PIC family; `PIC16F193X_IRQn` and the
- *   registers behind it are PIC16F193X-specific.
+ * Single interrupt vector at 0x0004, no priority (DS41364B §4.0): GIE in
+ * INTCON gates everything, PEIE gates the peripheral sources in
+ * PIE1/PIE2/PIE3. Hardware saves W/STATUS/BSR/FSR0/FSR1/PCLATH to shadow
+ * registers on entry, so no manual context save is needed (unlike classic
+ * PIC16F87XA). EPIC_IRQ_SetPriority is a no-op.
  *
- *   Single interrupt vector at 0x0004, no priority (DS41364B §4.0): GIE
- *   in INTCON gates everything, PEIE gates the peripheral sources in
- *   PIE1/PIE2/PIE3. Hardware saves W/STATUS/BSR/FSR0/FSR1/PCLATH to
- *   shadow registers on entry, so no manual context save is needed
- *   (unlike classic PIC16F87XA). EPIC_IRQ_SetPriority is a no-op.
- *
- *   23 sources (DS41364B §4.0, Figure 4-1/4-2 and Registers 4-1..4-7):
- *     INTCON:  IOC (RB change), INT (RB0 edge), TMR0 (overflow)
- *     PIR1/PIE1: TMR1, TMR2, CCP1, SSP, USART_TX, USART_RX, ADC, TMR1G
- *     PIR2/PIE2: CCP2, LCD, BCL, EEPROM, CMP1, CMP2, OSF
- *     PIR3/PIE3: TMR4, TMR6, CCP3, CCP4, CCP5
+ * 23 sources (DS41364B §4.0, Figure 4-1/4-2 and Registers 4-1..4-7):
+ *   INTCON:  IOC (RB change), INT (RB0 edge), TMR0 (overflow)
+ *   PIR1/PIE1: TMR1, TMR2, CCP1, SSP, USART_TX, USART_RX, ADC, TMR1G
+ *   PIR2/PIE2: CCP2, LCD, BCL, EEPROM, CMP1, CMP2, OSF
+ *   PIR3/PIE3: TMR4, TMR6, CCP3, CCP4, CCP5
  */
 
 #ifndef PIC16F193X_IRQ_H
@@ -62,8 +56,6 @@ typedef enum {
     PIC16F193X_IRQ_CCP4    = 21, /**< CCP4 capture/compare.      */
     PIC16F193X_IRQ_CCP5    = 22, /**< CCP5 capture/compare.      */
 } PIC16F193X_IRQn;
-
-/* ───────────────────────── enable / disable ─────────────────────── */
 
 /**
  * @brief Globally mask all interrupts by clearing the GIE bit

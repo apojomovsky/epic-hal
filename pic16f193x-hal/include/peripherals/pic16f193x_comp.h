@@ -1,7 +1,4 @@
-/**
- * @file    peripherals/pic16f193x_comp.h
- * @brief   PIC16F193X dual comparator driver (DS41364B §9.0).
- */
+/** PIC16F193X dual comparator driver (DS41364B §9.0). */
 #ifndef PIC16F193X_COMP_H
 #define PIC16F193X_COMP_H
 

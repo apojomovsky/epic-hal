@@ -1,25 +1,17 @@
 /**
- * @file    example_blink.c
- * @brief   Blink an LED on RB0 from a Timer0 overflow, the canonical
- *          "the HAL drives a real application" smoke test.
+ * Blink an LED on RB0 from a Timer0 overflow, the canonical "the HAL
+ * drives a real application" smoke test: Timer0 overflows drive an
+ * interrupt, the ISR toggles RB0, and the main loop just lets time pass
+ * (pumping the sim on host, busy-spinning on target, via
+ * core/epic_harness.h) and refreshes the WDT.
  *
- * @details
- *   Timer0 overflows drive an interrupt; the ISR toggles RB0. The main
- *   loop just lets time pass (pumping the sim on host, busy-spinning on
- *   target, via core/epic_harness.h) and refreshes the WDT.
- *
- *   Wiring: LED + resistor between RB0 and GND. The 193X has a 32 MHz
- *   internal oscillator; with Fosc/4 + 1:256 prescaler + reload 0,
- *   Timer0 overflows every 256 * 256 = 65536 cycles, so the pin toggles
- *   at ~FCY/(65536*2).
- *
- *   Expected register image (host sim, after init):
- *     TRISB  = 0xFF & ~0x01 = 0xFE   (RB0 output, rest input)
- *     ANSELB = 0xFF & ~0x01 = 0xFE   (RB0 digital, rest analog)
- *     LATB   = 0x00                   (RB0 driving low at start)
- *     OPTION_REG = WPUEN=1,INTEDG=1,T0CS=0,T0SE=0,PSA=0,PS=111 = 0xD7
- *     INTCON = TMR0IE=1, PEIE=1, GIE=1 = 0xE8 (after EPIC_IRQ_Restore(1))
- *   The ISR flips LATB<0> on every overflow; g_toggle_count counts them.
+ * Expected register image (host sim, after init):
+ *   TRISB  = 0xFF & ~0x01 = 0xFE   (RB0 output, rest input)
+ *   ANSELB = 0xFF & ~0x01 = 0xFE   (RB0 digital, rest analog)
+ *   LATB   = 0x00                   (RB0 driving low at start)
+ *   OPTION_REG = WPUEN=1,INTEDG=1,T0CS=0,T0SE=0,PSA=0,PS=111 = 0xD7
+ *   INTCON = TMR0IE=1, PEIE=1, GIE=1 = 0xE8 (after EPIC_IRQ_Restore(1))
+ * The ISR flips LATB<0> on every overflow; g_toggle_count counts them.
  */
 
 #include "pic16f193x.h"
@@ -67,11 +59,11 @@ int main(void)
     /* 3. Arm the Timer0 interrupt (EPIC_TIMER0_Init set TMR0IE; now GIE). */
     EPIC_IRQ_Restore(1);
 
-    /* 4. Let time pass. On the target this busy-spins forever, refreshing
-     *    the WDT while the Timer0 ISR toggles RB0; on the host the harness
-     *    bounds the loop to SIM_CYCLES and pumps the sim each iteration.
-     *    EPIC_WDT_Refresh is a no-op on the host, so it is called
-     *    unconditionally. */
+    /* 4. Let time pass. On the target this busy-spins forever,
+     *    refreshing the WDT while the Timer0 ISR toggles RB0; on the
+     *    host the harness bounds the loop to SIM_CYCLES and pumps the
+     *    sim each iteration. EPIC_WDT_Refresh is a no-op on the host,
+     *    so it is called unconditionally. */
     for (uint32_t i = 0; epic_harness_running(i); i++) {
         epic_harness_tick();
         EPIC_WDT_Refresh();

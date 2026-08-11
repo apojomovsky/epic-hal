@@ -1,12 +1,8 @@
 /**
- * @file    example_comparator.c
- * @brief   Comparator smoke test: init both instances, confirm
- *          control-register state. The §4 gate payload.
- *
- * @details
- *   Expected register image (after init):
- *     CM1CON0 = 0x80   (C1ON=1, C1OUT read-only at bit 6 masked)
- *     CM2CON0 = 0x80   (C2ON=1, C2OUT read-only at bit 6 masked)
+ * Comparator smoke test: init both instances, confirm control-register
+ * state. Expected register image (after init):
+ *   CM1CON0 = 0x80   (C1ON=1, C1OUT read-only at bit 6 masked)
+ *   CM2CON0 = 0x80   (C2ON=1, C2OUT read-only at bit 6 masked)
  */
 
 #include "pic16f193x.h"

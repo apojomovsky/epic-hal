@@ -1,21 +1,17 @@
 /**
- * @file    pic16f193x_sim.c
- * @brief   Host simulation backend for the PIC16F193X HAL.
- *
- * @details
- *   Provides `pic16f193x_sim_sfr[]`, the 4096-byte memory-backed register
- *   file (one byte per 12-bit data-memory address, DS41364B §2.2) that the
- *   host SFR macros (include/host/pic16f193x_platform.h) dereference. The
- *   foundation models Timer0 (DS41364B §15.0), the GPIO pin-level model
- *   (PORT/TRIS/LAT/ANSEL, §6.0) and the PORTB interrupt-on-change (§7.0).
- *   Other peripheral models are added by their phases.
+ * Host simulation backend for the PIC16F193X HAL: provides
+ * `pic16f193x_sim_sfr[]`, the 4096-byte memory-backed register file (one
+ * byte per 12-bit data-memory address, DS41364B §2.2) that the host SFR
+ * macros (include/host/pic16f193x_platform.h) dereference. Models Timer0
+ * (DS41364B §15.0), the GPIO pin-level model (PORT/TRIS/LAT/ANSEL, §6.0)
+ * and the PORTB interrupt-on-change (§7.0).
  */
 
 #include "pic16f193x_sim.h"
 #include "pic16f193x_sfr.h"
 #include <string.h>
 
-/* ───────────────────────── register file ────────────────────────── */
+/* register file */
 
 /** SFR backing store. Indices are the physical 12-bit data-memory
  *  addresses (DS41364B §2.2, Table 2-4/2-5). Covers all 32 banks x 128. */
@@ -51,7 +47,7 @@ static uint8_t port_index(char port)
     }
 }
 
-/* ───────────────────────── public API ───────────────────────────── */
+/* public API */
 
 void pic16f193x_sim_reset(void)
 {
@@ -144,7 +140,7 @@ void pic16f193x_sim_step(uint32_t ticks)
     }
 }
 
-/* ───────────────────────── Timer0 step ──────────────────────────── */
+/* Timer0 step */
 
 static void sim_step_timer0(void)
 {
@@ -179,7 +175,7 @@ static void sim_step_timer0(void)
     pic16f193x_sim_sfr[PIC_REG_TMR0] = t0;
 }
 
-/* ───────────────────────── Timer1 step ──────────────────────────── */
+/* Timer1 step */
 
 static void sim_step_timer1(void)
 {
@@ -225,7 +221,7 @@ static void sim_step_timer1(void)
     }
 }
 
-/* ───────────────────────── Timer2/4/6 step ──────────────────────── */
+/* Timer2/4/6 step */
 
 static void sim_step_timer246(void)
 {
@@ -279,7 +275,7 @@ static void sim_step_timer246(void)
     }
 }
 
-/* ───────────────────────── USART step ──────────────────────────── */
+/* USART step */
 
 static void sim_step_usart(void)
 {
@@ -296,7 +292,7 @@ static void sim_step_usart(void)
     pic16f193x_sim_sfr[PIC_REG_BAUDCON] |= PIC_BAUDCON_RCIDL;
 }
 
-/* ───────────────────────── EEPROM step ──────────────────────────── */
+/* EEPROM step */
 
 static uint8_t s_eeprom_data[256];
 
@@ -314,7 +310,7 @@ static void sim_step_eeprom(void)
     }
 }
 
-/* ───────────────────────── GPIO pin-level refresh ───────────────── */
+/* GPIO pin-level refresh */
 
 /* Keep PORTx fresh for EPIC_GPIO_ReadPin (which reads PORTx): for output
  * pins mirror LATx, for input pins mirror the driven override. The
@@ -349,7 +345,7 @@ static void sim_refresh_ports(void)
     }
 }
 
-/* ───────────────────────── PORTB interrupt-on-change ────────────── */
+/* PORTB interrupt-on-change */
 
 static void sim_step_ioc(void)
 {
@@ -381,7 +377,7 @@ static void sim_step_ioc(void)
     }
 }
 
-/* ───────────────────────── input / output ───────────────────────── */
+/* input / output */
 
 void pic16f193x_sim_drive_input(char port, uint8_t pin, uint8_t level)
 {

@@ -1,27 +1,13 @@
 /**
- * @file    peripherals/pic16f193x_timer246.h
- * @brief   Timer2/Timer4/Timer6 driver: three instances of the same
- *          8-bit timer with PR-match reset and postscaler.
- *
- * @details
- *   Source: DS41364B §17.0. Full reference: MANUAL.md (see that file's
- *   table of contents for the current section number; peripherals land
- *   in whatever order the roadmap executes them in, and the section
- *   number is reassigned on merge if something else lands first).
- *
- *   Unlike Timer0/Timer1 (raw free-running overflow at 0xFF/0xFFFF),
- *   TMRx counts 0..PRx and resets to 0 on the cycle it would exceed
- *   PRx (never reaches PRx+1). TMRxIF fires once every
- *   prescaler x (PRx+1) x postscaler input cycles: PR match happens
- *   every prescaler x (PRx+1) cycles, and the postscaler divides that
- *   further before setting the flag.
- *
- *   One driver covers all three instances via TIMER246_InstanceTypeDef
- *   (mirrors pic18fxx5x_ccp.h's CCP_InstanceTypeDef convention). Every
- *   SFR access inside the driver branches on the instance before
- *   touching any register, so each branch's own access stays a literal
- *   PIC_REG_* token (see pic18fxx5x_ccp.c's CCP_WRITE_* and CCP_READ_*
- *   macros for the proven shape this mirrors).
+ * PIC16F193X Timer2/4/6 driver (DS41364B §17.0): three instances of the
+ * same 8-bit timer with PR-match reset and postscaler. Unlike
+ * Timer0/Timer1 (raw free-running overflow at 0xFF/0xFFFF), TMRx counts
+ * 0..PRx and resets to 0 on the cycle it would exceed PRx (never reaches
+ * PRx+1); TMRxIF fires once every prescaler x (PRx+1) x postscaler input
+ * cycles. One driver covers all three instances; every SFR access
+ * branches on the instance before touching any register (literal
+ * PIC_REG_* tokens, the proven shape from pic18fxx5x_ccp.c). Full
+ * reference: MANUAL.md.
  */
 
 #ifndef PIC16F193X_TIMER246_H

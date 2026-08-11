@@ -1,28 +1,24 @@
 /**
- * @file    pic16f193x_sfr.h
- * @brief   Special Function Register (SFR) address map for the
- *          PIC16F193X family.
+ * Special Function Register (SFR) address map for the PIC16F193X family.
+ * Every address here is taken 1-to-1 from the DS41364B data memory map
+ * (Table 2-4, banks 0-7; Table 2-5, banks 8-15). The Enhanced Mid-range
+ * core banks data memory with the BSR (DS41364B §2.2): each bank is 128
+ * bytes, the 12 core registers (0x00-0x0B) and the 16 common registers
+ * (0x20-0x2F) mirror in every bank, SFRs occupy 0x0C-0x1F per bank. A
+ * given SFR's address is its physical 12-bit address; XC8 auto-selects
+ * the bank for a literal SFR access on this core, so drivers address
+ * SFRs by their `PIC_REG_*` token and let the compiler bank.
  *
- * @details
- *   Every address here is taken 1-to-1 from the DS41364B data memory map
- *   (Table 2-4, banks 0-7; Table 2-5, banks 8-15). The Enhanced Mid-range
- *   core banks data memory with the BSR (DS41364B §2.2): each bank is 128
- *   bytes, the 12 core registers (0x00-0x0B) and the 16 common registers
- *   (0x20-0x2F) mirror in every bank, SFRs occupy 0x0C-0x1F per bank. A
- *   given SFR's address is its physical 12-bit address; XC8 auto-selects
- *   the bank for a literal SFR access on this core, so drivers address
- *   SFRs by their `PIC_REG_*` token and let the compiler bank.
+ * Bit masks are included for the core, interrupt, GPIO, Timer0 and
+ * WDT/Sleep registers now (verified against DS41364B register
+ * definitions); peripheral register bit masks (T1CON, T2CON, CCPxCON,
+ * ADCON, SSPCON, TXSTA/RCSTA, etc.) are added by each peripheral phase
+ * as it is built and verified, not pre-declared from memory.
  *
- *   Bit masks are included for the core, interrupt, GPIO, Timer0 and
- *   WDT/Sleep registers now (verified against DS41364B register
- *   definitions). Peripheral register bit masks (T1CON, T2CON, CCPxCON,
- *   ADCON, SSPCON, TXSTA/RCSTA, etc.) are added by each peripheral phase
- *   as it is built and verified, not pre-declared from memory.
- *
- *   Address conflicts that are pin-count-dependent (PORTD/PORTE and their
- *   TRIS/LAT/ANSEL mirrors do not exist on 28-pin parts) are guarded with
- *   PIC16F193X_FAMILY_HAS_* macros so the same header compiles for any of
- *   the six parts.
+ * Address conflicts that are pin-count-dependent (PORTD/PORTE and their
+ * TRIS/LAT/ANSEL mirrors do not exist on 28-pin parts) are guarded with
+ * PIC16F193X_FAMILY_HAS_* macros so the same header compiles for any of
+ * the six parts.
  */
 
 #ifndef PIC16F193X_SFR_H
@@ -30,7 +26,7 @@
 
 #include "pic16f193x.h"
 
-/* ───────────────────────── Core registers (0x00-0x0B, every bank) ── */
+/* Core registers (0x00-0x0B, every bank) */
 
 /* DS41364B §2.2, Table 2-4. The 12 core registers mirror in every bank. */
 #define PIC_REG_INDF0        0x00U
@@ -46,7 +42,7 @@
 #define PIC_REG_PCLATH         0x0AU
 #define PIC_REG_INTCON        0x0BU
 
-/* ───────────────────────── Bank 0 SFRs (0x0C-0x1F) ──────────────── */
+/* Bank 0 SFRs (0x0C-0x1F) */
 
 /* I/O ports, DS41364B §6.0. PORTD/PORTE are 40/44-pin only. */
 #define PIC_REG_PORTA         0x0CU
@@ -82,7 +78,7 @@
 #define PIC_REG_CPSCON0       0x1EU
 #define PIC_REG_CPSCON1       0x1FU
 
-/* ───────────────────────── Bank 1 SFRs (0x8C-0x9F) ───────────────── */
+/* Bank 1 SFRs (0x8C-0x9F) */
 
 /* I/O direction, DS41364B §6.0. */
 #define PIC_REG_TRISA         0x8CU
@@ -114,7 +110,7 @@
 #define PIC_REG_ADCON0        0x9DU
 #define PIC_REG_ADCON1        0x9EU
 
-/* ───────────────────────── Bank 2 SFRs (0x10C-0x11F) ────────────── */
+/* Bank 2 SFRs (0x10C-0x11F) */
 
 /* I/O latches, DS41364B §6.0 (LATx, the write target on this core). */
 #define PIC_REG_LATA          0x10CU
@@ -141,7 +137,7 @@
 #define PIC_REG_SRCON1        0x11BU
 #define PIC_REG_APFCON        0x11DU
 
-/* ───────────────────────── Bank 3 SFRs (0x18C-0x19F) ────────────── */
+/* Bank 3 SFRs (0x18C-0x19F) */
 
 /* Analog select, DS41364B §6.0 (ANSELx, per-pin analog/digital). */
 #define PIC_REG_ANSELA        0x18CU
@@ -170,7 +166,7 @@
 #define PIC_REG_TXSTA         0x19EU
 #define PIC_REG_BAUDCON       0x19FU
 
-/* ───────────────────────── Bank 4 SFRs (0x20C-0x21F) ────────────── */
+/* Bank 4 SFRs (0x20C-0x21F) */
 
 /* Weak pull-ups, DS41364B §6.0 (WPUB per-pin PORTB, WPUE for PORTE). */
 #define PIC_REG_WPUB          0x20DU
@@ -185,7 +181,7 @@
 #define PIC_REG_SSPCON2       0x216U
 #define PIC_REG_SSPCON3       0x217U
 
-/* ───────────────────────── Bank 5 SFRs (0x28C-0x29F) ────────────── */
+/* Bank 5 SFRs (0x28C-0x29F) */
 
 /* CCP1/2 (ECCP), DS41364B §19.0. */
 #define PIC_REG_CCPR1L        0x291U
@@ -203,7 +199,7 @@
 #define PIC_REG_CCPTMRS0      0x29EU
 #define PIC_REG_CCPTMRS1      0x29FU
 
-/* ───────────────────────── Bank 6 SFRs (0x30C-0x31F) ────────────── */
+/* Bank 6 SFRs (0x30C-0x31F) */
 
 /* CCP3 (ECCP), CCP4, CCP5, DS41364B §19.0. */
 #define PIC_REG_CCPR3L        0x311U
@@ -219,22 +215,19 @@
 #define PIC_REG_CCPR5H        0x31DU
 #define PIC_REG_CCP5CON       0x31EU
 
-/* ───────────────────────── Bank 7 SFRs (0x38C-0x39F) ────────────── */
+/* Bank 7 SFRs (0x38C-0x39F) */
 
 /* Interrupt-on-change (PORTB, per-pin), DS41364B §7.0. */
 #define PIC_REG_IOCBP         0x394U
 #define PIC_REG_IOCBN         0x395U
 #define PIC_REG_IOCBF         0x396U
 
-/* ───────────────────────── Bank 8 SFRs (0x40C-0x41F) ────────────── */
+/* Bank 8 SFRs (0x40C-0x41F) */
 
-/* Timer4/Timer6, DS41364B §17.0. NOT documented in
- * docs/pic16f193x-plan.md §2's bank-map table (that table only covers
- * banks 0-7; banks 8-15 were assumed GPR/linear-only, which is wrong
- * for this bank, see docs/superpowers/plans/2026-08-04-pic16f193x-timer246.md's
- * "Known documentation gap" note). Confirmed via the installed DFP header
- * (xc8/pic/include/proc/pic16f1937.h): TMR4/PR4/T4CON and TMR6/PR6/T6CON
- * both live in bank 8, distinct from Timer2's bank-0 placement. */
+/* Timer4/Timer6, DS41364B §17.0: TMR4/PR4/T4CON and TMR6/PR6/T6CON
+ * both live in bank 8, distinct from Timer2's bank-0 placement
+ * (confirmed via the installed DFP header, xc8/pic/include/proc/
+ * pic16f1937.h). */
 #define PIC_REG_TMR4          0x415U
 #define PIC_REG_PR4           0x416U
 #define PIC_REG_T4CON         0x417U
@@ -242,7 +235,7 @@
 #define PIC_REG_PR6           0x41DU
 #define PIC_REG_T6CON         0x41EU
 
-/* ───────────────────────── STATUS register bits ────────────────── */
+/* STATUS register bits */
 
 /* DS41364B §2.2, Register 2-1. Enhanced Mid-range has no RP0/RP1/IRP
  * (BSR replaces them), so only C/DC/Z/PD/TO are defined. */
@@ -252,7 +245,7 @@
 #define PIC_STATUS_PD         EPIC_BIT(3)
 #define PIC_STATUS_TO         EPIC_BIT(4)
 
-/* ───────────────────────── INTCON register bits ────────────────── */
+/* INTCON register bits */
 
 /* DS41364B §4.0, Register 4-1. IOCIF/IOCIE replace classic RBIF/RBIE. */
 #define PIC_INTCON_IOCIF      EPIC_BIT(0)
@@ -264,7 +257,7 @@
 #define PIC_INTCON_PEIE       EPIC_BIT(6)
 #define PIC_INTCON_GIE        EPIC_BIT(7)
 
-/* ───────────────────────── OPTION_REG bits (Timer0 + WDT) ───────── */
+/* OPTION_REG bits (Timer0 + WDT) */
 
 /* DS41364B §2.2, Register 2-2. WPUEN (bit 7) is the global weak-pull-up
  * enable (active-low), replacing classic RBPU. */
@@ -275,7 +268,7 @@
 #define PIC_OPTION_PSA        EPIC_BIT(3)
 #define PIC_OPTION_PS_MASK    0x07U          /* PS2:PS0, prescaler ratio. */
 
-/* ───────────────────────── PIR1 / PIE1 ─────────────────────────── */
+/* PIR1 / PIE1 */
 
 /* DS41364B §4.5, Registers 4-2 (PIE1) / 4-5 (PIR1). */
 #define PIC_PIR1_TMR1IF       EPIC_BIT(0)
@@ -296,7 +289,7 @@
 #define PIC_PIE1_ADIE         EPIC_BIT(6)
 #define PIC_PIE1_TMR1GIE      EPIC_BIT(7)
 
-/* ───────────────────────── PIR2 / PIE2 ─────────────────────────── */
+/* PIR2 / PIE2 */
 
 /* DS41364B §4.5, Registers 4-3 (PIE2) / 4-6 (PIR2). */
 #define PIC_PIR2_CCP2IF       EPIC_BIT(0)
@@ -315,7 +308,7 @@
 #define PIC_PIE2_C2IE         EPIC_BIT(6)
 #define PIC_PIE2_OSFIE        EPIC_BIT(7)
 
-/* ───────────────────────── PIR3 / PIE3 ─────────────────────────── */
+/* PIR3 / PIE3 */
 
 /* DS41364B §4.5, Registers 4-4 (PIE3) / 4-7 (PIR3). */
 #define PIC_PIR3_TMR4IF       EPIC_BIT(1)
@@ -330,7 +323,7 @@
 #define PIC_PIE3_CCP4IE       EPIC_BIT(5)
 #define PIC_PIE3_CCP5IE       EPIC_BIT(6)
 
-/* ───────────────────────── PCON bits (reset flags) ─────────────── */
+/* PCON bits (reset flags) */
 
 /* DS41364B §3.0, Register 3-3. */
 #define PIC_PCON_BOR          EPIC_BIT(0)
@@ -340,7 +333,7 @@
 #define PIC_PCON_STKUNF       EPIC_BIT(6)
 #define PIC_PCON_STKOVF       EPIC_BIT(7)
 
-/* ───────────────────────── WDTCON bits ────────────────────────── */
+/* WDTCON bits */
 
 /* DS41364B §24.0, WDTCON register. SWDTEN (bit 0) is the software WDT
  * enable; WDTPS<4:0> (bits 5:1) the period select. */
@@ -348,15 +341,11 @@
 #define PIC_WDTCON_WDTPS_MASK 0x3EU          /* WDTPS4:WDTPS0, bits 5:1. */
 #define PIC_WDTCON_WDTPS_POS  1U
 
-/* ───────────────────────── T1CON bits (Timer1) ──────────────────── */
+/* T1CON bits (Timer1) */
 
-/* DS41364B Register 16-1. Verify each bit position and the POR
- * value against the datasheet before relying on them; the §4 gate
- * will catch any wrong literal.
- *
- * TMR1CS<1:0> (bits 7:6) selects the clock source (00 = FOSC/4,
- * 01 = FOSC, 10 = T1CKI pin/T1OSC, 11 = CAPOSC); bit 1 is
- * unimplemented. Everything but FOSC/4 (external clock, T1OSC,
+/* DS41364B Register 16-1. TMR1CS<1:0> (bits 7:6) selects the clock
+ * source (00 = FOSC/4, 01 = FOSC, 10 = T1CKI pin/T1OSC, 11 = CAPOSC);
+ * bit 1 is unimplemented. Everything but FOSC/4 (external clock, T1OSC,
  * CAPOSC) is out of scope for this phase (MANUAL.md §11 "Not in
  * this phase"), so no TMR1CS bit mask is defined here yet, and
  * EPIC_TIMER1_Init/Start reject any ClockSource other than
@@ -368,16 +357,14 @@
 /* POR value of T1CON, DS41364B Register 16-1 POR column. */
 #define PIC_T1CON_POR_VALUE      0x00U
 
-/* ───────────────── T2CON / T4CON / T6CON bits (Timer2/4/6) ──────── */
+/* T2CON / T4CON / T6CON bits (Timer2/4/6) */
 
 /* DS41364B §17.0 (one register template documents Timer2/4/6 as a
  * group; the physical registers are T2CON/T4CON/T6CON, one instance
  * each). Cross-checked against the installed DFP header's
  * T2CON_T2CKPS_POSN/_MASK, T2CON_TMR2ON_POSN/_MASK,
  * T2CON_T2OUTPS_POSN/_MASK macros (and the T4CON/T6CON equivalents,
- * identical shape). Re-verify against DS41364B directly before relying
- * on these; the §4 gate is the actual verification floor, not this
- * comment.
+ * identical shape).
  *
  * Layout, identical for all three registers:
  *   bit 7      unimplemented, reads 0
@@ -403,7 +390,7 @@
 #define PIC_T6CON_TOUTPS_POS    3U
 #define PIC_T6CON_POR_VALUE     0x00U
 
-/* ───────────────── CCP1/CCP2 bits (DS41364B §15.0) ──────────────── */
+/* CCP1/CCP2 bits (DS41364B §15.0) */
 
 /* Both instances are Enhanced CCP on this device. CCPxCON layout
  * (DS41364B Register 15-1/15-2): bits 3:0 = CCPxM mode select, bits
@@ -461,7 +448,7 @@
 #define PIC_CCPTMRS0_C4TSEL_MASK 0xC0U
 #define PIC_CCPTMRS1_C5TSEL_MASK 0x03U
 
-/* ───────────────── EUSART bits (DS41364B §23.0) ─────────────────── */
+/* EUSART bits (DS41364B §23.0) */
 
 /* RCSTA/TXSTA/BAUDCON, DS41364B Register 23-2/23-3/23-4. Cross-checked
  * against the DFP header: _RCSTA_SPEN_POSN=7, _RCSTA_CREN_POSN=4,
@@ -497,7 +484,7 @@
 #define PIC_RCSTA_POR_VALUE     0x00U
 #define PIC_BAUDCON_POR_VALUE   0x40U
 
-/* ───────────────── MSSP bits (DS41364B §22.0, SPI subset) ──────── */
+/* MSSP bits (DS41364B §22.0, SPI subset) */
 
 /* SSPSTAT/SSPCON1, SPI-relevant subset only (SSPCON2/3 are I2C-only).
  * Cross-checked against DFP: _SSPSTAT_BF_POSN=0, _SSPSTAT_CKE_POSN=6,
@@ -513,7 +500,7 @@
 #define PIC_SSPCON1_SSPOV       EPIC_BIT(6)
 #define PIC_SSPCON1_WCOL        EPIC_BIT(7)
 
-/* ───────────────── ADC bits (DS41364B ADC chapter) ──────────────── */
+/* ADC bits (DS41364B ADC chapter) */
 
 /* ADCON0/ADCON1. Cross-checked against DFP: _ADCON0_ADON_POSN=0,
  * _ADCON0_GO_POSN=1, _ADCON0_CHS_POSN=2 (mask 0x7C, 5-bit),
@@ -530,7 +517,7 @@
 #define PIC_ADCON1_ADCS_SHIFT   4U
 #define PIC_ADCON1_ADFM         EPIC_BIT(7)
 
-/* ───────────────── Comparator bits (DS41364B §9.0) ──────────────── */
+/* Comparator bits (DS41364B §9.0) */
 
 /* CM1CON0/CM2CON0: CxON(7), CxOE(5), CxPOL(4), CxHYS(1).
  * CM1CON1/CM2CON1: CxPCH(5:4, mask 0x30), CxNCH(1:0, mask 0x03),
@@ -559,7 +546,7 @@
 #define PIC_CMOUT_MC1OUT        EPIC_BIT(0)
 #define PIC_CMOUT_MC2OUT        EPIC_BIT(1)
 
-/* ───────────────── EEPROM bits (DS41364B §23.0) ──────────────────── */
+/* EEPROM bits (DS41364B §23.0) */
 
 #define PIC_EECON1_RD           EPIC_BIT(0)
 #define PIC_EECON1_WR           EPIC_BIT(1)
@@ -573,7 +560,7 @@
 #define PIC_EEADRH_MASK         0x7FU
 #define PIC_EEDATH_MASK         0x3FU
 
-/* ───────────────── DAC bits (DS41364B §13.0) ───────────────────── */
+/* DAC bits (DS41364B §13.0) */
 #define PIC_DACCON0_DACNSS     EPIC_BIT(0)
 #define PIC_DACCON0_DACPSS_MASK 0x0CU
 #define PIC_DACCON0_DACOE      EPIC_BIT(5)
@@ -581,7 +568,7 @@
 #define PIC_DACCON0_DACEN      EPIC_BIT(7)
 #define PIC_DACCON1_DACR_MASK  0x1FU
 
-/* ───────────────── FVR bits (DS41364B §12.0) ───────────────────── */
+/* FVR bits (DS41364B §12.0) */
 #define PIC_FVRCON_ADFVR_MASK   0x03U
 #define PIC_FVRCON_CDAFVR_MASK  0x0CU
 #define PIC_FVRCON_CDAFVR_SHIFT 2U
@@ -590,7 +577,7 @@
 #define PIC_FVRCON_FVRRDY      EPIC_BIT(6)
 #define PIC_FVRCON_FVREN       EPIC_BIT(7)
 
-/* ───────────────── SR latch bits (DS41364B §11.0) ──────────────── */
+/* SR latch bits (DS41364B §11.0) */
 #define PIC_SRCON0_SRPR        EPIC_BIT(0)
 #define PIC_SRCON0_SRPS        EPIC_BIT(1)
 #define PIC_SRCON0_SRNQEN      EPIC_BIT(2)
@@ -602,14 +589,14 @@
 #define PIC_SRCON1_SRNQEN      EPIC_BIT(2)
 #define PIC_SRCON1_SRQEN       EPIC_BIT(3)
 
-/* ───────────────── CPS bits (DS41364B §18.0) ───────────────────── */
+/* CPS bits (DS41364B §18.0) */
 #define PIC_CPSCON0_T0XCS      EPIC_BIT(0)
 #define PIC_CPSCON0_CPSOUT     EPIC_BIT(1)
 #define PIC_CPSCON0_CPSRNG_MASK 0x0CU
 #define PIC_CPSCON0_CPSON      EPIC_BIT(7)
 #define PIC_CPSCON1_CPSCH_MASK 0x0FU
 
-/* ───────────────── LCD bits (DS41364B LCD chapter) ──────────────── */
+/* LCD bits (DS41364B LCD chapter) */
 
 /* Bank 15. LCDCON=0x791, LCDPS=0x792, LCDREF=0x793, LCDCST=0x794,
  * LCDRL=0x795, LCDSE0-2=0x798-0x79A, LCDDATA0-11=0x7A0-0x7AB.
@@ -645,7 +632,7 @@
 #define PIC_LCDPS_LCDA          EPIC_BIT(5)
 #define PIC_LCDCST_LCDCST_MASK   0x07U
 
-/* ───────────────────────── Reset values (POR) ──────────────────── */
+/* Reset values (POR) */
 
 /* DS41364B §3 reset values and the per-register POR columns of the
  * Table 2-4 register summary. */
@@ -660,26 +647,18 @@
 #define PIC_PIE2_POR_VALUE       0x00U
 #define PIC_PIE3_POR_VALUE       0x00U
 
-/* ───────────────────────── Bank-selection helper ───────────────── */
+/* Bank-selection helper */
 
 /**
- * @brief  Load the Bank Select Register (BSR) with `bank`. DS41364B §2.2.
- *
- * @details
- *   On the Enhanced Mid-range core XC8 auto-banks every literal SFR
- *   access (it knows each SFR's bank and emits the bank select), so
- *   drivers normally never call this. It is provided for the cases that
- *   do need an explicit bank: indirect/linear-data-memory setup via FSR,
- *   and any hand-written sequence that must hold a bank across several
- *   SFR touches. Writing BSR is a plain core-register write (BSR is in
- *   the 0x00-0x0B core region mirrored in every bank), no inline asm.
- *
- *   Whether an SFR access made while a C-level local/parameter is live
- *   misdirects on this core (the classic-PIC16 RP0/RP1 codegen failure,
- *   see pic16f87xa-hal/docs/ARCHITECTURE.md) is NOT assumed away here:
- *   it is verified by the §4 codegen probe before any driver relies on
- *   it, per docs/adding-a-device.md. Until then every SFR access stays a
- *   compile-time-constant `PIC_REG_*` token with no runtime dispatch.
+ * Load the Bank Select Register (BSR) with `bank` (DS41364B §2.2).
+ * XC8 auto-banks every literal SFR access on this core, so drivers
+ * normally never call this; it exists for indirect/linear-data-memory
+ * setup via FSR and for hand-written sequences that must hold a bank
+ * across several SFR touches. BSR is a plain core-register write (BSR
+ * is in the 0x00-0x0B core region mirrored in every bank), no inline
+ * asm. The classic-PIC16 RP0/RP1 codegen failure mode
+ * (pic16f87xa-hal/docs/ARCHITECTURE.md) is not assumed away here:
+ * every SFR access stays a compile-time-constant `PIC_REG_*` token.
  */
 #define pic16f193x_select_bank(bank)   (EPIC_REG8(PIC_REG_BSR) = (uint8_t)(bank))
 

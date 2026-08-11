@@ -1,7 +1,4 @@
-/**
- * @file    pic16f193x_adc.c
- * @brief   PIC16F193X ADC driver implementation (DS41364B ADC chapter).
- */
+/** PIC16F193X ADC driver implementation (DS41364B ADC chapter). */
 
 #include "peripherals/pic16f193x_adc.h"
 

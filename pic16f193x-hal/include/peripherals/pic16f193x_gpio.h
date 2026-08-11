@@ -1,18 +1,11 @@
 /**
- * @file    peripherals/pic16f193x_gpio.h
- * @brief   General-Purpose I/O port driver for the PIC16F193X family.
- *
- * @details
- *   Cube-style API: every pin is (GPIOx, GPIO_PIN_n). The Enhanced
- *   Mid-range I/O model (DS41364B §6.0) adds a LATx output latch (writes
- *   go to LATx, never RMW the pin level, avoiding the classic PIC16
- *   read-modify-write hazard) and an ANSELx analog-select register. ANSEL
- *   defaults to 1 (analog) at POR on analog-capable pins, so a digital
- *   Init clears the ANSEL bit; the Init for ANALOG mode sets it.
- *
- *   PORTA/B/C are present on every device. PORTD and PORTE exist only on
- *   40/44-pin parts (PIC16F1934/1937/1939). PORTA/B/C/D are 8-bit, PORTE
- *   is 4-bit (RE0-RE3).
+ * PIC16F193X GPIO driver (DS41364B §6.0/§7.0). Cube-style API: every pin
+ * is (GPIOx, GPIO_PIN_n). The Enhanced Mid-range I/O model adds a LATx
+ * output latch (writes go to LATx, never RMW the pin level) and an ANSELx
+ * analog-select register; ANSEL defaults to 1 (analog) at POR on
+ * analog-capable pins, so digital Init clears the bit. PORTA/B/C are on
+ * every device; PORTD/E only on 40/44-pin parts. PORTA/B/C/D are 8-bit,
+ * PORTE is 4-bit (RE0-RE3).
  */
 
 #ifndef PIC16F193X_GPIO_H
@@ -76,8 +69,6 @@ typedef enum {
     GPIO_MODE_ANALOG = 0x3U,   /**< TRIS=1, ANSEL=1 (analog).          */
 } GPIO_ModeTypeDef;
 
-/* ───────────────────────── init / deinit ────────────────────────── */
-
 /**
  * @brief  Configure one or more pins of a port to the same mode.
  *
@@ -93,8 +84,6 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
 
 /** Restore all pins of `port` to reset (input, analog, latch clear). */
 void EPIC_GPIO_DeInit(GPIO_TypeDef port);
-
-/* ───────────────────────── read / write / toggle ────────────────── */
 
 /**
  * @brief  Drive a pin high or low; ORs/ANDs the mask onto the LATx latch
@@ -118,8 +107,6 @@ void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
 /** Read the entire port (PORTx, pin level). */
 uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
 
-/* ───────────────────────── PORTB weak pull-ups ─────────────────── */
-
 /**
  * @brief  Enable or disable the PORTB per-pin weak pull-ups via WPUB
  *         (DS41364B §6.0), and the global WPUEN enable in OPTION_REG<7>
@@ -128,8 +115,6 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
  *         enables the selected pins (WPUB |= pins, WPUEN=0).
  */
 void EPIC_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state);
-
-/* ───────────────────────── PORTB change interrupt ─────────────────── */
 
 /**
  * @brief  Register a callback fired from the PORTB interrupt-on-change
