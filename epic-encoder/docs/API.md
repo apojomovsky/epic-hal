@@ -2,7 +2,8 @@
 
 Per-function semantics, the port-byte/bit-position wiring convention, and
 the hard constraints (`at most two encoders per port`, `PORTB only`, the
-glitch-gate's 1 ms resolution). The full plan is `docs/epic-encoder-plan.md`.
+glitch-gate's 1 ms resolution). The design rationale lives in the
+module's [README](../README.md).
 
 ## Headers and linkage
 

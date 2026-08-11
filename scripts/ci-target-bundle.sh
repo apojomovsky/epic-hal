@@ -30,9 +30,9 @@ for tarball in "$repo_root/$bundles_dir"/*.tar.gz; do
   cd "/isolated/$name"
 
   # Reference MPLAB X project. Built headlessly via the same generated
-  # makefile MPLAB X itself uses; see
-  # docs/superpowers/plans/probe-mplabx-headless.md for why this is
-  # possible in this image. Runs for every bundle, including HAL-only
+  # makefile MPLAB X itself uses; the toolchain image ships MPLAB X's
+  # own project tooling, which is why this works. Runs for every
+  # bundle, including HAL-only
   # ones, since every family ships one regardless of whether it has a
   # higher-level module to link.
   if [ -d examples/epicurus-demo.X ]; then

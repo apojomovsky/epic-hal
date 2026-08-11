@@ -1,7 +1,6 @@
 /**
  * @file    combo_lcd_tick.c
- * @brief   C10 of the combination matrix
- *          (docs/superpowers/plans/2026-08-09-combination-matrix.md):
+ * @brief   C10 of the combination matrix:
  *          epic-lcd + epic-tick on the 16F877A. The real compiled
  *          HD44780 driver (src/epic_lcd.c) runs its init sequence plus
  *          a small print through the gpio4 transport ops while

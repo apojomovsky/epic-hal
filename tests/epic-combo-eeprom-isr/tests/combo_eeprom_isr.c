@@ -1,7 +1,6 @@
 /**
  * @file    combo_eeprom_isr.c
- * @brief   C5 of the combination matrix
- *          (docs/superpowers/plans/2026-08-09-combination-matrix.md):
+ * @brief   C5 of the combination matrix:
  *          EEPROM writes through the real HAL unlock sequence while a
  *          fast TIMER2 ISR runs the whole time, all real code, one
  *          firmware, one interrupt state.

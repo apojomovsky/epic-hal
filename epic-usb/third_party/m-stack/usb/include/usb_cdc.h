@@ -233,7 +233,7 @@ struct cdc_serial_state_notification {
 		 * int is accepted, which matches strict ISO C's bit-field base type
 		 * rule anyway. unsigned int is 16 bits on PIC18/XC8, so the 16
 		 * declared bits below still total 16 and match the union's flat
-		 * uint16_t sibling member. See epic-usb/docs/epic-usb-plan.md. */
+		 * uint16_t sibling member. See epic-usb/README.md. */
 		struct {
 			unsigned int bRxCarrier : 1; /**< Indicates DCD */
 			unsigned int bTxCarrier : 1; /**< Indicates DSR */

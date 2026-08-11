@@ -44,8 +44,9 @@ for `-DFOSC_HZ`; `--fosc-hz` overrides it for a different crystal.
 `hal_sources` is the full peripheral set for the family. It is not
 trimmed per module: `pic16_irq_dispatch.c` takes strong references to
 every peripheral's `_IRQHandler` specifically to force the linker to
-resolve them all, so a partial set is a guaranteed link failure. See
-`docs/mplabx-link-gaps-plan.md` root cause 1.
+resolve them all, so a partial set is a guaranteed link failure. This
+is the "link: irq dispatch needs every peripheral handler" failure
+class named in the manifest's `excluded` reason strings.
 
 A source only some variants compile is a conditional:
 
@@ -118,8 +119,8 @@ they are printed by the build driver and, in a later plan, by the
 generated `epicurus.mk` and `SUPPORT.md`.
 
 This pair replaces the `KNOWN_BROKEN` literal that used to live in
-`scripts/ci-discover-xc8-matrix.py`. `docs/mplabx-link-gaps-plan.md`'s
-exit criterion is now "no `excluded` entries remain."
+`scripts/ci-discover-xc8-matrix.py`. The exit criterion for the
+link-gaps work is now "no `excluded` entries remain."
 
 ## Examples
 

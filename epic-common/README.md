@@ -44,7 +44,6 @@ Anything register-specific: SFR maps, bank/BSR addressing, the
 peripheral driver bodies, config-word directives. Those stay in each
 family's tree (`pic16f87xa-hal/`, `pic18fxx5x-hal/`, …), implementing the
 contract this layer defines. See
-[../docs/multi-family-plan.md](../docs/multi-family-plan.md) for the full
-design and the per-phase plan, and
+[MANUAL.md](MANUAL.md) for the full design of the shared contract, and
 [../docs/adding-a-device.md](../docs/adding-a-device.md) for the operational
 guide to adding another device or family.

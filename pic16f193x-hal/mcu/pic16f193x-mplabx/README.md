@@ -53,7 +53,7 @@ register-readback gate passes for it specifically. The toolchain gap is
 closed, `mdb` (MPLAB SIM, headless, part of MPLAB X) is installed and
 confirmed working (verified against `epic-tick`'s pilot module, both
 existing families, both reaching a real `EPIC_HARNESS_RESULT: PASS` via
-`.github/workflows/sim-tests.yml`, see `docs/docker-dev-plan.md`). This
+CI's sim gate, see DEVELOPMENT.md's Docker section). This
 family's own `HARNESS=sim` (`epic-pic16f193x-firmware`'s sim variant,
 `epic-common/manifest/modules.toml`) reports over `MODE=gpio` (RA0
 PASS/FAIL marker, this family has no EUSART driver yet) and is gated

@@ -72,8 +72,8 @@ second scheduled event:
    `now + 1.5 * cycles_per_bit - RX_CAPTURE_OVERHEAD_CYCLES`.
 3. Switch to `CCP_MODE_COMPARE_SOFT_IF`.
 
-`RX_CAPTURE_OVERHEAD_CYCLES` (325 on PIC16F877A, see
-`docs/superpowers/plans/probe-swuart-rx-hotpath.md`) corrects for the
+`RX_CAPTURE_OVERHEAD_CYCLES` (325 on PIC16F877A, probe-measured; see
+the "Measured margins" section below) corrects for the
 cycles already elapsed between the real edge and the fresh Timer1
 read: without it, d0's deadline lands at 2.12 bit periods after the
 edge (inside d1's window) instead of the intended 1.5 (mid-d0). It is
@@ -190,9 +190,9 @@ by which point the frame is long since garbled.
 `EPIC_SWUART_Write` adds to "now" when arming the very first deadline
 of a new transmission, to guarantee the write lands before the
 deadline it names. It is `120`, not the original design guess of `40`:
-Task 2's real `mdb` probe
-(`docs/superpowers/plans/probe-swuart-v3-ccp-cost.md`) measured 73-95
-cycles of pure ISR dispatch latency alone on PIC16F877A (vector entry
+Task 2's real `mdb` probe (the first table in "Measured margins"
+below) measured 73-95 cycles of pure ISR dispatch latency alone on
+PIC16F877A (vector entry
 to the first instruction of the event callback), before any of the
 callback's own work. A 40-cycle margin would already be consumed by
 dispatch latency alone, before `Write`'s own mainline code even runs;
@@ -310,9 +310,8 @@ proves:
 **It does not prove real-hardware RX correctness.** Two different
 full TX+RX loopback approaches were attempted for this gate and both
 hit real, unresolved obstacles (see
-`epic-swuart/tests/sim_target_swuart.c`'s header comment and
-`docs/superpowers/plans/2026-08-07-swuart-v3.md`'s Task 8 section for
-the full write-up): an MPLAB SIM SCL stimulus process driving RC2 from
+`epic-swuart/tests/sim_target_swuart.c`'s header comment for the full
+write-up): an MPLAB SIM SCL stimulus process driving RC2 from
 RC1 never registered a CCP1 capture at all, and a breakpoint-driven
 `write pin RC2 <level>` approach (matching each TX transition observed
 on RC1) did make CCP1 capture real edges and run the whole
@@ -329,8 +328,8 @@ redesign has held to.
 ## Measured margins (probes, PIC16F877A, 20 MHz, 9600 baud)
 
 One bit period at 9600 baud / 20 MHz is 521 instruction cycles.
-`docs/superpowers/plans/probe-swuart-v3-ccp-cost.md` measured the real,
-compiled, linked driver code (not a mirror) under `mdb`:
+A real `mdb` probe measured the compiled, linked driver code (not a
+mirror):
 
 | Event | Measured cycles | % of 521-cycle budget | Margin |
 |---|---|---|---|
@@ -345,9 +344,8 @@ own real measurement of 1019 cycles against the same 521-cycle budget
 redundant) measured at just 30 cycles of handler-level overhead and is
 a meaningful share of why these numbers fit.
 
-The RX hot-path fix
-(`docs/superpowers/plans/probe-swuart-rx-hotpath.md`) then measured
-the new channel-A fast path on the real compiled module:
+The RX hot-path fix was then measured on the real compiled module's
+new channel-A fast path:
 
 | Event | Measured cycles | % of 521-cycle budget | Margin |
 |---|---|---|---|

@@ -310,9 +310,9 @@ The real *register-readback* half of the §4 gate has now run for at
 least one peripheral routed through every PIE/PIR bank: PIE1 (Timer1,
 Timer2, CCP1/2, ADC), PIE2 (comparators C1/C2), and PIE3 (Timer4/6,
 CCP3/4/5), closing the verification gap this section used to flag for
-PIE2 and PIE3. All 13 peripherals in `docs/pic16f193x-plan.md` §7's
-roadmap have landed and cleared the §4 gate; there is no remaining
-open peripheral work for this family as of this note. Future work here
+PIE2 and PIE3. All 13 peripherals on the family's rollout roadmap have
+landed and cleared the §4 gate; there is no remaining open peripheral
+work for this family as of this note. Future work here
 is either a new device variant (Path A, `docs/adding-a-device.md` §3)
 or wiring the family-agnostic `epic-*` modules (taskmgr, tick, serial,
 ...) against it for the first time, per the main `README.md`'s status

@@ -1,6 +1,6 @@
 --- epic-sdcard/third_party/m-stack-storage/src/mmc.c	2026-07-15 14:29:02.948282858 -0300
 +++ epic-sdcard/third_party/m-stack-storage/src/mmc.c	2026-07-15 15:59:06.165992025 -0300
-@@ -26,6 +26,15 @@
+@@ -26,6 +26,16 @@
 
  #if defined(__XC32__) || defined(__XC16__) || defined(__XC8)
  #include <xc.h>
@@ -12,7 +12,8 @@
 + * allowlist, not a real dependency. EPIC_SDCARD_HOST_BUILD (set by this
 + * module's host CMakeLists.txt, never by the real-target build) skips the
 + * include so this exact file can be host-compiled and tested directly.
-+ * See epic-sdcard/docs/epic-sdcard-plan.md, "Host build story". */
++ * See epic-sdcard/README.md, "Host tests exercise the real protocol
++ * logic". */
  #else
  #error "Compiler not supported"
  #endif

@@ -3,10 +3,10 @@
 Status: **living reference**, not a one-off task plan. Re-read this
 whole document (agent or human) before starting any device-addition
 work, and update it whenever a real addition teaches something this
-version got wrong or left out. Supersedes `docs/multi-family-plan.md`'s
-"How to add family #3" checklist as the operational procedure; that
-document's own "Open questions" section stays as-is, it is a historical
-record of specific decisions made for PIC18, not a checklist.
+version got wrong or left out. Supersedes the original multi-family
+plan's "How to add family #3" checklist as the operational procedure;
+its "Open questions" section was a historical record of specific
+decisions made for PIC18, not a checklist.
 
 ## Why this document is stricter than it looks
 
@@ -88,8 +88,8 @@ the exact same `mdb` reads.
    /opt/microchip/xc8/v<ver>/pic/packs/Microchip.<Family>_DFP/xc8/docs/chips/<part>.html
    ```
    `docker run --rm <image> bash -c 'find /opt/microchip/xc8/v<ver>/pic/packs -iname "*<part>*"'`
-   to locate them (see `docs/ci-plan.md`'s Phase 2 for the established
-   pattern of pulling files out of the toolchain image). If the part
+   to locate them (pulling files out of the toolchain image is an
+   established pattern in this repo). If the part
    isn't in an already-pinned DFP pack at all, that's a real blocker,
    flag it to the user before going further, don't try to hand-roll
    register headers.
@@ -121,8 +121,7 @@ against an already-supported sibling in `pic16f87xa-hal/` or
 If any of those don't hold, it's **Path B (new family)**. Enhanced
 Mid-range PIC16F1xxx is Path B even though it shares "PIC16" in the
 name: it has its own BSR-like addressing distinct from classic PIC16
-and PIC18 both (`docs/multi-family-plan.md`'s own note on this still
-holds).
+and PIC18 both.
 
 Go to §3 for Path A, §5 for Path B. Both paths end at §4 (the
 verification gate) for every peripheral touched, and §6 (documentation
@@ -138,10 +137,10 @@ deliverables) before calling it done.
    touching code, it's the actual scope of the work.
 2. **Check the RAM/flash budget seriously, don't assume "smaller
    variant, same modules" is fine.** This repo has been burned by this
-   exact assumption twice: `docs/mplabx-link-gaps-plan.md`'s Root cause
-   2 (modules that never fit the smaller PIC16/PIC18 variants at all)
-   and Root cause 3 (a single new `__at`-pinned byte tipping two
-   already-marginal modules from "fits" to "genuine linker error"). If
+   exact assumption twice: modules that never fit the smaller
+   PIC16/PIC18 variants at all, and a single new `__at`-pinned byte
+   tipping two already-marginal modules from "fits" to "genuine linker
+   error". If
    the new variant has less RAM or flash than the smallest currently
    supported one, expect some existing modules to need a `KNOWN_BROKEN`
    entry in `scripts/ci-discover-xc8-matrix.py` for it, not a silent
@@ -314,8 +313,8 @@ assumes the previous ones are done and verified, not just written):
 1. **New sibling tree** (`<partno>-hal/`), skeleton copied from
    whichever existing family is architecturally *closest* by addressing
    model and interrupt architecture (not by pin count or peripheral
-   list, per `docs/multi-family-plan.md`'s own note, still correct).
-   Expect to still write real driver code even when copying a skeleton.
+   list). Expect to still write real driver code even when copying a
+   skeleton.
 2. **Platform header first** (`include/target/`, `include/host/`), then
    get the most minimal possible real-target build (a GPIO toggle, no
    peripherals, no interrupts) actually running under real `mdb` before
@@ -375,8 +374,8 @@ assumes the previous ones are done and verified, not just written):
    `pic16f87xa-hal/MANUAL.md`/`pic18fxx5x-hal/MANUAL.md`'s shape:
    datasheet-cited peripheral/register reference, pointing to
    `epic-common/MANUAL.md` for every family-agnostic convention instead
-   of re-explaining it (see `docs/hal-manual-plan.md` for why that split
-   exists and how it was carved out).
+   of re-explaining it (see `epic-common/MANUAL.md`'s introduction for
+   why that split exists and how it was carved out).
 8. **Any compiler/codegen quirks discovered along the way** recorded as
    a live-gotcha section in `<family>-hal/README.md`, in the format
    established in `pic16f87xa-hal/README.md` and
@@ -417,8 +416,7 @@ assumes the previous ones are done and verified, not just written):
     itself. If something in `epic-common/` needed to change to fit the
     new family, that's a signal the shared contract was accidentally
     family-specific somewhere, fix that contract, not a sign the whole
-    approach is wrong (`docs/multi-family-plan.md`'s own framing, still
-    correct).
+    approach is wrong.
 
 ## §6. Documentation and sign-off checklist
 
@@ -441,9 +439,8 @@ exist and are accurate, not just present:
       and built clean for a long time before anyone noticed the
       discovery script itself had never been told about the family,
       and `xc8-build.yml` was failing outright the whole time). Any
-      `KNOWN_BROKEN` entries are documented in
-      `docs/mplabx-link-gaps-plan.md` with a real root cause, not just
-      silently excluded.
+      `excluded` manifest entries carry a real root-cause reason
+      string, not just a silent exclusion.
 - [ ] Full regression run: every module, every MCU variant in the
       affected family (or families, if a shared `epic-common` change
       was needed), host and real-target, immediately before the final
@@ -464,8 +461,8 @@ account lives.
 | SFR access while a `pic_select_bank`-style bank switch is in effect, via a plain C local/parameter | PIC16 (classic mid-range) | `pic16f87xa-hal/README.md` (XC8 codegen gotchas) |
 | SFR address that is a runtime variable/struct-field/parameter at the point of access (not a literal token) | PIC18 | `pic18fxx5x-hal/README.md` (XC8 codegen gotchas) |
 | Baud-rate/timing divisor math that can silently overflow the target register width | PIC18 (found in `pic18_harness_sim_target.c`) | `pic18fxx5x-hal/README.md` (XC8 codegen gotchas) |
-| Missing `HARNESS=sim` → watchdog-off Makefile override, WDT resets a bounded diagnostic build mid-run | PIC16, PIC18 | `docs/ci-plan.md` Phase 4 |
-| Dangling pointer: a HAL `_Init` stores the caller's pointer instead of copying the handle, and the caller's storage is a non-`static` local | PIC16 (fixed); PIC18's own driver already copies the handle, not affected | `docs/ci-plan.md` Phase 4 |
+| Missing `HARNESS=sim` → watchdog-off Makefile override, WDT resets a bounded diagnostic build mid-run | PIC16, PIC18 | manifest `example.*.sim` configs (`WDTE=OFF`/`WDT=OFF`) |
+| Dangling pointer: a HAL `_Init` stores the caller's pointer instead of copying the handle, and the caller's storage is a non-`static` local | PIC16 (fixed); PIC18's own driver already copies the handle, not affected | `epic-common/MANUAL.md` (handle pattern) |
 | Read-only status/flag bits (RCIDL, CxOUT, FVRRDY, CPSOUT, ...) reading back set even though the driver never wrote them, mistaken for a write not landing | PIC16F193X (Enhanced Mid-range) | `pic16f193x-hal/docs/ARCHITECTURE.md`; §4 step 8 above |
 | `MODE=gpio` bounded-loop example starved by continuously-firing ISRs on MPLAB SIM, never reaching `epic_harness_report()` inside the `mdb` wait window, despite every ISR and the peripheral logic being correct | PIC16F193X (Timer2/4/6, 3 concurrent timer ISRs) | §4 step 6's sub-bullet above; the fix (early-exit + ISR-driven marker) is in `pic16f193x-hal/tests/example_timer246.c` |
 | CI matrix discovery script (`scripts/ci-discover-xc8-matrix.py`) not updated when a new family's first `mcu/*-mplabx/Makefile` lands, so local real-target builds pass indefinitely while `xc8-build.yml` fails outright on every push | PIC16F193X | §5 step 9 above; §6's CI-wiring checklist item |

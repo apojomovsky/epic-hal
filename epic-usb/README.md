@@ -23,8 +23,6 @@ vendored M-Stack USB device stack (`third_party/m-stack`).
 ## Documentation
 
 - [API reference](docs/API.md), per-function semantics + usage.
-- [Implementation plan](../docs/epic-usb-plan.md), M-Stack vendoring
-  rationale, the `usb_hal.h` port, Phase 2 XC8 findings, open risks.
 
 ## Quick start
 

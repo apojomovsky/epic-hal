@@ -1,6 +1,6 @@
-# epic-combo-rx-loopback, task 8 of the quality roadmap
-# (docs/quality-roadmap.md): the RX wall, via a target-in-the-loop
-# harness. Unlike the other combos this module carries a host CMake
+# epic-combo-rx-loopback, task 8 of the quality roadmap: the RX wall,
+# via a target-in-the-loop harness. Unlike the other combos this
+# module carries a host CMake
 # build: MPLAB SIM cannot inject RX, so the firmware's echo path is
 # verified on the host sim, which CAN (pic16f87xa_sim_drive_usart_rx),
 # through the same dispatch and callback the real interrupt vector

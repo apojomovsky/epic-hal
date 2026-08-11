@@ -1,6 +1,6 @@
 /*
- * HARNESS=sim probe for the pic18fxx5x-hal GPIO audit
- * (docs/toolchain-coverage.md class C): the GPIO driver computes
+ * HARNESS=sim probe for the pic18fxx5x-hal GPIO audit: the GPIO driver
+ * computes
  * TRIS/LAT/PORT addresses at runtime and derefs them, the exact shape
  * pic18_irq.c and pic18fxx5x_ccp.c were fixed to avoid (a runtime SFR
  * address compiles to program-memory table access under XC8 v4.00).

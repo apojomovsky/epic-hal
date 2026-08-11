@@ -42,8 +42,6 @@ then stepped once per fixed-period control cycle via `pid_update()`.
 - [API reference](docs/API.md), per-function semantics, the
   Kp/Ki/Kd/Ts -> Q8.8 conversion formulas, the documented-not-guarded
   preconditions.
-- [Implementation plan](../../docs/epic-pid-plan.md), the design
-  discussion this module closes out.
 
 ## Quick start
 

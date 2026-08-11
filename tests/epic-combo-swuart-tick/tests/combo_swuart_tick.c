@@ -1,7 +1,6 @@
 /**
  * @file    combo_swuart_tick.c
- * @brief   C11 of the combination matrix
- *          (docs/superpowers/plans/2026-08-09-combination-matrix.md):
+ * @brief   C11 of the combination matrix:
  *          epic-swuart + epic-tick interleaved on PIC16F877A.
  *
  * @details
@@ -36,8 +35,7 @@
  *   The CCP driver now stores its own per-instance callback copy and
  *   the IRQ handlers call that copy directly, never dereferencing a
  *   caller handle, so this gate runs with the handle unpinned. It is
- *   the regression gate for that fragility; see the C11 section of
- *   docs/superpowers/plans/2026-08-09-combination-matrix.md.
+ *   the regression gate for that fragility.
  *
  *   MPLAB SIM lessons applied from the C1 gate: pending timer flags
  *   are cleared before any GIE-on edge (the sim wedges the ISR path

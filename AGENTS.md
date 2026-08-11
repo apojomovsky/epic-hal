@@ -16,10 +16,10 @@ register-specific (SFR maps, bank/BSR addressing, IRQ vectors,
 peripheral bodies) lives per-family under a **fixed contract**: same
 names/signatures across families, different bodies. Read
 `epic-common/README.md` + `epic-common/MANUAL.md` before touching HAL
-code; family manuals point back there instead of repeating it. Full
-design: `docs/multi-family-plan.md`. `docs/adding-a-device.md` is the
-verification-gated playbook for a new device or family (used to add
-PIC16F193X, see `docs/pic16f193x-plan.md`).
+code; family manuals point back there instead of repeating it. Those
+two are the shared-contract design docs. `docs/adding-a-device.md` is
+the verification-gated playbook for a new device or family (used to
+add PIC16F193X).
 
 ## Module anatomy
 
@@ -43,10 +43,10 @@ local installs beyond two vendor files only a human can fetch,
 Microchip's CDN blocks scripted downloads): root `Makefile`, `make
 check-vendor` -> `make image` -> `make test` / `make xc8-build
 MODULE=... MCU=...` / `make mdb-test MODULE=... MCU=... DEVICE=...
-DFP=...` / `make shell`. Details: `docs/docker-dev-plan.md`. Same image
-is pushed to a **private** GHCR package CI pulls from
-(`make ci-image-push`, human-triggered only; see that doc for why it
-must stay private, EULA redistribution terms).
+DFP=...` / `make shell`. Details: DEVELOPMENT.md's Docker section.
+Same image is pushed to a **private** GHCR package CI pulls from
+(`make ci-image-push`, human-triggered only; see DEVELOPMENT.md for
+why it must stay private, EULA redistribution terms).
 
 CI (`.github/workflows/ci.yml`): two jobs, `host` (host build+ctest,
 every module, plus lint, no Docker) and `target` (one Docker pull, then
@@ -117,9 +117,9 @@ codebase so far.
 - **Update the docs a change touches before calling it done**: the
   module's `README.md`/`docs/API.md`/`docs/ARCHITECTURE.md` if
   behavior changed, `MANUAL.md` if a register fact changed.
-- **Non-trivial work gets a plan doc first** (`docs/superpowers/plans/`),
-  and the plan is **ephemeral**: it lives during the work and is
-  deleted when the work lands. Git history is the archive. No
+- **Non-trivial work gets a plan doc first**, and the plan is
+  **ephemeral**: it lives during the work and is deleted when the work
+  lands. Git history is the archive. No
   `Status:` line bookkeeping; a design doc for implemented work is a
   bitacore, not documentation.
 - **Before trusting an uncertain compiler/hardware behavior**, write a

@@ -29,8 +29,6 @@ SSP/GPIO HAL and `epic-tick`.
 ## Documentation
 
 - [API reference](docs/API.md), per-function semantics + usage.
-- [Implementation plan](../docs/epic-sdcard-plan.md), M-Stack storage
-  vendoring, chip scope rationale, Phase 2 XC8 findings, open risks.
 
 ## Quick start
 

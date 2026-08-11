@@ -1,7 +1,6 @@
 /**
  * @file    combo_taskmgr_serial.c
- * @brief   C8 of the combination matrix
- *          (docs/superpowers/plans/2026-08-09-combination-matrix.md):
+ * @brief   C8 of the combination matrix:
  *          epic-taskmgr + epic-serial together, one firmware, one CPU.
  *          Three cooperative scheduler tasks with distinct periods each
  *          push a known 3-byte payload through epic_serial_write every

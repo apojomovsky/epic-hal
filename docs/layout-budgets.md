@@ -12,8 +12,7 @@ inspect the .s / .sym / .map (AGENTS.md).
 - **Page-0 ISR body (87XA)**: the `__interrupt` body must stay in
   flash page 0 because the vector's goto is PCLATH-less. Past ~4.2 K
   words total the linker scatters the ISR body and hand-asm internal
-  gotos across pages and aborts with fixup-overflow 1356
-  (docs/toolchain-coverage.md "Simulator and toolchain findings").
+  gotos across pages and aborts with fixup-overflow 1356.
   Pure-C code elsewhere can live on any page (the compiler emits
   PCLATH management for calls); the constraint is the ISR body and
   any hand-asm routine with internal gotos.
@@ -93,5 +92,6 @@ New pins must land outside these ranges (the linker skips pinned
 addresses, so a collision only happens against another pin or an
 SFR; the table exists so a future pin fails loudly in review).
 
-The toolchain-coverage.md "Simulator and toolchain findings"
-section is the companion record of what the sim cannot do.
+The probe findings behind these constraints live in git history and
+the kept module `docs/ARCHITECTURE.md` files; this file is the
+layout-focused companion record of what the sim cannot do.

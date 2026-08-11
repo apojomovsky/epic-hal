@@ -72,8 +72,8 @@ lines as `xc8-v${XC8_VERSION}-dfp${PIC16}-${PIC18}-${PIC1216F1}-mplabx${MPLABX_V
 `make ci-image-push` and the CI jobs reuse the same grep so the formula
 cannot drift.
 
-See [docs/docker-dev-plan.md](docs/docker-dev-plan.md) for the design
-and the full command reference.
+The tag formula above is the single source of truth for the image
+version; the targets in this section are the full command reference.
 
 ## CI
 
@@ -89,8 +89,8 @@ Maintainers with `write:packages` access to this repo's GHCR packages
 can publish an updated toolchain image with `make ci-image-push
 GHCR_OWNER=<owner>` (after `docker login ghcr.io`), the same private tag
 CI's workflows pull from; CI itself never builds this image. See
-[docs/ci-plan.md](docs/ci-plan.md) for the CI design and its
-phase-by-phase findings.
+[.github/workflows/ci.yml](.github/workflows/ci.yml) for the job
+definitions and the consolidation tradeoff in its header comment.
 
 ## Releases
 

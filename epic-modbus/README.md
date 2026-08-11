@@ -24,8 +24,6 @@ RS-485 driver-enable pin).
 ## Documentation
 
 - [API reference](docs/API.md), per-function semantics + usage.
-- [Implementation plan](../docs/epic-modbus-plan.md), scope, external
-  library survey, and the design decisions made before writing code.
 
 ### T3.5 caveat
 

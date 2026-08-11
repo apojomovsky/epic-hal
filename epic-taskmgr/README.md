@@ -13,7 +13,9 @@ priority order on each tick, like interrupt handlers.
 The same `task_manager.c`/`task_manager.h` builds against any 8-bit PIC HAL
 family (PIC16F87XA, PIC18F2455, ...) via the neutral `epic_hal.h` contract;
 select the family at build time with `-DEPIC_FAMILY=PIC16` (default) or
-`-DEPIC_FAMILY=PIC18`. See [docs/multi-family-plan.md](../docs/multi-family-plan.md).
+`-DEPIC_FAMILY=PIC18`. See [epic-common/README.md](../epic-common/README.md)
+and [epic-common/MANUAL.md](../epic-common/MANUAL.md) for the shared
+contract.
 
 > 📖 **Documentation**: [API reference](docs/API.md)
 
@@ -30,8 +32,8 @@ select the family at build time with `-DEPIC_FAMILY=PIC16` (default) or
   PIC16F876A/877A; banks cleanly into every part. Override with
   `-DTASK_MGR_MAX_TASKS=N`. Note: the real-target example build is
   manifest-excluded on the 192 B parts (the full-HAL build's 54-byte
-  default table does not fit; `docs/mplabx-link-gaps-plan.md` root
-  cause 2), so CI covers 16F876A/16F877A only.
+  default table does not fit there), so CI covers 16F876A/16F877A
+  only.
 - **Race-free**: the tick (interrupt context) and the run loop (main context)
   share the task table through short critical sections; a tick that lands
   during a long task arms it for the next round instead of being lost.
@@ -65,8 +67,8 @@ cmake --build build18
 ./build18/example_multi_blink               # default device (PIC18F4550)
 ```
 
-This is the multi-family litmus test
-([docs/multi-family-plan.md](../docs/multi-family-plan.md), Phase 3):
+This is the multi-family litmus test (per the shared-contract design
+in [epic-common/README.md](../epic-common/README.md)):
 pointing the task manager at `pic18fxx5x-hal` needs zero changes to
 `task_manager.c`/`task_manager.h` (only the 3 family-neutral include
 lines, which are the same for either family). The PIC18 run produces the
@@ -101,8 +103,8 @@ HAL family:
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
 
 # PIC16F87XA family (16F873A/16F874A are manifest-excluded from the
-# real-target build: the full-HAL example does not fit their 192 B RAM,
-# see docs/mplabx-link-gaps-plan.md root cause 2):
+# real-target build: the full-HAL example does not fit their 192 B
+# RAM):
 python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F877A --run
 python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F876A --run
 

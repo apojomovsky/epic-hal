@@ -1,9 +1,9 @@
 /**
  * Host-sim test for the RX-loopback harness firmware
  * (combo_rx_loopback.c): drives the SAME firmware logic through the
- * host sim's USART RX-injection hook. MPLAB SIM cannot inject RX
- * (docs/toolchain-coverage.md), so the echo path never fires under
- * mdb; the host sim CAN: pic16f87xa_sim_drive_usart_rx() stores the
+ * host sim's USART RX-injection hook. MPLAB SIM cannot inject RX, so
+ * the echo path never fires under mdb; the host sim CAN:
+ * pic16f87xa_sim_drive_usart_rx() stores the
  * byte in RCREG, sets RCIF and fires the sim IRQ callback, which
  * epic_harness_init wires to epic_dispatch_all_irqs, the same
  * dispatch the real interrupt vector runs. The TX helper is the

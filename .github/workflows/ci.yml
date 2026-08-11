@@ -26,8 +26,8 @@ name: ci
 # Tradeoff, deliberate: the old per-family/per-module jobs ran
 # concurrently (GitHub schedules matrix jobs on separate runners); this
 # collapses them into one sequential job each, trading wall-clock time
-# for a much shorter PR check list. See
-# docs/superpowers/plans/2026-08-06-ci-consolidation.md for the decision.
+# for a much shorter PR check list. The collapsed job structure above
+# is that decision.
 
 on:
   push:

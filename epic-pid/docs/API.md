@@ -1,8 +1,8 @@
 # `epic-pid` API reference
 
 Authoritative declarations: [`include/pid.h`](../include/pid.h).
-The implementation plan that motivated the design is in
-[`docs/epic-pid-plan.md`](../../docs/epic-pid-plan.md).
+The design discussion this module closes out is in the module's
+[README](../README.md).
 
 ## Types & constants
 

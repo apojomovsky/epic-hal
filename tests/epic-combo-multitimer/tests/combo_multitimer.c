@@ -1,8 +1,7 @@
 /**
  * @file    combo_multitimer.c
- * @brief   C2 of the combination matrix
- *          (docs/superpowers/plans/2026-08-09-combination-matrix.md):
- *          TMR0 + TMR1 + TMR2 + USART, all interrupt-driven, one
+ * @brief   C2 of the combination matrix:
+ *          TMR0 + TMR1 + TMR2 + USART, all interrupt-driven in one
  *          firmware, one bank state.
  *
  * @details

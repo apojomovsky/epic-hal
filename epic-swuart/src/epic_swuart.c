@@ -33,8 +33,7 @@ static void on_rx_event_b(void);
 /* Cycles of lead time between EPIC_SWUART_Write() arming the start bit's
  * compare deadline and that deadline actually landing: must be large
  * enough that EPIC_CCP_SetCompare/SetMode land before Timer1 reaches the
- * armed value, confirmed on real PIC16F877A hardware (see
- * docs/superpowers/plans/probe-swuart-v3-ccp-cost.md) to need 120
+ * armed value, confirmed on real PIC16F877A hardware to need 120
  * cycles, not the original 40-cycle guess. */
 #define SWUART_LEAD_CYCLES 120u
 
@@ -248,7 +247,7 @@ static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef r
 /* Edge-to-Timer1-read latency on real PIC16F87XA (AN555-style
  * _Cycle_Offset1 correction): 3 cycles interrupt response + 322 cycles
  * software latency, measured via an mdb probe on PIC16F877A, XC8 v3.10,
- * -O2 (see docs/superpowers/plans/probe-swuart-rx-hotpath.md). With it,
+ * -O2. With it,
  * d0's sample deadline lands mid-d0 at 1.499 bit periods; with 0 it
  * landed inside d1's window, a guaranteed mis-sample. Do not re-derive
  * without a fresh probe: it describes this exact code path/toolchain. */
@@ -296,8 +295,8 @@ static void rx_capture_event_fast(EPIC_SWUART_HandleTypeDef *h)
 
     /* RX_IDLE: a start-bit falling edge just latched into CCPR1.
      * Immediate, synchronous deglitch check, no second scheduled
-     * event (see docs/superpowers/specs/2026-08-08-swuart-rx-hotpath-design.md
-     * for why this removes the v3 timing race). */
+     * event (deferring the check to a second event was the v3 timing
+     * race this removes). */
     if (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) != GPIO_PIN_RESET) {
         return; /* noise: pin already back high, stay in Capture mode */
     }

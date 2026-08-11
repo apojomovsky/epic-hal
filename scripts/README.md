@@ -3,8 +3,9 @@
 Covers the host-toolchain bootstrap and pre-commit hook below. For
 real-target XC8 builds and the `mdb` (MPLAB SIM) verification gate
 without installing XC8/MPLAB X yourself, see the root
-[`Makefile`](../Makefile) and [`docs/docker-dev-plan.md`](../docs/docker-dev-plan.md)
-instead, everything runs inside a Docker image built from installers you
+[`Makefile`](../Makefile) and [DEVELOPMENT.md](../DEVELOPMENT.md)'s Docker
+section instead, everything runs inside a Docker image built from
+installers you
 drop in `docker/ci-toolchain/vendor/`. `scripts/sim-mdb-run.sh` and
 `scripts/sim-test-local.sh` (this directory) are the lower-level pieces
 that flow reuses; their own header comments cover direct use if you
@@ -160,8 +161,7 @@ scripts themselves run in).
 - `ci-target-bundle.sh [bundles-dir] [summary.md]`: the isolated bundle
   build, proving each generated bundle is self-contained by building it
   from `/isolated` (no repo above it) rather than in place. Also builds
-  each bundle's reference MPLAB X project headlessly (see
-  `docs/superpowers/plans/probe-mplabx-headless.md`).
+  each bundle's reference MPLAB X project headlessly.
 
 ## `epic_build.py`, the real-target build driver
 

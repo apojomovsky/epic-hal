@@ -1,7 +1,6 @@
 /**
  * @file    combo_tick_settings.c
- * @brief   C7 of the combination matrix
- *          (docs/superpowers/plans/2026-08-09-combination-matrix.md):
+ * @brief   C7 of the combination matrix:
  *          epic-tick + epic-settings on PIC18 (18F4550).
  *
  * @details

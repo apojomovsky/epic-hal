@@ -34,7 +34,8 @@
  * allowlist, not a real dependency. EPIC_SDCARD_HOST_BUILD (set by this
  * module's host CMakeLists.txt, never by the real-target build) skips the
  * include so this exact file can be host-compiled and tested directly.
- * See epic-sdcard/docs/epic-sdcard-plan.md, "Host build story". */
+ * See epic-sdcard/README.md, "Host tests exercise the real protocol
+ * logic". */
 #else
 #error "Compiler not supported"
 #endif

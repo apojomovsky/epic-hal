@@ -1,7 +1,6 @@
 /**
  * @file    combo_adc_uart.c
- * @brief   C3 of the combination matrix
- *          (docs/superpowers/plans/2026-08-09-combination-matrix.md):
+ * @brief   C3 of the combination matrix:
  *          ADC conversion loop + TIMER1 + USART TX interleaved, all
  *          real code, one firmware, one bank state.
  *

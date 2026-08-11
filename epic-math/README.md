@@ -27,8 +27,6 @@ family-agnostic C library with a hand-written inline-asm core.
   binding convention, banking, and the three test tiers.
 - [API reference](docs/API.md), per-function semantics, edge contracts, and
   the Q-format conventions.
-- [Implementation plan](../docs/epic-math-plan.md), source material and the
-  phase-by-phase plan.
 
 ## Quick start
 

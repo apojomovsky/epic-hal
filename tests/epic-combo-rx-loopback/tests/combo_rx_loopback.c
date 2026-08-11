@@ -1,10 +1,10 @@
 /**
- * Task 8 of the quality roadmap (docs/quality-roadmap.md): the RX
- * wall, via a target-in-the-loop harness. This file is the firmware:
- * a real USART RX path (interrupt-driven, line-framing echo) a host
- * can talk to through the actual UART pins. MPLAB SIM cannot inject
- * RX (docs/toolchain-coverage.md), so the mdb leg checks what the sim
- * CAN show (RX arm state, boot banner over TX); the echo path is
+ * Task 8 of the quality roadmap: the RX wall, via a
+ * target-in-the-loop harness. This file is the firmware: a real USART
+ * RX path (interrupt-driven, line-framing echo) a host can talk to
+ * through the actual UART pins. MPLAB SIM cannot inject RX, so the
+ * mdb leg checks what the sim CAN show (RX arm state, boot banner
+ * over TX); the echo path is
  * driven on the host sim, where pic16f87xa_sim_drive_usart_rx()
  * injects bytes through the same dispatch and callback the real
  * vector runs (tests/test_rx_loopback.c).

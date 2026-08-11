@@ -296,15 +296,17 @@ peripheral coverage is complete.
   [PIC18Fxx5x](pic18fxx5x-hal/MANUAL.md),
   [PIC16F193X](pic16f193x-hal/MANUAL.md): datasheet-cited register
   reference, one page per peripheral.
-- [docs/multi-family-plan.md](docs/multi-family-plan.md): how the shared
+- [epic-common/README.md](epic-common/README.md) +
+  [epic-common/MANUAL.md](epic-common/MANUAL.md): how the shared
   contract was extracted and the PIC18F2455 family added behind it.
 
 ## Contributing
 
 Bug reports, datasheet-cited corrections, and new devices are welcome.
 The repo is agent-friendly and plan-first: non-trivial work starts with
-a design doc under `docs/superpowers/`, and everything is verified by
-the CI pipeline (host tests, real XC8 cross-compiles, MPLAB SIM runs).
+a short-lived design doc (deleted on completion), and everything is
+verified by the CI pipeline (host tests, real XC8 cross-compiles,
+MPLAB SIM runs).
 See [AGENTS.md](AGENTS.md) for the conventions and
 [DEVELOPMENT.md](DEVELOPMENT.md) for the toolchain and build workflow.
 

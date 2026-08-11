@@ -4,8 +4,9 @@
  * pattern as pic16_harness_sim_target.c). TX-only: MPLAB SIM cannot
  * inject an RX bitstream (SCL stimulus never registers a CCP1
  * capture; breakpoint-driven pin writes never reproduced the byte, see
- * docs/superpowers/plans/2026-08-07-swuart-v3.md Task 8 for the
- * write-up), so the real RX path stays uncovered (docs/API.md).
+ * epic-swuart/docs/ARCHITECTURE.md, "Real-hardware verification: what
+ * is proven, and what is not", for the write-up), so the real RX path
+ * stays uncovered (docs/API.md).
  * tx_count drops when Write() dequeues into the shift register, but
  * the SIM_ITERATIONS budget still lets the real compare events run, so
  * a broken CCP2 ISR path fails by never reaching epic_harness_report. */

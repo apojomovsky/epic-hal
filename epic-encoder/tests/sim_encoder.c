@@ -4,8 +4,8 @@
  * `encoder_update` verifying the x4 position count in both directions,
  * the impossible-transition counter, and the glitch gate against real
  * simulated time, then hammers `encoder_get_position` under the live
- * tick ISR (docs/toolchain-coverage.md class G) checking every read is
- * consistent and the tick survived. Reports PASS/FAIL over the harness
+ * tick ISR, checking every read is consistent and the tick survived.
+ * Reports PASS/FAIL over the harness
  * USART (see pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
  */
 

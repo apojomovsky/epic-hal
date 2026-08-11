@@ -10,8 +10,8 @@
 # host build links against). The host build here links
 # epic_usb_host_stub.c instead -- a deliberately separate, independent test
 # double, not a compile-time swap of the same source (see
-# epic-usb/docs/epic-usb-plan.md, "Host build story", and
-# epic_usb_host_stub.c's own file header for why).
+# epic-usb/README.md's "Host stub tests the contract, not the silicon"
+# bullet and epic_usb_host_stub.c's own file header for why).
 #
 # The real target build goes entirely through the XC8 Makefile under
 # mcu/pic18fxx5x-usb-mplabx/ (Phase 3 of the plan, not wired up yet), not

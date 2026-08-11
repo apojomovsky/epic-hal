@@ -39,8 +39,7 @@ SIZE_HINTS = {  # type token -> bytes
 # Explicitly verified exceptions: (file, static) pairs that are
 # IRQ-shared and multi-byte but deliberately unpinned, with the reason.
 # Each is verified by disassembly or the documented codegen mechanism
-# (see docs/toolchain-coverage.md section H and the 2026-08-11 pinning
-# notes):
+# (the reasons are itemized below):
 # - The 193X objects: XC8 v4.00 derefs pointers through FSR1 indirect
 #   (`movwf fsr1l; clrf fsr1h; moviw`), which reaches any bank, and
 #   direct array reads get auto-banksel. Verified 2026-08-11 by

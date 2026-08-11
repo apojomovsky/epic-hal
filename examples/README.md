@@ -30,5 +30,4 @@ for the authoritative source/include list.
 
 Verified buildable headlessly in the toolchain container (`make shell`,
 then `prjMakefilesGenerator.sh` + `make -f nbproject/Makefile-default.mk
-SUBPROJECTS= .build-conf` from inside each `.X` directory); see
-`docs/superpowers/plans/probe-mplabx-headless.md` for the full probe.
+SUBPROJECTS= .build-conf` from inside each `.X` directory).

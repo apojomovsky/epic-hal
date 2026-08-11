@@ -70,7 +70,7 @@ check-vendor:
 	if [ "$$ok" -eq 0 ]; then \
 		echo ""; \
 		echo "Neither file can be fetched automatically: Microchip's download"; \
-		echo "CDN sits behind a bot-challenge (see docs/ci-plan.md), so this"; \
+		echo "CDN sits behind a bot-challenge, so this"; \
 		echo "is a one-time manual step, not a bug in this Makefile."; \
 		exit 1; \
 	fi; \

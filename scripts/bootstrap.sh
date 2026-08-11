@@ -70,7 +70,7 @@ fi
 toolchain_ok=1
 if ! command -v docker >/dev/null 2>&1; then
     echo "bootstrap: docker not found. Real-target builds run in a Docker image, see"
-    echo "  docs/docker-dev-plan.md; install Docker first."
+    echo "  DEVELOPMENT.md's Docker section; install Docker first."
     toolchain_ok=0
 elif ! docker info >/dev/null 2>&1; then
     echo "bootstrap: docker found but the daemon is not reachable (is it running? are"

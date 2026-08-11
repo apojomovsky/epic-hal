@@ -176,8 +176,8 @@ code-protection settings (`CP3`/`WRT3`/`EBTR3`) are emitted only for the
 Public API in `pic18fxx5x_sim.h`, backed by a flat 4096-byte memory array
 `pic18_sim_sfr[]` (`src/sim/pic18_sim.c`) indexed by the physical 12-bit
 address — no BSR/Access-Bank translation modeled; every MVP-and-beyond SFR
-this HAL uses lives in the Access Bank (0xF60-0xFFF) so none is needed
-(`docs/multi-family-plan.md`, Phase 2 resolved question). The function-name
+this HAL uses lives in the Access Bank (0xF60-0xFFF) so none is needed.
+The function-name
 shape mirrors `pic16f87xa_sim_*` (`pic18_sim_reset/step/drive_input/
 read_output/set_irq_callback`), plus one `drive_*` hook per peripheral that
 needs test-injected completion:
@@ -251,8 +251,8 @@ priority mode is active. `EPIC_IRQ_SetPriority` writes the matching bit in
 `INTCON2`/`INTCON3`/`IPR1`/`IPR2`; sources reset to high priority
 (`INTCON2`/`INTCON3`/`IPR1`/`IPR2` reset all-ones, DS39632E Table 5-1).
 `EPIC_IRQ_SetPriority` is the one shared-contract extension PIC18 needs and
-PIC16 implements as a no-op (`docs/multi-family-plan.md`, Phase 2 resolved
-question).
+PIC16 implements as a no-op (a resolved design question of the
+shared-contract work).
 
 Sources, by register: `INTCON` (TMR0, INT0, RB change), `INTCON3` (INT1,
 INT2), `PIR1` (TMR1, TMR2, CCP1, SSP, USART RX/TX, ADC, SPP), `PIR2` (TMR3,
@@ -935,7 +935,7 @@ build/example_*; do "$t"; done` (exit 0 = pass), same as PIC16F87XA.
 - **Real-silicon validation deferred.** No PIC18 board on hand during
   development; every peripheral is verified on the host sim and the XC8
   build's vector placement (0008h/0018h), but not yet on real hardware —
-  flagged explicitly in `docs/multi-family-plan.md`, not silently skipped.
+  flagged explicitly here, not silently skipped.
 
 ## 24. Appendix: datasheet section index
 

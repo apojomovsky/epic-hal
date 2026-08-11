@@ -10,7 +10,7 @@ backend** — a state machine is pure control-flow logic, so the same
 with [epic-taskmgr](../epic-taskmgr) (or anything else) by staying decoupled
 from it: a task callback just owns an `fsm_t` and calls `fsm_dispatch()`.
 
-> 📖 **Documentation**: [API reference](docs/API.md) · [Implementation plan](../docs/epic-fsm-plan.md)
+> 📖 **Documentation**: [API reference](docs/API.md)
 
 ## Why
 
