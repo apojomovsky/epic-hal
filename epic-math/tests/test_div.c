@@ -1,17 +1,15 @@
-/**
- * @file    test_div.c
- * @brief   Host tests for `pic_math_divmod_u16`/`_s16`/`_u32_16`: the
- *          oracle against native `/`/`%`, a C reference of the restoring
- *          shift-subtract algorithm the PIC16/PIC18 asm mirrors (so a
- *          correct hand-trace against this implies a correct asm body),
- *          and the documented edge contracts (divide-by-zero, `INT16_MIN
- *          / -1`, u32_16 truncation).
+/*
+ * Host tests for pic_math_divmod_u16/_s16/_u32_16: the oracle against
+ * native / and %, a C reference of the restoring shift-subtract
+ * algorithm the PIC16/PIC18 asm mirrors (so a correct hand-trace
+ * against this implies a correct asm body), and the documented edge
+ * contracts (divide-by-zero, INT16_MIN / -1, u32_16 truncation).
  */
 
 #include "pic_math.h"
 #include "pic_math_test.h"
 
-/* ─── 2. C reference of the restoring algorithm the asm mirrors ──── */
+/* C reference of the restoring algorithm the asm mirrors. */
 
 /* 16/16: AN526 layout -- acca=num becomes the quotient, accb=0 becomes the
  * remainder; each iteration shifts accb:acca left (acca MSB -> accb LSB),
@@ -49,8 +47,6 @@ static pic_math_udiv16_t ref_divmod_u32_16_algo(uint32_t num, uint16_t den)
     pic_math_udiv16_t r = { (uint16_t)acc, (uint16_t)rem };
     return r;
 }
-
-/* ─── 1 + 2. oracle and algorithm vs native ─────────────────────── */
 
 static const uint16_t U16_BOUNDS[] = {
     0x0000, 0x0001, 0x0002, 0x0003, 0x0007, 0x0100, 0x7FFF, 0x8000,
@@ -140,7 +136,7 @@ static void test_divmod_s16(void)
     }
 }
 
-/* ─── 3. documented edge contracts ──────────────────────────────── */
+/* Documented edge contracts. */
 
 static void test_div_edges(void)
 {

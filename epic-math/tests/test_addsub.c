@@ -1,9 +1,7 @@
-/**
- * @file    test_addsub.c
- * @brief   Host tests for `pic_math_add_u16`/`sub_u16`/`negate_s16`/
- *          `negate_s32`: randomized plus boundary cases (including
- *          `INT16_MIN`/`INT32_MIN`, which negate to themselves) against a
- *          32-bit reference.
+/*
+ * Host tests for pic_math_add_u16/sub_u16/negate_s16/negate_s32:
+ * randomized plus boundary cases (including INT16_MIN/INT32_MIN, which
+ * negate to themselves) against a 32-bit reference.
  */
 
 #include "pic_math.h"

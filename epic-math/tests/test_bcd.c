@@ -1,9 +1,8 @@
-/**
- * @file    test_bcd.c
- * @brief   Host tests for the BCD primitives against the host reference
- *          backend: exhaustive over the valid BCD range for each width,
- *          plus the documented invalid-nibble behavior. The per-family
- *          asm backends are validated separately (hand-traces).
+/*
+ * Host tests for the BCD primitives against the host reference backend:
+ * exhaustive over the valid BCD range for each width, plus the
+ * documented invalid-nibble behavior. The per-family asm backends are
+ * validated separately (hand-traces).
  */
 
 #include "pic_math.h"

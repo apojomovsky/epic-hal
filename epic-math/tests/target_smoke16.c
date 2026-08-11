@@ -1,12 +1,10 @@
-/**
- * @file    target_smoke16.c
- * @brief   PIC16F87XA on-target smoke: calls one representative primitive
- *          per asm-leaf group (multiply, divide, add, BCD) so the linker
- *          pulls in the real asm bodies, proving the backend builds and
- *          links. PIC16's flash/RAM budget is too small for the full
- *          golden-vector self-test (see target_selftest.c, PIC18-only);
- *          see docs/ARCHITECTURE.md "Testing tiers" for the rest of the
- *          PIC16 validation story.
+/*
+ * PIC16F87XA on-target smoke: calls one representative primitive per
+ * asm-leaf group (multiply, divide, add, BCD) so the linker pulls in the
+ * real asm bodies, proving the backend builds and links. PIC16's
+ * flash/RAM budget is too small for the full golden-vector self-test
+ * (see target_selftest.c, PIC18-only); see docs/ARCHITECTURE.md
+ * "Testing tiers" for the rest of the PIC16 validation story.
  */
 
 #include "epic_hal.h"

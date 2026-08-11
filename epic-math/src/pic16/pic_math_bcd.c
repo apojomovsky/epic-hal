@@ -1,10 +1,9 @@
-/**
- * @file    pic_math_bcd.c (PIC16 inline-asm backend)
- * @brief   BCD conversions are C built on this backend's asm mul/div
- *          primitives. The digit-adjust is new asm: mid-range PIC16 has
- *          no `daw` instruction, so `bcd_add8` does the manual +6 nibble
- *          adjust and `bcd_sub8` the nibble-wise subtract with borrow.
- *          Defined for valid BCD operands (0..99) only.
+/*
+ * PIC16 inline-asm BCD primitives. Conversions are C built on this
+ * backend's asm mul/div; only the digit adjust is asm, because mid-range
+ * PIC16 has no daw instruction: bcd_add8 does a manual +6 nibble adjust
+ * and bcd_sub8 a nibble-wise subtract with borrow. Defined for valid BCD
+ * operands (0..99) only.
  */
 
 #include <xc.h>
@@ -47,12 +46,9 @@ uint32_t pic_math_bin_to_bcd16(uint16_t value)
     return bcd;
 }
 
-/* ─── pic_math_bcd_add8 ──────────────────────────────────────────
- * Manual DAW: lo=(a&0xF)+(b&0xF); if lo>9 lo+=6 (carry to high); hi=(a>>4)+
- * (b>>4)+carry; if hi>9 hi+=6 (carry out). r=((hi&0xF)<<4)|(lo&0xF).
- * Offsets a@0,b@1,r@2,co@3,lo@4,hi@5. Hand-trace a=0x55 b=0x55 (110 ->
- * 0x10, carry=1): lo=5+5=0xA(10)>9 -> lo=16, adj_low=0, cy=1; hi=5+5+1=0xB
- * (11)>9 -> hi=17, adj_high=1, co=1; r=(1<<4)|0=0x10, co=1. Matches host. */
+/* Manual DAW: add nibbles separately, +6 on any nibble sum > 9, rippling
+ * the carry into the high nibble and out. r = (hi<<4)|lo; co set when the
+ * high nibble adjusted. Offsets a@0, b@1, r@2, co@3, lo@4, hi@5. */
 uint8_t pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out) __at(0x400)
 {
     pic16_mscratch[0] = a; pic16_mscratch[1] = b;
@@ -105,11 +101,10 @@ uint8_t pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out) __at(0x400)
     return pic16_mscratch[2];
 }
 
-/* ─── pic_math_bcd_sub8 ──────────────────────────────────────────
- * a - b, BCD, nibble-wise subtract with borrow. Offsets a@0,b@1,r@2,bo@3,
- * aL@4,bL@5,br@6,aH@7. Hand-trace a=0x12 b=0x34 (12-34 = -22 -> 78, bo=1):
- *   aL=2,bL=4; 2-4 borrow -> aL=8, br=1; aH=1; bH+br=3+1=4; 1-4 borrow ->
- *   aH=7, bo=1; r=(7<<4)|8=0x78, bo=1. Matches host: 12-34+100=78, bo=1.   */
+/* a - b, BCD, nibble-wise subtract with borrow. Each nibble pair
+ * subtracts; on borrow the digit is +10-adjusted and the borrow carries
+ * into the high nibble, becoming bo. Offsets a@0, b@1, r@2, bo@3, aL@4,
+ * bL@5, br@6, aH@7. */
 uint8_t pic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out) __at(0x450)
 {
     pic16_mscratch[0] = a; pic16_mscratch[1] = b;

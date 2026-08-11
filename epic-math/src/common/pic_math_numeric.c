@@ -1,10 +1,9 @@
-/**
- * @file    pic_math_numeric.c (shared portable-C, no asm)
- * @brief   `pic_math_diff3` (3-point central derivative) and
- *          `pic_math_integrate_simpson38` (Simpson's-3/8 integration),
- *          fixed-point, one implementation linked by every backend. The
- *          caller passes precomputed Q-format scale factors; see
- *          include/pic_math.h for the exact Q-format of each argument.
+/*
+ * Shared portable-C numeric routines (no asm): pic_math_diff3 (3-point
+ * central derivative) and pic_math_integrate_simpson38 (Simpson's-3/8
+ * integration), fixed-point, one implementation linked by every backend.
+ * The caller passes precomputed Q-format scale factors; see
+ * include/pic_math.h for the exact Q-format of each argument.
  */
 
 #include "pic_math.h"

@@ -1,9 +1,8 @@
-/**
- * @file    test_rand.c
- * @brief   Host tests asserting `pic_math_rand_next`'s documented LFSR
- *          properties (maximal-length period, never returns 0, escapes a
- *          zero seed, two states advance independently) and a coarse
- *          bell-shape sanity check on `rand_gauss`, not a chi-square test.
+/*
+ * Host tests asserting pic_math_rand_next's documented LFSR properties
+ * (maximal-length period, never returns 0, escapes a zero seed, two
+ * states advance independently) and a coarse bell-shape sanity check on
+ * rand_gauss, not a chi-square test.
  */
 
 #include "pic_math.h"

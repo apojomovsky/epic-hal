@@ -1,9 +1,8 @@
-/**
- * @file    pic_math_addsub.c (host reference backend)
- * @brief   Portable-C add/sub/negate primitives, the independent oracle
- *          for the PIC16/PIC18 asm backends. Negation works in unsigned
- *          to avoid `-INT_MIN` overflow, so `negate(INT16_MIN) ==
- *          INT16_MIN` (two's-complement wrap, documented).
+/*
+ * Host reference backend: portable-C add/sub/negate primitives, the
+ * independent oracle for the PIC16/PIC18 asm backends. Negation works in
+ * unsigned to avoid -INT_MIN overflow, so negate(INT16_MIN) == INT16_MIN
+ * (two's-complement wrap, documented).
  */
 
 #include "pic_math.h"

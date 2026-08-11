@@ -1,13 +1,11 @@
-/**
- * @file    test_properties.c
- * @brief   Host property tests for the fixed-point primitives: algebraic
- *          identities that must hold for every input, checked over
- *          deterministic random streams. Complements the oracle tests
- *          (test_mul/test_div/test_addsub/test_bcd compare against wider
- *          native arithmetic); these check the identities the module's
- *          own docs promise: add and sub are inverses modulo 2^16, mul
- *          is commutative, divmod round-trips through n = q*d + r, and
- *          the BCD add/sub pair are inverses modulo 100.
+/*
+ * Host property tests for the fixed-point primitives: algebraic
+ * identities that must hold for every input, checked over deterministic
+ * random streams. Complements the oracle tests (test_mul/test_div/
+ * test_addsub/test_bcd compare against wider native arithmetic); these
+ * check the identities the module's own docs promise: add and sub are
+ * inverses modulo 2^16, mul is commutative, divmod round-trips through
+ * n = q*d + r, and the BCD add/sub pair are inverses modulo 100.
  */
 
 #include "pic_math.h"
@@ -54,7 +52,7 @@ static void test_addsub_roundtrip(void)
 
 /**
  * @brief  a + b == b + a including the carry flag, and a * b == b * a
- *          for both signed and unsigned 16-bit multiply.
+ *         for both signed and unsigned 16-bit multiply.
  */
 static void test_commutativity(void)
 {
