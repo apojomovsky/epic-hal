@@ -198,27 +198,29 @@ if __name__ == "__main__":
 Run: `python3 scripts/tests/test_ci_noncode.py`
 Expected: all 15 tests pass (`OK`).
 
-- [ ] **Step 4: CLI smoke test (false path, own files are code)**
+- [ ] **Step 4: Commit**
+
+```bash
+git add scripts/ci_noncode_check.py scripts/tests/test_ci_noncode.py
+git commit -m "feat(ci): add shared non-code classifier"
+```
+
+- [ ] **Step 5: CLI smoke test after the commit (false path, own files are code)**
+
+The diff must be taken after the commit, otherwise `origin/master...HEAD` still resolves to the docs-only spec/plan commits and the verdict would be `true`. After Step 4's commit, HEAD includes the classifier's own files, which are code.
 
 Run: `python3 scripts/ci_noncode_check.py origin/master`
 Expected: `false` (the classifier's own new files are code-affecting, correctly).
 Agreement check: the CLI and the imported function must agree on the same diff:
 
 Run: `python3 - <<'PY'
-import pathlib, subprocess, sys
+import subprocess, sys
 sys.path.insert(0, "scripts")
 import ci_noncode_check
 changed = [l for l in subprocess.run(["git", "diff", "--name-only", "origin/master...HEAD"], capture_output=True, text=True, check=True).stdout.splitlines() if l]
 print("function:", ci_noncode_check.is_non_code(changed))
 PY`
 Expected: `function: False` (same verdict as the CLI).
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add scripts/ci_noncode_check.py scripts/tests/test_ci_noncode.py
-git commit -m "feat(ci): add shared non-code classifier"
-```
 
 ---
 
