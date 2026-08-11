@@ -1,12 +1,7 @@
-/**
- * @file    example_eeprom.c
- * @brief   Data EEPROM driver smoke test on the PIC18 host sim.
- *
- * @details
- *   Verifies read (EEADR + RD strobe), write (the 0x55/0xAA unlock
- *   sequence, DS39632E §7.0), sim-driven write-completion via EEIF, and a
- *   buffer round-trip. The write-complete IRQ handler clears EEIF, so
- *   polling checks disable the sim IRQ callback.
+/*
+ * Data EEPROM driver smoke test on the PIC18 host sim: read (EEADR + RD
+ * strobe), write (the 0x55/0xAA unlock sequence, DS39632E §7.0),
+ * sim-driven write completion via EEIF, and a buffer round-trip.
  */
 
 #include "epic_hal.h"

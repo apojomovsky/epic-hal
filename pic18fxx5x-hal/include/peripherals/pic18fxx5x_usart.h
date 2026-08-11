@@ -1,13 +1,9 @@
-/**
- * @file    peripherals/pic18fxx5x_usart.h
- * @brief   EUSART driver, async + sync master/slave.
- *
- * @details
- *   Mirrors `pic16f87xa_usart.h`'s API shape (DS39632E §20.0). PIC18 adds a
- *   16-bit BRG (BAUDCON<BRG16>, SPBRG:SPBRGH), auto-baud detect
- *   (ABDEN/ABDOVF), and 9-bit address-detect (RCSTA<ADDEN>), all in the
- *   Access Bank (no bank switching). RMW here uses split read+write because
- *   XC8 cannot lower a compound assignment on a volatile cast-lvalue.
+/*
+ * EUSART driver, async + sync master/slave (DS39632E §20.0). PIC18 adds
+ * a 16-bit BRG (BAUDCON<BRG16>, SPBRG:SPBRGH), auto-baud detect
+ * (ABDEN/ABDOVF) and 9-bit address-detect (RCSTA<ADDEN>), all in the
+ * Access Bank. RMW here uses split read+write because XC8 cannot lower
+ * a compound assignment on a volatile cast-lvalue.
  */
 
 #ifndef PIC18FXX5X_USART_H
@@ -111,12 +107,8 @@ typedef struct {
     .RxCpltCallback  = NULL,                                            \
 }
 
-/* ───────────────────────── init / deinit ────────────────────────── */
-
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_USART_DeInit(void);
-
-/* ───────────────────────── transmit ──────────────────────────────── */
 
 /**
  * @brief  Write one byte to TXREG. The write:
@@ -138,8 +130,6 @@ void EPIC_USART_SetTX9D(uint8_t bit9);
 /** Returns 1 if the TSR is empty (TRMT = 1). */
 uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);
 
-/* ───────────────────────── receive ──────────────────────────────── */
-
 /**
  * @brief  Read the latest byte from RCREG. Reading clears RCIF and
  *         advances the 2-deep FIFO.
@@ -156,8 +146,6 @@ uint8_t EPIC_USART_HasOverrun(void);
 /** Clear an overrun: clear CREN, then re-set it (DS39632E §20.2.2). */
 void EPIC_USART_ClearOverrun(void);
 
-/* ───────────────────────── auto-baud (BAUDCON) ────────────────────── */
-
 /**
  * @brief  Start auto-baud detection (sets BAUDCON<ABDEN>). The hardware
  *         measures the next incoming byte and loads SPBRG:SPBRGH; ABDEN
@@ -173,8 +161,6 @@ uint8_t EPIC_USART_HasAutoBaudOverflow(void);
 
 /** Clear the auto-baud overflow flag (ABDOVF). */
 void EPIC_USART_ClearAutoBaudOverflow(void);
-
-/* ───────────────────────── interrupts ───────────────────────────── */
 
 /** Weak USART RX ISR, override in user code. */
 void USART_RX_IRQHandler(void) EPIC_WEAK;

@@ -1,15 +1,10 @@
-/**
- * @file    host/pic18_platform.h
- * @brief   Host-simulation platform: how SFRs are stored and how the weak
- *          attribute is spelled, for the CMake host build.
- *
- * @details
- *   Host half of the SFR mapping layer (the target half is
- *   `target/pic18_platform.h`); the build's include path picks one, so
- *   `pic18fxx5x.h` includes `"pic18_platform.h"` unconditionally with no
- *   `#ifdef`. Every SFR access indexes a memory-backed register file
- *   `pic18_sim_sfr[]` (`src/sim/pic18_sim.c`), sized to the full 12-bit
- *   data-memory address space so tests can poke any register directly.
+/*
+ * Host-simulation platform half of the SFR mapping layer (target half:
+ * `target/pic18_platform.h`); the build's include path picks one, so
+ * `pic18fxx5x.h` includes `"pic18_platform.h"` unconditionally. Every
+ * SFR access indexes a memory-backed register file `pic18_sim_sfr[]`
+ * (`src/sim/pic18_sim.c`), sized to the full 12-bit data-memory address
+ * space so tests can poke any register directly.
  */
 
 #ifndef PIC18_PLATFORM_H

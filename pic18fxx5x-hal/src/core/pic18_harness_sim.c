@@ -1,13 +1,9 @@
-/**
- * @file    pic18_harness_sim.c
- * @brief   PIC18F2455 family host-simulation implementation of the test
- *          harness (see core/epic_harness.h).
- *
- * @details
- *   Linked by the CMake host build; the companion target implementation is
- *   the family-blind `epic_harness_target.c` in `epic-common`, so neither
- *   this file nor the examples need `#ifdef`. PIC18-specific only because
- *   it pumps the PIC18 simulator; the harness contract itself is shared.
+/*
+ * PIC18F2455-family host-simulation implementation of the test harness
+ * (see core/epic_harness.h), linked by the CMake host build. The target
+ * implementation is the family-blind `epic_harness_target.c` in
+ * `epic-common`, so neither this file nor the examples need `#ifdef`;
+ * this file is PIC18-specific only because it pumps the PIC18 simulator.
  */
 
 #include "core/epic_harness.h"   /* epic_dispatch_all_irqs is declared here */

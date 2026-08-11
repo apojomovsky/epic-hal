@@ -1,17 +1,13 @@
-/**
- * @file    pic18fxx5x_ssp.c
- * @brief   MSSP driver, implementation (DS39632E §19.0).
- *
- *   Register-level: the I2C state machine (Start/Stop/ACK, address
- *   matching) is left to the user. All MSSP registers are in the Access
- *   Bank, no bank switching. RMW uses split read+write because XC8 cannot
- *   lower a compound assignment on a volatile cast-lvalue.
+/*
+ * MSSP driver, implementation (DS39632E §19.0). Register-level: the I2C
+ * state machine (Start/Stop/ACK, address matching) is left to the user.
+ * All MSSP registers are in the Access Bank, no bank switching. RMW uses
+ * split read+write because XC8 cannot lower a compound assignment on a
+ * volatile cast-lvalue.
  */
 
 #include "peripherals/pic18fxx5x_ssp.h"
 #include "core/pic18_irq.h"
-
-/* ───────────────────────── handle storage ───────────────────────── */
 
 static SSP_HandleTypeDef        g_ssp_storage;
 static const SSP_HandleTypeDef *g_ssp = NULL;
@@ -24,8 +20,6 @@ static void sspcon2_set(uint8_t mask)
     epic_sfr_write8(PIC_REG_SSPCON2, v);
 }
 
-/* ───────────────────────── SSPADD computation ───────────────────── */
-
 uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz)
 {
     if (fscl_hz == 0) return 0xFFFFU;
@@ -33,8 +27,6 @@ uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz)
     if (x > 255U) return 0xFFFFU;
     return (uint16_t)x;
 }
-
-/* ───────────────────────── public API ───────────────────────────── */
 
 EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h)
 {
@@ -126,8 +118,6 @@ uint8_t EPIC_SSP_AcknowledgeStatus(void)
 {
     return (epic_sfr_read8(PIC_REG_SSPCON2) & PIC_SSPCON2_ACKSTAT) ? 1U : 0U;
 }
-
-/* ───────────────────────── ISR ───────────────────────────────────── */
 
 void SSP_IRQHandler(void)
 {

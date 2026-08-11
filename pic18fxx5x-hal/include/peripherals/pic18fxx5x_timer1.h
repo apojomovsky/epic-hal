@@ -1,13 +1,8 @@
-/**
- * @file    peripherals/pic18fxx5x_timer1.h
- * @brief   Timer1 driver, 16-bit timer/counter.
- *
- * @details
- *   Matches `pic16f87xa_timer1.h`'s API (DS39632E §12.0). PIC18's T1CON
- *   adds RD16 (T1CON<7>, 16-bit read/write mode, set by this driver so the
- *   atomic TMR1L-latches-TMR1H idiom works) and read-only T1RUN
- *   (T1CON<6>, ignored); prescaler/T1OSCEN/T1SYNC/TMR1CS/TMR1ON sit at the
- *   same positions as PIC16.
+/*
+ * Timer1 driver, 16-bit timer/counter (DS39632E §12.0). PIC18's T1CON
+ * adds RD16 (T1CON<7>, 16-bit read/write mode, set by this driver so the
+ * atomic TMR1L-latches-TMR1H idiom works) and read-only T1RUN (ignored);
+ * the other bits sit at the same positions as PIC16.
  */
 
 #ifndef PIC18FXX5X_TIMER1_H

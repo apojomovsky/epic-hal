@@ -1,12 +1,8 @@
-/**
- * @file    example_timer1.c
- * @brief   End-to-end smoke test for the PIC18 Timer1 driver on the host sim.
- *
- * @details
- *   Timer1 is a 16-bit counter clocked from Fosc/4 with a 1:1 prescaler.
- *   Expected: TMR1IF fires every 65 536 instruction cycles; the test counts
- *   overflows. One source builds for the host sim and a real XC8 target with
- *   no `#ifdef` (the harness abstracts the two execution models).
+/*
+ * End-to-end smoke test for the PIC18 Timer1 driver on the host sim:
+ * 16-bit counter at Fosc/4 with a 1:1 prescaler, TMR1IF fires every
+ * 65536 instruction cycles, overflow count checked. One source builds
+ * for host sim and XC8 target (the harness abstracts the two models).
  */
 
 #include "epic_hal.h"

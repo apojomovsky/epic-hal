@@ -1,11 +1,7 @@
-/**
- * @file    example_ssp.c
- * @brief   MSSP driver smoke test on the PIC18 host sim.
- *
- * @details
- *   Verifies SSPADD baud computation, SPI master init/write/collision,
- *   sim-injected RX + BF clear, and I2C Start/Stop (SEN/PEN in SSPCON2).
- *   Builds for host sim and XC8 target with no `#ifdef`.
+/*
+ * MSSP driver smoke test on the PIC18 host sim: SSPADD baud computation,
+ * SPI master init/write/collision, sim-injected RX + BF clear, and I2C
+ * Start/Stop (SEN/PEN in SSPCON2). Builds for host sim and XC8 target.
  */
 
 #include "epic_hal.h"

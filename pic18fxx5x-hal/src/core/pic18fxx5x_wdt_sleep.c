@@ -1,12 +1,8 @@
-/**
- * @file    pic18fxx5x_wdt_sleep.c
- * @brief   BOR / POR status helpers, shared by both builds.
- *
- * @details
- *   `EPIC_WDT_Refresh`/`EPIC_Sleep_Enter` are link-time-selected
- *   (`*_sim.c` host, `*_target.c` XC8); these BOR/POR helpers are
- *   identical on both builds, so they stay shared. RCON: POR = bit 1,
- *   BOR = bit 0 (DS39632E Register 4-1).
+/*
+ * BOR / POR status helpers, shared by both builds. `EPIC_WDT_Refresh` /
+ * `EPIC_Sleep_Enter` are link-time-selected (`*_sim.c` host, `*_target.c`
+ * XC8); these helpers are identical on both. RCON: POR = bit 1, BOR =
+ * bit 0 (DS39632E Register 4-1).
  */
 
 #include "core/pic18fxx5x_wdt_sleep.h"

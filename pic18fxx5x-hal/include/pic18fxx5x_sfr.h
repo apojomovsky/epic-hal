@@ -1,17 +1,13 @@
-/**
- * @file    pic18fxx5x_sfr.h
- * @brief   Special Function Register (SFR) address map for the
- *          PIC18F2455/2550/4455/4550 family (MVP subset).
- *
- * @details
- *   Every address, bit mask, and reset value here is taken 1-to-1 from
- *   DS39632E (Table 5-1 SFR Map, Registers 5-2/9-1/9-2/9-3/9-5/9-6/9-8/
- *   10-1/11-1), cross-checked against the PIC18Fxxxx DFP device header.
- *   Macro naming (`PIC_REG_*` / `PIC_*_*`) deliberately matches
- *   `pic16f87xa_sfr.h` so driver source reads identically across families.
- *   All of it is in the Access Bank (0xF60-0xFFF), no BSR banking needed;
- *   PORTD/E/LATD/E/TRISD/E exist only on 40/44-pin parts, gated by
- *   `PIC18FXX5X_FAMILY_HAS_PORTD`/`HAS_PORTE`.
+/*
+ * SFR address map for the PIC18F2455/2550/4455/4550 family (MVP subset).
+ * Every address, bit mask, and reset value here is taken 1-to-1 from
+ * DS39632E (Table 5-1 SFR Map, Registers 5-2/9-1/9-2/9-3/9-5/9-6/9-8/
+ * 10-1/11-1), cross-checked against the PIC18Fxxxx DFP device header.
+ * Macro naming (`PIC_REG_*` / `PIC_*_*`) matches `pic16f87xa_sfr.h` so
+ * driver source reads identically across families. All of it is in the
+ * Access Bank (0xF60-0xFFF), no BSR banking needed; PORTD/E/LATD/E/
+ * TRISD/E exist only on 40/44-pin parts, gated by
+ * `PIC18FXX5X_FAMILY_HAS_PORTD`/`HAS_PORTE`.
  */
 
 #ifndef PIC18FXX5X_SFR_H
@@ -19,7 +15,7 @@
 
 #include "pic18fxx5x.h"
 
-/* ───────────────────────── Access Bank SFR addresses ────────────── */
+/* Access Bank SFR addresses. */
 /* DS39632E Table 5-1, SFR Map. All in the Access Bank (0xF60-0xFFF). */
 
 /* Core CPU status, DS39632E Register 5-2. */
@@ -161,14 +157,14 @@
 #define PIC_REG_SPPCON         0xF65U   /**< SPP control (SPPEN/SPPOWN).                 */
 #endif
 
-/* ───────────────────────── STATUS bits (Register 5-2) ───────────── */
+/* STATUS bits (Register 5-2). */
 #define PIC_STATUS_N          EPIC_BIT(4)   /**< Negative / borrow complement. */
 #define PIC_STATUS_OV         EPIC_BIT(3)   /**< Overflow.                     */
 #define PIC_STATUS_Z          EPIC_BIT(2)   /**< Zero.                         */
 #define PIC_STATUS_DC         EPIC_BIT(1)   /**< Digit carry/borrow.           */
 #define PIC_STATUS_C          EPIC_BIT(0)   /**< Carry/borrow.                 */
 
-/* ───────────────────────── RCON bits (Register 4-1 / 9-10) ──────── */
+/* RCON bits (Register 4-1 / 9-10). */
 #define PIC_RCON_IPEN         EPIC_BIT(7)   /**< Interrupt Priority Enable.    */
 #define PIC_RCON_SBOREN       EPIC_BIT(6)   /**< BOR software enable.          */
 #define PIC_RCON_RI           EPIC_BIT(4)   /**< RESET instruction flag.       */
@@ -177,7 +173,7 @@
 #define PIC_RCON_POR          EPIC_BIT(1)   /**< Power-on Reset status.        */
 #define PIC_RCON_BOR          EPIC_BIT(0)   /**< Brown-out Reset status.       */
 
-/* ───────────────────────── INTCON bits (Register 9-1) ───────────── */
+/* INTCON bits (Register 9-1). */
 #define PIC_INTCON_GIE        EPIC_BIT(7)   /**< Global Int Enable / high-priority GIE. */
 #define PIC_INTCON_GIEH       PIC_INTCON_GIE
 #define PIC_INTCON_PEIE       EPIC_BIT(6)   /**< Peripheral Int Enable / low-priority GIEL. */
@@ -189,7 +185,7 @@
 #define PIC_INTCON_INT0IF     EPIC_BIT(1)   /**< INT0 external interrupt flag.     */
 #define PIC_INTCON_RBIF       EPIC_BIT(0)   /**< RB<7:4> change interrupt flag.    */
 
-/* ───────────────────────── INTCON2 bits (Register 9-2) ──────────── */
+/* INTCON2 bits (Register 9-2). */
 #define PIC_INTCON2_RBPU      EPIC_BIT(7)   /**< PORTB pull-up enable (active-low). */
 #define PIC_INTCON2_INTEDG0   EPIC_BIT(6)   /**< INT0 edge select (1=rising).       */
 #define PIC_INTCON2_INTEDG1   EPIC_BIT(5)   /**< INT1 edge select.                  */
@@ -197,7 +193,7 @@
 #define PIC_INTCON2_TMR0IP    EPIC_BIT(2)   /**< Timer0 overflow priority (1=high). */
 #define PIC_INTCON2_RBIP      EPIC_BIT(0)   /**< RB change priority (1=high).       */
 
-/* ───────────────────────── INTCON3 bits (Register 9-3) ──────────── */
+/* INTCON3 bits (Register 9-3). */
 #define PIC_INTCON3_INT2IP    EPIC_BIT(7)   /**< INT2 priority (1=high).            */
 #define PIC_INTCON3_INT1IP    EPIC_BIT(6)   /**< INT1 priority (1=high).            */
 #define PIC_INTCON3_INT2IE    EPIC_BIT(4)   /**< INT2 external interrupt enable.    */
@@ -205,7 +201,7 @@
 #define PIC_INTCON3_INT2IF    EPIC_BIT(1)   /**< INT2 external interrupt flag.      */
 #define PIC_INTCON3_INT1IF    EPIC_BIT(0)   /**< INT1 external interrupt flag.      */
 
-/* ───────────────────────── PIR1 / PIE1 / IPR1 bits (Reg 9-5/9-6/9-8) ── */
+/* PIR1 / PIE1 / IPR1 bits (Reg 9-5/9-6/9-8). */
 /* Same bit layout across the three registers: flag / enable / priority. */
 #define PIC_PIR1_SPPIF        EPIC_BIT(7)   /**< Streaming Parallel Port flag.  */
 #define PIC_PIR1_ADIF         EPIC_BIT(6)   /**< A/D conversion complete flag.  */
@@ -232,7 +228,7 @@
 #define PIC_IPR1_TMR2IP       EPIC_BIT(1)
 #define PIC_IPR1_TMR1IP       EPIC_BIT(0)
 
-/* ───────────────────────── T0CON bits (Register 11-1) ───────────── */
+/* T0CON bits (Register 11-1). */
 #define PIC_T0CON_TMR0ON      EPIC_BIT(7)   /**< Timer0 on/off.                  */
 #define PIC_T0CON_T08BIT      EPIC_BIT(6)   /**< 1=8-bit, 0=16-bit mode.         */
 #define PIC_T0CON_T0CS        EPIC_BIT(5)   /**< 0=internal Fosc/4, 1=T0CKI pin. */
@@ -240,7 +236,7 @@
 #define PIC_T0CON_PSA         EPIC_BIT(3)   /**< 0=prescaler assigned, 1=not.    */
 #define PIC_T0CON_T0PS_MASK   0x07U         /**< T0PS2:T0PS0, prescaler ratio.   */
 
-/* ───────────────────────── T1CON bits (Register 12-1) ───────────── */
+/* T1CON bits (Register 12-1). */
 #define PIC_T1CON_RD16        EPIC_BIT(7)   /**< 16-bit read/write mode enable.   */
 #define PIC_T1CON_T1RUN       EPIC_BIT(6)   /**< Timer1 system clock status (RO). */
 #define PIC_T1CON_T1CKPS_MASK 0x30U         /**< T1CKPS1:T1CKPS0 at bits 5:4.     */
@@ -249,12 +245,12 @@
 #define PIC_T1CON_TMR1CS      EPIC_BIT(1)   /**< 0=Fosc/4, 1=external/T1OSC.     */
 #define PIC_T1CON_TMR1ON      EPIC_BIT(0)   /**< Timer1 on/off.                   */
 
-/* ───────────────────────── T2CON bits (Register 12-2) ───────────── */
+/* T2CON bits (Register 12-2). */
 #define PIC_T2CON_TOUTPS_MASK 0x78U         /**< T2OUTPS3:T2OUTPS0 at bits 6:3 (1:(N+1)). */
 #define PIC_T2CON_TMR2ON      EPIC_BIT(2)   /**< Timer2 on/off.                   */
 #define PIC_T2CON_T2CKPS_MASK 0x03U         /**< T2CKPS1:T2CKPS0 at bits 1:0.     */
 
-/* ───────────────────────── T3CON bits (Register 14-1) ───────────── */
+/* T3CON bits (Register 14-1). */
 #define PIC_T3CON_RD16        EPIC_BIT(7)   /**< 16-bit read/write mode enable.   */
 #define PIC_T3CON_T3CCP2      EPIC_BIT(6)   /**< CCP timer-select bit (with T3CCP1). */
 #define PIC_T3CON_T3CKPS_MASK 0x30U         /**< T3CKPS1:T3CKPS0 at bits 5:4.     */
@@ -263,7 +259,7 @@
 #define PIC_T3CON_TMR3CS      EPIC_BIT(1)   /**< 0=Fosc/4, 1=external/T1OSC.      */
 #define PIC_T3CON_TMR3ON      EPIC_BIT(0)   /**< Timer3 on/off.                    */
 
-/* ───────────────────────── PIR2 / PIE2 / IPR2 bits (Reg 9-5/9-7/9-9) ── */
+/* PIR2 / PIE2 / IPR2 bits (Reg 9-5/9-7/9-9). */
 /* Same bit layout across the three registers: flag / enable / priority. */
 #define PIC_PIR2_OSCFIF       EPIC_BIT(7)   /**< Oscillator fail flag.            */
 #define PIC_PIR2_CMIF         EPIC_BIT(6)   /**< Comparator flag.                 */
@@ -290,7 +286,7 @@
 #define PIC_IPR2_TMR3IP       EPIC_BIT(1)
 #define PIC_IPR2_CCP2IP       EPIC_BIT(0)
 
-/* ───────────────────────── CCP1CON / CCP2CON bits (Register 16-1) ── */
+/* CCP1CON / CCP2CON bits (Register 16-1). */
 /* CCP1 (ECCP1) has the P1M output-mode bits in <7:6>; CCP2 (plain) leaves
  * them unimplemented. DC1B/DC2B are the PWM duty LSBs (or capture/compare
  * 2 LSBs in 16-bit mode). CCP1M/CCP2M are the mode select (capture/
@@ -301,17 +297,17 @@
 #define PIC_CCP2_DC2B_MASK    0x30U    /**< DC2B1:DC2B0 at bits 5:4.            */
 #define PIC_CCP2_M_MASK       0x0FU    /**< CCP2M3:CCP2M0 at bits 3:0.          */
 
-/* ───────────────────────── ECCP1DEL bits (Register 16-2) ─────────── */
+/* ECCP1DEL bits (Register 16-2). */
 #define PIC_ECCP1DEL_PRSEN    EPIC_BIT(7)  /**< PWM restart enable (auto-restart). */
 #define PIC_ECCP1DEL_PDC_MASK 0x7FU        /**< PDC6:PDC0, dead-band delay (6:0). */
 
-/* ───────────────────────── ECCP1AS bits (Register 16-3) ─────────── */
+/* ECCP1AS bits (Register 16-3). */
 #define PIC_ECCP1AS_ECCPASE   EPIC_BIT(7)  /**< Auto-shutdown event status (RO once active). */
 #define PIC_ECCP1AS_SRC_MASK  0x70U        /**< ECCPAS2:ECCPAS0 at bits 6:4 (source). */
 #define PIC_ECCP1AS_PSSAC_MASK 0x0CU       /**< PSSAC1:PSSAC0 at bits 3:2 (P1A/P1C state). */
 #define PIC_ECCP1AS_PSSBD_MASK 0x03U       /**< PSSBD1:PSSBD0 at bits 1:0 (P1B/P1D state). */
 
-/* ───────────────────────── MSSP bits (Register 19-1/19-2/19-4/19-5) ── */
+/* MSSP bits (Register 19-1/19-2/19-4/19-5). */
 /* SSPCON1 (mode/enable/polarity/flags), SSPSTAT (status), SSPCON2 (I2C
  * master control). Same bit positions as the PIC16 SSP. DS39632E §19.0. */
 #define PIC_SSPCON1_SSPM_MASK  0x0FU       /**< SSPM3:SSPM0 at bits 3:0 (mode select). */
@@ -336,7 +332,7 @@
 #define PIC_SSPSTAT_CKE        EPIC_BIT(6)  /**< Clock edge (SPI).                     */
 #define PIC_SSPSTAT_SMP        EPIC_BIT(7)  /**< Sample phase (SPI master).             */
 
-/* ───────────────────────── EUSART bits (Register 20-1/20-2/20-3) ────── */
+/* EUSART bits (Register 20-1/20-2/20-3). */
 /* TXSTA (Register 20-1) and RCSTA (Register 20-2) have the same bit layout
  * as the PIC16 USART, so the shared PIC_TXSTA_* / PIC_RCSTA_* names resolve
  * identically across families (only the PIC_REG_* address differs).
@@ -367,7 +363,7 @@
 #define PIC_BAUDCON_RCIDL      EPIC_BIT(6)  /**< Receiver idle (read-only).          */
 #define PIC_BAUDCON_ABDOVF     EPIC_BIT(7)  /**< Auto-baud overflow (read/clear).    */
 
-/* ───────────────────────── CMCON bits (Register 22-1) ──────────────── */
+/* CMCON bits (Register 22-1). */
 /* Same bit layout as the PIC16 CMCON (DS39632E §22.0). Eight operating
  * modes are selected by CM2:CM0; POR default is 111 (comparators off). */
 #define PIC_CMCON_CM_MASK      0x07U        /**< CM2:CM0 at bits 2:0 (mode select). */
@@ -377,7 +373,7 @@
 #define PIC_CMCON_C1OUT        EPIC_BIT(6)  /**< C1 output (read-only).              */
 #define PIC_CMCON_C2OUT        EPIC_BIT(7)  /**< C2 output (read-only).              */
 
-/* ───────────────────────── EECON1 bits (Register 7-1) ──────────────── */
+/* EECON1 bits (Register 7-1). */
 /* RD/WR/WREN/WRERR mirror the PIC16 EECON1; EEPGD/CFGS/FREE select data
  * EEPROM vs program flash vs config (DS39632E §7.0). For data EEPROM
  * access, EEPGD = 0 and CFGS = 0. */
@@ -389,28 +385,28 @@
 #define PIC_EECON1_CFGS        EPIC_BIT(6)  /**< Config access (1) vs code/data (0). */
 #define PIC_EECON1_EEPGD       EPIC_BIT(7)  /**< 0 = data EEPROM, 1 = program flash. */
 
-/* ───────────────────────── ADCON0 bits (Register 21-1) ─────────────── */
+/* ADCON0 bits (Register 21-1). */
 /* ADON bit0, GO/DONE bit1, CHS3:CHS0 bits 5:2 (4-bit channel). */
 #define PIC_ADCON0_ADON        EPIC_BIT(0)  /**< A/D module on.                       */
 #define PIC_ADCON0_GO_DONE     EPIC_BIT(1)  /**< Conversion status (1 = in progress). */
 #define PIC_ADCON0_CHS_MASK    0x3CU        /**< CHS3:CHS0 at bits 5:2.               */
 #define PIC_ADCON0_CHS_POS     2            /**< CHS field shift.                     */
 
-/* ───────────────────────── ADCON1 bits (Register 21-2) ─────────────── */
+/* ADCON1 bits (Register 21-2). */
 /* PCFG3:PCFG0 bits 3:0 (port config, Table 21-3); VCFG0=Vref+ (bit4),
  * VCFG1=Vref- (bit5). */
 #define PIC_ADCON1_PCFG_MASK   0x0FU        /**< PCFG3:PCFG0 at bits 3:0.             */
 #define PIC_ADCON1_VCFG0       EPIC_BIT(4)  /**< Vref+ source: 1=AN3, 0=VDD.          */
 #define PIC_ADCON1_VCFG1       EPIC_BIT(5)  /**< Vref- source: 1=AN2, 0=VSS.           */
 
-/* ───────────────────────── ADCON2 bits (Register 21-3) ─────────────── */
+/* ADCON2 bits (Register 21-3). */
 /* ADCS2:ADCS0 bits 2:0 (clock), ACQT2:ACQT0 bits 5:3 (acquisition), ADFM bit7. */
 #define PIC_ADCON2_ADCS_MASK   0x07U        /**< ADCS2:ADCS0 at bits 2:0.             */
 #define PIC_ADCON2_ACQT_MASK   0x38U        /**< ACQT2:ACQT0 at bits 5:3.             */
 #define PIC_ADCON2_ACQT_POS    3            /**< ACQT field shift.                     */
 #define PIC_ADCON2_ADFM        EPIC_BIT(7)  /**< 1 = right justified, 0 = left.       */
 
-/* ───────────────────────── SPP bits (Register 18-1/18-2/18-3) ──────── */
+/* SPP bits (Register 18-1/18-2/18-3). */
 /* Gated to 40/44-pin parts (PIC18FXX5X_FAMILY_HAS_SPP). DS39632E §18.0. */
 #if PIC18FXX5X_FAMILY_HAS_SPP
 /* SPPCON (Register 18-1). */
@@ -429,7 +425,7 @@
 #define PIC_SPPEPS_RDSPP       EPIC_BIT(7)  /**< Read occurred (read-only status).  */
 #endif
 
-/* ───────────────────────── Reset values (POR) ───────────────────── */
+/* Reset values (POR). */
 /* DS39632E Table 5-1 "Value at POR" column + Register 4-1 reset notes.
  * RCON after POR: IPEN=0, SBOREN=1, RI=0, TO=1, PD=1, POR=1, BOR=1
  * (POR/BOR set per Register 4-1 Note 1). IPR1 defaults to all-high

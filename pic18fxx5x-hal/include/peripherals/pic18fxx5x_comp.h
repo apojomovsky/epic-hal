@@ -1,13 +1,8 @@
-/**
- * @file    peripherals/pic18fxx5x_comp.h
- * @brief   Comparator driver, two on-chip comparators.
- *
- * @details
- *   Two on-chip comparators (DS39632E §22.0), 8 modes selected by
- *   CMCON<CM2:CM0> (Figure 22-1). Mirrors `pic16f87xa_comp.h`'s API; CMCON
- *   has the same bit layout as PIC16's, just in the Access Bank (0xFB4,
- *   no bank switching). The comparator voltage reference (CVRCON) is a
- *   separate module.
+/*
+ * Two on-chip comparators (DS39632E §22.0), 8 modes selected by
+ * CMCON<CM2:CM0> (Figure 22-1). Same bit layout as the PIC16 comparator,
+ * in the Access Bank (0xFB4, no bank switching); the comparator voltage
+ * reference (CVRCON) is a separate module.
  */
 
 #ifndef PIC18FXX5X_COMP_H
@@ -49,12 +44,8 @@ typedef struct {
     .ChangeCallback  = NULL,                                               \
 }
 
-/* ───────────────────────── init / deinit ────────────────────────── */
-
 EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_COMP_DeInit(void);
-
-/* ───────────────────────── outputs / status ────────────────────────── */
 
 /** Returns 1 if C1 output is high (CMCON<C1OUT>). */
 uint8_t EPIC_COMP_C1Out(void);
@@ -67,8 +58,6 @@ uint8_t EPIC_COMP_IsChangeFlag(void);
 
 /** Clear the CMIF flag (must be done in the change IRQ). */
 void EPIC_COMP_ClearChangeFlag(void);
-
-/* ───────────────────────── interrupts ───────────────────────────── */
 
 void COMP_IRQHandler(void) EPIC_WEAK;
 

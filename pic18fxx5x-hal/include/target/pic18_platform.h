@@ -1,16 +1,10 @@
-/**
- * @file    target/pic18_platform.h
- * @brief   Real-target platform: how SFRs are accessed and how the weak
- *          attribute is spelled, for the XC8 build.
- *
- * @details
- *   Target half of the SFR mapping layer (the host half is
- *   `host/pic18_platform.h`); the build's include path picks one, so
- *   `pic18fxx5x.h` includes `"pic18_platform.h"` unconditionally with no
- *   `#ifdef`. Every SFR access is a direct volatile dereference of the
- *   literal address, cast through `uintptr_t` to silence XC8's
- *   integer-to-pointer warning. XC8 has no weak symbols, so `EPIC_WEAK`
- *   is empty.
+/*
+ * Real-target platform half of the SFR mapping layer (host half:
+ * `host/pic18_platform.h`); the build's include path picks one, so
+ * `pic18fxx5x.h` includes `"pic18_platform.h"` unconditionally. Every
+ * SFR access is a direct volatile dereference of the literal address,
+ * cast through `uintptr_t` to silence XC8's integer-to-pointer warning.
+ * XC8 has no weak symbols, so `EPIC_WEAK` is empty.
  */
 
 #ifndef PIC18_PLATFORM_H

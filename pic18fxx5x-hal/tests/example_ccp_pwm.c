@@ -1,13 +1,9 @@
-/**
- * @file    example_ccp_pwm.c
- * @brief   End-to-end smoke test: ECCP1 half-bridge PWM with dead-band.
- *
- * @details
- *   Exercises Enhanced CCP (DS39632E §16.4): half-bridge output (P1M),
- *   dead-band (ECCP1DEL), auto-restart (PRSEN). The host sim doesn't
- *   toggle PWM pins, so the test checks the programmed register image
- *   (PR2=99, 50% duty, dead-band=12 -> `CCPR1L=0x0C`, `CCP1CON=0xAC`,
- *   `ECCP1DEL=0x8C`) and counts Timer2 overflows as the PWM period marker.
+/*
+ * End-to-end smoke test: ECCP1 half-bridge PWM with dead-band
+ * (DS39632E §16.4). The host sim does not toggle PWM pins, so the test
+ * checks the programmed register image (PR2=99, 50% duty, dead-band=12
+ * -> CCPR1L=0x0C, CCP1CON=0xAC, ECCP1DEL=0x8C) and counts Timer2
+ * overflows as the PWM period marker.
  */
 
 #include "epic_hal.h"

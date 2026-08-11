@@ -1,32 +1,11 @@
-/**
- * @file    pic18fxx5x.h
- * @brief   PIC18F2455/2550/4455/4550 family, top-level types, status codes,
- *          build-time device selection, and the simulated/real-target SFR
- *          mapping layer.
- *
- * @details
- *   The single entry point for the PIC18F2455 family HAL, mirroring
- *   `pic16f87xa.h` (and `stm32fxxx_hal.h` in STM32Cube): standard integer
- *   types, status codes, and the platform layer that defines how every SFR
- *   is stored. The datasheet (DS39632E) is authoritative for every
- *   constant, bit name, and reset value implemented here; every peripheral
- *   header cites the section it maps to.
- *
- * Target family (DS39632E page 1, "PIC18F2455/2550/4455/4550" feature
- * table):
- *   - PIC18F2455, 28-pin,  24 KB flash, 12288 instr, 2048 B RAM, 256 B
- *                   EEPROM, 24 I/O, 10 ADC ch, 2 CCP / 0 ECCP, no SPP.
- *   - PIC18F2550, 28-pin,  32 KB flash, 16384 instr, 2048 B RAM, 256 B
- *                   EEPROM, 24 I/O, 10 ADC ch, 2 CCP / 0 ECCP, no SPP.
- *   - PIC18F4455, 40/44-pin, 24 KB flash, 12288 instr, 2048 B RAM, 256 B
- *                   EEPROM, 35 I/O, 13 ADC ch, 1 CCP / 1 ECCP, SPP,
- *                   PORTD + PORTE.
- *   - PIC18F4550, 40/44-pin, 32 KB flash, 16384 instr, 2048 B RAM, 256 B
- *                   EEPROM, 35 I/O, 13 ADC ch, 1 CCP / 1 ECCP, SPP,
- *                   PORTD + PORTE.
- *   All four have the USB module, MSSP (SPI + I2C master), EUSART, two
- *   analog comparators, and the dual-priority interrupt scheme (vectors at
- *   0008h high, 0018h low; DS39632E §9.0).
+/*
+ * PIC18F2455/2550/4455/4550 family: top-level types, status codes,
+ * build-time device selection, and the SFR mapping layer (DS39632E is
+ * authoritative for every constant, bit name, and reset value; each
+ * peripheral header cites its section). 28-pin parts (2455/2550) have
+ * two plain CCP modules, no SPP, no PORTD/E; 40/44-pin parts (4455/4550)
+ * have ECCP1 + CCP2, SPP, and PORTD/E. All four share the dual-priority
+ * interrupt scheme (vectors 0008h high, 0018h low; DS39632E §9.0).
  *
  * @copyright © 2009 Microchip Technology Inc. (datasheet DS39632E).
  */
@@ -34,13 +13,9 @@
 #ifndef PIC18FXX5X_H
 #define PIC18FXX5X_H
 
-/* ───────────────────────── standard types ───────────────────────── */
-
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-
-/* ───────────────────────── build-time device selection ──────────── */
 
 /**
  * @defgroup  PIC18FXX5X_Device Device Selection
@@ -110,7 +85,6 @@
 #endif
 /** @} */
 
-/* ─────────── family-neutral capability aliases (epic-common contract) ── */
 /**
  * Family-neutral aliases of the capability macros above, so family-agnostic
  * consumers (e.g. the task manager) can scale without a family-specific
@@ -118,12 +92,10 @@
  */
 #define EPIC_FAMILY_RAM_BYTES   PIC18FXX5X_FAMILY_RAM_BYTES
 
-/* ─────────── shared HAL status codes + bit helpers (epic-common) ── */
 /** Status enum and bit macros are architecture-blind, shared across
  *  every 8-bit PIC family; see epic-common/include/core/hal_status.h. */
 #include "core/hal_status.h"
 
-/* ───────────── platform: SFR mapping + weak attribute ───────────── */
 /**
  * @defgroup PIC18FXX5X_SFR Special Function Register mapping
  * @brief   How every SFR is stored and how the weak attribute is spelled.

@@ -1,17 +1,13 @@
-/**
- * @file    pic18fxx5x_gpio.c
- * @brief   GPIO driver, implementation matching DS39632E §10.0.
- *
- * @details
- *   PIC18 exposes the output latch as its own register, LATx, so this
- *   driver writes LATx (not PORTx) and reads PORTx, per §10.0. Direction
- *   is programmed in TRISx. PORTB pull-ups live in INTCON2<RBPU>.
+/*
+ * GPIO driver, implementation (DS39632E §10.0). PIC18 exposes the output
+ * latch as its own register, LATx, so this driver writes LATx (not PORTx)
+ * and reads PORTx. Direction is programmed in TRISx. PORTB pull-ups live
+ * in INTCON2<RBPU>.
  */
 
 #include "peripherals/pic18fxx5x_gpio.h"
 #include "core/pic18_irq.h"
 
-/** Map a GPIO_TypeDef to the address of its TRIS register. */
 static uint16_t tris_addr(GPIO_TypeDef port)
 {
     switch (port) {
@@ -28,7 +24,6 @@ static uint16_t tris_addr(GPIO_TypeDef port)
     }
 }
 
-/** Map a GPIO_TypeDef to the address of its LAT (output latch) register. */
 static uint16_t lat_addr(GPIO_TypeDef port)
 {
     switch (port) {
@@ -45,7 +40,6 @@ static uint16_t lat_addr(GPIO_TypeDef port)
     }
 }
 
-/** Map a GPIO_TypeDef to the address of its PORT (pin sample) register. */
 static uint16_t port_addr(GPIO_TypeDef port)
 {
     switch (port) {
@@ -75,8 +69,6 @@ static uint8_t port_width(GPIO_TypeDef port)
     return 8U;
 }
 
-/* ───────────────────────── init / deinit ────────────────────────── */
-
 void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 {
     uint16_t ta = tris_addr(port);
@@ -102,12 +94,9 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 void EPIC_GPIO_DeInit(GPIO_TypeDef port)
 {
     uint16_t ta = tris_addr(port);
-    /* Reset all implemented bits of TRISx to 1 = input, clear the latch. */
     EPIC_REG8(ta) = (uint8_t)((1U << port_width(port)) - 1U);
     EPIC_REG8(lat_addr(port)) = 0x00U;
 }
-
-/* ───────────────────────── read / write / toggle ────────────────── */
 
 void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
@@ -146,8 +135,6 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
     return EPIC_REG8(port_addr(port));
 }
 
-/* ───────────────────────── PORTB pull-ups ───────────────────────── */
-
 void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 {
     /* INTCON2<RBPU> (bit 7), active-low: 1 = disabled, 0 = enabled
@@ -158,8 +145,6 @@ void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON2), PIC_INTCON2_RBPU);
     }
 }
-
-/* ───────────────────────── PORTB change interrupt ───────────────────── */
 
 /* One callback slot for the whole-port RB<7:4> change interrupt. There is
  * only one PORTB, so there is no handle struct (mirrors Timer2's
@@ -175,12 +160,10 @@ void RB_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC18_IRQ_RB)) return;
 
-    /* MUST read PORTB before clearing RBIF, DS39632E §9.0: the mismatch
+    /* MUST read PORTB before clearing RBIF (DS39632E §9.0): the mismatch
      * comparator latches the value at the last CPU read of PORTB, so the
-     * read is what ends the current mismatch condition and re-arms the next
-     * one. Clearing the flag first (or not reading at all) risks an
-     * immediate spurious re-interrupt or a silently-missed change. The
-     * callback gets this already-read byte, never a second later read. */
+     * read is what ends the mismatch condition and re-arms the next one.
+     * Clearing first risks a spurious re-interrupt or a missed change. */
     uint8_t portb = EPIC_REG8(PIC_REG_PORTB);
     EPIC_IRQ_ClearFlag(PIC18_IRQ_RB);
     if (s_rb_change_callback) s_rb_change_callback(portb);

@@ -1,13 +1,8 @@
-/**
- * @file    peripherals/pic18fxx5x_eeprom.h
- * @brief   Data EEPROM driver.
- *
- * @details
- *   256 bytes of data EEPROM (DS39632E §7.0). Mirrors
- *   `pic16f87xa_eeprom.h`'s API; PIC18 moves the registers into the Access
- *   Bank and adds EEPGD/CFGS in EECON1 (kept 0 for data EEPROM). The
- *   driver hides the 0x55/0xAA unlock sequence; writes are non-blocking,
- *   the caller polls EEIF (PIR2<4>) for write-cycle completion.
+/*
+ * Data EEPROM driver (DS39632E §7.0), 256 bytes. PIC18 moves the
+ * registers into the Access Bank and adds EEPGD/CFGS in EECON1 (kept 0
+ * for data EEPROM). The driver hides the 0x55/0xAA unlock sequence;
+ * writes are non-blocking, the caller polls EEIF (PIR2<4>).
  */
 
 #ifndef PIC18FXX5X_EEPROM_H

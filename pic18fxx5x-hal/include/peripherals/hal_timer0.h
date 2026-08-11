@@ -1,11 +1,6 @@
-/**
- * @file    peripherals/hal_timer0.h
- * @brief   Family-neutral Timer0 driver contract (`EPIC_TIMER0_*`).
- *
- * @details
- *   Family-agnostic consumers include this neutral name instead of
- *   `pic18fxx5x_timer0.h` directly; each family provides its own copy,
- *   and the build's include path picks which one resolves.
+/*
+ * Family-neutral Timer0 driver contract (`EPIC_TIMER0_*`). Each family
+ * ships its own copy; the build's include path picks which one resolves.
  */
 
 #ifndef EPIC_TIMER0_H

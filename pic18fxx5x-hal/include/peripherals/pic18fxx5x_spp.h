@@ -1,13 +1,9 @@
-/**
- * @file    peripherals/pic18fxx5x_spp.h
- * @brief   Streaming Parallel Port (SPP) driver.
- *
- * @details
- *   40/44-pin only (PIC18F4455/4550, gated by `PIC18FXX5X_FAMILY_HAS_SPP`):
- *   a USB-era parallel port (DS39632E §18.0), the PIC18 analog of PIC16's
- *   PSP. Register-level only: programs SPPCON/SPPCFG/SPPEPS and provides
- *   byte-level SPPDATA read/write plus the busy/read/write status flags
- *   and SPPIF; the USB streaming protocol itself is left to the user.
+/*
+ * Streaming Parallel Port (DS39632E §18.0), 40/44-pin only (gated by
+ * `PIC18FXX5X_FAMILY_HAS_SPP`): a USB-era parallel port, the PIC18 analog
+ * of PIC16's PSP. Register-level only: programs SPPCON/SPPCFG/SPPEPS and
+ * provides byte-level SPPDATA access plus the busy/read/write status
+ * flags and SPPIF; the USB streaming protocol is left to the user.
  */
 
 #ifndef PIC18FXX5X_SPP_H
@@ -60,12 +56,8 @@ typedef struct {
     .TransferCallback = NULL,                                             \
 }
 
-/* ───────────────────────── init / deinit ────────────────────────── */
-
 EPIC_StatusTypeDef EPIC_SPP_Init(const SPP_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_SPP_DeInit(void);
-
-/* ───────────────────────── data access ───────────────────────────── */
 
 /**
  * @brief  Write a byte to SPPDATA for endpoint `ep` (sets SPPEPS<ADDR>
@@ -78,8 +70,6 @@ void EPIC_SPP_WriteByte(uint8_t ep, uint8_t data);
  * @brief  Read a byte from SPPDATA for endpoint `ep`. Returns the byte.
  */
 uint8_t EPIC_SPP_ReadByte(uint8_t ep);
-
-/* ───────────────────────── status ─────────────────────────────────── */
 
 /** Returns 1 if the SPP is busy (SPPEPS<SPPBUSY>). */
 uint8_t EPIC_SPP_IsBusy(void);
@@ -95,8 +85,6 @@ uint8_t EPIC_SPP_IsInterruptFlag(void);
 
 /** Clear the SPPIF flag (must be done in the transfer IRQ). */
 void EPIC_SPP_ClearITFlag(void);
-
-/* ───────────────────────── interrupts ───────────────────────────── */
 
 void SPP_IRQHandler(void) EPIC_WEAK;
 

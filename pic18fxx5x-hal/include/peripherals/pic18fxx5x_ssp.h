@@ -1,14 +1,10 @@
-/**
- * @file    peripherals/pic18fxx5x_ssp.h
- * @brief   MSSP driver, SPI master/slave + I²C master/slave.
- *
- * @details
- *   SPI master/slave + I2C master/slave (DS39632E §19.0). Mirrors
- *   `pic16f87xa_ssp.h`'s API; the PIC18 MSSP registers are all in the
- *   Access Bank (no bank switching) and the control register is SSPCON1
- *   (PIC16's is SSPCON). Register-level only: I2C's Start/Stop/ACK state
- *   machine is left to the caller, SPI transfers complete automatically
- *   once SSPBUF is written, poll SSPSTAT<BF> for a byte's arrival.
+/*
+ * MSSP driver: SPI master/slave + I2C master/slave (DS39632E §19.0).
+ * The PIC18 MSSP registers are all in the Access Bank (no bank switching)
+ * and the control register is SSPCON1 (PIC16's is SSPCON). Register-level
+ * only: the I2C Start/Stop/ACK state machine is left to the caller; SPI
+ * transfers complete automatically once SSPBUF is written, poll
+ * SSPSTAT<BF> for a byte's arrival.
  */
 
 #ifndef PIC18FXX5X_SSP_H
@@ -80,12 +76,8 @@ typedef struct {
     .TransferCallback = NULL,                                              \
 }
 
-/* ───────────────────────── init / deinit ────────────────────────── */
-
 EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_SSP_DeInit(void);
-
-/* ───────────────────────── SPI transfer ──────────────────────────── */
 
 /**
  * @brief  Write a byte to SSPBUF. Returns 0xFFFF if WCOL (write collision)
@@ -104,8 +96,6 @@ uint8_t  EPIC_SSP_HasWriteCollision(void);
 
 /** Clear the WCOL flag (must be done in software per §19.2.2). */
 void     EPIC_SSP_ClearWriteCollision(void);
-
-/* ───────────────────────── I²C master helpers ────────────────────── */
 
 /**
  * @brief  Compute SSPADD for an I²C master baud rate.
@@ -131,8 +121,6 @@ void EPIC_SSP_AcknowledgeEnable(void);
 
 /** Returns 1 if an ACK was received from the slave (ACKSTAT). */
 uint8_t EPIC_SSP_AcknowledgeStatus(void);
-
-/* ───────────────────────── interrupts ───────────────────────────── */
 
 void SSP_IRQHandler(void) EPIC_WEAK;
 

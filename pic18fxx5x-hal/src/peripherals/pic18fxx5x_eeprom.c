@@ -1,12 +1,10 @@
-/**
- * @file    pic18fxx5x_eeprom.c
- * @brief   Data EEPROM driver, implementation (DS39632E §7.0).
- *
- *   Simpler than the PIC16 driver: the EEPROM registers are in the Access
- *   Bank (0xFA6-0xFA9), no bank switching needed. `ReadByte` sets RD then
- *   pulls the byte via `pic18_sim_eeprom_read()` on host (the flat-array
- *   sim has no write hook to model the RD strobe loading EEDATA); real
- *   target firmware reads EEDATA after RD instead.
+/*
+ * Data EEPROM driver, implementation (DS39632E §7.0). Simpler than the
+ * PIC16 driver: the EEPROM registers are in the Access Bank (0xFA6-0xFA9),
+ * no bank switching. `ReadByte` sets RD then pulls the byte via
+ * `pic18_sim_eeprom_read()` on host (the flat-array sim has no write hook
+ * to model the RD strobe loading EEDATA); real target firmware reads
+ * EEDATA after RD instead.
  */
 
 #include "peripherals/pic18fxx5x_eeprom.h"
@@ -99,8 +97,6 @@ void EPIC_EEPROM_ClearITFlag(void)
 {
     EPIC_IRQ_ClearFlag(PIC18_IRQ_EEPROM);
 }
-
-/* ───────────────────────── ISR ───────────────────────────────────── */
 
 void EEPROM_IRQHandler(void)
 {

@@ -1,14 +1,11 @@
-/**
- * @file    pic18_irq.c
- * @brief   Implementation of @ref pic18_irq.h.
- *
- * @details
- *   Every function names its SFR as a compile-time-constant `PIC_REG_*`
- *   token, never a runtime address: on PIC18, a runtime SFR address
- *   compiles to the program-memory table mechanism instead of a data
- *   access (see `pic18fxx5x-hal/docs/ARCHITECTURE.md`). GIEH/GIEL
- *   (INTCON<7:6>) act as one on/off switch; enabling also sets IPEN
- *   (RCON<7>) for the two-vector priority scheme.
+/*
+ * IRQ driver implementation. Every function names its SFR as a
+ * compile-time-constant `PIC_REG_*` token, never a runtime address: on
+ * PIC18 a runtime SFR address compiles to the program-memory table
+ * mechanism instead of a data access (see
+ * `pic18fxx5x-hal/docs/ARCHITECTURE.md`). GIEH/GIEL (INTCON<7:6>) act as
+ * one on/off switch; enabling also sets IPEN (RCON<7>) for the
+ * two-vector priority scheme.
  */
 
 #include "core/pic18_irq.h"
@@ -19,8 +16,6 @@
     epic_sfr_write8((reg), (uint8_t)(epic_sfr_read8(reg) | (mask)))
 #define SFR_CLR_BIT(reg, mask) \
     epic_sfr_write8((reg), (uint8_t)(epic_sfr_read8(reg) & (uint8_t)~(mask)))
-
-/* ───────────────────────── public API ───────────────────────────── */
 
 uint8_t EPIC_IRQ_Disable(void)
 {

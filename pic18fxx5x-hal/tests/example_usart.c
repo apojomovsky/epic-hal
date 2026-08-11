@@ -1,13 +1,8 @@
-/**
- * @file    example_usart.c
- * @brief   EUSART driver smoke test on the PIC18 host sim.
- *
- * @details
- *   Verifies BRG math (all of Table 20-1, DS39632E §20.0, including the
- *   16-bit BRG16=1 extension PIC16 lacks), init register programming,
- *   TX/RX, auto-baud, and 9-bit address-detect. The RX IRQ handler
- *   consumes RCREG, so polling checks disable the sim IRQ callback; host
- *   sim only, calls `pic18_sim_*` host-only hooks.
+/*
+ * EUSART driver smoke test on the PIC18 host sim: BRG math (all of
+ * Table 20-1, DS39632E §20.0, including the 16-bit BRG16=1 extension),
+ * init register programming, TX/RX, auto-baud, and 9-bit address-detect.
+ * Host sim only; calls `pic18_sim_*` host-only hooks.
  */
 
 #include "epic_hal.h"

@@ -1,12 +1,9 @@
-/**
- * @file    peripherals/pic18fxx5x_timer2.h
- * @brief   Timer2 driver, 8-bit timer with PR2 period register and postscaler.
- *
- * @details
- *   Matches `pic16f87xa_timer2.h`'s API (DS39632E §12.0); simpler than
- *   PIC16's because PIC18 puts PR2 in the Access Bank (0xFCB), no bank
- *   switching needed. TMR2IF (PIR1<1>) fires every prescaler x postscaler
- *   x (PR2+1) instruction cycles and drives the CCP/ECCP PWM time base.
+/*
+ * Timer2 driver, 8-bit timer with PR2 period register and postscaler
+ * (DS39632E §12.0). Simpler than PIC16's because PIC18 puts PR2 in the
+ * Access Bank (0xFCB), no bank switching needed. TMR2IF (PIR1<1>) fires
+ * every prescaler x postscaler x (PR2+1) instruction cycles and drives
+ * the CCP/ECCP PWM time base.
  */
 
 #ifndef PIC18FXX5X_TIMER2_H

@@ -1,13 +1,9 @@
-/**
- * @file    peripherals/pic18fxx5x_timer3.h
- * @brief   Timer3 driver, 16-bit timer/counter.
- *
- * @details
- *   A second 16-bit timer/counter alongside Timer1 (DS39632E §14.0),
- *   mirroring `pic18fxx5x_timer1.h`'s API. Shares Timer1's T1OSC (no
- *   T3OSCEN of its own); overflow sets PIR2<TMR3IF>. T3CON<T3CCP2:T3CCP1>
- *   selects Timer1 vs Timer3 as the CCP1/CCP2 capture/compare source, left
- *   at reset (Timer1) here, the CCP/ECCP driver manages it when needed.
+/*
+ * Timer3 driver, 16-bit timer/counter (DS39632E §14.0), a second
+ * 16-bit timer alongside Timer1. Shares Timer1's T1OSC (no T3OSCEN of
+ * its own); overflow sets PIR2<TMR3IF>. T3CON<T3CCP2:T3CCP1> selects
+ * Timer1 vs Timer3 as the CCP capture/compare source, left at reset
+ * (Timer1) here; the CCP/ECCP driver manages it when needed.
  */
 
 #ifndef PIC18FXX5X_TIMER3_H

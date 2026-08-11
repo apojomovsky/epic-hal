@@ -1,6 +1,5 @@
-/**
- * @file    pic18fxx5x_timer3.c
- * @brief   Timer3 driver, implementation (DS39632E §14.0, Register 14-1).
+/*
+ * Timer3 driver, implementation (DS39632E §14.0, Register 14-1).
  */
 
 #include "peripherals/pic18fxx5x_timer3.h"

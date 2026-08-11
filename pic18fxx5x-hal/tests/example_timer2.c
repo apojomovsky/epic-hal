@@ -1,13 +1,8 @@
-/**
- * @file    example_timer2.c
- * @brief   End-to-end smoke test for the PIC18 Timer2 driver on the host sim.
- *
- * @details
- *   Timer2 with PR2=249, prescaler 1:1, postscaler 1:1 fires every 250
- *   instruction cycles (DS39632E §12.0: period = (PR2+1) x prescaler x
- *   postscaler = 250 x 1 x 1 = 250). The test checks the overflow count and
- *   the first-overflow cycle. One source builds for host sim and XC8 target
- *   with no `#ifdef`.
+/*
+ * End-to-end smoke test for the PIC18 Timer2 driver on the host sim:
+ * PR2=249, prescaler 1:1, postscaler 1:1 fires every 250 instruction
+ * cycles (DS39632E §12.0); checks overflow count and first-overflow
+ * cycle. One source builds for host sim and XC8 target.
  */
 
 #include "epic_hal.h"

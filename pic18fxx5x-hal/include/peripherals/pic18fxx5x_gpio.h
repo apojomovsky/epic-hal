@@ -1,13 +1,9 @@
-/**
- * @file    peripherals/pic18fxx5x_gpio.h
- * @brief   General-Purpose I/O port driver for the PIC18F2455 family.
- *
- * @details
- *   Cube-style API, `(GPIOx, GPIO_PIN_n)`, matching `pic16f87xa_gpio.h`'s
- *   names/signatures. PIC18 exposes the output latch as its own register,
- *   LATx (DS39632E §10.0): writes go through LATx (avoiding PIC16's
- *   read-modify-write-of-PORTx pitfall), reads come from PORTx. PORTD/E
- *   exist only on 40/44-pin parts; PORTB pull-ups are INTCON2<RBPU>.
+/*
+ * GPIO driver for the PIC18F2455 family (DS39632E §10.0): Cube-style
+ * `(GPIOx, GPIO_PIN_n)` API. PIC18 exposes the output latch as its own
+ * register, LATx: writes go through LATx (avoiding PIC16's
+ * read-modify-write-of-PORTx pitfall), reads come from PORTx. PORTD/E
+ * exist only on 40/44-pin parts; PORTB pull-ups are INTCON2<RBPU>.
  */
 
 #ifndef PIC18FXX5X_GPIO_H
@@ -79,8 +75,6 @@ typedef enum {
     GPIO_PULLUP   = 1U    /**< Weak pull-ups enabled  (RBPU = 0). */
 } GPIO_PullTypeDef;
 
-/* ───────────────────────── init / deinit ────────────────────────── */
-
 /**
  * @brief  Configure one or more pins of a port to the same direction.
  *
@@ -95,8 +89,6 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode);
 
 /** Restore all pins of `port` to input mode and clear the latch. */
 void EPIC_GPIO_DeInit(GPIO_TypeDef port);
-
-/* ───────────────────────── read / write / toggle ────────────────── */
 
 /**
  * @brief  Drive a pin high or low. Writes the LATx latch directly
@@ -121,8 +113,6 @@ void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value);
 /** Read the entire port (PORTx). */
 uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
 
-/* ───────────────────────── PORTB pull-ups ───────────────────────── */
-
 /**
  * @brief  Enable or disable PORTB internal weak pull-ups.
  *         Maps to INTCON2<RBPU> (DS39632E §10.2).
@@ -131,8 +121,6 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
  */
 void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull);
 
-/* ───────────────────────── PORTB change interrupt ─────────────────── */
-
 /**
  * @brief  Register a single whole-port callback fired from the RB<7:4>
  *         change interrupt (DS39632E §9.0/§10.2, INTCON<RBIF>/<RBIE>).
@@ -140,24 +128,20 @@ void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull);
  * @param  callback  function called once per RB-change interrupt with the
  *                   freshly-read PORTB byte, or NULL to unregister.
  *
- * @details
- *   Same name/signature as `pic16f87xa_gpio.h`'s hook. One callback slot
- *   (only one PORTB exists); NULL unregisters safely. The handler must
- *   read PORTB *before* clearing RBIF (DS39632E §9.0: reading PORTB is
- *   what re-arms the mismatch comparator, clearing first risks a missed
- *   or spurious interrupt). See @ref RB_IRQHandler.
+ * One callback slot (only one PORTB exists). The handler must read PORTB
+ * *before* clearing RBIF (DS39632E §9.0): reading PORTB is what re-arms
+ * the mismatch comparator; clearing first risks a missed or spurious
+ * interrupt. See @ref RB_IRQHandler.
  */
 void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
 
 /**
  * @brief  Weak RB<7:4> change-interrupt ISR (DS39632E §9.0/§10.2).
  *
- * @details
- *   Weak, like every other `*_IRQHandler` here: default body reads PORTB
- *   into a local, clears RBIF, then forwards that value to the callback
- *   from @ref EPIC_GPIO_RegisterChangeCallback. The read-before-clear order
- *   is mandatory (datasheet "read PORTB to end the mismatch condition"),
- *   not stylistic.
+ * Default body reads PORTB into a local, clears RBIF, then forwards that
+ * value to the callback from @ref EPIC_GPIO_RegisterChangeCallback. The
+ * read-before-clear order is mandatory (datasheet "read PORTB to end the
+ * mismatch condition"), not stylistic.
  */
 void RB_IRQHandler(void) EPIC_WEAK;
 
