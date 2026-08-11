@@ -441,6 +441,18 @@ class TestBundleGate(unittest.TestCase):
             "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
         ])
 
+    def test_gate_rejects_sim_prefixed_fixtures(self):
+        offenders = make_bundle._sim_mdb_offenders([
+            "epic-bus/tests/sim_bus.c",
+            "pic16f87xa-hal/tests/sim_bank_probe.c",
+            "sim_console.c",
+        ])
+        self.assertEqual(offenders, [
+            "epic-bus/tests/sim_bus.c",
+            "pic16f87xa-hal/tests/sim_bank_probe.c",
+            "sim_console.c",
+        ])
+
     def test_gate_passes_legit_target_sources(self):
         offenders = make_bundle._sim_mdb_offenders([
             "pic16f87xa-hal/src/target/pic16_isr_vector.c",

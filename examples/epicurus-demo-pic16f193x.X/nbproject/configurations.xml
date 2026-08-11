@@ -48,6 +48,7 @@
   <sourceRootList>
     <Elem>../../epic-common/src/core</Elem>
     <Elem>../../pic16f193x-hal/src/core</Elem>
+    <Elem>../../pic16f193x-hal/src/target</Elem>
     <Elem>../../pic16f193x-hal/src/peripherals</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>

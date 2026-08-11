@@ -78,6 +78,7 @@
     <Elem>../../epic-serial/src</Elem>
     <Elem>../../epic-tick/src</Elem>
     <Elem>../../pic18fxx5x-hal/src/core</Elem>
+    <Elem>../../pic18fxx5x-hal/src/target</Elem>
     <Elem>../../pic18fxx5x-hal/src/peripherals</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>

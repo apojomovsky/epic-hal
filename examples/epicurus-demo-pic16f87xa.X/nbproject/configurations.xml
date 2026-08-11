@@ -79,6 +79,7 @@
     <Elem>../../epic-taskmgr/src</Elem>
     <Elem>../../epic-tick/src</Elem>
     <Elem>../../pic16f87xa-hal/src/core</Elem>
+    <Elem>../../pic16f87xa-hal/src/target</Elem>
     <Elem>../../pic16f87xa-hal/src/peripherals</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>

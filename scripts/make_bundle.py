@@ -51,10 +51,13 @@ def _is_sim_mdb(rel: str) -> bool:
     The split src/ layout mirrors the build environments: src/sim/ holds
     host-simulation sources, src/mdb/ holds the MPLAB SIM gate harness,
     and every such file carries _sim/_mdb in its name (including the
-    include/pic16f87xa_sim.h API headers). None of it is consumer-facing.
+    include/pic16f87xa_sim.h API headers) or a sim_ fixture prefix
+    (tests/sim_bus.c and friends). None of it is consumer-facing.
     """
     parts = rel.split("/")
     if "_sim" in rel or "_mdb" in rel:
+        return True
+    if any(part.startswith("sim_") for part in parts):
         return True
     return any(parts[i] == "src" and parts[i + 1] in ("sim", "mdb")
                for i in range(len(parts) - 1))
