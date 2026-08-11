@@ -1,19 +1,8 @@
-/**
- * @file    test_swuart_deinit.c
- * @brief   EPIC_SWUART_DeInit host test, v3: confirms it actually tears
- *          down both of the channel's CCP instances and Timer1 (not
- *          just that it returns EPIC_OK), and that a second Init after
- *          DeInit works cleanly (register, write, read a byte again).
- *          No real CCP hardware exists in the host sim, so TX/RX are
- *          driven directly via the same test hooks
- *          test_swuart_tx.c/test_swuart_rx.c use; CCP/Timer1 teardown
- *          is checked by reading the underlying SFRs directly
- *          (EPIC_REG8 plus the PIC_REG_ and PIC_..._POR_VALUE names), the same
- *          mechanism epic_swuart.c's own swuart_test_last_tx_mode hook
- *          uses, available here because epic_swuart.h pulls in
- *          epic_hal.h (and therefore the family's own sfr.h)
- *          transitively.
- */
+/* EPIC_SWUART_DeInit host test: confirms DeInit really tears down both
+ * CCP instances and Timer1 (checked by reading the SFRs directly, not
+ * just that it returns EPIC_OK), and that a second Init after DeInit
+ * works cleanly. TX/RX driven via the same test hooks
+ * test_swuart_tx.c/test_swuart_rx.c use. */
 #include <stdio.h>
 #include "epic_swuart.h"
 
@@ -58,7 +47,7 @@ extern void swuart_test_set_capture(uint16_t value);
 
 int main(void)
 {
-    /* ---- Channel 1: register, start a TX frame, DeInit mid-frame. ---- */
+    /* Channel 1: register, start a TX frame, DeInit mid-frame. */
     EPIC_SWUART_HandleTypeDef chan1;
     EPIC_StatusTypeDef st = EPIC_SWUART_Init(&chan1, GPIOC, GPIO_PIN_1, GPIOC, GPIO_PIN_2,
                                               FOSC_HZ, 9600u);
@@ -92,27 +81,24 @@ int main(void)
     EPIC_StatusTypeDef deinit_st = EPIC_SWUART_DeInit(&chan1);
     CHECK(deinit_st == EPIC_OK, "DeInit returns EPIC_OK");
 
-    /* ---- The actual regression this test exists for: DeInit must
-     * really call EPIC_CCP_DeInit on both of the channel's CCP
-     * instances (both CON registers zeroed, not just "some" register
-     * touched) and EPIC_TIMER1_DeInit (T1CON back to its POR value,
-     * TMR1ON cleared), not merely return EPIC_OK while leaving
-     * hardware armed. Only one channel is active in this test (both
-     * families' single-channel case and PIC16F193X's g_chan_b == NULL
-     * from never having been used), so Timer1 teardown is unconditional
-     * here; the conditional (survivor-preserving) case is
-     * test_swuart_dual_deinit.c's job. ---- */
+    /* The actual regression this test exists for: DeInit must really
+     * call EPIC_CCP_DeInit on both of the channel's CCP instances
+     * (both CON registers zeroed) and EPIC_TIMER1_DeInit (T1CON back
+     * to its POR value), not merely return EPIC_OK while leaving
+     * hardware armed. Only one channel is active here, so Timer1
+     * teardown is unconditional; the conditional (survivor-preserving)
+     * case is test_swuart_dual_deinit.c's job. */
     CHECK(EPIC_REG8(PIC_REG_CCP1CON) == 0x00u, "DeInit zeroed the RX CCP (CCP1)");
     CHECK(EPIC_REG8(PIC_REG_CCP2CON) == 0x00u, "DeInit zeroed the TX CCP (CCP2)");
     CHECK(EPIC_REG8(PIC_REG_T1CON) == PIC_T1CON_POR_VALUE,
           "DeInit reset Timer1 (T1CON) to its POR value");
     CHECK(SIM_READ('C', 1) == 1, "DeInit leaves TX at idle/mark, not stuck low");
 
-    /* ---- Channel 2: a *new* registration in the same slot, after the
-     * registry emptied out. This only works if DeInit's Timer1 release
+    /* Channel 2: a *new* registration in the same slot, after the
+     * registry emptied out. Only works if DeInit's Timer1 release
      * didn't leave the peripheral in a state that blocks a fresh Init,
-     * and if Init's lazy restart actually re-arms Timer1 and the CCP
-     * instances correctly. ---- */
+     * and if Init's lazy restart re-arms Timer1 and the CCP instances
+     * correctly. */
     EPIC_SWUART_HandleTypeDef chan2;
     st = EPIC_SWUART_Init(&chan2, GPIOC, GPIO_PIN_1, GPIOC, GPIO_PIN_2, FOSC_HZ, 9600u);
     CHECK(st == EPIC_OK, "channel 2 init ok after channel 1's DeInit");

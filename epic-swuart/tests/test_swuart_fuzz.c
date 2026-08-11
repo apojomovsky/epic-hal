@@ -1,20 +1,9 @@
-/**
- * @file    test_swuart_fuzz.c
- * @brief   Host property test for epic-swuart's ring + error-count
- *          invariants under randomized writes/reads, driven through
- *          the same test hooks as test_swuart_tx.c/test_swuart_rx.c
- *          (no real CCP hardware in the host sim): TX bytes are fired
- *          through compare events and decoded from the armed CCP mode
- *          sequence, RX bytes are injected pin-level and read back,
- *          byte-exact, against the model. Also covers the TX short-
- *          write boundary (never blocks, ring capacity respected),
- *          the RX ring-full drop, and the bad-stop-bit error path.
- *
- *          Deterministic: fixed-seed LCG. Channel A only, so the test
- *          compiles and runs on every family (the RX start sequence
- *          differs: one fire on the PIC16F87XA fast path, two on the
- *          generic paths).
- */
+/* Host property test of the ring + error-count invariants under
+ * randomized writes/reads (fixed-seed LCG): TX bytes are fired through
+ * compare events and decoded from the armed CCP mode sequence, RX
+ * bytes are injected pin-level and read back byte-exact. Covers the TX
+ * short-write boundary, the RX ring-full drop, and the bad-stop-bit
+ * path. Channel A only, so it compiles and runs on every family. */
 
 #include <stdio.h>
 #include "epic_swuart.h"

@@ -1,27 +1,8 @@
-/**
- * @file    epic_swuart.h
- * @brief   Bit-banged full-duplex UART, CCP hardware capture/compare
- *          timing. Channel capacity is a real per-family hardware
- *          ceiling (CCP module count), not configurable: 1 channel on
- *          PIC16F87XA/PIC18Fxx5x, 2 on PIC16F193X.
- *
- * @details
- *   RX uses CCP Capture mode to hardware-timestamp the start-bit edge,
- *   TX uses CCP Compare mode to hardware-toggle the pin at a scheduled
- *   Timer1 count. Both are immune to ISR service latency: the physical
- *   event happens in hardware at the programmed instant regardless of
- *   how late software reprograms the *next* one. Timer1 free-runs
- *   continuously as the shared time base; see docs/ARCHITECTURE.md.
- *   9600 baud only is validated; 8 data bits, no parity, 1 stop bit,
- *   not configurable. Non-blocking, ring-buffered.
- *
- *   This module owns Timer1 and the CCP instances listed in
- *   docs/ARCHITECTURE.md for as long as any channel is active: do not
- *   also drive Timer1 or those CCP instances directly from application
- *   code while a channel is initialised. RX/TX pins are fixed by which
- *   physical pin each CCP instance is wired to, not freely choosable;
- *   EPIC_SWUART_Init validates the caller's pins match.
- */
+/* Bit-banged full-duplex UART on CCP hardware capture/compare timing.
+ * Channel capacity is a hardware ceiling (1 on PIC16F87XA/PIC18Fxx5x,
+ * 2 on PIC16F193X), not configurable; RX/TX pins are fixed by the CCP
+ * wiring and validated in Init. While a channel is active the module
+ * owns Timer1 and the CCP instances listed in docs/ARCHITECTURE.md. */
 #ifndef EPIC_SWUART_H
 #define EPIC_SWUART_H
 
@@ -29,23 +10,15 @@
 #include <stddef.h>
 #include "epic_hal.h"
 
-/* Channel B needs GPIOD (RD1, its TX pin): only the 40/44-pin
- * PIC16F193X variants (1934/1937/1939) have a PORTD at all
- * (PIC16F193X_FAMILY_HAS_PORTD, defined per-device in pic16f193x.h).
- * The 28-pin variants (1933/1936/1938) have no PORTD, so channel B
- * must not exist there: referencing GPIOD unconditionally on those
- * devices doesn't compile (undeclared identifier), a real bug found
- * via a real-target CI build across every PIC16F193X variant, not
- * caught by v3's own verification, which only ever built 16F1937.
- *
- * PORTD alone isn't enough, though: PIC16F1934 has PORTD but only 4KW
- * of flash (PIC16F193X_FAMILY_FLASH_KW, same tier as the smallest
- * 28-pin parts), and the compiled real-target example (with channel B
- * enabled) needs 4127 words, 31 over 1934's 4096-word budget, measured
- * via a real XC8 build, not estimated. PIC16F1937 (8KW) and PIC16F1939
- * (16KW) both build with real headroom (50.4% and 25.2% used
- * respectively). Requiring >=8KW alongside PORTD excludes exactly
- * 1934 and nothing else. */
+/* Channel B needs GPIOD (RD1, its TX pin), which only the 40/44-pin
+ * PIC16F193X variants (1934/1937/1939) have (PIC16F193X_FAMILY_HAS_PORTD,
+ * per-device in pic16f193x.h); on the 28-pin variants GPIOD is an
+ * undeclared identifier, so channel B must not compile there. PORTD
+ * alone is not enough: PIC16F1934 has PORTD but only 4KW of flash
+ * (PIC16F193X_FAMILY_FLASH_KW), and the compiled real-target example
+ * with channel B needs 4127 words, 31 over 1934's 4096-word budget
+ * (measured XC8 build). Requiring >=8KW alongside PORTD excludes
+ * exactly 1934 and nothing else. */
 #if (defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
      defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)) && \
     PIC16F193X_FAMILY_HAS_PORTD && (PIC16F193X_FAMILY_FLASH_KW >= 8)

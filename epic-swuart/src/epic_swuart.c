@@ -1,18 +1,12 @@
-/**
- * @file    epic_swuart.c
- * @brief   Bit-banged full-duplex UART, CCP hardware capture/compare
- *          timing. See docs/ARCHITECTURE.md for the shared-tick design
- *          and docs/API.md for per-function semantics.
- */
+/* Bit-banged full-duplex UART on CCP hardware capture/compare timing.
+ * See docs/ARCHITECTURE.md for the shared-tick design and docs/API.md
+ * for per-function semantics. */
 #include "epic_swuart.h"
 
-/* TX state machine states. TX_DATA covers all 8 data bits, distinguished
- * by tx_bit_index, not by a separate enum value per bit: a per-bit enum
- * (tried first, caught in review) needs one shared case label per bit
- * plus a final duplicate for bit 7, which drives one extra spurious
- * transition using stale shifted-out data. Counting with tx_bit_index
- * instead makes "8 bits done" an explicit condition, not an off-by-one
- * in the case list. */
+/* TX state machine states. TX_DATA covers all 8 data bits,
+ * distinguished by tx_bit_index: a per-bit enum needs a duplicate
+ * case for bit 7 that fires one spurious transition on stale
+ * shifted-out data, so counting makes "8 bits done" explicit. */
 enum {
     TX_IDLE = 0,
     TX_DATA,
@@ -75,13 +69,11 @@ static EPIC_SWUART_HandleTypeDef *g_chan_b = NULL;
 #endif
 
 /* Arms the mode for the *next* compare match, not the one that just
- * fired (hardware already toggled the pin per whatever was armed
- * ahead of time; this function's job is only to decide what happens
- * at the deadline it is about to write). Traced against 'A' = 0x41,
- * LSB first (start=0, d0=1, d1..d5=0, d6=1, d7=0, stop=1): Write()
- * arms CLEAR for the start bit; this handler then arms SET (d0=1),
- * CLEAR x5 (d1..d5=0), SET (d6=1), CLEAR (d7=0), SET (stop=1), in that
- * order, landing back in TX_IDLE exactly at the stop bit's deadline. */
+ * fired: the hardware already toggled the pin per what was armed
+ * ahead, so this only decides the deadline it is about to write.
+ * Traced against 'A' = 0x41, LSB first: Write() arms CLEAR (start),
+ * then SET/CLEAR per data bit, SET (stop), landing in TX_IDLE exactly
+ * at the stop bit's deadline. */
 static void tx_compare_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef tx_inst)
 {
     CCP_ModeTypeDef next_mode;
@@ -161,15 +153,12 @@ static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
     h->rx_count++;
 }
 
-/* Channel B (PIC16F193X only, CCP3) keeps the original two-fire
+/* Channel B (PIC16F193X only, CCP3) keeps the two-fire
  * capture-then-confirm sequence; only channel A on PIC16F87XA gets the
- * collapsed fast path below (rx_capture_event_fast hardcodes CCP1's
- * 87XA SFR addresses; see EPIC_SWUART_HAS_RX_FAST_PATH). On 87XA
- * single-channel builds nothing calls rx_capture_event/test_get_capture
- * any more after the hot-path change, so both are scoped out there to
- * avoid dead code with no caller. PIC18Fxx5x and PIC16F193X channel A
- * still use the generic path (the fast-path port is a follow-up), so
- * the guard is "channel B exists OR no fast path exists". */
+ * collapsed fast path (rx_capture_event_fast hardcodes CCP1's 87XA SFR
+ * addresses; see EPIC_SWUART_HAS_RX_FAST_PATH). PIC18Fxx5x and
+ * PIC16F193X channel A still use this generic path, so the guard is
+ * "channel B exists OR no fast path exists". */
 #if EPIC_SWUART_MAX_CHANNELS >= 2 || !EPIC_SWUART_HAS_RX_FAST_PATH
 /* test_get_capture takes the RX CCP instance (not hardcoded to channel
  * A's) so the shared rx_capture_event body below reads the right
@@ -195,16 +184,11 @@ static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef r
          * actually runs. */
         uint16_t edge_time = test_get_capture(rx_inst);
         /* Half a bit period: the mid-start-bit deglitch confirm point,
-         * matching v1/v2's own on_rx_edge_start exactly (rx_ticks_left
-         * = g_cycles_per_bit / 2u there). This is NOT d0's sample
-         * point yet; the RX_CONFIRM_START branch below adds one more
-         * full bit period on top of this once the confirm passes,
-         * landing at edge_time + 1.5 * cycles_per_bit for d0, the same
-         * two-hop sequence v1/v2 used. Collapsing this into a single
-         * 1.5x hop (an earlier draft of this exact function did) skips
-         * the deglitch check entirely: at 1.5x post-edge the pin
-         * reflects d0's own value, not the start bit's stability, so a
-         * one-hop version would silently stop rejecting noise starts. */
+         * NOT d0's sample; the RX_CONFIRM_START branch below adds one
+         * more full bit period on top, landing d0 at edge_time + 1.5
+         * cycles_per_bit. A single 1.5x hop would skip the deglitch:
+         * at 1.5x post-edge the pin already reflects d0's value, so
+         * noise starts would pass. */
         h->rx_deadline = (uint16_t)(edge_time + g_cycles_per_bit / 2u);
         h->rx_state = RX_CONFIRM_START;
         EPIC_CCP_SetCompare(rx_inst, h->rx_deadline);
@@ -248,37 +232,26 @@ static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef r
 #endif /* EPIC_SWUART_MAX_CHANNELS >= 2 || !EPIC_SWUART_HAS_RX_FAST_PATH */
 
 /* Direct SFR addresses for PIC16F87XA's CCP1 (channel A's RX capture),
- * confirmed against pic16f87xa_ccp.c's own addrs[0] entry. Bypasses
- * EPIC_CCP_GetCapture's atomic retry-loop (unnecessary here: the
- * earliest a second real capture could land is a full cycles_per_bit
- * away, ~521 cycles at 9600 baud, vastly longer than the ~10-15 cycles
- * this plain 2-byte read takes) and EPIC_CCP_SetCompare/SetMode's
- * generic call overhead, for this one hot path only. Hardcoded to
- * CCP1 specifically, not parameterised by instance: channel B
- * (PIC16F193X, CCP3) keeps using the slower, generic rx_capture_event
- * above via on_rx_event_b, a disclosed, deliberate scope limit of this
- * fix (see docs/ARCHITECTURE.md's "Known limitations" section).
- * Porting this same pattern to channel B and to PIC18Fxx5x/PIC16F193X's
- * own literal addresses is a follow-up, not this fix. */
+ * confirmed against pic16f87xa_ccp.c's addrs[0] entry. Bypasses
+ * EPIC_CCP_GetCapture's atomic retry-loop (unnecessary: a second real
+ * capture can't land for a full cycles_per_bit, ~521 cycles at 9600
+ * baud) and the generic SetCompare/SetMode call overhead, for this one
+ * hot path only. Hardcoded to CCP1: channel B (PIC16F193X, CCP3) keeps
+ * the generic rx_capture_event, a disclosed scope limit (see
+ * docs/ARCHITECTURE.md's "Known limitations"); porting the pattern to
+ * other families/instances is a follow-up. */
 #if EPIC_SWUART_HAS_RX_FAST_PATH
 #define CCP1_CPRL_ADDR 0x15U
 #define CCP1_CPRH_ADDR 0x16U
 #define CCP1_CON_ADDR  0x17U
 
-/* Cycles elapsed, on real PIC16F87XA hardware, between the real
- * falling edge and the point inside rx_capture_event_fast() where
- * Timer1 is read fresh (the AN555-style _Cycle_Offset1 correction).
- * Measured via a real mdb probe on PIC16F877A (MPLAB SIM, XC8 v3.10,
- * -O2, the exact build this module ships with): 3 cycles of
- * edge-to-vector interrupt response plus 322 cycles of
- * vector-to-Timer1-read software latency, reproduced identically
- * across three runs (see
- * docs/superpowers/plans/probe-swuart-rx-hotpath.md). With this
- * value, d0's sample deadline lands at 1.499 bit periods after the
- * real edge, mid-d0; with the old 0u placeholder it landed at 2.12
- * bit periods, inside d1's window, a guaranteed mis-sample. Do not
- * re-derive or "improve" this number without a fresh probe: it
- * describes this exact code path on this exact toolchain. */
+/* Edge-to-Timer1-read latency on real PIC16F87XA (AN555-style
+ * _Cycle_Offset1 correction): 3 cycles interrupt response + 322 cycles
+ * software latency, measured via an mdb probe on PIC16F877A, XC8 v3.10,
+ * -O2 (see docs/superpowers/plans/probe-swuart-rx-hotpath.md). With it,
+ * d0's sample deadline lands mid-d0 at 1.499 bit periods; with 0 it
+ * landed inside d1's window, a guaranteed mis-sample. Do not re-derive
+ * without a fresh probe: it describes this exact code path/toolchain. */
 #define RX_CAPTURE_OVERHEAD_CYCLES 325u
 
 #if EPIC_SWUART_TEST_HOOKS
