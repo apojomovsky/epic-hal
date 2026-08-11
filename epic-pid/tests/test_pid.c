@@ -15,7 +15,7 @@ static int g_pass = 0, g_fail = 0;
 #define CHECK(c, m) do { if (c) { g_pass++; } \
                           else { printf("FAIL: %s\n", m); g_fail++; } } while (0)
 
-/* helpers: Q8.8 multiply by hand (independent of pic_math) */
+/** @brief Helpers: Q8.8 multiply by hand (independent of pic_math). */
 static int32_t mul_s16(int16_t a, int16_t b)
 {
     /* Independent oracle: the test must not call pic_math_mul_s16 here,
@@ -24,16 +24,23 @@ static int32_t mul_s16(int16_t a, int16_t b)
     return (int32_t)a * (int32_t)b;
 }
 
-/* Q8.8 multiply: a Q8.8-scale int16_t gain against a raw int16_t
- * measurement/error; returns the int32_t Q8.8 result pid.c computes
- * for P and D terms. */
+/**
+ * @brief Q8.8 multiply of a Q8.8 gain against a raw int16_t value.
+ *
+ * A Q8.8-scale int16_t gain against a raw int16_t measurement/error;
+ * returns the int32_t Q8.8 result pid.c computes for P and D terms.
+ */
 static int32_t p_or_d_term(int16_t gain_q8, int16_t raw)
 {
     return mul_s16(gain_q8, raw);
 }
 
-/* 1. Pure P: ki_q8 = kd_q8 = 0. A constant error should produce
- *      output == clamp(p_mul_s16(kp_q8, error), out_min, out_max). */
+/**
+ * @brief Pure P: ki_q8 = kd_q8 = 0.
+ *
+ * A constant error should produce
+ * output == clamp(p_mul_s16(kp_q8, error), out_min, out_max).
+ */
 static void test_pure_p(void)
 {
     pid_t pid;
@@ -64,8 +71,12 @@ static void test_pure_p(void)
     CHECK(out == 1000, "pure P: clamped to out_max on huge P");
 }
 
-/* 2. Pure I: kp_q8 = kd_q8 = 0. Repeated calls with a constant
- *      sub-saturating error accumulate integrator_q8 linearly. */
+/**
+ * @brief Pure I: kp_q8 = kd_q8 = 0.
+ *
+ * Repeated calls with a constant sub-saturating error accumulate
+ * integrator_q8 linearly.
+ */
 static void test_pure_i_accumulates(void)
 {
     pid_t pid;
@@ -92,9 +103,12 @@ static void test_pure_i_accumulates(void)
     CHECK(out == 60, "pure I: 6th call -> output 60");
 }
 
-/* 3. Anti-windup: tight clamp + sustained large error. The integrator
- *      must never exceed the Q8.8 clamp rails, and the output must
- *      saturate at the rails exactly, never beyond. */
+/**
+ * @brief Anti-windup: tight clamp + sustained large error.
+ *
+ * The integrator must never exceed the Q8.8 clamp rails, and the output
+ * must saturate at the rails exactly, never beyond.
+ */
 static void test_anti_windup_clamps(void)
 {
     pid_t pid;
@@ -134,9 +148,12 @@ static void test_anti_windup_clamps(void)
           "anti-windup: integrator still equals the rail exactly");
 }
 
-/* 4. Windup recovery: continuing #3, flip the sign of the error. The
- *      integrator was capped rather than allowed to overshoot, so the
- *      very next call should move the output off the saturation rail. */
+/**
+ * @brief Windup recovery: continuing #3, flip the sign of the error.
+ *
+ * The integrator was capped rather than allowed to overshoot, so the
+ * very next call should move the output off the saturation rail.
+ */
 static void test_windup_recovery_immediate(void)
 {
     pid_t pid;
@@ -163,10 +180,13 @@ static void test_windup_recovery_immediate(void)
     CHECK(out == 40, "recovery: output off the rail on the first flipped call");
 }
 
-/* 5. No derivative kick on the first call. With kp=ki=0, kd=256,
- *      a setpoint step from 0 to 1000 right after init must produce
- *      exactly 0 output (D=0 because no prev measurement, P=0 and
- *      I=0 because kp=ki=0). */
+/**
+ * @brief No derivative kick on the first call.
+ *
+ * With kp=ki=0, kd=256, a setpoint step from 0 to 1000 right after init
+ * must produce exactly 0 output (D=0 because no prev measurement, P=0
+ * and I=0 because kp=ki=0).
+ */
 static void test_no_derivative_kick_first_call(void)
 {
     pid_t pid;
@@ -187,8 +207,12 @@ static void test_no_derivative_kick_first_call(void)
     CHECK(out == exp, "no-deriv-kick: D term appears on second call only");
 }
 
-/* Same property after pid_reset: a reset must zero the D-term
- * history so the very next call behaves like the first call. */
+/**
+ * @brief Same no-derivative-kick property after pid_reset.
+ *
+ * A reset must zero the D-term history so the very next call behaves
+ * like the first call.
+ */
 static void test_no_derivative_kick_after_reset(void)
 {
     pid_t pid;
@@ -214,10 +238,14 @@ static void test_no_derivative_kick_after_reset(void)
     CHECK(out == -10, "no-deriv-kick-after-reset: gains still apply on second call");
 }
 
-/* 6. Derivative sign. With kp=ki=0, kd=256 (D-on-measurement,
- *      negated): a measurement that rises between two calls must
- *      produce a NEGATIVE output (damping); a falling measurement a
- *      POSITIVE output. Assert the sign, not just nonzero. */
+/**
+ * @brief Derivative sign.
+ *
+ * With kp=ki=0, kd=256 (D-on-measurement, negated): a measurement that
+ * rises between two calls must produce a NEGATIVE output (damping); a
+ * falling measurement a POSITIVE output. Assert the sign, not just
+ * nonzero.
+ */
 static void test_derivative_sign(void)
 {
     pid_t pid;
@@ -239,10 +267,13 @@ static void test_derivative_sign(void)
     CHECK(out == 30, "derivative sign: falling measurement -> positive");
 }
 
-/* 7. Final output always clamps. Extreme P, I, or D values chosen so
- *      sum_q8 >> 8 would land outside [out_min, out_max]. Assert
- *      the return is clamped regardless of which term caused the
- *      excess. */
+/**
+ * @brief Final output always clamps.
+ *
+ * Extreme P, I, or D values chosen so sum_q8 >> 8 would land outside
+ * [out_min, out_max]. Assert the return is clamped regardless of which
+ * term caused the excess.
+ */
 static void test_final_output_clamps_p(void)
 {
     pid_t pid;
@@ -257,6 +288,7 @@ static void test_final_output_clamps_p(void)
     CHECK(out == -100, "clamp: P pushes past out_min, clamped to out_min");
 }
 
+/** @brief Final output clamps when the D term alone pushes past a rail. */
 static void test_final_output_clamps_d(void)
 {
     pid_t pid;
@@ -269,6 +301,7 @@ static void test_final_output_clamps_d(void)
     CHECK(out == -100, "clamp: D pushes past out_min, clamped to out_min");
 }
 
+/** @brief Final output clamps when the I term alone pushes past a rail. */
 static void test_final_output_clamps_i(void)
 {
     pid_t pid;
@@ -284,9 +317,13 @@ static void test_final_output_clamps_i(void)
     }
 }
 
-/* 8. Bumpless transfer. Run several AUTO cycles, flip to MANUAL
- *      with a new output target, then back to AUTO. The output
- *      should not jump at the AUTO->MANUAL->AUTO transitions. */
+/**
+ * @brief Bumpless transfer.
+ *
+ * Run several AUTO cycles, flip to MANUAL with a new output target, then
+ * back to AUTO. The output should not jump at the AUTO->MANUAL->AUTO
+ * transitions.
+ */
 static void test_bumpless_transfer(void)
 {
     pid_t pid;
@@ -326,10 +363,13 @@ static void test_bumpless_transfer(void)
           "bumpless: integrator resumes evolving after AUTO resumes");
 }
 
-/* 9. pid_reset behavior. After several AUTO cycles, call pid_reset
- *      and assert the next pid_update behaves like the first call
- *      on a freshly-pid_init'd instance. The gains/clamp/mode
- *      persist. */
+/**
+ * @brief pid_reset behavior.
+ *
+ * After several AUTO cycles, call pid_reset and assert the next
+ * pid_update behaves like the first call on a freshly-pid_init'd
+ * instance. The gains/clamp/mode persist.
+ */
 static void test_pid_reset_clears_state_keeps_gains(void)
 {
     pid_t pid;
@@ -370,7 +410,7 @@ static void test_pid_reset_clears_state_keeps_gains(void)
     CHECK(out == exp2, "reset: second call adds I increment, P unchanged, D=0");
 }
 
-/* 10. Two independent instances never affect each other. */
+/** @brief Two independent instances never affect each other. */
 static void test_two_independent_instances(void)
 {
     pid_t a, b;
@@ -406,6 +446,7 @@ static void test_two_independent_instances(void)
 }
 
 
+/** @brief Run every epic-pid unit test and report pass/fail counts. */
 int main(void)
 {
     test_pure_p();

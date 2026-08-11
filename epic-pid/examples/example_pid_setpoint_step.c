@@ -12,9 +12,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/* Host-side Q8.8 conversion; the library itself takes pre-scaled gains. */
+/** @brief Host-side Q8.8 conversion; the library itself takes pre-scaled gains. */
 static int16_t q8(float x) { return (int16_t)(x * 256.0f); }
 
+/** @brief Demo a setpoint step with anti-windup and a bumpless MANUAL handoff. */
 int main(void)
 {
     /* Kp=2.0/Ki=0.5/Kd=0.0 and a tight output clamp are chosen to make
