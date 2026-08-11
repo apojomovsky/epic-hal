@@ -67,6 +67,11 @@ make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A  # the mdb gate
 make shell           # interactive shell, repo mounted at /repo
 ```
 
+The image tag is resolved from `docker/ci-toolchain/Dockerfile`'s ARG
+lines as `xc8-v${XC8_VERSION}-dfp${PIC16}-${PIC18}-${PIC1216F1}-mplabx${MPLABX_VERSION}`;
+`make ci-image-push` and the CI jobs reuse the same grep so the formula
+cannot drift.
+
 See [docs/docker-dev-plan.md](docs/docker-dev-plan.md) for the design
 and the full command reference.
 
