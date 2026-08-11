@@ -1,72 +1,15 @@
-/**
- * @file    sim_serial.c
- * @brief   Bounded, self-reporting HARNESS=sim build for epic-serial:
- *          the module's first real `mdb` gate. Runs the actual compiled
- *          epic_serial.c under MPLAB SIM on a 16F877A through the real
- *          public API, exercising the audited class-G paths
- *          (docs/toolchain-coverage.md): Disable/Restore inside the TX
- *          ISR callback (epic_serial.c:48-52), the blocking push's
- *          Disable/Restore plus explicit dispatcher calls
- *          (epic_serial.c:97-106), and the read path
- *          (epic_serial.c:115-121), then reports PASS/FAIL over the
- *          target's real hardware USART (see
- *          pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
+/*
+ * Bounded, self-reporting HARNESS=sim build for epic-serial: the module's
+ * first real mdb gate, running the actual epic_serial.c under MPLAB SIM
+ * on a 16F877A and reporting PASS/FAIL over the real hardware USART.
  *
- * @details
- *   MPLAB SIM's USART model has a documented gap that shapes this
- *   design: TXIF stays SET even while TXREG holds a byte (probed in
- *   the phase-2 output: every pop logs T=01, and TXREG reads back a
- *   constant 0x31). On real silicon TXIF clears on a TXREG write, so
- *   the TX ISR fires once per byte time; under the sim, TXIE enabled
- *   with GIE set means the ISR fires continuously, and the storm's
- *   in-ISR Disable/Restore churn trips the simulator's asynchronous
- *   interrupt-delivery quirk (the one documented in epic_tick.c: a
- *   request latched while GIE was set can still vector inside a
- *   disabled window and leave GIE cleared when the ISR returns),
- *   wedging GIE and stopping the tick. The gate therefore runs every
- *   TX phase with GIE OFF, driving the dispatch manually, and runs the
- *   live-ISR phase only after TXIE is off, so the storm cannot start.
- *   Transmitted bytes are verified byte-exact from the captured UART
- *   stream (the payload is visible in the gate output), and the
- *   in-firmware checks are the module's own counters.
- *
- *   Phases:
- *
- *   (1) RX-empty contract on a fresh ring: available() == 0 and
- *       read() returns 0 (the read path's Disable/Restore). MPLAB SIM
- *       cannot inject RX input (same constraint documented in
- *       epic-swuart's sim build), so the RX side is the empty-ring
- *       contract only.
- *
- *   (2) Byte-exact TX capture with GIE off. A 5-byte write drains
- *       through manual epic_dispatch_all_irqs() calls (the dispatch's
- *       TXIE gate with TXIE enabled), verified by tx_pending() == 0
- *       and by the payload bytes in the captured UART stream.
- *
- *   (3) Blocking write with GIE off: a 34-byte write (32-byte ring +
- *       2) fills the ring and blocks inside epic_serial_write's
- *       Disable/Restore + epic_dispatch_all_irqs() loop, then the
- *       remaining ring drains through the same manual dispatch and
- *       flush() returns only after the shift register empties (the
- *       last flush dispatch also hits the callback's empty-ring branch
- *       and clears TXIE, leaving the source disabled for phase 4).
- *
- *   (4) Live-ISR window: an ~819 us Timer2 tick (the epic_tick_init
- *       role, hand-rolled here so epic-serial's manifest dependency
- *       list stays empty; the ~1 ms class period keeps the dispatch
- *       ISR cost well under one period, unlike the 25 us first tried)
- *       enables GIE with TXIE already off; the tick ISR then vectors
- *       several times over a bounded pump, each vector running the
- *       real dispatch with TXIF pending and the TXIE gate skipping the
- *       TX handler (the exact gate the dispatch audit added). The
- *       checks: the tick counter advances (GIE and the vector survived
- *       the class-G churn), and epic_serial_read's Disable/Restore
- *       runs under the live preempting ISR.
- *
- *   Loop budget: every loop is tightly bounded and breaks early on
- *   completion; the polled UART logging at 9600 baud is the dominant
- *   cost, and the whole run terminates well inside a 60000 ms wait_ms
- *   budget on PIC16F877A/MPLAB SIM.
+ * MPLAB SIM's USART model keeps TXIF SET while TXREG holds a byte, so
+ * TXIE with GIE set fires the TX ISR continuously and the in-ISR
+ * Disable/Restore churn trips the simulator's interrupt-delivery quirk
+ * (documented in epic_tick.c), wedging GIE. The TX phases therefore run
+ * with GIE OFF (manual dispatch), and the live-ISR phase only after TXIE
+ * is off. MPLAB SIM cannot inject RX input, so the RX side is the
+ * empty-ring contract only.
  */
 
 #include "epic_serial.h"
@@ -77,20 +20,18 @@
 #define FOSC_HZ 20000000UL
 #endif
 
-/** Per-phase loop-iteration bounds (see core/epic_harness.h). */
+/* Per-phase loop-iteration bounds (see core/epic_harness.h). */
 #define SIM_ITERATIONS  30000UL
 #define PHASE2_ITERS    2000UL
 #define PHASE3_ITERS    20000UL
 #define PHASE4_ITERS    5000UL
 
-/* Timer2 tick, ~819 us period at 20 MHz (4096 instruction cycles:
- * (PR2+1) x prescaler, the same ~1 ms class epic-tick's compute_period
- * picks). The period is deliberately long: the full ISR dispatch costs
- * a few hundred cycles, and a shorter period (25 us was tried first)
- * makes the tick ISR consume 100% of the simulator's time, starving
- * main and freezing the run. */
+/* Timer2 tick, ~819 us period at 20 MHz ((PR2+1) x prescaler, the same
+ * ~1 ms class epic-tick's compute_period picks). Deliberately long: a
+ * shorter period lets the tick ISR consume all of the simulator's time,
+ * starving main and freezing the run. */
 #define TICK_PR2 ((uint8_t)255)
-/** Tick units (819 us each): the live-ISR pump must see at least this. */
+/* Tick units (819 us each): the live-ISR pump must see at least this. */
 #define TICK_MIN_ALIVE 4UL
 
 #define TX_SEQ_LEN 5u
@@ -146,12 +87,12 @@ int main(void)
      * harness leaves GIE clear; make it explicit). */
     (void)EPIC_IRQ_Disable();
 
-    /* ---- Phase 1: RX-empty contract (read's Disable/Restore) ---- */
+    /* Phase 1: RX-empty contract (read's Disable/Restore). */
     uint8_t rbuf[8] = { 0 };
     check(epic_serial_available() == 0, "rx avail empty");
     check(epic_serial_read(rbuf, (int)sizeof(rbuf)) == 0, "rx read empty");
 
-    /* ---- Phase 2: manual-dispatch TX drain, GIE off ---- */
+    /* Phase 2: manual-dispatch TX drain, GIE off. */
     static const uint8_t seq[TX_SEQ_LEN] = { 'A', 'B', 'C', 'D', 'E' };
     int w2 = epic_serial_write(seq, (int)TX_SEQ_LEN);
     int pops = 0;
@@ -163,8 +104,8 @@ int main(void)
         if (epic_serial_tx_pending() < p) {
             pops++;
             if (pops == 1) {
-                /* Sim-model probe: TXIF after a TXREG write, TXREG
-                 * readback (see the file header for what this shows). */
+                /* Probe the sim's USART model: TXIF/TXREG readback after
+                 * a TXREG write. */
                 epic_harness_log("pop");
                 log_hex_pair('T',
                     (uint8_t)EPIC_IRQ_GetFlag(PIC16_IRQ_USART_TX));
@@ -176,7 +117,7 @@ int main(void)
     check(w2 == (int)TX_SEQ_LEN, "tx write all");
     check(epic_serial_tx_pending() == 0, "tx drain all");
 
-    /* ---- Phase 3: blocking write + drain + flush, GIE off ---- */
+    /* Phase 3: blocking write + drain + flush, GIE off. */
     uint8_t fill[EPIC_SERIAL_RING_SZ + 2u];
     for (int j = 0; j < (int)sizeof(fill); j++) {
         fill[j] = (uint8_t)j;
@@ -189,14 +130,14 @@ int main(void)
         epic_dispatch_all_irqs();
     }
     int drained = (epic_serial_tx_pending() == 0);
-    epic_serial_flush();                 /* waits for the last TSR byte */
+    epic_serial_flush();                 /* waits for the last shift-register byte */
     check(drained, "tx drain full");
-    /* Belt and braces: the flush dispatch already hit the callback's
-     * empty-ring branch (TXIE cleared); make it explicit so phase 4
-     * cannot start a TX interrupt storm under the live tick. */
+    /* Belt and braces: the flush dispatch already cleared TXIE via the
+     * callback's empty-ring branch; make it explicit so phase 4 cannot
+     * start a TX interrupt storm under the live tick. */
     EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
 
-    /* ---- Phase 4: live tick ISR with the TXIE gate armed ---- */
+    /* Phase 4: live tick ISR with the TXIE gate armed. */
     static TIMER2_HandleTypeDef t2 = TIMER2_HANDLE_DEFAULT;
     t2.Prescaler = TIMER2_PRESCALER_1_16;
     t2.Postscaler = TIMER2_POSTSCALER_1_1;

@@ -1,24 +1,15 @@
-/**
- * @file    test_serial_stress.c
- * @brief   Host property test for epic-serial: randomized producer/
- *          consumer stress through the real public API over the host
- *          sim's USART model. Injects RX bytes through
- *          pic16f87xa_sim_drive_usart_rx (which dispatches into the
- *          module's RX ring) and pumps the TX ISR with
- *          epic_dispatch_all_irqs (the host equivalent of the target's
- *          interrupt vector), verifying byte-exact round trips against
- *          an independent model plus the full/empty ring boundaries.
+/*
+ * Host property test for epic-serial: randomized producer/consumer stress
+ * through the real public API over the host sim's USART model. RX is
+ * injected via *_sim_drive_usart_rx (which dispatches into the module's
+ * RX ring), TX drained with epic_dispatch_all_irqs (the host equivalent
+ * of the target's interrupt vector); byte-exact round trips are checked
+ * against an independent model. Deterministic: fixed-seed LCG.
  *
- *          Deterministic: fixed-seed LCG, so failures reproduce.
- *
- * @note    Host-only loop-safety rule the test relies on: on the host,
- *          TXIF is re-asserted only by pic16f87xa_sim_step(), so the
- *          module's internal drain (epic_dispatch_all_irqs inside a
- *          blocked epic_serial_write) can pop at most one byte between
- *          steps. The test therefore drains the TX ring (one
- *          step+dispatch pair per byte) after every write and never
- *          starts a write with a full ring, which is exactly the
- *          real-target timing the sim is modeling.
+ * Host loop-safety rule the test relies on: TXIF is re-asserted only by
+ * the sim step, so the module's internal drain pops at most one byte
+ * between steps; the test drains one step+dispatch pair per byte and
+ * never starts a write with a full ring.
  */
 
 #include "epic_serial.h"
@@ -67,14 +58,13 @@ static size_t  g_rx_model_head = 0u;   /* next byte the reader expects */
 static size_t  g_rx_model_len = 0u;    /* bytes not yet read */
 
 /* Drain the TX ring: one step (re-asserts TXIF) + one dispatch (pops
- * one byte into TXREG) per byte, capturing each popped byte into the
- * caller's buffer. Returns the number of bytes captured.
+ * one byte into TXREG) per byte, capturing each popped byte. Returns
+ * the number of bytes captured.
  *
  * The sim's free-running Timer0 can overflow inside the step and fire
- * the IRQ callback (epic_dispatch_all_irqs) before the explicit
- * dispatch, popping a byte whose TXREG contents the explicit dispatch
- * would overwrite; the pending-count deltas below catch every pop and
- * capture it in order. */
+ * the IRQ callback before the explicit dispatch, popping a byte whose
+ * TXREG contents the explicit dispatch would overwrite; the
+ * pending-count deltas catch every pop in order. */
 static int drain_tx(uint8_t *out, int max)
 {
     int n = 0;
@@ -91,8 +81,8 @@ static int drain_tx(uint8_t *out, int max)
             out[n++] = (uint8_t)EPIC_REG8(PIC_REG_TXREG);  /* dispatch popped */
         }
     }
-    /* One trailing step so TXIF is re-asserted for the next write's
-     * potential internal drain (see the file header note). */
+    /* Trailing step re-asserts TXIF for the next write's internal drain
+     * (see the file header note). */
     epic_harness_tick();
     return n;
 }
