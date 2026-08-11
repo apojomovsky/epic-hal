@@ -1,49 +1,12 @@
 /**
- * @file    sim_encoder.c
- * @brief   Bounded, self-reporting HARNESS=sim build: epic-encoder's
- *          real `mdb` gate (PIC16F877A/MPLAB SIM). Feeds a scripted
- *          quadrature sequence through the module's own
- *          `encoder_update` API (the module decodes a caller-supplied
- *          port byte, so unlike a GPIO-pin module there is no MPLAB
- *          SIM pin-injection limitation), verifying the x4 position
- *          count in both directions, the impossible-transition error
- *          counter, and the glitch gate against real simulated time.
- *          Then hammers `encoder_get_position` (the 32-bit read under
- *          EPIC_IRQ_Disable/Restore, docs/toolchain-coverage.md class
- *          G) under the live 1 ms tick ISR, checking that every read
- *          is consistent and that the tick survived (a latched
- *          interrupt delivered inside the GIE=0 critical section can
- *          tear the read and leave GIE cleared, stopping the tick
- *          dead, the exact signature epic-tick's sim gate froze with;
- *          see epic_tick.c's read-twice-retry comment). Reports
- *          PASS/FAIL over the target's real USART the same way every
- *          other family's own `.sim` variant does (see
- *          pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
- *
- * @details
- *   Phase 1 replays the host tests' (tests/test_encoder.c) two full
- *   clean rotations: states 00->01->11->10->00 twice (-8, the shipped
- *   table's negative direction) then 00->10->11->01->00 twice (+8),
- *   ending at position 0 with no errors or glitches. Phase 2 feeds the
- *   impossible 00->11 transition (both bits flipped: error_count 1,
- *   position unchanged) then a valid 11->01 edge (resync proof, +1).
- *   Phase 3 arms the glitch gate (min_edge_interval_ms = 10) on a
- *   fresh instance and replays the host glitch test against real tick
- *   time: first edge accepted, a too-soon second edge dropped
- *   (glitch_count 1, position unchanged), the same edge accepted after
- *   the window (position -2). Phase 4 is the class-G probe: 5000
- *   `encoder_get_position` reads under the live tick ISR with a
- *   1 ms wait every 1000 reads so the ISR demonstrably fires inside
- *   the probe window; position is never written during the probe, so
- *   any non-zero read is a torn read, and a bounded 1 ms wait that
- *   spins out its budget means the tick stopped (GIE lost).
- *
- *   Loop-iteration bounds: phase 3 waits ~24 ms and the hammer is
- *   5000 reads plus five one-ms waits, roughly 0.6M instructions at
- *   20 MHz; comfortably inside the 5000 ms wait_ms budget on
- *   PIC16F877A/MPLAB SIM (20000 reads was ~7 s per main() pass and
- *   blew the budget). Every wait and loop is bounded so the build
- *   always terminates and reaches epic_harness_report.
+ * Bounded, self-reporting HARNESS=sim build, the module's mdb gate
+ * (PIC16F877A/MPLAB SIM): feeds a scripted quadrature sequence through
+ * `encoder_update` verifying the x4 position count in both directions,
+ * the impossible-transition counter, and the glitch gate against real
+ * simulated time, then hammers `encoder_get_position` under the live
+ * tick ISR (docs/toolchain-coverage.md class G) checking every read is
+ * consistent and the tick survived. Reports PASS/FAIL over the harness
+ * USART (see pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
  */
 
 #include "encoder.h"

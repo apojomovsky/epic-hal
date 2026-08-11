@@ -1,14 +1,9 @@
 /**
- * @file    test_encoder.c
- * @brief   Host tests for the quadrature decoder, exercising the exact code
- *          that ships on-target.
- *
- * @details
- *   Glitch-gate cases use `epic_tick_init` + `epic_harness_tick()` to
- *   advance real simulated time; pure-decode cases drive `encoder_update`
- *   directly with constructed port bytes. Sign convention: `QUAD_TABLE`
- *   counts `00->10->11->01->00` positive; swap `pin_a`/`pin_b` at init to
- *   invert (see docs/API.md).
+ * Host tests for the quadrature decoder, exercising the exact code that
+ * ships on-target. Glitch-gate cases advance real simulated time via
+ * `epic_tick_init` + `epic_harness_tick()`; pure-decode cases drive
+ * `encoder_update` directly. Sign convention: `QUAD_TABLE` counts
+ * `00->10->11->01->00` positive; swap `pin_a`/`pin_b` to invert.
  */
 
 #include "encoder.h"
@@ -22,7 +17,7 @@
 static int g_pass = 0, g_fail = 0;
 #define CHECK(c, m) do { if (c) { g_pass++; } else { printf("FAIL: %s\n", m); g_fail++; } } while (0)
 
-/* ---- time advancement (pump until the tick counter increments by 1) ---- */
+/* time advancement (pump until the tick counter increments by 1) */
 static void advance_one_tick(void)
 {
     uint32_t t0 = epic_tick_get();
@@ -30,7 +25,7 @@ static void advance_one_tick(void)
 }
 static void advance_ms(uint32_t ms) { for (uint32_t i = 0; i < ms; i++) advance_one_tick(); }
 
-/* ---- port-byte helpers ---- */
+/* port-byte helpers */
 
 /* Put a 2-bit (a<<1)|b `state` at bit positions pin_a/pin_b of a port byte. */
 static uint8_t port_byte(uint8_t pin_a, uint8_t pin_b, uint8_t state)
@@ -52,9 +47,7 @@ static uint8_t port_byte2(uint8_t state_a, uint8_t state_b)
 #define PIN_A  4u
 #define PIN_B  5u
 
-/* ================================================================ */
-/* 1+2. Full clean rotations, both directions, against QUAD_TABLE.    */
-/* ================================================================ */
+/* 1+2. Full clean rotations, both directions, against QUAD_TABLE. */
 
 /* 00->01->11->10->00 x2: the shipped table counts this direction -4/cycle. */
 static void test_full_rotation_neg(void)
@@ -86,9 +79,7 @@ static void test_full_rotation_pos(void)
     CHECK(encoder_get_glitch_count(&enc) == 0, "rot_pos: no glitches (gate off)");
 }
 
-/* ================================================================ */
-/* 3. Impossible transition (both bits flip at once).                */
-/* ================================================================ */
+/* 3. Impossible transition (both bits flip at once). */
 static void test_impossible_transition(void)
 {
     encoder_t enc;
@@ -106,9 +97,7 @@ static void test_impossible_transition(void)
     CHECK(encoder_get_error_count(&enc) == 1, "impossible: no second error");
 }
 
-/* ================================================================ */
-/* 4. No-op on unchanged pins (another instance's pins changed).      */
-/* ================================================================ */
+/* 4. No-op on unchanged pins (another instance's pins changed). */
 static void test_noop_on_unchanged(void)
 {
     encoder_t enc;
@@ -123,9 +112,7 @@ static void test_noop_on_unchanged(void)
     CHECK(encoder_get_glitch_count(&enc) == 0, "noop: no glitch");
 }
 
-/* ================================================================ */
 /* 5. Glitch gate rejects a too-soon edge, then accepts after window. */
-/* ================================================================ */
 static void test_glitch_gate_rejects(void)
 {
     const uint16_t gate = 5u;
@@ -155,9 +142,7 @@ static void test_glitch_gate_rejects(void)
     CHECK(encoder_get_error_count(&enc) == 0, "gate: no impossible transitions");
 }
 
-/* ================================================================ */
-/* 6. Glitch gate disabled by default (min_edge_interval_ms == 0).   */
-/* ================================================================ */
+/* 6. Glitch gate disabled by default (min_edge_interval_ms == 0). */
 static void test_glitch_gate_disabled(void)
 {
     encoder_t enc;
@@ -172,9 +157,7 @@ static void test_glitch_gate_disabled(void)
     CHECK(encoder_get_error_count(&enc) == 0, "nogate: no errors");
 }
 
-/* ================================================================ */
 /* 7. encoder_init / encoder_reset resync last_state from port_value. */
-/* ================================================================ */
 static void test_init_reset_resync(void)
 {
     encoder_t enc;
@@ -201,9 +184,7 @@ static void test_init_reset_resync(void)
     CHECK(encoder_get_error_count(&enc) == 0, "resync: still no error after reset");
 }
 
-/* ================================================================ */
 /* 8. Getters read back exactly what direct struct inspection shows. */
-/* ================================================================ */
 static void test_getters_match_struct(void)
 {
     encoder_t enc;
@@ -225,9 +206,7 @@ static void test_getters_match_struct(void)
     CHECK(encoder_get_glitch_count(&enc) == 0, "getters: glitch value sanity");
 }
 
-/* ================================================================ */
-/* 9. Two independent instances on one port byte never cross-affect.  */
-/* ================================================================ */
+/* 9. Two independent instances on one port byte never cross-affect. */
 static void test_two_instances_independent(void)
 {
     encoder_t a, b;
@@ -268,7 +247,6 @@ static void test_two_instances_independent(void)
     CHECK(encoder_get_error_count(&a) == 0, "two: A no error from B's move");
 }
 
-/* ================================================================ */
 
 int main(void)
 {

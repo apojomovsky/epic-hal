@@ -1,13 +1,9 @@
 /**
- * @file    example_encoder_pid_loop.c
- * @brief   One encoder feeding encoder_get_position() into pid_update() as
- *          the measurement each control cycle.
- *
- * @details
- *   A simulated servo: each cycle reads the encoder, steps the PID, applies
- *   the output to a first-order-lag plant, then drives the encoder one
- *   quadrature edge at a time to match, so `encoder_get_position() ==
- *   motor_angle` exactly. Host-only, no floats.
+ * One encoder feeding encoder_get_position() into pid_update() as the
+ * measurement each control cycle. A simulated servo: each cycle reads the
+ * encoder, steps the PID, applies the output to a first-order-lag plant,
+ * then drives the encoder one quadrature edge at a time so
+ * `encoder_get_position() == motor_angle` exactly. Host-only, no floats.
  */
 
 #include "encoder.h"

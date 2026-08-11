@@ -1,19 +1,13 @@
 /**
- * @file    encoder.c
- * @brief   x4 quadrature decode via a Gray-code transition table, one
- *          implementation for host, PIC16, and PIC18 alike.
- *
- * @details
- *   State ordering 00,01,11,10 (true Gray code); `QUAD_TABLE` gives a
- *   `{-1,0,+1}` step per `(prev_state<<2)|new_state`. Physical direction
- *   is a wiring convention: swap `pin_a`/`pin_b` at init to invert it (see
- *   docs/API.md). `encoder_get_position()`'s atomic read is the only HAL
- *   surface; see docs/ARCHITECTURE.md for the two-counter error model.
+ * x4 quadrature decode via a Gray-code transition table, one
+ * implementation for host, PIC16, and PIC18. State ordering 00,01,11,10
+ * (true Gray code); physical direction is a wiring convention: swap
+ * `pin_a`/`pin_b` at init to invert it (see docs/API.md).
  */
 
 #include "encoder.h"
 #include "epic_tick.h"        /* glitch-gate timebase                       */
-#include "core/hal_irq.h"     /* EPIC_IRQ_Disable / Restore (atomic reads)  */
+#include "core/hal_irq.h"
 
 /* Gray-code quadrature step table, indexed by (last_state<<2)|new_state
  * where state = (A<<1)|B. +-1 = valid single-bit transition (one edge,
@@ -66,7 +60,6 @@ void encoder_update(encoder_t *enc, uint8_t port_value)
      * this instance's state is unchanged, so no-op, not an error. */
     if (new_state == enc->last_state) return;
 
-    /* Optional gate, active only when min_edge_interval_ms != 0. */
     if (enc->min_edge_interval_ms != 0U) {
         uint32_t now = epic_tick_get();
         if (epic_tick_elapsed_since(enc->last_edge_tick) <
@@ -91,12 +84,9 @@ void encoder_update(encoder_t *enc, uint8_t port_value)
 
 int32_t encoder_get_position(const encoder_t *enc)
 {
-    /* Read-twice-retry (class-G conversion, the epic_tick_get pattern):
-     * the ISR updates position as a multi-byte RMW, so a single read
-     * can tear; retry until two consecutive reads agree. The previous
-     * Disable-guarded read exposed the Finding 10.1 hazard (a latched
-     * interrupt delivered inside a GIE=0 window can tear the protected
-     * read and leave GIE cleared after ISR return). */
+    /* Read-twice-retry (the epic_tick_get pattern): the ISR updates
+     * position as a multi-byte RMW, so a single read can tear; retry
+     * until two consecutive reads agree. */
     int32_t p;
     do {
         p = enc->position;
