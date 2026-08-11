@@ -27,12 +27,14 @@ typedef struct {
     int fault_calls;
 } light_ctx_t;
 
+/** @brief Action: count a transition into YELLOW (caution). */
 static void on_caution(void *ctx)
 {
     light_ctx_t *c = ctx;
     c->caution_calls++;
 }
 
+/** @brief Action: count a transition into FAULT. */
 static void on_fault(void *ctx)
 {
     light_ctx_t *c = ctx;
@@ -46,6 +48,7 @@ static const fsm_transition_t light_transitions[] = {
     { FSM_ANY_STATE, EV_FAULT, NULL, on_fault,   ST_FAULT  },
 };
 
+/** @brief RED->GREEN->YELLOW->RED cycle with the action firing once. */
 static void test_basic_cycle(void)
 {
     light_ctx_t ctx = { 0, 0 };
@@ -65,6 +68,7 @@ static void test_basic_cycle(void)
     CHECK(fsm_state(&fsm) == ST_RED, "YELLOW+TIMER -> RED (full cycle)");
 }
 
+/** @brief FSM_ANY_STATE row matches from any current state. */
 static void test_any_state_wildcard(void)
 {
     light_ctx_t ctx = { 0, 0 };
@@ -84,6 +88,7 @@ static void test_any_state_wildcard(void)
     CHECK(fsm_state(&fsm) == ST_FAULT, "YELLOW+FAULT -> FAULT");
 }
 
+/** @brief An event with no matching row reports false and leaves state. */
 static void test_unhandled_event(void)
 {
     light_ctx_t ctx = { 0, 0 };
@@ -110,12 +115,14 @@ typedef struct {
 
 #define TURNSTILE_FARE_CENTS 25
 
+/** @brief Guard: credit must cover the fare. */
 static bool has_sufficient_credit(void *ctx)
 {
     turnstile_ctx_t *c = ctx;
     return c->credit_cents >= TURNSTILE_FARE_CENTS;
 }
 
+/** @brief Action: deduct the fare and count the unlock. */
 static void do_unlock(void *ctx)
 {
     turnstile_ctx_t *c = ctx;
@@ -123,6 +130,7 @@ static void do_unlock(void *ctx)
     c->unlock_calls++;
 }
 
+/** @brief Action: count a rejected (buzzed) coin. */
 static void buzz_rejected(void *ctx)
 {
     turnstile_ctx_t *c = ctx;
@@ -135,6 +143,7 @@ static const fsm_transition_t turnstile_transitions[] = {
     { ST_UNLOCKED, EV_PUSH, NULL,                  NULL,          ST_LOCKED   },
 };
 
+/** @brief A rejected guard falls through to the next matching row. */
 static void test_guard_fallthrough(void)
 {
     turnstile_ctx_t ctx = { 0, 0, 0 };
@@ -161,7 +170,7 @@ static void test_guard_fallthrough(void)
     CHECK(fsm_state(&fsm) == ST_LOCKED, "PUSH -> LOCKED");
 }
 
-/* Multiple instances sharing one table must never interfere. */
+/** @brief Multiple instances sharing one table must never interfere. */
 
 static void test_independent_instances(void)
 {
@@ -181,7 +190,7 @@ static void test_independent_instances(void)
     CHECK(fsm_state(&fsm_a) == ST_GREEN, "instance A untouched by B's dispatch");
 }
 
-/* FSM_INIT's sizeof/sizeof table_len computation. */
+/** @brief FSM_INIT's sizeof/sizeof table_len computation. */
 
 static void test_fsm_init_table_len(void)
 {
@@ -193,6 +202,7 @@ static void test_fsm_init_table_len(void)
           "FSM_INIT computed table_len matches the array's real row count");
 }
 
+/** @brief Run every epic-fsm unit test and report the failure count. */
 int main(void)
 {
     test_basic_cycle();

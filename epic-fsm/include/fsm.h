@@ -55,11 +55,17 @@ typedef struct {
 } fsm_t;
 
 /**
- * Initialize a machine instance.
+ * @brief Initialize a machine instance.
  *
  * `table` must outlive `fsm` (a `static const` array is the normal case).
  * Prefer FSM_INIT, which computes `table_len` for you. `ctx` may be NULL
  * if no guard/action needs it.
+ *
+ * @param fsm            the machine instance to initialize
+ * @param table          the transition table backing the machine
+ * @param table_len      number of rows in `table`
+ * @param initial_state  state the machine starts in
+ * @param ctx            opaque context passed to guards/actions, or NULL
  */
 void fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len,
               fsm_state_t initial_state, void *ctx);
@@ -73,10 +79,15 @@ void fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len,
              (initial_state), (ctx))
 
 /**
- * Feed one event to the machine. Scans the table top-to-bottom for the
- * first row whose state (or FSM_ANY_STATE) and event match and whose
- * guard (if any) passes, runs its action, and moves to next_state; a
- * rejected guard falls through to the next matching row.
+ * @brief Feed one event to the machine.
+ *
+ * Scans the table top-to-bottom for the first row whose state (or
+ * FSM_ANY_STATE) and event match and whose guard (if any) passes, runs
+ * its action, and moves to next_state; a rejected guard falls through
+ * to the next matching row.
+ *
+ * @param fsm    the machine to dispatch into
+ * @param event  the event to feed
  *
  * @return true if a row fired; false if none matched, leaving the state
  *         unchanged. No policy is imposed on an unhandled event (no
@@ -84,7 +95,12 @@ void fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len,
  */
 bool fsm_dispatch(fsm_t *fsm, fsm_event_t event);
 
-/** Current state of the machine. */
+/**
+ * @brief Current state of the machine.
+ *
+ * @param fsm the machine to query
+ * @return the state the machine is currently in
+ */
 fsm_state_t fsm_state(const fsm_t *fsm);
 
 #endif /* FSM_H */

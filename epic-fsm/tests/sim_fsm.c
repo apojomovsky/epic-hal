@@ -31,16 +31,19 @@ typedef struct {
     uint8_t          seq_len;
 } fsm_ctx_t;
 
+/** @brief Guard: EV_START fires only while the allow_start flag is set. */
 static bool guard_can_start(void *ctx)
 {
     return ((fsm_ctx_t *)ctx)->allow_start != 0u;
 }
 
+/** @brief Action: count a transition INTO RUN. */
 static void act_start(void *ctx)
 {
     ((fsm_ctx_t *)ctx)->enter_run++;
 }
 
+/** @brief Action: count the transition OUT of RUN and INTO DONE. */
 static void act_stop(void *ctx)
 {
     fsm_ctx_t *c = (fsm_ctx_t *)ctx;
@@ -48,6 +51,7 @@ static void act_stop(void *ctx)
     c->enter_done++;
 }
 
+/** @brief Action: count the transition OUT of DONE. */
 static void act_reset(void *ctx)
 {
     ((fsm_ctx_t *)ctx)->exit_done++;
@@ -59,6 +63,7 @@ static const fsm_transition_t transitions[] = {
     { ST_DONE, EV_RESET, NULL,            act_reset, ST_IDLE },
 };
 
+/** @brief Dispatch one scripted event and record the resulting state. */
 static uint8_t step(fsm_t *fsm, fsm_ctx_t *ctx, fsm_event_t ev,
                     uint8_t allow_start)
 {
@@ -70,6 +75,7 @@ static uint8_t step(fsm_t *fsm, fsm_ctx_t *ctx, fsm_event_t ev,
     return fired;
 }
 
+/** @brief Run the scripted FSM sequence and report PASS/FAIL over the harness. */
 int main(void)
 {
     fsm_ctx_t ctx = { 0u, 0u, 0u, 0u, 0u, {0u}, 0u };

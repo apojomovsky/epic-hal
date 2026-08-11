@@ -9,6 +9,7 @@
 enum { ST_RED, ST_GREEN, ST_YELLOW };
 enum { EV_TIMER };
 
+/** @brief Map a state to its printable name. */
 static const char *state_name(fsm_state_t s)
 {
     switch (s) {
@@ -19,6 +20,7 @@ static const char *state_name(fsm_state_t s)
     }
 }
 
+/** @brief Action run on entering YELLOW: print a caution line. */
 static void on_enter_yellow(void *ctx)
 {
     (void)ctx;
@@ -31,6 +33,7 @@ static const fsm_transition_t light_transitions[] = {
     { ST_YELLOW, EV_TIMER, NULL, NULL,             ST_RED    },
 };
 
+/** @brief Run the traffic-light cycle and print each transition. */
 int main(void)
 {
     fsm_t light;
