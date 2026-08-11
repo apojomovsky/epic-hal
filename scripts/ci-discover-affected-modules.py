@@ -4,12 +4,11 @@
 Two independent questions, both answered here so host-tests.yml's `discover`
 job stays a single step:
 
-  1. Is this change docs-only? If every changed file is a .md or lives under
-     a docs/ directory, the build-test matrix is empty and the whole
-     build-test job is skipped (a real cmake configure+build+ctest run
-     cannot be affected by prose, and this repo has no doc-generation step
-     that consumes source to produce docs, so there is no direction in
-     which a docs change could break a build).
+  1. Is this change non-code? If every changed file is on the shared
+     non-code allowlist (see ci_noncode_check.py, the single source of
+     truth), the build-test matrix is empty and the whole build-test job
+     is skipped (a real cmake configure+build+ctest run cannot be
+     affected by prose or by dev-only tooling).
   2. If not docs-only, which modules were actually touched, directly or
      transitively? Every module's own CMakeLists.txt already declares its
      sibling dependencies via a `<NAME>_DIR ... ../<module>` pattern
@@ -23,11 +22,11 @@ job stays a single step:
      directly, same as if all three HAL directories had changed.
 
 Conservative by construction, on both axes:
-  - Any changed file that is not (a) a .md file, (b) inside a discovered
-    module's own directory, or (c) inside epic-common/ falls back to "not
-    docs-only, every module affected" — a Makefile, workflow, script, or
-    Docker change is exactly the kind of change this script cannot reason
-    about safely, so it doesn't try.
+  - Any changed file that is not (a) on the shared non-code allowlist,
+    (b) inside a discovered module's own directory, or (c) inside
+    epic-common/ falls back to "not non-code, every module affected": a
+    workflow, CI script, or Docker change is exactly the kind of change
+    this script cannot reason about safely, so it doesn't try.
   - The graph walk only ever grows the affected set (transitive closure),
     never prunes based on which specific files inside a dependency changed.
   - This filtering is meant for pull_request runs only (see host-tests.yml):
@@ -35,13 +34,15 @@ Conservative by construction, on both axes:
     closure on a PR can only ever cause an extra CI run later, never let a
     real break merge unverified.
 
-Prints one JSON object to stdout: {"docs_only": bool, "modules": [...]}.
+Prints one JSON object to stdout: {"non_code": bool, "modules": [...]}.
 """
 
 import json
 import re
 import subprocess
 import sys
+
+import ci_noncode_check
 
 
 def git(*args):
@@ -120,17 +121,14 @@ def main():
 
     if not changed:
         # Nothing changed in range (e.g. an empty/merge commit): treat as
-        # docs-only rather than guessing, the safest "nothing to verify"
+        # non-code rather than guessing, the safest "nothing to verify"
         # signal available.
-        print(json.dumps({"docs_only": True, "modules": []}))
+        print(json.dumps({"non_code": True, "modules": []}))
         return
 
-    def is_docs(path):
-        return path.endswith(".md") or "/docs/" in path or path.startswith("docs/")
-
-    if all(is_docs(p) for p in changed):
-        print(json.dumps({"docs_only": True, "modules": []}), file=sys.stdout)
-        print(f"docs-only change ({len(changed)} file(s)), skipping build-test", file=sys.stderr)
+    if ci_noncode_check.is_non_code(changed):
+        print(json.dumps({"non_code": True, "modules": []}), file=sys.stdout)
+        print(f"non-code change ({len(changed)} file(s)), skipping build-test", file=sys.stderr)
         return
 
     modules = discover_modules()
@@ -149,7 +147,7 @@ def main():
     touched_modules = set()
     fallback_reason = None
     for p in changed:
-        if is_docs(p):
+        if ci_noncode_check.is_non_code([p]):
             continue
         if p.startswith("epic-common/"):
             # Implicit dependency of every HAL (include()'d, not its own
@@ -163,7 +161,7 @@ def main():
         touched_modules.add(m)
 
     if fallback_reason is not None:
-        print(json.dumps({"docs_only": False, "modules": modules}))
+        print(json.dumps({"non_code": False, "modules": modules}))
         print(
             f"'{fallback_reason}' is outside any known module and outside "
             f"epic-common/, falling back to the full {len(modules)}-module matrix",
@@ -183,7 +181,7 @@ def main():
     affected = transitive_closure(touched_modules, reverse_graph)
     affected_sorted = sorted(affected)
 
-    print(json.dumps({"docs_only": False, "modules": affected_sorted}))
+    print(json.dumps({"non_code": False, "modules": affected_sorted}))
     print(
         f"{len(changed)} file(s) changed, {len(touched_modules)} module(s) "
         f"directly touched, {len(affected_sorted)} affected after dependency closure: "
