@@ -4,9 +4,10 @@ Status: **implemented and fully verified against real builds**,
 including the full image (XC8 + all three DFPs + MPLAB X) and a real
 `mdb` gate run. `scripts/bootstrap.sh` now runs `check-vendor` and
 `image` itself when the installers are present (design:
-`docs/superpowers/specs/2026-08-11-bootstrap-docker-toolchain-design.md`). The user supplied both installers (see "What the user
-must provide" below; the Akamai bot-challenge is a hard, confirmed wall,
-not a gap in effort). Root `Makefile` covers host tests, real-target XC8
+`docs/superpowers/specs/2026-08-11-bootstrap-docker-toolchain-design.md`).
+The user supplied both installers (see "What the user must provide"
+below; the Akamai bot-challenge is a hard, confirmed wall, not a
+gap in effort). Root `Makefile` covers host tests, real-target XC8
 builds, the `mdb` gate, and a dev shell, all through the existing
 `docker/ci-toolchain/` image built from locally-supplied vendor
 installers. CI now pulls a pre-pushed private image instead of building
@@ -20,12 +21,12 @@ performed this session" below.
 
 Contributing to this repo's real-target/`mdb` work required installing
 XC8, MPLAB X, and their DFPs by hand: proprietary, license-gated,
-interactive installers, explicitly out of scope for `scripts/
-bootstrap.sh` (host-sim only). `docker/ci-toolchain/Dockerfile` already
-builds exactly the environment needed (XC8 v4.00 + MPLAB X/`mdb` + DFPs)
-from installer files placed under `docker/ci-toolchain/vendor/`, it was
-just wired for CI's asset-fetching flow (pull installers out of a
-private GHCR "blob carrier" image), not for a human dropping files in
+interactive installers, at the time, explicitly out of scope for
+`scripts/bootstrap.sh` (host-sim only). `docker/ci-toolchain/Dockerfile`
+already builds exactly the environment needed (XC8 v4.00 + MPLAB X/`mdb`
++ DFPs) from installer files placed under `docker/ci-toolchain/vendor/`,
+it was just wired for CI's asset-fetching flow (pull installers out of
+a private GHCR "blob carrier" image), not for a human dropping files in
 directly. This plan makes that same image the single local-dev
 mechanism too, and, since a locally-built image is a normal Docker
 image, also lets it be pushed straight to the private GHCR package CI
