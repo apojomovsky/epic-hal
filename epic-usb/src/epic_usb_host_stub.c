@@ -1,14 +1,10 @@
-/**
- * @file    epic_usb_host_stub.c
- * @brief   Host-only test double for epic_usb.h. Deliberately does NOT
- *          share implementation with epic_usb.c.
- *
- * @details
- *   No faithful host simulation of a real USB SIE exists, so this only
- *   proves the public API's behavioral contract (ring fill/drain,
- *   overflow-drop, DTR-gated connected()), never real enumeration,
- *   that's real-silicon only. epic_usb_test_support.h's hooks
- *   (set_dtr/inject_rx/sent-log) simulate the host side.
+/*
+ * Host-only test double for epic_usb.h, deliberately not sharing
+ * implementation with epic_usb.c: no faithful host simulation of a real
+ * USB SIE exists, so this proves only the public API's behavioral
+ * contract (ring fill/drain, overflow-drop, DTR-gated connected());
+ * real enumeration is real-silicon only. The test_support.h hooks
+ * (set_dtr/inject_rx/sent-log) simulate the host side.
  */
 
 #include "epic_usb.h"
@@ -84,7 +80,7 @@ bool epic_usb_connected(void)
     return g_dtr;
 }
 
-/* ---- test-only driver hooks (epic_usb_test_support.h) ---- */
+/* Test-only driver hooks (epic_usb_test_support.h). */
 
 void epic_usb_test_set_dtr(bool on)
 {

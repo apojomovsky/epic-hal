@@ -1,15 +1,9 @@
-/**
- * @file    epic_usb.c
- * @brief   Real-target implementation: ring buffers over M-Stack's raw
- *          endpoint-buffer API, plus the M-Stack callbacks usb_config.h
- *          points at.
- *
- * @details
- *   M-Stack has no CDC read/write/ring buffer, only raw endpoint access
- *   (usb_get_in_buffer, usb_arm_out_endpoint, ...); this file is new
- *   buffering code, not a wrapper. TX/RX each drain opportunistically
- *   into/from one EP2 packet per service() call, dropping RX on ring
- *   overflow. Host build uses epic_usb_host_stub.c instead.
+/*
+ * Real-target implementation: ring buffers over M-Stack's raw
+ * endpoint-buffer API (which has no CDC read/write of its own), plus
+ * the M-Stack callbacks usb_config.h points at. One EP2 packet drained
+ * per service() call, RX drops on ring overflow. Host build uses
+ * epic_usb_host_stub.c instead.
  */
 
 #include "epic_usb.h"
@@ -66,8 +60,6 @@ static void epic_usb_drain_rx(void)
     usb_arm_out_endpoint(EPIC_USB_DATA_EP);
 }
 
-/* ---- public API ---- */
-
 void epic_usb_init(void)
 {
     g_tx_head = g_tx_tail = g_tx_count = 0u;
@@ -87,13 +79,13 @@ size_t epic_usb_write(const uint8_t *data, size_t len)
 {
     for (size_t i = 0; i < len; i++) {
         while (g_tx_count >= EPIC_USB_RING_SZ) {
-            epic_usb_service();    /* block until space frees, servicing as we go */
+            epic_usb_service();    /* ring full: drain as we block */
         }
         g_tx_buf[g_tx_head] = data[i];
         g_tx_head = (uint8_t)((g_tx_head + 1u) & MASK);
         g_tx_count++;
     }
-    epic_usb_service();            /* kick a send now rather than waiting for the next poll */
+    epic_usb_service();            /* kick a send now, not on the next poll */
     return len;
 }
 
@@ -125,11 +117,10 @@ bool epic_usb_connected(void)
     return g_dtr;
 }
 
-/* ---- M-Stack callbacks (named in usb_config.h) ----
- * Every one must exist, even unused ones, M-Stack calls them
- * unconditionally. Only the DTR (set_control_line_state) and
- * unknown_setup_request (routes CDC class requests) callbacks do
- * anything beyond that; the rest are typed no-ops. */
+/* M-Stack callbacks (named in usb_config.h). Every one must exist even
+ * if unused: M-Stack calls them unconditionally. Only the DTR
+ * (set_control_line_state) and unknown_setup_request (routes CDC class
+ * requests) callbacks do anything; the rest are typed no-ops. */
 
 void epic_usb_set_configuration_cb(uint8_t configuration)
 {

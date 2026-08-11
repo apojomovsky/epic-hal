@@ -1,9 +1,7 @@
-/**
- * @file    test_epic_usb.c
- * @brief   Host tests against epic_usb_host_stub.c: the public API's
- *          behavioral contract only (ring fill/drain, overflow-drop,
- *          connected() transitions). Does not exercise epic_usb.c or
- *          M-Stack, that boundary is real, not a shortcut.
+/*
+ * Host tests against epic_usb_host_stub.c: the public API's behavioral
+ * contract only (ring fill/drain, overflow-drop, connected()
+ * transitions). epic_usb.c and M-Stack are real-silicon territory.
  */
 
 #include "epic_usb.h"
@@ -115,8 +113,8 @@ static void test_tx_overflow_short_write_when_disconnected(void)
     reset();
     uint8_t big[EPIC_USB_RING_SZ + 16u];
     memset(big, 0xAA, sizeof(big));
-    /* Disconnected: nothing drains the TX ring, so write() can only enqueue
-     * up to ring capacity before it has nowhere left to put more bytes. */
+    /* Disconnected: nothing drains the TX ring, so write() short-completes
+     * at ring capacity. */
     size_t n = epic_usb_write(big, sizeof(big));
     CHECK(n == EPIC_USB_RING_SZ,
           "write while disconnected: short-completes at ring capacity, does not hang");
