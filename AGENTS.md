@@ -153,6 +153,21 @@ codebase so far.
    bit-field encodings and SFR facts keep their citations.
 6. `TODO`/`FIXME` carry a concrete reason or do not exist.
 
+### Function docstrings (Doxygen style)
+
+Every first-party function carries a Doxygen-style docstring:
+
+- `@brief` on every function; a longer `@details` only when the
+  behavior is not obvious.
+- `@param name` per named argument, names matching the signature, with
+  in/out semantics in the prose; never `@param[in]`/`@param[out]`.
+- `@return` for non-void functions, nothing for void.
+- The block is `/** ... */`, never `/*` or `//`.
+- Placement: headers for public API; `.c` for `static` functions.
+  Tests and examples: `@brief`-only.
+- `scripts/doxygen_doc_check.py` is the compliance checker; run it
+  before finishing work that touches functions.
+
 ### Docs lifecycle
 
 1. `README.md` = what a human needs to use and maintain the module:
