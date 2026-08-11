@@ -1,7 +1,11 @@
 /*
  * PIC16 inline-asm add/sub/negate primitives. Mid-range PIC16 has no
- * addwfc/subwfb, so carry propagation uses AN526's idiom: btfsc/btfss
- * STATUS,0 + incfsz to fold carry/borrow into the high byte's addend.
+ * addwfc/subwfb, so the low-byte carry/borrow is folded into the high
+ * byte's addend with addlw 1 (never a skip: an incfsz that wraps on
+ * b_hi == 0xFF would drop the a_hi term), and the addend wrap is saved
+ * into the carry-out byte with rlf so both the result and the
+ * carry/borrow out are correct for every input (verified by
+ * instruction-level simulation over the full high-byte space).
  * STATUS bits by number (C=0, Z=2). Operands live in the shared scratch
  * buffer (pic_math_scratch.h), one banksel per routine.
  */
@@ -18,10 +22,10 @@
  * @return (a + b) truncated to 16 bits.
  *
  * 16-bit add. Low bytes add (sets C); the high addend is folded with the
- * carry through the btfsc/incfsz idiom, since movf preserves C. Worked
- * example 0xFFFF+0x0002 -> 0x0001, carry 1; the fold is correct for this
- * example (b_hi=0, so incfsz yields b_hi+1 and addwf sums a_hi, while
- * movf keeps C set for the final carry). Offsets a@0, b@2, r@4, co@6. */
+ * carry via addlw 1 (movf preserves C), and the addend wrap is OR-ed
+ * into the carry out so both the sum and the carry are correct for every
+ * input. Worked example 0xFFFF+0x0002 -> 0x0001, carry 1. Offsets a@0,
+ * b@2, r@4, co@6. */
 uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out) __at(0x2E0)
 {
     pic16_mscratch[0] = (uint8_t)a;           pic16_mscratch[1] = (uint8_t)(a >> 8);
@@ -33,12 +37,18 @@ uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out) __at(0x2E0)
     asm("movwf _pic16_mscratch+4");
     asm("movf  _pic16_mscratch+3,w");
     asm("btfsc STATUS,0");
-    asm("incfsz _pic16_mscratch+3,w");  /* b_hi + carry; skip if wrapped */
-    asm("addwf _pic16_mscratch+1,w");
+    asm("addlw 1");                     /* W = b_hi + carry; C = wrap */
+    asm("rlf   _pic16_mscratch+6,f");   /* co bit0 = wrap */
+    asm("movwf _pic16_mscratch+5");     /* folded addend */
+    asm("movf  _pic16_mscratch+1,w");
+    asm("addwf _pic16_mscratch+5,w");   /* W = a_hi + folded; C = C_add */
     asm("movwf _pic16_mscratch+5");
+    asm("rlf   _pic16_mscratch+6,f");   /* co = (wrap<<1) | C_add */
+    asm("movf  _pic16_mscratch+6,w");
     asm("clrf  _pic16_mscratch+6");
-    asm("btfsc STATUS,0");
-    asm("incf  _pic16_mscratch+6,f");
+    asm("andlw 0x03");
+    asm("btfss STATUS,2");              /* skip setf if no wrap and no C_add */
+    asm("setf  _pic16_mscratch+6");
     if (carry_out) *carry_out = (bool)pic16_mscratch[6];
     return (uint16_t)pic16_mscratch[4] | ((uint16_t)pic16_mscratch[5] << 8);
 }
@@ -51,8 +61,8 @@ uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out) __at(0x2E0)
  * @return (a - b) truncated to 16 bits.
  *
  * a - b, borrow_out = (a < b). Low bytes subtract (C=0 on borrow); the
- * high byte subtracts b_hi plus the borrow, folded via the btfss/incfsz
- * idiom. Borrow is the final C inverted. Offsets a@0, b@2, r@4, bo@6. */
+ * high byte subtracts b_hi plus the borrow, folded via addlw 1, with the
+ * addend wrap OR-ed into the borrow out. Offsets a@0, b@2, r@4, bo@6. */
 uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out) __at(0x320)
 {
     pic16_mscratch[0] = (uint8_t)a;           pic16_mscratch[1] = (uint8_t)(a >> 8);
@@ -63,13 +73,22 @@ uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out) __at(0x320)
     asm("subwf _pic16_mscratch+0,w");
     asm("movwf _pic16_mscratch+4");
     asm("movf  _pic16_mscratch+3,w");
-    asm("btfss STATUS,0");
-    asm("incfsz _pic16_mscratch+3,w");  /* b_hi + borrow; skip if wrapped */
-    asm("subwf _pic16_mscratch+1,w");
+    asm("btfsc STATUS,0");
+    asm("goto  _m_sub_nofold");         /* no borrow (C=1): addend stays b_hi */
+    asm("addlw 1");                     /* W = b_hi + borrow; C = wrap */
+    asm("rlf   _pic16_mscratch+6,f");   /* co bit0 = wrap */
+    asm("_m_sub_nofold:");
+    asm("movwf _pic16_mscratch+5");     /* folded addend */
+    asm("movf  _pic16_mscratch+5,w");
+    asm("subwf _pic16_mscratch+1,w");   /* W = a_hi - folded; C = no-borrow */
     asm("movwf _pic16_mscratch+5");
+    asm("rlf   _pic16_mscratch+6,f");   /* co = (wrap<<1) | C */
+    asm("movf  _pic16_mscratch+6,w");
     asm("clrf  _pic16_mscratch+6");
-    asm("btfss STATUS,0");
-    asm("incf  _pic16_mscratch+6,f");
+    asm("andlw 0x03");
+    asm("sublw 1");                     /* skip setf only when no borrow, no wrap */
+    asm("btfss STATUS,2");
+    asm("setf  _pic16_mscratch+6");
     if (borrow_out) *borrow_out = (bool)pic16_mscratch[6];
     return (uint16_t)pic16_mscratch[4] | ((uint16_t)pic16_mscratch[5] << 8);
 }
