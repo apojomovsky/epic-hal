@@ -1,11 +1,7 @@
-/**
- * @file    example_bus.c
- * @brief   epic-bus host test: verifies the I2C/SPI MEM transaction logic
- *          against a mock MEM device injected through the ops seam (the
- *          host sim has no SSP slave model, so this can't run end to end
- *          against real hardware here; the default HAL ops are validated
- *          on real silicon instead).
- */
+/* epic-bus host test: verifies the I2C/SPI MEM transaction logic
+ * against a mock MEM device injected through the ops seam (the host
+ * sim has no SSP slave model; the default HAL ops are validated on
+ * real silicon instead). */
 
 #include "epic_bus.h"
 #include "core/epic_harness.h"
@@ -13,7 +9,7 @@
 static int g_fails = 0;
 #define CHECK(c, m) do { if (!(c)) { epic_harness_log("FAIL: %s\n", m); g_fails++; } } while (0)
 
-/* ─── mock I2C MEM device (register map + transaction state machine) ─── */
+/* mock I2C MEM device (register map + transaction state machine) */
 #define MOCK_DEV 0x50
 static uint8_t g_reg[16];
 static enum { I_IDLE, I_ADDR, I_REG, I_DATA, I_READ } g_i2c_state;
@@ -46,7 +42,7 @@ static const epic_bus_i2c_ops_t mock_i2c = {
     mock_i2c_write_byte, mock_i2c_read_byte
 };
 
-/* ─── mock SPI MEM device ─── */
+/* mock SPI MEM device */
 static enum { S_IDLE, S_REG, S_XFER } g_spi_state;
 static uint8_t g_spi_reg;
 static void mock_spi_select(void)   { g_spi_state = S_REG; }
@@ -68,7 +64,7 @@ int main(void)
     epic_harness_init(0UL);
     for (int i = 0; i < 16; i++) { g_reg[i] = (uint8_t)(0x10 + i); }  /* known pattern */
 
-    /* ---- I2C ---- */
+    /* I2C */
     epic_bus_set_i2c_ops(&mock_i2c);
 
     uint8_t buf[8] = {0};
@@ -88,7 +84,7 @@ int main(void)
     n = epic_bus_i2c_mem_read(0x77, 0x00, buf, 1);   /* wrong device */
     CHECK(n == -1, "i2c wrong-device NACK -> -1");
 
-    /* ---- SPI ---- */
+    /* SPI */
     epic_bus_set_spi_ops(&mock_spi);
     for (int i = 0; i < 16; i++) { g_reg[i] = (uint8_t)(0x80 + i); }
 
