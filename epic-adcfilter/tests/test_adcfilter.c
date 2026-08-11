@@ -11,10 +11,12 @@ static int g_pass = 0, g_fail = 0;
 
 static uint16_t g_mock_val;
 static int      g_mock_calls;
+/** @brief Mock read callback returning the fixed g_mock_val. */
 static uint16_t mock_const(void *ctx) { (void)ctx; g_mock_calls++; return g_mock_val; }
 
 static uint16_t g_alt_a, g_alt_b;
 static int      g_alt_idx;
+/** @brief Mock read callback alternating between g_alt_a and g_alt_b. */
 static uint16_t mock_alternate(void *ctx) {
     (void)ctx; g_mock_calls++;
     uint16_t v = (g_alt_idx % 2 == 0) ? g_alt_a : g_alt_b;
@@ -22,6 +24,7 @@ static uint16_t mock_alternate(void *ctx) {
     return v;
 }
 
+/** @brief Oversampling scales a constant input by 2^extra_bits. */
 static void test_oversample_constant(void)
 {
     g_mock_val = 512;
@@ -36,6 +39,7 @@ static void test_oversample_constant(void)
     }
 }
 
+/** @brief Oversampling averages alternating low/high samples. */
 static void test_oversample_alternating(void)
 {
     g_alt_a = 0; g_alt_b = 1023; g_alt_idx = 0; g_mock_calls = 0;
@@ -51,6 +55,7 @@ static void test_oversample_alternating(void)
     CHECK(r == 0, "oversample eb=0: returns first sample");
 }
 
+/** @brief extra_bits=0 reads once and returns the sample unchanged. */
 static void test_oversample_eb0(void)
 {
     g_mock_val = 777;
@@ -60,6 +65,7 @@ static void test_oversample_eb0(void)
     CHECK(g_mock_calls == 1, "eb=0: exactly 1 call");
 }
 
+/** @brief Before the window fills, the average is over pushed samples. */
 static void test_avg_warmup(void)
 {
     uint16_t buf[4];
@@ -73,6 +79,7 @@ static void test_avg_warmup(void)
     CHECK(epic_adcfilter_avg_push(&f, 400) == 250, "avg warmup 4: avg == 250 (full window)");
 }
 
+/** @brief A full window evicts the oldest sample on each push. */
 static void test_avg_full_window(void)
 {
     uint16_t buf[3];
@@ -90,6 +97,7 @@ static void test_avg_full_window(void)
     CHECK(epic_adcfilter_avg_push(&f, 50) == 40, "avg full: push 50 evicts 20");
 }
 
+/** @brief A one-entry window tracks the latest sample. */
 static void test_avg_count1(void)
 {
     uint16_t buf[1];
@@ -99,6 +107,7 @@ static void test_avg_count1(void)
     CHECK(epic_adcfilter_avg_push(&f, 99) == 99, "avg count=1: returns last sample");
 }
 
+/** @brief Two filters share no state. */
 static void test_avg_independence(void)
 {
     uint16_t bufA[4], bufB[2];
@@ -120,6 +129,7 @@ static void test_avg_independence(void)
     CHECK(epic_adcfilter_avg_push(&fb, 0) == 10, "indep: fb unaffected by fa");
 }
 
+/** @brief Run every adcfilter test and report pass/fail counts. */
 int main(void)
 {
     test_oversample_constant();

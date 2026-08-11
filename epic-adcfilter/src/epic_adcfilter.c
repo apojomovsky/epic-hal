@@ -5,6 +5,14 @@
 
 #include "epic_adcfilter.h"
 
+/**
+ * @brief Oversample-and-decimate via the read callback.
+ *
+ * @param read callback returning one raw ADC sample per call
+ * @param ctx opaque context passed to `read`
+ * @param extra_bits extra effective resolution bits
+ * @return the decimated reading (sum >> extra_bits)
+ */
 uint16_t epic_adcfilter_oversample(epic_adcfilter_read_fn read, void *ctx,
                                    uint8_t extra_bits)
 {
@@ -18,6 +26,13 @@ uint16_t epic_adcfilter_oversample(epic_adcfilter_read_fn read, void *ctx,
     return (uint16_t)(sum >> extra_bits);
 }
 
+/**
+ * @brief Initialize a moving-average filter's state.
+ *
+ * @param f the filter state to initialize
+ * @param buf caller-owned storage, `count` entries
+ * @param count window length (buf's capacity)
+ */
 void epic_adcfilter_avg_init(epic_adcfilter_avg_t *f, uint16_t *buf, uint8_t count)
 {
     f->buf    = buf;
@@ -27,6 +42,13 @@ void epic_adcfilter_avg_init(epic_adcfilter_avg_t *f, uint16_t *buf, uint8_t cou
     f->sum    = 0UL;
 }
 
+/**
+ * @brief Push one sample and return the new window average.
+ *
+ * @param f the filter state
+ * @param sample the new sample to push
+ * @return the running average over the current window
+ */
 uint16_t epic_adcfilter_avg_push(epic_adcfilter_avg_t *f, uint16_t sample)
 {
     if (f->filled < f->count) {

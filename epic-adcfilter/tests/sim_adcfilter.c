@@ -21,18 +21,21 @@ static uint16_t g_mock_val;
 static uint16_t g_alt_a, g_alt_b;
 static uint8_t  g_alt_idx;
 
+/** @brief Mock read callback returning the fixed g_mock_val. */
 static uint16_t mock_const(void *ctx)
 {
     (void)ctx;
     return g_mock_val;
 }
 
+/** @brief Mock read callback alternating between g_alt_a and g_alt_b. */
 static uint16_t mock_alternate(void *ctx)
 {
     (void)ctx;
     return (g_alt_idx++ & 1u) ? g_alt_b : g_alt_a;
 }
 
+/** @brief Sim gate: verify the module under MPLAB SIM and report. */
 int main(void)
 {
     /* Phase A: documented oracle values (tests/test_adcfilter.c). */
