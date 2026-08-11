@@ -1,14 +1,9 @@
 /**
- * @file    epic_sdcard_mock_spi.c
- * @brief   Mock SD-over-SPI card -- see epic_sdcard_mock_spi.h.
- *
- * @details
- *   Dispatch is by call shape (out_buf/in_buf presence and len), matching
- *   exactly how mmc.c calls MMC_SPI_TRANSFER: len 6 out-only is a command
- *   frame, len 1/512/2 out-only is a pending write's token/data/CRC,
- *   in-only drains the queued reply. Implements CMD0/8/55/41/58/9/16/17/
- *   24/13; CMD25 (multi-block write) isn't implemented, matching
- *   epic_sdcard.h.
+ * Mock SD-over-SPI card (see epic_sdcard_mock_spi.h). Dispatch is by call
+ * shape, matching how mmc.c calls MMC_SPI_TRANSFER: len 6 out-only is a
+ * command frame, len 1/512/2 out-only is a pending write's token/data/CRC,
+ * in-only drains the queued reply. Implements CMD0/8/55/41/58/9/16/17/24/13;
+ * CMD25 isn't implemented, matching epic_sdcard.h.
  */
 
 #include "epic_sdcard_mock_spi.h"
@@ -41,7 +36,7 @@ static const uint8_t g_csd[16] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-/* ---- response queue ---- */
+/* response queue */
 
 static void q_reset(void)
 {
@@ -79,7 +74,7 @@ static void q_data_block(const uint8_t *data, uint16_t len)
     q_byte(ck & 0xffu);
 }
 
-/* ---- command decode ---- */
+/* command decode */
 
 static void handle_command(const uint8_t *cmd6)
 {
@@ -193,7 +188,7 @@ static void handle_write_data(const uint8_t *out, uint16_t len)
     }
 }
 
-/* ---- MMC_SPI_* bindings (named in tests/mock/mmc_config.h) ---- */
+/* MMC_SPI_* bindings, named in tests/mock/mmc_config.h */
 
 void epic_sdcard_mock_spi_transfer(uint8_t instance, const uint8_t *out_buf,
                                    uint8_t *in_buf, uint16_t len)
@@ -235,7 +230,7 @@ void epic_sdcard_mock_spi_set_speed(uint8_t instance, uint32_t speed_hz)
     (void)speed_hz;
 }
 
-/* ---- test-only setup/inspection (epic_sdcard_mock_spi.h) ---- */
+/* test-only setup/inspection (epic_sdcard_mock_spi.h) */
 
 void epic_sdcard_mock_reset(void)
 {

@@ -1,16 +1,11 @@
 /**
- * @file    epic_sdcard_mock_spi.h
- * @brief   Test-only mock SD-over-SPI card: plays the card's side of the
- *          protocol well enough that the REAL vendored mmc.c logic (not a
- *          hand-written stand-in for it) can be host-tested directly.
- *
- * @details
- *   Implements the command sequence real init/read/write/ready issue
- *   (CMD0/CMD8/CMD55+ACMD41/CMD58/CMD9 reporting an SDHC-style card,
- *   CMD17/CMD24 backed by an in-memory block store, CMD13 post-write
- *   status). CMD25 (multi-block write) is not implemented; the public
- *   API doesn't wrap it either. Bound into mmc.c via
- *   tests/mock/mmc_config.h, never linked into the real target build.
+ * Test-only mock SD-over-SPI card: plays the card side of the protocol so
+ * the REAL vendored mmc.c logic (not a hand-written stand-in) can be
+ * host-tested. Implements CMD0/CMD8/CMD55+ACMD41/CMD58/CMD9 (SDHC-style),
+ * CMD17/CMD24 over an in-memory block store, and CMD13 post-write status;
+ * CMD25 is not implemented (the public API doesn't wrap it either). Bound
+ * into mmc.c via tests/mock/mmc_config.h, never linked into the target
+ * build.
  */
 
 #ifndef EPIC_SDCARD_MOCK_SPI_H
