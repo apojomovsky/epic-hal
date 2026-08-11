@@ -1,5 +1,7 @@
 # CI Non-code Skip Implementation Plan
 
+Status: **implemented 2026-08-11**.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the two divergent "docs-only" CI classifiers with one fail-closed `is_non_code` classifier whose skip class is "cannot affect the object pipeline" (docs, assets, configs, dev-only tooling), so tooling-only PRs skip the host ctest matrix and the family jobs.

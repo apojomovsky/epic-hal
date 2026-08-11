@@ -1,6 +1,6 @@
 # CI: skip unit tests and real-target gates on non-code changes
 
-Status: **approved 2026-08-11, not started**.
+Status: **implemented 2026-08-11**.
 
 ## Problem
 
