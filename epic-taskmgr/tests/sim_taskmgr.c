@@ -51,15 +51,20 @@ static run_count_t   arg_b   = { 0U };
 static run_count_t   arg_c   = { 0U };
 static oneshot_arg_t arg_one = { 0U, TASK_ID_INVALID };
 
+/** @brief Periodic task: bump its run count. */
 static void task_count(void *arg)
 {
     run_count_t *r = (run_count_t *)arg;
     r->runs++;
 }
 
-/** One-shot: runs exactly once (the scheduler frees its slot right
- *  after), bumps its own count, and exercises task_set_period by
- *  freezing task C for the rest of the run. */
+/**
+ * @brief One-shot task.
+ *
+ * Runs exactly once (the scheduler frees its slot right after), bumps its
+ * own count, and exercises task_set_period by freezing task C for the
+ * rest of the run.
+ */
 static void task_oneshot(void *arg)
 {
     oneshot_arg_t *o = (oneshot_arg_t *)arg;
@@ -67,6 +72,7 @@ static void task_oneshot(void *arg)
     task_set_period(o->freeze_id, PERIOD_FROZEN);
 }
 
+/** @brief Run the scheduler sim and report PASS/FAIL over the harness. */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);

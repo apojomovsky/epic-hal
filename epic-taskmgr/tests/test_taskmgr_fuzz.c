@@ -14,8 +14,9 @@
 static int g_fails = 0;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); g_fails++; } } while (0)
 
-/* Fixed-seed LCG, deterministic. */
 static uint32_t g_seed = 0x7A5E0001u;
+
+/** @brief Fixed-seed LCG, deterministic. */
 static uint32_t rnd(void)
 {
     g_seed = (1664525u * g_seed + 1013904223u);
@@ -36,14 +37,19 @@ static model_task_t g_model[TASK_MGR_MAX_TASKS];
 /* Per-slot run counters observed through the task args. */
 static volatile uint16_t g_runs[TASK_MGR_MAX_TASKS];
 
+/** @brief Task body: bump the run counter for its slot. */
 static void task_bump(void *arg)
 {
     uintptr_t slot = (uintptr_t)arg;
     g_runs[slot]++;
 }
 
-/* Spawn with the predicted first-free slot as the task arg, so runs
- * can be attributed per slot; verifies the slot prediction. */
+/**
+ * @brief Spawn a task against the model's predicted first-free slot.
+ *
+ * Uses the predicted slot as the task arg so runs can be attributed per
+ * slot; verifies the slot prediction.
+ */
 static void do_spawn(uint16_t period, uint8_t priority, uint16_t tick)
 {
     uint8_t slot = TASK_MGR_MAX_TASKS;
@@ -74,6 +80,7 @@ static void do_spawn(uint16_t period, uint8_t priority, uint16_t tick)
     g_model[slot].fires     = 0u;
 }
 
+/** @brief Run random scheduler sequences against the model and report fails. */
 int main(void)
 {
     task_manager_init();
