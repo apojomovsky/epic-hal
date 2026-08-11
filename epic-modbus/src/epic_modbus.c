@@ -1,15 +1,7 @@
-/**
- * @file    epic_modbus.c
- * @brief   Modbus RTU slave core: CRC-16, T3.5 silence-delimited framing,
- *          function-code dispatch, optional RS-485 direction control.
- *
- * @details
- *   Single-instance module (one slave per firmware image), state lives
- *   in file-scope statics, not a caller-owned handle, same model
- *   epic-serial/epic-tick use. Family-neutral: the only family-specific
- *   surface is GPIO for the optional RS-485 pin, already neutral via
- *   epic_hal.h's GPIO_TypeDef/EPIC_GPIO_* contract, no #if needed here.
- */
+/* Modbus RTU slave core: CRC-16, T3.5 silence-delimited framing,
+ * function-code dispatch, optional RS-485 direction control.
+ * Single-instance module: state lives in file-scope statics, the same
+ * model epic-serial/epic-tick use; no #if needed here. */
 
 #include "epic_modbus.h"
 #include "epic_hal.h"
@@ -18,7 +10,7 @@
 
 #include <stdbool.h>
 
-/* ─── Modbus function codes (the "core" set this module implements) ──── */
+/* Modbus function codes (the "core" set this module implements) */
 #define MB_FC_READ_COILS            0x01u
 #define MB_FC_READ_DISCRETE_INPUTS  0x02u
 #define MB_FC_READ_HOLDING_REGS     0x03u
@@ -32,7 +24,7 @@
 #define MB_EXC_ILLEGAL_DATA_ADDRESS  0x02u
 #define MB_EXC_ILLEGAL_DATA_VALUE    0x03u
 
-/* ─── module state ────────────────────────────────────────────────────── */
+/* module state */
 static uint8_t  s_frame[EPIC_MODBUS_MAX_ADU];
 static uint16_t s_frame_len;
 static uint32_t s_last_rx_tick;
@@ -45,7 +37,7 @@ static uint8_t s_dir_port;
 static uint8_t s_dir_pin;
 static bool    s_dir_configured;
 
-/* ─── CRC-16 (Modbus/ANSI, poly 0xA001, init 0xFFFF), bit-loop ────────── */
+/* CRC-16 (Modbus/ANSI, poly 0xA001, init 0xFFFF), bit-loop */
 static uint16_t modbus_crc16(const uint8_t *buf, uint16_t len)
 {
     uint16_t crc = 0xFFFFu;
@@ -62,7 +54,7 @@ static uint16_t modbus_crc16(const uint8_t *buf, uint16_t len)
     return crc;
 }
 
-/* ─── T3.5 inter-frame silence timeout, see docs/ARCHITECTURE.md ─────── */
+/* T3.5 inter-frame silence timeout, see docs/ARCHITECTURE.md */
 static uint32_t compute_t3_5_ms(uint32_t baud)
 {
     if (baud > 19200u) {
@@ -74,7 +66,7 @@ static uint32_t compute_t3_5_ms(uint32_t baud)
     return (uint32_t)((38500ul + baud - 1ul) / baud);
 }
 
-/* ─── bit-packed coil/discrete-input helpers ──────────────────────────── */
+/* bit-packed coil/discrete-input helpers */
 static bool bit_get(const uint8_t *arr, uint16_t idx)
 {
     return (bool)((arr[idx >> 3] >> (idx & 7u)) & 1u);
@@ -100,10 +92,10 @@ static void put_be16(uint8_t *p, uint16_t v)
     p[1] = (uint8_t)v;
 }
 
-/* ─── response builders. Return the PDU length (addr+fc+payload, before
+/* Response builders. Return the PDU length (addr+fc+payload, before
  * CRC) written into resp[], or 0 for "drop, no response" (only used for a
  * frame whose length doesn't match its own function code, which passing
- * CRC makes vanishingly unlikely, this is defensive, not spec-driven). ─── */
+ * CRC makes vanishingly unlikely, this is defensive, not spec-driven). */
 
 static uint16_t build_exception(uint8_t *resp, uint8_t fc, uint8_t exc_code)
 {
@@ -291,7 +283,7 @@ static uint16_t handle_write_multiple_regs(uint8_t *resp)
     return 6u;
 }
 
-/* ─── RS-485 direction control + transmit ─────────────────────────────── */
+/* RS-485 direction control + transmit */
 static void send_response(const uint8_t *resp, uint16_t len)
 {
     if (s_dir_configured) {
@@ -305,7 +297,7 @@ static void send_response(const uint8_t *resp, uint16_t len)
     }
 }
 
-/* ─── frame validation + dispatch ─────────────────────────────────────── */
+/* frame validation + dispatch */
 static void process_frame(void)
 {
     if (s_frame_len < 4u) {
@@ -368,7 +360,7 @@ static void process_frame(void)
     send_response(resp, (uint16_t)(pdu_len + 2u));
 }
 
-/* ─── public API ───────────────────────────────────────────────────────── */
+/* public API */
 void epic_modbus_slave_init(uint32_t fosc_hz, uint32_t baud,
                              uint8_t slave_addr,
                              const epic_modbus_slave_map_t *map)

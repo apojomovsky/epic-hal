@@ -1,72 +1,13 @@
-/**
- * @file    sim_modbus.c
- * @brief   Bounded, self-reporting HARNESS=sim build for epic-modbus:
- *          the module's real `mdb` gate. Runs the actual compiled
- *          epic_modbus.c under MPLAB SIM on an 18F4550, exercises
- *          every code path the public API makes reachable without UART
- *          RX injection, and verifies the Modbus RTU wire format plus
- *          an independent CRC-16 end to end through the module's real
- *          TX machinery.
- *
- * @details
- *   The RX wall, established experimentally (do not silently re-open):
- *   MPLAB SIM on this stack (XC8 v4.00, MPLAB X 6.35) cannot inject
- *   UART RX at all, so the module's RX-driven dispatch
- *   (process_frame -> send_response) is not reachable under mdb:
- *
- *     - scripts/sim-mdb-run.sh's fixed device/program/run/wait/halt
- *       shape has no stimulus slot, and its one hook (extra_mdb) runs
- *       after halt. The mdb UART1 tool exposes output properties only
- *       (output/outputfile/uartioenabled, verified in the mdbcore
- *       simulator jar's UARTOption enum): there is no input file.
- *     - The SCL `stim` command is broken in MPLAB X 6.35 (syntax error
- *       on the guide's minimal file, then a simulator crash), and mdb
- *       `set RCREG` / `set PIR1` are silently ignored (probed by the
- *       epic-console gate work).
- *     - Firmware-side injection is sealed too: the simulator's EUSART
- *       model owns RCIF and RCREG. Poking RCREG and setting
- *       PIR1<RCIF> then running the RX ISR leaves the RX ring empty
- *       (verified: available() stayed 0), because RxUART re-derives
- *       RCIF from its own receive state and the model rejects RCREG
- *       writes. Bit-banging a cycle-accurate 9600 8N1 waveform onto
- *       the RX pin RC7 (1250-instruction bit period, verified against
- *       the XC8 -O2 listing) never sets RCIF either: the model's
- *       receive data path (RxUART.readData -> readStimBuffer) consumes
- *       the injected stimulus buffer, not the pin; the pin observer
- *       only handles wake-from-sleep, and the receiver raises FERR
- *       against a pin-driven waveform without ever completing a byte.
- *
- *   What the gate does exercise, all through the real APIs and the
- *   real compiled code:
- *
- *     (a) epic_modbus_slave_init with a real register map: the USART
- *         configuration it programs (SPBRG/SPBRGH for 9600 at 48 MHz,
- *         BRGH=1, BRG16=1, SPEN+CREN) is read back through the real
- *         SFR path and checked.
- *     (b) The FC03 Read Holding Registers request (slave address,
- *         function code 0x03, start address, quantity) is built to the
- *         RTU wire format the host smoke test documents, with an
- *         independently written CRC-16/MODBUS appended (a CRC bug in
- *         the module's stack cannot be shared with the gate).
- *     (c) The frame is pushed through the module's real TX path:
- *         epic_serial_write is the exact API send_response uses, the
- *         TX ISR drains the ring into TXREG, and the gate captures
- *         every byte from TXREG as the ISR loads it (the same TXREG
- *         readback the host test's drain_tx uses), with GIE masked so
- *         the drain is deterministic and one dispatch per TXIF pumps
- *         exactly one byte.
- *     (d) The captured bytes must equal the request exactly and the
- *         CRC must match the independent reference.
- *     (e) epic_modbus_slave_set_rs485_dir_pin: the direction pin's
- *         TRIS (output) and LAT (idle low = receive) are verified
- *         through the real GPIO driver.
- *     (f) epic_modbus_slave_poll is exercised over a bounded loop
- *         (empty RX ring: framing state machine idle path).
- *
- *   Loop bounds: the TX drain carries a hard iteration guard, every
- *   wait is a bounded tick-based timeout, and the program terminates
- *   by calling epic_harness_report like every other sim gate.
- */
+/* Bounded, self-reporting HARNESS=sim `mdb` gate for epic-modbus: runs
+ * the compiled epic_modbus.c under MPLAB SIM on an 18F4550 and verifies
+ * the RTU wire format + an independent CRC-16 through the real TX path.
+ * RX-driven dispatch is unreachable: MPLAB SIM cannot inject UART RX at
+ * all (no mdb input stimulus, SCL `stim` broken in 6.35, `set RCREG`/
+ * `set PIR1` ignored, and the EUSART model re-derives RCIF from its own
+ * state; established experimentally, do not silently re-open). The gate
+ * exercises: (a) real init SFR readback, (b) a built FC03 request,
+ * (c) the real TX path via TXREG capture, (d) frame+CRC equality,
+ * (e) RS-485 dir pin TRIS/LAT, (f) a bounded idle poll loop. */
 
 #include "core/epic_harness.h"
 #include "epic_hal.h"
@@ -176,7 +117,7 @@ int main(void)
         .num_input_regs      = 0,
     };
 
-    /* ---- (a) real init: module handle + register map ---- */
+    /* (a) real init: module handle + register map */
     epic_modbus_slave_init(FOSC_HZ, BAUD, SLAVE_ADDR, &map);
 
     int init_ok =
@@ -192,7 +133,7 @@ int main(void)
         epic_harness_log("modbus sim: init sfr BAD\n");
     }
 
-    /* ---- (b) build the FC03 request: addr, fc, start=0, qty=2, CRC ---- */
+    /* (b) build the FC03 request: addr, fc, start=0, qty=2, CRC */
     uint8_t req[8];
     req[0] = SLAVE_ADDR;
     req[1] = 0x03u;
@@ -206,8 +147,8 @@ int main(void)
         req[7] = (uint8_t)(crc >> 8);
     }
 
-    /* ---- (c) push the frame through the module's real TX path and
-     * capture each byte the TX ISR loads into TXREG ---- */
+    /* (c) push the frame through the module's real TX path and capture
+     * each byte the TX ISR loads into TXREG */
     uint8_t captured[8];
     int n;
     {
@@ -217,7 +158,7 @@ int main(void)
         EPIC_IRQ_Restore(prev);
     }
 
-    /* ---- (d) frame bytes + CRC against the independent reference ---- */
+    /* (d) frame bytes + CRC against the independent reference */
     int len_ok = (n == 8);
     int frame_ok = len_ok;
     for (int i = 0; i < n && i < 8; i++) {
@@ -250,7 +191,7 @@ int main(void)
         epic_harness_log("modbus sim: crc BAD\n");
     }
 
-    /* ---- (e) RS-485 direction pin: output, idle low (receive) ---- */
+    /* (e) RS-485 direction pin: output, idle low (receive) */
     epic_modbus_slave_set_rs485_dir_pin(DIR_PORT, DIR_BIT);
     int dir_ok =
         ((EPIC_REG8(PIC_REG_TRISC) & (uint8_t)EPIC_BIT(DIR_BIT)) == 0u) &&
@@ -261,7 +202,7 @@ int main(void)
         epic_harness_log("modbus sim: dir pin BAD\n");
     }
 
-    /* ---- (f) poll smoke: idle framing path over a bounded loop ---- */
+    /* (f) poll smoke: idle framing path over a bounded loop */
     {
         uint32_t t0 = epic_tick_get();
         while (epic_tick_elapsed_since(t0) < 3u) {

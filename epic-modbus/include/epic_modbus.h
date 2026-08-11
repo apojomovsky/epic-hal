@@ -1,17 +1,9 @@
-/**
- * @file    epic_modbus.h
- * @brief   Family-agnostic Modbus RTU slave, built on `epic-serial` (UART),
- *          `epic-tick` (T3.5 silence timing), and the HAL's GPIO (optional
- *          RS-485 driver-enable).
- *
- * @details
- *   RTU only (binary framing, CRC-16), slave role only, function codes
- *   01-06/15/16 (see docs/ARCHITECTURE.md for what's out of scope).
- *   Register access is plain arrays (epic_modbus_slave_map_t), the data
- *   itself on host and target, no callback indirection needed.
- *   epic_modbus_slave_poll() is silence-delimited, dispatching once the
- *   RTU T3.5 inter-frame gap elapses; call it every main-loop iteration.
- */
+/* Family-agnostic Modbus RTU slave on epic-serial (UART), epic-tick
+ * (T3.5 silence timing), and the HAL's GPIO (optional RS-485 driver
+ * enable). RTU only, slave role only, FC 01-06/15/16 (see
+ * docs/ARCHITECTURE.md for scope). Register access is plain caller-owned
+ * arrays (epic_modbus_slave_map_t); poll() dispatches once the T3.5
+ * inter-frame gap elapses. */
 
 #ifndef EPIC_MODBUS_H
 #define EPIC_MODBUS_H
