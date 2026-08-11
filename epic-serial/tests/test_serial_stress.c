@@ -46,6 +46,9 @@ static int g_fail = 0;
 
 /* Fixed-seed LCG, same shape as epic-math's pic_math_test_rand. */
 static uint32_t g_seed = 0x5E2D0001u;
+/**
+ * @brief Return the next fixed-seed LCG random value.
+ */
 static uint32_t rnd(void)
 {
     g_seed = (1664525u * g_seed + 1013904223u);
@@ -65,6 +68,13 @@ static size_t  g_rx_model_len = 0u;    /* bytes not yet read */
  * the IRQ callback before the explicit dispatch, popping a byte whose
  * TXREG contents the explicit dispatch would overwrite; the
  * pending-count deltas catch every pop in order. */
+/**
+ * @brief Drain the TX ring one step plus one dispatch per byte.
+ *
+ * @param out buffer receiving the captured bytes
+ * @param max capacity of out
+ * @return the number of bytes captured
+ */
 static int drain_tx(uint8_t *out, int max)
 {
     int n = 0;
@@ -88,11 +98,17 @@ static int drain_tx(uint8_t *out, int max)
 }
 
 /* Inject one RX byte through the sim; the sim dispatches immediately. */
+/**
+ * @brief Inject one RX byte through the sim.
+ */
 static void rx_inject(uint8_t b)
 {
     SIM_RX(b);
 }
 
+/**
+ * @brief Read the RX ring and compare byte-exact against the model.
+ */
 static void rx_check_model(void)
 {
     while (g_rx_model_len > 0u) {
@@ -120,6 +136,9 @@ static void rx_check_model(void)
     }
 }
 
+/**
+ * @brief Stress the TX/RX round trip with randomized traffic.
+ */
 static void test_stress_roundtrip(void)
 {
     for (int it = 0; it < 3000; it++) {
@@ -173,6 +192,9 @@ static void test_stress_roundtrip(void)
     CHECK(epic_serial_tx_pending() == 0, "tx ring empty at end");
 }
 
+/**
+ * @brief Exercise the full and empty ring boundary contracts.
+ */
 static void test_full_boundaries(void)
 {
     /* TX ring full: write exactly SZ bytes with no drain in between,
@@ -244,6 +266,11 @@ static void test_full_boundaries(void)
     }
 }
 
+/**
+ * @brief Run the serial stress tests.
+ *
+ * @return 0 when all checks pass, 1 otherwise
+ */
 int main(void)
 {
     epic_harness_init(4000000UL);
