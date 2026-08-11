@@ -13,6 +13,10 @@
 
 #define SIM_CYCLES 4000000UL
 
+/**
+ * @brief  Smoke-test the 1 ms timebase: delay 10 ms and 5 ms, verify
+ *         the elapsed counts land within one tick, report PASS/FAIL.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

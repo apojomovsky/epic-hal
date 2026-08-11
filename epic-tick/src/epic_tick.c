@@ -13,12 +13,21 @@
 static volatile uint32_t g_tick_ms = 0u;
 static TIMER2_HandleTypeDef s_timer2 = TIMER2_HANDLE_DEFAULT;
 
+/**
+ * @brief  Timer2 overflow callback: advance the 1 ms tick counter.
+ */
 static void epic_tick_on_overflow(void)
 {
     g_tick_ms++;
 }
 
-/* Pick the Timer2 configuration whose period is closest to 1 ms. */
+/**
+ * @brief  Pick the Timer2 configuration whose period is closest to 1 ms.
+ * @param fosc_hz the system oscillator frequency in Hz.
+ * @param pr2     where the best PR2 reload value is written.
+ * @param pre     where the best prescaler setting is written.
+ * @param post    where the best postscaler setting is written.
+ */
 static void compute_period(uint32_t fosc_hz, uint8_t *pr2,
                            TIMER2_PrescalerTypeDef *pre,
                            TIMER2_PostscalerTypeDef *post)
@@ -60,6 +69,10 @@ static void compute_period(uint32_t fosc_hz, uint8_t *pr2,
     *post = best_post;
 }
 
+/**
+ * @brief  Start the 1 ms timebase on Timer2 (target implementation).
+ * @param fosc_hz the system oscillator frequency in Hz.
+ */
 void epic_tick_init(uint32_t fosc_hz)
 {
     uint8_t pr2;
@@ -81,6 +94,10 @@ void epic_tick_init(uint32_t fosc_hz)
     EPIC_IRQ_Restore(1);
 }
 
+/**
+ * @brief  Read the 1 ms tick counter (target implementation).
+ * @return the millisecond tick count.
+ */
 uint32_t epic_tick_get(void)
 {
     /* Double-read retry: the ISR can update the 32-bit counter between
@@ -97,11 +114,20 @@ uint32_t epic_tick_get(void)
     return a;
 }
 
+/**
+ * @brief  Milliseconds elapsed since a tick timestamp (target impl).
+ * @param t0 an earlier `epic_tick_get()` timestamp.
+ * @return `epic_tick_get() - t0`, wraparound-safe.
+ */
 uint32_t epic_tick_elapsed_since(uint32_t t0)
 {
     return epic_tick_get() - t0;               /* unsigned: wraparound-safe   */
 }
 
+/**
+ * @brief  Block for `ms` milliseconds (target implementation).
+ * @param ms how long to block, in milliseconds.
+ */
 void epic_tick_delay_ms(uint32_t ms)
 {
     uint32_t t0 = epic_tick_get();
