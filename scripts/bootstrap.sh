@@ -9,14 +9,9 @@
 #   ./scripts/bootstrap.sh --check-only report only, install nothing, exit
 #                                        nonzero if anything is missing
 #
-# Real-target (XC8) builds and the mdb (MPLAB SIM) gate run inside the
-# docker/ci-toolchain/ Docker image built by the root Makefile (`make
-# check-vendor` -> `make image`), so nothing MPLAB-ish is installed on
-# the host. The image needs two Microchip installer files a human
-# fetches once into docker/ci-toolchain/vendor/ (Microchip's CDN blocks
-# scripted downloads); this script verifies Docker and those files and
-# builds the image when it can, printing exactly what to download and
-# where to put it when it cannot.
+# Real-target (XC8) builds run inside the docker/ci-toolchain/ image
+# built by the root Makefile; only the two Microchip installers in
+# vendor/ need a human (their CDN blocks scripted downloads).
 
 set -euo pipefail
 
@@ -74,15 +69,8 @@ else
 fi
 
 # ---- Docker toolchain (real-target builds) ----
-# Real-target (XC8) builds and the mdb (MPLAB SIM) gate run inside the
-# docker/ci-toolchain/ image; nothing MPLAB-ish is installed on the host
-# (docs/docker-dev-plan.md). The image is built from two Microchip
-# installer files only a human can fetch once (their CDN sits behind a
-# bot-challenge, see `make check-vendor` and docs/ci-plan.md):
-#   docker/ci-toolchain/vendor/xc8-installer.run
-#   docker/ci-toolchain/vendor/mplabx-installer.tar
-# `make check-vendor` and `make image` own the filenames, thresholds,
-# URLs, and the build; this section only orchestrates them.
+# `make check-vendor` and `make image` own the filenames, sizes, and
+# URLs; this section only orchestrates them.
 toolchain_ok=1
 if ! command -v docker >/dev/null 2>&1; then
     echo "bootstrap: docker not found. Real-target builds run in a Docker image, see"
@@ -100,14 +88,12 @@ elif ! command -v make >/dev/null 2>&1; then
 fi
 
 if [ "$toolchain_ok" = 1 ]; then
-    # vendor/ is the drop location the guidance below points at; create
-    # it so "place it here" is a real path. check-only never writes.
+    # Create the drop location the guidance names; check-only never writes.
     if [ "$check_only" = 0 ]; then
         mkdir -p "$repo_root/docker/ci-toolchain/vendor"
     fi
     if make -C "$repo_root" check-vendor; then
-        # Same tag as the Makefile's LOCAL_IMAGE, kept in sync by hand
-        # (a stable literal, not worth a make round-trip to derive).
+        # Same tag as the Makefile's LOCAL_IMAGE.
         if docker image inspect pic8-hal-toolchain:local >/dev/null 2>&1; then
             echo "bootstrap: docker toolchain image present (pic8-hal-toolchain:local);"
             echo "  real-target builds are ready (make xc8-build / make mdb-test)."
