@@ -1,13 +1,7 @@
 /**
- * @file    pid.c
- * @brief   Fixed-point PID controller, see pid.h.
- *
- * @details
- *   The Q8.8 `sum_q8 >> 8` truncation relies on signed `>>` being
- *   arithmetic (sign-extending), true on every target this ships on
- *   (host gcc/clang, XC8 PIC16/PIC18). Invariants the tests assert: the
- *   integrator stays in `[out_min, out_max] << 8`; `pid_update`'s return
- *   stays in `[out_min, out_max]`; AUTO -> MANUAL -> AUTO is bumpless.
+ * Fixed-point PID controller (see pid.h). The Q8.8 `sum_q8 >> 8`
+ * truncation relies on signed `>>` being arithmetic (sign-extending),
+ * true on every target this ships on (host gcc/clang, XC8 PIC16/PIC18).
  */
 
 #include "pid.h"

@@ -1,13 +1,9 @@
 /**
- * @file    example_pid_setpoint_step.c
- * @brief   Host-only setpoint-step + manual/auto transfer demo for epic-pid.
- *
- * @details
- *   Pure-host, no HAL/XC8 build; a first-order-lag integer "plant"
- *   (`measurement += (output - measurement) / 4`) driven by a
- *   deliberately tight output clamp so anti-windup visibly engages on a
- *   setpoint step, then a MANUAL -> AUTO handoff shows the resume is
- *   bumpless (matches the last MANUAL output exactly).
+ * Host-only setpoint-step + manual/auto transfer demo for epic-pid: a
+ * first-order-lag integer "plant" (`measurement += (output - measurement)
+ * / 4`) driven by a deliberately tight output clamp so anti-windup
+ * visibly engages on a setpoint step, then a MANUAL -> AUTO handoff shows
+ * the resume is bumpless (matches the last MANUAL output exactly).
  */
 
 #include "pid.h"
