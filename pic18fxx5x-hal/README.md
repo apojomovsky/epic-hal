@@ -232,7 +232,7 @@ Microchip recommends always specifying it. This is recorded in
 Same as the PIC16F87XA HAL (mirror STM32Cube): `HAL_PPP_Init/DeInit`,
 `HAL_PPP_MspInit` weak override, `GPIOA..` / `GPIO_PIN_*`, `EPIC_OK/ERROR/
 BUSY/TIMEOUT/INVALID`, `EPIC_BIT*`. The IRQ enum will be `PIC18_IRQ_*`
-  (Phase 2), taking the per-family `PIC18_IRQn` type, with the priority
+(Phase 2), taking the per-family `PIC18_IRQn` type, with the priority
 contract extension decided and recorded in the plan before the
 interrupt core is written.
 
