@@ -3,7 +3,7 @@
  * the actual compiled epic_adcfilter.c under MPLAB SIM on a 16F877A,
  * feeding a scripted sample stream through the real API and checking
  * the host-test oracle values, then reports PASS/FAIL over the
- * target's real hardware USART (pic16_harness_sim_target.c). Pure
+ * target's real hardware USART (pic16_harness_mdb.c). Pure
  * computation, no RX injection needed. The oracle, step-settling, and
  * reset contracts are enumerated inline at each check below.
  */

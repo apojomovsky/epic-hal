@@ -1455,7 +1455,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 name        = "swuart-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
-  "tests/sim_target_swuart.c",
+  "tests/sim_mdb_swuart.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 

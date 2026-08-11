@@ -8,7 +8,7 @@
  *
  * Known overlaps, deliberately not engineered around:
  * - 0x70/0x71 are also used by pic16f87xa-hal's epic_irq_pie_scratch/
- *   epic_bank1_scratch (src/core/pic16_isr_vector.c): images linking the
+ *   epic_bank1_scratch (src/target/pic16_isr_vector.c): images linking the
  *   HAL core emit XC8 warning 1482. Safe as long as user firmware does
  *   not run a PIE-enable/bank1-SFR macro while a math routine is
  *   mid-computation.

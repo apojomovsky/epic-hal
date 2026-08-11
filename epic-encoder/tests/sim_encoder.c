@@ -6,7 +6,7 @@
  * simulated time, then hammers `encoder_get_position` under the live
  * tick ISR, checking every read is consistent and the tick survived.
  * Reports PASS/FAIL over the harness
- * USART (see pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
+ * USART (see pic16f87xa-hal/src/mdb/pic16_harness_mdb.c).
  */
 
 #include "encoder.h"

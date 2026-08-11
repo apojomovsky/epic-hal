@@ -89,7 +89,8 @@ pic16f87xa-hal/
 │   ├── peripherals/            implementations of peripherals/ headers
 │   └── sim/                     host simulation backend (host build only)
 ├── tests/                        end-to-end examples / smoke tests
-├── mcu/pic16f87xa-mplabx/       XC8 Makefile + MPLAB X project
+│                                 (real-target: manifest selects sources;
+│                                 bundle epicurus.mk / reference project)
 └── CMakeLists.txt               host build (gcc + cmake)
 ```
 
@@ -100,7 +101,7 @@ host/target link-time split, is explained once in `epic-common/MANUAL.md`
 ### 2.1 One interrupt vector, one dispatcher
 
 The PIC16F87XA has a **single** interrupt vector at 0x0004 (DS39582B
-§14.11). On a real target, `src/core/pic16_isr_vector.c` installs the XC8
+§14.11). On a real target, `src/target/pic16_isr_vector.c` installs the XC8
 `__interrupt()` handler, which calls `epic_dispatch_all_irqs()`. On
 the host, the harness registers that same function as the simulator's IRQ
 callback. Either way, the one dispatcher reads INTCON/PIR1/PIR2 once

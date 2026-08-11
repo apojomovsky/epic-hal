@@ -3,8 +3,9 @@
 #   cmake -B build && cmake --build build
 #   ./build/example_blink
 #
-# Real PIC target builds use the XC8 toolchain. The MPLAB X project
-# lives at mcu/pic16f87xa-mplabx/; its Makefile produces a .hex via xc8-cc.
+# Real PIC target builds use the XC8 toolchain; the manifest selects the
+# real-target sources and the bundle's epicurus.mk (or the reference
+# project examples/epicurus-demo-pic16f87xa.X) drives xc8-cc to a .hex.
 #
 # The host vs. target split is done at build time, not with #ifdef: this
 # build puts include/host ahead of include on the include path, so

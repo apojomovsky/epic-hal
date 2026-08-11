@@ -111,7 +111,7 @@ implemented and cited against DS39632E. `example_blink` /
   against INTCON / INTCON2 / INTCON3 / PIE1 / PIR1 / IPR1, priority mode
   (IPEN) enabled by `EPIC_IRQ_Restore`. `EPIC_IRQ_SetPriority` is the
   shared-contract extension (no-op on PIC16).
-- ✅ ISR vectors (`src/core/pic18_isr_vector.c`, XC8 only):
+- ✅ ISR vectors (`src/target/pic18_isr_vector.c`, XC8 only):
   `__interrupt(high_priority)` at 0008h and `__interrupt(low_priority)` at
   0018h, both delegating to `epic_dispatch_all_irqs`.
 - ✅ WDT / Sleep (`core/pic18fxx5x_wdt_sleep.h`): `EPIC_WDT_Refresh` /
@@ -144,9 +144,11 @@ pic18fxx5x-hal/
 │   ├── core/                     (Phase 2: pic18_irq.h)
 │   └── peripherals/              (Phase 2: EPIC_GPIO_*, EPIC_TIMER0_*, ...)
 ├── src/
-│   ├── core/                     harness_sim, irq_dispatch (Phase 2: isr_vector)
-│   ├── peripherals/              (Phase 2)
-│   └── sim/                      Host simulation backend
+│   ├── core/                     pic18_irq.c, pic18_irq_dispatch.c, wdt/sleep
+│   ├── peripherals/              implementations of peripherals/ headers
+│   ├── target/                   isr_vector + wdt_sleep_target (XC8 only)
+│   ├── sim/                      harness_sim, sim backend (host build only)
+│   └── mdb/                      harness_mdb (MPLAB SIM gate)
 ├── tests/                        example_smoke (Phase 2: example_blink, ...)
 ├── mcu/pic18fxx5x-mplabx/        XC8 Makefile (thin caller of epic-common/mk)
 └── CMakeLists.txt                Host build (thin caller of epic-common/cmake)

@@ -1,6 +1,6 @@
 /* Bounded, self-reporting HARNESS=sim `mdb` gate for epic-bus: runs the
  * compiled epic_bus.c under MPLAB SIM on a 16F877A, then reports
- * PASS/FAIL over the target's real USART (pic16_harness_sim_target.c).
+ * PASS/FAIL over the target's real USART (pic16_harness_mdb.c).
  * MPLAB SIM has no slave to inject on the bus (probed: SEN stays
  * latched, SSPIF/BF never set, i.e. the model has the MSSP register
  * file but not the data path), so the gate covers the master side in

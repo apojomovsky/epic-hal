@@ -95,7 +95,7 @@ host build puts `include/host` first on the include path so
 `pic16f193x_platform.h` resolves to a memory-backed SFR array; the target
 build puts `include/target` first so it resolves to volatile-deref. The
 linked harness file (`pic16f193x_harness_sim.c` vs
-`pic16f193x_harness_sim_target.c`) and the sim backend (`src/sim/`,
+`pic16f193x_harness_mdb.c`) and the sim backend (`src/sim/`,
 host-only) are selected by the build, not by preprocessor. Every example
 source compiles unchanged in both builds.
 

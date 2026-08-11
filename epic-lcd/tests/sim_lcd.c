@@ -2,7 +2,7 @@
  * Bounded, self-reporting HARNESS=sim build: epic-lcd's `mdb` gate. Runs
  * the real compiled driver (src/epic_lcd.c) under MPLAB SIM on a 16F877A
  * and verifies the emitted command/data byte stream and delay pattern over
- * the harness USART (see pic16f87xa-hal/src/core/pic16_harness_sim_target.c).
+ * the harness USART (see pic16f87xa-hal/src/mdb/pic16_harness_mdb.c).
  *
  * Verification is by transport-call counting: the real epic_lcd_gpio4_init
  * runs (its pin configuration and initial E/RS writes are checked), then

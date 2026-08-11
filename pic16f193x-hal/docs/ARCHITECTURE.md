@@ -149,7 +149,7 @@ with bank-1 offsets 0x11/0x12/0x13).
    `extern volatile uint8_t epic_irq_pie_scratch __at(0x70);`
    declaration. Update the file header to point at this finding for
    the failure mode.
-2. `pic16f193x-hal/src/core/pic16f193x_isr_vector.c`: add the
+2. `pic16f193x-hal/src/target/pic16f193x_isr_vector.c`: add the
    `volatile uint8_t epic_irq_pie_scratch __at(0x70);` definition
    that the platform header's `extern` needs, plus a header-comment
    update that removes the old "no bank-switch scratch bytes are
