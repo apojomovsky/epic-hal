@@ -69,21 +69,59 @@ typedef struct {
     .OverflowCallback = NULL,                                           \
 }
 
+/**
+ * @brief  Initialize Timer1 from the handle. Programs T1CON (clock
+ *         source, sync, oscillator, prescaler) and INTCON<PIE1/TMR1IE>,
+ *         and loads ReloadValue into TMR1H:L.
+ * @param h handle with ClockSource, ClockSync, Oscillator, Prescaler,
+ *        ReloadValue, OverflowCallback.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h);
+
+/**
+ * @brief  De-initialize Timer1. Disables the overflow interrupt and
+ *         returns T1CON to reset.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void);
+
+/**
+ * @brief  Start Timer1 counting. Writes `h->ReloadValue` into
+ *         TMR1H:L and sets TMR1ON.
+ * @param h handle whose ReloadValue is loaded into TMR1H:L.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h);
+
+/**
+ * @brief  Stop Timer1 counting. Clears TMR1ON.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER1_Stop(void);
 
-/** Atomically read the 16-bit counter value. */
+/**
+ * @brief Atomically read the 16-bit counter value.
+ * @return the current 16-bit TMR1H:L value.
+ */
 uint16_t EPIC_TIMER1_ReadCounter(void);
 
-/** Atomically write the 16-bit counter value. */
+/**
+ * @brief Atomically write the 16-bit counter value.
+ * @param value the 16-bit value to load into TMR1H:L.
+ */
 void EPIC_TIMER1_WriteCounter(uint16_t value);
 
-/** Convert a prescaler enum to its integer ratio (1, 2, 4, 8). */
+/**
+ * @brief Convert a prescaler enum to its integer ratio (1, 2, 4, 8).
+ * @param p the prescaler enum value.
+ * @return the integer prescaler ratio (1, 2, 4 or 8).
+ */
 uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p);
 
-/** Weak Timer1 ISR, override in user code to add application logic. */
+/**
+ * @brief Weak Timer1 ISR, override in user code to add application logic.
+ */
 void TIMER1_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_TIMER1_H */

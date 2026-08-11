@@ -16,11 +16,17 @@
 
 static volatile uint32_t overflows = 0;
 
+/**
+ * @brief Count Timer1 overflows.
+ */
 static void on_t1_overflow(void)
 {
     overflows++;
 }
 
+/**
+ * @brief Verify Timer1 overflow cadence on the sim backend.
+ */
 int main(void)
 {
     pic16f87xa_sim_reset();

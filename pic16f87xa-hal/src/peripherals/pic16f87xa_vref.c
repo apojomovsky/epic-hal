@@ -2,6 +2,12 @@
 
 #include "peripherals/pic16f87xa_vref.h"
 
+/**
+ * @brief Initialize the voltage reference: program CVRCON from the
+ *        handle.
+ * @param h handle with Range, Value, OutputEnable, Enabled.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_VREF_Init(const VREF_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -26,6 +32,10 @@ EPIC_StatusTypeDef EPIC_VREF_Init(const VREF_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief De-initialize the voltage reference: clear CVRCON.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_VREF_DeInit(void)
 {
     uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
@@ -35,6 +45,13 @@ EPIC_StatusTypeDef EPIC_VREF_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief Compute the nominal output voltage in millivolts.
+ * @param vdd_mv the supply voltage in millivolts.
+ * @param range VREF_RANGE_LOW or VREF_RANGE_HIGH.
+ * @param value the ladder tap, 0..15.
+ * @return the nominal output voltage in millivolts.
+ */
 uint32_t EPIC_VREF_MilliVolts(uint32_t vdd_mv,
                              VREF_RangeTypeDef range,
                              uint8_t value)

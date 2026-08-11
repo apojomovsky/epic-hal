@@ -8,6 +8,14 @@
 
 /* SPBRG computation. */
 
+/**
+ * @brief Compute the SPBRG reload value for a target baud rate.
+ * @param fosc_hz the oscillator frequency in Hz.
+ * @param baud the desired baud rate in bits/s.
+ * @param mode USART_MODE_ASYNCHRONOUS or USART_MODE_SYNCHRONOUS.
+ * @param brgh USART_BRGH_HIGH or USART_BRGH_LOW (async only).
+ * @return the SPBRG value 0..255, or 0xFFFF if unattainable.
+ */
 uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
                             USART_ModeTypeDef mode,
                             USART_BaudRateHighTypeDef brgh)
@@ -27,6 +35,13 @@ static const USART_HandleTypeDef *g_usart = NULL;
 
 /* public API. */
 
+/**
+ * @brief Initialize the USART: program SPBRG, TXSTA, RCSTA and the
+ *        interrupt enables for the callbacks.
+ * @param h handle with Mode, ClockSource, BaudHigh, DataWidth, SPBRG,
+ *        TxCpltCallback, RxCpltCallback.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -93,6 +108,11 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief De-initialize the USART: disable both interrupts and restore
+ *        RCSTA/TXSTA/SPBRG to reset values.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_USART_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
@@ -111,6 +131,10 @@ EPIC_StatusTypeDef EPIC_USART_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief Write one byte to TXREG (clears TXIF and starts the shift).
+ * @param data the byte to transmit.
+ */
 void EPIC_USART_Transmit(uint8_t data)
 {
     /* Writing TXREG clears TXIF (DS39582B §10.2.1). The hardware
@@ -120,6 +144,10 @@ void EPIC_USART_Transmit(uint8_t data)
     EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_TX);
 }
 
+/**
+ * @brief Read the TX9D bit of the most recently transmitted byte.
+ * @return 1 if the 9th bit was set, 0 otherwise.
+ */
 uint8_t EPIC_USART_GetTX9D(void)
 {
 #ifdef EPIC_BANK1_READ8
@@ -131,6 +159,10 @@ uint8_t EPIC_USART_GetTX9D(void)
 #endif
 }
 
+/**
+ * @brief Set the 9th data bit to send next.
+ * @param bit9 the 9th bit value (0 or 1).
+ */
 void EPIC_USART_SetTX9D(uint8_t bit9)
 {
 #ifdef EPIC_BANK1_READ8
@@ -151,6 +183,10 @@ void EPIC_USART_SetTX9D(uint8_t bit9)
 #endif
 }
 
+/**
+ * @brief Report whether the transmit shift register is empty.
+ * @return 1 if TRMT is set, 0 otherwise.
+ */
 uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void)
 {
 #ifdef EPIC_BANK1_READ8
@@ -162,6 +198,10 @@ uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void)
 #endif
 }
 
+/**
+ * @brief Read the latest byte from RCREG (clears RCIF).
+ * @return the received byte.
+ */
 uint8_t EPIC_USART_Receive(void)
 {
     /* Reading RCREG clears RCIF (DS39582B §10.2.2). */
@@ -170,6 +210,10 @@ uint8_t EPIC_USART_Receive(void)
     return data;
 }
 
+/**
+ * @brief Read the RX9D bit of the most recently received byte.
+ * @return 1 if the 9th bit was set, 0 otherwise.
+ */
 uint8_t EPIC_USART_GetRX9D(void)
 {
     return (EPIC_REG8(PIC_REG_RCSTA) & PIC_RCSTA_RX9D) ? 1U : 0U;
@@ -177,6 +221,10 @@ uint8_t EPIC_USART_GetRX9D(void)
 
 /* ISRs. */
 
+/**
+ * @brief Weak USART TX ISR: fires the TX-complete callback when TXIF
+ *        is set (TXIF is read-only; cleared by writing TXREG).
+ */
 void USART_TX_IRQHandler(void)
 {
     /* Direct flag read (class-F: the table route clobbers PCLATH in
@@ -186,6 +234,10 @@ void USART_TX_IRQHandler(void)
     if (g_usart && g_usart->TxCpltCallback) g_usart->TxCpltCallback();
 }
 
+/**
+ * @brief Weak USART RX ISR: reads RCREG, clears RCIF and fires the
+ *        RX-complete callback with the byte.
+ */
 void USART_RX_IRQHandler(void)
 {
     /* Direct flag ops (class-F). RCIF is PIR1 bit 5; reading RCREG

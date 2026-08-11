@@ -27,6 +27,9 @@ static volatile uint32_t g_toggle_count = 0;
 /* Timer1 overflow callback: re-arms the period, toggles the LED, and
  * refreshes the WDT (a no-op on the host). Runs in interrupt context
  * on the target and in the sim IRQ callback on the host. */
+/**
+ * @brief Re-arm the 1 s period, toggle RB0 and refresh the WDT.
+ */
 static void on_t1_overflow(void)
 {
     EPIC_TIMER1_WriteCounter(T1_RELOAD);
@@ -35,6 +38,10 @@ static void on_t1_overflow(void)
     g_toggle_count++;
 }
 
+/**
+ * @brief Blink RB0 from a Timer1 overflow while the CPU sleeps between
+ *        overflows.
+ */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);

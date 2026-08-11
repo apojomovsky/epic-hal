@@ -73,10 +73,17 @@ typedef struct {
  * @brief  Configure Timer0 from the handle. Programs OPTION_REG and
  *         INTCON<TMR0IE>. Does not start the timer, call @ref
  *         EPIC_TIMER0_Start afterwards.
- *
+ * @param h handle with ClockSource, ClockEdge, Prescaler,
+ *        PrescalerAssigned, ReloadValue, OverflowCallback.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
 EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h);
+
+/**
+ * @brief  De-initialize Timer0. Disables the overflow interrupt and
+ *         returns OPTION_REG to reset.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void);
 
 /**
@@ -92,21 +99,34 @@ void TIMER0_IRQHandler(void) EPIC_WEAK;
  *         writes `h->ReloadValue` into TMR0.
  *
  *         Note: writing TMR0 clears the prescaler (DS39582B §5.3 Note).
+ * @param h handle whose ReloadValue is loaded into TMR0.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
 EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h);
 
-/** Disable TMR0 counting. Clears OPTION_REG<T0CS> → TMR0 halted. */
+/**
+ * @brief Disable TMR0 counting. Clears OPTION_REG<T0CS> → TMR0 halted.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER0_Stop(void);
 
-/** Read the current counter value. */
+/**
+ * @brief Read the current counter value.
+ * @return the current 8-bit TMR0 value.
+ */
 uint8_t EPIC_TIMER0_ReadCounter(void);
 
-/** Write `value` to the counter (also clears the prescaler). */
+/**
+ * @brief Write `value` to the counter (also clears the prescaler).
+ * @param value the 8-bit value to load into TMR0.
+ */
 void EPIC_TIMER0_WriteCounter(uint8_t value);
 
 /**
  * @brief  Convert a prescaler enum to its integer ratio (1, 2, 4, ..., 256).
  *         Used by callers that need the ratio to compute overflow periods.
+ * @param p the prescaler enum value.
+ * @return the integer prescaler ratio (2..256).
  */
 uint16_t EPIC_TIMER0_PrescalerToRatio(TIMER0_PrescalerTypeDef p);
 

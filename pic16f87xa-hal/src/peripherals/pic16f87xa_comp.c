@@ -5,6 +5,12 @@
 
 static const COMP_HandleTypeDef *g_comp = NULL;
 
+/**
+ * @brief Initialize the comparators: program CMCON from the handle and
+ *        arm the change interrupt if a callback is set.
+ * @param h handle with Mode, C1Inverted, C2Inverted, CIS, ChangeCallback.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -36,6 +42,11 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief De-initialize the comparators: disable the interrupt and reset
+ *        CMCON to its power-on default (comparators off).
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_COMP_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16_IRQ_CMP);
@@ -50,6 +61,10 @@ EPIC_StatusTypeDef EPIC_COMP_DeInit(void)
     return EPIC_OK;
 }
 
+/**
+ * @brief Read the C1 output bit.
+ * @return 1 if C1 output is high, 0 otherwise.
+ */
 uint8_t EPIC_COMP_C1Out(void)
 {
     uint8_t v = 0U;
@@ -65,6 +80,10 @@ uint8_t EPIC_COMP_C1Out(void)
     return (v & PIC_CMCON_C1OUT) ? 1U : 0U;
 }
 
+/**
+ * @brief Read the C2 output bit.
+ * @return 1 if C2 output is high, 0 otherwise.
+ */
 uint8_t EPIC_COMP_C2Out(void)
 {
     uint8_t v = 0U;
@@ -79,17 +98,27 @@ uint8_t EPIC_COMP_C2Out(void)
     return (v & PIC_CMCON_C2OUT) ? 1U : 0U;
 }
 
+/**
+ * @brief Report whether the comparator change flag is set.
+ * @return 1 if CMIF (PIR2<6>) is set, 0 otherwise.
+ */
 uint8_t EPIC_COMP_IsChangeFlag(void)
 {
     /* CMIF lives in PIR2<6>. */
     return (EPIC_REG8(0x0DU) & 0x40U) ? 1U : 0U;
 }
 
+/**
+ * @brief Clear the comparator change flag.
+ */
 void EPIC_COMP_ClearChangeFlag(void)
 {
     EPIC_IRQ_ClearFlag(PIC16_IRQ_CMP);
 }
 
+/**
+ * @brief Weak comparator ISR: clears CMIF and fires the change callback.
+ */
 void COMP_IRQHandler(void)
 {
     /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR

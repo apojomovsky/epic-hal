@@ -13,6 +13,10 @@
     if (!(cond)) { printf("FAIL: %s\n", msg); return 1; } \
 } while (0)
 
+/**
+ * @brief Smoke-test the MSSP driver: SSPADD math, SPI master init,
+ *        byte transfer and I²C master start/stop.
+ */
 int main(void)
 {
     /* 1. SSPADD formula. */

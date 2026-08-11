@@ -14,6 +14,12 @@
 } while (0)
 
 /* Helper: read a register from a non-default bank. */
+/**
+ * @brief Read a register from a non-default bank.
+ * @param bank the bank to select (0..3).
+ * @param addr the register address in that bank.
+ * @return the register value.
+ */
 static uint8_t b_read(uint8_t bank, uint16_t addr)
 {
     uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
@@ -23,6 +29,10 @@ static uint8_t b_read(uint8_t bank, uint16_t addr)
     return v;
 }
 
+/**
+ * @brief Smoke-test EEPROM read, the write unlock sequence, simulated
+ *        completion and buffer round-trips on the sim backend.
+ */
 int main(void)
 {
     pic16f87xa_sim_reset();

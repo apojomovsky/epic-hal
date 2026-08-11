@@ -21,12 +21,17 @@ static const ccp_addrs_t addrs[2] = {
     { 0x1BU, 0x1CU, 0x1DU, PIC16_IRQ_CCP2 },
 };
 
+/**
+ * @brief Look up the address table for a CCP instance.
+ * @param inst CCP_INSTANCE_1 or CCP_INSTANCE_2.
+ * @return pointer to the matching address entry (instance 1 on
+ *         invalid input).
+ */
 static const ccp_addrs_t *ccp_sel(CCP_InstanceTypeDef inst)
 {
     if (inst == CCP_INSTANCE_2) return &addrs[1];
     return &addrs[0];
 }
-
 /* Driver-owned callback storage, one slot per CCP instance (index 0
  * unused). The IRQ handlers call the stored callback directly: XC8
  * v4.00 bakes handle derefs to IRP=1 (banks 2/3 only), so reading
@@ -39,6 +44,12 @@ static void (*g_ccp_callbacks[3])(void) = { NULL, NULL, NULL };
 
 /* public API. */
 
+/**
+ * @brief Configure the CCP module: program the mode/compare/PWM
+ *        registers and arm the interrupt if an event callback is set.
+ * @param h handle with Instance, Mode, CompareValue, PWM, EventCallback.
+ * @return EPIC_OK on success, EPIC_INVALID on NULL or bad instance.
+ */
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
@@ -78,6 +89,12 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
     return EPIC_OK;
 }
 
+/**
+ * @brief Reset the CCP module: disable the interrupt, clear the flag
+ *        and zero CCPxCON.
+ * @param inst which CCP module to de-initialize.
+ * @return EPIC_OK on success, EPIC_INVALID on bad instance.
+ */
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) {
@@ -91,6 +108,12 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
     return EPIC_OK;
 }
 
+/**
+ * @brief Set the 16-bit CCPRx value (high byte first to avoid a
+ *        spurious compare match).
+ * @param inst which CCP module to program.
+ * @param value the 16-bit compare/capture value.
+ */
 void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
@@ -102,6 +125,11 @@ void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
     EPIC_REG8(a->cprl) = (uint8_t)(value & 0xFFU);
 }
 
+/**
+ * @brief Change only the CCPxCON mode field.
+ * @param inst which CCP module to reprogram.
+ * @param mode the new mode.
+ */
 void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
@@ -109,6 +137,11 @@ void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode)
     EPIC_REG8(a->con) = (uint8_t)(mode & 0x0FU);
 }
 
+/**
+ * @brief Atomically read the 16-bit CCPRx value.
+ * @param inst which CCP module to read.
+ * @return the captured/compare value, 0 on invalid instance.
+ */
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return 0U;
@@ -123,6 +156,12 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
     return (uint16_t)(((uint16_t)hi2 << 8) | lo);
 }
 
+/**
+ * @brief Set the PWM duty in 10-bit units. Writes the duty LSBs into
+ *        CCPxCON<5:4> first, then CCPRxL, to avoid a glitch.
+ * @param inst which CCP module to configure.
+ * @param duty the 10-bit duty value, 0..1023.
+ */
 void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
@@ -139,6 +178,9 @@ void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 
 /* ISRs. */
 
+/**
+ * @brief Weak CCP1 ISR: clears CCP1IF and fires the stored callback.
+ */
 void CCP1_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
@@ -147,6 +189,9 @@ void CCP1_IRQHandler(void)
     }
 }
 
+/**
+ * @brief Weak CCP2 ISR: clears CCP2IF and fires the stored callback.
+ */
 void CCP2_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);

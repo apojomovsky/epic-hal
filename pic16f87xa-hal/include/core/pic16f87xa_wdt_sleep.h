@@ -26,19 +26,25 @@ void EPIC_Sleep_Enter(void);
 /**
  * @brief  Returns 1 if the last reset was a Brown-out Reset
  *         (PCON<BOR>).  Clear after reading via @ref EPIC_BOR_ClearFlag.
+ * @return 1 if the last reset was a Brown-out Reset, 0 otherwise.
  */
 uint8_t EPIC_BOR_GetStatus(void);
 
-/** Clear PCON<BOR>. The POR bit is write-1-to-clear. */
+/**
+ * @brief Clear PCON<BOR>. The POR bit is write-1-to-clear.
+ */
 void EPIC_BOR_ClearFlag(void);
 
 /**
  * @brief  Returns 1 if the device just powered on (PCON<POR>).
  *         Set only on Power-on Reset.
+ * @return 1 if the last reset was a Power-on Reset, 0 otherwise.
  */
 uint8_t EPIC_POR_GetStatus(void);
 
-/** Clear PCON<POR>. */
+/**
+ * @brief Clear PCON<POR>.
+ */
 void EPIC_POR_ClearFlag(void);
 
 #endif /* PIC16F87XA_WDT_SLEEP_H */

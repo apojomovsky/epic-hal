@@ -82,39 +82,62 @@ typedef struct {
  *         with a period matching `h->PWM.Period` before this call.
  *
  * @note   For capture, also start Timer1 manually.
+ * @return EPIC_OK on success, EPIC_ERROR on invalid handle or instance.
  */
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h);
 
-/** Reset CCPxCON to 0x00 and clear the corresponding PIR flag. */
+/**
+ * @brief Reset CCPxCON to 0x00 and clear the corresponding PIR flag.
+ * @param inst which CCP module (CCP_INSTANCE_1 or CCP_INSTANCE_2).
+ * @return EPIC_OK on success, EPIC_ERROR on invalid instance.
+ */
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst);
 
 /* compare / capture / pwm. */
 
-/** Set the 16-bit CCPRx value. */
+/**
+ * @brief Set the 16-bit CCPRx value.
+ * @param inst which CCP module to program.
+ * @param value the 16-bit compare/capture value to write.
+ */
 void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value);
 
-/** Change only CCPxCON's mode field, leaving CCPRx and IRQ enable state
+/**
+ * @brief Change only CCPxCON's mode field, leaving CCPRx and IRQ enable state
  *  untouched. Cheap: no flag-clear or IRQ-enable bookkeeping, unlike
  *  EPIC_CCP_Init. For repeated in-frame mode switches (bit-banged
  *  protocols reprogramming the module every bit), not one-time setup.
- *  No-op if `inst` is not a valid CCP instance. */
+ *  No-op if `inst` is not a valid CCP instance.
+ * @param inst which CCP module to reprogram.
+ * @param mode the new CCP mode (see @ref CCP_ModeTypeDef).
+ */
 void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode);
 
-/** Atomically read the 16-bit CCPRx value. */
+/**
+ * @brief Atomically read the 16-bit CCPRx value.
+ * @param inst which CCP module to read.
+ * @return the current 16-bit CCPRx value.
+ */
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst);
 
 /**
  * @brief  Set PWM duty in 10-bit units (0..1023).
  *         For duty=0 the output stays low for the entire period.
  *         For duty > period the output stays high (per §8.3.2 Note).
+ * @param inst which CCP module to configure.
+ * @param duty the 10-bit duty value, 0..1023.
  */
 void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty);
 
 /* IRQ entries. */
 
-/** Weak CCP1 ISR, override in user code. */
+/**
+ * @brief Weak CCP1 ISR, override in user code.
+ */
 void CCP1_IRQHandler(void) EPIC_WEAK;
-/** Weak CCP2 ISR, override in user code. */
+/**
+ * @brief Weak CCP2 ISR, override in user code.
+ */
 void CCP2_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_CCP_H */

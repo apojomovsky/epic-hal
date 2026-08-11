@@ -18,6 +18,9 @@ static volatile uint32_t overflows = 0;
 static volatile uint32_t first_cycle = 0;
 static uint32_t cycle_counter = 0;
 
+/**
+ * @brief Count Timer2 overflows, recording the first overflow cycle.
+ */
 static void on_t2_overflow(void)
 {
     overflows++;
@@ -26,6 +29,9 @@ static void on_t2_overflow(void)
     }
 }
 
+/**
+ * @brief Verify Timer2 period/overflow cadence on the sim backend.
+ */
 int main(void)
 {
     pic16f87xa_sim_reset();

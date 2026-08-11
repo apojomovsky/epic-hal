@@ -33,12 +33,28 @@ typedef struct {
     .Enabled       = false,                                                \
 }
 
+/**
+ * @brief  Initialize the voltage reference with the given handle.
+ *         Programs CVRCON (range, tap, output enable, enable).
+ * @param h handle with Range, Value, OutputEnable, Enabled.
+ * @return EPIC_OK on success, EPIC_ERROR if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_VREF_Init(const VREF_HandleTypeDef *h);
+
+/**
+ * @brief  De-initialize the voltage reference. Disables it and clears
+ *         the output enable.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_VREF_DeInit(void);
 
 /**
  * @brief  Compute the nominal output voltage (mV) for a given range +
  *         tap value. Assumes CVRSRC = Vdd_mv.
+ * @param vdd_mv the supply voltage in millivolts.
+ * @param range VREF_RANGE_LOW or VREF_RANGE_HIGH.
+ * @param value the ladder tap, 0..15.
+ * @return the nominal output voltage in millivolts.
  */
 uint32_t EPIC_VREF_MilliVolts(uint32_t vdd_mv,
                              VREF_RangeTypeDef range,

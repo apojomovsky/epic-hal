@@ -18,12 +18,19 @@
 
 static uint32_t g_cycles = 0U;
 
+/**
+ * @brief TX-complete callback: non-null only to arm TXEN during init.
+ */
 static void s_tx_cplt(void)
 {
     /* Non-null so EPIC_USART_Init arms TXEN (pic16f87xa_usart.c); never
      * actually called, transmission below is polled. */
 }
 
+/**
+ * @brief Transmit one character, polling the TSR until it drains.
+ * @param c the character to send.
+ */
 static void s_uart_putc(char c)
 {
     while (!EPIC_USART_IsTxShiftRegisterEmpty()) {
@@ -39,6 +46,11 @@ static void s_uart_putc(char c)
  * baked IRP=1. */
 static USART_HandleTypeDef s_usart_handle EPIC_PLACE(0xA0);
 
+/**
+ * @brief Initialize the MPLAB SIM harness: configure the USART for
+ *        polled output and record the cycle bound.
+ * @param cycles the number of iterations the run is bounded by.
+ */
 void epic_harness_init(uint32_t cycles)
 {
     g_cycles = cycles;
@@ -56,16 +68,29 @@ void epic_harness_init(uint32_t cycles)
     EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
 }
 
+/**
+ * @brief Advance time. Nothing to pump under MPLAB SIM: real time
+ *        advances on its own.
+ */
 void epic_harness_tick(void)
 {
     /* Real time advances on its own under MPLAB SIM too, nothing to pump. */
 }
 
+/**
+ * @brief Report whether the run should continue.
+ * @param iteration the current 0-based iteration index.
+ * @return 1 while `iteration` is below the configured cycle bound, else 0.
+ */
 int epic_harness_running(uint32_t iteration)
 {
     return (iteration < g_cycles) ? 1 : 0;
 }
 
+/**
+ * @brief Write the format string's raw bytes to the USART (polled).
+ * @param fmt the (already-formatted) string to send.
+ */
 void epic_harness_log(const char *fmt, ...)
 {
     while (*fmt) {

@@ -8,19 +8,32 @@
 
 #include "core/pic16_irq.h"
 
+/** @brief Timer0 overflow ISR (weak, overridable). */
 extern void TIMER0_IRQHandler(void);
+/** @brief Timer1 overflow ISR (weak, overridable). */
 extern void TIMER1_IRQHandler(void);
+/** @brief Timer2 period-match ISR (weak, overridable). */
 extern void TIMER2_IRQHandler(void);
+/** @brief CCP1 capture/compare/PWM ISR (weak, overridable). */
 extern void CCP1_IRQHandler(void);
+/** @brief CCP2 capture/compare/PWM ISR (weak, overridable). */
 extern void CCP2_IRQHandler(void);
+/** @brief SSP (SPI/I2C) ISR (weak, overridable). */
 extern void SSP_IRQHandler(void);
+/** @brief USART receive ISR (weak, overridable). */
 extern void USART_RX_IRQHandler(void);
+/** @brief USART transmit ISR (weak, overridable). */
 extern void USART_TX_IRQHandler(void);
+/** @brief ADC conversion-done ISR (weak, overridable). */
 extern void ADC_IRQHandler(void);
+/** @brief EEPROM write-complete ISR (weak, overridable). */
 extern void EEPROM_IRQHandler(void);
+/** @brief Comparator change ISR (weak, overridable). */
 extern void COMP_IRQHandler(void);
+/** @brief PORTB RB<7:4> change ISR (weak, overridable). */
 extern void RB_IRQHandler(void);
 #if PIC16F87XA_FAMILY_HAS_PSP
+/** @brief Parallel Slave Port ISR (weak, overridable). */
 extern void PSP_IRQHandler(void);
 #endif
 
@@ -29,6 +42,14 @@ extern void PSP_IRQHandler(void);
  * one flash page), so the dispatch and handlers must share a page; a
  * page-crossing call lands 0x800 past its target. Pin the dispatch to
  * page 1 with the handlers (host build has no pages, no pin). */
+
+/**
+ * @brief Dispatch every pending interrupt source to its handler.
+ *
+ * Reads INTCON/PIR1/PIR2 once into locals and invokes only the
+ * handlers whose flag is set. Runs in the ISR; on XC8 it is pinned to
+ * flash page 1 so the handler calls share a page.
+ */
 #if defined(__XC8)
 void epic_dispatch_all_irqs(void) __at(0x900)
 #else

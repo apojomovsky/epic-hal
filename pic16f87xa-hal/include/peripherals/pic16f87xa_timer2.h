@@ -58,21 +58,75 @@ typedef struct {
     .OverflowCallback = NULL,                                           \
 }
 
+/**
+ * @brief  Initialize Timer2 from the handle. Programs T2CON (prescaler,
+ *         postscaler), loads PR2, and installs the overflow callback.
+ * @param h handle with Prescaler, Postscaler, Period, OverflowCallback.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h);
+
+/**
+ * @brief  De-initialize Timer2. Disables the overflow interrupt and
+ *         returns T2CON to reset.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void);
+
+/**
+ * @brief  Start Timer2 counting. Writes PR2 and sets TMR2ON.
+ * @param h handle whose Period is loaded into PR2.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h);
+
+/**
+ * @brief  Stop Timer2 counting. Clears TMR2ON.
+ * @return EPIC_OK on success.
+ */
 EPIC_StatusTypeDef EPIC_TIMER2_Stop(void);
 
+/**
+ * @brief Read the current counter value.
+ * @return the current 8-bit TMR2 value.
+ */
 uint8_t  EPIC_TIMER2_ReadCounter(void);
+
+/**
+ * @brief Write the counter value.
+ * @param value the 8-bit value to load into TMR2.
+ */
 void     EPIC_TIMER2_WriteCounter(uint8_t value);
 
+/**
+ * @brief Read the period register value.
+ * @return the current PR2 value.
+ */
 uint8_t  EPIC_TIMER2_ReadPeriod(void);
+
+/**
+ * @brief Write the period register value.
+ * @param period the 8-bit PR2 value, 0..255.
+ */
 void     EPIC_TIMER2_WritePeriod(uint8_t period);
 
+/**
+ * @brief Convert a prescaler enum to its integer ratio (1, 4, 16).
+ * @param p the prescaler enum value.
+ * @return the integer prescaler ratio (1, 4 or 16).
+ */
 uint16_t EPIC_TIMER2_PrescalerToRatio(TIMER2_PrescalerTypeDef p);
+
+/**
+ * @brief Convert a postscaler enum to its integer ratio (1..16).
+ * @param p the postscaler enum value.
+ * @return the integer postscaler ratio (1..16).
+ */
 uint16_t EPIC_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p);
 
-/** Weak Timer2 ISR, override in user code to add application logic. */
+/**
+ * @brief Weak Timer2 ISR, override in user code to add application logic.
+ */
 void TIMER2_IRQHandler(void) EPIC_WEAK;
 
 #endif /* PIC16F87XA_TIMER2_H */

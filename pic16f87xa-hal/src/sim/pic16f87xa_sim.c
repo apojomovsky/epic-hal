@@ -23,16 +23,30 @@ static uint8_t sim_input_value   [5] = {0};
 static pic16f87xa_sim_irq_cb_t sim_irq_cb = 0;
 
 /* Forward declarations for the per-timer step helpers. */
+/**
+ * @brief Advance the Timer0 model by one instruction cycle.
+ */
 static void sim_step_timer0(void);
+/**
+ * @brief Advance the Timer1 model by one instruction cycle.
+ */
 static void sim_step_timer1(void);
+/**
+ * @brief Advance the Timer2 model by one instruction cycle.
+ */
 static void sim_step_timer2(void);
+/**
+ * @brief Advance the USART model by one instruction cycle.
+ */
 static void sim_step_usart(void);
 
 /* GPIO model. */
 
-/* Helper: read the latched value of port `port` (0=A..4=E) honoring
- * read-modify-write: writes only update the latch, reads return the pin
- * state if the pin is configured as input, else the latch. */
+/**
+ * @brief Read the latched value of a port.
+ * @param port the port letter, 'A'..'E'.
+ * @return the port latch byte, or 0xFF for an invalid port.
+ */
 static uint8_t port_latch(char port)
 {
     switch (port) {
@@ -45,6 +59,11 @@ static uint8_t port_latch(char port)
     }
 }
 
+/**
+ * @brief Read the TRIS register of a port.
+ * @param port the port letter, 'A'..'E'.
+ * @return the TRIS byte, or 0xFF for an invalid port.
+ */
 static uint8_t tris_reg(char port)
 {
     switch (port) {
@@ -57,6 +76,11 @@ static uint8_t tris_reg(char port)
     }
 }
 
+/**
+ * @brief Map a port letter to the override-array index (0..4).
+ * @param port the port letter, 'A'..'E'.
+ * @return the index 0..4 (0 for an invalid port).
+ */
 static uint8_t port_index(char port)
 {
     switch (port) {
@@ -71,6 +95,10 @@ static uint8_t port_index(char port)
 
 /* public API. */
 
+/**
+ * @brief Reset the simulator: zero the register file, load power-on
+ *        reset values, and clear the input overrides and IRQ hook.
+ */
 void pic16f87xa_sim_reset(void)
 {
     memset(pic16f87xa_sim_sfr, 0, sizeof pic16f87xa_sim_sfr);
@@ -108,6 +136,10 @@ void pic16f87xa_sim_reset(void)
     memset(sim_input_value,    0, sizeof sim_input_value);
 }
 
+/**
+ * @brief Advance the simulation by `ticks` instruction cycles.
+ * @param ticks the number of cycles to advance.
+ */
 void pic16f87xa_sim_step(uint32_t ticks)
 {
     for (uint32_t i = 0; i < ticks; i++) {
@@ -120,6 +152,10 @@ void pic16f87xa_sim_step(uint32_t ticks)
 
 /* Timer0 step. */
 
+/**
+ * @brief Advance the Timer0 model by one instruction cycle: apply the
+ *        prescaler, increment TMR0, and set TMR0IF on overflow.
+ */
 static void sim_step_timer0(void)
 {
     /* Read the active Timer0 prescaler.
@@ -152,6 +188,11 @@ static void sim_step_timer0(void)
 
 /* Timer1 step. */
 
+/**
+ * @brief Advance the Timer1 model by one instruction cycle: apply the
+ *        prescaler, increment the 16-bit counter, and set TMR1IF on
+ *        overflow.
+ */
 static void sim_step_timer1(void)
 {
     /* T1CON layout (DS39582B Register 6-1):
@@ -194,6 +235,11 @@ static void sim_step_timer1(void)
 
 /* Timer2 step. */
 
+/**
+ * @brief Advance the Timer2 model by one instruction cycle: apply the
+ *        prescaler, increment TMR2, and fire TMR2IF (through the
+ *        postscaler) when the period completes.
+ */
 static void sim_step_timer2(void)
 {
     /* T2CON layout (DS39582B Register 7-1):
@@ -241,6 +287,10 @@ static void sim_step_timer2(void)
 
 /* USART step. */
 
+/**
+ * @brief Re-assert PIR1<TXIF> each cycle while TXEN is set, modeling
+ *        instantaneous transmit completion.
+ */
 static void sim_step_usart(void)
 {
     /* Re-assert TXIF every cycle when TXEN is set: writing TXREG clears
@@ -253,6 +303,12 @@ static void sim_step_usart(void)
     }
 }
 
+/**
+ * @brief Drive a digital input pin from the test rig.
+ * @param port the port letter, 'A'..'E'.
+ * @param pin the pin number, 0..7.
+ * @param level 0 = low, 1 = high.
+ */
 void pic16f87xa_sim_drive_input(char port, uint8_t pin, uint8_t level)
 {
     if (pin > 7U) return;
@@ -280,6 +336,12 @@ void pic16f87xa_sim_drive_input(char port, uint8_t pin, uint8_t level)
     pic16f87xa_sim_sfr[pa] = portval;
 }
 
+/**
+ * @brief Read the level currently driven onto a pin.
+ * @param port the port letter, 'A'..'E'.
+ * @param pin the pin number, 0..7.
+ * @return the pin level, 0 or 1 (0 for an invalid pin).
+ */
 uint8_t pic16f87xa_sim_read_output(char port, uint8_t pin)
 {
     if (pin > 7U) return 0U;
@@ -298,11 +360,21 @@ uint8_t pic16f87xa_sim_read_output(char port, uint8_t pin)
     return (port_latch(port) & mask) ? 1U : 0U;
 }
 
+/**
+ * @brief Install or remove the simulated-interrupt callback.
+ * @param cb the callback to fire on a simulated interrupt, or NULL to
+ *        unregister.
+ */
 void pic16f87xa_sim_set_irq_callback(pic16f87xa_sim_irq_cb_t cb)
 {
     sim_irq_cb = cb;
 }
 
+/**
+ * @brief Inject a byte into the USART receiver: store it in RCREG and
+ *        set PIR1<RCIF>.
+ * @param data the byte to inject.
+ */
 void pic16f87xa_sim_drive_usart_rx(uint8_t data)
 {
     /* Place the byte in RCREG (0x1A, DS39582B §10.x). */
@@ -312,6 +384,11 @@ void pic16f87xa_sim_drive_usart_rx(uint8_t data)
     if (sim_irq_cb) sim_irq_cb();
 }
 
+/**
+ * @brief Inject a byte into the SSP receiver: store it in SSPBUF, set
+ *        SSPSTAT<BF> and PIR1<SSPIF>.
+ * @param data the byte to inject.
+ */
 void pic16f87xa_sim_drive_ssp_rx(uint8_t data)
 {
     /* Place byte in SSPBUF (0x13, DS39582B §9.x). */
@@ -330,6 +407,11 @@ void pic16f87xa_sim_drive_ssp_rx(uint8_t data)
     if (sim_irq_cb) sim_irq_cb();
 }
 
+/**
+ * @brief Drive an A/D conversion to completion: clear GO/DONE, store the
+ *        result right-justified in ADRESH:ADRESL and set PIR1<ADIF>.
+ * @param result the 10-bit conversion result, 0..1023.
+ */
 void pic16f87xa_sim_drive_adc_done(uint16_t result)
 {
     /* Clear GO/DONE in ADCON0. */
@@ -359,6 +441,11 @@ void pic16f87xa_sim_drive_adc_done(uint16_t result)
 static uint8_t sim_eeprom[256];
 static uint8_t sim_eeprom_loaded[256];
 
+/**
+ * @brief Place a byte in the simulated EEPROM array.
+ * @param addr the EEPROM address, 0..255.
+ * @param data the byte to store.
+ */
 void pic16f87xa_sim_drive_eeprom_byte(uint8_t addr, uint8_t data)
 {
     /* `addr` is uint8_t (0..255), always a valid index into sim_eeprom[256]. */
@@ -366,6 +453,12 @@ void pic16f87xa_sim_drive_eeprom_byte(uint8_t addr, uint8_t data)
     sim_eeprom_loaded[addr] = 1U;
 }
 
+/**
+ * @brief Simulate a completed EEPROM write: store the byte and set
+ *        PIR2<EEIF>.
+ * @param addr the EEPROM address that was written.
+ * @param data the byte that was stored.
+ */
 void pic16f87xa_sim_drive_eeprom_done(uint8_t addr, uint8_t data)
 {
     sim_eeprom[addr] = data;
@@ -375,6 +468,11 @@ void pic16f87xa_sim_drive_eeprom_done(uint8_t addr, uint8_t data)
     if (sim_irq_cb) sim_irq_cb();
 }
 
+/**
+ * @brief Read a byte from the simulated EEPROM array.
+ * @param addr the EEPROM address, 0..255.
+ * @return the stored byte.
+ */
 uint8_t pic16f87xa_sim_eeprom_read(uint8_t addr)
 {
     return sim_eeprom[addr];
