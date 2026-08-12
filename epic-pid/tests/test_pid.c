@@ -2,7 +2,7 @@
  * Host tests for the fixed-point PID controller, exercising the exact
  * pid.c that ships in the PIC16/PIC18 cross-compiles. Expected values are
  * computed independently (plain `(int32_t)a * b`), not via
- * `pic_math_mul_s16`, so a pid.c bug is what these tests catch.
+ * `epic_math_mul_s16`, so a pid.c bug is what these tests catch.
  */
 
 #include "pid.h"
@@ -15,10 +15,10 @@ static int g_pass = 0, g_fail = 0;
 #define CHECK(c, m) do { if (c) { g_pass++; } \
                           else { printf("FAIL: %s\n", m); g_fail++; } } while (0)
 
-/** @brief Helpers: Q8.8 multiply by hand (independent of pic_math). */
+/** @brief Helpers: Q8.8 multiply by hand (independent of epic_math). */
 static int32_t mul_s16(int16_t a, int16_t b)
 {
-    /* Independent oracle: the test must not call pic_math_mul_s16 here,
+    /* Independent oracle: the test must not call epic_math_mul_s16 here,
      * since the bug we're trying to catch could be in pid.c's wiring
      * of that call. Compute the product in the wider host type. */
     return (int32_t)a * (int32_t)b;

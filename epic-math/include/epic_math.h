@@ -8,8 +8,8 @@
  * the backend split.
  */
 
-#ifndef PIC_MATH_H
-#define PIC_MATH_H
+#ifndef EPIC_MATH_H
+#define EPIC_MATH_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -19,8 +19,8 @@
  *         selects AN526's looped (smaller) form, 0 selects straight-line
  *         (faster, larger). No effect on PIC18, which always uses `MULWF`.
  */
-#ifndef PIC_MATH_OPTIMIZE_FOR_SIZE
-#define PIC_MATH_OPTIMIZE_FOR_SIZE 1
+#ifndef EPIC_MATH_OPTIMIZE_FOR_SIZE
+#define EPIC_MATH_OPTIMIZE_FOR_SIZE 1
 #endif
 
 /**
@@ -34,7 +34,7 @@
  *         AN526's shift-and-add loop. The host reference is plain
  *         `(uint16_t)a * (uint16_t)b`.
  */
-uint16_t pic_math_mul_u8(uint8_t a, uint8_t b);
+uint16_t epic_math_mul_u8(uint8_t a, uint8_t b);
 
 /**
  * @brief  16x16 -> 32 unsigned multiply.
@@ -43,7 +43,7 @@ uint16_t pic_math_mul_u8(uint8_t a, uint8_t b);
  * @return a*b as a 32-bit value. PIC18 builds this from four 8x8 partial
  *         products via `MULWF`; PIC16 uses AN526's 16x16 shift-add.
  */
-uint32_t pic_math_mul_u16(uint16_t a, uint16_t b);
+uint32_t epic_math_mul_u16(uint16_t a, uint16_t b);
 
 /**
  * @brief  16x16 -> 32 signed multiply.
@@ -52,7 +52,7 @@ uint32_t pic_math_mul_u16(uint16_t a, uint16_t b);
  * @return (int32_t)a*b. Built on the unsigned path with the app notes'
  *         negate-operands/negate-result sign handling.
  */
-int32_t  pic_math_mul_s16(int16_t a, int16_t b);
+int32_t  epic_math_mul_s16(int16_t a, int16_t b);
 
 /*
  * Divide/modulo: `ok` is set false and the result fields are zeroed on
@@ -63,9 +63,9 @@ int32_t  pic_math_mul_s16(int16_t a, int16_t b);
  */
 
 /** Unsigned 16/16 quotient+remainder. */
-typedef struct { uint16_t quotient, remainder; } pic_math_udiv16_t;
+typedef struct { uint16_t quotient, remainder; } epic_math_udiv16_t;
 /** Signed 16/16 quotient+remainder. */
-typedef struct { int16_t  quotient, remainder; } pic_math_sdiv16_t;
+typedef struct { int16_t  quotient, remainder; } epic_math_sdiv16_t;
 
 /**
  * @brief  Unsigned 16/16 divide with remainder.
@@ -74,7 +74,7 @@ typedef struct { int16_t  quotient, remainder; } pic_math_sdiv16_t;
  * @param  ok   out: true if den != 0; may be NULL
  * @return { quotient = num/den, remainder = num%den }.
  */
-pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok);
+epic_math_udiv16_t epic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok);
 
 /**
  * @brief  Signed 16/16 divide with remainder.
@@ -87,7 +87,7 @@ pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok);
  *         16-bit quotient; it does not crash or wrap silently -- see
  *         docs/API.md for the documented result.
  */
-pic_math_sdiv16_t pic_math_divmod_s16(int16_t  num, int16_t  den, bool *ok);
+epic_math_sdiv16_t epic_math_divmod_s16(int16_t  num, int16_t  den, bool *ok);
 
 /**
  * @brief  Wide unsigned 32/16 divide -- the "scale a 16-bit ADC reading by
@@ -99,7 +99,7 @@ pic_math_sdiv16_t pic_math_divmod_s16(int16_t  num, int16_t  den, bool *ok);
  *         caller must ensure num < den*65536 or the quotient is truncated
  *         to 16 bits, as documented).
  */
-pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok);
+epic_math_udiv16_t epic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok);
 
 /*
  * Add/sub/negate with explicit carry/borrow out.
@@ -112,7 +112,7 @@ pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok);
  * @param  carry_out  set true on overflow (sum > 65535); may be NULL.
  * @return (a + b) truncated to 16 bits.
  */
-uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out);
+uint16_t epic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out);
 
 /**
  * @brief  16-bit unsigned subtract with borrow out.
@@ -121,21 +121,21 @@ uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out);
  * @param  borrow_out  set true on underflow (a < b); may be NULL.
  * @return (a - b) truncated to 16 bits.
  */
-uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out);
+uint16_t epic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out);
 
 /**
  * @brief 16-bit two's-complement negate.
  * @param  v  value to negate, -32768..32767
  * @return -v; INT16_MIN negates to itself (two's-complement wrap).
  */
-int16_t  pic_math_negate_s16(int16_t v);
+int16_t  epic_math_negate_s16(int16_t v);
 
 /**
  * @brief 32-bit two's-complement negate.
  * @param  v  value to negate, -2147483648..2147483647
  * @return -v; INT32_MIN negates to itself (two's-complement wrap).
  */
-int32_t  pic_math_negate_s32(int32_t v);
+int32_t  epic_math_negate_s32(int32_t v);
 
 /*
  * BCD: "16"/"8" name the *binary* width; BCD width follows (5 digits / 2
@@ -156,7 +156,7 @@ int32_t  pic_math_negate_s32(int32_t v);
  *         independently (each contributes its value times its place), so
  *         bcd8_to_bin(0x0A) = 10 and bcd16_to_bin(0xABCDE) is well-defined.
  */
-uint16_t pic_math_bcd16_to_bin(uint32_t bcd5);
+uint16_t epic_math_bcd16_to_bin(uint32_t bcd5);
 
 /**
  * @brief  0..65535 (the uint16_t range) -> 5-digit packed BCD
@@ -165,21 +165,21 @@ uint16_t pic_math_bcd16_to_bin(uint32_t bcd5);
  * @param  value  binary value to convert, 0..65535
  * @return 5-digit packed BCD representation of @p value.
  */
-uint32_t pic_math_bin_to_bcd16(uint16_t value);
+uint32_t epic_math_bin_to_bcd16(uint16_t value);
 
 /**
  * @brief 2-digit packed BCD (0x00..0x99) -> binary 0..99.
  * @param  bcd2  2-digit packed BCD (one nibble per digit), 0..0x99
  * @return binary value of the BCD input, 0..99.
  */
-uint8_t  pic_math_bcd8_to_bin(uint8_t bcd2);
+uint8_t  epic_math_bcd8_to_bin(uint8_t bcd2);
 
 /**
  * @brief 0..99 -> 2-digit packed BCD.
  * @param  value  binary value to convert, 0..99
  * @return 2-digit packed BCD representation of @p value.
  */
-uint8_t  pic_math_bin_to_bcd8(uint8_t value);
+uint8_t  epic_math_bin_to_bcd8(uint8_t value);
 
 /**
  * @brief  Packed-BCD 2-digit add with carry out (DAW-style +/-6 adjust).
@@ -188,7 +188,7 @@ uint8_t  pic_math_bin_to_bcd8(uint8_t value);
  * @param  carry_out  set true if the BCD sum exceeds 99; may be NULL.
  * @return packed-BCD 2-digit sum.
  */
-uint8_t  pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out);
+uint8_t  epic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out);
 
 /**
  * @brief  Packed-BCD 2-digit subtract with borrow out.
@@ -197,7 +197,7 @@ uint8_t  pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out);
  * @param  borrow_out  set true on BCD underflow (a < b in BCD); may be NULL.
  * @return packed-BCD 2-digit difference (modulo 100 on underflow).
  */
-uint8_t  pic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out);
+uint8_t  epic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out);
 
 /*
  * Built on the above; portable C, one implementation shared by every
@@ -210,7 +210,7 @@ uint8_t  pic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out);
  * @param  value  value to take the square root of, 0..65535
  * @return floor(sqrt(value)), 0..255.
  */
-uint16_t pic_math_sqrt_u16(uint16_t value);
+uint16_t epic_math_sqrt_u16(uint16_t value);
 
 /**
  * @brief  3-point numerical first derivative: (x_now - x_prev2) / (2h),
@@ -226,7 +226,7 @@ uint16_t pic_math_sqrt_u16(uint16_t value);
  *         Checked against analytic linear/quadratic functions within a
  *         documented error bound in tests, not for exact equality.
  */
-int16_t pic_math_diff3(int16_t x_prev2, int16_t x_prev1, int16_t x_now,
+int16_t epic_math_diff3(int16_t x_prev2, int16_t x_prev1, int16_t x_now,
                        int16_t inv_2h_q8);
 
 /**
@@ -240,7 +240,7 @@ int16_t pic_math_diff3(int16_t x_prev2, int16_t x_prev1, int16_t x_now,
  *         (caller precomputes once). E.g. h=1 -> 3h/8 = 0.375 -> 0x6000.
  * @return Q16.16 fixed-point estimate of the integral.
  */
-int32_t pic_math_integrate_simpson38(int16_t f0, int16_t f1, int16_t f2,
+int32_t epic_math_integrate_simpson38(int16_t f0, int16_t f1, int16_t f2,
                                      int16_t f3,
                                      int32_t three_h_over_8_q16);
 
@@ -257,15 +257,15 @@ int32_t pic_math_integrate_simpson38(int16_t f0, int16_t f1, int16_t f2,
  *                A zero state is treated as the documented nonzero seed.
  * @return the next 16-bit pseudo-random value (also written back to *state).
  */
-uint16_t pic_math_rand_next(uint16_t *state);
+uint16_t epic_math_rand_next(uint16_t *state);
 
 /**
  * @brief  Approximate Gaussian (mean 0) pseudo-random sample via the
  *         Central Limit Theorem: the sum of several LFSR samples,
  *         normalized. Mirrors AN544 Figure 3's distribution.
- * @param  state  in/out LFSR state shared with pic_math_rand_next.
+ * @param  state  in/out LFSR state shared with epic_math_rand_next.
  * @return a signed sample with an approximately bell-shaped distribution.
  */
-int16_t  pic_math_rand_gauss(uint16_t *state);
+int16_t  epic_math_rand_gauss(uint16_t *state);
 
-#endif /* PIC_MATH_H */
+#endif /* EPIC_MATH_H */

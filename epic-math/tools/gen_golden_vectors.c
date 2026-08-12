@@ -8,7 +8,7 @@
  *       ./build/gen_golden_vectors > tests/golden_vectors.h
  */
 
-#include "pic_math.h"
+#include "epic_math.h"
 #include <stdio.h>
 #include <stddef.h>
 
@@ -22,13 +22,13 @@ static void hdr(void)
     printf(" * the C-over-asm and portable-C routines are Tier-1 host-tested.\n");
     printf(" * Expected outputs are computed by the host reference backend.\n");
     printf(" */\n");
-    printf("#ifndef PIC_MATH_GOLDEN_VECTORS_H\n");
-    printf("#define PIC_MATH_GOLDEN_VECTORS_H\n\n");
+    printf("#ifndef EPIC_MATH_GOLDEN_VECTORS_H\n");
+    printf("#define EPIC_MATH_GOLDEN_VECTORS_H\n\n");
     printf("#include <stdint.h>\n\n");
 }
 
 /** @brief Emit the golden-vector header epilogue (endif). */
-static void ftr(void) { printf("#endif /* PIC_MATH_GOLDEN_VECTORS_H */\n"); }
+static void ftr(void) { printf("#endif /* EPIC_MATH_GOLDEN_VECTORS_H */\n"); }
 
 /** @brief Emit the mul_u8 golden-vector table. */
 static void mul_u8(void)
@@ -38,7 +38,7 @@ static void mul_u8(void)
     printf("typedef struct { uint8_t a,b; uint16_t e; } gv_mul_u8_t;\n");
     printf("static const gv_mul_u8_t gv_mul_u8[] = {\n");
     for (int i = 0; i < 4; i++)
-        printf("  {0x%02Xu,0x%02Xu,0x%04Xu},\n", a[i], b[i], pic_math_mul_u8(a[i], b[i]));
+        printf("  {0x%02Xu,0x%02Xu,0x%04Xu},\n", a[i], b[i], epic_math_mul_u8(a[i], b[i]));
     printf("};\n#define GV_MUL_U8_N (sizeof(gv_mul_u8)/sizeof(gv_mul_u8[0]))\n\n");
 }
 
@@ -50,7 +50,7 @@ static void mul_u16(void)
     printf("typedef struct { uint16_t a,b; uint32_t e; } gv_mul_u16_t;\n");
     printf("static const gv_mul_u16_t gv_mul_u16[] = {\n");
     for (int i = 0; i < 4; i++)
-        printf("  {0x%04Xu,0x%04Xu,0x%08lXlu},\n", a[i], b[i], (unsigned long)pic_math_mul_u16(a[i], b[i]));
+        printf("  {0x%04Xu,0x%04Xu,0x%08lXlu},\n", a[i], b[i], (unsigned long)epic_math_mul_u16(a[i], b[i]));
     printf("};\n#define GV_MUL_U16_N (sizeof(gv_mul_u16)/sizeof(gv_mul_u16[0]))\n\n");
 }
 
@@ -62,7 +62,7 @@ static void mul_s16(void)
     printf("typedef struct { int16_t a,b; int32_t e; } gv_mul_s16_t;\n");
     printf("static const gv_mul_s16_t gv_mul_s16[] = {\n");
     for (int i = 0; i < 4; i++)
-        printf("  {%d,%d,%ldL},\n", a[i], b[i], (long)pic_math_mul_s16(a[i], b[i]));
+        printf("  {%d,%d,%ldL},\n", a[i], b[i], (long)epic_math_mul_s16(a[i], b[i]));
     printf("};\n#define GV_MUL_S16_N (sizeof(gv_mul_s16)/sizeof(gv_mul_s16[0]))\n\n");
 }
 
@@ -73,7 +73,7 @@ static void divmod_u16(void)
     printf("typedef struct { uint16_t n,d,q,r; } gv_div_u16_t;\n");
     printf("static const gv_div_u16_t gv_div_u16[] = {\n");
     for (int i = 0; i < 4; i++) {
-        pic_math_udiv16_t r = pic_math_divmod_u16(in[i].n, in[i].d, 0);
+        epic_math_udiv16_t r = epic_math_divmod_u16(in[i].n, in[i].d, 0);
         printf("  {0x%04Xu,0x%04Xu,0x%04Xu,0x%04Xu},\n", in[i].n, in[i].d, r.quotient, r.remainder);
     }
     printf("};\n#define GV_DIV_U16_N (sizeof(gv_div_u16)/sizeof(gv_div_u16[0]))\n\n");
@@ -86,7 +86,7 @@ static void divmod_s16(void)
     printf("typedef struct { int16_t n,d,q,r; } gv_div_s16_t;\n");
     printf("static const gv_div_s16_t gv_div_s16[] = {\n");
     for (int i = 0; i < 4; i++) {
-        pic_math_sdiv16_t r = pic_math_divmod_s16(in[i].n, in[i].d, 0);
+        epic_math_sdiv16_t r = epic_math_divmod_s16(in[i].n, in[i].d, 0);
         printf("  {%d,%d,%d,%d},\n", in[i].n, in[i].d, r.quotient, r.remainder);
     }
     printf("};\n#define GV_DIV_S16_N (sizeof(gv_div_s16)/sizeof(gv_div_s16[0]))\n\n");
@@ -99,7 +99,7 @@ static void divmod_u32_16(void)
     printf("typedef struct { uint32_t n; uint16_t d,q,r; } gv_div_u32_16_t;\n");
     printf("static const gv_div_u32_16_t gv_div_u32_16[] = {\n");
     for (int i = 0; i < 3; i++) {
-        pic_math_udiv16_t r = pic_math_divmod_u32_16(in[i].n, in[i].d, 0);
+        epic_math_udiv16_t r = epic_math_divmod_u32_16(in[i].n, in[i].d, 0);
         printf("  {0x%08lXlu,0x%04Xu,0x%04Xu,0x%04Xu},\n", (unsigned long)in[i].n, in[i].d, r.quotient, r.remainder);
     }
     printf("};\n#define GV_DIV_U32_16_N (sizeof(gv_div_u32_16)/sizeof(gv_div_u32_16[0]))\n\n");
@@ -119,12 +119,12 @@ static void addsub(void)
     };
     printf("typedef struct { uint16_t a,b,r; uint8_t c; } gv_add_u16_t;\n");
     printf("static const gv_add_u16_t gv_add_u16[] = {\n");
-    for (int i = 0; i < (int)(sizeof(in)/sizeof(in[0])); i++) { bool c; uint16_t r = pic_math_add_u16(in[i].a, in[i].b, &c);
+    for (int i = 0; i < (int)(sizeof(in)/sizeof(in[0])); i++) { bool c; uint16_t r = epic_math_add_u16(in[i].a, in[i].b, &c);
         printf("  {0x%04Xu,0x%04Xu,0x%04Xu,%u},\n", in[i].a, in[i].b, r, c?1u:0u); }
     printf("};\n#define GV_ADD_U16_N (sizeof(gv_add_u16)/sizeof(gv_add_u16[0]))\n\n");
     printf("typedef struct { uint16_t a,b,r; uint8_t b_out; } gv_sub_u16_t;\n");
     printf("static const gv_sub_u16_t gv_sub_u16[] = {\n");
-    for (int i = 0; i < (int)(sizeof(in)/sizeof(in[0])); i++) { bool bo; uint16_t r = pic_math_sub_u16(in[i].a, in[i].b, &bo);
+    for (int i = 0; i < (int)(sizeof(in)/sizeof(in[0])); i++) { bool bo; uint16_t r = epic_math_sub_u16(in[i].a, in[i].b, &bo);
         printf("  {0x%04Xu,0x%04Xu,0x%04Xu,%u},\n", in[i].a, in[i].b, r, bo?1u:0u); }
     printf("};\n#define GV_SUB_U16_N (sizeof(gv_sub_u16)/sizeof(gv_sub_u16[0]))\n\n");
 }
@@ -135,12 +135,12 @@ static void negate(void)
     int16_t s[] = {0,5,INT16_MIN,-1};
     printf("typedef struct { int16_t v,e; } gv_neg_s16_t;\n");
     printf("static const gv_neg_s16_t gv_neg_s16[] = {\n");
-    for (int i = 0; i < 4; i++) printf("  {%d,%d},\n", s[i], pic_math_negate_s16(s[i]));
+    for (int i = 0; i < 4; i++) printf("  {%d,%d},\n", s[i], epic_math_negate_s16(s[i]));
     printf("};\n#define GV_NEG_S16_N (sizeof(gv_neg_s16)/sizeof(gv_neg_s16[0]))\n\n");
     int32_t l[] = {0,1,INT32_MIN,-123456789L};
     printf("typedef struct { int32_t v,e; } gv_neg_s32_t;\n");
     printf("static const gv_neg_s32_t gv_neg_s32[] = {\n");
-    for (int i = 0; i < 4; i++) printf("  {%ldL,%ldL},\n", (long)l[i], (long)pic_math_negate_s32(l[i]));
+    for (int i = 0; i < 4; i++) printf("  {%ldL,%ldL},\n", (long)l[i], (long)epic_math_negate_s32(l[i]));
     printf("};\n#define GV_NEG_S32_N (sizeof(gv_neg_s32)/sizeof(gv_neg_s32[0]))\n\n");
 }
 
@@ -150,12 +150,12 @@ static void bcd_adjust(void)
     struct { uint8_t a, b; } ab[] = {{0x55,0x55},{0x12,0x34},{0x99,0x01},{0x00,0x00}};
     printf("typedef struct { uint8_t a,b,r; uint8_t c; } gv_bcd_add8_t;\n");
     printf("static const gv_bcd_add8_t gv_bcd_add8[] = {\n");
-    for (int i = 0; i < 4; i++) { bool c; uint8_t r = pic_math_bcd_add8(ab[i].a, ab[i].b, &c);
+    for (int i = 0; i < 4; i++) { bool c; uint8_t r = epic_math_bcd_add8(ab[i].a, ab[i].b, &c);
         printf("  {0x%02Xu,0x%02Xu,0x%02Xu,%u},\n", ab[i].a, ab[i].b, r, c?1u:0u); }
     printf("};\n#define GV_BCD_ADD8_N (sizeof(gv_bcd_add8)/sizeof(gv_bcd_add8[0]))\n\n");
     printf("typedef struct { uint8_t a,b,r; uint8_t bo; } gv_bcd_sub8_t;\n");
     printf("static const gv_bcd_sub8_t gv_bcd_sub8[] = {\n");
-    for (int i = 0; i < 4; i++) { bool bo; uint8_t r = pic_math_bcd_sub8(ab[i].a, ab[i].b, &bo);
+    for (int i = 0; i < 4; i++) { bool bo; uint8_t r = epic_math_bcd_sub8(ab[i].a, ab[i].b, &bo);
         printf("  {0x%02Xu,0x%02Xu,0x%02Xu,%u},\n", ab[i].a, ab[i].b, r, bo?1u:0u); }
     printf("};\n#define GV_BCD_SUB8_N (sizeof(gv_bcd_sub8)/sizeof(gv_bcd_sub8[0]))\n\n");
 }

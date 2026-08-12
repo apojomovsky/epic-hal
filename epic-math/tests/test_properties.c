@@ -8,8 +8,8 @@
  * n = q*d + r, and the BCD add/sub pair are inverses modulo 100.
  */
 
-#include "pic_math.h"
-#include "pic_math_test.h"
+#include "epic_math.h"
+#include "epic_math_test.h"
 
 static const uint16_t U16_BOUNDS[] = {
     0x0000, 0x0001, 0x0002, 0x0003, 0x0007, 0x0008,
@@ -33,18 +33,18 @@ static void test_addsub_roundtrip(void)
         for (size_t j = 0; j < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); j++) {
             uint16_t a = U16_BOUNDS[i], b = U16_BOUNDS[j];
             bool co = false, bo = false;
-            uint16_t s = pic_math_add_u16(a, b, &co);
-            uint16_t r = pic_math_sub_u16(s, b, &bo);
+            uint16_t s = epic_math_add_u16(a, b, &co);
+            uint16_t r = epic_math_sub_u16(s, b, &bo);
             CHECK(r == a, "addsub roundtrip boundary");
             CHECK(co == bo, "addsub carry == borrow boundary");
         }
     uint32_t st = 0xAC1D0001u;
     for (int n = 0; n < 200000; n++) {
-        uint16_t a = (uint16_t)pic_math_test_rand(&st);
-        uint16_t b = (uint16_t)pic_math_test_rand(&st);
+        uint16_t a = (uint16_t)epic_math_test_rand(&st);
+        uint16_t b = (uint16_t)epic_math_test_rand(&st);
         bool co = false, bo = false;
-        uint16_t s = pic_math_add_u16(a, b, &co);
-        uint16_t r = pic_math_sub_u16(s, b, &bo);
+        uint16_t s = epic_math_add_u16(a, b, &co);
+        uint16_t r = epic_math_sub_u16(s, b, &bo);
         CHECK(r == a, "addsub roundtrip random");
         CHECK(co == bo, "addsub carry == borrow random");
     }
@@ -58,17 +58,17 @@ static void test_commutativity(void)
 {
     uint32_t st = 0x0C0FFEE1u;
     for (int n = 0; n < 200000; n++) {
-        uint16_t a = (uint16_t)pic_math_test_rand(&st);
-        uint16_t b = (uint16_t)pic_math_test_rand(&st);
+        uint16_t a = (uint16_t)epic_math_test_rand(&st);
+        uint16_t b = (uint16_t)epic_math_test_rand(&st);
         bool ca = false, cb = false;
-        uint16_t sa = pic_math_add_u16(a, b, &ca);
-        uint16_t sb = pic_math_add_u16(b, a, &cb);
+        uint16_t sa = epic_math_add_u16(a, b, &ca);
+        uint16_t sb = epic_math_add_u16(b, a, &cb);
         CHECK(sa == sb, "add_u16 commutative result");
         CHECK(ca == cb, "add_u16 commutative carry");
-        CHECK(pic_math_mul_u16(a, b) == pic_math_mul_u16(b, a),
+        CHECK(epic_math_mul_u16(a, b) == epic_math_mul_u16(b, a),
               "mul_u16 commutative");
-        CHECK(pic_math_mul_s16((int16_t)(uint16_t)a, (int16_t)(uint16_t)b) ==
-              pic_math_mul_s16((int16_t)(uint16_t)b, (int16_t)(uint16_t)a),
+        CHECK(epic_math_mul_s16((int16_t)(uint16_t)a, (int16_t)(uint16_t)b) ==
+              epic_math_mul_s16((int16_t)(uint16_t)b, (int16_t)(uint16_t)a),
               "mul_s16 commutative");
     }
 }
@@ -83,11 +83,11 @@ static void test_divmod_roundtrip(void)
     /* Unsigned 16/16. */
     uint32_t st = 0xD1F00001u;
     for (int n = 0; n < 200000; n++) {
-        uint16_t num = (uint16_t)pic_math_test_rand(&st);
-        uint16_t den = (uint16_t)pic_math_test_rand(&st);
+        uint16_t num = (uint16_t)epic_math_test_rand(&st);
+        uint16_t den = (uint16_t)epic_math_test_rand(&st);
         if (den == 0u) continue;
         bool ok = false;
-        pic_math_udiv16_t r = pic_math_divmod_u16(num, den, &ok);
+        epic_math_udiv16_t r = epic_math_divmod_u16(num, den, &ok);
         CHECK(ok == true, "u16 divmod ok");
         CHECK((uint32_t)r.quotient * (uint32_t)den + r.remainder == num,
               "u16 divmod n == q*d + r");
@@ -101,11 +101,11 @@ static void test_divmod_roundtrip(void)
      * n == q*d + r round trip. */
     st = 0x32F10001u;
     for (int n = 0; n < 100000; n++) {
-        uint32_t num = pic_math_test_rand(&st) | ((uint32_t)pic_math_test_rand(&st) << 16);
-        uint16_t den = (uint16_t)pic_math_test_rand(&st);
+        uint32_t num = epic_math_test_rand(&st) | ((uint32_t)epic_math_test_rand(&st) << 16);
+        uint16_t den = (uint16_t)epic_math_test_rand(&st);
         if (den == 0u) continue;
         bool ok = false;
-        pic_math_udiv16_t r = pic_math_divmod_u32_16(num, den, &ok);
+        epic_math_udiv16_t r = epic_math_divmod_u32_16(num, den, &ok);
         uint32_t q_full = num / (uint32_t)den;
         CHECK(ok == true, "u32_16 divmod ok");
         CHECK(r.quotient == (uint16_t)q_full, "u32_16 quotient truncation");
@@ -119,11 +119,11 @@ static void test_divmod_roundtrip(void)
     /* Signed 16/16. */
     st = 0x5E100001u;
     for (int n = 0; n < 200000; n++) {
-        int16_t num = (int16_t)(uint16_t)pic_math_test_rand(&st);
-        int16_t den = (int16_t)(uint16_t)pic_math_test_rand(&st);
+        int16_t num = (int16_t)(uint16_t)epic_math_test_rand(&st);
+        int16_t den = (int16_t)(uint16_t)epic_math_test_rand(&st);
         if (den == 0) continue;
         bool ok = false;
-        pic_math_sdiv16_t r = pic_math_divmod_s16(num, den, &ok);
+        epic_math_sdiv16_t r = epic_math_divmod_s16(num, den, &ok);
         CHECK(ok == true, "s16 divmod ok");
         CHECK((int32_t)r.quotient * (int32_t)den + r.remainder == num,
               "s16 divmod n == q*d + r");
@@ -146,14 +146,14 @@ static void test_bcd_inverse(void)
     for (uint32_t a = 0; a <= 99u; a++) {
         for (uint32_t b = 0; b <= 99u; b++) {
             bool co = false, bo = false;
-            uint8_t s = pic_math_bcd_add8(ref_bcd8((uint8_t)a), ref_bcd8((uint8_t)b), &co);
-            uint8_t r = pic_math_bcd_sub8(s, ref_bcd8((uint8_t)b), &bo);
+            uint8_t s = epic_math_bcd_add8(ref_bcd8((uint8_t)a), ref_bcd8((uint8_t)b), &co);
+            uint8_t r = epic_math_bcd_sub8(s, ref_bcd8((uint8_t)b), &bo);
             CHECK(r == ref_bcd8((uint8_t)a), "bcd sub(add(a,b),b) == a");
             CHECK(co == bo, "bcd add carry == sub borrow");
 
             bool bo2 = false, co2 = false;
-            uint8_t d = pic_math_bcd_sub8(ref_bcd8((uint8_t)a), ref_bcd8((uint8_t)b), &bo2);
-            uint8_t s2 = pic_math_bcd_add8(d, ref_bcd8((uint8_t)b), &co2);
+            uint8_t d = epic_math_bcd_sub8(ref_bcd8((uint8_t)a), ref_bcd8((uint8_t)b), &bo2);
+            uint8_t s2 = epic_math_bcd_add8(d, ref_bcd8((uint8_t)b), &co2);
             CHECK(s2 == ref_bcd8((uint8_t)a), "bcd add(sub(a,b),b) == a");
             CHECK(bo2 == co2, "bcd sub borrow == add carry");
         }
@@ -167,6 +167,6 @@ int main(void)
     test_commutativity();
     test_divmod_roundtrip();
     test_bcd_inverse();
-    printf("test_properties: %u checks failed\n", (unsigned)g_pic_math_failures);
-    return pic_math_test_report();
+    printf("test_properties: %u checks failed\n", (unsigned)g_epic_math_failures);
+    return epic_math_test_report();
 }

@@ -9,19 +9,19 @@
 
 #include "epic_hal.h"
 #include "core/epic_harness.h"
-#include "pic_math.h"
+#include "epic_math.h"
 
 /** @brief Calls one representative primitive per asm-leaf group so the linker pulls in the real asm bodies. */
 int main(void)
 {
     epic_harness_init(0UL);
 
-    volatile uint16_t r1 = pic_math_mul_u16(0x0102u, 0x0103u);
-    pic_math_udiv16_t d  = pic_math_divmod_u16(0x0007u, 0x0002u, 0);
+    volatile uint16_t r1 = epic_math_mul_u16(0x0102u, 0x0103u);
+    epic_math_udiv16_t d  = epic_math_divmod_u16(0x0007u, 0x0002u, 0);
     bool carry = false;
-    volatile uint16_t r2 = pic_math_add_u16(0xFFFFu, 0x0002u, &carry);
-    volatile uint8_t  r3 = pic_math_bcd_add8(0x55u, 0x55u, &carry);
-    volatile uint16_t r4 = pic_math_sqrt_u16(100u);
+    volatile uint16_t r2 = epic_math_add_u16(0xFFFFu, 0x0002u, &carry);
+    volatile uint8_t  r3 = epic_math_bcd_add8(0x55u, 0x55u, &carry);
+    volatile uint16_t r4 = epic_math_sqrt_u16(100u);
     (void)r1; (void)d; (void)r2; (void)r3; (void)r4; (void)carry;
 
     for (uint32_t i = 0; epic_harness_running(i); i++) {

@@ -5,7 +5,7 @@
  */
 
 #include "pid.h"
-#include "pic_math.h"
+#include "epic_math.h"
 
 /**
  * @brief Initialize a PID instance (see pid.h).
@@ -101,7 +101,7 @@ int16_t pid_update(pid_t *pid, int16_t setpoint, int16_t measurement)
     /* P term: Kp * error in Q8.8; fits int32_t without an overflow guard
      * (max product ~1.07e9, well under INT32_MAX). */
     int16_t error = (int16_t)(setpoint - measurement);
-    int32_t p_q8  = pic_math_mul_s16(pid->kp_q8, error);
+    int32_t p_q8  = epic_math_mul_s16(pid->kp_q8, error);
 
     /* D term: -d(measurement)/dt, not d(error)/dt, to avoid setpoint-step
      * kick; zero on the first call (no previous measurement yet). */
@@ -113,7 +113,7 @@ int16_t pid_update(pid_t *pid, int16_t setpoint, int16_t measurement)
         dmeas = (int16_t)(measurement - pid->prev_measurement);
     }
     pid->prev_measurement = measurement;
-    int32_t d_q8 = -pic_math_mul_s16(pid->kd_q8, dmeas);
+    int32_t d_q8 = -epic_math_mul_s16(pid->kd_q8, dmeas);
 
     /* Integrator clamp rails: this is the anti-windup mechanism. */
     int32_t out_min_q8 = (int32_t)pid->out_min << 8;
@@ -137,7 +137,7 @@ int16_t pid_update(pid_t *pid, int16_t setpoint, int16_t measurement)
     /* AUTO: accumulate Ki*error unless the prior MANUAL call asked us to
      * skip it (bumpless handoff), then sum P+I+D and clamp. */
     if (!pid->skip_next_i_increment) {
-        pid->integrator_q8 += pic_math_mul_s16(pid->ki_q8, error);
+        pid->integrator_q8 += epic_math_mul_s16(pid->ki_q8, error);
     }
     pid->skip_next_i_increment = false;  /* single-shot: consumed */
 

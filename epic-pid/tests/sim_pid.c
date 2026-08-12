@@ -1,6 +1,6 @@
 /**
  * Bounded, self-reporting HARNESS=sim build, the module's mdb gate
- * (PIC16F877A/MPLAB SIM): runs the compiled pid.c (Q8.8, pic_math
+ * (PIC16F877A/MPLAB SIM): runs the compiled pid.c (Q8.8, epic_math
  * 16x16->32 multiply) through a scripted step-then-settle trajectory via
  * the real `pid_update` API, checking (a) every output stays in
  * [out_min, out_max] and the anti-windup invariant holds, (b) convergence

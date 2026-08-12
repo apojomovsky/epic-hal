@@ -4,13 +4,13 @@
  * byte's addend with addlw 1 (never a skip: an incfsz that wraps on
  * b_hi == 0xFF would drop the a_hi term), and the addend wrap is OR-ed
  * into the carry out via rlf. STATUS bits by number (C=0, Z=2).
- * Operands live in the shared scratch buffer (pic_math_scratch.h), one
+ * Operands live in the shared scratch buffer (epic_math_scratch.h), one
  * banksel per routine.
  */
 
 #include <xc.h>
-#include "pic_math.h"
-#include "pic_math_scratch.h"
+#include "epic_math.h"
+#include "epic_math_scratch.h"
 
 /**
  * @brief  16-bit unsigned add with carry out (PIC16 inline asm).
@@ -24,7 +24,7 @@
  * into the carry out so both the sum and the carry are correct for every
  * input. Worked example 0xFFFF+0x0002 -> 0x0001, carry 1. Offsets a@0,
  * b@2, r@4, co@6. */
-uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out) __at(0x2E0)
+uint16_t epic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out) __at(0x2E0)
 {
     pic16_mscratch[0] = (uint8_t)a;           pic16_mscratch[1] = (uint8_t)(a >> 8);
     pic16_mscratch[2] = (uint8_t)b;           pic16_mscratch[3] = (uint8_t)(b >> 8);
@@ -66,7 +66,7 @@ uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out) __at(0x2E0)
  * a - b, borrow_out = (a < b). Low bytes subtract (C=0 on borrow); the
  * high byte subtracts b_hi plus the borrow, folded via addlw 1, with the
  * addend wrap OR-ed into the borrow out. Offsets a@0, b@2, r@4, bo@6. */
-uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out) __at(0x320)
+uint16_t epic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out) __at(0x320)
 {
     pic16_mscratch[0] = (uint8_t)a;           pic16_mscratch[1] = (uint8_t)(a >> 8);
     pic16_mscratch[2] = (uint8_t)b;           pic16_mscratch[3] = (uint8_t)(b >> 8);
@@ -107,7 +107,7 @@ uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out) __at(0x320)
  *
  * -v = ~v + 1: complement both bytes, inc low, and inc high only if the
  * low inc wrapped (Z). INT16_MIN negates to itself. Offsets v@0, r@2. */
-int16_t pic_math_negate_s16(int16_t v) __at(0x360)
+int16_t epic_math_negate_s16(int16_t v) __at(0x360)
 {
     uint16_t uv = (uint16_t)v;
     pic16_mscratch[0] = (uint8_t)uv;          pic16_mscratch[1] = (uint8_t)(uv >> 8);
@@ -128,7 +128,7 @@ int16_t pic_math_negate_s16(int16_t v) __at(0x360)
  * @return -v; INT32_MIN negates to itself (two's-complement wrap).
  *
  * Same ~v + 1 with the carry cascade across 4 bytes. Offsets v@0-3, r@4-7. */
-int32_t pic_math_negate_s32(int32_t v) __at(0x380)
+int32_t epic_math_negate_s32(int32_t v) __at(0x380)
 {
     uint32_t uv = (uint32_t)v;
     pic16_mscratch[0] = (uint8_t)uv;          pic16_mscratch[1] = (uint8_t)(uv >> 8);

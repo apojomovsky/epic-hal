@@ -7,8 +7,8 @@
  */
 
 #include <xc.h>
-#include "pic_math.h"
-#include "pic_math_scratch.h"
+#include "epic_math.h"
+#include "epic_math_scratch.h"
 
 /**
  * @brief  Unsigned 16/16 divide with remainder (PIC16 inline asm).
@@ -23,9 +23,9 @@
  *   if (rem>=den) { rem -= den; num |= 1; }
  * For a 16-bit dividend the partial remainder never reaches 0x8000, so
  * the rem shift never carries out and the 16-bit compare is exact. */
-pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __at(0x1C0)
+epic_math_udiv16_t epic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __at(0x1C0)
 {
-    pic_math_udiv16_t res = { 0u, 0u };
+    epic_math_udiv16_t res = { 0u, 0u };
     if (den == 0u) { if (ok) *ok = false; return res; }
     if (ok) *ok = true;
 
@@ -85,9 +85,9 @@ pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __at
  * extended-den) and set the bit; else do the plain 16-bit restoring
  * subtract. Quotient truncated to 16 bits (low word). Mirrors
  * ref_divmod_u32_16_algo. */
-pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok) __at(0x240)
+epic_math_udiv16_t epic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok) __at(0x240)
 {
-    pic_math_udiv16_t res = { 0u, 0u };
+    epic_math_udiv16_t res = { 0u, 0u };
     if (den == 0u) { if (ok) *ok = false; return res; }
     if (ok) *ok = true;
 
@@ -157,9 +157,9 @@ pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok) _
  * Quotient sign = sign(num) ^ sign(den); remainder sign follows the
  * dividend (C99 truncated division). INT16_MIN / -1 -> quotient 0x8000
  * (wrap of 32768), remainder 0. */
-pic_math_sdiv16_t pic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
+epic_math_sdiv16_t epic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
 {
-    pic_math_sdiv16_t res = { 0, 0 };
+    epic_math_sdiv16_t res = { 0, 0 };
     if (den == 0) { if (ok) *ok = false; return res; }
     if (ok) *ok = true;
 
@@ -167,7 +167,7 @@ pic_math_sdiv16_t pic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
     uint16_t unum = (num < 0) ? (uint16_t)(0u - (uint16_t)num) : (uint16_t)num;
     uint16_t uden = (den < 0) ? (uint16_t)(0u - (uint16_t)den) : (uint16_t)den;
 
-    pic_math_udiv16_t u = pic_math_divmod_u16(unum, uden, NULL);
+    epic_math_udiv16_t u = epic_math_divmod_u16(unum, uden, NULL);
     res.quotient  = (int16_t)(neg_q ? (uint16_t)(0u - u.quotient)  : u.quotient);
     res.remainder = (int16_t)((num < 0) ? (uint16_t)(0u - u.remainder) : u.remainder);
     return res;

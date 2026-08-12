@@ -1,5 +1,5 @@
 /*
- * Definition of the shared file-scratch buffer (see pic_math_scratch.h).
+ * Definition of the shared file-scratch buffer (see epic_math_scratch.h).
  * __at-pinned into PIC16 mid-range's bank-independent common RAM
  * (0x70-0x7F): an unpinned buffer landed in bank 1 on PIC16F877A and
  * broke the link. Common RAM is the same physical addresses in every
@@ -17,6 +17,6 @@
  *   7 must first relocate this buffer.
  */
 
-#include "pic_math_scratch.h"
+#include "epic_math_scratch.h"
 
 volatile uint8_t pic16_mscratch[12] __at(0x72);

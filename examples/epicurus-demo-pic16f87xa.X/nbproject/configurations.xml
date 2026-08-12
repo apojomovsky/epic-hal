@@ -18,9 +18,9 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="common" displayName="common" projectFiles="true">
-        <itemPath>../../epic-math/src/common/pic_math_rand.c</itemPath>
-        <itemPath>../../epic-math/src/common/pic_math_numeric.c</itemPath>
-        <itemPath>../../epic-math/src/common/pic_math_sqrt.c</itemPath>
+        <itemPath>../../epic-math/src/common/epic_math_rand.c</itemPath>
+        <itemPath>../../epic-math/src/common/epic_math_numeric.c</itemPath>
+        <itemPath>../../epic-math/src/common/epic_math_sqrt.c</itemPath>
       </logicalFolder>
       <logicalFolder name="core" displayName="core" projectFiles="true">
         <itemPath>../../epic-common/src/core/epic_harness_target.c</itemPath>
@@ -45,11 +45,11 @@
         <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_ssp.c</itemPath>
       </logicalFolder>
       <logicalFolder name="pic16" displayName="pic16" projectFiles="true">
-        <itemPath>../../epic-math/src/pic16/pic_math_div.c</itemPath>
-        <itemPath>../../epic-math/src/pic16/pic_math_scratch.c</itemPath>
-        <itemPath>../../epic-math/src/pic16/pic_math_mul.c</itemPath>
-        <itemPath>../../epic-math/src/pic16/pic_math_bcd.c</itemPath>
-        <itemPath>../../epic-math/src/pic16/pic_math_addsub.c</itemPath>
+        <itemPath>../../epic-math/src/pic16/epic_math_div.c</itemPath>
+        <itemPath>../../epic-math/src/pic16/epic_math_scratch.c</itemPath>
+        <itemPath>../../epic-math/src/pic16/epic_math_mul.c</itemPath>
+        <itemPath>../../epic-math/src/pic16/epic_math_bcd.c</itemPath>
+        <itemPath>../../epic-math/src/pic16/epic_math_addsub.c</itemPath>
       </logicalFolder>
       <logicalFolder name="src" displayName="src" projectFiles="true">
         <itemPath>../../epic-adcfilter/src/epic_adcfilter.c</itemPath>

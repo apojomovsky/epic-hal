@@ -2,13 +2,13 @@
  * PIC16 inline-asm multiply primitives via AN526's shift-and-add
  * (PIC16F87XA has no hardware multiply): accumulate a<<i for each set bit
  * i of the multiplier. All operands live in the shared scratch buffer
- * (pic_math_scratch.h), one banksel per routine. STATUS bits by number
+ * (epic_math_scratch.h), one banksel per routine. STATUS bits by number
  * (C=0, Z=2).
  */
 
 #include <xc.h>
-#include "pic_math.h"
-#include "pic_math_scratch.h"
+#include "epic_math.h"
+#include "epic_math_scratch.h"
 
 /* 8x8 -> 16 shift-add. tmp = a (16-bit, shifted left each step -> a<<i);
  * for each set bit i of b, r += tmp. Offsets a@0, b@1, bk@2, cnt@3,
@@ -37,7 +37,7 @@
  * @param  b  multiplier,   0..255
  * @return a*b as a 16-bit value, 0..65535.
  */
-uint16_t pic_math_mul_u8(uint8_t a, uint8_t b) __at(0x100)
+uint16_t epic_math_mul_u8(uint8_t a, uint8_t b) __at(0x100)
 {
     pic16_mscratch[0] = a;
     pic16_mscratch[1] = b;
@@ -49,7 +49,7 @@ uint16_t pic_math_mul_u8(uint8_t a, uint8_t b) __at(0x100)
     asm("movf  _pic16_mscratch+0,w");
     asm("movwf _pic16_mscratch+6");          /* t = a (16-bit, low)                */
 
-#if PIC_MATH_OPTIMIZE_FOR_SIZE
+#if EPIC_MATH_OPTIMIZE_FOR_SIZE
     /* Looped form: shift b right, test its LSB each pass. */
     asm("movf  _pic16_mscratch+1,w");        /* bk = b                             */
     asm("movwf _pic16_mscratch+2");
@@ -91,7 +91,7 @@ uint16_t pic_math_mul_u8(uint8_t a, uint8_t b) __at(0x100)
  * (shifted left -> a<<i); for each set bit of b, r += tmp (32-bit add,
  * carry idiom across 4 bytes). Offsets a@0-1 (a_lo reused as cnt after
  * the t copy), b@2-3, bk@4-5, r@6-9, t@10-13. */
-uint32_t pic_math_mul_u16(uint16_t a, uint16_t b) __at(0x130)
+uint32_t epic_math_mul_u16(uint16_t a, uint16_t b) __at(0x130)
 {
     pic16_mscratch[0] = (uint8_t)a;           pic16_mscratch[1] = (uint8_t)(a >> 8);
     pic16_mscratch[2] = (uint8_t)b;           pic16_mscratch[3] = (uint8_t)(b >> 8);
@@ -158,14 +158,14 @@ uint32_t pic_math_mul_u16(uint16_t a, uint16_t b) __at(0x130)
  * abs the operands (unsigned, so INT16_MIN abs = 0x8000 with no
  * 16-bit-int overflow), call mul_u16, and negate the 32-bit result if
  * the signs differed. */
-int32_t pic_math_mul_s16(int16_t a, int16_t b)
+int32_t epic_math_mul_s16(int16_t a, int16_t b)
 {
     int neg = ((a < 0) != 0) ^ ((b < 0) != 0);
     uint16_t ua = (a < 0) ? (uint16_t)(0u - (uint16_t)a) : (uint16_t)a;
     uint16_t ub = (b < 0) ? (uint16_t)(0u - (uint16_t)b) : (uint16_t)b;
-    uint32_t ur = pic_math_mul_u16(ua, ub);
+    uint32_t ur = epic_math_mul_u16(ua, ub);
     if (neg) {
-        ur = (uint32_t)pic_math_negate_s32((int32_t)ur);
+        ur = (uint32_t)epic_math_negate_s32((int32_t)ur);
     }
     return (int32_t)ur;
 }

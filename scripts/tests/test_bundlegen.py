@@ -225,7 +225,7 @@ class TestEpicurusMk(unittest.TestCase):
         two_inc = MANIFEST + """
 [modules.epic-math]
 dir        = "epic-math"
-sources    = ["src/pic_math.c"]
+sources    = ["src/epic_math.c"]
 includes   = ["include", "tests"]
 depends_on = []
 
@@ -233,7 +233,7 @@ depends_on = []
 PIC16F87XA = ["16F873A", "16F877A"]
 
 [modules.epic-math.sources_by_family]
-PIC16F87XA = ["src/pic16/pic_math_mul.c"]
+PIC16F87XA = ["src/pic16/epic_math_mul.c"]
 """
         tmp = tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False)
         tmp.write(two_inc)

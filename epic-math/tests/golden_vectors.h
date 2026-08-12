@@ -5,8 +5,8 @@
  * the C-over-asm and portable-C routines are Tier-1 host-tested.
  * Expected outputs are computed by the host reference backend.
  */
-#ifndef PIC_MATH_GOLDEN_VECTORS_H
-#define PIC_MATH_GOLDEN_VECTORS_H
+#ifndef EPIC_MATH_GOLDEN_VECTORS_H
+#define EPIC_MATH_GOLDEN_VECTORS_H
 
 #include <stdint.h>
 
@@ -133,4 +133,4 @@ static const gv_bcd_sub8_t gv_bcd_sub8[] = {
 };
 #define GV_BCD_SUB8_N (sizeof(gv_bcd_sub8)/sizeof(gv_bcd_sub8[0]))
 
-#endif /* PIC_MATH_GOLDEN_VECTORS_H */
+#endif /* EPIC_MATH_GOLDEN_VECTORS_H */

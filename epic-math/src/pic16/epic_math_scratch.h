@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-/** Shared scratch for all PIC16 asm leaf routines (see pic_math_scratch.c). */
+/** Shared scratch for all PIC16 asm leaf routines (see epic_math_scratch.c). */
 extern volatile uint8_t pic16_mscratch[12];
 
 #endif /* PIC16_MATH_SCRATCH_H */
