@@ -108,15 +108,23 @@ static void divmod_u32_16(void)
 /** @brief Emit the add_u16 and sub_u16 golden-vector tables. */
 static void addsub(void)
 {
-    struct { uint16_t a,b; } in[] = {{0xFFFF,0x0002},{0x0002,0xFFFF},{0x8000,0x8000},{0,0}};
+    struct { uint16_t a,b; } in[] = {
+        {0xFFFF,0x0002},{0x0002,0xFFFF},{0x8000,0x8000},{0,0},
+        /* Issue 34: the PIC16 carry-fold dropped a_hi when b_hi==0xFF and
+         * the low add carried/borrowed. These pin the wrap class (a_hi
+         * nonzero in all but the {0x00FF,0xFFFF} boundary rows, which
+         * pass even pre-fix) so the PIC16 mdb gate catches a regression. */
+        {0x0101,0xFFFF},{0x1234,0xFFFF},{0x8102,0xFFFF},{0x0102,0xFFFF},
+        {0xFF01,0x00FF},{0x0101,0x00FF},{0x00FF,0xFFFF},{0x7FFF,0x0001},
+    };
     printf("typedef struct { uint16_t a,b,r; uint8_t c; } gv_add_u16_t;\n");
     printf("static const gv_add_u16_t gv_add_u16[] = {\n");
-    for (int i = 0; i < 4; i++) { bool c; uint16_t r = pic_math_add_u16(in[i].a, in[i].b, &c);
+    for (int i = 0; i < (int)(sizeof(in)/sizeof(in[0])); i++) { bool c; uint16_t r = pic_math_add_u16(in[i].a, in[i].b, &c);
         printf("  {0x%04Xu,0x%04Xu,0x%04Xu,%u},\n", in[i].a, in[i].b, r, c?1u:0u); }
     printf("};\n#define GV_ADD_U16_N (sizeof(gv_add_u16)/sizeof(gv_add_u16[0]))\n\n");
     printf("typedef struct { uint16_t a,b,r; uint8_t b_out; } gv_sub_u16_t;\n");
     printf("static const gv_sub_u16_t gv_sub_u16[] = {\n");
-    for (int i = 0; i < 4; i++) { bool bo; uint16_t r = pic_math_sub_u16(in[i].a, in[i].b, &bo);
+    for (int i = 0; i < (int)(sizeof(in)/sizeof(in[0])); i++) { bool bo; uint16_t r = pic_math_sub_u16(in[i].a, in[i].b, &bo);
         printf("  {0x%04Xu,0x%04Xu,0x%04Xu,%u},\n", in[i].a, in[i].b, r, bo?1u:0u); }
     printf("};\n#define GV_SUB_U16_N (sizeof(gv_sub_u16)/sizeof(gv_sub_u16[0]))\n\n");
 }
@@ -156,8 +164,8 @@ static void bcd_adjust(void)
 int main(void)
 {
     hdr();
-    mul_u8(); mul_u16();
-    divmod_u16(); divmod_u32_16();
+    mul_u8(); mul_u16(); mul_s16();
+    divmod_u16(); divmod_s16(); divmod_u32_16();
     addsub(); negate(); bcd_adjust();
     ftr();
     return 0;
