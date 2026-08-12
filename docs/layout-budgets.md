@@ -85,7 +85,7 @@ inspect the .s / .sym / .map (AGENTS.md).
 | 0x70 | 1 | epic_irq_pie_scratch (HAL) | common RAM, asm operand reach |
 | 0x71 | 1 | epic_bank1_scratch (HAL) | common RAM, asm operand reach |
 | 0xA0 | 7 | s_usart_handle (harness) | USART ISR bakes IRP=0 |
-| 0x100-0x490 | ~0x390 | epic-math PIC16 asm leaves (10 fns) | internal gotos, page 0 only |
+| 0x100-0x540 | ~0x440 | epic-math PIC16 asm leaves (10 fns) | internal gotos, page 0 only; gaps sized to worst-case (-O0) codegen (old pins fit -O2 only and collided at -O0/-O1) |
 | 0x190 | 6 | g_t0_storage (timer0) | Timer0 ISR bakes IRP=1; bank 3 keeps bank 2 contiguous |
 
 New pins must land outside these ranges (the linker skips pinned

@@ -23,7 +23,7 @@
  *   if (rem>=den) { rem -= den; num |= 1; }
  * For a 16-bit dividend the partial remainder never reaches 0x8000, so
  * the rem shift never carries out and the 16-bit compare is exact. */
-epic_math_udiv16_t epic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __at(0x1C0)
+epic_math_udiv16_t epic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __at(0x360)
 {
     epic_math_udiv16_t res = { 0u, 0u };
     if (den == 0u) { if (ok) *ok = false; return res; }
@@ -85,7 +85,7 @@ epic_math_udiv16_t epic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __
  * extended-den) and set the bit; else do the plain 16-bit restoring
  * subtract. Quotient truncated to 16 bits (low word). Mirrors
  * ref_divmod_u32_16_algo. */
-epic_math_udiv16_t epic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok) __at(0x240)
+epic_math_udiv16_t epic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok) __at(0x3E0)
 {
     epic_math_udiv16_t res = { 0u, 0u };
     if (den == 0u) { if (ok) *ok = false; return res; }

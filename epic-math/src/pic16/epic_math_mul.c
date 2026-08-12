@@ -91,7 +91,7 @@ uint16_t epic_math_mul_u8(uint8_t a, uint8_t b) __at(0x100)
  * (shifted left -> a<<i); for each set bit of b, r += tmp (32-bit add,
  * carry idiom across 4 bytes). Offsets a@0-1 (a_lo reused as cnt after
  * the t copy), b@2-3, bk@4-5, r@6-9, t@10-13. */
-uint32_t epic_math_mul_u16(uint16_t a, uint16_t b) __at(0x130)
+uint32_t epic_math_mul_u16(uint16_t a, uint16_t b) __at(0x2C0)
 {
     pic16_mscratch[0] = (uint8_t)a;           pic16_mscratch[1] = (uint8_t)(a >> 8);
     pic16_mscratch[2] = (uint8_t)b;           pic16_mscratch[3] = (uint8_t)(b >> 8);
