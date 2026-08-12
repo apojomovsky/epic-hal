@@ -93,4 +93,23 @@ class TestEmitMakefile(unittest.TestCase):
         self.assertIn("DFOSC_HZ=20000000", mk)
         self.assertIn("myapp.hex: $(SRCS)", mk)
 
+class TestEmitMainC(unittest.TestCase):
+    def setUp(self): self.m = load()
+
+    def test_has_xc_and_tick_and_gpio_headers(self):
+        src = epicurus_init.emit_main_c(self.m, "PIC16F87XA", "16F877A", ["tick"])
+        self.assertIn("#include <xc.h>", src)
+        self.assertIn('#include "epic_tick.h"', src)
+        self.assertIn('#include "peripherals/pic16f87xa_gpio.h"', src)
+
+    def test_pragma_config_from_family_pseudo_module(self):
+        src = epicurus_init.emit_main_c(self.m, "PIC16F87XA", "16F877A", ["tick"])
+        self.assertIn("#pragma config FOSC = HS", src)
+        self.assertIn("#pragma config WDTE = ON", src)
+
+    def test_skeleton_uses_tick_and_gpio(self):
+        src = epicurus_init.emit_main_c(self.m, "PIC16F87XA", "16F877A", ["tick"])
+        self.assertIn("epic_tick_init(FOSC_HZ);", src)
+        self.assertIn("EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);", src)
+
 if __name__ == "__main__": unittest.main()
