@@ -80,4 +80,17 @@ class TestResolveSelection(unittest.TestCase):
         with self.assertRaises(epicurus_init.SelectionError):
             epicurus_init.resolve_selection(self.m, "NOPE", "16F877A", ["epic-tick"])
 
+class TestEmitMakefile(unittest.TestCase):
+    def setUp(self): self.m = load()
+
+    def test_makefile_has_required_fields(self):
+        mk = epicurus_init.emit_makefile(
+            self.m, "PIC16F87XA", "16F877A", ["serial"], "../..", "myapp")
+        self.assertIn("EPICURUS_DIR := ../..", mk)
+        self.assertIn("EPICURUS_MCU := 16F877A", mk)
+        self.assertIn("EPICURUS_MODULES := serial", mk)
+        self.assertIn("include $(EPICURUS_DIR)/epicurus.mk", mk)
+        self.assertIn("DFOSC_HZ=20000000", mk)
+        self.assertIn("myapp.hex: $(SRCS)", mk)
+
 if __name__ == "__main__": unittest.main()
