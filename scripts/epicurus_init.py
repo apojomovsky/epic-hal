@@ -3,6 +3,7 @@
 patched MPLAB X .X out. Pure helpers here; scripts/epicurus.py is the CLI."""
 from __future__ import annotations
 import pathlib
+import shutil
 import xml.etree.ElementTree as ET
 import bundlegen, epicmanifest
 
@@ -168,3 +169,49 @@ def patch_configurations_xml(xml_text, fam, part, selected_dirs, include_dirs) -
     for d in selected_dirs:
         ET.SubElement(sr, "Elem").text = f"../../{d}"
     return ET.tostring(root, encoding="UTF-8", xml_declaration=True).decode()
+
+
+def _reference_x_dir(manifest, fam, bundle_dir) -> pathlib.Path:
+    """Locate the family reference MPLAB X project under bundle_dir/examples.
+    A generated bundle uses examples/epicurus-demo.X; a repo checkout uses
+    examples/epicurus-demo-<slug>.X (see bundlegen.reference_project_dir)."""
+    bundle = pathlib.Path(bundle_dir)
+    bundle_form = bundle / "examples" / "epicurus-demo.X"
+    if bundle_form.is_dir():
+        return bundle_form
+    repo_form = bundle / bundlegen.reference_project_dir(manifest, fam.name)
+    if repo_form.is_dir():
+        return repo_form
+    raise SelectionError(f"no reference MPLAB X project found under {bundle}/examples")
+
+
+def init_project(manifest, family_name, part, modules, bundle_dir, out_dir, name) -> dict:
+    """Scaffold a complete project into out_dir/<name>.X + main.c + Makefile.
+    Non-destructive: refuses an existing <name>.X. The .X references the
+    bundle via ../../, so out_dir is expected to sit one level below the
+    bundle root (same layout as the reference project)."""
+    fam = manifest.families[family_name]
+    selected = resolve_selection(manifest, family_name, part, modules)
+    short = [m.removeprefix("epic-") for m in modules]
+    out = pathlib.Path(out_dir)
+    x_dst = out / f"{name}.X"
+    if x_dst.exists():
+        raise FileExistsError(f"{x_dst} already exists; refusing to overwrite")
+    out.mkdir(parents=True, exist_ok=True)
+
+    src_x = _reference_x_dir(manifest, fam, bundle_dir)
+    shutil.copytree(src_x, x_dst)
+
+    sd = source_dirs(manifest, fam, part, selected)
+    idd = include_dirs(manifest, fam, part, selected)
+    cfg_path = x_dst / "nbproject" / "configurations.xml"
+    cfg_path.write_text(patch_configurations_xml(cfg_path.read_text(), fam, part, sd, idd))
+
+    main_c = emit_main_c(manifest, family_name, part, short)
+    (out / "main.c").write_text(main_c)
+    (x_dst / "main.c").write_text(main_c)  # so the .X opens with the user's code
+    (out / "Makefile").write_text(
+        emit_makefile(manifest, family_name, part, short, "../..", name))
+    return {"main_c": str(out / "main.c"),
+            "makefile": str(out / "Makefile"),
+            "x": str(x_dst)}

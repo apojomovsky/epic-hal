@@ -166,4 +166,55 @@ class TestPatchX(unittest.TestCase):
         self.assertIn("../../epic-serial/src", elems)
         self.assertIn("../../epic-tick/src", elems)  # serial depends on tick
 
+import os, tempfile
+
+class TestInitProject(unittest.TestCase):
+    def setUp(self):
+        self.m = load()
+        self.bundle = tempfile.mkdtemp()
+        os.makedirs(os.path.join(self.bundle, "examples", "epicurus-demo.X", "nbproject"))
+        with open(os.path.join(self.bundle, "examples", "epicurus-demo.X",
+                               "nbproject", "configurations.xml"), "w") as f:
+            f.write(SAMPLE_XML)
+        with open(os.path.join(self.bundle, "examples", "epicurus-demo.X", "main.c"), "w") as f:
+            f.write("/* old */\n")
+        self.out = tempfile.mkdtemp()
+
+    def test_writes_main_makefile_and_x(self):
+        epicurus_init.init_project(
+            self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+            self.bundle, self.out, "myapp")
+        self.assertTrue(os.path.isfile(os.path.join(self.out, "main.c")))
+        self.assertTrue(os.path.isfile(os.path.join(self.out, "Makefile")))
+        cfg = os.path.join(self.out, "myapp.X", "nbproject", "configurations.xml")
+        self.assertTrue(os.path.isfile(cfg))
+        root = ET.parse(cfg).getroot()
+        self.assertEqual(root.find(".//targetDevice").text, "PIC16F877A")
+
+    def test_refuses_existing_project(self):
+        epicurus_init.init_project(
+            self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+            self.bundle, self.out, "myapp")
+        with self.assertRaises(FileExistsError):
+            epicurus_init.init_project(
+                self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+                self.bundle, self.out, "myapp")
+
+    def test_writes_x_from_repo_layout(self):
+        # Repo-checkout layout: reference project is examples/epicurus-demo-<slug>.X
+        # (Resolution A fallback), not examples/epicurus-demo.X.
+        bundle = pathlib.Path(tempfile.mkdtemp())
+        xdir = bundle / "examples" / "epicurus-demo-pic16f87xa.X"
+        (xdir / "nbproject").mkdir(parents=True)
+        (xdir / "nbproject" / "configurations.xml").write_text(SAMPLE_XML)
+        (xdir / "main.c").write_text("/* old */\n")
+        out = tempfile.mkdtemp()
+        epicurus_init.init_project(
+            self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+            str(bundle), out, "myapp")
+        cfg = pathlib.Path(out) / "myapp.X" / "nbproject" / "configurations.xml"
+        self.assertTrue(cfg.is_file())
+        root = ET.parse(cfg).getroot()
+        self.assertEqual(root.find(".//targetDevice").text, "PIC16F877A")
+
 if __name__ == "__main__": unittest.main()
