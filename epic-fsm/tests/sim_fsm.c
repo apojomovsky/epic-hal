@@ -57,21 +57,21 @@ static void act_reset(void *ctx)
     ((fsm_ctx_t *)ctx)->exit_done++;
 }
 
-static const fsm_transition_t transitions[] = {
+static const epic_fsm_transition_t transitions[] = {
     { ST_IDLE, EV_START, guard_can_start, act_start, ST_RUN  },
     { ST_RUN,  EV_STOP,  NULL,            act_stop,  ST_DONE },
     { ST_DONE, EV_RESET, NULL,            act_reset, ST_IDLE },
 };
 
 /** @brief Dispatch one scripted event and record the resulting state. */
-static uint8_t step(fsm_t *fsm, fsm_ctx_t *ctx, fsm_event_t ev,
+static uint8_t step(epic_fsm_t *fsm, fsm_ctx_t *ctx, epic_fsm_event_t ev,
                     uint8_t allow_start)
 {
     uint8_t fired;
 
     ctx->allow_start = allow_start;
-    fired = fsm_dispatch(fsm, ev) ? 1u : 0u;
-    ctx->seq[ctx->seq_len++] = fsm_state(fsm);
+    fired = epic_fsm_dispatch(fsm, ev) ? 1u : 0u;
+    ctx->seq[ctx->seq_len++] = epic_fsm_state(fsm);
     return fired;
 }
 
@@ -79,7 +79,7 @@ static uint8_t step(fsm_t *fsm, fsm_ctx_t *ctx, fsm_event_t ev,
 int main(void)
 {
     fsm_ctx_t ctx = { 0u, 0u, 0u, 0u, 0u, {0u}, 0u };
-    fsm_t fsm;
+    epic_fsm_t fsm;
     uint8_t fired[8];
     uint8_t i;
     uint32_t iter;
@@ -96,8 +96,8 @@ int main(void)
 
     epic_harness_init(SIM_ITERATIONS);
 
-    FSM_INIT(&fsm, transitions, ST_IDLE, &ctx);
-    ctx.seq[ctx.seq_len++] = fsm_state(&fsm);
+    EPIC_FSM_INIT(&fsm, transitions, ST_IDLE, &ctx);
+    ctx.seq[ctx.seq_len++] = epic_fsm_state(&fsm);
 
     /* 1: EV_STOP in IDLE: no row, rejected. */
     fired[0] = step(&fsm, &ctx, EV_STOP, 0u);

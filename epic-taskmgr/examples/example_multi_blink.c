@@ -9,7 +9,7 @@
 #include "epic_hal.h"          /* family-neutral HAL entry point         */
 #include "core/epic_harness.h"
 
-#include "task_manager.h"
+#include "epic_taskmgr.h"
 
 /** Timer0 reload for a ~10 ms tick on a 20 MHz target: Fosc/4=5 MHz,
  *  prescaler 1:256 (51.2 us/count), reload 61 -> 195 counts ~= 9.98 ms. */
@@ -31,7 +31,7 @@
 #define PERIOD_SLOW       20U    /* ~200 ms -> RB2 */
 #define PERIOD_SUPERVISOR 40U    /* ~400 ms -> spawns a blip on RB3 */
 
-/** Per-LED state carried through each blink task's task_spawn `arg`,
+/** Per-LED state carried through each blink task's epic_taskmgr_spawn `arg`,
  *  since locals don't survive between calls. Pointer-free to fit the
  *  192 B 28-pin parts. */
 typedef struct {
@@ -72,7 +72,7 @@ static void task_blink(void *arg)
     EPIC_GPIO_TogglePin(a->port, EPIC_BIT(a->pin));
     a->count++;
     epic_harness_log("[t=%3u] %s  #%u\n",
-                           (unsigned)task_manager_ticks(),
+                           (unsigned)epic_taskmgr_ticks(),
                            led_name(a->pin), (unsigned)a->count);
 }
 
@@ -85,16 +85,16 @@ static void task_blink(void *arg)
 static void task_supervisor(void *arg)
 {
     (void)arg;
-    task_spawn(task_blink, &arg_blip, 0U, 2U);   /* one-shot (period 0) */
+    epic_taskmgr_spawn(task_blink, &arg_blip, 0U, 2U);   /* one-shot (period 0) */
     epic_harness_log("[t=%3u] super  spawned blip\n",
-                           (unsigned)task_manager_ticks());
+                           (unsigned)epic_taskmgr_ticks());
 }
 
 /** @brief Run four LED blinks at distinct rates and report the verdict. */
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);
-    task_manager_init();
+    epic_taskmgr_init();
 
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3,
                   GPIO_MODE_OUTPUT);
@@ -104,20 +104,20 @@ int main(void)
 
     /* Priority 0 = supervisor runs first; the three blinks share
      * priority 1 and run in spawn order. */
-    task_spawn(task_supervisor, NULL, PERIOD_SUPERVISOR, 0U);
-    task_spawn(task_blink, &arg_fast, PERIOD_FAST, 1U);
-    task_spawn(task_blink, &arg_med,  PERIOD_MED,  1U);
-    task_spawn(task_blink, &arg_slow, PERIOD_SLOW, 1U);
+    epic_taskmgr_spawn(task_supervisor, NULL, PERIOD_SUPERVISOR, 0U);
+    epic_taskmgr_spawn(task_blink, &arg_fast, PERIOD_FAST, 1U);
+    epic_taskmgr_spawn(task_blink, &arg_med,  PERIOD_MED,  1U);
+    epic_taskmgr_spawn(task_blink, &arg_slow, PERIOD_SLOW, 1U);
 
     /* Wire the ~10 ms Timer0 tick to the scheduler. This sets TMR0IE;
      * arm it on the target by enabling global interrupts (harmless on
      * the sim, where the IRQ fires regardless). */
-    task_manager_attach_timer0(TICK_RELOAD, TICK_PRESCALER);
+    epic_taskmgr_attach_timer0(TICK_RELOAD, TICK_PRESCALER);
     EPIC_IRQ_Restore(1);
 
     /* Run the scheduler: on the host the harness bounds the loop to
      * SIM_CYCLES; on the target it runs forever. */
-    task_manager_run();
+    epic_taskmgr_run();
 
     /* Host-only epilogue: the verdict after the dispatch stream. On the
      * target these lines are unreachable (the loop never returns). */
@@ -125,8 +125,8 @@ int main(void)
                            "(ticks=%u, tasks=%u)\n",
                            (unsigned)arg_fast.count, (unsigned)arg_med.count,
                            (unsigned)arg_slow.count, (unsigned)arg_blip.count,
-                           (unsigned)task_manager_ticks(),
-                           (unsigned)task_manager_count());
+                           (unsigned)epic_taskmgr_ticks(),
+                           (unsigned)epic_taskmgr_count());
 
     /* Pass when the four tasks ran at four distinct rates and the
      * supervisor spawned at least one blip. */

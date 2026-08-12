@@ -7,7 +7,7 @@
  */
 
 #include <xc.h>
-#include "pic_math.h"
+#include "epic_math.h"
 
 /* 8x8 -> 16 via one MULWF. Worked example 0x0C*0x14 = 0x00F0 pins that
  * PRODL is the low product byte and PRODH the high one. */
@@ -22,7 +22,7 @@ static volatile uint16_t m_mul8_r;
  *
  * Worked example 0x0C*0x14 = 0x00F0 pins that PRODL is the low product
  * byte and PRODH the high one. */
-uint16_t pic_math_mul_u8(uint8_t a, uint8_t b)
+uint16_t epic_math_mul_u8(uint8_t a, uint8_t b)
 {
     m_mul8_a = a; m_mul8_b = b;
     asm("banksel _m_mul8_a");
@@ -68,7 +68,7 @@ static volatile uint32_t m_mul16_r;
  * addwfc next" to ripple the carry one more byte. The 32-bit product of
  * two 16-bit operands never exceeds 0xFFFE0001, so no carry escapes
  * byte 3. */
-uint32_t pic_math_mul_u16(uint16_t a, uint16_t b)
+uint32_t epic_math_mul_u16(uint16_t a, uint16_t b)
 {
     m_mul16_a = a; m_mul16_b = b;
     asm("banksel _m_mul16_a");
@@ -117,14 +117,14 @@ uint32_t pic_math_mul_u16(uint16_t a, uint16_t b)
  * abs the operands (in unsigned, so INT16_MIN abs = 0x8000 with no
  * 16-bit-int overflow), call the asm mul_u16, and negate the 32-bit
  * result if the signs differed. */
-int32_t pic_math_mul_s16(int16_t a, int16_t b)
+int32_t epic_math_mul_s16(int16_t a, int16_t b)
 {
     int neg = ((a < 0) != 0) ^ ((b < 0) != 0);
     uint16_t ua = (a < 0) ? (uint16_t)(0u - (uint16_t)a) : (uint16_t)a;
     uint16_t ub = (b < 0) ? (uint16_t)(0u - (uint16_t)b) : (uint16_t)b;
-    uint32_t ur = pic_math_mul_u16(ua, ub);
+    uint32_t ur = epic_math_mul_u16(ua, ub);
     if (neg) {
-        ur = (uint32_t)pic_math_negate_s32((int32_t)ur);
+        ur = (uint32_t)epic_math_negate_s32((int32_t)ur);
     }
     return (int32_t)ur;
 }

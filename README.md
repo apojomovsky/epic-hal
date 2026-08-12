@@ -163,7 +163,7 @@ plain C functions, no IDE glue.
 ```c
 #include <xc.h>
 #include "epic_hal.h"
-#include "task_manager.h"
+#include "epic_taskmgr.h"
 
 static void toggle(void *arg)
 {
@@ -173,19 +173,19 @@ static void toggle(void *arg)
 int main(void)
 {
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0 | GPIO_PIN_1, GPIO_MODE_OUTPUT);
-    task_manager_init();
+    epic_taskmgr_init();
 
-    task_spawn(toggle, (void *)(uintptr_t)GPIO_PIN_0, 100u, 0u);
-    task_spawn(toggle, (void *)(uintptr_t)GPIO_PIN_1, 300u, 0u);
+    epic_taskmgr_spawn(toggle, (void *)(uintptr_t)GPIO_PIN_0, 100u, 0u);
+    epic_taskmgr_spawn(toggle, (void *)(uintptr_t)GPIO_PIN_1, 300u, 0u);
 
-    task_manager_attach_timer0(61u, TIMER0_PRESCALER_1_256); /* ~10 ms tick */
+    epic_taskmgr_attach_timer0(61u, TIMER0_PRESCALER_1_256); /* ~10 ms tick */
     EPIC_IRQ_Restore(1);                                     /* arm IRQs    */
-    task_manager_run();                                      /* never returns */
+    epic_taskmgr_run();                                      /* never returns */
 }
 ```
 
-`task_manager` is a priority-ordered, race-free cooperative scheduler:
-periodic and one-shot tasks, `TASK_MGR_MAX_TASKS` fixed slots, no
+`epic_taskmgr` is a priority-ordered, race-free cooperative scheduler:
+periodic and one-shot tasks, `EPIC_TASKMGR_MAX_TASKS` fixed slots, no
 per-task stack. The 10-line core of
 [example_multi_blink](epic-taskmgr/examples/example_multi_blink.c).
 

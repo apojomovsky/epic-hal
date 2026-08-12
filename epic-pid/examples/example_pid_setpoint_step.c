@@ -26,8 +26,8 @@ int main(void)
     const int16_t out_min = -200;
     const int16_t out_max = 200;
 
-    pid_t pid;
-    pid_init(&pid, kp_q8, ki_q8, kd_q8, out_min, out_max);
+    epic_pid_t pid;
+    epic_pid_init(&pid, kp_q8, ki_q8, kd_q8, out_min, out_max);
 
     int16_t measurement = 0;
     int16_t setpoint    = 0;
@@ -38,29 +38,29 @@ int main(void)
     printf("== Setpoint step 0 -> 100 (AUTO) ==\n");
     printf("step | setpoint | measurement | output | integrator_q8 | mode\n");
     for (int step = 0; step < 30; step++) {
-        int16_t output = pid_update(&pid, setpoint, measurement);
+        int16_t output = epic_pid_update(&pid, setpoint, measurement);
         /* Plant: integer first-order lag, no floats. */
         int16_t plant_delta = (int16_t)((output - measurement) / 4);
         measurement = (int16_t)(measurement + plant_delta);
         printf("%4d | %8d | %11d | %6d | %13d | %s\n",
                step, setpoint, measurement, output,
                pid.integrator_q8,
-               pid.mode == PID_MODE_AUTO ? "AUTO" : "MANUAL");
+               pid.mode == EPIC_PID_MODE_AUTO ? "AUTO" : "MANUAL");
     }
 
     /* Phase 2: switch to MANUAL; the operator drives the plant directly
-     * via pid_set_manual_output while the integrator back-calculates. */
+     * via epic_pid_set_manual_output while the integrator back-calculates. */
     printf("\n== Switch to MANUAL, operator takes over (target 50) ==\n");
-    pid_set_mode(&pid, PID_MODE_MANUAL);
-    pid_set_manual_output(&pid, 50);
+    epic_pid_set_mode(&pid, EPIC_PID_MODE_MANUAL);
+    epic_pid_set_manual_output(&pid, 50);
     for (int step = 30; step < 40; step++) {
-        int16_t output = pid_update(&pid, setpoint, measurement);
+        int16_t output = epic_pid_update(&pid, setpoint, measurement);
         int16_t plant_delta = (int16_t)((output - measurement) / 4);
         measurement = (int16_t)(measurement + plant_delta);
         printf("%4d | %8d | %11d | %6d | %13d | %s\n",
                step, setpoint, measurement, output,
                pid.integrator_q8,
-               pid.mode == PID_MODE_AUTO ? "AUTO" : "MANUAL");
+               pid.mode == EPIC_PID_MODE_AUTO ? "AUTO" : "MANUAL");
     }
 
     /* With the plant frozen, a MANUAL call followed by an AUTO call at
@@ -70,32 +70,32 @@ int main(void)
     int16_t new_manual = 75;
     printf("\n== Bumpless-equivalence demo (plant frozen) ==\n");
     printf("  setpoint=%d  measurement=%d\n", frozen_setpoint, frozen_measurement);
-    pid_set_mode(&pid, PID_MODE_MANUAL);
-    pid_set_manual_output(&pid, new_manual);
-    int16_t held_out = pid_update(&pid, frozen_setpoint, frozen_measurement);
+    epic_pid_set_mode(&pid, EPIC_PID_MODE_MANUAL);
+    epic_pid_set_manual_output(&pid, new_manual);
+    int16_t held_out = epic_pid_update(&pid, frozen_setpoint, frozen_measurement);
     printf("  MANUAL output = %d  (operator's target was %d)\n", held_out, new_manual);
-    pid_set_mode(&pid, PID_MODE_AUTO);
-    int16_t first_auto = pid_update(&pid, frozen_setpoint, frozen_measurement);
+    epic_pid_set_mode(&pid, EPIC_PID_MODE_AUTO);
+    int16_t first_auto = epic_pid_update(&pid, frozen_setpoint, frozen_measurement);
     printf("  first AUTO output = %d  %s\n", first_auto,
            (first_auto == held_out) ? "(matches MANUAL exactly -- bumpless)"
                                     : "(differs -- check the test suite's assert)");
     /* Second AUTO call: integrator resumes evolving, output diverges. */
-    int16_t second_auto = pid_update(&pid, frozen_setpoint, frozen_measurement);
+    int16_t second_auto = epic_pid_update(&pid, frozen_setpoint, frozen_measurement);
     printf("  second AUTO output = %d  (integrator resumes evolving)\n", second_auto);
 
     /* Phase 3: switch back to AUTO. Internal state is continuous (no
      * integrator jump), but the plant moved, so the output isn't pinned. */
     printf("\n== Switch back to AUTO (controller state is continuous, "
            "but the plant moved one step) ==\n");
-    pid_set_mode(&pid, PID_MODE_AUTO);
+    epic_pid_set_mode(&pid, EPIC_PID_MODE_AUTO);
     for (int step = 40; step < 70; step++) {
-        int16_t output = pid_update(&pid, setpoint, measurement);
+        int16_t output = epic_pid_update(&pid, setpoint, measurement);
         int16_t plant_delta = (int16_t)((output - measurement) / 4);
         measurement = (int16_t)(measurement + plant_delta);
         printf("%4d | %8d | %11d | %6d | %13d | %s\n",
                step, setpoint, measurement, output,
                pid.integrator_q8,
-               pid.mode == PID_MODE_AUTO ? "AUTO" : "MANUAL");
+               pid.mode == EPIC_PID_MODE_AUTO ? "AUTO" : "MANUAL");
     }
 
     return 0;

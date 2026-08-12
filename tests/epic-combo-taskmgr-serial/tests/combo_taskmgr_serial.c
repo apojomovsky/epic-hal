@@ -37,7 +37,7 @@
  *   gate therefore drives everything through manual
  *   epic_dispatch_all_irqs() calls: the Timer0 overflow still latches
  *   TMR0IF in real simulated time and the dispatch runs
- *   TIMER0_IRQHandler -> task_manager_tick exactly like the ISR would
+ *   TIMER0_IRQHandler -> epic_taskmgr_tick exactly like the ISR would
  *   (the tick counter is real), and each dispatch additionally pops
  *   one TX ring byte. Every pop is paced per byte (wait for the shift
  *   register to empty) like the console gate's drain, so the uart1io
@@ -77,7 +77,7 @@
  *   involvement, so the MPLAB SIM RX wall does not apply.
  */
 
-#include "task_manager.h"
+#include "epic_taskmgr.h"
 #include "epic_serial.h"
 #include "core/epic_harness.h"
 #include "epic_hal.h"        /* EPIC_IRQ_*, EPIC_USART_IsTxShiftRegisterEmpty */
@@ -280,27 +280,27 @@ int main(void)
      * header); the harness leaves it clear, make it explicit. */
     (void)EPIC_IRQ_Disable();
 
-    task_manager_init();
+    epic_taskmgr_init();
 
     /* Three periodic writer tasks, priorities distinct so the run
      * order within one round is fixed: A, then B, then C. */
-    task_spawn(task_writer_a, &arg_a, PERIOD_A, 0U);
-    task_spawn(task_writer_b, &arg_b, PERIOD_B, 1U);
-    task_spawn(task_writer_c, &arg_c, PERIOD_C, 2U);
+    epic_taskmgr_spawn(task_writer_a, &arg_a, PERIOD_A, 0U);
+    epic_taskmgr_spawn(task_writer_b, &arg_b, PERIOD_B, 1U);
+    epic_taskmgr_spawn(task_writer_c, &arg_c, PERIOD_C, 2U);
 
     /* Wire the diagnostic Timer0 tick to the scheduler (starts the
      * timer; TMR0IF latches in real simulated time and is serviced by
      * the manual dispatch below, standing in for the ISR the same way
      * the serial gate's drain stands in for the TX ISR). */
-    task_manager_attach_timer0(TICK_RELOAD, TICK_PRESCALER);
+    epic_taskmgr_attach_timer0(TICK_RELOAD, TICK_PRESCALER);
 
     /* The bounded scheduler loop. Each round: service any pending
      * TMR0IF (the tick), run every task due this round (their writes
      * arm TXIE), then drain the TX ring byte by byte. */
     for (uint32_t i = 0; epic_harness_running(i); i++) {
         epic_harness_tick();
-        epic_dispatch_all_irqs();   /* tick: TMR0IF -> task_manager_tick */
-        (void)task_manager_run_once();
+        epic_dispatch_all_irqs();   /* tick: TMR0IF -> epic_taskmgr_tick */
+        (void)epic_taskmgr_run_once();
         drain_tx();
     }
 
@@ -310,8 +310,8 @@ int main(void)
     drain_tx();
 
     /* Cross-checks. */
-    uint16_t ticks = task_manager_ticks();
-    uint8_t  used  = task_manager_count();
+    uint16_t ticks = epic_taskmgr_ticks();
+    uint8_t  used  = epic_taskmgr_count();
     uint16_t pushed = g_pushed;
 
     CHECK(arg_c.runs >= 2u, 0x00);              /* C fired repeatedly */

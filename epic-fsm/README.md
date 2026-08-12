@@ -8,7 +8,7 @@ other module in this repo, it has **no HAL dependency and no per-family
 backend** — a state machine is pure control-flow logic, so the same
 `src/fsm.c` compiles unchanged for the host, PIC16, and PIC18. It composes
 with [epic-taskmgr](../epic-taskmgr) (or anything else) by staying decoupled
-from it: a task callback just owns an `fsm_t` and calls `fsm_dispatch()`.
+from it: a task callback just owns an `epic_fsm_t` and calls `epic_fsm_dispatch()`.
 
 > 📖 **Documentation**: [API reference](docs/API.md)
 
@@ -22,16 +22,16 @@ the caller's own file — no `switch` per state scattered across functions.
 enum { ST_RED, ST_GREEN, ST_YELLOW, ST_FAULT };
 enum { EV_TIMER, EV_FAULT };
 
-static const fsm_transition_t light_transitions[] = {
+static const epic_fsm_transition_t light_transitions[] = {
     { ST_RED,        EV_TIMER, NULL, NULL,       ST_GREEN  },
     { ST_GREEN,      EV_TIMER, NULL, on_caution, ST_YELLOW },
     { ST_YELLOW,     EV_TIMER, NULL, NULL,       ST_RED    },
-    { FSM_ANY_STATE, EV_FAULT, NULL, on_fault,   ST_FAULT  },
+    { EPIC_FSM_ANY_STATE, EV_FAULT, NULL, on_fault,   ST_FAULT  },
 };
 
-fsm_t light;
-FSM_INIT(&light, light_transitions, ST_RED, NULL);
-fsm_dispatch(&light, EV_TIMER);
+epic_fsm_t light;
+EPIC_FSM_INIT(&light, light_transitions, ST_RED, NULL);
+epic_fsm_dispatch(&light, EV_TIMER);
 ```
 
 Four columns — `state`, `event`, `guard`, `action`/`next_state` — tell the
@@ -42,7 +42,7 @@ guard-fallthrough dispatch semantics are covered in the [API reference](docs/API
 
 - **Table-driven**: the whole machine is one `static const` array, placed in
   flash, not RAM.
-- **`FSM_ANY_STATE` wildcard**: a row that fires from any current state (a
+- **`EPIC_FSM_ANY_STATE` wildcard**: a row that fires from any current state (a
   global fault/reset transition, typically).
 - **Guarded transitions with fallthrough**: multiple candidate rows for the
   same `(state, event)` pair, disambiguated by guard functions evaluated in
@@ -96,21 +96,21 @@ python3 scripts/epic_build.py build --module epic-fsm --mcu 16F1937 --run
 enum { ST_IDLE, ST_ARMED };
 enum { EV_PRESS, EV_TIMEOUT };
 
-static const fsm_transition_t button_transitions[] = {
+static const epic_fsm_transition_t button_transitions[] = {
     { ST_IDLE,  EV_PRESS,   NULL, on_arm, ST_ARMED },
     { ST_ARMED, EV_TIMEOUT, NULL, NULL,   ST_IDLE  },
 };
 
-static fsm_t g_button;
+static epic_fsm_t g_button;
 
 void button_task(void *arg) {
-    /* fsm_dispatch() is the entire integration surface — nothing else about
+    /* epic_fsm_dispatch() is the entire integration surface, nothing else about
      * this task needs to know an FSM is involved. */
-    fsm_dispatch(&g_button, some_event_read_this_tick());
+    epic_fsm_dispatch(&g_button, some_event_read_this_tick());
 }
 
 int main(void) {
-    FSM_INIT(&g_button, button_transitions, ST_IDLE, NULL);
+    EPIC_FSM_INIT(&g_button, button_transitions, ST_IDLE, NULL);
     /* ...wire button_task into your scheduler or main loop... */
 }
 ```

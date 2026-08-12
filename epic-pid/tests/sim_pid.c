@@ -1,10 +1,10 @@
 /**
  * Bounded, self-reporting HARNESS=sim build, the module's mdb gate
- * (PIC16F877A/MPLAB SIM): runs the compiled pid.c (Q8.8, pic_math
+ * (PIC16F877A/MPLAB SIM): runs the compiled pid.c (Q8.8, epic_math
  * 16x16->32 multiply) through a scripted step-then-settle trajectory via
- * the real `pid_update` API, checking (a) every output stays in
+ * the real `epic_pid_update` API, checking (a) every output stays in
  * [out_min, out_max] and the anti-windup invariant holds, (b) convergence
- * to the setpoint, and (c) pid_set_gains takes effect. Reports PASS/FAIL
+ * to the setpoint, and (c) epic_pid_set_gains takes effect. Reports PASS/FAIL
  * over the harness USART (see pic16f87xa-hal/src/mdb/pic16_harness_mdb.c).
  */
 
@@ -30,7 +30,7 @@
 #define KI_Q8 64
 #define KD_Q8 0
 
-static pid_t   g_pid;
+static epic_pid_t   g_pid;
 static int16_t g_meas = 0;
 
 /** @brief Run the step-then-settle trajectory and report PASS/FAIL over the harness. */
@@ -38,7 +38,7 @@ int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);
 
-    pid_init(&g_pid, (int16_t)KP_Q8, (int16_t)KI_Q8, (int16_t)KD_Q8,
+    epic_pid_init(&g_pid, (int16_t)KP_Q8, (int16_t)KI_Q8, (int16_t)KD_Q8,
              (int16_t)OUT_MIN, (int16_t)OUT_MAX);
 
     int16_t out_min_seen = OUT_MAX, out_max_seen = OUT_MIN;
@@ -48,7 +48,7 @@ int main(void)
         epic_harness_tick();
         if (i < N_SETTLE) {
             /* Phase A: setpoint step 0 -> 100, let the loop settle. */
-            int16_t out = pid_update(&g_pid, (int16_t)SETPOINT, g_meas);
+            int16_t out = epic_pid_update(&g_pid, (int16_t)SETPOINT, g_meas);
             if (out < out_min_seen) { out_min_seen = out; }
             if (out > out_max_seen) { out_max_seen = out; }
             /* Plant: integer first-order lag, same shape as the
@@ -58,18 +58,18 @@ int main(void)
             /* Steady state reached; freeze the plant and record the
              * controller's holding output (error is 0, so this is
              * I >> 8 exactly). */
-            u_pre = pid_update(&g_pid, (int16_t)SETPOINT, g_meas);
+            u_pre = epic_pid_update(&g_pid, (int16_t)SETPOINT, g_meas);
             if (u_pre < out_min_seen) { out_min_seen = u_pre; }
             if (u_pre > out_max_seen) { out_max_seen = u_pre; }
         } else if (i == N_SETTLE + 1UL) {
             /* Phase B: gain change on the live instance. Double kp,
              * drop the I gain; integrator state is untouched. */
-            pid_set_gains(&g_pid, (int16_t)512, (int16_t)0, (int16_t)0);
+            epic_pid_set_gains(&g_pid, (int16_t)512, (int16_t)0, (int16_t)0);
         } else if (i == N_SETTLE + 2UL) {
             /* 10-count setpoint step at the frozen plant: with the new
              * kp the output must move by (512 * 10) >> 8 = 20 counts
              * (the old kp would have moved it 10). */
-            out_step = pid_update(&g_pid, (int16_t)(SETPOINT + 10), g_meas);
+            out_step = epic_pid_update(&g_pid, (int16_t)(SETPOINT + 10), g_meas);
             if (out_step < out_min_seen) { out_min_seen = out_step; }
             if (out_step > out_max_seen) { out_max_seen = out_step; }
         }

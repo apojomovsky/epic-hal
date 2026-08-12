@@ -863,7 +863,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
 # debounce gate under MPLAB SIM. Feeds a scripted noisy level sequence
-# through the module's own debounce_read_fn callback (the sim drives a
+# through the module's own epic_debounce_read_fn callback (the sim drives a
 # synthetic level from epic_tick_get(), not a GPIO pin, so no MPLAB SIM
 # pin-injection limitation applies) and verifies one PRESSED and one
 # RELEASED, each committed only after the full debounce window. WDTE=OFF
@@ -1071,9 +1071,9 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 [modules.epic-math]
 dir        = "epic-math"
 sources    = [
-  "src/common/pic_math_numeric.c",
-  "src/common/pic_math_rand.c",
-  "src/common/pic_math_sqrt.c",
+  "src/common/epic_math_numeric.c",
+  "src/common/epic_math_rand.c",
+  "src/common/epic_math_sqrt.c",
 ]
 includes   = [
   "include",
@@ -1084,17 +1084,17 @@ needs_hal = false
 
 [modules.epic-math.sources_by_family]
 PIC16F87XA = [
-  "src/pic16/pic_math_addsub.c",
-  "src/pic16/pic_math_bcd.c",
-  "src/pic16/pic_math_div.c",
-  "src/pic16/pic_math_mul.c",
-  "src/pic16/pic_math_scratch.c",
+  "src/pic16/epic_math_addsub.c",
+  "src/pic16/epic_math_bcd.c",
+  "src/pic16/epic_math_div.c",
+  "src/pic16/epic_math_mul.c",
+  "src/pic16/epic_math_scratch.c",
 ]
 PIC18Fxx5x = [
-  "src/pic18/pic_math_addsub.c",
-  "src/pic18/pic_math_bcd.c",
-  "src/pic18/pic_math_div.c",
-  "src/pic18/pic_math_mul.c",
+  "src/pic18/epic_math_addsub.c",
+  "src/pic18/epic_math_bcd.c",
+  "src/pic18/epic_math_div.c",
+  "src/pic18/epic_math_mul.c",
 ]
 
 [modules.epic-math.supported]
@@ -1476,7 +1476,7 @@ config  = { FOSC = "INTOSC", WDTE = "ON", PWRTE = "ON", MCLRE = "ON", CP = "OFF"
 [modules.epic-taskmgr]
 dir        = "epic-taskmgr"
 sources    = [
-  "src/task_manager.c",
+  "src/epic_taskmgr.c",
 ]
 includes   = [
   "include",

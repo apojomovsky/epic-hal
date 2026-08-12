@@ -7,18 +7,18 @@
  */
 
 #include <xc.h>
-#include "pic_math.h"
+#include "epic_math.h"
 
 /**
  * @brief  2-digit packed BCD -> binary, built on this backend's asm mul.
  * @param  bcd2  2-digit packed BCD (one nibble per digit), 0..0x99
  * @return binary value of the BCD input, 0..99.
  */
-uint8_t pic_math_bcd8_to_bin(uint8_t bcd2)
+uint8_t epic_math_bcd8_to_bin(uint8_t bcd2)
 {
     uint8_t tens = (uint8_t)(bcd2 >> 4);
     uint8_t ones = (uint8_t)(bcd2 & 0x0Fu);
-    return (uint8_t)(pic_math_mul_u8(tens, 10u) + ones);
+    return (uint8_t)(epic_math_mul_u8(tens, 10u) + ones);
 }
 
 /**
@@ -27,9 +27,9 @@ uint8_t pic_math_bcd8_to_bin(uint8_t bcd2)
  * @param  value  binary value to convert, 0..99
  * @return 2-digit packed BCD representation of @p value.
  */
-uint8_t pic_math_bin_to_bcd8(uint8_t value)
+uint8_t epic_math_bin_to_bcd8(uint8_t value)
 {
-    pic_math_udiv16_t d = pic_math_divmod_u16((uint16_t)value, 10u, NULL);
+    epic_math_udiv16_t d = epic_math_divmod_u16((uint16_t)value, 10u, NULL);
     return (uint8_t)((d.quotient << 4) | (d.remainder & 0x0Fu));
 }
 
@@ -39,12 +39,12 @@ uint8_t pic_math_bin_to_bcd8(uint8_t value)
  * @param  bcd5  5-digit packed BCD (one nibble per digit), 0..0x99999
  * @return binary value of the BCD input, truncated to 16 bits.
  */
-uint16_t pic_math_bcd16_to_bin(uint32_t bcd5)
+uint16_t epic_math_bcd16_to_bin(uint32_t bcd5)
 {
     uint32_t bin = 0u;
     uint16_t place = 1u;
     for (int i = 0; i < 5; i++) {
-        bin += pic_math_mul_u16((uint16_t)(bcd5 & 0x0Fu), place);
+        bin += epic_math_mul_u16((uint16_t)(bcd5 & 0x0Fu), place);
         bcd5 >>= 4;
         place = (uint16_t)(place * 10u);
     }
@@ -57,11 +57,11 @@ uint16_t pic_math_bcd16_to_bin(uint32_t bcd5)
  * @param  value  binary value to convert, 0..65535
  * @return 5-digit packed BCD representation of @p value, 0..0x65535.
  */
-uint32_t pic_math_bin_to_bcd16(uint16_t value)
+uint32_t epic_math_bin_to_bcd16(uint16_t value)
 {
     uint32_t bcd = 0u;
     for (int i = 0; i < 5; i++) {
-        pic_math_udiv16_t d = pic_math_divmod_u16(value, 10u, NULL);
+        epic_math_udiv16_t d = epic_math_divmod_u16(value, 10u, NULL);
         bcd |= (uint32_t)(d.remainder & 0x0Fu) << (i * 4);
         value = d.quotient;
     }
@@ -80,7 +80,7 @@ static volatile struct { uint8_t a, b, r, co; } m_ba;
  * @param  carry_out  set true if the BCD sum exceeds 99; may be NULL.
  * @return packed-BCD 2-digit sum.
  */
-uint8_t pic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out)
+uint8_t epic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out)
 {
     m_ba.a = a; m_ba.b = b; m_ba.co = 0;
     asm("banksel _m_ba");
@@ -122,7 +122,7 @@ static volatile struct { uint8_t a, b, r, bo, aL, bL, br, aH; } m_bs;
  *   r = (dH<<4)|dL
  * Worked example 0x12-0x34 -> 0x78, borrow 1 pins the +10 adjust and
  * the borrow ripple from low to high nibble. */
-uint8_t pic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out)
+uint8_t epic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out)
 {
     m_bs.a = a; m_bs.b = b; m_bs.bo = 0; m_bs.br = 0;
     asm("banksel _m_bs");

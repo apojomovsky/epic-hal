@@ -10,7 +10,7 @@ enum { ST_RED, ST_GREEN, ST_YELLOW };
 enum { EV_TIMER };
 
 /** @brief Map a state to its printable name. */
-static const char *state_name(fsm_state_t s)
+static const char *state_name(epic_fsm_state_t s)
 {
     switch (s) {
     case ST_RED:    return "RED";
@@ -27,7 +27,7 @@ static void on_enter_yellow(void *ctx)
     printf("  (caution: entering YELLOW)\n");
 }
 
-static const fsm_transition_t light_transitions[] = {
+static const epic_fsm_transition_t light_transitions[] = {
     { ST_RED,    EV_TIMER, NULL, NULL,             ST_GREEN  },
     { ST_GREEN,  EV_TIMER, NULL, on_enter_yellow,  ST_YELLOW },
     { ST_YELLOW, EV_TIMER, NULL, NULL,             ST_RED    },
@@ -36,13 +36,13 @@ static const fsm_transition_t light_transitions[] = {
 /** @brief Run the traffic-light cycle and print each transition. */
 int main(void)
 {
-    fsm_t light;
-    FSM_INIT(&light, light_transitions, ST_RED, NULL);
+    epic_fsm_t light;
+    EPIC_FSM_INIT(&light, light_transitions, ST_RED, NULL);
 
-    printf("start: %s\n", state_name(fsm_state(&light)));
+    printf("start: %s\n", state_name(epic_fsm_state(&light)));
     for (int i = 0; i < 6; i++) {
-        fsm_dispatch(&light, EV_TIMER);
-        printf("TIMER -> %s\n", state_name(fsm_state(&light)));
+        epic_fsm_dispatch(&light, EV_TIMER);
+        printf("TIMER -> %s\n", state_name(epic_fsm_state(&light)));
     }
     return 0;
 }

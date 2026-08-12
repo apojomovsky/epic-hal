@@ -69,14 +69,14 @@ PIC16F87XA = ["16F877A"]
 
 [modules.epic-math]
 dir        = "epic-math"
-sources    = ["src/common/pic_math_sqrt.c", "src/common/pic_math_numeric.c"]
+sources    = ["src/common/epic_math_sqrt.c", "src/common/epic_math_numeric.c"]
 includes   = ["include"]
 depends_on = []
 needs_hal  = false
 
 [modules.epic-math.sources_by_family]
-PIC16F87XA = ["src/pic16/pic_math_mul.c", "src/pic16/pic_math_scratch.c"]
-PIC18Fxx5x = ["src/pic18/pic_math_mul.c"]
+PIC16F87XA = ["src/pic16/epic_math_mul.c", "src/pic16/epic_math_scratch.c"]
+PIC18Fxx5x = ["src/pic18/epic_math_mul.c"]
 
 [modules.epic-math.supported]
 PIC16F87XA = ["16F873A", "16F877A"]
@@ -151,8 +151,8 @@ class TestLoad(unittest.TestCase):
 
     def test_sources_by_family_parsed(self):
         sbf = self.m.modules["epic-math"].sources_by_family
-        self.assertEqual(sbf["PIC16F87XA"], ["src/pic16/pic_math_mul.c", "src/pic16/pic_math_scratch.c"])
-        self.assertEqual(sbf["PIC18Fxx5x"], ["src/pic18/pic_math_mul.c"])
+        self.assertEqual(sbf["PIC16F87XA"], ["src/pic16/epic_math_mul.c", "src/pic16/epic_math_scratch.c"])
+        self.assertEqual(sbf["PIC18Fxx5x"], ["src/pic18/epic_math_mul.c"])
 
     def test_examples_are_keyed_by_family(self):
         ex = self.m.modules["epic-tick"].examples
@@ -331,14 +331,14 @@ class TestResolution(unittest.TestCase):
 
     def test_sources_by_family_contributes_only_the_matching_family(self):
         srcs16 = self.m.sources_for("epic-math", "16F877A")
-        self.assertIn("epic-math/src/pic16/pic_math_mul.c", srcs16)
-        self.assertIn("epic-math/src/pic16/pic_math_scratch.c", srcs16)
-        self.assertNotIn("epic-math/src/pic18/pic_math_mul.c", srcs16)
-        self.assertIn("epic-math/src/common/pic_math_sqrt.c", srcs16)
+        self.assertIn("epic-math/src/pic16/epic_math_mul.c", srcs16)
+        self.assertIn("epic-math/src/pic16/epic_math_scratch.c", srcs16)
+        self.assertNotIn("epic-math/src/pic18/epic_math_mul.c", srcs16)
+        self.assertIn("epic-math/src/common/epic_math_sqrt.c", srcs16)
         srcs18 = self.m.sources_for("epic-math", "18F4550")
-        self.assertIn("epic-math/src/pic18/pic_math_mul.c", srcs18)
-        self.assertNotIn("epic-math/src/pic16/pic_math_mul.c", srcs18)
-        self.assertIn("epic-math/src/common/pic_math_sqrt.c", srcs18)
+        self.assertIn("epic-math/src/pic18/epic_math_mul.c", srcs18)
+        self.assertNotIn("epic-math/src/pic16/epic_math_mul.c", srcs18)
+        self.assertIn("epic-math/src/common/epic_math_sqrt.c", srcs18)
 
     def test_the_right_example_is_used_per_family(self):
         self.assertIn("epic-math/tests/target_smoke16.c",

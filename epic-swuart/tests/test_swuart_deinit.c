@@ -33,21 +33,21 @@ static int g_fails = 0;
 
 /** @brief Test-only hooks: see test_swuart_tx.c/test_swuart_rx.c.
  *         Defined in epic_swuart.c behind EPIC_SWUART_TEST_HOOKS.
- *         swuart_test_last_tx_mode always reads slot A's TX CCP
+ *         epic_swuart_test_last_tx_mode always reads slot A's TX CCP
  *         (CCP2CON), which is exactly the slot both channels in this
  *         test occupy in turn (only one channel is ever live at a time
  *         here). */
-extern uint8_t swuart_test_last_tx_mode(void);
+extern uint8_t epic_swuart_test_last_tx_mode(void);
 /** @brief Test hook: fire one channel A TX compare event. */
-extern void swuart_test_fire_tx_event(void);
+extern void epic_swuart_test_fire_tx_event(void);
 /** @brief Test hook: fire one channel A RX capture/compare event. */
-extern void swuart_test_fire_rx_event(void);
+extern void epic_swuart_test_fire_rx_event(void);
 #if EPIC_SWUART_HAS_RX_FAST_PATH
 /** @brief Test hook: inject the fast-path RX capture value. */
-extern void swuart_test_set_capture_fast(uint16_t value);
+extern void epic_swuart_test_set_capture_fast(uint16_t value);
 #else
 /** @brief Test hook: inject the generic RX capture value. */
-extern void swuart_test_set_capture(uint16_t value);
+extern void epic_swuart_test_set_capture(uint16_t value);
 #endif
 
 /** @brief DeInit host test main: teardown, SFR readback, re-init. */
@@ -80,8 +80,8 @@ int main(void)
      * not exposed via the header, but the handle struct itself is not
      * opaque; checking != 0 here is enough to prove "still mid-frame,
      * not idle" without needing the name. */
-    swuart_test_fire_tx_event();
-    swuart_test_fire_tx_event();
+    epic_swuart_test_fire_tx_event();
+    epic_swuart_test_fire_tx_event();
     CHECK(chan1.tx_state != 0u, "channel 1 genuinely mid-frame before DeInit");
 
     EPIC_StatusTypeDef deinit_st = EPIC_SWUART_DeInit(&chan1);
@@ -120,8 +120,8 @@ int main(void)
     static const uint8_t expected_modes[] = {8, 9, 9, 9, 9, 9, 8, 9, 8};
     int tx_ok = 1;
     for (size_t i = 0; i < 9; i++) {
-        swuart_test_fire_tx_event();
-        if (swuart_test_last_tx_mode() != expected_modes[i]) tx_ok = 0;
+        epic_swuart_test_fire_tx_event();
+        if (epic_swuart_test_last_tx_mode() != expected_modes[i]) tx_ok = 0;
     }
     CHECK(tx_ok, "channel 2 transmits the correct mode sequence after re-init");
     CHECK(chan2.tx_count == 0u, "channel 2 finished transmitting");
@@ -130,20 +130,20 @@ int main(void)
     static const uint8_t rx_bits[] = {0, 1, 0, 0, 0, 0, 0, 1, 0, 1};
     SIM_DRIVE('C', 2, rx_bits[0]);
 #if EPIC_SWUART_HAS_RX_FAST_PATH
-    swuart_test_set_capture_fast(1000u);
-    swuart_test_fire_rx_event(); /* one fire: deglitch check + arm d0,
+    epic_swuart_test_set_capture_fast(1000u);
+    epic_swuart_test_fire_rx_event(); /* one fire: deglitch check + arm d0,
                                    * IDLE -> DATA0 (see test_swuart_rx.c
                                    * for why this collapsed from two). */
 #else
     /* PIC18Fxx5x/PIC16F193X channel A keeps the generic two-fire
      * capture-then-confirm sequence; see rx_capture_event. */
-    swuart_test_set_capture(1000u);
-    swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
-    swuart_test_fire_rx_event(); /* confirm event, half a bit later */
+    epic_swuart_test_set_capture(1000u);
+    epic_swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
+    epic_swuart_test_fire_rx_event(); /* confirm event, half a bit later */
 #endif
     for (size_t i = 1; i < 10; i++) {
         SIM_DRIVE('C', 2, rx_bits[i]);
-        swuart_test_fire_rx_event(); /* compare event: sample + arm next */
+        epic_swuart_test_fire_rx_event(); /* compare event: sample + arm next */
     }
 
     uint8_t rx_buf[4] = {0};
@@ -152,6 +152,6 @@ int main(void)
     CHECK(rx_buf[0] == 0x41u, "channel 2 byte == 'A'");
     CHECK(EPIC_SWUART_GetErrorCount(&chan2) == 0u, "channel 2 no errors");
 
-    printf("swuart_deinit: fails=%d\n", g_fails);
+    printf("epic_swuart_deinit: fails=%d\n", g_fails);
     return g_fails == 0 ? 0 : 1;
 }

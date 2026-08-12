@@ -36,12 +36,12 @@ typedef struct {
     uint8_t argc;
     char args[8][64];
     int help_count;
-} console_ctx_t;
+} epic_console_ctx_t;
 
 /**
  * @brief Copy the dispatched tokens into the test context.
  */
-static void copy_args(console_ctx_t *ctx, uint8_t argc, char **argv)
+static void copy_args(epic_console_ctx_t *ctx, uint8_t argc, char **argv)
 {
     ctx->argc = argc;
     for (uint8_t i = 0; i < argc && i < 8u; i++) {
@@ -55,7 +55,7 @@ static void copy_args(console_ctx_t *ctx, uint8_t argc, char **argv)
  */
 static void cmd_capture(uint8_t argc, char **argv, void *ctx_)
 {
-    console_ctx_t *ctx = (console_ctx_t *)ctx_;
+    epic_console_ctx_t *ctx = (epic_console_ctx_t *)ctx_;
     ctx->call_count++;
     copy_args(ctx, argc, argv);
 }
@@ -63,7 +63,7 @@ static void cmd_capture(uint8_t argc, char **argv, void *ctx_)
 /**
  * @brief Zero the test context.
  */
-static void reset_ctx(console_ctx_t *ctx)
+static void reset_ctx(epic_console_ctx_t *ctx)
 {
     memset(ctx, 0, sizeof(*ctx));
 }
@@ -124,7 +124,7 @@ static void test_no_arg_dispatch(void)
 {
     reset_env();
 
-    console_ctx_t ctx;
+    epic_console_ctx_t ctx;
     epic_console_t con;
     static const epic_console_cmd_t table[] = {
         { "status", cmd_capture, "show status" },
@@ -147,7 +147,7 @@ static void test_multi_arg_tokenization(void)
 {
     reset_env();
 
-    console_ctx_t ctx;
+    epic_console_ctx_t ctx;
     epic_console_t con;
     static const epic_console_cmd_t table[] = {
         { "set", cmd_capture, "set value" },
@@ -172,7 +172,7 @@ static void test_backspace_behavior(void)
 {
     reset_env();
 
-    console_ctx_t ctx;
+    epic_console_ctx_t ctx;
     epic_console_t con;
     char tx[64] = {0};
     static const epic_console_cmd_t table[] = {
@@ -198,7 +198,7 @@ static void test_backspace_at_empty_line(void)
 {
     reset_env();
 
-    console_ctx_t ctx;
+    epic_console_ctx_t ctx;
     epic_console_t con;
     char tx[32] = {0};
     static const epic_console_cmd_t table[] = {
@@ -222,7 +222,7 @@ static void test_overlong_line_truncates_without_crashing(void)
 {
     reset_env();
 
-    console_ctx_t ctx;
+    epic_console_ctx_t ctx;
     epic_console_t con;
     static const epic_console_cmd_t table[] = {
         { "abcdefghijklmnopqrstuvwxyz12345", cmd_capture, "long command" },
@@ -246,7 +246,7 @@ static void test_crlf_is_one_terminator(void)
 {
     reset_env();
 
-    console_ctx_t ctx;
+    epic_console_ctx_t ctx;
     epic_console_t con;
     static const epic_console_cmd_t table[] = {
         { "go", cmd_capture, "run" },
@@ -267,7 +267,7 @@ static void test_unknown_command_ignored(void)
 {
     reset_env();
 
-    console_ctx_t ctx;
+    epic_console_ctx_t ctx;
     epic_console_t con;
     static const epic_console_cmd_t table[] = {
         { "known", cmd_capture, "known command" },
@@ -288,7 +288,7 @@ static void test_init_macro_table_len(void)
 {
     reset_env();
 
-    console_ctx_t ctx;
+    epic_console_ctx_t ctx;
     epic_console_t con;
     static const epic_console_cmd_t table[] = {
         { "a", cmd_capture, "A" },

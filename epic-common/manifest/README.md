@@ -90,8 +90,8 @@ its dependencies'.
 
 ```toml
 [modules.epic-math.sources_by_family]
-PIC16F87XA = ["src/pic16/pic_math_mul.c", "src/pic16/pic_math_scratch.c"]
-PIC18Fxx5x = ["src/pic18/pic_math_mul.c"]
+PIC16F87XA = ["src/pic16/epic_math_mul.c", "src/pic16/epic_math_scratch.c"]
+PIC18Fxx5x = ["src/pic18/epic_math_mul.c"]
 ```
 
 `epic-math` compiles a `src/pic16/` inline-asm backend on PIC16 and a

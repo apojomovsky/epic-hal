@@ -6,7 +6,7 @@
 
 #include "pid.h"
 
-static pid_t g_pid;
+static epic_pid_t g_pid;
 
 /**
  * @brief On-target build proof and footprint report.
@@ -17,9 +17,9 @@ static pid_t g_pid;
  */
 int main(void)
 {
-    pid_init(&g_pid, (int16_t)0x0100, (int16_t)0x0001, (int16_t)0x0000,
+    epic_pid_init(&g_pid, (int16_t)0x0100, (int16_t)0x0001, (int16_t)0x0000,
              (int16_t)-1000, (int16_t)1000);
     for (;;) {
-        (void)pid_update(&g_pid, (int16_t)0, (int16_t)0);
+        (void)epic_pid_update(&g_pid, (int16_t)0, (int16_t)0);
     }
 }

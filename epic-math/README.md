@@ -6,7 +6,7 @@ supports, **PIC16F87XA** (mid-range, no hardware multiply) and
 Microchip application notes **AN526** and **AN544** and modernized into one
 family-agnostic C library with a hand-written inline-asm core.
 
-- **One neutral public API** (`include/pic_math.h`, no `#ifdef`): multiply,
+- **One neutral public API** (`include/epic_math.h`, no `#ifdef`): multiply,
   divide/modulo, add/sub/negate, BCD, integer sqrt, numerical differentiation
   and integration, and two PRNGs, all by value/pointer, no hidden global
   arithmetic state.
@@ -58,12 +58,12 @@ PIC18 builds the full self-test.
 ## Use it in your own firmware
 
 ```c
-#include "pic_math.h"
+#include "epic_math.h"
 
-uint32_t scale = pic_math_mul_u16(adc_reading, factor);   /* no overflow */
-pic_math_udiv16_t d = pic_math_divmod_u16(n, 10, &ok);     /* ok=false on /0 */
-uint16_t r = pic_math_sqrt_u16(value);                      /* floor(sqrt) */
-uint16_t s; pic_math_rand_next(&s);                        /* explicit state */
+uint32_t scale = epic_math_mul_u16(adc_reading, factor);   /* no overflow */
+epic_math_udiv16_t d = epic_math_divmod_u16(n, 10, &ok);     /* ok=false on /0 */
+uint16_t r = epic_math_sqrt_u16(value);                      /* floor(sqrt) */
+uint16_t s; epic_math_rand_next(&s);                        /* explicit state */
 ```
 
 ## License

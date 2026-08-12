@@ -1,9 +1,9 @@
 /**
- * One encoder feeding encoder_get_position() into pid_update() as the
+ * One encoder feeding epic_encoder_get_position() into epic_pid_update() as the
  * measurement each control cycle. A simulated servo: each cycle reads the
  * encoder, steps the PID, applies the output to a first-order-lag plant,
  * then drives the encoder one quadrature edge at a time so
- * `encoder_get_position() == motor_angle` exactly. Host-only, no floats.
+ * `epic_encoder_get_position() == motor_angle` exactly. Host-only, no floats.
  */
 
 #include "encoder.h"
@@ -50,21 +50,21 @@ static int32_t g_driven = 0;
  * @brief Drive the encoder to `target` counts by feeding one Gray edge at a time.
  *
  * The decoder sees every single-bit transition (never a diagonal jump)
- * and encoder_get_position() == target exactly.
+ * and epic_encoder_get_position() == target exactly.
  */
-static void drive_encoder_to(encoder_t *enc, int32_t target)
+static void drive_encoder_to(epic_encoder_t *enc, int32_t target)
 {
     while (g_driven < target) {
         g_driven++;
-        encoder_update(enc, port_byte(gray_state(g_driven)));
+        epic_encoder_update(enc, port_byte(gray_state(g_driven)));
     }
     while (g_driven > target) {
         g_driven--;
-        encoder_update(enc, port_byte(gray_state(g_driven)));
+        epic_encoder_update(enc, port_byte(gray_state(g_driven)));
     }
 }
 
-/** @brief Close a PID loop on encoder_get_position() and check convergence. */
+/** @brief Close a PID loop on epic_encoder_get_position() and check convergence. */
 int main(void)
 {
     epic_harness_init(4000000UL);
@@ -73,19 +73,19 @@ int main(void)
     /* A PID tuned for a visible saturating step response (mirrors
      * example_pid_setpoint_step's choices). Output clamp tight enough that
      * anti-windup engages on the setpoint step. */
-    pid_t pid;
-    pid_init(&pid, q8(2.0f), q8(0.5f), q8(0.0f), -200, 200);
+    epic_pid_t pid;
+    epic_pid_init(&pid, q8(2.0f), q8(0.5f), q8(0.0f), -200, 200);
 
     /* Encoder on RB4/RB5, glitch gate off (the simulated motor is clean). */
-    encoder_t enc;
+    epic_encoder_t enc;
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5, GPIO_MODE_INPUT);
     EPIC_REG8(PIC_REG_PORTB) = port_byte(gray_state(0));
-    encoder_init(&enc, PIN_A, PIN_B, 0, EPIC_REG8(PIC_REG_PORTB));
+    epic_encoder_init(&enc, PIN_A, PIN_B, 0, EPIC_REG8(PIC_REG_PORTB));
 
     int32_t motor_angle = 0;
     int16_t setpoint    = 100;
 
-    printf("== Servo: PID closes on encoder_get_position(), setpoint %d ==\n",
+    printf("== Servo: PID closes on epic_encoder_get_position(), setpoint %d ==\n",
            (int)setpoint);
     printf("step | setpoint | encoder_meas |   output  | motor_angle | integrator_q8\n");
     /* Convergence = the encoder reading settles within 1 count of the
@@ -95,8 +95,8 @@ int main(void)
     int converged = 0;
     int last_step_logged = 0;
     for (int step = 0; step < 80; step++) {
-        int32_t meas = encoder_get_position(&enc);     /* the sensor reading */
-        int16_t output = pid_update(&pid, setpoint, (int16_t)meas);
+        int32_t meas = epic_encoder_get_position(&enc);     /* the sensor reading */
+        int16_t output = epic_pid_update(&pid, setpoint, (int16_t)meas);
 
         /* Plant: integer first-order lag, no floats. */
         int32_t delta = (output - motor_angle) / PLANT_N;
@@ -112,7 +112,7 @@ int main(void)
             last_step_logged = step;
         }
 
-        int32_t now = encoder_get_position(&enc);
+        int32_t now = epic_encoder_get_position(&enc);
         int32_t err = now - setpoint;
         if (err < 0) err = -err;
         if (err <= 1) {
@@ -122,17 +122,17 @@ int main(void)
         }
     }
 
-    int32_t final_meas = encoder_get_position(&enc);
+    int32_t final_meas = epic_encoder_get_position(&enc);
     printf("\nfinal encoder reading = %ld (setpoint %d)\n",
            (long)final_meas, (int)setpoint);
     printf("encoder errors = %u, glitches = %u\n",
-           (unsigned)encoder_get_error_count(&enc),
-           (unsigned)encoder_get_glitch_count(&enc));
+           (unsigned)epic_encoder_get_error_count(&enc),
+           (unsigned)epic_encoder_get_glitch_count(&enc));
 
     int32_t err = final_meas - setpoint;
     if (err < 0) err = -err;
     int ok = converged && (err <= 1) &&
-             (encoder_get_error_count(&enc) == 0) &&
-             (encoder_get_glitch_count(&enc) == 0);
+             (epic_encoder_get_error_count(&enc) == 0) &&
+             (epic_encoder_get_glitch_count(&enc) == 0);
     return epic_harness_report(ok);
 }

@@ -30,13 +30,13 @@ static int g_fails = 0;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); g_fails++; } } while (0)
 
 /** @brief Test hook: fire one channel A RX capture/compare event. */
-extern void swuart_test_fire_rx_event(void);
+extern void epic_swuart_test_fire_rx_event(void);
 #if EPIC_SWUART_HAS_RX_FAST_PATH
 /** @brief Test hook: inject the fast-path RX capture value. */
-extern void swuart_test_set_capture_fast(uint16_t value);
+extern void epic_swuart_test_set_capture_fast(uint16_t value);
 #else
 /** @brief Test hook: inject the generic RX capture value. */
-extern void swuart_test_set_capture(uint16_t value);
+extern void epic_swuart_test_set_capture(uint16_t value);
 #endif
 
 /** @brief RX-only host test main for the fast-path hot fix. */
@@ -50,8 +50,8 @@ int main(void)
 
     SIM_DRIVE('C', 2, bits[0]);
 #if EPIC_SWUART_HAS_RX_FAST_PATH
-    swuart_test_set_capture_fast(1000u);
-    swuart_test_fire_rx_event(); /* one fire: deglitch check (bits[0]=0,
+    epic_swuart_test_set_capture_fast(1000u);
+    epic_swuart_test_fire_rx_event(); /* one fire: deglitch check (bits[0]=0,
                                    * still on the line, passes) AND arms
                                    * d0's deadline, IDLE -> DATA0. The
                                    * old two-fire sequence (capture,
@@ -62,14 +62,14 @@ int main(void)
 #else
     /* PIC18Fxx5x/PIC16F193X channel A keeps the generic two-fire
      * capture-then-confirm sequence; see rx_capture_event. */
-    swuart_test_set_capture(1000u);
-    swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
-    swuart_test_fire_rx_event(); /* confirm event, half a bit later */
+    epic_swuart_test_set_capture(1000u);
+    epic_swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
+    epic_swuart_test_fire_rx_event(); /* confirm event, half a bit later */
 #endif
 
     for (size_t i = 1; i < 10; i++) {
         SIM_DRIVE('C', 2, bits[i]);
-        swuart_test_fire_rx_event(); /* compare event: sample + arm next */
+        epic_swuart_test_fire_rx_event(); /* compare event: sample + arm next */
     }
 
     uint8_t buf[4] = {0};
@@ -78,6 +78,6 @@ int main(void)
     CHECK(buf[0] == 0x41u, "byte == 'A'");
     CHECK(EPIC_SWUART_GetErrorCount(&h) == 0u, "no framing errors");
 
-    printf("swuart_rx: fails=%d\n", g_fails);
+    printf("epic_swuart_rx: fails=%d\n", g_fails);
     return g_fails == 0 ? 0 : 1;
 }

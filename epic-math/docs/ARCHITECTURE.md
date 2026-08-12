@@ -77,11 +77,11 @@ name-prefixed so no two routines share), runs the `asm()` body against
 those named symbols, and returns the `volatile` result:
 
 ```c
-/* src/pic18/pic_math_mul.c (XC8-only; #include <xc.h> for SFR symbols) */
+/* src/pic18/epic_math_mul.c (XC8-only; #include <xc.h> for SFR symbols) */
 static volatile uint8_t  m_mul_u8_a, m_mul_u8_b;
 static volatile uint16_t m_mul_u8_r;
 
-uint16_t pic_math_mul_u8(uint8_t a, uint8_t b)
+uint16_t epic_math_mul_u8(uint8_t a, uint8_t b)
 {
     m_mul_u8_a = a;             /* C store -- volatile, so not elided */
     m_mul_u8_b = b;
@@ -114,7 +114,7 @@ The load-bearing details:
   optimized away as dead. `volatile` forces both, bracketing the asm.
 - **`#include <xc.h>` in the XC8-only asm `.c` files** makes the device SFR
   symbols (`STATUS`, `WREG`, `PRODL`, `PRODH`) available to the assembler.
-  The public header `pic_math.h` stays `xc.h`-free (only `<stdint.h>`/
+  The public header `epic_math.h` stays `xc.h`-free (only `<stdint.h>`/
   `<stdbool.h>`), so the host build and library consumers never pull it in.
 - **STATUS bits are referenced by number, not name**: `btfsc STATUS,0` for
   carry, `STATUS,2` for zero, `STATUS,1` for digit-carry. XC8's assembler
@@ -145,7 +145,7 @@ The file-scratch convention has one per-family wrinkle the probe surfaced:
   object, which XC8 cannot split across banks, so it lands whole in one bank
   and one `banksel` covers every member, accessed by byte offset `(_m_x)+N`.
   The one shared object, the 16-byte `pic16_mscratch` buffer every PIC16
-  asm leaf routine operates on (pic_math_scratch.h), is `__at`-pinned to
+  asm leaf routine operates on (epic_math_scratch.h), is `__at`-pinned to
   common RAM (0x72-0x7D, 12 bytes, clear of the HAL RMW scratches at
   0x70/0x71 and the compiler's top-of-common-RAM area) instead of
   left to the linker: an unpinned
@@ -169,7 +169,7 @@ The file-scratch convention has one per-family wrinkle the probe surfaced:
 
 The probe confirmed XC8's optimizer already emits `mulwf` for idiomatic
 `return (uint16_t)a * (uint16_t)b` with `uint8_t` operands on PIC18. So
-for `pic_math_mul_u8` the hand-asm and the plain-C paths produce
+for `epic_math_mul_u8` the hand-asm and the plain-C paths produce
 equivalent `mulwf` code. The hand-written asm genuinely earns its keep on
 the **structured** routines, the 16×16 multiply built from three partial
 products, the restoring shift-subtract divide loop, the BCD digit-adjust.
@@ -186,8 +186,8 @@ primitives keep **per-function** file-scope scratch. This is deliberately
 narrower than the app notes' hazard, and the testability concern is fully
 eliminated:
 
-- **Per-function, name-prefixed scratch**, `pic_math_mul_u8`'s scratch
-  is distinct from `pic_math_divmod_u16`'s, so two call sites of *different*
+- **Per-function, name-prefixed scratch**, `epic_math_mul_u8`'s scratch
+  is distinct from `epic_math_divmod_u16`'s, so two call sites of *different*
   routines can never collide (AN526's cross-routine `ACCa` collision is
   impossible; callers never see or name the scratch).
 - **Written before read, every call**, no stale-state bug; the wrapper
@@ -199,10 +199,10 @@ The one residual hazard is **interrupt re-entrancy of the same leaf
 function**: if an ISR runs the same routine while main is mid-computation
 in it, the shared scratch is corrupted. This is the same limitation the
 PIC16 compiled-stack already imposes on any non-`reentrant` function, and
-AN526/AN544 had it too. Callers that need to call a `pic_math_*` primitive
+AN526/AN544 had it too. Callers that need to call a `epic_math_*` primitive
 from both main-loop and ISR context should bracket the ISR call with
 `EPIC_IRQ_Disable`/`EPIC_IRQ_Restore` (the family-neutral contract the rest
-of this repo already uses); a future `PIC_MATH_REENTRANT` build knob could
+of this repo already uses); a future `EPIC_MATH_REENTRANT` build knob could
 add that bracket inside the wrappers if a caller needs it as a default.
 
 ## Testing tiers

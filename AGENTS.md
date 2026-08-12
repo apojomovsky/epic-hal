@@ -140,6 +140,13 @@ codebase so far.
   PIC16F193X BSR-addressing probe).
 - **No em-dashes (—).** Not in docs, not in commit messages, not in code
   comments. Use a comma, a colon, or a period and a new sentence instead.
+- **API naming:** module `epic-X` exports `epic_x_*` (lowercase, e.g.
+  `epic_serial_init`); HALs export `EPIC_*` uppercase for the
+  cross-family contract (EPIC_GPIO_Init); family-internal helpers use
+  the family prefix (`pic16f87xa_*`, `pic18_*`, `pic16f193x_*`);
+  epic-common harness glue uses `epic_*`; third-party keeps its own
+  names. A module's public symbols never use a bare short prefix
+  (`fsm_*`, `task_manager_*`).
 
 ## Expression conventions (comments and docs)
 

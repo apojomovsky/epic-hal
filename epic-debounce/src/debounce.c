@@ -55,7 +55,7 @@ static inline void set_stable(uint8_t *flags, bool val)
  * @param read_ctx    opaque context passed to `read` (may be NULL).
  * @param debounce_ms stability window in ms.
  */
-void debounce_init(debounce_t *db, debounce_read_fn read, void *read_ctx,
+void epic_debounce_init(epic_debounce_t *db, epic_debounce_read_fn read, void *read_ctx,
                    uint16_t debounce_ms)
 {
     db->read           = read;
@@ -74,7 +74,7 @@ void debounce_init(debounce_t *db, debounce_read_fn read, void *read_ctx,
  * @return `DEBOUNCE_EVENT_PRESSED`, `DEBOUNCE_EVENT_RELEASED`, or
  *         `DEBOUNCE_EVENT_NONE`.
  */
-debounce_event_t debounce_poll(debounce_t *db)
+epic_debounce_event_t epic_debounce_poll(epic_debounce_t *db)
 {
     bool raw       = db->read(db->read_ctx);
     bool candidate = get_candidate(db->flags);
@@ -100,7 +100,7 @@ debounce_event_t debounce_poll(debounce_t *db)
  * @param db the instance to query.
  * @return true when the stable state is active.
  */
-bool debounce_is_active(const debounce_t *db)
+bool epic_debounce_is_active(const epic_debounce_t *db)
 {
     return get_stable(db->flags);
 }

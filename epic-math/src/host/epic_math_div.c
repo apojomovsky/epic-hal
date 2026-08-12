@@ -6,7 +6,7 @@
  * documented in docs/API.md.
  */
 
-#include "pic_math.h"
+#include "epic_math.h"
 
 /**
  * @brief  Unsigned 16/16 divide with remainder (host oracle).
@@ -15,9 +15,9 @@
  * @param  ok   out: true if den != 0; may be NULL
  * @return { quotient = num/den, remainder = num%den }.
  */
-pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
+epic_math_udiv16_t epic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
 {
-    pic_math_udiv16_t r = { 0u, 0u };
+    epic_math_udiv16_t r = { 0u, 0u };
     if (den == 0u) { if (ok) *ok = false; return r; }
     if (ok) *ok = true;
     r.quotient  = (uint16_t)(num / den);
@@ -34,9 +34,9 @@ pic_math_udiv16_t pic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
  * @param  ok   out: true if den != 0; may be NULL
  * @return { quotient = num/den, remainder = num%den } (C99 truncation).
  */
-pic_math_sdiv16_t pic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
+epic_math_sdiv16_t epic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
 {
-    pic_math_sdiv16_t r = { 0, 0 };
+    epic_math_sdiv16_t r = { 0, 0 };
     if (den == 0) { if (ok) *ok = false; return r; }
     if (ok) *ok = true;
     /* int is 32-bit on the host; computing in int32 avoids INT16_MIN/-1 UB.
@@ -57,9 +57,9 @@ pic_math_sdiv16_t pic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
  * @param  ok   out: true if den != 0; may be NULL
  * @return { quotient = (uint16_t)(num/den), remainder = num%den }.
  */
-pic_math_udiv16_t pic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
+epic_math_udiv16_t epic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
 {
-    pic_math_udiv16_t r = { 0u, 0u };
+    epic_math_udiv16_t r = { 0u, 0u };
     if (den == 0u) { if (ok) *ok = false; return r; }
     if (ok) *ok = true;
     /* Quotient is truncated to 16 bits: caller must ensure num < den*65536

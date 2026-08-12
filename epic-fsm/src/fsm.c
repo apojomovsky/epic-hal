@@ -14,8 +14,8 @@
  * @param initial_state  state the machine starts in
  * @param ctx            opaque context passed to guards/actions, or NULL
  */
-void fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len,
-              fsm_state_t initial_state, void *ctx)
+void epic_fsm_init(epic_fsm_t *fsm, const epic_fsm_transition_t *table, uint8_t table_len,
+              epic_fsm_state_t initial_state, void *ctx)
 {
     fsm->table     = table;
     fsm->table_len = table_len;
@@ -30,14 +30,14 @@ void fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len,
  * @param event  the event to feed
  * @return true if a row fired; false if none matched
  */
-bool fsm_dispatch(fsm_t *fsm, fsm_event_t event)
+bool epic_fsm_dispatch(epic_fsm_t *fsm, epic_fsm_event_t event)
 {
     uint8_t i;
 
     for (i = 0; i < fsm->table_len; i++) {
-        const fsm_transition_t *row = &fsm->table[i];
+        const epic_fsm_transition_t *row = &fsm->table[i];
 
-        if ((row->state != fsm->state) && (row->state != FSM_ANY_STATE)) {
+        if ((row->state != fsm->state) && (row->state != EPIC_FSM_ANY_STATE)) {
             continue;
         }
         if (row->event != event) {
@@ -63,7 +63,7 @@ bool fsm_dispatch(fsm_t *fsm, fsm_event_t event)
  * @param fsm the machine to query
  * @return the state the machine is currently in
  */
-fsm_state_t fsm_state(const fsm_t *fsm)
+epic_fsm_state_t epic_fsm_state(const epic_fsm_t *fsm)
 {
     return fsm->state;
 }

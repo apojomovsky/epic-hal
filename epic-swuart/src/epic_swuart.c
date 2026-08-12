@@ -148,12 +148,12 @@ static void on_tx_event_b(void) { tx_compare_event(g_chan_b, SWUART_CCP_TX_B); }
  *         this stays correct even on PIC16F193X where channel B exists
  *         too.
  * @return the raw CCP2CON register value. */
-uint8_t swuart_test_last_tx_mode(void) { return (uint8_t)EPIC_REG8(PIC_REG_CCP2CON); }
+uint8_t epic_swuart_test_last_tx_mode(void) { return (uint8_t)EPIC_REG8(PIC_REG_CCP2CON); }
 /** @brief Test hook: channel A's last armed TX deadline.
  * @return g_chan_a->tx_deadline. */
-uint16_t swuart_test_last_tx_compare(void) { return g_chan_a->tx_deadline; }
+uint16_t epic_swuart_test_last_tx_compare(void) { return g_chan_a->tx_deadline; }
 /** @brief Test hook: fire one channel A TX compare event. */
-void swuart_test_fire_tx_event(void) { on_tx_event_a(); }
+void epic_swuart_test_fire_tx_event(void) { on_tx_event_a(); }
 #if EPIC_SWUART_MAX_CHANNELS >= 2
 /**
  * @brief  Channel B's own TX hooks. PIC_REG_CCP4CON is channel B's real
@@ -164,12 +164,12 @@ void swuart_test_fire_tx_event(void) { on_tx_event_a(); }
  *         EPIC_SWUART_Write's dispatch fix).
  * @return the raw CCP4CON register value.
  */
-uint8_t swuart_test_last_tx_mode_b(void) { return (uint8_t)EPIC_REG8(PIC_REG_CCP4CON); }
+uint8_t epic_swuart_test_last_tx_mode_b(void) { return (uint8_t)EPIC_REG8(PIC_REG_CCP4CON); }
 /** @brief Test hook: channel B's last armed TX deadline.
  * @return g_chan_b->tx_deadline. */
-uint16_t swuart_test_last_tx_compare_b(void) { return g_chan_b->tx_deadline; }
+uint16_t epic_swuart_test_last_tx_compare_b(void) { return g_chan_b->tx_deadline; }
 /** @brief Test hook: fire one channel B TX compare event. */
-void swuart_test_fire_tx_event_b(void) { on_tx_event_b(); }
+void epic_swuart_test_fire_tx_event_b(void) { on_tx_event_b(); }
 #endif
 #endif
 
@@ -207,7 +207,7 @@ static uint16_t g_test_capture_value = 0u;
 /** @brief Test hook: override the RX capture value the next
  *         rx_capture_event reads.
  * @param value the value to return from test_get_capture. */
-void swuart_test_set_capture(uint16_t value) { g_test_capture_value = value; }
+void epic_swuart_test_set_capture(uint16_t value) { g_test_capture_value = value; }
 /** @brief Test hook: the capture value for the RX instance, served from
  *         the injected test value instead of real hardware.
  * @param rx_inst the RX CCP instance (unused: one shared test value).
@@ -312,7 +312,7 @@ static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef r
  *         flows through the exact production code path, not a separate
  *         indirection layer.
  * @param value the capture value to inject. */
-void swuart_test_set_capture_fast(uint16_t value)
+void epic_swuart_test_set_capture_fast(uint16_t value)
 {
     EPIC_REG8(CCP1_CPRH_ADDR) = (uint8_t)(value >> 8);
     EPIC_REG8(CCP1_CPRL_ADDR) = (uint8_t)(value & 0xFFu);
@@ -403,10 +403,10 @@ static void on_rx_event_b(void) { rx_capture_event(g_chan_b, SWUART_CCP_RX_B); }
 
 #if EPIC_SWUART_TEST_HOOKS
 /** @brief Test hook: fire one channel A RX capture/compare event. */
-void swuart_test_fire_rx_event(void) { on_rx_event_a(); }
+void epic_swuart_test_fire_rx_event(void) { on_rx_event_a(); }
 #if EPIC_SWUART_MAX_CHANNELS >= 2
 /** @brief Test hook: fire one channel B RX capture/compare event. */
-void swuart_test_fire_rx_event_b(void) { on_rx_event_b(); }
+void epic_swuart_test_fire_rx_event_b(void) { on_rx_event_b(); }
 #endif
 #endif
 

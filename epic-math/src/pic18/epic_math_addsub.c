@@ -7,7 +7,7 @@
  */
 
 #include <xc.h>
-#include "pic_math.h"
+#include "epic_math.h"
 
 /* 16-bit add. Low bytes add (sets C); addwfc folds the carry into the
  * high byte, which movf preserves. Worked example 0xFFFF+0x0002 ->
@@ -24,7 +24,7 @@ static volatile uint8_t  m_add_co;
  * @param  carry_out  set true on overflow (sum > 65535); may be NULL.
  * @return (a + b) truncated to 16 bits.
  */
-uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out)
+uint16_t epic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out)
 {
     m_add_a = a; m_add_b = b; m_add_co = 0;
     asm("banksel _m_add_a");
@@ -55,7 +55,7 @@ static volatile uint8_t  m_sub_bo;
  * @param  borrow_out  set true on underflow (a < b); may be NULL.
  * @return (a - b) truncated to 16 bits.
  */
-uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out)
+uint16_t epic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out)
 {
     m_sub_a = a; m_sub_b = b; m_sub_bo = 0;
     asm("banksel _m_sub_a");
@@ -82,7 +82,7 @@ static volatile int16_t m_neg_r;
  * @param  v  value to negate, -32768..32767
  * @return -v; INT16_MIN negates to itself (two's-complement wrap).
  */
-int16_t pic_math_negate_s16(int16_t v)
+int16_t epic_math_negate_s16(int16_t v)
 {
     m_neg_v = v;
     asm("banksel _m_neg_v");
@@ -107,7 +107,7 @@ static volatile int32_t m_neg32_r;
  * @param  v  value to negate, -2147483648..2147483647
  * @return -v; INT32_MIN negates to itself (two's-complement wrap).
  */
-int32_t pic_math_negate_s32(int32_t v)
+int32_t epic_math_negate_s32(int32_t v)
 {
     m_neg32_v = v;
     asm("banksel _m_neg32_v");

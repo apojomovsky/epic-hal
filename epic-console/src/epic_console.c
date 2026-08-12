@@ -11,7 +11,7 @@
  *
  * @param s the string to write
  */
-static void console_write_str(const char *s)
+static void epic_console_write_str(const char *s)
 {
     (void)epic_serial_write((const uint8_t *)s, (int)strlen(s));
 }
@@ -26,7 +26,7 @@ static void console_write_str(const char *s)
  * @param argv array receiving the token start pointers
  * @return the number of tokens found
  */
-static uint8_t console_tokenize(char *line, char **argv)
+static uint8_t epic_console_tokenize(char *line, char **argv)
 {
     uint8_t argc = 0u;
     char *p = line;
@@ -63,13 +63,13 @@ static uint8_t console_tokenize(char *line, char **argv)
  *
  * @param con the console whose line to dispatch
  */
-static void console_dispatch(epic_console_t *con)
+static void epic_console_dispatch(epic_console_t *con)
 {
     char *argv[EPIC_CONSOLE_MAX_ARGS];
     uint8_t argc;
 
     con->line[con->line_len] = '\0';
-    argc = console_tokenize(con->line, argv);
+    argc = epic_console_tokenize(con->line, argv);
     if (argc == 0u) {
         con->line_len = 0u;
         return;
@@ -133,8 +133,8 @@ void epic_console_poll(epic_console_t *con)
                 continue;
             }
 
-            console_write_str("\r\n");
-            console_dispatch(con);
+            epic_console_write_str("\r\n");
+            epic_console_dispatch(con);
             con->last_was_cr = (ch == '\r');
             continue;
         }
@@ -145,7 +145,7 @@ void epic_console_poll(epic_console_t *con)
             if (con->line_len > 0u) {
                 con->line_len--;
                 con->line[con->line_len] = '\0';
-                console_write_str("\b \b");
+                epic_console_write_str("\b \b");
             }
             continue;
         }
@@ -168,9 +168,9 @@ void epic_console_poll(epic_console_t *con)
 void epic_console_print_help(const epic_console_t *con)
 {
     for (uint8_t i = 0; i < con->table_len; i++) {
-        console_write_str(con->table[i].name);
-        console_write_str(" - ");
-        console_write_str(con->table[i].help != NULL ? con->table[i].help : "");
-        console_write_str("\r\n");
+        epic_console_write_str(con->table[i].name);
+        epic_console_write_str(" - ");
+        epic_console_write_str(con->table[i].help != NULL ? con->table[i].help : "");
+        epic_console_write_str("\r\n");
     }
 }
