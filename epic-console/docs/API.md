@@ -45,7 +45,7 @@ Initializes an instance with a table, row count, and opaque caller context.
 ### `EPIC_CONSOLE_INIT(con, table, ctx)`
 
 Convenience macro that computes `table_len` via `sizeof(table) /
-sizeof(table[0])`. As with `FSM_INIT`, call it with the actual array, not a
+sizeof(table[0])`. As with `EPIC_FSM_INIT`, call it with the actual array, not a
 decayed pointer.
 
 ### `void epic_console_poll(epic_console_t *con);`

@@ -9,12 +9,12 @@
 enum { ST_A, ST_B };
 enum { EV_GO };
 
-static const fsm_transition_t transitions[] = {
+static const epic_fsm_transition_t transitions[] = {
     { ST_A, EV_GO, NULL, NULL, ST_B },
     { ST_B, EV_GO, NULL, NULL, ST_A },
 };
 
-static fsm_t g_fsm;
+static epic_fsm_t g_fsm;
 
 /**
  * @brief On-target build proof and footprint report.
@@ -25,7 +25,7 @@ static fsm_t g_fsm;
  */
 int main(void)
 {
-    FSM_INIT(&g_fsm, transitions, ST_A, NULL);
+    EPIC_FSM_INIT(&g_fsm, transitions, ST_A, NULL);
     for (;;) {
         epic_fsm_dispatch(&g_fsm, EV_GO);
     }

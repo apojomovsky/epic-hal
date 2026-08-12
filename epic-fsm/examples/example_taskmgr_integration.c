@@ -1,5 +1,5 @@
 /**
- * epic-fsm composed with epic-taskmgr: a task callback owns an fsm_t and
+ * epic-fsm composed with epic-taskmgr: a task callback owns an epic_fsm_t and
  * dispatches into it, no special integration needed. Built only with
  * -DEPIC_FSM_BUILD_TASKMGR_EXAMPLE=ON.
  */
@@ -13,7 +13,7 @@ enum { ST_IDLE, ST_ARMED };
 enum { EV_PRESS, EV_TIMEOUT };
 
 typedef struct {
-    fsm_t    fsm;
+    epic_fsm_t    fsm;
     uint8_t  arm_count;
 } button_t;
 
@@ -25,7 +25,7 @@ static void on_arm(void *ctx)
     epic_harness_log("  armed (count=%u)\n", (unsigned)b->arm_count);
 }
 
-static const fsm_transition_t button_transitions[] = {
+static const epic_fsm_transition_t button_transitions[] = {
     { ST_IDLE,  EV_PRESS,   NULL, on_arm, ST_ARMED },
     { ST_ARMED, EV_TIMEOUT, NULL, NULL,   ST_IDLE  },
 };
@@ -51,10 +51,10 @@ static void button_task(void *arg)
     }
 }
 
-/** @brief Compose an fsm_t with epic-taskmgr and drive it via the harness. */
+/** @brief Compose an epic_fsm_t with epic-taskmgr and drive it via the harness. */
 int main(void)
 {
-    FSM_INIT(&g_button.fsm, button_transitions, ST_IDLE, &g_button);
+    EPIC_FSM_INIT(&g_button.fsm, button_transitions, ST_IDLE, &g_button);
     g_button.arm_count = 0;
 
     epic_taskmgr_init();

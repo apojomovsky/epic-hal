@@ -41,19 +41,19 @@ static void on_fault(void *ctx)
     c->fault_calls++;
 }
 
-static const fsm_transition_t light_transitions[] = {
+static const epic_fsm_transition_t light_transitions[] = {
     { ST_RED,        EV_TIMER, NULL, NULL,       ST_GREEN  },
     { ST_GREEN,      EV_TIMER, NULL, on_caution, ST_YELLOW },
     { ST_YELLOW,     EV_TIMER, NULL, NULL,       ST_RED    },
-    { FSM_ANY_STATE, EV_FAULT, NULL, on_fault,   ST_FAULT  },
+    { EPIC_FSM_ANY_STATE, EV_FAULT, NULL, on_fault,   ST_FAULT  },
 };
 
 /** @brief RED->GREEN->YELLOW->RED cycle with the action firing once. */
 static void test_basic_cycle(void)
 {
     light_ctx_t ctx = { 0, 0 };
-    fsm_t fsm;
-    FSM_INIT(&fsm, light_transitions, ST_RED, &ctx);
+    epic_fsm_t fsm;
+    EPIC_FSM_INIT(&fsm, light_transitions, ST_RED, &ctx);
 
     CHECK(epic_fsm_state(&fsm) == ST_RED, "initial state is RED");
 
@@ -68,22 +68,22 @@ static void test_basic_cycle(void)
     CHECK(epic_fsm_state(&fsm) == ST_RED, "YELLOW+TIMER -> RED (full cycle)");
 }
 
-/** @brief FSM_ANY_STATE row matches from any current state. */
+/** @brief EPIC_FSM_ANY_STATE row matches from any current state. */
 static void test_any_state_wildcard(void)
 {
     light_ctx_t ctx = { 0, 0 };
-    fsm_t fsm;
+    epic_fsm_t fsm;
 
-    FSM_INIT(&fsm, light_transitions, ST_RED, &ctx);
+    EPIC_FSM_INIT(&fsm, light_transitions, ST_RED, &ctx);
     CHECK(epic_fsm_dispatch(&fsm, EV_FAULT) == true, "FAULT fires from RED");
     CHECK(epic_fsm_state(&fsm) == ST_FAULT, "RED+FAULT -> FAULT");
     CHECK(ctx.fault_calls == 1, "on_fault ran");
 
-    FSM_INIT(&fsm, light_transitions, ST_GREEN, &ctx);
+    EPIC_FSM_INIT(&fsm, light_transitions, ST_GREEN, &ctx);
     CHECK(epic_fsm_dispatch(&fsm, EV_FAULT) == true, "FAULT fires from GREEN");
     CHECK(epic_fsm_state(&fsm) == ST_FAULT, "GREEN+FAULT -> FAULT");
 
-    FSM_INIT(&fsm, light_transitions, ST_YELLOW, &ctx);
+    EPIC_FSM_INIT(&fsm, light_transitions, ST_YELLOW, &ctx);
     CHECK(epic_fsm_dispatch(&fsm, EV_FAULT) == true, "FAULT fires from YELLOW");
     CHECK(epic_fsm_state(&fsm) == ST_FAULT, "YELLOW+FAULT -> FAULT");
 }
@@ -92,8 +92,8 @@ static void test_any_state_wildcard(void)
 static void test_unhandled_event(void)
 {
     light_ctx_t ctx = { 0, 0 };
-    fsm_t fsm;
-    FSM_INIT(&fsm, light_transitions, ST_FAULT, &ctx);
+    epic_fsm_t fsm;
+    EPIC_FSM_INIT(&fsm, light_transitions, ST_FAULT, &ctx);
 
     /* No row matches (ST_FAULT, EV_TIMER): dispatch must report false and
      * leave state untouched. */
@@ -137,7 +137,7 @@ static void buzz_rejected(void *ctx)
     c->buzz_calls++;
 }
 
-static const fsm_transition_t turnstile_transitions[] = {
+static const epic_fsm_transition_t turnstile_transitions[] = {
     { ST_LOCKED,   EV_COIN, has_sufficient_credit, do_unlock,     ST_UNLOCKED },
     { ST_LOCKED,   EV_COIN, NULL,                  buzz_rejected, ST_LOCKED   },
     { ST_UNLOCKED, EV_PUSH, NULL,                  NULL,          ST_LOCKED   },
@@ -147,8 +147,8 @@ static const fsm_transition_t turnstile_transitions[] = {
 static void test_guard_fallthrough(void)
 {
     turnstile_ctx_t ctx = { 0, 0, 0 };
-    fsm_t fsm;
-    FSM_INIT(&fsm, turnstile_transitions, ST_LOCKED, &ctx);
+    epic_fsm_t fsm;
+    EPIC_FSM_INIT(&fsm, turnstile_transitions, ST_LOCKED, &ctx);
 
     /* Insufficient credit: first row's guard rejects, falls through to the
      * unconditional second row. */
@@ -176,10 +176,10 @@ static void test_independent_instances(void)
 {
     light_ctx_t ctx_a = { 0, 0 };
     light_ctx_t ctx_b = { 0, 0 };
-    fsm_t fsm_a, fsm_b;
+    epic_fsm_t fsm_a, fsm_b;
 
-    FSM_INIT(&fsm_a, light_transitions, ST_RED, &ctx_a);
-    FSM_INIT(&fsm_b, light_transitions, ST_RED, &ctx_b);
+    EPIC_FSM_INIT(&fsm_a, light_transitions, ST_RED, &ctx_a);
+    EPIC_FSM_INIT(&fsm_b, light_transitions, ST_RED, &ctx_b);
 
     epic_fsm_dispatch(&fsm_a, EV_TIMER);
     CHECK(epic_fsm_state(&fsm_a) == ST_GREEN, "instance A advanced");
@@ -190,16 +190,16 @@ static void test_independent_instances(void)
     CHECK(epic_fsm_state(&fsm_a) == ST_GREEN, "instance A untouched by B's dispatch");
 }
 
-/** @brief FSM_INIT's sizeof/sizeof table_len computation. */
+/** @brief EPIC_FSM_INIT's sizeof/sizeof table_len computation. */
 
 static void test_fsm_init_table_len(void)
 {
     light_ctx_t ctx = { 0, 0 };
-    fsm_t fsm;
-    FSM_INIT(&fsm, light_transitions, ST_RED, &ctx);
+    epic_fsm_t fsm;
+    EPIC_FSM_INIT(&fsm, light_transitions, ST_RED, &ctx);
 
     CHECK(fsm.table_len == (sizeof(light_transitions) / sizeof(light_transitions[0])),
-          "FSM_INIT computed table_len matches the array's real row count");
+          "EPIC_FSM_INIT computed table_len matches the array's real row count");
 }
 
 /** @brief Run every epic-fsm unit test and report the failure count. */
