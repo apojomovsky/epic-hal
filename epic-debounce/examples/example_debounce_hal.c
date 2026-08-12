@@ -41,9 +41,9 @@ int main(void)
 
     pin_ctx_t pin_a = { GPIOA, GPIO_PIN_0 };
     pin_ctx_t pin_b = { GPIOA, GPIO_PIN_1 };
-    debounce_t db_a, db_b;
-    debounce_init(&db_a, read_pin, &pin_a, DB_MS);
-    debounce_init(&db_b, read_pin, &pin_b, DB_MS);
+    epic_debounce_t db_a, db_b;
+    epic_debounce_init(&db_a, read_pin, &pin_a, DB_MS);
+    epic_debounce_init(&db_b, read_pin, &pin_b, DB_MS);
 
     int events = 0;
     for (uint32_t i = 0; epic_harness_running(i); i++) {
@@ -54,8 +54,8 @@ int main(void)
 
         epic_harness_tick();
 
-        debounce_event_t ea = debounce_poll(&db_a);
-        debounce_event_t eb = debounce_poll(&db_b);
+        epic_debounce_event_t ea = epic_debounce_poll(&db_a);
+        epic_debounce_event_t eb = epic_debounce_poll(&db_b);
         if (ea != DEBOUNCE_EVENT_NONE) {
             epic_harness_log("[t=%lu] A: %s\n", (unsigned long)t,
                              ea == DEBOUNCE_EVENT_PRESSED ? "PRESSED" : "RELEASED");

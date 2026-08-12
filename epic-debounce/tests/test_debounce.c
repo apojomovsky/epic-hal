@@ -1,6 +1,6 @@
 /**
  * Host tests for the debounce engine: scripted bounce sequences through
- * a mock `debounce_read_fn`, with real simulated time advanced 1 ms per
+ * a mock `epic_debounce_read_fn`, with real simulated time advanced 1 ms per
  * poll via epic_tick_init + epic_harness_tick.
  */
 
@@ -35,10 +35,10 @@ static void advance_ms(uint32_t ms) { for (uint32_t i = 0; i < ms; i++) advance_
 /**
  * @brief  Advance one millisecond and poll the debounce instance.
  */
-static debounce_event_t step(debounce_t *db)
+static epic_debounce_event_t step(epic_debounce_t *db)
 {
     advance_ms(1);
-    return debounce_poll(db);
+    return epic_debounce_poll(db);
 }
 
 /**
@@ -51,13 +51,13 @@ static void test_clean_transition(void)
     g_idx = 0;
     for (int i = 0; i < 512; i++) g_script[i] = (i >= 15 && i < 30);
 
-    debounce_t db;
-    debounce_init(&db, mock_read, NULL, DEBOUNCE_MS);  /* reads g_script[0]=false */
-    CHECK(!debounce_is_active(&db), "clean: init inactive");
+    epic_debounce_t db;
+    epic_debounce_init(&db, mock_read, NULL, DEBOUNCE_MS);  /* reads g_script[0]=false */
+    CHECK(!epic_debounce_is_active(&db), "clean: init inactive");
 
     int presses = 0, releases = 0;
     for (int i = 0; i < 40; i++) {
-        debounce_event_t ev = step(&db);
+        epic_debounce_event_t ev = step(&db);
         if (ev == DEBOUNCE_EVENT_PRESSED)  presses++;
         if (ev == DEBOUNCE_EVENT_RELEASED) releases++;
     }
@@ -66,7 +66,7 @@ static void test_clean_transition(void)
      * (poll i=29). 5 ms later (poll i=34): RELEASED. */
     CHECK(presses == 1, "clean: exactly 1 PRESSED");
     CHECK(releases == 1, "clean: exactly 1 RELEASED");
-    CHECK(!debounce_is_active(&db), "clean: inactive after release");
+    CHECK(!epic_debounce_is_active(&db), "clean: inactive after release");
 }
 
 /**
@@ -83,19 +83,19 @@ static void test_bouncy_transition(void)
         else if (i < 16) g_script[i] = (i % 2 == 0);  /* 10=T,11=F,12=T,13=F,14=T,15=F */
         else g_script[i] = true;                       /* stable from 16 onward */
     }
-    debounce_t db;
-    debounce_init(&db, mock_read, NULL, DEBOUNCE_MS);  /* reads g_script[0]=false */
+    epic_debounce_t db;
+    epic_debounce_init(&db, mock_read, NULL, DEBOUNCE_MS);  /* reads g_script[0]=false */
 
     int presses = 0;
     for (int i = 0; i < 40; i++) {
-        debounce_event_t ev = step(&db);
+        epic_debounce_event_t ev = step(&db);
         if (ev == DEBOUNCE_EVENT_PRESSED) presses++;
     }
     /* The bouncy flips (calls 10..15) keep resetting the candidate timer.
      * From call 16 (poll i=15) the raw is stably true. 5 ms later
      * (poll i=20): PRESSED. Exactly 1, not one per flip. */
     CHECK(presses == 1, "bouncy: exactly 1 PRESSED despite flips");
-    CHECK(debounce_is_active(&db), "bouncy: active after settle");
+    CHECK(epic_debounce_is_active(&db), "bouncy: active after settle");
 }
 
 /**
@@ -109,18 +109,18 @@ static void test_reversed_before_window(void)
     g_idx = 0;
     for (int i = 0; i < 512; i++) g_script[i] = (i >= 10 && i < 13);
 
-    debounce_t db;
-    debounce_init(&db, mock_read, NULL, DEBOUNCE_MS);
+    epic_debounce_t db;
+    epic_debounce_init(&db, mock_read, NULL, DEBOUNCE_MS);
 
     int presses = 0, releases = 0;
     for (int i = 0; i < 30; i++) {
-        debounce_event_t ev = step(&db);
+        epic_debounce_event_t ev = step(&db);
         if (ev == DEBOUNCE_EVENT_PRESSED)  presses++;
         if (ev == DEBOUNCE_EVENT_RELEASED) releases++;
     }
     CHECK(presses == 0, "reversed: no PRESSED (true didn't hold)");
     CHECK(releases == 0, "reversed: no RELEASED (false was already stable)");
-    CHECK(!debounce_is_active(&db), "reversed: stayed inactive");
+    CHECK(!epic_debounce_is_active(&db), "reversed: stayed inactive");
 }
 
 /**
@@ -133,17 +133,17 @@ static void test_init_already_active(void)
     g_idx = 0;
     for (int i = 0; i < 512; i++) g_script[i] = true;
 
-    debounce_t db;
-    debounce_init(&db, mock_read, NULL, DEBOUNCE_MS);
-    CHECK(debounce_is_active(&db), "init-active: is_active at init");
+    epic_debounce_t db;
+    epic_debounce_init(&db, mock_read, NULL, DEBOUNCE_MS);
+    CHECK(epic_debounce_is_active(&db), "init-active: is_active at init");
 
     int presses = 0;
     for (int i = 0; i < 20; i++) {
-        debounce_event_t ev = step(&db);
+        epic_debounce_event_t ev = step(&db);
         if (ev == DEBOUNCE_EVENT_PRESSED) presses++;
     }
     CHECK(presses == 0, "init-active: no spurious PRESSED after window");
-    CHECK(debounce_is_active(&db), "init-active: still active");
+    CHECK(epic_debounce_is_active(&db), "init-active: still active");
 }
 
 /**
@@ -152,13 +152,13 @@ static void test_init_already_active(void)
 static void test_two_independent_instances(void)
 {
     /* Run A fully, then B fully with a fresh script, confirming the
-     * debounce_t structs are independent (B's result is unaffected by
+     * epic_debounce_t structs are independent (B's result is unaffected by
      * A's prior run). test_concurrent_independence below covers true
      * interleaved polling. */
     g_idx = 0;
     for (int i = 0; i < 512; i++) g_script[i] = (i >= 10 && i < 25);
-    debounce_t dbA;
-    debounce_init(&dbA, mock_read, NULL, DEBOUNCE_MS);
+    epic_debounce_t dbA;
+    epic_debounce_init(&dbA, mock_read, NULL, DEBOUNCE_MS);
     int pressA = 0;
     for (int i = 0; i < 35; i++) {
         if (step(&dbA) == DEBOUNCE_EVENT_PRESSED) pressA++;
@@ -168,15 +168,15 @@ static void test_two_independent_instances(void)
     /* Run B: never presses (all false). */
     g_idx = 0;
     for (int i = 0; i < 512; i++) g_script[i] = false;
-    debounce_t dbB;
-    debounce_init(&dbB, mock_read, NULL, DEBOUNCE_MS);
+    epic_debounce_t dbB;
+    epic_debounce_init(&dbB, mock_read, NULL, DEBOUNCE_MS);
     int pressB = 0;
     for (int i = 0; i < 35; i++) {
         if (step(&dbB) == DEBOUNCE_EVENT_PRESSED) pressB++;
     }
     CHECK(pressB == 0, "indep: B has 0 presses");
-    CHECK(debounce_is_active(&dbA) == false, "indep: A unaffected by B");
-    CHECK(debounce_is_active(&dbB) == false, "indep: B stays inactive");
+    CHECK(epic_debounce_is_active(&dbA) == false, "indep: A unaffected by B");
+    CHECK(epic_debounce_is_active(&dbB) == false, "indep: B stays inactive");
 }
 
 static bool g_script2[512];
@@ -196,15 +196,15 @@ static void test_concurrent_independence(void)
         g_script[i]  = (i >= 10 && i < 25);  /* A: press at 10, release at 25 */
         g_script2[i] = (i >= 20);            /* B: press at 20, stays active   */
     }
-    debounce_t dbA, dbB;
-    debounce_init(&dbA, mock_read,  NULL, DEBOUNCE_MS);
-    debounce_init(&dbB, mock_read2, NULL, DEBOUNCE_MS);
+    epic_debounce_t dbA, dbB;
+    epic_debounce_init(&dbA, mock_read,  NULL, DEBOUNCE_MS);
+    epic_debounce_init(&dbB, mock_read2, NULL, DEBOUNCE_MS);
 
     int pA = 0, rA = 0, pB = 0, rB = 0;
     for (int i = 0; i < 35; i++) {
         advance_ms(1);
-        debounce_event_t eA = debounce_poll(&dbA);
-        debounce_event_t eB = debounce_poll(&dbB);
+        epic_debounce_event_t eA = epic_debounce_poll(&dbA);
+        epic_debounce_event_t eB = epic_debounce_poll(&dbB);
         if (eA == DEBOUNCE_EVENT_PRESSED)  pA++;
         if (eA == DEBOUNCE_EVENT_RELEASED) rA++;
         if (eB == DEBOUNCE_EVENT_PRESSED)  pB++;
@@ -212,8 +212,8 @@ static void test_concurrent_independence(void)
     }
     CHECK(pA == 1 && rA == 1, "concurrent: A has 1 press + 1 release");
     CHECK(pB == 1 && rB == 0, "concurrent: B has 1 press, 0 releases");
-    CHECK(!debounce_is_active(&dbA), "concurrent: A released");
-    CHECK(debounce_is_active(&dbB),  "concurrent: B still active");
+    CHECK(!epic_debounce_is_active(&dbA), "concurrent: A released");
+    CHECK(epic_debounce_is_active(&dbB),  "concurrent: B still active");
 }
 
 /**

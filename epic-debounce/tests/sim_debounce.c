@@ -48,8 +48,8 @@ int main(void)
     epic_harness_init(SIM_ITERATIONS);
     epic_tick_init(FOSC_HZ);
 
-    debounce_t db;
-    debounce_init(&db, sim_level, NULL, DB_MS);
+    epic_debounce_t db;
+    epic_debounce_init(&db, sim_level, NULL, DB_MS);
 
     int presses = 0, releases = 0;
     uint32_t press_t = 0u, release_t = 0u;
@@ -59,7 +59,7 @@ int main(void)
          i++) {
         epic_harness_tick();
 
-        debounce_event_t ev = debounce_poll(&db);
+        epic_debounce_event_t ev = epic_debounce_poll(&db);
         if (ev == DEBOUNCE_EVENT_PRESSED) {
             presses++;
             press_t = epic_tick_get();
@@ -75,7 +75,7 @@ int main(void)
     int ok = (presses == 1) && (releases == 1) &&
              (press_t >= PRESS_BOUNCE_MS + DB_MS) &&
              (release_t >= REL_BOUNCE_MS + DB_MS) &&
-             !debounce_is_active(&db);
+             !epic_debounce_is_active(&db);
 
     if (ok) {
         epic_harness_log("debounce sim: 1 press, 1 release, window respected\n");

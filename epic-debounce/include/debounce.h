@@ -1,7 +1,7 @@
 /**
  * Vendor-agnostic, instantiable digital-input debouncer: one instance
  * per input, plain data, no global state. The caller supplies a
- * `debounce_read_fn` resolving active-high/low, so the module works
+ * `epic_debounce_read_fn` resolving active-high/low, so the module works
  * over a HAL GPIO pin, an I2C-expander bit, or a host-test mock.
  */
 
@@ -15,27 +15,27 @@
  * @brief  Pin-read callback. Returns `true` when the pin currently reads
  *         "active." The callback resolves active-high vs. active-low.
  */
-typedef bool (*debounce_read_fn)(void *ctx);
+typedef bool (*epic_debounce_read_fn)(void *ctx);
 
-/** Debounce edge events emitted by `debounce_poll`. */
+/** Debounce edge events emitted by `epic_debounce_poll`. */
 typedef enum {
     DEBOUNCE_EVENT_NONE     = 0,  /**< no state change committed this poll */
     DEBOUNCE_EVENT_PRESSED,       /**< just became stably active */
     DEBOUNCE_EVENT_RELEASED,      /**< just became stably inactive */
-} debounce_event_t;
+} epic_debounce_event_t;
 
-/** Bit flags packed into `debounce_t.flags`, mirroring epic-taskmgr's
+/** Bit flags packed into `epic_debounce_t.flags`, mirroring epic-taskmgr's
  *  `task_t.flags` convention. */
 #define DEBOUNCE_FLAG_STABLE     0x01U  /**< current committed (debounced) state */
 #define DEBOUNCE_FLAG_CANDIDATE  0x02U  /**< last raw read being watched for stability */
 
 typedef struct {
-    debounce_read_fn read;
+    epic_debounce_read_fn read;
     void            *read_ctx;
     uint16_t         debounce_ms;
     uint32_t         candidate_since; /**< epic_tick_get() timestamp of last raw change */
     uint8_t          flags;           /**< DEBOUNCE_FLAG_* */
-} debounce_t;
+} epic_debounce_t;
 
 /**
  * @brief  Initialize a debounce instance.
@@ -48,7 +48,7 @@ typedef struct {
  *         down at boot does NOT spuriously fire a PRESSED event once the
  *         window elapses.
  */
-void debounce_init(debounce_t *db, debounce_read_fn read, void *read_ctx,
+void epic_debounce_init(epic_debounce_t *db, epic_debounce_read_fn read, void *read_ctx,
                    uint16_t debounce_ms);
 
 /**
@@ -60,7 +60,7 @@ void debounce_init(debounce_t *db, debounce_read_fn read, void *read_ctx,
  * @return `DEBOUNCE_EVENT_PRESSED`, `DEBOUNCE_EVENT_RELEASED`, or
  *         `DEBOUNCE_EVENT_NONE`.
  */
-debounce_event_t debounce_poll(debounce_t *db);
+epic_debounce_event_t epic_debounce_poll(epic_debounce_t *db);
 
 /**
  * @brief  Query the last committed (debounced) state.
@@ -68,6 +68,6 @@ debounce_event_t debounce_poll(debounce_t *db);
  * @return `true` if the stable state is "active," `false` if "inactive."
  * @note   Reflects the committed stable state, not the raw/candidate state.
  */
-bool debounce_is_active(const debounce_t *db);
+bool epic_debounce_is_active(const epic_debounce_t *db);
 
 #endif /* DEBOUNCE_H */
