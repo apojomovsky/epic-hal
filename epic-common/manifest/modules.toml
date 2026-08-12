@@ -863,7 +863,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
 # debounce gate under MPLAB SIM. Feeds a scripted noisy level sequence
-# through the module's own debounce_read_fn callback (the sim drives a
+# through the module's own epic_debounce_read_fn callback (the sim drives a
 # synthetic level from epic_tick_get(), not a GPIO pin, so no MPLAB SIM
 # pin-injection limitation applies) and verifies one PRESSED and one
 # RELEASED, each committed only after the full debounce window. WDTE=OFF

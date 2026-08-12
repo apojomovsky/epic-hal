@@ -20,7 +20,7 @@ typedef enum {
 
 /**
  * One PID control loop, caller-owned storage. Fields are written by
- * epic_pid_init / pid_set_* and by epic_pid_update; the caller reads them through
+ * epic_pid_init / epic_pid_set_* and by epic_pid_update; the caller reads them through
  * the API.
  */
 typedef struct {

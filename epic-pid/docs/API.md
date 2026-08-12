@@ -31,7 +31,7 @@ typedef struct {
 ### `epic_pid_t`
 
 One PID control loop, caller-owned storage. Fields are written by
-`epic_pid_init` / `pid_set_*` and by `epic_pid_update` (the integrator, the
+`epic_pid_init` / `epic_pid_set_*` and by `epic_pid_update` (the integrator, the
 D-term history, and the back-calculated MANUAL integrator). The
 caller reads them through the API; reading them directly is
 unsupported but harmless.
