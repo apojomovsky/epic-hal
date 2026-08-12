@@ -44,11 +44,16 @@ uint16_t pic_math_add_u16(uint16_t a, uint16_t b, bool *carry_out) __at(0x2E0)
     asm("addwf _pic16_mscratch+5,w");   /* W = a_hi + folded; C = C_add */
     asm("movwf _pic16_mscratch+5");
     asm("rlf   _pic16_mscratch+6,f");   /* co = (wrap<<1) | C_add */
-    asm("movf  _pic16_mscratch+6,w");
+    asm("btfsc _pic16_mscratch+6,0");   /* C_add set? */
+    asm("goto  _m_add_coset");
+    asm("btfsc _pic16_mscratch+6,1");   /* wrap set? */
+    asm("goto  _m_add_coset");
     asm("clrf  _pic16_mscratch+6");
-    asm("andlw 0x03");
-    asm("btfss STATUS,2");              /* skip setf if no wrap and no C_add */
-    asm("setf  _pic16_mscratch+6");
+    asm("goto  _m_add_codone");
+    asm("_m_add_coset:");
+    asm("movlw 0xFF");
+    asm("movwf _pic16_mscratch+6");
+    asm("_m_add_codone:");
     if (carry_out) *carry_out = (bool)pic16_mscratch[6];
     return (uint16_t)pic16_mscratch[4] | ((uint16_t)pic16_mscratch[5] << 8);
 }
@@ -83,12 +88,16 @@ uint16_t pic_math_sub_u16(uint16_t a, uint16_t b, bool *borrow_out) __at(0x320)
     asm("subwf _pic16_mscratch+1,w");   /* W = a_hi - folded; C = no-borrow */
     asm("movwf _pic16_mscratch+5");
     asm("rlf   _pic16_mscratch+6,f");   /* co = (wrap<<1) | C */
-    asm("movf  _pic16_mscratch+6,w");
+    asm("btfss _pic16_mscratch+6,0");   /* borrow (C=0)? */
+    asm("goto  _m_sub_coset");
+    asm("btfsc _pic16_mscratch+6,1");   /* wrap set? */
+    asm("goto  _m_sub_coset");
     asm("clrf  _pic16_mscratch+6");
-    asm("andlw 0x03");
-    asm("sublw 1");                     /* skip setf only when no borrow, no wrap */
-    asm("btfss STATUS,2");
-    asm("setf  _pic16_mscratch+6");
+    asm("goto  _m_sub_codone");
+    asm("_m_sub_coset:");
+    asm("movlw 0xFF");
+    asm("movwf _pic16_mscratch+6");
+    asm("_m_sub_codone:");
     if (borrow_out) *borrow_out = (bool)pic16_mscratch[6];
     return (uint16_t)pic16_mscratch[4] | ((uint16_t)pic16_mscratch[5] << 8);
 }
