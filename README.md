@@ -39,10 +39,21 @@ UART and bit-banged serial, Modbus, PID, fixed-point math, and more.
 
 ## Quick start (5 minutes)
 
-### 1. Grab the bundle for your part
+### 1. Scaffold a project (one command)
 
-Download your family's bundle from
-[Releases](https://github.com/apojomovsky/epicurus/releases):
+From inside an unpacked bundle:
+
+    ./epicurus init
+
+Answer family, part, and modules. It writes `main.c`, a filled `Makefile`,
+and a ready MPLAB X `.X` for your exact part + module subset. Open the
+`.X` in MPLAB X (or the MPLAB extension for VS Code) and Build, or just
+`make`. Or, with the CLI installed globally: `pipx install
+git+https://github.com/apojomovsky/epicurus`, then `epicurus init
+--bundle path/to/bundle`.
+
+Bundles live on the [Releases](https://github.com/apojomovsky/epicurus/releases)
+page:
 
 | Bundle | Parts inside |
 |---|---|
@@ -53,7 +64,12 @@ Download your family's bundle from
 The `<version>` is the release tag (e.g. `v0.1.0`); the badge above
 always shows the latest one.
 
-### 2. Open the reference project in MPLAB X
+## Advanced: without the scaffolder
+
+Prefer to wire a project by hand, or add Epicurus to one you already
+have? These two paths skip the scaffolder.
+
+### Open the reference project in MPLAB X
 
 Unpack the bundle, then open `examples/epicurus-demo.X` (File > Open
 Project). Pick your exact part under Project Properties, and Build. It
@@ -69,7 +85,7 @@ set. Selecting your part under Project Properties is the only manual
 step.
 </details>
 
-### 3. Or skip the IDE: a six-line Makefile
+### Or skip the IDE: a six-line Makefile
 
 Just `xc8-cc` and `make`, no MPLAB X and no license:
 

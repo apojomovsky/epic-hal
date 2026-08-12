@@ -99,3 +99,21 @@ per family, verifies checksums, gates every bundle from a scratch
 directory outside any repo checkout, and only then attaches the
 tarballs to a GitHub Release. See
 [.github/workflows/release-bundles.yml](.github/workflows/release-bundles.yml).
+
+## epicurus CLI
+
+The `epicurus` CLI (`scripts/epicurus.py`, with `epicurus_init.py`,
+`epicmanifest.py`, and `bundlegen.py`) scaffolds a consumer project from
+a bundle: `main.c`, a filled `Makefile`, and a patched MPLAB X `.X` for
+the chosen part and module subset. Run it from a checkout or an unpacked
+bundle:
+
+```sh
+python3 scripts/epicurus.py init --bundle path/to/epicurus-pic16f87xa-v0.1.0
+```
+
+Its tests live with the rest of the scripts tests:
+
+```sh
+python3 scripts/tests/test_epicurus_init.py
+```
