@@ -166,7 +166,7 @@ class TestPatchX(unittest.TestCase):
         self.assertIn("../../epic-serial/src", elems)
         self.assertIn("../../epic-tick/src", elems)  # serial depends on tick
 
-import os, tempfile
+import os, tempfile, shutil
 
 class TestInitProject(unittest.TestCase):
     def setUp(self):
@@ -216,5 +216,40 @@ class TestInitProject(unittest.TestCase):
         self.assertTrue(cfg.is_file())
         root = ET.parse(cfg).getroot()
         self.assertEqual(root.find(".//targetDevice").text, "PIC16F877A")
+
+
+class TestBundlePresence(unittest.TestCase):
+    """Task 6: a release bundle must be self-sufficient for `epicurus init`:
+    it carries the CLI and all four Python modules the CLI imports, plus the
+    manifest at the path _find_manifest expects.
+    """
+    def _make_bundle(self, out_dir):
+        import make_bundle
+        argv = ["make_bundle", "--family", "PIC16F87XA", "--version",
+                "ci-test", "--out-dir", str(out_dir), "--no-tarball"]
+        saved = sys.argv
+        sys.argv = argv
+        try:
+            make_bundle.main()
+        finally:
+            sys.argv = saved
+
+    def test_bundle_contains_cli_modules_and_manifest(self):
+        repo = pathlib.Path(__file__).resolve().parents[2]
+        out_dir = pathlib.Path(tempfile.mkdtemp(dir=repo))
+        self._make_bundle(out_dir)
+        self.addCleanup(shutil.rmtree, out_dir, ignore_errors=True)
+        root = out_dir / "epicurus-pic16f87xa-ci-test"
+        self.assertTrue(root.is_dir(), f"bundle root not created at {root}")
+        # 1. CLI, executable, no extension.
+        cli = root / "epicurus"
+        self.assertTrue(cli.is_file(), "missing bundle-root epicurus CLI")
+        self.assertTrue(os.access(cli, os.X_OK), "epicurus is not executable")
+        # 2-4. The three helper modules the CLI imports from its own dir.
+        for mod in ("epicurus_init.py", "epicmanifest.py", "bundlegen.py"):
+            self.assertTrue((root / mod).is_file(), f"missing bundle-root {mod}")
+        # 5. The manifest at the path _find_manifest resolves from the root.
+        manifest = root / "epic-common" / "manifest" / "modules.toml"
+        self.assertTrue(manifest.is_file(), "missing epic-common/manifest/modules.toml")
 
 if __name__ == "__main__": unittest.main()

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "epicurus-cli"
+version = "0.0.0"
+description = "Epicurus project scaffolder for 8-bit PIC"
+requires-python = ">=3.11"
+
+[project.scripts]
+epicurus = "epicurus:main"
+
+[tool.setuptools]
+py-modules = ["epicurus", "epicurus_init", "epicmanifest", "bundlegen"]
+package-dir = {"" = "scripts"}
