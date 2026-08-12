@@ -2,10 +2,10 @@
  * @file    combo_encoder_tick.c
  * @brief   C9 of the combination matrix:
  *          epic-encoder + epic-tick. Scripted quadrature edges are fed
- *          through the encoder's own `encoder_update` API, interleaved
+ *          through the encoder's own `epic_encoder_update` API, interleaved
  *          with 1 ms tick-delay waits, while every position read is
  *          checked against the running scripted expectation under the
- *          live 1 ms tick ISR. The 32-bit `encoder_get_position` read
+ *          live 1 ms tick ISR. The 32-bit `epic_encoder_get_position` read
  *          (EPIC_IRQ_Disable/Restore) is the point: an interrupt
  *          delivered inside the disabled
  *          window can tear the 4-byte read and, under MPLAB SIM, leave
@@ -14,7 +14,7 @@
  *
  * @details
  *   The encoder's own sim gate (epic-encoder/tests/sim_encoder.c)
- *   already hammers `encoder_get_position` under the live tick with
+ *   already hammers `epic_encoder_get_position` under the live tick with
  *   the position held constant (any non-zero read is a tear). This
  *   combo goes one step further: the position CHANGES under the probe
  *   (scripted edges), so a torn read differs from the true value by
@@ -31,7 +31,7 @@
  *   epic-combo-uart-ssp/tests/combo_uart_ssp.c and epic_tick.c's
  *   read-twice-retry comment):
  *   - Found 2026-08-09 while building this gate: interleaving
- *     `encoder_get_position` reads (their Disable/Restore edges) with
+ *     `epic_encoder_get_position` reads (their Disable/Restore edges) with
  *     the tick module's own unbounded `epic_tick_delay_ms` freezes
  *     the sim's ISR delivery on the very first overflow after a read:
  *     g_tick_ms stays 0, TMR2IF latches, GIE ends up cleared, and the
@@ -83,8 +83,8 @@
  *  this must exceed HAMMER_READS. */
 #define SIM_ITERATIONS    100000UL
 
-static encoder_t g_seq;    /* scripted quadrature, position changes */
-static encoder_t g_ham;    /* class-G read hammer, position constant */
+static epic_encoder_t g_seq;    /* scripted quadrature, position changes */
+static epic_encoder_t g_ham;    /* class-G read hammer, position constant */
 static uint16_t g_fail = 0u;
 
 /**
@@ -142,12 +142,12 @@ static uint8_t wait_1ms_bounded(void)
  *
  * Every read must equal the running expectation.
  */
-static void edge_with_delay(encoder_t *enc, uint8_t state, int32_t expected)
+static void edge_with_delay(epic_encoder_t *enc, uint8_t state, int32_t expected)
 {
-    encoder_update(enc, port_byte(state));
-    CHECK(encoder_get_position(enc) == expected, 0x00);
+    epic_encoder_update(enc, port_byte(state));
+    CHECK(epic_encoder_get_position(enc) == expected, 0x00);
     (void)wait_1ms_bounded();
-    CHECK(encoder_get_position(enc) == expected, 0x01);
+    CHECK(epic_encoder_get_position(enc) == expected, 0x01);
 }
 
 /**
@@ -168,7 +168,7 @@ int main(void)
      *      byte-shift garbage). */
     static const uint8_t pos_seq[4] = { 2, 3, 1, 0 };
     static const uint8_t neg_seq[4] = { 1, 3, 2, 0 };
-    encoder_init(&g_seq, PIN_A, PIN_B, 0u, port_byte(0u));
+    epic_encoder_init(&g_seq, PIN_A, PIN_B, 0u, port_byte(0u));
     int32_t expected = 0;
     for (uint8_t i = 0; i < 4u; i++) {
         expected += 1;
@@ -178,9 +178,9 @@ int main(void)
         expected -= 1;
         edge_with_delay(&g_seq, neg_seq[i], expected);
     }
-    int32_t  p_final = encoder_get_position(&g_seq);
-    uint16_t e_final = encoder_get_error_count(&g_seq);
-    uint16_t g_final = encoder_get_glitch_count(&g_seq);
+    int32_t  p_final = epic_encoder_get_position(&g_seq);
+    uint16_t e_final = epic_encoder_get_error_count(&g_seq);
+    uint16_t g_final = epic_encoder_get_glitch_count(&g_seq);
 
     /* Bounded liveness probe after the scripted phase (the delays
      * themselves would hang on a dead tick; this catches a tick that
@@ -192,13 +192,13 @@ int main(void)
      *      position is never written here, so any non-zero read is a
      *      torn read, and a wait that spins out its budget means the
      *      tick stopped (GIE lost). */
-    encoder_init(&g_ham, PIN_A, PIN_B, 0u, port_byte(0u));
+    epic_encoder_init(&g_ham, PIN_A, PIN_B, 0u, port_byte(0u));
     uint32_t t_start = epic_tick_get();
     int tear = 0;
     int stall = 0;
     for (uint32_t i = 0; epic_harness_running(i) && i < HAMMER_READS; i++) {
         epic_harness_tick();
-        if (encoder_get_position(&g_ham) != 0) { tear = 1; }
+        if (epic_encoder_get_position(&g_ham) != 0) { tear = 1; }
         if ((i % HAMMER_WAIT_EVERY) == 0u && !wait_1ms_bounded()) { stall = 1; }
     }
     uint32_t t_end = epic_tick_get();

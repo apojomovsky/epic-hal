@@ -17,7 +17,7 @@
 #define SIM_CYCLES 4000000UL
 
 /* Two encoders on RB<7:4>: A on RB4/RB5, B on RB6/RB7. */
-static encoder_t g_enc_a, g_enc_b;
+static epic_encoder_t g_enc_a, g_enc_b;
 
 /**
  * @brief RB-change callback: fan the received PORTB byte out to both encoders.
@@ -27,15 +27,15 @@ static encoder_t g_enc_a, g_enc_b;
  */
 static void on_rb_change(uint8_t portb_value)
 {
-    encoder_update(&g_enc_a, portb_value);
-    encoder_update(&g_enc_b, portb_value);
+    epic_encoder_update(&g_enc_a, portb_value);
+    epic_encoder_update(&g_enc_b, portb_value);
 }
 
 /**
  * @brief Build a PORTB byte with the two encoders' states at their pin positions.
  *
  * Puts `state_a` (a<<1|b) on RB4/RB5 and `state_b` on RB6/RB7 (the same
- * bit-position convention encoder_init is given).
+ * bit-position convention epic_encoder_init is given).
  */
 static uint8_t make_portb(uint8_t state_a, uint8_t state_b)
 {
@@ -66,15 +66,15 @@ int main(void)
     epic_harness_init(SIM_CYCLES);
     epic_tick_init(FOSC_HZ);
 
-    /* Seed PORTB to a known state before reading it for encoder_init. */
+    /* Seed PORTB to a known state before reading it for epic_encoder_init. */
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7,
                   GPIO_MODE_INPUT);
     uint8_t start = make_portb(0, 0);
     EPIC_REG8(PIC_REG_PORTB) = start;
 
     EPIC_GPIO_RegisterChangeCallback(on_rb_change);
-    encoder_init(&g_enc_a, 4, 5, 0, start);   /* A on RB4/RB5, gate off */
-    encoder_init(&g_enc_b, 6, 7, 0, start);   /* B on RB6/RB7, gate off */
+    epic_encoder_init(&g_enc_a, 4, 5, 0, start);   /* A on RB4/RB5, gate off */
+    epic_encoder_init(&g_enc_b, 6, 7, 0, start);   /* B on RB6/RB7, gate off */
 
     /* Two full rotations, interleaved on the shared byte:
      *   A: 00->10->11->01->00 x2  (table's positive direction, +8)
@@ -88,10 +88,10 @@ int main(void)
     sim_rb_edge(make_portb(2, 0));   /* A: 00->10 (+1);  B: 00==00 no-op   */
     sim_rb_edge(make_portb(2, 1));   /* A: 10==10 no-op; B: 00->01 (-1)    */
 
-    int32_t pa = encoder_get_position(&g_enc_a);
-    int32_t pb = encoder_get_position(&g_enc_b);
-    uint16_t ea = encoder_get_error_count(&g_enc_a);
-    uint16_t eb = encoder_get_error_count(&g_enc_b);
+    int32_t pa = epic_encoder_get_position(&g_enc_a);
+    int32_t pb = epic_encoder_get_position(&g_enc_b);
+    uint16_t ea = epic_encoder_get_error_count(&g_enc_a);
+    uint16_t eb = epic_encoder_get_error_count(&g_enc_b);
 
     epic_harness_log("encoder A (RB4/RB5): position=%ld errors=%u\n",
                      (long)pa, (unsigned)ea);

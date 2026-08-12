@@ -1,8 +1,8 @@
 /**
  * Vendor-agnostic, interrupt-driven incremental quadrature decoder (x4),
- * one `encoder_t` per A/B channel pair. Software-decoded via the RB<7:4>
+ * one `epic_encoder_t` per A/B channel pair. Software-decoded via the RB<7:4>
  * interrupt-on-change source (neither family has a QEI peripheral): wire
- * A/B to two of RB4-RB7 and forward the port byte to `encoder_update()`
+ * A/B to two of RB4-RB7 and forward the port byte to `epic_encoder_update()`
  * from the HAL's RB-change callback. See docs/API.md for wiring.
  */
 
@@ -29,7 +29,7 @@ typedef struct {
                                                   *  meaningless when the gate is disabled. */
     volatile uint16_t error_count;
     volatile uint16_t glitch_count;
-} encoder_t;
+} epic_encoder_t;
 
 /**
  * @brief Initialize an encoder instance.
@@ -44,7 +44,7 @@ typedef struct {
  * @param port_value           current port byte; seeds `last_state` so the
  *                             first real edge isn't misjudged
  */
-void encoder_init(encoder_t *enc, uint8_t pin_a, uint8_t pin_b,
+void epic_encoder_init(epic_encoder_t *enc, uint8_t pin_a, uint8_t pin_b,
                   uint16_t min_edge_interval_ms, uint8_t port_value);
 
 /**
@@ -58,7 +58,7 @@ void encoder_init(encoder_t *enc, uint8_t pin_a, uint8_t pin_b,
  * @param enc         the encoder instance to reset
  * @param port_value  current port byte; re-seeds `last_state`
  */
-void encoder_reset(encoder_t *enc, uint8_t port_value);
+void epic_encoder_reset(epic_encoder_t *enc, uint8_t port_value);
 
 /**
  * @brief Decode one port sample.
@@ -72,7 +72,7 @@ void encoder_reset(encoder_t *enc, uint8_t port_value);
  * @param enc         the encoder instance to update
  * @param port_value  the port byte just sampled
  */
-void encoder_update(encoder_t *enc, uint8_t port_value);
+void epic_encoder_update(epic_encoder_t *enc, uint8_t port_value);
 
 /**
  * @brief Read the accumulated position atomically.
@@ -83,26 +83,26 @@ void encoder_update(encoder_t *enc, uint8_t port_value);
  * @param enc the encoder instance to read
  * @return the current position count
  */
-int32_t  encoder_get_position(const encoder_t *enc);
+int32_t  epic_encoder_get_position(const epic_encoder_t *enc);
 
 /**
  * @brief Read the impossible-transition counter atomically.
  *
- * Same retry as encoder_get_position.
+ * Same retry as epic_encoder_get_position.
  *
  * @param enc the encoder instance to read
  * @return the current error count
  */
-uint16_t encoder_get_error_count(const encoder_t *enc);
+uint16_t epic_encoder_get_error_count(const epic_encoder_t *enc);
 
 /**
  * @brief Read the rejected-by-gate counter atomically.
  *
- * Same retry as encoder_get_position (see @ref encoder_get_error_count).
+ * Same retry as epic_encoder_get_position (see @ref epic_encoder_get_error_count).
  *
  * @param enc the encoder instance to read
  * @return the current glitch count
  */
-uint16_t encoder_get_glitch_count(const encoder_t *enc);
+uint16_t epic_encoder_get_glitch_count(const epic_encoder_t *enc);
 
 #endif /* ENCODER_H */

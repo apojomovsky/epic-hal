@@ -5,7 +5,7 @@
 #   ./build/test_encoder && ./build/example_encoder_hal && ./build/example_encoder_pid_loop
 #
 # This build reuses the host simulation backend of a HAL family (pulled in via
-# add_subdirectory) exactly as epic-tick does: encoder_get_position() reads a
+# add_subdirectory) exactly as epic-tick does: epic_encoder_get_position() reads a
 # volatile int32_t the ISR writes asynchronously, so it wraps the read in
 # EPIC_IRQ_Disable()/EPIC_IRQ_Restore() -- the one HAL call this module makes.
 # The optional glitch gate also calls epic_tick_get()/epic_tick_elapsed_since(),
@@ -13,7 +13,7 @@
 # the family with -DEPIC_FAMILY=PIC18 (default PIC16), same convention as
 # epic-tick. Real-target builds use the XC8 Makefiles under mcu/.
 #
-# encoder_update() itself is pure C with no HAL dependency (same as
+# epic_encoder_update() itself is pure C with no HAL dependency (same as
 # fsm_dispatch); the family dimension lives entirely in the atomic-read
 # helper + the XC8 Makefiles. One src/encoder.c builds against any family.
 # Only src/encoder.c includes the family-neutral shims (core/hal_irq.h,
@@ -57,7 +57,7 @@ if(NOT TARGET epic_tick)
 endif()
 
 # epic-pid for example_encoder_pid_loop (the direct demonstration of this
-# module's purpose: encoder_get_position() fed into pid_update()). epic-pid
+# module's purpose: epic_encoder_get_position() fed into pid_update()). epic-pid
 # is itself HAL-free (it links only epic-math), and pulls epic-math in itself.
 set(PID_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-pid
     CACHE PATH "Path to the epic-pid source tree")

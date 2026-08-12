@@ -1,9 +1,9 @@
 /**
  * Bounded, self-reporting HARNESS=sim build, the module's mdb gate
  * (PIC16F877A/MPLAB SIM): feeds a scripted quadrature sequence through
- * `encoder_update` verifying the x4 position count in both directions,
+ * `epic_encoder_update` verifying the x4 position count in both directions,
  * the impossible-transition counter, and the glitch gate against real
- * simulated time, then hammers `encoder_get_position` under the live
+ * simulated time, then hammers `epic_encoder_get_position` under the live
  * tick ISR, checking every read is consistent and the tick survived.
  * Reports PASS/FAIL over the harness
  * USART (see pic16f87xa-hal/src/mdb/pic16_harness_mdb.c).
@@ -32,9 +32,9 @@
  *  this must exceed HAMMER_READS. */
 #define SIM_ITERATIONS    100000UL
 
-static encoder_t g_dec;    /* phase 1+2: decode + impossible transition */
-static encoder_t g_gate;   /* phase 3:   glitch gate against real time   */
-static encoder_t g_ham;    /* phase 4:   class-G read hammer             */
+static epic_encoder_t g_dec;    /* phase 1+2: decode + impossible transition */
+static epic_encoder_t g_gate;   /* phase 3:   glitch gate against real time   */
+static epic_encoder_t g_ham;    /* phase 4:   class-G read hammer             */
 
 /**
  * @brief Build a port byte putting the 2-bit state (a<<1|b) at pins PIN_A/PIN_B.
@@ -74,51 +74,51 @@ int main(void)
      *      sequence verbatim). -8 then +8 -> back to 0, no errors. */
     static const uint8_t neg_seq[8] = { 1, 3, 2, 0, 1, 3, 2, 0 };
     static const uint8_t pos_seq[8] = { 2, 3, 1, 0, 2, 3, 1, 0 };
-    encoder_init(&g_dec, PIN_A, PIN_B, 0u, port_byte(0u));
+    epic_encoder_init(&g_dec, PIN_A, PIN_B, 0u, port_byte(0u));
     for (uint8_t i = 0; i < 8u; i++) {
-        encoder_update(&g_dec, port_byte(neg_seq[i]));
+        epic_encoder_update(&g_dec, port_byte(neg_seq[i]));
     }
     for (uint8_t i = 0; i < 8u; i++) {
-        encoder_update(&g_dec, port_byte(pos_seq[i]));
+        epic_encoder_update(&g_dec, port_byte(pos_seq[i]));
     }
-    int32_t p_dec   = encoder_get_position(&g_dec);
-    uint16_t e_dec  = encoder_get_error_count(&g_dec);
-    uint16_t g_dec0 = encoder_get_glitch_count(&g_dec);
+    int32_t p_dec   = epic_encoder_get_position(&g_dec);
+    uint16_t e_dec  = epic_encoder_get_error_count(&g_dec);
+    uint16_t g_dec0 = epic_encoder_get_glitch_count(&g_dec);
 
     /* ---- Phase 2: impossible 00->11 (both bits flip), then resync. */
-    encoder_update(&g_dec, port_byte(3u));   /* 00->11: error, no count */
-    int32_t p_imp = encoder_get_position(&g_dec);
-    uint16_t e_imp = encoder_get_error_count(&g_dec);
-    encoder_update(&g_dec, port_byte(1u));   /* 11->01: valid +1 edge  */
-    int32_t p_resync = encoder_get_position(&g_dec);
+    epic_encoder_update(&g_dec, port_byte(3u));   /* 00->11: error, no count */
+    int32_t p_imp = epic_encoder_get_position(&g_dec);
+    uint16_t e_imp = epic_encoder_get_error_count(&g_dec);
+    epic_encoder_update(&g_dec, port_byte(1u));   /* 11->01: valid +1 edge  */
+    int32_t p_resync = epic_encoder_get_position(&g_dec);
 
     /* ---- Phase 3: glitch gate on real tick time (host test script). */
-    encoder_init(&g_gate, PIN_A, PIN_B, 10u, port_byte(0u));
+    epic_encoder_init(&g_gate, PIN_A, PIN_B, 10u, port_byte(0u));
     for (uint8_t i = 0; i < 10u; i++) wait_1ms_bounded();  /* clear seed gate */
-    encoder_update(&g_gate, port_byte(1u));                /* 00->01 accepted */
-    int32_t pg_first = encoder_get_position(&g_gate);
+    epic_encoder_update(&g_gate, port_byte(1u));                /* 00->01 accepted */
+    int32_t pg_first = epic_encoder_get_position(&g_gate);
     wait_1ms_bounded();
     wait_1ms_bounded();                                    /* +2 ms          */
-    encoder_update(&g_gate, port_byte(3u));                /* 01->11 too soon */
-    uint16_t gg_drop = encoder_get_glitch_count(&g_gate);
-    int32_t pg_drop  = encoder_get_position(&g_gate);
+    epic_encoder_update(&g_gate, port_byte(3u));                /* 01->11 too soon */
+    uint16_t gg_drop = epic_encoder_get_glitch_count(&g_gate);
+    int32_t pg_drop  = epic_encoder_get_position(&g_gate);
     for (uint8_t i = 0; i < 12u; i++) wait_1ms_bounded();  /* +12 ms         */
-    encoder_update(&g_gate, port_byte(3u));                /* 01->11 accepted */
-    int32_t pg_accept = encoder_get_position(&g_gate);
-    uint16_t gg_after = encoder_get_glitch_count(&g_gate);
-    uint16_t eg_gate  = encoder_get_error_count(&g_gate);
+    epic_encoder_update(&g_gate, port_byte(3u));                /* 01->11 accepted */
+    int32_t pg_accept = epic_encoder_get_position(&g_gate);
+    uint16_t gg_after = epic_encoder_get_glitch_count(&g_gate);
+    uint16_t eg_gate  = epic_encoder_get_error_count(&g_gate);
 
     /* ---- Phase 4: class-G probe. Hammer the 32-bit position read
      *      under the live tick ISR. Position is never written here, so
      *      any non-zero read is a torn read; a wait that spins out its
      *      budget means the tick stopped (GIE left cleared). */
-    encoder_init(&g_ham, PIN_A, PIN_B, 0u, port_byte(0u));
+    epic_encoder_init(&g_ham, PIN_A, PIN_B, 0u, port_byte(0u));
     uint32_t t_start = epic_tick_get();
     int tear = 0;
     int stall = 0;
     for (uint32_t i = 0; epic_harness_running(i) && i < HAMMER_READS; i++) {
         epic_harness_tick();
-        if (encoder_get_position(&g_ham) != 0) { tear = 1; }
+        if (epic_encoder_get_position(&g_ham) != 0) { tear = 1; }
         if ((i % HAMMER_WAIT_EVERY) == 0u && !wait_1ms_bounded()) { stall = 1; }
     }
     uint32_t t_end = epic_tick_get();
