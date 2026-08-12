@@ -6,10 +6,10 @@ A quick start is in the [README](../README.md).
 ## Types & constants
 
 ```c
-typedef void (*task_fn_t)(void *arg);   /* a task: runs to completion, returns */
-typedef uint8_t task_id_t;               /* opaque task id */
-#define TASK_ID_INVALID  ((task_id_t)0xFFU)
-#define TASK_MGR_MAX_TASKS  8            /* default; 6 on 192 B parts, see below */
+typedef void (*epic_taskmgr_fn_t)(void *arg);   /* a task: runs to completion, returns */
+typedef uint8_t epic_taskmgr_id_t;               /* opaque task id */
+#define EPIC_TASKMGR_ID_INVALID  ((epic_taskmgr_id_t)0xFFU)
+#define EPIC_TASKMGR_MAX_TASKS  8            /* default; 6 on 192 B parts, see below */
 ```
 
 A task is a plain function that runs to completion and returns. It is called
@@ -17,7 +17,7 @@ with the `arg` passed to `epic_taskmgr_spawn`. Persist per-task state in storage
 through `arg` (a struct you own), not in locals, which do not survive between
 calls.
 
-### `TASK_MGR_MAX_TASKS`
+### `EPIC_TASKMGR_MAX_TASKS`
 
 Maximum number of simultaneously registered tasks. Each slot costs ~12 B of
 RAM (two 3-byte PIC16 pointers + two `uint16` + a flags byte). The default
@@ -26,7 +26,7 @@ PIC16F876A/877A, so the table banks cleanly into every device in the
 family when it fits alongside the rest of the image (the real-target
 full-HAL example overflows the 192 B parts and is manifest-excluded
 there).
-Override by defining `TASK_MGR_MAX_TASKS` before including the header.
+Override by defining `EPIC_TASKMGR_MAX_TASKS` before including the header.
 
 One-shot tasks free their slot after they run (see `epic_taskmgr_run_once`),
 so a periodic task that re-spawns one-shots does not permanently consume a slot
@@ -39,7 +39,7 @@ per spawn.
 Initialise the scheduler. Clears every task slot and zeroes the tick counter.
 Call once before spawning tasks or attaching a tick source. Idempotent.
 
-### `task_id_t epic_taskmgr_spawn(task_fn_t fn, void *arg, uint16_t period_ticks, uint8_t priority)`
+### `epic_taskmgr_id_t epic_taskmgr_spawn(epic_taskmgr_fn_t fn, void *arg, uint16_t period_ticks, uint8_t priority)`
 
 Register a task and arm it.
 
@@ -51,22 +51,22 @@ Register a task and arm it.
 - `priority`, scheduling priority within a round; lower numbers run first.
   Ties break by spawn order.
 
-Returns the new task id, or `TASK_ID_INVALID` if `fn` is `NULL` or all
-`TASK_MGR_MAX_TASKS` slots are in use.
+Returns the new task id, or `EPIC_TASKMGR_ID_INVALID` if `fn` is `NULL` or all
+`EPIC_TASKMGR_MAX_TASKS` slots are in use.
 
 > Safe to call from within a running task (e.g. a supervisor that spawns
 > one-shot children). The slot fill is a short critical section, so it does not
 > race with the tick ISR.
 
-### `void task_start(task_id_t id)`
+### `void epic_taskmgr_start(epic_taskmgr_id_t id)`
 
 Enable a previously stopped task. Its countdown is reset to its period.
 
-### `void task_stop(task_id_t id)`
+### `void epic_taskmgr_stop(epic_taskmgr_id_t id)`
 
-Disable a task so the scheduler skips it until `task_start`.
+Disable a task so the scheduler skips it until `epic_taskmgr_start`.
 
-### `void task_set_period(task_id_t id, uint16_t period_ticks)`
+### `void epic_taskmgr_set_period(epic_taskmgr_id_t id, uint16_t period_ticks)`
 
 Change a task’s period at runtime. Takes effect on the next arming.
 
@@ -81,7 +81,7 @@ immediately on their first tick.
 
 Call this from a timer interrupt service routine, typically the Timer0
 overflow wired by `epic_taskmgr_attach_timer0`. It is short (O(n),
-n ≤ `TASK_MGR_MAX_TASKS`) and never runs user code, so it is safe in interrupt
+n ≤ `EPIC_TASKMGR_MAX_TASKS`) and never runs user code, so it is safe in interrupt
 context.
 
 ### `uint16_t epic_taskmgr_ticks(void)`
@@ -152,9 +152,9 @@ scheduler does not care where the tick comes from.
 | Function | Purpose |
 |---|---|
 | `epic_taskmgr_init()` | Clear the table; call once at startup. |
-| `epic_taskmgr_spawn(fn, arg, period, prio)` | Register + arm a task; returns its id (or `TASK_ID_INVALID`). `period==0` → one-shot. |
-| `task_start(id)` / `task_stop(id)` | Enable / disable a task at runtime. |
-| `task_set_period(id, period)` | Change a task’s period. |
+| `epic_taskmgr_spawn(fn, arg, period, prio)` | Register + arm a task; returns its id (or `EPIC_TASKMGR_ID_INVALID`). `period==0` → one-shot. |
+| `epic_taskmgr_start(id)` / `epic_taskmgr_stop(id)` | Enable / disable a task at runtime. |
+| `epic_taskmgr_set_period(id, period)` | Change a task’s period. |
 | `epic_taskmgr_tick()` | Advance one tick, call from a timer ISR. |
 | `epic_taskmgr_run_once()` | Run all due tasks once (priority order); returns count run. |
 | `epic_taskmgr_run()` | Canonical loop (bounded on sim, forever on target). |

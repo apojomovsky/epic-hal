@@ -32,10 +32,10 @@ typedef struct {
     uint16_t fires;           /* model fire count */
 } model_task_t;
 
-static model_task_t g_model[TASK_MGR_MAX_TASKS];
+static model_task_t g_model[EPIC_TASKMGR_MAX_TASKS];
 
 /* Per-slot run counters observed through the task args. */
-static volatile uint16_t g_runs[TASK_MGR_MAX_TASKS];
+static volatile uint16_t g_runs[EPIC_TASKMGR_MAX_TASKS];
 
 /** @brief Task body: bump the run counter for its slot. */
 static void task_bump(void *arg)
@@ -52,24 +52,24 @@ static void task_bump(void *arg)
  */
 static void do_spawn(uint16_t period, uint8_t priority, uint16_t tick)
 {
-    uint8_t slot = TASK_MGR_MAX_TASKS;
-    for (uint8_t s = 0; s < TASK_MGR_MAX_TASKS; s++) {
+    uint8_t slot = EPIC_TASKMGR_MAX_TASKS;
+    for (uint8_t s = 0; s < EPIC_TASKMGR_MAX_TASKS; s++) {
         if (!g_model[s].used) {
             slot = s;
             break;
         }
     }
-    if (slot == TASK_MGR_MAX_TASKS) {
+    if (slot == EPIC_TASKMGR_MAX_TASKS) {
         /* Table full: spawn must fail. */
-        task_id_t id = epic_taskmgr_spawn(task_bump, (void *)(uintptr_t)0u, period, priority);
-        CHECK(id == TASK_ID_INVALID, "spawn on full table returns INVALID");
+        epic_taskmgr_id_t id = epic_taskmgr_spawn(task_bump, (void *)(uintptr_t)0u, period, priority);
+        CHECK(id == EPIC_TASKMGR_ID_INVALID, "spawn on full table returns INVALID");
         return;
     }
 
     g_runs[slot] = 0u;   /* fresh task: reset the observable counter */
-    task_id_t id = epic_taskmgr_spawn(task_bump, (void *)(uintptr_t)slot, period, priority);
-    CHECK(id == (task_id_t)slot, "spawn claims the first free slot");
-    if (id == TASK_ID_INVALID) {
+    epic_taskmgr_id_t id = epic_taskmgr_spawn(task_bump, (void *)(uintptr_t)slot, period, priority);
+    CHECK(id == (epic_taskmgr_id_t)slot, "spawn claims the first free slot");
+    if (id == EPIC_TASKMGR_ID_INVALID) {
         return;
     }
     g_model[slot].used      = 1u;
@@ -99,36 +99,36 @@ int main(void)
             do_spawn(0u, (uint8_t)(rnd() % 4u), tick);
             break;
         case 2: {   /* stop a random used task */
-            uint8_t s = (uint8_t)(rnd() % TASK_MGR_MAX_TASKS);
+            uint8_t s = (uint8_t)(rnd() % EPIC_TASKMGR_MAX_TASKS);
             if (g_model[s].used) {
-                task_stop((task_id_t)s);
+                epic_taskmgr_stop((epic_taskmgr_id_t)s);
                 g_model[s].enabled = 0u;
             }
             break;
         }
         case 3: {   /* start a stopped task */
-            uint8_t s = (uint8_t)(rnd() % TASK_MGR_MAX_TASKS);
+            uint8_t s = (uint8_t)(rnd() % EPIC_TASKMGR_MAX_TASKS);
             if (g_model[s].used && !g_model[s].enabled) {
-                task_start((task_id_t)s);
+                epic_taskmgr_start((epic_taskmgr_id_t)s);
                 g_model[s].enabled   = 1u;
                 g_model[s].next_fire = (uint16_t)(tick + g_model[s].period);
             }
             break;
         }
         case 4: {   /* reset a random used task */
-            uint8_t s = (uint8_t)(rnd() % TASK_MGR_MAX_TASKS);
+            uint8_t s = (uint8_t)(rnd() % EPIC_TASKMGR_MAX_TASKS);
             if (g_model[s].used) {
-                task_reset((task_id_t)s);
+                epic_taskmgr_reset((epic_taskmgr_id_t)s);
                 g_model[s].enabled   = 1u;
                 g_model[s].next_fire = (uint16_t)(tick + g_model[s].period);
             }
             break;
         }
         case 5: {   /* change a random used periodic task's period */
-            uint8_t s = (uint8_t)(rnd() % TASK_MGR_MAX_TASKS);
+            uint8_t s = (uint8_t)(rnd() % EPIC_TASKMGR_MAX_TASKS);
             if (g_model[s].used && g_model[s].period != 0u) {
                 uint16_t p = (uint16_t)(rnd() % 40u) + 1u;
-                task_set_period((task_id_t)s, p);
+                epic_taskmgr_set_period((epic_taskmgr_id_t)s, p);
                 g_model[s].period = p;   /* takes effect on next arming */
             }
             break;
@@ -143,7 +143,7 @@ int main(void)
         (void)epic_taskmgr_run_once();
 
         /* Fire accounting for every slot. */
-        for (uint8_t s = 0; s < TASK_MGR_MAX_TASKS; s++) {
+        for (uint8_t s = 0; s < EPIC_TASKMGR_MAX_TASKS; s++) {
             if (!g_model[s].used) continue;
             if (g_model[s].enabled && g_model[s].next_fire == tick) {
                 g_model[s].fires++;
@@ -161,7 +161,7 @@ int main(void)
         /* Invariants. */
         CHECK(epic_taskmgr_ticks() == tick, "ticks counter advances exactly once");
         uint8_t used = 0u;
-        for (uint8_t s = 0; s < TASK_MGR_MAX_TASKS; s++) {
+        for (uint8_t s = 0; s < EPIC_TASKMGR_MAX_TASKS; s++) {
             if (g_model[s].used) used++;
         }
         CHECK(epic_taskmgr_count() == used, "count matches model");
@@ -169,7 +169,7 @@ int main(void)
         /* No unexpected fires: every used slot's observable run count
          * must equal the model count (this catches a task firing off
          * its predicted grid, e.g. a one-shot with a wrong countdown). */
-        for (uint8_t s = 0; s < TASK_MGR_MAX_TASKS; s++) {
+        for (uint8_t s = 0; s < EPIC_TASKMGR_MAX_TASKS; s++) {
             if (g_model[s].used) {
                 if (g_runs[s] != g_model[s].fires) {
                     CHECK(0, "unexpected fire off the predicted grid");

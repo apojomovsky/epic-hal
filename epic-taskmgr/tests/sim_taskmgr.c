@@ -4,7 +4,7 @@
  * MPLAB SIM): spawns two periodic tasks plus a one-shot, runs the
  * canonical scheduler loop, and verifies both periodics executed, the
  * tick counter advanced, the one-shot fired exactly once and freed its
- * slot, and task_set_period took effect. Reports PASS/FAIL over the
+ * slot, and epic_taskmgr_set_period took effect. Reports PASS/FAIL over the
  * harness EUSART (see pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c).
  */
 
@@ -43,13 +43,13 @@ typedef struct {
 /** One-shot task's arg: its own run count plus the task id it freezes. */
 typedef struct {
     volatile uint16_t runs;
-    task_id_t         freeze_id;
+    epic_taskmgr_id_t         freeze_id;
 } oneshot_arg_t;
 
 static run_count_t   arg_a   = { 0U };
 static run_count_t   arg_b   = { 0U };
 static run_count_t   arg_c   = { 0U };
-static oneshot_arg_t arg_one = { 0U, TASK_ID_INVALID };
+static oneshot_arg_t arg_one = { 0U, EPIC_TASKMGR_ID_INVALID };
 
 /** @brief Periodic task: bump its run count. */
 static void task_count(void *arg)
@@ -62,14 +62,14 @@ static void task_count(void *arg)
  * @brief One-shot task.
  *
  * Runs exactly once (the scheduler frees its slot right after), bumps its
- * own count, and exercises task_set_period by freezing task C for the
+ * own count, and exercises epic_taskmgr_set_period by freezing task C for the
  * rest of the run.
  */
 static void task_oneshot(void *arg)
 {
     oneshot_arg_t *o = (oneshot_arg_t *)arg;
     o->runs++;
-    task_set_period(o->freeze_id, PERIOD_FROZEN);
+    epic_taskmgr_set_period(o->freeze_id, PERIOD_FROZEN);
 }
 
 /** @brief Run the scheduler sim and report PASS/FAIL over the harness. */
@@ -79,11 +79,11 @@ int main(void)
     epic_taskmgr_init();
 
     /* Two periodic tasks with known periods, plus a one-shot (period 0)
-     * whose single run freezes task C via task_set_period. Priorities:
+     * whose single run freezes task C via epic_taskmgr_set_period. Priorities:
      * A first, B and C share the middle, one-shot last. */
     epic_taskmgr_spawn(task_count, &arg_a, PERIOD_A, 0U);
     epic_taskmgr_spawn(task_count, &arg_b, PERIOD_B, 1U);
-    task_id_t id_c = epic_taskmgr_spawn(task_count, &arg_c, PERIOD_C, 1U);
+    epic_taskmgr_id_t id_c = epic_taskmgr_spawn(task_count, &arg_c, PERIOD_C, 1U);
     arg_one.freeze_id = id_c;
     epic_taskmgr_spawn(task_oneshot, &arg_one, 0U, 2U);
 
@@ -100,7 +100,7 @@ int main(void)
 
     /* Verdict. A (period 10) fires at ticks 10, 20, 30, ...; B (period
      * 20) at 20, 40, ...; C fires once at tick 5 (countdown armed at
-     * spawn) then freezes on the one-shot's task_set_period; the
+     * spawn) then freezes on the one-shot's epic_taskmgr_set_period; the
      * one-shot fires on the first tick and frees its slot. */
     uint16_t ticks = epic_taskmgr_ticks();
     uint8_t  used  = epic_taskmgr_count();

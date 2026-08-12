@@ -25,7 +25,7 @@ typedef enum {
 } epic_debounce_event_t;
 
 /** Bit flags packed into `epic_debounce_t.flags`, mirroring epic-taskmgr's
- *  `task_t.flags` convention. */
+ *  `epic_taskmgr_t.flags` convention. */
 #define DEBOUNCE_FLAG_STABLE     0x01U  /**< current committed (debounced) state */
 #define DEBOUNCE_FLAG_CANDIDATE  0x02U  /**< last raw read being watched for stability */
 

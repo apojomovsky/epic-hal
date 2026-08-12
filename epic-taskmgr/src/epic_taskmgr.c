@@ -14,7 +14,7 @@
  *  TCBs are read from interrupt context and the 64-byte object needs one
  *  contiguous bank, so the placement is explicit rather than left to
  *  best-fit fragmentation. */
-static task_t g_tasks[TASK_MGR_MAX_TASKS] EPIC_PLACE(0x110);
+static epic_taskmgr_t g_tasks[EPIC_TASKMGR_MAX_TASKS] EPIC_PLACE(0x110);
 
 /** Monotonic tick counter since the last init (wraps at 65535). */
 static uint16_t g_ticks = 0U;
@@ -46,7 +46,7 @@ static uint8_t g_tick_reload = 0U;
 void epic_taskmgr_init(void)
 {
     uint8_t prev = EPIC_IRQ_Disable();
-    for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
+    for (uint8_t i = 0; i < EPIC_TASKMGR_MAX_TASKS; i++) {
         g_tasks[i].fn        = NULL;
         g_tasks[i].arg       = NULL;
         g_tasks[i].period    = 0U;
@@ -65,27 +65,27 @@ void epic_taskmgr_init(void)
  * @param arg           opaque pointer passed to `fn` on every run
  * @param period_ticks  firing period in ticks; 0 = one-shot
  * @param priority      lower runs first within a round
- * @return the new task's id, or TASK_ID_INVALID on failure
+ * @return the new task's id, or EPIC_TASKMGR_ID_INVALID on failure
  */
-task_id_t epic_taskmgr_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
+epic_taskmgr_id_t epic_taskmgr_spawn(epic_taskmgr_fn_t fn, void *arg, uint16_t period_ticks,
                      uint8_t priority)
 {
     if (fn == NULL) {
-        return TASK_ID_INVALID;
+        return EPIC_TASKMGR_ID_INVALID;
     }
 
     /* Publish-last: the TCB is fully written before the slot's USED bit
      * is set, and the tick ISR gates every access on USED. */
-    task_id_t id = TASK_ID_INVALID;
-    for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
-        if (!(g_tasks[i].flags & TM_FLAG_USED)) {
+    epic_taskmgr_id_t id = EPIC_TASKMGR_ID_INVALID;
+    for (uint8_t i = 0; i < EPIC_TASKMGR_MAX_TASKS; i++) {
+        if (!(g_tasks[i].flags & EPIC_TASKMGR_FLAG_USED)) {
             g_tasks[i].fn        = fn;
             g_tasks[i].arg       = arg;
             g_tasks[i].period    = period_ticks;
             g_tasks[i].countdown = arm_countdown(period_ticks);
             g_tasks[i].priority  = priority;
-            g_tasks[i].flags     = TM_FLAG_USED | TM_FLAG_ENABLED;
-            id = (task_id_t)i;
+            g_tasks[i].flags     = EPIC_TASKMGR_FLAG_USED | EPIC_TASKMGR_FLAG_ENABLED;
+            id = (epic_taskmgr_id_t)i;
             break;
         }
     }
@@ -97,33 +97,33 @@ task_id_t epic_taskmgr_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
  *
  * @param id the task to start
  */
-void task_start(task_id_t id)
+void epic_taskmgr_start(epic_taskmgr_id_t id)
 {
-    if (id >= TASK_MGR_MAX_TASKS) return;
+    if (id >= EPIC_TASKMGR_MAX_TASKS) return;
     /* Critical section retained: countdown is a 16-bit store racing the
      * tick ISR's 16-bit countdown RMW, and retry cannot make a write
      * atomic; the ENABLED toggle alone leaves the ISR's check-then-act
      * window open. */
     uint8_t prev = EPIC_IRQ_Disable();
-    if (g_tasks[id].flags & TM_FLAG_USED) {
+    if (g_tasks[id].flags & EPIC_TASKMGR_FLAG_USED) {
         g_tasks[id].countdown = arm_countdown(g_tasks[id].period);
-        g_tasks[id].flags |=  TM_FLAG_ENABLED;
-        g_tasks[id].flags &= (uint8_t)~TM_FLAG_READY;
+        g_tasks[id].flags |=  EPIC_TASKMGR_FLAG_ENABLED;
+        g_tasks[id].flags &= (uint8_t)~EPIC_TASKMGR_FLAG_READY;
     }
     EPIC_IRQ_Restore(prev);
 }
 
 /**
- * @brief Disable a task so the scheduler skips it until @ref task_start (see epic_taskmgr.h).
+ * @brief Disable a task so the scheduler skips it until @ref epic_taskmgr_start (see epic_taskmgr.h).
  *
  * @param id the task to stop
  */
-void task_stop(task_id_t id)
+void epic_taskmgr_stop(epic_taskmgr_id_t id)
 {
-    if (id >= TASK_MGR_MAX_TASKS) return;
+    if (id >= EPIC_TASKMGR_MAX_TASKS) return;
     /* Single-byte flag RMW, atomic on both families: no critical section. */
-    if (g_tasks[id].flags & TM_FLAG_USED) {
-        g_tasks[id].flags &= (uint8_t)~(TM_FLAG_ENABLED | TM_FLAG_READY);
+    if (g_tasks[id].flags & EPIC_TASKMGR_FLAG_USED) {
+        g_tasks[id].flags &= (uint8_t)~(EPIC_TASKMGR_FLAG_ENABLED | EPIC_TASKMGR_FLAG_READY);
     }
 }
 
@@ -132,16 +132,16 @@ void task_stop(task_id_t id)
  *
  * @param id the task to re-arm
  */
-void task_reset(task_id_t id)
+void epic_taskmgr_reset(epic_taskmgr_id_t id)
 {
-    /* Same rationale as task_start: the 16-bit countdown write cannot be
+    /* Same rationale as epic_taskmgr_start: the 16-bit countdown write cannot be
      * made atomic by retry. */
-    if (id >= TASK_MGR_MAX_TASKS) return;
+    if (id >= EPIC_TASKMGR_MAX_TASKS) return;
     uint8_t prev = EPIC_IRQ_Disable();
-    if (g_tasks[id].flags & TM_FLAG_USED) {
+    if (g_tasks[id].flags & EPIC_TASKMGR_FLAG_USED) {
         g_tasks[id].countdown = arm_countdown(g_tasks[id].period);
-        g_tasks[id].flags |=  TM_FLAG_ENABLED;
-        g_tasks[id].flags &= (uint8_t)~TM_FLAG_READY;
+        g_tasks[id].flags |=  EPIC_TASKMGR_FLAG_ENABLED;
+        g_tasks[id].flags &= (uint8_t)~EPIC_TASKMGR_FLAG_READY;
     }
     EPIC_IRQ_Restore(prev);
 }
@@ -152,14 +152,14 @@ void task_reset(task_id_t id)
  * @param id            the task to retune
  * @param period_ticks  new period in ticks
  */
-void task_set_period(task_id_t id, uint16_t period_ticks)
+void epic_taskmgr_set_period(epic_taskmgr_id_t id, uint16_t period_ticks)
 {
-    if (id >= TASK_MGR_MAX_TASKS) return;
+    if (id >= EPIC_TASKMGR_MAX_TASKS) return;
     /* Critical section retained: the 16-bit period write races the tick
      * ISR's period read when a task fires; a torn value mis-times one
      * fire. */
     uint8_t prev = EPIC_IRQ_Disable();
-    if (g_tasks[id].flags & TM_FLAG_USED) {
+    if (g_tasks[id].flags & EPIC_TASKMGR_FLAG_USED) {
         g_tasks[id].period = period_ticks;
     }
     EPIC_IRQ_Restore(prev);
@@ -174,14 +174,14 @@ void epic_taskmgr_tick(void)
 {
     g_ticks++;
 
-    for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
-        task_t *t = &g_tasks[i];
+    for (uint8_t i = 0; i < EPIC_TASKMGR_MAX_TASKS; i++) {
+        epic_taskmgr_t *t = &g_tasks[i];
         uint8_t  f = t->flags;
-        if (!(f & TM_FLAG_USED) || !(f & TM_FLAG_ENABLED)) {
+        if (!(f & EPIC_TASKMGR_FLAG_USED) || !(f & EPIC_TASKMGR_FLAG_ENABLED)) {
             continue;
         }
         if (t->countdown == 0U) {
-            t->flags |= TM_FLAG_READY;
+            t->flags |= EPIC_TASKMGR_FLAG_READY;
             if (t->period != 0U) {
                 t->countdown = arm_countdown(t->period);
             }
@@ -218,7 +218,7 @@ uint8_t epic_taskmgr_run_once(void)
     /* Snapshot the ready set in priority order, clearing each READY flag,
      * then run the tasks with interrupts enabled so a tick during a long
      * task arms the task for the next round. */
-    task_id_t order[TASK_MGR_MAX_TASKS];
+    epic_taskmgr_id_t order[EPIC_TASKMGR_MAX_TASKS];
     uint8_t   n = 0U;
 
     /* No critical section: every flags access here is a single-byte read
@@ -228,10 +228,10 @@ uint8_t epic_taskmgr_run_once(void)
         /* Pick the lowest-numbered-priority ready task (ties: lowest slot). */
         int      best      = -1;
         uint8_t  best_prio = 0xFFU;
-        for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
-            task_t *t = &g_tasks[i];
-            if ((t->flags & (TM_FLAG_USED | TM_FLAG_ENABLED | TM_FLAG_READY))
-                == (TM_FLAG_USED | TM_FLAG_ENABLED | TM_FLAG_READY) &&
+        for (uint8_t i = 0; i < EPIC_TASKMGR_MAX_TASKS; i++) {
+            epic_taskmgr_t *t = &g_tasks[i];
+            if ((t->flags & (EPIC_TASKMGR_FLAG_USED | EPIC_TASKMGR_FLAG_ENABLED | EPIC_TASKMGR_FLAG_READY))
+                == (EPIC_TASKMGR_FLAG_USED | EPIC_TASKMGR_FLAG_ENABLED | EPIC_TASKMGR_FLAG_READY) &&
                 t->priority < best_prio) {
                 best      = (int)i;
                 best_prio = t->priority;
@@ -240,14 +240,14 @@ uint8_t epic_taskmgr_run_once(void)
         if (best < 0) {
             break;
         }
-        g_tasks[best].flags &= (uint8_t)~TM_FLAG_READY;  /* a new tick re-arms */
-        order[n] = (task_id_t)best;
+        g_tasks[best].flags &= (uint8_t)~EPIC_TASKMGR_FLAG_READY;  /* a new tick re-arms */
+        order[n] = (epic_taskmgr_id_t)best;
         n++;
     }
 
     /* Run with interrupts enabled. */
     for (uint8_t k = 0; k < n; k++) {
-        task_t *t = &g_tasks[order[k]];
+        epic_taskmgr_t *t = &g_tasks[order[k]];
         t->fn(t->arg);
         if (t->period == 0U) {
             /* One-shot: free the slot so a periodic task re-spawning
@@ -287,8 +287,8 @@ uint8_t epic_taskmgr_count(void)
      * mid-scan shifts the count by one at worst: a timing artifact, not
      * a scheduler safety issue. */
     uint8_t count = 0U;
-    for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
-        if (g_tasks[i].flags & TM_FLAG_USED) {
+    for (uint8_t i = 0; i < EPIC_TASKMGR_MAX_TASKS; i++) {
+        if (g_tasks[i].flags & EPIC_TASKMGR_FLAG_USED) {
             count++;
         }
     }

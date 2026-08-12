@@ -14,44 +14,44 @@
 /**
  * Maximum simultaneously registered tasks (~12 B/slot); scales via
  * EPIC_FAMILY_RAM_BYTES: 6 on 192 B parts, 8 otherwise. Override with
- * `#define TASK_MGR_MAX_TASKS` before including this header.
+ * `#define EPIC_TASKMGR_MAX_TASKS` before including this header.
  */
-#ifndef TASK_MGR_MAX_TASKS
+#ifndef EPIC_TASKMGR_MAX_TASKS
 #  if EPIC_FAMILY_RAM_BYTES <= 192
-#    define TASK_MGR_MAX_TASKS  6
+#    define EPIC_TASKMGR_MAX_TASKS  6
 #  else
-#    define TASK_MGR_MAX_TASKS  8
+#    define EPIC_TASKMGR_MAX_TASKS  8
 #  endif
 #endif
 
 /** Opaque task identifier returned by @ref epic_taskmgr_spawn. */
-typedef uint8_t task_id_t;
+typedef uint8_t epic_taskmgr_id_t;
 
 /** Sentinel for "no task" / an invalid spawn. */
-#define TASK_ID_INVALID  ((task_id_t)0xFFU)
+#define EPIC_TASKMGR_ID_INVALID  ((epic_taskmgr_id_t)0xFFU)
 
 /**
  * Task entry point: called with the `arg` passed to epic_taskmgr_spawn, runs to
  * completion and returns. Nothing else runs while it does; persist
  * per-task state through `arg`, not locals.
  */
-typedef void (*task_fn_t)(void *arg);
+typedef void (*epic_taskmgr_fn_t)(void *arg);
 
-/** Task control block, one of TASK_MGR_MAX_TASKS fixed slots; all fields
- *  internal, tasks addressed by task_id_t. */
+/** Task control block, one of EPIC_TASKMGR_MAX_TASKS fixed slots; all fields
+ *  internal, tasks addressed by epic_taskmgr_id_t. */
 typedef struct {
-    task_fn_t   fn;          /**< Entry point (NULL in a free slot). */
+    epic_taskmgr_fn_t   fn;          /**< Entry point (NULL in a free slot). */
     void       *arg;
     uint16_t    period;      /**< Period in ticks; 0 = one-shot. */
     uint16_t    countdown;
     uint8_t     priority;    /**< Lower number = runs first within a round. */
     uint8_t     flags;       /**< Packed task flags. */
-} task_t;
+} epic_taskmgr_t;
 
-/* Packed into task_t.flags. */
-#define TM_FLAG_USED     0x01U   /**< Slot is allocated. */
-#define TM_FLAG_ENABLED  0x02U   /**< Slot is scheduled. */
-#define TM_FLAG_READY    0x04U   /**< Due this round. */
+/* Packed into epic_taskmgr_t.flags. */
+#define EPIC_TASKMGR_FLAG_USED     0x01U   /**< Slot is allocated. */
+#define EPIC_TASKMGR_FLAG_ENABLED  0x02U   /**< Slot is scheduled. */
+#define EPIC_TASKMGR_FLAG_READY    0x04U   /**< Due this round. */
 
 /**
  * @brief Initialise the scheduler.
@@ -64,7 +64,7 @@ void epic_taskmgr_init(void);
 /**
  * @brief Register a task and arm it.
  *
- * `fn` must not be NULL; returns TASK_ID_INVALID if it is, or when all
+ * `fn` must not be NULL; returns EPIC_TASKMGR_ID_INVALID if it is, or when all
  * slots are in use.
  *
  * `period_ticks` 0 = one-shot (fires once, then frees its slot).
@@ -76,9 +76,9 @@ void epic_taskmgr_init(void);
  * @param arg           opaque pointer passed to `fn` on every run
  * @param period_ticks  firing period in ticks; 0 = one-shot
  * @param priority      lower runs first within a round
- * @return the new task's id, or TASK_ID_INVALID on failure
+ * @return the new task's id, or EPIC_TASKMGR_ID_INVALID on failure
  */
-task_id_t epic_taskmgr_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
+epic_taskmgr_id_t epic_taskmgr_spawn(epic_taskmgr_fn_t fn, void *arg, uint16_t period_ticks,
                      uint8_t priority);
 
 /**
@@ -88,14 +88,14 @@ task_id_t epic_taskmgr_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
  *
  * @param id the task to start
  */
-void task_start(task_id_t id);
+void epic_taskmgr_start(epic_taskmgr_id_t id);
 
 /**
- * @brief Disable a task so the scheduler skips it until @ref task_start.
+ * @brief Disable a task so the scheduler skips it until @ref epic_taskmgr_start.
  *
  * @param id the task to stop
  */
-void task_stop(task_id_t id);
+void epic_taskmgr_stop(epic_taskmgr_id_t id);
 
 /**
  * @brief Change a task's period at runtime.
@@ -105,7 +105,7 @@ void task_stop(task_id_t id);
  * @param id            the task to retune
  * @param period_ticks  new period in ticks
  */
-void task_set_period(task_id_t id, uint16_t period_ticks);
+void epic_taskmgr_set_period(epic_taskmgr_id_t id, uint16_t period_ticks);
 
 /**
  * @brief Re-arm a task from its full period.
@@ -116,7 +116,7 @@ void task_set_period(task_id_t id, uint16_t period_ticks);
  *
  * @param id the task to re-arm
  */
-void task_reset(task_id_t id);
+void epic_taskmgr_reset(epic_taskmgr_id_t id);
 
 /**
  * @brief Advance the scheduler one tick.
