@@ -17,7 +17,7 @@
  * @param out_min   lower actuator clamp rail (out_min <= out_max)
  * @param out_max   upper actuator clamp rail
  */
-void epic_pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
+void epic_pid_init(epic_pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
               int16_t out_min, int16_t out_max)
 {
     pid->kp_q8   = kp_q8;
@@ -30,7 +30,7 @@ void epic_pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
     pid->prev_measurement      = 0;
     pid->have_prev_measurement = false;
     pid->skip_next_i_increment = false;
-    pid->mode                  = PID_MODE_AUTO;
+    pid->mode                  = EPIC_PID_MODE_AUTO;
     pid->manual_output         = 0;
 }
 
@@ -42,7 +42,7 @@ void epic_pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
  *
  * @param pid the controller instance to reset
  */
-void epic_pid_reset(pid_t *pid)
+void epic_pid_reset(epic_pid_t *pid)
 {
     /* Fault-recovery reset: zero integrator/D-history/skip-flag, keep
      * gains, clamp, and mode untouched. */
@@ -59,7 +59,7 @@ void epic_pid_reset(pid_t *pid)
  * @param ki_q8 Q8.8 integral gain, pre-multiplied by Ts (= round(Ki * Ts * 256))
  * @param kd_q8 Q8.8 derivative gain, pre-divided by Ts (= round(Kd / Ts * 256))
  */
-void epic_pid_set_gains(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8)
+void epic_pid_set_gains(epic_pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8)
 {
     pid->kp_q8 = kp_q8;
     pid->ki_q8 = ki_q8;
@@ -70,20 +70,20 @@ void epic_pid_set_gains(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8)
  * @brief Switch between AUTO and MANUAL (see pid.h).
  *
  * @param pid   the controller instance to switch
- * @param mode  the new mode (PID_MODE_AUTO or PID_MODE_MANUAL)
+ * @param mode  the new mode (EPIC_PID_MODE_AUTO or EPIC_PID_MODE_MANUAL)
  */
-void epic_pid_set_mode(pid_t *pid, pid_mode_t mode)
+void epic_pid_set_mode(epic_pid_t *pid, epic_pid_mode_t mode)
 {
     pid->mode = mode;
 }
 
 /**
- * @brief Set the target output used while mode == PID_MODE_MANUAL (see pid.h).
+ * @brief Set the target output used while mode == EPIC_PID_MODE_MANUAL (see pid.h).
  *
  * @param pid    the controller instance to drive
  * @param value  the manual output target
  */
-void epic_pid_set_manual_output(pid_t *pid, int16_t value)
+void epic_pid_set_manual_output(epic_pid_t *pid, int16_t value)
 {
     pid->manual_output = value;
 }
@@ -96,7 +96,7 @@ void epic_pid_set_manual_output(pid_t *pid, int16_t value)
  * @param measurement  the measured process value
  * @return the clamped output, always in `[out_min, out_max]`
  */
-int16_t epic_pid_update(pid_t *pid, int16_t setpoint, int16_t measurement)
+int16_t epic_pid_update(epic_pid_t *pid, int16_t setpoint, int16_t measurement)
 {
     /* P term: Kp * error in Q8.8; fits int32_t without an overflow guard
      * (max product ~1.07e9, well under INT32_MAX). */
@@ -119,7 +119,7 @@ int16_t epic_pid_update(pid_t *pid, int16_t setpoint, int16_t measurement)
     int32_t out_min_q8 = (int32_t)pid->out_min << 8;
     int32_t out_max_q8 = (int32_t)pid->out_max << 8;
 
-    if (pid->mode == PID_MODE_MANUAL) {
+    if (pid->mode == EPIC_PID_MODE_MANUAL) {
         /* MANUAL: clamp manual_output, then back-calculate the (also
          * clamped) integrator so the next AUTO call reproduces this exact
          * output; skip_next_i_increment suppresses that call's I term so

@@ -26,7 +26,7 @@ int main(void)
     const int16_t out_min = -200;
     const int16_t out_max = 200;
 
-    pid_t pid;
+    epic_pid_t pid;
     epic_pid_init(&pid, kp_q8, ki_q8, kd_q8, out_min, out_max);
 
     int16_t measurement = 0;
@@ -45,13 +45,13 @@ int main(void)
         printf("%4d | %8d | %11d | %6d | %13d | %s\n",
                step, setpoint, measurement, output,
                pid.integrator_q8,
-               pid.mode == PID_MODE_AUTO ? "AUTO" : "MANUAL");
+               pid.mode == EPIC_PID_MODE_AUTO ? "AUTO" : "MANUAL");
     }
 
     /* Phase 2: switch to MANUAL; the operator drives the plant directly
      * via epic_pid_set_manual_output while the integrator back-calculates. */
     printf("\n== Switch to MANUAL, operator takes over (target 50) ==\n");
-    epic_pid_set_mode(&pid, PID_MODE_MANUAL);
+    epic_pid_set_mode(&pid, EPIC_PID_MODE_MANUAL);
     epic_pid_set_manual_output(&pid, 50);
     for (int step = 30; step < 40; step++) {
         int16_t output = epic_pid_update(&pid, setpoint, measurement);
@@ -60,7 +60,7 @@ int main(void)
         printf("%4d | %8d | %11d | %6d | %13d | %s\n",
                step, setpoint, measurement, output,
                pid.integrator_q8,
-               pid.mode == PID_MODE_AUTO ? "AUTO" : "MANUAL");
+               pid.mode == EPIC_PID_MODE_AUTO ? "AUTO" : "MANUAL");
     }
 
     /* With the plant frozen, a MANUAL call followed by an AUTO call at
@@ -70,11 +70,11 @@ int main(void)
     int16_t new_manual = 75;
     printf("\n== Bumpless-equivalence demo (plant frozen) ==\n");
     printf("  setpoint=%d  measurement=%d\n", frozen_setpoint, frozen_measurement);
-    epic_pid_set_mode(&pid, PID_MODE_MANUAL);
+    epic_pid_set_mode(&pid, EPIC_PID_MODE_MANUAL);
     epic_pid_set_manual_output(&pid, new_manual);
     int16_t held_out = epic_pid_update(&pid, frozen_setpoint, frozen_measurement);
     printf("  MANUAL output = %d  (operator's target was %d)\n", held_out, new_manual);
-    epic_pid_set_mode(&pid, PID_MODE_AUTO);
+    epic_pid_set_mode(&pid, EPIC_PID_MODE_AUTO);
     int16_t first_auto = epic_pid_update(&pid, frozen_setpoint, frozen_measurement);
     printf("  first AUTO output = %d  %s\n", first_auto,
            (first_auto == held_out) ? "(matches MANUAL exactly -- bumpless)"
@@ -87,7 +87,7 @@ int main(void)
      * integrator jump), but the plant moved, so the output isn't pinned. */
     printf("\n== Switch back to AUTO (controller state is continuous, "
            "but the plant moved one step) ==\n");
-    epic_pid_set_mode(&pid, PID_MODE_AUTO);
+    epic_pid_set_mode(&pid, EPIC_PID_MODE_AUTO);
     for (int step = 40; step < 70; step++) {
         int16_t output = epic_pid_update(&pid, setpoint, measurement);
         int16_t plant_delta = (int16_t)((output - measurement) / 4);
@@ -95,7 +95,7 @@ int main(void)
         printf("%4d | %8d | %11d | %6d | %13d | %s\n",
                step, setpoint, measurement, output,
                pid.integrator_q8,
-               pid.mode == PID_MODE_AUTO ? "AUTO" : "MANUAL");
+               pid.mode == EPIC_PID_MODE_AUTO ? "AUTO" : "MANUAL");
     }
 
     return 0;

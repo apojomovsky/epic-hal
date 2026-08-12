@@ -6,7 +6,7 @@
 
 #include "pid.h"
 
-static pid_t g_pid;
+static epic_pid_t g_pid;
 
 /**
  * @brief On-target build proof and footprint report.

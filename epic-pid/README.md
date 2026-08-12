@@ -2,7 +2,7 @@
 
 A single-loop, fixed-point PID controller with anti-windup,
 derivative-on-measurement, and bumpless auto/manual transfer. One
-caller-owned `pid_t` instance per control loop, initialized once,
+caller-owned `epic_pid_t` instance per control loop, initialized once,
 then stepped once per fixed-period control cycle via `epic_pid_update()`.
 
 - **Vendor-agnostic**: a PID controller is arithmetic on plain data,
@@ -75,7 +75,7 @@ make -C mcu/pic18fxx5x-pid-mplabx MCU=18F4550   # also 2455 / 2550 / 4455
 #define TS_SEC (1.0f / 100.0f)
 static int16_t q8(float x) { return (int16_t)(x * 256.0f); }
 
-static pid_t g_loop;
+static epic_pid_t g_loop;
 
 void control_init(void)
 {
@@ -97,14 +97,14 @@ void control_tick(int16_t setpoint, int16_t measurement)
 void control_take_manual(int16_t target)
 {
     epic_pid_set_manual_output(&g_loop, target);
-    epic_pid_set_mode(&g_loop, PID_MODE_MANUAL);
+    epic_pid_set_mode(&g_loop, EPIC_PID_MODE_MANUAL);
 }
 
 /* Operator / supervisor hands back. The first AUTO call returns the
  * held manual value exactly, no output jump. */
 void control_resume_auto(void)
 {
-    epic_pid_set_mode(&g_loop, PID_MODE_AUTO);
+    epic_pid_set_mode(&g_loop, EPIC_PID_MODE_AUTO);
 }
 ```
 

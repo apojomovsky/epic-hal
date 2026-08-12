@@ -30,7 +30,7 @@
 #define KI_Q8 64
 #define KD_Q8 0
 
-static pid_t   g_pid;
+static epic_pid_t   g_pid;
 static int16_t g_meas = 0;
 
 /** @brief Run the step-then-settle trajectory and report PASS/FAIL over the harness. */

@@ -14,9 +14,9 @@
 
 /** Auto / manual mode selector (see @ref epic_pid_set_mode, @ref epic_pid_update). */
 typedef enum {
-    PID_MODE_MANUAL = 0,
-    PID_MODE_AUTO,
-} pid_mode_t;
+    EPIC_PID_MODE_MANUAL = 0,
+    EPIC_PID_MODE_AUTO,
+} epic_pid_mode_t;
 
 /**
  * One PID control loop, caller-owned storage. Fields are written by
@@ -34,9 +34,9 @@ typedef struct {
     bool       skip_next_i_increment; /* set after a MANUAL call back-calculates the
                                         * integrator; the next AUTO call skips the I
                                         * increment (bumpless transfer), then clears this */
-    pid_mode_t mode;
+    epic_pid_mode_t mode;
     int16_t    manual_output;         /* caller-set target output while mode == MANUAL */
-} pid_t;
+} epic_pid_t;
 
 /**
  * @brief Initialize a PID instance.
@@ -51,7 +51,7 @@ typedef struct {
  * @param out_min   lower actuator clamp rail (out_min <= out_max)
  * @param out_max   upper actuator clamp rail
  */
-void epic_pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
+void epic_pid_init(epic_pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
               int16_t out_min, int16_t out_max);
 
 /**
@@ -61,7 +61,7 @@ void epic_pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
  *
  * @param pid the controller instance to reset
  */
-void epic_pid_reset(pid_t *pid);
+void epic_pid_reset(epic_pid_t *pid);
 
 /**
  * @brief  Replace the three gains, leaving the integrator, D-term history,
@@ -72,7 +72,7 @@ void epic_pid_reset(pid_t *pid);
  * @param ki_q8 Q8.8 integral gain, pre-multiplied by Ts (= round(Ki * Ts * 256))
  * @param kd_q8 Q8.8 derivative gain, pre-divided by Ts (= round(Kd / Ts * 256))
  */
-void epic_pid_set_gains(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8);
+void epic_pid_set_gains(epic_pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8);
 
 /**
  * @brief  Switch between AUTO and MANUAL.
@@ -82,12 +82,12 @@ void epic_pid_set_gains(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8)
  * across the switch.
  *
  * @param pid   the controller instance to switch
- * @param mode  the new mode (PID_MODE_AUTO or PID_MODE_MANUAL)
+ * @param mode  the new mode (EPIC_PID_MODE_AUTO or EPIC_PID_MODE_MANUAL)
  */
-void epic_pid_set_mode(pid_t *pid, pid_mode_t mode);
+void epic_pid_set_mode(epic_pid_t *pid, epic_pid_mode_t mode);
 
 /**
- * @brief Set the target output used while mode == PID_MODE_MANUAL.
+ * @brief Set the target output used while mode == EPIC_PID_MODE_MANUAL.
  *
  * Only consulted by epic_pid_update() in MANUAL, ignored in AUTO. Call every
  * cycle the operator wants a new manual output in effect.
@@ -95,7 +95,7 @@ void epic_pid_set_mode(pid_t *pid, pid_mode_t mode);
  * @param pid    the controller instance to drive
  * @param value  the manual output target
  */
-void epic_pid_set_manual_output(pid_t *pid, int16_t value);
+void epic_pid_set_manual_output(epic_pid_t *pid, int16_t value);
 
 /**
  * @brief Step the controller once per fixed control-loop period.
@@ -113,6 +113,6 @@ void epic_pid_set_manual_output(pid_t *pid, int16_t value);
  *
  * @return the clamped output, always in `[out_min, out_max]`
  */
-int16_t epic_pid_update(pid_t *pid, int16_t setpoint, int16_t measurement);
+int16_t epic_pid_update(epic_pid_t *pid, int16_t setpoint, int16_t measurement);
 
 #endif /* PID_H */

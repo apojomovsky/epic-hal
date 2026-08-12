@@ -43,7 +43,7 @@ static int32_t p_or_d_term(int16_t gain_q8, int16_t raw)
  */
 static void test_pure_p(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     epic_pid_init(&pid, (int16_t)256, (int16_t)0, (int16_t)0, (int16_t)-1000, (int16_t)1000);
 
     /* kp_q8 = 256 means Kp = 1.0 in fixed point. error=100 -> P_q8 = 25600. */
@@ -79,7 +79,7 @@ static void test_pure_p(void)
  */
 static void test_pure_i_accumulates(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     /* ki_q8 = 256 means Ki*Ts = 1.0 in fixed point. Sub-saturating
      * error = 10, clamp wide so no anti-windup. */
     epic_pid_init(&pid, (int16_t)0, (int16_t)256, (int16_t)0,
@@ -111,7 +111,7 @@ static void test_pure_i_accumulates(void)
  */
 static void test_anti_windup_clamps(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     /* kp=0, ki=256 (1.0/step), kd=0. Tight clamp [-50, 50] so the
      * Q8.8 rails are [-12800, 12800]. Sustained error=10 normally
      * accumulates to (10 * 256) = 2560 per step -> saturates in
@@ -156,7 +156,7 @@ static void test_anti_windup_clamps(void)
  */
 static void test_windup_recovery_immediate(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     epic_pid_init(&pid, (int16_t)0, (int16_t)256, (int16_t)0,
              (int16_t)-50, (int16_t)50);
 
@@ -189,7 +189,7 @@ static void test_windup_recovery_immediate(void)
  */
 static void test_no_derivative_kick_first_call(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     epic_pid_init(&pid, (int16_t)0, (int16_t)0, (int16_t)256,
              (int16_t)-1000, (int16_t)1000);
 
@@ -215,7 +215,7 @@ static void test_no_derivative_kick_first_call(void)
  */
 static void test_no_derivative_kick_after_reset(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     epic_pid_init(&pid, (int16_t)0, (int16_t)0, (int16_t)256,
              (int16_t)-1000, (int16_t)1000);
 
@@ -248,7 +248,7 @@ static void test_no_derivative_kick_after_reset(void)
  */
 static void test_derivative_sign(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     epic_pid_init(&pid, (int16_t)0, (int16_t)0, (int16_t)256,
              (int16_t)-1000, (int16_t)1000);
 
@@ -276,7 +276,7 @@ static void test_derivative_sign(void)
  */
 static void test_final_output_clamps_p(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     /* kp huge, ki=kd=0, tight clamp. */
     epic_pid_init(&pid, (int16_t)32000, (int16_t)0, (int16_t)0,
              (int16_t)-100, (int16_t)100);
@@ -291,7 +291,7 @@ static void test_final_output_clamps_p(void)
 /** @brief Final output clamps when the D term alone pushes past a rail. */
 static void test_final_output_clamps_d(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     /* kd huge, kp=ki=0. */
     epic_pid_init(&pid, (int16_t)0, (int16_t)0, (int16_t)32000,
              (int16_t)-100, (int16_t)100);
@@ -304,7 +304,7 @@ static void test_final_output_clamps_d(void)
 /** @brief Final output clamps when the I term alone pushes past a rail. */
 static void test_final_output_clamps_i(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     /* I-only, gain huge. Clamp is symmetric, so we get pinned to
      * out_max, then check the rail is respected even with
      * accumulated integrator overflow potential. */
@@ -326,7 +326,7 @@ static void test_final_output_clamps_i(void)
  */
 static void test_bumpless_transfer(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     epic_pid_init(&pid, (int16_t)256, (int16_t)10, (int16_t)0,
              (int16_t)-1000, (int16_t)1000);
 
@@ -342,7 +342,7 @@ static void test_bumpless_transfer(void)
 
     /* Switch to MANUAL, set manual_output=300. First MANUAL call
      * returns 300 (clamped). */
-    epic_pid_set_mode(&pid, PID_MODE_MANUAL);
+    epic_pid_set_mode(&pid, EPIC_PID_MODE_MANUAL);
     epic_pid_set_manual_output(&pid, (int16_t)300);
     int16_t manual_out = epic_pid_update(&pid, (int16_t)100, (int16_t)0);
     CHECK(manual_out == 300, "bumpless: MANUAL output is the requested target");
@@ -351,7 +351,7 @@ static void test_bumpless_transfer(void)
      * integrator was back-calculated during MANUAL so this call's
      * AUTO output should equal the MANUAL output (continuous, no
      * jump) before the loop is free to evolve. */
-    epic_pid_set_mode(&pid, PID_MODE_AUTO);
+    epic_pid_set_mode(&pid, EPIC_PID_MODE_AUTO);
     int16_t first_auto_after = epic_pid_update(&pid, (int16_t)100, (int16_t)0);
     CHECK(first_auto_after == manual_out,
           "bumpless: first AUTO call after MANUAL returns the same value (no jump)");
@@ -372,7 +372,7 @@ static void test_bumpless_transfer(void)
  */
 static void test_pid_reset_clears_state_keeps_gains(void)
 {
-    pid_t pid;
+    epic_pid_t pid;
     epic_pid_init(&pid, (int16_t)256, (int16_t)128, (int16_t)256,
              (int16_t)-1000, (int16_t)1000);
 
@@ -391,7 +391,7 @@ static void test_pid_reset_clears_state_keeps_gains(void)
           "reset: gains preserved");
     CHECK(pid.out_min == -1000 && pid.out_max == 1000,
           "reset: clamp range preserved");
-    CHECK(pid.mode == PID_MODE_AUTO, "reset: mode preserved");
+    CHECK(pid.mode == EPIC_PID_MODE_AUTO, "reset: mode preserved");
 
     /* First call after reset: D=0 (no prev measurement). */
     int16_t out = epic_pid_update(&pid, (int16_t)100, (int16_t)0);
@@ -413,7 +413,7 @@ static void test_pid_reset_clears_state_keeps_gains(void)
 /** @brief Two independent instances never affect each other. */
 static void test_two_independent_instances(void)
 {
-    pid_t a, b;
+    epic_pid_t a, b;
     epic_pid_init(&a, (int16_t)256, (int16_t)0, (int16_t)0,
              (int16_t)-1000, (int16_t)1000);
     epic_pid_init(&b, (int16_t)512, (int16_t)0, (int16_t)0,

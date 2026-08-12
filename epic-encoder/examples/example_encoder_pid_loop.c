@@ -73,7 +73,7 @@ int main(void)
     /* A PID tuned for a visible saturating step response (mirrors
      * example_pid_setpoint_step's choices). Output clamp tight enough that
      * anti-windup engages on the setpoint step. */
-    pid_t pid;
+    epic_pid_t pid;
     epic_pid_init(&pid, q8(2.0f), q8(0.5f), q8(0.0f), -200, 200);
 
     /* Encoder on RB4/RB5, glitch gate off (the simulated motor is clean). */
