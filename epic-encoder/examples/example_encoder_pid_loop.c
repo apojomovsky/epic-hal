@@ -1,5 +1,5 @@
 /**
- * One encoder feeding epic_encoder_get_position() into pid_update() as the
+ * One encoder feeding epic_encoder_get_position() into epic_pid_update() as the
  * measurement each control cycle. A simulated servo: each cycle reads the
  * encoder, steps the PID, applies the output to a first-order-lag plant,
  * then drives the encoder one quadrature edge at a time so
@@ -74,7 +74,7 @@ int main(void)
      * example_pid_setpoint_step's choices). Output clamp tight enough that
      * anti-windup engages on the setpoint step. */
     pid_t pid;
-    pid_init(&pid, q8(2.0f), q8(0.5f), q8(0.0f), -200, 200);
+    epic_pid_init(&pid, q8(2.0f), q8(0.5f), q8(0.0f), -200, 200);
 
     /* Encoder on RB4/RB5, glitch gate off (the simulated motor is clean). */
     epic_encoder_t enc;
@@ -96,7 +96,7 @@ int main(void)
     int last_step_logged = 0;
     for (int step = 0; step < 80; step++) {
         int32_t meas = epic_encoder_get_position(&enc);     /* the sensor reading */
-        int16_t output = pid_update(&pid, setpoint, (int16_t)meas);
+        int16_t output = epic_pid_update(&pid, setpoint, (int16_t)meas);
 
         /* Plant: integer first-order lag, no floats. */
         int32_t delta = (output - motor_angle) / PLANT_N;

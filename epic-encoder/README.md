@@ -3,7 +3,7 @@
 A vendor-agnostic decoder for a standard 2-channel (A/B) incremental
 quadrature encoder, x4 resolution (counts every edge of both channels),
 instantiable (one `epic_encoder_t` per A/B pair), composable with `epic-pid`:
-feed `epic_encoder_get_position()` into `pid_update()`'s `measurement`
+feed `epic_encoder_get_position()` into `epic_pid_update()`'s `measurement`
 argument every control cycle.
 
 Neither PIC16F87XA nor PIC18F2455/2550/4455/4550 has any encoder-aware
@@ -44,7 +44,7 @@ one shared interrupt; decode with a software Gray-code transition table.
 cmake -B build && cmake --build build
 ctest --test-dir build --output-on-failure   # test_encoder: 52 checks
 ./build/example_encoder_hal                  # two encoders on one PORTB
-./build/example_encoder_pid_loop             # encoder -> pid_update loop
+./build/example_encoder_pid_loop             # encoder -> epic_pid_update loop
 # PIC18 family instead:
 cmake -B build18 -DEPIC_FAMILY=PIC18 && cmake --build build18
 ctest --test-dir build18 --output-on-failure
@@ -87,7 +87,7 @@ void app_init(void) {
 
 /* Each control cycle: */
 int32_t meas = epic_encoder_get_position(&enc);
-int16_t out  = pid_update(&pid, setpoint, (int16_t)meas);
+int16_t out  = epic_pid_update(&pid, setpoint, (int16_t)meas);
 ```
 
 See `examples/example_encoder_hal.c` (two encoders sharing one PORTB) and

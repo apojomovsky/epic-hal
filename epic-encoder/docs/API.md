@@ -186,5 +186,5 @@ channel is not held to a timing gate a bouncy mechanical one needs.
   composes with anything wanting filtered ADC. Nothing about it belongs
   inside `epic_encoder_update`.
 - **A PID loop**: feed `epic_encoder_get_position()` straight into
-  `pid_update()`'s `measurement` each control cycle
+  `epic_pid_update()`'s `measurement` each control cycle
   (`examples/example_encoder_pid_loop.c`).

@@ -3,7 +3,7 @@
 A single-loop, fixed-point PID controller with anti-windup,
 derivative-on-measurement, and bumpless auto/manual transfer. One
 caller-owned `pid_t` instance per control loop, initialized once,
-then stepped once per fixed-period control cycle via `pid_update()`.
+then stepped once per fixed-period control cycle via `epic_pid_update()`.
 
 - **Vendor-agnostic**: a PID controller is arithmetic on plain data,
   not a hardware operation, so `src/pid.c` is one file, compiles
@@ -18,9 +18,9 @@ then stepped once per fixed-period control cycle via `pid_update()`.
   no HAL; the XC8 cross-compile links `epic-math`'s real per-family
   asm backend).
 - **Discrete-time gains, pre-scaled by the sample period**: the
-  caller calls `pid_update` at a fixed, known period `Ts` and
+  caller calls `epic_pid_update` at a fixed, known period `Ts` and
   pre-scales `Ki`/`Kd` by `Ts` once at configuration. This keeps
-  `pid_update` division-free (the most expensive primitive
+  `epic_pid_update` division-free (the most expensive primitive
   `epic-math` provides on PIC16) and lets the module have zero
   dependency on any timebase.
 - **Anti-windup by clamping** (the integrator is hard-capped to
@@ -29,11 +29,11 @@ then stepped once per fixed-period control cycle via `pid_update()`.
   saturated state is immediate on the very next call when the
   error reverses sign.
 - **Derivative-on-measurement only** (no setpoint-step derivative
-  kick, by construction). The first call after `pid_init` or
-  `pid_reset` zeroes the D term, gating it on
+  kick, by construction). The first call after `epic_pid_init` or
+  `epic_pid_reset` zeroes the D term, gating it on
   `have_prev_measurement`.
-- **Bumpless AUTO<->MANUAL transfer built in**: `pid_set_mode` does
-  not touch state, and `pid_update` back-calculates the integrator
+- **Bumpless AUTO<->MANUAL transfer built in**: `epic_pid_set_mode` does
+  not touch state, and `epic_pid_update` back-calculates the integrator
   in MANUAL so the next AUTO call returns the held manual value
   exactly (no output jump at the handoff).
 
@@ -79,7 +79,7 @@ static pid_t g_loop;
 
 void control_init(void)
 {
-    pid_init(&g_loop,
+    epic_pid_init(&g_loop,
              q8(1.0f),                  /* Kp          */
              q8(5.0f * TS_SEC),         /* Ki * Ts     */
              q8(0.001f / TS_SEC),       /* Kd / Ts     */
@@ -89,22 +89,22 @@ void control_init(void)
 /* Call once per fixed-period control cycle, in EITHER mode. */
 void control_tick(int16_t setpoint, int16_t measurement)
 {
-    int16_t output = pid_update(&g_loop, setpoint, measurement);
+    int16_t output = epic_pid_update(&g_loop, setpoint, measurement);
     drive_actuator(output);
 }
 
 /* Operator / supervisor takes over (e.g. a manual jog from a UI). */
 void control_take_manual(int16_t target)
 {
-    pid_set_manual_output(&g_loop, target);
-    pid_set_mode(&g_loop, PID_MODE_MANUAL);
+    epic_pid_set_manual_output(&g_loop, target);
+    epic_pid_set_mode(&g_loop, PID_MODE_MANUAL);
 }
 
 /* Operator / supervisor hands back. The first AUTO call returns the
  * held manual value exactly, no output jump. */
 void control_resume_auto(void)
 {
-    pid_set_mode(&g_loop, PID_MODE_AUTO);
+    epic_pid_set_mode(&g_loop, PID_MODE_AUTO);
 }
 ```
 

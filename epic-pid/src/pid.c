@@ -17,7 +17,7 @@
  * @param out_min   lower actuator clamp rail (out_min <= out_max)
  * @param out_max   upper actuator clamp rail
  */
-void pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
+void epic_pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
               int16_t out_min, int16_t out_max)
 {
     pid->kp_q8   = kp_q8;
@@ -42,7 +42,7 @@ void pid_init(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8,
  *
  * @param pid the controller instance to reset
  */
-void pid_reset(pid_t *pid)
+void epic_pid_reset(pid_t *pid)
 {
     /* Fault-recovery reset: zero integrator/D-history/skip-flag, keep
      * gains, clamp, and mode untouched. */
@@ -59,7 +59,7 @@ void pid_reset(pid_t *pid)
  * @param ki_q8 Q8.8 integral gain, pre-multiplied by Ts (= round(Ki * Ts * 256))
  * @param kd_q8 Q8.8 derivative gain, pre-divided by Ts (= round(Kd / Ts * 256))
  */
-void pid_set_gains(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8)
+void epic_pid_set_gains(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8)
 {
     pid->kp_q8 = kp_q8;
     pid->ki_q8 = ki_q8;
@@ -72,7 +72,7 @@ void pid_set_gains(pid_t *pid, int16_t kp_q8, int16_t ki_q8, int16_t kd_q8)
  * @param pid   the controller instance to switch
  * @param mode  the new mode (PID_MODE_AUTO or PID_MODE_MANUAL)
  */
-void pid_set_mode(pid_t *pid, pid_mode_t mode)
+void epic_pid_set_mode(pid_t *pid, pid_mode_t mode)
 {
     pid->mode = mode;
 }
@@ -83,7 +83,7 @@ void pid_set_mode(pid_t *pid, pid_mode_t mode)
  * @param pid    the controller instance to drive
  * @param value  the manual output target
  */
-void pid_set_manual_output(pid_t *pid, int16_t value)
+void epic_pid_set_manual_output(pid_t *pid, int16_t value)
 {
     pid->manual_output = value;
 }
@@ -96,7 +96,7 @@ void pid_set_manual_output(pid_t *pid, int16_t value)
  * @param measurement  the measured process value
  * @return the clamped output, always in `[out_min, out_max]`
  */
-int16_t pid_update(pid_t *pid, int16_t setpoint, int16_t measurement)
+int16_t epic_pid_update(pid_t *pid, int16_t setpoint, int16_t measurement)
 {
     /* P term: Kp * error in Q8.8; fits int32_t without an overflow guard
      * (max product ~1.07e9, well under INT32_MAX). */
