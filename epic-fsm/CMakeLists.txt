@@ -44,10 +44,10 @@ if(EPIC_FSM_BUILD_TASKMGR_EXAMPLE)
     set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link the taskmgr example against: PIC16 or PIC18")
     set(TASKMGR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-taskmgr
         CACHE PATH "Path to the epic-taskmgr source tree")
-    if(NOT TARGET task_manager)
+    if(NOT TARGET epic_taskmgr)
         add_subdirectory(${TASKMGR_DIR} ${CMAKE_CURRENT_BINARY_DIR}/taskmgr)
     endif()
 
     add_executable(example_taskmgr_integration examples/example_taskmgr_integration.c)
-    target_link_libraries(example_taskmgr_integration PRIVATE fsm task_manager)
+    target_link_libraries(example_taskmgr_integration PRIVATE fsm epic_taskmgr)
 endif()

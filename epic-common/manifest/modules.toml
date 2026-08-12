@@ -1476,7 +1476,7 @@ config  = { FOSC = "INTOSC", WDTE = "ON", PWRTE = "ON", MCLRE = "ON", CP = "OFF"
 [modules.epic-taskmgr]
 dir        = "epic-taskmgr"
 sources    = [
-  "src/task_manager.c",
+  "src/epic_taskmgr.c",
 ]
 includes   = [
   "include",

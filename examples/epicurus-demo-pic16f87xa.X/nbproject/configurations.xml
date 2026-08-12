@@ -59,7 +59,7 @@
         <itemPath>../../epic-fsm/src/fsm.c</itemPath>
         <itemPath>../../epic-pid/src/pid.c</itemPath>
         <itemPath>../../epic-serial/src/epic_serial.c</itemPath>
-        <itemPath>../../epic-taskmgr/src/task_manager.c</itemPath>
+        <itemPath>../../epic-taskmgr/src/epic_taskmgr.c</itemPath>
         <itemPath>../../epic-tick/src/epic_tick.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>

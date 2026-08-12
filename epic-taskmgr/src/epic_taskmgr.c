@@ -1,11 +1,11 @@
 /**
- * Cooperative task scheduler (see task_manager.h). The TCB array is the
+ * Cooperative task scheduler (see epic_taskmgr.h). The TCB array is the
  * only state shared with interrupt context: single-byte flag ops are
  * atomic, and the 16-bit TCB field writes (countdown/period) take a brief
  * critical section so a tick ISR never observes a torn value.
  */
 
-#include "task_manager.h"
+#include "epic_taskmgr.h"
 #include "core/hal_irq.h"   /* EPIC_IRQ_Disable/Restore (family-neutral) */
 #include "core/epic_harness.h"      /* harness_tick / harness_running */
 #include "core/hal_wdt_sleep.h"    /* EPIC_WDT_Refresh (family-neutral) */
@@ -35,15 +35,15 @@ static uint16_t arm_countdown(uint16_t period)
 }
 
 /** TMR0 reload value, rewritten each overflow since Timer0 has no
- *  hardware auto-reload; set by task_manager_attach_timer0. */
+ *  hardware auto-reload; set by epic_taskmgr_attach_timer0. */
 static uint8_t g_tick_reload = 0U;
 
 /**
- * @brief Initialise the scheduler (see task_manager.h).
+ * @brief Initialise the scheduler (see epic_taskmgr.h).
  *
  * Clears every task slot and zeroes the tick counter; idempotent.
  */
-void task_manager_init(void)
+void epic_taskmgr_init(void)
 {
     uint8_t prev = EPIC_IRQ_Disable();
     for (uint8_t i = 0; i < TASK_MGR_MAX_TASKS; i++) {
@@ -59,7 +59,7 @@ void task_manager_init(void)
 }
 
 /**
- * @brief Register a task and arm it (see task_manager.h).
+ * @brief Register a task and arm it (see epic_taskmgr.h).
  *
  * @param fn            the task entry point; must not be NULL
  * @param arg           opaque pointer passed to `fn` on every run
@@ -67,7 +67,7 @@ void task_manager_init(void)
  * @param priority      lower runs first within a round
  * @return the new task's id, or TASK_ID_INVALID on failure
  */
-task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
+task_id_t epic_taskmgr_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
                      uint8_t priority)
 {
     if (fn == NULL) {
@@ -93,7 +93,7 @@ task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
 }
 
 /**
- * @brief Enable a previously stopped task (see task_manager.h).
+ * @brief Enable a previously stopped task (see epic_taskmgr.h).
  *
  * @param id the task to start
  */
@@ -114,7 +114,7 @@ void task_start(task_id_t id)
 }
 
 /**
- * @brief Disable a task so the scheduler skips it until @ref task_start (see task_manager.h).
+ * @brief Disable a task so the scheduler skips it until @ref task_start (see epic_taskmgr.h).
  *
  * @param id the task to stop
  */
@@ -128,7 +128,7 @@ void task_stop(task_id_t id)
 }
 
 /**
- * @brief Re-arm a task from its full period (see task_manager.h).
+ * @brief Re-arm a task from its full period (see epic_taskmgr.h).
  *
  * @param id the task to re-arm
  */
@@ -147,7 +147,7 @@ void task_reset(task_id_t id)
 }
 
 /**
- * @brief Change a task's period at runtime (see task_manager.h).
+ * @brief Change a task's period at runtime (see epic_taskmgr.h).
  *
  * @param id            the task to retune
  * @param period_ticks  new period in ticks
@@ -166,11 +166,11 @@ void task_set_period(task_id_t id, uint16_t period_ticks)
 }
 
 /**
- * @brief Advance the scheduler one tick (see task_manager.h).
+ * @brief Advance the scheduler one tick (see epic_taskmgr.h).
  *
  * Safe in interrupt context; never runs user code.
  */
-void task_manager_tick(void)
+void epic_taskmgr_tick(void)
 {
     g_ticks++;
 
@@ -192,11 +192,11 @@ void task_manager_tick(void)
 }
 
 /**
- * @brief Current tick counter since task_manager_init (see task_manager.h).
+ * @brief Current tick counter since epic_taskmgr_init (see epic_taskmgr.h).
  *
  * @return the tick count
  */
-uint16_t task_manager_ticks(void)
+uint16_t epic_taskmgr_ticks(void)
 {
     /* Read-twice-retry (the epic_tick_get pattern): the tick ISR
      * increments g_ticks as a 16-bit RMW, so a single read can tear;
@@ -209,11 +209,11 @@ uint16_t task_manager_ticks(void)
 }
 
 /**
- * @brief Run every task ready now, in priority order (see task_manager.h).
+ * @brief Run every task ready now, in priority order (see epic_taskmgr.h).
  *
  * @return number of tasks actually run this round
  */
-uint8_t task_manager_run_once(void)
+uint8_t epic_taskmgr_run_once(void)
 {
     /* Snapshot the ready set in priority order, clearing each READY flag,
      * then run the tasks with interrupts enabled so a tick during a long
@@ -263,25 +263,25 @@ uint8_t task_manager_run_once(void)
 }
 
 /**
- * @brief The canonical scheduler loop (see task_manager.h).
+ * @brief The canonical scheduler loop (see epic_taskmgr.h).
  *
  * Bounded on host; runs forever on target.
  */
-void task_manager_run(void)
+void epic_taskmgr_run(void)
 {
     for (uint32_t i = 0; epic_harness_running(i); i++) {
         epic_harness_tick();    /* host: pumps sim → Timer0 ISR → tick */
-        (void)task_manager_run_once();
+        (void)epic_taskmgr_run_once();
         EPIC_WDT_Refresh();            /* no-op on the host */
     }
 }
 
 /**
- * @brief Number of tasks currently registered (used slots), any state (see task_manager.h).
+ * @brief Number of tasks currently registered (used slots), any state (see epic_taskmgr.h).
  *
  * @return the count of used slots
  */
-uint8_t task_manager_count(void)
+uint8_t epic_taskmgr_count(void)
 {
     /* Single-byte flag reads (atomic), no critical section. A spawn/free
      * mid-scan shifts the count by one at worst: a timing artifact, not
@@ -301,19 +301,19 @@ uint8_t task_manager_count(void)
  * Reloads TMR0 first (no hardware auto-reload) so every tick has the
  * same period, then advances the scheduler.
  */
-static void task_manager_on_timer0_overflow(void)
+static void epic_taskmgr_on_timer0_overflow(void)
 {
     EPIC_TIMER0_WriteCounter(g_tick_reload);
-    task_manager_tick();
+    epic_taskmgr_tick();
 }
 
 /**
- * @brief Wire a HAL Timer0 overflow to task_manager_tick and start it (see task_manager.h).
+ * @brief Wire a HAL Timer0 overflow to epic_taskmgr_tick and start it (see epic_taskmgr.h).
  *
  * @param reload     TMR0 reload value (0..255)
  * @param prescaler  a TIMER0_PrescalerTypeDef (1:2 .. 1:256)
  */
-void task_manager_attach_timer0(uint8_t reload, TIMER0_PrescalerTypeDef prescaler)
+void epic_taskmgr_attach_timer0(uint8_t reload, TIMER0_PrescalerTypeDef prescaler)
 {
     g_tick_reload = reload;
     TIMER0_HandleTypeDef h = TIMER0_HANDLE_DEFAULT;
@@ -321,7 +321,7 @@ void task_manager_attach_timer0(uint8_t reload, TIMER0_PrescalerTypeDef prescale
     h.Prescaler         = prescaler;
     h.PrescalerAssigned = true;
     h.ReloadValue       = reload;
-    h.OverflowCallback  = task_manager_on_timer0_overflow;
+    h.OverflowCallback  = epic_taskmgr_on_timer0_overflow;
     EPIC_TIMER0_Init(&h);
     EPIC_TIMER0_Start(&h);
 }

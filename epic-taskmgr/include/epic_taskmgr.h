@@ -1,12 +1,12 @@
 /**
  * Cooperative (non-preemptive) task scheduler for 8-bit PIC, family-
  * agnostic via `epic_hal.h`. A single periodic tick (typically Timer0)
- * marks due tasks ready; `task_manager_run_once()` runs them to
+ * marks due tasks ready; `epic_taskmgr_run_once()` runs them to
  * completion in priority order, no preemption, one shared call stack.
  */
 
-#ifndef TASK_MANAGER_H
-#define TASK_MANAGER_H
+#ifndef EPIC_TASKMGR_H
+#define EPIC_TASKMGR_H
 
 #include <stdint.h>
 #include "peripherals/hal_timer0.h"   /* Timer0 tick source (family-neutral) */
@@ -24,14 +24,14 @@
 #  endif
 #endif
 
-/** Opaque task identifier returned by @ref task_spawn. */
+/** Opaque task identifier returned by @ref epic_taskmgr_spawn. */
 typedef uint8_t task_id_t;
 
 /** Sentinel for "no task" / an invalid spawn. */
 #define TASK_ID_INVALID  ((task_id_t)0xFFU)
 
 /**
- * Task entry point: called with the `arg` passed to task_spawn, runs to
+ * Task entry point: called with the `arg` passed to epic_taskmgr_spawn, runs to
  * completion and returns. Nothing else runs while it does; persist
  * per-task state through `arg`, not locals.
  */
@@ -59,7 +59,7 @@ typedef struct {
  * Clears every task slot and zeroes the tick counter. Call once before
  * spawning tasks or attaching a tick source. Idempotent.
  */
-void task_manager_init(void);
+void epic_taskmgr_init(void);
 
 /**
  * @brief Register a task and arm it.
@@ -78,7 +78,7 @@ void task_manager_init(void);
  * @param priority      lower runs first within a round
  * @return the new task's id, or TASK_ID_INVALID on failure
  */
-task_id_t task_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
+task_id_t epic_taskmgr_spawn(task_fn_t fn, void *arg, uint16_t period_ticks,
                      uint8_t priority);
 
 /**
@@ -125,16 +125,16 @@ void task_reset(task_id_t id);
  * reloading periodic ones) at zero. Call from a timer ISR (typically
  * Timer0); it never runs user code, so it is safe in interrupt context.
  */
-void task_manager_tick(void);
+void epic_taskmgr_tick(void);
 
 /**
- * @brief Current tick counter since task_manager_init.
+ * @brief Current tick counter since epic_taskmgr_init.
  *
  * Wraps at 65535.
  *
  * @return the tick count
  */
-uint16_t task_manager_ticks(void);
+uint16_t epic_taskmgr_ticks(void);
 
 /**
  * @brief Run every task ready now, in priority order, then return.
@@ -143,27 +143,27 @@ uint16_t task_manager_ticks(void);
  *
  * @return number of tasks actually run this round
  */
-uint8_t task_manager_run_once(void);
+uint8_t epic_taskmgr_run_once(void);
 
 /**
  * @brief The canonical scheduler loop.
  *
  * Pumps the harness, runs due tasks, refreshes the watchdog. Bounded on
  * host (harness reports pass/fail and returns), runs forever on target.
- * Call task_manager_run_once directly if you need per-iteration work of
+ * Call epic_taskmgr_run_once directly if you need per-iteration work of
  * your own.
  */
-void task_manager_run(void);
+void epic_taskmgr_run(void);
 
 /**
  * @brief Number of tasks currently registered (used slots), any state.
  *
  * @return the count of used slots
  */
-uint8_t task_manager_count(void);
+uint8_t epic_taskmgr_count(void);
 
 /**
- * @brief Wire a HAL Timer0 overflow to task_manager_tick and start it.
+ * @brief Wire a HAL Timer0 overflow to epic_taskmgr_tick and start it.
  *
  * Call EPIC_IRQ_Restore(1) afterwards to actually arm it.
  *
@@ -171,6 +171,6 @@ uint8_t task_manager_count(void);
  *                   prescaler 1:256, reload 61 -> ~10 ms per tick
  * @param prescaler  a TIMER0_PrescalerTypeDef (1:2 .. 1:256)
  */
-void task_manager_attach_timer0(uint8_t reload, TIMER0_PrescalerTypeDef prescaler);
+void epic_taskmgr_attach_timer0(uint8_t reload, TIMER0_PrescalerTypeDef prescaler);
 
-#endif /* TASK_MANAGER_H */
+#endif /* EPIC_TASKMGR_H */

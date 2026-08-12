@@ -6,7 +6,7 @@
 
 #include <stddef.h>
 #include "fsm.h"
-#include "task_manager.h"
+#include "epic_taskmgr.h"
 #include "core/epic_harness.h"
 
 enum { ST_IDLE, ST_ARMED };
@@ -57,16 +57,16 @@ int main(void)
     FSM_INIT(&g_button.fsm, button_transitions, ST_IDLE, &g_button);
     g_button.arm_count = 0;
 
-    task_manager_init();
-    task_spawn(button_task, &g_button, 1U, 0U);
+    epic_taskmgr_init();
+    epic_taskmgr_spawn(button_task, &g_button, 1U, 0U);
 
     epic_harness_init(10U);
     for (uint32_t i = 0; epic_harness_running(i); i++) {
         epic_harness_tick();
-        task_manager_tick();      /* drive the scheduler's own tick counter directly;
+        epic_taskmgr_tick();      /* drive the scheduler's own tick counter directly;
                                     * a real target would wire this to a timer ISR via
-                                    * task_manager_attach_timer0() instead. */
-        task_manager_run_once();
+                                    * epic_taskmgr_attach_timer0() instead. */
+        epic_taskmgr_run_once();
     }
 
     epic_harness_log("final state: %s, arm_count=%u\n",

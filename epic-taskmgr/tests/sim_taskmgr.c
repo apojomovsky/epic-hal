@@ -8,7 +8,7 @@
  * harness EUSART (see pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c).
  */
 
-#include "task_manager.h"
+#include "epic_taskmgr.h"
 #include "core/epic_harness.h"
 #include "core/hal_irq.h"      /* EPIC_IRQ_Restore: enable GIE for TMR0 */
 
@@ -76,34 +76,34 @@ static void task_oneshot(void *arg)
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);
-    task_manager_init();
+    epic_taskmgr_init();
 
     /* Two periodic tasks with known periods, plus a one-shot (period 0)
      * whose single run freezes task C via task_set_period. Priorities:
      * A first, B and C share the middle, one-shot last. */
-    task_spawn(task_count, &arg_a, PERIOD_A, 0U);
-    task_spawn(task_count, &arg_b, PERIOD_B, 1U);
-    task_id_t id_c = task_spawn(task_count, &arg_c, PERIOD_C, 1U);
+    epic_taskmgr_spawn(task_count, &arg_a, PERIOD_A, 0U);
+    epic_taskmgr_spawn(task_count, &arg_b, PERIOD_B, 1U);
+    task_id_t id_c = epic_taskmgr_spawn(task_count, &arg_c, PERIOD_C, 1U);
     arg_one.freeze_id = id_c;
-    task_spawn(task_oneshot, &arg_one, 0U, 2U);
+    epic_taskmgr_spawn(task_oneshot, &arg_one, 0U, 2U);
 
     /* Wire the diagnostic Timer0 tick to the scheduler and enable
      * global interrupts (on the sim, the ISR fires regardless; the
      * GIE enable matters only on real hardware). */
-    task_manager_attach_timer0(TICK_RELOAD, TICK_PRESCALER);
+    epic_taskmgr_attach_timer0(TICK_RELOAD, TICK_PRESCALER);
     EPIC_IRQ_Restore(1);
 
     /* The canonical scheduler loop. On the sim target the harness
      * terminates it after SIM_ITERATIONS; on real hardware it runs
      * forever (unreachable epilogue below). */
-    task_manager_run();
+    epic_taskmgr_run();
 
     /* Verdict. A (period 10) fires at ticks 10, 20, 30, ...; B (period
      * 20) at 20, 40, ...; C fires once at tick 5 (countdown armed at
      * spawn) then freezes on the one-shot's task_set_period; the
      * one-shot fires on the first tick and frees its slot. */
-    uint16_t ticks = task_manager_ticks();
-    uint8_t  used  = task_manager_count();
+    uint16_t ticks = epic_taskmgr_ticks();
+    uint8_t  used  = epic_taskmgr_count();
 
     int ok = (arg_a.runs >= 2U) &&      /* (a) A executed (twice: re-armed) */
              (arg_b.runs >= 1U) &&      /* (a) B executed                  */

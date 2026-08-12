@@ -10,7 +10,7 @@ with no software stack and only modest RAM (192 B on a PIC16F873A up to 2 KB
 on a PIC18F4550). Tasks are plain functions that run to completion in
 priority order on each tick, like interrupt handlers.
 
-The same `task_manager.c`/`task_manager.h` builds against any 8-bit PIC HAL
+The same `epic_taskmgr.c`/`epic_taskmgr.h` builds against any 8-bit PIC HAL
 family (PIC16F87XA, PIC18F2455, ...) via the neutral `epic_hal.h` contract;
 select the family at build time with `-DEPIC_FAMILY=PIC16` (default) or
 `-DEPIC_FAMILY=PIC18`. See [epic-common/README.md](../epic-common/README.md)
@@ -56,7 +56,7 @@ cmake --build build
 The task manager is **family-agnostic**: it includes only the neutral HAL
 contract headers (`epic_hal.h`, `core/hal_irq.h`,
 `peripherals/hal_timer0.h`, `core/hal_wdt_sleep.h`) plus the shared
-`epic_harness.h`, so the same `task_manager.c`/`.h` builds against any
+`epic_harness.h`, so the same `epic_taskmgr.c`/`.h` builds against any
 8-bit PIC family. To build against the PIC18F2455 family instead
 (`pic18fxx5x-hal`), pass `-DEPIC_FAMILY=PIC18`:
 
@@ -70,7 +70,7 @@ cmake --build build18
 This is the multi-family litmus test (per the shared-contract design
 in [epic-common/README.md](../epic-common/README.md)):
 pointing the task manager at `pic18fxx5x-hal` needs zero changes to
-`task_manager.c`/`task_manager.h` (only the 3 family-neutral include
+`epic_taskmgr.c`/`epic_taskmgr.h` (only the 3 family-neutral include
 lines, which are the same for either family). The PIC18 run produces the
 same output shape (four rates, one spawned blip, slot reuse); exact tick
 counts differ because Timer0 timing differs between families.
@@ -131,27 +131,27 @@ and RB3 blips once every ~400 ms (a freshly spawned one-shot task).
 ## Use it in your own firmware
 
 ```c
-#include "task_manager.h"
+#include "epic_taskmgr.h"
 
 static void my_task(void *arg) {
     /* ...a small amount of work, then return... */
 }
 
 int main(void) {
-    task_manager_init();
-    task_spawn(my_task, NULL, /*period_ticks=*/10, /*priority=*/1);
+    epic_taskmgr_init();
+    epic_taskmgr_spawn(my_task, NULL, /*period_ticks=*/10, /*priority=*/1);
 
-    task_manager_attach_timer0(61, TIMER0_PRESCALER_1_256);  /* ~10 ms tick */
+    epic_taskmgr_attach_timer0(61, TIMER0_PRESCALER_1_256);  /* ~10 ms tick */
     EPIC_IRQ_Restore(1);   /* arm the Timer0 interrupt */
 
-    task_manager_run();          /* never returns on target */
+    epic_taskmgr_run();          /* never returns on target */
 }
 ```
 
-For a custom main loop, call `task_manager_run_once()` directly instead of
-`task_manager_run()`. To drive the tick from another timer, call
-`task_manager_tick()` from that timer's ISR instead of using
-`task_manager_attach_timer0()`; the scheduler is agnostic to the tick source.
+For a custom main loop, call `epic_taskmgr_run_once()` directly instead of
+`epic_taskmgr_run()`. To drive the tick from another timer, call
+`epic_taskmgr_tick()` from that timer's ISR instead of using
+`epic_taskmgr_attach_timer0()`; the scheduler is agnostic to the tick source.
 See the [API reference](docs/API.md).
 
 ## License

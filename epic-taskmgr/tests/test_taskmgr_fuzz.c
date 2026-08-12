@@ -2,11 +2,11 @@
  * Host property test for the cooperative scheduler: random
  * spawn/stop/start/reset/set_period sequences through the real public
  * API, every fire verified against a model of the documented semantics.
- * No timers: the test drives task_manager_tick()/run_once() directly, so
+ * No timers: the test drives epic_taskmgr_tick()/run_once() directly, so
  * the checks are deterministic and exact.
  */
 
-#include "task_manager.h"
+#include "epic_taskmgr.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -61,13 +61,13 @@ static void do_spawn(uint16_t period, uint8_t priority, uint16_t tick)
     }
     if (slot == TASK_MGR_MAX_TASKS) {
         /* Table full: spawn must fail. */
-        task_id_t id = task_spawn(task_bump, (void *)(uintptr_t)0u, period, priority);
+        task_id_t id = epic_taskmgr_spawn(task_bump, (void *)(uintptr_t)0u, period, priority);
         CHECK(id == TASK_ID_INVALID, "spawn on full table returns INVALID");
         return;
     }
 
     g_runs[slot] = 0u;   /* fresh task: reset the observable counter */
-    task_id_t id = task_spawn(task_bump, (void *)(uintptr_t)slot, period, priority);
+    task_id_t id = epic_taskmgr_spawn(task_bump, (void *)(uintptr_t)slot, period, priority);
     CHECK(id == (task_id_t)slot, "spawn claims the first free slot");
     if (id == TASK_ID_INVALID) {
         return;
@@ -83,7 +83,7 @@ static void do_spawn(uint16_t period, uint8_t priority, uint16_t tick)
 /** @brief Run random scheduler sequences against the model and report fails. */
 int main(void)
 {
-    task_manager_init();
+    epic_taskmgr_init();
     memset(g_model, 0, sizeof(g_model));
     memset((void *)g_runs, 0, sizeof(g_runs));
 
@@ -138,9 +138,9 @@ int main(void)
         }
 
         /* Advance one tick and run the ready set. */
-        task_manager_tick();
+        epic_taskmgr_tick();
         tick++;
-        (void)task_manager_run_once();
+        (void)epic_taskmgr_run_once();
 
         /* Fire accounting for every slot. */
         for (uint8_t s = 0; s < TASK_MGR_MAX_TASKS; s++) {
@@ -159,12 +159,12 @@ int main(void)
         }
 
         /* Invariants. */
-        CHECK(task_manager_ticks() == tick, "ticks counter advances exactly once");
+        CHECK(epic_taskmgr_ticks() == tick, "ticks counter advances exactly once");
         uint8_t used = 0u;
         for (uint8_t s = 0; s < TASK_MGR_MAX_TASKS; s++) {
             if (g_model[s].used) used++;
         }
-        CHECK(task_manager_count() == used, "count matches model");
+        CHECK(epic_taskmgr_count() == used, "count matches model");
 
         /* No unexpected fires: every used slot's observable run count
          * must equal the model count (this catches a task firing off
@@ -179,7 +179,7 @@ int main(void)
     }
 
     /* End-of-run: no leaked one-shot slots, tick counter exact. */
-    CHECK(task_manager_ticks() == 5000u, "final ticks count");
+    CHECK(epic_taskmgr_ticks() == 5000u, "final ticks count");
     printf("test_taskmgr_fuzz: fails=%d\n", g_fails);
     return g_fails == 0 ? 0 : 1;
 }

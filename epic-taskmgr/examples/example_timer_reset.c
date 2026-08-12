@@ -8,7 +8,7 @@
 
 #include "epic_hal.h"
 #include "core/epic_harness.h"
-#include "task_manager.h"
+#include "epic_taskmgr.h"
 
 #define CHECK(cond, msg) do { \
     if (!(cond)) { epic_harness_log("FAIL: %s\n", msg); return epic_harness_report(0); } \
@@ -36,7 +36,7 @@ static void task_marker(void *arg)
 {
     (void)arg;
     if (n_fires < MAX_FIRES) {
-        fire_ticks[n_fires] = task_manager_ticks();
+        fire_ticks[n_fires] = epic_taskmgr_ticks();
         n_fires++;
     }
 }
@@ -46,7 +46,7 @@ static void task_supervisor(void *arg)
 {
     (void)arg;
     if (!did_reset) {
-        reset_tick = task_manager_ticks();
+        reset_tick = epic_taskmgr_ticks();
         task_reset(g_marker_id);
         did_reset = 1U;
         epic_harness_log("[t=%u] supervisor reset marker\n", (unsigned)reset_tick);
@@ -57,15 +57,15 @@ static void task_supervisor(void *arg)
 int main(void)
 {
     epic_harness_init(SIM_CYCLES);
-    task_manager_init();
+    epic_taskmgr_init();
 
-    g_marker_id = task_spawn(task_marker, NULL, MARKER_PERIOD, 1U);
-    (void)task_spawn(task_supervisor, NULL, SUPERVISOR_PERIOD, 0U);
+    g_marker_id = epic_taskmgr_spawn(task_marker, NULL, MARKER_PERIOD, 1U);
+    (void)epic_taskmgr_spawn(task_supervisor, NULL, SUPERVISOR_PERIOD, 0U);
 
-    task_manager_attach_timer0(TICK_RELOAD, TICK_PRESCALER);
+    epic_taskmgr_attach_timer0(TICK_RELOAD, TICK_PRESCALER);
     EPIC_IRQ_Restore(1);
 
-    task_manager_run();
+    epic_taskmgr_run();
 
     /* 1. Enough fires to cover both pre-reset fires (10, 20), the first
      *    post-reset fire (35), and one more confirming resumed spacing (45). */

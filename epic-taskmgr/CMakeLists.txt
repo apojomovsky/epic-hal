@@ -11,10 +11,10 @@
 # The task manager is family-agnostic: it includes only the neutral HAL
 # contract headers (epic_hal.h, core/hal_irq.h, peripherals/hal_timer0.h,
 # core/hal_wdt_sleep.h) and the shared epic_harness.h, so the same
-# task_manager.c/.h builds against any family. Select the family with
+# epic_taskmgr.c/.h builds against any family. Select the family with
 # -DEPIC_FAMILY=PIC18 (default PIC16); the build points at that family's
 # tree and device list. This is the Phase 3 litmus test: pointing the task
-# manager at pic18fxx5x-hal needs zero changes to task_manager.c/.h.
+# manager at pic18fxx5x-hal needs zero changes to epic_taskmgr.c/.h.
 #
 # The host/target split is done at build time, not with #ifdef, exactly as
 # in the HAL: the CMake build puts include/host first on the HAL's include
@@ -56,24 +56,24 @@ endif()
 
 # The task manager itself, a small static library so other projects can
 # link it the same way the example does.
-add_library(task_manager STATIC src/task_manager.c)
-target_include_directories(task_manager PUBLIC
+add_library(epic_taskmgr STATIC src/epic_taskmgr.c)
+target_include_directories(epic_taskmgr PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 # The scheduler uses the HAL's Timer0, IRQ and harness APIs, and needs the
 # same device selection. The HAL defaults to its family's default device
 # when none is set.
-target_link_libraries(task_manager PUBLIC ${EPIC_LIB})
-target_compile_definitions(task_manager PRIVATE -D${DEFAULT_DEVICE})
+target_link_libraries(epic_taskmgr PUBLIC ${EPIC_LIB})
+target_compile_definitions(epic_taskmgr PRIVATE -D${DEFAULT_DEVICE})
 
 # The example: four blinks on PORTB via the scheduler.
 add_executable(example_multi_blink examples/example_multi_blink.c)
 target_compile_definitions(example_multi_blink PRIVATE -D${DEFAULT_DEVICE})
-target_link_libraries(example_multi_blink PRIVATE task_manager)
+target_link_libraries(example_multi_blink PRIVATE epic_taskmgr)
 
 # Focused test: task_reset re-arms a task from the full period.
 add_executable(example_timer_reset examples/example_timer_reset.c)
 target_compile_definitions(example_timer_reset PRIVATE -D${DEFAULT_DEVICE})
-target_link_libraries(example_timer_reset PRIVATE task_manager)
+target_link_libraries(example_timer_reset PRIVATE epic_taskmgr)
 
 # Both examples are bounded, self-reporting host-sim runs (the harness
 # contract: epic_harness_report exit code), so they register as ctests
@@ -89,7 +89,7 @@ add_test(NAME example_timer_reset COMMAND example_timer_reset)
 # against a model of the documented semantics (deterministic).
 add_executable(test_taskmgr_fuzz tests/test_taskmgr_fuzz.c)
 target_compile_definitions(test_taskmgr_fuzz PRIVATE -D${DEFAULT_DEVICE})
-target_link_libraries(test_taskmgr_fuzz PRIVATE task_manager)
+target_link_libraries(test_taskmgr_fuzz PRIVATE epic_taskmgr)
 add_test(NAME taskmgr_fuzz COMMAND test_taskmgr_fuzz)
 
 # Optional: the example for every device in the family. PORTB-only, so it
@@ -99,5 +99,5 @@ add_test(NAME taskmgr_fuzz COMMAND test_taskmgr_fuzz)
 foreach(dev ${FAMILY_DEVICES})
     add_executable(example_multi_blink_${dev} examples/example_multi_blink.c)
     target_compile_definitions(example_multi_blink_${dev} PRIVATE -D${dev})
-    target_link_libraries(example_multi_blink_${dev} PRIVATE task_manager)
+    target_link_libraries(example_multi_blink_${dev} PRIVATE epic_taskmgr)
 endforeach()
