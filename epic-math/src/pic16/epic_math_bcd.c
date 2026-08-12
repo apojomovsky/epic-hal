@@ -79,7 +79,7 @@ uint32_t epic_math_bin_to_bcd16(uint16_t value)
  * Manual DAW: add nibbles separately, +6 on any nibble sum > 9, rippling
  * the carry into the high nibble and out. r = (hi<<4)|lo; co set when the
  * high nibble adjusted. Offsets a@0, b@1, r@2, co@3, lo@4, hi@5. */
-uint8_t epic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out) __at(0x400)
+uint8_t epic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out) __at(0x220)
 {
     pic16_mscratch[0] = a; pic16_mscratch[1] = b;
     pic16_mscratch[3] = 0u;
@@ -142,7 +142,7 @@ uint8_t epic_math_bcd_add8(uint8_t a, uint8_t b, bool *carry_out) __at(0x400)
  * subtracts; on borrow the digit is +10-adjusted and the borrow carries
  * into the high nibble, becoming bo. Offsets a@0, b@1, r@2, bo@3, aL@4,
  * bL@5, br@6, aH@7. */
-uint8_t epic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out) __at(0x450)
+uint8_t epic_math_bcd_sub8(uint8_t a, uint8_t b, bool *borrow_out) __at(0x270)
 {
     pic16_mscratch[0] = a; pic16_mscratch[1] = b;
     pic16_mscratch[3] = 0u; pic16_mscratch[6] = 0u;
