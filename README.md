@@ -185,7 +185,7 @@ int main(void)
 ```
 
 `epic_taskmgr` is a priority-ordered, race-free cooperative scheduler:
-periodic and one-shot tasks, `TASK_MGR_MAX_TASKS` fixed slots, no
+periodic and one-shot tasks, `EPIC_TASKMGR_MAX_TASKS` fixed slots, no
 per-task stack. The 10-line core of
 [example_multi_blink](epic-taskmgr/examples/example_multi_blink.c).
 
