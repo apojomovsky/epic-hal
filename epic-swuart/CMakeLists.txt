@@ -50,7 +50,7 @@ target_compile_definitions(test_swuart_tx PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=
 target_link_libraries(test_swuart_tx PRIVATE epic_swuart)
 add_test(NAME swuart_tx COMMAND test_swuart_tx)
 
-# test_swuart_tx pokes the TX state machine directly (swuart_test_*
+# test_swuart_tx pokes the TX state machine directly (epic_swuart_test_*
 # accessors in epic_swuart.c) to drive compare events without waiting on
 # real Timer1/CCP hardware timing. That code is compiled out of
 # epic_swuart.c by default (see the EPIC_SWUART_TEST_HOOKS guard there),

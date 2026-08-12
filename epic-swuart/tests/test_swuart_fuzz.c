@@ -34,17 +34,17 @@ static int g_fails = 0;
 #define EPIC_SWUART_TEST_HOOKS 1
 #endif
 /** @brief Test hook: fire one channel A TX compare event. */
-extern void swuart_test_fire_tx_event(void);
+extern void epic_swuart_test_fire_tx_event(void);
 /** @brief Test hook: fire one channel A RX capture/compare event. */
-extern void swuart_test_fire_rx_event(void);
+extern void epic_swuart_test_fire_rx_event(void);
 /** @brief Test hook: channel A's last armed TX mode (CCP2CON). */
-extern uint8_t swuart_test_last_tx_mode(void);
+extern uint8_t epic_swuart_test_last_tx_mode(void);
 #if EPIC_SWUART_HAS_RX_FAST_PATH
 /** @brief Test hook: inject the fast-path RX capture value. */
-extern void swuart_test_set_capture_fast(uint16_t value);
+extern void epic_swuart_test_set_capture_fast(uint16_t value);
 #else
 /** @brief Test hook: inject the generic RX capture value. */
-extern void swuart_test_set_capture(uint16_t value);
+extern void epic_swuart_test_set_capture(uint16_t value);
 #endif
 
 static uint32_t g_seed = 0x5EED0001u;
@@ -72,16 +72,16 @@ static void tx_send_decode(EPIC_SWUART_HandleTypeDef *h,
          * byte needs one TX_IDLE pop event first (that event arms the
          * start bit, mode CLEAR, and is not a data bit). */
         if (b > 0u) {
-            swuart_test_fire_tx_event();
+            epic_swuart_test_fire_tx_event();
         }
         uint8_t got = 0u;
         for (int k = 1; k <= 8; k++) {
-            swuart_test_fire_tx_event();
-            if (swuart_test_last_tx_mode() == (uint8_t)CCP_MODE_COMPARE_SET) {
+            epic_swuart_test_fire_tx_event();
+            if (epic_swuart_test_last_tx_mode() == (uint8_t)CCP_MODE_COMPARE_SET) {
                 got |= (uint8_t)(1u << (k - 1));
             }
         }
-        swuart_test_fire_tx_event();   /* stop bit */
+        epic_swuart_test_fire_tx_event();   /* stop bit */
         if (got != data[b]) {
             CHECK(0, "tx byte decoded from mode sequence");
         }
@@ -110,15 +110,15 @@ static unsigned rx_send_byte(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
      * literals, so do the same: channel A's RX pin is RC2 everywhere. */
     SIM_DRIVE('C', 2u, bits[0]);
 #if EPIC_SWUART_HAS_RX_FAST_PATH
-    swuart_test_fire_rx_event();   /* IDLE -> DATA0 (deglitch: pin low) */
+    epic_swuart_test_fire_rx_event();   /* IDLE -> DATA0 (deglitch: pin low) */
 #else
-    swuart_test_set_capture(1000u);
-    swuart_test_fire_rx_event();   /* capture: IDLE -> CONFIRM_START */
-    swuart_test_fire_rx_event();   /* confirm: pin still low -> DATA0 */
+    epic_swuart_test_set_capture(1000u);
+    epic_swuart_test_fire_rx_event();   /* capture: IDLE -> CONFIRM_START */
+    epic_swuart_test_fire_rx_event();   /* confirm: pin still low -> DATA0 */
 #endif
     for (int i = 1; i < 10; i++) {
         SIM_DRIVE('C', 2u, bits[i]);
-        swuart_test_fire_rx_event();
+        epic_swuart_test_fire_rx_event();
     }
 #if EPIC_SWUART_HAS_RX_FAST_PATH
     return 10u;
@@ -142,15 +142,15 @@ static void rx_send_bad_stop(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 
     SIM_DRIVE('C', 2u, bits[0]);
 #if EPIC_SWUART_HAS_RX_FAST_PATH
-    swuart_test_fire_rx_event();
+    epic_swuart_test_fire_rx_event();
 #else
-    swuart_test_set_capture(1000u);
-    swuart_test_fire_rx_event();
-    swuart_test_fire_rx_event();
+    epic_swuart_test_set_capture(1000u);
+    epic_swuart_test_fire_rx_event();
+    epic_swuart_test_fire_rx_event();
 #endif
     for (int i = 1; i < 10; i++) {
         SIM_DRIVE('C', 2u, bits[i]);
-        swuart_test_fire_rx_event();
+        epic_swuart_test_fire_rx_event();
     }
 }
 
@@ -191,16 +191,16 @@ static void test_tx_short_write(EPIC_SWUART_HandleTypeDef *h)
     size_t total = EPIC_SWUART_RING_SZ + 1u;
     for (size_t b = 0; b < total; b++) {
         if (b > 0u) {
-            swuart_test_fire_tx_event();   /* TX_IDLE pop arms the start bit */
+            epic_swuart_test_fire_tx_event();   /* TX_IDLE pop arms the start bit */
         }
         uint8_t got = 0u;
         for (int k = 1; k <= 8; k++) {
-            swuart_test_fire_tx_event();
-            if (swuart_test_last_tx_mode() == (uint8_t)CCP_MODE_COMPARE_SET) {
+            epic_swuart_test_fire_tx_event();
+            if (epic_swuart_test_last_tx_mode() == (uint8_t)CCP_MODE_COMPARE_SET) {
                 got |= (uint8_t)(1u << (k - 1));
             }
         }
-        swuart_test_fire_tx_event();
+        epic_swuart_test_fire_tx_event();
         if (got != buf[b]) {
             CHECK(0, "short-write: bytes transmitted in order");
         }
@@ -295,6 +295,6 @@ int main(void)
     test_rx_fuzz(&h);
     test_rx_overflow_and_errors(&h);
 
-    printf("swuart_fuzz: fails=%d\n", g_fails);
+    printf("epic_swuart_fuzz: fails=%d\n", g_fails);
     return g_fails == 0 ? 0 : 1;
 }

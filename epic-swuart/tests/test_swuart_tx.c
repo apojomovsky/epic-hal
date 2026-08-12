@@ -17,11 +17,11 @@ static int g_fails = 0;
 #define EPIC_SWUART_TEST_HOOKS 1
 #endif
 /** @brief Test hook: channel A's last armed TX mode (CCP2CON). */
-extern uint8_t swuart_test_last_tx_mode(void);
+extern uint8_t epic_swuart_test_last_tx_mode(void);
 /** @brief Test hook: channel A's last armed TX deadline. */
-extern uint16_t swuart_test_last_tx_compare(void);
+extern uint16_t epic_swuart_test_last_tx_compare(void);
 /** @brief Test hook: fire one channel A TX compare event. */
-extern void swuart_test_fire_tx_event(void);
+extern void epic_swuart_test_fire_tx_event(void);
 
 /** @brief TX-only host test main: inspect the armed mode sequence. */
 int main(void)
@@ -44,15 +44,15 @@ int main(void)
      * nine compare events (d0..d7, stop) arms for the *following*
      * event, per tx_compare_event's one-ahead scheduling. */
 
-    CHECK(swuart_test_last_tx_mode() == 9, "start bit armed as CLEAR (space)");
+    CHECK(epic_swuart_test_last_tx_mode() == 9, "start bit armed as CLEAR (space)");
 
     for (size_t i = 0; i < 9; i++) {
-        swuart_test_fire_tx_event();
+        epic_swuart_test_fire_tx_event();
         char msg[32];
         snprintf(msg, sizeof(msg), "event %u mode", (unsigned)i);
-        CHECK(swuart_test_last_tx_mode() == expected_modes[i], msg);
+        CHECK(epic_swuart_test_last_tx_mode() == expected_modes[i], msg);
     }
 
-    printf("swuart_tx: fails=%d\n", g_fails);
+    printf("epic_swuart_tx: fails=%d\n", g_fails);
     return g_fails == 0 ? 0 : 1;
 }

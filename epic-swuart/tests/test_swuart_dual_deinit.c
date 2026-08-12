@@ -23,13 +23,13 @@ static int g_fails = 0;
 #define EPIC_SWUART_TEST_HOOKS 1
 #endif
 /** @brief Test hook: fire one channel A TX compare event. */
-extern void swuart_test_fire_tx_event(void);
+extern void epic_swuart_test_fire_tx_event(void);
 /** @brief Test hook: fire one channel A RX capture/compare event. */
-extern void swuart_test_fire_rx_event(void);
+extern void epic_swuart_test_fire_rx_event(void);
 /** @brief Test hook: fire one channel B RX capture/compare event. */
-extern void swuart_test_fire_rx_event_b(void);
+extern void epic_swuart_test_fire_rx_event_b(void);
 /** @brief Test hook: inject the generic RX capture value. */
-extern void swuart_test_set_capture(uint16_t value);
+extern void epic_swuart_test_set_capture(uint16_t value);
 
 /**
  * @brief  Drives one full byte (start + 8 data + stop, LSB first) onto
@@ -45,13 +45,13 @@ static void receive_byte_a(const uint8_t *bits)
 {
     pic16f193x_sim_drive_input('C', 2, bits[0]);
     pic16f193x_sim_step(1);
-    swuart_test_set_capture(2000u);
-    swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
-    swuart_test_fire_rx_event(); /* confirm event, half a bit later */
+    epic_swuart_test_set_capture(2000u);
+    epic_swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
+    epic_swuart_test_fire_rx_event(); /* confirm event, half a bit later */
     for (size_t i = 1; i < 10; i++) {
         pic16f193x_sim_drive_input('C', 2, bits[i]);
         pic16f193x_sim_step(1);
-        swuart_test_fire_rx_event(); /* compare event: sample + arm next */
+        epic_swuart_test_fire_rx_event(); /* compare event: sample + arm next */
     }
 }
 
@@ -78,20 +78,20 @@ int main(void)
      * and bytes test_swuart_dual.c uses. */
     size_t queued = EPIC_SWUART_Write(&chan_a, (const uint8_t *)"Z", 1);
     CHECK(queued == 1u, "channel A queued one byte");
-    for (size_t i = 0; i < 9; i++) swuart_test_fire_tx_event();
+    for (size_t i = 0; i < 9; i++) epic_swuart_test_fire_tx_event();
     CHECK(chan_a.tx_count == 0u, "channel A finished transmitting before DeInit");
     CHECK(EPIC_SWUART_GetErrorCount(&chan_a) == 0u, "channel A no errors before DeInit");
 
     static const uint8_t bits[] = {0, 1, 0, 0, 0, 0, 0, 1, 0, 1}; /* 'A', LSB first */
     pic16f193x_sim_drive_input('B', 5, bits[0]);
     pic16f193x_sim_step(1);
-    swuart_test_set_capture(1000u);
-    swuart_test_fire_rx_event_b(); /* capture event: IDLE -> CONFIRM_START */
-    swuart_test_fire_rx_event_b(); /* confirm event, half a bit later */
+    epic_swuart_test_set_capture(1000u);
+    epic_swuart_test_fire_rx_event_b(); /* capture event: IDLE -> CONFIRM_START */
+    epic_swuart_test_fire_rx_event_b(); /* confirm event, half a bit later */
     for (size_t i = 1; i < 10; i++) {
         pic16f193x_sim_drive_input('B', 5, bits[i]);
         pic16f193x_sim_step(1);
-        swuart_test_fire_rx_event_b();
+        epic_swuart_test_fire_rx_event_b();
     }
     uint8_t rx_buf_b[4] = {0};
     int n_b = EPIC_SWUART_Read(&chan_b, rx_buf_b, sizeof(rx_buf_b));
@@ -140,7 +140,7 @@ int main(void)
     uint8_t byte_x = 0x96u; /* 1001 0110: mixed bits in every position */
     size_t qx = EPIC_SWUART_Write(&chan_a, &byte_x, 1);
     CHECK(qx == 1u, "channel A queues a byte after sibling DeInit");
-    for (size_t i = 0; i < 9; i++) swuart_test_fire_tx_event();
+    for (size_t i = 0; i < 9; i++) epic_swuart_test_fire_tx_event();
     CHECK(chan_a.tx_count == 0u, "channel A TX completes after sibling DeInit");
     CHECK(EPIC_SWUART_GetErrorCount(&chan_a) == 0u, "channel A TX no errors after sibling DeInit");
 
@@ -161,7 +161,7 @@ int main(void)
     CHECK(EPIC_REG8(PIC_REG_CCP1CON) == 0x00u, "channel A RX CCP (CCP1) zeroed once it too is DeInit'd");
     CHECK(EPIC_REG8(PIC_REG_CCP2CON) == 0x00u, "channel A TX CCP (CCP2) zeroed once it too is DeInit'd");
 
-    printf("swuart_dual_deinit: fails=%d\n", g_fails);
+    printf("epic_swuart_dual_deinit: fails=%d\n", g_fails);
     return g_fails == 0 ? 0 : 1;
 }
 

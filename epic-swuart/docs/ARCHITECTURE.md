@@ -267,9 +267,9 @@ cannot drive the state machine by injecting a simulated pin edge and
 waiting for a simulated capture, the way, for example, `epic-serial`'s
 host tests inject simulated USART RX. Instead, `src/epic_swuart.c`
 exposes a set of test-only accessor functions
-(`swuart_test_fire_tx_event[_b]`, `swuart_test_fire_rx_event[_b]`,
-`swuart_test_set_capture`, `swuart_test_last_tx_mode[_b]`,
-`swuart_test_last_tx_compare[_b]`), gated behind `EPIC_SWUART_TEST_HOOKS`,
+(`epic_swuart_test_fire_tx_event[_b]`, `epic_swuart_test_fire_rx_event[_b]`,
+`epic_swuart_test_set_capture`, `epic_swuart_test_last_tx_mode[_b]`,
+`epic_swuart_test_last_tx_compare[_b]`), gated behind `EPIC_SWUART_TEST_HOOKS`,
 that call the real `tx_compare_event`/`rx_capture_event` bodies
 directly, as if a real CCP interrupt had just fired, letting tests
 drive the real state machine logic without any real timing hardware
