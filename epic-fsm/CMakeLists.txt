@@ -35,7 +35,7 @@ target_link_libraries(example_traffic_light PRIVATE fsm)
 
 # Optional: the taskmgr-composition example. Off by default so this module
 # never forces a HAL family choice on a consumer who only wants the FSM
-# engine; turn it on to build the demonstration that an fsm_t composes with
+# engine; turn it on to build the demonstration that an epic_fsm_t composes with
 # epic-taskmgr with zero special integration.
 option(EPIC_FSM_BUILD_TASKMGR_EXAMPLE
        "Build examples/example_taskmgr_integration.c against epic-taskmgr" OFF)

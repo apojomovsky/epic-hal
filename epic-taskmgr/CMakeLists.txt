@@ -70,7 +70,7 @@ add_executable(example_multi_blink examples/example_multi_blink.c)
 target_compile_definitions(example_multi_blink PRIVATE -D${DEFAULT_DEVICE})
 target_link_libraries(example_multi_blink PRIVATE epic_taskmgr)
 
-# Focused test: task_reset re-arms a task from the full period.
+# Focused test: epic_taskmgr_reset re-arms a task from the full period.
 add_executable(example_timer_reset examples/example_timer_reset.c)
 target_compile_definitions(example_timer_reset PRIVATE -D${DEFAULT_DEVICE})
 target_link_libraries(example_timer_reset PRIVATE epic_taskmgr)
@@ -78,7 +78,7 @@ target_link_libraries(example_timer_reset PRIVATE epic_taskmgr)
 # Both examples are bounded, self-reporting host-sim runs (the harness
 # contract: epic_harness_report exit code), so they register as ctests
 # the same way epic-tick's example_tick does. The multi-blink verifies
-# four tasks at four distinct rates; timer_reset verifies task_reset
+# four tasks at four distinct rates; timer_reset verifies epic_taskmgr_reset
 # re-arms a task from the full period.
 enable_testing()
 add_test(NAME example_multi_blink COMMAND example_multi_blink)
