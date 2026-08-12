@@ -2,6 +2,8 @@
 """Project scaffolder for Epicurus: manifest in, ready main.c + Makefile +
 patched MPLAB X .X out. Pure helpers here; scripts/epicurus.py is the CLI."""
 from __future__ import annotations
+import pathlib
+import xml.etree.ElementTree as ET
 import bundlegen, epicmanifest
 
 
@@ -113,3 +115,56 @@ def emit_main_c(manifest, family_name, part, modules) -> str:
         "",
     ]
     return "\n".join(lines)
+
+
+def source_dirs(manifest, fam, part, selected) -> list[str]:
+    """Repo-root-relative source directories: HAL (always full) + each
+    resolved module's library source dirs. sourceRootList is directories,
+    not files, so we collapse each source to its parent."""
+    dirs: set[str] = set()
+    for s in fam.hal_sources:
+        dirs.add(str(pathlib.PurePosixPath(s).parent))
+    for c in fam.conditional_sources:
+        if part in c.variants:
+            dirs.add(str(pathlib.PurePosixPath(c.path).parent))
+    names: set[str] = set()
+    for m in selected:
+        names.update(manifest.resolve_deps(m))
+    for name in names:
+        mod = manifest.modules[name]
+        for s in list(mod.sources) + list(mod.sources_by_family.get(fam.name, [])):
+            dirs.add(f"{mod.dir}/{pathlib.PurePosixPath(s).parent}")
+    return sorted(dirs)
+
+
+def include_dirs(manifest, fam, part, selected) -> list[str]:
+    """Family includes first (include/target before include, load-bearing),
+    then each resolved module's includes, deduped."""
+    out: list[str] = []
+    seen: set[str] = set()
+    for m in selected:
+        for inc in manifest.includes_for(m, part):
+            if inc not in seen:
+                seen.add(inc)
+                out.append(inc)
+    return out
+
+
+def patch_configurations_xml(xml_text, fam, part, selected_dirs, include_dirs) -> str:
+    """Patch the four per-(part, subset) fields of a family's reference
+    configurations.xml. ElementTree reformats the file; MPLAB X rewrites it
+    on open, so formatting drift is harmless and the CI headless build gate
+    proves the result still opens and builds."""
+    root = ET.fromstring(xml_text)
+    root.find(".//targetDevice").text = f"PIC{part}"
+    for prop in root.findall(".//property[@key='define-macros']"):
+        prop.set("value", f"PIC{part};FOSC_HZ={fam.fosc_hz}")
+    inc_value = ";".join(f"../../{i}" for i in include_dirs)
+    for prop in root.findall(".//property[@key='extra-include-directories']"):
+        prop.set("value", inc_value)
+    sr = root.find(".//sourceRootList")
+    for elem in list(sr):
+        sr.remove(elem)
+    for d in selected_dirs:
+        ET.SubElement(sr, "Elem").text = f"../../{d}"
+    return ET.tostring(root, encoding="UTF-8", xml_declaration=True).decode()

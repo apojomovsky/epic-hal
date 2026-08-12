@@ -112,4 +112,58 @@ class TestEmitMainC(unittest.TestCase):
         self.assertIn("epic_tick_init(FOSC_HZ);", src)
         self.assertIn("EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);", src)
 
+import xml.etree.ElementTree as ET
+
+SAMPLE_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="65">
+  <sourceRootList>
+    <Elem>../../epic-tick/src</Elem>
+    <Elem>../../pic16f87xa-hal/src/peripherals</Elem>
+  </sourceRootList>
+  <confs>
+    <conf name="default" type="2">
+      <toolsSet><targetDevice>PIC16F877A</targetDevice></toolsSet>
+      <HI-TECH-COMP>
+        <property key="define-macros" value="PIC16F877A;FOSC_HZ=20000000"/>
+        <property key="extra-include-directories" value="../../pic16f87xa-hal/include/target"/>
+      </HI-TECH-COMP>
+    </conf>
+  </confs>
+</configurationDescriptor>"""
+
+class TestPatchX(unittest.TestCase):
+    def setUp(self): self.m = load()
+
+    def test_source_dirs_hal_plus_modules(self):
+        fam = self.m.families["PIC16F87XA"]
+        sel = epicurus_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
+        d = epicurus_init.source_dirs(self.m, fam, "16F877A", sel)
+        self.assertIn("pic16f87xa-hal/src/peripherals", d)
+        self.assertIn("epic-serial/src", d)
+        self.assertIn("epic-tick/src", d)
+
+    def test_include_dirs_family_first(self):
+        fam = self.m.families["PIC16F87XA"]
+        sel = epicurus_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
+        d = epicurus_init.include_dirs(self.m, fam, "16F877A", sel)
+        self.assertEqual(d[0], "pic16f87xa-hal/include/target")
+        self.assertIn("epic-serial/include", d)
+        self.assertIn("epic-tick/include", d)
+
+    def test_patch_changes_device_macros_includes_sourceroots(self):
+        fam = self.m.families["PIC16F87XA"]
+        sel = epicurus_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
+        sd = epicurus_init.source_dirs(self.m, fam, "16F877A", sel)
+        idd = epicurus_init.include_dirs(self.m, fam, "16F877A", sel)
+        out = epicurus_init.patch_configurations_xml(SAMPLE_XML, fam, "16F873A", sd, idd)
+        root = ET.fromstring(out)
+        self.assertEqual(root.find(".//targetDevice").text, "PIC16F873A")
+        dm = root.find(".//property[@key='define-macros']").get("value")
+        self.assertEqual(dm, "PIC16F873A;FOSC_HZ=20000000")
+        inc = root.find(".//property[@key='extra-include-directories']").get("value")
+        self.assertTrue(inc.startswith("../../pic16f87xa-hal/include/target;"))
+        elems = [e.text for e in root.findall(".//sourceRootList/Elem")]
+        self.assertIn("../../epic-serial/src", elems)
+        self.assertIn("../../epic-tick/src", elems)  # serial depends on tick
+
 if __name__ == "__main__": unittest.main()
