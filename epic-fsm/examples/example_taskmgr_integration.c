@@ -36,7 +36,7 @@ static button_t g_button;
  * @brief Task callback that dispatches button events into the FSM.
  *
  * The task callback knows nothing of fsm.h's internals beyond calling
- * fsm_dispatch: that is the entire integration surface.
+ * epic_fsm_dispatch: that is the entire integration surface.
  */
 static void button_task(void *arg)
 {
@@ -45,9 +45,9 @@ static void button_task(void *arg)
 
     tick++;
     if (tick == 2U) {
-        fsm_dispatch(&b->fsm, EV_PRESS);
+        epic_fsm_dispatch(&b->fsm, EV_PRESS);
     } else if (tick == 5U) {
-        fsm_dispatch(&b->fsm, EV_TIMEOUT);
+        epic_fsm_dispatch(&b->fsm, EV_TIMEOUT);
     }
 }
 
@@ -70,8 +70,8 @@ int main(void)
     }
 
     epic_harness_log("final state: %s, arm_count=%u\n",
-                     fsm_state(&g_button.fsm) == ST_IDLE ? "IDLE" : "ARMED",
+                     epic_fsm_state(&g_button.fsm) == ST_IDLE ? "IDLE" : "ARMED",
                      (unsigned)g_button.arm_count);
-    return epic_harness_report(fsm_state(&g_button.fsm) == ST_IDLE &&
+    return epic_harness_report(epic_fsm_state(&g_button.fsm) == ST_IDLE &&
                                 g_button.arm_count == 1U);
 }

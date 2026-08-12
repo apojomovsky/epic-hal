@@ -39,10 +39,10 @@ int main(void)
     fsm_t light;
     FSM_INIT(&light, light_transitions, ST_RED, NULL);
 
-    printf("start: %s\n", state_name(fsm_state(&light)));
+    printf("start: %s\n", state_name(epic_fsm_state(&light)));
     for (int i = 0; i < 6; i++) {
-        fsm_dispatch(&light, EV_TIMER);
-        printf("TIMER -> %s\n", state_name(fsm_state(&light)));
+        epic_fsm_dispatch(&light, EV_TIMER);
+        printf("TIMER -> %s\n", state_name(epic_fsm_state(&light)));
     }
     return 0;
 }

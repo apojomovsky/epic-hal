@@ -8,7 +8,7 @@ other module in this repo, it has **no HAL dependency and no per-family
 backend** — a state machine is pure control-flow logic, so the same
 `src/fsm.c` compiles unchanged for the host, PIC16, and PIC18. It composes
 with [epic-taskmgr](../epic-taskmgr) (or anything else) by staying decoupled
-from it: a task callback just owns an `fsm_t` and calls `fsm_dispatch()`.
+from it: a task callback just owns an `fsm_t` and calls `epic_fsm_dispatch()`.
 
 > 📖 **Documentation**: [API reference](docs/API.md)
 
@@ -31,7 +31,7 @@ static const fsm_transition_t light_transitions[] = {
 
 fsm_t light;
 FSM_INIT(&light, light_transitions, ST_RED, NULL);
-fsm_dispatch(&light, EV_TIMER);
+epic_fsm_dispatch(&light, EV_TIMER);
 ```
 
 Four columns — `state`, `event`, `guard`, `action`/`next_state` — tell the
@@ -104,9 +104,9 @@ static const fsm_transition_t button_transitions[] = {
 static fsm_t g_button;
 
 void button_task(void *arg) {
-    /* fsm_dispatch() is the entire integration surface — nothing else about
+    /* epic_fsm_dispatch() is the entire integration surface, nothing else about
      * this task needs to know an FSM is involved. */
-    fsm_dispatch(&g_button, some_event_read_this_tick());
+    epic_fsm_dispatch(&g_button, some_event_read_this_tick());
 }
 
 int main(void) {

@@ -70,8 +70,8 @@ static uint8_t step(fsm_t *fsm, fsm_ctx_t *ctx, fsm_event_t ev,
     uint8_t fired;
 
     ctx->allow_start = allow_start;
-    fired = fsm_dispatch(fsm, ev) ? 1u : 0u;
-    ctx->seq[ctx->seq_len++] = fsm_state(fsm);
+    fired = epic_fsm_dispatch(fsm, ev) ? 1u : 0u;
+    ctx->seq[ctx->seq_len++] = epic_fsm_state(fsm);
     return fired;
 }
 
@@ -97,7 +97,7 @@ int main(void)
     epic_harness_init(SIM_ITERATIONS);
 
     FSM_INIT(&fsm, transitions, ST_IDLE, &ctx);
-    ctx.seq[ctx.seq_len++] = fsm_state(&fsm);
+    ctx.seq[ctx.seq_len++] = epic_fsm_state(&fsm);
 
     /* 1: EV_STOP in IDLE: no row, rejected. */
     fired[0] = step(&fsm, &ctx, EV_STOP, 0u);

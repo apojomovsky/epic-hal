@@ -27,6 +27,6 @@ int main(void)
 {
     FSM_INIT(&g_fsm, transitions, ST_A, NULL);
     for (;;) {
-        fsm_dispatch(&g_fsm, EV_GO);
+        epic_fsm_dispatch(&g_fsm, EV_GO);
     }
 }

@@ -27,7 +27,7 @@ typedef FSM_STATE_TYPE fsm_event_t;
 /** Wildcard: a row with `state == FSM_ANY_STATE` matches any current state. */
 #define FSM_ANY_STATE  ((fsm_state_t)-1)
 
-/** Optional predicate gating a row; false lets @ref fsm_dispatch keep
+/** Optional predicate gating a row; false lets @ref epic_fsm_dispatch keep
  *  scanning for another match. NULL always allows the row. */
 typedef bool (*fsm_guard_fn)(void *ctx);
 
@@ -67,15 +67,15 @@ typedef struct {
  * @param initial_state  state the machine starts in
  * @param ctx            opaque context passed to guards/actions, or NULL
  */
-void fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len,
+void epic_fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len,
               fsm_state_t initial_state, void *ctx);
 
-/** Convenience wrapper over fsm_init computing `table_len` via
+/** Convenience wrapper over epic_fsm_init computing `table_len` via
  *  sizeof(table)/sizeof(table[0]) at the call site. `table` must be the
  *  actual array, not a decayed pointer: sizeof on a pointer silently
  *  gives the wrong length. */
 #define FSM_INIT(fsm, table, initial_state, ctx) \
-    fsm_init((fsm), (table), (uint8_t)(sizeof(table) / sizeof((table)[0])), \
+    epic_fsm_init((fsm), (table), (uint8_t)(sizeof(table) / sizeof((table)[0])), \
              (initial_state), (ctx))
 
 /**
@@ -93,7 +93,7 @@ void fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len,
  *         unchanged. No policy is imposed on an unhandled event (no
  *         logging, no assert); that decision is left to the caller.
  */
-bool fsm_dispatch(fsm_t *fsm, fsm_event_t event);
+bool epic_fsm_dispatch(fsm_t *fsm, fsm_event_t event);
 
 /**
  * @brief Current state of the machine.
@@ -101,6 +101,6 @@ bool fsm_dispatch(fsm_t *fsm, fsm_event_t event);
  * @param fsm the machine to query
  * @return the state the machine is currently in
  */
-fsm_state_t fsm_state(const fsm_t *fsm);
+fsm_state_t epic_fsm_state(const fsm_t *fsm);
 
 #endif /* FSM_H */

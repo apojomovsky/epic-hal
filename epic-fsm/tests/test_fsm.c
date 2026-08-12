@@ -55,17 +55,17 @@ static void test_basic_cycle(void)
     fsm_t fsm;
     FSM_INIT(&fsm, light_transitions, ST_RED, &ctx);
 
-    CHECK(fsm_state(&fsm) == ST_RED, "initial state is RED");
+    CHECK(epic_fsm_state(&fsm) == ST_RED, "initial state is RED");
 
-    CHECK(fsm_dispatch(&fsm, EV_TIMER) == true, "RED+TIMER fires");
-    CHECK(fsm_state(&fsm) == ST_GREEN, "RED+TIMER -> GREEN");
+    CHECK(epic_fsm_dispatch(&fsm, EV_TIMER) == true, "RED+TIMER fires");
+    CHECK(epic_fsm_state(&fsm) == ST_GREEN, "RED+TIMER -> GREEN");
 
-    CHECK(fsm_dispatch(&fsm, EV_TIMER) == true, "GREEN+TIMER fires");
-    CHECK(fsm_state(&fsm) == ST_YELLOW, "GREEN+TIMER -> YELLOW");
+    CHECK(epic_fsm_dispatch(&fsm, EV_TIMER) == true, "GREEN+TIMER fires");
+    CHECK(epic_fsm_state(&fsm) == ST_YELLOW, "GREEN+TIMER -> YELLOW");
     CHECK(ctx.caution_calls == 1, "on_caution ran exactly once");
 
-    CHECK(fsm_dispatch(&fsm, EV_TIMER) == true, "YELLOW+TIMER fires");
-    CHECK(fsm_state(&fsm) == ST_RED, "YELLOW+TIMER -> RED (full cycle)");
+    CHECK(epic_fsm_dispatch(&fsm, EV_TIMER) == true, "YELLOW+TIMER fires");
+    CHECK(epic_fsm_state(&fsm) == ST_RED, "YELLOW+TIMER -> RED (full cycle)");
 }
 
 /** @brief FSM_ANY_STATE row matches from any current state. */
@@ -75,17 +75,17 @@ static void test_any_state_wildcard(void)
     fsm_t fsm;
 
     FSM_INIT(&fsm, light_transitions, ST_RED, &ctx);
-    CHECK(fsm_dispatch(&fsm, EV_FAULT) == true, "FAULT fires from RED");
-    CHECK(fsm_state(&fsm) == ST_FAULT, "RED+FAULT -> FAULT");
+    CHECK(epic_fsm_dispatch(&fsm, EV_FAULT) == true, "FAULT fires from RED");
+    CHECK(epic_fsm_state(&fsm) == ST_FAULT, "RED+FAULT -> FAULT");
     CHECK(ctx.fault_calls == 1, "on_fault ran");
 
     FSM_INIT(&fsm, light_transitions, ST_GREEN, &ctx);
-    CHECK(fsm_dispatch(&fsm, EV_FAULT) == true, "FAULT fires from GREEN");
-    CHECK(fsm_state(&fsm) == ST_FAULT, "GREEN+FAULT -> FAULT");
+    CHECK(epic_fsm_dispatch(&fsm, EV_FAULT) == true, "FAULT fires from GREEN");
+    CHECK(epic_fsm_state(&fsm) == ST_FAULT, "GREEN+FAULT -> FAULT");
 
     FSM_INIT(&fsm, light_transitions, ST_YELLOW, &ctx);
-    CHECK(fsm_dispatch(&fsm, EV_FAULT) == true, "FAULT fires from YELLOW");
-    CHECK(fsm_state(&fsm) == ST_FAULT, "YELLOW+FAULT -> FAULT");
+    CHECK(epic_fsm_dispatch(&fsm, EV_FAULT) == true, "FAULT fires from YELLOW");
+    CHECK(epic_fsm_state(&fsm) == ST_FAULT, "YELLOW+FAULT -> FAULT");
 }
 
 /** @brief An event with no matching row reports false and leaves state. */
@@ -97,8 +97,8 @@ static void test_unhandled_event(void)
 
     /* No row matches (ST_FAULT, EV_TIMER): dispatch must report false and
      * leave state untouched. */
-    CHECK(fsm_dispatch(&fsm, EV_TIMER) == false, "unhandled event returns false");
-    CHECK(fsm_state(&fsm) == ST_FAULT, "unhandled event leaves state unchanged");
+    CHECK(epic_fsm_dispatch(&fsm, EV_TIMER) == false, "unhandled event returns false");
+    CHECK(epic_fsm_state(&fsm) == ST_FAULT, "unhandled event leaves state unchanged");
 }
 
 /* Guard fall-through: a turnstile where COIN unlocks only with enough
@@ -152,22 +152,22 @@ static void test_guard_fallthrough(void)
 
     /* Insufficient credit: first row's guard rejects, falls through to the
      * unconditional second row. */
-    CHECK(fsm_dispatch(&fsm, EV_COIN) == true, "COIN with no credit still dispatches (buzz row)");
-    CHECK(fsm_state(&fsm) == ST_LOCKED, "stays LOCKED with insufficient credit");
+    CHECK(epic_fsm_dispatch(&fsm, EV_COIN) == true, "COIN with no credit still dispatches (buzz row)");
+    CHECK(epic_fsm_state(&fsm) == ST_LOCKED, "stays LOCKED with insufficient credit");
     CHECK(ctx.buzz_calls == 1, "buzz ran");
     CHECK(ctx.unlock_calls == 0, "unlock did not run");
 
     /* Enough credit: first row's guard passes, fires, second row never
      * evaluated. */
     ctx.credit_cents = TURNSTILE_FARE_CENTS;
-    CHECK(fsm_dispatch(&fsm, EV_COIN) == true, "COIN with sufficient credit dispatches (unlock row)");
-    CHECK(fsm_state(&fsm) == ST_UNLOCKED, "moves to UNLOCKED");
+    CHECK(epic_fsm_dispatch(&fsm, EV_COIN) == true, "COIN with sufficient credit dispatches (unlock row)");
+    CHECK(epic_fsm_state(&fsm) == ST_UNLOCKED, "moves to UNLOCKED");
     CHECK(ctx.unlock_calls == 1, "unlock ran");
     CHECK(ctx.buzz_calls == 1, "buzz did not run again");
     CHECK(ctx.credit_cents == 0, "fare deducted");
 
-    CHECK(fsm_dispatch(&fsm, EV_PUSH) == true, "PUSH fires from UNLOCKED");
-    CHECK(fsm_state(&fsm) == ST_LOCKED, "PUSH -> LOCKED");
+    CHECK(epic_fsm_dispatch(&fsm, EV_PUSH) == true, "PUSH fires from UNLOCKED");
+    CHECK(epic_fsm_state(&fsm) == ST_LOCKED, "PUSH -> LOCKED");
 }
 
 /** @brief Multiple instances sharing one table must never interfere. */
@@ -181,13 +181,13 @@ static void test_independent_instances(void)
     FSM_INIT(&fsm_a, light_transitions, ST_RED, &ctx_a);
     FSM_INIT(&fsm_b, light_transitions, ST_RED, &ctx_b);
 
-    fsm_dispatch(&fsm_a, EV_TIMER);
-    CHECK(fsm_state(&fsm_a) == ST_GREEN, "instance A advanced");
-    CHECK(fsm_state(&fsm_b) == ST_RED, "instance B untouched by A's dispatch");
+    epic_fsm_dispatch(&fsm_a, EV_TIMER);
+    CHECK(epic_fsm_state(&fsm_a) == ST_GREEN, "instance A advanced");
+    CHECK(epic_fsm_state(&fsm_b) == ST_RED, "instance B untouched by A's dispatch");
 
-    fsm_dispatch(&fsm_b, EV_FAULT);
-    CHECK(fsm_state(&fsm_b) == ST_FAULT, "instance B faulted");
-    CHECK(fsm_state(&fsm_a) == ST_GREEN, "instance A untouched by B's dispatch");
+    epic_fsm_dispatch(&fsm_b, EV_FAULT);
+    CHECK(epic_fsm_state(&fsm_b) == ST_FAULT, "instance B faulted");
+    CHECK(epic_fsm_state(&fsm_a) == ST_GREEN, "instance A untouched by B's dispatch");
 }
 
 /** @brief FSM_INIT's sizeof/sizeof table_len computation. */

@@ -58,7 +58,7 @@ with each other.
 
 ## Functions
 
-### `void fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len, fsm_state_t initial_state, void *ctx)`
+### `void epic_fsm_init(fsm_t *fsm, const fsm_transition_t *table, uint8_t table_len, fsm_state_t initial_state, void *ctx)`
 
 Initialize a machine instance.
 
@@ -74,11 +74,11 @@ Initialize a machine instance.
 
 ```c
 #define FSM_INIT(fsm, table, initial_state, ctx) \
-    fsm_init((fsm), (table), (uint8_t)(sizeof(table) / sizeof((table)[0])), \
+    epic_fsm_init((fsm), (table), (uint8_t)(sizeof(table) / sizeof((table)[0])), \
              (initial_state), (ctx))
 ```
 
-Convenience macro wrapping `fsm_init` that computes `table_len` from the
+Convenience macro wrapping `epic_fsm_init` that computes `table_len` from the
 array itself, so a row added to the table can never silently fall outside
 the length passed in.
 
@@ -87,10 +87,10 @@ the length passed in.
 > silently give the pointer's size instead of the array's. Call `FSM_INIT`
 > where the table is declared or still in scope by its array type (as in
 > every example in this repo); if you need to initialize a machine from
-> inside a function that only has a pointer to the table, call `fsm_init`
+> inside a function that only has a pointer to the table, call `epic_fsm_init`
 > directly with the real row count instead.
 
-### `bool fsm_dispatch(fsm_t *fsm, fsm_event_t event)`
+### `bool epic_fsm_dispatch(fsm_t *fsm, fsm_event_t event)`
 
 Feed one event to the machine. Scans `table` top-to-bottom for the first row
 whose `state` matches the current state (or is `FSM_ANY_STATE`) *and* whose
@@ -106,7 +106,7 @@ events — no logging, no assert — so it stays usable in a firmware image
 with no logging facility. Check the return value if the caller needs to
 know.
 
-### `fsm_state_t fsm_state(const fsm_t *fsm)`
+### `fsm_state_t epic_fsm_state(const fsm_t *fsm)`
 
 Current state of the machine.
 
@@ -114,9 +114,9 @@ Current state of the machine.
 
 | Function/macro | Purpose |
 |---|---|
-| `fsm_init(fsm, table, table_len, initial, ctx)` | Initialize a machine explicitly. |
+| `epic_fsm_init(fsm, table, table_len, initial, ctx)` | Initialize a machine explicitly. |
 | `FSM_INIT(fsm, table, initial, ctx)` | Same, computing `table_len` via `sizeof`; prefer this. |
-| `fsm_dispatch(fsm, event)` | Feed an event; returns `true` if a row fired. |
-| `fsm_state(fsm)` | Query the current state. |
+| `epic_fsm_dispatch(fsm, event)` | Feed an event; returns `true` if a row fired. |
+| `epic_fsm_state(fsm)` | Query the current state. |
 | `FSM_ANY_STATE` | Wildcard row: matches from any current state. |
 | `FSM_STATE_TYPE` | Override before `#include` for >255 states/events. |
