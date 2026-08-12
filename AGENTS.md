@@ -96,7 +96,12 @@ codebase so far.
 - **XC8 inline asm is not GNU extended asm.** No operand constraints.
   Only file-scope `static volatile` symbols are addressable. PIC16 user
   globals need a leading `_` in the asm string; SFRs don't. STATUS bits
-  are numeric (`STATUS,0`), never aliased. Full writeup:
+  are numeric (`STATUS,0`), never aliased. Reuse the mnemonics already
+  proven in this codebase's inline asm (movf/addwf/subwf/addlw/movlw/
+  movwf/clrf/incf/incfsz/rlf/rrf, register-bit btfsc/btfss, goto +
+  labels); an untested mnemonic or STATUS-bit combination can be
+  rejected by XC8 with error (876), so probe a candidate instruction
+  before assuming it assembles. Full writeup:
   `epic-math/docs/ARCHITECTURE.md`.
 - **Banking differs per family, not just "PIC16 vs PIC18."** Classic
   PIC16 (87XA): RP0/RP1 bank bits, `STATUS,7`=IRP selects a bank-*pair*.
@@ -153,7 +158,10 @@ codebase so far.
    file header is fine when it adds context (which backend, what it
    rides on).
 4. **No narrative.** No "fixed X by doing Y", no iteration or session
-   prose. Git history owns that.
+   prose. Verification claims about a change ("verified by
+   simulation", "probe confirmed") belong in the PR and commit, not in
+   the tree, where they go stale. Durable toolchain or hardware facts
+   (with a date) are a different class and stay.
 5. **Register maps and datasheet citations stay.** The
    datasheet-faithful contract is the exception to "why not what":
    bit-field encodings and SFR facts keep their citations.

@@ -2,12 +2,10 @@
  * PIC16 inline-asm add/sub/negate primitives. Mid-range PIC16 has no
  * addwfc/subwfb, so the low-byte carry/borrow is folded into the high
  * byte's addend with addlw 1 (never a skip: an incfsz that wraps on
- * b_hi == 0xFF would drop the a_hi term), and the addend wrap is saved
- * into the carry-out byte with rlf so both the result and the
- * carry/borrow out are correct for every input (verified by
- * instruction-level simulation over the full high-byte space).
- * STATUS bits by number (C=0, Z=2). Operands live in the shared scratch
- * buffer (pic_math_scratch.h), one banksel per routine.
+ * b_hi == 0xFF would drop the a_hi term), and the addend wrap is OR-ed
+ * into the carry out via rlf. STATUS bits by number (C=0, Z=2).
+ * Operands live in the shared scratch buffer (pic_math_scratch.h), one
+ * banksel per routine.
  */
 
 #include <xc.h>
