@@ -116,8 +116,16 @@ class TestBuildScript(unittest.TestCase):
 
     def test_flag_order_matches_the_makefiles(self):
         s = self.script()
+        # Mirrors epic_build.emit_build_script's flag list exactly: the
+        # triaged XC8 -Wno suppressions (set by ed2ac5d) sit between
+        # -Wextra and -DPIC<part>, before the -I includes.
         self.assertIn(
-            "-mdfp=/opt/dfp -mcpu=16f877a -O2 -std=c99 -Wall -Wextra -DPIC16F877A",
+            "-mdfp=/opt/dfp -mcpu=16f877a -O2 -std=c99 -Wall -Wextra "
+            "-Wno-520 -Wno-2053 -Wno-759 -Wno-1516 -Wno-1311 -Wno-1262 "
+            "-Wno-1510 -Wno-2098 -Wno-1498 -Wno-unused-function "
+            "-Wno-unused-variable -Wno-unused-parameter "
+            "-Wno-sign-conversion -Wno-implicit-int-conversion "
+            "-DPIC16F877A",
             s,
         )
 

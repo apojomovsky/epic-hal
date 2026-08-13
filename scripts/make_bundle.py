@@ -194,6 +194,22 @@ def main():
         bundlegen.emit_mplabx_md(manifest, args.family, args.version))
     (root / "VERSION").write_text(args.version + "\n")
     shutil.copy2(REPO / "LICENSE", root / "LICENSE")
+    # Ship the `epicurus` CLI inside the bundle so a consumer can run
+    # `./epicurus init` with no install. epicurus.py becomes `epicurus`
+    # (no extension, executable); the three helper modules it imports
+    # from its own directory ship alongside it so `import epicmanifest`,
+    # `import epicurus_init` (which imports `bundlegen`) all resolve from
+    # the bundle root.
+    shutil.copy2(REPO / "scripts" / "epicurus.py", root / "epicurus")
+    (root / "epicurus").chmod(0o755)
+    for mod in ("epicurus_init.py", "epicmanifest.py", "bundlegen.py"):
+        shutil.copy2(REPO / "scripts" / mod, root / mod)
+    # _copy_tree only ships .c/.h/.md/.txt under epic-common/, so the
+    # manifest (.toml) is dropped. _find_manifest looks for it at
+    # epic-common/manifest/modules.toml; copy it there explicitly.
+    manifest_dst = root / "epic-common" / "manifest" / "modules.toml"
+    manifest_dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(epicmanifest.default_path(), manifest_dst)
 
     project_src = REPO / bundlegen.reference_project_dir(manifest, args.family)
     if not project_src.is_dir():

@@ -13,6 +13,11 @@ correctly: initialise the HAL, toggle a pin, loop.
 `examples/epicurus-demo.X`, so inside a bundle the project sits one level
 below the bundle root and every path in it resolves as `../..`.
 
+These `.X` projects are also the base templates the `epicurus init`
+scaffolder patches: `scripts/epicurus_init.py` copies the matching
+reference project and rewrites its part and module set, so a scaffolded
+project starts from a known-good reference instead of a blank one.
+
 Three projects, not one per module. `nbproject` XML is generated, pins
 DFP versions, and rots; mirroring the old per-module `mcu/` layout would
 mean 29 of these. If you find yourself wanting a fourth, add a

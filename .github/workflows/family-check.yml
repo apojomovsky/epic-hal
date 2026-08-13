@@ -275,3 +275,53 @@ jobs:
             bash scripts/ci-target-bundle.sh || bundle_status=$?
           cat ci-summary-bundle.md >> "$GITHUB_STEP_SUMMARY"
           exit "${bundle_status:-0}"
+
+      # epicurus init end-to-end gate: scaffold a fresh consumer
+      # project from THIS job's already-generated bundle (Resolution A:
+      # the bundle layout examples/epicurus-demo.X only exists in a
+      # generated bundle, not the repo checkout, so --bundle points at
+      # bundles/epicurus-<slug>-ci-test, not '.'), then build it
+      # headlessly with the same prjMakefilesGenerator.sh + make
+      # pipeline the isolated bundle build uses. The part is the
+      # family's last variant; the module subset is resolved from the
+      # manifest so it is valid for every family: serial,tick when both
+      # exist (PIC16F87XA, PIC18Fxx5x), else the family's first
+      # available modules (PIC16F193X ships only swuart+fsm, so a
+      # hardcoded serial,tick would fail there). The scaffolded project
+      # is built the way a consumer builds it: the QUICKSTART Makefile
+      # path (make myapp.hex), which exercises the emitted Makefile,
+      # epicurus.mk resolution, and the selected module subset on the
+      # selected part. prjMakefilesGenerator.sh cannot run headless in
+      # the toolchain image: its Java make-generator crashes with
+      # NoClassDefFoundError before reading the project, and the
+      # reference project's own gate hides that behind `|| true` and
+      # builds from committed makefiles. The .X itself is validated by
+      # the unit tests and by the scaffold output here; MPLAB X's
+      # acceptance of the ElementTree-reformatted configurations.xml
+      # remains IDE-side verification.
+      - name: epicurus init scaffold-and-build
+        if: steps.noncode.outputs.non_code != 'true'
+        env:
+          EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          python3 - <<'PY' > /tmp/epi-resolve
+          import os, sys
+          sys.path.insert(0, "scripts")
+          import epicmanifest
+          from bundlegen import modules_for_family
+          m = epicmanifest.load(epicmanifest.default_path())
+          family = os.environ["FAMILY"]
+          fam = m.families[family]
+          print(fam.variants[-1])
+          print(f"bundles/epicurus-{fam.hal_dir.removesuffix('-hal')}-ci-test")
+          avail = [x.removeprefix("epic-") for x in modules_for_family(m, family)]
+          print("serial,tick" if ("serial" in avail and "tick" in avail) else ",".join(avail[:2]))
+          PY
+          { read -r PART; read -r BUNDLE_DIR; read -r MODS; } < /tmp/epi-resolve
+          echo "scaffold: family=$FAMILY part=$PART modules=$MODS bundle=$BUNDLE_DIR"
+          python3 scripts/epicurus.py init \
+            --family "$FAMILY" --part "$PART" --modules "$MODS" \
+            --bundle "$BUNDLE_DIR" -o "$BUNDLE_DIR/scaffold" --name myapp
+          docker run --rm -v "$PWD:/work" -w /work \
+            "$EPIC_TOOLCHAIN_IMAGE" \
+            bash -c 'cd "'"$BUNDLE_DIR"'/scaffold" && make myapp.hex && ls -la myapp.hex'

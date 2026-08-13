@@ -47,7 +47,7 @@ staged_files() {
 # reaches the staged set.
 
 stray_files_check() {
-    local file_whitelist='^\.gitignore$|^\.clang-format$|^AGENTS\.md$|^CLAUDE\.md$|^DEVELOPMENT\.md$|^LICENSE$|^Makefile$|^README\.md$'
+    local file_whitelist='^\.gitignore$|^\.clang-format$|^pyproject\.toml$|^AGENTS\.md$|^CLAUDE\.md$|^DEVELOPMENT\.md$|^LICENSE$|^Makefile$|^README\.md$'
     # Top-level directories: modules (epic-*), the three HALs, and the
     # known infra directories. Anything else at the root is a stray
     # (probe output, a dropped directory, an unplanned module): the
