@@ -1558,7 +1558,13 @@ includes   = [
   "third_party/m-stack-storage/include",
   "src/target",
 ]
-depends_on = []
+# epic-tick is a genuine library dependency: epic_sdcard.c's exported
+# MMC_TIMER_START/EXPIRED callbacks call epic_tick_get() and
+# epic_tick_elapsed_since() directly. Only the example's serial usage is
+# example-scoped (see the example's depends_on below).
+depends_on = [
+  "epic-tick",
+]
 needs_hal  = true
 
 [modules.epic-sdcard.supported]
@@ -1579,8 +1585,9 @@ name    = "sdcard"
 sources = [
   "examples/example_sdcard.c",
 ]
+# Only serial is example-scoped here: the example prints over
+# epic-serial, while epic-tick is already a module-level dependency.
 depends_on = [
-  "epic-tick",
   "epic-serial",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
