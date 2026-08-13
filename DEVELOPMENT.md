@@ -100,6 +100,26 @@ directory outside any repo checkout, and only then attaches the
 tarballs to a GitHub Release. See
 [.github/workflows/release-bundles.yml](.github/workflows/release-bundles.yml).
 
+## install.sh
+
+The README's one-command getting started runs `install.sh` (repo root).
+To check it locally, build a family bundle with its checksum, then point
+the installer at the result:
+
+```sh
+python3 scripts/make_bundle.py --family PIC16F87XA --version ci-test
+cd bundles && sha256sum ./*.tar.gz > SHA256SUMS && cd ..
+EPICURUS_BASE_URL=file://$PWD/bundles sh install.sh pic16f87xa ci-test
+```
+
+`--family` takes the manifest name (`PIC16F87XA`, `PIC18Fxx5x`,
+`PIC16F193X`); the bundle slug and the installer's family are the
+lowercase form (`pic16f87xa`, `pic18fxx5x`, `pic16f193x`).
+`EPICURUS_BASE_URL` is a flat asset dir, so `<version>` is required. The
+release gate runs the same flow for all three families and builds the
+scaffolds, see
+[.github/workflows/release-bundles.yml](.github/workflows/release-bundles.yml).
+
 ## epicurus CLI
 
 The `epicurus` CLI (`scripts/epicurus.py`, with `epicurus_init.py`,
