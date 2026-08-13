@@ -88,12 +88,42 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      # install.sh (repo root) is itself a release asset, and the
+      # installer gate below must run it, so this container job needs
+      # the checkout alongside the downloaded artifacts.
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: release-bundles
           path: /tmp/bundles
       - name: Verify the checksums
         run: cd /tmp/bundles && sha256sum -c SHA256SUMS
+      # install.sh is the released artifact: the gate must not publish
+      # an installer it has not itself run. For every family, run the
+      # real script against the downloaded artifacts (file:// flat dir,
+      # explicit version), then build the scaffolded project the way a
+      # consumer builds it (make myapp.hex). This job already runs in
+      # the toolchain container, so xc8-cc and make are on PATH. Any
+      # family failure fails the job.
+      - name: Install every family and build its scaffold
+        shell: bash
+        run: |
+          fail=0
+          for fam in pic16f87xa pic18fxx5x pic16f193x; do
+            echo "=== install.sh $fam ==="
+            if ! (
+              EPICURUS_BASE_URL="file:///tmp/bundles" \
+              EPICURUS_DIR="/isolated/install-$fam/epicurus" \
+                sh install.sh "$fam" "${{ needs.build.outputs.version }}"
+            ) || ! (
+              cd "/isolated/install-$fam/epicurus/projects"
+              make myapp.hex
+            ); then
+              echo "FAIL install-$fam"
+              fail=1
+            fi
+          done
+          exit "$fail"
       - name: Build every bundle outside any repo checkout
         shell: bash
         run: |
@@ -230,4 +260,4 @@ jobs:
           gh release create "${{ needs.build.outputs.version }}" \
             --title "Epicurus ${{ needs.build.outputs.version }}" \
             --notes-file notes.md \
-            bundles/*.tar.gz bundles/SHA256SUMS
+            bundles/*.tar.gz bundles/SHA256SUMS install.sh
