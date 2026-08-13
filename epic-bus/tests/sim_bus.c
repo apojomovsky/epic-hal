@@ -6,7 +6,7 @@
  * file but not the data path), so the gate covers the master side in
  * three parts: (a) real init config readback, (b) bounded real SSP
  * register traffic, (c) MEM transaction logic through the mock ops
- * seam, mirroring examples/example_bus.c. */
+ * seam, mirroring the original host smoke test. */
 
 #include "epic_bus.h"
 #include "core/epic_harness.h"
@@ -36,7 +36,7 @@
 #define I2C_ADDR_BYTE(dev, rd) ((uint8_t)(((dev) << 1) | (rd)))
 #define SSPADD_100K 49u   /* 20e6 / (4 * 100e3) - 1 */
 
-/* mock MEM device for the ops-seam phase (mirrors example_bus.c) */
+/* mock MEM device for the ops-seam phase (mirrors the host smoke test) */
 
 static uint8_t g_reg[16];
 static uint8_t g_seq_op[20];

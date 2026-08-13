@@ -1,15 +1,15 @@
 # epic-bus, I2C/SPI "MEM" register-access idiom (HAL_I2C_Mem_Read/Write equiv).
 #
 #   cmake -B build && cmake --build build
-#   ctest --test-dir build --output-on-failure
-#   ./build/example_bus
 #
 # Reuses a HAL family's host sim backend via add_subdirectory (as the other
 # epic-* modules do). The MEM transaction logic is family-agnostic; the
-# default ops wrap the HAL SSP driver (target), and the host test injects a
-# mock MEM device through the ops seam (the host sim has no SSP slave model).
-# Select the family with -DEPIC_FAMILY=PIC18 (default PIC16). Real-target
-# builds use the XC8 Makefiles under mcu/.
+# default ops wrap the HAL SSP driver (target), and the mock-MEM test now
+# lives under MPLAB SIM (tests/sim_bus.c, run via `make mdb-test MODULE=
+# epic-bus MCU=16F877A DEVICE=PIC16F877A`). The target-only example
+# (examples/example_bus.c) is compiled by the manifest's xc8 matrix, not
+# by this host CMake. Select the family with -DEPIC_FAMILY=PIC18 (default
+# PIC16).
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_bus C)
@@ -44,10 +44,3 @@ target_include_directories(epic_bus PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(epic_bus PUBLIC ${EPIC_LIB})
 target_compile_definitions(epic_bus PRIVATE -D${DEFAULT_DEVICE})
-
-add_executable(example_bus examples/example_bus.c)
-target_compile_definitions(example_bus PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
-target_link_libraries(example_bus PRIVATE epic_bus)
-
-enable_testing()
-add_test(NAME example_bus COMMAND example_bus)
