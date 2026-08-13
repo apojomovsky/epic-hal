@@ -522,6 +522,17 @@ class TestBundleGate(unittest.TestCase):
             "tests/epic-combo-uart-ssp/tests/combo_uart_ssp.c",
         ])
 
+    def test_gate_allows_manifest_declared_include_dirs(self):
+        # epic-math declares tests/ as an include dir (the library's
+        # quoted includes resolve there); those headers are build
+        # artifacts and must ship. A tests/ path outside any declared
+        # include dir is still rejected.
+        offenders = make_bundle._nonconsumer_offenders([
+            "epic-math/tests/golden_vectors.h",
+            "epic-serial/tests/sim_serial.c",
+        ], allowed_prefixes=["epic-math/tests"])
+        self.assertEqual(offenders, ["epic-serial/tests/sim_serial.c"])
+
     def test_gate_passes_legit_target_sources(self):
         offenders = make_bundle._sim_mdb_offenders([
             "pic16f87xa-hal/src/target/pic16_isr_vector.c",

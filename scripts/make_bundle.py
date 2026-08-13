@@ -37,9 +37,11 @@ DOC_NAMES = {"README.md", "MANUAL.md"}
 # third_party include dirs in the manifest (the M-Stack storage/USB
 # headers their sources include), so a bundle that ships their .c files
 # without mmc.h/usb.h would not be self-sufficient. The skip set below
-# covers the non-consumer dirs; third_party is deliberately absent.
-HEADER_SKIP = {"host", "tests", "sim", "mdb", "build", "build18",
-               "__pycache__"}
+# covers the non-consumer dirs; third_party and tests are deliberately
+# absent, because the manifest include dirs are authoritative (epic-math
+# declares its tests/ dir as an include: the library's quoted includes
+# resolve there). Only host/sim/mdb backends never ship.
+HEADER_SKIP = {"host", "sim", "mdb", "build", "build18", "__pycache__"}
 
 
 def _slug(family_name: str, manifest) -> str:
@@ -69,16 +71,23 @@ def _sim_mdb_offenders(paths) -> list[str]:
     return sorted(p for p in paths if _is_sim_mdb(p))
 
 
-def _nonconsumer_offenders(paths) -> list[str]:
+def _nonconsumer_offenders(paths, allowed_prefixes=()) -> list[str]:
     """Bundle-relative paths that must never ship, in sorted order.
 
     The release gate's load-bearing policy: a consumer bundle carries no
     tests, no host-simulation or MPLAB-SIM backends, no host include
-    dir, and no design docs (ARCHITECTURE.md). Anything matching here
-    fails the bundle build instead of silently shipping.
+    dir, and no design docs (ARCHITECTURE.md). Paths under a
+    manifest-declared include dir are build-required and allowed even
+    when the dir name contains tests (epic-math/tests); sim/mdb is
+    rejected even there. Anything else matching fails the bundle build
+    instead of silently shipping.
     """
     out = []
     for p in paths:
+        if any(p.startswith(prefix + "/") for prefix in allowed_prefixes):
+            if _is_sim_mdb(p):
+                out.append(p)
+            continue
         parts = p.split("/")
         if "tests" in parts or "host" in parts or _is_sim_mdb(p):
             out.append(p)
@@ -102,32 +111,37 @@ def _copy_sources(manifest, family_name: str, root: pathlib.Path) -> None:
 
 
 def _copy_headers(manifest, family_name: str, root: pathlib.Path) -> None:
-    """Headers from the manifest include dirs, minus host/tests/sim/mdb."""
+    """Headers a consumer build needs: the manifest include dirs plus
+    headers that live next to the shipped sources (quoted sibling
+    includes, e.g. epic-math/src/pic16/epic_math_scratch.h), minus the
+    host/sim/mdb backends. The manifest include dirs are authoritative:
+    epic-math declares its tests/ dir as an include, so those headers
+    ship; test-only headers never do, because no manifest include dir
+    names them."""
     fam = manifest.families[family_name]
     dirs = list(fam.includes)
     for name in bundlegen.modules_for_family(manifest, family_name):
         mod = manifest.modules[name]
         dirs += [f"{mod.dir}/{i}" for i in mod.includes]
-    seen = set()
-    for d in dirs:
-        d = os.path.normpath(d)
-        if d in seen:
-            continue
-        seen.add(d)
+    # Quoted includes resolve relative to the includer, so every dir
+    # that holds a shipped source can contribute headers too.
+    dirs += sorted({str(pathlib.PurePosixPath(f).parent)
+                    for f in bundlegen.files_for_family(manifest, family_name)})
+    copied = set()
+    for d in dict.fromkeys(os.path.normpath(d) for d in dirs):
         src_dir = REPO / d
         if not src_dir.is_dir():
             continue
         for path in sorted(src_dir.rglob("*.h")):
             full = path.relative_to(REPO).as_posix()
-            # Check the full repo-relative path: an include dir may
-            # itself be epic-math/tests, and sim API headers can sit in
-            # the base include dir (pic16f87xa_sim.h) rather than under
-            # src/sim/.
+            if full in copied:
+                continue
             if any(p in HEADER_SKIP for p in full.split("/")):
                 continue
             if _is_sim_mdb(full):
                 continue
-            _copy_file(path, root / d / path.relative_to(src_dir))
+            copied.add(full)
+            _copy_file(path, root / full)
 
 
 def _copy_docs(manifest, family_name: str, root: pathlib.Path) -> None:
@@ -263,9 +277,17 @@ def main():
     # MPLAB SIM gate harnesses, tests, host include dirs, design docs),
     # not consumer-facing, and the allowlist copy above excludes them;
     # this assertion turns an accidental inclusion into a hard build
-    # error instead of a silent packaging bug.
+    # error instead of a silent packaging bug. Manifest-declared include
+    # dirs are build-required (epic-math/tests) and allowed by the gate.
+    fam = manifest.families[args.family]
+    include_prefixes = list(fam.includes)
+    for name in modules:
+        include_prefixes += [
+            f"{manifest.modules[name].dir}/{i}"
+            for i in manifest.modules[name].includes]
     rel_paths = [p.relative_to(root).as_posix() for p in root.rglob("*")]
-    offenders = _sim_mdb_offenders(rel_paths) + _nonconsumer_offenders(rel_paths)
+    offenders = _sim_mdb_offenders(rel_paths) + _nonconsumer_offenders(
+        rel_paths, allowed_prefixes=[os.path.normpath(p) for p in include_prefixes])
     if offenders:
         sys.exit("error: non-consumer files must never ship in a release bundle:\n  " +
                  "\n  ".join(sorted(set(offenders))))
