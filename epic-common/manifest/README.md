@@ -130,12 +130,12 @@ self-test), and so can its config words:
 
 ```toml
 [modules.epic-taskmgr.example.PIC16F87XA]
-name    = "multi-blink"
-sources = ["examples/example_multi_blink.c"]
-config  = { FOSC = "HS", WDTE = "ON" }
+name    = "taskmgr"
+sources = ["examples/example_taskmgr.c"]
+config  = { FOSC = "HS", WDTE = "OFF" }
 ```
 
-`name` becomes the `.hex` basename: `build/16F877A-multi-blink.hex`. The
+`name` becomes the `.hex` basename: `build/16F877A-taskmgr.hex`. The
 `config` table generates the `#pragma config` translation unit, which is
 why the pragmas are per family: PIC16 has one configuration word, PIC18
 has several with unrelated fields. An example with **no `config` table**

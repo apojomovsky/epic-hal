@@ -33,8 +33,13 @@ REPO = pathlib.Path(__file__).resolve().parents[1]
 # Nothing else: no tests, no sim/mdb backends, no design docs, no mcu/
 # scaffolding. The gates below make that load-bearing.
 DOC_NAMES = {"README.md", "MANUAL.md"}
+# Vendored headers ARE included: epic-sdcard/epic-usb declare their
+# third_party include dirs in the manifest (the M-Stack storage/USB
+# headers their sources include), so a bundle that ships their .c files
+# without mmc.h/usb.h would not be self-sufficient. The skip set below
+# covers the non-consumer dirs; third_party is deliberately absent.
 HEADER_SKIP = {"host", "tests", "sim", "mdb", "build", "build18",
-               "__pycache__", "third_party"}
+               "__pycache__"}
 
 
 def _slug(family_name: str, manifest) -> str:
