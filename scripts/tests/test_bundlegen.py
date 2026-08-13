@@ -101,6 +101,22 @@ PIC16F193X = ["16F1937"]
 [modules.epic-pic16f193x-firmware.example.PIC16F193X]
 name    = "firmware"
 sources = ["tests/example_blink.c"]
+
+# A combination-matrix CI gate module, the same shape as the real
+# epic-combo-* modules under tests/: must never appear in a bundle's
+# module list or file set, it is CI coverage, not a consumer library.
+[modules.epic-combo-uart-ssp]
+dir        = "tests/epic-combo-uart-ssp"
+sources    = ["tests/combo_uart_ssp.c"]
+includes   = []
+depends_on = []
+
+[modules.epic-combo-uart-ssp.supported]
+PIC16F87XA = ["16F877A"]
+
+[modules.epic-combo-uart-ssp.example.PIC16F87XA]
+name    = "combo-uart-ssp"
+sources = ["tests/combo_uart_ssp.c"]
 """
 
 
@@ -139,6 +155,13 @@ class TestModuleSelection(unittest.TestCase):
         # for by name. PIC16F193X is correctly a HAL-only bundle.
         self.assertEqual(bundlegen.modules_for_family(self.m, "PIC16F193X"), [])
 
+    def test_excludes_combo_test_modules_under_tests(self):
+        # epic-combo-* are combination-matrix CI gates, not consumer
+        # libraries: they must not appear in a bundle's module list.
+        self.assertNotIn(
+            "epic-combo-uart-ssp", bundlegen.modules_for_family(self.m, "PIC16F87XA")
+        )
+
     def test_unknown_family_raises(self):
         with self.assertRaises(bundlegen.BundleError):
             bundlegen.modules_for_family(self.m, "PIC99XXXX")
@@ -155,8 +178,13 @@ class TestFileSelection(unittest.TestCase):
         self.assertIn("epic-serial/src/epic_serial.c", self.files)
         self.assertIn("epic-tick/src/epic_tick.c", self.files)
 
-    def test_includes_example_sources(self):
-        self.assertIn("epic-tick/examples/example_tick.c", self.files)
+    def test_excludes_example_and_test_sources(self):
+        # Consumer bundles carry the manifest-resolved target sources
+        # only: manifest example sources (the real-target smoke tests)
+        # and the combo test modules never ship.
+        self.assertNotIn("epic-tick/examples/example_tick.c", self.files)
+        self.assertFalse(any(f.startswith("tests/") for f in self.files))
+        self.assertFalse(any("tests/" in f for f in self.files))
 
     def test_excludes_other_families_hal(self):
         self.assertFalse(any(f.startswith("pic18fxx5x-hal/") for f in self.files))
@@ -462,6 +490,22 @@ class TestBundleGate(unittest.TestCase):
             "epic-bus/tests/sim_bus.c",
             "pic16f87xa-hal/tests/sim_bank_probe.c",
             "sim_console.c",
+        ])
+
+    def test_nonconsumer_gate_rejects_tests_host_and_design_docs(self):
+        offenders = make_bundle._nonconsumer_offenders([
+            "epic-serial/tests/sim_serial.c",
+            "tests/epic-combo-uart-ssp/tests/combo_uart_ssp.c",
+            "pic16f87xa-hal/include/host/pic16_platform.h",
+            "epic-common/docs/ARCHITECTURE.md",
+            "epic-serial/src/epic_serial.c",
+            "epic-serial/README.md",
+        ])
+        self.assertEqual(offenders, [
+            "epic-common/docs/ARCHITECTURE.md",
+            "epic-serial/tests/sim_serial.c",
+            "pic16f87xa-hal/include/host/pic16_platform.h",
+            "tests/epic-combo-uart-ssp/tests/combo_uart_ssp.c",
         ])
 
     def test_gate_passes_legit_target_sources(self):

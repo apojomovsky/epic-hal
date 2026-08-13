@@ -10,6 +10,7 @@ Usage: python3 scripts/make_bundle.py --family <FAMILY> --version <VERSION>
 from __future__ import annotations
 
 import argparse
+import os
 import pathlib
 import shutil
 import sys
@@ -22,27 +23,22 @@ import epicmanifest  # noqa: E402
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 
-# Copied wholesale from any directory a bundle includes. Sources are
-# authoritative in the manifest; these are the human-facing files that
-# would be busywork to enumerate there.
-DOC_NAMES = {"README.md", "MANUAL.md", "LICENSE"}
-SKIP_DIRS = {"build", "build18", "__pycache__", ".git", "third_party"}
+# Consumer-bundle content policy: the manifest is the single source of
+# truth for what builds on a real target. Sources are exactly the
+# manifest-resolved target list (bundlegen.files_for_family), headers
+# come from the manifest include dirs, docs are the living consumer
+# files (README.md/MANUAL.md at each module/HAL/epic-common root), and
+# the generated consumer files, the reference .X (for `epicurus init`),
+# the CLI, and the manifest ship so the bundle is self-sufficient.
+# Nothing else: no tests, no sim/mdb backends, no design docs, no mcu/
+# scaffolding. The gates below make that load-bearing.
+DOC_NAMES = {"README.md", "MANUAL.md"}
+HEADER_SKIP = {"host", "tests", "sim", "mdb", "build", "build18",
+               "__pycache__", "third_party"}
 
 
 def _slug(family_name: str, manifest) -> str:
     return manifest.families[family_name].hal_dir.removesuffix("-hal")
-
-
-def _is_mplabx_dir(part: str) -> bool:
-    """A now-deleted-Makefile mcu/*-mplabx/ subdirectory, not the mcu/
-    directory itself. Several modules (epic-adcfilter, epic-fsm,
-    epic-pid, epic-encoder) name a real example source directly under
-    mcu/ (mcu/target_sizecheck.c, per epic-common/manifest/modules.toml),
-    so skipping every "mcu" path component would drop a file
-    files_for_family names, confirmed the hard way: the first bundle
-    generation run failed the missing-files check on exactly those four.
-    """
-    return part.endswith("-mplabx")
 
 
 def _is_sim_mdb(rel: str) -> bool:
@@ -68,23 +64,78 @@ def _sim_mdb_offenders(paths) -> list[str]:
     return sorted(p for p in paths if _is_sim_mdb(p))
 
 
-def _copy_tree(src: pathlib.Path, dst: pathlib.Path) -> None:
-    """Copy a module or HAL directory, minus build output, mcu/*-mplabx/,
-    and sim/mdb sources (the gate below makes the exclusion load-bearing).
+def _nonconsumer_offenders(paths) -> list[str]:
+    """Bundle-relative paths that must never ship, in sorted order.
+
+    The release gate's load-bearing policy: a consumer bundle carries no
+    tests, no host-simulation or MPLAB-SIM backends, no host include
+    dir, and no design docs (ARCHITECTURE.md). Anything matching here
+    fails the bundle build instead of silently shipping.
     """
-    for path in sorted(src.rglob("*")):
-        rel_parts = path.relative_to(src).parts
-        if any(part in SKIP_DIRS or _is_mplabx_dir(part) for part in rel_parts):
+    out = []
+    for p in paths:
+        parts = p.split("/")
+        if "tests" in parts or "host" in parts or _is_sim_mdb(p):
+            out.append(p)
+        elif p.endswith("ARCHITECTURE.md"):
+            out.append(p)
+    return sorted(set(out))
+
+
+def _copy_file(src: pathlib.Path, dst: pathlib.Path) -> None:
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dst)
+
+
+def _copy_sources(manifest, family_name: str, root: pathlib.Path) -> None:
+    """The manifest-resolved target sources, exactly as epicurus.mk names them."""
+    for f in bundlegen.files_for_family(manifest, family_name):
+        src = REPO / f
+        if not src.is_file():
+            sys.exit(f"error: referenced source {f} does not exist")
+        _copy_file(src, root / f)
+
+
+def _copy_headers(manifest, family_name: str, root: pathlib.Path) -> None:
+    """Headers from the manifest include dirs, minus host/tests/sim/mdb."""
+    fam = manifest.families[family_name]
+    dirs = list(fam.includes)
+    for name in bundlegen.modules_for_family(manifest, family_name):
+        mod = manifest.modules[name]
+        dirs += [f"{mod.dir}/{i}" for i in mod.includes]
+    seen = set()
+    for d in dirs:
+        d = os.path.normpath(d)
+        if d in seen:
             continue
-        if _is_sim_mdb(path.relative_to(src).as_posix()):
+        seen.add(d)
+        src_dir = REPO / d
+        if not src_dir.is_dir():
             continue
-        if path.is_dir():
-            continue
-        if path.suffix not in {".c", ".h", ".md", ".txt"} and path.name not in DOC_NAMES:
-            continue
-        target = dst / path.relative_to(src)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(path, target)
+        for path in sorted(src_dir.rglob("*.h")):
+            full = path.relative_to(REPO).as_posix()
+            # Check the full repo-relative path: an include dir may
+            # itself be epic-math/tests, and sim API headers can sit in
+            # the base include dir (pic16f87xa_sim.h) rather than under
+            # src/sim/.
+            if any(p in HEADER_SKIP for p in full.split("/")):
+                continue
+            if _is_sim_mdb(full):
+                continue
+            _copy_file(path, root / d / path.relative_to(src_dir))
+
+
+def _copy_docs(manifest, family_name: str, root: pathlib.Path) -> None:
+    """The living consumer docs at each module/HAL/epic-common root."""
+    fam = manifest.families[family_name]
+    dirs = ["epic-common", fam.hal_dir]
+    dirs += [manifest.modules[name].dir
+             for name in bundlegen.modules_for_family(manifest, family_name)]
+    for d in dirs:
+        for name in DOC_NAMES:
+            src = REPO / d / name
+            if src.is_file():
+                _copy_file(src, root / d / name)
 
 
 def _copy_project(src: pathlib.Path, dst: pathlib.Path) -> None:
@@ -158,28 +209,14 @@ def main():
         shutil.rmtree(root)
     root.mkdir(parents=True)
 
-    # Source trees.
-    _copy_tree(REPO / "epic-common", root / "epic-common")
-    _copy_tree(REPO / fam.hal_dir, root / fam.hal_dir)
+    # Consumer content: manifest-resolved target sources, headers from
+    # the include dirs, and the living consumer docs. No tests, no
+    # sim/mdb backends, no design docs, no mcu/ scaffolding (the gates
+    # below make that load-bearing).
     modules = bundlegen.modules_for_family(manifest, args.family)
-    for name in modules:
-        _copy_tree(REPO / manifest.modules[name].dir, root / manifest.modules[name].dir)
-
-    # Cross-module references: a combo-module example can name a source
-    # in another module's dir (epic-combo-lcd-tick references
-    # epic-lcd/src/epic_lcd_gpio4.c, which epic-lcd's own supported set
-    # may keep out of this family's bundle). Copy any file the
-    # reference list names that no module-dir copy already provided,
-    # so the missing-files check below passes and the emitted
-    # epicurus.mk names a file that exists.
-    for f in bundlegen.files_for_family(manifest, args.family):
-        if not (root / f).exists():
-            src = REPO / f
-            if not src.is_file():
-                sys.exit(f"error: referenced source {f} does not exist")
-            target = root / f
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, target)
+    _copy_sources(manifest, args.family, root)
+    _copy_headers(manifest, args.family, root)
+    _copy_docs(manifest, args.family, root)
 
     # Generated files.
     (root / "epicurus.mk").write_text(
@@ -216,16 +253,17 @@ def main():
         sys.exit(f"error: no reference project at {project_src.relative_to(REPO)}")
     _copy_project(project_src, root / "examples" / "epicurus-demo.X")
 
-    # Gate: sim/mdb files must never ship in a release bundle. They are
-    # CI plumbing (host-simulation backends, MPLAB SIM gate harnesses),
-    # not consumer-facing, and _copy_tree skips them; this assertion
-    # turns an accidental inclusion into a hard build error instead of
-    # a silent packaging bug.
-    offenders = _sim_mdb_offenders(
-        p.relative_to(root).as_posix() for p in root.rglob("*"))
+    # Gate: sim/mdb and other non-consumer files must never ship in a
+    # release bundle. They are CI plumbing (host-simulation backends,
+    # MPLAB SIM gate harnesses, tests, host include dirs, design docs),
+    # not consumer-facing, and the allowlist copy above excludes them;
+    # this assertion turns an accidental inclusion into a hard build
+    # error instead of a silent packaging bug.
+    rel_paths = [p.relative_to(root).as_posix() for p in root.rglob("*")]
+    offenders = _sim_mdb_offenders(rel_paths) + _nonconsumer_offenders(rel_paths)
     if offenders:
-        sys.exit("error: sim/mdb files must never ship in a release bundle:\n  " +
-                 "\n  ".join(offenders))
+        sys.exit("error: non-consumer files must never ship in a release bundle:\n  " +
+                 "\n  ".join(sorted(set(offenders))))
 
     # Every source epicurus.mk names must actually be in the bundle. A
     # bundle that ships a source list referring to a file it does not

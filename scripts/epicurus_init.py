@@ -22,10 +22,23 @@ def hal_pseudo_module(manifest: epicmanifest.Manifest, fam: epicmanifest.Family)
     raise SelectionError(f"no HAL pseudo-module for {fam.name} (dir={fam.hal_dir})")
 
 
+def normalize_part(part: str) -> str:
+    """Canonicalize a user-supplied part token: uppercase, drop a PIC/p
+    prefix (16f877a, pic16f877a, p16f877a, PIC16F877A -> 16F877A)."""
+    norm = part.upper()
+    if norm.startswith("PIC"):
+        norm = norm[3:]
+    elif norm.startswith("P"):
+        norm = norm[1:]
+    return norm
+
+
 def family_for_part(manifest: epicmanifest.Manifest, part: str) -> str | None:
-    """The manifest family name that owns `part`, or None if unknown."""
+    """The manifest family name that owns `part` (any case, PIC/p prefix
+    tolerated), or None if unknown."""
+    norm = normalize_part(part)
     for fam in manifest.families.values():
-        if part in fam.variants:
+        if norm in fam.variants:
             return fam.name
     return None
 

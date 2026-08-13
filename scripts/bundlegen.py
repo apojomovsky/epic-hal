@@ -30,28 +30,31 @@ def _family(manifest, family_name):
 
 
 def modules_for_family(manifest, family_name: str) -> list[str]:
-    """Every module with at least one supported part in this family.
+    """Every consumer module with at least one supported part in this family.
 
-    Excludes a module whose dir equals the family's own hal_dir: that
-    shape (epic-pic16f193x-firmware in the real manifest) is CI-coverage
-    plumbing for a family with no real modules yet, plan 1's manifest-
-    equivalence stand-in for the family's bare-HAL build, not a library
-    a bundle consumer would ever ask for by name. Excluding it is what
-    keeps PIC16F193X a genuine HAL-only bundle.
+    Excludes a module whose dir equals the family's own hal_dir (the
+    epic-pic16f193x-firmware shape: CI-coverage plumbing, not a library a
+    consumer asks for) and any module whose dir sits under tests/ (the
+    epic-combo-* modules: combination-matrix CI gates, not consumer
+    libraries). Both are what keeps a bundle genuinely consumer-facing.
     """
     fam = _family(manifest, family_name)
     return sorted(
         name for name, mod in manifest.modules.items()
-        if mod.supported.get(family_name) and mod.dir != fam.hal_dir
+        if mod.supported.get(family_name)
+        and mod.dir != fam.hal_dir
+        and not mod.dir.startswith("tests/")
     )
 
 
 def files_for_family(manifest, family_name: str) -> list[str]:
-    """Every repo-root-relative file the bundle must copy.
+    """Every repo-root-relative source file a consumer bundle must carry.
 
-    Sources only. Documentation and headers are copied wholesale by
-    make_bundle.py's directory walk; this is the list that has to be
-    exactly right because it is what the emitted epicurus.mk names.
+    Sources only: the family HAL plus each consumer module's library
+    sources. Manifest example sources (the real-target smoke tests under
+    tests/) never ship, and headers/docs are copied by make_bundle.py's
+    explicit allowlist; this is the list that has to be exactly right
+    because it is what the emitted epicurus.mk names.
     """
     fam = _family(manifest, family_name)
     files = set(fam.hal_sources)
@@ -59,16 +62,8 @@ def files_for_family(manifest, family_name: str) -> list[str]:
 
     for name in modules_for_family(manifest, family_name):
         mod = manifest.modules[name]
-        # normpath: combo-module examples reference sources across
-        # module dirs ("../epic-lcd/src/epic_lcd_gpio4.c"), which is
-        # valid for the filesystem and must collapse to a clean
-        # repo-root-relative path for the bundle copy and the
-        # emitted epicurus.mk (the epic-combo-lcd-tick gate).
         files |= {os.path.normpath(f"{mod.dir}/{s}") for s in mod.sources}
         files |= {os.path.normpath(f"{mod.dir}/{s}") for s in mod.sources_by_family.get(family_name, [])}
-        example = mod.examples.get(family_name)
-        if example is not None:
-            files |= {os.path.normpath(f"{mod.dir}/{s}") for s in example.sources}
 
     return sorted(files)
 
