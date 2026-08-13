@@ -77,8 +77,8 @@ int main(void)
         { "help",   cmd_help,   "list commands" },
     };
 
-    app_ctx_t ctx;
-    epic_console_t con;
+    static app_ctx_t ctx;
+    static epic_console_t con;
     ctx.led_on = 0u;
     ctx.status_count = 0u;
     EPIC_CONSOLE_INIT(&con, table, &ctx);

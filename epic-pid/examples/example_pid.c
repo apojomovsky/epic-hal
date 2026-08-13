@@ -20,12 +20,6 @@
 #define STEP_MANUAL   30u         /* steps 30..39: operator in MANUAL */
 #define STEP_RESUME   40u         /* step 40: back to AUTO */
 
-/** @brief Convert a continuous-time gain to its Q8.8 fixed-point value. */
-static int16_t q8(float x)
-{
-    return (int16_t)(x * 256.0f);
-}
-
 /**
  * @brief Run the repeating setpoint-step scenario forever, logging each step.
  */
@@ -35,13 +29,13 @@ int main(void)
     epic_tick_init(FOSC_HZ);
     EPIC_IRQ_Restore(1);
 
-    /* Kp=2.0, Ki=50/s (0.5 per 10 ms step), Kd=0 and a tight +/-200 clamp
-     * are chosen so the step saturates the output, showing anti-windup
-     * release and a clean bumpless MANUAL to AUTO handoff in the log. */
+    /* Kp=2.0 (512), Ki=50/s = 0.5 per 10 ms step (128), Kd=0 and a tight
+     * +/-200 clamp are chosen so the step saturates the output, showing
+     * anti-windup release and a clean bumpless MANUAL to AUTO handoff in
+     * the log. Gains are integer Q8.8 literals, so no FP runtime is
+     * linked on 8-bit targets. */
     epic_pid_t pid;
-    epic_pid_init(&pid, q8(2.0f),
-                  q8(50.0f * (1.0f / (float)CONTROL_HZ)),
-                  q8(0.0f), (int16_t)-200, (int16_t)200);
+    epic_pid_init(&pid, 512, 128, 0, (int16_t)-200, (int16_t)200);
 
     int16_t setpoint = 0;
     int16_t measurement = 0;
