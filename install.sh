@@ -7,8 +7,8 @@
 #     | sh -s -- pic16f87xa
 #
 # Leaves third_party/epicurus/ (the vendored library, pinned to the
-# resolved version) and third_party/epicurus/projects/myapp.X, Makefile,
-# and main.c. Build with `make -C third_party/epicurus/projects`.
+# resolved version) and, in the current directory, myapp.X, Makefile,
+# and main.c. Build with `make`.
 #
 # Usage: install.sh <family> [<version>] [--part <part>] [--modules <a,b>]
 #                   [--name <name>] [--force]
@@ -190,11 +190,11 @@ fi
 
 echo
 echo "Epicurus $version ($family) installed in $DEST"
-echo "Scaffolded project: $DEST/projects/$name.X"
+echo "Scaffolded project: ./$name.X"
 if command -v xc8-cc >/dev/null 2>&1; then
-    echo "XC8 found. Build it with:  make -C $DEST/projects"
+    echo "XC8 found. Build it with:  make"
 else
     echo "XC8 not found. Install MPLAB XC8 (free tier is enough), then:"
-    echo "  make -C $DEST/projects"
+    echo "  make"
 fi
-echo "Or open $DEST/projects/$name.X in MPLAB X or the VS Code extension."
+echo "Or open ./$name.X in MPLAB X or the VS Code extension."

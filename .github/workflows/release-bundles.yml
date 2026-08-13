@@ -205,15 +205,22 @@ jobs:
         run: |
           set -euo pipefail
           fail=0
+          base="$GITHUB_WORKSPACE"
           for fam in pic16f87xa pic18fxx5x pic16f193x; do
             echo "=== install.sh $fam ==="
+            mkdir -p "$base/install-$fam"
+            # install.sh scaffolds in the current directory (in place),
+            # so run it from the per-family dir to keep each scaffold
+            # isolated; the bundle is vendored at ./third_party/epicurus
+            # inside that dir and the scaffold's paths point at it.
             if ! (
+              cd "$base/install-$fam"
               EPICURUS_BASE_URL="file:///tmp/bundles" \
-              EPICURUS_DIR="$PWD/install-$fam/epicurus" \
-                sh install.sh "$fam" "${{ needs.build.outputs.version }}"
+              EPICURUS_DIR="$base/install-$fam/epicurus" \
+                sh "$base/install.sh" "$fam" "${{ needs.build.outputs.version }}"
             ) || ! docker run --rm -v "$PWD:/work" -w /work \
                 "$EPIC_TOOLCHAIN_IMAGE" \
-                bash -c "cd /work/install-$fam/epicurus/projects && make myapp.hex"; then
+                bash -c "cd /work/install-$fam && make myapp.hex"; then
               echo "FAIL install-$fam"
               fail=1
             fi

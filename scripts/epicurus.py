@@ -30,11 +30,9 @@ def cmd_init(args) -> int:
     mods_s = args.modules or input("modules (comma-separated, e.g. serial,tick): ").strip()
     modules = [m.strip() for m in mods_s.split(",") if m.strip()]
     name = args.name or input("project name [myapp]: ").strip() or "myapp"
-    # The .X references the bundle via ../../, so the project must sit one
-    # level below the bundle root (same layout as the reference project).
-    # Default to <bundle>/projects so the out-of-box flow satisfies that;
-    # -o overrides for an explicit location.
-    out_dir = args.output or str(bundle / "projects")
+    # The scaffold lands in the current directory (in place), with the
+    # bundle vendored alongside (e.g. third_party/epicurus); -o overrides.
+    out_dir = args.output or "."
     # The user gives short module names (serial,tick); init_project and
     # resolve_selection expect full manifest names (epic-serial, epic-tick).
     by_short = {f.removeprefix("epic-"): f for f in modules_for_family(manifest, family)}
@@ -65,7 +63,7 @@ def main(argv=None) -> int:
     ip.add_argument("--modules")
     ip.add_argument("--bundle", default=".")
     ip.add_argument("-o", "--output", default=None,
-                    help="output dir (default: <bundle>/projects)")
+                    help="output dir (default: current directory)")
     ip.add_argument("--name", default="myapp")
     ip.set_defaults(func=cmd_init)
     args = p.parse_args(argv)

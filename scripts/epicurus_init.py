@@ -204,23 +204,26 @@ def include_dirs(manifest, fam, part, selected) -> list[str]:
     return out
 
 
-def patch_configurations_xml(xml_text, fam, part, selected_dirs, include_dirs) -> str:
+def patch_configurations_xml(xml_text, fam, part, selected_dirs, include_dirs,
+                             prefix="../..") -> str:
     """Patch the four per-(part, subset) fields of a family's reference
-    configurations.xml. ElementTree reformats the file; MPLAB X rewrites it
-    on open, so formatting drift is harmless and the CI headless build gate
+    configurations.xml. `prefix` is the path from the .X directory to the
+    bundle root (init_project computes it; ../.. keeps the nested layout
+    unchanged). ElementTree reformats the file; MPLAB X rewrites it on
+    open, so formatting drift is harmless and the CI headless build gate
     proves the result still opens and builds."""
     root = ET.fromstring(xml_text)
     root.find(".//targetDevice").text = f"PIC{part}"
     for prop in root.findall(".//property[@key='define-macros']"):
         prop.set("value", f"PIC{part};FOSC_HZ={fam.fosc_hz}")
-    inc_value = ";".join(f"../../{i}" for i in include_dirs)
+    inc_value = ";".join(f"{prefix}/{i}" for i in include_dirs)
     for prop in root.findall(".//property[@key='extra-include-directories']"):
         prop.set("value", inc_value)
     sr = root.find(".//sourceRootList")
     for elem in list(sr):
         sr.remove(elem)
     for d in selected_dirs:
-        ET.SubElement(sr, "Elem").text = f"../../{d}"
+        ET.SubElement(sr, "Elem").text = f"{prefix}/{d}"
     return ET.tostring(root, encoding="UTF-8", xml_declaration=True).decode()
 
 
@@ -240,11 +243,13 @@ def _reference_x_dir(manifest, fam, bundle_dir) -> pathlib.Path:
 
 def init_project(manifest, family_name, part, modules, bundle_dir, out_dir, name) -> dict:
     """Scaffold a complete project into out_dir/<name>.X + main.c + Makefile.
-    Non-destructive: refuses an existing <name>.X. The .X references the
-    bundle via ../../, so out_dir is expected to sit one level below the
-    bundle root (same layout as the reference project). The Makefile's
-    EPICURUS_DIR is computed from the actual relative path between out_dir
-    and bundle_dir, so it stays correct wherever out_dir sits."""
+    Non-destructive: refuses an existing <name>.X. Every path in the
+    scaffold is the real relative path from the artifact to the bundle
+    root: the .X's sourceRootList/include entries get the computed prefix
+    (so the project works in place with the bundle vendored alongside,
+    e.g. third_party/epicurus), and the Makefile's EPICURUS_DIR is the
+    same relpath. The bundle must stay where it was when the paths were
+    computed, like any MPLAB X project."""
     fam = manifest.families[family_name]
     selected = resolve_selection(manifest, family_name, part, modules)
     short = [m.removeprefix("epic-") for m in modules]
@@ -259,13 +264,15 @@ def init_project(manifest, family_name, part, modules, bundle_dir, out_dir, name
 
     sd = source_dirs(manifest, fam, part, selected)
     idd = include_dirs(manifest, fam, part, selected)
+    bundle_resolved = pathlib.Path(bundle_dir).resolve()
+    prefix = os.path.relpath(bundle_resolved, x_dst.resolve())
     cfg_path = x_dst / "nbproject" / "configurations.xml"
-    cfg_path.write_text(patch_configurations_xml(cfg_path.read_text(), fam, part, sd, idd))
+    cfg_path.write_text(patch_configurations_xml(
+        cfg_path.read_text(), fam, part, sd, idd, prefix))
 
     main_c = emit_main_c(manifest, family_name, part, short)
     (out / "main.c").write_text(main_c)
     (x_dst / "main.c").write_text(main_c)  # so the .X opens with the user's code
-    bundle_resolved = pathlib.Path(bundle_dir).resolve()
     out_resolved = out.resolve()
     epicurus_dir = os.path.relpath(bundle_resolved, out_resolved)
     (out / "Makefile").write_text(
