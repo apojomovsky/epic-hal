@@ -52,12 +52,12 @@ epic_lcd_ops_t ops;
 void *ops_ctx;
 
 epic_lcd_gpio4_pins_t pins = {
-    .rs_port = GPIOA, .rs_pin  = GPIO_PIN_0,
-    .e_port  = GPIOA, .e_pin   = GPIO_PIN_1,
-    .db4_port = GPIOA, .db4_pin = GPIO_PIN_4,
-    .db5_port = GPIOA, .db5_pin = GPIO_PIN_5,
-    .db6_port = GPIOA, .db6_pin = GPIO_PIN_6,
-    .db7_port = GPIOA, .db7_pin = GPIO_PIN_7,
+    .rs_port = GPIOB, .rs_pin  = GPIO_PIN_0,
+    .e_port  = GPIOB, .e_pin   = GPIO_PIN_1,
+    .db4_port = GPIOB, .db4_pin = GPIO_PIN_4,
+    .db5_port = GPIOB, .db5_pin = GPIO_PIN_5,
+    .db6_port = GPIOB, .db6_pin = GPIO_PIN_6,
+    .db7_port = GPIOB, .db7_pin = GPIO_PIN_7,
 };
 epic_lcd_gpio4_init(&ops, &ops_ctx, &pins);
 
