@@ -128,13 +128,9 @@ else
     asset_dir="$BASE_URL/download/$version"
 fi
 
-if [ -e "$DEST" ]; then
-    if [ "$force" -eq 1 ]; then
-        rm -rf "$DEST"
-    else
-        echo "install.sh: $DEST already exists; pass --force to replace it" >&2
-        exit 2
-    fi
+if [ -e "$DEST" ] && [ "$force" -ne 1 ]; then
+    echo "install.sh: $DEST already exists; pass --force to replace it" >&2
+    exit 2
 fi
 
 tmp="$(mktemp -d)"
@@ -162,6 +158,9 @@ echo "install.sh: checksum OK"
 
 mkdir -p "$(dirname "$DEST")"
 tar xzf "$tmp/bundle.tar.gz" -C "$tmp"
+if [ "$force" -eq 1 ]; then
+    rm -rf "$DEST"
+fi
 mv "$tmp/epicurus-$family-$version" "$DEST"
 
 manifest_family="$(awk '/^EPICURUS_FAMILY[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"

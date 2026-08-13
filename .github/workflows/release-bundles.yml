@@ -219,6 +219,63 @@ jobs:
             fi
           done
           exit "$fail"
+      - name: Exercise the latest-version resolution branch against a local mock
+        run: |
+          # The real releases/latest redirect cannot be exercised here:
+          # at gate time the release for the tag being built does not
+          # exist yet, so the actual latest-download path stays
+          # inherently untestable until a release exists. This step
+          # covers the resolution logic itself (curl redirect following,
+          # the %{url_effective} final URL, and the ${resolved##*/} tag
+          # extraction) against a local 302 mock.
+          python3 - <<'PY'
+          import http.server
+          import os
+          import subprocess
+          import threading
+
+          class Mock(http.server.BaseHTTPRequestHandler):
+              # One 302 from /latest, like the real releases/latest
+              # endpoint; the redirect target answers 200 so curl
+              # terminates instead of looping.
+              def do_GET(self):
+                  if self.path == "/latest":
+                      self.send_response(302)
+                      self.send_header("Location", "/releases/tag/ci-test")
+                  else:
+                      self.send_response(200)
+                  self.end_headers()
+
+              def log_message(self, *args):
+                  pass
+
+          server = http.server.HTTPServer(("127.0.0.1", 0), Mock)
+          port = server.server_address[1]
+          threading.Thread(target=server.serve_forever, daemon=True).start()
+
+          # The exact resolution snippet from install.sh.
+          script = '''set -eu
+          resolved="$(curl -fsSL -o /dev/null -w '%{url_effective}' "$BASE_URL/latest")"
+          version="${resolved##*/}"
+          [ -n "$version" ] && [ "$version" != "latest" ] || {
+              echo "install.sh: could not resolve the latest release version" >&2
+              exit 1
+          }
+          printf '%s\\n' "$version"
+          '''
+          env = dict(os.environ)
+          env["BASE_URL"] = "http://127.0.0.1:%d" % port
+          out = subprocess.run(["sh", "-c", script], env=env,
+                               capture_output=True, text=True)
+          server.shutdown()
+          server.server_close()
+          resolved = out.stdout.strip()
+          if out.returncode != 0 or resolved != "ci-test":
+              print("FAIL: expected 'ci-test', got %r" % resolved)
+              print(out.stderr)
+              raise SystemExit(1)
+          print("PASS: latest-resolution branch resolved", resolved)
+          PY
 
   publish:
     needs: [build, gate, installer-gate]
