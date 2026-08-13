@@ -3,6 +3,9 @@
 """epicurus init: scaffold a ready PIC project from an Epicurus bundle."""
 from __future__ import annotations
 import argparse, pathlib, sys
+# The CLI runs from inside a vendored bundle; do not leave __pycache__
+# next to the shipped modules in the consumer's tree.
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import epicmanifest, epicurus_init
 from bundlegen import modules_for_family
