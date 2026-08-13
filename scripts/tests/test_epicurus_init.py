@@ -112,6 +112,26 @@ class TestEmitMainC(unittest.TestCase):
         self.assertIn("epic_tick_init(FOSC_HZ);", src)
         self.assertIn("EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);", src)
 
+    def test_serial_skeleton(self):
+        src = epicurus_init.emit_main_c(self.m, "PIC16F87XA", "16F877A", ["serial"])
+        self.assertIn('#include "epic_serial.h"', src)
+        self.assertIn("epic_serial_init(FOSC_HZ, 115200u);", src)
+        self.assertNotIn("epic_tick", src)
+
+    def test_bare_gpio_skeleton(self):
+        src = epicurus_init.emit_main_c(self.m, "PIC16F87XA", "16F877A", [])
+        self.assertIn('#include "peripherals/pic16f87xa_gpio.h"', src)
+        self.assertIn("EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);", src)
+        self.assertNotIn("epic_tick", src)
+        self.assertNotIn("epic_serial", src)
+
+    def test_bare_gpio_skeleton_fsm_only(self):
+        src = epicurus_init.emit_main_c(self.m, "PIC16F87XA", "16F877A", ["fsm"])
+        self.assertIn('#include "peripherals/pic16f87xa_gpio.h"', src)
+        self.assertIn("EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);", src)
+        self.assertNotIn("epic_tick", src)
+        self.assertNotIn("epic_serial", src)
+
 import xml.etree.ElementTree as ET
 
 SAMPLE_XML = """<?xml version="1.0" encoding="UTF-8"?>

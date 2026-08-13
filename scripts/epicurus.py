@@ -19,6 +19,9 @@ def cmd_init(args) -> int:
     bundle = pathlib.Path(args.bundle).resolve()
     manifest = epicmanifest.load(_find_manifest(bundle))
     family = args.family or input(f"family [{', '.join(manifest.families)}]: ").strip()
+    if family not in manifest.families:
+        print(f"error: unknown family {family!r}; known: {', '.join(sorted(manifest.families))}", file=sys.stderr)
+        return 2
     fam = manifest.families.get(family)
     part = args.part or (input(f"part [{', '.join(fam.variants)}]: ").strip() if fam else "")
     mods_s = args.modules or input("modules (comma-separated, e.g. serial,tick): ").strip()

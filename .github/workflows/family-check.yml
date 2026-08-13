@@ -314,9 +314,9 @@ jobs:
           echo "scaffold: family=$FAMILY part=$PART modules=$MODS bundle=$BUNDLE_DIR"
           python3 scripts/epicurus.py init \
             --family "$FAMILY" --part "$PART" --modules "$MODS" \
-            --bundle "$BUNDLE_DIR" -o build-scaffold/myapp --name myapp
+            --bundle "$BUNDLE_DIR" -o "$BUNDLE_DIR/scaffold" --name myapp
           docker run --rm -v "$PWD:/work" -w /work \
             "$EPIC_TOOLCHAIN_IMAGE" \
-            bash -c 'cd build-scaffold/myapp/myapp.X && \
+            bash -c 'cd "'"$BUNDLE_DIR"'/scaffold/myapp.X" && \
                      "$MPLABX_INSTALL_DIR/mplab_platform/bin/prjMakefilesGenerator.sh" . && \
                      make -f nbproject/Makefile-default.mk SUBPROJECTS= .build-conf'
