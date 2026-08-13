@@ -84,7 +84,8 @@ def _nonconsumer_offenders(paths, allowed_prefixes=()) -> list[str]:
     """
     out = []
     for p in paths:
-        if any(p.startswith(prefix + "/") for prefix in allowed_prefixes):
+        if any(p == prefix or p.startswith(prefix + "/")
+               for prefix in allowed_prefixes):
             if _is_sim_mdb(p):
                 out.append(p)
             continue
