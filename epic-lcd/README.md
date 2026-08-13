@@ -39,7 +39,7 @@ ctest --test-dir build --output-on-failure
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-# MCU Makefile not wired up yet -- see example_lcd_hello.c for pin setup
+# MCU Makefile not wired up yet -- see examples/example_lcd.c for pin setup
 ```
 
 ## Use it

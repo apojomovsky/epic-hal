@@ -21,8 +21,8 @@ Build (host): `cmake -B build && cmake --build build` (default PIC16;
 `-DEPIC_FAMILY=PIC18` selects the PIC18 family). The CMake build links
 `epic-tick` (the glitch-gate timebase) and the chosen HAL family
 (`epic_encoder_get_position`'s atomic read is the one HAL call this module
-makes), and `epic-pid` for the `example_encoder_pid_loop` example. Real
-targets use the XC8 Makefiles under `mcu/`.
+makes). Real targets use the XC8 Makefiles under `mcu/`; the target-only
+example (`examples/example_encoder.c`) builds through the manifest.
 
 ## The wiring convention: one port byte, two bit positions
 
@@ -39,7 +39,7 @@ pins) and pass those bit positions to `epic_encoder_init`. For two encoders
 sharing the port, use disjoint pin pairs (e.g. A on RB4/RB5, B on RB6/RB7).
 
 ```c
-/* Application-side wiring (see examples/example_encoder_hal.c). */
+/* Application-side wiring (see examples/example_encoder.c). */
 static void on_rb_change(uint8_t portb) {
     epic_encoder_update(&enc_a, portb);   /* pins 4,5 */
     epic_encoder_update(&enc_b, portb);   /* pins 6,7 */
@@ -186,5 +186,5 @@ channel is not held to a timing gate a bouncy mechanical one needs.
   composes with anything wanting filtered ADC. Nothing about it belongs
   inside `epic_encoder_update`.
 - **A PID loop**: feed `epic_encoder_get_position()` straight into
-  `epic_pid_update()`'s `measurement` each control cycle
-  (`examples/example_encoder_pid_loop.c`).
+  `epic_pid_update()`'s `measurement` each control cycle (see the
+  epic-pid module's example).
