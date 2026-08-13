@@ -24,10 +24,13 @@ the HAL's Timer2 (auto-reload, so the ISR just increments a counter).
 
 ```sh
 cmake -B build && cmake --build build
-ctest --test-dir build --output-on-failure   # example_tick: delay(10)->10 ms
 # PIC18 family instead:
-cmake -B build18 -DEPIC_FAMILY=PIC18 && ctest --test-dir build18
+cmake -B build18 -DEPIC_FAMILY=PIC18 && cmake --build build18
 ```
+
+The host build compiles the [target example](examples/example_tick.c) as a
+syntax/link gate; the example itself is a real-silicon program (an LED
+blink, no stdout) and is not run here.
 
 ### Real target (XC8)
 
