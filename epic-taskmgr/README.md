@@ -48,9 +48,7 @@ Requires only CMake and a C compiler. The HAL is pulled in via
 ```sh
 cmake -B build -S .
 cmake --build build
-
-./build/example_multi_blink                 # default device (PIC16F877A)
-./build/example_multi_blink_PIC16F873A      # 28-pin, 192 B
+ctest --test-dir build --output-on-failure      # taskmgr_fuzz: scheduler property test
 ```
 
 The task manager is **family-agnostic**: it includes only the neutral HAL
@@ -63,34 +61,16 @@ contract headers (`epic_hal.h`, `core/hal_irq.h`,
 ```sh
 cmake -B build18 -S . -DEPIC_FAMILY=PIC18
 cmake --build build18
-
-./build18/example_multi_blink               # default device (PIC18F4550)
 ```
 
 This is the multi-family litmus test (per the shared-contract design
 in [epic-common/README.md](../epic-common/README.md)):
 pointing the task manager at `pic18fxx5x-hal` needs zero changes to
 `epic_taskmgr.c`/`epic_taskmgr.h` (only the 3 family-neutral include
-lines, which are the same for either family). The PIC18 run produces the
-same output shape (four rates, one spawned blip, slot reuse); exact tick
-counts differ because Timer0 timing differs between families.
-
-The example streams a dispatch log as it runs (host only; the target has no
-stdout and runs forever):
-
-```
-[t= 20] fast  #4
-[t= 20] med   #2
-[t= 20] slow  #1
-[t= 40] super  spawned blip
-[t= 41] blip  #1
-done: fast=12 med=6 slow=3 blips=1 (ticks=61, tasks=4)
-```
-
-Four blinks at distinct rates on RB0-RB3, plus a priority-0 supervisor that
-spawns a one-shot blip at runtime. `tasks=4` (not 5) shows the blip freed its
-slot after running, which is what lets the supervisor spawn blips indefinitely
-without exhausting the table.
+lines, which are the same for either family). Both builds also compile
+the [target example](examples/example_taskmgr.c) as a syntax/link gate;
+it is a real-silicon program (two periodic tasks, no stdout) and is not
+run here.
 
 ### Real target
 
@@ -113,20 +93,21 @@ python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F876A --run
 python3 scripts/epic_build.py build --module epic-taskmgr --mcu 18F4550 --run
 ```
 
-This produces `build/16F877A-multi-blink.hex` (or the MCU you built for).
+This produces `build/16F877A-taskmgr.hex` (or the MCU you built for).
 Program it with MPLAB X or any external programmer (PICkit, ICD, IPE).
 
 ### Wiring (real target)
 
-- **LEDs**: an LED and current-limiting resistor on each of RB0, RB1, RB2, RB3
+- **LEDs**: an LED and current-limiting resistor on each of RB0 and RB1
   to GND (active-high).
-- **Clock**: a 20 MHz HS crystal on OSC1/OSC2 (Fosc/4 = 5 MHz). With the default
-  Timer0 prescaler 1:256 and reload 61, the tick is ~9.98 ms.
+- **Clock**: a 20 MHz HS crystal on OSC1/OSC2 (Fosc/4 = 5 MHz). The example
+  derives the Timer0 reload from `FOSC_HZ` for a ~10 ms tick at the
+  maximum 1:256 prescaler.
 - **Config word** (auto-generated): `FOSC=HS, WDTE=ON, PWRTE=ON, BOREN=ON,
   LVP=OFF`. The scheduler refreshes the WDT each loop.
 
-Expected behavior: RB0 blinks fastest (~50 ms), RB1 (~100 ms), RB2 (~200 ms),
-and RB3 blips once every ~400 ms (a freshly spawned one-shot task).
+Expected behavior: the blink task toggles RB0 every 25 ticks (~250 ms) and
+the counter task toggles RB1 every 40 of its 5-tick fires (~2 s).
 
 ## Use it in your own firmware
 

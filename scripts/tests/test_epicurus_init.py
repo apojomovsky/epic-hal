@@ -86,6 +86,24 @@ class TestResolveSelection(unittest.TestCase):
         self.assertIsNone(epicurus_init.family_for_part(self.m, "18F4550"))
         self.assertIsNone(epicurus_init.family_for_part(self.m, "NOPE"))
 
+    def test_normalize_part(self):
+        for raw, expected in [
+            ("16f877a", "16F877A"),
+            ("16F877A", "16F877A"),
+            ("pic16f877a", "16F877A"),
+            ("PIC16F877A", "16F877A"),
+            ("p16f877a", "16F877A"),
+            ("P16F877A", "16F877A"),
+            ("16f1939", "16F1939"),
+            ("18f4550", "18F4550"),
+        ]:
+            self.assertEqual(epicurus_init.normalize_part(raw), expected)
+
+    def test_family_for_part_tolerates_case_and_prefix(self):
+        for raw in ("16f877a", "pic16f877a", "PIC16F877A", "p16f877a"):
+            self.assertEqual(
+                epicurus_init.family_for_part(self.m, raw), "PIC16F87XA")
+
 class TestEmitMakefile(unittest.TestCase):
     def setUp(self): self.m = load()
 

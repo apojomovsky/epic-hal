@@ -1,15 +1,16 @@
 # epic-modbus, a Modbus RTU slave for 8-bit PICs.
 #
 #   cmake -B build && cmake --build build
-#   ctest --test-dir build --output-on-failure
-#   ./build/example_modbus
 #
 # Builds on two sibling epic-* modules: epic-serial (the UART) and epic-tick
 # (the T3.5 silence timebase), the same sibling-link pattern epic-debounce
 # uses for epic-tick alone. epic-tick in turn pulls in a HAL family for its
-# Timer2 host-sim backend; epic-serial links the same family's USART. Select
-# the family with -DEPIC_FAMILY=PIC18 (default PIC16). Real-target builds use
-# the XC8 Makefiles under mcu/.
+# Timer2 host-sim backend; epic-serial links the same family's USART. The
+# target-only example (examples/example_modbus.c) is compiled by the
+# manifest's xc8 matrix, and the framing/T3.5 test runs under MPLAB SIM
+# (tests/sim_modbus.c, via `make mdb-test MODULE=epic-modbus MCU=18F4550
+# DEVICE=PIC18F4550`). Select the family with -DEPIC_FAMILY=PIC18 (default
+# PIC16).
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_modbus C)
@@ -45,11 +46,3 @@ add_library(epic_modbus STATIC src/epic_modbus.c)
 target_include_directories(epic_modbus PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(epic_modbus PUBLIC epic_serial epic_tick)
-
-# The example doubles as the host smoke test.
-add_executable(example_modbus examples/example_modbus.c)
-target_compile_definitions(example_modbus PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
-target_link_libraries(example_modbus PRIVATE epic_modbus)
-
-enable_testing()
-add_test(NAME example_modbus COMMAND example_modbus)

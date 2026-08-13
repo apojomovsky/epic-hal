@@ -35,20 +35,23 @@ sizes; realistic targets are 16F876A/877A and the PIC18Fxx5x family.
 
 ## Quick start
 
-### Host simulator (the test)
+### Example (real target, XC8)
+
+The target-only example (`examples/example_modbus.c`) is an RTU slave
+exposing 4 holding registers and 8 coils with an RS-485 driver-enable
+pin; the manifest build compiles it:
 
 ```sh
-cmake -B build && cmake --build build
-ctest --test-dir build --output-on-failure   # example_modbus: fails=0
-cmake -B build18 -DEPIC_FAMILY=PIC18 && ctest --test-dir build18
+make xc8-build MODULE=epic-modbus MCU=18F4550
 ```
 
-### Real target (XC8), a 4-holding-register RTU slave
+### MPLAB SIM gate (framing/T3.5)
+
+The RTU framing and T3.5 behavior are covered under MPLAB SIM by
+`tests/sim_modbus.c`:
 
 ```sh
-export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-make -C mcu/pic16f87xa-modbus-mplabx MCU=16F877A
-make -C mcu/pic18fxx5x-modbus-mplabx MCU=18F4550
+make mdb-test MODULE=epic-modbus MCU=18F4550 DEVICE=PIC18F4550
 ```
 
 ## Use it

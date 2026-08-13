@@ -31,11 +31,3 @@ enable_testing()
 add_executable(test_epic_usb tests/test_epic_usb.c)
 target_link_libraries(test_epic_usb PRIVATE epic_usb_hoststub)
 add_test(NAME epic_usb_tests COMMAND test_epic_usb)
-
-# ---- example: builds against the host stub for a bounded smoke run; the
-# same source is meant to also build against the real target's epic_usb.c
-# via mcu/pic18fxx5x-usb-mplabx/Makefile once that exists (Phase 3) ----
-add_executable(example_usb_echo examples/example_usb_echo.c)
-target_compile_definitions(example_usb_echo PRIVATE EPIC_USB_EXAMPLE_HOST_ITERS=4)
-target_link_libraries(example_usb_echo PRIVATE epic_usb_hoststub)
-add_test(NAME epic_usb_example_echo COMMAND example_usb_echo)

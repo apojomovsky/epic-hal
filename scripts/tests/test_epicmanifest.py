@@ -87,11 +87,20 @@ name    = "math-smoke"
 sources = ["tests/target_smoke16.c"]
 hal     = true
 config  = { FOSC = "HS" }
+# The example logs over serial; the library does not, so the dep is
+# scoped to the example (the per-MCU variant below drops it).
+depends_on = ["epic-serial"]
+
+[modules.epic-math.example.PIC16F87XA.variants.16F873A]
+name    = "math-smoke-873"
+sources = ["tests/target_smoke16.c"]
+hal     = true
 
 [modules.epic-math.example.PIC18Fxx5x]
 name    = "math-selftest"
 sources = ["tests/target_selftest.c"]
 hal     = true
+depends_on = ["epic-serial"]
 
 [modules.epic-adcfilter]
 dir        = "epic-adcfilter"
@@ -174,6 +183,13 @@ class TestLoad(unittest.TestCase):
     def test_example_config_is_empty_when_absent(self):
         self.assertEqual(self.m.modules["epic-adcfilter"].examples["PIC16F87XA"].config, {})
 
+    def test_example_depends_on_parsed(self):
+        self.assertEqual(self.m.modules["epic-math"].examples["PIC16F87XA"].depends_on,
+                         ["epic-serial"])
+        # Variants carry their own depends_on (default empty when absent).
+        variant = self.m.modules["epic-math"].examples["PIC16F87XA"].variants["16F873A"]
+        self.assertEqual(variant.depends_on, [])
+
     def test_example_is_none_when_no_entry_for_that_family(self):
         # epic-serial has no example table at all
         self.assertIsNone(self.m.modules["epic-serial"].examples.get("PIC16F87XA"))
@@ -225,11 +241,24 @@ class TestValidation(unittest.TestCase):
         self.assertIn("PIC99XXXX", str(cm.exception))
 
     def test_unknown_family_in_example_is_rejected(self):
-        bad = MINIMAL.replace('[modules.epic-math.example.PIC16F87XA]',
-                              '[modules.epic-math.example.PIC99XXXX]')
+        # Rename both the base example and its per-MCU variant table so
+        # the family key is consistently unknown.
+        bad = MINIMAL.replace('[modules.epic-math.example.PIC16F87XA.variants.16F873A]',
+                              '[modules.epic-math.example.PIC99XXXX.variants.16F873A]')
+        bad = bad.replace('[modules.epic-math.example.PIC16F87XA]',
+                          '[modules.epic-math.example.PIC99XXXX]')
         with self.assertRaises(epicmanifest.ManifestError) as cm:
             epicmanifest.load(write(bad))
         self.assertIn("PIC99XXXX", str(cm.exception))
+
+    def test_unknown_example_dependency_is_rejected(self):
+        bad = MINIMAL.replace('depends_on = ["epic-serial"]\n\n[modules.epic-math.example.PIC18Fxx5x]',
+                              'depends_on = ["epic-serial"]\n\n[modules.epic-math.example.PIC18Fxx5x]')
+        bad = bad.replace('depends_on = ["epic-serial"]',
+                          'depends_on = ["epic-nope"]', 1)
+        with self.assertRaises(epicmanifest.ManifestError) as cm:
+            epicmanifest.load(write(bad))
+        self.assertIn("epic-nope", str(cm.exception))
 
     def test_missing_family_fosc_hz_is_rejected(self):
         bad = MINIMAL.replace('fosc_hz  = 20000000\n', '', 1)
@@ -324,6 +353,28 @@ class TestResolution(unittest.TestCase):
         srcs = self.m.sources_for("epic-serial", "16F877A")
         self.assertIn("epic-tick/src/epic_tick.c", srcs)
         self.assertIn("epic-serial/src/epic_serial.c", srcs)
+
+    def test_sources_pull_in_example_dependency_sources(self):
+        # epic-math's example depends_on epic-serial (the library does
+        # not), so the serial library joins the math example's build.
+        srcs = self.m.sources_for("epic-math", "16F877A")
+        self.assertIn("epic-serial/src/epic_serial.c", srcs)
+
+    def test_includes_pull_in_example_dependency_includes(self):
+        incs = self.m.includes_for("epic-math", "16F877A")
+        self.assertIn("epic-serial/include", incs)
+
+    def test_example_dependency_respects_per_mcu_variant_override(self):
+        # The 16F873A variant of epic-math's example drops the serial
+        # dep (it is excluded on that part for RAM), so the small-part
+        # probe build must not compile epic-serial.
+        srcs = self.m.sources_for("epic-math", "16F873A")
+        self.assertNotIn("epic-serial/src/epic_serial.c", srcs)
+        self.assertIn("epic-math/tests/target_smoke16.c", srcs)
+
+    def test_example_dependency_sources_are_deduplicated(self):
+        srcs = self.m.sources_for("epic-math", "16F877A")
+        self.assertEqual(len(srcs), len(set(srcs)))
 
     def test_sources_only_include_the_requested_modules_example(self):
         srcs = self.m.sources_for("epic-serial", "16F877A")

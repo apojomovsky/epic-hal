@@ -21,11 +21,18 @@ def _find_manifest(bundle: pathlib.Path) -> pathlib.Path:
 def cmd_init(args) -> int:
     bundle = pathlib.Path(args.bundle).resolve()
     manifest = epicmanifest.load(_find_manifest(bundle))
+    part = epicurus_init.normalize_part(args.part) if args.part is not None else None
     if args.family is not None:
-        family = args.family
-    elif args.part is not None:
+        family = next(
+            (n for n in manifest.families if n.lower() == args.family.lower()),
+            None)
+        if family is None:
+            print(f"error: unknown family {args.family!r}; known: {', '.join(sorted(manifest.families))}",
+                  file=sys.stderr)
+            return 2
+    elif part is not None:
         # A part implies its family; resolve it from the manifest.
-        family = epicurus_init.family_for_part(manifest, args.part)
+        family = epicurus_init.family_for_part(manifest, part)
         if family is None:
             known = sorted(v for f in manifest.families.values() for v in f.variants)
             print(f"error: unknown part {args.part!r}; known parts: {', '.join(known)}",
@@ -33,11 +40,11 @@ def cmd_init(args) -> int:
             return 2
     else:
         family = input(f"family [{', '.join(sorted(manifest.families))}]: ").strip()
-    if family not in manifest.families:
-        print(f"error: unknown family {family!r}; known: {', '.join(sorted(manifest.families))}", file=sys.stderr)
-        return 2
+        if family not in manifest.families:
+            print(f"error: unknown family {family!r}; known: {', '.join(sorted(manifest.families))}", file=sys.stderr)
+            return 2
     fam = manifest.families[family]
-    part = args.part or (input(f"part [{', '.join(fam.variants)}]: ").strip() if fam else "")
+    part = part or (input(f"part [{', '.join(fam.variants)}]: ").strip() if fam else "")
     mods_s = args.modules or input("modules (comma-separated, e.g. serial,tick): ").strip()
     modules = [m.strip() for m in mods_s.split(",") if m.strip()]
     name = args.name or input("project name [myapp]: ").strip() or "myapp"

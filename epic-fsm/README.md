@@ -63,17 +63,12 @@ cmake -B build -S .
 cmake --build build
 
 ./build/test_fsm                 # unit tests
-./build/example_traffic_light    # dependency-free demo
 ctest --test-dir build           # or just: cd build && ctest
 ```
 
-To also build the `epic-taskmgr` composition demo:
-
-```sh
-cmake -B build -S . -DEPIC_FSM_BUILD_TASKMGR_EXAMPLE=ON
-cmake --build build
-./build/example_taskmgr_integration
-```
+The module's example (`examples/example_fsm.c`) is target-only: a
+tick-driven traffic light with a pedestrian button, built for real parts
+through the manifest's example slot (see Real target below).
 
 ### Real target (cross-compile sanity check)
 

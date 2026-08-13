@@ -50,8 +50,12 @@ then stepped once per fixed-period control cycle via `epic_pid_update()`.
 ```sh
 cmake -B build && cmake --build build
 ctest --test-dir build --output-on-failure   # 13 test cases, 156 checks, all pass
-./build/example_pid_setpoint_step              # setpoint step + manual/auto transfer
 ```
+
+The module's example (`examples/example_pid.c`) is target-only: a
+setpoint step with manual/auto transfer, every control step logged over
+the UART, built for real parts through the manifest's example slot (see
+Real target below).
 
 ### Real target (XC8)
 

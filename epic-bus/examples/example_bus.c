@@ -1,113 +1,90 @@
-/* epic-bus host test: verifies the I2C/SPI MEM transaction logic
- * against a mock MEM device injected through the ops seam (the host
- * sim has no SSP slave model; the default HAL ops are validated on
- * real silicon instead). */
+/*
+ * epic-bus target example: register read/write round-trip to a MEM
+ * device on the I2C bus, then the same round-trip over SPI. Both
+ * phases run against the module's default (HAL) ops, so a real device
+ * on the bus sees the transaction shapes documented in docs/API.md.
+ * The LED on GPIOB1 shows the result: on when both round-trips
+ * verified, off when a device NACKed or the data did not match.
+ */
 
 #include "epic_bus.h"
-#include "core/epic_harness.h"
+#include "epic_hal.h"                /* EPIC_GPIO_Init / EPIC_GPIO_WritePin */
 
-static int g_fails = 0;
-#define CHECK(c, m) do { if (!(c)) { epic_harness_log("FAIL: %s\n", m); g_fails++; } } while (0)
+#include <stdint.h>
 
-/* mock I2C MEM device (register map + transaction state machine) */
-#define MOCK_DEV 0x50
-static uint8_t g_reg[16];
-static enum { I_IDLE, I_ADDR, I_REG, I_DATA, I_READ } g_i2c_state;
-static uint8_t g_i2c_reg;
+#ifndef FOSC_HZ
+#define FOSC_HZ 20000000UL
+#endif
 
-/** @brief Mock I2C: enter the address phase on START. */
-static void mock_i2c_start(void)          { g_i2c_state = I_ADDR; }
-/** @brief Mock I2C: enter the address phase on REPEATED-START. */
-static void mock_i2c_repeated_start(void) { g_i2c_state = I_ADDR; }
-/** @brief Mock I2C: return to idle on STOP. */
-static void mock_i2c_stop(void)           { g_i2c_state = I_IDLE; }
-/** @brief Mock I2C: process one written byte (address, register, data). */
-static int  mock_i2c_write_byte(uint8_t b)
+/* MEM device on the I2C bus (7-bit address), 100 kHz SCL. */
+#define I2C_DEV_ADDR 0x50u
+#define I2C_SPEED_HZ 100000UL
+
+/* SPI chip-select on GPIOB0. */
+#define SPI_CS_PORT  1u
+#define SPI_CS_PIN   0u
+
+/* Register both buses round-trip. */
+#define SCRATCH_REG  0x10u
+
+/* Result LED on GPIOB1. */
+#define LED_PORT     GPIOB
+#define LED_PIN      GPIO_PIN_1
+
+/** @brief Pace the demo so the LED result stays visible. */
+static void demo_delay(void)
 {
-    if (g_i2c_state == I_ADDR) {
-        if ((b >> 1) != MOCK_DEV) return 0;          /* wrong device: NACK */
-        if (b & 1u) { g_i2c_state = I_READ; }        /* addr+R */
-        else        { g_i2c_state = I_REG; }         /* addr+W */
-        return 1;
+    volatile uint32_t i;
+    for (i = 0u; i < 200000u; i++) {
     }
-    if (g_i2c_state == I_REG)  { g_i2c_reg = b; g_i2c_state = I_DATA; return 1; }
-    if (g_i2c_state == I_DATA) { g_reg[g_i2c_reg & 0x0F] = b; g_i2c_reg++; return 1; }
-    return 0;
 }
-/** @brief Mock I2C: read one byte from the register map. */
-static uint8_t mock_i2c_read_byte(int ack)
-{
-    (void)ack;
-    uint8_t b = g_reg[g_i2c_reg & 0x0F];
-    g_i2c_reg++;
-    return b;
-}
-static const epic_bus_i2c_ops_t mock_i2c = {
-    mock_i2c_start, mock_i2c_repeated_start, mock_i2c_stop,
-    mock_i2c_write_byte, mock_i2c_read_byte
-};
 
-/* mock SPI MEM device */
-static enum { S_IDLE, S_REG, S_XFER } g_spi_state;
-static uint8_t g_spi_reg;
-/** @brief Mock SPI: enter the register phase on select. */
-static void mock_spi_select(void)   { g_spi_state = S_REG; }
-/** @brief Mock SPI: return to idle on deselect. */
-static void mock_spi_deselect(void) { g_spi_state = S_IDLE; }
-/** @brief Mock SPI: exchange one byte (register byte or data byte). */
-static uint8_t mock_spi_exchange(uint8_t b)
+/** @brief Round-trip SCRATCH_REG over I2C against the HAL ops. */
+static uint8_t i2c_round_trip(void)
 {
-    if (g_spi_state == S_REG) { g_spi_reg = b; g_spi_state = S_XFER; return 0xFFu; }
-    uint8_t out = g_reg[g_spi_reg & 0x0F];
-    g_reg[g_spi_reg & 0x0F] = b;   /* write what's shifted in (MOSI) to the map */
-    g_spi_reg++;
-    return out;
-}
-static const epic_bus_spi_ops_t mock_spi = {
-    mock_spi_select, mock_spi_deselect, mock_spi_exchange
-};
+    static const uint8_t pattern[2] = { 0x5Au, 0xA5u };
+    uint8_t rd[2] = { 0u, 0u };
 
-/** @brief Host test main: verify I2C/SPI MEM transactions against the mocks. */
+    if (epic_bus_i2c_mem_write(I2C_DEV_ADDR, SCRATCH_REG, pattern, 2) != 2) {
+        return 0u;                  /* address/register NACKed: no device */
+    }
+    if (epic_bus_i2c_mem_read(I2C_DEV_ADDR, SCRATCH_REG, rd, 2) != 2) {
+        return 0u;
+    }
+    return (uint8_t)(rd[0] == pattern[0] && rd[1] == pattern[1]);
+}
+
+/** @brief Round-trip SCRATCH_REG over SPI against the HAL ops. */
+static uint8_t spi_round_trip(void)
+{
+    static const uint8_t pattern[2] = { 0x3Cu, 0xC3u };
+    uint8_t rd[2] = { 0u, 0u };
+
+    if (epic_bus_spi_mem_write(SCRATCH_REG, pattern, 2) != 2) {
+        return 0u;
+    }
+    if (epic_bus_spi_mem_read(SCRATCH_REG, rd, 2) != 2) {
+        return 0u;
+    }
+    return (uint8_t)(rd[0] == pattern[0] && rd[1] == pattern[1]);
+}
+
+/** @brief Register read/write round-trip over I2C and SPI. */
 int main(void)
 {
-    epic_harness_init(0UL);
-    for (int i = 0; i < 16; i++) { g_reg[i] = (uint8_t)(0x10 + i); }  /* known pattern */
+    EPIC_GPIO_Init(LED_PORT, LED_PIN, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(LED_PORT, LED_PIN, GPIO_PIN_RESET);
 
-    /* I2C */
-    epic_bus_set_i2c_ops(&mock_i2c);
+    for (;;) {
+        /* The MSSP is one peripheral: re-init per bus before use. */
+        epic_bus_i2c_init(FOSC_HZ, I2C_SPEED_HZ);
+        uint8_t ok = i2c_round_trip();
 
-    uint8_t buf[8] = {0};
-    int n = epic_bus_i2c_mem_read(MOCK_DEV, 0x00, buf, 4);
-    CHECK(n == 4, "i2c mem_read returns 4");
-    CHECK(buf[0] == 0x10 && buf[1] == 0x11 && buf[2] == 0x12 && buf[3] == 0x13,
-          "i2c mem_read bytes");
+        epic_bus_spi_init(FOSC_HZ, 0UL, SPI_CS_PORT, SPI_CS_PIN);
+        ok = (uint8_t)(ok && spi_round_trip());
 
-    uint8_t wr[3] = { 0xA0, 0xA1, 0xA2 };
-    n = epic_bus_i2c_mem_write(MOCK_DEV, 0x05, wr, 3);
-    CHECK(n == 3, "i2c mem_write returns 3");
-    CHECK(g_reg[5] == 0xA0 && g_reg[6] == 0xA1 && g_reg[7] == 0xA2, "i2c mem_write stored");
-
-    n = epic_bus_i2c_mem_read(MOCK_DEV, 0x05, buf, 3);
-    CHECK(n == 3 && buf[0] == 0xA0 && buf[1] == 0xA1 && buf[2] == 0xA2, "i2c read-back");
-
-    n = epic_bus_i2c_mem_read(0x77, 0x00, buf, 1);   /* wrong device */
-    CHECK(n == -1, "i2c wrong-device NACK -> -1");
-
-    /* SPI */
-    epic_bus_set_spi_ops(&mock_spi);
-    for (int i = 0; i < 16; i++) { g_reg[i] = (uint8_t)(0x80 + i); }
-
-    n = epic_bus_spi_mem_read(0x02, buf, 3);
-    CHECK(n == 3, "spi mem_read returns 3");
-    CHECK(buf[0] == 0x82 && buf[1] == 0x83 && buf[2] == 0x84, "spi mem_read bytes");
-
-    uint8_t sw[2] = { 0xC0, 0xC1 };
-    n = epic_bus_spi_mem_write(0x08, sw, 2);
-    CHECK(n == 2, "spi mem_write returns 2");
-    CHECK(g_reg[8] == 0xC0 && g_reg[9] == 0xC1, "spi mem_write stored");
-    n = epic_bus_spi_mem_read(0x08, buf, 2);
-    CHECK(n == 2 && buf[0] == 0xC0 && buf[1] == 0xC1, "spi read-back");
-
-    epic_harness_log("bus: fails=%d\n", g_fails);
-    return epic_harness_report(g_fails == 0);
+        EPIC_GPIO_WritePin(LED_PORT, LED_PIN,
+                           ok ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        demo_delay();
+    }
 }

@@ -289,7 +289,7 @@ name    = "combo-uart-ssp"
 sources = [
   "tests/combo_uart_ssp.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-uart-ssp.example.PIC16F87XA.sim]
@@ -323,7 +323,7 @@ name    = "combo-multitimer"
 sources = [
   "tests/combo_multitimer.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-multitimer.example.PIC16F87XA.sim]
@@ -356,7 +356,7 @@ name    = "combo-adc-uart"
 sources = [
   "tests/combo_adc_uart.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-adc-uart.example.PIC16F87XA.sim]
@@ -387,7 +387,7 @@ name    = "combo-rb-uart"
 sources = [
   "tests/combo_rb_uart.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-rb-uart.example.PIC16F87XA.sim]
@@ -425,7 +425,7 @@ name    = "combo-eeprom-isr"
 sources = [
   "tests/combo_eeprom_isr.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, WDT=OFF like every other sim variant.
 [modules.epic-combo-eeprom-isr.example.PIC18Fxx5x.sim]
@@ -458,7 +458,7 @@ name    = "combo-encoder-tick"
 sources = [
   "tests/combo_encoder_tick.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-encoder-tick.example.PIC16F87XA.sim]
@@ -489,7 +489,7 @@ name    = "combo-swuart-tick"
 sources = [
   "tests/combo_swuart_tick.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-swuart-tick.example.PIC16F87XA.sim]
@@ -519,7 +519,7 @@ name    = "combo-tick-serial"
 sources = [
   "tests/combo_tick_serial.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-tick-serial.example.PIC16F87XA.sim]
@@ -554,7 +554,7 @@ sources = [
   "tests/combo_lcd_tick.c",
   "../../epic-lcd/src/epic_lcd_gpio4.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-lcd-tick.example.PIC18Fxx5x.sim]
@@ -590,7 +590,7 @@ name    = "rx_loopback"
 sources = [
   "tests/combo_rx_loopback.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
 [modules.epic-combo-rx-loopback.example.PIC16F87XA.sim]
@@ -624,14 +624,34 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-adcfilter.example.PIC16F87XA]
+name    = "adcfilter"
+sources = [
+  "examples/example_adcfilter.c",
+]
+depends_on = [
+  "epic-tick",
+  "epic-serial",
+]
+# HARNESS=sim needs the family HAL for the harness USART, and the
+# example uses EPIC_ADC_*/epic_tick/epic_serial, so the example opts
+# in to the HAL despite the module being pure logic.
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# The example logs over epic-serial, which is excluded on the 4K-word
+# parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
+# parts keep the footprint probe.
+[modules.epic-adcfilter.example.PIC16F87XA.variants.16F873A]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-# HARNESS=sim needs the family HAL for the harness USART, so the
-# PIC16F87XA example (the only one with a .sim variant) opts in
-# despite the module being pure logic.
-hal     = true
+
+[modules.epic-adcfilter.example.PIC16F87XA.variants.16F874A]
+name    = "adcfilter-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
 # diagnostic build (tests/sim_adcfilter.c) that runs the real compiled
@@ -650,6 +670,25 @@ sources     = [
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-adcfilter.example.PIC18Fxx5x]
+name    = "adcfilter"
+sources = [
+  "examples/example_adcfilter.c",
+]
+hal     = true
+depends_on = [
+  "epic-tick",
+  "epic-serial",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# Same epic-serial RAM exclusion as the PIC16 small parts.
+[modules.epic-adcfilter.example.PIC18Fxx5x.variants.18F2455]
+name    = "adcfilter-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+
+[modules.epic-adcfilter.example.PIC18Fxx5x.variants.18F2550]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
@@ -684,10 +723,10 @@ PIC18Fxx5x = [
 [modules.epic-bus.example.PIC16F87XA]
 name    = "bus"
 sources = [
-  "examples/example_bus_target.c",
+  "examples/example_bus.c",
 ]
 hal     = true
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
 # diagnostic build (tests/sim_bus.c) that runs the real compiled
@@ -732,7 +771,7 @@ sources = [
   "examples/example_mcp23x17_target.c",
 ]
 hal     = true
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim: the same bounded, self-reporting shape as epic-bus's
 # gate (the sim SSP data path is unmodeled, so the gate proves the
@@ -749,9 +788,9 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 [modules.epic-bus.example.PIC18Fxx5x]
 name    = "bus"
 sources = [
-  "examples/example_bus_target.c",
+  "examples/example_bus.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-console]
 dir        = "epic-console"
@@ -788,16 +827,18 @@ PIC18Fxx5x = [
 "18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-console.example.PIC16F87XA]
-name    = "console-sizecheck"
+name    = "console"
 sources = [
-  "mcu/target_sizecheck.c",
+  "examples/example_console.c",
 ]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-console.example.PIC18Fxx5x]
-name    = "console-sizecheck"
+name    = "console"
 sources = [
-  "mcu/target_sizecheck.c",
+  "examples/example_console.c",
 ]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 # HARNESS=sim needs the family HAL for the harness USART (the module
 # defaults to needs_hal = true anyway; explicit for the same reason as
 # epic-fsm's and epic-pid's examples with a .sim variant).
@@ -857,9 +898,9 @@ PIC18Fxx5x = [
 [modules.epic-debounce.example.PIC16F87XA]
 name    = "debounce"
 sources = [
-  "examples/example_debounce_hal.c",
+  "examples/example_debounce.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
 # debounce gate under MPLAB SIM. Feeds a scripted noisy level sequence
@@ -881,9 +922,9 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 [modules.epic-debounce.example.PIC18Fxx5x]
 name    = "debounce"
 sources = [
-  "examples/example_debounce_hal.c",
+  "examples/example_debounce.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-encoder]
 dir        = "epic-encoder"
@@ -914,11 +955,31 @@ PIC18Fxx5x = [
 "18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-encoder.example.PIC16F87XA]
+name    = "encoder"
+sources = [
+  "examples/example_encoder.c",
+]
+depends_on = [
+  "epic-serial",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# The example logs over epic-serial, which is excluded on the 4K-word
+# parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
+# parts keep the footprint probe.
+[modules.epic-encoder.example.PIC16F87XA.variants.16F873A]
 name    = "encoder-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-encoder.example.PIC16F87XA.variants.16F874A]
+name    = "encoder-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim: the module's first real mdb gate (the class-G probe of
 # encoder_get_position's Disable/Restore read). WDTE=OFF for the same
@@ -934,11 +995,14 @@ sources     = [
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-encoder.example.PIC18Fxx5x]
-name    = "encoder-sizecheck"
+name    = "encoder"
 sources = [
-  "mcu/target_sizecheck.c",
+  "examples/example_encoder.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+depends_on = [
+  "epic-serial",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-fsm]
 dir        = "epic-fsm"
@@ -959,31 +1023,41 @@ PIC16F87XA = [
   "16F877A",
 ]
 PIC18Fxx5x = [
-  "18F2455",
-  "18F2550",
   "18F4455",
   "18F4550",
 ]
-PIC16F193X = [
-  "16F1933",
-  "16F1934",
-  "16F1936",
-  "16F1937",
-  "16F1938",
-  "16F1939",
-]
+
+# The example (examples/example_fsm.c) is a tick-driven traffic light.
+# Its epic-tick dependency is excluded on the smaller parts: epic-tick
+# has no PIC16F193X backend (the family HAL exposes the combined
+# TIMER246 shim, not the TIMER2 API epic_tick.c links), and it does not
+# fit on the 18F2455/18F2550 (RAM). The 193X example entry below stays
+# as the footprint probe, but no part is supported.
+[modules.epic-fsm.excluded]
+"16F1933" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
+"16F1934" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
+"16F1936" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
+"16F1937" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
+"16F1938" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
+"16F1939" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
+"18F2455" = "example needs epic-tick, which does not fit on this part (RAM)"
+"18F2550" = "example needs epic-tick, which does not fit on this part (RAM)"
 
 [modules.epic-fsm.example.PIC16F87XA]
-name    = "fsm-sizecheck"
+name    = "fsm"
 sources = [
-  "mcu/target_sizecheck.c",
+  "examples/example_fsm.c",
 ]
 hal     = true
+depends_on = [
+  "epic-tick",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
 # 3-state FSM driven through a scripted event sequence over the real
-# API, distinct from the real-target sizecheck example above (a pure
-# footprint build, no core/epic_harness.h dependency). This module's
+# API, distinct from the real-target example_fsm.c above (an unbounded
+# LED demo with no core/epic_harness.h dependency). This module's
 # first real mdb gate; PIC16F87XA/16F877A only. hal = true because the
 # sim build links the family HAL for the harness USART (the module
 # itself is needs_hal = false; epicmanifest.py uses_hal() reads the
@@ -999,11 +1073,20 @@ sources     = [
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-fsm.example.PIC18Fxx5x]
-name    = "fsm-sizecheck"
+name    = "fsm"
 sources = [
-  "mcu/target_sizecheck.c",
+  "examples/example_fsm.c",
 ]
+hal     = true
+depends_on = [
+  "epic-tick",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
+# Footprint probe only (no supported part on this family since the
+# example needs epic-tick, which has no PIC16F193X backend). Kept per
+# the examples-v2 policy: mcu/ sizecheck entries stay for the xc8
+# footprint matrix, they never ship in bundles.
 [modules.epic-fsm.example.PIC16F193X]
 name    = "fsm-sizecheck"
 sources = [
@@ -1038,11 +1121,11 @@ PIC16F87XA = [
 [modules.epic-lcd.example.PIC16F87XA]
 name    = "lcd"
 sources = [
-  "examples/example_hd44780_hello.c",
+  "examples/example_lcd.c",
   "src/epic_lcd_gpio4.c",
 ]
 hal     = true
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
 # gate (tests/sim_lcd.c), distinct from the real-target hello example
@@ -1114,24 +1197,30 @@ PIC18Fxx5x = [
 "18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-math.example.PIC16F87XA]
-name    = "math-selftest"
+name    = "math"
 sources = [
-  "tests/target_selftest.c",
+  "examples/example_math.c",
 ]
 hal    = true
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+depends_on = [
+  "epic-serial",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # The 4K-word parts (16F873A/16F874A) cannot hold the golden-vector
 # replay: the selftest plus the page-0-pinned asm leaves fragments the
 # CODE space and the link fails with 1347 (measured 2026-08-11). They
 # keep the smoke, which still proves every asm body links and executes.
+# They also cannot hold the new example: epic-serial (which it logs
+# over) is excluded there for RAM, so these parts keep the smoke
+# instead of the example.
 [modules.epic-math.example.PIC16F87XA.variants.16F873A]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
 ]
 hal     = true
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-math.example.PIC16F87XA.variants.16F874A]
 name    = "math-selftest"
@@ -1139,7 +1228,7 @@ sources = [
   "tests/target_smoke16.c",
 ]
 hal     = true
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim for PIC16: the full golden-vector replay (same source
 # as the real-target example and the PIC18 gate). The replay was
@@ -1159,18 +1248,26 @@ sources     = [
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-math.example.PIC18Fxx5x]
-name    = "math-selftest"
+name    = "math"
 sources = [
-  "tests/target_selftest.c",
+  "examples/example_math.c",
 ]
 hal    = true
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+depends_on = [
+  "epic-serial",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# HARNESS=sim, mirroring the PIC16 section: same target_selftest.c,
-# only the harness source and the WDT config bit differ.
+# HARNESS=sim, mirroring the PIC16 section: the bounded golden-vector
+# replay (tests/target_selftest.c, explicit sources so the sim gate
+# does not inherit the unbounded target example above), only the
+# harness source and the WDT config bit differ.
 [modules.epic-math.example.PIC18Fxx5x.sim]
 name        = "math-selftest-sim"
 harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/target_selftest.c",
+]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-modbus]
@@ -1203,17 +1300,17 @@ PIC18Fxx5x = [
 [modules.epic-modbus.example.PIC16F87XA]
 name    = "modbus"
 sources = [
-  "examples/example_modbus_target.c",
+  "examples/example_modbus.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-modbus.example.PIC18Fxx5x]
 name    = "modbus"
 sources = [
-  "examples/example_modbus_target.c",
+  "examples/example_modbus.c",
 ]
 hal     = true
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
 # diagnostic build (tests/sim_modbus.c) that runs the real compiled
@@ -1258,29 +1355,69 @@ PIC18Fxx5x = [
 ]
 
 [modules.epic-pid.example.PIC16F87XA]
+name    = "pid"
+sources = [
+  "examples/example_pid.c",
+]
+hal     = true
+depends_on = [
+  "epic-tick",
+  "epic-serial",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# The example logs over epic-serial, which is excluded on the 4K-word
+# parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
+# parts keep the footprint probe while the serial-capable parts build
+# the real example.
+[modules.epic-pid.example.PIC16F87XA.variants.16F873A]
+name    = "pid-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+
+[modules.epic-pid.example.PIC16F87XA.variants.16F874A]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
 [modules.epic-pid.example.PIC18Fxx5x]
+name    = "pid"
+sources = [
+  "examples/example_pid.c",
+]
+hal     = true
+depends_on = [
+  "epic-tick",
+  "epic-serial",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# Same epic-serial RAM exclusion as the PIC16 small parts.
+[modules.epic-pid.example.PIC18Fxx5x.variants.18F2455]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-# HARNESS=sim needs the family HAL for the harness USART. The gate runs
-# on PIC18 deliberately: pid.c is family-agnostic pure logic, and the
-# PIC16F87XA sim build exceeds XC8's flash-page-0 constraint for the
-# interrupt handler body (fixup-overflow 1356 at pic16_isr_vector.c:30
-# once the total passes ~4.2 K words; measured 2026-08-09). PIC18 has
-# absolute calls, so no such constraint.
-hal     = true
+
+[modules.epic-pid.example.PIC18Fxx5x.variants.18F2550]
+name    = "pid-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
 # diagnostic build (tests/sim_pid.c) that runs the real compiled pid.c
 # under MPLAB SIM, driving a scripted step-then-settle trajectory and
 # checking steady-state convergence and that gain changes take effect.
-# WDT=OFF for the same reason as every other family's sim variant.
+# WDT=OFF for the same reason as every other family's sim variant. The
+# sim build needs the family HAL for the harness USART; the gate runs
+# on PIC18 deliberately: pid.c is family-agnostic pure logic, and the
+# PIC16F87XA sim build exceeds XC8's flash-page-0 constraint for the
+# interrupt handler body (fixup-overflow 1356 at pic16_isr_vector.c:30
+# once the total passes ~4.2 K words; measured 2026-08-09). PIC18 has
+# absolute calls, so no such constraint.
 [modules.epic-pid.example.PIC18Fxx5x.sim]
 name        = "pid-sim"
 harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
@@ -1318,10 +1455,10 @@ PIC18Fxx5x = [
 [modules.epic-serial.example.PIC16F87XA]
 name    = "serial"
 sources = [
-  "examples/example_serial_target.c",
+  "examples/example_serial.c",
 ]
 hal     = true
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
 # gate that runs the real compiled epic_serial.c under MPLAB SIM on a
@@ -1342,9 +1479,9 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 [modules.epic-serial.example.PIC18Fxx5x]
 name    = "serial"
 sources = [
-  "examples/example_serial_target.c",
+  "examples/example_serial.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-settings]
 dir        = "epic-settings"
@@ -1377,11 +1514,15 @@ sources = [
 ]
 
 [modules.epic-settings.example.PIC18Fxx5x]
-name    = "settings-sizecheck"
+name    = "settings"
 sources = [
-  "mcu/target_sizecheck.c",
+  "examples/example_settings.c",
 ]
 hal     = true
+depends_on = [
+  "epic-serial",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim: the bounded EEPROM round-trip + corruption gate
 # (tests/sim_settings.c). The module's own real-target example was
@@ -1398,6 +1539,95 @@ sources     = [
   "tests/sim_settings.c",
 ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# epic-sdcard, SD/MMC-over-SPI block storage: wraps the vendored
+# M-Stack storage driver (third_party/m-stack-storage, compiled from
+# source) and binds its MMC_SPI_/timer macros to this repo's HAL and
+# epic-tick. PIC18Fxx5x only: a 512-byte block exceeds every PIC16F87XA
+# variant's total RAM. The example reads SD block 0 and prints its
+# first bytes over epic-serial.
+[modules.epic-sdcard]
+dir        = "epic-sdcard"
+sources    = [
+  "src/epic_sdcard.c",
+  "third_party/m-stack-storage/src/mmc.c",
+  "third_party/m-stack-storage/src/crc.c",
+]
+includes   = [
+  "include",
+  "third_party/m-stack-storage/include",
+  "src/target",
+]
+# epic-tick is a genuine library dependency: epic_sdcard.c's exported
+# MMC_TIMER_START/EXPIRED callbacks call epic_tick_get() and
+# epic_tick_elapsed_since() directly. Only the example's serial usage is
+# example-scoped (see the example's depends_on below).
+depends_on = [
+  "epic-tick",
+]
+needs_hal  = true
+
+[modules.epic-sdcard.supported]
+PIC18Fxx5x = [
+  "18F4455",
+  "18F4550",
+]
+
+# Mirrors epic-serial's exclusion: the example's epic-serial sources
+# (32-byte g_rx_buf) do not fit on the smaller parts, and the example
+# links them.
+[modules.epic-sdcard.excluded]
+"18F2455" = "RAM: does not fit on this smaller part"
+"18F2550" = "RAM: does not fit on this smaller part"
+
+[modules.epic-sdcard.example.PIC18Fxx5x]
+name    = "sdcard"
+sources = [
+  "examples/example_sdcard.c",
+]
+# Only serial is example-scoped here: the example prints over
+# epic-serial, while epic-tick is already a module-level dependency.
+depends_on = [
+  "epic-serial",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# epic-usb, USB CDC-ACM virtual serial port: wraps the vendored M-Stack
+# USB device stack (third_party/m-stack), polling (epic_usb_service),
+# not interrupt-driven. PIC18Fxx5x only: the family's SIE has no
+# equivalent on PIC16F87XA parts. The example enumerates and echoes the
+# host's CDC input.
+[modules.epic-usb]
+dir        = "epic-usb"
+sources    = [
+  "src/epic_usb.c",
+  "src/usb_descriptors.c",
+  "third_party/m-stack/usb/src/usb.c",
+  "third_party/m-stack/usb/src/usb_cdc.c",
+]
+includes   = [
+  "include",
+  "src",
+  "third_party/m-stack/usb/include",
+  "third_party/m-stack/usb/src",
+]
+depends_on = []
+needs_hal  = false
+
+[modules.epic-usb.supported]
+PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
+  "18F4455",
+  "18F4550",
+]
+
+[modules.epic-usb.example.PIC18Fxx5x]
+name    = "usb-cdc"
+sources = [
+  "examples/example_usb.c",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-swuart]
 dir        = "epic-swuart"
@@ -1437,9 +1667,9 @@ PIC16F193X = [
 [modules.epic-swuart.example.PIC16F87XA]
 name    = "swuart"
 sources = [
-  "tests/example_swuart.c",
+  "examples/example_swuart.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
 # CCP TX+RX round-trip, distinct from the real-target example_swuart.c
@@ -1462,16 +1692,16 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 [modules.epic-swuart.example.PIC18Fxx5x]
 name    = "swuart"
 sources = [
-  "tests/example_swuart.c",
+  "examples/example_swuart.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-swuart.example.PIC16F193X]
 name    = "swuart"
 sources = [
-  "tests/example_swuart.c",
+  "examples/example_swuart.c",
 ]
-config  = { FOSC = "INTOSC", WDTE = "ON", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "OFF", WRT = "OFF" }
+config  = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "OFF", WRT = "OFF" }
 
 [modules.epic-taskmgr]
 dir        = "epic-taskmgr"
@@ -1500,21 +1730,21 @@ PIC18Fxx5x = [
 "18F2550" = "link: irq dispatch needs every peripheral handler"
 
 [modules.epic-taskmgr.example.PIC16F87XA]
-name    = "multi-blink"
+name    = "taskmgr"
 sources = [
-  "examples/example_multi_blink.c",
+  "examples/example_taskmgr.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-taskmgr.example.PIC18Fxx5x]
-name    = "multi-blink"
+name    = "taskmgr"
 sources = [
-  "examples/example_multi_blink.c",
+  "examples/example_taskmgr.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
-# diagnostic distinct from the real-target example_multi_blink.c above
+# diagnostic distinct from the real-target example_taskmgr.c above
 # (an unbounded LED demo with no core/epic_harness.h dependency). This
 # module's first-ever real mdb gate coverage. Wired on PIC18Fxx5x
 # (18F4550), not PIC16F87XA: SIM's PIC16 leg has a hard layout budget
@@ -1565,18 +1795,24 @@ name    = "tick"
 sources = [
   "examples/example_tick.c",
 ]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim (see sim-tests.yml): a bounded, self-reporting firmware
 # build driven under MPLAB SIM, distinct from the real-target
-# HARNESS=target build above. Same example_tick.c (no sources
-# override); only the harness source and WDTE differ, mirroring
+# HARNESS=target build above. The target example is an unbounded demo
+# (it would never terminate under SIM), so the sim variant gets its own
+# bounded harness source (tests/sim_tick.c, the delay-accuracy gate
+# that used to live in examples/example_tick.c), plus the harness
+# source swap and WDTE off, mirroring
 # epic-tick/mcu/pic16f87xa-tick-mplabx/Makefile's HARNESS=sim branch
 # (real-target firmware needs the watchdog running unattended, a
 # diagnostic build that terminates and reports over USART does not).
 [modules.epic-tick.example.PIC16F87XA.sim]
 name        = "tick-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_tick.c",
+]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-tick.example.PIC18Fxx5x]
@@ -1584,14 +1820,18 @@ name    = "tick"
 sources = [
   "examples/example_tick.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, mirroring epic-tick/mcu/pic18fxx5x-tick-mplabx/Makefile's
-# own HARNESS=sim branch: same example_tick.c, only the harness source
-# and WDT (PIC18's watchdog config bit) differ.
+# own HARNESS=sim branch: bounded harness source (tests/sim_tick.c,
+# same reason as the PIC16F87XA sim variant above), harness source swap,
+# and WDT (PIC18's watchdog config bit) off.
 [modules.epic-tick.example.PIC18Fxx5x.sim]
 name        = "tick-sim"
 harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/sim_tick.c",
+]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 
@@ -1623,7 +1863,7 @@ name    = "combo-tick-settings"
 sources = [
   "tests/combo_tick_settings.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, WDT=OFF like every other sim variant.
 [modules.epic-combo-tick-settings.example.PIC18Fxx5x.sim]
@@ -1662,7 +1902,7 @@ name    = "combo-modbus-full"
 sources = [
   "tests/combo_modbus_full.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, WDT=OFF like every other sim variant.
 [modules.epic-combo-modbus-full.example.PIC18Fxx5x.sim]
@@ -1701,7 +1941,7 @@ name    = "combo-taskmgr-serial"
 sources = [
   "tests/combo_taskmgr_serial.c",
 ]
-config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, WDT=OFF like every other sim variant.
 [modules.epic-combo-taskmgr-serial.example.PIC18Fxx5x.sim]

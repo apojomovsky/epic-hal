@@ -2,7 +2,7 @@
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
-#   ./build/test_debounce && ./build/example_debounce_hal
+#   ./build/test_debounce
 #
 # The debounce core (src/debounce.c) depends on epic-tick for its timebase
 # (epic_tick_get / epic_tick_elapsed_since). epic-tick in turn pulls a HAL
@@ -36,7 +36,3 @@ enable_testing()
 add_executable(test_debounce tests/test_debounce.c)
 target_link_libraries(test_debounce PRIVATE debounce)
 add_test(NAME debounce_tests COMMAND test_debounce)
-
-# ---- example: two instances on HAL GPIO pins, host-sim runnable ----
-add_executable(example_debounce_hal examples/example_debounce_hal.c)
-target_link_libraries(example_debounce_hal PRIVATE debounce)

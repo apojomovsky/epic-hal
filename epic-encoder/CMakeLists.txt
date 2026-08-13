@@ -2,7 +2,7 @@
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
-#   ./build/test_encoder && ./build/example_encoder_hal && ./build/example_encoder_pid_loop
+#   ./build/test_encoder
 #
 # This build reuses the host simulation backend of a HAL family (pulled in via
 # add_subdirectory) exactly as epic-tick does: epic_encoder_get_position() reads a
@@ -34,14 +34,12 @@ if(EPIC_FAMILY STREQUAL "PIC18")
     set(EPIC_LIB          pic18fxx5x_hal)
     set(FAMILY_DEVICES   PIC18F2455 PIC18F2550 PIC18F4455 PIC18F4550)
     set(DEFAULT_DEVICE   PIC18F4550)
-    set(DEFAULT_FOSC_HZ  48000000UL)
 else()
     set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic16f87xa-hal
         CACHE PATH "Path to the pic16f87xa-hal source tree")
     set(EPIC_LIB          pic16f87xa_hal)
     set(FAMILY_DEVICES   PIC16F873A PIC16F874A PIC16F876A PIC16F877A)
     set(DEFAULT_DEVICE   PIC16F877A)
-    set(DEFAULT_FOSC_HZ  20000000UL)
 endif()
 
 if(NOT TARGET ${EPIC_LIB})
@@ -54,15 +52,6 @@ set(TICK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-tick
     CACHE PATH "Path to the epic-tick source tree")
 if(NOT TARGET epic_tick)
     add_subdirectory(${TICK_DIR} ${CMAKE_CURRENT_BINARY_DIR}/tick)
-endif()
-
-# epic-pid for example_encoder_pid_loop (the direct demonstration of this
-# module's purpose: epic_encoder_get_position() fed into epic_pid_update()). epic-pid
-# is itself HAL-free (it links only epic-math), and pulls epic-math in itself.
-set(PID_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-pid
-    CACHE PATH "Path to the epic-pid source tree")
-if(NOT TARGET pid)
-    add_subdirectory(${PID_DIR} ${CMAKE_CURRENT_BINARY_DIR}/pid)
 endif()
 
 add_library(encoder STATIC src/encoder.c)
@@ -78,10 +67,5 @@ target_link_libraries(test_encoder PRIVATE encoder)
 add_test(NAME encoder_tests COMMAND test_encoder)
 
 # ---- examples ----
-add_executable(example_encoder_hal examples/example_encoder_hal.c)
-target_compile_definitions(example_encoder_hal PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
-target_link_libraries(example_encoder_hal PRIVATE encoder)
-
-add_executable(example_encoder_pid_loop examples/example_encoder_pid_loop.c)
-target_compile_definitions(example_encoder_pid_loop PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
-target_link_libraries(example_encoder_pid_loop PRIVATE encoder pid)
+# The target-only example (examples/example_encoder.c) is built by the
+# manifest-driven XC8 build, not this host CMake build.

@@ -58,6 +58,10 @@ PIC16F87XA = ["16F873A", "16F877A"]
 [modules.epic-adcfilter.example.PIC16F87XA]
 name    = "adcfilter-sizecheck"
 sources = ["mcu/target_sizecheck.c"]
+# Example-level dep: epic-tick is excluded on 16F873A (see the tick
+# fixture's excluded), so a build of this example there must fail the
+# support check rather than compile excluded code.
+depends_on = ["epic-tick"]
 """
 
 
@@ -110,6 +114,27 @@ class TestBuildScript(unittest.TestCase):
         self.assertIn("epic-tick/src/epic_tick.c", s)
         self.assertIn("epic-tick/examples/example_tick.c", s)
         self.assertIn("build/16F877A/epic_tick.p1", s)
+
+    def test_example_dependency_sources_are_in_the_build(self):
+        # epic-adcfilter's example depends_on epic-tick, so the tick
+        # library joins the example's build even though the module has
+        # no module-level dep.
+        s = epic_build.emit_build_script(
+            load(), "epic-adcfilter", "16F877A",
+            build_dir="build", dfp_dir="/opt/dfp")
+        self.assertIn("epic-tick/src/epic_tick.c", s)
+        self.assertIn("epic-adcfilter/mcu/target_sizecheck.c", s)
+
+    def test_example_dep_excluded_on_mcu_raises(self):
+        # epic-tick is excluded on 16F873A; epic-adcfilter's example
+        # depends on it, so that build must fail loudly instead of
+        # compiling excluded code.
+        with self.assertRaises(epic_build.UnsupportedError) as cm:
+            epic_build.emit_build_script(
+                load(), "epic-adcfilter", "16F873A",
+                build_dir="build", dfp_dir="/opt/dfp")
+        self.assertIn("epic-tick", str(cm.exception))
+        self.assertIn("16F873A", str(cm.exception))
 
     def test_includes_conditional_source_only_on_matching_variant(self):
         self.assertIn("pic16f87xa_psp.c", self.script())

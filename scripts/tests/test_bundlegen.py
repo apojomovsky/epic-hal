@@ -70,7 +70,9 @@ PIC16F87XA = ["16F877A"]
 
 [modules.epic-serial.example.PIC16F87XA]
 name    = "serial-echo"
-sources = ["examples/example_serial.c"]
+# Two non-consumer example shapes, the same as real manifest modules:
+# a tests/ real-target smoke test and an mcu/ size-check probe.
+sources = ["tests/example_serial.c", "mcu/target_sizecheck.c"]
 
 [modules.epic-usb]
 dir        = "epic-usb"
@@ -101,6 +103,22 @@ PIC16F193X = ["16F1937"]
 [modules.epic-pic16f193x-firmware.example.PIC16F193X]
 name    = "firmware"
 sources = ["tests/example_blink.c"]
+
+# A combination-matrix CI gate module, the same shape as the real
+# epic-combo-* modules under tests/: must never appear in a bundle's
+# module list or file set, it is CI coverage, not a consumer library.
+[modules.epic-combo-uart-ssp]
+dir        = "tests/epic-combo-uart-ssp"
+sources    = ["tests/combo_uart_ssp.c"]
+includes   = []
+depends_on = []
+
+[modules.epic-combo-uart-ssp.supported]
+PIC16F87XA = ["16F877A"]
+
+[modules.epic-combo-uart-ssp.example.PIC16F87XA]
+name    = "combo-uart-ssp"
+sources = ["tests/combo_uart_ssp.c"]
 """
 
 
@@ -139,6 +157,13 @@ class TestModuleSelection(unittest.TestCase):
         # for by name. PIC16F193X is correctly a HAL-only bundle.
         self.assertEqual(bundlegen.modules_for_family(self.m, "PIC16F193X"), [])
 
+    def test_excludes_combo_test_modules_under_tests(self):
+        # epic-combo-* are combination-matrix CI gates, not consumer
+        # libraries: they must not appear in a bundle's module list.
+        self.assertNotIn(
+            "epic-combo-uart-ssp", bundlegen.modules_for_family(self.m, "PIC16F87XA")
+        )
+
     def test_unknown_family_raises(self):
         with self.assertRaises(bundlegen.BundleError):
             bundlegen.modules_for_family(self.m, "PIC99XXXX")
@@ -155,8 +180,25 @@ class TestFileSelection(unittest.TestCase):
         self.assertIn("epic-serial/src/epic_serial.c", self.files)
         self.assertIn("epic-tick/src/epic_tick.c", self.files)
 
-    def test_includes_example_sources(self):
+    def test_includes_consumer_example_sources(self):
+        # Manifest example sources that are consumer samples (under
+        # examples/) ship in the bundle: epic-tick's example_tick.c is a
+        # real sample a consumer can build.
         self.assertIn("epic-tick/examples/example_tick.c", self.files)
+
+    def test_excludes_non_consumer_example_sources(self):
+        # Manifest example sources that are not consumer samples never
+        # ship: tests/ sources are real-target smoke tests (epic-serial's
+        # serial-echo here; the fixture's pic16f193x-firmware example
+        # under tests/ is the same shape), mcu/ sources are size-check
+        # probes (epic-serial's target_sizecheck.c), and the combo test
+        # modules are CI coverage. Only examples/ sources ship.
+        self.assertNotIn("epic-serial/tests/example_serial.c", self.files)
+        self.assertNotIn("epic-serial/mcu/target_sizecheck.c", self.files)
+        self.assertNotIn("tests/combo_uart_ssp.c", self.files)
+        self.assertNotIn("tests/example_blink.c", self.files)
+        self.assertFalse(any(f.startswith("tests/") for f in self.files))
+        self.assertFalse(any("tests/" in f for f in self.files))
 
     def test_excludes_other_families_hal(self):
         self.assertFalse(any(f.startswith("pic18fxx5x-hal/") for f in self.files))
@@ -463,6 +505,33 @@ class TestBundleGate(unittest.TestCase):
             "pic16f87xa-hal/tests/sim_bank_probe.c",
             "sim_console.c",
         ])
+
+    def test_nonconsumer_gate_rejects_tests_host_and_design_docs(self):
+        offenders = make_bundle._nonconsumer_offenders([
+            "epic-serial/tests/sim_serial.c",
+            "tests/epic-combo-uart-ssp/tests/combo_uart_ssp.c",
+            "pic16f87xa-hal/include/host/pic16_platform.h",
+            "epic-common/docs/ARCHITECTURE.md",
+            "epic-serial/src/epic_serial.c",
+            "epic-serial/README.md",
+        ])
+        self.assertEqual(offenders, [
+            "epic-common/docs/ARCHITECTURE.md",
+            "epic-serial/tests/sim_serial.c",
+            "pic16f87xa-hal/include/host/pic16_platform.h",
+            "tests/epic-combo-uart-ssp/tests/combo_uart_ssp.c",
+        ])
+
+    def test_gate_allows_manifest_declared_include_dirs(self):
+        # epic-math declares tests/ as an include dir (the library's
+        # quoted includes resolve there); those headers are build
+        # artifacts and must ship. A tests/ path outside any declared
+        # include dir is still rejected.
+        offenders = make_bundle._nonconsumer_offenders([
+            "epic-math/tests/golden_vectors.h",
+            "epic-serial/tests/sim_serial.c",
+        ], allowed_prefixes=["epic-math/tests"])
+        self.assertEqual(offenders, ["epic-serial/tests/sim_serial.c"])
 
     def test_gate_passes_legit_target_sources(self):
         offenders = make_bundle._sim_mdb_offenders([

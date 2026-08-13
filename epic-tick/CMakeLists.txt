@@ -1,8 +1,6 @@
 # epic-tick, a 1 ms timebase (HAL_GetTick/HAL_Delay equivalent) for 8-bit PICs.
 #
 #   cmake -B build && cmake --build build
-#   ctest --test-dir build --output-on-failure
-#   ./build/example_tick
 #
 # This build reuses the host simulation backend of a HAL family (pulled in via
 # add_subdirectory) exactly as epic-taskmgr does. The tick module is
@@ -46,10 +44,9 @@ target_include_directories(epic_tick PUBLIC
 target_link_libraries(epic_tick PUBLIC ${EPIC_LIB})
 target_compile_definitions(epic_tick PRIVATE -D${DEFAULT_DEVICE})
 
-# The example doubles as the host smoke test.
+# The target-only example: compiled here as a host syntax/link gate for
+# the default device. It is a real-silicon program (an LED blink, no
+# stdout) so it is not run as a test.
 add_executable(example_tick examples/example_tick.c)
 target_compile_definitions(example_tick PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
 target_link_libraries(example_tick PRIVATE epic_tick)
-
-enable_testing()
-add_test(NAME example_tick COMMAND example_tick)

@@ -2,7 +2,7 @@
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
-#   ./build/test_console && ./build/example_console
+#   ./build/test_console
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_console C)
@@ -42,7 +42,3 @@ add_executable(test_console_fuzz tests/test_console_fuzz.c)
 target_compile_definitions(test_console_fuzz PRIVATE -D${DEFAULT_DEVICE})
 target_link_libraries(test_console_fuzz PRIVATE epic_console)
 add_test(NAME console_fuzz COMMAND test_console_fuzz)
-
-add_executable(example_console examples/example_console.c)
-target_compile_definitions(example_console PRIVATE -D${DEFAULT_DEVICE})
-target_link_libraries(example_console PRIVATE epic_console)

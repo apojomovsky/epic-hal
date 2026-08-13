@@ -2,7 +2,12 @@
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
-#   ./build/test_settings && ./build/example_settings
+#   ./build/test_settings
+#
+# The target-only example (examples/example_settings.c) is not built by
+# this host build: it is a manifest-governed consumer program compiled
+# with XC8 by scripts/epic_build.py (see epic-common/manifest/
+# modules.toml), like every other module's examples/ demo.
 #
 # One family-agnostic implementation (src/epic_settings.c) builds against
 # either HAL family. The public header is dependency-free; the implementation
@@ -52,7 +57,3 @@ add_executable(test_settings_fuzz tests/test_settings_fuzz.c)
 target_compile_definitions(test_settings_fuzz PRIVATE -D${DEFAULT_DEVICE})
 target_link_libraries(test_settings_fuzz PRIVATE epic_settings)
 add_test(NAME settings_fuzz COMMAND test_settings_fuzz)
-
-add_executable(example_settings examples/example_settings.c)
-target_compile_definitions(example_settings PRIVATE -D${DEFAULT_DEVICE})
-target_link_libraries(example_settings PRIVATE epic_settings)

@@ -43,8 +43,6 @@ one shared interrupt; decode with a software Gray-code transition table.
 ```sh
 cmake -B build && cmake --build build
 ctest --test-dir build --output-on-failure   # test_encoder: 52 checks
-./build/example_encoder_hal                  # two encoders on one PORTB
-./build/example_encoder_pid_loop             # encoder -> epic_pid_update loop
 # PIC18 family instead:
 cmake -B build18 -DEPIC_FAMILY=PIC18 && cmake --build build18
 ctest --test-dir build18 --output-on-failure
@@ -90,9 +88,8 @@ int32_t meas = epic_encoder_get_position(&enc);
 int16_t out  = epic_pid_update(&pid, setpoint, (int16_t)meas);
 ```
 
-See `examples/example_encoder_hal.c` (two encoders sharing one PORTB) and
-`examples/example_encoder_pid_loop.c` (the servo demo) for complete,
-host-runnable wiring.
+See `examples/example_encoder.c` for the complete, target-runnable
+wiring (A/B on RB4/RB5, position logged over serial).
 
 ## Constraints
 

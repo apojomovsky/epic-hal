@@ -34,9 +34,20 @@ usage: install.sh <part-or-family> [<version>] [--part <part>] [--modules <a,b>]
                    [--name <name>] [--force]
        install.sh --list | --help
 
-A part (16F877A) picks its family automatically; a family slug
-(pic16f87xa) installs that family's bundle. families: $FAMILIES
+A part (16F877A; case and a PIC/p prefix do not matter) picks its family
+automatically; a family slug (pic16f87xa) installs that family's bundle.
+families: $FAMILIES
 EOF
+}
+
+# Uppercase a part token and drop a PIC/p prefix (pic16f877a -> 16F877A).
+norm_part() {
+    norm="$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')"
+    case "$norm" in
+        PIC*) norm="${norm#PIC}" ;;
+        P*) norm="${norm#P}" ;;
+    esac
+    printf '%s' "$norm"
 }
 
 family=
@@ -106,13 +117,24 @@ fi
 case " $FAMILIES " in
     *" $family "*) ;;
     *)
-        # Not a family slug: treat it as a part. Its family is resolved
-        # from the parts.txt release asset once the asset_dir is known.
-        # An explicit --part still overrides (install.sh 16F877A --part X).
-        part="${part:-$family}"
-        family=
+        # Not a family slug: treat it as a part (case and a PIC/p prefix
+        # do not matter). Its family is resolved from the parts.txt
+        # release asset once the asset_dir is known. An explicit --part
+        # still overrides (install.sh 16F877A --part X).
+        token="$(printf '%s' "$family" | tr '[:upper:]' '[:lower:]')"
+        case " $FAMILIES " in
+            *" $token "*) family="$token" ;;
+            *)
+                part="${part:-$(norm_part "$family")}"
+                family=
+                ;;
+        esac
         ;;
 esac
+
+if [ -n "$part" ]; then
+    part="$(norm_part "$part")"
+fi
 
 if [ -n "${EPICURUS_BASE_URL:-}" ]; then
     # CI override: treat the base as a flat directory of assets. The

@@ -28,8 +28,11 @@ plain data, cover multiple inputs.
 ```sh
 cmake -B build && cmake --build build
 ctest --test-dir build --output-on-failure   # 6 test cases, all pass
-./build/example_debounce_hal                  # two buttons on RA0/RA1, LED on RB0
 ```
+
+The module's example (`examples/example_debounce.c`) is target-only: two
+debounced buttons driving two LEDs via press/release events, built for
+real parts through the manifest's example slot.
 
 ### Real target (XC8)
 

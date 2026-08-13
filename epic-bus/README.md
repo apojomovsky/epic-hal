@@ -20,20 +20,23 @@ address, then read/write N bytes" in one call, for both I2C and SPI.
 
 ## Quick start
 
-### Host simulator (the test, with a mock MEM device)
+### Example (real target, XC8)
+
+The target-only example (`examples/example_bus.c`) round-trips a register
+over I2C and SPI against the HAL ops; the manifest build compiles it:
 
 ```sh
-cmake -B build && cmake --build build
-ctest --test-dir build --output-on-failure   # example_bus: I2C+SPI MEM, fails=0
-cmake -B build18 -DEPIC_FAMILY=PIC18 && ctest --test-dir build18
+make xc8-build MODULE=epic-bus MCU=16F877A
+make xc8-build MODULE=epic-bus MCU=18F4550
 ```
 
-### Real target (XC8), bus init smoke
+### MPLAB SIM gate (the mock-MEM test)
+
+The mock-MEM transaction logic is covered under MPLAB SIM by
+`tests/sim_bus.c`:
 
 ```sh
-export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-make -C mcu/pic16f87xa-bus-mplabx MCU=16F877A
-make -C mcu/pic18fxx5x-bus-mplabx MCU=18F4550
+make mdb-test MODULE=epic-bus MCU=16F877A DEVICE=PIC16F877A
 ```
 
 ## Use it

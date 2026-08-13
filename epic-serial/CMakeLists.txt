@@ -2,7 +2,6 @@
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
-#   ./build/example_serial
 #
 # Reuses a HAL family's host sim backend via add_subdirectory (as epic-taskmgr
 # / epic-tick do). The serial module is family-agnostic: it includes only the
@@ -45,16 +44,17 @@ target_include_directories(epic_serial PUBLIC
 target_link_libraries(epic_serial PUBLIC ${EPIC_LIB})
 target_compile_definitions(epic_serial PRIVATE -D${DEFAULT_DEVICE})
 
+# The target-only example: compiled here as a host syntax/link gate for
+# the default device. It is a real-silicon program (an infinite echo
+# loop, printf via putch) so it is not run as a test.
 add_executable(example_serial examples/example_serial.c)
 target_compile_definitions(example_serial PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
 target_link_libraries(example_serial PRIVATE epic_serial)
 
-enable_testing()
-add_test(NAME example_serial COMMAND example_serial)
-
 # Host property test: randomized producer/consumer stress through the
 # real public API over the sim's USART model, byte-exact against an
 # independent model plus the full/empty ring boundaries.
+enable_testing()
 add_executable(test_serial_stress tests/test_serial_stress.c)
 target_compile_definitions(test_serial_stress PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
 target_link_libraries(test_serial_stress PRIVATE epic_serial)
