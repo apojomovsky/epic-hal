@@ -46,7 +46,12 @@ host simulator models it); they drive the TX/RX state machine directly
 through test-only accessor functions compiled in only for host-sim
 builds. See `docs/ARCHITECTURE.md`'s "Host testing" section.
 
-### Real target (XC8), loopback demo
+### Real target (XC8), echo demo
+
+The target-only demo (`examples/example_swuart.c`) opens channel A
+(TX = RC1, RX = RC2 at 9600 baud 8N1), sends a banner, and echoes
+every received byte back. Connect a serial terminal to RC1/RC2 and
+type; RB1 toggles per echoed byte.
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
