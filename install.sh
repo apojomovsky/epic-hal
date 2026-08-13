@@ -176,6 +176,12 @@ fi
 [ -n "$modules" ] || modules="$default_modules"
 
 echo "install.sh: scaffolding with part=$part modules=$modules"
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "install.sh: python3 is required to scaffold the project." >&2
+    echo "install.sh: the bundle is installed and verified; once python3 exists, run:" >&2
+    echo "  $DEST/epicurus init" >&2
+    exit 1
+fi
 "$DEST/epicurus" init \
     --family "$manifest_family" \
     --part "$part" \

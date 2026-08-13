@@ -43,6 +43,10 @@ That needs MPLAB XC8 (the free tier is enough); the installer tells you if
 `third_party/epicurus/projects/myapp.X` in MPLAB X or the MPLAB extension
 for VS Code and Build there.
 
+The scaffolder is a plain Python 3 script (stdlib only), so the one-liner
+also needs `python3` on PATH; the installer checks for it and tells you how
+to finish by hand if it is missing.
+
 The other families: replace `pic16f87xa` with `pic18fxx5x` or `pic16f193x`.
 List them with `... | sh -s -- --list`, pin a release with
 `... | sh -s -- pic16f87xa v0.1.0`, and override the defaults with
