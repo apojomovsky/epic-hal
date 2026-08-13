@@ -2,7 +2,7 @@
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
-#   ./build/test_pid && ./build/example_pid_setpoint_step
+#   ./build/test_pid
 #
 # The pid core (src/pid.c) is a fixed-point arithmetic engine on plain
 # data. It depends only on epic-math (for the 16x16->32 signed multiply
@@ -37,7 +37,3 @@ enable_testing()
 add_executable(test_pid tests/test_pid.c)
 target_link_libraries(test_pid PRIVATE pid)
 add_test(NAME pid_tests COMMAND test_pid)
-
-# ---- example: host-only setpoint-step + manual/auto transfer demo ----
-add_executable(example_pid_setpoint_step examples/example_pid_setpoint_step.c)
-target_link_libraries(example_pid_setpoint_step PRIVATE pid)
