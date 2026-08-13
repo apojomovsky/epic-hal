@@ -606,10 +606,7 @@ sources    = [
 includes   = [
   "include",
 ]
-depends_on = [
-  "epic-tick",
-  "epic-serial",
-]
+depends_on = []
 needs_hal = false
 
 [modules.epic-adcfilter.supported]
@@ -630,6 +627,10 @@ PIC18Fxx5x = [
 name    = "adcfilter"
 sources = [
   "examples/example_adcfilter.c",
+]
+depends_on = [
+  "epic-tick",
+  "epic-serial",
 ]
 # HARNESS=sim needs the family HAL for the harness USART, and the
 # example uses EPIC_ADC_*/epic_tick/epic_serial, so the example opts
@@ -674,6 +675,10 @@ sources = [
   "examples/example_adcfilter.c",
 ]
 hal     = true
+depends_on = [
+  "epic-tick",
+  "epic-serial",
+]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # Same epic-serial RAM exclusion as the PIC16 small parts.
@@ -931,7 +936,6 @@ includes   = [
 ]
 depends_on = [
   "epic-tick",
-  "epic-serial",
 ]
 
 [modules.epic-encoder.supported]
@@ -954,6 +958,9 @@ PIC18Fxx5x = [
 name    = "encoder"
 sources = [
   "examples/example_encoder.c",
+]
+depends_on = [
+  "epic-serial",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
@@ -992,6 +999,9 @@ name    = "encoder"
 sources = [
   "examples/example_encoder.c",
 ]
+depends_on = [
+  "epic-serial",
+]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules.epic-fsm]
@@ -1002,9 +1012,7 @@ sources    = [
 includes   = [
   "include",
 ]
-depends_on = [
-  "epic-tick",
-]
+depends_on = []
 needs_hal = false
 
 [modules.epic-fsm.supported]
@@ -1015,16 +1023,15 @@ PIC16F87XA = [
   "16F877A",
 ]
 PIC18Fxx5x = [
-  "18F2455",
-  "18F2550",
   "18F4455",
   "18F4550",
 ]
 
-# The example (examples/example_fsm.c) is a tick-driven traffic light,
-# and epic-tick has no PIC16F193X backend (the family HAL exposes the
-# combined TIMER246 shim, not the TIMER2 API epic_tick.c links), so the
-# module cannot build there anymore. The 193X example entry below stays
+# The example (examples/example_fsm.c) is a tick-driven traffic light.
+# Its epic-tick dependency is excluded on the smaller parts: epic-tick
+# has no PIC16F193X backend (the family HAL exposes the combined
+# TIMER246 shim, not the TIMER2 API epic_tick.c links), and it does not
+# fit on the 18F2455/18F2550 (RAM). The 193X example entry below stays
 # as the footprint probe, but no part is supported.
 [modules.epic-fsm.excluded]
 "16F1933" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
@@ -1033,6 +1040,8 @@ PIC18Fxx5x = [
 "16F1937" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
 "16F1938" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
 "16F1939" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
+"18F2455" = "example needs epic-tick, which does not fit on this part (RAM)"
+"18F2550" = "example needs epic-tick, which does not fit on this part (RAM)"
 
 [modules.epic-fsm.example.PIC16F87XA]
 name    = "fsm"
@@ -1040,6 +1049,9 @@ sources = [
   "examples/example_fsm.c",
 ]
 hal     = true
+depends_on = [
+  "epic-tick",
+]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
@@ -1066,6 +1078,9 @@ sources = [
   "examples/example_fsm.c",
 ]
 hal     = true
+depends_on = [
+  "epic-tick",
+]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # Footprint probe only (no supported part on this family since the
@@ -1147,9 +1162,7 @@ includes   = [
   "include",
   "tests",
 ]
-depends_on = [
-  "epic-serial",
-]
+depends_on = []
 needs_hal = false
 
 [modules.epic-math.sources_by_family]
@@ -1189,6 +1202,9 @@ sources = [
   "examples/example_math.c",
 ]
 hal    = true
+depends_on = [
+  "epic-serial",
+]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # The 4K-word parts (16F873A/16F874A) cannot hold the golden-vector
@@ -1237,6 +1253,9 @@ sources = [
   "examples/example_math.c",
 ]
 hal    = true
+depends_on = [
+  "epic-serial",
+]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, mirroring the PIC16 section: the bounded golden-vector
@@ -1318,8 +1337,6 @@ includes   = [
 ]
 depends_on = [
   "epic-math",
-  "epic-tick",
-  "epic-serial",
 ]
 needs_hal = false
 
@@ -1343,6 +1360,10 @@ sources = [
   "examples/example_pid.c",
 ]
 hal     = true
+depends_on = [
+  "epic-tick",
+  "epic-serial",
+]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # The example logs over epic-serial, which is excluded on the 4K-word
@@ -1367,6 +1388,10 @@ sources = [
   "examples/example_pid.c",
 ]
 hal     = true
+depends_on = [
+  "epic-tick",
+  "epic-serial",
+]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # Same epic-serial RAM exclusion as the PIC16 small parts.
@@ -1466,9 +1491,7 @@ sources    = [
 includes   = [
   "include",
 ]
-depends_on = [
-  "epic-serial",
-]
+depends_on = []
 
 [modules.epic-settings.supported]
 PIC18Fxx5x = [
@@ -1496,6 +1519,9 @@ sources = [
   "examples/example_settings.c",
 ]
 hal     = true
+depends_on = [
+  "epic-serial",
+]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim: the bounded EEPROM round-trip + corruption gate
@@ -1532,10 +1558,7 @@ includes   = [
   "third_party/m-stack-storage/include",
   "src/target",
 ]
-depends_on = [
-  "epic-tick",
-  "epic-serial",
-]
+depends_on = []
 needs_hal  = true
 
 [modules.epic-sdcard.supported]
@@ -1555,6 +1578,10 @@ PIC18Fxx5x = [
 name    = "sdcard"
 sources = [
   "examples/example_sdcard.c",
+]
+depends_on = [
+  "epic-tick",
+  "epic-serial",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 

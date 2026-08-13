@@ -29,6 +29,7 @@ class UnsupportedError(Exception):
 def _check_supported(manifest, module, mcu):
     fam = manifest.family_of(mcu)
     if manifest.is_supported(module, fam.name, mcu):
+        _check_example_deps_supported(manifest, module, fam.name, mcu)
         return fam
     reason = manifest.exclusion_reason(module, mcu)
     supported = manifest.modules[module].supported.get(fam.name, [])
@@ -38,6 +39,32 @@ def _check_supported(manifest, module, mcu):
         + (f" ({reason})" if reason else "")
         + f". Supported on {fam.name}: {detail}."
     )
+
+
+def _check_example_deps_supported(manifest, module, fam_name, mcu):
+    """Fail loudly when a resolved example dep is excluded on this MCU.
+
+    sources_for would otherwise compile the dep's sources on a part
+    where the dep is excluded (the serial/tick RAM exclusions), silently
+    over-building instead of surfacing the manifest gap. Module-level
+    depends_on is untouched: those deps are the library's own and were
+    already validated when the manifest was written.
+    """
+    example = manifest.example_for(module, fam_name, mcu)
+    if example is None or not example.depends_on:
+        return
+    for dep in example.depends_on:
+        if manifest.is_supported(dep, fam_name, mcu):
+            continue
+        reason = manifest.exclusion_reason(dep, mcu)
+        supported = manifest.modules[dep].supported.get(fam_name, [])
+        detail = ", ".join(supported) if supported else "none"
+        raise UnsupportedError(
+            f"{module}'s example on {mcu} depends on {dep}, which is "
+            f"not supported there"
+            + (f" ({reason})" if reason else "")
+            + f". Supported on {fam_name}: {detail}."
+        )
 
 
 def _example_name_and_config(manifest, module, mcu, variant):

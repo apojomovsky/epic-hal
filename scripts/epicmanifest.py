@@ -66,6 +66,16 @@ class Example:
     sources: list[str]
     config: dict[str, str]
     hal: bool
+    # Per-example module dependencies, distinct from the module-level
+    # depends_on: the example program needs these modules in the build
+    # even when the library itself does not (epic-math's example logs
+    # over epic-serial, but epic-math the library is pure logic). Kept
+    # on the example so the dep is scoped per family and per MCU: a
+    # small-part variant whose probe does not use serial carries no
+    # serial dep, so excluded-MCU builds do not compile excluded code.
+    # Resolved together with the module's own depends_on in
+    # sources_for/includes_for, before the example's own sources.
+    depends_on: list[str] | None = None
     sim: SimVariant | None = None
     # Per-MCU overrides: a variant replaces the family example for one
     # MCU (flash budgets differ within a family, e.g. the 4K-word
@@ -118,6 +128,23 @@ class Manifest:
 
         visit(module_name)
         return ordered
+
+    def resolved_deps(self, module_name: str, mcu: str) -> list[str]:
+        """The module's deps plus the resolved example's deps, dependencies
+        first, de-duplicated.
+
+        The example deps are scoped per family and per MCU (the
+        resolved example may be a per-MCU variant with its own
+        depends_on, e.g. epic-math's small-part probes carry no serial
+        dep), and expanded transitively just like the module's own.
+        """
+        names = list(self.resolve_deps(module_name))
+        fam = self.family_of(mcu)
+        example = self.example_for(module_name, fam.name, mcu)
+        if example is not None and example.depends_on:
+            for dep in example.depends_on:
+                names += self.resolve_deps(dep)
+        return _dedupe(names)
 
     def family_of(self, mcu: str) -> Family:
         for fam in self.families.values():
@@ -212,7 +239,7 @@ class Manifest:
                         out.append(c.path)
             out += [c.path for c in applicable if c.after is None]
 
-        for name in self.resolve_deps(module_name):
+        for name in self.resolved_deps(module_name, mcu):
             mod = self._module(name)
             out += [f"{mod.dir}/{s}" for s in mod.sources]
             out += [f"{mod.dir}/{s}"
@@ -238,7 +265,7 @@ class Manifest:
         """
         fam = self.family_of(mcu)
         out = list(fam.includes) if self.uses_hal(module_name, mcu) else []
-        for name in self.resolve_deps(module_name):
+        for name in self.resolved_deps(module_name, mcu):
             mod = self._module(name)
             out += [f"{mod.dir}/{i}" for i in mod.includes]
         return _dedupe(out)
@@ -292,12 +319,13 @@ def _parse_sim_variant(module_name, family_name, table):
 
 def _parse_example(module_name, family_name, table, default_hal):
     variants = table.get("variants", {})
+    where = f"modules.{module_name}.example.{family_name}"
     return Example(
-        name=_require(table, "name", f"modules.{module_name}.example.{family_name}"),
-        sources=list(_require(table, "sources",
-                              f"modules.{module_name}.example.{family_name}")),
+        name=_require(table, "name", where),
+        sources=list(_require(table, "sources", where)),
         config=dict(table.get("config", {})),
         hal=bool(table.get("hal", default_hal)),
+        depends_on=list(table.get("depends_on", [])),
         sim=_parse_sim_variant(module_name, family_name, table.get("sim")),
         variants={vname: _parse_example(
             module_name, f"{family_name}.variants.{vname}", vtable, default_hal)
@@ -331,9 +359,24 @@ def _parse_module(name, table):
 
 
 def _check_cycles(modules):
-    """Depth-first search for a dependency cycle, reporting the path."""
+    """Depth-first search for a dependency cycle, reporting the path.
+
+    Follows both module-level depends_on and every example's depends_on
+    (an example dep is a real build dependency: its sources are linked
+    into the example's program, so a cycle through it would recurse
+    forever in sources_for).
+    """
     WHITE, GREY, BLACK = 0, 1, 2
     colour = {name: WHITE for name in modules}
+
+    def example_deps(mod):
+        deps = list(mod.depends_on)
+        for example in mod.examples.values():
+            deps += list(example.depends_on)
+            if example.variants:
+                for v in example.variants.values():
+                    deps += list(v.depends_on)
+        return deps
 
     def visit(name, stack):
         if colour[name] == GREY:
@@ -342,7 +385,7 @@ def _check_cycles(modules):
         if colour[name] == BLACK:
             return
         colour[name] = GREY
-        for dep in modules[name].depends_on:
+        for dep in example_deps(modules[name]):
             visit(dep, stack + [name])
         colour[name] = BLACK
 
@@ -363,6 +406,17 @@ def _validate(manifest):
                     f"modules.{mod.name}.sources_by_family: "
                     f"unknown family '{fam_name}'"
                 )
+        def check_example(example, where):
+            for dep in example.depends_on:
+                if dep not in manifest.modules:
+                    raise ManifestError(
+                        f"modules.{mod.name}.example.{where}: "
+                        f"depends_on unknown module '{dep}'"
+                    )
+            if example.variants:
+                for vname, v in example.variants.items():
+                    check_example(v, f"{where}.variants.{vname}")
+
         for fam_name, example in mod.examples.items():
             if fam_name not in manifest.families:
                 raise ManifestError(
@@ -373,6 +427,7 @@ def _validate(manifest):
                     f"modules.{mod.name}.example.{fam_name}.sim: "
                     f"families.{fam_name} has no harness_src to swap"
                 )
+            check_example(example, fam_name)
         for fam_name, variants in mod.supported.items():
             fam = manifest.families.get(fam_name)
             if fam is None:
