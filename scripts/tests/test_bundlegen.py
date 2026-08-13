@@ -70,7 +70,9 @@ PIC16F87XA = ["16F877A"]
 
 [modules.epic-serial.example.PIC16F87XA]
 name    = "serial-echo"
-sources = ["tests/example_serial.c"]
+# Two non-consumer example shapes, the same as real manifest modules:
+# a tests/ real-target smoke test and an mcu/ size-check probe.
+sources = ["tests/example_serial.c", "mcu/target_sizecheck.c"]
 
 [modules.epic-usb]
 dir        = "epic-usb"
@@ -184,13 +186,15 @@ class TestFileSelection(unittest.TestCase):
         # real sample a consumer can build.
         self.assertIn("epic-tick/examples/example_tick.c", self.files)
 
-    def test_excludes_example_sources_under_tests(self):
-        # Manifest example sources under tests/ are real-target smoke
-        # tests (epic-serial's serial-echo here; the fixture's
-        # pic16f193x-firmware example under tests/ is the same shape),
-        # and the combo test modules are CI coverage: none of them may
-        # ship in a consumer bundle.
+    def test_excludes_non_consumer_example_sources(self):
+        # Manifest example sources that are not consumer samples never
+        # ship: tests/ sources are real-target smoke tests (epic-serial's
+        # serial-echo here; the fixture's pic16f193x-firmware example
+        # under tests/ is the same shape), mcu/ sources are size-check
+        # probes (epic-serial's target_sizecheck.c), and the combo test
+        # modules are CI coverage. Only examples/ sources ship.
         self.assertNotIn("epic-serial/tests/example_serial.c", self.files)
+        self.assertNotIn("epic-serial/mcu/target_sizecheck.c", self.files)
         self.assertNotIn("tests/combo_uart_ssp.c", self.files)
         self.assertNotIn("tests/example_blink.c", self.files)
         self.assertFalse(any(f.startswith("tests/") for f in self.files))
