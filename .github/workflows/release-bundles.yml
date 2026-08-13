@@ -167,8 +167,118 @@ jobs:
           done
           exit "$fail"
 
+  # install.sh is itself a release asset, so the gate must not publish
+  # an installer it has not run. This job runs on the bare runner (not
+  # in the toolchain container): install.sh's scaffold step delegates
+  # to the bundle's `epicurus` CLI, a plain python3 script, and the
+  # toolchain image deliberately has no python3. Each family's bundle
+  # is installed through the real script against the downloaded
+  # artifacts (file:// flat dir, explicit version), then the scaffolded
+  # project is built in the toolchain container the same way
+  # family-check does (docker run with $PWD mounted at /work). Any
+  # family failure fails the job.
+  installer-gate:
+    needs: [toolchain-image, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-bundles
+          path: /tmp/bundles
+      - name: Resolve + pull the toolchain image
+        id: image
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
+          image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker pull "$image"
+      - name: Install every family and build its scaffold
+        env:
+          EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          set -euo pipefail
+          fail=0
+          for fam in pic16f87xa pic18fxx5x pic16f193x; do
+            echo "=== install.sh $fam ==="
+            if ! (
+              EPICURUS_BASE_URL="file:///tmp/bundles" \
+              EPICURUS_DIR="$PWD/install-$fam/epicurus" \
+                sh install.sh "$fam" "${{ needs.build.outputs.version }}"
+            ) || ! docker run --rm -v "$PWD:/work" -w /work \
+                "$EPIC_TOOLCHAIN_IMAGE" \
+                bash -c "cd /work/install-$fam/epicurus/projects && make myapp.hex"; then
+              echo "FAIL install-$fam"
+              fail=1
+            fi
+          done
+          exit "$fail"
+      - name: Exercise the latest-version resolution branch against a local mock
+        run: |
+          # The real releases/latest redirect cannot be exercised here:
+          # at gate time the release for the tag being built does not
+          # exist yet, so the actual latest-download path stays
+          # inherently untestable until a release exists. This step
+          # covers the resolution logic itself (curl redirect following,
+          # the %{url_effective} final URL, and the ${resolved##*/} tag
+          # extraction) against a local 302 mock.
+          python3 - <<'PY'
+          import http.server
+          import os
+          import subprocess
+          import threading
+
+          class Mock(http.server.BaseHTTPRequestHandler):
+              # One 302 from /latest, like the real releases/latest
+              # endpoint; the redirect target answers 200 so curl
+              # terminates instead of looping.
+              def do_GET(self):
+                  if self.path == "/latest":
+                      self.send_response(302)
+                      self.send_header("Location", "/releases/tag/ci-test")
+                  else:
+                      self.send_response(200)
+                  self.end_headers()
+
+              def log_message(self, *args):
+                  pass
+
+          server = http.server.HTTPServer(("127.0.0.1", 0), Mock)
+          port = server.server_address[1]
+          threading.Thread(target=server.serve_forever, daemon=True).start()
+
+          # The exact resolution snippet from install.sh.
+          script = '''set -eu
+          resolved="$(curl -fsSL -o /dev/null -w '%{url_effective}' "$BASE_URL/latest")"
+          version="${resolved##*/}"
+          [ -n "$version" ] && [ "$version" != "latest" ] || {
+              echo "install.sh: could not resolve the latest release version" >&2
+              exit 1
+          }
+          printf '%s\\n' "$version"
+          '''
+          env = dict(os.environ)
+          env["BASE_URL"] = "http://127.0.0.1:%d" % port
+          out = subprocess.run(["sh", "-c", script], env=env,
+                               capture_output=True, text=True)
+          server.shutdown()
+          server.server_close()
+          resolved = out.stdout.strip()
+          if out.returncode != 0 or resolved != "ci-test":
+              print("FAIL: expected 'ci-test', got %r" % resolved)
+              print(out.stderr)
+              raise SystemExit(1)
+          print("PASS: latest-resolution branch resolved", resolved)
+          PY
+
   publish:
-    needs: [build, gate]
+    needs: [build, gate, installer-gate]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -230,4 +340,4 @@ jobs:
           gh release create "${{ needs.build.outputs.version }}" \
             --title "Epicurus ${{ needs.build.outputs.version }}" \
             --notes-file notes.md \
-            bundles/*.tar.gz bundles/SHA256SUMS
+            bundles/*.tar.gz bundles/SHA256SUMS install.sh

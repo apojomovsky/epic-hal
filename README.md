@@ -22,6 +22,43 @@ datasheet-faithful driver layer with one API across three PIC families,
 plus the things firmware always needs: a scheduler, a 1 ms timebase,
 UART and bit-banged serial, Modbus, PID, fixed-point math, and more.
 
+## Getting started (one command)
+
+    curl -fsSL https://github.com/apojomovsky/epicurus/releases/latest/download/install.sh | sh -s -- pic16f87xa
+
+That downloads the PIC16F87XA bundle, verifies its checksum, and scaffolds
+a project. It leaves you with:
+
+- `third_party/epicurus/`: the vendored library, pinned to the version you got,
+- `third_party/epicurus/projects/myapp.X`: a ready MPLAB X project for the
+  part and modules you picked,
+- `third_party/epicurus/projects/Makefile` and `main.c`: a working blink.
+
+Then either build it or open it:
+
+    make -C third_party/epicurus/projects
+
+That needs MPLAB XC8 (the free tier is enough); the installer tells you if
+`xc8-cc` is already on your PATH. Or open
+`third_party/epicurus/projects/myapp.X` in MPLAB X or the MPLAB extension
+for VS Code and Build there.
+
+The scaffolder is a plain Python 3 script (stdlib only), so the one-liner
+also needs `python3` on PATH; the installer checks for it and tells you how
+to finish by hand if it is missing.
+
+The other families: replace `pic16f87xa` with `pic18fxx5x` or `pic16f193x`.
+List them with `... | sh -s -- --list`, pin a release with
+`... | sh -s -- pic16f87xa v0.1.0`, and override the defaults with
+`--part` (e.g. `16F873A`) and `--modules` (e.g. `serial`). The installer
+refuses to clobber an existing `third_party/epicurus` unless you pass
+`--force`, and `EPICURUS_DIR` changes where it lands.
+
+Prefer to inspect before running? Download the script, read it, then run it:
+
+    curl -fsSL -o install.sh https://github.com/apojomovsky/epicurus/releases/latest/download/install.sh
+    less install.sh && sh install.sh pic16f87xa
+
 ## What you get
 
 - **One API, three families.** The same names and signatures on
@@ -34,23 +71,12 @@ UART and bit-banged serial, Modbus, PID, fixed-point math, and more.
 - **Logic proven before silicon.** Every module also builds and runs as
   a host program, and CI cross-compiles everything for real parts and
   runs it under MPLAB SIM, checking actual registers and UART output.
-- **Five minutes to a `.hex`.** Release bundles carry a reference MPLAB
-  X project and a Makefile fragment. Download, unpack, build, program.
+- **One command to a `.hex`.** `curl ... | sh -s -- <family>` downloads,
+  verifies, and scaffolds a project; build with `make` or MPLAB X.
 
-## Quick start (5 minutes)
+## Not using the one-liner?
 
-### 1. Scaffold a project (one command)
-
-From inside an unpacked bundle:
-
-    ./epicurus init
-
-Answer family, part, and modules. It writes `main.c`, a filled `Makefile`,
-and a ready MPLAB X `.X` under `projects/` for your exact part + module
-subset. Open `projects/myapp.X` in MPLAB X (or the MPLAB extension for
-VS Code) and Build, or `make -C projects`. Or, with the CLI installed
-globally: `pipx install git+https://github.com/apojomovsky/epicurus`, then
-`epicurus init --bundle path/to/bundle`.
+### 1. Download a bundle and run `epicurus init`
 
 Bundles live on the [Releases](https://github.com/apojomovsky/epicurus/releases)
 page:
@@ -63,6 +89,17 @@ page:
 
 The `<version>` is the release tag (e.g. `v0.1.0`); the badge above
 always shows the latest one.
+
+Download and unpack one, then from inside the unpacked bundle:
+
+    ./epicurus init
+
+Answer family, part, and modules. It writes `main.c`, a filled `Makefile`,
+and a ready MPLAB X `.X` under `projects/` for your exact part + module
+subset. Open `projects/myapp.X` in MPLAB X (or the MPLAB extension for
+VS Code) and Build, or `make -C projects`. Or, with the CLI installed
+globally: `pipx install git+https://github.com/apojomovsky/epicurus`, then
+`epicurus init --bundle path/to/bundle`.
 
 ## Advanced: without the scaffolder
 
