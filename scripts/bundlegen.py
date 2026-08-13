@@ -454,3 +454,18 @@ def emit_mplabx_md(manifest, family_name: str, version: str) -> str:
         "",
     ]
     return "\n".join(out) + "\n"
+
+
+def emit_parts_map(manifest) -> str:
+    """One 'part family-slug' line per supported part.
+
+    Shipped as the release asset install.sh downloads to pick the right
+    bundle when the user passes a part instead of a family. Derived from
+    the manifest so it cannot drift from the bundles it describes."""
+    out = []
+    for name in sorted(manifest.families):
+        fam = manifest.families[name]
+        slug = fam.hal_dir.removesuffix("-hal")
+        for variant in fam.variants:
+            out.append(f"{variant} {slug}")
+    return "\n".join(out) + "\n"

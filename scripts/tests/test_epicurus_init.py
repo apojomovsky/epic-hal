@@ -80,6 +80,12 @@ class TestResolveSelection(unittest.TestCase):
         with self.assertRaises(epicurus_init.SelectionError):
             epicurus_init.resolve_selection(self.m, "NOPE", "16F877A", ["epic-tick"])
 
+    def test_family_for_part(self):
+        self.assertEqual(epicurus_init.family_for_part(self.m, "16F877A"), "PIC16F87XA")
+        self.assertEqual(epicurus_init.family_for_part(self.m, "16F873A"), "PIC16F87XA")
+        self.assertIsNone(epicurus_init.family_for_part(self.m, "18F4550"))
+        self.assertIsNone(epicurus_init.family_for_part(self.m, "NOPE"))
+
 class TestEmitMakefile(unittest.TestCase):
     def setUp(self): self.m = load()
 
@@ -175,7 +181,8 @@ class TestPatchX(unittest.TestCase):
         sel = epicurus_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
         sd = epicurus_init.source_dirs(self.m, fam, "16F877A", sel)
         idd = epicurus_init.include_dirs(self.m, fam, "16F877A", sel)
-        out = epicurus_init.patch_configurations_xml(SAMPLE_XML, fam, "16F873A", sd, idd)
+        out = epicurus_init.patch_configurations_xml(
+            SAMPLE_XML, fam, "16F873A", sd, idd, prefix="../..")
         root = ET.fromstring(out)
         self.assertEqual(root.find(".//targetDevice").text, "PIC16F873A")
         dm = root.find(".//property[@key='define-macros']").get("value")
@@ -185,6 +192,24 @@ class TestPatchX(unittest.TestCase):
         elems = [e.text for e in root.findall(".//sourceRootList/Elem")]
         self.assertIn("../../epic-serial/src", elems)
         self.assertIn("../../epic-tick/src", elems)  # serial depends on tick
+
+    def test_patch_accepts_in_place_prefix(self):
+        # A project scaffolded in place with the bundle vendored at
+        # third_party/epicurus gets that prefix instead of ../..; from
+        # <proj>/myapp.X it resolves to <proj>/third_party/epicurus.
+        fam = self.m.families["PIC16F87XA"]
+        sel = epicurus_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
+        sd = epicurus_init.source_dirs(self.m, fam, "16F877A", sel)
+        idd = epicurus_init.include_dirs(self.m, fam, "16F877A", sel)
+        out = epicurus_init.patch_configurations_xml(
+            SAMPLE_XML, fam, "16F877A", sd, idd,
+            prefix="third_party/epicurus")
+        root = ET.fromstring(out)
+        inc = root.find(".//property[@key='extra-include-directories']").get("value")
+        self.assertTrue(
+            inc.startswith("third_party/epicurus/pic16f87xa-hal/include/target;"))
+        for e in root.findall(".//sourceRootList/Elem"):
+            self.assertTrue(e.text.startswith("third_party/epicurus/"), e.text)
 
 import os, tempfile, shutil
 
@@ -210,6 +235,18 @@ class TestInitProject(unittest.TestCase):
         self.assertTrue(os.path.isfile(cfg))
         root = ET.parse(cfg).getroot()
         self.assertEqual(root.find(".//targetDevice").text, "PIC16F877A")
+        # The .X paths must resolve to the bundle from wherever the
+        # project sits: each sourceRootList entry, joined to the .X dir,
+        # lands inside the bundle.
+        prefix = os.path.relpath(self.bundle, os.path.join(self.out, "myapp.X"))
+        for e in root.findall(".//sourceRootList/Elem"):
+            resolved = os.path.normpath(os.path.join(self.out, "myapp.X", e.text))
+            self.assertTrue(resolved.startswith(
+                os.path.normpath(self.bundle)), e.text)
+        self.assertEqual(
+            os.path.normpath(os.path.join(self.out, "myapp.X",
+                                          f"{prefix}/pic16f87xa-hal/src/peripherals")),
+            os.path.normpath(os.path.join(self.bundle, "pic16f87xa-hal/src/peripherals")))
 
     def test_refuses_existing_project(self):
         epicurus_init.init_project(
@@ -238,9 +275,9 @@ class TestInitProject(unittest.TestCase):
         self.assertEqual(root.find(".//targetDevice").text, "PIC16F877A")
 
     def test_makefile_epicurus_dir_is_relative_to_bundle(self):
-        # Scaffolding one level below the bundle root (the documented
-        # layout) must yield EPICURUS_DIR := .. so the consumer Makefile
-        # reaches the bundle's epicurus.mk.
+        # Scaffolding one level below the bundle root (the nested layout,
+        # still supported via explicit -o) must yield EPICURUS_DIR := ..
+        # so the consumer Makefile reaches the bundle's epicurus.mk.
         out = pathlib.Path(self.bundle) / "scaffold"
         epicurus_init.init_project(
             self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
@@ -249,6 +286,37 @@ class TestInitProject(unittest.TestCase):
         self.assertIn("EPICURUS_DIR := ..\n", mk)
         self.assertIn("include $(EPICURUS_DIR)/epicurus.mk", mk)
         self.assertTrue((out / "myapp.X" / "nbproject" / "configurations.xml").is_file())
+
+    def test_in_place_layout(self):
+        # Project in place: bundle vendored at <proj>/third_party/epicurus,
+        # scaffold at the project root. main.c/Makefile/myapp.X sit beside
+        # the vendored library, and both the Makefile and the .X point at
+        # it via third_party/epicurus.
+        proj = pathlib.Path(tempfile.mkdtemp())
+        bundle = proj / "third_party" / "epicurus"
+        xdir = bundle / "examples" / "epicurus-demo.X"
+        (xdir / "nbproject").mkdir(parents=True)
+        (xdir / "nbproject" / "configurations.xml").write_text(SAMPLE_XML)
+        (xdir / "main.c").write_text("/* old */\n")
+        epicurus_init.init_project(
+            self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+            str(bundle), str(proj), "myapp")
+        self.assertTrue((proj / "main.c").is_file())
+        self.assertTrue((proj / "Makefile").is_file())
+        self.assertTrue((proj / "myapp.X" / "nbproject" / "configurations.xml").is_file())
+        mk = (proj / "Makefile").read_text()
+        self.assertIn("EPICURUS_DIR := third_party/epicurus", mk)
+        root = ET.parse(proj / "myapp.X" / "nbproject" / "configurations.xml").getroot()
+        # .X paths are relative to the .X dir (proj/myapp.X), so the
+        # bundle one level up at third_party/epicurus is ../third_party/epicurus.
+        inc = root.find(".//property[@key='extra-include-directories']").get("value")
+        self.assertTrue(
+            inc.startswith("../third_party/epicurus/pic16f87xa-hal/include/target;"))
+        for e in root.findall(".//sourceRootList/Elem"):
+            self.assertTrue(e.text.startswith("../third_party/epicurus/"), e.text)
+            resolved = os.path.normpath(os.path.join(proj, "myapp.X", e.text))
+            self.assertTrue(resolved.startswith(
+                os.path.normpath(str(bundle))), e.text)
 
 
 class TestBundlePresence(unittest.TestCase):

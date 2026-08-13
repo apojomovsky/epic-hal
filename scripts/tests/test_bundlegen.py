@@ -417,6 +417,17 @@ class TestReferenceProjectPath(unittest.TestCase):
             bundlegen.reference_project_dir(load(), "PIC99XXXX")
 
 
+class TestPartsMap(unittest.TestCase):
+    """install.sh resolves a part to its family from the parts.txt asset."""
+
+    def test_emits_one_part_to_family_line_per_variant(self):
+        doc = bundlegen.emit_parts_map(load())
+        self.assertIn("16F873A pic16f87xa\n", doc)
+        self.assertIn("16F877A pic16f87xa\n", doc)
+        self.assertIn("18F4550 pic18fxx5x\n", doc)
+        self.assertIn("16F1937 pic16f193x\n", doc)
+
+
 class TestBundleGate(unittest.TestCase):
     """make_bundle's sim/mdb gate: the family file set must be clean,
     and the assertion function must reject any injected offender."""
