@@ -51,7 +51,9 @@ static void cmd_status(uint8_t argc, char **argv, void *ctx_)
     app_ctx_t *ctx = (app_ctx_t *)ctx_;
     (void)argc;
     (void)argv;
-    ctx->status_count++;
+    uint8_t c = ctx->status_count;
+    c = (uint8_t)(c + 1u);
+    ctx->status_count = c;
     printf("status: led=%u count=%u\r\n", ctx->led_on, ctx->status_count);
 }
 
