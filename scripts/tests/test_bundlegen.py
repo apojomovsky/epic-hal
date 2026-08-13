@@ -70,7 +70,7 @@ PIC16F87XA = ["16F877A"]
 
 [modules.epic-serial.example.PIC16F87XA]
 name    = "serial-echo"
-sources = ["examples/example_serial.c"]
+sources = ["tests/example_serial.c"]
 
 [modules.epic-usb]
 dir        = "epic-usb"
@@ -178,11 +178,21 @@ class TestFileSelection(unittest.TestCase):
         self.assertIn("epic-serial/src/epic_serial.c", self.files)
         self.assertIn("epic-tick/src/epic_tick.c", self.files)
 
-    def test_excludes_example_and_test_sources(self):
-        # Consumer bundles carry the manifest-resolved target sources
-        # only: manifest example sources (the real-target smoke tests)
-        # and the combo test modules never ship.
-        self.assertNotIn("epic-tick/examples/example_tick.c", self.files)
+    def test_includes_consumer_example_sources(self):
+        # Manifest example sources that are consumer samples (under
+        # examples/) ship in the bundle: epic-tick's example_tick.c is a
+        # real sample a consumer can build.
+        self.assertIn("epic-tick/examples/example_tick.c", self.files)
+
+    def test_excludes_example_sources_under_tests(self):
+        # Manifest example sources under tests/ are real-target smoke
+        # tests (epic-serial's serial-echo here; the fixture's
+        # pic16f193x-firmware example under tests/ is the same shape),
+        # and the combo test modules are CI coverage: none of them may
+        # ship in a consumer bundle.
+        self.assertNotIn("epic-serial/tests/example_serial.c", self.files)
+        self.assertNotIn("tests/combo_uart_ssp.c", self.files)
+        self.assertNotIn("tests/example_blink.c", self.files)
         self.assertFalse(any(f.startswith("tests/") for f in self.files))
         self.assertFalse(any("tests/" in f for f in self.files))
 

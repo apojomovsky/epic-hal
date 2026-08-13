@@ -51,10 +51,12 @@ def files_for_family(manifest, family_name: str) -> list[str]:
     """Every repo-root-relative source file a consumer bundle must carry.
 
     Sources only: the family HAL plus each consumer module's library
-    sources. Manifest example sources (the real-target smoke tests under
-    tests/) never ship, and headers/docs are copied by make_bundle.py's
-    explicit allowlist; this is the list that has to be exactly right
-    because it is what the emitted epicurus.mk names.
+    sources, plus the manifest example sources that are consumer
+    samples (under examples/). Manifest example sources under tests/
+    are real-target smoke tests and never ship. Headers/docs are
+    copied by make_bundle.py's explicit allowlist; this is the list
+    that has to be exactly right because it is what the emitted
+    epicurus.mk names.
     """
     fam = _family(manifest, family_name)
     files = set(fam.hal_sources)
@@ -64,6 +66,13 @@ def files_for_family(manifest, family_name: str) -> list[str]:
         mod = manifest.modules[name]
         files |= {os.path.normpath(f"{mod.dir}/{s}") for s in mod.sources}
         files |= {os.path.normpath(f"{mod.dir}/{s}") for s in mod.sources_by_family.get(family_name, [])}
+        example = mod.examples.get(family_name)
+        if example is not None:
+            files |= {
+                os.path.normpath(f"{mod.dir}/{s}")
+                for s in example.sources
+                if "/tests/" not in s and not s.startswith("tests/")
+            }
 
     return sorted(files)
 
