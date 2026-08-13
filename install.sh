@@ -1,10 +1,13 @@
 #!/usr/bin/env sh
 # Epicurus installer: fetch a family bundle from a GitHub Release, verify
 # its SHA-256, unpack it, and scaffold a project. One command to a
-# buildable project:
+# buildable project, passing the part you target:
 #
 #   curl -fsSL https://github.com/apojomovsky/epicurus/releases/latest/download/install.sh \
-#     | sh -s -- pic16f87xa
+#     | sh -s -- 16F877A
+#
+# A part (16F877A) picks its family automatically; a family slug
+# (pic16f87xa) installs that family's bundle.
 #
 # Leaves third_party/epicurus/ (the vendored library, pinned to the
 # resolved version) and, in the current directory, myapp.X, Makefile,
@@ -27,11 +30,12 @@ FAMILIES="pic16f87xa pic18fxx5x pic16f193x"
 
 usage() {
     cat <<EOF
-usage: install.sh <family> [<version>] [--part <part>] [--modules <a,b>] \\
+usage: install.sh <part-or-family> [<version>] [--part <part>] [--modules <a,b>] \\
                    [--name <name>] [--force]
        install.sh --list | --help
 
-families: $FAMILIES
+A part (16F877A) picks its family automatically; a family slug
+(pic16f87xa) installs that family's bundle. families: $FAMILIES
 EOF
 }
 
@@ -45,7 +49,7 @@ force=0
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --list)
-            printf '%s\n' "$FAMILIES"
+            printf 'families: %s\n(or pass a part like 16F877A and the family is picked for you)\n' "$FAMILIES"
             exit 0
             ;;
         --help|-h)
@@ -90,11 +94,11 @@ done
 
 if [ -z "$family" ]; then
     if [ -t 0 ]; then
-        printf 'family [%s]: ' "$FAMILIES"
+        printf 'part or family [e.g. 16F877A or pic16f87xa]: '
         read -r family
     else
-        echo "install.sh: no family given and stdin is not a tty (piped)" >&2
-        echo "install.sh: run with --list to see the families" >&2
+        echo "install.sh: no part or family given and stdin is not a tty (piped)" >&2
+        echo "install.sh: pass a part like 16F877A, or run with --list for the families" >&2
         exit 2
     fi
 fi
@@ -102,9 +106,11 @@ fi
 case " $FAMILIES " in
     *" $family "*) ;;
     *)
-        echo "install.sh: unknown family '$family'" >&2
-        echo "install.sh: families: $FAMILIES" >&2
-        exit 2
+        # Not a family slug: treat it as a part. Its family is resolved
+        # from the parts.txt release asset once the asset_dir is known.
+        # An explicit --part still overrides (install.sh 16F877A --part X).
+        part="${part:-$family}"
+        family=
         ;;
 esac
 
@@ -128,13 +134,35 @@ else
     asset_dir="$BASE_URL/download/$version"
 fi
 
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT INT TERM
+
+if [ -z "$family" ]; then
+    # Part form: resolve the family from the parts.txt release asset
+    # before downloading the full bundle.
+    echo "install.sh: resolving the family for part $part"
+    curl -fsSL "$asset_dir/parts.txt" -o "$tmp/parts.txt"
+    family="$(awk -v p="$part" '$1 == p { print $2; exit }' "$tmp/parts.txt")"
+    if [ -z "$family" ]; then
+        echo "install.sh: unknown part '$part'" >&2
+        echo "install.sh: families: $FAMILIES (or pass a supported part like 16F877A)" >&2
+        exit 2
+    fi
+fi
+
+case " $FAMILIES " in
+    *" $family "*) ;;
+    *)
+        echo "install.sh: unknown family '$family'" >&2
+        echo "install.sh: families: $FAMILIES" >&2
+        exit 2
+        ;;
+esac
+
 if [ -e "$DEST" ] && [ "$force" -ne 1 ]; then
     echo "install.sh: $DEST already exists; pass --force to replace it" >&2
     exit 2
 fi
-
-tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT INT TERM
 
 echo "install.sh: fetching epicurus-$family-$version.tar.gz from $asset_dir"
 curl -fsSL "$asset_dir/epicurus-$family-$version.tar.gz" -o "$tmp/bundle.tar.gz"

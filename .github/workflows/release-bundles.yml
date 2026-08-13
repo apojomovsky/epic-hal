@@ -74,6 +74,19 @@ jobs:
           cd bundles
           sha256sum ./*.tar.gz > SHA256SUMS
           cat SHA256SUMS
+      - name: Emit the part-to-family map
+        run: |
+          # install.sh resolves a part (16F877A) to its family from this
+          # asset before downloading the bundle; derived from the manifest
+          # so it cannot drift from the bundles it describes.
+          python3 - <<'PY' > bundles/parts.txt
+          import sys
+          sys.path.insert(0, "scripts")
+          import bundlegen, epicmanifest
+          m = epicmanifest.load(epicmanifest.default_path())
+          sys.stdout.write(bundlegen.emit_parts_map(m))
+          PY
+          cat bundles/parts.txt
       - uses: actions/upload-artifact@v4
         with:
           name: release-bundles
@@ -206,22 +219,25 @@ jobs:
           set -euo pipefail
           fail=0
           base="$GITHUB_WORKSPACE"
-          for fam in pic16f87xa pic18fxx5x pic16f193x; do
-            echo "=== install.sh $fam ==="
-            mkdir -p "$base/install-$fam"
+          # Part form: install.sh resolves each part to its family via
+          # parts.txt, which exercises that asset plus the family
+          # resolution end to end.
+          for part in 16F877A 18F4550 16F1939; do
+            echo "=== install.sh $part ==="
+            mkdir -p "$base/install-$part"
             # install.sh scaffolds in the current directory (in place),
-            # so run it from the per-family dir to keep each scaffold
+            # so run it from the per-part dir to keep each scaffold
             # isolated; the bundle is vendored at ./third_party/epicurus
             # inside that dir and the scaffold's paths point at it.
             if ! (
-              cd "$base/install-$fam"
+              cd "$base/install-$part"
               EPICURUS_BASE_URL="file:///tmp/bundles" \
-              EPICURUS_DIR="$base/install-$fam/epicurus" \
-                sh "$base/install.sh" "$fam" "${{ needs.build.outputs.version }}"
+              EPICURUS_DIR="$base/install-$part/epicurus" \
+                sh "$base/install.sh" "$part" "${{ needs.build.outputs.version }}"
             ) || ! docker run --rm -v "$PWD:/work" -w /work \
                 "$EPIC_TOOLCHAIN_IMAGE" \
-                bash -c "cd /work/install-$fam && make myapp.hex"; then
-              echo "FAIL install-$fam"
+                bash -c "cd /work/install-$part && make myapp.hex"; then
+              echo "FAIL install-$part"
               fail=1
             fi
           done
@@ -347,4 +363,4 @@ jobs:
           gh release create "${{ needs.build.outputs.version }}" \
             --title "Epicurus ${{ needs.build.outputs.version }}" \
             --notes-file notes.md \
-            bundles/*.tar.gz bundles/SHA256SUMS install.sh
+            bundles/*.tar.gz bundles/SHA256SUMS bundles/parts.txt install.sh

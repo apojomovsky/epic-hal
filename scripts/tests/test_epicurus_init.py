@@ -80,6 +80,12 @@ class TestResolveSelection(unittest.TestCase):
         with self.assertRaises(epicurus_init.SelectionError):
             epicurus_init.resolve_selection(self.m, "NOPE", "16F877A", ["epic-tick"])
 
+    def test_family_for_part(self):
+        self.assertEqual(epicurus_init.family_for_part(self.m, "16F877A"), "PIC16F87XA")
+        self.assertEqual(epicurus_init.family_for_part(self.m, "16F873A"), "PIC16F87XA")
+        self.assertIsNone(epicurus_init.family_for_part(self.m, "18F4550"))
+        self.assertIsNone(epicurus_init.family_for_part(self.m, "NOPE"))
+
 class TestEmitMakefile(unittest.TestCase):
     def setUp(self): self.m = load()
 

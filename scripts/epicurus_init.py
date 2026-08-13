@@ -22,6 +22,14 @@ def hal_pseudo_module(manifest: epicmanifest.Manifest, fam: epicmanifest.Family)
     raise SelectionError(f"no HAL pseudo-module for {fam.name} (dir={fam.hal_dir})")
 
 
+def family_for_part(manifest: epicmanifest.Manifest, part: str) -> str | None:
+    """The manifest family name that owns `part`, or None if unknown."""
+    for fam in manifest.families.values():
+        if part in fam.variants:
+            return fam.name
+    return None
+
+
 def resolve_selection(manifest, family_name, part, modules) -> list[str]:
     """Expand `modules` to an ordered, deduped (selected + deps) list,
     refusing any module unsupported on `part` with the manifest's reason."""

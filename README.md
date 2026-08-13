@@ -24,10 +24,11 @@ UART and bit-banged serial, Modbus, PID, fixed-point math, and more.
 
 ## Getting started (one command)
 
-    curl -fsSL https://github.com/apojomovsky/epicurus/releases/latest/download/install.sh | sh -s -- pic16f87xa
+    curl -fsSL https://github.com/apojomovsky/epicurus/releases/latest/download/install.sh | sh -s -- 16F877A
 
-That downloads the PIC16F87XA bundle, verifies its checksum, and scaffolds
-a project in your current directory. It leaves you with:
+Pass any supported part; the installer picks the family for you, downloads
+the right bundle, verifies its checksum, and scaffolds a project in your
+current directory. It leaves you with:
 
 - `third_party/epicurus/`: the vendored library, pinned to the version you got,
 - `myapp.X`: a ready MPLAB X project for the part and modules you picked,
@@ -45,12 +46,12 @@ The scaffolder is a plain Python 3 script (stdlib only), so the one-liner
 also needs `python3` on PATH; the installer checks for it and tells you how
 to finish by hand if it is missing.
 
-The other families: replace `pic16f87xa` with `pic18fxx5x` or `pic16f193x`.
-List them with `... | sh -s -- --list`, pin a release with
-`... | sh -s -- pic16f87xa v0.1.0`, and override the defaults with
-`--part` (e.g. `16F873A`) and `--modules` (e.g. `serial`). The installer
-refuses to clobber an existing `third_party/epicurus` unless you pass
-`--force`, and `EPICURUS_DIR` changes where it lands.
+Pin a release with `... | sh -s -- 16F877A v0.1.0`, choose your modules
+with `--modules` (e.g. `serial`), and the project name with `--name`.
+Family slugs still work (`pic16f87xa`, `pic18fxx5x`, `pic16f193x`);
+`... | sh -s -- --list` shows them. The installer refuses to clobber an
+existing `third_party/epicurus` unless you pass `--force`, and
+`EPICURUS_DIR` changes where it lands.
 
 Prefer to inspect before running? Download the script, read it, then run it:
 
