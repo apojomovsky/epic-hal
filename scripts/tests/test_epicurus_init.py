@@ -237,6 +237,19 @@ class TestInitProject(unittest.TestCase):
         root = ET.parse(cfg).getroot()
         self.assertEqual(root.find(".//targetDevice").text, "PIC16F877A")
 
+    def test_makefile_epicurus_dir_is_relative_to_bundle(self):
+        # Scaffolding one level below the bundle root (the documented
+        # layout) must yield EPICURUS_DIR := .. so the consumer Makefile
+        # reaches the bundle's epicurus.mk.
+        out = pathlib.Path(self.bundle) / "scaffold"
+        epicurus_init.init_project(
+            self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+            self.bundle, str(out), "myapp")
+        mk = (out / "Makefile").read_text()
+        self.assertIn("EPICURUS_DIR := ..\n", mk)
+        self.assertIn("include $(EPICURUS_DIR)/epicurus.mk", mk)
+        self.assertTrue((out / "myapp.X" / "nbproject" / "configurations.xml").is_file())
+
 
 class TestBundlePresence(unittest.TestCase):
     """Task 6: a release bundle must be self-sufficient for `epicurus init`:

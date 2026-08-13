@@ -27,6 +27,11 @@ def cmd_init(args) -> int:
     mods_s = args.modules or input("modules (comma-separated, e.g. serial,tick): ").strip()
     modules = [m.strip() for m in mods_s.split(",") if m.strip()]
     name = args.name or input("project name [myapp]: ").strip() or "myapp"
+    # The .X references the bundle via ../../, so the project must sit one
+    # level below the bundle root (same layout as the reference project).
+    # Default to <bundle>/projects so the out-of-box flow satisfies that;
+    # -o overrides for an explicit location.
+    out_dir = args.output or str(bundle / "projects")
     # The user gives short module names (serial,tick); init_project and
     # resolve_selection expect full manifest names (epic-serial, epic-tick).
     by_short = {f.removeprefix("epic-"): f for f in modules_for_family(manifest, family)}
@@ -37,14 +42,14 @@ def cmd_init(args) -> int:
             return 2
         full_modules.append(by_short[m])
     try:
-        epicurus_init.init_project(manifest, family, part, full_modules, bundle, args.output, name)
+        epicurus_init.init_project(manifest, family, part, full_modules, bundle, out_dir, name)
     except epicurus_init.SelectionError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
     except FileExistsError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
-    print(f"created {name}.X, main.c, Makefile in {args.output}")
+    print(f"created {name}.X, main.c, Makefile in {out_dir}")
     return 0
 
 
@@ -56,7 +61,8 @@ def main(argv=None) -> int:
     ip.add_argument("--part")
     ip.add_argument("--modules")
     ip.add_argument("--bundle", default=".")
-    ip.add_argument("-o", "--output", default=".")
+    ip.add_argument("-o", "--output", default=None,
+                    help="output dir (default: <bundle>/projects)")
     ip.add_argument("--name", default="myapp")
     ip.set_defaults(func=cmd_init)
     args = p.parse_args(argv)

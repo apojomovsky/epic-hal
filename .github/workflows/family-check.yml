@@ -287,11 +287,18 @@ jobs:
       # manifest so it is valid for every family: serial,tick when both
       # exist (PIC16F87XA, PIC18Fxx5x), else the family's first
       # available modules (PIC16F193X ships only swuart+fsm, so a
-      # hardcoded serial,tick would fail there). The Docker/MPLAB-X
-      # build needs the private toolchain image, so it is CI-gated and
-      # not runnable locally; the ElementTree-reformatted
-      # configurations.xml acceptance by MPLAB X is therefore unverified
-      # until CI runs.
+      # hardcoded serial,tick would fail there). The scaffolded project
+      # is built the way a consumer builds it: the QUICKSTART Makefile
+      # path (make myapp.hex), which exercises the emitted Makefile,
+      # epicurus.mk resolution, and the selected module subset on the
+      # selected part. prjMakefilesGenerator.sh cannot run headless in
+      # the toolchain image: its Java make-generator crashes with
+      # NoClassDefFoundError before reading the project, and the
+      # reference project's own gate hides that behind `|| true` and
+      # builds from committed makefiles. The .X itself is validated by
+      # the unit tests and by the scaffold output here; MPLAB X's
+      # acceptance of the ElementTree-reformatted configurations.xml
+      # remains IDE-side verification.
       - name: epicurus init scaffold-and-build
         if: steps.noncode.outputs.non_code != 'true'
         env:
@@ -317,6 +324,4 @@ jobs:
             --bundle "$BUNDLE_DIR" -o "$BUNDLE_DIR/scaffold" --name myapp
           docker run --rm -v "$PWD:/work" -w /work \
             "$EPIC_TOOLCHAIN_IMAGE" \
-            bash -c 'cd "'"$BUNDLE_DIR"'/scaffold/myapp.X" && \
-                     "$MPLABX_INSTALL_DIR/mplab_platform/bin/prjMakefilesGenerator.sh" . && \
-                     make -f nbproject/Makefile-default.mk SUBPROJECTS= .build-conf'
+            bash -c 'cd "'"$BUNDLE_DIR"'/scaffold" && make myapp.hex && ls -la myapp.hex'

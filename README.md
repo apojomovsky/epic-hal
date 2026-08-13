@@ -46,11 +46,11 @@ From inside an unpacked bundle:
     ./epicurus init
 
 Answer family, part, and modules. It writes `main.c`, a filled `Makefile`,
-and a ready MPLAB X `.X` for your exact part + module subset. Open the
-`.X` in MPLAB X (or the MPLAB extension for VS Code) and Build, or just
-`make`. Or, with the CLI installed globally: `pipx install
-git+https://github.com/apojomovsky/epicurus`, then `epicurus init
---bundle path/to/bundle`.
+and a ready MPLAB X `.X` under `projects/` for your exact part + module
+subset. Open `projects/myapp.X` in MPLAB X (or the MPLAB extension for
+VS Code) and Build, or `make -C projects`. Or, with the CLI installed
+globally: `pipx install git+https://github.com/apojomovsky/epicurus`, then
+`epicurus init --bundle path/to/bundle`.
 
 Bundles live on the [Releases](https://github.com/apojomovsky/epicurus/releases)
 page:
