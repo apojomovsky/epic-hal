@@ -103,11 +103,13 @@ tarballs to a GitHub Release. See
 ## install.sh
 
 The README's one-command getting started runs `install.sh` (repo root).
-To check it locally, build a family bundle with its checksum and the
-part-to-family map, then point the installer at the result:
+To check it locally, build a family bundle with its checksum, the
+part-to-family map, and the standalone CLI asset, then point the
+installer at the result:
 
 ```sh
 python3 scripts/make_bundle.py --family PIC16F87XA --version ci-test
+python3 scripts/make_bundle.py --cli --version ci-test
 cd bundles && sha256sum ./*.tar.gz > SHA256SUMS
 python3 -c "import sys; sys.path.insert(0, 'scripts'); import bundlegen, epicmanifest; sys.stdout.write(bundlegen.emit_parts_map(epicmanifest.load(epicmanifest.default_path())))" > parts.txt
 cd ..

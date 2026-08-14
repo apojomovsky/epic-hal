@@ -69,6 +69,13 @@ jobs:
             python3 scripts/make_bundle.py \
               --family "$fam" --version "${{ steps.version.outputs.version }}"
           done < families.txt
+      - name: Emit the standalone epicurus CLI asset
+        run: |
+          # Consumer bundles are pure libraries; the scaffolder CLI
+          # (Python + manifest) ships as its own asset install.sh fetches
+          # alongside a bundle. Created before the checksum step so its
+          # SHA-256 lands in SHA256SUMS.
+          python3 scripts/make_bundle.py --cli --version "${{ steps.version.outputs.version }}"
       - name: Checksum the tarballs
         run: |
           cd bundles

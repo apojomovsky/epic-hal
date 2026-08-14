@@ -338,9 +338,9 @@ class TestInitProject(unittest.TestCase):
 
 
 class TestBundlePresence(unittest.TestCase):
-    """Task 6: a release bundle must be self-sufficient for `epicurus init`:
-    it carries the CLI and all four Python modules the CLI imports, plus the
-    manifest at the path _find_manifest expects.
+    """Consumer bundles are pure libraries: no Python, no manifest. The
+    scaffolder CLI (which needs the manifest and its helper modules) ships
+    as its own release asset, epicurus-cli-<version>.tar.gz.
     """
     def _make_bundle(self, out_dir):
         import make_bundle
@@ -353,22 +353,40 @@ class TestBundlePresence(unittest.TestCase):
         finally:
             sys.argv = saved
 
-    def test_bundle_contains_cli_modules_and_manifest(self):
+    def test_bundle_has_no_python_or_manifest(self):
         repo = pathlib.Path(__file__).resolve().parents[2]
         out_dir = pathlib.Path(tempfile.mkdtemp(dir=repo))
         self._make_bundle(out_dir)
         self.addCleanup(shutil.rmtree, out_dir, ignore_errors=True)
         root = out_dir / "epicurus-pic16f87xa-ci-test"
         self.assertTrue(root.is_dir(), f"bundle root not created at {root}")
-        # 1. CLI, executable, no extension.
-        cli = root / "epicurus"
-        self.assertTrue(cli.is_file(), "missing bundle-root epicurus CLI")
-        self.assertTrue(os.access(cli, os.X_OK), "epicurus is not executable")
-        # 2-4. The three helper modules the CLI imports from its own dir.
-        for mod in ("epicurus_init.py", "epicmanifest.py", "bundlegen.py"):
-            self.assertTrue((root / mod).is_file(), f"missing bundle-root {mod}")
-        # 5. The manifest at the path _find_manifest resolves from the root.
-        manifest = root / "epic-common" / "manifest" / "modules.toml"
-        self.assertTrue(manifest.is_file(), "missing epic-common/manifest/modules.toml")
+        # A consumer bundle is a pure library: the scaffolder CLI, its
+        # helper modules, and the manifest must NOT ship.
+        for p in ("epicurus", "epicurus_init.py", "epicmanifest.py",
+                  "bundlegen.py", "epic-common/manifest/modules.toml"):
+            self.assertFalse((root / p).exists(), f"bundle must not contain {p}")
+
+    def test_cli_asset_contains_cli_helpers_and_manifest(self):
+        import make_bundle
+        repo = pathlib.Path(__file__).resolve().parents[2]
+        out_dir = pathlib.Path(tempfile.mkdtemp(dir=repo))
+        self.addCleanup(shutil.rmtree, out_dir, ignore_errors=True)
+        argv = ["make_bundle", "--cli", "--version", "ci-test",
+                "--out-dir", str(out_dir)]
+        saved = sys.argv
+        sys.argv = argv
+        try:
+            make_bundle.main()
+        finally:
+            sys.argv = saved
+        asset = out_dir / "epicurus-cli-ci-test.tar.gz"
+        self.assertTrue(asset.is_file(), "missing CLI asset tarball")
+        import tarfile
+        names = tarfile.open(asset).getnames()
+        joined = "\n".join(names)
+        for p in ("/epicurus", "/epicurus_init.py", "/epicmanifest.py",
+                  "/bundlegen.py", "/epic-common/manifest/modules.toml"):
+            self.assertTrue(any(n.endswith(p) for n in names),
+                            f"CLI asset missing {p}; has:\n{joined}")
 
 if __name__ == "__main__": unittest.main()

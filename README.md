@@ -89,17 +89,15 @@ page:
 The `<version>` is the release tag (e.g. `v0.1.0`); the badge above
 always shows the latest one.
 
-Download and unpack one, then from your project directory:
+Download and unpack one, then, with the CLI installed globally:
 
-    /path/to/epicurus/epicurus init --bundle /path/to/epicurus
+    pipx install git+https://github.com/apojomovsky/epicurus
+    epicurus init --bundle /path/to/unpacked/bundle
 
 Answer family, part, and modules. It writes `main.c`, a filled `Makefile`,
 and a ready MPLAB X `.X` in your current directory for your exact part +
-module subset, with the bundle vendored wherever you pointed `--bundle`.
-Open `myapp.X` in MPLAB X (or the MPLAB extension for VS Code) and Build,
-or `make`. Or, with the CLI installed globally:
-`pipx install git+https://github.com/apojomovsky/epicurus`, then
-`epicurus init --bundle path/to/bundle`.
+module subset. Open `myapp.X` in MPLAB X (or the MPLAB extension for VS
+Code) and Build, or `make`.
 
 ## Advanced: without the scaffolder
 

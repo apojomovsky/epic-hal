@@ -15,6 +15,12 @@ def _find_manifest(bundle: pathlib.Path) -> pathlib.Path:
     cand = bundle / "epic-common" / "manifest" / "modules.toml"
     if cand.exists():
         return cand
+    # The standalone CLI asset is flat (helpers next to the executable,
+    # unlike the repo's scripts/ layout), so default_path() resolves one
+    # level too high; the manifest it carries lives next to it.
+    own = pathlib.Path(__file__).resolve().parent / "epic-common" / "manifest" / "modules.toml"
+    if own.exists():
+        return own
     return epicmanifest.default_path()  # repo checkout, scripts/ alongside
 
 
