@@ -268,9 +268,16 @@ fi
 if [ "$xc8_ok" -eq 1 ] && [ "$dfp_ok" -eq 1 ]; then
     echo "XC8 and the $dfp_name device pack are ready. Build it with:  make"
 elif [ "$xc8_ok" -eq 1 ]; then
+    dfp_version="$(awk '/^EPICURUS_DFP_VERSION[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"
     echo "xc8-cc is on PATH, but the $dfp_name device pack is missing." >&2
-    echo "Download it from Microchip in a browser (the CDN blocks scripts)" >&2
-    echo "and unzip it into $xc8_root/pic/packs/, then run:  make" >&2
+    if [ -n "$dfp_version" ]; then
+        echo "Download it (Microchip's official pack CDN):" >&2
+        echo "  curl -fsSL -o $dfp_name.$dfp_version.atpack \\" >&2
+        echo "    https://packs.download.microchip.com/$dfp_name.$dfp_version.atpack" >&2
+    else
+        echo "Download it from https://packs.download.microchip.com/ (any recent version)." >&2
+    fi
+    echo "then unzip it into $xc8_root/pic/packs/, and run:  make" >&2
 else
     echo "xc8-cc not found on PATH. Add MPLAB XC8's bin/ to PATH, e.g.:" >&2
     echo "  export PATH=\$PATH:/opt/microchip/xc8/v4.00/bin" >&2
