@@ -116,6 +116,13 @@ class TestEmitMakefile(unittest.TestCase):
         self.assertIn("include $(EPICURUS_DIR)/epicurus.mk", mk)
         self.assertIn("DFOSC_HZ=20000000", mk)
         self.assertIn("myapp.hex: $(SRCS)", mk)
+        # No hardcoded XC8 version/install path: the DFP is resolved from
+        # xc8-cc's own location, and a missing xc8-cc or device pack is a
+        # clear make-time error, not a cryptic failure.
+        self.assertNotIn("/opt/microchip/xc8/v4.00/pic/packs/", mk)
+        self.assertIn("command -v xc8-cc", mk)
+        self.assertIn("XC8_ROOT := $(patsubst %/bin/,%,$(dir $(shell command -v xc8-cc)))", mk)
+        self.assertIn("$(wildcard $(DFP))", mk)
 
 class TestEmitMainC(unittest.TestCase):
     def setUp(self): self.m = load()
