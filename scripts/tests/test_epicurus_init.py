@@ -128,6 +128,11 @@ class TestEmitMakefile(unittest.TestCase):
         self.assertIn("command -v xc8-cc", mk)
         self.assertIn("XC8_ROOT := $(patsubst %/bin/,%,$(dir $(shell command -v xc8-cc)))", mk)
         self.assertIn("$(wildcard $(DFP))", mk)
+        # Library-and-small-app noise is silenced; 1393 is not.
+        for flag in ("-Wno-520", "-Wno-2053", "-Wno-2098", "-Wno-759",
+                     "-Wno-1510", "-Wno-unused-function"):
+            self.assertIn(flag, mk)
+        self.assertNotIn("-Wno-1393", mk)
 
 class TestEmitMainC(unittest.TestCase):
     def setUp(self): self.m = load()

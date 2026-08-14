@@ -78,7 +78,9 @@ also needs `python3` on PATH; the installer checks for it and tells you how
 to finish by hand if it is missing.
 
 Pin a release with `... | sh -s -- 16F877A v0.1.0`, choose your modules
-with `--modules` (e.g. `serial`), and the project name with `--name`.
+with `--modules` (e.g. `serial,tick`; the default is `tick`, which keeps
+the blink build clean and inside the PIC16 hardware stack), and the
+project name with `--name`.
 Family slugs still work (`pic16f87xa`, `pic18fxx5x`, `pic16f193x`);
 `... | sh -s -- --list` shows them. The installer refuses to clobber an
 existing `third_party/epicurus` unless you pass `--force`, and
