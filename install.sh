@@ -187,31 +187,40 @@ if [ -e "$DEST" ] && [ "$force" -ne 1 ]; then
 fi
 
 echo "install.sh: fetching epicurus-$family-$version.tar.gz from $asset_dir"
-curl -fsSL "$asset_dir/epicurus-$family-$version.tar.gz" -o "$tmp/bundle.tar.gz"
+curl -fsSL "$asset_dir/epicurus-$family-$version.tar.gz" \
+    -o "$tmp/epicurus-$family-$version.tar.gz"
+# The consumer bundles are pure libraries; the scaffolder CLI ships as
+# its own asset and is fetched alongside.
+curl -fsSL "$asset_dir/epicurus-cli-$version.tar.gz" \
+    -o "$tmp/epicurus-cli-$version.tar.gz"
 curl -fsSL "$asset_dir/SHA256SUMS" -o "$tmp/SHA256SUMS"
 
-expected="$(awk -v n="epicurus-$family-$version.tar.gz" '$2 == n || $2 == "./" n { print $1 }' "$tmp/SHA256SUMS")"
-if [ -z "$expected" ]; then
-    echo "install.sh: no checksum for epicurus-$family-$version.tar.gz in SHA256SUMS" >&2
-    exit 1
-fi
-if command -v sha256sum >/dev/null 2>&1; then
-    actual="$(sha256sum "$tmp/bundle.tar.gz" | awk '{ print $1 }')"
-else
-    actual="$(shasum -a 256 "$tmp/bundle.tar.gz" | awk '{ print $1 }')"
-fi
-if [ "$actual" != "$expected" ]; then
-    echo "install.sh: checksum mismatch for epicurus-$family-$version.tar.gz" >&2
-    exit 1
-fi
+for art in "epicurus-$family-$version.tar.gz" "epicurus-cli-$version.tar.gz"; do
+    expected="$(awk -v n="$art" '$2 == n || $2 == "./" n { print $1 }' "$tmp/SHA256SUMS")"
+    if [ -z "$expected" ]; then
+        echo "install.sh: no checksum for $art in SHA256SUMS" >&2
+        exit 1
+    fi
+    if command -v sha256sum >/dev/null 2>&1; then
+        actual="$(sha256sum "$tmp/$art" | awk '{ print $1 }')"
+    else
+        actual="$(shasum -a 256 "$tmp/$art" | awk '{ print $1 }')"
+    fi
+    if [ "$actual" != "$expected" ]; then
+        echo "install.sh: checksum mismatch for $art" >&2
+        exit 1
+    fi
+done
 echo "install.sh: checksum OK"
 
 mkdir -p "$(dirname "$DEST")"
-tar xzf "$tmp/bundle.tar.gz" -C "$tmp"
+tar xzf "$tmp/epicurus-$family-$version.tar.gz" -C "$tmp"
 if [ "$force" -eq 1 ]; then
     rm -rf "$DEST"
 fi
 mv "$tmp/epicurus-$family-$version" "$DEST"
+tar xzf "$tmp/epicurus-cli-$version.tar.gz" -C "$tmp"
+CLI="$tmp/epicurus-cli-$version/epicurus"
 
 manifest_family="$(awk '/^EPICURUS_FAMILY[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"
 default_part="$(awk '/^EPICURUS_VARIANTS[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"
@@ -227,11 +236,11 @@ fi
 echo "install.sh: scaffolding with part=$part modules=$modules"
 if ! command -v python3 >/dev/null 2>&1; then
     echo "install.sh: python3 is required to scaffold the project." >&2
-    echo "install.sh: the bundle is installed and verified; once python3 exists, run:" >&2
-    echo "  $DEST/epicurus init" >&2
+    echo "install.sh: the bundle is installed and verified; install python3 and" >&2
+    echo "install.sh: rerun this installer, or use: pipx install epicurus" >&2
     exit 1
 fi
-"$DEST/epicurus" init \
+"$CLI" init \
     --family "$manifest_family" \
     --part "$part" \
     --modules "$modules" \

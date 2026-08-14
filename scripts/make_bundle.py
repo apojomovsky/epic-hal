@@ -206,13 +206,50 @@ def _quickstart(manifest, family_name: str, version: str) -> str:
         ]) + "\n"
 
 
+def _make_cli_asset(version: str, out_dir: pathlib.Path) -> pathlib.Path:
+    """Assemble the standalone `epicurus` CLI asset.
+
+    The consumer bundles are pure libraries: no Python. The scaffolder
+    CLI (which needs the manifest and its three helper modules) ships as
+    its own release asset, `epicurus-cli-<version>.tar.gz`, that
+    install.sh fetches alongside a bundle. The manifest lives in the
+    asset (not the bundle) so `epicurus init --bundle <dir>` resolves it
+    via epicmanifest.default_path() even when the bundle has none.
+    """
+    root = out_dir / f"epicurus-cli-{version}"
+    if root.exists():
+        shutil.rmtree(root)
+    root.mkdir(parents=True)
+    shutil.copy2(REPO / "scripts" / "epicurus.py", root / "epicurus")
+    (root / "epicurus").chmod(0o755)
+    for mod in ("epicurus_init.py", "epicmanifest.py", "bundlegen.py"):
+        shutil.copy2(REPO / "scripts" / mod, root / mod)
+    manifest_dst = root / "epic-common" / "manifest" / "modules.toml"
+    manifest_dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(epicmanifest.default_path(), manifest_dst)
+    tarball = root.parent / f"{root.name}.tar.gz"
+    with tarfile.open(tarball, "w:gz") as tf:
+        tf.add(root, arcname=root.name)
+    return tarball
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--family", required=True)
+    ap.add_argument("--family")
     ap.add_argument("--version", required=True)
     ap.add_argument("--out-dir", default="bundles")
     ap.add_argument("--no-tarball", action="store_true")
+    ap.add_argument("--cli", action="store_true",
+                    help="emit only the standalone epicurus CLI asset")
     args = ap.parse_args()
+
+    out_dir = REPO / args.out_dir
+    if args.cli:
+        tarball = _make_cli_asset(args.version, out_dir)
+        print(f"cli asset: {tarball.relative_to(REPO)}")
+        return
+    if args.family is None:
+        sys.exit("error: --family is required unless --cli is given")
 
     manifest = epicmanifest.load(epicmanifest.default_path())
     try:
@@ -251,22 +288,6 @@ def main():
         bundlegen.emit_mplabx_md(manifest, args.family, args.version))
     (root / "VERSION").write_text(args.version + "\n")
     shutil.copy2(REPO / "LICENSE", root / "LICENSE")
-    # Ship the `epicurus` CLI inside the bundle so a consumer can run
-    # `./epicurus init` with no install. epicurus.py becomes `epicurus`
-    # (no extension, executable); the three helper modules it imports
-    # from its own directory ship alongside it so `import epicmanifest`,
-    # `import epicurus_init` (which imports `bundlegen`) all resolve from
-    # the bundle root.
-    shutil.copy2(REPO / "scripts" / "epicurus.py", root / "epicurus")
-    (root / "epicurus").chmod(0o755)
-    for mod in ("epicurus_init.py", "epicmanifest.py", "bundlegen.py"):
-        shutil.copy2(REPO / "scripts" / mod, root / mod)
-    # _copy_tree only ships .c/.h/.md/.txt under epic-common/, so the
-    # manifest (.toml) is dropped. _find_manifest looks for it at
-    # epic-common/manifest/modules.toml; copy it there explicitly.
-    manifest_dst = root / "epic-common" / "manifest" / "modules.toml"
-    manifest_dst.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(epicmanifest.default_path(), manifest_dst)
 
     project_src = REPO / bundlegen.reference_project_dir(manifest, args.family)
     if not project_src.is_dir():
