@@ -248,7 +248,7 @@ jobs:
                 sh "$base/install.sh" "$part" "${{ needs.build.outputs.version }}"
             ) || ! docker run --rm -v "$PWD:/work" -w /work \
                 "$EPIC_TOOLCHAIN_IMAGE" \
-                bash -c "cd /work/install-$part && make myapp.hex"; then
+                bash -c "cd /work/install-$part && make && test -f build/myapp.hex"; then
               echo "FAIL install-$part"
               fail=1
             fi
