@@ -224,9 +224,11 @@ CLI="$tmp/epicurus-cli-$version/epicurus"
 
 manifest_family="$(awk '/^EPICURUS_FAMILY[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"
 default_part="$(awk '/^EPICURUS_VARIANTS[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"
-if grep -q '^EPICURUS_MODULE_serial :=' "$DEST/epicurus.mk" \
-   && grep -q '^EPICURUS_MODULE_tick :=' "$DEST/epicurus.mk"; then
-    default_modules="serial,tick"
+# Default to tick-only: the blink main.c uses just tick + GPIO, and
+# linking serial pushes the PIC16 call graph past the 8-level hardware
+# stack (XC8 warning 1393). Users add serial with --modules serial,tick.
+if grep -q '^EPICURUS_MODULE_tick :=' "$DEST/epicurus.mk"; then
+    default_modules="tick"
 else
     default_modules="$(sed -n 's/^EPICURUS_MODULE_\([a-z0-9][a-z0-9]*\) := .*/\1/p' "$DEST/epicurus.mk" | head -n 2 | paste -sd, -)"
 fi
