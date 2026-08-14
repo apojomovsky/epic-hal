@@ -115,7 +115,12 @@ class TestEmitMakefile(unittest.TestCase):
         self.assertIn("EPICURUS_MODULES := serial", mk)
         self.assertIn("include $(EPICURUS_DIR)/epicurus.mk", mk)
         self.assertIn("DFOSC_HZ=20000000", mk)
-        self.assertIn("myapp.hex: $(SRCS)", mk)
+        # Artifacts live under build/, with all/clean targets.
+        self.assertIn("HEX := $(BUILD)/myapp.hex", mk)
+        self.assertIn("all: $(HEX)", mk)
+        self.assertIn("cd $(BUILD) && xc8-cc $(CFLAGS) $(addprefix ../,$(SRCS)) ../main.c -o myapp.hex -ginhx32", mk)
+        self.assertIn("clean:", mk)
+        self.assertIn(".PHONY: all clean", mk)
         # No hardcoded XC8 version/install path: the DFP is resolved from
         # xc8-cc's own location, and a missing xc8-cc or device pack is a
         # clear make-time error, not a cryptic failure.
@@ -328,6 +333,7 @@ class TestInitProject(unittest.TestCase):
             str(bundle), str(proj), "myapp")
         self.assertTrue((proj / "main.c").is_file())
         self.assertTrue((proj / "Makefile").is_file())
+        self.assertTrue((proj / ".gitignore").is_file())
         self.assertTrue((proj / "myapp.X" / "nbproject" / "configurations.xml").is_file())
         mk = (proj / "Makefile").read_text()
         self.assertIn("EPICURUS_DIR := third_party/epicurus", mk)

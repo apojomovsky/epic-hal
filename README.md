@@ -38,9 +38,11 @@ Then either build it or open it:
 
     make
 
-That needs MPLAB XC8 (the free tier is enough); the installer tells you if
-`xc8-cc` is already on your PATH. Or open `myapp.X` in MPLAB X or the MPLAB
-extension for VS Code and Build there.
+`make` produces `build/myapp.hex` (all compiler intermediates stay in
+`build/`, and the scaffolded `.gitignore` ignores it); `make clean`
+removes it. That needs MPLAB XC8 (the free tier is enough); the
+installer tells you if `xc8-cc` is already on your PATH. Or open
+`myapp.X` in MPLAB X or the MPLAB extension for VS Code and Build there.
 
 The scaffolder is a plain Python 3 script (stdlib only), so the one-liner
 also needs `python3` on PATH; the installer checks for it and tells you how

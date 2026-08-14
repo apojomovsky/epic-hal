@@ -289,7 +289,8 @@ jobs:
       # available modules (PIC16F193X ships only swuart+fsm, so a
       # hardcoded serial,tick would fail there). The scaffolded project
       # is built the way a consumer builds it: the QUICKSTART Makefile
-      # path (make myapp.hex), which exercises the emitted Makefile,
+      # path (make, which builds build/myapp.hex), which exercises the
+      # emitted Makefile,
       # epicurus.mk resolution, and the selected module subset on the
       # selected part. prjMakefilesGenerator.sh cannot run headless in
       # the toolchain image: its Java make-generator crashes with
@@ -324,4 +325,4 @@ jobs:
             --bundle "$BUNDLE_DIR" -o "$BUNDLE_DIR/scaffold" --name myapp
           docker run --rm -v "$PWD:/work" -w /work \
             "$EPIC_TOOLCHAIN_IMAGE" \
-            bash -c 'cd "'"$BUNDLE_DIR"'/scaffold" && make myapp.hex && ls -la myapp.hex'
+            bash -c 'cd "'"$BUNDLE_DIR"'/scaffold" && make && ls -la build/myapp.hex'
