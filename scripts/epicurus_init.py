@@ -102,12 +102,27 @@ def emit_makefile(manifest, family_name, part, modules, bundle_dir, name) -> str
         "        Install it with MPLAB X (Tools > Packs) or unzip the downloaded DFP into that directory)",
         "endif",
         "",
-        "SRCS := main.c $(EPICURUS_SRCS)",
-        "CFLAGS := -mdfp=$(DFP) -mcpu=$(shell echo $(EPICURUS_MCU) | tr A-Z a-z) \\",
-        f"          -O2 -std=c99 -Wall -Wextra $(EPICURUS_CFLAGS) -DFOSC_HZ={fam.fosc_hz}",
+        "SRCS := $(EPICURUS_SRCS)",
+        "BUILD := build",
+        f"HEX := $(BUILD)/{name}.hex",
         "",
-        f"{name}.hex: $(SRCS)",
-        "\txc8-cc $(CFLAGS) $^ -o $@ -ginhx32",
+        "# XC8 writes its intermediates (.p1, .d, .o) into the working",
+        "# directory, so the compile runs from inside build/ to keep the",
+        "# project root clean; the bundle-relative include and source",
+        "# paths get a ../ prefix for that.",
+        "CFLAGS := -mdfp=$(DFP) -mcpu=$(shell echo $(EPICURUS_MCU) | tr A-Z a-z) \\",
+        f"          -O2 -std=c99 -Wall -Wextra $(subst -I,-I../,$(EPICURUS_CFLAGS)) -DFOSC_HZ={fam.fosc_hz}",
+        "",
+        "all: $(HEX)",
+        "",
+        "$(HEX): $(SRCS) main.c",
+        "\t@mkdir -p $(BUILD)",
+        f"\tcd $(BUILD) && xc8-cc $(CFLAGS) $(addprefix ../,$(SRCS)) ../main.c -o {name}.hex -ginhx32",
+        "",
+        "clean:",
+        "\trm -rf $(BUILD)",
+        "",
+        ".PHONY: all clean",
         "",
     ])
 
@@ -311,6 +326,7 @@ def init_project(manifest, family_name, part, modules, bundle_dir, out_dir, name
     epicurus_dir = os.path.relpath(bundle_resolved, out_resolved)
     (out / "Makefile").write_text(
         emit_makefile(manifest, family_name, part, short, epicurus_dir, name))
+    (out / ".gitignore").write_text("build/\n")
     return {"main_c": str(out / "main.c"),
             "makefile": str(out / "Makefile"),
             "x": str(x_dst)}
