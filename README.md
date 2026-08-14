@@ -38,6 +38,11 @@ Then either build it or open it:
 
     make
 
+`make` produces `build/myapp.hex` (all compiler intermediates stay in
+`build/`, and the scaffolded `.gitignore` ignores it); `make clean`
+removes it. Or open `myapp.X` in MPLAB X or the MPLAB extension for VS
+Code and Build there.
+
 That needs two things installed, and the one-liner reports exactly which are
 missing (with the commands to fix them) after scaffolding:
 
@@ -67,9 +72,6 @@ missing (with the commands to fix them) after scaffolding:
          -d /opt/microchip/xc8/v4.00/pic/packs/Microchip.PIC16Fxxx_DFP
 
    (Or use MPLAB X's Tools > Packs manager, which does this for you.)
-
-Or open `myapp.X` in MPLAB X or the MPLAB extension for VS Code and Build
-there.
 
 The scaffolder is a plain Python 3 script (stdlib only), so the one-liner
 also needs `python3` on PATH; the installer checks for it and tells you how
