@@ -123,6 +123,11 @@ jobs:
           fail=0
           for tarball in /tmp/bundles/*.tar.gz; do
             name="$(basename "$tarball" .tar.gz)"
+            # The standalone CLI asset is not a family bundle; the
+            # installer-gate job exercises it end to end instead.
+            case "$name" in
+              epicurus-cli-*) echo "SKIP $name: standalone CLI asset"; continue ;;
+            esac
             tar xzf "$tarball" -C /isolated
             cd "/isolated/$name"
 
