@@ -34,6 +34,7 @@ class Family:
     hal_sources: list[str]
     conditional_sources: list[ConditionalSource]
     harness_src: str | None = None
+    dfp_version: str | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -294,6 +295,7 @@ def _parse_family(name, table):
         variants=list(_require(table, "variants", f"families.{name}")),
         dfp=_require(table, "dfp", f"families.{name}"),
         fosc_hz=_require(table, "fosc_hz", f"families.{name}"),
+        dfp_version=table.get("dfp_version"),
         includes=list(_require(table, "includes", f"families.{name}")),
         hal_sources=list(_require(table, "hal_sources", f"families.{name}")),
         conditional_sources=[

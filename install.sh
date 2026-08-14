@@ -250,10 +250,37 @@ fi
 echo
 echo "Epicurus $version ($family) installed in $DEST"
 echo "Scaffolded project: ./$name.X"
+# Report the real-target prerequisites UP FRONT, before the user runs
+# make, so a missing compiler or device pack is not a make-time
+# surprise. The device pack cannot be fetched by a script (Microchip's
+# CDN blocks it), so a missing pack names the exact fix.
+xc8_ok=0
+dfp_ok=0
+dfp_name=
 if command -v xc8-cc >/dev/null 2>&1; then
-    echo "XC8 found. Build it with:  make"
+    xc8_ok=1
+    xc8_root="$(dirname "$(dirname "$(command -v xc8-cc)")")"
+    dfp_name="$(awk '/^EPICURUS_DFP[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"
+    if [ -d "$xc8_root/pic/packs/$dfp_name/xc8" ]; then
+        dfp_ok=1
+    fi
+fi
+if [ "$xc8_ok" -eq 1 ] && [ "$dfp_ok" -eq 1 ]; then
+    echo "XC8 and the $dfp_name device pack are ready. Build it with:  make"
+elif [ "$xc8_ok" -eq 1 ]; then
+    dfp_version="$(awk '/^EPICURUS_DFP_VERSION[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"
+    echo "xc8-cc is on PATH, but the $dfp_name device pack is missing." >&2
+    if [ -n "$dfp_version" ]; then
+        echo "Download it (Microchip's official pack CDN):" >&2
+        echo "  curl -fsSL -o $dfp_name.$dfp_version.atpack \\" >&2
+        echo "    https://packs.download.microchip.com/$dfp_name.$dfp_version.atpack" >&2
+    else
+        echo "Download it from https://packs.download.microchip.com/ (any recent version)." >&2
+    fi
+    echo "then unzip it into $xc8_root/pic/packs/, and run:  make" >&2
 else
-    echo "XC8 not found. Install MPLAB XC8 (free tier is enough), then:"
-    echo "  make"
+    echo "xc8-cc not found on PATH. Add MPLAB XC8's bin/ to PATH, e.g.:" >&2
+    echo "  export PATH=\$PATH:/opt/microchip/xc8/v4.00/bin" >&2
+    echo "then:  make" >&2
 fi
 echo "Or open ./$name.X in MPLAB X or the VS Code extension."

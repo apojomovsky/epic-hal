@@ -40,9 +40,38 @@ Then either build it or open it:
 
 `make` produces `build/myapp.hex` (all compiler intermediates stay in
 `build/`, and the scaffolded `.gitignore` ignores it); `make clean`
-removes it. That needs MPLAB XC8 (the free tier is enough); the
-installer tells you if `xc8-cc` is already on your PATH. Or open
-`myapp.X` in MPLAB X or the MPLAB extension for VS Code and Build there.
+removes it. Or open `myapp.X` in MPLAB X or the MPLAB extension for VS
+Code and Build there.
+
+That needs two things installed, and the one-liner reports exactly which are
+missing (with the commands to fix them) after scaffolding:
+
+1. **MPLAB XC8** (the free tier is enough):
+   <https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers>.
+   Add its `bin/` to PATH:
+
+       export PATH=$PATH:/opt/microchip/xc8/v4.00/bin
+
+   (add that line to `~/.bashrc` to keep it).
+
+2. **The device pack for your family** (XC8 needs it; it ships with MPLAB X
+   or downloads separately from Microchip's pack CDN). The packs are
+   official Microchip downloads:
+
+   | Family | Pack | Download |
+   |---|---|---|
+   | PIC16F87XA | `Microchip.PIC16Fxxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC16Fxxx_DFP.1.8.167.atpack> |
+   | PIC18Fxx5x | `Microchip.PIC18Fxxxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC18Fxxxx_DFP.1.7.171.atpack> |
+   | PIC16F193X | `Microchip.PIC12-16F1xxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC12-16F1xxx_DFP.1.9.258.atpack> |
+
+   Install it next to XC8 (the exact version the bundle was built against
+   is pinned in the bundle's `examples/epicurus-demo.X` project):
+
+       mkdir -p /opt/microchip/xc8/v4.00/pic/packs
+       unzip ~/Downloads/Microchip.PIC16Fxxx_DFP.1.8.167.atpack \
+         -d /opt/microchip/xc8/v4.00/pic/packs/Microchip.PIC16Fxxx_DFP
+
+   (Or use MPLAB X's Tools > Packs manager, which does this for you.)
 
 The scaffolder is a plain Python 3 script (stdlib only), so the one-liner
 also needs `python3` on PATH; the installer checks for it and tells you how
