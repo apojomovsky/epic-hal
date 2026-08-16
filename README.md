@@ -1,17 +1,17 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/epicurus-logo-dark-mode.svg">
-    <img src="docs/assets/epicurus-logo-light-mode.svg" width="120" alt="Epicurus logo: a chip-temple inside a laurel wreath">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/epic-hal-logo-dark-mode.svg">
+    <img src="docs/assets/epic-hal-logo-light-mode.svg" width="120" alt="Epic HAL logo: a chip-temple inside a laurel wreath">
   </picture>
 </p>
 
-<h1 align="center">Epicurus</h1>
+<h1 align="center">Epic HAL</h1>
 
 <p align="center"><em>Built down to what the datasheet requires.</em></p>
 
 <p align="center">
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html) [![Release](https://img.shields.io/github/v/release/apojomovsky/epicurus)](https://github.com/apojomovsky/epicurus/releases) [![ci](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epicurus/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html) [![Release](https://img.shields.io/github/v/release/apojomovsky/epic-hal)](https://github.com/apojomovsky/epic-hal/releases) [![ci](https://github.com/apojomovsky/epic-hal/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epic-hal/actions/workflows/ci.yml)
 
 </p>
 
@@ -24,13 +24,13 @@ UART and bit-banged serial, Modbus, PID, fixed-point math, and more.
 
 ## Getting started (one command)
 
-    curl -fsSL https://github.com/apojomovsky/epicurus/releases/latest/download/install.sh | sh -s -- 16F877A
+    curl -fsSL https://github.com/apojomovsky/epic-hal/releases/latest/download/install.sh | sh -s -- 16F877A
 
 Pass any supported part; the installer picks the family for you, downloads
 the right bundle, verifies its checksum, and scaffolds a project in your
 current directory. It leaves you with:
 
-- `third_party/epicurus/`: the vendored library, pinned to the version you got,
+- `third_party/epic-hal/`: the vendored library, pinned to the version you got,
 - `myapp.X`: a ready MPLAB X project for the part and modules you picked,
 - `Makefile` and `main.c`: a working blink.
 
@@ -65,7 +65,7 @@ missing (with the commands to fix them) after scaffolding:
    | PIC16F193X | `Microchip.PIC12-16F1xxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC12-16F1xxx_DFP.1.9.258.atpack> |
 
    Install it next to XC8 (the exact version the bundle was built against
-   is pinned in the bundle's `examples/epicurus-demo.X` project):
+   is pinned in the bundle's `examples/epic-hal-demo.X` project):
 
        mkdir -p /opt/microchip/xc8/v4.00/pic/packs
        unzip ~/Downloads/Microchip.PIC16Fxxx_DFP.1.8.167.atpack \
@@ -83,12 +83,12 @@ the blink build clean and inside the PIC16 hardware stack), and the
 project name with `--name`.
 Family slugs still work (`pic16f87xa`, `pic18fxx5x`, `pic16f193x`);
 `... | sh -s -- --list` shows them. The installer refuses to clobber an
-existing `third_party/epicurus` unless you pass `--force`, and
-`EPICURUS_DIR` changes where it lands.
+existing `third_party/epic-hal` unless you pass `--force`, and
+`EPIC_HAL_DIR` changes where it lands.
 
 Prefer to inspect before running? Download the script, read it, then run it:
 
-    curl -fsSL -o install.sh https://github.com/apojomovsky/epicurus/releases/latest/download/install.sh
+    curl -fsSL -o install.sh https://github.com/apojomovsky/epic-hal/releases/latest/download/install.sh
     less install.sh && sh install.sh pic16f87xa
 
 ## What you get
@@ -108,24 +108,24 @@ Prefer to inspect before running? Download the script, read it, then run it:
 
 ## Not using the one-liner?
 
-### 1. Download a bundle and run `epicurus init`
+### 1. Download a bundle and run `epic-hal init`
 
-Bundles live on the [Releases](https://github.com/apojomovsky/epicurus/releases)
+Bundles live on the [Releases](https://github.com/apojomovsky/epic-hal/releases)
 page:
 
 | Bundle | Parts inside |
 |---|---|
-| `epicurus-pic16f87xa-<version>.tar.gz` | 16F873A / 874A / 876A / 877A |
-| `epicurus-pic18fxx5x-<version>.tar.gz` | 18F2455 / 2550 / 4455 / 4550 |
-| `epicurus-pic16f193x-<version>.tar.gz` | 16F1933 / 1934 / 1936 / 1937 / 1938 / 1939 |
+| `epic-hal-pic16f87xa-<version>.tar.gz` | 16F873A / 874A / 876A / 877A |
+| `epic-hal-pic18fxx5x-<version>.tar.gz` | 18F2455 / 2550 / 4455 / 4550 |
+| `epic-hal-pic16f193x-<version>.tar.gz` | 16F1933 / 1934 / 1936 / 1937 / 1938 / 1939 |
 
 The `<version>` is the release tag (e.g. `v0.1.0`); the badge above
 always shows the latest one.
 
 Download and unpack one, then, with the CLI installed globally:
 
-    pipx install git+https://github.com/apojomovsky/epicurus
-    epicurus init --bundle /path/to/unpacked/bundle
+    pipx install git+https://github.com/apojomovsky/epic-hal
+    epic-hal init --bundle /path/to/unpacked/bundle
 
 Answer family, part, and modules. It writes `main.c`, a filled `Makefile`,
 and a ready MPLAB X `.X` in your current directory for your exact part +
@@ -134,12 +134,12 @@ Code) and Build, or `make`.
 
 ## Advanced: without the scaffolder
 
-Prefer to wire a project by hand, or add Epicurus to one you already
+Prefer to wire a project by hand, or add Epic HAL to one you already
 have? These two paths skip the scaffolder.
 
 ### Open the reference project in MPLAB X
 
-Unpack the bundle, then open `examples/epicurus-demo.X` (File > Open
+Unpack the bundle, then open `examples/epic-hal-demo.X` (File > Open
 Project). Pick your exact part under Project Properties, and Build. It
 produces a `.hex` you can program with MPLAB IPE or any PICkit.
 
@@ -158,13 +158,13 @@ step.
 Just `xc8-cc` and `make`, no MPLAB X and no license:
 
 ```make
-EPICURUS_DIR := third_party/epicurus
-EPICURUS_MCU := 16F877A
-EPICURUS_MODULES := serial tick
-include $(EPICURUS_DIR)/epicurus.mk
+EPIC_HAL_DIR := third_party/epic-hal
+EPIC_HAL_MCU := 16F877A
+EPIC_HAL_MODULES := serial tick
+include $(EPIC_HAL_DIR)/epic-hal.mk
 
-SRCS := main.c $(EPICURUS_SRCS)
-CFLAGS += $(EPICURUS_CFLAGS)
+SRCS := main.c $(EPIC_HAL_SRCS)
+CFLAGS += $(EPIC_HAL_CFLAGS)
 
 app.hex: $(SRCS)
 	xc8-cc $(CFLAGS) $^ -o $@ -ginhx32
@@ -176,7 +176,7 @@ part it does not fit fails immediately with the reason instead of a
 wall of XC8 linker errors. Each bundle's `SUPPORT.md` has the full
 per-part table.
 
-Adding Epicurus to an existing MPLAB X project instead? The bundle's
+Adding Epic HAL to an existing MPLAB X project instead? The bundle's
 `MPLABX.md` walks through it.
 
 ## What the API feels like

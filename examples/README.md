@@ -5,16 +5,16 @@ correctly: initialise the HAL, toggle a pin, loop.
 
 | Project | Family | Device it ships configured for |
 |---|---|---|
-| `epicurus-demo-pic16f87xa.X` | PIC16F87XA | PIC16F877A |
-| `epicurus-demo-pic18fxx5x.X` | PIC18Fxx5x | PIC18F4550 |
-| `epicurus-demo-pic16f193x.X` | PIC16F193X | PIC16F1937 (HAL only) |
+| `epic-hal-demo-pic16f87xa.X` | PIC16F87XA | PIC16F877A |
+| `epic-hal-demo-pic18fxx5x.X` | PIC18Fxx5x | PIC18F4550 |
+| `epic-hal-demo-pic16f193x.X` | PIC16F193X | PIC16F1937 (HAL only) |
 
 `scripts/make_bundle.py` copies the matching one into each bundle as
-`examples/epicurus-demo.X`, so inside a bundle the project sits one level
+`examples/epic-hal-demo.X`, so inside a bundle the project sits one level
 below the bundle root and every path in it resolves as `../..`.
 
-These `.X` projects are also the base templates the `epicurus init`
-scaffolder patches: `scripts/epicurus_init.py` copies the matching
+These `.X` projects are also the base templates the `epic-hal init`
+scaffolder patches: `scripts/epic_hal_init.py` copies the matching
 reference project and rewrites its part and module set, so a scaffolded
 project starts from a known-good reference instead of a blank one.
 

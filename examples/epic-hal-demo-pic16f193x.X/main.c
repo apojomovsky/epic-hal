@@ -1,7 +1,7 @@
 /*
- * Epicurus reference project, PIC16F193X: Timer0 overflow toggles RB0
+ * Epic HAL reference project, PIC16F193X: Timer0 overflow toggles RB0
  * via the HAL's weak-ISR dispatch (HAL-only family, no hand-written
- * vector). See MPLABX.md to add Epicurus to an existing project.
+ * vector). See MPLABX.md to add Epic HAL to an existing project.
  */
 #include <xc.h>
 

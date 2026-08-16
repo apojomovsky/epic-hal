@@ -35,22 +35,22 @@ for tarball in "$repo_root/$bundles_dir"/*.tar.gz; do
   # bundle, including HAL-only
   # ones, since every family ships one regardless of whether it has a
   # higher-level module to link.
-  if [ -d examples/epicurus-demo.X ]; then
+  if [ -d examples/epic-hal-demo.X ]; then
     (
-      cd examples/epicurus-demo.X
+      cd examples/epic-hal-demo.X
       "$MPLABX_INSTALL_DIR/mplab_platform/bin/prjMakefilesGenerator.sh" . \
         >/dev/null 2>&1 || true
       if make -f nbproject/Makefile-default.mk SUBPROJECTS= .build-conf \
            >project.log 2>&1; then
-        echo "| $name | epicurus-demo.X | (project) | PASS |" >> "$repo_root/$summary"
+        echo "| $name | epic-hal-demo.X | (project) | PASS |" >> "$repo_root/$summary"
       else
-        echo "| $name | epicurus-demo.X | (project) | FAIL |" >> "$repo_root/$summary"
+        echo "| $name | epic-hal-demo.X | (project) | FAIL |" >> "$repo_root/$summary"
         echo "::group::$name project log"; cat project.log; echo "::endgroup::"
         exit 1
       fi
     ) || fail=1
   else
-    echo "| $name | epicurus-demo.X | (project) | FAIL: missing |" >> "$repo_root/$summary"
+    echo "| $name | epic-hal-demo.X | (project) | FAIL: missing |" >> "$repo_root/$summary"
     fail=1
   fi
 
@@ -86,17 +86,17 @@ for tarball in "$repo_root/$bundles_dir"/*.tar.gz; do
     continue
   fi
 
-  dfp_name="$(grep -m1 '^EPICURUS_DFP' epicurus.mk | awk '{print $3}')"
+  dfp_name="$(grep -m1 '^EPIC_HAL_DFP' epic-hal.mk | awk '{print $3}')"
   cat > Makefile <<EOF
-EPICURUS_DIR := .
-EPICURUS_MCU := $part
-EPICURUS_MODULES := $module
-include \$(EPICURUS_DIR)/epicurus.mk
+EPIC_HAL_DIR := .
+EPIC_HAL_MCU := $part
+EPIC_HAL_MODULES := $module
+include \$(EPIC_HAL_DIR)/epic-hal.mk
 DFP := $XC8_INSTALL_DIR/pic/packs/$dfp_name/xc8
 all:
-	xc8-cc -mdfp=\$(DFP) -mcpu=\$(shell echo \$(EPICURUS_MCU) | tr A-Z a-z) \\
-	  -O2 -std=c99 -Wall -Wextra \$(EPICURUS_CFLAGS) -DFOSC_HZ=20000000 \\
-	  \$(EPICURUS_SRCS) main.c -o app.hex -ginhx32
+	xc8-cc -mdfp=\$(DFP) -mcpu=\$(shell echo \$(EPIC_HAL_MCU) | tr A-Z a-z) \\
+	  -O2 -std=c99 -Wall -Wextra \$(EPIC_HAL_CFLAGS) -DFOSC_HZ=20000000 \\
+	  \$(EPIC_HAL_SRCS) main.c -o app.hex -ginhx32
 EOF
   printf 'void main(void) { for (;;) { } }\n' > main.c
 

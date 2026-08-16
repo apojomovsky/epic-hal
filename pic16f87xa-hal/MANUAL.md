@@ -90,7 +90,7 @@ pic16f87xa-hal/
 │   └── sim/                     host simulation backend (host build only)
 ├── tests/                        end-to-end examples / smoke tests
 │                                 (real-target: manifest selects sources;
-│                                 bundle epicurus.mk / reference project)
+│                                 bundle epic-hal.mk / reference project)
 └── CMakeLists.txt               host build (gcc + cmake)
 ```
 

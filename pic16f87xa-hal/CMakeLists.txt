@@ -4,8 +4,8 @@
 #   ./build/example_blink
 #
 # Real PIC target builds use the XC8 toolchain; the manifest selects the
-# real-target sources and the bundle's epicurus.mk (or the reference
-# project examples/epicurus-demo-pic16f87xa.X) drives xc8-cc to a .hex.
+# real-target sources and the bundle's epic-hal.mk (or the reference
+# project examples/epic-hal-demo-pic16f87xa.X) drives xc8-cc to a .hex.
 #
 # The host vs. target split is done at build time, not with #ifdef: this
 # build puts include/host ahead of include on the include path, so

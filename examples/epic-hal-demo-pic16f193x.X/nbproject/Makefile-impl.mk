@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=epicurus-demo-pic18fxx5x.X
+PROJECTNAME=epic-hal-demo-pic16f193x.X
 
 # Active Configuration
 DEFAULTCONF=default

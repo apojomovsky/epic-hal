@@ -116,7 +116,7 @@ loader rejects a part listed in both. A module that builds on no part of
 a family simply omits that family from `supported` (see `epic-modbus`,
 which has no `PIC16F87XA` entry). `excluded` reasons are user-facing:
 they are printed by the build driver and, in a later plan, by the
-generated `epicurus.mk` and `SUPPORT.md`.
+generated `epic-hal.mk` and `SUPPORT.md`.
 
 This pair replaces the `KNOWN_BROKEN` literal that used to live in
 `scripts/ci-discover-xc8-matrix.py`. The exit criterion for the

@@ -1,15 +1,15 @@
 #!/usr/bin/env sh
-# Epicurus installer: fetch a family bundle from a GitHub Release, verify
+# Epic HAL installer: fetch a family bundle from a GitHub Release, verify
 # its SHA-256, unpack it, and scaffold a project. One command to a
 # buildable project, passing the part you target:
 #
-#   curl -fsSL https://github.com/apojomovsky/epicurus/releases/latest/download/install.sh \
+#   curl -fsSL https://github.com/apojomovsky/epic-hal/releases/latest/download/install.sh \
 #     | sh -s -- 16F877A
 #
 # A part (16F877A) picks its family automatically; a family slug
 # (pic16f87xa) installs that family's bundle.
 #
-# Leaves third_party/epicurus/ (the vendored library, pinned to the
+# Leaves third_party/epic-hal/ (the vendored library, pinned to the
 # resolved version) and, in the current directory, myapp.X, Makefile,
 # and main.c. Build with `make`.
 #
@@ -17,15 +17,15 @@
 #                   [--name <name>] [--force]
 #        install.sh --list | --help
 #
-# Env: EPICURUS_BASE_URL  release base (default
-#      https://github.com/apojomovsky/epicurus/releases; when set, treated
+# Env: EPIC_HAL_BASE_URL  release base (default
+#      https://github.com/apojomovsky/epic-hal/releases; when set, treated
 #      as a flat asset dir and <version> becomes required, used by CI).
-#      EPICURUS_DIR       install dir (default ./third_party/epicurus).
+#      EPIC_HAL_DIR       install dir (default ./third_party/epic-hal).
 
 set -eu
 
-BASE_URL="${EPICURUS_BASE_URL:-https://github.com/apojomovsky/epicurus/releases}"
-DEST="${EPICURUS_DIR:-./third_party/epicurus}"
+BASE_URL="${EPIC_HAL_BASE_URL:-https://github.com/apojomovsky/epic-hal/releases}"
+DEST="${EPIC_HAL_DIR:-./third_party/epic-hal}"
 FAMILIES="pic16f87xa pic18fxx5x pic16f193x"
 
 usage() {
@@ -136,11 +136,11 @@ if [ -n "$part" ]; then
     part="$(norm_part "$part")"
 fi
 
-if [ -n "${EPICURUS_BASE_URL:-}" ]; then
+if [ -n "${EPIC_HAL_BASE_URL:-}" ]; then
     # CI override: treat the base as a flat directory of assets. The
     # version is part of the asset filename, so it must be explicit.
     if [ -z "$version" ]; then
-        echo "install.sh: EPICURUS_BASE_URL is set, a version argument is required" >&2
+        echo "install.sh: EPIC_HAL_BASE_URL is set, a version argument is required" >&2
         exit 2
     fi
     asset_dir="$BASE_URL"
@@ -186,16 +186,16 @@ if [ -e "$DEST" ] && [ "$force" -ne 1 ]; then
     exit 2
 fi
 
-echo "install.sh: fetching epicurus-$family-$version.tar.gz from $asset_dir"
-curl -fsSL "$asset_dir/epicurus-$family-$version.tar.gz" \
-    -o "$tmp/epicurus-$family-$version.tar.gz"
+echo "install.sh: fetching epic-hal-$family-$version.tar.gz from $asset_dir"
+curl -fsSL "$asset_dir/epic-hal-$family-$version.tar.gz" \
+    -o "$tmp/epic-hal-$family-$version.tar.gz"
 # The consumer bundles are pure libraries; the scaffolder CLI ships as
 # its own asset and is fetched alongside.
-curl -fsSL "$asset_dir/epicurus-cli-$version.tar.gz" \
-    -o "$tmp/epicurus-cli-$version.tar.gz"
+curl -fsSL "$asset_dir/epic-hal-cli-$version.tar.gz" \
+    -o "$tmp/epic-hal-cli-$version.tar.gz"
 curl -fsSL "$asset_dir/SHA256SUMS" -o "$tmp/SHA256SUMS"
 
-for art in "epicurus-$family-$version.tar.gz" "epicurus-cli-$version.tar.gz"; do
+for art in "epic-hal-$family-$version.tar.gz" "epic-hal-cli-$version.tar.gz"; do
     expected="$(awk -v n="$art" '$2 == n || $2 == "./" n { print $1 }' "$tmp/SHA256SUMS")"
     if [ -z "$expected" ]; then
         echo "install.sh: no checksum for $art in SHA256SUMS" >&2
@@ -214,23 +214,23 @@ done
 echo "install.sh: checksum OK"
 
 mkdir -p "$(dirname "$DEST")"
-tar xzf "$tmp/epicurus-$family-$version.tar.gz" -C "$tmp"
+tar xzf "$tmp/epic-hal-$family-$version.tar.gz" -C "$tmp"
 if [ "$force" -eq 1 ]; then
     rm -rf "$DEST"
 fi
-mv "$tmp/epicurus-$family-$version" "$DEST"
-tar xzf "$tmp/epicurus-cli-$version.tar.gz" -C "$tmp"
-CLI="$tmp/epicurus-cli-$version/epicurus"
+mv "$tmp/epic-hal-$family-$version" "$DEST"
+tar xzf "$tmp/epic-hal-cli-$version.tar.gz" -C "$tmp"
+CLI="$tmp/epic-hal-cli-$version/epic-hal"
 
-manifest_family="$(awk '/^EPICURUS_FAMILY[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"
-default_part="$(awk '/^EPICURUS_VARIANTS[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"
+manifest_family="$(awk '/^EPIC_HAL_FAMILY[[:space:]]*:=/{ print $NF }' "$DEST/epic-hal.mk")"
+default_part="$(awk '/^EPIC_HAL_VARIANTS[[:space:]]*:=/{ print $NF }' "$DEST/epic-hal.mk")"
 # Default to tick-only: the blink main.c uses just tick + GPIO, and
 # linking serial pushes the PIC16 call graph past the 8-level hardware
 # stack (XC8 warning 1393). Users add serial with --modules serial,tick.
-if grep -q '^EPICURUS_MODULE_tick :=' "$DEST/epicurus.mk"; then
+if grep -q '^EPIC_HAL_MODULE_tick :=' "$DEST/epic-hal.mk"; then
     default_modules="tick"
 else
-    default_modules="$(sed -n 's/^EPICURUS_MODULE_\([a-z0-9][a-z0-9]*\) := .*/\1/p' "$DEST/epicurus.mk" | head -n 2 | paste -sd, -)"
+    default_modules="$(sed -n 's/^EPIC_HAL_MODULE_\([a-z0-9][a-z0-9]*\) := .*/\1/p' "$DEST/epic-hal.mk" | head -n 2 | paste -sd, -)"
 fi
 [ -n "$part" ] || part="$default_part"
 [ -n "$modules" ] || modules="$default_modules"
@@ -239,7 +239,8 @@ echo "install.sh: scaffolding with part=$part modules=$modules"
 if ! command -v python3 >/dev/null 2>&1; then
     echo "install.sh: python3 is required to scaffold the project." >&2
     echo "install.sh: the bundle is installed and verified; install python3 and" >&2
-    echo "install.sh: rerun this installer, or use: pipx install epicurus" >&2
+    echo "install.sh: rerun this installer, or use:" >&2
+    echo "install.sh:   pipx install git+https://github.com/apojomovsky/epic-hal" >&2
     exit 1
 fi
 "$CLI" init \
@@ -250,7 +251,7 @@ fi
     --bundle "$DEST"
 
 echo
-echo "Epicurus $version ($family) installed in $DEST"
+echo "Epic HAL $version ($family) installed in $DEST"
 echo "Scaffolded project: ./$name.X"
 # Report the real-target prerequisites UP FRONT, before the user runs
 # make, so a missing compiler or device pack is not a make-time
@@ -262,7 +263,7 @@ dfp_name=
 if command -v xc8-cc >/dev/null 2>&1; then
     xc8_ok=1
     xc8_root="$(dirname "$(dirname "$(command -v xc8-cc)")")"
-    dfp_name="$(awk '/^EPICURUS_DFP[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"
+    dfp_name="$(awk '/^EPIC_HAL_DFP[[:space:]]*:=/{ print $NF }' "$DEST/epic-hal.mk")"
     if [ -d "$xc8_root/pic/packs/$dfp_name/xc8" ]; then
         dfp_ok=1
     fi
@@ -270,7 +271,7 @@ fi
 if [ "$xc8_ok" -eq 1 ] && [ "$dfp_ok" -eq 1 ]; then
     echo "XC8 and the $dfp_name device pack are ready. Build it with:  make"
 elif [ "$xc8_ok" -eq 1 ]; then
-    dfp_version="$(awk '/^EPICURUS_DFP_VERSION[[:space:]]*:=/{ print $NF }' "$DEST/epicurus.mk")"
+    dfp_version="$(awk '/^EPIC_HAL_DFP_VERSION[[:space:]]*:=/{ print $NF }' "$DEST/epic-hal.mk")"
     echo "xc8-cc is on PATH, but the $dfp_name device pack is missing." >&2
     if [ -n "$dfp_version" ]; then
         echo "Download it (Microchip's official pack CDN):" >&2
