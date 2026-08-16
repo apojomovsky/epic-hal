@@ -318,6 +318,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # release_notes.py walks back to the previous tag, so the tags and
+          # the commits between them must both be present.
+          fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
           name: release-bundles
@@ -325,14 +329,16 @@ jobs:
       - name: Write the release notes
         run: |
           version="${{ needs.build.outputs.version }}"
+          repo_url="${{ github.server_url }}/${{ github.repository }}"
           {
             echo "## Epic HAL $version"
             echo
-            echo "Source bundles, one per family. Download the one for your"
-            echo "part, unpack it, and point \`EPIC_HAL_DIR\` at it. Each"
-            echo "bundle carries its own \`QUICKSTART.md\`, \`SUPPORT.md\`,"
-            echo "\`MPLABX.md\`, and a reference MPLAB X project under"
-            echo "\`examples/\`."
+            python3 scripts/release_notes.py "$version" --repo-url "$repo_url"
+            echo
+            echo "## Using it"
+            echo
+            echo "One source bundle per family. Download the one for your part,"
+            echo "unpack it, and point \`EPIC_HAL_DIR\` at it:"
             echo
             echo '```make'
             echo 'EPIC_HAL_DIR := third_party/epic-hal'
@@ -344,28 +350,23 @@ jobs:
             echo 'CFLAGS += $(EPIC_HAL_CFLAGS)'
             echo '```'
             echo
-            echo "### Stability"
+            echo "This is a 0.x release: pin this tag, the \`epic-hal.mk\`"
+            echo "interface may still change. Per-part support (not every"
+            echo "module fits on every part) is in each bundle's"
+            echo "\`SUPPORT.md\`; build notes are in \`QUICKSTART.md\` and"
+            echo "\`MPLABX.md\`, alongside a reference MPLAB X project under"
+            echo "\`examples/\`."
             echo
-            echo "This is a 0.x release: the \`epic-hal.mk\` interface may"
-            echo "still change. Pin this tag rather than tracking a branch."
+            echo "<details><summary>Checksums</summary>"
             echo
-            echo "### Support"
-            echo
-            echo "Not every module builds on every part; the smaller parts"
-            echo "in each family run out of RAM for the larger modules."
-            echo "Each bundle's \`SUPPORT.md\` has the full table with a"
-            echo "reason for every exclusion, and \`epic-hal.mk\` fails"
-            echo "immediately with that reason rather than as a wall of XC8"
-            echo "linker errors."
-            echo
-            echo "### Verification"
-            echo
-            echo "Every bundle in this release was built from a scratch"
-            echo "directory outside the repository before publication."
+            echo "Every bundle here was built from a scratch directory outside"
+            echo "the repository before publication."
             echo
             echo '```'
             cat bundles/SHA256SUMS
             echo '```'
+            echo
+            echo "</details>"
           } > notes.md
           cat notes.md
       - name: Create the release

@@ -128,6 +128,10 @@ codebase so far.
 - **Commit whenever a piece of work is finished**, Conventional Commits
   (`type(scope): summary`; `feat`/`docs`/`plan`/`fix`/`refactor`/`style`).
   Scope is usually the module or `phaseN`. Don't batch unrelated changes.
+  Subjects are release-notes copy: `scripts/release_notes.py` groups them
+  into the GitHub Release verbatim, so write them for someone reading the
+  release page. A change that breaks consumers needs `type(scope)!:` or a
+  `BREAKING CHANGE:` footer, otherwise nothing flags it there.
 - **Update the docs a change touches before calling it done**: the
   module's `README.md`/`docs/API.md`/`docs/ARCHITECTURE.md` if
   behavior changed, `MANUAL.md` if a register fact changed.

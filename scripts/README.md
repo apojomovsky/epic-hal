@@ -162,6 +162,12 @@ scripts themselves run in).
   build, proving each generated bundle is self-contained by building it
   from `/isolated` (no repo above it) rather than in place. Also builds
   each bundle's reference MPLAB X project headlessly.
+- `release_notes.py <tag> [--previous <tag>] [--repo-url <url>]`: the
+  "What changed" section of a GitHub Release, grouped from the
+  Conventional Commit subjects since the previous version tag. Called by
+  `release-bundles.yml`; run it by hand to preview a tag before pushing
+  it. Breaking changes need `type(scope)!:` or a `BREAKING CHANGE:`
+  footer to be called out. See DEVELOPMENT.md's Releases section.
 
 ## `epic_build.py`, the real-target build driver
 
