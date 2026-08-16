@@ -1,6 +1,6 @@
-# Developing Epicurus
+# Developing Epic HAL
 
-The toolchain, build, and CI workflows for working *on* Epicurus. If you
+The toolchain, build, and CI workflows for working *on* Epic HAL. If you
 just want to use it in a project, see the [README](README.md): grab a
 release bundle and go. This document is for contributors and for local
 verification.
@@ -113,31 +113,31 @@ python3 scripts/make_bundle.py --cli --version ci-test
 cd bundles && sha256sum ./*.tar.gz > SHA256SUMS
 python3 -c "import sys; sys.path.insert(0, 'scripts'); import bundlegen, epicmanifest; sys.stdout.write(bundlegen.emit_parts_map(epicmanifest.load(epicmanifest.default_path())))" > parts.txt
 cd ..
-EPICURUS_BASE_URL=file://$PWD/bundles sh install.sh 16F877A ci-test
+EPIC_HAL_BASE_URL=file://$PWD/bundles sh install.sh 16F877A ci-test
 ```
 
 The first argument is a part (`16F877A`; its family is resolved from
 `parts.txt`) or a family slug (`pic16f87xa`, `pic18fxx5x`,
 `pic16f193x`). `make_bundle.py --family` takes the manifest name
-(`PIC16F87XA`, `PIC18Fxx5x`, `PIC16F193X`). `EPICURUS_BASE_URL` is a
+(`PIC16F87XA`, `PIC18Fxx5x`, `PIC16F193X`). `EPIC_HAL_BASE_URL` is a
 flat asset dir, so `<version>` is required. The release gate runs the
 same flow for all three families and builds the scaffolds, see
 [.github/workflows/release-bundles.yml](.github/workflows/release-bundles.yml).
 
-## epicurus CLI
+## epic-hal CLI
 
-The `epicurus` CLI (`scripts/epicurus.py`, with `epicurus_init.py`,
+The `epic-hal` CLI (`scripts/epic_hal.py`, with `epic_hal_init.py`,
 `epicmanifest.py`, and `bundlegen.py`) scaffolds a consumer project from
 a bundle: `main.c`, a filled `Makefile`, and a patched MPLAB X `.X` for
 the chosen part and module subset. Run it from a checkout or an unpacked
 bundle:
 
 ```sh
-python3 scripts/epicurus.py init --bundle path/to/epicurus-pic16f87xa-v0.1.0
+python3 scripts/epic_hal.py init --bundle path/to/epic-hal-pic16f87xa-v0.1.0
 ```
 
 Its tests live with the rest of the scripts tests:
 
 ```sh
-python3 scripts/tests/test_epicurus_init.py
+python3 scripts/tests/test_epic_hal_init.py
 ```

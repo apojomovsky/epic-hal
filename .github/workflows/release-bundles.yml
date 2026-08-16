@@ -69,7 +69,7 @@ jobs:
             python3 scripts/make_bundle.py \
               --family "$fam" --version "${{ steps.version.outputs.version }}"
           done < families.txt
-      - name: Emit the standalone epicurus CLI asset
+      - name: Emit the standalone epic-hal CLI asset
         run: |
           # Consumer bundles are pure libraries; the scaffolder CLI
           # (Python + manifest) ships as its own asset install.sh fetches
@@ -126,58 +126,58 @@ jobs:
             # The standalone CLI asset is not a family bundle; the
             # installer-gate job exercises it end to end instead.
             case "$name" in
-              epicurus-cli-*) echo "SKIP $name: standalone CLI asset"; continue ;;
+              epic-hal-cli-*) echo "SKIP $name: standalone CLI asset"; continue ;;
             esac
             tar xzf "$tarball" -C /isolated
             cd "/isolated/$name"
 
-            for required in epicurus.mk epicurus-sources.json SUPPORT.md \
+            for required in epic-hal.mk epic-hal-sources.json SUPPORT.md \
                             QUICKSTART.md MPLABX.md VERSION LICENSE; do
               if [ ! -f "$required" ]; then
                 echo "FAIL $name: missing $required"
                 fail=1
               fi
             done
-            if [ ! -d examples/epicurus-demo.X ]; then
-              echo "FAIL $name: missing examples/epicurus-demo.X"
+            if [ ! -d examples/epic-hal-demo.X ]; then
+              echo "FAIL $name: missing examples/epic-hal-demo.X"
               fail=1
             else
               (
-                cd examples/epicurus-demo.X
+                cd examples/epic-hal-demo.X
                 "$MPLABX_INSTALL_DIR/mplab_platform/bin/prjMakefilesGenerator.sh" . \
                   >/dev/null 2>&1 || true
                 if make -f nbproject/Makefile-default.mk SUBPROJECTS= .build-conf \
                      >project.log 2>&1; then
-                  echo "PASS $name (epicurus-demo.X)"
+                  echo "PASS $name (epic-hal-demo.X)"
                 else
-                  echo "FAIL $name: epicurus-demo.X did not build"
+                  echo "FAIL $name: epic-hal-demo.X did not build"
                   cat project.log
                   exit 1
                 fi
               ) || fail=1
             fi
 
-            module="$(grep -m1 '^EPICURUS_MODULE_' epicurus.mk \
-              | sed 's/^EPICURUS_MODULE_\([^ ]*\).*/\1/' || true)"
+            module="$(grep -m1 '^EPIC_HAL_MODULE_' epic-hal.mk \
+              | sed 's/^EPIC_HAL_MODULE_\([^ ]*\).*/\1/' || true)"
             if [ -z "$module" ]; then
               echo "SKIP $name: HAL-only bundle, nothing to link"
               cd /isolated
               continue
             fi
-            part="$(grep -m1 "^EPICURUS_SUPPORTED_epic-$module " epicurus.mk \
+            part="$(grep -m1 "^EPIC_HAL_SUPPORTED_epic-$module " epic-hal.mk \
               | awk '{print $3}')"
-            dfp_name="$(grep -m1 '^EPICURUS_DFP' epicurus.mk | awk '{print $3}')"
+            dfp_name="$(grep -m1 '^EPIC_HAL_DFP' epic-hal.mk | awk '{print $3}')"
 
             cat > Makefile <<EOF
-          EPICURUS_DIR := .
-          EPICURUS_MCU := $part
-          EPICURUS_MODULES := $module
-          include \$(EPICURUS_DIR)/epicurus.mk
+          EPIC_HAL_DIR := .
+          EPIC_HAL_MCU := $part
+          EPIC_HAL_MODULES := $module
+          include \$(EPIC_HAL_DIR)/epic-hal.mk
           DFP := $XC8_INSTALL_DIR/pic/packs/$dfp_name/xc8
           all:
-          	xc8-cc -mdfp=\$(DFP) -mcpu=\$(shell echo \$(EPICURUS_MCU) | tr A-Z a-z) \\
-          	  -O2 -std=c99 -Wall -Wextra \$(EPICURUS_CFLAGS) -DFOSC_HZ=20000000 \\
-          	  \$(EPICURUS_SRCS) main.c -o app.hex -ginhx32
+          	xc8-cc -mdfp=\$(DFP) -mcpu=\$(shell echo \$(EPIC_HAL_MCU) | tr A-Z a-z) \\
+          	  -O2 -std=c99 -Wall -Wextra \$(EPIC_HAL_CFLAGS) -DFOSC_HZ=20000000 \\
+          	  \$(EPIC_HAL_SRCS) main.c -o app.hex -ginhx32
           EOF
             printf 'void main(void) { for (;;) { } }\n' > main.c
 
@@ -195,7 +195,7 @@ jobs:
   # install.sh is itself a release asset, so the gate must not publish
   # an installer it has not run. This job runs on the bare runner (not
   # in the toolchain container): install.sh's scaffold step delegates
-  # to the bundle's `epicurus` CLI, a plain python3 script, and the
+  # to the bundle's `epic-hal` CLI, a plain python3 script, and the
   # toolchain image deliberately has no python3. Each family's bundle
   # is installed through the real script against the downloaded
   # artifacts (file:// flat dir, explicit version), then the scaffolded
@@ -239,12 +239,12 @@ jobs:
             mkdir -p "$base/install-$part"
             # install.sh scaffolds in the current directory (in place),
             # so run it from the per-part dir to keep each scaffold
-            # isolated; the bundle is vendored at ./third_party/epicurus
+            # isolated; the bundle is vendored at ./third_party/epic-hal
             # inside that dir and the scaffold's paths point at it.
             if ! (
               cd "$base/install-$part"
-              EPICURUS_BASE_URL="file:///tmp/bundles" \
-              EPICURUS_DIR="$base/install-$part/epicurus" \
+              EPIC_HAL_BASE_URL="file:///tmp/bundles" \
+              EPIC_HAL_DIR="$base/install-$part/epic-hal" \
                 sh "$base/install.sh" "$part" "${{ needs.build.outputs.version }}"
             ) || ! docker run --rm -v "$PWD:/work" -w /work \
                 "$EPIC_TOOLCHAIN_IMAGE" \
@@ -326,27 +326,27 @@ jobs:
         run: |
           version="${{ needs.build.outputs.version }}"
           {
-            echo "## Epicurus $version"
+            echo "## Epic HAL $version"
             echo
             echo "Source bundles, one per family. Download the one for your"
-            echo "part, unpack it, and point \`EPICURUS_DIR\` at it. Each"
+            echo "part, unpack it, and point \`EPIC_HAL_DIR\` at it. Each"
             echo "bundle carries its own \`QUICKSTART.md\`, \`SUPPORT.md\`,"
             echo "\`MPLABX.md\`, and a reference MPLAB X project under"
             echo "\`examples/\`."
             echo
             echo '```make'
-            echo 'EPICURUS_DIR := third_party/epicurus'
-            echo 'EPICURUS_MCU := 16F877A'
-            echo 'EPICURUS_MODULES := serial tick'
-            echo 'include $(EPICURUS_DIR)/epicurus.mk'
+            echo 'EPIC_HAL_DIR := third_party/epic-hal'
+            echo 'EPIC_HAL_MCU := 16F877A'
+            echo 'EPIC_HAL_MODULES := serial tick'
+            echo 'include $(EPIC_HAL_DIR)/epic-hal.mk'
             echo
-            echo 'SRCS := main.c $(EPICURUS_SRCS)'
-            echo 'CFLAGS += $(EPICURUS_CFLAGS)'
+            echo 'SRCS := main.c $(EPIC_HAL_SRCS)'
+            echo 'CFLAGS += $(EPIC_HAL_CFLAGS)'
             echo '```'
             echo
             echo "### Stability"
             echo
-            echo "This is a 0.x release: the \`epicurus.mk\` interface may"
+            echo "This is a 0.x release: the \`epic-hal.mk\` interface may"
             echo "still change. Pin this tag rather than tracking a branch."
             echo
             echo "### Support"
@@ -354,7 +354,7 @@ jobs:
             echo "Not every module builds on every part; the smaller parts"
             echo "in each family run out of RAM for the larger modules."
             echo "Each bundle's \`SUPPORT.md\` has the full table with a"
-            echo "reason for every exclusion, and \`epicurus.mk\` fails"
+            echo "reason for every exclusion, and \`epic-hal.mk\` fails"
             echo "immediately with that reason rather than as a wall of XC8"
             echo "linker errors."
             echo
@@ -373,6 +373,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${{ needs.build.outputs.version }}" \
-            --title "Epicurus ${{ needs.build.outputs.version }}" \
+            --title "Epic HAL ${{ needs.build.outputs.version }}" \
             --notes-file notes.md \
             bundles/*.tar.gz bundles/SHA256SUMS bundles/parts.txt install.sh

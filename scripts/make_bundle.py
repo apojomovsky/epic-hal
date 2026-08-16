@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble a per-family Epicurus bundle (a build output, attached to a
+"""Assemble a per-family Epic HAL bundle (a build output, attached to a
 GitHub Release, never committed): copy one family's HAL, epic-common, and
 every module that builds on it into a self-contained tree with the
 generated consumer files. Called by CI's emit step and
@@ -28,7 +28,7 @@ REPO = pathlib.Path(__file__).resolve().parents[1]
 # manifest-resolved target list (bundlegen.files_for_family), headers
 # come from the manifest include dirs, docs are the living consumer
 # files (README.md/MANUAL.md at each module/HAL/epic-common root), and
-# the generated consumer files, the reference .X (for `epicurus init`),
+# the generated consumer files, the reference .X (for `epic-hal init`),
 # the CLI, and the manifest ship so the bundle is self-sufficient.
 # Nothing else: no tests, no sim/mdb backends, no design docs, no mcu/
 # scaffolding. The gates below make that load-bearing.
@@ -103,7 +103,7 @@ def _copy_file(src: pathlib.Path, dst: pathlib.Path) -> None:
 
 
 def _copy_sources(manifest, family_name: str, root: pathlib.Path) -> None:
-    """The manifest-resolved target sources, exactly as epicurus.mk names them."""
+    """The manifest-resolved target sources, exactly as epic-hal.mk names them."""
     for f in bundlegen.files_for_family(manifest, family_name):
         src = REPO / f
         if not src.is_file():
@@ -181,7 +181,7 @@ def _quickstart(manifest, family_name: str, version: str) -> str:
 
     PIC16F193X's only manifest entry for its family is the family-HAL-
     wrapper pseudo-module (bundlegen.modules_for_family excludes it), so
-    there is no real module to write a worked EPICURUS_MODULES example
+    there is no real module to write a worked EPIC_HAL_MODULES example
     for; emit_quickstart_md raises BundleError in that case rather than
     naming a module that does not exist for a consumer.
     """
@@ -190,10 +190,10 @@ def _quickstart(manifest, family_name: str, version: str) -> str:
     except bundlegen.BundleError:
         fam = manifest.families[family_name]
         return "\n".join([
-            f"# Quick start, Epicurus {version} ({family_name})",
+            f"# Quick start, Epic HAL {version} ({family_name})",
             "",
             "This bundle is HAL-only: no higher-level module is wired up",
-            "for this family yet. There is no `EPICURUS_MODULES` value to",
+            "for this family yet. There is no `EPIC_HAL_MODULES` value to",
             "give a worked example for.",
             "",
             "Build the HAL directly against `epic-common/src/core/",
@@ -207,22 +207,22 @@ def _quickstart(manifest, family_name: str, version: str) -> str:
 
 
 def _make_cli_asset(version: str, out_dir: pathlib.Path) -> pathlib.Path:
-    """Assemble the standalone `epicurus` CLI asset.
+    """Assemble the standalone `epic-hal` CLI asset.
 
     The consumer bundles are pure libraries: no Python. The scaffolder
     CLI (which needs the manifest and its three helper modules) ships as
-    its own release asset, `epicurus-cli-<version>.tar.gz`, that
+    its own release asset, `epic-hal-cli-<version>.tar.gz`, that
     install.sh fetches alongside a bundle. The manifest lives in the
-    asset (not the bundle) so `epicurus init --bundle <dir>` resolves it
+    asset (not the bundle) so `epic-hal init --bundle <dir>` resolves it
     via epicmanifest.default_path() even when the bundle has none.
     """
-    root = out_dir / f"epicurus-cli-{version}"
+    root = out_dir / f"epic-hal-cli-{version}"
     if root.exists():
         shutil.rmtree(root)
     root.mkdir(parents=True)
-    shutil.copy2(REPO / "scripts" / "epicurus.py", root / "epicurus")
-    (root / "epicurus").chmod(0o755)
-    for mod in ("epicurus_init.py", "epicmanifest.py", "bundlegen.py"):
+    shutil.copy2(REPO / "scripts" / "epic_hal.py", root / "epic-hal")
+    (root / "epic-hal").chmod(0o755)
+    for mod in ("epic_hal_init.py", "epicmanifest.py", "bundlegen.py"):
         shutil.copy2(REPO / "scripts" / mod, root / mod)
     manifest_dst = root / "epic-common" / "manifest" / "modules.toml"
     manifest_dst.parent.mkdir(parents=True, exist_ok=True)
@@ -240,7 +240,7 @@ def main():
     ap.add_argument("--out-dir", default="bundles")
     ap.add_argument("--no-tarball", action="store_true")
     ap.add_argument("--cli", action="store_true",
-                    help="emit only the standalone epicurus CLI asset")
+                    help="emit only the standalone epic-hal CLI asset")
     args = ap.parse_args()
 
     out_dir = REPO / args.out_dir
@@ -261,7 +261,7 @@ def main():
         )
 
     slug = _slug(args.family, manifest)
-    root = REPO / args.out_dir / f"epicurus-{slug}-{args.version}"
+    root = REPO / args.out_dir / f"epic-hal-{slug}-{args.version}"
     if root.exists():
         shutil.rmtree(root)
     root.mkdir(parents=True)
@@ -276,9 +276,9 @@ def main():
     _copy_docs(manifest, args.family, root)
 
     # Generated files.
-    (root / "epicurus.mk").write_text(
-        bundlegen.emit_epicurus_mk(manifest, args.family, args.version))
-    (root / "epicurus-sources.json").write_text(
+    (root / "epic-hal.mk").write_text(
+        bundlegen.emit_epic_hal_mk(manifest, args.family, args.version))
+    (root / "epic-hal-sources.json").write_text(
         bundlegen.emit_sources_json(manifest, args.family, args.version))
     (root / "SUPPORT.md").write_text(
         bundlegen.emit_support_md(manifest, args.family, args.version))
@@ -292,7 +292,7 @@ def main():
     project_src = REPO / bundlegen.reference_project_dir(manifest, args.family)
     if not project_src.is_dir():
         sys.exit(f"error: no reference project at {project_src.relative_to(REPO)}")
-    _copy_project(project_src, root / "examples" / "epicurus-demo.X")
+    _copy_project(project_src, root / "examples" / "epic-hal-demo.X")
 
     # Gate: sim/mdb and other non-consumer files must never ship in a
     # release bundle. They are CI plumbing (host-simulation backends,
@@ -314,7 +314,7 @@ def main():
         sys.exit("error: non-consumer files must never ship in a release bundle:\n  " +
                  "\n  ".join(sorted(set(offenders))))
 
-    # Every source epicurus.mk names must actually be in the bundle. A
+    # Every source epic-hal.mk names must actually be in the bundle. A
     # bundle that ships a source list referring to a file it does not
     # contain is the exact failure mode packaging introduces.
     missing = [
@@ -330,7 +330,7 @@ def main():
     if not args.no_tarball:
         # Not root.with_suffix(".tar.gz"): pathlib treats the version's
         # own dots (v0.1.0) as suffixes and truncates the name, verified
-        # against a real run (produced epicurus-pic16f193x-v0.1.tar.gz,
+        # against a real run (produced epic-hal-pic16f193x-v0.1.tar.gz,
         # silently dropping the ".0").
         tarball = root.parent / f"{root.name}.tar.gz"
         with tarfile.open(tarball, "w:gz") as tf:

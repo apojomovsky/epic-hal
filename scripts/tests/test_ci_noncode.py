@@ -33,7 +33,7 @@ class TestIsNonCode(unittest.TestCase):
         self.assertTrue(self.check(["Makefile"]))
 
     def test_nested_makefile_is_code(self):
-        self.assertFalse(self.check(["examples/epicurus-demo-pic16f87xa.X/Makefile"]))
+        self.assertFalse(self.check(["examples/epic-hal-demo-pic16f87xa.X/Makefile"]))
 
     def test_c_source_is_code(self):
         self.assertFalse(self.check(["epic-tick/src/epic_tick.c"]))

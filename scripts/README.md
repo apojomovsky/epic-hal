@@ -192,8 +192,8 @@ driver reads.
 ## `make_bundle.py`, the release bundle generator
 
 Assembles a self-contained, per-family source tree from the manifest,
-plus the generated consumer files (`epicurus.mk`,
-`epicurus-sources.json`, `SUPPORT.md`, `QUICKSTART.md`, `MPLABX.md`).
+plus the generated consumer files (`epic-hal.mk`,
+`epic-hal-sources.json`, `SUPPORT.md`, `QUICKSTART.md`, `MPLABX.md`).
 
 ```sh
 python3 scripts/make_bundle.py --family PIC16F87XA --version v0.1.0

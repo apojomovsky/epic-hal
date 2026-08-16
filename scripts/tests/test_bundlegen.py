@@ -210,56 +210,56 @@ class TestFileSelection(unittest.TestCase):
         self.assertEqual(self.files, sorted(set(self.files)))
 
 
-class TestEpicurusMk(unittest.TestCase):
+class TestEpicHalMk(unittest.TestCase):
     def setUp(self):
-        self.mk = bundlegen.emit_epicurus_mk(load(), "PIC16F87XA", "v0.1.0")
+        self.mk = bundlegen.emit_epic_hal_mk(load(), "PIC16F87XA", "v0.1.0")
 
     def test_declares_the_family_and_version(self):
         self.assertIn("PIC16F87XA", self.mk)
         self.assertIn("v0.1.0", self.mk)
 
     def test_maps_short_module_names_to_full_ones(self):
-        self.assertIn("EPICURUS_MODULE_serial := epic-serial", self.mk)
-        self.assertIn("EPICURUS_MODULE_tick := epic-tick", self.mk)
+        self.assertIn("EPIC_HAL_MODULE_serial := epic-serial", self.mk)
+        self.assertIn("EPIC_HAL_MODULE_tick := epic-tick", self.mk)
 
     def test_flattens_dependencies_at_generation_time(self):
         self.assertIn(
-            "EPICURUS_RESOLVED_epic-serial := epic-tick epic-serial", self.mk
+            "EPIC_HAL_RESOLVED_epic-serial := epic-tick epic-serial", self.mk
         )
 
     def test_lists_supported_parts_per_module(self):
         self.assertIn(
-            "EPICURUS_SUPPORTED_epic-serial := 16F877A", self.mk
+            "EPIC_HAL_SUPPORTED_epic-serial := 16F877A", self.mk
         )
         self.assertIn(
-            "EPICURUS_SUPPORTED_epic-tick := 16F873A 16F877A", self.mk
+            "EPIC_HAL_SUPPORTED_epic-tick := 16F873A 16F877A", self.mk
         )
 
     def test_carries_the_exclusion_reason(self):
         self.assertIn(
-            "EPICURUS_WHYNOT_epic-serial_16F873A := "
+            "EPIC_HAL_WHYNOT_epic-serial_16F873A := "
             "RAM: 32-byte g_rx_buf does not fit",
             self.mk,
         )
 
     def test_hal_sources_are_prefixed_with_the_bundle_dir(self):
         self.assertIn(
-            "$(EPICURUS_DIR)/pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+            "$(EPIC_HAL_DIR)/pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
             self.mk,
         )
 
     def test_module_sources_are_prefixed_with_the_bundle_dir(self):
-        self.assertIn("$(EPICURUS_DIR)/epic-serial/src/epic_serial.c", self.mk)
+        self.assertIn("$(EPIC_HAL_DIR)/epic-serial/src/epic_serial.c", self.mk)
 
     def test_includes_are_prefixed_and_ordered(self):
         self.assertIn(
-            "-I$(EPICURUS_DIR)/pic16f87xa-hal/include/target "
-            "-I$(EPICURUS_DIR)/pic16f87xa-hal/include",
+            "-I$(EPIC_HAL_DIR)/pic16f87xa-hal/include/target "
+            "-I$(EPIC_HAL_DIR)/pic16f87xa-hal/include",
             self.mk,
         )
 
     def test_every_module_include_dir_gets_its_own_prefix(self):
-        # Regression: EPICURUS_INCLUDES used to emit one -I before the
+        # Regression: EPIC_HAL_INCLUDES used to emit one -I before the
         # whole space-joined per-module dir list, so the second dir of a
         # module with two includes (epic-math ships include + tests) was
         # passed to xc8-cc as a source file (error 894) and the bundle
@@ -280,37 +280,37 @@ PIC16F87XA = ["src/pic16/epic_math_mul.c"]
         tmp = tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False)
         tmp.write(two_inc)
         tmp.close()
-        mk = bundlegen.emit_epicurus_mk(
+        mk = bundlegen.emit_epic_hal_mk(
             epicmanifest.load(pathlib.Path(tmp.name)), "PIC16F87XA", "v0.1.0"
         )
         self.assertIn(
-            "EPICURUS_INCLUDES := $(EPICURUS_FAMILY_INCLUDES) "
-            "$(foreach m,$(EPICURUS_ALL),$(addprefix -I,$(EPICURUS_INCS_$(m))))",
+            "EPIC_HAL_INCLUDES := $(EPIC_HAL_FAMILY_INCLUDES) "
+            "$(foreach m,$(EPIC_HAL_ALL),$(addprefix -I,$(EPIC_HAL_INCS_$(m))))",
             mk,
         )
         self.assertIn(
-            "EPICURUS_INCS_epic-math := "
-            "$(EPICURUS_DIR)/epic-math/include "
-            "$(EPICURUS_DIR)/epic-math/tests",
+            "EPIC_HAL_INCS_epic-math := "
+            "$(EPIC_HAL_DIR)/epic-math/include "
+            "$(EPIC_HAL_DIR)/epic-math/tests",
             mk,
         )
 
     def test_errors_on_an_unset_mcu(self):
-        self.assertIn("EPICURUS_MCU is not set", self.mk)
+        self.assertIn("EPIC_HAL_MCU is not set", self.mk)
 
     def test_errors_on_an_unsupported_pair(self):
         self.assertIn("$(error", self.mk)
         self.assertIn("is not supported on", self.mk)
 
     def test_defines_the_part_macro_and_dfp(self):
-        self.assertIn("-DPIC$(EPICURUS_MCU)", self.mk)
+        self.assertIn("-DPIC$(EPIC_HAL_MCU)", self.mk)
         self.assertIn("Microchip.PIC16Fxxx_DFP", self.mk)
 
     def test_excludes_the_family_hal_wrapper_pseudo_module(self):
-        # Same rule as modules_for_family: PIC16F193X's epicurus.mk must
+        # Same rule as modules_for_family: PIC16F193X's epic-hal.mk must
         # not map a short name for epic-pic16f193x-firmware.
-        mk193x = bundlegen.emit_epicurus_mk(load(), "PIC16F193X", "v0.1.0")
-        self.assertNotIn("EPICURUS_MODULE_pic16f193x-firmware", mk193x)
+        mk193x = bundlegen.emit_epic_hal_mk(load(), "PIC16F193X", "v0.1.0")
+        self.assertNotIn("EPIC_HAL_MODULE_pic16f193x-firmware", mk193x)
 
 
 class TestSourcesJson(unittest.TestCase):
@@ -392,10 +392,10 @@ class TestQuickstart(unittest.TestCase):
         self.md = bundlegen.emit_quickstart_md(load(), "PIC16F87XA", "v0.1.0")
 
     def test_shows_a_complete_consumer_makefile(self):
-        self.assertIn("EPICURUS_DIR :=", self.md)
-        self.assertIn("EPICURUS_MCU :=", self.md)
-        self.assertIn("EPICURUS_MODULES :=", self.md)
-        self.assertIn("include $(EPICURUS_DIR)/epicurus.mk", self.md)
+        self.assertIn("EPIC_HAL_DIR :=", self.md)
+        self.assertIn("EPIC_HAL_MCU :=", self.md)
+        self.assertIn("EPIC_HAL_MODULES :=", self.md)
+        self.assertIn("include $(EPIC_HAL_DIR)/epic-hal.mk", self.md)
 
     def test_names_a_real_part_from_this_family(self):
         self.assertIn("16F877A", self.md)
@@ -412,7 +412,7 @@ class TestQuickstart(unittest.TestCase):
     def test_raises_for_a_hal_only_family(self):
         # PIC16F193X has no consumer-facing module (its sole entry is the
         # excluded HAL-wrapper pseudo-module), so a quickstart cannot
-        # name a working EPICURUS_MODULES value.
+        # name a working EPIC_HAL_MODULES value.
         with self.assertRaises(bundlegen.BundleError):
             bundlegen.emit_quickstart_md(load(), "PIC16F193X", "v0.1.0")
 
@@ -435,7 +435,7 @@ class TestMplabxMd(unittest.TestCase):
         self.assertIn("Microchip.PIC16Fxxx_DFP", self.md)
 
     def test_points_at_the_reference_project(self):
-        self.assertIn("examples/epicurus-demo.X", self.md)
+        self.assertIn("examples/epic-hal-demo.X", self.md)
 
     def test_has_no_em_dash(self):
         self.assertNotIn(chr(0x2014), self.md)  # em-dash, repo convention
@@ -447,11 +447,11 @@ class TestReferenceProjectPath(unittest.TestCase):
     def test_maps_family_to_its_project_dir(self):
         self.assertEqual(
             bundlegen.reference_project_dir(load(), "PIC16F87XA"),
-            "examples/epicurus-demo-pic16f87xa.X",
+            "examples/epic-hal-demo-pic16f87xa.X",
         )
         self.assertEqual(
             bundlegen.reference_project_dir(load(), "PIC18Fxx5x"),
-            "examples/epicurus-demo-pic18fxx5x.X",
+            "examples/epic-hal-demo-pic18fxx5x.X",
         )
 
     def test_unknown_family_raises(self):

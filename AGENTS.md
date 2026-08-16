@@ -36,8 +36,8 @@ Each HAL's `src/` mirrors its build environments: `src/core/` and
 `src/peripherals/` are shared, `src/target/` is real-hardware-only,
 `src/sim/` is host-simulation-only, `src/mdb/` holds the MPLAB-SIM gate
 variant. Never glob a HAL `src/` directory into a build; select files
-through the manifest (the bundle's `epicurus.mk` or a reference project).
-The `epicurus` CLI (`scripts/epicurus.py`) scaffolds consumer projects
+through the manifest (the bundle's `epic-hal.mk` or a reference project).
+The `epic-hal` CLI (`scripts/epic_hal.py`) scaffolds consumer projects
 from a bundle: it writes `main.c`, a filled `Makefile`, and a patched
 MPLAB X `.X` for a chosen part and module subset.
 

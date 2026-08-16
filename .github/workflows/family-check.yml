@@ -276,11 +276,11 @@ jobs:
           cat ci-summary-bundle.md >> "$GITHUB_STEP_SUMMARY"
           exit "${bundle_status:-0}"
 
-      # epicurus init end-to-end gate: scaffold a fresh consumer
+      # epic-hal init end-to-end gate: scaffold a fresh consumer
       # project from THIS job's already-generated bundle (Resolution A:
-      # the bundle layout examples/epicurus-demo.X only exists in a
+      # the bundle layout examples/epic-hal-demo.X only exists in a
       # generated bundle, not the repo checkout, so --bundle points at
-      # bundles/epicurus-<slug>-ci-test, not '.'), then build it
+      # bundles/epic-hal-<slug>-ci-test, not '.'), then build it
       # headlessly with the same prjMakefilesGenerator.sh + make
       # pipeline the isolated bundle build uses. The part is the
       # family's last variant; the module subset is resolved from the
@@ -291,7 +291,7 @@ jobs:
       # is built the way a consumer builds it: the QUICKSTART Makefile
       # path (make, which builds build/myapp.hex), which exercises the
       # emitted Makefile,
-      # epicurus.mk resolution, and the selected module subset on the
+      # epic-hal.mk resolution, and the selected module subset on the
       # selected part. prjMakefilesGenerator.sh cannot run headless in
       # the toolchain image: its Java make-generator crashes with
       # NoClassDefFoundError before reading the project, and the
@@ -300,7 +300,7 @@ jobs:
       # the unit tests and by the scaffold output here; MPLAB X's
       # acceptance of the ElementTree-reformatted configurations.xml
       # remains IDE-side verification.
-      - name: epicurus init scaffold-and-build
+      - name: epic-hal init scaffold-and-build
         if: steps.noncode.outputs.non_code != 'true'
         env:
           EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
@@ -314,13 +314,13 @@ jobs:
           family = os.environ["FAMILY"]
           fam = m.families[family]
           print(fam.variants[-1])
-          print(f"bundles/epicurus-{fam.hal_dir.removesuffix('-hal')}-ci-test")
+          print(f"bundles/epic-hal-{fam.hal_dir.removesuffix('-hal')}-ci-test")
           avail = [x.removeprefix("epic-") for x in modules_for_family(m, family)]
           print("serial,tick" if ("serial" in avail and "tick" in avail) else ",".join(avail[:2]))
           PY
           { read -r PART; read -r BUNDLE_DIR; read -r MODS; } < /tmp/epi-resolve
           echo "scaffold: family=$FAMILY part=$PART modules=$MODS bundle=$BUNDLE_DIR"
-          python3 scripts/epicurus.py init \
+          python3 scripts/epic_hal.py init \
             --family "$FAMILY" --part "$PART" --modules "$MODS" \
             --bundle "$BUNDLE_DIR" -o "$BUNDLE_DIR/scaffold" --name myapp
           docker run --rm -v "$PWD:/work" -w /work \

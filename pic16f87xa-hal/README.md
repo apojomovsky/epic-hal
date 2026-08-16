@@ -88,8 +88,8 @@ is done at **build time, not with `#ifdef`**: the XC8 Makefile puts
 `pic16f87xa_platform.h` resolves to the real-target version (SFR macros
 = direct volatile dereference) and the target-side harness / WDT-sleep /
 interrupt-vector implementations are linked. Real-target builds are
-selected through the manifest: the bundle's `epicurus.mk` (or the
-reference project `examples/epicurus-demo-pic16f87xa.X`) drives `xc8-cc`
+selected through the manifest: the bundle's `epic-hal.mk` (or the
+reference project `examples/epic-hal-demo-pic16f87xa.X`) drives `xc8-cc`
 to produce `<MCU>-firmware.hex`.
 
 ## The simulation middleware
@@ -180,4 +180,4 @@ consistent abstraction.
 `src/target/` is real-hardware-only, `src/sim/` is host-simulation-only,
 `src/mdb/` is the MPLAB SIM gate variant. Never glob a `src/`
 directory into your build; select files through the manifest (the
-bundle's `epicurus.mk` or the reference project).
+bundle's `epic-hal.mk` or the reference project).
