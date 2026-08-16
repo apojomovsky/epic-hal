@@ -34,10 +34,18 @@ UNKNOWN_KEY_RE = re.compile(r"\(1363\) unknown configuration "
 MAIN_TU = "#include <xc.h>\nvoid main(void) { for (;;) {} }\n"
 
 
+MAIN_REL = "build-sim/audit-config/_audit_main.c"
+
+
 def link_config_tu(mcu: str, dfp_pack: str, rel_path: str) -> str:
-    """Link one config TU (plus a trivial main) in the container."""
-    main_rel = "build-sim/audit-config/_audit_main.c"
-    (REPO / main_rel).write_text(MAIN_TU)
+    """Link one config TU (plus a trivial main) in the container.
+
+    The main TU is written once by the caller, never here: this runs on a
+    thread pool, and rewriting one shared path while other workers' xc8-cc
+    containers read it hands them a truncated file (seen in CI as a run of
+    "null character ignored" warnings, then error 1091 main not defined).
+    """
+    main_rel = MAIN_REL
     cmd = [
         "docker", "run", "--rm",
         "-v", f"{REPO}:/repo", "-w", "/repo",
@@ -59,6 +67,8 @@ def main() -> int:
     m = manifest_lib.load(manifest_lib.default_path())
     out_root = OUT_ROOT
     out_root.mkdir(parents=True, exist_ok=True)
+    # Written once, before any worker starts, because every link shares it.
+    (REPO / MAIN_REL).write_text(MAIN_TU)
 
     jobs = []
     for module_name in sorted(m.modules):
