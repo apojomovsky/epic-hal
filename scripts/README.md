@@ -162,6 +162,12 @@ scripts themselves run in).
   build, proving each generated bundle is self-contained by building it
   from `/isolated` (no repo above it) rather than in place. Also builds
   each bundle's reference MPLAB X project headlessly.
+- `release.sh <major|minor|patch|vX.Y.Z> [-y] [--watch] [--dry-run]`:
+  cut a release. Syncs with the remote, computes the next version from
+  the newest tag, previews the notes, and pushes the tag that triggers
+  `release-bundles.yml`. Refuses a dirty tree, a non-`master` branch, or
+  a `master` that is not level with the remote. See DEVELOPMENT.md's
+  Releases section.
 - `release_notes.py <tag> [--previous <tag>] [--repo-url <url>]`: the
   "What changed" section of a GitHub Release, grouped from the
   Conventional Commit subjects since the previous version tag. Called by

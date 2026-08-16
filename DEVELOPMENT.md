@@ -94,11 +94,29 @@ definitions and the consolidation tradeoff in its header comment.
 
 ## Releases
 
-Tagging `v*` triggers `release-bundles.yml`: it builds one source bundle
-per family, verifies checksums, gates every bundle from a scratch
-directory outside any repo checkout, and only then attaches the
-tarballs to a GitHub Release. See
+Cutting one is a single command:
+
+    scripts/release.sh patch     # 0.3.7 -> 0.3.8
+    scripts/release.sh minor     # 0.3.7 -> 0.4.0
+    scripts/release.sh major     # 0.3.7 -> 1.0.0
+    scripts/release.sh v0.5.0    # or name the version outright
+
+It syncs with the remote, refuses to run on a dirty tree, off `master`,
+or when `master` is not level with the remote, computes the next version
+from the newest tag, prints the notes that would publish, and asks
+before pushing. Everything up to that prompt is local: declining deletes
+the tag it made to preview with. `-y` skips the prompt, `--dry-run`
+stops before tagging, `--watch` follows the run.
+
+Pushing the tag is the point of no return. Tagging `v*` triggers
+`release-bundles.yml`: it builds one source bundle per family, verifies
+checksums, gates every bundle from a scratch directory outside any repo
+checkout, and only then attaches the tarballs to a GitHub Release. See
 [.github/workflows/release-bundles.yml](.github/workflows/release-bundles.yml).
+
+`-y` also skips the warning about a tag with no commits behind it, so a
+scripted `-y` run can republish an unchanged tree the way v0.3.3 and
+v0.3.4 did.
 
 The release notes are generated, not written. `scripts/release_notes.py`
 reads the Conventional Commit subjects between the previous version tag
