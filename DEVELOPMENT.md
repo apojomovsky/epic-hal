@@ -100,6 +100,27 @@ directory outside any repo checkout, and only then attaches the
 tarballs to a GitHub Release. See
 [.github/workflows/release-bundles.yml](.github/workflows/release-bundles.yml).
 
+The release notes are generated, not written. `scripts/release_notes.py`
+reads the Conventional Commit subjects between the previous version tag
+and this one, groups them (`feat` -> Added, `fix` -> Fixed,
+`refactor`/`perf` -> Changed, `docs` -> Documentation), and puts
+everything else in a collapsed "Internal changes" block so no commit is
+silently dropped. Commit subjects are the only source, so a release can
+never disagree with the history it was cut from.
+
+Two things follow from that. A commit subject is release-notes copy:
+write it for someone reading the release page. And a change that breaks
+consumers has to say so, either `type(scope)!:` in the subject or a
+`BREAKING CHANGE:` footer in the body, or it lands under Changed with
+nothing to flag it (the Epicurus -> Epic HAL rename did exactly this,
+and `EPICURUS_DIR` breaking for every existing consumer went unmarked).
+
+Preview what a tag will publish before pushing it:
+
+    python3 scripts/release_notes.py v0.4.0 \
+        --previous v0.3.7 \
+        --repo-url https://github.com/apojomovsky/epic-hal
+
 ## install.sh
 
 The README's one-command getting started runs `install.sh` (repo root).

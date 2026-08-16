@@ -118,7 +118,8 @@ jobs:
 
       # Every scripts/tests/test_*.py in one loop: the unit tests for
       # the host-side Python tooling (epicmanifest, bundlegen,
-      # epic_build, ci_noncode, doxygen_doc_check, epic_hal_init). No
+      # epic_build, ci_noncode, doxygen_doc_check, epic_hal_init,
+      # release_notes). No
       # `if:` gate: these are fast and validate the scripts themselves,
       # so they run on every PR including non-code ones (a scripts/
       # touch is not a HAL/module change but still needs this gate).
