@@ -20,6 +20,12 @@ if(EPIC_FAMILY STREQUAL "PIC18")
     set(EPIC_LIB          pic18fxx5x_hal)
     set(DEFAULT_DEVICE    PIC18F4550)
     set(DEFAULT_FOSC_HZ   48000000UL)
+elseif(EPIC_FAMILY STREQUAL "PIC16F88X")
+    set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic16f88x-hal
+        CACHE PATH "Path to the pic16f88x-hal source tree")
+    set(EPIC_LIB          pic16f88x_hal)
+    set(DEFAULT_DEVICE    PIC16F887)
+    set(DEFAULT_FOSC_HZ   20000000UL)
 elseif(EPIC_FAMILY STREQUAL "PIC16F193X")
     set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../pic16f193x-hal
         CACHE PATH "Path to the pic16f193x-hal source tree")

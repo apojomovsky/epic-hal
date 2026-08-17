@@ -11,6 +11,12 @@
   #include "pic18fxx5x_sim.h"
   #define SIM_EEPROM_BYTE(addr, data)  pic18_sim_drive_eeprom_byte((addr), (data))
   #define SIM_EEPROM_READ(addr)        pic18_sim_eeprom_read((addr))
+#elif defined(PIC16F882) || defined(PIC16F883) || defined(PIC16F884) || \
+      defined(PIC16F886) || defined(PIC16F887)
+  #include "pic16f88x_sim.h"
+  #define SIM_EEPROM_BYTE(addr, data)  pic16f88x_sim_drive_eeprom_byte((addr), (data))
+  #define SIM_EEPROM_DONE(addr, data)  pic16f88x_sim_drive_eeprom_done((addr), (data))
+  #define SIM_EEPROM_READ(addr)        pic16f88x_sim_eeprom_read((addr))
 #else
   #include "pic16f87xa_sim.h"
   #define SIM_EEPROM_BYTE(addr, data)  pic16f87xa_sim_drive_eeprom_byte((addr), (data))

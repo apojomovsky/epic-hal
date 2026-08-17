@@ -22,6 +22,10 @@ static int g_fails = 0;
   #include "pic16f193x_sim.h"
   #define SIM_DRIVE(port, pin, lvl) \
       do { pic16f193x_sim_drive_input((port), (pin), (lvl)); pic16f193x_sim_step(1); } while (0)
+#elif defined(PIC16F882) || defined(PIC16F883) || defined(PIC16F884) || \
+      defined(PIC16F886) || defined(PIC16F887)
+  #include "pic16f88x_sim.h"
+  #define SIM_DRIVE(port, pin, lvl) pic16f88x_sim_drive_input((port), (pin), (lvl))
 #else
   #include "pic16f87xa_sim.h"
   #define SIM_DRIVE(port, pin, lvl) pic16f87xa_sim_drive_input((port), (pin), (lvl))

@@ -18,7 +18,7 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 import epicmanifest as manifest_lib  # noqa: E402
 
-BANKED_FAMILIES = ("PIC16F87XA", "PIC16F193X")
+BANKED_FAMILIES = ("PIC16F87XA", "PIC16F193X", "PIC16F88X")
 
 HANDLE_TYPEDEF_RE = re.compile(r"HandleTypeDef|struct\b|\bunion\b")
 # Placement pins: XC8's raw __at or the platform-header EPIC_PLACE

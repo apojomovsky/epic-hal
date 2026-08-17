@@ -89,6 +89,47 @@ variants = [
   "16F877A",
 ]
 
+[families.PIC16F88X]
+hal_dir  = "pic16f88x-hal"
+variants = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
+dfp      = "Microchip.PIC16Fxxx_DFP"
+dfp_version = "1.7.162"
+fosc_hz  = 20000000
+includes = [
+  "pic16f88x-hal/include/target",
+  "pic16f88x-hal/include",
+  "epic-common/include",
+]
+hal_sources = [
+  "pic16f88x-hal/src/peripherals/pic16f88x_gpio.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_timer0.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_timer1.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_timer2.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_ccp.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_usart.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_ssp.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_adc.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_comp.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_vref.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_srlatch.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_eeprom.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_osc.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_ulpwu.c",
+  "pic16f88x-hal/src/core/pic16_irq.c",
+  "pic16f88x-hal/src/core/pic16f88x_wdt_sleep.c",
+  "pic16f88x-hal/src/target/pic16f88x_wdt_sleep_target.c",
+  "pic16f88x-hal/src/target/pic16_isr_vector.c",
+  "pic16f88x-hal/src/core/pic16_irq_dispatch.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+
 [families.PIC18Fxx5x]
 hal_dir  = "pic18fxx5x-hal"
 variants = [
@@ -226,6 +267,48 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 [modules.pic16f87xa-hal.example.PIC16F87XA.sim]
 name        = "bank-probe"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_bank_probe.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# pic16f88x-hal's own manifest slot, mirroring the 87XA pseudo-module:
+# no application code, just the family's real-target smoke
+# (tests/example_blink.c) and the HARNESS=sim banked-SFR probe gate.
+# The probe (tests/sim_bank_probe.c) exercises every banked-SFR access
+# path across all four banks (Bank 1: OPTION_REG/TRISx/TXSTA/SPBRG/
+# ADCON1/VRCON; Bank 2: WDTCON/CM1CON0/CM2CON0/CM2CON1; Bank 3:
+# SRCON) with known values and reads them back, so XC8 v4.00 bank
+# misdirection fails the gate instead of corrupting silently.
+[modules.pic16f88x-hal]
+dir        = "pic16f88x-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.pic16f88x-hal.supported]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
+
+[modules.pic16f88x-hal.example.PIC16F88X]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", WRT = "OFF" }
+
+# HARNESS=sim: the banked-SFR probe. WDTE=OFF like every other sim
+# variant (a diagnostic build that terminates and reports does not need
+# the watchdog).
+[modules.pic16f88x-hal.example.PIC16F88X.sim]
+name        = "bank-probe"
+harness_src = "pic16f88x-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_bank_probe.c",
 ]
@@ -619,6 +702,13 @@ PIC16F87XA = [
   "16F876A",
   "16F877A",
 ]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
 PIC18Fxx5x = [
   "18F2455",
   "18F2550",
@@ -649,6 +739,29 @@ name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
+[modules.epic-adcfilter.example.PIC16F88X]
+name    = "adcfilter"
+sources = [
+  "examples/example_adcfilter.c",
+]
+depends_on = [
+  "epic-tick",
+  "epic-serial",
+]
+# HARNESS=sim needs the family HAL for the harness USART, and the
+# example uses EPIC_ADC_*/epic_tick/epic_serial, so the example opts
+# in to the HAL despite the module being pure logic.
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# The example logs over epic-serial, which is excluded on the 4K-word
+# parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
+# parts keep the footprint probe.
+[modules.epic-adcfilter.example.PIC16F88X.variants.16F873A]
+name    = "adcfilter-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
 
 [modules.epic-adcfilter.example.PIC16F87XA.variants.16F874A]
 name    = "adcfilter-sizecheck"
@@ -667,6 +780,13 @@ sources = [
 [modules.epic-adcfilter.example.PIC16F87XA.sim]
 name        = "adcfilter-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_adcfilter.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-adcfilter.example.PIC16F88X.sim]
+name        = "adcfilter-sim"
+harness_src = "pic16f88x-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_adcfilter.c",
 ]
@@ -714,6 +834,13 @@ PIC16F87XA = [
   "16F876A",
   "16F877A",
 ]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
 PIC18Fxx5x = [
   "18F4455",
   "18F4550",
@@ -749,6 +876,32 @@ sources     = [
   "tests/sim_bus.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-bus.example.PIC16F88X]
+name    = "bus"
+sources = [
+  "examples/example_bus.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# diagnostic build (tests/sim_bus.c) that runs the real compiled
+# epic_bus.c under MPLAB SIM on a 16F877A, exercising the master-side
+# path: real SSP config readback, real SSP register traffic with
+# bounded SSPIF polls (the default ops' own waits are unbounded), and
+# the MEM transaction logic through the documented ops seam (MPLAB SIM
+# has no slave device to inject on the I2C/SPI bus, same constraint as
+# epic-swuart's sim build). hal = true because the build links the
+# family HAL for the harness USART. WDTE=OFF for the same reason as
+# every other family's own sim variant: a diagnostic build that
+# terminates and reports does not need the watchdog running unattended.
+[modules.epic-bus.example.PIC16F88X.sim]
+name        = "bus-sim"
+harness_src = "pic16f88x-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_bus.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-mcp23x17]
 dir        = "epic-mcp23x17"
@@ -767,6 +920,13 @@ PIC16F87XA = [
   "16F876A",
   "16F877A",
 ]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
 
 [modules.epic-mcp23x17.example.PIC16F87XA]
 name    = "mcp23x17"
@@ -783,6 +943,25 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 [modules.epic-mcp23x17.example.PIC16F87XA.sim]
 name        = "mcp23x17-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_mcp23x17.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-mcp23x17.example.PIC16F88X]
+name    = "mcp23x17"
+sources = [
+  "examples/example_mcp23x17_target.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# HARNESS=sim: the same bounded, self-reporting shape as epic-bus's
+# gate (the sim SSP data path is unmodeled, so the gate proves the
+# module links and the init runs; the register semantics are
+# host-tested against the mock device).
+[modules.epic-mcp23x17.example.PIC16F88X.sim]
+name        = "mcp23x17-sim"
+harness_src = "pic16f88x-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_mcp23x17.c",
 ]
@@ -812,6 +991,13 @@ PIC16F87XA = [
   "16F876A",
   "16F877A",
 ]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
 PIC18Fxx5x = [
   "18F4455",
   "18F4550",
@@ -830,6 +1016,12 @@ PIC18Fxx5x = [
 "18F2550" = "RAM: does not fit on this smaller part"
 
 [modules.epic-console.example.PIC16F87XA]
+name    = "console"
+sources = [
+  "examples/example_console.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-console.example.PIC16F88X]
 name    = "console"
 sources = [
   "examples/example_console.c",
@@ -887,6 +1079,13 @@ PIC16F87XA = [
   "16F876A",
   "16F877A",
 ]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
 PIC18Fxx5x = [
   "18F4455",
   "18F4550",
@@ -921,6 +1120,29 @@ sources     = [
   "tests/sim_debounce.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-debounce.example.PIC16F88X]
+name    = "debounce"
+sources = [
+  "examples/example_debounce.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# debounce gate under MPLAB SIM. Feeds a scripted noisy level sequence
+# through the module's own epic_debounce_read_fn callback (the sim drives a
+# synthetic level from epic_tick_get(), not a GPIO pin, so no MPLAB SIM
+# pin-injection limitation applies) and verifies one PRESSED and one
+# RELEASED, each committed only after the full debounce window. WDTE=OFF
+# for the same reason as every other family's sim variant: a diagnostic
+# build that terminates and reports does not need the watchdog running
+# unattended.
+[modules.epic-debounce.example.PIC16F88X.sim]
+name        = "debounce-sim"
+harness_src = "pic16f88x-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_debounce.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-debounce.example.PIC18Fxx5x]
 name    = "debounce"
@@ -947,6 +1169,13 @@ PIC16F87XA = [
   "16F874A",
   "16F876A",
   "16F877A",
+]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
 ]
 PIC18Fxx5x = [
   "18F4455",
@@ -976,6 +1205,25 @@ sources = [
   "mcu/target_sizecheck.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-encoder.example.PIC16F88X]
+name    = "encoder"
+sources = [
+  "examples/example_encoder.c",
+]
+depends_on = [
+  "epic-serial",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# The example logs over epic-serial, which is excluded on the 4K-word
+# parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
+# parts keep the footprint probe.
+[modules.epic-encoder.example.PIC16F88X.variants.16F873A]
+name    = "encoder-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-encoder.example.PIC16F87XA.variants.16F874A]
 name    = "encoder-sizecheck"
@@ -995,6 +1243,21 @@ harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_encoder.c",
 ]
+# The sim test logs over the harness USART, not epic-serial; the
+# example's epic-serial dep would pull in a 9-byte local that
+# overflows 16F887 RAM (XC8 error 1250).
+depends_on  = []
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-encoder.example.PIC16F88X.sim]
+name        = "encoder-sim"
+harness_src = "pic16f88x-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_encoder.c",
+]
+# The sim test logs over the harness USART, not epic-serial; the
+# example's epic-serial dep would pull in a 9-byte local that
+# overflows 16F887 RAM (XC8 error 1250).
+depends_on  = []
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-encoder.example.PIC18Fxx5x]
@@ -1024,6 +1287,13 @@ PIC16F87XA = [
   "16F874A",
   "16F876A",
   "16F877A",
+]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
 ]
 PIC18Fxx5x = [
   "18F4455",
@@ -1070,6 +1340,34 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 [modules.epic-fsm.example.PIC16F87XA.sim]
 name        = "fsm-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_fsm.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-fsm.example.PIC16F88X]
+name    = "fsm"
+sources = [
+  "examples/example_fsm.c",
+]
+hal     = true
+depends_on = [
+  "epic-tick",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# 3-state FSM driven through a scripted event sequence over the real
+# API, distinct from the real-target example_fsm.c above (an unbounded
+# LED demo with no core/epic_harness.h dependency). This module's
+# first real mdb gate; PIC16F87XA/16F877A only. hal = true because the
+# sim build links the family HAL for the harness USART (the module
+# itself is needs_hal = false; epicmanifest.py uses_hal() reads the
+# example's hal flag). WDTE=OFF for the same reason as every other
+# family's own sim variant: a diagnostic build that terminates and
+# reports does not need the watchdog running unattended.
+[modules.epic-fsm.example.PIC16F88X.sim]
+name        = "fsm-sim"
+harness_src = "pic16f88x-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_fsm.c",
 ]
@@ -1176,6 +1474,13 @@ PIC16F87XA = [
   "src/pic16/epic_math_mul.c",
   "src/pic16/epic_math_scratch.c",
 ]
+PIC16F88X = [
+  "src/pic16/epic_math_addsub.c",
+  "src/pic16/epic_math_bcd.c",
+  "src/pic16/epic_math_div.c",
+  "src/pic16/epic_math_mul.c",
+  "src/pic16/epic_math_scratch.c",
+]
 PIC18Fxx5x = [
   "src/pic18/epic_math_addsub.c",
   "src/pic18/epic_math_bcd.c",
@@ -1189,6 +1494,13 @@ PIC16F87XA = [
   "16F874A",
   "16F876A",
   "16F877A",
+]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
 ]
 PIC18Fxx5x = [
   "18F4455",
@@ -1224,6 +1536,31 @@ sources = [
 ]
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-math.example.PIC16F88X]
+name    = "math"
+sources = [
+  "examples/example_math.c",
+]
+hal    = true
+depends_on = [
+  "epic-serial",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# The 4K-word parts (16F873A/16F874A) cannot hold the golden-vector
+# replay: the selftest plus the page-0-pinned asm leaves fragments the
+# CODE space and the link fails with 1347 (measured 2026-08-11). They
+# keep the smoke, which still proves every asm body links and executes.
+# They also cannot hold the new example: epic-serial (which it logs
+# over) is excluded there for RAM, so these parts keep the smoke
+# instead of the example.
+[modules.epic-math.example.PIC16F88X.variants.16F873A]
+name    = "math-selftest"
+sources = [
+  "tests/target_smoke16.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-math.example.PIC16F87XA.variants.16F874A]
 name    = "math-selftest"
@@ -1245,6 +1582,13 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 [modules.epic-math.example.PIC16F87XA.sim]
 name        = "math-selftest-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/target_selftest.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-math.example.PIC16F88X.sim]
+name        = "math-selftest-sim"
+harness_src = "pic16f88x-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/target_selftest.c",
 ]
@@ -1350,6 +1694,13 @@ PIC16F87XA = [
   "16F876A",
   "16F877A",
 ]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
 PIC18Fxx5x = [
   "18F2455",
   "18F2550",
@@ -1374,6 +1725,27 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # parts keep the footprint probe while the serial-capable parts build
 # the real example.
 [modules.epic-pid.example.PIC16F87XA.variants.16F873A]
+name    = "pid-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+[modules.epic-pid.example.PIC16F88X]
+name    = "pid"
+sources = [
+  "examples/example_pid.c",
+]
+hal     = true
+depends_on = [
+  "epic-tick",
+  "epic-serial",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# The example logs over epic-serial, which is excluded on the 4K-word
+# parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
+# parts keep the footprint probe while the serial-capable parts build
+# the real example.
+[modules.epic-pid.example.PIC16F88X.variants.16F873A]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
@@ -1444,6 +1816,13 @@ PIC16F87XA = [
   "16F876A",
   "16F877A",
 ]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
 PIC18Fxx5x = [
   "18F4455",
   "18F4550",
@@ -1474,6 +1853,29 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 [modules.epic-serial.example.PIC16F87XA.sim]
 name        = "serial-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_serial.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-serial.example.PIC16F88X]
+name    = "serial"
+sources = [
+  "examples/example_serial.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# gate that runs the real compiled epic_serial.c under MPLAB SIM on a
+# 16F877A, exercising the audited class-G paths (Disable/Restore inside
+# the TX ISR callback and in the blocking write, docs/toolchain-
+# coverage.md) plus the TXIE-gated dispatch. PIC16F87XA/16F877A only.
+# WDTE=OFF for the same reason as every other sim variant: a diagnostic
+# build that terminates and reports does not need the watchdog running
+# unattended.
+[modules.epic-serial.example.PIC16F88X.sim]
+name        = "serial-sim"
+harness_src = "pic16f88x-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_serial.c",
 ]
@@ -1648,6 +2050,13 @@ PIC16F87XA = [
   "16F876A",
   "16F877A",
 ]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
 PIC18Fxx5x = [
   "18F2455",
   "18F2550",
@@ -1691,6 +2100,30 @@ sources     = [
   "tests/sim_mdb_swuart.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-swuart.example.PIC16F88X]
+name    = "swuart"
+sources = [
+  "examples/example_swuart.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# HARNESS=sim (see scripts/ci-target-sim.sh): a bounded, self-reporting
+# CCP TX+RX round-trip, distinct from the real-target example_swuart.c
+# above (an unbounded loop, no core/epic_harness.h dependency). This
+# module's first-ever real mdb gate coverage; only PIC16F87XA/16F877A
+# is wired up for now (channel A's pins are identical across all three
+# families per epic_swuart.c's own Init validation, so this exercises
+# the shared logic, not something PIC16F87XA-specific). WDTE=OFF for
+# the same reason as every other family's own sim variant: a
+# diagnostic build that terminates and reports does not need the
+# watchdog running unattended.
+[modules.epic-swuart.example.PIC16F88X.sim]
+name        = "swuart-sim"
+harness_src = "pic16f88x-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_mdb_swuart.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules.epic-swuart.example.PIC18Fxx5x]
 name    = "swuart"
@@ -1721,6 +2154,13 @@ PIC16F87XA = [
   "16F876A",
   "16F877A",
 ]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
 PIC18Fxx5x = [
   "18F4455",
   "18F4550",
@@ -1733,6 +2173,12 @@ PIC18Fxx5x = [
 "18F2550" = "link: irq dispatch needs every peripheral handler"
 
 [modules.epic-taskmgr.example.PIC16F87XA]
+name    = "taskmgr"
+sources = [
+  "examples/example_taskmgr.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-taskmgr.example.PIC16F88X]
 name    = "taskmgr"
 sources = [
   "examples/example_taskmgr.c",
@@ -1784,6 +2230,13 @@ PIC16F87XA = [
   "16F876A",
   "16F877A",
 ]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
 PIC18Fxx5x = [
   "18F4455",
   "18F4550",
@@ -1813,6 +2266,30 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 [modules.epic-tick.example.PIC16F87XA.sim]
 name        = "tick-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_tick.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-tick.example.PIC16F88X]
+name    = "tick"
+sources = [
+  "examples/example_tick.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# HARNESS=sim (see sim-tests.yml): a bounded, self-reporting firmware
+# build driven under MPLAB SIM, distinct from the real-target
+# HARNESS=target build above. The target example is an unbounded demo
+# (it would never terminate under SIM), so the sim variant gets its own
+# bounded harness source (tests/sim_tick.c, the delay-accuracy gate
+# that used to live in examples/example_tick.c), plus the harness
+# source swap and WDTE off, mirroring
+# epic-tick/mcu/pic16f87xa-tick-mplabx/Makefile's HARNESS=sim branch
+# (real-target firmware needs the watchdog running unattended, a
+# diagnostic build that terminates and reports over USART does not).
+[modules.epic-tick.example.PIC16F88X.sim]
+name        = "tick-sim"
+harness_src = "pic16f88x-hal/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_tick.c",
 ]

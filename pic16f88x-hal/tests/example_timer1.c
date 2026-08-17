@@ -1,0 +1,58 @@
+/* End-to-end smoke test for the Timer1 driver on the sim backend.
+ * Timer1 counts Fosc/4 at 1:1; TMR1IF fires every 65 536 instruction
+ * cycles and the test counts overflows. */
+
+#include "pic16f88x.h"
+#include "pic16f88x_sim.h"
+#include "pic16f88x_sfr.h"
+#include "peripherals/pic16f88x_timer1.h"
+#include "core/pic16_irq.h"
+#include <stdio.h>
+
+#define EXPECTED_OVERFLOWS  3U
+/** Cycles between overflows at 1:1 prescaler = 0x10000 = 65536. */
+#define OVERFLOW_CYCLES     65536UL
+#define SIM_BUDGET          ((OVERFLOW_CYCLES * EXPECTED_OVERFLOWS) + 1024UL)
+
+static volatile uint32_t overflows = 0;
+
+/**
+ * @brief Count Timer1 overflows.
+ */
+static void on_t1_overflow(void)
+{
+    overflows++;
+}
+
+/**
+ * @brief Verify Timer1 overflow cadence on the sim backend.
+ */
+int main(void)
+{
+    pic16f88x_sim_reset();
+    pic16f88x_sim_set_irq_callback(TIMER1_IRQHandler);
+
+    TIMER1_HandleTypeDef h = TIMER1_HANDLE_DEFAULT;
+    h.Prescaler        = TIMER1_PRESCALER_1_1;
+    h.ClockSource      = TIMER1_CLOCK_INTERNAL;
+    h.ReloadValue      = 0x0000U;
+    h.OverflowCallback = on_t1_overflow;
+
+    EPIC_StatusTypeDef st = EPIC_TIMER1_Init(&h);
+    if (st != EPIC_OK) { printf("FAIL: Init returned %u\n", (unsigned)st); return 1; }
+    EPIC_TIMER1_Start(&h);
+
+    for (uint32_t i = 0; i < SIM_BUDGET; i++) {
+        pic16f88x_sim_step(1);
+        if (overflows >= EXPECTED_OVERFLOWS) break;
+    }
+
+    if (overflows >= EXPECTED_OVERFLOWS) {
+        printf("OK: Timer1 produced %u overflows (expected >= %u)\n",
+               (unsigned)overflows, (unsigned)EXPECTED_OVERFLOWS);
+        return 0;
+    }
+    printf("FAIL: Timer1 produced only %u overflows (expected %u)\n",
+           (unsigned)overflows, (unsigned)EXPECTED_OVERFLOWS);
+    return 1;
+}

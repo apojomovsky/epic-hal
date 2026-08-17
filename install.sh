@@ -26,7 +26,7 @@ set -eu
 
 BASE_URL="${EPIC_HAL_BASE_URL:-https://github.com/apojomovsky/epic-hal/releases}"
 DEST="${EPIC_HAL_DIR:-./third_party/epic-hal}"
-FAMILIES="pic16f87xa pic18fxx5x pic16f193x"
+FAMILIES="pic16f87xa pic18fxx5x pic16f193x pic16f88x"
 
 usage() {
     cat <<EOF

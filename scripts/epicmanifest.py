@@ -54,11 +54,19 @@ class SimVariant:
     is off in every sim variant seen so far, and restating the whole
     config table keeps this dataclass's contract simple (no partial-
     override merge logic to get subtly wrong).
+
+    depends_on, when set, replaces the example's depends_on for the sim
+    build (the sim variant's sources replace the example's, so its
+    deps replace the example's too; unset inherits the example's).
+    epic-encoder's sim test logs over the harness USART and needs no
+    epic-serial, but the target example does, so the sim variant
+    declares an empty list to drop it.
     """
     name: str
     harness_src: str
     config: dict[str, str]
     sources: list[str] | None = None
+    depends_on: list[str] | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -130,7 +138,8 @@ class Manifest:
         visit(module_name)
         return ordered
 
-    def resolved_deps(self, module_name: str, mcu: str) -> list[str]:
+    def resolved_deps(self, module_name: str, mcu: str,
+                      variant: str = "target") -> list[str]:
         """The module's deps plus the resolved example's deps, dependencies
         first, de-duplicated.
 
@@ -138,12 +147,18 @@ class Manifest:
         resolved example may be a per-MCU variant with its own
         depends_on, e.g. epic-math's small-part probes carry no serial
         dep), and expanded transitively just like the module's own.
+        A sim variant's own depends_on replaces the example's (its
+        sources replace the example's, so its deps do too).
         """
         names = list(self.resolve_deps(module_name))
         fam = self.family_of(mcu)
         example = self.example_for(module_name, fam.name, mcu)
-        if example is not None and example.depends_on:
-            for dep in example.depends_on:
+        if example is not None:
+            deps = example.depends_on
+            if variant == "sim" and example.sim is not None \
+                    and example.sim.depends_on is not None:
+                deps = example.sim.depends_on
+            for dep in deps:
                 names += self.resolve_deps(dep)
         return _dedupe(names)
 
@@ -240,7 +255,7 @@ class Manifest:
                         out.append(c.path)
             out += [c.path for c in applicable if c.after is None]
 
-        for name in self.resolved_deps(module_name, mcu):
+        for name in self.resolved_deps(module_name, mcu, variant=variant):
             mod = self._module(name)
             out += [f"{mod.dir}/{s}" for s in mod.sources]
             out += [f"{mod.dir}/{s}"
@@ -256,7 +271,8 @@ class Manifest:
 
         return _dedupe(out)
 
-    def includes_for(self, module_name: str, mcu: str) -> list[str]:
+    def includes_for(self, module_name: str, mcu: str,
+                     variant: str = "target") -> list[str]:
         """Repo-root-relative include dirs, family first when the HAL is used.
 
         Family order is preserved verbatim: include/target must precede
@@ -266,7 +282,7 @@ class Manifest:
         """
         fam = self.family_of(mcu)
         out = list(fam.includes) if self.uses_hal(module_name, mcu) else []
-        for name in self.resolved_deps(module_name, mcu):
+        for name in self.resolved_deps(module_name, mcu, variant=variant):
             mod = self._module(name)
             out += [f"{mod.dir}/{i}" for i in mod.includes]
         return _dedupe(out)
@@ -316,6 +332,7 @@ def _parse_sim_variant(module_name, family_name, table):
         harness_src=_require(table, "harness_src", where),
         config=dict(_require(table, "config", where)),
         sources=(list(table["sources"]) if "sources" in table else None),
+        depends_on=(list(table["depends_on"]) if "depends_on" in table else None),
     )
 
 
