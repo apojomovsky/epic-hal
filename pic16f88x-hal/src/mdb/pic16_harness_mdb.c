@@ -6,7 +6,7 @@
 
 #include "core/epic_harness.h"
 #include "core/pic16_irq.h"
-#include "peripherals/pic16f87xa_usart.h"
+#include "peripherals/pic16f88x_usart.h"
 
 #include <stdint.h>
 
@@ -23,7 +23,7 @@ static uint32_t g_cycles = 0U;
  */
 static void s_tx_cplt(void)
 {
-    /* Non-null so EPIC_USART_Init arms TXEN (pic16f87xa_usart.c); never
+    /* Non-null so EPIC_USART_Init arms TXEN (pic16f88x_usart.c); never
      * actually called, transmission below is polled. */
 }
 
@@ -56,7 +56,7 @@ void epic_harness_init(uint32_t cycles)
     g_cycles = cycles;
 
     s_usart_handle = (USART_HandleTypeDef)USART_HANDLE_DEFAULT;
-    s_usart_handle.SPBRG = (uint8_t)USART_ComputeSPBRG(
+    s_usart_handle.SPBRG = (uint16_t)USART_ComputeSPBRG(
         FOSC_HZ, EPIC_HARNESS_SIM_BAUD, USART_MODE_ASYNCHRONOUS,
         USART_BRGH_HIGH);
     s_usart_handle.TxCpltCallback = s_tx_cplt;
