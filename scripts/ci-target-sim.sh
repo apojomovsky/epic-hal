@@ -48,6 +48,7 @@ run_one() {
   else
     echo "FAIL: ${family} ${mcu} ${module} (${pass}/${repeat} runs passed)"
     echo "| ${family} | ${mcu} | ${module} | FAIL (${pass}/${repeat}) |" >> "$summary"
+    fail=1
     return 1
   fi
   return 0
@@ -89,6 +90,17 @@ run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-eeprom-isr 5000 uart 32
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-tick-settings 5000 uart 32
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-taskmgr-serial 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-modbus-full 5000 uart
+run_one pic16f88x 16F887 PIC16F887 pic16f88x-hal 5000 uart
+run_one pic16f88x 16F887 PIC16F887 epic-tick 5000 uart
+run_one pic16f88x 16F887 PIC16F887 epic-swuart 15000 uart
+run_one pic16f88x 16F887 PIC16F887 epic-math 5000 uart
+run_one pic16f88x 16F887 PIC16F887 epic-fsm 5000 uart
+run_one pic16f88x 16F887 PIC16F887 epic-adcfilter 5000 uart
+run_one pic16f88x 16F887 PIC16F887 epic-encoder 5000 uart
+run_one pic16f88x 16F887 PIC16F887 epic-bus 5000 uart
+run_one pic16f88x 16F887 PIC16F887 epic-mcp23x17 5000 uart
+run_one pic16f88x 16F887 PIC16F887 epic-serial 10000 uart
+run_one pic16f88x 16F887 PIC16F887 epic-debounce 5000 uart
 fi
 
 if [ "$parallel" -gt 1 ]; then
