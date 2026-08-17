@@ -370,6 +370,19 @@ assumes the previous ones are done and verified, not just written):
      one or two entries), then encode the derived formula in the
      driver with a comment citing where it came from, not the formula
      alone.
+   - **A classic-mid-range family can spread SFRs across all four
+     banks even when its sibling keeps them in two** (PIC16F88X vs
+     PIC16F87XA: 88X puts OSCCON/OSCTUNE in Bank 1, CM1CON0/CM2CON0/
+     CM2CON1 in Bank 2, SRCON/BAUDCTL/ANSEL/ANSELH in Bank 3). The
+     banked-access layer must be built and probed before the
+     peripherals, and the probe must exercise every banked access site
+     (see `pic16f88x-hal/docs/ARCHITECTURE.md`'s banking section).
+   - **The smallest part in the family can be RAM-starved enough to
+     change driver storage strategy** (PIC16F882: 128 B RAM, no
+     Bank 2/3 GPR to pin into). If the largest part's drivers fit only
+     by pinning to high banks, the small part forces unpinned
+     best-fit storage; verify the whole family builds, not just the
+     flagship, before calling the family done.
 7. **`<family>-hal/MANUAL.md`** as you go, matching
    `pic16f87xa-hal/MANUAL.md`/`pic18fxx5x-hal/MANUAL.md`'s shape:
    datasheet-cited peripheral/register reference, pointing to

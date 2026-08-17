@@ -93,8 +93,14 @@ int epic_harness_running(uint32_t iteration)
  */
 void epic_harness_log(const char *fmt, ...)
 {
+    /* The polled transmit chain is 6 calls deep (report -> log -> putc
+     * -> Transmit -> ClearFlag); the 1 ms tick ISR adds 4 more, which
+     * overflows the 8-level hardware stack if it fires mid-print. Mask
+     * GIE for the whole line so the marker cannot be corrupted. */
+    uint8_t prev_gie = EPIC_IRQ_Disable();
     while (*fmt) {
         s_uart_putc(*fmt);
         fmt++;
     }
+    EPIC_IRQ_Restore(prev_gie);
 }

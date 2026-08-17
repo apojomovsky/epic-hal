@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>com.microchip.mplab.nbide.embedded.makeproject</type>
+    <configuration>
+        <data xmlns="http://www.netbeans.org/ns/make-project/1">
+            <name>epic-hal-demo-pic16f193x</name>
+            <creation-uuid>e6761d85-2510-4c26-88c5-7dda46959312</creation-uuid>
+            <make-project-type>0</make-project-type>
+            <sourceEncoding>ISO-8859-1</sourceEncoding>
+            <make-dep-projects/>
+            <sourceRootList>
+                <sourceRootElem>../../epic-common/src/core</sourceRootElem>
+                <sourceRootElem>../../pic16f193x-hal/src/core</sourceRootElem>
+                <sourceRootElem>../../pic16f193x-hal/src/target</sourceRootElem>
+                <sourceRootElem>../../pic16f193x-hal/src/peripherals</sourceRootElem>
+            </sourceRootList>
+            <confList>
+                <confElem>
+                    <name>default</name>
+                    <type>2</type>
+                </confElem>
+            </confList>
+            <formatting>
+                <project-formatting-style>false</project-formatting-style>
+            </formatting>
+        </data>
+    </configuration>
+</project>

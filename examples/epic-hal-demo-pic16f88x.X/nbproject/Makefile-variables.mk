@@ -1,0 +1,10 @@
+#
+# Generated - do not edit!
+#
+# NOCDDL
+#
+CND_BASEDIR=`pwd`
+# default configuration
+CND_ARTIFACT_DIR_default=dist/default/production
+CND_ARTIFACT_NAME_default=epic-hal-demo-pic16f193x.X.production.hex
+CND_ARTIFACT_PATH_default=dist/default/production/epic-hal-demo-pic16f193x.X.production.hex

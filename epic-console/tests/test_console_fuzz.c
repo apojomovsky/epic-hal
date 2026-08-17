@@ -20,6 +20,11 @@
   #include "pic18fxx5x_sim.h"
   #define SIM_RX(b)  pic18_sim_drive_usart_rx((uint8_t)(b))
   #define TEST_FOSC_HZ 48000000UL
+#elif defined(PIC16F882) || defined(PIC16F883) || defined(PIC16F884) || \
+      defined(PIC16F886) || defined(PIC16F887)
+  #include "pic16f88x_sim.h"
+  #define SIM_RX(b)  pic16f88x_sim_drive_usart_rx((uint8_t)(b))
+  #define TEST_FOSC_HZ 20000000UL
 #else
   #include "pic16f87xa_sim.h"
   #define SIM_RX(b)  pic16f87xa_sim_drive_usart_rx((uint8_t)(b))

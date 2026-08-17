@@ -163,6 +163,11 @@ jobs:
     with:
       family: PIC16F193X
 
+  family-88x:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F88X
+
   # Flake-hunt: REPEAT=N run of every sim gate (quality task 10),
   # manual-trigger only so a hunt does not slow the PR target job.
   # Reuses the target job's emit step and the same ci-target-sim.sh the
@@ -225,6 +230,13 @@ jobs:
               ("epic-combo-swuart-tick", "16F877A"),
               ("epic-combo-modbus-full", "18F4550"),
               ("epic-combo-rx-loopback", "16F877A"),
+              ("pic16f88x-hal", "16F887"), ("epic-tick", "16F887"),
+              ("epic-swuart", "16F887"), ("epic-math", "16F887"),
+              ("epic-fsm", "16F887"),
+              ("epic-adcfilter", "16F887"), ("epic-encoder", "16F887"),
+              ("epic-bus", "16F887"),
+              ("epic-mcp23x17", "16F887"), ("epic-serial", "16F887"),
+              ("epic-debounce", "16F887"),
           ]:
               # The sim list is shared across merge orders (the
               # rx-loopback module lands on its own PR); skip modules

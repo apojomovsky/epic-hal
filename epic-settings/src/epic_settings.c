@@ -27,6 +27,20 @@
         pic18_sim_drive_eeprom_byte(addr, data);
         epic_sfr_write8(PIC_REG_PIR2, (uint8_t)(epic_sfr_read8(PIC_REG_PIR2) | PIC_PIR2_EEIF));
     }
+  #elif defined(PIC16F882) || defined(PIC16F883) || defined(PIC16F884) || \
+      defined(PIC16F886) || defined(PIC16F887)
+    #include "pic16f88x_sim.h"
+    /**
+     * @brief Drive one sim EEPROM byte write and raise EEIF (PIC16F88X).
+     *
+     * @param addr EEPROM address written
+     * @param data byte written
+     */
+    static void settings_sim_complete(uint8_t addr, uint8_t data)
+    {
+        pic16f88x_sim_drive_eeprom_byte(addr, data);
+        EPIC_REG8(PIC_REG_PIR2) |= PIC_PIR2_EEIF;
+    }
   #else
     #include "pic16f87xa_sim.h"
     /**

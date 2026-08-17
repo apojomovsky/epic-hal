@@ -65,7 +65,7 @@ def main() -> int:
     import argparse
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
-                                         "PIC16F193X"), default=None,
+                                         "PIC16F193X", "PIC16F88X"), default=None,
                     help="only this manifest family (the sharded CI jobs)")
     args = ap.parse_args()
     matrix = json.loads(subprocess.run(

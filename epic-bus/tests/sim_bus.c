@@ -11,9 +11,16 @@
 #include "epic_bus.h"
 #include "core/epic_harness.h"
 #include "core/pic16_irq.h"
+#if defined(PIC16F882) || defined(PIC16F883) || defined(PIC16F884) || \
+    defined(PIC16F886) || defined(PIC16F887)
+#include "target/pic16f88x_platform.h"
+#include "pic16f88x_sfr.h"
+#include "peripherals/pic16f88x_ssp.h"
+#else
 #include "target/pic16f87xa_platform.h"
 #include "pic16f87xa_sfr.h"
 #include "peripherals/pic16f87xa_ssp.h"
+#endif
 
 #include <stdint.h>
 

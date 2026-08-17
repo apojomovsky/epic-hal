@@ -1,0 +1,221 @@
+/* EUSART driver, async + sync master/slave, enhanced (BRG16, auto-baud
+ * detect, wake-up on start bit). Source: DS40001291H §12.0, §12.1 (BRG);
+ * full reference: MANUAL.md §EUSART. One EUSART instance on this
+ * family; 8/9-bit data, address-detect mode via ADDEN, auto-baud via
+ * ABDEN/ABDOVF (BAUDCTL), wake-up on start bit via WUE. */
+
+#ifndef PIC16F88X_USART_H
+#define PIC16F88X_USART_H
+
+#include "pic16f88x.h"
+#include "pic16f88x_sfr.h"
+
+/**
+ * @brief EUSART mode (TXSTA<SYNC>, DS40001291H Register 12-1).
+ */
+typedef enum {
+    USART_MODE_ASYNCHRONOUS  = 0x0U,   /**< SYNC = 0. */
+    USART_MODE_SYNCHRONOUS   = 0x1U,   /**< SYNC = 1. */
+} USART_ModeTypeDef;
+
+/**
+ * @brief Synchronous clock source (TXSTA<CSRC>, Register 12-1).
+ *        Only meaningful in synchronous mode; ignored otherwise.
+ */
+typedef enum {
+    USART_CLOCK_SLAVE        = 0x0U,   /**< CSRC = 0, clock from external. */
+    USART_CLOCK_MASTER       = 0x1U,   /**< CSRC = 1, clock from BRG. */
+} USART_ClockSourceTypeDef;
+
+/**
+ * @brief High/low baud-rate divisor (TXSTA<BRGH>, DS40001291H §12.1).
+ *        Async mode only. Synchronous mode always uses /4.
+ */
+typedef enum {
+    USART_BRGH_LOW           = 0x0U,   /**< BRGH = 0, divisor 64. */
+    USART_BRGH_HIGH          = 0x1U,   /**< BRGH = 1, divisor 16. */
+} USART_BaudRateHighTypeDef;
+
+/**
+ * @brief Receive / transmit data width (RCSTA<RX9>, TXSTA<TX9>).
+ */
+typedef enum {
+    USART_DATA_8BITS         = 0x0U,
+    USART_DATA_9BITS         = 0x1U,
+} USART_DataWidthTypeDef;
+
+/**
+ * @brief Compute the SPBRG value for a desired baud rate (8-bit BRG).
+ *
+ *   Async: rate = FOSC / (64 × (X+1))  (BRGH=0)
+ *          rate = FOSC / (16 × (X+1))  (BRGH=1)
+ *   Sync:  rate = FOSC / (4  × (X+1))
+ *
+ * This is the shared cross-family signature (epic-serial calls it with
+ * exactly these four arguments on every family). Returns 0..255, or
+ * 0xFFFF if the requested baud rate is unattainable (X would have to
+ * exceed 255).
+ * @param fosc_hz the oscillator frequency in Hz.
+ * @param baud the desired baud rate in bits/s.
+ * @param mode USART_MODE_ASYNCHRONOUS or USART_MODE_SYNCHRONOUS.
+ * @param brgh USART_BRGH_LOW or USART_BRGH_HIGH (async only).
+ * @return the SPBRG value, or 0xFFFF if unattainable.
+ */
+uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
+                            USART_ModeTypeDef mode,
+                            USART_BaudRateHighTypeDef brgh);
+
+/**
+ * @brief Compute the 16-bit SPBRGH:SPBRG reload value (BRG16 mode,
+ *        DS40001291H Table 12-3).
+ *
+ *   Async: rate = FOSC / (16 × (X+1))
+ *   Sync:  rate = FOSC / (4  × (X+1))
+ *
+ * Returns 0..65535, or 0xFFFF if the requested baud rate is
+ * unattainable.
+ * @param fosc_hz the oscillator frequency in Hz.
+ * @param baud the desired baud rate in bits/s.
+ * @param mode USART_MODE_ASYNCHRONOUS or USART_MODE_SYNCHRONOUS.
+ * @return the 16-bit SPBRGH:SPBRG value, or 0xFFFF if unattainable.
+ */
+uint16_t USART_ComputeSPBRG16(uint32_t fosc_hz, uint32_t baud,
+                              USART_ModeTypeDef mode);
+
+/** Driver handle (Cube-style). */
+typedef struct {
+    USART_ModeTypeDef          Mode;
+    USART_ClockSourceTypeDef   ClockSource;
+    USART_BaudRateHighTypeDef  BaudHigh;
+    USART_DataWidthTypeDef     DataWidth;
+    uint16_t                   SPBRG;        /**< 0..255 (8-bit) or 0..65535 (16-bit). */
+    uint8_t                    Brg16;        /**< 1 = 16-bit BRG (BAUDCTL<BRG16>). */
+    /** @brief  Optional TX-complete callback (fires on TXIF). */
+    void (*TxCpltCallback)(void);
+    /** @brief  Optional RX-complete callback (fires on RCIF). */
+    void (*RxCpltCallback)(uint8_t data);
+} USART_HandleTypeDef;
+
+#define USART_HANDLE_DEFAULT {                                          \
+    .Mode          = USART_MODE_ASYNCHRONOUS,                           \
+    .ClockSource   = USART_CLOCK_MASTER,                                \
+    .BaudHigh      = USART_BRGH_HIGH,                                   \
+    .DataWidth     = USART_DATA_8BITS,                                  \
+    .SPBRG         = 0,                                                 \
+    .Brg16         = 0,                                                 \
+    .TxCpltCallback = NULL,                                            \
+    .RxCpltCallback = NULL,                                            \
+}
+
+/* init / deinit. */
+
+/**
+ * @brief  Initialize the EUSART with the given handle. Programs TXSTA,
+ *         RCSTA, BAUDCTL (BRG16), SPBRGH:SPBRG and the interrupt
+ *         enables for the callbacks.
+ * @param h handle with Mode, ClockSource, BaudHigh, DataWidth, SPBRG,
+ *        Brg16, TxCpltCallback, RxCpltCallback.
+ * @return EPIC_OK on success, EPIC_ERROR if `h` is NULL.
+ */
+EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h);
+
+/**
+ * @brief  De-initialize the EUSART. Disables the module and returns
+ *         TXSTA/RCSTA/BAUDCTL/SPBRGH:SPBRG to reset.
+ * @return EPIC_OK on success.
+ */
+EPIC_StatusTypeDef EPIC_USART_DeInit(void);
+
+/* transmit. */
+
+/**
+ * @brief  Write one byte to TXREG. The write:
+ *    - loads the byte into the TSR if it's empty (back-to-back transfer),
+ *    - else parks it in TXREG until TSR drains,
+ *    - sets TXIF = 0 (TXIF is read-only, cleared on TXREG write).
+ *
+ * @note   TXIF is NOT cleared by reading, only by writing TXREG.
+ *         DS40001291H §12.2.1.
+ * @param data the byte to transmit.
+ */
+void EPIC_USART_Transmit(uint8_t data);
+
+/**
+ * @brief Read the 9th bit (TX9D) just transmitted.
+ * @return the TX9D bit value.
+ */
+uint8_t EPIC_USART_GetTX9D(void);
+
+/**
+ * @brief Set the 9th bit to send NEXT. Must be set BEFORE writing TXREG.
+ * @param bit9 the 9th data bit value (0 or 1).
+ */
+void EPIC_USART_SetTX9D(uint8_t bit9);
+
+/**
+ * @brief Returns 1 if the TSR is empty (TRMT = 1).
+ * @return 1 if the transmit shift register is empty, 0 otherwise.
+ */
+uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void);
+
+/**
+ * @brief  Send a Sync Break character (TXSTA<SENDB>). In async mode the
+ *         next transmission is preceded by a break; SENDB is cleared by
+ *         hardware on completion.
+ */
+void EPIC_USART_SendBreak(void);
+
+/* receive. */
+
+/**
+ * @brief  Read the latest byte from RCREG. Reading:
+ *    - clears RCIF,
+ *    - advances the 2-deep FIFO.
+ * @return the received byte.
+ */
+uint8_t EPIC_USART_Receive(void);
+
+/**
+ * @brief Read RX9D, the 9th bit of the most recently received byte.
+ * @return the RX9D bit value.
+ */
+uint8_t EPIC_USART_GetRX9D(void);
+
+/* enhanced features (BAUDCTL). */
+
+/**
+ * @brief  Enable or disable the auto-baud detect mode (BAUDCTL<ABDEN>).
+ *         In auto-baud mode the BRG is calibrated from the received
+ *         start-bit; ABDEN clears automatically when calibration
+ *         completes, ABDOVF (see @ref EPIC_USART_GetAutoBaudOverflow)
+ *         reports a timeout.
+ * @param enable 1 to enter auto-baud mode, 0 to leave it.
+ */
+void EPIC_USART_SetAutoBaud(uint8_t enable);
+
+/**
+ * @brief  Report whether the auto-baud timer overflowed (BAUDCTL<ABDOVF>).
+ * @return 1 if the auto-baud timer overflowed, 0 otherwise.
+ */
+uint8_t EPIC_USART_GetAutoBaudOverflow(void);
+
+/**
+ * @brief  Enable the wake-up on start bit (BAUDCTL<WUE>): the receiver
+ *         waits for a falling edge on RX, wakes the device, and clears
+ *         WUE when RCIF is set.
+ * @param enable 1 to arm the wake-up, 0 to disable it.
+ */
+void EPIC_USART_SetWakeUp(uint8_t enable);
+
+/* interrupts. */
+
+/**
+ * @brief Weak EUSART RX ISR, override in user code.
+ */
+void USART_RX_IRQHandler(void) EPIC_WEAK;
+/**
+ * @brief Weak EUSART TX ISR, override in user code.
+ */
+void USART_TX_IRQHandler(void) EPIC_WEAK;
+
+#endif /* PIC16F88X_USART_H */

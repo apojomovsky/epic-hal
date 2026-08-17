@@ -8,7 +8,12 @@
 #if EPIC_SWUART_MAX_CHANNELS >= 2
 
 #include <stdio.h>
-#include "pic16f193x_sim.h"
+#if defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
+      defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)
+  #include "pic16f193x_sim.h"
+#else
+  #include "pic16f87xa_sim.h"
+#endif
 
 static int g_fails = 0;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); g_fails++; } } while (0)
