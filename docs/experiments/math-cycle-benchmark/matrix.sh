@@ -4,7 +4,7 @@
 # prints "<op> <hexdelta>" over UART; per-op cycles = (delta - loop_empty)/N.
 #
 # Run inside the XC8 toolchain container, from the repo root:
-#   docker run --rm -v "$PWD":/work -w /work pic8-hal-toolchain:local \
+#   docker run --rm -v "$PWD":/work -w /work epic-hal-toolchain:local \
 #     sh docs/experiments/math-cycle-benchmark/matrix.sh
 # Output per build is a "### <name>" header followed by the raw <op> <hexdelta>
 # lines captured from the simulator's UART. See README.md in this directory.

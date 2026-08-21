@@ -15,7 +15,7 @@ import re
 import subprocess
 import sys
 
-IMAGE = os.environ.get("EPIC_TOOLCHAIN_IMAGE", "pic8-hal-toolchain:local")
+IMAGE = os.environ.get("EPIC_TOOLCHAIN_IMAGE", "epic-hal-toolchain:local")
 XC8_ROOT = os.environ.get("EPIC_XC8_ROOT", "/opt/microchip/xc8/v4.00")
 PACKS = f"{XC8_ROOT}/pic/packs"
 

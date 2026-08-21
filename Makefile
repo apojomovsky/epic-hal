@@ -4,7 +4,7 @@
 # locally. Not a top-level build (AGENTS.md): every target shells into
 # per-module cmake/make invocations in the container.
 #
-# LOCAL_IMAGE is pic8-hal-toolchain:local; the pushed CI tag is derived
+# LOCAL_IMAGE is epic-hal-toolchain:local; the pushed CI tag is derived
 # from the Dockerfile's ARGs (IMAGE_TAG below), so ci-image-push pushes
 # exactly what CI resolves and pulls.
 
@@ -23,7 +23,7 @@ PIC1216F1_DFP_VER := $(shell grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' $(DOCKER
 MPLABX_VERSION  := $(shell grep -m1 '^ARG MPLABX_VERSION=' $(DOCKERFILE) | cut -d= -f2)
 IMAGE_TAG       := xc8-v$(XC8_VERSION)-dfp$(PIC16_DFP_VER)-$(PIC18_DFP_VER)-$(PIC1216F1_DFP_VER)-mplabx$(MPLABX_VERSION)
 
-LOCAL_IMAGE     := pic8-hal-toolchain:local
+LOCAL_IMAGE     := epic-hal-toolchain:local
 # GHCR_OWNER is not auto-derived from `git remote` here (unlike
 # scripts/sim-test-local.sh, which only reads, never writes): pushing is
 # a deliberate, infrequent, human-triggered action, so requiring an
@@ -38,7 +38,7 @@ CI_IMAGE        := ghcr.io/$(GHCR_OWNER)/pic8-hal-ci:$(IMAGE_TAG)
 # UID and give its preferences a writable home, without which it wrote a
 # literal `?` dir into the repo during testing. Every target that writes to
 # the mounted repo needs this combo (shell/exec/audit reuse it).
-HOME_MOUNT := $(HOME)/.cache/pic8-hal-toolchain-home
+HOME_MOUNT := $(HOME)/.cache/epic-hal-toolchain-home
 DOCKER_RUN := mkdir -p $(HOME_MOUNT) && docker run --rm --user $$(id -u):$$(id -g) \
 	-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 	-v $(HOME_MOUNT):$(HOME) \

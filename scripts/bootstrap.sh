@@ -79,7 +79,7 @@ elif ! docker info >/dev/null 2>&1; then
 elif ! command -v make >/dev/null 2>&1; then
     echo "bootstrap: make not found, cannot run check-vendor/image. Install make, or"
     echo "  build the image yourself with:"
-    echo "    docker build -t pic8-hal-toolchain:local docker/ci-toolchain"
+    echo "    docker build -t epic-hal-toolchain:local docker/ci-toolchain"
     toolchain_ok=0
 fi
 
@@ -90,8 +90,8 @@ if [ "$toolchain_ok" = 1 ]; then
     fi
     if make -C "$repo_root" check-vendor; then
         # Same tag as the Makefile's LOCAL_IMAGE.
-        if docker image inspect pic8-hal-toolchain:local >/dev/null 2>&1; then
-            echo "bootstrap: docker toolchain image present (pic8-hal-toolchain:local);"
+        if docker image inspect epic-hal-toolchain:local >/dev/null 2>&1; then
+            echo "bootstrap: docker toolchain image present (epic-hal-toolchain:local);"
             echo "  real-target builds are ready (make xc8-build / make mdb-test)."
         elif [ "$check_only" = 1 ]; then
             echo "bootstrap: docker toolchain image not built yet (run ./scripts/bootstrap.sh"
