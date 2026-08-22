@@ -184,9 +184,13 @@ void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 void CCP1_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
+#ifndef EPIC_AT
     if (g_ccp_callbacks[CCP_INSTANCE_1]) {
         g_ccp_callbacks[CCP_INSTANCE_1]();
     }
+#else
+    (void)g_ccp_callbacks;
+#endif
 }
 
 /**
@@ -195,7 +199,11 @@ void CCP1_IRQHandler(void)
 void CCP2_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
+#ifndef EPIC_AT
     if (g_ccp_callbacks[CCP_INSTANCE_2]) {
         g_ccp_callbacks[CCP_INSTANCE_2]();
     }
+#else
+    (void)g_ccp_callbacks;
+#endif
 }

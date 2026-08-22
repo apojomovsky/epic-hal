@@ -127,11 +127,23 @@ void EPIC_IRQ_ClearFlag(PIC16_IRQn irq)
     if (in_intcon) {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), flag_mask);
     } else {
+#ifndef EPIC_AT
         /* PIR1/PIR2 are Bank 0, so no pic_select_bank needed here. */
         uint8_t addr = pir_reg_addr(d);
         uint8_t v = EPIC_REG8(addr);
         v &= (uint8_t)~flag_mask;
         EPIC_REG8(addr) = v;
+#else
+        if (d->pir_is_pir2) {
+            uint8_t v = EPIC_REG8(PIC_REG_PIR2);
+            v &= (uint8_t)~flag_mask;
+            EPIC_REG8(PIC_REG_PIR2) = v;
+        } else {
+            uint8_t v = EPIC_REG8(PIC_REG_PIR1);
+            v &= (uint8_t)~flag_mask;
+            EPIC_REG8(PIC_REG_PIR1) = v;
+        }
+#endif
     }
 }
 
@@ -146,9 +158,17 @@ uint8_t EPIC_IRQ_GetFlag(PIC16_IRQn irq)
     const irq_desc_t *d = &irq_table[irq];
     uint8_t in_intcon = d->in_intcon;
     uint8_t flag_mask = d->flag_mask;
+#ifndef EPIC_AT
     uint8_t addr = pir_reg_addr(d);
     uint8_t reg = in_intcon ? EPIC_REG8(PIC_REG_INTCON) : EPIC_REG8(addr);
     return (reg & flag_mask) ? 1U : 0U;
+#else
+    uint8_t reg;
+    if (in_intcon) reg = EPIC_REG8(PIC_REG_INTCON);
+    else if (d->pir_is_pir2) reg = EPIC_REG8(PIC_REG_PIR2);
+    else reg = EPIC_REG8(PIC_REG_PIR1);
+    return (reg & flag_mask) ? 1U : 0U;
+#endif
 }
 
 /**
