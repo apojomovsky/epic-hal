@@ -74,13 +74,28 @@ different providers and on different machines, share one GitHub account, so the
 board is the only place that knows what is already taken. **Do not choose a
 ticket by reading the issue list.**
 
+Run once per machine (and after any env change):
+
+0. `epic-tasks doctor`: checks `EPIC_AGENT_ID`, `EPIC_TASKS_PROJECT`,
+   `gh` auth with `project` scope, and board reachability. Fix what it
+   reports before claiming.
+
+For every ticket:
+
 1. `epic-tasks next` to see what you may take, `epic-tasks claim <repo>#<n>` to
    take it. Exit 2 means another agent won the race, so go back to `next`.
    Exit 3 means the board is unreachable: do the work and say so in the pull
    request. Exit 4 means stop and ask.
-2. Branch as `<type>/<issue>-<slug>`, for example `feat/58-epic-cc-build-backend`.
-3. Open the pull request with `Closes #N`, then
+2. Create a worktree under `.worktrees/` and branch as
+   `<type>/<issue>-<slug>`, for example `feat/58-epic-cc-build-backend`
+   (see Worktrees below, never work on `master`).
+3. Work, then run the takeoff ritual (`make pre-pr-check` → `epic-tasks takeoff`).
+4. Open the pull request with `Closes #N`, then
    `epic-tasks review <repo>#<n> --pr <url>`.
+5. After the PR merges, remove the worktree:
+   `git worktree remove .worktrees/<name>`. Never remove a worktree before
+   merge, the branch must stay reachable for review.
+
 
 Set `EPIC_AGENT_ID` (`<runtime>@<host>`) and `EPIC_TASKS_PROJECT` once per
 runtime and machine. `claim` refuses to act without an identity, because an
@@ -98,11 +113,13 @@ dependencies live from the issues, so a blocked ticket is never offered.
 ## Worktrees
 
 **All feature work happens in a worktree under `.worktrees/`**, never on
-`master`:
+`master`, and worktrees are removed only after the PR merges:
 
 ```bash
 git fetch origin master
 git worktree add .worktrees/<name> -b <branch> origin/master
+# ... work, PR, merge ...
+git worktree remove .worktrees/<name>
 ```
 
 Branch names mirror the commit types: `feat/<description>`,
@@ -125,6 +142,9 @@ it is gitignored, so a new tree starts without the two installers.
 `check-vendor` hard-links them from the main checkout, which costs no
 disk and needs no flag, so this is invisible unless the main checkout
 never had them either.
+
+Worktree discipline is enforced by the takeoff ritual (`epic-tasks takeoff`
+checks you are in a `.worktrees/` worktree and not on `master`).
 
 ## Development cycle
 
@@ -154,37 +174,40 @@ codebase so far.
 
 ## Takeoff ritual (before every PR)
 
-Run `make pre-pr-check` before opening a PR. It is the gate; it checks:
+Run `make pre-pr-check` before opening a PR. It is a thin wrapper around
+`epic-tasks takeoff`, the shared skeleton used by every epic repository
+(canonical checks live in `epic-tasks/epic_tasks/takeoff.py`). It checks:
 
-1. Working tree clean, branch not behind `origin/master`.
-2. **No plan docs in the PR's final diff.** Plans
+1. Working tree clean, branch not behind `origin/master` (or `$BASE_REF`).
+2. **You are in a `.worktrees/` worktree**, not on `master`.
+3. **No plan docs in the PR's final diff.** Plans
    (`docs/superpowers/plans/`) live through development; the final
    commit distills the durable facts into the living docs (the module's
    `README.md`/`docs/`, `MANUAL.md` for a register fact,
    `DEVELOPMENT.md` or `docs/adding-a-device.md` for a toolchain or
    debug gotcha) and `git rm`s the plan. Squash merging then keeps
    master plan-free. The plan stays visible in the PR's commit history.
-3. Commit hygiene: conventional subjects, no attribution trailers, no
+4. Commit hygiene: conventional subjects, no attribution trailers, no
    em-dashes, no whitespace errors in the diff.
-4. **Docstring compliance.** `scripts/doxygen_doc_check.py` over the C
+5. **Docstring compliance.** `scripts/doxygen_doc_check.py` over the C
    files the PR touches, `--brief-only` for `tests/` and `examples/`.
    Hard gate, and scoped to the diff, so a PR is never charged for a
    pre-existing violation elsewhere in the tree.
-5. **Comment and doc prose review.** `scripts/prose-diff.sh` prints
+6. **Comment and doc prose review.** `scripts/prose-diff.sh` prints
    every added comment block and markdown hunk in the PR. It flags a
    few objective signals (a block over ~8 lines, a hardcoded count or
    pasted tree, a local `.pdf` link) but cannot judge content, so it
    never fails the ritual on its own. Read everything it printed
    against the Expression conventions below and fix what doesn't hold
    up; `make pre-pr-check PROSE=1` records that the review happened.
-6. Hooks installed (`make setup-hooks`).
-7. `make pre-pr-check TEST=1` also runs the host-sim suite.
+7. Hooks installed (`make setup-hooks`).
+8. `make pre-pr-check TEST=1` also runs the host-sim suite (or `epic-tasks takeoff --test`).
 
-The script exits 1 with the exact fix list while blocking items are
+The ritual exits 1 with the exact fix list while blocking items are
 outstanding. It complements the pre-commit hook rather than repeating
 it: the hook gates one commit's staged content, the ritual gates the
 whole PR range. Don't skip it, CI covers the builds and the sim gates,
-not the ritual.
+not the ritual. `epic-tasks takeoff --prose` is the same as `PROSE=1`.
 
 ## Ground rules
 
