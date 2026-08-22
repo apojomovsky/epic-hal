@@ -21,8 +21,9 @@ verification.
 ## Native toolchain
 
 `./scripts/bootstrap.sh` sets up a fresh clone: installs the host
-toolchain the CMake builds need and a pre-commit hook (trailing
-newline/whitespace, no em-dash, `cppcheck` on staged `.c` files), then
+toolchain the CMake builds need and the git hooks (`pre-commit`:
+trailing newline/whitespace, no em-dash, `cppcheck` on staged `.c`
+files; `commit-msg`: no attribution trailers, no em-dash), then
 verifies the Docker toolchain: it checks Docker is installed and
 reachable, handles the two Microchip installer files
 (`docker/ci-toolchain/vendor/`) self-instructively, and builds the
@@ -74,6 +75,26 @@ cannot drift.
 
 The tag formula above is the single source of truth for the image
 version; the targets in this section are the full command reference.
+
+## Worktrees and the pre-PR ritual
+
+Feature work happens in a worktree under `.worktrees/`, never on
+`master` (AGENTS.md's "Worktrees"):
+
+```sh
+git fetch origin master
+git worktree add .worktrees/<name> -b feat/<description> origin/master
+
+make setup-hooks     # once per clone; the hooks dir is shared by all worktrees
+make pre-pr-check    # the gate, before opening the PR
+```
+
+`make pre-pr-check` checks the whole `origin/master...HEAD` range where
+the pre-commit hook only sees one commit's staged content: plan docs
+that must not reach master, commit hygiene, whitespace, em-dashes,
+docstring compliance on the C files touched, and the comment/doc prose
+review. `PROSE=1` attests the prose review happened, `TEST=1` also runs
+the host-sim suite. See `scripts/README.md` for the details.
 
 ## CI
 
