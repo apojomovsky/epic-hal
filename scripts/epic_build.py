@@ -270,6 +270,15 @@ def _part_define(mcu: str) -> str:
     return f"PIC{mcu}"
 
 
+def parse_memory_summary(log: str):
+    """Pull flash and RAM byte counts out of XC8's Memory Summary."""
+    flash = re.search(r"Program space\s+used\s+\S+\s+\(\s*(\d+)\)", log)
+    ram = re.search(r"Data space\s+used\s+\S+\s+\(\s*(\d+)\)", log)
+    if not flash or not ram:
+        return None
+    return {"flash_bytes": int(flash.group(1)), "ram_bytes": int(ram.group(1))}
+
+
 def _device_for_epic_cc(mcu: str) -> str:
     """16F877A -> p16f877a, 18F4550 -> p18f4550, matching epic-cc --device."""
     low = mcu.lower()
