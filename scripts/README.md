@@ -1,6 +1,7 @@
 # Dev environment scripts
 
-Covers the host-toolchain bootstrap and pre-commit hook below. For
+Covers the host-toolchain bootstrap, the git hooks, and the pre-PR
+takeoff ritual below. For
 real-target XC8 builds and the `mdb` (MPLAB SIM) verification gate
 without installing XC8/MPLAB X yourself, see the root
 [`Makefile`](../Makefile) and [DEVELOPMENT.md](../DEVELOPMENT.md)'s Docker
@@ -14,7 +15,7 @@ need it.
 ## Bootstrap
 
 ```sh
-./scripts/bootstrap.sh              # install missing host packages + the git hook
+./scripts/bootstrap.sh              # install missing host packages + the git hooks
 ./scripts/bootstrap.sh --check-only # report what's missing, install nothing,
                                      # exit nonzero if anything is missing
 ```
@@ -31,20 +32,32 @@ image once they are in place. Real-target (XC8) builds and the `mdb`
 gate run inside that image (root `Makefile`), so nothing MPLAB-ish is
 installed on the host; host builds work with or without it.
 
-## Pre-commit hook
+## Git hooks
 
-Installed on its own, or as part of `bootstrap.sh` above:
+Installed on their own, or as part of `bootstrap.sh` above:
 
 ```sh
-./scripts/install-git-hooks.sh
+./scripts/install-git-hooks.sh      # or: make setup-hooks
 ```
 
-This symlinks `.git/hooks/pre-commit` to `scripts/pre-commit-checks.sh`
-(`.git/hooks/` isn't tracked by git, so every clone needs to run the
-installer once). Uninstall by deleting `.git/hooks/pre-commit`, or skip it
-for one commit with `git commit --no-verify`.
+This symlinks `pre-commit` to `scripts/pre-commit-checks.sh` and
+`commit-msg` to `scripts/commit-msg-checks.sh` in the git hooks
+directory (not tracked by git, so every clone needs to run the installer
+once). The hooks directory is shared by every worktree, so one install
+covers all of them; the symlinks point at the main checkout, which
+outlives any worktree under `.worktrees/`. Uninstall by deleting the
+symlinks, or skip them for one commit with `git commit --no-verify`.
 
-### What it checks
+### What `commit-msg` checks
+
+1. **No attribution trailers** (`Co-Authored-By:` and friends). Git
+   history is the human author's record, and `release_notes.py` builds
+   the GitHub Release from these commits, so a trailer would make the
+   release page speak for someone who did not sign off.
+2. **No em-dashes**, the same rule the pre-commit hook applies to added
+   lines, here applied to the message itself.
+
+### What `pre-commit` checks
 
 1. **Trailing newline / trailing whitespace.** Auto-fixes the working-tree
    file, then blocks the commit and asks you to `git diff`, review, and
@@ -110,6 +123,33 @@ changed, not the whole tree (which would also flag this repo's
 pre-existing violations from before the rules were adopted). Local,
 hook-driven runs are unaffected: the variable is unset there, so behavior
 is identical to before.
+
+## Takeoff ritual (`pre-pr-check.sh`, `prose-diff.sh`)
+
+```sh
+make pre-pr-check                   # or: bash scripts/pre-pr-check.sh
+make pre-pr-check PROSE=1           # attest the prose review happened
+make pre-pr-check TEST=1            # also run the host-sim suite
+BASE_REF=<fork>/master make pre-pr-check
+```
+
+The pre-PR gate. AGENTS.md's "Takeoff ritual" section lists what it
+checks and why; the short version is that the pre-commit hook gates one
+commit's staged content while this gates the whole `origin/master...HEAD`
+range: plan docs that must not reach master, commit hygiene, whitespace,
+em-dashes, Doxygen docstring compliance on the C files the PR touches,
+and the prose review below. Blocking items exit 1 with the fix list;
+advisory items only warn.
+
+`prose-diff.sh` is the prose review's input, and is useful on its own:
+it prints every comment block and markdown hunk the PR adds, so you
+read the prose surface without re-deriving the diff. It hints at a few
+objective signals (a block over ~8 lines, a hardcoded count or pasted
+tree, a local `.pdf` link) and deliberately never fails: judging whether
+a comment carries a reason or restates the code is not a job a script
+can do, so every block wants a human or a language model reading it
+against AGENTS.md's Expression conventions. `PROSE=1` is that
+attestation, the same trust model as `TEST=1`.
 
 ## CI change-scoping (non-code skip, affected-module narrowing)
 

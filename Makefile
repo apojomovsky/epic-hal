@@ -8,7 +8,7 @@
 # from the Dockerfile's ARGs (IMAGE_TAG below), so ci-image-push pushes
 # exactly what CI resolves and pulls.
 
-.PHONY: check-vendor image ci-image-push test xc8-build mdb-test target-ci exec audit shell
+.PHONY: vendor-link check-vendor image ci-image-push test xc8-build mdb-test target-ci exec audit shell setup-hooks pre-pr-check
 
 # ─────────────────────────── image identity ─────────────────────────
 # Same tag-resolution formula CI and scripts/sim-test-local.sh already
@@ -49,7 +49,18 @@ VENDOR_DIR := docker/ci-toolchain/vendor
 XC8_INSTALLER := $(VENDOR_DIR)/xc8-installer.run
 MPLABX_INSTALLER := $(VENDOR_DIR)/mplabx-installer.tar
 
-check-vendor:
+# The vendor installers are gitignored, so a fresh worktree under
+# .worktrees/ starts without them and check-vendor fails there even
+# though the main checkout has both and the image is already built.
+# Hard-link them in (same filesystem, so it costs nothing); docker's
+# build context needs real files, a symlink pointing out of the context
+# is not followed.
+MAIN_ROOT := $(shell cd "$$(git rev-parse --git-common-dir)/.." && pwd)
+
+vendor-link:
+	@[ "$(CURDIR)" = "$(MAIN_ROOT)" ] && exit 0; 	mkdir -p $(VENDOR_DIR); 	for f in xc8-installer.run mplabx-installer.tar; do 		src="$(MAIN_ROOT)/$(VENDOR_DIR)/$$f"; 		if [ ! -f "$(VENDOR_DIR)/$$f" ] && [ -f "$$src" ]; then 			ln "$$src" "$(VENDOR_DIR)/$$f" 2>/dev/null 				|| cp "$$src" "$(VENDOR_DIR)/$$f"; 			echo "vendor: linked $$f from the main checkout"; 		fi; 	done
+
+check-vendor: vendor-link
 	@ok=1; \
 	if [ ! -f "$(XC8_INSTALLER)" ] || [ "$$(stat -c%s "$(XC8_INSTALLER)" 2>/dev/null || echo 0)" -lt 10000000 ]; then \
 		echo "missing (or too small, expected at least ~10 MB): $(XC8_INSTALLER)"; \
@@ -202,3 +213,13 @@ target-ci: image
 	docker run --rm -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) \
 		bash scripts/ci-target-bundle.sh bundles ci-summary-bundle.md
 	@cat ci-summary-build.md ci-summary-sim.md ci-summary-bundle.md
+
+# ───────────────────── local-only developer rituals ─────────────────
+# Host-side bash/python3, no container: these gate the branch, not the
+# build, so they must run before `make image` is even possible.
+
+setup-hooks:
+	@bash scripts/install-git-hooks.sh
+
+pre-pr-check:
+	@bash scripts/pre-pr-check.sh $(if $(TEST),--test,) $(if $(PROSE),--prose,)
