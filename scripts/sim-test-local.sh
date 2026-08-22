@@ -24,7 +24,7 @@ mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile
 tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
 
 owner="$(git remote get-url origin | sed -E 's#.*[:/]([^/]+)/[^/]+(\.git)?$#\1#')"
-image="ghcr.io/${owner}/pic8-hal-ci:${tag}"
+image="ghcr.io/${owner}/epic-hal-ci:${tag}"
 
 xc8_install_dir="/opt/microchip/xc8/v${xc8_version}"
 dfp_dir="$(python3 -c "

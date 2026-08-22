@@ -9,7 +9,7 @@ in the **Microchip.PIC12-16F1xxx_DFP**, which is **not** bundled with
 the XC8 installer, but **is** pinned in this repo's CI toolchain image
 (`docker/ci-toolchain/Dockerfile`, version 1.9.258, alongside the
 classic PIC16Fxxx_DFP + PIC18Fxxxx_DFP) and is baked into the pushed
-`ghcr.io/apojomovsky/pic8-hal-ci` image `make image`/CI pull. No manual
+`ghcr.io/apojomovsky/epic-hal-ci` image `make image`/CI pull. No manual
 DFP setup is needed if you're using the root `Makefile`'s Docker flow
 (see repo-root `README.md`'s Docker quick start).
 

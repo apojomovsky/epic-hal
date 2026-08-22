@@ -30,7 +30,7 @@ LOCAL_IMAGE     := epic-hal-toolchain:local
 # explicit override protects against silently pushing to the wrong
 # owner's package if this repo is ever forked/cloned under another name.
 GHCR_OWNER      ?=
-CI_IMAGE        := ghcr.io/$(GHCR_OWNER)/pic8-hal-ci:$(IMAGE_TAG)
+CI_IMAGE        := ghcr.io/$(GHCR_OWNER)/epic-hal-ci:$(IMAGE_TAG)
 
 # --user + passwd/group bind-mounts + a writable HOME_MOUNT (~/.cache):
 # --user keeps build artifacts in the bind-mounted repo host-owned (root-
