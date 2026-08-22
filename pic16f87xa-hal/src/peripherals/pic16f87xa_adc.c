@@ -172,7 +172,11 @@ void ADC_IRQHandler(void)
      * context; see the CCP handlers). ADIF is PIR1 bit 6. */
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_ADIF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_ADIF);
+#ifndef EPIC_AT
     if (g_adc && g_adc->ConvCpltCallback) {
         g_adc->ConvCpltCallback(EPIC_ADC_Read());
     }
+#else
+    (void)g_adc;
+#endif
 }

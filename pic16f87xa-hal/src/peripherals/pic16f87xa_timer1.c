@@ -145,7 +145,11 @@ void TIMER1_IRQHandler(void)
      * context; see the CCP handlers). TMR1IF is PIR1 bit 0. */
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR1IF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR1IF);
+#ifndef EPIC_AT
     if (g_t1_handle && g_t1_handle->OverflowCallback) {
         g_t1_handle->OverflowCallback();
     }
+#else
+    (void)g_t1_handle;
+#endif
 }

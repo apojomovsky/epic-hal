@@ -284,5 +284,9 @@ void SSP_IRQHandler(void)
      * context; see the CCP handlers). SSPIF is PIR1 bit 3. */
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_SSPIF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_SSPIF);
+#ifndef EPIC_AT
     if (g_ssp && g_ssp->TransferCallback) g_ssp->TransferCallback();
+#else
+    (void)g_ssp;
+#endif
 }

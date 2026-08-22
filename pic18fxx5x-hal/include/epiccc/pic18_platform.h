@@ -27,8 +27,16 @@
 #include <epic-cc.h>
 #endif
 
-#define EPIC_WEAK
+#define EPIC_WEAK   __attribute__((weak))
 #define EPIC_PLACE(addr) EPIC_AT(addr)
+
+/* Bridge the historic FOSC_HZ name to the epic-cc spelling so shared
+ * harness code sees the right frequency without its own #ifdef. */
+#ifndef FOSC_HZ
+#ifdef EPIC_FOSC_HZ
+#define FOSC_HZ EPIC_FOSC_HZ
+#endif
+#endif
 
 #define EPIC_SFR_PTR(addr)       ((volatile uint8_t *)(uintptr_t)(addr))
 #define epic_sfr_read8(addr)     (*(volatile uint8_t *)(uintptr_t)(addr))
