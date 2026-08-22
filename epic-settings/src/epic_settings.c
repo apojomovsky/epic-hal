@@ -13,7 +13,7 @@
 
 #include <string.h>
 
-#if !defined(__XC8)
+#if !defined(__XC8) && !defined(__EPIC_CC__)
   #if defined(PIC18F2455) || defined(PIC18F2550) || defined(PIC18F4455) || defined(PIC18F4550)
     #include "pic18fxx5x_sim.h"
     /**
@@ -114,7 +114,7 @@ static bool settings_write_bytes(uint8_t start, const uint8_t *buf, uint8_t len)
             return false;
         }
 
-#if !defined(__XC8)
+#if !defined(__XC8) && !defined(__EPIC_CC__)
         settings_sim_complete(addr, data);
 #endif
 

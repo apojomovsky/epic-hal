@@ -189,6 +189,22 @@ def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
         "",
         "EPIC_HAL_CFLAGS := $(EPIC_HAL_INCLUDES) -DPIC$(EPIC_HAL_MCU)",
         "",
+        "# ---- toolchain selection -----------------------------------------",
+        "# xc8 (default, needs Microchip pack) or epic-cc (no pack, no .X).",
+        "# `make -f epic-hal.mk TOOLCHAIN=epic-cc` builds the same sources to",
+        "# a distinct dir so the two toolchains never collide.",
+        "TOOLCHAIN ?= xc8",
+        "ifeq ($(TOOLCHAIN),epic-cc)",
+        "  EPIC_HAL_CC := epic-cc",
+        "  EPIC_HAL_BUILD_DIR ?= build/epiccc",
+        "  # epic-cc uses include/epiccc, not include/target",
+        "  EPIC_HAL_FAMILY_INCLUDES := $(subst /target,/epiccc,$(EPIC_HAL_FAMILY_INCLUDES))",
+        "  EPIC_HAL_CFLAGS += -D__EPIC_CC__",
+        "else",
+        "  EPIC_HAL_CC := xc8-cc",
+        "  EPIC_HAL_BUILD_DIR ?= build",
+        "endif",
+        "",
     ]
     return "\n".join(out) + "\n"
 

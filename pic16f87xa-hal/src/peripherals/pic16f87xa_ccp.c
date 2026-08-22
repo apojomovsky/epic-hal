@@ -14,7 +14,11 @@ typedef struct {
     PIC16_IRQn irq;   /**< Interrupt ID. */
 } ccp_addrs_t;
 
+#ifdef __EPIC_CC__
+static ccp_addrs_t addrs[2] = {
+#else
 static const ccp_addrs_t addrs[2] = {
+#endif
     /* CCP1, DS39582B Figure 2-3 / §8.0. */
     { 0x15U, 0x16U, 0x17U, PIC16_IRQ_CCP1 },
     /* CCP2, §8.0. */
@@ -27,7 +31,7 @@ static const ccp_addrs_t addrs[2] = {
  * @return pointer to the matching address entry (instance 1 on
  *         invalid input).
  */
-static const ccp_addrs_t *ccp_sel(CCP_InstanceTypeDef inst)
+static ccp_addrs_t *ccp_sel(CCP_InstanceTypeDef inst)
 {
     if (inst == CCP_INSTANCE_2) return &addrs[1];
     return &addrs[0];

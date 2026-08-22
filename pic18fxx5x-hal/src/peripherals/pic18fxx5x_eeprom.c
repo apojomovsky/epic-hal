@@ -55,7 +55,7 @@ uint8_t EPIC_EEPROM_ReadByte(uint8_t addr)
     epic_sfr_write8(PIC_REG_EEADR,  addr);
     epic_sfr_write8(PIC_REG_EECON1, 0x00U);                /* clear, EEPGD=0. */
     epic_sfr_write8(PIC_REG_EECON1, PIC_EECON1_RD);       /* RD = 1. */
-#if !defined(__XC8)
+#if !defined(__XC8) && !defined(__EPIC_CC__)
     /**
      * @brief  Host sim backend: pull the byte from the simulated EEPROM
      *         array (the flat-array sim has no RD strobe model).

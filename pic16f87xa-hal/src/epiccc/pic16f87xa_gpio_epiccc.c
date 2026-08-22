@@ -20,30 +20,63 @@ static uint8_t port_width(GPIO_TypeDef port)
 void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
-    uint8_t tris;
-    if (port == GPIOA) tris = EPIC_REG8(PIC_REG_TRISA);
-    else if (port == GPIOB) tris = EPIC_REG8(PIC_REG_TRISB);
-    else if (port == GPIOC) tris = EPIC_REG8(PIC_REG_TRISC);
+    switch (port) {
+    case GPIOA: {
+        uint8_t tris = EPIC_REG8(PIC_REG_TRISA);
+        __asm__ volatile("" ::: "memory");
+        if (mode == GPIO_MODE_INPUT || mode == GPIO_MODE_ANALOG) tris |= mask;
+        else if (mode == GPIO_MODE_OUTPUT) tris &= (uint8_t)~mask;
+        else break;
+        EPIC_REG8(PIC_REG_TRISA) = tris;
+        __asm__ volatile("" ::: "memory");
+        break;
+    }
+    case GPIOB: {
+        uint8_t tris = EPIC_REG8(PIC_REG_TRISB);
+        __asm__ volatile("" ::: "memory");
+        if (mode == GPIO_MODE_INPUT || mode == GPIO_MODE_ANALOG) tris |= mask;
+        else if (mode == GPIO_MODE_OUTPUT) tris &= (uint8_t)~mask;
+        else break;
+        EPIC_REG8(PIC_REG_TRISB) = tris;
+        __asm__ volatile("" ::: "memory");
+        break;
+    }
+    case GPIOC: {
+        uint8_t tris = EPIC_REG8(PIC_REG_TRISC);
+        __asm__ volatile("" ::: "memory");
+        if (mode == GPIO_MODE_INPUT || mode == GPIO_MODE_ANALOG) tris |= mask;
+        else if (mode == GPIO_MODE_OUTPUT) tris &= (uint8_t)~mask;
+        else break;
+        EPIC_REG8(PIC_REG_TRISC) = tris;
+        __asm__ volatile("" ::: "memory");
+        break;
+    }
 #if PIC16F87XA_FAMILY_HAS_PORTD
-    else if (port == GPIOD) tris = EPIC_REG8(PIC_REG_TRISD);
+    case GPIOD: {
+        uint8_t tris = EPIC_REG8(PIC_REG_TRISD);
+        __asm__ volatile("" ::: "memory");
+        if (mode == GPIO_MODE_INPUT || mode == GPIO_MODE_ANALOG) tris |= mask;
+        else if (mode == GPIO_MODE_OUTPUT) tris &= (uint8_t)~mask;
+        else break;
+        EPIC_REG8(PIC_REG_TRISD) = tris;
+        __asm__ volatile("" ::: "memory");
+        break;
+    }
 #endif
 #if PIC16F87XA_FAMILY_HAS_PORTE
-    else if (port == GPIOE) tris = EPIC_REG8(PIC_REG_TRISE);
+    case GPIOE: {
+        uint8_t tris = EPIC_REG8(PIC_REG_TRISE);
+        __asm__ volatile("" ::: "memory");
+        if (mode == GPIO_MODE_INPUT || mode == GPIO_MODE_ANALOG) tris |= mask;
+        else if (mode == GPIO_MODE_OUTPUT) tris &= (uint8_t)~mask;
+        else break;
+        EPIC_REG8(PIC_REG_TRISE) = tris;
+        __asm__ volatile("" ::: "memory");
+        break;
+    }
 #endif
-    else tris = EPIC_REG8(PIC_REG_TRISA);
-    if (mode == GPIO_MODE_INPUT || mode == GPIO_MODE_ANALOG) tris |= mask;
-    else if (mode == GPIO_MODE_OUTPUT) tris &= (uint8_t)~mask;
-    else return;
-    if (port == GPIOA) EPIC_REG8(PIC_REG_TRISA) = tris;
-    else if (port == GPIOB) EPIC_REG8(PIC_REG_TRISB) = tris;
-    else if (port == GPIOC) EPIC_REG8(PIC_REG_TRISC) = tris;
-#if PIC16F87XA_FAMILY_HAS_PORTD
-    else if (port == GPIOD) EPIC_REG8(PIC_REG_TRISD) = tris;
-#endif
-#if PIC16F87XA_FAMILY_HAS_PORTE
-    else if (port == GPIOE) EPIC_REG8(PIC_REG_TRISE) = tris;
-#endif
-    else EPIC_REG8(PIC_REG_TRISA) = tris;
+    default: break;
+    }
 }
 
 void EPIC_GPIO_DeInit(GPIO_TypeDef port)
