@@ -66,6 +66,35 @@ register/UART output not just "compiled", the device-data audits, and
 the isolated bundle-gate build). The family jobs pull the private
 image; no job ever builds it.
 
+## Picking up work
+
+Work across epic-cc, epic-hal and epic-platformio is coordinated by
+[epic-tasks](https://github.com/apojomovsky/epic-tasks). Several agents, from
+different providers and on different machines, share one GitHub account, so the
+board is the only place that knows what is already taken. **Do not choose a
+ticket by reading the issue list.**
+
+1. `epic-tasks next` to see what you may take, `epic-tasks claim <repo>#<n>` to
+   take it. Exit 2 means another agent won the race, so go back to `next`.
+   Exit 3 means the board is unreachable: do the work and say so in the pull
+   request. Exit 4 means stop and ask.
+2. Branch as `<type>/<issue>-<slug>`, for example `feat/58-epic-cc-build-backend`.
+3. Open the pull request with `Closes #N`, then
+   `epic-tasks review <repo>#<n> --pr <url>`.
+
+Set `EPIC_AGENT_ID` (`<runtime>@<host>`) and `EPIC_TASKS_PROJECT` once per
+runtime and machine. `claim` refuses to act without an identity, because an
+anonymous claim tells the other agents nothing.
+
+An issue also carries `area:*` labels naming the surfaces it touches
+(`pic16-hal`, `pic18-hal`, `epic-math`, `build`, `docs`, `ci`). Two tickets
+sharing an area cannot be worked at the same time even when neither blocks the
+other, which is why selection goes through the tool: what is blocked, taken, or
+conflicting is decided there, not in this file.
+
+Several epic-hal tickets are blocked by epic-cc work, and the tool reads those
+dependencies live from the issues, so a blocked ticket is never offered.
+
 ## Worktrees
 
 **All feature work happens in a worktree under `.worktrees/`**, never on
