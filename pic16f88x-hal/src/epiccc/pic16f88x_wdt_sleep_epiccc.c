@@ -1,6 +1,7 @@
-/* epic-cc implementation of EPIC_WDT_Refresh / EPIC_Sleep_Enter. */
+/* epic-cc implementation of EPIC_WDT_Refresh / EPIC_Sleep_Enter.
+ * Uses the intrinsics from <epic-cc.h>. */
 
-#include "core/pic18fxx5x_wdt_sleep.h"
+#include "core/pic16f88x_wdt_sleep.h"
 
 #ifdef __has_include
 #if __has_include(<epic-cc.h>)
@@ -16,7 +17,7 @@
 #endif
 
 /**
- * @brief Refresh the Watchdog Timer (epic-cc build) via `clrwdt`.
+ * @brief Refresh the Watchdog Timer with the native `clrwdt` instruction.
  */
 void EPIC_WDT_Refresh(void)
 {
@@ -24,7 +25,7 @@ void EPIC_WDT_Refresh(void)
 }
 
 /**
- * @brief Enter Sleep via `sleep`; the CPU halts until an interrupt wakes it.
+ * @brief Enter Sleep with the native `sleep` instruction.
  */
 void EPIC_Sleep_Enter(void)
 {

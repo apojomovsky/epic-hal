@@ -41,11 +41,12 @@ jobs:
           fi
           echo "non_code=$result" >> "$GITHUB_OUTPUT"
 
-      # This workflow no longer builds or pushes the toolchain image
-      # itself: the root Makefile (`make image`, `make ci-image-push`)
-      # is the only path that publishes a new tag, from installers a
-      # human drops in docker/ci-toolchain/vendor/. Fails loudly, with
-      # those exact instructions, if the resolved tag isn't on GHCR yet.
+      # Transitional pull: epic-hal-ci is the new name (PR #63), pic8-hal-ci
+      # is the still-published legacy name until `make ci-image-push` has
+      # republished the same tag under the new package (see #55 ordering
+      # constraint). Try the new name first, fall back to legacy so CI
+      # stays green across the rename window; remove the fallback once
+      # the epic-hal-ci package is verified.
       - name: Resolve + pull the toolchain image
         if: steps.noncode.outputs.non_code != 'true'
         id: image
@@ -56,11 +57,16 @@ jobs:
           pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
-          image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
-          echo "image=$image" >> "$GITHUB_OUTPUT"
+          image="ghcr.io/${{ github.repository_owner }}/epic-hal-ci:${tag}"
+          legacy_image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          if ! docker pull "$image"; then
-            echo "error: no cached $image on GHCR." >&2
+          if docker pull "$image"; then
+            echo "image=$image" >> "$GITHUB_OUTPUT"
+          elif docker pull "$legacy_image"; then
+            echo "note: pulled legacy $legacy_image (epic-hal-ci not yet published; see #55)" >&2
+            echo "image=$legacy_image" >> "$GITHUB_OUTPUT"
+          else
+            echo "error: no cached $image nor $legacy_image on GHCR." >&2
             echo "  1. drop the Microchip installers in docker/ci-toolchain/vendor/" >&2
             echo "     (see 'make check-vendor' for exact filenames)" >&2
             echo "  2. docker login ghcr.io -u <you> (needs a PAT with write:packages)" >&2

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One-time (idempotent) dev-environment setup, run by hand on a fresh
 # checkout: installs the host-toolchain packages every module's CMake host
-# build needs, then the pre-commit hook (scripts/install-git-hooks.sh).
+# build needs, then the git hooks (scripts/install-git-hooks.sh).
 # Linux only (Debian/Ubuntu apt). Real-target builds run in the
 # docker/ci-toolchain/ image; only the vendor/ installers need a human
 # (their CDN blocks scripted downloads).
@@ -52,14 +52,19 @@ else
     problems=1
 fi
 
-# ---- pre-commit hook ----
+# ---- git hooks ----
+# The hooks dir lives in the common dir, shared by every worktree, so
+# this reports the same state from a .worktrees/ checkout as from master.
 if [ "$check_only" = 1 ]; then
-    if [ -e "$repo_root/.git/hooks/pre-commit" ]; then
-        echo "bootstrap: pre-commit hook already installed."
-    else
-        echo "bootstrap: pre-commit hook not installed (run ./scripts/install-git-hooks.sh)."
-        problems=1
-    fi
+    hooks_dir="$(cd "$(git -C "$repo_root" rev-parse --git-common-dir)" && pwd)/hooks"
+    for hook in pre-commit commit-msg; do
+        if [ -e "$hooks_dir/$hook" ]; then
+            echo "bootstrap: $hook hook already installed."
+        else
+            echo "bootstrap: $hook hook not installed (run ./scripts/install-git-hooks.sh)."
+            problems=1
+        fi
+    done
 else
     "$repo_root/scripts/install-git-hooks.sh"
 fi

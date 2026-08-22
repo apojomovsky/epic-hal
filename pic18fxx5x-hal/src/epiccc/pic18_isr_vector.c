@@ -1,19 +1,19 @@
-/*
- * epic-cc interrupt-vector entry (sibling to
- * src/target/pic18_isr_vector.c). PIC18 has two hardware vectors
- * (0008h high, 0018h low, DS39632E §9.0) but isel-pic18's
- * single-vector compatibility mode (docs/31 D-8) supports at most one
- * ISR. One high-priority entry that dispatches the full fan-out is the
- * correct single-vector shape; the low vector is not emitted.
- */
+/* epic-cc interrupt-vector entry (single-vector compatibility mode).
+ * PIC18 has two vectors at 0008h/0018h (DS39632E 9.0) but epic-cc's
+ * backend currently supports only one (D-8, ADR-013); both XC8 handlers
+ * delegating to epic_dispatch_all_irqs is correct because every
+ * peripheral handler checks its own flag. */
 
+/**
+ * @brief Shared IRQ fan-out dispatcher.
+ */
 extern void epic_dispatch_all_irqs(void);
 
 /**
- * @brief High-priority interrupt vector (0008h). Delegates to the shared
- *        dispatcher. Marked isr so isel places it at the vector.
+ * @brief Single interrupt vector for the epic-cc build, delegates to the
+ *        shared dispatcher. Replaces the XC8 high/low priority pair.
  */
-__attribute__((interrupt(0))) void PIC18_IRQ_HandlerHigh(void)
+void __attribute__((interrupt(0))) PIC18_IRQ_Handler(void)
 {
     epic_dispatch_all_irqs();
 }

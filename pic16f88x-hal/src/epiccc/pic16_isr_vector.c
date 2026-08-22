@@ -1,8 +1,7 @@
 /* epic-cc interrupt-vector entry: the single PIC16 vector at 0x0004
- * (DS39582B 14.11) delegates to the shared dispatcher. The XC8 target
- * uses its interrupt attribute plus inline asm to normalize the bank;
- * epic-cc uses __attribute__((interrupt(0))) and its banking pass
- * handles the rest. */
+ * (DS40001291H 14.11) delegates to the shared dispatcher. XC8 uses
+ * its interrupt attribute plus bank-normalizing asm; epic-cc uses
+ * the interrupt attribute and relies on its banking pass. */
 
 #include "core/pic16_irq.h"
 
