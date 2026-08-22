@@ -1,7 +1,7 @@
 # AGENTS.md
 
-8-bit PIC HAL and tooling library. Three families: PIC16F87XA, PIC18F2455
-(both full peripheral coverage), PIC16F193X/Enhanced Mid-range
+8-bit PIC HAL and tooling library. Families: PIC16F87XA, PIC18F2455 and
+PIC16F88X (full peripheral coverage), PIC16F193X/Enhanced Mid-range
 (foundation only, GPIO+Timer0, peripherals land incrementally). C99,
 MPLAB XC8. Every module dual-builds: host simulation (gcc/CMake, no
 hardware) and real-target (XC8 Makefile, produces `.hex`). Applications
@@ -57,12 +57,45 @@ Same image is pushed to a **private** GHCR package CI pulls from
 (`make ci-image-push`, human-triggered only; see DEVELOPMENT.md for
 why it must stay private, EULA redistribution terms).
 
-CI (`.github/workflows/ci.yml`): two jobs, `host` (host build+ctest,
-every module, plus lint, no Docker) and `target` (one Docker pull, then
-real XC8 cross-compile for every MCU variant, real `mdb`/MPLAB SIM runs
-that check actual register/UART output not just "compiled", and the
-isolated bundle-gate build). `target` pulls the private image; neither
-job ever builds it.
+CI (`.github/workflows/ci.yml`): a `host` job (host build+ctest for
+every module, the Python tooling tests, plus lint, no Docker) and one
+per-family job per family, each a call into the reusable
+`family-check.yml` (Docker pull, then real XC8 cross-compile for every
+MCU variant of that family, real `mdb`/MPLAB SIM runs that check actual
+register/UART output not just "compiled", the device-data audits, and
+the isolated bundle-gate build). The family jobs pull the private
+image; no job ever builds it.
+
+## Worktrees
+
+**All feature work happens in a worktree under `.worktrees/`**, never on
+`master`:
+
+```bash
+git fetch origin master
+git worktree add .worktrees/<name> -b <branch> origin/master
+```
+
+Branch names mirror the commit types: `feat/<description>`,
+`fix/<description>`, `chore/<description>`, `docs/<description>`. The
+worktree keeps your master checkout clean and lets several tasks run in
+parallel without touching each other's trees. `.worktrees/` is
+gitignored, so a worktree is never part of a diff.
+
+Two things are shared by every worktree, so they are set up once, not
+per tree: the git hooks (`make setup-hooks` writes into the common hooks
+dir) and the toolchain image (`make image` produces a docker tag, not a
+file in the tree). Per-worktree: each needs its own `cmake -B build`
+output, and every container target bind-mounts the worktree it was run
+from, so `make test`/`make xc8-build` do the right thing without extra
+flags. The container HOME mount (`~/.cache/epic-hal-toolchain-home`) is
+the one writable path they all share.
+
+The one thing a worktree needs a copy of is `docker/ci-toolchain/vendor/`:
+it is gitignored, so a new tree starts without the two installers.
+`check-vendor` hard-links them from the main checkout, which costs no
+disk and needs no flag, so this is invisible unless the main checkout
+never had them either.
 
 ## Development cycle
 
@@ -89,6 +122,55 @@ known-good control register before blaming timing, and the
 high-risk-pattern checklist (runtime SFR addresses, read-modify-write,
 clock-derived divisors) that has caught every real bug found in this
 codebase so far.
+
+## Takeoff ritual (before every PR)
+
+Run `make pre-pr-check` before opening a PR. It is the gate; it checks:
+
+1. Working tree clean, branch not behind `origin/master`.
+2. **No plan docs in the PR's final diff.** Plans
+   (`docs/superpowers/plans/`) live through development; the final
+   commit distills the durable facts into the living docs (the module's
+   `README.md`/`docs/`, `MANUAL.md` for a register fact,
+   `DEVELOPMENT.md` or `docs/adding-a-device.md` for a toolchain or
+   debug gotcha) and `git rm`s the plan. Squash merging then keeps
+   master plan-free. The plan stays visible in the PR's commit history.
+3. Commit hygiene: conventional subjects, no attribution trailers, no
+   em-dashes, no whitespace errors in the diff.
+4. **Docstring compliance.** `scripts/doxygen_doc_check.py` over the C
+   files the PR touches, `--brief-only` for `tests/` and `examples/`.
+   Hard gate, and scoped to the diff, so a PR is never charged for a
+   pre-existing violation elsewhere in the tree.
+5. **Comment and doc prose review.** `scripts/prose-diff.sh` prints
+   every added comment block and markdown hunk in the PR. It flags a
+   few objective signals (a block over ~8 lines, a hardcoded count or
+   pasted tree, a local `.pdf` link) but cannot judge content, so it
+   never fails the ritual on its own. Read everything it printed
+   against the Expression conventions below and fix what doesn't hold
+   up; `make pre-pr-check PROSE=1` records that the review happened.
+6. Hooks installed (`make setup-hooks`).
+7. `make pre-pr-check TEST=1` also runs the host-sim suite.
+
+The script exits 1 with the exact fix list while blocking items are
+outstanding. It complements the pre-commit hook rather than repeating
+it: the hook gates one commit's staged content, the ritual gates the
+whole PR range. Don't skip it, CI covers the builds and the sim gates,
+not the ritual.
+
+## Ground rules
+
+- **Approval gates are real.** Brainstorm -> design -> approve ->
+  implement. Present a design and stop until you get a yes, even for
+  work that looks small.
+- **The license-gated vendor files never enter the repo.** The XC8 and
+  MPLAB X installers under `docker/ci-toolchain/vendor/` and the
+  datasheet PDFs are Microchip downloads a human fetches by hand, and
+  both are gitignored. Redistribution is what forces the GHCR package
+  to stay private (DEVELOPMENT.md).
+- **A failing `mdb` gate is a defect, not a flaky check.** It asserts
+  on real register and UART output, so debug the target with
+  `docs/adding-a-device.md` §4 before touching the assertion. Loosening
+  a gate to get green is how a silent miscompile ships.
 
 ## Non-obvious things that will bite you
 
@@ -132,6 +214,11 @@ codebase so far.
   into the GitHub Release verbatim, so write them for someone reading the
   release page. A change that breaks consumers needs `type(scope)!:` or a
   `BREAKING CHANGE:` footer, otherwise nothing flags it there.
+- **Never `Co-Authored-By:` or any other attribution trailer.** Git
+  history is the human author's record, and the release notes are built
+  from these commits, so a trailer makes them speak for someone who did
+  not sign off. The `commit-msg` hook rejects trailers and em-dashes;
+  `make pre-pr-check` re-checks the whole PR range.
 - **Update the docs a change touches before calling it done**: the
   module's `README.md`/`docs/API.md`/`docs/ARCHITECTURE.md` if
   behavior changed, `MANUAL.md` if a register fact changed.
@@ -147,6 +234,12 @@ codebase so far.
   PIC16F193X BSR-addressing probe).
 - **No em-dashes (—).** Not in docs, not in commit messages, not in code
   comments. Use a comma, a colon, or a period and a new sentence instead.
+  Replacing one is a judgment call, not a swap: pick the replacement
+  (and split or reorder the sentence when it needs it) so the result
+  reads as prose. A mechanical em-dash-to-comma sweep produces comma
+  splices, which is why `make pre-pr-check` flags the leftover space
+  before a comma as a warning. The exception is ascii-art diagrams,
+  where alignment may force them.
 - **API naming:** module `epic-X` exports `epic_x_*` (lowercase, e.g.
   `epic_serial_init`); HALs export `EPIC_*` uppercase for the
   cross-family contract (EPIC_GPIO_Init); family-internal helpers use
@@ -209,5 +302,14 @@ Every first-party function carries a Doxygen-style docstring:
    completed work are deleted. Live gotchas (asm rules, banking,
    debug protocol, tag formulas) live in README/DEVELOPMENT/MANUAL,
    the places a future maintainer actually reads.
-5. Third-party code keeps its own style; these rules are first-party
+5. **Write for a reader who wasn't there.** Clear, easy to follow,
+   sized to the point being made: a doc that overwhelms with detail is
+   as broken as one that omits the load-bearing fact.
+6. **No coupling to volatile facts.** Test counts, module counts, a
+   pasted directory tree, line numbers: describe the mechanism, never a
+   snapshot that goes stale on the next merge.
+7. **Diagrams earn their place.** A diagram is welcome where it
+   clarifies structure or flow that prose would belabor; skip it for
+   anything a sentence already says clearly.
+8. Third-party code keeps its own style; these rules are first-party
    only.

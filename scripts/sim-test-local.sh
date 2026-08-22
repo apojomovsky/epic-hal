@@ -25,6 +25,7 @@ tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f
 
 owner="$(git remote get-url origin | sed -E 's#.*[:/]([^/]+)/[^/]+(\.git)?$#\1#')"
 image="ghcr.io/${owner}/epic-hal-ci:${tag}"
+legacy_image="ghcr.io/${owner}/pic8-hal-ci:${tag}"
 
 xc8_install_dir="/opt/microchip/xc8/v${xc8_version}"
 dfp_dir="$(python3 -c "
@@ -40,8 +41,11 @@ python3 scripts/epic_build.py build --module "$module" --mcu "$mcu" \
   --variant sim --build-dir "build-sim/${module}" --dfp-dir "$dfp_dir"
 
 echo "Pulling ${image} (same tag CI resolves, cache hit expected)..." >&2
-docker pull "$image"
-
+if ! docker pull "$image"; then
+  echo "note: ${image} not found, trying legacy ${legacy_image}..." >&2
+  docker pull "$legacy_image"
+  image="$legacy_image"
+fi
 echo "Running: scripts/sim-mdb-run.sh $* (inside the container)" >&2
 docker run --rm \
   -v "$repo_root:/repo" -w /repo \
