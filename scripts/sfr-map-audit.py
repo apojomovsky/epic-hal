@@ -14,7 +14,7 @@ import re
 import subprocess
 import sys
 
-IMAGE = os.environ.get("EPIC_TOOLCHAIN_IMAGE", "pic8-hal-toolchain:local")
+IMAGE = os.environ.get("EPIC_TOOLCHAIN_IMAGE", "epic-hal-toolchain:local")
 PACKS = f"{os.environ.get('EPIC_XC8_ROOT', '/opt/microchip/xc8/v4.00')}/pic/packs"
 
 # family -> (hal sfr.h path, [(mcu, dfp pack, proc header)])
