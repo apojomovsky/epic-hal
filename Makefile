@@ -8,7 +8,7 @@
 # from the Dockerfile's ARGs (IMAGE_TAG below), so ci-image-push pushes
 # exactly what CI resolves and pulls.
 
-.PHONY: check-vendor image ci-image-push test xc8-build mdb-test target-ci exec audit shell
+.PHONY: check-vendor image ci-image-push test xc8-build mdb-test target-ci exec audit shell setup-hooks pre-pr-check
 
 # ─────────────────────────── image identity ─────────────────────────
 # Same tag-resolution formula CI and scripts/sim-test-local.sh already
@@ -202,3 +202,13 @@ target-ci: image
 	docker run --rm -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) \
 		bash scripts/ci-target-bundle.sh bundles ci-summary-bundle.md
 	@cat ci-summary-build.md ci-summary-sim.md ci-summary-bundle.md
+
+# ───────────────────── local-only developer rituals ─────────────────
+# Host-side bash/python3, no container: these gate the branch, not the
+# build, so they must run before `make image` is even possible.
+
+setup-hooks:
+	@bash scripts/install-git-hooks.sh
+
+pre-pr-check:
+	@bash scripts/pre-pr-check.sh $(if $(TEST),--test,) $(if $(PROSE),--prose,)
