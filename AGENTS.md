@@ -91,6 +91,12 @@ from, so `make test`/`make xc8-build` do the right thing without extra
 flags. The container HOME mount (`~/.cache/epic-hal-toolchain-home`) is
 the one writable path they all share.
 
+The one thing a worktree needs a copy of is `docker/ci-toolchain/vendor/`:
+it is gitignored, so a new tree starts without the two installers.
+`check-vendor` hard-links them from the main checkout, which costs no
+disk and needs no flag, so this is invisible unless the main checkout
+never had them either.
+
 ## Development cycle
 
 Fast inner loop stays host-sim only, either path: `cmake -B build &&

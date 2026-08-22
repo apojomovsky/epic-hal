@@ -89,6 +89,11 @@ make setup-hooks     # once per clone; the hooks dir is shared by all worktrees
 make pre-pr-check    # the gate, before opening the PR
 ```
 
+The toolchain image is shared by every worktree (it is a docker tag, not
+a file in the tree) and `make check-vendor` hard-links the gitignored
+vendor installers in from the main checkout, so container targets work
+from a worktree with no extra setup.
+
 `make pre-pr-check` checks the whole `origin/master...HEAD` range where
 the pre-commit hook only sees one commit's staged content: plan docs
 that must not reach master, commit hygiene, whitespace, em-dashes,
