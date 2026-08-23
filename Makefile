@@ -141,7 +141,7 @@ epiccc-build:
 	@test -n "$(MCU)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
 	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --toolchain epic-cc --build-dir build/epiccc
 	PIC8_CLANG_UNWRAPPED=$$(if [ -n "$(PIC8_CLANG_UNWRAPPED)" ]; then echo "$(PIC8_CLANG_UNWRAPPED)"; else echo "/tmp/epic-clang/clang"; fi) \
-	PIC8_CLANG_RESOURCE_DIR=$$(if [ -n "$(PIC8_CLANG_RESOURCE_DIR)" ]; then echo "$(PIC8_CLANG_RESOURCE_DIR)"; else echo "/nix/store/50vb6bzwh3mmv7m92l9s5s3way7zr1ps-clang-20.1.8-lib/lib/clang/20"; fi) \
+	PIC8_CLANG_RESOURCE_DIR=$$(if [ -n "$(PIC8_CLANG_RESOURCE_DIR)" ]; then echo "$(PIC8_CLANG_RESOURCE_DIR)"; else echo "/opt/clang/lib/clang/20"; fi) \
 	sh build/epiccc/$(MCU)/build.sh
 	@echo "Built build/epiccc/$(MCU)-$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print(m.example_for('$(MODULE)', e.load(e.default_path()).family_of('$(MCU)').name).name)") .hex"
 # ─────────────────────────── mdb / MPLAB SIM gate ────────────────────
