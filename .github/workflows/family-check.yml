@@ -80,7 +80,7 @@ jobs:
       # config database (validated at link time by a minimal config-TU
       # link). Host-side python3 that shells into the toolchain
       # container for the DFP headers / xc8-cc.
-      - name: Device-data audits (sfr-map, config-key, statics)
+      - name: Device-data audits (sfr-map, config-key, statics, sfr-gen)
         if: steps.noncode.outputs.non_code != 'true'
         env:
           EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
@@ -88,6 +88,27 @@ jobs:
           python3 scripts/sfr-map-audit.py --family "$FAMILY" || audit_status=$?
           python3 scripts/config-key-audit.py --family "$FAMILY" || audit_status=$?
           python3 scripts/statics-audit.py || audit_status=$?
+          # SFR header drift gate: generated header must match committed one.
+          # EDC packs live inside the toolchain image (/opt/microchip/xc8);
+          # the runner host may not have the PIC18 pack, so extract once and
+          # run the generator on the host (the image has no python3 per
+          # AGENTS.md, so docker run python3 would fail).
+          if [ ! -d /tmp/xc8-extracted ]; then
+            cid=$(docker create "${{ steps.image.outputs.image }}")
+            docker cp "$cid:/opt/microchip/xc8" /tmp/xc8-extracted
+            docker rm "$cid" > /dev/null
+            # docker cp creates /tmp/xc8-extracted/xc8 when source is a directory
+            if [ -d /tmp/xc8-extracted/xc8 ]; then
+              mv /tmp/xc8-extracted/xc8 /tmp/xc8-extracted.tmp && rm -rf /tmp/xc8-extracted && mv /tmp/xc8-extracted.tmp /tmp/xc8-extracted
+            fi
+          fi
+          # XC8 version is pinned in Dockerfile; the extracted tree contains v4.00 etc.
+          xc8_root=$(ls -d /tmp/xc8-extracted/v* 2>/dev/null | head -n1)
+          if [ -n "$xc8_root" ]; then
+            XC8_INSTALL_DIR="$xc8_root" python3 scripts/gen-sfr.py --family "$FAMILY" --check || audit_status=$?
+          else
+            python3 scripts/gen-sfr.py --family "$FAMILY" --check || audit_status=$?
+          fi
           exit "${audit_status:-0}"
 
       # The rebuild-identity audit: this family's matrix .hex built

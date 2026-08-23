@@ -1,0 +1,37 @@
+name: nightly
+
+# Nightly (and manual) lightweight for every variant in the manifest.
+# PR CI runs only the canonical per family (epic_build.py matrix with
+# GITHUB_EVENT_NAME == pull_request); nightly proves no variant drifted
+# while no PR touched it. Full per-variant build is variants x modules,
+# but nightly runs it once (schedule), not on every PR.
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  family-87xa:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F87XA
+
+  family-88x:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F88X
+
+  family-18fxx5x:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC18Fxx5x
+
+  family-193x:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F193X

@@ -142,16 +142,27 @@ deliverables) before calling it done.
    tipping two already-marginal modules from "fits" to "genuine linker
    error". If
    the new variant has less RAM or flash than the smallest currently
-   supported one, expect some existing modules to need a `KNOWN_BROKEN`
-   entry in `scripts/ci-discover-xc8-matrix.py` for it, not a silent
+   supported one, expect some existing modules to need an `excluded`
+   entry in `epic-common/manifest/modules.toml` for it, not a silent
    assumption that everything still fits.
-3. Add the MCU to every place that enumerates supported variants:
-   - Each `mcu/*-mplabx/Makefile`'s `MCU` `ifeq` chain
-     (`CFLAGS_DEVICE`).
-   - `scripts/ci-discover-xc8-matrix.py`'s `PIC16_VARIANTS` /
-     `PIC18_VARIANTS` list.
-   - Any family-conditional macro whose applicability changes for this
-     variant (`PIC16F87XA_FAMILY_HAS_PSP` and friends).
+3. Add the MCU to the manifest and regenerate the SFR header:
+   - Add it to that family's `variants` in `epic-common/manifest/modules.toml`,
+     then add it to every module's `supported` or `excluded` (the loader
+     fails until every module has classified it).
+   - Add a `[[families.<FAMILY>.conditional_sources]]` entry if the new part
+     needs a source that only some variants compile (e.g. `psp.c` on 40/44-pin).
+   - Any family-conditional macro whose applicability changes for this variant
+     (`PIC16F87XA_FAMILY_HAS_PSP` and friends).
+   - Regenerate the per-family SFR header from the ATDF/EDC (same source the
+     compiler's `scripts/gen-device.py` uses):
+     ```bash
+     python3 scripts/gen-sfr.py --family <FAMILY>
+     git diff --exit-code  # should be empty if the new part shares the family map
+     python3 scripts/gen-sfr.py --family <FAMILY> --check  # CI drift gate
+     ```
+     No hand-edited `PIC_REG_*` defines; the generator reads
+     `/opt/microchip/xc8/v*/pic/packs/<dfp>/edc/<PART>.PIC` (or `Device.sfrs`
+     once the compiler populates it) and projects the address map.
 4. For every peripheral whose register layout differs on the new part
    (from §3.1's diff), update the driver with the minimal `#if`/`#ifdef`
    needed, citing the datasheet for the new part specifically, not
