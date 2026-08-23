@@ -178,3 +178,32 @@ Add it to that family's `variants`, then add it to every module's
 `supported` or `excluded`. The loader fails until every module has
 classified it, which is intentional: a new part should not silently
 appear supported everywhere.
+
+Then regenerate the family's SFR header and verify it:
+
+```bash
+python3 scripts/gen-sfr.py --family <FAMILY>   # writes the header in place
+python3 scripts/gen-sfr.py --family <FAMILY> --check  # CI drift gate
+```
+
+The generator reads the same ATDF/EDC the compiler's `scripts/gen-device.py`
+does (`/opt/microchip/xc8/v*/pic/packs/<dfp>/edc/<PART>.PIC`), so a new part
+is a manifest entry plus `conditional_sources` if needed plus a regenerated
+header, with no hand-edited `PIC_REG_*` defines.
+
+## CI stratification (canonical vs full)
+
+`scripts/epic_build.py matrix` is what `ci.yml`/`family-check.yml` builds.
+On a pull request (`GITHUB_EVENT_NAME == pull_request`) it emits only the
+canonical variant per family, so the per-family job is `modules` not
+`variants × modules`:
+
+- `PIC16F87XA` → `16F877A`
+- `PIC16F88X`  → `16F887`
+- `PIC18Fxx5x` → `18F4550`
+- `PIC16F193X` → `16F1937`
+
+Pass `--canonical-only` to force the same locally. On `push` to `master`,
+`schedule` (nightly `0 2 * * *`) and `workflow_dispatch` the matrix is the
+full `variants × modules` sweep. `.github/workflows/nightly.yml` runs that
+full sweep nightly so a variant that no PR touched still gets built.

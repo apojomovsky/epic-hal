@@ -479,15 +479,42 @@ def _path():
     return os.environ.get("PATH", "")
 
 
+# Canonical per family: PR CI builds only this variant (half of
+# variants x modules); nightly/schedule builds every variant.
+CANONICAL = {
+    "PIC16F87XA": "16F877A",
+    "PIC16F88X": "16F887",
+    "PIC18Fxx5x": "18F4550",
+    "PIC16F193X": "16F1937",
+}
+
 def cmd_matrix(args):
+    import os
     manifest = epicmanifest.load(epicmanifest.default_path())
+    # --canonical-only or GITHUB_EVENT_NAME pull_request => canonical only
+    canonical_only = bool(getattr(args, "canonical_only", False))
+    if not canonical_only:
+        env = os.environ.get("GITHUB_EVENT_NAME", "")
+        if env == "pull_request":
+            canonical_only = True
     entries = []
     for fam in manifest.families.values():
         modules = []
         for name in sorted(manifest.modules):
             mcus = manifest.modules[name].supported.get(fam.name, [])
-            if mcus and manifest.example_for(name, fam.name) is not None:
-                modules.append(f"{name}={','.join(mcus)}")
+            if not mcus or manifest.example_for(name, fam.name) is None:
+                continue
+            if canonical_only:
+                canonical = CANONICAL.get(fam.name)
+                if canonical and canonical in mcus:
+                    mcus = [canonical]
+                elif canonical:
+                    # module does not support canonical (excluded) but supports family at all:
+                    # pick first supported so the module still gets built on this family
+                    mcus = [mcus[0]]
+                else:
+                    mcus = [mcus[0]]
+            modules.append(f"{name}={','.join(mcus)}")
         if modules:
             entries.append({
                 "family": fam.name,
@@ -533,6 +560,7 @@ def main():
     b.set_defaults(func=cmd_build)
 
     m = sub.add_parser("matrix", help="print the CI build matrix as JSON")
+    m.add_argument("--canonical-only", action="store_true", help="emit only the canonical variant per family (PR CI)")
     m.set_defaults(func=cmd_matrix)
 
     r = sub.add_parser("report", help="parse flash/RAM usage from a build log")
