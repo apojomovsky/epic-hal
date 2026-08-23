@@ -227,3 +227,33 @@ Memory Summary:
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestEpicCcToolchain(unittest.TestCase):
+    """The epic-cc backend passes the manifest mcu through untranslated.
+
+    epic-cc resolves `16F877A`, `16f877a` and `p16f877a` to the same device, so
+    a name table on this side would be a second place to update per part.
+    """
+
+    def script(self, mcu="16F877A"):
+        return epic_build.emit_build_script(
+            load(), "epic-tick", mcu,
+            build_dir="build", dfp_dir="", toolchain="epic-cc",
+        )
+
+    def test_passes_the_manifest_mcu_to_target(self):
+        self.assertIn("--target 16F877A", self.script())
+
+    def test_does_not_translate_the_mcu_name(self):
+        s = self.script()
+        self.assertNotIn("--target p16f877a", s)
+        self.assertNotIn("--device", s)
+
+    def test_no_per_part_name_table_remains(self):
+        self.assertFalse(hasattr(epic_build, "_device_for_epic_cc"))
+
+    def test_unsupported_mcu_still_raises_with_the_reason(self):
+        with self.assertRaises(epic_build.UnsupportedError) as ctx:
+            self.script(mcu="16F873A")
+        self.assertIn("RAM: does not fit", str(ctx.exception))
