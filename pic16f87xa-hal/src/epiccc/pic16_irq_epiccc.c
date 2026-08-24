@@ -1,11 +1,5 @@
-/* Implementation of core/pic16_irq.h. Each IRQ source maps to a bit in
- * INTCON / PIE1 / PIE2 (DS39582B §14.11 + Figure 14-10); the
- * translation table lives at the top of this file.
- *
- * epic-cc variant: the descriptor table lives in RAM (a const table
- * lowers to a flash GEP that isel does not yet handle, epic-cc#114)
- * and the PIR1/PIR2 accesses are direct with memory barriers, the same
- * shape as pic16f88x-hal's epiccc twin. */
+/* Implementation of core/pic16_irq.h (DS39582B §14.11); epic-cc
+ * variant. */
 
 #include "core/pic16_irq.h"
 
@@ -19,6 +13,8 @@ typedef struct {
     uint8_t pir_is_pir2;   /**< 1 = PIR2, 0 = PIR1. (Ignored if in_intcon.) */
 } irq_desc_t;
 
+/* RAM not const under epic-cc: a const table lowers to a flash GEP
+ * isel does not yet handle (epic-cc#114). */
 #ifdef __EPIC_CC__
 static irq_desc_t irq_table[] = {
 #else

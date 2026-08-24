@@ -1,11 +1,6 @@
-/* Fan-out for the 877A smoke under epic-cc: only Timer0 and RB are
- * needed for blinky. The full dispatch pulls in every peripheral handler
- * (ccp, usart, adc, etc.) which hit isel gaps (flash GEP, indirect calls)
- * that are filed separately. Keeping the smoke's dispatch minimal lets
- * the toolchain be proven on the 87XA without waiting for every
- * peripheral's isel gap to be closed. Mirrors pic16f88x-hal's epiccc
- * twin, with the 87XA's PIR1/PIR2 flag set (DS39582B §14.11: PIR2 has
- * CCP2IF/BCLIF/EEIF/CMIF; no C1/C2/ULPWU/OSF on this family). */
+/* Smoke-minimal epic-cc dispatch: Timer0 + RB only, other flags
+ * cleared (the full fan-out pulls every peripheral handler into the
+ * slice). Mirrors pic16f88x-hal's epiccc twin. */
 
 #include "core/pic16_irq.h"
 
@@ -43,6 +38,8 @@ void epic_dispatch_all_irqs(void)
     if (pir1 & PIC_PIR1_PSPIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_PSPIF);
 #endif
 
+    /* 87XA PIR2 (DS39582B §14.11): CCP2IF/BCLIF/EEIF/CMIF only; the
+     * 88X's C1/C2/ULPWU/OSF flags do not exist here. */
     uint8_t pir2 = EPIC_REG8(PIC_REG_PIR2);
     if (pir2 & PIC_PIR2_CCP2IF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
     if (pir2 & PIC_PIR2_BCLIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_BCLIF);

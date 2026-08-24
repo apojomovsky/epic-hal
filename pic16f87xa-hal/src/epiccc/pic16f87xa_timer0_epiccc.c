@@ -1,10 +1,4 @@
-/* Timer0 driver implementation (DS39582B §5.0).
- *
- * epic-cc variant: the prescaler-ratio lookup is a straight-line switch
- * (the const ps_ratio array lowers to a flash GEP isel does not yet
- * handle, epic-cc#114), the ISR stores only the callback pointer, and
- * the callback call is compiled out under EPIC_AT (epic-cc#73, indirect
- * call gap). Mirrors pic16f88x-hal's epiccc twin. */
+/* Timer0 driver implementation (DS39582B §5.0); epic-cc variant. */
 
 #include "peripherals/pic16f87xa_timer0.h"
 #include "core/pic16_irq.h"
