@@ -56,6 +56,50 @@ path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
 variants = ["16F874A", "16F877A"]   # PSP is 40/44-pin only
 ```
 
+### `epiccc_sources`: the family's epic-cc conformant slice
+
+`epic_build.py` resolves two source sets from the same family table. The
+XC8 path uses `hal_sources` + `conditional_sources`, exactly as above.
+The epic-cc path (`--toolchain epic-cc`) uses `epiccc_sources` instead:
+the subset of the HAL that builds under epic-cc and fits the part's RAM,
+listed verbatim with the `_epiccc.c` variant names.
+
+```toml
+[families.PIC16F87XA]
+# ... hal_sources and conditional_sources as above ...
+epiccc_sources = [
+  "pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c",
+  "pic16f87xa-hal/src/epiccc/pic16f87xa_timer0_epiccc.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_epiccc.c",
+  "pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep.c",
+  "pic16f87xa-hal/src/epiccc/pic16f87xa_wdt_sleep_epiccc.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+```
+
+The slice is the family HAL's answer to three hard constraints:
+epic-cc's whole-program overlay must fit the part's RAM (the full set
+exceeds the 877A's GPR capacity), every peripheral driver must avoid
+the filed isel gaps (flash GEPs, indirect calls: `apojomovsky/epic-cc#73`
+and `apojomovsky/epic-cc#114`), and the dispatch must not take strong
+references to handlers outside the slice. It is per family, not per
+module: every module on the epic-cc path for this family links the
+same slice, so the full peripheral set is never silently compiled into
+an epic-cc build.
+
+**The recipe for adding a module to the epic-cc path is a manifest
+edit, nothing else:** add the module's epiccc-compliant source files
+to its family's `epiccc_sources` (or a new family's, with the epiccc
+variant files), keep `_epiccc.c` names for files that only build under
+epic-cc, and run `make epiccc-build MODULE=<name> MCU=<part>`. The
+build driver performs no mapping or keep-list of its own; it compiles
+the slice verbatim. A family without an `epiccc_sources` key fails the
+epic-cc path loudly ("no epiccc_sources; the epic-cc path needs a
+conformant slice"), so a module cannot silently fall back to the XC8
+set.
+
 ## Modules
 
 ```toml

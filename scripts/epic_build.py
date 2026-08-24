@@ -124,9 +124,11 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
 
     ``toolchain="xc8"`` reproduces the existing xc8-cc script (the byte-
     identical migration gate).  ``toolchain="epic-cc"`` emits a single
-    ``epic-cc --target <mcu>`` invocation with the same source set, no DFP,
-    and a distinct build dir (caller decides the dir name).  No device-pack
-    download or ``/opt/microchip`` path is referenced on the epic-cc path.
+    ``epic-cc --target <mcu>`` invocation with the family's
+    ``epiccc_sources`` slice (HAL-3: the epic-cc conformant subset,
+    see the manifest README), no DFP, and a distinct build dir (caller
+    decides the dir name).  No device-pack download or ``/opt/microchip``
+    path is referenced on the epic-cc path.
 
     Flag order reproduces the Makefiles this replaces exactly (DFP, then
     -mcpu, then optimisation and warnings, then the part define, then
@@ -153,24 +155,17 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     if fosc_hz is None:
         fosc_hz = fam.fosc_hz
 
-    sources = manifest.sources_for(module, mcu, variant=variant)
+    sources = manifest.sources_for(module, mcu, variant=variant,
+                                   toolchain=toolchain)
     includes = manifest.includes_for(module, mcu)
     objdir = f"{build_dir}/{mcu}"
 
     if toolchain == "epic-cc":
-        # Map the XC8 family dirs/sources to the epic-cc variant (HAL-1).
-        sources = [_epiccc_source(s) for s in sources]
+        # The family's epiccc_sources slice is already the epic-cc
+        # conformant set (HAL-3): it lists the epiccc-named variant
+        # files verbatim, so no source mapping runs here, only the
+        # include-dir swap (include/target -> include/epiccc).
         includes = [_epiccc_include(i) for i in includes]
-        # For the 887 smoke the full family HAL hits a handful of isel
-        # gaps that are tracked separately (ccp addrs flash GEP:
-        # epic-cc#114; srlatch bool trunc: closed by epic-cc#107; usart
-        # indirect calls: epic-cc#73). The smoke only needs GPIO +
-        # Timer0 + core to prove the toolchain, so keep the build green
-        # by compiling just that slice. The gaps are filed, not silently
-        # worked around.
-        if module == "pic16f88x-hal" and mcu == "16F887":
-            keep = ("gpio", "timer0", "irq", "wdt", "isr_vector", "dispatch", "harness", "example_blink", "config")
-            sources = [s for s in sources if any(k in s for k in keep)]
         # Epic-cc path: one invocation, no per-file compiles, no DFP.
         # Keep the same source set and include order; the driver adds its
         # own -I for the generated epic-cc.h and -D EPIC_FOSC_HZ.
@@ -419,34 +414,6 @@ def _epiccc_include(path: str) -> str:
     """Map an XC8 family include dir to its epic-cc counterpart."""
     if "/include/target" in path:
         return path.replace("/include/target", "/include/epiccc")
-    return path
-
-
-def _epiccc_source(path: str) -> str:
-    """Map an XC8 HAL source to its epic-cc counterpart.
-
-    Directory ``src/target`` -> ``src/epiccc`` and the WDT/sleep TU's
-    ``_target.c`` suffix -> ``_epiccc.c``.  Non-HAL sources pass through.
-    The GPIO driver has a dedicated epic-cc file that avoids runtime
-    inttoptr (see pic16f87xa_gpio_epiccc.c): map that explicitly.
-    """
-    if path == "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c":
-        return "pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c"
-    if path == "pic16f88x-hal/src/peripherals/pic16f88x_gpio.c":
-        return "pic16f88x-hal/src/epiccc/pic16f88x_gpio_epiccc.c"
-    if path == "pic16f88x-hal/src/peripherals/pic16f88x_usart.c":
-        return "pic16f88x-hal/src/epiccc/pic16f88x_usart_epiccc.c"
-    if path == "pic16f88x-hal/src/peripherals/pic16f88x_timer0.c":
-        return "pic16f88x-hal/src/epiccc/pic16f88x_timer0_epiccc.c"
-    if path == "pic16f88x-hal/src/core/pic16_irq.c":
-        return "pic16f88x-hal/src/epiccc/pic16_irq_epiccc.c"
-    if path == "pic16f88x-hal/src/core/pic16_irq_dispatch.c":
-        return "pic16f88x-hal/src/epiccc/pic16_irq_dispatch_epiccc.c"
-    if "/src/target/" in path:
-        path = path.replace("/src/target/", "/src/epiccc/")
-        if path.endswith("_target.c"):
-            path = path[: -len("_target.c")] + "_epiccc.c"
-        return path
     return path
 
 
