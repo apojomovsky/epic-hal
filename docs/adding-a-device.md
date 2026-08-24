@@ -236,6 +236,13 @@ it done.
      timing-dependent part, and treat register reads taken right after
      a `wait` as a snapshot that could be a few instructions early or
      late.)
+   - Measured exception, PIC16F88X under MPLAB X v6.35 (2026-08-24):
+     `stepi` **does** advance Timer0 on this family. Twelve samples of
+     `stepi 200000` against a Timer0-driven blinky gave a bit-identical
+     PORTB sequence on three consecutive runs, where `run` + `wait`
+     varied with machine load. `make mdb-epiccc` uses `stepi` for that
+     reason. Measure per family before relying on it; the caution above
+     still holds wherever it has not been.
    - `print <REGISTER>` (or `x /1xbr <addr>` for a raw byte) for every
      SFR the peripheral touched.
    - Compare against the hand-computed expected values from step 3's
