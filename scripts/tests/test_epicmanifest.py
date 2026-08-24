@@ -17,6 +17,7 @@ fosc_hz  = 20000000
 includes = ["pic16f87xa-hal/include", "epic-common/include"]
 hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
 harness_src = "epic-common/src/core/epic_harness_target.c"
+epiccc_sources = ["pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c", "epic-common/src/core/epic_harness_target.c"]
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
@@ -438,9 +439,35 @@ class TestResolution(unittest.TestCase):
         sim = self.m.sources_for("epic-tick", "16F877A", variant="sim")
         self.assertIn("epic-tick/examples/example_tick.c", sim)
 
-    def test_sources_for_sim_variant_raises_without_one(self):
+    def test_epiccc_sources_used_for_epic_cc_toolchain(self):
+        srcs = self.m.sources_for("epic-tick", "16F877A", toolchain="epic-cc")
+        self.assertIn("pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c", srcs)
+        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
+
+    def test_epiccc_sources_do_not_splice_conditional_sources(self):
+        # Conditional sources are XC8 psect-order machinery; the epic-cc
+        # path is a single whole-program invocation with no link order.
+        psp = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+        srcs = self.m.sources_for("epic-tick", "16F877A", toolchain="epic-cc")
+        self.assertNotIn(psp, srcs)
+
+    def test_epiccc_sources_default_to_empty(self):
+        fam = self.m.families["PIC18Fxx5x"]
+        self.assertEqual(fam.epiccc_sources, [])
+
+    def test_epic_cc_without_epiccc_sources_raises(self):
         with self.assertRaises(epicmanifest.ManifestError):
-            self.m.sources_for("epic-tick", "18F4550", variant="sim")
+            self.m.sources_for("epic-tick", "18F4550", toolchain="epic-cc")
+
+    def test_epiccc_sources_keep_the_example(self):
+        srcs = self.m.sources_for("epic-tick", "16F877A", toolchain="epic-cc")
+        self.assertIn("epic-tick/examples/example_tick.c", srcs)
+
+    def test_xc8_path_is_unchanged_with_epiccc_sources_present(self):
+        # The epiccc_sources key must not leak into the XC8 resolution.
+        srcs = self.m.sources_for("epic-tick", "16F877A")
+        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
+        self.assertNotIn("pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c", srcs)
 
 
 if __name__ == "__main__":

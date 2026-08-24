@@ -18,6 +18,7 @@ fosc_hz  = 20000000
 includes = ["pic16f87xa-hal/include/target", "pic16f87xa-hal/include"]
 hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
 harness_src = "epic-common/src/core/epic_harness_target.c"
+epiccc_sources = ["pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c", "epic-common/src/core/epic_harness_target.c"]
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"

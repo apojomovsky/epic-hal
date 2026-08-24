@@ -81,6 +81,22 @@ hal_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
+# The epic-cc conformant slice (HAL-3): the subset that builds under
+# epic-cc and fits the part's RAM (the full set exceeds the 877A's GPR
+# capacity; epic_irq.c and the peripheral drivers hit filed isel gaps,
+# epic-cc#73/#114). Listed verbatim, epiccc-named variants included;
+# later clusters grow the slice here. The slice is per family: every
+# module on the epic-cc path for this family links the same set.
+epiccc_sources = [
+  "pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c",
+  "pic16f87xa-hal/src/epiccc/pic16f87xa_timer0_epiccc.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_epiccc.c",
+  "pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep.c",
+  "pic16f87xa-hal/src/epiccc/pic16f87xa_wdt_sleep_epiccc.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
@@ -129,6 +145,20 @@ hal_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
+# The epic-cc conformant slice (HAL-3), the former 887 smoke keep-list
+# now declared in the manifest (gpio + timer0 + core + harness). Same
+# contract as PIC16F87XA's slice: grows by adding entries, never by
+# editing the build driver.
+epiccc_sources = [
+  "pic16f88x-hal/src/epiccc/pic16f88x_gpio_epiccc.c",
+  "pic16f88x-hal/src/epiccc/pic16f88x_timer0_epiccc.c",
+  "pic16f88x-hal/src/epiccc/pic16_irq_epiccc.c",
+  "pic16f88x-hal/src/core/pic16f88x_wdt_sleep.c",
+  "pic16f88x-hal/src/epiccc/pic16f88x_wdt_sleep_epiccc.c",
+  "pic16f88x-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f88x-hal/src/epiccc/pic16_irq_dispatch_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
 
 [families.PIC18Fxx5x]
 hal_dir  = "pic18fxx5x-hal"
@@ -2458,3 +2488,50 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 name        = "combo-taskmgr-serial-sim"
 harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# The shared HAL library itself, manifest form (HAL-3): the harness
+# implementation every family HAL links. The library is family-blind
+# (it touches no SFR, no family include), so needs_hal is false; the
+# example exercises the harness contract on every family and joins the
+# XC8 CI matrix automatically. The example keeps the config WDTE=OFF:
+# it has no WDT refresh of its own (the WDT driver is family HAL
+# territory), so a watchdog would reset the run.
+[modules.epic-common]
+dir        = "epic-common"
+sources    = [
+  "src/core/epic_harness_target.c",
+]
+includes   = [
+  "include",
+]
+depends_on = []
+needs_hal  = false
+
+[modules.epic-common.supported]
+PIC16F87XA = [
+  "16F873A",
+  "16F874A",
+  "16F876A",
+  "16F877A",
+]
+PIC16F88X = [
+  "16F882",
+  "16F883",
+  "16F884",
+  "16F886",
+  "16F887",
+]
+
+[modules.epic-common.example.PIC16F87XA]
+name    = "harness"
+sources = [
+  "tests/example_harness.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-common.example.PIC16F88X]
+name    = "harness"
+sources = [
+  "tests/example_harness.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }

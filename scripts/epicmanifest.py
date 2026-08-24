@@ -35,6 +35,14 @@ class Family:
     conditional_sources: list[ConditionalSource]
     harness_src: str | None = None
     dfp_version: str | None = None
+    # The family HAL's epic-cc conformant slice (HAL-3): exactly the
+    # files that build under epic-cc and fit the part's RAM, listed
+    # verbatim (epiccc-named variants included). Replaces the build
+    # driver's hardcoded keep-list: a later cluster grows the slice by
+    # adding entries here, not by touching shared tooling. Empty means
+    # the family is not yet reachable on the epic-cc path and the
+    # driver fails loudly.
+    epiccc_sources: list[str] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -211,8 +219,19 @@ class Manifest:
         example = self.example_for(module_name, family_name)
         return None if example is None else example.sim
 
-    def sources_for(self, module_name: str, mcu: str, variant: str = "target") -> list[str]:
+    def sources_for(self, module_name: str, mcu: str, variant: str = "target",
+                    toolchain: str = "xc8") -> list[str]:
         """Repo-root-relative sources for one (module, MCU) build.
+
+        toolchain="epic-cc" swaps the family HAL sources for the
+        family's epiccc_sources slice (HAL-3): the conformant subset
+        that builds under epic-cc and fits the part's RAM. The slice is
+        listed verbatim, epiccc-named variants included, and a family
+        without one fails loudly rather than silently compiling the
+        full XC8 set (which hits filed isel gaps and the GPR wall).
+        Conditional sources are XC8-psect-order machinery and do not
+        apply on the epic-cc path (single whole-program invocation,
+        no link order).
 
         Order: family HAL sources with applicable conditional sources
         spliced in at their recorded position (only when the build uses
@@ -244,16 +263,27 @@ class Manifest:
 
         out = []
         if self.uses_hal(module_name, mcu):
-            applicable = [c for c in fam.conditional_sources if mcu in c.variants]
-            for hal_src in fam.hal_sources:
-                if sim is not None and hal_src == fam.harness_src:
-                    out.append(sim.harness_src)
-                else:
-                    out.append(hal_src)
-                for c in applicable:
-                    if c.after == hal_src:
-                        out.append(c.path)
-            out += [c.path for c in applicable if c.after is None]
+            if toolchain == "epic-cc":
+                # The epic-cc path builds only variant="target"; the
+                # slice is the family's conformant real-target set.
+                if not fam.epiccc_sources:
+                    raise ManifestError(
+                        f"families.{fam.name} has no epiccc_sources; "
+                        f"the epic-cc path needs a conformant slice "
+                        f"(HAL-3)"
+                    )
+                out += list(fam.epiccc_sources)
+            else:
+                applicable = [c for c in fam.conditional_sources if mcu in c.variants]
+                for hal_src in fam.hal_sources:
+                    if sim is not None and hal_src == fam.harness_src:
+                        out.append(sim.harness_src)
+                    else:
+                        out.append(hal_src)
+                    for c in applicable:
+                        if c.after == hal_src:
+                            out.append(c.path)
+                out += [c.path for c in applicable if c.after is None]
 
         for name in self.resolved_deps(module_name, mcu, variant=variant):
             mod = self._module(name)
@@ -320,6 +350,7 @@ def _parse_family(name, table):
             for c in table.get("conditional_sources", [])
         ],
         harness_src=table.get("harness_src"),
+        epiccc_sources=list(table.get("epiccc_sources", [])),
     )
 
 
