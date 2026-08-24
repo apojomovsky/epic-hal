@@ -20,7 +20,7 @@ main_root="$(cd "$common_dir/.." && pwd)"
 hooks="$common_dir/hooks"
 
 mkdir -p "$hooks"
-for hook in pre-commit commit-msg; do
+for hook in pre-commit commit-msg pre-push; do
     script="$main_root/scripts/$hook-checks.sh"
     # A hook script that exists only on this branch is not in the main
     # checkout yet; link the invoking tree's copy so the hook works now,

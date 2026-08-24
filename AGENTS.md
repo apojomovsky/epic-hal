@@ -236,6 +236,11 @@ not the ritual. `epic-tasks takeoff --prose` is the same as `PROSE=1`.
   on real register and UART output, so debug the target with
   `docs/adding-a-device.md` §4 before touching the assertion. Loosening
   a gate to get green is how a silent miscompile ships.
+- **No force pushes.** Rewriting a branch that already exists on the
+  remote drops it for every other agent and clone; the pre-push hook
+  refuses it. If history is genuinely messy, rebase onto master and
+  get the human's explicit go-ahead before re-running with
+  `EPIC_FORCE_PUSH_APPROVED=1 git push --force-with-lease`.
 
 ## Non-obvious things that will bite you
 
