@@ -8,6 +8,11 @@
 #include "peripherals/pic16f87xa_gpio.h"
 #include "core/pic16_irq.h"
 
+/**
+ * @brief Port width in pins.
+ * @param port GPIO port.
+ * @return number of implemented pins.
+ */
 static uint8_t port_width(GPIO_TypeDef port)
 {
 #if PIC16F87XA_FAMILY_HAS_PORTE
@@ -17,6 +22,12 @@ static uint8_t port_width(GPIO_TypeDef port)
     return 8U;
 }
 
+/**
+ * @brief Configure one or more pins of a port.
+ * @param port GPIO port.
+ * @param pins bitmask.
+ * @param mode direction.
+ */
 void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
@@ -79,6 +90,10 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     }
 }
 
+/**
+ * @brief Restore all pins of a port to input.
+ * @param port GPIO port.
+ */
 void EPIC_GPIO_DeInit(GPIO_TypeDef port)
 {
     uint8_t v = (uint8_t)((1U << port_width(port)) - 1U);
@@ -94,6 +109,12 @@ void EPIC_GPIO_DeInit(GPIO_TypeDef port)
     else EPIC_REG8(PIC_REG_TRISA) = v;
 }
 
+/**
+ * @brief Drive a set of pins high or low.
+ * @param port GPIO port.
+ * @param pins bitmask.
+ * @param state pin state.
+ */
 void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
@@ -150,6 +171,11 @@ void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
     }
 }
 
+/**
+ * @brief Toggle a set of pins.
+ * @param port GPIO port.
+ * @param pins bitmask.
+ */
 void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
@@ -165,6 +191,12 @@ void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
     else EPIC_REG8(PIC_REG_PORTA) ^= mask;
 }
 
+/**
+ * @brief Read the current level of a set of pins.
+ * @param port GPIO port.
+ * @param pins bitmask.
+ * @return pin state.
+ */
 GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
 {
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
@@ -204,6 +236,11 @@ GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
     }
 }
 
+/**
+ * @brief Write the whole port latch.
+ * @param port GPIO port.
+ * @param value byte to write.
+ */
 void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value)
 {
     uint8_t mask = (uint8_t)((1U << port_width(port)) - 1U);
@@ -220,6 +257,11 @@ void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value)
     else EPIC_REG8(PIC_REG_PORTA) = v;
 }
 
+/**
+ * @brief Read the whole port latch.
+ * @param port GPIO port.
+ * @return port byte.
+ */
 uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
 {
     if (port == GPIOA) {
@@ -258,6 +300,10 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
     }
 }
 
+/**
+ * @brief Enable or disable PORTB pull-ups.
+ * @param pull pull-up control.
+ */
 void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 {
     uint8_t opt = EPIC_REG8(PIC_REG_OPTION);
@@ -268,11 +314,18 @@ void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 
 static void (*s_rb_change_callback)(uint8_t) = NULL;
 
+/**
+ * @brief Register PORTB change callback.
+ * @param callback function called with PORTB byte.
+ */
 void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t))
 {
     s_rb_change_callback = callback;
 }
 
+/**
+ * @brief RB change ISR.
+ */
 void RB_IRQHandler(void)
 {
     if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_RBIF)) return;
