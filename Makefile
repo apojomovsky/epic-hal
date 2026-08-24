@@ -9,7 +9,7 @@
 # exactly what CI resolves and pulls.
 
 # ─────────────────────────── image identity ─────────────────────────
-.PHONY: vendor-link check-vendor image ci-image-push test xc8-build mdb-test mdb-epiccc mdb-hex target-ci exec audit shell setup-hooks pre-pr-check
+.PHONY: vendor-link check-vendor image ci-image-push test xc8-build mdb-test mdb-epiccc mdb-hex target-ci exec audit shell bootstrap doctor setup-hooks pre-pr-check
 # Same tag-resolution formula CI and scripts/sim-test-local.sh already
 # use (read straight out of the Dockerfile's own ARGs), kept here in one
 # place so ci-image-push pushes to the exact tag CI resolves and pulls,
@@ -287,6 +287,12 @@ target-ci: image
 # ───────────────────── local-only developer rituals ─────────────────
 # Host-side bash/python3, no container: these gate the branch, not the
 # build, so they must run before `make image` is even possible.
+
+bootstrap:
+	@bash scripts/bootstrap.sh
+
+doctor:
+	@bash scripts/bootstrap.sh --check-only
 
 setup-hooks:
 	@bash scripts/install-git-hooks.sh
