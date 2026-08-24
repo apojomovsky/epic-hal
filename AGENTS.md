@@ -142,6 +142,9 @@ Branch names mirror the commit types: `feat/<description>`,
 worktree keeps your master checkout clean and lets several tasks run in
 parallel without touching each other's trees. `.worktrees/` is
 gitignored, so a worktree is never part of a diff.
+The default base is the latest `origin/master`; branching off a different
+branch is the exception, reserved for multi-step work other tasks build on
+in parallel.
 
 Two things are shared by every worktree, so they are set up once, not
 per tree: the git hooks (`make setup-hooks` writes into the common hooks
