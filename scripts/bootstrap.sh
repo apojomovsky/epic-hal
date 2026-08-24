@@ -57,7 +57,7 @@ fi
 # this reports the same state from a .worktrees/ checkout as from master.
 if [ "$check_only" = 1 ]; then
     hooks_dir="$(cd "$(git -C "$repo_root" rev-parse --git-common-dir)" && pwd)/hooks"
-    for hook in pre-commit commit-msg; do
+    for hook in pre-commit commit-msg pre-push; do
         if [ -e "$hooks_dir/$hook" ]; then
             echo "bootstrap: $hook hook already installed."
         else
@@ -113,13 +113,13 @@ if [ "$toolchain_ok" = 1 ]; then
         echo "       docker/ci-toolchain/vendor/mplabx-installer.tar"
         echo "  2. Re-run ./scripts/bootstrap.sh (or run 'make image')."
         echo "  Host-simulation builds and tests work without this."
-        [ "$check_only" = 1 ] && problems=1
+        problems=1
     fi
-elif [ "$check_only" = 1 ]; then
+else
     problems=1
 fi
 
-if [ "$check_only" = 1 ] && [ "$problems" -eq 1 ]; then
+if [ "$problems" -eq 1 ]; then
     exit 1
 fi
 exit 0

@@ -43,7 +43,9 @@ MPLAB X `.X` for a chosen part and module subset.
 
 ## Build & toolchain
 
-Two paths, pick either. **Native**: XC8/MPLAB X installed by hand
+First-time setup: `make bootstrap` (installs host packages, git hooks,
+and the docker toolchain image; `make doctor` reports what is missing
+without changing anything). **Native**: XC8/MPLAB X installed by hand
 (license-gated), `export PATH=$PATH:/opt/microchip/xc8/v3.10/bin`,
 `python3 scripts/epic_build.py build --module <name> --mcu <MCU> --run`;
 `./scripts/bootstrap.sh` covers the host-sim side plus the Docker
