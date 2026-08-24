@@ -51,13 +51,24 @@ toolchain readiness checks. **Docker** (no
 local installs beyond two vendor files only a human can fetch,
 Microchip's CDN blocks scripted downloads): root `Makefile`, `make
 check-vendor` -> `make image` -> `make test` / `make xc8-build
-MODULE=... MCU=...` / `make mdb-test MODULE=... MCU=... DEVICE=...
-DFP=...` / `make mdb-epiccc MODULE=... MCU=... DEVICE=...` (the same
-gate over an already built epic-cc hex) / `make shell`. Details:
-DEVELOPMENT.md's Docker section.
+MODULE=... MCU=...` / `make epiccc-build MODULE=... MCU=...` (the
+epic-cc toolchain path, runs in the epic-cc dev image) / `make
+mdb-test MODULE=... MCU=... DEVICE=...` / `make mdb-epiccc MODULE=...
+MCU=... DEVICE=...` (deterministic toggle gate over an already built
+epic-cc hex) / `make mdb-hex HEX=... DEVICE=...` (run a register-read
+gate on an existing hex) / `make shell`. Details: DEVELOPMENT.md's
+Docker section.
 Same image is pushed to a **private** GHCR package CI pulls from
 (`make ci-image-push`, human-triggered only; see DEVELOPMENT.md for
 why it must stay private, EULA redistribution terms).
+
+All builds and gates go through the Makefile targets, which own the
+docker plumbing (container images, bind mounts, environment). Never
+hand-roll a `docker run` or call a toolchain binary directly: if a
+target is missing or wrong, fix the Makefile and use it, and record
+the reason in the target's comment rather than a workaround in this
+file. The only host-side step is `epic_build.py` resolution, which
+emits a script for a container target to execute.
 
 CI (`.github/workflows/ci.yml`): a `host` job (host build+ctest for
 every module, the Python tooling tests, plus lint, no Docker) and one
