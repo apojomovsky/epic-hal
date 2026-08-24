@@ -439,6 +439,10 @@ class TestResolution(unittest.TestCase):
         sim = self.m.sources_for("epic-tick", "16F877A", variant="sim")
         self.assertIn("epic-tick/examples/example_tick.c", sim)
 
+    def test_sources_for_sim_variant_raises_without_one(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            self.m.sources_for("epic-tick", "18F4550", variant="sim")
+
     def test_epiccc_sources_used_for_epic_cc_toolchain(self):
         srcs = self.m.sources_for("epic-tick", "16F877A", toolchain="epic-cc")
         self.assertIn("pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c", srcs)

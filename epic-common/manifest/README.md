@@ -48,6 +48,14 @@ resolve them all, so a partial set is a guaranteed link failure. This
 is the "link: irq dispatch needs every peripheral handler" failure
 class named in the manifest's `excluded` reason strings.
 
+A source only some variants compile is a conditional:
+
+```toml
+[[families.PIC16F87XA.conditional_sources]]
+path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+variants = ["16F874A", "16F877A"]   # PSP is 40/44-pin only
+```
+
 ### `epiccc_sources`: the family's epic-cc conformant slice
 
 `epic_build.py` resolves two source sets from the same family table. The
