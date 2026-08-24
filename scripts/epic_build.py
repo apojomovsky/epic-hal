@@ -449,6 +449,18 @@ def _epiccc_source(path: str) -> str:
     return path
 
 
+def _display_path(path):
+    """`path` written relative to the repository, or absolute when outside it.
+
+    `--build-dir` may point anywhere, so the repo-relative form a reader
+    expects is not always expressible.
+    """
+    try:
+        return path.relative_to(REPO)
+    except ValueError:
+        return path
+
+
 def cmd_build(args):
     manifest = epicmanifest.load(epicmanifest.default_path())
     toolchain = getattr(args, "toolchain", "xc8")
@@ -462,7 +474,7 @@ def cmd_build(args):
     except (UnsupportedError, epicmanifest.ManifestError) as exc:
         sys.exit(f"error: {exc}")
 
-    objdir = REPO / args.build_dir / args.mcu
+    objdir = (REPO / args.build_dir / args.mcu).resolve()
     objdir.mkdir(parents=True, exist_ok=True)
     config_source = emit_config_source(
         manifest, args.module, args.mcu, variant=args.variant,
@@ -473,7 +485,7 @@ def cmd_build(args):
     script_path = objdir / "build.sh"
     script_path.write_text(script)
     script_path.chmod(0o755)
-    print(f"wrote {script_path.relative_to(REPO)}")
+    print(f"wrote {_display_path(script_path)}")
 
     if not args.run:
         return

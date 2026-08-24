@@ -95,6 +95,26 @@ class TestConfigSource(unittest.TestCase):
         self.assertNotIn("#pragma config WDTE = ON", out)
 
 
+class TestDisplayPath(unittest.TestCase):
+    """`--build-dir` may point outside the checkout, so the "wrote ..." line
+    cannot always be repo-relative."""
+
+    def test_path_inside_the_repo_is_repo_relative(self):
+        p = epic_build.REPO / "build" / "16F877A" / "build.sh"
+        self.assertEqual(
+            str(epic_build._display_path(p)), "build/16F877A/build.sh"
+        )
+
+    def test_path_outside_the_repo_stays_absolute(self):
+        with tempfile.TemporaryDirectory() as td:
+            p = pathlib.Path(td).resolve() / "16F877A" / "build.sh"
+            self.assertEqual(epic_build._display_path(p), p)
+
+    def test_sibling_of_the_repo_does_not_raise(self):
+        p = (epic_build.REPO / ".." / "elsewhere" / "build.sh").resolve()
+        self.assertEqual(epic_build._display_path(p), p)
+
+
 class TestBuildScript(unittest.TestCase):
     def script(self, module="epic-tick", mcu="16F877A", dfp_dir="/opt/dfp", fosc_hz=None,
               variant="target"):
