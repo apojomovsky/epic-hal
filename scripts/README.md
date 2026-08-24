@@ -39,9 +39,9 @@ Installed on their own, or as part of `bootstrap.sh` above:
 ```sh
 ./scripts/install-git-hooks.sh      # or: make setup-hooks
 ```
-
-This symlinks `pre-commit` to `scripts/pre-commit-checks.sh` and
-`commit-msg` to `scripts/commit-msg-checks.sh` in the git hooks
+This symlinks `pre-commit` to `scripts/pre-commit-checks.sh`,
+`commit-msg` to `scripts/commit-msg-checks.sh` and `pre-push` to
+`scripts/pre-push-checks.sh` in the git hooks
 directory (not tracked by git, so every clone needs to run the installer
 once). The hooks directory is shared by every worktree, so one install
 covers all of them; the symlinks point at the main checkout, which
@@ -56,6 +56,18 @@ symlinks, or skip them for one commit with `git commit --no-verify`.
    release page speak for someone who did not sign off.
 2. **No em-dashes**, the same rule the pre-commit hook applies to added
    lines, here applied to the message itself.
+
+### What `pre-push` checks
+
+1. **No force pushes.** A push that rewrites a branch that already
+   exists on the remote (the remote tip is not an ancestor of the pushed
+   commit) is refused. The rewrite drops the branch for every other
+   agent and downstream clone of this repo, and force-pushed commits are
+   only recoverable from a reflog nobody is guaranteed to have. New
+   branches and branch deletions always pass. A rewrite that is
+   genuinely needed (e.g. cleaning up a messy history before merge)
+   requires the human's explicit go-ahead; re-run the push with
+   `EPIC_FORCE_PUSH_APPROVED=1 git push --force-with-lease`.
 
 ### What `pre-commit` checks
 
