@@ -162,11 +162,12 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         sources = [_epiccc_source(s) for s in sources]
         includes = [_epiccc_include(i) for i in includes]
         # For the 887 smoke the full family HAL hits a handful of isel
-        # gaps that are tracked separately (ccp addrs flash GEP, srlatch
-        # bool trunc, usart indirect calls, etc.). The smoke only needs
-        # GPIO + Timer0 + core to prove the toolchain, so keep the build
-        # green by compiling just that slice. The gaps are filed, not
-        # silently worked around.
+        # gaps that are tracked separately (ccp addrs flash GEP:
+        # epic-cc#114; srlatch bool trunc: closed by epic-cc#107; usart
+        # indirect calls: epic-cc#73). The smoke only needs GPIO +
+        # Timer0 + core to prove the toolchain, so keep the build green
+        # by compiling just that slice. The gaps are filed, not silently
+        # worked around.
         if module == "pic16f88x-hal" and mcu == "16F887":
             keep = ("gpio", "timer0", "irq", "wdt", "isr_vector", "dispatch", "harness", "example_blink", "config")
             sources = [s for s in sources if any(k in s for k in keep)]
