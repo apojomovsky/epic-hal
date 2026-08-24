@@ -8,7 +8,7 @@
 # from the Dockerfile's ARGs (IMAGE_TAG below), so ci-image-push pushes
 # exactly what CI resolves and pulls.
 
-.PHONY: vendor-link check-vendor image ci-image-push test xc8-build mdb-test target-ci exec audit shell setup-hooks pre-pr-check
+.PHONY: vendor-link check-vendor image ci-image-push test xc8-build mdb-test mdb-epiccc target-ci exec audit shell setup-hooks pre-pr-check
 
 # ─────────────────────────── image identity ─────────────────────────
 # Same tag-resolution formula CI and scripts/sim-test-local.sh already
@@ -168,6 +168,25 @@ mdb-test: image
 	  --build-dir build-sim/$(MODULE) \
 	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
 	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)" $(or $(EEPROM_WRITES),$(if $(filter epic-settings,$(MODULE)),24,0))
+
+mdb-epiccc: image
+	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
+		echo "usage: make mdb-epiccc MODULE=<manifest module> MCU=<mcu> DEVICE=<device> [REG=PORTB] [BIT=0] [SAMPLES=12] [STEPI=200000]" >&2; \
+		echo "  Runs an ALREADY BUILT epic-cc hex under MPLAB SIM and requires REG bit BIT to" >&2; \
+		echo "  change across SAMPLES samples of STEPI instructions each. Deterministic:" >&2; \
+		echo "  stepi, not wall-clock wait, so the sequence is identical run to run." >&2; \
+		echo "  Build the hex first where epic-cc lives (its compiler and clang are not in" >&2; \
+		echo "  this image):" >&2; \
+		echo "    python3 scripts/epic_build.py build --module <m> --mcu <mcu> \\" >&2; \
+		echo "      --toolchain epic-cc --epic-cc <path> --build-dir build-sim/<m>" >&2; \
+		echo "    then run the emitted build-sim/<m>/<mcu>/build.sh there" >&2; \
+		echo "  e.g. make mdb-epiccc MODULE=pic16f88x-hal MCU=16F887 DEVICE=PIC16F887" >&2; \
+		exit 1; \
+	fi
+	$(DOCKER_RUN) env SIM_MDB_SKIP_BUILD=1 \
+	  TOGGLE_REG=$(or $(REG),PORTB) TOGGLE_BIT=$(or $(BIT),0) \
+	  TOGGLE_SAMPLES=$(or $(SAMPLES),12) TOGGLE_STEPI=$(or $(STEPI),200000) \
+	  scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) 0 toggle
 
 # ─────────────────────────── dev shell ───────────────────────────────
 # Same --user/passwd/HOME fix as DOCKER_RUN (see its comment); a plain

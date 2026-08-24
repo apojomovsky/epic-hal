@@ -52,7 +52,9 @@ local installs beyond two vendor files only a human can fetch,
 Microchip's CDN blocks scripted downloads): root `Makefile`, `make
 check-vendor` -> `make image` -> `make test` / `make xc8-build
 MODULE=... MCU=...` / `make mdb-test MODULE=... MCU=... DEVICE=...
-DFP=...` / `make shell`. Details: DEVELOPMENT.md's Docker section.
+DFP=...` / `make mdb-epiccc MODULE=... MCU=... DEVICE=...` (the same
+gate over an already built epic-cc hex) / `make shell`. Details:
+DEVELOPMENT.md's Docker section.
 Same image is pushed to a **private** GHCR package CI pulls from
 (`make ci-image-push`, human-triggered only; see DEVELOPMENT.md for
 why it must stay private, EULA redistribution terms).
