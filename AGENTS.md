@@ -106,10 +106,28 @@ For every ticket:
    (see Worktrees below, never work on `master`).
 3. Work, then run the takeoff ritual (`make pre-pr-check` → `epic-tasks takeoff`).
 4. Open the pull request with `Closes #N`, then
-   `epic-tasks review <repo>#<n> --pr <url>`.
+   `epic-tasks review <repo>#<n> --pr <url>`. The body must use real newlines:
+   copy-paste-safe ``gh pr create --body-file - <<'EOF'`` (or
+   ``cat <<'EOF' > /tmp/pr_body.md`` + ``gh pr create --body-file /tmp/pr_body.md``),
+   NEVER ``gh pr create --body "a\nb"``, the shell never expands ``\n`` so GitHub
+   renders literal ``\n`` as text and the bullets collapse to one line (epic-cc#129):
+   ```bash
+   cat <<'EOF' > /tmp/pr_body.md
+   Closes #N
+
+   Summary of the change.
+
+   - bullet one
+   - bullet two
+   EOF
+   gh pr create --title "fix(scope): summary" --body-file /tmp/pr_body.md
+   # - or inline: gh pr create --title "..." --body-file - <<'EOF'
+   ```
+   Heal an existing PR with ``gh pr edit --body-file - <<'EOF'`` or
+   ``python3 -c 'from epic_tasks.gh import normalize_pr_body; print(normalize_pr_body(open("body.txt").read()))'``.
+   The local ``check_pr_body`` gate (``epic_tasks/takeoff.py``) warns (advisory) and
+   ``.github/workflows/pr-body.yml`` fails in CI when the body contains literal ``\n``/``\r``.
 5. After the PR merges, remove the worktree:
-   `git worktree remove .worktrees/<name>`. Never remove a worktree before
-   merge, the branch must stay reachable for review.
 
 
 Set `EPIC_AGENT_ID` (`<runtime>@<host>`) and `EPIC_TASKS_PROJECT` once per
@@ -142,9 +160,6 @@ Branch names mirror the commit types: `feat/<description>`,
 worktree keeps your master checkout clean and lets several tasks run in
 parallel without touching each other's trees. `.worktrees/` is
 gitignored, so a worktree is never part of a diff.
-The default base is the latest `origin/master`; branching off a different
-branch is the exception, reserved for multi-step work other tasks build on
-in parallel.
 
 Two things are shared by every worktree, so they are set up once, not
 per tree: the git hooks (`make setup-hooks` writes into the common hooks
@@ -218,8 +233,15 @@ Run `make pre-pr-check` before opening a PR. It is a thin wrapper around
    never fails the ritual on its own. Read everything it printed
    against the Expression conventions below and fix what doesn't hold
    up; `make pre-pr-check PROSE=1` records that the review happened.
-7. Hooks installed (`make setup-hooks`).
-8. `make pre-pr-check TEST=1` also runs the host-sim suite (or `epic-tasks takeoff --test`).
+7. **PR body hygiene: real newlines only.** PR descriptions must use
+   actual newlines (``gh pr create --body-file <file>`` or a heredoc),
+   never an inline ``"a\n\n- b"`` that renders literally as ``\n`` on
+   GitHub (epic-cc#129). The takeoff ritual (``check_pr_body`` in
+   ``epic_tasks/takeoff.py`` + ``epic_tasks.gh:normalize_pr_body``) warns (advisory) and
+   the ``.github/workflows/pr-body.yml`` CI workflow fails in CI when a body
+   contains literal ``\n``/``\r``; heal with ``gh pr edit --body-file``.
+8. Hooks installed (`make setup-hooks`).
+9. `make pre-pr-check TEST=1` also runs the host-sim suite (or `epic-tasks takeoff --test`).
 
 The ritual exits 1 with the exact fix list while blocking items are
 outstanding. It complements the pre-commit hook rather than repeating
@@ -294,6 +316,9 @@ not the ritual. `epic-tasks takeoff --prose` is the same as `PROSE=1`.
   from these commits, so a trailer makes them speak for someone who did
   not sign off. The `commit-msg` hook rejects trailers and em-dashes;
   `make pre-pr-check` re-checks the whole PR range.
+- **PR bodies use real newlines.** ``gh pr create --body-file`` or a
+  heredoc, never ``--body "line\nnext"``. Literal ``\n`` is rejected by
+  takeoff and by ``.github/workflows/pr-body.yml`` (epic-cc#129).
 - **Update the docs a change touches before calling it done**: the
   module's `README.md`/`docs/API.md`/`docs/ARCHITECTURE.md` if
   behavior changed, `MANUAL.md` if a register fact changed.
@@ -307,7 +332,7 @@ not the ritual. `epic-tasks takeoff --prose` is the same as `PROSE=1`.
   from the datasheet alone. Has caught real wrong assumptions every
   time it's been tried (`epic-math`'s XC8 round-trip probe, the
   PIC16F193X BSR-addressing probe).
-- **No em-dashes (—).** Not in docs, not in commit messages, not in code
+- **No em-dashes (,).** Not in docs, not in commit messages, not in code
   comments. Use a comma, a colon, or a period and a new sentence instead.
   Replacing one is a judgment call, not a swap: pick the replacement
   (and split or reorder the sentence when it needs it) so the result
