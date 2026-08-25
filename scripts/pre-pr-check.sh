@@ -5,9 +5,8 @@
 # repo-specific hard gates). This file only preserves `make pre-pr-check`
 # as the entry point and forwards flags.
 #
-# Usage: bash scripts/pre-pr-check.sh [--test] [--prose] [--base <ref>]
+# Usage: bash scripts/pre-pr-check.sh [--test] [--base <ref>]
 #   --test   also run the full suite
-#   --prose  attest that scripts/prose-diff.sh output was reviewed
 #   --base   base ref to diff against (default origin/master or $BASE_REF)
 #   BASE_REF env var overrides the base (for forks)
 

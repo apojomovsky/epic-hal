@@ -41,6 +41,22 @@ permissions:
   packages: read
 
 jobs:
+  prose:
+    name: prose lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install epic-tasks
+        run: |
+          pip install --user git+https://github.com/apojomovsky/epic-tasks.git
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Lint added comment blocks
+        run: epic-tasks prose --verify
+
   # Bare runner, no Docker: every module/HAL's cmake+ctest plus lint.
   # non-code PRs skip the build+test loop but still run lint (a
   # trailing-whitespace/em-dash violation can live in a .md file too).
