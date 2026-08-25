@@ -83,14 +83,14 @@ hal_sources = [
 harness_src = "epic-common/src/core/epic_harness_target.c"
 # The epic-cc conformant slice (HAL-3): the subset that builds under
 # epic-cc and fits the part's RAM (the full set exceeds the 877A's GPR
-# capacity; epic_irq.c and the peripheral drivers hit filed isel gaps,
-# epic-cc#73/#114). Listed verbatim, epiccc-named variants included;
-# later clusters grow the slice here. The slice is per family: every
-# module on the epic-cc path for this family links the same set.
+# capacity; the peripheral drivers hit filed isel gaps). Listed
+# verbatim; later clusters grow the slice here. The slice is per
+# family: every module on the epic-cc path for this family links the
+# same set.
 epiccc_sources = [
-  "pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c",
-  "pic16f87xa-hal/src/epiccc/pic16f87xa_timer0_epiccc.c",
-  "pic16f87xa-hal/src/epiccc/pic16_irq_epiccc.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer0.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
   "pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep.c",
   "pic16f87xa-hal/src/epiccc/pic16f87xa_wdt_sleep_epiccc.c",
   "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
@@ -150,9 +150,9 @@ harness_src = "epic-common/src/core/epic_harness_target.c"
 # contract as PIC16F87XA's slice: grows by adding entries, never by
 # editing the build driver.
 epiccc_sources = [
-  "pic16f88x-hal/src/epiccc/pic16f88x_gpio_epiccc.c",
-  "pic16f88x-hal/src/epiccc/pic16f88x_timer0_epiccc.c",
-  "pic16f88x-hal/src/epiccc/pic16_irq_epiccc.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_gpio.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_timer0.c",
+  "pic16f88x-hal/src/core/pic16_irq.c",
   "pic16f88x-hal/src/core/pic16f88x_wdt_sleep.c",
   "pic16f88x-hal/src/epiccc/pic16f88x_wdt_sleep_epiccc.c",
   "pic16f88x-hal/src/epiccc/pic16_isr_vector.c",

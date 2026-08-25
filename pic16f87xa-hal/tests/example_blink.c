@@ -64,6 +64,8 @@ int main(void)
     EPIC_IRQ_Restore(1);
 
 #ifdef __EPIC_CC__
+    // TMR0IF poll loop (the #137 workaround): same posture as
+    // 88x_usart umin, filed gap, minimal fork.
     for (uint32_t i = 0; epic_harness_running(i); i++) {
         if (EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_TMR0IF) {
             EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_TMR0IF);

@@ -237,5 +237,9 @@ void RB_IRQHandler(void)
      * after clearing risks a spurious re-interrupt or a missed change. */
     uint8_t portb = EPIC_REG8(PIC_REG_PORTB);
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_RBIF);
+#ifndef EPIC_AT
     if (s_rb_change_callback) s_rb_change_callback(portb);
+#else
+    (void)portb;
+#endif
 }

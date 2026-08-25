@@ -6,12 +6,6 @@
 /* Prescaler ratios, DS40001291H Table 5-1: 000=1:2 ... 111=1:256. */
 static const uint16_t ps_ratio[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 
-/* Owned copy of the caller's handle for the weak ISR (the caller's is
- * typically stack-local, out of scope by the time the ISR reads it).
- * Pinned to bank 3 (0x190) when the part has Bank 3 GPR (883/884/886/
- * 887); the 882 (128 B RAM) has none, so it falls back to the
- * linker's best-fit scatter. */
-
 /* The ISR only needs the callback, so store the pointer (1 byte) rather
  * than a full handle copy: the caller's handle is typically stack-local
  * (a dangling-pointer hazard, see epic-common/MANUAL.md §3.3), and a
@@ -163,7 +157,11 @@ void TIMER0_IRQHandler(void)
      * (class-F hazard; see the CCP handlers). TMR0IF is INTCON bit 2. */
     if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_TMR0IF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_TMR0IF);
+#ifndef EPIC_AT
     if (g_t0_overflow_cb) {
         g_t0_overflow_cb();
     }
+#else
+    (void)g_t0_overflow_cb;
+#endif
 }

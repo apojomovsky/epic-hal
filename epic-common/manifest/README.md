@@ -62,15 +62,17 @@ variants = ["16F874A", "16F877A"]   # PSP is 40/44-pin only
 XC8 path uses `hal_sources` + `conditional_sources`, exactly as above.
 The epic-cc path (`--toolchain epic-cc`) uses `epiccc_sources` instead:
 the subset of the HAL that builds under epic-cc and fits the part's RAM,
-listed verbatim with the `_epiccc.c` variant names.
+listed verbatim. The slice shares the family's `src/peripherals/` and
+`src/core/` files with the XC8 build (no per-toolchain variants), plus
+the epic-cc-specific vector, dispatch, and WDT/sleep intrinsics.
 
 ```toml
 [families.PIC16F87XA]
 # ... hal_sources and conditional_sources as above ...
 epiccc_sources = [
-  "pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c",
-  "pic16f87xa-hal/src/epiccc/pic16f87xa_timer0_epiccc.c",
-  "pic16f87xa-hal/src/epiccc/pic16_irq_epiccc.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer0.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
   "pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep.c",
   "pic16f87xa-hal/src/epiccc/pic16f87xa_wdt_sleep_epiccc.c",
   "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
@@ -82,12 +84,14 @@ epiccc_sources = [
 The slice is the family HAL's answer to three hard constraints:
 epic-cc's whole-program overlay must fit the part's RAM (the full set
 exceeds the 877A's GPR capacity), every peripheral driver must avoid
-the filed isel gaps (flash GEPs, indirect calls: `apojomovsky/epic-cc#73`
-and `apojomovsky/epic-cc#114`), and the dispatch must not take strong
+the filed isel gaps (cross-context callback: `apojomovsky/epic-cc#137`;
+const-table window: `apojomovsky/epic-cc#138`), and the dispatch must not take strong
 references to handlers outside the slice. It is per family, not per
 module: every module on the epic-cc path for this family links the
 same slice, so the full peripheral set is never silently compiled into
-an epic-cc build.
+an epic-cc build. The 87XA `irq_table` const placement is currently
+blocked on #138 (60B window at 0xCEA on the 877A blink shape; 887
+proves the shared-file shape); it will follow when #138 lands.
 
 **The recipe for adding a module to the epic-cc path is a manifest
 edit, nothing else:** add the module's epiccc-compliant source files

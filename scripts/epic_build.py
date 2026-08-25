@@ -189,9 +189,10 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
 
     if toolchain == "epic-cc":
         # The family's epiccc_sources slice is already the epic-cc
-        # conformant set (HAL-3): it lists the epiccc-named variant
-        # files verbatim, so no source mapping runs here, only the
-        # include-dir swap (include/target -> include/epiccc).
+        # conformant set (HAL-3): shared peripherals/core plus the
+        # toolchain-specific vector/dispatch/WDT files. No source
+        # mapping runs, only the include-dir swap (include/target ->
+        # include/epiccc).
         includes = [_epiccc_include(i) for i in includes]
         # Epic-cc path: one invocation, no per-file compiles, no DFP.
         # Keep the same source set and include order; the driver adds its
