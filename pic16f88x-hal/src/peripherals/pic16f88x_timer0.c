@@ -6,12 +6,6 @@
 /* Prescaler ratios, DS40001291H Table 5-1: 000=1:2 ... 111=1:256. */
 static const uint16_t ps_ratio[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 
-/* Owned copy of the caller's handle for the weak ISR (the caller's is
- * typically stack-local, out of scope by the time the ISR reads it).
- * Pinned to bank 3 (0x190) when the part has Bank 3 GPR (883/884/886/
- * 887); the 882 (128 B RAM) has none, so it falls back to the
- * linker's best-fit scatter. */
-
 /* The ISR only needs the callback, so store the pointer (1 byte) rather
  * than a full handle copy: the caller's handle is typically stack-local
  * (a dangling-pointer hazard, see epic-common/MANUAL.md §3.3), and a

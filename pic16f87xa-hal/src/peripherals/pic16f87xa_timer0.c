@@ -38,7 +38,7 @@ static void option_clr_set(uint8_t clr_mask, uint8_t set_mask)
 
 /**
  * @brief Configure Timer0: stop it, arm the overflow interrupt if a
- *        callback is given, and copy the handle into driver storage.
+ *        callback is given, and record the callback.
  * @param h handle with ClockSource, ClockEdge, Prescaler,
  *        PrescalerAssigned, ReloadValue, OverflowCallback.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.

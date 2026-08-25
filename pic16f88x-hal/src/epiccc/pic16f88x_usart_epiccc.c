@@ -341,5 +341,6 @@ void USART_RX_IRQHandler(void)
     if (g_usart && g_usart->RxCpltCallback) g_usart->RxCpltCallback(data);
 #else
     (void)g_usart;
+    (void)data;
 #endif
 }

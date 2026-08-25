@@ -37,11 +37,11 @@ inspect the .s / .sym / .map (AGENTS.md).
   `bsf STATUS,7` (banks 2/3), USART_TX_IRQHandler uses
   `bcf STATUS,7` (banks 0/1) (disassembly probes, 2026-08-11). Any
   storage deref'd from an 87XA ISR through a pointer must live in
-  the window that handler bakes, so it is `EPIC_PLACE`-pinned:
-  `g_t0_storage` at 0x130 (bank 2, 6 bytes), `s_usart_handle` at
-  0xA0 (bank 1, 7 bytes). Direct symbol accesses (e.g. the CCP ISR's
-  `g_ccp_callbacks[i]`) get auto-banksel and are bank-correct
-  anywhere; only pointer derefs bake.
+  the window that handler bakes; direct symbol accesses (e.g. the CCP
+  ISR's `g_ccp_callbacks[i]` or the lean `g_t0_overflow_cb`) get
+  auto-banksel and are bank-correct anywhere, only pointer derefs
+  bake. `g_t0_storage` at 0x130 was the timer0 example; the 87XA
+  timer0 now stores only the 1B callback like 88X, so no pin.
 - **FSR1 indirect (193X)**: pointer derefs compile to FSR1 indirect
   (`movwf fsr1l; clrf fsr1h; moviw`), which reaches any bank; the
   193X statics are verified safe unpinned (Finding 1 in
@@ -86,7 +86,7 @@ inspect the .s / .sym / .map (AGENTS.md).
 | 0x71 | 1 | epic_bank1_scratch (HAL) | common RAM, asm operand reach |
 | 0xA0 | 7 | s_usart_handle (harness) | USART ISR bakes IRP=0 |
 | 0x100-0x540 | ~0x440 | epic-math PIC16 asm leaves (10 fns) | internal gotos, page 0 only; gaps sized to worst-case (-O0) codegen (old pins fit -O2 only and collided at -O0/-O1) |
-| 0x190 | 6 | g_t0_storage (timer0) | Timer0 ISR bakes IRP=1; bank 3 keeps bank 2 contiguous |
+| 0xA0 | 7 | s_usart_handle (harness) | USART ISR bakes IRP=0 |
 
 New pins must land outside these ranges (the linker skips pinned
 addresses, so a collision only happens against another pin or an

@@ -84,12 +84,14 @@ epiccc_sources = [
 The slice is the family HAL's answer to three hard constraints:
 epic-cc's whole-program overlay must fit the part's RAM (the full set
 exceeds the 877A's GPR capacity), every peripheral driver must avoid
-the filed isel gaps (flash GEPs, indirect calls: `apojomovsky/epic-cc#73`
-and `apojomovsky/epic-cc#114`), and the dispatch must not take strong
+the filed isel gaps (cross-context callback: `apojomovsky/epic-cc#137`;
+const-table window: `apojomovsky/epic-cc#138`), and the dispatch must not take strong
 references to handlers outside the slice. It is per family, not per
 module: every module on the epic-cc path for this family links the
 same slice, so the full peripheral set is never silently compiled into
-an epic-cc build.
+an epic-cc build. The 87XA `irq_table` const placement is currently
+blocked on #138 (60B window at 0xCEA on the 877A blink shape; 887
+proves the shared-file shape); it will follow when #138 lands.
 
 **The recipe for adding a module to the epic-cc path is a manifest
 edit, nothing else:** add the module's epiccc-compliant source files
