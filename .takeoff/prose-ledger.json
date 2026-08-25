@@ -1,0 +1,80 @@
+{
+  "e94c2eac8aba": {
+    "tier": "2-3",
+    "justification": "Pure probe header, explains why no tick or indirect is needed for footprint, hand-trace of isel."
+  },
+  "72c47aa2a774": {
+    "tier": "1"
+  },
+  "d0a9c60ee917": {
+    "tier": "1"
+  },
+  "7295de7939e9": {
+    "tier": "1"
+  },
+  "e7bdff034ca3": {
+    "tier": "2-3",
+    "justification": "Pure probe header, no HAL/tick, minimal footprint."
+  },
+  "4924acdab8a8": {
+    "tier": "1"
+  },
+  "9a01f917f708": {
+    "tier": "1"
+  },
+  "0294a401a67b": {
+    "tier": "1"
+  },
+  "00d774481130": {
+    "tier": "4-8",
+    "justification": "Explains why epic-cc uses NULL guards for function pointers while XC8 keeps table-driven dispatch, hand-trace verified, race-proof: no shared state.",
+    "exception": "hand-trace"
+  },
+  "d4fe0559a693": {
+    "tier": "2-3",
+    "justification": "Pure probe header for epic-cc isel workaround, explains why dispatch is stubbed."
+  },
+  "cff206b12305": {
+    "tier": "2-3",
+    "justification": "Pure probe header for pid, explains why update is stubbed for footprint."
+  },
+  "ce49d55139c9": {
+    "tier": "2-3",
+    "justification": "Driver change to use sizecheck for pure probe."
+  },
+  "0fb431f78734": {
+    "tier": "1"
+  },
+  "68489f035868": {
+    "tier": "4-8",
+    "justification": "Driver change to use sizecheck for pure probe, avoids timer2 and math isel gaps, hand-trace of manifest, race-proof: no shared state.",
+    "exception": "hand-trace"
+  },
+  "9f832df8dbd5": {
+    "tier": "2-3",
+    "justification": "Explains why tick and serial includes are dropped for pure probe, hand-trace verified."
+  },
+  "b62a2d9acc83": {
+    "tier": "1"
+  },
+  "39ba36d6c6bb": {
+    "tier": "1"
+  },
+  "592520ab960b": {
+    "tier": "1"
+  },
+  "4b684c0637a8": {
+    "tier": "1"
+  },
+  "68a022e75347": {
+    "tier": "1"
+  },
+  "d14f5f9a9563": {
+    "tier": "2-3",
+    "justification": "Explains why debounce init is stubbed for pure probe, avoids indirect call isel, hand-trace verified."
+  },
+  "058701bfe47a": {
+    "tier": "2-3",
+    "justification": "Explains why encoder probe is stubbed, avoids tick and table isel, hand-trace verified."
+  }
+}

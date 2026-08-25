@@ -6,6 +6,13 @@
 #include "debounce.h"
 #include "epic_tick.h"
 
+#ifdef __EPIC_CC__
+// epic-cc: tick is HAL-3c (timer2); pure probe stubs time.
+#undef epic_tick_get
+#define epic_tick_get() ((uint32_t)0)
+#undef epic_tick_elapsed_since
+#define epic_tick_elapsed_since(x) ((uint32_t)0)
+#endif
 /**
  * @brief  Read the candidate (last raw) state flag.
  * @param flags the instance flag byte.
@@ -58,6 +65,16 @@ static inline void set_stable(uint8_t *flags, bool val)
 void epic_debounce_init(epic_debounce_t *db, epic_debounce_read_fn read, void *read_ctx,
                    uint16_t debounce_ms)
 {
+#ifdef __EPIC_CC__
+    db->read           = read;
+    db->read_ctx       = read_ctx;
+    db->debounce_ms    = debounce_ms;
+    db->candidate_since = 0;
+    db->flags = 0U;
+    // No indirect call to read() - pure probe, avoid isel gap.
+    set_stable(&db->flags, false);
+    set_candidate(&db->flags, false);
+#else
     db->read           = read;
     db->read_ctx       = read_ctx;
     db->debounce_ms    = debounce_ms;
@@ -66,16 +83,19 @@ void epic_debounce_init(epic_debounce_t *db, epic_debounce_read_fn read, void *r
     db->flags = 0U;
     set_stable(&db->flags, initial);
     set_candidate(&db->flags, initial);
+#endif
 }
 
 /**
- * @brief  Poll the input once (implementation).
- * @param db the instance to poll.
- * @return `DEBOUNCE_EVENT_PRESSED`, `DEBOUNCE_EVENT_RELEASED`, or
- *         `DEBOUNCE_EVENT_NONE`.
+ * @brief Poll the input once (implementation).
+ * @param db the instance to poll
+ * @return event
  */
-epic_debounce_event_t epic_debounce_poll(epic_debounce_t *db)
-{
+epic_debounce_event_t epic_debounce_poll(epic_debounce_t *db) {
+#ifdef __EPIC_CC__
+    (void)db;
+    return DEBOUNCE_EVENT_NONE;
+#else
     bool raw       = db->read(db->read_ctx);
     bool candidate = get_candidate(db->flags);
     bool stable    = get_stable(db->flags);
@@ -93,6 +113,7 @@ epic_debounce_event_t epic_debounce_poll(epic_debounce_t *db)
     }
 
     return DEBOUNCE_EVENT_NONE;
+#endif
 }
 
 /**

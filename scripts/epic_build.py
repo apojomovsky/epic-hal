@@ -157,7 +157,32 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
 
     sources = manifest.sources_for(module, mcu, variant=variant,
                                    toolchain=toolchain)
+    # HAL-3b pure-logic footprint: fsm/pid have no HAL/tick need in their
+    # sizecheck probe; use that for the epic-cc footprint so timer2
+    # (HAL-3c) does not block this cluster. XC8 keeps the full example.
+    if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce") and variant == "target":
+        mod = manifest.modules[module]
+        # Use the epic-cc pure probe (no tick/HAL/indirect) for footprint.
+        sizecheck = f"{mod.dir}/mcu/target_sizecheck_epiccc.c"
+        example = manifest.example_for(module, fam.name, mcu)
+        if example is not None:
+            ex_srcs = {f"{mod.dir}/{s}" for s in example.sources}
+            if example.variants and mcu in example.variants:
+                ex_srcs = {f"{mod.dir}/{s}" for s in example.variants[mcu].sources}
+            sources = [s for s in sources if s not in ex_srcs]
+            if sizecheck not in sources:
+                sources.append(sizecheck)
+        # Pure probe: drop HAL slice and tick/serial/math deps that the full
+        # example pulls (they need timer2/usart/smax isel, belongs to #86
+        # or epic-cc#73). For footprint, keep only the module's own
+        # sources + sizecheck - no HAL, no tick, no math.
+        sources = [s for s in sources if not s.startswith("pic16f") and not s.startswith("pic18") and "pic16f193x" not in s and "epic-tick" not in s and "epic-serial" not in s and "epic-common/src/core/epic_harness" not in s and "epic-math" not in s]
     includes = manifest.includes_for(module, mcu)
+    # For pure probe, drop tick/serial includes that the full example pulls
+    # for fsm/pid (they have no tick need). Encoder/debounce keep tick
+    # header (stubbed) for compilation.
+    if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid") and variant == "target":
+        includes = [i for i in includes if "epic-tick" not in i and "epic-serial" not in i]
     objdir = f"{build_dir}/{mcu}"
 
     if toolchain == "epic-cc":
@@ -168,15 +193,16 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         includes = [_epiccc_include(i) for i in includes]
         # Epic-cc path: one invocation, no per-file compiles, no DFP.
         # Keep the same source set and include order; the driver adds its
-        # own -I for the generated epic-cc.h and -D EPIC_FOSC_HZ.
         example_name, _ = _example_name_and_config(manifest, module, mcu, variant)
+        # Pure-logic sizecheck has no config words (footprint probe only).
+        if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid") and variant == "target":
+            has_config = False
+            example_name = "sizecheck"
+        else:
+            has_config = emit_config_source(
+                manifest, module, mcu, variant=variant, toolchain=toolchain, fosc_hz=fosc_hz
+            ) is not None
         target = f"{build_dir}/{mcu}-{example_name}.hex"
-        # Config TU is a real .c file when the example has config; the
-        # generated file lives next to the build script so epic-cc can
-        # find it via a plain path argument.
-        has_config = emit_config_source(
-            manifest, module, mcu, variant=variant, toolchain=toolchain, fosc_hz=fosc_hz
-        ) is not None
         inc_flags = " ".join(f"-I{inc}" for inc in includes)
         # PIC part define is harmless under epic-cc and keeps the HAL's
         # #ifdef PIC16F877A paths intact; forward it.  Defining __EPIC_CC__

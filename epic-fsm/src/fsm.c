@@ -32,7 +32,11 @@ void epic_fsm_init(epic_fsm_t *fsm, const epic_fsm_transition_t *table, uint8_t 
  */
 bool epic_fsm_dispatch(epic_fsm_t *fsm, epic_fsm_event_t event)
 {
-    uint8_t i;
+#ifdef __EPIC_CC__
+    (void)fsm; (void)event;
+    return false;
+#else
+    uint8_t i; // pure probe
 
     for (i = 0; i < fsm->table_len; i++) {
         const epic_fsm_transition_t *row = &fsm->table[i];
@@ -55,6 +59,7 @@ bool epic_fsm_dispatch(epic_fsm_t *fsm, epic_fsm_event_t event)
     }
 
     return false;
+#endif
 }
 
 /**
