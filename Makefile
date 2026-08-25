@@ -297,5 +297,5 @@ doctor:
 setup-hooks:
 	@bash scripts/install-git-hooks.sh
 
-pre-pr-check:
-	@bash scripts/pre-pr-check.sh $(if $(TEST),--test,) $(if $(PROSE),--prose,)
+pre-pr-check: ## Takeoff ritual before opening a PR; TEST=1 runs the suite
+	@bash scripts/pre-pr-check.sh $(if $(TEST),--test,)

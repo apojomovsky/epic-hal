@@ -140,7 +140,6 @@ is identical to before.
 
 ```sh
 make pre-pr-check                   # or: bash scripts/pre-pr-check.sh
-make pre-pr-check PROSE=1           # attest the prose review happened
 make pre-pr-check TEST=1            # also run the host-sim suite
 BASE_REF=<fork>/master make pre-pr-check
 ```
@@ -153,15 +152,16 @@ em-dashes, Doxygen docstring compliance on the C files the PR touches,
 and the prose review below. Blocking items exit 1 with the fix list;
 advisory items only warn.
 
-`prose-diff.sh` is the prose review's input, and is useful on its own:
-it prints every comment block and markdown hunk the PR adds, so you
-read the prose surface without re-deriving the diff. It hints at a few
-objective signals (a block over ~8 lines, a hardcoded count or pasted
-tree, a local `.pdf` link) and deliberately never fails: judging whether
-a comment carries a reason or restates the code is not a job a script
-can do, so every block wants a human or a language model reading it
-against AGENTS.md's Expression conventions. `PROSE=1` is that
-attestation, the same trust model as `TEST=1`.
+`prose-diff.sh` is a thin wrapper over `epic-tasks prose`, the same
+lint every epic repository runs. Plain `prose-diff.sh` prints every
+comment block the PR adds, so you read the prose surface without
+re-deriving the diff; `prose-diff.sh --verify` (part of the takeoff
+ritual and of the pre-push hook) exits 1 when a block violates the
+mechanical rules: the 8-line block cap, no `@file`/`@brief` decoration,
+no iteration or verification narrative, no em-dashes. Judging whether a
+comment carries a reason or restates the code stays a human or language
+model call, applied while reading the listing against AGENTS.md's
+Expression conventions.
 
 ## CI change-scoping (non-code skip, affected-module narrowing)
 

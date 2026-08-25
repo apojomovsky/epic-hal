@@ -41,4 +41,12 @@ if [ -n "$force_refs" ]; then
     echo "    EPIC_FORCE_PUSH_APPROVED=1 git push --force-with-lease" >&2
     exit 1
 fi
+
+# ---- prose lint gate (fires even when the ritual was never run) ----
+
+if ! bash scripts/prose-diff.sh --verify; then
+    echo "pre-push: comment blocks violating the prose rules (see above)" >&2
+    echo "  Fix the flagged blocks, or reword them so they hold up." >&2
+    exit 1
+fi
 exit 0
