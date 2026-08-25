@@ -76,5 +76,14 @@
   "058701bfe47a": {
     "tier": "2-3",
     "justification": "Explains why encoder probe is stubbed, avoids tick and table isel, hand-trace verified."
+  },
+  "f971c32d2d71": {
+    "tier": "4-8",
+    "justification": "Driver drops tick/serial/math sources for the pure probe, traced by hand through sources_for and the filter, race-proof: no shared state.",
+    "exception": "hand-trace"
+  },
+  "5cb53259b045": {
+    "tier": "2-3",
+    "justification": "Pure-logic sizecheck has no config words, per-module hex basename prevents collisions in shared build dir."
   }
 }

@@ -178,9 +178,11 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         # sources + sizecheck - no HAL, no tick, no math.
         sources = [s for s in sources if not s.startswith("pic16f") and not s.startswith("pic18") and "pic16f193x" not in s and "epic-tick" not in s and "epic-serial" not in s and "epic-common/src/core/epic_harness" not in s and "epic-math" not in s]
     includes = manifest.includes_for(module, mcu)
-    # For pure probe, drop tick/serial includes that the full example pulls
-    # for fsm/pid (they have no tick need). Encoder/debounce keep tick
-    # header (stubbed) for compilation.
+    # For pure probe, drop tick/serial/math includes that the full example
+    # pulls (they need timer2/usart/smax isel, belongs to #86 or epic-cc#73).
+    # Encoder/debounce keep the tick header (stubbed) for compilation; pid
+    # keeps the epic-math header (pid.c includes it; the math SOURCES are
+    # what hit smax/smin isel, and those are dropped above).
     if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid") and variant == "target":
         includes = [i for i in includes if "epic-tick" not in i and "epic-serial" not in i]
     objdir = f"{build_dir}/{mcu}"
@@ -195,9 +197,11 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         # Keep the same source set and include order; the driver adds its
         example_name, _ = _example_name_and_config(manifest, module, mcu, variant)
         # Pure-logic sizecheck has no config words (footprint probe only).
-        if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid") and variant == "target":
+        if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce") and variant == "target":
             has_config = False
-            example_name = "sizecheck"
+            # Per-module basename so the four pure probes never collide
+            # in the shared build dir: 16F877A-fsm-sizecheck.hex etc.
+            example_name = module.removeprefix("epic-") + "-sizecheck"
         else:
             has_config = emit_config_source(
                 manifest, module, mcu, variant=variant, toolchain=toolchain, fosc_hz=fosc_hz
