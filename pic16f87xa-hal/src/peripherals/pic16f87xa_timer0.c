@@ -6,15 +6,12 @@
 /* Prescaler ratios, DS39582B Table 5-1: 000=1:2 ... 111=1:256. */
 static const uint16_t ps_ratio[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 
-/* Owned copy of the caller's handle for the weak ISR (the caller's is
- * typically stack-local, out of scope by the time the ISR reads it).
- * Pinned to bank 3 (0x190) because the ISR deref bakes a constant
- * IRP=1 select (banks 2/3 only) under XC8 v4.00, so the storage must
- * live in that bank. Bank 3 keeps bank 2's 112 bytes contiguous for
- * the big module statics (the demo bundle's 64-byte taskmgr TCB would
- * not fit with the pin in bank 2, error 1250). */
-static TIMER0_HandleTypeDef g_t0_storage EPIC_PLACE(0x190);
-static const TIMER0_HandleTypeDef *g_t0_handle = NULL;
+/* Owned copy of the caller's callback for the weak ISR (the caller's
+ * handle is typically stack-local, out of scope by the time the ISR
+ * reads it). The ISR only needs the callback, so store the pointer
+ * (1 byte) rather than a full handle copy, the same RAM saving the
+ * 88X driver makes. */
+static void (*g_t0_overflow_cb)(void) = NULL;
 
 /**
  * @brief Read-modify-write helper for OPTION_REG: clear `clr_mask`
@@ -60,8 +57,7 @@ EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
         EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR0);
     }
 
-    g_t0_storage = *h;
-    g_t0_handle = &g_t0_storage;
+    g_t0_overflow_cb = h->OverflowCallback;
     return EPIC_OK;
 }
 
@@ -160,10 +156,8 @@ void TIMER0_IRQHandler(void)
     if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_TMR0IF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_TMR0IF);
 #ifndef EPIC_AT
-    if (g_t0_handle && g_t0_handle->OverflowCallback) {
-        g_t0_handle->OverflowCallback();
-    }
+    if (g_t0_overflow_cb) g_t0_overflow_cb();
 #else
-    (void)g_t0_handle;
+    (void)g_t0_overflow_cb;
 #endif
 }

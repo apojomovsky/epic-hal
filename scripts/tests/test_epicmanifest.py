@@ -17,7 +17,7 @@ fosc_hz  = 20000000
 includes = ["pic16f87xa-hal/include", "epic-common/include"]
 hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
 harness_src = "epic-common/src/core/epic_harness_target.c"
-epiccc_sources = ["pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c", "epic-common/src/core/epic_harness_target.c"]
+epiccc_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
@@ -445,8 +445,8 @@ class TestResolution(unittest.TestCase):
 
     def test_epiccc_sources_used_for_epic_cc_toolchain(self):
         srcs = self.m.sources_for("epic-tick", "16F877A", toolchain="epic-cc")
-        self.assertIn("pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c", srcs)
-        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
+        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
+        self.assertNotIn("pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c", srcs)
 
     def test_epiccc_sources_do_not_splice_conditional_sources(self):
         # Conditional sources are XC8 psect-order machinery; the epic-cc

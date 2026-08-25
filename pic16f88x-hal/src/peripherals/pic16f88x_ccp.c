@@ -16,11 +16,7 @@ typedef struct {
 
 /* DS40001291H Table 2-1: CCPR1L 0x15, CCPR1H 0x16, CCP1CON 0x17;
  * CCPR2L 0x1B, CCPR2H 0x1C, CCP2CON 0x1D. */
-#ifdef __EPIC_CC__
-static ccp_addrs_t addrs[2] = {
-#else
 static const ccp_addrs_t addrs[2] = {
-#endif
     { 0x15U, 0x16U, 0x17U, PIC16_IRQ_CCP1 },
     { 0x1BU, 0x1CU, 0x1DU, PIC16_IRQ_CCP2 },
 };

@@ -62,15 +62,17 @@ variants = ["16F874A", "16F877A"]   # PSP is 40/44-pin only
 XC8 path uses `hal_sources` + `conditional_sources`, exactly as above.
 The epic-cc path (`--toolchain epic-cc`) uses `epiccc_sources` instead:
 the subset of the HAL that builds under epic-cc and fits the part's RAM,
-listed verbatim with the `_epiccc.c` variant names.
+listed verbatim. The slice shares the family's `src/peripherals/` and
+`src/core/` files with the XC8 build (no per-toolchain variants), plus
+the epic-cc-specific vector, dispatch, and WDT/sleep intrinsics.
 
 ```toml
 [families.PIC16F87XA]
 # ... hal_sources and conditional_sources as above ...
 epiccc_sources = [
-  "pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c",
-  "pic16f87xa-hal/src/epiccc/pic16f87xa_timer0_epiccc.c",
-  "pic16f87xa-hal/src/epiccc/pic16_irq_epiccc.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer0.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
   "pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep.c",
   "pic16f87xa-hal/src/epiccc/pic16f87xa_wdt_sleep_epiccc.c",
   "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",

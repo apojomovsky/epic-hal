@@ -2,7 +2,7 @@
  * avoids llvm.umin.i32 (generated for `x > 65535 ? 65535 : x` clamp) which
  * isel does not yet lower. The clamp is kept as a plain branch with a
  * compiler barrier so clang emits `icmp`/`br` instead of `llvm.umin`.
- * Filed as HAL gap, same posture as #67 EPIC_AT workarounds. */
+ * Filed as a HAL gap against epic-cc. */
 
 
 #include "peripherals/pic16f88x_usart.h"
@@ -341,6 +341,5 @@ void USART_RX_IRQHandler(void)
     if (g_usart && g_usart->RxCpltCallback) g_usart->RxCpltCallback(data);
 #else
     (void)g_usart;
-    (void)data;
 #endif
 }
