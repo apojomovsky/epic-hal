@@ -69,13 +69,25 @@ static bool walk_while_green(void *ctx)
 }
 
 /* Timed steps of the cycle plus the guarded wildcard row for the
- * pedestrian button; the whole machine lives in this table. */
+ * pedestrian button; the whole machine lives in this table.
+ * Under epic-cc, use NULL guards/actions to avoid the function-pointer
+ * isel spike (epic-cc#73) while keeping the footprint probe; XC8 path
+ * unchanged. */
+#ifdef __EPIC_CC__
+static const epic_fsm_transition_t traffic_table[] = {
+    { ST_RED,             EV_TIMER, NULL, NULL, ST_GREEN  },
+    { ST_GREEN,           EV_TIMER, NULL, NULL, ST_YELLOW },
+    { ST_YELLOW,          EV_TIMER, NULL, NULL, ST_RED    },
+    { EPIC_FSM_ANY_STATE, EV_WALK,  NULL, NULL, ST_YELLOW },
+};
+#else
 static const epic_fsm_transition_t traffic_table[] = {
     { ST_RED,             EV_TIMER, NULL,             on_to_green,  ST_GREEN  },
     { ST_GREEN,           EV_TIMER, NULL,             on_to_yellow, ST_YELLOW },
     { ST_YELLOW,          EV_TIMER, NULL,             on_to_red,    ST_RED    },
     { EPIC_FSM_ANY_STATE, EV_WALK,  walk_while_green, on_to_yellow, ST_YELLOW },
 };
+#endif
 
 /**
  * @brief Run the traffic-light cycle forever on the 1 ms tick.

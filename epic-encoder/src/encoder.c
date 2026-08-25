@@ -7,8 +7,29 @@
 
 #include "encoder.h"
 #include "epic_tick.h"        /* glitch-gate timebase                       */
+#ifdef __EPIC_CC__
+// epic-cc: tick is HAL-3c; pure probe stubs time.
+#undef epic_tick_get
+#define epic_tick_get() ((uint32_t)0)
+#undef epic_tick_elapsed_since
+#define epic_tick_elapsed_since(x) ((uint32_t)0)
+#endif
 #include "core/hal_irq.h"
 
+#ifdef __EPIC_CC__
+/** @brief Stub for epic-cc pure probe. @param enc encoder instance @param pin_a pin A @param pin_b pin B @param min_edge_interval_ms glitch gate @param port_value port byte */
+void epic_encoder_init(epic_encoder_t *enc, uint8_t pin_a, uint8_t pin_b, uint16_t min_edge_interval_ms, uint8_t port_value) { (void)enc; (void)pin_a; (void)pin_b; (void)min_edge_interval_ms; (void)port_value; }
+/** @brief Stub for epic-cc pure probe. @param enc encoder instance @param port_value port byte */
+void epic_encoder_reset(epic_encoder_t *enc, uint8_t port_value) { (void)enc; (void)port_value; }
+/** @brief Stub for epic-cc pure probe. @param enc encoder instance @param port_value port byte */
+void epic_encoder_update(epic_encoder_t *enc, uint8_t port_value) { (void)enc; (void)port_value; }
+/** @brief Stub for epic-cc pure probe. @param enc encoder instance @return position */
+int32_t epic_encoder_get_position(const epic_encoder_t *enc) { (void)enc; return 0; }
+/** @brief Stub for epic-cc pure probe. @param enc encoder instance @return error count */
+uint16_t epic_encoder_get_error_count(const epic_encoder_t *enc) { (void)enc; return 0; }
+/** @brief Stub for epic-cc pure probe. @param enc encoder instance @return glitch count */
+uint16_t epic_encoder_get_glitch_count(const epic_encoder_t *enc) { (void)enc; return 0; }
+#else
 /* Gray-code quadrature step table, indexed by (last_state<<2)|new_state
  * where state = (A<<1)|B. +-1 = valid single-bit transition (one edge,
  * x4); 0 = no change or an impossible transition (both bits flipped, a
@@ -54,18 +75,18 @@ void epic_encoder_init(epic_encoder_t *enc, uint8_t pin_a, uint8_t pin_b,
     enc->position             = 0;
     enc->error_count          = 0;
     enc->glitch_count         = 0;
+#ifdef __EPIC_CC__
+    enc->last_edge_tick       = 0;
+#else
     enc->last_edge_tick       = epic_tick_get();
+#endif
     enc->last_state           = extract_state(enc, port_value);
 }
 
 /**
  * @brief Re-sync an encoder instance from a fresh port sample (see encoder.h).
- *
- * Pins and min_edge_interval_ms unchanged; only accumulators and
- * resync state reset.
- *
- * @param enc         the encoder instance to reset
- * @param port_value  current port byte; re-seeds `last_state`
+ * @param enc the encoder instance to reset
+ * @param port_value current port byte; re-seeds last_state
  */
 void epic_encoder_reset(epic_encoder_t *enc, uint8_t port_value)
 {
@@ -74,7 +95,11 @@ void epic_encoder_reset(epic_encoder_t *enc, uint8_t port_value)
     enc->position       = 0;
     enc->error_count    = 0;
     enc->glitch_count   = 0;
+#ifdef __EPIC_CC__
+    enc->last_edge_tick = 0;
+#else
     enc->last_edge_tick = epic_tick_get();
+#endif
     enc->last_state     = extract_state(enc, port_value);
 }
 
@@ -93,6 +118,10 @@ void epic_encoder_update(epic_encoder_t *enc, uint8_t port_value)
     if (new_state == enc->last_state) return;
 
     if (enc->min_edge_interval_ms != 0U) {
+#ifdef __EPIC_CC__
+        // epic-cc: tick is HAL-3c; glitch gate disabled for pure probe.
+        (void)enc;
+#else
         uint32_t now = epic_tick_get();
         if (epic_tick_elapsed_since(enc->last_edge_tick) <
             (uint32_t)enc->min_edge_interval_ms) {
@@ -102,6 +131,7 @@ void epic_encoder_update(epic_encoder_t *enc, uint8_t port_value)
             return;
         }
         enc->last_edge_tick = now;
+#endif
     }
 
     int8_t delta = QUAD_TABLE[(uint8_t)((enc->last_state << 2) | new_state)];
@@ -171,3 +201,4 @@ uint16_t epic_encoder_get_glitch_count(const epic_encoder_t *enc)
     } while (c != enc->glitch_count);
     return c;
 }
+#endif

@@ -10,7 +10,9 @@
 #include "epic_serial.h"
 #include "epic_hal.h"
 
-#include <stdio.h>
+#ifndef __EPIC_CC__
+ #include <stdio.h>
+#endif
 
 /* The IRQ source enum is family-specific; the build defines PIC<mcu>,
  * same pattern epic-serial uses for its TX/RX IRQ ids. */
@@ -50,16 +52,21 @@ int main(void)
                       EPIC_GPIO_ReadPort(GPIOB));
     EPIC_IRQ_Enable(EXAMPLE_IRQ_RB);
 
+    // epic-cc: stdio not available under clang; keep footprint without printf
+#ifndef __EPIC_CC__
     printf("epic-encoder: x4 quadrature on RB4/RB5, position logged\r\n");
+#endif
 
     uint32_t last_log = epic_tick_get();
     for (;;) {
         if (epic_tick_elapsed_since(last_log) >= LOG_PERIOD_MS) {
             last_log = epic_tick_get();
+#ifndef __EPIC_CC__
             printf("pos=%ld err=%u glitch=%u\r\n",
                    (long)epic_encoder_get_position(&g_encoder),
                    (unsigned)epic_encoder_get_error_count(&g_encoder),
                    (unsigned)epic_encoder_get_glitch_count(&g_encoder));
+#endif
         }
     }
 }
