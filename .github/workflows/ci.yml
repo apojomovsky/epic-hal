@@ -196,7 +196,12 @@ jobs:
   epiccc-gate:
     runs-on: ubuntu-latest
     env:
-      EPIC_CC_PIN: 25a98424ee5e783953bd610b46502468d5a970ac
+      # The companion epic-cc branch (feat/105-hal-callback-e2e) that
+      # lands the two compiler gaps the guard-free HAL needs: the
+      # indirect-call candidate arity filter and the post-banking
+      # const-section window accounting. Re-pin to epic-cc master after
+      # that PR merges (DEVELOPMENT.md "The epiccc gate pin").
+      EPIC_CC_PIN: 57f78760a14278e4ea88895f94b75385ecd7ea83
       # The release tag (v0.0.3) and the version inside its asset names
       # (epic-cc-0.0.3-...): the asset names drop the v prefix.
       EPIC_CC_CLANG_TAG: v0.0.3
