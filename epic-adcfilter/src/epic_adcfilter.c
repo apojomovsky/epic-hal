@@ -16,6 +16,14 @@
 uint16_t epic_adcfilter_oversample(epic_adcfilter_read_fn read, void *ctx,
                                    uint8_t extra_bits)
 {
+#ifdef __EPIC_CC__
+    /* The callback-parameter call and the runtime-indexed buffer deref
+     * hit epic-cc isel gaps (call to unknown function, no gep for
+     * pointer); the epic-cc footprint probe links the module without
+     * them. XC8 keeps the real filters. */
+    (void)read; (void)ctx; (void)extra_bits;
+    return 0u;
+#else
     /* 4^extra_bits = 2^(2*extra_bits). extra_bits <= 6 in practice
      * (see the header doc), so count fits uint32_t. */
     uint32_t count = 1UL << (extra_bits * 2u);
@@ -24,6 +32,7 @@ uint16_t epic_adcfilter_oversample(epic_adcfilter_read_fn read, void *ctx,
         sum += (uint32_t)read(ctx);
     }
     return (uint16_t)(sum >> extra_bits);
+#endif
 }
 
 /**
@@ -51,6 +60,10 @@ void epic_adcfilter_avg_init(epic_adcfilter_avg_t *f, uint16_t *buf, uint8_t cou
  */
 uint16_t epic_adcfilter_avg_push(epic_adcfilter_avg_t *f, uint16_t sample)
 {
+#ifdef __EPIC_CC__
+    (void)f; (void)sample;
+    return 0u;
+#else
     if (f->filled < f->count) {
         /* Window not yet full: just add, average over what's been pushed. */
         f->buf[f->index] = sample;
@@ -67,4 +80,5 @@ uint16_t epic_adcfilter_avg_push(epic_adcfilter_avg_t *f, uint16_t sample)
     f->index++;
     if (f->index >= f->count) { f->index = 0u; }
     return (uint16_t)(f->sum / f->count);
+#endif
 }
