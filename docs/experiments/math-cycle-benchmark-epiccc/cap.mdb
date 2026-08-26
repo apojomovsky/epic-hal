@@ -1,0 +1,10 @@
+device PIC16F877A
+set uart1io.uartioenabled true
+set uart1io.output file
+set uart1io.outputfile /repo/build-sim/bench-epiccc/out-87.txt
+hwtool SIM
+program /repo/build-sim/bench-epiccc/87-cpath.hex
+run
+wait 4000
+halt
+quit
