@@ -3,20 +3,14 @@
 #include "epic_math.h"
 #include <epic-cc.h>
 
-/* Cycle benchmark via TMR1 (counts instruction cycles on the 87XA/88X),
- * the epic-cc twin of docs/experiments/math-cycle-benchmark/bench.c.
- * Same probe shape, same operands, same UART reporting, so the numbers
- * line up against the hand-asm tables in that directory's README. The
- * difference: this build links the portable C path (epic-math/src/host/
- * + src/common/) under epic-cc instead of the XC8-dialect inline-asm
- * backends. N=50, not 100: the 16-bit TMR1 wraps at 65536 and the
- * C-path mul16/div16 loops at N=100 exceed it (see this directory's
- * README).
- *
- * Op labels are numeric IDs, not strings: epic-cc does not yet lower
- * const string tables reliably in multi-table layouts, and the label
- * is not what is being measured. The ID to op mapping is in this
- * directory's README. */
+/* Cycle benchmark via TMR1, the epic-cc twin of
+ * docs/experiments/math-cycle-benchmark/bench.c: same probe shape and
+ * operands, but linking the portable C path (src/host/ + src/common/)
+ * under epic-cc instead of the XC8-dialect inline-asm backends. N=50,
+ * not 100: the 16-bit TMR1 wraps at 65536 and the C-path mul16/div16
+ * loops at N=100 exceed it. Op labels are numeric IDs (epic-cc does
+ * not yet lower const string tables reliably); the ID to op mapping
+ * is in this directory's README. */
 
 EPIC_CONFIG("osc=hs, wdt=off, pwrt=on, lvp=off, xtal_hz=20000000");
 
@@ -40,11 +34,20 @@ EPIC_CONFIG("osc=hs, wdt=off, pwrt=on, lvp=off, xtal_hz=20000000");
 
 #define N 50u
 
+/**
+ * @brief Transmit one byte, polling TXIF until the shift register drains.
+ * @param c the byte to send.
+ */
 static void uart_putc(char c)
 {
     while (!(REG8(PIR1_REG) & TXIF_BIT)) { }
     REG8(TXREG_REG) = (uint8_t)c;
 }
+
+/**
+ * @brief Transmit a 16-bit value as 4 hex digits.
+ * @param v the value to print.
+ */
 static void uart_puthex(uint16_t v)
 {
     for (int s = 12; s >= 0; s -= 4) {
@@ -52,16 +55,31 @@ static void uart_puthex(uint16_t v)
         uart_putc((char)(d < 10u ? '0' + d : 'A' + (d - 10u)));
     }
 }
+
+/**
+ * @brief Configure the USART for polled 9600-baud output.
+ */
 static void uart_init(void)
 {
     REG8(SPBRG_REG) = 129u;   /* 20 MHz, BRGH=1: 20e6/(16*9600)-1 */
     REG8(TXSTA_REG) = (uint8_t)(BRGH_BIT | TXEN_BIT);
     REG8(RCSTA_REG) = SPEN_BIT;
 }
+
+/**
+ * @brief Read the 16-bit TMR1 count.
+ * @return the current TMR1H:TMR1L value.
+ */
 static uint16_t tmr1(void)
 {
     return (uint16_t)((uint16_t)REG8(TMR1H_REG) << 8 | REG8(TMR1L_REG));
 }
+
+/**
+ * @brief Print one measurement: op ID, space, TMR1 delta, CRLF.
+ * @param op the op ID (see README for the mapping).
+ * @param t0 the TMR1 snapshot taken before the loop.
+ */
 static void report(uint8_t op, uint16_t t0)
 {
     uint16_t dt = (uint16_t)(tmr1() - t0);
@@ -72,70 +90,109 @@ volatile uint16_t g_seed = 0x1357u;
 volatile uint16_t g_sum  = 0u;
 volatile bool g_ok = false;
 
-/* Op IDs: 0 loop_empty, 1 add_native, 2 add_epic, 3 sub_native,
- * 4 sub_epic, 5 mul8_native, 6 mul8_epic, 7 mul16_native,
- * 8 mul16_epic, 9 div16_native, A div16_epic. */
-
+/**
+ * @brief Time the empty loop: the per-op baseline.
+ */
 void bench_loop_empty(void)
 {
     uint16_t a = g_seed; uint16_t t0 = tmr1();
     for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + a); a = (uint16_t)(a + 3u); }
     report(0u, t0);
 }
+
+/**
+ * @brief Time inlined 16-bit add (native baseline).
+ */
 void bench_add_native(void)
 {
     uint16_t a = g_seed, b = 0xFFFFu; uint16_t t0 = tmr1();
     for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (a + b)); a = (uint16_t)(a + 3u); }
     report(1u, t0);
 }
+
+/**
+ * @brief Time the C-path 16-bit add with carry out.
+ */
 void bench_add_epic(void)
 {
     uint16_t a = g_seed, b = 0xFFFFu; uint16_t t0 = tmr1();
     for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + epic_math_add_u16(a, b, (bool *)&g_ok)); a = (uint16_t)(a + 3u); }
     report(2u, t0);
 }
+
+/**
+ * @brief Time inlined 16-bit subtract (native baseline).
+ */
 void bench_sub_native(void)
 {
     uint16_t a = g_seed, b = 0x1357u; uint16_t t0 = tmr1();
     for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (a - b)); a = (uint16_t)(a + 3u); }
     report(3u, t0);
 }
+
+/**
+ * @brief Time the C-path 16-bit subtract with borrow out.
+ */
 void bench_sub_epic(void)
 {
     uint16_t a = g_seed, b = 0x1357u; uint16_t t0 = tmr1();
     for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + epic_math_sub_u16(a, b, (bool *)&g_ok)); a = (uint16_t)(a + 3u); }
     report(4u, t0);
 }
+
+/**
+ * @brief Time inlined 8x8 multiply (native baseline).
+ */
 void bench_mul8_native(void)
 {
     uint8_t a = (uint8_t)g_seed, b = 0xCDu; uint16_t t0 = tmr1();
     for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (uint16_t)(a * b)); a = (uint8_t)(a + 3u); }
     report(5u, t0);
 }
+
+/**
+ * @brief Time the C-path 8x8 multiply.
+ */
 void bench_mul8_epic(void)
 {
     uint8_t a = (uint8_t)g_seed, b = 0xCDu; uint16_t t0 = tmr1();
     for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + epic_math_mul_u8(a, b)); a = (uint8_t)(a + 3u); }
     report(6u, t0);
 }
+
+/**
+ * @brief Time inlined 16x16 multiply (native baseline).
+ */
 void bench_mul16_native(void)
 {
     uint16_t a = g_seed, b = 0xCDEFu; uint16_t t0 = tmr1();
     for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (uint16_t)(a * b)); a = (uint16_t)(a + 3u); }
     report(7u, t0);
 }
+
+/**
+ * @brief Time the C-path 16x16 multiply.
+ */
 void bench_mul16_epic(void)
 {
     uint16_t a = g_seed, b = 0xCDEFu; uint16_t t0 = tmr1();
     for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (uint16_t)epic_math_mul_u16(a, b)); a = (uint16_t)(a + 3u); }
     report(8u, t0);
 }
+
+/**
+ * @brief Time inlined 16/16 divide (native baseline).
+ */
 void bench_div16_native(void)
 {
     uint16_t a = g_seed, b = 0x0013u; uint16_t t0 = tmr1();
     for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (a / b)); a = (uint16_t)(a + 3u); }
     report(9u, t0);
 }
+
+/**
+ * @brief Time the C-path 16/16 divide with remainder.
+ */
 void bench_div16_epic(void)
 {
     uint16_t a = g_seed, b = 0x0013u; uint16_t t0 = tmr1();
@@ -143,6 +200,9 @@ void bench_div16_epic(void)
     report(0xAu, t0);
 }
 
+/**
+ * @brief Run every bench op in order and report the raw TMR1 deltas.
+ */
 void main(void)
 {
     uart_init();
