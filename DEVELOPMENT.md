@@ -131,8 +131,8 @@ The pin has two halves, both deliberate:
 - `EPIC_CC_PIN` (job env): the epic-cc driver's source sha. The job
   checks out `apojomovsky/epic-cc` at that sha and runs
   `cargo build --release --locked -p driver` (a Rust 1.97.1 toolchain
-  only, no clang build). The driver reports the sha it was built from,
-  and the job asserts the checkout matches the pin.
+  only, no clang build). The job asserts the checkout sha equals the
+  pin and prints that sha, so a failure names the compiler.
 - `EPIC_CC_CLANG_TAG` (job env): a tagged epic-cc release whose Linux
   bundle supplies `clang` and `llvm-link`. The job downloads
   `epic-cc-<tag>-x86_64-linux.zip` and verifies it against the
