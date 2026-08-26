@@ -10,8 +10,10 @@ The non-blocking serial layer STM32Cube's `HAL_UART_Transmit_DMA`/
   (`put_str`, `put_u16`, `put_hex8`, ...), no format string. The same
   eight functions serve XC8 and epic-cc, because epic-cc's freestanding
   libc has no `stdio` and a stackless machine cannot read varargs. `putch`
-  stays for XC8's `printf` retarget; the docs and examples teach the `put_*`
-  API, never `printf` (epic-hal#91).
+  stays for XC8's `printf` retarget. The docs teach the `put_*` API, never
+  `printf`; the declarations and the examples migrate with epic-hal#88
+  (until then the shipped surface is the raw byte I/O plus `putch`, see
+  docs/API.md).
 - **Family-agnostic**: one `src/epic_serial.c` builds against
   `pic16f87xa-hal` or `pic18fxx5x-hal` (one `#if` branch for the
   family-specific USART handle/IRQ/TXREG-write); runs on the host sim and real
@@ -47,7 +49,8 @@ epic_serial_init(FOSC_HZ, 9600);            /* once */
 epic_serial_write((const uint8_t *)"hi\r\n", 4);
 int n = epic_serial_read(buf, sizeof(buf));  /* non-blocking RX */
 
-/* formatting: no printf needed, same code on XC8 and epic-cc */
+/* formatting, once epic-hal#88 ships the put_* functions: no printf
+ * needed, same code on XC8 and epic-cc */
 epic_serial_put_str("x=");
 epic_serial_put_u16(x);
 epic_serial_put_str("\r\n");
