@@ -201,7 +201,7 @@ jobs:
       # indirect-call candidate arity filter and the post-banking
       # const-section window accounting. Re-pin to epic-cc master after
       # that PR merges (DEVELOPMENT.md "The epiccc gate pin").
-      EPIC_CC_PIN: 12b02b8a88e7d067824902e48d4e36af63073006
+      EPIC_CC_PIN: d84e085e4570f50de785b7f405a6a028580bc75f
       # The release tag (v0.0.3) and the version inside its asset names
       # (epic-cc-0.0.3-...): the asset names drop the v prefix.
       EPIC_CC_CLANG_TAG: v0.0.3

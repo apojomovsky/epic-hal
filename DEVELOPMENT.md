@@ -151,7 +151,7 @@ working compiler.
 Bumping the pin:
 
 The 105 branch pins the epic-cc driver to
-`feat/105-hal-callback-e2e` (12b02b8) while that PR is open: the
+`feat/105-hal-callback-e2e` (d84e085) while that PR is open: the
 guard-free HAL needs two compiler fixes it carries (the indirect-call
 candidate arity filter and the post-banking const-section window
 accounting, epic-cc#151/#152). Re-pin to epic-cc master after it
