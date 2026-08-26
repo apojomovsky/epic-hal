@@ -186,14 +186,13 @@ jobs:
       family: PIC16F88X
 
   # The epic-cc conformance gate in this tree: "did a HAL change break
-  # against a known good compiler". epic-cc's own hal-887 job (epic-cc#113)
-  # asks the reverse question in its tree. Pins the driver to EPIC_CC_PIN
-  # (built from source; a Rust toolchain only, no clang build) and pairs it
-  # with the v0.0.3 release bundle's clang, the one artifact a user gets
-  # (epic-cc#118). The pin is a deliberate bump: a compiler regression shows
-  # up as a chosen bump that fails, not a mystery (how to bump: DEVELOPMENT.md
-  # "The epiccc gate pin"). The mdb half needs the private toolchain image,
-  # so this is not yet the public gate (that is HAL-4, epic-hal#60).
+  # against a known good compiler". epic-cc's hal-887 job asks the reverse
+  # question in its tree. Pins the driver to EPIC_CC_PIN (built from
+  # source; Rust only, no clang build) plus the v0.0.3 bundle's clang, the
+  # artifact a user gets (epic-cc#118). A deliberate bump: a regression
+  # shows up as a chosen bump that fails, not a mystery (how: DEVELOPMENT.md
+  # "The epiccc gate pin"). The mdb half needs the private image, so this
+  # is not yet the public gate (HAL-4, epic-hal#60).
   epiccc-gate:
     runs-on: ubuntu-latest
     env:

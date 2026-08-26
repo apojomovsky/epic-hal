@@ -1,17 +1,14 @@
 #!/usr/bin/env bash
-# Program an existing hex under MPLAB SIM (mdb) and run EXTRA_MDB register
-# reads after the first wait. Shared by make mdb-hex and the epiccc-gate CI
-# job so the mdb command sequence has one source of truth, the same shape
-# sim-mdb-run.sh gives the harness gates. Unlike mdb-test there is no
-# HARNESS=sim rebuild: this is the gate for hexes another toolchain
-# produced, e.g. epiccc-build's output, where the acceptance is a register
-# read, not a UART marker. Container-only (mdb.sh, no python3).
+# Program an existing hex under MPLAB SIM and run EXTRA_MDB register
+# reads after the first wait. Shared by make mdb-hex and the epiccc-gate
+# CI job so the mdb command sequence has one source of truth (the same
+# shape sim-mdb-run.sh gives the harness gates); no HARNESS=sim rebuild,
+# this is the gate for hexes another toolchain produced. Container-only
+# (mdb.sh, no python3).
 #
 # Usage: mdb-hex-run.sh <hex> <device> [wait_ms] [extra_mdb]
-#   hex: path to the .hex as the container sees it; device: MPLAB part
-#   name (PIC16F887); wait_ms=2000 wall-clock (SIM slower than real
-#   time); extra_mdb: mdb commands after the first wait, \n-escaped,
-#   before quit.
+#   hex/device as the container sees them; wait_ms=2000 wall-clock;
+#   extra_mdb: mdb commands after the first wait, \n-escaped, before quit.
 
 set -euo pipefail
 
