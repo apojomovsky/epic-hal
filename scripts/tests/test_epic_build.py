@@ -74,6 +74,12 @@ needs_hal  = false
 [modules.epic-math.supported]
 PIC16F87XA = ["16F877A"]
 
+[modules.epic-math.sources_by_family]
+PIC16F87XA = [
+  "src/pic16/epic_math_addsub.c",
+  "src/pic16/epic_math_mul.c",
+]
+
 [modules.epic-pid]
 dir        = "epic-pid"
 sources    = ["src/pid.c"]
@@ -100,6 +106,22 @@ PIC16F87XA = ["16F877A"]
 
 [modules.epic-encoder.example.PIC16F87XA]
 name    = "encoder-sizecheck"
+sources = ["mcu/target_sizecheck.c"]
+# Example-level dep: the real example logs over epic-serial; the
+# epic-cc driver path must drop it.
+depends_on = ["epic-serial"]
+
+[modules.epic-serial]
+dir        = "epic-serial"
+sources    = ["src/epic_serial.c"]
+includes   = ["include"]
+depends_on = []
+
+[modules.epic-serial.supported]
+PIC16F87XA = ["16F877A"]
+
+[modules.epic-serial.example.PIC16F87XA]
+name    = "serial-sizecheck"
 sources = ["mcu/target_sizecheck.c"]
 """
 
@@ -309,6 +331,14 @@ class TestEpicCcToolchain(unittest.TestCase):
         self.assertNotIn("--target p16f877a", s)
         self.assertNotIn("--device", s)
 
+    def test_no_per_part_name_table_remains(self):
+        self.assertFalse(hasattr(epic_build, "_device_for_epic_cc"))
+
+    def test_unsupported_mcu_still_raises_with_the_reason(self):
+        with self.assertRaises(epic_build.UnsupportedError) as ctx:
+            self.script(mcu="16F873A")
+        self.assertIn("RAM: does not fit", str(ctx.exception))
+
     def pid_script(self):
         return epic_build.emit_build_script(
             load(), "epic-pid", "16F877A",
@@ -340,8 +370,9 @@ class TestEpicCcToolchain(unittest.TestCase):
     def test_encoder_epiccc_uses_the_driver_and_drops_tick_and_serial(self):
         # The driver supplies epic_tick_get/epic_tick_elapsed_since
         # (epic-tick is HAL-3c, #86); the module's tick/serial example
-        # deps must not join the link.
+        # deps must not join the link (their include dirs may remain as
+        # harmless search paths).
         s = self.encoder_script()
         self.assertIn("epic-encoder/mcu/target_sizecheck_epiccc.c", s)
         self.assertNotIn("epic-tick/src", s)
-        self.assertNotIn("epic-serial", s)
+        self.assertNotIn("epic-serial/src", s)
