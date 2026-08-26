@@ -118,6 +118,52 @@ CI's workflows pull from; CI itself never builds this image. See
 [.github/workflows/ci.yml](.github/workflows/ci.yml) for the job
 definitions and the consolidation tradeoff in its header comment.
 
+## The epiccc gate pin
+
+The `epiccc-gate` CI job (`.github/workflows/ci.yml`) builds
+`pic16f88x-hal` for the 887 with a pinned epic-cc compiler and runs the
+deterministic PORTB toggle gate plus the `mdb-hex` register read. It is
+the "did a HAL change break against a known good compiler" direction;
+epic-cc's own `hal-887` job asks the reverse question in its tree.
+
+The pin has two halves, both deliberate:
+
+- `EPIC_CC_PIN` (job env): the epic-cc driver's source sha. The job
+  checks out `apojomovsky/epic-cc` at that sha and runs
+  `cargo build --release --locked -p driver` (a Rust 1.97.1 toolchain
+  only, no clang build). The job asserts the checkout sha equals the
+  pin and prints that sha, so a failure names the compiler.
+- `EPIC_CC_CLANG_TAG` (job env): a tagged epic-cc release whose Linux
+  bundle supplies `clang` and `llvm-link`. The job downloads
+  `epic-cc-<tag>-x86_64-linux.zip` and verifies it against the
+  release's own `SHA256SUMS`.
+
+Why two: the rolling `ci-<sha>` prereleases epic-cc#118 planned never
+published (their publish job has no checkout; epic-cc#140 fixed only
+`release.yml`), and the one tagged release, v0.0.3, is epic-cc master
+whose driver panics on the 887 slice (`isel: call to unknown function
+@8`), a regression from the smax/smin isel change (epic-cc#136). The
+last known-good driver is the commit before that change; the release
+bundle's clang is known good against it. This split is what lets the
+job consume a real user-facing artifact (the bundle) while pinning a
+working compiler.
+
+Bumping the pin:
+
+1. Pick a new `EPIC_CC_PIN` that still builds the 887 slice. A quick
+   check: build the driver at that sha (`cargo build --release -p
+   driver` in a checkout) and run
+   `make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1`
+   with the v0.0.3 bundle's clang exported.
+2. Change `EPIC_CC_PIN` in `.github/workflows/ci.yml` to the new sha.
+   The pin is a chosen, deliberate bump: a compiler regression shows up
+   as a bump that fails the gate, not as a mystery. (When the rolling
+   prereleases start publishing, `EPIC_CC_CLANG_TAG` can move to a
+   `ci-<sha>` tag and the driver to the same tag's binary; until then
+   the split stays.)
+3. The job prints the driver sha and clang version in its step summary,
+   so a failure names the compiler.
+
 ## Releases
 
 Cutting one is a single command:
