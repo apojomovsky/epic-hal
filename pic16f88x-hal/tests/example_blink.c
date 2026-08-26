@@ -42,20 +42,12 @@ int main(void)
 
     /* 2. Timer0: internal Fosc/4, 1:256 prescaler, reload 0, toggle on
      *    each overflow. */
-#ifdef __EPIC_CC__
-    static TIMER0_HandleTypeDef h = TIMER0_HANDLE_DEFAULT;
-#else
     TIMER0_HandleTypeDef h = TIMER0_HANDLE_DEFAULT;
-#endif
     h.ClockSource       = TIMER0_CLOCK_INTERNAL;
     h.Prescaler         = TIMER0_PRESCALER_1_256;
     h.PrescalerAssigned = true;
     h.ReloadValue       = 0x00U;
-#ifdef __EPIC_CC__
-    h.OverflowCallback  = NULL;
-#else
     h.OverflowCallback  = on_t0_overflow;
-#endif
     EPIC_TIMER0_Init(&h);
     EPIC_TIMER0_Start(&h);
 
@@ -67,29 +59,11 @@ int main(void)
      *    pumps the sim each iteration (no-op on target, where real
      *    time advances on its own). WDT refresh is a host no-op, so it
      *    is called unconditionally. */
-#ifdef __EPIC_CC__
-    // TMR0IF poll loop (the #137 workaround): same posture as
-    // 88x_usart umin, filed gap, minimal fork.
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
-        if (EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_TMR0IF) {
-            EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_TMR0IF);
-            on_t0_overflow();
-        }
-        epic_harness_tick();
-        EPIC_WDT_Refresh();
-    }
-#else
     for (uint32_t i = 0; epic_harness_running(i); i++) {
         epic_harness_tick();
         EPIC_WDT_Refresh();
     }
-#endif
 
-#ifdef __EPIC_CC__
-    (void)g_toggle_count;
-    return 0;
-#else
     epic_harness_log("RB0 toggled %u times.\n", (unsigned)g_toggle_count);
     return epic_harness_report(g_toggle_count >= 2U);
-#endif
 }

@@ -262,9 +262,5 @@ void EEPROM_IRQHandler(void)
      * context; see the CCP handlers). EEIF is PIR2 bit 4. */
     if (!(EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_EEIF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_EEIF);
-#ifndef EPIC_AT
     if (g_eeprom_cb) g_eeprom_cb();
-#else
-    (void)g_eeprom_cb;
-#endif
 }
