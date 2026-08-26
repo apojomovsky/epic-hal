@@ -197,7 +197,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EPIC_CC_PIN: 25a98424ee5e783953bd610b46502468d5a970ac
+      # The release tag (v0.0.3) and the version inside its asset names
+      # (epic-cc-0.0.3-...): the asset names drop the v prefix.
       EPIC_CC_CLANG_TAG: v0.0.3
+      EPIC_CC_CLANG_VER: 0.0.3
     steps:
       - uses: actions/checkout@v4
         with:
@@ -248,7 +251,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p bundle && cd bundle
-          zip="epic-cc-${EPIC_CC_CLANG_TAG}-x86_64-linux.zip"
+          zip="epic-cc-${EPIC_CC_CLANG_VER}-x86_64-linux.zip"
           gh release download "$EPIC_CC_CLANG_TAG" --repo apojomovsky/epic-cc \
             --pattern "$zip" --pattern "SHA256SUMS"
           expected="$(awk '/'"${zip}"'$/{print $1}' SHA256SUMS)"
@@ -261,8 +264,8 @@ jobs:
         if: steps.noncode.outputs.non_code != 'true'
         env:
           EPIC_CC_BIN: ${{ github.workspace }}/epic-cc-target/release/epic-cc
-          PIC8_CLANG_UNWRAPPED: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_TAG }}-x86_64-linux/clang/bin/clang
-          PIC8_CLANG_RESOURCE_DIR: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_TAG }}-x86_64-linux/clang/lib/clang/20
+          PIC8_CLANG_UNWRAPPED: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/bin/clang
+          PIC8_CLANG_RESOURCE_DIR: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/lib/clang/20
         run: |
           make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
 
@@ -274,7 +277,7 @@ jobs:
             exit 1
           fi
           echo "epic-cc driver: $sha (pinned $EPIC_CC_PIN)" >> "$GITHUB_STEP_SUMMARY"
-          echo "clang: $("${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_TAG }}-x86_64-linux/clang/bin/clang" --version | head -1)" >> "$GITHUB_STEP_SUMMARY"
+          echo "clang: $("${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/bin/clang" --version | head -1)" >> "$GITHUB_STEP_SUMMARY"
 
       # Resolve + pull the toolchain image, same formula the family
       # jobs use (new name, legacy fallback across the #55 rename window).
