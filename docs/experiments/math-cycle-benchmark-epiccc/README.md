@@ -25,15 +25,18 @@ the fixed-cycle property the asm advertises?
 - MPLAB SIM (mdb) runs the firmware and captures the UART stream to a
   file. The simulator is deterministic: identical binaries reproduce
   identical raw deltas.
-- Operands identical to the hand-asm bench: add/sub a=seed.., b=0x1357;
-  mul8 b=0xCD; mul16 b=0xCDEF (bit 15 set); div16 den=0x0013.
+- Operands identical to the hand-asm bench: add a=seed.., b=0xFFFF;
+  sub a=seed.., b=0x1357; mul8 b=0xCD; mul16 b=0xCDEF (bit 15 set);
+  div16 den=0x0013.
 - Build: epic-cc (current master) compiles `bench_epiccc.c` plus the C
   path sources (`src/host/epic_math_{mul,div,addsub}.c`) in one
   whole-program invocation, `--target 16F877A` / `16F887`.
 - N=50, not 100: the 16-bit TMR1 wraps at 65536, and the C-path mul16
-  and div16 loops at N=100 exceed it (the N=100 mul16_epic delta 0x5018
-  is 86924 mod 65536, a wrap artifact, not a fast multiply). N=50 keeps
-  every delta under the wrap.
+  and div16 loops at N=100 exceed it. The N=100 mul16_epic delta 0x5018
+  (20504) is smaller than the N=50 delta 0xA9D7 (43479), which is only
+  possible if TMR1 wrapped mid-loop (the unwrapped N=100 delta is
+  0x15018 = 86040, ~788 cycles per op). N=50 keeps every delta under
+  the wrap.
 - The bench writes its seed at runtime: epic-cc has no RAM-initializer
   copy, so a `volatile uint16_t g_seed = 0x1357u` reads as 0 (the first
   probe run measured 0 * 0xCDEF = 0 and looked like a miscompile; it was
@@ -65,8 +68,8 @@ baseline.
 
 1. The C path under epic-cc is correct: every op matches the host oracle
    on both devices (probe: add 0x1357+0xFFFF = 0x1356 carry 1, sub
-   0x1357-0x1357 = 0 borrow 0, mul8 0x57*0xCD = 0x46CB, div
-   0x1357/0x0013 = 0x00F9 rem 0x0004, mul16 0x1357*0xCDEF =
+   0x1357-0x1357 = 0 borrow 0, mul8 0x57*0xCD = 0x45AB, div
+   0x1357/0x0013 = 0x0104 rem 0x000B, mul16 0x1357*0xCDEF =
    0x0F8EB939).
 2. The C path loses to the hand asm on every op: add 153 vs 80, sub 90
    vs 75, mul8 423 vs 145, mul16 797 vs 302, div 1000 vs 441. The gap is
@@ -115,6 +118,8 @@ covers).
 From the repo root, with the epic-cc dev image and the hal toolchain
 image available:
 
+    mkdir -p build-sim/bench-epiccc   # epic-cc does not create output dirs
+
     # build (epic-cc dev image, clang env as in the Makefile's epiccc-build)
     docker run --rm -v "$PWD":/repo -w /repo \
       -e PIC8_CLANG_UNWRAPPED=/opt/clang/bin/clang \
@@ -133,7 +138,9 @@ image available:
 
 `cap.mdb` programs `build-sim/bench-epiccc/87-cpath.hex` under MPLAB SIM
 and captures the UART stream to `build-sim/bench-epiccc/out-87.txt`.
-Per-op cycles = (delta - loop_empty) / 50.
+Per-op cycles = (delta - loop_empty) / 50. The 887 build is the same
+command with `--target 16F887` and `-D PIC16F887`; the results are
+identical (same PIC14 core, same codegen).
 
 ## Tools in this directory
 
