@@ -157,10 +157,10 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
 
     sources = manifest.sources_for(module, mcu, variant=variant,
                                    toolchain=toolchain)
-    # HAL-3b pure-logic footprint: fsm/pid have no HAL/tick need in their
-    # sizecheck probe; use that for the epic-cc footprint so timer2
-    # (HAL-3c) does not block this cluster. XC8 keeps the full example.
-    if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce") and variant == "target":
+    # Epic-cc footprint probes: every module with a target_sizecheck_epiccc.c
+    # uses it on the epic-cc path, because the full example pulls tick/serial
+    # and HAL surfaces that hit filed isel gaps. XC8 keeps the full example.
+    if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
         mod = manifest.modules[module]
         # Use the epic-cc pure probe (no tick/HAL/indirect) for footprint.
         sizecheck = f"{mod.dir}/mcu/target_sizecheck_epiccc.c"
@@ -172,32 +172,13 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
             sources = [s for s in sources if s not in ex_srcs]
             if sizecheck not in sources:
                 sources.append(sizecheck)
-        # Pure probe: drop HAL slice and tick/serial/math deps that the full
-        # example pulls (they need timer2/usart/smax isel, belongs to #86
-        # or epic-cc#73). For footprint, keep only the module's own
-        # sources + sizecheck - no HAL, no tick, no math.
-        sources = [s for s in sources if not s.startswith("pic16f") and not s.startswith("pic18") and "pic16f193x" not in s and "epic-tick" not in s and "epic-serial" not in s and "epic-common/src/core/epic_harness" not in s and "epic-math" not in s]
-    # HAL-3d peripheral-facing footprint: bus/lcd/mcp23x17/adcfilter use
-    # the epic-cc probe (no tick/serial/indirect dispatch) for footprint.
-    # bus/mcp23x17 keep the HAL slice (GPIO+SSP); lcd/adcfilter are
-    # HAL-free and drop it. XC8 keeps the full example.
-    if toolchain == "epic-cc" and module in ("epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
-        mod = manifest.modules[module]
-        sizecheck = f"{mod.dir}/mcu/target_sizecheck_epiccc.c"
-        example = manifest.example_for(module, fam.name, mcu)
-        if example is not None:
-            ex_srcs = {f"{mod.dir}/{s}" for s in example.sources}
-            if example.variants and mcu in example.variants:
-                ex_srcs = {f"{mod.dir}/{s}" for s in example.variants[mcu].sources}
-            sources = [s for s in sources if s not in ex_srcs]
-            if sizecheck not in sources:
-                sources.append(sizecheck)
-        # lcd/adcfilter are HAL-free: drop the HAL slice for the probe.
-        if module in ("epic-lcd", "epic-adcfilter"):
+        # Pure-logic probes (fsm/pid/encoder/debounce) and the HAL-free
+        # lcd/adcfilter drop the HAL slice; bus/mcp23x17 keep it (GPIO+SSP).
+        if module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-lcd", "epic-adcfilter"):
             sources = [s for s in sources if not s.startswith("pic16f") and not s.startswith("pic18") and "pic16f193x" not in s and "epic-common/src/core/epic_harness" not in s]
-        # The probes do not use tick/serial (the example's deps); drop
-        # them so the epic-cc build does not pull timer2/usart isel gaps.
-        sources = [s for s in sources if "epic-tick" not in s and "epic-serial" not in s]
+        # The probes do not use tick/serial/math (the example's deps); drop
+        # them so the epic-cc build does not pull timer2/usart/smax isel gaps.
+        sources = [s for s in sources if "epic-tick" not in s and "epic-serial" not in s and "epic-math" not in s]
     includes = manifest.includes_for(module, mcu)
     # For pure probe, drop tick/serial/math includes that the full example
     # pulls (they need timer2/usart/smax isel, belongs to #86 or epic-cc#73).

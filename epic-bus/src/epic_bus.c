@@ -243,7 +243,7 @@ int epic_bus_i2c_mem_write(uint8_t dev, uint8_t reg, const uint8_t *data, int n)
      * the ops seam is the host-test surface, so the epic-cc footprint
      * probe links the module without it. XC8 keeps the real dispatch. */
     (void)dev; (void)reg; (void)data;
-    return n;
+    return -1;
 #else
     const epic_bus_i2c_ops_t *o = g_i2c_ops;
     o->start();
@@ -271,7 +271,7 @@ int epic_bus_i2c_mem_read(uint8_t dev, uint8_t reg, uint8_t *buf, int n)
 {
 #ifdef __EPIC_CC__
     (void)dev; (void)reg; (void)buf;
-    return n;
+    return -1;
 #else
     const epic_bus_i2c_ops_t *o = g_i2c_ops;
     o->start();
@@ -300,7 +300,7 @@ int epic_bus_spi_mem_write(uint8_t reg, const uint8_t *data, int n)
 {
 #ifdef __EPIC_CC__
     (void)reg; (void)data;
-    return n;
+    return -1;
 #else
     const epic_bus_spi_ops_t *o = g_spi_ops;
     o->select();
@@ -324,7 +324,7 @@ int epic_bus_spi_mem_read(uint8_t reg, uint8_t *buf, int n)
 {
 #ifdef __EPIC_CC__
     (void)reg; (void)buf;
-    return n;
+    return -1;
 #else
     const epic_bus_spi_ops_t *o = g_spi_ops;
     o->select();

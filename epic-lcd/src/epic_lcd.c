@@ -155,14 +155,15 @@ void epic_lcd_init(epic_lcd_t *lcd, const epic_lcd_ops_t *ops, void *ops_ctx,
      * 8-bit-form Function Set regardless of the active transport. */
 
 #ifdef __EPIC_CC__
-    (void)lcd;
+    /* lcd is already used above (ops/cols/rows/row_addr); the delay
+     * ops are stubbed, so nothing else to do here. */
 #else
     lcd->ops->delay_ms(lcd->ops_ctx, DELAY_INIT_MS);
 #endif
 
     send_cmd(lcd, CMD_FUNCTION_SET | FS_8BIT | FS_2LINE);
 #ifdef __EPIC_CC__
-    (void)lcd;
+    /* lcd is already used above; the delay ops are stubbed. */
 #else
     lcd->ops->delay_us(lcd->ops_ctx, DELAY_INIT4_US);
 #endif
