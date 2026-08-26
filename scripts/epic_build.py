@@ -205,10 +205,10 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         # Epic-cc path: one invocation, no per-file compiles, no DFP.
         # Keep the same source set and include order; the driver adds its
         example_name, _ = _example_name_and_config(manifest, module, mcu, variant)
-        # Pure-logic sizecheck has no config words (footprint probe only).
+        # Pure-logic sizechecks carry their own EPIC_CONFIG (or none).
         if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
             has_config = False
-            # Per-module basename so the probes never collide in the
+            # Per-module basename so the drivers never collide in the
             # shared build dir: 16F877A-bus-sizecheck.hex etc.
             example_name = module.removeprefix("epic-") + "-sizecheck"
         else:
