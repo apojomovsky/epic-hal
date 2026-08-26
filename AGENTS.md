@@ -73,13 +73,18 @@ file. The only host-side step is `epic_build.py` resolution, which
 emits a script for a container target to execute.
 
 CI (`.github/workflows/ci.yml`): a `host` job (host build+ctest for
-every module, the Python tooling tests, plus lint, no Docker) and one
+every module, the Python tooling tests, plus lint, no Docker), one
 per-family job per family, each a call into the reusable
 `family-check.yml` (Docker pull, then real XC8 cross-compile for every
 MCU variant of that family, real `mdb`/MPLAB SIM runs that check actual
 register/UART output not just "compiled", the device-data audits, and
-the isolated bundle-gate build). The family jobs pull the private
-image; no job ever builds it.
+the isolated bundle-gate build), and an `epiccc-gate` job that builds
+`pic16f88x-hal` for the 887 with a pinned epic-cc driver and the
+release bundle's clang, then runs the deterministic PORTB toggle gate
+and the `mdb-hex` register read (the "did a HAL change break against a
+known good compiler" direction; how to bump the pin: DEVELOPMENT.md).
+The family jobs and the epiccc-gate mdb half pull the private image; no
+job ever builds it.
 
 ## Picking up work
 

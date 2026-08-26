@@ -185,6 +185,147 @@ jobs:
     with:
       family: PIC16F88X
 
+  # The epic-cc conformance gate in this tree: "did a HAL change break
+  # against a known good compiler". epic-cc's own hal-887 job (epic-cc#113)
+  # asks the reverse question in its tree. Pins the driver to EPIC_CC_PIN
+  # (built from source; a Rust toolchain only, no clang build) and pairs it
+  # with the v0.0.3 release bundle's clang, the one artifact a user gets
+  # (epic-cc#118). The pin is a deliberate bump: a compiler regression shows
+  # up as a chosen bump that fails, not a mystery (how to bump: DEVELOPMENT.md
+  # "The epiccc gate pin"). The mdb half needs the private toolchain image,
+  # so this is not yet the public gate (that is HAL-4, epic-hal#60).
+  epiccc-gate:
+    runs-on: ubuntu-latest
+    env:
+      EPIC_CC_PIN: 25a98424ee5e783953bd610b46502468d5a970ac
+      EPIC_CC_CLANG_TAG: v0.0.3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine non-code
+        id: noncode
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            result="$(python3 scripts/ci_noncode_check.py '${{ github.event.pull_request.base.sha }}')"
+          else
+            result="false"
+          fi
+          echo "non_code=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Check out epic-cc at the pinned driver sha
+        if: steps.noncode.outputs.non_code != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: apojomovsky/epic-cc
+          ref: ${{ env.EPIC_CC_PIN }}
+          path: epic-cc
+
+      # Rust 1.97.1, the toolchain the pinned driver was built with
+      # (epic-cc's rust-toolchain.toml pins the same version in-tree).
+      - name: Install Rust 1.97.1
+        if: steps.noncode.outputs.non_code != 'true'
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.97.1
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Build the pinned epic-cc driver
+        if: steps.noncode.outputs.non_code != 'true'
+        env:
+          CARGO_TARGET_DIR: ${{ github.workspace }}/epic-cc-target
+        run: cargo build --release --locked -p driver
+        working-directory: epic-cc
+
+      # The clang front end (and llvm-link) from the tagged release, the
+      # artifact a user downloads; verified against the release's own
+      # SHA256SUMS so a tampered or truncated fetch cannot silently gate.
+      - name: Fetch the clang bundle (${{ env.EPIC_CC_CLANG_TAG }})
+        if: steps.noncode.outputs.non_code != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p bundle && cd bundle
+          zip="epic-cc-${EPIC_CC_CLANG_TAG}-x86_64-linux.zip"
+          curl -fsSL -o "$zip" \
+            "https://github.com/apojomovsky/epic-cc/releases/download/${EPIC_CC_CLANG_TAG}/${zip}"
+          curl -fsSL -o SHA256SUMS \
+            "https://github.com/apojomovsky/epic-cc/releases/download/${EPIC_CC_CLANG_TAG}/SHA256SUMS"
+          expected="$(awk '/'"${zip}"'$/{print $1}' SHA256SUMS)"
+          actual="$(sha256sum "$zip" | awk '{print $1}')"
+          test -n "$expected"
+          test "$expected" = "$actual"
+          unzip -q "$zip"
+
+      - name: Build pic16f88x-hal with epic-cc (the issue's smoke)
+        if: steps.noncode.outputs.non_code != 'true'
+        env:
+          EPIC_CC_BIN: ${{ github.workspace }}/epic-cc-target/release/epic-cc
+          PIC8_CLANG_UNWRAPPED: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_TAG }}-x86_64-linux/clang/bin/clang
+          PIC8_CLANG_RESOURCE_DIR: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_TAG }}-x86_64-linux/clang/lib/clang/20
+        run: |
+          make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
+
+      - name: Report the compiler identities used
+        run: |
+          sha="$(git -C epic-cc rev-parse HEAD)"
+          if [ "$sha" != "$EPIC_CC_PIN" ]; then
+            echo "::error::epic-cc checkout is $sha, expected the pin $EPIC_CC_PIN" >&2
+            exit 1
+          fi
+          echo "epic-cc driver: $sha (pinned $EPIC_CC_PIN)" >> "$GITHUB_STEP_SUMMARY"
+          echo "clang: $("${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_TAG }}-x86_64-linux/clang/bin/clang" --version | head -1)" >> "$GITHUB_STEP_SUMMARY"
+
+      # Resolve + pull the toolchain image, same formula the family
+      # jobs use (new name, legacy fallback across the #55 rename window).
+      - name: Resolve + pull the toolchain image
+        if: steps.noncode.outputs.non_code != 'true'
+        id: image
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
+          image="ghcr.io/${{ github.repository_owner }}/epic-hal-ci:${tag}"
+          legacy_image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          if docker pull "$image"; then
+            echo "image=$image" >> "$GITHUB_OUTPUT"
+          elif docker pull "$legacy_image"; then
+            echo "note: pulled legacy $legacy_image (epic-hal-ci not yet published; see #55)" >&2
+            echo "image=$legacy_image" >> "$GITHUB_OUTPUT"
+          else
+            echo "error: no cached $image nor $legacy_image on GHCR." >&2
+            exit 1
+          fi
+
+      - name: Copy the hex where the toggle gate looks
+        if: steps.noncode.outputs.non_code != 'true'
+        run: |
+          mkdir -p build-sim/pic16f88x-hal
+          cp build/epiccc/16F887-blink.hex build-sim/pic16f88x-hal/16F887-blink.hex
+
+      # The blink assertion, deterministic (stepi, not wall-clock): 12
+      # samples of 200k instructions must show PORTB bit 0 changing, the
+      # same gate make mdb-epiccc runs locally (sim-mdb-run.sh toggle).
+      - name: MPLAB SIM toggle gate (the blink really toggles)
+        if: steps.noncode.outputs.non_code != 'true'
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work \
+            -e SIM_MDB_SKIP_BUILD=1 -e TOGGLE_REG=PORTB -e TOGGLE_BIT=0 \
+            -e TOGGLE_SAMPLES=12 -e TOGGLE_STEPI=200000 \
+            "${{ steps.image.outputs.image }}" \
+            bash scripts/sim-mdb-run.sh local 16F887 PIC16F887 pic16f88x-hal 0 toggle
+
+      - name: MPLAB SIM register read (mdb-hex)
+        if: steps.noncode.outputs.non_code != 'true'
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work \
+            "${{ steps.image.outputs.image }}" \
+            bash scripts/mdb-hex-run.sh /work/build/epiccc/16F887-blink.hex PIC16F887 2000 'print PORTB\nprint TMR0'
+
   # Flake-hunt: REPEAT=N run of every sim gate (quality task 10),
   # manual-trigger only so a hunt does not slow the PR target job.
   # Reuses the target job's emit step and the same ci-target-sim.sh the

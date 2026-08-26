@@ -140,6 +140,10 @@ xc8-build: image
 # inside it (defaults to the dev image's own cargo-built binary at
 # /tmp/cargo-target/release/epic-cc, shared with the epic-cc repo's
 # make exec plumbing).
+#
+# EPIC_CC_HOST=1 runs the emitted script directly on the host instead:
+# the CI epiccc-gate job prepares the driver and clang itself (see
+# DEVELOPMENT.md "The epiccc gate pin") and has no dev image to run in.
 EPIC_CC_IMAGE ?= epic-cc-dev:local
 EPIC_CC_BIN   ?= /tmp/cargo-target/release/epic-cc
 EPIC_CC_RUN := mkdir -p $(HOME_MOUNT) $(HOME)/.cache/epic-cc/target && docker run --rm \
@@ -152,9 +156,13 @@ epiccc-build:
 	@test -n "$(MODULE)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
 	@test -n "$(MCU)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
 	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --toolchain epic-cc --epic-cc $(EPIC_CC_BIN) --build-dir build/epiccc
+ifeq ($(EPIC_CC_HOST),1)
+	sh build/epiccc/$(MCU)/build.sh
+else
 	$(EPIC_CC_RUN) -e PIC8_CLANG_UNWRAPPED=/opt/clang/bin/clang \
 		-e PIC8_CLANG_RESOURCE_DIR=/opt/clang/lib/clang/20 \
 		$(EPIC_CC_IMAGE) sh build/epiccc/$(MCU)/build.sh
+endif
 	@echo "Built build/epiccc/$(MCU)-$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print(m.example_for('$(MODULE)', e.load(e.default_path()).family_of('$(MCU)').name).name)") .hex"
 # ─────────────────────────── mdb / MPLAB SIM gate ────────────────────
 # Thin wrapper around scripts/sim-mdb-run.sh, the exact same script CI
@@ -204,9 +212,12 @@ mdb-epiccc: image
 # reads) after the first wait. Unlike mdb-test there is no HARNESS=sim
 # rebuild: this is the gate for hexes another toolchain produced, e.g.
 # epiccc-build's output, where the acceptance is a register read, not a
-# UART marker. HEX is repo-relative, DEVICE is the MPLAB part name, and
-# EXTRA_MDB uses backslash-n escapes for newlines (single shell value,
-# expanded inside the container), e.g.
+# UART marker. Thin wrapper around scripts/mdb-hex-run.sh, the same
+# "one source of truth" shape sim-mdb-run.sh gives the harness gates:
+# the CI epiccc-gate job runs that script directly. HEX is
+# repo-relative, DEVICE is the MPLAB part name, and EXTRA_MDB uses
+# backslash-n escapes for newlines (single shell value, expanded inside
+# the container), e.g.
 #   EXTRA_MDB='print PORTB\nprint TMR0'
 mdb-hex: image
 	@if [ -z "$(HEX)" ] || [ -z "$(DEVICE)" ]; then \
@@ -216,16 +227,7 @@ mdb-hex: image
 		echo "  e.g. make mdb-hex HEX=build/epiccc/16F887-blink.hex DEVICE=PIC16F887" >&2; \
 		exit 1; \
 	fi
-	@test -f "$(HEX)" || { echo "error: no such hex: $(HEX)" >&2; exit 1; }
-	# DOCKER_RUN ends with the image, so env flags must go before it;
-	# spell the invocation out here rather than contorting that shared var.
-	mkdir -p $(HOME_MOUNT) && docker run --rm --user $$(id -u):$$(id -g) \
-		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-		-v $(HOME_MOUNT):$(HOME) \
-		-v $(CURDIR):/repo -w /repo \
-		-e MDB_HEX="$(HEX)" -e MDB_DEVICE="$(DEVICE)" \
-		-e MDB_WAIT="$(or $(WAIT_MS),2000)" -e EXTRA_MDB="$(EXTRA_MDB)" \
-		$(LOCAL_IMAGE) bash -c 'printf "device %s\nhwtool SIM\nprogram /repo/%s\nrun\nwait %s\nhalt\n" "$$MDB_DEVICE" "$$MDB_HEX" "$$MDB_WAIT" > /tmp/mdb-hex.txt; printf "%b\nquit\n" "$$EXTRA_MDB" >> /tmp/mdb-hex.txt; mdb.sh /tmp/mdb-hex.txt'
+	$(DOCKER_RUN) scripts/mdb-hex-run.sh /repo/$(HEX) $(DEVICE) $(or $(WAIT_MS),2000) "$(EXTRA_MDB)"
 
 # ─────────────────────────── dev shell ───────────────────────────────
 # Same --user/passwd/HOME fix as DOCKER_RUN (see its comment); a plain
