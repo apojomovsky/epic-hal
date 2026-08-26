@@ -125,9 +125,5 @@ void COMP_IRQHandler(void)
      * context; see the CCP handlers). CMIF is PIR2 bit 5. */
     if (!(EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_CMIF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CMIF);
-#ifndef EPIC_AT
     if (g_comp && g_comp->ChangeCallback) g_comp->ChangeCallback();
-#else
-    (void)g_comp;
-#endif
 }

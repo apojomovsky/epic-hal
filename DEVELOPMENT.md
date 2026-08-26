@@ -150,6 +150,13 @@ working compiler.
 
 Bumping the pin:
 
+The 105 branch pins the epic-cc driver to
+`feat/105-hal-callback-e2e` (d84e085) while that PR is open: the
+guard-free HAL needs two compiler fixes it carries (the indirect-call
+candidate arity filter and the post-banking const-section window
+accounting, epic-cc#151/#152). Re-pin to epic-cc master after it
+merges, then delete the pin comment in ci.yml's `EPIC_CC_PIN`.
+
 1. Pick a new `EPIC_CC_PIN` that still builds the 887 slice. A quick
    check: build the driver at that sha (`cargo build --release -p
    driver` in a checkout) and run

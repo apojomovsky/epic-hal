@@ -321,11 +321,5 @@ void SSP_IRQHandler(void)
      * context; see the CCP handlers). SSPIF is PIR1 bit 3. */
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_SSPIF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_SSPIF);
-#ifdef __EPIC_CC__
-    /* Cross-context stored callback (epic-cc#137): the epic-cc path
-     * compiles the ISR dispatch out; XC8 keeps the real callback. */
-    (void)g_ssp_transfer_cb;
-#else
     if (g_ssp_transfer_cb) g_ssp_transfer_cb();
-#endif
 }
