@@ -237,7 +237,15 @@ jobs:
         if: steps.noncode.outputs.non_code != 'true'
         env:
           CARGO_TARGET_DIR: ${{ github.workspace }}/epic-cc-target
-        run: cargo build --release --locked -p driver
+        run: |
+          sha="$(git rev-parse HEAD)"
+          if [ "$sha" != "$EPIC_CC_PIN" ]; then
+            echo "::error::epic-cc checkout is $sha, expected the pin $EPIC_CC_PIN" >&2
+            exit 1
+          fi
+          echo "epic-cc driver: $sha (pinned $EPIC_CC_PIN)"
+          echo "epic-cc driver: $sha (pinned $EPIC_CC_PIN)" >> "$GITHUB_STEP_SUMMARY"
+          cargo build --release --locked -p driver
         working-directory: epic-cc
 
       # The clang front end (and llvm-link) from the tagged release, the
@@ -269,15 +277,12 @@ jobs:
         run: |
           make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
 
-      - name: Report the compiler identities used
+      - name: Report the clang identity used
+        if: steps.noncode.outputs.non_code != 'true'
         run: |
-          sha="$(git -C epic-cc rev-parse HEAD)"
-          if [ "$sha" != "$EPIC_CC_PIN" ]; then
-            echo "::error::epic-cc checkout is $sha, expected the pin $EPIC_CC_PIN" >&2
-            exit 1
-          fi
-          echo "epic-cc driver: $sha (pinned $EPIC_CC_PIN)" >> "$GITHUB_STEP_SUMMARY"
-          echo "clang: $("${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/bin/clang" --version | head -1)" >> "$GITHUB_STEP_SUMMARY"
+          clang="${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/bin/clang"
+          echo "clang: $("$clang" --version | head -1)"
+          echo "clang: $("$clang" --version | head -1)" >> "$GITHUB_STEP_SUMMARY"
 
       # Resolve + pull the toolchain image, same formula the family
       # jobs use (new name, legacy fallback across the #55 rename window).
