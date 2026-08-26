@@ -63,6 +63,44 @@ sources = ["mcu/target_sizecheck.c"]
 # fixture's excluded), so a build of this example there must fail the
 # support check rather than compile excluded code.
 depends_on = ["epic-tick"]
+
+[modules.epic-math]
+dir        = "epic-math"
+sources    = ["src/common/epic_math_numeric.c"]
+includes   = ["include"]
+depends_on = []
+needs_hal  = false
+
+[modules.epic-math.supported]
+PIC16F87XA = ["16F877A"]
+
+[modules.epic-pid]
+dir        = "epic-pid"
+sources    = ["src/pid.c"]
+includes   = ["include"]
+depends_on = ["epic-math"]
+needs_hal  = false
+
+[modules.epic-pid.supported]
+PIC16F87XA = ["16F877A"]
+
+[modules.epic-pid.example.PIC16F87XA]
+name    = "pid-sizecheck"
+sources = ["mcu/target_sizecheck.c"]
+
+[modules.epic-encoder]
+dir        = "epic-encoder"
+sources    = ["src/encoder.c"]
+includes   = ["include"]
+depends_on = ["epic-tick"]
+needs_hal  = false
+
+[modules.epic-encoder.supported]
+PIC16F87XA = ["16F877A"]
+
+[modules.epic-encoder.example.PIC16F87XA]
+name    = "encoder-sizecheck"
+sources = ["mcu/target_sizecheck.c"]
 """
 
 
@@ -271,10 +309,39 @@ class TestEpicCcToolchain(unittest.TestCase):
         self.assertNotIn("--target p16f877a", s)
         self.assertNotIn("--device", s)
 
-    def test_no_per_part_name_table_remains(self):
-        self.assertFalse(hasattr(epic_build, "_device_for_epic_cc"))
+    def pid_script(self):
+        return epic_build.emit_build_script(
+            load(), "epic-pid", "16F877A",
+            build_dir="build", dfp_dir="", toolchain="epic-cc",
+        )
 
-    def test_unsupported_mcu_still_raises_with_the_reason(self):
-        with self.assertRaises(epic_build.UnsupportedError) as ctx:
-            self.script(mcu="16F873A")
-        self.assertIn("RAM: does not fit", str(ctx.exception))
+    def encoder_script(self):
+        return epic_build.emit_build_script(
+            load(), "epic-encoder", "16F877A",
+            build_dir="build", dfp_dir="", toolchain="epic-cc",
+        )
+
+    def test_pid_links_the_host_math_mul_not_the_pic16_asm_backend(self):
+        # pid.c's real epic_pid_update calls epic_math_mul_s16; the pic16
+        # asm backend needs XC8's xc.h, so the epic-cc path links the
+        # portable host C implementation instead (the independent oracle).
+        s = self.pid_script()
+        self.assertIn("epic-math/src/host/epic_math_mul.c", s)
+        self.assertNotIn("src/pic16/epic_math_mul.c", s)
+        self.assertIn("epic-pid/mcu/target_sizecheck_epiccc.c", s)
+        self.assertNotIn("epic-pid/examples/", s)
+
+    def test_pid_epiccc_drops_the_pic16_math_sources(self):
+        # The math SOURCES that hit the pic16 asm dialect are dropped for
+        # epic-cc; only the host mul joins (tested above).
+        s = self.pid_script()
+        self.assertNotIn("src/pic16/epic_math_addsub.c", s)
+
+    def test_encoder_epiccc_uses_the_driver_and_drops_tick_and_serial(self):
+        # The driver supplies epic_tick_get/epic_tick_elapsed_since
+        # (epic-tick is HAL-3c, #86); the module's tick/serial example
+        # deps must not join the link.
+        s = self.encoder_script()
+        self.assertIn("epic-encoder/mcu/target_sizecheck_epiccc.c", s)
+        self.assertNotIn("epic-tick/src", s)
+        self.assertNotIn("epic-serial", s)

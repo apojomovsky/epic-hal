@@ -33,6 +33,9 @@ void epic_fsm_init(epic_fsm_t *fsm, const epic_fsm_transition_t *table, uint8_t 
 bool epic_fsm_dispatch(epic_fsm_t *fsm, epic_fsm_event_t event)
 {
 #ifdef __EPIC_CC__
+    /* Stub: the real body reads guard/action fn ptrs out of a static
+     * const transition table; irparse cannot decode a const struct
+     * field whose value is a function symbol (epic-cc#154). */
     (void)fsm; (void)event;
     return false;
 #else

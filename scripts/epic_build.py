@@ -157,12 +157,12 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
 
     sources = manifest.sources_for(module, mcu, variant=variant,
                                    toolchain=toolchain)
-    # Epic-cc footprint probes: every module with a target_sizecheck_epiccc.c
-    # uses it on the epic-cc path, because the full example pulls tick/serial
-    # and HAL surfaces that hit filed isel gaps. XC8 keeps the full example.
+    # Epic-cc drivers: every module with a target_sizecheck_epiccc.c uses it
+    # on the epic-cc path (real module logic where the compiler supports it,
+    # a footprint probe where a filed isel gap remains). XC8 keeps the full
+    # example.
     if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
         mod = manifest.modules[module]
-        # Use the epic-cc pure probe (no tick/HAL/indirect) for footprint.
         sizecheck = f"{mod.dir}/mcu/target_sizecheck_epiccc.c"
         example = manifest.example_for(module, fam.name, mcu)
         if example is not None:
@@ -172,22 +172,25 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
             sources = [s for s in sources if s not in ex_srcs]
             if sizecheck not in sources:
                 sources.append(sizecheck)
-        # Pure-logic probes (fsm/pid/encoder/debounce) and the HAL-free
+        # Pure-logic drivers (fsm/pid/encoder/debounce) and the HAL-free
         # lcd/adcfilter drop the HAL slice; bus/mcp23x17 keep it (GPIO+SSP).
         if module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-lcd", "epic-adcfilter"):
             sources = [s for s in sources if not s.startswith("pic16f") and not s.startswith("pic18") and "pic16f193x" not in s and "epic-common/src/core/epic_harness" not in s]
-        # The probes do not use tick/serial/math (the example's deps); drop
-        # them so the epic-cc build does not pull timer2/usart/smax isel gaps.
+        # Drop tick/serial/math (the example's deps): timer2/usart isel is
+        # #86's domain, and the pic16 math asm backend needs XC8's xc.h.
         sources = [s for s in sources if "epic-tick" not in s and "epic-serial" not in s and "epic-math" not in s]
+        # pid.c calls epic_math_mul_s16 for real now; link the host C-path
+        # implementation (the portable oracle), not the pic16 asm backend.
+        if module == "epic-pid":
+            sources.append("epic-math/src/host/epic_math_mul.c")
     includes = manifest.includes_for(module, mcu)
-    # For pure probe, drop tick/serial/math includes that the full example
-    # pulls (they need timer2/usart/smax isel, belongs to #86 or epic-cc#73).
-    # Encoder/debounce keep the tick header (stubbed) for compilation; pid
-    # keeps the epic-math header (pid.c includes it; the math SOURCES are
-    # what hit smax/smin isel, and those are dropped above).
+    # Drop tick/serial includes the full example pulls (they need
+    # timer2/usart isel, #86's domain). Encoder/debounce keep the tick
+    # header for compilation; pid keeps the epic-math header (pid.c
+    # includes it; the math SOURCES are handled above).
     if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid") and variant == "target":
         includes = [i for i in includes if "epic-tick" not in i and "epic-serial" not in i]
-    # HAL-3d probes: drop tick/serial includes the example pulls.
+    # HAL-3d drivers: drop tick/serial includes the example pulls.
     if toolchain == "epic-cc" and module in ("epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
         includes = [i for i in includes if "epic-tick" not in i and "epic-serial" not in i]
     objdir = f"{build_dir}/{mcu}"

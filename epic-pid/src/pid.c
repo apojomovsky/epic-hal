@@ -98,10 +98,6 @@ void epic_pid_set_manual_output(epic_pid_t *pid, int16_t value)
  */
 int16_t epic_pid_update(epic_pid_t *pid, int16_t setpoint, int16_t measurement)
 {
-#ifdef __EPIC_CC__
-    (void)pid; (void)setpoint; (void)measurement;
-    return 0;
-#else
     /* P term: Kp * error in Q8.8; fits int32_t without an overflow guard
      * (max product ~1.07e9, well under INT32_MAX). */
     int16_t error = (int16_t)(setpoint - measurement);
@@ -152,5 +148,4 @@ int16_t epic_pid_update(epic_pid_t *pid, int16_t setpoint, int16_t measurement)
     if (output < pid->out_min) { output = pid->out_min; }
     if (output > pid->out_max) { output = pid->out_max; }
     return output;
-#endif
 }
