@@ -8,7 +8,12 @@
 
 /* handle storage. */
 
-static const SSP_HandleTypeDef *g_ssp = NULL;
+/* Owned copy of the caller's transfer callback for the weak ISR (the
+ * caller's handle is typically stack-local, out of scope by the time
+ * the ISR reads it). The ISR only needs the callback, so store the
+ * pointer (1 byte) rather than a full handle copy, the same RAM
+ * saving the 88X driver and both timer0 drivers make. */
+static void (*g_ssp_transfer_cb)(void) = NULL;
 
 /* SSPCON2/SSPSTAT/SSPADD are Bank 1 (SSPSTAT=0x94, SSPCON2=0x91,
  * SSPADD=0x93, DS39582B Figure 2-4). EPIC_BANK1_* need a literal SFR
@@ -99,7 +104,7 @@ uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz)
 EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
-    g_ssp = h;
+    g_ssp_transfer_cb = h->TransferCallback;
 
     /* Program SSPADD (Bank 1, address 0x93). */
     ssp_b1_write(0x93U, h->SSPADD);
@@ -146,7 +151,7 @@ EPIC_StatusTypeDef EPIC_SSP_DeInit(void)
     ssp_b1_write(0x91U, 0x00U);
     ssp_b1_write(0x94U, 0x00U);
     ssp_b1_write(0x93U, 0x00U);
-    g_ssp = NULL;
+    g_ssp_transfer_cb = NULL;
     return EPIC_OK;
 }
 
@@ -284,5 +289,5 @@ void SSP_IRQHandler(void)
      * context; see the CCP handlers). SSPIF is PIR1 bit 3. */
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_SSPIF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_SSPIF);
-    if (g_ssp && g_ssp->TransferCallback) g_ssp->TransferCallback();
+    if (g_ssp_transfer_cb) g_ssp_transfer_cb();
 }

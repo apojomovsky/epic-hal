@@ -9,8 +9,9 @@ static const uint16_t ps_ratio[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 /* The ISR only needs the callback, so store the pointer (1 byte) rather
  * than a full handle copy: the caller's handle is typically stack-local
  * (a dangling-pointer hazard, see epic-common/MANUAL.md §3.3), and a
- * full copy costs RAM on the 128-byte 882. */
-static void (*g_t0_overflow_cb)(void) = NULL;
+ * full copy costs RAM on the 128-byte 882. External linkage so the
+ * inlined Init in the header can store to it from any TU. */
+void (*g_t0_overflow_cb)(void) = NULL;
 
 /**
  * @brief Read-modify-write helper for OPTION_REG: clear `clr_mask`
@@ -36,31 +37,6 @@ static void option_clr_set(uint8_t clr_mask, uint8_t set_mask)
 }
 
 /**
- * @brief Configure Timer0: stop it, arm the overflow interrupt if a
- *        callback is given, and copy the handle into driver storage.
- * @param h handle with ClockSource, ClockEdge, Prescaler,
- *        PrescalerAssigned, ReloadValue, OverflowCallback.
- * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
- */
-EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
-{
-    if (!h) return EPIC_INVALID;
-
-    /* Stop the timer before reconfiguring. */
-    option_clr_set(PIC_OPTION_T0CS, 0u);
-
-    EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR0);
-    if (h->OverflowCallback) {
-        EPIC_IRQ_Enable(PIC16_IRQ_TMR0);
-    } else {
-        EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR0);
-    }
-
-    g_t0_overflow_cb = h->OverflowCallback;
-    return EPIC_OK;
-}
-
-/**
  * @brief De-initialize Timer0: disable the interrupt, stop counting
  *        and reset TMR0.
  * @return EPIC_OK on success.
@@ -71,39 +47,6 @@ EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void)
     EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR0);
     option_clr_set(PIC_OPTION_T0CS, 0u);
     EPIC_REG8(PIC_REG_TMR0) = 0x00U;
-    return EPIC_OK;
-}
-
-/**
- * @brief Start Timer0 counting: reload TMR0 and program the prescaler
- *        assignment/ratio, clock source and edge.
- * @param h handle whose ReloadValue and config are applied.
- * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
- */
-EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
-{
-    if (!h) return EPIC_INVALID;
-
-    /* DS40001291H §5.3: writing TMR0 when the prescaler is assigned to
-     * Timer0 clears the prescaler. Reload before re-enabling so the
-     * first overflow happens after a clean prescaler cycle. */
-    EPIC_REG8(PIC_REG_TMR0) = h->ReloadValue;
-
-    /* Program the prescaler assignment + ratio + clock source + edge
-     * in one atomic read-modify-write. DS40001291H §5.1.3.1 (and errata
-     * DS80000302K item 10) require CLRWDT before switching the
-     * prescaler assignment to avoid a spurious reset when T0CKI is
-     * enabled. */
-    uint8_t set_mask = (uint8_t)((h->Prescaler & PIC_OPTION_PS_MASK));
-    if (!h->PrescalerAssigned) set_mask |= PIC_OPTION_PSA;
-    if (h->ClockSource == TIMER0_CLOCK_EXTERNAL) set_mask |= PIC_OPTION_T0CS;
-    if (h->ClockEdge   == TIMER0_EDGE_FALLING)  set_mask |= PIC_OPTION_T0SE;
-
-    /* Mask leaves RBPU and INTEDG untouched (DS40001291H §4.2). */
-    uint8_t clr_mask = (uint8_t)(PIC_OPTION_PS_MASK | PIC_OPTION_PSA |
-                                 PIC_OPTION_T0CS  | PIC_OPTION_T0SE);
-    option_clr_set(clr_mask, set_mask);
-
     return EPIC_OK;
 }
 

@@ -9,6 +9,7 @@
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sfr.h"
+#include "core/pic16_irq.h"
 
 /**
  * @brief Timer0 clock source (OPTION_REG<T0CS>, DS39582B §5.0, Reg 5-1).
@@ -57,6 +58,10 @@ typedef struct {
     void (*OverflowCallback)(void);
 } TIMER0_HandleTypeDef;
 
+/* The ISR's owned callback slot, defined in the driver body. Declared
+ * here so the inlined Init (below) can store to it from any TU. */
+extern void (*g_t0_overflow_cb)(void);
+
 /**
  * @brief  Default initialiser: internal Fosc/4, prescaler 1:256, no callback.
  */
@@ -73,11 +78,44 @@ typedef struct {
  * @brief  Configure Timer0 from the handle. Programs OPTION_REG and
  *         INTCON<TMR0IE>. Does not start the timer, call @ref
  *         EPIC_TIMER0_Start afterwards.
+ *
+ *         Static inline so the callback store lands in the caller's
+ *         translation unit: epic-cc resolves a cross-context store
+ *         only when the value is a named function literal (ADR-024),
+ *         which requires the handle-field load to fold after
+ *         inlining.
  * @param h handle with ClockSource, ClockEdge, Prescaler,
  *        PrescalerAssigned, ReloadValue, OverflowCallback.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
-EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h);
+static inline EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
+{
+    if (!h) return EPIC_INVALID;
+
+    /* Stop the timer before reconfiguring: clear T0CS (DS39582B §5.0).
+     * Same bank-safe RMW shape as option_clr_set in the driver body;
+     * inlined here because the header cannot see the static helper. */
+#ifdef EPIC_BANK1_READ8
+    uint8_t opt = 0u;
+    EPIC_BANK1_READ8(OPTION_REG, opt);
+    opt = (uint8_t)(opt & (uint8_t)~PIC_OPTION_T0CS);
+    EPIC_BANK1_WRITE8(OPTION_REG, opt);
+#else
+    uint8_t opt = EPIC_REG8(PIC_REG_OPTION);
+    opt = (uint8_t)(opt & (uint8_t)~PIC_OPTION_T0CS);
+    EPIC_REG8(PIC_REG_OPTION) = opt;
+#endif
+
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR0);
+    if (h->OverflowCallback) {
+        EPIC_IRQ_Enable(PIC16_IRQ_TMR0);
+    } else {
+        EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR0);
+    }
+
+    g_t0_overflow_cb = h->OverflowCallback;
+    return EPIC_OK;
+}
 
 /**
  * @brief  De-initialize Timer0. Disables the overflow interrupt and
@@ -99,10 +137,45 @@ void TIMER0_IRQHandler(void) EPIC_WEAK;
  *         writes `h->ReloadValue` into TMR0.
  *
  *         Note: writing TMR0 clears the prescaler (DS39582B §5.3 Note).
+ *
+ *         Static inline for the same reason as Init: with the handle
+ *         local to the caller, clang folds every field load, and the
+ *         inlined body keeps the Init store a named literal.
  * @param h handle whose ReloadValue is loaded into TMR0.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
-EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h);
+static inline EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
+{
+    if (!h) return EPIC_INVALID;
+
+    /* DS39582B §5.3: writing TMR0 when the prescaler is assigned to
+     * Timer0 clears the prescaler. Reload before re-enabling so the
+     * first overflow happens after a clean prescaler cycle. */
+    EPIC_REG8(PIC_REG_TMR0) = h->ReloadValue;
+
+    /* Program the prescaler assignment + ratio + clock source + edge
+     * in one atomic read-modify-write. */
+    uint8_t set_mask = (uint8_t)((h->Prescaler & PIC_OPTION_PS_MASK));
+    if (!h->PrescalerAssigned) set_mask |= PIC_OPTION_PSA;
+    if (h->ClockSource == TIMER0_CLOCK_EXTERNAL) set_mask |= PIC_OPTION_T0CS;
+    if (h->ClockEdge   == TIMER0_EDGE_FALLING)  set_mask |= PIC_OPTION_T0SE;
+
+    /* Mask leaves RBPU and INTEDG untouched (DS39582B §4.2 / §14.12.4). */
+    uint8_t clr_mask = (uint8_t)(PIC_OPTION_PS_MASK | PIC_OPTION_PSA |
+                                 PIC_OPTION_T0CS  | PIC_OPTION_T0SE);
+#ifdef EPIC_BANK1_READ8
+    uint8_t opt = 0u;
+    EPIC_BANK1_READ8(OPTION_REG, opt);
+    opt = (uint8_t)((opt & (uint8_t)~clr_mask) | set_mask);
+    EPIC_BANK1_WRITE8(OPTION_REG, opt);
+#else
+    uint8_t opt = EPIC_REG8(PIC_REG_OPTION);
+    opt = (uint8_t)((opt & (uint8_t)~clr_mask) | set_mask);
+    EPIC_REG8(PIC_REG_OPTION) = opt;
+#endif
+
+    return EPIC_OK;
+}
 
 /**
  * @brief Disable TMR0 counting. Clears OPTION_REG<T0CS> → TMR0 halted.

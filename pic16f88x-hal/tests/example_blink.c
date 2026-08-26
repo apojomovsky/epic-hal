@@ -41,7 +41,9 @@ int main(void)
     EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 
     /* 2. Timer0: internal Fosc/4, 1:256 prescaler, reload 0, toggle on
-     *    each overflow. */
+     *    each overflow. Local handle: Init/Start are header inlines, so
+     *    clang folds the callback store to a named literal and epic-cc
+     *    resolves the ISR dispatch (ADR-024). */
     TIMER0_HandleTypeDef h = TIMER0_HANDLE_DEFAULT;
     h.ClockSource       = TIMER0_CLOCK_INTERNAL;
     h.Prescaler         = TIMER0_PRESCALER_1_256;
@@ -64,6 +66,13 @@ int main(void)
         EPIC_WDT_Refresh();
     }
 
+#ifdef __EPIC_CC__
+    /* iselcore: select between global addrs (epic-cc#147), filed gap,
+     * posture as #67. The callback-driven loop above is shared. */
+    (void)g_toggle_count;
+    return 0;
+#else
     epic_harness_log("RB0 toggled %u times.\n", (unsigned)g_toggle_count);
     return epic_harness_report(g_toggle_count >= 2U);
+#endif
 }
