@@ -177,6 +177,27 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         # or epic-cc#73). For footprint, keep only the module's own
         # sources + sizecheck - no HAL, no tick, no math.
         sources = [s for s in sources if not s.startswith("pic16f") and not s.startswith("pic18") and "pic16f193x" not in s and "epic-tick" not in s and "epic-serial" not in s and "epic-common/src/core/epic_harness" not in s and "epic-math" not in s]
+    # HAL-3d peripheral-facing footprint: bus/lcd/mcp23x17/adcfilter use
+    # the epic-cc probe (no tick/serial/indirect dispatch) for footprint.
+    # bus/mcp23x17 keep the HAL slice (GPIO+SSP); lcd/adcfilter are
+    # HAL-free and drop it. XC8 keeps the full example.
+    if toolchain == "epic-cc" and module in ("epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
+        mod = manifest.modules[module]
+        sizecheck = f"{mod.dir}/mcu/target_sizecheck_epiccc.c"
+        example = manifest.example_for(module, fam.name, mcu)
+        if example is not None:
+            ex_srcs = {f"{mod.dir}/{s}" for s in example.sources}
+            if example.variants and mcu in example.variants:
+                ex_srcs = {f"{mod.dir}/{s}" for s in example.variants[mcu].sources}
+            sources = [s for s in sources if s not in ex_srcs]
+            if sizecheck not in sources:
+                sources.append(sizecheck)
+        # lcd/adcfilter are HAL-free: drop the HAL slice for the probe.
+        if module in ("epic-lcd", "epic-adcfilter"):
+            sources = [s for s in sources if not s.startswith("pic16f") and not s.startswith("pic18") and "pic16f193x" not in s and "epic-common/src/core/epic_harness" not in s]
+        # The probes do not use tick/serial (the example's deps); drop
+        # them so the epic-cc build does not pull timer2/usart isel gaps.
+        sources = [s for s in sources if "epic-tick" not in s and "epic-serial" not in s]
     includes = manifest.includes_for(module, mcu)
     # For pure probe, drop tick/serial/math includes that the full example
     # pulls (they need timer2/usart/smax isel, belongs to #86 or epic-cc#73).
@@ -184,6 +205,9 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     # keeps the epic-math header (pid.c includes it; the math SOURCES are
     # what hit smax/smin isel, and those are dropped above).
     if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid") and variant == "target":
+        includes = [i for i in includes if "epic-tick" not in i and "epic-serial" not in i]
+    # HAL-3d probes: drop tick/serial includes the example pulls.
+    if toolchain == "epic-cc" and module in ("epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
         includes = [i for i in includes if "epic-tick" not in i and "epic-serial" not in i]
     objdir = f"{build_dir}/{mcu}"
 
@@ -198,10 +222,10 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         # Keep the same source set and include order; the driver adds its
         example_name, _ = _example_name_and_config(manifest, module, mcu, variant)
         # Pure-logic sizecheck has no config words (footprint probe only).
-        if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce") and variant == "target":
+        if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
             has_config = False
-            # Per-module basename so the four pure probes never collide
-            # in the shared build dir: 16F877A-fsm-sizecheck.hex etc.
+            # Per-module basename so the probes never collide in the
+            # shared build dir: 16F877A-bus-sizecheck.hex etc.
             example_name = module.removeprefix("epic-") + "-sizecheck"
         else:
             has_config = emit_config_source(

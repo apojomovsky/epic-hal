@@ -90,6 +90,7 @@ harness_src = "epic-common/src/core/epic_harness_target.c"
 epiccc_sources = [
   "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
   "pic16f87xa-hal/src/peripherals/pic16f87xa_timer0.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_ssp.c",
   "pic16f87xa-hal/src/core/pic16_irq.c",
   "pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep.c",
   "pic16f87xa-hal/src/epiccc/pic16f87xa_wdt_sleep_epiccc.c",
@@ -152,6 +153,7 @@ harness_src = "epic-common/src/core/epic_harness_target.c"
 epiccc_sources = [
   "pic16f88x-hal/src/peripherals/pic16f88x_gpio.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_timer0.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_ssp.c",
   "pic16f88x-hal/src/core/pic16_irq.c",
   "pic16f88x-hal/src/core/pic16f88x_wdt_sleep.c",
   "pic16f88x-hal/src/epiccc/pic16f88x_wdt_sleep_epiccc.c",
@@ -1462,8 +1464,20 @@ needs_hal  = false
 PIC16F87XA = [
   "16F877A",
 ]
+PIC16F88X = [
+  "16F887",
+]
 
 [modules.epic-lcd.example.PIC16F87XA]
+name    = "lcd"
+sources = [
+  "examples/example_lcd.c",
+  "src/epic_lcd_gpio4.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-lcd.example.PIC16F88X]
 name    = "lcd"
 sources = [
   "examples/example_lcd.c",

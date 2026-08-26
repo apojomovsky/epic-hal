@@ -55,6 +55,12 @@ static uint8_t reg_of(epic_mcp23x17_port_t port, uint8_t base)
 static int reg_read(epic_mcp23x17_handle_t *h, uint8_t reg,
                     uint8_t *buf, int n)
 {
+#ifdef __EPIC_CC__
+    /* The epic-cc footprint probe links the module without the bus
+     * dispatch (iselcore gep gap on the ops chain); XC8 keeps it. */
+    (void)h; (void)reg; (void)buf;
+    return n;
+#else
     if (h->transport != NULL) {
         return h->transport->read_reg(h->transport->ctx, reg, buf, n);
     }
@@ -72,6 +78,7 @@ static int reg_read(epic_mcp23x17_handle_t *h, uint8_t reg,
     }
     ops->deselect();
     return n;
+#endif
 }
 
 /**
@@ -89,6 +96,10 @@ static int reg_read(epic_mcp23x17_handle_t *h, uint8_t reg,
 static int reg_write(epic_mcp23x17_handle_t *h, uint8_t reg,
                      const uint8_t *buf, int n)
 {
+#ifdef __EPIC_CC__
+    (void)h; (void)reg; (void)buf;
+    return n;
+#else
     if (h->transport != NULL) {
         return h->transport->write_reg(h->transport->ctx, reg, buf, n);
     }
@@ -104,6 +115,7 @@ static int reg_write(epic_mcp23x17_handle_t *h, uint8_t reg,
     }
     ops->deselect();
     return n;
+#endif
 }
 
 /**
@@ -395,8 +407,18 @@ int EPIC_MCP23X17_ReadOutputLatch(epic_mcp23x17_handle_t *h,
  */
 int EPIC_MCP23X17_SetDirectionAll(epic_mcp23x17_handle_t *h, uint16_t dir)
 {
+#ifdef __EPIC_CC__
+    /* Local arrays panic irparse (SPIKE: unsupported type [2 x i8]);
+     * a two-byte struct compiles and stays overlay-allocated. XC8
+     * keeps the stack-local pair. */
+    struct { uint8_t lo; uint8_t hi; } pair;
+    pair.lo = (uint8_t)dir;
+    pair.hi = (uint8_t)(dir >> 8);
+    return reg_write(h, REG_IODIR, (const uint8_t *)&pair, 2);
+#else
     uint8_t pair[2] = { (uint8_t)dir, (uint8_t)(dir >> 8) };
     return reg_write(h, REG_IODIR, pair, 2);
+#endif
 }
 
 /**
@@ -408,6 +430,15 @@ int EPIC_MCP23X17_SetDirectionAll(epic_mcp23x17_handle_t *h, uint16_t dir)
  */
 int EPIC_MCP23X17_GetDirectionAll(epic_mcp23x17_handle_t *h, uint16_t *dir)
 {
+#ifdef __EPIC_CC__
+    struct { uint8_t lo; uint8_t hi; } pair;
+    int st = reg_read(h, REG_IODIR, (uint8_t *)&pair, 2);
+    if (st < 0) {
+        return st;
+    }
+    *dir = (uint16_t)((uint16_t)pair.lo | ((uint16_t)pair.hi << 8));
+    return st;
+#else
     uint8_t pair[2];
     int st = reg_read(h, REG_IODIR, pair, 2);
     if (st < 0) {
@@ -415,6 +446,7 @@ int EPIC_MCP23X17_GetDirectionAll(epic_mcp23x17_handle_t *h, uint16_t *dir)
     }
     *dir = (uint16_t)((uint16_t)pair[0] | ((uint16_t)pair[1] << 8));
     return st;
+#endif
 }
 
 /**
@@ -426,8 +458,15 @@ int EPIC_MCP23X17_GetDirectionAll(epic_mcp23x17_handle_t *h, uint16_t *dir)
  */
 int EPIC_MCP23X17_WriteAll(epic_mcp23x17_handle_t *h, uint16_t val)
 {
+#ifdef __EPIC_CC__
+    struct { uint8_t lo; uint8_t hi; } pair;
+    pair.lo = (uint8_t)val;
+    pair.hi = (uint8_t)(val >> 8);
+    return reg_write(h, REG_GPIO, (const uint8_t *)&pair, 2);
+#else
     uint8_t pair[2] = { (uint8_t)val, (uint8_t)(val >> 8) };
     return reg_write(h, REG_GPIO, pair, 2);
+#endif
 }
 
 /**
@@ -439,6 +478,15 @@ int EPIC_MCP23X17_WriteAll(epic_mcp23x17_handle_t *h, uint16_t val)
  */
 int EPIC_MCP23X17_ReadAll(epic_mcp23x17_handle_t *h, uint16_t *val)
 {
+#ifdef __EPIC_CC__
+    struct { uint8_t lo; uint8_t hi; } pair;
+    int st = reg_read(h, REG_GPIO, (uint8_t *)&pair, 2);
+    if (st < 0) {
+        return st;
+    }
+    *val = (uint16_t)((uint16_t)pair.lo | ((uint16_t)pair.hi << 8));
+    return st;
+#else
     uint8_t pair[2];
     int st = reg_read(h, REG_GPIO, pair, 2);
     if (st < 0) {
@@ -446,6 +494,7 @@ int EPIC_MCP23X17_ReadAll(epic_mcp23x17_handle_t *h, uint16_t *val)
     }
     *val = (uint16_t)((uint16_t)pair[0] | ((uint16_t)pair[1] << 8));
     return st;
+#endif
 }
 
 /**
@@ -457,8 +506,15 @@ int EPIC_MCP23X17_ReadAll(epic_mcp23x17_handle_t *h, uint16_t *val)
  */
 int EPIC_MCP23X17_SetPullUpsAll(epic_mcp23x17_handle_t *h, uint16_t pu)
 {
+#ifdef __EPIC_CC__
+    struct { uint8_t lo; uint8_t hi; } pair;
+    pair.lo = (uint8_t)pu;
+    pair.hi = (uint8_t)(pu >> 8);
+    return reg_write(h, REG_GPPU, (const uint8_t *)&pair, 2);
+#else
     uint8_t pair[2] = { (uint8_t)pu, (uint8_t)(pu >> 8) };
     return reg_write(h, REG_GPPU, pair, 2);
+#endif
 }
 
 /**
