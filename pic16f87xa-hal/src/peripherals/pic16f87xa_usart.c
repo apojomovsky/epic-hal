@@ -38,6 +38,15 @@ void (*g_usart_rx_cb)(uint8_t data) = NULL;
 
 /* public API. */
 
+/*
+ * Initialize the USART: program SPBRG, TXSTA, RCSTA and the
+ * interrupt enables for the callbacks.
+ * @param h handle
+ * @return EPIC_OK
+ */
+#ifndef __EPIC_CC__
+/* XC8 keeps the out-of-line body; the epic-cc path uses the static
+ * inline in the header (see the note there). */
 /**
  * @brief Initialize the USART: program SPBRG, TXSTA, RCSTA and the
  *        interrupt enables for the callbacks.
@@ -45,9 +54,6 @@ void (*g_usart_rx_cb)(uint8_t data) = NULL;
  *        TxCpltCallback, RxCpltCallback.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
-#ifndef __EPIC_CC__
-/* XC8 keeps the out-of-line body; the epic-cc path uses the static
- * inline in the header (see the note there). */
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;

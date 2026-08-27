@@ -23,19 +23,25 @@
 #endif
 
 #if EPICCC_IRQ_TMR1
+/** @brief Timer1 IRQ handler. */
 extern void TIMER1_IRQHandler(void);
 #endif
 #if EPICCC_IRQ_TMR2
+/** @brief Timer2 IRQ handler. */
 extern void TIMER2_IRQHandler(void);
 #endif
 #if EPICCC_IRQ_CCP1
+/** @brief CCP1 IRQ handler. */
 extern void CCP1_IRQHandler(void);
 #endif
 #if EPICCC_IRQ_CCP2
+/** @brief CCP2 IRQ handler. */
 extern void CCP2_IRQHandler(void);
 #endif
 #if EPICCC_IRQ_USART
+/** @brief USART RX IRQ handler. */
 extern void USART_RX_IRQHandler(void);
+/** @brief USART TX IRQ handler. */
 extern void USART_TX_IRQHandler(void);
 #endif
 
