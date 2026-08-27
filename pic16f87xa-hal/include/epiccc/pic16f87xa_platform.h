@@ -3,11 +3,9 @@
  * include path picks which resolves, so pic16f87xa.h includes
  * "pic16f87xa_platform.h" unconditionally with no #ifdef.
  *
- * Under epic-cc the SFR layer is the same volatile dereference shape as
- * the XC8 target (and as epic-cc's own fixtures); banking is inserted by
- * the compiler's banking pass, so the XC8-specific inline-asm
- * pie/bank fixups are replaced by plain C. Placement uses EPIC_AT from
- * <epic-cc.h>. */
+ * Banking is inserted by the compiler's banking pass, so the XC8-specific
+ * inline-asm pie/bank fixups are plain C here. Placement pins are dropped
+ * (EPIC_PLACE expands to nothing): the overlay places globals itself. */
 
 #ifndef PIC16F87XA_PLATFORM_H
 #define PIC16F87XA_PLATFORM_H

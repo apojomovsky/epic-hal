@@ -196,11 +196,14 @@ jobs:
   epiccc-gate:
     runs-on: ubuntu-latest
     env:
-      # The companion epic-cc PR (fix/151-const-window-peephole, #159) that
-      # measures the const-section start at the assembler's final position,
-      # which epic-hal#86's 877A tick/taskmgr builds need. Re-pin to epic-cc
-      # master after that PR merges (DEVELOPMENT.md "The epiccc gate pin").
-      EPIC_CC_PIN: 038d4462461222b6131a20d3874fc5ba94694337
+      # The companion epic-cc PR (fix/151-const-window-peephole, #159) head
+      # (52ce5bf), which carries the six fixes epic-hal#86's 877A tick and
+      # taskmgr builds need plus their direct tests: const-section
+      # measurement, null/undef/zeroinitializer call args, llvm.umin/
+      # usub.sat lowering, candidate width filter, field-sensitive ISR-read
+      # tracking, lower-footprint placement. Re-pin to epic-cc master after
+      # that PR merges (DEVELOPMENT.md "The epiccc gate pin").
+      EPIC_CC_PIN: 52ce5bf93345a1b18cbc19ceb3a9ae8bf70d399d
       # The release tag (v0.0.3) and the version inside its asset names
       # (epic-cc-0.0.3-...): the asset names drop the v prefix.
       EPIC_CC_CLANG_TAG: v0.0.3
@@ -313,11 +316,21 @@ jobs:
             exit 1
           fi
 
-      - name: Copy the hex where the toggle gate looks
+      - name: Build epic-tick with epic-cc (the issue's subject)
+        if: steps.noncode.outputs.non_code != 'true'
+        env:
+          EPIC_CC_BIN: ${{ github.workspace }}/epic-cc-target/release/epic-cc
+          PIC8_CLANG_UNWRAPPED: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/bin/clang
+          PIC8_CLANG_RESOURCE_DIR: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/lib/clang/20
+        run: |
+          make epiccc-build MODULE=epic-tick MCU=16F887 EPIC_CC_HOST=1
+
+      - name: Copy the hexes where the toggle gates look
         if: steps.noncode.outputs.non_code != 'true'
         run: |
-          mkdir -p build-sim/pic16f88x-hal
+          mkdir -p build-sim/pic16f88x-hal build-sim/epic-tick
           cp build/epiccc/16F887-blink.hex build-sim/pic16f88x-hal/16F887-blink.hex
+          cp build/epiccc/16F887-tick.hex build-sim/epic-tick/16F887-tick.hex
 
       # The blink assertion, deterministic (stepi, not wall-clock): 12
       # samples of 200k instructions must show PORTB bit 0 changing, the
@@ -330,6 +343,19 @@ jobs:
             -e TOGGLE_SAMPLES=12 -e TOGGLE_STEPI=200000 \
             "${{ steps.image.outputs.image }}" \
             bash scripts/sim-mdb-run.sh local 16F887 PIC16F887 pic16f88x-hal 0 toggle
+
+      # The tick assertion: the epic-cc-built 1 ms timebase advances and
+      # the example's 500 ms LED period toggles PORTB bit 0. 24 samples of
+      # 500k instructions cover ~4.8M cycles, well past the first 500 ms
+      # half-period (~2.5M cycles), so at least one transition is required.
+      - name: MPLAB SIM toggle gate (the tick really advances)
+        if: steps.noncode.outputs.non_code != 'true'
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work \
+            -e SIM_MDB_SKIP_BUILD=1 -e TOGGLE_REG=PORTB -e TOGGLE_BIT=0 \
+            -e TOGGLE_SAMPLES=24 -e TOGGLE_STEPI=500000 \
+            "${{ steps.image.outputs.image }}" \
+            bash scripts/sim-mdb-run.sh local 16F887 PIC16F887 epic-tick 0 toggle
 
       - name: MPLAB SIM register read (mdb-hex)
         if: steps.noncode.outputs.non_code != 'true'
