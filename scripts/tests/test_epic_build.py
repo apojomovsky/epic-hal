@@ -123,6 +123,32 @@ PIC16F87XA = ["16F877A"]
 [modules.epic-serial.example.PIC16F87XA]
 name    = "serial-sizecheck"
 sources = ["mcu/target_sizecheck.c"]
+
+[families.PIC18Fxx5x]
+hal_dir  = "pic18fxx5x-hal"
+variants = ["18F2455", "18F4550"]
+dfp      = "Microchip.PIC18Fxxxx_DFP"
+fosc_hz  = 48000000
+xtal_hz  = 20000000
+includes = ["pic18fxx5x-hal/include/target", "pic18fxx5x-hal/include"]
+hal_sources = ["pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c", "epic-common/src/core/epic_harness_target.c"]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+epiccc_sources = ["pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c", "epic-common/src/core/epic_harness_target.c"]
+
+[modules.epic-usb]
+dir        = "epic-usb"
+sources    = ["src/epic_usb.c"]
+includes   = ["include"]
+depends_on = []
+needs_hal  = false
+
+[modules.epic-usb.supported]
+PIC18Fxx5x = ["18F4550"]
+
+[modules.epic-usb.example.PIC18Fxx5x]
+name    = "usb-cdc"
+sources = ["examples/example_usb.c"]
+config  = { FOSC = "HS", PLLDIV = "5", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF" }
 """
 
 
@@ -154,6 +180,36 @@ class TestConfigSource(unittest.TestCase):
         out = epic_build.emit_config_source(load(), "epic-tick", "16F877A", variant="sim")
         self.assertIn("#pragma config WDTE = OFF", out)
         self.assertNotIn("#pragma config WDTE = ON", out)
+
+
+class TestEpicConfigSpecPic18(unittest.TestCase):
+    """The manifest records XC8's spellings for the PIC18 config bits;
+    the EPIC_CONFIG spec must restate them in the device data's canonical
+    vocabulary (the ccp2mx pin name, the raw usbdiv bit, the CPUDIV
+    postscaler enum) and pass the crystal, not the system clock, as
+    xtal_hz."""
+
+    def _spec(self, module="epic-usb", mcu="18F4550", fosc_hz=None):
+        return epic_build._epic_config_spec(load(), module, mcu, "target", fosc_hz)
+
+    def test_ccp2mx_on_names_the_pin(self):
+        self.assertIn("ccp2mx=rc1", self._spec())
+
+    def test_usbdiv_two_sets_the_divide_bit(self):
+        self.assertIn("usbdiv=on", self._spec())
+
+    def test_cpudiv_mnemonic_maps_to_the_postscaler_enum(self):
+        self.assertIn("cpudiv=div1", self._spec())
+
+    def test_crystal_not_system_clock_reaches_xtal_hz(self):
+        self.assertIn("xtal_hz=20000000", self._spec())
+
+    def test_family_crystal_wins_over_an_fosc_override(self):
+        self.assertIn("xtal_hz=20000000", self._spec(fosc_hz=96000000))
+
+    def test_pic16_xtal_hz_stays_the_family_fosc(self):
+        self.assertIn("xtal_hz=20000000",
+                      self._spec(module="epic-tick", mcu="16F877A"))
 
 
 class TestDisplayPath(unittest.TestCase):

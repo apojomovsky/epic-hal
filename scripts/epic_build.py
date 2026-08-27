@@ -401,9 +401,13 @@ _PIC18_VALUE_MAP = {
     "2": "div2",
     "3": "div3",
     "4": "div4",
-    "osc1_pll2": "div2",
-    "osc2_pll3": "div3",
-    "osc3_pll4": "div4",
+    # epic-cc counts the four CPUDIV postscaler options div1..div4
+    # (96 MHz / 2, 3, 4, 6), so the datasheet mnemonic's number sits one
+    # below the enum name: OSC1_PLL2 is the first option, not the second.
+    "osc1_pll2": "div1",
+    "osc2_pll3": "div2",
+    "osc3_pll4": "div3",
+    "osc4_pll6": "div4",
     "off": "off",
     "on": "on",
 }
@@ -441,12 +445,20 @@ def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
                 epic_val = _BORV_MAP.get(low_val, low_val)
             elif low_key == "wdtps" and low_val.isdigit():
                 epic_val = f"div{low_val}"
+            elif low_key == "ccp2mx":
+                # XC8 spells the CCP2 pin-mux bit ON/OFF; the device data
+                # names the two states after the pin (DS39632E).
+                epic_val = {"on": "rc1", "off": "rb3"}.get(low_val, low_val)
+            elif low_key == "usbdiv":
+                # XC8 spells the USB postscaler by its divide ratio;
+                # the device data models the raw config bit.
+                epic_val = {"1": "off", "2": "on"}.get(low_val, low_val)
             else:
                 epic_val = _PIC18_VALUE_MAP.get(low_val, low_val)
         else:
             epic_val = low_val
         parts.append(f"{epic_key}={epic_val}")
-    parts.append(f"xtal_hz={fosc_hz}")
+    parts.append(f"xtal_hz={fam.xtal_hz or fosc_hz}")
     return ", ".join(parts)
 
 def _epiccc_include(path: str) -> str:
