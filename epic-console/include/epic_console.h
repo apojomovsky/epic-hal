@@ -11,28 +11,26 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifdef __EPIC_CC__
-/* The 368-byte GPR parts leave no margin for the console's per-instance
- * state once argv moves into the struct (avoids a local array alloca
- * the compiler cannot lower). Keep the public documented defaults
- * (32/8) for host and XC8 builds where RAM is not constrained. */
-#undef EPIC_CONSOLE_LINE_MAX
-#define EPIC_CONSOLE_LINE_MAX 24u
-#undef EPIC_CONSOLE_MAX_ARGS
-#define EPIC_CONSOLE_MAX_ARGS 4u
-#endif
 
 /* Maximum buffered line length including the terminating NUL. Override
  * by defining EPIC_CONSOLE_LINE_MAX before including the header. */
 #ifndef EPIC_CONSOLE_LINE_MAX
+#ifdef __EPIC_CC__
+#define EPIC_CONSOLE_LINE_MAX 24u
+#else
 #define EPIC_CONSOLE_LINE_MAX 32u
+#endif
 #endif
 
 /* Maximum number of in-place whitespace-delimited tokens placed in
  * argv[] during dispatch. Override by defining EPIC_CONSOLE_MAX_ARGS
  * before including the header. */
 #ifndef EPIC_CONSOLE_MAX_ARGS
+#ifdef __EPIC_CC__
+#define EPIC_CONSOLE_MAX_ARGS 4u
+#else
 #define EPIC_CONSOLE_MAX_ARGS 8u
+#endif
 #endif
 
 /* Command callback signature. argc is the number of tokens in argv (for

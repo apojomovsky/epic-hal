@@ -2175,7 +2175,6 @@ depends_on = []
 needs_hal  = true
 
 epiccc_hal_sources_by_family.PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
   "pic16f87xa-hal/src/peripherals/pic16f87xa_ccp.c",
   "pic16f87xa-hal/src/peripherals/pic16f87xa_timer1.c",
   "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
@@ -2185,7 +2184,6 @@ epiccc_hal_sources_by_family.PIC16F87XA = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 epiccc_hal_sources_by_family.PIC16F88X = [
-  "pic16f88x-hal/src/peripherals/pic16f88x_usart.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_ccp.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_timer1.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_gpio.c",

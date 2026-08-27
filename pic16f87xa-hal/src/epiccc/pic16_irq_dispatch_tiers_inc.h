@@ -1,12 +1,8 @@
-/* epic-cc dispatch tiers: one shared body, compiled per module class by
- * defining EPICCC_IRQ_* before the include. Only the gated sources
- * dispatch; every other source is not in the module's HAL subset and
- * cannot vector (PIE bit off), so no flag-clear scaffolding is needed.
- * Rationale: the full fan-out pulls every peripheral handler into the
- * whole program, and the 368-byte GPR parts cannot pay for the unused
- * ones. Handler-less TMR1IF/TMR2IF would latch while the peripheral
- * free-runs, but that peripheral is not compiled in for tiers that do
- * not set the gate. */
+/* epic-cc dispatch tiers: one shared body per module class via
+ * EPICCC_IRQ_* gates. Only gated sources dispatch; others are not in
+ * the HAL subset and cannot vector (PIE off), so no clear scaffolding.
+ * The full fan-out pulls every handler into the program, and 368-byte
+ * GPR cannot pay for the unused ones. */
 
 #include "core/pic16_irq.h"
 
