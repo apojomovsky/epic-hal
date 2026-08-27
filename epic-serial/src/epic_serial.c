@@ -241,6 +241,7 @@ static void epic_serial_put_udec(uint32_t v)
 
 /**
  * @brief Emit v in decimal with sign handling.
+ * @param v Value to format.
  */
 static void epic_serial_put_idec(int32_t v)
 {
@@ -256,6 +257,8 @@ static void epic_serial_put_idec(int32_t v)
 
 /**
  * @brief Emit the low nibbles of v as hex.
+ * @param v Value to format.
+ * @param nibbles Number of nibbles to emit.
  */
 static void epic_serial_put_hexw(uint32_t v, int nibbles)
 {
@@ -270,12 +273,17 @@ static void epic_serial_put_hexw(uint32_t v, int nibbles)
 
 /**
  * @brief Emit one char through the TX ring.
+ * @param c Char to emit.
  */
 void epic_serial_put_char(char c)
 {
     putch(c);
 }
 
+/**
+ * @brief Emit a null-terminated string.
+ * @param s Null-terminated string.
+ */
 void epic_serial_put_str(const char *s)
 {
     int len = 0;
@@ -285,6 +293,10 @@ void epic_serial_put_str(const char *s)
     epic_serial_write((const uint8_t *)s, len);
 }
 
+/**
+ * @brief Emit v in decimal.
+ * @param v Value to format.
+ */
 void epic_serial_put_u16(uint16_t v)
 {
     epic_serial_put_udec(v);
@@ -292,22 +304,35 @@ void epic_serial_put_u16(uint16_t v)
 
 /**
  * @brief Emit v in decimal with no leading zeros.
+ * @param v Value to format.
  */
 void epic_serial_put_u32(uint32_t v)
 {
     epic_serial_put_udec(v);
 }
 
+/**
+ * @brief Emit v in decimal with sign.
+ * @param v Value to format.
+ */
 void epic_serial_put_i16(int16_t v)
 {
     epic_serial_put_idec(v);
 }
 
+/**
+ * @brief Emit v in decimal with sign.
+ * @param v Value to format.
+ */
 void epic_serial_put_i32(int32_t v)
 {
     epic_serial_put_idec(v);
 }
 
+/**
+ * @brief Emit v as two uppercase hex digits.
+ * @param v Value to format.
+ */
 void epic_serial_put_hex8(uint8_t v)
 {
     epic_serial_put_hexw(v, 2);
@@ -315,6 +340,7 @@ void epic_serial_put_hex8(uint8_t v)
 
 /**
  * @brief Emit v as four uppercase hex digits.
+ * @param v Value to format.
  */
 void epic_serial_put_hex16(uint16_t v)
 {
