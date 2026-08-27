@@ -262,13 +262,13 @@ static void epic_serial_put_idec(int32_t v)
  */
 static void epic_serial_put_hexw(uint32_t v, int nibbles)
 {
-    char *p = &s_fmt_buf[sizeof(s_fmt_buf)];
-    for (int i = 0; i < nibbles; i++) {
+    int base = (int)sizeof(s_fmt_buf) - nibbles;
+    for (int i = nibbles - 1; i >= 0; i--) {
         int d = (int)(v & 0xFu);
-        *--p = (char)((d < 10) ? ('0' + d) : ('A' - 10 + d));
+        s_fmt_buf[base + i] = (char)((d < 10) ? ('0' + d) : ('A' - 10 + d));
         v >>= 4;
     }
-    epic_serial_write((const uint8_t *)p, nibbles);
+    epic_serial_write((const uint8_t *)&s_fmt_buf[base], nibbles);
 }
 
 /**

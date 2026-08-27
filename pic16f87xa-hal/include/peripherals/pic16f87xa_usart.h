@@ -153,7 +153,7 @@ static inline EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
  * @return EPIC_OK on success.
  */
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h);
-
+#endif
 /**
  * @brief  De-initialize the USART. Disables the module and returns
  *         TXSTA/RCSTA to reset.
