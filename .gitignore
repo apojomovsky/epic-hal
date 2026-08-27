@@ -74,3 +74,10 @@ bundles/
 /*.p1
 /*.sdb
 .worktrees/
+
+# Epic-cc probe artifacts (whole-program llvm-link dumps)
+probe.ll
+ser.ll
+ser887.ll
+sw.ll
+st/
