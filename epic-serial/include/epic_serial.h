@@ -1,12 +1,9 @@
 /*
- * Family-agnostic interrupt-driven ring-buffered UART: RX is always-on
- * into a ring, TX is demand-driven (TXIE stays off until a write queues
- * bytes). Installed via the USART handle's RxCpltCallback/TxCpltCallback,
- * never by redefining the HAL's own strong USART_RX/TX_IRQHandler. Ring
- * access shared with an ISR relies on single-byte atomic fields (see the
- * ring-discipline note in src/epic_serial.c), not critical sections.
- * Formatting is the non-variadic put_* family; putch stays for XC8's
- * printf retarget.
+ * Family-agnostic ring-buffered UART: RX always-on into a ring, TX
+ * demand-driven (TXIE off until a write queues bytes). Installed via
+ * USART handle callbacks, not the HAL's strong IRQHandler. Ring access
+ * uses single-byte atomics (see ring-discipline note in the source).
+ * Formatting via put_* (non-variadic); putch remains for XC8 printf.
  */
 
 #ifndef EPIC_SERIAL_H

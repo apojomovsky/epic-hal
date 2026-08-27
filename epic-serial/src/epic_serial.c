@@ -223,6 +223,7 @@ static char s_fmt_buf[12];               /* sign + 10 digits + NUL fits i32 */
 
 /**
  * @brief Emit v in decimal via the shared buffer.
+ * @param v the value to emit
  */
 static void epic_serial_put_udec(uint32_t v)
 {
@@ -238,6 +239,9 @@ static void epic_serial_put_udec(uint32_t v)
     }
 }
 
+/**
+ * @brief Emit v in decimal with sign handling.
+ */
 static void epic_serial_put_idec(int32_t v)
 {
     if (v < 0) {
@@ -250,6 +254,9 @@ static void epic_serial_put_idec(int32_t v)
     }
 }
 
+/**
+ * @brief Emit the low nibbles of v as hex.
+ */
 static void epic_serial_put_hexw(uint32_t v, int nibbles)
 {
     char *p = &s_fmt_buf[sizeof(s_fmt_buf)];
@@ -261,6 +268,9 @@ static void epic_serial_put_hexw(uint32_t v, int nibbles)
     epic_serial_write((const uint8_t *)p, nibbles);
 }
 
+/**
+ * @brief Emit one char through the TX ring.
+ */
 void epic_serial_put_char(char c)
 {
     putch(c);
@@ -280,6 +290,9 @@ void epic_serial_put_u16(uint16_t v)
     epic_serial_put_udec(v);
 }
 
+/**
+ * @brief Emit v in decimal with no leading zeros.
+ */
 void epic_serial_put_u32(uint32_t v)
 {
     epic_serial_put_udec(v);
@@ -300,6 +313,9 @@ void epic_serial_put_hex8(uint8_t v)
     epic_serial_put_hexw(v, 2);
 }
 
+/**
+ * @brief Emit v as four uppercase hex digits.
+ */
 void epic_serial_put_hex16(uint16_t v)
 {
     epic_serial_put_hexw(v, 4);
