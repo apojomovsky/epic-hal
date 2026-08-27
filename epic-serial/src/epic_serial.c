@@ -214,19 +214,20 @@ void putch(char c)
     epic_serial_write(&b, 1);
 }
 
-/* Formatting (the put_* family). One shared reversal buffer for every
- * conversion: the 368-byte GPR parts cannot spare per-call scratch, and a
- * shared buffer makes the family mutually exclusive under interrupts (no
- * call from an ISR while the main loop is mid-format). Same code on XC8
- * and epic-cc; decimal has no leading zeros, hex is fixed-width uppercase. */
+/* Formatting (the put_* family). On epic-cc a shared static buffer avoids
+ * the [12 x i8] alloca that spikes irparse; on XC8 a stack buffer avoids
+ * linking 12 bytes of static RAM into every consumer (e.g. pid). Same
+ * decimal/hex semantics on both. */
+#ifdef __EPIC_CC__
 static char s_fmt_buf[12];               /* sign + 10 digits + NUL fits i32 */
-
+#endif
 /**
- * @brief Emit v in decimal via the shared buffer.
+ * @brief Emit v in decimal via a local buffer.
  * @param v the value to emit
  */
 static void epic_serial_put_udec(uint32_t v)
 {
+#ifdef __EPIC_CC__
     uint8_t n = 0;
     do {
         s_fmt_buf[n] = (char)('0' + (int)(v % 10u));
@@ -237,6 +238,19 @@ static void epic_serial_put_udec(uint32_t v)
         n--;
         epic_serial_write((const uint8_t *)&s_fmt_buf[n], 1);
     }
+#else
+    char buf[12];
+    uint8_t n = 0;
+    do {
+        buf[n] = (char)('0' + (int)(v % 10u));
+        v /= 10u;
+        n++;
+    } while (v != 0u);
+    while (n > 0u) {
+        n--;
+        epic_serial_write((const uint8_t *)&buf[n], 1);
+    }
+#endif
 }
 
 /**
@@ -262,6 +276,7 @@ static void epic_serial_put_idec(int32_t v)
  */
 static void epic_serial_put_hexw(uint32_t v, int nibbles)
 {
+#ifdef __EPIC_CC__
     int base = (int)sizeof(s_fmt_buf) - nibbles;
     for (int i = nibbles - 1; i >= 0; i--) {
         int d = (int)(v & 0xFu);
@@ -269,6 +284,16 @@ static void epic_serial_put_hexw(uint32_t v, int nibbles)
         v >>= 4;
     }
     epic_serial_write((const uint8_t *)&s_fmt_buf[base], nibbles);
+#else
+    char buf[12];
+    int base = (int)sizeof(buf) - nibbles;
+    for (int i = nibbles - 1; i >= 0; i--) {
+        int d = (int)(v & 0xFu);
+        buf[base + i] = (char)((d < 10) ? ('0' + d) : ('A' - 10 + d));
+        v >>= 4;
+    }
+    epic_serial_write((const uint8_t *)&buf[base], nibbles);
+#endif
 }
 
 /**
