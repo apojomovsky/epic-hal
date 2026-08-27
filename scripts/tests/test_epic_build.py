@@ -149,6 +149,11 @@ PIC18Fxx5x = ["18F4550"]
 name    = "usb-cdc"
 sources = ["examples/example_usb.c"]
 config  = { FOSC = "HS", PLLDIV = "5", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF" }
+
+[modules.epic-usb.example.PIC18Fxx5x.sim]
+name        = "usb-cdc-sim"
+harness_src = "epic-common/src/core/epic_harness_sim.c"
+config      = { FOSC = "HS", PLLDIV = "1", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF" }
 """
 
 
@@ -200,6 +205,13 @@ class TestEpicConfigSpecPic18(unittest.TestCase):
 
     def test_cpudiv_mnemonic_maps_to_the_postscaler_enum(self):
         self.assertIn("cpudiv=div1", self._spec())
+
+    def test_plldiv_unity_maps_to_noprescale(self):
+        # The digit map is the CPUDIV enum; a PLLDIV of 1 must not
+        # become div1, which epic-cc's prescaler vocabulary lacks.
+        # The sim stanza carries PLLDIV = "1" to exercise it.
+        spec = epic_build._epic_config_spec(load(), "epic-usb", "18F4550", "sim", None)
+        self.assertIn("plldiv=noprescale", spec)
 
     def test_crystal_not_system_clock_reaches_xtal_hz(self):
         self.assertIn("xtal_hz=20000000", self._spec())

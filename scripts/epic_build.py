@@ -445,6 +445,11 @@ def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
                 epic_val = _BORV_MAP.get(low_val, low_val)
             elif low_key == "wdtps" and low_val.isdigit():
                 epic_val = f"div{low_val}"
+            elif low_key == "plldiv":
+                # The prescaler's unity setting has its own name in the
+                # device data; the digit map is the CPUDIV enum, whose
+                # div1 means "divide by 2" instead.
+                epic_val = "noprescale" if low_val == "1" else f"div{low_val}"
             elif low_key == "ccp2mx":
                 # XC8 spells the CCP2 pin-mux bit ON/OFF; the device data
                 # names the two states after the pin (DS39632E).
