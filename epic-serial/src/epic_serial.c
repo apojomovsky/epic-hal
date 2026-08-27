@@ -235,7 +235,7 @@ static void epic_serial_put_udec(uint32_t v)
     } while (v != 0u);
     while (n > 0u) {
         n--;
-        epic_serial_put_char(s_fmt_buf[n]);
+        epic_serial_write((const uint8_t *)&s_fmt_buf[n], 1);
     }
 }
 
