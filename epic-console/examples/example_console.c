@@ -18,6 +18,13 @@
 
 #define BAUD     115200UL
 
+static const char s_txt_led_on[] = "led -> on\r\n";
+static const char s_txt_led_off[] = "led -> off\r\n";
+static const char s_txt_led_usage[] = "usage: led on|off\r\n";
+static const char s_txt_status_led[] = "status: led=";
+static const char s_txt_status_cnt[] = " count=";
+static const char s_txt_crlf[] = "\r\n";
+static const char s_txt_banner[] = "epic-console example: type \"help\"\r\n";
 typedef struct {
     uint8_t          led_on;
     uint8_t          status_count;
@@ -30,13 +37,13 @@ static void cmd_led(uint8_t argc, char **argv, void *ctx_)
     app_ctx_t *ctx = (app_ctx_t *)ctx_;
     if (argc >= 2u && argv[1][0] == 'o' && argv[1][1] == 'n' && argv[1][2] == '\0') {
         ctx->led_on = 1u;
-        epic_serial_put_str("led -> on\r\n");
+        epic_serial_put_str(s_txt_led_on);
     } else if (argc >= 2u && argv[1][0] == 'o' && argv[1][1] == 'f' &&
                argv[1][2] == 'f' && argv[1][3] == '\0') {
         ctx->led_on = 0u;
-        epic_serial_put_str("led -> off\r\n");
+        epic_serial_put_str(s_txt_led_off);
     } else {
-        epic_serial_put_str("usage: led on|off\r\n");
+        epic_serial_put_str(s_txt_led_usage);
     }
 }
 
@@ -49,11 +56,11 @@ static void cmd_status(uint8_t argc, char **argv, void *ctx_)
     uint8_t c = ctx->status_count;
     c = (uint8_t)(c + 1u);
     ctx->status_count = c;
-    epic_serial_put_str("status: led=");
+    epic_serial_put_str(s_txt_status_led);
     epic_serial_put_u16(ctx->led_on);
-    epic_serial_put_str(" count=");
+    epic_serial_put_str(s_txt_status_cnt);
     epic_serial_put_u16(ctx->status_count);
-    epic_serial_put_str("\r\n");
+    epic_serial_put_str(s_txt_crlf);
 }
 
 /** @brief Print the command table help. */
@@ -86,7 +93,7 @@ int main(void)
     ctx.console = &con;
 
     EPIC_IRQ_Restore(1);             /* UART RX/TX ISRs */
-    epic_serial_put_str("epic-console example: type \"help\"\r\n");
+    epic_serial_put_str(s_txt_banner);
 
     for (;;) {
         epic_console_poll(&con);

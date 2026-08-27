@@ -84,9 +84,12 @@ harness_src = "epic-common/src/core/epic_harness_target.c"
 # The epic-cc conformant slice (HAL-3): the subset that builds under
 # epic-cc and fits the part's RAM (the full set exceeds the 877A's GPR
 # capacity; the peripheral drivers hit filed isel gaps). Listed
-# verbatim; later clusters grow the slice here. The slice is per
-# family: every module on the epic-cc path for this family links the
-# same set.
+# verbatim; later clusters grow the slice here. The family slice is the
+# default: every module on the epic-cc path links the same set unless
+# it declares its own `epiccc_hal_sources_by_family` override (verbatim
+# replacement, validated against `hal_dir`/`epic-common`). See README
+# `epiccc_hal_sources_by_family` section for when to use the per-module
+# slice.
 epiccc_sources = [
   "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
   "pic16f87xa-hal/src/peripherals/pic16f87xa_timer0.c",
