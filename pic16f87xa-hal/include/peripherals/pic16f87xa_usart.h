@@ -86,6 +86,17 @@ typedef struct {
 
 /* init / deinit. */
 
+/* The ISRs' owned callback slots, defined in the driver body. */
+extern void (*g_usart_tx_cb)(void);
+extern void (*g_usart_rx_cb)(uint8_t data);
+
+#ifdef __EPIC_CC__
+/* Static inline on the epic-cc path so the callback stores land in the
+ * caller's TU as named literals, which the cross-context analysis
+ * resolves (ADR-024, the timer0/timer2 precedent). XC8 keeps the
+ * out-of-line driver body. */
+#include "core/pic16_irq.h"
+
 /**
  * @brief  Initialize the USART with the given handle. Programs TXSTA,
  *         RCSTA, SPBRG and the interrupt enables for the callbacks.
@@ -93,8 +104,56 @@ typedef struct {
  *        TxCpltCallback, RxCpltCallback.
  * @return EPIC_OK on success, EPIC_ERROR if `h` is NULL.
  */
-EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h);
+static inline EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
+{
+    if (!h) return EPIC_INVALID;
+    g_usart_tx_cb = h->TxCpltCallback;
+    g_usart_rx_cb = h->RxCpltCallback;
 
+#ifdef EPIC_BANK1_WRITE8
+    EPIC_BANK1_WRITE8(SPBRG, h->SPBRG);
+#else
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    pic_select_bank(1);
+    EPIC_REG8(PIC_REG_SPBRG) = h->SPBRG;
+    pic_select_bank(prev);
+#endif
+
+    uint8_t txsta = 0x02U;
+    if (h->Mode == USART_MODE_SYNCHRONOUS) txsta |= PIC_TXSTA_SYNC;
+    if (h->Mode == USART_MODE_SYNCHRONOUS &&
+        h->ClockSource == USART_CLOCK_MASTER) txsta |= PIC_TXSTA_CSRC;
+    if (h->BaudHigh == USART_BRGH_HIGH) txsta |= PIC_TXSTA_BRGH;
+    if (h->DataWidth == USART_DATA_9BITS) txsta |= PIC_TXSTA_TX9;
+    if (h->TxCpltCallback) txsta |= PIC_TXSTA_TXEN;
+#ifdef EPIC_BANK1_WRITE8
+    EPIC_BANK1_WRITE8(TXSTA, txsta);
+#else
+    EPIC_REG8(PIC_REG_TXSTA) = txsta;
+#endif
+
+    uint8_t rcsta = PIC_RCSTA_SPEN;
+    if (h->DataWidth == USART_DATA_9BITS) rcsta |= PIC_RCSTA_RX9;
+    if (h->RxCpltCallback) rcsta |= PIC_RCSTA_CREN;
+    EPIC_REG8(PIC_REG_RCSTA) = rcsta;
+
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
+
+    if (h->TxCpltCallback) EPIC_IRQ_Enable(PIC16_IRQ_USART_TX);
+    else                   EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
+    if (h->RxCpltCallback) EPIC_IRQ_Enable(PIC16_IRQ_USART_RX);
+    else                   EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_RX);
+
+    return EPIC_OK;
+}
+#else
+/**
+ * @brief Initialize the USART.
+ * @param h Handle.
+ * @return EPIC_OK on success.
+ */
+EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h);
+#endif
 /**
  * @brief  De-initialize the USART. Disables the module and returns
  *         TXSTA/RCSTA to reset.

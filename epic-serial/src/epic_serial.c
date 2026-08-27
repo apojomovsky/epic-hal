@@ -213,3 +213,161 @@ void putch(char c)
     uint8_t b = (uint8_t)c;
     epic_serial_write(&b, 1);
 }
+
+/* Formatting (the put_* family). On epic-cc a shared static buffer avoids
+ * the [12 x i8] alloca that spikes irparse; on XC8 a stack buffer avoids
+ * linking 12 bytes of static RAM into every consumer (e.g. pid). Same
+ * decimal/hex semantics on both. */
+#ifdef __EPIC_CC__
+static char s_fmt_buf[12];               /* sign + 10 digits + NUL fits i32 */
+#endif
+/**
+ * @brief Emit v in decimal via a local buffer.
+ * @param v the value to emit
+ */
+static void epic_serial_put_udec(uint32_t v)
+{
+#ifdef __EPIC_CC__
+    uint8_t n = 0;
+    do {
+        s_fmt_buf[n] = (char)('0' + (int)(v % 10u));
+        v /= 10u;
+        n++;
+    } while (v != 0u);
+    while (n > 0u) {
+        n--;
+        epic_serial_write((const uint8_t *)&s_fmt_buf[n], 1);
+    }
+#else
+    char buf[12];
+    uint8_t n = 0;
+    do {
+        buf[n] = (char)('0' + (int)(v % 10u));
+        v /= 10u;
+        n++;
+    } while (v != 0u);
+    while (n > 0u) {
+        n--;
+        epic_serial_write((const uint8_t *)&buf[n], 1);
+    }
+#endif
+}
+
+/**
+ * @brief Emit v in decimal with sign handling.
+ * @param v Value to format.
+ */
+static void epic_serial_put_idec(int32_t v)
+{
+    if (v < 0) {
+        uint8_t sign = (uint8_t)'-';
+        /* -(-2147483648) overflows, so negate through the low half. */
+        epic_serial_write(&sign, 1);
+        epic_serial_put_udec((uint32_t)(-(v + 1)) + 1u);
+    } else {
+        epic_serial_put_udec((uint32_t)v);
+    }
+}
+
+/**
+ * @brief Emit the low nibbles of v as hex.
+ * @param v Value to format.
+ * @param nibbles Number of nibbles to emit.
+ */
+static void epic_serial_put_hexw(uint32_t v, int nibbles)
+{
+#ifdef __EPIC_CC__
+    int base = (int)sizeof(s_fmt_buf) - nibbles;
+    for (int i = nibbles - 1; i >= 0; i--) {
+        int d = (int)(v & 0xFu);
+        s_fmt_buf[base + i] = (char)((d < 10) ? ('0' + d) : ('A' - 10 + d));
+        v >>= 4;
+    }
+    epic_serial_write((const uint8_t *)&s_fmt_buf[base], nibbles);
+#else
+    char buf[12];
+    int base = (int)sizeof(buf) - nibbles;
+    for (int i = nibbles - 1; i >= 0; i--) {
+        int d = (int)(v & 0xFu);
+        buf[base + i] = (char)((d < 10) ? ('0' + d) : ('A' - 10 + d));
+        v >>= 4;
+    }
+    epic_serial_write((const uint8_t *)&buf[base], nibbles);
+#endif
+}
+
+/**
+ * @brief Emit one char through the TX ring.
+ * @param c Char to emit.
+ */
+void epic_serial_put_char(char c)
+{
+    putch(c);
+}
+
+/**
+ * @brief Emit a null-terminated string.
+ * @param s Null-terminated string.
+ */
+void epic_serial_put_str(const char *s)
+{
+    int len = 0;
+    while (s[len] != '\0') {
+        len++;
+    }
+    epic_serial_write((const uint8_t *)s, len);
+}
+
+/**
+ * @brief Emit v in decimal.
+ * @param v Value to format.
+ */
+void epic_serial_put_u16(uint16_t v)
+{
+    epic_serial_put_udec(v);
+}
+
+/**
+ * @brief Emit v in decimal with no leading zeros.
+ * @param v Value to format.
+ */
+void epic_serial_put_u32(uint32_t v)
+{
+    epic_serial_put_udec(v);
+}
+
+/**
+ * @brief Emit v in decimal with sign.
+ * @param v Value to format.
+ */
+void epic_serial_put_i16(int16_t v)
+{
+    epic_serial_put_idec(v);
+}
+
+/**
+ * @brief Emit v in decimal with sign.
+ * @param v Value to format.
+ */
+void epic_serial_put_i32(int32_t v)
+{
+    epic_serial_put_idec(v);
+}
+
+/**
+ * @brief Emit v as two uppercase hex digits.
+ * @param v Value to format.
+ */
+void epic_serial_put_hex8(uint8_t v)
+{
+    epic_serial_put_hexw(v, 2);
+}
+
+/**
+ * @brief Emit v as four uppercase hex digits.
+ * @param v Value to format.
+ */
+void epic_serial_put_hex16(uint16_t v)
+{
+    epic_serial_put_hexw(v, 4);
+}

@@ -84,9 +84,12 @@ harness_src = "epic-common/src/core/epic_harness_target.c"
 # The epic-cc conformant slice (HAL-3): the subset that builds under
 # epic-cc and fits the part's RAM (the full set exceeds the 877A's GPR
 # capacity; the peripheral drivers hit filed isel gaps). Listed
-# verbatim; later clusters grow the slice here. The slice is per
-# family: every module on the epic-cc path for this family links the
-# same set.
+# verbatim; later clusters grow the slice here. The family slice is the
+# default: every module on the epic-cc path links the same set unless
+# it declares its own `epiccc_hal_sources_by_family` override (verbatim
+# replacement, validated against `hal_dir`/`epic-common`). See README
+# `epiccc_hal_sources_by_family` section for when to use the per-module
+# slice.
 epiccc_sources = [
   "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
   "pic16f87xa-hal/src/peripherals/pic16f87xa_timer0.c",
@@ -1028,6 +1031,21 @@ depends_on = [
   "epic-serial",
 ]
 
+epiccc_hal_sources_by_family.PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+epiccc_hal_sources_by_family.PIC16F88X = [
+  "pic16f88x-hal/src/peripherals/pic16f88x_usart.c",
+  "pic16f88x-hal/src/core/pic16_irq.c",
+  "pic16f88x-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f88x-hal/src/epiccc/pic16_irq_dispatch_serial_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+
 [modules.epic-console.supported]
 PIC16F87XA = [
   "16F876A",
@@ -1704,6 +1722,23 @@ depends_on = [
   "epic-tick",
 ]
 
+epiccc_hal_sources_by_family.PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+epiccc_hal_sources_by_family.PIC16F88X = [
+  "pic16f88x-hal/src/peripherals/pic16f88x_usart.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_timer2.c",
+  "pic16f88x-hal/src/core/pic16_irq.c",
+  "pic16f88x-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f88x-hal/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+
 [modules.epic-modbus.supported]
 PIC18Fxx5x = [
   "18F4455",
@@ -1893,6 +1928,21 @@ includes   = [
   "include",
 ]
 depends_on = []
+
+epiccc_hal_sources_by_family.PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+epiccc_hal_sources_by_family.PIC16F88X = [
+  "pic16f88x-hal/src/peripherals/pic16f88x_usart.c",
+  "pic16f88x-hal/src/core/pic16_irq.c",
+  "pic16f88x-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f88x-hal/src/epiccc/pic16_irq_dispatch_serial_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
 
 [modules.epic-serial.supported]
 PIC16F87XA = [
@@ -2124,6 +2174,25 @@ includes   = [
 ]
 depends_on = []
 needs_hal  = true
+
+epiccc_hal_sources_by_family.PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_ccp.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer1.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_swuart_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+epiccc_hal_sources_by_family.PIC16F88X = [
+  "pic16f88x-hal/src/peripherals/pic16f88x_ccp.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_timer1.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_gpio.c",
+  "pic16f88x-hal/src/core/pic16_irq.c",
+  "pic16f88x-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f88x-hal/src/epiccc/pic16_irq_dispatch_swuart_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
 
 [modules.epic-swuart.supported]
 PIC16F87XA = [

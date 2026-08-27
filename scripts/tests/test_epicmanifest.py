@@ -474,5 +474,67 @@ class TestResolution(unittest.TestCase):
         self.assertNotIn("pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c", srcs)
 
 
+
+HALT = MINIMAL.replace(
+    '[modules.epic-serial.supported]',
+    'epiccc_hal_sources_by_family.PIC16F87XA = ['
+    '"pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c", '
+    '"epic-common/src/core/epic_harness_target.c"]\n\n'
+    '[modules.epic-serial.supported]'
+).replace(
+    '[modules.epic-serial.excluded]',
+    '[modules.epic-serial.example.PIC16F87XA]\n'
+    'name    = "serial"\n'
+    'sources = ["examples/example_serial.c"]\n\n'
+    '[modules.epic-serial.excluded]'
+)
+
+
+class TestEpicccHalSources(unittest.TestCase):
+    def setUp(self):
+        self.m = epicmanifest.load(write(HALT))
+
+    def test_override_replaces_the_family_slice_verbatim(self):
+        srcs = self.m.sources_for("epic-serial", "16F877A",
+                                  toolchain="epic-cc")
+        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+                      srcs)
+        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+                         srcs)
+
+    def test_override_keeps_deps_and_the_example(self):
+        srcs = self.m.sources_for("epic-serial", "16F877A",
+                                  toolchain="epic-cc")
+        self.assertIn("epic-tick/src/epic_tick.c", srcs)
+        self.assertIn("epic-serial/examples/example_serial.c", srcs)
+
+    def test_xc8_path_unaffected_by_the_override(self):
+        srcs = self.m.sources_for("epic-serial", "16F877A")
+        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+                      srcs)
+        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+                         srcs)
+
+    def test_modules_without_the_key_keep_the_family_slice(self):
+        srcs = self.m.sources_for("epic-tick", "16F877A",
+                                  toolchain="epic-cc")
+        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+                      srcs)
+
+    def test_empty_override_rejected(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(HALT.replace(
+                'epiccc_hal_sources_by_family.PIC16F87XA = [' +
+                '"pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c", '
+                '"epic-common/src/core/epic_harness_target.c"]',
+                'epiccc_hal_sources_by_family.PIC16F87XA = []')))
+
+    def test_outside_hal_dir_rejected(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(HALT.replace(
+                '"pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c"',
+                '"../escape.c"')))
+
+
 if __name__ == "__main__":
     unittest.main()

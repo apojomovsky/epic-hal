@@ -1,8 +1,9 @@
 /*
- * Family-agnostic interrupt-driven ring-buffered UART + printf retarget
- * (the non-blocking serial layer Cube's HAL_UART_Transmit_DMA/_IT gives)
- * for 8-bit PICs. RX/TX ISRs feed ring buffers via the USART handle's
- * callbacks; putch retargets XC8's printf to the TX ring.
+ * Family-agnostic ring-buffered UART: RX always-on into a ring, TX
+ * demand-driven (TXIE off until a write queues bytes). Installed via
+ * USART handle callbacks, not the HAL's strong IRQHandler. Ring access
+ * uses single-byte atomics (see ring-discipline note in the source).
+ * Formatting via put_* (non-variadic); putch remains for XC8 printf.
  */
 
 #ifndef EPIC_SERIAL_H
@@ -88,5 +89,61 @@ void epic_serial_flush(void);
  * @param c the character to emit
  */
 void putch(char c);
+
+/**
+ * @brief Emit one char through the TX ring.
+ *
+ * @param c the character to emit
+ */
+void epic_serial_put_char(char c);
+
+/**
+ * @brief Emit the NUL-terminated string s through the TX ring.
+ *
+ * @param s the string to emit (pass non-NULL)
+ */
+void epic_serial_put_str(const char *s);
+
+/**
+ * @brief Emit v in decimal with no leading zeros.
+ *
+ * @param v the value to emit
+ */
+void epic_serial_put_u16(uint16_t v);
+
+/**
+ * @brief Emit v in decimal with no leading zeros.
+ *
+ * @param v the value to emit
+ */
+void epic_serial_put_u32(uint32_t v);
+
+/**
+ * @brief Emit v in decimal, prefixed with - when negative.
+ *
+ * @param v the value to emit
+ */
+void epic_serial_put_i16(int16_t v);
+
+/**
+ * @brief Emit v in decimal, prefixed with - when negative.
+ *
+ * @param v the value to emit
+ */
+void epic_serial_put_i32(int32_t v);
+
+/**
+ * @brief Emit v as two uppercase hex digits.
+ *
+ * @param v the value to emit
+ */
+void epic_serial_put_hex8(uint8_t v);
+
+/**
+ * @brief Emit v as four uppercase hex digits.
+ *
+ * @param v the value to emit
+ */
+void epic_serial_put_hex16(uint16_t v);
 
 #endif /* EPIC_SERIAL_H */

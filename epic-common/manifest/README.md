@@ -86,13 +86,37 @@ epic-cc's whole-program overlay must fit the part's RAM (the full set
 exceeds the 877A's GPR capacity), every peripheral driver must avoid
 the filed isel gaps (cross-context callback: `apojomovsky/epic-cc#137`;
 const-table window: `apojomovsky/epic-cc#138`), and the dispatch must not take strong
-references to handlers outside the slice. It is per family, not per
-module: every module on the epic-cc path for this family links the
-same slice, so the full peripheral set is never silently compiled into
-an epic-cc build. The 87XA `irq_table` const placement is currently
-blocked on #138 (60B window at 0xCEA on the 877A blink shape; 887
-proves the shared-file shape); it will follow when #138 lands.
+references to handlers outside the slice. The family slice is the
+default: every module on the epic-cc path links the same slice, so the
+full peripheral set is never silently compiled into an epic-cc build.
+The 87XA `irq_table` const placement is currently blocked on #138 (60B
+window at 0xCEA on the 877A blink shape; 887 proves the shared-file
+shape); it will follow when #138 lands.
 
+### `epiccc_hal_sources_by_family`: per-module epic-cc slice override
+
+When a module's fit requires fewer peripherals than the family slice
+(e.g. `epic-serial` needs only `USART` + `pic16_irq` + vector), it can
+declare a verbatim replacement for that module:
+
+```toml
+[modules.epic-serial.epiccc_hal_sources_by_family]
+PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+```
+
+The loader validates each path against the family's `hal_dir` or
+`epic-common`, and the build driver links **only** this list for the
+module (no merging with `epiccc_sources`). Prefer growing the family
+slice when the peripheral is generally useful (so other modules benefit);
+use the override when the family slice would overflow GPR or pull a
+known-bad driver into the module. `epic-console`/`epic-modbus` and
+`epic-swuart` use this for the same reason.
 **The recipe for adding a module to the epic-cc path is a manifest
 edit, nothing else:** add the module's epiccc-compliant source files
 to its family's `epiccc_sources` (or a new family's, with the epiccc
