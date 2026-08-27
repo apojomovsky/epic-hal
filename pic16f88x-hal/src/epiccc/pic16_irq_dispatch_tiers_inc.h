@@ -1,12 +1,8 @@
-/* epic-cc dispatch tiers: one shared body, compiled per module class by
- * defining EPICCC_IRQ_* before the include. Only the gated sources
- * dispatch; every other source is not in the module's HAL subset and
- * cannot vector (PIE bit off), so no flag-clear scaffolding is needed.
- * Rationale: the full fan-out pulls every peripheral handler into the
- * whole program, and the 368-byte GPR parts cannot pay for the unused
- * ones. Handler-less TMR1IF/TMR2IF would latch while the peripheral
- * free-runs, but that peripheral is not compiled in for tiers that do
- * not set the gate. */
+/* epic-cc dispatch tiers: one shared body per module class via
+ * EPICCC_IRQ_* gates. Only gated sources dispatch; others are not in
+ * the HAL subset and cannot vector (PIE off), so no clear scaffolding.
+ * The full fan-out pulls every handler into the program, and 368-byte
+ * GPR cannot pay for the unused ones. */
 
 #include "core/pic16_irq.h"
 
@@ -59,10 +55,16 @@ void epic_dispatch_all_irqs(void)
     }
 #endif
 #if EPICCC_IRQ_TMR2
-    if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
+    if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) {
+        if (EPIC_REG8(PIC_REG_PIE1) & PIC_PIE1_TMR2IE) TIMER2_IRQHandler();
+        else EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR2IF);
+    }
 #endif
 #if EPICCC_IRQ_CCP1
-    if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_CCP1IF) CCP1_IRQHandler();
+    if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_CCP1IF) {
+        if (EPIC_REG8(PIC_REG_PIE1) & PIC_PIE1_CCP1IE) CCP1_IRQHandler();
+        else EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
+    }
 #endif
 #if EPICCC_IRQ_USART
     if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_RCIF) USART_RX_IRQHandler();
@@ -72,6 +74,9 @@ void epic_dispatch_all_irqs(void)
     }
 #endif
 #if EPICCC_IRQ_CCP2
-    if (EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_CCP2IF) CCP2_IRQHandler();
+    if (EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_CCP2IF) {
+        if (EPIC_REG8(PIC_REG_PIE2) & PIC_PIE2_CCP2IE) CCP2_IRQHandler();
+        else EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
+    }
 #endif
 }

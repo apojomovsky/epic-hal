@@ -55,10 +55,16 @@ void epic_dispatch_all_irqs(void)
     }
 #endif
 #if EPICCC_IRQ_TMR2
-    if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
+    if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) {
+        if (EPIC_REG8(PIC_REG_PIE1) & PIC_PIE1_TMR2IE) TIMER2_IRQHandler();
+        else EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR2IF);
+    }
 #endif
 #if EPICCC_IRQ_CCP1
-    if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_CCP1IF) CCP1_IRQHandler();
+    if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_CCP1IF) {
+        if (EPIC_REG8(PIC_REG_PIE1) & PIC_PIE1_CCP1IE) CCP1_IRQHandler();
+        else EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
+    }
 #endif
 #if EPICCC_IRQ_USART
     if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_RCIF) USART_RX_IRQHandler();
@@ -68,6 +74,9 @@ void epic_dispatch_all_irqs(void)
     }
 #endif
 #if EPICCC_IRQ_CCP2
-    if (EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_CCP2IF) CCP2_IRQHandler();
+    if (EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_CCP2IF) {
+        if (EPIC_REG8(PIC_REG_PIE2) & PIC_PIE2_CCP2IE) CCP2_IRQHandler();
+        else EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
+    }
 #endif
 }

@@ -238,6 +238,7 @@ void USART_TX_IRQHandler(void)
     /* Direct flag read (class-F: the table route clobbers PCLATH in
      * ISR context). TXIF is PIR1 bit 4, read-only, cleared by writing
      * TXREG, so there is nothing to clear here. */
+    if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TXIF)) return;
     if (g_usart_tx_cb) g_usart_tx_cb();
 }
 
