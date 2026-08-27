@@ -138,6 +138,9 @@ uint16_t epic_taskmgr_ticks(void);
 
 /**
  * @brief Run every task ready now, in priority order, then return.
+ *        Not re-entrant: never call from inside a task (the snapshot
+ *        array is a file-scope static, so a nested call would clobber
+ *        the outer round's order).
  *
  * Non-blocking; call repeatedly from your main loop.
  *

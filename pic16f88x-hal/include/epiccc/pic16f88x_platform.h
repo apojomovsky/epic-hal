@@ -3,10 +3,9 @@
  * include path picks which resolves, so pic16f88x.h includes
  * "pic16f88x_platform.h" unconditionally with no #ifdef.
  *
- * Under epic-cc the SFR layer is the same volatile dereference shape as
- * the XC8 target; banking is inserted by the compiler's banking pass, so
- * the XC8-specific inline-asm pie/bank fixups are replaced by plain C.
- * Placement uses EPIC_AT from <epic-cc.h>. */
+ * Banking is inserted by the compiler's banking pass, so the XC8-specific
+ * inline-asm pie/bank fixups are plain C here. Placement pins are dropped
+ * (EPIC_PLACE expands to nothing): the overlay places globals itself. */
 
 #ifndef PIC16F88X_PLATFORM_H
 #define PIC16F88X_PLATFORM_H
@@ -29,7 +28,10 @@
 #endif
 
 #define EPIC_WEAK
-#define EPIC_PLACE(addr) EPIC_AT(addr)
+/* Placement pins are an XC8 bank-placement concern; the
+ * whole-program overlay places globals (unique addresses, one
+ * bank) itself, so a pin only fragments the layout (epic-hal#86). */
+#define EPIC_PLACE(addr)
 
 #define EPIC_SFR_PTR(addr)       ((volatile uint8_t *)(uintptr_t)(addr))
 #define epic_sfr_read8(addr)     (*(volatile uint8_t *)(uintptr_t)(addr))

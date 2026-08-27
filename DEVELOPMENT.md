@@ -150,6 +150,12 @@ builds the slice.
 
 Bumping the pin:
 
+The #86 branch pins the epic-cc driver to
+`fix/151-const-window-peephole` head (52ce5bf) while that PR is open:
+the 877A epic-cc tick/taskmgr builds need the six fixes on it
+(epic-cc#159, closes #151/#144/#160). Re-pin to epic-cc master after
+it merges, then delete the pin comment in ci.yml's `EPIC_CC_PIN`.
+
 1. Pick a new `EPIC_CC_PIN` that still builds the 887 slice. A quick
    check: build the driver at that sha (`cargo build --release -p
    driver` in a checkout) and run

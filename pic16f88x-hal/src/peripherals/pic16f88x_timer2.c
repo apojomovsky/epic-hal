@@ -23,7 +23,7 @@ static const uint8_t post_ratio[16] = {
  * than a full handle copy (see epic-common/MANUAL.md §3.3 for the
  * dangling-pointer hazard a copy avoids; a full copy costs RAM on the
  * 128-byte 882). */
-static void (*g_t2_overflow_cb)(void) = NULL;
+void (*g_t2_overflow_cb)(void) = NULL;
 
 /**
  * @brief Read the current TMR2 value.
@@ -106,29 +106,6 @@ uint16_t EPIC_TIMER2_PostscalerToRatio(TIMER2_PostscalerTypeDef p)
 }
 
 /**
- * @brief Configure Timer2: stop it, arm the overflow interrupt if a
- *        callback is given, and record the handle.
- * @param h handle with Prescaler, Postscaler, Period, OverflowCallback.
- * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
- */
-EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h)
-{
-    if (!h) return EPIC_INVALID;
-
-    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
-
-    EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR2);
-    if (h->OverflowCallback) {
-        EPIC_IRQ_Enable(PIC16_IRQ_TMR2);
-    } else {
-        EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR2);
-    }
-
-    g_t2_overflow_cb = h->OverflowCallback;
-    return EPIC_OK;
-}
-
-/**
  * @brief De-initialize Timer2: disable the interrupt and restore T2CON
  *        and PR2 to reset values.
  * @return EPIC_OK on success.
@@ -140,34 +117,6 @@ EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void)
     EPIC_REG8(PIC_REG_T2CON) = PIC_T2CON_POR_VALUE;
     EPIC_TIMER2_WritePeriod(0xFFU);
     g_t2_overflow_cb = NULL;
-    return EPIC_OK;
-}
-
-/**
- * @brief Start Timer2 counting: write PR2 first, then program T2CON
- *        (postscaler, prescaler) and set TMR2ON.
- * @param h handle whose Period and prescaler/postscaler are applied.
- * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
- */
-EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h)
-{
-    if (!h) return EPIC_INVALID;
-
-    /* Period register first, DS40001291H §7.0 recommends setting PR2
-     * before enabling TMR2ON to avoid spurious matches. */
-    EPIC_TIMER2_WritePeriod(h->Period);
-
-    /* Build T2CON:
-     *   TOUTPS3:TOUTPS0 → bits 6:3
-     *   TMR2ON          → bit 2
-     *   T2CKPS1:T2CKPS0 → bits 1:0
-     */
-    uint8_t v = 0U;
-    v |= (uint8_t)((h->Postscaler & 0xFU) << 3);
-    v |= PIC_T2CON_TMR2ON;
-    v |= (uint8_t)(h->Prescaler & 0x3U);
-    EPIC_REG8(PIC_REG_T2CON) = v;
-
     return EPIC_OK;
 }
 

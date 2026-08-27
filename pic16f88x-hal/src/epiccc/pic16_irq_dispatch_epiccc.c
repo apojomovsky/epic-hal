@@ -1,9 +1,9 @@
-/* Fan-out for the 887 smoke under epic-cc: only Timer0 and RB are
- * needed for blinky. The full dispatch pulls in every peripheral handler
- * (ccp, usart, adc, etc.) which hit isel gaps (flash GEP, indirect calls)
- * that are filed separately. Keeping the smoke's dispatch minimal lets
- * the toolchain be proven on a second PIC14 part without waiting for
- * every peripheral's isel gap to be closed. */
+/* epic-cc dispatch: Timer0, RB and Timer2 (the scheduling core's
+ * sources), other flags cleared (the full fan-out pulls every
+ * peripheral handler into the slice; the rest hit filed isel gaps).
+ * Timer2 dispatch landed with epic-hal#86: the tick's 1 ms timebase
+ * registers a Timer2 overflow callback, which must fire for the tick to
+ * advance. Mirrors pic16f87xa-hal's epiccc twin. */
 
 #include "core/pic16_irq.h"
 
@@ -13,9 +13,12 @@ extern void TIMER0_IRQHandler(void);
 /** @brief RB_IRQHandler (weak).
  */
 extern void RB_IRQHandler(void);
+/** @brief TIMER2_IRQHandler (weak).
+ */
+extern void TIMER2_IRQHandler(void);
 
 /**
- * @brief Dispatch all pending IRQs (smoke minimal).
+ * @brief Dispatch all pending IRQs.
  */
 void epic_dispatch_all_irqs(void)
 {
@@ -27,7 +30,7 @@ void epic_dispatch_all_irqs(void)
      * handlers that would pull in the rest of the HAL. */
     uint8_t pir1 = EPIC_REG8(PIC_REG_PIR1);
     if (pir1 & PIC_PIR1_TMR1IF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR1IF);
-    if (pir1 & PIC_PIR1_TMR2IF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR2IF);
+    if (pir1 & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
     if (pir1 & PIC_PIR1_CCP1IF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
     if (pir1 & PIC_PIR1_SSPIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_SSPIF);
     if (pir1 & PIC_PIR1_RCIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_RCIF);

@@ -217,9 +217,13 @@ uint8_t epic_taskmgr_run_once(void)
 {
     /* Snapshot the ready set in priority order, clearing each READY flag,
      * then run the tasks with interrupts enabled so a tick during a long
-     * task arms the task for the next round. */
-    epic_taskmgr_id_t order[EPIC_TASKMGR_MAX_TASKS];
-    uint8_t   n = 0U;
+     * task arms the task for the next round. The snapshot array is a
+     * file-scope static, not a stack local: a stack `order[]` alloca
+     * triggers an irparse spike on the epic-cc path (`[8 x i8]`
+     * unsupported), and run_once is the main-loop dispatcher, never
+     * re-entered, so the static is exclusive to it. */
+    static epic_taskmgr_id_t s_order[EPIC_TASKMGR_MAX_TASKS];
+    uint8_t n = 0U;
 
     /* No critical section: every flags access here is a single-byte read
      * or RMW (atomic), and the snapshot is timing-tolerant: a tick that
@@ -241,13 +245,13 @@ uint8_t epic_taskmgr_run_once(void)
             break;
         }
         g_tasks[best].flags &= (uint8_t)~EPIC_TASKMGR_FLAG_READY;  /* a new tick re-arms */
-        order[n] = (epic_taskmgr_id_t)best;
+        s_order[n] = (epic_taskmgr_id_t)best;
         n++;
     }
 
     /* Run with interrupts enabled. */
     for (uint8_t k = 0; k < n; k++) {
-        epic_taskmgr_t *t = &g_tasks[order[k]];
+        epic_taskmgr_t *t = &g_tasks[s_order[k]];
         t->fn(t->arg);
         if (t->period == 0U) {
             /* One-shot: free the slot so a periodic task re-spawning
