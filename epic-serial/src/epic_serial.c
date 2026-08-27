@@ -221,15 +221,21 @@ void putch(char c)
  * and epic-cc; decimal has no leading zeros, hex is fixed-width uppercase. */
 static char s_fmt_buf[12];               /* sign + 10 digits + NUL fits i32 */
 
+/**
+ * @brief Emit v in decimal via the shared buffer.
+ */
 static void epic_serial_put_udec(uint32_t v)
 {
-    char *end = &s_fmt_buf[sizeof(s_fmt_buf) - 1];
-    char *p = end;
+    uint8_t n = 0;
     do {
-        *--p = (char)('0' + (int)(v % 10u));
+        s_fmt_buf[n] = (char)('0' + (int)(v % 10u));
         v /= 10u;
+        n++;
     } while (v != 0u);
-    epic_serial_write((const uint8_t *)p, (int)(end - p));
+    while (n > 0u) {
+        n--;
+        epic_serial_put_char(s_fmt_buf[n]);
+    }
 }
 
 static void epic_serial_put_idec(int32_t v)
