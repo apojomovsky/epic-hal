@@ -4,11 +4,6 @@ Authoritative declarations: [`include/epic_serial.h`](../include/epic_serial.h).
 Override the ring size with `-DEPIC_SERIAL_RING_SZ=64` (power of two) before
 including the header.
 
-> **Status (epic-hal#91, 2026-08-26):** the `put_*` functions below are the
-> decided formatting surface for every toolchain. The declarations land with
-> epic-hal#88 (the serial conformance cluster), which implements them and
-> migrates the examples; until then the shipped API is the raw byte I/O plus
-> `putch` documented in the header.
 
 ## Raw byte I/O
 

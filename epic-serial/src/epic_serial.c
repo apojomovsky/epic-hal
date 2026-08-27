@@ -213,3 +213,88 @@ void putch(char c)
     uint8_t b = (uint8_t)c;
     epic_serial_write(&b, 1);
 }
+
+/* Formatting (the put_* family). One shared reversal buffer for every
+ * conversion: the 368-byte GPR parts cannot spare per-call scratch, and a
+ * shared buffer makes the family mutually exclusive under interrupts (no
+ * call from an ISR while the main loop is mid-format). Same code on XC8
+ * and epic-cc; decimal has no leading zeros, hex is fixed-width uppercase. */
+static char s_fmt_buf[12];               /* sign + 10 digits + NUL fits i32 */
+
+static void epic_serial_put_udec(uint32_t v)
+{
+    char *end = &s_fmt_buf[sizeof(s_fmt_buf) - 1];
+    char *p = end;
+    do {
+        *--p = (char)('0' + (int)(v % 10u));
+        v /= 10u;
+    } while (v != 0u);
+    epic_serial_write((const uint8_t *)p, (int)(end - p));
+}
+
+static void epic_serial_put_idec(int32_t v)
+{
+    if (v < 0) {
+        uint8_t sign = (uint8_t)'-';
+        /* -(-2147483648) overflows, so negate through the low half. */
+        epic_serial_write(&sign, 1);
+        epic_serial_put_udec((uint32_t)(-(v + 1)) + 1u);
+    } else {
+        epic_serial_put_udec((uint32_t)v);
+    }
+}
+
+static void epic_serial_put_hexw(uint32_t v, int nibbles)
+{
+    char *p = &s_fmt_buf[sizeof(s_fmt_buf)];
+    for (int i = 0; i < nibbles; i++) {
+        int d = (int)(v & 0xFu);
+        *--p = (char)((d < 10) ? ('0' + d) : ('A' - 10 + d));
+        v >>= 4;
+    }
+    epic_serial_write((const uint8_t *)p, nibbles);
+}
+
+void epic_serial_put_char(char c)
+{
+    putch(c);
+}
+
+void epic_serial_put_str(const char *s)
+{
+    int len = 0;
+    while (s[len] != '\0') {
+        len++;
+    }
+    epic_serial_write((const uint8_t *)s, len);
+}
+
+void epic_serial_put_u16(uint16_t v)
+{
+    epic_serial_put_udec(v);
+}
+
+void epic_serial_put_u32(uint32_t v)
+{
+    epic_serial_put_udec(v);
+}
+
+void epic_serial_put_i16(int16_t v)
+{
+    epic_serial_put_idec(v);
+}
+
+void epic_serial_put_i32(int32_t v)
+{
+    epic_serial_put_idec(v);
+}
+
+void epic_serial_put_hex8(uint8_t v)
+{
+    epic_serial_put_hexw(v, 2);
+}
+
+void epic_serial_put_hex16(uint16_t v)
+{
+    epic_serial_put_hexw(v, 4);
+}

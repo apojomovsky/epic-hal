@@ -142,6 +142,61 @@ static void rx_check_model(void)
 }
 
 /**
+ * @brief Drain the TX ring and compare against an expected byte stream.
+ */
+static void expect_tx(const char *want, int len)
+{
+    uint8_t got[16];
+    int n = drain_tx(got, (int)sizeof(got));
+    if (n != len || memcmp(got, want, (size_t)len) != 0) {
+        CHECK(0, "put_*: byte stream mismatch");
+    } else {
+        g_pass++;
+    }
+}
+
+/**
+ * @brief Fix each put_* function's exact byte stream on the wire.
+ */
+static void test_put_formatting(void)
+{
+    epic_serial_put_char('A');
+    expect_tx("A", 1);
+    epic_serial_put_str("ok\r\n");
+    expect_tx("ok\r\n", 4);
+
+    /* Decimal: no leading zeros, zero itself prints. */
+    epic_serial_put_u16(0u);
+    expect_tx("0", 1);
+    epic_serial_put_u16(7u);
+    expect_tx("7", 1);
+    epic_serial_put_u16(65535u);
+    expect_tx("65535", 5);
+    epic_serial_put_u32(4294967295u);
+    expect_tx("4294967295", 10);
+    epic_serial_put_i16(3200);
+    expect_tx("3200", 4);
+    epic_serial_put_i16(-1);
+    expect_tx("-1", 2);
+    epic_serial_put_i16(-32768);
+    expect_tx("-32768", 6);
+    epic_serial_put_i32(123456789);
+    expect_tx("123456789", 9);
+    epic_serial_put_i32(-2147483647L - 1L);   /* INT32_MIN without the macro */
+    expect_tx("-2147483648", 11);
+
+    /* Hex: fixed width, uppercase digits, zero-padded. */
+    epic_serial_put_hex8(0x00u);
+    expect_tx("00", 2);
+    epic_serial_put_hex8(0xABu);
+    expect_tx("AB", 2);
+    epic_serial_put_hex16(0x0007u);
+    expect_tx("0007", 4);
+    epic_serial_put_hex16(0xF00Du);
+    expect_tx("F00D", 4);
+}
+
+/**
  * @brief Stress the TX/RX round trip with randomized traffic.
  */
 static void test_stress_roundtrip(void)
@@ -283,6 +338,7 @@ int main(void)
 
     test_stress_roundtrip();
     test_full_boundaries();
+    test_put_formatting();
 
     printf("test_serial_stress: %d passed, %d failed\n", g_pass, g_fail);
     return epic_harness_report(g_fail == 0);
