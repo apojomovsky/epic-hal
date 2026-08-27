@@ -9,9 +9,7 @@
 #include "peripherals/hal_timer2.h"   /* family-neutral shim -> pic*_timer2.h */
 #include "core/hal_irq.h"             /* EPIC_IRQ_Disable / Restore            */
 #include "core/epic_harness.h"        /* epic_harness_tick (host sim pump)    */
-
 static volatile uint32_t g_tick_ms = 0u;
-static TIMER2_HandleTypeDef s_timer2 = TIMER2_HANDLE_DEFAULT;
 
 /**
  * @brief  Timer2 overflow callback: advance the 1 ms tick counter.
@@ -81,13 +79,20 @@ void epic_tick_init(uint32_t fosc_hz)
     compute_period(fosc_hz, &pr2, &pre, &post);
 
     g_tick_ms = 0u;
-    s_timer2 = (TIMER2_HandleTypeDef)TIMER2_HANDLE_DEFAULT;
-    s_timer2.Prescaler        = pre;
-    s_timer2.Postscaler       = post;
-    s_timer2.Period           = pr2;
-    s_timer2.OverflowCallback = epic_tick_on_overflow;
-    EPIC_TIMER2_Init(&s_timer2);
-    EPIC_TIMER2_Start(&s_timer2);
+    /* The handle is a local, not a static: with the Init inlined, clang
+     * folds every field load and the callback store lands as a named
+     * literal, which is how the epic-cc cross-context analysis resolves
+     * the ISR's dispatch candidates (the same shape as the timer0
+     * driver's inlined Init, epic-hal#105). A static handle would leave
+     * the store a runtime load-copy and the tick's Timer2 callback would
+     * trap on the epic-cc path (epic-hal#86). */
+    TIMER2_HandleTypeDef h = TIMER2_HANDLE_DEFAULT;
+    h.Prescaler        = pre;
+    h.Postscaler       = post;
+    h.Period           = pr2;
+    h.OverflowCallback = epic_tick_on_overflow;
+    EPIC_TIMER2_Init(&h);
+    EPIC_TIMER2_Start(&h);
     /* EPIC_TIMER2_Init only arms Timer2's own source enable; the global
      * interrupt enable is separate, so without this the ISR never fires
      * and epic_tick_delay_ms spins forever (epic-common/MANUAL.md §6-7). */
