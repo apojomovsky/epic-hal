@@ -34,8 +34,10 @@
 /* Weak attribute: lets user code override a peripheral's IRQHandler. */
 #define EPIC_WEAK   __attribute__((weak))
 
-/* Placement pins map onto epic-cc's spelling. */
-#define EPIC_PLACE(addr)         EPIC_AT(addr)
+/* Placement pins are an XC8 bank-placement concern; the
+ * whole-program overlay places globals (unique addresses, one
+ * bank) itself, so a pin only fragments the layout (epic-hal#86). */
+#define EPIC_PLACE(addr)
 
 /* Bridge the historic FOSC_HZ name to the epic-cc spelling so shared
  * harness code (epic_harness_target.c) sees the right frequency without

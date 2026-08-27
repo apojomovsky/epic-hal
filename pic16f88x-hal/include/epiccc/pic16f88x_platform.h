@@ -29,7 +29,10 @@
 #endif
 
 #define EPIC_WEAK
-#define EPIC_PLACE(addr) EPIC_AT(addr)
+/* Placement pins are an XC8 bank-placement concern; the
+ * whole-program overlay places globals (unique addresses, one
+ * bank) itself, so a pin only fragments the layout (epic-hal#86). */
+#define EPIC_PLACE(addr)
 
 #define EPIC_SFR_PTR(addr)       ((volatile uint8_t *)(uintptr_t)(addr))
 #define epic_sfr_read8(addr)     (*(volatile uint8_t *)(uintptr_t)(addr))
