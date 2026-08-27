@@ -65,20 +65,19 @@ static uint8_t epic_console_tokenize(char *line, char **argv)
  */
 static void epic_console_dispatch(epic_console_t *con)
 {
-    char *argv[EPIC_CONSOLE_MAX_ARGS];
     uint8_t argc;
 
     con->line[con->line_len] = '\0';
-    argc = epic_console_tokenize(con->line, argv);
+    argc = epic_console_tokenize(con->line, con->argv);
     if (argc == 0u) {
         con->line_len = 0u;
         return;
     }
 
     for (uint8_t i = 0; i < con->table_len; i++) {
-        if (strcmp(argv[0], con->table[i].name) == 0) {
+        if (strcmp(con->argv[0], con->table[i].name) == 0) {
             if (con->table[i].handler != NULL) {
-                con->table[i].handler(argc, argv, con->ctx);
+                con->table[i].handler(argc, con->argv, con->ctx);
             }
             break;
         }

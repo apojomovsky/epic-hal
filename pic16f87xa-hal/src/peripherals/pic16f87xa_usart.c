@@ -29,9 +29,12 @@ uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
     return (uint16_t)x;
 }
 
-/* handle storage. */
-
-static const USART_HandleTypeDef *g_usart = NULL;
+/* Callback slots (the ISRs' owned storage; extern in the header). The
+ * full handle pointer is gone: the ISR reads the slots directly, and
+ * the epic-cc build's inlined Init stores the callbacks here as named
+ * literals (ADR-024). */
+void (*g_usart_tx_cb)(void) = NULL;
+void (*g_usart_rx_cb)(uint8_t data) = NULL;
 
 /* public API. */
 
@@ -42,10 +45,14 @@ static const USART_HandleTypeDef *g_usart = NULL;
  *        TxCpltCallback, RxCpltCallback.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
+#ifndef __EPIC_CC__
+/* XC8 keeps the out-of-line body; the epic-cc path uses the static
+ * inline in the header (see the note there). */
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
-    g_usart = h;
+    g_usart_tx_cb = h->TxCpltCallback;
+    g_usart_rx_cb = h->RxCpltCallback;
 
     /* Program SPBRG (Bank 1, 0x99, DS39582B §10.1). Plain bank-switch
      * writes silently corrupt under XC8 v4.00 (see
@@ -107,7 +114,7 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
 
     return EPIC_OK;
 }
-
+#endif   /* !__EPIC_CC__ */
 /**
  * @brief De-initialize the USART: disable both interrupts and restore
  *        RCSTA/TXSTA/SPBRG to reset values.
@@ -127,7 +134,8 @@ EPIC_StatusTypeDef EPIC_USART_DeInit(void)
         EPIC_REG8(PIC_REG_SPBRG) = 0x00U;
         pic_select_bank(prev);
     }
-    g_usart = NULL;
+    g_usart_tx_cb = NULL;
+    g_usart_rx_cb = NULL;
     return EPIC_OK;
 }
 
@@ -230,8 +238,7 @@ void USART_TX_IRQHandler(void)
     /* Direct flag read (class-F: the table route clobbers PCLATH in
      * ISR context). TXIF is PIR1 bit 4, read-only, cleared by writing
      * TXREG, so there is nothing to clear here. */
-    if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TXIF)) return;
-    if (g_usart && g_usart->TxCpltCallback) g_usart->TxCpltCallback();
+    if (g_usart_tx_cb) g_usart_tx_cb();
 }
 
 /**
@@ -246,5 +253,5 @@ void USART_RX_IRQHandler(void)
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_RCIF)) return;
     uint8_t data = EPIC_REG8(PIC_REG_RCREG);
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_RCIF);
-    if (g_usart && g_usart->RxCpltCallback) g_usart->RxCpltCallback(data);
+    if (g_usart_rx_cb) g_usart_rx_cb(data);
 }

@@ -1,16 +1,15 @@
 /*
  * epic-console target example: a line command dispatcher over the
  * 115200-baud UART. "help" prints the command table, "led on|off"
- * drives the LED on GPIOB0, and "status" reports the LED state and a
- * status counter. Typed lines are echoed and edited by epic-console
- * and dispatched on Enter.
+ * tracks LED state in memory and reports it, and "status" reports the
+ * LED state and a status counter. Typed lines are echoed and edited
+ * by epic-console and dispatched on Enter.
  */
 
 #include "epic_console.h"
 #include "epic_serial.h"
-#include "epic_hal.h"                /* EPIC_GPIO_Init / EPIC_GPIO_WritePin */
+#include "core/hal_irq.h"
 
-#include <stdio.h>
 #include <stdint.h>
 
 #ifndef FOSC_HZ
@@ -18,8 +17,6 @@
 #endif
 
 #define BAUD     115200UL
-#define LED_PORT GPIOB
-#define LED_PIN  GPIO_PIN_0
 
 typedef struct {
     uint8_t          led_on;
@@ -27,21 +24,19 @@ typedef struct {
     epic_console_t  *console;
 } app_ctx_t;
 
-/** @brief Turn the demo LED on or off. */
+/** @brief Turn the demo LED state on or off. */
 static void cmd_led(uint8_t argc, char **argv, void *ctx_)
 {
     app_ctx_t *ctx = (app_ctx_t *)ctx_;
     if (argc >= 2u && argv[1][0] == 'o' && argv[1][1] == 'n' && argv[1][2] == '\0') {
         ctx->led_on = 1u;
-        EPIC_GPIO_WritePin(LED_PORT, LED_PIN, GPIO_PIN_SET);
-        printf("led -> on\r\n");
+        epic_serial_put_str("led -> on\r\n");
     } else if (argc >= 2u && argv[1][0] == 'o' && argv[1][1] == 'f' &&
                argv[1][2] == 'f' && argv[1][3] == '\0') {
         ctx->led_on = 0u;
-        EPIC_GPIO_WritePin(LED_PORT, LED_PIN, GPIO_PIN_RESET);
-        printf("led -> off\r\n");
+        epic_serial_put_str("led -> off\r\n");
     } else {
-        printf("usage: led on|off\r\n");
+        epic_serial_put_str("usage: led on|off\r\n");
     }
 }
 
@@ -54,7 +49,11 @@ static void cmd_status(uint8_t argc, char **argv, void *ctx_)
     uint8_t c = ctx->status_count;
     c = (uint8_t)(c + 1u);
     ctx->status_count = c;
-    printf("status: led=%u count=%u\r\n", ctx->led_on, ctx->status_count);
+    epic_serial_put_str("status: led=");
+    epic_serial_put_u16(ctx->led_on);
+    epic_serial_put_str(" count=");
+    epic_serial_put_u16(ctx->status_count);
+    epic_serial_put_str("\r\n");
 }
 
 /** @brief Print the command table help. */
@@ -66,18 +65,18 @@ static void cmd_help(uint8_t argc, char **argv, void *ctx_)
     epic_console_print_help(ctx->console);
 }
 
-/** @brief Line command dispatcher: help/led on/off/status over serial. */
+static epic_console_cmd_t table[3];
+
+/**
+ * @brief Console example: dispatch help/led/status over serial.
+ */
 int main(void)
 {
-    epic_serial_init(FOSC_HZ, BAUD);
-    EPIC_GPIO_Init(LED_PORT, LED_PIN, GPIO_MODE_OUTPUT);
-    EPIC_GPIO_WritePin(LED_PORT, LED_PIN, GPIO_PIN_RESET);
+    table[0].name = "led";    table[0].handler = cmd_led;    table[0].help = "led on|off";
+    table[1].name = "status"; table[1].handler = cmd_status; table[1].help = "show led state and status count";
+    table[2].name = "help";   table[2].handler = cmd_help;   table[2].help = "list commands";
 
-    static const epic_console_cmd_t table[] = {
-        { "led",    cmd_led,    "led on|off" },
-        { "status", cmd_status, "show led state and status count" },
-        { "help",   cmd_help,   "list commands" },
-    };
+    epic_serial_init(FOSC_HZ, BAUD);
 
     static app_ctx_t ctx;
     static epic_console_t con;
@@ -87,7 +86,7 @@ int main(void)
     ctx.console = &con;
 
     EPIC_IRQ_Restore(1);             /* UART RX/TX ISRs */
-    printf("epic-console example: type \"help\"\r\n");
+    epic_serial_put_str("epic-console example: type \"help\"\r\n");
 
     for (;;) {
         epic_console_poll(&con);

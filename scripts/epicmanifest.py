@@ -113,6 +113,13 @@ class Module:
     supported: dict[str, list[str]]
     excluded: dict[str, str]
     examples: dict[str, Example]
+    # Optional per-module HAL subset for epic-cc builds, family name to
+    # repo-root-relative paths, replacing the family's flat
+    # epiccc_sources slice for this module on that family only. The
+    # serial stack needs a narrower (and different) peripheral set than
+    # the scheduling core, and the whole-program overlay on 368-byte
+    # parts cannot hold one slice serving both.
+    epiccc_hal_sources_by_family: dict[str, list[str]] | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -262,17 +269,26 @@ class Manifest:
             )
 
         out = []
+        mod = self._module(module_name)
+        # Per-module HAL subset for epic-cc builds replaces the family
+        # slice verbatim; deps and the example keep flowing through the
+        # shared tail below.
+        halt = (mod.epiccc_hal_sources_by_family or {}).get(fam.name)
+        halt_override = toolchain == "epic-cc" and halt is not None
         if self.uses_hal(module_name, mcu):
             if toolchain == "epic-cc":
                 # The epic-cc path builds only variant="target"; the
                 # slice is the family's conformant real-target set.
-                if not fam.epiccc_sources:
-                    raise ManifestError(
-                        f"families.{fam.name} has no epiccc_sources; "
-                        f"the epic-cc path needs a conformant slice "
-                        f"(HAL-3)"
-                    )
-                out += list(fam.epiccc_sources)
+                if halt_override:
+                    out += list(halt)
+                else:
+                    if not fam.epiccc_sources:
+                        raise ManifestError(
+                            f"families.{fam.name} has no epiccc_sources; "
+                            f"the epic-cc path needs a conformant slice "
+                            f"(HAL-3)"
+                        )
+                    out += list(fam.epiccc_sources)
             else:
                 applicable = [c for c in fam.conditional_sources if mcu in c.variants]
                 for hal_src in fam.hal_sources:
@@ -405,6 +421,15 @@ def _parse_module(name, table):
             fam: _parse_example(name, fam, tbl, needs_hal)
             for fam, tbl in table.get("example", {}).items()
         },
+        epiccc_hal_sources_by_family=(
+            {
+                fam: list(paths)
+                for fam, paths in table.get(
+                    "epiccc_hal_sources_by_family", {}
+                ).items()
+            }
+            or None
+        ),
     )
 
 
@@ -496,6 +521,26 @@ def _validate(manifest):
                     )
         # An example may name a family; its config is family-scoped, so no
         # per-family subkeys to validate here.
+        for fam_name, paths in (mod.epiccc_hal_sources_by_family or {}).items():
+            fam = manifest.families.get(fam_name)
+            if fam is None:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_hal_sources_by_family: "
+                    f"unknown family '{fam_name}'"
+                )
+            if not paths:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_hal_sources_by_family."
+                    f"{fam_name}: must not be empty"
+                )
+            for p in paths:
+                if not (p.startswith("epic-common/")
+                        or p.startswith(fam.hal_dir + "/")):
+                    raise ManifestError(
+                        f"modules.{mod.name}.epiccc_hal_sources_by_family."
+                        f"{fam_name}: '{p}' is outside {fam.hal_dir}/ "
+                        f"and epic-common"
+                    )
     _check_cycles(manifest.modules)
 
 

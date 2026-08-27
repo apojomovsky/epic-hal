@@ -11,6 +11,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __EPIC_CC__
+/* The 368-byte GPR parts leave no margin for the console's per-instance
+ * state once argv moves into the struct (avoids a local array alloca
+ * the compiler cannot lower). Keep the public documented defaults
+ * (32/8) for host and XC8 builds where RAM is not constrained. */
+#undef EPIC_CONSOLE_LINE_MAX
+#define EPIC_CONSOLE_LINE_MAX 24u
+#undef EPIC_CONSOLE_MAX_ARGS
+#define EPIC_CONSOLE_MAX_ARGS 4u
+#endif
+
 /* Maximum buffered line length including the terminating NUL. Override
  * by defining EPIC_CONSOLE_LINE_MAX before including the header. */
 #ifndef EPIC_CONSOLE_LINE_MAX
@@ -38,8 +49,9 @@ typedef struct {
 } epic_console_cmd_t;
 
 /* One console instance: command table, opaque context, editable line
- * buffer, and CR/LF state. Multiple instances are independent, and the
- * line buffer lives inside the instance, not in module-global storage. */
+ * buffer, argument vector, and CR/LF state. Multiple instances are
+ * independent and all mutable state lives inside the instance, not in
+ * module-global storage. */
 typedef struct {
     const epic_console_cmd_t *table;       /* Command table declared by the caller. */
     uint8_t                   table_len;   /* Number of rows in table.               */
@@ -47,6 +59,7 @@ typedef struct {
     char                      line[EPIC_CONSOLE_LINE_MAX]; /* Editable line buffer.  */
     uint8_t                   line_len;    /* Bytes currently buffered in line.      */
     bool                      last_was_cr; /* CR/LF coalescing flag.                 */
+    char                     *argv[EPIC_CONSOLE_MAX_ARGS]; /* Token vector, per-instance. */
 } epic_console_t;
 
 /**
