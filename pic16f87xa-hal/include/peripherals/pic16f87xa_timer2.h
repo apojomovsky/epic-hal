@@ -8,6 +8,7 @@
 
 #include "pic16f87xa.h"
 #include "pic16f87xa_sfr.h"
+#include "core/pic16_irq.h"
 
 /**
  * @brief Prescaler ratio (T2CON<T2CKPS1:T2CKPS0>, DS39582B §7.0, Reg 7-1).
@@ -58,13 +59,34 @@ typedef struct {
     .OverflowCallback = NULL,                                           \
 }
 
+/* The ISR's owned callback slot, defined in the driver body. Declared
+ * here so the inlined Init (below) can store to it from any TU. */
+extern void (*g_t2_overflow_cb)(void);
+
+void EPIC_TIMER2_WritePeriod(uint8_t period);
+
 /**
  * @brief  Initialize Timer2 from the handle. Programs T2CON (prescaler,
  *         postscaler), loads PR2, and installs the overflow callback.
+ *         Static inline so the callback store lands in the caller's
+ *         TU: epic-cc resolves a cross-context store only when the value
+ *         is a named function literal (ADR-024).
  * @param h handle with Prescaler, Postscaler, Period, OverflowCallback.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
-EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h);
+static inline EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h)
+{
+    if (!h) return EPIC_INVALID;
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
+    EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR2);
+    if (h->OverflowCallback) {
+        EPIC_IRQ_Enable(PIC16_IRQ_TMR2);
+    } else {
+        EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR2);
+    }
+    g_t2_overflow_cb = h->OverflowCallback;
+    return EPIC_OK;
+}
 
 /**
  * @brief  De-initialize Timer2. Disables the overflow interrupt and
@@ -75,10 +97,21 @@ EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void);
 
 /**
  * @brief  Start Timer2 counting. Writes PR2 and sets TMR2ON.
+ *         Static inline for the same reason as Init.
  * @param h handle whose Period is loaded into PR2.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
-EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h);
+static inline EPIC_StatusTypeDef EPIC_TIMER2_Start(const TIMER2_HandleTypeDef *h)
+{
+    if (!h) return EPIC_INVALID;
+    EPIC_TIMER2_WritePeriod(h->Period);
+    uint8_t v = 0U;
+    v |= (uint8_t)((h->Postscaler & 0xFU) << 3);
+    v |= PIC_T2CON_TMR2ON;
+    v |= (uint8_t)(h->Prescaler & 0x3U);
+    EPIC_REG8(PIC_REG_T2CON) = v;
+    return EPIC_OK;
+}
 
 /**
  * @brief  Stop Timer2 counting. Clears TMR2ON.
