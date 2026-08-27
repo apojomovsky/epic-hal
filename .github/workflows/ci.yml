@@ -196,7 +196,11 @@ jobs:
   epiccc-gate:
     runs-on: ubuntu-latest
     env:
-      EPIC_CC_PIN: 7d354083a60221f2dc7c3c2295645f8054dbcdca
+      # The companion epic-cc PR (fix/151-const-window-peephole, #159) that
+      # measures the const-section start at the assembler's final position,
+      # which epic-hal#86's 877A tick/taskmgr builds need. Re-pin to epic-cc
+      # master after that PR merges (DEVELOPMENT.md "The epiccc gate pin").
+      EPIC_CC_PIN: 038d4462461222b6131a20d3874fc5ba94694337
       # The release tag (v0.0.3) and the version inside its asset names
       # (epic-cc-0.0.3-...): the asset names drop the v prefix.
       EPIC_CC_CLANG_TAG: v0.0.3

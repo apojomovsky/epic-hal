@@ -59,18 +59,18 @@ typedef struct {
     .OverflowCallback = NULL,                                           \
 }
 
-/* The ISR's owned callback slot, defined in the driver body. Declared
- * here so the inlined Init (below) can store to it from any TU. */
+/* The ISR's owned callback slot, defined in the driver body. */
 extern void (*g_t2_overflow_cb)(void);
 
+/** @brief Write the PR2 period register (Bank 1); forward-declared so
+ *         the inlined Start can call it before its own declaration.
+ * @param period the 8-bit PR2 value, 0..255. */
 void EPIC_TIMER2_WritePeriod(uint8_t period);
 
 /**
- * @brief  Initialize Timer2 from the handle. Programs T2CON (prescaler,
- *         postscaler), loads PR2, and installs the overflow callback.
- *         Static inline so the callback store lands in the caller's
- *         TU: epic-cc resolves a cross-context store only when the value
- *         is a named function literal (ADR-024).
+ * @brief  Initialize Timer2 from the handle. Static inline so the
+ *         callback store lands in the caller's TU as a named literal,
+ *         which the epic-cc cross-context analysis resolves (ADR-024).
  * @param h handle with Prescaler, Postscaler, Period, OverflowCallback.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
@@ -96,8 +96,7 @@ static inline EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h)
 EPIC_StatusTypeDef EPIC_TIMER2_DeInit(void);
 
 /**
- * @brief  Start Timer2 counting. Writes PR2 and sets TMR2ON.
- *         Static inline for the same reason as Init.
+ * @brief  Start Timer2 counting. Static inline for the same reason as Init.
  * @param h handle whose Period is loaded into PR2.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
