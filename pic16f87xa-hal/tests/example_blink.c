@@ -67,8 +67,9 @@ int main(void)
     }
 
 #ifdef __EPIC_CC__
-    /* iselcore: select between global addrs (epic-cc#147), filed gap,
-     * posture as #67. The callback-driven loop above is shared. */
+    /* epic-cc isel gaps, both filed: a const global as a pointer call
+     * argument (epic-cc#148) and a select between two string globals
+     * (epic-cc#147). The callback-driven loop above is shared. */
     (void)g_toggle_count;
     return 0;
 #else
