@@ -43,6 +43,10 @@ class Family:
     # the family is not yet reachable on the epic-cc path and the
     # driver fails loudly.
     epiccc_sources: list[str] = dataclasses.field(default_factory=list)
+    # Crystal frequency for PLL-based families whose fosc_hz records the
+    # post-PLL system clock: epic-cc derives clocks from the crystal and
+    # checks xtal/plldiv hits the PLL's 4 MHz input (DS39632E).
+    xtal_hz: int | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -367,6 +371,7 @@ def _parse_family(name, table):
         ],
         harness_src=table.get("harness_src"),
         epiccc_sources=list(table.get("epiccc_sources", [])),
+        xtal_hz=table.get("xtal_hz"),
     )
 
 

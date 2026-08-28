@@ -178,6 +178,10 @@ variants = [
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 dfp_version = "1.7.171"
 fosc_hz  = 48000000
+# The HS crystal: fosc_hz above is the post-PLL system clock (the PLL's
+# 96 MHz divided by CPUDIV), while epic-cc derives clocks from the
+# crystal itself and checks xtal/plldiv hits the PLL's 4 MHz input.
+xtal_hz  = 20000000
 includes = [
   "pic18fxx5x-hal/include/target",
   "pic18fxx5x-hal/include",
