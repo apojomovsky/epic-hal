@@ -23,17 +23,17 @@ and the XC8 vs epic-cc RAM/flash headroom per combo.
 
 | Combo | XC8 build | XC8 gate | epic-cc build | epic-cc gate | XC8 RAM | XC8 flash | epic-cc RAM | Notes |
 |---|---|---|---|---|---|---|---|---|
-| combo-uart-ssp | PASS | PASS | FAIL | - | 193 | 2374 | - | `iselcore: no gep for pointer %7` in `pic16_harness_mdb.c:epic_harness_log` (harness pointer chain base missing), epic-cc#138-adjacent, filed |
-| combo-multitimer | PASS | PASS | FAIL | - | 296 | 3746 | - | `legalize: llvm.memset.p0.i16 must carry a dst`, struct `{i16,..}` zero-init for `TIMER1_HandleTypeDef` / `TIMER0/TIMER2` handles |
-| combo-adc-uart | PASS | PASS | FAIL | - | 228 | 2956 | - | `legalize: llvm.memset.p0.i64 must carry a dst`, `TIMER1_HandleTypeDef` zero-init (12 bytes, i64 dst form) |
-| combo-rb-uart | PASS | PASS | FAIL | - | 208 | 2981 | - | `alloc: GPR demand exceeds 0x1EF (0x01f0)`, overlay needs 1 byte past the 877A window on this branch (tick-serial repros identically) |
+| combo-uart-ssp | PASS | PASS | FAIL | - | 139 | 2259 | - | `iselcore: no gep for pointer %7` in `pic16_harness_mdb.c:epic_harness_log` (harness pointer chain base missing), epic-cc#138-adjacent, filed |
+| combo-multitimer | PASS | PASS | FAIL | - | 207 | 3319 | - | `legalize: llvm.memset.p0.i16 must carry a dst`, struct `{i16,..}` zero-init for `TIMER1_HandleTypeDef` / `TIMER0/TIMER2` handles |
+| combo-adc-uart | PASS | PASS | FAIL | - | 174 | 2707 | - | `legalize: llvm.memset.p0.i64 must carry a dst`, `TIMER1_HandleTypeDef` zero-init (12 bytes, i64 dst form) |
+| combo-rb-uart | PASS | PASS | FAIL | - | 150 | 2682 | - | `alloc: GPR demand exceeds 0x1EF (0x01f0)`, overlay needs 1 byte past the 877A window on this branch (tick-serial repros identically) |
 | combo-encoder-tick | PASS | PASS | FAIL | - | 201 | 3886 | - | `alloc: no arrangement of 16 globals fits p16f877a's 4 GPR bank window(s) (total demand 377, capacity 352)`, five `EPIC_HARNESS_LOG_STATIC` sites own 291 bytes |
 | combo-swuart-tick | PASS | PASS | FAIL | - | 317 | 6100 | - | `legalize: unknown intrinsic "llvm.umin.i32"`, `EPIC_SWUART_Init` clamp `if (cycles > 65535u)` lowers to `llvm.umin/umax` |
 | combo-tick-serial | PASS | PASS | FAIL | - | 318 | 4509 | - | `alloc: GPR demand exceeds 0x1EF (0x01f0)`, serial+tick stack (USART+TIMER2+harness) at the 877A ceiling |
-| combo-rx-loopback | PASS | PASS | FAIL | - | 236 | 2562 | - | `alloc: GPR demand exceeds 0x1EF (0x01f0)`, 1 byte past the window, same as tick-serial |
+| combo-rx-loopback | PASS | PASS | FAIL | - | 180 | 2261 | - | `alloc: GPR demand exceeds 0x1EF (0x01f0)`, 1 byte past the window, same as tick-serial |
 
 XC8 gates are green on `origin/master` CI (`family-check` PIC16F87XA 16F877A).
-All eight manifest `epiccc_hal_sources_by_family` slices are declared; the
+All thirteen manifest `epiccc_hal_sources_by_family` slices are declared (eight on PIC16F87XA, five on PIC18Fxx5x); the
 sources are epiccc-clean (no array allocas, no const-address materialization,
 see `epic_harness.h:EPIC_HARNESS_LOG_STATIC` and the per-combo `static`
 buffers). The remaining epic-cc failures are in shared HAL/driver or

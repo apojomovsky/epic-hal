@@ -18,6 +18,9 @@
 #ifndef EPICCC_IRQ_RB
 #define EPICCC_IRQ_RB 0
 #endif
+#ifndef EPICCC_IRQ_USART
+#define EPICCC_IRQ_USART 0
+#endif
 #ifndef EPICCC_IRQ_SSP
 #define EPICCC_IRQ_SSP 0
 #endif
@@ -101,7 +104,7 @@ void epic_dispatch_all_irqs(void)
 #if EPICCC_IRQ_RB
     if (EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_RBIF) {
         if (EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_RBIE) RB_IRQHandler();
-        else EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_RBIF);
+        else { (void)EPIC_REG8(PIC_REG_PORTB); EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_RBIF); }
     }
 #endif
 #if EPICCC_IRQ_SSP
