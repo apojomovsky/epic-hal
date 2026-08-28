@@ -159,6 +159,7 @@ void epic_serial_put_hex16(uint16_t v);
         static const char epic_str_src_[] = s;                                         \
         static char epic_str_buf_[sizeof(epic_str_src_)];                              \
         uint8_t epic_str_i_;                                                           \
+        typedef char epic_str_len_ok_[(sizeof(epic_str_src_) <= 256) ? 1 : -1];       \
         for (epic_str_i_ = 0u; epic_str_i_ < (uint8_t)sizeof(epic_str_src_);           \
              epic_str_i_++) {                                                          \
             epic_str_buf_[epic_str_i_] = epic_str_src_[epic_str_i_];                   \
