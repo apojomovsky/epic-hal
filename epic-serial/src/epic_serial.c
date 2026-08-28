@@ -305,10 +305,13 @@ void epic_serial_put_char(char c)
     putch(c);
 }
 
+/* epic-cc expands put_str at each call site instead (see epic_serial.h):
+ * a const pointer cannot cross a call boundary there yet (epic-cc#148). */
 /**
  * @brief Emit a null-terminated string.
  * @param s Null-terminated string.
  */
+#ifndef __EPIC_CC__
 void epic_serial_put_str(const char *s)
 {
     int len = 0;
@@ -317,6 +320,7 @@ void epic_serial_put_str(const char *s)
     }
     epic_serial_write((const uint8_t *)s, len);
 }
+#endif /* !__EPIC_CC__ */
 
 /**
  * @brief Emit v in decimal.

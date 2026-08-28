@@ -10,6 +10,8 @@
 #include "epic_serial.h"
 #include "epic_hal.h"
 
+/* XC8 streams printf through putch and needs the header; epic-cc has no
+ * stdio and epic-serial replaces printf with its literal shim instead. */
 #ifndef __EPIC_CC__
  #include <stdio.h>
 #endif
@@ -52,21 +54,22 @@ int main(void)
                       EPIC_GPIO_ReadPort(GPIOB));
     EPIC_IRQ_Enable(EXAMPLE_IRQ_RB);
 
-    // epic-cc: stdio not available under clang; keep footprint without printf
-#ifndef __EPIC_CC__
     printf("epic-encoder: x4 quadrature on RB4/RB5, position logged\r\n");
-#endif
 
     uint32_t last_log = epic_tick_get();
     for (;;) {
         if (epic_tick_elapsed_since(last_log) >= LOG_PERIOD_MS) {
             last_log = epic_tick_get();
-#ifndef __EPIC_CC__
-            printf("pos=%ld err=%u glitch=%u\r\n",
-                   (long)epic_encoder_get_position(&g_encoder),
-                   (unsigned)epic_encoder_get_error_count(&g_encoder),
-                   (unsigned)epic_encoder_get_glitch_count(&g_encoder));
-#endif
+            /* Value-only put_* composition: the epic-cc printf shim is
+             * literal-only, and the put_* forms render the same bytes
+             * on both toolchains. */
+            epic_serial_put_str("pos=");
+            epic_serial_put_i32(epic_encoder_get_position(&g_encoder));
+            epic_serial_put_str(" err=");
+            epic_serial_put_u16(epic_encoder_get_error_count(&g_encoder));
+            epic_serial_put_str(" glitch=");
+            epic_serial_put_u16(epic_encoder_get_glitch_count(&g_encoder));
+            epic_serial_put_str("\r\n");
         }
     }
 }

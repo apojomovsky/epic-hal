@@ -145,5 +145,36 @@ void epic_serial_put_hex8(uint8_t v);
  * @param v the value to emit
  */
 void epic_serial_put_hex16(uint16_t v);
+/*
+ * epic-cc has no stdio and cannot yet pass a const pointer across a
+ * call boundary (epic-cc#148), so on that path put_str expands per
+ * call site: the literal lands in const data and is copied byte-wise
+ * into an exact-size RAM staging buffer, and the RAM copy is written
+ * (the EPIC_HARNESS_LOG_STATIC pattern). The argument must be a string
+ * literal; XC8 and host keep the out-of-line function.
+ */
+#ifdef __EPIC_CC__
+#define epic_serial_put_str(s)                                                         \
+    do {                                                                               \
+        static const char epic_str_src_[] = s;                                         \
+        static char epic_str_buf_[sizeof(epic_str_src_)];                              \
+        uint8_t epic_str_i_;                                                           \
+        typedef char epic_str_len_ok_[(sizeof(epic_str_src_) <= 256) ? 1 : -1];       \
+        for (epic_str_i_ = 0u; epic_str_i_ < (uint8_t)sizeof(epic_str_src_);           \
+             epic_str_i_++) {                                                          \
+            epic_str_buf_[epic_str_i_] = epic_str_src_[epic_str_i_];                   \
+        }                                                                              \
+        epic_serial_write((const uint8_t *)epic_str_buf_,                              \
+                          (int)sizeof(epic_str_src_) - 1);                             \
+    } while (0)
+
+/*
+ * Literal-only printf for XC8-era call sites. A printf with arguments
+ * is a compile error here (macro arity): the variadic ABI is
+ * epic-cc#131 territory, so compose the put_* calls instead. Redefining
+ * a stdio name is safe on this path because stdio.h does not exist.
+ */
+#define printf(str) epic_serial_put_str(str)
+#endif /* __EPIC_CC__ */
 
 #endif /* EPIC_SERIAL_H */

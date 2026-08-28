@@ -11,7 +11,10 @@ The non-blocking serial layer STM32Cube's `HAL_UART_Transmit_DMA`/
   eight functions serve XC8 and epic-cc, because epic-cc's freestanding
   libc has no `stdio` and a stackless machine cannot read varargs. `putch`
   stays for XC8's `printf` retarget. The docs teach the `put_*` API,
-  never `printf`.
+  never `printf`. For XC8-era source compat the epic-cc path additionally
+  maps a literal-only `printf(str)` onto `put_str` (epic-hal#97); a
+  `printf` with arguments is a compile error there, which keeps the
+  silent-output class impossible.
 - **Family-agnostic**: one `src/epic_serial.c` builds against
   `pic16f87xa-hal` or `pic18fxx5x-hal` (one `#if` branch for the
   family-specific USART handle/IRQ/TXREG-write); runs on the host sim and real
