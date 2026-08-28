@@ -41,6 +41,11 @@ memory-backed one.
 from the Makefiles' own `FOSC_HZ ?=` defaults. The build driver uses it
 for `-DFOSC_HZ`; `--fosc-hz` overrides it for a different crystal.
 
+PLL-based families whose `fosc_hz` records the post-PLL system clock
+also carry `xtal_hz`, the crystal itself: the epic-cc config spec
+checks `xtal/plldiv` against the PLL's input requirement, so it needs
+the crystal, not the system clock.
+
 `hal_sources` is the full peripheral set for the family. It is not
 trimmed per module: `pic16_irq_dispatch.c` takes strong references to
 every peripheral's `_IRQHandler` specifically to force the linker to

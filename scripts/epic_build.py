@@ -393,14 +393,9 @@ _PIC18_VALUE_MAP = {
     "xt": "xt",
     "xtpll": "xtpll",
     "intosc": "intio",
-    "5": "div5",
-    "6": "div6",
-    "10": "div10",
-    "12": "div12",
-    "1": "div1",
-    "2": "div2",
-    "3": "div3",
-    "4": "div4",
+    # Digit values never reach this map: borv, wdtps, plldiv and usbdiv
+    # each route through their own branch, and a generic "1": "div1"
+    # entry is the CPUDIV-enum trap the plldiv branch exists to prevent.
     # epic-cc counts the four CPUDIV postscaler options div1..div4
     # (96 MHz / 2, 3, 4, 6), so the datasheet mnemonic's number sits one
     # below the enum name: OSC1_PLL2 is the first option, not the second.
