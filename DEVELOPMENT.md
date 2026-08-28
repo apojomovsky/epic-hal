@@ -150,11 +150,12 @@ builds the slice.
 
 Bumping the pin:
 
-The #86 branch pins the epic-cc driver to
-`fix/151-const-window-peephole` head (52ce5bf) while that PR is open:
-the 877A epic-cc tick/taskmgr builds need the six fixes on it
-(epic-cc#159, closes #151/#144/#160). Re-pin to epic-cc master after
-it merges, then delete the pin comment in ci.yml's `EPIC_CC_PIN`.
+The pin currently holds epic-cc master at the HAL-3 close-out
+(c64440e, its docs/31 section 6), which carries everything the 877A/887
+slices need plus the sim crate the sim gates run on. The earlier
+temporary pin (the fix/151 branch head, 52ce5bf) merged long ago; the
+pin comment in ci.yml's `EPIC_CC_PIN` records the reasoning for the
+current sha.
 
 1. Pick a new `EPIC_CC_PIN` that still builds the 887 slice. A quick
    check: build the driver at that sha (`cargo build --release -p
@@ -169,6 +170,43 @@ it merges, then delete the pin comment in ci.yml's `EPIC_CC_PIN`.
    the split stays.)
 3. The job prints the driver sha and clang version in its step summary,
    so a failure names the compiler.
+
+## The sim gate (HAL-4)
+
+The epiccc-gate CI job verifies its hexes in epic-cc's own ISA
+simulator (`crates/sim`, via `scripts/sim-runner/`), so the epic-cc
+path needs neither mdb nor the private toolchain image; the XC8 + mdb
+jobs stay as the differential oracle. The runner is a thin wrapper:
+it loads a hex, raises the firmware's interrupt source the way the
+peripheral would (flag through its enable bit, vector when GIE
+allows), and requires the watched register bit to toggle across
+step-counted samples, the same contract the mdb toggle gate runs.
+
+crates/sim models the CPU, not the peripherals or the oscillator, so a
+gate's timer interrupt is injected on a step schedule rather than
+counted from a clock. The tick counter in the firmware counts
+interrupts, not cycles, which is what makes that honest: the gate
+proves the interrupt path, not a timing figure. It also needs every
+register the gate touches to be reachable in the simulator; INTCON is
+mirrored on the PIC14 core, which is why the blink gates run today
+while the tick gates wait on epic-cc#173 (banked SFR writes do not
+land in the simulator yet).
+
+Local run of the same gate the CI job runs:
+
+```sh
+ln -s ~/projects/epic-cc epic-cc        # once per worktree
+make epiccc-build MODULE=pic16f87xa-hal MCU=16F877A
+make sim-epiccc HEX=build/epiccc/16F877A-blink.hex DEVICE=PIC16F877A \
+  SAMPLES=12 STEPS=200000 \
+  IRQ_EVERY=65536 IRQ_FLAG=INTCON:2 IRQ_ENABLE=INTCON:5
+```
+
+`sim-epiccc` runs the runner inside the epic-cc dev image (the host
+has no Rust toolchain); `--trace INTCON,PIR1,PIE1` on the runner
+prints register values per sample when a gate needs debugging. The
+host gcc/ctest build stays the fast inner loop; the sim gate is the
+CI verification layer between that and the mdb oracle.
 
 ## Releases
 

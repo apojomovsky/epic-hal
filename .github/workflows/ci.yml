@@ -191,19 +191,18 @@ jobs:
   # source; Rust only, no clang build) plus the v0.0.3 bundle's clang, the
   # artifact a user gets (epic-cc#118). A deliberate bump: a regression
   # shows up as a chosen bump that fails, not a mystery (how: DEVELOPMENT.md
-  # "The epiccc gate pin"). The mdb half needs the private image, so this
-  # is not yet the public gate (HAL-4, epic-hal#60).
+  # "The epiccc gate pin"). Public since HAL-4 (epic-hal#60): the hexes
+  # verify in epic-cc's own crates/sim via scripts/sim-runner, so this job
+  # pulls neither the private toolchain image nor anything Microchip.
   epiccc-gate:
     runs-on: ubuntu-latest
     env:
-      # The companion epic-cc PR (fix/151-const-window-peephole, #159) head
-      # (52ce5bf), which carries the six fixes epic-hal#86's 877A tick and
-      # taskmgr builds need plus their direct tests: const-section
-      # measurement, null/undef/zeroinitializer call args, llvm.umin/
-      # usub.sat lowering, candidate width filter, field-sensitive ISR-read
-      # tracking, lower-footprint placement. Re-pin to epic-cc master after
-      # that PR merges (DEVELOPMENT.md "The epiccc gate pin").
-      EPIC_CC_PIN: 52ce5bf93345a1b18cbc19ceb3a9ae8bf70d399d
+      # epic-cc master at the HAL-3 close-out (its docs/31 section 6),
+      # which carries everything the 877A/887 slices need plus the
+      # m-stack set (#163 to #166) and the sim crate this job's gates
+      # run on. The previous pin (52ce5bf, the fix/151 branch head) is
+      # long merged; see DEVELOPMENT.md "The epiccc gate pin".
+      EPIC_CC_PIN: c64440ed24811a4ce66dc958c47d9f2f453651e0
       # The release tag (v0.0.3) and the version inside its asset names
       # (epic-cc-0.0.3-...): the asset names drop the v prefix.
       EPIC_CC_CLANG_TAG: v0.0.3
@@ -275,15 +274,6 @@ jobs:
           test "$expected" = "$actual"
           unzip -q "$zip"
 
-      - name: Build pic16f88x-hal with epic-cc (the issue's smoke)
-        if: steps.noncode.outputs.non_code != 'true'
-        env:
-          EPIC_CC_BIN: ${{ github.workspace }}/epic-cc-target/release/epic-cc
-          PIC8_CLANG_UNWRAPPED: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/bin/clang
-          PIC8_CLANG_RESOURCE_DIR: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/lib/clang/20
-        run: |
-          make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
-
       - name: Report the clang identity used
         if: steps.noncode.outputs.non_code != 'true'
         run: |
@@ -291,78 +281,42 @@ jobs:
           echo "clang: $("$clang" --version | head -1)"
           echo "clang: $("$clang" --version | head -1)" >> "$GITHUB_STEP_SUMMARY"
 
-      # Resolve + pull the toolchain image, same formula the family
-      # jobs use (new name, legacy fallback across the #55 rename window).
-      - name: Resolve + pull the toolchain image
+      - name: Build the sim runner
         if: steps.noncode.outputs.non_code != 'true'
-        id: image
-        run: |
-          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
-          image="ghcr.io/${{ github.repository_owner }}/epic-hal-ci:${tag}"
-          legacy_image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          if docker pull "$image"; then
-            echo "image=$image" >> "$GITHUB_OUTPUT"
-          elif docker pull "$legacy_image"; then
-            echo "note: pulled legacy $legacy_image (epic-hal-ci not yet published; see #55)" >&2
-            echo "image=$legacy_image" >> "$GITHUB_OUTPUT"
-          else
-            echo "error: no cached $image nor $legacy_image on GHCR." >&2
-            exit 1
-          fi
+        run: cargo build --release --locked
+        working-directory: scripts/sim-runner
 
-      - name: Build epic-tick with epic-cc (the issue's subject)
+      # The gate hexes from the #60 amendment: {877A, 887} x {blink,
+      # tick}. The 4550 slice stays out until epic-cc#125, #126 and #143
+      # land; the repros and status live in epic-hal#60.
+      - name: Build the gate hexes with epic-cc
         if: steps.noncode.outputs.non_code != 'true'
         env:
           EPIC_CC_BIN: ${{ github.workspace }}/epic-cc-target/release/epic-cc
           PIC8_CLANG_UNWRAPPED: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/bin/clang
           PIC8_CLANG_RESOURCE_DIR: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/lib/clang/20
         run: |
-          make epiccc-build MODULE=epic-tick MCU=16F887 EPIC_CC_HOST=1
+          make epiccc-build MODULE=pic16f87xa-hal MCU=16F877A EPIC_CC_HOST=1
+          make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
 
-      - name: Copy the hexes where the toggle gates look
+      # The sim gates: the mdb toggle contract, run on crates/sim's CPU.
+      # Watch PORTB bit 0 across the samples, require a transition. Blink
+      # is Timer0 driven, so the runner raises its overflow (INTCON bit 2
+      # through TMR0IE, bit 5) every 65536 steps (prescaler 256 x count
+      # 256); INTCON is a mirrored register, so the gate needs no SFR
+      # banking. The tick gates wait on epic-cc#173 (crates/sim drops
+      # banked SFR writes, so PIE1:TMR2IE can never be observed set);
+      # they are a config change here once that lands.
+      - name: Sim gates (crates/sim)
         if: steps.noncode.outputs.non_code != 'true'
         run: |
-          mkdir -p build-sim/pic16f88x-hal build-sim/epic-tick
-          cp build/epiccc/16F887-blink.hex build-sim/pic16f88x-hal/16F887-blink.hex
-          cp build/epiccc/16F887-tick.hex build-sim/epic-tick/16F887-tick.hex
-
-      # The blink assertion, deterministic (stepi, not wall-clock): 12
-      # samples of 200k instructions must show PORTB bit 0 changing, the
-      # same gate make mdb-epiccc runs locally (sim-mdb-run.sh toggle).
-      - name: MPLAB SIM toggle gate (the blink really toggles)
-        if: steps.noncode.outputs.non_code != 'true'
-        run: |
-          docker run --rm -v "$PWD:/work" -w /work \
-            -e SIM_MDB_SKIP_BUILD=1 -e TOGGLE_REG=PORTB -e TOGGLE_BIT=0 \
-            -e TOGGLE_SAMPLES=12 -e TOGGLE_STEPI=200000 \
-            "${{ steps.image.outputs.image }}" \
-            bash scripts/sim-mdb-run.sh local 16F887 PIC16F887 pic16f88x-hal 0 toggle
-
-      # The tick assertion: the epic-cc-built 1 ms timebase advances and
-      # the example's 500 ms LED period toggles PORTB bit 0. 24 samples of
-      # 500k instructions cover ~4.8M cycles, well past the first 500 ms
-      # half-period (~2.5M cycles), so at least one transition is required.
-      - name: MPLAB SIM toggle gate (the tick really advances)
-        if: steps.noncode.outputs.non_code != 'true'
-        run: |
-          docker run --rm -v "$PWD:/work" -w /work \
-            -e SIM_MDB_SKIP_BUILD=1 -e TOGGLE_REG=PORTB -e TOGGLE_BIT=0 \
-            -e TOGGLE_SAMPLES=24 -e TOGGLE_STEPI=500000 \
-            "${{ steps.image.outputs.image }}" \
-            bash scripts/sim-mdb-run.sh local 16F887 PIC16F887 epic-tick 0 toggle
-
-      - name: MPLAB SIM register read (mdb-hex)
-        if: steps.noncode.outputs.non_code != 'true'
-        run: |
-          docker run --rm -v "$PWD:/work" -w /work \
-            "${{ steps.image.outputs.image }}" \
-            bash scripts/mdb-hex-run.sh /work/build/epiccc/16F887-blink.hex PIC16F887 2000 'print PORTB\nprint TMR0'
+          runner=scripts/sim-runner/target/release/sim-runner
+          "$runner" --hex build/epiccc/16F877A-blink.hex --device 16F877A \
+            --watch PORTB:0 --samples 12 --steps 200000 \
+            --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
+          "$runner" --hex build/epiccc/16F887-blink.hex --device 16F887 \
+            --watch PORTB:0 --samples 12 --steps 200000 \
+            --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
 
   # Flake-hunt: REPEAT=N run of every sim gate (quality task 10),
   # manual-trigger only so a hunt does not slow the PR target job.

@@ -82,3 +82,7 @@ ser887.ll
 sw.ll
 st/
 *.ll
+
+# local epic-cc checkout link for scripts/sim-runner (make sim-epiccc)
+/epic-cc
+scripts/sim-runner/target/

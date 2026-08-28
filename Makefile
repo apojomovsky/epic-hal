@@ -9,7 +9,7 @@
 # exactly what CI resolves and pulls.
 
 # ─────────────────────────── image identity ─────────────────────────
-.PHONY: vendor-link check-vendor image ci-image-push test xc8-build mdb-test mdb-epiccc mdb-hex target-ci exec audit shell bootstrap doctor setup-hooks pre-pr-check
+.PHONY: vendor-link check-vendor image ci-image-push test xc8-build mdb-test mdb-epiccc mdb-hex sim-epiccc target-ci exec audit shell bootstrap doctor setup-hooks pre-pr-check
 # Same tag-resolution formula CI and scripts/sim-test-local.sh already
 # use (read straight out of the Dockerfile's own ARGs), kept here in one
 # place so ci-image-push pushes to the exact tag CI resolves and pulls,
@@ -228,6 +228,34 @@ mdb-hex: image
 		exit 1; \
 	fi
 	$(DOCKER_RUN) scripts/mdb-hex-run.sh /repo/$(HEX) $(DEVICE) $(or $(WAIT_MS),2000) "$(EXTRA_MDB)"
+
+# ─────── epic-cc sim gate (HAL-4) ───────
+# The public gate: run an epic-cc hex under its own ISA simulator
+# (crates/sim, via scripts/sim-runner), replacing the mdb half of
+# the epiccc-gate job (epic-hal#60): no XC8, no mdb, no private
+# image. Needs an epic-cc checkout at <repo>/epic-cc (locally
+# `ln -s ~/projects/epic-cc epic-cc`). WATCH requires a toggle;
+# IRQ_EVERY injects the flag through its enable bit when GIE allows
+# for a timer crates/sim lacks.
+sim-epiccc:
+	@if [ ! -e "$(CURDIR)/epic-cc/crates/sim" ]; then \
+		echo "sim-epiccc: no epic-cc checkout at $(CURDIR)/epic-cc." >&2; \
+		echo "  link or clone one there, e.g.: ln -s ~/projects/epic-cc epic-cc" >&2; \
+		exit 1; \
+	fi
+	@test -n "$(DEVICE)" || { echo "usage: make sim-epiccc HEX=build/epiccc/16F887-tick.hex DEVICE=16F887 [WATCH=PORTB:0] [SAMPLES=24] [STEPS=500000] [IRQ_EVERY=5000 IRQ_FLAG=PIR1:1 IRQ_ENABLE=PIE1:1]" >&2; exit 1; }
+	@test -f "$(CURDIR)/$(HEX)" || { echo "sim-epiccc: no hex at $(HEX)" >&2; exit 1; }
+	mkdir -p $(HOME_MOUNT) && docker run --rm --user $$(id -u):$$(id -g) \
+		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+		-v $(HOME_MOUNT):$(HOME) \
+		-v $(realpath $(CURDIR)/epic-cc):$(HOME)/projects/epic-cc \
+		-e CARGO_HOME=$(HOME)/.cargo-sim-runner -e CARGO_TARGET_DIR=$(HOME)/.target-sim-runner \
+		-v $(CURDIR):/repo \
+		-w /repo/scripts/sim-runner $(EPIC_CC_IMAGE) \
+		cargo run --release --locked -- \
+		--hex /repo/$(HEX) --device $(DEVICE) --watch $(or $(WATCH),PORTB:0) \
+		--samples $(or $(SAMPLES),24) --steps $(or $(STEPS),500000) \
+		$(if $(IRQ_EVERY),--irq-every $(IRQ_EVERY) --irq-flag $(IRQ_FLAG) --irq-enable $(IRQ_ENABLE),)
 
 # ─────────────────────────── dev shell ───────────────────────────────
 # Same --user/passwd/HOME fix as DOCKER_RUN (see its comment); a plain
