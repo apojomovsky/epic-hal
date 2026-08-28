@@ -92,17 +92,17 @@ static void t1_overflow_cb(void)
  */
 static void fail(uint8_t idx)
 {
+    /* One static RAM buffer, not stack locals or const pointers: the
+     * epic-cc build has no const-address form and no array allocas. */
     static const char hx[] = "0123456789ABCDEF";
-    char c[2];
+    static char c[5];
     g_fail++;
-    epic_harness_log("F");
-    c[0] = hx[(idx >> 4) & 0xF];
-    c[1] = '\0';
+    c[0] = 'F';
+    c[1] = hx[(idx >> 4) & 0xF];
+    c[2] = hx[idx & 0xF];
+    c[3] = '.';
+    c[4] = '\0';
     epic_harness_log(c);
-    c[0] = hx[idx & 0xF];
-    c[1] = '\0';
-    epic_harness_log(c);
-    epic_harness_log(".");
 }
 
 #define CHECK(cond, idx) do {         \
@@ -297,15 +297,22 @@ int main(void)
      * model observation for this run - "ADCM" + go_clears, adif_seen,
      * stable, first_result hi/lo as hex digits. */
     {
+        /* One static RAM buffer, not stack locals or const pointers: the
+         * epic-cc build has no const-address form and no array allocas. */
         static const char hx[] = "0123456789ABCDEF";
-        char c[2];
-        epic_harness_log("ADCM");
-        c[0] = hx[go_clears & 0xF]; c[1] = '\0'; epic_harness_log(c);
-        c[0] = hx[adif_seen & 0xF]; c[1] = '\0'; epic_harness_log(c);
-        c[0] = hx[adc_stable & 0xF]; c[1] = '\0'; epic_harness_log(c);
-        c[0] = hx[(first_result >> 4) & 0xF]; c[1] = '\0'; epic_harness_log(c);
-        c[0] = hx[first_result & 0xF]; c[1] = '\0'; epic_harness_log(c);
-        epic_harness_log("\n");
+        static char c[11];
+        c[0] = 'A';
+        c[1] = 'D';
+        c[2] = 'C';
+        c[3] = 'M';
+        c[4] = hx[go_clears & 0xF];
+        c[5] = hx[adif_seen & 0xF];
+        c[6] = hx[adc_stable & 0xF];
+        c[7] = hx[(first_result >> 4) & 0xF];
+        c[8] = hx[first_result & 0xF];
+        c[9] = '\n';
+        c[10] = '\0';
+        epic_harness_log(c);
     }
 
     for (uint32_t i = 0; epic_harness_running(i); i++) {

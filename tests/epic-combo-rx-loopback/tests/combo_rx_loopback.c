@@ -69,17 +69,17 @@ static uint32_t g_loop_ticks = 0u;
 /** @brief Record a check failure and log its index as hex. */
 static void fail(uint8_t idx)
 {
+    /* One static RAM buffer, not stack locals or const pointers: the
+     * epic-cc build has no const-address form and no array allocas. */
     static const char hx[] = "0123456789ABCDEF";
-    char c[2];
+    static char c[5];
     g_fail++;
-    epic_harness_log("F");
-    c[0] = hx[(idx >> 4) & 0xF];
-    c[1] = '\0';
+    c[0] = 'F';
+    c[1] = hx[(idx >> 4) & 0xF];
+    c[2] = hx[idx & 0xF];
+    c[3] = '.';
+    c[4] = '\0';
     epic_harness_log(c);
-    c[0] = hx[idx & 0xF];
-    c[1] = '\0';
-    epic_harness_log(c);
-    epic_harness_log(".");
 }
 
 #define CHECK(cond, idx) do {         \
@@ -153,12 +153,47 @@ static void s_tx_noop(void)
 {
 }
 
-/** @brief Transmit a NUL-terminated string through rx_loopback_tx. */
-static void rx_loopback_tx_str(const char *s)
+/** @brief Transmit the boot banner "RXLOOP UP\r\n". */
+static void rx_loopback_tx_banner(void)
 {
-    while (*s) {
-        rx_loopback_tx((uint8_t)*s);
-        s++;
+    /* Table-reader const, not a literal pointer: epic-cc has no
+     * const-address form. */
+    static const char s[] = "RXLOOP UP\r\n";
+    for (uint8_t i = 0u; s[i] != '\0'; i++) {
+        rx_loopback_tx((uint8_t)s[i]);
+    }
+}
+
+/** @brief Transmit the "OK:" echo prefix. */
+static void rx_loopback_tx_ok(void)
+{
+    /* Table-reader const, not a literal pointer: epic-cc has no
+     * const-address form. */
+    static const char s[] = "OK:";
+    for (uint8_t i = 0u; s[i] != '\0'; i++) {
+        rx_loopback_tx((uint8_t)s[i]);
+    }
+}
+
+/** @brief Transmit the "ERR:" echo prefix. */
+static void rx_loopback_tx_err(void)
+{
+    /* Table-reader const, not a literal pointer: epic-cc has no
+     * const-address form. */
+    static const char s[] = "ERR:";
+    for (uint8_t i = 0u; s[i] != '\0'; i++) {
+        rx_loopback_tx((uint8_t)s[i]);
+    }
+}
+
+/** @brief Transmit the CRLF line terminator. */
+static void rx_loopback_tx_crlf(void)
+{
+    /* Table-reader const, not a literal pointer: epic-cc has no
+     * const-address form. */
+    static const char s[] = "\r\n";
+    for (uint8_t i = 0u; s[i] != '\0'; i++) {
+        rx_loopback_tx((uint8_t)s[i]);
     }
 }
 
@@ -191,7 +226,7 @@ void rx_loopback_init(void)
     EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
     /* Boot banner: GIE is still off here (main enables it after this
      * returns), so no ISR can preempt the polled-TX wait. */
-    rx_loopback_tx_str("RXLOOP UP\r\n");
+    rx_loopback_tx_banner();
 }
 
 /**
@@ -211,15 +246,15 @@ void rx_loopback_on_rx_byte(uint8_t b)
                      (g_line[g_line_len - 1u] == (uint8_t)'\r') &&
                      (g_line_overflow == 0u);
         if (ok) {
-            rx_loopback_tx_str("OK:");
+            rx_loopback_tx_ok();
             g_line_len--;   /* drop the CRLF terminator's CR */
         } else {
-            rx_loopback_tx_str("ERR:");
+            rx_loopback_tx_err();
         }
         for (uint8_t i = 0u; i < g_line_len; i++) {
             rx_loopback_tx(g_line[i]);
         }
-        rx_loopback_tx_str("\r\n");
+        rx_loopback_tx_crlf();
         g_line_len = 0u;
         g_line_overflow = 0u;
     } else if (g_line_overflow) {

@@ -39,6 +39,8 @@
 #define PIC_REG_INTCON        0x0BU
 #define PIC_REG_PIR1          0x0CU
 #define PIC_REG_PIR2          0x0DU
+#define PIC_REG_PIE1          0x8CU   /* Bank 1, DS39582B Table 14-4. */
+#define PIC_REG_PIE2          0x8DU   /* Bank 1. */
 #define PIC_REG_PCON          0x8EU
 
 /* Timer0, DS39582B §5.0. */

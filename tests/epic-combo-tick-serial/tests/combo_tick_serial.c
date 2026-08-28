@@ -73,17 +73,17 @@ static uint16_t g_fail = 0u;
  */
 static void fail(uint8_t idx)
 {
+    /* One static RAM buffer, not stack locals or const pointers: the
+     * epic-cc build has no const-address form and no array allocas. */
     static const char hx[] = "0123456789ABCDEF";
-    char c[2];
+    static char c[5];
     g_fail++;
-    epic_harness_log("F");
-    c[0] = hx[(idx >> 4) & 0xF];
-    c[1] = '\0';
+    c[0] = 'F';
+    c[1] = hx[(idx >> 4) & 0xF];
+    c[2] = hx[idx & 0xF];
+    c[3] = '.';
+    c[4] = '\0';
     epic_harness_log(c);
-    c[0] = hx[idx & 0xF];
-    c[1] = '\0';
-    epic_harness_log(c);
-    epic_harness_log(".");
 }
 
 #define CHECK(cond, idx) do {         \
@@ -121,7 +121,7 @@ static void build_line(uint8_t *line, uint8_t n)
 static void log_tx_header(uint8_t n)
 {
     static const char hx[] = "0123456789ABCDEF";
-    char s[4];
+    static char s[4];
     s[0] = 'T';
     s[1] = 'X';
     s[2] = ':';
@@ -172,7 +172,9 @@ int main(void)
             /* ---- Serial phase (the serial gate's discipline) ---- */
             (void)EPIC_IRQ_Disable();            /* GIE off */
 
-            uint8_t line[TX_LINE_LEN];
+            /* static, not a stack local: the epic-cc build lowers
+             * only global RAM arrays (no array allocas). */
+            static uint8_t line[TX_LINE_LEN];
             uint8_t n = (uint8_t)(tx_lines & 0xFFu);
             log_tx_header(n);
             build_line(line, n);
@@ -251,6 +253,6 @@ int main(void)
     epic_serial_flush();
     CHECK(epic_serial_tx_pending() == 0, 0x09);
 
-    epic_harness_log("combo tick-serial done\n");
+    EPIC_HARNESS_LOG_STATIC("combo tick-serial done\n");
     return epic_harness_report(g_fail == 0u);
 }

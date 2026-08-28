@@ -162,17 +162,17 @@ static void t2_overflow_cb(void)
  */
 static void fail(uint8_t idx)
 {
+    /* One static RAM buffer, not stack locals or const pointers: the
+     * epic-cc build has no const-address form and no array allocas. */
     static const char hx[] = "0123456789ABCDEF";
-    char c[2];
+    static char c[5];
     g_fail++;
-    epic_harness_log("F");
-    c[0] = hx[(idx >> 4) & 0xF];
-    c[1] = '\0';
+    c[0] = 'F';
+    c[1] = hx[(idx >> 4) & 0xF];
+    c[2] = hx[idx & 0xF];
+    c[3] = '.';
+    c[4] = '\0';
     epic_harness_log(c);
-    c[0] = hx[idx & 0xF];
-    c[1] = '\0';
-    epic_harness_log(c);
-    epic_harness_log(".");
 }
 
 #define CHECK(cond, idx) do {         \
@@ -207,7 +207,9 @@ static uint16_t stable_read16(const volatile uint16_t *p)
 static void log_hex16(uint16_t v)
 {
     static const char hx[] = "0123456789ABCDEF";
-    char c[2];
+    /* static, not a stack local: the epic-cc build lowers only
+     * global RAM arrays (no array allocas). */
+    static char c[2];
     c[0] = hx[(v >> 12) & 0xFu];
     c[1] = '\0';
     epic_harness_log(c);
@@ -412,17 +414,17 @@ int main(void)
 
     /* Diagnostics: final counts, visible in the mdb UART capture
      * (no-op on the real-target smoke build). */
-    epic_harness_log("T0W=");
+    EPIC_HARNESS_LOG_STATIC("T0W=");
     log_hex16(t0w);
-    epic_harness_log(" T0C=");
+    EPIC_HARNESS_LOG_STATIC(" T0C=");
     log_hex16(g_t0_count);
-    epic_harness_log(" T0I=");
+    EPIC_HARNESS_LOG_STATIC(" T0I=");
     log_hex16(t0_if_seen);
-    epic_harness_log(" T1=");
+    EPIC_HARNESS_LOG_STATIC(" T1=");
     log_hex16(t1c);
-    epic_harness_log(" T2=");
+    EPIC_HARNESS_LOG_STATIC(" T2=");
     log_hex16(t2c);
-    epic_harness_log("\n");
+    EPIC_HARNESS_LOG_STATIC("\n");
 
     for (uint32_t i = 0; epic_harness_running(i); i++) {
         epic_harness_tick();

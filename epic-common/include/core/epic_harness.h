@@ -55,10 +55,54 @@ void epic_harness_log(const char *fmt, ...);
  */
 static inline int epic_harness_report(int ok)
 {
+#ifdef __EPIC_CC__
+    /* The marker goes out as a RAM copy, never as a pointer into const
+     * data: epic-cc reads a C-indexed const array through its table
+     * readers but has no address form for const data used as a value. */
+    static char line[27];
+    static const char pass[] = "EPIC_HARNESS_RESULT: PASS\n";
+    static const char fail[] = "EPIC_HARNESS_RESULT: FAIL\n";
+    uint8_t i = 0;
+    if (ok) {
+        for (i = 0; i < (uint8_t)(sizeof(pass) - 1u); i++) line[i] = pass[i];
+    } else {
+        for (i = 0; i < (uint8_t)(sizeof(fail) - 1u); i++) line[i] = fail[i];
+    }
+    line[i] = '\0';
+    epic_harness_log(line);
+#else
     epic_harness_log(ok ? "EPIC_HARNESS_RESULT: PASS\n"
-                         : "EPIC_HARNESS_RESULT: FAIL\n");
+                        : "EPIC_HARNESS_RESULT: FAIL\n");
+#endif
     return ok ? 0 : 1;
 }
+
+/**
+ * @brief  Log a literal through a static RAM copy.
+ *
+ * Gate firmware never materializes a const address: epic-cc lowers a
+ * C-indexed const array to its table readers but has no address form
+ * for const data used as a value (epic-cc#138), so the literal is
+ * declared locally and copied byte-wise into a RAM buffer before the
+ * call. Every expansion site owns its buffers.
+ */
+#ifdef __EPIC_CC__
+#define EPIC_HARNESS_LOG_STATIC(msg)                             \
+    do {                                                         \
+        static const char epic_log_src_[] = msg;                 \
+        static char epic_log_buf_[sizeof(epic_log_src_)];        \
+        uint8_t epic_log_i_;                                     \
+        for (epic_log_i_ = 0;                                    \
+             epic_log_i_ < (uint8_t)sizeof(epic_log_src_);       \
+             epic_log_i_++) {                                    \
+            epic_log_buf_[epic_log_i_] = epic_log_src_[epic_log_i_]; \
+        }                                                        \
+        epic_harness_log(epic_log_buf_);                         \
+    } while (0)
+#else
+#define EPIC_HARNESS_LOG_STATIC(msg) epic_harness_log(msg)
+#endif
+
 
 /**
  * @brief  Fan out to every peripheral IRQHandler for the linked family.

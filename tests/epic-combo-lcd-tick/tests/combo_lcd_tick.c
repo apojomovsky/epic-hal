@@ -270,18 +270,17 @@ static uint16_t g_fail = 0u;
  */
 static void fail(uint8_t idx)
 {
+    /* One static RAM buffer, not stack locals or const pointers: the
+     * epic-cc build has no const-address form and no array allocas. */
     static const char hx[] = "0123456789ABCDEF";
-    char c[2];
-
+    static char c[5];
     g_fail++;
-    epic_harness_log("F");
-    c[0] = hx[(idx >> 4) & 0xF];
-    c[1] = '\0';
+    c[0] = 'F';
+    c[1] = hx[(idx >> 4) & 0xF];
+    c[2] = hx[idx & 0xF];
+    c[3] = '.';
+    c[4] = ' ';
     epic_harness_log(c);
-    c[0] = hx[idx & 0xF];
-    c[1] = '\0';
-    epic_harness_log(c);
-    epic_harness_log(".");
 }
 
 #define CHECK(cond, idx) do {         \
@@ -447,7 +446,7 @@ int main(void)
         CHECK((epic_tick_get() - t0) >= 3u, 0x09);
     }
     if (g_fail == 0u) {
-        epic_harness_log("C10 lcd-tick: TRIS/sequence/delay checks ok, tick alive\n");
+        EPIC_HARNESS_LOG_STATIC("C10 lcd-tick: TRIS/sequence/delay checks ok, tick alive\n");
     }
 
     /* Idle under the live tick, then quiet before the report so the

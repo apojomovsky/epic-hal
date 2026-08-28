@@ -75,8 +75,15 @@
         else         { EPIC_REG8(0x8CU) &= (uint8_t)~(mask); } \
     } while (0)
 
+/* PIE1/PIE2 enable-bit reads for the dispatch tiers: TMR1IE, TXIE,
+ * TMR2IE, SSPIE, ADIE, CCP1IE, CCP2IE, EEIE. */
 #define EPIC_PIE1_READ_TMR1IE(out_var) ((out_var) = EPIC_REG8(0x8CU))
 #define EPIC_PIE1_READ_TXIE(out_var)   ((out_var) = EPIC_REG8(0x8CU))
+#define EPIC_PIE1_READ_TMR2IE(out_var) ((out_var) = EPIC_REG8(0x8CU))
+#define EPIC_PIE1_READ_SSPIE(out_var)  ((out_var) = EPIC_REG8(0x8CU))
+#define EPIC_PIE1_READ_ADIE(out_var)   ((out_var) = EPIC_REG8(0x8CU))
+#define EPIC_PIE1_READ_CCP1IE(out_var) ((out_var) = EPIC_REG8(0x8CU))
+#define EPIC_PIE2_READ_CCP2IE(out_var) ((out_var) = EPIC_REG8(0x8DU))
 #define EPIC_PIE2_READ_EEIE(out_var)   ((out_var) = EPIC_REG8(0x8DU))
 
 #endif /* PIC16F88X_PLATFORM_H */
