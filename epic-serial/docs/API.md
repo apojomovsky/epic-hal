@@ -74,6 +74,21 @@ Emit `v` as two uppercase hex digits.
 
 ### `void epic_serial_put_hex16(uint16_t v)`
 Emit `v` as four uppercase hex digits.
+### epic-cc: the `put_str` expansion and the `printf` shim
+
+Under epic-cc both names are macros in [`epic_serial.h`](../include/epic_serial.h),
+defined only there (`__EPIC_CC__`); XC8 and host keep the out-of-line
+function and libc `printf`. Two compiler facts shape them (epic-hal#97):
+
+- A const pointer cannot cross a call boundary under epic-cc yet
+  (epic-cc#148), so `epic_serial_put_str(s)` expands per call site: the
+  literal lands in const data and is copied byte-wise into an exact-size
+  RAM staging buffer, and the RAM copy is written (the
+  `EPIC_HARNESS_LOG_STATIC` pattern). The argument must be a string
+  literal; the RAM cost is the string's length, per site.
+- `printf(str)` maps onto that same expansion for XC8-era banner call
+  sites. `printf` with arguments fails to compile (macro arity): the
+  variadic ABI is epic-cc#131, so compose the `put_*` calls instead.
 
 ## Usage
 
