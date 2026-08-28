@@ -65,22 +65,22 @@ static void t2_overflow_cb(void)
     g_t2_count++;
 }
 
+/* One static RAM buffer, not stack locals or const pointers: the
+ * epic-cc build has no const-address form and no array allocas. */
+static char fail_line[5];
 /**
  * @brief Record a check failure and log its index as two hex digits.
  */
 static void fail(uint8_t idx)
 {
     static const char hx[] = "0123456789ABCDEF";
-    char c[2];
     g_fail++;
-    epic_harness_log("F");
-    c[0] = hx[(idx >> 4) & 0xF];
-    c[1] = '\0';
-    epic_harness_log(c);
-    c[0] = hx[idx & 0xF];
-    c[1] = '\0';
-    epic_harness_log(c);
-    epic_harness_log(".");
+    fail_line[0] = 'F';
+    fail_line[1] = hx[(idx >> 4) & 0xF];
+    fail_line[2] = hx[idx & 0xF];
+    fail_line[3] = '.';
+    fail_line[4] = '\0';
+    epic_harness_log(fail_line);
 }
 
 #define CHECK(cond, idx) do {         \

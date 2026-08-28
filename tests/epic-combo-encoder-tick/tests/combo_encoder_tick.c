@@ -92,17 +92,17 @@ static uint16_t g_fail = 0u;
  */
 static void fail(uint8_t idx)
 {
+    /* One static RAM buffer, not stack locals or const pointers: the
+     * epic-cc build has no const-address form and no array allocas. */
     static const char hx[] = "0123456789ABCDEF";
-    char c[2];
+    static char c[5];
     g_fail++;
-    epic_harness_log("F");
-    c[0] = hx[(idx >> 4) & 0xF];
-    c[1] = '\0';
+    c[0] = 'F';
+    c[1] = hx[(idx >> 4) & 0xF];
+    c[2] = hx[idx & 0xF];
+    c[3] = '.';
+    c[4] = '\0';
     epic_harness_log(c);
-    c[0] = hx[idx & 0xF];
-    c[1] = '\0';
-    epic_harness_log(c);
-    epic_harness_log(".");
 }
 
 #define CHECK(cond, idx) do {         \
@@ -114,10 +114,15 @@ static void fail(uint8_t idx)
  */
 static uint8_t port_byte(uint8_t state)
 {
-    uint8_t v = 0U;
-    if (state & 0x2U) v |= (uint8_t)(1U << PIN_A);
-    if (state & 0x1U) v |= (uint8_t)(1U << PIN_B);
-    return v;
+    /* Table read, not a bit-scatter expression: clang folds the
+     * scatter into llvm.bitreverse.i6, which irparse rejects. */
+    static const uint8_t bits[4] = {
+        0u,
+        (uint8_t)(1u << PIN_B),
+        (uint8_t)(1u << PIN_A),
+        (uint8_t)((1u << PIN_A) | (1u << PIN_B))
+    };
+    return bits[state & 3u];
 }
 
 /**
@@ -214,17 +219,17 @@ int main(void)
     /* ---- Report. ---- */
     int seq_ok = (p_final == expected) && (e_final == 0u) && (g_final == 0u);
     if (seq_ok) {
-        epic_harness_log("C9 encoder-tick: scripted quadrature ok (net 0, 32 coherent reads)\n");
+        EPIC_HARNESS_LOG_STATIC("C9 encoder-tick: scripted quadrature ok (net 0, 32 coherent reads)\n");
     } else {
-        epic_harness_log("C9 encoder-tick: scripted quadrature MISMATCH (torn read or bad decode)\n");
+        EPIC_HARNESS_LOG_STATIC("C9 encoder-tick: scripted quadrature MISMATCH (torn read or bad decode)\n");
     }
     if (tear) {
-        epic_harness_log("C9 encoder-tick: class-G probe saw a TORN read\n");
+        EPIC_HARNESS_LOG_STATIC("C9 encoder-tick: class-G probe saw a TORN read\n");
     }
     if (tick_ok) {
-        epic_harness_log("C9 encoder-tick: tick survived (count advanced, no stalls)\n");
+        EPIC_HARNESS_LOG_STATIC("C9 encoder-tick: tick survived (count advanced, no stalls)\n");
     } else {
-        epic_harness_log("C9 encoder-tick: tick STALLED (GIE lost)\n");
+        EPIC_HARNESS_LOG_STATIC("C9 encoder-tick: tick STALLED (GIE lost)\n");
     }
 
     int ok = seq_ok && !tear && tick_ok;

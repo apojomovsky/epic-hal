@@ -116,17 +116,17 @@ static void rb_change_cb(uint8_t portb_value)
  */
 static void fail(uint8_t idx)
 {
+    /* One static RAM buffer, not stack locals or const pointers: the
+     * epic-cc build has no const-address form and no array allocas. */
     static const char hx[] = "0123456789ABCDEF";
-    char c[2];
+    static char c[5];
     g_fail++;
-    epic_harness_log("F");
-    c[0] = hx[(idx >> 4) & 0xF];
-    c[1] = '\0';
+    c[0] = 'F';
+    c[1] = hx[(idx >> 4) & 0xF];
+    c[2] = hx[idx & 0xF];
+    c[3] = '.';
+    c[4] = '\0';
     epic_harness_log(c);
-    c[0] = hx[idx & 0xF];
-    c[1] = '\0';
-    epic_harness_log(c);
-    epic_harness_log(".");
 }
 
 #define CHECK(cond, idx) do {         \
@@ -147,7 +147,9 @@ static void s_tx_noop(void)
  */
 static void tx_hex2(uint8_t v)
 {
-    char c[2];
+    /* One static RAM buffer, not stack locals or const pointers: the
+     * epic-cc build has no const-address form and no array allocas. */
+    static char c[2];
     uint8_t n = (v >> 4) & 0xFu;
     c[0] = (char)((n < 10u) ? ('0' + n) : ('A' + n - 10u));
     c[1] = '\0';
@@ -165,10 +167,10 @@ static void tx_hex2(uint8_t v)
  */
 static void send_frame(uint8_t idx)
 {
-    epic_harness_log("T");
+    EPIC_HARNESS_LOG_STATIC("T");
     tx_hex2(idx);
     tx_hex2((uint8_t)(idx ^ 0x5Au));
-    epic_harness_log(".");
+    EPIC_HARNESS_LOG_STATIC(".");
 }
 
 /**

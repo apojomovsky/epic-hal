@@ -208,6 +208,24 @@ hal_sources = [
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
 
+# The epic-cc conformant slice (HAL-3g): the subset the combo
+# integration firmwares need. The dispatch is the epiccc tier file
+# (USART + TIMER2 + EEPROM, same gating semantics as the full fan-out),
+# because the shared pic18_irq_dispatch.c strong-references every
+# peripheral handler and cannot link against a partial set.
+epiccc_sources = [
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer2.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c",
+  "pic18fxx5x-hal/src/core/pic18_irq.c",
+  "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
+  "pic18fxx5x-hal/src/epiccc/pic18fxx5x_wdt_sleep_epiccc.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_isr_vector.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+
 # The eight PIC18 module Makefiles agree exactly on this order, which
 # differs from pic18fxx5x-hal's own top-level Makefile (that one is a
 # separate, unrelated build, not the one this migration replaces). SPP
@@ -424,6 +442,22 @@ name        = "combo-uart-ssp-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
+
+# epic-cc slice (HAL-3g): USART + SSP + EEPROM under the TIMER2 ISR;
+# the tier clears the polled SSP/EEPROM flags and dispatches the tick
+# and USART sources, and the mdb harness reports the sim gate.
+[modules.epic-combo-uart-ssp.epiccc_hal_sources_by_family]
+PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_ssp.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_eeprom.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_tick_ssp_ee_epiccc.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
+
 [modules.epic-combo-multitimer]
 dir        = "tests/epic-combo-multitimer"
 sources    = []
@@ -458,6 +492,21 @@ name        = "combo-multitimer-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
+
+# epic-cc slice (HAL-3g): the three timer ISRs and the harness USART;
+# the tier dispatches TMR0/TMR1/TMR2 and the USART sources.
+[modules.epic-combo-multitimer.epiccc_hal_sources_by_family]
+PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer0.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer1.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_timers_epiccc.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
+
 [modules.epic-combo-adc-uart]
 dir        = "tests/epic-combo-adc-uart"
 sources    = []
@@ -491,6 +540,20 @@ name        = "combo-adc-uart-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
+
+# epic-cc slice (HAL-3g): polled ADC plus the TIMER1 overflow ISR and
+# the harness USART; the tier clears the latched conversion-done flag.
+[modules.epic-combo-adc-uart.epiccc_hal_sources_by_family]
+PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_adc.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer1.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_timer1_adc_epiccc.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
+
 [modules.epic-combo-rb-uart]
 dir        = "tests/epic-combo-rb-uart"
 sources    = []
@@ -521,6 +584,20 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 name        = "combo-rb-uart-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+
+# epic-cc slice (HAL-3g): the RB port-change ISR and TIMER2 tick under
+# the harness USART; the tier dispatches RB, TMR2 and the USART sources.
+[modules.epic-combo-rb-uart.epiccc_hal_sources_by_family]
+PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_rb_tick_epiccc.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
 
 [modules.epic-combo-eeprom-isr]
 dir        = "tests/epic-combo-eeprom-isr"
@@ -565,6 +642,23 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # waits and reads the 32-bit position (the class-G Disable/Restore
 # site) under the live 1 ms tick ISR, checking every read against the
 # scripted net and that the tick survived.
+
+# epic-cc slice (HAL-3g): the serial + tick + EEPROM tier and the
+# mdb harness, the sim-gate's report path under epic-cc.
+[modules.epic-combo-eeprom-isr.epiccc_hal_sources_by_family]
+PIC18Fxx5x = [
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer2.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c",
+  "pic18fxx5x-hal/src/core/pic18_irq.c",
+  "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
+  "pic18fxx5x-hal/src/epiccc/pic18fxx5x_wdt_sleep_epiccc.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_isr_vector.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc.c",
+  "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c",
+]
+
 [modules.epic-combo-encoder-tick]
 dir        = "tests/epic-combo-encoder-tick"
 sources    = []
@@ -592,6 +686,20 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 name        = "combo-encoder-tick-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+
+# epic-cc slice (HAL-3g): the encoder library is HAL-free (it reads the
+# port through the platform header), so the slice is the tick timebase
+# and the harness USART on epic-modbus's serial+tick tier.
+[modules.epic-combo-encoder-tick.epiccc_hal_sources_by_family]
+PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
 
 [modules.epic-combo-swuart-tick]
 dir        = "tests/epic-combo-swuart-tick"
@@ -624,6 +732,23 @@ name        = "combo-swuart-tick-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
+
+# epic-cc slice (HAL-3g): the software UART's CCP/Timer1 timebase plus
+# the tick's Timer2 and the harness USART; the tier mirrors
+# epic-swuart's CCP gates and adds the tick.
+[modules.epic-combo-swuart-tick.epiccc_hal_sources_by_family]
+PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_ccp.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer1.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_swuart_tick_epiccc.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
+
 [modules.epic-combo-tick-serial]
 dir        = "tests/epic-combo-tick-serial"
 sources    = []
@@ -653,6 +778,20 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 name        = "combo-tick-serial-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# epic-cc slice (HAL-3g): the C6 gate links the tick's Timer2 timebase
+# and epic-serial's USART stack, so the override is epic-modbus's
+# serial+tick tier; the mdb harness replaces the target no-op harness
+# because this module's epic-cc build exists to report the sim gate.
+[modules.epic-combo-tick-serial.epiccc_hal_sources_by_family]
+PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
 
 [modules.epic-combo-lcd-tick]
 dir        = "tests/epic-combo-lcd-tick"
@@ -689,6 +828,23 @@ name        = "combo-lcd-tick-sim"
 harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
+
+# epic-cc slice (HAL-3g): the serial + tick + EEPROM tier and the
+# mdb harness, the sim-gate's report path under epic-cc.
+[modules.epic-combo-lcd-tick.epiccc_hal_sources_by_family]
+PIC18Fxx5x = [
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer2.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c",
+  "pic18fxx5x-hal/src/core/pic18_irq.c",
+  "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
+  "pic18fxx5x-hal/src/epiccc/pic18fxx5x_wdt_sleep_epiccc.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_isr_vector.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc.c",
+  "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c",
+]
+
 [modules.epic-combo-rx-loopback]
 dir        = "tests/epic-combo-rx-loopback"
 sources    = []
@@ -724,6 +880,18 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 name        = "rx_loopback-sim"
 harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+
+# epic-cc slice (HAL-3g): the loopback runs on the USART alone, so the
+# slice is epic-serial's serial tier with the mdb harness reporting.
+[modules.epic-combo-rx-loopback.epiccc_hal_sources_by_family]
+PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_epiccc.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
 
 [modules.epic-adcfilter]
 dir        = "epic-adcfilter"
@@ -2510,6 +2678,23 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # write (the modbus gate's exact push), and verifies the frame is
 # byte-exact against the modbus gate's oracle (11 03 00 00 00 02 C6 9B)
 # with the tick still advancing and GIE alive.
+
+# epic-cc slice (HAL-3g): the serial + tick + EEPROM tier and the
+# mdb harness, the sim-gate's report path under epic-cc.
+[modules.epic-combo-tick-settings.epiccc_hal_sources_by_family]
+PIC18Fxx5x = [
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer2.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c",
+  "pic18fxx5x-hal/src/core/pic18_irq.c",
+  "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
+  "pic18fxx5x-hal/src/epiccc/pic18fxx5x_wdt_sleep_epiccc.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_isr_vector.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc.c",
+  "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c",
+]
+
 [modules.epic-combo-modbus-full]
 dir        = "tests/epic-combo-modbus-full"
 sources    = []
@@ -2538,6 +2723,23 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 name        = "combo-modbus-full-sim"
 harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+
+# epic-cc slice (HAL-3g): the serial + tick + EEPROM tier and the
+# mdb harness, the sim-gate's report path under epic-cc.
+[modules.epic-combo-modbus-full.epiccc_hal_sources_by_family]
+PIC18Fxx5x = [
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer2.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c",
+  "pic18fxx5x-hal/src/core/pic18_irq.c",
+  "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
+  "pic18fxx5x-hal/src/epiccc/pic18fxx5x_wdt_sleep_epiccc.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_isr_vector.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc.c",
+  "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c",
+]
 
 [modules.epic-combo-taskmgr-serial]
 dir        = "tests/epic-combo-taskmgr-serial"
@@ -2585,6 +2787,23 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # XC8 CI matrix automatically. The example keeps the config WDTE=OFF:
 # it has no WDT refresh of its own (the WDT driver is family HAL
 # territory), so a watchdog would reset the run.
+
+# epic-cc slice (HAL-3g): the serial + tick + EEPROM tier and the
+# mdb harness, the sim-gate's report path under epic-cc.
+[modules.epic-combo-taskmgr-serial.epiccc_hal_sources_by_family]
+PIC18Fxx5x = [
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer2.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c",
+  "pic18fxx5x-hal/src/core/pic18_irq.c",
+  "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
+  "pic18fxx5x-hal/src/epiccc/pic18fxx5x_wdt_sleep_epiccc.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_isr_vector.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc.c",
+  "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c",
+]
+
 [modules.epic-common]
 dir        = "epic-common"
 sources    = [

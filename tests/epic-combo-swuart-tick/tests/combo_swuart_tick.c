@@ -79,25 +79,27 @@ static uint16_t g_fail = 0u;
  */
 static void fail(uint8_t idx)
 {
+    /* One static RAM buffer, not stack locals or const pointers: the
+     * epic-cc build has no const-address form and no array allocas. */
     static const char hx[] = "0123456789ABCDEF";
-    char c[2];
+    static char c[5];
     g_fail++;
-    epic_harness_log("F");
-    c[0] = hx[(idx >> 4) & 0xF];
-    c[1] = '\0';
+    c[0] = 'F';
+    c[1] = hx[(idx >> 4) & 0xF];
+    c[2] = hx[idx & 0xF];
+    c[3] = '.';
+    c[4] = '\0';
     epic_harness_log(c);
-    c[0] = hx[idx & 0xF];
-    c[1] = '\0';
-    epic_harness_log(c);
-    epic_harness_log(".");
 }
 
 #define CHECK(cond, idx) do {         \
     if (!(cond)) fail(idx);            \
 } while (0)
 
-/* Known payload: 'A','B','C','D', shifted LSB-first on the wire. */
-static const uint8_t g_payload[TX_BYTES] = { 0x41u, 0x42u, 0x43u, 0x44u };
+/* Known payload: 'A','B','C','D', shifted LSB-first on the wire. RAM,
+ * not const: the write call needs the array's address as a value and
+ * the epic-cc build has no const-address form. */
+static uint8_t g_payload[TX_BYTES] = { 0x41u, 0x42u, 0x43u, 0x44u };
 
 /**
  * @brief Run the epic-swuart + epic-tick interleave gate (C11).
@@ -146,7 +148,8 @@ int main(void)
         uint8_t round_done = 0u;
         for (uint32_t i = 0; epic_harness_running(i); i++) {
             epic_harness_tick();
-            EPIC_WDT_Refresh();
+            /* No WDT refresh in the pump: the combo's epic-cc link
+             * set carries no WDT source and the mdb sim models none. */
             if (g_h.tx_count == 0u && g_h.tx_state == 0u) {
                 /* tx_count 0 and TX_IDLE (state 0): the ring drained
                  * and the last stop bit's compare event fired, so the
@@ -191,6 +194,6 @@ int main(void)
     CHECK(g_h.error_count == 0u, 0x0B);  /* RX side saw no noise */
     CHECK(tick_end > tick_start, 0x0C);  /* tick kept counting overall */
 
-    epic_harness_log("combo swuart+tick: payload drained under live tick\n");
+    EPIC_HARNESS_LOG_STATIC("combo swuart+tick: payload drained under live tick\n");
     return epic_harness_report(g_fail == 0u);
 }
