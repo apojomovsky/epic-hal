@@ -9,7 +9,7 @@
 # exactly what CI resolves and pulls.
 
 # ─────────────────────────── image identity ─────────────────────────
-.PHONY: vendor-link check-vendor image ci-image-push test xc8-build mdb-test mdb-epiccc mdb-hex target-ci exec audit shell bootstrap doctor setup-hooks pre-pr-check
+.PHONY: vendor-link check-vendor image ci-image-push test xc8-build mdb-test mdb-epiccc mdb-hex sim-epiccc target-ci exec audit shell bootstrap doctor setup-hooks pre-pr-check
 # Same tag-resolution formula CI and scripts/sim-test-local.sh already
 # use (read straight out of the Dockerfile's own ARGs), kept here in one
 # place so ci-image-push pushes to the exact tag CI resolves and pulls,

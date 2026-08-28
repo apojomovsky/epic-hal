@@ -197,7 +197,7 @@ Local run of the same gate the CI job runs:
 ```sh
 ln -s ~/projects/epic-cc epic-cc        # once per worktree
 make epiccc-build MODULE=pic16f87xa-hal MCU=16F877A
-make sim-epiccc HEX=build/epiccc/16F877A-blink.hex DEVICE=16F877A \
+make sim-epiccc HEX=build/epiccc/16F877A-blink.hex DEVICE=PIC16F877A \
   SAMPLES=12 STEPS=200000 \
   IRQ_EVERY=65536 IRQ_FLAG=INTCON:2 IRQ_ENABLE=INTCON:5
 ```

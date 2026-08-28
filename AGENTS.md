@@ -78,15 +78,15 @@ per-family job per family, each a call into the reusable
 `family-check.yml` (Docker pull, then real XC8 cross-compile for every
 MCU variant of that family, real `mdb`/MPLAB SIM runs that check actual
 register/UART output not just "compiled", the device-data audits, and
-the isolated bundle-gate build), an `epiccc-gate` job that builds
-hexes with a pinned epic-cc driver and the release bundle's clang,
-then verifies them in epic-cc's own simulator (`crates/sim`, via
-`scripts/sim-runner`: the blink PORTB toggle gate; the tick and 4550
-gates wait on epic-cc#173/#125/#126, see DEVELOPMENT.md). This is the
-"did a HAL change break against a known good compiler" direction; how
-to bump the pin: DEVELOPMENT.md. The job is fully public: it pulls no
-image, Microchip or GHCR. The family jobs pull the private image; no
-job ever builds it.
+the isolated bundle-gate build), an `epiccc-gate` job that builds the
+877A and 887 blink and tick hexes with a pinned epic-cc driver and the
+release bundle's clang, then verifies them in epic-cc's own simulator
+(`crates/sim`, via `scripts/sim-runner`: the blink PORTB toggle gate;
+the tick and 4550 gates wait on epic-cc#173/#125/#126, see
+DEVELOPMENT.md). This is the "did a HAL change break against a known
+good compiler" direction; how to bump the pin: DEVELOPMENT.md. The
+epiccc-gate job is fully public: it pulls no image, Microchip or GHCR.
+The family jobs pull the private image; no job ever builds it.
 
 ## Picking up work
 

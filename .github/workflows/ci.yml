@@ -274,6 +274,13 @@ jobs:
           test "$expected" = "$actual"
           unzip -q "$zip"
 
+      - name: Report the clang identity used
+        if: steps.noncode.outputs.non_code != 'true'
+        run: |
+          clang="${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/bin/clang"
+          echo "clang: $("$clang" --version | head -1)"
+          echo "clang: $("$clang" --version | head -1)" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Build the sim runner
         if: steps.noncode.outputs.non_code != 'true'
         run: cargo build --release --locked
@@ -291,8 +298,6 @@ jobs:
         run: |
           make epiccc-build MODULE=pic16f87xa-hal MCU=16F877A EPIC_CC_HOST=1
           make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
-          make epiccc-build MODULE=epic-tick MCU=16F877A EPIC_CC_HOST=1
-          make epiccc-build MODULE=epic-tick MCU=16F887 EPIC_CC_HOST=1
 
       # The sim gates: the mdb toggle contract, run on crates/sim's CPU.
       # Watch PORTB bit 0 across the samples, require a transition. Blink

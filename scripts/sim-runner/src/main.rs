@@ -7,7 +7,7 @@
 //! firmware's own ISR does the rest, exactly as on silicon, so what a
 //! tick gate proves is the interrupt path, not an oscillator.
 
-use device::Core;
+use device::{Core, Device};
 use pic14_sim::{parse_hex, parse_hex_pic18, Pic14, Pic18};
 use std::process::ExitCode;
 
@@ -31,6 +31,8 @@ const PIC14_REGS: Regs = Regs {
     pir1: 0x0C,
     pie1: 0x8C,
 };
+// Exercised once the 4550 smoke lands (epic-hal#60, blocked on
+// epic-cc#125/#126).
 const PIC18_REGS: Regs = Regs {
     portb: 0xF81,
     latb: Some(0xF8A),
@@ -54,11 +56,18 @@ enum Sim {
 }
 
 impl Sim {
-    fn build(core: Core, hex: &str) -> Result<Sim, String> {
-        match core {
+    /// Build from the resolved device, not just its core: the simulator
+    /// must use the device's real bank geometry. The two families here
+    /// happen to share `ram_banks` today, which is why the blink gates
+    /// passed when this hard-coded `PIC16F877A`; wiring the geometry
+    /// through `with_device` removes the silent-mis-simulation hazard a
+    /// future part would hit (#115 insistence on not shipping silent
+    /// geometry bugs).
+    fn build(dev: &'static Device, hex: &str) -> Result<Sim, String> {
+        match dev.core {
             Core::Pic14 => {
                 let prog = parse_hex(hex);
-                Ok(Sim::Pic14(Pic14::new(prog), PIC14_REGS))
+                Ok(Sim::Pic14(Pic14::with_device(dev, prog), PIC14_REGS))
             }
             Core::Pic18 => {
                 let prog = parse_hex_pic18(hex);
@@ -92,6 +101,14 @@ impl Sim {
     /// the enable bit must be set for the flag to latch, and the vector is
     /// only taken when GIE is set. A flag latched while GIE is masked
     /// stays set, so the ISR services it on a later injection.
+    ///
+    /// Direct physical RAM via `ram()/ram_mut()[phys]`, not the sim's
+    /// banked instruction addressing: this register table is physical
+    /// (`PIC14_REGS` 0x06/0x0B/0x0C/0x8C, `PIC18_REGS` 0xF81/...), matching
+    /// `crates/device` and the DS pages the gate cites. The banked path
+    /// is the CPU's `BANKSEL + read_f` for firmware instructions; the
+    /// gate checks the memory that path writes into, which is also the
+    /// place the banking bug #173 was filed against.
     fn inject(&mut self, irq: &Irq) {
         let regs = self.regs();
         let (faddr, fbit) = irq.flag;
@@ -104,7 +121,10 @@ impl Sim {
             if std::env::var_os("SIM_RUNNER_DEBUG").is_some() {
                 let ic = self.reg_byte(regs.intcon);
                 let p1 = self.reg_byte(regs.pir1);
-                eprintln!("inject: skipped (enable off) INTCON={ic:02X} PIR1={p1:02X} PIE1={:02X}", self.reg_byte(regs.pie1));
+                eprintln!(
+                    "inject: skipped (enable off) INTCON={ic:02X} PIR1={p1:02X} PIE1={:02X}",
+                    self.reg_byte(regs.pie1)
+                );
             }
             return;
         }
@@ -128,6 +148,7 @@ impl Sim {
         }
     }
 
+    /// Read a watched bit from physical RAM (same reasoning as `inject`).
     fn watch_bit(&self, addr: u16, bit: u8) -> u8 {
         match self {
             Sim::Pic14(p, _) => (p.ram()[addr as usize] >> bit) & 1,
@@ -205,6 +226,14 @@ fn parse_args() -> Result<Args, String> {
     let hex = hex.ok_or("--hex is required")?;
     let device = device.ok_or("--device is required")?;
     let watch = watch.ok_or("--watch is required (SFR:BIT)")?;
+    if samples == 0 || steps == 0 {
+        return Err("--samples and --steps must be >0".into());
+    }
+    if let Some(v) = irq_every {
+        if v == 0 {
+            return Err("--irq-every must be >0".into());
+        }
+    }
     if irq_every.is_some() != (irq_flag.is_some() && irq_enable.is_some()) {
         return Err("--irq-every needs --irq-flag and --irq-enable (and vice versa)".into());
     }
@@ -243,7 +272,7 @@ fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    let mut sim = match Sim::build(dev.core, &hex) {
+    let mut sim = match Sim::build(dev, &hex) {
         Ok(s) => s,
         Err(e) => {
             eprintln!("sim-runner: {e}");
