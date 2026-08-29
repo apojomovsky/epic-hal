@@ -31,12 +31,13 @@ FAMILIES="pic16f87xa pic18fxx5x pic16f193x pic16f88x"
 usage() {
     cat <<EOF
 usage: install.sh <part-or-family> [<version>] [--part <part>] [--modules <a,b>] \\
-                   [--name <name>] [--force]
+                   [--name <name>] [--force] [--with-xc8] [--toolchain epic-cc|xc8]
        install.sh --list | --help
 
 A part (16F877A; case and a PIC/p prefix do not matter) picks its family
 automatically; a family slug (pic16f87xa) installs that family's bundle.
 families: $FAMILIES
+default toolchain is epic-cc (no Microchip download); pass --with-xc8 for the XC8 alternate.
 EOF
 }
 
@@ -56,6 +57,7 @@ part=
 modules=
 name=myapp
 force=0
+toolchain=epic-cc
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -70,6 +72,17 @@ while [ "$#" -gt 0 ]; do
         --force)
             force=1
             shift
+            ;;
+        --with-xc8)
+            toolchain=xc8
+            shift
+            ;;
+        --toolchain)
+            case "$2" in
+                epic-cc|xc8) toolchain="$2" ;;
+                *) echo "install.sh: --toolchain must be epic-cc or xc8" >&2; exit 2 ;;
+            esac
+            shift 2
             ;;
         --part)
             part="$2"
@@ -248,42 +261,52 @@ fi
     --part "$part" \
     --modules "$modules" \
     --name "$name" \
-    --bundle "$DEST"
+    --bundle "$DEST" \
+    --toolchain "$toolchain"
 
 echo
-echo "Epic HAL $version ($family) installed in $DEST"
+echo "Epic HAL $version ($family) installed in $DEST (toolchain=$toolchain)"
 echo "Scaffolded project: ./$name.X"
-# Report the real-target prerequisites UP FRONT, before the user runs
-# make, so a missing compiler or device pack is not a make-time
-# surprise. The device pack cannot be fetched by a script (Microchip's
-# CDN blocks it), so a missing pack names the exact fix.
-xc8_ok=0
-dfp_ok=0
-dfp_name=
-if command -v xc8-cc >/dev/null 2>&1; then
-    xc8_ok=1
-    xc8_root="$(dirname "$(dirname "$(command -v xc8-cc)")")"
-    dfp_name="$(awk '/^EPIC_HAL_DFP[[:space:]]*:=/{ print $NF }' "$DEST/epic-hal.mk")"
-    if [ -d "$xc8_root/pic/packs/$dfp_name/xc8" ]; then
-        dfp_ok=1
-    fi
-fi
-if [ "$xc8_ok" -eq 1 ] && [ "$dfp_ok" -eq 1 ]; then
-    echo "XC8 and the $dfp_name device pack are ready. Build it with:  make"
-elif [ "$xc8_ok" -eq 1 ]; then
-    dfp_version="$(awk '/^EPIC_HAL_DFP_VERSION[[:space:]]*:=/{ print $NF }' "$DEST/epic-hal.mk")"
-    echo "xc8-cc is on PATH, but the $dfp_name device pack is missing." >&2
-    if [ -n "$dfp_version" ]; then
-        echo "Download it (Microchip's official pack CDN):" >&2
-        echo "  curl -fsSL -o $dfp_name.$dfp_version.atpack \\" >&2
-        echo "    https://packs.download.microchip.com/$dfp_name.$dfp_version.atpack" >&2
+if [ "$toolchain" = "epic-cc" ]; then
+    # Epic-cc is the default: zero Microchip downloads.
+    if command -v epic-cc >/dev/null 2>&1; then
+        echo "epic-cc found on PATH. Build it with:  make"
     else
-        echo "Download it from https://packs.download.microchip.com/ (any recent version)." >&2
+        echo "epic-cc not found on PATH. Install it from https://github.com/apojomovsky/epic-cc/releases" >&2
+        echo "  or build it: cargo install --git https://github.com/apojomovsky/epic-cc epic-cc" >&2
+        echo "then:  make   (or: make TOOLCHAIN=epic-cc)" >&2
     fi
-    echo "then unzip it into $xc8_root/pic/packs/, and run:  make" >&2
+    echo "XC8 alternate:  ./install.sh --with-xc8  or  make TOOLCHAIN=xc8"
 else
-    echo "xc8-cc not found on PATH. Add MPLAB XC8's bin/ to PATH, e.g.:" >&2
-    echo "  export PATH=\$PATH:/opt/microchip/xc8/v4.00/bin" >&2
-    echo "then:  make" >&2
+    # XC8 alternate: keep the existing reporting.
+    xc8_ok=0
+    dfp_ok=0
+    dfp_name=
+    if command -v xc8-cc >/dev/null 2>&1; then
+        xc8_ok=1
+        xc8_root="$(dirname "$(dirname "$(command -v xc8-cc)")")"
+        dfp_name="$(awk '/^EPIC_HAL_DFP[[:space:]]*:=/{ print $NF }' "$DEST/epic-hal.mk")"
+        if [ -d "$xc8_root/pic/packs/$dfp_name/xc8" ]; then
+            dfp_ok=1
+        fi
+    fi
+    if [ "$xc8_ok" -eq 1 ] && [ "$dfp_ok" -eq 1 ]; then
+        echo "XC8 and the $dfp_name device pack are ready. Build it with:  make TOOLCHAIN=xc8"
+    elif [ "$xc8_ok" -eq 1 ]; then
+        dfp_version="$(awk '/^EPIC_HAL_DFP_VERSION[[:space:]]*:=/{ print $NF }' "$DEST/epic-hal.mk")"
+        echo "xc8-cc is on PATH, but the $dfp_name device pack is missing." >&2
+        if [ -n "$dfp_version" ]; then
+            echo "Download it (Microchip's official pack CDN):" >&2
+            echo "  curl -fsSL -o $dfp_name.$dfp_version.atpack \\" >&2
+            echo "    https://packs.download.microchip.com/$dfp_name.$dfp_version.atpack" >&2
+        else
+            echo "Download it from https://packs.download.microchip.com/ (any recent version)." >&2
+        fi
+        echo "then unzip it into $xc8_root/pic/packs/, and run:  make TOOLCHAIN=xc8" >&2
+    else
+        echo "xc8-cc not found on PATH. Add MPLAB XC8's bin/ to PATH, e.g.:" >&2
+        echo "  export PATH=\$PATH:/opt/microchip/xc8/v4.00/bin" >&2
+        echo "then:  make TOOLCHAIN=xc8" >&2
+    fi
 fi
 echo "Or open ./$name.X in MPLAB X or the VS Code extension."
