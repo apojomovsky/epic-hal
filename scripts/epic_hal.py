@@ -81,6 +81,7 @@ def cmd_init(args) -> int:
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="epic-hal")
     sub = p.add_subparsers(dest="cmd", required=True)
+    ip = sub.add_parser("init", help="scaffold a new PIC project")
     ip.add_argument("--family")
     ip.add_argument("--part")
     ip.add_argument("--modules")

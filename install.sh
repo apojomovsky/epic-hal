@@ -78,6 +78,7 @@ while [ "$#" -gt 0 ]; do
             shift
             ;;
         --toolchain)
+            if [ $# -lt 2 ] || [ -z "${2:-}" ]; then echo "install.sh: --toolchain requires an argument (epic-cc or xc8)" >&2; exit 2; fi
             case "$2" in
                 epic-cc|xc8) toolchain="$2" ;;
                 *) echo "install.sh: --toolchain must be epic-cc or xc8" >&2; exit 2 ;;
@@ -85,14 +86,17 @@ while [ "$#" -gt 0 ]; do
             shift 2
             ;;
         --part)
+            if [ $# -lt 2 ] || [ -z "${2:-}" ]; then echo "install.sh: --part requires an argument" >&2; exit 2; fi
             part="$2"
             shift 2
             ;;
         --modules)
+            if [ $# -lt 2 ] || [ -z "${2:-}" ]; then echo "install.sh: --modules requires an argument" >&2; exit 2; fi
             modules="$2"
             shift 2
             ;;
         --name)
+            if [ $# -lt 2 ] || [ -z "${2:-}" ]; then echo "install.sh: --name requires an argument" >&2; exit 2; fi
             name="$2"
             shift 2
             ;;
