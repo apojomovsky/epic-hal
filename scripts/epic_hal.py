@@ -67,7 +67,7 @@ def cmd_init(args) -> int:
             return 2
         full_modules.append(by_short[m])
     try:
-        epic_hal_init.init_project(manifest, family, part, full_modules, bundle, out_dir, name)
+        epic_hal_init.init_project(manifest, family, part, full_modules, bundle, out_dir, name, toolchain=getattr(args, "toolchain", "epic-cc"))
     except epic_hal_init.SelectionError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -89,6 +89,8 @@ def main(argv=None) -> int:
     ip.add_argument("-o", "--output", default=None,
                     help="output dir (default: current directory)")
     ip.add_argument("--name", default="myapp")
+    ip.add_argument("--toolchain", choices=["epic-cc", "xc8"], default="epic-cc",
+                    help="toolchain for the scaffolded Makefile (default: epic-cc)")
     ip.set_defaults(func=cmd_init)
     args = p.parse_args(argv)
     return args.func(args)

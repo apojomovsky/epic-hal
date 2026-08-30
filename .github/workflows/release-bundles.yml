@@ -261,10 +261,10 @@ jobs:
               cd "$base/install-$part"
               EPIC_HAL_BASE_URL="file:///tmp/bundles" \
               EPIC_HAL_DIR="$base/install-$part/epic-hal" \
-                sh "$base/install.sh" "$part" "${{ needs.build.outputs.version }}"
+                sh "$base/install.sh" "$part" "${{ needs.build.outputs.version }}" --with-xc8
             ) || ! docker run --rm -v "$PWD:/work" -w /work \
                 "$EPIC_TOOLCHAIN_IMAGE" \
-                bash -c "cd /work/install-$part && make && test -f build/myapp.hex"; then
+                bash -c "cd /work/install-$part && make TOOLCHAIN=xc8 && test -f build/myapp.hex"; then
               echo "FAIL install-$part"
               fail=1
             fi

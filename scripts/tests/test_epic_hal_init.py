@@ -126,14 +126,24 @@ class TestEmitMakefile(unittest.TestCase):
         # clear make-time error, not a cryptic failure.
         self.assertNotIn("/opt/microchip/xc8/v4.00/pic/packs/", mk)
         self.assertIn("command -v xc8-cc", mk)
+        self.assertIn("command -v epic-cc", mk)
+        self.assertIn("TOOLCHAIN ?= epic-cc", mk)
         self.assertIn("XC8_ROOT := $(patsubst %/bin/,%,$(dir $(shell command -v xc8-cc)))", mk)
         self.assertIn("$(wildcard $(DFP))", mk)
+        self.assertIn("epic-cc --device", mk)
         # Library-and-small-app noise is silenced; 1393 is not.
         for flag in ("-Wno-520", "-Wno-2053", "-Wno-2098", "-Wno-759",
                      "-Wno-1510", "-Wno-unused-function"):
             self.assertIn(flag, mk)
         self.assertNotIn("-Wno-1393", mk)
 
+    def test_makefile_toolchain_param(self):
+        mk_xc8 = epic_hal_init.emit_makefile(
+            self.m, "PIC16F87XA", "16F877A", ["serial"], "../..", "myapp", toolchain="xc8")
+        self.assertIn("TOOLCHAIN ?= xc8", mk_xc8)
+        mk_cc = epic_hal_init.emit_makefile(
+            self.m, "PIC16F87XA", "16F877A", ["serial"], "../..", "myapp", toolchain="epic-cc")
+        self.assertIn("TOOLCHAIN ?= epic-cc", mk_cc)
 class TestEmitMainC(unittest.TestCase):
     def setUp(self): self.m = load()
 

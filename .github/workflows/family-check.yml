@@ -326,13 +326,15 @@ jobs:
       # exist (PIC16F87XA, PIC18Fxx5x), else the family's first
       # available modules (PIC16F193X ships only swuart+fsm, so a
       # hardcoded serial,tick would fail there). The scaffolded project
-      # is built the way a consumer builds it: the QUICKSTART Makefile
-      # path (make, which builds build/myapp.hex), which exercises the
-      # emitted Makefile,
+      # is built the way a consumer builds it on the XC8 alternate:
+      # `make TOOLCHAIN=xc8` exercises the emitted Makefile,
       # epic-hal.mk resolution, and the selected module subset on the
-      # selected part. prjMakefilesGenerator.sh cannot run headless in
-      # the toolchain image: its Java make-generator crashes with
-      # NoClassDefFoundError before reading the project, and the
+      # selected part. The default epic-cc path has no container image
+      # in CI (the toolchain image is XC8-only), so the XC8 alternate
+      # is exercised here and the epic-cc gate covers the default. The
+      # release-bundles.yml installer gate does the same. prjMakefilesGenerator.sh
+      # cannot run headless in the toolchain image: its Java make-generator
+      # crashes with NoClassDefFoundError before reading the project, and the
       # reference project's own gate hides that behind `|| true` and
       # builds from committed makefiles. The .X itself is validated by
       # the unit tests and by the scaffold output here; MPLAB X's
@@ -360,7 +362,7 @@ jobs:
           echo "scaffold: family=$FAMILY part=$PART modules=$MODS bundle=$BUNDLE_DIR"
           python3 scripts/epic_hal.py init \
             --family "$FAMILY" --part "$PART" --modules "$MODS" \
-            --bundle "$BUNDLE_DIR" -o "$BUNDLE_DIR/scaffold" --name myapp
+            --bundle "$BUNDLE_DIR" -o "$BUNDLE_DIR/scaffold" --name myapp --toolchain xc8
           docker run --rm -v "$PWD:/work" -w /work \
             "$EPIC_TOOLCHAIN_IMAGE" \
-            bash -c 'cd "'"$BUNDLE_DIR"'/scaffold" && make && ls -la build/myapp.hex'
+            bash -c 'cd "'"$BUNDLE_DIR"'/scaffold" && make TOOLCHAIN=xc8 && ls -la build/myapp.hex'

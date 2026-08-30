@@ -11,7 +11,7 @@
 
 <p align="center">
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html) [![Release](https://img.shields.io/github/v/release/apojomovsky/epic-hal)](https://github.com/apojomovsky/epic-hal/releases) [![ci](https://github.com/apojomovsky/epic-hal/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epic-hal/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Toolchain: epic-cc](https://img.shields.io/badge/toolchain-epic--cc-blue.svg)](https://github.com/apojomovsky/epic-cc) [![Toolchain: MPLAB XC8](https://img.shields.io/badge/toolchain-MPLAB%20XC8-green.svg)](https://www.microchip.com/mpgb/xc8.html) [![Release](https://img.shields.io/github/v/release/apojomovsky/epic-hal)](https://github.com/apojomovsky/epic-hal/releases) [![ci](https://github.com/apojomovsky/epic-hal/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epic-hal/actions/workflows/ci.yml)
 
 </p>
 
@@ -38,13 +38,32 @@ Then either build it or open it:
 
     make
 
-`make` produces `build/myapp.hex` (all compiler intermediates stay in
-`build/`, and the scaffolded `.gitignore` ignores it); `make clean`
-removes it. Or open `myapp.X` in MPLAB X or the MPLAB extension for VS
-Code and Build there.
+`make` builds with **epic-cc** (`build/myapp.hex`, intermediates stay in
+`build/`, `.gitignore` ignores it; `make clean` removes it) with **no**
+Microchip download, no device pack, and no `.X` required. Or open
+`myapp.X` in MPLAB X or the MPLAB extension for VS Code and Build there.
 
 That needs two things installed, and the one-liner reports exactly which are
 missing (with the commands to fix them) after scaffolding:
+
+1. **epic-cc** (bundled `clang 20.1.8`, no `/opt/microchip` step):
+   <https://github.com/apojomovsky/epic-cc/releases> or build from source:
+
+       cargo install --git https://github.com/apojomovsky/epic-cc epic-cc
+
+   Add its `bin/` to `PATH`.
+
+2. **python3** (stdlib only, for the scaffolder). The installer checks for
+   it and tells you how to finish by hand if it is missing.
+
+### With MPLAB XC8 (alternate toolchain)
+
+Scaffold with XC8 instead (still fully supported):
+
+    curl -fsSL https://github.com/apojomovsky/epic-hal/releases/latest/download/install.sh | sh -s -- 16F877A --with-xc8
+    make TOOLCHAIN=xc8
+
+That needs XC8 plus its device pack:
 
 1. **MPLAB XC8** (the free tier is enough):
    <https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers>.
@@ -72,10 +91,6 @@ missing (with the commands to fix them) after scaffolding:
          -d /opt/microchip/xc8/v4.00/pic/packs/Microchip.PIC16Fxxx_DFP
 
    (Or use MPLAB X's Tools > Packs manager, which does this for you.)
-
-The scaffolder is a plain Python 3 script (stdlib only), so the one-liner
-also needs `python3` on PATH; the installer checks for it and tells you how
-to finish by hand if it is missing.
 
 Pin a release with `... | sh -s -- 16F877A v0.1.0`, choose your modules
 with `--modules` (e.g. `serial,tick`; the default is `tick`, which keeps
@@ -155,7 +170,7 @@ step.
 
 ### Or skip the IDE: a six-line Makefile
 
-Just `xc8-cc` and `make`, no MPLAB X and no license:
+Just `epic-cc` and `make`, no MPLAB X, no Microchip download, no license:
 
 ```make
 EPIC_HAL_DIR := third_party/epic-hal
@@ -167,8 +182,11 @@ SRCS := main.c $(EPIC_HAL_SRCS)
 CFLAGS += $(EPIC_HAL_CFLAGS)
 
 app.hex: $(SRCS)
-	xc8-cc $(CFLAGS) $^ -o $@ -ginhx32
+	epic-cc --device p16f877a $(CFLAGS) $^ -o $@
 ```
+
+XC8 alternate: `xc8-cc $(CFLAGS) $^ -o $@ -ginhx32` with `TOOLCHAIN=xc8` (and
+its device pack, see above).
 
 Run `make`, program the result. Dependencies resolve automatically
 (`modbus` pulls in `serial` and `tick`), and asking for a module on a
