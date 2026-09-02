@@ -55,7 +55,9 @@ ctest --test-dir build --output-on-failure   # 13 test cases, 156 checks, all pa
 The module's example (`examples/example_pid.c`) is target-only: a
 setpoint step with manual/auto transfer, every control step logged over
 the UART, built for real parts through the manifest's example slot (see
-Real target below).
+Real target below). The log is composed with the `put_*` API (no
+`printf`): the column padding is explicit, so the bytes are identical
+under XC8 and epic-cc.
 
 ### Real target (XC8)
 

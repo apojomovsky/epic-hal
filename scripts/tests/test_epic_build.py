@@ -87,12 +87,23 @@ includes   = ["include"]
 depends_on = ["epic-math"]
 needs_hal  = false
 
+epiccc_hal_sources_by_family.PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+
 [modules.epic-pid.supported]
 PIC16F87XA = ["16F877A"]
 
 [modules.epic-pid.example.PIC16F87XA]
-name    = "pid-sizecheck"
-sources = ["mcu/target_sizecheck.c"]
+name    = "pid"
+sources = ["examples/example_pid.c"]
+hal     = true
+depends_on = ["epic-tick", "epic-serial"]
 
 [modules.epic-encoder]
 dir        = "epic-encoder"
@@ -419,15 +430,27 @@ class TestEpicCcToolchain(unittest.TestCase):
             build_dir="build", dfp_dir="", toolchain="epic-cc",
         )
 
-    def test_pid_links_the_host_math_mul_not_the_pic16_asm_backend(self):
+    def test_pid_epiccc_links_the_host_math_mul_not_the_pic16_asm_backend(self):
         # pid.c's real epic_pid_update calls epic_math_mul_s16; the pic16
         # asm backend needs XC8's xc.h, so the epic-cc path links the
         # portable host C implementation instead (the independent oracle).
         s = self.pid_script()
         self.assertIn("epic-math/src/host/epic_math_mul.c", s)
         self.assertNotIn("src/pic16/epic_math_mul.c", s)
-        self.assertIn("epic-pid/mcu/target_sizecheck_epiccc.c", s)
-        self.assertNotIn("epic-pid/examples/", s)
+
+    def test_pid_epiccc_builds_the_full_example_with_the_serial_tick_slice(self):
+        # epic-pid's epiccc_hal_sources_by_family override (HAL-3b) puts
+        # the full example on the epic-cc path: the serial + tick tier
+        # replaces the sizecheck driver, and the example's tick/serial
+        # deps join the link.
+        s = self.pid_script()
+        self.assertIn("epic-pid/examples/example_pid.c", s)
+        self.assertNotIn("epic-pid/mcu/target_sizecheck_epiccc.c", s)
+        self.assertIn("pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c", s)
+        self.assertIn("epic-tick/src/epic_tick.c", s)
+        self.assertIn("epic-serial/src/epic_serial.c", s)
+        self.assertIn("epic-math/src/host/epic_math_mul.c", s)
+        self.assertNotIn("epic-math/src/common/", s)
 
     def test_pid_epiccc_drops_the_pic16_math_sources(self):
         # The math SOURCES that hit the pic16 asm dialect are dropped for
