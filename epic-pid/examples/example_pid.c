@@ -6,7 +6,6 @@
  * TX/RX pins to watch the log. */
 
 #include <stdint.h>
-#include <stdio.h>
 
 #include "pid.h"
 #include "epic_tick.h"
@@ -19,6 +18,46 @@
 #define STEP_SETPOINT 1u          /* step 1: setpoint 0 -> 100 */
 #define STEP_MANUAL   30u         /* steps 30..39: operator in MANUAL */
 #define STEP_RESUME   40u         /* step 40: back to AUTO */
+
+/**
+ * @brief Emit v right-aligned in a width-wide decimal field.
+ */
+static void put_u16_field(uint16_t v, uint8_t width)
+{
+    uint8_t digits = 1u;
+    uint16_t t = v;
+    while (t >= 10u) {
+        digits++;
+        t /= 10u;
+    }
+    while (digits < width) {
+        epic_serial_put_char(' ');
+        digits++;
+    }
+    epic_serial_put_u16(v);
+}
+
+/**
+ * @brief Emit v right-aligned in a width-wide signed decimal field.
+ */
+static void put_i16_field(int16_t v, uint8_t width)
+{
+    int32_t t = v;
+    uint8_t digits = 1u;
+    if (t < 0) {
+        digits++;
+        t = -t;
+    }
+    while (t >= 10) {
+        digits++;
+        t /= 10;
+    }
+    while (digits < width) {
+        epic_serial_put_char(' ');
+        digits++;
+    }
+    epic_serial_put_i16(v);
+}
 
 /**
  * @brief Run the repeating setpoint-step scenario forever, logging each step.
@@ -34,7 +73,9 @@ int main(void)
      * anti-windup release and a clean bumpless MANUAL to AUTO handoff in
      * the log. Gains are integer Q8.8 literals, so no FP runtime is
      * linked on 8-bit targets. */
-    epic_pid_t pid;
+    /* Static: a stack-local address cannot cross a call boundary on the
+     * stackless epic-cc path (the same shape as epic-serial's example). */
+    static epic_pid_t pid;
     epic_pid_init(&pid, 512, 128, 0, (int16_t)-200, (int16_t)200);
 
     int16_t setpoint = 0;
@@ -51,7 +92,7 @@ int main(void)
 
         uint16_t s = step % SCENARIO_LEN;
         if (s == 0u) {
-            printf(" step   set   meas   out  mode\n");
+            epic_serial_put_str(" step   set   meas   out  mode\n");
             setpoint = 0;
             measurement = 0;
             epic_pid_reset(&pid); /* re-arm the loop for the next run */
@@ -74,8 +115,23 @@ int main(void)
          * drives the measurement a quarter of the way each step. */
         measurement += (int16_t)((output - measurement) / 4);
 
-        printf("%4u %5d %5d %5d %s\n", (unsigned)step, setpoint, measurement,
-               output, auto_mode ? "AUTO" : "MANUAL");
+        /* Right-aligned columns, composed: the put_* API has no width or
+         * precision (epic-hal#91), so the field padding is explicit to
+         * keep the log byte-identical to the XC8 printf table. */
+        put_u16_field(step, 4u);
+        epic_serial_put_char(' ');
+        put_i16_field(setpoint, 5u);
+        epic_serial_put_char(' ');
+        put_i16_field(measurement, 5u);
+        epic_serial_put_char(' ');
+        put_i16_field(output, 5u);
+        epic_serial_put_char(' ');
+        if (auto_mode) {
+            epic_serial_put_str("AUTO");
+        } else {
+            epic_serial_put_str("MANUAL");
+        }
+        epic_serial_put_str("\n");
         step++;
     }
 }

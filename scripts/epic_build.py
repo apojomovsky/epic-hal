@@ -159,36 +159,51 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
                                    toolchain=toolchain)
     # Epic-cc drivers: every module with a target_sizecheck_epiccc.c uses it
     # on the epic-cc path (real module logic where the compiler supports it,
-    # a footprint probe where a filed isel gap remains). XC8 keeps the full
+    # a footprint probe where a filed isel gap remains). A module with its
+    # own epiccc_hal_sources_by_family override for this family builds the
+    # full example instead (epic-pid on PIC16, HAL-3b). XC8 keeps the full
     # example.
-    if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
+    epiccc_driver = (toolchain == "epic-cc"
+                     and module in ("epic-fsm", "epic-pid", "epic-encoder",
+                                    "epic-debounce", "epic-bus", "epic-lcd",
+                                    "epic-mcp23x17", "epic-adcfilter")
+                     and variant == "target")
+    swap = True
+    if epiccc_driver:
         mod = manifest.modules[module]
-        sizecheck = f"{mod.dir}/mcu/target_sizecheck_epiccc.c"
         example = manifest.example_for(module, fam.name, mcu)
-        if example is not None:
-            ex_srcs = {f"{mod.dir}/{s}" for s in example.sources}
-            if example.variants and mcu in example.variants:
-                ex_srcs = {f"{mod.dir}/{s}" for s in example.variants[mcu].sources}
-            sources = [s for s in sources if s not in ex_srcs]
-            if sizecheck not in sources:
-                sources.append(sizecheck)
-        # Pure-logic drivers (fsm/pid/encoder/debounce) and the HAL-free
-        # lcd/adcfilter drop the HAL slice; bus/mcp23x17 keep it (GPIO+SSP).
-        if module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-lcd", "epic-adcfilter"):
-            sources = [s for s in sources if not s.startswith("pic16f") and not s.startswith("pic18") and "pic16f193x" not in s and "epic-common/src/core/epic_harness" not in s]
-        # Drop tick/serial/math (the example's deps): timer2/usart isel is
-        # #86's domain, and the pic16 math asm backend needs XC8's xc.h.
-        sources = [s for s in sources if "epic-tick" not in s and "epic-serial" not in s and "epic-math" not in s]
+        override = (mod.epiccc_hal_sources_by_family or {}).get(fam.name)
+        full_example = example is not None and any(
+            "examples/" in s for s in example.sources)
+        swap = not (override and full_example)
+        if swap:
+            sizecheck = f"{mod.dir}/mcu/target_sizecheck_epiccc.c"
+            if example is not None:
+                ex_srcs = {f"{mod.dir}/{s}" for s in example.sources}
+                if example.variants and mcu in example.variants:
+                    ex_srcs = {f"{mod.dir}/{s}" for s in example.variants[mcu].sources}
+                sources = [s for s in sources if s not in ex_srcs]
+                if sizecheck not in sources:
+                    sources.append(sizecheck)
+            # Pure-logic drivers (fsm/pid/encoder/debounce) and the HAL-free
+            # lcd/adcfilter drop the HAL slice; bus/mcp23x17 keep it (GPIO+SSP).
+            if module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-lcd", "epic-adcfilter"):
+                sources = [s for s in sources if not s.startswith("pic16f") and not s.startswith("pic18") and "pic16f193x" not in s and "epic-common/src/core/epic_harness" not in s]
+            # Drop tick/serial/math (the example's deps): timer2/usart isel is
+            # #86's domain, and the pic16 math asm backend needs XC8's xc.h.
+            sources = [s for s in sources if "epic-tick" not in s and "epic-serial" not in s and "epic-math" not in s]
         # pid.c calls epic_math_mul_s16 for real now; link the host C-path
         # implementation (the portable oracle), not the pic16 asm backend.
         if module == "epic-pid":
+            if not swap:
+                sources = [s for s in sources if "epic-math/src" not in s]
             sources.append("epic-math/src/host/epic_math_mul.c")
     includes = manifest.includes_for(module, mcu)
     # Drop tick/serial includes the full example pulls (they need
     # timer2/usart isel, #86's domain). Encoder/debounce keep the tick
     # header for compilation; pid keeps the epic-math header (pid.c
     # includes it; the math SOURCES are handled above).
-    if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid") and variant == "target":
+    if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid") and variant == "target" and swap:
         includes = [i for i in includes if "epic-tick" not in i and "epic-serial" not in i]
     # HAL-3d drivers: drop tick/serial includes the example pulls.
     if toolchain == "epic-cc" and module in ("epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
@@ -205,8 +220,7 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         # Epic-cc path: one invocation, no per-file compiles, no DFP.
         # Keep the same source set and include order; the driver adds its
         example_name, _ = _example_name_and_config(manifest, module, mcu, variant)
-        # Pure-logic sizechecks carry their own EPIC_CONFIG (or none).
-        if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
+        if epiccc_driver and swap:
             has_config = False
             # Per-module basename so the drivers never collide in the
             # shared build dir: 16F877A-bus-sizecheck.hex etc.

@@ -1968,6 +1968,29 @@ depends_on = [
 ]
 needs_hal = false
 
+# The epic-cc slice for the full example (HAL-3b): the serial + tick
+# tier (USART + Timer2 + irq + vector + the serial_tick dispatch) and
+# the target no-op harness, mirroring epic-serial's override plus the
+# tick timebase. The family slice would pull gpio/timer0/ssp into the
+# 368-byte GPR overlay for no reason; the PIC18 slice stays the
+# sizecheck (the PIC18 epic-cc backend is not yet conformant, HAL-3d).
+epiccc_hal_sources_by_family.PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic16f87xa-hal/src/core/pic16_irq.c",
+  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+epiccc_hal_sources_by_family.PIC16F88X = [
+  "pic16f88x-hal/src/peripherals/pic16f88x_usart.c",
+  "pic16f88x-hal/src/peripherals/pic16f88x_timer2.c",
+  "pic16f88x-hal/src/core/pic16_irq.c",
+  "pic16f88x-hal/src/epiccc/pic16_isr_vector.c",
+  "pic16f88x-hal/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+
 [modules.epic-pid.supported]
 PIC16F87XA = [
   "16F873A",
