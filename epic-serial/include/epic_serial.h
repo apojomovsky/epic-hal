@@ -153,22 +153,14 @@ void epic_serial_put_hex16(uint16_t v);
  * EPIC_HARNESS_LOG_STATIC pattern). The argument must be a string
  * literal; XC8 and host keep the out-of-line function.
  *
- * The staging buffer is one shared, file-scope array
- * (g_epic_serial_str_scratch), not one per call site: each macro
- * expansion used to declare its own same-shape `static char` buffer,
- * and since every call site is textually distinct, the compiler never
- * merges them, every literal ever logged in a translation unit stayed
- * permanently resident (apojomovsky/epic-hal#123, apojomovsky/epic-cc#206:
- * 83 of 350 RAM bytes on one real example, 24% of the whole 16F877A
- * budget, for one scratch buffer used one literal at a time). Sharing
- * it is safe here specifically because nothing overlaps: each
- * expansion copies in, writes out, and is done before the next one
- * runs.
- *
+ * One shared file-scope buffer (g_epic_serial_str_scratch), not one
+ * per call site: distinct same-shape statics never merge, so every
+ * literal ever logged stayed permanently resident (epic-hal#123,
+ * epic-cc#206: 83 of 350 RAM bytes on one example). Safe to share
+ * since each expansion copies in and writes out before the next runs.
  * Sized by EPIC_SERIAL_STR_SCRATCH_SZ (override before including this
- * header if a project logs a literal longer than the default 64
- * bytes); epic_str_len_ok_ is a compile-time assertion, a literal that
- * doesn't fit fails the build loudly instead of silently truncating.
+ * header for a longer literal); epic_str_len_ok_ still asserts it at
+ * compile time, an oversized literal fails loudly, not silently.
  */
 #ifdef __EPIC_CC__
 #ifndef EPIC_SERIAL_STR_SCRATCH_SZ
