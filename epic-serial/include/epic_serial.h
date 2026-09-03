@@ -155,12 +155,12 @@ void epic_serial_put_hex16(uint16_t v);
  *
  * One shared file-scope buffer (g_epic_serial_str_scratch), not one
  * per call site: distinct same-shape statics never merge, so every
- * literal ever logged stayed permanently resident (epic-hal#123,
- * epic-cc#206: 83 of 350 RAM bytes on one example). Safe to share
- * since each expansion copies in and writes out before the next runs.
- * Sized by EPIC_SERIAL_STR_SCRATCH_SZ (override before including this
- * header for a longer literal); epic_str_len_ok_ still asserts it at
- * compile time, an oversized literal fails loudly, not silently.
+ * literal logged stayed resident (epic-hal#123, epic-cc#206: 83 of
+ * 350 RAM bytes on one example). Safe since each expansion copies in
+ * and writes out before the next runs. Sized by
+ * EPIC_SERIAL_STR_SCRATCH_SZ (override before including this header
+ * for a longer literal); epic_str_len_ok_ still asserts it at compile
+ * time, so an oversized literal fails loudly, not silently.
  */
 #ifdef __EPIC_CC__
 #ifndef EPIC_SERIAL_STR_SCRATCH_SZ
