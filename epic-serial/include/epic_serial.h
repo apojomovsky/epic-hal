@@ -158,9 +158,8 @@ void epic_serial_put_hex16(uint16_t v);
  * literal logged stayed resident (epic-hal#123, epic-cc#206: 83 of
  * 350 RAM bytes on one example). Safe since each expansion copies in
  * and writes out before the next runs. Sized by
- * EPIC_SERIAL_STR_SCRATCH_SZ (override before including this header
- * for a longer literal); epic_str_len_ok_ still asserts it at compile
- * time, so an oversized literal fails loudly, not silently.
+ * EPIC_SERIAL_STR_SCRATCH_SZ; epic_str_len_ok_ still asserts a
+ * literal fits at compile time, no silent truncation.
  */
 #ifdef __EPIC_CC__
 #ifndef EPIC_SERIAL_STR_SCRATCH_SZ
