@@ -150,12 +150,13 @@ builds the slice.
 
 Bumping the pin:
 
-The pin currently holds epic-cc master at the HAL-3 close-out
-(c64440e, its docs/31 section 6), which carries everything the 877A/887
-slices need plus the sim crate the sim gates run on. The earlier
-temporary pin (the fix/151 branch head, 52ce5bf) merged long ago; the
-pin comment in ci.yml's `EPIC_CC_PIN` records the reasoning for the
-current sha.
+The pin currently holds epic-cc master at the HAL-3d follow-up
+(acf3ece, epic-hal#102), which carries everything the 877A/887 slices
+need plus the PIC18 fixes for the 4550 slice (epic-cc#180, #189, #194)
+and the sim crate the sim gates run on. The previous pin (c64440e, the
+HAL-3 close-out) cannot compile the 4550 settings slice (`SPIKE:
+unsupported type "[2 x i8]"`); the pin comment in ci.yml's
+`EPIC_CC_PIN` records the reasoning for the current sha.
 
 1. Pick a new `EPIC_CC_PIN` that still builds the 887 slice. A quick
    check: build the driver at that sha (`cargo build --release -p

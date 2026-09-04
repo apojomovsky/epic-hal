@@ -166,7 +166,8 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     epiccc_driver = (toolchain == "epic-cc"
                      and module in ("epic-fsm", "epic-pid", "epic-encoder",
                                     "epic-debounce", "epic-bus", "epic-lcd",
-                                    "epic-mcp23x17", "epic-adcfilter")
+                                    "epic-mcp23x17", "epic-adcfilter",
+                                    "epic-sdcard")
                      and variant == "target")
     swap = True
     if epiccc_driver:
@@ -191,7 +192,12 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
                 sources = [s for s in sources if not s.startswith("pic16f") and not s.startswith("pic18") and "pic16f193x" not in s and "epic-common/src/core/epic_harness" not in s]
             # Drop tick/serial/math (the example's deps): timer2/usart isel is
             # #86's domain, and the pic16 math asm backend needs XC8's xc.h.
-            sources = [s for s in sources if "epic-tick" not in s and "epic-serial" not in s and "epic-math" not in s]
+            # epic-sdcard keeps epic-tick: epic_sdcard.c's timer callbacks
+            # call epic_tick_get/epic_tick_elapsed_since (module-level dep).
+            if module == "epic-sdcard":
+                sources = [s for s in sources if "epic-serial" not in s and "epic-math" not in s]
+            else:
+                sources = [s for s in sources if "epic-tick" not in s and "epic-serial" not in s and "epic-math" not in s]
         # pid.c calls epic_math_mul_s16 for real now; link the host C-path
         # implementation (the portable oracle), not the pic16 asm backend.
         if module == "epic-pid":
@@ -208,6 +214,11 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     # HAL-3d drivers: drop tick/serial includes the example pulls.
     if toolchain == "epic-cc" and module in ("epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
         includes = [i for i in includes if "epic-tick" not in i and "epic-serial" not in i]
+    # epic-sdcard: the probe links epic_sdcard.c, which includes
+    # epic_tick.h for its timer callbacks, so only the serial include
+    # (pulled by the dropped example) goes.
+    if toolchain == "epic-cc" and module == "epic-sdcard" and variant == "target":
+        includes = [i for i in includes if "epic-serial" not in i]
     objdir = f"{build_dir}/{mcu}"
 
     if toolchain == "epic-cc":

@@ -212,11 +212,15 @@ harness_src = "epic-common/src/core/epic_harness_target.c"
 # integration firmwares need. The dispatch is the epiccc tier file
 # (USART + TIMER2 + EEPROM, same gating semantics as the full fan-out),
 # because the shared pic18_irq_dispatch.c strong-references every
-# peripheral handler and cannot link against a partial set.
+# peripheral handler and cannot link against a partial set. SSP joined
+# for epic-sdcard (HAL-3d follow-up, epic-hal#102): the SD-over-SPI
+# driver polls SSPBUF/SSPSTAT and never vectors SSPIF, so the tier
+# dispatch is unchanged.
 epiccc_sources = [
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer2.c",
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_ssp.c",
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c",
   "pic18fxx5x-hal/src/core/pic18_irq.c",
   "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
