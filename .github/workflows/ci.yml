@@ -205,10 +205,12 @@ jobs:
       # (`SPIKE: unsupported type "[2 x i8]"`); see DEVELOPMENT.md
       # "The epiccc gate pin".
       EPIC_CC_PIN: acf3ece4bae026625a791b18f4d86d6002f40606
-      # The release tag (v0.0.3) and the version inside its asset names
-      # (epic-cc-0.0.3-...): the asset names drop the v prefix.
-      EPIC_CC_CLANG_TAG: v0.0.3
-      EPIC_CC_CLANG_VER: 0.0.3
+      # The rolling prerelease cut from the pinned driver sha (the
+      # ci-<sha> tags now publish; see DEVELOPMENT.md "The epiccc gate
+      # pin"). The v0.0.3 bundle predates the driver's opt requirement
+      # (epic-cc#198) and cannot build the gate hexes.
+      EPIC_CC_CLANG_TAG: ci-acf3ece4bae026625a791b18f4d86d6002f40606
+      EPIC_CC_CLANG_VER: 0.0.0-master-acf3ece4bae026625a791b18f4d86d6002f40606
     steps:
       - uses: actions/checkout@v4
         with:

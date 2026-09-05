@@ -1,11 +1,8 @@
---- epic-sdcard/third_party/m-stack-storage/src/crc.c	2026-07-15 14:29:02.948282858 -0300
-+++ epic-sdcard/third_party/m-stack-storage/src/crc.c	2026-09-04 00:00:00.000000000 -0300
-@@ -24,7 +24,15 @@
-  *  with this software.  If not, see <http://www.apache.org/licenses/>.
-  */
-
+--- epic-sdcard/third_party/m-stack-storage/src/crc.c
++++ epic-sdcard/third_party/m-stack-storage/src/crc.c
+@@ -26,0 +27 @@
 +#if PC_CODE_TO_GENERATE_THE_TABLES
- #include <stdio.h>
+@@ -27,0 +29,7 @@
 +#endif
 +/* Deviation from upstream (epic-sdcard, not sent upstream): upstream
 + * includes <stdio.h> unconditionally, but only the PC table-generator
@@ -13,6 +10,22 @@
 + * it. Under epic-cc the include pulls the driver's stdio formatter,
 + * whose va_start the PIC18 backend cannot lower, so the include is
 + * scoped to the guard. */
- #include <stdint.h>
-
- static uint8_t crc7_table[] =  {
+@@ -100,0 +109,2 @@ static uint16_t crc16_table[] =  {
++/** @brief Update a CRC-7 checksum with one byte. @param csum the checksum.
++ * @param input the byte. @return the updated checksum. */
+@@ -106,0 +117,2 @@ uint8_t add_crc7(uint8_t csum, uint8_t input)
++/** @brief Update a CRC-16 checksum with one byte. @param csum the checksum.
++ * @param input the byte. @return the updated checksum. */
+@@ -111,0 +124,3 @@ uint16_t add_crc16(uint16_t csum, uint8_t input)
++/** @brief Update a CRC-16 checksum over a byte array. @param csum the
++ * checksum. @param data the bytes. @param len the byte count. @return the
++ * updated checksum. */
+@@ -127,0 +143,2 @@ uint16_t add_crc16_array(uint16_t csum, uint8_t *data, uint16_t len)
++/** @brief PC-only CRC-7 table generator (see the guard above).
++ * @param csum the checksum. @param input the byte. @return the checksum. */
+@@ -143,0 +161,2 @@ uint8_t add_crc7(uint8_t csum, uint8_t input)
++/** @brief PC-only CRC-16 table generator (see the guard above).
++ * @param csum the checksum. @param input the byte. @return the checksum. */
+@@ -161,0 +181,2 @@ uint16_t add_crc16(uint16_t csum, uint8_t input)
++/** @brief PC-only table writer: emits crc_table.c (see the guard above).
++ * @return 0 on success, 1 on failure. */

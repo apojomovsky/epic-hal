@@ -134,8 +134,8 @@ The pin has two halves, both deliberate:
   only, no clang build). The job asserts the checkout sha equals the
   pin and prints that sha, so a failure names the compiler.
 - `EPIC_CC_CLANG_TAG` (job env): a tagged epic-cc release whose Linux
-  bundle supplies `clang` and `llvm-link`. The job downloads
-  `epic-cc-<tag>-x86_64-linux.zip` and verifies it against the
+  bundle supplies `clang`, `llvm-link` and `opt`. The job downloads
+  `epic-cc-<ver>-x86_64-linux.zip` and verifies it against the
   release's own `SHA256SUMS`.
 
 Why two: the rolling `ci-<sha>` prereleases epic-cc#118 planned never
@@ -146,7 +146,10 @@ unknown function @8`), a regression from the smax/smin isel change
 (epic-cc#136) that master has since fixed (epic-cc#142, #153). The
 bundle's clang was never affected, so the split lets the job consume a
 real user-facing artifact (the bundle) while pinning a driver that
-builds the slice.
+builds the slice. The rolling prereleases now publish, so
+`EPIC_CC_CLANG_TAG` moved to the `ci-<sha>` tag cut from the pinned
+driver sha; the v0.0.3 bundle predates the driver's `opt` requirement
+(epic-cc#198) and cannot build the gate hexes.
 
 Bumping the pin:
 
@@ -162,13 +165,13 @@ unsupported type "[2 x i8]"`); the pin comment in ci.yml's
    check: build the driver at that sha (`cargo build --release -p
    driver` in a checkout) and run
    `make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1`
-   with the v0.0.3 bundle's clang exported.
+   with the `ci-<sha>` bundle's clang exported.
 2. Change `EPIC_CC_PIN` in `.github/workflows/ci.yml` to the new sha.
    The pin is a chosen, deliberate bump: a compiler regression shows up
-   as a bump that fails the gate, not as a mystery. (When the rolling
-   prereleases start publishing, `EPIC_CC_CLANG_TAG` can move to a
-   `ci-<sha>` tag and the driver to the same tag's binary; until then
-   the split stays.)
+   as a bump that fails the gate, not as a mystery. When the rolling
+   prerelease for the new sha exists, move `EPIC_CC_CLANG_TAG` to its
+   `ci-<sha>` tag and `EPIC_CC_CLANG_VER` to the version inside its
+   asset names (the `0.0.0-master-<sha>` form).
 3. The job prints the driver sha and clang version in its step summary,
    so a failure names the compiler.
 
