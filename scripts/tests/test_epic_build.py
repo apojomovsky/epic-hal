@@ -130,6 +130,7 @@ depends_on = []
 
 [modules.epic-serial.supported]
 PIC16F87XA = ["16F877A"]
+PIC18Fxx5x = ["18F4550"]
 
 [modules.epic-serial.example.PIC16F87XA]
 name    = "serial-sizecheck"
@@ -165,6 +166,23 @@ config  = { FOSC = "HS", PLLDIV = "5", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2M
 name        = "usb-cdc-sim"
 harness_src = "epic-common/src/core/epic_harness_sim.c"
 config      = { FOSC = "HS", PLLDIV = "1", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF" }
+
+[modules.epic-sdcard]
+dir        = "epic-sdcard"
+sources    = ["src/epic_sdcard.c", "third_party/m-stack-storage/src/mmc.c", "third_party/m-stack-storage/src/crc.c"]
+includes   = ["include", "third_party/m-stack-storage/include", "src/target"]
+depends_on = ["epic-tick"]
+
+[modules.epic-sdcard.supported]
+PIC18Fxx5x = ["18F4550"]
+
+[modules.epic-sdcard.example.PIC18Fxx5x]
+name    = "sdcard"
+sources = ["examples/example_sdcard.c"]
+config  = { FOSC = "HS", PLLDIV = "5", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF" }
+# Example-level dep: the real example logs over epic-serial; the
+# epic-cc driver path must drop it.
+depends_on = ["epic-serial"]
 """
 
 
@@ -466,4 +484,24 @@ class TestEpicCcToolchain(unittest.TestCase):
         s = self.encoder_script()
         self.assertIn("epic-encoder/mcu/target_sizecheck_epiccc.c", s)
         self.assertNotIn("epic-tick/src", s)
+        self.assertNotIn("epic-serial/src", s)
+
+    def sdcard_script(self):
+        return epic_build.emit_build_script(
+            load(), "epic-sdcard", "18F4550",
+            build_dir="build", dfp_dir="", toolchain="epic-cc",
+        )
+
+    def test_sdcard_epiccc_uses_the_driver_and_keeps_tick(self):
+        # The probe links the real epic_sdcard.c and the vendored m-stack
+        # sources; epic-tick stays (epic_sdcard.c's timer callbacks call
+        # epic_tick_get/epic_tick_elapsed_since), the example and its
+        # serial dep go.
+        s = self.sdcard_script()
+        self.assertIn("epic-sdcard/mcu/target_sizecheck_epiccc.c", s)
+        self.assertIn("epic-sdcard/src/epic_sdcard.c", s)
+        self.assertIn("epic-sdcard/third_party/m-stack-storage/src/mmc.c", s)
+        self.assertIn("epic-sdcard/third_party/m-stack-storage/src/crc.c", s)
+        self.assertIn("epic-tick/src/epic_tick.c", s)
+        self.assertNotIn("epic-sdcard/examples/example_sdcard.c", s)
         self.assertNotIn("epic-serial/src", s)

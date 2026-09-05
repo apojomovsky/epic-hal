@@ -13,14 +13,17 @@ License used: Apache License 2.0 (the Apache-2.0 arm of M-Stack's
 LGPLv3/Apache-2.0 dual license -- see LICENSE-Apache2.txt in this
 directory). Not relicensed.
 
-Local fixes: two small host-build-compatibility patches (mmc.c's compiler
-allowlist didn't include a host-build option; mmc.h used size_t without
-including <stddef.h>, relying on <xc.h> to pull it in transitively, which
-a host build skips). Both are cosmetic/portability, not functional
-changes. See epic-sdcard/third_party/patches/0001-host-build-compat.patch
-(the exact diff, kept reapplicable) and
-epic-sdcard/README.md, for details.
-crc.{c,h} are unmodified from upstream.
+Local fixes: three small patches. 0001-host-build-compat.patch is two
+host-build-compatibility fixes (mmc.c's compiler allowlist didn't
+include a host-build option; mmc.h used size_t without including
+<stddef.h>, relying on <xc.h> to pull it in transitively, which a host
+build skips). 0002-crc-stdio-guard.patch scopes crc.c's <stdio.h>
+include to the PC_CODE_TO_GENERATE_THE_TABLES table-generator guard
+(always false): under epic-cc the unconditional include pulls the
+driver's stdio formatter, whose va_start the PIC18 backend cannot
+lower. All are cosmetic/portability, not functional changes. See
+epic-sdcard/third_party/patches/ (the exact diffs, kept reapplicable)
+and epic-sdcard/README.md, for details.
 
 To upgrade to a newer upstream commit:
   1. git clone the URL above at the new commit.
@@ -30,10 +33,11 @@ To upgrade to a newer upstream commit:
      commit hash/date above).
   3. cd to the repo root and run:
        patch -p0 --dry-run < epic-sdcard/third_party/patches/0001-host-build-compat.patch
-     (note: -p0, not -p1 -- the patch's paths already include the
-     "epic-sdcard/" prefix). If it applies cleanly, apply for real (drop
-     --dry-run). If a hunk fails, check whether upstream already fixed
-     that issue before re-deriving it.
+       patch -p0 --dry-run < epic-sdcard/third_party/patches/0002-crc-stdio-guard.patch
+     (note: -p0, not -p1 -- the patches' paths already include the
+     "epic-sdcard/" prefix). If a patch applies cleanly, apply for real
+     (drop --dry-run). If a hunk fails, check whether upstream already
+     fixed that issue before re-deriving it.
   4. Re-run the host build (cmake -B build && cmake --build build &&
      ctest --test-dir build) and the real xc8-cc compile (see
      epic-sdcard/README.md's Quick start for the build commands)

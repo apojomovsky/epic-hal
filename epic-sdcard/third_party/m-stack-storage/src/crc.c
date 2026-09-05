@@ -24,7 +24,15 @@
  *  with this software.  If not, see <http://www.apache.org/licenses/>.
  */
 
+#if PC_CODE_TO_GENERATE_THE_TABLES
 #include <stdio.h>
+#endif
+/* Deviation from upstream (epic-sdcard, not sent upstream): upstream
+ * includes <stdio.h> unconditionally, but only the PC table-generator
+ * main (guarded by PC_CODE_TO_GENERATE_THE_TABLES, always false) uses
+ * it. Under epic-cc the include pulls the driver's stdio formatter,
+ * whose va_start the PIC18 backend cannot lower, so the include is
+ * scoped to the guard. */
 #include <stdint.h>
 
 static uint8_t crc7_table[] =  {
@@ -98,17 +106,24 @@ static uint16_t crc16_table[] =  {
 };
 
 
+/** @brief Update a CRC-7 checksum with one byte. @param csum the checksum.
+ * @param input the byte. @return the updated checksum. */
 uint8_t add_crc7(uint8_t csum, uint8_t input)
 {
 	csum = crc7_table[(csum << 1) ^ input];
 	return csum;
 }
 
+/** @brief Update a CRC-16 checksum with one byte. @param csum the checksum.
+ * @param input the byte. @return the updated checksum. */
 uint16_t add_crc16(uint16_t csum, uint8_t input)
 {
 	return crc16_table[((csum >> 8) ^ input) & 0xff] ^ (csum << 8);
 }
 
+/** @brief Update a CRC-16 checksum over a byte array. @param csum the
+ * checksum. @param data the bytes. @param len the byte count. @return the
+ * updated checksum. */
 uint16_t add_crc16_array(uint16_t csum, uint8_t *data, uint16_t len)
 {
 	while (len--) {
@@ -125,6 +140,8 @@ uint16_t add_crc16_array(uint16_t csum, uint8_t *data, uint16_t len)
 #define POLY 0x89
 #define POLY16 0x1021
 
+/** @brief PC-only CRC-7 table generator (see the guard above).
+ * @param csum the checksum. @param input the byte. @return the checksum. */
 uint8_t add_crc7(uint8_t csum, uint8_t input)
 {
 	int i;
@@ -141,6 +158,8 @@ uint8_t add_crc7(uint8_t csum, uint8_t input)
 	return csum;
 }
 
+/** @brief PC-only CRC-16 table generator (see the guard above).
+ * @param csum the checksum. @param input the byte. @return the checksum. */
 uint16_t add_crc16(uint16_t csum, uint8_t input)
 {
 	int i;
@@ -159,6 +178,8 @@ uint16_t add_crc16(uint16_t csum, uint8_t input)
 }
 
 
+/** @brief PC-only table writer: emits crc_table.c (see the guard above).
+ * @return 0 on success, 1 on failure. */
 int main(void)
 {
 	FILE *fp = fopen("crc_table.c", "w");

@@ -197,16 +197,20 @@ jobs:
   epiccc-gate:
     runs-on: ubuntu-latest
     env:
-      # epic-cc master at the HAL-3 close-out (its docs/31 section 6),
-      # which carries everything the 877A/887 slices need plus the
-      # m-stack set (#163 to #166) and the sim crate this job's gates
-      # run on. The previous pin (52ce5bf, the fix/151 branch head) is
-      # long merged; see DEVELOPMENT.md "The epiccc gate pin".
-      EPIC_CC_PIN: c64440ed24811a4ce66dc958c47d9f2f453651e0
-      # The release tag (v0.0.3) and the version inside its asset names
-      # (epic-cc-0.0.3-...): the asset names drop the v prefix.
-      EPIC_CC_CLANG_TAG: v0.0.3
-      EPIC_CC_CLANG_VER: 0.0.3
+      # epic-cc master at the HAL-3d follow-up (epic-hal#102), which
+      # carries everything the 877A/887 slices need plus the PIC18
+      # fixes for the 4550 slice (epic-cc#180, #189, #194) and the sim
+      # crate this job's gates run on. The previous pin (c64440e, the
+      # HAL-3 close-out) cannot compile the 4550 settings slice
+      # (`SPIKE: unsupported type "[2 x i8]"`); see DEVELOPMENT.md
+      # "The epiccc gate pin".
+      EPIC_CC_PIN: acf3ece4bae026625a791b18f4d86d6002f40606
+      # The rolling prerelease cut from the pinned driver sha (the
+      # ci-<sha> tags now publish; see DEVELOPMENT.md "The epiccc gate
+      # pin"). The v0.0.3 bundle predates the driver's opt requirement
+      # (epic-cc#198) and cannot build the gate hexes.
+      EPIC_CC_CLANG_TAG: ci-acf3ece4bae026625a791b18f4d86d6002f40606
+      EPIC_CC_CLANG_VER: 0.0.0-master-acf3ece4bae026625a791b18f4d86d6002f40606
     steps:
       - uses: actions/checkout@v4
         with:
@@ -287,8 +291,13 @@ jobs:
         working-directory: scripts/sim-runner
 
       # The gate hexes from the #60 amendment: {877A, 887} x {blink,
-      # tick}. The 4550 slice stays out until epic-cc#125, #126 and #143
-      # land; the repros and status live in epic-hal#60.
+      # tick} plus the HAL-3d follow-up's 4550 pair (epic-hal#102):
+      # epic-settings (full example) and epic-sdcard (sizecheck driver;
+      # the full example's 512-byte block buffer exceeds epic-cc's
+      # array cap). The 4550 tick sim gate stays out: the real
+      # epic_tick.c's OverflowCallback indirect call from the ISR traps
+      # on the PIC18 backend (the 887's PIC14 path resolves it), and
+      # the sdcard sizecheck is a register-read gate, not a toggle.
       - name: Build the gate hexes with epic-cc
         if: steps.noncode.outputs.non_code != 'true'
         env:
@@ -298,6 +307,8 @@ jobs:
         run: |
           make epiccc-build MODULE=pic16f87xa-hal MCU=16F877A EPIC_CC_HOST=1
           make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
+          make epiccc-build MODULE=epic-settings MCU=18F4550 EPIC_CC_HOST=1
+          make epiccc-build MODULE=epic-sdcard MCU=18F4550 EPIC_CC_HOST=1
 
       # The sim gates: the mdb toggle contract, run on crates/sim's CPU.
       # Watch PORTB bit 0 across the samples, require a transition. Blink
