@@ -198,18 +198,19 @@ jobs:
   epiccc-gate:
     runs-on: ubuntu-latest
     env:
-      # epic-cc master at the HAL-3d follow-up (epic-hal#102), which
-      # carries everything the 877A/887 slices need plus the PIC18
-      # fixes for the 4550 slice (epic-cc#180, #189, #194) and the sim
-      # crate this job's gates run on. The previous pin (c64440e, the
-      # HAL-3 close-out) cannot compile the 4550 settings slice
-      # (`SPIKE: unsupported type "[2 x i8]"`); see DEVELOPMENT.md
+      # epic-cc master at the epic-hal#129 bump, which carries the PIC14E
+      # port this job's 16F1937 leg needs: the isel-pic14e backend, the
+      # Pic14e sim core the gates run on, parse_hex_pic14e (the PIC14E
+      # hex's ELA config region aliases program words without it), i1
+      # loads/stores as bytes, and the PIC14E config-field defaults. The
+      # previous pin (acf3ece, the HAL-3d follow-up) predates the port;
+      # it still serves the 877A/887/4550 slices. See DEVELOPMENT.md
       # "The epiccc gate pin".
-      EPIC_CC_PIN: acf3ece4bae026625a791b18f4d86d6002f40606
-      # The rolling prerelease cut from the pinned driver sha (the
-      # ci-<sha> tags now publish; see DEVELOPMENT.md "The epiccc gate
-      # pin"). The v0.0.3 bundle predates the driver's opt requirement
-      # (epic-cc#198) and cannot build the gate hexes.
+      EPIC_CC_PIN: 5fbde4caf5cee0291e2054e01ddcc1c0ba12509a
+      # The clang bundle stays on the acf3ece cut: clang 20.1.8 is
+      # identical across both pins (none of the #129 epic-cc changes
+      # touch the front end), so the job keeps consuming the published
+      # bundle until a front-end change forces a re-cut.
       EPIC_CC_CLANG_TAG: ci-acf3ece4bae026625a791b18f4d86d6002f40606
       EPIC_CC_CLANG_VER: 0.0.0-master-acf3ece4bae026625a791b18f4d86d6002f40606
     steps:
@@ -299,6 +300,9 @@ jobs:
       # epic_tick.c's OverflowCallback indirect call from the ISR traps
       # on the PIC18 backend (the 887's PIC14 path resolves it), and
       # the sdcard sizecheck is a register-read gate, not a toggle.
+      # The 1937 blink joins with epic-hal#129: the PIC14E port's
+      # first family leg, watched on LATB (this family's GPIO driver
+      # toggles the latch, not the port register).
       - name: Build the gate hexes with epic-cc
         if: steps.noncode.outputs.non_code != 'true'
         env:
@@ -310,15 +314,16 @@ jobs:
           make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
           make epiccc-build MODULE=epic-settings MCU=18F4550 EPIC_CC_HOST=1
           make epiccc-build MODULE=epic-sdcard MCU=18F4550 EPIC_CC_HOST=1
-
+          make epiccc-build MODULE=epic-pic16f193x-firmware MCU=16F1937 EPIC_CC_HOST=1
       # The sim gates: the mdb toggle contract, run on crates/sim's CPU.
       # Watch PORTB bit 0 across the samples, require a transition. Blink
       # is Timer0 driven, so the runner raises its overflow (INTCON bit 2
       # through TMR0IE, bit 5) every 65536 steps (prescaler 256 x count
       # 256); INTCON is a mirrored register, so the gate needs no SFR
-      # banking. The tick gates wait on epic-cc#173 (crates/sim drops
-      # banked SFR writes, so PIE1:TMR2IE can never be observed set);
-      # they are a config change here once that lands.
+      # banking. The 1937 gate watches LATB bit 0 (0x010D, bank 2) for
+      # the same reason. The tick gates wait on epic-cc#173 (crates/sim
+      # drops banked SFR writes, so PIE1:TMR2IE can never be observed
+      # set); they are a config change here once that lands.
       - name: Sim gates (crates/sim)
         if: steps.noncode.outputs.non_code != 'true'
         run: |
@@ -328,6 +333,9 @@ jobs:
             --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
           "$runner" --hex build/epiccc/16F887-blink.hex --device 16F887 \
             --watch PORTB:0 --samples 12 --steps 200000 \
+            --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
+          "$runner" --hex build/epiccc/16F1937-firmware.hex --device 16F1937 \
+            --watch LATB:0 --samples 12 --steps 200000 \
             --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
 
   # Flake-hunt: REPEAT=N run of every sim gate (quality task 10),

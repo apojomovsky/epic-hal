@@ -18,11 +18,37 @@ fosc_hz  = 20000000
 includes = ["pic16f87xa-hal/include/target", "pic16f87xa-hal/include"]
 hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
 harness_src = "epic-common/src/core/epic_harness_target.c"
+
 epiccc_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
 variants = ["16F877A"]
+
+[families.PIC16F193X]
+hal_dir  = "pic16f193x-hal"
+variants = ["16F1937"]
+dfp      = "Microchip.PIC12-16F1xxx_DFP"
+fosc_hz  = 32000000
+includes = ["pic16f193x-hal/include/target", "pic16f193x-hal/include"]
+hal_sources = ["epic-common/src/core/epic_harness_target.c"]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+epiccc_sources = ["epic-common/src/core/epic_harness_target.c"]
+
+[modules.epic-pic16f193x-firmware]
+dir        = "pic16f193x-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.epic-pic16f193x-firmware.supported]
+PIC16F193X = ["16F1937"]
+
+[modules.epic-pic16f193x-firmware.example.PIC16F193X]
+name    = "firmware"
+sources = ["tests/example_blink.c"]
+config  = { FOSC = "INTOSC", WDTE = "ON", BOREN = "ON" }
 
 [modules.epic-tick]
 dir        = "epic-tick"
@@ -251,6 +277,27 @@ class TestEpicConfigSpecPic18(unittest.TestCase):
     def test_pic16_xtal_hz_stays_the_family_fosc(self):
         self.assertIn("xtal_hz=20000000",
                       self._spec(module="epic-tick", mcu="16F877A"))
+
+
+class TestEpicConfigSpecPic16F193X(unittest.TestCase):
+    """The 193X device TOMLs name the brown-out-enable field `boren`
+    (only the 877A spells it `bor`), so the shared XC8->epic-cc table's
+    `boren -> bor` mapping must flip back for this family (epic-hal#129).
+    FOSC=INTOSC maps onto the 193X oscillator enum's `intosc` value."""
+
+    def _spec(self):
+        return epic_build._epic_config_spec(
+            load(), "epic-pic16f193x-firmware", "16F1937", "target", None)
+
+    def test_boren_keeps_the_device_field_name(self):
+        self.assertIn("boren=on", self._spec())
+        self.assertNotIn("bor=on", self._spec())
+
+    def test_intosc_maps_onto_the_osc_field(self):
+        self.assertIn("osc=intosc", self._spec())
+
+    def test_family_fosc_reaches_xtal_hz(self):
+        self.assertIn("xtal_hz=32000000", self._spec())
 
 
 class TestDisplayPath(unittest.TestCase):

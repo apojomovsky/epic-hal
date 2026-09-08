@@ -8,13 +8,14 @@
 //! tick gate proves is the interrupt path, not an oscillator.
 
 use device::{Core, Device};
-use pic14_sim::{parse_hex, parse_hex_pic18, Pic14, Pic18};
+use pic14_sim::{parse_hex, parse_hex_pic14e, parse_hex_pic18, Pic14, Pic14e, Pic18};
 use std::process::ExitCode;
 
 /// SFR addresses the gates need, per core. The PIC14 row is shared by the
-/// 877A and 887 (DS39582C/DS41286A); the PIC18 row is the PIC18F4550's
-/// (DS39632E). LATB exists on the 4550 only; the PIC16 families toggle
-/// PORTx directly.
+/// 877A and 887 (DS39582C/DS41286A); the PIC14E row is the PIC16F193X's
+/// (DS41364E, PORTB 0x00D bank 0, LATB 0x10D bank 2, PIE1 0x091 bank 1);
+/// the PIC18 row is the PIC18F4550's (DS39632E). LATB exists on the 4550
+/// and the 193X; the classic PIC16 families toggle PORTx directly.
 #[derive(Clone, Copy)]
 struct Regs {
     portb: u16,
@@ -30,6 +31,13 @@ const PIC14_REGS: Regs = Regs {
     intcon: 0x0B,
     pir1: 0x0C,
     pie1: 0x8C,
+};
+const PIC14E_REGS: Regs = Regs {
+    portb: 0x00D,
+    latb: Some(0x10D),
+    intcon: 0x00B,
+    pir1: 0x011,
+    pie1: 0x091,
 };
 // Exercised once the 4550 smoke lands (epic-hal#60, blocked on
 // epic-cc#125/#126).
@@ -52,6 +60,7 @@ struct Irq {
 
 enum Sim {
     Pic14(Pic14, Regs),
+    Pic14e(Pic14e, Regs),
     Pic18(Pic18, Regs),
 }
 
@@ -73,19 +82,23 @@ impl Sim {
                 let prog = parse_hex_pic18(hex);
                 Ok(Sim::Pic18(Pic18::new(prog), PIC18_REGS))
             }
-            Core::Pic14e => Err("enhanced mid-range cores have no sim gate yet".into()),
+            Core::Pic14e => {
+                let prog = parse_hex_pic14e(hex);
+                Ok(Sim::Pic14e(Pic14e::with_device(dev, prog), PIC14E_REGS))
+            }
         }
     }
 
     fn regs(&self) -> Regs {
         match self {
-            Sim::Pic14(_, r) | Sim::Pic18(_, r) => *r,
+            Sim::Pic14(_, r) | Sim::Pic14e(_, r) | Sim::Pic18(_, r) => *r,
         }
     }
 
     fn run(&mut self, steps: usize) -> usize {
         match self {
             Sim::Pic14(p, _) => p.run(steps),
+            Sim::Pic14e(p, _) => p.run(steps),
             Sim::Pic18(p, _) => p.run(steps),
         }
     }
@@ -93,6 +106,7 @@ impl Sim {
     fn halted(&self) -> bool {
         match self {
             Sim::Pic14(p, _) => p.halted(),
+            Sim::Pic14e(p, _) => p.halted(),
             Sim::Pic18(p, _) => p.halted(),
         }
     }
@@ -115,6 +129,7 @@ impl Sim {
         let (eaddr, ebit) = irq.enable;
         let enabled = match self {
             Sim::Pic14(p, _) => p.ram()[eaddr as usize] >> ebit & 1 != 0,
+            Sim::Pic14e(p, _) => p.ram()[eaddr as usize] >> ebit & 1 != 0,
             Sim::Pic18(p, _) => p.ram()[eaddr as usize] >> ebit & 1 != 0,
         };
         if !enabled {
@@ -130,6 +145,7 @@ impl Sim {
         }
         let gie_on = match self {
             Sim::Pic14(p, _) => p.ram()[regs.intcon as usize] & GIE != 0,
+            Sim::Pic14e(p, _) => p.ram()[regs.intcon as usize] & GIE != 0,
             Sim::Pic18(p, _) => p.ram()[regs.intcon as usize] & GIE != 0,
         };
         match self {
@@ -145,6 +161,12 @@ impl Sim {
                     p.fire_interrupt();
                 }
             }
+            Sim::Pic14e(p, _) => {
+                p.ram_mut()[faddr as usize] |= 1 << fbit;
+                if gie_on {
+                    p.fire_interrupt();
+                }
+            }
         }
     }
 
@@ -152,6 +174,7 @@ impl Sim {
     fn watch_bit(&self, addr: u16, bit: u8) -> u8 {
         match self {
             Sim::Pic14(p, _) => (p.ram()[addr as usize] >> bit) & 1,
+            Sim::Pic14e(p, _) => (p.ram()[addr as usize] >> bit) & 1,
             Sim::Pic18(p, _) => (p.ram()[addr as usize] >> bit) & 1,
         }
     }
@@ -159,6 +182,7 @@ impl Sim {
     fn reg_byte(&self, addr: u16) -> u8 {
         match self {
             Sim::Pic14(p, _) => p.ram()[addr as usize],
+            Sim::Pic14e(p, _) => p.ram()[addr as usize],
             Sim::Pic18(p, _) => p.ram()[addr as usize],
         }
     }

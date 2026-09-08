@@ -72,8 +72,8 @@ program-memory table mechanism instead of a data access) does not apply
 on this core.
 
 Separately, a **literal, compile-time-constant SFR token in a
-non-mirrored bank** (`option_clr_set()`'s access to `PIC_REG_OPTION`,
-bank 1) compiles to the expected `movlb 1` / access / `movlb 0`
+non-mirrored bank** (the `PIC_REG_OPTION` read-modify-write that
+pic16f193x_timer0.h's inlined EPIC_TIMER0_Init/Start perform, bank 1) compiles to the expected `movlb 1` / access / `movlb 0`
 sequence, i.e. XC8 auto-banks literal SFR tokens on this core exactly as
 `pic16f193x_sfr.h`'s header comment assumed. No manual
 `pic_select_bank`-style macro is needed for a literal token, and none of
