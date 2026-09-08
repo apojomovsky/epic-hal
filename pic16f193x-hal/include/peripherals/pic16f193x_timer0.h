@@ -12,6 +12,7 @@
 
 #include "pic16f193x.h"
 #include "pic16f193x_sfr.h"
+#include "core/pic16f193x_irq.h"
 
 /**
  * @brief Timer0 clock source (OPTION_REG<T0CS>, DS41364B §15.0, Reg 2-2).
@@ -66,16 +67,48 @@ typedef struct {
     .ReloadValue        = 0x00U,                                        \
     .OverflowCallback   = NULL,                                          \
 }
+/* The ISR's owned handle storage, defined in the driver body. Declared
+ * here so the inlined Init (below) can store to it from any TU. */
+extern TIMER0_HandleTypeDef g_t0_storage;
 
 /**
  * @brief  Configure Timer0 from the handle. Programs OPTION_REG and
  *         INTCON<TMR0IE>. Does not start the timer, call @ref
  *         EPIC_TIMER0_Start afterwards.
  *
+ *         Static inline so the callback store lands in the caller's
+ *         translation unit: epic-cc resolves a cross-context indirect
+ *         call only when the stored value is a named function literal
+ *         (ADR-024, the shape pic16f87xa_timer0.h uses). Out-of-line,
+ *         the call site's candidate set comes back empty and the call
+ *         traps.
+ *
  * @param  h  handle with clock source, edge, prescaler, callback
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
-EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h);
+static inline EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
+{
+    if (!h) return EPIC_INVALID;
+
+    /* Stop the timer before reconfiguring: clear T0CS (DS41364B §15.0). */
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_T0CS);
+
+    /* Clear TMR0IF; configure TMR0IE if a callback is provided. */
+    EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR0);
+    if (h->OverflowCallback) {
+        EPIC_IRQ_Enable(PIC16F193X_IRQ_TMR0);
+    } else {
+        EPIC_IRQ_DisableSrc(PIC16F193X_IRQ_TMR0);
+    }
+
+    g_t0_storage.ClockSource       = h->ClockSource;
+    g_t0_storage.ClockEdge         = h->ClockEdge;
+    g_t0_storage.Prescaler         = h->Prescaler;
+    g_t0_storage.PrescalerAssigned = h->PrescalerAssigned;
+    g_t0_storage.ReloadValue       = h->ReloadValue;
+    g_t0_storage.OverflowCallback  = h->OverflowCallback;
+    return EPIC_OK;
+}
 
 /**
  * @brief  Disable the Timer0 interrupt, clear TMR0IF, halt the timer
@@ -99,11 +132,37 @@ void TIMER0_IRQHandler(void) EPIC_WEAK;
  *
  *         Note: writing TMR0 clears the prescaler (DS41364B §15.0).
  *
+ *         Static inline for the same reason as Init (ADR-024): with
+ *         the handle local to the caller, clang folds every field
+ *         load.
+ *
  * @param  h  handle holding the reload value, prescaler and clock
  *            source/edge programmed in @ref EPIC_TIMER0_Init
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL
  */
-EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h);
+static inline EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
+{
+    if (!h) return EPIC_INVALID;
+
+    /* DS41364B §15.0: writing TMR0 when the prescaler is assigned to
+     * Timer0 clears the prescaler. Reload before re-enabling. */
+    EPIC_REG8(PIC_REG_TMR0) = h->ReloadValue;
+
+    /* Program prescaler assignment + ratio + clock source + edge in one
+     * atomic read-modify-write. WPUEN and INTEDG are left untouched. */
+    uint8_t set_mask = (uint8_t)(h->Prescaler & PIC_OPTION_PS_MASK);
+    if (!h->PrescalerAssigned) set_mask |= PIC_OPTION_PSA;
+    if (h->ClockSource == TIMER0_CLOCK_EXTERNAL) set_mask |= PIC_OPTION_T0CS;
+    if (h->ClockEdge   == TIMER0_EDGE_FALLING)  set_mask |= PIC_OPTION_T0SE;
+
+    uint8_t clr_mask = (uint8_t)(PIC_OPTION_PS_MASK | PIC_OPTION_PSA |
+                                 PIC_OPTION_T0CS  | PIC_OPTION_T0SE);
+    uint8_t opt = EPIC_REG8(PIC_REG_OPTION);
+    opt = (uint8_t)((opt & (uint8_t)~clr_mask) | set_mask);
+    EPIC_REG8(PIC_REG_OPTION) = opt;
+
+    return EPIC_OK;
+}
 
 /**
  * @brief  Disable TMR0 counting (clears OPTION_REG<T0CS>, Timer0 halted).

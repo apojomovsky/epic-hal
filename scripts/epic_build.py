@@ -454,10 +454,13 @@ def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
     for key, val in sorted(pragmas.items()):
         low_key = key.lower()
         epic_key = table.get(low_key, low_key)
-        # PIC16F887 uses `boren` as the field name; PIC16F877A uses `bor`.
-        # The shared table maps `boren` -> `bor` for the 877A. Fix the 887
-        # exemplar so the config validates against its own device TOML.
-        if not is_pic18 and mcu.lower() == "16f887" and epic_key == "bor":
+        # The device TOMLs name the brown-out-enable field `bor` on the
+        # 877A but `boren` everywhere else on PIC16 (the 88X family and
+        # the 193X family included). The shared table maps
+        # `boren` -> `bor` for the 877A; flip it back for the families
+        # whose own device data spells it `boren`.
+        if (not is_pic18 and epic_key == "bor"
+                and fam.name in ("PIC16F88X", "PIC16F193X")):
             epic_key = "boren"
         low_val = val.lower()
         if is_pic18:
