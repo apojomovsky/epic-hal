@@ -341,12 +341,23 @@ def _part_define(mcu: str) -> str:
 
 
 def parse_memory_summary(log: str):
-    """Pull flash and RAM byte counts out of XC8's Memory Summary."""
-    flash = re.search(r"Program space\s+used\s+\S+\s+\(\s*(\d+)\)", log)
-    ram = re.search(r"Data space\s+used\s+\S+\s+\(\s*(\d+)\)", log)
+    """Pull flash and RAM usage out of XC8's Memory Summary.
+
+    XC8 reports Program space in words and Data space in bytes, each with a
+    hex total: `Program space used 102Ch (4140) of 2000h words` and
+    `Data space used 5Bh (91) of 170h bytes`. The paren number is the used
+    amount in the line's own unit, so flash is words, RAM is bytes.
+    """
+    flash = re.search(r"Program space\s+used\s+\S+\s+\(\s*(\d+)\)\s+of\s+(\S+)h\s+words", log)
+    ram = re.search(r"Data space\s+used\s+\S+\s+\(\s*(\d+)\)\s+of\s+(\S+)h\s+bytes", log)
     if not flash or not ram:
         return None
-    return {"flash_bytes": int(flash.group(1)), "ram_bytes": int(ram.group(1))}
+    return {
+        "flash_words": int(flash.group(1)),
+        "flash_total_words": int(flash.group(2), 16),
+        "ram_bytes": int(ram.group(1)),
+        "ram_total_bytes": int(ram.group(2), 16),
+    }
 
 
 # XC8 manifest keys use Microchip's pragma names (FOSC, WDTE, PWRTE,
@@ -550,7 +561,10 @@ def cmd_build(args):
         sys.exit(proc.returncode)
     usage = parse_memory_summary(log_path.read_text())
     if usage:
-        print(f"flash {usage['flash_bytes']} bytes, RAM {usage['ram_bytes']} bytes")
+        print(
+            f"flash {usage['flash_words']}/{usage['flash_total_words']} words, "
+            f"RAM {usage['ram_bytes']}/{usage['ram_total_bytes']} bytes"
+        )
 
 
 def _path():
