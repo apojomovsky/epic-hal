@@ -4,21 +4,12 @@
 # `make xc8-build` path and prints the Memory Summary in the shape
 # epic-cc's xc8_reference.md columns expect, so re-baselining is a single
 # command instead of manual .hex/map digging.
-#
-# Usage: scripts/xc8-size-baseline.sh <module> <mcu>
-#   e.g. scripts/xc8-size-baseline.sh epic-encoder 16F877A
-#   scripts/xc8-size-baseline.sh --log-file build/16F877A/build.log
-#
-# The build runs in the docker toolchain image (make xc8-build owns the
-# plumbing); this script only captures its output and parses the summary.
-# --log-file skips the build and re-formats an existing build log, which
-# is also how the formatting is tested without a toolchain.
 set -euo pipefail
 
 log_file=""
-if [ "$1" = "--log-file" ]; then
-    log_file="$2"
-    shift 2
+if [ "${1:-}" = "--log-file" ]; then
+    log_file="${2:-}"
+    shift 2 2>/dev/null || shift 1
 fi
 
 if [ "$#" -ne 2 ] && [ -z "$log_file" ]; then
@@ -38,7 +29,10 @@ else
     mcu="$2"
     # Capture the full build output so the Memory Summary can be parsed
     # from it. make xc8-build streams the xc8-cc link step's summary.
-    out="$(make xc8-build MODULE="$module" MCU="$mcu" 2>&1)"
+    if ! out="$(make xc8-build MODULE="$module" MCU="$mcu" 2>&1)"; then
+        echo "$out" >&2
+        exit 1
+    fi
 fi
 
 # Reuse epic_build's parser so the regex has one home.
