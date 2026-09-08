@@ -65,6 +65,9 @@ make test MODULE=epic-lcd   # ... or just one
 make xc8-build MODULE=epic-tick MCU=16F877A   # real-target build
 make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A  # the mdb gate
 
+scripts/xc8-size-baseline.sh epic-encoder 16F877A  # flash/RAM size baseline
+                                                    # for epic-cc#200's table
+
 make shell           # interactive shell, repo mounted at /repo
 ```
 

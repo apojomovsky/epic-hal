@@ -1,5 +1,6 @@
 """Unit tests for scripts/epic_build.py."""
 import pathlib
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -443,11 +444,56 @@ Memory Summary:
 
     def test_parses_flash_and_ram(self):
         usage = epic_build.parse_memory_summary(self.LOG)
-        self.assertEqual(usage["flash_bytes"], 4140)
+        self.assertEqual(usage["flash_words"], 4140)
+        self.assertEqual(usage["flash_total_words"], 0x2000)
         self.assertEqual(usage["ram_bytes"], 91)
+        self.assertEqual(usage["ram_total_bytes"], 0x170)
 
     def test_returns_none_when_absent(self):
         self.assertIsNone(epic_build.parse_memory_summary("no summary here"))
+
+
+class TestXc8SizeBaseline(unittest.TestCase):
+    """The one-command baseline script formats the Memory Summary into the
+    shape epic-cc's xc8_reference.md columns expect. Exercised through its
+    --log-file path so the formatting is tested without a toolchain."""
+
+    LOG = """
+Memory Summary:
+    Program space        used   102Ch (  4140) of  2000h words   ( 50.5%)
+    Data space           used    5Bh (    91) of   170h bytes   ( 24.7%)
+"""
+
+    def test_formats_flash_and_ram(self):
+        script = pathlib.Path(__file__).resolve().parents[1] / "xc8-size-baseline.sh"
+        with tempfile.NamedTemporaryFile("w", suffix=".log", delete=False) as f:
+            f.write(self.LOG)
+            log = f.name
+        try:
+            proc = subprocess.run(
+                [str(script), "--log-file", log],
+                capture_output=True, text=True,
+            )
+        finally:
+            pathlib.Path(log).unlink(missing_ok=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("flash: 4140/8192 words (50.5%)", proc.stdout)
+        self.assertIn("RAM: 91/368 bytes (24.7%)", proc.stdout)
+
+    def test_missing_summary_fails(self):
+        script = pathlib.Path(__file__).resolve().parents[1] / "xc8-size-baseline.sh"
+        with tempfile.NamedTemporaryFile("w", suffix=".log", delete=False) as f:
+            f.write("no summary here\n")
+            log = f.name
+        try:
+            proc = subprocess.run(
+                [str(script), "--log-file", log],
+                capture_output=True, text=True,
+            )
+        finally:
+            pathlib.Path(log).unlink(missing_ok=True)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("no Memory Summary", proc.stderr)
 
 
 if __name__ == "__main__":
