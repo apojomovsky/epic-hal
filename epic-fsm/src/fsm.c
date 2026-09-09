@@ -69,7 +69,7 @@ bool epic_fsm_dispatch(epic_fsm_t *fsm, epic_fsm_event_t event)
  * @brief Current state of the machine (see fsm.h).
  *
  * @param fsm the machine to query
- * @return the state the machine is currently in
+ * @return the state the machine is in
  */
 epic_fsm_state_t epic_fsm_state(const epic_fsm_t *fsm)
 {

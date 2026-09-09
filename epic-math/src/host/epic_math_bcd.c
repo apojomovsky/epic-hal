@@ -39,7 +39,7 @@ uint16_t epic_math_bcd16_to_bin(uint32_t bcd5)
     /* Accumulate in uint32_t so a 5-digit BCD (up to 99999) is computed
      * exactly, then truncate to the uint16_t binary width: BCD representing
      * 0..65535 returns exactly; 65536..99999 wrap to the low 16 bits
-     * (documented -- the binary side is 16-bit). */
+     * (documented: the binary side is 16-bit). */
     uint32_t bin = 0u;
     uint32_t mult = 1u;
     for (int i = 0; i < 5; i++) {

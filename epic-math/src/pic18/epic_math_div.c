@@ -3,9 +3,8 @@
  * shift-subtract algorithm as AN526/AN544 (neither core has hardware
  * divide): num shifts left into rem, rem reduces by den when it fits,
  * ORing a quotient bit into num's LSB. Signed divide is plain C
- * negate/negate-result over the asm unsigned path. Correctness verified
- * against tests/test_div.c's reference (cross-checked against native
- * / and %).
+ * negate/negate-result over the asm unsigned path, matching the C99
+ * truncated-division identity in the header docs.
  */
 
 #include <xc.h>
@@ -200,7 +199,7 @@ epic_math_udiv16_t epic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
  * 16-bit-int overflow), call divmod_u16, then apply the sign. Quotient
  * sign = sign(num) ^ sign(den); remainder sign follows the dividend (C99
  * truncated division: (a/b)*b + a%b == a). INT16_MIN / -1 -> quotient
- * 0x8000 (the wrap of 32768), remainder 0 -- the one signed divide that
+ * 0x8000 (the wrap of 32768), remainder 0: the one signed divide that
  * can overflow int16, documented in the header. */
 epic_math_sdiv16_t epic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
 {

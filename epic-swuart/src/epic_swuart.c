@@ -37,17 +37,15 @@ static void on_rx_event_b(void);
 #endif
 
 /* Cycles of lead time between EPIC_SWUART_Write() arming the start bit's
- * compare deadline and that deadline actually landing: must be large
- * enough that EPIC_CCP_SetCompare/SetMode land before Timer1 reaches the
- * armed value, confirmed on real PIC16F877A hardware to need 120
- * cycles, not the original 40-cycle guess. */
+ * compare deadline and that deadline actually landing: large enough
+ * that EPIC_CCP_SetCompare/SetMode land before Timer1 reaches the
+ * armed value. */
 #define SWUART_LEAD_CYCLES 120u
 
 /**
  * @brief  Compute one bit period in instruction cycles:
- *         round(FOSC_HZ / 4 / baud). Timer1 prescaler stays 1:1
- *         (unchanged from v1) so this is directly the Timer1 counter
- *         delta for one bit.
+ *         round(FOSC_HZ / 4 / baud). Timer1 prescaler stays 1:1, so
+ *         this is directly the Timer1 counter delta for one bit.
  * @param fosc_hz system oscillator frequency in Hz.
  * @param baud    desired baud rate.
  * @return the per-bit Timer1 counter delta, clamped to [1, 65535].
@@ -142,11 +140,9 @@ static void on_tx_event_b(void) { tx_compare_event(g_chan_b, SWUART_CCP_TX_B); }
  *         PIC_REG_CCP2CON: every family's own sfr.h defines this name
  *         at that family's actual CCP2CON address (0x1D on PIC16F87XA,
  *         0xFBA on PIC18Fxx5x, 0x29A on PIC16F193X), reached
- *         transitively via epic_hal.h. Previously hardcoded to
- *         PIC16F87XA's 0x1D with no family guard (deferred finding
- *         from Task 4); only channel A's CCP2 is ever read here, so
- *         this stays correct even on PIC16F193X where channel B exists
- *         too.
+ *         transitively via epic_hal.h. Only channel A's CCP2 is read
+ *         here, so this stays correct even on PIC16F193X where channel
+ *         B exists too.
  * @return the raw CCP2CON register value. */
 uint8_t epic_swuart_test_last_tx_mode(void) { return (uint8_t)EPIC_REG8(PIC_REG_CCP2CON); }
 /** @brief Test hook: channel A's last armed TX deadline.
@@ -200,8 +196,7 @@ static void rx_push(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 /* test_get_capture takes the RX CCP instance (not hardcoded to channel
  * A's) so the shared rx_capture_event body below reads the right
  * hardware capture register for whichever channel is firing; the test
- * double still returns one shared value regardless of instance, since
- * no existing test exercises both channels' RX side at once. */
+ * double returns one shared value regardless of instance. */
 #if EPIC_SWUART_TEST_HOOKS
 static uint16_t g_test_capture_value = 0u;
 /** @brief Test hook: override the RX capture value the next
@@ -283,26 +278,22 @@ static void rx_capture_event(EPIC_SWUART_HandleTypeDef *h, CCP_InstanceTypeDef r
 #endif /* EPIC_SWUART_MAX_CHANNELS >= 2 || !EPIC_SWUART_HAS_RX_FAST_PATH */
 
 /* Direct SFR addresses for PIC16F87XA's CCP1 (channel A's RX capture),
- * confirmed against pic16f87xa_ccp.c's addrs[0] entry. Bypasses
+ * matching pic16f87xa_ccp.c's addrs[0] entry. Bypasses
  * EPIC_CCP_GetCapture's atomic retry-loop (unnecessary: a second real
  * capture can't land for a full cycles_per_bit, ~521 cycles at 9600
  * baud) and the generic SetCompare/SetMode call overhead, for this one
  * hot path only. Hardcoded to CCP1: channel B (PIC16F193X, CCP3) keeps
- * the generic rx_capture_event, a disclosed scope limit (see
- * docs/ARCHITECTURE.md's "Known limitations"); porting the pattern to
- * other families/instances is a follow-up. */
+ * the generic rx_capture_event (see docs/ARCHITECTURE.md). */
 #if EPIC_SWUART_HAS_RX_FAST_PATH
 #define CCP1_CPRL_ADDR 0x15U
 #define CCP1_CPRH_ADDR 0x16U
 #define CCP1_CON_ADDR  0x17U
 
-/* Edge-to-Timer1-read latency on real PIC16F87XA (AN555-style
- * _Cycle_Offset1 correction): 3 cycles interrupt response + 322 cycles
- * software latency, measured via an mdb probe on PIC16F877A, XC8 v3.10,
- * -O2. With it,
+/* Edge-to-Timer1-read latency (AN555-style _Cycle_Offset1 correction):
+ * 3 cycles interrupt response + 322 cycles software latency. With it,
  * d0's sample deadline lands mid-d0 at 1.499 bit periods; with 0 it
- * landed inside d1's window, a guaranteed mis-sample. Do not re-derive
- * without a fresh probe: it describes this exact code path/toolchain. */
+ * lands inside d1's window and mis-samples. The value describes this
+ * exact code path and toolchain; re-measure it if either changes. */
 #define RX_CAPTURE_OVERHEAD_CYCLES 325u
 
 #if EPIC_SWUART_TEST_HOOKS
@@ -330,10 +321,8 @@ void epic_swuart_test_set_capture_fast(uint16_t value)
 static void rx_capture_event_fast(EPIC_SWUART_HandleTypeDef *h)
 {
     if (h->rx_state != RX_IDLE) {
-        /* Steady-state per-bit sampling, unchanged from v3's own
-         * arithmetic: each event only needs to beat the *next* one by
-         * a full cycles_per_bit, already proven to fit with real
-         * margin (v3's TX-side measurement). */
+        /* Steady-state per-bit sampling: each event only needs to beat the *next* one
+         * by a full cycles_per_bit. */
         uint8_t sample = (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) == GPIO_PIN_SET) ? 1u : 0u;
 
         if (h->rx_state == RX_STOP) {
@@ -358,8 +347,7 @@ static void rx_capture_event_fast(EPIC_SWUART_HandleTypeDef *h)
 
     /* RX_IDLE: a start-bit falling edge just latched into CCPR1.
      * Immediate, synchronous deglitch check, no second scheduled
-     * event (deferring the check to a second event was the v3 timing
-     * race this removes). */
+     * event. */
     if (EPIC_GPIO_ReadPin(h->rx_port, h->rx_pin) != GPIO_PIN_RESET) {
         return; /* noise: pin already back high, stay in Capture mode */
     }
@@ -370,10 +358,10 @@ static void rx_capture_event_fast(EPIC_SWUART_HandleTypeDef *h)
 
     /* Relative reload: "now" is read after this handler's own real
      * latency has already elapsed, so the deadline can never be in
-     * the past, unlike v3's edge_time + 0.5*cycles_per_bit scheme.
-     * RX_CAPTURE_OVERHEAD_CYCLES corrects for that already-elapsed
-     * latency so the arm still lands close to the intended 1.5-bit
-     * mark relative to the real edge, not relative to "now". */
+     * the past. RX_CAPTURE_OVERHEAD_CYCLES corrects for that
+     * already-elapsed latency so the arm still lands close to the
+     * intended 1.5-bit mark relative to the real edge, not relative
+     * to "now". */
     uint16_t now = EPIC_TIMER1_ReadCounter();
     uint16_t target_offset = (uint16_t)(g_cycles_per_bit + g_cycles_per_bit / 2u);
     h->rx_deadline = (uint16_t)(now + target_offset - RX_CAPTURE_OVERHEAD_CYCLES);
@@ -387,7 +375,7 @@ static void rx_capture_event_fast(EPIC_SWUART_HandleTypeDef *h)
 /* Channel A's handler is the fast path on PIC16F87XA only; on
  * PIC18Fxx5x and PIC16F193X it stays on the generic rx_capture_event
  * (which reads/writes CCP1 through the family-correct EPIC_CCP_* SFR
- * accessors) until a follow-up ports the fast pattern. */
+ * accessors). */
 #if EPIC_SWUART_HAS_RX_FAST_PATH
 /** @brief RX event handler for channel A (fast path on PIC16F87XA). */
 static void on_rx_event_a(void) { rx_capture_event_fast(g_chan_a); }
@@ -432,9 +420,8 @@ EPIC_StatusTypeDef EPIC_SWUART_Init(EPIC_SWUART_HandleTypeDef *h,
     if (!h) return EPIC_INVALID;
 
     /* Slot A, every family: CCP1 = RC2 (RX), CCP2 = RC1 (TX). Same port
-     * and pin numbers on PIC16F87XA and PIC16F193X (checked against
-     * both families' own datasheets, not assumed from the shared
-     * macro names). */
+     * and pin numbers on PIC16F87XA and PIC16F193X per both families'
+     * own datasheets. */
     uint8_t slot_a_match = (tx_port == GPIOC && tx_pin == GPIO_PIN_1 &&
                              rx_port == GPIOC && rx_pin == GPIO_PIN_2) ? 1u : 0u;
     CCP_InstanceTypeDef rx_inst;
@@ -642,8 +629,9 @@ uint16_t EPIC_SWUART_GetErrorCount(const EPIC_SWUART_HandleTypeDef *h)
     /* 16-bit read, no GIE manipulation (class-G conversion, the
      * epic_tick_get read-twice-retry pattern): a single Disable-guarded
      * read can tear (the ISR increments error_count as a multi-byte
-     * RMW) and the Disable exposes the Finding 10.1 hazard. Retry until
-     * two consecutive reads agree. */
+     * RMW), and a Disable/Restore guard risks a latched interrupt
+     * delivered inside a GIE=0 window. Retry until two consecutive
+     * reads agree. */
     uint16_t count;
     do {
         count = h->error_count;

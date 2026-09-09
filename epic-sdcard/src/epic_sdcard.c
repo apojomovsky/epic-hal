@@ -81,11 +81,9 @@ void epic_sdcard_spi_set_cs(uint8_t instance, uint8_t value)
  * @brief Pick the fastest SSP divisor meeting target_hz.
  *
  * The SSP has 3 fixed divisors (Fosc/4, /16, /64); the fastest that
- * still meets target_hz is chosen, falling back to the slowest if none
- * do. Known gap: at 48 MHz (this family's USB clock), the slowest
- * available divisor is 750 kHz, above the SD spec's 400 kHz bring-up
- * ceiling; unverified whether real cards tolerate that without a board
- * to test on.
+ * meets target_hz is chosen, falling back to the slowest if none
+ * do. Limit: at 48 MHz (this family's USB clock) the slowest divisor
+ * yields 750 kHz, above the SD spec's 400 kHz bring-up ceiling.
  *
  * @param target_hz   desired SPI clock rate
  * @param achieved_hz receives the achieved rate
@@ -239,7 +237,7 @@ bool epic_sdcard_read_block(uint32_t block_addr, uint8_t *data)
  * @param block_addr block address to write
  * @param data       source buffer (exactly 512 bytes)
  * @return true if the card accepted the data and reported no write error
- *         via the follow-up SEND_STATUS check
+ *         via the SEND_STATUS check
  */
 bool epic_sdcard_write_block(uint32_t block_addr, const uint8_t *data)
 {

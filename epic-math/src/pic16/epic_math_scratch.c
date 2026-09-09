@@ -1,8 +1,8 @@
 /*
  * Definition of the shared file-scratch buffer (see epic_math_scratch.h).
  * __at-pinned into PIC16 mid-range's bank-independent common RAM
- * (0x70-0x7F): an unpinned buffer landed in bank 1 on PIC16F877A and
- * broke the link. Common RAM is the same physical addresses in every
+ * (0x70-0x7F): an unpinned buffer lands in banked RAM and breaks the
+ * link. Common RAM is the same physical addresses in every
  * bank, so the routine-level banksel is harmless and the whole window is
  * reachable from any bank.
  *

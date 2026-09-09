@@ -1,6 +1,6 @@
 /**
  * PIC16F193X EUSART driver implementation (DS41364B §23.0). Async 8-bit
- * mode only; 9-bit, auto-baud, sync deferred.
+ * mode only; 9-bit, auto-baud, and sync modes are out of scope.
  */
 
 #include "peripherals/pic16f193x_usart.h"

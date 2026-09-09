@@ -1,9 +1,9 @@
 /* epic-cc dispatch: Timer0, RB and Timer2 (the scheduling core's
  * sources), other flags cleared (the full fan-out pulls every
  * peripheral handler into the slice; the rest hit filed isel gaps).
- * Timer2 dispatch landed with epic-hal#86: the tick's 1 ms timebase
- * registers a Timer2 overflow callback, which must fire for the tick to
- * advance. Mirrors pic16f88x-hal's epiccc twin. */
+ * The tick's 1 ms timebase registers a Timer2 overflow callback, which
+ * must fire for the tick to advance (epic-hal#86). Mirrors
+ * pic16f88x-hal's epiccc twin. */
 
 #include "core/pic16_irq.h"
 

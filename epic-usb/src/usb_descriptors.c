@@ -33,12 +33,12 @@ const struct device_descriptor this_device_descriptor =
 	DESC_DEVICE, // bDescriptorType
 	0x0200, // USB 2.0
 	DEVICE_CLASS_MISC, // Device class
-	0x02, /* Device Subclass -- "USB Interface Association Descriptor
+	0x02, /* Device Subclass: "USB Interface Association Descriptor
 	         Device Class Code and Use Model" */
 	0x01, // Protocol, see document referenced above
 	EP_0_LEN, // bMaxPacketSize0
-	0xA0A0, // Vendor -- M-Stack placeholder, see file header comment
-	0x0004, // Product -- ditto
+	0xA0A0, // Vendor: M-Stack placeholder, see file header comment
+	0x0004, // Product: ditto
 	0x0001, // device release (1.0)
 	1, // Manufacturer (string index)
 	2, // Product (string index)
@@ -139,7 +139,7 @@ static const struct configuration_1_packet configuration_1 =
 	0x00, // iInterface
 	},
 
-	/* CDC Data IN Endpoint -- epic_usb_read() source */
+	/* CDC Data IN Endpoint: epic_usb_read() source */
 	{
 	sizeof(struct endpoint_descriptor),
 	DESC_ENDPOINT,
@@ -149,7 +149,7 @@ static const struct configuration_1_packet configuration_1 =
 	1,
 	},
 
-	/* CDC Data OUT Endpoint -- epic_usb_write() destination */
+	/* CDC Data OUT Endpoint: epic_usb_write() destination */
 	{
 	sizeof(struct endpoint_descriptor),
 	DESC_ENDPOINT,
