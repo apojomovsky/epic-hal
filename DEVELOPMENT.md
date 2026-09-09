@@ -101,8 +101,9 @@ from a worktree with no extra setup.
 the pre-commit hook only sees one commit's staged content: plan docs
 that must not reach master, commit hygiene, whitespace, em-dashes,
 docstring compliance on the C files touched, and the comment/doc prose
-review. `PROSE=1` attests the prose review happened, `TEST=1` also runs
-the host-sim suite. See `scripts/README.md` for the details.
+review. The prose step lints mechanically and prints every added block;
+`TEST=1` also runs the host-sim suite. See `scripts/README.md` for the
+details.
 
 ## CI
 
