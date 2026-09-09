@@ -66,8 +66,7 @@ void epic_debounce_init(epic_debounce_t *db, epic_debounce_read_fn read, void *r
                    uint16_t debounce_ms)
 {
 #ifdef __EPIC_CC__
-    /* Stub: the real init calls read(read_ctx) once and the real poll
-     * calls read() on every poll; isel cannot resolve an indirect call
+    /* Stub stores the config without sampling; isel cannot resolve an indirect call
      * through a struct-stored fn ptr (epic-cc#155). */
     db->read           = read;
     db->read_ctx       = read_ctx;
@@ -95,7 +94,7 @@ void epic_debounce_init(epic_debounce_t *db, epic_debounce_read_fn read, void *r
  */
 epic_debounce_event_t epic_debounce_poll(epic_debounce_t *db) {
 #ifdef __EPIC_CC__
-    /* Stub: epic-cc#155 (see epic_debounce_init above). */
+    /* Stub: see epic_debounce_init above (epic-cc#155). */
     (void)db;
     return DEBOUNCE_EVENT_NONE;
 #else

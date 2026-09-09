@@ -219,7 +219,7 @@ uint8_t epic_taskmgr_run_once(void)
      * then run the tasks with interrupts enabled so a tick during a long
      * task arms the task for the next round. The snapshot array is a
      * file-scope static, not a stack local: a stack `order[]` alloca
-     * triggers an irparse spike on the epic-cc path (`[8 x i8]`
+     * is rejected by irparse on the epic-cc path (`[8 x i8]`
      * unsupported), and run_once is the main-loop dispatcher, never
      * re-entered, so the static is exclusive to it. */
     static epic_taskmgr_id_t s_order[EPIC_TASKMGR_MAX_TASKS];
@@ -281,7 +281,7 @@ void epic_taskmgr_run(void)
 }
 
 /**
- * @brief Number of tasks currently registered (used slots), any state (see epic_taskmgr.h).
+ * @brief Number of tasks registered (used slots), any state (see epic_taskmgr.h).
  *
  * @return the count of used slots
  */

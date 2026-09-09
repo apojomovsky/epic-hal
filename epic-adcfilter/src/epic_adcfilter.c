@@ -65,7 +65,7 @@ uint16_t epic_adcfilter_avg_push(epic_adcfilter_avg_t *f, uint16_t sample)
     return 0u;
 #else
     if (f->filled < f->count) {
-        /* Window not yet full: just add, average over what's been pushed. */
+        /* Window filling: add, average over what's been pushed. */
         f->buf[f->index] = sample;
         f->sum += (uint32_t)sample;
         f->filled++;

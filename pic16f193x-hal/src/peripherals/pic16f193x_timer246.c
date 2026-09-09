@@ -3,7 +3,7 @@
  * driver, three instances. Every macro below branches on `inst` before
  * touching any SFR, so each branch's own register access is a literal
  * PIC_REG_* token, mirroring pic18fxx5x_ccp.c's CCP_WRITE_* and
- * CCP_READ_* shape (docs/adding-a-device.md §4.8's proven pattern for
+ * CCP_READ_* shape (docs/adding-a-device.md §4.8,
  * runtime-selected-instance dispatch).
  */
 

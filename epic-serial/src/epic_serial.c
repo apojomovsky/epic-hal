@@ -36,10 +36,10 @@ static volatile uint8_t g_rx_head, g_rx_tail, g_rx_count;
  * index/count; consumers read the slot only after the count check, so
  * a half-written slot is never observed. The only ISR writer of the TX
  * ring is the USART TX handler (the RX handler touches only the RX
- * ring), so no GIE manipulation is needed: the Disable/Restore pairs
- * that used to guard these sites exposed the Finding 10.1 hazard (a
- * latched interrupt delivered inside a GIE=0 window tears the region
- * and can leave GIE cleared after ISR return). */
+ * ring), so no GIE manipulation is needed: guarding these sites with
+ * Disable/Restore pairs risks a latched interrupt delivered inside a
+ * GIE=0 window tearing the region and leaving GIE cleared after ISR
+ * return. */
 
 /* ISR callbacks (called by the HAL's USART handlers). */
 
@@ -180,7 +180,7 @@ int epic_serial_available(void)
 /**
  * @brief Report the number of bytes still pending in the TX ring.
  *
- * @return the number of bytes not yet loaded into TXREG
+ * @return the number of bytes pending in the TX ring, not loaded into TXREG
  */
 int epic_serial_tx_pending(void)
 {
@@ -215,13 +215,13 @@ void putch(char c)
 }
 
 /* Formatting (the put_* family). On epic-cc a shared static buffer avoids
- * the [12 x i8] alloca that spikes irparse; on XC8 a stack buffer avoids
+ * the [12 x i8] alloca that irparse rejects; on XC8 a stack buffer avoids
  * linking 12 bytes of static RAM into every consumer (e.g. pid). Same
  * decimal/hex semantics on both. */
 #ifdef __EPIC_CC__
 static char s_fmt_buf[12];               /* sign + 10 digits + NUL fits i32 */
-/* epic_serial_put_str's shared staging buffer (epic-hal#123); external
- * linkage, every TU that expands the macro needs this symbol. */
+/* Shared staging buffer for epic_serial_put_str; external linkage, every TU that
+ * expands the macro needs this symbol (epic-hal#123). */
 char g_epic_serial_str_scratch[EPIC_SERIAL_STR_SCRATCH_SZ];
 #endif
 /**
@@ -309,7 +309,7 @@ void epic_serial_put_char(char c)
 }
 
 /* epic-cc expands put_str at each call site instead (see epic_serial.h):
- * a const pointer cannot cross a call boundary there yet (epic-cc#148). */
+ * a const pointer cannot cross a call boundary there (epic-cc#148). */
 /**
  * @brief Emit a null-terminated string.
  * @param s Null-terminated string.

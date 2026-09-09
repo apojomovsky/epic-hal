@@ -1,7 +1,7 @@
 /*
  * Host-only test double for epic_usb.h, deliberately not sharing
  * implementation with epic_usb.c: no faithful host simulation of a real
- * USB SIE exists, so this proves only the public API's behavioral
+ * USB SIE exists, so this covers only the public API's behavioral
  * contract (ring fill/drain, overflow-drop, DTR-gated connected());
  * real enumeration is real-silicon only. The test_support.h hooks
  * (set_dtr/inject_rx/sent-log) simulate the host side.

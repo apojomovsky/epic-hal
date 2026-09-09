@@ -103,7 +103,7 @@ int16_t epic_pid_update(epic_pid_t *pid, int16_t setpoint, int16_t measurement)
     int16_t error = (int16_t)(setpoint - measurement);
     int32_t p_q8  = epic_math_mul_s16(pid->kp_q8, error);
     /* D term: -d(measurement)/dt, not d(error)/dt, to avoid setpoint-step
-     * kick; zero on the first call (no previous measurement yet). */
+     * kick; zero on the first call (no previous measurement). */
     int16_t dmeas;
     if (!pid->have_prev_measurement) {
         dmeas = 0;

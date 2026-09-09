@@ -17,8 +17,7 @@
  * (DS41364B Table 2-3) so the inline-asm PIE bit helpers can move the
  * value through W without disturbing any C-level local (the same shape
  * as pic16f87xa-hal's scratch-byte extern + pic16_isr_vector.c's
- * `__at()`-pinned definition; see docs/ARCHITECTURE.md for the codegen
- * evidence).
+ * `__at()`-pinned definition; see docs/ARCHITECTURE.md).
  */
 
 #include "core/pic16f193x_irq.h"

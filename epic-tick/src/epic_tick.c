@@ -83,9 +83,9 @@ void epic_tick_init(uint32_t fosc_hz)
      * folds every field load and the callback store lands as a named
      * literal, which is how the epic-cc cross-context analysis resolves
      * the ISR's dispatch candidates (the same shape as the timer0
-     * driver's inlined Init, epic-hal#105). A static handle would leave
-     * the store a runtime load-copy and the tick's Timer2 callback would
-     * trap on the epic-cc path (epic-hal#86). */
+     * driver's inlined Init). A static handle would leave the store a
+     * runtime load-copy and the tick's Timer2 callback would trap on
+     * the epic-cc path (epic-hal#105, epic-hal#86). */
     TIMER2_HandleTypeDef h = TIMER2_HANDLE_DEFAULT;
     h.Prescaler        = pre;
     h.Postscaler       = post;
