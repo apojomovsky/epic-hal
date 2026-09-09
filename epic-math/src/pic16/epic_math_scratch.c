@@ -1,20 +1,10 @@
 /*
- * Definition of the shared file-scratch buffer (see epic_math_scratch.h).
- * __at-pinned into PIC16 mid-range's bank-independent common RAM
- * (0x70-0x7F): an unpinned buffer lands in banked RAM and breaks the
- * link. Common RAM is the same physical addresses in every
- * bank, so the routine-level banksel is harmless and the whole window is
- * reachable from any bank.
- *
- * Known overlaps, deliberately not engineered around:
- * - 0x70/0x71 are also used by pic16f87xa-hal's epic_irq_pie_scratch/
- *   epic_bank1_scratch (src/target/pic16_isr_vector.c): images linking the
- *   HAL core emit XC8 warning 1482. Safe as long as user firmware does
- *   not run a PIE-enable/bank1-SFR macro while a math routine is
- *   mid-computation.
- * - 0x7E/0x7F overlap XC8's btemp/wtemp/btemp1 temporaries. The asm
- *   routines use only offsets 0-7; a routine needing a byte past offset
- *   7 must first relocate this buffer.
+ * Shared file-scratch buffer (see epic_math_scratch.h), __at-pinned
+ * into common RAM (0x70-0x7F, bank-independent): an unpinned buffer
+ * lands in banked RAM and breaks the link. Known overlaps: 0x70/0x71
+ * are also the HAL ISR scratch (XC8 warning 1482 in HAL-linked images;
+ * safe unless firmware runs a PIE/bank1 macro mid-computation) and
+ * 0x7E/0x7F are XC8's btemp/wtemp (routines use offsets 0-7 only).
  */
 
 #include "epic_math_scratch.h"

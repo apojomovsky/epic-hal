@@ -1,12 +1,9 @@
 /**
- * Timer0 driver, implementation (DS41364B §15.0). OPTION_REG (Register
- * 2-2) holds T0CS/T0SE/PSA/PS<2:0>; TMR0 is at 0x15. XC8 auto-banks
- * both (TMR0 in bank 0, OPTION_REG in bank 1) on this core, so every
- * access is a plain literal `PIC_REG_*` write. The handle is copied
- * into owned static storage in EPIC_TIMER0_Init (the caller's handle is
- * typically a stack local that is gone by the time the ISR reads it
- * back; storing a pointer would dangle, the same shape as the classic
- * family).
+ * Timer0 driver, implementation (DS41364B §15.0). OPTION_REG holds
+ * T0CS/T0SE/PSA/PS<2:0>; TMR0 is at 0x15. XC8 auto-banks both, so
+ * every access is a plain literal `PIC_REG_*` write. The handle is
+ * copied into owned static storage in EPIC_TIMER0_Init (a caller
+ * stack local would dangle by the time the ISR reads it back).
  */
 
 #include "peripherals/pic16f193x_timer0.h"
