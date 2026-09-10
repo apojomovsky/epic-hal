@@ -16,9 +16,7 @@
 </p>
 
 A register-level HAL and a shelf of drop-in modules for 8-bit PIC
-microcontrollers. Download the bundle for your family, open the
-reference MPLAB X project, and you are building against a
-datasheet-faithful driver layer with one API across three PIC families,
+microcontrollers: one datasheet-faithful API across three PIC families,
 plus the things firmware always needs: a scheduler, a 1 ms timebase,
 UART and bit-banged serial, Modbus, PID, fixed-point math, and more.
 
@@ -105,97 +103,6 @@ Prefer to inspect before running? Download the script, read it, then run it:
 
     curl -fsSL -o install.sh https://github.com/apojomovsky/epic-hal/releases/latest/download/install.sh
     less install.sh && sh install.sh pic16f87xa
-
-## What you get
-
-- **One API, three families.** The same names and signatures on
-  [PIC16F87XA](pic16f87xa-hal/), [PIC18F2455](pic18fxx5x-hal/), and
-  [PIC16F193X](pic16f193x-hal/). Each family HAL implements the contract
-  over its own registers, every bit cited to Microchip's datasheet.
-  Code written against one builds against the others unchanged.
-- **No framework tax.** Plain C99, static storage, no RTOS, no dynamic
-  allocation, no C++. A module is a folder of `.c` files you can read.
-- **Logic proven before silicon.** Every module also builds and runs as
-  a host program, and CI cross-compiles everything for real parts and
-  runs it under MPLAB SIM, checking actual registers and UART output.
-- **One command to a `.hex`.** `curl ... | sh -s -- <family>` downloads,
-  verifies, and scaffolds a project; build with `make` or MPLAB X.
-
-## Not using the one-liner?
-
-### 1. Download a bundle and run `epic-hal init`
-
-Bundles live on the [Releases](https://github.com/apojomovsky/epic-hal/releases)
-page:
-
-| Bundle | Parts inside |
-|---|---|
-| `epic-hal-pic16f87xa-<version>.tar.gz` | 16F873A / 874A / 876A / 877A |
-| `epic-hal-pic18fxx5x-<version>.tar.gz` | 18F2455 / 2550 / 4455 / 4550 |
-| `epic-hal-pic16f193x-<version>.tar.gz` | 16F1933 / 1934 / 1936 / 1937 / 1938 / 1939 |
-
-The `<version>` is the release tag (e.g. `v0.1.0`); the badge above
-always shows the latest one.
-
-Download and unpack one, then, with the CLI installed globally:
-
-    pipx install git+https://github.com/apojomovsky/epic-hal
-    epic-hal init --bundle /path/to/unpacked/bundle
-
-Answer family, part, and modules. It writes `main.c`, a filled `Makefile`,
-and a ready MPLAB X `.X` in your current directory for your exact part +
-module subset. Open `myapp.X` in MPLAB X (or the MPLAB extension for VS
-Code) and Build, or `make`.
-
-## Advanced: without the scaffolder
-
-Prefer to wire a project by hand, or add Epic HAL to one you already
-have? These two paths skip the scaffolder.
-
-### Open the reference project in MPLAB X
-
-Unpack the bundle, then open `examples/epic-hal-demo.X` (File > Open
-Project). Pick your exact part under Project Properties, and Build. It
-produces a `.hex` you can program with MPLAB IPE or any PICkit.
-
-<details>
-<summary>New to MPLAB X?</summary>
-
-You need MPLAB X IDE and the MPLAB XC8 compiler, both free from
-Microchip (the free XC8 tier is enough). The reference project is
-pre-wired: sources, include paths, and configuration words are already
-set. Selecting your part under Project Properties is the only manual
-step.
-</details>
-
-### Or skip the IDE: a six-line Makefile
-
-Just `epic-cc` and `make`, no MPLAB X, no Microchip download, no license:
-
-```make
-EPIC_HAL_DIR := third_party/epic-hal
-EPIC_HAL_MCU := 16F877A
-EPIC_HAL_MODULES := serial tick
-include $(EPIC_HAL_DIR)/epic-hal.mk
-
-SRCS := main.c $(EPIC_HAL_SRCS)
-CFLAGS += $(EPIC_HAL_CFLAGS)
-
-app.hex: $(SRCS)
-	epic-cc --device p16f877a $(CFLAGS) $^ -o $@
-```
-
-XC8 alternate: `xc8-cc $(CFLAGS) $^ -o $@ -ginhx32` with `TOOLCHAIN=xc8` (and
-its device pack, see above).
-
-Run `make`, program the result. Dependencies resolve automatically
-(`modbus` pulls in `serial` and `tick`), and asking for a module on a
-part it does not fit fails immediately with the reason instead of a
-wall of XC8 linker errors. Each bundle's `SUPPORT.md` has the full
-per-part table.
-
-Adding Epic HAL to an existing MPLAB X project instead? The bundle's
-`MPLABX.md` walks through it.
 
 ## What the API feels like
 
@@ -327,6 +234,97 @@ int main(void)
 `epic_adcfilter` decimates the raw samples and keeps an O(1) moving
 average, both over a callback you provide. The HAL layer is just
 select, start, poll, read.
+
+## What you get
+
+- **One API, three families.** The same names and signatures on
+  [PIC16F87XA](pic16f87xa-hal/), [PIC18F2455](pic18fxx5x-hal/), and
+  [PIC16F193X](pic16f193x-hal/). Each family HAL implements the contract
+  over its own registers, every bit cited to Microchip's datasheet.
+  Code written against one builds against the others unchanged.
+- **No framework tax.** Plain C99, static storage, no RTOS, no dynamic
+  allocation, no C++. A module is a folder of `.c` files you can read.
+- **Logic proven before silicon.** Every module also builds and runs as
+  a host program, and CI cross-compiles everything for real parts and
+  runs it under MPLAB SIM, checking actual registers and UART output.
+- **One command to a `.hex`.** `curl ... | sh -s -- <family>` downloads,
+  verifies, and scaffolds a project; build with `make` or MPLAB X.
+
+## Not using the one-liner?
+
+### 1. Download a bundle and run `epic-hal init`
+
+Bundles live on the [Releases](https://github.com/apojomovsky/epic-hal/releases)
+page:
+
+| Bundle | Parts inside |
+|---|---|
+| `epic-hal-pic16f87xa-<version>.tar.gz` | 16F873A / 874A / 876A / 877A |
+| `epic-hal-pic18fxx5x-<version>.tar.gz` | 18F2455 / 2550 / 4455 / 4550 |
+| `epic-hal-pic16f193x-<version>.tar.gz` | 16F1933 / 1934 / 1936 / 1937 / 1938 / 1939 |
+
+The `<version>` is the release tag (e.g. `v0.1.0`); the badge above
+always shows the latest one.
+
+Download and unpack one, then, with the CLI installed globally:
+
+    pipx install git+https://github.com/apojomovsky/epic-hal
+    epic-hal init --bundle /path/to/unpacked/bundle
+
+Answer family, part, and modules. It writes `main.c`, a filled `Makefile`,
+and a ready MPLAB X `.X` in your current directory for your exact part +
+module subset. Open `myapp.X` in MPLAB X (or the MPLAB extension for VS
+Code) and Build, or `make`.
+
+## Advanced: without the scaffolder
+
+Prefer to wire a project by hand, or add Epic HAL to one you already
+have? These two paths skip the scaffolder.
+
+### Open the reference project in MPLAB X
+
+Unpack the bundle, then open `examples/epic-hal-demo.X` (File > Open
+Project). Pick your exact part under Project Properties, and Build. It
+produces a `.hex` you can program with MPLAB IPE or any PICkit.
+
+<details>
+<summary>New to MPLAB X?</summary>
+
+You need MPLAB X IDE and the MPLAB XC8 compiler, both free from
+Microchip (the free XC8 tier is enough). The reference project is
+pre-wired: sources, include paths, and configuration words are already
+set. Selecting your part under Project Properties is the only manual
+step.
+</details>
+
+### Or skip the IDE: a six-line Makefile
+
+Just `epic-cc` and `make`, no MPLAB X, no Microchip download, no license:
+
+```make
+EPIC_HAL_DIR := third_party/epic-hal
+EPIC_HAL_MCU := 16F877A
+EPIC_HAL_MODULES := serial tick
+include $(EPIC_HAL_DIR)/epic-hal.mk
+
+SRCS := main.c $(EPIC_HAL_SRCS)
+CFLAGS += $(EPIC_HAL_CFLAGS)
+
+app.hex: $(SRCS)
+	epic-cc --device p16f877a $(CFLAGS) $^ -o $@
+```
+
+XC8 alternate: `xc8-cc $(CFLAGS) $^ -o $@ -ginhx32` with `TOOLCHAIN=xc8` (and
+its device pack, see above).
+
+Run `make`, program the result. Dependencies resolve automatically
+(`modbus` pulls in `serial` and `tick`), and asking for a module on a
+part it does not fit fails immediately with the reason instead of a
+wall of XC8 linker errors. Each bundle's `SUPPORT.md` has the full
+per-part table.
+
+Adding Epic HAL to an existing MPLAB X project instead? The bundle's
+`MPLABX.md` walks through it.
 
 ## What you can build
 
