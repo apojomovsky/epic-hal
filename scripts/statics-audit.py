@@ -66,8 +66,6 @@ ALLOWLIST = {
         "88X CCP ISR reads the array directly, auto-banksel (same mechanism as 87XA)",
     ("pic14-midrange-core/src/peripherals/pic14_ccp.c", "g_ccp_callbacks"):
         "shared CCP ISR reads the array directly with a constant index, auto-banksel (same mechanism as 87XA)",
-    ("pic14-midrange-core/src/peripherals/pic14_ssp.c", "g_ssp_transfer_cb"):
-        "shared SSP ISR reads the single callback pointer directly, auto-banksel (same mechanism as shared ccp)",
     ("epic-serial/src/epic_serial.c", "g_tx_buf"):
         "direct symbol access, auto-banksel (verified)",
     ("epic-tick/src/epic_tick.c", "g_tick_ms"):

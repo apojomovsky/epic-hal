@@ -9,17 +9,10 @@
 
 /* handle storage. */
 
-/* Owned copy of the caller's handle for the weak ISR (the caller's is
- * typically stack-local, out of scope by the time the ISR reads it;
- * see epic-common/MANUAL.md §3.3 for the dangling-pointer hazard this
- * avoids). Pinned to bank 2 (0x145) when the part has Bank 2 GPR
- * (883/884/886/887); the 882 has none, so it falls back to the
- * linker's best-fit scatter. */
-
-/* The ISR only needs the callback, so store the pointer (1 byte) rather
- * than a full handle copy (see epic-common/MANUAL.md §3.3 for the
- * dangling-pointer hazard a copy avoids; a full copy costs RAM on the
- * 128-byte 882). */
+/* The ISR only needs the transfer callback, so store the pointer (1
+ * byte) rather than a full handle copy: the caller's handle is
+ * typically stack-local, out of scope by the time the ISR reads it
+ * (epic-common/MANUAL.md §3.3). */
 static void (*g_ssp_transfer_cb)(void) = NULL;
 
 /* SSPCON2/SSPSTAT/SSPADD are Bank 1 (SSPSTAT=0x94, SSPCON2=0x91,
