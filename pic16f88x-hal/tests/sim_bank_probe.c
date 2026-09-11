@@ -11,7 +11,7 @@
 
 #include "core/epic_harness.h"
 #include "core/pic16_irq.h"
-#include "core/pic16f88x_wdt_sleep.h"
+#include "core/pic14_wdt_sleep.h"
 #include "peripherals/pic16f88x_adc.h"
 #include "peripherals/pic16f88x_comp.h"
 #include "peripherals/pic16f88x_gpio.h"
@@ -127,7 +127,7 @@ int main(void)
     /* Class A: EPIC_TIMER2_ReadPeriod reads PR2 (Bank 1, 0x92). */
     EPIC_BANK1_WRITE8(PR2, 0xAAu);
     {
-        /* Read through the driver's safe path. */
+        /** @brief Read through the driver's safe path. */
         extern uint8_t EPIC_TIMER2_ReadPeriod(void);
         CHECK(EPIC_TIMER2_ReadPeriod() == 0xAAu, 0x07);
     }

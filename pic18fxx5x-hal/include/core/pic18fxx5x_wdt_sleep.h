@@ -1,6 +1,6 @@
 /*
  * CPU-level helpers: Watchdog Timer, Brown-out Reset, Sleep. Matches
- * `pic16f87xa_wdt_sleep.h`'s API (DS39632E §4.0/§9.0/§14.x/§3.0); PIC18
+ * `pic14_wdt_sleep.h`'s API (DS39632E §4.0/§9.0/§14.x/§3.0); PIC18
  * folds the reset-status bits (TO/PD/POR/BOR) into RCON instead of PIC16's
  * separate PCON. `EPIC_WDT_Refresh`/`EPIC_Sleep_Enter` are link-time-
  * selected (`*_sim.c` host, `*_target.c` XC8).

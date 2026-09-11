@@ -10,7 +10,7 @@
 
 /* Core. */
 #include "core/pic16_irq.h"
-#include "core/pic16f88x_wdt_sleep.h"
+#include "core/pic14_wdt_sleep.h"
 
 /* Peripherals. */
 #include "peripherals/pic16f88x_gpio.h"

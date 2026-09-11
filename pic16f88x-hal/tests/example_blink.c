@@ -8,7 +8,7 @@
 #include "peripherals/pic16f88x_gpio.h"
 #include "peripherals/pic16f88x_timer0.h"
 #include "core/pic16_irq.h"
-#include "core/pic16f88x_wdt_sleep.h"
+#include "core/pic14_wdt_sleep.h"
 #include "core/epic_harness.h"
 
 /** Simulated run length (host only). 256 × 256 = 65536 cycles per Timer0

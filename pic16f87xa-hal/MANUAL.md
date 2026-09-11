@@ -82,7 +82,9 @@ pic16f87xa-hal/
 │   │   └── pic16f87xa_platform.h   (SFRs → volatile deref, no weak)
 │   ├── core/                    CPU-level features (PIC16-specific)
 │   │   ├── pic16_irq.h                IRQn enum + EPIC_IRQ_* backend
-│   │   └── pic16f87xa_wdt_sleep.h      WDT/Sleep/BOR/POR helpers
+│   │   └── hal_wdt_sleep.h            family-neutral shim; the WDT/Sleep/
+│   │                                   BOR/POR implementation lives in
+│   │                                   pic14-midrange-core
 │   └── peripherals/            one .h per peripheral, Cube-style
 ├── src/
 │   ├── core/                    implementations of core/ headers

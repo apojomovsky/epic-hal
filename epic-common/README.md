@@ -43,7 +43,10 @@ Anything register-specific: SFR maps, bank/BSR addressing, the
 `platform.h` SFR-access spelling, the IRQ enum and vector layout,
 peripheral driver bodies, config-word directives. Those stay in each
 family's tree (`pic16f87xa-hal/`, `pic18fxx5x-hal/`, …), implementing the
-contract this layer defines. See
+contract this layer defines, with one exception: the drivers shared by
+the classic-midrange families (PIC16F87XA, PIC16F88X, PIC16F628A) live
+in [../pic14-midrange-core/](../pic14-midrange-core/), selected per part
+by its SFR map and `PIC14MIDRANGE_HAS_*` feature macros. See
 [MANUAL.md](MANUAL.md) for the full design of the shared contract, and
 [../docs/adding-a-device.md](../docs/adding-a-device.md) for the operational
 guide to adding another device or family.

@@ -1,9 +1,9 @@
-/* Family-neutral WDT / Sleep / BOR / POR contract. Family-agnostic
- * consumers include this name instead of pic16f88x_wdt_sleep.h; each
- * family provides its own copy that pulls in its family-specific
- * header. The include path selects which family's copy resolves. */
+/* Family-neutral WDT / Sleep / BOR / POR contract (EPIC_WDT_*).
+ * Implementation lives in the shared pic14-midrange-core; this header
+ * redirects to it so family-neutral consumers (epic-taskmgr) keep
+ * building unchanged across families. */
 
 #ifndef EPIC_WDT_SLEEP_H
 #define EPIC_WDT_SLEEP_H
-#include "pic16f88x_wdt_sleep.h"
+#include "core/pic14_wdt_sleep.h"
 #endif /* EPIC_WDT_SLEEP_H */

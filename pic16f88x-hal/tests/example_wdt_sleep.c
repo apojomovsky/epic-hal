@@ -5,7 +5,7 @@
 #include "pic16f88x.h"
 #include "pic16f88x_sim.h"
 #include "pic16f88x_sfr.h"
-#include "core/pic16f88x_wdt_sleep.h"
+#include "core/pic14_wdt_sleep.h"
 #include <stdio.h>
 
 #define CHECK(cond, msg) do { \
