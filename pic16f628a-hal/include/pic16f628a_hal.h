@@ -4,8 +4,8 @@
  * Single-part family: 18-pin, 2 KW flash, 224 B RAM, 128 B data EEPROM,
  * no ADC/SSP/CCP2/PSP/PIR2. */
 
-#ifndef PIC16F628A_H
-#define PIC16F628A_H
+#ifndef PIC16F628A_HAL_H
+#define PIC16F628A_HAL_H
 
 /* standard types. */
 
@@ -36,11 +36,11 @@
 
 /* EPIC_StatusTypeDef/EPIC_OK/... and the EPIC_BIT* macros are
  * architecture-blind, so they live in the shared layer; pulled in here
- * so one `#include "pic16f628a.h"` gives every consumer the same
+ * so one `#include "pic16f628a_hal.h"` gives every consumer the same
  * status/bit vocabulary. */
 #include "core/hal_status.h"
 
 /* platform: SFR mapping + weak attribute. */
 #include "pic16f628a_platform.h"
 
-#endif /* PIC16F628A_H */
+#endif /* PIC16F628A_HAL_H */

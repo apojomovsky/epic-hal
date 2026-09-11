@@ -2,7 +2,7 @@
  * 0x55/0xAA unlock sequence on write, simulated write completion, and
  * buffer round-trips. */
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 #include "pic16f628a_sim.h"
 #include "pic16f628a_sfr.h"
 #include "peripherals/pic14_eeprom.h"

@@ -2,7 +2,7 @@
  * Table 10-1, Init programs TXSTA/SPBRG, Transmit writes TXREG, and a
  * simulated RX byte is returned with RCIF cleared. */
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 #include "pic16f628a_sim.h"
 #include "pic16f628a_sfr.h"
 #include "peripherals/pic14_usart.h"

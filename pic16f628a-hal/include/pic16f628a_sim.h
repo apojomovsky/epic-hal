@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 
 /**
  * @brief Initialize the simulation backend and reset every SFR to its

@@ -3,7 +3,7 @@
  * host sim does not model RBIF-on-mismatch, so the test asserts RBIF
  * directly and checks the handler's read/clear/callback ordering. */
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 #include "pic16f628a_sim.h"
 #include "pic16f628a_sfr.h"
 #include "peripherals/pic14_gpio.h"

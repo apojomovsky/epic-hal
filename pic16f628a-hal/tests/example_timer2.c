@@ -2,7 +2,7 @@
  * PR2=249, prescaler 1:1, postscaler 1:1: period = (PR2+1) x pre x
  * post = 250 instruction cycles (DS39582B §7.0). */
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 #include "pic16f628a_sim.h"
 #include "pic16f628a_sfr.h"
 #include "peripherals/pic14_timer2.h"

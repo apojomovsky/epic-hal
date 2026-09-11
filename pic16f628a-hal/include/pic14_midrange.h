@@ -4,7 +4,7 @@
 
 #ifndef PIC14_MIDRANGE_H
 #define PIC14_MIDRANGE_H
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 
 /* Capability contract for shared pic14-midrange-core code (1 = present). */
 #define PIC14MIDRANGE_FLASH_KW 2

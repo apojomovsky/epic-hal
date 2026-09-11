@@ -8,7 +8,7 @@
 #ifndef PIC16F628A_SFR_H
 #define PIC16F628A_SFR_H
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 
 /* Bank 0, core SFRs. */
 

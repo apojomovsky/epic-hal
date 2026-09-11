@@ -3,7 +3,7 @@
  * RB0 and GND, 20 MHz HS crystal. Timer0 Fosc/4, 1:256 prescaler,
  * reload 0, overflows every ~13 ms (~76 Hz toggle). */
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 #include "pic16f628a_sfr.h"
 #include "peripherals/pic14_gpio.h"
 #include "peripherals/pic14_timer0.h"

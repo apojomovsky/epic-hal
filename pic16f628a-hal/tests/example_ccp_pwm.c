@@ -4,7 +4,7 @@
  * verifies the configured registers (CCP1CON, PR2, T2CON) and counts
  * TMR2 overflows for the period. */
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 #include "pic16f628a_sim.h"
 #include "pic16f628a_sfr.h"
 #include "peripherals/pic14_ccp.h"

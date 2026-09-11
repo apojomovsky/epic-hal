@@ -2,7 +2,7 @@
  * and POR flags are set (PCON = 0x0F), the ClearFlag helpers clear
  * them, and the WDT/Sleep no-ops do not crash. */
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 #include "pic16f628a_sim.h"
 #include "pic16f628a_sfr.h"
 #include "core/pic14_wdt_sleep.h"

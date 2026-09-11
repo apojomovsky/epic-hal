@@ -3,7 +3,7 @@
  * Init programs VRCON (0.25..0.75 VDD range, tap 8, output enabled),
  * and EPIC_VREF_MilliVolts computes the expected mV values. */
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 #include "pic16f628a_sim.h"
 #include "pic16f628a_sfr.h"
 #include "peripherals/pic14_comp.h"

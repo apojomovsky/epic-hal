@@ -6,7 +6,7 @@
 #ifndef PIC16_IRQ_H
 #define PIC16_IRQ_H
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 #include "pic16f628a_sfr.h"
 #include "core/epic_irq.h"   /* shared EPIC_IRQ_Priority enum (family-blind) */
 

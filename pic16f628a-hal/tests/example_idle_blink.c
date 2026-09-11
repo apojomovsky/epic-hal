@@ -5,7 +5,7 @@
  * toggle the LED. Wiring: LED+resistor on RB0, 32.768 kHz crystal on
  * T1OSO/T1OSI, 20 MHz HS crystal for the CPU clock. */
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 #include "pic16f628a_sfr.h"
 #include "peripherals/pic14_gpio.h"
 #include "peripherals/pic14_timer1.h"

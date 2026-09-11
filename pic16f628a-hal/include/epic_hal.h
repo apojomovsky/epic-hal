@@ -6,7 +6,7 @@
 #ifndef EPIC_H
 #define EPIC_H
 
-#include "pic16f628a.h"       /* standard types, status codes, platform   */
+#include "pic16f628a_hal.h"       /* standard types, status codes, platform   */
 #include "pic16f628a_sfr.h"   /* SFR address map + bit definitions       */
 
 /* Core. */

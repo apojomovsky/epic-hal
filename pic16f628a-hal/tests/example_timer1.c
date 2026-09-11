@@ -2,7 +2,7 @@
  * Timer1 counts Fosc/4 at 1:1; TMR1IF fires every 65 536 instruction
  * cycles and the test counts overflows. */
 
-#include "pic16f628a.h"
+#include "pic16f628a_hal.h"
 #include "pic16f628a_sim.h"
 #include "pic16f628a_sfr.h"
 #include "peripherals/pic14_timer1.h"
