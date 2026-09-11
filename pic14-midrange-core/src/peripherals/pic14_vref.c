@@ -1,6 +1,8 @@
-/* Voltage Reference driver implementation (DS39582B §13.0). */
+/* Shared PIC14 mid-range voltage-reference implementation (87XA CVRCON
+ * parts and 88X/628A VRCON parts). Sources: DS39582B §13 (87XA),
+ * DS40001291H §8.10 (88X). */
 
-#include "peripherals/pic16f87xa_vref.h"
+#include "peripherals/pic14_vref.h"
 
 /**
  * @brief Initialize the voltage reference: program CVRCON from the
@@ -12,14 +14,36 @@ EPIC_StatusTypeDef EPIC_VREF_Init(const VREF_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
 
+#if PIC14MIDRANGE_HAS_VRCON
+    /* Build VRCON (Bank 1; 0x97 on 88X, 0x9F on 628A). VRR=1 selects
+     * the low range on VRCON parts (per each datasheet's register
+     * table), the opposite polarity of CVRCON. */
+    uint8_t v = h->Value & PIC_VRCON_VR_MASK;
+#if PIC14MIDRANGE_HAS_VRSS
+    if (h->Source == VREF_SRC_VREFP_VREFN) v |= PIC_VRCON_VRSS;
+#endif
+    if (h->Range == VREF_RANGE_LOW)        v |= PIC_VRCON_VRR;
+    if (h->OutputEnable)                   v |= PIC_VRCON_VROE;
+    if (h->Enabled)                        v |= PIC_VRCON_VREN;
+#ifdef EPIC_BANK1_WRITE8
+    EPIC_BANK1_WRITE8(VRCON, v);
+#else
+    {
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        pic_select_bank(1);
+        EPIC_REG8(PIC_REG_VRCON) = v;
+        pic_select_bank(prev);
+    }
+#endif
+#else
     /* Build CVRCON (Bank 1, address 0x9D). */
     uint8_t v = h->Value & PIC_CVRCON_CVR_MASK;
     if (h->Range == VREF_RANGE_HIGH) v |= PIC_CVRCON_CVRR;
     if (h->OutputEnable)            v |= PIC_CVRCON_CVROE;
     if (h->Enabled)                 v |= PIC_CVRCON_CVREN;
 #ifdef EPIC_BANK1_WRITE8
-    /* See target/pic16f87xa_platform.h: a plain bank-switch write here
-     * silently corrupts under XC8 v4.00. */
+    /* See the family target platform header: a plain bank-switch write
+     * here silently corrupts under XC8 v4.00. */
     EPIC_BANK1_WRITE8(CVRCON, v);
 #else
     {
@@ -28,6 +52,7 @@ EPIC_StatusTypeDef EPIC_VREF_Init(const VREF_HandleTypeDef *h)
         EPIC_REG8(0x9DU) = v;
         pic_select_bank(prev);
     }
+#endif
 #endif
     return EPIC_OK;
 }
@@ -38,11 +63,17 @@ EPIC_StatusTypeDef EPIC_VREF_Init(const VREF_HandleTypeDef *h)
  */
 EPIC_StatusTypeDef EPIC_VREF_DeInit(void)
 {
+#if PIC14MIDRANGE_HAS_VRCON
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    pic_select_bank(1);
+    EPIC_REG8(PIC_REG_VRCON) = 0x00U;
+    pic_select_bank(prev);
+#else
     uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
     pic_select_bank(1);
     EPIC_REG8(0x9DU) = 0x00U;
     pic_select_bank(prev);
-    return EPIC_OK;
+#endif
 }
 
 /**

@@ -1,6 +1,9 @@
-/* ECCP1 / CCP2 driver implementation (DS40001291H §11.0). */
+/* Shared PIC14 mid-range CCP implementation (87XA + 88X ECCP1 variant +
+ * 628A CCP1-only). Sources: DS39582B §8 (87XA), DS40001291H §11 (88X).
+ * CCP1 addresses are identical on all three (DFP-verified); CCP2 and
+ * the ECCP enhancement registers exist only where flagged. */
 
-#include "peripherals/pic16f88x_ccp.h"
+#include "peripherals/pic14_ccp.h"
 #include "core/pic16_irq.h"
 
 /**
@@ -18,7 +21,9 @@ typedef struct {
  * CCPR2L 0x1B, CCPR2H 0x1C, CCP2CON 0x1D. */
 static const ccp_addrs_t addrs[2] = {
     { 0x15U, 0x16U, 0x17U, PIC16_IRQ_CCP1 },
+#if PIC14MIDRANGE_HAS_CCP2
     { 0x1BU, 0x1CU, 0x1DU, PIC16_IRQ_CCP2 },
+#endif
 };
 
 /**
@@ -29,7 +34,9 @@ static const ccp_addrs_t addrs[2] = {
  */
 static const ccp_addrs_t *ccp_sel(CCP_InstanceTypeDef inst)
 {
+#if PIC14MIDRANGE_HAS_CCP2
     if (inst == CCP_INSTANCE_2) return &addrs[1];
+#endif
     return &addrs[0];
 }
 /* Driver-owned callback storage, one slot per CCP instance (index 0
@@ -53,10 +60,15 @@ static void (*g_ccp_callbacks[3])(void) = { NULL, NULL, NULL };
  */
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
-    if (!h) return EPIC_INVALID;
+#if PIC14MIDRANGE_HAS_CCP2
     if (h->Instance != CCP_INSTANCE_1 && h->Instance != CCP_INSTANCE_2) {
         return EPIC_INVALID;
     }
+#else
+    if (h->Instance != CCP_INSTANCE_1) {
+        return EPIC_INVALID;
+    }
+#endif
     const ccp_addrs_t *a = ccp_sel(h->Instance);
     /* Copy the callback into driver-owned storage: the IRQ handlers
      * call this copy directly and the caller's handle is not retained
@@ -77,9 +89,11 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
         uint16_t duty = h->PWM.Duty & 0x03FFU;       /* 10-bit clamp. */
         uint8_t  con  = (uint8_t)(h->Mode & 0x0FU);  /* mode 1100, also handles 1101/1110/1111. */
         con |= (uint8_t)((duty & 0x03U) << 4);        /* DCxB1:DCxB0 = duty[1:0]. */
+#if PIC14MIDRANGE_HAS_ECCP
         if (h->Instance == CCP_INSTANCE_1) {
             con |= (uint8_t)((uint8_t)h->PWMOutput << 6);  /* P1M1:P1M0. */
         }
+#endif
         EPIC_REG8(a->cprl) = (uint8_t)(duty >> 2);
         EPIC_REG8(a->cprh) = 0U;
         EPIC_REG8(a->con)  = con;
@@ -88,9 +102,11 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
         EPIC_REG8(a->cprl) = (uint8_t)(h->CompareValue & 0xFFU);
         EPIC_REG8(a->cprh) = (uint8_t)(h->CompareValue >> 8);
         uint8_t con = (uint8_t)(h->Mode & 0x0FU);
+#if PIC14MIDRANGE_HAS_ECCP
         if (h->Instance == CCP_INSTANCE_1) {
             con |= (uint8_t)((uint8_t)h->PWMOutput << 6);  /* P1M1:P1M0 (ignored in non-PWM). */
         }
+#endif
         EPIC_REG8(a->con) = con;
     }
 
@@ -106,13 +122,20 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
  */
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
 {
+#if PIC14MIDRANGE_HAS_CCP2
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) {
         return EPIC_INVALID;
     }
+#else
+    if (inst != CCP_INSTANCE_1) {
+        return EPIC_INVALID;
+    }
+#endif
     const ccp_addrs_t *a = ccp_sel(inst);
     EPIC_IRQ_DisableSrc(a->irq);
     EPIC_IRQ_ClearFlag(a->irq);
     EPIC_REG8(a->con) = 0x00U;
+#if PIC14MIDRANGE_HAS_ECCP
     if (inst == CCP_INSTANCE_1) {
 #ifdef EPIC_BANK1_WRITE8
         EPIC_BANK1_WRITE8(PWM1CON, 0x00U);
@@ -129,6 +152,7 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
         }
 #endif
     }
+#endif
     g_ccp_callbacks[inst] = NULL;
     return EPIC_OK;
 }
@@ -141,7 +165,11 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
  */
 void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
 {
+#if PIC14MIDRANGE_HAS_CCP2
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
+#else
+    if (inst != CCP_INSTANCE_1) return;
+#endif
     const ccp_addrs_t *a = ccp_sel(inst);
     /* DS40001291H §11.x: in compare mode a write to CCPRxH could
      * trigger a spurious compare match if the low byte wrote first.
@@ -157,13 +185,21 @@ void EPIC_CCP_SetCompare(CCP_InstanceTypeDef inst, uint16_t value)
  */
 void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode)
 {
+#if PIC14MIDRANGE_HAS_CCP2
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
+#else
+    if (inst != CCP_INSTANCE_1) return;
+#endif
     const ccp_addrs_t *a = ccp_sel(inst);
+#if PIC14MIDRANGE_HAS_ECCP
     /* Keep the P1M bits for ECCP1 (bits 7:6) and DCx bits (5:4). */
     uint8_t keep = (inst == CCP_INSTANCE_1) ? 0xF0U : 0x30U;
     uint8_t con = (uint8_t)(EPIC_REG8(a->con) & keep);
     con |= (uint8_t)(mode & 0x0FU);
     EPIC_REG8(a->con) = con;
+#else
+    EPIC_REG8(a->con) = (uint8_t)(mode & 0x0FU);
+#endif
 }
 
 /**
@@ -173,7 +209,11 @@ void EPIC_CCP_SetMode(CCP_InstanceTypeDef inst, CCP_ModeTypeDef mode)
  */
 uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
+#if PIC14MIDRANGE_HAS_CCP2
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return 0U;
+#else
+    if (inst != CCP_INSTANCE_1) return 0U;
+#endif
     const ccp_addrs_t *a = ccp_sel(inst);
     /* Same atomic-read idiom as Timer1. */
     uint8_t lo, hi1, hi2;
@@ -193,7 +233,11 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
  */
 void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 {
+#if PIC14MIDRANGE_HAS_CCP2
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return;
+#else
+    if (inst != CCP_INSTANCE_1) return;
+#endif
     const ccp_addrs_t *a = ccp_sel(inst);
     duty &= 0x03FFU;
     /* The duty LSBs go into CCPxCON<5:4>; CCPRxL holds bits 9:2.
@@ -205,6 +249,7 @@ void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
     EPIC_REG8(a->cprl) = (uint8_t)(duty >> 2);
 }
 
+#if PIC14MIDRANGE_HAS_ECCP
 /* ECCP1-only enhanced-PWM helpers. */
 
 /**
@@ -305,6 +350,7 @@ void EPIC_CCP1_ClearShutdown(void)
     EPIC_REG8(PIC_REG_ECCPAS) &= (uint8_t)~PIC_ECCPAS_ECCPASE;
 #endif
 }
+#endif
 
 /* ISRs. */
 
@@ -319,6 +365,7 @@ void CCP1_IRQHandler(void)
     }
 }
 
+#if PIC14MIDRANGE_HAS_CCP2
 /**
  * @brief Weak CCP2 ISR: clears CCP2IF and fires the stored callback.
  */
@@ -329,3 +376,4 @@ void CCP2_IRQHandler(void)
         g_ccp_callbacks[CCP_INSTANCE_2]();
     }
 }
+#endif

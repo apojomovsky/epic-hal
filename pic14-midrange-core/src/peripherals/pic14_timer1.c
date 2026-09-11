@@ -1,37 +1,31 @@
-/* Timer1 driver implementation (DS40001291H §6.0). */
+/* Shared PIC14 mid-range Timer1 implementation (87XA base + 88X gate).
+ * Sources: DS39582B §6 (87XA), DS40001291H §6 (88X). */
 
-#include "peripherals/pic16f88x_timer1.h"
+#include "peripherals/pic14_timer1.h"
 #include "core/pic16_irq.h"
 
-/* T1CON prescaler ratios, DS40001291H Register 6-1:
+/* T1CON prescaler ratios, DS39582B Register 6-1:
  *   00 → 1:1, 01 → 1:2, 10 → 1:4, 11 → 1:8 */
 static const uint16_t ps_ratio[4] = { 1, 2, 4, 8 };
 
-/* Owned copy of the caller's handle for the weak ISR (the caller's is
- * typically stack-local, out of scope by the time the ISR reads it;
- * the 87XA's pointer-holding version was a confirmed dangling-pointer
- * bug, see epic-common/MANUAL.md §3.3). Pinned to bank 2 (0x140) when
- * the part has Bank 2 GPR (883/884/886/887); the 882 (128 B RAM) has
- * none, so it falls back to the linker's best-fit scatter. */
-
 /* The ISR only needs the callback, so store the pointer (1 byte) rather
- * than a full handle copy (see epic-common/MANUAL.md §3.3 for the
- * dangling-pointer hazard a copy avoids; a full copy costs RAM on the
- * 128-byte 882). */
+ * than the whole handle: the caller's handle is typically stack-local
+ * (a dangling-pointer hazard, see epic-common/MANUAL.md §3.3), and a
+ * full copy costs RAM on the smaller parts. */
 static void (*g_t1_overflow_cb)(void) = NULL;
 
 /**
  * @brief Atomically read the 16-bit counter. The datasheet warns that
  *        reading TMR1H:TMR1L in asynchronous counter mode can return
- *        inconsistent values (DS40001291H §6.5.1). Wrap that risk here
- *        so callers don't have to.
+ *        inconsistent values (DS39582B §6.4.1). Wrap that risk here so
+ *        callers don't have to.
  * @return the current 16-bit TMR1H:L value.
  */
 uint16_t EPIC_TIMER1_ReadCounter(void)
 {
     /* Read high byte, then low byte, then high byte again; if the
      * second read differs, the low byte rolled over, so use the
-     * refreshed high. Standard PIC16 idiom (DS40001291H §6.5.1). */
+     * refreshed high. Standard PIC16 idiom (DS39582B §6.4.1). */
     uint8_t hi1, lo, hi2;
     do {
         hi1 = EPIC_REG8(PIC_REG_TMR1H);
@@ -49,7 +43,7 @@ uint16_t EPIC_TIMER1_ReadCounter(void)
  */
 void EPIC_TIMER1_WriteCounter(uint16_t value)
 {
-    /* Per DS40001291H §6.8: writing TMR1H or TMR1L clears the prescaler.
+    /* Per DS39582B §6.8: writing TMR1H or TMR1L clears the prescaler.
      * Write high byte first. */
     EPIC_REG8(PIC_REG_TMR1H) = (uint8_t)(value >> 8);
     EPIC_REG8(PIC_REG_TMR1L) = (uint8_t)(value & 0xFFU);
@@ -68,10 +62,9 @@ uint16_t EPIC_TIMER1_PrescalerToRatio(TIMER1_PrescalerTypeDef p)
 
 /**
  * @brief Configure Timer1: stop it, arm the overflow interrupt if a
- *        callback is given, and copy the handle into driver storage.
+ *        callback is given, and store the callback.
  * @param h handle with ClockSource, ClockSync, Oscillator, Prescaler,
- *        GateEnabled, GateSource, GatePolarity, ReloadValue,
- *        OverflowCallback.
+ *        ReloadValue, OverflowCallback.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
 EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
@@ -110,9 +103,7 @@ EPIC_StatusTypeDef EPIC_TIMER1_DeInit(void)
 
 /**
  * @brief Start Timer1 counting: reload the counter and program T1CON
- *        (prescaler, oscillator, sync, clock source, gate bits),
- *        setting TMR1ON. The gate source (T1GSS) lives in CM2CON1
- *        (Bank 2).
+ *        (prescaler, oscillator, sync, clock source), setting TMR1ON.
  * @param h handle whose ReloadValue and config are applied.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
@@ -123,25 +114,26 @@ EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
     EPIC_TIMER1_WriteCounter(h->ReloadValue);
 
     /* Program T1CON in one RMW.
-     *   T1GINV           → bit 7
-     *   TMR1GE           → bit 6
-     *   T1CKPS1:T1CKPS0  → bits 5:4
+     *   T1GINV/TMR1GE     → bits 7:6, gate parts only
+     *   T1CKPS1:T1CKPS0 → bits 5:4
      *   T1OSCEN          → bit 3
      *   T1SYNC           → bit 2
      *   TMR1CS           → bit 1
      *   TMR1ON           → bit 0 (set last) */
     uint8_t v = 0U;
+#if PIC14MIDRANGE_HAS_TMR1_GATE
     if (h->GatePolarity == TIMER1_GATE_ACTIVE_HIGH) v |= PIC_T1CON_T1GINV;
     if (h->GateEnabled) v |= PIC_T1CON_TMR1GE;
+#endif
     v |= (uint8_t)((h->Prescaler & 0x3U) << 4);
     if (h->Oscillator  == TIMER1_OSCILLATOR_ON) v |= PIC_T1CON_T1OSCEN;
     if (h->ClockSync   == TIMER1_ASYNC_EXTERNAL) v |= PIC_T1CON_T1SYNC;
     if (h->ClockSource == TIMER1_CLOCK_EXTERNAL) v |= PIC_T1CON_TMR1CS;
     v |= PIC_T1CON_TMR1ON;
     EPIC_REG8(PIC_REG_T1CON) = v;
-
-    /* Gate source select, CM2CON1<T1GSS> (Bank 2, DS40001291H §8.8.1).
-     * Only meaningful when TMR1GE is set. */
+#if PIC14MIDRANGE_HAS_TMR1_GATE
+    /* Gate source select, CM2CON1<T1GSS> (Bank 2). Only meaningful
+     * when TMR1GE is set. */
 #ifdef EPIC_BANK2_READ8
     uint8_t cm2con1 = 0u;
     EPIC_BANK2_READ8(CM2CON1, cm2con1);
@@ -159,6 +151,7 @@ EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
         cm2con1 &= (uint8_t)~PIC_CM2CON1_T1GSS;
     }
     EPIC_REG8(PIC_REG_CM2CON1) = cm2con1;
+#endif
 #endif
 
     return EPIC_OK;

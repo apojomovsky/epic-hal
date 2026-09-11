@@ -1,16 +1,20 @@
-/* BOR / POR status helpers and WDT software control, shared by both
- * builds. The build-specific EPIC_WDT_Refresh / EPIC_Sleep_Enter live
- * in the _sim / _target twins, selected at link time; the helpers here
- * only read and clear PCON bits and set WDTCON through the platform
- * SFR macro. */
+/* Shared PIC14 mid-range BOR/POR helpers (+ WDTCON software control
+ * where present), both builds. The build-specific EPIC_WDT_Refresh /
+ * EPIC_Sleep_Enter live in the _sim / _target twins, selected at link
+ * time; the helpers here only read and clear PCON bits (and set
+ * WDTCON) through the platform SFR macro. Sources: DS39582B §14.10
+ * (87XA), DS40001291H §14.2 (88X). */
 
-#include "core/pic16f88x_wdt_sleep.h"
+#include "core/pic14_wdt_sleep.h"
 
-/* PCON lives in Bank 1 (0x8E); WDTCON in Bank 2 (0x105). Plain
- * EPIC_REG8 accesses silently misdirect to the Bank-0 alias under XC8
- * v4.00 (same class as the TXSTA/OPTION_REG sites in
- * tests/sim_bank_probe.c), so reads and RMWs go through the safe
- * banked macros where they exist. */
+/* PCON bits (DS39582B §14.10, Register 14-2). */
+#define PIC_PCON_BOR   EPIC_BIT(0)
+#define PIC_PCON_POR   EPIC_BIT(1)
+
+/* PCON lives in Bank 1 (0x8E). Plain EPIC_REG8 accesses silently
+ * misdirect to the Bank-0 alias (TMR1L) under XC8 v4.00 (same class as
+ * the TXSTA/OPTION_REG sites in tests/sim_bank_probe.c), so reads and
+ * RMWs go through the safe Bank-1 macros where they exist. */
 
 /**
  * @brief Return whether the last reset was a Brown-out Reset (PCON<BOR>).
@@ -73,6 +77,11 @@ void EPIC_POR_ClearFlag(void)
 #endif
 }
 
+#if PIC14MIDRANGE_HAS_WDT_SW
+/* WDTCON software control (Bank 2, 0x105 on 88X). Plain EPIC_REG8
+ * accesses silently misdirect to the Bank-0 alias under XC8 v4.00, so
+ * reads and RMWs go through the safe banked macros where they exist. */
+
 /**
  * @brief Enable or disable the software Watchdog Timer (WDTCON<SWDTEN>).
  * @param enable 1 to turn the WDT on, 0 to turn it off.
@@ -112,3 +121,4 @@ void EPIC_WDT_SetPrescaler(uint8_t wdtps)
     EPIC_REG8(PIC_REG_WDTCON) = wdtcon;
 #endif
 }
+#endif

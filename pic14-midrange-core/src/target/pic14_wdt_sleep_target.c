@@ -1,8 +1,8 @@
-/* Real-target implementation of EPIC_WDT_Refresh / EPIC_Sleep_Enter:
- * the native clrwdt / sleep instructions. Linked by the XC8 build; the
- * host twin is the _sim.c. */
+/* Shared PIC14 mid-range real-target implementation of
+ * EPIC_WDT_Refresh / EPIC_Sleep_Enter: the native clrwdt / sleep
+ * instructions. Linked by the XC8 build; the host twin is the _sim.c. */
 
-#include "core/pic16f87xa_wdt_sleep.h"
+#include "core/pic14_wdt_sleep.h"
 
 /**
  * @brief Refresh the Watchdog Timer with the native `clrwdt` instruction.

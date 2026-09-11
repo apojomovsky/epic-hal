@@ -51,22 +51,22 @@ set(EPIC_FAMILY_DEVICES        PIC16F882 PIC16F883 PIC16F884 PIC16F886 PIC16F887
 set(EPIC_SOURCES
     src/peripherals/pic16f88x_gpio.c
     ../pic14-midrange-core/src/peripherals/pic14_timer0.c
-    src/peripherals/pic16f88x_timer1.c
+    ../pic14-midrange-core/src/peripherals/pic14_timer1.c
     ../pic14-midrange-core/src/peripherals/pic14_timer2.c
-    src/peripherals/pic16f88x_ccp.c
-    src/peripherals/pic16f88x_usart.c
+    ../pic14-midrange-core/src/peripherals/pic14_ccp.c
+    ../pic14-midrange-core/src/peripherals/pic14_usart.c
     src/peripherals/pic16f88x_ssp.c
     src/peripherals/pic16f88x_adc.c
     src/peripherals/pic16f88x_comp.c
-    src/peripherals/pic16f88x_vref.c
+    ../pic14-midrange-core/src/peripherals/pic14_vref.c
     src/peripherals/pic16f88x_srlatch.c
     ../pic14-midrange-core/src/peripherals/pic14_eeprom.c
     src/peripherals/pic16f88x_osc.c
     src/peripherals/pic16f88x_ulpwu.c
     ../pic14-midrange-core/src/core/pic14_irq.c
     src/core/pic16_irq_table.c
-    src/core/pic16f88x_wdt_sleep.c
-    src/sim/pic16f88x_wdt_sleep_sim.c
+    ../pic14-midrange-core/src/core/pic14_wdt_sleep.c
+    ../pic14-midrange-core/src/sim/pic14_wdt_sleep_sim.c
     ../pic14-midrange-core/src/core/pic14_irq_dispatch.c
     src/sim/pic16_harness_sim.c
     src/sim/pic16f88x_sim.c

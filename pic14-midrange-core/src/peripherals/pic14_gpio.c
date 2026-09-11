@@ -1,6 +1,7 @@
-/* GPIO driver implementation (DS39582B §4.1..§4.5). */
+/* Shared PIC14 mid-range GPIO implementation (87XA parts; the 88X ANSEL
+ * variant keeps its own driver). Sources: DS39582B §4 (87XA). */
 
-#include "peripherals/pic16f87xa_gpio.h"
+#include "peripherals/pic14_gpio.h"
 #include "core/pic16_irq.h"
 
 /**
@@ -15,11 +16,13 @@ static uint8_t tris_addr(GPIO_TypeDef port)
     switch (port) {
         case GPIOA: return PIC_REG_TRISA;
         case GPIOB: return PIC_REG_TRISB;
+#if PIC14MIDRANGE_HAS_PORTC
         case GPIOC: return PIC_REG_TRISC;
-#if PIC16F87XA_FAMILY_HAS_PORTD
+#endif
+#if PIC14MIDRANGE_HAS_PORTD
         case GPIOD: return PIC_REG_TRISD;
 #endif
-#if PIC16F87XA_FAMILY_HAS_PORTE
+#if PIC14MIDRANGE_HAS_PORTE
         case GPIOE: return PIC_REG_TRISE;
 #endif
         default:    return PIC_REG_TRISA;
@@ -36,11 +39,13 @@ static uint8_t port_addr(GPIO_TypeDef port)
     switch (port) {
         case GPIOA: return PIC_REG_PORTA;
         case GPIOB: return PIC_REG_PORTB;
+#if PIC14MIDRANGE_HAS_PORTC
         case GPIOC: return PIC_REG_PORTC;
-#if PIC16F87XA_FAMILY_HAS_PORTD
+#endif
+#if PIC14MIDRANGE_HAS_PORTD
         case GPIOD: return PIC_REG_PORTD;
 #endif
-#if PIC16F87XA_FAMILY_HAS_PORTE
+#if PIC14MIDRANGE_HAS_PORTE
         case GPIOE: return PIC_REG_PORTE;
 #endif
         default:    return PIC_REG_PORTA;
@@ -56,7 +61,7 @@ static uint8_t port_addr(GPIO_TypeDef port)
  */
 static uint8_t port_width(GPIO_TypeDef port)
 {
-#if PIC16F87XA_FAMILY_HAS_PORTE
+#if PIC14MIDRANGE_HAS_PORTE
     if (port == GPIOE) return 3U;
 #endif
     if (port == GPIOA) return 6U;
@@ -184,7 +189,7 @@ void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 #ifdef EPIC_BANK1_READ8
     /* Plain EPIC_REG8 RMWs on the Bank-1 OPTION_REG silently misdirect
      * to the Bank-0 alias (TMR0) under XC8 v4.00; see the probe note
-     * in pic16f87xa_timer0.c's option_clr_set. */
+     * in pic14_timer0.c's option_clr_set. */
     uint8_t opt = 0u;
     EPIC_BANK1_READ8(OPTION_REG, opt);
     if (pull == GPIO_PULLUP) {

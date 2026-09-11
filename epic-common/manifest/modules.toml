@@ -78,21 +78,21 @@ includes = [
   "epic-common/include",
 ]
 hal_sources = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+  "pic14-midrange-core/src/peripherals/pic14_gpio.c",
   "pic14-midrange-core/src/peripherals/pic14_timer0.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer1.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer1.c",
   "pic14-midrange-core/src/peripherals/pic14_timer2.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_ccp.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_ccp.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic16f87xa-hal/src/peripherals/pic16f87xa_ssp.c",
   "pic16f87xa-hal/src/peripherals/pic16f87xa_adc.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_comp.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_vref.c",
+  "pic14-midrange-core/src/peripherals/pic14_comp.c",
+  "pic14-midrange-core/src/peripherals/pic14_vref.c",
   "pic14-midrange-core/src/peripherals/pic14_eeprom.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
-  "pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep.c",
-  "pic16f87xa-hal/src/target/pic16f87xa_wdt_sleep_target.c",
+  "pic14-midrange-core/src/core/pic14_wdt_sleep.c",
+  "pic14-midrange-core/src/target/pic14_wdt_sleep_target.c",
   "pic14-midrange-core/src/target/pic16_isr_vector.c",
   "pic14-midrange-core/src/core/pic14_irq_dispatch.c",
   "epic-common/src/core/epic_harness_target.c",
@@ -108,14 +108,14 @@ harness_src = "epic-common/src/core/epic_harness_target.c"
 # `epiccc_hal_sources_by_family` section for when to use the per-module
 # slice.
 epiccc_sources = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+  "pic14-midrange-core/src/peripherals/pic14_gpio.c",
   "pic14-midrange-core/src/peripherals/pic14_timer0.c",
   "pic14-midrange-core/src/peripherals/pic14_timer2.c",
   "pic16f87xa-hal/src/peripherals/pic16f87xa_ssp.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
-  "pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep.c",
-  "pic16f87xa-hal/src/epiccc/pic16f87xa_wdt_sleep_epiccc.c",
+  "pic14-midrange-core/src/core/pic14_wdt_sleep.c",
+  "pic14-midrange-core/src/epiccc/pic14_wdt_sleep_epiccc.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
   "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_epiccc.c",
   "epic-common/src/core/epic_harness_target.c",
@@ -149,22 +149,22 @@ includes = [
 hal_sources = [
   "pic16f88x-hal/src/peripherals/pic16f88x_gpio.c",
   "pic14-midrange-core/src/peripherals/pic14_timer0.c",
-  "pic16f88x-hal/src/peripherals/pic16f88x_timer1.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer1.c",
   "pic14-midrange-core/src/peripherals/pic14_timer2.c",
-  "pic16f88x-hal/src/peripherals/pic16f88x_ccp.c",
-  "pic16f88x-hal/src/peripherals/pic16f88x_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_ccp.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_ssp.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_adc.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_comp.c",
-  "pic16f88x-hal/src/peripherals/pic16f88x_vref.c",
+  "pic14-midrange-core/src/peripherals/pic14_vref.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_srlatch.c",
   "pic14-midrange-core/src/peripherals/pic14_eeprom.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_osc.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_ulpwu.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f88x-hal/src/core/pic16_irq_table.c",
-  "pic16f88x-hal/src/core/pic16f88x_wdt_sleep.c",
-  "pic16f88x-hal/src/target/pic16f88x_wdt_sleep_target.c",
+  "pic14-midrange-core/src/core/pic14_wdt_sleep.c",
+  "pic14-midrange-core/src/target/pic14_wdt_sleep_target.c",
   "pic14-midrange-core/src/target/pic16_isr_vector.c",
   "pic14-midrange-core/src/core/pic14_irq_dispatch.c",
   "epic-common/src/core/epic_harness_target.c",
@@ -181,8 +181,8 @@ epiccc_sources = [
   "pic16f88x-hal/src/peripherals/pic16f88x_ssp.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f88x-hal/src/core/pic16_irq_table.c",
-  "pic16f88x-hal/src/core/pic16f88x_wdt_sleep.c",
-  "pic16f88x-hal/src/epiccc/pic16f88x_wdt_sleep_epiccc.c",
+  "pic14-midrange-core/src/core/pic14_wdt_sleep.c",
+  "pic14-midrange-core/src/epiccc/pic14_wdt_sleep_epiccc.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
   "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_epiccc.c",
   "epic-common/src/core/epic_harness_target.c",
@@ -473,10 +473,10 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # and USART sources, and the mdb harness reports the sim gate.
 [modules.epic-combo-uart-ssp.epiccc_hal_sources_by_family]
 PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic16f87xa-hal/src/peripherals/pic16f87xa_ssp.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_eeprom.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_eeprom.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -523,10 +523,10 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # the tier dispatches TMR0/TMR1/TMR2 and the USART sources.
 [modules.epic-combo-multitimer.epiccc_hal_sources_by_family]
 PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer0.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer1.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer0.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer1.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -573,8 +573,8 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 [modules.epic-combo-adc-uart.epiccc_hal_sources_by_family]
 PIC16F87XA = [
   "pic16f87xa-hal/src/peripherals/pic16f87xa_adc.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer1.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer1.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -618,9 +618,9 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # the harness USART; the tier dispatches RB, TMR2 and the USART sources.
 [modules.epic-combo-rb-uart.epiccc_hal_sources_by_family]
 PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_gpio.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -722,8 +722,8 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # and the harness USART on epic-modbus's serial+tick tier.
 [modules.epic-combo-encoder-tick.epiccc_hal_sources_by_family]
 PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -768,11 +768,11 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # epic-swuart's CCP gates and adds the tick.
 [modules.epic-combo-swuart-tick.epiccc_hal_sources_by_family]
 PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_ccp.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer1.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_ccp.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer1.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_gpio.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -816,8 +816,8 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # because this module's epic-cc build exists to report the sim gate.
 [modules.epic-combo-tick-serial.epiccc_hal_sources_by_family]
 PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -918,7 +918,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # slice is epic-serial's serial tier with the mdb harness reporting.
 [modules.epic-combo-rx-loopback.epiccc_hal_sources_by_family]
 PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -1237,7 +1237,7 @@ depends_on = [
 ]
 
 epiccc_hal_sources_by_family.PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -1245,7 +1245,7 @@ epiccc_hal_sources_by_family.PIC16F87XA = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 epiccc_hal_sources_by_family.PIC16F88X = [
-  "pic16f88x-hal/src/peripherals/pic16f88x_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f88x-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -1930,8 +1930,8 @@ depends_on = [
 ]
 
 epiccc_hal_sources_by_family.PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -1939,8 +1939,8 @@ epiccc_hal_sources_by_family.PIC16F87XA = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 epiccc_hal_sources_by_family.PIC16F88X = [
-  "pic16f88x-hal/src/peripherals/pic16f88x_usart.c",
-  "pic16f88x-hal/src/peripherals/pic16f88x_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f88x-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -2012,8 +2012,8 @@ needs_hal = false
 # 368-byte GPR overlay for no reason; the PIC18 slice stays the
 # sizecheck (the PIC18 epic-cc backend is not yet conformant, HAL-3d).
 epiccc_hal_sources_by_family.PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -2021,8 +2021,8 @@ epiccc_hal_sources_by_family.PIC16F87XA = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 epiccc_hal_sources_by_family.PIC16F88X = [
-  "pic16f88x-hal/src/peripherals/pic16f88x_usart.c",
-  "pic16f88x-hal/src/peripherals/pic16f88x_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f88x-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -2164,7 +2164,7 @@ includes   = [
 depends_on = []
 
 epiccc_hal_sources_by_family.PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -2172,7 +2172,7 @@ epiccc_hal_sources_by_family.PIC16F87XA = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 epiccc_hal_sources_by_family.PIC16F88X = [
-  "pic16f88x-hal/src/peripherals/pic16f88x_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f88x-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -2412,9 +2412,9 @@ depends_on = []
 needs_hal  = true
 
 epiccc_hal_sources_by_family.PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_ccp.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer1.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+  "pic14-midrange-core/src/peripherals/pic14_ccp.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer1.c",
+  "pic14-midrange-core/src/peripherals/pic14_gpio.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
@@ -2422,8 +2422,8 @@ epiccc_hal_sources_by_family.PIC16F87XA = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 epiccc_hal_sources_by_family.PIC16F88X = [
-  "pic16f88x-hal/src/peripherals/pic16f88x_ccp.c",
-  "pic16f88x-hal/src/peripherals/pic16f88x_timer1.c",
+  "pic14-midrange-core/src/peripherals/pic14_ccp.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer1.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_gpio.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f88x-hal/src/core/pic16_irq_table.c",

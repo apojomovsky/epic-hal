@@ -1,7 +1,9 @@
-/* epic-cc implementation of EPIC_WDT_Refresh / EPIC_Sleep_Enter.
- * Uses the intrinsics from <epic-cc.h>. */
+/* Shared PIC14 mid-range epic-cc implementation of EPIC_WDT_Refresh /
+ * EPIC_Sleep_Enter. Uses the intrinsics from <epic-cc.h> (which lower
+ * to opaque asm blocks the compiler understands). The XC8 target uses
+ * raw asm() clrwdt/sleep; the host sim no-ops. */
 
-#include "core/pic16f88x_wdt_sleep.h"
+#include "core/pic14_wdt_sleep.h"
 
 #ifdef __has_include
 #if __has_include(<epic-cc.h>)
@@ -9,6 +11,7 @@
 #endif
 #endif
 
+/* Fall back when building the file with host gcc for a smoke check. */
 #ifndef __epic_clrwdt
 #define __epic_clrwdt() asm volatile("clrwdt")
 #endif

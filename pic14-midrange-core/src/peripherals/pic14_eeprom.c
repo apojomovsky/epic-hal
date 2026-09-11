@@ -7,11 +7,26 @@
 
 static void (*g_eeprom_cb)(void) = NULL;
 
-/* EEPROM registers live in Banks 2/3. EPIC_BANK2/3_* need a literal SFR
- * name at compile time (inline-asm operands), not a runtime addr, so
- * this dispatches on `addr` before any bank switch, then invokes the
- * named macro; every real call site passes a compile-time constant, so
- * XC8 folds this to the single matching branch either way. */
+/* EEPROM register placement is per family (DFP-verified): 87XA/88X keep
+ * the data pair in Bank 2 and the control pair in Bank 3, while the
+ * 628A keeps all four in Bank 1. The EPIC_BANKn_* accessors need a
+ * literal SFR name at compile time, not a runtime addr, so the helpers
+ * below dispatch on `addr` before any bank switch. */
+#if PIC14MIDRANGE_HAS_EEPROM_BANK1
+#define EE_ADDR_DATA  0x9AU
+#define EE_ADDR_ADDR  0x9BU
+#define EE_ADDR_CTRL  0x9CU
+#define EE_ADDR_CTRL2 0x9DU
+#define EE_DATA_BANK  1
+#define EE_CTRL_BANK  1
+#else
+#define EE_ADDR_DATA  0x0CU
+#define EE_ADDR_ADDR  0x0DU
+#define EE_ADDR_CTRL  0x18CU
+#define EE_ADDR_CTRL2 0x18DU
+#define EE_DATA_BANK  2
+#define EE_CTRL_BANK  3
+#endif
 
 /**
  * @brief Write a byte to a Bank-3 EEPROM register (EECON1 or EECON2).
@@ -21,8 +36,13 @@ static void (*g_eeprom_cb)(void) = NULL;
 #ifdef EPIC_BANK3_WRITE8
 static void b3_write(uint16_t addr, uint8_t v)
 {
+#if PIC14MIDRANGE_HAS_EEPROM_BANK1
+    if (addr == EE_ADDR_CTRL) EPIC_BANK1_WRITE8(EECON1, v);
+    else                      EPIC_BANK1_WRITE8(EECON2, v);
+#else
     if (addr == 0x18CU) EPIC_BANK3_WRITE8(EECON1, v);
     else                EPIC_BANK3_WRITE8(EECON2, v);
+#endif
 }
 
 /**
@@ -34,7 +54,11 @@ static uint8_t b3_read(uint16_t addr)
 {
     uint8_t v = 0U;
     (void)addr;   /* only EECON1 is ever read via b3_read. */
+#if PIC14MIDRANGE_HAS_EEPROM_BANK1
+    EPIC_BANK1_READ8(EECON1, v);
+#else
     EPIC_BANK3_READ8(EECON1, v);
+#endif
     return v;
 }
 
@@ -45,8 +69,13 @@ static uint8_t b3_read(uint16_t addr)
  */
 static void b2_write(uint16_t addr, uint8_t v)
 {
+#if PIC14MIDRANGE_HAS_EEPROM_BANK1
+    if (addr == EE_ADDR_DATA) EPIC_BANK1_WRITE8(EEDATA, v);
+    else                      EPIC_BANK1_WRITE8(EEADR, v);
+#else
     if (addr == 0x0CU) EPIC_BANK2_WRITE8(EEDATA, v);
     else               EPIC_BANK2_WRITE8(EEADR, v);
+#endif
 }
 
 /**
@@ -57,8 +86,13 @@ static void b2_write(uint16_t addr, uint8_t v)
 static uint8_t b2_read(uint16_t addr)
 {
     uint8_t v = 0U;
+#if PIC14MIDRANGE_HAS_EEPROM_BANK1
+    if (addr == EE_ADDR_DATA) EPIC_BANK1_READ8(EEDATA, v);
+    else                      EPIC_BANK1_READ8(EEADR, v);
+#else
     if (addr == 0x0CU) EPIC_BANK2_READ8(EEDATA, v);
     else               EPIC_BANK2_READ8(EEADR, v);
+#endif
     return v;
 }
 #else
@@ -71,7 +105,7 @@ static uint8_t b2_read(uint16_t addr)
 static void b3_write(uint16_t addr, uint8_t v)
 {
     uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
-    pic_select_bank(3);
+    pic_select_bank(EE_CTRL_BANK);
     EPIC_REG8(addr) = v;
     pic_select_bank(prev);
 }
@@ -84,7 +118,7 @@ static void b3_write(uint16_t addr, uint8_t v)
 static uint8_t b3_read(uint16_t addr)
 {
     uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
-    pic_select_bank(3);
+    pic_select_bank(EE_CTRL_BANK);
     uint8_t v = EPIC_REG8(addr);
     pic_select_bank(prev);
     return v;
@@ -99,7 +133,7 @@ static uint8_t b3_read(uint16_t addr)
 static void b2_write(uint16_t addr, uint8_t v)
 {
     uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
-    pic_select_bank(2);
+    pic_select_bank(EE_DATA_BANK);
     EPIC_REG8(addr) = v;
     pic_select_bank(prev);
 }
@@ -112,7 +146,7 @@ static void b2_write(uint16_t addr, uint8_t v)
 static uint8_t b2_read(uint16_t addr)
 {
     uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
-    pic_select_bank(2);
+    pic_select_bank(EE_DATA_BANK);
     uint8_t v = EPIC_REG8(addr);
     pic_select_bank(prev);
     return v;
@@ -155,9 +189,9 @@ EPIC_StatusTypeDef EPIC_EEPROM_DeInit(void)
  */
 uint8_t EPIC_EEPROM_ReadByte(uint8_t addr)
 {
-    b2_write(0x0DU, addr);                  /* EEADR. */
-    b3_write(0x18CU, 0x00U);                /* EECON1 = 0, set RD. */
-    b3_write(0x18CU, 0x01U);                /* EECON1<RD>=1. */
+    b2_write(EE_ADDR_ADDR, addr);             /* EEADR. */
+    b3_write(EE_ADDR_CTRL, 0x00U);            /* EECON1 = 0, set RD. */
+    b3_write(EE_ADDR_CTRL, 0x01U);            /* EECON1<RD>=1. */
 #if !defined(__XC8) && !defined(__EPIC_CC__)
     /* Host sim backend: pull the byte from the simulated EEPROM
      * array (the flat-array sim has no RD strobe model). */
@@ -167,12 +201,12 @@ uint8_t EPIC_EEPROM_ReadByte(uint8_t addr)
      * @return the stored byte.
      */
     extern uint8_t pic14_sim_eeprom_read(uint8_t addr);
-    b2_write(0x0CU, pic14_sim_eeprom_read(addr));
-    return b2_read(0x0CU);
+    b2_write(EE_ADDR_DATA, pic14_sim_eeprom_read(addr));
+    return b2_read(EE_ADDR_DATA);
 #else
     /* Real target: the RD strobe loads the addressed byte into EEDATA
      * (DS39582B §5.5). */
-    return b2_read(0x0CU);
+    return b2_read(EE_ADDR_DATA);
 #endif
 }
 
@@ -187,16 +221,16 @@ uint8_t EPIC_EEPROM_ReadByte(uint8_t addr)
 EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data)
 {
     /* §3.4: check WRERR before starting. */
-    if (b3_read(0x18CU) & PIC_EECON1_WRERR) return EPIC_ERROR;
+    if (b3_read(EE_ADDR_CTRL) & PIC_EECON1_WRERR) return EPIC_ERROR;
 
-    b2_write(0x0CU, data);                  /* EEDATA. */
-    b2_write(0x0DU, addr);                  /* EEADR. */
-    b3_write(0x18CU, 0x00U);                /* clear WREN/WR. */
-    b3_write(0x18CU, 0x04U);                /* WREN=1. */
+    b2_write(EE_ADDR_DATA, data);             /* EEDATA. */
+    b2_write(EE_ADDR_ADDR, addr);             /* EEADR. */
+    b3_write(EE_ADDR_CTRL, 0x00U);            /* clear WREN/WR. */
+    b3_write(EE_ADDR_CTRL, 0x04U);            /* WREN=1. */
     /* Unlock sequence, §3.4 / Example 3-1. */
-    b3_write(0x18DU, 0x55U);                /* EECON2 = 0x55. */
-    b3_write(0x18DU, 0xAAU);                /* EECON2 = 0xAA. */
-    b3_write(0x18CU, PIC_EECON1_WREN | PIC_EECON1_WR);  /* start write. */
+    b3_write(EE_ADDR_CTRL2, 0x55U);           /* EECON2 = 0x55. */
+    b3_write(EE_ADDR_CTRL2, 0xAAU);           /* EECON2 = 0xAA. */
+    b3_write(EE_ADDR_CTRL, PIC_EECON1_WREN | PIC_EECON1_WR);  /* start write. */
     /* WR is held for the write cycle (DS39582B §3.4). On real
      * hardware the CPU sees it clear when the cycle completes; the
      * sim backend mirrors that in sim_step(). The caller polls EEIF
@@ -238,12 +272,17 @@ EPIC_StatusTypeDef EPIC_EEPROM_WriteBuffer(uint8_t start,
 
 /**
  * @brief Report whether the EEPROM write completed.
- * @return 1 if EEIF (PIR2<4>) is set, 0 otherwise.
+ * @return 1 if EEIF is set (PIR2<4>, PIR1<7> on Bank-1 parts).
  */
 uint8_t EPIC_EEPROM_IsWriteComplete(void)
 {
+#if PIC14MIDRANGE_HAS_EE_PIR1
+    /* EEIF lives in PIR1<7>. */
+    return (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_EEIF) ? 1U : 0U;
+#else
     /* EEIF lives in PIR2<4>. */
     return (EPIC_REG8(0x0DU) & 0x10U) ? 1U : 0U;
+#endif
 }
 
 /**
@@ -261,8 +300,14 @@ void EPIC_EEPROM_ClearITFlag(void)
 void EEPROM_IRQHandler(void)
 {
     /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
-     * context; see the CCP handlers). EEIF is PIR2 bit 4. */
+     * context; see the CCP handlers). EEIF is PIR2 bit 4 (PIR1 bit 7
+     * on Bank-1-EEPROM parts). */
+#if PIC14MIDRANGE_HAS_EE_PIR1
+    if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_EEIF)) return;
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_EEIF);
+#else
     if (!(EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_EEIF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_EEIF);
+#endif
     if (g_eeprom_cb) g_eeprom_cb();
 }

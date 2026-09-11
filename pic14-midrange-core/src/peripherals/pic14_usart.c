@@ -1,29 +1,24 @@
-/* EUSART driver implementation (DS40001291H §12.0). Programs the SFRs
- * only, does not model the bit shifts; the sim backend re-asserts TXIF
- * each cycle when TXEN is set and dispatches RCREG values from
- * pic16f88x_sim_drive_usart_rx(). */
+/* Shared PIC14 mid-range USART implementation (87XA base + 88X 16-bit
+ * BRG and enhanced features). Sources: DS39582B §10 (87XA),
+ * DS40001291H §12 (88X). Programs the SFRs only, does not model the
+ * bit shifts; the sim backend re-asserts TXIF each cycle when TXEN is
+ * set and dispatches RCREG values from the family sim's
+ * drive_usart_rx(). */
 
-#include "peripherals/pic16f88x_usart.h"
+#include "peripherals/pic14_usart.h"
 #include "core/pic16_irq.h"
 
 /* SPBRG computation. */
 
 /**
  * @brief Compute the SPBRG reload value for a target baud rate.
- *
- *   Async 8-bit:  rate = FOSC / (64 × (X+1))  (BRGH=0)
- *                 rate = FOSC / (16 × (X+1))  (BRGH=1)
- *   Async 16-bit: rate = FOSC / (16 × (X+1))  (BRG16=1)
- *   Sync:         rate = FOSC / (4  × (X+1))
- *
- * DS40001291H Table 12-3. Returns 0xFFFF if the divisor would exceed
- * the register width.
  * @param fosc_hz the oscillator frequency in Hz.
  * @param baud the desired baud rate in bits/s.
  * @param mode USART_MODE_ASYNCHRONOUS or USART_MODE_SYNCHRONOUS.
- * @param brgh USART_BRGH_LOW or USART_BRGH_HIGH (async only).
- * @return the SPBRG value, or 0xFFFF if unattainable.
+ * @param brgh USART_BRGH_HIGH or USART_BRGH_LOW (async only).
+ * @return the SPBRG value 0..255, or 0xFFFF if unattainable.
  */
+#if PIC14MIDRANGE_HAS_BRGH16
 uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
                             USART_ModeTypeDef mode,
                             USART_BaudRateHighTypeDef brgh)
@@ -59,6 +54,20 @@ uint16_t USART_ComputeSPBRG16(uint32_t fosc_hz, uint32_t baud,
     if (x > 65535U) return 0xFFFFU;
     return (uint16_t)x;
 }
+#else
+uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
+                            USART_ModeTypeDef mode,
+                            USART_BaudRateHighTypeDef brgh)
+{
+    if (baud == 0) return 0xFFFFU;
+    uint32_t divisor = (mode == USART_MODE_ASYNCHRONOUS)
+                       ? (brgh == USART_BRGH_HIGH ? 16U : 64U)
+                       : 4U;
+    uint32_t x = (fosc_hz / (divisor * baud)) - 1U;
+    if (x > 255U) return 0xFFFFU;
+    return (uint16_t)x;
+}
+#endif
 
 /* Callback slots (the ISRs' owned storage; extern in the header). The
  * full handle pointer is gone: the ISR reads the slots directly, and
@@ -70,8 +79,8 @@ void (*g_usart_rx_cb)(uint8_t data) = NULL;
 /* public API. */
 
 /*
- * Initialize the EUSART: program SPBRGH:SPBRG, TXSTA, RCSTA,
- *        BAUDCTL (BRG16) and the interrupt enables for the callbacks.
+ * Initialize the USART: program SPBRG, TXSTA, RCSTA and the
+ * interrupt enables for the callbacks.
  * @param h handle
  * @return EPIC_OK
  */
@@ -79,10 +88,10 @@ void (*g_usart_rx_cb)(uint8_t data) = NULL;
 /* XC8 keeps the out-of-line body; the epic-cc path uses the static
  * inline in the header (see the note there). */
 /**
- * @brief Initialize the EUSART: program SPBRGH:SPBRG, TXSTA, RCSTA,
- *        BAUDCTL (BRG16) and the interrupt enables for the callbacks.
+ * @brief Initialize the USART: program SPBRG, TXSTA, RCSTA and the
+ *        interrupt enables for the callbacks.
  * @param h handle with Mode, ClockSource, BaudHigh, DataWidth, SPBRG,
- *        Brg16, TxCpltCallback, RxCpltCallback.
+ *        TxCpltCallback, RxCpltCallback.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
 EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
@@ -91,9 +100,12 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     g_usart_tx_cb = h->TxCpltCallback;
     g_usart_rx_cb = h->RxCpltCallback;
 
-    /* Program SPBRGH:SPBRG (Bank 1, 0x9A/0x99, DS40001291H §12.1).
-     * Plain bank-switch writes silently corrupt under XC8 v4.00 (see
-     * target/pic16f88x_platform.h). */
+    /* Program SPBRG (Bank 1, 0x99, DS39582B §10.1). Plain bank-switch
+     * writes silently corrupt under XC8 v4.00 (see
+     * target/pic16f87xa_platform.h). MPLAB SIM's UART capture is not
+     * baud-timing-sensitive, so only a real receiver shows a wrong
+     * SPBRG. */
+#if PIC14MIDRANGE_HAS_BRGH16
 #ifdef EPIC_BANK1_WRITE8
     EPIC_BANK1_WRITE8(SPBRGH, (uint8_t)(h->SPBRG >> 8));
     EPIC_BANK1_WRITE8(SPBRG,  (uint8_t)(h->SPBRG & 0xFFU));
@@ -104,16 +116,25 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     EPIC_REG8(PIC_REG_SPBRG)  = (uint8_t)(h->SPBRG & 0xFFU);
     pic_select_bank(prev);
 #endif
+#else
+#ifdef EPIC_BANK1_WRITE8
+    EPIC_BANK1_WRITE8(SPBRG, h->SPBRG);
+#else
+    uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+    pic_select_bank(1);
+    EPIC_REG8(PIC_REG_SPBRG) = h->SPBRG;
+    pic_select_bank(prev);
+#endif
+#endif
 
     /* Build TXSTA (Bank 1, address 0x98).
      *   CSRC  bit 7, sync clock source
      *   TX9   bit 6, 9-bit TX
      *   TXEN  bit 5, TX enable
      *   SYNC  bit 4, sync/async
-     *   SENDB bit 3, send break
      *   BRGH  bit 2, high baud rate
      *   TX9D  bit 0, 9th bit
-     * Reset value of TXSTA: 0000 0010 (TRMT=1). */
+     * Reset value of TXSTA: 0000 -010 (TRMT=1). */
     uint8_t txsta = 0x02U;
     if (h->Mode == USART_MODE_SYNCHRONOUS) txsta |= PIC_TXSTA_SYNC;
     if (h->Mode == USART_MODE_SYNCHRONOUS &&
@@ -122,6 +143,9 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     if (h->DataWidth == USART_DATA_9BITS) txsta |= PIC_TXSTA_TX9;
     if (h->TxCpltCallback) txsta |= PIC_TXSTA_TXEN;  /* TXEN implied if user has a callback. */
 #ifdef EPIC_BANK1_WRITE8
+    /* Plain EPIC_REG8 write to Bank-1 TXSTA (0x98) misdirects to the
+     * Bank-0 alias (0x18, RCSTA) under XC8 v4.00 (see
+     * target/pic16f87xa_platform.h). */
     EPIC_BANK1_WRITE8(TXSTA, txsta);
 #else
     EPIC_REG8(PIC_REG_TXSTA) = txsta;
@@ -137,7 +161,7 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     if (h->DataWidth == USART_DATA_9BITS) rcsta |= PIC_RCSTA_RX9;
     if (h->RxCpltCallback) rcsta |= PIC_RCSTA_CREN;
     EPIC_REG8(PIC_REG_RCSTA) = rcsta;
-
+#if PIC14MIDRANGE_HAS_BRGH16
     /* BAUDCTL (Bank 3, 0x187): BRG16 only; the other bits (ABDEN, WUE,
      * SCKP) are left for the explicit enhanced-feature calls. */
     uint8_t baudctl = 0x00U;
@@ -147,8 +171,9 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
 #else
     EPIC_REG8(PIC_REG_BAUDCTL) = baudctl;
 #endif
+#endif
 
-    /* TXIF is initially 1 (TXREG empty after reset, §12.2.1).
+    /* TXIF is initially 1 (TXREG empty after reset, §10.2.1).
      * RCIF is initially 0 (RCREG empty after reset). */
     EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
 
@@ -160,10 +185,9 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     return EPIC_OK;
 }
 #endif   /* !__EPIC_CC__ */
-
 /**
- * @brief De-initialize the EUSART: disable both interrupts and restore
- *        RCSTA/TXSTA/BAUDCTL/SPBRGH:SPBRG to reset values.
+ * @brief De-initialize the USART: disable both interrupts and restore
+ *        RCSTA/TXSTA/SPBRG to reset values.
  * @return EPIC_OK on success.
  */
 EPIC_StatusTypeDef EPIC_USART_DeInit(void)
@@ -174,12 +198,16 @@ EPIC_StatusTypeDef EPIC_USART_DeInit(void)
     EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
     EPIC_REG8(PIC_REG_RCSTA) = 0x00U;
     EPIC_REG8(PIC_REG_TXSTA) = 0x02U;     /* keep TRMT=1 reset state. */
+#if PIC14MIDRANGE_HAS_BRGH16
     EPIC_REG8(PIC_REG_BAUDCTL) = 0x00U;
+#endif
     {
         uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
         pic_select_bank(1);
+#if PIC14MIDRANGE_HAS_BRGH16
         EPIC_REG8(PIC_REG_SPBRGH) = 0x00U;
-        EPIC_REG8(PIC_REG_SPBRG)  = 0x00U;
+#endif
+        EPIC_REG8(PIC_REG_SPBRG) = 0x00U;
         pic_select_bank(prev);
     }
     g_usart_tx_cb = NULL;
@@ -193,9 +221,9 @@ EPIC_StatusTypeDef EPIC_USART_DeInit(void)
  */
 void EPIC_USART_Transmit(uint8_t data)
 {
-    /* Writing TXREG clears TXIF (DS40001291H §12.2.1). The hardware
+    /* Writing TXREG clears TXIF (DS39582B §10.2.1). The hardware
      * simultaneously starts the TSR→line shift; the sim backend
-     * re-asserts TXIF on the next pic16f88x_sim_step() call. */
+     * re-asserts TXIF on the next sim_step() call. */
     EPIC_REG8(PIC_REG_TXREG) = data;
     EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_TX);
 }
@@ -253,7 +281,7 @@ uint8_t EPIC_USART_IsTxShiftRegisterEmpty(void)
     return (EPIC_REG8(PIC_REG_TXSTA) & PIC_TXSTA_TRMT) ? 1U : 0U;
 #endif
 }
-
+#if PIC14MIDRANGE_HAS_BRGH16
 /**
  * @brief Send a Sync Break character (TXSTA<SENDB>).
  */
@@ -268,6 +296,7 @@ void EPIC_USART_SendBreak(void)
     EPIC_BIT_SET(EPIC_REG8(PIC_REG_TXSTA), PIC_TXSTA_SENDB);
 #endif
 }
+#endif
 
 /**
  * @brief Read the latest byte from RCREG (clears RCIF).
@@ -275,7 +304,7 @@ void EPIC_USART_SendBreak(void)
  */
 uint8_t EPIC_USART_Receive(void)
 {
-    /* Reading RCREG clears RCIF (DS40001291H §12.2.2). */
+    /* Reading RCREG clears RCIF (DS39582B §10.2.2). */
     uint8_t data = EPIC_REG8(PIC_REG_RCREG);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_USART_RX);
     return data;
@@ -289,7 +318,7 @@ uint8_t EPIC_USART_GetRX9D(void)
 {
     return (EPIC_REG8(PIC_REG_RCSTA) & PIC_RCSTA_RX9D) ? 1U : 0U;
 }
-
+#if PIC14MIDRANGE_HAS_BRGH16
 /* enhanced features (BAUDCTL, Bank 3). */
 
 /**
@@ -324,11 +353,12 @@ void EPIC_USART_SetWakeUp(uint8_t enable)
     else        baudctl &= (uint8_t)~PIC_BAUDCTL_WUE;
     EPIC_REG8(PIC_REG_BAUDCTL) = baudctl;
 }
+#endif
 
 /* ISRs. */
 
 /**
- * @brief Weak EUSART TX ISR: fires the TX-complete callback when TXIF
+ * @brief Weak USART TX ISR: fires the TX-complete callback when TXIF
  *        is set (TXIF is read-only; cleared by writing TXREG).
  */
 void USART_TX_IRQHandler(void)
@@ -341,7 +371,7 @@ void USART_TX_IRQHandler(void)
 }
 
 /**
- * @brief Weak EUSART RX ISR: reads RCREG, clears RCIF and fires the
+ * @brief Weak USART RX ISR: reads RCREG, clears RCIF and fires the
  *        RX-complete callback with the byte.
  */
 void USART_RX_IRQHandler(void)
