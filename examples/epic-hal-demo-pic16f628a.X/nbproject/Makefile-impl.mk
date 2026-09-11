@@ -62,6 +62,7 @@ ALLCONFS=default
 #	    echo "DEPFILES=\$$(wildcard \$$(addsuffix .d, \$${OBJECTFILES}))" >>.dep.inc; \
 #	    echo "ifneq (\$${DEPFILES},)" >>.dep.inc; \
 #	    echo "include \$${DEPFILES}" >>.dep.inc; \
+
 #	    echo "endif" >>.dep.inc; \
 #	else \
 #	    echo ".KEEP_STATE:" >>.dep.inc; \

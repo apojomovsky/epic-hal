@@ -1,12 +1,9 @@
-/* SFR address map for the PIC16F628A (single-part family). Every
- * address is 1-to-1 from DS40044G (Register 2-1, Tables 2-1/2-2, §3.0,
- * §4.x, §14.x) and cross-checked against the DFP EDC
- * (Microchip.PIC16Fxxx_DFP, edc/PIC16F628A.PIC); bit positions match
- * the EDC field order. Registers the part does not have (PORTC/D/E,
- * PIR2/PIE2, SSP, ADC, CCP2, EEDATH/H, SPBRGH/BAUDCTL, OSCCON) are
- * deliberately absent: referencing one must fail at compile time, not
- * silently use a wrong address. Regenerated addresses via
- * scripts/gen-sfr.py --family PIC16F628A. */
+/* SFR map for the PIC16F628A, 1-to-1 from DS40044G and cross-checked
+ * against the DFP EDC (Microchip.PIC16Fxxx_DFP, edc/PIC16F628A.PIC);
+ * bit positions match the EDC field order. Registers the part lacks
+ * (PORTC/D/E, PIR2/PIE2, SSP, ADC, CCP2, EEDATH/H, SPBRGH/BAUDCTL,
+ * OSCCON) are deliberately absent: referencing one must fail at
+ * compile time. Regenerated via scripts/gen-sfr.py. */
 
 #ifndef PIC16F628A_SFR_H
 #define PIC16F628A_SFR_H

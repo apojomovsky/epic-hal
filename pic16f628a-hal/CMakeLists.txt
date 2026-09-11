@@ -1,15 +1,7 @@
-# PIC16F628A HAL, host simulation build.
-#
-#   cmake -B build && cmake --build build
-#   ./build/example_blink
-#
-# Real PIC target builds use the XC8 toolchain; the manifest selects the
-# real-target sources and the bundle's epic-hal.mk (or the reference
-# project examples/epic-hal-demo-pic16f628a.X) drives xc8-cc to a .hex.
-#
-# This file is a thin caller of the shared epic_family.cmake helpers
-# (epic-common/cmake/). Only what is genuinely PIC16F628A-specific stays
-# here: the source list and the single device.
+# PIC16F628A HAL, host simulation build (cmake -B build, build, run).
+# Real-target builds use XC8 via the manifest + the reference .X project.
+# Thin caller of epic-common/cmake/epic_family.cmake; only the source
+# list and the single device are PIC16F628A-specific.
 
 cmake_minimum_required(VERSION 3.16)
 project(pic16f628a_hal C)
