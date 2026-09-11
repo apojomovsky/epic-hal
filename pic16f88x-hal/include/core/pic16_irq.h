@@ -36,6 +36,10 @@ typedef enum {
     PIC16_IRQ_OSF      = 16, /**< Oscillator fail.            */
 } PIC16_IRQn;
 
+/* Bound check for the shared table body. Macro, not a const global
+ * (the pinned epic-cc isel panics on scalar consts). */
+#define IRQ_TABLE_SIZE 17U
+
 /* enable / disable. */
 
 /**

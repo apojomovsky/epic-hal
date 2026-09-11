@@ -361,6 +361,7 @@ ${OBJECTDIR}/_ext/666212198/epic_harness_target.p1: ../../epic-common/src/core/e
 	@-${MV} ${OBJECTDIR}/epic_harness_target.d ${OBJECTDIR}/_ext/666212198/epic_harness_target.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/666212198/epic_harness_target.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
+endif
 
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: assemble

@@ -32,6 +32,10 @@ typedef struct {
 #endif
 
 extern const irq_desc_t irq_table[];
-extern const unsigned IRQ_TABLE_SIZE;
+/* Table length for the shared bound check. A macro, not a const
+ * global: the pinned epic-cc isel turns every const global into a
+ * flash table and panics on scalar ones (no table bytes), so a
+ * `const unsigned` here breaks the epiccc gate. Each family's own
+ * core/pic16_irq.h defines IRQ_TABLE_SIZE next to its IRQn enum. */
 
 #endif /* PIC14_IRQ_COMMON_H */

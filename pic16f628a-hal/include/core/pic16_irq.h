@@ -27,6 +27,10 @@ typedef enum {
     PIC16_IRQ_CMP      = 9,  /**< Comparator output change.  */
 } PIC16_IRQn;
 
+/* Bound check for the shared table body. Macro, not a const global
+ * (the pinned epic-cc isel panics on scalar consts). */
+#define IRQ_TABLE_SIZE 10U
+
 /* enable / disable. */
 
 /**

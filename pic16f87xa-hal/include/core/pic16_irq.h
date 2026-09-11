@@ -36,6 +36,11 @@ typedef enum {
 #endif
 } PIC16_IRQn;
 
+/* Bound check for the shared table body. Macro, not a const global
+ * (the pinned epic-cc isel panics on scalar consts). 15 rows plus
+ * the PSP row on PSP variants. */
+#define IRQ_TABLE_SIZE (15U + (unsigned)PIC16F87XA_FAMILY_HAS_PSP)
+
 /* enable / disable. */
 
 /**

@@ -18,4 +18,3 @@ const irq_desc_t irq_table[] = {
     [PIC16_IRQ_CMP]      = { PIC_PIR1_CMIF,     PIC_PIE1_CMIE,     0, 0 },
 };
 
-const unsigned IRQ_TABLE_SIZE = (unsigned)(sizeof irq_table / sizeof irq_table[0]);

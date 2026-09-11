@@ -24,4 +24,3 @@ const irq_desc_t irq_table[] = {
     [PIC16_IRQ_OSF]      = { PIC_PIR2_OSFIF,    PIC_PIE2_OSFIE,    0, 1 },
 };
 
-const unsigned IRQ_TABLE_SIZE = (unsigned)(sizeof irq_table / sizeof irq_table[0]);

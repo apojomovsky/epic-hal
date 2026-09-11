@@ -24,4 +24,3 @@ const irq_desc_t irq_table[] = {
 #endif
 };
 
-const unsigned IRQ_TABLE_SIZE = (unsigned)(sizeof irq_table / sizeof irq_table[0]);
