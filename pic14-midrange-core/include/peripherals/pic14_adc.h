@@ -1,16 +1,10 @@
-/* Shared A/D converter driver (SPI of the analog world: 10-bit SAR with
- * a mux), classic mid-range: 87XA (DS39582B section 11.0) and 88X
- * (DS40001291H section 15.0). The two families wire the ADC differently
- * and the divergences are gated, not hidden:
- *   - PIC14MIDRANGE_HAS_ADC_PCFG (87XA): 16 PCFG reference/voltage-pin
- *     configurations in ADCON1, 3-bit channel mux, 7 clock rates via
- *     ADCS2+ADCS1:0. Without it (88X): 4 VCFG reference combos, 4-bit
- *     channel mux (AN0..13 + CVREF/VP6), 4 clock rates.
- *   - PIC14MIDRANGE_HAS_ANSEL (88X): per-pin analog gating through
- *     ANSEL/ANSELH and the ConfigChannel API.
- * Each family's shim header (pic16f87xa_adc.h / pic16f88x_adc.h) sets
- * its umbrella + SFR map, then includes this body; do not include it
- * directly. */
+/* Shared A/D converter driver, classic mid-range: 87XA (DS39582B
+ * section 11.0) and 88X (DS40001291H section 15.0). The families wire
+ * the ADC differently and the divergences are gated, not hidden:
+ * HAS_ADC_PCFG selects the 87XA PCFG reference table, 3-bit mux and
+ * 7 clock rates; HAS_ANSEL selects the 88X per-pin analog gating and
+ * the ConfigChannel API. Family shims (pic16f87xa_adc.h /
+ * pic16f88x_adc.h) set umbrella + SFR map, then include this body. */
 
 #ifndef PIC14_ADC_BODY_H
 #define PIC14_ADC_BODY_H
