@@ -1,9 +1,10 @@
-/* MSSP driver implementation (DS40001291H §13.0). Register-level only: the
+/* Shared MSSP driver implementation, classic mid-range: 87XA
+ * (DS39582B §9.0) and 88X (DS40001291H §13.0). Register-level only: the
  * I²C state machine (Start/Stop/ACK timing, slave address matching) is
  * left to the user; this configures SSPCON / SSPCON2 / SSPSTAT / SSPADD
  * and provides the byte-level transmit / receive primitives. */
 
-#include "peripherals/pic16f88x_ssp.h"
+#include "peripherals/pic14_ssp.h"
 #include "core/pic16_irq.h"
 
 /* handle storage. */
@@ -297,6 +298,7 @@ uint8_t EPIC_SSP_AcknowledgeStatus(void)
  *   restores `mode`, which re-programs SSPCON<3:0> but leaves SSPEN,
  *   CKP and the rest of the module state untouched.
  */
+#if PIC14MIDRANGE_HAS_SSPMSK
 void EPIC_SSP_LoadAddressMask(SSP_ModeTypeDef mode, uint8_t mask)
 {
     /* Enter Load-Mask mode: keep CKP/SSPEN, set SSPM = 1001. */
@@ -309,6 +311,7 @@ void EPIC_SSP_LoadAddressMask(SSP_ModeTypeDef mode, uint8_t mask)
     con = (uint8_t)((con & 0xF0U) | ((uint8_t)mode & 0x0FU));
     EPIC_REG8(PIC_REG_SSPCON) = con;
 }
+#endif /* PIC14MIDRANGE_HAS_SSPMSK */
 
 /* ISRs. */
 

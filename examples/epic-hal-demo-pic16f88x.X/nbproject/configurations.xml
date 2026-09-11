@@ -33,7 +33,7 @@
         <itemPath>../../pic14-midrange-core/src/peripherals/pic14_timer2.c</itemPath>
         <itemPath>../../pic14-midrange-core/src/peripherals/pic14_ccp.c</itemPath>
         <itemPath>../../pic14-midrange-core/src/peripherals/pic14_usart.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_ssp.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_ssp.c</itemPath>
         <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_adc.c</itemPath>
         <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_comp.c</itemPath>
         <itemPath>../../pic14-midrange-core/src/peripherals/pic14_vref.c</itemPath>
