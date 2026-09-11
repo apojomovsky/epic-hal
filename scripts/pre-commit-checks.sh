@@ -55,7 +55,7 @@ stray_files_check() {
     # 2026-08-11 cleanup moved the 12 epic-combo-* test modules under
     # tests/ precisely so the root stays readable. A new module is
     # added by extending this list deliberately, not by accident.
-    local dir_whitelist='^epic-[a-z0-9-]+$|^pic16f87xa-hal$|^pic18fxx5x-hal$|^pic16f193x-hal$|^pic16f88x-hal$|^pic[0-9a-z]+-midrange-core$|^pic[0-9a-z]+-enhanced-core$|^pic-baseline-core$|^pic18-core$|^docs$|^scripts$|^docker$|^examples$|^tests$|^\.github$'
+    local dir_whitelist='^epic-[a-z0-9-]+$|^pic16f87xa-hal$|^pic18fxx5x-hal$|^pic16f193x-hal$|^pic16f88x-hal$|^pic16f628a-hal$|^pic[0-9a-z]+-midrange-core$|^pic[0-9a-z]+-enhanced-core$|^pic-baseline-core$|^pic18-core$|^docs$|^scripts$|^docker$|^examples$|^tests$|^\.github$'
     local bad=0
     local f
     while IFS= read -r f; do

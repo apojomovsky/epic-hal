@@ -29,11 +29,18 @@ static void (*g_eeprom_cb)(void) = NULL;
 #endif
 
 /**
- * @brief Write a byte to a Bank-3 EEPROM register (EECON1 or EECON2).
- * @param addr the register address (0x18C or 0x18D).
+ * @brief Write a byte to an EEPROM control register (EECON1/EECON2).
+ * Bank-2/3 parts use the EPIC_BANK3_* literal-token macros, Bank-1-only
+ * parts (628A) the EPIC_BANK1_* ones; the addr dispatch below picks the
+ * SFR token. Literal tokens are REQUIRED here: a runtime-address
+ * EPIC_REG8 access misdirects under XC8 on banked parts (the 628A
+ * b2 writes landed in Bank 0 while b3 appeared to land; see
+ * pic16f628a-hal/MANUAL.md), so the variable-address fallback below is
+ * host-sim only.
+ * @param addr the register address.
  * @param v the byte to write.
  */
-#ifdef EPIC_BANK3_WRITE8
+#if defined(EPIC_BANK3_WRITE8) || defined(EPIC_BANK1_WRITE8)
 static void b3_write(uint16_t addr, uint8_t v)
 {
 #if PIC14MIDRANGE_HAS_EEPROM_BANK1
@@ -46,7 +53,7 @@ static void b3_write(uint16_t addr, uint8_t v)
 }
 
 /**
- * @brief Read a byte from the Bank-3 EECON1 register.
+ * @brief Read a byte from the EECON1 register.
  * @param addr the register address (only EECON1 is ever read).
  * @return the EECON1 value.
  */
@@ -63,8 +70,8 @@ static uint8_t b3_read(uint16_t addr)
 }
 
 /**
- * @brief Write a byte to a Bank-2 EEPROM register (EEDATA or EEADR).
- * @param addr the register address (0x0C or 0x0D).
+ * @brief Write a byte to an EEPROM data register (EEDATA or EEADR).
+ * @param addr the register address.
  * @param v the byte to write.
  */
 static void b2_write(uint16_t addr, uint8_t v)
@@ -79,8 +86,8 @@ static void b2_write(uint16_t addr, uint8_t v)
 }
 
 /**
- * @brief Read a byte from a Bank-2 EEPROM register (EEDATA or EEADR).
- * @param addr the register address (0x0C or 0x0D).
+ * @brief Read a byte from an EEPROM data register (EEDATA or EEADR).
+ * @param addr the register address.
  * @return the register value.
  */
 static uint8_t b2_read(uint16_t addr)
@@ -97,9 +104,10 @@ static uint8_t b2_read(uint16_t addr)
 }
 #else
 /**
- * @brief Write a byte to a Bank-3 EEPROM register (EECON1 or EECON2)
- *        via bank-switched EPIC_REG8 access.
- * @param addr the register address (0x18C or 0x18D).
+ * @brief Write a byte to an EEPROM control register via bank-switched
+ *        EPIC_REG8 access (HOST SIM ONLY: misdirects under XC8, which
+ *        always takes the literal-token branch above).
+ * @param addr the register address.
  * @param v the byte to write.
  */
 static void b3_write(uint16_t addr, uint8_t v)
@@ -111,7 +119,7 @@ static void b3_write(uint16_t addr, uint8_t v)
 }
 
 /**
- * @brief Read a byte from a Bank-3 EEPROM register.
+ * @brief Read a byte from an EEPROM control register (HOST SIM ONLY).
  * @param addr the register address.
  * @return the register value.
  */
@@ -125,9 +133,8 @@ static uint8_t b3_read(uint16_t addr)
 }
 
 /**
- * @brief Write a byte to a Bank-2 EEPROM register (EEDATA or EEADR)
- *        via bank-switched EPIC_REG8 access.
- * @param addr the register address (0x0C or 0x0D).
+ * @brief Write a byte to an EEPROM data register (HOST SIM ONLY).
+ * @param addr the register address.
  * @param v the byte to write.
  */
 static void b2_write(uint16_t addr, uint8_t v)
@@ -139,8 +146,8 @@ static void b2_write(uint16_t addr, uint8_t v)
 }
 
 /**
- * @brief Read a byte from a Bank-2 EEPROM register (EEDATA or EEADR).
- * @param addr the register address (0x0C or 0x0D).
+ * @brief Read a byte from an EEPROM data register (HOST SIM ONLY).
+ * @param addr the register address.
  * @return the register value.
  */
 static uint8_t b2_read(uint16_t addr)

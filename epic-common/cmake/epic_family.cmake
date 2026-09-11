@@ -1,33 +1,11 @@
-# Shared CMake helpers for every 8-bit PIC HAL family.
-#
-# A family's CMakeLists.txt sets a few variables describing that family
-# (its source list, include dirs, default device, the optional peripheral
-# gate, and the list of devices in the family) and then calls these
-# functions to build the static library and the examples. Everything that
-# is identical between families — the host-include-first convention, the
-# per-target device-select define, the example/link boilerplate, the
-# "build this example for every device in the family" loop — lives here,
-# so a new family's CMakeLists.txt is a thin caller.
-#
-# Variables the caller sets before including this file:
-#   EPIC_LIB              static library target name (e.g. pic16f87xa_hal)
-#   EPIC_DEFAULT_DEVICE       device macro for the default build (PIC16F877A)
-#   EPIC_FAMILY_INCLUDE_DIR   this family's include/ directory
-#   EPIC_HOST_INCLUDE_DIR     this family's include/host directory (resolved
-#                            first, so <family>_platform.h picks the host body)
-#   EPIC_COMMON_INCLUDE_DIR  epic-common/include (shared headers: hal_status.h,
-#                            epic_harness.h) — added PUBLIC so consumers
-#                            that link the library see them too
-#   EPIC_CORE_INCLUDE_DIR    shared ISA-core include/ directory, if the
-#                            family consumes one (e.g. pic14-midrange-core)
-#   EPIC_FAMILY_DEVICES       list of every device macro in the family
-#
-# Variables the caller sets before calling epic_add_hal_library:
-#   EPIC_SOURCES          the family's .c source list (per family)
-#   EPIC_COMPILE_DEFS     PRIVATE compile defs for the lib (optional)
-#
-# A family that has an optional peripheral only on some devices gates it
-# itself before calling epic_add_hal_library (see pic16f87xa-hal's PSP).
+# Shared CMake helpers for every 8-bit PIC HAL family. The caller sets
+# EPIC_LIB/EPIC_DEFAULT_DEVICE/EPIC_FAMILY_INCLUDE_DIR (plus optional
+# EPIC_HOST_INCLUDE_DIR, EPIC_COMMON_INCLUDE_DIR, EPIC_CORE_INCLUDE_DIR,
+# EPIC_FAMILY_DEVICES, EPIC_SOURCES, EPIC_COMPILE_DEFS), then calls the
+# functions below. Everything identical between families lives here, so
+# a new family's CMakeLists.txt stays a thin caller. A family with an
+# optional peripheral on some devices gates it itself first (see the
+# 87XA's PSP gate).
 
 # Build the family's static library. Host include dir goes first so the
 # build selects the memory-backed platform header; the shared epic-common

@@ -53,19 +53,19 @@ static uint8_t port_addr(GPIO_TypeDef port)
 }
 
 /**
- * @brief  Upper pin bound for a port. PORTA = 6, PORTE = 3, others = 8.
- *         Anything above this is unimplemented (DS39582B Table 4-1..4-9,
- *         marked with a dash in the datasheet).
+ * @brief  Implemented-pin mask for a port. PORTA is gapped on small
+ *         parts (RA5 input-only on the 628A), so a width cannot express
+ *         it; every other port is contiguous from bit 0.
  * @param port GPIOA..GPIOE.
- * @return the number of implemented pins.
+ * @return the bitmask of implemented pins.
  */
-static uint8_t port_width(GPIO_TypeDef port)
+static uint8_t port_pin_mask(GPIO_TypeDef port)
 {
 #if PIC14MIDRANGE_HAS_PORTE
-    if (port == GPIOE) return 3U;
+    if (port == GPIOE) return 0x07U;
 #endif
-    if (port == GPIOA) return 6U;
-    return 8U;
+    if (port == GPIOA) return PIC14MIDRANGE_PORTA_MASK;
+    return 0xFFU;
 }
 
 /* init / deinit. */
@@ -79,7 +79,7 @@ static uint8_t port_width(GPIO_TypeDef port)
 void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 {
     uint8_t ta = tris_addr(port);
-    uint8_t mask   = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
+    uint8_t mask   = (uint8_t)pins & port_pin_mask(port);
 
     uint8_t tris = EPIC_REG8(ta);
 
@@ -108,7 +108,7 @@ void EPIC_GPIO_DeInit(GPIO_TypeDef port)
 {
     uint8_t ta = tris_addr(port);
     /* Reset all implemented bits of TRISx to 1 = input. */
-    EPIC_REG8(ta) = (uint8_t)((1U << port_width(port)) - 1U);
+    EPIC_REG8(ta) = port_pin_mask(port);
 }
 
 /* read / write / toggle. */
@@ -121,7 +121,7 @@ void EPIC_GPIO_DeInit(GPIO_TypeDef port)
  */
 void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
 {
-    uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
+    uint8_t mask = (uint8_t)pins & port_pin_mask(port);
     uint8_t pa = port_addr(port);
     uint8_t cur = EPIC_REG8(pa);
     if (state == GPIO_PIN_SET) cur |= mask;
@@ -136,7 +136,7 @@ void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
  */
 void EPIC_GPIO_TogglePin(GPIO_TypeDef port, uint16_t pins)
 {
-    uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
+    uint8_t mask = (uint8_t)pins & port_pin_mask(port);
     uint8_t pa = port_addr(port);
     EPIC_REG8(pa) = EPIC_REG8(pa) ^ mask;
 }
@@ -152,7 +152,7 @@ GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
     /* TRIS=1 (input) returns the pin state; TRIS=0 (output) the latch.
      * The sim backend implements the same behavior; XC8 lowers this to
      * a single MOVF on the real target. */
-    uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
+    uint8_t mask = (uint8_t)pins & port_pin_mask(port);
     uint8_t pa = port_addr(port);
     return (EPIC_REG8(pa) & mask) ? GPIO_PIN_SET : GPIO_PIN_RESET;
 }
@@ -164,7 +164,7 @@ GPIO_PinState EPIC_GPIO_ReadPin(GPIO_TypeDef port, uint16_t pins)
  */
 void EPIC_GPIO_WritePort(GPIO_TypeDef port, uint8_t value)
 {
-    uint8_t mask = (uint8_t)((1U << port_width(port)) - 1U);
+    uint8_t mask = port_pin_mask(port);
     EPIC_REG8(port_addr(port)) = (uint8_t)(value & mask);
 }
 

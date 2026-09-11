@@ -48,6 +48,12 @@ FAMILIES = {
             ("16F1939", "Microchip.PIC12-16F1xxx_DFP", "pic16f1939.h"),
         ],
     ),
+    "pic16f628a-hal": (
+        "pic16f628a-hal/include/pic16f628a_sfr.h",
+        [
+            ("16F628A", "Microchip.PIC16Fxxx_DFP", "pic16f628a.h"),
+        ],
+    ),
 }
 
 
@@ -125,6 +131,9 @@ BIT_ALIASES = {
     # n-prefixed alias at the same position).
     ("ADCON0_GO", "NDONE"): ("ADCON0", "GO"),
     ("ADCON0_GO", "DONE"): ("ADCON0", "GO_DONE"),
+    # 628A T1CON: the HAL uses the datasheet name T1SYNC; the DFP
+    # spells it nT1SYNC (1 = do not synchronize).
+    ("T1CON", "T1SYNC"): ("T1CON", "nT1SYNC"),
 }
 
 # Registers and bits that are legitimately absent from a part's DFP
@@ -190,13 +199,14 @@ def main() -> int:
     import argparse
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
-                                         "PIC16F193X", "PIC16F88X"), default=None,
+                                         "PIC16F193X", "PIC16F88X", "PIC16F628A"), default=None,
                     help="only this manifest family (the sharded CI jobs)")
     args = ap.parse_args()
     hal_label = {"PIC16F87XA": "pic16f87xa-hal",
                  "PIC18Fxx5x": "pic18fxx5x-hal",
                  "PIC16F193X": "pic16f193x-hal",
-                 "PIC16F88X": "pic16f88x-hal"}[args.family] \
+                 "PIC16F88X": "pic16f88x-hal",
+                 "PIC16F628A": "pic16f628a-hal"}[args.family] \
         if args.family else None
     bad = 0
     for family, (sfr_path, mcus) in FAMILIES.items():

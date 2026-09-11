@@ -7,7 +7,7 @@
 # Usage: ci-target-sim.sh [summary.md]
 #   REPEAT=N   run every gate N times (default 1); any failed run fails the
 #              gate, summary records "PASS (n/N)"
-#   FAMILY=<pic16f87xa|pic18fxx5x|pic16f193x> only that family (sharded CI);
+#   FAMILY=<pic16f87xa|pic18fxx5x|pic16f193x|pic16f88x|pic16f628a> only that family (sharded CI);
 #   PARALLEL=N concurrent gates (sim-mdb-run.sh temps are PID-suffixed)
 
 set -uo pipefail
@@ -101,6 +101,7 @@ run_one pic16f88x 16F887 PIC16F887 epic-bus 5000 uart
 run_one pic16f88x 16F887 PIC16F887 epic-mcp23x17 5000 uart
 run_one pic16f88x 16F887 PIC16F887 epic-serial 10000 uart
 run_one pic16f88x 16F887 PIC16F887 epic-debounce 5000 uart
+run_one pic16f628a 16F628A PIC16F628A pic16f628a-hal 15000 uart
 fi
 
 if [ "$parallel" -gt 1 ]; then

@@ -295,6 +295,15 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     flags.append(f"-DFOSC_HZ={fosc_hz}")
     cflags = " ".join(flags)
 
+    # Link with device + optimization only. The link inputs are prebuilt
+    # objects, so -std/-Wall/-D/-I are void there; worse, XC8 v4.00
+    # forwards them into its runtime-support compile (__eeprom.c) and
+    # miscompiles it for the 16F628A with any extras present
+    # (epic-hal#136: undeclared-identifier errors on EECON1bits et al).
+    # -O2 stays: it still governs support codegen.
+    linkflags = f"-mdfp={dfp_dir} -mcpu={mcu.lower()} -O2" if dfp_dir \
+        else f"-mcpu={mcu.lower()} -O2"
+
     example_name, _ = _example_name_and_config(manifest, module, mcu, variant)
     target = f"{build_dir}/{mcu}-{example_name}.hex"
     config_source = emit_config_source(
@@ -328,7 +337,7 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
 
     out += [
         "",
-        f"xc8-cc {cflags} {' '.join(objs)} -o {target} -ginhx32",
+        f"xc8-cc {linkflags} {' '.join(objs)} -o {target} -ginhx32",
         "",
         f'echo "Built {target}"',
     ]
@@ -466,12 +475,12 @@ def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
         low_key = key.lower()
         epic_key = table.get(low_key, low_key)
         # The device TOMLs name the brown-out-enable field `bor` on the
-        # 877A but `boren` everywhere else on PIC16 (the 88X family and
-        # the 193X family included). The shared table maps
+        # 877A but `boren` everywhere else on PIC16 (the 88X, 193X and
+        # 628A families included). The shared table maps
         # `boren` -> `bor` for the 877A; flip it back for the families
         # whose own device data spells it `boren`.
         if (not is_pic18 and epic_key == "bor"
-                and fam.name in ("PIC16F88X", "PIC16F193X")):
+                and fam.name in ("PIC16F88X", "PIC16F193X", "PIC16F628A")):
             epic_key = "boren"
         low_val = val.lower()
         if is_pic18:
@@ -579,6 +588,7 @@ CANONICAL = {
     "PIC16F88X": "16F887",
     "PIC18Fxx5x": "18F4550",
     "PIC16F193X": "16F1937",
+    "PIC16F628A": "16F628A",
 }
 
 def cmd_matrix(args):

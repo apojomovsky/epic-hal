@@ -18,7 +18,7 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 import epicmanifest as manifest_lib  # noqa: E402
 
-BANKED_FAMILIES = ("PIC16F87XA", "PIC16F193X", "PIC16F88X")
+BANKED_FAMILIES = ("PIC16F87XA", "PIC16F193X", "PIC16F88X", "PIC16F628A")
 
 HANDLE_TYPEDEF_RE = re.compile(r"HandleTypeDef|struct\b|\bunion\b")
 # Placement pins: XC8's raw __at or the platform-header EPIC_PLACE
@@ -64,6 +64,8 @@ ALLOWLIST = {
         "87XA CCP ISR reads the array directly, auto-banksel (verified)",
     ("pic16f88x-hal/src/peripherals/pic16f88x_ccp.c", "g_ccp_callbacks"):
         "88X CCP ISR reads the array directly, auto-banksel (same mechanism as 87XA)",
+    ("pic14-midrange-core/src/peripherals/pic14_ccp.c", "g_ccp_callbacks"):
+        "shared CCP ISR reads the array directly with a constant index, auto-banksel (same mechanism as 87XA)",
     ("epic-serial/src/epic_serial.c", "g_tx_buf"):
         "direct symbol access, auto-banksel (verified)",
     ("epic-tick/src/epic_tick.c", "g_tick_ms"):
