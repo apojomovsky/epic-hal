@@ -298,7 +298,10 @@ it done.
      parameter at the point of access**, not a literal `PIC_REG_*`
      token. On PIC16, a value read/written while a bank switch
      (`pic_select_bank`) is in effect can get misdirected to the wrong
-     memory location. On PIC18, XC8 has compiled this exact shape to
+     memory location (latest instance: the 628A EEPROM driver's
+     EEDATA/EEADR writes landed in Bank 0 GPRs while EECON1 landed,
+     caught only by an mdb data-register readback, 2026-09-11). On
+     PIC18, XC8 has compiled this exact shape to
      the program-memory table read/write mechanism (`TBLPTR`/`TABLAT`/
      `tblrd`/`tblwt`) instead of a data-memory access, silently writing
      nowhere. Both are real, both were found by this exact gate, not by
