@@ -18,6 +18,8 @@
 #   EPIC_COMMON_INCLUDE_DIR  epic-common/include (shared headers: hal_status.h,
 #                            epic_harness.h) — added PUBLIC so consumers
 #                            that link the library see them too
+#   EPIC_CORE_INCLUDE_DIR    shared ISA-core include/ directory, if the
+#                            family consumes one (e.g. pic14-midrange-core)
 #   EPIC_FAMILY_DEVICES       list of every device macro in the family
 #
 # Variables the caller sets before calling epic_add_hal_library:
@@ -38,6 +40,9 @@ function(epic_add_hal_library name)
         ${EPIC_HOST_INCLUDE_DIR}
         ${EPIC_FAMILY_INCLUDE_DIR}
         ${EPIC_COMMON_INCLUDE_DIR})
+    if(EPIC_CORE_INCLUDE_DIR)
+        target_include_directories(${name} PUBLIC ${EPIC_CORE_INCLUDE_DIR})
+    endif()
     target_compile_definitions(${name} PRIVATE -D${EPIC_DEFAULT_DEVICE})
     if(EPIC_COMPILE_DEFS)
         target_compile_definitions(${name} PRIVATE ${EPIC_COMPILE_DEFS})

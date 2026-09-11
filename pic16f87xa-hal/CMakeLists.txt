@@ -51,22 +51,23 @@ endif()
 set(EPIC_LIB              pic16f87xa_hal)
 set(EPIC_DEFAULT_DEVICE       ${PIC16F87XA_DEFAULT_DEVICE})
 set(EPIC_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(EPIC_CORE_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/../pic14-midrange-core/include)
 set(EPIC_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
 set(EPIC_FAMILY_DEVICES        PIC16F873A PIC16F874A PIC16F876A PIC16F877A)
 
 set(EPIC_SOURCES
     src/peripherals/pic16f87xa_gpio.c
-    src/peripherals/pic16f87xa_timer0.c
+    ../pic14-midrange-core/src/peripherals/pic14_timer0.c
     src/peripherals/pic16f87xa_timer1.c
-    src/peripherals/pic16f87xa_timer2.c
+    ../pic14-midrange-core/src/peripherals/pic14_timer2.c
     src/peripherals/pic16f87xa_ccp.c
     src/peripherals/pic16f87xa_usart.c
     src/peripherals/pic16f87xa_ssp.c
     src/peripherals/pic16f87xa_adc.c
     src/peripherals/pic16f87xa_comp.c
     src/peripherals/pic16f87xa_vref.c
-    src/peripherals/pic16f87xa_eeprom.c
+    ../pic14-midrange-core/src/peripherals/pic14_eeprom.c
     src/core/pic16_irq.c
     src/core/pic16f87xa_wdt_sleep.c
     src/sim/pic16f87xa_wdt_sleep_sim.c

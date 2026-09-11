@@ -504,7 +504,7 @@ void pic16f88x_sim_drive_eeprom_done(uint8_t addr, uint8_t data)
  * @param addr the EEPROM address, 0..255.
  * @return the stored byte.
  */
-uint8_t pic16f88x_sim_eeprom_read(uint8_t addr)
+uint8_t pic14_sim_eeprom_read(uint8_t addr)
 {
     return sim_eeprom[addr];
 }

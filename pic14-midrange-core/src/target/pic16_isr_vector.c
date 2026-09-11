@@ -1,11 +1,11 @@
 /* Real-target interrupt-vector entry (XC8 build only): the single
- * PIC16 vector at 0x0004 (DS40001291H §14.11) delegates to the shared
- * epic_dispatch_all_irqs fan-out. The host registers the same
- * dispatcher as its sim IRQ callback instead. */
+ * PIC16 vector at 0x0004 (DS39582B §14.11, DS40001291H §14.11) delegates
+ * to the shared epic_dispatch_all_irqs fan-out. The host registers the
+ * same dispatcher as its sim IRQ callback instead. */
 
 #include "core/pic16_irq.h"
 
-/* Definitions for target/pic16f88x_platform.h's `extern volatile
+/* Definitions for the family target platform header's `extern volatile
  * uint8_t epic_irq_pie_scratch`/`epic_bank1_scratch` (see that header's
  * comments for what they're for); `__at`-pinned into PIC16 mid-range's
  * bank-independent common RAM. */

@@ -1,6 +1,7 @@
-/* Timer2 driver implementation (DS39582B §7.0). */
+/* Shared PIC14 mid-range Timer2 implementation (87XA + 88X).
+ * Sources: DS39582B §7 (87XA), DS40001291H §7 (88X). */
 
-#include "peripherals/pic16f87xa_timer2.h"
+#include "peripherals/pic14_timer2.h"
 #include "core/pic16_irq.h"
 
 /* T2CON prescaler, DS39582B Register 7-1:
@@ -40,7 +41,7 @@ uint8_t EPIC_TIMER2_ReadPeriod(void)
 {
 #ifdef EPIC_BANK1_READ8
     /* Plain bank-switch read misdirects to the Bank-0 alias under XC8
-     * v4.00 (see target/pic16f87xa_platform.h). */
+     * v4.00 (see the family target platform header). */
     uint8_t pr2 = 0u;
     EPIC_BANK1_READ8(PR2, pr2);
     return pr2;
@@ -61,8 +62,8 @@ uint8_t EPIC_TIMER2_ReadPeriod(void)
 void EPIC_TIMER2_WritePeriod(uint8_t period)
 {
 #ifdef EPIC_BANK1_WRITE8
-    /* See target/pic16f87xa_platform.h: a plain bank-switch write here
-     * silently corrupts under XC8 v4.00. */
+    /* See the family target platform header: a plain bank-switch write
+     * here silently corrupts under XC8 v4.00. */
     EPIC_BANK1_WRITE8(PR2, period);
 #else
     uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;

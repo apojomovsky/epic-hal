@@ -1,6 +1,8 @@
-/* Data EEPROM driver implementation (DS40001291H §10.0). */
+/* Shared PIC14 mid-range Data EEPROM implementation (87XA + 88X).
+ * Sources: DS39582B §3 (87XA), DS40001291H §10 (88X); § numbers below
+ * are the 87XA ones. */
 
-#include "peripherals/pic16f88x_eeprom.h"
+#include "peripherals/pic14_eeprom.h"
 #include "core/pic16_irq.h"
 
 static void (*g_eeprom_cb)(void) = NULL;
@@ -164,12 +166,12 @@ uint8_t EPIC_EEPROM_ReadByte(uint8_t addr)
      * @param addr the EEPROM address to read.
      * @return the stored byte.
      */
-    extern uint8_t pic16f88x_sim_eeprom_read(uint8_t addr);
-    b2_write(0x0CU, pic16f88x_sim_eeprom_read(addr));
+    extern uint8_t pic14_sim_eeprom_read(uint8_t addr);
+    b2_write(0x0CU, pic14_sim_eeprom_read(addr));
     return b2_read(0x0CU);
 #else
     /* Real target: the RD strobe loads the addressed byte into EEDATA
-     * (DS40001291H §5.5). */
+     * (DS39582B §5.5). */
     return b2_read(0x0CU);
 #endif
 }
@@ -195,7 +197,7 @@ EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data)
     b3_write(0x18DU, 0x55U);                /* EECON2 = 0x55. */
     b3_write(0x18DU, 0xAAU);                /* EECON2 = 0xAA. */
     b3_write(0x18CU, PIC_EECON1_WREN | PIC_EECON1_WR);  /* start write. */
-    /* WR is held for the write cycle (DS40001291H §3.4). On real
+    /* WR is held for the write cycle (DS39582B §3.4). On real
      * hardware the CPU sees it clear when the cycle completes; the
      * sim backend mirrors that in sim_step(). The caller polls EEIF
      * (PIR2<4>) to detect completion. */

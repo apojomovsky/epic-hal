@@ -48,13 +48,14 @@ staged_files() {
 
 stray_files_check() {
     local file_whitelist='^\.gitignore$|^\.clang-format$|^pyproject\.toml$|^AGENTS\.md$|^CLAUDE\.md$|^DEVELOPMENT\.md$|^LICENSE$|^Makefile$|^README\.md$|^install\.sh$'
-    # Top-level directories: modules (epic-*), the three HALs, and the
+    # Top-level directories: modules (epic-*), the HALs (pic*-hal), the
+    # shared ISA cores (pic*-core, epic-hal#136 naming decision), and the
     # known infra directories. Anything else at the root is a stray
     # (probe output, a dropped directory, an unplanned module): the
     # 2026-08-11 cleanup moved the 12 epic-combo-* test modules under
     # tests/ precisely so the root stays readable. A new module is
     # added by extending this list deliberately, not by accident.
-    local dir_whitelist='^epic-[a-z0-9-]+$|^pic16f87xa-hal$|^pic18fxx5x-hal$|^pic16f193x-hal$|^pic16f88x-hal$|^docs$|^scripts$|^docker$|^examples$|^tests$|^\.github$'
+    local dir_whitelist='^epic-[a-z0-9-]+$|^pic16f87xa-hal$|^pic18fxx5x-hal$|^pic16f193x-hal$|^pic16f88x-hal$|^pic[0-9a-z]+-midrange-core$|^pic[0-9a-z]+-enhanced-core$|^pic-baseline-core$|^pic18-core$|^docs$|^scripts$|^docker$|^examples$|^tests$|^\.github$'
     local bad=0
     local f
     while IFS= read -r f; do

@@ -1,6 +1,7 @@
-/* Timer0 driver implementation (DS39582B §5.0). */
+/* Shared PIC14 mid-range Timer0 implementation (87XA + 88X).
+ * Sources: DS39582B §5 (87XA), DS40001291H §5 (88X). */
 
-#include "peripherals/pic16f87xa_timer0.h"
+#include "peripherals/pic14_timer0.h"
 #include "core/pic16_irq.h"
 
 /* Prescaler ratios, DS39582B Table 5-1: 000=1:2 ... 111=1:256. */
@@ -24,8 +25,8 @@ static void option_clr_set(uint8_t clr_mask, uint8_t set_mask)
 {
 #ifdef EPIC_BANK1_READ8
     /* Plain EPIC_REG8 RMW on Bank-1 OPTION_REG (0x81) misdirects to the
-     * Bank-0 alias (0x01, TMR0) under XC8 v4.00 (see
-     * target/pic16f87xa_platform.h). */
+     * Bank-0 alias (0x01, TMR0) under XC8 v4.00 (see the family target
+     * platform header). */
     uint8_t opt = 0u;
     EPIC_BANK1_READ8(OPTION_REG, opt);
     opt = (uint8_t)((opt & (uint8_t)~clr_mask) | set_mask);
@@ -101,5 +102,7 @@ void TIMER0_IRQHandler(void)
      * (class-F hazard; see the CCP handlers). TMR0IF is INTCON bit 2. */
     if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_TMR0IF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_TMR0IF);
-    if (g_t0_overflow_cb) g_t0_overflow_cb();
+    if (g_t0_overflow_cb) {
+        g_t0_overflow_cb();
+    }
 }

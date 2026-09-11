@@ -16,13 +16,13 @@
   #include "pic16f88x_sim.h"
   #define SIM_EEPROM_BYTE(addr, data)  pic16f88x_sim_drive_eeprom_byte((addr), (data))
   #define SIM_EEPROM_DONE(addr, data)  pic16f88x_sim_drive_eeprom_done((addr), (data))
-  #define SIM_EEPROM_READ(addr)        pic16f88x_sim_eeprom_read((addr))
+  #define SIM_EEPROM_READ(addr)        pic14_sim_eeprom_read((addr))
 #else
   #include "pic16f87xa_sim.h"
   #define SIM_EEPROM_BYTE(addr, data)  pic16f87xa_sim_drive_eeprom_byte((addr), (data))
   /** @brief Read one EEPROM byte from the PIC16F87XA simulator. */
-  extern uint8_t pic16f87xa_sim_eeprom_read(uint8_t addr);
-  #define SIM_EEPROM_READ(addr)        pic16f87xa_sim_eeprom_read((addr))
+  extern uint8_t pic14_sim_eeprom_read(uint8_t addr);
+  #define SIM_EEPROM_READ(addr)        pic14_sim_eeprom_read((addr))
 #endif
 
 #include <stdio.h>

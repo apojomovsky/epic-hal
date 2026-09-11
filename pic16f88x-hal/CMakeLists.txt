@@ -43,15 +43,16 @@ set(PIC16F88X_DEFAULT_DEVICE PIC16F887)
 set(EPIC_LIB              pic16f88x_hal)
 set(EPIC_DEFAULT_DEVICE       ${PIC16F88X_DEFAULT_DEVICE})
 set(EPIC_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(EPIC_CORE_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/../pic14-midrange-core/include)
 set(EPIC_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
 set(EPIC_FAMILY_DEVICES        PIC16F882 PIC16F883 PIC16F884 PIC16F886 PIC16F887)
 
 set(EPIC_SOURCES
     src/peripherals/pic16f88x_gpio.c
-    src/peripherals/pic16f88x_timer0.c
+    ../pic14-midrange-core/src/peripherals/pic14_timer0.c
     src/peripherals/pic16f88x_timer1.c
-    src/peripherals/pic16f88x_timer2.c
+    ../pic14-midrange-core/src/peripherals/pic14_timer2.c
     src/peripherals/pic16f88x_ccp.c
     src/peripherals/pic16f88x_usart.c
     src/peripherals/pic16f88x_ssp.c
@@ -59,7 +60,7 @@ set(EPIC_SOURCES
     src/peripherals/pic16f88x_comp.c
     src/peripherals/pic16f88x_vref.c
     src/peripherals/pic16f88x_srlatch.c
-    src/peripherals/pic16f88x_eeprom.c
+    ../pic14-midrange-core/src/peripherals/pic14_eeprom.c
     src/peripherals/pic16f88x_osc.c
     src/peripherals/pic16f88x_ulpwu.c
     src/core/pic16_irq.c
