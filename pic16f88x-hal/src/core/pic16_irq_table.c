@@ -23,4 +23,3 @@ const irq_desc_t irq_table[] = {
     [PIC16_IRQ_ULPWU]    = { PIC_PIR2_ULPWUIF,  PIC_PIE2_ULPWUIE,  0, 1 },
     [PIC16_IRQ_OSF]      = { PIC_PIR2_OSFIF,    PIC_PIE2_OSFIE,    0, 1 },
 };
-

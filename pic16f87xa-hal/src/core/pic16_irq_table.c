@@ -23,4 +23,3 @@ const irq_desc_t irq_table[] = {
     [PIC16_IRQ_PSP]      = { PIC_PIR1_PSPIF,    PIC_PIE1_PSPIE,    0, 0 },
 #endif
 };
-

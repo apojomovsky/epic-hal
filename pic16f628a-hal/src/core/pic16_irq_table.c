@@ -17,4 +17,3 @@ const irq_desc_t irq_table[] = {
     [PIC16_IRQ_EEPROM]   = { PIC_PIR1_EEIF,     PIC_PIE1_EEIE,     0, 0 },
     [PIC16_IRQ_CMP]      = { PIC_PIR1_CMIF,     PIC_PIE1_CMIE,     0, 0 },
 };
-
