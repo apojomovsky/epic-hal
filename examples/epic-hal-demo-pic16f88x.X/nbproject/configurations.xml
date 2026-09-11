@@ -47,9 +47,12 @@
   </logicalFolder>
   <sourceRootList>
     <Elem>../../epic-common/src/core</Elem>
-    <Elem>../../pic16f193x-hal/src/core</Elem>
-    <Elem>../../pic16f193x-hal/src/target</Elem>
-    <Elem>../../pic16f193x-hal/src/peripherals</Elem>
+    <Elem>../../pic14-midrange-core/src/core</Elem>
+    <Elem>../../pic14-midrange-core/src/target</Elem>
+    <Elem>../../pic14-midrange-core/src/peripherals</Elem>
+    <Elem>../../pic16f88x-hal/src/core</Elem>
+    <Elem>../../pic16f88x-hal/src/target</Elem>
+    <Elem>../../pic16f88x-hal/src/peripherals</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
