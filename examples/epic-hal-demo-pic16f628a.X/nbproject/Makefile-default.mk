@@ -97,7 +97,7 @@ ${OBJECTDIR}/main.p1: main.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} ${OBJECTDIR}/main.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1: ../../pic14-midrange-core/src/peripherals/pic14_gpio.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1 ../../pic14-midrange-core/src/peripherals/pic14_gpio.c
@@ -105,7 +105,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1: ../../pic14-midrange-core/src/periph
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1: ../../pic14-midrange-core/src/peripherals/pic14_timer0.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1 ../../pic14-midrange-core/src/peripherals/pic14_timer0.c
@@ -113,7 +113,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1: ../../pic14-midrange-core/src/peri
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1: ../../pic14-midrange-core/src/peripherals/pic14_timer1.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1 ../../pic14-midrange-core/src/peripherals/pic14_timer1.c
@@ -121,7 +121,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1: ../../pic14-midrange-core/src/peri
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1: ../../pic14-midrange-core/src/peripherals/pic14_timer2.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1 ../../pic14-midrange-core/src/peripherals/pic14_timer2.c
@@ -129,7 +129,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1: ../../pic14-midrange-core/src/peri
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1: ../../pic14-midrange-core/src/peripherals/pic14_ccp.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1 ../../pic14-midrange-core/src/peripherals/pic14_ccp.c
@@ -137,7 +137,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1: ../../pic14-midrange-core/src/periphe
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1: ../../pic14-midrange-core/src/peripherals/pic14_usart.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1 ../../pic14-midrange-core/src/peripherals/pic14_usart.c
@@ -145,7 +145,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1: ../../pic14-midrange-core/src/perip
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1: ../../pic14-midrange-core/src/peripherals/pic14_comp.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1 ../../pic14-midrange-core/src/peripherals/pic14_comp.c
@@ -153,7 +153,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1: ../../pic14-midrange-core/src/periph
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1: ../../pic14-midrange-core/src/peripherals/pic14_vref.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1 ../../pic14-midrange-core/src/peripherals/pic14_vref.c
@@ -161,7 +161,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1: ../../pic14-midrange-core/src/periph
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1: ../../pic14-midrange-core/src/peripherals/pic14_eeprom.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1 ../../pic14-midrange-core/src/peripherals/pic14_eeprom.c
@@ -169,7 +169,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1: ../../pic14-midrange-core/src/peri
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic14_irq.p1: ../../pic14-midrange-core/src/core/pic14_irq.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_irq.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_irq.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic14_irq.p1 ../../pic14-midrange-core/src/core/pic14_irq.c
@@ -177,7 +177,7 @@ ${OBJECTDIR}/_ext/280167671/pic14_irq.p1: ../../pic14-midrange-core/src/core/pic
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic14_irq.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1: ../../pic16f628a-hal/src/core/pic16_irq_table.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1 ../../pic16f628a-hal/src/core/pic16_irq_table.c
@@ -185,7 +185,7 @@ ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1: ../../pic16f628a-hal/src/core/pi
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1: ../../pic14-midrange-core/src/core/pic14_wdt_sleep.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1 ../../pic14-midrange-core/src/core/pic14_wdt_sleep.c
@@ -193,7 +193,7 @@ ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1: ../../pic14-midrange-core/src/co
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1: ../../pic14-midrange-core/src/target/pic14_wdt_sleep_target.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1 ../../pic14-midrange-core/src/target/pic14_wdt_sleep_target.c
@@ -201,7 +201,7 @@ ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1: ../../pic14-midrange-core
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1: ../../pic14-midrange-core/src/target/pic16_isr_vector.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1 ../../pic14-midrange-core/src/target/pic16_isr_vector.c
@@ -209,7 +209,7 @@ ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1: ../../pic14-midrange-core/src/t
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1: ../../pic14-midrange-core/src/core/pic14_irq_dispatch.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1 ../../pic14-midrange-core/src/core/pic14_irq_dispatch.c
@@ -217,7 +217,7 @@ ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1: ../../pic14-midrange-core/src
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/666212198/epic_harness_target.p1: ../../epic-common/src/core/epic_harness_target.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/666212198"
 	@${RM} ${OBJECTDIR}/_ext/666212198/epic_harness_target.p1.d
 	@${RM} ${OBJECTDIR}/_ext/666212198/epic_harness_target.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/666212198/epic_harness_target.p1 ../../epic-common/src/core/epic_harness_target.c
@@ -234,7 +234,7 @@ ${OBJECTDIR}/main.p1: main.c  nbproject/Makefile-${CND_CONF}.mk
 	@${FIXDEPS} ${OBJECTDIR}/main.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1: ../../pic14-midrange-core/src/peripherals/pic14_gpio.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1 ../../pic14-midrange-core/src/peripherals/pic14_gpio.c
@@ -242,7 +242,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1: ../../pic14-midrange-core/src/periph
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_gpio.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1: ../../pic14-midrange-core/src/peripherals/pic14_timer0.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1 ../../pic14-midrange-core/src/peripherals/pic14_timer0.c
@@ -250,7 +250,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1: ../../pic14-midrange-core/src/peri
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_timer0.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1: ../../pic14-midrange-core/src/peripherals/pic14_timer1.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1 ../../pic14-midrange-core/src/peripherals/pic14_timer1.c
@@ -258,7 +258,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1: ../../pic14-midrange-core/src/peri
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_timer1.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1: ../../pic14-midrange-core/src/peripherals/pic14_timer2.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1 ../../pic14-midrange-core/src/peripherals/pic14_timer2.c
@@ -266,7 +266,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1: ../../pic14-midrange-core/src/peri
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_timer2.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1: ../../pic14-midrange-core/src/peripherals/pic14_ccp.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1 ../../pic14-midrange-core/src/peripherals/pic14_ccp.c
@@ -274,7 +274,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1: ../../pic14-midrange-core/src/periphe
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_ccp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1: ../../pic14-midrange-core/src/peripherals/pic14_usart.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1 ../../pic14-midrange-core/src/peripherals/pic14_usart.c
@@ -282,7 +282,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1: ../../pic14-midrange-core/src/perip
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_usart.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1: ../../pic14-midrange-core/src/peripherals/pic14_comp.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1 ../../pic14-midrange-core/src/peripherals/pic14_comp.c
@@ -290,7 +290,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1: ../../pic14-midrange-core/src/periph
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_comp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1: ../../pic14-midrange-core/src/peripherals/pic14_vref.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1 ../../pic14-midrange-core/src/peripherals/pic14_vref.c
@@ -298,7 +298,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1: ../../pic14-midrange-core/src/periph
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_vref.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1: ../../pic14-midrange-core/src/peripherals/pic14_eeprom.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/1853308684"
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1.d
 	@${RM} ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1 ../../pic14-midrange-core/src/peripherals/pic14_eeprom.c
@@ -306,7 +306,7 @@ ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1: ../../pic14-midrange-core/src/peri
 	@${FIXDEPS} ${OBJECTDIR}/_ext/1853308684/pic14_eeprom.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic14_irq.p1: ../../pic14-midrange-core/src/core/pic14_irq.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_irq.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_irq.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic14_irq.p1 ../../pic14-midrange-core/src/core/pic14_irq.c
@@ -314,7 +314,7 @@ ${OBJECTDIR}/_ext/280167671/pic14_irq.p1: ../../pic14-midrange-core/src/core/pic
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic14_irq.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1: ../../pic16f628a-hal/src/core/pic16_irq_table.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1 ../../pic16f628a-hal/src/core/pic16_irq_table.c
@@ -322,7 +322,7 @@ ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1: ../../pic16f628a-hal/src/core/pi
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic16_irq_table.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1: ../../pic14-midrange-core/src/core/pic14_wdt_sleep.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1 ../../pic14-midrange-core/src/core/pic14_wdt_sleep.c
@@ -330,7 +330,7 @@ ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1: ../../pic14-midrange-core/src/co
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1: ../../pic14-midrange-core/src/target/pic14_wdt_sleep_target.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1 ../../pic14-midrange-core/src/target/pic14_wdt_sleep_target.c
@@ -338,7 +338,7 @@ ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1: ../../pic14-midrange-core
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic14_wdt_sleep_target.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1: ../../pic14-midrange-core/src/target/pic16_isr_vector.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1 ../../pic14-midrange-core/src/target/pic16_isr_vector.c
@@ -346,7 +346,7 @@ ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1: ../../pic14-midrange-core/src/t
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic16_isr_vector.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1: ../../pic14-midrange-core/src/core/pic14_irq_dispatch.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/280167671"
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1.d
 	@${RM} ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1 ../../pic14-midrange-core/src/core/pic14_irq_dispatch.c
@@ -354,7 +354,7 @@ ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1: ../../pic14-midrange-core/src
 	@${FIXDEPS} ${OBJECTDIR}/_ext/280167671/pic14_irq_dispatch.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 ${OBJECTDIR}/_ext/666212198/epic_harness_target.p1: ../../epic-common/src/core/epic_harness_target.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}"
+	@${MKDIR} "${OBJECTDIR}/_ext/666212198"
 	@${RM} ${OBJECTDIR}/_ext/666212198/epic_harness_target.p1.d
 	@${RM} ${OBJECTDIR}/_ext/666212198/epic_harness_target.p1
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F628A -xassembler-with-cpp -I"../../pic16f628a-hal/include/target" -I"../../pic16f628a-hal/include" -I"../../pic14-midrange-core/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/666212198/epic_harness_target.p1 ../../epic-common/src/core/epic_harness_target.c
