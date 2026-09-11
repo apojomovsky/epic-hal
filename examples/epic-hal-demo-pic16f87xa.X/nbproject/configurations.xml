@@ -27,6 +27,7 @@
         <itemPath>../../pic14-midrange-core/src/core/pic14_irq.c</itemPath>
         <itemPath>../../pic14-midrange-core/src/target/pic16_isr_vector.c</itemPath>
         <itemPath>../../pic14-midrange-core/src/core/pic14_irq_dispatch.c</itemPath>
+        <itemPath>../../pic16f87xa-hal/src/core/pic16_irq_table.c</itemPath>
         <itemPath>../../pic14-midrange-core/src/core/pic14_wdt_sleep.c</itemPath>
         <itemPath>../../pic14-midrange-core/src/target/pic14_wdt_sleep_target.c</itemPath>
       </logicalFolder>

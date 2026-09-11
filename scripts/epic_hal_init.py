@@ -153,8 +153,14 @@ def emit_makefile(manifest, family_name, part, modules, bundle_dir, name, toolch
         ".PHONY: all clean",
         "",
     ])
-def _gpio_header(fam) -> str:
-    """The family GPIO header path, e.g. peripherals/pic16f87xa_gpio.h."""
+def _gpio_header(manifest, family_name) -> str:
+    """The family GPIO header path, resolved from the manifest's
+    hal_sources (shared-core families keep it as
+    peripherals/pic14_gpio.h, not peripherals/<slug>_gpio.h)."""
+    fam = manifest.families[family_name]
+    for src in fam.hal_sources:
+        if src.endswith("gpio.c"):
+            return "peripherals/" + src.rsplit("/", 1)[-1][:-len(".c")] + ".h"
     base = fam.hal_dir.removesuffix("-hal")
     return f"peripherals/{base}_gpio.h"
 
@@ -164,7 +170,7 @@ def emit_main_c(manifest, family_name, part, modules) -> str:
     names): tick-blink when tick is selected, serial-echo when serial is
     selected, else a bare HAL GPIO blink. The family's working #pragma
     config always comes from the family pseudo-module's example, so the
-    same source shape builds on all three families; only the GPIO header
+    same source shape builds on every family; only the GPIO header
     name and the skeleton body are family/module-specific."""
     fam = manifest.families[family_name]
     pseudo = hal_pseudo_module(manifest, fam)
@@ -178,7 +184,7 @@ def emit_main_c(manifest, family_name, part, modules) -> str:
             header,
             "#include <xc.h>",
             '#include "epic_tick.h"',
-            f'#include "{_gpio_header(fam)}"',
+            f'#include "{_gpio_header(manifest, family_name)}"',
             "",
         ]
         lines += pragma_lines
@@ -227,7 +233,7 @@ def emit_main_c(manifest, family_name, part, modules) -> str:
     lines = [
         header,
         "#include <xc.h>",
-        f'#include "{_gpio_header(fam)}"',
+        f'#include "{_gpio_header(manifest, family_name)}"',
         "",
     ]
     lines += pragma_lines

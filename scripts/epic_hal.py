@@ -51,7 +51,13 @@ def cmd_init(args) -> int:
             return 2
     fam = manifest.families[family]
     part = part or (input(f"part [{', '.join(fam.variants)}]: ").strip() if fam else "")
-    mods_s = args.modules or input("modules (comma-separated, e.g. serial,tick): ").strip()
+    # An explicitly empty --modules means a HAL-only project (valid for
+    # families with no epic-* modules yet); only prompt when the flag
+    # was omitted entirely, and default empty off-tty.
+    if args.modules is None:
+        mods_s = input("modules (comma-separated, e.g. serial,tick): ").strip() if sys.stdin.isatty() else ""
+    else:
+        mods_s = args.modules
     modules = [m.strip() for m in mods_s.split(",") if m.strip()]
     name = args.name or input("project name [myapp]: ").strip() or "myapp"
     # The scaffold lands in the current directory (in place), with the
