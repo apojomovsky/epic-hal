@@ -1,46 +1,11 @@
-/* Implementation of core/pic16_irq.h. Each IRQ source maps to a bit in
- * INTCON / PIE1 / PIE2 (DS39582B §14.11 + Figure 14-10); the
- * translation table lives at the top of this file. */
+/* Shared PIC14 mid-range interrupt controller implementation (87XA +
+ * 88X). Sources: DS39582B §14.11 (87XA), DS40001291H §14.11 (88X). The
+ * per-source translation table lives in the family's own
+ * src/core/pic16_irq_table.c (its own IRQn enum); this body consumes it
+ * through core/pic14_irq_common.h. */
 
 #include "core/pic16_irq.h"
-
-/* Per-IRQ descriptor: which register the enable / flag bit lives in and
- * at which position. Flags and enables sit in INTCON, PIR1/PIR2 (Bank
- * 0), and PIE1/PIE2 (Bank 1); Bank-1 mirrors of PIR1/PIR2 are at
- * 0x8C/0x8D (DS39582B Figure 2-3). */
-typedef struct {
-    uint8_t flag_mask;     /**< PIR/INTCON bit to test/clear. */
-    uint8_t enable_mask;   /**< PIE/INTCON bit to set/clear. */
-    uint8_t in_intcon;     /**< 1 = INTCON, 0 = PIR1/PIR2. */
-    uint8_t pir_is_pir2;   /**< 1 = PIR2, 0 = PIR1. (Ignored if in_intcon.) */
-} irq_desc_t;
-
-static const irq_desc_t irq_table[] = {
-    [PIC16_IRQ_RB]       = { PIC_INTCON_RBIF,   PIC_INTCON_RBIE,   1, 0 },
-    [PIC16_IRQ_INT]      = { PIC_INTCON_INTF,   PIC_INTCON_INTE,   1, 0 },
-    [PIC16_IRQ_TMR0]     = { PIC_INTCON_TMR0IF, PIC_INTCON_TMR0IE, 1, 0 },
-    [PIC16_IRQ_TMR1]     = { PIC_PIR1_TMR1IF,   PIC_PIE1_TMR1IE,   0, 0 },
-    [PIC16_IRQ_TMR2]     = { PIC_PIR1_TMR2IF,   PIC_PIE1_TMR2IE,   0, 0 },
-    [PIC16_IRQ_CCP1]     = { PIC_PIR1_CCP1IF,   PIC_PIE1_CCP1IE,   0, 0 },
-    [PIC16_IRQ_CCP2]     = { PIC_PIR2_CCP2IF,   PIC_PIE2_CCP2IE,   0, 1 },
-    [PIC16_IRQ_SSP]      = { PIC_PIR1_SSPIF,    PIC_PIE1_SSPIE,    0, 0 },
-    [PIC16_IRQ_BCL]      = { PIC_PIR2_BCLIF,    PIC_PIE2_BCLIE,    0, 1 },
-    [PIC16_IRQ_USART_TX] = { PIC_PIR1_TXIF,     PIC_PIE1_TXIE,     0, 0 },
-    [PIC16_IRQ_USART_RX] = { PIC_PIR1_RCIF,     PIC_PIE1_RCIE,     0, 0 },
-    [PIC16_IRQ_ADC]      = { PIC_PIR1_ADIF,     PIC_PIE1_ADIE,     0, 0 },
-    [PIC16_IRQ_EEPROM]   = { PIC_PIR2_EEIF,     PIC_PIE2_EEIE,     0, 1 },
-    [PIC16_IRQ_CMP]      = { PIC_PIR2_CMIF,     PIC_PIE2_CMIE,     0, 1 },
-#if PIC16F87XA_FAMILY_HAS_PSP
-    [PIC16_IRQ_PSP]      = { PIC_PIR1_PSPIF,    PIC_PIE1_PSPIE,    0, 0 },
-#endif
-};
-
-#define IRQ_TABLE_SIZE  (sizeof irq_table / sizeof irq_table[0])
-
-/* Macro, not a `static` function: a function-call boundary here lost
- * the returned address before it reached the caller's read/write
- * (see README.md, XC8 codegen gotchas). PIR1 = 0x0C, PIR2 = 0x0D. */
-#define pir_reg_addr(d) ((d)->pir_is_pir2 ? PIC_REG_PIR2 : PIC_REG_PIR1)
+#include "core/pic14_irq_common.h"
 
 /* public API. */
 
@@ -110,7 +75,7 @@ void EPIC_IRQ_DisableSrc(PIC16_IRQn irq)
         return;
     }
     /* Same fix as EPIC_IRQ_Enable, see EPIC_PIE_DISABLE_BIT's header
-     * comment (target/pic16f87xa_platform.h) for the full account. */
+     * comment (the family target platform header) for the full account. */
     EPIC_PIE_DISABLE_BIT(d->pir_is_pir2, enable_mask);
 }
 
@@ -159,7 +124,7 @@ uint8_t EPIC_IRQ_GetFlag(PIC16_IRQn irq)
  */
 void EPIC_IRQ_SetPriority(PIC16_IRQn irq, EPIC_IRQ_Priority prio)
 {
-    /* PIC16F87XA has a single interrupt vector, no priority scheme
+    /* PIC14 mid-range has a single interrupt vector, no priority scheme
      * (DS39582B §14.11). This is the no-op half of the shared
      * EPIC_IRQ_SetPriority contract; PIC18's implementation writes the
      * matching IPR bit. Both arguments are intentionally unused. */

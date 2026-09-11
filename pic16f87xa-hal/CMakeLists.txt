@@ -68,10 +68,11 @@ set(EPIC_SOURCES
     src/peripherals/pic16f87xa_comp.c
     src/peripherals/pic16f87xa_vref.c
     ../pic14-midrange-core/src/peripherals/pic14_eeprom.c
-    src/core/pic16_irq.c
+    ../pic14-midrange-core/src/core/pic14_irq.c
+    src/core/pic16_irq_table.c
     src/core/pic16f87xa_wdt_sleep.c
     src/sim/pic16f87xa_wdt_sleep_sim.c
-    src/core/pic16_irq_dispatch.c
+    ../pic14-midrange-core/src/core/pic14_irq_dispatch.c
     src/sim/pic16_harness_sim.c
     src/sim/pic16f87xa_sim.c
 )

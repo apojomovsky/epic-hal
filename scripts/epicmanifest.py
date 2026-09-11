@@ -16,6 +16,12 @@ class ManifestError(Exception):
     """A manifest that parsed as TOML but is not internally consistent."""
 
 
+# Shared ISA cores (epic-hal#136 naming decision): families consume
+# these verbatim, so per-module epic-cc slices may name them alongside
+# the family's own hal_dir and epic-common. Extend deliberately.
+_SHARED_CORE_DIRS = ("pic14-midrange-core/",)
+
+
 @dataclasses.dataclass(frozen=True)
 class ConditionalSource:
     path: str
@@ -540,11 +546,12 @@ def _validate(manifest):
                 )
             for p in paths:
                 if not (p.startswith("epic-common/")
-                        or p.startswith(fam.hal_dir + "/")):
+                        or p.startswith(fam.hal_dir + "/")
+                        or p.startswith(_SHARED_CORE_DIRS)):
                     raise ManifestError(
                         f"modules.{mod.name}.epiccc_hal_sources_by_family."
-                        f"{fam_name}: '{p}' is outside {fam.hal_dir}/ "
-                        f"and epic-common"
+                        f"{fam_name}: '{p}' is outside {fam.hal_dir}/, "
+                        f"epic-common and the shared cores"
                     )
     _check_cycles(manifest.modules)
 
