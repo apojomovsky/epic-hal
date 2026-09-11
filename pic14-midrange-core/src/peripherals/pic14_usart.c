@@ -84,6 +84,9 @@ uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
 void (*g_usart_tx_cb)(void) = NULL;
 void (*g_usart_rx_cb)(uint8_t data) = NULL;
 
+#ifndef __EPIC_CC__
+/* XC8 keeps the out-of-line body; the epic-cc path uses the static
+ * inline in the header (see the note there). */
 /**
  * @brief Initialize the USART: SPBRG, TXSTA, RCSTA, IRQ enables.
  * @param h handle (Mode, ClockSource, BaudHigh, DataWidth, SPBRG, callbacks).
