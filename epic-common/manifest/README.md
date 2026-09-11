@@ -69,7 +69,7 @@ The epic-cc path (`--toolchain epic-cc`) uses `epiccc_sources` instead:
 the subset of the HAL that builds under epic-cc and fits the part's RAM,
 listed verbatim. The slice draws from the family's tree and the shared
 `pic14-midrange-core/` sources (no per-toolchain variants), plus the
-epic-cc-specific vector and dispatch intrinsics.
+epic-cc-specific vector, dispatch, and WDT/sleep intrinsics.
 
 ```toml
 [families.PIC16F87XA]

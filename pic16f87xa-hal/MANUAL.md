@@ -81,8 +81,10 @@ pic16f87xa-hal/
 │   ├── target/                 platform header selected by the XC8 build
 │   │   └── pic16f87xa_platform.h   (SFRs → volatile deref, no weak)
 │   ├── core/                    CPU-level features (PIC16-specific)
-│   │   └── pic16_irq.h                IRQn enum + EPIC_IRQ_* backend
-│   │     (WDT/Sleep/BOR/POR come from pic14-midrange-core/include/core)
+│   │   ├── pic16_irq.h                IRQn enum + EPIC_IRQ_* backend
+│   │   └── hal_wdt_sleep.h            family-neutral shim; the WDT/Sleep/
+│   │                                   BOR/POR implementation lives in
+│   │                                   pic14-midrange-core
 │   └── peripherals/            one .h per peripheral, Cube-style
 ├── src/
 │   ├── core/                    implementations of core/ headers

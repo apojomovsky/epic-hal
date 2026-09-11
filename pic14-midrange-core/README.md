@@ -18,9 +18,11 @@ macros in `pic14_midrange.h`. Nothing here serves the enhanced mid-range
   CCP, USART, comparator, VREF and EEPROM drivers, one `pic14_<ppp>`
   header/source pair each.
 - `src/epiccc/`: the epic-cc build slices (ISR vector, dispatch tiers,
-  WDT/sleep intrinsics) every family on the epic-cc path links.
-- `src/sim/` and `src/target/`: the link-time-selected
-  execution-model pairs (`epic-common/MANUAL.md` §2.2).
+  WDT/sleep intrinsics) every classic mid-range family on the epic-cc
+  path links.
+- `src/sim/` and `src/target/`: the link-time-selected execution-model
+  pairs, plus the target-only ISR vector (`epic-common/MANUAL.md`
+  §2.2).
 
 ## What lives in a family instead
 
@@ -32,11 +34,11 @@ how thin that shim should be: every driver it has comes from here.
 A peripheral driver stays in a family's own tree when it has a single
 adopter or genuinely different hardware. Inside the classic mid-range
 that is currently: the 88X GPIO (ANSEL/ANSELH analog selection, per-pin
-PORTB interrupt-on-change), the 88X comparator pair, the 87XA ADC and
-PSP, and the 88X ADC, OSC, SR-latch and ULPWU. Converging one of those
-means moving it here behind feature macros, worth doing only when two
-families share the hardware (the 87XA/88X SSP and ADC are that case and
-carry their own migration tickets).
+PORTB interrupt-on-change), the 88X comparator pair, the 87XA PSP, and
+the 88X OSC, SR-latch and ULPWU. The 87XA/88X SSP and ADC are the
+opposite case, shared hardware with two adopters each, and carry their
+own migration tickets (#139, #140) to move them here behind feature
+macros.
 
 ## Non-goals
 
