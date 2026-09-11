@@ -224,6 +224,7 @@ jobs:
               ("epic-mcp23x17", "16F887"),
               ("epic-serial", "16F887"),
               ("epic-debounce", "16F887"),
+              ("pic16f628a-hal", "16F628A"),
           ]:
               if module not in m.modules:
                   continue

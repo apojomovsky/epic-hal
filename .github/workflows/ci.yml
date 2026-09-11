@@ -186,6 +186,11 @@ jobs:
     with:
       family: PIC16F88X
 
+  family-628a:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F628A
+
   # The epic-cc conformance gate in this tree: "did a HAL change break
   # against a known good compiler". epic-cc's hal-887 job asks the reverse
   # question in its tree. Pins the driver to EPIC_CC_PIN (built from

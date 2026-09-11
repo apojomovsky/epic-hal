@@ -298,7 +298,10 @@ it done.
      parameter at the point of access**, not a literal `PIC_REG_*`
      token. On PIC16, a value read/written while a bank switch
      (`pic_select_bank`) is in effect can get misdirected to the wrong
-     memory location. On PIC18, XC8 has compiled this exact shape to
+     memory location (latest instance: the 628A EEPROM driver's
+     EEDATA/EEADR writes landed in Bank 0 GPRs while EECON1 landed,
+     caught only by an mdb data-register readback, 2026-09-11). On
+     PIC18, XC8 has compiled this exact shape to
      the program-memory table read/write mechanism (`TBLPTR`/`TABLAT`/
      `tblrd`/`tblwt`) instead of a data-memory access, silently writing
      nowhere. Both are real, both were found by this exact gate, not by
@@ -490,6 +493,7 @@ account lives.
 | Pattern | Confirmed on | Full account |
 |---|---|---|
 | SFR access while a `pic_select_bank`-style bank switch is in effect, via a plain C local/parameter | PIC16 (classic mid-range) | `pic16f87xa-hal/README.md` (XC8 codegen gotchas) |
+| Family umbrella header sharing the compiler device header name (`pic16f628a.h`), shadowing it through `-I` at link time so XC8's own `__eeprom.c` loses all SFRs; 87XA/88X dodge it only because `pic16f87xa.h` differs from `pic16f877a.h` | PIC16F628A | PR #137 (umbrella renamed to `pic16f628a_hal.h`) |
 | SFR address that is a runtime variable/struct-field/parameter at the point of access (not a literal token) | PIC18 | `pic18fxx5x-hal/README.md` (XC8 codegen gotchas) |
 | Baud-rate/timing divisor math that can silently overflow the target register width | PIC18 (found in `pic18_harness_mdb.c`) | `pic18fxx5x-hal/README.md` (XC8 codegen gotchas) |
 | Missing `HARNESS=sim` → watchdog-off Makefile override, WDT resets a bounded diagnostic build mid-run | PIC16, PIC18 | manifest `example.*.sim` configs (`WDTE=OFF`/`WDT=OFF`) |

@@ -10,6 +10,7 @@
 #include "pic16f88x.h"
 #include "pic16f88x_sfr.h"
 #include "core/epic_irq.h"   /* shared EPIC_IRQ_Priority enum (family-blind) */
+#include "core/pic14_irq_common.h"   /* shared table contract */
 
 /**
  * @brief Logical identity of every interrupt source on the part.
@@ -34,6 +35,10 @@ typedef enum {
     PIC16_IRQ_ULPWU    = 15, /**< Ultra low-power wake-up.    */
     PIC16_IRQ_OSF      = 16, /**< Oscillator fail.            */
 } PIC16_IRQn;
+
+/* Bound check for the shared table body. Macro, not a const global
+ * (the pinned epic-cc isel panics on scalar consts). */
+#define IRQ_TABLE_SIZE 17U
 
 /* enable / disable. */
 

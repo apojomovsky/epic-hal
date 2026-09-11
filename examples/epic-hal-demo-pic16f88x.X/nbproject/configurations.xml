@@ -19,25 +19,26 @@
                projectFiles="true">
       <logicalFolder name="core" displayName="core" projectFiles="true">
         <itemPath>../../epic-common/src/core/epic_harness_target.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/core/pic16_irq.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/core/pic16_irq_dispatch.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/target/pic16_isr_vector.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/core/pic16f88x_wdt_sleep.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/target/pic16f88x_wdt_sleep_target.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/core/pic14_irq.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/core/pic14_irq_dispatch.c</itemPath>
+        <itemPath>../../pic16f88x-hal/src/core/pic16_irq_table.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/target/pic16_isr_vector.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/core/pic14_wdt_sleep.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/target/pic14_wdt_sleep_target.c</itemPath>
       </logicalFolder>
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
         <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_gpio.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_timer0.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_timer1.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_timer2.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_ccp.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_usart.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_timer0.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_timer1.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_timer2.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_ccp.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_usart.c</itemPath>
         <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_ssp.c</itemPath>
         <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_adc.c</itemPath>
         <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_comp.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_vref.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_vref.c</itemPath>
         <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_srlatch.c</itemPath>
-        <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_eeprom.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_eeprom.c</itemPath>
         <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_osc.c</itemPath>
         <itemPath>../../pic16f88x-hal/src/peripherals/pic16f88x_ulpwu.c</itemPath>
       </logicalFolder>

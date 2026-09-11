@@ -10,6 +10,7 @@
 #include "pic16f87xa.h"
 #include "pic16f87xa_sfr.h"
 #include "core/epic_irq.h"   /* shared EPIC_IRQ_Priority enum (family-blind) */
+#include "core/pic14_irq_common.h"   /* shared table contract */
 
 /**
  * @brief Logical identity of every interrupt source on the part.
@@ -34,6 +35,11 @@ typedef enum {
     PIC16_IRQ_PSP      = 14, /**< Parallel Slave Port.       */
 #endif
 } PIC16_IRQn;
+
+/* Bound check for the shared table body. Macro, not a const global
+ * (the pinned epic-cc isel panics on scalar consts). 15 rows plus
+ * the PSP row on PSP variants. */
+#define IRQ_TABLE_SIZE (15U + (unsigned)PIC16F87XA_FAMILY_HAS_PSP)
 
 /* enable / disable. */
 

@@ -1,0 +1,38 @@
+/* PIC14 mid-range family selectors for PIC16F87XA: device selection,
+ * FAMILY_* macros, status codes and the platform layer. Shared
+ * pic14-midrange-core code includes this name; each family's copy
+ * resolves via the include path. */
+
+#ifndef PIC14_MIDRANGE_H
+#define PIC14_MIDRANGE_H
+#include "pic16f87xa.h"
+
+/* Capability contract for shared pic14-midrange-core code (1 = present).
+ * Per-device values ride on the FAMILY_* selectors above; family-fixed
+ * values are literals. PIC16F628A defines its own column in wave 3. */
+#define PIC14MIDRANGE_FLASH_KW PIC16F87XA_FAMILY_FLASH_KW
+#define PIC14MIDRANGE_HAS_PIR2 1
+#define PIC14MIDRANGE_HAS_SSP 1
+#define PIC14MIDRANGE_HAS_ADC 1
+#define PIC14MIDRANGE_HAS_CCP2 1
+#define PIC14MIDRANGE_HAS_PSP PIC16F87XA_FAMILY_HAS_PSP
+#define PIC14MIDRANGE_HAS_PORTC 1
+#define PIC14MIDRANGE_HAS_PORTD PIC16F87XA_FAMILY_HAS_PORTD
+#define PIC14MIDRANGE_HAS_PORTE PIC16F87XA_FAMILY_HAS_PORTE
+#define PIC14MIDRANGE_HAS_COMP_DUAL 0
+#define PIC14MIDRANGE_HAS_CM_PIR1 0
+#define PIC14MIDRANGE_HAS_EE_PIR1 0
+#define PIC14MIDRANGE_HAS_CMCON_BANK0 0
+#define PIC14MIDRANGE_HAS_EEPROM_BANK1 0
+#define PIC14MIDRANGE_HAS_BRGH16 0
+#define PIC14MIDRANGE_HAS_TMR1_GATE 0
+#define PIC14MIDRANGE_HAS_ECCP 0
+#define PIC14MIDRANGE_HAS_VRSS 0
+#define PIC14MIDRANGE_HAS_WDT_SW 0
+#define PIC14MIDRANGE_HAS_ANSEL 0
+#define PIC14MIDRANGE_HAS_OSCCON 0
+#define PIC14MIDRANGE_HAS_BCL_DISPATCH 1
+#define PIC14MIDRANGE_HAS_VRCON 0
+#define PIC14MIDRANGE_HAS_VRSS 0
+#define PIC14MIDRANGE_PORTA_MASK 0x3FU
+#endif /* PIC14_MIDRANGE_H */

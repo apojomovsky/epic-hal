@@ -24,23 +24,24 @@
       </logicalFolder>
       <logicalFolder name="core" displayName="core" projectFiles="true">
         <itemPath>../../epic-common/src/core/epic_harness_target.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/core/pic16_irq.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/target/pic16_isr_vector.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/core/pic16_irq_dispatch.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/core/pic16f87xa_wdt_sleep.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/target/pic16f87xa_wdt_sleep_target.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/core/pic14_irq.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/target/pic16_isr_vector.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/core/pic14_irq_dispatch.c</itemPath>
+        <itemPath>../../pic16f87xa-hal/src/core/pic16_irq_table.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/core/pic14_wdt_sleep.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/target/pic14_wdt_sleep_target.c</itemPath>
       </logicalFolder>
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
-        <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_timer0.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_ccp.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_comp.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_timer1.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_timer0.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_usart.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_ccp.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_comp.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_timer1.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_timer2.c</itemPath>
         <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_adc.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_eeprom.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_vref.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_eeprom.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_vref.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_gpio.c</itemPath>
         <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c</itemPath>
         <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_ssp.c</itemPath>
       </logicalFolder>
@@ -81,6 +82,9 @@
     <Elem>../../pic16f87xa-hal/src/core</Elem>
     <Elem>../../pic16f87xa-hal/src/target</Elem>
     <Elem>../../pic16f87xa-hal/src/peripherals</Elem>
+    <Elem>../../pic14-midrange-core/src/peripherals</Elem>
+    <Elem>../../pic14-midrange-core/src/target</Elem>
+    <Elem>../../pic14-midrange-core/src/core</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -134,7 +138,7 @@
         <property key="define-macros" value="PIC16F877A;FOSC_HZ=20000000"/>
         <property key="disable-optimizations" value="true"/>
         <property key="extra-include-directories"
-                  value="../../pic16f87xa-hal/include/target;../../pic16f87xa-hal/include;../../epic-common/include;../../epic-adcfilter/include;../../epic-bus/include;../../epic-debounce/include;../../epic-encoder/include;../../epic-fsm/include;../../epic-math/include;../../epic-math/tests;../../epic-pid/include;../../epic-serial/include;../../epic-taskmgr/include;../../epic-tick/include"/>
+                  value="../../pic16f87xa-hal/include/target;../../pic16f87xa-hal/include;../../pic14-midrange-core/include;../../epic-common/include;../../epic-adcfilter/include;../../epic-bus/include;../../epic-debounce/include;../../epic-encoder/include;../../epic-fsm/include;../../epic-math/include;../../epic-math/tests;../../epic-pid/include;../../epic-serial/include;../../epic-taskmgr/include;../../epic-tick/include"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
         <property key="garbage-collect-data" value="true"/>
         <property key="garbage-collect-functions" value="true"/>

@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
-# MPLAB SIM (mdb) run loop for ci.yml's "target" job and `make target-ci`:
-# a plain loop over scripts/sim-mdb-run.sh, the same script sim-test-local.sh
-# uses. wait_ms budgets are wall-clock (MPLAB SIM runs slower than real
-# time). Does not stop at the first failure; exits 1 if anything failed.
-#
-# Usage: ci-target-sim.sh [summary.md]
-#   REPEAT=N   run every gate N times (default 1); any failed run fails the
-#              gate, summary records "PASS (n/N)"
-#   FAMILY=<pic16f87xa|pic18fxx5x|pic16f193x> only that family (sharded CI);
-#   PARALLEL=N concurrent gates (sim-mdb-run.sh temps are PID-suffixed)
+# MPLAB SIM run loop for the target job and `make target-ci`, over
+# scripts/sim-mdb-run.sh. wait_ms is wall-clock. Exits 1 on any failure.
+# Usage: ci-target-sim.sh [summary.md]; REPEAT=N; FAMILY=<fam> (sharded CI);
+# PARALLEL=N (sim-mdb-run.sh temps are PID-suffixed).
 
 set -uo pipefail
 
@@ -101,6 +95,7 @@ run_one pic16f88x 16F887 PIC16F887 epic-bus 5000 uart
 run_one pic16f88x 16F887 PIC16F887 epic-mcp23x17 5000 uart
 run_one pic16f88x 16F887 PIC16F887 epic-serial 10000 uart
 run_one pic16f88x 16F887 PIC16F887 epic-debounce 5000 uart
+run_one pic16f628a 16F628A PIC16F628A pic16f628a-hal 15000 uart
 fi
 
 if [ "$parallel" -gt 1 ]; then
