@@ -8,7 +8,7 @@
 #include "peripherals/pic16f88x_gpio.h"
 #include "peripherals/pic16f88x_timer0.h"
 #include "core/pic16_irq.h"
-#include "core/pic16f88x_wdt_sleep.h"
+#include "core/pic14_wdt_sleep.h"
 
 #pragma config FOSC = HS
 #pragma config WDTE = ON

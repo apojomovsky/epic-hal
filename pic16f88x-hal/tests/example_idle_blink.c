@@ -10,7 +10,7 @@
 #include "peripherals/pic16f88x_gpio.h"
 #include "peripherals/pic16f88x_timer1.h"
 #include "core/pic16_irq.h"
-#include "core/pic16f88x_wdt_sleep.h"
+#include "core/pic14_wdt_sleep.h"
 #include "core/epic_harness.h"
 
 /* Timer1 reload, 0x8000 (32768): exactly 1 s on the 32.768 kHz T1OSC

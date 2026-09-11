@@ -103,7 +103,7 @@
         <property key="define-macros" value="PIC16F887"/>
         <property key="disable-optimizations" value="true"/>
         <property key="extra-include-directories"
-                  value="../../pic16f193x-hal/include/target;../../pic16f193x-hal/include;../../epic-common/include"/>
+                  value="../../pic16f88x-hal/include/target;../../pic16f88x-hal/include;../../pic14-midrange-core/include;../../epic-common/include"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
         <property key="garbage-collect-data" value="true"/>
         <property key="garbage-collect-functions" value="true"/>
