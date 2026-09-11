@@ -43,7 +43,7 @@
         <itemPath>../../pic14-midrange-core/src/peripherals/pic14_vref.c</itemPath>
         <itemPath>../../pic14-midrange-core/src/peripherals/pic14_gpio.c</itemPath>
         <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c</itemPath>
-        <itemPath>../../pic16f87xa-hal/src/peripherals/pic16f87xa_ssp.c</itemPath>
+        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_ssp.c</itemPath>
       </logicalFolder>
       <logicalFolder name="pic16" displayName="pic16" projectFiles="true">
         <itemPath>../../epic-math/src/pic16/epic_math_div.c</itemPath>

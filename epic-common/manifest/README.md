@@ -78,7 +78,7 @@ epiccc_sources = [
   "pic14-midrange-core/src/peripherals/pic14_gpio.c",
   "pic14-midrange-core/src/peripherals/pic14_timer0.c",
   "pic14-midrange-core/src/peripherals/pic14_timer2.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_ssp.c",
+  "pic14-midrange-core/src/peripherals/pic14_ssp.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
   "pic14-midrange-core/src/core/pic14_wdt_sleep.c",

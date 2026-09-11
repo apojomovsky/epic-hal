@@ -1,24 +1,18 @@
-/* MSSP driver implementation (DS40001291H §13.0). Register-level only: the
+/* Shared MSSP driver implementation, classic mid-range: 87XA
+ * (DS39582B §9.0) and 88X (DS40001291H §13.0). Register-level only: the
  * I²C state machine (Start/Stop/ACK timing, slave address matching) is
  * left to the user; this configures SSPCON / SSPCON2 / SSPSTAT / SSPADD
  * and provides the byte-level transmit / receive primitives. */
 
-#include "peripherals/pic16f88x_ssp.h"
+#include "peripherals/pic14_ssp.h"
 #include "core/pic16_irq.h"
 
 /* handle storage. */
 
-/* Owned copy of the caller's handle for the weak ISR (the caller's is
- * typically stack-local, out of scope by the time the ISR reads it;
- * see epic-common/MANUAL.md §3.3 for the dangling-pointer hazard this
- * avoids). Pinned to bank 2 (0x145) when the part has Bank 2 GPR
- * (883/884/886/887); the 882 has none, so it falls back to the
- * linker's best-fit scatter. */
-
-/* The ISR only needs the callback, so store the pointer (1 byte) rather
- * than a full handle copy (see epic-common/MANUAL.md §3.3 for the
- * dangling-pointer hazard a copy avoids; a full copy costs RAM on the
- * 128-byte 882). */
+/* The ISR only needs the transfer callback, so store the pointer (1
+ * byte) rather than a full handle copy: the caller's handle is
+ * typically stack-local, out of scope by the time the ISR reads it
+ * (epic-common/MANUAL.md §3.3). */
 static void (*g_ssp_transfer_cb)(void) = NULL;
 
 /* SSPCON2/SSPSTAT/SSPADD are Bank 1 (SSPSTAT=0x94, SSPCON2=0x91,
@@ -297,6 +291,7 @@ uint8_t EPIC_SSP_AcknowledgeStatus(void)
  *   restores `mode`, which re-programs SSPCON<3:0> but leaves SSPEN,
  *   CKP and the rest of the module state untouched.
  */
+#if PIC14MIDRANGE_HAS_SSPMSK
 void EPIC_SSP_LoadAddressMask(SSP_ModeTypeDef mode, uint8_t mask)
 {
     /* Enter Load-Mask mode: keep CKP/SSPEN, set SSPM = 1001. */
@@ -309,6 +304,7 @@ void EPIC_SSP_LoadAddressMask(SSP_ModeTypeDef mode, uint8_t mask)
     con = (uint8_t)((con & 0xF0U) | ((uint8_t)mode & 0x0FU));
     EPIC_REG8(PIC_REG_SSPCON) = con;
 }
+#endif /* PIC14MIDRANGE_HAS_SSPMSK */
 
 /* ISRs. */
 
