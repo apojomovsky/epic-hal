@@ -1,13 +1,9 @@
-/* Shared MSSP driver (SPI master/slave + I2C master/slave), classic
- * mid-range: 87XA (DS39582B section 9.0) and 88X (DS40001291H section
- * 13.0). Register-level only, no I2C state machine: a master issues
- * Start, writes SSPBUF, polls SSPSTAT<BF> + ACKSTAT (SSPCON2<6>), then
- * Stop. SPI is automatic once SSPBUF is written; poll SSPSTAT<BF> for
- * RX-ready. The 88X adds the I2C address-mask register (SSPMSK, reached
- * through SSPADD when SSPM = 1001), gated by PIC14MIDRANGE_HAS_SSPMSK.
- * Each family's shim header (pic16f87xa_ssp.h / pic16f88x_ssp.h) sets
- * its umbrella + SFR map, then includes this body; do not include it
- * directly. */
+/* Shared MSSP driver (SPI + I2C master/slave), classic mid-range:
+ * 87XA (DS39582B section 9.0) and 88X (DS40001291H section 13.0).
+ * Register-level only. The 88X adds SSPMSK, gated by
+ * PIC14MIDRANGE_HAS_SSPMSK. Each family's shim header
+ * (pic16f87xa_ssp.h / pic16f88x_ssp.h) sets its umbrella + SFR map,
+ * then includes this body; do not include it directly. */
 
 #ifndef PIC14_SSP_BODY_H
 #define PIC14_SSP_BODY_H
