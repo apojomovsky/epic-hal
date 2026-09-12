@@ -108,13 +108,16 @@ shared GPIO driver takes the mask from `PIC14MIDRANGE_PORTA_MASK`.
 ## Interrupts
 
 Single vector at 0x0004, no priority (as on the 87XA). Ten sources:
-RB, INT, TMR0, TMR1, TMR2, CCP1, USART TX/RX, EEPROM, CMP. The 2K
-flash is a single page, so the dispatcher carries no `__at(0x900)`
-page pin (as on the 2K 16F882).
+RB, INT, TMR0, TMR1, TMR2, CCP1, USART TX/RX, EEPROM, CMP. The 1K and
+2K parts (627/627A/LF627A, 628/628A/LF628A) are single-page, so the
+dispatcher carries no `__at(0x900)` page pin; the 4K 648A has two
+pages and the shared dispatcher's own `PIC14MIDRANGE_FLASH_KW >= 4`
+pin applies there (as on the 88X family).
 
 ## Flash and RAM budget
 
-2 KW flash, 224 B RAM (three GPR banks + 16 B common), 128 B data
-EEPROM. The blink firmware uses 1089 words / 70 B; the bank probe
+1/2/4 KW flash, 224 B RAM (three GPR banks + 16 B common; 256 B on
+the 648A), 128 B data EEPROM (256 B on the 648A). The blink firmware
+uses 1087 words / 70 B on the 628A; the bank probe
 uses 1945 words / 135 B. Peripheral-heavy applications must watch
 both budgets; see `docs/adding-a-device.md` §3.2.

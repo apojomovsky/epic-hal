@@ -1,7 +1,7 @@
 # PIC16F628A HAL, host simulation build (cmake -B build, build, run).
 # Real-target builds use XC8 via the manifest + the reference .X project.
 # Thin caller of epic-common/cmake/epic_family.cmake; only the source
-# list and the single device are PIC16F628A-specific.
+# list and the device list are PIC16F628A-family-specific.
 
 cmake_minimum_required(VERSION 3.16)
 project(pic16f628a_hal C)
@@ -13,7 +13,8 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(EPIC_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-common)
 include(${EPIC_COMMON_DIR}/cmake/epic_family.cmake)
 
-# Default device (the family's only part).
+# Default device (the canonical part; -DPIC16F628A_DEVICE=<part> picks
+# another). Per-example device selection goes through EPIC_FAMILY_DEVICES.
 if(NOT DEFINED PIC16F628A_DEVICE)
     set(PIC16F628A_DEVICE "PIC16F628A")
 endif()
@@ -27,7 +28,8 @@ set(EPIC_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(EPIC_CORE_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/../pic14-midrange-core/include)
 set(EPIC_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
-set(EPIC_FAMILY_DEVICES        PIC16F628A)
+set(EPIC_FAMILY_DEVICES        PIC16F627 PIC16F628 PIC16F627A PIC16F628A
+                               PIC16F648A PIC16LF627A PIC16LF628A)
 
 set(EPIC_SOURCES
     ../pic14-midrange-core/src/peripherals/pic14_gpio.c
