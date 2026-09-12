@@ -4,11 +4,23 @@ All notable changes to this project are documented here, generated from
 Conventional Commits. Dates are UTC.
 ## [Unreleased]
 
+### Bug Fixes
+
+- Normalize em-dashes in changelog output and allow it at repo root
+
+
 ### Features
 
 - Add PIC16F628A family support on shared pic14 core (#137) (#137)
 
 - Generate CHANGELOG.md and cut releases with git-cliff
+
+- Onboard 16F627/627A/628/648A and the LF variants (#158) (#158)
+
+
+### Other
+
+- Merge remote-tracking branch 'origin/master' into ci/144-cliff-release
 
 
 ### Refactor
