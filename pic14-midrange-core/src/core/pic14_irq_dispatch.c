@@ -83,7 +83,7 @@ void epic_dispatch_all_irqs(void)
     uint8_t intcon = EPIC_REG8(PIC_REG_INTCON);
     if (intcon & PIC_INTCON_TMR0IF) TIMER0_IRQHandler();
     if (intcon & PIC_INTCON_RBIF)   RB_IRQHandler();
-
+#if PIC14MIDRANGE_HAS_PIR1
     uint8_t pir1 = EPIC_REG8(PIC_REG_PIR1);
     /* TMR1 is gated on TMR1IE, not just TMR1IF: Timer1 free-runs with
      * its overflow interrupt disabled (epic-swuart needs the counter,
@@ -137,6 +137,22 @@ void epic_dispatch_all_irqs(void)
         uint8_t eeie = 0u;
         EPIC_PIE1_READ_EEIE(eeie);
         if (eeie & PIC_PIE1_EEIE) {
+            EEPROM_IRQHandler();
+        }
+    }
+#endif
+#else
+    /* No PIR/PIE pair on this family (83/84/84A): the EEPROM
+     * completion flag EEIF is EECON1<4>, Bank 1 (DS35007B §3.0),
+     * gated by EEIE, INTCON<6> (§14.11). Same no-steal gating as the
+     * PIE blocks above: the polling consumer owns the flag, so a
+     * disabled source's flag is left untouched. EECON1 is read
+     * through the family platform's literal-token Bank-1 macro (same
+     * XC8 misdirect class as PIE1). */
+    if (intcon & PIC_INTCON_EEIE) {
+        uint8_t eecon1 = 0U;
+        EPIC_BANK1_READ8(EECON1, eecon1);
+        if (eecon1 & PIC_EECON1_EEIF) {
             EEPROM_IRQHandler();
         }
     }

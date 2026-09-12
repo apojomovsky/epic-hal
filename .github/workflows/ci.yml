@@ -200,6 +200,12 @@ jobs:
   # "The epiccc gate pin"). Public since HAL-4 (epic-hal#60): the hexes
   # verify in epic-cc's own crates/sim via scripts/sim-runner, so this job
   # pulls neither the private toolchain image nor anything Microchip.
+
+  family-83_84:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F83_84
+
   epiccc-gate:
     runs-on: ubuntu-latest
     env:

@@ -5,6 +5,7 @@
  * GPR cannot pay for the unused ones. */
 
 #include "core/pic16_irq.h"
+#include "pic14_midrange.h"
 
 #ifndef EPICCC_IRQ_TMR0
 #define EPICCC_IRQ_TMR0 0
@@ -122,11 +123,22 @@ void epic_dispatch_all_irqs(void)
     }
 #endif
 #if EPICCC_IRQ_EE
+#if PIC14MIDRANGE_HAS_PIR2
     if (EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_EEIF) {
         uint8_t eeie; EPIC_PIE2_READ_EEIE(eeie);
         if (eeie & PIC_PIE2_EEIE) EEPROM_IRQHandler();
         else EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_EEIF);
     }
+#else
+    /* PIR-less family (83/84/84A): the gate EEIE is INTCON<6>, the
+     * flag EEIF is EECON1<4>, Bank 1 (literal-token access). */
+    if (EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_EEIE) {
+        uint8_t eecon1 = 0U;
+        EPIC_BANK1_READ8(EECON1, eecon1);
+        if (eecon1 & PIC_EECON1_EEIF) EEPROM_IRQHandler();
+        else EPIC_BANK1_WRITE8(EECON1, (uint8_t)(eecon1 & (uint8_t)~PIC_EECON1_EEIF));
+    }
+#endif
 #endif
 #if EPICCC_IRQ_TMR2
     if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) {

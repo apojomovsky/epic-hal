@@ -16,6 +16,7 @@
  * the TXSTA/OPTION_REG sites in tests/sim_bank_probe.c), so reads and
  * RMWs go through the safe Bank-1 macros where they exist. */
 
+#if PIC14MIDRANGE_HAS_PCON
 /**
  * @brief Return whether the last reset was a Brown-out Reset (PCON<BOR>).
  * @return 1 if BOR was the reset cause, 0 otherwise.
@@ -76,6 +77,7 @@ void EPIC_POR_ClearFlag(void)
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PCON), PIC_PCON_POR);
 #endif
 }
+#endif /* PIC14MIDRANGE_HAS_PCON */
 
 #if PIC14MIDRANGE_HAS_WDT_SW
 /* WDTCON software control (Bank 2, 0x105 on 88X). Plain EPIC_REG8
