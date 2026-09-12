@@ -26,6 +26,13 @@ footer = ""
 conventional_commits = true
 filter_unconventional = false
 split_commits = false
+# A handful of historical commit subjects use an em-dash; this repo's
+# pre-commit gate rejects em-dashes in any added line, including a
+# generated CHANGELOG.md that quotes them verbatim, so normalize to a
+# colon here rather than editing already-published commit history.
+commit_preprocessors = [
+  { pattern = '\s*\x{2014}\s*', replace = ": " },
+]
 commit_parsers = [
   { message = "^feat", group = "Features" },
   { message = "^fix", group = "Bug Fixes" },

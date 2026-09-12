@@ -47,7 +47,7 @@ staged_files() {
 # reaches the staged set.
 
 stray_files_check() {
-    local file_whitelist='^\.gitignore$|^\.clang-format$|^pyproject\.toml$|^AGENTS\.md$|^CLAUDE\.md$|^DEVELOPMENT\.md$|^LICENSE$|^Makefile$|^README\.md$|^install\.sh$'
+    local file_whitelist='^\.gitignore$|^\.clang-format$|^pyproject\.toml$|^AGENTS\.md$|^CLAUDE\.md$|^DEVELOPMENT\.md$|^LICENSE$|^Makefile$|^README\.md$|^install\.sh$|^CHANGELOG\.md$|^cliff\.toml$'
     # Top-level directories: modules (epic-*), the HALs (pic*-hal), the
     # shared ISA cores (pic*-core, epic-hal#136 naming decision), and the
     # known infra directories. Anything else at the root is a stray

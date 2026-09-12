@@ -6,141 +6,143 @@ Conventional Commits. Dates are UTC.
 
 ### Features
 
-- Add PIC16F628A family support on shared pic14 core (#137)
+- Add PIC16F628A family support on shared pic14 core (#137) (#137)
 
 - Generate CHANGELOG.md and cut releases with git-cliff
 
 
 ### Refactor
 
-- Converge the post-628A family layout leftovers (#141)
+- Converge the post-628A family layout leftovers (#141) (#141)
 
-- Migrate 87XA/88X SSP driver into pic14-midrange-core (#142)
+- Migrate 87XA/88X SSP driver into pic14-midrange-core (#142) (#142)
 
-- Migrate 87XA/88X ADC driver into pic14-midrange-core (#143)
+- Migrate 87XA/88X ADC driver into pic14-midrange-core (#143) (#143)
+
+- Dedupe git-cliff setup into a shared composite action
 
 ## [0.5.1] - 2026-09-10
 
 ### Bug Fixes
 
-- Authenticate the epic-tasks checkout for prose lint (#126)
+- Authenticate the epic-tasks checkout for prose lint (#126) (#126)
 
 
 ### Documentation
 
-- Require a separate code review before takeoff (#127)
+- Require a separate code review before takeoff (#127) (#127)
 
-- Board-track every filed issue (#128)
+- Board-track every filed issue (#128) (#128)
 
-- Lead with the API, not the installer detour (#135)
+- Lead with the API, not the installer detour (#135) (#135)
 
 
 ### Features
 
-- Epic-sdcard and epic-settings PIC18 slice under epic-cc (#125)
+- Epic-sdcard and epic-settings PIC18 slice under epic-cc (#125) (#125)
 
-- Bring PIC16F193X onto the epic-cc path (#130)
+- Bring PIC16F193X onto the epic-cc path (#130) (#130)
 
-- One-command XC8 size baseline for epic-cc#200 (#131)
+- One-command XC8 size baseline for epic-cc#200 (#131) (#131)
 
 
 ### Miscellaneous
 
-- Remove prose-ledger leftovers from the pre-PR gates (#133)
+- Remove prose-ledger leftovers from the pre-PR gates (#133) (#133)
 
-- Production-ready src comments without planning-stage prose (#134)
+- Production-ready src comments without planning-stage prose (#134) (#134)
 
 ## [0.5.0] - 2026-09-03
 
 ### Bug Fixes
 
-- Let --build-dir point outside the repository (#78)
+- Let --build-dir point outside the repository (#78) (#78)
 
-- Guard against escaped newlines in PR bodies (#95)
+- Guard against escaped newlines in PR bodies (#95) (#95)
 
-- Share pir-reg, unify irq, make ccp const for epic-cc #67 (with filed gaps) (#100)
+- Share pir-reg, unify irq, make ccp const for epic-cc #67 (with filed gaps) (#100) (#100)
 
-- Correct the PIC18Fxx5x epic-cc config-word translations (#113)
+- Correct the PIC18Fxx5x epic-cc config-word translations (#113) (#113)
 
-- Share one printf literal staging buffer instead of one per call site (#124)
+- Share one printf literal staging buffer instead of one per call site (#124) (#124)
 
 
 ### Documentation
 
-- Point agents at the epic-tasks board for picking up work (#68)
+- Point agents at the epic-tasks board for picking up work (#68) (#68)
 
-- HAL file-per-device SFR generation + canonical-per-core CI (#72)
+- HAL file-per-device SFR generation + canonical-per-core CI (#72) (#72)
 
-- State default task base is latest origin/master (#94)
+- State default task base is latest origin/master (#94) (#94)
 
-- Shared non-variadic put API decision (#91) (#106)
+- Shared non-variadic put API decision (#91) (#106) (#106)
 
 
 ### Features
 
-- Add PIC16F88X family with full peripheral support (#56)
+- Add PIC16F88X family with full peripheral support (#56) (#56)
 
-- Add epic-cc variant include/epiccc + src/epiccc (#64)
+- Add epic-cc variant include/epiccc + src/epiccc (#64) (#64)
 
-- Add epic-cc variant (HAL-1) (#66)
+- Add epic-cc variant (HAL-1) (#66) (#66)
 
-- Unified takeoff and worktree workflow (#69)
+- Unified takeoff and worktree workflow (#69) (#69)
 
-- Add epic-cc toolchain backend for HAL-2 (#73)
+- Add epic-cc toolchain backend for HAL-2 (#73) (#73)
 
-- Device registry SFR generation and canonical CI (#76)
+- Device registry SFR generation and canonical CI (#76) (#76)
 
-- Build pic16f88x-hal for 887 under epic-cc (#77)
+- Build pic16f88x-hal for 887 under epic-cc (#77) (#77)
 
-- Deterministic mdb toggle gate for epic-cc built firmware (#79)
+- Deterministic mdb toggle gate for epic-cc built firmware (#79) (#79)
 
-- Pure logic modules under epic-cc on 16F877A/16F887 (#96)
+- Pure logic modules under epic-cc on 16F877A/16F887 (#96) (#96)
 
-- Lint gate replaces the PROSE=1 attestation (#99)
+- Lint gate replaces the PROSE=1 attestation (#99) (#99)
 
-- Peripheral modules under epic-cc on 16F877A/16F887 (#103)
+- Peripheral modules under epic-cc on 16F877A/16F887 (#103) (#103)
 
-- Remove the __EPIC_CC__ stubs from epic-pid and epic-encoder (#108)
+- Remove the __EPIC_CC__ stubs from epic-pid and epic-encoder (#108) (#108)
 
-- Scheduling core under epic-cc on 16F877A/16F887 (#111)
+- Scheduling core under epic-cc on 16F877A/16F887 (#111) (#111)
 
-- Serial stack epic-cc conformance (#112)
+- Serial stack epic-cc conformance (#112) (#112)
 
-- Combo firmware epic-cc conformance, slices, tiers and headroom (#115)
+- Combo firmware epic-cc conformance, slices, tiers and headroom (#115) (#115)
 
-- Literal printf shim and staged put_str on the epic-cc path (#117)
+- Literal printf shim and staged put_str on the epic-cc path (#117) (#117)
 
-- Verify the epic-cc hexes in crates/sim, the public HAL-4 gate (#118)
+- Verify the epic-cc hexes in crates/sim, the public HAL-4 gate (#118) (#118)
 
-- Flip distribution default to epic-cc (HAL-5) (#119)
+- Flip distribution default to epic-cc (HAL-5) (#119) (#119)
 
-- Migrate epic-pid example off printf, restore it under epic-cc (#120)
+- Migrate epic-pid example off printf, restore it under epic-cc (#120) (#120)
 
 
 ### Miscellaneous
 
-- Rename local image pic8-hal-toolchain to epic-hal-toolchain (#62)
+- Rename local image pic8-hal-toolchain to epic-hal-toolchain (#62) (#62)
 
-- Rename GHCR image pic8-hal-ci to epic-hal-ci (#63)
+- Rename GHCR image pic8-hal-ci to epic-hal-ci (#63) (#63)
 
-- Port epic-cc's worktree, takeoff ritual, and prose conventions (#65)
+- Port epic-cc's worktree, takeoff ritual, and prose conventions (#65) (#65)
 
-- Run epic-cc in the dev image and add an mdb-hex gate (#81)
+- Run epic-cc in the dev image and add an mdb-hex gate (#81) (#81)
 
-- Refuse force pushes unless the human approves (#82)
+- Refuse force pushes unless the human approves (#82) (#82)
 
-- Add make bootstrap and make doctor for first-time setup (#83)
+- Add make bootstrap and make doctor for first-time setup (#83) (#83)
 
-- Exercise the epic-cc build path on a canonical job for #80 (#101)
+- Exercise the epic-cc build path on a canonical job for #80 (#101) (#101)
 
-- Re-pin the epiccc gate to epic-cc master after the #153 merge (#110)
+- Re-pin the epiccc gate to epic-cc master after the #153 merge (#110) (#110)
 
-- Drop dead PIC18 digit map entries, document xtal_hz (#114)
+- Drop dead PIC18 digit map entries, document xtal_hz (#114) (#114)
 
 
 ### Other
 
-- Epic-common under epic-cc + the per-module recipe + 877A baseline (#93)
+- Epic-common under epic-cc + the per-module recipe + 877A baseline (#93) (#93)
 
 - Remove the EPIC_AT callback guards, share one ISR path (closes #105) (#107)
 
@@ -154,87 +156,87 @@ Conventional Commits. Dates are UTC.
 
 * ci(hal): re-pin the epiccc gate to the rebased companion SHA
 
-* ci(hal): re-pin the epiccc gate to the post-review companion SHA
+* ci(hal): re-pin the epiccc gate to the post-review companion SHA (#107)
 
 
 ### Refactor
 
-- Pass the manifest mcu to epic-cc --target (#75)
+- Pass the manifest mcu to epic-cc --target (#75) (#75)
 
 
 ### Testing
 
-- Measure the C path under epic-cc on 877A/887 (#104)
+- Measure the C path under epic-cc on 877A/887 (#104) (#104)
 
-- Restore excluded-MCU test and make fixture assertions non-vacuous (#109)
+- Restore excluded-MCU test and make fixture assertions non-vacuous (#109) (#109)
 
 ## [0.4.0] - 2026-08-16
 
 ### Features
 
-- Generate release notes from Conventional Commits (#53)
+- Generate release notes from Conventional Commits (#53) (#53)
 
-- One-command release via scripts/release.sh (#54)
+- One-command release via scripts/release.sh (#54) (#54)
 
 
 ### Refactor
 
-- Rename Epicurus to Epic HAL (#52)
+- Rename Epicurus to Epic HAL (#52) (#52)
 
 ## [0.3.7] - 2026-08-14
 
 ### Features
 
-- Clean default build - tick-only modules and targeted warning suppression (#51)
+- Clean default build - tick-only modules and targeted warning suppression (#51) (#51)
 
 ## [0.3.6] - 2026-08-14
 
 ### Bug Fixes
 
-- Report XC8/device-pack prerequisites upfront with exact install commands (#49)
+- Report XC8/device-pack prerequisites upfront with exact install commands (#49) (#49)
 
 
 ### Features
 
-- Scaffold Makefile builds into build/ with all/clean targets (#50)
+- Scaffold Makefile builds into build/ with all/clean targets (#50) (#50)
 
 ## [0.3.5] - 2026-08-14
 
 ### Bug Fixes
 
-- Makefile resolves XC8 and DFP dynamically with clear errors (#47)
+- Makefile resolves XC8 and DFP dynamically with clear errors (#47) (#47)
 
-- Release bundle gate skips the standalone CLI asset (#48)
+- Release bundle gate skips the standalone CLI asset (#48) (#48)
 
 
 ### Features
 
-- Pure-library bundles; CLI ships as a separate release asset (#46)
+- Pure-library bundles; CLI ships as a separate release asset (#46) (#46)
 
 ## [0.3.4] - 2026-08-13
 
 ### Features
 
-- Case-tolerant parts, consumer-only bundles, target-only examples (#45)
+- Case-tolerant parts, consumer-only bundles, target-only examples (#45) (#45)
 
 ## [0.3.1] - 2026-08-13
 
 ### Features
 
-- Pass a part, scaffold in place, vendored bundle (#44)
+- Pass a part, scaffold in place, vendored bundle (#44) (#44)
 
 ## [0.3.0] - 2026-08-13
 
 ### Bug Fixes
 
-- Correct PIC16 add/sub carry-fold when b_hi wraps (issue 34) (#38)
+- Correct PIC16 add/sub carry-fold when b_hi wraps (issue 34) (#38) (#38)
 
-- Size PIC16 asm pins for worst-case -O codegen (#40)
+- Size PIC16 asm pins for worst-case -O codegen (#40) (#40)
 
 
 ### Documentation
 
-- Benchmark of hand asm vs XC8 native math (#41)
+- Benchmark of hand asm vs XC8 native math (#41) (#41)
 
 
 ### Features
@@ -243,35 +245,35 @@ Conventional Commits. Dates are UTC.
 
 - Add the GPIO-mimic layer (HAL-shaped per-pin API)
 
-- Docker-first real-target setup with self-instructive vendor handling (#32)
+- Docker-first real-target setup with self-instructive vendor handling (#32) (#32)
 
-- Skip tests on non-code changes (#33)
+- Skip tests on non-code changes (#33) (#33)
 
-- Expression rules, full comment pass, bitacore deletion (#35)
+- Expression rules, full comment pass, bitacore deletion (#35) (#35)
 
-- Doxygen-style function docstrings, whole project (#36)
+- Doxygen-style function docstrings, whole project (#36) (#36)
 
-- `epicurus init` scaffolder + .X patcher (#42)
+- `epicurus init` scaffolder + .X patcher (#42) (#42)
 
-- One-line curl getting started (#43)
+- One-line curl getting started (#43) (#43)
 
 
 ### Other
 
 - Merge pull request #30 from apojomovsky/feat/mcp23x17-module
 
-feat(module): add epic-mcp23x17 (MCP23017/MCP23S17 I/O expander)
+feat(module): add epic-mcp23x17 (MCP23017/MCP23S17 I/O expander) (#30)
 
 - Merge pull request #31 from apojomovsky/feat/mcp23x17-gpio-mimic
 
-feat(mcp23x17): add the GPIO-mimic layer (HAL-shaped per-pin API)
+feat(mcp23x17): add the GPIO-mimic layer (HAL-shaped per-pin API) (#31)
 
 
 ### Refactor
 
-- Environment-split src layout, bundle sim/mdb gate (#37)
+- Environment-split src layout, bundle sim/mdb gate (#37) (#37)
 
-- Enforce the epic_* naming convention across modules (#39)
+- Enforce the epic_* naming convention across modules (#39) (#39)
 
 ## [0.2.0] - 2026-08-10
 
@@ -323,20 +325,20 @@ feat(mcp23x17): add the GPIO-mimic layer (HAL-shaped per-pin API)
 
 - Add exec, target-ci, and mdb-test EXTRA_MDB
 
-- Real mdb gates for every simulatable module (20 gates), 20+ bugs fixed (#12)
+- Real mdb gates for every simulatable module (20 gates), 20+ bugs fixed (#12) (#12)
 
-- 12 peripheral/module interleave gates; PIE2 + EEIF dispatch fixes (#13)
+- 12 peripheral/module interleave gates; PIE2 + EEIF dispatch fixes (#13) (#13)
 
 - Add epic-combo-rx-loopback RX harness (task 8)
 
 
 ### Miscellaneous
 
-- Remove stray vmain.p1 (codegen probe artifact) (#14)
+- Remove stray vmain.p1 (codegen probe artifact) (#14) (#14)
 
-- Remove stray XC8 probe artifacts; guard against recurrence (#15)
+- Remove stray XC8 probe artifacts; guard against recurrence (#15) (#15)
 
-- Move the 12 combo test modules under tests/; root-directory rule (#17)
+- Move the 12 combo test modules under tests/; root-directory rule (#17) (#17)
 
 - Gate on the SFR-map and config-key audits
 
@@ -373,60 +375,60 @@ feat(mcp23x17): add the GPIO-mimic layer (HAL-shaped per-pin API)
 
 - Merge pull request #10 from apojomovsky/docs/readme-rewrite
 
-docs: rewrite the README around consuming the releases
+docs: rewrite the README around consuming the releases (#10)
 
 - Merge pull request #11 from apojomovsky/feat/makefile-dev-targets
 
-feat(make): add exec, target-ci, and mdb-test EXTRA_MDB
+feat(make): add exec, target-ci, and mdb-test EXTRA_MDB (#11)
 
 - Merge pull request #18 from apojomovsky/feat/sfr-config-audit
 
-feat(audit): SFR-map DFP audit + config-key audit (quality tasks 6-7)
+feat(audit): SFR-map DFP audit + config-key audit (quality tasks 6-7) (#18)
 
 - Merge pull request #19 from apojomovsky/feat/swuart-ccp-hardening
 
-fix(hal): CCP driver owns its callbacks (swuart/CCP handle hardening, quality task 4)
+fix(hal): CCP driver owns its callbacks (swuart/CCP handle hardening, quality task 4) (#19)
 
 - Merge pull request #20 from apojomovsky/feat/host-property-fuzz
 
-test: host property/fuzz tests for six modules (quality task 2)
+test: host property/fuzz tests for six modules (quality task 2) (#20)
 
 - Merge pull request #21 from apojomovsky/docs/roadmap-statuses
 
-docs: mark quality tasks 2-4 done in the roadmap
+docs: mark quality tasks 2-4 done in the roadmap (#21)
 
 - Merge feat/hex-identity-audit (task 5c) into the layout/flakes branch
 
 - Merge pull request #24 from apojomovsky/feat/rx-loopback-harness
 
-feat(combo): RX loopback harness (task 8)
+feat(combo): RX loopback harness (task 8) (#24)
 
 - Merge origin/master into the layout/flakes branch (rx-loopback landed)
 
 - Merge pull request #22 from apojomovsky/feat/layout-rx-flakes
 
-feat: layout hardening, statics pinning, PIC16 math replay, flake hunt (tasks 5, 9, 10)
+feat: layout hardening, statics pinning, PIC16 math replay, flake hunt (tasks 5, 9, 10) (#22)
 
 - Merge pull request #25 from apojomovsky/feat/ci-speed
 
-ci: shard the target job by family and parallelize its loops
+ci: shard the target job by family and parallelize its loops (#25)
 
 - Merge pull request #26 from apojomovsky/feat/ci-image-slim
 
-ci: slim the toolchain image 5.7 GB -> 3.98 GB
+ci: slim the toolchain image 5.7 GB -> 3.98 GB (#27)
 
 - Merge pull request #28 from apojomovsky/feat/warning-cleanup
 
-test(gates): trim the 60s wait budgets and silence the triaged XC8 warnings
+test(gates): trim the 60s wait budgets and silence the triaged XC8 warnings (#28)
 
 - Merge pull request #29 from apojomovsky/feat/release-followup
 
-fix(gates): close unclosed comments, restore the 193X budget, decouple the README
+fix(gates): close unclosed comments, restore the 193X budget, decouple the README (#29)
 
 
 ### Refactor
 
-- Stringdir ISR-handler conversion (class F) + GIE-race removal (class G) (#16)
+- Stringdir ISR-handler conversion (class F) + GIE-race removal (class G) (#16) (#16)
 
 
 ### Testing
@@ -554,9 +556,9 @@ fix(gates): close unclosed comments, restore the 193X budget, decouple the READM
 
 - Remove dev-only and self-deprecating comments
 
-- Add MANUAL.md — the human-readable manual
+- Add MANUAL.md: the human-readable manual
 
-- Brand the repo for public release — root README, MIT license, split docs
+- Brand the repo for public release: root README, MIT license, split docs
 
 - Tighten prose voice across docs, comments, and docstrings
 
@@ -985,19 +987,19 @@ fix(gates): close unclosed comments, restore the 193X budget, decouple the READM
 
 - Merge pull request #1 from apojomovsky/distribution-manifest
 
-Manifest and build driver (plan 1 of 3)
+Manifest and build driver (plan 1 of 3) (#1)
 
 - Merge pull request #2 from apojomovsky/bundle-generator
 
-Bundle generator (plan 2 of 3)
+Bundle generator (plan 2 of 3) (#2)
 
 - Merge pull request #3 from apojomovsky/worktree-pic16f193x-fsm
 
-feat(pic16f193x): port epic-fsm (module 1 of the rollout)
+feat(pic16f193x): port epic-fsm (module 1 of the rollout) (#3)
 
 - Merge pull request #4 from apojomovsky/worktree-ci-consolidate-checks
 
-ci: consolidate 4 workflows/~14 jobs into 1 workflow/2 jobs
+ci: consolidate 4 workflows/~14 jobs into 1 workflow/2 jobs (#4)
 
 - Merge remote-tracking branch 'origin/master' into mplabx-projects-and-release
 
@@ -1008,25 +1010,25 @@ ci: consolidate 4 workflows/~14 jobs into 1 workflow/2 jobs
 
 - Merge pull request #6 from apojomovsky/swuart-bitbang
 
-feat(swuart): add CCP hardware-timed bit-banged software UART
+feat(swuart): add CCP hardware-timed bit-banged software UART (#6)
 
 - Merge pull request #8 from apojomovsky/epic-math-bank1-fixup-overflow
 
-fix(epic-math): pin pic16_mscratch to common RAM; bundle -I fix
+fix(epic-math): pin pic16_mscratch to common RAM; bundle -I fix (#8)
 
 - Merge pull request #7 from apojomovsky/swuart-rx-hotpath
 
-fix(swuart): collapse RX confirm+arm into one synchronous pass (PIC16F87XA channel A)
+fix(swuart): collapse RX confirm+arm into one synchronous pass (PIC16F87XA channel A) (#7)
 
 - Merge pull request #9 from apojomovsky/fix/pic16-irq-dispatch-tick-sim
 
-fix(hal): un-wedge epic-tick's PIC16 sim-target gate (GIE-race read, TXIE gating, dispatch co-location)
+fix(hal): un-wedge epic-tick's PIC16 sim-target gate (GIE-race read, TXIE gating, dispatch co-location) (#9)
 
 - Merge branch 'master' into mplabx-projects-and-release
 
 - Merge pull request #5 from apojomovsky/mplabx-projects-and-release
 
-feat(mplabx): reference MPLAB X projects + v0.1.0 release pipeline
+feat(mplabx): reference MPLAB X projects + v0.1.0 release pipeline (#5)
 
 
 ### Refactor
