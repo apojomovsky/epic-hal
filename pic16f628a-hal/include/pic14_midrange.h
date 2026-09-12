@@ -1,4 +1,5 @@
-/* PIC14 mid-range family selectors for PIC16F628A: single part, no
+/* PIC14 mid-range family selectors for the PIC16F628A family (627/627A/
+ * 628/628A/648A and the LF627A/LF628A voltage variants): no
  * PIR2/SSP/ADC/CCP2/PSP/PORTC/D/E. Shared pic14-midrange-core code
  * includes this name; each family's copy resolves via the path. */
 
@@ -7,7 +8,7 @@
 #include "pic16f628a_hal.h"
 
 /* Capability contract for shared pic14-midrange-core code (1 = present). */
-#define PIC14MIDRANGE_FLASH_KW 2
+#define PIC14MIDRANGE_FLASH_KW PIC16F628A_FAMILY_FLASH_KW
 #define PIC14MIDRANGE_HAS_PIR2 0
 #define PIC14MIDRANGE_HAS_SSP 0
 #define PIC14MIDRANGE_HAS_SSPMSK 0

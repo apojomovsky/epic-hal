@@ -1,16 +1,20 @@
-# PIC16F628A HAL
+# PIC16F628A-family HAL
 
-Single-part family (PIC16F628A, 18-pin, 2 KW flash, 224 B RAM, 128 B
-data EEPROM, DS40044G). Every driver comes from the shared
-`pic14-midrange-core/`; this directory holds only the part-specific
-shim: SFR map, platform headers, IRQ table, sim backend, harnesses,
-tests, and docs.
+The PIC16F62x flash family (PIC16F627/627A/628/628A/648A and the
+16LF627A/16LF628A voltage variants; 18-pin, 1/2/4 KW flash, 224/256 B
+RAM, 128/256 B data EEPROM; DS40044G for the A parts and 648A,
+DS40300C for the 627/628). Same die peripherals on every part: the
+SFR map is byte-identical across all seven (DFP-verified), so every
+driver comes from the shared `pic14-midrange-core/` and this directory
+holds only the part-specific shim: SFR map, platform headers, IRQ
+table, sim backend, harnesses, tests, and docs.
 
 ## Peripheral coverage
 
 GPIO (PORTA/B only), Timer0/1/2, CCP1, USART (8-bit BRG), comparators
-(single CMCON, Bank 0), VREF (VRCON), data EEPROM (128 B, Bank 1),
-WDT/BOR/POR. No ADC, SSP, CCP2, PSP, PIR2 (absent silicon).
+(single CMCON, Bank 0), VREF (VRCON), data EEPROM (128 B; 256 B on
+the 648A), WDT/BOR/POR. No ADC, SSP, CCP2, PSP, PIR2 (absent silicon
+on the whole family).
 
 ## Register placement deltas vs PIC16F87XA (DFP-verified)
 

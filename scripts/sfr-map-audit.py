@@ -51,6 +51,12 @@ FAMILIES = {
     "pic16f628a-hal": (
         "pic16f628a-hal/include/pic16f628a_sfr.h",
         [
+            ("16F627", "Microchip.PIC16Fxxx_DFP", "pic16f627.h"),
+            ("16F627A", "Microchip.PIC16Fxxx_DFP", "pic16f627a.h"),
+            ("16LF627A", "Microchip.PIC16Fxxx_DFP", "pic16lf627a.h"),
+            ("16F628", "Microchip.PIC16Fxxx_DFP", "pic16f628.h"),
+            ("16LF628A", "Microchip.PIC16Fxxx_DFP", "pic16lf628a.h"),
+            ("16F648A", "Microchip.PIC16Fxxx_DFP", "pic16f648a.h"),
             ("16F628A", "Microchip.PIC16Fxxx_DFP", "pic16f628a.h"),
         ],
     ),
