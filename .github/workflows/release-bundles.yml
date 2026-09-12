@@ -21,6 +21,14 @@ permissions:
   contents: write
   packages: read
 
+env:
+  GIT_CLIFF_VERSION: "2.14.1"
+  # See the same env var in cut-release.yml: the notes template references
+  # commit.remote.pr_number, which otherwise sends git-cliff to the GitHub
+  # API per commit and, on this repo's history, ends up doubling the PR
+  # reference GitHub's squash-merge already appended to the subject.
+  GIT_CLIFF_OFFLINE: "true"
+
 jobs:
   toolchain-image:
     runs-on: ubuntu-latest
@@ -342,48 +350,17 @@ jobs:
         with:
           name: release-bundles
           path: bundles
+      - name: Install git-cliff
+        run: |
+          curl -fsSL -o /tmp/git-cliff.tar.gz \
+            "https://github.com/orhun/git-cliff/releases/download/v${GIT_CLIFF_VERSION}/git-cliff-${GIT_CLIFF_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          tar xzf /tmp/git-cliff.tar.gz -C /tmp
+          install -m 755 "/tmp/git-cliff-${GIT_CLIFF_VERSION}/git-cliff" /usr/local/bin/git-cliff
+          git-cliff --version
       - name: Write the release notes
         run: |
           version="${{ needs.build.outputs.version }}"
-          repo_url="${{ github.server_url }}/${{ github.repository }}"
-          {
-            echo "## Epic HAL $version"
-            echo
-            python3 scripts/release_notes.py "$version" --repo-url "$repo_url"
-            echo
-            echo "## Using it"
-            echo
-            echo "One source bundle per family. Download the one for your part,"
-            echo "unpack it, and point \`EPIC_HAL_DIR\` at it:"
-            echo
-            echo '```make'
-            echo 'EPIC_HAL_DIR := third_party/epic-hal'
-            echo 'EPIC_HAL_MCU := 16F877A'
-            echo 'EPIC_HAL_MODULES := serial tick'
-            echo 'include $(EPIC_HAL_DIR)/epic-hal.mk'
-            echo
-            echo 'SRCS := main.c $(EPIC_HAL_SRCS)'
-            echo 'CFLAGS += $(EPIC_HAL_CFLAGS)'
-            echo '```'
-            echo
-            echo "This is a 0.x release: pin this tag, the \`epic-hal.mk\`"
-            echo "interface may still change. Per-part support (not every"
-            echo "module fits on every part) is in each bundle's"
-            echo "\`SUPPORT.md\`; build notes are in \`QUICKSTART.md\` and"
-            echo "\`MPLABX.md\`, alongside a reference MPLAB X project under"
-            echo "\`examples/\`."
-            echo
-            echo "<details><summary>Checksums</summary>"
-            echo
-            echo "Every bundle here was built from a scratch directory outside"
-            echo "the repository before publication."
-            echo
-            echo '```'
-            cat bundles/SHA256SUMS
-            echo '```'
-            echo
-            echo "</details>"
-          } > notes.md
+          git-cliff --tag "$version" --latest --strip header -o notes.md
           cat notes.md
       - name: Create the release
         env:
