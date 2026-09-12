@@ -1,22 +1,27 @@
-/* A/D converter driver implementation (DS40001291H §9.0). */
+/* Shared A/D converter driver, classic mid-range: 87XA (DS39582B
+ * section 11.0) and 88X (DS40001291H section 15.0). The families wire
+ * the ADC differently: reference configuration (PCFG table vs VCFG
+ * bits), channel mux width, clock sources and ANSEL gating all differ,
+ * and the split is gated by PIC14MIDRANGE_HAS_ADC_PCFG and
+ * PIC14MIDRANGE_HAS_ANSEL (see pic14_adc.h for the enum flavors).
+ * GO/DONE sits at a different bit per family but both spell it
+ * PIC_ADCON0_GO_DONE, so the conversion paths below are token-shared. */
 
-#include "peripherals/pic16f88x_adc.h"
+#include "peripherals/pic14_adc.h"
 #include "core/pic16_irq.h"
 
-/* Owned copy of the caller's handle for the weak ISR (see
- * epic-common/MANUAL.md §3.3 for the dangling-pointer hazard this
- * avoids). */
-/* The ISR only needs the callback, so store the pointer (1 byte) rather
- * than a full handle copy (see epic-common/MANUAL.md §3.3 for the
- * dangling-pointer hazard a copy avoids; a full copy costs RAM on the
- * 128-byte 882). */
+/* callback storage. */
+
+/* The ISR only needs the conversion-complete callback, so store the
+ * pointer rather than a full handle copy: the caller's handle is
+ * typically stack-local, out of scope by the time the ISR reads it
+ * (epic-common/MANUAL.md §3.3). */
 static void (*g_adc_conv_cb)(uint16_t result) = NULL;
 
+#if PIC14MIDRANGE_HAS_ANSEL
 /**
- * @brief Map an ADC channel to its ANSEL/ANSELH pin, if it has one.
- *        Internal channels (CVREF, VP6) have no pin (DS40001291H §9.0
- *        Register 9-1). Returns 0xFF for a pinless channel.
- * @param ch the channel.
+ * @brief Map one analog channel to its ANSEL/ANSELH gate.
+ * @param ch the analog channel.
  * @param reg_out set to PIC_REG_ANSEL or PIC_REG_ANSELH.
  * @return the bit position, or 0xFF if the channel has no pin.
  */
@@ -40,12 +45,13 @@ static uint8_t channel_ansel_bit(ADC_ChannelTypeDef ch, uint16_t *reg_out)
         default:               return 0xFFU;                          /* CVREF, VP6. */
     }
 }
+#endif /* PIC14MIDRANGE_HAS_ANSEL */
 
 /**
  * @brief Initialize the A/D converter: program ADCON0/ADCON1 from the
  *        handle and arm the conversion-complete interrupt if a callback
  *        is set.
- * @param h handle with Channel, ClockSource, ResultFormat, Reference,
+ * @param h handle with Channel, ClockSource, Reference, ResultFormat,
  *        ConvCpltCallback.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
@@ -54,28 +60,34 @@ EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
     if (!h) return EPIC_INVALID;
     g_adc_conv_cb = h->ConvCpltCallback;
 
-    /* ADCON0, Bank 0, address 0x1F.
-     *   bit 0    ADON
-     *   bit 1    GO/DONE (clear, not started yet)
-     *   bit 5:2  CHS3:CHS0
-     *   bit 7:6  ADCS1:ADCS0
-     */
+    /* ADCON0, Bank 0, address 0x1F: ADON, GO/DONE (clear), the channel
+     * mux and ADCS1:ADCS0. The mux width and position differ per
+     * family; both spell them PIC_ADCON0_CHS_MASK / _POS. */
     uint8_t adcon0 = PIC_ADCON0_ADON;
+#if PIC14MIDRANGE_HAS_ADC_PCFG
+    adcon0 |= (uint8_t)(((uint8_t)h->Channel & 0x7U) << PIC_ADCON0_CHS_POS);
+#else
     adcon0 |= (uint8_t)(((uint8_t)h->Channel & 0xFU) << PIC_ADCON0_CHS_POS);
+#endif
     adcon0 |= (uint8_t)(((uint8_t)h->ClockSource & 0x3U) << PIC_ADCON0_ADCS_POS);
     EPIC_REG8(PIC_REG_ADCON0) = adcon0;
 
-    /* ADCON1, Bank 1, address 0x9F.
-     *   bit 7    ADFM
-     *   bit 5    VCFG1 (Vref-)
-     *   bit 4    VCFG0 (Vref+)
-     */
+    /* ADCON1, Bank 1, address 0x9F. The 87XA spends its bits on the
+     * PCFG table plus ADCS2; the 88X on ADFM plus the VCFG pair. */
     uint8_t adcon1 = 0x00U;
     if (h->ResultFormat == ADC_FORMAT_RIGHT) adcon1 |= PIC_ADCON1_ADFM;
+#if PIC14MIDRANGE_HAS_ADC_PCFG
+    adcon1 |= (uint8_t)((uint8_t)h->Reference & PIC_ADCON1_PCFG_MASK);
+    if (h->ClockSource >= ADC_CLOCK_FOSC_4) {
+        /* ADCS2 = 1 for the four high clock modes. */
+        adcon1 |= PIC_ADCON1_ADCS2;
+    }
+#else
     adcon1 |= (uint8_t)(((uint8_t)h->Reference & 0x3U) << 4);
+#endif
 #ifdef EPIC_BANK1_WRITE8
-    /* See target/pic16f88x_platform.h: a plain bank-switch RMW here
-     * silently corrupts under XC8 v4.00. */
+    /* See target/pic16f{87xa,88x}_platform.h: a plain bank-switch RMW
+     * here silently corrupts under XC8 v4.00. */
     EPIC_BANK1_WRITE8(ADCON1, adcon1);
 #else
     {
@@ -121,11 +133,17 @@ EPIC_StatusTypeDef EPIC_ADC_DeInit(void)
 void EPIC_ADC_SelectChannel(ADC_ChannelTypeDef ch)
 {
     uint8_t v = EPIC_REG8(PIC_REG_ADCON0);
+#if PIC14MIDRANGE_HAS_ADC_PCFG
+    v = (uint8_t)((v & (uint8_t)~PIC_ADCON0_CHS_MASK) |
+                  ((uint8_t)((uint8_t)ch & 0x7U) << PIC_ADCON0_CHS_POS));
+#else
     v = (uint8_t)((v & (uint8_t)~PIC_ADCON0_CHS_MASK) |
                   ((uint8_t)((uint8_t)ch & 0xFU) << PIC_ADCON0_CHS_POS));
+#endif
     EPIC_REG8(PIC_REG_ADCON0) = v;
 }
 
+#if PIC14MIDRANGE_HAS_ANSEL
 /**
  * @brief Configure the ANSEL/ANSELH bit for one analog channel.
  * @param ch the channel whose pin to enable.
@@ -160,6 +178,7 @@ void EPIC_ADC_ConfigChannel(ADC_ChannelTypeDef ch)
 #endif
     }
 }
+#endif /* PIC14MIDRANGE_HAS_ANSEL */
 
 /**
  * @brief Start a conversion by setting GO/DONE.
@@ -205,16 +224,28 @@ void EPIC_ADC_ClearITFlag(void)
  */
 uint16_t EPIC_ADC_Read(void)
 {
-    uint16_t hi = (uint16_t)EPIC_REG8(PIC_REG_ADRESH);
-    uint16_t lo = (uint16_t)EPIC_REG8(PIC_REG_ADRESL);
-
-    /* ADRESH/ADRESL layout (DS40001291H §9.4, Registers 9-3..9-6):
-     *   ADFM=0 (left): ADRESH = result<9:2>, ADRESL = result<1:0>.
-     *   ADFM=1 (right): ADRESH = result<9:8>, ADRESL = result<7:0>. */
-    if (EPIC_REG8(PIC_REG_ADCON1) & PIC_ADCON1_ADFM) {
-        return (uint16_t)((hi << 8) | lo);   /* right-justified. */
+    /* ADRESL and ADCON1 sit in Bank 1 on both families; read them
+     * through the Bank-1 tokens so the bank discipline matches the
+     * write path. */
+    uint8_t lo = 0U, adfm_raw = 0U;
+#ifdef EPIC_BANK1_READ8
+    EPIC_BANK1_READ8(ADRESL, lo);
+    EPIC_BANK1_READ8(ADCON1, adfm_raw);
+#else
+    {
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        pic_select_bank(1);
+        lo = EPIC_REG8(PIC_REG_ADRESL);
+        adfm_raw = EPIC_REG8(PIC_REG_ADCON1);
+        pic_select_bank(prev);
     }
-    return (uint16_t)((hi << 2) | ((lo >> 6) & 0x03U));   /* left-justified → right. */
+#endif
+    uint8_t hi = EPIC_REG8(PIC_REG_ADRESH);
+    uint16_t raw = (uint16_t)(((uint16_t)hi << 8) | lo);
+    /* Right-shift if left-justified (ADFM=0) so the caller always
+     * gets a 0..1023 result. */
+    if (!(adfm_raw & PIC_ADCON1_ADFM)) raw = (uint16_t)(raw >> 6);
+    return raw & 0x03FFU;
 }
 
 /**
@@ -223,7 +254,8 @@ uint16_t EPIC_ADC_Read(void)
  */
 void ADC_IRQHandler(void)
 {
-    /* Direct flag ops (class-F). ADIF is PIR1 bit 6. */
+    /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
+     * context; see the CCP handlers). ADIF is PIR1 bit 6. */
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_ADIF)) return;
     uint16_t result = EPIC_ADC_Read();
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_ADIF);

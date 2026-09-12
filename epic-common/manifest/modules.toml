@@ -85,7 +85,7 @@ hal_sources = [
   "pic14-midrange-core/src/peripherals/pic14_ccp.c",
   "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/peripherals/pic14_ssp.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_adc.c",
+  "pic14-midrange-core/src/peripherals/pic14_adc.c",
   "pic14-midrange-core/src/peripherals/pic14_comp.c",
   "pic14-midrange-core/src/peripherals/pic14_vref.c",
   "pic14-midrange-core/src/peripherals/pic14_eeprom.c",
@@ -154,7 +154,7 @@ hal_sources = [
   "pic14-midrange-core/src/peripherals/pic14_ccp.c",
   "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/peripherals/pic14_ssp.c",
-  "pic16f88x-hal/src/peripherals/pic16f88x_adc.c",
+  "pic14-midrange-core/src/peripherals/pic14_adc.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_comp.c",
   "pic14-midrange-core/src/peripherals/pic14_vref.c",
   "pic16f88x-hal/src/peripherals/pic16f88x_srlatch.c",
@@ -655,7 +655,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # the harness USART; the tier clears the latched conversion-done flag.
 [modules.epic-combo-adc-uart.epiccc_hal_sources_by_family]
 PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_adc.c",
+  "pic14-midrange-core/src/peripherals/pic14_adc.c",
   "pic14-midrange-core/src/peripherals/pic14_timer1.c",
   "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/core/pic14_irq.c",

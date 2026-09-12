@@ -56,7 +56,7 @@ set(EPIC_SOURCES
     ../pic14-midrange-core/src/peripherals/pic14_ccp.c
     ../pic14-midrange-core/src/peripherals/pic14_usart.c
     ../pic14-midrange-core/src/peripherals/pic14_ssp.c
-    src/peripherals/pic16f88x_adc.c
+    ../pic14-midrange-core/src/peripherals/pic14_adc.c
     src/peripherals/pic16f88x_comp.c
     ../pic14-midrange-core/src/peripherals/pic14_vref.c
     src/peripherals/pic16f88x_srlatch.c
