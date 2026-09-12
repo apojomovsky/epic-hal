@@ -1,13 +1,17 @@
 name: cut-release
 
 # Cuts a release: regenerates CHANGELOG.md from Conventional Commit history,
-# commits it to master as chore(release), then tags the result. Pushing the
-# tag is what release-bundles.yml reacts to (push: tags: v*); this workflow
-# never builds bundles or calls `gh release create` itself.
+# lands it on master via an auto-merged PR, then tags the result. Pushing
+# the tag is what release-bundles.yml reacts to (push: tags: v*); this
+# workflow never builds bundles or calls `gh release create` itself.
 #
-# master has no branch protection in this repo (confirmed via the GitHub
-# API), so the bot pushing straight to it is the intended shape: this is the
-# automated release-cutting step, not something reviewed via PR.
+# master's ruleset requires every change through a PR with its required
+# status checks green (classic branch protection reports none, but
+# `gh api repos/.../rules/branches/master` does; a direct push was tried
+# on the sibling epic-cc workflow and rejected with GH013 before both
+# switched to this PR based shape), so this opens a release PR, enables
+# auto-merge, waits for it to actually merge, then tags the resulting
+# commit.
 
 on:
   workflow_dispatch:
@@ -20,6 +24,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   cut-release:
@@ -74,16 +79,55 @@ jobs:
           # whitespace gate (scripts/pre-pr-check.sh) rejects one.
           printf '%s\n' "$(cat CHANGELOG.md)" > CHANGELOG.md
 
-      - name: Commit and tag
+      - name: Open the release PR and enable auto-merge
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -eu
           next="${{ steps.version.outputs.next }}"
+          branch="chore/release-${next}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
           git add CHANGELOG.md
           git commit -m "chore(release): ${next}"
-          git tag -a "$next" -m "Epic HAL ${next}"
-          # --atomic: either both refs land or neither does, so a failed
-          # push never leaves the commit on master without its tag (or the
-          # reverse).
-          git push --atomic origin master "refs/tags/${next}"
+          git push origin "$branch"
+          url="$(gh pr create --base master --head "$branch" \
+            --title "chore(release): ${next}" \
+            --body "Automated release PR (cut-release.yml). Merging tags the resulting commit as ${next}.")"
+          number="${url##*/}"
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          gh pr merge "$number" --auto --squash
+
+      - name: Wait for the release PR to merge
+        id: merged
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          number="${{ steps.pr.outputs.number }}"
+          for _ in $(seq 1 90); do
+            state="$(gh pr view "$number" --json state --jq .state)"
+            if [ "$state" = "MERGED" ]; then
+              sha="$(gh pr view "$number" --json mergeCommit --jq .mergeCommit.oid)"
+              echo "sha=$sha" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if [ "$state" = "CLOSED" ]; then
+              echo "::error::release PR #$number was closed without merging"
+              exit 1
+            fi
+            sleep 20
+          done
+          echo "::error::release PR #$number did not merge within 30 minutes"
+          exit 1
+
+      - name: Tag the merged release commit
+        run: |
+          set -eu
+          next="${{ steps.version.outputs.next }}"
+          sha="${{ steps.merged.outputs.sha }}"
+          git fetch origin "$sha"
+          git tag -a "$next" "$sha" -m "Epic HAL ${next}"
+          git push origin "refs/tags/${next}"
