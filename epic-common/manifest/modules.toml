@@ -191,6 +191,12 @@ epiccc_sources = [
 [families.PIC16F628A]
 hal_dir  = "pic16f628a-hal"
 variants = [
+  # 1K-word parts, then 2K, then the 4K 648A; the canonical 628A last
+  # (family-check's scaffold gate builds variants[-1], as on the
+  # 87XA/88X/18F families).
+  "16F627", "16F627A", "16LF627A",
+  "16F628", "16LF628A",
+  "16F648A",
   "16F628A",
 ]
 dfp      = "Microchip.PIC16Fxxx_DFP"
@@ -460,8 +466,16 @@ needs_hal  = true
 
 [modules.pic16f628a-hal.supported]
 PIC16F628A = [
-  "16F628A",
+  "16F628", "16LF628A", "16F648A", "16F628A",
 ]
+
+[modules.pic16f628a-hal.excluded]
+# The 1087-word blink smoke cannot fit the 1K-word parts (measured:
+# XC8 error 1347, class CODE, on 16F627/16F627A/16LF627A); the
+# exclusion wording follows the epic-serial 873A/874A precedent.
+"16F627" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
+"16F627A" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
+"16LF627A" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
 
 [modules.pic16f628a-hal.example.PIC16F628A]
 name    = "blink"
