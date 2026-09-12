@@ -5,13 +5,13 @@ name: cut-release
 # the tag is what release-bundles.yml reacts to (push: tags: v*); this
 # workflow never builds bundles or calls `gh release create` itself.
 #
-# master's ruleset requires every change through a PR with its required
-# status checks green (classic branch protection reports none, but
-# `gh api repos/.../rules/branches/master` does; a direct push was tried
-# on the sibling epic-cc workflow and rejected with GH013 before both
-# switched to this PR based shape), so this opens a release PR, enables
-# auto-merge, waits for it to actually merge, then tags the resulting
-# commit.
+# master's ruleset requires a PR with required checks green, so this opens
+# a release PR and auto-merges it. Uses EPIC_TASKS_TOKEN (a PAT, already a
+# repo secret) to push the branch and open the PR: a PR opened with the
+# default GITHUB_TOKEN never triggers other workflows (GitHub's
+# loop-prevention rule), so its required checks would never run and it
+# would sit BLOCKED forever, confirmed the hard way on the sibling epic-cc
+# workflow (PR #417).
 
 on:
   workflow_dispatch:
@@ -34,6 +34,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: master
+          token: ${{ secrets.EPIC_TASKS_TOKEN }}
 
       - uses: ./.github/actions/setup-git-cliff
 
@@ -82,7 +83,7 @@ jobs:
       - name: Open the release PR and enable auto-merge
         id: pr
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.EPIC_TASKS_TOKEN }}
         run: |
           set -eu
           next="${{ steps.version.outputs.next }}"
@@ -103,7 +104,7 @@ jobs:
       - name: Wait for the release PR to merge
         id: merged
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.EPIC_TASKS_TOKEN }}
         run: |
           set -eu
           number="${{ steps.pr.outputs.number }}"
