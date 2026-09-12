@@ -26,12 +26,6 @@ footer = ""
 conventional_commits = true
 filter_unconventional = false
 split_commits = false
-# GitHub's squash-merge already appends " (#N)" to the commit subject, and
-# the body template above re-appends it from commit.remote.pr_number, so
-# without stripping it here every entry would show the PR number twice.
-commit_preprocessors = [
-  { pattern = ' \(#[0-9]+\)$', replace = "" },
-]
 commit_parsers = [
   { message = "^feat", group = "Features" },
   { message = "^fix", group = "Bug Fixes" },

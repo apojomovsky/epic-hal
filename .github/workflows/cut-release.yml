@@ -21,15 +21,6 @@ on:
 permissions:
   contents: write
 
-env:
-  GIT_CLIFF_VERSION: "2.14.1"
-  # The template's commit.remote.pr_number sends git-cliff to the GitHub
-  # API per commit, which rate-limits and, on this repo's history, ends up
-  # doubling the PR number GitHub's squash-merge already appends to the
-  # subject. Offline mode leaves that number alone instead; verified
-  # locally against this repo's real tags before relying on it here.
-  GIT_CLIFF_OFFLINE: "true"
-
 jobs:
   cut-release:
     runs-on: ubuntu-latest
@@ -39,13 +30,7 @@ jobs:
           fetch-depth: 0
           ref: master
 
-      - name: Install git-cliff
-        run: |
-          curl -fsSL -o /tmp/git-cliff.tar.gz \
-            "https://github.com/orhun/git-cliff/releases/download/v${GIT_CLIFF_VERSION}/git-cliff-${GIT_CLIFF_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
-          tar xzf /tmp/git-cliff.tar.gz -C /tmp
-          install -m 755 "/tmp/git-cliff-${GIT_CLIFF_VERSION}/git-cliff" /usr/local/bin/git-cliff
-          git-cliff --version
+      - uses: ./.github/actions/setup-git-cliff
 
       - name: Resolve the next version
         id: version
@@ -65,6 +50,9 @@ jobs:
             rest="${core#*.}"
             minor="${rest%%.*}"
             patch="${rest#*.}"
+            # 10#: force decimal, so a leading-zero component (v1.08.2)
+            # isn't misread as an (often invalid) octal literal.
+            major=$((10#$major)); minor=$((10#$minor)); patch=$((10#$patch))
             case "$bump" in
               major) major=$((major + 1)); minor=0; patch=0 ;;
               minor) minor=$((minor + 1)); patch=0 ;;

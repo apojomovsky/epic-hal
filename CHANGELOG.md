@@ -8,6 +8,8 @@ Conventional Commits. Dates are UTC.
 
 - Add PIC16F628A family support on shared pic14 core (#137)
 
+- Generate CHANGELOG.md and cut releases with git-cliff
+
 
 ### Refactor
 
@@ -21,14 +23,14 @@ Conventional Commits. Dates are UTC.
 
 ### Bug Fixes
 
-- Authenticate the epic-tasks checkout for prose lint
+- Authenticate the epic-tasks checkout for prose lint (#126)
 
 
 ### Documentation
 
-- Require a separate code review before takeoff
+- Require a separate code review before takeoff (#127)
 
-- Board-track every filed issue
+- Board-track every filed issue (#128)
 
 - Lead with the API, not the installer detour (#135)
 
@@ -37,14 +39,14 @@ Conventional Commits. Dates are UTC.
 
 - Epic-sdcard and epic-settings PIC18 slice under epic-cc (#125)
 
-- Bring PIC16F193X onto the epic-cc path
+- Bring PIC16F193X onto the epic-cc path (#130)
 
 - One-command XC8 size baseline for epic-cc#200 (#131)
 
 
 ### Miscellaneous
 
-- Remove prose-ledger leftovers from the pre-PR gates
+- Remove prose-ledger leftovers from the pre-PR gates (#133)
 
 - Production-ready src comments without planning-stage prose (#134)
 
@@ -52,7 +54,7 @@ Conventional Commits. Dates are UTC.
 
 ### Bug Fixes
 
-- Let --build-dir point outside the repository
+- Let --build-dir point outside the repository (#78)
 
 - Guard against escaped newlines in PR bodies (#95)
 
@@ -65,11 +67,11 @@ Conventional Commits. Dates are UTC.
 
 ### Documentation
 
-- Point agents at the epic-tasks board for picking up work
+- Point agents at the epic-tasks board for picking up work (#68)
 
-- HAL file-per-device SFR generation + canonical-per-core CI
+- HAL file-per-device SFR generation + canonical-per-core CI (#72)
 
-- State default task base is latest origin/master
+- State default task base is latest origin/master (#94)
 
 - Shared non-variadic put API decision (#91) (#106)
 
@@ -82,15 +84,15 @@ Conventional Commits. Dates are UTC.
 
 - Add epic-cc variant (HAL-1) (#66)
 
-- Unified takeoff and worktree workflow
+- Unified takeoff and worktree workflow (#69)
 
 - Add epic-cc toolchain backend for HAL-2 (#73)
 
-- Device registry SFR generation and canonical CI
+- Device registry SFR generation and canonical CI (#76)
 
 - Build pic16f88x-hal for 887 under epic-cc (#77)
 
-- Deterministic mdb toggle gate for epic-cc built firmware
+- Deterministic mdb toggle gate for epic-cc built firmware (#79)
 
 - Pure logic modules under epic-cc on 16F877A/16F887 (#96)
 
@@ -157,7 +159,7 @@ Conventional Commits. Dates are UTC.
 
 ### Refactor
 
-- Pass the manifest mcu to epic-cc --target
+- Pass the manifest mcu to epic-cc --target (#75)
 
 
 ### Testing
@@ -183,7 +185,7 @@ Conventional Commits. Dates are UTC.
 
 ### Features
 
-- Clean default build - tick-only modules and targeted warning suppression
+- Clean default build - tick-only modules and targeted warning suppression (#51)
 
 ## [0.3.6] - 2026-08-14
 
@@ -200,14 +202,14 @@ Conventional Commits. Dates are UTC.
 
 ### Bug Fixes
 
-- Makefile resolves XC8 and DFP dynamically with clear errors
+- Makefile resolves XC8 and DFP dynamically with clear errors (#47)
 
-- Release bundle gate skips the standalone CLI asset
+- Release bundle gate skips the standalone CLI asset (#48)
 
 
 ### Features
 
-- Pure-library bundles; CLI ships as a separate release asset
+- Pure-library bundles; CLI ships as a separate release asset (#46)
 
 ## [0.3.4] - 2026-08-13
 
@@ -330,7 +332,7 @@ feat(mcp23x17): add the GPIO-mimic layer (HAL-shaped per-pin API)
 
 ### Miscellaneous
 
-- Remove stray vmain.p1 (codegen probe artifact)
+- Remove stray vmain.p1 (codegen probe artifact) (#14)
 
 - Remove stray XC8 probe artifacts; guard against recurrence (#15)
 

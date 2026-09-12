@@ -223,7 +223,15 @@ CI verification layer between that and the mdb oracle.
 
 ## Releases
 
-Cutting one is a single command:
+**Automated (preferred)**: run the `cut-release` workflow
+(`workflow_dispatch`, optional `bump: auto|patch|minor|major`, default
+`auto`, which reads the bump size off the Conventional Commits since the
+last tag). It regenerates `CHANGELOG.md` with `git-cliff` (`cliff.toml`),
+commits it to `master` as `chore(release): vX.Y.Z`, and pushes the
+annotated tag, no local checkout required. See
+[.github/workflows/cut-release.yml](.github/workflows/cut-release.yml).
+
+**Manual**: `scripts/release.sh` still works for a local, previewed cut:
 
     scripts/release.sh patch     # 0.3.7 -> 0.3.8
     scripts/release.sh minor     # 0.3.7 -> 0.4.0
@@ -232,41 +240,39 @@ Cutting one is a single command:
 
 It syncs with the remote, refuses to run on a dirty tree, off `master`,
 or when `master` is not level with the remote, computes the next version
-from the newest tag, prints the notes that would publish, and asks
-before pushing. Everything up to that prompt is local: declining deletes
-the tag it made to preview with. `-y` skips the prompt, `--dry-run`
-stops before tagging, `--watch` follows the run.
+from the newest tag, prints a `scripts/release_notes.py` preview of what
+would publish, and asks before pushing. Everything up to that prompt is
+local: declining deletes the tag it made to preview with. `-y` skips the
+prompt, `--dry-run` stops before tagging, `--watch` follows the run.
+Unlike `cut-release.yml`, it never touches `CHANGELOG.md`: a tag cut this
+way leaves the changelog stale until the next automated cut catches up,
+so prefer the workflow unless you specifically need the local preview or
+dry-run.
 
-Pushing the tag is the point of no return. Tagging `v*` triggers
-`release-bundles.yml`: it builds one source bundle per family, verifies
-checksums, gates every bundle from a scratch directory outside any repo
-checkout, and only then attaches the tarballs to a GitHub Release. See
+Pushing the tag (either way) is the point of no return. Tagging `v*`
+triggers `release-bundles.yml`: it builds one source bundle per family,
+verifies checksums, gates every bundle from a scratch directory outside
+any repo checkout, and only then attaches the tarballs to a GitHub
+Release, with notes generated from the tag's `git-cliff` section. See
 [.github/workflows/release-bundles.yml](.github/workflows/release-bundles.yml).
 
-`-y` also skips the warning about a tag with no commits behind it, so a
-scripted `-y` run can republish an unchanged tree the way v0.3.3 and
-v0.3.4 did.
+`scripts/release.sh -y` also skips the warning about a tag with no
+commits behind it, so a scripted `-y` run can republish an unchanged tree
+the way v0.3.3 and v0.3.4 did.
 
-The release notes are generated, not written. `scripts/release_notes.py`
-reads the Conventional Commit subjects between the previous version tag
-and this one, groups them (`feat` -> Added, `fix` -> Fixed,
-`refactor`/`perf` -> Changed, `docs` -> Documentation), and puts
-everything else in a collapsed "Internal changes" block so no commit is
-silently dropped. Commit subjects are the only source, so a release can
-never disagree with the history it was cut from.
+The published release notes are generated, not written: `cliff.toml`
+groups the Conventional Commit subjects between the previous tag and
+this one (`feat` -> Features, `fix` -> Bug Fixes, and so on; see the file
+for the full grouping), so a release can never disagree with the history
+it was cut from, and no commit is silently dropped, either it lands
+under a real heading or under the catch-all "Other" group.
 
-Two things follow from that. A commit subject is release-notes copy:
-write it for someone reading the release page. And a change that breaks
-consumers has to say so, either `type(scope)!:` in the subject or a
-`BREAKING CHANGE:` footer in the body, or it lands under Changed with
-nothing to flag it (the Epicurus -> Epic HAL rename did exactly this,
-and `EPICURUS_DIR` breaking for every existing consumer went unmarked).
-
-Preview what a tag will publish before pushing it:
-
-    python3 scripts/release_notes.py v0.4.0 \
-        --previous v0.3.7 \
-        --repo-url https://github.com/apojomovsky/epic-hal
+That means a commit subject is release-notes copy: write it for someone
+reading the release page. And a change that breaks consumers has to say
+so, either `type(scope)!:` in the subject or a `BREAKING CHANGE:` footer
+in the body, or nothing flags it (the Epicurus -> Epic HAL rename did
+exactly this, and `EPICURUS_DIR` breaking for every existing consumer
+went unmarked).
 
 ## install.sh
 
