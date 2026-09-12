@@ -335,55 +335,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # release_notes.py walks back to the previous tag, so the tags and
-          # the commits between them must both be present.
+          # git-cliff needs the tag being published plus its predecessor,
+          # so the tags and the commits between them must both be present.
           fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
           name: release-bundles
           path: bundles
+      - uses: ./.github/actions/setup-git-cliff
       - name: Write the release notes
         run: |
           version="${{ needs.build.outputs.version }}"
-          repo_url="${{ github.server_url }}/${{ github.repository }}"
-          {
-            echo "## Epic HAL $version"
-            echo
-            python3 scripts/release_notes.py "$version" --repo-url "$repo_url"
-            echo
-            echo "## Using it"
-            echo
-            echo "One source bundle per family. Download the one for your part,"
-            echo "unpack it, and point \`EPIC_HAL_DIR\` at it:"
-            echo
-            echo '```make'
-            echo 'EPIC_HAL_DIR := third_party/epic-hal'
-            echo 'EPIC_HAL_MCU := 16F877A'
-            echo 'EPIC_HAL_MODULES := serial tick'
-            echo 'include $(EPIC_HAL_DIR)/epic-hal.mk'
-            echo
-            echo 'SRCS := main.c $(EPIC_HAL_SRCS)'
-            echo 'CFLAGS += $(EPIC_HAL_CFLAGS)'
-            echo '```'
-            echo
-            echo "This is a 0.x release: pin this tag, the \`epic-hal.mk\`"
-            echo "interface may still change. Per-part support (not every"
-            echo "module fits on every part) is in each bundle's"
-            echo "\`SUPPORT.md\`; build notes are in \`QUICKSTART.md\` and"
-            echo "\`MPLABX.md\`, alongside a reference MPLAB X project under"
-            echo "\`examples/\`."
-            echo
-            echo "<details><summary>Checksums</summary>"
-            echo
-            echo "Every bundle here was built from a scratch directory outside"
-            echo "the repository before publication."
-            echo
-            echo '```'
-            cat bundles/SHA256SUMS
-            echo '```'
-            echo
-            echo "</details>"
-          } > notes.md
+          git-cliff --tag "$version" --latest --strip header -o notes.md
           cat notes.md
       - name: Create the release
         env:

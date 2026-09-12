@@ -1,0 +1,89 @@
+name: cut-release
+
+# Cuts a release: regenerates CHANGELOG.md from Conventional Commit history,
+# commits it to master as chore(release), then tags the result. Pushing the
+# tag is what release-bundles.yml reacts to (push: tags: v*); this workflow
+# never builds bundles or calls `gh release create` itself.
+#
+# master has no branch protection in this repo (confirmed via the GitHub
+# API), so the bot pushing straight to it is the intended shape: this is the
+# automated release-cutting step, not something reviewed via PR.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump"
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+
+permissions:
+  contents: write
+
+jobs:
+  cut-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: master
+
+      - uses: ./.github/actions/setup-git-cliff
+
+      - name: Resolve the next version
+        id: version
+        run: |
+          set -eu
+          bump="${{ inputs.bump }}"
+          if [ "$bump" = "auto" ]; then
+            next="$(git-cliff --bumped-version)"
+          else
+            latest="$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)"
+            if [ -z "$latest" ]; then
+              echo "cut-release: no existing vX.Y.Z tag to bump from" >&2
+              exit 1
+            fi
+            core="${latest#v}"
+            major="${core%%.*}"
+            rest="${core#*.}"
+            minor="${rest%%.*}"
+            patch="${rest#*.}"
+            # 10#: force decimal, so a leading-zero component (v1.08.2)
+            # isn't misread as an (often invalid) octal literal.
+            major=$((10#$major)); minor=$((10#$minor)); patch=$((10#$patch))
+            case "$bump" in
+              major) major=$((major + 1)); minor=0; patch=0 ;;
+              minor) minor=$((minor + 1)); patch=0 ;;
+              patch) patch=$((patch + 1)) ;;
+            esac
+            next="v${major}.${minor}.${patch}"
+          fi
+          if git rev-parse -q --verify "refs/tags/$next" >/dev/null; then
+            echo "cut-release: tag $next already exists" >&2
+            exit 1
+          fi
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+          echo "cut-release: cutting $next"
+
+      - name: Regenerate CHANGELOG.md
+        run: |
+          git-cliff --tag "${{ steps.version.outputs.next }}" -o CHANGELOG.md
+          # git-cliff always leaves a trailing blank line; the repo's
+          # whitespace gate (scripts/pre-pr-check.sh) rejects one.
+          printf '%s\n' "$(cat CHANGELOG.md)" > CHANGELOG.md
+
+      - name: Commit and tag
+        run: |
+          set -eu
+          next="${{ steps.version.outputs.next }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "chore(release): ${next}"
+          git tag -a "$next" -m "Epic HAL ${next}"
+          # --atomic: either both refs land or neither does, so a failed
+          # push never leaves the commit on master without its tag (or the
+          # reverse).
+          git push --atomic origin master "refs/tags/${next}"

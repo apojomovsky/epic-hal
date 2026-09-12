@@ -1,0 +1,33 @@
+name: setup-git-cliff
+description: >-
+  Install a pinned git-cliff and put it on PATH, offline. Shared by
+  cut-release.yml and release-bundles.yml so both stay on the same
+  version and offline behavior instead of drifting independently.
+
+inputs:
+  version:
+    description: "git-cliff release to install"
+    required: false
+    default: "2.14.1"
+
+runs:
+  using: composite
+  steps:
+    - name: Install git-cliff
+      shell: bash
+      run: |
+        curl -fsSL -o /tmp/git-cliff.tar.gz \
+          "https://github.com/orhun/git-cliff/releases/download/v${{ inputs.version }}/git-cliff-${{ inputs.version }}-x86_64-unknown-linux-gnu.tar.gz"
+        tar xzf /tmp/git-cliff.tar.gz -C /tmp
+        install -m 755 "/tmp/git-cliff-${{ inputs.version }}/git-cliff" /usr/local/bin/git-cliff
+        git-cliff --version
+    - name: Force git-cliff offline
+      shell: bash
+      # The changelog template reads commit.remote.pr_number, which makes
+      # git-cliff call the GitHub API per commit unless this is set: those
+      # calls rate-limit on this repo's ~430-commit history, and even
+      # authenticated, resolved lookups collide with the "(#N)" GitHub's
+      # squash-merge already appends to the subject, doubling it. Offline,
+      # remote.pr_number is never populated, so the template's conditional
+      # never fires and the number already in the subject is left alone.
+      run: echo "GIT_CLIFF_OFFLINE=true" >> "$GITHUB_ENV"
