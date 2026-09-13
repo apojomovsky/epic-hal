@@ -1,13 +1,8 @@
-/* epic-cc variant of the SFR mapping layer (paired with
- * target/pic16f63x_67x_68x_platform.h and
- * host/pic16f63x_67x_68x_platform.h); the build's include path picks
- * which resolves, so pic16f63x_67x_68x_hal.h includes
- * "pic16f63x_67x_68x_platform.h" unconditionally with no #ifdef.
- *
- * Banking is inserted by the compiler's banking pass, so the
- * XC8-specific inline-asm pie/bank fixups are plain C here. Placement
- * pins are dropped (EPIC_PLACE expands to nothing): the overlay places
- * globals itself. */
+/* epic-cc variant of the SFR mapping layer (paired with the target
+ * and host halves); the build's include path picks which resolves.
+ * Banking comes from the compiler's banking pass, so the XC8
+ * inline-asm fixups are plain C here, and placement pins are dropped
+ * (the overlay places globals itself). */
 
 #ifndef PIC16F63X_67X_68X_PLATFORM_H
 #define PIC16F63X_67X_68X_PLATFORM_H

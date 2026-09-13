@@ -1,12 +1,8 @@
 /* Comparator driver, two independent comparators C1 and C2
- * (DS40001262F Comparator module, Registers CM1CON0/CM2CON0/CM2CON1;
- * full reference: MANUAL.md §Comparators). Each comparator is
- * configured independently through CMxCON0, has its own interrupt flag
- * (C1IF/C2IF in PIR2), and the shared CM2CON1 carries the Timer1 gate
- * source select and C2's Timer1 synchronization. Unlike the 88X, this
- * family has no CxRSEL bits: the reference select is CxR in CMxCON0
- * (pin vs internal reference) plus CxVREN in VRCON (CVREF vs the
- * 0.6 V fixed reference), both owned by this driver. */
+ * (DS40001262F Comparator module; full reference: MANUAL.md
+ * §Comparators). Each has its own PIR2 flag; CM2CON1 carries the
+ * Timer1 gate select and C2 sync. No CxRSEL bits here (unlike the
+ * 88X): the reference is CxR plus CxVREN, both owned by this driver. */
 
 #ifndef PIC16F63X_67X_68X_COMP_H
 #define PIC16F63X_67X_68X_COMP_H
@@ -74,7 +70,7 @@ EPIC_StatusTypeDef EPIC_COMP1_Init(const COMP_HandleTypeDef *h);
  *        arm the C2 change interrupt if a callback is given.
  * @param h handle with Channel, InputSource, RefSource, Inverted,
  *        OutputEnable, ChangeCallback.
- * @return EPIC_OK on success, EPIC_ERROR if `h` is NULL.
+ * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
 EPIC_StatusTypeDef EPIC_COMP2_Init(const COMP_HandleTypeDef *h);
 

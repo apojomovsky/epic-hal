@@ -1,14 +1,9 @@
 /* PIC16F63x/67x/68x family top-level entry: standard types, status
  * codes, build-time device selection, and the SFR mapping layer.
- * DS40001262F (631/677/685/689/690) is authoritative for the 16F631
- * constants; each peripheral header cites its own section. Family
- * shape on this ticket: the 20-pin 16F631/677 (dual comparators,
- * Timer0 + Timer1 with gate, no USART/CCP/Timer2; 631: 1024 W flash,
- * 64 B SRAM, 128 B EEPROM, no ADC. 677: 2048 W flash, 128 B SRAM,
- * 256 B EEPROM, ADC + SSP; DS40001262F Table 1). The remaining
- * siblings (630/639/676/684/685/688/689) join in epic-hal#152 under
- * capability macros, so this header selects exactly one device the
- * same way the 628A umbrella does. */
+ * DS40001262F Table 1 is authoritative; each peripheral header cites
+ * its own section. Onboarded here: 16F631 (1 KW/64 B/128 B, no ADC)
+ * and 16F677 canonical (2 KW/128 B/256 B, ADC + SSP). The rest join
+ * in epic-hal#152; this header selects exactly one device. */
 
 #ifndef PIC16F63X_67X_68X_HAL_H
 #define PIC16F63X_67X_68X_HAL_H

@@ -1,12 +1,8 @@
-/* SFR address map for the PIC16F63x/67x/68x family (16F631 on this
- * ticket). Every address and bit position is 1-to-1 from the DFP proc
- * header (Microchip.PIC16Fxxx_DFP, xc8/pic/include/proc/pic16f631.h,
- * cross-checked against edc/PIC16F631.PIC); layout per DS40001262F
- * §2.0 (memory map), §4.0 (I/O), §5.0 (Timer0), §6.0 (Timer1), §14.0
- * (interrupts). Register addresses are regenerated from the EDC by
- * scripts/gen-sfr.py; bit positions and POR values are hand-maintained
- * against the DFP header. The #152 siblings extend the map; their
- * registers are absent here, not stubbed. */
+/* SFR address map for the PIC16F63x/67x/68x family, 1-to-1 from the
+ * DFP proc header (Microchip.PIC16Fxxx_DFP pic16f631.h, cross-checked
+ * against edc/PIC16F631.PIC); layout per DS40001262F §§2.0/4.0/5.0/
+ * 6.0/14.0. Addresses regenerate via scripts/gen-sfr.py; bits and POR
+ * values are hand-maintained. #152 siblings extend the map. */
 
 #ifndef PIC16F63X_67X_68X_SFR_H
 #define PIC16F63X_67X_68X_SFR_H
