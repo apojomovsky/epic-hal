@@ -68,6 +68,12 @@ FAMILIES = {
             ("16F84A", "Microchip.PIC16Fxxx_DFP", "pic16f84a.h"),
         ],
     ),
+    "pic16f63x_67x_68x-hal": (
+        "pic16f63x_67x_68x-hal/include/pic16f63x_67x_68x_sfr.h",
+        [
+            ("16F631", "Microchip.PIC16Fxxx_DFP", "pic16f631.h"),
+        ],
+    ),
     "pic16f88x-hal": (
         "pic16f88x-hal/include/pic16f88x_sfr.h",
         [
@@ -151,6 +157,9 @@ BIT_ALIASES = {
     # 87XA/88X OPTION_REG: the HAL spells the pull-up bit RBPU (the
     # datasheet name); the DFP spells it nRBPU.
     ("OPTION", "RBPU"): ("OPTION_REG", "nRBPU"),
+    # 63x/67x/68x OPTION_REG: the pull-up bit covers both ports
+    # (RABPU); the DFP spells it nRABPU.
+    ("OPTION", "RABPU"): ("OPTION_REG", "nRABPU"),
     # 193X ADCON0: the HAL spells the GO/DONE bit GO_NDONE; the 87XA
     # and PIC18 spell it GO_DONE (the DFP defines both GO_DONE and the
     # n-prefixed alias at the same position).
@@ -252,7 +261,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
                                          "PIC16F193X", "PIC16F88X", "PIC16F628A",
-                                         "PIC16F83_84"), default=None,
+                                         "PIC16F83_84",
+                                         "PIC16F63x_67x_68x"), default=None,
                     help="only this manifest family (the sharded CI jobs)")
     args = ap.parse_args()
     hal_label = {"PIC16F87XA": "pic16f87xa-hal",
@@ -260,7 +270,8 @@ def main() -> int:
                  "PIC16F193X": "pic16f193x-hal",
                  "PIC16F88X": "pic16f88x-hal",
                  "PIC16F628A": "pic16f628a-hal",
-                 "PIC16F83_84": "pic16f83_84-hal"}[args.family] \
+                 "PIC16F83_84": "pic16f83_84-hal",
+                 "PIC16F63x_67x_68x": "pic16f63x_67x_68x-hal"}[args.family] \
         if args.family else None
     bad = 0
     for family, (sfr_path, mcus) in FAMILIES.items():

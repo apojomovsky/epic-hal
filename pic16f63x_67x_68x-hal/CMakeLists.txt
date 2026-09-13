@@ -29,7 +29,7 @@ set(EPIC_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(EPIC_CORE_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/../pic14-midrange-core/include)
 set(EPIC_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
-set(EPIC_FAMILY_DEVICES        PIC16F631)
+set(EPIC_FAMILY_DEVICES        PIC16F631 PIC16F677)
 
 set(EPIC_SOURCES
     src/peripherals/pic16f63x_67x_68x_gpio.c
@@ -56,5 +56,9 @@ epic_add_example(example_eeprom      tests/example_eeprom.c)
 epic_add_example(example_wdt_sleep   tests/example_wdt_sleep.c)
 epic_add_example(example_rb_change   tests/example_rb_change.c)
 
-# Optional: example for every device in the family.
+# Optional: example for every device in the family. The host library
+# builds once (default device), so per-device examples only recompile
+# the example source: they smoke-test device selection, not
+# device-specific register paths (ANSELH lives in the target-only mdb
+# probe for that reason).
 epic_add_example_per_device(example_blink tests/example_blink.c)

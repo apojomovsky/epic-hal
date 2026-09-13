@@ -106,6 +106,10 @@ void pic16f63x_67x_68x_sim_reset(void)
     pic16f63x_67x_68x_sim_sfr[PIC_REG_OPTION]   = PIC_OPTION_POR_VALUE;
     pic16f63x_67x_68x_sim_sfr[PIC_REG_ANSEL]    = PIC_ANSEL_POR_VALUE;
     pic16f63x_67x_68x_sim_sfr[PIC_REG_CM2CON1]  = PIC_CM2CON1_POR_VALUE;
+    /* ANSELH POR (677): the 631 has no ANSELH (reads 0 on silicon);
+     * the shared sim carries the superset so the 677 digital path
+     * (ANSELH cleared by Init) is exercised on host. */
+    pic16f63x_67x_68x_sim_sfr[PIC_REG_ANSELH]   = PIC_ANSELH_POR_VALUE;
 
     /* TRIS defaults: 1 = input on every implemented pin. */
     pic16f63x_67x_68x_sim_sfr[PIC_REG_TRISA]    = PIC_TRISA_POR_VALUE;
@@ -292,14 +296,14 @@ void pic16f63x_67x_68x_sim_drive_comparator(uint8_t comp, uint8_t level)
     if (sim_irq_cb) sim_irq_cb();
 }
 
-/* Simulated EEPROM storage. The part has 128 bytes of data EEPROM;
- * the table keeps 256 entries and the upper half is ignored. */
+/* Simulated EEPROM storage, 256 entries (the 631 implements 128;
+ * the 677 implements all 256). */
 static uint8_t sim_eeprom[256];
 static uint8_t sim_eeprom_loaded[256];
 
 /**
  * @brief Place a byte in the simulated EEPROM array.
- * @param addr the EEPROM address, 0..127.
+ * @param addr the EEPROM address, 0..255 (631: 0..127).
  * @param data the byte to store.
  */
 void pic16f63x_67x_68x_sim_drive_eeprom_byte(uint8_t addr, uint8_t data)

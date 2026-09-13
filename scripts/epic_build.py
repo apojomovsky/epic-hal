@@ -389,6 +389,14 @@ _PIC16_XC8_TO_EPIC = {
     "debug": "debug",
 }
 
+# XC8 and the epic-cc device data spell the internal-oscillator
+# FOSC values differently (INTRCIO/INTRCCLK vs intoscio/intoscclk);
+# every other oscillator spelling already matches after lowercasing.
+_PIC16_OSC_VALUE_MAP = {
+    "intrcio": "intoscio",
+    "intrcclk": "intoscclk",
+}
+
 _PIC18_XC8_TO_EPIC = {
     "fosc": "osc",
     "plldiv": "plldiv",
@@ -480,7 +488,8 @@ def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
         # `boren` -> `bor` for the 877A; flip it back for the families
         # whose own device data spells it `boren`.
         if (not is_pic18 and epic_key == "bor"
-                and fam.name in ("PIC16F88X", "PIC16F193X", "PIC16F628A")):
+                and fam.name in ("PIC16F88X", "PIC16F193X", "PIC16F628A",
+                                 "PIC16F63x_67x_68x")):
             epic_key = "boren"
         low_val = val.lower()
         if is_pic18:
@@ -504,7 +513,7 @@ def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
             else:
                 epic_val = _PIC18_VALUE_MAP.get(low_val, low_val)
         else:
-            epic_val = low_val
+            epic_val = _PIC16_OSC_VALUE_MAP.get(low_val, low_val)
         parts.append(f"{epic_key}={epic_val}")
     parts.append(f"xtal_hz={fam.xtal_hz or fosc_hz}")
     return ", ".join(parts)
@@ -590,6 +599,7 @@ CANONICAL = {
     "PIC16F193X": "16F1937",
     "PIC16F628A": "16F628A",
     "PIC16F83_84": "16F84A",
+    "PIC16F63x_67x_68x": "16F631",
 }
 
 def cmd_matrix(args):

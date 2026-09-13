@@ -2,8 +2,9 @@
  * PORTx latch and never read-modify the pin level first (DS40001262F
  * §4.0). PORTA is RA0..RA5, PORTB is RB4..RB7 only, PORTC is RC0..RC7
  * (DS40001262F Table 1, 18 I/O). Analog-capable pins are selected
- * per-pin through ANSEL in Bank 2 (RA0/RA1/RC0..RC3); there is no
- * ADCON1<PCFG> on this family. */
+ * per-pin through ANSEL in Bank 2 (RA0/RA1/RC0..RC3) and, on ANSELH
+ * parts, ANSELH (RB4/RB5/RC6/RC7); there is no ADCON1<PCFG> on this
+ * family. */
 
 #ifndef PIC16F63X_67X_68X_GPIO_H
 #define PIC16F63X_67X_68X_GPIO_H

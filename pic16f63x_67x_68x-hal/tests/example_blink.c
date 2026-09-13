@@ -21,13 +21,16 @@
 static volatile uint16_t g_toggle_count = 0;
 
 /* Timer0 overflow callback, runs in interrupt context (target) or the
- * sim IRQ callback (host). */
+ * sim IRQ callback (host). The pin toggles through a direct latch RMW:
+ * the driver call path in the ISR partition tips the 64 B RAM
+ * allocation over the limit (adding-a-device §3.2); main and the bank
+ * probe gate still cover the GPIO driver paths. */
 /**
  * @brief Toggle RB4 and bump the toggle counter on each Timer0 overflow.
  */
 static void on_t0_overflow(void)
 {
-    EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
+    EPIC_REG8(PIC_REG_PORTB) ^= GPIO_PIN_4;
     g_toggle_count++;
 }
 

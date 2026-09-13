@@ -67,6 +67,7 @@
 #define PIC_REG_CM2CON0       0x11AU
 #define PIC_REG_CM2CON1       0x11BU
 #define PIC_REG_ANSEL         0x11EU
+#define PIC_REG_ANSELH        0x11FU
 
 /* Bank 3. */
 #define PIC_REG_EECON1        0x18CU
@@ -145,6 +146,7 @@
 #define PIC_CM2CON0_POR_VALUE    0x00U
 #define PIC_CM2CON1_POR_VALUE    0x02U  /* ---- --10: T1GSS=1. */
 #define PIC_ANSEL_POR_VALUE      0xF3U  /* ANS0/1/4/5/6/7 analog. */
+#define PIC_ANSELH_POR_VALUE     0x0FU  /* ANS8..ANS11 analog (677; no ANSELH on 631). */
 #define PIC_EECON1_POR_VALUE     0x00U
 #define PIC_SRCON_POR_VALUE      0x00U
 
@@ -152,9 +154,6 @@
  * DS40001262F §5.0, Register 5-1). Bit 7 is the PORTA/B pull-up
  * enable, active-low, named RABPU on this family. */
 
-#define PIC_OPTION_PS0          EPIC_BIT(0)
-#define PIC_OPTION_PS1          EPIC_BIT(1)
-#define PIC_OPTION_PS2          EPIC_BIT(2)
 #define PIC_OPTION_PSA          EPIC_BIT(3)
 #define PIC_OPTION_T0SE         EPIC_BIT(4)
 #define PIC_OPTION_T0CS         EPIC_BIT(5)
@@ -278,6 +277,14 @@
 #define PIC_ANSEL_ANS5          EPIC_BIT(5)
 #define PIC_ANSEL_ANS6          EPIC_BIT(6)
 #define PIC_ANSEL_ANS7          EPIC_BIT(7)
+
+/* ANSELH bits (677 only; DS40001262F §4.0, Register 4-6). Absent on
+ * the 631: the driver gates every ANSELH access on
+ * PIC16F63X_67X_68X_FAMILY_HAS_ANSELH. */
+#define PIC_ANSELH_ANS8         EPIC_BIT(0)
+#define PIC_ANSELH_ANS9         EPIC_BIT(1)
+#define PIC_ANSELH_ANS10        EPIC_BIT(2)
+#define PIC_ANSELH_ANS11        EPIC_BIT(3)
 
 /* EECON1 bits (DS40001262F Data EEPROM module, Register EECON1). EEIF
  * is PIR2<4> here, not EECON1<4> as on the PIR-less 83/84 parts. */

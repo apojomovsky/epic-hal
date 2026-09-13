@@ -76,8 +76,36 @@ static uint8_t ansel_bit(GPIO_TypeDef port, uint8_t pin)
     return 0xFFU;
 }
 
+#if PIC16F63X_67X_68X_FAMILY_HAS_ANSELH
 /**
- * @brief  Clear or set the ANSEL bits for a set of pins (Bank 2).
+ * @brief  Map a pin to its ANSELH bit, if it has an analog function.
+ *         RB4=ANS10, RB5=ANS11, RC6=ANS8, RC7=ANS9 (677 only,
+ *         DS40001262F pin summary).
+ * @param port GPIOA..GPIOC.
+ * @param pin the pin number, 0..7.
+ * @return the ANSELH bit position, or 0xFF if the pin has no analog
+ *         function.
+ */
+static uint8_t anselh_bit(GPIO_TypeDef port, uint8_t pin)
+{
+    if (port == GPIOB) {
+        if (pin == 4U) return 2U;
+        if (pin == 5U) return 3U;
+        return 0xFFU;
+    }
+    if (port == GPIOC) {
+        if (pin == 6U) return 0U;
+        if (pin == 7U) return 1U;
+        return 0xFFU;
+    }
+    /* PORTA has no ANSELH functions. */
+    return 0xFFU;
+}
+#endif
+
+/**
+ * @brief  Clear or set the ANSEL (and ANSELH, where present) bits for
+ *         a set of pins (Bank 2).
  * @param port GPIOA..GPIOC.
  * @param pins bitmask of pins.
  * @param analog 1 to set the bits (pin to analog), 0 to clear them
@@ -107,6 +135,30 @@ static void set_ansel_bits(GPIO_TypeDef port, uint16_t pins, uint8_t analog)
         EPIC_REG8(PIC_REG_ANSEL) = ansel;
 #endif
     }
+#if PIC16F63X_67X_68X_FAMILY_HAS_ANSELH
+    uint8_t anselh = 0u;
+#ifdef EPIC_BANK2_READ8
+    EPIC_BANK2_READ8(ANSELH, anselh);
+#else
+    anselh = EPIC_REG8(PIC_REG_ANSELH);
+#endif
+    uint8_t changed_h = 0U;
+    for (uint8_t pin = 0U; pin <= 7U; pin++) {
+        if (!((uint16_t)EPIC_BIT(pin) & pins)) continue;
+        uint8_t bit = anselh_bit(port, pin);
+        if (bit == 0xFFU) continue;   /* no analog function. */
+        if (analog) anselh |= EPIC_BIT(bit);
+        else        anselh &= (uint8_t)~EPIC_BIT(bit);
+        changed_h = 1U;
+    }
+    if (changed_h) {
+#ifdef EPIC_BANK2_WRITE8
+        EPIC_BANK2_WRITE8(ANSELH, anselh);
+#else
+        EPIC_REG8(PIC_REG_ANSELH) = anselh;
+#endif
+    }
+#endif
 }
 
 /* init / deinit. */

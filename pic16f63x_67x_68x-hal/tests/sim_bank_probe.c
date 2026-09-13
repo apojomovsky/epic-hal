@@ -35,7 +35,7 @@ extern void pic16f63x_67x_68x_harness_halt(void);
 static uint16_t g_fail = 0u;
 /**
  * @brief Bump the failure counter and log a marker line.
- * @param idx the check index (0x00..0x0F), logged as F characters.
+ * @param idx the check index (0x00..0x10), logged as F characters.
  */
 static void fail(uint8_t idx)
 {
@@ -88,9 +88,11 @@ int main(void)
     CHECK((v & 0x40U) == 0x40U && (v & 0x80U) == 0U, 0x02U);
     EPIC_GPIO_SetPullups(GPIO_NOPULL);
 
-    /* Bank 1, OSCCON POR image reads back through the banked path. */
+    /* Bank 1, OSCCON POR image reads back through the banked path.
+     * LTS/HTS/OSTS are read-only hardware status (adding-a-device §4
+     * step 8), so only SCS/IRCF are compared. */
     RD1(OSCCON, v);
-    CHECK(v == PIC_OSCCON_POR_VALUE, 0x03U);
+    CHECK((v & 0x71U) == 0x60U, 0x03U);
 
     /* Bank 1, WDTCON software enable: the shared driver's Bank-1 path
      * (PIC14MIDRANGE_HAS_WDTCON_BANK1) sets SWDTEN and reads back. */
@@ -105,13 +107,16 @@ int main(void)
     v = EPIC_BOR_GetStatus();
     (void)v;
 
-    /* Bank 2, ANSEL via GPIO analog mode: RA0 to analog sets ANS0. */
-    EPIC_GPIO_Init(GPIOA, GPIO_PIN_0, GPIO_MODE_ANALOG);
+    /* Bank 2, ANSEL via GPIO analog mode: RA1 to analog sets ANS1.
+     * RA1, not RA0: RA0 is the PASS/FAIL marker pin (output, armed by
+     * the harness), and the marker reads the pin level, so the probe
+     * must never return RA0 to input. */
+    EPIC_GPIO_Init(GPIOA, GPIO_PIN_1, GPIO_MODE_ANALOG);
     RD2(ANSEL, v);
-    CHECK((v & PIC_ANSEL_ANS0) != 0U, 0x06U);
-    EPIC_GPIO_Init(GPIOA, GPIO_PIN_0, GPIO_MODE_INPUT);
+    CHECK((v & PIC_ANSEL_ANS1) != 0U, 0x06U);
+    EPIC_GPIO_Init(GPIOA, GPIO_PIN_1, GPIO_MODE_INPUT);
     RD2(ANSEL, v);
-    CHECK((v & PIC_ANSEL_ANS0) == 0U, 0x07U);
+    CHECK((v & PIC_ANSEL_ANS1) == 0U, 0x07U);
 
     /* Bank 2, CM1CON0 via the comparator driver: C1 on, channel IN0,
      * pin input, non-inverted, internal output. */
@@ -121,8 +126,9 @@ int main(void)
         (void)EPIC_COMP1_Init(&hc);
     }
     RD2(CM1CON0, v);
-    /* 0x08: C1ON set, CxCH/CxR/CxPOL/CxOE clear. */
-    CHECK(v == PIC_CMx_CxON, 0x08U);
+    /* 0x08: C1ON set, CxCH/CxR/CxPOL/CxOE clear. C1OUT is a read-only
+     * live output (adding-a-device §4 step 8) and stays masked out. */
+    CHECK((v & (uint8_t)~PIC_CMx_CxOUT) == PIC_CMx_CxON, 0x08U);
     (void)EPIC_COMP1_DeInit();
 
     /* Bank 2, WPUB/IOCB via the GPIO pin helpers. */
@@ -134,6 +140,13 @@ int main(void)
     RD2(IOCB, v);
     CHECK((v & 0x20U) != 0U, 0x0AU);
     EPIC_GPIO_SetPinIOC(5U, 0U);
+#if PIC16F63X_67X_68X_FAMILY_HAS_ANSELH
+    /* ANSELH parts: RB4 to output clears ANS10 (RB4 boots analog). */
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_4, GPIO_MODE_OUTPUT);
+    RD2(ANSELH, v);
+    CHECK((v & PIC_ANSELH_ANS10) == 0U, 0x10U);
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_4, GPIO_MODE_INPUT);
+#endif
 
     /* Bank 2/3, EEPROM access classes: the data pair (EEDATA/EEADR)
      * through EPIC_BANK2_*, the control pair (EECON1) through

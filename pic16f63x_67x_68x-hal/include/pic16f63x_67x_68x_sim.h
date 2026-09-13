@@ -67,8 +67,8 @@ void pic16f63x_67x_68x_sim_drive_comparator(uint8_t comp, uint8_t level);
 
 /**
  * @brief Place a byte in the simulated EEPROM. Subsequent reads of the
- *        same address return it. The part has 128 bytes; the upper half
- *        of the 256-byte table is ignored.
+ *        same address return it. The table holds 256 bytes (the 631
+ *        implements 128, the 677 all 256).
  * @param addr the EEPROM address, 0..127.
  * @param data the byte to store.
  */
