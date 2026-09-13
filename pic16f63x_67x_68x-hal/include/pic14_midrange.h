@@ -1,0 +1,46 @@
+/* PIC14 mid-range family selectors for the PIC16F63x/67x/68x family
+ * (16F631 on this ticket; the #152 siblings reuse every entry and flip
+ * only the shape-dependent ones). Shared pic14-midrange-core code
+ * includes this name; each family's copy resolves via the path. */
+
+#ifndef PIC14_MIDRANGE_H
+#define PIC14_MIDRANGE_H
+#include "pic16f63x_67x_68x_hal.h"
+
+/* Capability contract for shared pic14-midrange-core code (1 = present).
+ * 16F631 (DS40001262F Table 1): PIR1+PIR2, PORTA/B/C, dual comparators
+ * with PIR2 flags, EEPROM completion in PIR2, Timer1 gate, SWDTEN in a
+ * Bank-1 WDTCON. No ADC/SSP/CCP/USART/Timer2/PSP/ULPWU flag. */
+#define PIC14MIDRANGE_FLASH_KW PIC16F63X_67X_68X_FAMILY_FLASH_KW
+#define PIC14MIDRANGE_HAS_PIR2 1
+#define PIC14MIDRANGE_HAS_SSP 0
+#define PIC14MIDRANGE_HAS_SSPMSK 0
+#define PIC14MIDRANGE_HAS_ADC 0
+#define PIC14MIDRANGE_HAS_ADC_PCFG 0
+#define PIC14MIDRANGE_HAS_TMR2 0
+#define PIC14MIDRANGE_HAS_CCP1 0
+#define PIC14MIDRANGE_HAS_USART 0
+#define PIC14MIDRANGE_HAS_CCP2 0
+#define PIC14MIDRANGE_HAS_PSP 0
+#define PIC14MIDRANGE_HAS_PORTC 1
+#define PIC14MIDRANGE_HAS_PORTD 0
+#define PIC14MIDRANGE_HAS_PORTE 0
+#define PIC14MIDRANGE_HAS_COMP_DUAL 1
+#define PIC14MIDRANGE_HAS_CM_PIR1 0
+#define PIC14MIDRANGE_HAS_EE_PIR1 0
+#define PIC14MIDRANGE_HAS_CMCON_BANK0 0
+#define PIC14MIDRANGE_HAS_EEPROM_BANK1 0
+#define PIC14MIDRANGE_HAS_BRGH16 0
+#define PIC14MIDRANGE_HAS_TMR1_GATE 1
+#define PIC14MIDRANGE_HAS_ECCP 0
+#define PIC14MIDRANGE_HAS_VRSS 0
+#define PIC14MIDRANGE_HAS_WDT_SW 1
+#define PIC14MIDRANGE_HAS_WDTCON_BANK1 1
+#define PIC14MIDRANGE_HAS_ANSEL 1
+#define PIC14MIDRANGE_HAS_OSCCON 1
+#define PIC14MIDRANGE_HAS_OSF 1
+#define PIC14MIDRANGE_HAS_ULPWU 0
+#define PIC14MIDRANGE_HAS_BCL_DISPATCH 0
+#define PIC14MIDRANGE_HAS_VRCON 1
+#define PIC14MIDRANGE_PORTA_MASK 0x3FU
+#endif /* PIC14_MIDRANGE_H */

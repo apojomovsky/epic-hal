@@ -91,7 +91,7 @@ void EPIC_POR_ClearFlag(void)
  */
 void EPIC_WDT_SetSoftwareEnable(uint8_t enable)
 {
-#if PIC14MIDRANGE_HAS_WDTCON_BANK1
+#if PIC14MIDRANGE_HAS_WDTCON_BANK1 && defined(EPIC_BANK1_READ8)
     uint8_t wdtcon = 0u;
     EPIC_BANK1_READ8(WDTCON, wdtcon);
     if (enable) wdtcon |= PIC_WDTCON_SWDTEN;
@@ -117,7 +117,7 @@ void EPIC_WDT_SetSoftwareEnable(uint8_t enable)
  */
 void EPIC_WDT_SetPrescaler(uint8_t wdtps)
 {
-#if PIC14MIDRANGE_HAS_WDTCON_BANK1
+#if PIC14MIDRANGE_HAS_WDTCON_BANK1 && defined(EPIC_BANK1_READ8)
     uint8_t wdtcon = 0u;
     EPIC_BANK1_READ8(WDTCON, wdtcon);
     wdtcon &= (uint8_t)~PIC_WDTCON_WDTPS_MASK;

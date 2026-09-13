@@ -14,10 +14,14 @@
 extern void TIMER0_IRQHandler(void);
 /** @brief Timer1 overflow ISR (weak, overridable). */
 extern void TIMER1_IRQHandler(void);
+#if PIC14MIDRANGE_HAS_TMR2
 /** @brief Timer2 period-match ISR (weak, overridable). */
 extern void TIMER2_IRQHandler(void);
+#endif
+#if PIC14MIDRANGE_HAS_CCP1
 /** @brief CCP1 capture/compare/PWM ISR (weak, overridable). */
 extern void CCP1_IRQHandler(void);
+#endif
 #if PIC14MIDRANGE_HAS_CCP2
 /** @brief CCP2 capture/compare/PWM ISR (weak, overridable). */
 extern void CCP2_IRQHandler(void);
@@ -26,10 +30,12 @@ extern void CCP2_IRQHandler(void);
 /** @brief SSP (SPI/I2C) ISR (weak, overridable). */
 extern void SSP_IRQHandler(void);
 #endif
+#if PIC14MIDRANGE_HAS_USART
 /** @brief USART receive ISR (weak, overridable). */
 extern void USART_RX_IRQHandler(void);
 /** @brief USART transmit ISR (weak, overridable). */
 extern void USART_TX_IRQHandler(void);
+#endif
 #if PIC14MIDRANGE_HAS_ADC
 /** @brief ADC conversion-done ISR (weak, overridable). */
 extern void ADC_IRQHandler(void);
@@ -103,11 +109,16 @@ void epic_dispatch_all_irqs(void)
             EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR1IF);
         }
     }
+#if PIC14MIDRANGE_HAS_TMR2
     if (pir1 & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
+#endif
+#if PIC14MIDRANGE_HAS_CCP1
     if (pir1 & PIC_PIR1_CCP1IF) CCP1_IRQHandler();
+#endif
 #if PIC14MIDRANGE_HAS_SSP
     if (pir1 & PIC_PIR1_SSPIF)  SSP_IRQHandler();
 #endif
+#if PIC14MIDRANGE_HAS_USART
     if (pir1 & PIC_PIR1_RCIF)   USART_RX_IRQHandler();
     /* TXIF is a read-only status bit that stays set whenever TXREG is
      * empty, so dispatch the TX handler only when the source is
@@ -122,6 +133,7 @@ void epic_dispatch_all_irqs(void)
             USART_TX_IRQHandler();
         }
     }
+#endif
 #if PIC14MIDRANGE_HAS_ADC
     if (pir1 & PIC_PIR1_ADIF)   ADC_IRQHandler();
 #endif
