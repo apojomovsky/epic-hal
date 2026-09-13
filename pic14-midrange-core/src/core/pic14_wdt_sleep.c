@@ -80,9 +80,10 @@ void EPIC_POR_ClearFlag(void)
 #endif /* PIC14MIDRANGE_HAS_PCON */
 
 #if PIC14MIDRANGE_HAS_WDT_SW
-/* WDTCON software control (Bank 2, 0x105 on 88X). Plain EPIC_REG8
- * accesses silently misdirect to the Bank-0 alias under XC8 v4.00, so
- * reads and RMWs go through the safe banked macros where they exist. */
+/* WDTCON software control (Bank 2, 0x105 on 88X; Bank 1, 0x97 on the
+ * 63x/67x/68x parts). Plain EPIC_REG8 accesses silently misdirect to
+ * the Bank-0 alias under XC8 v4.00, so reads and RMWs go through the
+ * safe banked macros where they exist. */
 
 /**
  * @brief Enable or disable the software Watchdog Timer (WDTCON<SWDTEN>).
@@ -90,7 +91,13 @@ void EPIC_POR_ClearFlag(void)
  */
 void EPIC_WDT_SetSoftwareEnable(uint8_t enable)
 {
-#ifdef EPIC_BANK2_READ8
+#if PIC14MIDRANGE_HAS_WDTCON_BANK1
+    uint8_t wdtcon = 0u;
+    EPIC_BANK1_READ8(WDTCON, wdtcon);
+    if (enable) wdtcon |= PIC_WDTCON_SWDTEN;
+    else        wdtcon &= (uint8_t)~PIC_WDTCON_SWDTEN;
+    EPIC_BANK1_WRITE8(WDTCON, wdtcon);
+#elif defined(EPIC_BANK2_READ8)
     uint8_t wdtcon = 0u;
     EPIC_BANK2_READ8(WDTCON, wdtcon);
     if (enable) wdtcon |= PIC_WDTCON_SWDTEN;
@@ -110,7 +117,13 @@ void EPIC_WDT_SetSoftwareEnable(uint8_t enable)
  */
 void EPIC_WDT_SetPrescaler(uint8_t wdtps)
 {
-#ifdef EPIC_BANK2_READ8
+#if PIC14MIDRANGE_HAS_WDTCON_BANK1
+    uint8_t wdtcon = 0u;
+    EPIC_BANK1_READ8(WDTCON, wdtcon);
+    wdtcon &= (uint8_t)~PIC_WDTCON_WDTPS_MASK;
+    wdtcon |= (uint8_t)((wdtps << PIC_WDTCON_WDTPS_POS) & PIC_WDTCON_WDTPS_MASK);
+    EPIC_BANK1_WRITE8(WDTCON, wdtcon);
+#elif defined(EPIC_BANK2_READ8)
     uint8_t wdtcon = 0u;
     EPIC_BANK2_READ8(WDTCON, wdtcon);
     wdtcon &= (uint8_t)~PIC_WDTCON_WDTPS_MASK;
