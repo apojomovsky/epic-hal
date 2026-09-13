@@ -6,7 +6,7 @@
 #
 # Usage: sim-mdb-run.sh <family> <mcu> <device> <module> [wait_ms] [mode] [extra_mdb] [eeprom_writes]
 #   wait_ms=2000 wall-clock (SIM slower than real time); mode=uart|gpio|toggle
-#   (gpio: PORTA bit 0, pic16f193x only; toggle: see below);
+#   (gpio: PORTA bit 0, pic16f193x and pic16f63x_67x_68x; toggle: see below);
 #   extra_mdb: commands before `quit`;
 #   eeprom_writes=0: SIM never completes a CPU-executed EEPROM write; each cycle
 #   halts, clears WR, replays the EECON2 unlock, re-asserts WR. Keep >= the

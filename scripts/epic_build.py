@@ -598,8 +598,12 @@ CANONICAL = {
     "PIC18Fxx5x": "18F4550",
     "PIC16F193X": "16F1937",
     "PIC16F628A": "16F628A",
+<<<<<<< HEAD
     "PIC16F83_84": "16F84A",
     "PIC16F63x_67x_68x": "16F631",
+=======
+    "PIC16F63x_67x_68x": "16F677",
+>>>>>>> 30b8ecd (fix(review): ANSELH audit conditional, probe COMP2/PCON coverage, nits)
 }
 
 def cmd_matrix(args):

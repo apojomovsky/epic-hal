@@ -233,6 +233,9 @@ CONDITIONAL_REGS.update({
     "16F882": {"PORTD", "TRISD"},
     "16F883": {"PORTD", "TRISD"},
     "16F886": {"PORTD", "TRISD"},
+    # 63x/67x/68x 16F631: no ANSELH (677-only); the HAL defines it
+    # unconditionally and gates the usage on FAMILY_HAS_ANSELH.
+    "16F631": {"ANSELH"},
 })
 
 # Bits the DFP does not define but the datasheet documents:

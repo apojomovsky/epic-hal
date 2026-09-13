@@ -21,8 +21,8 @@ those peripherals arrive with the siblings that carry them.
 
 Host sim: `cmake -B build && cmake --build build`, run any
 `build/example_*` directly. Real target: `make xc8-build
-MODULE=pic16f63x_67x_68x-hal MCU=16F631` (blink) and the `MODE=gpio`
-mdb gate `make mdb-test MODULE=pic16f63x_67x_68x-hal MCU=16F631`
+MODULE=pic16f63x_67x_68x-hal MCU=16F677` (blink) and the `MODE=gpio`
+mdb gate `make mdb-test MODULE=pic16f63x_67x_68x-hal MCU=16F677`
 (bank probe, RA0 marker). No USART exists, so every mdb gate on this
 family is MODE=gpio.
 

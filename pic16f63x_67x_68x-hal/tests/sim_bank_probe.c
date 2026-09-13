@@ -35,7 +35,7 @@ extern void pic16f63x_67x_68x_harness_halt(void);
 static uint16_t g_fail = 0u;
 /**
  * @brief Bump the failure counter and log a marker line.
- * @param idx the check index (0x00..0x10), logged as F characters.
+ * @param idx the check index (0x00..0x14), logged as F characters.
  */
 static void fail(uint8_t idx)
 {
@@ -103,9 +103,10 @@ int main(void)
     RD1(WDTCON, v);
     CHECK((v & PIC_WDTCON_SWDTEN) == 0U, 0x05U);
 
-    /* Bank 1, PCON: the BOR helper reads through the banked path. */
-    v = EPIC_BOR_GetStatus();
-    (void)v;
+    /* Bank 1, PCON: SBOREN reads back set through the banked path
+     * (nBOR/nPOR are reset-cause dependent and stay unasserted). */
+    RD1(PCON, v);
+    CHECK((v & PIC_PCON_SBOREN) != 0U, 0x11U);
 
     /* Bank 2, ANSEL via GPIO analog mode: RA1 to analog sets ANS1.
      * RA1, not RA0: RA0 is the PASS/FAIL marker pin (output, armed by
@@ -129,7 +130,29 @@ int main(void)
     /* 0x08: C1ON set, CxCH/CxR/CxPOL/CxOE clear. C1OUT is a read-only
      * live output (adding-a-device §4 step 8) and stays masked out. */
     CHECK((v & (uint8_t)~PIC_CMx_CxOUT) == PIC_CMx_CxON, 0x08U);
-    (void)EPIC_COMP1_DeInit();
+
+    /* Bank 2, CM2CON0/VRCON via the C2 driver: C2 on, channel IN1,
+     * pin input, CVREF reference. CM2CON0 = C2ON|C2R|CH1 = 0x85;
+     * VRCON = C2VREN = 0x40. */
+    {
+        COMP_HandleTypeDef hc2 = COMP_HANDLE_DEFAULT;
+        hc2.Channel     = COMP_CHANNEL_IN1;
+        hc2.InputSource = COMP_INPUT_REF;
+        hc2.RefSource   = COMP_REF_CVREF;
+        hc2.ChangeCallback = 0;
+        (void)EPIC_COMP2_Init(&hc2);
+    }
+    RD2(CM2CON0, v);
+    CHECK((v & (uint8_t)~PIC_CMx_CxOUT) == 0x85U, 0x12U);
+    RD2(VRCON, v);
+    CHECK(v == PIC_VRCON_C2VREN, 0x13U);
+    /* CM2CON1 via the C2-sync helper: POR T1GSS=1 must survive the
+     * RMW that sets C2SYNC. (SetT1GateSource shares the same RMW
+     * shape; the T1GSS bit itself is POR-set.) */
+    EPIC_COMP_SetC2Sync(1U);
+    RD2(CM2CON1, v);
+    /* MC1OUT/MC2OUT are read-only live outputs, masked out. */
+    CHECK((v & 0x03U) == (uint8_t)(PIC_CM2CON1_T1GSS | PIC_CM2CON1_C2SYNC), 0x14U);
 
     /* Bank 2, WPUB/IOCB via the GPIO pin helpers. */
     EPIC_GPIO_SetPinPullup(4U, 1U);
