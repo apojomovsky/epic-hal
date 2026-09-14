@@ -224,6 +224,10 @@ def _make_cli_asset(version: str, out_dir: pathlib.Path) -> pathlib.Path:
     (root / "epic-hal").chmod(0o755)
     for mod in ("epic_hal_init.py", "epicmanifest.py", "bundlegen.py"):
         shutil.copy2(REPO / "scripts" / mod, root / mod)
+    # The CLI reports this version through `epic-hal --version` (crate-level
+    # stamping would otherwise be absent); the family bundles carry VERSION and
+    # pio's framework packer requires it, so the CLI asset mirrors that file.
+    (root / "VERSION").write_text(version + "\n")
     manifest_dst = root / "epic-common" / "manifest" / "modules.toml"
     manifest_dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(epicmanifest.default_path(), manifest_dst)

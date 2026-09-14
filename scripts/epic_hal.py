@@ -84,9 +84,28 @@ def cmd_init(args) -> int:
     return 0
 
 
+def _print_version() -> int:
+    """Print the epic-hal version and exit.
+
+    The authoritative stamp is the ``VERSION`` file shipped in the release
+    CLI asset (and in every family bundle) by make_bundle.py, mirroring how
+    epic-cc's driver reports its build stamp through ``--version``. In a
+    source checkout there is no such file, so report the commit-less "dev"
+    label rather than fabricate a release number.
+    """
+    vf = pathlib.Path(__file__).resolve().parent / "VERSION"
+    if vf.exists():
+        print(f"epic-hal {vf.read_text().strip()}")
+    else:
+        print("epic-hal dev (source checkout)")
+    return 0
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="epic-hal")
-    sub = p.add_subparsers(dest="cmd", required=True)
+    p.add_argument("--version", "-V", action="store_true",
+                   help="print the epic-hal version and exit")
+    sub = p.add_subparsers(dest="cmd")
     ip = sub.add_parser("init", help="scaffold a new PIC project")
     ip.add_argument("--family")
     ip.add_argument("--part")
@@ -99,6 +118,10 @@ def main(argv=None) -> int:
                     help="toolchain for the scaffolded Makefile (default: epic-cc)")
     ip.set_defaults(func=cmd_init)
     args = p.parse_args(argv)
+    if args.version:
+        return _print_version()
+    if args.cmd is None:
+        p.error("no command given")
     return args.func(args)
 
 

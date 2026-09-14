@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here, generated from
 Conventional Commits. Dates are UTC.
+## [Unreleased]
+
+### Features
+
+- PIC16F83_84 family on pic14-midrange-core, 16F84A exemplar (#166)
+
+- 63x/67x/68x family with 16F677 canonical (#168)
+
+- Onboard the remaining 63x/67x/68x parts (#173)
+
+
+### Miscellaneous
+
+- Pin the clang bundle to the stable v0.3.0 release (#172)
+
 ## [0.6.0] - 2026-09-13
 
 ### Bug Fixes
