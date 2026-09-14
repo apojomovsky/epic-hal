@@ -98,6 +98,15 @@ void EPIC_WDT_SetSoftwareEnable(uint8_t enable)
     if (enable) wdtcon |= PIC_WDTCON_SWDTEN;
     else        wdtcon &= (uint8_t)~PIC_WDTCON_SWDTEN;
     EPIC_BANK1_WRITE8(WDTCON, wdtcon);
+#elif PIC14MIDRANGE_HAS_WDTCON_BANK0
+    /* Bank-0 WDTCON (63x 2-bank WDT shapes): plain access needs no
+     * switch, and every caller runs at bank 0 by convention. The
+     * address rides the WDTCON_BANK0 alias (the Bank-1 constant does
+     * not exist there). */
+    uint8_t wdtcon = EPIC_REG8(PIC_REG_WDTCON_BANK0);
+    if (enable) wdtcon |= PIC_WDTCON_SWDTEN;
+    else        wdtcon &= (uint8_t)~PIC_WDTCON_SWDTEN;
+    EPIC_REG8(PIC_REG_WDTCON_BANK0) = wdtcon;
 #elif !PIC14MIDRANGE_HAS_WDTCON_BANK0 && defined(EPIC_BANK2_READ8)
     uint8_t wdtcon = 0u;
     EPIC_BANK2_READ8(WDTCON, wdtcon);
@@ -124,6 +133,11 @@ void EPIC_WDT_SetPrescaler(uint8_t wdtps)
     wdtcon &= (uint8_t)~PIC_WDTCON_WDTPS_MASK;
     wdtcon |= (uint8_t)((wdtps << PIC_WDTCON_WDTPS_POS) & PIC_WDTCON_WDTPS_MASK);
     EPIC_BANK1_WRITE8(WDTCON, wdtcon);
+#elif PIC14MIDRANGE_HAS_WDTCON_BANK0
+    uint8_t wdtcon = EPIC_REG8(PIC_REG_WDTCON_BANK0);
+    wdtcon &= (uint8_t)~PIC_WDTCON_WDTPS_MASK;
+    wdtcon |= (uint8_t)((wdtps << PIC_WDTCON_WDTPS_POS) & PIC_WDTCON_WDTPS_MASK);
+    EPIC_REG8(PIC_REG_WDTCON_BANK0) = wdtcon;
 #elif !PIC14MIDRANGE_HAS_WDTCON_BANK0 && defined(EPIC_BANK2_READ8)
     uint8_t wdtcon = 0u;
     EPIC_BANK2_READ8(WDTCON, wdtcon);

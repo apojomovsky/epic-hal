@@ -85,6 +85,11 @@ class SimVariant:
     config: dict[str, str]
     sources: list[str] | None = None
     depends_on: list[str] | None = None
+    # Per-MCU full overrides, mirroring Example.variants: a part whose
+    # config spelling differs from the family default (63x INTOSCIO
+    # vs INTRCIO) restates the sim entry. Absent MCUs use the family
+    # default unchanged.
+    variants: dict[str, SimVariant] | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -226,15 +231,22 @@ class Manifest:
             return example.hal
         return self._module(module_name).needs_hal
 
-    def sim_variant_for(self, module_name: str, family_name: str) -> SimVariant | None:
+    def sim_variant_for(self, module_name: str, family_name: str,
+                        mcu: str | None = None) -> SimVariant | None:
         """This module's HARNESS=sim variant for a family, or None.
 
         Only three (module, family) pairs have one today: epic-tick on
         PIC16F87XA and PIC18Fxx5x, and the PIC16F193X bare-HAL firmware
         module, mirroring the three sim-tests.yml legs that exist.
+
+        With mcu, a per-MCU variant override (SimVariant.variants)
+        wins; without one the family entry is returned unchanged.
         """
         example = self.example_for(module_name, family_name)
-        return None if example is None else example.sim
+        sim = None if example is None else example.sim
+        if sim is not None and mcu is not None and sim.variants:
+            return sim.variants.get(mcu, sim)
+        return sim
 
     def sources_for(self, module_name: str, mcu: str, variant: str = "target",
                     toolchain: str = "xc8") -> list[str]:
@@ -272,7 +284,7 @@ class Manifest:
         overrides them.
         """
         fam = self.family_of(mcu)
-        sim = self.sim_variant_for(module_name, fam.name) if variant == "sim" else None
+        sim = self.sim_variant_for(module_name, fam.name, mcu) if variant == "sim" else None
         if variant == "sim" and sim is None:
             raise ManifestError(
                 f"{module_name} has no sim variant for {fam.name}"
@@ -385,12 +397,16 @@ def _parse_sim_variant(module_name, family_name, table):
     if table is None:
         return None
     where = f"modules.{module_name}.example.{family_name}.sim"
+    variants = table.get("variants", {})
     return SimVariant(
         name=_require(table, "name", where),
         harness_src=_require(table, "harness_src", where),
         config=dict(_require(table, "config", where)),
         sources=(list(table["sources"]) if "sources" in table else None),
         depends_on=(list(table["depends_on"]) if "depends_on" in table else None),
+        variants={vname: _parse_sim_variant(
+            module_name, f"{family_name}.variants.{vname}", vtable)
+            for vname, vtable in variants.items()} or None,
     )
 
 

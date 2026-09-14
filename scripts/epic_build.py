@@ -78,7 +78,7 @@ def _example_name_and_config(manifest, module, mcu, variant):
     fam = manifest.family_of(mcu)
     example = manifest.example_for(module, fam.name, mcu)
     if variant == "sim":
-        sim = manifest.sim_variant_for(module, fam.name)
+        sim = manifest.sim_variant_for(module, fam.name, mcu)
         if sim is None:
             raise UnsupportedError(f"{module} has no sim variant for {fam.name}")
         return sim.name, sim.config

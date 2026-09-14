@@ -52,6 +52,9 @@
 #define PIC_REG_WPUA          0x95U
 #define PIC_REG_IOCA          0x96U
 #define PIC_REG_WDTCON        0x97U
+/* Second WDTCON address (0x18, Bank 0) for the 2-bank WDT parts
+ * (639/684/688); the Bank-1 WDTCON above does not exist there. */
+#define PIC_REG_WDTCON_BANK0  0x18U
 
 /* Bank 2. */
 #define PIC_REG_EEDATA        0x10CU

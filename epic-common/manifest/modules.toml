@@ -250,6 +250,7 @@ variants = [
   # builds variants[-1], as on the 87XA/88X/18F families).
   "16F631",
   "16F630",
+  "16F639",
   "16F677",
 ]
 dfp      = "Microchip.PIC16Fxxx_DFP"
@@ -613,6 +614,7 @@ needs_hal  = true
 
 [modules.pic16f63x_67x_68x-hal.supported]
 PIC16F63x_67x_68x = [
+  "16F639",
   "16F677",
 ]
 [modules.pic16f63x_67x_68x-hal.excluded]
@@ -629,6 +631,14 @@ sources = [
   "tests/example_blink.c",
 ]
 config  = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTRCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "ON" }
+
+[modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x.variants.16F639]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTOSCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "ON" }
+
 # HARNESS=sim: the banked-SFR probe, reported on RA0 (MODE=gpio; the
 # family has no USART). WDTE=OFF like every other sim variant (a
 # diagnostic build that terminates and reports does not need the
@@ -640,6 +650,15 @@ sources     = [
   "tests/sim_bank_probe.c",
 ]
 config      = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTRCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
+
+[modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x.sim.variants.16F639]
+name        = "bank-probe"
+harness_src = "pic16f63x_67x_68x-hal/src/mdb/pic16f63x_67x_68x_harness_mdb.c"
+sources     = [
+  "tests/sim_bank_probe.c",
+]
+config      = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTOSCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
+
 [modules.pic16f83_84-hal]
 dir        = "pic16f83_84-hal"
 sources    = []
