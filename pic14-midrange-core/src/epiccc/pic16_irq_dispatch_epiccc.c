@@ -27,7 +27,10 @@ void epic_dispatch_all_irqs(void)
     if (intcon & PIC_INTCON_RBIF) RB_IRQHandler();
     /* Other PIR1/PIR2 flags are not used by the smoke; if any are set,
      * just clear them so they do not re-trigger, without calling the
-     * handlers that would pull in the rest of the HAL. */
+     * handlers that would pull in the rest of the HAL. On PIR-less
+     * families (83/84/84A) the whole PIR1 section compiles out and the
+     * INTCON-resident EEIF gets the same clear treatment. */
+#if PIC14MIDRANGE_HAS_PIR1
     uint8_t pir1 = EPIC_REG8(PIC_REG_PIR1);
     if (pir1 & PIC_PIR1_TMR1IF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR1IF);
     if (pir1 & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
@@ -52,6 +55,13 @@ void epic_dispatch_all_irqs(void)
 #endif
 #if PIC14MIDRANGE_HAS_EE_PIR1
     if (pir1 & PIC_PIR1_EEIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_EEIF);
+#endif
+#else
+    {   /* PIR-less family (83/84/84A): EEIF is EECON1<4>, Bank 1. */
+        uint8_t eecon1 = 0U;
+        EPIC_BANK1_READ8(EECON1, eecon1);
+        if (eecon1 & PIC_EECON1_EEIF) EPIC_BANK1_WRITE8(EECON1, (uint8_t)(eecon1 & (uint8_t)~PIC_EECON1_EEIF));
+    }
 #endif
 #if PIC14MIDRANGE_HAS_PIR2
     /* 87XA PIR2 (DS39582B §14.11): CCP2IF/BCLIF/EEIF/CMIF; the 88X

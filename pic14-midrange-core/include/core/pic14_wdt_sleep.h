@@ -3,7 +3,8 @@
  * Config bits are left to the user's MPLAB X/XC8 setup;
  * EPIC_Sleep_Enter is a no-op on host. The 88X adds WDTCON software
  * control (SWDTEN/prescaler); parts without WDTCON (87XA, 628A) run
- * the same file with an empty software block. */
+ * the same file with an empty software block. Parts without PCON at
+ * all (83/84/84A, no BOR either) compile out the BOR/POR helpers. */
 
 #ifndef PIC14_WDT_SLEEP_H
 #define PIC14_WDT_SLEEP_H
@@ -24,6 +25,7 @@ void EPIC_WDT_Refresh(void);
  *         halts until any enabled interrupt wakes it (§14.14).
  */
 void EPIC_Sleep_Enter(void);
+#if PIC14MIDRANGE_HAS_PCON
 
 /**
  * @brief  Returns 1 if the last reset was a Brown-out Reset
@@ -48,6 +50,7 @@ uint8_t EPIC_POR_GetStatus(void);
  * @brief Clear PCON<POR>.
  */
 void EPIC_POR_ClearFlag(void);
+#endif /* PIC14MIDRANGE_HAS_PCON */
 
 #if PIC14MIDRANGE_HAS_WDT_SW
 /**

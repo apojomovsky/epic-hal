@@ -8,16 +8,24 @@
 static void (*g_eeprom_cb)(void) = NULL;
 
 /* EEPROM register placement is per family (DFP-verified): 87XA/88X keep
- * the data pair in Bank 2 and the control pair in Bank 3, while the
- * 628A keeps all four in Bank 1. The EPIC_BANKn_* accessors need a
- * literal SFR name at compile time, not a runtime addr, so the helpers
- * below dispatch on `addr` before any bank switch. */
+ * the data pair in Bank 2 and the control pair in Bank 3, the 628A
+ * keeps all four in Bank 1, and the 83/84/84A keep EEDATA/EEADR in
+ * Bank 0 with EECON1/EECON2 in Bank 1. The EPIC_BANKn_* accessors need
+ * a literal SFR name at compile time, not a runtime addr, so the
+ * helpers below dispatch on `addr` before any bank switch. */
 #if PIC14MIDRANGE_HAS_EEPROM_BANK1
 #define EE_ADDR_DATA  0x9AU
 #define EE_ADDR_ADDR  0x9BU
 #define EE_ADDR_CTRL  0x9CU
 #define EE_ADDR_CTRL2 0x9DU
 #define EE_DATA_BANK  1
+#define EE_CTRL_BANK  1
+#elif PIC14MIDRANGE_HAS_EEPROM_BANK0
+#define EE_ADDR_DATA  0x08U
+#define EE_ADDR_ADDR  0x09U
+#define EE_ADDR_CTRL  0x88U
+#define EE_ADDR_CTRL2 0x89U
+#define EE_DATA_BANK  0
 #define EE_CTRL_BANK  1
 #else
 #define EE_ADDR_DATA  0x0CU
@@ -28,22 +36,24 @@ static void (*g_eeprom_cb)(void) = NULL;
 #define EE_CTRL_BANK  3
 #endif
 
+/* Bank-2/3 parts use the EPIC_BANK3_* literal-token macros, Bank-1-only
+ * parts (628A) and Bank-0-data parts (83/84/84A: the control pair is
+ * still in Bank 1 there) the EPIC_BANK1_* ones; the addr dispatch below
+ * picks the SFR token. Literal tokens are REQUIRED here: a
+ * runtime-address EPIC_REG8 access misdirects under XC8 on banked
+ * parts (the 628A b2 writes landed in Bank 0 while b3 appeared to
+ * land; see pic16f628a-hal/MANUAL.md), so the variable-address
+ * fallback below is host-sim only. */
+#if defined(EPIC_BANK3_WRITE8) || defined(EPIC_BANK1_WRITE8) || \
+    defined(EPIC_BANK0_WRITE8)
 /**
  * @brief Write a byte to an EEPROM control register (EECON1/EECON2).
- * Bank-2/3 parts use the EPIC_BANK3_* literal-token macros, Bank-1-only
- * parts (628A) the EPIC_BANK1_* ones; the addr dispatch below picks the
- * SFR token. Literal tokens are REQUIRED here: a runtime-address
- * EPIC_REG8 access misdirects under XC8 on banked parts (the 628A
- * b2 writes landed in Bank 0 while b3 appeared to land; see
- * pic16f628a-hal/MANUAL.md), so the variable-address fallback below is
- * host-sim only.
  * @param addr the register address.
  * @param v the byte to write.
  */
-#if defined(EPIC_BANK3_WRITE8) || defined(EPIC_BANK1_WRITE8)
 static void b3_write(uint16_t addr, uint8_t v)
 {
-#if PIC14MIDRANGE_HAS_EEPROM_BANK1
+#if PIC14MIDRANGE_HAS_EEPROM_BANK1 || PIC14MIDRANGE_HAS_EEPROM_BANK0
     if (addr == EE_ADDR_CTRL) EPIC_BANK1_WRITE8(EECON1, v);
     else                      EPIC_BANK1_WRITE8(EECON2, v);
 #else
@@ -61,7 +71,7 @@ static uint8_t b3_read(uint16_t addr)
 {
     uint8_t v = 0U;
     (void)addr;   /* only EECON1 is ever read via b3_read. */
-#if PIC14MIDRANGE_HAS_EEPROM_BANK1
+#if PIC14MIDRANGE_HAS_EEPROM_BANK1 || PIC14MIDRANGE_HAS_EEPROM_BANK0
     EPIC_BANK1_READ8(EECON1, v);
 #else
     EPIC_BANK3_READ8(EECON1, v);
@@ -79,6 +89,9 @@ static void b2_write(uint16_t addr, uint8_t v)
 #if PIC14MIDRANGE_HAS_EEPROM_BANK1
     if (addr == EE_ADDR_DATA) EPIC_BANK1_WRITE8(EEDATA, v);
     else                      EPIC_BANK1_WRITE8(EEADR, v);
+#elif PIC14MIDRANGE_HAS_EEPROM_BANK0
+    if (addr == EE_ADDR_DATA) EPIC_BANK0_WRITE8(EEDATA, v);
+    else                      EPIC_BANK0_WRITE8(EEADR, v);
 #else
     if (addr == 0x0CU) EPIC_BANK2_WRITE8(EEDATA, v);
     else               EPIC_BANK2_WRITE8(EEADR, v);
@@ -96,6 +109,9 @@ static uint8_t b2_read(uint16_t addr)
 #if PIC14MIDRANGE_HAS_EEPROM_BANK1
     if (addr == EE_ADDR_DATA) EPIC_BANK1_READ8(EEDATA, v);
     else                      EPIC_BANK1_READ8(EEADR, v);
+#elif PIC14MIDRANGE_HAS_EEPROM_BANK0
+    if (addr == EE_ADDR_DATA) EPIC_BANK0_READ8(EEDATA, v);
+    else                      EPIC_BANK0_READ8(EEADR, v);
 #else
     if (addr == 0x0CU) EPIC_BANK2_READ8(EEDATA, v);
     else               EPIC_BANK2_READ8(EEADR, v);
@@ -261,8 +277,8 @@ void EPIC_EEPROM_ReadBuffer(uint8_t start, uint8_t *buf, uint8_t len)
 /**
  * @brief Write a contiguous block of EEPROM bytes.
  * @param start the first address to write.
- * @param buf the bytes to store.
- * @param len the number of bytes to write.
+ * @param buf where the bytes are written.
+ * @param len the number of bytes to read.
  * @return EPIC_OK on success, or the first non-OK write status.
  */
 EPIC_StatusTypeDef EPIC_EEPROM_WriteBuffer(uint8_t start,
@@ -279,19 +295,24 @@ EPIC_StatusTypeDef EPIC_EEPROM_WriteBuffer(uint8_t start,
 
 /**
  * @brief Report whether the EEPROM write completed.
- * @return 1 if EEIF is set (PIR2<4>, PIR1<7> on Bank-1 parts).
+ * @return 1 if EEIF is set (EECON1<4> on PIR-less parts, PIR1<7> on
+ *         Bank-1-EEPROM parts, PIR2<4> elsewhere).
  */
 uint8_t EPIC_EEPROM_IsWriteComplete(void)
 {
 #if PIC14MIDRANGE_HAS_EE_PIR1
     /* EEIF lives in PIR1<7>. */
     return (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_EEIF) ? 1U : 0U;
-#else
+#elif PIC14MIDRANGE_HAS_PIR2
     /* EEIF lives in PIR2<4>. */
-    return (EPIC_REG8(0x0DU) & 0x10U) ? 1U : 0U;
+    return (EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_EEIF) ? 1U : 0U;
+#else
+    /* No PIR/PIE pair (83/84/84A): EEIF is EECON1<4>, Bank 1. */
+    uint8_t eecon1 = 0U;
+    EPIC_BANK1_READ8(EECON1, eecon1);
+    return (eecon1 & PIC_EECON1_EEIF) ? 1U : 0U;
 #endif
 }
-
 /**
  * @brief Clear the EEPROM write-complete flag.
  */
@@ -307,14 +328,19 @@ void EPIC_EEPROM_ClearITFlag(void)
 void EEPROM_IRQHandler(void)
 {
     /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
-     * context; see the CCP handlers). EEIF is PIR2 bit 4 (PIR1 bit 7
-     * on Bank-1-EEPROM parts). */
+     * context; see the CCP handlers). EEIF is PIR2 bit 4, PIR1 bit 7
+     * on Bank-1-EEPROM parts, EECON1 bit 4 on PIR-less parts. */
 #if PIC14MIDRANGE_HAS_EE_PIR1
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_EEIF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_EEIF);
-#else
+#elif PIC14MIDRANGE_HAS_PIR2
     if (!(EPIC_REG8(PIC_REG_PIR2) & PIC_PIR2_EEIF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_EEIF);
+#else
+    uint8_t eecon1 = 0U;
+    EPIC_BANK1_READ8(EECON1, eecon1);
+    if (!(eecon1 & PIC_EECON1_EEIF)) return;
+    EPIC_BANK1_WRITE8(EECON1, (uint8_t)(eecon1 & (uint8_t)~PIC_EECON1_EEIF));
 #endif
     if (g_eeprom_cb) g_eeprom_cb();
 }

@@ -589,6 +589,7 @@ CANONICAL = {
     "PIC18Fxx5x": "18F4550",
     "PIC16F193X": "16F1937",
     "PIC16F628A": "16F628A",
+    "PIC16F83_84": "16F84A",
 }
 
 def cmd_matrix(args):

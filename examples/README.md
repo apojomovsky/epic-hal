@@ -9,6 +9,7 @@ correctly: initialise the HAL, toggle a pin, loop.
 | `epic-hal-demo-pic18fxx5x.X` | PIC18Fxx5x | PIC18F4550 |
 | `epic-hal-demo-pic16f193x.X` | PIC16F193X | PIC16F1937 (HAL only) |
 | `epic-hal-demo-pic16f628a.X` | PIC16F628A | PIC16F628A |
+| `epic-hal-demo-pic16f83_84.X` | PIC16F83_84 | PIC16F84A |
 
 `scripts/make_bundle.py` copies the matching one into each bundle as
 `examples/epic-hal-demo.X`, so inside a bundle the project sits one level
@@ -19,9 +20,9 @@ scaffolder patches: `scripts/epic_hal_init.py` copies the matching
 reference project and rewrites its part and module set, so a scaffolded
 project starts from a known-good reference instead of a blank one.
 
-Four projects, not one per module. `nbproject` XML is generated, pins
+Five projects, not one per module. `nbproject` XML is generated, pins
 DFP versions, and rots; mirroring the old per-module `mcu/` layout would
-mean 29 of these. If you find yourself wanting a fifth, add a
+mean 29 of these. If you find yourself wanting a sixth, add a
 configuration to an existing project instead.
 
 To change which device a project targets, use Project Properties rather

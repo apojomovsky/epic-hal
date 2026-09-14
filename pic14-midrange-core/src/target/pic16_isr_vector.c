@@ -4,13 +4,15 @@
  * same dispatcher as its sim IRQ callback instead. */
 
 #include "core/pic16_irq.h"
+#include "pic14_midrange.h"   /* PIC14MIDRANGE_COMMON_RAM_BASE */
 
 /* Definitions for the family target platform header's `extern volatile
  * uint8_t epic_irq_pie_scratch`/`epic_bank1_scratch` (see that header's
- * comments for what they're for); `__at`-pinned into PIC16 mid-range's
- * bank-independent common RAM. */
-volatile uint8_t epic_irq_pie_scratch __at(0x70);
-volatile uint8_t epic_bank1_scratch __at(0x71);
+ * comments for what they're for); `__at`-pinned into PIC14 mid-range's
+ * bank-independent common RAM, whose base is per family (0x70 on
+ * 87XA/88X/628A parts, 0x40 on the 83/84/84A). */
+volatile uint8_t epic_irq_pie_scratch __at(PIC14MIDRANGE_COMMON_RAM_BASE);
+volatile uint8_t epic_bank1_scratch __at(PIC14MIDRANGE_COMMON_RAM_BASE + 1);
 
 /**
  * @brief Fan-out dispatcher invoked from the interrupt vector; defined
