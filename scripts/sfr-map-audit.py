@@ -68,6 +68,22 @@ FAMILIES = {
             ("16F84A", "Microchip.PIC16Fxxx_DFP", "pic16f84a.h"),
         ],
     ),
+    "pic16f63x_67x_68x-hal": (
+        "pic16f63x_67x_68x-hal/include/pic16f63x_67x_68x_sfr.h",
+        [
+            ("16F631", "Microchip.PIC16Fxxx_DFP", "pic16f631.h"),
+        ],
+    ),
+    "pic16f88x-hal": (
+        "pic16f88x-hal/include/pic16f88x_sfr.h",
+        [
+            ("16F882", "Microchip.PIC16Fxxx_DFP", "pic16f882.h"),
+            ("16F883", "Microchip.PIC16Fxxx_DFP", "pic16f883.h"),
+            ("16F884", "Microchip.PIC16Fxxx_DFP", "pic16f884.h"),
+            ("16F886", "Microchip.PIC16Fxxx_DFP", "pic16f886.h"),
+            ("16F887", "Microchip.PIC16Fxxx_DFP", "pic16f887.h"),
+        ],
+    ),
 }
 
 
@@ -124,7 +140,6 @@ BIT_ALIASES = {
     ("STATUS", "DC"): ("STATUS", "DC"),
     ("STATUS", "Z"): ("STATUS", "ZERO"),
     # OPTION_REG: the DFP spells the register name in full.
-    ("OPTION", "RBPU"): ("OPTION_REG", "RBPU"),
     ("OPTION", "INTEDG"): ("OPTION_REG", "INTEDG"),
     ("OPTION", "T0CS"): ("OPTION_REG", "T0CS"),
     ("OPTION", "T0SE"): ("OPTION_REG", "T0SE"),
@@ -139,7 +154,12 @@ BIT_ALIASES = {
     ("PCON", "RI"): ("PCON", "nRI"),
     ("PCON", "RMCLR"): ("PCON", "nRMCLR"),
     ("OPTION", "WPUEN"): ("OPTION_REG", "nWPUEN"),
-    ("OPTION", "RBPU"): ("OPTION_REG", "nWPUEN"),
+    # 87XA/88X OPTION_REG: the HAL spells the pull-up bit RBPU (the
+    # datasheet name); the DFP spells it nRBPU.
+    ("OPTION", "RBPU"): ("OPTION_REG", "nRBPU"),
+    # 63x/67x/68x OPTION_REG: the pull-up bit covers both ports
+    # (RABPU); the DFP spells it nRABPU.
+    ("OPTION", "RABPU"): ("OPTION_REG", "nRABPU"),
     # 193X ADCON0: the HAL spells the GO/DONE bit GO_NDONE; the 87XA
     # and PIC18 spell it GO_DONE (the DFP defines both GO_DONE and the
     # n-prefixed alias at the same position).
@@ -148,6 +168,23 @@ BIT_ALIASES = {
     # 628A T1CON: the HAL uses the datasheet name T1SYNC; the DFP
     # spells it nT1SYNC (1 = do not synchronize).
     ("T1CON", "T1SYNC"): ("T1CON", "nT1SYNC"),
+    # 88X CCP: the HAL anchors the mode/duty/config bits on CCP1/CCP2
+    # (PIC_CCP1_*); the DFP anchors the same bit names on CCP1CON/
+    # CCP2CON. Positions still checked after the alias.
+    ("CCP1", "CCP1M0"): ("CCP1CON", "CCP1M0"),
+    ("CCP1", "CCP1M1"): ("CCP1CON", "CCP1M1"),
+    ("CCP1", "CCP1M2"): ("CCP1CON", "CCP1M2"),
+    ("CCP1", "CCP1M3"): ("CCP1CON", "CCP1M3"),
+    ("CCP1", "DC1B0"): ("CCP1CON", "DC1B0"),
+    ("CCP1", "DC1B1"): ("CCP1CON", "DC1B1"),
+    ("CCP1", "P1M0"): ("CCP1CON", "P1M0"),
+    ("CCP1", "P1M1"): ("CCP1CON", "P1M1"),
+    ("CCP2", "CCP2M0"): ("CCP2CON", "CCP2M0"),
+    ("CCP2", "CCP2M1"): ("CCP2CON", "CCP2M1"),
+    ("CCP2", "CCP2M2"): ("CCP2CON", "CCP2M2"),
+    ("CCP2", "CCP2M3"): ("CCP2CON", "CCP2M3"),
+    ("CCP2", "DC2B0"): ("CCP2CON", "DC2B0"),
+    ("CCP2", "DC2B1"): ("CCP2CON", "DC2B1"),
 }
 
 # Registers and bits that are legitimately absent from a part's DFP
@@ -168,6 +205,11 @@ CONDITIONAL_BITS = {
     # interrupt bits are absent from those parts' DFP headers.
     "18F2455": {("IPR1", "SPPIP"), ("PIE1", "SPPIE"), ("PIR1", "SPPIF")},
     "18F2550": {("IPR1", "SPPIP"), ("PIE1", "SPPIE"), ("PIR1", "SPPIF")},
+    # 88X 28-pin parts (882/883/886): ANSEL ANS5/ANS6/ANS7 are
+    # unimplemented on the 11-channel ADC (present on 884/887).
+    "16F882": {("ANSEL", "ANS5"), ("ANSEL", "ANS6"), ("ANSEL", "ANS7")},
+    "16F883": {("ANSEL", "ANS5"), ("ANSEL", "ANS6"), ("ANSEL", "ANS7")},
+    "16F886": {("ANSEL", "ANS5"), ("ANSEL", "ANS6"), ("ANSEL", "ANS7")},
 }
 
 # Registers absent from the smaller parts' DFP headers but defined
@@ -186,6 +228,14 @@ CONDITIONAL_REGS.update({
                 "LCDDATA2", "LCDDATA5", "LCDDATA8", "LCDDATA11"},
     "16F1938": {"PORTD", "TRISD", "ANSELD", "ANSELE", "LATD", "LCDSE2",
                 "LCDDATA2", "LCDDATA5", "LCDDATA8", "LCDDATA11"},
+    # 88X 28-pin parts (882/883/886): no PORTD; the HAL defines
+    # PORTD/TRISD unconditionally and guards the usage.
+    "16F882": {"PORTD", "TRISD"},
+    "16F883": {"PORTD", "TRISD"},
+    "16F886": {"PORTD", "TRISD"},
+    # 63x/67x/68x 16F631: no ANSELH (677-only); the HAL defines it
+    # unconditionally and gates the usage on FAMILY_HAS_ANSELH.
+    "16F631": {"ANSELH"},
 })
 
 # Bits the DFP does not define but the datasheet documents:
@@ -214,7 +264,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
                                          "PIC16F193X", "PIC16F88X", "PIC16F628A",
-                                         "PIC16F83_84"), default=None,
+                                         "PIC16F83_84",
+                                         "PIC16F63x_67x_68x"), default=None,
                     help="only this manifest family (the sharded CI jobs)")
     args = ap.parse_args()
     hal_label = {"PIC16F87XA": "pic16f87xa-hal",
@@ -222,7 +273,8 @@ def main() -> int:
                  "PIC16F193X": "pic16f193x-hal",
                  "PIC16F88X": "pic16f88x-hal",
                  "PIC16F628A": "pic16f628a-hal",
-                 "PIC16F83_84": "pic16f83_84-hal"}[args.family] \
+                 "PIC16F83_84": "pic16f83_84-hal",
+                 "PIC16F63x_67x_68x": "pic16f63x_67x_68x-hal"}[args.family] \
         if args.family else None
     bad = 0
     for family, (sfr_path, mcus) in FAMILIES.items():

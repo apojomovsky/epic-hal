@@ -226,6 +226,7 @@ jobs:
               ("epic-debounce", "16F887"),
               ("pic16f628a-hal", "16F628A"),
               ("pic16f83_84-hal", "16F84A"),
+              ("pic16f63x_67x_68x-hal", "16F677"),
           ]:
               if module not in m.modules:
                   continue

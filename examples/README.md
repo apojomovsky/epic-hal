@@ -10,6 +10,7 @@ correctly: initialise the HAL, toggle a pin, loop.
 | `epic-hal-demo-pic16f193x.X` | PIC16F193X | PIC16F1937 (HAL only) |
 | `epic-hal-demo-pic16f628a.X` | PIC16F628A | PIC16F628A |
 | `epic-hal-demo-pic16f83_84.X` | PIC16F83_84 | PIC16F84A |
+| `epic-hal-demo-pic16f63x_67x_68x.X` | PIC16F63x_67x_68x | PIC16F677 |
 
 `scripts/make_bundle.py` copies the matching one into each bundle as
 `examples/epic-hal-demo.X`, so inside a bundle the project sits one level

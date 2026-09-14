@@ -125,9 +125,11 @@ definitions and the consolidation tradeoff in its header comment.
 ## The epiccc gate pin
 
 The `epiccc-gate` CI job (`.github/workflows/ci.yml`) builds `pic16f87xa-hal`
-for the 877A, `pic16f88x-hal` for the 887 and `epic-pic16f193x-firmware`
-for the 16F1937 with a pinned epic-cc compiler, and runs the deterministic
-PORTB toggle gate on the classic-PIC16 blink hexes, the LATB toggle gate on
+for the 877A, `pic16f88x-hal` for the 887, `epic-pic16f193x-firmware`
+for the 16F1937 and `pic16f63x_67x_68x-hal` for the 16F677 with a pinned
+epic-cc compiler, and runs the deterministic
+PORTB toggle gate on the classic-PIC16 blink hexes (the 677 leg watches
+PORTB bit 4, the only implemented low bit on this family's PORTB), the LATB toggle gate on
 the 1937 (its GPIO driver toggles the latch, DS41364E), plus the `mdb-hex`
 register read. It is
 the "did a HAL change break against a known good compiler" direction;
@@ -160,14 +162,15 @@ driver sha; the v0.0.3 bundle predates the driver's `opt` requirement
 
 Bumping the pin:
 
-The pin holds epic-cc master at 5fbde4c (the epic-hal#129 bump), which
-carries the PIC14E port (the isel-pic14e backend, the
+The pin holds epic-cc master at e4a4e78 (the epic-hal#146 bump), which
+carries the p16f677 target (epic-cc#421) on top of the #129 PIC14E port
+(the isel-pic14e backend, the
 `Pic14e` sim core, `parse_hex_pic14e`, i1 loads/stores as bytes and the
 PIC14E config-field defaults) on top of everything the 877A/887 slices
 need plus the PIC18 fixes for the 4550 slice (epic-cc#180, #189, #194).
-The previous pin (acf3ece, the HAL-3d follow-up) predates the PIC14E
-port entirely: its sim has no `Pic14e` core and its driver cannot
-compile the 1937 blink slice. The pin comment in ci.yml's `EPIC_CC_PIN`
+The previous pin (5fbde4c, the #129 bump) predates p16f677: its device
+registry has no p16f677 target and its driver cannot resolve the 16F677
+blink slice. The pin comment in ci.yml's `EPIC_CC_PIN`
 records the reasoning for the current sha.
 
 1. Pick a new `EPIC_CC_PIN` that still builds the 887 slice. A quick

@@ -86,6 +86,9 @@ impl Sim {
                 let prog = parse_hex_pic14e(hex);
                 Ok(Sim::Pic14e(Pic14e::with_device(dev, prog), PIC14E_REGS))
             }
+            Core::PicBaseline => {
+                Err(format!("device {} is baseline core, no sim model", dev.name))
+            }
         }
     }
 

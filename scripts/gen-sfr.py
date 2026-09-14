@@ -52,6 +52,7 @@ CANONICAL = {
     "PIC16F88X": "16F887",
     "PIC16F628A": "16F628A",
     "PIC16F83_84": "16F84A",
+    "PIC16F63x_67x_68x": "16F677",
     "PIC18Fxx5x": "18F4550",
     "PIC16F193X": "16F1937",
 }
@@ -162,6 +163,7 @@ def hal_header_path(family: str) -> pathlib.Path:
         "PIC16F87XA": "pic16f87xa-hal/include/pic16f87xa_sfr.h",
         "PIC16F88X": "pic16f88x-hal/include/pic16f88x_sfr.h",
         "PIC16F628A": "pic16f628a-hal/include/pic16f628a_sfr.h",
+        "PIC16F63x_67x_68x": "pic16f63x_67x_68x-hal/include/pic16f63x_67x_68x_sfr.h",
         "PIC18Fxx5x": "pic18fxx5x-hal/include/pic18fxx5x_sfr.h",
         "PIC16F193X": "pic16f193x-hal/include/pic16f193x_sfr.h",
     }
