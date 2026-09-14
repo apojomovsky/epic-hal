@@ -101,28 +101,6 @@ uint8_t EPIC_COMP_C1Out(void);
 uint8_t EPIC_COMP_C2Out(void);
 
 /**
- * @brief Returns 1 if C1IF is set.
- * @return 1 if the C1 change flag is set, 0 otherwise.
- */
-uint8_t EPIC_COMP_C1ChangeFlag(void);
-
-/**
- * @brief Returns 1 if C2IF is set.
- * @return 1 if the C2 change flag is set, 0 otherwise.
- */
-uint8_t EPIC_COMP_C2ChangeFlag(void);
-
-/**
- * @brief Clear the C1IF flag (must be done in the C1 change IRQ).
- */
-void EPIC_COMP_ClearC1Flag(void);
-
-/**
- * @brief Clear the C2IF flag (must be done in the C2 change IRQ).
- */
-void EPIC_COMP_ClearC2Flag(void);
-
-/**
  * @brief Timer1 gate source constants for @ref EPIC_COMP_SetT1GateSource
  *        (CM2CON1<T1GSS>).
  */

@@ -168,40 +168,6 @@ uint8_t EPIC_COMP_C2Out(void)
 }
 
 /**
- * @brief Returns 1 if C1IF is set.
- * @return 1 if the C1 change flag is set, 0 otherwise.
- */
-uint8_t EPIC_COMP_C1ChangeFlag(void)
-{
-    return EPIC_IRQ_GetFlag(PIC16_IRQ_C1);
-}
-
-/**
- * @brief Returns 1 if C2IF is set.
- * @return 1 if the C2 change flag is set, 0 otherwise.
- */
-uint8_t EPIC_COMP_C2ChangeFlag(void)
-{
-    return EPIC_IRQ_GetFlag(PIC16_IRQ_C2);
-}
-
-/**
- * @brief Clear the C1IF flag.
- */
-void EPIC_COMP_ClearC1Flag(void)
-{
-    EPIC_IRQ_ClearFlag(PIC16_IRQ_C1);
-}
-
-/**
- * @brief Clear the C2IF flag.
- */
-void EPIC_COMP_ClearC2Flag(void)
-{
-    EPIC_IRQ_ClearFlag(PIC16_IRQ_C2);
-}
-
-/**
  * @brief Select the Timer1 gate source (CM2CON1<T1GSS>).
  * @param src COMP_GATE_SRC_T1G or COMP_GATE_SRC_C2OUT.
  */

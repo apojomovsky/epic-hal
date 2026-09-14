@@ -36,8 +36,10 @@
 
 /* File-scope symbol the asm needs (inline asm can only address
  * file-scope symbols, see epic-math/docs/ARCHITECTURE.md's "Inline-asm
- * binding"); __at-pinned to bank-independent common RAM (0x70) in
- * pic16_isr_vector.c, not left to the linker's best-fit scatter. */
+ * binding"); __at-pinned to bank-independent common RAM
+ * (PIC14MIDRANGE_COMMON_RAM_BASE, 0x70 here) in pic16_isr_vector.c,
+ * not left to the linker's best-fit scatter. The literals here must
+ * match PIC14MIDRANGE_COMMON_RAM_BASE in pic14_midrange.h. */
 extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
 
 /* Same fix shape as PIE1/PIE2 above, for plain Bank 1 SFR writes whose

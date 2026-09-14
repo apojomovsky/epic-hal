@@ -76,10 +76,10 @@ int main(void)
     CHECK((v & 0xF0U) == 0U, 0x00U);
 
     /* Bank 0, PORT: the latch write lands and reads back. */
-    EPIC_GPIO_WritePort(GPIOB, 0xFFU);
+    EPIC_REG8(PIC_REG_PORTB) = 0xF0U;
     v = EPIC_REG8(PIC_REG_PORTB);
     CHECK((v & 0xF0U) == 0xF0U, 0x01U);
-    EPIC_GPIO_WritePort(GPIOB, 0x00U);
+    EPIC_REG8(PIC_REG_PORTB) = 0x00U;
 
     /* Bank 1, OPTION via the GPIO pull-up path: RABPU = 0 enables the
      * pull-ups (active low); INTEDG reads back at its POR value. */
