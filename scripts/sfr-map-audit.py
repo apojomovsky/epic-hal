@@ -78,6 +78,7 @@ FAMILIES = {
             ("16F684", "Microchip.PIC16Fxxx_DFP", "pic16f684.h"),
             ("16F685", "Microchip.PIC16Fxxx_DFP", "pic16f685.h"),
             ("16F688", "Microchip.PIC16Fxxx_DFP", "pic16f688.h"),
+            ("16F689", "Microchip.PIC16Fxxx_DFP", "pic16f689.h"),
             ("16F677", "Microchip.PIC16Fxxx_DFP", "pic16f677.h"),
         ],
     ),
@@ -194,16 +195,12 @@ BIT_ALIASES = {
     ("CCP2", "DC2B1"): ("CCP2CON", "DC2B1"),
 }
 
-# Registers that exist on every shape of a family but live at a
-# different address on some parts (bank variants, not absences): key
-# mcu -> {HAL name: expected DFP address}. The comparison checks the
-# override value against the DFP instead of the HAL constant, so a
-# wrong override fails the audit rather than passing silently. Used
-# for the 63x/67x/68x 2-bank shapes, whose EEPROM pair sits in Bank 1
-# (0x9A-0x9D) and VRCON in Bank 1 (0x99) while the HAL constants carry
-# the 4-bank homes (the runtime uses literal-token bank macros and the
-# host uses per-part EE_ADDR_* dispatches, so the constants are only
-# correct for the 4-bank shapes).
+# Registers present on every shape but at a different address on
+# some parts (bank variants, not absences): key mcu -> {HAL name:
+# expected DFP address}, checked against the DFP (a wrong override
+# fails loudly). The 63x 2-bank EEPROM/VRCON/ANSEL/WDTCON homes
+# below; the runtime uses literal-token bank macros there, so the
+# HAL constants stay canonical.
 BANK_VARIANT_ADDRS = {
     "16F630": {"EEDATA": 0x9A, "EEADR": 0x9B, "EECON1": 0x9C,
                "EECON2": 0x9D, "VRCON": 0x99},
@@ -285,6 +282,8 @@ CONDITIONAL_BITS = {
                ("OPTION", "RAPU"), ("PCON", "SBOREN"),
                ("VRCON", "C1VREN"), ("VRCON", "C2VREN"),
                ("VRCON", "VP6EN")},
+    "16F689": {("INTCON", "RAIF"), ("INTCON", "RAIE"), ("OPTION", "RAPU"),
+               ("PIR1", "EEIF"), ("PIE1", "EEIE")},
 
 }
 
@@ -333,6 +332,7 @@ CONDITIONAL_REGS.update({
     "16F688": {"ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0", "CM2CON1",
                "IOCB", "PIE2", "PIR2", "PORTB", "SRCON", "TRISB",
                "WPUB", "WDTCON_BANK0"},
+    "16F689": {"ANSEL_BANK1", "WDTCON_BANK0"},
 
 })
 

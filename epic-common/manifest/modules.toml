@@ -245,9 +245,9 @@ epiccc_sources = [
 [families.PIC16F63x_67x_68x]
 hal_dir  = "pic16f63x_67x_68x-hal"
 variants = [
-  # 1K-word parts first (631 excluded, 630 excluded below), then 2K,
-  # then 4K; the canonical 677 last (family-check's scaffold gate
-  # builds variants[-1], as on the 87XA/88X/18F families).
+  # 1K-word parts first (631/630/676 excluded below), then 2K, then
+  # 4K; the canonical 677 last (family-check's scaffold gate builds
+  # variants[-1], as on the 87XA/88X/18F families).
   "16F631",
   "16F630",
   "16F676",
@@ -255,6 +255,7 @@ variants = [
   "16F684",
   "16F685",
   "16F688",
+  "16F689",
   "16F677",
 ]
 dfp      = "Microchip.PIC16Fxxx_DFP"
@@ -288,7 +289,7 @@ harness_src = "epic-common/src/core/epic_harness_target.c"
 
 [[families.PIC16F63x_67x_68x.conditional_sources]]
 path     = "pic16f63x_67x_68x-hal/src/peripherals/pic16f63x_67x_68x_comp.c"
-variants = ["16F631", "16F677", "16F685"]   # CM1CON0 dual shape only
+variants = ["16F631", "16F677", "16F685", "16F689"]   # CM1CON0 dual shape only
 # The epic-cc conformant slice: gpio + timer0 + core + harness, the
 # blink minimum that fits the exemplar's 64 B RAM. The blink-tier
 # dispatch (not the shared epiccc one, which names Timer2/USART
@@ -622,6 +623,7 @@ PIC16F63x_67x_68x = [
   "16F684",
   "16F685",
   "16F688",
+  "16F689",
   "16F677",
 ]
 [modules.pic16f63x_67x_68x-hal.excluded]

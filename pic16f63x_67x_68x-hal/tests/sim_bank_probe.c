@@ -150,11 +150,12 @@ int main(void)
 #endif
 
 #if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL
-    /* Bank 2, ANSEL via GPIO analog mode: RA1 to analog sets ANS1.
-     * RA1, not RA0: RA0 is the PASS/FAIL marker pin (output, armed by
-     * the harness), and the marker reads the pin level, so the probe
+    /* ANSEL via GPIO analog mode: RA1 to analog sets ANS1. RA1, not
+     * RA0: RA0 is the PASS/FAIL marker pin (output, armed by the
+     * harness), and the marker reads the pin level, so the probe
      * must never return RA0 to input. Parts without ANSEL (630/639,
-     * no ADC) skip. */
+     * no ADC) skip. The 14-pin ADC parts read it through the Bank-1
+     * macro with the real SFR name. */
     EPIC_GPIO_Init(GPIOA, GPIO_PIN_1, GPIO_MODE_ANALOG);
 #if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL_BANK1
     EPIC_BANK1_READ8(ANSEL, v);
