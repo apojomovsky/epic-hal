@@ -75,6 +75,7 @@ FAMILIES = {
             ("16F630", "Microchip.PIC16Fxxx_DFP", "pic16f630.h"),
             ("16F676", "Microchip.PIC16Fxxx_DFP", "pic16f676.h"),
             ("16F639", "Microchip.PIC16Fxxx_DFP", "pic16f639.h"),
+            ("16F677", "Microchip.PIC16Fxxx_DFP", "pic16f677.h"),
         ],
     ),
     "pic16f88x-hal": (
@@ -292,6 +293,7 @@ CONDITIONAL_REGS.update({
     # 63x/67x/68x 16F631: no ANSELH (677-only); the HAL defines it
     # unconditionally and gates the usage on FAMILY_HAS_ANSELH.
     "16F631": {"ANSELH", "ANSEL_BANK1", "WDTCON_BANK0"},
+    "16F677": {"ANSEL_BANK1", "WDTCON_BANK0"},
     # 63x/67x/68x 16F630: no PORTB, no dual comparators, no PIE2/PIR2,
     # no SRCON, no OSCCON/OSCTUNE/WDTCON, no ANSEL; ANSEL_BANK1 is the
     # HAL-side alias pattern above. EEPROM/VRCON bank addresses ride
