@@ -286,10 +286,6 @@ hal_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
-
-[[families.PIC16F63x_67x_68x.conditional_sources]]
-path     = "pic16f63x_67x_68x-hal/src/peripherals/pic16f63x_67x_68x_comp.c"
-variants = ["16F631", "16F677", "16F685", "16F689"]   # CM1CON0 dual shape only
 # The epic-cc conformant slice: gpio + timer0 + core + harness, the
 # blink minimum that fits the exemplar's 64 B RAM. The blink-tier
 # dispatch (not the shared epiccc one, which names Timer2/USART
@@ -306,6 +302,10 @@ epiccc_sources = [
   "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_blink_epiccc.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
+
+[[families.PIC16F63x_67x_68x.conditional_sources]]
+path     = "pic16f63x_67x_68x-hal/src/peripherals/pic16f63x_67x_68x_comp.c"
+variants = ["16F631", "16F677", "16F685", "16F689"]   # CM1CON0 dual shape only
 
 
 [families.PIC16F83_84]
