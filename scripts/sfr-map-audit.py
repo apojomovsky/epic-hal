@@ -73,6 +73,7 @@ FAMILIES = {
         [
             ("16F631", "Microchip.PIC16Fxxx_DFP", "pic16f631.h"),
             ("16F630", "Microchip.PIC16Fxxx_DFP", "pic16f630.h"),
+            ("16F676", "Microchip.PIC16Fxxx_DFP", "pic16f676.h"),
             ("16F639", "Microchip.PIC16Fxxx_DFP", "pic16f639.h"),
         ],
     ),
@@ -204,6 +205,13 @@ BANK_VARIANT_ADDRS = {
                "EECON2": 0x9D, "VRCON": 0x99},
     "16F639": {"EEDATA": 0x9A, "EEADR": 0x9B, "EECON1": 0x9C,
                "EECON2": 0x9D, "VRCON": 0x99, "WDTCON": 0x18},
+    "16F676": {"EEDATA": 0x9A, "EEADR": 0x9B, "EECON1": 0x9C,
+               "EECON2": 0x9D, "VRCON": 0x99, "ANSEL": 0x91},
+    # The 14-pin ADC parts keep ANSEL in Bank 1 (0x91, the
+    # ANSEL_BANK1 alias's premise); 639/684/688 keep WDTCON in Bank
+    # 0 (0x18, the WDTCON_BANK0 alias's premise, used by the shared
+    # WDT driver).
+
 }
 # Registers and bits that are legitimately absent from a part's DFP
 # header: family-conditional SFRs on the smaller parts (the HAL defines
@@ -251,6 +259,13 @@ CONDITIONAL_BITS = {
                ("OPTION", "RAPU"),
                ("VRCON", "C1VREN"), ("VRCON", "C2VREN"),
                ("VRCON", "VP6EN")},
+    "16F676": {("INTCON", "RABIF"), ("INTCON", "RABIE"),
+               ("OPTION", "RAPU"),
+               ("PCON", "SBOREN"), ("PCON", "ULPWUE"),
+               ("T1CON", "T1GINV"),
+               ("VRCON", "C1VREN"), ("VRCON", "C2VREN"),
+               ("VRCON", "VP6EN")},
+
 }
 
 # Registers absent from the smaller parts' DFP headers but defined
@@ -287,6 +302,10 @@ CONDITIONAL_REGS.update({
     "16F639": {"ANSEL", "ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0",
                "CM2CON1", "IOCB", "PIE2", "PIR2", "PORTB", "SRCON",
                "TRISB", "WPUA", "WPUB", "WDTCON_BANK0"},
+    "16F676": {"ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0", "CM2CON1",
+               "IOCB", "OSCCON", "OSCTUNE", "PIE2", "PIR2", "PORTB",
+               "SRCON", "TRISB", "WDTCON", "WPUB", "WDTCON_BANK0"},
+
 })
 
 # Bits the DFP does not define but the datasheet documents:
