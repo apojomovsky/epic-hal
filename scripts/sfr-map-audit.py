@@ -76,6 +76,7 @@ FAMILIES = {
             ("16F676", "Microchip.PIC16Fxxx_DFP", "pic16f676.h"),
             ("16F639", "Microchip.PIC16Fxxx_DFP", "pic16f639.h"),
             ("16F684", "Microchip.PIC16Fxxx_DFP", "pic16f684.h"),
+            ("16F685", "Microchip.PIC16Fxxx_DFP", "pic16f685.h"),
             ("16F677", "Microchip.PIC16Fxxx_DFP", "pic16f677.h"),
         ],
     ),
@@ -274,6 +275,8 @@ CONDITIONAL_BITS = {
                ("OPTION", "RAPU"),
                ("VRCON", "C1VREN"), ("VRCON", "C2VREN"),
                ("VRCON", "VP6EN")},
+    "16F685": {("INTCON", "RAIF"), ("INTCON", "RAIE"), ("OPTION", "RAPU"),
+               ("PIR1", "EEIF"), ("PIE1", "EEIE")},
 
 }
 
@@ -318,6 +321,7 @@ CONDITIONAL_REGS.update({
     "16F684": {"ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0", "CM2CON1",
                "IOCB", "PIE2", "PIR2", "PORTB", "SRCON", "TRISB",
                "WPUB", "WDTCON_BANK0"},
+    "16F685": {"ANSEL_BANK1", "WDTCON_BANK0"},
 
 })
 
