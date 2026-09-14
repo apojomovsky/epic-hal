@@ -63,4 +63,7 @@ extern uint8_t pic16f63x_67x_68x_sim_sfr[0x200];
  * 0x8D). */
 #define EPIC_PIE2_READ_EEIE(out_var)   ((out_var) = pic16f63x_67x_68x_sim_sfr[0x8DU])
 
+/* Host twin for the 2-bank EEPROM path. */
+#define EPIC_PIE1_READ_EEIE(out_var)   ((out_var) = pic16f63x_67x_68x_sim_sfr[0x8CU])
+
 #endif /* PIC16F63X_67X_68X_PLATFORM_H */

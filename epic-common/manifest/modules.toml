@@ -245,10 +245,11 @@ epiccc_sources = [
 [families.PIC16F63x_67x_68x]
 hal_dir  = "pic16f63x_67x_68x-hal"
 variants = [
-  # 1K-word 631, then the 2K 677; the canonical 677 last
-  # (family-check's scaffold gate builds variants[-1], as on the
-  # 87XA/88X/18F families). The #152 siblings extend this list.
+  # 1K-word parts first (631 excluded, 630 excluded below), then 2K,
+  # then 4K; the canonical 677 last (family-check's scaffold gate
+  # builds variants[-1], as on the 87XA/88X/18F families).
   "16F631",
+  "16F630",
   "16F677",
 ]
 dfp      = "Microchip.PIC16Fxxx_DFP"
@@ -260,14 +261,14 @@ includes = [
   "pic14-midrange-core/include",
   "epic-common/include",
 ]
-# Exemplar tier: family gpio + Timer0/Timer1 + dual comparators +
-# EEPROM + osc-fail handler + the irq/wdt core. No USART/ADC/SSP/CCP/
-# Timer2 sources exist on this die; the #152 siblings grow this list.
+# Family tier: gpio + Timer0/Timer1 + EEPROM + osc-fail handler +
+# the irq/wdt core on every part; the dual-comparator driver rides
+# conditional_sources on the CM1CON0 shapes only. No USART/ADC/SSP/CCP/
+# Timer2 sources exist in this tree.
 hal_sources = [
   "pic16f63x_67x_68x-hal/src/peripherals/pic16f63x_67x_68x_gpio.c",
   "pic14-midrange-core/src/peripherals/pic14_timer0.c",
   "pic14-midrange-core/src/peripherals/pic14_timer1.c",
-  "pic16f63x_67x_68x-hal/src/peripherals/pic16f63x_67x_68x_comp.c",
   "pic14-midrange-core/src/peripherals/pic14_eeprom.c",
   "pic16f63x_67x_68x-hal/src/peripherals/pic16f63x_67x_68x_osc.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
@@ -279,6 +280,10 @@ hal_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
+
+[[families.PIC16F63x_67x_68x.conditional_sources]]
+path     = "pic16f63x_67x_68x-hal/src/peripherals/pic16f63x_67x_68x_comp.c"
+variants = ["16F631", "16F677"]   # CM1CON0 dual shape only
 # The epic-cc conformant slice: gpio + timer0 + core + harness, the
 # blink minimum that fits the exemplar's 64 B RAM. The blink-tier
 # dispatch (not the shared epiccc one, which names Timer2/USART
@@ -616,6 +621,7 @@ PIC16F63x_67x_68x = [
 # variant cannot fit the 64 B RAM (XC8 error 1250 on the harness cycle
 # bound). Wording follows the epic-serial 873A/874A precedent.
 "16F631" = "flash and RAM: the 1314-word blink smoke does not fit the 1K-word flash (XC8 error 1347), and the bank-probe sim variant does not fit the 64 B RAM (XC8 error 1250)"
+"16F630" = "flash and RAM: the blink smoke does not fit the 1K-word flash (XC8 error 1347, measured), and the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
 
 [modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x]
 name    = "blink"
@@ -623,7 +629,6 @@ sources = [
   "tests/example_blink.c",
 ]
 config  = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTRCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "ON" }
-
 # HARNESS=sim: the banked-SFR probe, reported on RA0 (MODE=gpio; the
 # family has no USART). WDTE=OFF like every other sim variant (a
 # diagnostic build that terminates and reports does not need the
@@ -635,11 +640,6 @@ sources     = [
   "tests/sim_bank_probe.c",
 ]
 config      = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTRCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
-
-# pic16f83_84-hal's own manifest slot, mirroring the other families'
-# pseudo-modules: no application code, just the family's real-target
-# smoke (tests/example_blink.c) and a HARNESS=sim bank probe over the
-# shared pic14-midrange-core drivers, reported on RA0 (no USART).
 [modules.pic16f83_84-hal]
 dir        = "pic16f83_84-hal"
 sources    = []

@@ -81,7 +81,8 @@ void EPIC_POR_ClearFlag(void)
 
 #if PIC14MIDRANGE_HAS_WDT_SW
 /* WDTCON software control (Bank 2, 0x105 on 88X; Bank 1, 0x97 on the
- * 63x/67x/68x parts). Plain EPIC_REG8 accesses silently misdirect to
+ * 4-bank 63x/67x/68x parts; Bank 0, 0x18 on the 639-shape parts, plain
+ * literal access). Plain EPIC_REG8 accesses silently misdirect to
  * the Bank-0 alias under XC8 v4.00, so reads and RMWs go through the
  * safe banked macros where they exist. */
 
@@ -97,7 +98,7 @@ void EPIC_WDT_SetSoftwareEnable(uint8_t enable)
     if (enable) wdtcon |= PIC_WDTCON_SWDTEN;
     else        wdtcon &= (uint8_t)~PIC_WDTCON_SWDTEN;
     EPIC_BANK1_WRITE8(WDTCON, wdtcon);
-#elif defined(EPIC_BANK2_READ8)
+#elif !PIC14MIDRANGE_HAS_WDTCON_BANK0 && defined(EPIC_BANK2_READ8)
     uint8_t wdtcon = 0u;
     EPIC_BANK2_READ8(WDTCON, wdtcon);
     if (enable) wdtcon |= PIC_WDTCON_SWDTEN;
@@ -123,7 +124,7 @@ void EPIC_WDT_SetPrescaler(uint8_t wdtps)
     wdtcon &= (uint8_t)~PIC_WDTCON_WDTPS_MASK;
     wdtcon |= (uint8_t)((wdtps << PIC_WDTCON_WDTPS_POS) & PIC_WDTCON_WDTPS_MASK);
     EPIC_BANK1_WRITE8(WDTCON, wdtcon);
-#elif defined(EPIC_BANK2_READ8)
+#elif !PIC14MIDRANGE_HAS_WDTCON_BANK0 && defined(EPIC_BANK2_READ8)
     uint8_t wdtcon = 0u;
     EPIC_BANK2_READ8(WDTCON, wdtcon);
     wdtcon &= (uint8_t)~PIC_WDTCON_WDTPS_MASK;

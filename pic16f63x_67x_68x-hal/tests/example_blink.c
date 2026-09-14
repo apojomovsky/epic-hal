@@ -1,8 +1,9 @@
-/* Blink an LED on RB4 from a Timer0 overflow: the canonical "the HAL
+/* Blink an LED from a Timer0 overflow: the canonical "the HAL
  * drives a real application" smoke test. Wiring: LED+resistor between
- * RB4 and GND, internal oscillator (INTRCIO, 4 MHz POR). Timer0 Fosc/4,
- * 1:256 prescaler, reload 0, overflows every ~16 ms (~30 Hz toggle).
- * RB4, not RB0: PORTB on this part is RB4..RB7 only. */
+ * the blink pin and GND, internal oscillator (INTRCIO, 4 MHz POR).
+ * Timer0 Fosc/4, 1:256 prescaler, reload 0, overflows every ~16 ms
+ * (~30 Hz toggle). The blink pin is RB4 on 20-pin parts; PORTB does
+ * not exist on the 14-pin shapes, which blink RA0 instead. */
 
 #include "pic16f63x_67x_68x_hal.h"
 #include "pic16f63x_67x_68x_sfr.h"
@@ -30,7 +31,11 @@ static volatile uint16_t g_toggle_count = 0;
  */
 static void on_t0_overflow(void)
 {
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
     EPIC_REG8(PIC_REG_PORTB) ^= GPIO_PIN_4;
+#else
+    EPIC_REG8(PIC_REG_PORTA) ^= GPIO_PIN_0;
+#endif
     g_toggle_count++;
 }
 
@@ -41,9 +46,14 @@ int main(void)
 {
     epic_harness_init(SIM_CYCLES);
 
-    /* 1. RB4 as output, start low. */
+    /* 1. Blink pin as output, start low. */
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_4, GPIO_MODE_OUTPUT);
     EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
+#else
+    EPIC_GPIO_Init(GPIOA, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+#endif
 
     /* 2. Timer0: internal Fosc/4, 1:256 prescaler, reload 0, toggle on
      *    each overflow. Local handle: Init/Start are header inlines, so
@@ -78,7 +88,7 @@ int main(void)
     (void)g_toggle_count;
     return 0;
 #else
-    epic_harness_log("RB4 toggled %u times.\n", (unsigned)g_toggle_count);
+    epic_harness_log("blink toggled %u times.\n", (unsigned)g_toggle_count);
     return epic_harness_report(g_toggle_count >= 2U);
 #endif
 }

@@ -14,28 +14,33 @@ consistent with DS40001262F Table 1):
 
 | part | pins | flash | SRAM | EEPROM | USART | ADC | CCP | SSP | COMP | T2 | PIR2 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 16F630 | 14 | 1 KW | 64 B | 128 B | - | - | - | - | single | - | - |
-| 16F631 | 20 | 1 KW | 64 B | 128 B | - | - | - | - | dual | - | Y |
-| 16F639 | 20 | 2 KW | 128 B | 256 B | - | - | - | - | single | - | - |
-| 16F676 | 14 | 1 KW | 64 B | 128 B | - | Y | - | - | single | - | - |
-| 16F677 | 20 | 2 KW | 128 B | 256 B | - | Y | - | Y | dual | - | Y |
-| 16F684 | 14 | 2 KW | 128 B | 256 B | - | Y | Y | - | single | Y | - |
-| 16F685 | 20 | 4 KW | 256 B | 256 B | - | Y | Y | - | dual | Y | Y |
-| 16F688 | 14 | 2 KW | 256 B | 256 B | Y | Y | - | - | single | - | - |
-| 16F689 | 20 | 4 KW | 256 B | 256 B | Y | Y | - | Y | dual | - | Y |
+| 16F630 | 14 | 1 KW | 64 B | 128 B | - | - | - | - | CMCON | - | - |
+| 16F631 | 20 | 1 KW | 64 B | 128 B | - | - | - | - | CM1CON0 | - | Y |
+| 16F639 | 20 | 2 KW | 128 B | 256 B | - | - | - | - | CMCON0/1+LVD | - | - |
+| 16F676 | 14 | 1 KW | 64 B | 128 B | - | Y | - | - | CMCON | - | - |
+| 16F677 | 20 | 2 KW | 128 B | 256 B | - | Y | - | Y | CM1CON0 | - | Y |
+| 16F684 | 14 | 2 KW | 128 B | 256 B | - | Y | Y | - | CMCON0/1 | Y | - |
+| 16F685 | 20 | 4 KW | 256 B | 256 B | - | Y | Y | - | CM1CON0 | Y | Y |
+| 16F688 | 14 | 4 KW | 256 B | 256 B | Y | Y | - | - | CMCON0/1 | - | - |
+| 16F689 | 20 | 4 KW | 256 B | 256 B | Y | Y | - | Y | CM1CON0 | - | Y |
 
 The 14-pin shapes are two-bank parts (single PIR1/PIE1); the 20-pin
 shapes spread SFRs across all four banks (PIR1+PIR2). EUSART appears
-only on 688/689, ECCP only on 684/685. The onboarded parts (this
-ticket) are the 16F631 (minimal 20-pin shape: GPIO, Timer0, Timer1
-with gate, dual comparators, EEPROM, OSF flag) and the 16F677
-canonical (same shape plus ADC/SSP, 2 KW/128 B/256 B), which proves
-the full tier: the 631's 1 KW flash cannot link it (measured
-1314-word blink, XC8 error 1347; bank probe fails RAM at error 1250),
-so the 631 is a manifest-excluded variant. The #152 batch onboards
-the remaining seven parts behind capability macros; the peripheral
-drivers they need (USART, ADC, SSP, CCP, Timer2) do not exist in this
-tree yet.
+only on 688/689, ECCP only on 684/685. The 16F677 canonical proves
+the full tier with the bank probe; the 639/684/685/688/689 siblings
+prove their shapes the same way. The three 1 KW parts (630/631/676)
+cannot link the tier (blink overflows flash, XC8 error 1347,
+measured on 630 and 676; the bank probe cannot fit 64 B RAM, error
+1250 measured on the same-die 631), so they are manifest-excluded
+variants with host-sim coverage only. The -1 DFP spellings
+(16F631-1 and siblings) are a non-goal: XC8 v4.00 rejects every
+-mcpu spelling with error 2043. Only the CM1CON0 dual-comparator
+shape has a driver; the CMCON single shape (630/676) and the
+CMCON0/CMCON1 shape (639/684/688, plus LVD and CRC on the 639) are
+never enabled and undispatched. Likewise ADC, SSP, CCP, Timer2 and
+USART silicon is present on some parts with no driver yet. Timer1
+gating is compiled in on the 4-bank shapes only (87XA precedent);
+the 2-bank parts count unconditionally.
 
 ## 16F631 register map
 
@@ -63,9 +68,9 @@ Single-page flash (1 KW), so the dispatcher carries no page pin.
 16F631: 1 KW flash, 64 B SRAM (Bank-0 GPR 0x40..0x6F plus common
 0x70..0x7F), 128 B data EEPROM. 16F677: 2 KW flash, 128 B SRAM,
 256 B data EEPROM. Measured on the canonical 677 (XC8 v4.00): the
-blink smoke uses 1314 words / 62 B (64.2%/48.4% of flash/RAM, clear
-of the 20%-headroom bar); the 631's 1 KW/64 B cannot hold either
-image. The ISR scratch bytes pin to common RAM at 0x70/0x71. The
-blink ISR toggles the port latch directly (the GPIO driver call path
-in the ISR partition tips the 64 B RAM allocation over the limit;
-the 83_84 probe records the same pivot at 68 B).
+blink smoke uses 1321 words / 62 B (64.5%/48.4% of flash/RAM, clear
+of the 20%-headroom bar); no 1 KW/64 B part can hold either image
+(see the exclusion notes above). The ISR scratch bytes pin to
+common RAM at 0x70/0x71. The blink ISR toggles the port latch
+directly (the GPIO driver call path in the ISR partition tips the
+64 B RAM allocation over the limit; the 83_84 probe records the same

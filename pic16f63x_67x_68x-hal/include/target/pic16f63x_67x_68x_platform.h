@@ -34,6 +34,13 @@
  * exits to Bank 0. Inline asm is XC8-only, so this lives here, not in
  * pic16_irq.c (shared with the host build). */
 
+/* The banked-access macros below need bank-independent common RAM
+ * for their scratch byte, selected by FAMILY_HAS_COMMON_RAM. Parts
+ * without it (630/676, whose GPR is bank 0 only) have no banked
+ * path: a plain literal hits the bank-0 alias (measured TRISA
+ * stuck at POR on the 630 blink), so the #else arm fails loudly
+ * instead of misdirecting silently. */
+#if PIC16F63X_67X_68X_FAMILY_HAS_COMMON_RAM
 /* File-scope symbol the asm needs (inline asm can only address
  * file-scope symbols, see epic-math/docs/ARCHITECTURE.md's "Inline-asm
  * binding"); __at-pinned to bank-independent common RAM
@@ -76,7 +83,10 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
     } while (0)
 
 /* PIE enable/disable with PIR2 support (PIE2 at 0x8D holds EEIE, C1IE,
- * C2IE, OSFIE on this family). Same inline-asm shape as Bank 1. */
+ * C2IE, OSFIE on the 4-bank shapes). Same inline-asm shape as Bank 1.
+ * The 2-bank shapes have no PIE2 SFR: their branch takes the PIE1-only
+ * shape (the parameter is unused there, as on the 628A). */
+#if PIC16F63X_67X_68X_FAMILY_HAS_PIR2
 #define EPIC_PIE_ENABLE_BIT(is_pir2, mask)                              \
     do {                                                                \
         epic_irq_pie_scratch = (uint8_t)(mask);                        \
@@ -116,6 +126,32 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
             asm("bcf STATUS,6");                                       \
         }                                                              \
     } while (0)
+#else
+/* PIE1-only shapes (no PIE2 SFR): the parameter is unused. */
+#define EPIC_PIE_ENABLE_BIT(is_pir2, mask)                              \
+    do {                                                                \
+        (void)(is_pir2);                                                \
+        epic_irq_pie_scratch = (uint8_t)(mask);                        \
+        asm("movf _epic_irq_pie_scratch,w");                           \
+        asm("bcf STATUS,6");                                           \
+        asm("bsf STATUS,5");                                           \
+        asm("iorwf PIE1,f");                                           \
+        asm("bcf STATUS,5");                                           \
+        asm("bcf STATUS,6");                                           \
+    } while (0)
+
+#define EPIC_PIE_DISABLE_BIT(is_pir2, mask)                             \
+    do {                                                                \
+        (void)(is_pir2);                                                \
+        epic_irq_pie_scratch = (uint8_t)~(mask);                       \
+        asm("movf _epic_irq_pie_scratch,w");                           \
+        asm("bcf STATUS,6");                                           \
+        asm("bsf STATUS,5");                                           \
+        asm("andwf PIE1,f");                                           \
+        asm("bcf STATUS,5");                                           \
+        asm("bcf STATUS,6");                                           \
+    } while (0)
+#endif
 
 /* Read the TMR1IE bit (PIE1 bit 0, Bank 1) through the same
  * bank-in/read/bank-out scratch mechanism as EPIC_BANK1_READ8. The
@@ -130,6 +166,10 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
  * polled with EEIE disabled, and an unconditional dispatch would clear
  * the polled flag from a live ISR. */
 #define EPIC_PIE2_READ_EEIE(out_var) EPIC_BANK1_READ8(PIE2, (out_var))
+
+/* Same shape, for the EEIE bit in PIE1 (2-bank shapes, EEPROM
+ * completion in PIR1<7>). */
+#define EPIC_PIE1_READ_EEIE(out_var) EPIC_BANK1_READ8(PIE1, (out_var))
 
 /* Same fix, Bank 2. This family keeps WPUB/IOCB/VRCON/CM1CON0/CM2CON0/
  * CM2CON1/ANSEL and the EEPROM data/address pair in Bank 2. Sets RP1
@@ -181,5 +221,15 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
         asm("movwf _epic_bank1_scratch");                              \
         (out_var) = epic_bank1_scratch;                                \
     } while (0)
-
+#else
+/* Parts without common RAM (16F630/16F676: GPR is bank 0 only) have
+ * no banked-access path: a plain literal hits the bank-0 alias (XC8
+ * encodes the access bank-implicitly, measured TRISA stuck at POR on
+ * the 630 blink), and there is no scratch home for the asm path
+ * above. Both parts are module-excluded on flash/RAM grounds (blink
+ * overflows the 1K-word flash, XC8 error 1347, measured on both), so
+ * a target build for them must fail loudly here instead of
+ * misdirecting silently. Host builds never include this header. */
+#error "63x/67x/68x target: banked SFR access needs common RAM (16F630/16F676 are module-excluded)"
+#endif
 #endif /* PIC16F63X_67X_68X_PLATFORM_H */

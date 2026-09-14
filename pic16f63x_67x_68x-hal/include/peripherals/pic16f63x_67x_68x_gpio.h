@@ -144,14 +144,16 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
  */
 void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull);
 
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
 /**
  * @brief Enable or disable the weak pull-up on a single PORTB pin.
  * @param pin the RB pin number, 4..7 (RB0..RB3 do not exist).
  * @param enable 1 to enable the pull-up, 0 to disable it.
  */
 void EPIC_GPIO_SetPinPullup(uint8_t pin, uint8_t enable);
+#endif
 
-/* PORTB change interrupt. */
+/* PORTA/B change interrupt (PORTB on 20-pin parts, PORTA on 14-pin). */
 
 /**
  * @brief Install or remove the PORTB change callback.
@@ -166,22 +168,24 @@ void EPIC_GPIO_SetPinPullup(uint8_t pin, uint8_t enable);
  */
 void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t portb_value));
 
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
 /**
  * @brief  Enable or disable interrupt-on-change for one PORTB pin.
  * @param pin the RB pin number, 4..7 (RB0..RB3 do not exist).
  * @param enable 1 to enable IOC on the pin, 0 to disable it.
  */
 void EPIC_GPIO_SetPinIOC(uint8_t pin, uint8_t enable);
+#endif
 
 /**
- * @brief  Weak RB<7:4> change-interrupt ISR (DS40001262F §4.0, §14.0).
+ * @brief  Weak PORTA/B change-interrupt ISR (DS40001262F §4.0, §14.0).
  *
  * @details
- *   Default body clears RABIF and forwards the already-read PORTB byte
- *   to the registered callback. Read-before-clear is mandatory, not
- *   stylistic: the mismatch comparator only re-arms once PORTB is
- *   read, so reading it after clearing RABIF risks a spurious
- *   re-interrupt or a silently-missed change.
+ *   Default body clears RABIF and forwards the already-read port byte
+ *   (PORTB on 20-pin parts, PORTA on 14-pin). Read-before-clear is
+ *   mandatory, not stylistic: the mismatch comparator only re-arms
+ *   once the port is read, so reading it after clearing RABIF risks a
+ *   spurious re-interrupt or a silently-missed change.
  */
 void RB_IRQHandler(void) EPIC_WEAK;
 
