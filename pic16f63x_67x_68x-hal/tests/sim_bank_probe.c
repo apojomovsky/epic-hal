@@ -140,12 +140,14 @@ int main(void)
 #endif
     CHECK((v & PIC_WDTCON_SWDTEN) == 0U, 0x05U);
 
+#if PIC16F63X_67X_68X_FAMILY_HAS_PCON_SBOREN
     /* Bank 1, PCON: SBOREN reads back set through the banked path
      * (nBOR/nPOR are reset-cause dependent and stay unasserted).
      * The 630/676/688 PCON has no SBOREN bit; their Bank-1 read
      * path is already proven by the OPTION/OSCCON/PIE checks. */
     RD1(PCON, v);
     CHECK((v & PIC_PCON_SBOREN) != 0U, 0x11U);
+#endif
 
 #if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL
     /* Bank 2, ANSEL via GPIO analog mode: RA1 to analog sets ANS1.
