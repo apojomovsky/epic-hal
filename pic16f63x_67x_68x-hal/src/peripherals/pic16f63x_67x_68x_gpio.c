@@ -138,8 +138,12 @@ static void set_ansel_bits(GPIO_TypeDef port, uint16_t pins, uint8_t analog)
 #if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL
     uint8_t ansel = 0u;
 #if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL_BANK1
+    /* The BANK1 literal-token macros stringify the token for inline
+     * asm, so they need the real SFR name (XC8 resolves ANSEL to
+     * 0x91 on these parts); the HAL-side ANSEL_BANK1 alias exists
+     * only for the host/sim constant path below. */
 #ifdef EPIC_BANK1_READ8
-    EPIC_BANK1_READ8(ANSEL_BANK1, ansel);
+    EPIC_BANK1_READ8(ANSEL, ansel);
 #else
     ansel = EPIC_REG8(PIC_REG_ANSEL_BANK1);
 #endif
@@ -162,7 +166,8 @@ static void set_ansel_bits(GPIO_TypeDef port, uint16_t pins, uint8_t analog)
     if (changed) {
 #if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL_BANK1
 #ifdef EPIC_BANK1_WRITE8
-        EPIC_BANK1_WRITE8(ANSEL_BANK1, ansel);
+        /* Real SFR name for the stringified asm token (see above). */
+        EPIC_BANK1_WRITE8(ANSEL, ansel);
 #else
         EPIC_REG8(PIC_REG_ANSEL_BANK1) = ansel;
 #endif

@@ -154,10 +154,18 @@ int main(void)
      * must never return RA0 to input. Parts without ANSEL (630/639,
      * no ADC) skip. */
     EPIC_GPIO_Init(GPIOA, GPIO_PIN_1, GPIO_MODE_ANALOG);
+#if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL_BANK1
+    EPIC_BANK1_READ8(ANSEL, v);
+#else
     RD2(ANSEL, v);
+#endif
     CHECK((v & PIC_ANSEL_ANS1) != 0U, 0x06U);
     EPIC_GPIO_Init(GPIOA, GPIO_PIN_1, GPIO_MODE_INPUT);
+#if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL_BANK1
+    EPIC_BANK1_READ8(ANSEL, v);
+#else
     RD2(ANSEL, v);
+#endif
     CHECK((v & PIC_ANSEL_ANS1) == 0U, 0x07U);
 #endif
 
