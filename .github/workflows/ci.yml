@@ -199,9 +199,9 @@ jobs:
   # The epic-cc conformance gate in this tree: "did a HAL change break
   # against a known good compiler". epic-cc's hal-887 job asks the reverse
   # question in its tree. Pins the driver to EPIC_CC_PIN (built from
-  # source; Rust only, no clang build) plus the v0.0.3 bundle's clang, the
-  # artifact a user gets (epic-cc#118). A deliberate bump: a regression
-  # shows up as a chosen bump that fails, not a mystery (how: DEVELOPMENT.md
+  # source; Rust only, no clang build) plus the v0.3.0 bundle's clang, the
+  # artifact a user gets. A deliberate bump: a regression shows up as a
+  # chosen bump that fails, not a mystery (how: DEVELOPMENT.md
   # "The epiccc gate pin"). Public since HAL-4 (epic-hal#60): the hexes
   # verify in epic-cc's own crates/sim via scripts/sim-runner, so this job
   # pulls neither the private toolchain image nor anything Microchip.
@@ -221,12 +221,13 @@ jobs:
       # 877A/887/4550/1937 slices. See DEVELOPMENT.md
       # "The epiccc gate pin".
       EPIC_CC_PIN: e4a4e781c9a51b3dd0ebac5710ad5011c0ac7949
-      # The clang bundle stays on the acf3ece cut: clang 20.1.8 is
-      # identical across both pins (none of the #129 epic-cc changes
-      # touch the front end), so the job keeps consuming the published
-      # bundle until a front-end change forces a re-cut.
-      EPIC_CC_CLANG_TAG: ci-acf3ece4bae026625a791b18f4d86d6002f40606
-      EPIC_CC_CLANG_VER: 0.0.0-master-acf3ece4bae026625a791b18f4d86d6002f40606
+      # The clang bundle comes from the stable v0.3.0 release (the same
+      # clang 20.1.8 across the rolling cuts, cut from a driver that
+      # satisfies epic-cc#198's opt requirement). Pinning the stable
+      # tag removes the dependency on the rolling ci-<sha> prereleases
+      # (ADR-023), which are being retired.
+      EPIC_CC_CLANG_TAG: v0.3.0
+      EPIC_CC_CLANG_VER: 0.3.0
     steps:
       - uses: actions/checkout@v4
         with:

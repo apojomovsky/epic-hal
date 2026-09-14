@@ -147,18 +147,14 @@ The pin has two halves, both deliberate:
   `epic-cc-<ver>-x86_64-linux.zip` and verifies it against the
   release's own `SHA256SUMS`.
 
-Why two: the rolling `ci-<sha>` prereleases epic-cc#118 planned never
-published (their publish job has no checkout; epic-cc#140 fixed only
-`release.yml`), and the one tagged release, v0.0.3, was cut from an
-epic-cc master whose driver panicked on the 887 slice (`isel: call to
-unknown function @8`), a regression from the smax/smin isel change
-(epic-cc#136) that master has since fixed (epic-cc#142, #153). The
-bundle's clang was never affected, so the split lets the job consume a
-real user-facing artifact (the bundle) while pinning a driver that
-builds the slice. The rolling prereleases now publish, so
-`EPIC_CC_CLANG_TAG` moved to the `ci-<sha>` tag cut from the pinned
-driver sha; the v0.0.3 bundle predates the driver's `opt` requirement
-(epic-cc#198) and cannot build the gate hexes.
+Why two: rolling `ci-<sha>` prereleases (ADR-023) are being retired, and the
+v0.0.3 tag release was cut from an epic-cc master whose driver panicked
+on the 887 slice (`isel: call to unknown function @8`), a regression
+from the smax/smin isel change (epic-cc#136) that master has since
+fixed (epic-cc#142, #153). The stable v0.3.0 release supplies the clang
+bundle (clang 20.1.8, cut from a driver that satisfies the `opt`
+requirement of epic-cc#198), so `EPIC_CC_CLANG_TAG` pins that stable
+release and the driver is pinned separately from source.
 
 Bumping the pin:
 
@@ -177,13 +173,13 @@ records the reasoning for the current sha.
    check: build the driver at that sha (`cargo build --release -p
    driver` in a checkout) and run
    `make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1`
-   with the `ci-<sha>` bundle's clang exported.
+   with the stable release bundle's clang exported.
 2. Change `EPIC_CC_PIN` in `.github/workflows/ci.yml` to the new sha.
    The pin is a chosen, deliberate bump: a compiler regression shows up
-   as a bump that fails the gate, not as a mystery. When the rolling
-   prerelease for the new sha exists, move `EPIC_CC_CLANG_TAG` to its
-   `ci-<sha>` tag and `EPIC_CC_CLANG_VER` to the version inside its
-   asset names (the `0.0.0-master-<sha>` form).
+   as a bump that fails the gate, not as a mystery. The clang bundle
+   stays on the stable release (`EPIC_CC_CLANG_TAG`/`EPIC_CC_CLANG_VER`)
+   unless a driver change forces a front-end or `opt` change that
+   requires a re-cut.
 3. The job prints the driver sha and clang version in its step summary,
    so a failure names the compiler.
 
