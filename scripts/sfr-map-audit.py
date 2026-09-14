@@ -141,6 +141,9 @@ def parse_dfp(text: str):
 # positions must still agree after the alias.
 REG_ALIASES = {
     "CCP1RH": "CCPR1H", "CCP1RL": "CCPR1L", "OPTION": "OPTION_REG",
+    # 63x/67x/68x: the HAL-side Bank-0 WDTCON alias names the DFP's
+    # WDTCON, so its address is checked instead of skipped.
+    "WDTCON_BANK0": "WDTCON",
 }
 BIT_ALIASES = {
     # 87XA STATUS: the HAL's short names vs the DFP's long ones.
@@ -321,17 +324,17 @@ CONDITIONAL_REGS.update({
                "PORTB", "SRCON", "TRISB", "WDTCON", "WPUB", "WDTCON_BANK0"},
     "16F639": {"ANSEL", "ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0",
                "CM2CON1", "IOCB", "PIE2", "PIR2", "PORTB", "SRCON",
-               "TRISB", "WPUA", "WPUB", "WDTCON_BANK0"},
+               "TRISB", "WPUA", "WPUB"},
     "16F676": {"ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0", "CM2CON1",
                "IOCB", "OSCCON", "OSCTUNE", "PIE2", "PIR2", "PORTB",
                "SRCON", "TRISB", "WDTCON", "WPUB", "WDTCON_BANK0"},
     "16F684": {"ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0", "CM2CON1",
                "IOCB", "PIE2", "PIR2", "PORTB", "SRCON", "TRISB",
-               "WPUB", "WDTCON_BANK0"},
+               "WPUB"},
     "16F685": {"ANSEL_BANK1", "WDTCON_BANK0"},
     "16F688": {"ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0", "CM2CON1",
                "IOCB", "PIE2", "PIR2", "PORTB", "SRCON", "TRISB",
-               "WPUB", "WDTCON_BANK0"},
+               "WPUB"},
     "16F689": {"ANSEL_BANK1", "WDTCON_BANK0"},
 
 })

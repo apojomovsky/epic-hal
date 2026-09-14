@@ -29,18 +29,20 @@ shapes spread SFRs across all four banks (PIR1+PIR2). EUSART appears
 only on 688/689, ECCP only on 684/685. The 16F677 canonical proves
 the full tier with the bank probe; the 639/684/685/688/689 siblings
 prove their shapes the same way. The three 1 KW parts (630/631/676)
-cannot link the tier (blink overflows flash, XC8 error 1347,
-measured on 630 and 676; the bank probe cannot fit 64 B RAM, error
-1250 measured on the same-die 631), so they are manifest-excluded
-variants with host-sim coverage only. The -1 DFP spellings
-(16F631-1 and siblings) are a non-goal: XC8 v4.00 rejects every
--mcpu spelling with error 2043. Only the CM1CON0 dual-comparator
-shape has a driver; the CMCON single shape (630/676) and the
-CMCON0/CMCON1 shape (639/684/688, plus LVD and CRC on the 639) are
-never enabled and undispatched. Likewise ADC, SSP, CCP, Timer2 and
-USART silicon is present on some parts with no driver yet. Timer1
-gating is compiled in on the 4-bank shapes only (87XA precedent);
-the 2-bank parts count unconditionally.
+cannot link the tier: the 1058-word 676 blink overflows flash (XC8
+error 1347, measured), the 630 has no common RAM for banked access
+and its 942-word blink leaves no headroom, and the bank probe
+cannot fit 64 B RAM (error 1250 measured on the same-die 631), so
+they are manifest-excluded variants with host-sim coverage only.
+The -1 DFP spellings (16F631-1 and siblings) are a non-goal: XC8
+v4.00 rejects every -mcpu spelling with error 2043. Only the
+CM1CON0 dual-comparator shape has a driver; the CMCON single
+shape (630/676) and the CMCON0/CMCON1 shape (639/684/688, plus
+LVD and CRC on the 639) are never enabled and undispatched.
+Likewise ADC, SSP, CCP, Timer2 and USART silicon is present on
+some parts with no driver yet. Timer1 gating is compiled in on
+the 4-bank shapes only (87XA precedent); the 2-bank parts count
+unconditionally.
 
 ## 16F631 register map
 

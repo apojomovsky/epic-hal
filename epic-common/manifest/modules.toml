@@ -632,8 +632,8 @@ PIC16F63x_67x_68x = [
 # variant cannot fit the 64 B RAM (XC8 error 1250 on the harness cycle
 # bound). Wording follows the epic-serial 873A/874A precedent.
 "16F631" = "flash and RAM: the 1314-word blink smoke does not fit the 1K-word flash (XC8 error 1347), and the bank-probe sim variant does not fit the 64 B RAM (XC8 error 1250)"
-"16F630" = "flash and RAM: the blink smoke does not fit the 1K-word flash (XC8 error 1347, measured), and the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
-"16F676" = "flash and RAM: the blink smoke does not fit the 1K-word flash (XC8 error 1347, measured), and the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
+"16F630" = "flash and RAM: the 942-word blink leaves no headroom in the 1K-word flash and banked access is impossible without common RAM (target build fails loudly at the #error gate); the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
+"16F676" = "flash and RAM: the 1058-word blink smoke does not fit the 1K-word flash (XC8 error 1347, measured), and the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
 
 [modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x]
 name    = "blink"

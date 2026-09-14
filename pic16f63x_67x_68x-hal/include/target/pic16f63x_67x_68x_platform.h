@@ -226,10 +226,11 @@ extern volatile uint8_t epic_bank1_scratch __at(0x71);
  * no banked-access path: a plain literal hits the bank-0 alias (XC8
  * encodes the access bank-implicitly, measured TRISA stuck at POR on
  * the 630 blink), and there is no scratch home for the asm path
- * above. Both parts are module-excluded on flash/RAM grounds (blink
- * overflows the 1K-word flash, XC8 error 1347, measured on both), so
- * a target build for them must fail loudly here instead of
- * misdirecting silently. Host builds never include this header. */
+ * above. Both parts are module-excluded (the 1058-word 676 blink
+ * overflows the 1K-word flash with XC8 error 1347, measured; the
+ * 942-word 630 blink leaves no headroom), so a target build for
+ * them must fail loudly here instead of misdirecting silently.
+ * Host builds never include this header. */
 #error "63x/67x/68x target: banked SFR access needs common RAM (16F630/16F676 are module-excluded)"
 #endif
 #endif /* PIC16F63X_67X_68X_PLATFORM_H */
