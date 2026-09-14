@@ -72,6 +72,14 @@ FAMILIES = {
         "pic16f63x_67x_68x-hal/include/pic16f63x_67x_68x_sfr.h",
         [
             ("16F631", "Microchip.PIC16Fxxx_DFP", "pic16f631.h"),
+            ("16F630", "Microchip.PIC16Fxxx_DFP", "pic16f630.h"),
+            ("16F676", "Microchip.PIC16Fxxx_DFP", "pic16f676.h"),
+            ("16F639", "Microchip.PIC16Fxxx_DFP", "pic16f639.h"),
+            ("16F684", "Microchip.PIC16Fxxx_DFP", "pic16f684.h"),
+            ("16F685", "Microchip.PIC16Fxxx_DFP", "pic16f685.h"),
+            ("16F688", "Microchip.PIC16Fxxx_DFP", "pic16f688.h"),
+            ("16F689", "Microchip.PIC16Fxxx_DFP", "pic16f689.h"),
+            ("16F677", "Microchip.PIC16Fxxx_DFP", "pic16f677.h"),
         ],
     ),
     "pic16f88x-hal": (
@@ -133,6 +141,9 @@ def parse_dfp(text: str):
 # positions must still agree after the alias.
 REG_ALIASES = {
     "CCP1RH": "CCPR1H", "CCP1RL": "CCPR1L", "OPTION": "OPTION_REG",
+    # 63x/67x/68x: the HAL-side Bank-0 WDTCON alias names the DFP's
+    # WDTCON, so its address is checked instead of skipped.
+    "WDTCON_BANK0": "WDTCON",
 }
 BIT_ALIASES = {
     # 87XA STATUS: the HAL's short names vs the DFP's long ones.
@@ -187,6 +198,31 @@ BIT_ALIASES = {
     ("CCP2", "DC2B1"): ("CCP2CON", "DC2B1"),
 }
 
+# Registers present on every shape but at a different address on
+# some parts (bank variants, not absences): key mcu -> {HAL name:
+# expected DFP address}, checked against the DFP (a wrong override
+# fails loudly). The 63x 2-bank EEPROM/VRCON/ANSEL/WDTCON homes
+# below; the runtime uses literal-token bank macros there, so the
+# HAL constants stay canonical.
+BANK_VARIANT_ADDRS = {
+    "16F630": {"EEDATA": 0x9A, "EEADR": 0x9B, "EECON1": 0x9C,
+               "EECON2": 0x9D, "VRCON": 0x99},
+    "16F639": {"EEDATA": 0x9A, "EEADR": 0x9B, "EECON1": 0x9C,
+               "EECON2": 0x9D, "VRCON": 0x99, "WDTCON": 0x18},
+    "16F676": {"EEDATA": 0x9A, "EEADR": 0x9B, "EECON1": 0x9C,
+               "EECON2": 0x9D, "VRCON": 0x99, "ANSEL": 0x91},
+    "16F684": {"EEDATA": 0x9A, "EEADR": 0x9B, "EECON1": 0x9C,
+               "EECON2": 0x9D, "VRCON": 0x99, "WDTCON": 0x18,
+               "ANSEL": 0x91},
+    "16F688": {"EEDATA": 0x9A, "EEADR": 0x9B, "EECON1": 0x9C,
+               "EECON2": 0x9D, "VRCON": 0x99, "WDTCON": 0x18,
+               "ANSEL": 0x91},
+    # The 14-pin ADC parts keep ANSEL in Bank 1 (0x91, the
+    # ANSEL_BANK1 alias's premise); 639/684/688 keep WDTCON in Bank
+    # 0 (0x18, the WDTCON_BANK0 alias's premise, used by the shared
+    # WDT driver).
+
+}
 # Registers and bits that are legitimately absent from a part's DFP
 # header: family-conditional SFRs on the smaller parts (the HAL defines
 # the constants unconditionally and guards the usage). key: mcu -> set
@@ -210,6 +246,48 @@ CONDITIONAL_BITS = {
     "16F882": {("ANSEL", "ANS5"), ("ANSEL", "ANS6"), ("ANSEL", "ANS7")},
     "16F883": {("ANSEL", "ANS5"), ("ANSEL", "ANS6"), ("ANSEL", "ANS7")},
     "16F886": {("ANSEL", "ANS5"), ("ANSEL", "ANS6"), ("ANSEL", "ANS7")},
+    # 63x/67x/68x 4-bank parts: the 2-bank RAIF/RAIE/RAPU spellings
+    # and the PIR1 EEPROM pair exist only on the 2-bank shapes;
+    # ANS2/ANS3 exist only where ANSEL is fully implemented.
+    "16F631": {("INTCON", "RAIF"), ("INTCON", "RAIE"), ("OPTION", "RAPU"),
+               ("PIR1", "EEIF"), ("PIE1", "EEIE"),
+               ("ANSEL", "ANS2"), ("ANSEL", "ANS3")},
+    "16F677": {("INTCON", "RAIF"), ("INTCON", "RAIE"), ("OPTION", "RAPU"),
+               ("PIR1", "EEIF"), ("PIE1", "EEIE")},
+    # 63x/67x/68x 16F630: the DFP spells the PORTA-change pair
+    # RAIF/RAIE (no RABIF/RABIE); RAPU is a HAL-only name for the
+    # pull-up bit. The VRCON comparator-reference trio exists only
+    # on the dual-comparator shapes. The 1K dice additionally lack
+    # the SBOREN/ULPWUE PCON bits and the T1GINV gate-invert bit.
+    "16F630": {("INTCON", "RABIF"), ("INTCON", "RABIE"),
+               ("OPTION", "RAPU"),
+               ("PCON", "SBOREN"), ("PCON", "ULPWUE"),
+               ("T1CON", "T1GINV"),
+               ("VRCON", "C1VREN"), ("VRCON", "C2VREN"),
+               ("VRCON", "VP6EN")},
+    "16F639": {("INTCON", "RABIF"), ("INTCON", "RABIE"),
+               ("OPTION", "RAPU"),
+               ("VRCON", "C1VREN"), ("VRCON", "C2VREN"),
+               ("VRCON", "VP6EN")},
+    "16F676": {("INTCON", "RABIF"), ("INTCON", "RABIE"),
+               ("OPTION", "RAPU"),
+               ("PCON", "SBOREN"), ("PCON", "ULPWUE"),
+               ("T1CON", "T1GINV"),
+               ("VRCON", "C1VREN"), ("VRCON", "C2VREN"),
+               ("VRCON", "VP6EN")},
+    "16F684": {("INTCON", "RABIF"), ("INTCON", "RABIE"),
+               ("OPTION", "RAPU"),
+               ("VRCON", "C1VREN"), ("VRCON", "C2VREN"),
+               ("VRCON", "VP6EN")},
+    "16F685": {("INTCON", "RAIF"), ("INTCON", "RAIE"), ("OPTION", "RAPU"),
+               ("PIR1", "EEIF"), ("PIE1", "EEIE")},
+    "16F688": {("INTCON", "RABIF"), ("INTCON", "RABIE"),
+               ("OPTION", "RAPU"), ("PCON", "SBOREN"),
+               ("VRCON", "C1VREN"), ("VRCON", "C2VREN"),
+               ("VRCON", "VP6EN")},
+    "16F689": {("INTCON", "RAIF"), ("INTCON", "RAIE"), ("OPTION", "RAPU"),
+               ("PIR1", "EEIF"), ("PIE1", "EEIE")},
+
 }
 
 # Registers absent from the smaller parts' DFP headers but defined
@@ -235,7 +313,30 @@ CONDITIONAL_REGS.update({
     "16F886": {"PORTD", "TRISD"},
     # 63x/67x/68x 16F631: no ANSELH (677-only); the HAL defines it
     # unconditionally and gates the usage on FAMILY_HAS_ANSELH.
-    "16F631": {"ANSELH"},
+    "16F631": {"ANSELH", "ANSEL_BANK1", "WDTCON_BANK0"},
+    "16F677": {"ANSEL_BANK1", "WDTCON_BANK0"},
+    # 63x/67x/68x 16F630: no PORTB, no dual comparators, no PIE2/PIR2,
+    # no SRCON, no OSCCON/OSCTUNE/WDTCON, no ANSEL; ANSEL_BANK1 is the
+    # HAL-side alias pattern above. EEPROM/VRCON bank addresses ride
+    # BANK_VARIANT_ADDRS, not this list.
+    "16F630": {"ANSEL", "ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0",
+               "CM2CON1", "IOCB", "OSCCON", "OSCTUNE", "PIE2", "PIR2",
+               "PORTB", "SRCON", "TRISB", "WDTCON", "WPUB", "WDTCON_BANK0"},
+    "16F639": {"ANSEL", "ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0",
+               "CM2CON1", "IOCB", "PIE2", "PIR2", "PORTB", "SRCON",
+               "TRISB", "WPUA", "WPUB"},
+    "16F676": {"ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0", "CM2CON1",
+               "IOCB", "OSCCON", "OSCTUNE", "PIE2", "PIR2", "PORTB",
+               "SRCON", "TRISB", "WDTCON", "WPUB", "WDTCON_BANK0"},
+    "16F684": {"ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0", "CM2CON1",
+               "IOCB", "PIE2", "PIR2", "PORTB", "SRCON", "TRISB",
+               "WPUB"},
+    "16F685": {"ANSEL_BANK1", "WDTCON_BANK0"},
+    "16F688": {"ANSELH", "ANSEL_BANK1", "CM1CON0", "CM2CON0", "CM2CON1",
+               "IOCB", "PIE2", "PIR2", "PORTB", "SRCON", "TRISB",
+               "WPUB"},
+    "16F689": {"ANSEL_BANK1", "WDTCON_BANK0"},
+
 })
 
 # Bits the DFP does not define but the datasheet documents:
@@ -246,6 +347,10 @@ DFP_MISSING_OK = {
     ("STATUS", "PD"), ("STATUS", "TO"),
     ("OPTION", "RBPU"), ("OPTION_REG", "RBPU"),
     ("SRCON1", "SRQEN"), ("SRCON1", "SRNQEN"),
+    # 63x/67x/68x 2-bank RABPU: the pull-up global is documented in
+    # DS40300/DS41262 but the 2-bank DFP headers carry no _POSN for
+    # it (the 4-bank headers spell it nRABPU, covered by the alias).
+    ("OPTION", "RABPU"),
 }
 
 # Bit aliases that the audit deliberately does not chase: aggregate or
@@ -290,10 +395,11 @@ def main() -> int:
                 if name in CONDITIONAL_REGS.get(mcu, set()):
                     continue
                 dfp_name = REG_ALIASES.get(name, name)
+                expected = BANK_VARIANT_ADDRS.get(mcu, {}).get(name, addr)
                 if dfp_name not in dfp_regs:
                     issues.append(f"  register {name}: HAL 0x{addr:02X}, "
                                   f"no DFP register {dfp_name} on {mcu}")
-                elif dfp_regs[dfp_name] != addr:
+                elif dfp_regs[dfp_name] != expected:
                     issues.append(f"  register {name}: HAL 0x{addr:02X} != "
                                   f"DFP {dfp_name} 0x{dfp_regs[dfp_name]:02X} on {mcu}")
             for (reg, bit), pos in sorted(hal_bits.items()):

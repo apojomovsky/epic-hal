@@ -1,6 +1,8 @@
-/* GPIO driver implementation (DS40001262F §4.0). PORTA is RA0..RA5,
- * PORTB is RB4..RB7 only, PORTC is RC0..RC7; ANSEL (Bank 2) selects the
- * analog function on RA0/RA1/RC0..RC3. */
+/* GPIO driver implementation (DS40001262F §4.0, DS40300 §4.0). The
+ * 20-pin parts carry PORTA (RA0..RA5), PORTB (RB4..RB7) and full PORTC;
+ * the 14-pin parts carry PORTA/PORTC only with RC0..RC5. ANSEL lives at
+ * 0x11E (Bank 2) on 20-pin shapes and 0x91 (Bank 1) on the 14-pin ADC
+ * shapes; the 630/639 have no ANSEL at all. */
 
 #include "peripherals/pic16f63x_67x_68x_gpio.h"
 #include "core/pic16_irq.h"
@@ -14,7 +16,9 @@ static uint8_t tris_addr(GPIO_TypeDef port)
 {
     switch (port) {
         case GPIOA: return PIC_REG_TRISA;
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
         case GPIOB: return PIC_REG_TRISB;
+#endif
         case GPIOC: return PIC_REG_TRISC;
         default:    return PIC_REG_TRISA;
     }
@@ -29,7 +33,9 @@ static uint8_t port_addr(GPIO_TypeDef port)
 {
     switch (port) {
         case GPIOA: return PIC_REG_PORTA;
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
         case GPIOB: return PIC_REG_PORTB;
+#endif
         case GPIOC: return PIC_REG_PORTC;
         default:    return PIC_REG_PORTA;
     }
@@ -46,28 +52,43 @@ static uint8_t port_mask(GPIO_TypeDef port)
 {
     switch (port) {
         case GPIOA: return 0x3FU;
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
         case GPIOB: return 0xF0U;
         case GPIOC: return 0xFFU;
+#else
+        case GPIOC: return 0x3FU;
+#endif
         default:    return 0x00U;
     }
 }
 
 /**
  * @brief  Map a pin to its ANSEL bit, if it has an analog function.
- *         RA0=ANS0, RA1=ANS1, RC0=ANS4, RC1=ANS5, RC2=ANS6, RC3=ANS7
- *         (DS40001262F pin summary; AN2/AN3 do not exist on this part).
+ *         20-pin map: RA0=ANS0, RA1=ANS1, RC0=ANS4, RC1=ANS5, RC2=ANS6,
+ *         RC3=ANS7 (DS40001262F pin summary). 14-pin ADC map:
+ *         RA0=ANS0, RA1=ANS1, RA2=ANS2, RA4=ANS3, RC0=ANS4, RC1=ANS5,
+ *         RC2=ANS6, RC3=ANS7 (DS40300 pin summary).
  * @param port GPIOA..GPIOC.
  * @param pin the pin number, 0..7.
  * @return the ANSEL bit position, or 0xFF if the pin has no analog
  *         function.
  */
+#if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL
 static uint8_t ansel_bit(GPIO_TypeDef port, uint8_t pin)
 {
+#if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL_BANK1
+    if (port == GPIOA) {
+        if (pin <= 2U) return pin;
+        if (pin == 4U) return 3U;
+        return 0xFFU;
+    }
+#else
     if (port == GPIOA) {
         if (pin == 0U) return 0U;
         if (pin == 1U) return 1U;
         return 0xFFU;
     }
+#endif
     if (port == GPIOC) {
         if (pin <= 3U) return (uint8_t)(pin + 4U);
         return 0xFFU;
@@ -75,6 +96,7 @@ static uint8_t ansel_bit(GPIO_TypeDef port, uint8_t pin)
     /* PORTB has no analog functions. */
     return 0xFFU;
 }
+#endif
 
 #if PIC16F63X_67X_68X_FAMILY_HAS_ANSELH
 /**
@@ -113,11 +135,24 @@ static uint8_t anselh_bit(GPIO_TypeDef port, uint8_t pin)
  */
 static void set_ansel_bits(GPIO_TypeDef port, uint16_t pins, uint8_t analog)
 {
+#if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL
     uint8_t ansel = 0u;
+#if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL_BANK1
+    /* The BANK1 literal-token macros stringify the token for inline
+     * asm, so they need the real SFR name (XC8 resolves ANSEL to
+     * 0x91 on these parts); the HAL-side ANSEL_BANK1 alias exists
+     * only for the host/sim constant path below. */
+#ifdef EPIC_BANK1_READ8
+    EPIC_BANK1_READ8(ANSEL, ansel);
+#else
+    ansel = EPIC_REG8(PIC_REG_ANSEL_BANK1);
+#endif
+#else
 #ifdef EPIC_BANK2_READ8
     EPIC_BANK2_READ8(ANSEL, ansel);
 #else
     ansel = EPIC_REG8(PIC_REG_ANSEL);
+#endif
 #endif
     uint8_t changed = 0U;
     for (uint8_t pin = 0U; pin <= 7U; pin++) {
@@ -129,12 +164,22 @@ static void set_ansel_bits(GPIO_TypeDef port, uint16_t pins, uint8_t analog)
         changed = 1U;
     }
     if (changed) {
+#if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL_BANK1
+#ifdef EPIC_BANK1_WRITE8
+        /* Real SFR name for the stringified asm token (see above). */
+        EPIC_BANK1_WRITE8(ANSEL, ansel);
+#else
+        EPIC_REG8(PIC_REG_ANSEL_BANK1) = ansel;
+#endif
+#else
 #ifdef EPIC_BANK2_WRITE8
         EPIC_BANK2_WRITE8(ANSEL, ansel);
 #else
         EPIC_REG8(PIC_REG_ANSEL) = ansel;
 #endif
+#endif
     }
+#endif
 #if PIC16F63X_67X_68X_FAMILY_HAS_ANSELH
     uint8_t anselh = 0u;
 #ifdef EPIC_BANK2_READ8
@@ -178,7 +223,9 @@ static uint8_t tris_read(GPIO_TypeDef port)
     uint8_t v = 0u;
     switch (port) {
         case GPIOA: EPIC_BANK1_READ8(TRISA, v); break;
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
         case GPIOB: EPIC_BANK1_READ8(TRISB, v); break;
+#endif
         case GPIOC: EPIC_BANK1_READ8(TRISC, v); break;
         default: break;
     }
@@ -198,7 +245,9 @@ static void tris_write(GPIO_TypeDef port, uint8_t value)
 #ifdef EPIC_BANK1_WRITE8
     switch (port) {
         case GPIOA: EPIC_BANK1_WRITE8(TRISA, value); break;
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
         case GPIOB: EPIC_BANK1_WRITE8(TRISB, value); break;
+#endif
         case GPIOC: EPIC_BANK1_WRITE8(TRISC, value); break;
         default: break;
     }
@@ -346,6 +395,7 @@ void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 #endif
 }
 
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
 /**
  * @brief Enable or disable the weak pull-up on a single PORTB pin.
  * @param pin the RB pin number, 4..7 (RB0..RB3 do not exist; masked).
@@ -368,8 +418,9 @@ void EPIC_GPIO_SetPinPullup(uint8_t pin, uint8_t enable)
     EPIC_REG8(PIC_REG_WPUB) = wpub;
 #endif
 }
+#endif
 
-/* PORTB change interrupt. */
+/* PORTA/B change interrupt. */
 
 /* One callback slot for the whole-port RB<7:4> change interrupt. There is
  * only one PORTB, so there is no handle struct. NULL = unregistered. */
@@ -385,6 +436,7 @@ void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t))
     s_rb_change_callback = callback;
 }
 
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
 /**
  * @brief Enable or disable interrupt-on-change for one PORTB pin.
  * @param pin the RB pin number, 4..7 (RB0..RB3 do not exist; masked).
@@ -407,6 +459,7 @@ void EPIC_GPIO_SetPinIOC(uint8_t pin, uint8_t enable)
     EPIC_REG8(PIC_REG_IOCB) = iocb;
 #endif
 }
+#endif
 
 /**
  * @brief Weak RB<7:4> change ISR: reads PORTB first, clears RABIF, then
@@ -416,7 +469,11 @@ void RB_IRQHandler(void)
 {
     /* Direct flag ops (class-F). RABIF is INTCON bit 0. */
     if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_RBIF)) return;
+#if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
     uint8_t portb = EPIC_REG8(PIC_REG_PORTB);
+#else
+    uint8_t portb = EPIC_REG8(PIC_REG_PORTA);
+#endif
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_RBIF);
     if (s_rb_change_callback) s_rb_change_callback(portb);
 }

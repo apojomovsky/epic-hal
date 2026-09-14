@@ -76,5 +76,6 @@
  * exist on this family's slice (no Timer2/USART/SSP/ADC/CCP). */
 #define EPIC_PIE1_READ_TMR1IE(out_var) ((out_var) = EPIC_REG8(0x8CU))
 #define EPIC_PIE2_READ_EEIE(out_var)   ((out_var) = EPIC_REG8(0x8DU))
+#define EPIC_PIE1_READ_EEIE(out_var)   ((out_var) = EPIC_REG8(0x8CU))
 
 #endif /* PIC16F63X_67X_68X_PLATFORM_H */

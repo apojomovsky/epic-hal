@@ -52,6 +52,9 @@
 #define PIC_REG_WPUA          0x95U
 #define PIC_REG_IOCA          0x96U
 #define PIC_REG_WDTCON        0x97U
+/* Second WDTCON address (0x18, Bank 0) for the 2-bank WDT parts
+ * (639/684/688); the Bank-1 WDTCON above does not exist there. */
+#define PIC_REG_WDTCON_BANK0  0x18U
 
 /* Bank 2. */
 #define PIC_REG_EEDATA        0x10CU
@@ -63,6 +66,9 @@
 #define PIC_REG_CM2CON0       0x11AU
 #define PIC_REG_CM2CON1       0x11BU
 #define PIC_REG_ANSEL         0x11EU
+/* Second ANSEL address (0x91, Bank 1) for the 14-pin ADC parts
+ * (676/684/688); the 20-pin ANSEL above does not exist there. */
+#define PIC_REG_ANSEL_BANK1   0x91U
 #define PIC_REG_ANSELH        0x11FU
 
 /* Bank 3. */
@@ -85,9 +91,13 @@
  * names the PORTA/B-change flag RABIF/RABIE; RBIF/RBIE are compat
  * aliases for the shared core, which spells them the 87XA way. */
 
+/* RAIF/RAIE are the 2-bank Dice names for the same PORTA-change
+ * bits (DS40300); the audit checks each spelling where it exists. */
+#define PIC_INTCON_RAIF       EPIC_BIT(0)
 #define PIC_INTCON_RABIF      EPIC_BIT(0)
 #define PIC_INTCON_INTF       EPIC_BIT(1)
 #define PIC_INTCON_T0IF       EPIC_BIT(2)
+#define PIC_INTCON_RAIE       EPIC_BIT(3)
 #define PIC_INTCON_RABIE      EPIC_BIT(3)
 #define PIC_INTCON_INTE       EPIC_BIT(4)
 #define PIC_INTCON_T0IE       EPIC_BIT(5)
@@ -98,10 +108,14 @@
 #define PIC_INTCON_TMR0IF     PIC_INTCON_T0IF
 #define PIC_INTCON_TMR0IE     PIC_INTCON_T0IE
 
-/* PIR1 / PIE1: Timer1 overflow only (DS40001262F §14.0). */
+/* PIR1 / PIE1: Timer1 overflow on every part; EEPROM completion
+ * lives here (bit 7) on the 2-bank parts (DS40300 §14.0) instead of
+ * PIR2. The audit checks the EE pair where it exists. */
 
 #define PIC_PIR1_TMR1IF       EPIC_BIT(0)
 #define PIC_PIE1_TMR1IE       EPIC_BIT(0)
+#define PIC_PIR1_EEIF         EPIC_BIT(7)
+#define PIC_PIE1_EEIE         EPIC_BIT(7)
 
 /* PIR2 / PIE2: EEPROM, comparators C1/C2, oscillator fail
  * (DS40001262F §14.0). */
@@ -155,6 +169,7 @@
 #define PIC_OPTION_T0CS         EPIC_BIT(5)
 #define PIC_OPTION_INTEDG       EPIC_BIT(6)
 #define PIC_OPTION_RABPU        EPIC_BIT(7)
+#define PIC_OPTION_RAPU         EPIC_BIT(7)
 #define PIC_OPTION_PS_MASK      0x07U
 
 /* PCON bits (DS40001262F §14.0). */
@@ -269,6 +284,8 @@
 
 #define PIC_ANSEL_ANS0          EPIC_BIT(0)
 #define PIC_ANSEL_ANS1          EPIC_BIT(1)
+#define PIC_ANSEL_ANS2          EPIC_BIT(2)
+#define PIC_ANSEL_ANS3          EPIC_BIT(3)
 #define PIC_ANSEL_ANS4          EPIC_BIT(4)
 #define PIC_ANSEL_ANS5          EPIC_BIT(5)
 #define PIC_ANSEL_ANS6          EPIC_BIT(6)
