@@ -219,11 +219,22 @@ void EPIC_ADC_ClearITFlag(void)
 }
 
 /**
- * @brief Read the latest 10-bit result (0..1023), right-justified.
- * @return the conversion result.
+ * @brief Read the latest conversion result (right-justified). The
+ *        DS30325 (16F72-77) ADC is 8-bit with a single ADRES register
+ *        and no ADFM/ADCON2; the DS30498 (16F737-777) and the
+ *        87XA/88X families carry the 10-bit ADRESH/ADRESL pair. The
+ *        8-bit path (HAS_ADC_10BIT=0) masks the result to 8 bits so a
+ *        caller can always treat it as a scalar.
+ * @return the conversion result (0..255 for the 8-bit ADRES parts,
+ *         0..1023 for the 10-bit pair).
  */
 uint16_t EPIC_ADC_Read(void)
 {
+#if !PIC14MIDRANGE_HAS_ADC_10BIT
+    /* 8-bit result in ADRES, Bank 0, address 0x1E (DS30325 Table 3-1).
+     * ADCON1 holds only the reference/mux bits here, no ADFM. */
+    return (uint16_t)EPIC_REG8(PIC_REG_ADRES);
+#else
     /* ADRESL and ADCON1 sit in Bank 1 on both families; read them
      * through the Bank-1 tokens so the bank discipline matches the
      * write path. */
@@ -246,6 +257,7 @@ uint16_t EPIC_ADC_Read(void)
      * gets a 0..1023 result. */
     if (!(adfm_raw & PIC_ADCON1_ADFM)) raw = (uint16_t)(raw >> 6);
     return raw & 0x03FFU;
+#endif
 }
 
 /**
