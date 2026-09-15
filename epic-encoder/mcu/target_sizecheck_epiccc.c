@@ -16,9 +16,15 @@ EPIC_CONFIG("osc=hs, wdt=off, xtal_hz=20000000");
 static uint32_t g_now;
 
 /** @brief Read the simulated millisecond timebase. @return the tick count. */
-uint32_t epic_tick_get(void) { return g_now; }
+uint32_t epic_tick_get(void)
+{
+    return g_now;
+}
 /** @brief Elapsed ms since a captured timestamp. @param t0 the timestamp. @return g_now - t0. */
-uint32_t epic_tick_elapsed_since(uint32_t t0) { return g_now - t0; }
+uint32_t epic_tick_elapsed_since(uint32_t t0)
+{
+    return g_now - t0;
+}
 
 static epic_encoder_t g_enc;
 
@@ -32,6 +38,7 @@ int main(void)
     (void)epic_encoder_get_position(&g_enc);
     EPIC_REG8(TRISB_REG) = (uint8_t)0x00u;
     EPIC_REG8(PORTB_REG) = (uint8_t)epic_encoder_get_glitch_count(&g_enc);
-    for (;;) {
+    for (;;)
+    {
     }
 }

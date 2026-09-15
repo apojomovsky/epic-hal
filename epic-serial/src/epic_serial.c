@@ -53,7 +53,8 @@ static volatile uint8_t g_rx_head, g_rx_tail, g_rx_count;
  */
 static void epic_serial_on_rx(uint8_t data)
 {
-    if (g_rx_count < SZ) {                  /* drop on overflow */
+    if (g_rx_count < SZ)
+    {                  /* drop on overflow */
         g_rx_buf[g_rx_head] = data;
         g_rx_head = (uint8_t)((g_rx_head + 1u) & MASK);
         g_rx_count++;
@@ -68,7 +69,8 @@ static void epic_serial_on_rx(uint8_t data)
  */
 static void epic_serial_on_tx(void)
 {
-    if (g_tx_count > 0u) {
+    if (g_tx_count > 0u)
+    {
         /* No GIE manipulation (see the ring-discipline note): the pop is
          * the only ISR writer of the TX ring's tail/count, and each
          * update is a single-byte atomic store. */
@@ -76,7 +78,9 @@ static void epic_serial_on_tx(void)
         g_tx_tail = (uint8_t)((g_tx_tail + 1u) & MASK);
         g_tx_count--;
         SERIAL_TXREG_WRITE(b);              /* writing TXREG clears TXIF (HW) */
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(SERIAL_IRQ_TX);  /* ring empty: disarm the TX ISR */
     }
 }
@@ -135,8 +139,10 @@ void epic_serial_init(uint32_t fosc_hz, uint32_t baud)
  */
 int epic_serial_write(const uint8_t *data, int len)
 {
-    for (int i = 0; i < len; i++) {
-        while (g_tx_count >= SZ) {
+    for (int i = 0; i < len; i++)
+    {
+        while (g_tx_count >= SZ)
+        {
             epic_dispatch_all_irqs();        /* ring full: drain (host pumps, target ISR drains) */
         }
         g_tx_buf[g_tx_head] = data[i];
@@ -159,7 +165,8 @@ int epic_serial_write(const uint8_t *data, int len)
 int epic_serial_read(uint8_t *buf, int max)
 {
     int n = 0;
-    while (n < max && g_rx_count > 0u) {
+    while (n < max && g_rx_count > 0u)
+    {
         buf[n++] = g_rx_buf[g_rx_tail];
         g_rx_tail = (uint8_t)((g_rx_tail + 1u) & MASK);
         g_rx_count--;
@@ -195,10 +202,12 @@ int epic_serial_tx_pending(void)
  */
 void epic_serial_flush(void)
 {
-    while (g_tx_count > 0u) {
+    while (g_tx_count > 0u)
+    {
         epic_dispatch_all_irqs();
     }
-    while (!EPIC_USART_IsTxShiftRegisterEmpty()) {
+    while (!EPIC_USART_IsTxShiftRegisterEmpty())
+    {
         epic_dispatch_all_irqs();            /* last byte still in the shift register */
     }
 }
@@ -232,24 +241,28 @@ static void epic_serial_put_udec(uint32_t v)
 {
 #ifdef __EPIC_CC__
     uint8_t n = 0;
-    do {
+    do
+    {
         s_fmt_buf[n] = (char)('0' + (int)(v % 10u));
         v /= 10u;
         n++;
     } while (v != 0u);
-    while (n > 0u) {
+    while (n > 0u)
+    {
         n--;
         epic_serial_write((const uint8_t *)&s_fmt_buf[n], 1);
     }
 #else
     char buf[12];
     uint8_t n = 0;
-    do {
+    do
+    {
         buf[n] = (char)('0' + (int)(v % 10u));
         v /= 10u;
         n++;
     } while (v != 0u);
-    while (n > 0u) {
+    while (n > 0u)
+    {
         n--;
         epic_serial_write((const uint8_t *)&buf[n], 1);
     }
@@ -262,12 +275,15 @@ static void epic_serial_put_udec(uint32_t v)
  */
 static void epic_serial_put_idec(int32_t v)
 {
-    if (v < 0) {
+    if (v < 0)
+    {
         uint8_t sign = (uint8_t)'-';
         /* -(-2147483648) overflows, so negate through the low half. */
         epic_serial_write(&sign, 1);
         epic_serial_put_udec((uint32_t)(-(v + 1)) + 1u);
-    } else {
+    }
+    else
+    {
         epic_serial_put_udec((uint32_t)v);
     }
 }
@@ -281,7 +297,8 @@ static void epic_serial_put_hexw(uint32_t v, int nibbles)
 {
 #ifdef __EPIC_CC__
     int base = (int)sizeof(s_fmt_buf) - nibbles;
-    for (int i = nibbles - 1; i >= 0; i--) {
+    for (int i = nibbles - 1; i >= 0; i--)
+    {
         int d = (int)(v & 0xFu);
         s_fmt_buf[base + i] = (char)((d < 10) ? ('0' + d) : ('A' - 10 + d));
         v >>= 4;
@@ -290,7 +307,8 @@ static void epic_serial_put_hexw(uint32_t v, int nibbles)
 #else
     char buf[12];
     int base = (int)sizeof(buf) - nibbles;
-    for (int i = nibbles - 1; i >= 0; i--) {
+    for (int i = nibbles - 1; i >= 0; i--)
+    {
         int d = (int)(v & 0xFu);
         buf[base + i] = (char)((d < 10) ? ('0' + d) : ('A' - 10 + d));
         v >>= 4;
@@ -318,7 +336,8 @@ void epic_serial_put_char(char c)
 void epic_serial_put_str(const char *s)
 {
     int len = 0;
-    while (s[len] != '\0') {
+    while (s[len] != '\0')
+    {
         len++;
     }
     epic_serial_write((const uint8_t *)s, len);

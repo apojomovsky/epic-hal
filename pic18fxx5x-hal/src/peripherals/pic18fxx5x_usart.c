@@ -33,13 +33,19 @@ uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
     if (baud == 0) return 0xFFFFU;
 
     uint32_t divisor;
-    if (mode == USART_MODE_SYNCHRONOUS) {
+    if (mode == USART_MODE_SYNCHRONOUS)
+    {
         divisor = 4U;
-    } else {
+    }
+    else
+    {
         /* DS39632E Table 20-1, async rows. */
-        if (brg16 == USART_BAUDGEN_16BIT) {
+        if (brg16 == USART_BAUDGEN_16BIT)
+        {
             divisor = (brgh == USART_BRGH_HIGH) ? 4U : 16U;
-        } else {
+        }
+        else
+        {
             divisor = (brgh == USART_BRGH_HIGH) ? 16U : 64U;
         }
     }

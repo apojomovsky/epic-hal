@@ -80,9 +80,12 @@ static inline EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h)
     if (!h) return EPIC_INVALID;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR2);
-    if (h->OverflowCallback) {
+    if (h->OverflowCallback)
+    {
         EPIC_IRQ_Enable(PIC16_IRQ_TMR2);
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR2);
     }
     g_t2_overflow_cb = h->OverflowCallback;

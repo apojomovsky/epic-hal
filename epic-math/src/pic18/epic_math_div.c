@@ -54,7 +54,10 @@ static volatile uint8_t  m_du16_cnt;
 epic_math_udiv16_t epic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
 {
     epic_math_udiv16_t res = { 0u, 0u };
-    if (den == 0u) { if (ok) *ok = false; return res; }
+    if (den == 0u)
+    {
+        if (ok) *ok = false; return res;
+    }
     if (ok) *ok = true;
 
     m_du16_num = num; m_du16_den = den;
@@ -131,7 +134,10 @@ static volatile uint8_t  m_du32_cnt;
 epic_math_udiv16_t epic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
 {
     epic_math_udiv16_t res = { 0u, 0u };
-    if (den == 0u) { if (ok) *ok = false; return res; }
+    if (den == 0u)
+    {
+        if (ok) *ok = false; return res;
+    }
     if (ok) *ok = true;
 
     m_du32_num = num; m_du32_den = den;
@@ -204,7 +210,10 @@ epic_math_udiv16_t epic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
 epic_math_sdiv16_t epic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
 {
     epic_math_sdiv16_t res = { 0, 0 };
-    if (den == 0) { if (ok) *ok = false; return res; }
+    if (den == 0)
+    {
+        if (ok) *ok = false; return res;
+    }
     if (ok) *ok = true;
 
     int neg_q = ((num < 0) != 0) ^ ((den < 0) != 0);

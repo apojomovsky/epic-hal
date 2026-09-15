@@ -16,7 +16,8 @@ int main(void)
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
     epic_bus_i2c_init(FOSC_HZ, 100000UL);
     epic_bus_spi_init(FOSC_HZ, 0u, 1u, 0u);
-    for (;;) {
+    for (;;)
+    {
         EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
         EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
     }

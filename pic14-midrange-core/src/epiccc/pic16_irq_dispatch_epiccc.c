@@ -47,7 +47,8 @@ void epic_dispatch_all_irqs(void)
     if (pir1 & PIC_PIR1_SSPIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_SSPIF);
 #endif
     if (pir1 & PIC_PIR1_RCIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_RCIF);
-    if (pir1 & PIC_PIR1_TXIF) {
+    if (pir1 & PIC_PIR1_TXIF)
+    {
         uint8_t txie;
         EPIC_PIE1_READ_TXIE(txie);
         if (!(txie & PIC_PIE1_TXIE)) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TXIF);
@@ -82,7 +83,8 @@ void epic_dispatch_all_irqs(void)
     if (pir2 & PIC_PIR2_BCLIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_BCLIF);
 #endif
 #if PIC14MIDRANGE_HAS_EE_PIR2
-    if (pir2 & PIC_PIR2_EEIF) {
+    if (pir2 & PIC_PIR2_EEIF)
+    {
         uint8_t eeie = 0u;
         EPIC_PIE2_READ_EEIE(eeie);
         if (!(eeie & PIC_PIE2_EEIE)) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_EEIF);

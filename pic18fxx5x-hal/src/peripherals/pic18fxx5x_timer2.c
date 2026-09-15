@@ -94,9 +94,12 @@ EPIC_StatusTypeDef EPIC_TIMER2_Init(const TIMER2_HandleTypeDef *h)
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T2CON), PIC_T2CON_TMR2ON);
 
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR2);
-    if (h->OverflowCallback) {
+    if (h->OverflowCallback)
+    {
         EPIC_IRQ_Enable(PIC18_IRQ_TMR2);
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR2);
     }
 
@@ -168,7 +171,8 @@ void TIMER2_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC18_IRQ_TMR2)) return;
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR2);
-    if (g_t2_handle && g_t2_handle->OverflowCallback) {
+    if (g_t2_handle && g_t2_handle->OverflowCallback)
+    {
         g_t2_handle->OverflowCallback();
     }
 }

@@ -86,7 +86,8 @@ static void test_pure_i_accumulates(void)
              (int16_t)-10000, (int16_t)10000);
 
     int32_t expected_integrator = 0;
-    for (int n = 0; n < 4; n++) {
+    for (int n = 0; n < 4; n++)
+    {
         (void)epic_pid_update(&pid, (int16_t)10, (int16_t)0);
         expected_integrator += mul_s16(256, 10);  /* 2560 per step */
         CHECK(pid.integrator_q8 == expected_integrator,
@@ -125,7 +126,8 @@ static void test_anti_windup_clamps(void)
     /* Drive until saturation: 5 steps of error=+10 (2560/step) takes the
      * integrator from 0 to 12800, exactly the rail. */
     int16_t last_out = 0;
-    for (int n = 0; n < 5; n++) {
+    for (int n = 0; n < 5; n++)
+    {
         last_out = epic_pid_update(&pid, (int16_t)10, (int16_t)0);
     }
     CHECK(last_out == 50, "anti-windup: just reached the rail");
@@ -135,7 +137,8 @@ static void test_anti_windup_clamps(void)
     /* Continue for another 20 steps: every step's increment would
      * overshoot, so the integrator must stay clamped at out_max_q8 and
      * the output must stay at out_max exactly. */
-    for (int n = 0; n < 20; n++) {
+    for (int n = 0; n < 20; n++)
+    {
         last_out = epic_pid_update(&pid, (int16_t)10, (int16_t)0);
         CHECK(pid.integrator_q8 <= out_max_q8,
               "anti-windup: integrator never above out_max_q8");
@@ -161,7 +164,8 @@ static void test_windup_recovery_immediate(void)
              (int16_t)-50, (int16_t)50);
 
     /* Drive to saturation: 20 steps of error=+10. */
-    for (int n = 0; n < 20; n++) {
+    for (int n = 0; n < 20; n++)
+    {
         (void)epic_pid_update(&pid, (int16_t)10, (int16_t)0);
     }
     int32_t out_max_q8 = 50 * 256;
@@ -310,7 +314,8 @@ static void test_final_output_clamps_i(void)
      * accumulated integrator overflow potential. */
     epic_pid_init(&pid, (int16_t)0, (int16_t)32000, (int16_t)0,
              (int16_t)-100, (int16_t)100);
-    for (int n = 0; n < 50; n++) {
+    for (int n = 0; n < 50; n++)
+    {
         int16_t out = epic_pid_update(&pid, (int16_t)10, (int16_t)0);
         CHECK(out >= -100 && out <= 100,
               "clamp: I extreme, every step's output is in range");
@@ -334,7 +339,8 @@ static void test_bumpless_transfer(void)
      * non-trivial. setpoint=100, measurement=0 -> steady-state
      * P = 256*100 = 25600 -> 100, plus a small I. */
     int16_t last_auto_out = 0;
-    for (int n = 0; n < 10; n++) {
+    for (int n = 0; n < 10; n++)
+    {
         last_auto_out = epic_pid_update(&pid, (int16_t)100, (int16_t)0);
     }
     /* P=100 exactly, I contributing a small amount, D=0. Output is
@@ -423,7 +429,8 @@ static void test_two_independent_instances(void)
      * interleaved. Their outputs should follow their own gains,
      * not leak. */
     int16_t a_out = 0, b_out = 0;
-    for (int n = 0; n < 5; n++) {
+    for (int n = 0; n < 5; n++)
+    {
         a_out = epic_pid_update(&a, (int16_t)100, (int16_t)0);
         b_out = epic_pid_update(&b, (int16_t)100, (int16_t)0);
     }
@@ -433,7 +440,8 @@ static void test_two_independent_instances(void)
     CHECK(b_out == 200, "indep: B output reflects B's gain (512 -> 200)");
 
     /* Now drive only B; A should be unaffected. */
-    for (int n = 0; n < 5; n++) {
+    for (int n = 0; n < 5; n++)
+    {
         b_out = epic_pid_update(&b, (int16_t)100, (int16_t)0);
     }
     /* B with kp=512 and 10 steps of error=100: P=51200, >>8=200 still. */

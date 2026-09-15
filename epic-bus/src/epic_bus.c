@@ -23,7 +23,9 @@
  *         the current SSP operation completes, then clear SSPIF. */
 static void i2c_wait_ssp(void)
 {
-    while (!EPIC_IRQ_GetFlag(BUS_IRQ_SSP)) { }   /* block until the SSP op completes */
+    while (!EPIC_IRQ_GetFlag(BUS_IRQ_SSP))
+    {
+    }   /* block until the SSP op completes */
     EPIC_IRQ_ClearFlag(BUS_IRQ_SSP);
 }
 
@@ -35,17 +37,32 @@ static void i2c_wait_ssp(void)
 static void i2c_set_ackdt(int ack)
 {
     uint8_t c = BUS_SSPCON2_READ();
-    if (ack) { c &= (uint8_t)~PIC_SSPCON2_ACKDT; }
-    else     { c |= (uint8_t) PIC_SSPCON2_ACKDT; }
+    if (ack)
+    {
+        c &= (uint8_t)~PIC_SSPCON2_ACKDT;
+    }
+    else
+    {
+        c |= (uint8_t) PIC_SSPCON2_ACKDT;
+    }
     BUS_SSPCON2_WRITE(c);
 }
 
 /** @brief Default I2C start: issue a hardware START and wait for SSPIF. */
-static void i2c_real_start(void)          { EPIC_SSP_Start();          i2c_wait_ssp(); }
+static void i2c_real_start(void)
+{
+    EPIC_SSP_Start();          i2c_wait_ssp();
+}
 /** @brief Default I2C repeated start: issue a hardware RESTART and wait. */
-static void i2c_real_repeated_start(void) { EPIC_SSP_RepeatedStart();  i2c_wait_ssp(); }
+static void i2c_real_repeated_start(void)
+{
+    EPIC_SSP_RepeatedStart();  i2c_wait_ssp();
+}
 /** @brief Default I2C stop: issue a hardware STOP and wait for SSPIF. */
-static void i2c_real_stop(void)           { EPIC_SSP_Stop();           i2c_wait_ssp(); }
+static void i2c_real_stop(void)
+{
+    EPIC_SSP_Stop();           i2c_wait_ssp();
+}
 /**
  * @brief  Default I2C write byte: shift out `b` and report the slave's
  *         acknowledge.
@@ -156,7 +173,9 @@ static void spi_real_deselect(void)
 static uint8_t spi_real_exchange(uint8_t b)
 {
     (void)EPIC_SSP_WriteByte(b);
-    while (!EPIC_SSP_IsBufferFull()) { }    /* wait for the shift to complete */
+    while (!EPIC_SSP_IsBufferFull())
+    {
+    }    /* wait for the shift to complete */
     return EPIC_SSP_ReadByte();
 }
 
@@ -247,10 +266,20 @@ int epic_bus_i2c_mem_write(uint8_t dev, uint8_t reg, const uint8_t *data, int n)
 #else
     const epic_bus_i2c_ops_t *o = g_i2c_ops;
     o->start();
-    if (!o->write_byte((uint8_t)((dev << 1) | 0u))) { o->stop(); return -1; }
-    if (!o->write_byte(reg))                         { o->stop(); return -1; }
-    for (int i = 0; i < n; i++) {
-        if (!o->write_byte(data[i])) { o->stop(); return -1; }
+    if (!o->write_byte((uint8_t)((dev << 1) | 0u)))
+    {
+        o->stop(); return -1;
+    }
+    if (!o->write_byte(reg))
+    {
+        o->stop(); return -1;
+    }
+    for (int i = 0; i < n; i++)
+    {
+        if (!o->write_byte(data[i]))
+        {
+            o->stop(); return -1;
+        }
     }
     o->stop();
     return n;
@@ -275,11 +304,21 @@ int epic_bus_i2c_mem_read(uint8_t dev, uint8_t reg, uint8_t *buf, int n)
 #else
     const epic_bus_i2c_ops_t *o = g_i2c_ops;
     o->start();
-    if (!o->write_byte((uint8_t)((dev << 1) | 0u))) { o->stop(); return -1; }
-    if (!o->write_byte(reg))                         { o->stop(); return -1; }
+    if (!o->write_byte((uint8_t)((dev << 1) | 0u)))
+    {
+        o->stop(); return -1;
+    }
+    if (!o->write_byte(reg))
+    {
+        o->stop(); return -1;
+    }
     o->repeated_start();
-    if (!o->write_byte((uint8_t)((dev << 1) | 1u))) { o->stop(); return -1; }
-    for (int i = 0; i < n; i++) {
+    if (!o->write_byte((uint8_t)((dev << 1) | 1u)))
+    {
+        o->stop(); return -1;
+    }
+    for (int i = 0; i < n; i++)
+    {
         buf[i] = o->read_byte(i < (n - 1) ? 1 : 0);   /* ACK all but the last */
     }
     o->stop();
@@ -305,7 +344,10 @@ int epic_bus_spi_mem_write(uint8_t reg, const uint8_t *data, int n)
     const epic_bus_spi_ops_t *o = g_spi_ops;
     o->select();
     (void)o->exchange(reg);
-    for (int i = 0; i < n; i++) { (void)o->exchange(data[i]); }
+    for (int i = 0; i < n; i++)
+    {
+        (void)o->exchange(data[i]);
+    }
     o->deselect();
     return n;
 #endif
@@ -329,7 +371,10 @@ int epic_bus_spi_mem_read(uint8_t reg, uint8_t *buf, int n)
     const epic_bus_spi_ops_t *o = g_spi_ops;
     o->select();
     (void)o->exchange(reg);
-    for (int i = 0; i < n; i++) { buf[i] = o->exchange(0u); }
+    for (int i = 0; i < n; i++)
+    {
+        buf[i] = o->exchange(0u);
+    }
     o->deselect();
     return n;
 #endif

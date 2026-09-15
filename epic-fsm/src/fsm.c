@@ -41,20 +41,25 @@ bool epic_fsm_dispatch(epic_fsm_t *fsm, epic_fsm_event_t event)
 #else
     uint8_t i;
 
-    for (i = 0; i < fsm->table_len; i++) {
+    for (i = 0; i < fsm->table_len; i++)
+    {
         const epic_fsm_transition_t *row = &fsm->table[i];
 
-        if ((row->state != fsm->state) && (row->state != EPIC_FSM_ANY_STATE)) {
+        if ((row->state != fsm->state) && (row->state != EPIC_FSM_ANY_STATE))
+        {
             continue;
         }
-        if (row->event != event) {
+        if (row->event != event)
+        {
             continue;
         }
-        if ((row->guard != NULL) && !row->guard(fsm->ctx)) {
+        if ((row->guard != NULL) && !row->guard(fsm->ctx))
+        {
             continue;  /* guard rejected: keep scanning for another matching row */
         }
 
-        if (row->action != NULL) {
+        if (row->action != NULL)
+        {
             row->action(fsm->ctx);
         }
         fsm->state = row->next_state;

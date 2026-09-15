@@ -44,34 +44,60 @@ int main(void)
     int16_t out_min_seen = OUT_MAX, out_max_seen = OUT_MIN;
     int16_t u_pre = 0, out_step = 0;
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
-        if (i < N_SETTLE) {
+        if (i < N_SETTLE)
+        {
             /* Phase A: setpoint step 0 -> 100, let the loop settle. */
             int16_t out = epic_pid_update(&g_pid, (int16_t)SETPOINT, g_meas);
-            if (out < out_min_seen) { out_min_seen = out; }
-            if (out > out_max_seen) { out_max_seen = out; }
+            if (out < out_min_seen)
+            {
+                out_min_seen = out;
+            }
+            if (out > out_max_seen)
+            {
+                out_max_seen = out;
+            }
             /* Plant: integer first-order lag, same shape as the
              * setpoint-step example. */
             g_meas = (int16_t)(g_meas + (int16_t)((out - g_meas) / 4));
-        } else if (i == N_SETTLE) {
+        }
+        else if (i == N_SETTLE)
+        {
             /* Steady state reached; freeze the plant and record the
              * controller's holding output (error is 0, so this is
              * I >> 8 exactly). */
             u_pre = epic_pid_update(&g_pid, (int16_t)SETPOINT, g_meas);
-            if (u_pre < out_min_seen) { out_min_seen = u_pre; }
-            if (u_pre > out_max_seen) { out_max_seen = u_pre; }
-        } else if (i == N_SETTLE + 1UL) {
+            if (u_pre < out_min_seen)
+            {
+                out_min_seen = u_pre;
+            }
+            if (u_pre > out_max_seen)
+            {
+                out_max_seen = u_pre;
+            }
+        }
+        else if (i == N_SETTLE + 1UL)
+        {
             /* Phase B: gain change on the live instance. Double kp,
              * drop the I gain; integrator state is untouched. */
             epic_pid_set_gains(&g_pid, (int16_t)512, (int16_t)0, (int16_t)0);
-        } else if (i == N_SETTLE + 2UL) {
+        }
+        else if (i == N_SETTLE + 2UL)
+        {
             /* 10-count setpoint step at the frozen plant: with the new
              * kp the output must move by (512 * 10) >> 8 = 20 counts
              * (the old kp would have moved it 10). */
             out_step = epic_pid_update(&g_pid, (int16_t)(SETPOINT + 10), g_meas);
-            if (out_step < out_min_seen) { out_min_seen = out_step; }
-            if (out_step > out_max_seen) { out_max_seen = out_step; }
+            if (out_step < out_min_seen)
+            {
+                out_min_seen = out_step;
+            }
+            if (out_step > out_max_seen)
+            {
+                out_max_seen = out_step;
+            }
         }
     }
 

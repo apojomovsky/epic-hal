@@ -46,12 +46,17 @@ static bool    s_dir_configured;
 static uint16_t modbus_crc16(const uint8_t *buf, uint16_t len)
 {
     uint16_t crc = 0xFFFFu;
-    for (uint16_t i = 0; i < len; i++) {
+    for (uint16_t i = 0; i < len; i++)
+    {
         crc = (uint16_t)(crc ^ buf[i]);
-        for (uint8_t bit = 0; bit < 8u; bit++) {
-            if (crc & 0x0001u) {
+        for (uint8_t bit = 0; bit < 8u; bit++)
+        {
+            if (crc & 0x0001u)
+            {
                 crc = (uint16_t)((crc >> 1) ^ 0xA001u);
-            } else {
+            }
+            else
+            {
                 crc = (uint16_t)(crc >> 1);
             }
         }
@@ -68,7 +73,8 @@ static uint16_t modbus_crc16(const uint8_t *buf, uint16_t len)
  */
 static uint32_t compute_t3_5_ms(uint32_t baud)
 {
-    if (baud > 19200u) {
+    if (baud > 19200u)
+    {
         return 2u; /* spec fixes T3.5 = 1.75 ms above 19200 baud; epic-tick's
                        1 ms resolution rounds that up to 2 ticks. */
     }
@@ -97,9 +103,12 @@ static bool bit_get(const uint8_t *arr, uint16_t idx)
  */
 static void bit_set(uint8_t *arr, uint16_t idx, bool v)
 {
-    if (v) {
+    if (v)
+    {
         arr[idx >> 3] = (uint8_t)(arr[idx >> 3] | (uint8_t)(1u << (idx & 7u)));
-    } else {
+    }
+    else
+    {
         arr[idx >> 3] = (uint8_t)(arr[idx >> 3] & (uint8_t)~(1u << (idx & 7u)));
     }
 }
@@ -157,31 +166,38 @@ static uint16_t build_exception(uint8_t *resp, uint8_t fc, uint8_t exc_code)
 static uint16_t handle_read_bits(uint8_t fc, const uint8_t *table, uint16_t table_len,
                                   uint8_t *resp)
 {
-    if (s_frame_len != 8u) { /* addr+fc+4 payload+crc16 */
+    if (s_frame_len != 8u)
+    { /* addr+fc+4 payload+crc16 */
         return 0u;
     }
     uint16_t start = be16(&s_frame[2]);
     uint16_t qty   = be16(&s_frame[4]);
 
-    if (qty == 0u || qty > 2000u) {
+    if (qty == 0u || qty > 2000u)
+    {
         return build_exception(resp, fc, MB_EXC_ILLEGAL_DATA_VALUE);
     }
-    if (table == NULL || (uint32_t)start + qty > table_len) {
+    if (table == NULL || (uint32_t)start + qty > table_len)
+    {
         return build_exception(resp, fc, MB_EXC_ILLEGAL_DATA_ADDRESS);
     }
     uint16_t byte_count = (uint16_t)((qty + 7u) / 8u);
-    if ((uint32_t)byte_count + 5u > EPIC_MODBUS_MAX_ADU) { /* +5 = addr+fc+bytecount+crc16 */
+    if ((uint32_t)byte_count + 5u > EPIC_MODBUS_MAX_ADU)
+    { /* +5 = addr+fc+bytecount+crc16 */
         return build_exception(resp, fc, MB_EXC_ILLEGAL_DATA_VALUE);
     }
 
     resp[0] = s_slave_addr;
     resp[1] = fc;
     resp[2] = (uint8_t)byte_count;
-    for (uint16_t i = 0; i < byte_count; i++) {
+    for (uint16_t i = 0; i < byte_count; i++)
+    {
         resp[3 + i] = 0u;
     }
-    for (uint16_t i = 0; i < qty; i++) {
-        if (bit_get(table, (uint16_t)(start + i))) {
+    for (uint16_t i = 0; i < qty; i++)
+    {
+        if (bit_get(table, (uint16_t)(start + i)))
+        {
             resp[3 + (i >> 3)] = (uint8_t)(resp[3 + (i >> 3)] | (uint8_t)(1u << (i & 7u)));
         }
     }
@@ -200,27 +216,32 @@ static uint16_t handle_read_bits(uint8_t fc, const uint8_t *table, uint16_t tabl
 static uint16_t handle_read_regs(uint8_t fc, const uint16_t *table, uint16_t table_len,
                                    uint8_t *resp)
 {
-    if (s_frame_len != 8u) {
+    if (s_frame_len != 8u)
+    {
         return 0u;
     }
     uint16_t start = be16(&s_frame[2]);
     uint16_t qty   = be16(&s_frame[4]);
 
-    if (qty == 0u || qty > 125u) {
+    if (qty == 0u || qty > 125u)
+    {
         return build_exception(resp, fc, MB_EXC_ILLEGAL_DATA_VALUE);
     }
-    if (table == NULL || (uint32_t)start + qty > table_len) {
+    if (table == NULL || (uint32_t)start + qty > table_len)
+    {
         return build_exception(resp, fc, MB_EXC_ILLEGAL_DATA_ADDRESS);
     }
     uint16_t byte_count = (uint16_t)(qty * 2u);
-    if ((uint32_t)byte_count + 5u > EPIC_MODBUS_MAX_ADU) { /* +5 = addr+fc+bytecount+crc16 */
+    if ((uint32_t)byte_count + 5u > EPIC_MODBUS_MAX_ADU)
+    { /* +5 = addr+fc+bytecount+crc16 */
         return build_exception(resp, fc, MB_EXC_ILLEGAL_DATA_VALUE);
     }
 
     resp[0] = s_slave_addr;
     resp[1] = fc;
     resp[2] = (uint8_t)byte_count;
-    for (uint16_t i = 0; i < qty; i++) {
+    for (uint16_t i = 0; i < qty; i++)
+    {
         put_be16(&resp[3 + 2u * i], table[start + i]);
     }
     return (uint16_t)(3u + byte_count);
@@ -234,16 +255,19 @@ static uint16_t handle_read_regs(uint8_t fc, const uint16_t *table, uint16_t tab
  */
 static uint16_t handle_write_single_coil(uint8_t *resp)
 {
-    if (s_frame_len != 8u) {
+    if (s_frame_len != 8u)
+    {
         return 0u;
     }
     uint16_t addr  = be16(&s_frame[2]);
     uint16_t value = be16(&s_frame[4]);
 
-    if (value != 0xFF00u && value != 0x0000u) {
+    if (value != 0xFF00u && value != 0x0000u)
+    {
         return build_exception(resp, MB_FC_WRITE_SINGLE_COIL, MB_EXC_ILLEGAL_DATA_VALUE);
     }
-    if (s_map->coils == NULL || addr >= s_map->num_coils) {
+    if (s_map->coils == NULL || addr >= s_map->num_coils)
+    {
         return build_exception(resp, MB_FC_WRITE_SINGLE_COIL, MB_EXC_ILLEGAL_DATA_ADDRESS);
     }
     bit_set(s_map->coils, addr, value == 0xFF00u);
@@ -266,13 +290,15 @@ static uint16_t handle_write_single_coil(uint8_t *resp)
  */
 static uint16_t handle_write_single_reg(uint8_t *resp)
 {
-    if (s_frame_len != 8u) {
+    if (s_frame_len != 8u)
+    {
         return 0u;
     }
     uint16_t addr  = be16(&s_frame[2]);
     uint16_t value = be16(&s_frame[4]);
 
-    if (s_map->holding_regs == NULL || addr >= s_map->num_holding_regs) {
+    if (s_map->holding_regs == NULL || addr >= s_map->num_holding_regs)
+    {
         return build_exception(resp, MB_FC_WRITE_SINGLE_REG, MB_EXC_ILLEGAL_DATA_ADDRESS);
     }
     s_map->holding_regs[addr] = value;
@@ -294,7 +320,8 @@ static uint16_t handle_write_single_reg(uint8_t *resp)
  */
 static uint16_t handle_write_multiple_coils(uint8_t *resp)
 {
-    if (s_frame_len < 9u) { /* addr+fc+start(2)+qty(2)+bytecount(1)+>=1 data+crc(2) */
+    if (s_frame_len < 9u)
+    { /* addr+fc+start(2)+qty(2)+bytecount(1)+>=1 data+crc(2) */
         return 0u;
     }
     uint16_t start      = be16(&s_frame[2]);
@@ -302,17 +329,21 @@ static uint16_t handle_write_multiple_coils(uint8_t *resp)
     uint8_t  byte_count = s_frame[6];
     const uint8_t *data = &s_frame[7];
 
-    if (qty == 0u || qty > 1968u || byte_count != (uint16_t)((qty + 7u) / 8u)) {
+    if (qty == 0u || qty > 1968u || byte_count != (uint16_t)((qty + 7u) / 8u))
+    {
         return build_exception(resp, MB_FC_WRITE_MULTIPLE_COILS, MB_EXC_ILLEGAL_DATA_VALUE);
     }
-    if ((uint16_t)(7u + byte_count + 2u) != s_frame_len) {
+    if ((uint16_t)(7u + byte_count + 2u) != s_frame_len)
+    {
         return 0u; /* declared byte count doesn't match the received frame length */
     }
-    if (s_map->coils == NULL || (uint32_t)start + qty > s_map->num_coils) {
+    if (s_map->coils == NULL || (uint32_t)start + qty > s_map->num_coils)
+    {
         return build_exception(resp, MB_FC_WRITE_MULTIPLE_COILS, MB_EXC_ILLEGAL_DATA_ADDRESS);
     }
 
-    for (uint16_t i = 0; i < qty; i++) {
+    for (uint16_t i = 0; i < qty; i++)
+    {
         bool v = (bool)((data[i >> 3] >> (i & 7u)) & 1u);
         bit_set(s_map->coils, (uint16_t)(start + i), v);
     }
@@ -334,7 +365,8 @@ static uint16_t handle_write_multiple_coils(uint8_t *resp)
  */
 static uint16_t handle_write_multiple_regs(uint8_t *resp)
 {
-    if (s_frame_len < 9u) {
+    if (s_frame_len < 9u)
+    {
         return 0u;
     }
     uint16_t start      = be16(&s_frame[2]);
@@ -342,17 +374,21 @@ static uint16_t handle_write_multiple_regs(uint8_t *resp)
     uint8_t  byte_count = s_frame[6];
     const uint8_t *data = &s_frame[7];
 
-    if (qty == 0u || qty > 123u || byte_count != (uint16_t)(qty * 2u)) {
+    if (qty == 0u || qty > 123u || byte_count != (uint16_t)(qty * 2u))
+    {
         return build_exception(resp, MB_FC_WRITE_MULTIPLE_REGS, MB_EXC_ILLEGAL_DATA_VALUE);
     }
-    if ((uint16_t)(7u + byte_count + 2u) != s_frame_len) {
+    if ((uint16_t)(7u + byte_count + 2u) != s_frame_len)
+    {
         return 0u;
     }
-    if (s_map->holding_regs == NULL || (uint32_t)start + qty > s_map->num_holding_regs) {
+    if (s_map->holding_regs == NULL || (uint32_t)start + qty > s_map->num_holding_regs)
+    {
         return build_exception(resp, MB_FC_WRITE_MULTIPLE_REGS, MB_EXC_ILLEGAL_DATA_ADDRESS);
     }
 
-    for (uint16_t i = 0; i < qty; i++) {
+    for (uint16_t i = 0; i < qty; i++)
+    {
         s_map->holding_regs[start + i] = be16(&data[2u * i]);
     }
 
@@ -374,11 +410,13 @@ static uint16_t handle_write_multiple_regs(uint8_t *resp)
  */
 static void send_response(const uint8_t *resp, uint16_t len)
 {
-    if (s_dir_configured) {
+    if (s_dir_configured)
+    {
         EPIC_GPIO_WritePin((GPIO_TypeDef)s_dir_port, (uint16_t)EPIC_BIT(s_dir_pin), GPIO_PIN_SET);
     }
     epic_serial_write(resp, (int)len);
-    if (s_dir_configured) {
+    if (s_dir_configured)
+    {
         epic_serial_flush(); /* wait for the ring AND the shift register to drain
                                  before dropping the driver enable */
         EPIC_GPIO_WritePin((GPIO_TypeDef)s_dir_port, (uint16_t)EPIC_BIT(s_dir_pin), GPIO_PIN_RESET);
@@ -394,19 +432,22 @@ static void send_response(const uint8_t *resp, uint16_t len)
  */
 static void process_frame(void)
 {
-    if (s_frame_len < 4u) {
+    if (s_frame_len < 4u)
+    {
         return; /* shorter than addr+fc+crc16, can't be a real ADU */
     }
 
     uint16_t crc_calc = modbus_crc16(s_frame, (uint16_t)(s_frame_len - 2u));
     if (s_frame[s_frame_len - 2u] != (uint8_t)(crc_calc & 0xFFu) ||
-        s_frame[s_frame_len - 1u] != (uint8_t)(crc_calc >> 8)) {
+        s_frame[s_frame_len - 1u] != (uint8_t)(crc_calc >> 8))
+        {
         return; /* bad CRC, drop silently like every RTU slave does */
     }
 
     uint8_t addr      = s_frame[0];
     bool    broadcast = (addr == 0u);
-    if (!broadcast && addr != s_slave_addr) {
+    if (!broadcast && addr != s_slave_addr)
+    {
         return; /* frame is for a different slave */
     }
 
@@ -414,7 +455,8 @@ static void process_frame(void)
     uint8_t  resp[EPIC_MODBUS_MAX_ADU];
     uint16_t pdu_len;
 
-    switch (fc) {
+    switch (fc)
+    {
     case MB_FC_READ_COILS:
         pdu_len = handle_read_bits(fc, s_map->coils, s_map->num_coils, resp);
         break;
@@ -444,7 +486,8 @@ static void process_frame(void)
         break;
     }
 
-    if (pdu_len == 0u || broadcast) {
+    if (pdu_len == 0u || broadcast)
+    {
         return; /* malformed request, or a broadcast (processed above, never answered) */
     }
 
@@ -503,24 +546,30 @@ void epic_modbus_slave_set_rs485_dir_pin(uint8_t port, uint8_t pin)
 void epic_modbus_slave_poll(void)
 {
     int avail = epic_serial_available();
-    if (avail > 0) {
+    if (avail > 0)
+    {
         uint16_t space = (uint16_t)(EPIC_MODBUS_MAX_ADU - s_frame_len);
-        if (space > 0u) {
+        if (space > 0u)
+        {
             int n = epic_serial_read(&s_frame[s_frame_len], (int)space);
-            if (n > 0) {
+            if (n > 0)
+            {
                 s_frame_len = (uint16_t)(s_frame_len + (uint16_t)n);
             }
         }
-        if ((uint16_t)avail > space) {
+        if ((uint16_t)avail > space)
+        {
             /* frame already overflowed the ADU buffer: drain and discard the
              * rest so the RX ring never wedges. The oversized frame fails
              * length/CRC validation once silence is detected. */
             uint8_t  scratch[8];
             uint16_t remaining = (uint16_t)((uint16_t)avail - space);
-            while (remaining > 0u) {
+            while (remaining > 0u)
+            {
                 int chunk = (remaining < 8u) ? (int)remaining : 8;
                 int n     = epic_serial_read(scratch, chunk);
-                if (n <= 0) {
+                if (n <= 0)
+                {
                     break;
                 }
                 remaining = (uint16_t)(remaining - (uint16_t)n);
@@ -529,7 +578,8 @@ void epic_modbus_slave_poll(void)
         s_last_rx_tick = epic_tick_get();
     }
 
-    if (s_frame_len > 0u && epic_tick_elapsed_since(s_last_rx_tick) >= s_t3_5_ms) {
+    if (s_frame_len > 0u && epic_tick_elapsed_since(s_last_rx_tick) >= s_t3_5_ms)
+    {
         process_frame();
         s_frame_len = 0u;
     }

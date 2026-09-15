@@ -14,7 +14,8 @@
  */
 static uint8_t tris_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_TRISA;
 #if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
         case GPIOB: return PIC_REG_TRISB;
@@ -31,7 +32,8 @@ static uint8_t tris_addr(GPIO_TypeDef port)
  */
 static uint8_t port_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_PORTA;
 #if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
         case GPIOB: return PIC_REG_PORTB;
@@ -50,7 +52,8 @@ static uint8_t port_addr(GPIO_TypeDef port)
  */
 static uint8_t port_mask(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return 0x3FU;
 #if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
         case GPIOB: return 0xF0U;
@@ -77,19 +80,22 @@ static uint8_t port_mask(GPIO_TypeDef port)
 static uint8_t ansel_bit(GPIO_TypeDef port, uint8_t pin)
 {
 #if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL_BANK1
-    if (port == GPIOA) {
+    if (port == GPIOA)
+    {
         if (pin <= 2U) return pin;
         if (pin == 4U) return 3U;
         return 0xFFU;
     }
 #else
-    if (port == GPIOA) {
+    if (port == GPIOA)
+    {
         if (pin == 0U) return 0U;
         if (pin == 1U) return 1U;
         return 0xFFU;
     }
 #endif
-    if (port == GPIOC) {
+    if (port == GPIOC)
+    {
         if (pin <= 3U) return (uint8_t)(pin + 4U);
         return 0xFFU;
     }
@@ -110,12 +116,14 @@ static uint8_t ansel_bit(GPIO_TypeDef port, uint8_t pin)
  */
 static uint8_t anselh_bit(GPIO_TypeDef port, uint8_t pin)
 {
-    if (port == GPIOB) {
+    if (port == GPIOB)
+    {
         if (pin == 4U) return 2U;
         if (pin == 5U) return 3U;
         return 0xFFU;
     }
-    if (port == GPIOC) {
+    if (port == GPIOC)
+    {
         if (pin == 6U) return 0U;
         if (pin == 7U) return 1U;
         return 0xFFU;
@@ -155,7 +163,8 @@ static void set_ansel_bits(GPIO_TypeDef port, uint16_t pins, uint8_t analog)
 #endif
 #endif
     uint8_t changed = 0U;
-    for (uint8_t pin = 0U; pin <= 7U; pin++) {
+    for (uint8_t pin = 0U; pin <= 7U; pin++)
+    {
         if (!((uint16_t)EPIC_BIT(pin) & pins)) continue;
         uint8_t bit = ansel_bit(port, pin);
         if (bit == 0xFFU) continue;   /* no analog function. */
@@ -163,7 +172,8 @@ static void set_ansel_bits(GPIO_TypeDef port, uint16_t pins, uint8_t analog)
         else        ansel &= (uint8_t)~EPIC_BIT(bit);
         changed = 1U;
     }
-    if (changed) {
+    if (changed)
+    {
 #if PIC16F63X_67X_68X_FAMILY_HAS_ANSEL_BANK1
 #ifdef EPIC_BANK1_WRITE8
         /* Real SFR name for the stringified asm token (see above). */
@@ -188,7 +198,8 @@ static void set_ansel_bits(GPIO_TypeDef port, uint16_t pins, uint8_t analog)
     anselh = EPIC_REG8(PIC_REG_ANSELH);
 #endif
     uint8_t changed_h = 0U;
-    for (uint8_t pin = 0U; pin <= 7U; pin++) {
+    for (uint8_t pin = 0U; pin <= 7U; pin++)
+    {
         if (!((uint16_t)EPIC_BIT(pin) & pins)) continue;
         uint8_t bit = anselh_bit(port, pin);
         if (bit == 0xFFU) continue;   /* no analog function. */
@@ -196,7 +207,8 @@ static void set_ansel_bits(GPIO_TypeDef port, uint16_t pins, uint8_t analog)
         else        anselh &= (uint8_t)~EPIC_BIT(bit);
         changed_h = 1U;
     }
-    if (changed_h) {
+    if (changed_h)
+    {
 #ifdef EPIC_BANK2_WRITE8
         EPIC_BANK2_WRITE8(ANSELH, anselh);
 #else
@@ -221,7 +233,8 @@ static uint8_t tris_read(GPIO_TypeDef port)
      * header). The banked macro needs a literal SFR name, so dispatch
      * per-port before any SFR access. */
     uint8_t v = 0u;
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: EPIC_BANK1_READ8(TRISA, v); break;
 #if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
         case GPIOB: EPIC_BANK1_READ8(TRISB, v); break;
@@ -243,7 +256,8 @@ static uint8_t tris_read(GPIO_TypeDef port)
 static void tris_write(GPIO_TypeDef port, uint8_t value)
 {
 #ifdef EPIC_BANK1_WRITE8
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: EPIC_BANK1_WRITE8(TRISA, value); break;
 #if PIC16F63X_67X_68X_FAMILY_HAS_PORTB
         case GPIOB: EPIC_BANK1_WRITE8(TRISB, value); break;
@@ -282,9 +296,12 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     /* Set/clear the TRIS bits (Bank 1). INPUT and ANALOG both keep
      * TRIS = 1 (high-impedance). */
     uint8_t tris = tris_read(port);
-    if (mode == GPIO_MODE_OUTPUT) {
+    if (mode == GPIO_MODE_OUTPUT)
+    {
         tris &= (uint8_t)~mask;
-    } else {
+    }
+    else
+    {
         tris |= mask;
     }
     tris_write(port, tris);
@@ -316,9 +333,12 @@ void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
     uint8_t p_addr = port_addr(port);
     uint8_t mask = (uint8_t)(pins & port_mask(port));
     uint8_t portval = EPIC_REG8(p_addr);
-    if (state == GPIO_PIN_SET) {
+    if (state == GPIO_PIN_SET)
+    {
         portval |= mask;
-    } else {
+    }
+    else
+    {
         portval &= (uint8_t)~mask;
     }
     EPIC_REG8(p_addr) = portval;

@@ -27,7 +27,8 @@ int main(void)
     epic_bus_i2c_init(FOSC_HZ, 100000UL);
     epic_mcp23x17_handle_t h;
     int ok = 1;
-    if (EPIC_MCP23X17_Init(&h, EPIC_MCP23X17_BUS_I2C, 0x20u) != 0) {
+    if (EPIC_MCP23X17_Init(&h, EPIC_MCP23X17_BUS_I2C, 0x20u) != 0)
+    {
         epic_harness_log("mcp23x17 sim: init failed\n");
         ok = 0;
     }
@@ -35,7 +36,8 @@ int main(void)
     epic_harness_log(ok ? "mcp23x17 sim: linked and initialized ok\n"
                         : "mcp23x17 sim: sequence failed\n");
     (void)epic_harness_report(ok);
-    for (;;) {
+    for (;;)
+    {
         epic_harness_tick();
     }
 }

@@ -19,7 +19,8 @@ int main(void)
 {
     epic_pid_init(&g_pid, (int16_t)0x0100, (int16_t)0x0001, (int16_t)0x0000,
              (int16_t)-1000, (int16_t)1000);
-    for (;;) {
+    for (;;)
+    {
         (void)epic_pid_update(&g_pid, (int16_t)0, (int16_t)0);
     }
 }

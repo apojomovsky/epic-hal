@@ -59,7 +59,8 @@ static void sim_step_usart(void);
  */
 static uint8_t port_index(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return 0;
         case 'B': case 'b': return 1;
         case 'C': case 'c': return 2;
@@ -78,7 +79,8 @@ static uint8_t port_index(char port)
  */
 static uint16_t lat_addr(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return PIC_REG_LATA;
         case 'B': case 'b': return PIC_REG_LATB;
         case 'C': case 'c': return PIC_REG_LATC;
@@ -101,7 +103,8 @@ static uint16_t lat_addr(char port)
  */
 static uint16_t tris_addr(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return PIC_REG_TRISA;
         case 'B': case 'b': return PIC_REG_TRISB;
         case 'C': case 'c': return PIC_REG_TRISC;
@@ -124,7 +127,8 @@ static uint16_t tris_addr(char port)
  */
 static uint16_t port_addr(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return PIC_REG_PORTA;
         case 'B': case 'b': return PIC_REG_PORTB;
         case 'C': case 'c': return PIC_REG_PORTC;
@@ -232,7 +236,8 @@ void pic18_sim_reset(void)
  */
 void pic18_sim_step(uint32_t ticks)
 {
-    for (uint32_t i = 0; i < ticks; i++) {
+    for (uint32_t i = 0; i < ticks; i++)
+    {
         sim_step_timer0();
         sim_step_timer1();
         sim_step_timer2();
@@ -274,22 +279,27 @@ static void sim_step_timer0(void)
     if (t0_prescaler < rate) return;
     t0_prescaler = 0U;
 
-    if (t0con & PIC_T0CON_T08BIT) {
+    if (t0con & PIC_T0CON_T08BIT)
+    {
         /* 8-bit mode: increment TMR0L. */
         uint8_t t0 = (uint8_t)(pic18_sim_sfr[PIC_REG_TMR0L] + 1U);
         pic18_sim_sfr[PIC_REG_TMR0L] = t0;
-        if (t0 == 0x00U) {
+        if (t0 == 0x00U)
+        {
             pic18_sim_sfr[PIC_REG_INTCON] |= PIC_INTCON_TMR0IF;
             if (sim_irq_cb) sim_irq_cb();
         }
-    } else {
+    }
+    else
+    {
         /* 16-bit mode: increment TMR0H:TMR0L. */
         uint16_t full = (uint16_t)(((uint16_t)pic18_sim_sfr[PIC_REG_TMR0H] << 8) |
                                    pic18_sim_sfr[PIC_REG_TMR0L]);
         full++;
         pic18_sim_sfr[PIC_REG_TMR0L] = (uint8_t)(full & 0xFFU);
         pic18_sim_sfr[PIC_REG_TMR0H] = (uint8_t)(full >> 8);
-        if (full == 0U) {
+        if (full == 0U)
+        {
             pic18_sim_sfr[PIC_REG_INTCON] |= PIC_INTCON_TMR0IF;
             if (sim_irq_cb) sim_irq_cb();
         }
@@ -337,7 +347,8 @@ static void sim_step_timer1(void)
     full++;
     pic18_sim_sfr[PIC_REG_TMR1L] = (uint8_t)(full & 0xFFU);
     pic18_sim_sfr[PIC_REG_TMR1H] = (uint8_t)(full >> 8);
-    if (full == 0U) {
+    if (full == 0U)
+    {
         pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR1IF;
         if (sim_irq_cb) sim_irq_cb();
     }
@@ -378,10 +389,12 @@ static void sim_step_timer2(void)
     /* TMR2 increments until it matches PR2, then resets (DS39632E §12.0);
      * TMR2IF fires after the postscaler, once per (PR2+1) prescaled cycles. */
     uint8_t t2 = (uint8_t)(pic18_sim_sfr[PIC_REG_TMR2] + 1U);
-    if (t2 > pr2) {
+    if (t2 > pr2)
+    {
         t2 = 0U;
         t2_post++;
-        if (t2_post >= post) {
+        if (t2_post >= post)
+        {
             t2_post = 0U;
             pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR2IF;
             if (sim_irq_cb) sim_irq_cb();
@@ -424,7 +437,8 @@ static void sim_step_timer3(void)
     full++;
     pic18_sim_sfr[PIC_REG_TMR3L] = (uint8_t)(full & 0xFFU);
     pic18_sim_sfr[PIC_REG_TMR3H] = (uint8_t)(full >> 8);
-    if (full == 0U) {
+    if (full == 0U)
+    {
         pic18_sim_sfr[PIC_REG_PIR2] |= PIC_PIR2_TMR3IF;
         if (sim_irq_cb) sim_irq_cb();
     }
@@ -477,7 +491,8 @@ uint8_t pic18_sim_read_output(char port, uint8_t pin)
     uint8_t mask = (uint8_t)(1U << pin);
     uint8_t tris = pic18_sim_sfr[tris_addr(port)];
 
-    if (tris & mask) {
+    if (tris & mask)
+    {
         /* Input: return the externally driven level (0 if not driven). */
         return (sim_input_override[idx] & mask) ?
                ((sim_input_value[idx] & mask) ? 1U : 0U) : 0U;
@@ -529,7 +544,8 @@ static void sim_step_usart(void)
      * the PIC16 sim). RCIF is set by the host application through
      * pic18_sim_drive_usart_rx(). */
     uint8_t txsta = pic18_sim_sfr[PIC_REG_TXSTA];
-    if (txsta & PIC_TXSTA_TXEN) {
+    if (txsta & PIC_TXSTA_TXEN)
+    {
         pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TXIF;
     }
 }
@@ -630,10 +646,13 @@ void pic18_sim_drive_adc_done(uint16_t result)
      *   Left  (ADFM=0): ADRESH[7:2] = result[9:2], ADRESL[7:6] = result[1:0]. */
     uint8_t adfm = (uint8_t)(pic18_sim_sfr[PIC_REG_ADCON2] & PIC_ADCON2_ADFM);
     uint16_t r = (uint16_t)(result & 0x03FFU);
-    if (adfm) {
+    if (adfm)
+    {
         pic18_sim_sfr[PIC_REG_ADRESH] = (uint8_t)((r >> 8) & 0x03U);
         pic18_sim_sfr[PIC_REG_ADRESL] = (uint8_t)(r & 0xFFU);
-    } else {
+    }
+    else
+    {
         pic18_sim_sfr[PIC_REG_ADRESH] = (uint8_t)(r >> 2);
         pic18_sim_sfr[PIC_REG_ADRESL] = (uint8_t)((r & 0x03U) << 6);
     }

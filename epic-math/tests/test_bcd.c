@@ -10,14 +10,21 @@
 
 /* Reference helpers (decimal), independent of the implementation under test. */
 /** @brief Reference decimal -> packed-BCD helper. */
-static uint8_t ref_bcd8(uint8_t v) { return (uint8_t)(((v/10u)<<4)|(v%10u)); }
+static uint8_t ref_bcd8(uint8_t v)
+{
+    return (uint8_t)(((v/10u)<<4)|(v%10u));
+}
 /** @brief Reference packed-BCD -> decimal helper. */
-static uint8_t ref_bin8(uint8_t b) { return (uint8_t)((b>>4)*10u + (b&0x0Fu)); }
+static uint8_t ref_bin8(uint8_t b)
+{
+    return (uint8_t)((b>>4)*10u + (b&0x0Fu));
+}
 
 /** @brief Exhaustive 0..99 roundtrip of epic_math_bin_to_bcd8/epic_math_bcd8_to_bin. */
 static void test_bcd8_roundtrip(void)
 {
-    for (uint32_t v = 0; v <= 99u; v++) {
+    for (uint32_t v = 0; v <= 99u; v++)
+    {
         uint8_t bcd = epic_math_bin_to_bcd8((uint8_t)v);
         CHECK(bcd == ref_bcd8((uint8_t)v), "bin_to_bcd8 value");
         CHECK(epic_math_bcd8_to_bin(bcd) == v, "bcd8_to_bin roundtrip");
@@ -40,10 +47,12 @@ static void test_bcd16_roundtrip(void)
     /* Exhaustive over the whole uint16_t input range 0..65535 (the binary
      * side is 16-bit; bin_to_bcd16's "16" names that width). The 5-digit BCD
      * can represent up to 99999, but a uint16_t only reaches 65535. */
-    for (uint32_t v = 0; v <= 65535u; v++) {
+    for (uint32_t v = 0; v <= 65535u; v++)
+    {
         uint32_t bcd = epic_math_bin_to_bcd16((uint16_t)v);
         uint16_t bin = epic_math_bcd16_to_bin(bcd);
-        if (bin != (uint16_t)v) {
+        if (bin != (uint16_t)v)
+        {
             CHECK(0, "bcd16 roundtrip mismatch");
             if (g_epic_math_failures < 5)
                 printf("  v=%lu bcd=0x%05lX bin=%u\n",
@@ -72,7 +81,8 @@ static void test_bcd16_invalid_nibble(void)
 static void test_bcd_add8(void)
 {
     for (uint32_t a = 0; a <= 99u; a++)
-        for (uint32_t b = 0; b <= 99u; b++) {
+        for (uint32_t b = 0; b <= 99u; b++)
+        {
             bool co = true;
             uint8_t got = epic_math_bcd_add8(ref_bcd8((uint8_t)a),
                                             ref_bcd8((uint8_t)b), &co);
@@ -90,7 +100,8 @@ static void test_bcd_add8(void)
 static void test_bcd_sub8(void)
 {
     for (uint32_t a = 0; a <= 99u; a++)
-        for (uint32_t b = 0; b <= 99u; b++) {
+        for (uint32_t b = 0; b <= 99u; b++)
+        {
             bool bo = true;
             uint8_t got = epic_math_bcd_sub8(ref_bcd8((uint8_t)a),
                                             ref_bcd8((uint8_t)b), &bo);

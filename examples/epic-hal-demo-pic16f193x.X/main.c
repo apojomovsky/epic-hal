@@ -52,7 +52,8 @@ int main(void)
 
     EPIC_IRQ_Restore(1);
 
-    for (;;) {
+    for (;;)
+    {
         EPIC_WDT_Refresh();
     }
 }

@@ -31,7 +31,10 @@ static void compute_period(uint32_t fosc_hz, uint8_t *pr2,
                            TIMER2_PostscalerTypeDef *post)
 {
     uint32_t target = fosc_hz / 4000u;       /* instruction cycles per 1 ms */
-    if (target == 0u) { target = 1u; }
+    if (target == 0u)
+    {
+        target = 1u;
+    }
 
     static const TIMER2_PrescalerTypeDef pre_enum[3] = {
         TIMER2_PRESCALER_1_16, TIMER2_PRESCALER_1_4, TIMER2_PRESCALER_1_1 };
@@ -42,18 +45,25 @@ static void compute_period(uint32_t fosc_hz, uint8_t *pr2,
     TIMER2_PrescalerTypeDef best_pre = TIMER2_PRESCALER_1_1;
     TIMER2_PostscalerTypeDef best_post = TIMER2_POSTSCALER_1_1;
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         uint32_t p = pre_ratio[i];
-        for (uint32_t q = 1u; q <= 16u; q++) {
+        for (uint32_t q = 1u; q <= 16u; q++)
+        {
             uint32_t pq = p * q;
             uint32_t n = target / pq;            /* n = PR2+1 */
             /* try n and n+1 (the floor and ceil of target/pq), clamped 1..256 */
-            for (uint32_t k = 0u; k < 2u; k++) {
+            for (uint32_t k = 0u; k < 2u; k++)
+            {
                 uint32_t nn = n + k;
-                if (nn < 1u || nn > 256u) { continue; }
+                if (nn < 1u || nn > 256u)
+                {
+                    continue;
+                }
                 uint32_t cand = pq * nn;
                 uint32_t err = (cand >= target) ? (cand - target) : (target - cand);
-                if (err < best_err) {
+                if (err < best_err)
+                {
                     best_err  = err;
                     best_pr2  = (uint8_t)(nn - 1u);
                     best_pre  = pre_enum[i];
@@ -112,7 +122,8 @@ uint32_t epic_tick_get(void)
      * race-free on real silicon too, at the cost of an occasional
      * re-read. */
     uint32_t a, b;
-    do {
+    do
+    {
         a = g_tick_ms;
         b = g_tick_ms;
     } while (a != b);
@@ -136,7 +147,8 @@ uint32_t epic_tick_elapsed_since(uint32_t t0)
 void epic_tick_delay_ms(uint32_t ms)
 {
     uint32_t t0 = epic_tick_get();
-    while (epic_tick_elapsed_since(t0) < ms) {
+    while (epic_tick_elapsed_since(t0) < ms)
+    {
         epic_harness_tick();                   /* host: pump sim; target: no-op */
     }
 }

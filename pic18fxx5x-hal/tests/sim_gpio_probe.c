@@ -81,7 +81,8 @@ int main(void)
     EPIC_GPIO_DeInit(GPIOB);
     CHECK(epic_sfr_read8(PIC_REG_TRISB) == 0xFFu, 0x0A);
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
     return epic_harness_report(g_fail == 0u);

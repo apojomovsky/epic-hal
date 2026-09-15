@@ -130,7 +130,8 @@ void TIMER2_IRQHandler(void)
      * context; see the CCP handlers). TMR2IF is PIR1 bit 1. */
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR2IF);
-    if (g_t2_overflow_cb) {
+    if (g_t2_overflow_cb)
+    {
         g_t2_overflow_cb();
     }
 }

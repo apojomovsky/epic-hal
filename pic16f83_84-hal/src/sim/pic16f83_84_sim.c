@@ -38,7 +38,8 @@ static void sim_step_timer0(void);
  */
 static uint8_t port_latch(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return pic16f83_84_sim_sfr[PIC_REG_PORTA];
         case 'B': case 'b': return pic16f83_84_sim_sfr[PIC_REG_PORTB];
         default:             return 0xFFU;
@@ -52,7 +53,8 @@ static uint8_t port_latch(char port)
  */
 static uint8_t tris_reg(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return pic16f83_84_sim_sfr[PIC_REG_TRISA];
         case 'B': case 'b': return pic16f83_84_sim_sfr[PIC_REG_TRISB];
         default:             return 0xFFU;
@@ -66,7 +68,8 @@ static uint8_t tris_reg(char port)
  */
 static uint8_t port_index(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return 0;
         case 'B': case 'b': return 1;
         default:             return 0;
@@ -106,7 +109,8 @@ void pic16f83_84_sim_reset(void)
  */
 void pic16f83_84_sim_step(uint32_t ticks)
 {
-    for (uint32_t i = 0; i < ticks; i++) {
+    for (uint32_t i = 0; i < ticks; i++)
+    {
         sim_step_timer0();
     }
 }
@@ -140,7 +144,8 @@ static void sim_step_timer0(void)
 
     uint8_t t0 = pic16f83_84_sim_sfr[PIC_REG_TMR0];
     t0++;
-    if (t0 == 0x00U) {
+    if (t0 == 0x00U)
+    {
         pic16f83_84_sim_sfr[PIC_REG_INTCON] |= PIC_INTCON_TMR0IF;
         if (sim_irq_cb) sim_irq_cb();
     }
@@ -166,7 +171,8 @@ void pic16f83_84_sim_drive_input(char port, uint8_t pin, uint8_t level)
      * externally driven value for input pins, matching real hardware
      * (TRIS=1 reads return the pin's external state). */
     uint8_t pa;
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': pa = PIC_REG_PORTA; break;
         case 'B': case 'b': pa = PIC_REG_PORTB; break;
         default:             pa = PIC_REG_PORTA; break;
@@ -190,7 +196,8 @@ uint8_t pic16f83_84_sim_read_output(char port, uint8_t pin)
     uint8_t mask = (uint8_t)(1U << pin);
     uint8_t tris = tris_reg(port);
 
-    if (tris & mask) {
+    if (tris & mask)
+    {
         /* Pin configured as input: return the externally driven level. */
         return (sim_input_override[idx] & mask) ?
                ((sim_input_value[idx] & mask) ? 1U : 0U) :

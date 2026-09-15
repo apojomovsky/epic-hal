@@ -24,11 +24,16 @@ uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
                             USART_BaudRateHighTypeDef brgh)
 {
     uint32_t divisor;
-    if (mode == USART_MODE_SYNCHRONOUS) {
+    if (mode == USART_MODE_SYNCHRONOUS)
+    {
         divisor = 4U;
-    } else if (brgh == USART_BRGH_HIGH) {
+    }
+    else if (brgh == USART_BRGH_HIGH)
+    {
         divisor = 16U;
-    } else {
+    }
+    else
+    {
         divisor = 64U;
     }
     /* X = FOSC / (divisor * baud) - 1. */
@@ -253,9 +258,12 @@ void EPIC_USART_SetTX9D(uint8_t bit9)
      * EPIC_USART_Init. */
     uint8_t txsta = 0u;
     EPIC_BANK1_READ8(TXSTA, txsta);
-    if (bit9) {
+    if (bit9)
+    {
         txsta |= PIC_TXSTA_TX9D;
-    } else {
+    }
+    else
+    {
         txsta &= (uint8_t)~PIC_TXSTA_TX9D;
     }
     EPIC_BANK1_WRITE8(TXSTA, txsta);

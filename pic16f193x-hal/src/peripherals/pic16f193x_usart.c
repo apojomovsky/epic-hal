@@ -99,8 +99,12 @@ uint8_t EPIC_USART_HasOverrunError(void)
 /**
  * @brief EUSART transmit ISR (weak, override in user code).
  */
-void USART_TX_IRQHandler(void) {}
+void USART_TX_IRQHandler(void)
+{
+}
 /**
  * @brief EUSART receive ISR (weak, override in user code).
  */
-void USART_RX_IRQHandler(void) {}
+void USART_RX_IRQHandler(void)
+{
+}

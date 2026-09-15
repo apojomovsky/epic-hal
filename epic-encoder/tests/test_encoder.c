@@ -23,10 +23,16 @@ static int g_pass = 0, g_fail = 0;
 static void advance_one_tick(void)
 {
     uint32_t t0 = epic_tick_get();
-    while (epic_tick_get() == t0) { epic_harness_tick(); }
+    while (epic_tick_get() == t0)
+    {
+        epic_harness_tick();
+    }
 }
 /** @brief Advance simulated time by `ms` ticks. */
-static void advance_ms(uint32_t ms) { for (uint32_t i = 0; i < ms; i++) advance_one_tick(); }
+static void advance_ms(uint32_t ms)
+{
+    for (uint32_t i = 0; i < ms; i++) advance_one_tick();
+}
 
 /* port-byte helpers */
 
@@ -224,7 +230,8 @@ static void test_two_instances_independent(void)
      * one where only B changes (A must no-op). */
     static const uint8_t sa_seq[8] = { 1, 3, 2, 0, 1, 3, 2, 0 };  /* A: -8 */
     static const uint8_t sb_seq[8] = { 2, 3, 1, 0, 2, 3, 1, 0 };  /* B: +8 */
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++)
+    {
         uint8_t byte = port_byte2(sa_seq[i], sb_seq[i]);
         epic_encoder_update(&a, byte);
         epic_encoder_update(&b, byte);

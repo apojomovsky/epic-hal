@@ -124,7 +124,8 @@ static void test_rx_overflow_drops(void)
 {
     reset();
     uint8_t big[EPIC_USB_RING_SZ + 16u];
-    for (size_t i = 0; i < sizeof(big); i++) {
+    for (size_t i = 0; i < sizeof(big); i++)
+    {
         big[i] = (uint8_t)i;
     }
     size_t n = epic_usb_test_inject_rx(big, sizeof(big));

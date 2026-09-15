@@ -102,7 +102,8 @@ void TIMER0_IRQHandler(void)
      * (class-F hazard; see the CCP handlers). TMR0IF is INTCON bit 2. */
     if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_TMR0IF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_TMR0IF);
-    if (g_t0_overflow_cb) {
+    if (g_t0_overflow_cb)
+    {
         g_t0_overflow_cb();
     }
 }

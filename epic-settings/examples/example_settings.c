@@ -26,7 +26,8 @@ typedef struct {
 static void putstr(const char *s)
 {
     int len = 0;
-    while (s[len] != '\0') {
+    while (s[len] != '\0')
+    {
         len++;
     }
     epic_serial_write((const uint8_t *)s, len);
@@ -39,11 +40,13 @@ static void putu16(uint16_t v)
 {
     char buf[5];
     int n = 0, i;
-    do {
+    do
+    {
         buf[n++] = (char)('0' + (int)(v % 10u));
         v /= 10u;
     } while (v > 0u);
-    for (i = 0; i < n / 2; i++) {
+    for (i = 0; i < n / 2; i++)
+    {
         char t = buf[i];
         buf[i] = buf[n - 1 - i];
         buf[n - 1 - i] = t;
@@ -104,21 +107,28 @@ int main(void)
     /* Modify one field and persist the new blob. */
     cfg.threshold = 375u;
     cfg.flags |= 0x04u;
-    if (epic_settings_save(SETTINGS_ADDR, &cfg, (uint8_t)sizeof(cfg))) {
+    if (epic_settings_save(SETTINGS_ADDR, &cfg, (uint8_t)sizeof(cfg)))
+    {
         putstr("save: modified blob persisted\r\n");
-    } else {
+    }
+    else
+    {
         putstr("save: EEPROM write failed\r\n");
     }
 
     /* Reload from EEPROM to show the save/load round-trip. */
     app_settings_t back;
-    if (epic_settings_load(SETTINGS_ADDR, &back, (uint8_t)sizeof(back))) {
+    if (epic_settings_load(SETTINGS_ADDR, &back, (uint8_t)sizeof(back)))
+    {
         report_cfg("reload", &back);
-    } else {
+    }
+    else
+    {
         putstr("reload: blob invalid (blank or corrupt)\r\n");
     }
 
-    for (;;) {
+    for (;;)
+    {
         EPIC_WDT_Refresh();
     }
 }

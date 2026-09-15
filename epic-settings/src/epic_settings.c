@@ -67,10 +67,14 @@
 static uint16_t settings_crc16_update(uint16_t crc, uint8_t byte)
 {
     crc ^= (uint16_t)((uint16_t)byte << 8);
-    for (uint8_t bit = 0; bit < 8u; bit++) {
-        if ((crc & 0x8000u) != 0u) {
+    for (uint8_t bit = 0; bit < 8u; bit++)
+    {
+        if ((crc & 0x8000u) != 0u)
+        {
             crc = (uint16_t)((crc << 1) ^ 0x1021u);
-        } else {
+        }
+        else
+        {
             crc <<= 1;
         }
     }
@@ -87,7 +91,8 @@ static uint16_t settings_crc16_update(uint16_t crc, uint8_t byte)
 static uint16_t settings_crc16(const uint8_t *data, uint8_t size)
 {
     uint16_t crc = 0xFFFFu;
-    for (uint8_t i = 0; i < size; i++) {
+    for (uint8_t i = 0; i < size; i++)
+    {
         crc = settings_crc16_update(crc, data[i]);
     }
     return crc;
@@ -106,11 +111,13 @@ static uint16_t settings_crc16(const uint8_t *data, uint8_t size)
  */
 static bool settings_write_bytes(uint8_t start, const uint8_t *buf, uint8_t len)
 {
-    for (uint8_t i = 0; i < len; i++) {
+    for (uint8_t i = 0; i < len; i++)
+    {
         uint8_t addr = (uint8_t)(start + i);
         uint8_t data = buf[i];
 
-        if (EPIC_EEPROM_WriteByte(addr, data) != EPIC_OK) {
+        if (EPIC_EEPROM_WriteByte(addr, data) != EPIC_OK)
+        {
             return false;
         }
 
@@ -118,7 +125,8 @@ static bool settings_write_bytes(uint8_t start, const uint8_t *buf, uint8_t len)
         settings_sim_complete(addr, data);
 #endif
 
-        while (EPIC_EEPROM_IsWriteComplete() == 0u) {
+        while (EPIC_EEPROM_IsWriteComplete() == 0u)
+        {
             epic_harness_tick();
         }
         EPIC_EEPROM_ClearITFlag();
@@ -141,7 +149,8 @@ bool epic_settings_save(uint8_t eeprom_addr, const void *data, uint8_t size)
     uint16_t crc = settings_crc16(bytes, size);
     uint8_t trailer[2];
 
-    if (!settings_write_bytes(eeprom_addr, bytes, size)) {
+    if (!settings_write_bytes(eeprom_addr, bytes, size))
+    {
         return false;
     }
 
@@ -166,17 +175,20 @@ bool epic_settings_load(uint8_t eeprom_addr, void *data, uint8_t size)
     uint8_t *out = (uint8_t *)data;
     uint16_t crc = 0xFFFFu;
 
-    for (uint8_t i = 0; i < size; i++) {
+    for (uint8_t i = 0; i < size; i++)
+    {
         crc = settings_crc16_update(crc, EPIC_EEPROM_ReadByte((uint8_t)(eeprom_addr + i)));
     }
 
     uint16_t stored_crc = (uint16_t)((uint16_t)EPIC_EEPROM_ReadByte((uint8_t)(eeprom_addr + size)) << 8);
     stored_crc |= EPIC_EEPROM_ReadByte((uint8_t)(eeprom_addr + size + 1u));
-    if (stored_crc != crc) {
+    if (stored_crc != crc)
+    {
         return false;
     }
 
-    for (uint8_t i = 0; i < size; i++) {
+    for (uint8_t i = 0; i < size; i++)
+    {
         out[i] = EPIC_EEPROM_ReadByte((uint8_t)(eeprom_addr + i));
     }
     return true;
@@ -196,7 +208,8 @@ bool epic_settings_load(uint8_t eeprom_addr, void *data, uint8_t size)
 bool epic_settings_load_or_default(uint8_t eeprom_addr, void *data, uint8_t size,
                                    const void *default_data)
 {
-    if (epic_settings_load(eeprom_addr, data, size)) {
+    if (epic_settings_load(eeprom_addr, data, size))
+    {
         return true;
     }
 

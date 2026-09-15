@@ -38,7 +38,8 @@ static void s_tx_cplt(void)
  */
 static void s_uart_putc(char c)
 {
-    while (!EPIC_USART_IsTxShiftRegisterEmpty()) {
+    while (!EPIC_USART_IsTxShiftRegisterEmpty())
+    {
         /* wait for the shift register to drain */
     }
     EPIC_USART_Transmit((uint8_t)c);
@@ -100,7 +101,8 @@ int epic_harness_running(uint32_t iteration)
  */
 void epic_harness_log(const char *fmt, ...)
 {
-    while (*fmt) {
+    while (*fmt)
+    {
         s_uart_putc(*fmt);
         fmt++;
     }

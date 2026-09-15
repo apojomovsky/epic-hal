@@ -71,22 +71,27 @@ static void tx_send_decode(EPIC_SWUART_HandleTypeDef *h,
     size_t queued = EPIC_SWUART_Write(h, data, len);
     CHECK(queued == len, "tx queued fully (ring had room)");
 
-    for (size_t b = 0; b < len; b++) {
+    for (size_t b = 0; b < len; b++)
+    {
         /* Byte 0's start bit was armed by Write() itself; each later
          * byte needs one TX_IDLE pop event first (that event arms the
          * start bit, mode CLEAR, and is not a data bit). */
-        if (b > 0u) {
+        if (b > 0u)
+        {
             epic_swuart_test_fire_tx_event();
         }
         uint8_t got = 0u;
-        for (int k = 1; k <= 8; k++) {
+        for (int k = 1; k <= 8; k++)
+        {
             epic_swuart_test_fire_tx_event();
-            if (epic_swuart_test_last_tx_mode() == (uint8_t)CCP_MODE_COMPARE_SET) {
+            if (epic_swuart_test_last_tx_mode() == (uint8_t)CCP_MODE_COMPARE_SET)
+            {
                 got |= (uint8_t)(1u << (k - 1));
             }
         }
         epic_swuart_test_fire_tx_event();   /* stop bit */
-        if (got != data[b]) {
+        if (got != data[b])
+        {
             CHECK(0, "tx byte decoded from mode sequence");
         }
     }
@@ -103,7 +108,8 @@ static unsigned rx_send_byte(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 {
     uint8_t bits[10];
     bits[0] = 0u;   /* start */
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++)
+    {
         bits[1 + i] = (uint8_t)((byte >> i) & 1u);
     }
     bits[9] = 1u;   /* stop */
@@ -120,7 +126,8 @@ static unsigned rx_send_byte(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
     epic_swuart_test_fire_rx_event();   /* capture: IDLE -> CONFIRM_START */
     epic_swuart_test_fire_rx_event();   /* confirm: pin still low -> DATA0 */
 #endif
-    for (int i = 1; i < 10; i++) {
+    for (int i = 1; i < 10; i++)
+    {
         SIM_DRIVE('C', 2u, bits[i]);
         epic_swuart_test_fire_rx_event();
     }
@@ -139,7 +146,8 @@ static void rx_send_bad_stop(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 {
     uint8_t bits[10];
     bits[0] = 0u;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++)
+    {
         bits[1 + i] = (uint8_t)((byte >> i) & 1u);
     }
     bits[9] = 0u;   /* bad stop */
@@ -152,7 +160,8 @@ static void rx_send_bad_stop(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
     epic_swuart_test_fire_rx_event();
     epic_swuart_test_fire_rx_event();
 #endif
-    for (int i = 1; i < 10; i++) {
+    for (int i = 1; i < 10; i++)
+    {
         SIM_DRIVE('C', 2u, bits[i]);
         epic_swuart_test_fire_rx_event();
     }
@@ -161,10 +170,12 @@ static void rx_send_bad_stop(EPIC_SWUART_HandleTypeDef *h, uint8_t byte)
 /** @brief Randomized TX fuzz over 300 iterations. */
 static void test_tx_fuzz(EPIC_SWUART_HandleTypeDef *h)
 {
-    for (int it = 0; it < 300; it++) {
+    for (int it = 0; it < 300; it++)
+    {
         size_t len = (size_t)(rnd() % EPIC_SWUART_RING_SZ) + 1u;
         uint8_t buf[EPIC_SWUART_RING_SZ];
-        for (size_t i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++)
+        {
             buf[i] = (uint8_t)rnd();
         }
         tx_send_decode(h, buf, len);
@@ -177,7 +188,8 @@ static void test_tx_short_write(EPIC_SWUART_HandleTypeDef *h)
     /* Fill the ring: a full Write pops one byte into the shift
      * register, so the ring ends RING_SZ-1 full. */
     uint8_t buf[EPIC_SWUART_RING_SZ + 3u];
-    for (size_t i = 0; i < sizeof(buf); i++) {
+    for (size_t i = 0; i < sizeof(buf); i++)
+    {
         buf[i] = (uint8_t)(i * 3u + 1u);
     }
     size_t q1 = EPIC_SWUART_Write(h, buf, EPIC_SWUART_RING_SZ);
@@ -193,19 +205,24 @@ static void test_tx_short_write(EPIC_SWUART_HandleTypeDef *h)
 
     /* Drain everything: RING_SZ+1 bytes total. */
     size_t total = EPIC_SWUART_RING_SZ + 1u;
-    for (size_t b = 0; b < total; b++) {
-        if (b > 0u) {
+    for (size_t b = 0; b < total; b++)
+    {
+        if (b > 0u)
+        {
             epic_swuart_test_fire_tx_event();   /* TX_IDLE pop arms the start bit */
         }
         uint8_t got = 0u;
-        for (int k = 1; k <= 8; k++) {
+        for (int k = 1; k <= 8; k++)
+        {
             epic_swuart_test_fire_tx_event();
-            if (epic_swuart_test_last_tx_mode() == (uint8_t)CCP_MODE_COMPARE_SET) {
+            if (epic_swuart_test_last_tx_mode() == (uint8_t)CCP_MODE_COMPARE_SET)
+            {
                 got |= (uint8_t)(1u << (k - 1));
             }
         }
         epic_swuart_test_fire_tx_event();
-        if (got != buf[b]) {
+        if (got != buf[b])
+        {
             CHECK(0, "short-write: bytes transmitted in order");
         }
     }
@@ -220,13 +237,16 @@ static void test_rx_fuzz(EPIC_SWUART_HandleTypeDef *h)
     size_t  expect_len = 0u;
     uint16_t err_before = EPIC_SWUART_GetErrorCount(h);
 
-    for (int it = 0; it < 300; it++) {
+    for (int it = 0; it < 300; it++)
+    {
         /* Inject 1..4 bytes, then read them back byte-exact. */
         size_t k = (size_t)(rnd() % 4u) + 1u;
-        for (size_t i = 0; i < k; i++) {
+        for (size_t i = 0; i < k; i++)
+        {
             uint8_t b = (uint8_t)rnd();
             rx_send_byte(h, b);
-            if (expect_len < sizeof(expect)) {
+            if (expect_len < sizeof(expect))
+            {
                 expect[expect_len++] = b;
             }
         }
@@ -237,7 +257,8 @@ static void test_rx_fuzz(EPIC_SWUART_HandleTypeDef *h)
         int n = EPIC_SWUART_Read(h, out, sizeof(out));
         CHECK(n == (int)k, "rx read returns the injected count");
         int ok = 1;
-        for (size_t i = 0; i < k; i++) {
+        for (size_t i = 0; i < k; i++)
+        {
             if (out[i] != expect[expect_len - k + i]) ok = 0;
         }
         CHECK(ok, "rx bytes byte-exact in order");
@@ -251,10 +272,12 @@ static void test_rx_overflow_and_errors(EPIC_SWUART_HandleTypeDef *h)
 {
     /* Fill the RX ring exactly. */
     uint8_t buf[EPIC_SWUART_RING_SZ];
-    for (size_t i = 0; i < sizeof(buf); i++) {
+    for (size_t i = 0; i < sizeof(buf); i++)
+    {
         buf[i] = (uint8_t)(i * 5u + 2u);
     }
-    for (size_t i = 0; i < sizeof(buf); i++) {
+    for (size_t i = 0; i < sizeof(buf); i++)
+    {
         rx_send_byte(h, buf[i]);
     }
     CHECK(h->rx_count == (uint8_t)EPIC_SWUART_RING_SZ, "rx ring full");
@@ -280,7 +303,8 @@ static void test_rx_overflow_and_errors(EPIC_SWUART_HandleTypeDef *h)
     int n = EPIC_SWUART_Read(h, out, sizeof(out));
     CHECK(n == (int)EPIC_SWUART_RING_SZ, "rx overflow: original bytes readable");
     int ok = 1;
-    for (size_t i = 0; i < EPIC_SWUART_RING_SZ; i++) {
+    for (size_t i = 0; i < EPIC_SWUART_RING_SZ; i++)
+    {
         if (out[i] != buf[i]) ok = 0;
     }
     CHECK(ok, "rx overflow: bytes preserved in order");

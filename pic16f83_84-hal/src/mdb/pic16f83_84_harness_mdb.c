@@ -68,10 +68,14 @@ void epic_harness_log(const char *fmt, ...)
      * "...RESULT: PASS\n\0" vs "...RESULT: FAIL\n\0" differ at
      * fmt[21] ('P'/'F') and fmt[24] ('S'/'L'); the shared "EPIC_HA"
      * prefix and the ": " separator anchor the marker shape. */
-    if (fmt && fmt[0] == 'E' && fmt[19] == ':' && fmt[20] == ' ') {
-        if (fmt[21] == 'P' && fmt[22] == 'A' && fmt[24] == 'S') {
+    if (fmt && fmt[0] == 'E' && fmt[19] == ':' && fmt[20] == ' ')
+    {
+        if (fmt[21] == 'P' && fmt[22] == 'A' && fmt[24] == 'S')
+        {
             EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-        } else if (fmt[21] == 'F' && fmt[22] == 'A' && fmt[24] == 'L') {
+        }
+        else if (fmt[21] == 'F' && fmt[22] == 'A' && fmt[24] == 'L')
+        {
             EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
         }
     }
@@ -86,7 +90,8 @@ void epic_harness_log(const char *fmt, ...)
  */
 void pic16f83_84_harness_halt(void)
 {
-    for (;;) {
+    for (;;)
+    {
         /* nothing */
     }
 }

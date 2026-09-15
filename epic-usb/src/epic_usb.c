@@ -33,13 +33,15 @@ static void epic_usb_drain_tx(void)
     if (!usb_is_configured() ||
         usb_in_endpoint_halted(EPIC_USB_DATA_EP) ||
         usb_in_endpoint_busy(EPIC_USB_DATA_EP) ||
-        g_tx_count == 0u) {
+        g_tx_count == 0u)
+        {
         return;
     }
 
     unsigned char *buf = usb_get_in_buffer(EPIC_USB_DATA_EP);
     size_t n = 0;
-    while (n < EP_2_IN_LEN && g_tx_count > 0u) {
+    while (n < EP_2_IN_LEN && g_tx_count > 0u)
+    {
         buf[n++] = g_tx_buf[g_tx_tail];
         g_tx_tail = (uint8_t)((g_tx_tail + 1u) & MASK);
         g_tx_count--;
@@ -58,14 +60,17 @@ static void epic_usb_drain_rx(void)
 {
     if (!usb_is_configured() ||
         usb_out_endpoint_halted(EPIC_USB_DATA_EP) ||
-        !usb_out_endpoint_has_data(EPIC_USB_DATA_EP)) {
+        !usb_out_endpoint_has_data(EPIC_USB_DATA_EP))
+        {
         return;
     }
 
     const unsigned char *out_buf;
     uint8_t len = usb_get_out_buffer(EPIC_USB_DATA_EP, &out_buf);
-    for (uint8_t i = 0; i < len; i++) {
-        if (g_rx_count < EPIC_USB_RING_SZ) {    /* drop on overflow */
+    for (uint8_t i = 0; i < len; i++)
+    {
+        if (g_rx_count < EPIC_USB_RING_SZ)
+        {    /* drop on overflow */
             g_rx_buf[g_rx_head] = out_buf[i];
             g_rx_head = (uint8_t)((g_rx_head + 1u) & MASK);
             g_rx_count++;
@@ -114,8 +119,10 @@ void epic_usb_service(void)
  */
 size_t epic_usb_write(const uint8_t *data, size_t len)
 {
-    for (size_t i = 0; i < len; i++) {
-        while (g_tx_count >= EPIC_USB_RING_SZ) {
+    for (size_t i = 0; i < len; i++)
+    {
+        while (g_tx_count >= EPIC_USB_RING_SZ)
+        {
             epic_usb_service();    /* ring full: drain as we block */
         }
         g_tx_buf[g_tx_head] = data[i];
@@ -138,7 +145,8 @@ size_t epic_usb_write(const uint8_t *data, size_t len)
 size_t epic_usb_read(uint8_t *buf, size_t max)
 {
     size_t n = 0;
-    while (n < max && g_rx_count > 0u) {
+    while (n < max && g_rx_count > 0u)
+    {
         buf[n++] = g_rx_buf[g_rx_tail];
         g_rx_tail = (uint8_t)((g_rx_tail + 1u) & MASK);
         g_rx_count--;
@@ -164,7 +172,8 @@ size_t epic_usb_available(void)
  */
 void epic_usb_flush(void)
 {
-    while (g_tx_count > 0u || usb_in_endpoint_busy(EPIC_USB_DATA_EP)) {
+    while (g_tx_count > 0u || usb_in_endpoint_busy(EPIC_USB_DATA_EP))
+    {
         epic_usb_service();
     }
 }

@@ -27,7 +27,8 @@ uint16_t EPIC_TIMER1_ReadCounter(void)
      * second read differs, the low byte rolled over, so use the
      * refreshed high. Standard PIC16 idiom (DS39582B §6.4.1). */
     uint8_t hi1, lo, hi2;
-    do {
+    do
+    {
         hi1 = EPIC_REG8(PIC_REG_TMR1H);
         lo  = EPIC_REG8(PIC_REG_TMR1L);
         hi2 = EPIC_REG8(PIC_REG_TMR1H);
@@ -75,9 +76,12 @@ EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T1CON), PIC_T1CON_TMR1ON);
 
     EPIC_IRQ_ClearFlag(PIC16_IRQ_TMR1);
-    if (h->OverflowCallback) {
+    if (h->OverflowCallback)
+    {
         EPIC_IRQ_Enable(PIC16_IRQ_TMR1);
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(PIC16_IRQ_TMR1);
     }
 
@@ -137,17 +141,23 @@ EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h)
 #ifdef EPIC_BANK2_READ8
     uint8_t cm2con1 = 0u;
     EPIC_BANK2_READ8(CM2CON1, cm2con1);
-    if (h->GateSource == TIMER1_GATE_SRC_T1G) {
+    if (h->GateSource == TIMER1_GATE_SRC_T1G)
+    {
         cm2con1 |= PIC_CM2CON1_T1GSS;
-    } else {
+    }
+    else
+    {
         cm2con1 &= (uint8_t)~PIC_CM2CON1_T1GSS;
     }
     EPIC_BANK2_WRITE8(CM2CON1, cm2con1);
 #else
     uint8_t cm2con1 = EPIC_REG8(PIC_REG_CM2CON1);
-    if (h->GateSource == TIMER1_GATE_SRC_T1G) {
+    if (h->GateSource == TIMER1_GATE_SRC_T1G)
+    {
         cm2con1 |= PIC_CM2CON1_T1GSS;
-    } else {
+    }
+    else
+    {
         cm2con1 &= (uint8_t)~PIC_CM2CON1_T1GSS;
     }
     EPIC_REG8(PIC_REG_CM2CON1) = cm2con1;
@@ -177,7 +187,8 @@ void TIMER1_IRQHandler(void)
      * context; see the CCP handlers). TMR1IF is PIR1 bit 0. */
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR1IF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR1IF);
-    if (g_t1_overflow_cb) {
+    if (g_t1_overflow_cb)
+    {
         g_t1_overflow_cb();
     }
 }

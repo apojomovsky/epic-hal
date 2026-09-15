@@ -34,7 +34,8 @@ static void fail(uint8_t idx)
     g_fail++;
     /* Raw-bytes channel (no printf): emit idx+1 F's so the failing
      * check is countable in the capture. */
-    for (i = 0U; i <= idx; i++) {
+    for (i = 0U; i <= idx; i++)
+    {
         epic_harness_log("F");
     }
     epic_harness_log("\n");
@@ -144,7 +145,8 @@ int main(void)
      * analog-pin model latches once comparators/VREF have run, so later
      * iterations would re-fail the GPIO reads. One verdict. */
     int rc = epic_harness_report(g_fail == 0U);
-    for (;;) {
+    for (;;)
+    {
     }
     return rc;
 }

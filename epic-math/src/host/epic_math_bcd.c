@@ -42,7 +42,8 @@ uint16_t epic_math_bcd16_to_bin(uint32_t bcd5)
      * (documented: the binary side is 16-bit). */
     uint32_t bin = 0u;
     uint32_t mult = 1u;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++)
+    {
         bin += (bcd5 & 0x0Fu) * mult;
         bcd5 >>= 4;
         mult *= 10u;
@@ -58,7 +59,8 @@ uint16_t epic_math_bcd16_to_bin(uint32_t bcd5)
 uint32_t epic_math_bin_to_bcd16(uint16_t value)
 {
     uint32_t bcd = 0u;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++)
+    {
         bcd |= (uint32_t)(value % 10u) << (i * 4);
         value = (uint16_t)(value / 10u);
     }

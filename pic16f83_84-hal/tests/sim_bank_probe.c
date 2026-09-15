@@ -43,7 +43,8 @@ static void fail(uint8_t idx)
     g_fail++;
     /* Raw-bytes channel (no printf): emit idx+1 F's so the failing
      * check is countable in the capture. */
-    for (i = 0U; i <= idx; i++) {
+    for (i = 0U; i <= idx; i++)
+    {
         epic_harness_log("F");
     }
     epic_harness_log("\n");

@@ -105,10 +105,13 @@ int16_t epic_pid_update(epic_pid_t *pid, int16_t setpoint, int16_t measurement)
     /* D term: -d(measurement)/dt, not d(error)/dt, to avoid setpoint-step
      * kick; zero on the first call (no previous measurement). */
     int16_t dmeas;
-    if (!pid->have_prev_measurement) {
+    if (!pid->have_prev_measurement)
+    {
         dmeas = 0;
         pid->have_prev_measurement = true;
-    } else {
+    }
+    else
+    {
         dmeas = (int16_t)(measurement - pid->prev_measurement);
     }
     pid->prev_measurement = measurement;
@@ -118,34 +121,60 @@ int16_t epic_pid_update(epic_pid_t *pid, int16_t setpoint, int16_t measurement)
     int32_t out_min_q8 = (int32_t)pid->out_min << 8;
     int32_t out_max_q8 = (int32_t)pid->out_max << 8;
 
-    if (pid->mode == EPIC_PID_MODE_MANUAL) {
+    if (pid->mode == EPIC_PID_MODE_MANUAL)
+    {
         /* MANUAL: clamp manual_output, then back-calculate the (also
          * clamped) integrator so the next AUTO call reproduces this exact
          * output; skip_next_i_increment suppresses that call's I term so
          * the back-calculation isn't double-counted. */
         int16_t output = pid->manual_output;
-        if (output < pid->out_min) { output = pid->out_min; }
-        if (output > pid->out_max) { output = pid->out_max; }
+        if (output < pid->out_min)
+        {
+            output = pid->out_min;
+        }
+        if (output > pid->out_max)
+        {
+            output = pid->out_max;
+        }
         pid->integrator_q8 = ((int32_t)output << 8) - p_q8 - d_q8;
-        if (pid->integrator_q8 < out_min_q8) { pid->integrator_q8 = out_min_q8; }
-        if (pid->integrator_q8 > out_max_q8) { pid->integrator_q8 = out_max_q8; }
+        if (pid->integrator_q8 < out_min_q8)
+        {
+            pid->integrator_q8 = out_min_q8;
+        }
+        if (pid->integrator_q8 > out_max_q8)
+        {
+            pid->integrator_q8 = out_max_q8;
+        }
         pid->skip_next_i_increment = true;
         return output;
     }
 
     /* AUTO: accumulate Ki*error unless the prior MANUAL call asked us to
      * skip it (bumpless handoff), then sum P+I+D and clamp. */
-    if (!pid->skip_next_i_increment) {
+    if (!pid->skip_next_i_increment)
+    {
         pid->integrator_q8 += epic_math_mul_s16(pid->ki_q8, error);
     }
     pid->skip_next_i_increment = false;  /* single-shot: consumed */
 
-    if (pid->integrator_q8 < out_min_q8) { pid->integrator_q8 = out_min_q8; }
-    if (pid->integrator_q8 > out_max_q8) { pid->integrator_q8 = out_max_q8; }
+    if (pid->integrator_q8 < out_min_q8)
+    {
+        pid->integrator_q8 = out_min_q8;
+    }
+    if (pid->integrator_q8 > out_max_q8)
+    {
+        pid->integrator_q8 = out_max_q8;
+    }
 
     int32_t sum_q8 = p_q8 + pid->integrator_q8 + d_q8;
     int16_t output = (int16_t)(sum_q8 >> 8);
-    if (output < pid->out_min) { output = pid->out_min; }
-    if (output > pid->out_max) { output = pid->out_max; }
+    if (output < pid->out_min)
+    {
+        output = pid->out_min;
+    }
+    if (output > pid->out_max)
+    {
+        output = pid->out_max;
+    }
     return output;
 }

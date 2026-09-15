@@ -126,7 +126,8 @@ static void s_tx_noop(void)
 static void s_tx_status(uint8_t data, uint16_t *stall)
 {
     uint16_t n = 0u;
-    while (!EPIC_USART_IsTxShiftRegisterEmpty() && n < 1000u) {
+    while (!EPIC_USART_IsTxShiftRegisterEmpty() && n < 1000u)
+    {
         n++;
     }
     if (n == 1000u) (*stall)++;
@@ -206,30 +207,43 @@ int main(void)
     uint16_t tx_count = 0u;
     uint16_t tx_stall = 0u;
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         /* Start a conversion when the ADC is idle: the sim's model
          * completes every conversion (GO/DONE clears), so this fires
          * once per iteration; the guard keeps a wedged conversion
          * from stacking Starts. */
-        if (!EPIC_ADC_IsConversionInProgress()) {
+        if (!EPIC_ADC_IsConversionInProgress())
+        {
             uint16_t rv = EPIC_ADC_Start();
-            if (!adc_started) {
+            if (!adc_started)
+            {
                 first_start_ok = (rv == 0u) ? 1u : 0u;
                 adc_started = 1u;
             }
         }
         /* Bounded wait for completion. */
-        for (uint16_t w = 0u; w < ADC_WAIT_SPINS; w++) {
-            if (EPIC_ADC_IsConversionDone()) { adif_seen = 1u; break; }
-            if (!EPIC_ADC_IsConversionInProgress()) { go_clears = 1u; break; }
+        for (uint16_t w = 0u; w < ADC_WAIT_SPINS; w++)
+        {
+            if (EPIC_ADC_IsConversionDone())
+            {
+                adif_seen = 1u; break;
+            }
+            if (!EPIC_ADC_IsConversionInProgress())
+            {
+                go_clears = 1u; break;
+            }
         }
         /* Read the result registers (two Bank-1 windows + one Bank-0
          * read: the bank-interleave surface this gate exercises). */
         uint16_t r = EPIC_ADC_Read();
-        if (!have_result) {
+        if (!have_result)
+        {
             first_result = r;
             have_result = 1u;
-        } else if (r != first_result) {
+        }
+        else if (r != first_result)
+        {
             adc_stable = 0u;
         }
 
@@ -256,7 +270,8 @@ int main(void)
 
     /* Let the ADC finish the conversion it started last (a real part
      * needs the bounded wait; the sim completes within it). */
-    for (uint16_t w = 0u; w < ADC_WAIT_SPINS; w++) {
+    for (uint16_t w = 0u; w < ADC_WAIT_SPINS; w++)
+    {
         if (!EPIC_ADC_IsConversionInProgress()) break;
     }
 
@@ -315,7 +330,8 @@ int main(void)
         epic_harness_log(c);
     }
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
     return epic_harness_report(g_fail == 0u);

@@ -151,7 +151,8 @@ int main(void)
         EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
     }
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
     return epic_harness_report(g_fail == 0u);

@@ -108,7 +108,8 @@ static void build_line(uint8_t *line, uint8_t n)
     line[3] = (uint8_t)hx[(n >> 4) & 0xF];
     line[4] = (uint8_t)hx[n & 0xF];
     line[5] = (uint8_t)':';
-    for (j = 0u; j < (uint8_t)(TX_LINE_LEN - 6u); j++) {
+    for (j = 0u; j < (uint8_t)(TX_LINE_LEN - 6u); j++)
+    {
         line[6u + j] = (uint8_t)pat[(uint16_t)((uint16_t)n + j) % 36u];
     }
 }
@@ -162,13 +163,16 @@ int main(void)
     uint8_t gie_ok = 1u;
     uint16_t tx_lines = 0u;
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         /* Bounded busy work so the loop advances simulated time
          * through several 1 ms tick periods between serial phases. */
-        for (volatile uint16_t w = 0u; w < 32u; w++) {
+        for (volatile uint16_t w = 0u; w < 32u; w++)
+        {
         }
 
-        if ((i % TX_EVERY_N_ITERS) == 0u) {
+        if ((i % TX_EVERY_N_ITERS) == 0u)
+        {
             /* ---- Serial phase (the serial gate's discipline) ---- */
             (void)EPIC_IRQ_Disable();            /* GIE off */
 
@@ -178,7 +182,8 @@ int main(void)
             uint8_t n = (uint8_t)(tx_lines & 0xFFu);
             log_tx_header(n);
             build_line(line, n);
-            if (epic_serial_write(line, (int)TX_LINE_LEN) != (int)TX_LINE_LEN) {
+            if (epic_serial_write(line, (int)TX_LINE_LEN) != (int)TX_LINE_LEN)
+            {
                 write_ok = 0u;
             }
             /* Drain: one dispatch pops one byte (TXIF stays set in
@@ -186,11 +191,13 @@ int main(void)
              * callback's empty-ring branch and disables TXIE so the
              * GIE-on edge cannot start a storm. */
             for (uint8_t k = 0u; k < 40u &&
-                                epic_serial_tx_pending() > 0; k++) {
+                                epic_serial_tx_pending() > 0; k++)
+                                {
                 epic_dispatch_all_irqs();
             }
             epic_dispatch_all_irqs();
-            if (epic_serial_tx_pending() != 0) {
+            if (epic_serial_tx_pending() != 0)
+            {
                 fail(0x0C);   /* ring did not empty */
             }
             tx_lines++;
@@ -203,7 +210,8 @@ int main(void)
             /* ---- Tick checkpoint ---- */
             {
                 uint32_t t = epic_tick_get();
-                if (t < t_last) {
+                if (t < t_last)
+                {
                     fail(0x01);   /* tick regressed: torn or wedged */
                 }
                 t_last = t;
@@ -214,7 +222,8 @@ int main(void)
             {
                 uint8_t g1 = EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_GIE;
                 uint8_t g2 = EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_GIE;
-                if ((g1 | g2) == 0u) {
+                if ((g1 | g2) == 0u)
+                {
                     gie_ok = 0u;   /* GIE lost by the churn */
                 }
             }
@@ -226,7 +235,8 @@ int main(void)
     {
         uint32_t t_end = epic_tick_get();
         for (uint32_t i = 0; epic_harness_running(i) && i < 20000u &&
-                            (epic_tick_get() - t_end) < TICK_ALIVE_MS; i++) {
+                            (epic_tick_get() - t_end) < TICK_ALIVE_MS; i++)
+                            {
             /* spin; the tick ISR advances the counter */
         }
         CHECK((epic_tick_get() - t_end) >= TICK_ALIVE_MS, 0x00);

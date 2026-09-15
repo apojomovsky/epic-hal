@@ -33,7 +33,8 @@ static void test_init_sequence(void)
     CHECK(mock_log_len() >= 6u, "init: at least 6 commands sent");
 
     /* First three should be Function Set (rs=0, byte with bit 5 set) */
-    for (uint16_t i = 0; i < 3u; i++) {
+    for (uint16_t i = 0; i < 3u; i++)
+    {
         const mock_entry_t *e = mock_log_entry(i);
         CHECK(e != NULL, "init: entry exists");
         CHECK(e->rs == 0u, "init: first commands are instructions");
@@ -42,7 +43,8 @@ static void test_init_sequence(void)
 
     /* Find Clear Display (0x01) and Entry Mode Set */
     bool found_clear = false, found_entry = false;
-    for (uint16_t i = 0; i < mock_log_len(); i++) {
+    for (uint16_t i = 0; i < mock_log_len(); i++)
+    {
         const mock_entry_t *e = mock_log_entry(i);
         if (e->rs == 0u && e->byte == 0x01u) found_clear = true;
         if (e->rs == 0u && (e->byte & 0x04u) && (e->byte & 0x02u)) found_entry = true;
@@ -203,7 +205,8 @@ static void test_create_char(void)
     CHECK(e->rs == 0u, "create_char: CGRAM addr is instruction");
     CHECK((e->byte & 0x40u) != 0u, "create_char: Set CGRAM Addr bit");
 
-    for (uint8_t i = 0; i < 8u; i++) {
+    for (uint8_t i = 0; i < 8u; i++)
+    {
         e = mock_log_entry((uint16_t)(i + 1u));
         CHECK(e->rs == 1u, "create_char: data byte");
         CHECK(e->byte == (heart[i] & 0x1Fu), "create_char: glyph row matches");

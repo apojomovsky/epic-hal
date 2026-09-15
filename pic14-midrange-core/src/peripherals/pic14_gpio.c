@@ -13,7 +13,8 @@
  */
 static uint8_t tris_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_TRISA;
         case GPIOB: return PIC_REG_TRISB;
 #if PIC14MIDRANGE_HAS_PORTC
@@ -36,7 +37,8 @@ static uint8_t tris_addr(GPIO_TypeDef port)
  */
 static uint8_t port_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_PORTA;
         case GPIOB: return PIC_REG_PORTB;
 #if PIC14MIDRANGE_HAS_PORTC
@@ -83,7 +85,8 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 
     uint8_t tris = EPIC_REG8(ta);
 
-    switch (mode) {
+    switch (mode)
+    {
         case GPIO_MODE_INPUT:
         case GPIO_MODE_ANALOG:
             /* Both modes set TRIS=1 (input). Analog mode additionally
@@ -192,17 +195,23 @@ void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
      * in pic14_timer0.c's option_clr_set. */
     uint8_t opt = 0u;
     EPIC_BANK1_READ8(OPTION_REG, opt);
-    if (pull == GPIO_PULLUP) {
+    if (pull == GPIO_PULLUP)
+    {
         opt &= (uint8_t)0x7F;    /* RBPU = 0 → enabled */
-    } else {
+    }
+    else
+    {
         opt |= (uint8_t)0x80;    /* RBPU = 1 → disabled */
     }
     EPIC_BANK1_WRITE8(OPTION_REG, opt);
 #else
     uint8_t opt = EPIC_REG8(PIC_REG_OPTION);
-    if (pull == GPIO_PULLUP) {
+    if (pull == GPIO_PULLUP)
+    {
         EPIC_BIT_CLR(opt, (uint8_t)0x80);    /* RBPU = 0 → enabled */
-    } else {
+    }
+    else
+    {
         EPIC_BIT_SET(opt, (uint8_t)0x80);    /* RBPU = 1 → disabled */
     }
     EPIC_REG8(PIC_REG_OPTION) = opt;

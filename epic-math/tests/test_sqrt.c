@@ -10,10 +10,12 @@
 /** @brief Exhaustive 0..65535 check of epic_math_sqrt_u16 against (uint16_t)floor(sqrt((double)v)). */
 static void test_sqrt_exhaustive(void)
 {
-    for (uint32_t v = 0; v <= 0xFFFFu; v++) {
+    for (uint32_t v = 0; v <= 0xFFFFu; v++)
+    {
         uint16_t got = epic_math_sqrt_u16((uint16_t)v);
         uint16_t exp = (uint16_t)floor(sqrt((double)v));
-        if (got != exp) {
+        if (got != exp)
+        {
             CHECK(0, "sqrt mismatch");
             if (g_epic_math_failures < 5)
                 printf("  v=%lu got=%u exp=%u\n",

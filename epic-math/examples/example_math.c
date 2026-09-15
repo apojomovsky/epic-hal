@@ -21,7 +21,8 @@
 static void putstr(const char *s)
 {
     int len = 0;
-    while (s[len] != '\0') {
+    while (s[len] != '\0')
+    {
         len++;
     }
     epic_serial_write((const uint8_t *)s, len);
@@ -34,11 +35,13 @@ static void putu32(uint32_t v)
 {
     char buf[10];
     int n = 0, i;
-    do {
+    do
+    {
         buf[n++] = (char)('0' + (int)(v % 10u));
         v /= 10u;
     } while (v > 0u);
-    for (i = 0; i < n / 2; i++) {
+    for (i = 0; i < n / 2; i++)
+    {
         char t = buf[i];
         buf[i] = buf[n - 1 - i];
         buf[n - 1 - i] = t;
@@ -55,7 +58,8 @@ int main(void)
     EPIC_IRQ_Restore(1);
 
     uint16_t counter = 0u;
-    for (;;) {
+    for (;;)
+    {
         uint32_t product = epic_math_mul_u16(counter, MUL_FACTOR);
 
         bool ok;

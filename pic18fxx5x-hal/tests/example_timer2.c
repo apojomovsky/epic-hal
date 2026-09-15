@@ -24,7 +24,8 @@ static uint32_t g_cycle = 0;
 static void on_t2_overflow(void)
 {
     g_overflows++;
-    if (g_overflows == 1U) {
+    if (g_overflows == 1U)
+    {
         g_first_cycle = g_cycle;
     }
 }
@@ -46,7 +47,8 @@ int main(void)
     EPIC_TIMER2_Start(&h);
     EPIC_IRQ_Restore(1);
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         g_cycle = i + 1;
         epic_harness_tick();
         if (g_overflows >= EXPECTED_OVERFLOWS) break;

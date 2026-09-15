@@ -35,7 +35,8 @@ EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
      *   bit 7    ADFM
      */
     uint8_t adcon1 = h->Reference & PIC_ADCON1_PCFG_MASK;
-    if (h->ClockSource >= ADC_CLOCK_FOSC_4) {
+    if (h->ClockSource >= ADC_CLOCK_FOSC_4)
+    {
         /* ADCS2 = 1 for the four high clock modes. */
         adcon1 |= PIC_ADCON1_ADCS2;
     }
@@ -172,7 +173,8 @@ void ADC_IRQHandler(void)
      * context; see the CCP handlers). ADIF is PIR1 bit 6. */
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_ADIF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_ADIF);
-    if (g_adc && g_adc->ConvCpltCallback) {
+    if (g_adc && g_adc->ConvCpltCallback)
+    {
         g_adc->ConvCpltCallback(EPIC_ADC_Read());
     }
 }

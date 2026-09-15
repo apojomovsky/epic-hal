@@ -135,17 +135,21 @@ void epic_lcd_init(epic_lcd_t *lcd, const epic_lcd_ops_t *ops, void *ops_ctx,
 #ifdef __EPIC_CC__
     /* The const-table memcpy hits an epic-cc isel gap (no address for
      * @default_row_addr); a loop compiles. XC8 keeps the memcpy. */
-    for (uint8_t i = 0u; i < EPIC_LCD_MAX_ROWS; i++) {
+    for (uint8_t i = 0u; i < EPIC_LCD_MAX_ROWS; i++)
+    {
         lcd->row_addr[i] = config->row_addr[i];
     }
-    if (config->row_addr[0] == 0u) {
-        for (uint8_t i = 0u; i < EPIC_LCD_MAX_ROWS; i++) {
+    if (config->row_addr[0] == 0u)
+    {
+        for (uint8_t i = 0u; i < EPIC_LCD_MAX_ROWS; i++)
+        {
             lcd->row_addr[i] = default_row_addr[i];
         }
     }
 #else
     memcpy(lcd->row_addr, config->row_addr, EPIC_LCD_MAX_ROWS);
-    if (config->row_addr[0] == 0u) {
+    if (config->row_addr[0] == 0u)
+    {
         memcpy(lcd->row_addr, default_row_addr, EPIC_LCD_MAX_ROWS);
     }
 #endif
@@ -229,10 +233,12 @@ void epic_lcd_home(epic_lcd_t *lcd)
  */
 void epic_lcd_set_cursor(epic_lcd_t *lcd, uint8_t col, uint8_t row)
 {
-    if (row >= lcd->rows) {
+    if (row >= lcd->rows)
+    {
         row = (uint8_t)(lcd->rows - 1u);
     }
-    if (col >= lcd->cols) {
+    if (col >= lcd->cols)
+    {
         col = (uint8_t)(lcd->cols - 1u);
     }
     uint8_t addr = (uint8_t)(lcd->row_addr[row] + col);
@@ -261,7 +267,8 @@ void epic_lcd_write_char(epic_lcd_t *lcd, char c)
  */
 void epic_lcd_write(epic_lcd_t *lcd, const char *str, size_t len)
 {
-    for (size_t i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++)
+    {
         send_data(lcd, (uint8_t)str[i]);
         cmd_short_wait(lcd);
     }
@@ -288,9 +295,12 @@ void epic_lcd_print(epic_lcd_t *lcd, const char *str)
  */
 void epic_lcd_display_on(epic_lcd_t *lcd, bool on)
 {
-    if (on) {
+    if (on)
+    {
         lcd->display_ctrl |= DISPLAY_ON;
-    } else {
+    }
+    else
+    {
         lcd->display_ctrl &= (uint8_t)~DISPLAY_ON;
     }
     send_cmd(lcd, CMD_DISPLAY_CTRL | lcd->display_ctrl);
@@ -305,9 +315,12 @@ void epic_lcd_display_on(epic_lcd_t *lcd, bool on)
  */
 void epic_lcd_cursor_on(epic_lcd_t *lcd, bool on)
 {
-    if (on) {
+    if (on)
+    {
         lcd->display_ctrl |= DISPLAY_CURSOR;
-    } else {
+    }
+    else
+    {
         lcd->display_ctrl &= (uint8_t)~DISPLAY_CURSOR;
     }
     send_cmd(lcd, CMD_DISPLAY_CTRL | lcd->display_ctrl);
@@ -322,9 +335,12 @@ void epic_lcd_cursor_on(epic_lcd_t *lcd, bool on)
  */
 void epic_lcd_cursor_blink(epic_lcd_t *lcd, bool on)
 {
-    if (on) {
+    if (on)
+    {
         lcd->display_ctrl |= DISPLAY_BLINK;
-    } else {
+    }
+    else
+    {
         lcd->display_ctrl &= (uint8_t)~DISPLAY_BLINK;
     }
     send_cmd(lcd, CMD_DISPLAY_CTRL | lcd->display_ctrl);
@@ -371,12 +387,14 @@ void epic_lcd_scroll_right(epic_lcd_t *lcd)
  */
 void epic_lcd_create_char(epic_lcd_t *lcd, uint8_t slot, const uint8_t glyph[8])
 {
-    if (slot > 7u) {
+    if (slot > 7u)
+    {
         return;
     }
     send_cmd(lcd, CMD_SET_CGRAM_ADDR | (uint8_t)(slot << 3u));
     cmd_short_wait(lcd);
-    for (uint8_t i = 0; i < 8u; i++) {
+    for (uint8_t i = 0; i < 8u; i++)
+    {
         send_data(lcd, glyph[i] & 0x1Fu);
         cmd_short_wait(lcd);
     }

@@ -45,7 +45,8 @@ static void task_counter(void *arg)
 {
     counter_arg_t *c = (counter_arg_t *)arg;
     c->count++;
-    if (c->count >= COUNT_TARGET) {
+    if (c->count >= COUNT_TARGET)
+    {
         c->count = 0u;
         EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_1);
     }
@@ -67,7 +68,8 @@ int main(void)
      * FOSC_HZ / 102400. Clamp at 256 counts: faster parts (48 MHz
      * PIC18) cannot reach 10 ms and just tick proportionally faster. */
     uint32_t counts = (uint32_t)FOSC_HZ / 102400u;
-    if (counts > 256u) {
+    if (counts > 256u)
+    {
         counts = 256u;
     }
     epic_taskmgr_attach_timer0((uint8_t)(256u - counts), TICK_PRESCALER);

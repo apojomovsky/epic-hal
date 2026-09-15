@@ -35,7 +35,8 @@ int main(void)
     (void)EPIC_MCP23X17_SetDirectionAll(&h, 0x0000u);
     (void)EPIC_MCP23X17_WriteAll(&h, 0x00AAu);
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
     return 0;

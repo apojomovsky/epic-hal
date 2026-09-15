@@ -112,7 +112,8 @@ static void on_t6_overflow(void)
     if (!g_pass_marker_set &&
         g_toggle_count[0] >= MIN_OVERFLOWS &&
         g_toggle_count[1] >= MIN_OVERFLOWS &&
-        g_toggle_count[2] >= MIN_OVERFLOWS) {
+        g_toggle_count[2] >= MIN_OVERFLOWS)
+        {
         EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
         g_pass_marker_set = 1U;
     }
@@ -173,12 +174,14 @@ int main(void)
      *    on target. Exits early once all three instances have
      *    overflowed at least MIN_OVERFLOWS times; on the target the
      *    ISR-driven PASS marker (on_t6_overflow) may fire first. */
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
         EPIC_WDT_Refresh();
         if (g_toggle_count[0] >= MIN_OVERFLOWS &&
             g_toggle_count[1] >= MIN_OVERFLOWS &&
-            g_toggle_count[2] >= MIN_OVERFLOWS) {
+            g_toggle_count[2] >= MIN_OVERFLOWS)
+            {
             break;
         }
     }

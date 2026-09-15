@@ -12,12 +12,16 @@ static int g_pass = 0, g_fail = 0;
 static uint16_t g_mock_val;
 static int      g_mock_calls;
 /** @brief Mock read callback returning the fixed g_mock_val. */
-static uint16_t mock_const(void *ctx) { (void)ctx; g_mock_calls++; return g_mock_val; }
+static uint16_t mock_const(void *ctx)
+{
+    (void)ctx; g_mock_calls++; return g_mock_val;
+}
 
 static uint16_t g_alt_a, g_alt_b;
 static int      g_alt_idx;
 /** @brief Mock read callback alternating between g_alt_a and g_alt_b. */
-static uint16_t mock_alternate(void *ctx) {
+static uint16_t mock_alternate(void *ctx)
+{
     (void)ctx; g_mock_calls++;
     uint16_t v = (g_alt_idx % 2 == 0) ? g_alt_a : g_alt_b;
     g_alt_idx++;
@@ -28,7 +32,8 @@ static uint16_t mock_alternate(void *ctx) {
 static void test_oversample_constant(void)
 {
     g_mock_val = 512;
-    for (uint8_t eb = 0; eb <= 4; eb++) {
+    for (uint8_t eb = 0; eb <= 4; eb++)
+    {
         g_mock_calls = 0;
         uint16_t r = epic_adcfilter_oversample(mock_const, NULL, eb);
         uint32_t expected_calls = 1UL << (eb * 2u);

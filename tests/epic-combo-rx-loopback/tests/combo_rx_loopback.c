@@ -96,7 +96,8 @@ static void fail(uint8_t idx)
 void rx_loopback_tx(uint8_t b)
 {
     uint32_t guard = 0UL;
-    while (!EPIC_USART_IsTxShiftRegisterEmpty() && guard < TX_TRMT_GUARD) {
+    while (!EPIC_USART_IsTxShiftRegisterEmpty() && guard < TX_TRMT_GUARD)
+    {
         guard++;
     }
     EPIC_USART_Transmit(b);
@@ -115,7 +116,8 @@ int main(void)
      * RCIF, TXIE is off), so no ISR can preempt the TX-free loop. */
     EPIC_IRQ_Restore(1);
 
-    for (uint32_t i = 0u; epic_harness_running(i); i++) {
+    for (uint32_t i = 0u; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
         g_loop_ticks++;
     }
@@ -159,7 +161,8 @@ static void rx_loopback_tx_banner(void)
     /* Table-reader const, not a literal pointer: epic-cc has no
      * const-address form. */
     static const char s[] = "RXLOOP UP\r\n";
-    for (uint8_t i = 0u; s[i] != '\0'; i++) {
+    for (uint8_t i = 0u; s[i] != '\0'; i++)
+    {
         rx_loopback_tx((uint8_t)s[i]);
     }
 }
@@ -170,7 +173,8 @@ static void rx_loopback_tx_ok(void)
     /* Table-reader const, not a literal pointer: epic-cc has no
      * const-address form. */
     static const char s[] = "OK:";
-    for (uint8_t i = 0u; s[i] != '\0'; i++) {
+    for (uint8_t i = 0u; s[i] != '\0'; i++)
+    {
         rx_loopback_tx((uint8_t)s[i]);
     }
 }
@@ -181,7 +185,8 @@ static void rx_loopback_tx_err(void)
     /* Table-reader const, not a literal pointer: epic-cc has no
      * const-address form. */
     static const char s[] = "ERR:";
-    for (uint8_t i = 0u; s[i] != '\0'; i++) {
+    for (uint8_t i = 0u; s[i] != '\0'; i++)
+    {
         rx_loopback_tx((uint8_t)s[i]);
     }
 }
@@ -192,7 +197,8 @@ static void rx_loopback_tx_crlf(void)
     /* Table-reader const, not a literal pointer: epic-cc has no
      * const-address form. */
     static const char s[] = "\r\n";
-    for (uint8_t i = 0u; s[i] != '\0'; i++) {
+    for (uint8_t i = 0u; s[i] != '\0'; i++)
+    {
         rx_loopback_tx((uint8_t)s[i]);
     }
 }
@@ -239,29 +245,40 @@ void rx_loopback_init(void)
  */
 void rx_loopback_on_rx_byte(uint8_t b)
 {
-    if (b == (uint8_t)'\n') {
+    if (b == (uint8_t)'\n')
+    {
         /* Frame complete. Well-formed: CRLF-terminated and never
          * over-long. */
         uint8_t ok = (g_line_len > 0u) &&
                      (g_line[g_line_len - 1u] == (uint8_t)'\r') &&
                      (g_line_overflow == 0u);
-        if (ok) {
+        if (ok)
+        {
             rx_loopback_tx_ok();
             g_line_len--;   /* drop the CRLF terminator's CR */
-        } else {
+        }
+        else
+        {
             rx_loopback_tx_err();
         }
-        for (uint8_t i = 0u; i < g_line_len; i++) {
+        for (uint8_t i = 0u; i < g_line_len; i++)
+        {
             rx_loopback_tx(g_line[i]);
         }
         rx_loopback_tx_crlf();
         g_line_len = 0u;
         g_line_overflow = 0u;
-    } else if (g_line_overflow) {
+    }
+    else if (g_line_overflow)
+    {
         /* Over-long: discard everything until the frame ends. */
-    } else if (g_line_len < RX_LINE_MAX) {
+    }
+    else if (g_line_len < RX_LINE_MAX)
+    {
         g_line[g_line_len++] = b;
-    } else {
+    }
+    else
+    {
         g_line_overflow = 1u;
     }
 }

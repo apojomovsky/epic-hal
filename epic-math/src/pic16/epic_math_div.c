@@ -26,7 +26,10 @@
 epic_math_udiv16_t epic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __at(0x360)
 {
     epic_math_udiv16_t res = { 0u, 0u };
-    if (den == 0u) { if (ok) *ok = false; return res; }
+    if (den == 0u)
+    {
+        if (ok) *ok = false; return res;
+    }
     if (ok) *ok = true;
 
     pic16_mscratch[0] = (uint8_t)num;          pic16_mscratch[1] = (uint8_t)(num >> 8);
@@ -88,7 +91,10 @@ epic_math_udiv16_t epic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok) __
 epic_math_udiv16_t epic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok) __at(0x3E0)
 {
     epic_math_udiv16_t res = { 0u, 0u };
-    if (den == 0u) { if (ok) *ok = false; return res; }
+    if (den == 0u)
+    {
+        if (ok) *ok = false; return res;
+    }
     if (ok) *ok = true;
 
     pic16_mscratch[0] = (uint8_t)num;           pic16_mscratch[1] = (uint8_t)(num >> 8);
@@ -160,7 +166,10 @@ epic_math_udiv16_t epic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
 epic_math_sdiv16_t epic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
 {
     epic_math_sdiv16_t res = { 0, 0 };
-    if (den == 0) { if (ok) *ok = false; return res; }
+    if (den == 0)
+    {
+        if (ok) *ok = false; return res;
+    }
     if (ok) *ok = true;
 
     int neg_q = ((num < 0) != 0) ^ ((den < 0) != 0);

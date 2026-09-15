@@ -57,8 +57,10 @@ int main(void)
     printf("epic-encoder: x4 quadrature on RB4/RB5, position logged\r\n");
 
     uint32_t last_log = epic_tick_get();
-    for (;;) {
-        if (epic_tick_elapsed_since(last_log) >= LOG_PERIOD_MS) {
+    for (;;)
+    {
+        if (epic_tick_elapsed_since(last_log) >= LOG_PERIOD_MS)
+        {
             last_log = epic_tick_get();
             /* Value-only put_* composition: the epic-cc printf shim is
              * literal-only, and the put_* forms render the same bytes

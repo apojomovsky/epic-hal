@@ -35,7 +35,8 @@
 static void demo_delay(void)
 {
     volatile uint32_t i;
-    for (i = 0u; i < 200000u; i++) {
+    for (i = 0u; i < 200000u; i++)
+    {
     }
 }
 
@@ -45,10 +46,12 @@ static uint8_t i2c_round_trip(void)
     static const uint8_t pattern[2] = { 0x5Au, 0xA5u };
     uint8_t rd[2] = { 0u, 0u };
 
-    if (epic_bus_i2c_mem_write(I2C_DEV_ADDR, SCRATCH_REG, pattern, 2) != 2) {
+    if (epic_bus_i2c_mem_write(I2C_DEV_ADDR, SCRATCH_REG, pattern, 2) != 2)
+    {
         return 0u;                  /* address/register NACKed: no device */
     }
-    if (epic_bus_i2c_mem_read(I2C_DEV_ADDR, SCRATCH_REG, rd, 2) != 2) {
+    if (epic_bus_i2c_mem_read(I2C_DEV_ADDR, SCRATCH_REG, rd, 2) != 2)
+    {
         return 0u;
     }
     return (uint8_t)(rd[0] == pattern[0] && rd[1] == pattern[1]);
@@ -60,10 +63,12 @@ static uint8_t spi_round_trip(void)
     static const uint8_t pattern[2] = { 0x3Cu, 0xC3u };
     uint8_t rd[2] = { 0u, 0u };
 
-    if (epic_bus_spi_mem_write(SCRATCH_REG, pattern, 2) != 2) {
+    if (epic_bus_spi_mem_write(SCRATCH_REG, pattern, 2) != 2)
+    {
         return 0u;
     }
-    if (epic_bus_spi_mem_read(SCRATCH_REG, rd, 2) != 2) {
+    if (epic_bus_spi_mem_read(SCRATCH_REG, rd, 2) != 2)
+    {
         return 0u;
     }
     return (uint8_t)(rd[0] == pattern[0] && rd[1] == pattern[1]);
@@ -75,7 +80,8 @@ int main(void)
     EPIC_GPIO_Init(LED_PORT, LED_PIN, GPIO_MODE_OUTPUT);
     EPIC_GPIO_WritePin(LED_PORT, LED_PIN, GPIO_PIN_RESET);
 
-    for (;;) {
+    for (;;)
+    {
         /* The MSSP is one peripheral: re-init per bus before use. */
         epic_bus_i2c_init(FOSC_HZ, I2C_SPEED_HZ);
         uint8_t ok = i2c_round_trip();

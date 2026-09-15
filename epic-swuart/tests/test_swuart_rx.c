@@ -71,7 +71,8 @@ int main(void)
     epic_swuart_test_fire_rx_event(); /* confirm event, half a bit later */
 #endif
 
-    for (size_t i = 1; i < 10; i++) {
+    for (size_t i = 1; i < 10; i++)
+    {
         SIM_DRIVE('C', 2, bits[i]);
         epic_swuart_test_fire_rx_event(); /* compare event: sample + arm next */
     }

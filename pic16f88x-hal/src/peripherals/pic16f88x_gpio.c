@@ -10,7 +10,8 @@
  */
 static uint8_t tris_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_TRISA;
         case GPIOB: return PIC_REG_TRISB;
         case GPIOC: return PIC_REG_TRISC;
@@ -31,7 +32,8 @@ static uint8_t tris_addr(GPIO_TypeDef port)
  */
 static uint8_t port_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_PORTA;
         case GPIOB: return PIC_REG_PORTB;
         case GPIOC: return PIC_REG_PORTC;
@@ -52,7 +54,8 @@ static uint8_t port_addr(GPIO_TypeDef port)
  */
 static uint8_t port_width(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
 #if PIC16F88X_FAMILY_HAS_PORTE
         case GPIOE: return 2U;    /* RE0..RE2. */
 #endif
@@ -86,16 +89,24 @@ static uint8_t port_mask(GPIO_TypeDef port)
  */
 static uint8_t ansel_bit(GPIO_TypeDef port, uint8_t pin, uint16_t *reg_out)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA:
             /* RA0=AN0, RA1=AN1, RA2=AN2, RA3=AN3, RA5=AN4. */
-            if (pin <= 3U)      { *reg_out = PIC_REG_ANSEL;  return pin; }
-            if (pin == 5U)      { *reg_out = PIC_REG_ANSEL;  return 4U;  }
+            if (pin <= 3U)
+            {
+                *reg_out = PIC_REG_ANSEL;  return pin;
+            }
+            if (pin == 5U)
+            {
+                *reg_out = PIC_REG_ANSEL;  return 4U;
+            }
             return 0xFFU;
         case GPIOB:
             /* RB0=AN12, RB1=AN10, RB2=AN8, RB3=AN9, RB4=AN11,
              * RB5=AN13. */
-            switch (pin) {
+            switch (pin)
+            {
                 case 0U: *reg_out = PIC_REG_ANSELH; return 4U;
                 case 1U: *reg_out = PIC_REG_ANSELH; return 2U;
                 case 2U: *reg_out = PIC_REG_ANSELH; return 0U;
@@ -107,7 +118,10 @@ static uint8_t ansel_bit(GPIO_TypeDef port, uint8_t pin, uint16_t *reg_out)
 #if PIC16F88X_FAMILY_HAS_PORTE
         case GPIOE:
             /* RE0=AN5, RE1=AN6, RE2=AN7. */
-            if (pin <= 2U)      { *reg_out = PIC_REG_ANSEL;  return (uint8_t)(pin + 5U); }
+            if (pin <= 2U)
+            {
+                *reg_out = PIC_REG_ANSEL;  return (uint8_t)(pin + 5U);
+            }
             return 0xFFU;
 #endif
         default:
@@ -134,29 +148,35 @@ static void set_ansel_bits(GPIO_TypeDef port, uint16_t pins, uint8_t analog)
     anselh = EPIC_REG8(PIC_REG_ANSELH);
 #endif
     uint8_t changed_a = 0U, changed_h = 0U;
-    for (uint8_t pin = 0U; pin <= port_width(port); pin++) {
+    for (uint8_t pin = 0U; pin <= port_width(port); pin++)
+    {
         if (!((uint16_t)EPIC_BIT(pin) & pins)) continue;
         uint16_t reg = 0U;
         uint8_t bit = ansel_bit(port, pin, &reg);
         if (bit == 0xFFU) continue;   /* no analog function. */
-        if (reg == PIC_REG_ANSEL) {
+        if (reg == PIC_REG_ANSEL)
+        {
             if (analog) ansel |= EPIC_BIT(bit);
             else        ansel &= (uint8_t)~EPIC_BIT(bit);
             changed_a = 1U;
-        } else {
+        }
+        else
+        {
             if (analog) anselh |= EPIC_BIT(bit);
             else        anselh &= (uint8_t)~EPIC_BIT(bit);
             changed_h = 1U;
         }
     }
-    if (changed_a) {
+    if (changed_a)
+    {
 #ifdef EPIC_BANK3_WRITE8
         EPIC_BANK3_WRITE8(ANSEL, ansel);
 #else
         EPIC_REG8(PIC_REG_ANSEL) = ansel;
 #endif
     }
-    if (changed_h) {
+    if (changed_h)
+    {
 #ifdef EPIC_BANK3_WRITE8
         EPIC_BANK3_WRITE8(ANSELH, anselh);
 #else
@@ -180,7 +200,8 @@ static uint8_t tris_read(GPIO_TypeDef port)
      * The banked macro needs a literal SFR name, so dispatch per-port
      * before any SFR access. */
     uint8_t v = 0u;
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: EPIC_BANK1_READ8(TRISA, v); break;
         case GPIOB: EPIC_BANK1_READ8(TRISB, v); break;
         case GPIOC: EPIC_BANK1_READ8(TRISC, v); break;
@@ -206,7 +227,8 @@ static uint8_t tris_read(GPIO_TypeDef port)
 static void tris_write(GPIO_TypeDef port, uint8_t value)
 {
 #ifdef EPIC_BANK1_WRITE8
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: EPIC_BANK1_WRITE8(TRISA, value); break;
         case GPIOB: EPIC_BANK1_WRITE8(TRISB, value); break;
         case GPIOC: EPIC_BANK1_WRITE8(TRISC, value); break;
@@ -252,9 +274,12 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     /* Set/clear the TRIS bits (Bank 1). INPUT and ANALOG both keep
      * TRIS = 1 (high-impedance). */
     uint8_t tris = tris_read(port);
-    if (mode == GPIO_MODE_OUTPUT) {
+    if (mode == GPIO_MODE_OUTPUT)
+    {
         tris &= (uint8_t)~mask;
-    } else {
+    }
+    else
+    {
         tris |= mask;
     }
     tris_write(port, tris);
@@ -286,9 +311,12 @@ void EPIC_GPIO_WritePin(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
     uint8_t p_addr = port_addr(port);
     uint8_t mask = (uint8_t)(pins & port_mask(port));
     uint8_t portval = EPIC_REG8(p_addr);
-    if (state == GPIO_PIN_SET) {
+    if (state == GPIO_PIN_SET)
+    {
         portval |= mask;
-    } else {
+    }
+    else
+    {
         portval &= (uint8_t)~mask;
     }
     EPIC_REG8(p_addr) = portval;

@@ -23,7 +23,8 @@ int main(void)
     /* Gate armed so the epic_tick timebase path in epic_encoder_update links. */
     epic_encoder_init(&g_enc, 4, 5, 5, 0x00U);
 
-    for (;;) {
+    for (;;)
+    {
         epic_encoder_update(&g_enc, 0x20U);   /* RB5 high -> state 01 */
         epic_encoder_update(&g_enc, 0x30U);   /* RB4+RB5 high -> state 11 */
 

@@ -9,7 +9,8 @@ static mock_ctx_t g_mock;
 static void mock_send(void *ctx, uint8_t rs, uint8_t byte)
 {
     (void)ctx;
-    if (g_mock.log_len < MOCK_LOG_CAP) {
+    if (g_mock.log_len < MOCK_LOG_CAP)
+    {
         g_mock.log[g_mock.log_len].rs   = rs;
         g_mock.log[g_mock.log_len].byte = byte;
         g_mock.log_len++;
@@ -17,9 +18,15 @@ static void mock_send(void *ctx, uint8_t rs, uint8_t byte)
 }
 
 /** @brief Mock delay: no-op. */
-static void mock_delay_us(void *ctx, uint32_t us) { (void)ctx; (void)us; }
+static void mock_delay_us(void *ctx, uint32_t us)
+{
+    (void)ctx; (void)us;
+}
 /** @brief Mock delay: no-op. */
-static void mock_delay_ms(void *ctx, uint32_t ms) { (void)ctx; (void)ms; }
+static void mock_delay_ms(void *ctx, uint32_t ms)
+{
+    (void)ctx; (void)ms;
+}
 
 /**
  * @brief Clear the mock log and state.

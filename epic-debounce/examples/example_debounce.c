@@ -28,9 +28,12 @@ static bool read_button(void *ctx)
 static void drive_led(epic_debounce_t *db, GPIO_TypeDef port, uint16_t pin)
 {
     epic_debounce_event_t ev = epic_debounce_poll(db);
-    if (ev == DEBOUNCE_EVENT_PRESSED) {
+    if (ev == DEBOUNCE_EVENT_PRESSED)
+    {
         EPIC_GPIO_WritePin(port, pin, GPIO_PIN_SET);
-    } else if (ev == DEBOUNCE_EVENT_RELEASED) {
+    }
+    else if (ev == DEBOUNCE_EVENT_RELEASED)
+    {
         EPIC_GPIO_WritePin(port, pin, GPIO_PIN_RESET);
     }
 }
@@ -59,7 +62,8 @@ int main(void)
     EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_3,
                        epic_debounce_is_active(&db_b) ? GPIO_PIN_SET : GPIO_PIN_RESET);
 
-    for (;;) {
+    for (;;)
+    {
         drive_led(&db_a, GPIOB, GPIO_PIN_2);
         drive_led(&db_b, GPIOB, GPIO_PIN_3);
     }

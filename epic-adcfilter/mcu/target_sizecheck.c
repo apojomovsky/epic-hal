@@ -10,7 +10,10 @@
  * @param ctx unused
  * @return 512 (a mid-scale 10-bit reading)
  */
-static uint16_t stub_read(void *ctx) { (void)ctx; return 512u; }
+static uint16_t stub_read(void *ctx)
+{
+    (void)ctx; return 512u;
+}
 
 /**
  * @brief Sizecheck main: link both filters and report footprint.
@@ -22,5 +25,7 @@ void main(void)
     epic_adcfilter_avg_t f;
     epic_adcfilter_avg_init(&f, buf, 4);
     epic_adcfilter_avg_push(&f, r);
-    while (1) { }
+    while (1)
+    {
+    }
 }

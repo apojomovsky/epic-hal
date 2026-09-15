@@ -19,11 +19,15 @@ static void test_rand_period_and_zero(void)
     (void)first;
     uint32_t count = 1u;
     int saw_zero = 0;
-    while (state != EPIC_MATH_RAND_SEED) {
+    while (state != EPIC_MATH_RAND_SEED)
+    {
         uint16_t v = epic_math_rand_next(&state);
         if (v == 0u) saw_zero = 1;
         count++;
-        if (count > 70000u) { CHECK(0, "period runaway"); break; }
+        if (count > 70000u)
+        {
+            CHECK(0, "period runaway"); break;
+        }
     }
     CHECK(count == 65535u, "LFSR period is 2^16-1");
     CHECK(saw_zero == 0, "rand_next never returns 0 over the period");
@@ -50,7 +54,8 @@ static void test_rand_reentrance(void)
 {
     uint16_t a = 1, b = 2;
     uint16_t sa = 0, sb = 0;
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 100; i++)
+    {
         sa = epic_math_rand_next(&a);
         sb = epic_math_rand_next(&b);
     }
@@ -67,7 +72,8 @@ static void test_gauss_distribution(void)
     for (int i = 0; i < NB; i++) hist[i] = 0u;
     uint16_t state = 12345u;
     int16_t lo = 0, hi = 0;
-    for (long n = 0; n < NSAMP; n++) {
+    for (long n = 0; n < NSAMP; n++)
+    {
         int16_t g = epic_math_rand_gauss(&state);
         if (g < lo) lo = g;
         if (g > hi) hi = g;

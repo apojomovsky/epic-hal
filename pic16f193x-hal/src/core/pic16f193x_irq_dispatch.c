@@ -73,12 +73,16 @@ void epic_dispatch_all_irqs(void)
      * re-arm margin. When the source is disabled the stale flag is
      * dropped so it does not re-trigger this branch on every later
      * event. */
-    if (pir1 & PIC_PIR1_TMR1IF) {
+    if (pir1 & PIC_PIR1_TMR1IF)
+    {
         uint8_t tmr1ie;
         EPIC_PIE1_READ_TMR1IE(tmr1ie);
-        if (tmr1ie & PIC_PIE1_TMR1IE) {
+        if (tmr1ie & PIC_PIE1_TMR1IE)
+        {
             TIMER1_IRQHandler();
-        } else {
+        }
+        else
+        {
             /* Source disabled: drop the stale flag with the same
              * single-instruction PIR1 bit clear the CCP handlers use
              * (EPIC_BIT_CLR on PIC_REG_PIR1, atomic ANDWF), not the
@@ -95,10 +99,12 @@ void epic_dispatch_all_irqs(void)
      * branch fires USART_TX_IRQHandler on every ISR from any source
      * (the handler is an empty stub today, but the every-ISR call is
      * already wasted and any real handler inherits the defect). */
-    if (pir1 & PIC_PIR1_TXIF) {
+    if (pir1 & PIC_PIR1_TXIF)
+    {
         uint8_t txie;
         EPIC_PIE1_READ_TXIE(txie);
-        if (txie & PIC_PIE1_TXIE) {
+        if (txie & PIC_PIE1_TXIE)
+        {
             USART_TX_IRQHandler();
         }
     }
@@ -113,10 +119,12 @@ void epic_dispatch_all_irqs(void)
      * on EEIF with EEIE off), and an unconditional dispatch would
      * clear the flag from a live ISR and hang the poller. No
      * stale-flag drop: the polling consumer owns EEIF. */
-    if (pir2 & PIC_PIR2_EEIF) {
+    if (pir2 & PIC_PIR2_EEIF)
+    {
         uint8_t eeie = 0u;
         EPIC_PIE2_READ_EEIE(eeie);
-        if (eeie & PIC_PIE2_EEIE) {
+        if (eeie & PIC_PIE2_EEIE)
+        {
             EEPROM_IRQHandler();
         }
     }

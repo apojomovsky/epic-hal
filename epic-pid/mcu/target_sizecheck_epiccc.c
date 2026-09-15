@@ -25,6 +25,7 @@ int main(void)
     int16_t out = epic_pid_update(&g_pid, (int16_t)100, (int16_t)0);
     EPIC_REG8(TRISB_REG) = (uint8_t)0x00u;
     EPIC_REG8(PORTB_REG) = (uint8_t)out;
-    for (;;) {
+    for (;;)
+    {
     }
 }

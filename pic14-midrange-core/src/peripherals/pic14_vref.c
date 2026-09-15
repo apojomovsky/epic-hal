@@ -88,10 +88,13 @@ uint32_t EPIC_VREF_MilliVolts(uint32_t vdd_mv,
                              uint8_t value)
 {
     value &= 0x0FU;
-    if (range == VREF_RANGE_LOW) {
+    if (range == VREF_RANGE_LOW)
+    {
         /* CVREF = (VR<3:0>/24) × CVRSRC */
         return (vdd_mv * value) / 24U;
-    } else {
+    }
+    else
+    {
         /* CVREF = 1/4 × CVRSRC + (VR<3:0>/32) × CVRSRC */
         return (vdd_mv / 4U) + (vdd_mv * value) / 32U;
     }

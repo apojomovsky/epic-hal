@@ -40,7 +40,9 @@ EPIC_CONFIG("osc=hs, wdt=off, pwrt=on, lvp=off, xtal_hz=20000000");
  */
 static void uart_putc(char c)
 {
-    while (!(REG8(PIR1_REG) & TXIF_BIT)) { }
+    while (!(REG8(PIR1_REG) & TXIF_BIT))
+    {
+    }
     REG8(TXREG_REG) = (uint8_t)c;
 }
 
@@ -50,7 +52,8 @@ static void uart_putc(char c)
  */
 static void uart_puthex(uint16_t v)
 {
-    for (int s = 12; s >= 0; s -= 4) {
+    for (int s = 12; s >= 0; s -= 4)
+    {
         uint8_t d = (uint8_t)((v >> s) & 0xFu);
         uart_putc((char)(d < 10u ? '0' + d : 'A' + (d - 10u)));
     }
@@ -96,7 +99,10 @@ volatile bool g_ok = false;
 void bench_loop_empty(void)
 {
     uint16_t a = g_seed; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + a); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + a); a = (uint16_t)(a + 3u);
+    }
     report(0u, t0);
 }
 
@@ -106,7 +112,10 @@ void bench_loop_empty(void)
 void bench_add_native(void)
 {
     uint16_t a = g_seed, b = 0xFFFFu; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (a + b)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (a + b)); a = (uint16_t)(a + 3u);
+    }
     report(1u, t0);
 }
 
@@ -116,7 +125,10 @@ void bench_add_native(void)
 void bench_add_epic(void)
 {
     uint16_t a = g_seed, b = 0xFFFFu; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + epic_math_add_u16(a, b, (bool *)&g_ok)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + epic_math_add_u16(a, b, (bool *)&g_ok)); a = (uint16_t)(a + 3u);
+    }
     report(2u, t0);
 }
 
@@ -126,7 +138,10 @@ void bench_add_epic(void)
 void bench_sub_native(void)
 {
     uint16_t a = g_seed, b = 0x1357u; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (a - b)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (a - b)); a = (uint16_t)(a + 3u);
+    }
     report(3u, t0);
 }
 
@@ -136,7 +151,10 @@ void bench_sub_native(void)
 void bench_sub_epic(void)
 {
     uint16_t a = g_seed, b = 0x1357u; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + epic_math_sub_u16(a, b, (bool *)&g_ok)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + epic_math_sub_u16(a, b, (bool *)&g_ok)); a = (uint16_t)(a + 3u);
+    }
     report(4u, t0);
 }
 
@@ -146,7 +164,10 @@ void bench_sub_epic(void)
 void bench_mul8_native(void)
 {
     uint8_t a = (uint8_t)g_seed, b = 0xCDu; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (uint16_t)(a * b)); a = (uint8_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (uint16_t)(a * b)); a = (uint8_t)(a + 3u);
+    }
     report(5u, t0);
 }
 
@@ -156,7 +177,10 @@ void bench_mul8_native(void)
 void bench_mul8_epic(void)
 {
     uint8_t a = (uint8_t)g_seed, b = 0xCDu; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + epic_math_mul_u8(a, b)); a = (uint8_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + epic_math_mul_u8(a, b)); a = (uint8_t)(a + 3u);
+    }
     report(6u, t0);
 }
 
@@ -166,7 +190,10 @@ void bench_mul8_epic(void)
 void bench_mul16_native(void)
 {
     uint16_t a = g_seed, b = 0xCDEFu; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (uint16_t)(a * b)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (uint16_t)(a * b)); a = (uint16_t)(a + 3u);
+    }
     report(7u, t0);
 }
 
@@ -176,7 +203,10 @@ void bench_mul16_native(void)
 void bench_mul16_epic(void)
 {
     uint16_t a = g_seed, b = 0xCDEFu; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (uint16_t)epic_math_mul_u16(a, b)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (uint16_t)epic_math_mul_u16(a, b)); a = (uint16_t)(a + 3u);
+    }
     report(8u, t0);
 }
 
@@ -186,7 +216,10 @@ void bench_mul16_epic(void)
 void bench_div16_native(void)
 {
     uint16_t a = g_seed, b = 0x0013u; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (a / b)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (a / b)); a = (uint16_t)(a + 3u);
+    }
     report(9u, t0);
 }
 
@@ -196,7 +229,10 @@ void bench_div16_native(void)
 void bench_div16_epic(void)
 {
     uint16_t a = g_seed, b = 0x0013u; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { epic_math_udiv16_t r = epic_math_divmod_u16(a, b, (bool *)&g_ok); g_sum = (uint16_t)(g_sum + r.quotient); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        epic_math_udiv16_t r = epic_math_divmod_u16(a, b, (bool *)&g_ok); g_sum = (uint16_t)(g_sum + r.quotient); a = (uint16_t)(a + 3u);
+    }
     report(0xAu, t0);
 }
 
@@ -220,5 +256,7 @@ void main(void)
     bench_mul16_epic();
     bench_div16_native();
     bench_div16_epic();
-    for (;;) { }
+    for (;;)
+    {
+    }
 }

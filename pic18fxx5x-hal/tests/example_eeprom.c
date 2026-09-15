@@ -48,7 +48,8 @@ int main(void)
     static uint8_t data[3] = { 0x11U, 0x22U, 0x33U };
     EPIC_StatusTypeDef st = EPIC_EEPROM_WriteBuffer(0x20U, data, 3);
     CHECK(st == EPIC_OK, "WriteBuffer returned error");
-    for (uint8_t i = 0; i < 3; i++) {
+    for (uint8_t i = 0; i < 3; i++)
+    {
         pic18_sim_drive_eeprom_done((uint8_t)(0x20U + i), data[i]);
     }
     uint8_t buf[3] = { 0 };

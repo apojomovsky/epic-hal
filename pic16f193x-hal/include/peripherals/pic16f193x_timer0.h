@@ -95,9 +95,12 @@ static inline EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
 
     /* Clear TMR0IF; configure TMR0IE if a callback is provided. */
     EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR0);
-    if (h->OverflowCallback) {
+    if (h->OverflowCallback)
+    {
         EPIC_IRQ_Enable(PIC16F193X_IRQ_TMR0);
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(PIC16F193X_IRQ_TMR0);
     }
 

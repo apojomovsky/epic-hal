@@ -15,23 +15,61 @@
 #endif
 #define N 100u
 
-static void uart_putc(char c) { while (!PIR1bits.TXIF) { } TXREG = c; }
-static void uart_puts(const char *s) { while (*s) uart_putc(*s++); }
-static void uart_puthex(uint16_t v) {
+/** @brief Transmit one character over UART.
+ * @param c the character to send; polls TXIF until the TXREG is free. */
+static void uart_putc(char c)
+{
+    while (!PIR1bits.TXIF)
+    {
+    }
+    TXREG = c;
+}
+/** @brief Transmit a NUL-terminated string over UART.
+ * @param s the string to send. */
+static void uart_puts(const char *s)
+{
+    while (*s) uart_putc(*s++);
+}
+/** @brief Transmit a 16-bit value as four hexadecimal digits.
+ * @param v the value to print, most significant nibble first. */
+static void uart_puthex(uint16_t v)
+{
     static const char hex[] = "0123456789ABCDEF";
     uart_putc(hex[(v >> 12) & 0xF]); uart_putc(hex[(v >> 8) & 0xF]);
     uart_putc(hex[(v >> 4) & 0xF]);  uart_putc(hex[v & 0xF]);
 }
 #if defined(PIC18F4550)
-static void uart_init(void) { SPBRGH = 0u; SPBRG = SPBRG_VAL; TXSTA = 0x24; RCSTA = 0x80; }
-static uint16_t tmr1(void) { return (uint16_t)((uint16_t)TMR1H << 8 | TMR1L); }
+/** @brief Configure the EUSART for 9600 baud transmit on PIC18F4550. */
+static void uart_init(void)
+{
+    SPBRGH = 0u; SPBRG = SPBRG_VAL; TXSTA = 0x24; RCSTA = 0x80;
+}
+/** @brief Snapshot the 16-bit TMR1 counter on PIC18F4550.
+ * @return the current TMR1H:TMR1L value. */
+static uint16_t tmr1(void)
+{
+    return (uint16_t)((uint16_t)TMR1H << 8 | TMR1L);
+}
 #define TMR1_CONF 0x81u  /* RD16, TMR1ON */
 #else
-static void uart_init(void) { SPBRG = SPBRG_VAL; TXSTA = 0x24; RCSTA = 0x80; }
-static uint16_t tmr1(void) { return (uint16_t)((uint16_t)TMR1H << 8 | TMR1L); }
+/** @brief Configure the USART for 9600 baud transmit on PIC16F87XA. */
+static void uart_init(void)
+{
+    SPBRG = SPBRG_VAL; TXSTA = 0x24; RCSTA = 0x80;
+}
+/** @brief Snapshot the 16-bit TMR1 counter on PIC16F87XA.
+ * @return the current TMR1H:TMR1L value. */
+static uint16_t tmr1(void)
+{
+    return (uint16_t)((uint16_t)TMR1H << 8 | TMR1L);
+}
 #define TMR1_CONF 0x01u
 #endif
-static void report(const char *name, uint16_t t0) {
+/** @brief Print one benchmark result line over UART.
+ * @param name the benchmark label printed ahead of the value.
+ * @param t0 the TMR1 snapshot taken before the measured loop. */
+static void report(const char *name, uint16_t t0)
+{
     uint16_t dt = (uint16_t)(tmr1() - t0);
     uart_puts(name); uart_putc(' '); uart_puthex(dt); uart_puts("\r\n");
 }
@@ -39,65 +77,123 @@ static void report(const char *name, uint16_t t0) {
 volatile uint16_t g_seed = 0x1357u;
 volatile uint16_t g_sum  = 0u;
 
-void bench_loop_empty(void) {
+/** @brief Time the empty loop with no math under test.
+ * Reports the overhead baseline the other benches compare against. */
+void bench_loop_empty(void)
+{
     uint16_t a = g_seed; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + a); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + a); a = (uint16_t)(a + 3u);
+    }
     report("loop_empty", t0);
 }
-void bench_add_native(void) {
+/** @brief Time native 16-bit addition. */
+void bench_add_native(void)
+{
     uint16_t a = g_seed, b = 0xFFFFu; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (a + b)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (a + b)); a = (uint16_t)(a + 3u);
+    }
     report("add_native", t0);
 }
-void bench_sub_native(void) {
+/** @brief Time native 16-bit subtraction. */
+void bench_sub_native(void)
+{
     uint16_t a = g_seed, b = 0x1357u; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (a - b)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (a - b)); a = (uint16_t)(a + 3u);
+    }
     report("sub_native", t0);
 }
-void bench_mul8_native(void) {
+/** @brief Time native 8-bit multiplication. */
+void bench_mul8_native(void)
+{
     uint8_t a = (uint8_t)g_seed, b = 0xCDu; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (uint16_t)(a * b)); a = (uint8_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (uint16_t)(a * b)); a = (uint8_t)(a + 3u);
+    }
     report("mul8_native", t0);
 }
-void bench_mul16_native(void) {
+/** @brief Time native 16-bit multiplication. */
+void bench_mul16_native(void)
+{
     uint16_t a = g_seed, b = 0xCDEFu; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (uint16_t)(a * b)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (uint16_t)(a * b)); a = (uint16_t)(a + 3u);
+    }
     report("mul16_native", t0);
 }
-void bench_div16_native(void) {
+/** @brief Time native 16-bit division. */
+void bench_div16_native(void)
+{
     uint16_t a = g_seed, b = 0x0013u; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (a / b)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (a / b)); a = (uint16_t)(a + 3u);
+    }
     report("div16_native", t0);
 }
 #ifndef BENCH_NATIVE_ONLY
-void bench_add_epic(void) {
+/** @brief Time epic_math 16-bit addition with carry out. */
+void bench_add_epic(void)
+{
     uint16_t a = g_seed, b = 0xFFFFu; bool c; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + epic_math_add_u16(a, b, &c)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + epic_math_add_u16(a, b, &c)); a = (uint16_t)(a + 3u);
+    }
     report("add_epic", t0);
 }
-void bench_sub_epic(void) {
+/** @brief Time epic_math 16-bit subtraction with borrow out. */
+void bench_sub_epic(void)
+{
     uint16_t a = g_seed, b = 0x1357u; bool c; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + epic_math_sub_u16(a, b, &c)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + epic_math_sub_u16(a, b, &c)); a = (uint16_t)(a + 3u);
+    }
     report("sub_epic", t0);
 }
-void bench_mul8_epic(void) {
+/** @brief Time epic_math 8-bit multiplication. */
+void bench_mul8_epic(void)
+{
     uint8_t a = (uint8_t)g_seed, b = 0xCDu; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + epic_math_mul_u8(a, b)); a = (uint8_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + epic_math_mul_u8(a, b)); a = (uint8_t)(a + 3u);
+    }
     report("mul8_epic", t0);
 }
-void bench_mul16_epic(void) {
+/** @brief Time epic_math 16-bit multiplication. */
+void bench_mul16_epic(void)
+{
     uint16_t a = g_seed, b = 0xCDEFu; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { g_sum = (uint16_t)(g_sum + (uint16_t)epic_math_mul_u16(a, b)); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        g_sum = (uint16_t)(g_sum + (uint16_t)epic_math_mul_u16(a, b)); a = (uint16_t)(a + 3u);
+    }
     report("mul16_epic", t0);
 }
-void bench_div16_epic(void) {
+/** @brief Time epic_math 16-bit division with quotient and remainder. */
+void bench_div16_epic(void)
+{
     uint16_t a = g_seed, b = 0x0013u; bool ok; uint16_t t0 = tmr1();
-    for (uint16_t i = 0u; i < N; i++) { epic_math_udiv16_t r = epic_math_divmod_u16(a, b, &ok); g_sum = (uint16_t)(g_sum + r.quotient); a = (uint16_t)(a + 3u); }
+    for (uint16_t i = 0u; i < N; i++)
+    {
+        epic_math_udiv16_t r = epic_math_divmod_u16(a, b, &ok); g_sum = (uint16_t)(g_sum + r.quotient); a = (uint16_t)(a + 3u);
+    }
     report("div16_epic", t0);
 }
 #endif
 
-void main(void) {
+/** @brief Run every benchmark once over UART, then halt. */
+void main(void)
+{
     uart_init();
     T1CON = TMR1_CONF;
     uart_puts("\r\nbench-start\r\n");
@@ -123,5 +219,7 @@ void main(void) {
     bench_div16_epic();
 #endif
     uart_puts("bench-done\r\n");
-    for (;;) { }
+    for (;;)
+    {
+    }
 }

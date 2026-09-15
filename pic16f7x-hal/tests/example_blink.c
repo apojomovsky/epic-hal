@@ -53,7 +53,8 @@ int main(void)
     EPIC_IRQ_Restore(1);
 
     /* 4. Let time pass. */
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
         EPIC_WDT_Refresh();
     }

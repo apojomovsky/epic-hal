@@ -18,11 +18,15 @@
 static epic_math_udiv16_t ref_divmod_u16_algo(uint16_t num, uint16_t den)
 {
     uint16_t acca = num, accb = 0;
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 16; i++)
+    {
         uint16_t c = (uint16_t)((acca >> 15) & 1u);
         acca = (uint16_t)(acca << 1);          /* LSB now 0: room for quotient bit */
         accb = (uint16_t)((accb << 1) | c);    /* dividend bit into remainder    */
-        if (accb >= den) { accb = (uint16_t)(accb - den); acca |= 1u; }
+        if (accb >= den)
+        {
+            accb = (uint16_t)(accb - den); acca |= 1u;
+        }
     }
     epic_math_udiv16_t r = { acca, accb };
     return r;
@@ -40,11 +44,15 @@ static epic_math_udiv16_t ref_divmod_u32_16_algo(uint32_t num, uint16_t den)
 {
     uint32_t acc = num;
     uint32_t rem = 0;
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 32; i++)
+    {
         uint32_t top = (acc >> 31) & 1u;
         acc <<= 1;                              /* LSB 0: room for quotient bit */
         rem = (rem << 1) | top;                 /* 17-bit-safe: rem < 2*den     */
-        if (rem >= (uint32_t)den) { rem -= den; acc |= 1u; }
+        if (rem >= (uint32_t)den)
+        {
+            rem -= den; acc |= 1u;
+        }
     }
     epic_math_udiv16_t r = { (uint16_t)acc, (uint16_t)rem };
     return r;
@@ -59,10 +67,12 @@ static const uint16_t U16_BOUNDS[] = {
 static void test_divmod_u16(void)
 {
     /* Exhaustive numerator x boundary denominator, plus randomized pairs. */
-    for (size_t d = 0; d < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); d++) {
+    for (size_t d = 0; d < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); d++)
+    {
         uint16_t den = U16_BOUNDS[d];
         if (den == 0) continue;
-        for (uint32_t n = 0; n <= 0xFFFFu; n++) {
+        for (uint32_t n = 0; n <= 0xFFFFu; n++)
+        {
             uint16_t num = (uint16_t)n;
             epic_math_udiv16_t got = epic_math_divmod_u16(num, den, NULL);
             epic_math_udiv16_t alg = ref_divmod_u16_algo(num, den);
@@ -73,7 +83,8 @@ static void test_divmod_u16(void)
         }
     }
     uint32_t st = 0xD1A00001u;
-    for (int n = 0; n < 200000; n++) {
+    for (int n = 0; n < 200000; n++)
+    {
         uint16_t num = (uint16_t)epic_math_test_rand(&st);
         uint16_t den = (uint16_t)epic_math_test_rand(&st);
         if (den == 0) continue;
@@ -91,11 +102,13 @@ static void test_divmod_u32_16(void)
 {
     /* Boundary denominators x randomized 32-bit numerators (incl. overflow
      * cases where num >= den*65536 -- quotient must truncate to low 16). */
-    for (size_t d = 0; d < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); d++) {
+    for (size_t d = 0; d < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); d++)
+    {
         uint16_t den = U16_BOUNDS[d];
         if (den == 0) continue;
         uint32_t st = 0xF32A0001u ^ ((uint32_t)den << 16);
-        for (int n = 0; n < 20000; n++) {
+        for (int n = 0; n < 20000; n++)
+        {
             uint32_t num = epic_math_test_rand(&st);
             epic_math_udiv16_t got = epic_math_divmod_u32_16(num, den, NULL);
             epic_math_udiv16_t alg = ref_divmod_u32_16_algo(num, den);
@@ -119,7 +132,8 @@ static void test_divmod_s16(void)
 {
     /* Boundary cross-product + randomized, vs native int32 division. */
     for (size_t i = 0; i < sizeof(S16_BOUNDS)/sizeof(S16_BOUNDS[0]); i++)
-        for (size_t j = 0; j < sizeof(S16_BOUNDS)/sizeof(S16_BOUNDS[0]); j++) {
+        for (size_t j = 0; j < sizeof(S16_BOUNDS)/sizeof(S16_BOUNDS[0]); j++)
+        {
             int16_t num = S16_BOUNDS[i], den = S16_BOUNDS[j];
             if (den == 0) continue;
             epic_math_sdiv16_t got = epic_math_divmod_s16(num, den, NULL);
@@ -129,7 +143,8 @@ static void test_divmod_s16(void)
             CHECK(got.remainder == (int16_t)exp_r, "s16 boundary remainder");
         }
     uint32_t st = 0x51660001u;
-    for (int n = 0; n < 200000; n++) {
+    for (int n = 0; n < 200000; n++)
+    {
         int16_t num = (int16_t)(uint16_t)epic_math_test_rand(&st);
         int16_t den = (int16_t)(uint16_t)epic_math_test_rand(&st);
         if (den == 0) continue;

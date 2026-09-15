@@ -88,7 +88,8 @@ static void ssp_b1_write(uint8_t addr, uint8_t v)
 static uint8_t ssp_b1_read(uint8_t addr)
 {
     uint8_t v = 0U;
-    if (addr == 0x93U) {
+    if (addr == 0x93U)
+    {
 #ifdef EPIC_BANK1_READ8
         EPIC_BANK1_READ8(SSPADD, v);
 #else
@@ -97,7 +98,9 @@ static uint8_t ssp_b1_read(uint8_t addr)
         v = EPIC_REG8(0x93U);
         pic_select_bank(prev);
 #endif
-    } else {
+    }
+    else
+    {
 #ifdef EPIC_BANK1_READ8
         EPIC_BANK1_READ8(SSPSTAT, v);
 #else
@@ -119,7 +122,8 @@ static uint8_t ssp_b1_read(uint8_t addr)
  */
 static void ssp_b1_write(uint8_t addr, uint8_t v)
 {
-    if (addr == 0x93U) {
+    if (addr == 0x93U)
+    {
 #ifdef EPIC_BANK1_WRITE8
         EPIC_BANK1_WRITE8(SSPADD, v);
 #else
@@ -128,7 +132,9 @@ static void ssp_b1_write(uint8_t addr, uint8_t v)
         EPIC_REG8(0x93U) = v;
         pic_select_bank(prev);
 #endif
-    } else {
+    }
+    else
+    {
 #ifdef EPIC_BANK1_WRITE8
         EPIC_BANK1_WRITE8(SSPSTAT, v);
 #else

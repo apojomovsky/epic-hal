@@ -80,4 +80,6 @@ uint16_t EPIC_ADC_Read(void)
 /**
  * @brief ADC interrupt handler (weak, override in user code).
  */
-void ADC_IRQHandler(void) {}
+void ADC_IRQHandler(void)
+{
+}

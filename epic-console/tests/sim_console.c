@@ -107,7 +107,8 @@ static uint8_t g_drain_failed;
 static uint8_t help_len(const epic_console_t *con)
 {
     uint8_t n = 0u;
-    for (uint8_t i = 0u; i < con->table_len; i++) {
+    for (uint8_t i = 0u; i < con->table_len; i++)
+    {
         const char *h = con->table[i].help != NULL ? con->table[i].help : "";
         n = (uint8_t)(n + (uint8_t)strlen(con->table[i].name) + 3u +
                       (uint8_t)strlen(h) + 2u);
@@ -127,13 +128,16 @@ static uint8_t help_len(const epic_console_t *con)
 static void drain_tx(void)
 {
     uint32_t outer = 0UL;
-    while (epic_serial_tx_pending() > 0 && outer < TX_POP_GUARD) {
+    while (epic_serial_tx_pending() > 0 && outer < TX_POP_GUARD)
+    {
         uint32_t guard = 0UL;
         while (!EPIC_USART_IsTxShiftRegisterEmpty() &&
-               guard < TX_TRMT_GUARD) {
+               guard < TX_TRMT_GUARD)
+               {
             guard++;
         }
-        if (guard >= TX_TRMT_GUARD) {
+        if (guard >= TX_TRMT_GUARD)
+        {
             g_drain_failed = 1u;
             epic_harness_log("console sim: TX shift wait timeout\n");
             return;
@@ -142,7 +146,8 @@ static void drain_tx(void)
         g_tx_pops++;
         outer++;
     }
-    if (epic_serial_tx_pending() > 0) {
+    if (epic_serial_tx_pending() > 0)
+    {
         g_drain_failed = 1u;
         epic_harness_log("console sim: TX drain timeout\n");
     }
@@ -199,9 +204,12 @@ int main(void)
         ok = ok && (con1.last_was_cr == false);
         if (!(con1.table == t_small && con1.table_len == 3u &&
               con1.ctx == &ctx && con1.line_len == 0u &&
-              con1.line[0] == '\0' && con1.last_was_cr == false)) {
+              con1.line[0] == '\0' && con1.last_was_cr == false))
+              {
             epic_harness_log("console sim: init contract FAIL\n");
-        } else {
+        }
+        else
+        {
             epic_harness_log("console sim: init contract ok\n");
         }
 
@@ -222,9 +230,12 @@ int main(void)
         ok = ok && (pending == expected);
         ok = ok && (g_tx_pops == expected);
         if (!(g_drain_failed == 0u && expected == 32u &&
-              pending == expected && g_tx_pops == expected)) {
+              pending == expected && g_tx_pops == expected))
+              {
             epic_harness_log("console sim: help framing FAIL\n");
-        } else {
+        }
+        else
+        {
             epic_harness_log("console sim: help framing ok\n");
         }
     }
@@ -246,7 +257,8 @@ int main(void)
         epic_console_print_help(&con);
         drain_tx();
         ok = ok && (g_drain_failed == 0u);
-        if (g_drain_failed != 0u) {
+        if (g_drain_failed != 0u)
+        {
             epic_harness_log("console sim: drain FAIL (2nd)\n");
         }
 
@@ -258,22 +270,27 @@ int main(void)
             epic_console_print_help(&con0);
             ok = ok && (epic_serial_tx_pending() == 0);
             ok = ok && (g_tx_pops == 0u);
-            if (epic_serial_tx_pending() != 0 || g_tx_pops != 0u) {
+            if (epic_serial_tx_pending() != 0 || g_tx_pops != 0u)
+            {
                 epic_harness_log("console sim: empty table emitted bytes\n");
             }
         }
     }
 
-    if (ok) {
+    if (ok)
+    {
         epic_harness_log("console sim: all checks passed\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("console sim: one or more checks FAILED\n");
     }
     epic_harness_log("console sim: ring_sz=");
     log_u16(EPIC_SERIAL_RING_SZ);
     epic_harness_log("\n");
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
     return epic_harness_report(ok);

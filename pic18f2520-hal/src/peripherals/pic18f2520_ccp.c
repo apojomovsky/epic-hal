@@ -202,7 +202,8 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return 0U;
     uint8_t lo, hi1, hi2;
-    do {
+    do
+    {
         CCP_READ_CPRH(inst, hi1);
         CCP_READ_CPRL(inst, lo);
         CCP_READ_CPRH(inst, hi2);

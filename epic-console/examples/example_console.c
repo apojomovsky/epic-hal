@@ -35,14 +35,18 @@ typedef struct {
 static void cmd_led(uint8_t argc, char **argv, void *ctx_)
 {
     app_ctx_t *ctx = (app_ctx_t *)ctx_;
-    if (argc >= 2u && argv[1][0] == 'o' && argv[1][1] == 'n' && argv[1][2] == '\0') {
+    if (argc >= 2u && argv[1][0] == 'o' && argv[1][1] == 'n' && argv[1][2] == '\0')
+    {
         ctx->led_on = 1u;
         epic_serial_put_str(s_txt_led_on);
     } else if (argc >= 2u && argv[1][0] == 'o' && argv[1][1] == 'f' &&
-               argv[1][2] == 'f' && argv[1][3] == '\0') {
+               argv[1][2] == 'f' && argv[1][3] == '\0')
+               {
         ctx->led_on = 0u;
         epic_serial_put_str(s_txt_led_off);
-    } else {
+    }
+    else
+    {
         epic_serial_put_str(s_txt_led_usage);
     }
 }
@@ -95,7 +99,8 @@ int main(void)
     EPIC_IRQ_Restore(1);             /* UART RX/TX ISRs */
     epic_serial_put_str(s_txt_banner);
 
-    for (;;) {
+    for (;;)
+    {
         epic_console_poll(&con);
     }
 }

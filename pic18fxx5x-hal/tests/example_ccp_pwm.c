@@ -68,21 +68,25 @@ int main(void)
     uint8_t cprl = epic_sfr_read8(PIC_REG_CCPR1L);
     uint8_t con  = epic_sfr_read8(PIC_REG_CCP1CON);
     uint8_t del  = epic_sfr_read8(PIC_REG_ECCP1DEL);
-    if (cprl != 12U) {
+    if (cprl != 12U)
+    {
         epic_harness_log("FAIL: CCPR1L=0x%02X, expected 0x0C\n", (unsigned)cprl);
         return epic_harness_report(0);
     }
-    if (con != 0xACU) {
+    if (con != 0xACU)
+    {
         epic_harness_log("FAIL: CCP1CON=0x%02X, expected 0xAC\n", (unsigned)con);
         return epic_harness_report(0);
     }
-    if (del != 0x8CU) {
+    if (del != 0x8CU)
+    {
         epic_harness_log("FAIL: ECCP1DEL=0x%02X, expected 0x8C\n", (unsigned)del);
         return epic_harness_report(0);
     }
 
     /* 5. Run the sim and count TMR2 overflows (one per PWM period). */
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         g_cycle = i + 1;
         epic_harness_tick();
         if (g_overflows >= EXPECTED_OVERFLOWS) break;

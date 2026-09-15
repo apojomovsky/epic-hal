@@ -39,15 +39,20 @@ int main(void)
     h.OverflowCallback = on_t1_overflow;
 
     EPIC_StatusTypeDef st = EPIC_TIMER1_Init(&h);
-    if (st != EPIC_OK) { printf("FAIL: Init returned %u\n", (unsigned)st); return 1; }
+    if (st != EPIC_OK)
+    {
+        printf("FAIL: Init returned %u\n", (unsigned)st); return 1;
+    }
     EPIC_TIMER1_Start(&h);
 
-    for (uint32_t i = 0; i < SIM_BUDGET; i++) {
+    for (uint32_t i = 0; i < SIM_BUDGET; i++)
+    {
         pic16f87xa_sim_step(1);
         if (overflows >= EXPECTED_OVERFLOWS) break;
     }
 
-    if (overflows >= EXPECTED_OVERFLOWS) {
+    if (overflows >= EXPECTED_OVERFLOWS)
+    {
         printf("OK: Timer1 produced %u overflows (expected >= %u)\n",
                (unsigned)overflows, (unsigned)EXPECTED_OVERFLOWS);
         return 0;

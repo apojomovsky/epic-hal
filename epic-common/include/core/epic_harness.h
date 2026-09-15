@@ -63,9 +63,12 @@ static inline int epic_harness_report(int ok)
     static const char pass[] = "EPIC_HARNESS_RESULT: PASS\n";
     static const char fail[] = "EPIC_HARNESS_RESULT: FAIL\n";
     uint8_t i = 0;
-    if (ok) {
+    if (ok)
+    {
         for (i = 0; i < (uint8_t)(sizeof(pass) - 1u); i++) line[i] = pass[i];
-    } else {
+    }
+    else
+    {
         for (i = 0; i < (uint8_t)(sizeof(fail) - 1u); i++) line[i] = fail[i];
     }
     line[i] = '\0';

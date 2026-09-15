@@ -87,16 +87,19 @@ static void cmd_ping(uint8_t argc, char **argv, void *ctx)
 static int drain_tx(char *out, int max)
 {
     int n = 0;
-    while (epic_serial_tx_pending() > 0 && n < max) {
+    while (epic_serial_tx_pending() > 0 && n < max)
+    {
         int before = epic_serial_tx_pending();
         epic_harness_tick();
         int mid = epic_serial_tx_pending();
-        if (mid < before) {
+        if (mid < before)
+        {
             out[n++] = (char)EPIC_REG8(PIC_REG_TXREG);
         }
         epic_dispatch_all_irqs();
         int after = epic_serial_tx_pending();
-        if (after < mid) {
+        if (after < mid)
+        {
             out[n++] = (char)EPIC_REG8(PIC_REG_TXREG);
         }
     }
@@ -126,15 +129,18 @@ static void model_feed(line_model_t *m, uint8_t ch)
 {
     m->echo_len = 0u;
 
-    if (ch == '\r' || ch == '\n') {
-        if (ch == '\n' && m->last_was_cr) {
+    if (ch == '\r' || ch == '\n')
+    {
+        if (ch == '\n' && m->last_was_cr)
+        {
             m->last_was_cr = 0u;
             return;   /* CRLF: second byte swallowed silently */
         }
         m->echo[0] = '\r';
         m->echo[1] = '\n';
         m->echo_len = 2u;
-        if (strcmp(m->line, "ping") == 0) {
+        if (strcmp(m->line, "ping") == 0)
+        {
             m->dispatches++;
         }
         m->line_len = 0u;              /* line dispatched (or dropped) */
@@ -145,8 +151,10 @@ static void model_feed(line_model_t *m, uint8_t ch)
 
     m->last_was_cr = 0u;
 
-    if (ch == '\b' || ch == 0x7Fu) {
-        if (m->line_len > 0u) {
+    if (ch == '\b' || ch == 0x7Fu)
+    {
+        if (m->line_len > 0u)
+        {
             m->line_len--;
             m->line[m->line_len] = '\0';
             m->echo[0] = '\b';
@@ -157,7 +165,8 @@ static void model_feed(line_model_t *m, uint8_t ch)
         return;
     }
 
-    if (m->line_len < (uint8_t)(EPIC_CONSOLE_LINE_MAX - 1u)) {
+    if (m->line_len < (uint8_t)(EPIC_CONSOLE_LINE_MAX - 1u))
+    {
         m->line[m->line_len++] = (char)ch;
         m->line[m->line_len] = '\0';
         m->echo[0] = (char)ch;
@@ -186,7 +195,8 @@ int main(void)
     memset(&m, 0, sizeof(m));
     g_calls = 0;
 
-    for (int it = 0; it < 6000; it++) {
+    for (int it = 0; it < 6000; it++)
+    {
         /* One byte per step. Every 64 steps the sentinel "ping\r" is
          * injected; the step before it, a '\r' flush clears any
          * pending fuzz line so the sentinel starts from a clean
@@ -195,29 +205,42 @@ int main(void)
         int phase = it % 64;
         uint8_t b;
         int check_sentinel = 0;
-        if (phase == 30) {
+        if (phase == 30)
+        {
             b = (uint8_t)'\r';      /* flush pending fuzz line */
-        } else if (phase == 31) {
+        }
+        else if (phase == 31)
+        {
             g_calls = 0;
             m.dispatches = 0;
             b = (uint8_t)'p';
-        } else if (phase >= 32 && phase < 36) {
+        }
+        else if (phase >= 32 && phase < 36)
+        {
             static const char sent[] = "ing\r";
             uint8_t idx = (uint8_t)(phase - 32);
-            if (idx < (uint8_t)(sizeof(sent) / sizeof(sent[0]))) {
+            if (idx < (uint8_t)(sizeof(sent) / sizeof(sent[0])))
+            {
                 b = (uint8_t)sent[idx];
-            } else {
+            }
+            else
+            {
                 b = (uint8_t)'\r';
             }
             if (phase == 35) check_sentinel = 1;
-        } else {
+        }
+        else
+        {
             /* Bias toward control bytes so the state-machine edges
              * (terminators, backspaces, CRLF pairs) are hit hard. */
             uint32_t r = rnd();
-            if ((r & 3u) == 0u) {
+            if ((r & 3u) == 0u)
+            {
                 static const uint8_t ctl[] = { '\r', '\n', '\b', 0x7Fu, 'a', ' ', 'p' };
                 b = ctl[rnd() % (sizeof(ctl) / sizeof(ctl[0]))];
-            } else {
+            }
+            else
+            {
                 b = (uint8_t)(r >> 8);
             }
         }
@@ -230,7 +253,8 @@ int main(void)
         char echo[16];
         int n = drain_tx(echo, (int)sizeof(echo));
         CHECK(n == (int)m.echo_len, "echo length matches model");
-        if (n == (int)m.echo_len) {
+        if (n == (int)m.echo_len)
+        {
             CHECK(memcmp(echo, m.echo, m.echo_len) == 0, "echo bytes match model");
         }
 
@@ -241,7 +265,8 @@ int main(void)
         /* Sentinel accounting: the model knows how many dispatches
          * occurred since the last checkpoint; the parser must agree
          * and the last dispatched command must be "ping". */
-        if (check_sentinel) {
+        if (check_sentinel)
+        {
             CHECK(g_calls == m.dispatches && m.dispatches == 1,
                   "sentinel dispatched exactly once");
             CHECK(strcmp(g_last_cmd, "ping") == 0, "dispatched command is ping");

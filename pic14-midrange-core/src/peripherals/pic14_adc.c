@@ -27,7 +27,8 @@ static void (*g_adc_conv_cb)(uint16_t result) = NULL;
  */
 static uint8_t channel_ansel_bit(ADC_ChannelTypeDef ch, uint16_t *reg_out)
 {
-    switch (ch) {
+    switch (ch)
+    {
         case ADC_CHANNEL_AN0:  *reg_out = PIC_REG_ANSEL;  return 0U;
         case ADC_CHANNEL_AN1:  *reg_out = PIC_REG_ANSEL;  return 1U;
         case ADC_CHANNEL_AN2:  *reg_out = PIC_REG_ANSEL;  return 2U;
@@ -78,7 +79,8 @@ EPIC_StatusTypeDef EPIC_ADC_Init(const ADC_HandleTypeDef *h)
     if (h->ResultFormat == ADC_FORMAT_RIGHT) adcon1 |= PIC_ADCON1_ADFM;
 #if PIC14MIDRANGE_HAS_ADC_PCFG
     adcon1 |= (uint8_t)((uint8_t)h->Reference & PIC_ADCON1_PCFG_MASK);
-    if (h->ClockSource >= ADC_CLOCK_FOSC_4) {
+    if (h->ClockSource >= ADC_CLOCK_FOSC_4)
+    {
         /* ADCS2 = 1 for the four high clock modes. */
         adcon1 |= PIC_ADCON1_ADCS2;
     }
@@ -162,14 +164,17 @@ void EPIC_ADC_ConfigChannel(ADC_ChannelTypeDef ch)
     ansel  = EPIC_REG8(PIC_REG_ANSEL);
     anselh = EPIC_REG8(PIC_REG_ANSELH);
 #endif
-    if (reg == PIC_REG_ANSEL) {
+    if (reg == PIC_REG_ANSEL)
+    {
         ansel |= EPIC_BIT(bit);
 #ifdef EPIC_BANK3_WRITE8
         EPIC_BANK3_WRITE8(ANSEL, ansel);
 #else
         EPIC_REG8(PIC_REG_ANSEL) = ansel;
 #endif
-    } else {
+    }
+    else
+    {
         anselh |= EPIC_BIT(bit);
 #ifdef EPIC_BANK3_WRITE8
         EPIC_BANK3_WRITE8(ANSELH, anselh);

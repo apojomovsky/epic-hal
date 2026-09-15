@@ -105,12 +105,16 @@ void epic_dispatch_all_irqs(void)
      * Without the gate every later event pays the full handler cost
      * before its own dispatch; when the source is disabled the stale
      * flag is dropped so it does not re-trigger this branch. */
-    if (pir1 & PIC_PIR1_TMR1IF) {
+    if (pir1 & PIC_PIR1_TMR1IF)
+    {
         uint8_t tmr1ie;
         EPIC_PIE1_READ_TMR1IE(tmr1ie);
-        if (tmr1ie & PIC_PIE1_TMR1IE) {
+        if (tmr1ie & PIC_PIE1_TMR1IE)
+        {
             TIMER1_IRQHandler();
-        } else {
+        }
+        else
+        {
             /* Source disabled: drop the stale flag with the same
              * single-instruction PIR1 bit clear the CCP handlers use
              * (atomic ANDWF), not the table-driven lookup. */
@@ -134,10 +138,12 @@ void epic_dispatch_all_irqs(void)
      * through XC8's PC-relative function-pointer table, which requires
      * the callback to share the table's flash page; a scattered jump
      * lands in garbage and wedges interrupt delivery. */
-    if (pir1 & PIC_PIR1_TXIF) {
+    if (pir1 & PIC_PIR1_TXIF)
+    {
         uint8_t txie;
         EPIC_PIE1_READ_TXIE(txie);
-        if (txie & PIC_PIE1_TXIE) {
+        if (txie & PIC_PIE1_TXIE)
+        {
             USART_TX_IRQHandler();
         }
     }
@@ -153,10 +159,12 @@ void epic_dispatch_all_irqs(void)
 #endif
 #if PIC14MIDRANGE_HAS_EE_PIR1
     /* Same no-steal gating as the PIR2 EEIF block below, on PIE1. */
-    if (pir1 & PIC_PIR1_EEIF) {
+    if (pir1 & PIC_PIR1_EEIF)
+    {
         uint8_t eeie = 0u;
         EPIC_PIE1_READ_EEIE(eeie);
-        if (eeie & PIC_PIE1_EEIE) {
+        if (eeie & PIC_PIE1_EEIE)
+        {
             EEPROM_IRQHandler();
         }
     }
@@ -169,10 +177,12 @@ void epic_dispatch_all_irqs(void)
      * disabled source's flag is left untouched. EECON1 is read
      * through the family platform's literal-token Bank-1 macro (same
      * XC8 misdirect class as PIE1). */
-    if (intcon & PIC_INTCON_EEIE) {
+    if (intcon & PIC_INTCON_EEIE)
+    {
         uint8_t eecon1 = 0U;
         EPIC_BANK1_READ8(EECON1, eecon1);
-        if (eecon1 & PIC_EECON1_EEIF) {
+        if (eecon1 & PIC_EECON1_EEIF)
+        {
             EEPROM_IRQHandler();
         }
     }
@@ -191,10 +201,12 @@ void epic_dispatch_all_irqs(void)
      * sets HAS_EE_PIR2 0 and this block (and its EEIF/EEIE macros)
      * compile out. */
 #if PIC14MIDRANGE_HAS_EE_PIR2
-    if (pir2 & PIC_PIR2_EEIF) {
+    if (pir2 & PIC_PIR2_EEIF)
+    {
         uint8_t eeie = 0u;
         EPIC_PIE2_READ_EEIE(eeie);
-        if (eeie & PIC_PIE2_EEIE) {
+        if (eeie & PIC_PIE2_EEIE)
+        {
             EEPROM_IRQHandler();
         }
     }

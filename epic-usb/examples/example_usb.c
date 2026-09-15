@@ -14,11 +14,14 @@ int main(void)
     epic_usb_init();
 
     uint8_t buf[64];
-    for (;;) {
+    for (;;)
+    {
         epic_usb_service();
-        if (epic_usb_connected()) {
+        if (epic_usb_connected())
+        {
             size_t n = epic_usb_read(buf, sizeof(buf));
-            if (n > 0) {
+            if (n > 0)
+            {
                 epic_usb_write(buf, n);
             }
         }

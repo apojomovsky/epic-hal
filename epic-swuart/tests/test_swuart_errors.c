@@ -72,7 +72,8 @@ static void receive_byte(const uint8_t *bits)
     epic_swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
     epic_swuart_test_fire_rx_event(); /* confirm event, half a bit later */
 #endif
-    for (size_t i = 1; i < 10; i++) {
+    for (size_t i = 1; i < 10; i++)
+    {
         SIM_DRIVE('C', 2, bits[i]);
         epic_swuart_test_fire_rx_event(); /* compare event: sample + arm next */
     }
@@ -100,7 +101,8 @@ int main(void)
      * DeInit/Init cycle would reset error_count, and this scenario
      * wants exactly one more error source layered on top. */
     static const uint8_t ok_bits[] = {0, 1, 0, 0, 0, 0, 0, 1, 0, 1}; /* 'A', valid framing */
-    for (unsigned i = 0; i < EPIC_SWUART_RING_SZ + 2u; i++) {
+    for (unsigned i = 0; i < EPIC_SWUART_RING_SZ + 2u; i++)
+    {
         receive_byte(ok_bits);
     }
     CHECK(EPIC_SWUART_GetErrorCount(&h) == 3u,

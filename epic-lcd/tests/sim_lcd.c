@@ -126,7 +126,8 @@ static uint8_t        g_dlog_len;
 static void recorder_send(void *ctx, uint8_t rs, uint8_t byte)
 {
     (void)ctx;
-    if (g_log_len < SEND_CAP) {
+    if (g_log_len < SEND_CAP)
+    {
         g_log[g_log_len].rs   = rs;
         g_log[g_log_len].byte = byte;
         g_log_len++;
@@ -139,7 +140,8 @@ static void recorder_send(void *ctx, uint8_t rs, uint8_t byte)
 static void recorder_delay_us(void *ctx, uint32_t us)
 {
     (void)ctx;
-    if (g_dlog_len < DELAY_CAP) {
+    if (g_dlog_len < DELAY_CAP)
+    {
         g_dlog[g_dlog_len].kind  = 0u;
         g_dlog[g_dlog_len].value = (uint16_t)us;
         g_dlog_len++;
@@ -152,7 +154,8 @@ static void recorder_delay_us(void *ctx, uint32_t us)
 static void recorder_delay_ms(void *ctx, uint32_t ms)
 {
     (void)ctx;
-    if (g_dlog_len < DELAY_CAP) {
+    if (g_dlog_len < DELAY_CAP)
+    {
         g_dlog[g_dlog_len].kind  = 1u;
         g_dlog[g_dlog_len].value = (uint16_t)ms;
         g_dlog_len++;
@@ -250,11 +253,14 @@ int main(void)
     /* 0x01/0x02: the driver handed the transport exactly the expected
      * byte stream, with the right RS for each send. */
     CHECK(g_log_len == EXPECT_LEN, 0x01);
-    if (g_log_len == EXPECT_LEN) {
+    if (g_log_len == EXPECT_LEN)
+    {
         uint8_t seq_ok = 1u;
-        for (i = 0; i < EXPECT_LEN; i++) {
+        for (i = 0; i < EXPECT_LEN; i++)
+        {
             if (g_log[i].rs != EXPECT[i].rs ||
-                g_log[i].byte != EXPECT[i].byte) {
+                g_log[i].byte != EXPECT[i].byte)
+                {
                 seq_ok = 0u;
                 break;
             }
@@ -265,11 +271,14 @@ int main(void)
     /* 0x07/0x08: the delay calls match the driver's documented
      * timing pattern. */
     CHECK(g_dlog_len == EXPECT_DELAY_LEN, 0x07);
-    if (g_dlog_len == EXPECT_DELAY_LEN) {
+    if (g_dlog_len == EXPECT_DELAY_LEN)
+    {
         uint8_t dly_ok = 1u;
-        for (i = 0; i < EXPECT_DELAY_LEN; i++) {
+        for (i = 0; i < EXPECT_DELAY_LEN; i++)
+        {
             if (g_dlog[i].kind != EXPECT_DELAY[i].kind ||
-                g_dlog[i].value != EXPECT_DELAY[i].value) {
+                g_dlog[i].value != EXPECT_DELAY[i].value)
+                {
                 dly_ok = 0u;
                 break;
             }
@@ -277,11 +286,13 @@ int main(void)
         CHECK(dly_ok != 0u, 0x08);
     }
 
-    if (g_fail == 0u) {
+    if (g_fail == 0u)
+    {
         epic_harness_log("lcd sim: TRIS/sequence/delay checks all ok\n");
     }
 
-    for (uint32_t iter = 0; epic_harness_running(iter); iter++) {
+    for (uint32_t iter = 0; epic_harness_running(iter); iter++)
+    {
         epic_harness_tick();
     }
     return epic_harness_report(g_fail == 0u);

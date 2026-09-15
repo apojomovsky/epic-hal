@@ -25,16 +25,20 @@ void epic_dispatch_all_irqs(void)
 {
     uint8_t pir1 = epic_sfr_read8(PIC_REG_PIR1);
     if (pir1 & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
-    if (pir1 & PIC_PIR1_TXIF) {
-        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TXIE) {
+    if (pir1 & PIC_PIR1_TXIF)
+    {
+        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TXIE)
+        {
             USART_TX_IRQHandler();
         }
     }
     if (pir1 & PIC_PIR1_RCIF) USART_RX_IRQHandler();
 
     uint8_t pir2 = epic_sfr_read8(PIC_REG_PIR2);
-    if (pir2 & PIC_PIR2_EEIF) {
-        if (epic_sfr_read8(PIC_REG_PIE2) & PIC_PIE2_EEIE) {
+    if (pir2 & PIC_PIR2_EEIF)
+    {
+        if (epic_sfr_read8(PIC_REG_PIE2) & PIC_PIE2_EEIE)
+        {
             EEPROM_IRQHandler();
         }
     }

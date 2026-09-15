@@ -280,10 +280,13 @@ int main(void)
     uint16_t t0_if_seen = 0u;
     uint16_t t0_wraps = 0u;
     uint8_t t0_prev = EPIC_TIMER0_ReadCounter();
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         /* Polled TX exercise under the live ISR load. */
-        if ((i & 0xFFu) == 0u) {
-            while (!EPIC_USART_IsTxShiftRegisterEmpty()) {
+        if ((i & 0xFFu) == 0u)
+        {
+            while (!EPIC_USART_IsTxShiftRegisterEmpty())
+            {
                 /* wait for the shift register to drain */
             }
             EPIC_USART_Transmit(0x55u);
@@ -308,7 +311,8 @@ int main(void)
          * disambiguates). */
         uint16_t t1c = stable_read16(&g_t1_count);
         uint16_t t2c = stable_read16(&g_t2_count);
-        if (t1c < prev1 || t2c < prev2) {
+        if (t1c < prev1 || t2c < prev2)
+        {
             /* Re-read once: the snapshot may have straddled an ISR
              * increment. A genuine decrease survives the retry. */
             t1c = stable_read16(&g_t1_count);
@@ -426,7 +430,8 @@ int main(void)
     log_hex16(t2c);
     EPIC_HARNESS_LOG_STATIC("\n");
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
     return epic_harness_report(g_fail == 0u);

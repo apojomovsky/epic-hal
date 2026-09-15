@@ -43,7 +43,8 @@ static void test_read_preseeded_block(void)
 {
     epic_sdcard_mock_reset();
     uint8_t *backing = epic_sdcard_mock_block(1);
-    for (uint16_t i = 0; i < EPIC_SDCARD_MOCK_BLOCK_SIZE; i++) {
+    for (uint16_t i = 0; i < EPIC_SDCARD_MOCK_BLOCK_SIZE; i++)
+    {
         backing[i] = (uint8_t)(i * 3 + 7);
     }
 
@@ -68,7 +69,8 @@ static void test_write_then_read_round_trip(void)
     CHECK(mmc_init_card(&card) == 0, "round-trip: init_card succeeds");
 
     uint8_t written[EPIC_SDCARD_MOCK_BLOCK_SIZE];
-    for (uint16_t i = 0; i < EPIC_SDCARD_MOCK_BLOCK_SIZE; i++) {
+    for (uint16_t i = 0; i < EPIC_SDCARD_MOCK_BLOCK_SIZE; i++)
+    {
         written[i] = (uint8_t)(255 - i);
     }
 
@@ -144,7 +146,8 @@ static void test_crc16_self_check_property(void)
      * [low,high] (the order mmc_write_block sends, unrelated and never
      * self-checked) does not self-check to 0; only MSB-first does. */
     uint8_t data[16];
-    for (uint16_t i = 0; i < sizeof(data); i++) {
+    for (uint16_t i = 0; i < sizeof(data); i++)
+    {
         data[i] = (uint8_t)(i * 17 + 3);
     }
     uint16_t ck = add_crc16_array(0, data, sizeof(data));
@@ -160,7 +163,8 @@ static void test_crc16_array_matches_byte_by_byte(void)
     uint16_t via_array = add_crc16_array(0, data, sizeof(data));
 
     uint16_t via_bytes = 0;
-    for (uint16_t i = 0; i < sizeof(data); i++) {
+    for (uint16_t i = 0; i < sizeof(data); i++)
+    {
         via_bytes = add_crc16(via_bytes, data[i]);
     }
     CHECK(via_array == via_bytes, "crc16: add_crc16_array matches repeated add_crc16 calls");
@@ -171,7 +175,8 @@ static void test_crc7_nonzero_and_deterministic(void)
 {
     uint8_t csum = 0;
     uint8_t frame[5] = {0x40, 0x00, 0x00, 0x00, 0x00}; /* CMD0 */
-    for (uint8_t i = 0; i < sizeof(frame); i++) {
+    for (uint8_t i = 0; i < sizeof(frame); i++)
+    {
         csum = add_crc7(csum, frame[i]);
     }
     /* mmc.c's __send_mmc_command computes exactly this and ORs in the

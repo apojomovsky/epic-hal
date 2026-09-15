@@ -19,7 +19,10 @@ static int g_pass = 0, g_fail = 0;
 static bool g_script[512];
 static int  g_idx;
 /** @brief  Mock pin-read: replay the next scripted level. */
-static bool mock_read(void *ctx) { (void)ctx; return g_script[g_idx++]; }
+static bool mock_read(void *ctx)
+{
+    (void)ctx; return g_script[g_idx++];
+}
 
 /**
  * @brief  Advance simulated time by exactly one millisecond.
@@ -27,10 +30,16 @@ static bool mock_read(void *ctx) { (void)ctx; return g_script[g_idx++]; }
 static void advance_one_tick(void)
 {
     uint32_t t0 = epic_tick_get();
-    while (epic_tick_get() == t0) { epic_harness_tick(); }
+    while (epic_tick_get() == t0)
+    {
+        epic_harness_tick();
+    }
 }
 /** @brief  Advance simulated time by `ms` milliseconds. */
-static void advance_ms(uint32_t ms) { for (uint32_t i = 0; i < ms; i++) advance_one_tick(); }
+static void advance_ms(uint32_t ms)
+{
+    for (uint32_t i = 0; i < ms; i++) advance_one_tick();
+}
 
 /**
  * @brief  Advance one millisecond and poll the debounce instance.
@@ -56,7 +65,8 @@ static void test_clean_transition(void)
     CHECK(!epic_debounce_is_active(&db), "clean: init inactive");
 
     int presses = 0, releases = 0;
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 40; i++)
+    {
         epic_debounce_event_t ev = step(&db);
         if (ev == DEBOUNCE_EVENT_PRESSED)  presses++;
         if (ev == DEBOUNCE_EVENT_RELEASED) releases++;
@@ -78,7 +88,8 @@ static void test_bouncy_transition(void)
      * true,false,true,true,true,... (flips at calls 10,11,12,13,14,15,
      * then stable true from 16). Then false from 30. */
     g_idx = 0;
-    for (int i = 0; i < 512; i++) {
+    for (int i = 0; i < 512; i++)
+    {
         if (i < 10) g_script[i] = false;
         else if (i < 16) g_script[i] = (i % 2 == 0);  /* 10=T,11=F,12=T,13=F,14=T,15=F */
         else g_script[i] = true;                       /* stable from 16 onward */
@@ -87,7 +98,8 @@ static void test_bouncy_transition(void)
     epic_debounce_init(&db, mock_read, NULL, DEBOUNCE_MS);  /* reads g_script[0]=false */
 
     int presses = 0;
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 40; i++)
+    {
         epic_debounce_event_t ev = step(&db);
         if (ev == DEBOUNCE_EVENT_PRESSED) presses++;
     }
@@ -113,7 +125,8 @@ static void test_reversed_before_window(void)
     epic_debounce_init(&db, mock_read, NULL, DEBOUNCE_MS);
 
     int presses = 0, releases = 0;
-    for (int i = 0; i < 30; i++) {
+    for (int i = 0; i < 30; i++)
+    {
         epic_debounce_event_t ev = step(&db);
         if (ev == DEBOUNCE_EVENT_PRESSED)  presses++;
         if (ev == DEBOUNCE_EVENT_RELEASED) releases++;
@@ -138,7 +151,8 @@ static void test_init_already_active(void)
     CHECK(epic_debounce_is_active(&db), "init-active: is_active at init");
 
     int presses = 0;
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 20; i++)
+    {
         epic_debounce_event_t ev = step(&db);
         if (ev == DEBOUNCE_EVENT_PRESSED) presses++;
     }
@@ -160,7 +174,8 @@ static void test_two_independent_instances(void)
     epic_debounce_t dbA;
     epic_debounce_init(&dbA, mock_read, NULL, DEBOUNCE_MS);
     int pressA = 0;
-    for (int i = 0; i < 35; i++) {
+    for (int i = 0; i < 35; i++)
+    {
         if (step(&dbA) == DEBOUNCE_EVENT_PRESSED) pressA++;
     }
     CHECK(pressA == 1, "indep: A has 1 press");
@@ -171,7 +186,8 @@ static void test_two_independent_instances(void)
     epic_debounce_t dbB;
     epic_debounce_init(&dbB, mock_read, NULL, DEBOUNCE_MS);
     int pressB = 0;
-    for (int i = 0; i < 35; i++) {
+    for (int i = 0; i < 35; i++)
+    {
         if (step(&dbB) == DEBOUNCE_EVENT_PRESSED) pressB++;
     }
     CHECK(pressB == 0, "indep: B has 0 presses");
@@ -182,7 +198,10 @@ static void test_two_independent_instances(void)
 static bool g_script2[512];
 static int  g_idx2;
 /** @brief  Mock pin-read for a second instance: replay g_script2. */
-static bool mock_read2(void *ctx) { (void)ctx; return g_script2[g_idx2++]; }
+static bool mock_read2(void *ctx)
+{
+    (void)ctx; return g_script2[g_idx2++];
+}
 
 /**
  * @brief  Two instances polled interleaved do not interfere.
@@ -192,7 +211,8 @@ static void test_concurrent_independence(void)
     /* Two instances polled interleaved, each with its own script + read fn,
      * verifying they don't interfere. */
     g_idx = 0;  g_idx2 = 0;
-    for (int i = 0; i < 512; i++) {
+    for (int i = 0; i < 512; i++)
+    {
         g_script[i]  = (i >= 10 && i < 25);  /* A: press at 10, release at 25 */
         g_script2[i] = (i >= 20);            /* B: press at 20, stays active   */
     }
@@ -201,7 +221,8 @@ static void test_concurrent_independence(void)
     epic_debounce_init(&dbB, mock_read2, NULL, DEBOUNCE_MS);
 
     int pA = 0, rA = 0, pB = 0, rB = 0;
-    for (int i = 0; i < 35; i++) {
+    for (int i = 0; i < 35; i++)
+    {
         advance_ms(1);
         epic_debounce_event_t eA = epic_debounce_poll(&dbA);
         epic_debounce_event_t eB = epic_debounce_poll(&dbB);

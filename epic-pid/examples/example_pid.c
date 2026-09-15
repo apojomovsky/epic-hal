@@ -26,11 +26,13 @@ static void put_u16_field(uint16_t v, uint8_t width)
 {
     uint8_t digits = 1u;
     uint16_t t = v;
-    while (t >= 10u) {
+    while (t >= 10u)
+    {
         digits++;
         t /= 10u;
     }
-    while (digits < width) {
+    while (digits < width)
+    {
         epic_serial_put_char(' ');
         digits++;
     }
@@ -44,15 +46,18 @@ static void put_i16_field(int16_t v, uint8_t width)
 {
     int32_t t = v;
     uint8_t digits = 1u;
-    if (t < 0) {
+    if (t < 0)
+    {
         digits++;
         t = -t;
     }
-    while (t >= 10) {
+    while (t >= 10)
+    {
         digits++;
         t /= 10;
     }
-    while (digits < width) {
+    while (digits < width)
+    {
         epic_serial_put_char(' ');
         digits++;
     }
@@ -84,28 +89,34 @@ int main(void)
     uint8_t auto_mode = 1;
     uint32_t last = epic_tick_get();
 
-    for (;;) {
-        if (epic_tick_elapsed_since(last) < STEP_MS) {
+    for (;;)
+    {
+        if (epic_tick_elapsed_since(last) < STEP_MS)
+        {
             continue;
         }
         last = epic_tick_get();
 
         uint16_t s = step % SCENARIO_LEN;
-        if (s == 0u) {
+        if (s == 0u)
+        {
             epic_serial_put_str(" step   set   meas   out  mode\n");
             setpoint = 0;
             measurement = 0;
             epic_pid_reset(&pid); /* re-arm the loop for the next run */
         }
-        if (s == STEP_SETPOINT) {
+        if (s == STEP_SETPOINT)
+        {
             setpoint = 100;
         }
-        if (s == STEP_MANUAL) {
+        if (s == STEP_MANUAL)
+        {
             epic_pid_set_manual_output(&pid, 50);
             epic_pid_set_mode(&pid, EPIC_PID_MODE_MANUAL);
             auto_mode = 0;
         }
-        if (s == STEP_RESUME) {
+        if (s == STEP_RESUME)
+        {
             epic_pid_set_mode(&pid, EPIC_PID_MODE_AUTO);
             auto_mode = 1;
         }
@@ -126,9 +137,12 @@ int main(void)
         epic_serial_put_char(' ');
         put_i16_field(output, 5u);
         epic_serial_put_char(' ');
-        if (auto_mode) {
+        if (auto_mode)
+        {
             epic_serial_put_str("AUTO");
-        } else {
+        }
+        else
+        {
             epic_serial_put_str("MANUAL");
         }
         epic_serial_put_str("\n");

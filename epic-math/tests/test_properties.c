@@ -17,7 +17,10 @@ static const uint16_t U16_BOUNDS[] = {
 };
 
 /** @brief Reference decimal -> packed-BCD helper (independent of the implementation). */
-static uint8_t ref_bcd8(uint8_t v) { return (uint8_t)(((v/10u)<<4)|(v%10u)); }
+static uint8_t ref_bcd8(uint8_t v)
+{
+    return (uint8_t)(((v/10u)<<4)|(v%10u));
+}
 
 /**
  * @brief  (a + b) - b == a for every a, b, including pairs whose sum
@@ -30,7 +33,8 @@ static void test_addsub_roundtrip(void)
 {
     /* Boundary cross-product, then random. */
     for (size_t i = 0; i < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); i++)
-        for (size_t j = 0; j < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); j++) {
+        for (size_t j = 0; j < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); j++)
+        {
             uint16_t a = U16_BOUNDS[i], b = U16_BOUNDS[j];
             bool co = false, bo = false;
             uint16_t s = epic_math_add_u16(a, b, &co);
@@ -39,7 +43,8 @@ static void test_addsub_roundtrip(void)
             CHECK(co == bo, "addsub carry == borrow boundary");
         }
     uint32_t st = 0xAC1D0001u;
-    for (int n = 0; n < 200000; n++) {
+    for (int n = 0; n < 200000; n++)
+    {
         uint16_t a = (uint16_t)epic_math_test_rand(&st);
         uint16_t b = (uint16_t)epic_math_test_rand(&st);
         bool co = false, bo = false;
@@ -57,7 +62,8 @@ static void test_addsub_roundtrip(void)
 static void test_commutativity(void)
 {
     uint32_t st = 0x0C0FFEE1u;
-    for (int n = 0; n < 200000; n++) {
+    for (int n = 0; n < 200000; n++)
+    {
         uint16_t a = (uint16_t)epic_math_test_rand(&st);
         uint16_t b = (uint16_t)epic_math_test_rand(&st);
         bool ca = false, cb = false;
@@ -82,7 +88,8 @@ static void test_divmod_roundtrip(void)
 {
     /* Unsigned 16/16. */
     uint32_t st = 0xD1F00001u;
-    for (int n = 0; n < 200000; n++) {
+    for (int n = 0; n < 200000; n++)
+    {
         uint16_t num = (uint16_t)epic_math_test_rand(&st);
         uint16_t den = (uint16_t)epic_math_test_rand(&st);
         if (den == 0u) continue;
@@ -100,7 +107,8 @@ static void test_divmod_roundtrip(void)
      * the true quotient fits in 16 bits this reduces to the plain
      * n == q*d + r round trip. */
     st = 0x32F10001u;
-    for (int n = 0; n < 100000; n++) {
+    for (int n = 0; n < 100000; n++)
+    {
         uint32_t num = epic_math_test_rand(&st) | ((uint32_t)epic_math_test_rand(&st) << 16);
         uint16_t den = (uint16_t)epic_math_test_rand(&st);
         if (den == 0u) continue;
@@ -118,7 +126,8 @@ static void test_divmod_roundtrip(void)
 
     /* Signed 16/16. */
     st = 0x5E100001u;
-    for (int n = 0; n < 200000; n++) {
+    for (int n = 0; n < 200000; n++)
+    {
         int16_t num = (int16_t)(uint16_t)epic_math_test_rand(&st);
         int16_t den = (int16_t)(uint16_t)epic_math_test_rand(&st);
         if (den == 0) continue;
@@ -143,8 +152,10 @@ static void test_divmod_roundtrip(void)
  */
 static void test_bcd_inverse(void)
 {
-    for (uint32_t a = 0; a <= 99u; a++) {
-        for (uint32_t b = 0; b <= 99u; b++) {
+    for (uint32_t a = 0; a <= 99u; a++)
+    {
+        for (uint32_t b = 0; b <= 99u; b++)
+        {
             bool co = false, bo = false;
             uint8_t s = epic_math_bcd_add8(ref_bcd8((uint8_t)a), ref_bcd8((uint8_t)b), &co);
             uint8_t r = epic_math_bcd_sub8(s, ref_bcd8((uint8_t)b), &bo);
