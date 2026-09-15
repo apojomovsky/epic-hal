@@ -1,13 +1,8 @@
 /*
- * CCP1-5 driver (DS39609B §16.0): capture/compare/PWM. All five
- * instances are plain CCP modules: no ECCP auto-shutdown/PWM bridge
- * registers exist on this part (confirmed absent from the DFP header,
- * no PSTRCON/ECCPAS/PWM1CON), unlike the 4550's ECCP1 or the 2520's
- * reduced ECCP1. Capture/Compare use Timer1 or Timer3 (T3CON<
- * T3CCP2:T3CCP1>, reset default Timer1+Timer2, DS39609B Register
- * 14-1); PWM uses Timer2. One driver with an instance selector, per
- * docs/adding-a-device.md §5 step 6's multiple-identical-instances
- * rule (the 193x CCP1-5 precedent).
+ * CCP1-5 driver (DS39609B §16.0): capture/compare/PWM. All five are
+ * plain CCP (no ECCPAS/PSTRCON/PWM1CON in the DFP, unlike 4550/2520);
+ * compare time base is Timer1 or Timer3, PWM uses Timer2. One driver,
+ * instance selector, per adding-a-device.md §5 step 6.
  */
 
 #ifndef PIC18F6520_CCP_H

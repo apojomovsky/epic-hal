@@ -1,15 +1,9 @@
 /*
  * EUSART1 + EUSART2 driver, async + sync master/slave (DS39609B §18.0).
- * This part carries two identical EUSART modules (Register 18-1/18-2,
- * "Register names generically refer to both of the identically named
- * registers for the two USART modules", DS39609B Table 18-2 note 1), so
- * one driver with an instance selector, per docs/adding-a-device.md §5
- * step 6 (the 193x CCP1-5 precedent). Neither module has BAUDCON or
- * SPBRGH: the baud generator is 8-bit only (SPBRGx, X = 0..255, Table
- * 18-1), so there is no BRG16 / auto-baud / wake-up field and no
- * USART_BaudGenTypeDef on this part (confirmed absent from the DFP
- * header). RMW uses split read+write because XC8 cannot lower a
- * compound assignment on a volatile cast-lvalue.
+ * Two identical modules, one driver with an instance selector (see
+ * Table 18-2 note 1); the BRG is 8-bit only (no BAUDCON/SPBRGH on
+ * this part). RMW uses split read+write: XC8 cannot lower compound
+ * assignment on a volatile cast-lvalue.
  */
 
 #ifndef PIC18F6520_USART_H
