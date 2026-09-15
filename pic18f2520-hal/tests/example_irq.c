@@ -107,7 +107,7 @@ int main(void)
     int rc = epic_harness_report(en_ok && running_ok && fired_ok);
 
     /* Freeze so the HARNESS=sim marker's RA0 stays set across the mdb
-     * latch readback (mirrors pic16f193x). */
+     * `print PORTA` readback (mirrors pic16f193x). */
     pic18f2520_harness_halt();
     return rc;
 }

@@ -88,8 +88,8 @@ void epic_harness_log(const char *fmt, ...)
 /**
  * @brief Freeze here so RA0 stays at its post-report value: XC8's `ljmp
  *        start` epilogue would otherwise re-enter main() on return, and
- *        epic_harness_init() would drive RA0 low again, flickering the
- *        latch across the mdb readback window.
+ *        epic_harness_init() would drive RA0 low again, flickering
+ *        PORTA<0> across the mdb `print PORTA` readback window.
  */
 void pic18f2520_harness_halt(void)
 {

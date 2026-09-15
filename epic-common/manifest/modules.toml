@@ -907,7 +907,7 @@ name    = "blink"
 sources = [
   "tests/example_blink.c",
 ]
-config  = { BOREN = "ON", BORV = "3", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", FCMEN = "OFF", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", PBADEN = "OFF", PWRT = "ON", STVREN = "ON", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+config  = { BOREN = "ON", BORV = "3", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", FCMEN = "OFF", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", PBADEN = "OFF", PWRT = "ON", STVREN = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim: the dedicated IRQ-core smoke test, the step
 # docs/adding-a-device.md §5.5 makes mandatory before any peripheral
