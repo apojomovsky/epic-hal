@@ -63,7 +63,7 @@ def main() -> int:
     ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
                                          "PIC16F193X", "PIC16F88X", "PIC16F628A",
                                          "PIC16F83_84",
-                                         "PIC16F63x_67x_68x"), default=None,
+                                         "PIC16F63x_67x_68x", "PIC18F1320"), default=None,
                     help="only this manifest family (the sharded CI jobs)")
     args = ap.parse_args()
     m = manifest_lib.load(manifest_lib.default_path())

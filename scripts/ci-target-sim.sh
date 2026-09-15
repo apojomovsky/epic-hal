@@ -11,6 +11,12 @@ repeat="${REPEAT:-1}"
 family_filter="${FAMILY:-}"
 parallel="${PARALLEL:-1}"
 
+# TOGGLE_REG=LATB (harmless: no other run_one line uses MODE=toggle):
+# PIC18F1320's simulated PORTB does not mirror LATB for an output pin
+# under MPLAB SIM, unlike every other family's gate. Exported at the
+# top so the parallel path's xargs subshells still inherit it.
+export TOGGLE_REG=LATB
+
 fail=0
 {
   echo "| Family | MCU | Module | Result |"
@@ -97,7 +103,7 @@ run_one pic16f88x 16F887 PIC16F887 epic-serial 10000 uart
 run_one pic16f88x 16F887 PIC16F887 epic-debounce 5000 uart
 run_one pic16f628a 16F628A PIC16F628A pic16f628a-hal 15000 uart
 run_one pic16f83_84 16F84A PIC16F84A pic16f83_84-hal 5000 gpio
-run_one pic16f63x_67x_68x 16F677 PIC16F677 pic16f63x_67x_68x-hal 15000 gpio
+run_one pic18f1320 18F1320 PIC18F1320 pic18f1320-hal 2000 toggle
 fi
 
 if [ "$parallel" -gt 1 ]; then

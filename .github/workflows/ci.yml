@@ -196,6 +196,12 @@ jobs:
     with:
       family: PIC16F63x_67x_68x
 
+  # PIC18F1320 (epic-hal#178) is not wired into family-check.yml yet:
+  # that job's scaffold step needs a consumer module for the family
+  # (bundlegen.modules_for_family excludes the family's own -hal dir),
+  # which pic18f1320-hal does not have. PIC16F193X's own job followed
+  # the same order, added once epic-pic16f193x-firmware existed.
+
   # The epic-cc conformance gate in this tree: "did a HAL change break
   # against a known good compiler". epic-cc's hal-887 job asks the reverse
   # question in its tree. Pins the driver to EPIC_CC_PIN (built from
