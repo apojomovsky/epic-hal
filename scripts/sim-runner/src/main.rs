@@ -8,7 +8,7 @@
 //! tick gate proves is the interrupt path, not an oscillator.
 
 use device::{Core, Device};
-use pic14_sim::{parse_hex, parse_hex_pic14e, parse_hex_pic18, Pic14, Pic14e, Pic18};
+use pic14_sim::{parse_hex, parse_hex_pic14e, parse_hex_pic18, Pic14, Pic14e, Pic18, PicBaseline};
 use std::process::ExitCode;
 
 /// SFR addresses the gates need, per core. The PIC14 row is shared by the
@@ -39,6 +39,17 @@ const PIC14E_REGS: Regs = Regs {
     pir1: 0x011,
     pie1: 0x091,
 };
+// PIC16F54 (DS41213D, 12-bit baseline core): PORTB 0x06, no LAT
+// registers, no interrupt machinery (no INTCON/PIR1/PIE1 exist on the
+// die), so the unused rows stay 0. The baseline gates never inject an
+// IRQ; the rows exist only to keep `Regs` a single type.
+const PIC_BASELINE_REGS: Regs = Regs {
+    portb: 0x06,
+    latb: None,
+    intcon: 0,
+    pir1: 0,
+    pie1: 0,
+};
 // Exercised once the 4550 smoke lands (epic-hal#60, blocked on
 // epic-cc#125/#126).
 const PIC18_REGS: Regs = Regs {
@@ -58,13 +69,14 @@ struct Irq {
     enable: (u16, u8),
 }
 
-enum Sim {
+enum Sim<'a> {
     Pic14(Pic14, Regs),
     Pic14e(Pic14e, Regs),
     Pic18(Pic18, Regs),
+    Baseline(PicBaseline<'a>, Regs),
 }
 
-impl Sim {
+impl<'a> Sim<'a> {
     /// Build from the resolved device, not just its core: the simulator
     /// must use the device's real bank geometry. The two families here
     /// happen to share `ram_banks` today, which is why the blink gates
@@ -72,7 +84,7 @@ impl Sim {
     /// through `with_device` removes the silent-mis-simulation hazard a
     /// future part would hit (#115 insistence on not shipping silent
     /// geometry bugs).
-    fn build(dev: &'static Device, hex: &str) -> Result<Sim, String> {
+    fn build(dev: &'static Device, hex: &str) -> Result<Sim<'static>, String> {
         match dev.core {
             Core::Pic14 => {
                 let prog = parse_hex(hex);
@@ -87,14 +99,22 @@ impl Sim {
                 Ok(Sim::Pic14e(Pic14e::with_device(dev, prog), PIC14E_REGS))
             }
             Core::PicBaseline => {
-                Err(format!("device {} is baseline core, no sim model", dev.name))
+                // 12-bit baseline (PIC16F5x): the CPU-only model runs the
+                // software-loop toggle the family's gate needs (crates/sim
+                // does not advance TMR0, but the loop toggles PORTB via a
+                // literal store, which the model fully executes). The
+                // 16F54 blink uses the flat 25-byte GPR window; the
+                // runner never touches `latb`/interrupt rows.
+                let prog = parse_hex_pic14e(hex);
+                Ok(Sim::Baseline(PicBaseline::with_device(dev, prog), PIC_BASELINE_REGS))
             }
         }
     }
 
     fn regs(&self) -> Regs {
         match self {
-            Sim::Pic14(_, r) | Sim::Pic14e(_, r) | Sim::Pic18(_, r) => *r,
+            Sim::Pic14(_, r) | Sim::Pic14e(_, r) | Sim::Pic18(_, r)
+            | Sim::Baseline(_, r) => *r,
         }
     }
 
@@ -103,6 +123,7 @@ impl Sim {
             Sim::Pic14(p, _) => p.run(steps),
             Sim::Pic14e(p, _) => p.run(steps),
             Sim::Pic18(p, _) => p.run(steps),
+            Sim::Baseline(p, _) => p.run(steps),
         }
     }
 
@@ -111,6 +132,7 @@ impl Sim {
             Sim::Pic14(p, _) => p.halted(),
             Sim::Pic14e(p, _) => p.halted(),
             Sim::Pic18(p, _) => p.halted(),
+            Sim::Baseline(p, _) => p.halted(),
         }
     }
 
@@ -134,6 +156,10 @@ impl Sim {
             Sim::Pic14(p, _) => p.ram()[eaddr as usize] >> ebit & 1 != 0,
             Sim::Pic14e(p, _) => p.ram()[eaddr as usize] >> ebit & 1 != 0,
             Sim::Pic18(p, _) => p.ram()[eaddr as usize] >> ebit & 1 != 0,
+            // Baseline has no interrupt machinery; inject is never
+            // called for it (parse_args requires --irq-* together,
+            // and the baseline gates pass none).
+            Sim::Baseline(_, _) => return,
         };
         if !enabled {
             if std::env::var_os("SIM_RUNNER_DEBUG").is_some() {
@@ -150,6 +176,9 @@ impl Sim {
             Sim::Pic14(p, _) => p.ram()[regs.intcon as usize] & GIE != 0,
             Sim::Pic14e(p, _) => p.ram()[regs.intcon as usize] & GIE != 0,
             Sim::Pic18(p, _) => p.ram()[regs.intcon as usize] & GIE != 0,
+            // Unreachable: Baseline returns from the `enabled` match
+            // above before this point (no interrupts on the die).
+            Sim::Baseline(_, _) => unreachable!(),
         };
         match self {
             Sim::Pic14(p, _) => {
@@ -170,6 +199,7 @@ impl Sim {
                     p.fire_interrupt();
                 }
             }
+            Sim::Baseline(_, _) => unreachable!(),
         }
     }
 
@@ -179,6 +209,7 @@ impl Sim {
             Sim::Pic14(p, _) => (p.ram()[addr as usize] >> bit) & 1,
             Sim::Pic14e(p, _) => (p.ram()[addr as usize] >> bit) & 1,
             Sim::Pic18(p, _) => (p.ram()[addr as usize] >> bit) & 1,
+            Sim::Baseline(p, _) => (p.ram()[addr as usize] >> bit) & 1,
         }
     }
 
@@ -187,6 +218,7 @@ impl Sim {
             Sim::Pic14(p, _) => p.ram()[addr as usize],
             Sim::Pic14e(p, _) => p.ram()[addr as usize],
             Sim::Pic18(p, _) => p.ram()[addr as usize],
+            Sim::Baseline(p, _) => p.ram()[addr as usize],
         }
     }
 }

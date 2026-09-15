@@ -60,9 +60,11 @@
 /* Control-space TRIS/OPTION: loaded through a scratch byte pinned to a
  * literal file address (0x0C, in the 16F54's shared GPR window
  * 0x07-0x0F) because the baseline asm pass resolves only literal
- * operands. `movf` loads W, `tris <f>` / `option` consume it. */
+ * operands (and EPIC_AT stringizes its argument, so the macro name
+ * cannot be indirection: irparse rejects a non-literal section suffix).
+ * `movf` loads W, `tris <f>` / `option` consume it. */
 #define EPIC_SCRATCH_ADDR 0x0CU
-static volatile uint8_t pic16f5x_scratch EPIC_AT(EPIC_SCRATCH_ADDR);
+static volatile uint8_t pic16f5x_scratch EPIC_AT(0x0C);
 
 #define EPIC_TRIS_WRITE(sel, val)                                          \
     do {                                                                   \
