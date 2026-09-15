@@ -476,7 +476,9 @@ def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
         return None
     if fosc_hz is None:
         fosc_hz = fam.fosc_hz
-    is_pic18 = fam.name in ("PIC18Fxx5x", "PIC18F1320")
+    # Every PIC18 family takes the PIC18 table: a name allowlist here
+    # already missed one family once (2520), and 6520 has not landed yet.
+    is_pic18 = fam.name.startswith("PIC18")
     table = _PIC18_XC8_TO_EPIC if is_pic18 else _PIC16_XC8_TO_EPIC
     parts = []
     for key, val in sorted(pragmas.items()):
@@ -596,6 +598,8 @@ CANONICAL = {
     "PIC16F87XA": "16F877A",
     "PIC16F88X": "16F887",
     "PIC18Fxx5x": "18F4550",
+    "PIC18F1320": "18F1320",
+    "PIC18F2520": "18F2520",
     "PIC16F193X": "16F1937",
     "PIC16F628A": "16F628A",
     "PIC16F83_84": "16F84A",

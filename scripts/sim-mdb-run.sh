@@ -98,6 +98,13 @@ elif [ "$mode" = "gpio" ]; then
   out="/tmp/${family}-gpio-$$.txt"
   rm -f "$out"
   mdb_script="/tmp/${family}-mdb-$$.txt"
+  # PIC16 reflects a driven output latch into the PORTx input register on
+  # read, so the pic16f193x gates read PORTA. PIC18 under MPSIM does NOT:
+  # a LATx output pin reads back as its input state on PORTx, not the
+  # driven latch (verified on PIC18F2520, 2026-09-14), so a PIC18 GPIO
+  # gate must read the latch, LATA, not PORTA. GPIO_REG defaults to the
+  # PIC16-compatible PORTA; a PIC18 gate passes GPIO_REG=LATA.
+  gpio_reg="${GPIO_REG:-PORTA}"
   cat > "$mdb_script" <<SCRIPT
 device ${device}
 hwtool SIM
@@ -106,7 +113,7 @@ ${eeprom_cycles}
 run
 wait ${wait_ms}
 halt
-print PORTA
+print ${gpio_reg}
 ${extra_mdb}
 quit
 SCRIPT
@@ -176,7 +183,7 @@ if [ "$mode" = "toggle" ]; then
 fi
 
 if [ "$mode" = "gpio" ]; then
-  echo "---- captured PORTA readback ----"
+  echo "---- captured ${gpio_reg} readback ----"
   cat "$out" 2>/dev/null || echo "(no output file produced)"
   echo "----------------------------------"
 
@@ -185,7 +192,7 @@ if [ "$mode" = "gpio" ]; then
     exit 1
   fi
   if [ ! -s "$out" ]; then
-    echo "::error::mdb produced no PORTA output at all (simulator" \
+    echo "::error::mdb produced no ${gpio_reg} output at all (simulator" \
          "may have errored, or the harness never reached report())"
     exit 1
   fi
@@ -193,18 +200,18 @@ if [ "$mode" = "gpio" ]; then
   # "<REG>=NN" (decimal) by default, or "=0xNN" if hex mode is set;
   # accept either form. Strip any 0x prefix, parse as decimal (mdb's
   # default form), and check bit 0.
-  por_line=$(grep -E 'PORTA\s*=' "$out" | tail -n 1 | sed -E 's/.*=\s*(0x)?([0-9A-Fa-f]+).*/\2/')
+  por_line=$(grep -E "${gpio_reg}\s*=" "$out" | tail -n 1 | sed -E 's/.*=\s*(0x)?([0-9A-Fa-f]+).*/\2/')
   if [ -z "$por_line" ]; then
-    echo "::error::no PORTA value found in mdb output"
+    echo "::error::no ${gpio_reg} value found in mdb output"
     exit 1
   fi
   # Decimal parse (mdb's default).
   por_byte=$((por_line))
   if [ $((por_byte & 0x01)) -ne 0 ]; then
-    echo "PASS marker found (PORTA bit 0 set, byte=${por_byte})"
+    echo "PASS marker found (${gpio_reg} bit 0 set, byte=${por_byte})"
     exit 0
   fi
-  echo "::error::PORTA bit 0 was 0 after halt (FAIL marker)"
+  echo "::error::${gpio_reg} bit 0 was 0 after halt (FAIL marker)"
   exit 1
 fi
 
