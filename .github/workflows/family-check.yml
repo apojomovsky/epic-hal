@@ -187,6 +187,7 @@ jobs:
               ("epic-math", "18F4550"),
               ("pic16f87xa-hal", "16F877A"),
               ("pic18fxx5x-hal", "18F4550"),
+              ("pic18f2520-hal", "18F2520"),
               ("epic-pid", "18F4550"),
               ("epic-fsm", "16F877A"),
               ("epic-adcfilter", "16F877A"),
