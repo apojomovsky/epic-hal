@@ -16,11 +16,15 @@
 #include "core/pic18_irq.h"
 #include "core/pic18f6520_wdt_sleep.h"
 
-/* Peripherals (GPIO + Timer0-3; CCP/MSSP/EUSART/analog land later). */
+/* Peripherals (GPIO + Timer0-3 + CCP1-5 + MSSP + EUSART1/2; analog
+ * and memory land in #185). */
 #include "peripherals/pic18f6520_gpio.h"
 #include "peripherals/pic18f6520_timer0.h"
 #include "peripherals/pic18f6520_timer1.h"
 #include "peripherals/pic18f6520_timer2.h"
 #include "peripherals/pic18f6520_timer3.h"
+#include "peripherals/pic18f6520_ccp.h"
+#include "peripherals/pic18f6520_ssp.h"
+#include "peripherals/pic18f6520_usart.h"
 
 #endif /* EPIC_H */
