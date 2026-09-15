@@ -15,6 +15,8 @@
 #endif
 #define N 100u
 
+/** @brief Transmit one character over UART.
+ * @param c the character to send; polls TXIF until the TXREG is free. */
 static void uart_putc(char c)
 {
     while (!PIR1bits.TXIF)
@@ -22,10 +24,14 @@ static void uart_putc(char c)
     }
     TXREG = c;
 }
+/** @brief Transmit a NUL-terminated string over UART.
+ * @param s the string to send. */
 static void uart_puts(const char *s)
 {
     while (*s) uart_putc(*s++);
 }
+/** @brief Transmit a 16-bit value as four hexadecimal digits.
+ * @param v the value to print, most significant nibble first. */
 static void uart_puthex(uint16_t v)
 {
     static const char hex[] = "0123456789ABCDEF";
@@ -33,26 +39,35 @@ static void uart_puthex(uint16_t v)
     uart_putc(hex[(v >> 4) & 0xF]);  uart_putc(hex[v & 0xF]);
 }
 #if defined(PIC18F4550)
+/** @brief Configure the EUSART for 9600 baud transmit on PIC18F4550. */
 static void uart_init(void)
 {
     SPBRGH = 0u; SPBRG = SPBRG_VAL; TXSTA = 0x24; RCSTA = 0x80;
 }
+/** @brief Snapshot the 16-bit TMR1 counter on PIC18F4550.
+ * @return the current TMR1H:TMR1L value. */
 static uint16_t tmr1(void)
 {
     return (uint16_t)((uint16_t)TMR1H << 8 | TMR1L);
 }
 #define TMR1_CONF 0x81u  /* RD16, TMR1ON */
 #else
+/** @brief Configure the USART for 9600 baud transmit on PIC16F87XA. */
 static void uart_init(void)
 {
     SPBRG = SPBRG_VAL; TXSTA = 0x24; RCSTA = 0x80;
 }
+/** @brief Snapshot the 16-bit TMR1 counter on PIC16F87XA.
+ * @return the current TMR1H:TMR1L value. */
 static uint16_t tmr1(void)
 {
     return (uint16_t)((uint16_t)TMR1H << 8 | TMR1L);
 }
 #define TMR1_CONF 0x01u
 #endif
+/** @brief Print one benchmark result line over UART.
+ * @param name the benchmark label printed ahead of the value.
+ * @param t0 the TMR1 snapshot taken before the measured loop. */
 static void report(const char *name, uint16_t t0)
 {
     uint16_t dt = (uint16_t)(tmr1() - t0);
@@ -62,6 +77,8 @@ static void report(const char *name, uint16_t t0)
 volatile uint16_t g_seed = 0x1357u;
 volatile uint16_t g_sum  = 0u;
 
+/** @brief Time the empty loop with no math under test.
+ * Reports the overhead baseline the other benches compare against. */
 void bench_loop_empty(void)
 {
     uint16_t a = g_seed; uint16_t t0 = tmr1();
