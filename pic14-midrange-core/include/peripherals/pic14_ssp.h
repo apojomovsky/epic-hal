@@ -11,6 +11,14 @@
 #include "pic14_midrange.h"
 #include "pic14_midrange_sfr.h"
 
+/* The 87XA and 88X MSSP carry the I2C-master SSPCON2 register (0x91);
+ * the PIC16F7x family's MSSP is SPI-only and does not. Default to 1 so
+ * existing families keep the I2C master helpers; the 7x shim overrides
+ * this to 0, which compiles out SSPCON2 and the I2C master functions. */
+#ifndef PIC14MIDRANGE_HAS_SSPCON2
+#define PIC14MIDRANGE_HAS_SSPCON2 1
+#endif
+
 /**
  * @brief SSP mode select (SSPCON<3:0>). The two families differ: the
  *        88X (HAS_SSPMSK) encodes 1001 as the Load-Mask function
@@ -158,6 +166,11 @@ void     EPIC_SSP_ClearWriteCollision(void);
  */
 uint16_t SSP_ComputeSSPADD(uint32_t fosc_hz, uint32_t fscl_hz);
 
+/* I2C master helpers. SPI-only parts (PIC16F7x, HAS_SSPCON2=0) have no
+ * SSPCON2 register, so these declarations compile out along with their
+ * implementations. */
+
+#if PIC14MIDRANGE_HAS_SSPCON2
 /**
  * @brief Issue a Start condition (sets SSPCON2<SEN>).
  */
@@ -188,6 +201,7 @@ void EPIC_SSP_AcknowledgeEnable(void);
  * @return 1 if the slave acknowledged, 0 otherwise.
  */
 uint8_t EPIC_SSP_AcknowledgeStatus(void);
+#endif /* PIC14MIDRANGE_HAS_SSPCON2 */
 
 #if PIC14MIDRANGE_HAS_SSPMSK
 /* I2C address mask (SSPMSK, 88X-specific). */

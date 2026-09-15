@@ -8,6 +8,14 @@
  * PIC14MIDRANGE_HAS_* from pic14_midrange.h. */
 
 #include "core/pic16_irq.h"
+
+/* The PIR2 EEPROM block dispatches EEPROM_IRQHandler and reads
+ * EEIF/EEIE. Existing families (87XA/88X) define no HAS_EE_PIR2 and
+ * carry PIR2 EEPROM flags, so default to 1; the 7x (no EEPROM at all)
+ * sets it 0 in its shim to compile the block out. */
+#ifndef PIC14MIDRANGE_HAS_EE_PIR2
+#define PIC14MIDRANGE_HAS_EE_PIR2 1
+#endif
 #include "pic14_midrange.h"
 
 /** @brief Timer0 overflow ISR (weak, overridable). */
@@ -178,7 +186,11 @@ void epic_dispatch_all_irqs(void)
      * disabled: EEPROM completion is often polled with EEIE off, so
      * clearing the flag from a live ISR would steal the completion
      * signal and hang the poller. Unlike the TMR1 stale flag, there is
-     * no stale-flag drop here: the polling consumer owns EEIF. */
+     * no stale-flag drop here: the polling consumer owns EEIF. The 7x
+     * family has no EEPROM at all (its PIR2 carries only CCP2IF), so it
+     * sets HAS_EE_PIR2 0 and this block (and its EEIF/EEIE macros)
+     * compile out. */
+#if PIC14MIDRANGE_HAS_EE_PIR2
     if (pir2 & PIC_PIR2_EEIF) {
         uint8_t eeie = 0u;
         EPIC_PIE2_READ_EEIE(eeie);
@@ -186,6 +198,7 @@ void epic_dispatch_all_irqs(void)
             EEPROM_IRQHandler();
         }
     }
+#endif
 #if PIC14MIDRANGE_HAS_COMP_DUAL
     if (pir2 & PIC_PIR2_C1IF)  COMP1_IRQHandler();
     if (pir2 & PIC_PIR2_C2IF)  COMP2_IRQHandler();

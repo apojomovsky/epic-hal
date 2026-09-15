@@ -128,6 +128,70 @@ variants = [
   "16F877A",
 ]
 
+[families.PIC16F7x]
+hal_dir  = "pic16f7x-hal"
+variants = [
+  # Smallest flash first, canonical 16F77 last so family-check's
+  # scaffold gate builds variants[-1] (as on 87XA/88X/18F).
+  "16F72", "16F73", "16F74", "16F737", "16F747",
+  "16F76", "16F767",
+  "16F777", "16F77",
+]
+dfp      = "Microchip.PIC16Fxxx_DFP"
+dfp_version = "1.8.167"
+fosc_hz  = 20000000
+includes = [
+  "pic16f7x-hal/include/target",
+  "pic16f7x-hal/include",
+  "pic14-midrange-core/include",
+  "epic-common/include",
+]
+# Classic mid-range surface riding the shared core: GPIO, Timers 0/1/2,
+# CCP1/CCP2, USART, SPI-only SSP, 8-bit ADC. No EEPROM (the PM* program-
+# memory bank replaces it), no comparator/Vref; PSP is conditional below.
+hal_sources = [
+  "pic14-midrange-core/src/peripherals/pic14_gpio.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer0.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer1.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_ccp.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_ssp.c",
+  "pic14-midrange-core/src/peripherals/pic14_adc.c",
+  "pic14-midrange-core/src/core/pic14_irq.c",
+  "pic16f7x-hal/src/core/pic16_irq_table.c",
+  "pic14-midrange-core/src/core/pic14_wdt_sleep.c",
+  "pic14-midrange-core/src/target/pic14_wdt_sleep_target.c",
+  "pic14-midrange-core/src/target/pic16_isr_vector.c",
+  "pic14-midrange-core/src/core/pic14_irq_dispatch.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+# The epic-cc conformant slice: gpio + timers + irq core, riding the
+# landed epic-cc 16F77 target (epic-cc#405). Grows by adding entries,
+# never by editing the build driver.
+epiccc_sources = [
+  "pic14-midrange-core/src/peripherals/pic14_gpio.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer0.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/core/pic14_irq.c",
+  "pic16f7x-hal/src/core/pic16_irq_table.c",
+  "pic14-midrange-core/src/core/pic14_wdt_sleep.c",
+  "pic14-midrange-core/src/epiccc/pic14_wdt_sleep_epiccc.c",
+  "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
+  "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+
+[[families.PIC16F7x.conditional_sources]]
+path     = "pic16f7x-hal/src/peripherals/pic16f7x_psp.c"
+variants = [
+  "16F74",
+  "16F77",
+  "16F747",
+  "16F777",
+]
+
 [families.PIC16F88X]
 hal_dir  = "pic16f88x-hal"
 variants = [
@@ -618,6 +682,52 @@ sources     = [
   "tests/sim_bank_probe.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# pic16f7x-hal's own manifest slot, mirroring the 87XA pseudo-module:
+# no application code, just the family's real-target smoke
+# (tests/example_blink.c, RB0). The blink example is the section-4
+# exemplar proof for 16F77; the other variants are proven up to the
+# host-sim blink loop in this family's CMakeLists, and full per-part
+# real-target verification is the mechanical follow-on (the ticket
+# calls the remaining parts mechanical once the exemplar's capability
+# macros are proven).
+[modules.pic16f7x-hal]
+dir        = "pic16f7x-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.pic16f7x-hal.supported]
+PIC16F7x = [
+  "16F72",
+  "16F73",
+  "16F74",
+  "16F737",
+  "16F747",
+  "16F76",
+  "16F767",
+  "16F777",
+  "16F77",
+]
+
+[modules.pic16f7x-hal.example.PIC16F7x]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "ON" }
+
+# HARNESS=sim: the banked-SFR probe (16F77 exemplar). WDTE=OFF like
+# every other sim variant (a diagnostic build that terminates and
+# reports does not need the watchdog running unattended).
+[modules.pic16f7x-hal.example.PIC16F7x.sim]
+name        = "bank-probe"
+harness_src = "pic16f7x-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_bank_probe.c",
+]
+config      = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "OFF" }
 
 # pic16f88x-hal's own manifest slot, mirroring the 87XA pseudo-module:
 # no application code, just the family's real-target smoke

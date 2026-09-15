@@ -21,7 +21,7 @@ static void (*g_ssp_transfer_cb)(void) = NULL;
  * this dispatches on `addr` before any bank switch, then invokes the
  * named macro; every real call site passes a compile-time constant, so
  * XC8 folds this to one branch either way. */
-#ifdef EPIC_BANK1_READ8
+#if PIC14MIDRANGE_HAS_SSPCON2 && defined(EPIC_BANK1_READ8)
 /**
  * @brief Read a Bank-1 SSP register (SSPCON2, SSPADD or SSPSTAT).
  * @param addr the register address (0x91, 0x93 or 0x94).
@@ -47,9 +47,10 @@ static void ssp_b1_write(uint8_t addr, uint8_t v)
     else if (addr == 0x93U) EPIC_BANK1_WRITE8(SSPADD, v);
     else                    EPIC_BANK1_WRITE8(SSPSTAT, v);
 }
-#else
+#elif PIC14MIDRANGE_HAS_SSPCON2
 /**
- * @brief Read a Bank-1 SSP register via bank-switched EPIC_REG8 access.
+ * @brief Read a Bank-1 SSP register (SSPCON2, SSPADD or SSPSTAT) on a
+ *        host build (no EPIC_BANK1_READ8 token macros).
  * @param addr the register address (0x91, 0x93 or 0x94).
  * @return the register value.
  */
@@ -63,7 +64,8 @@ static uint8_t ssp_b1_read(uint8_t addr)
 }
 
 /**
- * @brief Write a Bank-1 SSP register via bank-switched EPIC_REG8 access.
+ * @brief Write a Bank-1 SSP register (SSPCON2, SSPADD or SSPSTAT) on a
+ *        host build.
  * @param addr the register address (0x91, 0x93 or 0x94).
  * @param v the byte to write.
  */
@@ -73,6 +75,69 @@ static void ssp_b1_write(uint8_t addr, uint8_t v)
     pic_select_bank(1);
     EPIC_REG8(addr) = v;
     pic_select_bank(prev);
+}
+#else
+/**
+ * @brief Read a Bank-1 SSP register (SSPADD or SSPSTAT) on an SPI-only
+ *        part (PIC16F7x, HAS_SSPCON2=0): no SSPCON2, so only the two
+ *        registers are reachable. Keep these helpers shared so the SPI
+ *        paths below stay identical even with no I2C-master sites.
+ * @param addr the register address (0x93 or 0x94).
+ * @return the register value.
+ */
+static uint8_t ssp_b1_read(uint8_t addr)
+{
+    uint8_t v = 0U;
+    if (addr == 0x93U) {
+#ifdef EPIC_BANK1_READ8
+        EPIC_BANK1_READ8(SSPADD, v);
+#else
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        pic_select_bank(1);
+        v = EPIC_REG8(0x93U);
+        pic_select_bank(prev);
+#endif
+    } else {
+#ifdef EPIC_BANK1_READ8
+        EPIC_BANK1_READ8(SSPSTAT, v);
+#else
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        pic_select_bank(1);
+        v = EPIC_REG8(0x94U);
+        pic_select_bank(prev);
+#endif
+    }
+    return v;
+}
+
+/**
+ * @brief Write a Bank-1 SSP register (SSPADD or SSPSTAT) on an SPI-only
+ *        part (PIC16F7x, HAS_SSPCON2=0); the mirror of @ref
+ *        ssp_b1_read for the write path.
+ * @param addr the register address (0x93 or 0x94).
+ * @param v the byte to write.
+ */
+static void ssp_b1_write(uint8_t addr, uint8_t v)
+{
+    if (addr == 0x93U) {
+#ifdef EPIC_BANK1_WRITE8
+        EPIC_BANK1_WRITE8(SSPADD, v);
+#else
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        pic_select_bank(1);
+        EPIC_REG8(0x93U) = v;
+        pic_select_bank(prev);
+#endif
+    } else {
+#ifdef EPIC_BANK1_WRITE8
+        EPIC_BANK1_WRITE8(SSPSTAT, v);
+#else
+        uint8_t prev = (EPIC_REG8(PIC_REG_STATUS) >> 5) & 0x03U;
+        pic_select_bank(1);
+        EPIC_REG8(0x94U) = v;
+        pic_select_bank(prev);
+#endif
+    }
 }
 #endif
 
@@ -127,8 +192,11 @@ EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h)
     con |= PIC_SSPCON_SSPEN;
     EPIC_REG8(0x14U) = con;
 
-    /* SSPCON2 (Bank 1, address 0x91), clear all bits (idle state). */
+    /* SSPCON2 (Bank 1, address 0x91), clear all bits (idle state).
+     * SPI-only parts (PIC16F7x) have no SSPCON2. */
+#if PIC14MIDRANGE_HAS_SSPCON2
     ssp_b1_write(0x91U, 0x00U);
+#endif
 
     /* Interrupt enable. */
     EPIC_IRQ_ClearFlag(PIC16_IRQ_SSP);
@@ -148,7 +216,9 @@ EPIC_StatusTypeDef EPIC_SSP_DeInit(void)
     EPIC_IRQ_DisableSrc(PIC16_IRQ_SSP);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_SSP);
     EPIC_REG8(0x14U) = 0x00U;
+#if PIC14MIDRANGE_HAS_SSPCON2
     ssp_b1_write(0x91U, 0x00U);
+#endif
     ssp_b1_write(0x94U, 0x00U);
     ssp_b1_write(0x93U, 0x00U);
     g_ssp_transfer_cb = NULL;
@@ -226,6 +296,10 @@ void EPIC_SSP_ClearWriteCollision(void)
     EPIC_REG8(0x14U) &= (uint8_t)~PIC_SSPCON_WCOL;
 }
 
+/* I2C master helpers: SPI-only parts (PIC16F7x) have no SSPCON2, so
+ * these compile out entirely on them. */
+
+#if PIC14MIDRANGE_HAS_SSPCON2
 /**
  * @brief Issue a Start condition (SSPCON2<SEN>).
  */
@@ -277,6 +351,7 @@ uint8_t EPIC_SSP_AcknowledgeStatus(void)
 {
     return (ssp_b1_read(0x91U) & PIC_SSPCON2_ACKSTAT) ? 1U : 0U;
 }
+#endif /* PIC14MIDRANGE_HAS_SSPCON2 */
 
 /**
  * @brief Load the I²C address-mask register (SSPMSK).
