@@ -88,6 +88,7 @@ void bench_loop_empty(void)
     }
     report("loop_empty", t0);
 }
+/** @brief Time native 16-bit addition. */
 void bench_add_native(void)
 {
     uint16_t a = g_seed, b = 0xFFFFu; uint16_t t0 = tmr1();
@@ -97,6 +98,7 @@ void bench_add_native(void)
     }
     report("add_native", t0);
 }
+/** @brief Time native 16-bit subtraction. */
 void bench_sub_native(void)
 {
     uint16_t a = g_seed, b = 0x1357u; uint16_t t0 = tmr1();
@@ -106,6 +108,7 @@ void bench_sub_native(void)
     }
     report("sub_native", t0);
 }
+/** @brief Time native 8-bit multiplication. */
 void bench_mul8_native(void)
 {
     uint8_t a = (uint8_t)g_seed, b = 0xCDu; uint16_t t0 = tmr1();
@@ -115,6 +118,7 @@ void bench_mul8_native(void)
     }
     report("mul8_native", t0);
 }
+/** @brief Time native 16-bit multiplication. */
 void bench_mul16_native(void)
 {
     uint16_t a = g_seed, b = 0xCDEFu; uint16_t t0 = tmr1();
@@ -124,6 +128,7 @@ void bench_mul16_native(void)
     }
     report("mul16_native", t0);
 }
+/** @brief Time native 16-bit division. */
 void bench_div16_native(void)
 {
     uint16_t a = g_seed, b = 0x0013u; uint16_t t0 = tmr1();
@@ -134,6 +139,7 @@ void bench_div16_native(void)
     report("div16_native", t0);
 }
 #ifndef BENCH_NATIVE_ONLY
+/** @brief Time epic_math 16-bit addition with carry out. */
 void bench_add_epic(void)
 {
     uint16_t a = g_seed, b = 0xFFFFu; bool c; uint16_t t0 = tmr1();
@@ -143,6 +149,7 @@ void bench_add_epic(void)
     }
     report("add_epic", t0);
 }
+/** @brief Time epic_math 16-bit subtraction with borrow out. */
 void bench_sub_epic(void)
 {
     uint16_t a = g_seed, b = 0x1357u; bool c; uint16_t t0 = tmr1();
@@ -152,6 +159,7 @@ void bench_sub_epic(void)
     }
     report("sub_epic", t0);
 }
+/** @brief Time epic_math 8-bit multiplication. */
 void bench_mul8_epic(void)
 {
     uint8_t a = (uint8_t)g_seed, b = 0xCDu; uint16_t t0 = tmr1();
@@ -161,6 +169,7 @@ void bench_mul8_epic(void)
     }
     report("mul8_epic", t0);
 }
+/** @brief Time epic_math 16-bit multiplication. */
 void bench_mul16_epic(void)
 {
     uint16_t a = g_seed, b = 0xCDEFu; uint16_t t0 = tmr1();
@@ -170,6 +179,7 @@ void bench_mul16_epic(void)
     }
     report("mul16_epic", t0);
 }
+/** @brief Time epic_math 16-bit division with quotient and remainder. */
 void bench_div16_epic(void)
 {
     uint16_t a = g_seed, b = 0x0013u; bool ok; uint16_t t0 = tmr1();
@@ -181,6 +191,7 @@ void bench_div16_epic(void)
 }
 #endif
 
+/** @brief Run every benchmark once over UART, then halt. */
 void main(void)
 {
     uart_init();
