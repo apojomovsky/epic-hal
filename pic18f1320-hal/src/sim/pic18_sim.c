@@ -139,6 +139,9 @@ void pic18_sim_reset(void)
     pic18_sim_sfr[PIC_REG_TXSTA]    = PIC_TXSTA_POR_VALUE;    /* 0x02 */
     pic18_sim_sfr[PIC_REG_SPBRG]    = PIC_SPBRG_POR_VALUE;    /* 0x00 */
     pic18_sim_sfr[PIC_REG_SPBRGH]   = PIC_SPBRGH_POR_VALUE;   /* 0x00 */
+    /* PIR1<TXIF> reads 1 right after POR (TXREG empty, §16.3.1) even
+     * though Table 5-1 lists PIR1 = 0x00; mirror the 4550 sim. */
+    pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TXIF;
 
     /* ECCP1: CCP1CON/PWM1CON/ECCPAS reset to 0x00 (module off). */
     pic18_sim_sfr[PIC_REG_CCP1CON]  = PIC_CCP1CON_POR_VALUE;
