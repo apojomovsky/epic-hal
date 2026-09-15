@@ -309,6 +309,12 @@ bundle:
 python3 scripts/epic_hal.py init --bundle path/to/epic-hal-pic16f87xa-v0.1.0
 ```
 
+`epic-hal --version` reports the release stamp (the `VERSION` file
+shipped in the release CLI asset and in every family bundle), mirroring
+how `epic-cc --version` prints the compiler's build stamp. In a source
+checkout, where no `VERSION` file exists, it prints `epic-hal dev
+(source checkout)` instead of fabricating a release number.
+
 Its tests live with the rest of the scripts tests:
 
 ```sh

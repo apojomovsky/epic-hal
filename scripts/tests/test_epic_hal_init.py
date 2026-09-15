@@ -417,4 +417,61 @@ class TestBundlePresence(unittest.TestCase):
             self.assertTrue(any(n.endswith(p) for n in names),
                             f"CLI asset missing {p}; has:\n{joined}")
 
+    def test_cli_asset_ships_version_file(self):
+        # The CLI reports its version through `epic-hal --version`, so the
+        # asset must carry the same VERSION stamp the family bundles do.
+        import make_bundle
+        repo = pathlib.Path(__file__).resolve().parents[2]
+        out_dir = pathlib.Path(tempfile.mkdtemp(dir=repo))
+        self.addCleanup(shutil.rmtree, out_dir, ignore_errors=True)
+        saved = sys.argv
+        sys.argv = ["make_bundle", "--cli", "--version", "ci-test",
+                    "--out-dir", str(out_dir)]
+        try:
+            make_bundle.main()
+        finally:
+            sys.argv = saved
+        import tarfile
+        tf = tarfile.open(out_dir / "epic-hal-cli-ci-test.tar.gz")
+        version = [n for n in tf.getnames() if n.endswith("/VERSION")]
+        self.assertEqual(len(version), 1, "CLI asset must carry exactly one VERSION")
+        self.assertEqual(tf.extractfile(version[0]).read().decode().strip(), "ci-test")
+
+    def test_version_flag(self):
+        # epic-hal --version mirrors epic-cc's driver stamp: in a release
+        # asset it prints the VERSION file; in a source checkout (no such
+        # file) it says dev rather than fabricating a release number.
+        import subprocess
+        repo = pathlib.Path(__file__).resolve().parents[2]
+        cli = repo / "scripts" / "epic_hal.py"
+
+        # Source checkout: scripts/epic_hal.py with no VERSION beside it.
+        self.assertFalse((cli.parent / "VERSION").exists(),
+                         "scripts/ has no VERSION in a source checkout")
+        run = subprocess.run(["python3", str(cli), "--version"],
+                             capture_output=True, text=True)
+        self.assertEqual(run.returncode, 0)
+        self.assertEqual(run.stdout.strip(), "epic-hal dev (source checkout)")
+        # -V is the short form epic-cc's driver supports, kept for parity.
+        run = subprocess.run(["python3", str(cli), "-V"],
+                             capture_output=True, text=True)
+        self.assertEqual(run.returncode, 0)
+        self.assertEqual(run.stdout.strip(), "epic-hal dev (source checkout)")
+
+        # Release layout: VERSION beside the module (make_bundle.py stamps
+        # it; shipping is covered by test_cli_asset_ships_version_file).
+        # The standalone CLI imports its helper modules from the same dir,
+        # exactly as the release asset lays them out.
+        asset_dir = pathlib.Path(tempfile.mkdtemp(dir=repo))
+        self.addCleanup(shutil.rmtree, asset_dir, ignore_errors=True)
+        scripts = repo / "scripts"
+        shutil.copy2(scripts / "epic_hal.py", asset_dir / "epic-hal")
+        for helper in ("epic_hal_init.py", "epicmanifest.py", "bundlegen.py"):
+            shutil.copy2(scripts / helper, asset_dir / helper)
+        (asset_dir / "VERSION").write_text("v0.6.0\n")
+        run = subprocess.run(["python3", str(asset_dir / "epic-hal"), "--version"],
+                             capture_output=True, text=True)
+        self.assertEqual(run.returncode, 0)
+        self.assertEqual(run.stdout.strip(), "epic-hal v0.6.0")
+
 if __name__ == "__main__": unittest.main()
