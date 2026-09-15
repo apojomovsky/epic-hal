@@ -1,6 +1,6 @@
-/* epic-cc dispatch, GPIO + Timer0-3 tier: fans out Timer0/RB plus the
- * Timer1/2/3 sources, matching the XC8 full fan-out with the same
- * per-source gating semantics. */
+/* epic-cc dispatch, GPIO + Timer0-3 + CCP + SSP + EUSART tier: fans out
+ * Timer0/RB plus the Timer1/2/3, CCP1/2, SSP and TX/RC sources, matching
+ * the XC8 full fan-out with the same per-source gating semantics. */
 
 #include "core/pic18_irq.h"
 
@@ -14,6 +14,16 @@ extern void TIMER1_IRQHandler(void);
 extern void TIMER2_IRQHandler(void);
 /** @brief Timer3 overflow IRQ handler. */
 extern void TIMER3_IRQHandler(void);
+/** @brief CCP1 event IRQ handler. */
+extern void CCP1_IRQHandler(void);
+/** @brief CCP2 event IRQ handler. */
+extern void CCP2_IRQHandler(void);
+/** @brief MSSP transfer IRQ handler. */
+extern void SSP_IRQHandler(void);
+/** @brief EUSART TX IRQ handler. */
+extern void USART_TX_IRQHandler(void);
+/** @brief EUSART RX IRQ handler. */
+extern void USART_RX_IRQHandler(void);
 /**
  * @brief  Dispatch the tier's pending interrupt sources under the same
  *         per-source gating rules as the full fan-out.
@@ -32,6 +42,15 @@ void epic_dispatch_all_irqs(void)
         }
     }
     if (pir1 & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
+    if (pir1 & PIC_PIR1_CCP1IF) CCP1_IRQHandler();
+    if (pir1 & PIC_PIR1_SSPIF) SSP_IRQHandler();
+    if (pir1 & PIC_PIR1_TXIF) {
+        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TXIE) {
+            USART_TX_IRQHandler();
+        }
+    }
+    if (pir1 & PIC_PIR1_RCIF) USART_RX_IRQHandler();
     uint8_t pir2 = epic_sfr_read8(PIC_REG_PIR2);
     if (pir2 & PIC_PIR2_TMR3IF) TIMER3_IRQHandler();
+    if (pir2 & PIC_PIR2_CCP2IF) CCP2_IRQHandler();
 }
