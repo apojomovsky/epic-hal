@@ -21,14 +21,15 @@ interrupt backend, peripheral drivers) live here.
 
 ## Status
 
-**Phases 1-2 (epic-hal#182, #183, umbrella #150):** platform, SFR map,
-GPIO (PORTA-G), Timer0-3, the dual-priority interrupt core, WDT/Sleep/
-BOR/POR, and the harness are implemented and verified under host sim
-and real `mdb` (each peripheral through docs/adding-a-device.md §4:
-host example + XC8 target build + `mdb` register-readback gate). CCP1-5,
-MSSP, EUSART1/2, ADC, comparator, data EEPROM, PSP and LVD land in
-phases 3-4 (#184-185); TMR4 has no driver in this ticket's scope.
-This part has **no USB and no SPP** (DS39609B Table 1-1).
+**Phases 1-3 (epic-hal#182, #183, #184, umbrella #150):** platform, SFR
+map, GPIO (PORTA-G), Timer0-3, CCP1-5, MSSP, EUSART1/2, the
+dual-priority interrupt core, WDT/Sleep/BOR/POR, and the harness are
+implemented and verified under host sim and real `mdb` (each
+peripheral through docs/adding-a-device.md §4: host example + XC8
+target build + `mdb` register-readback gate). ADC, comparator, data
+EEPROM, PSP and LVD land in phase 4 (#185); TMR4 has no driver yet
+(#183 covered Timer0-3 only). This part has **no USB and no SPP**
+(DS39609B Table 1-1).
 
 - ✅ Family header (`pic18f6520_hal.h`): device selection, capability
   macros, platform include. Named `_hal` to avoid shadowing the DFP
@@ -57,7 +58,17 @@ This part has **no USB and no SPP** (DS39609B Table 1-1).
   4-bit postscaler, DS39609B Register 13-1.
 - ✅ Timer3 driver (`peripherals/pic18f6520_timer3.h`): 16-bit with RD16,
   DS39609B Register 14-1. Timer4 (T4CON/PR4/TMR4 at 0xF76-0xF78) has no
-  driver in this ticket's scope.
+  driver yet (#183 covered Timer0-3 only).
+- ✅ CCP1-5 driver (`peripherals/pic18f6520_ccp.h`): one driver with an
+  instance selector over five plain CCP modules (CCP1CON/CCPR1 at
+  0xFBD-0xFBF through CCP5 at 0xF70-0xF72). All plain: no
+  auto-shutdown/PWM-bridge hardware on this part (no PSTRCON/ECCPAS/
+  PWM1CON in the DFP), so no ECCP-specific API.
+- ✅ MSSP driver (`peripherals/pic18f6520_ssp.h`): SPI + I2C, same
+  register shape as the 4550 family.
+- ✅ EUSART1/2 driver (`peripherals/pic18f6520_usart.h`): one driver with
+  an instance selector over the two identical EUSART modules; 8-bit
+  BRG only (no BAUDCON/SPBRGH on this part).
 - ✅ Interrupt core (`core/pic18_irq.h`): `PIC18_IRQn` enum (25 sources,
   the richest set in this repo: INT0-3, RB, TMR0-4, CCP1-5, SSP, USART1/2
   TX+RX, ADC, CMP, EEPROM, LVD, PSP), `EPIC_IRQ_*` against
@@ -97,7 +108,8 @@ The 6520 is a 64-pin part and the largest of the three new PIC18 families:
   registers exist on this part), PIR3/PIE3/IPR3 carry their flags.
 - **4 timers** (TMR0-3 plus TMR4, T4CON/PR4/TMR4 at 0xF76-0xF78).
 - **2 EUSARTs** (EUSART1 registers at 0xFAB-0xFAF, EUSART2 at 0xF6B-0xF6F;
-  no BAUDCON and no SPBRGH on this part, the baud generator is 8-bit only).
+  one driver with an instance selector; no BAUDCON and no SPBRGH on
+  this part, the baud generator is 8-bit only).
 - **1 MSSP**, **PSP** (parallel slave port, PSPCON at 0xFB0), **dual
   comparator + CVR**, **LVD**, **1 KB data EEPROM** (EEADR + EEADRH),
   **12-channel 10-bit A/D** (AN0-AN11).

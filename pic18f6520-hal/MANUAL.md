@@ -6,13 +6,14 @@ manual covers only what is genuinely specific to the **PIC18F6520**, verified
 against the Microchip datasheet **DS39609B** (PIC18F6520/6620/8520/8620/
 6720/8720).
 
-**Phase 1-2 status (epic-hal#182, #183):** platform layer, SFR map, GPIO,
-Timer0-3, the interrupt core, WDT/Sleep/BOR/POR, and the harness are
-implemented and verified under host sim and real `mdb`. CCP1-5, MSSP,
-EUSART1/2, ADC, the comparator, the data EEPROM, PSP and LVD land in
-later phases and are marked **phase N** below; Timer4 has no driver in
-this ticket's scope. This family has no USB and no SPP (DS39609B
-Table 1-1), so it never will; do not expect them here.
+**Phase 1-3 status (epic-hal#182, #183, #184):** platform layer, SFR map,
+GPIO, Timer0-3, CCP1-5, MSSP, EUSART1/2, the interrupt core,
+WDT/Sleep/BOR/POR, and the harness are implemented and verified under
+host sim and real `mdb`. ADC, the comparator, the data EEPROM, PSP and
+LVD land in phase 4 (#185) and are marked **phase N** below; Timer4 has
+no driver yet (#183 covered Timer0-3 only). This family has no USB and
+no SPP (DS39609B Table 1-1), so it never will; do not expect them
+here.
 
 ---
 
@@ -27,11 +28,14 @@ Table 1-1), so it never will; do not expect them here.
 7. [Core: WDT, Sleep, BOR/POR](#7-core-wdt-sleep-borpor)
 8. [GPIO](#8-gpio)
 9. [Timers: Timer0-4](#9-timers-timer0-4)
-10. [The SFR layer](#10-the-sfr-layer)
-11. [Device selection](#11-device-selection)
-12. [The examples](#12-the-examples)
-13. [Known gaps and gotchas](#13-known-gaps-and-gotchas)
-14. [Appendix: datasheet section index](#14-appendix-datasheet-section-index)
+10. [CCP1-5](#10-ccp1-5)
+11. [MSSP](#11-mssp)
+12. [EUSART1/2](#12-eusart12)
+13. [The SFR layer](#13-the-sfr-layer)
+14. [Device selection](#14-device-selection)
+15. [The examples](#15-the-examples)
+16. [Known gaps and gotchas](#16-known-gaps-and-gotchas)
+17. [Appendix: datasheet section index](#17-appendix-datasheet-section-index)
 
 ---
 
@@ -204,27 +208,63 @@ gated under real mdb with register readbacks (T1CON=0x81 with
 TMR1IF set on 0xFFF0-reload overflow, T2CON=0x04 with PR2=9 and
 TMR2IF, T3CON=0x81 with PIR2<TMR3IF>).
 
-## 10. The SFR layer
+## 10. CCP1-5
+
+Five plain CCP modules (CP1CON/CCPR1 at 0xFBD-0xFBF, CCP2 at 0xFBA-0xFBC,
+CCP3 at 0xFB7-0xFB9, CCP4 at 0xF73-0xF75, CCP5 at 0xF70-0xF72; DS39609B
+§16.0, Register 16-1). All five share the identical plain-CCP layout
+(mode bits 3:0, duty LSBs 5:4): this part has no Enhanced-CCP hardware
+(no PSTRCON/ECCPAS/PWM1CON in the DFP), unlike the 4550's ECCP1 or the
+2520's reduced ECCP1, so there is no auto-shutdown/restart API. One
+driver with an instance selector (`CCP_INSTANCE_1..5`) programs
+capture/compare/PWM; Capture/Compare use Timer1 or Timer3 (T3CON<
+T3CCP2:T3CCP1>, reset default Timer1+Timer2), PWM uses Timer2. Each
+branch of the instance selector touches only literal `PIC_REG_*`
+tokens before any SFR access.
+
+## 11. MSSP
+
+Single MSSP module (SSPCON1/2, SSPSTAT, SSPADD, SSPBUF at 0xFC5-0xFC9;
+DS39609B §17.0), SPI and I2C, same register shape as the 4550 family.
+API follows the 2520 driver: `EPIC_SSP_Init` programs the mode/edges,
+`EPIC_SSP_WriteByte`/`_ReadByte` transfer, the I2C condition helpers
+(`_Start`/`_Stop`/`_RepeatedStart`/`_ReceiveEnable`/`_AcknowledgeEnable`)
+drive SSPCON2, and the weak `SSP_IRQHandler` fires `TransferCallback`.
+
+## 12. EUSART1/2
+
+Two identical EUSART modules (EUSART1 registers at 0xFAB-0xFAF, EUSART2
+at 0xF6B-0xF6F; DS39609B §18.0). One driver with an instance selector
+(`USART_INSTANCE_1/2`). Async + sync master/slave, the 8-bit baud-rate
+generator per Table 18-1 (no BRG16/SPBRGH/BAUDCON, see §13), 9-bit data
+with address-detect. The weak handlers split per module: `USART_TX/
+RX_IRQHandler` for EUSART1 (PIR1<TXIF/RCIF>), `USART2_TX/RX_IRQHandler`
+for EUSART2 (PIR3<TX2IF/RC2IF>).
+
+## 13. The SFR layer
 
 Every SFR access names a compile-time-constant `PIC_REG_*` token through
 `epic_sfr_read8` / `EPIC_REG8` (see `pic18_platform.h`). This is load-bearing:
 on PIC18, a runtime SFR address compiles to the program-memory table
 mechanism and silently writes nowhere (see §13).
 
-## 11. Device selection
+## 14. Device selection
 
 `PIC18F6520` is the only variant. The build driver emits `-DPIC18F6520`;
 `pic18f6520_hal.h` defaults to it when nothing is defined.
 
-## 12. The examples
+## 15. The examples
 
 - `example_smoke`: bare harness contract (family-blind).
 - `example_blink`: Timer0 + GPIO + interrupt, RB0 toggle.
 - `example_irq`: the IRQ-core smoke test described in §6.
 - `example_timer1/2/3`: per-timer host overflow/match smokes (the §4
   gate's host-sim halves; the mdb halves run as register-readback gates).
+- `example_ccp`: CCP1/CCP3 compare programming + time-base check.
+- `example_ssp`: MSSP SPI-master programming check.
+- `example_usart`: EUSART1/2 async TX programming (BRG math) check.
 
-## 13. Known gaps and gotchas
+## 16. Known gaps and gotchas
 
 - **Umbrella header name.** The family header is `pic18f6520_hal.h`, not
   `pic18f6520.h`: the DFP proc header for this part is literally
@@ -242,15 +282,19 @@ mechanism and silently writes nowhere (see §13).
   `BOR` / `STVR` (not `BOREN` / `STVREN`) and has no `MCLRE` / `IESO` /
   `FCMEN` / `PBADEN` / `XINST` keys; see
   `mcu/pic18f6520-mplabx/README.md` for the default set.
-- **Foundation has no EUSART yet**, so the MPLAB SIM gates report PASS/FAIL
-  on the RA0 GPIO marker (`MODE=gpio`), not over UART. Phase 3 adds the
-  EUSARTs and can switch the gates to `MODE=uart`.
-- Peripherals not yet ported (CCP1-5, MSSP, EUSART1/2, ADC, comparator,
-  data EEPROM, PSP, LVD) are phases 3-4 (#184-185); Timer4 has no driver
-  in this ticket's scope (#183 covers Timer0-3 only), so its SFRs are in
-  the map but there is no TMR4 driver or header yet.
+- **Dual EUSART, eight-bit BRG only.** Both EUSART1 and EUSART2 carry
+  SPBRGx as an 8-bit baud generator (X = 0..255, DS39609B Table 18-1):
+  no BAUDCON, no SPBRGH, no BRG16/auto-baud fields on this part. The
+  `USART_ComputeSPBRG` signature therefore takes no `brg16` argument
+  (compare the 4550/2520 families).
+- Peripherals not yet ported (ADC, comparator, data EEPROM, PSP, LVD)
+  are phase 4 (#185); Timer4 has no driver yet (#183 covered Timer0-3
+  only), so its SFRs are in the map but there is no TMR4 driver or
+  header yet. The MPLAB SIM gates still report PASS/FAIL on the RA0
+  GPIO marker (`MODE=gpio`), the EUSART's mdb gate uses `uartio`
+  capture directly (see PR #203's EUSART verification).
 
-## 14. Appendix: datasheet section index
+## 17. Appendix: datasheet section index
 
 | Section | Topic        | Where covered here                |
 |---------|--------------|-----------------------------------|
@@ -261,5 +305,8 @@ mechanism and silently writes nowhere (see §13).
 | §12.0   | Timer1       | `peripherals/pic18f6520_timer1.h` |
 | §13.0   | Timer2       | `peripherals/pic18f6520_timer2.h` |
 | §14.0   | Timer3       | `peripherals/pic18f6520_timer3.h` |
+| §16.0   | CCP1-5       | `peripherals/pic18f6520_ccp.h`     |
+| §17.0   | MSSP         | `peripherals/pic18f6520_ssp.h`     |
+| §18.0   | EUSART1/2    | `peripherals/pic18f6520_usart.h`   |
 | §23.0   | Config words | `mcu/pic18f6520-mplabx/README.md` |
 | Table 1-1 | Device features | §1                            |
