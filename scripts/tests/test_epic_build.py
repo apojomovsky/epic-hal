@@ -66,6 +66,21 @@ name    = "firmware"
 sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOREN = "ON", WDT = "OFF" }
 
+[modules.epic-pic18f6520-firmware]
+dir        = "pic18f6520-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.epic-pic18f6520-firmware.supported]
+PIC18F6520 = ["18F6520"]
+
+[modules.epic-pic18f6520-firmware.example.PIC18F6520]
+name    = "firmware"
+sources = ["tests/example_blink.c"]
+config  = { OSC = "HS", BOR = "ON", WDT = "OFF" }
+
 [modules.epic-tick]
 dir        = "epic-tick"
 sources    = ["src/epic_tick.c"]
@@ -195,6 +210,16 @@ variants = ["18F2520"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 fosc_hz  = 20000000
 includes = ["pic18f2520-hal/include/target", "pic18f2520-hal/include"]
+hal_sources = ["epic-common/src/core/epic_harness_target.c"]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+epiccc_sources = ["epic-common/src/core/epic_harness_target.c"]
+
+[families.PIC18F6520]
+hal_dir  = "pic18f6520-hal"
+variants = ["18F6520"]
+dfp      = "Microchip.PIC18Fxxxx_DFP"
+fosc_hz  = 20000000
+includes = ["pic18f6520-hal/include/target", "pic18f6520-hal/include"]
 hal_sources = ["epic-common/src/core/epic_harness_target.c"]
 harness_src = "epic-common/src/core/epic_harness_target.c"
 epiccc_sources = ["epic-common/src/core/epic_harness_target.c"]
@@ -338,6 +363,23 @@ class TestEpicConfigSpecPic18F2520(unittest.TestCase):
     def test_boren_keeps_the_device_field_name(self):
         self.assertIn("boren=on", self._spec())
         self.assertNotIn("bor=on", self._spec())
+
+    def test_family_fosc_reaches_xtal_hz(self):
+        self.assertIn("xtal_hz=20000000", self._spec())
+
+
+class TestEpicConfigSpecPic18F6520(unittest.TestCase):
+    """PIC18F6520 spells its brown-out-enable config field BOR (DS39609B
+    Register 23-2), not BOREN like the 2520; the PIC18 table keeps the
+    device field name."""
+
+    def _spec(self):
+        return epic_build._epic_config_spec(
+            load(), "epic-pic18f6520-firmware", "18F6520", "target", None)
+
+    def test_bor_keeps_the_device_field_name(self):
+        self.assertIn("bor=on", self._spec())
+        self.assertNotIn("boren=on", self._spec())
 
     def test_family_fosc_reaches_xtal_hz(self):
         self.assertIn("xtal_hz=20000000", self._spec())

@@ -34,12 +34,13 @@ run_one() {
   # Args 7 (extra_mdb) and 8 (eeprom_writes) of sim-mdb-run.sh: no gate
   # here uses extra_mdb, so it stays empty and the 7th run_one arg maps
   # to the 8th runner arg (eeprom_writes), which epic-settings needs.
-  # PIC18 (pic18f2520) does not reflect a driven LATx latch back into the
-  # PORTx input register under MPSIM (verified 2026-09-14), so its gpio
-  # gate reads the latch LATA; the PIC16 families keep the PORTA default
-  # (sim-mdb-run.sh's GPIO_REG). See sim-mdb-run.sh's gpio block.
+  # PIC18 does not reflect a driven LATx latch back into the PORTx input
+  # register under MPSIM (verified on PIC18F2520 2026-09-14 and
+  # PIC18F6520 2026-09-15), so the PIC18 gpio gates read the latch LATA;
+  # the PIC16 families keep the PORTA default (sim-mdb-run.sh's GPIO_REG).
+  # See sim-mdb-run.sh's gpio block.
   local gpio_reg_env=""
-  if [ "$mode" = "gpio" ] && [ "$device" = "PIC18F2520" ]; then
+  if [ "$mode" = "gpio" ] && { [ "$device" = "PIC18F2520" ] || [ "$device" = "PIC18F6520" ]; }; then
     gpio_reg_env="GPIO_REG=LATA"
   fi
   local n pass=0
@@ -79,6 +80,7 @@ run_one pic16f87xa 16F877A PIC16F877A pic16f87xa-hal 5000 uart
 run_one pic16f7x 16F77 PIC16F77 pic16f7x-hal 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 pic18fxx5x-hal 5000 uart
 run_one pic18f2520 18F2520 PIC18F2520 pic18f2520-hal 5000 gpio
+run_one pic18f6520 18F6520 PIC18F6520 pic18f6520-hal 5000 gpio
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-pid 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-fsm 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-adcfilter 5000 uart

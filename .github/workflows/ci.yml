@@ -208,6 +208,13 @@ jobs:
   # manifest family/module, device-data audits, and the sim-gate
   # definition (ci-target-sim.sh) are wired and pass on their own.
 
+  # PIC18F6520 (epic-hal#182) is not wired into family-check.yml yet,
+  # same reason as the other two PIC18 foundation families: the
+  # scaffold step needs a consumer module, which pic18f6520-hal does
+  # not have at foundation time. The manifest family/module,
+  # device-data audits, and the sim-gate definition (ci-target-sim.sh)
+  # are wired and pass on their own.
+
   # The epic-cc conformance gate in this tree: "did a HAL change break
   # against a known good compiler". epic-cc's hal-887 job asks the reverse
   # question in its tree. Pins the driver to EPIC_CC_PIN (built from
