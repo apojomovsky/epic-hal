@@ -39,7 +39,7 @@ int main(void)
      * GO/DONE clears + ADIF sets on real hardware. */
     EPIC_ADC_Start();
 #ifndef __XC8
-    pic18_sim_drive_adc_done(0x2A8U);   /* 10-bit: 682 = 0x2AA masked. */
+    pic18_sim_drive_adc_done(0x2A8U);   /* 10-bit: 680 (0x2A8). */
     uint16_t result = EPIC_ADC_Read();
     if (result != 0x2A8U) ok = 0U;
 #else
