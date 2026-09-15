@@ -159,13 +159,14 @@ Register 9-11).
 ## 8. GPIO
 
 PORTA-G, all seven ports with PORTx/LATx/TRISx registers (DS39609B
-§10.0, Table 1-1). Writes go through LATx, reads through PORTx, direction
-in TRISx. PORTB pull-ups via INTCON2<RBPU>. TRISG implements only
-RG0-RG4 (bits 0-4; the upper bits are unimplemented, Read as 0, Table
-4-3). Like every PIC18 port, an output does not read back on PORTx (the
-pin input register), only on LATx. RB<7:4> change interrupts are
-supported through `EPIC_GPIO_RegisterChangeCallback` and the weak
-`RB_IRQHandler`.
+§10.0, Table 1-1). PORTA is 7 bits (RA0-RA6, no RA7) and PORTG is 5
+bits (RG0-RG4, no RG5-RG7); the other five ports are full 8-bit. The
+unimplemented TRISA<7> and TRISG<7:5> bits read 0 (Table 4-3). Writes
+go through LATx, reads through PORTx, direction in TRISx. PORTB
+pull-ups via INTCON2<RBPU>. Like every PIC18 port, an output does not
+read back on PORTx (the pin input register), only on LATx. RB<7:4>
+change interrupts are supported through
+`EPIC_GPIO_RegisterChangeCallback` and the weak `RB_IRQHandler`.
 
 ## 9. Timer0
 

@@ -35,6 +35,7 @@ SIM_VARIANTS = [
     ("epic-math", "18F4550"),
     ("pic16f87xa-hal", "16F877A"),
     ("pic18fxx5x-hal", "18F4550"),
+    ("pic18f6520-hal", "18F6520"),
     ("epic-pid", "18F4550"),
     ("epic-fsm", "16F877A"),
     ("epic-adcfilter", "16F877A"),

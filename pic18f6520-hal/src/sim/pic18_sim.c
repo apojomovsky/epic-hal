@@ -155,13 +155,13 @@ void pic18_sim_reset(void)
 
     /* TRIS defaults: 1 = input. All seven ports exist on the 64-pin part;
      * TRISG implements only RG0-RG4 (bits 0-4, Table 4-3). */
-    pic18_sim_sfr[PIC_REG_TRISA] = PIC_TRIS_POR_VALUE;
+    pic18_sim_sfr[PIC_REG_TRISA] = PIC_TRISA_POR_VALUE;
     pic18_sim_sfr[PIC_REG_TRISB] = PIC_TRIS_POR_VALUE;
     pic18_sim_sfr[PIC_REG_TRISC] = PIC_TRIS_POR_VALUE;
     pic18_sim_sfr[PIC_REG_TRISD] = PIC_TRIS_POR_VALUE;
     pic18_sim_sfr[PIC_REG_TRISE] = PIC_TRIS_POR_VALUE;
     pic18_sim_sfr[PIC_REG_TRISF] = PIC_TRIS_POR_VALUE;
-    pic18_sim_sfr[PIC_REG_TRISG] = PIC_TRIS_POR_VALUE;
+    pic18_sim_sfr[PIC_REG_TRISG] = PIC_TRISG_POR_VALUE;
     pic18_sim_sfr[PIC_REG_LATA] = PIC_LAT_POR_VALUE;
     pic18_sim_sfr[PIC_REG_LATB] = PIC_LAT_POR_VALUE;
     pic18_sim_sfr[PIC_REG_LATC] = PIC_LAT_POR_VALUE;

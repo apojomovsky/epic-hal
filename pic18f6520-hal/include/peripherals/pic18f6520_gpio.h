@@ -16,13 +16,15 @@
  * @brief GPIO port identifier. Matches the Cube convention where
  *        `GPIOx` selects the port (x = A..G).
  *
- * PORTA-G are all full 8-bit I/O ports on the 64-pin PIC18F6520
- * (DS39609B Table 1-1), each with PORTx/LATx/TRISx registers; TRISG
- * uses only RG0-RG4 (bits 0-4, Table 4-3) and the upper TRISG bits are
+ * PORTA-G are the seven I/O ports on the 64-pin PIC18F6520 (DS39609B
+ * Table 1-1). PORTA is 7 bits (RA0-RA6; no RA7), PORTG is 5 bits
+ * (RG0-RG4; no RG5-RG7); the rest are full 8-bit ports, each with
+ * PORTx/LATx/TRISx registers (DS39609B §10.0). TRISG uses only
+ * RG0-RG4 (bits 0-4, Table 4-3) and the upper TRISG bits are
  * unimplemented.
  */
 typedef enum {
-    GPIOA = 0,   /**< PORTA, 8 bits (RA0..RA7), DS39609B §10.0. */
+    GPIOA = 0,   /**< PORTA, 7 bits (RA0..RA6), DS39609B §10.0. */
     GPIOB = 1,   /**< PORTB, 8 bits (RB0..RB7), DS39609B §10.0. */
     GPIOC = 2,   /**< PORTC, 8 bits (RC0..RC7), DS39609B §10.0. */
     GPIOD = 3,   /**< PORTD, 8 bits (RD0..RD7), DS39609B §10.0. */

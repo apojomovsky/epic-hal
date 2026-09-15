@@ -64,7 +64,7 @@ PIC18F2520 = ["18F2520"]
 [modules.epic-pic18f2520-firmware.example.PIC18F2520]
 name    = "firmware"
 sources = ["tests/example_blink.c"]
-config  = { OSC = "HS", BOREN = "ON", WDT = "OFF" }
+config  = { OSC = "HS", BOREN = "ON", WDT = "OFF", WDTPS = "32768" }
 
 [modules.epic-pic18f6520-firmware]
 dir        = "pic18f6520-hal"
@@ -79,7 +79,7 @@ PIC18F6520 = ["18F6520"]
 [modules.epic-pic18f6520-firmware.example.PIC18F6520]
 name    = "firmware"
 sources = ["tests/example_blink.c"]
-config  = { OSC = "HS", BOR = "ON", WDT = "OFF" }
+config  = { OSC = "HS", BOR = "ON", WDT = "OFF", WDTPS = "128" }
 
 [modules.epic-tick]
 dir        = "epic-tick"
@@ -364,6 +364,13 @@ class TestEpicConfigSpecPic18F2520(unittest.TestCase):
         self.assertIn("boren=on", self._spec())
         self.assertNotIn("bor=on", self._spec())
 
+    def test_wdtps_keeps_the_numeric_device_vocabulary(self):
+        # The 2520 device TOML names WDTPS values 1..32768 without a div
+        # prefix (epic-cc resolve_config strict value matching); the
+        # 4550-family div prefix must not be applied here.
+        self.assertIn("wdtps=32768", self._spec())
+        self.assertNotIn("div", self._spec())
+
     def test_family_fosc_reaches_xtal_hz(self):
         self.assertIn("xtal_hz=20000000", self._spec())
 
@@ -380,6 +387,13 @@ class TestEpicConfigSpecPic18F6520(unittest.TestCase):
     def test_bor_keeps_the_device_field_name(self):
         self.assertIn("bor=on", self._spec())
         self.assertNotIn("boren=on", self._spec())
+
+    def test_wdtps_keeps_the_numeric_device_vocabulary(self):
+        # The 6520 device TOML names WDTPS 1..128 without a div prefix
+        # (epic-cc resolve_config strict value matching); the reviewer
+        # caught div128 being emitted for this part before the fix.
+        self.assertIn("wdtps=128", self._spec())
+        self.assertNotIn("div", self._spec())
 
     def test_family_fosc_reaches_xtal_hz(self):
         self.assertIn("xtal_hz=20000000", self._spec())

@@ -456,6 +456,11 @@
 #define PIC_IPR3_POR_VALUE       0x3FU
 #define PIC_T0CON_POR_VALUE      0xFFU
 #define PIC_TRIS_POR_VALUE       0xFFU   /* All pins inputs after POR. */
+/* TRISA and TRISG POR images carry unimplemented bits as 0, not 1:
+ * PORTA is RA0-RA6 only (bit 7 unused), PORTG is RG0-RG4 only (bits
+ * 5-7 unused); DS39609B Table 3-3 lists '-111 1111' and '--1 1111'. */
+#define PIC_TRISA_POR_VALUE      0x7FU
+#define PIC_TRISG_POR_VALUE      0x1FU
 #define PIC_LAT_POR_VALUE        0x00U   /* Output latches clear after POR. */
 #define PIC_PORT_POR_VALUE       0x00U
 
