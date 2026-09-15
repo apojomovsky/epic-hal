@@ -255,13 +255,18 @@ BANK_VARIANT_ADDRS = {
 # the constants unconditionally and guards the usage). key: mcu -> set
 # of register names to skip entirely.
 CONDITIONAL_REGS = {
+    "16F873": {"PORTD", "PORTE", "TRISD", "TRISE", "CMCON", "CVRCON"},
     "16F873A": {"PORTD", "PORTE", "TRISD", "TRISE", "PIE1", "PIR1", "PIR2"},
     "16F876A": {"PORTD", "PORTE", "TRISD", "TRISE", "PIE1", "PIR1", "PIR2"},
 }
 # On the 28-pin parts the whole PSP interrupt path is absent; the
 # PIE1/PIR1/PIR2 registers still exist, only their PSP bits are
-# conditional.
+# conditional. The non-A 873 additionally lacks the comparator/VREF
+# registers and the PIE2/PIR2 comparator bits (DPF headers).
 CONDITIONAL_BITS = {
+    "16F873": {("PIE1", "PSPIE"), ("PIR1", "PSPIF"),
+               ("PIE2", "CMIE"), ("PIR2", "CMIF"),
+               ("ADCON1", "ADCS2")},
     "16F873A": {("PIE1", "PSPIE"), ("PIR1", "PSPIF")},
     "16F876A": {("PIE1", "PSPIE"), ("PIR1", "PSPIF")},
     # 18F2455/2550 (28-pin, no SPP): the SPP registers and the SPP
