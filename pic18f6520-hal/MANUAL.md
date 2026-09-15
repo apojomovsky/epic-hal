@@ -40,7 +40,7 @@ One part, DS39609B:
 
 | Part      | Pins | Flash | RAM    | EEPROM | I/O | ADC ch | CCP |
 |-----------|------|-------|--------|--------|-----|--------|-----|
-| 18F6520   | 64   | 64 KB | 2032 B | 1 KB   | 52  | 12     | 5   |
+| 18F6520   | 64   | 32 KB | 2032 B | 1 KB   | 52  | 12     | 5   |
 
 64-pin TQFP: full PORTA-G I/O (7 ports, DS39609B Table 1-1), 12-channel
 10-bit A/D, five CCP modules, MSSP (SPI + I²C), **two** EUSARTs, a Parallel

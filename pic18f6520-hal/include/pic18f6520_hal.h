@@ -28,7 +28,7 @@
 
 /* The PIC18F6520 is the only variant; keep the size facts here rather
  * than behind a 1-way #if so they stay a single source of truth. */
-#define PIC18F6520_FAMILY_FLASH_BYTES    65536U  /**< 64 KB (DS39609B §4.0, 16384 words). */
+#define PIC18F6520_FAMILY_FLASH_BYTES    32768U  /**< 32 KB (DS39609B §4.0, 16384 words). */
 #define PIC18F6520_FAMILY_FLASH_INSTR    16384U
 #define PIC18F6520_FAMILY_RAM_BYTES      2032U   /**< 0x0010-0x07FF (DS39609B §4.0, Figure 4-6). */
 #define PIC18F6520_FAMILY_EEPROM_B       1024U   /**< 1 KB, EEADRH<1:0> (DS39609B §7.0). */
