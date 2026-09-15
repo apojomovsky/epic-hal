@@ -159,13 +159,10 @@
 #define PIC_IPR2_TMR3IP       EPIC_BIT(1)
 #define PIC_IPR2_CCP2IP       EPIC_BIT(0)
 
-/* Reset values (POR). */
-/* DS39631E Table 5-1 "Value at POR" column + Register 4-1 reset notes.
- * RCON after POR: IPEN=0, SBOREN=1, RI=0, TO=1, PD=1, POR=1, BOR=1
- * (POR/BOR set per Register 4-1 Note). IPR1/IPR2 default to all-high
- * priority. T0CON resets to 0xFF (on, 8-bit, external, no prescaler).
- * INTCON2 resets to 0xFB (RBPU=1, INTEDG0/1/2=1); INTCON3 resets to
- * 0xC0 (INT1IP/INT2IP=1, enable/flag clear). */
+/* Reset values (POR), DS39631E Table 5-1 + Register 4-1 notes. RCON
+ * POR value 0x57 (IPEN=0, SBOREN=1, TO/PD/POR/BOR set; the sim uses this
+ * image). IPR1/IPR2 default high. T0CON to 0xFF; INTCON2 to 0xFB;
+ * INTCON3 to 0xC0 (INT1/2 priority). */
 #define PIC_STATUS_POR_VALUE     0x00U
 #define PIC_BSR_POR_VALUE        0x00U
 #define PIC_RCON_POR_VALUE       0x57U

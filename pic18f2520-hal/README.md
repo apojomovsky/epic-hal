@@ -58,7 +58,8 @@ phases 2-4. This part has **no USB and no SPP** (DS39631E Table 1-1).
   dedicated IRQ-core smoke test), `example_smoke` (harness seam).
 - ✅ MPLAB SIM gate, `MODE=gpio`: no EUSART yet, so `src/mdb/pic18_harness_mdb.c`
   drives the PASS/FAIL marker on RA0 (the pic16f193x pattern), read by the
-  CI wrapper via `print PORTA`.
+  CI wrapper via the latch `LATA` (`GPIO_REG=LATA`: PIC18's driven output
+  latch does not read back on PORTx under MPSIM).
 
 **Deferred:** peripherals beyond the foundation (phases 2-4).
 

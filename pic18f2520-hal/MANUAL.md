@@ -39,7 +39,9 @@ One part, DS39631E:
 
 | Part      | Pins | Flash | RAM    | EEPROM | I/O | ADC ch | CCP/ECCP |
 |-----------|------|-------|--------|--------|-----|--------|----------|
-| 18F2520   | 28   | 32 KB | 1520 B | 256 B  | 24  | 10     | 2/0      |
+| 18F2520   | 28   | 32 KB | 1520 B | 256 B  | 24* | 10     | 2/0      |
+
+\* 24 digital I/O (PORTA/B/C); Table 1-1 counts 25 by including the input-only RE3/MCLR pin, which this HAL excludes (no LAT/TRIS for it).
 
 28-pin (PDIP/SOIC/SSOP): PORTA/B/C plus a single RE3/MCLR input (no PORTD,
 no LATE/TRISE registers), 10-channel A/D, ECCP1 + CCP2, MSSP (SPI + I²C),
