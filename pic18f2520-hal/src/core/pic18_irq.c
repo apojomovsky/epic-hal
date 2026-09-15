@@ -39,13 +39,16 @@ uint8_t EPIC_IRQ_Disable(void)
  */
 void EPIC_IRQ_Restore(uint8_t prev_state)
 {
-    if (prev_state) {
+    if (prev_state)
+    {
         /* Activate the two-vector priority scheme (DS39631E §9.0, RCON<7>)
          * before enabling the masters, so high/low routing is in effect. */
         SFR_SET_BIT(PIC_REG_RCON, PIC_RCON_IPEN);
         SFR_SET_BIT(PIC_REG_INTCON, PIC_INTCON_GIEH);
         SFR_SET_BIT(PIC_REG_INTCON, PIC_INTCON_GIEL);
-    } else {
+    }
+    else
+    {
         SFR_CLR_BIT(PIC_REG_INTCON, PIC_INTCON_GIEH);
         SFR_CLR_BIT(PIC_REG_INTCON, PIC_INTCON_GIEL);
     }
@@ -60,7 +63,8 @@ void EPIC_IRQ_Restore(uint8_t prev_state)
  */
 void EPIC_IRQ_Enable(PIC18_IRQn irq)
 {
-    switch (irq) {
+    switch (irq)
+    {
     case PIC18_IRQ_INT0:     SFR_SET_BIT(PIC_REG_INTCON,  PIC_INTCON_INT0IE);  break;
     case PIC18_IRQ_INT1:     SFR_SET_BIT(PIC_REG_INTCON3, PIC_INTCON3_INT1IE); break;
     case PIC18_IRQ_INT2:     SFR_SET_BIT(PIC_REG_INTCON3, PIC_INTCON3_INT2IE); break;
@@ -88,7 +92,8 @@ void EPIC_IRQ_Enable(PIC18_IRQn irq)
  */
 void EPIC_IRQ_DisableSrc(PIC18_IRQn irq)
 {
-    switch (irq) {
+    switch (irq)
+    {
     case PIC18_IRQ_INT0:     SFR_CLR_BIT(PIC_REG_INTCON,  PIC_INTCON_INT0IE);  break;
     case PIC18_IRQ_INT1:     SFR_CLR_BIT(PIC_REG_INTCON3, PIC_INTCON3_INT1IE); break;
     case PIC18_IRQ_INT2:     SFR_CLR_BIT(PIC_REG_INTCON3, PIC_INTCON3_INT2IE); break;
@@ -117,7 +122,8 @@ void EPIC_IRQ_DisableSrc(PIC18_IRQn irq)
  */
 void EPIC_IRQ_ClearFlag(PIC18_IRQn irq)
 {
-    switch (irq) {
+    switch (irq)
+    {
     case PIC18_IRQ_INT0:     SFR_CLR_BIT(PIC_REG_INTCON,  PIC_INTCON_INT0IF);  break;
     case PIC18_IRQ_INT1:     SFR_CLR_BIT(PIC_REG_INTCON3, PIC_INTCON3_INT1IF); break;
     case PIC18_IRQ_INT2:     SFR_CLR_BIT(PIC_REG_INTCON3, PIC_INTCON3_INT2IF); break;
@@ -145,7 +151,8 @@ void EPIC_IRQ_ClearFlag(PIC18_IRQn irq)
  */
 uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq)
 {
-    switch (irq) {
+    switch (irq)
+    {
     case PIC18_IRQ_INT0:     return (epic_sfr_read8(PIC_REG_INTCON)  & PIC_INTCON_INT0IF)  ? 1U : 0U;
     case PIC18_IRQ_INT1:     return (epic_sfr_read8(PIC_REG_INTCON3) & PIC_INTCON3_INT1IF) ? 1U : 0U;
     case PIC18_IRQ_INT2:     return (epic_sfr_read8(PIC_REG_INTCON3) & PIC_INTCON3_INT2IF) ? 1U : 0U;
@@ -178,7 +185,8 @@ uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq)
 void EPIC_IRQ_SetPriority(PIC18_IRQn irq, EPIC_IRQ_Priority prio)
 {
     uint8_t high = (prio == EPIC_IRQ_PRIORITY_HIGH) ? 1U : 0U;
-    switch (irq) {
+    switch (irq)
+    {
     case PIC18_IRQ_INT0:     break; /* always high, no bit to set. */
     case PIC18_IRQ_INT1:
         if (high) SFR_SET_BIT(PIC_REG_INTCON3, PIC_INTCON3_INT1IP);

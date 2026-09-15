@@ -46,7 +46,8 @@ static void on_t0_overflow(void)
 {
     EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
     g_toggle_count++;
-    if (g_toggle_count >= 2U) {
+    if (g_toggle_count >= 2U)
+    {
         EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
     }
 }
@@ -92,7 +93,8 @@ int main(void)
         (epic_sfr_read8(PIC_REG_T0CON)  & PIC_T0CON_TMR0ON)  ? 1U : 0U;
 
     /* 5. Let time pass; the ISR toggles RB0 and bumps the count. */
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
         if (g_toggle_count >= 2U) break;
     }

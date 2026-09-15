@@ -36,7 +36,8 @@ int main(void)
      * mdb gate proves GO clears + ADIF sets. */
     EPIC_ADC_Start();
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
 

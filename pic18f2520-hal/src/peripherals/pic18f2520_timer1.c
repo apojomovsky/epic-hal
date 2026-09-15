@@ -73,9 +73,12 @@ EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
 
     /* Configure the overflow interrupt. */
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR1);
-    if (h->OverflowCallback) {
+    if (h->OverflowCallback)
+    {
         EPIC_IRQ_Enable(PIC18_IRQ_TMR1);
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR1);
     }
 
@@ -154,7 +157,8 @@ void TIMER1_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC18_IRQ_TMR1)) return;
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR1);
-    if (g_t1_handle && g_t1_handle->OverflowCallback) {
+    if (g_t1_handle && g_t1_handle->OverflowCallback)
+    {
         g_t1_handle->OverflowCallback();
     }
 }

@@ -84,7 +84,14 @@ symlinks, or skip them for one commit with `git commit --no-verify`.
    one of those files. Not auto-fixed (picking a comma vs. a colon vs. a
    period needs a human), the commit is blocked with the offending
    `file:line`.
-3. **`cppcheck`** on staged `.c` files (`--enable=warning,performance,
+3. **Allman brace style.** The opening brace of a block (function or
+   control statement) must own its line: `if (x) {` and
+   `void f(void) {` are violations, `if (x)\n{` is the house form.
+   Scoped like the em-dash rule to lines a commit *adds*, so pre-existing
+   style in files an unrelated commit touches never blocks it. The
+   checker (`scripts/brace-style-check.sh`) is a hard gate: the commit is
+   blocked with `file:line` hits.
+4. **`cppcheck`** on staged `.c` files (`--enable=warning,performance,
    portability`), a real static-analysis gate (uninitialized variables,
    null derefs, etc.), not a style check. `unusedFunction` and
    `missingInclude`/`missingIncludeSystem` are suppressed: cppcheck
@@ -94,26 +101,20 @@ symlinks, or skip them for one commit with `git commit --no-verify`.
    module as dead code. Skipped with a notice if `cppcheck` isn't
    installed.
 
-### What it deliberately does not check yet: `clang-format`
+### Brace style and `clang-format`
 
-A starter `.clang-format` is in the repo root, but it is **not** wired
-into the hook. Tested against a real file (`epic-pid/src/pid.c`) before
-deciding this: even a style hand-picked to match this codebase's actual
-conventions (4-space indent, `Stroustrup` brace style: own-line brace for
-functions, attached brace for `if`/`while`/`else`) still reformatted
-things this codebase does deliberately, aligned `struct` field/assignment
-comments into columns, single-line `if (x) { y; }` clamp idioms expanded
-across multiple lines, `} else {` split onto two lines. That is real
-diff noise on files nobody actually changed the meaning of, not a bug in
-the config, clang-format does not have a "match this file's existing
-hand-tuned alignment" mode.
+The enforceable house rule is Allman (**Microsoft**) braces, checked by
+`scripts/brace-style-check.sh` on added lines: an opening brace owns its
+line. The gate lives in three places so it cannot be skipped: the
+pre-commit hook (above), CI's pre-commit-checks job, and the
+`epic-tasks takeoff` ritual via the shared takeoff gate.
 
-If you want to use it anyway for a specific file, `git clang-format
---diff` shows what would change without applying it, and only considers
-lines your commit touches, not the whole file. Tightening `.clang-format`
-enough to stop fighting this codebase's style (or deciding to reformat
-the codebase once and live with the new style going forward) is future
-work, not done here.
+`.clang-format` (repo root) pins the same Allman style, but it is not
+wired into a formatter pass: clang-format would also churn pre-existing
+code that followed the older attached-brace habit, producing diff noise
+on files nobody changed the meaning of. For a manual look at what a file
+would look like formatted, `git clang-format --diff` shows the delta
+without applying it.
 
 ### Manual run
 

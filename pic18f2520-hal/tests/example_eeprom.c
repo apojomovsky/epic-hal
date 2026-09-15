@@ -29,7 +29,8 @@ int main(void)
 #endif
     uint8_t r = EPIC_EEPROM_ReadByte(0x42U);
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
 

@@ -44,7 +44,8 @@ int main(void)
     if (!(stat & PIC_SSPSTAT_CKE)) ok = 0U;
     if (stat & PIC_SSPSTAT_SMP) ok = 0U;
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
 

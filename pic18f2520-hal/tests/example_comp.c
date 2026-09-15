@@ -27,7 +27,8 @@ int main(void)
     uint8_t cmcon = epic_sfr_read8(PIC_REG_CMCON);
     if ((cmcon & PIC_CMCON_CM_MASK) != COMP_MODE_TWO_INDEP) ok = 0U;
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
 

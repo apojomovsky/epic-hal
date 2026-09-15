@@ -81,7 +81,8 @@ static uint8_t pss_encode(CCP_PinStateTypeDef s)
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
-    if (h->Instance != CCP_INSTANCE_1 && h->Instance != CCP_INSTANCE_2) {
+    if (h->Instance != CCP_INSTANCE_1 && h->Instance != CCP_INSTANCE_2)
+    {
         return EPIC_INVALID;
     }
     g_ccp_storage[h->Instance] = *h;
@@ -89,13 +90,17 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 
     /* Clear/rearm the IRQ before reconfiguring. */
     EPIC_IRQ_ClearFlag(ccp_irq(h->Instance));
-    if (h->EventCallback) {
+    if (h->EventCallback)
+    {
         EPIC_IRQ_Enable(ccp_irq(h->Instance));
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(ccp_irq(h->Instance));
     }
 
-    if (h->Mode == CCP_MODE_PWM) {
+    if (h->Mode == CCP_MODE_PWM)
+    {
         /* DS39631E §15.4.3 step 2: set the PWM duty BEFORE enabling PWM.
          * 10-bit duty: CCPRxL = duty[9:2], CCPxCON<5:4> = duty[1:0].
          * No P1M on the 2520: single P1A output always. */
@@ -105,7 +110,9 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
         CCP_WRITE_CPRL(h->Instance, duty >> 2);
         CCP_WRITE_CPRH(h->Instance, 0U);
         CCP_WRITE_CON(h->Instance, con);
-    } else {
+    }
+    else
+    {
         /* Capture / compare: write the 16-bit value then enable mode. */
         CCP_WRITE_CPRH(h->Instance, h->CompareValue >> 8);
         CCP_WRITE_CPRL(h->Instance, h->CompareValue & 0xFFU);
@@ -114,10 +121,14 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 
     /* ECCP1-only: auto-shutdown (ECCP1AS) + auto-restart (PRSEN).
      * No PDC, no PSSBD on the 2520. CCP2 has neither; skip. */
-    if (h->Instance == CCP_INSTANCE_1) {
-        if (h->AutoShutdown.AutoRestart) {
+    if (h->Instance == CCP_INSTANCE_1)
+    {
+        if (h->AutoShutdown.AutoRestart)
+        {
             EPIC_BIT_SET(EPIC_REG8(PIC_REG_PWM1CON), PIC_PWM1CON_PRSEN);
-        } else {
+        }
+        else
+        {
             EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PWM1CON), PIC_PWM1CON_PRSEN);
         }
         /* ECCP1AS: ECCPASE (bit 7, status, left 0) | source[6:4] |
@@ -143,7 +154,8 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
     EPIC_IRQ_DisableSrc(ccp_irq(inst));
     EPIC_IRQ_ClearFlag(ccp_irq(inst));
     CCP_WRITE_CON(inst, PIC_CCPxCON_POR_VALUE);
-    if (inst == CCP_INSTANCE_1) {
+    if (inst == CCP_INSTANCE_1)
+    {
         EPIC_REG8(PIC_REG_PWM1CON) = PIC_PWM1CON_POR_VALUE;
         EPIC_REG8(PIC_REG_ECCP1AS) = PIC_ECCP1AS_POR_VALUE;
     }
@@ -231,9 +243,12 @@ void EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
                                 bool auto_restart)
 {
     if (inst != CCP_INSTANCE_1) return;     /* ECCP1 only */
-    if (auto_restart) {
+    if (auto_restart)
+    {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_PWM1CON), PIC_PWM1CON_PRSEN);
-    } else {
+    }
+    else
+    {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PWM1CON), PIC_PWM1CON_PRSEN);
     }
     /* Preserve ECCPASE (status); reprogram source + PSSAC. */
@@ -275,7 +290,8 @@ void CCP1_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
     if (g_ccp_handles[CCP_INSTANCE_1] &&
-        g_ccp_handles[CCP_INSTANCE_1]->EventCallback) {
+        g_ccp_handles[CCP_INSTANCE_1]->EventCallback)
+    {
         g_ccp_handles[CCP_INSTANCE_1]->EventCallback();
     }
 }
@@ -288,7 +304,8 @@ void CCP2_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
     if (g_ccp_handles[CCP_INSTANCE_2] &&
-        g_ccp_handles[CCP_INSTANCE_2]->EventCallback) {
+        g_ccp_handles[CCP_INSTANCE_2]->EventCallback)
+    {
         g_ccp_handles[CCP_INSTANCE_2]->EventCallback();
     }
 }

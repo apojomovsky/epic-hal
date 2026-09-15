@@ -16,7 +16,8 @@
  */
 static uint16_t tris_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_TRISA;
         case GPIOB: return PIC_REG_TRISB;
         case GPIOC: return PIC_REG_TRISC;
@@ -31,7 +32,8 @@ static uint16_t tris_addr(GPIO_TypeDef port)
  */
 static uint16_t lat_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_LATA;
         case GPIOB: return PIC_REG_LATB;
         case GPIOC: return PIC_REG_LATC;
@@ -46,7 +48,8 @@ static uint16_t lat_addr(GPIO_TypeDef port)
  */
 static uint16_t port_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_PORTA;
         case GPIOB: return PIC_REG_PORTB;
         case GPIOC: return PIC_REG_PORTC;
@@ -65,10 +68,13 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     uint8_t mask = (uint8_t)pins;
     uint16_t tr = tris_addr(port);
 
-    if (mode == GPIO_MODE_OUTPUT) {
+    if (mode == GPIO_MODE_OUTPUT)
+    {
         uint8_t t = EPIC_REG8(tr);
         EPIC_REG8(tr) = (uint8_t)(t & (uint8_t)~mask);
-    } else {
+    }
+    else
+    {
         uint8_t t = EPIC_REG8(tr);
         EPIC_REG8(tr) = (uint8_t)(t | mask);
     }
@@ -152,9 +158,12 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port)
  */
 void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 {
-    if (pull == GPIO_PULLUP) {
+    if (pull == GPIO_PULLUP)
+    {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON2), PIC_INTCON2_RBPU);
-    } else {
+    }
+    else
+    {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON2), PIC_INTCON2_RBPU);
     }
 }

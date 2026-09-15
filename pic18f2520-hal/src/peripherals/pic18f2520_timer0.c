@@ -44,16 +44,22 @@ EPIC_StatusTypeDef EPIC_TIMER0_Init(const TIMER0_HandleTypeDef *h)
 
     /* Clear TMR0IF; configure TMR0IE if a callback is provided. */
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR0);
-    if (h->OverflowCallback) {
+    if (h->OverflowCallback)
+    {
         EPIC_IRQ_Enable(PIC18_IRQ_TMR0);
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(PIC18_IRQ_TMR0);
     }
 
     /* Set the 8/16-bit mode bit (T0CON<T08BIT>). */
-    if (h->Mode == TIMER0_BITMODE_8BIT) {
+    if (h->Mode == TIMER0_BITMODE_8BIT)
+    {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_T0CON), PIC_T0CON_T08BIT);
-    } else {
+    }
+    else
+    {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_T0CON), PIC_T0CON_T08BIT);
     }
 
@@ -92,7 +98,8 @@ EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)
     /* Load the counter. In 8-bit mode only TMR0L is used; in 16-bit mode
      * TMR0H is the high byte (DS39631E §11.0). */
     EPIC_REG8(PIC_REG_TMR0L) = h->ReloadValue;
-    if (h->Mode == TIMER0_BITMODE_16BIT) {
+    if (h->Mode == TIMER0_BITMODE_16BIT)
+    {
         EPIC_REG8(PIC_REG_TMR0H) = 0x00U;
     }
 
@@ -165,7 +172,8 @@ void TIMER0_IRQHandler(void)
 {
     if (!EPIC_IRQ_GetFlag(PIC18_IRQ_TMR0)) return;
     EPIC_IRQ_ClearFlag(PIC18_IRQ_TMR0);
-    if (g_t0_handle && g_t0_handle->OverflowCallback) {
+    if (g_t0_handle && g_t0_handle->OverflowCallback)
+    {
         g_t0_handle->OverflowCallback();
     }
 }
