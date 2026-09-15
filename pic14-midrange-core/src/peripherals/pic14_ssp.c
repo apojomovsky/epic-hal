@@ -296,9 +296,9 @@ void EPIC_SSP_ClearWriteCollision(void)
     EPIC_REG8(0x14U) &= (uint8_t)~PIC_SSPCON_WCOL;
 }
 
-/* I2C master helpers: SPI-only parts (PIC16F7x) have no SSPCON2, so
- * these compile out entirely on them. */
-
+/* I2C master helpers: compile out when the family shim has no modeled
+ * SSPCON2 (PIC16F7x, HAS_SSPCON2=0, the SPI-only DS30325 half plus the
+ * DS30498 half's unmodeled I2C surface). */
 #if PIC14MIDRANGE_HAS_SSPCON2
 /**
  * @brief Issue a Start condition (SSPCON2<SEN>).

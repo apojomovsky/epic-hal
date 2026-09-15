@@ -11,10 +11,14 @@
 #include "pic14_midrange.h"
 #include "pic14_midrange_sfr.h"
 
-/* The 87XA and 88X MSSP carry the I2C-master SSPCON2 register (0x91);
- * the PIC16F7x family's MSSP is SPI-only and does not. Default to 1 so
- * existing families keep the I2C master helpers; the 7x shim overrides
- * this to 0, which compiles out SSPCON2 and the I2C master functions. */
+/* The 87XA and 88X MSSP carry the I2C-master SSPCON2 register (0x91).
+ * The PIC16F7x family's modeled SSP surface is SPI-only: its DS30325
+ * half (16F72-77) genuinely has no SSPCON2, and the DS30498 half
+ * (16F737/747/767/777) does carry one but its I2C-master surface is not
+ * modeled here (no-new-drivers scope). Default to 1 so existing
+ * families keep the I2C master helpers; the 7x shim overrides this to
+ * 0, which compiles out SSPCON2 and the I2C master functions for the
+ * modeled SPI surface. */
 #ifndef PIC14MIDRANGE_HAS_SSPCON2
 #define PIC14MIDRANGE_HAS_SSPCON2 1
 #endif

@@ -15,9 +15,14 @@
 #define PIC14MIDRANGE_HAS_PIR2 PIC16F7X_FAMILY_HAS_PIR2
 #define PIC14MIDRANGE_HAS_SSP PIC16F7X_FAMILY_HAS_SSP
 #define PIC14MIDRANGE_HAS_SSPMSK 0
-/* The 16F77 MSSP is SPI-only: it has no SSPCON2 register (DFP-
- * verified), unlike the 87XA/88X. The shared SSP driver compiles out
- * its I2C-master helpers (Start/Stop/ACK/Receive) under this guard. */
+/* The 7x family spans two SSP shapes. The DS30325 parts (16F72-77,
+ * including the 16F77 exemplar) have an SPI-only MSSP with no SSPCON2
+ * register (DFP-verified: no SSPCON2 in those parts' DFP headers). The
+ * DS30498 parts (16F737/747/767/777) do carry SSPCON2 at 0x91, but
+ * that I2C-master surface is not modeled here (no-new-drivers scope),
+ * so the whole family keeps HAS_SSPCON2 0 to compile out the shared
+ * I2C-master helpers (Start/Stop/ACK/Receive) for the modeled SPI
+ * surface. */
 #define PIC14MIDRANGE_HAS_SSPCON2 0
 #define PIC14MIDRANGE_HAS_ADC 1
 #define PIC14MIDRANGE_HAS_ADC_PCFG 0
