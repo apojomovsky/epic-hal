@@ -22,6 +22,7 @@ FAMILIES = {
     "pic16f87xa-hal": (
         "pic16f87xa-hal/include/pic16f87xa_sfr.h",
         [
+            ("16F873", "Microchip.PIC16Fxxx_DFP", "pic16f873.h"),
             ("16F873A", "Microchip.PIC16Fxxx_DFP", "pic16f873a.h"),
             ("16F874A", "Microchip.PIC16Fxxx_DFP", "pic16f874a.h"),
             ("16F876A", "Microchip.PIC16Fxxx_DFP", "pic16f876a.h"),
