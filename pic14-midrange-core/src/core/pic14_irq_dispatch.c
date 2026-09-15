@@ -208,7 +208,7 @@ void epic_dispatch_all_irqs(void)
 #if PIC14MIDRANGE_HAS_OSF
     if (pir2 & PIC_PIR2_OSFIF) OSF_IRQHandler();
 #endif
-#elif PIC14MIDRANGE_HAS_CM_PIR2
+#elif PIC14MIDRANGE_HAS_CM_PIR2 && PIC14MIDRANGE_HAS_COMP
     if (pir2 & PIC_PIR2_CMIF)   COMP_IRQHandler();
 #endif
 #endif
