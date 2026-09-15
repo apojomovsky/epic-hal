@@ -25,6 +25,19 @@ fail=0
 
 run_one() {
   family="$1"; mcu="$2"; device="$3"; module="$4"; wait_ms="$5"; mode="$6"; eeprom_writes="${7:-}"
+  # Per-call toggle-gate overrides: TOGGLE_REG / TOGGLE_STEPI. The
+  # global TOGGLE_REG=LATB export above serves the PIC18F1320 gate; a
+  # family whose gate must sample a different register or step size
+  # overrides it here (arg 8 = TOGGLE_REG, arg 9 = TOGGLE_STEPI).
+  tog_reg="${8:-}"
+  tog_stepi="${9:-}"
+  local tog_env=""
+  if [ "$mode" = "toggle" ] && [ -n "$tog_reg" ]; then
+    tog_env="TOGGLE_REG=${tog_reg}"
+    if [ -n "$tog_stepi" ]; then
+      tog_env="${tog_env} TOGGLE_STEPI=${tog_stepi}"
+    fi
+  fi
   # The manifest family names (PIC16F87XA etc.) are uppercase; the
   # run_one labels below are lowercase, so compare case-insensitively.
   [ -z "$family_filter" ] \
@@ -45,7 +58,13 @@ run_one() {
   fi
   local n pass=0
   for n in $(seq 1 "$repeat"); do
-    if [ -n "$gpio_reg_env" ]; then
+    if [ -n "$tog_env" ]; then
+      if env $tog_env scripts/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
+        pass=$((pass + 1))
+      else
+        echo "FAIL (run ${n}/${repeat}): ${family} ${mcu} ${module}"
+      fi
+    elif [ -n "$gpio_reg_env" ]; then
       if env "$gpio_reg_env" scripts/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
         pass=$((pass + 1))
       else
@@ -122,6 +141,14 @@ run_one pic16f88x 16F887 PIC16F887 epic-debounce 5000 uart
 run_one pic16f628a 16F628A PIC16F628A pic16f628a-hal 15000 uart
 run_one pic16f83_84 16F84A PIC16F84A pic16f83_84-hal 5000 gpio
 run_one pic16f63x_67x_68x 16F677 PIC16F677 pic16f63x_67x_68x-hal 15000 gpio
+# MODE=toggle on PORTB bit 0 with a 50000-instruction sample step.
+# The blink's toggle period is ~50000 steps at 4 MHz (Timer0 Fosc/4,
+# 1:256 prescaler, reload 0: 65536 instr per overflow, one toggle per
+# overflow), so 50000 alternates; the 200000 default aliases to a
+# constant phase (verified 2026-09-15) and would fail the gate.
+# TOGGLE_REG=PORTB overrides the script-wide LATB export (that export
+# exists for PIC18F1320, whose simulated PORTB does not mirror LATB).
+run_one pic16f5x 16F54 PIC16F54 pic16f5x-hal 5000 toggle "" PORTB 50000
 run_one pic18f1320 18F1320 PIC18F1320 pic18f1320-hal 2000 toggle
 fi
 
