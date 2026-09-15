@@ -432,6 +432,38 @@ variants = [
   "18F4550",
 ]
 
+# Family B phase 1 (epic-hal#178, umbrella #150): the smallest of the
+# three new PIC18 families, 18-pin package, forked from PIC18Fxx5x
+# (same Access Bank addressing and two-vector interrupt model, confirmed
+# against both parts' device TOMLs in epic-cc). No USB, no MSSP, single
+# ECCP1 (no CCP2), no comparator: confirmed absent from the DFP header,
+# not assumed. Foundation only: GPIO + Timer0 + IRQ backend; Timer1-3
+# (#179), ECCP1/USART (#180) and ADC/EEPROM (#181) grow this list.
+[families.PIC18F1320]
+hal_dir  = "pic18f1320-hal"
+variants = [
+  "18F1320",
+]
+dfp      = "Microchip.PIC18Fxxxx_DFP"
+dfp_version = "1.7.171"
+fosc_hz  = 20000000
+includes = [
+  "pic18f1320-hal/include/target",
+  "pic18f1320-hal/include",
+  "epic-common/include",
+]
+hal_sources = [
+  "pic18f1320-hal/src/peripherals/pic18f1320_gpio.c",
+  "pic18f1320-hal/src/peripherals/pic18f1320_timer0.c",
+  "pic18f1320-hal/src/core/pic18_irq.c",
+  "pic18f1320-hal/src/core/pic18_irq_dispatch.c",
+  "pic18f1320-hal/src/target/pic18_isr_vector.c",
+  "pic18f1320-hal/src/core/pic18f1320_wdt_sleep.c",
+  "pic18f1320-hal/src/target/pic18f1320_wdt_sleep_target.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+
 # PIC16F193X has no higher-level modules yet (out of scope for the
 # distribution work), so nothing else exercises its family HAL. This
 # module is the family's own
@@ -775,6 +807,41 @@ sources     = [
   "tests/sim_gpio_probe.c",
 ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# pic18f1320-hal's own manifest slot (family B phase 1, epic-hal#178),
+# mirroring pic18fxx5x-hal's pseudo-module shape. Config field set is
+# smaller than PIC18Fxx5x's (no USB/CCP2/PBADEN/LPT1OSC/EBTR2/CP2/WRT2
+# fields, confirmed against the DFP's 18f1320.cfgmap) and STVR replaces
+# STVREN (both DS39605F Register 26-1's own spelling).
+[modules.pic18f1320-hal]
+dir        = "pic18f1320-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.pic18f1320-hal.supported]
+PIC18F1320 = [
+  "18F1320",
+]
+
+[modules.pic18f1320-hal.example.PIC18F1320]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "OFF", BORV = "27", CP0 = "OFF", CP1 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", PWRT = "ON", STVR = "ON", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Gated via MODE=toggle (watches LATB, see ci-target-sim.sh), not
+# MODE=gpio; harness_src stays the family default, see
+# tests/example_timer0_irq.c's header comment.
+[modules.pic18f1320-hal.example.PIC18F1320.sim]
+name        = "timer0-irq"
+harness_src = "epic-common/src/core/epic_harness_target.c"
+sources     = [
+  "tests/example_timer0_irq.c",
+]
+config      = { BOR = "OFF", BORV = "27", CP0 = "OFF", CP1 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 [modules.epic-combo-uart-ssp]
 dir        = "tests/epic-combo-uart-ssp"

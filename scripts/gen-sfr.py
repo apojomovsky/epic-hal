@@ -57,6 +57,15 @@ CANONICAL = {
     "PIC16F193X": "16F1937",
 }
 
+# Families whose family-check.yml job calls this script but whose SFR
+# header the generator does not yet cover: pic18f1320-hal's foundation
+# header (epic-hal#178) is a deliberate register subset (grows per
+# ticket, #179-181), so a full-family generation would always drift
+# against it. Accepted as a --family value and skipped with a note
+# rather than rejected, so the shared family-check.yml job the manifest
+# wires in still runs its other audits for this family.
+UNGENERATED = ("PIC18F1320",)
+
 # Map HAL register name (without PIC_REG_) to EDC cname, where they differ.
 # Mirrors sfr-map-audit.py REG_ALIASES.
 REG_ALIASES = {
@@ -224,7 +233,8 @@ def generate_for_family(family: str, edc_override: pathlib.Path | None, dfp_dir:
 
 def main():
     ap = argparse.ArgumentParser(description="Generate per-family SFR headers from EDC (ATDF)")
-    ap.add_argument("--family", choices=list(CANONICAL.keys()), help="only this family")
+    ap.add_argument("--family", choices=list(CANONICAL.keys()) + list(UNGENERATED),
+                    help="only this family")
     ap.add_argument("--check", action="store_true", help="fail if committed file differs from generated")
     ap.add_argument("--edc", type=pathlib.Path, help="override EDC .PIC path for single family")
     ap.add_argument("--dfp-dir", type=pathlib.Path, help="override DFP dir for EDC lookup")
@@ -235,6 +245,9 @@ def main():
         sys.exit("gen-sfr: --edc requires --family")
     failed = False
     for fam in families:
+        if fam in UNGENERATED:
+            print(f"gen-sfr: {fam} has no generator support yet, skipping")
+            continue
         edc_override = args.edc if args.edc else None
         header_path = hal_header_path(fam)
         generated = generate_for_family(fam, edc_override, args.dfp_dir)
