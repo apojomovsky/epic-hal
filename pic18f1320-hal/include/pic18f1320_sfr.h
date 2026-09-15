@@ -70,6 +70,27 @@
 #define PIC_REG_TMR3L         0xFB2U   /**< Timer3 low byte.                          */
 #define PIC_REG_TMR3H         0xFB3U   /**< Timer3 high byte.                         */
 
+/* Enhanced Capture/Compare/PWM (ECCP1), DS39605F §15.0, Register 15-1/15-2/15-3.
+ * Enhanced ECCP1 (P1M multi-output + auto-shutdown), same shape as 4550's
+ * ECCP1; no CCP2 on this part, so only the single CCP1CON/CCPR1 pair. */
+#define PIC_REG_ECCPAS        0xFB6U   /**< ECCP1 auto-shutdown control/status.    */
+#define PIC_REG_PWM1CON       0xFB7U   /**< ECCP1 PWM config (PDC dead-band, PRSEN). */
+#define PIC_REG_CCP1CON       0xFBDU   /**< ECCP1 control (P1M/DC1B/CCP1M).         */
+#define PIC_REG_CCPR1L        0xFBEU   /**< ECCP1 low byte (capture/compare/PWM LSBs). */
+#define PIC_REG_CCPR1H        0xFBFU   /**< ECCP1 high byte.                       */
+
+/* EUSART, DS39605F §16.0. RCSTA/TXSTA/TXREG/RCREG/SPBRG/SPBRGH share the
+ * 4550 shape; the baud control register is BAUDCTL (0xFAA, DS39605F
+ * Register 16-3), not BAUDCON, and BAUDCTL has no ABDOVF bit (bit 7 is
+ * unimplemented on this part, confirmed in Register 16-3 and the DFP). */
+#define PIC_REG_BAUDCTL       0xFAAU   /**< EUSART baud-rate control (BRG16/ABDEN/WUE/...). */
+#define PIC_REG_RCSTA         0xFABU   /**< EUSART receive control/status.        */
+#define PIC_REG_TXSTA         0xFACU   /**< EUSART transmit control/status.        */
+#define PIC_REG_TXREG         0xFADU   /**< EUSART transmit data.                 */
+#define PIC_REG_RCREG         0xFAEU   /**< EUSART receive data.                  */
+#define PIC_REG_SPBRG         0xFAFU   /**< EUSART baud-rate divisor, low byte.    */
+#define PIC_REG_SPBRGH        0xFB0U   /**< EUSART baud-rate divisor, high byte (BRG16=1). */
+
 /* STATUS bits (Register 5-2). */
 #define PIC_STATUS_N          EPIC_BIT(4)   /**< Negative / borrow complement. */
 #define PIC_STATUS_OV         EPIC_BIT(3)   /**< Overflow.                     */
@@ -174,6 +195,49 @@
 #define PIC_T3CON_TMR3ON      EPIC_BIT(0)   /**< Timer3 on/off.                  */
 #define PIC_T3CON_POR_VALUE   0x00U         /**< Power-on reset value.           */
 
+/* CCP1CON (ECCP1) bits, DS39605F Register 15-1. */
+#define PIC_CCP1_P1M_MASK     0xC0U    /**< P1M1:P1M0 at bits 7:6 (output mode). */
+#define PIC_CCP1_DC1B_MASK    0x30U    /**< DC1B1:DC1B0 at bits 5:4 (duty LSBs). */
+#define PIC_CCP1_M_MASK       0x0FU    /**< CCP1M3:CCP1M0 at bits 3:0 (mode).    */
+#define PIC_CCP1CON_POR_VALUE 0x00U
+
+/* PWM1CON bits, DS39605F Register 15-2 (the 1320's ECCP1 dead-band +
+ * auto-restart register, named PWM1CON not ECCP1DEL). */
+#define PIC_PWM1CON_PRSEN     EPIC_BIT(7)  /**< PWM restart enable (auto-restart). */
+#define PIC_PWM1CON_PDC_MASK  0x7FU        /**< PDC6:PDC0, dead-band delay (6:0).  */
+#define PIC_PWM1CON_POR_VALUE 0x00U
+
+/* ECCPAS bits, DS39605F Register 15-3. */
+#define PIC_ECCPAS_ECCPASE    EPIC_BIT(7)  /**< Auto-shutdown event status (RO once active). */
+#define PIC_ECCPAS_SRC_MASK   0x70U        /**< ECCPAS2:ECCPAS0 at bits 6:4 (source). */
+#define PIC_ECCPAS_PSSAC_MASK 0x0CU        /**< PSSAC1:PSSAC0 at bits 3:2 (P1A/P1C state). */
+#define PIC_ECCPAS_PSSBD_MASK 0x03U        /**< PSSBD1:PSSBD0 at bits 1:0 (P1B/P1D state). */
+#define PIC_ECCPAS_POR_VALUE  0x00U
+
+/* EUSART bits (Registers 16-1 / 16-2 / 16-3), same layout as pic18fxx5x
+ * (the shared PIC_TXSTA_* / PIC_RCSTA_* names resolve). BAUDCTL has no
+ * ABDOVF bit on this part (Register 16-3, bit 7 unimplemented). */
+#define PIC_TXSTA_TX9D         EPIC_BIT(0)  /**< 9th bit of TX data.                  */
+#define PIC_TXSTA_TRMT         EPIC_BIT(1)  /**< TSR empty (read-only).               */
+#define PIC_TXSTA_BRGH         EPIC_BIT(2)  /**< High baud rate.                      */
+#define PIC_TXSTA_SYNC         EPIC_BIT(4)  /**< Sync mode.                           */
+#define PIC_TXSTA_TXEN         EPIC_BIT(5)  /**< TX enable.                           */
+#define PIC_TXSTA_TX9          EPIC_BIT(6)  /**< 9-bit TX.                            */
+#define PIC_TXSTA_CSRC         EPIC_BIT(7)  /**< Clock source (sync).                 */
+#define PIC_RCSTA_RX9D         EPIC_BIT(0)  /**< 9th bit of RX data.                  */
+#define PIC_RCSTA_OERR         EPIC_BIT(1)  /**< Overrun error.                       */
+#define PIC_RCSTA_FERR         EPIC_BIT(2)  /**< Framing error.                       */
+#define PIC_RCSTA_ADDEN        EPIC_BIT(3)  /**< Address detect (9-bit).              */
+#define PIC_RCSTA_CREN         EPIC_BIT(4)  /**< Continuous receive.                  */
+#define PIC_RCSTA_SREN         EPIC_BIT(5)  /**< Single receive.                      */
+#define PIC_RCSTA_RX9          EPIC_BIT(6)  /**< 9-bit RX.                            */
+#define PIC_RCSTA_SPEN         EPIC_BIT(7)  /**< Serial port enable.                  */
+#define PIC_BAUDCTL_ABDEN      EPIC_BIT(0)  /**< Auto-baud detect enable.            */
+#define PIC_BAUDCTL_WUE        EPIC_BIT(1)  /**< Wake-up enable (async).             */
+#define PIC_BAUDCTL_BRG16      EPIC_BIT(3)  /**< 16-bit baud generator (else 8-bit). */
+#define PIC_BAUDCTL_SCKP       EPIC_BIT(4)  /**< Sync: TX clock polarity.            */
+#define PIC_BAUDCTL_RCIDL      EPIC_BIT(6)  /**< Receiver idle (read-only).           */
+
 /* PIR2 / PIE2 / IPR2 bits (Reg 9-5/9-7/9-9). Bits 0 (CCP2), 3 (BCLIE, no
  * MSSP), 5/6 (USBIE/CMIE, no USB/comparator) are unimplemented on this
  * part; no macro is defined for them. */
@@ -211,5 +275,10 @@
 #define PIC_TRIS_POR_VALUE       0xFFU   /* All pins inputs after POR. */
 #define PIC_LAT_POR_VALUE        0x00U   /* Output latches clear after POR. */
 #define PIC_PORT_POR_VALUE       0x00U
+#define PIC_TXSTA_POR_VALUE      0x02U   /* TRMT=1, TSR empty. */
+#define PIC_RCSTA_POR_VALUE      0x00U
+#define PIC_BAUDCTL_POR_VALUE    0x00U
+#define PIC_SPBRG_POR_VALUE      0x00U
+#define PIC_SPBRGH_POR_VALUE     0x00U
 
 #endif /* PIC18F1320_SFR_H */

@@ -5,9 +5,9 @@ and the host-sim/target build-time split: see `epic-common/MANUAL.md`. This
 manual covers only what is genuinely specific to **PIC18F1320**, verified
 against the Microchip datasheet **DS39605F** (PIC18F1220/1320 Data Sheet).
 
-Status: **skeleton**, foundation phase only (epic-hal#178). Filled out fully
-in epic-hal#181 (family B phase 4/4), the same way pic18fxx5x-hal/MANUAL.md
-and pic16f87xa-hal/MANUAL.md were.
+Status: **skeleton**, foundation + timers + comm phases (epic-hal#178,
+#179, #180). Filled out fully in epic-hal#181 (family B phase 4/4), the
+same way pic18fxx5x-hal/MANUAL.md and pic16f87xa-hal/MANUAL.md were.
 
 ---
 
@@ -32,7 +32,7 @@ header, not carried over from `pic18fxx5x-hal`'s IRQn enum).
 
 The IRQ backend's own dedicated `mdb` smoke test is
 `tests/example_timer0_irq.c`, verified under real `mdb` via `MODE=toggle`
-(see section 12).
+(see section 14).
 
 ## 3. Core: WDT, Sleep, BOR/POR
 
@@ -97,13 +97,47 @@ the CCP driver leaves it). Overflow sets PIR2<TMR3IF>. `example_timer3`:
 internal/1:1, 2 overflows per 150k cycles; real-`mdb` gate proves
 `TMR3L` counts with `T3CON<RD16|TMR3ON>` and `PIR2` cleared (ISR fired).
 
-## 10. ECCP1, USART, ADC, Data EEPROM
+## 10. ECCP1 (Enhanced Capture / Compare / PWM)
 
-Land in epic-hal#180 (ECCP1, USART) and #181 (ADC, Data EEPROM), each
-through the full `mdb` verification gate before this section gets filled
-in.
+*DS39605F §15.0, Register 15-1 (CCP1CON 0xFBD), 15-2 (PWM1CON 0xFB7),
+15-3 (ECCPAS 0xFB6).*
 
-## 11. Known gaps and gotchas
+Single Enhanced CCP1 on this part (no CCP2). Full enhanced module:
+P1M multi-output PWM, PWM1CON dead-band/auto-restart and ECCPAS
+auto-shutdown, matching the 4550's ECCP1 register shape. Capture/Compare
+use Timer1 or Timer3 (T3CON<T3CCP1>); PWM always uses Timer2.
+
+One genuine family difference flagged: the ECCPAS auto-shutdown sources
+are the external Interrupt pins INT0/INT1/INT2 (an 18-pin part has no
+FLT0 fault pin and no comparators), per DS39605F Register 15-3
+(ECCPAS0=bit4 selects INT1, ECCPAS1=bit5 selects INT2, ECCPAS2=bit6
+selects INT0) - not the FLT0/comparator sources of the 4550/2520.
+The driver's `CCP_AutoShutdownSourceTypeDef` reflects the 1320's INT
+sources. `example_ccp`: compare-toggle on 0x1000 against Timer1, `mdb`
+proves CCPR1H:L read 0x1000, CCP1CON reads 0x02 and CCP1IF clears.
+
+## 11. EUSART
+
+*DS39605F §16.0, Register 16-1 (TXSTA 0xFAC), 16-2 (RCSTA 0xFAB),
+16-3 (BAUDCTL 0xFAA).*
+
+Async + sync, same shape as `pic18fxx5x-hal`: 16-bit BRG
+(BAUDCTL<BRG16>, SPBRG:SPBRGH), auto-baud detect (BAUDCTL<ABDEN>) and
+9-bit address-detect (RCSTA<ADDEN>). The baud control register is
+BAUDCTL (0xFAA), not BAUDCON. **BAUDCTL has no ABDOVF auto-baud-overflow
+bit** on this part (bit 7 unimplemented, read as 0 per Register 16-3);
+the ABDOVF accessors present on the 4550/2520 drivers are deliberately
+absent here. RCIDL (bit 6) is read-only, hardware-set while the receiver
+is idle; mask it out of any readback comparison. `example_usart`: BRG
+math (8/16-bit) + init programming + TX, `mdb` proves TXSTA/RCSTA/SPBRG
+write back correctly.
+
+## 12. ADC, Data EEPROM
+
+Land in epic-hal#181, each through the full `mdb` verification gate
+before this section gets filled in.
+
+## 13. Known gaps and gotchas
 
 - **No comparator, no MSSP, no CCP2, no SPP, no USB**: confirmed absent
   from the PIC18Fxxxx DFP header for `pic18f1320`/`pic18lf1320`, not
@@ -120,7 +154,7 @@ in.
   read a constant 0 across the same run). `scripts/ci-target-sim.sh`
   exports `TOGGLE_REG=LATB` for this family's gate for that reason.
 
-## 12. The examples
+## 14. The examples
 
 - `tests/example_smoke.c`: bare harness-seam test, no GPIO/Timer/IRQ.
 - `tests/example_blink.c`: Timer0 + GPIO + interrupt canonical smoke,
@@ -129,7 +163,11 @@ in.
   (`.example.PIC18F1320.sim`), enables one Timer0 overflow interrupt and
   asserts the flag/enable bits (`INTCON<TMR0IE/TMR0IF>`, `T0CON<TMR0ON>`)
   read back correctly on the host build; verified on real hardware via
-  `MODE=toggle` (see section 11).
+  `MODE=toggle` (see section 13).
 - `tests/example_timer1.c`: Timer1 overflow smoke (host), `mdb`-verified.
 - `tests/example_timer2.c`: Timer2 PR2-match smoke (host), `mdb`-verified.
 - `tests/example_timer3.c`: Timer3 overflow smoke (host), `mdb`-verified.
+- `tests/example_ccp.c`: ECCP1 compare-toggle (0x1000) against Timer1,
+  `mdb`-verified (CCPR1H:L = 0x1000, CCP1CON = 0x02).
+- `tests/example_usart.c`: EUSART BRG math + init + TX, `mdb`-verified
+  (TXSTA/RCSTA/SPBRG write back correctly).

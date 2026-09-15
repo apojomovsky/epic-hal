@@ -63,4 +63,11 @@ typedef void (*pic18_sim_irq_cb_t)(void);
  */
 void pic18_sim_set_irq_callback(pic18_sim_irq_cb_t cb);
 
+/**
+ * @brief Deliver a received EUSART byte to the simulated hardware. Places
+ *        the byte in RCREG, sets PIR1<RCIF>, and raises the IRQ callback.
+ * @param data the byte received on the USART.
+ */
+void pic18_sim_drive_usart_rx(uint8_t data);
+
 #endif /* PIC18F1320_SIM_H */
