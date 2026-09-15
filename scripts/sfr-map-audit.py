@@ -43,6 +43,12 @@ FAMILIES = {
             ("18F1320", "Microchip.PIC18Fxxxx_DFP", "pic18f1320.h"),
         ],
     ),
+    "pic18f2520-hal": (
+        "pic18f2520-hal/include/pic18f2520_sfr.h",
+        [
+            ("18F2520", "Microchip.PIC18Fxxxx_DFP", "pic18f2520.h"),
+        ],
+    ),
     "pic16f193x-hal": (
         "pic16f193x-hal/include/pic16f193x_sfr.h",
         [
@@ -376,7 +382,8 @@ def main() -> int:
     ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
                                          "PIC16F193X", "PIC16F88X", "PIC16F628A",
                                          "PIC16F83_84",
-                                         "PIC16F63x_67x_68x", "PIC18F1320"), default=None,
+                                         "PIC16F63x_67x_68x", "PIC18F1320",
+                                         "PIC18F2520"), default=None,
                     help="only this manifest family (the sharded CI jobs)")
     args = ap.parse_args()
     hal_label = {"PIC16F87XA": "pic16f87xa-hal",
@@ -386,7 +393,8 @@ def main() -> int:
                  "PIC16F628A": "pic16f628a-hal",
                  "PIC16F83_84": "pic16f83_84-hal",
                  "PIC16F63x_67x_68x": "pic16f63x_67x_68x-hal",
-                 "PIC18F1320": "pic18f1320-hal"}[args.family] \
+                 "PIC18F1320": "pic18f1320-hal",
+                 "PIC18F2520": "pic18f2520-hal"}[args.family] \
         if args.family else None
     bad = 0
     for family, (sfr_path, mcus) in FAMILIES.items():
