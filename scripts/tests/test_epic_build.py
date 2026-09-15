@@ -51,6 +51,21 @@ name    = "firmware"
 sources = ["tests/example_blink.c"]
 config  = { FOSC = "INTOSC", WDTE = "ON", BOREN = "ON" }
 
+[modules.epic-pic18f2520-firmware]
+dir        = "pic18f2520-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.epic-pic18f2520-firmware.supported]
+PIC18F2520 = ["18F2520"]
+
+[modules.epic-pic18f2520-firmware.example.PIC18F2520]
+name    = "firmware"
+sources = ["tests/example_blink.c"]
+config  = { OSC = "HS", BOREN = "ON", WDT = "OFF" }
+
 [modules.epic-tick]
 dir        = "epic-tick"
 sources    = ["src/epic_tick.c"]
@@ -173,6 +188,16 @@ includes = ["pic18fxx5x-hal/include/target", "pic18fxx5x-hal/include"]
 hal_sources = ["pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c", "epic-common/src/core/epic_harness_target.c"]
 harness_src = "epic-common/src/core/epic_harness_target.c"
 epiccc_sources = ["pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c", "epic-common/src/core/epic_harness_target.c"]
+
+[families.PIC18F2520]
+hal_dir  = "pic18f2520-hal"
+variants = ["18F2520"]
+dfp      = "Microchip.PIC18Fxxxx_DFP"
+fosc_hz  = 8000000
+includes = ["pic18f2520-hal/include/target", "pic18f2520-hal/include"]
+hal_sources = ["epic-common/src/core/epic_harness_target.c"]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+epiccc_sources = ["epic-common/src/core/epic_harness_target.c"]
 
 [modules.epic-usb]
 dir        = "epic-usb"
@@ -299,6 +324,23 @@ class TestEpicConfigSpecPic16F193X(unittest.TestCase):
 
     def test_family_fosc_reaches_xtal_hz(self):
         self.assertIn("xtal_hz=32000000", self._spec())
+
+
+class TestEpicConfigSpecPic18F2520(unittest.TestCase):
+    """PIC18F2520 is a PIC18 family, so its config keys take the PIC18
+    table: BOREN keeps the device field name instead of collapsing to
+    the 877A `bor` spelling (the tuple fix for epic-hal#174)."""
+
+    def _spec(self):
+        return epic_build._epic_config_spec(
+            load(), "epic-pic18f2520-firmware", "18F2520", "target", None)
+
+    def test_boren_keeps_the_device_field_name(self):
+        self.assertIn("boren=on", self._spec())
+        self.assertNotIn("bor=on", self._spec())
+
+    def test_family_fosc_reaches_xtal_hz(self):
+        self.assertIn("xtal_hz=8000000", self._spec())
 
 
 class TestDisplayPath(unittest.TestCase):

@@ -476,7 +476,7 @@ def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
         return None
     if fosc_hz is None:
         fosc_hz = fam.fosc_hz
-    is_pic18 = fam.name in ("PIC18Fxx5x", "PIC18F1320")
+    is_pic18 = fam.name in ("PIC18Fxx5x", "PIC18F1320", "PIC18F2520")
     table = _PIC18_XC8_TO_EPIC if is_pic18 else _PIC16_XC8_TO_EPIC
     parts = []
     for key, val in sorted(pragmas.items()):
