@@ -55,6 +55,21 @@
 #define PIC_REG_TMR0L         0xFD6U   /**< Timer0 low byte (also 8-bit mode value). */
 #define PIC_REG_TMR0H         0xFD7U   /**< Timer0 high byte (16-bit mode only).    */
 
+/* Timer1, DS39605F §12.0, Register 12-1 (T1CON 0xFCD, same shape as 4550). */
+#define PIC_REG_T1CON         0xFCDU   /**< Timer1 control (RD16/run/prescale/osc/sync/cs/on). */
+#define PIC_REG_TMR1L         0xFCEU   /**< Timer1 low byte.                          */
+#define PIC_REG_TMR1H         0xFCFU   /**< Timer1 high byte.                         */
+
+/* Timer2, DS39605F §13.0, Register 13-1 (T2CON 0xFCA, same shape as 4550). */
+#define PIC_REG_T2CON         0xFCAU   /**< Timer2 control (postscaler/on/prescaler). */
+#define PIC_REG_PR2           0xFCBU   /**< Timer2 period register (Access Bank).    */
+#define PIC_REG_TMR2          0xFCCU   /**< Timer2 counter.                          */
+
+/* Timer3, DS39605F §14.0, Register 14-1 (T3CON 0xFB1, same shape as 4550). */
+#define PIC_REG_T3CON         0xFB1U   /**< Timer3 control (RD16/CCP-sel/prescale/sync/cs/on). */
+#define PIC_REG_TMR3L         0xFB2U   /**< Timer3 low byte.                          */
+#define PIC_REG_TMR3H         0xFB3U   /**< Timer3 high byte.                         */
+
 /* STATUS bits (Register 5-2). */
 #define PIC_STATUS_N          EPIC_BIT(4)   /**< Negative / borrow complement. */
 #define PIC_STATUS_OV         EPIC_BIT(3)   /**< Overflow.                     */
@@ -128,6 +143,36 @@
 #define PIC_T0CON_T0SE        EPIC_BIT(4)   /**< Counter mode edge select.       */
 #define PIC_T0CON_PSA         EPIC_BIT(3)   /**< 0=prescaler assigned, 1=not.    */
 #define PIC_T0CON_T0PS_MASK   0x07U         /**< T0PS2:T0PS0, prescaler ratio.   */
+
+/* T1CON bits (Register 12-1, identical to 4550). */
+#define PIC_T1CON_RD16        EPIC_BIT(7)   /**< 16-bit read/write mode enable.   */
+#define PIC_T1CON_T1RUN       EPIC_BIT(6)   /**< Timer1 system clock status (RO). */
+#define PIC_T1CON_T1CKPS_MASK 0x30U         /**< T1CKPS1:T1CKPS0 at bits 5:4.     */
+#define PIC_T1CON_T1OSCEN     EPIC_BIT(3)   /**< Timer1 oscillator enable.       */
+#define PIC_T1CON_T1SYNC      EPIC_BIT(2)   /**< External clock sync (1=async).  */
+#define PIC_T1CON_TMR1CS      EPIC_BIT(1)   /**< 0=Fosc/4, 1=external/T1OSC.    */
+#define PIC_T1CON_TMR1ON      EPIC_BIT(0)   /**< Timer1 on/off.                  */
+#define PIC_T1CON_POR_VALUE   0x00U         /**< Power-on reset value.           */
+
+/* T2CON bits (Register 13-1, identical to 4550). */
+#define PIC_T2CON_TOUTPS_MASK 0x78U         /**< T2OUTPS3:T2OUTPS0 at bits 6:3 (1:(N+1)). */
+#define PIC_T2CON_TMR2ON      EPIC_BIT(2)   /**< Timer2 on/off.                  */
+#define PIC_T2CON_T2CKPS_MASK 0x03U         /**< T2CKPS1:T2CKPS0 at bits 1:0.    */
+#define PIC_T2CON_POR_VALUE   0x00U         /**< Power-on reset value.           */
+#define PIC_PR2_POR_VALUE     0xFFU         /**< PR2 power-on reset value.       */
+
+/* T3CON bits (Register 14-1). Bit 6 (T3CCP2 on 4550/2520) is
+ * unimplemented on this part: no CCP2 (single ECCP1), so the 1320's
+ * T3CON<6> reads 0 regardless, per Register 14-1's "Unimplemented, read
+ * as 0" cell (DS39605F §14.0). The register value 0x40 written via the
+ * 4550-shaped PIC_T3CON_T3CCP2 macro is harmless but defined out here. */
+#define PIC_T3CON_T3CCP1      EPIC_BIT(3)   /**< CCP1 Timer1/Timer3 select.      */
+#define PIC_T3CON_RD16        EPIC_BIT(7)   /**< 16-bit read/write mode enable.  */
+#define PIC_T3CON_T3CKPS_MASK 0x30U         /**< T3CKPS1:T3CKPS0 at bits 5:4.    */
+#define PIC_T3CON_T3SYNC      EPIC_BIT(2)   /**< External clock sync (alias).    */
+#define PIC_T3CON_TMR3CS      EPIC_BIT(1)   /**< 0=Fosc/4, 1=external.           */
+#define PIC_T3CON_TMR3ON      EPIC_BIT(0)   /**< Timer3 on/off.                  */
+#define PIC_T3CON_POR_VALUE   0x00U         /**< Power-on reset value.           */
 
 /* PIR2 / PIE2 / IPR2 bits (Reg 9-5/9-7/9-9). Bits 0 (CCP2), 3 (BCLIE, no
  * MSSP), 5/6 (USBIE/CMIE, no USB/comparator) are unimplemented on this

@@ -36,6 +36,9 @@ set(EPIC_SOURCES
     src/sim/pic18f1320_wdt_sleep_sim.c
     src/peripherals/pic18f1320_gpio.c
     src/peripherals/pic18f1320_timer0.c
+    src/peripherals/pic18f1320_timer1.c
+    src/peripherals/pic18f1320_timer2.c
+    src/peripherals/pic18f1320_timer3.c
 )
 
 epic_add_hal_library(${EPIC_LIB})
@@ -43,9 +46,14 @@ epic_add_hal_library(${EPIC_LIB})
 # Foundation examples: example_blink is the canonical Timer0 + GPIO +
 # interrupt smoke test; example_timer0_irq is the IRQ backend's own
 # dedicated smoke (also the real-mdb gate, MODE=toggle via ci-target-sim.sh);
-# example_smoke is the bare harness-seam test.
+# example_smoke is the bare harness-seam test. Timers phase (#179) adds
+# the per-timer host-sim overflow/match smokes; Timer1-3 are each through
+# their own real-mdb §4 register-readback gate (documented in MANUAL.md).
 epic_add_example(example_blink tests/example_blink.c)
 epic_add_example(example_timer0_irq tests/example_timer0_irq.c)
+epic_add_example(example_timer1 tests/example_timer1.c)
+epic_add_example(example_timer2 tests/example_timer2.c)
+epic_add_example(example_timer3 tests/example_timer3.c)
 epic_add_example(example_smoke tests/example_smoke.c)
 
 # Optional: the blink example for every device in the family (one, here),
