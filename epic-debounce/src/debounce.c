@@ -40,8 +40,14 @@ static inline bool get_stable(uint8_t flags)
  */
 static inline void set_candidate(uint8_t *flags, bool val)
 {
-    if (val) { *flags |= DEBOUNCE_FLAG_CANDIDATE; }
-    else     { *flags &= (uint8_t)~DEBOUNCE_FLAG_CANDIDATE; }
+    if (val)
+    {
+        *flags |= DEBOUNCE_FLAG_CANDIDATE;
+    }
+    else
+    {
+        *flags &= (uint8_t)~DEBOUNCE_FLAG_CANDIDATE;
+    }
 }
 
 /**
@@ -51,8 +57,14 @@ static inline void set_candidate(uint8_t *flags, bool val)
  */
 static inline void set_stable(uint8_t *flags, bool val)
 {
-    if (val) { *flags |= DEBOUNCE_FLAG_STABLE; }
-    else     { *flags &= (uint8_t)~DEBOUNCE_FLAG_STABLE; }
+    if (val)
+    {
+        *flags |= DEBOUNCE_FLAG_STABLE;
+    }
+    else
+    {
+        *flags &= (uint8_t)~DEBOUNCE_FLAG_STABLE;
+    }
 }
 
 /**
@@ -102,14 +114,16 @@ epic_debounce_event_t epic_debounce_poll(epic_debounce_t *db) {
     bool candidate = get_candidate(db->flags);
     bool stable    = get_stable(db->flags);
 
-    if (raw != candidate) {
+    if (raw != candidate)
+    {
         set_candidate(&db->flags, raw);
         db->candidate_since = epic_tick_get();
         return DEBOUNCE_EVENT_NONE;
     }
 
     if (raw != stable &&
-        epic_tick_elapsed_since(db->candidate_since) >= (uint32_t)db->debounce_ms) {
+        epic_tick_elapsed_since(db->candidate_since) >= (uint32_t)db->debounce_ms)
+        {
         set_stable(&db->flags, raw);
         return raw ? DEBOUNCE_EVENT_PRESSED : DEBOUNCE_EVENT_RELEASED;
     }

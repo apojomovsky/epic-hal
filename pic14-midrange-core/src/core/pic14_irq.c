@@ -47,7 +47,8 @@ void EPIC_IRQ_Enable(PIC16_IRQn irq)
      * locals before touching any SFR. */
     uint8_t in_intcon = d->enable_in_intcon;
     uint8_t enable_mask = d->enable_mask;
-    if (in_intcon) {
+    if (in_intcon)
+    {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), enable_mask);
         return;
     }
@@ -74,7 +75,8 @@ void EPIC_IRQ_DisableSrc(PIC16_IRQn irq)
     const irq_desc_t *d = &irq_table[irq];
     uint8_t in_intcon = d->enable_in_intcon;
     uint8_t enable_mask = d->enable_mask;
-    if (in_intcon) {
+    if (in_intcon)
+    {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), enable_mask);
         return;
     }
@@ -97,11 +99,13 @@ void EPIC_IRQ_ClearFlag(PIC16_IRQn irq)
     const irq_desc_t *d = &irq_table[irq];
     uint8_t in_intcon = d->flag_in_intcon;
     uint8_t flag_mask = d->flag_mask;
-    if (in_intcon) {
+    if (in_intcon)
+    {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), flag_mask);
     }
 #if PIC14MIDRANGE_HAS_PIR1
-    else {
+    else
+    {
         /* PIR1/PIR2 are Bank 0, so no pic_select_bank needed here. */
         uint8_t addr = pir_reg_addr(d);
         uint8_t v = EPIC_REG8(addr);
@@ -109,7 +113,8 @@ void EPIC_IRQ_ClearFlag(PIC16_IRQn irq)
         EPIC_REG8(addr) = v;
     }
 #else
-    else {
+    else
+    {
         /* PIR-less family (83/84/84A): the only non-INTCON flag is
          * EEIF, EECON1<4>, Bank 1: route through the literal-token
          * macros (same XC8 misdirect class as PIE1). */
@@ -138,7 +143,8 @@ uint8_t EPIC_IRQ_GetFlag(PIC16_IRQn irq)
     uint8_t reg = in_intcon ? EPIC_REG8(PIC_REG_INTCON) : EPIC_REG8(addr);
     return (reg & flag_mask) ? 1U : 0U;
 #else
-    if (in_intcon) {
+    if (in_intcon)
+    {
         return (EPIC_REG8(PIC_REG_INTCON) & flag_mask) ? 1U : 0U;
     }
     /* PIR-less family: EEIF is EECON1<4> (Bank 1, literal-token read). */

@@ -236,14 +236,18 @@ int main(void)
      * lands in plain loop code. */
     uint16_t rb_events = 0u;
     uint16_t evt_cd = RB_EVENT_EVERY;
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
-        if (--evt_cd == 0u) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
+        if (--evt_cd == 0u)
+        {
             evt_cd = RB_EVENT_EVERY;
-            if (rb_events < RB_EVENTS) {
+            if (rb_events < RB_EVENTS)
+            {
                 uint16_t before = g_rb_count;
                 EPIC_REG8(PIC_REG_INTCON) |= PIC_INTCON_RBIF;
                 uint16_t w = 0u;
-                while ((g_rb_count == before) && (w < RB_WAIT_LIMIT)) {
+                while ((g_rb_count == before) && (w < RB_WAIT_LIMIT))
+                {
                     w++;
                 }
                 rb_events++;
@@ -265,13 +269,15 @@ int main(void)
     uint8_t rbif_any = 0u;
     uint8_t intf_any = 0u;
     uint8_t t0if_any = 0u;
-    for (uint8_t k = 0u; k < 8u; k++) {
+    for (uint8_t k = 0u; k < 8u; k++)
+    {
         uint8_t intcon = EPIC_REG8(PIC_REG_INTCON);
         if (intcon & PIC_INTCON_GIE) gie_any = 1u;
         if (intcon & PIC_INTCON_RBIF) rbif_any = 1u;
         if (intcon & PIC_INTCON_INTF) intf_any = 1u;
         if (intcon & PIC_INTCON_TMR0IF) t0if_any = 1u;
-        for (volatile uint16_t d = 0u; d < 40u; d++) {
+        for (volatile uint16_t d = 0u; d < 40u; d++)
+        {
         }
     }
     EPIC_IRQ_Disable();
@@ -298,11 +304,13 @@ int main(void)
      * deterministic frames + the marker, byte-exact in the capture.
      * The verdict above is already fixed; this is the byte-exactness
      * evidence for the cross-check. */
-    for (uint8_t f = 0u; f < TX_FRAMES; f++) {
+    for (uint8_t f = 0u; f < TX_FRAMES; f++)
+    {
         send_frame(f);
     }
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
     return epic_harness_report(g_fail == 0u);

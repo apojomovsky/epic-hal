@@ -116,25 +116,31 @@ int main(void)
     /* 8: EV_RESET in DONE: DONE -> IDLE. */
     fired[7] = step(&fsm, &ctx, EV_RESET, 1u);
 
-    for (iter = 0; epic_harness_running(iter); iter++) {
+    for (iter = 0; epic_harness_running(iter); iter++)
+    {
         epic_harness_tick();
     }
 
     ok = 1;
-    for (i = 0; i < ctx.seq_len; i++) {
-        if (ctx.seq[i] != expect_state[i]) {
+    for (i = 0; i < ctx.seq_len; i++)
+    {
+        if (ctx.seq[i] != expect_state[i])
+        {
             ok = 0;
         }
     }
-    for (i = 0; i < 8u; i++) {
-        if (fired[i] != expect_fired[i + 1u]) {
+    for (i = 0; i < 8u; i++)
+    {
+        if (fired[i] != expect_fired[i + 1u])
+        {
             ok = 0;
         }
     }
     /* The guard-rejected EV_START (step 2) must not have run its
      * action: enter_run must be exactly 1 (step 4 only). */
     if (ctx.enter_run != 1u || ctx.exit_run != 1u ||
-        ctx.enter_done != 1u || ctx.exit_done != 1u) {
+        ctx.enter_done != 1u || ctx.exit_done != 1u)
+        {
         ok = 0;
     }
 

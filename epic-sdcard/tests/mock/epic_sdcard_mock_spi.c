@@ -52,7 +52,8 @@ static void q_reset(void)
  */
 static void q_byte(uint8_t b)
 {
-    if (g_resp_len < RESP_QUEUE_CAP) {
+    if (g_resp_len < RESP_QUEUE_CAP)
+    {
         g_resp[g_resp_len++] = b;
     }
 }
@@ -62,7 +63,8 @@ static void q_byte(uint8_t b)
  */
 static void q_bytes(const uint8_t *data, uint16_t len)
 {
-    for (uint16_t i = 0; i < len; i++) {
+    for (uint16_t i = 0; i < len; i++)
+    {
         q_byte(data[i]);
     }
 }
@@ -99,7 +101,8 @@ static void handle_command(const uint8_t *cmd6)
 
     q_reset();
 
-    switch (idx) {
+    switch (idx)
+    {
     case 0:     /* CMD0: GO_IDLE_STATE */
         g_idle = true;
         g_acmd41_count = 0u;
@@ -117,19 +120,25 @@ static void handle_command(const uint8_t *cmd6)
 
     case 41:    /* ACMD41: SD_SEND_OP_COND -- idle once, then ready, so the retry loop
                  * in mmc_init_card is genuinely exercised at least once */
-        if (g_acmd41_count < 1u) {
+        if (g_acmd41_count < 1u)
+        {
             q_byte(0x01u);
             g_acmd41_count++;
-        } else {
+        }
+        else
+        {
             q_byte(0x00u);
             g_idle = false;
         }
         break;
 
     case 58:    /* CMD58: READ_OCR -- called twice; g_idle distinguishes which */
-        if (g_idle) {
+        if (g_idle)
+        {
             q_byte(0x01u); q_byte(0x00u); q_byte(0xFFu); q_byte(0x80u); q_byte(0x00u);
-        } else {
+        }
+        else
+        {
             /* buf[1] bit 0x40 set = CCS = 1 (SDHC/SDXC) */
             q_byte(0x00u); q_byte(0xC0u); q_byte(0x00u); q_byte(0x00u); q_byte(0x00u);
         }
@@ -147,7 +156,8 @@ static void handle_command(const uint8_t *cmd6)
 
     case 17:    /* CMD17: READ_SINGLE_BLOCK -- arg is already a block address (CCS=1) */
         q_byte(0x00u);
-        if (arg < EPIC_SDCARD_MOCK_BACKING_BLOCKS) {
+        if (arg < EPIC_SDCARD_MOCK_BACKING_BLOCKS)
+        {
             q_data_block(g_blocks[arg], EPIC_SDCARD_MOCK_BLOCK_SIZE);
         }
         /* else: only R1 queued, no data block -- __read_data_block will
@@ -176,13 +186,15 @@ static void handle_command(const uint8_t *cmd6)
  */
 static void handle_write_data(const uint8_t *out, uint16_t len)
 {
-    switch (g_write_phase) {
+    switch (g_write_phase)
+    {
     case WRITE_PHASE_TOKEN:                    /* len == 1: the 0xFE start token, value unchecked */
         g_write_phase = WRITE_PHASE_DATA;
         break;
 
     case WRITE_PHASE_DATA:                     /* len == EPIC_SDCARD_MOCK_BLOCK_SIZE */
-        if (len == EPIC_SDCARD_MOCK_BLOCK_SIZE) {
+        if (len == EPIC_SDCARD_MOCK_BLOCK_SIZE)
+        {
             memcpy(g_write_staging, out, EPIC_SDCARD_MOCK_BLOCK_SIZE);
         }
         g_write_phase = WRITE_PHASE_CRC;
@@ -191,7 +203,8 @@ static void handle_write_data(const uint8_t *out, uint16_t len)
     case WRITE_PHASE_CRC:                      /* len == 2: trailing CRC16, not independently
                                                  * re-verified here -- mmc.c never reads it back
                                                  * either, so there's no "bad CRC" leg to model */
-        if (g_write_block_addr < EPIC_SDCARD_MOCK_BACKING_BLOCKS) {
+        if (g_write_block_addr < EPIC_SDCARD_MOCK_BACKING_BLOCKS)
+        {
             memcpy(g_blocks[g_write_block_addr], g_write_staging, EPIC_SDCARD_MOCK_BLOCK_SIZE);
         }
         g_write_phase = WRITE_PHASE_NONE;
@@ -216,21 +229,28 @@ void epic_sdcard_mock_spi_transfer(uint8_t instance, const uint8_t *out_buf,
 {
     (void)instance;
 
-    if (out_buf != NULL && in_buf == NULL) {
-        if (len == 6u) {
+    if (out_buf != NULL && in_buf == NULL)
+    {
+        if (len == 6u)
+        {
             handle_command(out_buf);
-        } else if (g_write_phase != WRITE_PHASE_NONE) {
+        }
+        else if (g_write_phase != WRITE_PHASE_NONE)
+        {
             handle_write_data(out_buf, len);
         }
         return;
     }
 
-    if (in_buf != NULL && out_buf == NULL) {
+    if (in_buf != NULL && out_buf == NULL)
+    {
         uint16_t i = 0;
-        for (; i < len && g_resp_pos < g_resp_len; i++, g_resp_pos++) {
+        for (; i < len && g_resp_pos < g_resp_len; i++, g_resp_pos++)
+        {
             in_buf[i] = g_resp[g_resp_pos];
         }
-        for (; i < len; i++) {
+        for (; i < len; i++)
+        {
             in_buf[i] = 0xFFu;   /* queue exhausted: idle filler, as real hardware would send */
         }
         return;
@@ -277,7 +297,8 @@ void epic_sdcard_mock_reset(void)
  */
 uint8_t *epic_sdcard_mock_block(uint32_t block_addr)
 {
-    if (block_addr >= EPIC_SDCARD_MOCK_BACKING_BLOCKS) {
+    if (block_addr >= EPIC_SDCARD_MOCK_BACKING_BLOCKS)
+    {
         return NULL;
     }
     return g_blocks[block_addr];

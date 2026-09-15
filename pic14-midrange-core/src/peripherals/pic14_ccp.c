@@ -61,11 +61,13 @@ static void (*g_ccp_callbacks[3])(void) = { NULL, NULL, NULL };
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
 #if PIC14MIDRANGE_HAS_CCP2
-    if (h->Instance != CCP_INSTANCE_1 && h->Instance != CCP_INSTANCE_2) {
+    if (h->Instance != CCP_INSTANCE_1 && h->Instance != CCP_INSTANCE_2)
+    {
         return EPIC_INVALID;
     }
 #else
-    if (h->Instance != CCP_INSTANCE_1) {
+    if (h->Instance != CCP_INSTANCE_1)
+    {
         return EPIC_INVALID;
     }
 #endif
@@ -77,33 +79,41 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 
     /* Clear the IRQ before reconfiguring. */
     EPIC_IRQ_ClearFlag(a->irq);
-    if (g_ccp_callbacks[h->Instance]) {
+    if (g_ccp_callbacks[h->Instance])
+    {
         EPIC_IRQ_Enable(a->irq);
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(a->irq);
     }
 
     /* For PWM, program duty (10-bit) into CCPRxL + CCPxCON<5:4>.
      * DS40001291H §11.3.3 step 2: set the PWM duty BEFORE enabling PWM. */
-    if (h->Mode == CCP_MODE_PWM) {
+    if (h->Mode == CCP_MODE_PWM)
+    {
         uint16_t duty = h->PWM.Duty & 0x03FFU;       /* 10-bit clamp. */
         uint8_t  con  = (uint8_t)(h->Mode & 0x0FU);  /* mode 1100, also handles 1101/1110/1111. */
         con |= (uint8_t)((duty & 0x03U) << 4);        /* DCxB1:DCxB0 = duty[1:0]. */
 #if PIC14MIDRANGE_HAS_ECCP
-        if (h->Instance == CCP_INSTANCE_1) {
+        if (h->Instance == CCP_INSTANCE_1)
+        {
             con |= (uint8_t)((uint8_t)h->PWMOutput << 6);  /* P1M1:P1M0. */
         }
 #endif
         EPIC_REG8(a->cprl) = (uint8_t)(duty >> 2);
         EPIC_REG8(a->cprh) = 0U;
         EPIC_REG8(a->con)  = con;
-    } else {
+    }
+    else
+    {
         /* For compare / capture, write the 16-bit value then enable mode. */
         EPIC_REG8(a->cprl) = (uint8_t)(h->CompareValue & 0xFFU);
         EPIC_REG8(a->cprh) = (uint8_t)(h->CompareValue >> 8);
         uint8_t con = (uint8_t)(h->Mode & 0x0FU);
 #if PIC14MIDRANGE_HAS_ECCP
-        if (h->Instance == CCP_INSTANCE_1) {
+        if (h->Instance == CCP_INSTANCE_1)
+        {
             con |= (uint8_t)((uint8_t)h->PWMOutput << 6);  /* P1M1:P1M0 (ignored in non-PWM). */
         }
 #endif
@@ -123,11 +133,13 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
 {
 #if PIC14MIDRANGE_HAS_CCP2
-    if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) {
+    if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2)
+    {
         return EPIC_INVALID;
     }
 #else
-    if (inst != CCP_INSTANCE_1) {
+    if (inst != CCP_INSTANCE_1)
+    {
         return EPIC_INVALID;
     }
 #endif
@@ -136,7 +148,8 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
     EPIC_IRQ_ClearFlag(a->irq);
     EPIC_REG8(a->con) = 0x00U;
 #if PIC14MIDRANGE_HAS_ECCP
-    if (inst == CCP_INSTANCE_1) {
+    if (inst == CCP_INSTANCE_1)
+    {
 #ifdef EPIC_BANK1_WRITE8
         EPIC_BANK1_WRITE8(PWM1CON, 0x00U);
         EPIC_BANK1_WRITE8(ECCPAS, 0x00U);
@@ -217,7 +230,8 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
     const ccp_addrs_t *a = ccp_sel(inst);
     /* Same atomic-read idiom as Timer1. */
     uint8_t lo, hi1, hi2;
-    do {
+    do
+    {
         hi1 = EPIC_REG8(a->cprh);
         lo  = EPIC_REG8(a->cprl);
         hi2 = EPIC_REG8(a->cprh);
@@ -360,7 +374,8 @@ void EPIC_CCP1_ClearShutdown(void)
 void CCP1_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
-    if (g_ccp_callbacks[CCP_INSTANCE_1]) {
+    if (g_ccp_callbacks[CCP_INSTANCE_1])
+    {
         g_ccp_callbacks[CCP_INSTANCE_1]();
     }
 }
@@ -372,7 +387,8 @@ void CCP1_IRQHandler(void)
 void CCP2_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
-    if (g_ccp_callbacks[CCP_INSTANCE_2]) {
+    if (g_ccp_callbacks[CCP_INSTANCE_2])
+    {
         g_ccp_callbacks[CCP_INSTANCE_2]();
     }
 }

@@ -50,7 +50,8 @@ static const settings_blob_t g_defaults = { 1u, 0xFAu, 0x00u, 0x03u };
 static void eeprom_write_byte(uint8_t addr, uint8_t data)
 {
     (void)EPIC_EEPROM_WriteByte(addr, data);
-    while (EPIC_EEPROM_IsWriteComplete() == 0u) {
+    while (EPIC_EEPROM_IsWriteComplete() == 0u)
+    {
         epic_harness_tick();
     }
     EPIC_EEPROM_ClearITFlag();
@@ -76,7 +77,8 @@ int main(void)
     int ok = 1;
 
     /* (a) write a known blob through the real API. */
-    if (!epic_settings_save(BLOB_ADDR, &g_saved, (uint8_t)sizeof(g_saved))) {
+    if (!epic_settings_save(BLOB_ADDR, &g_saved, (uint8_t)sizeof(g_saved)))
+    {
         epic_harness_log("settings sim: save failed\n");
         ok = 0;
     }
@@ -84,11 +86,13 @@ int main(void)
     /* (b)+(c) reset (fresh read) and verify both the payload and the
      * CRC validation result (the load return value). */
     memset(&out, 0, sizeof(out));
-    if (!epic_settings_load(BLOB_ADDR, &out, (uint8_t)sizeof(out))) {
+    if (!epic_settings_load(BLOB_ADDR, &out, (uint8_t)sizeof(out)))
+    {
         epic_harness_log("settings sim: load rejected valid blob\n");
         ok = 0;
     }
-    if (!blob_eq(&out, &g_saved)) {
+    if (!blob_eq(&out, &g_saved))
+    {
         epic_harness_log("settings sim: roundtrip mismatch\n");
         ok = 0;
     }
@@ -99,11 +103,13 @@ int main(void)
     eeprom_write_byte((uint8_t)(BLOB_ADDR + 1u), (uint8_t)~g_saved.limit_lo);
     {
         settings_blob_t untouched = out;
-        if (epic_settings_load(BLOB_ADDR, &out, (uint8_t)sizeof(out))) {
+        if (epic_settings_load(BLOB_ADDR, &out, (uint8_t)sizeof(out)))
+        {
             epic_harness_log("settings sim: corruption NOT detected\n");
             ok = 0;
         }
-        if (!blob_eq(&out, &untouched)) {
+        if (!blob_eq(&out, &untouched))
+        {
             epic_harness_log("settings sim: failed load overwrote output\n");
             ok = 0;
         }
@@ -112,19 +118,23 @@ int main(void)
     /* Fall back to defaults, persist them, and confirm the next boot
      * reads the persisted default blob as valid. */
     if (epic_settings_load_or_default(BLOB_ADDR, &out, (uint8_t)sizeof(out),
-                                      &g_defaults)) {
+                                      &g_defaults))
+                                      {
         epic_harness_log("settings sim: corrupt region did not default\n");
         ok = 0;
     }
-    if (!blob_eq(&out, &g_defaults)) {
+    if (!blob_eq(&out, &g_defaults))
+    {
         epic_harness_log("settings sim: defaults not applied\n");
         ok = 0;
     }
-    if (!epic_settings_load(BLOB_ADDR, &out, (uint8_t)sizeof(out))) {
+    if (!epic_settings_load(BLOB_ADDR, &out, (uint8_t)sizeof(out)))
+    {
         epic_harness_log("settings sim: persisted defaults unreadable\n");
         ok = 0;
     }
-    if (!blob_eq(&out, &g_defaults)) {
+    if (!blob_eq(&out, &g_defaults))
+    {
         epic_harness_log("settings sim: persisted defaults mismatch\n");
         ok = 0;
     }
@@ -133,12 +143,14 @@ int main(void)
      * caller's defaults (blank and corrupt are both "apply
      * defaults", see epic_settings.h). */
     if (epic_settings_load_or_default(DEFAULT_ADDR, &out,
-                                      (uint8_t)sizeof(out), &g_defaults)) {
+                                      (uint8_t)sizeof(out), &g_defaults))
+                                      {
         epic_harness_log("settings sim: blank region reported valid\n");
         ok = 0;
     }
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
 
@@ -149,7 +161,8 @@ int main(void)
     /* NEVER return: under MPLAB SIM a return re-runs main, and pass 1
      * corrupts a stored byte, so a re-run would report a false failure.
      * Idle instead, keeping the gate single-pass. */
-    for (;;) {
+    for (;;)
+    {
         epic_harness_tick();
     }
 }

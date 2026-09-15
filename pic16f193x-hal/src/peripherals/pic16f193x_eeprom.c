@@ -59,7 +59,9 @@ EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data)
     EPIC_BIT_SET(EPIC_REG8(PIC_REG_EECON1), PIC_EECON1_WR);
     EPIC_IRQ_Restore(gie);
 
-    while (EPIC_REG8(PIC_REG_EECON1) & PIC_EECON1_WR) { }
+    while (EPIC_REG8(PIC_REG_EECON1) & PIC_EECON1_WR)
+    {
+    }
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_EECON1), PIC_EECON1_WREN);
 
     if (EPIC_REG8(PIC_REG_EECON1) & PIC_EECON1_WRERR) return EPIC_ERROR;
@@ -87,4 +89,6 @@ uint8_t EPIC_EEPROM_HasWriteError(void)
 /**
  * @brief EEPROM interrupt handler (weak, override in user code).
  */
-void EEPROM_IRQHandler(void) {}
+void EEPROM_IRQHandler(void)
+{
+}

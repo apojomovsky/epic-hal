@@ -28,7 +28,10 @@ static void hdr(void)
 }
 
 /** @brief Emit the golden-vector header epilogue (endif). */
-static void ftr(void) { printf("#endif /* EPIC_MATH_GOLDEN_VECTORS_H */\n"); }
+static void ftr(void)
+{
+    printf("#endif /* EPIC_MATH_GOLDEN_VECTORS_H */\n");
+}
 
 /** @brief Emit the mul_u8 golden-vector table. */
 static void mul_u8(void)
@@ -72,7 +75,8 @@ static void divmod_u16(void)
     struct { uint16_t n, d; } in[] = {{7,2},{0xFFFF,2},{0x8000,0x8000},{1234,0}};
     printf("typedef struct { uint16_t n,d,q,r; } gv_div_u16_t;\n");
     printf("static const gv_div_u16_t gv_div_u16[] = {\n");
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         epic_math_udiv16_t r = epic_math_divmod_u16(in[i].n, in[i].d, 0);
         printf("  {0x%04Xu,0x%04Xu,0x%04Xu,0x%04Xu},\n", in[i].n, in[i].d, r.quotient, r.remainder);
     }
@@ -85,7 +89,8 @@ static void divmod_s16(void)
     struct { int16_t n, d; } in[] = {{-7,2},{7,-2},{INT16_MIN,-1},{1234,0}};
     printf("typedef struct { int16_t n,d,q,r; } gv_div_s16_t;\n");
     printf("static const gv_div_s16_t gv_div_s16[] = {\n");
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         epic_math_sdiv16_t r = epic_math_divmod_s16(in[i].n, in[i].d, 0);
         printf("  {%d,%d,%d,%d},\n", in[i].n, in[i].d, r.quotient, r.remainder);
     }
@@ -98,7 +103,8 @@ static void divmod_u32_16(void)
     struct { uint32_t n; uint16_t d; } in[] = {{0x00020000u,1u},{0x00010506u,0x0103u},{1000u,0u}};
     printf("typedef struct { uint32_t n; uint16_t d,q,r; } gv_div_u32_16_t;\n");
     printf("static const gv_div_u32_16_t gv_div_u32_16[] = {\n");
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         epic_math_udiv16_t r = epic_math_divmod_u32_16(in[i].n, in[i].d, 0);
         printf("  {0x%08lXlu,0x%04Xu,0x%04Xu,0x%04Xu},\n", (unsigned long)in[i].n, in[i].d, r.quotient, r.remainder);
     }
@@ -119,12 +125,16 @@ static void addsub(void)
     };
     printf("typedef struct { uint16_t a,b,r; uint8_t c; } gv_add_u16_t;\n");
     printf("static const gv_add_u16_t gv_add_u16[] = {\n");
-    for (int i = 0; i < (int)(sizeof(in)/sizeof(in[0])); i++) { bool c; uint16_t r = epic_math_add_u16(in[i].a, in[i].b, &c);
+    for (int i = 0; i < (int)(sizeof(in)/sizeof(in[0])); i++)
+    {
+        bool c; uint16_t r = epic_math_add_u16(in[i].a, in[i].b, &c);
         printf("  {0x%04Xu,0x%04Xu,0x%04Xu,%u},\n", in[i].a, in[i].b, r, c?1u:0u); }
     printf("};\n#define GV_ADD_U16_N (sizeof(gv_add_u16)/sizeof(gv_add_u16[0]))\n\n");
     printf("typedef struct { uint16_t a,b,r; uint8_t b_out; } gv_sub_u16_t;\n");
     printf("static const gv_sub_u16_t gv_sub_u16[] = {\n");
-    for (int i = 0; i < (int)(sizeof(in)/sizeof(in[0])); i++) { bool bo; uint16_t r = epic_math_sub_u16(in[i].a, in[i].b, &bo);
+    for (int i = 0; i < (int)(sizeof(in)/sizeof(in[0])); i++)
+    {
+        bool bo; uint16_t r = epic_math_sub_u16(in[i].a, in[i].b, &bo);
         printf("  {0x%04Xu,0x%04Xu,0x%04Xu,%u},\n", in[i].a, in[i].b, r, bo?1u:0u); }
     printf("};\n#define GV_SUB_U16_N (sizeof(gv_sub_u16)/sizeof(gv_sub_u16[0]))\n\n");
 }
@@ -150,12 +160,16 @@ static void bcd_adjust(void)
     struct { uint8_t a, b; } ab[] = {{0x55,0x55},{0x12,0x34},{0x99,0x01},{0x00,0x00}};
     printf("typedef struct { uint8_t a,b,r; uint8_t c; } gv_bcd_add8_t;\n");
     printf("static const gv_bcd_add8_t gv_bcd_add8[] = {\n");
-    for (int i = 0; i < 4; i++) { bool c; uint8_t r = epic_math_bcd_add8(ab[i].a, ab[i].b, &c);
+    for (int i = 0; i < 4; i++)
+    {
+        bool c; uint8_t r = epic_math_bcd_add8(ab[i].a, ab[i].b, &c);
         printf("  {0x%02Xu,0x%02Xu,0x%02Xu,%u},\n", ab[i].a, ab[i].b, r, c?1u:0u); }
     printf("};\n#define GV_BCD_ADD8_N (sizeof(gv_bcd_add8)/sizeof(gv_bcd_add8[0]))\n\n");
     printf("typedef struct { uint8_t a,b,r; uint8_t bo; } gv_bcd_sub8_t;\n");
     printf("static const gv_bcd_sub8_t gv_bcd_sub8[] = {\n");
-    for (int i = 0; i < 4; i++) { bool bo; uint8_t r = epic_math_bcd_sub8(ab[i].a, ab[i].b, &bo);
+    for (int i = 0; i < 4; i++)
+    {
+        bool bo; uint8_t r = epic_math_bcd_sub8(ab[i].a, ab[i].b, &bo);
         printf("  {0x%02Xu,0x%02Xu,0x%02Xu,%u},\n", ab[i].a, ab[i].b, r, bo?1u:0u); }
     printf("};\n#define GV_BCD_SUB8_N (sizeof(gv_bcd_sub8)/sizeof(gv_bcd_sub8[0]))\n\n");
 }

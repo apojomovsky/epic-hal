@@ -39,7 +39,8 @@ int main(void)
     EPIC_TIMER3_Start(&h);
     EPIC_IRQ_Restore(1);
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
         if (g_overflows >= EXPECTED_OVERFLOWS) break;
     }

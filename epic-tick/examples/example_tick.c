@@ -33,8 +33,10 @@ int main(void)
     /* Elapsed-time check: non-blocking 500 ms period via the elapsed
      * idiom (unsigned subtraction, wraparound-safe). */
     uint32_t last = epic_tick_get();
-    for (;;) {
-        if (epic_tick_elapsed_since(last) >= BLINK_MS) {
+    for (;;)
+    {
+        if (epic_tick_elapsed_since(last) >= BLINK_MS)
+        {
             last = epic_tick_get();
             EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
         }

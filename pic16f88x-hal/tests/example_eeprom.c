@@ -68,7 +68,8 @@ int main(void)
     EPIC_StatusTypeDef st = EPIC_EEPROM_WriteBuffer(0x20U, data, 3);
     CHECK(st == EPIC_OK, "WriteBuffer returned error");
     /* Drive the write-completion sim helper for each byte. */
-    for (uint8_t i = 0; i < 3; i++) {
+    for (uint8_t i = 0; i < 3; i++)
+    {
         pic16f88x_sim_drive_eeprom_done((uint8_t)(0x20U + i), data[i]);
     }
 

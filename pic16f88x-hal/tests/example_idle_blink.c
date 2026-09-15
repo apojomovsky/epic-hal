@@ -68,7 +68,8 @@ int main(void)
      *    (a 32 kHz crystal can take a few hundred ms), refreshing the
      *    WDT meanwhile. On the host the sim advances the counter so
      *    the loop exits. */
-    while (EPIC_TIMER1_ReadCounter() <= T1_RELOAD) {
+    while (EPIC_TIMER1_ReadCounter() <= T1_RELOAD)
+    {
         EPIC_WDT_Refresh();
         epic_harness_tick();
     }
@@ -82,7 +83,8 @@ int main(void)
      *    (target), then sleeps. Each Timer1 overflow wakes the CPU;
      *    the dispatcher runs the callback and the CPU sleeps again.
      *    The harness bounds the loop on the host. */
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
         EPIC_Sleep_Enter();
     }

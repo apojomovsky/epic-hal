@@ -50,7 +50,8 @@ static void sim_step_ioc(void);
  */
 static uint8_t port_index(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return 0;
         case 'B': case 'b': return 1;
         case 'C': case 'c': return 2;
@@ -148,7 +149,8 @@ void pic16f193x_sim_reset(void)
  */
 void pic16f193x_sim_step(uint32_t ticks)
 {
-    for (uint32_t i = 0; i < ticks; i++) {
+    for (uint32_t i = 0; i < ticks; i++)
+    {
         sim_step_timer0();
         sim_step_timer1();
         sim_step_timer246();
@@ -188,7 +190,8 @@ static void sim_step_timer0(void)
 
     uint8_t t0 = pic16f193x_sim_sfr[PIC_REG_TMR0];
     t0++;
-    if (t0 == 0x00U) {
+    if (t0 == 0x00U)
+    {
         pic16f193x_sim_sfr[PIC_REG_INTCON] |= PIC_INTCON_TMR0IF;
         if (sim_irq_cb) sim_irq_cb();
     }
@@ -236,7 +239,8 @@ static void sim_step_timer1(void)
     pic16f193x_sim_sfr[PIC_REG_TMR1H] = (uint8_t)(full >> 8);
 
     /* On overflow, set PIR1<TMR1IF> and fire the IRQ callback. */
-    if (full == 0x0000U) {
+    if (full == 0x0000U)
+    {
         pic16f193x_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR1IF;
         if (sim_irq_cb) sim_irq_cb();
     }
@@ -269,7 +273,8 @@ static void sim_step_timer246(void)
     static uint16_t prescale_ctr[3]  = { 0, 0, 0 };
     static uint8_t  postscale_ctr[3] = { 0, 0, 0 };
 
-    for (uint8_t i = 0; i < 3u; i++) {
+    for (uint8_t i = 0; i < 3u; i++)
+    {
         uint8_t con = pic16f193x_sim_sfr[con_addr[i]];
         if (!(con & 0x04U)) continue;   /* TMR*ON = 0 -> stopped. */
 
@@ -281,17 +286,21 @@ static void sim_step_timer246(void)
         uint8_t tmr = pic16f193x_sim_sfr[tmr_addr[i]];
         uint8_t pr  = pic16f193x_sim_sfr[pr_addr[i]];
 
-        if (tmr == pr) {
+        if (tmr == pr)
+        {
             /* PR match: reset to 0, bump the postscaler. */
             tmr = 0U;
             uint8_t outps = (uint8_t)((con >> 3) & 0x0FU);
             postscale_ctr[i]++;
-            if (postscale_ctr[i] > outps) {
+            if (postscale_ctr[i] > outps)
+            {
                 postscale_ctr[i] = 0U;
                 pic16f193x_sim_sfr[pir_addr[i]] |= pir_bit[i];
                 if (sim_irq_cb) sim_irq_cb();
             }
-        } else {
+        }
+        else
+        {
             tmr++;
         }
         pic16f193x_sim_sfr[tmr_addr[i]] = tmr;
@@ -309,7 +318,8 @@ static void sim_step_usart(void)
      * 1 whenever TXEN is set. The driver writes TXSTA without TRMT
      * (it is read-only on real silicon), so the sim sets it here. */
     uint8_t txsta = pic16f193x_sim_sfr[PIC_REG_TXSTA];
-    if (txsta & PIC_TXSTA_TXEN) {
+    if (txsta & PIC_TXSTA_TXEN)
+    {
         pic16f193x_sim_sfr[PIC_REG_TXSTA] = (uint8_t)(txsta | PIC_TXSTA_TRMT);
     }
     /* BAUDCON: RCIDL (bit 6) is read-only, stays 1 when receiver idle. */
@@ -326,11 +336,14 @@ static uint8_t s_eeprom_data[256];
 static void sim_step_eeprom(void)
 {
     uint8_t econ1 = pic16f193x_sim_sfr[PIC_REG_EECON1];
-    if (econ1 & PIC_EECON1_RD) {
+    if (econ1 & PIC_EECON1_RD)
+    {
         uint8_t addr = pic16f193x_sim_sfr[PIC_REG_EEADRL];
         pic16f193x_sim_sfr[PIC_REG_EEDATL] = s_eeprom_data[addr];
         pic16f193x_sim_sfr[PIC_REG_EECON1] &= (uint8_t)~PIC_EECON1_RD;
-    } else if (econ1 & PIC_EECON1_WR) {
+    }
+    else if (econ1 & PIC_EECON1_WR)
+    {
         uint8_t addr = pic16f193x_sim_sfr[PIC_REG_EEADRL];
         s_eeprom_data[addr] = pic16f193x_sim_sfr[PIC_REG_EEDATL];
         pic16f193x_sim_sfr[PIC_REG_EECON1] &= (uint8_t)~PIC_EECON1_WR;
@@ -359,17 +372,22 @@ static void sim_refresh_ports(void)
     static const uint16_t lat_addr[5]  = { PIC_REG_LATA,  PIC_REG_LATB,
                                            PIC_REG_LATC,  PIC_REG_LATD,
                                            PIC_REG_LATE };
-    for (uint8_t p = 0; p < 5u; p++) {
+    for (uint8_t p = 0; p < 5u; p++)
+    {
         uint8_t tris = pic16f193x_sim_sfr[tris_addr[p]];
         uint8_t lat  = pic16f193x_sim_sfr[lat_addr[p]];
         uint8_t in   = sim_input_value[p];
         uint8_t port = 0U;
-        for (uint8_t b = 0; b < 8u; b++) {
+        for (uint8_t b = 0; b < 8u; b++)
+        {
             uint8_t m = (uint8_t)(1U << b);
-            if (tris & m) {
+            if (tris & m)
+            {
                 if (sim_input_override[p] & m) port |= (uint8_t)(in & m);
                 /* input with no override reads 0. */
-            } else {
+            }
+            else
+            {
                 port |= (uint8_t)(lat & m);
             }
         }
@@ -392,19 +410,23 @@ static void sim_step_ioc(void)
     uint8_t changed = (uint8_t)(cur ^ sim_last_portb);
     uint8_t iocbf   = pic16f193x_sim_sfr[PIC_REG_IOCBF];
 
-    for (uint8_t b = 0; b < 8u; b++) {
+    for (uint8_t b = 0; b < 8u; b++)
+    {
         uint8_t m = (uint8_t)(1U << b);
         if (!(changed & m)) continue;
         uint8_t rising  = (cur & m) && !(sim_last_portb & m);
         uint8_t falling = !(cur & m) && (sim_last_portb & m);
-        if ((rising  && (iocbp & m)) || (falling && (iocbn & m))) {
+        if ((rising  && (iocbp & m)) || (falling && (iocbn & m)))
+        {
             iocbf |= m;
         }
     }
     sim_last_portb = cur;
-    if (iocbf != pic16f193x_sim_sfr[PIC_REG_IOCBF]) {
+    if (iocbf != pic16f193x_sim_sfr[PIC_REG_IOCBF])
+    {
         pic16f193x_sim_sfr[PIC_REG_IOCBF] = iocbf;
-        if (iocbf) {
+        if (iocbf)
+        {
             pic16f193x_sim_sfr[PIC_REG_INTCON] |= PIC_INTCON_IOCIF;
             if (sim_irq_cb) sim_irq_cb();
         }
@@ -447,7 +469,8 @@ uint8_t pic16f193x_sim_read_output(char port, uint8_t pin)
                                            PIC_REG_LATC,  PIC_REG_LATD,
                                            PIC_REG_LATE };
     uint8_t tris = pic16f193x_sim_sfr[tris_addr[idx]];
-    if (tris & mask) {
+    if (tris & mask)
+    {
         /* Input: return the externally driven level (0 if not driven). */
         return (sim_input_override[idx] & mask) ?
                ((sim_input_value[idx] & mask) ? 1U : 0U) : 0U;

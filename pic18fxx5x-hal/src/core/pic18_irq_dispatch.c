@@ -63,10 +63,14 @@ void epic_dispatch_all_irqs(void)
      * table-driven handler cost on unrelated events; when the source
      * is disabled the stale flag is dropped so it does not re-trigger
      * this branch on every later event. */
-    if (pir1 & PIC_PIR1_TMR1IF) {
-        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TMR1IE) {
+    if (pir1 & PIC_PIR1_TMR1IF)
+    {
+        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TMR1IE)
+        {
             TIMER1_IRQHandler();
-        } else {
+        }
+        else
+        {
             /* Source disabled: drop the stale flag via the direct
              * EPIC_BIT_CLR the CCP handlers use, not the table-driven
              * EPIC_IRQ_ClearFlag, whose lookup would delay the swuart
@@ -81,8 +85,10 @@ void epic_dispatch_all_irqs(void)
      * stays set whenever TXREG is empty, so an un-gated branch fires
      * USART_TX_IRQHandler (and its callback) on every ISR from any
      * source. */
-    if (pir1 & PIC_PIR1_TXIF) {
-        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TXIE) {
+    if (pir1 & PIC_PIR1_TXIF)
+    {
+        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TXIE)
+        {
             USART_TX_IRQHandler();
         }
     }
@@ -101,8 +107,10 @@ void epic_dispatch_all_irqs(void)
      * on EEIF with EEIE off), and an unconditional dispatch would clear
      * the flag from a live ISR and hang the poller. No stale-flag drop:
      * the polling consumer owns EEIF. */
-    if (pir2 & PIC_PIR2_EEIF) {
-        if (epic_sfr_read8(PIC_REG_PIE2) & PIC_PIE2_EEIE) {
+    if (pir2 & PIC_PIR2_EEIF)
+    {
+        if (epic_sfr_read8(PIC_REG_PIE2) & PIC_PIE2_EEIE)
+        {
             EEPROM_IRQHandler();
         }
     }

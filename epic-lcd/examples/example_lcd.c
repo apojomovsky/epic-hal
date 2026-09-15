@@ -40,8 +40,10 @@ int main(void)
     char line[17];
     uint32_t seconds = 0u;
     uint32_t last = epic_tick_get();
-    for (;;) {
-        if (epic_tick_elapsed_since(last) >= 1000u) {
+    for (;;)
+    {
+        if (epic_tick_elapsed_since(last) >= 1000u)
+        {
             last = epic_tick_get();
             seconds++;
             (void)sprintf(line, "up %lu s", (unsigned long)seconds);

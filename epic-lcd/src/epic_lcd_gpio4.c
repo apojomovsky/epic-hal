@@ -67,7 +67,8 @@ static void gpio4_send(void *ctx, uint8_t rs, uint8_t byte)
 static void gpio4_delay_us(void *ctx, uint32_t us)
 {
     (void)ctx;
-    if (us >= 1000u) {
+    if (us >= 1000u)
+    {
         epic_tick_delay_ms(us / 1000u);
     }
     /* Sub-ms: no precise timer on 8-bit PIC without Timer intervention;

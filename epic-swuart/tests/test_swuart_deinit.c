@@ -124,7 +124,8 @@ int main(void)
 
     static const uint8_t expected_modes[] = {8, 9, 9, 9, 9, 9, 8, 9, 8};
     int tx_ok = 1;
-    for (size_t i = 0; i < 9; i++) {
+    for (size_t i = 0; i < 9; i++)
+    {
         epic_swuart_test_fire_tx_event();
         if (epic_swuart_test_last_tx_mode() != expected_modes[i]) tx_ok = 0;
     }
@@ -146,7 +147,8 @@ int main(void)
     epic_swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
     epic_swuart_test_fire_rx_event(); /* confirm event, half a bit later */
 #endif
-    for (size_t i = 1; i < 10; i++) {
+    for (size_t i = 1; i < 10; i++)
+    {
         SIM_DRIVE('C', 2, rx_bits[i]);
         epic_swuart_test_fire_rx_event(); /* compare event: sample + arm next */
     }

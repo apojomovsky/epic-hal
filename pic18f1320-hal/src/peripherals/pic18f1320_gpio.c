@@ -54,7 +54,8 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     uint8_t mask = (uint8_t)pins;
     uint8_t tris = EPIC_REG8(ta);
 
-    switch (mode) {
+    switch (mode)
+    {
         case GPIO_MODE_INPUT:
         case GPIO_MODE_ANALOG:
             /* Both modes set TRIS=1 (input). Analog mode additionally
@@ -158,9 +159,12 @@ void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 {
     /* INTCON2<RBPU> (bit 7), active-low: 1 = disabled, 0 = enabled
      * (DS39605F §6.2, Register 9-2). */
-    if (pull == GPIO_PULLUP) {
+    if (pull == GPIO_PULLUP)
+    {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON2), PIC_INTCON2_RBPU);
-    } else {
+    }
+    else
+    {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON2), PIC_INTCON2_RBPU);
     }
 }

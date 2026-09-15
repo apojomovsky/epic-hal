@@ -44,10 +44,12 @@ void epic_usb_init(void)
  */
 void epic_usb_service(void)
 {
-    if (!g_dtr) {
+    if (!g_dtr)
+    {
         return;                     /* real module gates draining on usb_is_configured() */
     }
-    while (g_tx_count > 0u && g_sent_len < SENT_LOG_SZ) {
+    while (g_tx_count > 0u && g_sent_len < SENT_LOG_SZ)
+    {
         g_sent_log[g_sent_len++] = g_tx_buf[g_tx_tail];
         g_tx_tail = (uint8_t)((g_tx_tail + 1u) & MASK);
         g_tx_count--;
@@ -68,7 +70,8 @@ void epic_usb_service(void)
 size_t epic_usb_write(const uint8_t *data, size_t len)
 {
     size_t n = 0;
-    while (n < len && g_tx_count < EPIC_USB_RING_SZ) {
+    while (n < len && g_tx_count < EPIC_USB_RING_SZ)
+    {
         g_tx_buf[g_tx_head] = data[n++];
         g_tx_head = (uint8_t)((g_tx_head + 1u) & MASK);
         g_tx_count++;
@@ -89,7 +92,8 @@ size_t epic_usb_write(const uint8_t *data, size_t len)
 size_t epic_usb_read(uint8_t *buf, size_t max)
 {
     size_t n = 0;
-    while (n < max && g_rx_count > 0u) {
+    while (n < max && g_rx_count > 0u)
+    {
         buf[n++] = g_rx_buf[g_rx_tail];
         g_rx_tail = (uint8_t)((g_rx_tail + 1u) & MASK);
         g_rx_count--;
@@ -141,7 +145,8 @@ bool epic_usb_connected(void)
 void epic_usb_test_set_dtr(bool on)
 {
     g_dtr = on;
-    if (on) {
+    if (on)
+    {
         epic_usb_service();
     }
 }
@@ -157,7 +162,8 @@ void epic_usb_test_set_dtr(bool on)
 size_t epic_usb_test_inject_rx(const uint8_t *data, size_t len)
 {
     size_t n = 0;
-    while (n < len && g_rx_count < EPIC_USB_RING_SZ) {
+    while (n < len && g_rx_count < EPIC_USB_RING_SZ)
+    {
         g_rx_buf[g_rx_head] = data[n++];
         g_rx_head = (uint8_t)((g_rx_head + 1u) & MASK);
         g_rx_count++;

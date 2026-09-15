@@ -123,7 +123,8 @@ int32_t epic_math_mul_s16(int16_t a, int16_t b)
     uint16_t ua = (a < 0) ? (uint16_t)(0u - (uint16_t)a) : (uint16_t)a;
     uint16_t ub = (b < 0) ? (uint16_t)(0u - (uint16_t)b) : (uint16_t)b;
     uint32_t ur = epic_math_mul_u16(ua, ub);
-    if (neg) {
+    if (neg)
+    {
         ur = (uint32_t)epic_math_negate_s32((int32_t)ur);
     }
     return (int32_t)ur;

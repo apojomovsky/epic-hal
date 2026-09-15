@@ -146,7 +146,8 @@ int main(void)
     (void)EPIC_TIMER2_Init(&t2);
     (void)EPIC_TIMER2_Start(&t2);
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         /* SSP cycle: SSPCON2/SSPSTAT Bank-1 macro windows. */
         EPIC_SSP_Start();
         (void)EPIC_SSP_WriteByte(0xA5u);
@@ -158,7 +159,8 @@ int main(void)
          * misdirects and the callback's increment lands in the wrong
          * bank's GPR (the count freezes/lags). */
         asm("bsf STATUS,5");
-        for (volatile uint16_t n = 0u; n < 40u; n++) {
+        for (volatile uint16_t n = 0u; n < 40u; n++)
+        {
             /* hold the window open */
         }
         asm("bcf STATUS,5");
@@ -178,7 +180,8 @@ int main(void)
     (void)EPIC_SSP_Init(&ssp);
     CHECK((EPIC_REG8(PIC_REG_SSPCON) & 0x2Fu) == 0x28u, 0x04);
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
     return epic_harness_report(g_fail == 0u);

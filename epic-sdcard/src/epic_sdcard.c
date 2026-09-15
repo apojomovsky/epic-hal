@@ -27,13 +27,16 @@ static uint16_t           g_timer_timeout_ms;
 static uint8_t spi_byte(uint8_t out)
 {
     uint16_t w;
-    do {
+    do
+    {
         w = EPIC_SSP_WriteByte(out);
-        if (w == 0xFFFFu) {
+        if (w == 0xFFFFu)
+        {
             EPIC_SSP_ClearWriteCollision();     /* must be cleared in software, DS39632E §19.2.2 */
         }
     } while (w == 0xFFFFu);
-    while (!EPIC_SSP_IsBufferFull()) {
+    while (!EPIC_SSP_IsBufferFull())
+    {
     }
     return EPIC_SSP_ReadByte();
 }
@@ -55,10 +58,12 @@ void epic_sdcard_spi_transfer(uint8_t instance, const uint8_t *out_buf,
                               uint8_t *in_buf, uint16_t len)
 {
     (void)instance;
-    for (uint16_t i = 0; i < len; i++) {
+    for (uint16_t i = 0; i < len; i++)
+    {
         uint8_t out = out_buf ? out_buf[i] : 0xFFu;   /* SD-over-SPI: clock junk while reading */
         uint8_t in = spi_byte(out);
-        if (in_buf) {
+        if (in_buf)
+        {
             in_buf[i] = in;
         }
     }
@@ -97,15 +102,19 @@ static SSP_ModeTypeDef pick_divisor(uint32_t target_hz, uint32_t *achieved_hz)
                                               SSP_MODE_SPI_MASTER_FOSC_64};
     int8_t best = -1;
 
-    for (uint8_t i = 0; i < 3u; i++) {
+    for (uint8_t i = 0; i < 3u; i++)
+    {
         uint32_t hz = g_fosc_hz / divs[i];
-        if (hz <= target_hz) {
-            if (best < 0 || hz > (g_fosc_hz / divs[(uint8_t)best])) {
+        if (hz <= target_hz)
+        {
+            if (best < 0 || hz > (g_fosc_hz / divs[(uint8_t)best]))
+            {
                 best = (int8_t)i;
             }
         }
     }
-    if (best < 0) {
+    if (best < 0)
+    {
         best = 2;   /* none met target; slowest available is the safest fallback */
     }
 

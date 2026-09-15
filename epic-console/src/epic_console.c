@@ -31,22 +31,28 @@ static uint8_t epic_console_tokenize(char *line, char **argv)
     uint8_t argc = 0u;
     char *p = line;
 
-    while (*p != '\0' && argc < EPIC_CONSOLE_MAX_ARGS) {
-        while (*p == ' ' || *p == '\t') {
+    while (*p != '\0' && argc < EPIC_CONSOLE_MAX_ARGS)
+    {
+        while (*p == ' ' || *p == '\t')
+        {
             *p++ = '\0';
         }
-        if (*p == '\0') {
+        if (*p == '\0')
+        {
             break;
         }
 
         argv[argc++] = p;
-        while (*p != '\0' && *p != ' ' && *p != '\t') {
+        while (*p != '\0' && *p != ' ' && *p != '\t')
+        {
             p++;
         }
     }
 
-    while (*p != '\0') {
-        if (*p == ' ' || *p == '\t') {
+    while (*p != '\0')
+    {
+        if (*p == ' ' || *p == '\t')
+        {
             *p = '\0';
         }
         p++;
@@ -69,14 +75,18 @@ static void epic_console_dispatch(epic_console_t *con)
 
     con->line[con->line_len] = '\0';
     argc = epic_console_tokenize(con->line, con->argv);
-    if (argc == 0u) {
+    if (argc == 0u)
+    {
         con->line_len = 0u;
         return;
     }
 
-    for (uint8_t i = 0; i < con->table_len; i++) {
-        if (strcmp(con->argv[0], con->table[i].name) == 0) {
-            if (con->table[i].handler != NULL) {
+    for (uint8_t i = 0; i < con->table_len; i++)
+    {
+        if (strcmp(con->argv[0], con->table[i].name) == 0)
+        {
+            if (con->table[i].handler != NULL)
+            {
                 con->table[i].handler(argc, con->argv, con->ctx);
             }
             break;
@@ -105,7 +115,8 @@ void epic_console_init(epic_console_t *con, const epic_console_cmd_t *table,
     con->ctx = ctx;
     con->line_len = 0u;
     con->last_was_cr = false;
-    if (EPIC_CONSOLE_LINE_MAX > 0u) {
+    if (EPIC_CONSOLE_LINE_MAX > 0u)
+    {
         con->line[0] = '\0';
     }
 }
@@ -121,13 +132,17 @@ void epic_console_poll(epic_console_t *con)
 {
     uint8_t ch;
 
-    while (epic_serial_available() > 0) {
-        if (epic_serial_read(&ch, 1) != 1) {
+    while (epic_serial_available() > 0)
+    {
+        if (epic_serial_read(&ch, 1) != 1)
+        {
             break;
         }
 
-        if (ch == '\r' || ch == '\n') {
-            if (ch == '\n' && con->last_was_cr) {
+        if (ch == '\r' || ch == '\n')
+        {
+            if (ch == '\n' && con->last_was_cr)
+            {
                 con->last_was_cr = false;
                 continue;
             }
@@ -140,8 +155,10 @@ void epic_console_poll(epic_console_t *con)
 
         con->last_was_cr = false;
 
-        if (ch == '\b' || ch == 0x7Fu) {
-            if (con->line_len > 0u) {
+        if (ch == '\b' || ch == 0x7Fu)
+        {
+            if (con->line_len > 0u)
+            {
                 con->line_len--;
                 con->line[con->line_len] = '\0';
                 epic_console_write_str("\b \b");
@@ -149,7 +166,8 @@ void epic_console_poll(epic_console_t *con)
             continue;
         }
 
-        if (con->line_len < (uint8_t)(EPIC_CONSOLE_LINE_MAX - 1u)) {
+        if (con->line_len < (uint8_t)(EPIC_CONSOLE_LINE_MAX - 1u))
+        {
             con->line[con->line_len++] = (char)ch;
             con->line[con->line_len] = '\0';
             (void)epic_serial_write(&ch, 1);
@@ -166,7 +184,8 @@ void epic_console_poll(epic_console_t *con)
  */
 void epic_console_print_help(const epic_console_t *con)
 {
-    for (uint8_t i = 0; i < con->table_len; i++) {
+    for (uint8_t i = 0; i < con->table_len; i++)
+    {
         epic_console_write_str(con->table[i].name);
         epic_console_write_str(" - ");
         epic_console_write_str(con->table[i].help != NULL ? con->table[i].help : "");

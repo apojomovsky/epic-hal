@@ -37,10 +37,12 @@ int main(void)
     size_t queued = EPIC_SWUART_Write(&h, &tx_byte, 1);
 
     int drained = 0;
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
         EPIC_WDT_Refresh();
-        if (!drained && h.tx_count == 0u) {
+        if (!drained && h.tx_count == 0u)
+        {
             drained = 1;
         }
     }

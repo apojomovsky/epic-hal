@@ -22,24 +22,30 @@ int main(void)
 
     EPIC_SWUART_HandleTypeDef h;
     if (EPIC_SWUART_Init(&h, GPIOC, GPIO_PIN_1, GPIOC, GPIO_PIN_2,
-                         FOSC_HZ, BAUD_RATE) != EPIC_OK) {
+                         FOSC_HZ, BAUD_RATE) != EPIC_OK)
+                         {
         /* The pin pair does not match this slot's fixed CCP pins. */
-        for (;;) {
+        for (;;)
+        {
             EPIC_WDT_Refresh();
         }
     }
 
     static const uint8_t banner[] = "epic-swuart echo ready\r\n";
-    for (size_t i = 0u; i < sizeof(banner) - 1u; i++) {
-        while (EPIC_SWUART_Write(&h, &banner[i], 1u) != 1u) {
+    for (size_t i = 0u; i < sizeof(banner) - 1u; i++)
+    {
+        while (EPIC_SWUART_Write(&h, &banner[i], 1u) != 1u)
+        {
             /* TX ring full; the CCP-compare ISR drains it. */
         }
     }
 
     uint8_t buf[4];
-    for (;;) {
+    for (;;)
+    {
         int n = EPIC_SWUART_Read(&h, buf, sizeof(buf));
-        if (n > 0) {
+        if (n > 0)
+        {
             EPIC_SWUART_Write(&h, buf, (size_t)n);
             EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_1);
         }

@@ -19,7 +19,10 @@
  *          It is never invoked here because the sim IRQ callback is
  *          disabled, so the body is irrelevant.
  */
-static void rx_dummy_cb(uint8_t data) { (void)data; }
+static void rx_dummy_cb(uint8_t data)
+{
+    (void)data;
+}
 
 /** @brief  EUSART driver smoke test.
  *

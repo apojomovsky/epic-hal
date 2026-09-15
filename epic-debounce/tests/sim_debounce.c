@@ -33,10 +33,22 @@ static bool sim_level(void *ctx)
     (void)ctx;
     uint32_t t = epic_tick_get();
 
-    if (t < 10u) { return false; }
-    if (t < 16u) { return ((t & 1u) == 0u); }   /* 10..15: 1,0,1,0,1,0 */
-    if (t < 40u) { return true; }
-    if (t < 46u) { return ((t & 1u) != 0u); }   /* 40..45: 0,1,0,1,0,1 */
+    if (t < 10u)
+    {
+        return false;
+    }
+    if (t < 16u)
+    {
+        return ((t & 1u) == 0u);
+    }   /* 10..15: 1,0,1,0,1,0 */
+    if (t < 40u)
+    {
+        return true;
+    }
+    if (t < 46u)
+    {
+        return ((t & 1u) != 0u);
+    }   /* 40..45: 0,1,0,1,0,1 */
     return false;
 }
 
@@ -56,14 +68,18 @@ int main(void)
 
     for (uint32_t i = 0;
          epic_harness_running(i) && (epic_tick_get() < SCENARIO_END_MS);
-         i++) {
+         i++)
+         {
         epic_harness_tick();
 
         epic_debounce_event_t ev = epic_debounce_poll(&db);
-        if (ev == DEBOUNCE_EVENT_PRESSED) {
+        if (ev == DEBOUNCE_EVENT_PRESSED)
+        {
             presses++;
             press_t = epic_tick_get();
-        } else if (ev == DEBOUNCE_EVENT_RELEASED) {
+        }
+        else if (ev == DEBOUNCE_EVENT_RELEASED)
+        {
             releases++;
             release_t = epic_tick_get();
         }
@@ -77,9 +93,12 @@ int main(void)
              (release_t >= REL_BOUNCE_MS + DB_MS) &&
              !epic_debounce_is_active(&db);
 
-    if (ok) {
+    if (ok)
+    {
         epic_harness_log("debounce sim: 1 press, 1 release, window respected\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("debounce sim: checks failed\n");
     }
     return epic_harness_report(ok);

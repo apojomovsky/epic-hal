@@ -133,4 +133,6 @@ uint8_t EPIC_LCD_IsActive(void)
 /**
  * @brief LCD interrupt handler (weak, override in user code).
  */
-void LCD_IRQHandler(void) {}
+void LCD_IRQHandler(void)
+{
+}

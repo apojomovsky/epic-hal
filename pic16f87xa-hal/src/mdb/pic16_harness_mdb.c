@@ -33,7 +33,8 @@ static void s_tx_cplt(void)
  */
 static void s_uart_putc(char c)
 {
-    while (!EPIC_USART_IsTxShiftRegisterEmpty()) {
+    while (!EPIC_USART_IsTxShiftRegisterEmpty())
+    {
         /* wait for the shift register to drain */
     }
     EPIC_USART_Transmit((uint8_t)c);
@@ -98,7 +99,8 @@ void epic_harness_log(const char *fmt, ...)
      * overflows the 8-level hardware stack if it fires mid-print. Mask
      * GIE for the whole line so the marker cannot be corrupted. */
     uint8_t prev_gie = EPIC_IRQ_Disable();
-    while (*fmt) {
+    while (*fmt)
+    {
         s_uart_putc(*fmt);
         fmt++;
     }

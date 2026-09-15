@@ -83,16 +83,19 @@ static size_t  g_rx_model_len = 0u;    /* bytes not yet read */
 static int drain_tx(uint8_t *out, int max)
 {
     int n = 0;
-    while (epic_serial_tx_pending() > 0 && n < max) {
+    while (epic_serial_tx_pending() > 0 && n < max)
+    {
         int before = epic_serial_tx_pending();
         epic_harness_tick();
         int mid = epic_serial_tx_pending();
-        if (mid < before) {
+        if (mid < before)
+        {
             out[n++] = (uint8_t)EPIC_REG8(PIC_REG_TXREG);  /* tick popped */
         }
         epic_dispatch_all_irqs();
         int after = epic_serial_tx_pending();
-        if (after < mid) {
+        if (after < mid)
+        {
             out[n++] = (uint8_t)EPIC_REG8(PIC_REG_TXREG);  /* dispatch popped */
         }
     }
@@ -116,18 +119,22 @@ static void rx_inject(uint8_t b)
  */
 static void rx_check_model(void)
 {
-    while (g_rx_model_len > 0u) {
+    while (g_rx_model_len > 0u)
+    {
         /* Varied read sizes, never more than the model holds. */
         int n = (int)(g_rx_model_len % 7u) + 1;
         if ((size_t)n > g_rx_model_len) n = (int)g_rx_model_len;
         uint8_t buf[16];
         int got = epic_serial_read(buf, n);
-        if (got != n) {
+        if (got != n)
+        {
             CHECK(0, "rx read returns requested count");
             break;
         }
-        for (int i = 0; i < n; i++) {
-            if (buf[i] != g_rx_model[g_rx_model_head + (size_t)i]) {
+        for (int i = 0; i < n; i++)
+        {
+            if (buf[i] != g_rx_model[g_rx_model_head + (size_t)i])
+            {
                 CHECK(0, "rx byte mismatch vs model");
             }
         }
@@ -135,7 +142,8 @@ static void rx_check_model(void)
         g_rx_model_len  -= (size_t)n;
     }
     /* Compact so the linear model buffer never overflows. */
-    if (g_rx_model_head > 0u) {
+    if (g_rx_model_head > 0u)
+    {
         memmove(g_rx_model, g_rx_model + g_rx_model_head, g_rx_model_len);
         g_rx_model_head = 0u;
     }
@@ -148,9 +156,12 @@ static void expect_tx(const char *want, int len)
 {
     uint8_t got[16];
     int n = drain_tx(got, (int)sizeof(got));
-    if (n != len || memcmp(got, want, (size_t)len) != 0) {
+    if (n != len || memcmp(got, want, (size_t)len) != 0)
+    {
         CHECK(0, "put_*: byte stream mismatch");
-    } else {
+    }
+    else
+    {
         g_pass++;
     }
 }
@@ -201,14 +212,16 @@ static void test_put_formatting(void)
  */
 static void test_stress_roundtrip(void)
 {
-    for (int it = 0; it < 3000; it++) {
+    for (int it = 0; it < 3000; it++)
+    {
         /* TX producer: 0..SZ+1 bytes (SZ+1 exercises the blocking
          * boundary: the module drains one byte internally, then the
          * external drain finishes the ring). */
         int wlen = (int)(rnd() % (SZ + 2u));
         uint8_t wbuf[SZ + 2u];
         memset(wbuf, 0, sizeof(wbuf));
-        for (int i = 0; i < wlen; i++) {
+        for (int i = 0; i < wlen; i++)
+        {
             wbuf[i] = (uint8_t)rnd();
         }
         int w = epic_serial_write(wbuf, wlen);
@@ -218,7 +231,8 @@ static void test_stress_roundtrip(void)
          * external drain overwrites TXREG with the next byte. */
         int pre = 0;
         uint8_t tbuf[SZ + 2u];
-        if (wlen > (int)SZ) {
+        if (wlen > (int)SZ)
+        {
             tbuf[0] = (uint8_t)EPIC_REG8(PIC_REG_TXREG);
             CHECK(tbuf[0] == wbuf[0], "tx internal drain pops oldest byte");
             pre = 1;
@@ -229,9 +243,11 @@ static void test_stress_roundtrip(void)
 
         /* RX producer: 0..4 random bytes, injected one at a time. */
         int rlen = (int)(rnd() % 5u);
-        for (int i = 0; i < rlen; i++) {
+        for (int i = 0; i < rlen; i++)
+        {
             uint8_t b = (uint8_t)rnd();
-            if (g_rx_model_len >= SZ) {
+            if (g_rx_model_len >= SZ)
+            {
                 CHECK(epic_serial_available() == (int)SZ,
                       "rx ring full reported");
                 continue;   /* overflow drop is the documented contract */
@@ -264,7 +280,8 @@ static void test_full_boundaries(void)
      * header note), so the blocking write is a one-byte write with
      * TXIF re-asserted first. */
     uint8_t wbuf[SZ + 1u];
-    for (int i = 0; i < (int)sizeof(wbuf); i++) {
+    for (int i = 0; i < (int)sizeof(wbuf); i++)
+    {
         wbuf[i] = (uint8_t)(i * 7u + 1u);
     }
     CHECK(epic_serial_write(wbuf, SZ) == (int)SZ, "tx fill: write SZ");
@@ -284,10 +301,12 @@ static void test_full_boundaries(void)
     g_rx_model_head = 0u;
     g_rx_model_len = 0u;
     uint8_t rbuf[SZ + 1u];
-    for (int i = 0; i < (int)sizeof(rbuf); i++) {
+    for (int i = 0; i < (int)sizeof(rbuf); i++)
+    {
         rbuf[i] = (uint8_t)(i * 13u + 3u);
     }
-    for (int i = 0; i < SZ; i++) {
+    for (int i = 0; i < SZ; i++)
+    {
         rx_inject(rbuf[i]);
     }
     CHECK(epic_serial_available() == (int)SZ, "rx fill: ring full");
@@ -296,7 +315,8 @@ static void test_full_boundaries(void)
     int got_rx = epic_serial_read(rbuf, (int)sizeof(rbuf));
     CHECK(got_rx == SZ, "rx fill: reads exactly the ring capacity");
     int ok = 1;
-    for (int i = 0; i < got_rx; i++) {
+    for (int i = 0; i < got_rx; i++)
+    {
         if (rbuf[i] != (uint8_t)(i * 13u + 3u)) ok = 0;
     }
     CHECK(ok, "rx fill: first SZ bytes byte-exact");
@@ -311,11 +331,14 @@ static void test_full_boundaries(void)
     /* Wrap-around: several fill/read cycles force head and tail to
      * wrap the ring many times. */
     uint8_t pat[20];
-    for (int cyc = 0; cyc < 40; cyc++) {
-        for (int i = 0; i < 20; i++) {
+    for (int cyc = 0; cyc < 40; cyc++)
+    {
+        for (int i = 0; i < 20; i++)
+        {
             pat[i] = (uint8_t)(rnd() & 0xFFu);
         }
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 20; i++)
+        {
             rx_inject(pat[i]);
         }
         int got = epic_serial_read(pat, 20);

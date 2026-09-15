@@ -98,7 +98,8 @@ void EPIC_IRQ_Enable(PIC16F193X_IRQn irq)
     uint8_t in_intcon   = d->in_intcon;
     uint8_t enable_mask = d->enable_mask;
     uint8_t pir_index   = d->pir_index;
-    if (in_intcon) {
+    if (in_intcon)
+    {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), enable_mask);
         return;
     }
@@ -120,7 +121,8 @@ void EPIC_IRQ_DisableSrc(PIC16F193X_IRQn irq)
     uint8_t in_intcon   = d->in_intcon;
     uint8_t enable_mask = d->enable_mask;
     uint8_t pir_index   = d->pir_index;
-    if (in_intcon) {
+    if (in_intcon)
+    {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), enable_mask);
         return;
     }
@@ -138,9 +140,12 @@ void EPIC_IRQ_ClearFlag(PIC16F193X_IRQn irq)
     const irq_desc_t *d = &irq_table[irq];
     uint8_t in_intcon = d->in_intcon;
     uint8_t flag_mask = d->flag_mask;
-    if (in_intcon) {
+    if (in_intcon)
+    {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), flag_mask);
-    } else {
+    }
+    else
+    {
         uint8_t addr = pir_reg_addr(d);
         uint8_t v = EPIC_REG8(addr);
         v &= (uint8_t)~flag_mask;

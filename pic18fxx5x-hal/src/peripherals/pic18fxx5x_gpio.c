@@ -15,7 +15,8 @@
  */
 static uint16_t tris_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_TRISA;
         case GPIOB: return PIC_REG_TRISB;
         case GPIOC: return PIC_REG_TRISC;
@@ -36,7 +37,8 @@ static uint16_t tris_addr(GPIO_TypeDef port)
  */
 static uint16_t lat_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_LATA;
         case GPIOB: return PIC_REG_LATB;
         case GPIOC: return PIC_REG_LATC;
@@ -57,7 +59,8 @@ static uint16_t lat_addr(GPIO_TypeDef port)
  */
 static uint16_t port_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_PORTA;
         case GPIOB: return PIC_REG_PORTB;
         case GPIOC: return PIC_REG_PORTC;
@@ -100,7 +103,8 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
     uint8_t tris = EPIC_REG8(ta);
 
-    switch (mode) {
+    switch (mode)
+    {
         case GPIO_MODE_INPUT:
         case GPIO_MODE_ANALOG:
             /* Both modes set TRIS=1 (input). Analog mode additionally
@@ -207,9 +211,12 @@ void EPIC_GPIO_SetPullups(GPIO_PullTypeDef pull)
 {
     /* INTCON2<RBPU> (bit 7), active-low: 1 = disabled, 0 = enabled
      * (DS39632E §10.2, Register 9-2). */
-    if (pull == GPIO_PULLUP) {
+    if (pull == GPIO_PULLUP)
+    {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON2), PIC_INTCON2_RBPU);
-    } else {
+    }
+    else
+    {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON2), PIC_INTCON2_RBPU);
     }
 }

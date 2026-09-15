@@ -10,11 +10,14 @@
 /** @brief Exhaustive 256x256 check of epic_math_mul_u8 against native arithmetic. */
 static void test_mul_u8_exhaustive(void)
 {
-    for (uint32_t a = 0; a <= 0xFFu; a++) {
-        for (uint32_t b = 0; b <= 0xFFu; b++) {
+    for (uint32_t a = 0; a <= 0xFFu; a++)
+    {
+        for (uint32_t b = 0; b <= 0xFFu; b++)
+        {
             uint16_t got = epic_math_mul_u8((uint8_t)a, (uint8_t)b);
             uint16_t exp = (uint16_t)(a * b);
-            if (got != exp) {
+            if (got != exp)
+            {
                 CHECK(0, "mul_u8 mismatch");
                 if (g_epic_math_failures < 5)
                     printf("  a=%lu b=%lu got=%u exp=%u\n",
@@ -38,7 +41,8 @@ static void test_mul_u16(void)
 {
     /* Exhaustive over the boundary cross-product (169 pairs). */
     for (size_t i = 0; i < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); i++)
-        for (size_t j = 0; j < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); j++) {
+        for (size_t j = 0; j < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); j++)
+        {
             uint16_t a = U16_BOUNDS[i], b = U16_BOUNDS[j];
             uint32_t got = epic_math_mul_u16(a, b);
             uint32_t exp = (uint32_t)a * (uint32_t)b;
@@ -47,7 +51,8 @@ static void test_mul_u16(void)
 
     /* Randomized fuzz, reproducible. */
     uint32_t st = 0xC0FFEE01u;
-    for (int n = 0; n < 200000; n++) {
+    for (int n = 0; n < 200000; n++)
+    {
         uint16_t a = (uint16_t)epic_math_test_rand(&st);
         uint16_t b = (uint16_t)epic_math_test_rand(&st);
         uint32_t got = epic_math_mul_u16(a, b);
@@ -62,7 +67,8 @@ static void test_mul_s16(void)
     /* Boundary cross-product (324 pairs), incl. INT16_MIN*INT16_MIN and
      * INT16_MIN*-1 (the cases that stress signed abs/negate). */
     for (size_t i = 0; i < sizeof(S16_BOUNDS)/sizeof(S16_BOUNDS[0]); i++)
-        for (size_t j = 0; j < sizeof(S16_BOUNDS)/sizeof(S16_BOUNDS[0]); j++) {
+        for (size_t j = 0; j < sizeof(S16_BOUNDS)/sizeof(S16_BOUNDS[0]); j++)
+        {
             int16_t a = S16_BOUNDS[i], b = S16_BOUNDS[j];
             int32_t got = epic_math_mul_s16(a, b);
             int32_t exp = (int32_t)a * (int32_t)b;
@@ -70,7 +76,8 @@ static void test_mul_s16(void)
         }
 
     uint32_t st = 0x5EA12345u;
-    for (int n = 0; n < 200000; n++) {
+    for (int n = 0; n < 200000; n++)
+    {
         int16_t a = (int16_t)(uint16_t)epic_math_test_rand(&st);
         int16_t b = (int16_t)(uint16_t)epic_math_test_rand(&st);
         int32_t got = epic_math_mul_s16(a, b);

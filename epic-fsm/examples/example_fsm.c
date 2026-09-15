@@ -105,9 +105,11 @@ int main(void)
     EPIC_FSM_INIT(&g_traffic, traffic_table, ST_RED, &g_ctx);
 
     uint32_t last = epic_tick_get();
-    for (;;) {
+    for (;;)
+    {
         epic_fsm_dispatch(&g_traffic, EV_WALK); /* guarded wildcard row */
-        if (epic_tick_elapsed_since(last) >= g_ctx.interval_ms) {
+        if (epic_tick_elapsed_since(last) >= g_ctx.interval_ms)
+        {
             last = epic_tick_get();
             epic_fsm_dispatch(&g_traffic, EV_TIMER);
         }

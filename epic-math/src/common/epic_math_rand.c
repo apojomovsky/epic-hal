@@ -21,7 +21,8 @@
 uint16_t epic_math_rand_next(uint16_t *state)
 {
     uint16_t s = *state;
-    if (s == 0u) {
+    if (s == 0u)
+    {
         s = EPIC_MATH_RAND_SEED;      /* escape the all-zero fixed point      */
     }
     /* maximal-length 16-bit LFSR, taps {0,2,3,5} -> x^16+x^14+x^13+x^11+1 */
@@ -40,7 +41,8 @@ uint16_t epic_math_rand_next(uint16_t *state)
 int16_t epic_math_rand_gauss(uint16_t *state)
 {
     int32_t sum = 0;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         sum += (int32_t)epic_math_rand_next(state);
     }
     sum -= 131072;   /* 4 * 32768 (mean of the 1..65535 uniform LFSR output) */

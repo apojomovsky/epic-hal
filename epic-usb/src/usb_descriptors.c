@@ -194,19 +194,23 @@ static const struct {uint8_t bLength; uint8_t bDescriptorType; uint16_t chars[29
  */
 int16_t usb_application_get_string(uint8_t string_number, const void **ptr)
 {
-	if (string_number == 0) {
+	if (string_number == 0)
+	{
 		*ptr = &str00;
 		return sizeof(str00);
 	}
-	else if (string_number == 1) {
+	else if (string_number == 1)
+	{
 		*ptr = &vendor_string;
 		return sizeof(vendor_string);
 	}
-	else if (string_number == 2) {
+	else if (string_number == 2)
+	{
 		*ptr = &product_string;
 		return sizeof(product_string);
 	}
-	else if (string_number == 3) {
+	else if (string_number == 3)
+	{
 		/* Placeholder, not a real per-unit serial number: a real
 		 * deployment needs a genuine one (e.g. from EEPROM) so a host
 		 * doesn't confuse two boards sharing this VID/PID. */

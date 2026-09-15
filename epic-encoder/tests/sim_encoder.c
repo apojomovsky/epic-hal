@@ -57,9 +57,13 @@ static uint8_t wait_1ms_bounded(void)
 {
     uint32_t t0 = epic_tick_get();
     uint32_t spins = 0u;
-    while (epic_tick_elapsed_since(t0) < 1u) {
+    while (epic_tick_elapsed_since(t0) < 1u)
+    {
         epic_harness_tick();
-        if (++spins >= WAIT_SPIN_BOUND) { return 0u; }
+        if (++spins >= WAIT_SPIN_BOUND)
+        {
+            return 0u;
+        }
     }
     return 1u;
 }
@@ -75,10 +79,12 @@ int main(void)
     static const uint8_t neg_seq[8] = { 1, 3, 2, 0, 1, 3, 2, 0 };
     static const uint8_t pos_seq[8] = { 2, 3, 1, 0, 2, 3, 1, 0 };
     epic_encoder_init(&g_dec, PIN_A, PIN_B, 0u, port_byte(0u));
-    for (uint8_t i = 0; i < 8u; i++) {
+    for (uint8_t i = 0; i < 8u; i++)
+    {
         epic_encoder_update(&g_dec, port_byte(neg_seq[i]));
     }
-    for (uint8_t i = 0; i < 8u; i++) {
+    for (uint8_t i = 0; i < 8u; i++)
+    {
         epic_encoder_update(&g_dec, port_byte(pos_seq[i]));
     }
     int32_t p_dec   = epic_encoder_get_position(&g_dec);
@@ -116,10 +122,17 @@ int main(void)
     uint32_t t_start = epic_tick_get();
     int tear = 0;
     int stall = 0;
-    for (uint32_t i = 0; epic_harness_running(i) && i < HAMMER_READS; i++) {
+    for (uint32_t i = 0; epic_harness_running(i) && i < HAMMER_READS; i++)
+    {
         epic_harness_tick();
-        if (epic_encoder_get_position(&g_ham) != 0) { tear = 1; }
-        if ((i % HAMMER_WAIT_EVERY) == 0u && !wait_1ms_bounded()) { stall = 1; }
+        if (epic_encoder_get_position(&g_ham) != 0)
+        {
+            tear = 1;
+        }
+        if ((i % HAMMER_WAIT_EVERY) == 0u && !wait_1ms_bounded())
+        {
+            stall = 1;
+        }
     }
     uint32_t t_end = epic_tick_get();
     int tick_ok = (t_end > t_start) && !stall;
@@ -130,27 +143,40 @@ int main(void)
     int phase3_ok = (pg_first == -1) && (gg_drop == 1) && (pg_drop == -1) &&
                     (pg_accept == -2) && (gg_after == 1) && (eg_gate == 0);
 
-    if (phase1_ok) {
+    if (phase1_ok)
+    {
         epic_harness_log("encoder sim: rotations ok (-8 then +8, no errors)\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("encoder sim: rotation decode MISMATCH\n");
     }
-    if (phase2_ok) {
+    if (phase2_ok)
+    {
         epic_harness_log("encoder sim: impossible transition + resync ok\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("encoder sim: impossible transition MISMATCH\n");
     }
-    if (phase3_ok) {
+    if (phase3_ok)
+    {
         epic_harness_log("encoder sim: glitch gate ok (window respected)\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("encoder sim: glitch gate MISMATCH\n");
     }
-    if (tear) {
+    if (tear)
+    {
         epic_harness_log("encoder sim: class-G probe saw a TORN read\n");
     }
-    if (tick_ok) {
+    if (tick_ok)
+    {
         epic_harness_log("encoder sim: class-G probe: tick survived\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("encoder sim: class-G probe: tick STALLED (GIE lost)\n");
     }
 

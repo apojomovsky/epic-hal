@@ -17,7 +17,8 @@
  */
 static uint16_t tris_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_TRISA;
         case GPIOB: return PIC_REG_TRISB;
         case GPIOC: return PIC_REG_TRISC;
@@ -38,7 +39,8 @@ static uint16_t tris_addr(GPIO_TypeDef port)
  */
 static uint16_t lat_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_LATA;
         case GPIOB: return PIC_REG_LATB;
         case GPIOC: return PIC_REG_LATC;
@@ -59,7 +61,8 @@ static uint16_t lat_addr(GPIO_TypeDef port)
  */
 static uint16_t port_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_PORTA;
         case GPIOB: return PIC_REG_PORTB;
         case GPIOC: return PIC_REG_PORTC;
@@ -81,7 +84,8 @@ static uint16_t port_addr(GPIO_TypeDef port)
  */
 static uint16_t ansel_addr(GPIO_TypeDef port)
 {
-    switch (port) {
+    switch (port)
+    {
         case GPIOA: return PIC_REG_ANSELA;
         case GPIOB: return PIC_REG_ANSELB;
 #if PIC16F193X_FAMILY_HAS_PORTD
@@ -126,7 +130,8 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
     uint8_t lat   = EPIC_REG8(la);
     uint8_t ansel = (aa != 0xFFFFU) ? EPIC_REG8(aa) : 0U;
 
-    switch (mode) {
+    switch (mode)
+    {
         case GPIO_MODE_INPUT:
             tris  |= mask;
             ansel &= (uint8_t)~mask;   /* digital input. */
@@ -242,14 +247,18 @@ void EPIC_GPIO_SetPullups(GPIO_TypeDef port, uint16_t pins, GPIO_PinState state)
     if (port != GPIOB) return;
     uint8_t mask = (uint8_t)pins & (uint8_t)((1U << port_width(port)) - 1U);
 
-    if (state == GPIO_PIN_SET) {
+    if (state == GPIO_PIN_SET)
+    {
         EPIC_REG8(PIC_REG_WPUB) |= mask;
         /* WPUEN = 0 enables the per-pin pull-ups. */
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_WPUEN);
-    } else {
+    }
+    else
+    {
         EPIC_REG8(PIC_REG_WPUB) &= (uint8_t)~mask;
         /* If no PORTB pin still wants a pull-up, disable globally. */
-        if (EPIC_REG8(PIC_REG_WPUB) == 0U) {
+        if (EPIC_REG8(PIC_REG_WPUB) == 0U)
+        {
             EPIC_BIT_SET(EPIC_REG8(PIC_REG_OPTION), PIC_OPTION_WPUEN);
         }
     }

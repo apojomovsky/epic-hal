@@ -18,7 +18,10 @@
 epic_math_udiv16_t epic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
 {
     epic_math_udiv16_t r = { 0u, 0u };
-    if (den == 0u) { if (ok) *ok = false; return r; }
+    if (den == 0u)
+    {
+        if (ok) *ok = false; return r;
+    }
     if (ok) *ok = true;
     r.quotient  = (uint16_t)(num / den);
     r.remainder = (uint16_t)(num % den);
@@ -37,7 +40,10 @@ epic_math_udiv16_t epic_math_divmod_u16(uint16_t num, uint16_t den, bool *ok)
 epic_math_sdiv16_t epic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
 {
     epic_math_sdiv16_t r = { 0, 0 };
-    if (den == 0) { if (ok) *ok = false; return r; }
+    if (den == 0)
+    {
+        if (ok) *ok = false; return r;
+    }
     if (ok) *ok = true;
     /* int is 32-bit on the host; computing in int32 avoids INT16_MIN/-1 UB.
      * The cast back to int16 wraps 32768 -> INT16_MIN, documented. */
@@ -60,7 +66,10 @@ epic_math_sdiv16_t epic_math_divmod_s16(int16_t num, int16_t den, bool *ok)
 epic_math_udiv16_t epic_math_divmod_u32_16(uint32_t num, uint16_t den, bool *ok)
 {
     epic_math_udiv16_t r = { 0u, 0u };
-    if (den == 0u) { if (ok) *ok = false; return r; }
+    if (den == 0u)
+    {
+        if (ok) *ok = false; return r;
+    }
     if (ok) *ok = true;
     /* Quotient is truncated to 16 bits: caller must ensure num < den*65536
      * or the high quotient bits are lost (documented). */

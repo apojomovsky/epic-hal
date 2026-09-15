@@ -22,9 +22,11 @@ int main(void)
     EPIC_IRQ_Restore(1);         /* serial RX/TX and the tick ISR need GIE on */
 
     epic_sdcard_pins_t pins = { .cs_port = GPIOC, .cs_pin = 6 };
-    if (!epic_sdcard_init(&pins, FOSC_HZ)) {
+    if (!epic_sdcard_init(&pins, FOSC_HZ))
+    {
         printf("epic-sdcard: init failed\r\n");
-        for (;;) {
+        for (;;)
+        {
         }
     }
 
@@ -32,18 +34,22 @@ int main(void)
            (unsigned long)epic_sdcard_num_blocks());
 
     static uint8_t block[512];
-    if (!epic_sdcard_read_block(0, block)) {
+    if (!epic_sdcard_read_block(0, block))
+    {
         printf("epic-sdcard: read_block(0) failed\r\n");
-        for (;;) {
+        for (;;)
+        {
         }
     }
 
     printf("block 0, first 16 bytes:");
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 16; i++)
+    {
         printf(" %02x", block[i]);
     }
     printf("\r\n");
 
-    for (;;) {
+    for (;;)
+    {
     }
 }

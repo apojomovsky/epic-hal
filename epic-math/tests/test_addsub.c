@@ -15,7 +15,8 @@ static const uint16_t U16_BOUNDS[] = {
 static void test_add_u16(void)
 {
     for (size_t i = 0; i < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); i++)
-        for (size_t j = 0; j < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); j++) {
+        for (size_t j = 0; j < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); j++)
+        {
             uint16_t a = U16_BOUNDS[i], b = U16_BOUNDS[j];
             bool co = false;
             uint16_t got = epic_math_add_u16(a, b, &co);
@@ -24,7 +25,8 @@ static void test_add_u16(void)
             CHECK(co == (s > 0xFFFFu), "add_u16 carry mismatch");
         }
     uint32_t st = 0xADD10011u;
-    for (int n = 0; n < 200000; n++) {
+    for (int n = 0; n < 200000; n++)
+    {
         uint16_t a = (uint16_t)epic_math_test_rand(&st);
         uint16_t b = (uint16_t)epic_math_test_rand(&st);
         bool co = false;
@@ -41,7 +43,8 @@ static void test_add_u16(void)
 static void test_sub_u16(void)
 {
     for (size_t i = 0; i < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); i++)
-        for (size_t j = 0; j < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); j++) {
+        for (size_t j = 0; j < sizeof(U16_BOUNDS)/sizeof(U16_BOUNDS[0]); j++)
+        {
             uint16_t a = U16_BOUNDS[i], b = U16_BOUNDS[j];
             bool bo = false;
             uint16_t got = epic_math_sub_u16(a, b, &bo);
@@ -49,7 +52,8 @@ static void test_sub_u16(void)
             CHECK(bo == (a < b), "sub_u16 borrow mismatch");
         }
     uint32_t st = 0x5B100011u;
-    for (int n = 0; n < 200000; n++) {
+    for (int n = 0; n < 200000; n++)
+    {
         uint16_t a = (uint16_t)epic_math_test_rand(&st);
         uint16_t b = (uint16_t)epic_math_test_rand(&st);
         bool bo = false;
@@ -65,7 +69,8 @@ static void test_negate(void)
 {
     const int16_t s16[] = { 0, 1, -1, 2, -2, 127, -128, 128, -129,
                             32767, -32768, 12345, -12345 };
-    for (size_t i = 0; i < sizeof(s16)/sizeof(s16[0]); i++) {
+    for (size_t i = 0; i < sizeof(s16)/sizeof(s16[0]); i++)
+    {
         int16_t v = s16[i];
         int16_t got = epic_math_negate_s16(v);
         int16_t exp = (int16_t)(0u - (uint16_t)v);
@@ -76,7 +81,8 @@ static void test_negate(void)
     const int32_t s32[] = { 0, 1, -1, 32767, -32768, 2147483647L,
                             -2147483647L - 1L /* INT32_MIN */, 123456789L,
                             -123456789L };
-    for (size_t i = 0; i < sizeof(s32)/sizeof(s32[0]); i++) {
+    for (size_t i = 0; i < sizeof(s32)/sizeof(s32[0]); i++)
+    {
         int32_t v = s32[i];
         int32_t got = epic_math_negate_s32(v);
         int32_t exp = (int32_t)(0u - (uint32_t)v);

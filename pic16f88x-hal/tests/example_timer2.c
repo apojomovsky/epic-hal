@@ -24,7 +24,8 @@ static uint32_t cycle_counter = 0;
 static void on_t2_overflow(void)
 {
     overflows++;
-    if (overflows == 1U) {
+    if (overflows == 1U)
+    {
         first_cycle = cycle_counter;
     }
 }
@@ -44,10 +45,14 @@ int main(void)
     h.OverflowCallback = on_t2_overflow;
 
     EPIC_StatusTypeDef st = EPIC_TIMER2_Init(&h);
-    if (st != EPIC_OK) { printf("FAIL: Init returned %u\n", (unsigned)st); return 1; }
+    if (st != EPIC_OK)
+    {
+        printf("FAIL: Init returned %u\n", (unsigned)st); return 1;
+    }
     EPIC_TIMER2_Start(&h);
 
-    for (uint32_t i = 0; i < SIM_BUDGET; i++) {
+    for (uint32_t i = 0; i < SIM_BUDGET; i++)
+    {
         cycle_counter = i + 1;
         pic16f88x_sim_step(1);
         if (overflows >= EXPECTED_OVERFLOWS) break;
@@ -58,7 +63,8 @@ int main(void)
     int32_t delta = (int32_t)first_cycle - (int32_t)EXPECTED_PERIOD_CYCLES;
     if (delta < 0) delta = -delta;
 
-    if (overflows >= EXPECTED_OVERFLOWS && delta <= 2) {
+    if (overflows >= EXPECTED_OVERFLOWS && delta <= 2)
+    {
         printf("OK: Timer2 produced %u overflows, first at cycle %u (expected ~%u)\n",
                (unsigned)overflows, (unsigned)first_cycle,
                (unsigned)EXPECTED_PERIOD_CYCLES);

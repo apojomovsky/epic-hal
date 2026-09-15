@@ -29,7 +29,8 @@ static uint16_t read_adc_sample(void *ctx)
     uint16_t spins = 0u;
 
     (void)EPIC_ADC_Start();
-    while (!EPIC_ADC_IsConversionDone() && spins < ADC_WAIT_SPINS) {
+    while (!EPIC_ADC_IsConversionDone() && spins < ADC_WAIT_SPINS)
+    {
         spins++;
     }
     EPIC_ADC_ClearITFlag();
@@ -54,10 +55,12 @@ int main(void)
            (unsigned)AVG_WINDOW);
 
     uint32_t last_log = epic_tick_get();
-    for (;;) {
+    for (;;)
+    {
         uint16_t raw = epic_adcfilter_oversample(read_adc_sample, NULL, ADC_EXTRA_BITS);
         uint16_t avg = epic_adcfilter_avg_push(&g_filter, raw);
-        if (epic_tick_elapsed_since(last_log) >= LOG_PERIOD_MS) {
+        if (epic_tick_elapsed_since(last_log) >= LOG_PERIOD_MS)
+        {
             last_log = epic_tick_get();
             printf("raw=%u avg=%u\r\n", (unsigned)raw, (unsigned)avg);
         }

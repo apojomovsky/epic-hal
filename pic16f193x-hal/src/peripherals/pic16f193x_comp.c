@@ -29,13 +29,18 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
     if (h->InvertOutput)  con0 |= EPIC_BIT(4);
     if (h->OutputToPin)   con0 |= EPIC_BIT(5);
 
-    if (h->Instance == COMP_INSTANCE_1) {
+    if (h->Instance == COMP_INSTANCE_1)
+    {
         EPIC_REG8(PIC_REG_CM1CON1) = con1;
         EPIC_REG8(PIC_REG_CM1CON0) = con0;
-    } else if (h->Instance == COMP_INSTANCE_2) {
+    }
+    else if (h->Instance == COMP_INSTANCE_2)
+    {
         EPIC_REG8(PIC_REG_CM2CON1) = con1;
         EPIC_REG8(PIC_REG_CM2CON0) = con0;
-    } else {
+    }
+    else
+    {
         return EPIC_INVALID;
     }
     return EPIC_OK;
@@ -48,13 +53,18 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
  */
 EPIC_StatusTypeDef EPIC_COMP_DeInit(COMP_InstanceTypeDef inst)
 {
-    if (inst == COMP_INSTANCE_1) {
+    if (inst == COMP_INSTANCE_1)
+    {
         EPIC_REG8(PIC_REG_CM1CON0) = 0x00U;
         EPIC_REG8(PIC_REG_CM1CON1) = 0x00U;
-    } else if (inst == COMP_INSTANCE_2) {
+    }
+    else if (inst == COMP_INSTANCE_2)
+    {
         EPIC_REG8(PIC_REG_CM2CON0) = 0x00U;
         EPIC_REG8(PIC_REG_CM2CON1) = 0x00U;
-    } else {
+    }
+    else
+    {
         return EPIC_INVALID;
     }
     return EPIC_OK;
@@ -76,8 +86,12 @@ uint8_t EPIC_COMP_ReadOutput(COMP_InstanceTypeDef inst)
 /**
  * @brief Comparator 1 interrupt handler (weak, override in user code).
  */
-void CMP1_IRQHandler(void) {}
+void CMP1_IRQHandler(void)
+{
+}
 /**
  * @brief Comparator 2 interrupt handler (weak, override in user code).
  */
-void CMP2_IRQHandler(void) {}
+void CMP2_IRQHandler(void)
+{
+}

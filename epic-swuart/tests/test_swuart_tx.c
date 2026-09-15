@@ -46,7 +46,8 @@ int main(void)
 
     CHECK(epic_swuart_test_last_tx_mode() == 9, "start bit armed as CLEAR (space)");
 
-    for (size_t i = 0; i < 9; i++) {
+    for (size_t i = 0; i < 9; i++)
+    {
         epic_swuart_test_fire_tx_event();
         char msg[32];
         snprintf(msg, sizeof(msg), "event %u mode", (unsigned)i);

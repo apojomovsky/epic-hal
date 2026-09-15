@@ -16,7 +16,8 @@
  */
 uint16_t epic_math_sqrt_u16(uint16_t value)
 {
-    if (value < 2u) {
+    if (value < 2u)
+    {
         return value;   /* 0 -> 0, 1 -> 1 */
     }
     /* Newton-Raphson: x_{k+1} = (x_k + n/x_k) / 2, converging down to
@@ -24,7 +25,8 @@ uint16_t epic_math_sqrt_u16(uint16_t value)
      * estimate keeps decreasing. */
     uint16_t x = value;
     uint16_t y = (uint16_t)((x + 1u) / 2u);
-    while (y < x) {
+    while (y < x)
+    {
         x = y;
         epic_math_udiv16_t d = epic_math_divmod_u16(value, x, NULL);
         y = (uint16_t)((x + d.quotient) / 2u);

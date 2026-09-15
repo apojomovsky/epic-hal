@@ -20,31 +20,49 @@ static int     s_phase;
 enum { MOCK_ADDR, MOCK_REG, MOCK_DATA, MOCK_RADDR, MOCK_READ };
 
 /** @brief Mock I2C start: enter the address phase. */
-static void mock_start(void)               { s_phase = MOCK_ADDR; }
+static void mock_start(void)
+{
+    s_phase = MOCK_ADDR;
+}
 /** @brief Mock I2C repeated start: enter the read-address phase. */
-static void mock_repeated_start(void)      { s_phase = MOCK_RADDR; }
+static void mock_repeated_start(void)
+{
+    s_phase = MOCK_RADDR;
+}
 /** @brief Mock I2C stop: no-op. */
-static void mock_stop(void)                { }
+static void mock_stop(void)
+{
+}
 
 /** @brief Mock I2C write byte: drive the mock register file. */
 static int mock_write_byte(uint8_t b)
 {
-    if (s_phase == MOCK_ADDR || s_phase == MOCK_RADDR) {
-        if ((b >> 1) != 0x20u) {
+    if (s_phase == MOCK_ADDR || s_phase == MOCK_RADDR)
+    {
+        if ((b >> 1) != 0x20u)
+        {
             return 0;   /* NACK anything but our device */
         }
         s_phase = (s_phase == MOCK_ADDR) ? MOCK_REG : MOCK_READ;
         return 1;
     }
-    if (s_phase == MOCK_REG) {
+    if (s_phase == MOCK_REG)
+    {
         s_reg_ptr = b & 0x1Fu;
         s_phase = MOCK_DATA;
         return 1;
     }
-    if (s_reg_ptr < sizeof(s_regs)) {
+    if (s_reg_ptr < sizeof(s_regs))
+    {
         s_regs[s_reg_ptr] = b;
-        if (s_reg_ptr == 0x11u) { s_regs[0x13u] = b; }  /* GPIO->OLAT */
-        if (s_reg_ptr == 0x12u) { s_regs[0x14u] = b; }
+        if (s_reg_ptr == 0x11u)
+        {
+            s_regs[0x13u] = b;
+        }  /* GPIO->OLAT */
+        if (s_reg_ptr == 0x12u)
+        {
+            s_regs[0x14u] = b;
+        }
     }
     s_reg_ptr++;
     return 1;
@@ -73,7 +91,8 @@ int main(void)
 
     /* dir low byte = PORTA (GPA0-3 out, GPA4-7 in); GPB all out. */
     uint16_t dir = 0x00F0u;
-    if (EPIC_MCP23X17_SetDirectionAll(&h, dir) < 0) {
+    if (EPIC_MCP23X17_SetDirectionAll(&h, dir) < 0)
+    {
         printf("expander not on the bus\n");
         return 1;
     }

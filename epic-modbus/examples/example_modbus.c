@@ -47,9 +47,11 @@ int main(void)
     EPIC_IRQ_Restore(1);             /* UART RX/TX and Timer2 ISRs */
 
     uint32_t last_sec = 0u;
-    for (;;) {
+    for (;;)
+    {
         uint32_t sec = epic_tick_get() / 1000u;
-        if (sec != last_sec) {
+        if (sec != last_sec)
+        {
             holding_regs[0] = (uint16_t)sec;   /* live uptime for FC 03 */
             last_sec = sec;
         }

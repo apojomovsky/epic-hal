@@ -72,15 +72,18 @@ int main(void)
     /* 50% of 100 = 50 → 10-bit value 50 = 0x032.
      * CCPR1L = 0x0C (50 >> 2).
      * CCP1CON<5:4> = 0x032 & 0x3 = 0x2, shifted to bits 4..5. */
-    if (rl != 12U) {
+    if (rl != 12U)
+    {
         printf("FAIL: CCPR1L = %u, expected 12\n", (unsigned)rl);
         return 1;
     }
-    if (pr2 != 99U) {
+    if (pr2 != 99U)
+    {
         printf("FAIL: PR2 = %u, expected 99\n", (unsigned)pr2);
         return 1;
     }
-    if ((con & 0x0CU) != 0x0CU) {
+    if ((con & 0x0CU) != 0x0CU)
+    {
         printf("FAIL: CCP1CON mode bits = 0x%X, expected 0xC (PWM)\n",
                (unsigned)(con & 0x0FU));
         return 1;
@@ -88,7 +91,8 @@ int main(void)
 
     /* 5. Run the sim and count TMR2 overflows. Each overflow = one PWM
      *    period. First overflow should fire at the end of the period. */
-    for (uint32_t i = 0; i < SIM_BUDGET; i++) {
+    for (uint32_t i = 0; i < SIM_BUDGET; i++)
+    {
         cycle_counter = i + 1;
         pic16f88x_sim_step(1);
         if (t2_overflows >= EXPECTED_OVERFLOWS) break;
@@ -97,7 +101,8 @@ int main(void)
     int32_t delta = (int32_t)first_t2_cycle - (int32_t)EXPECTED_PERIOD_CYCLES;
     if (delta < 0) delta = -delta;
 
-    if (t2_overflows >= EXPECTED_OVERFLOWS && delta <= 4) {
+    if (t2_overflows >= EXPECTED_OVERFLOWS && delta <= 4)
+    {
         printf("OK: CCP1 PWM configured; TMR2 produced %u overflows, "
                "first at cycle %u (expected ~%u)\n",
                (unsigned)t2_overflows,

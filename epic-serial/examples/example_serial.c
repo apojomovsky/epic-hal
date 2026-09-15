@@ -28,7 +28,8 @@ int main(void)
      * the array gets a flash address through its gep, which is the
      * const shape the epic-cc isel places. */
     static const uint8_t banner[] = "epic-serial ready at 115200 8N1\r\n";
-    for (uint8_t i = 0u; i < (uint8_t)(sizeof(banner) - 1u); i++) {
+    for (uint8_t i = 0u; i < (uint8_t)(sizeof(banner) - 1u); i++)
+    {
         epic_serial_put_char((char)banner[i]);
     }
 
@@ -36,10 +37,13 @@ int main(void)
      * through the TX ring, byte for byte. Static: a stack-local array
      * alloca does not exist on a stackless part (epic-cc irparse). */
     static uint8_t buf[8];
-    for (;;) {
-        if (epic_serial_available() > 0) {
+    for (;;)
+    {
+        if (epic_serial_available() > 0)
+        {
             int n = epic_serial_read(buf, (int)sizeof(buf));
-            if (n > 0) {
+            if (n > 0)
+            {
                 epic_serial_write(buf, n);
             }
         }

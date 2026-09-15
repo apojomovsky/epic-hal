@@ -78,7 +78,8 @@ void TIMER0_IRQHandler(void)
     /* Direct flag ops (class-F). TMR0IF is INTCON bit 2. */
     if (!(EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_TMR0IF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_TMR0IF);
-    if (g_t0_storage.OverflowCallback) {
+    if (g_t0_storage.OverflowCallback)
+    {
         g_t0_storage.OverflowCallback();
     }
 }

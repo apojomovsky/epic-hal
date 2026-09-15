@@ -43,7 +43,8 @@ uint16_t epic_math_bcd16_to_bin(uint32_t bcd5)
 {
     uint32_t bin = 0u;
     uint16_t place = 1u;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++)
+    {
         bin += epic_math_mul_u16((uint16_t)(bcd5 & 0x0Fu), place);
         bcd5 >>= 4;
         place = (uint16_t)(place * 10u);
@@ -60,7 +61,8 @@ uint16_t epic_math_bcd16_to_bin(uint32_t bcd5)
 uint32_t epic_math_bin_to_bcd16(uint16_t value)
 {
     uint32_t bcd = 0u;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++)
+    {
         epic_math_udiv16_t d = epic_math_divmod_u16(value, 10u, NULL);
         bcd |= (uint32_t)(d.remainder & 0x0Fu) << (i * 4);
         value = d.quotient;

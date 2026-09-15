@@ -212,7 +212,8 @@ int main(void)
     test_independent_instances();
     test_fsm_init_table_len();
 
-    if (g_failures == 0) {
+    if (g_failures == 0)
+    {
         printf("PASS: all epic-fsm unit tests\n");
         return 0;
     }

@@ -84,7 +84,8 @@ static uint8_t pss_encode(CCP_PinStateTypeDef s)
 EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 {
     if (!h) return EPIC_INVALID;
-    if (h->Instance != CCP_INSTANCE_1 && h->Instance != CCP_INSTANCE_2) {
+    if (h->Instance != CCP_INSTANCE_1 && h->Instance != CCP_INSTANCE_2)
+    {
         return EPIC_INVALID;
     }
     g_ccp_storage[h->Instance] = *h;
@@ -92,30 +93,38 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 
     /* Clear/rearm the IRQ before reconfiguring. */
     EPIC_IRQ_ClearFlag(ccp_irq(h->Instance));
-    if (h->EventCallback) {
+    if (h->EventCallback)
+    {
         EPIC_IRQ_Enable(ccp_irq(h->Instance));
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(ccp_irq(h->Instance));
     }
 
-    if (h->Mode == CCP_MODE_PWM) {
+    if (h->Mode == CCP_MODE_PWM)
+    {
         /* DS39632E §16.4.3 step 2: set the PWM duty BEFORE enabling PWM.
          * 10-bit duty: CCPRxL = duty[9:2], CCPxCON<5:4> = duty[1:0]. */
         uint16_t duty = (uint16_t)(h->PWM.Duty & 0x03FFU);
         uint8_t  con  = (uint8_t)(h->Mode & PIC_CCP1_M_MASK);   /* 11xx */
         con |= (uint8_t)((duty & 0x03U) << 4);                   /* duty[1:0] */
-        if (h->Instance == CCP_INSTANCE_1) {
+        if (h->Instance == CCP_INSTANCE_1)
+        {
             con |= (uint8_t)((h->PWMOutputMode & 0x3U) << 6);   /* P1M[7:6] */
         }
         CCP_WRITE_CPRL(h->Instance, duty >> 2);
         CCP_WRITE_CPRH(h->Instance, 0U);
         CCP_WRITE_CON(h->Instance, con);
-    } else {
+    }
+    else
+    {
         /* Capture / compare: write the 16-bit value then enable mode. */
         CCP_WRITE_CPRH(h->Instance, h->CompareValue >> 8);
         CCP_WRITE_CPRL(h->Instance, h->CompareValue & 0xFFU);
         uint8_t con = (uint8_t)(h->Mode & PIC_CCP1_M_MASK);
-        if (h->Instance == CCP_INSTANCE_1) {
+        if (h->Instance == CCP_INSTANCE_1)
+        {
             con |= (uint8_t)((h->PWMOutputMode & 0x3U) << 6);
         }
         CCP_WRITE_CON(h->Instance, con);
@@ -123,7 +132,8 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 
     /* ECCP1-only: dead-band + auto-restart (ECCP1DEL) and auto-shutdown
      * (ECCP1AS). CCP2 has neither; skip. */
-    if (h->Instance == CCP_INSTANCE_1) {
+    if (h->Instance == CCP_INSTANCE_1)
+    {
         uint8_t del = (uint8_t)(h->DeadBand.Delay & PIC_ECCP1DEL_PDC_MASK);
         if (h->DeadBand.AutoRestart) del |= PIC_ECCP1DEL_PRSEN;
         EPIC_REG8(PIC_REG_ECCP1DEL) = del;
@@ -151,7 +161,8 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
     EPIC_IRQ_DisableSrc(ccp_irq(inst));
     EPIC_IRQ_ClearFlag(ccp_irq(inst));
     CCP_WRITE_CON(inst, 0x00U);
-    if (inst == CCP_INSTANCE_1) {
+    if (inst == CCP_INSTANCE_1)
+    {
         EPIC_REG8(PIC_REG_ECCP1DEL) = PIC_ECCP1DEL_POR_VALUE;
         EPIC_REG8(PIC_REG_ECCP1AS) = PIC_ECCP1AS_POR_VALUE;
     }
@@ -198,7 +209,8 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (inst != CCP_INSTANCE_1 && inst != CCP_INSTANCE_2) return 0U;
     uint8_t lo, hi1, hi2;
-    do {
+    do
+    {
         CCP_READ_CPRH(inst, hi1);
         CCP_READ_CPRL(inst, lo);
         CCP_READ_CPRH(inst, hi2);
@@ -303,7 +315,8 @@ void CCP1_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
     if (g_ccp_handles[CCP_INSTANCE_1] &&
-        g_ccp_handles[CCP_INSTANCE_1]->EventCallback) {
+        g_ccp_handles[CCP_INSTANCE_1]->EventCallback)
+        {
         g_ccp_handles[CCP_INSTANCE_1]->EventCallback();
     }
 }
@@ -316,7 +329,8 @@ void CCP2_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
     if (g_ccp_handles[CCP_INSTANCE_2] &&
-        g_ccp_handles[CCP_INSTANCE_2]->EventCallback) {
+        g_ccp_handles[CCP_INSTANCE_2]->EventCallback)
+        {
         g_ccp_handles[CCP_INSTANCE_2]->EventCallback();
     }
 }

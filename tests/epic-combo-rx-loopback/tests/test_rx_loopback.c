@@ -28,7 +28,8 @@ static size_t  g_tx_len;
 /** @brief Byte recorder replacing the firmware's polled TX. */
 void rx_loopback_tx(uint8_t b)
 {
-    if (g_tx_len < sizeof(g_tx)) {
+    if (g_tx_len < sizeof(g_tx))
+    {
         g_tx[g_tx_len++] = b;
     }
 }
@@ -45,7 +46,8 @@ static int g_fail = 0;
 static void check_tx(const char *expected, const char *what)
 {
     size_t n = strlen(expected);
-    if (g_tx_len != n || memcmp(g_tx, expected, n) != 0) {
+    if (g_tx_len != n || memcmp(g_tx, expected, n) != 0)
+    {
         printf("FAIL: %s (got %u bytes, want %u)\n", what,
                (unsigned)g_tx_len, (unsigned)n);
         g_fail++;
@@ -60,7 +62,8 @@ static void check_tx(const char *expected, const char *what)
  */
 static void inject_line(const char *line)
 {
-    while (*line) {
+    while (*line)
+    {
         pic16f87xa_sim_drive_usart_rx((uint8_t)*line);
         line++;
         epic_harness_tick();
@@ -106,7 +109,8 @@ int main(void)
           "ERR:0123456789abcdef0123456789abcdef\r\n" },
     };
 
-    for (size_t i = 0u; i < sizeof(cases) / sizeof(cases[0]); i++) {
+    for (size_t i = 0u; i < sizeof(cases) / sizeof(cases[0]); i++)
+    {
         char label[64];
         snprintf(label, sizeof(label), "vector %u", (unsigned)i);
         tx_reset();
@@ -120,7 +124,8 @@ int main(void)
     inject_line("tail\r\n");
     check_tx("OK:tail\r\n", "state reset after overflow");
 
-    if (g_fail == 0) {
+    if (g_fail == 0)
+    {
         printf("rx_loopback host test: PASS\n");
     }
     return g_fail == 0 ? 0 : 1;

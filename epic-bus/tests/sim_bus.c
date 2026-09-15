@@ -56,22 +56,38 @@ static uint8_t g_i2c_state;
 static uint8_t g_i2c_reg;
 
 /** @brief Mock I2C: record a START and enter the address phase. */
-static void mock_i2c_start(void)          { g_seq_op[g_seq_n] = OP_START;  g_seq_n++; g_i2c_state = I_ADDR; }
+static void mock_i2c_start(void)
+{
+    g_seq_op[g_seq_n] = OP_START;  g_seq_n++; g_i2c_state = I_ADDR;
+}
 /** @brief Mock I2C: record a REPEATED-START and enter the address phase. */
-static void mock_i2c_repeated_start(void) { g_seq_op[g_seq_n] = OP_RSTART; g_seq_n++; g_i2c_state = I_ADDR; }
+static void mock_i2c_repeated_start(void)
+{
+    g_seq_op[g_seq_n] = OP_RSTART; g_seq_n++; g_i2c_state = I_ADDR;
+}
 /** @brief Mock I2C: record a STOP and return to idle. */
-static void mock_i2c_stop(void)           { g_seq_op[g_seq_n] = OP_STOP;   g_seq_n++; g_i2c_state = I_IDLE; }
+static void mock_i2c_stop(void)
+{
+    g_seq_op[g_seq_n] = OP_STOP;   g_seq_n++; g_i2c_state = I_IDLE;
+}
 /** @brief Mock I2C: record and process one written byte. */
 static int  mock_i2c_write_byte(uint8_t b)
 {
     g_seq_op[g_seq_n] = OP_WRITE; g_seq_val[g_seq_n] = b; g_seq_n++;
-    if (g_i2c_state == I_ADDR) {
+    if (g_i2c_state == I_ADDR)
+    {
         if ((b >> 1) != MOCK_DEV) return 0;          /* wrong device: NACK */
         g_i2c_state = I_REG;
         return 1;
     }
-    if (g_i2c_state == I_REG)  { g_i2c_reg = b; g_i2c_state = I_DATA; return 1; }
-    if (g_i2c_state == I_DATA) { g_reg[g_i2c_reg & 0x0Fu] = b; g_i2c_reg++; return 1; }
+    if (g_i2c_state == I_REG)
+    {
+        g_i2c_reg = b; g_i2c_state = I_DATA; return 1;
+    }
+    if (g_i2c_state == I_DATA)
+    {
+        g_reg[g_i2c_reg & 0x0Fu] = b; g_i2c_reg++; return 1;
+    }
     return 0;
 }
 /** @brief Mock I2C: record and serve one read byte. */
@@ -91,14 +107,23 @@ enum { S_IDLE, S_REG, S_XFER };
 static uint8_t g_spi_state;
 static uint8_t g_spi_reg;
 /** @brief Mock SPI: record a select and enter the register phase. */
-static void mock_spi_select(void)   { g_seq_op[g_seq_n] = OP_START;  g_seq_n++; g_spi_state = S_REG; }
+static void mock_spi_select(void)
+{
+    g_seq_op[g_seq_n] = OP_START;  g_seq_n++; g_spi_state = S_REG;
+}
 /** @brief Mock SPI: record a deselect and return to idle. */
-static void mock_spi_deselect(void) { g_seq_op[g_seq_n] = OP_STOP;   g_seq_n++; g_spi_state = S_IDLE; }
+static void mock_spi_deselect(void)
+{
+    g_seq_op[g_seq_n] = OP_STOP;   g_seq_n++; g_spi_state = S_IDLE;
+}
 /** @brief Mock SPI: record and exchange one byte. */
 static uint8_t mock_spi_exchange(uint8_t b)
 {
     g_seq_op[g_seq_n] = OP_WRITE; g_seq_val[g_seq_n] = b; g_seq_n++;
-    if (g_spi_state == S_REG) { g_spi_reg = b; g_spi_state = S_XFER; return 0xFFu; }
+    if (g_spi_state == S_REG)
+    {
+        g_spi_reg = b; g_spi_state = S_XFER; return 0xFFu;
+    }
     uint8_t out = g_reg[g_spi_reg & 0x0Fu];
     g_reg[g_spi_reg & 0x0Fu] = b;   /* write what shifted in (MOSI) to the map */
     g_spi_reg++;
@@ -130,8 +155,10 @@ static void log_reg(const char *label, uint8_t v)
 static uint8_t ssp_wait(uint32_t polls)
 {
     uint32_t i;
-    for (i = 0; i < polls; i++) {
-        if (EPIC_IRQ_GetFlag(PIC16_IRQ_SSP)) {
+    for (i = 0; i < polls; i++)
+    {
+        if (EPIC_IRQ_GetFlag(PIC16_IRQ_SSP))
+        {
             EPIC_IRQ_ClearFlag(PIC16_IRQ_SSP);
             return 1u;
         }
@@ -160,8 +187,14 @@ int main(void)
                                     (sspcon & PIC_SSPCON_SSPEN) &&
                                     (sspadd == SSPADD_100K) &&
                                     ((sspstat & (PIC_SSPSTAT_BF | PIC_SSPSTAT_UA)) == 0u));
-    if (i2c_cfg_ok) { epic_harness_log("bus sim: i2c master config ok\n"); }
-    else            { epic_harness_log("bus sim: i2c master config WRONG\n"); }
+    if (i2c_cfg_ok)
+    {
+        epic_harness_log("bus sim: i2c master config ok\n");
+    }
+    else
+    {
+        epic_harness_log("bus sim: i2c master config WRONG\n");
+    }
     ok &= i2c_cfg_ok;
 
     /* (b) real SSP register traffic (bounded) */
@@ -197,13 +230,22 @@ int main(void)
     EPIC_BANK1_READ8(SSPCON2, sspcon);
     log_reg("bus sim: after stop SSPCON2", sspcon);
 
-    if (st_adv && wr_adv && sp_adv) {
+    if (st_adv && wr_adv && sp_adv)
+    {
         epic_harness_log("bus sim: ssp state machine advanced\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("bus sim: ssp state machine NOT modeled by MPLAB SIM\n");
     }
-    if (land_ok) { epic_harness_log("bus sim: i2c byte landed in SSPBUF\n"); }
-    else         { epic_harness_log("bus sim: i2c byte did NOT land in SSPBUF\n"); }
+    if (land_ok)
+    {
+        epic_harness_log("bus sim: i2c byte landed in SSPBUF\n");
+    }
+    else
+    {
+        epic_harness_log("bus sim: i2c byte did NOT land in SSPBUF\n");
+    }
     ok &= land_ok;
 
     /* Full mem_write through the DEFAULT (real SSP) ops, only when the
@@ -211,7 +253,8 @@ int main(void)
      * SSPIF waits are unbounded; this guard keeps the gate bounded).
      * Documented contract: n on success, -1 on address NACK, with the
      * return value and ACKSTAT required to agree. */
-    if (st_adv && wr_adv && sp_adv) {
+    if (st_adv && wr_adv && sp_adv)
+    {
         uint8_t wr[2] = { 0x11u, 0x22u };
         int n = epic_bus_i2c_mem_write(MOCK_DEV, 0x00u, wr, 2);
         EPIC_BANK1_READ8(SSPCON2, sspcon);
@@ -223,20 +266,37 @@ int main(void)
         /* ACKed: return 2 and SSPBUF holds the last data byte; NACKed
          * at the address: return -1 and SSPBUF holds the address byte. */
         uint8_t mem_ok = 0u;
-        if (n == 2 && ack == 0u && sspbuf == 0x22u)      { mem_ok = 1u; }
-        else if (n == -1 && ack == 1u && sspbuf == 0xA0u) { mem_ok = 1u; }
+        if (n == 2 && ack == 0u && sspbuf == 0x22u)
+        {
+            mem_ok = 1u;
+        }
+        else if (n == -1 && ack == 1u && sspbuf == 0xA0u)
+        {
+            mem_ok = 1u;
+        }
         mem_ok = (uint8_t)(mem_ok && ctrl_idle);
-        if (mem_ok) { epic_harness_log("bus sim: default-ops mem_write ok\n"); }
-        else        { epic_harness_log("bus sim: default-ops mem_write MISMATCH\n"); }
+        if (mem_ok)
+        {
+            epic_harness_log("bus sim: default-ops mem_write ok\n");
+        }
+        else
+        {
+            epic_harness_log("bus sim: default-ops mem_write MISMATCH\n");
+        }
         ok &= mem_ok;
-    } else {
+    }
+    else
+    {
         epic_harness_log("bus sim: default-ops mem_write skipped (no SSP model)\n");
     }
 
     /* (c) transaction logic through the ops seam */
     epic_bus_set_i2c_ops(&mock_i2c);
     g_seq_n = 0u;
-    for (uint8_t i = 0; i < 16u; i++) { g_reg[i] = (uint8_t)(0x10u + i); }
+    for (uint8_t i = 0; i < 16u; i++)
+    {
+        g_reg[i] = (uint8_t)(0x10u + i);
+    }
 
     uint8_t buf[4];
     int n = epic_bus_i2c_mem_read(MOCK_DEV, 0x00u, buf, 4);
@@ -252,8 +312,14 @@ int main(void)
                               g_seq_op[6] == OP_READ && g_seq_val[6] == 1u &&
                               g_seq_op[7] == OP_READ && g_seq_val[7] == 1u &&
                               g_seq_op[8] == OP_READ && g_seq_val[8] == 0u);
-    if (rd_ok) { epic_harness_log("bus sim: i2c mem_read seq ok\n"); }
-    else       { epic_harness_log("bus sim: i2c mem_read seq WRONG\n"); }
+    if (rd_ok)
+    {
+        epic_harness_log("bus sim: i2c mem_read seq ok\n");
+    }
+    else
+    {
+        epic_harness_log("bus sim: i2c mem_read seq WRONG\n");
+    }
     ok &= rd_ok;
 
     uint8_t wd[3] = { 0xA0u, 0xA1u, 0xA2u };
@@ -269,8 +335,14 @@ int main(void)
                                g_seq_op[5] == OP_WRITE && g_seq_val[5] == 0xA2u &&
                                g_seq_op[6] == OP_STOP);
     /* START, W(addr), W(reg), W x3, STOP */
-    if (wr2_ok) { epic_harness_log("bus sim: i2c mem_write seq ok\n"); }
-    else        { epic_harness_log("bus sim: i2c mem_write seq WRONG\n"); }
+    if (wr2_ok)
+    {
+        epic_harness_log("bus sim: i2c mem_write seq ok\n");
+    }
+    else
+    {
+        epic_harness_log("bus sim: i2c mem_write seq WRONG\n");
+    }
     ok &= wr2_ok;
 
     g_seq_n = 0u;
@@ -279,8 +351,14 @@ int main(void)
                                g_seq_op[0] == OP_START &&
                                g_seq_op[1] == OP_WRITE && g_seq_val[1] == I2C_ADDR_BYTE(0x77u, 0u) &&
                                g_seq_op[2] == OP_STOP);
-    if (nak_ok) { epic_harness_log("bus sim: i2c addr NACK -> -1 ok\n"); }
-    else        { epic_harness_log("bus sim: i2c addr NACK WRONG\n"); }
+    if (nak_ok)
+    {
+        epic_harness_log("bus sim: i2c addr NACK -> -1 ok\n");
+    }
+    else
+    {
+        epic_harness_log("bus sim: i2c addr NACK WRONG\n");
+    }
     ok &= nak_ok;
 
     /* SPI: real init readback + ops-seam transaction logic */
@@ -288,8 +366,14 @@ int main(void)
     sspcon = EPIC_REG8(PIC_REG_SSPCON);
     uint8_t spi_cfg_ok = (uint8_t)(((sspcon & PIC_SSPCON_SSPM_MASK) == SSP_MODE_SPI_MASTER_FOSC_4) &&
                                    (sspcon & PIC_SSPCON_SSPEN));
-    if (spi_cfg_ok) { epic_harness_log("bus sim: spi master config ok\n"); }
-    else            { epic_harness_log("bus sim: spi master config WRONG\n"); }
+    if (spi_cfg_ok)
+    {
+        epic_harness_log("bus sim: spi master config ok\n");
+    }
+    else
+    {
+        epic_harness_log("bus sim: spi master config WRONG\n");
+    }
     ok &= spi_cfg_ok;
 
     /* Real SPI register traffic (bounded BF poll, same guard as the
@@ -299,25 +383,41 @@ int main(void)
     EPIC_IRQ_ClearFlag(PIC16_IRQ_SSP);
     uint16_t swc = EPIC_SSP_WriteByte(0x55u);
     uint8_t spi_adv = 0u;
-    for (uint32_t pi = 0; pi < SSP_POLLS; pi++) {
-        if (EPIC_SSP_IsBufferFull()) { spi_adv = 1u; break; }
+    for (uint32_t pi = 0; pi < SSP_POLLS; pi++)
+    {
+        if (EPIC_SSP_IsBufferFull())
+        {
+            spi_adv = 1u; break;
+        }
     }
     sspbuf = EPIC_REG8(PIC_REG_SSPBUF);
     log_reg("bus sim: spi SSPBUF after write", sspbuf);
     uint8_t spi_land = (uint8_t)(swc == 0u && sspbuf == 0x55u);
     ok &= spi_land;
-    if (spi_land) { epic_harness_log("bus sim: spi byte landed in SSPBUF\n"); }
-    else          { epic_harness_log("bus sim: spi byte did NOT land in SSPBUF\n"); }
-    if (spi_adv) {
+    if (spi_land)
+    {
+        epic_harness_log("bus sim: spi byte landed in SSPBUF\n");
+    }
+    else
+    {
+        epic_harness_log("bus sim: spi byte did NOT land in SSPBUF\n");
+    }
+    if (spi_adv)
+    {
         uint8_t got = EPIC_SSP_ReadByte();
         ok &= (uint8_t)(got == 0x55u);
         epic_harness_log("bus sim: spi byte shift advanced\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("bus sim: spi byte shift NOT modeled by MPLAB SIM\n");
     }
 
     epic_bus_set_spi_ops(&mock_spi);
-    for (uint8_t i = 0; i < 16u; i++) { g_reg[i] = (uint8_t)(0x80u + i); }
+    for (uint8_t i = 0; i < 16u; i++)
+    {
+        g_reg[i] = (uint8_t)(0x80u + i);
+    }
     g_seq_n = 0u;
     n = epic_bus_spi_mem_read(0x02u, buf, 3);
     uint8_t srd_ok = (uint8_t)(n == 3 && buf[0] == 0x82u && buf[1] == 0x83u &&
@@ -329,8 +429,14 @@ int main(void)
                                g_seq_op[4] == OP_WRITE && g_seq_val[4] == 0x00u &&
                                g_seq_op[5] == OP_STOP);
     /* select, W(reg), W x3, deselect */
-    if (srd_ok) { epic_harness_log("bus sim: spi mem_read seq ok\n"); }
-    else        { epic_harness_log("bus sim: spi mem_read seq WRONG\n"); }
+    if (srd_ok)
+    {
+        epic_harness_log("bus sim: spi mem_read seq ok\n");
+    }
+    else
+    {
+        epic_harness_log("bus sim: spi mem_read seq WRONG\n");
+    }
     ok &= srd_ok;
 
     uint8_t sw[2] = { 0xC0u, 0xC1u };
@@ -343,11 +449,18 @@ int main(void)
                                g_seq_op[2] == OP_WRITE && g_seq_val[2] == 0xC0u &&
                                g_seq_op[3] == OP_WRITE && g_seq_val[3] == 0xC1u &&
                                g_seq_op[4] == OP_STOP);
-    if (swr_ok) { epic_harness_log("bus sim: spi mem_write seq ok\n"); }
-    else        { epic_harness_log("bus sim: spi mem_write seq WRONG\n"); }
+    if (swr_ok)
+    {
+        epic_harness_log("bus sim: spi mem_write seq ok\n");
+    }
+    else
+    {
+        epic_harness_log("bus sim: spi mem_write seq WRONG\n");
+    }
     ok &= swr_ok;
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
 

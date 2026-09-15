@@ -80,7 +80,8 @@ void epic_harness_log(const char *fmt, ...)
         fmt[15] == 'S' && fmt[16] == 'U' && fmt[17] == 'L' &&
         fmt[18] == 'T' && fmt[19] == ':' && fmt[20] == ' ' &&
         fmt[21] == 'P' && fmt[22] == 'A' && fmt[23] == 'S' &&
-        fmt[24] == 'S' && fmt[25] == '\n' && fmt[26] == '\0') {
+        fmt[24] == 'S' && fmt[25] == '\n' && fmt[26] == '\0')
+        {
         EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
     } else if (fmt && fmt[0] == 'E' && fmt[1] == 'P' && fmt[2] == 'I' &&
         fmt[3] == 'C' && fmt[4] == '_' && fmt[5] == 'H' &&
@@ -90,7 +91,8 @@ void epic_harness_log(const char *fmt, ...)
         fmt[15] == 'S' && fmt[16] == 'U' && fmt[17] == 'L' &&
         fmt[18] == 'T' && fmt[19] == ':' && fmt[20] == ' ' &&
         fmt[21] == 'F' && fmt[22] == 'A' && fmt[23] == 'I' &&
-        fmt[24] == 'L' && fmt[25] == '\n' && fmt[26] == '\0') {
+        fmt[24] == 'L' && fmt[25] == '\n' && fmt[26] == '\0')
+        {
         EPIC_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
     }
     /* variadic args ignored; the marker has none. */
@@ -104,7 +106,8 @@ void epic_harness_log(const char *fmt, ...)
  */
 void pic16f193x_harness_halt(void)
 {
-    for (;;) {
+    for (;;)
+    {
         /* nothing */
     }
 }

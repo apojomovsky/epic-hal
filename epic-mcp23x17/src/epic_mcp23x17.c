@@ -61,10 +61,12 @@ static int reg_read(epic_mcp23x17_handle_t *h, uint8_t reg,
     (void)h; (void)reg; (void)buf;
     return n;
 #else
-    if (h->transport != NULL) {
+    if (h->transport != NULL)
+    {
         return h->transport->read_reg(h->transport->ctx, reg, buf, n);
     }
-    if (h->bus == EPIC_MCP23X17_BUS_I2C) {
+    if (h->bus == EPIC_MCP23X17_BUS_I2C)
+    {
         return epic_bus_i2c_mem_read(h->dev, reg, buf, n);
     }
     /* MCP23S17: CS low, control byte (read), reg, n dummy exchanges
@@ -73,7 +75,8 @@ static int reg_read(epic_mcp23x17_handle_t *h, uint8_t reg,
     ops->select();
     (void)ops->exchange(SPI_CTRL(h->dev, 1u));
     (void)ops->exchange(reg);
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         buf[i] = ops->exchange(0u);
     }
     ops->deselect();
@@ -100,17 +103,20 @@ static int reg_write(epic_mcp23x17_handle_t *h, uint8_t reg,
     (void)h; (void)reg; (void)buf;
     return n;
 #else
-    if (h->transport != NULL) {
+    if (h->transport != NULL)
+    {
         return h->transport->write_reg(h->transport->ctx, reg, buf, n);
     }
-    if (h->bus == EPIC_MCP23X17_BUS_I2C) {
+    if (h->bus == EPIC_MCP23X17_BUS_I2C)
+    {
         return epic_bus_i2c_mem_write(h->dev, reg, buf, n);
     }
     const epic_bus_spi_ops_t *ops = epic_bus_get_spi_ops();
     ops->select();
     (void)ops->exchange(SPI_CTRL(h->dev, 0u));
     (void)ops->exchange(reg);
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         (void)ops->exchange(buf[i]);
     }
     ops->deselect();
@@ -137,27 +143,36 @@ int EPIC_MCP23X17_GPIO_Init(epic_mcp23x17_handle_t *h,
     uint8_t mask = (uint8_t)(pins & 0xFFu);
     uint8_t dir;
     int st = EPIC_MCP23X17_GetDirection(h, port, &dir);
-    if (st < 0) {
+    if (st < 0)
+    {
         return st;
     }
-    if (mode == MCP23X17_MODE_OUTPUT) {
+    if (mode == MCP23X17_MODE_OUTPUT)
+    {
         dir &= (uint8_t)~mask;
-    } else {
+    }
+    else
+    {
         dir |= mask;
     }
     st = EPIC_MCP23X17_SetDirection(h, port, dir);
-    if (st < 0) {
+    if (st < 0)
+    {
         return st;
     }
     /* the pull-ups follow the mode for the affected pins only. */
     uint8_t pu;
     st = EPIC_MCP23X17_GetPullUps(h, port, &pu);
-    if (st < 0) {
+    if (st < 0)
+    {
         return st;
     }
-    if (mode == MCP23X17_MODE_INPUT_PULLUP) {
+    if (mode == MCP23X17_MODE_INPUT_PULLUP)
+    {
         pu |= mask;
-    } else {
+    }
+    else
+    {
         pu &= (uint8_t)~mask;
     }
     return EPIC_MCP23X17_SetPullUps(h, port, pu);
@@ -180,12 +195,16 @@ int EPIC_MCP23X17_GPIO_WritePin(epic_mcp23x17_handle_t *h,
     uint8_t mask = (uint8_t)(pins & 0xFFu);
     uint8_t latch;
     int st = EPIC_MCP23X17_ReadOutputLatch(h, port, &latch);
-    if (st < 0) {
+    if (st < 0)
+    {
         return st;
     }
-    if (state == MCP23X17_PIN_SET) {
+    if (state == MCP23X17_PIN_SET)
+    {
         latch |= mask;
-    } else {
+    }
+    else
+    {
         latch &= (uint8_t)~mask;
     }
     return EPIC_MCP23X17_WritePort(h, port, latch);
@@ -206,7 +225,8 @@ int EPIC_MCP23X17_GPIO_TogglePin(epic_mcp23x17_handle_t *h,
     uint8_t mask = (uint8_t)(pins & 0xFFu);
     uint8_t latch;
     int st = EPIC_MCP23X17_ReadOutputLatch(h, port, &latch);
-    if (st < 0) {
+    if (st < 0)
+    {
         return st;
     }
     latch ^= mask;
@@ -228,7 +248,8 @@ int EPIC_MCP23X17_GPIO_ReadPin(epic_mcp23x17_handle_t *h,
 {
     uint8_t port_val;
     int st = EPIC_MCP23X17_ReadPort(h, port, &port_val);
-    if (st < 0) {
+    if (st < 0)
+    {
         return st;
     }
     return (port_val & (uint8_t)(pin & 0xFFu)) ? MCP23X17_PIN_SET
@@ -433,7 +454,8 @@ int EPIC_MCP23X17_GetDirectionAll(epic_mcp23x17_handle_t *h, uint16_t *dir)
 #ifdef __EPIC_CC__
     struct { uint8_t lo; uint8_t hi; } pair;
     int st = reg_read(h, REG_IODIR, (uint8_t *)&pair, 2);
-    if (st < 0) {
+    if (st < 0)
+    {
         return st;
     }
     *dir = (uint16_t)((uint16_t)pair.lo | ((uint16_t)pair.hi << 8));
@@ -441,7 +463,8 @@ int EPIC_MCP23X17_GetDirectionAll(epic_mcp23x17_handle_t *h, uint16_t *dir)
 #else
     uint8_t pair[2];
     int st = reg_read(h, REG_IODIR, pair, 2);
-    if (st < 0) {
+    if (st < 0)
+    {
         return st;
     }
     *dir = (uint16_t)((uint16_t)pair[0] | ((uint16_t)pair[1] << 8));
@@ -481,7 +504,8 @@ int EPIC_MCP23X17_ReadAll(epic_mcp23x17_handle_t *h, uint16_t *val)
 #ifdef __EPIC_CC__
     struct { uint8_t lo; uint8_t hi; } pair;
     int st = reg_read(h, REG_GPIO, (uint8_t *)&pair, 2);
-    if (st < 0) {
+    if (st < 0)
+    {
         return st;
     }
     *val = (uint16_t)((uint16_t)pair.lo | ((uint16_t)pair.hi << 8));
@@ -489,7 +513,8 @@ int EPIC_MCP23X17_ReadAll(epic_mcp23x17_handle_t *h, uint16_t *val)
 #else
     uint8_t pair[2];
     int st = reg_read(h, REG_GPIO, pair, 2);
-    if (st < 0) {
+    if (st < 0)
+    {
         return st;
     }
     *val = (uint16_t)((uint16_t)pair[0] | ((uint16_t)pair[1] << 8));

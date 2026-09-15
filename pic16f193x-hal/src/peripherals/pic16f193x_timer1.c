@@ -27,7 +27,8 @@ uint16_t EPIC_TIMER1_ReadCounter(void)
      * second read differs, the low byte rolled over, so use the
      * refreshed high. Standard PIC16 idiom (DS41364B §16.4.1). */
     uint8_t hi1, lo, hi2;
-    do {
+    do
+    {
         hi1 = EPIC_REG8(PIC_REG_TMR1H);
         lo  = EPIC_REG8(PIC_REG_TMR1L);
         hi2 = EPIC_REG8(PIC_REG_TMR1H);
@@ -77,9 +78,12 @@ EPIC_StatusTypeDef EPIC_TIMER1_Init(const TIMER1_HandleTypeDef *h)
 
     /* Configure the overflow interrupt. */
     EPIC_IRQ_ClearFlag(PIC16F193X_IRQ_TMR1);
-    if (h->OverflowCallback) {
+    if (h->OverflowCallback)
+    {
         EPIC_IRQ_Enable(PIC16F193X_IRQ_TMR1);
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(PIC16F193X_IRQ_TMR1);
     }
 
@@ -148,7 +152,8 @@ void TIMER1_IRQHandler(void)
     /* Direct flag ops (class-F). TMR1IF is PIR1 bit 0. */
     if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR1IF)) return;
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR1IF);
-    if (g_t1_handle && g_t1_handle->OverflowCallback) {
+    if (g_t1_handle && g_t1_handle->OverflowCallback)
+    {
         g_t1_handle->OverflowCallback();
     }
 }

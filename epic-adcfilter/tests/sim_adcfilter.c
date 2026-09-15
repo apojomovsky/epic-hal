@@ -49,36 +49,72 @@ int main(void)
 
     /* (a1) oversample constant: 512 with eb=2 -> 512 << 2 = 2048. */
     g_mock_val = 512;
-    if (epic_adcfilter_oversample(mock_const, NULL, 2) != 2048) { a_ok = 0; }
+    if (epic_adcfilter_oversample(mock_const, NULL, 2) != 2048)
+    {
+        a_ok = 0;
+    }
 
     /* (a2) oversample alternating: 8 x 0 + 8 x 1023 = 8184, >> 2 -> 2046. */
     g_alt_a = 0; g_alt_b = 1023; g_alt_idx = 0;
-    if (epic_adcfilter_oversample(mock_alternate, NULL, 2) != 2046) { a_ok = 0; }
+    if (epic_adcfilter_oversample(mock_alternate, NULL, 2) != 2046)
+    {
+        a_ok = 0;
+    }
 
     /* (a3) eb=0: single read, returns the sample itself. */
     g_mock_val = 777;
-    if (epic_adcfilter_oversample(mock_const, NULL, 0) != 777) { a_ok = 0; }
+    if (epic_adcfilter_oversample(mock_const, NULL, 0) != 777)
+    {
+        a_ok = 0;
+    }
 
     /* (a4) warmup: average over what has been pushed, not the window. */
     epic_adcfilter_avg_init(&f, buf4, 4);
-    if (epic_adcfilter_avg_push(&f, 100) != 100) { a_ok = 0; }
-    if (epic_adcfilter_avg_push(&f, 200) != 150) { a_ok = 0; }
-    if (epic_adcfilter_avg_push(&f, 300) != 200) { a_ok = 0; }
-    if (epic_adcfilter_avg_push(&f, 400) != 250) { a_ok = 0; }
+    if (epic_adcfilter_avg_push(&f, 100) != 100)
+    {
+        a_ok = 0;
+    }
+    if (epic_adcfilter_avg_push(&f, 200) != 150)
+    {
+        a_ok = 0;
+    }
+    if (epic_adcfilter_avg_push(&f, 300) != 200)
+    {
+        a_ok = 0;
+    }
+    if (epic_adcfilter_avg_push(&f, 400) != 250)
+    {
+        a_ok = 0;
+    }
 
     /* (a5) full window: push 40 evicts 10 -> 30; push 50 evicts 20 -> 40. */
     epic_adcfilter_avg_init(&f3, buf3, 3);
     epic_adcfilter_avg_push(&f3, 10);
     epic_adcfilter_avg_push(&f3, 20);
     epic_adcfilter_avg_push(&f3, 30);
-    if (f3.filled != 3) { a_ok = 0; }
-    if (epic_adcfilter_avg_push(&f3, 40) != 30) { a_ok = 0; }
-    if (epic_adcfilter_avg_push(&f3, 50) != 40) { a_ok = 0; }
+    if (f3.filled != 3)
+    {
+        a_ok = 0;
+    }
+    if (epic_adcfilter_avg_push(&f3, 40) != 30)
+    {
+        a_ok = 0;
+    }
+    if (epic_adcfilter_avg_push(&f3, 50) != 40)
+    {
+        a_ok = 0;
+    }
 
     /* (a6) count=1: tracks the last sample. */
     epic_adcfilter_avg_init(&f1, buf1, 1);
-    if (epic_adcfilter_avg_push(&f1, 42) != 42) { a_ok = 0; }
-    if (epic_adcfilter_avg_push(&f1, 99) != 99) { a_ok = 0; }
+    if (epic_adcfilter_avg_push(&f1, 42) != 42)
+    {
+        a_ok = 0;
+    }
+    if (epic_adcfilter_avg_push(&f1, 99) != 99)
+    {
+        a_ok = 0;
+    }
 
     /* (a7) independence: two filters share no state. */
     epic_adcfilter_avg_init(&fa, bufA, 4);
@@ -87,10 +123,22 @@ int main(void)
     epic_adcfilter_avg_push(&fa, 200);
     epic_adcfilter_avg_push(&fb, 10);
     epic_adcfilter_avg_push(&fb, 20);
-    if (fa.sum != 300 || fb.sum != 30) { a_ok = 0; }
-    if (fa.filled != 2 || fb.filled != 2) { a_ok = 0; }
-    if (epic_adcfilter_avg_push(&fa, 0) != 100) { a_ok = 0; }
-    if (epic_adcfilter_avg_push(&fb, 0) != 10) { a_ok = 0; }
+    if (fa.sum != 300 || fb.sum != 30)
+    {
+        a_ok = 0;
+    }
+    if (fa.filled != 2 || fb.filled != 2)
+    {
+        a_ok = 0;
+    }
+    if (epic_adcfilter_avg_push(&fa, 0) != 100)
+    {
+        a_ok = 0;
+    }
+    if (epic_adcfilter_avg_push(&fb, 0) != 10)
+    {
+        a_ok = 0;
+    }
 
     /* Phase B: step settling within the documented window (count
      * pushes). Prefill an 8-deep window with 8 x 100, then step to
@@ -100,32 +148,65 @@ int main(void)
     {
         uint16_t prev = 0;
         epic_adcfilter_avg_init(&fs, buf8, 8);
-        for (i = 0; i < 8; i++) {
+        for (i = 0; i < 8; i++)
+        {
             epic_adcfilter_avg_push(&fs, 100);
         }
-        for (i = 0; i < 8; i++) {
+        for (i = 0; i < 8; i++)
+        {
             uint16_t out = epic_adcfilter_avg_push(&fs, 1000);
-            if (out < prev) { b_ok = 0; }  /* monotone toward the step */
+            if (out < prev)
+            {
+                b_ok = 0;
+            }  /* monotone toward the step */
             prev = out;
-            if (i == 3u && out != 550) { b_ok = 0; }
+            if (i == 3u && out != 550)
+            {
+                b_ok = 0;
+            }
         }
-        if (prev != 1000) { b_ok = 0; }    /* settled within the window */
+        if (prev != 1000)
+        {
+            b_ok = 0;
+        }    /* settled within the window */
     }
 
     /* Phase C: reset path restores the initial state. */
     epic_adcfilter_avg_init(&fs, buf8, 8);
-    if (fs.filled != 0 || fs.index != 0 || fs.sum != 0) { c_ok = 0; }
+    if (fs.filled != 0 || fs.index != 0 || fs.sum != 0)
+    {
+        c_ok = 0;
+    }
     /* First push after re-init: averaged over 1 sample, not /8. */
-    if (epic_adcfilter_avg_push(&fs, 1000) != 1000) { c_ok = 0; }
-    if (epic_adcfilter_avg_push(&fs, 2000) != 1500) { c_ok = 0; }
+    if (epic_adcfilter_avg_push(&fs, 1000) != 1000)
+    {
+        c_ok = 0;
+    }
+    if (epic_adcfilter_avg_push(&fs, 2000) != 1500)
+    {
+        c_ok = 0;
+    }
     /* Re-init with a different window length takes effect. */
     epic_adcfilter_avg_init(&fs, buf8, 2);
-    if (fs.count != 2 || fs.filled != 0 || fs.sum != 0) { c_ok = 0; }
-    if (epic_adcfilter_avg_push(&fs, 100) != 100) { c_ok = 0; }
-    if (epic_adcfilter_avg_push(&fs, 200) != 150) { c_ok = 0; }
-    if (fs.filled != 2) { c_ok = 0; }
+    if (fs.count != 2 || fs.filled != 0 || fs.sum != 0)
+    {
+        c_ok = 0;
+    }
+    if (epic_adcfilter_avg_push(&fs, 100) != 100)
+    {
+        c_ok = 0;
+    }
+    if (epic_adcfilter_avg_push(&fs, 200) != 150)
+    {
+        c_ok = 0;
+    }
+    if (fs.filled != 2)
+    {
+        c_ok = 0;
+    }
 
-    for (i = 0; epic_harness_running(i); i++) {
+    for (i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
 

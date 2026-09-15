@@ -49,7 +49,8 @@ typedef struct {
 static void copy_args(epic_console_ctx_t *ctx, uint8_t argc, char **argv)
 {
     ctx->argc = argc;
-    for (uint8_t i = 0; i < argc && i < 8u; i++) {
+    for (uint8_t i = 0; i < argc && i < 8u; i++)
+    {
         strncpy(ctx->args[i], argv[i], sizeof(ctx->args[i]) - 1u);
         ctx->args[i][sizeof(ctx->args[i]) - 1u] = '\0';
     }
@@ -87,7 +88,8 @@ static void reset_env(void)
  */
 static void drive_input(const char *s)
 {
-    while (*s != '\0') {
+    while (*s != '\0')
+    {
         SIM_RX((uint8_t)*s++);
     }
 }
@@ -97,7 +99,8 @@ static void drive_input(const char *s)
  */
 static void drive_input_polled(epic_console_t *con, const char *s)
 {
-    while (*s != '\0') {
+    while (*s != '\0')
+    {
         SIM_RX((uint8_t)*s++);
         epic_console_poll(con);
     }
@@ -114,7 +117,8 @@ static int drain_tx(char *out, int max)
 {
     int n = 0;
     epic_harness_tick();
-    while (epic_serial_tx_pending() > 0 && n < max) {
+    while (epic_serial_tx_pending() > 0 && n < max)
+    {
         epic_dispatch_all_irqs();
         out[n++] = (char)EPIC_REG8(PIC_REG_TXREG);
         epic_harness_tick();

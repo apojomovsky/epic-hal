@@ -63,7 +63,8 @@ static void reset_env(void)
 /** @brief Fill a buffer with random bytes from the LCG. */
 static void fill_random(uint8_t *buf, uint8_t len)
 {
-    for (uint8_t i = 0; i < len; i++) {
+    for (uint8_t i = 0; i < len; i++)
+    {
         buf[i] = (uint8_t)rnd();
     }
 }
@@ -86,15 +87,18 @@ static void roundtrip_and_corrupt(uint8_t addr, uint8_t size)
     CHECK(memcmp(out, g_blob, size) == 0, "round trip byte-exact");
 
     /* Corruption sweep over payload + the two trailing CRC bytes. */
-    for (int pos = 0; pos < (int)size + 2; pos++) {
+    for (int pos = 0; pos < (int)size + 2; pos++)
+    {
         uint8_t stored = SIM_EEPROM_READ((uint8_t)(addr + (uint8_t)pos));
         uint8_t corrupt = (uint8_t)(stored ^ 0x80u);
         SIM_EEPROM_BYTE((uint8_t)(addr + (uint8_t)pos), corrupt);
 
         memset(out, 0x5A, sizeof(out));
         CHECK(!epic_settings_load(addr, out, size), "corrupt byte detected");
-        for (uint8_t i = 0; i < size; i++) {
-            if (out[i] != 0x5Au) {
+        for (uint8_t i = 0; i < size; i++)
+        {
+            if (out[i] != 0x5Au)
+            {
                 CHECK(0, "output untouched on corrupt load");
                 break;
             }
@@ -113,7 +117,8 @@ static void roundtrip_and_corrupt(uint8_t addr, uint8_t size)
 static void test_random_roundtrips(void)
 {
     reset_env();
-    for (int it = 0; it < 200; it++) {
+    for (int it = 0; it < 200; it++)
+    {
         uint8_t addr = (uint8_t)(rnd() % MAX_ADDR);
         uint8_t size = (uint8_t)(1u + rnd() % MAX_BLOB);
         roundtrip_and_corrupt(addr, size);
@@ -153,7 +158,8 @@ static void test_top_of_eeprom(void)
 {
     reset_env();
     static const uint8_t sizes[] = { 1u, 5u, 16u, 40u };
-    for (size_t i = 0; i < sizeof(sizes)/sizeof(sizes[0]); i++) {
+    for (size_t i = 0; i < sizeof(sizes)/sizeof(sizes[0]); i++)
+    {
         uint8_t size = sizes[i];
         uint8_t addr = (uint8_t)(256u - (uint16_t)size - 2u);
         roundtrip_and_corrupt(addr, size);
@@ -170,13 +176,15 @@ static void test_region_isolation(void)
     };
     uint8_t blobs[3][MAX_BLOB];
     uint8_t out[MAX_BLOB];
-    for (size_t r = 0; r < 3; r++) {
+    for (size_t r = 0; r < 3; r++)
+    {
         fill_random(blobs[r], regions[r].size);
         CHECK(epic_settings_save(regions[r].addr, blobs[r], regions[r].size),
               "region save succeeds");
     }
     /* Save/load interleaved, then verify every region independently. */
-    for (size_t r = 0; r < 3; r++) {
+    for (size_t r = 0; r < 3; r++)
+    {
         memset(out, 0x00, sizeof(out));
         CHECK(epic_settings_load(regions[r].addr, out, regions[r].size),
               "region load succeeds");

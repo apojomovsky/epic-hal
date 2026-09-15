@@ -43,9 +43,11 @@ static uint16_t holding_regs[4];
 static uint16_t ref_crc16(const uint8_t *buf, int len)
 {
     uint16_t crc = 0xFFFFu;
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++)
+    {
         crc = (uint16_t)(crc ^ buf[i]);
-        for (int b = 0; b < 8; b++) {
+        for (int b = 0; b < 8; b++)
+        {
             crc = (crc & 1u) ? (uint16_t)((crc >> 1) ^ 0xA001u)
                              : (uint16_t)(crc >> 1);
         }
@@ -71,7 +73,8 @@ static void log_hex_buf(const uint8_t *buf, int n)
 {
     char s[2];
     s[1] = '\0';
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         s[0] = ' ';
         epic_harness_log(s);
         log_hex8(buf[i]);
@@ -90,9 +93,11 @@ static int drain_tx(uint8_t *out, int max)
 {
     int n = 0;
     uint32_t guard = 0UL;
-    while (n < max && epic_serial_tx_pending() > 0 && guard < 1000000UL) {
+    while (n < max && epic_serial_tx_pending() > 0 && guard < 1000000UL)
+    {
         guard++;
-        if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TXIF) {
+        if (EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TXIF)
+        {
             epic_dispatch_all_irqs();
             out[n++] = EPIC_REG8(PIC_REG_TXREG);
         }
@@ -134,9 +139,12 @@ int main(void)
         ((EPIC_REG8(PIC_REG_BAUDCON) & PIC_BAUDCON_BRG16) != 0u) &&
         ((EPIC_REG8(PIC_REG_RCSTA) & (PIC_RCSTA_SPEN | PIC_RCSTA_CREN))
          == (PIC_RCSTA_SPEN | PIC_RCSTA_CREN));
-    if (init_ok) {
+    if (init_ok)
+    {
         epic_harness_log("modbus sim: init sfr ok\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("modbus sim: init sfr BAD\n");
     }
 
@@ -168,13 +176,16 @@ int main(void)
     /* (d) frame bytes + CRC against the independent reference */
     int len_ok = (n == 8);
     int frame_ok = len_ok;
-    for (int i = 0; i < n && i < 8; i++) {
-        if (captured[i] != req[i]) {
+    for (int i = 0; i < n && i < 8; i++)
+    {
+        if (captured[i] != req[i])
+        {
             frame_ok = 0;
         }
     }
     int crc_ok = 0;
-    if (n >= 2) {
+    if (n >= 2)
+    {
         uint16_t c = ref_crc16(captured, n - 2);
         crc_ok = (captured[n - 2] == (uint8_t)(c & 0xFFu) &&
                   captured[n - 1] == (uint8_t)(c >> 8));
@@ -182,19 +193,28 @@ int main(void)
 
     epic_harness_log("modbus sim: tx:");
     log_hex_buf(captured, n);
-    if (len_ok) {
+    if (len_ok)
+    {
         epic_harness_log("modbus sim: tx len ok\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("modbus sim: tx len BAD\n");
     }
-    if (frame_ok) {
+    if (frame_ok)
+    {
         epic_harness_log("modbus sim: frame ok\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("modbus sim: frame BAD\n");
     }
-    if (crc_ok) {
+    if (crc_ok)
+    {
         epic_harness_log("modbus sim: crc ok\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("modbus sim: crc BAD\n");
     }
 
@@ -203,16 +223,20 @@ int main(void)
     int dir_ok =
         ((EPIC_REG8(PIC_REG_TRISC) & (uint8_t)EPIC_BIT(DIR_BIT)) == 0u) &&
         ((EPIC_REG8(PIC_REG_LATC) & (uint8_t)EPIC_BIT(DIR_BIT)) == 0u);
-    if (dir_ok) {
+    if (dir_ok)
+    {
         epic_harness_log("modbus sim: dir pin ok\n");
-    } else {
+    }
+    else
+    {
         epic_harness_log("modbus sim: dir pin BAD\n");
     }
 
     /* (f) poll smoke: idle framing path over a bounded loop */
     {
         uint32_t t0 = epic_tick_get();
-        while (epic_tick_elapsed_since(t0) < 3u) {
+        while (epic_tick_elapsed_since(t0) < 3u)
+        {
             epic_modbus_slave_poll();
             epic_harness_tick();
         }
@@ -220,7 +244,8 @@ int main(void)
     epic_harness_log("modbus sim: poll ok\n");
 
     int ok = init_ok && len_ok && frame_ok && crc_ok && dir_ok;
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
     return epic_harness_report(ok);

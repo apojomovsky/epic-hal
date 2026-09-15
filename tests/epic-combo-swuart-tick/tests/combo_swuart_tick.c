@@ -137,25 +137,30 @@ int main(void)
     uint8_t completed = 0u;
     uint8_t paced = 1u;        /* tick advanced >= 1 ms inside every round */
 
-    for (uint8_t round = 0u; round < TX_ROUNDS; round++) {
+    for (uint8_t round = 0u; round < TX_ROUNDS; round++)
+    {
         size_t queued = EPIC_SWUART_Write(&g_h, g_payload, TX_BYTES);
-        if (queued != TX_BYTES) {
+        if (queued != TX_BYTES)
+        {
             all_queued = 0u;
             break;
         }
 
         uint32_t t0 = epic_tick_get();
         uint8_t round_done = 0u;
-        for (uint32_t i = 0; epic_harness_running(i); i++) {
+        for (uint32_t i = 0; epic_harness_running(i); i++)
+        {
             epic_harness_tick();
             /* No WDT refresh in the pump: the combo's epic-cc link
              * set carries no WDT source and the mdb sim models none. */
-            if (g_h.tx_count == 0u && g_h.tx_state == 0u) {
+            if (g_h.tx_count == 0u && g_h.tx_state == 0u)
+            {
                 /* tx_count 0 and TX_IDLE (state 0): the ring drained
                  * and the last stop bit's compare event fired, so the
                  * whole payload shifted out under the live tick. */
                 uint32_t t1 = epic_tick_get();
-                if (t1 - t0 < 1u) {
+                if (t1 - t0 < 1u)
+                {
                     paced = 0u;
                 }
                 drained = 1u;
@@ -164,7 +169,8 @@ int main(void)
                 break;
             }
         }
-        if (!round_done) {
+        if (!round_done)
+        {
             break;
         }
     }

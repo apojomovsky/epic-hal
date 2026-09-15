@@ -11,7 +11,8 @@ int main(void)
 {
     epic_harness_init(1000000UL);
     uint32_t i = 0;
-    while (epic_harness_running(i)) {
+    while (epic_harness_running(i))
+    {
         epic_harness_tick();
         i++;
     }

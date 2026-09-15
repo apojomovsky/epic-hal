@@ -159,23 +159,38 @@ void EPIC_SSP_ClearWriteCollision(void)
 /**
  * @brief  Issue an I2C Start condition (SSPCON2<SEN>).
  */
-void EPIC_SSP_Start(void)          { sspcon2_set(PIC_SSPCON2_SEN);  }
+void EPIC_SSP_Start(void)
+{
+    sspcon2_set(PIC_SSPCON2_SEN);
+}
 /**
  * @brief  Issue an I2C Repeated Start condition (SSPCON2<RSEN>).
  */
-void EPIC_SSP_RepeatedStart(void)  { sspcon2_set(PIC_SSPCON2_RSEN); }
+void EPIC_SSP_RepeatedStart(void)
+{
+    sspcon2_set(PIC_SSPCON2_RSEN);
+}
 /**
  * @brief  Issue an I2C Stop condition (SSPCON2<PEN>).
  */
-void EPIC_SSP_Stop(void)           { sspcon2_set(PIC_SSPCON2_PEN);  }
+void EPIC_SSP_Stop(void)
+{
+    sspcon2_set(PIC_SSPCON2_PEN);
+}
 /**
  * @brief  Enable I2C receive mode (SSPCON2<RCEN>).
  */
-void EPIC_SSP_ReceiveEnable(void)  { sspcon2_set(PIC_SSPCON2_RCEN); }
+void EPIC_SSP_ReceiveEnable(void)
+{
+    sspcon2_set(PIC_SSPCON2_RCEN);
+}
 /**
  * @brief  Initiate an I2C Acknowledge sequence (SSPCON2<ACKEN>).
  */
-void EPIC_SSP_AcknowledgeEnable(void) { sspcon2_set(PIC_SSPCON2_ACKEN); }
+void EPIC_SSP_AcknowledgeEnable(void)
+{
+    sspcon2_set(PIC_SSPCON2_ACKEN);
+}
 
 /**
  * @brief  Return the I2C Acknowledge status (SSPCON2<ACKSTAT>).

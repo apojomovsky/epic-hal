@@ -127,7 +127,8 @@ int main(void)
     test_read_clear_forward();
     test_no_callback_registered();
 
-    if (g_fail == 0) {
+    if (g_fail == 0)
+    {
         printf("OK: RB change hook passes (%d checks).\n", g_pass);
         return 0;
     }

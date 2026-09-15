@@ -24,7 +24,8 @@ int main(void)
     volatile uint16_t r4 = epic_math_sqrt_u16(100u);
     (void)r1; (void)d; (void)r2; (void)r3; (void)r4; (void)carry;
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
     return epic_harness_report(1);

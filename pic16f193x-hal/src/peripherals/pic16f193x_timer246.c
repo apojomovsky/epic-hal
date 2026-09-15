@@ -181,7 +181,8 @@ EPIC_StatusTypeDef EPIC_TIMER246_Init(const TIMER246_HandleTypeDef *h)
     if (!h) return EPIC_INVALID;
     if (h->Instance != TIMER246_INSTANCE_2 &&
         h->Instance != TIMER246_INSTANCE_4 &&
-        h->Instance != TIMER246_INSTANCE_6) {
+        h->Instance != TIMER246_INSTANCE_6)
+        {
         return EPIC_INVALID;
     }
 
@@ -190,9 +191,12 @@ EPIC_StatusTypeDef EPIC_TIMER246_Init(const TIMER246_HandleTypeDef *h)
 
     PIC16F193X_IRQn irq = timer246_irq(h->Instance);
     EPIC_IRQ_ClearFlag(irq);
-    if (h->OverflowCallback) {
+    if (h->OverflowCallback)
+    {
         EPIC_IRQ_Enable(irq);
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(irq);
     }
 
@@ -229,7 +233,8 @@ EPIC_StatusTypeDef EPIC_TIMER246_Start(const TIMER246_HandleTypeDef *h)
     if (!h) return EPIC_INVALID;
     if (h->Instance != TIMER246_INSTANCE_2 &&
         h->Instance != TIMER246_INSTANCE_4 &&
-        h->Instance != TIMER246_INSTANCE_6) {
+        h->Instance != TIMER246_INSTANCE_6)
+        {
         return EPIC_INVALID;
     }
 
@@ -273,7 +278,8 @@ static void timer246_irq_common(TIMER246_InstanceTypeDef inst, PIC16F193X_IRQn i
     /* Direct flag ops (class-F: the table route clobbers PCLATH in ISR
      * context; the ccp_irq_common switch is the reference). TMR2IF is
      * PIR1 bit 1, TMR4IF/TMR6IF are PIR3 bits 1/5. */
-    switch (irq) {
+    switch (irq)
+    {
     case PIC16F193X_IRQ_TMR2:
         if (!(EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF)) return;
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR2IF);
@@ -288,7 +294,8 @@ static void timer246_irq_common(TIMER246_InstanceTypeDef inst, PIC16F193X_IRQn i
         break;
     }
     const TIMER246_HandleTypeDef *h = g_handle[idx_of(inst)];
-    if (h && h->OverflowCallback) {
+    if (h && h->OverflowCallback)
+    {
         h->OverflowCallback();
     }
 }
@@ -296,12 +303,21 @@ static void timer246_irq_common(TIMER246_InstanceTypeDef inst, PIC16F193X_IRQn i
 /**
  * @brief Timer2 overflow ISR (weak, override in user code).
  */
-void TIMER2_IRQHandler(void) { timer246_irq_common(TIMER246_INSTANCE_2, PIC16F193X_IRQ_TMR2); }
+void TIMER2_IRQHandler(void)
+{
+    timer246_irq_common(TIMER246_INSTANCE_2, PIC16F193X_IRQ_TMR2);
+}
 /**
  * @brief Timer4 overflow ISR (weak, override in user code).
  */
-void TIMER4_IRQHandler(void) { timer246_irq_common(TIMER246_INSTANCE_4, PIC16F193X_IRQ_TMR4); }
+void TIMER4_IRQHandler(void)
+{
+    timer246_irq_common(TIMER246_INSTANCE_4, PIC16F193X_IRQ_TMR4);
+}
 /**
  * @brief Timer6 overflow ISR (weak, override in user code).
  */
-void TIMER6_IRQHandler(void) { timer246_irq_common(TIMER246_INSTANCE_6, PIC16F193X_IRQ_TMR6); }
+void TIMER6_IRQHandler(void)
+{
+    timer246_irq_common(TIMER246_INSTANCE_6, PIC16F193X_IRQ_TMR6);
+}

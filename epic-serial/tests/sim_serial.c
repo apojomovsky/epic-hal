@@ -54,7 +54,8 @@ static uint32_t tick_now(void)
     /* 32-bit read the ISR can tear mid-update on the 8-bit core (same
      * pattern as epic_tick_get): retry until two reads agree. */
     uint32_t a, b;
-    do {
+    do
+    {
         a = g_tick_us;
         b = g_tick_us;
     } while (a != b);
@@ -114,13 +115,16 @@ int main(void)
     int w2 = epic_serial_write(seq, (int)TX_SEQ_LEN);
     int pops = 0;
     for (uint32_t i = 0; epic_harness_running(i) && i < PHASE2_ITERS &&
-                        epic_serial_tx_pending() > 0; i++) {
+                        epic_serial_tx_pending() > 0; i++)
+                        {
         epic_harness_tick();
         int p = epic_serial_tx_pending();
         epic_dispatch_all_irqs();
-        if (epic_serial_tx_pending() < p) {
+        if (epic_serial_tx_pending() < p)
+        {
             pops++;
-            if (pops == 1) {
+            if (pops == 1)
+            {
                 /* Probe the sim's USART model: TXIF/TXREG readback after
                  * a TXREG write. */
                 epic_harness_log("pop");
@@ -136,13 +140,15 @@ int main(void)
 
     /* Phase 3: blocking write + drain + flush, GIE off. */
     uint8_t fill[EPIC_SERIAL_RING_SZ + 2u];
-    for (int j = 0; j < (int)sizeof(fill); j++) {
+    for (int j = 0; j < (int)sizeof(fill); j++)
+    {
         fill[j] = (uint8_t)j;
     }
     int w3 = epic_serial_write(fill, (int)sizeof(fill));   /* blocks at ring-full */
     check(w3 == (int)sizeof(fill), "tx block all");
     for (uint32_t i = 0; epic_harness_running(i) && i < PHASE3_ITERS &&
-                        epic_serial_tx_pending() > 0; i++) {
+                        epic_serial_tx_pending() > 0; i++)
+                        {
         epic_harness_tick();
         epic_dispatch_all_irqs();
     }
@@ -166,7 +172,8 @@ int main(void)
 
     uint32_t t0 = tick_now();
     for (uint32_t i = 0; epic_harness_running(i) && i < PHASE4_ITERS &&
-                        (tick_now() - t0) < TICK_MIN_ALIVE; i++) {
+                        (tick_now() - t0) < TICK_MIN_ALIVE; i++)
+                        {
         epic_harness_tick();
         epic_dispatch_all_irqs();        /* TXIF pending, TXIE off: gate skips */
     }

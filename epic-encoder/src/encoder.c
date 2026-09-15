@@ -88,10 +88,12 @@ void epic_encoder_update(epic_encoder_t *enc, uint8_t port_value)
      * this instance's state is unchanged, so no-op, not an error. */
     if (new_state == enc->last_state) return;
 
-    if (enc->min_edge_interval_ms != 0U) {
+    if (enc->min_edge_interval_ms != 0U)
+    {
         uint32_t now = epic_tick_get();
         if (epic_tick_elapsed_since(enc->last_edge_tick) <
-            (uint32_t)enc->min_edge_interval_ms) {
+            (uint32_t)enc->min_edge_interval_ms)
+            {
             /* last_state intentionally not updated: the next sample
              * compares against the last accepted state, not this one. */
             enc->glitch_count++;
@@ -101,7 +103,8 @@ void epic_encoder_update(epic_encoder_t *enc, uint8_t port_value)
     }
 
     int8_t delta = QUAD_TABLE[(uint8_t)((enc->last_state << 2) | new_state)];
-    if (delta == 0) {
+    if (delta == 0)
+    {
         /* Both bits appear to have flipped between samples: a missed edge
          * or corruption. last_state still advances so decode resyncs. */
         enc->error_count++;
@@ -126,7 +129,8 @@ int32_t epic_encoder_get_position(const epic_encoder_t *enc)
      * position as a multi-byte RMW, so a single read can tear; retry
      * until two consecutive reads agree. */
     int32_t p;
-    do {
+    do
+    {
         p = enc->position;
     } while (p != enc->position);
     return p;
@@ -144,7 +148,8 @@ uint16_t epic_encoder_get_error_count(const epic_encoder_t *enc)
 {
     /* Read-twice-retry, same discipline as epic_encoder_get_position. */
     uint16_t c;
-    do {
+    do
+    {
         c = enc->error_count;
     } while (c != enc->error_count);
     return c;
@@ -162,7 +167,8 @@ uint16_t epic_encoder_get_glitch_count(const epic_encoder_t *enc)
 {
     /* Read-twice-retry, same discipline as epic_encoder_get_position. */
     uint16_t c;
-    do {
+    do
+    {
         c = enc->glitch_count;
     } while (c != enc->glitch_count);
     return c;

@@ -53,7 +53,8 @@ static void receive_byte_a(const uint8_t *bits)
     epic_swuart_test_set_capture(2000u);
     epic_swuart_test_fire_rx_event(); /* capture event: IDLE -> CONFIRM_START */
     epic_swuart_test_fire_rx_event(); /* confirm event, half a bit later */
-    for (size_t i = 1; i < 10; i++) {
+    for (size_t i = 1; i < 10; i++)
+    {
         pic16f193x_sim_drive_input('C', 2, bits[i]);
         pic16f193x_sim_step(1);
         epic_swuart_test_fire_rx_event(); /* compare event: sample + arm next */
@@ -93,7 +94,8 @@ int main(void)
     epic_swuart_test_set_capture(1000u);
     epic_swuart_test_fire_rx_event_b(); /* capture event: IDLE -> CONFIRM_START */
     epic_swuart_test_fire_rx_event_b(); /* confirm event, half a bit later */
-    for (size_t i = 1; i < 10; i++) {
+    for (size_t i = 1; i < 10; i++)
+    {
         pic16f193x_sim_drive_input('B', 5, bits[i]);
         pic16f193x_sim_step(1);
         epic_swuart_test_fire_rx_event_b();
@@ -173,6 +175,9 @@ int main(void)
 #else /* EPIC_SWUART_MAX_CHANNELS < 2: not a PIC16F193X build. */
 
 /** @brief Empty TU main for single-channel families. */
-int main(void) { return 0; }
+int main(void)
+{
+    return 0;
+}
 
 #endif

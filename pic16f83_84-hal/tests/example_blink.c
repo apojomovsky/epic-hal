@@ -63,7 +63,8 @@ int main(void)
      *    pumps the sim each iteration (no-op on target, where real
      *    time advances on its own). WDT refresh is a host no-op, so it
      *    is called unconditionally. */
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
         EPIC_WDT_Refresh();
     }

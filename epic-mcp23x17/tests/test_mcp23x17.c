@@ -48,34 +48,52 @@ enum {
 static mock_i2c_t g_i2c;
 
 /** @brief Mock I2C start: enter the address phase. */
-static void mock_i2c_start(void)        { g_i2c.phase = MOCK_I2C_ADDR; }
+static void mock_i2c_start(void)
+{
+    g_i2c.phase = MOCK_I2C_ADDR;
+}
 /** @brief Mock I2C repeated start: enter the read-address phase. */
-static void mock_i2c_repeated_start(void) { g_i2c.phase = MOCK_I2C_RADDR; }
+static void mock_i2c_repeated_start(void)
+{
+    g_i2c.phase = MOCK_I2C_RADDR;
+}
 /** @brief Mock I2C stop: no-op. */
-static void mock_i2c_stop(void)         { }
+static void mock_i2c_stop(void)
+{
+}
 
 /** @brief Mock I2C write byte: drive the mock register file. */
 static int mock_i2c_write_byte(uint8_t b)
 {
-    if (g_i2c.phase == MOCK_I2C_ADDR || g_i2c.phase == MOCK_I2C_RADDR) {
-        if (g_i2c.nack_addr || ((b >> 1) != g_i2c.dev)) {
+    if (g_i2c.phase == MOCK_I2C_ADDR || g_i2c.phase == MOCK_I2C_RADDR)
+    {
+        if (g_i2c.nack_addr || ((b >> 1) != g_i2c.dev))
+        {
             return 0;   /* NACK */
         }
         g_i2c.phase = (g_i2c.phase == MOCK_I2C_ADDR) ? MOCK_I2C_REG
                                                      : MOCK_I2C_READ;
         return 1;
     }
-    if (g_i2c.phase == MOCK_I2C_REG) {
+    if (g_i2c.phase == MOCK_I2C_REG)
+    {
         g_i2c.reg_ptr = b & 0x1Fu;
         g_i2c.phase = MOCK_I2C_DATA;
         return 1;
     }
     /* data byte into the register file, pointer increments (SEQOP=0);
      * a GPIO write mirrors into the output latch (DS20001952E 3.5.10). */
-    if (g_i2c.reg_ptr < sizeof(g_i2c.regs)) {
+    if (g_i2c.reg_ptr < sizeof(g_i2c.regs))
+    {
         g_i2c.regs[g_i2c.reg_ptr] = b;
-        if (g_i2c.reg_ptr == 0x11u) { g_i2c.regs[0x13u] = b; }
-        if (g_i2c.reg_ptr == 0x12u) { g_i2c.regs[0x14u] = b; }
+        if (g_i2c.reg_ptr == 0x11u)
+        {
+            g_i2c.regs[0x13u] = b;
+        }
+        if (g_i2c.reg_ptr == 0x12u)
+        {
+            g_i2c.regs[0x14u] = b;
+        }
     }
     g_i2c.reg_ptr++;
     return 1;
@@ -86,7 +104,8 @@ static uint8_t mock_i2c_read_byte(int ack)
 {
     (void)ack;
     uint8_t v = 0u;
-    if (g_i2c.reg_ptr < sizeof(g_i2c.regs)) {
+    if (g_i2c.reg_ptr < sizeof(g_i2c.regs))
+    {
         v = g_i2c.regs[g_i2c.reg_ptr];
     }
     g_i2c.reg_ptr++;
@@ -113,34 +132,46 @@ static void mock_spi_select(void)
     g_spi.expect_reg = 0;
 }
 /** @brief Mock SPI deselect: no-op. */
-static void mock_spi_deselect(void) { }
+static void mock_spi_deselect(void)
+{
+}
 
 /** @brief Mock SPI exchange: handle control, register, and data bytes. */
 static uint8_t mock_spi_exchange(uint8_t b)
 {
-    if (g_spi.expect_ctrl) {
+    if (g_spi.expect_ctrl)
+    {
         g_spi.expect_ctrl = 0;
         g_spi.expect_reg = 1;
         g_spi.reading = (b & 0x01u) != 0u;
         uint8_t want = (uint8_t)(0x40u | ((g_spi.dev & 0x7u) << 1));
         return (b & 0xFEu) == want ? 0xFFu : 0x00u;   /* MISO idle */
     }
-    if (g_spi.expect_reg) {
+    if (g_spi.expect_reg)
+    {
         g_spi.expect_reg = 0;
         g_spi.reg_ptr = b;   /* the register byte, both directions */
         return 0xFFu;
     }
     /* data bytes: writes go to the register file, reads return it. */
-    if (g_spi.reading) {
+    if (g_spi.reading)
+    {
         uint8_t v = (g_spi.reg_ptr < sizeof(g_spi.regs))
                         ? g_spi.regs[g_spi.reg_ptr] : 0u;
         g_spi.reg_ptr++;
         return v;
     }
-    if (g_spi.reg_ptr < sizeof(g_spi.regs)) {
+    if (g_spi.reg_ptr < sizeof(g_spi.regs))
+    {
         g_spi.regs[g_spi.reg_ptr] = b;
-        if (g_spi.reg_ptr == 0x11u) { g_spi.regs[0x13u] = b; }
-        if (g_spi.reg_ptr == 0x12u) { g_spi.regs[0x14u] = b; }
+        if (g_spi.reg_ptr == 0x11u)
+        {
+            g_spi.regs[0x13u] = b;
+        }
+        if (g_spi.reg_ptr == 0x12u)
+        {
+            g_spi.regs[0x14u] = b;
+        }
     }
     g_spi.reg_ptr++;
     return 0xFFu;
@@ -157,10 +188,12 @@ static mock_transport_t g_mock;
 static int mock_read_reg(void *ctx, uint8_t reg, uint8_t *buf, int n)
 {
     mock_transport_t *m = (mock_transport_t *)ctx;
-    if (m->nack) {
+    if (m->nack)
+    {
         return -1;
     }
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         buf[i] = (reg + i < sizeof(m->regs)) ? m->regs[reg + i] : 0u;
     }
     return n;
@@ -170,14 +203,23 @@ static int mock_read_reg(void *ctx, uint8_t reg, uint8_t *buf, int n)
 static int mock_write_reg(void *ctx, uint8_t reg, const uint8_t *buf, int n)
 {
     mock_transport_t *m = (mock_transport_t *)ctx;
-    if (m->nack) {
+    if (m->nack)
+    {
         return -1;
     }
-    for (int i = 0; i < n; i++) {
-        if (reg + i < sizeof(m->regs)) {
+    for (int i = 0; i < n; i++)
+    {
+        if (reg + i < sizeof(m->regs))
+        {
             m->regs[reg + i] = buf[i];
-            if (reg + i == 0x11u) { m->regs[0x13u] = buf[i]; }
-            if (reg + i == 0x12u) { m->regs[0x14u] = buf[i]; }
+            if (reg + i == 0x11u)
+            {
+                m->regs[0x13u] = buf[i];
+            }
+            if (reg + i == 0x12u)
+            {
+                m->regs[0x14u] = buf[i];
+            }
         }
     }
     return n;
@@ -404,7 +446,8 @@ int main(void)
     g_mock.nack = 1;
     CHECK(EPIC_MCP23X17_ReadPort(&h, EPIC_MCP23X17_PORTA, &(uint8_t){0}) == -1);
 
-    if (g_fail) {
+    if (g_fail)
+    {
         printf("test_mcp23x17: FAILURES\n");
         return 1;
     }

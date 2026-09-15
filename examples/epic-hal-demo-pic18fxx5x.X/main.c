@@ -53,8 +53,10 @@ int main(void)
     epic_tick_init(FOSC_HZ);
 
     uint32_t last = epic_tick_get();
-    for (;;) {
-        if ((epic_tick_get() - last) >= 500u) {
+    for (;;)
+    {
+        if ((epic_tick_get() - last) >= 500u)
+        {
             last = epic_tick_get();
             EPIC_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
         }

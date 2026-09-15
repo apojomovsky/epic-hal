@@ -107,9 +107,12 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 
     PIC16F193X_IRQn irq = ccp_irq(h->Instance);
     EPIC_IRQ_ClearFlag(irq);
-    if (h->EventCallback) {
+    if (h->EventCallback)
+    {
         EPIC_IRQ_Enable(irq);
-    } else {
+    }
+    else
+    {
         EPIC_IRQ_DisableSrc(irq);
     }
 
@@ -170,7 +173,8 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
 {
     if (!valid_instance(inst)) return 0U;
     uint8_t hi1, lo, hi2;
-    do {
+    do
+    {
         CCP_READ_CPRH(inst, hi1);
         CCP_READ_CPRL(inst, lo);
         CCP_READ_CPRH(inst, hi2);
@@ -186,7 +190,8 @@ uint16_t EPIC_CCP_GetCapture(CCP_InstanceTypeDef inst)
  */
 static void ccp_irq_common(CCP_InstanceTypeDef inst, PIC16F193X_IRQn irq)
 {
-    switch (irq) {
+    switch (irq)
+    {
     case PIC16F193X_IRQ_CCP1: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF); break;
     case PIC16F193X_IRQ_CCP2: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF); break;
     case PIC16F193X_IRQ_CCP3: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CCP3IF); break;
@@ -194,7 +199,8 @@ static void ccp_irq_common(CCP_InstanceTypeDef inst, PIC16F193X_IRQn irq)
     default: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CCP5IF); break;
     }
     const CCP_HandleTypeDef *h = g_handle[idx_of(inst)];
-    if (h && h->EventCallback) {
+    if (h && h->EventCallback)
+    {
         h->EventCallback();
     }
 }
@@ -202,20 +208,35 @@ static void ccp_irq_common(CCP_InstanceTypeDef inst, PIC16F193X_IRQn irq)
 /**
  * @brief CCP1 interrupt handler (weak, override in user code).
  */
-void CCP1_IRQHandler(void) { ccp_irq_common(CCP_INSTANCE_1, PIC16F193X_IRQ_CCP1); }
+void CCP1_IRQHandler(void)
+{
+    ccp_irq_common(CCP_INSTANCE_1, PIC16F193X_IRQ_CCP1);
+}
 /**
  * @brief CCP2 interrupt handler (weak, override in user code).
  */
-void CCP2_IRQHandler(void) { ccp_irq_common(CCP_INSTANCE_2, PIC16F193X_IRQ_CCP2); }
+void CCP2_IRQHandler(void)
+{
+    ccp_irq_common(CCP_INSTANCE_2, PIC16F193X_IRQ_CCP2);
+}
 /**
  * @brief CCP3 interrupt handler (weak, override in user code).
  */
-void CCP3_IRQHandler(void) { ccp_irq_common(CCP_INSTANCE_3, PIC16F193X_IRQ_CCP3); }
+void CCP3_IRQHandler(void)
+{
+    ccp_irq_common(CCP_INSTANCE_3, PIC16F193X_IRQ_CCP3);
+}
 /**
  * @brief CCP4 interrupt handler (weak, override in user code).
  */
-void CCP4_IRQHandler(void) { ccp_irq_common(CCP_INSTANCE_4, PIC16F193X_IRQ_CCP4); }
+void CCP4_IRQHandler(void)
+{
+    ccp_irq_common(CCP_INSTANCE_4, PIC16F193X_IRQ_CCP4);
+}
 /**
  * @brief CCP5 interrupt handler (weak, override in user code).
  */
-void CCP5_IRQHandler(void) { ccp_irq_common(CCP_INSTANCE_5, PIC16F193X_IRQ_CCP5); }
+void CCP5_IRQHandler(void)
+{
+    ccp_irq_common(CCP_INSTANCE_5, PIC16F193X_IRQ_CCP5);
+}

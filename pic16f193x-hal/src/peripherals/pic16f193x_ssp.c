@@ -89,4 +89,6 @@ void EPIC_SSP_ClearWriteCollision(void)
 /**
  * @brief MSSP interrupt handler (weak, override in user code).
  */
-void SSP_IRQHandler(void) {}
+void SSP_IRQHandler(void)
+{
+}

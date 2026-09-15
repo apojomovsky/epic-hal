@@ -269,7 +269,8 @@ EPIC_StatusTypeDef EPIC_EEPROM_WriteByte(uint8_t addr, uint8_t data)
  */
 void EPIC_EEPROM_ReadBuffer(uint8_t start, uint8_t *buf, uint8_t len)
 {
-    for (uint8_t i = 0; i < len; i++) {
+    for (uint8_t i = 0; i < len; i++)
+    {
         buf[i] = EPIC_EEPROM_ReadByte((uint8_t)(start + i));
     }
 }
@@ -286,7 +287,8 @@ EPIC_StatusTypeDef EPIC_EEPROM_WriteBuffer(uint8_t start,
                                                 uint8_t len)
 {
     EPIC_StatusTypeDef st;
-    for (uint8_t i = 0; i < len; i++) {
+    for (uint8_t i = 0; i < len; i++)
+    {
         st = EPIC_EEPROM_WriteByte((uint8_t)(start + i), buf[i]);
         if (st != EPIC_OK) return st;
     }

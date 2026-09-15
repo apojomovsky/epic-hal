@@ -43,6 +43,7 @@ int main(void)
      * post-init state), 0 otherwise. */
     EPIC_REG8(TRISB_REG) = (uint8_t)0x00u;
     EPIC_REG8(LATB_REG) = (uint8_t)(g_card.state == MMC_STATE_IDLE);
-    for (;;) {
+    for (;;)
+    {
     }
 }

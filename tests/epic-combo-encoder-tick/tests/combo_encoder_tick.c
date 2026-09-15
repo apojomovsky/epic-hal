@@ -135,9 +135,13 @@ static uint8_t wait_1ms_bounded(void)
 {
     uint32_t t0 = epic_tick_get();
     uint32_t spins = 0u;
-    while (epic_tick_elapsed_since(t0) < 1u) {
+    while (epic_tick_elapsed_since(t0) < 1u)
+    {
         epic_harness_tick();
-        if (++spins >= WAIT_SPIN_BOUND) { return 0u; }
+        if (++spins >= WAIT_SPIN_BOUND)
+        {
+            return 0u;
+        }
     }
     return 1u;
 }
@@ -175,11 +179,13 @@ int main(void)
     static const uint8_t neg_seq[4] = { 1, 3, 2, 0 };
     epic_encoder_init(&g_seq, PIN_A, PIN_B, 0u, port_byte(0u));
     int32_t expected = 0;
-    for (uint8_t i = 0; i < 4u; i++) {
+    for (uint8_t i = 0; i < 4u; i++)
+    {
         expected += 1;
         edge_with_delay(&g_seq, pos_seq[i], expected);
     }
-    for (uint8_t i = 0; i < 4u; i++) {
+    for (uint8_t i = 0; i < 4u; i++)
+    {
         expected -= 1;
         edge_with_delay(&g_seq, neg_seq[i], expected);
     }
@@ -201,10 +207,17 @@ int main(void)
     uint32_t t_start = epic_tick_get();
     int tear = 0;
     int stall = 0;
-    for (uint32_t i = 0; epic_harness_running(i) && i < HAMMER_READS; i++) {
+    for (uint32_t i = 0; epic_harness_running(i) && i < HAMMER_READS; i++)
+    {
         epic_harness_tick();
-        if (epic_encoder_get_position(&g_ham) != 0) { tear = 1; }
-        if ((i % HAMMER_WAIT_EVERY) == 0u && !wait_1ms_bounded()) { stall = 1; }
+        if (epic_encoder_get_position(&g_ham) != 0)
+        {
+            tear = 1;
+        }
+        if ((i % HAMMER_WAIT_EVERY) == 0u && !wait_1ms_bounded())
+        {
+            stall = 1;
+        }
     }
     uint32_t t_end = epic_tick_get();
     int tick_ok = (t_end > t_start) && !stall && !script_stall;
@@ -218,17 +231,24 @@ int main(void)
 
     /* ---- Report. ---- */
     int seq_ok = (p_final == expected) && (e_final == 0u) && (g_final == 0u);
-    if (seq_ok) {
+    if (seq_ok)
+    {
         EPIC_HARNESS_LOG_STATIC("C9 encoder-tick: scripted quadrature ok (net 0, 32 coherent reads)\n");
-    } else {
+    }
+    else
+    {
         EPIC_HARNESS_LOG_STATIC("C9 encoder-tick: scripted quadrature MISMATCH (torn read or bad decode)\n");
     }
-    if (tear) {
+    if (tear)
+    {
         EPIC_HARNESS_LOG_STATIC("C9 encoder-tick: class-G probe saw a TORN read\n");
     }
-    if (tick_ok) {
+    if (tick_ok)
+    {
         EPIC_HARNESS_LOG_STATIC("C9 encoder-tick: tick survived (count advanced, no stalls)\n");
-    } else {
+    }
+    else
+    {
         EPIC_HARNESS_LOG_STATIC("C9 encoder-tick: tick STALLED (GIE lost)\n");
     }
 
