@@ -63,6 +63,7 @@ epiccc_sources = [
 [families.PIC16F87XA]
 hal_dir  = "pic16f87xa-hal"
 variants = [
+  "16F873",
   "16F873A",
   "16F874A",
   "16F876A",
@@ -659,6 +660,7 @@ needs_hal  = true
 
 [modules.pic16f87xa-hal.supported]
 PIC16F87XA = [
+  "16F873",
   "16F873A",
   "16F874A",
   "16F876A",
@@ -1554,6 +1556,7 @@ needs_hal = false
 [modules.epic-adcfilter.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -1696,6 +1699,7 @@ depends_on = []
 [modules.epic-bus.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -1781,6 +1785,7 @@ depends_on = ["epic-bus"]
 [modules.epic-mcp23x17.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -1889,6 +1894,7 @@ PIC18Fxx5x = [
 # epic-serial, which does not fit there (the same RAM reason
 # epic-serial and epic-debounce exclude them).
 "16F873A" = "RAM: does not fit on this smaller part"
+"16F873" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
@@ -1970,6 +1976,7 @@ PIC18Fxx5x = [
 
 [modules.epic-debounce.excluded]
 "16F873A" = "RAM: does not fit on this smaller part"
+"16F873" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
@@ -2043,6 +2050,7 @@ depends_on = [
 [modules.epic-encoder.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2172,6 +2180,7 @@ needs_hal = false
 [modules.epic-fsm.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2390,6 +2399,7 @@ PIC18Fxx5x = [
 [modules.epic-math.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2570,6 +2580,7 @@ PIC18Fxx5x = [
 
 [modules.epic-modbus.excluded]
 "16F873A" = "RAM: does not fit on this smaller part"
+"16F873" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
 "16F876A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
 "16F877A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
@@ -2647,6 +2658,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
 [modules.epic-pid.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2810,6 +2822,7 @@ PIC18Fxx5x = [
 
 [modules.epic-serial.excluded]
 "16F873A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
+"16F873" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
 "16F874A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
@@ -2885,6 +2898,7 @@ PIC18Fxx5x = [
 
 [modules.epic-settings.excluded]
 "16F873A" = "link: irq dispatch needs every peripheral handler"
+"16F873" = "link: irq dispatch needs every peripheral handler"
 "16F874A" = "link: irq dispatch needs every peripheral handler"
 "16F876A" = "link: irq dispatch needs every peripheral handler"
 "16F877A" = "link: irq dispatch needs every peripheral handler"
@@ -3072,6 +3086,7 @@ PIC16F193X = [
 
 [modules.epic-swuart.excluded]
 "16F873A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
+"16F873" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 "16F874A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 
 [modules.epic-swuart.example.PIC16F87XA]
@@ -3166,6 +3181,7 @@ PIC18Fxx5x = [
 
 [modules.epic-taskmgr.excluded]
 "16F873A" = "RAM: 54-byte task table does not fit on this smaller part"
+"16F873" = "RAM: 54-byte task table does not fit on this smaller part"
 "16F874A" = "RAM: 54-byte task table does not fit on this smaller part"
 "18F2455" = "link: irq dispatch needs every peripheral handler"
 "18F2550" = "link: irq dispatch needs every peripheral handler"
@@ -3224,6 +3240,7 @@ depends_on = []
 [modules.epic-tick.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -3498,6 +3515,7 @@ needs_hal  = false
 [modules.epic-common.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
