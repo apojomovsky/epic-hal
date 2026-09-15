@@ -193,7 +193,7 @@ epiccc_sources = ["pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c", "epic-comm
 hal_dir  = "pic18f2520-hal"
 variants = ["18F2520"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
-fosc_hz  = 8000000
+fosc_hz  = 20000000
 includes = ["pic18f2520-hal/include/target", "pic18f2520-hal/include"]
 hal_sources = ["epic-common/src/core/epic_harness_target.c"]
 harness_src = "epic-common/src/core/epic_harness_target.c"
@@ -340,7 +340,7 @@ class TestEpicConfigSpecPic18F2520(unittest.TestCase):
         self.assertNotIn("bor=on", self._spec())
 
     def test_family_fosc_reaches_xtal_hz(self):
-        self.assertIn("xtal_hz=8000000", self._spec())
+        self.assertIn("xtal_hz=20000000", self._spec())
 
 
 class TestDisplayPath(unittest.TestCase):
