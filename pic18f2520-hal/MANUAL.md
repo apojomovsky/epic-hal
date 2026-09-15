@@ -5,11 +5,10 @@ and the host-sim/target build-time split: see `epic-common/MANUAL.md`. This
 manual covers only what is genuinely specific to the **PIC18F2520**, verified
 against the Microchip datasheet **DS39631E** (PIC18F2420/2520/4420/4520).
 
-**Foundation status (phase 1):** platform layer, SFR map, GPIO, Timer0, the
-interrupt core, WDT/Sleep, and the harness are implemented and verified under
-host sim and real `mdb`. Timer1-3, CCP/ECCP, MSSP, EUSART, ADC, the
-comparator, and the data EEPROM land in later phases and are marked
-**phase N** below. This family has no USB and no SPP (DS39631E Table 1-1),
+**Complete family:** platform, SFR map, GPIO, Timer0-3, ECCP/CCP, MSSP,
+EUSART, ADC, comparator, data EEPROM, interrupt core, WDT/Sleep, and the
+harness are implemented and verified under host sim and real `mdb`
+(epic-hal#174-177). This family has no USB and no SPP (DS39631E Table 1-1),
 so it never will; do not expect them here.
 
 ---
@@ -25,11 +24,20 @@ so it never will; do not expect them here.
 7. [Core: WDT, Sleep, BOR/POR](#7-core-wdt-sleep-borpor)
 8. [GPIO](#8-gpio)
 9. [Timer0](#9-timer0)
-10. [The SFR layer](#10-the-sfr-layer)
-11. [Device selection](#11-device-selection)
-12. [The examples](#12-the-examples)
-13. [Known gaps and gotchas](#13-known-gaps-and-gotchas)
-14. [Appendix: datasheet section index](#14-appendix-datasheet-section-index)
+10. [Timer1](#10-timer1)
+11. [Timer2](#11-timer2)
+12. [Timer3](#12-timer3)
+13. [ECCP1 / CCP2, Capture, Compare, PWM](#13-eccp1--ccp2-capture-compare-pwm)
+14. [MSSP, SPI and I2C](#14-mssp-spi-and-i2c)
+15. [EUSART](#15-eusart)
+16. [ADC](#16-adc)
+17. [Comparator](#17-comparator)
+18. [Data EEPROM](#18-data-eeprom)
+19. [The SFR layer](#19-the-sfr-layer)
+20. [Device selection](#20-device-selection)
+21. [The examples](#21-the-examples)
+22. [Known gaps and gotchas](#22-known-gaps-and-gotchas)
+23. [Appendix: datasheet section index](#23-appendix-datasheet-section-index)
 
 ---
 
@@ -57,7 +65,7 @@ pic18f2520-hal/
 │   ├── pic18f2520_hal.h          family header: device select, SFR mapping;
 │   │                              pulls shared status codes from epic-common.
 │   │                              Named _hal, not pic18f2520.h, to avoid
-│   │                              shadowing the DFP device header (see §13).
+│   │                              shadowing the DFP device header (see §22).
 │   ├── pic18f2520_sfr.h          SFR address map + bit names (1:1 DS39631E)
 │   ├── pic18f2520_sim.h          simulation backend public API
 │   ├── epic_hal.h                 family-neutral top-level include
@@ -157,25 +165,110 @@ LAT/TRIS registers). RB<7:4> change interrupts are supported through
 by T0CON; default 8-bit to stay a PIC16 drop-in. Overflow -> TMR0IF +
 weak `TIMER0_IRQHandler`.
 
-## 10. The SFR layer
+## 10. Timer1
+
+*DS39631E §12.0, Register 12-1 (T1CON 0xFCD, identical to 4550).*
+
+16-bit timer/counter. T1CON adds RD16 (bit 7, set by this driver for atomic
+16-bit access) and read-only T1RUN (ignored). Prescaler 1:1/2/4/8.
+Overflow sets PIR1<TMR1IF>. `example_timer1`: internal/1:1, 2 overflows
+per 150k cycles on host; mdb proves TMR1 counts + TMR1IF on hardware.
+
+## 11. Timer2
+
+*DS39631E §13.0, Register 13-1 (T2CON 0xFCA, identical to 4550).*
+
+8-bit timer with PR2 period + postscaler (1:1..1:16). Match (TMR2==PR2)
+resets TMR2 and sets PIR1<TMR2IF> after the postscaler. Drives CCP PWM.
+`example_timer2`: PR2=9, 10 matches per 100 cycles on host; mdb proves
+TMR2/PR2/TMR2IF on hardware.
+
+## 12. Timer3
+
+*DS39631E §12.0, Register 12-1 (T3CON 0xFB1, identical to 4550).*
+
+Second 16-bit timer alongside Timer1. Shares T1OSC (no oscillator field).
+T3CCP2:T3CCP1 select Timer1 vs Timer3 for CCP (reset default Timer1; the
+CCP driver leaves them). Overflow sets PIR2<TMR3IF>. `example_timer3`:
+internal/1:1, 2 overflows per 150k cycles; mdb proves TMR3IF.
+
+## 13. ECCP1 / CCP2, Capture, Compare, PWM
+
+*DS39631E §15.0. ECCP1 + plain CCP2, same instance split as 4550.*
+
+**Reduced ECCP1:** the 2520 has no P1M bridge modes, no PDC dead-band, no
+PSSBD (P1B/P1D do not exist on this 28-pin part; confirmed vs DFP, zero
+PSSBD symbols vs 42 on 4550). The driver omits bridge/dead-band and keeps
+capture/compare/PWM + auto-shutdown (ECCPAS/PSSAC/PRSEN only). Capture and
+compare use Timer1/3; PWM uses Timer2. `example_ccp`: compare-toggle mode
+programming + time base; mdb proves CCP1IF on Timer1==CCPR1 hardware match.
+
+## 14. MSSP, SPI and I2C
+
+*DS39631E §17.0 (SSPCON1 0xFC6, identical to 4550).*
+
+Register-level SPI master/slave + I2C master/slave. I2C Start/Stop/ACK
+state machine left to caller; SPI completes on SSPBUF write, poll BF.
+`example_ssp`: SPI-master programming; mdb proves SSPCON1/SSPSTAT/SSPBUF
+on hardware (SIM does not model SPI shifting, same as 4550).
+
+## 15. EUSART
+
+*DS39631E §18.0 (same shape as 4550).*
+
+Async + sync with 16-bit BRG (BRG16), auto-baud, 9-bit address-detect.
+TXEN/CREN always enabled (polled TX/RX work with no callback; TXIE/RCIE
+still gate interrupts). TXSTA POR is 0x02 (TRMT). `example_usart`: 9600
+baud async TX; mdb UART captures 0x55 bytes out on SIM (actual TX on wire).
+
+## 16. ADC
+
+*DS39631E §19.0 (10-bit, AN0-4 + AN8-12 on 28-pin, same as 4550).*
+
+AN5-7 exist only on 40/44-pin parts. GO/DONE starts conversion; ADIF sets
+on completion. `example_adc`: AN0 programming; mdb proves GO clears +
+ADIF sets on hardware.
+
+## 17. Comparator
+
+*DS39631E §20.0 (two comparators, same as 4550).*
+
+8 modes via CMCON; C1OUT/C2OUT read-only outputs. `example_comp`: mode
+programming; mdb proves CMCON on hardware.
+
+## 18. Data EEPROM
+
+*DS39631E §7.0 (256 bytes, EEADR alone, same as 4550).*
+
+Unlock 0x55/0xAA to EECON2, strobe WR, poll EEIF (or interrupt via EEIE;
+dispatch leaves EEIF untouched when EEIE is off so pollers own it).
+`example_eeprom`: write/read round-trip; mdb proves EEADR/EECON1 programming
+(SIM does not model cell writes).
+
+## 19. The SFR layer
 
 Every SFR access names a compile-time-constant `PIC_REG_*` token through
 `epic_sfr_read8` / `EPIC_REG8` (see `pic18_platform.h`). This is load-bearing:
 on PIC18, a runtime SFR address compiles to the program-memory table
-mechanism and silently writes nowhere (see §13).
+mechanism and silently writes nowhere (see §22).
 
-## 11. Device selection
+## 20. Device selection
 
 `PIC18F2520` is the only variant. The build driver emits `-DPIC18F2520`;
 `pic18f2520_hal.h` defaults to it when nothing is defined.
 
-## 12. The examples
+## 21. The examples
 
 - `example_smoke`: bare harness contract (family-blind).
 - `example_blink`: Timer0 + GPIO + interrupt, RB0 toggle.
 - `example_irq`: the IRQ-core smoke test described in §6.
+- `example_timer1/2/3`: per-timer overflow/match counting (§10-12).
+- `example_ccp`: CCP1 compare-mode programming + time base (§13).
+- `example_ssp`: MSSP SPI-master programming (§14).
+- `example_usart`: EUSART async TX programming + byte out (§15).
+- `example_adc/comp/eeprom`: analog programming + round-trips (§16-18).
 
-## 13. Known gaps and gotchas
+## 22. Known gaps and gotchas
 
 - **Umbrella header name.** The family header is `pic18f2520_hal.h`, not
   `pic18f2520.h`: the DFP proc header for this part is literally
@@ -189,21 +282,33 @@ mechanism and silently writes nowhere (see §13).
   value and then access a register.
 - **No USB / no SPP.** Do not expect SPP or USB config fields
   (usbdiv/cpudiv/plldiv/vregen) on this part.
+- **Reduced ECCP1.** No P1M/PDC/PSSBD hardware (28-pin); the driver omits
+  bridge/dead-band. Do not port 4550 full-bridge code unchanged.
+- **EUSART TXEN/CREN always on.** Polled TX/RX work with no callback;
+  TXIE/RCIE gate interrupts. TXSTA POR is 0x02 (TRMT), not 0x00.
+- **SIM limits.** MPLAB SIM does not model SPI shifting, EEPROM cell
+  writes, or CCP output pins; those gates prove register programming +
+  flags, matching the 4550's accepted level.
 - **Config words.** The 2520 drops the 2455 family's USB config fields;
   see `mcu/pic18f2520-mplabx/README.md` for the default set.
-- **Foundation has no EUSART yet**, so the MPLAB SIM gates report PASS/FAIL
-  on the RA0 GPIO marker (`MODE=gpio`), not over UART. Phase 3 adds the
-  EUSART and can switch the gates to `MODE=uart`.
-- Peripherals not yet ported (Timer1-3, CCP/ECCP, MSSP, EUSART, ADC,
-  comparator, data EEPROM) are phase 2-4; their headers do not exist yet.
+- **Gates stay `MODE=gpio`.** The EUSART exists, but the CI blink gate
+  reports on the RA0 latch by design (no UART in the blink path).
 
-## 14. Appendix: datasheet section index
+## 23. Appendix: datasheet section index
 
 | Section | Topic        | Where covered here                |
 |---------|--------------|-----------------------------------|
 | §5.0    | SFR map      | `pic18f2520_sfr.h`                 |
+| §7.0    | Data EEPROM  | `peripherals/pic18f2520_eeprom.h` |
 | §9.0    | Interrupts   | `core/pic18_irq.h` / `.c`, §6      |
 | §10.0   | GPIO ports   | `peripherals/pic18f2520_gpio.h`   |
 | §11.0   | Timer0       | `peripherals/pic18f2520_timer0.h` |
+| §12.0   | Timer1/3     | `peripherals/pic18f2520_timer1/3.h` |
+| §13.0   | Timer2       | `peripherals/pic18f2520_timer2.h` |
+| §15.0   | ECCP/CCP     | `peripherals/pic18f2520_ccp.h`    |
+| §17.0   | MSSP         | `peripherals/pic18f2520_ssp.h`    |
+| §18.0   | EUSART       | `peripherals/pic18f2520_usart.h`  |
+| §19.0   | ADC          | `peripherals/pic18f2520_adc.h`    |
+| §20.0   | Comparator   | `peripherals/pic18f2520_comp.h`   |
 | §22.1   | Config words | `mcu/pic18f2520-mplabx/README.md` |
 | Table 1-1 | Device features | §1                            |

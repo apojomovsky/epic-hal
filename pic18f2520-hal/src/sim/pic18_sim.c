@@ -23,6 +23,9 @@ static uint8_t sim_input_value   [3] = {0};
 /* Optional ISR hook (the family dispatcher, registered by the harness). */
 static pic18_sim_irq_cb_t sim_irq_cb = 0;
 
+/* 256-byte data-EEPROM cell array (defined at file end with accessors). */
+static uint8_t sim_eeprom[256];
+
 /**
  * @brief Advance the simulated Timer0 by one instruction cycle.
  */
@@ -137,6 +140,10 @@ void pic18_sim_reset(void)
     pic18_sim_sfr[PIC_REG_T2CON]    = PIC_T2CON_POR_VALUE;    /* 0x00 */
     pic18_sim_sfr[PIC_REG_PR2]      = PIC_PR2_POR_VALUE;      /* 0xFF */
     pic18_sim_sfr[PIC_REG_T3CON]    = PIC_T3CON_POR_VALUE;    /* 0x00 */
+    pic18_sim_sfr[PIC_REG_ADCON0]   = PIC_ADCON0_POR_VALUE;   /* 0x00 */
+    pic18_sim_sfr[PIC_REG_ADCON1]   = PIC_ADCON1_POR_VALUE;   /* 0x00 */
+    pic18_sim_sfr[PIC_REG_ADCON2]   = PIC_ADCON2_POR_VALUE;   /* 0x00 */
+    pic18_sim_sfr[PIC_REG_CMCON]    = PIC_CMCON_POR_VALUE;    /* 0x07 */
     pic18_sim_sfr[PIC_REG_PIR2]     = PIC_PIR2_POR_VALUE;     /* 0x00 */
     pic18_sim_sfr[PIC_REG_PIE2]     = PIC_PIE2_POR_VALUE;     /* 0x00 */
     pic18_sim_sfr[PIC_REG_IPR2]     = PIC_IPR2_POR_VALUE;     /* 0xFF */
@@ -151,6 +158,7 @@ void pic18_sim_reset(void)
 
     memset(sim_input_override, 0, sizeof sim_input_override);
     memset(sim_input_value,    0, sizeof sim_input_value);
+    memset(sim_eeprom,         0, sizeof sim_eeprom);
     sim_irq_cb = 0;
 }
 
@@ -392,4 +400,37 @@ uint8_t pic18_sim_read_output(char port, uint8_t pin)
 void pic18_sim_set_irq_callback(pic18_sim_irq_cb_t cb)
 {
     sim_irq_cb = cb;
+}
+
+
+/**
+ * @brief Preload a data-EEPROM cell (test rig only).
+ * @param addr cell address 0..255.
+ * @param data byte to store.
+ */
+void pic18_sim_drive_eeprom_byte(uint8_t addr, uint8_t data)
+{
+    sim_eeprom[addr] = data;
+}
+
+/**
+ * @brief Complete an EEPROM write: store the byte and raise EEIF.
+ * @param addr cell address 0..255.
+ * @param data byte to store.
+ */
+void pic18_sim_drive_eeprom_done(uint8_t addr, uint8_t data)
+{
+    sim_eeprom[addr] = data;
+    pic18_sim_sfr[PIC_REG_PIR2] |= PIC_PIR2_EEIF;
+    if (sim_irq_cb) sim_irq_cb();
+}
+
+/**
+ * @brief Read a data-EEPROM cell (driver read path on host).
+ * @param addr cell address 0..255.
+ * @return the stored byte.
+ */
+uint8_t pic18_sim_eeprom_read(uint8_t addr)
+{
+    return sim_eeprom[addr];
 }
