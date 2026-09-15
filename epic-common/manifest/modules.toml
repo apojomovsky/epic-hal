@@ -532,6 +532,8 @@ hal_sources = [
   "pic18f1320-hal/src/peripherals/pic18f1320_timer3.c",
   "pic18f1320-hal/src/peripherals/pic18f1320_eccp.c",
   "pic18f1320-hal/src/peripherals/pic18f1320_usart.c",
+  "pic18f1320-hal/src/peripherals/pic18f1320_adc.c",
+  "pic18f1320-hal/src/peripherals/pic18f1320_eeprom.c",
   "pic18f1320-hal/src/core/pic18_irq.c",
   "pic18f1320-hal/src/core/pic18_irq_dispatch.c",
   "pic18f1320-hal/src/target/pic18_isr_vector.c",

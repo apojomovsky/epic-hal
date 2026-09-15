@@ -7,16 +7,17 @@ register address and behavior is taken 1-to-1 from the datasheet
 [DS39605F](https://ww1.microchip.com/downloads/en/DeviceDoc/30009605g.pdf)
 (PIC18F1220/1320 Data Sheet).
 
-➜ **[MANUAL.md](MANUAL.md)** is the human-readable manual (currently a
-skeleton, filled out fully in epic-hal#181).
+➜ **[MANUAL.md](MANUAL.md)** is the datasheet-cited human-readable manual
+for this family.
 
-## Status: foundation + Timers 0-3 + ECCP1/EUSART (epic-hal#178, #179, #180)
+## Status: complete (epic-hal#178, #179, #180, #181)
 
 GPIO (PORTA/PORTB only, both full 8-bit), Timer0-3, the interrupt core,
-WDT/Sleep/BOR/POR, ECCP1 (Enhanced Capture/Compare/PWM) and the EUSART
-are implemented and verified (host sim + real `mdb`), each through the
-full section-4 gate. ADC/Data EEPROM land in epic-hal#181; this part has
-no MSSP, CCP2, comparator or USB, confirmed absent from the DFP header.
+WDT/Sleep/BOR/POR, ECCP1 (Enhanced Capture/Compare/PWM), the EUSART, the
+10-bit ADC (7 channels) and the 256-byte Data EEPROM are all implemented
+and verified (host sim + real `mdb`), each through the full section-4
+gate. This part has no MSSP, CCP2, comparator or USB, confirmed absent
+from the DFP header.
 
 ## XC8 codegen gotchas
 
@@ -38,6 +39,8 @@ cmake --build build
 ./build/example_timer3         # Timer3 overflow smoke
 ./build/example_ccp            # ECCP1 compare-toggle smoke
 ./build/example_usart          # EUSART BRG + init + TX smoke
+./build/example_adc            # ADC AN0 conversion smoke
+./build/example_eeprom         # Data EEPROM write/read smoke
 ./build/example_smoke          # bare harness seam
 ```
 

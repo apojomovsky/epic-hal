@@ -23,6 +23,9 @@ static uint8_t sim_input_value   [2] = {0};
 /* Optional ISR hook (the family dispatcher, registered by the harness). */
 static pic18_sim_irq_cb_t sim_irq_cb = 0;
 
+/* Simulated data EEPROM (256 bytes, DS39605F §7.0). */
+static uint8_t sim_eeprom[256] = {0};
+
 /**
  * @brief Advance the simulated Timer0 by one instruction cycle.
  */
@@ -156,6 +159,7 @@ void pic18_sim_reset(void)
 
     memset(sim_input_override, 0, sizeof sim_input_override);
     memset(sim_input_value,    0, sizeof sim_input_value);
+    memset(sim_eeprom,         0, sizeof sim_eeprom);
     sim_irq_cb = 0;
 }
 
@@ -383,6 +387,79 @@ void pic18_sim_drive_usart_rx(uint8_t data)
     /* Place the byte in RCREG (DS39605F §16.3.4), set PIR1<RCIF>. */
     pic18_sim_sfr[PIC_REG_RCREG] = data;
     pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_RCIF;
+    if (sim_irq_cb) sim_irq_cb();
+}
+
+/**
+ * @brief Write a byte to the simulated data EEPROM.
+ *
+ * @param addr the EEPROM address (0..255)
+ * @param data the byte to store
+ */
+void pic18_sim_drive_eeprom_byte(uint8_t addr, uint8_t data)
+{
+    sim_eeprom[addr] = data;
+}
+
+/**
+ * @brief Complete a simulated data EEPROM write cycle.
+ *
+ * Stores the byte and sets PIR2<EEIF> to model the write cycle finishing.
+ *
+ * @param addr the EEPROM address (0..255)
+ * @param data the byte to store
+ */
+void pic18_sim_drive_eeprom_done(uint8_t addr, uint8_t data)
+{
+    sim_eeprom[addr] = data;
+    /* Set PIR2<EEIF> (bit 4) to model the write cycle completing. */
+    pic18_sim_sfr[PIC_REG_PIR2] |= PIC_PIR2_EEIF;
+    if (sim_irq_cb) sim_irq_cb();
+}
+
+/**
+ * @brief Read a byte from the simulated data EEPROM.
+ *
+ * @param addr the EEPROM address (0..255)
+ * @return the byte stored at that address
+ */
+uint8_t pic18_sim_eeprom_read(uint8_t addr)
+{
+    return sim_eeprom[addr];
+}
+
+/**
+ * @brief Complete a simulated A/D conversion.
+ *
+ * Clears ADCON0<GO/DONE>, stores the 10-bit result in ADRESH:ADRESL per
+ * ADFM, and sets PIR1<ADIF>.
+ *
+ * @param result the 10-bit conversion result (0..1023)
+ */
+void pic18_sim_drive_adc_done(uint16_t result)
+{
+    /* Clear GO/DONE in ADCON0. */
+    uint8_t adcon0 = (uint8_t)(pic18_sim_sfr[PIC_REG_ADCON0] & (uint8_t)~PIC_ADCON0_GO_DONE);
+    pic18_sim_sfr[PIC_REG_ADCON0] = adcon0;
+
+    /* Store the 10-bit result in ADRESH:ADRESL per ADFM (ADCON2<7>).
+     *   Right (ADFM=1): ADRESH[1:0] = result[9:8], ADRESL = result[7:0].
+     *   Left  (ADFM=0): ADRESH[7:2] = result[9:2], ADRESL[7:6] = result[1:0]. */
+    uint8_t adfm = (uint8_t)(pic18_sim_sfr[PIC_REG_ADCON2] & PIC_ADCON2_ADFM);
+    uint16_t r = (uint16_t)(result & 0x03FFU);
+    if (adfm)
+    {
+        pic18_sim_sfr[PIC_REG_ADRESH] = (uint8_t)((r >> 8) & 0x03U);
+        pic18_sim_sfr[PIC_REG_ADRESL] = (uint8_t)(r & 0xFFU);
+    }
+    else
+    {
+        pic18_sim_sfr[PIC_REG_ADRESH] = (uint8_t)(r >> 2);
+        pic18_sim_sfr[PIC_REG_ADRESL] = (uint8_t)((r & 0x03U) << 6);
+    }
+
+    /* Set PIR1<ADIF> (bit 6). */
+    pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_ADIF;
     if (sim_irq_cb) sim_irq_cb();
 }
 

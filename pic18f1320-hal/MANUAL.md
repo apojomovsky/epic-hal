@@ -5,9 +5,9 @@ and the host-sim/target build-time split: see `epic-common/MANUAL.md`. This
 manual covers only what is genuinely specific to **PIC18F1320**, verified
 against the Microchip datasheet **DS39605F** (PIC18F1220/1320 Data Sheet).
 
-Status: **skeleton**, foundation + timers + comm phases (epic-hal#178,
-#179, #180). Filled out fully in epic-hal#181 (family B phase 4/4), the
-same way pic18fxx5x-hal/MANUAL.md and pic16f87xa-hal/MANUAL.md were.
+Status: **complete** (family B, epic-hal#178/#179/#180/#181), verified
+against the Microchip datasheet DS39605F (PIC18F1220/1320 Data Sheet) and
+the DFP header, every peripheral through its own real `mdb` gate.
 
 ---
 
@@ -32,7 +32,7 @@ header, not carried over from `pic18fxx5x-hal`'s IRQn enum).
 
 The IRQ backend's own dedicated `mdb` smoke test is
 `tests/example_timer0_irq.c`, verified under real `mdb` via `MODE=toggle`
-(see section 14).
+(see section 15).
 
 ## 3. Core: WDT, Sleep, BOR/POR
 
@@ -132,12 +132,33 @@ is idle; mask it out of any readback comparison. `example_usart`: BRG
 math (8/16-bit) + init programming + TX, `mdb` proves TXSTA/RCSTA/SPBRG
 write back correctly.
 
-## 12. ADC, Data EEPROM
+## 12. ADC
 
-Land in epic-hal#181, each through the full `mdb` verification gate
-before this section gets filled in.
+*DS39605F §17.0, Register 17-1 (ADCON0 0xFC2), 17-2 (ADCON1 0xFC1),
+17-3 (ADCON2 0xFC0).*
 
-## 13. Known gaps and gotchas
+10-bit SAR ADC, 7 channels (AN0-AN6). The 1320's register layout is
+genuinely different from the 4550: **VCFG1:VCFG0 live in ADCON0 bits
+7:6** (not ADCON1), the channel select is a 3-bit CHS (ADCON0 bits 4:2),
+and ADCON1 carries a **7-bit per-pin PCFG** (bits 6:0) with no VCFG.
+ADCON2 matches the 4550 (ADFM/ACQT/ADCS). `example_adc`: AN0, host
+sim drives a 0x2A8 result and `EPIC_ADC_Read` returns it; mdb proves
+ADCON0/ADCON2 program correctly.
+
+## 13. Data EEPROM
+
+*DS39605F §7.0 (256 bytes, EECON1 0xFA6 / EECON2 0xFA7 / EEDATA 0xFA8 /
+EEADR 0xFA9).*
+
+Same shape and API as `pic18fxx5x-hal`: registers in the Access Bank, no
+bank switching; a byte-write performs the mandatory 0x55/0xAA unlock.
+The write-complete flag is PIR2<EEIF>. `example_eeprom`: write 0xA5 to
+0x42 and read back; mdb proves EEADR/EEDATA/EECON1 program correctly.
+(Under MPLAB SIM a CPU-executed EEPROM write never completes on its own;
+the `make mdb-test EEPROM_WRITES=n` replay completes writes through the
+debugger, same as every other PIC18 family.)
+
+## 14. Known gaps and gotchas
 
 - **No comparator, no MSSP, no CCP2, no SPP, no USB**: confirmed absent
   from the PIC18Fxxxx DFP header for `pic18f1320`/`pic18lf1320`, not
@@ -154,7 +175,7 @@ before this section gets filled in.
   read a constant 0 across the same run). `scripts/ci-target-sim.sh`
   exports `TOGGLE_REG=LATB` for this family's gate for that reason.
 
-## 14. The examples
+## 15. The examples
 
 - `tests/example_smoke.c`: bare harness-seam test, no GPIO/Timer/IRQ.
 - `tests/example_blink.c`: Timer0 + GPIO + interrupt canonical smoke,
@@ -163,7 +184,7 @@ before this section gets filled in.
   (`.example.PIC18F1320.sim`), enables one Timer0 overflow interrupt and
   asserts the flag/enable bits (`INTCON<TMR0IE/TMR0IF>`, `T0CON<TMR0ON>`)
   read back correctly on the host build; verified on real hardware via
-  `MODE=toggle` (see section 13).
+  `MODE=toggle` (see section 15).
 - `tests/example_timer1.c`: Timer1 overflow smoke (host), `mdb`-verified.
 - `tests/example_timer2.c`: Timer2 PR2-match smoke (host), `mdb`-verified.
 - `tests/example_timer3.c`: Timer3 overflow smoke (host), `mdb`-verified.
@@ -171,3 +192,7 @@ before this section gets filled in.
   `mdb`-verified (CCPR1H:L = 0x1000, CCP1CON = 0x02).
 - `tests/example_usart.c`: EUSART BRG math + init + TX, `mdb`-verified
   (TXSTA/RCSTA/SPBRG write back correctly).
+- `tests/example_adc.c`: ADC AN0 programming + conversion (host drives a
+  0x2A8 result), `mdb`-verified (ADCON0/ADCON2 write back correctly).
+- `tests/example_eeprom.c`: EEPROM write 0xA5 to 0x42 + read back,
+  `mdb`-verified (EEADR/EEDATA/EECON1 program correctly).

@@ -1,10 +1,10 @@
 /*
  * PIC18F1320 interrupt controller (DS39605F §9.0): IRQn enum plus
- * enable/disable/flag/priority helpers. Comm/Timers phase (epic-hal#180):
- * sources RB, Timer0-3, ECCP1 and USART TX/RX each have a real dispatch
- * entry in pic18_irq_dispatch.c (an enabled source with no dispatch entry
- * never clears and re-vectors forever); the remaining peripheral sources
- * join as their tickets land their dispatch entries.
+ * enable/disable/flag/priority helpers. Complete family phase
+ * (epic-hal#181): sources RB, Timer0-3, ECCP1, USART TX/RX, ADC and
+ * EEPROM each have a real dispatch entry in pic18_irq_dispatch.c (an
+ * enabled source with no dispatch entry never clears and re-vectors
+ * forever).
  */
 
 #ifndef PIC18_IRQ_H
@@ -28,6 +28,8 @@ typedef enum {
     PIC18_IRQ_CCP1      = 5,  /**< ECCP1 event (PIR1<CCP1IF>).           */
     PIC18_IRQ_USART_TX  = 6,  /**< USART TX shift done (PIR1<TXIF>).      */
     PIC18_IRQ_USART_RX  = 7,  /**< USART RX byte ready (PIR1<RCIF>).     */
+    PIC18_IRQ_ADC       = 8,  /**< A/D conversion done (PIR1<ADIF>).     */
+    PIC18_IRQ_EEPROM    = 9,  /**< EEPROM write complete (PIR2<EEIF>).   */
 } PIC18_IRQn;
 
 /**
