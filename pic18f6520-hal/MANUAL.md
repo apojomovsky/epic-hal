@@ -6,11 +6,12 @@ manual covers only what is genuinely specific to the **PIC18F6520**, verified
 against the Microchip datasheet **DS39609B** (PIC18F6520/6620/8520/8620/
 6720/8720).
 
-**Foundation status (phase 1):** platform layer, SFR map, GPIO, Timer0, the
-interrupt core, WDT/Sleep/BOR/POR, and the harness are implemented and
-verified under host sim and real `mdb`. Timer1-4, CCP1-5, MSSP, EUSART1/2,
-ADC, the comparator, the data EEPROM, PSP and LVD land in later phases and
-are marked **phase N** below. This family has no USB and no SPP (DS39609B
+**Phase 1-2 status (epic-hal#182, #183):** platform layer, SFR map, GPIO,
+Timer0-3, the interrupt core, WDT/Sleep/BOR/POR, and the harness are
+implemented and verified under host sim and real `mdb`. CCP1-5, MSSP,
+EUSART1/2, ADC, the comparator, the data EEPROM, PSP and LVD land in
+later phases and are marked **phase N** below; Timer4 has no driver in
+this ticket's scope. This family has no USB and no SPP (DS39609B
 Table 1-1), so it never will; do not expect them here.
 
 ---
@@ -25,7 +26,7 @@ Table 1-1), so it never will; do not expect them here.
 6. [Interrupts](#6-interrupts)
 7. [Core: WDT, Sleep, BOR/POR](#7-core-wdt-sleep-borpor)
 8. [GPIO](#8-gpio)
-9. [Timer0](#9-timer0)
+9. [Timers: Timer0-4](#9-timers-timer0-4)
 10. [The SFR layer](#10-the-sfr-layer)
 11. [Device selection](#11-device-selection)
 12. [The examples](#12-the-examples)
@@ -168,11 +169,40 @@ read back on PORTx (the pin input register), only on LATx. RB<7:4>
 change interrupts are supported through
 `EPIC_GPIO_RegisterChangeCallback` and the weak `RB_IRQHandler`.
 
-## 9. Timer0
+## 9. Timers: Timer0-4
 
-8/16-bit timer/counter with its own prescaler (DS39609B §11.0), controlled
-by T0CON; default 8-bit to stay a PIC16 drop-in. Overflow -> TMR0IF +
-weak `TIMER0_IRQHandler`.
+Four timer modules on this part (DS39609B Table 1-1; Timer4 is
+registered in the SFR map but has no driver yet, out of this ticket's
+scope).
+
+**Timer0** (DS39609B §11.0): 8/16-bit timer/counter with its own
+prescaler, controlled by T0CON; default 8-bit to stay a PIC16 drop-in.
+Overflow -> TMR0IF + weak `TIMER0_IRQHandler`.
+
+**Timer1** (DS39609B §12.0): 16-bit timer/counter. The driver sets
+RD16 (T1CON<7>) so the atomic TMR1L-latches-TMR1H read/write idiom
+works; bit 6 is unimplemented on this part (no T1RUN, Register 12-1),
+unlike the 4550/2520 families. Overflow -> PIR1<TMR1IF> + weak
+`TIMER1_IRQHandler`.
+
+**Timer2** (DS39609B §13.0): 8-bit period-match timer with 2-bit
+prescaler and 4-bit postscaler (T2CON, 1:1/4/16 and 1:(N+1)). Match
+with PR2 resets the counter, advances the postscaler, and fires
+PIR1<TMR2IF> when the postscaler wraps.
+
+**Timer3** (DS39609B §14.0): 16-bit timer/counter, RD16-style atomic
+access like Timer1; T3CCP1/T3CCP2 (T3CON<3>/<6>) select which CCP
+module uses Timer3 as its time base (left at reset, Timer1). Overflow
+-> PIR2<TMR3IF> + weak `TIMER3_IRQHandler`.
+
+All four drivers follow the Cube-style handle pattern (per-timer
+`*_HANDLE_DEFAULT`, `EPIC_TIMERx_Init` copies the handle and enables
+the interrupt when a callback is given, `EPIC_TIMERx_Start` loads the
+reload/period and starts counting, `_Stop`/`_DeInit` reverse it).
+Per-timer host smokes live in `tests/example_timer1/2/3.c`; each was
+gated under real mdb with register readbacks (T1CON=0x81 with
+TMR1IF set on 0xFFF0-reload overflow, T2CON=0x04 with PR2=9 and
+TMR2IF, T3CON=0x81 with PIR2<TMR3IF>).
 
 ## 10. The SFR layer
 
@@ -191,6 +221,8 @@ mechanism and silently writes nowhere (see §13).
 - `example_smoke`: bare harness contract (family-blind).
 - `example_blink`: Timer0 + GPIO + interrupt, RB0 toggle.
 - `example_irq`: the IRQ-core smoke test described in §6.
+- `example_timer1/2/3`: per-timer host overflow/match smokes (the §4
+  gate's host-sim halves; the mdb halves run as register-readback gates).
 
 ## 13. Known gaps and gotchas
 
@@ -213,9 +245,10 @@ mechanism and silently writes nowhere (see §13).
 - **Foundation has no EUSART yet**, so the MPLAB SIM gates report PASS/FAIL
   on the RA0 GPIO marker (`MODE=gpio`), not over UART. Phase 3 adds the
   EUSARTs and can switch the gates to `MODE=uart`.
-- Peripherals not yet ported (Timer1-4, CCP1-5, MSSP, EUSART1/2, ADC,
-  comparator, data EEPROM, PSP, LVD) are phase 2-4; their headers do not
-  exist yet.
+- Peripherals not yet ported (CCP1-5, MSSP, EUSART1/2, ADC, comparator,
+  data EEPROM, PSP, LVD) are phases 3-4 (#184-185); Timer4 has no driver
+  in this ticket's scope (#183 covers Timer0-3 only), so its SFRs are in
+  the map but there is no TMR4 driver or header yet.
 
 ## 14. Appendix: datasheet section index
 
@@ -225,5 +258,8 @@ mechanism and silently writes nowhere (see §13).
 | §9.0    | Interrupts   | `core/pic18_irq.h` / `.c`, §6      |
 | §10.0   | GPIO ports   | `peripherals/pic18f6520_gpio.h`   |
 | §11.0   | Timer0       | `peripherals/pic18f6520_timer0.h` |
+| §12.0   | Timer1       | `peripherals/pic18f6520_timer1.h` |
+| §13.0   | Timer2       | `peripherals/pic18f6520_timer2.h` |
+| §14.0   | Timer3       | `peripherals/pic18f6520_timer3.h` |
 | §23.0   | Config words | `mcu/pic18f6520-mplabx/README.md` |
 | Table 1-1 | Device features | §1                            |

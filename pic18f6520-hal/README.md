@@ -21,12 +21,13 @@ interrupt backend, peripheral drivers) live here.
 
 ## Status
 
-**Foundation (phase 1, epic-hal#182, umbrella #150):** platform, SFR map,
-GPIO (PORTA-G), Timer0, the dual-priority interrupt core, WDT/Sleep/BOR/POR,
-and the harness are implemented and verified under host sim and real `mdb`
-(the IRQ smoke through docs/adding-a-device.md §4: host example + XC8 target
-build + `mdb` register-readback gate). Timer1-4, CCP1-5, MSSP, EUSART1/2,
-ADC, comparator, data EEPROM, PSP and LVD land in phases 2-4 (#183-185).
+**Phases 1-2 (epic-hal#182, #183, umbrella #150):** platform, SFR map,
+GPIO (PORTA-G), Timer0-3, the dual-priority interrupt core, WDT/Sleep/
+BOR/POR, and the harness are implemented and verified under host sim
+and real `mdb` (each peripheral through docs/adding-a-device.md §4:
+host example + XC8 target build + `mdb` register-readback gate). CCP1-5,
+MSSP, EUSART1/2, ADC, comparator, data EEPROM, PSP and LVD land in
+phases 3-4 (#184-185); TMR4 has no driver in this ticket's scope.
 This part has **no USB and no SPP** (DS39609B Table 1-1).
 
 - ✅ Family header (`pic18f6520_hal.h`): device selection, capability
@@ -49,6 +50,14 @@ This part has **no USB and no SPP** (DS39609B Table 1-1).
   INTCON2<RBPU>, RB<7:4> change interrupt hook.
 - ✅ Timer0 driver (`peripherals/pic18f6520_timer0.h`): same API as PIC16
   plus a `Mode` field for the T0CON 8/16-bit select (default 8-bit).
+- ✅ Timer1 driver (`peripherals/pic18f6520_timer1.h`): 16-bit with RD16
+  atomic read/write; DS39609B Register 12-1 (bit 6 unimplemented, no
+  T1RUN on this part).
+- ✅ Timer2 driver (`peripherals/pic18f6520_timer2.h`): period match with
+  4-bit postscaler, DS39609B Register 13-1.
+- ✅ Timer3 driver (`peripherals/pic18f6520_timer3.h`): 16-bit with RD16,
+  DS39609B Register 14-1. Timer4 (T4CON/PR4/TMR4 at 0xF76-0xF78) has no
+  driver in this ticket's scope.
 - ✅ Interrupt core (`core/pic18_irq.h`): `PIC18_IRQn` enum (25 sources,
   the richest set in this repo: INT0-3, RB, TMR0-4, CCP1-5, SSP, USART1/2
   TX+RX, ADC, CMP, EEPROM, LVD, PSP), `EPIC_IRQ_*` against
@@ -60,11 +69,12 @@ This part has **no USB and no SPP** (DS39609B Table 1-1).
 - ✅ WDT / Sleep (`core/pic18f6520_wdt_sleep.h`): `EPIC_WDT_Refresh` /
   `EPIC_Sleep_Enter` (asm on target, no-op on host) + BOR/POR status from
   RCON.
-- ✅ Host simulation backend (`src/sim/pic18_sim.c`): Timer0 stepping
-  (8/16-bit, prescaler, overflow -> TMR0IF + IRQ callback) + GPIO drive/read
+- ✅ Host simulation backend (`src/sim/pic18_sim.c`): Timer0-3 stepping
+  (8/16-bit, prescaler, overflow -> flag + IRQ callback) + GPIO drive/read
   over all seven ports.
 - ✅ `example_blink` (Timer0 + GPIO + interrupt), `example_irq` (the
-  dedicated IRQ-core smoke test), `example_smoke` (harness seam).
+  dedicated IRQ-core smoke test), `example_smoke` (harness seam),
+  `example_timer1/2/3` (per-timer host overflow/match smokes).
 - ✅ MPLAB SIM gate, `MODE=gpio`: `src/mdb/pic18_harness_mdb.c`
   drives the PASS/FAIL marker on RA0 (the pic16f193x pattern), read by the
   CI wrapper via the latch `LATA` (`GPIO_REG=LATA`: PIC18's driven output
