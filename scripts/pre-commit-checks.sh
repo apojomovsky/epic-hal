@@ -180,7 +180,11 @@ emdash_check() {
 # scripts/brace-style-check.sh holds the implementation and the rationale.
 
 brace_style_check() {
-    if ! bash "${SCRIPT_DIR}/brace-style-check.sh"; then
+    # Forward the CI base ref exactly like git_diff/emdash_check: in CI
+    # the index equals HEAD (actions/checkout), so --cached is empty and
+    # the gate would silently no-op without the base. Local hook: empty
+    # arg -> checker scans the staged index.
+    if ! bash "${SCRIPT_DIR}/brace-style-check.sh" "${PRE_COMMIT_BASE_REF:-}"; then
         fail=1
     fi
 }

@@ -7,19 +7,31 @@ line. Attached openers are violations:
     void f(void) {            <- violation
     if (x) {                  <- violation
     } else {                  <- violation
+    do {                      <- violation (real do/while statement)
 
 Scope: lines the diff ADDS (base...HEAD via the first CLI arg, or the
 staged index), so pre-existing style never blocks an unrelated commit.
-Exempt: type declarations (typedef/struct/enum {), initializers (= {,
-comma {, array {), C compound literals ((type){), the macro `do {`
-idiom, strings, chars and comments. `else if` and `do` keep the control
-keyword on the statement line; only their brace must move to its own
-line. Exits 1 with file:line hits.
+Exempt: type declarations (typedef/struct/union/enum {), initializers
+(= {, array {), C compound literals ((type){), the macro `do {` idiom
+(preprocessor lines), strings, chars and comments. `else if` and `do`
+keep the control keyword on the statement line; only their brace must
+move to its own line. A small state machine tracks paren groups across
+lines within a hunk, so multi-line conditions and function signatures
+ending in `) {` are still flagged while compound literals are not.
+Exits 1 with file:line hits.
 """
 
 import re
 import subprocess
 import sys
+
+_CTRL_KWS = ("if", "for", "while", "switch", "do")
+
+_TYPE_RE = re.compile(
+    r"(?:^|[^A-Za-z0-9_])(?:static|const|volatile|signed|unsigned|long|short"
+    r"|char|int|float|double|void|bool|uint(?:8|16|32)_t|int(?:8|16|32)_t"
+    r"|(?:struct|union|enum)\s+[A-Za-z_][A-Za-z0-9_]*)$"
+)
 
 
 def mask_line(line):
@@ -29,11 +41,7 @@ def mask_line(line):
     n = len(line)
     while i < n:
         c = line[i]
-        if c == "/" and i + 1 < n and line[i + 1] == "/":
-            for j in range(i, n):
-                out[j] = " "
-            break
-        if c == "/" and i + 1 < n and line[i + 1] == "*":
+        if c == "/" and i + 1 < n and line[i + 1] in ("/", "*"):
             for j in range(i, n):
                 out[j] = " "
             break
@@ -58,66 +66,66 @@ def mask_line(line):
     return "".join(out)
 
 
-def is_attached_block_opener(masked, line):
-    """True if `line` opens a block with an attached brace."""
-    m = re.search(r"\{", masked)
+def _head_is_block(head):
+    """Classify the paren group whose head text (through the opening `(`)
+    is `head`: control keyword, function definition, or compound literal.
+    True means a `{` immediately after the group's closing `)` opens a
+    real block."""
+    m = re.search(r"([A-Za-z_][A-Za-z0-9_]*)\s*\($", head)
     if not m:
+        # No identifier before `(`: `= (`, `, (`, `& (`, `( (` etc.
+        # A cast/compound literal, not a block opener.
         return False
-    idx = m.start()
-    before = masked[:idx].rstrip()
-    if not before:
-        return False
-    original_prefix = line[:idx]
-    if re.match(r"^\s*(//|/?\*)", original_prefix):
-        return False
-    if line.lstrip().startswith("#"):
-        # Preprocessor line (macro with attached brace): not a C block.
-        return False
-    if re.search(r"(?:^|\s)(struct|union|enum)(\s|$)", original_prefix):
-        return False
-    if before.endswith("else"):
+    word = m.group(1)
+    if word in _CTRL_KWS:
         return True
-    if before == "}":
+    prefix = head[: m.start()].rstrip()
+    if not prefix:
+        # `foo(` at statement head: a function definition.
         return True
-    if before.endswith(")"):
-        # The preceding `)` closes either a control condition or a
-        # function definition, or it closes a C compound literal
-        # ((type){ ... }). Scan back to the matching `(`.
-        depth = 0
-        open_idx = None
-        for j in range(len(before) - 1, -1, -1):
-            if before[j] == ")":
-                depth += 1
-            elif before[j] == "(":
-                depth -= 1
-                if depth == 0:
-                    open_idx = j
-                    break
-        if open_idx is None:
-            return False
-        head = before[:open_idx].rstrip()
-        if not head:
-            return False  # `(` at statement head: compound literal
-        mword = re.search(r"[A-Za-z_][A-Za-z0-9_]*$", head)
-        if not mword:
-            # Preceded by `(`, `=`, `&`, `,`, `[`, `!`, `return`, etc:
-            # a compound-literal or expression-literal, not a block.
-            return False
-        kw = mword.group(0)
-        if kw in ("if", "for", "while", "switch", "do"):
-            return True
-        # Identifier before `(`: function definition when its own prefix
-        # is a type (or none). A call as statement cannot be followed by
-        # a block in valid C, so treat as function definition.
-        tail = before[: open_idx - mword.end()].rstrip()
-        if not tail:
-            return True
-        if re.search(r"(?:^|[^A-Za-z0-9_])(?:static|const|volatile|signed"
-                     r"|unsigned|long|short|char|int|float|double|void|bool"
-                     r"|uint(?:8|16|32)_t|int(?:8|16|32)_t)$", tail):
-            return True
-        return False
+    if _TYPE_RE.search(prefix):
+        # `int f(` / `struct S make_s(`: function definition.
+        return True
     return False
+
+
+def scan_hunk(lines):
+    """Scan one contiguous region of new-file lines (context + additions,
+    in order) for attached block braces on ADDED lines.
+
+    `lines` is a list of (is_added, text). Returns a list of (0-based
+    index into `lines`, stripped text) hits. Paren groups are tracked
+    across lines within the hunk; a macro line resets the group stack."""
+    hits = []
+    groups = []
+    for idx, (added, raw) in enumerate(lines):
+        if raw.lstrip().startswith("#"):
+            groups = []
+            continue
+        masked = mask_line(raw)
+        closed_head = None
+        i = 0
+        n = len(masked)
+        while i < n:
+            c = masked[i]
+            if c == "(":
+                groups.append(raw[: i + 1])
+            elif c == ")":
+                if groups:
+                    closed_head = groups.pop()
+            elif c == "{" and not groups:
+                pre = masked[:i].rstrip()
+                if closed_head is not None and pre.endswith(")"):
+                    block = _head_is_block(closed_head)
+                else:
+                    block = pre.endswith(("else", "do")) or pre == "}"
+                if block and added:
+                    hits.append((idx, raw.strip()))
+                closed_head = None
+            i += 1
+        if not masked.rstrip().endswith(")"):
+            closed_head = None
+    return hits
 
 
 def main():
@@ -131,23 +139,40 @@ def main():
     p = subprocess.run(diff_cmd, capture_output=True, text=True)
     diff = p.stdout
     hits = []
+    hunk_re = re.compile(r"^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@.*$", re.M)
+    starts = [m.start() for m in hunk_re.finditer(diff)]
+    ends = starts[1:] + [len(diff)]
+    # Assign hunks to files: walk the diff marking the +++ line each
+    # hunk falls under.
+    hunk_files = []
     filename = None
-    newline = 0
+    pos = 0
     for raw in diff.splitlines():
+        hunk_match = hunk_re.search(raw)
         if raw.startswith("+++ "):
             filename = raw[4:]
-            continue
-        if raw.startswith("@@"):
-            m = re.search(r"\+(\d+)(?:,(\d+))?", raw)
-            newline = int(m.group(1)) if m else 0
-            continue
-        if raw.startswith("+") and not raw.startswith("+++"):
-            content = raw[1:]
-            if "{" in content:
-                masked = mask_line(content)
-                if is_attached_block_opener(masked, content):
-                    hits.append(f"{filename}:{newline}: {content.strip()}")
-            newline += 1
+        if hunk_match:
+            hunk_files.append(filename)
+        pos += len(raw) + 1
+    for (s, e), fname in zip(zip(starts, ends), hunk_files):
+        body = diff[s:e]
+        m = re.search(r" \+(\d+)(?:,\d+)?", body.splitlines()[0])
+        start = int(m.group(1))
+        lines = []
+        for ln in body.splitlines()[1:]:
+            if ln.startswith("+++ ") or ln.startswith("--- "):
+                break
+            if ln.startswith("+"):
+                lines.append((True, ln[1:]))
+            elif ln.startswith(" "):
+                lines.append((False, ln[1:]))
+            elif ln.startswith("-"):
+                continue
+        for idx, text in scan_hunk(lines):
+            # `start` is the 1-based new-file line of the hunk's first
+            # line; idx is 0-based within the hunk.
+            line_no = start + idx
+            hits.append(f"{fname}:{line_no}: {text}")
     if hits:
         print("brace-style: opening brace must be on its own line (Allman)"
               " in added lines:")
