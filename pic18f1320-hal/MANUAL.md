@@ -84,7 +84,7 @@ per 150k cycles on host; real-`mdb` gate proves `TMR1L` counts with
 8-bit timer with PR2 period + postscaler (1:1..1:16). Match (TMR2==PR2)
 resets TMR2 and sets PIR1<TMR2IF> after the postscaler. Drives CCP PWM.
 `example_timer2`: PR2=9, 10 matches per 100 cycles on host; real-`mdb`
-gate proves `TMR2` counts, `PR2` reads 9, `T2CON<MR2CON>` = 0x04 and
+gate proves `TMR2` counts, `PR2` reads 9, `T2CON<TMR2ON>` = 0x04 and
 `PIR1<TMR2IF>` set on match.
 
 ## 9. Timer3
