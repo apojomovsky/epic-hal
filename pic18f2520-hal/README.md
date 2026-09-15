@@ -19,13 +19,13 @@ dual-priority interrupt backend, peripheral drivers) live here.
 
 ## Status
 
-**Foundation (phase 1) complete:** platform layer, SFR map, GPIO, Timer0,
-the dual-priority interrupt core, WDT/Sleep, and the harness are implemented
-and verified under host sim and real `mdb`. The dedicated IRQ smoke test
-(`tests/example_irq.c`) enables the Timer0 interrupt, confirms it fires and
-the flag/enable bits read back correctly, per `docs/adding-a-device.md` §5.5.
-Timer1-3, CCP/ECCP, MSSP, EUSART, ADC, comparator, and data EEPROM land in
-phases 2-4. This part has **no USB and no SPP** (DS39631E Table 1-1).
+**Complete family (phases 1-4, epic-hal#174-177):** platform, SFR map, GPIO,
+Timer0-3, ECCP/CCP, MSSP, EUSART, ADC, comparator, data EEPROM, the
+dual-priority interrupt core, WDT/Sleep, and the harness are implemented and
+verified under host sim and real `mdb` (each peripheral through
+docs/adding-a-device.md §4: host example + XC8 target build + `mdb`
+register-readback gate). This part has **no USB and no SPP** (DS39631E
+Table 1-1).
 
 - ✅ Family header (`pic18f2520_hal.h`): device selection, capability
   macros, platform include. Named `_hal` to avoid shadowing the DFP
@@ -56,12 +56,10 @@ phases 2-4. This part has **no USB and no SPP** (DS39631E Table 1-1).
   (8/16-bit, prescaler, overflow -> TMR0IF + IRQ callback) + GPIO drive/read.
 - ✅ `example_blink` (Timer0 + GPIO + interrupt), `example_irq` (the
   dedicated IRQ-core smoke test), `example_smoke` (harness seam).
-- ✅ MPLAB SIM gate, `MODE=gpio`: no EUSART yet, so `src/mdb/pic18_harness_mdb.c`
+- ✅ MPLAB SIM gate, `MODE=gpio`: `src/mdb/pic18_harness_mdb.c`
   drives the PASS/FAIL marker on RA0 (the pic16f193x pattern), read by the
   CI wrapper via the latch `LATA` (`GPIO_REG=LATA`: PIC18's driven output
   latch does not read back on PORTx under MPSIM).
-
-**Deferred:** peripherals beyond the foundation (phases 2-4).
 
 ## XC8 codegen gotchas (settled)
 
@@ -74,7 +72,22 @@ phases 2-4. This part has **no USB and no SPP** (DS39631E Table 1-1).
   device header's name; an umbrella of the same name shadows it through
   `-I` at link time so the compiler's auto-included SFRs are lost (the
   PIC16F628A lesson, epic-hal#137). The umbrella is `pic18f2520_hal.h`.
-
+- **No compiler bugs found in phases 2-4.** Every XC8 surprise traced to
+  a DFP misread or a SIM/mdb tool limit, not codegen. The XC8 User's Guide
+  is not shipped in the toolchain image, so nothing here is claimed as a
+  compiler bug; the split read+write RMW pattern and literal-SFR-token rule
+  above are design constraints verified by green builds, not bug reports.
+- **Reduced ECCP1 (driver, not compiler).** T3CON<T3CCP1> is BIT(3), not
+  BIT(2); no P1M/PDC/PSSBD hardware on this 28-pin part. Caught by reading
+  the DFP struct order, fixed before first build.
+- **EUSART TXEN/CREN always on (driver).** Tying them to callbacks breaks
+  polled TX/RX; TXIE/RCIE gate interrupts. TXSTA POR is 0x02 (TRMT).
+- **mdb `set` does not write SFRs.** Preload-via-debugger gates fail
+  silently; use ReloadValue/CompareValue driver paths for overflow/match
+  gates instead.
+- **SIM models registers, not physics.** SPI shifting, EEPROM cell writes,
+  CCP output pins, and ADC conversions do not advance in MPLAB SIM; those
+  gates prove programming + flags (the 4550's accepted level).
 ## Layout
 
 ```

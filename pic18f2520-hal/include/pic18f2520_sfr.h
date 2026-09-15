@@ -99,6 +99,23 @@
 #define PIC_REG_SPBRG         0xFAFU   /**< EUSART baud-rate divisor, low byte.        */
 #define PIC_REG_SPBRGH        0xFB0U   /**< EUSART baud-rate divisor, high byte (BRG16=1). */
 
+/* Comparator, DS39631E §20.0 (two comparators, same as 4550). */
+#define PIC_REG_CMCON         0xFB4U   /**< Comparator control (mode/inputs/outputs). */
+#define PIC_REG_CVRCON        0xFB5U   /**< Comparator voltage reference control.     */
+
+/* Data EEPROM, DS39631E §7.0 (256 bytes, EEADR alone, same as 4550). */
+#define PIC_REG_EECON1        0xFA6U   /**< EEPROM/Flash control (RD/WR/WREN/WRERR/EEPGD). */
+#define PIC_REG_EECON2        0xFA7U   /**< EEPROM unlock (write 0x55 then 0xAA).       */
+#define PIC_REG_EEDATA        0xFA8U   /**< EEPROM data register.                      */
+#define PIC_REG_EEADR         0xFA9U   /**< EEPROM address register (8-bit, 0..255).    */
+
+/* A/D Converter, DS39631E §19.0 (10-bit, AN0-4 + AN8-12 on 28-pin). */
+#define PIC_REG_ADCON2        0xFC0U   /**< A/D control 2 (ADCS/ACQT/ADFM).            */
+#define PIC_REG_ADCON1        0xFC1U   /**< A/D control 1 (PCFG/VCFG).                 */
+#define PIC_REG_ADCON0        0xFC2U   /**< A/D control 0 (CHS/GO-DONE/ADON).          */
+#define PIC_REG_ADRESL        0xFC3U   /**< A/D result low byte.                       */
+#define PIC_REG_ADRESH        0xFC4U   /**< A/D result high byte.                       */
+
 /* STATUS bits (Register 5-2). */
 #define PIC_STATUS_N          EPIC_BIT(4)   /**< Negative / borrow complement. */
 #define PIC_STATUS_OV         EPIC_BIT(3)   /**< Overflow.                     */
@@ -269,6 +286,41 @@
 #define PIC_BAUDCON_POR_VALUE  0x00U        /**< BAUDCON power-on reset value.      */
 #define PIC_SPBRG_POR_VALUE    0x00U        /**< SPBRG power-on reset value.        */
 #define PIC_SPBRGH_POR_VALUE   0x00U        /**< SPBRGH power-on reset value.       */
+
+/* ADC bits (Register 19-1/19-2/19-3, same as 4550). */
+#define PIC_ADCON0_ADON        EPIC_BIT(0)  /**< A/D module on.                       */
+#define PIC_ADCON0_GO_DONE     EPIC_BIT(1)  /**< Conversion status (1 = in progress). */
+#define PIC_ADCON0_CHS_MASK    0x3CU        /**< CHS3:CHS0 at bits 5:2.               */
+#define PIC_ADCON0_CHS_POS     2            /**< CHS field shift.                     */
+#define PIC_ADCON0_POR_VALUE   0x00U
+#define PIC_ADCON1_PCFG_MASK   0x0FU        /**< PCFG3:PCFG0 at bits 3:0.             */
+#define PIC_ADCON1_VCFG0       EPIC_BIT(4)  /**< Vref+ source: 1=AN3, 0=VDD.          */
+#define PIC_ADCON1_VCFG1       EPIC_BIT(5)  /**< Vref- source: 1=AN2, 0=VSS.           */
+#define PIC_ADCON1_POR_VALUE   0x00U
+#define PIC_ADCON2_ADCS_MASK   0x07U        /**< ADCS2:ADCS0 at bits 2:0.             */
+#define PIC_ADCON2_ACQT_MASK   0x38U        /**< ACQT2:ACQT0 at bits 5:3.             */
+#define PIC_ADCON2_ACQT_POS    3            /**< ACQT field shift.                     */
+#define PIC_ADCON2_ADFM        EPIC_BIT(7)  /**< 1 = right justified, 0 = left.       */
+#define PIC_ADCON2_POR_VALUE   0x00U
+
+/* Comparator bits (Register 20-1, same as 4550). */
+#define PIC_CMCON_CM_MASK      0x07U        /**< CM2:CM0 at bits 2:0 (mode select). */
+#define PIC_CMCON_CIS          EPIC_BIT(3)  /**< Comparator input switch.            */
+#define PIC_CMCON_C1INV        EPIC_BIT(4)  /**< C1 output inversion.                 */
+#define PIC_CMCON_C2INV        EPIC_BIT(5)  /**< C2 output inversion.                 */
+#define PIC_CMCON_C1OUT        EPIC_BIT(6)  /**< C1 output (read-only).              */
+#define PIC_CMCON_C2OUT        EPIC_BIT(7)  /**< C2 output (read-only).              */
+#define PIC_CMCON_POR_VALUE    0x07U        /**< POR: all comparators off (CM=111).  */
+
+/* Data EEPROM bits (Register 7-1, same as 4550). */
+#define PIC_EECON1_RD          EPIC_BIT(0)  /**< Read control (strobe, self-clears). */
+#define PIC_EECON1_WR          EPIC_BIT(1)  /**< Write control (strobe).             */
+#define PIC_EECON1_WREN        EPIC_BIT(2)  /**< Write enable.                       */
+#define PIC_EECON1_WRERR       EPIC_BIT(3)  /**< Write-error flag.                   */
+#define PIC_EECON1_FREE        EPIC_BIT(4)  /**< Flash row erase enable.             */
+#define PIC_EECON1_CFGS        EPIC_BIT(6)  /**< Config access (1) vs code/data (0). */
+#define PIC_EECON1_EEPGD       EPIC_BIT(7)  /**< 0 = data EEPROM, 1 = program flash. */
+#define PIC_EECON1_POR_VALUE   0x00U
 
 /* PIR2 / PIE2 / IPR2 bits (Reg 9-5/9-7/9-9). */
 /* Same bit layout across the three registers: flag / enable / priority.
