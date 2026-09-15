@@ -79,17 +79,21 @@ int main(void)
     RD1(ADCON1, v);
     CHECK(v == 0x00u, 0x00);
 
+#if PIC16F87XA_FAMILY_HAS_COMP
     /* Class A: EPIC_COMP_DeInit writes CMCON (0x9C), expect 0x07. */
     EPIC_BANK1_WRITE8(CMCON, 0xAAu);
     (void)EPIC_COMP_DeInit();
     RD1(CMCON, v);
     CHECK(v == 0x07u, 0x01);
+#endif
 
+#if PIC16F87XA_FAMILY_HAS_VREF
     /* Class A: EPIC_VREF_DeInit writes CVRCON (0x9D), expect 0x00. */
     EPIC_BANK1_WRITE8(CVRCON, 0xAAu);
     (void)EPIC_VREF_DeInit();
     RD1(CVRCON, v);
     CHECK(v == 0x00u, 0x02);
+#endif
 
     /* Class A read side: EPIC_TIMER2_ReadPeriod reads PR2 (0x92) after
      * an ungated bank switch (was corrupted, now the safe macro). */

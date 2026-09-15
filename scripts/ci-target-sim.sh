@@ -76,6 +76,7 @@ run_one pic16f87xa 16F877A PIC16F877A epic-swuart 15000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-math 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-math 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A pic16f87xa-hal 5000 uart
+run_one pic16f7x 16F77 PIC16F77 pic16f7x-hal 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 pic18fxx5x-hal 5000 uart
 run_one pic18f2520 18F2520 PIC18F2520 pic18f2520-hal 5000 gpio
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-pid 5000 uart

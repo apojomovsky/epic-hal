@@ -12,6 +12,15 @@
 #include "pic14_midrange.h"
 #include "pic14_midrange_sfr.h"
 
+/* The DS30498 (16F737-777), 87XA and 88X families carry a 10-bit
+ * ADRESH/ADRESL pair; the DS30325 (16F72-77) carries one 8-bit ADRES.
+ * Default to the 10-bit path so families that don't declare a selector
+ * (87XA/88X/others) keep the existing behavior; the 7x shim overrides
+ * this to 0 for its 8-bit parts. */
+#ifndef PIC14MIDRANGE_HAS_ADC_10BIT
+#define PIC14MIDRANGE_HAS_ADC_10BIT 1
+#endif
+
 /**
  * @brief Analog channel select (ADCON0<CHS>).
  *        The 88X muxes 14 pins plus two internal sources; the 87XA

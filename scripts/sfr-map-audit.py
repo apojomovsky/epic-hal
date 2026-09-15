@@ -22,6 +22,7 @@ FAMILIES = {
     "pic16f87xa-hal": (
         "pic16f87xa-hal/include/pic16f87xa_sfr.h",
         [
+            ("16F873", "Microchip.PIC16Fxxx_DFP", "pic16f873.h"),
             ("16F873A", "Microchip.PIC16Fxxx_DFP", "pic16f873a.h"),
             ("16F874A", "Microchip.PIC16Fxxx_DFP", "pic16f874a.h"),
             ("16F876A", "Microchip.PIC16Fxxx_DFP", "pic16f876a.h"),
@@ -102,6 +103,20 @@ FAMILIES = {
             ("16F884", "Microchip.PIC16Fxxx_DFP", "pic16f884.h"),
             ("16F886", "Microchip.PIC16Fxxx_DFP", "pic16f886.h"),
             ("16F887", "Microchip.PIC16Fxxx_DFP", "pic16f887.h"),
+        ],
+    ),
+    "pic16f7x-hal": (
+        "pic16f7x-hal/include/pic16f7x_sfr.h",
+        [
+            ("16F72", "Microchip.PIC16Fxxx_DFP", "pic16f72.h"),
+            ("16F73", "Microchip.PIC16Fxxx_DFP", "pic16f73.h"),
+            ("16F74", "Microchip.PIC16Fxxx_DFP", "pic16f74.h"),
+            ("16F76", "Microchip.PIC16Fxxx_DFP", "pic16f76.h"),
+            ("16F77", "Microchip.PIC16Fxxx_DFP", "pic16f77.h"),
+            ("16F737", "Microchip.PIC16Fxxx_DFP", "pic16f737.h"),
+            ("16F747", "Microchip.PIC16Fxxx_DFP", "pic16f747.h"),
+            ("16F767", "Microchip.PIC16Fxxx_DFP", "pic16f767.h"),
+            ("16F777", "Microchip.PIC16Fxxx_DFP", "pic16f777.h"),
         ],
     ),
 }
@@ -240,13 +255,18 @@ BANK_VARIANT_ADDRS = {
 # the constants unconditionally and guards the usage). key: mcu -> set
 # of register names to skip entirely.
 CONDITIONAL_REGS = {
+    "16F873": {"PORTD", "PORTE", "TRISD", "TRISE", "CMCON", "CVRCON"},
     "16F873A": {"PORTD", "PORTE", "TRISD", "TRISE", "PIE1", "PIR1", "PIR2"},
     "16F876A": {"PORTD", "PORTE", "TRISD", "TRISE", "PIE1", "PIR1", "PIR2"},
 }
 # On the 28-pin parts the whole PSP interrupt path is absent; the
 # PIE1/PIR1/PIR2 registers still exist, only their PSP bits are
-# conditional.
+# conditional. The non-A 873 additionally lacks the comparator/VREF
+# registers and the PIE2/PIR2 comparator bits (DPF headers).
 CONDITIONAL_BITS = {
+    "16F873": {("PIE1", "PSPIE"), ("PIR1", "PSPIF"),
+               ("PIE2", "CMIE"), ("PIR2", "CMIF"),
+               ("ADCON1", "ADCS2")},
     "16F873A": {("PIE1", "PSPIE"), ("PIR1", "PSPIF")},
     "16F876A": {("PIE1", "PSPIE"), ("PIR1", "PSPIF")},
     # 18F2455/2550 (28-pin, no SPP): the SPP registers and the SPP
@@ -348,7 +368,48 @@ CONDITIONAL_REGS.update({
                "IOCB", "PIE2", "PIR2", "PORTB", "SRCON", "TRISB",
                "WPUB"},
     "16F689": {"ANSEL_BANK1", "WDTCON_BANK0"},
+    # PIC16F7x family (DFP-verified, exact per-part absence). 16F72
+    # (28-pin, no USART/CCP2/PM bank): the missing registers are
+    # CCP2CON/CCPR2H/CCPR2L/PIE2/PIR2/PMADR/PMDATA and the USART/PSP/
+    # CMP bit rows. The DS30498 parts (16F737/747/767/777) use the
+    # 10-bit ADRESH/ADRESL pair; the DS30325 parts (16F72-77) use the
+    # single 8-bit ADRES. PortD/E and their TRIS rows exist only where
+    # the DFP declares them.
+    "16F72":  {"CCP2CON", "CCPR2H", "CCPR2L", "PIE2", "PIR2",
+               "PMADR", "PMDATA", "ADRESH", "ADRESL",
+               "PORTD", "PORTE", "TRISD", "TRISE",
+               "TXSTA", "SPBRG", "RCSTA", "TXREG", "RCREG"},
+    "16F73":  {"ADRESH", "ADRESL", "PORTD", "PORTE", "TRISD", "TRISE"},
+    "16F74":  {"ADRESH", "ADRESL"},
+    "16F76":  {"ADRESH", "ADRESL", "PORTD", "PORTE", "TRISD", "TRISE"},
+    "16F77":  {"ADRESH", "ADRESL"},
+    "16F737": {"ADRES", "PORTD", "TRISD", "TRISE"},
+    "16F747": {"ADRES"},
+    "16F767": {"ADRES", "PORTD", "TRISD", "TRISE"},
+    "16F777": {"ADRES"},
 
+})
+
+# PIC16F7x bit rows absent from the smaller/older parts' DFP headers:
+# the HAL defines the bit unconditionally and gates usage on the family
+# macros. 16F72 has no USART/CCP2/PM (its PIE1/PIE2/PIR1 flag rows for
+# those sources are absent); the 28-pin parts have no PSP bit; several
+# DS30325 parts carry no ADCON1 ADCS2/ADFM (single 8-bit ADC) and no
+# RCSTA ADDEN (no auto-address-detect). Enumerated exactly as the DFP
+# reports missing for each MCU.
+CONDITIONAL_BITS.update({
+    "16F72": {("ADCON1", "ADCS2"), ("ADCON1", "ADFM"),
+              ("PIE1", "PSPIE"), ("PIE1", "RCIE"), ("PIE1", "TXIE"),
+              ("PIE2", "CCP2IE"), ("PIR1", "PSPIF"),
+              ("PIR1", "RCIF"), ("PIR1", "TXIF"), ("PIR2", "CCP2IF")},
+    "16F73": {("ADCON1", "ADCS2"), ("ADCON1", "ADFM"),
+              ("PIE1", "PSPIE"), ("PIR1", "PSPIF"), ("RCSTA", "ADDEN")},
+    "16F74": {("ADCON1", "ADCS2"), ("ADCON1", "ADFM"),
+              ("RCSTA", "ADDEN")},
+    "16F76": {("ADCON1", "ADCS2"), ("ADCON1", "ADFM"),
+              ("PIE1", "PSPIE"), ("PIR1", "PSPIF"), ("RCSTA", "ADDEN")},
+    "16F77": {("ADCON1", "ADCS2"), ("ADCON1", "ADFM"),
+              ("RCSTA", "ADDEN")},
 })
 
 # Bits the DFP does not define but the datasheet documents:
@@ -383,7 +444,7 @@ def main() -> int:
                                          "PIC16F193X", "PIC16F88X", "PIC16F628A",
                                          "PIC16F83_84",
                                          "PIC16F63x_67x_68x", "PIC18F1320",
-                                         "PIC18F2520"), default=None,
+                                         "PIC18F2520", "PIC16F7x"), default=None,
                     help="only this manifest family (the sharded CI jobs)")
     args = ap.parse_args()
     hal_label = {"PIC16F87XA": "pic16f87xa-hal",
@@ -394,7 +455,8 @@ def main() -> int:
                  "PIC16F83_84": "pic16f83_84-hal",
                  "PIC16F63x_67x_68x": "pic16f63x_67x_68x-hal",
                  "PIC18F1320": "pic18f1320-hal",
-                 "PIC18F2520": "pic18f2520-hal"}[args.family] \
+                 "PIC18F2520": "pic18f2520-hal",
+                 "PIC16F7x": "pic16f7x-hal"}[args.family] \
         if args.family else None
     bad = 0
     for family, (sfr_path, mcus) in FAMILIES.items():

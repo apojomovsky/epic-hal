@@ -63,6 +63,7 @@ epiccc_sources = [
 [families.PIC16F87XA]
 hal_dir  = "pic16f87xa-hal"
 variants = [
+  "16F873",
   "16F873A",
   "16F874A",
   "16F876A",
@@ -86,8 +87,6 @@ hal_sources = [
   "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/peripherals/pic14_ssp.c",
   "pic14-midrange-core/src/peripherals/pic14_adc.c",
-  "pic14-midrange-core/src/peripherals/pic14_comp.c",
-  "pic14-midrange-core/src/peripherals/pic14_vref.c",
   "pic14-midrange-core/src/peripherals/pic14_eeprom.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
@@ -121,11 +120,84 @@ epiccc_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 
+# The comparator and VREF drivers exist only on the A-parts: the non-A
+# 873 die has no CMCON/CVRCON (DFP + gputils p16f873.inc agree).
+[[families.PIC16F87XA.conditional_sources]]
+path     = "pic14-midrange-core/src/peripherals/pic14_comp.c"
+variants = ["16F873A", "16F874A", "16F876A", "16F877A"]
+[[families.PIC16F87XA.conditional_sources]]
+path     = "pic14-midrange-core/src/peripherals/pic14_vref.c"
+variants = ["16F873A", "16F874A", "16F876A", "16F877A"]
+
 [[families.PIC16F87XA.conditional_sources]]
 path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
 variants = [
   "16F874A",
   "16F877A",
+]
+
+[families.PIC16F7x]
+hal_dir  = "pic16f7x-hal"
+variants = [
+  # Smallest flash first, canonical 16F77 last so family-check's
+  # scaffold gate builds variants[-1] (as on 87XA/88X/18F).
+  "16F72", "16F73", "16F74", "16F737", "16F747",
+  "16F76", "16F767",
+  "16F777", "16F77",
+]
+dfp      = "Microchip.PIC16Fxxx_DFP"
+dfp_version = "1.8.167"
+fosc_hz  = 20000000
+includes = [
+  "pic16f7x-hal/include/target",
+  "pic16f7x-hal/include",
+  "pic14-midrange-core/include",
+  "epic-common/include",
+]
+# Classic mid-range surface riding the shared core: GPIO, Timers 0/1/2,
+# CCP1/CCP2, USART, SPI-only SSP, 8-bit ADC. No EEPROM (the PM* program-
+# memory bank replaces it), no comparator/Vref; PSP is conditional below.
+hal_sources = [
+  "pic14-midrange-core/src/peripherals/pic14_gpio.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer0.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer1.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_ccp.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
+  "pic14-midrange-core/src/peripherals/pic14_ssp.c",
+  "pic14-midrange-core/src/peripherals/pic14_adc.c",
+  "pic14-midrange-core/src/core/pic14_irq.c",
+  "pic16f7x-hal/src/core/pic16_irq_table.c",
+  "pic14-midrange-core/src/core/pic14_wdt_sleep.c",
+  "pic14-midrange-core/src/target/pic14_wdt_sleep_target.c",
+  "pic14-midrange-core/src/target/pic16_isr_vector.c",
+  "pic14-midrange-core/src/core/pic14_irq_dispatch.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+# The epic-cc conformant slice: gpio + timers + irq core, riding the
+# landed epic-cc 16F77 target (epic-cc#405). Grows by adding entries,
+# never by editing the build driver.
+epiccc_sources = [
+  "pic14-midrange-core/src/peripherals/pic14_gpio.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer0.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/core/pic14_irq.c",
+  "pic16f7x-hal/src/core/pic16_irq_table.c",
+  "pic14-midrange-core/src/core/pic14_wdt_sleep.c",
+  "pic14-midrange-core/src/epiccc/pic14_wdt_sleep_epiccc.c",
+  "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
+  "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+
+[[families.PIC16F7x.conditional_sources]]
+path     = "pic16f7x-hal/src/peripherals/pic16f7x_psp.c"
+variants = [
+  "16F74",
+  "16F77",
+  "16F747",
+  "16F777",
 ]
 
 [families.PIC16F88X]
@@ -595,6 +667,7 @@ needs_hal  = true
 
 [modules.pic16f87xa-hal.supported]
 PIC16F87XA = [
+  "16F873",
   "16F873A",
   "16F874A",
   "16F876A",
@@ -618,6 +691,52 @@ sources     = [
   "tests/sim_bank_probe.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# pic16f7x-hal's own manifest slot, mirroring the 87XA pseudo-module:
+# no application code, just the family's real-target smoke
+# (tests/example_blink.c, RB0). The blink example is the section-4
+# exemplar proof for 16F77; the other variants are proven up to the
+# host-sim blink loop in this family's CMakeLists, and full per-part
+# real-target verification is the mechanical follow-on (the ticket
+# calls the remaining parts mechanical once the exemplar's capability
+# macros are proven).
+[modules.pic16f7x-hal]
+dir        = "pic16f7x-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.pic16f7x-hal.supported]
+PIC16F7x = [
+  "16F72",
+  "16F73",
+  "16F74",
+  "16F737",
+  "16F747",
+  "16F76",
+  "16F767",
+  "16F777",
+  "16F77",
+]
+
+[modules.pic16f7x-hal.example.PIC16F7x]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "ON" }
+
+# HARNESS=sim: the banked-SFR probe (16F77 exemplar). WDTE=OFF like
+# every other sim variant (a diagnostic build that terminates and
+# reports does not need the watchdog running unattended).
+[modules.pic16f7x-hal.example.PIC16F7x.sim]
+name        = "bank-probe"
+harness_src = "pic16f7x-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_bank_probe.c",
+]
+config      = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "OFF" }
 
 # pic16f88x-hal's own manifest slot, mirroring the 87XA pseudo-module:
 # no application code, just the family's real-target smoke
@@ -1444,6 +1563,7 @@ needs_hal = false
 [modules.epic-adcfilter.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -1481,6 +1601,11 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
 # parts keep the footprint probe.
 [modules.epic-adcfilter.example.PIC16F87XA.variants.16F873A]
+name    = "adcfilter-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+[modules.epic-adcfilter.example.PIC16F87XA.variants.16F873]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
@@ -1586,6 +1711,7 @@ depends_on = []
 [modules.epic-bus.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -1671,6 +1797,7 @@ depends_on = ["epic-bus"]
 [modules.epic-mcp23x17.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -1779,6 +1906,7 @@ PIC18Fxx5x = [
 # epic-serial, which does not fit there (the same RAM reason
 # epic-serial and epic-debounce exclude them).
 "16F873A" = "RAM: does not fit on this smaller part"
+"16F873" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
@@ -1860,6 +1988,7 @@ PIC18Fxx5x = [
 
 [modules.epic-debounce.excluded]
 "16F873A" = "RAM: does not fit on this smaller part"
+"16F873" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
@@ -1933,6 +2062,7 @@ depends_on = [
 [modules.epic-encoder.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -1966,6 +2096,12 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
 # parts keep the footprint probe.
 [modules.epic-encoder.example.PIC16F87XA.variants.16F873A]
+name    = "encoder-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-encoder.example.PIC16F87XA.variants.16F873]
 name    = "encoder-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
@@ -2062,6 +2198,7 @@ needs_hal = false
 [modules.epic-fsm.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2280,6 +2417,7 @@ PIC18Fxx5x = [
 [modules.epic-math.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2319,6 +2457,13 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # over) is excluded there for RAM, so these parts keep the smoke
 # instead of the example.
 [modules.epic-math.example.PIC16F87XA.variants.16F873A]
+name    = "math-selftest"
+sources = [
+  "tests/target_smoke16.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-math.example.PIC16F87XA.variants.16F873]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
@@ -2460,6 +2605,7 @@ PIC18Fxx5x = [
 
 [modules.epic-modbus.excluded]
 "16F873A" = "RAM: does not fit on this smaller part"
+"16F873" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
 "16F876A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
 "16F877A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
@@ -2537,6 +2683,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
 [modules.epic-pid.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2571,6 +2718,11 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # parts keep the footprint probe while the serial-capable parts build
 # the real example.
 [modules.epic-pid.example.PIC16F87XA.variants.16F873A]
+name    = "pid-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+[modules.epic-pid.example.PIC16F87XA.variants.16F873]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
@@ -2700,6 +2852,7 @@ PIC18Fxx5x = [
 
 [modules.epic-serial.excluded]
 "16F873A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
+"16F873" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
 "16F874A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
@@ -2775,6 +2928,7 @@ PIC18Fxx5x = [
 
 [modules.epic-settings.excluded]
 "16F873A" = "link: irq dispatch needs every peripheral handler"
+"16F873" = "link: irq dispatch needs every peripheral handler"
 "16F874A" = "link: irq dispatch needs every peripheral handler"
 "16F876A" = "link: irq dispatch needs every peripheral handler"
 "16F877A" = "link: irq dispatch needs every peripheral handler"
@@ -2962,6 +3116,7 @@ PIC16F193X = [
 
 [modules.epic-swuart.excluded]
 "16F873A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
+"16F873" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 "16F874A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 
 [modules.epic-swuart.example.PIC16F87XA]
@@ -3056,6 +3211,7 @@ PIC18Fxx5x = [
 
 [modules.epic-taskmgr.excluded]
 "16F873A" = "RAM: 54-byte task table does not fit on this smaller part"
+"16F873" = "RAM: 54-byte task table does not fit on this smaller part"
 "16F874A" = "RAM: 54-byte task table does not fit on this smaller part"
 "18F2455" = "link: irq dispatch needs every peripheral handler"
 "18F2550" = "link: irq dispatch needs every peripheral handler"
@@ -3114,6 +3270,7 @@ depends_on = []
 [modules.epic-tick.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -3388,6 +3545,7 @@ needs_hal  = false
 [modules.epic-common.supported]
 PIC16F87XA = [
   "16F873A",
+  "16F873",
   "16F874A",
   "16F876A",
   "16F877A",

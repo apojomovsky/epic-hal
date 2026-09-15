@@ -7,6 +7,14 @@
 #include "core/pic16_irq.h"
 #include "pic14_midrange.h"
 
+/* The PIR2 EEPROM block reads EEIF/EEIE; existing families (87XA/88X)
+ * define no HAS_EE_PIR2 and carry PIR2 EEPROM flags, so default to 1.
+ * The 7x (no EEPROM at all) sets it 0 in its shim to compile the block
+ * out. */
+#ifndef PIC14MIDRANGE_HAS_EE_PIR2
+#define PIC14MIDRANGE_HAS_EE_PIR2 1
+#endif
+
 /** @brief TIMER0_IRQHandler (weak).
  */
 extern void TIMER0_IRQHandler(void);
@@ -73,11 +81,13 @@ void epic_dispatch_all_irqs(void)
 #if PIC14MIDRANGE_HAS_BCL_DISPATCH
     if (pir2 & PIC_PIR2_BCLIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_BCLIF);
 #endif
+#if PIC14MIDRANGE_HAS_EE_PIR2
     if (pir2 & PIC_PIR2_EEIF) {
         uint8_t eeie = 0u;
         EPIC_PIE2_READ_EEIE(eeie);
         if (!(eeie & PIC_PIE2_EEIE)) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_EEIF);
     }
+#endif
 #if PIC14MIDRANGE_HAS_COMP_DUAL
     if (pir2 & PIC_PIR2_C1IF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_C1IF);
     if (pir2 & PIC_PIR2_C2IF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_C2IF);
@@ -87,7 +97,7 @@ void epic_dispatch_all_irqs(void)
 #if PIC14MIDRANGE_HAS_OSF
     if (pir2 & PIC_PIR2_OSFIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_OSFIF);
 #endif
-#else
+#elif PIC14MIDRANGE_HAS_CM_PIR2
     if (pir2 & PIC_PIR2_CMIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CMIF);
 #endif
 #endif
