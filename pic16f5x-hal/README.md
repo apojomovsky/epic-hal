@@ -23,11 +23,11 @@ hold the shared serial/tick modules.
 Host sim: `cmake -B build && cmake --build build`, run any
 `build/example_*` directly (`example_blink`, `example_control`).
 Real target: `make xc8-build MODULE=pic16f5x-hal MCU=16F54` (blink).
-MPLAB SIM toggle gate: `TOGGLE_STEPI=50000 make mdb-test
-MODULE=pic16f5x-hal MCU=16F54 DEVICE=PIC16F54 MODE=toggle` (PORTB bit
-0; the family has no UART. The blink's toggle period is ~50000
-instructions, so 50000 alternates cleanly while the runner's 200000
-default aliases to a constant phase, see `scripts/ci-target-sim.sh`).
+MPLAB SIM toggle gate: `make mdb-test MODULE=pic16f5x-hal MCU=16F54
+DEVICE=PIC16F54 MODE=toggle STEPI=50000` (PORTB bit 0; the family has
+no UART. The blink's toggle period is ~50000 instructions, so STEPI
+50000 alternates cleanly while the 200000 default aliases to a constant
+phase, see `scripts/ci-target-sim.sh`).
 Epic-cc gate: `make epiccc-build MODULE=pic16f5x-hal MCU=16F54
 EPIC_CC_HOST=1` awaits epic-cc#437 (the p16f54 RAM model caps GPR at
 9 bytes; the sim-runner PicBaseline arm is landed and fixture-verified

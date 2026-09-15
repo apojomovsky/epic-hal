@@ -187,7 +187,9 @@ mdb-test: image
 	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --variant sim \
 	  --build-dir build-sim/$(MODULE) \
 	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
-	$(DOCKER_RUN) scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)" $(or $(EEPROM_WRITES),$(if $(filter epic-settings,$(MODULE)),24,0))
+	$(DOCKER_RUN) env \
+	  $(if $(filter toggle,$(or $(MODE),uart)),TOGGLE_REG=$(or $(REG),PORTB) TOGGLE_BIT=$(or $(BIT),0) TOGGLE_SAMPLES=$(or $(SAMPLES),12) TOGGLE_STEPI=$(or $(STEPI),200000),) \
+	  scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)" $(or $(EEPROM_WRITES),$(if $(filter epic-settings,$(MODULE)),24,0))
 
 mdb-epiccc: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
