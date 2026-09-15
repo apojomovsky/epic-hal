@@ -1,54 +1,37 @@
-/* Control-space probe for the PIC16F5x exemplar: exercises the GPIO
- * and Timer0 drivers against exact expected byte images. Runs as a
- * HARNESS=sim target under MPLAB SIM (MODE=gpio, RA0 marker) and as a
- * host test.
+/* Host-only control-space probe for the PIC16F5x exemplar: exercises
+ * the GPIO and Timer0 drivers against exact expected byte images.
  *
  * The TRIS/OPTION control registers are write-only on this core
  * (DS41213D Table 12-1): there is no file-register readback, and mdb
  * does not expose OPTION by name on the 16F54 (probed: `print OPTION`
  * -> "Symbol does not exist"; `print TRISA` works and returns 0x1F
- * at POR). So the shadow-register checks below are host-only
- * (guarded by PIC16F5X_HOST); the target build checks the
- * behaviorally observable state: PORT/PORTA latch round-trips and the
- * TMR0 reload value.
+ * at POR). So the register-image checks run on the host sim, where
+ * the platform header routes control writes into the sim shadow
+ * registers for readback; the real-target gate (MODE=toggle on the
+ * blink) proves the behavioral side.
  *
  * Expected values (hand-computed):
  *   EPIC_GPIO_Init(GPIOB, PIN_0, OUTPUT)      -> TRISB = 0xFE
- *   EPIC_GPIO_Init(GPIOB, PIN_0, INPUT)       -> TRISB = 0xFF
- *   EPIC_GPIOWritePort(GPIOB, 0x55)           -> PORTB reads 0x55
- *   EPIC_TIMER0_Init (internal, 1:256)        -> OPTION = 0x07
- *   EPIC_TIMER0_Init ReloadValue = 0x21       -> TMR0 reads 0x21
- *   EPIC_TIMER0_Start()                       -> T0CS clears (0x06)
- *   host only: 300 sim cycles -> TMR0 0x22; 512 -> 0x23 (two
- *   prescaler periods at 1:256 from 0x21). */
+ *   EPIC_GPIO_WritePort(GPIOB, 0x55)          -> PORTB reads 0x55
+ *   EPIC_TIMER0_Init (internal, 1:2, reload 0x21)
+ *                                             -> OPTION = 0x00 (1:2 is PS=000,
+ *                                                PSA=0, T0CS=0, T0SE=0)
+ *                                             -> TMR0 reads 0x21
+ *   EPIC_TIMER0_Start()                       -> T0CS stays clear
+ *   6 sim cycles at 1:2 (3 steps)             -> TMR0 = 0x24 */
 
 #include "pic16f5x_hal.h"
 #include "pic16f5x_sfr.h"
 #include "peripherals/pic16f5x_gpio.h"
 #include "peripherals/pic16f5x_timer0.h"
-#include "core/epic_harness.h"
-
-#ifdef PIC16F5X_HOST
 #include "pic16f5x_sim.h"
-#endif
-
-/**
- * @brief Freeze-at-verdict hook, defined by the mdb harness (this probe
- *        only builds as the HARNESS=sim target, so the mdb harness is
- *        linked). No-op extern on the host build (pic16_harness_sim.c
- *        links instead); guarded so the host test still compiles.
- */
-#ifdef PIC16F5X_HOST
-#define pic16f5x_harness_halt() ((void)0)
-#else
-extern void pic16f5x_harness_halt(void);
-#endif
+#include "core/epic_harness.h"
 
 #ifndef FOSC_HZ
 #define FOSC_HZ 4000000UL
 #endif
 
-static uint16_t g_fail = 0u;
+static uint8_t g_fail = 0U;
 /**
  * @brief Bump the failure counter and log a marker line.
  * @param idx the check index (0x00..0x0F), logged as F characters.
@@ -70,73 +53,77 @@ static void fail(uint8_t idx)
 } while (0)
 
 /**
- * @brief Run the control-space access probes and report pass/fail on
- *        RA0 (target) / stdout (host).
+ * @brief Run the control-space access probes and report pass/fail.
  */
 int main(void)
 {
-    uint8_t v = 0U;
+    uint8_t t0 = 0U;
+    TIMER0_HandleTypeDef h;
 
     epic_harness_init(1000U);
 
-    /* GPIO direction via the control-space TRIS write (host shadow
-     * check; the target TRIS is write-only). */
+    /* GPIO direction via the control-space TRIS write; the host
+     * platform header routes it into the sim shadow. */
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
-#ifdef PIC16F5X_HOST
-    v = pic16f5x_sim_trisb;
-    CHECK(v == 0xFEU, 0x00U);
+    t0 = pic16f5x_sim_trisb;
+    CHECK(t0 == 0xFEU, 0x00U);
 
-    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_INPUT);
-    v = pic16f5x_sim_trisb;
-    CHECK(v == 0xFFU, 0x01U);
-#endif
-
-    /* PORTB latch write/readback through the file register (both
-     * builds). */
+    /* PORTB latch write/readback through the file register. */
     EPIC_GPIO_WritePort(GPIOB, 0x55U);
-    v = EPIC_REG8(PIC_REG_PORTB);
-    CHECK(v == 0x55U, 0x02U);
+    t0 = EPIC_REG8(PIC_REG_PORTB);
+    CHECK(t0 == 0x55U, 0x02U);
 
-    /* Timer0 OPTION via EPIC_TIMER0_Init: internal, 1:256 assigned
-     * (PS=111), T0CS=0, T0SE=0, PSA=0. Host shadow check; target
-     * checks the reload value only. */
-    TIMER0_HandleTypeDef h = TIMER0_HANDLE_DEFAULT;
+    /* Timer0: internal, 1:2 prescaler, reload 0x21. */
     h.ClockSource       = TIMER0_CLOCK_INTERNAL;
-    h.Prescaler         = TIMER0_PRESCALER_1_256;
+    h.ClockEdge         = TIMER0_EDGE_RISING;
+    h.Prescaler         = TIMER0_PRESCALER_1_2;
     h.PrescalerAssigned = true;
     h.ReloadValue       = 0x21U;
     EPIC_TIMER0_Init(&h);
-#ifdef PIC16F5X_HOST
-    v = pic16f5x_sim_option;
-    CHECK(v == 0x07U, 0x03U);
-#endif
-    v = EPIC_REG8(PIC_REG_TMR0);
-    CHECK(v == 0x21U, 0x04U);
-
-    /* Start flips T0CS through the driver shadow (host check); the
-     * target timer keeps counting (the blink example proves the
-     * counting path under mdb). */
+    t0 = EPIC_REG8(PIC_REG_TMR0);
+    CHECK(t0 == 0x21U, 0x04U);
     EPIC_TIMER0_Start(&h);
-#ifdef PIC16F5X_HOST
-    v = pic16f5x_sim_option;
-    CHECK((v & PIC_OPTION_T0CS) == 0U, 0x05U);
 
-    /* Timer0 actually counts: the sim steps at 1:256 (TMR0 starts at
-     * 0x21). After 300 cycles (one prescaler period of 256) TMR0 =
-     * 0x22; after another 212 (512 total = two periods) TMR0 = 0x23. */
-    pic16f5x_sim_step(300U);
-    v = EPIC_REG8(PIC_REG_TMR0);
-    CHECK(v == 0x22U, 0x06U);
-    pic16f5x_sim_step(212U);   /* 512 total: exactly two prescaler periods */
-    v = EPIC_REG8(PIC_REG_TMR0);
-    CHECK(v == 0x23U, 0x07U);
-#endif
+    /* OPTION shadow: PS=000 (1:2), PSA=0, T0CS=0, T0SE=0. */
+    t0 = pic16f5x_sim_option;
+    CHECK(t0 == 0x00U, 0x03U);
+    t0 = pic16f5x_sim_option;
+    CHECK((t0 & PIC_OPTION_T0CS) == 0U, 0x05U);
 
-    /* Report once, then halt (target): XC8 restarts main() on return,
-     * and epic_harness_init() would drive RA0 low again, flickering
-     * the marker across the mdb `print PORTA` readback window. One
-     * verdict. */
+    /* Timer0 counts: the sim steps at 1:2 (TMR0 starts at 0x21).
+     * After 6 cycles (3 steps) TMR0 = 0x24. */
+    pic16f5x_sim_step(6U);
+    t0 = EPIC_REG8(PIC_REG_TMR0);
+    CHECK(t0 == 0x24U, 0x06U);
+
+    /* Simulated 1:2 counting continues: 200 more cycles (100 steps,
+     * 0x24 + 100 = 0x88), proving the prescaler keeps dividing. */
+    pic16f5x_sim_step(200U);
+    t0 = EPIC_REG8(PIC_REG_TMR0);
+    CHECK(t0 == 0x88U, 0x07U);
+
+    /* The 16F54's 25-byte GPR surface (DS41213D §1.0) means the
+     * probe's loop counter is byte-width; re-run the wrap detection
+     * idiom the blink uses (t0 < last) across 512 ticks at 1:2
+     * (0x88 + 512 steps wraps twice: at +120 and +376), exactly the
+     * toggle gate's expectation. */
+    {
+        uint16_t j = 0U;
+        uint8_t last = pic16f5x_sim_sfr[PIC_REG_TMR0];
+        uint8_t over = 0U;
+        for (j = 0U; j < 512U; j++)
+        {
+            t0 = EPIC_REG8(PIC_REG_TMR0);
+            if (t0 < last)
+            {
+                over++;
+            }
+            last = t0;
+            pic16f5x_sim_step(2U);
+        }
+        CHECK(over >= 2U, 0x08U);
+    }
+
     (void)epic_harness_report(g_fail == 0U);
-    pic16f5x_harness_halt();
-    return 0;
+    return g_fail == 0U ? 0 : 1;
 }

@@ -200,6 +200,46 @@ variants = [
   "16F777",
 ]
 
+[families.PIC16F5x]
+hal_dir  = "pic16f5x-hal"
+variants = [
+  # Smallest flash first, canonical 16F54 last so family-check's
+  # scaffold gate builds variants[-1] (as on 7x/83_84).
+  "16F505", "16F506", "16F57", "16F59", "16F54",
+]
+dfp      = "Microchip.PIC16Fxxx_DFP"
+dfp_version = "1.7.162"
+fosc_hz  = 4000000
+includes = [
+  "pic16f5x-hal/include/target",
+  "pic16f5x-hal/include",
+  "epic-common/include",
+]
+# 12-bit baseline core (DS41213D): the family owns its GPIO, polled
+# Timer0, no-op IRQ stub and WDT/sleep; no pic14-midrange-core sources
+# (different architecture: no INTCON, TRIS/OPTION are instructions).
+hal_sources = [
+  "pic16f5x-hal/src/peripherals/pic16f5x_gpio.c",
+  "pic16f5x-hal/src/peripherals/pic16f5x_timer0.c",
+  "pic16f5x-hal/src/core/pic16_irq_stub.c",
+  "pic16f5x-hal/src/core/pic16_irq_dispatch.c",
+  "pic16f5x-hal/src/target/pic16f5x_wdt_sleep_target.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+# The epic-cc conformant slice: the blink minimum that fits the
+# 25 B RAM exemplar, riding the landed p16f54 epic-cc target
+# (epic-cc#413). Grows by adding entries, never by editing the build
+# driver.
+epiccc_sources = [
+  "pic16f5x-hal/src/peripherals/pic16f5x_gpio.c",
+  "pic16f5x-hal/src/peripherals/pic16f5x_timer0.c",
+  "pic16f5x-hal/src/core/pic16_irq_stub.c",
+  "pic16f5x-hal/src/core/pic16_irq_dispatch.c",
+  "pic16f5x-hal/src/epiccc/pic16f5x_wdt_sleep_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+
 [families.PIC16F88X]
 hal_dir  = "pic16f88x-hal"
 variants = [
@@ -993,7 +1033,6 @@ sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
-
 [modules.pic16f83_84-hal.supported]
 PIC16F83_84 = [
   "16F84", "16F84A",
@@ -1023,6 +1062,53 @@ sources     = [
   "tests/sim_bank_probe.c",
 ]
 config      = { FOSC = "XT", PWRTE = "ON", WDTE = "OFF" }
+
+# pic16f5x-hal's own manifest slot, mirroring the 83_84 pseudo-module:
+# no application code, just the family's real-target smoke
+# (tests/example_blink.c) and the HARNESS=sim control-space probe gate.
+# The probe (tests/sim_control_probe.c) exercises the TRIS/OPTION
+# control-space writes and the polled Timer0 against hand-computed
+# values, so a platform-header miscompile fails the gate.
+[modules.pic16f5x-hal]
+dir        = "pic16f5x-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.pic16f5x-hal.supported]
+PIC16F5x = [
+  "16F505",
+  "16F506",
+  "16F57",
+  "16F59",
+  "16F54",
+]
+
+[modules.pic16f5x-hal.example.PIC16F5x]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+# WDT = OFF: the 512-word example has no room for a WDT refresh
+# loop (measured; see example_blink.c header). WDT is off for the
+# sim build anyway; keeping it off on target makes the canonical
+# smoke match the gate build.
+config  = { OSC = "XT", WDT = "OFF", CP = "OFF" }
+
+[modules.pic16f5x-hal.example.PIC16F5x.sim]
+name        = "blink"
+# MODE=toggle mdb gate: the blink itself toggles PORTB bit 0, and
+# sim-mdb-run.sh's toggle mode requires exactly that (the family has
+# no UART and no RA0-marker harness object: 512-word/25-byte 16F54
+# cannot hold the variadic report path, so the family links the
+# family-blind epic_harness_target.c and the gate watches the pin).
+# WDT=OFF like every other sim variant.
+harness_src = "epic-common/src/core/epic_harness_target.c"
+sources     = [
+  "tests/example_blink.c",
+]
+config      = { OSC = "XT", WDT = "OFF", CP = "OFF" }
 
 # pic18fxx5x-hal's own manifest slot, mirroring the 87XA and 193X
 # pseudo-modules: the family's real-target smoke (tests/example_blink.c)

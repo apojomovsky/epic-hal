@@ -78,9 +78,32 @@ static uint8_t port_pin_mask(GPIO_TypeDef port)
 }
 
 /* TRIS shadow: the write-only control register is read-modify-cycled
- * in GPR, one byte per port (only A/B exist on the 16F54 exemplar;
- * the wider ports are covered for the batch parts). */
-static uint8_t s_tris[5] = {0xFFU, 0xFFU, 0xFFU, 0xFFU, 0xFFU};
+ * in GPR. Sized to the part's actual port count (A and B always exist;
+ * the wider ports follow the capability macros), so the 25 B RAM
+ * 16F54 exemplar carries only 2 bytes, not the 5 the 40-pin 16F59's
+ * A..E surface needs. Indexing rides the port enum values, which are
+ * contiguous from GPIOA once the wider parts are in scope. */
+static uint8_t s_tris[2
+#if PIC16F5X_FAMILY_HAS_PORTC
+                      + 1
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+                      + 1
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+                      + 1
+#endif
+                      ] = {0xFFU, 0xFFU
+#if PIC16F5X_FAMILY_HAS_PORTC
+                           , 0xFFU
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+                           , 0xFFU
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+                           , 0xFFU
+#endif
+                          };
 
 /* init / deinit. */
 
