@@ -20,7 +20,6 @@ static uint32_t g_cycles = 0U;
  */
 void epic_harness_init(uint32_t cycles)
 {
-
     g_cycles = cycles;
 
     /* RA0 as digital output. TRISA<0> = 0 (default is input per
@@ -36,7 +35,6 @@ void epic_harness_init(uint32_t cycles)
  */
 void epic_harness_tick(void)
 {
-
     /* Real time advances on its own under MPLAB SIM too, nothing to pump. */
 }
 
@@ -48,7 +46,6 @@ void epic_harness_tick(void)
  */
 int epic_harness_running(uint32_t iteration)
 {
-
     return (iteration < g_cycles) ? 1 : 0;
 }
 
@@ -61,7 +58,6 @@ int epic_harness_running(uint32_t iteration)
  */
 void epic_harness_log(const char *fmt, ...)
 {
-
     /* Magic-string dispatch: on the two pass/fail markers from
      * epic_harness_report() drive RA0 from the meaning (PASS = high,
      * FAIL = low); every other log line is a no-op. */
@@ -100,10 +96,8 @@ void epic_harness_log(const char *fmt, ...)
  */
 void pic18f2520_harness_halt(void)
 {
-
     for (;;)
     {
-
         /* nothing */
     }
 }

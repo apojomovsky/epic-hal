@@ -291,7 +291,7 @@ void CCP1_IRQHandler(void)
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
     if (g_ccp_handles[CCP_INSTANCE_1] &&
         g_ccp_handles[CCP_INSTANCE_1]->EventCallback)
-        {
+    {
         g_ccp_handles[CCP_INSTANCE_1]->EventCallback();
     }
 }
@@ -305,7 +305,7 @@ void CCP2_IRQHandler(void)
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
     if (g_ccp_handles[CCP_INSTANCE_2] &&
         g_ccp_handles[CCP_INSTANCE_2]->EventCallback)
-        {
+    {
         g_ccp_handles[CCP_INSTANCE_2]->EventCallback();
     }
 }
