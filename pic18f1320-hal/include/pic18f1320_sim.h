@@ -70,4 +70,33 @@ void pic18_sim_set_irq_callback(pic18_sim_irq_cb_t cb);
  */
 void pic18_sim_drive_usart_rx(uint8_t data);
 
+/**
+ * @brief Write a byte to the simulated data EEPROM.
+ * @param addr the EEPROM address (0..255).
+ * @param data the byte to store.
+ */
+void pic18_sim_drive_eeprom_byte(uint8_t addr, uint8_t data);
+
+/**
+ * @brief Complete a simulated data EEPROM write cycle. Stores the byte
+ *        and sets PIR2<EEIF> to model the cycle finishing.
+ * @param addr the EEPROM address (0..255).
+ * @param data the byte to store.
+ */
+void pic18_sim_drive_eeprom_done(uint8_t addr, uint8_t data);
+
+/**
+ * @brief Read a byte from the simulated data EEPROM.
+ * @param addr the EEPROM address (0..255).
+ * @return the byte stored at that address.
+ */
+uint8_t pic18_sim_eeprom_read(uint8_t addr);
+
+/**
+ * @brief Complete a simulated A/D conversion. Clears ADCON0<GO/DONE>,
+ *        stores the 10-bit result per ADFM, and sets PIR1<ADIF>.
+ * @param result the 10-bit conversion result (0..1023).
+ */
+void pic18_sim_drive_adc_done(uint16_t result);
+
 #endif /* PIC18F1320_SIM_H */

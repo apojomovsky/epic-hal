@@ -72,6 +72,8 @@ void EPIC_IRQ_Enable(PIC18_IRQn irq)
     case PIC18_IRQ_CCP1: SFR_SET_BIT(PIC_REG_PIE1,   PIC_PIE1_CCP1IE);   break;
     case PIC18_IRQ_USART_TX: SFR_SET_BIT(PIC_REG_PIE1, PIC_PIE1_TXIE);  break;
     case PIC18_IRQ_USART_RX: SFR_SET_BIT(PIC_REG_PIE1, PIC_PIE1_RCIE);  break;
+    case PIC18_IRQ_ADC:   SFR_SET_BIT(PIC_REG_PIE1, PIC_PIE1_ADIE);    break;
+    case PIC18_IRQ_EEPROM: SFR_SET_BIT(PIC_REG_PIE2, PIC_PIE2_EEIE);   break;
     default: break;
     }
 }
@@ -93,6 +95,8 @@ void EPIC_IRQ_DisableSrc(PIC18_IRQn irq)
     case PIC18_IRQ_CCP1: SFR_CLR_BIT(PIC_REG_PIE1,   PIC_PIE1_CCP1IE);   break;
     case PIC18_IRQ_USART_TX: SFR_CLR_BIT(PIC_REG_PIE1, PIC_PIE1_TXIE);  break;
     case PIC18_IRQ_USART_RX: SFR_CLR_BIT(PIC_REG_PIE1, PIC_PIE1_RCIE);  break;
+    case PIC18_IRQ_ADC:   SFR_CLR_BIT(PIC_REG_PIE1, PIC_PIE1_ADIE);    break;
+    case PIC18_IRQ_EEPROM: SFR_CLR_BIT(PIC_REG_PIE2, PIC_PIE2_EEIE);   break;
     default: break;
     }
 }
@@ -115,6 +119,8 @@ void EPIC_IRQ_ClearFlag(PIC18_IRQn irq)
     case PIC18_IRQ_CCP1: SFR_CLR_BIT(PIC_REG_PIR1,   PIC_PIR1_CCP1IF);   break;
     case PIC18_IRQ_USART_TX: SFR_CLR_BIT(PIC_REG_PIR1, PIC_PIR1_TXIF);  break;
     case PIC18_IRQ_USART_RX: SFR_CLR_BIT(PIC_REG_PIR1, PIC_PIR1_RCIF);  break;
+    case PIC18_IRQ_ADC:   SFR_CLR_BIT(PIC_REG_PIR1, PIC_PIR1_ADIF);    break;
+    case PIC18_IRQ_EEPROM: SFR_CLR_BIT(PIC_REG_PIR2, PIC_PIR2_EEIF);   break;
     default: break;
     }
 }
@@ -136,6 +142,8 @@ uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq)
     case PIC18_IRQ_CCP1: return (epic_sfr_read8(PIC_REG_PIR1)   & PIC_PIR1_CCP1IF)   ? 1U : 0U;
     case PIC18_IRQ_USART_TX: return (epic_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_TXIF) ? 1U : 0U;
     case PIC18_IRQ_USART_RX: return (epic_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_RCIF) ? 1U : 0U;
+    case PIC18_IRQ_ADC:   return (epic_sfr_read8(PIC_REG_PIR1) & PIC_PIR1_ADIF) ? 1U : 0U;
+    case PIC18_IRQ_EEPROM: return (epic_sfr_read8(PIC_REG_PIR2) & PIC_PIR2_EEIF) ? 1U : 0U;
     default: return 0U;
     }
 }
@@ -183,6 +191,14 @@ void EPIC_IRQ_SetPriority(PIC18_IRQn irq, EPIC_IRQ_Priority prio)
     case PIC18_IRQ_USART_RX:
         if (high) SFR_SET_BIT(PIC_REG_IPR1, PIC_IPR1_RCIP);
         else      SFR_CLR_BIT(PIC_REG_IPR1, PIC_IPR1_RCIP);
+        break;
+    case PIC18_IRQ_ADC:
+        if (high) SFR_SET_BIT(PIC_REG_IPR1, PIC_IPR1_ADIP);
+        else      SFR_CLR_BIT(PIC_REG_IPR1, PIC_IPR1_ADIP);
+        break;
+    case PIC18_IRQ_EEPROM:
+        if (high) SFR_SET_BIT(PIC_REG_IPR2, PIC_IPR2_EEIP);
+        else      SFR_CLR_BIT(PIC_REG_IPR2, PIC_IPR2_EEIP);
         break;
     default: break;
     }

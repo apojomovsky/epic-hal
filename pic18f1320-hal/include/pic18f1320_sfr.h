@@ -91,6 +91,24 @@
 #define PIC_REG_SPBRG         0xFAFU   /**< EUSART baud-rate divisor, low byte.    */
 #define PIC_REG_SPBRGH        0xFB0U   /**< EUSART baud-rate divisor, high byte (BRG16=1). */
 
+/* Data EEPROM, DS39605F §7.0 (256 bytes). Same Access Bank addresses and
+ * EECON1 bit layout as the 4550. */
+#define PIC_REG_EECON1        0xFA6U   /**< EEPROM/Flash control (RD/WR/WREN/WRERR/EEPGD). */
+#define PIC_REG_EECON2        0xFA7U   /**< EEPROM unlock (write 0x55 then 0xAA).       */
+#define PIC_REG_EEDATA        0xFA8U   /**< EEPROM data register.                      */
+#define PIC_REG_EEADR         0xFA9U   /**< EEPROM address register (8-bit, 0..255).   */
+
+/* A/D Converter, DS39605F §17.0 (10-bit, 7 channels AN0-6). The 1320's ADC
+ * has a genuinely different register layout from the 4550: VCFG1:VCFG0 live
+ * in ADCON0 bits 7:6 (not ADCON1), CHS is 3 bits (2:0 in ADCON0 bits 4:2,
+ * 7 channels), and ADCON1 carries a 7-bit per-pin PCFG (bits 6:0) with no
+ * VCFG. ADCON2 matches the 4550 (ADFM/ACQT/ADCS). */
+#define PIC_REG_ADCON2        0xFC0U   /**< A/D control 2 (ADFM/ACQT/ADCS).       */
+#define PIC_REG_ADCON1        0xFC1U   /**< A/D control 1 (PCFG6:PCFG0).          */
+#define PIC_REG_ADCON0        0xFC2U   /**< A/D control 0 (VCFG/CHS/GO-DONE/ADON). */
+#define PIC_REG_ADRESL        0xFC3U   /**< A/D result low byte.                  */
+#define PIC_REG_ADRESH        0xFC4U   /**< A/D result high byte.                 */
+
 /* STATUS bits (Register 5-2). */
 #define PIC_STATUS_N          EPIC_BIT(4)   /**< Negative / borrow complement. */
 #define PIC_STATUS_OV         EPIC_BIT(3)   /**< Overflow.                     */
@@ -237,6 +255,35 @@
 #define PIC_BAUDCTL_BRG16      EPIC_BIT(3)  /**< 16-bit baud generator (else 8-bit). */
 #define PIC_BAUDCTL_SCKP       EPIC_BIT(4)  /**< Sync: TX clock polarity.            */
 #define PIC_BAUDCTL_RCIDL      EPIC_BIT(6)  /**< Receiver idle (read-only).           */
+
+/* A/D bits, DS39605F Registers 17-1/17-2/17-3. ADCON2 matches the 4550;
+ * ADCON0 has VCFG at 7:6 and a 3-bit CHS at 4:2; ADCON1 is a 7-bit
+ * per-pin PCFG with no VCFG. */
+#define PIC_ADCON0_ADON        EPIC_BIT(0)  /**< A/D module on.                       */
+#define PIC_ADCON0_GO_DONE     EPIC_BIT(1)  /**< Conversion status (1 = in progress). */
+#define PIC_ADCON0_CHS_MASK    0x1CU        /**< CHS2:CHS0 at bits 4:2.               */
+#define PIC_ADCON0_CHS_POS     2            /**< CHS field shift.                     */
+#define PIC_ADCON0_VCFG0       EPIC_BIT(6)  /**< Vref+ source: 1=AN3, 0=VDD.          */
+#define PIC_ADCON0_VCFG1       EPIC_BIT(7)  /**< Vref- source: 1=AN2, 0=VSS.          */
+#define PIC_ADCON0_POR_VALUE   0x00U
+
+#define PIC_ADCON1_PCFG_MASK   0x7FU        /**< PCFG6:PCFG0 at bits 6:0 (7 pins).     */
+#define PIC_ADCON1_POR_VALUE   0x00U
+
+#define PIC_ADCON2_ADCS_MASK   0x07U        /**< ADCS2:ADCS0 at bits 2:0.             */
+#define PIC_ADCON2_ACQT_MASK   0x38U        /**< ACQT2:ACQT0 at bits 5:3.             */
+#define PIC_ADCON2_ACQT_POS    3            /**< ACQT field shift.                     */
+#define PIC_ADCON2_ADFM        EPIC_BIT(7)  /**< 1 = right justified, 0 = left.       */
+#define PIC_ADCON2_POR_VALUE   0x00U
+
+/* EEPROM control bits, DS39605F Register 7-1 (identical to 4550). */
+#define PIC_EECON1_RD          EPIC_BIT(0)  /**< Read control (with EEPGD=0).         */
+#define PIC_EECON1_WR          EPIC_BIT(1)  /**< Write control.                      */
+#define PIC_EECON1_WREN        EPIC_BIT(2)  /**< Write-enable (must be set before WR). */
+#define PIC_EECON1_WRERR       EPIC_BIT(3)  /**< Write-error flag.                   */
+#define PIC_EECON1_FREE        EPIC_BIT(4)  /**< Flash erase/Program Free bit.        */
+#define PIC_EECON1_EEPGD       EPIC_BIT(7)  /**< 1=Flash program memory, 0=Data EEPROM. */
+#define PIC_EECON1_POR_VALUE   0x00U
 
 /* PIR2 / PIE2 / IPR2 bits (Reg 9-5/9-7/9-9). Bits 0 (CCP2), 3 (BCLIE, no
  * MSSP), 5/6 (USBIE/CMIE, no USB/comparator) are unimplemented on this
