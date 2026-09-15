@@ -75,15 +75,6 @@ uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
             default: break;                                              \
         }                                                                \
     } while (0)
-#define USART_WRITE_RCREG(inst, v)                                       \
-    do {                                                                 \
-        switch (inst)                                                    \
-        {                                                                \
-            case USART_INSTANCE_1: EPIC_REG8(PIC_REG_RCREG1) = (uint8_t)(v); break; \
-            case USART_INSTANCE_2: EPIC_REG8(PIC_REG_RCREG2) = (uint8_t)(v); break; \
-            default: break;                                              \
-        }                                                                \
-    } while (0)
 #define USART_WRITE_SPBRG(inst, v)                                       \
     do {                                                                 \
         switch (inst)                                                    \

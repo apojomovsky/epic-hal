@@ -81,13 +81,13 @@ typedef struct {
  *         phase and SSPADD, then enable the module and (optionally) the
  *         SSPIF interrupt.
  * @param h the SSP handle describing the desired configuration.
- * @return 0 on success, 0xFFFF on invalid configuration.
+ * @return EPIC_OK on success, EPIC_INVALID if h is NULL.
  */
 EPIC_StatusTypeDef EPIC_SSP_Init(const SSP_HandleTypeDef *h);
 
 /**
  * @brief  Disable the MSSP module and clear SSPIF.
- * @return 0 on success, 0xFFFF if the module was not initialized.
+ * @return EPIC_OK.
  */
 EPIC_StatusTypeDef EPIC_SSP_DeInit(void);
 
@@ -158,8 +158,9 @@ void EPIC_SSP_ReceiveEnable(void);
 void EPIC_SSP_AcknowledgeEnable(void);
 
 /**
- * @brief Returns 1 if an ACK was received from the slave (ACKSTAT).
- * @return 1 when the slave acknowledged, else 0.
+ * @brief Returns 1 if the slave NACKed the last byte. ACKSTAT
+ *        (SSPCON2<6>) reads 1 when no acknowledge was received.
+ * @return 1 when the slave did not acknowledge (NACK), else 0.
  */
 uint8_t EPIC_SSP_AcknowledgeStatus(void);
 

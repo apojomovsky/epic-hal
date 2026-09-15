@@ -36,10 +36,6 @@ here.
 15. [The examples](#15-the-examples)
 16. [Known gaps and gotchas](#16-known-gaps-and-gotchas)
 17. [Appendix: datasheet section index](#17-appendix-datasheet-section-index)
-11. [Device selection](#11-device-selection)
-12. [The examples](#12-the-examples)
-13. [Known gaps and gotchas](#13-known-gaps-and-gotchas)
-14. [Appendix: datasheet section index](#14-appendix-datasheet-section-index)
 
 ---
 
