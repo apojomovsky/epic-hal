@@ -1,7 +1,7 @@
 /*
  * Real-target platform half of the SFR mapping layer (host half:
  * `host/pic18_platform.h`); the build's include path picks one, so
- * `pic18f2520_hal.h` includes `"pic18_platform.h"` unconditionally. Every
+ * `pic18f6520_hal.h` includes `"pic18_platform.h"` unconditionally. Every
  * SFR access is a direct volatile dereference of the literal address,
  * cast through `uintptr_t` to silence XC8's integer-to-pointer warning.
  * XC8 has no weak symbols, so `EPIC_WEAK` is empty.

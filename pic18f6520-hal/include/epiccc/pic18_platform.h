@@ -1,6 +1,6 @@
 /* epic-cc variant of the SFR mapping layer (paired with
  * target/pic18_platform.h and host/pic18_platform.h); the build's include
- * path picks which resolves, so pic18f2520_hal.h includes "pic18_platform.h"
+ * path picks which resolves, so pic18f6520_hal.h includes "pic18_platform.h"
  * unconditionally with no #ifdef.
  *
  * Under epic-cc the SFR layer is the same volatile dereference shape as

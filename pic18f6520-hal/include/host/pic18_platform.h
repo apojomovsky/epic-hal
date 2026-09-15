@@ -1,7 +1,7 @@
 /*
  * Host-simulation platform half of the SFR mapping layer (target half:
  * `target/pic18_platform.h`); the build's include path picks one, so
- * `pic18f2520_hal.h` includes `"pic18_platform.h"` unconditionally. Every
+ * `pic18f6520_hal.h` includes `"pic18_platform.h"` unconditionally. Every
  * SFR access indexes a memory-backed register file `pic18_sim_sfr[]`
  * (`src/sim/pic18_sim.c`), sized to the full 12-bit data-memory address
  * space so tests can poke any register directly.

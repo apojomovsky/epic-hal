@@ -29,6 +29,21 @@ static pic18_sim_irq_cb_t sim_irq_cb = 0;
 static void sim_step_timer0(void);
 
 /**
+ * @brief Advance the simulated Timer1 by one instruction cycle.
+ */
+static void sim_step_timer1(void);
+
+/**
+ * @brief Advance the simulated Timer2 by one instruction cycle.
+ */
+static void sim_step_timer2(void);
+
+/**
+ * @brief Advance the simulated Timer3 by one instruction cycle.
+ */
+static void sim_step_timer3(void);
+
+/**
  * @brief Map a port letter (A..G) to a 0-based index.
  *
  * Unknown letters map to index 0, matching port A.
@@ -144,6 +159,10 @@ void pic18_sim_reset(void)
     pic18_sim_sfr[PIC_REG_PIE3]     = PIC_PIE3_POR_VALUE;     /* 0x00 */
     pic18_sim_sfr[PIC_REG_IPR3]     = PIC_IPR3_POR_VALUE;     /* 0x3F */
     pic18_sim_sfr[PIC_REG_T0CON]    = PIC_T0CON_POR_VALUE;    /* 0xFF */
+    pic18_sim_sfr[PIC_REG_T1CON]    = PIC_T1CON_POR_VALUE;    /* 0x00 */
+    pic18_sim_sfr[PIC_REG_T2CON]    = PIC_T2CON_POR_VALUE;    /* 0x00 */
+    pic18_sim_sfr[PIC_REG_PR2]      = PIC_PR2_POR_VALUE;      /* 0xFF */
+    pic18_sim_sfr[PIC_REG_T3CON]    = PIC_T3CON_POR_VALUE;    /* 0x00 */
     pic18_sim_sfr[PIC_REG_ADCON0]   = PIC_ADCON0_POR_VALUE;   /* 0x00 */
     pic18_sim_sfr[PIC_REG_ADCON1]   = PIC_ADCON1_POR_VALUE;   /* 0x00 */
     pic18_sim_sfr[PIC_REG_ADCON2]   = PIC_ADCON2_POR_VALUE;   /* 0x00 */
@@ -178,7 +197,7 @@ void pic18_sim_reset(void)
 /**
  * @brief Advance the simulated device by a number of instruction cycles.
  *
- * Each cycle steps the enabled Timer0.
+ * Each cycle steps the enabled timers (Timer0, Timer1, Timer2, Timer3).
  *
  * @param ticks the number of instruction cycles to simulate
  */
@@ -187,6 +206,9 @@ void pic18_sim_step(uint32_t ticks)
     for (uint32_t i = 0; i < ticks; i++)
     {
         sim_step_timer0();
+        sim_step_timer1();
+        sim_step_timer2();
+        sim_step_timer3();
     }
 }
 
@@ -246,6 +268,125 @@ static void sim_step_timer0(void)
             pic18_sim_sfr[PIC_REG_INTCON] |= PIC_INTCON_TMR0IF;
             if (sim_irq_cb) sim_irq_cb();
         }
+    }
+}
+
+/**
+ * @brief Step the simulated Timer1 by one instruction cycle.
+ *
+ * Applies the T1CON prescaler (1:1/2/4/8), increments the 16-bit
+ * TMR1H:TMR1L, and raises PIR1<TMR1IF> on overflow (DS39609B §12.0).
+ */
+static void sim_step_timer1(void)
+{
+    /* T1CON layout (DS39609B Register 12-1):
+     *   bit 7  RD16 (ignored here, host memory is atomic)
+     *   bit 6  unimplemented on this part (no T1RUN)
+     *   bit 5..4 T1CKPS1:T1CKPS0
+     *   bit 0  TMR1ON */
+    uint8_t t1con = pic18_sim_sfr[PIC_REG_T1CON];
+    if (!(t1con & PIC_T1CON_TMR1ON)) return;
+
+    /* Prescaler ratio, DS39609B Register 12-1: 00->1, 01->2, 10->4, 11->8. */
+    static const uint16_t ps_idx[4] = {1, 2, 4, 8};
+    uint32_t rate = ps_idx[(t1con >> 4) & 0x3U];
+
+    static uint16_t t1_prescaler = 0U;
+    t1_prescaler++;
+    if (t1_prescaler < rate) return;
+    t1_prescaler = 0U;
+
+    uint16_t full = (uint16_t)(((uint16_t)pic18_sim_sfr[PIC_REG_TMR1H] << 8) |
+                               pic18_sim_sfr[PIC_REG_TMR1L]);
+    full++;
+    pic18_sim_sfr[PIC_REG_TMR1L] = (uint8_t)(full & 0xFFU);
+    pic18_sim_sfr[PIC_REG_TMR1H] = (uint8_t)(full >> 8);
+    if (full == 0U)
+    {
+        pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR1IF;
+        if (sim_irq_cb) sim_irq_cb();
+    }
+}
+
+/**
+ * @brief Step the simulated Timer2 by one instruction cycle.
+ *
+ * Applies the T2CON prescaler (1:1/4/16), increments TMR2, and on
+ * match with PR2 resets TMR2, advances the postscaler, and raises
+ * PIR1<TMR2IF> when the postscaler wraps (DS39609B §13.0).
+ */
+static void sim_step_timer2(void)
+{
+    /* T2CON layout (DS39609B Register 13-1):
+     *   bit 6..3 T2OUTPS3:T2OUTPS0 (postscaler 1:(N+1))
+     *   bit 2    TMR2ON
+     *   bit 1..0 T2CKPS1:T2CKPS0 (00=1:1, 01=1:4, 1x=1:16) */
+    uint8_t t2con = pic18_sim_sfr[PIC_REG_T2CON];
+    if (!(t2con & PIC_T2CON_TMR2ON)) return;
+
+    static const uint16_t pre_idx[4] = {1, 4, 16, 16};
+    uint32_t pre_rate = pre_idx[t2con & 0x3U];
+
+    static uint16_t t2_prescaler = 0U;
+    t2_prescaler++;
+    if (t2_prescaler < pre_rate) return;
+    t2_prescaler = 0U;
+
+    uint8_t tmr2 = (uint8_t)(pic18_sim_sfr[PIC_REG_TMR2] + 1U);
+    uint8_t pr2 = pic18_sim_sfr[PIC_REG_PR2];
+    if (tmr2 > pr2)
+    {
+        /* Match: reset counter, advance postscaler. */
+        pic18_sim_sfr[PIC_REG_TMR2] = 0U;
+        static uint8_t t2_post = 0U;
+        uint8_t post_n = (uint8_t)((t2con >> 3) & 0xFU);
+        t2_post++;
+        if (t2_post > post_n)
+        {
+            t2_post = 0U;
+            pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR2IF;
+            if (sim_irq_cb) sim_irq_cb();
+        }
+    }
+    else
+    {
+        pic18_sim_sfr[PIC_REG_TMR2] = tmr2;
+    }
+}
+
+/**
+ * @brief Step the simulated Timer3 by one instruction cycle.
+ *
+ * Applies the T3CON prescaler (1:1/2/4/8), increments the 16-bit
+ * TMR3H:TMR3L, and raises PIR2<TMR3IF> on overflow (DS39609B §14.0).
+ */
+static void sim_step_timer3(void)
+{
+    /* T3CON layout (DS39609B Register 14-1):
+     *   bit 7  RD16 (ignored here, host memory is atomic)
+     *   bit 5..4 T3CKPS1:T3CKPS0
+     *   bit 0  TMR3ON */
+    uint8_t t3con = pic18_sim_sfr[PIC_REG_T3CON];
+    if (!(t3con & PIC_T3CON_TMR3ON)) return;
+
+    /* Prescaler ratio, DS39609B Register 14-1: 00->1, 01->2, 10->4, 11->8. */
+    static const uint16_t ps_idx[4] = {1, 2, 4, 8};
+    uint32_t rate = ps_idx[(t3con >> 4) & 0x3U];
+
+    static uint16_t t3_prescaler = 0U;
+    t3_prescaler++;
+    if (t3_prescaler < rate) return;
+    t3_prescaler = 0U;
+
+    uint16_t full = (uint16_t)(((uint16_t)pic18_sim_sfr[PIC_REG_TMR3H] << 8) |
+                               pic18_sim_sfr[PIC_REG_TMR3L]);
+    full++;
+    pic18_sim_sfr[PIC_REG_TMR3L] = (uint8_t)(full & 0xFFU);
+    pic18_sim_sfr[PIC_REG_TMR3H] = (uint8_t)(full >> 8);
+    if (full == 0U)
+    {
+        pic18_sim_sfr[PIC_REG_PIR2] |= PIC_PIR2_TMR3IF;
+        if (sim_irq_cb) sim_irq_cb();
     }
 }
 
