@@ -1,5 +1,5 @@
 /*
- * Timer3 driver, 16-bit timer/counter (DS39609B §12.0), a second
+ * Timer3 driver, 16-bit timer/counter (DS39609B §14.0), a second
  * 16-bit timer alongside Timer1. Shares Timer1's T1OSC (no T3OSCEN of
  * its own); overflow sets PIR2<TMR3IF>. T3CON<T3CCP2:T3CCP1> selects
  * Timer1 vs Timer3 as the CCP capture/compare source, left at reset
@@ -13,7 +13,7 @@
 #include "pic18f6520_sfr.h"
 
 /**
- * @brief Timer3 clock source (T3CON<TMR3CS>, DS39609B Register 12-1).
+ * @brief Timer3 clock source (T3CON<TMR3CS>, DS39609B Register 14-1).
  */
 typedef enum {
     TIMER3_CLOCK_INTERNAL  = 0x0U,   /**< Fosc/4 (timer mode). */
@@ -21,7 +21,7 @@ typedef enum {
 } TIMER3_ClockSourceTypeDef;
 
 /**
- * @brief External-clock synchronisation (T3CON<T3SYNC>, DS39609B §12.0).
+ * @brief External-clock synchronisation (T3CON<T3SYNC>, DS39609B §14.0).
  *        Ignored in timer mode (internal clock).
  */
 typedef enum {
@@ -30,7 +30,7 @@ typedef enum {
 } TIMER3_ClockSyncTypeDef;
 
 /**
- * @brief Prescaler ratio (T3CON<T3CKPS1:T3CKPS0>, DS39609B Register 12-1).
+ * @brief Prescaler ratio (T3CON<T3CKPS1:T3CKPS0>, DS39609B Register 14-1).
  */
 typedef enum {
     TIMER3_PRESCALER_1_1 = 0x0U,    /**< 1:1, 00. */

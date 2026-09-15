@@ -649,7 +649,7 @@ hal_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
-# The epic-cc conformant slice (foundation): GPIO + Timer0 + the IRQ/WDT
+# The epic-cc conformant slice: GPIO + Timer0-3 + the IRQ/WDT
 # core + the toolchain-specific vector/dispatch/WDT files, the blink/IRQ
 # smoke needs. Grows by adding entries as peripherals land, never by
 # editing the build driver.

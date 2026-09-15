@@ -1,11 +1,11 @@
 /*
- * Timer3 driver, implementation (DS39609B §12.0, Register 12-1).
+ * Timer3 driver, implementation (DS39609B §14.0, Register 14-1).
  */
 
 #include "peripherals/pic18f6520_timer3.h"
 #include "core/pic18_irq.h"
 
-/* T3CON prescaler ratios, DS39609B Register 12-1:
+/* T3CON prescaler ratios, DS39609B Register 14-1:
  *   00 -> 1:1, 01 -> 1:2, 10 -> 1:4, 11 -> 1:8 */
 static const uint16_t ps_ratio[4] = { 1, 2, 4, 8 };
 
@@ -23,7 +23,7 @@ static const TIMER3_HandleTypeDef *g_t3_handle = NULL;
 uint16_t EPIC_TIMER3_ReadCounter(void)
 {
     /* With RD16 set, reading TMR3L latches TMR3H into a shadow (DS39609B
-     * §12.0); read low then high for a consistent 16-bit value. */
+     * §14.0); read low then high for a consistent 16-bit value. */
     uint8_t lo = epic_sfr_read8(PIC_REG_TMR3L);
     uint8_t hi = epic_sfr_read8(PIC_REG_TMR3H);
     return (uint16_t)(((uint16_t)hi << 8) | lo);
@@ -37,7 +37,7 @@ uint16_t EPIC_TIMER3_ReadCounter(void)
  */
 void EPIC_TIMER3_WriteCounter(uint16_t value)
 {
-    /* With RD16 set, writing TMR3L latches TMR3H (DS39609B §12.0); write
+    /* With RD16 set, writing TMR3L latches TMR3H (DS39609B §14.0); write
      * high byte first via the shadow, then low to commit both. */
     epic_sfr_write8(PIC_REG_TMR3H, (uint8_t)(value >> 8));
     epic_sfr_write8(PIC_REG_TMR3L, (uint8_t)(value & 0xFFU));
