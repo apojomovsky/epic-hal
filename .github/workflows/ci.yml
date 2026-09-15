@@ -364,7 +364,7 @@ jobs:
           make epiccc-build MODULE=pic16f63x_67x_68x-hal MCU=16F677 EPIC_CC_HOST=1
           make epiccc-build MODULE=pic16f7x-hal MCU=16F77 EPIC_CC_HOST=1
           # The 16F54 leg (epic-hal#151) awaits the epic-cc p16f54 RAM
-          # model fix (epic-cc#433): the device toml caps the GPR bank
+          # model fix (epic-cc#437): the device toml caps the GPR bank
           # at 9 bytes (ram_banks [[0x07,0x0F]] + common_ram
           # [0x10,0x1F]) while the part has one flat 25-byte bank, so
           # the blink overflows the allocator ("GPR demand exceeds
@@ -400,7 +400,7 @@ jobs:
             --watch PORTB:0 --samples 12 --steps 200000 \
             --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
           # The 16F54 toggle leg awaits the epic-cc p16f54 RAM model
-          # fix (epic-cc#433): no epic-cc-built blink hex exists while
+          # fix (epic-cc#437): no epic-cc-built blink hex exists while
           # the allocator caps the part's GPR at 9 bytes. The
           # sim-runner PicBaseline arm is landed and fixture-verified;
           # this leg re-enables with that epic-cc bump.
