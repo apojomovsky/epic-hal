@@ -608,6 +608,59 @@ epiccc_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 
+# Family C phase 1 (epic-hal#182, umbrella #150): 64-pin PIC18,
+# forked from PIC18Fxx5x (same Access Bank / two-vector model,
+# confirmed against p18f6520's device TOML in epic-cc). Largest of the
+# three new families: 7 ports, 5 CCP, TMR4, dual EUSART, MSSP, PSP,
+# 12-ch ADC, dual comparator, LVD, 1 KB EEPROM (DS39609B Table 1-1).
+# No USB, no SPP. Foundation only: GPIO + Timer0 + IRQ backend;
+# Timer1-4 (#183), CCP/MSSP/EUSART (#184) and ADC/comp/EEPROM (#185)
+# grow this list.
+[families.PIC18F6520]
+hal_dir  = "pic18f6520-hal"
+variants = ["18F6520"]
+dfp      = "Microchip.PIC18Fxxxx_DFP"
+dfp_version = "1.7.171"
+fosc_hz  = 20000000
+# The 6520's config uses HS (external crystal, DS39609B §2.0) and
+# carries no PLL/USB fields (no plldiv/cpudiv/usbdiv/vregen like the
+# 2455 family), so there is no xtal/plldiv to check and no xtal_hz
+# here; fosc_hz is the 20 MHz HS system clock the foundation examples
+# assume (example_blink). The 6520's config-word register set uses the
+# BOR / STVR field spellings (not BOREN / STVREN like the 2520;
+# DS39609B §23.0) and has no MCLRE / IESO / FCMEN / PBADEN / XINST
+# fields.
+includes = [
+  "pic18f6520-hal/include/target",
+  "pic18f6520-hal/include",
+  "epic-common/include",
+]
+hal_sources = [
+  "pic18f6520-hal/src/peripherals/pic18f6520_gpio.c",
+  "pic18f6520-hal/src/peripherals/pic18f6520_timer0.c",
+  "pic18f6520-hal/src/core/pic18_irq.c",
+  "pic18f6520-hal/src/core/pic18_irq_dispatch.c",
+  "pic18f6520-hal/src/target/pic18_isr_vector.c",
+  "pic18f6520-hal/src/core/pic18f6520_wdt_sleep.c",
+  "pic18f6520-hal/src/target/pic18f6520_wdt_sleep_target.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+# The epic-cc conformant slice (foundation): GPIO + Timer0 + the IRQ/WDT
+# core + the toolchain-specific vector/dispatch/WDT files, the blink/IRQ
+# smoke needs. Grows by adding entries as peripherals land, never by
+# editing the build driver.
+epiccc_sources = [
+  "pic18f6520-hal/src/peripherals/pic18f6520_gpio.c",
+  "pic18f6520-hal/src/peripherals/pic18f6520_timer0.c",
+  "pic18f6520-hal/src/core/pic18_irq.c",
+  "pic18f6520-hal/src/core/pic18f6520_wdt_sleep.c",
+  "pic18f6520-hal/src/epiccc/pic18f6520_wdt_sleep_epiccc.c",
+  "pic18f6520-hal/src/epiccc/pic18_isr_vector.c",
+  "pic18f6520-hal/src/epiccc/pic18_irq_dispatch_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+
 # PIC16F193X has no higher-level modules yet (out of scope for the
 # distribution work), so nothing else exercises its family HAL. This
 # module is the family's own
@@ -1066,6 +1119,43 @@ sources     = [
   "tests/example_irq.c",
 ]
 config      = { BOREN = "ON", BORV = "3", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", FCMEN = "OFF", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", PBADEN = "OFF", PWRT = "ON", STVREN = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+[modules.pic18f6520-hal]
+dir        = "pic18f6520-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.pic18f6520-hal.supported]
+PIC18F6520 = [
+  "18F6520",
+]
+
+# Blink on RB0, the canonical HAL smoke. Config field set is the 6520's
+# own (DS39609B §23.0): BOR/STVR (not BOREN/STVREN), no MCLRE/IESO/
+# FCMEN/PBADEN/XINST; WDTPS is the postscaler ratio 1:1..1:128 (Table
+# 23-2), not the 2520/4550 families' period-derived names.
+[modules.pic18f6520-hal.example.PIC18F6520]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# HARNESS=sim: the dedicated IRQ-core smoke test, the step
+# docs/adding-a-device.md §5.5 makes mandatory before any peripheral
+# builds on the interrupt backend (enable the Timer0 interrupt, confirm
+# it fires and the flag/enable bits read back correctly). Reporting on
+# RA0 in MODE=gpio (no EUSART in the foundation). WDT=OFF like every
+# other sim variant.
+[modules.pic18f6520-hal.example.PIC18F6520.sim]
+name        = "irq-smoke"
+harness_src = "pic18f6520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 [modules.epic-combo-uart-ssp]
 dir        = "tests/epic-combo-uart-ssp"

@@ -493,12 +493,26 @@ def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
                 and fam.name in ("PIC16F88X", "PIC16F193X", "PIC16F628A",
                                  "PIC16F63x_67x_68x", "PIC16F7x")):
             epic_key = "boren"
+        # The PIC18 table maps `bor` -> `boren` for the 2455/2520
+        # devices whose TOMLs spell the field that way; the 6520's own
+        # device data spells it `bor` (DS39609B Register 23-2), so flip
+        # it back like the PIC16 families.
+        if (is_pic18 and epic_key == "boren"
+                and fam.name == "PIC18F6520"):
+            epic_key = "bor"
         low_val = val.lower()
         if is_pic18:
             if low_key == "borv":
                 epic_val = _BORV_MAP.get(low_val, low_val)
             elif low_key == "wdtps" and low_val.isdigit():
-                epic_val = f"div{low_val}"
+                # Only the 4550-family device TOMLs name the WDTPS values
+                # with a div prefix (div1..div32768, DS39632E); the 2520
+                # /1320/6520 TOMLs name them as plain postscaler ratios
+                # (1..32768 / 1..128). Prefixing every digit would emit
+                # wdtps=div128 for the 6520, which its device data
+                # rejects (epic-cc resolve_config unknown value).
+                epic_val = f"div{low_val}" if fam.name == "PIC18Fxx5x" \
+                    else low_val
             elif low_key == "plldiv":
                 # The prescaler's unity setting has its own name in the
                 # device data; the digit map is the CPUDIV enum, whose
@@ -600,6 +614,7 @@ CANONICAL = {
     "PIC18Fxx5x": "18F4550",
     "PIC18F1320": "18F1320",
     "PIC18F2520": "18F2520",
+    "PIC18F6520": "18F6520",
     "PIC16F193X": "16F1937",
     "PIC16F628A": "16F628A",
     "PIC16F83_84": "16F84A",
