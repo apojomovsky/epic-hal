@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
-# The pre-commit checks: trailing whitespace/newline, em-dashes on added
-# lines, cppcheck on staged .c files, stray root-level files. Installed into
-# .git/hooks/pre-commit by scripts/install-git-hooks.sh; see scripts/README.md
-# for what each check does and why.
-#
-# Operates on staged content, except the whitespace fixer, which edits the
-# working-tree file in place and asks you to re-`git add` it. CI reuses this
-# same script (ci.yml's host job) against a committed ref range: set
-# PRE_COMMIT_BASE_REF to the ref to diff against; unset = local staged-index
-# hook.
+# The pre-commit checks: trailing whitespace/newline, em-dashes and
+# Allman-brace style on added lines, cppcheck on staged .c files, stray
+# root-level files. Installed into .git/hooks/pre-commit by
+# scripts/install-git-hooks.sh; see scripts/README.md for what each check
+# does and why. Operates on staged content, except the whitespace fixer,
+# which edits the working-tree file in place and asks you to re-`git add`
+# it. CI reuses this script against PRE_COMMIT_BASE_REF; unset = index.
 
 set -u
 fail=0
+
+# Resolve this script's real location: the pre-commit hook is a symlink
+# into .git/hooks, so $0/dirname would point into .git/hooks, not scripts/.
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")" && pwd)"
 
 if [ -n "${PRE_COMMIT_BASE_REF:-}" ]; then
     diff_range=("$PRE_COMMIT_BASE_REF...HEAD")
@@ -170,7 +171,21 @@ emdash_check() {
     fi
 }
 
-# ---- 3. cppcheck on staged .c files (real static-analysis findings only) ----
+# ---- 3. Allman brace style on added lines ----
+#
+# Repo brace style is Allman: an opening brace owns its line, for function
+# bodies and control statements alike. Scoped like the em-dash rule (added
+# lines only, PRE_COMMIT_BASE_REF respects) so pre-existing style in files
+# an unrelated commit touches never blocks it; the standalone checker
+# scripts/brace-style-check.sh holds the implementation and the rationale.
+
+brace_style_check() {
+    if ! bash "${SCRIPT_DIR}/brace-style-check.sh"; then
+        fail=1
+    fi
+}
+
+# ---- 4. cppcheck on staged .c files (real static-analysis findings only) ----
 #
 # unusedFunction and missingInclude/missingIncludeSystem are suppressed:
 # cppcheck analyzes one translation unit at a time here, so it cannot see
@@ -239,6 +254,7 @@ cppcheck_check() {
 
 newline_whitespace_check
 emdash_check
+brace_style_check
 cppcheck_check
 stray_files_check
 

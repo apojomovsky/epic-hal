@@ -53,7 +53,8 @@ int main(void)
 
     /* Let time pass. On the host the harness bounds the loop to
      * SIM_CYCLES and pumps the sim each iteration. */
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
 

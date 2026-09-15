@@ -1,15 +1,14 @@
-# Starter config for `git clang-format` (manual, opt-in use only, see
-# scripts/README.md). NOT wired into the pre-commit hook: tested against
-# real files in this repo (epic-pid/src/pid.c) and it still reformats
-# deliberate hand-tuned style this codebase relies on, aligned struct-field
-# comments, single-line `if (x) { y; }` clamp idioms, `} else {` spacing,
-# even collapsing a one-line function body onto its signature. Fix those
-# before trusting this for anything other than a manual, reviewed
-# `git clang-format --diff` look.
+# Brace-style gate config (scripts/brace-style-check.sh is the enforced
+# checker: Allman braces on added lines, wired into the pre-commit hook,
+# CI, and epic-tasks takeoff). This file exists so clang-format and the
+# gate agree on the house style; it is not itself wired into a formatter
+# pass (clang-format would also churn pre-existing code).
 BasedOnStyle: LLVM
 IndentWidth: 4
 ColumnLimit: 80
-BreakBeforeBraces: Stroustrup
+# House style is Allman/Microsoft: the opening brace owns its line, for
+# function bodies and control statements alike.
+BreakBeforeBraces: Allman
 AlignConsecutiveDeclarations: false
 AlignConsecutiveAssignments: false
 SpaceBeforeParens: ControlStatements

@@ -56,7 +56,8 @@ static void sim_step_timer3(void);
  */
 static uint8_t port_index(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return 0;
         case 'B': case 'b': return 1;
         case 'C': case 'c': return 2;
@@ -73,7 +74,8 @@ static uint8_t port_index(char port)
  */
 static uint16_t lat_addr(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return PIC_REG_LATA;
         case 'B': case 'b': return PIC_REG_LATB;
         case 'C': case 'c': return PIC_REG_LATC;
@@ -90,7 +92,8 @@ static uint16_t lat_addr(char port)
  */
 static uint16_t tris_addr(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return PIC_REG_TRISA;
         case 'B': case 'b': return PIC_REG_TRISB;
         case 'C': case 'c': return PIC_REG_TRISC;
@@ -107,7 +110,8 @@ static uint16_t tris_addr(char port)
  */
 static uint16_t port_addr(char port)
 {
-    switch (port) {
+    switch (port)
+    {
         case 'A': case 'a': return PIC_REG_PORTA;
         case 'B': case 'b': return PIC_REG_PORTB;
         case 'C': case 'c': return PIC_REG_PORTC;
@@ -171,7 +175,8 @@ void pic18_sim_reset(void)
  */
 void pic18_sim_step(uint32_t ticks)
 {
-    for (uint32_t i = 0; i < ticks; i++) {
+    for (uint32_t i = 0; i < ticks; i++)
+    {
         sim_step_timer0();
         sim_step_timer1();
         sim_step_timer2();
@@ -211,22 +216,27 @@ static void sim_step_timer0(void)
     if (t0_prescaler < rate) return;
     t0_prescaler = 0U;
 
-    if (t0con & PIC_T0CON_T08BIT) {
+    if (t0con & PIC_T0CON_T08BIT)
+    {
         /* 8-bit mode: increment TMR0L. */
         uint8_t t0 = (uint8_t)(pic18_sim_sfr[PIC_REG_TMR0L] + 1U);
         pic18_sim_sfr[PIC_REG_TMR0L] = t0;
-        if (t0 == 0x00U) {
+        if (t0 == 0x00U)
+        {
             pic18_sim_sfr[PIC_REG_INTCON] |= PIC_INTCON_TMR0IF;
             if (sim_irq_cb) sim_irq_cb();
         }
-    } else {
+    }
+    else
+    {
         /* 16-bit mode: increment TMR0H:TMR0L. */
         uint16_t full = (uint16_t)(((uint16_t)pic18_sim_sfr[PIC_REG_TMR0H] << 8) |
                                    pic18_sim_sfr[PIC_REG_TMR0L]);
         full++;
         pic18_sim_sfr[PIC_REG_TMR0L] = (uint8_t)(full & 0xFFU);
         pic18_sim_sfr[PIC_REG_TMR0H] = (uint8_t)(full >> 8);
-        if (full == 0U) {
+        if (full == 0U)
+        {
             pic18_sim_sfr[PIC_REG_INTCON] |= PIC_INTCON_TMR0IF;
             if (sim_irq_cb) sim_irq_cb();
         }
@@ -261,7 +271,8 @@ static void sim_step_timer1(void)
     full++;
     pic18_sim_sfr[PIC_REG_TMR1L] = (uint8_t)(full & 0xFFU);
     pic18_sim_sfr[PIC_REG_TMR1H] = (uint8_t)(full >> 8);
-    if (full == 0U) {
+    if (full == 0U)
+    {
         pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR1IF;
         if (sim_irq_cb) sim_irq_cb();
     }
@@ -292,18 +303,22 @@ static void sim_step_timer2(void)
 
     uint8_t tmr2 = (uint8_t)(pic18_sim_sfr[PIC_REG_TMR2] + 1U);
     uint8_t pr2 = pic18_sim_sfr[PIC_REG_PR2];
-    if (tmr2 > pr2) {
+    if (tmr2 > pr2)
+    {
         /* Match: reset counter, advance postscaler. */
         pic18_sim_sfr[PIC_REG_TMR2] = 0U;
         static uint8_t t2_post = 0U;
         uint8_t post_n = (uint8_t)((t2con >> 3) & 0xFU);
         t2_post++;
-        if (t2_post > post_n) {
+        if (t2_post > post_n)
+        {
             t2_post = 0U;
             pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR2IF;
             if (sim_irq_cb) sim_irq_cb();
         }
-    } else {
+    }
+    else
+    {
         pic18_sim_sfr[PIC_REG_TMR2] = tmr2;
     }
 }
@@ -336,7 +351,8 @@ static void sim_step_timer3(void)
     full++;
     pic18_sim_sfr[PIC_REG_TMR3L] = (uint8_t)(full & 0xFFU);
     pic18_sim_sfr[PIC_REG_TMR3H] = (uint8_t)(full >> 8);
-    if (full == 0U) {
+    if (full == 0U)
+    {
         pic18_sim_sfr[PIC_REG_PIR2] |= PIC_PIR2_TMR3IF;
         if (sim_irq_cb) sim_irq_cb();
     }
@@ -383,7 +399,8 @@ uint8_t pic18_sim_read_output(char port, uint8_t pin)
     uint8_t mask = (uint8_t)(1U << pin);
     uint8_t tris = pic18_sim_sfr[tris_addr(port)];
 
-    if (tris & mask) {
+    if (tris & mask)
+    {
         /* Input: return the externally driven level (0 if not driven). */
         return (sim_input_override[idx] & mask) ?
                ((sim_input_value[idx] & mask) ? 1U : 0U) : 0U;

@@ -58,7 +58,8 @@ int main(void)
     /* Transmit 'U' (0x55, alternating bits, scope-friendly). */
     EPIC_USART_Transmit(0x55U);
 
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
     }
 

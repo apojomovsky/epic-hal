@@ -40,18 +40,24 @@ void epic_dispatch_all_irqs(void)
     if (intcon & PIC_INTCON_TMR0IF) TIMER0_IRQHandler();
     if (intcon & PIC_INTCON_RBIF)   RB_IRQHandler();
     uint8_t pir1 = epic_sfr_read8(PIC_REG_PIR1);
-    if (pir1 & PIC_PIR1_TMR1IF) {
-        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TMR1IE) {
+    if (pir1 & PIC_PIR1_TMR1IF)
+    {
+        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TMR1IE)
+        {
             TIMER1_IRQHandler();
-        } else {
+        }
+        else
+        {
             EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR1IF);
         }
     }
     if (pir1 & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
     if (pir1 & PIC_PIR1_CCP1IF) CCP1_IRQHandler();
     if (pir1 & PIC_PIR1_SSPIF) SSP_IRQHandler();
-    if (pir1 & PIC_PIR1_TXIF) {
-        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TXIE) {
+    if (pir1 & PIC_PIR1_TXIF)
+    {
+        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TXIE)
+        {
             USART_TX_IRQHandler();
         }
     }
@@ -61,8 +67,10 @@ void epic_dispatch_all_irqs(void)
     if (pir2 & PIC_PIR2_TMR3IF) TIMER3_IRQHandler();
     if (pir2 & PIC_PIR2_CCP2IF) CCP2_IRQHandler();
     if (pir2 & PIC_PIR2_CMIF) COMP_IRQHandler();
-    if (pir2 & PIC_PIR2_EEIF) {
-        if (epic_sfr_read8(PIC_REG_PIE2) & PIC_PIE2_EEIE) {
+    if (pir2 & PIC_PIR2_EEIF)
+    {
+        if (epic_sfr_read8(PIC_REG_PIE2) & PIC_PIE2_EEIE)
+        {
             EEPROM_IRQHandler();
         }
     }

@@ -20,7 +20,8 @@ int main(void)
     epic_harness_init(SIM_CYCLES);
 
     uint32_t ticks = 0U;
-    for (uint32_t i = 0; epic_harness_running(i); i++) {
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
         epic_harness_tick();
         ticks++;
     }
