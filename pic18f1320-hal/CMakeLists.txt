@@ -42,7 +42,7 @@ epic_add_hal_library(${EPIC_LIB})
 
 # Foundation examples: example_blink is the canonical Timer0 + GPIO +
 # interrupt smoke test; example_timer0_irq is the IRQ backend's own
-# dedicated smoke (also the real-mdb gate, src/mdb/pic18f1320_harness_mdb.c);
+# dedicated smoke (also the real-mdb gate, MODE=toggle via ci-target-sim.sh);
 # example_smoke is the bare harness-seam test.
 epic_add_example(example_blink tests/example_blink.c)
 epic_add_example(example_timer0_irq tests/example_timer0_irq.c)

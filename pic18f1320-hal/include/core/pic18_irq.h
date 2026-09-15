@@ -1,9 +1,9 @@
 /*
  * PIC18F1320 interrupt controller (DS39605F §9.0): IRQn enum plus
- * enable/disable/flag/priority helpers, mirroring pic18fxx5x-hal's
- * pic18_irq.h. No SSP, CCP2, comparator or SPP sources: confirmed
- * absent from the DFP header for this part, unlike the sibling
- * family's 4550/2455.
+ * enable/disable/flag/priority helpers. Foundation phase: only sources
+ * with a real dispatch entry in pic18_irq_dispatch.c are named here (an
+ * enabled source with no dispatch entry never clears and re-vectors
+ * forever); the rest join as each ticket lands its dispatch entry.
  */
 
 #ifndef PIC18_IRQ_H
@@ -14,24 +14,13 @@
 #include "core/epic_irq.h"   /* shared EPIC_IRQ_Priority enum (family-blind) */
 
 /**
- * @brief Logical identity of every interrupt source on the part.
- *        Used as the parameter for enable / disable / clear / status /
- *        priority calls.
+ * @brief Logical identity of every interrupt source with a real
+ *        dispatch entry. Used as the parameter for enable / disable /
+ *        clear / status / priority calls.
  */
 typedef enum {
-    PIC18_IRQ_INT0      = 0,  /**< External INT0 (RB0), always high-prio. */
-    PIC18_IRQ_INT1      = 1,  /**< External INT1 (RB1).                    */
-    PIC18_IRQ_INT2      = 2,  /**< External INT2 (RB2).                    */
-    PIC18_IRQ_RB        = 3,  /**< RB<7:4> change.                         */
-    PIC18_IRQ_TMR0      = 4,  /**< Timer0 overflow.                        */
-    PIC18_IRQ_TMR1      = 5,  /**< Timer1 overflow (PIR1<TMR1IF>).         */
-    PIC18_IRQ_TMR2      = 6,  /**< Timer2 == PR2 match (PIR1<TMR2IF>).     */
-    PIC18_IRQ_TMR3      = 7,  /**< Timer3 overflow (PIR2<TMR3IF>).         */
-    PIC18_IRQ_CCP1      = 8,  /**< ECCP1 event (PIR1<CCP1IF>).             */
-    PIC18_IRQ_USART_TX  = 9,  /**< USART TX shift done (PIR1<TXIF>).       */
-    PIC18_IRQ_USART_RX  = 10, /**< USART RX byte ready (PIR1<RCIF>).       */
-    PIC18_IRQ_ADC       = 11, /**< A/D conversion done (PIR1<ADIF>).       */
-    PIC18_IRQ_EEPROM    = 12, /**< EEPROM write complete (PIR2<EEIF>).     */
+    PIC18_IRQ_RB        = 0,  /**< RB<7:4> change.                         */
+    PIC18_IRQ_TMR0      = 1,  /**< Timer0 overflow.                        */
 } PIC18_IRQn;
 
 /**
@@ -55,9 +44,8 @@ void EPIC_IRQ_Restore(uint8_t prev_state);
 
 /**
  * @brief Enable one interrupt source. The peripheral enable bit lives in
- *        INTCON / INTCON3 / PIE1 / PIE2 per the source. The master
- *        enable(s) must still be set via @ref EPIC_IRQ_Restore for the
- *        source to fire.
+ *        INTCON per the source. The master enable(s) must still be set
+ *        via @ref EPIC_IRQ_Restore for the source to fire.
  * @param irq the interrupt source to enable (a @ref PIC18_IRQn value).
  */
 void EPIC_IRQ_Enable(PIC18_IRQn irq);
@@ -85,11 +73,10 @@ uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq);
 
 /**
  * @brief Set the priority of `irq` (high or low vector). Writes the
- *        matching bit in INTCON2 / INTCON3 / IPR1 / IPR2. INT0 has no
- *        priority bit (always high); setting its priority is a no-op.
- *        Takes effect only in priority mode (IPEN = 1, which @ref
- *        EPIC_IRQ_Restore enables). Part of the shared `EPIC_IRQ_*`
- *        contract (the PIC16 implementation is a no-op).
+ *        matching bit in INTCON2. Takes effect only in priority mode
+ *        (IPEN = 1, which @ref EPIC_IRQ_Restore enables). Part of the
+ *        shared `EPIC_IRQ_*` contract (the PIC16 implementation is a
+ *        no-op).
  * @param irq the interrupt source to configure (a @ref PIC18_IRQn value).
  * @param prio the priority to assign (EPIC_IRQ_PRIORITY_HIGH or
  *        EPIC_IRQ_PRIORITY_LOW).
