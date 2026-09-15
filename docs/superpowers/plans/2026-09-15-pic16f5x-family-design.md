@@ -28,12 +28,11 @@ One family. Evidence, all verified from the pinned toolchain's DFP EDC
   differ only by which ports and control-space registers exist:
   - 16F54: PORTA 0x05, PORTB 0x06 (the minimal exemplar, 512 words,
     25 B GPR).
-  - 16F57: + PORTC 0x07 (2048 words, 72 B GPR, TMR0 16-bit... no, 8-bit
-    TMR0 with 8-bit prescaler, 16F57 keeps 8-bit TMR0; 24x GPR).
+  - 16F57: + PORTC 0x07 (2048 words, 72 B GPR, 8-bit TMR0 with 8-bit
+    prescaler).
   - 16F59: + PORTD 0x08, PORTE 0x09 (2048 words).
-  - 16F505: no PORTA/PORTB; OSCCAL 0x05, PORTB 0x06, PORTC 0x07,
-    14-bit... no, 12-bit, 20-pin, 1024 words, 72 B GPR, 4 banks
-    (FSR<6:5>).
+  - 16F505: no PORTA; OSCCAL 0x05, PORTB 0x06, PORTC 0x07, 20-pin,
+    1024 words, 72 B GPR, 4 banks (FSR<6:5>).
   - 16F506: 16F505 + CM1CON0/CM2CON0/VRCON/ADCON0/ADRES at 0x08-0x0C.
 - Same addressing model and interrupt architecture: `FSR` high bits
   select the data bank, no interrupt vector exists on any part
@@ -147,8 +146,9 @@ mdb does recognize the part: `device PIC16F54; hwtool SIM` accepted
 (no unknown-device error), so the section-4 mdb gate runs on MPLAB SIM
 as it does for every other family. The sim-target harness
 (`src/mdb/pic16f5x_harness_mdb.c`) drives the PASS/FAIL marker on
-PORTB bit 0 or PORTA via `MODE=toggle` or a `MODE=gpio`-style PORTA
-read, since the family has no UART.
+PORTA bit 0 (RA0, present on the 18-pin 16F54) with the exact
+MODE=gpio magic-string dispatch of the 193X harness, since the family
+has no UART.
 
 ### 4. The Timer0 interrupt question
 
@@ -260,8 +260,13 @@ four-function harness, as every family does.
 - epiccc_sources: gpio + timer0 + wdt + harness + irq-stub (the blink
   minimum; rides the landed p16f54 epic-cc target, epic-cc#413)
 - `[modules.pic16f5x-hal]` slot (needs_hal = true, supported =
-  PIC16F5x all five, example blink + sim bank/control probe), mirroring
-  the pic16f83_84-hal module slot.
+  PIC16F5x all five, example blink + sim control probe), mirroring
+  the pic16f83_84-hal module slot. The example config uses the
+  baseline word's setting names, verified against the pinned
+  cfgdata CSETTING rows: `OSC = "XT"`, `WDT = "OFF"`, `CP = "OFF"`
+  (the baseline word has no PWRTE and names the watchdog setting
+  `WDT`, not `WDTE`; the epic-cc table maps `wdt` -> `wdt`
+  unchanged, and p16f54.toml fields osc/wdt/cp match 1:1).
 - No consumer module supports PIC16F5x yet: the manifest loader fails
   loudly until every module classifies the family, so every epic-*
   module gets its `excluded` entry, exactly as the 83_84 addition did
@@ -281,8 +286,8 @@ four-function harness, as every family does.
 - `scripts/ci-local-emit.py` and `.github/workflows/family-check.yml`:
   the pilot list gets `("pic16f5x-hal", "16F54")`;
   `scripts/ci-target-sim.sh` gets `run_one pic16f5x 16F54 PIC16F54
-  pic16f5x-hal ...` with the family's gate mode (gpio or toggle,
-  decided after the first real mdb run; the family has no UART).
+  pic16f5x-hal ... gpio` (PORTA bit 0 marker, the 83_84/193X gate
+  mode; the family has no UART).
 - `ci.yml` + `nightly.yml`: `family-5x` job calling family-check with
   family: PIC16F5x. The epiccc-gate job additionally covers the
   `mdb-epiccc` leg: `make mdb-epiccc MODULE=pic16f5x-hal MCU=16F54
