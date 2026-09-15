@@ -1,12 +1,9 @@
 /*
- * IRQ driver implementation. Every function names its SFR as a
- * compile-time-constant `PIC_REG_*` token, never a runtime address: on
- * PIC18 a runtime SFR address compiles to the program-memory table
- * mechanism instead of a data access (see
- * `pic18f2520-hal/README.md`). GIEH/GIEL (INTCON<7:6>) act as
- * one on/off switch; enabling also sets IPEN (RCON<7>) for the
- * two-vector priority scheme. This part has no SPP source (DS39631E
- * Table 1-1), so the switch cases stop at EEPROM.
+ * IRQ driver: every SFR names a compile-time-constant PIC_REG_* token,
+ * never a runtime address (on PIC18 a runtime address compiles to the
+ * table mechanism, not a data access; see the family README). GIEH/GIEL
+ * act as one switch; enabling sets IPEN (RCON<7>). No SPP source
+ * (DS39631E Table 1-1); cases stop at EEPROM.
  */
 
 #include "core/pic18_irq.h"

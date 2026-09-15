@@ -1,21 +1,9 @@
-# PIC18F2520 family HAL, host simulation build (foundation).
-#
-#   cmake -B build -S pic18f2520-hal && cmake --build build
-#   ./build/example_smoke
-#
-# Real PIC target builds use the XC8 toolchain, driven by the manifest
-# (epic-common/manifest/modules.toml); mcu/pic18f2520-mplabx/ documents
-# that path. This CMake is the host-sim build only.
-#
-# The host vs. target split is done at build time, not with #ifdef: this
-# build puts include/host ahead of include on the include path, so
-# pic18_platform.h resolves to the memory-backed-SFR version, and links
-# the host-side harness implementation. The XC8 build does the mirror
-# with include/target and the target implementations.
-#
-# A thin caller of the shared epic_family.cmake helpers
-# (epic-common/cmake/); only what is genuinely PIC18F2520-specific stays
-# here: the source list and the device list.
+# PIC18F2520 host-sim build (foundation): cmake -B build, build, run
+# ./build/example_smoke. Real-target XC8 builds come from the manifest
+# (epic-common/manifest/modules.toml); mcu/pic18f2520-mplabx/ covers that
+# path. include/host leads the include path here (memory-backed SFRs);
+# the XC8 build mirrors with include/target. Thin caller of
+# epic-common/cmake helpers; only the source/device lists are local.
 
 cmake_minimum_required(VERSION 3.16)
 project(pic18f2520_hal C)

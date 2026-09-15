@@ -1,18 +1,9 @@
 /*
- * SFR address map for the PIC18F2520 (foundation subset). Every address,
- * bit mask, and reset value here is taken 1-to-1 from DS39631E (Table 5-1
- * SFR Map, Registers 5-2/9-1/9-2/9-3/9-5/9-6/9-7/9-8/9-9/10-1/11-1),
- * cross-checked against the PIC18Fxxxx DFP device header (pic18f2520.h).
- * Macro naming (`PIC_REG_*` / `PIC_*_*`) matches `pic16f87xa_sfr.h` so
- * driver source reads identically across families. All of it is in the
- * Access Bank (0xF60-0xFFF), no BSR banking needed; PORTE is a single
- * RE3/MCLR input on this 28-pin part, so there is no LATD/E or TRISD/E,
- * and there is no USB or SPP at all (DS39631E Table 1-1).
- *
- * Foundation covers what phase 1 needs: core CPU status, GPIO (PORTA/B/C
- * + RE3), the interrupt core, and Timer0. Peripheral SFRs for Timer1-3,
- * CCP, MSSP, EUSART, ADC, comparator, EEPROM land with their drivers in
- * phases 2-4.
+ * SFR map, foundation subset: every address/mask/reset 1-to-1 from
+ * DS39631E Table 5-1, cross-checked against the DFP header. All in the
+ * Access Bank (0xF60-0xFFF), no BSR. No LATD/E or TRISD/E (RE3 only),
+ * no USB/SPP (Table 1-1). Timer1-3/CCP/MSSP/EUSART/ADC/EEPROM SFRs
+ * land with their drivers in phases 2-4.
  */
 
 #ifndef PIC18F2520_SFR_H

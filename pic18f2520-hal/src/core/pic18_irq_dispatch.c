@@ -1,13 +1,9 @@
 /*
- * Fan-out from the PIC18 interrupt vectors to the peripheral IRQHandlers
- * that exist in this family tree, shared by both builds (both vectors call
- * this on target; the host harness registers it as the sim IRQ callback).
- * Reads INTCON once into a local and only calls a handler whose bit is
- * set. Prototypes are strong externs here (not the headers' EPIC_WEAK),
- * so the host linker cannot drop a handler's object from the static
- * library. Foundation covers only the sources that exist this phase;
- * Timer1-3, CCP, MSSP, EUSART, ADC, comparator and EEPROM handlers join
- * as their drivers land.
+ * Fan-out from both vectors to this family's IRQHandlers, shared by
+ * both builds. Reads INTCON once, calls only handlers whose bit is
+ * set. Prototypes are strong externs (not EPIC_WEAK) so the host
+ * linker keeps every handler object. Sources beyond Timer0 join as
+ * their drivers land.
  */
 
 #include "core/pic18_irq.h"

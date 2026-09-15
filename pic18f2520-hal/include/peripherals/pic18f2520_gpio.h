@@ -1,11 +1,8 @@
 /*
- * GPIO driver for the PIC18F2520 (DS39631E §10.0): Cube-style
- * `(GPIOx, GPIO_PIN_n)` API. PIC18 exposes the output latch as its own
- * register, LATx: writes go through LATx (avoiding PIC16's
- * read-modify-write-of-PORTx pitfall), reads come from PORTx. This
- * 28-pin part has only PORTA/B/C (RA0..RA7, RB0..RB7, RC0..RC7); the
- * lone RE3/MCLR input has no LAT/TRIS registers, so there is no GPIOE.
- * PORTB pull-ups are INTCON2<RBPU> (DS39631E §10.2).
+ * GPIO driver (DS39631E §10.0): Cube-style (GPIOx, GPIO_PIN_n) API.
+ * Writes go through LATx (no PIC16 read-modify-write PORTx hazard),
+ * reads come from PORTx. 28-pin part: PORTA/B/C only; RE3/MCLR input
+ * has no LAT/TRIS, so no GPIOE. PORTB pull-ups are INTCON2<RBPU>.
  */
 
 #ifndef PIC18F2520_GPIO_H

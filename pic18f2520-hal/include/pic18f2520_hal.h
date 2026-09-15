@@ -1,23 +1,9 @@
 /*
- * PIC18F2520 family: top-level types, status codes, build-time device
- * selection, and the SFR mapping layer. DS39631E (PIC18F2420/2520/4420/
- * 4520) is authoritative for every constant, bit name, and reset value;
- * each peripheral header cites its section. The PIC18F2520 is a 28-pin
- * part: PORTA/B/C plus a single RE3 input (no PORTD), a 10-channel ADC,
- * ECCP1 + CCP2, MSSP (SSP), EUSART, two comparators, 256 B data EEPROM.
- * It has no USB peripheral and no SPP, so the config words carry none of
- * the 2455-family's usbdiv/cpudiv/plldiv/vregen fields. It shares the
- * PIC18 two-vector interrupt scheme (0008h high, 0018h low; DS39631E
- * §9.0).
- *
- * The umbrella file is named pic18f2520_hal.h, not pic18f2520.h: the
- * DFP proc header for this part is literally pic18f2520.h, and an
- * umbrella named the same would shadow it through -I at link time and
- * strip the compiler's auto-included device SFRs (the PIC16F628A
- * lesson, epic-hal#137). The host/target platform headers are reached
- * through pic18_platform.h, chosen by include path.
- *
- * @copyright © 2008 Microchip Technology Inc. (datasheet DS39631E).
+ * PIC18F2520 family top level: types, status codes, device selection,
+ * SFR layer (@copyright © 2008 Microchip, DS39631E throughout). 28-pin:
+ * PORTA/B/C plus RE3 input, no USB/SPP (no usbdiv/cpudiv/plldiv in
+ * config). Two-vector interrupts (0008h/0018h; §9.0). Named _hal.h so
+ * it never shadows the DFP proc header (the 628A lesson, epic-hal#137).
  */
 
 #ifndef PIC18F2520_HAL_H

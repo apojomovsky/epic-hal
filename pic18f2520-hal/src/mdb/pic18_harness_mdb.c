@@ -1,16 +1,8 @@
 /*
- * PIC18F2520 sim-target implementation of the test harness
- * (core/epic_harness.h): epic_harness_log() inspects its format string
- * and, on the EPIC_HARNESS_RESULT marker, drives RA0 (PORTA bit 0) so
- * the mdb wrapper can read the result via 'print PORTA' in MODE=gpio.
- * This family has no EUSART driver in the foundation phase, so the gate
- * cannot report over UART; the GPIO marker is the pic16f193x pattern
- * adopted here. The marker strings are passed verbatim from
- * epic_harness_report() (static inline in epic_harness.h) and are the
- * only call sites in the codebase that ever pass these literals.
- * init() leaves RA0 driving low; the toggle happens on log() (marker
- * line drives RA0 to ok's value, every other log line is a no-op).
- * running() is bounded by `cycles` so a run terminates on its own.
+ * HARNESS=sim harness: epic_harness_log() drives RA0 on the
+ * EPIC_HARNESS_RESULT marker so the mdb gate reads it via print in
+ * MODE=gpio (no EUSART this phase; the pic16f193x pattern). init()
+ * leaves RA0 low; running() bounds the run by `cycles`.
  */
 
 #include "core/epic_harness.h"

@@ -1,12 +1,8 @@
 /*
- * PIC18F2520 host simulation backend, linked by the CMake host build
- * only. Provides `pic18_sim_sfr[]`, the 4096-byte memory-backed register
- * file the host SFR macros (`include/host/pic18_platform.h`) dereference,
- * and the hooks declared in `pic18f2520_sim.h`. Every SFR the drivers
- * touch is in the Access Bank (0xF60-0xFFF), so it is just an index into
- * this array, no BSR translation needed. Foundation steps Timer0 and the
- * GPIO ports (PORTA/B/C); later phases add the other timers and
- * peripherals.
+ * Host simulation backend (CMake build only): `pic18_sim_sfr[]`, the
+ * memory-backed register file the host SFR macros dereference, plus
+ * the pic18f2520_sim.h hooks. Everything drivers touch is Access Bank,
+ * so plain indexing, no BSR. Steps Timer0 and GPIO this phase.
  */
 
 #include "pic18f2520_sim.h"

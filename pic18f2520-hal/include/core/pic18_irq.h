@@ -1,11 +1,9 @@
 /*
  * PIC18F2520 interrupt controller (DS39631E §9.0): IRQn enum plus
- * enable/disable/flag/priority helpers mirroring STM32Cube's HAL_NVIC_*
- * and the PIC16 EPIC_IRQ_* API. Two-vector priority mode (IPEN=1) is the
- * default here, with GIEH/GIEL gating high/low sources; INT0 has no
- * priority bit (always high). `EPIC_IRQ_Restore(1)` is the drop-in for
- * PIC16's `GIE = 1`. This part has no USB and no SPP, so there is no
- * SPP interrupt source (the 2455-family enum carries one).
+ * enable/disable/flag/priority helpers on the EPIC_IRQ_* contract.
+ * Two-vector priority mode (IPEN=1) with GIEH/GIEL gating; INT0 has no
+ * priority bit (always high). No SPP source on this part (Table 1-1),
+ * unlike the 2455-family enum.
  */
 
 #ifndef PIC18_IRQ_H

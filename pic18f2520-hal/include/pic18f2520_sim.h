@@ -1,12 +1,8 @@
 /*
- * Public API for the PIC18F2520 host simulation backend. On the host
- * build every SFR access indexes a host-side register file
- * (`include/host/pic18_platform.h`); these hooks let the host application
- * drive input pins, read output-pin levels, advance simulated
- * peripherals by N instruction cycles, and register an interrupt
- * callback. Names mirror `pic16f87xa_sim_*` for symmetry with the PIC16
- * tree. Foundation covers Timer0 plus GPIO; later phases add the other
- * timers and peripherals.
+ * Host simulation backend API: drive input pins, read output levels,
+ * advance peripherals by N cycles, register an IRQ callback. Host SFR
+ * accesses index a memory-backed register file (include/host/). Names
+ * mirror pic16f87xa_sim_*; covers Timer0 plus GPIO this phase.
  */
 
 #ifndef PIC18F2520_SIM_H

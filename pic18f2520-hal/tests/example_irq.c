@@ -1,31 +1,9 @@
 /*
- * Dedicated IRQ-core smoke test for pic18f2520-hal, the step
- * docs/adding-a-device.md §5.5 makes mandatory before any peripheral
- * builds on the interrupt backend: enable one timer interrupt, confirm
- * it actually fires and that the flag/enable bits read back correctly.
- * Timer0 (INTCON<TMR0IE>/<TMR0IF>) is the chosen source; enabling it
- * through EPIC_IRQ_Enable + EPIC_IRQ_Restore, then letting Timer0
- * overflow via the sim (host) or real time (mdb/MPSIM) drives the ISR,
- * which counts the overflow. The pass condition is both "an overflow
- * was observed" (the ISR ran) and "the enable bit reads back set" (the
- * IRQ write path landed), verified through literal-token SFR reads,
- * the proven-safe side (DS39631E §9.0).
- *
- * Expected register image (host sim, verified by probe):
- *   T0CON   = 0xC7                       (8-bit, T08BIT=1; Fosc/4;
- *                                        prescaler 1:256 T0PS=111;
- *                                        TMR0ON=1 after Start)
- *   INTCON  = 0xE0                       (GIE=1, GIEL=1, TMR0IE bit 5,
- *                                        once EPIC_IRQ_Restore(1) runs)
- *   INTCON2 = 0xFB                       (RBPU=1, INTEDG0/1/2=1)
- *   RCON    = 0xD7                       (POR value 0x57 | IPEN bit 7,
- *                                        once EPIC_IRQ_Restore(1) runs)
- *   TRISB   = 0xFE                       (RB0 output, rest input)
- *   LATB    = 0x00                       (RB0 driving low at start)
- * The ISR flips LATB<0> on every overflow; g_toggle_count counts them.
- *
- * SIM_CYCLES = 600_000 gives ~9 Timer0 overflows at the 1:256 prescaler
- * + 8-bit counter (65536 cycles per overflow).
+ * Dedicated IRQ-core smoke test (§5.5): enable one Timer0 interrupt,
+ * confirm it fires with INTCON<TMR0IE>/T0CON<TMR0ON> reading back set
+ * (DS39631E §9.0). The ISR toggles RB0, counts overflows, and drives
+ * the RA0 PASS marker from the second overflow: under MPLAB SIM the
+ * main loop can starve behind firing ISRs and never reach report().
  */
 
 #include "pic18f2520_hal.h"
@@ -35,10 +13,16 @@
 #include "core/pic18_irq.h"
 #include "core/epic_harness.h"
 
+/*
+ * Expected register image: T0CON = 0xC7 (8-bit, Fosc/4, 1:256, ON);
+ * INTCON = 0xE0 (GIE/GIEL/TMR0IE); INTCON2 = 0xFB; RCON = 0xD7 (POR
+ * 0x57 | IPEN); TRISB = 0xFE (RB0 out); LATB = 0x00 (starts low).
+ */
+
 /** @brief Family-local harness extension: no-op on the CMake host build
  *  (pic18_harness_sim.c), infinite loop on the mdb build so the
- *  HARNESS=sim marker's RA0 stays set across the mdb `print PORTA`
- *  readback (mirrors pic16f193x_harness_halt). */
+ *  HARNESS=sim marker's RA0 stays set across the mdb latch readback
+ *  (PORTA does not mirror LATx on this silicon; mirrors 193x halt). */
 extern void pic18f2520_harness_halt(void);
 
 /** Simulated run length (host only). */
