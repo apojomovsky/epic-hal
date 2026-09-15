@@ -44,6 +44,11 @@ static void sim_step_timer2(void);
 static void sim_step_timer3(void);
 
 /**
+ * @brief Advance the simulated EUSART state machine by one instruction cycle.
+ */
+static void sim_step_usart(void);
+
+/**
  * @brief Map a port letter (A, B, case-insensitive) to a 0-based index.
  *
  * Unknown letters map to index 0, matching port A.
@@ -125,6 +130,21 @@ void pic18_sim_reset(void)
     pic18_sim_sfr[PIC_REG_PR2]      = PIC_PR2_POR_VALUE;      /* 0xFF */
     pic18_sim_sfr[PIC_REG_T3CON]    = PIC_T3CON_POR_VALUE;    /* 0x00 */
 
+    /* EUSART reset values (DS39605F Table 5-1). TXSTA resets to 0x02
+     * (TRMT=1, TSR empty); the rest are clear. PIR1<TXIF> is a level, not
+     * a latched flag: it reads 1 after POR because TXREG is empty
+     * (§16.3.1), even though Table 5-1 lists PIR1 = 0x00. */
+    pic18_sim_sfr[PIC_REG_BAUDCTL]  = PIC_BAUDCTL_POR_VALUE;  /* 0x00 */
+    pic18_sim_sfr[PIC_REG_RCSTA]    = PIC_RCSTA_POR_VALUE;    /* 0x00 */
+    pic18_sim_sfr[PIC_REG_TXSTA]    = PIC_TXSTA_POR_VALUE;    /* 0x02 */
+    pic18_sim_sfr[PIC_REG_SPBRG]    = PIC_SPBRG_POR_VALUE;    /* 0x00 */
+    pic18_sim_sfr[PIC_REG_SPBRGH]   = PIC_SPBRGH_POR_VALUE;   /* 0x00 */
+
+    /* ECCP1: CCP1CON/PWM1CON/ECCPAS reset to 0x00 (module off). */
+    pic18_sim_sfr[PIC_REG_CCP1CON]  = PIC_CCP1CON_POR_VALUE;
+    pic18_sim_sfr[PIC_REG_PWM1CON]  = PIC_PWM1CON_POR_VALUE;
+    pic18_sim_sfr[PIC_REG_ECCPAS]   = PIC_ECCPAS_POR_VALUE;
+
     /* TRIS defaults: 1 = input. Both ports are full 8-bit on this part. */
     pic18_sim_sfr[PIC_REG_TRISA] = PIC_TRIS_POR_VALUE;
     pic18_sim_sfr[PIC_REG_TRISB] = PIC_TRIS_POR_VALUE;
@@ -151,6 +171,7 @@ void pic18_sim_step(uint32_t ticks)
         sim_step_timer1();
         sim_step_timer2();
         sim_step_timer3();
+        sim_step_usart();
     }
 }
 
@@ -325,6 +346,41 @@ static void sim_step_timer3(void)
         pic18_sim_sfr[PIC_REG_PIR2] |= PIC_PIR2_TMR3IF;
         if (sim_irq_cb) sim_irq_cb();
     }
+}
+
+/**
+ * @brief Advance the simulated EUSART state machine by one instruction cycle.
+ *
+ * Re-asserts PIR1<TXIF> every cycle while TXEN is set to model the
+ * instantaneous transmit completion. RCIF is set by the host application
+ * through `pic18_sim_drive_usart_rx()`.
+ */
+static void sim_step_usart(void)
+{
+    /* Re-assert TXIF every cycle when TXEN is set. TXIF is cleared by the
+     * user writing TXREG (see EPIC_USART_Transmit); this step brings it
+     * back high to model the instantaneous transmit completion (mirrors
+     * the PIC16 sim). */
+    uint8_t txsta = pic18_sim_sfr[PIC_REG_TXSTA];
+    if (txsta & PIC_TXSTA_TXEN)
+    {
+        pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TXIF;
+    }
+}
+
+/**
+ * @brief Deliver a received USART byte to the simulated hardware.
+ *
+ * Places the byte in RCREG, sets PIR1<RCIF>, and raises the IRQ hook.
+ *
+ * @param data the byte received on the USART
+ */
+void pic18_sim_drive_usart_rx(uint8_t data)
+{
+    /* Place the byte in RCREG (DS39605F §16.3.4), set PIR1<RCIF>. */
+    pic18_sim_sfr[PIC_REG_RCREG] = data;
+    pic18_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_RCIF;
+    if (sim_irq_cb) sim_irq_cb();
 }
 
 /**

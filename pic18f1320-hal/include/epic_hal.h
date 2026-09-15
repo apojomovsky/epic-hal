@@ -20,5 +20,7 @@
 #include "peripherals/pic18f1320_timer1.h"
 #include "peripherals/pic18f1320_timer2.h"
 #include "peripherals/pic18f1320_timer3.h"
+#include "peripherals/pic18f1320_eccp.h"
+#include "peripherals/pic18f1320_usart.h"
 
 #endif /* EPIC_H */

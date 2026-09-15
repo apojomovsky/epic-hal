@@ -2,9 +2,9 @@
  * Fan-out from the PIC18 interrupt vectors to every peripheral
  * IRQHandler with a linked driver (both vectors call this on target;
  * the host harness registers it as the sim IRQ callback). Reads
- * INTCON/PIRx once, calls only handlers whose bit is set. Timers
- * phase: Timer0-3 all dispatch from here; later phases add PIR1/PIR2
- * peripheral sources.
+ * INTCON/PIRx once, calls only handlers whose bit is set. Comm/Timers
+ * phase: Timer0-3, ECCP1, USART TX/RX all dispatch from here; later
+ * phases add the remaining PIR2/PIR1 peripheral sources.
  */
 
 #include "core/pic18_irq.h"
@@ -19,6 +19,12 @@ extern void TIMER1_IRQHandler(void);
 extern void TIMER2_IRQHandler(void);
 /** @brief Timer3 overflow interrupt handler. */
 extern void TIMER3_IRQHandler(void);
+/** @brief ECCP1 event interrupt handler. */
+extern void CCP1_IRQHandler(void);
+/** @brief EUSART TX interrupt handler. */
+extern void USART_TX_IRQHandler(void);
+/** @brief EUSART RX interrupt handler. */
+extern void USART_RX_IRQHandler(void);
 
 /**
  * @brief  Fan out from the PIC18 interrupt vectors to every peripheral
@@ -43,6 +49,17 @@ void epic_dispatch_all_irqs(void)
         }
     }
     if (pir1 & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
+    if (pir1 & PIC_PIR1_CCP1IF) CCP1_IRQHandler();
+    /* Gate TX on TXIE, not TXIF: TXIF is read-only status, stays set
+     * whenever TXREG is empty (same as 4550). */
+    if (pir1 & PIC_PIR1_TXIF)
+    {
+        if (epic_sfr_read8(PIC_REG_PIE1) & PIC_PIE1_TXIE)
+        {
+            USART_TX_IRQHandler();
+        }
+    }
+    if (pir1 & PIC_PIR1_RCIF) USART_RX_IRQHandler();
 
     uint8_t pir2 = epic_sfr_read8(PIC_REG_PIR2);
     if (pir2 & PIC_PIR2_TMR3IF) TIMER3_IRQHandler();

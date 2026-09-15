@@ -10,14 +10,13 @@ register address and behavior is taken 1-to-1 from the datasheet
 ➜ **[MANUAL.md](MANUAL.md)** is the human-readable manual (currently a
 skeleton, filled out fully in epic-hal#181).
 
-## Status: foundation + Timers 0-3 (epic-hal#178, #179)
+## Status: foundation + Timers 0-3 + ECCP1/EUSART (epic-hal#178, #179, #180)
 
-GPIO (PORTA/PORTB only, both full 8-bit), Timer0, the interrupt core,
-and WDT/Sleep/BOR/POR are implemented and verified (host sim + real
-`mdb`). Timer1, Timer2 and Timer3 land in epic-hal#179, each through the
-full `mdb` verification gate. ECCP1/USART land in epic-hal#180,
-ADC/Data EEPROM in epic-hal#181; this part has no MSSP, CCP2, comparator
-or USB, confirmed absent from the DFP header.
+GPIO (PORTA/PORTB only, both full 8-bit), Timer0-3, the interrupt core,
+WDT/Sleep/BOR/POR, ECCP1 (Enhanced Capture/Compare/PWM) and the EUSART
+are implemented and verified (host sim + real `mdb`), each through the
+full section-4 gate. ADC/Data EEPROM land in epic-hal#181; this part has
+no MSSP, CCP2, comparator or USB, confirmed absent from the DFP header.
 
 ## XC8 codegen gotchas
 
@@ -37,6 +36,8 @@ cmake --build build
 ./build/example_timer1         # Timer1 overflow smoke
 ./build/example_timer2         # Timer2 PR2-match smoke
 ./build/example_timer3         # Timer3 overflow smoke
+./build/example_ccp            # ECCP1 compare-toggle smoke
+./build/example_usart          # EUSART BRG + init + TX smoke
 ./build/example_smoke          # bare harness seam
 ```
 
