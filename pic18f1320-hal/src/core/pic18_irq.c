@@ -66,6 +66,9 @@ void EPIC_IRQ_Enable(PIC18_IRQn irq)
     {
     case PIC18_IRQ_RB:   SFR_SET_BIT(PIC_REG_INTCON, PIC_INTCON_RBIE);   break;
     case PIC18_IRQ_TMR0: SFR_SET_BIT(PIC_REG_INTCON, PIC_INTCON_TMR0IE); break;
+    case PIC18_IRQ_TMR1: SFR_SET_BIT(PIC_REG_PIE1,   PIC_PIE1_TMR1IE);   break;
+    case PIC18_IRQ_TMR2: SFR_SET_BIT(PIC_REG_PIE1,   PIC_PIE1_TMR2IE);   break;
+    case PIC18_IRQ_TMR3: SFR_SET_BIT(PIC_REG_PIE2,   PIC_PIE2_TMR3IE);   break;
     default: break;
     }
 }
@@ -81,6 +84,9 @@ void EPIC_IRQ_DisableSrc(PIC18_IRQn irq)
     {
     case PIC18_IRQ_RB:   SFR_CLR_BIT(PIC_REG_INTCON, PIC_INTCON_RBIE);   break;
     case PIC18_IRQ_TMR0: SFR_CLR_BIT(PIC_REG_INTCON, PIC_INTCON_TMR0IE); break;
+    case PIC18_IRQ_TMR1: SFR_CLR_BIT(PIC_REG_PIE1,   PIC_PIE1_TMR1IE);   break;
+    case PIC18_IRQ_TMR2: SFR_CLR_BIT(PIC_REG_PIE1,   PIC_PIE1_TMR2IE);   break;
+    case PIC18_IRQ_TMR3: SFR_CLR_BIT(PIC_REG_PIE2,   PIC_PIE2_TMR3IE);   break;
     default: break;
     }
 }
@@ -97,6 +103,9 @@ void EPIC_IRQ_ClearFlag(PIC18_IRQn irq)
     {
     case PIC18_IRQ_RB:   SFR_CLR_BIT(PIC_REG_INTCON, PIC_INTCON_RBIF);   break;
     case PIC18_IRQ_TMR0: SFR_CLR_BIT(PIC_REG_INTCON, PIC_INTCON_TMR0IF); break;
+    case PIC18_IRQ_TMR1: SFR_CLR_BIT(PIC_REG_PIR1,   PIC_PIR1_TMR1IF);   break;
+    case PIC18_IRQ_TMR2: SFR_CLR_BIT(PIC_REG_PIR1,   PIC_PIR1_TMR2IF);   break;
+    case PIC18_IRQ_TMR3: SFR_CLR_BIT(PIC_REG_PIR2,   PIC_PIR2_TMR3IF);   break;
     default: break;
     }
 }
@@ -112,6 +121,9 @@ uint8_t EPIC_IRQ_GetFlag(PIC18_IRQn irq)
     {
     case PIC18_IRQ_RB:   return (epic_sfr_read8(PIC_REG_INTCON) & PIC_INTCON_RBIF)   ? 1U : 0U;
     case PIC18_IRQ_TMR0: return (epic_sfr_read8(PIC_REG_INTCON) & PIC_INTCON_TMR0IF) ? 1U : 0U;
+    case PIC18_IRQ_TMR1: return (epic_sfr_read8(PIC_REG_PIR1)   & PIC_PIR1_TMR1IF)   ? 1U : 0U;
+    case PIC18_IRQ_TMR2: return (epic_sfr_read8(PIC_REG_PIR1)   & PIC_PIR1_TMR2IF)   ? 1U : 0U;
+    case PIC18_IRQ_TMR3: return (epic_sfr_read8(PIC_REG_PIR2)   & PIC_PIR2_TMR3IF)   ? 1U : 0U;
     default: return 0U;
     }
 }
@@ -135,6 +147,18 @@ void EPIC_IRQ_SetPriority(PIC18_IRQn irq, EPIC_IRQ_Priority prio)
     case PIC18_IRQ_TMR0:
         if (high) SFR_SET_BIT(PIC_REG_INTCON2, PIC_INTCON2_TMR0IP);
         else      SFR_CLR_BIT(PIC_REG_INTCON2, PIC_INTCON2_TMR0IP);
+        break;
+    case PIC18_IRQ_TMR1:
+        if (high) SFR_SET_BIT(PIC_REG_IPR1, PIC_IPR1_TMR1IP);
+        else      SFR_CLR_BIT(PIC_REG_IPR1, PIC_IPR1_TMR1IP);
+        break;
+    case PIC18_IRQ_TMR2:
+        if (high) SFR_SET_BIT(PIC_REG_IPR1, PIC_IPR1_TMR2IP);
+        else      SFR_CLR_BIT(PIC_REG_IPR1, PIC_IPR1_TMR2IP);
+        break;
+    case PIC18_IRQ_TMR3:
+        if (high) SFR_SET_BIT(PIC_REG_IPR2, PIC_IPR2_TMR3IP);
+        else      SFR_CLR_BIT(PIC_REG_IPR2, PIC_IPR2_TMR3IP);
         break;
     default: break;
     }

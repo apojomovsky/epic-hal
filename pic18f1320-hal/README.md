@@ -10,11 +10,12 @@ register address and behavior is taken 1-to-1 from the datasheet
 ➜ **[MANUAL.md](MANUAL.md)** is the human-readable manual (currently a
 skeleton, filled out fully in epic-hal#181).
 
-## Status: foundation (epic-hal#178)
+## Status: foundation + Timers 0-3 (epic-hal#178, #179)
 
 GPIO (PORTA/PORTB only, both full 8-bit), Timer0, the interrupt core,
 and WDT/Sleep/BOR/POR are implemented and verified (host sim + real
-`mdb`). Timer1-3 land in epic-hal#179, ECCP1/USART in epic-hal#180,
+`mdb`). Timer1, Timer2 and Timer3 land in epic-hal#179, each through the
+full `mdb` verification gate. ECCP1/USART land in epic-hal#180,
 ADC/Data EEPROM in epic-hal#181; this part has no MSSP, CCP2, comparator
 or USB, confirmed absent from the DFP header.
 
@@ -33,6 +34,9 @@ cmake --build build
 
 ./build/example_blink          # Timer0 + GPIO + interrupt smoke
 ./build/example_timer0_irq     # IRQ backend's dedicated smoke
+./build/example_timer1         # Timer1 overflow smoke
+./build/example_timer2         # Timer2 PR2-match smoke
+./build/example_timer3         # Timer3 overflow smoke
 ./build/example_smoke          # bare harness seam
 ```
 
