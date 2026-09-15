@@ -87,8 +87,6 @@ hal_sources = [
   "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/peripherals/pic14_ssp.c",
   "pic14-midrange-core/src/peripherals/pic14_adc.c",
-  "pic14-midrange-core/src/peripherals/pic14_comp.c",
-  "pic14-midrange-core/src/peripherals/pic14_vref.c",
   "pic14-midrange-core/src/peripherals/pic14_eeprom.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
   "pic16f87xa-hal/src/core/pic16_irq_table.c",
@@ -121,6 +119,15 @@ epiccc_sources = [
   "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_epiccc.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
+
+# The comparator and VREF drivers exist only on the A-parts: the non-A
+# 873 die has no CMCON/CVRCON (DFP + gputils p16f873.inc agree).
+[[families.PIC16F87XA.conditional_sources]]
+path     = "pic14-midrange-core/src/peripherals/pic14_comp.c"
+variants = ["16F873A", "16F874A", "16F876A", "16F877A"]
+[[families.PIC16F87XA.conditional_sources]]
+path     = "pic14-midrange-core/src/peripherals/pic14_vref.c"
+variants = ["16F873A", "16F874A", "16F876A", "16F877A"]
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
@@ -1598,6 +1605,11 @@ name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
+[modules.epic-adcfilter.example.PIC16F87XA.variants.16F873]
+name    = "adcfilter-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
 [modules.epic-adcfilter.example.PIC16F88X]
 name    = "adcfilter"
 sources = [
@@ -2089,6 +2101,12 @@ sources = [
   "mcu/target_sizecheck.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-encoder.example.PIC16F87XA.variants.16F873]
+name    = "encoder-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 [modules.epic-encoder.example.PIC16F88X]
 name    = "encoder"
 sources = [
@@ -2445,6 +2463,13 @@ sources = [
 ]
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules.epic-math.example.PIC16F87XA.variants.16F873]
+name    = "math-selftest"
+sources = [
+  "tests/target_smoke16.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 [modules.epic-math.example.PIC16F88X]
 name    = "math"
 sources = [
@@ -2693,6 +2718,11 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # parts keep the footprint probe while the serial-capable parts build
 # the real example.
 [modules.epic-pid.example.PIC16F87XA.variants.16F873A]
+name    = "pid-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+[modules.epic-pid.example.PIC16F87XA.variants.16F873]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
