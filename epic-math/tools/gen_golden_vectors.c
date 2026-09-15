@@ -174,7 +174,8 @@ static void bcd_adjust(void)
     printf("};\n#define GV_BCD_SUB8_N (sizeof(gv_bcd_sub8)/sizeof(gv_bcd_sub8[0]))\n\n");
 }
 
-/** @brief Emit the complete golden-vector header to stdout. */
+/** @brief Emit the complete golden-vector header to stdout.
+ * @return the process exit status, always zero. */
 int main(void)
 {
     hdr();
