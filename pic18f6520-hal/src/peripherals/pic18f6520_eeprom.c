@@ -1,11 +1,9 @@
 /*
- * Data EEPROM driver, implementation (DS39609B §7.0). The EEPROM
- * registers are in the Access Bank (0xFA6-0xFA9), no bank switching.
- * Addresses are 10-bit (EEADRH:EEADR, 1024 bytes), unlike the
- * 4550/2520 families' 8-bit EEADR-only addressing. `ReadByte` sets RD
- * then pulls the byte via `pic18_sim_eeprom_read()` on host (the
- * flat-array sim has no RD-strobe model); real target firmware reads
- * EEDATA after RD instead.
+ * Data EEPROM driver, implementation (DS39609B §7.0). Registers are
+ * Access Bank (0xFA6-0xFA9), no bank switching; addresses are 10-bit
+ * (EEADRH:EEADR, 1024 bytes), unlike the 4550/2520 families' 8-bit
+ * EEADR-only. `ReadByte` sets RD then pulls the byte via the sim read
+ * hook on host; real target reads EEDATA after RD instead.
  */
 
 #include "peripherals/pic18f6520_eeprom.h"

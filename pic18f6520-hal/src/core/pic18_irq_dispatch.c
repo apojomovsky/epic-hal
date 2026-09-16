@@ -2,10 +2,9 @@
  * Fan-out from both vectors to this family's IRQHandlers, shared by
  * both builds. Reads INTCON/PIRx once, calls only handlers whose bit
  * is set. Prototypes are strong externs (not EPIC_WEAK) so the host
- * linker keeps every handler object. Phase-4 tier: Timer0-3, CCP1-5,
- * SSP, EUSART1/2 (TX gated on TXIE/TX2IE, RX direct), ADC, COMP and
- * EEPROM (EE gated on EEIE for pollers). TMR4, LVD and PSP have no
- * driver yet.
+ * linker keeps every handler object. Final tier: Timer0-3, CCP1-5,
+ * SSP, EUSART1/2, ADC, COMP, EEPROM (EE gated on EEIE for pollers).
+ * TMR4/LVD/PSP have no driver yet.
  */
 
 #include "core/pic18_irq.h"
