@@ -32,7 +32,7 @@ typedef enum {
     GPIOD = 3,   /**< PORTD, RD0..RD7. */
 #endif
 #if PIC16F5X_FAMILY_HAS_PORTE
-    GPIOE = 4,   /**< PORTE, RE0..RE1 (2 pins on 16F59). */
+    GPIOE = 4,   /**< PORTE, RE4..RE7 (upper nibble, 16F59 only; DS41213D §6.5). */
 #endif
 } GPIO_TypeDef;
 

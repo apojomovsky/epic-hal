@@ -10,22 +10,26 @@ DS41213D, cross-checked against the DFP
 ## Family shape
 
 Five parts on the 12-bit baseline core (`edc:arch="16c5x"`,
-`instructionSetId="pic12c5xx"`), two address shapes. The 18/28/40-pin
-parts (16F54/57/59) are single-bank flat-RAM dice; the 20-pin parts
-(16F505/506) bank GPR 4 ways through FSR<6:5>.
+`instructionSetId="pic12c5xx"`), two address shapes. The 16F54 is a
+flat-RAM die; the 16F57 (FSR<6:5>), 16F59 (FSR<7:5>) and the 20-pin
+505/506 (FSR<6:5>) bank their GPR through FSR (DS41213D section 3.6,
+Figures 3-4/3-5).
 
 | part | pins | flash | GPR | banks | ports | extras |
 |---|---|---|---|---|---|---|
 | 16F54 | 18 | 512 W | 25 B | flat | A (RA0..3), B | - |
-| 16F57 | 28 | 2048 W | 72 B | flat | A, B, C | - |
-| 16F59 | 40 | 2048 W | 73 B | flat | A, B, C, D, E | - |
-| 16F505 | 20 | 1024 W | 72 B | 4x FSR<6:5> | B, C | OSCCAL (file 0x05) |
-| 16F506 | 20 | 1024 W | 72 B | 4x FSR<6:5> | B, C | OSCCAL, comparator, ADC |
+| 16F57 | 28 | 2048 W | 72 B | 4x FSR<6:5> | A, B, C | - |
+| 16F59 | 40 | 2048 W | 134 B | 8x FSR<7:5> | A, B, C, D, E (RE4..7) | - |
+| 16F505 | 20 | 1024 W | 72 B | 4x FSR<6:5> | B (6-bit), C (6-bit) | OSCCAL (file 0x05) |
+| 16F506 | 20 | 1024 W | 72 B | 4x FSR<6:5> | B (6-bit), C (6-bit) | OSCCAL, comparator, ADC |
 
 GPR is 0x07..0x1F on the 16F54 (25 B, DS41213D section 1.0), the
 tightest budget in this repo; every real-target example must fit both
-512 words of flash and 25 B of RAM. The 505/506 have no PORTA: OSCCAL
-takes file 0x05 and the 20-pin die has no RA0 output pins (DS41319).
+512 words of flash and 25 B of RAM. The banked parts (16F57/59,
+505/506) select their GPR window through FSR<6:5> or FSR<7:5>
+(DS41213D section 3.6); only the 16F54 has no bank bits. The 505/506
+have no PORTA: OSCCAL takes file 0x05 and the 20-pin die has no RA0
+output pins (DS41319).
 
 ## No interrupts, no WDT sleep
 

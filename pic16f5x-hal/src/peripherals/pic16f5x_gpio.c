@@ -64,8 +64,10 @@ static uint8_t port_addr(GPIO_TypeDef port)
 }
 
 /**
- * @brief Implemented-pin mask for a port. PORTA is RA0..RA3
- *        (DS41213D §2.0); PORTE is RE0..RE1 on the 16F59 (2 pins).
+ * @brief Implemented-pin mask for a port. PORTA is RA0..RA3, PORTE is
+ *        RE4..RE7 on the 16F59 (its upper nibble; DS41213D §6.5,
+ *        DFP PORTA_/PORTE_ rows: RE0..RE3 do not exist). The 505/506
+ *        carry 6-bit PORTB/PORTC (RB0..RB5, RC0..RC5, DS41319).
  *        Every other port is contiguous from bit 0.
  * @param port GPIOA..GPIOE.
  * @return the bitmask of implemented pins.
@@ -73,10 +75,13 @@ static uint8_t port_addr(GPIO_TypeDef port)
 static uint8_t port_pin_mask(GPIO_TypeDef port)
 {
 #if PIC16F5X_FAMILY_HAS_PORTE
-    if (port == GPIOE) return 0x03U;
+    if (port == GPIOE) return 0xF0U;
 #endif
 #if PIC16F5X_FAMILY_HAS_PORTA
     if (port == GPIOA) return 0x0FU;
+#endif
+#if PIC16F5X_FAMILY_HAS_SIXBIT_PORTS
+    if (port == GPIOB || port == GPIOC) return 0x3FU;
 #endif
     return 0xFFU;
 }

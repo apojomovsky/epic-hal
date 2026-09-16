@@ -4,9 +4,10 @@ First family on the 12-bit baseline core (DS41213D): five parts across
 two address shapes. The 16F54 canonical (18-pin, 512 words flash,
 25 B GPR) is the tightest budget in this repo and proves every tier:
 host-sim blink, real XC8 build, the MPLAB SIM toggle gate and the
-family-check scaffold. The remaining parts (16F57/59 flat,
-16F505/506 banked 20-pin) build the same blink; capability macros per
-part select ports, OSCCAL and the comparator/ADC surface.
+family-check scaffold. The remaining parts bank their GPR through FSR
+(16F57, 505/506 via FSR<6:5>; 16F59 via FSR<7:5>) and build the same
+blink; capability macros per part select ports, bank geometry, OSCCAL
+and the comparator/ADC surface.
 
 ## Peripheral tier
 
@@ -44,6 +45,7 @@ in the meantime).
   variadic harness logging, no 32-bit frame locals on target, and the
   WDT refresh loop cannot ride along (example links WDT = OFF); see
   `MANUAL.md` for the measured shape.
-- Banked parts (505/506) page GPR through FSR<6:5>; the flat exemplar
-  has no bank bits at all, so no runtime bank select exists on this
-  core.
+- Banking: 16F57/505/506 page GPR through FSR<6:5>, the 16F59 through
+  FSR<7:5> (DS41213D section 3.6); only the 16F54 exemplar is flat,
+  so no runtime bank select exists on it. The 505/506's PORTB/PORTC
+  are 6-bit (RB0..RB5, RC0..RC5) and the 16F59's PORTE is RE4..RE7.

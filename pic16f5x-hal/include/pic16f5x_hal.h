@@ -41,12 +41,15 @@
   #define PIC16F5X_FAMILY_HAS_PORTE 0
   #define PIC16F5X_FAMILY_HAS_OSCCAL 0
   #define PIC16F5X_FAMILY_HAS_COMP_ADC 0
+  #define PIC16F5X_FAMILY_HAS_SIXBIT_PORTS 0
   #define PIC16F5X_DEVICE_NAME      "PIC16F54"
 #elif defined(PIC16F57)
-  /* 2048 words, 72 B GPR (0x07..0x4F), single data bank. */
+  /* 2048 words, 72 B GPR, 4 data banks selected by FSR<6:5>
+   * (0x10/0x30/0x50/0x70, common 0x08..0x0F; DS41213D §3.6,
+   * Figure 3-4, EDC banked GPRDataSectors). */
   #define PIC16F5X_FAMILY_FLASH_KW  2
   #define PIC16F5X_FAMILY_RAM_BYTES 72
-  #define PIC16F5X_FAMILY_FSR_BANK_BITS 0
+  #define PIC16F5X_FAMILY_FSR_BANK_BITS 2
   #define PIC16F5X_FAMILY_HAS_PORTA 1
   #define PIC16F5X_FAMILY_HAS_PORTB 1
   #define PIC16F5X_FAMILY_HAS_PORTC 1
@@ -54,12 +57,16 @@
   #define PIC16F5X_FAMILY_HAS_PORTE 0
   #define PIC16F5X_FAMILY_HAS_OSCCAL 0
   #define PIC16F5X_FAMILY_HAS_COMP_ADC 0
+  #define PIC16F5X_FAMILY_HAS_SIXBIT_PORTS 0
   #define PIC16F5X_DEVICE_NAME      "PIC16F57"
 #elif defined(PIC16F59)
-  /* 2048 words, 73 B GPR, single data bank, PORTD/E added. */
+  /* 2048 words, 134 B GPR, 8 data banks selected by FSR<7:5>
+   * (0x10/0x30/0x50/0x70/0x90/0xB0/0xD0/0xF0, common 0x0A..0x0F;
+   * DS41213D §1.0/§3.6, Figure 3-5, EDC banked GPRDataSectors),
+   * PORTD/E added. */
   #define PIC16F5X_FAMILY_FLASH_KW  2
-  #define PIC16F5X_FAMILY_RAM_BYTES 73
-  #define PIC16F5X_FAMILY_FSR_BANK_BITS 0
+  #define PIC16F5X_FAMILY_RAM_BYTES 134
+  #define PIC16F5X_FAMILY_FSR_BANK_BITS 3
   #define PIC16F5X_FAMILY_HAS_PORTA 1
   #define PIC16F5X_FAMILY_HAS_PORTB 1
   #define PIC16F5X_FAMILY_HAS_PORTC 1
@@ -67,6 +74,7 @@
   #define PIC16F5X_FAMILY_HAS_PORTE 1
   #define PIC16F5X_FAMILY_HAS_OSCCAL 0
   #define PIC16F5X_FAMILY_HAS_COMP_ADC 0
+  #define PIC16F5X_FAMILY_HAS_SIXBIT_PORTS 0
   #define PIC16F5X_DEVICE_NAME      "PIC16F59"
 #elif defined(PIC16F505)
   /* 1024 words, 72 B GPR, 4 data banks selected by FSR<6:5>, no
@@ -81,6 +89,7 @@
   #define PIC16F5X_FAMILY_HAS_PORTE 0
   #define PIC16F5X_FAMILY_HAS_OSCCAL 1
   #define PIC16F5X_FAMILY_HAS_COMP_ADC 0
+  #define PIC16F5X_FAMILY_HAS_SIXBIT_PORTS 1
   #define PIC16F5X_DEVICE_NAME      "PIC16F505"
 #else  /* PIC16F506 */
   /* 1024 words, 72 B GPR, 4 data banks, comparator+ADC added. */
@@ -94,6 +103,7 @@
   #define PIC16F5X_FAMILY_HAS_PORTE 0
   #define PIC16F5X_FAMILY_HAS_OSCCAL 1
   #define PIC16F5X_FAMILY_HAS_COMP_ADC 1
+  #define PIC16F5X_FAMILY_HAS_SIXBIT_PORTS 1
   #define PIC16F5X_DEVICE_NAME      "PIC16F506"
 #endif
 

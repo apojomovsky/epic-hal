@@ -78,8 +78,10 @@
                                           * bits 6-7 unimplemented (read 0,
                                           * EDC por="--111111"). */
 
-/* FSR file-register access: INDF addresses `FSR` (the full flat byte),
- * exactly as on every PIC core (DS41213D §4.0). */
-#define PIC_FSR_INDIRECT_MASK 0x7FU  /* 7-bit flat file on all 5x parts. */
+/* FSR file-register access: INDF addresses `FSR` as a flat byte on the
+ * baseline core, with the data-bank bits (FSR<6:5> on 16F57/505/506,
+ * FSR<7:5> on 16F59, none on 16F54) selecting the banked GPR window
+ * (DS41213D §3.6, Figure 3-3). */
+#define PIC_FSR_INDIRECT_MASK 0x7FU  /* 7-bit offset+bank on all 5x parts. */
 
 #endif /* PIC16F5X_SFR_H */

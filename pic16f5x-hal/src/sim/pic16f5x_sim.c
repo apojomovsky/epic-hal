@@ -130,8 +130,11 @@ static void sim_step_timer0(void)
      * prescaler, so psa does not gate the counter here. */
     (void)psa;
 
-    /* OPTION<PS2:PS0> prescaler mapping (DS41213D §5.0, Table 5-1). */
-    static const uint8_t ps_idx[8] = {2, 4, 8, 16, 32, 64, 128, 255};
+    /* OPTION<PS2:PS0> prescaler mapping (DS41213D §5.0, Table 5-1):
+     * 1:2..1:256, matching the driver's ps_ratio table. The 1:256
+     * entry is 256, not 255 (the 1-byte counter window would make
+     * 255 a one-tick-slow alias; MPLAB SIM and XC8 agree on 256). */
+    static const uint16_t ps_idx[8] = {2, 4, 8, 16, 32, 64, 128, 256};
     uint32_t rate = ps_idx[ps];
 
     t0_prescaler++;
@@ -156,6 +159,27 @@ void pic16f5x_sim_step(uint32_t ticks)
 }
 
 /**
+ * @brief Implemented-pin mask for a port letter, mirroring the
+ *        target driver's port_pin_mask (see pic16f5x_gpio.c).
+ */
+static uint8_t port_pin_mask(char port)
+{
+#if PIC16F5X_FAMILY_HAS_PORTE
+    if (port == 'E' || port == 'e') return 0xF0U;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTA
+    if (port == 'A' || port == 'a') return 0x0FU;
+#endif
+#if PIC16F5X_FAMILY_HAS_SIXBIT_PORTS
+    if (port == 'B' || port == 'b' || port == 'C' || port == 'c')
+    {
+        return 0x3FU;
+    }
+#endif
+    return 0xFFU;
+}
+
+/**
  * @brief Drive a digital input pin from the test rig.
  * @param port the port letter, 'A' or 'B'.
  * @param pin the pin number, 0..7.
@@ -164,8 +188,11 @@ void pic16f5x_sim_step(uint32_t ticks)
 void pic16f5x_sim_drive_input(char port, uint8_t pin, uint8_t level)
 {
     if (pin > 7U) return;
-    uint8_t idx = port_index(port);
     uint8_t mask = (uint8_t)(1U << pin);
+    /* Pins the die does not implement are a no-op, exactly as on
+     * silicon (DS41213D/DS41319 port tables). */
+    if ((mask & port_pin_mask(port)) == 0U) return;
+    uint8_t idx = port_index(port);
     sim_input_override[idx] |= mask;
     if (level) sim_input_value[idx] |= mask;
     else       sim_input_value[idx] &= (uint8_t)~mask;
@@ -189,8 +216,9 @@ void pic16f5x_sim_drive_input(char port, uint8_t pin, uint8_t level)
 uint8_t pic16f5x_sim_read_output(char port, uint8_t pin)
 {
     if (pin > 7U) return 0U;
-    uint8_t idx  = port_index(port);
     uint8_t mask = (uint8_t)(1U << pin);
+    if ((mask & port_pin_mask(port)) == 0U) return 0U;
+    uint8_t idx  = port_index(port);
     uint8_t tris = pic16f5x_sim_trisb;
 #if PIC16F5X_FAMILY_HAS_PORTA
     if (port == 'A' || port == 'a') tris = pic16f5x_sim_trisa;
