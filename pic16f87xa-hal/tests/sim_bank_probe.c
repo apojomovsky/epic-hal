@@ -100,11 +100,13 @@ int main(void)
     EPIC_TIMER2_WritePeriod(0xAAu);
     CHECK(EPIC_TIMER2_ReadPeriod() == 0xAAu, 0x03);
 
+#if PIC16F87XA_FAMILY_HAS_SSP
     /* Class B: EPIC_SSP_ReadByte's SSPBUF value round-trip (Bank 0).
      * The BF-clear RMW is the safe Bank-1 pattern; BF itself is a
      * hardware status bit, not reliable to poke under MPLAB SIM. */
     EPIC_REG8(PIC_REG_SSPBUF) = 0x5Au;
     CHECK(EPIC_SSP_ReadByte() == 0x5Au, 0x04);
+#endif
 
     /* Class B: EPIC_GPIO_Init writes TRISx (Bank 1) through a runtime
      * address (FSR-indirect, expected safe; probe confirms). PORTB all

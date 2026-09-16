@@ -22,6 +22,7 @@ FAMILIES = {
     "pic16f87xa-hal": (
         "pic16f87xa-hal/include/pic16f87xa_sfr.h",
         [
+            ("16F870", "Microchip.PIC16Fxxx_DFP", "pic16f870.h"),
             ("16F873", "Microchip.PIC16Fxxx_DFP", "pic16f873.h"),
             ("16F873A", "Microchip.PIC16Fxxx_DFP", "pic16f873a.h"),
             ("16F874", "Microchip.PIC16Fxxx_DFP", "pic16f874.h"),
@@ -271,9 +272,10 @@ BANK_VARIANT_ADDRS = {
 }
 # Registers and bits that are legitimately absent from a part's DFP
 # header: family-conditional SFRs on the smaller parts (the HAL defines
-# the constants unconditionally and guards the usage). key: mcu -> set
-# of register names to skip entirely.
 CONDITIONAL_REGS = {
+    "16F870": {"PORTD", "PORTE", "TRISD", "TRISE", "CMCON", "CVRCON",
+               "SSPBUF", "SSPCON", "SSPCON2", "SSPADD", "SSPSTAT",
+               "CCP2CON", "CCPR2L", "CCPR2H"},
     "16F873": {"PORTD", "PORTE", "TRISD", "TRISE", "CMCON", "CVRCON"},
     "16F873A": {"PORTD", "PORTE", "TRISD", "TRISE", "PIE1", "PIR1", "PIR2"},
     "16F874": {"CMCON", "CVRCON"},
@@ -281,11 +283,13 @@ CONDITIONAL_REGS = {
     "16F876A": {"PORTD", "PORTE", "TRISD", "TRISE", "PIE1", "PIR1", "PIR2"},
     "16F877": {"CMCON", "CVRCON"},
 }
-# On the 28-pin parts the whole PSP interrupt path is absent; the
-# PIE1/PIR1/PIR2 registers still exist, only their PSP bits are
-# conditional. Every non-A part additionally lacks the comparator/VREF
-# registers and the PIE2/PIR2 comparator bits (DFP headers).
 CONDITIONAL_BITS = {
+    "16F870": {("PIE1", "PSPIE"), ("PIR1", "PSPIF"),
+               ("PIE1", "SSPIE"), ("PIR1", "SSPIF"),
+               ("PIE2", "BCLIE"), ("PIR2", "BCLIF"),
+               ("PIE2", "CMIE"), ("PIR2", "CMIF"),
+               ("PIE2", "CCP2IE"), ("PIR2", "CCP2IF"),
+               ("ADCON1", "ADCS2")},
     "16F873": {("PIE1", "PSPIE"), ("PIR1", "PSPIF"),
                ("PIE2", "CMIE"), ("PIR2", "CMIF"),
                ("ADCON1", "ADCS2")},
