@@ -288,7 +288,7 @@ cell writes, same as the other PIC18 families).
 Every SFR access names a compile-time-constant `PIC_REG_*` token through
 `epic_sfr_read8` / `EPIC_REG8` (see `pic18_platform.h`). This is load-bearing:
 on PIC18, a runtime SFR address compiles to the program-memory table
-mechanism and silently writes nowhere (see §13).
+mechanism and silently writes nowhere (see §16).
 
 ## 17. Device selection
 

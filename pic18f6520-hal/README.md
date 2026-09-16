@@ -23,7 +23,7 @@ interrupt backend, peripheral drivers) live here.
 
 **Complete (epic-hal#182, #183, #184, #185, umbrella #150):** platform,
 SFR map, GPIO (PORTA-G), Timer0-3, CCP1-5, MSSP, EUSART1/2, ADC,
-comparator (with CVR), data EEPROM, the dual-priority interrupt core,
+comparator, data EEPROM, the dual-priority interrupt core,
 WDT/Sleep/BOR/POR, and the harness are implemented and verified under
 host sim and real `mdb` (each peripheral through
 docs/adding-a-device.md §4: host example + XC8 target build + `mdb`
@@ -75,7 +75,8 @@ Table 1-1).
   kept for contract compatibility and ignored.
 - ✅ Comparator driver (`peripherals/pic18f6520_comp.h`): two
   comparators, 8 CMCON modes, C1OUT/C2OUT readouts, CMIF change
-  interrupt.
+  interrupt. CVRCON (the comparator voltage reference) is a separate
+  module in the SFR map; no driver yet.
 - ✅ Data EEPROM driver (`peripherals/pic18f6520_eeprom.h`): 1 KB,
   10-bit EEADRH:EEADR addressing (the 4550/2520 families use 8-bit
   EEADR only), unlock 0x55/0xAA, EEIF write-complete (interrupt or

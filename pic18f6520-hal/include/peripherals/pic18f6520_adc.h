@@ -2,8 +2,8 @@
  * 10-bit SAR ADC (DS39609B §19.0), 12 channels on this part
  * (AN0-AN11, CHS3:CHS0). Same three-register shape as the 4550/2520:
  * ADCON0 (channel + GO/DONE + ADON), ADCON1 (VCFG1:VCFG0 + PCFG3:PCFG0),
- * ADCON2 (ADFM + ACQT + ADCS). PinConfig is the raw 4-bit PCFG code
- * from Table 19-4, not a curated enum.
+ * ADCON2 (ADFM + ADCS only; no ACQT on this part). PinConfig is the raw
+ * 4-bit PCFG code from Table 19-4, not a curated enum.
  */
 
 #ifndef PIC18F6520_ADC_H

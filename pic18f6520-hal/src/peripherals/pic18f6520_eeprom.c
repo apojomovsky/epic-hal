@@ -1,6 +1,6 @@
 /*
  * Data EEPROM driver, implementation (DS39609B §7.0). Registers are
- * Access Bank (0xFA6-0xFA9), no bank switching; addresses are 10-bit
+ * Access Bank (0xFA6-0xFAA), no bank switching; addresses are 10-bit
  * (EEADRH:EEADR, 1024 bytes), unlike the 4550/2520 families' 8-bit
  * EEADR-only. `ReadByte` sets RD then pulls the byte via the sim read
  * hook on host; real target reads EEDATA after RD instead.
