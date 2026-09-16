@@ -1,9 +1,9 @@
 /* PIC16F87XA top-level entry: standard types, status codes, build-time
  * device selection, and the SFR mapping layer. DS39582B is authoritative
  * for every constant; each peripheral header cites its own section.
- * Device (DS39582B §1.0, Table 1-1; non-A 873 per DS30529): 873/873A/
- * 874A/876A/877A, 4/8 KW flash, 192/368 B RAM, 128/256 B EEPROM,
- * 5/8 ADC channels. */
+ * Device (DS39582B §1.0, Table 1-1; non-A 873/874 per DS30529):
+ * 873/873A/874/874A/876A/877A, 4/8 KW flash, 192/368 B RAM,
+ * 128/256 B EEPROM, 5/8 ADC channels. */
 
 #ifndef PIC16F87XA_H
 #define PIC16F87XA_H
@@ -23,13 +23,14 @@
  * @{
  */
 #if !defined(PIC16F873) && !defined(PIC16F873A) && \
-    !defined(PIC16F874A) && !defined(PIC16F876A) && !defined(PIC16F877A)
+    !defined(PIC16F874) && !defined(PIC16F874A) && \
+    !defined(PIC16F876A) && !defined(PIC16F877A)
 #define PIC16F877A   1
 #endif
 
-#if defined(PIC16F873) + defined(PIC16F873A) + \
+#if defined(PIC16F873) + defined(PIC16F873A) + defined(PIC16F874) + \
     defined(PIC16F874A) + defined(PIC16F876A) + defined(PIC16F877A) > 1
-#error "Define exactly one of PIC16F873 / PIC16F873A / PIC16F874A / PIC16F876A / PIC16F877A."
+#error "Define exactly one of PIC16F873 / PIC16F873A / PIC16F874 / PIC16F874A / PIC16F876A / PIC16F877A."
 #endif
 
 #if   defined(PIC16F873)
@@ -54,6 +55,17 @@
   #define PIC16F87XA_FAMILY_HAS_PORTE  0
   #define PIC16F87XA_FAMILY_HAS_PSP    0
   #define PIC16F87XA_DEVICE_NAME       "PIC16F873A"
+#elif defined(PIC16F874)
+  #define PIC16F87XA_FAMILY_FLASH_KW   4
+  #define PIC16F87XA_FAMILY_HAS_COMP   0
+  #define PIC16F87XA_FAMILY_HAS_VREF   0
+  #define PIC16F87XA_FAMILY_RAM_BYTES  192
+  #define PIC16F87XA_FAMILY_EEPROM_B   128
+  #define PIC16F87XA_FAMILY_ADC_CH     8
+  #define PIC16F87XA_FAMILY_HAS_PORTD  1
+  #define PIC16F87XA_FAMILY_HAS_PORTE  1
+  #define PIC16F87XA_FAMILY_HAS_PSP    1
+  #define PIC16F87XA_DEVICE_NAME       "PIC16F874"
 #elif defined(PIC16F874A)
   #define PIC16F87XA_FAMILY_HAS_COMP   1
   #define PIC16F87XA_FAMILY_HAS_VREF   1

@@ -65,6 +65,7 @@ hal_dir  = "pic16f87xa-hal"
 variants = [
   "16F873",
   "16F873A",
+  "16F874",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -132,6 +133,7 @@ variants = ["16F873A", "16F874A", "16F876A", "16F877A"]
 [[families.PIC16F87XA.conditional_sources]]
 path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
 variants = [
+  "16F874",
   "16F874A",
   "16F877A",
 ]
@@ -807,6 +809,7 @@ needs_hal  = true
 PIC16F87XA = [
   "16F873",
   "16F873A",
+  "16F874",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -1785,6 +1788,7 @@ needs_hal = false
 PIC16F87XA = [
   "16F873A",
   "16F873",
+  "16F874",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -1865,6 +1869,12 @@ sources = [
   "mcu/target_sizecheck.c",
 ]
 
+[modules.epic-adcfilter.example.PIC16F87XA.variants.16F874]
+name    = "adcfilter-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+
 [modules.epic-adcfilter.example.PIC16F87XA.variants.16F874A]
 name    = "adcfilter-sizecheck"
 sources = [
@@ -1933,6 +1943,7 @@ depends_on = []
 PIC16F87XA = [
   "16F873A",
   "16F873",
+  "16F874",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2019,6 +2030,7 @@ depends_on = ["epic-bus"]
 PIC16F87XA = [
   "16F873A",
   "16F873",
+  "16F874",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2129,6 +2141,7 @@ PIC18Fxx5x = [
 "16F873A" = "RAM: does not fit on this smaller part"
 "16F873" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
+"16F874" = "RAM: does not fit on this smaller part"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
@@ -2211,6 +2224,7 @@ PIC18Fxx5x = [
 "16F873A" = "RAM: does not fit on this smaller part"
 "16F873" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
+"16F874" = "RAM: does not fit on this smaller part"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
@@ -2284,6 +2298,7 @@ depends_on = [
 PIC16F87XA = [
   "16F873A",
   "16F873",
+  "16F874",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2360,6 +2375,13 @@ sources = [
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
+[modules.epic-encoder.example.PIC16F87XA.variants.16F874]
+name    = "encoder-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
 [modules.epic-encoder.example.PIC16F87XA.variants.16F874A]
 name    = "encoder-sizecheck"
 sources = [
@@ -2420,6 +2442,7 @@ needs_hal = false
 PIC16F87XA = [
   "16F873A",
   "16F873",
+  "16F874",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2639,6 +2662,7 @@ PIC18Fxx5x = [
 PIC16F87XA = [
   "16F873A",
   "16F873",
+  "16F874",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2724,6 +2748,14 @@ sources = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 [modules.epic-math.example.PIC16F88X.variants.16F884]
+name    = "math-selftest"
+sources = [
+  "tests/target_smoke16.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-math.example.PIC16F87XA.variants.16F874]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
@@ -2828,6 +2860,7 @@ PIC18Fxx5x = [
 "16F873A" = "RAM: does not fit on this smaller part"
 "16F873" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
+"16F874" = "RAM: does not fit on this smaller part"
 "16F876A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
 "16F877A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
 "18F2455" = "RAM: does not fit on this smaller part"
@@ -2905,6 +2938,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
 PIC16F87XA = [
   "16F873A",
   "16F873",
+  "16F874",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -2975,6 +3009,12 @@ sources = [
   "mcu/target_sizecheck.c",
 ]
 [modules.epic-pid.example.PIC16F88X.variants.16F884]
+name    = "pid-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+
+[modules.epic-pid.example.PIC16F87XA.variants.16F874]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
@@ -3075,6 +3115,7 @@ PIC18Fxx5x = [
 "16F873A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
 "16F873" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
 "16F874A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
+"16F874" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
@@ -3151,6 +3192,7 @@ PIC18Fxx5x = [
 "16F873A" = "link: irq dispatch needs every peripheral handler"
 "16F873" = "link: irq dispatch needs every peripheral handler"
 "16F874A" = "link: irq dispatch needs every peripheral handler"
+"16F874" = "link: irq dispatch needs every peripheral handler"
 "16F876A" = "link: irq dispatch needs every peripheral handler"
 "16F877A" = "link: irq dispatch needs every peripheral handler"
 "18F2455" = "link: irq dispatch needs every peripheral handler"
@@ -3339,6 +3381,7 @@ PIC16F193X = [
 "16F873A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 "16F873" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 "16F874A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
+"16F874" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 
 [modules.epic-swuart.example.PIC16F87XA]
 name    = "swuart"
@@ -3434,6 +3477,7 @@ PIC18Fxx5x = [
 "16F873A" = "RAM: 54-byte task table does not fit on this smaller part"
 "16F873" = "RAM: 54-byte task table does not fit on this smaller part"
 "16F874A" = "RAM: 54-byte task table does not fit on this smaller part"
+"16F874" = "RAM: 54-byte task table does not fit on this smaller part"
 "18F2455" = "link: irq dispatch needs every peripheral handler"
 "18F2550" = "link: irq dispatch needs every peripheral handler"
 
@@ -3492,6 +3536,7 @@ depends_on = []
 PIC16F87XA = [
   "16F873A",
   "16F873",
+  "16F874",
   "16F874A",
   "16F876A",
   "16F877A",
@@ -3767,6 +3812,7 @@ needs_hal  = false
 PIC16F87XA = [
   "16F873A",
   "16F873",
+  "16F874",
   "16F874A",
   "16F876A",
   "16F877A",
