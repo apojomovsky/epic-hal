@@ -75,11 +75,12 @@ void pic16f7x_sim_drive_usart_rx(uint8_t data);
 void pic16f7x_sim_drive_ssp_rx(uint8_t data);
 
 /**
- * @brief Drive an A/D conversion to completion with a given 8-bit
- *        result. Stores `result` in the single ADRES register
- *        (right-justified), clears GO/DONE, and sets PIR1<ADIF>. The
- *        next call to EPIC_ADC_Read() will return the result.
- * @param result the 8-bit conversion result, 0..255.
+ * @brief Drive an A/D conversion to completion with a given result.
+ *        DS30325 parts store an 8-bit result in ADRES; DS30498 parts
+ *        store a 10-bit result across ADRESH/ADRESL using the current
+ *        ADCON1<ADFM> justification. Clears GO/DONE and sets PIR1<ADIF>.
+ * @param result the conversion result, 0..255 on 8-bit parts and
+ *        0..1023 on 10-bit parts.
  */
 void pic16f7x_sim_drive_adc_done(uint16_t result);
 

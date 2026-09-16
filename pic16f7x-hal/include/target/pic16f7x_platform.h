@@ -31,9 +31,10 @@
  * codegen gotchas). Loads the operand into W before the bank switch,
  * does the whole
  * RMW as one iorwf/andwf, selects Bank 1 absolutely and exits to
- * Bank 0. Bank 2's matching offset (0x10D) is EEADR, NOT PIE2, so a
- * Bank-2 select here silently ORs the mask into EEADR and never arms
- * the PIR2 source. Inline asm is XC8-only, so this lives here, not in
+ * Bank 0. Bank 2's matching offset (0x10D) is PMADR/PMADRL, NOT PIE2,
+ * so a Bank-2 select here silently ORs the mask into the program-
+ * memory address register and never arms the PIR2 source. Inline asm is
+ * XC8-only, so this lives here, not in
  * pic16_irq.c (shared with the host build). */
 
 /* File-scope symbol the asm needs (inline asm can only address

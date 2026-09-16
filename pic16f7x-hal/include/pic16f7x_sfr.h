@@ -62,7 +62,7 @@
 #define PIC_REG_SSPBUF        0x13U
 #define PIC_REG_SSPCON        0x14U
 
-/* CCP (the 16F72 has neither; CCP2 is 40-pin-only). */
+/* CCP (CCP1 on every part; CCP2 on every part except the 16F72). */
 #define PIC_REG_CCP1RL        0x15U
 #define PIC_REG_CCP1RH        0x16U
 #define PIC_REG_CCP1CON       0x17U
@@ -244,6 +244,11 @@
 #define PIC_TRISE_OBF          EPIC_BIT(6)
 #define PIC_TRISE_IBOV         EPIC_BIT(5)
 #define PIC_TRISE_PSPMODE      EPIC_BIT(4)
+#if PIC16F7X_FAMILY_ADC_10BIT
+#define PIC_TRISE_POR_VALUE    0x0FU   /* DS30498 TRISE3 exists. */
+#else
+#define PIC_TRISE_POR_VALUE    0x07U   /* DS30325 has no TRISE3. */
+#endif
 
 /* Bank-selection helper. Set the bank-select bits RP1:RP0 in STATUS
  * to access a given bank (DS30325 §2.2, Table 2-1). A macro, not a

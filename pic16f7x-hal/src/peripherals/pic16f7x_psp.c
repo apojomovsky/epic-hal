@@ -71,7 +71,7 @@ EPIC_StatusTypeDef EPIC_PSP_DeInit(void)
 {
     EPIC_IRQ_DisableSrc(PIC16_IRQ_PSP);
     EPIC_IRQ_ClearFlag(PIC16_IRQ_PSP);
-    b1_trise_write(0x07U);    /* POR default: I/O mode, no PSP. */
+    b1_trise_write(PIC_TRISE_POR_VALUE);    /* POR I/O mode, no PSP. */
     g_psp_cb = NULL;
     return EPIC_OK;
 }

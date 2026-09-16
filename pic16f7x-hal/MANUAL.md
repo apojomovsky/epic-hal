@@ -14,9 +14,9 @@ consistent with DS30325/DS30498):
 
 | part | pins | flash | SRAM | USART | ADC result | CCP | SSP | PSP | PIR2 |
 |---|---|---|---|---|---|---|---|---|---|
-| 16F72 | 28 | 2 KW | 64 B | - | 8-bit ADRES | - | - | - | - |
-| 16F73 | 28 | 4 KW | 128 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | - | Y |
-| 16F74 | 40 | 4 KW | 128 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | Y | Y |
+| 16F72 | 28 | 2 KW | 128 B | - | 8-bit ADRES | CCP1 | Y | - | - |
+| 16F73 | 28 | 4 KW | 192 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | - | Y |
+| 16F74 | 40 | 4 KW | 192 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | Y | Y |
 | 16F76 | 28 | 8 KW | 368 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | - | Y |
 | 16F77 | 40 | 8 KW | 368 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | Y | Y |
 | 16F737 | 28 | 4 KW | 368 B | Y | 10-bit ADRESH/L | CCP1+CCP2 | Y | - | Y |
@@ -30,10 +30,10 @@ DS30498 parts (737-777) carry the 10-bit ADRESH/ADRESL pair plus
 ADCON2/ADCON1<ADFM>:ADCS2. The shared `pic14_adc.c` reads the result
 through `PIC14MIDRANGE_HAS_ADC_10BIT` to pick the 8-bit single-register
 or 10-bit pair path. `16F72` is the minimal die: no USART, no CCP2, no
-PIR2/PIE2 (its interrupt surface is PIR1-only) and no PM* program-memory
-block on the 2 KW flash.
+PIR2/PIE2 (its interrupt surface is PIR1-only); 0x10D is PMADRL, with
+no PMDATA program-memory byte.
 
-The 28-pin parts (72/73/76/77/737/767) have no PortD/PortE and no PSP;
+The 28-pin parts (72/73/76/737/767) have no PortD/PortE and no PSP;
 the 40-pin parts (74/77/747/777) carry PORTD/TRISD, PORTE/TRISE and the
 PSP (the shared driver gates on `PIC16F7X_FAMILY_HAS_PSP`).
 
