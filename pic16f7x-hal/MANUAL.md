@@ -16,7 +16,7 @@ consistent with DS30325/DS30498):
 |---|---|---|---|---|---|---|---|---|---|
 | 16F72 | 28 | 2 KW | 128 B | - | 8-bit ADRES | CCP1 | Y | - | - |
 | 16F73 | 28 | 4 KW | 192 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | - | Y |
-| 16F74 | 40 | 4 KW | 128 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | Y | Y |
+| 16F74 | 40 | 4 KW | 192 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | Y | Y |
 | 16F76 | 28 | 8 KW | 368 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | - | Y |
 | 16F77 | 40 | 8 KW | 368 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | Y | Y |
 | 16F737 | 28 | 4 KW | 368 B | Y | 10-bit ADRESH/L | CCP1+CCP2 | Y | - | Y |
