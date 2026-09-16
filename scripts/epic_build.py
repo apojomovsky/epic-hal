@@ -494,16 +494,25 @@ def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
                                  "PIC16F63x_67x_68x", "PIC16F7x")):
             epic_key = "boren"
         # The PIC18 table maps `bor` -> `boren` for the 2455/2520
-        # devices whose TOMLs spell the field that way; the 6520's own
-        # device data spells it `bor` (DS39609B Register 23-2), so flip
-        # it back like the PIC16 families.
+        # devices whose TOMLs spell the field that way; the 6520 and
+        # 1320 devices spell it `bor` (DS39609B Register 23-2,
+        # DS39605F Register 4-2), so flip it back like the PIC16
+        # families.
         if (is_pic18 and epic_key == "boren"
-                and fam.name == "PIC18F6520"):
+                and fam.name in ("PIC18F6520", "PIC18F1320")):
             epic_key = "bor"
         low_val = val.lower()
         if is_pic18:
             if low_key == "borv":
-                epic_val = _BORV_MAP.get(low_val, low_val)
+                # Only the 4550-family device TOMLs name the BORV values
+                # with words (minimum/low/mid/maximum, DS39632E); the 2520
+                # /1320/6520 TOMLs name them as plain numeric codes
+                # (0..3 for the 2520, voltage codes 45/42/27 for the
+                # 1320/6520), which `_BORV_MAP` would corrupt (e.g.
+                # 2520's "3" -> "maximum" for a device that only accepts
+                # "0".."3"). Pass those through, same as the wdtps gate.
+                epic_val = (_BORV_MAP.get(low_val, low_val)
+                            if fam.name == "PIC18Fxx5x" else low_val)
             elif low_key == "wdtps" and low_val.isdigit():
                 # Only the 4550-family device TOMLs name the WDTPS values
                 # with a div prefix (div1..div32768, DS39632E); the 2520
