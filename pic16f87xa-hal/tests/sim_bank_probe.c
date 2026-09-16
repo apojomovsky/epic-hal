@@ -100,11 +100,13 @@ int main(void)
     EPIC_TIMER2_WritePeriod(0xAAu);
     CHECK(EPIC_TIMER2_ReadPeriod() == 0xAAu, 0x03);
 
+#if PIC16F87XA_FAMILY_HAS_SSP
     /* Class B: EPIC_SSP_ReadByte's SSPBUF value round-trip (Bank 0).
      * The BF-clear RMW is the safe Bank-1 pattern; BF itself is a
      * hardware status bit, not reliable to poke under MPLAB SIM. */
     EPIC_REG8(PIC_REG_SSPBUF) = 0x5Au;
     CHECK(EPIC_SSP_ReadByte() == 0x5Au, 0x04);
+#endif
 
     /* Class B: EPIC_GPIO_Init writes TRISx (Bank 1) through a runtime
      * address (FSR-indirect, expected safe; probe confirms). PORTB all
@@ -127,10 +129,13 @@ int main(void)
         CHECK(v == 0xDFu, 0x0A);
     }
 
+#if PIC16F87XA_FAMILY_HAS_USART
     /* Class B (last: kills the marker USART): EPIC_USART_Init's TXSTA
      * and SPBRG writes are the safe pattern. Verify the Init state
      * first, then DeInit (SPBRG -> 0x00, TXSTA -> 0x02), then re-init.
-     * TXEN is expected from the non-null callback. */
+     * TXEN is expected from the non-null callback. Absent on the
+     * USART-less cut-down (16F872): no TXSTA/SPBRG to probe, and no
+     * uart-mode sim gate for that part. */
     {
         USART_HandleTypeDef h = USART_HANDLE_DEFAULT;
         h.SPBRG = (uint8_t)USART_ComputeSPBRG(
@@ -150,6 +155,7 @@ int main(void)
         (void)EPIC_USART_Init(&h);
         EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
     }
+#endif
 
     for (uint32_t i = 0; epic_harness_running(i); i++)
     {
