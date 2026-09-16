@@ -67,6 +67,7 @@ variants = [
   "16F873A",
   "16F874",
   "16F874A",
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -811,6 +812,7 @@ PIC16F87XA = [
   "16F873A",
   "16F874",
   "16F874A",
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -1790,6 +1792,7 @@ PIC16F87XA = [
   "16F873",
   "16F874",
   "16F874A",
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -1945,6 +1948,7 @@ PIC16F87XA = [
   "16F873",
   "16F874",
   "16F874A",
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -2032,6 +2036,7 @@ PIC16F87XA = [
   "16F873",
   "16F874",
   "16F874A",
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -2119,6 +2124,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
 
 [modules.epic-console.supported]
 PIC16F87XA = [
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -2206,6 +2212,7 @@ depends_on = [
 
 [modules.epic-debounce.supported]
 PIC16F87XA = [
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -2300,6 +2307,7 @@ PIC16F87XA = [
   "16F873",
   "16F874",
   "16F874A",
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -2444,6 +2452,7 @@ PIC16F87XA = [
   "16F873",
   "16F874",
   "16F874A",
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -2664,6 +2673,7 @@ PIC16F87XA = [
   "16F873",
   "16F874",
   "16F874A",
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -2861,6 +2871,7 @@ PIC18Fxx5x = [
 "16F873" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
 "16F874" = "RAM: does not fit on this smaller part"
+"16F876" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
 "16F876A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
 "16F877A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
 "18F2455" = "RAM: does not fit on this smaller part"
@@ -2940,6 +2951,7 @@ PIC16F87XA = [
   "16F873",
   "16F874",
   "16F874A",
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -3099,6 +3111,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
 
 [modules.epic-serial.supported]
 PIC16F87XA = [
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -3193,6 +3206,7 @@ PIC18Fxx5x = [
 "16F873" = "link: irq dispatch needs every peripheral handler"
 "16F874A" = "link: irq dispatch needs every peripheral handler"
 "16F874" = "link: irq dispatch needs every peripheral handler"
+"16F876" = "link: irq dispatch needs every peripheral handler"
 "16F876A" = "link: irq dispatch needs every peripheral handler"
 "16F877A" = "link: irq dispatch needs every peripheral handler"
 "18F2455" = "link: irq dispatch needs every peripheral handler"
@@ -3355,6 +3369,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
 
 [modules.epic-swuart.supported]
 PIC16F87XA = [
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -3458,6 +3473,7 @@ depends_on = []
 
 [modules.epic-taskmgr.supported]
 PIC16F87XA = [
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -3538,6 +3554,7 @@ PIC16F87XA = [
   "16F873",
   "16F874",
   "16F874A",
+  "16F876",
   "16F876A",
   "16F877A",
 ]
@@ -3814,6 +3831,7 @@ PIC16F87XA = [
   "16F873",
   "16F874",
   "16F874A",
+  "16F876",
   "16F876A",
   "16F877A",
 ]
