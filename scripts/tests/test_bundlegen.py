@@ -317,6 +317,30 @@ PIC16F87XA = ["src/pic16/epic_math_mul.c"]
         mk193x = bundlegen.emit_epic_hal_mk(load(), "PIC16F193X", "v0.1.0")
         self.assertNotIn("EPIC_HAL_MODULE_pic16f193x-firmware", mk193x)
 
+    def test_splices_a_positioned_conditional_after_its_sibling(self):
+        # A conditional with `after` must land mid-list where epic_build
+        # resolves it (load-bearing link order), not appended at the end.
+        cond = MANIFEST + """
+[[families.PIC16F87XA.conditional_sources]]
+path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_extra.c"
+after    = "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c"
+variants = ["16F877A"]
+"""
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False)
+        tmp.write(cond)
+        tmp.close()
+        mk = bundlegen.emit_epic_hal_mk(
+            epicmanifest.load(pathlib.Path(tmp.name)), "PIC16F87XA", "v0.1.0"
+        )
+        self.assertIn(
+            "EPIC_HAL_HAL_SRCS := $(patsubst "
+            "%/pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c,"
+            "%/pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c "
+            "%/pic16f87xa-hal/src/peripherals/pic16f87xa_extra.c,"
+            "$(EPIC_HAL_HAL_SRCS))",
+            mk,
+        )
+
 
 class TestSourcesJson(unittest.TestCase):
     def setUp(self):

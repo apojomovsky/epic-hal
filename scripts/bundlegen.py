@@ -154,7 +154,16 @@ def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
     ]
     for cond in fam.conditional_sources:
         out.append(f"ifneq ($(filter $(EPIC_HAL_MCU),{' '.join(cond.variants)}),)")
-        out.append(f"  EPIC_HAL_HAL_SRCS += $(EPIC_HAL_DIR)/{cond.path}")
+        if cond.after is None:
+            out.append(f"  EPIC_HAL_HAL_SRCS += $(EPIC_HAL_DIR)/{cond.path}")
+        else:
+            # Splice after the named sibling so the bundle links in the
+            # same order epic_build.py resolves (load-bearing for the
+            # byte-identical .hex gate).
+            out.append(
+                f"  EPIC_HAL_HAL_SRCS := $(patsubst %/{cond.after},"
+                f"%/{cond.after} %/{cond.path},$(EPIC_HAL_HAL_SRCS))"
+            )
         out.append("endif")
     out.append("")
 
@@ -237,7 +246,6 @@ def emit_sources_json(manifest, family_name: str, version: str) -> str:
                 "config": dict(example.config),
             },
         }
-
     doc = {
         "version": version,
         "family": family_name,
