@@ -47,6 +47,9 @@ set(EPIC_SOURCES
     src/peripherals/pic18f6520_ccp.c
     src/peripherals/pic18f6520_ssp.c
     src/peripherals/pic18f6520_usart.c
+    src/peripherals/pic18f6520_adc.c
+    src/peripherals/pic18f6520_comp.c
+    src/peripherals/pic18f6520_eeprom.c
 )
 
 epic_add_hal_library(${EPIC_LIB})
@@ -60,3 +63,6 @@ epic_add_example(example_timer3 tests/example_timer3.c)
 epic_add_example(example_ccp   tests/example_ccp.c)
 epic_add_example(example_ssp   tests/example_ssp.c)
 epic_add_example(example_usart tests/example_usart.c)
+epic_add_example(example_adc    tests/example_adc.c)
+epic_add_example(example_comp   tests/example_comp.c)
+epic_add_example(example_eeprom tests/example_eeprom.c)

@@ -615,7 +615,7 @@ epiccc_sources = [
 # 12-ch ADC, dual comparator, LVD, 1 KB EEPROM (DS39609B Table 1-1).
 # No USB, no SPP. GPIO + Timer0-3 + CCP1-5 + MSSP + EUSART1/2 + IRQ
 # backend; TMR4 has no driver yet (#183 covered Timer0-3 only).
-# ADC/comp/EEPROM/PSP/LVD land in #185.
+# TMR4/LVD/PSP have no driver yet.
 [families.PIC18F6520]
 hal_dir  = "pic18f6520-hal"
 variants = ["18F6520"]
@@ -644,6 +644,9 @@ hal_sources = [
   "pic18f6520-hal/src/peripherals/pic18f6520_ccp.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_ssp.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_usart.c",
+  "pic18f6520-hal/src/peripherals/pic18f6520_adc.c",
+  "pic18f6520-hal/src/peripherals/pic18f6520_comp.c",
+  "pic18f6520-hal/src/peripherals/pic18f6520_eeprom.c",
   "pic18f6520-hal/src/core/pic18_irq.c",
   "pic18f6520-hal/src/core/pic18_irq_dispatch.c",
   "pic18f6520-hal/src/target/pic18_isr_vector.c",
@@ -665,6 +668,9 @@ epiccc_sources = [
   "pic18f6520-hal/src/peripherals/pic18f6520_ccp.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_ssp.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_usart.c",
+  "pic18f6520-hal/src/peripherals/pic18f6520_adc.c",
+  "pic18f6520-hal/src/peripherals/pic18f6520_comp.c",
+  "pic18f6520-hal/src/peripherals/pic18f6520_eeprom.c",
   "pic18f6520-hal/src/core/pic18_irq.c",
   "pic18f6520-hal/src/core/pic18f6520_wdt_sleep.c",
   "pic18f6520-hal/src/epiccc/pic18f6520_wdt_sleep_epiccc.c",

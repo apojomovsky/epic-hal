@@ -6,14 +6,13 @@ manual covers only what is genuinely specific to the **PIC18F6520**, verified
 against the Microchip datasheet **DS39609B** (PIC18F6520/6620/8520/8620/
 6720/8720).
 
-**Phase 1-3 status (epic-hal#182, #183, #184):** platform layer, SFR map,
-GPIO, Timer0-3, CCP1-5, MSSP, EUSART1/2, the interrupt core,
-WDT/Sleep/BOR/POR, and the harness are implemented and verified under
-host sim and real `mdb`. ADC, the comparator, the data EEPROM, PSP and
-LVD land in phase 4 (#185) and are marked **phase N** below; Timer4 has
-no driver yet (#183 covered Timer0-3 only). This family has no USB and
-no SPP (DS39609B Table 1-1), so it never will; do not expect them
-here.
+**Status: complete.** Platform layer, SFR map, GPIO, Timer0-3, CCP1-5,
+MSSP, EUSART1/2, ADC, comparator, data EEPROM, the interrupt core,
+WDT/Sleep/BOR/POR, and the harness are all implemented (epic-hal#182,
+#183, #184, #185) and verified under host sim and real `mdb`. Timer4,
+PSP and LVD have no driver yet (the SFRs are in the map). This family
+has no USB and no SPP (DS39609B Table 1-1), so it never will; do not
+expect them here.
 
 ---
 
@@ -31,11 +30,14 @@ here.
 10. [CCP1-5](#10-ccp1-5)
 11. [MSSP](#11-mssp)
 12. [EUSART1/2](#12-eusart12)
-13. [The SFR layer](#13-the-sfr-layer)
-14. [Device selection](#14-device-selection)
-15. [The examples](#15-the-examples)
-16. [Known gaps and gotchas](#16-known-gaps-and-gotchas)
-17. [Appendix: datasheet section index](#17-appendix-datasheet-section-index)
+13. [ADC](#13-adc)
+14. [Comparator](#14-comparator)
+15. [Data EEPROM](#15-data-eeprom)
+16. [The SFR layer](#16-the-sfr-layer)
+17. [Device selection](#17-device-selection)
+18. [The examples](#18-the-examples)
+19. [Known gaps and gotchas](#19-known-gaps-and-gotchas)
+20. [Appendix: datasheet section index](#20-appendix-datasheet-section-index)
 
 ---
 
@@ -241,19 +243,59 @@ with address-detect. The weak handlers split per module: `USART_TX/
 RX_IRQHandler` for EUSART1 (PIR1<TXIF/RCIF>), `USART2_TX/RX_IRQHandler`
 for EUSART2 (PIR3<TX2IF/RC2IF>).
 
-## 13. The SFR layer
+## 13. ADC
+
+*DS39609B §19.0 (10-bit SAR, 12 channels AN0-AN11).*
+
+CHS3:CHS0 selects the channel (ADCON0), VCFG1:VCFG0 the voltage
+reference, PCFG3:PCFG0 the per-pin analog/digital config (ADCON1), and
+ADCS2:ADCS0 the conversion clock (ADCON2). Two family-specific points:
+
+- **No ACQT field.** ADCON2 on this part carries only ADCS (bits 2:0)
+  and ADFM (bit 7); bits 3:6 are unimplemented (confirmed in the DFP
+  and EDC, unlike the 4550/2520/1320 which have ACQT2:ACQT0 there).
+  The `Acquisition` handle field is kept for cross-family contract
+  compatibility and ignored; the sample-and-hold acquisition is
+  internally timed.
+- GO/DONE starts a conversion, ADIF (PIR1<6>) sets on completion.
+  `example_adc` programs AN0; the mdb gate proves GO clears and ADIF
+  sets on hardware (ADCON0=0x01, ADCON2=0x81, PIR1=0x40).
+
+## 14. Comparator
+
+*DS39609B §20.0 (two comparators, same layout as the 4550/2520).*
+
+8 modes via CMCON<CM2:CM0> (Figure 20-1); C1OUT/C2OUT are read-only
+outputs. CMCON POR is 0x00 (Reset mode) on this part, unlike the
+4550 family's 0x07 (comparators off). CMIF (PIR2<6>) fires on any
+output change. `example_comp` programs two-independent mode; the mdb
+gate reads CMCON=0x02 on hardware.
+
+## 15. Data EEPROM
+
+*DS39609B §7.0 (1024 bytes, addressed by EEADRH:EEADR).*
+
+This is the family difference vs the 4550/2520 (256 bytes, EEADR
+alone): every address is 10-bit, so the driver's Read/Write/Buffer
+APIs take `uint16_t` addresses and program both EEADRH and EEADR.
+`example_eeprom` writes 0xA5 to 0x142 (above the 256-byte mark,
+proving the high-address byte); the mdb gate reads back
+EEADRH=0x01, EEADR=0x42 and EECON1=WR strobed (SIM does not model
+cell writes, same as the other PIC18 families).
+
+## 16. The SFR layer
 
 Every SFR access names a compile-time-constant `PIC_REG_*` token through
 `epic_sfr_read8` / `EPIC_REG8` (see `pic18_platform.h`). This is load-bearing:
 on PIC18, a runtime SFR address compiles to the program-memory table
 mechanism and silently writes nowhere (see §13).
 
-## 14. Device selection
+## 17. Device selection
 
 `PIC18F6520` is the only variant. The build driver emits `-DPIC18F6520`;
 `pic18f6520_hal.h` defaults to it when nothing is defined.
 
-## 15. The examples
+## 18. The examples
 
 - `example_smoke`: bare harness contract (family-blind).
 - `example_blink`: Timer0 + GPIO + interrupt, RB0 toggle.
@@ -263,8 +305,11 @@ mechanism and silently writes nowhere (see §13).
 - `example_ccp`: CCP1/CCP3 compare programming + time-base check.
 - `example_ssp`: MSSP SPI-master programming check.
 - `example_usart`: EUSART1/2 async TX programming (BRG math) check.
+- `example_adc`: AN0 conversion programming check.
+- `example_comp`: two-independent comparator mode check.
+- `example_eeprom`: 10-bit-address write/read round-trip check.
 
-## 16. Known gaps and gotchas
+## 19. Known gaps and gotchas
 
 - **Umbrella header name.** The family header is `pic18f6520_hal.h`, not
   `pic18f6520.h`: the DFP proc header for this part is literally
@@ -287,14 +332,17 @@ mechanism and silently writes nowhere (see §13).
   no BAUDCON, no SPBRGH, no BRG16/auto-baud fields on this part. The
   `USART_ComputeSPBRG` signature therefore takes no `brg16` argument
   (compare the 4550/2520 families).
-- Peripherals not yet ported (ADC, comparator, data EEPROM, PSP, LVD)
-  are phase 4 (#185); Timer4 has no driver yet (#183 covered Timer0-3
-  only), so its SFRs are in the map but there is no TMR4 driver or
-  header yet. The MPLAB SIM gates still report PASS/FAIL on the RA0
-  GPIO marker (`MODE=gpio`), the EUSART's mdb gate uses `uartio`
-  capture directly (see PR #203's EUSART verification).
+- **No ACQT on the ADC.** ADCON2 has only ADCS + ADFM; there is no
+  acquisition-time field (4550/2520/1320 have ACQT there). See §13.
+- **1 KB EEPROM, 10-bit addressing.** The EEPROM APIs take `uint16_t`
+  addresses and program EEADRH + EEADR; the 4550/2520 drivers use
+  8-bit EEADR only. See §15.
+- Timer4, PSP and LVD have no driver yet, so their SFRs are in the map
+  but there is no TMR4/PSP/LVD header. The MPLAB SIM CI gate reports
+  PASS/FAIL on the RA0 GPIO marker (`MODE=gpio`); the EUSART's mdb gate
+  uses `uartio` capture directly (see PR #203's EUSART verification).
 
-## 17. Appendix: datasheet section index
+## 20. Appendix: datasheet section index
 
 | Section | Topic        | Where covered here                |
 |---------|--------------|-----------------------------------|
@@ -308,5 +356,8 @@ mechanism and silently writes nowhere (see §13).
 | §16.0   | CCP1-5       | `peripherals/pic18f6520_ccp.h`     |
 | §17.0   | MSSP         | `peripherals/pic18f6520_ssp.h`     |
 | §18.0   | EUSART1/2    | `peripherals/pic18f6520_usart.h`   |
+| §19.0   | ADC          | `peripherals/pic18f6520_adc.h`     |
+| §20.0   | Comparator   | `peripherals/pic18f6520_comp.h`    |
+| §7.0    | Data EEPROM  | `peripherals/pic18f6520_eeprom.h`  |
 | §23.0   | Config words | `mcu/pic18f6520-mplabx/README.md` |
 | Table 1-1 | Device features | §1                            |
