@@ -1,11 +1,12 @@
 # PIC16F87XA HAL, Manual
 
-A hardware abstraction layer for the **PIC16F873A / 874A / 876A / 877A**
-family, modelled on the STM32Cube HAL and verified against the Microchip
-datasheet **DS39582B**. Every constant, register address, bit name and
-reset value in this HAL is taken 1:1 from that datasheet; each header cites
-the section it implements. If the HAL and the datasheet disagree, the HAL
-is wrong, please treat that as a bug.
+A hardware abstraction layer for the **PIC16F87XA** family
+(**16F870/871/872/873/874/876/877**, **16F873A/874A/876A/877A** and the
+**16LF873A** voltage variant), modelled on the STM32Cube HAL and verified
+against the Microchip datasheet **DS39582B**. Every constant, register
+address, bit name and reset value in this HAL is taken 1:1 from that
+datasheet; each header cites the section it implements. If the HAL and
+the datasheet disagree, the HAL is wrong, please treat that as a bug.
 
 This manual covers what's genuinely specific to this family: the device
 variants, the peripheral register reference, the SFR map, and this
@@ -49,16 +50,25 @@ model are explained there once and apply here unchanged.
 
 ## 1. What this is
 
-The PIC16F87XA is a mid-range 8-bit Microchip family: four pin-compatible
-parts that share one datasheet (DS39582B) and differ mainly in package,
-flash/RAM/EEPROM size, and how many analog channels and ports they expose:
+The PIC16F87XA is a mid-range 8-bit Microchip family: twelve parts that
+share one datasheet (DS39582B, non-A steppings per DS30529) and differ
+mainly in package, flash/RAM/EEPROM size, and which peripherals they
+expose:
 
-| Part     | Pins | Flash | RAM  | EEPROM | ADC ch | PORTD/PORTE | PSP |
-|----------|------|-------|------|--------|--------|-------------|-----|
-| 16F873A  | 28   | 4 KW  | 192B | 128B   | 5      | no          | no  |
-| 16F874A  | 40   | 4 KW  | 192B | 128B   | 8      | yes         | yes |
-| 16F876A  | 28   | 8 KW  | 368B | 256B   | 5      | no          | no  |
-| 16F877A  | 40   | 8 KW  | 368B | 256B   | 8      | yes         | yes |
+| Part     | Pins | Flash | RAM  | EEPROM | ADC ch | PORTD/E+PSP | USART | SSP | CCP2 | COMP+Vref |
+|----------|------|-------|------|--------|--------|-------------|-------|-----|------|-----------|
+| 16F870   | 28   | 2 KW  | 128B | 64B    | 5      | no          | yes   | no  | no   | no        |
+| 16F871   | 40   | 2 KW  | 128B | 64B    | 8      | yes         | yes   | no  | no   | no        |
+| 16F872   | 28   | 2 KW  | 128B | 64B    | 5      | no          | no    | yes | no   | no        |
+| 16F873   | 28   | 4 KW  | 192B | 128B   | 5      | no          | yes   | yes | yes  | no        |
+| 16F874   | 40   | 4 KW  | 192B | 128B   | 8      | yes         | yes   | yes | yes  | no        |
+| 16F876   | 28   | 8 KW  | 368B | 256B   | 5      | no          | yes   | yes | yes  | no        |
+| 16F877   | 40   | 8 KW  | 368B | 256B   | 8      | yes         | yes   | yes | yes  | no        |
+| 16F873A  | 28   | 4 KW  | 192B | 128B   | 5      | no          | yes   | yes | yes  | yes       |
+| 16LF873A | 28   | 4 KW  | 192B | 128B   | 5      | no          | yes   | yes | yes  | yes       |
+| 16F874A  | 40   | 4 KW  | 192B | 128B   | 8      | yes         | yes   | yes | yes  | yes       |
+| 16F876A  | 28   | 8 KW  | 368B | 256B   | 5      | no          | yes   | yes | yes  | yes       |
+| 16F877A  | 40   | 8 KW  | 368B | 256B   | 8      | yes         | yes   | yes | yes  | yes       |
 
 See `epic-common/MANUAL.md` §1 for why this HAL exists at all (the general
 "absorbs the register-level machinery" pitch) — it's the same reasoning
@@ -185,7 +195,7 @@ device define, and links the HAL library (which propagates the
 ### 4.2 Target build, manifest-driven
 
 ```sh
-python3 scripts/epic_build.py build --module epic-tick --mcu 16F877A --run   # also 873A / 874A / 876A
+python3 scripts/epic_build.py build --module epic-tick --mcu 16F877A --run   # also 870/871/872/873/LF873A/874/876/877 and the A-parts
 ```
 
 CLI flags (see `python3 scripts/epic_build.py build --help`):
@@ -193,7 +203,7 @@ CLI flags (see `python3 scripts/epic_build.py build --help`):
 | Flag            | Default                          | Meaning                                    |
 |-----------------|-----------------------------------|---------------------------------------------|
 | `--module`      | (required)                        | Manifest module name, e.g. `epic-tick`.    |
-| `--mcu`         | (required)                        | Target part (873A/874A/876A/877A).         |
+| `--mcu`         | (required)                        | Target part (any `variants` entry).        |
 | `--fosc-hz`     | the family's `fosc_hz` (20000000) | Oscillator frequency, passed as `-DFOSC_HZ`. |
 | `--dfp-dir`     | empty (omit `-mdfp`)              | Device Family Pack dir.                    |
 | `--build-dir`   | `build`                           | Output directory.                          |
@@ -1003,22 +1013,28 @@ does not expose.
 
 ## 22. Device selection
 
-Define exactly **one** of `PIC16F873A`, `PIC16F874A`, `PIC16F876A`,
-`PIC16F877A` before including any HAL header. If none is defined,
+Define exactly **one** of `PIC16F870`, `PIC16F871`, `PIC16F872`,
+`PIC16F873`, `PIC16F873A`, `PIC16LF873A`, `PIC16F874`, `PIC16F874A`,
+`PIC16F876`, `PIC16F876A`, `PIC16F877`, `PIC16F877A` before including any
+HAL header. If none is defined,
 `pic16f87xa.h` defaults to `PIC16F877A`; if more than one is defined, it
 is a `#error`.
 
 The choice sets a family of `PIC16F87XA_FAMILY_*` macros you can branch
 on:
 
-| Macro                         | 873A | 874A | 876A | 877A |
-|-------------------------------|------|------|------|------|
-| `_FLASH_KW`                   | 4    | 4    | 8    | 8    |
-| `_RAM_BYTES`                   | 192  | 192  | 368  | 368  |
-| `_EEPROM_B`                    | 128  | 128  | 256  | 256  |
-| `_ADC_CH`                      | 5    | 8    | 5    | 8    |
-| `_HAS_PORTD` / `_HAS_PORTE`    | 0    | 1    | 0    | 1    |
-| `_HAS_PSP`                     | 0    | 1    | 0    | 1    |
+| Macro                      | 870 | 871 | 872 | 873 | 873A/LF873A | 874 | 874A | 876 | 876A | 877 | 877A |
+|----------------------------|-----|-----|-----|-----|-----------|-----|------|-----|------|-----|------|
+| `_FLASH_KW`                | 2   | 2   | 2   | 4   | 4         | 4   | 4    | 8   | 8    | 8   | 8    |
+| `_RAM_BYTES`               | 128 | 128 | 128 | 192 | 192       | 192 | 192  | 368 | 368  | 368 | 368  |
+| `_EEPROM_B`                | 64  | 64  | 64  | 128 | 128       | 128 | 128  | 256 | 256  | 256 | 256  |
+| `_ADC_CH`                  | 5   | 8   | 5   | 5   | 5         | 8   | 8    | 5   | 5    | 8   | 8    |
+| `_HAS_PORTD`/`_HAS_PORTE`  | 0   | 1   | 0   | 0   | 0         | 1   | 1    | 0   | 0    | 1   | 1    |
+| `_HAS_PSP`                 | 0   | 1   | 0   | 0   | 0         | 1   | 1    | 0   | 0    | 1   | 1    |
+| `_HAS_USART`               | 1   | 1   | 0   | 1   | 1         | 1   | 1    | 1   | 1    | 1   | 1    |
+| `_HAS_SSP`                 | 0   | 0   | 1   | 1   | 1         | 1   | 1    | 1   | 1    | 1   | 1    |
+| `_HAS_CCP2`                | 0   | 0   | 0   | 1   | 1         | 1   | 1    | 1   | 1    | 1   | 1    |
+| `_HAS_COMP`/`_HAS_VREF`    | 0   | 0   | 0   | 0   | 1         | 0   | 1    | 0   | 1    | 0   | 1    |
 
 These are *device-capability* guards (which chip), not build-mode guards
 (host vs. target), they are the one kind of `#if` that legitimately
@@ -1087,6 +1103,15 @@ for t in build/example_*; do "$t"; done   # exit code 0 = pass
 - **CCP has no `HANDLE_DEFAULT`**, fill `Instance` and `Mode` explicitly.
 - **PSP is 40/44-pin only**, including its header on a 28-pin part is a
   deliberate `#error`.
+- **UART-mode sim gates run on the A-parts only.** Under MPLAB X 6.35
+  SIM the non-A parts never raise `TXIF` (`PIR1` reads `0` with `SPEN`
+  set and `TXSTA = 0x26`, identical driver state to an A-part showing
+  `PIR1 = 0x10`), so polled transmit spins forever and no UART marker
+  is captured; a longer `wait` does not help. Measured 2026-09-16 on
+  16F873/877 against the passing 16F877A gate. The USART driver is
+  shared across the family, so the A-part gate covers it; non-A parts
+  are verified by XC8 cross-compile, the device-data audits, and the
+  host-sim build instead.
 
 See `epic-common/MANUAL.md` §6 for two HAL-wide design decisions that used
 to be listed here (`EPIC_IRQ_Enable` not setting the global enable, and
