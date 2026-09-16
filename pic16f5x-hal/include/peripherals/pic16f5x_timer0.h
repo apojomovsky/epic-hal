@@ -1,13 +1,8 @@
-/* PIC16F5x Timer0 driver (DS41213D §5.0): 8-bit timer/counter with a
- * shared prescaler. Configured through the control-space OPTION
- * register (T0CS clock source, T0SE edge, PSA prescaler assignment,
- * PS<2:0> ratio), written via the `option` instruction (EPIC_OPTION_WRITE).
- * Writing TMR0 clears the prescaler (§5.0). The prescaler is shared
- * with the WDT; PSA=1 assigns it to the WDT and Timer0 runs at 1:1.
- *
- * This core has NO interrupt path: there is no INTCON and no TMR0IF/
- * TMR0IE on the die (DS41213D §4.0), so the driver is polled and has
- * no OverflowCallback, unlike the 14-bit families' Timer0 API. */
+/* PIC16F5x Timer0 driver (DS41213D section 5.0): 8-bit timer/counter
+ * with a shared prescaler, configured through the control-space OPTION
+ * register (T0CS/T0SE/PSA/PS<2:0>) written via the `option` instruction.
+ * No interrupt path on this core (no INTCON, no TMR0IF/TMR0IE), so the
+ * driver is polled and has no OverflowCallback. */
 
 #ifndef PIC16F5X_TIMER0_H
 #define PIC16F5X_TIMER0_H

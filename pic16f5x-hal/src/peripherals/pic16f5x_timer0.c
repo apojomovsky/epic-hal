@@ -23,6 +23,7 @@ EPIC_StatusTypeDef EPIC_TIMER0_DeInit(void)
 
 /**
  * @brief Start Timer0 counting from internal Fosc/4 (clears T0CS).
+ * @param h the Timer0 handle (unused on this core).
  * @return EPIC_OK.
  */
 EPIC_StatusTypeDef EPIC_TIMER0_Start(const TIMER0_HandleTypeDef *h)

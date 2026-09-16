@@ -1,12 +1,8 @@
-/* PIC16F5x GPIO implementation (DS41213D §2.0). TRIS direction lives
- * in control space and is WRITE-ONLY on this core: the `tris`
- * instruction has no read path (DS41213D Table 12-1; unlike classic
- * mid-range, where TRISx is a banked file register that reads back),
- * so the driver shadows the direction byte in GPR and re-writes the
- * whole TRIS on every transition. PORTA is RA0..RA3 (4 output-capable
- * pins, 16F54/57/59); PORTB is RB0..RB7 on every part; PORTC/D/E
- * follow the capability macros. No pull-ups, no RB-change interrupt on
- * this die. */
+/* PIC16F5x GPIO implementation (DS41213D section 2.0). TRIS direction
+ * lives in control space and is WRITE-ONLY: the `tris` instruction has
+ * no read path, so the driver shadows the direction byte in GPR and
+ * re-writes the whole TRIS on every transition. No pull-ups, no
+ * RB-change interrupt on this die. */
 
 #include "peripherals/pic16f5x_gpio.h"
 

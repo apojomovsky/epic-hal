@@ -1,14 +1,9 @@
-/* epic-cc variant of the SFR mapping layer (paired with
- * target/pic16f5x_platform.h and host/pic16f5x_platform.h); the build's
- * include path picks which resolves, so pic16f5x_hal.h includes
- * "pic16f5x_platform.h" unconditionally with no #ifdef.
- *
- * The baseline backend's asm pass emits inline-asm templates verbatim
- * and resolves only literal and equ symbols, not C symbol names
- * (probed: `movf _scratch,w` panics the assembler), so the
- * control-space TRIS/OPTION path loads W from a scratch byte pinned to
- * a literal address. The XC8 target uses plain `__control` externs
- * instead. */
+/* epic-cc half of the SFR mapping layer (paired with target/ and
+ * host/); the include path picks which resolves. The baseline asm pass
+ * emits inline-asm templates verbatim and resolves only literal and
+ * equ symbols (probed: `movf _scratch,w` panics the assembler), so
+ * TRIS/OPTION load W from a scratch byte pinned to a literal address;
+ * the XC8 target uses plain `__control` externs instead. */
 
 #ifndef PIC16F5X_PLATFORM_H
 #define PIC16F5X_PLATFORM_H
@@ -86,6 +81,11 @@ static volatile uint8_t pic16f5x_scratch EPIC_AT(0x0C);
 
 #if PIC16F5X_FAMILY_HAS_PORTC || PIC16F5X_FAMILY_HAS_PORTD \
     || PIC16F5X_FAMILY_HAS_PORTE
+/**
+ * @brief TRIS select for the wider ports: `tris <f>` takes the port's
+ *        file address (7/8/9), kept a literal so the asm pass inlines.
+ * @param sel the port select ('C', 'D' or 'E').
+ */
 static inline void _EPIC_TRIS_WRITE_OTHER(char sel)
 {
 #if PIC16F5X_FAMILY_HAS_PORTC

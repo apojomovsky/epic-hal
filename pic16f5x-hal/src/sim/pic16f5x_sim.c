@@ -161,6 +161,8 @@ void pic16f5x_sim_step(uint32_t ticks)
 /**
  * @brief Implemented-pin mask for a port letter, mirroring the
  *        target driver's port_pin_mask (see pic16f5x_gpio.c).
+ * @param port the port letter ('A'..'E').
+ * @return the bitmask of implemented pins.
  */
 static uint8_t port_pin_mask(char port)
 {

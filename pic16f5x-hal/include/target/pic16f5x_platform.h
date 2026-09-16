@@ -71,6 +71,13 @@ extern volatile __control unsigned char pic16f5x_option __at(0x000);
 
 #if PIC16F5X_FAMILY_HAS_PORTC || PIC16F5X_FAMILY_HAS_PORTD \
     || PIC16F5X_FAMILY_HAS_PORTE
+/**
+ * @brief Wider-port TRIS selects (C/D/E): each is a distinct
+ *        `__control` extern pinned to its port's file address
+ *        (DS41213D Table 12-1).
+ * @param sel the port select ('C', 'D' or 'E').
+ * @param val the TRIS byte (1 = input bit, 0 = output bit).
+ */
 static inline void _EPIC_TRIS_WRITE_OTHER(char sel, uint8_t val)
 {
 #if PIC16F5X_FAMILY_HAS_PORTC

@@ -404,16 +404,11 @@ CONDITIONAL_REGS.update({
     "16F767": {"ADRES", "PORTD", "TRISD", "TRISE"},
     "16F777": {"ADRES"},
 
-    # PIC16F5x family: the HAL's single sfr.h text carries every port
-    # register and OSCCAL, all #if-guarded by the per-part capability
-    # macros (pic16f5x_hal.h); parse_hal reads the raw text, so each
-    # part absent from a given die must be listed. Verified against the
-    # DFP headers (asm "equ" rows): 16F57 adds PORTC, 16F59 adds
-    # PORTD/PORTE, the 20-pin 505/506 replace PORTA with OSCCAL and
-    # gain PORTC, and 16F506 adds the comparator/ADC file registers
-    # (DS41213D §2.0, §5.0). TRIS/OPTION are control-space on this
-    # core (no equ rows anywhere); they carry no PIC_REG_* defines and
-    # take DFP_MISSING_OK bit rows below.
+    # PIC16F5x: sfr.h carries every port register and OSCCAL,
+    # #if-guarded per part (pic16f5x_hal.h); parse_hal reads the raw
+    # text, so each absent die register is listed (DFP "equ" rows):
+    # PORTC on 57+, PORTD/E on 59, OSCCAL instead of PORTA on 505/506,
+    # comparator/ADC files on 506. TRIS/OPTION are control-space.
     "16F54":  {"PORTC", "PORTD", "PORTE", "OSCCAL"},
     "16F57":  {"PORTD", "PORTE", "OSCCAL"},
     "16F59":  {"OSCCAL"},
@@ -465,12 +460,10 @@ DFP_MISSING_OK = {
     # DS40300/DS41262 but the 2-bank DFP headers carry no _POSN for
     # it (the 4-bank headers spell it nRABPU, covered by the alias).
     ("OPTION", "RABPU"),
-    # PIC16F5x OPTION register: control-space on the 12-bit baseline
-    # (written with the `option` instruction, no SFR address; the DFP
-    # declares `extern volatile __control unsigned char OPTION` and no
-    # bit _POSN macros). The HAL's OPTION bits (PS/PSA/T0SE/T0CS) are
-    # datasheet facts (DS41213D Register 9-1), verified by the
-    # control-space probe, not by the DFP bit rows.
+    # PIC16F5x OPTION: control-space (written with `option`, no SFR
+    # address; the DFP declares `extern volatile __control unsigned
+    # char OPTION` and no _POSN macros). The HAL's bits (PS/PSA/T0SE/
+    # T0CS) are datasheet facts (DS41213D Register 9-1).
     ("OPTION", "PS0"), ("OPTION", "PS1"), ("OPTION", "PS2"),
     ("OPTION", "PSA"), ("OPTION", "T0SE"), ("OPTION", "T0CS"),
 }

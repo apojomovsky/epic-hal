@@ -69,6 +69,11 @@ extern uint8_t pic16f5x_sim_option;
 
 #if PIC16F5X_FAMILY_HAS_PORTC || PIC16F5X_FAMILY_HAS_PORTD \
     || PIC16F5X_FAMILY_HAS_PORTE
+/**
+ * @brief Wider-port TRIS shadows (C/D/E), mirroring the target header.
+ * @param sel the port select ('C', 'D' or 'E').
+ * @param val the TRIS byte to record.
+ */
 static inline void _EPIC_TRIS_WRITE_OTHER(char sel, uint8_t val)
 {
 #if PIC16F5X_FAMILY_HAS_PORTC
