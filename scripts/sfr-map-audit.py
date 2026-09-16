@@ -28,6 +28,7 @@ FAMILIES = {
             ("16F874A", "Microchip.PIC16Fxxx_DFP", "pic16f874a.h"),
             ("16F876", "Microchip.PIC16Fxxx_DFP", "pic16f876.h"),
             ("16F876A", "Microchip.PIC16Fxxx_DFP", "pic16f876a.h"),
+            ("16F877", "Microchip.PIC16Fxxx_DFP", "pic16f877.h"),
             ("16F877A", "Microchip.PIC16Fxxx_DFP", "pic16f877a.h"),
         ],
     ),
@@ -278,6 +279,7 @@ CONDITIONAL_REGS = {
     "16F874": {"CMCON", "CVRCON"},
     "16F876": {"PORTD", "PORTE", "TRISD", "TRISE", "CMCON", "CVRCON"},
     "16F876A": {"PORTD", "PORTE", "TRISD", "TRISE", "PIE1", "PIR1", "PIR2"},
+    "16F877": {"CMCON", "CVRCON"},
 }
 # On the 28-pin parts the whole PSP interrupt path is absent; the
 # PIE1/PIR1/PIR2 registers still exist, only their PSP bits are
@@ -294,7 +296,8 @@ CONDITIONAL_BITS = {
                ("PIE2", "CMIE"), ("PIR2", "CMIF"),
                ("ADCON1", "ADCS2")},
     "16F876A": {("PIE1", "PSPIE"), ("PIR1", "PSPIF")},
-    # 18F2455/2550 (28-pin, no SPP): the SPP registers and the SPP
+    "16F877": {("PIE2", "CMIE"), ("PIR2", "CMIF"),
+               ("ADCON1", "ADCS2")},
     # interrupt bits are absent from those parts' DFP headers.
     "18F2455": {("IPR1", "SPPIP"), ("PIE1", "SPPIE"), ("PIR1", "SPPIF")},
     "18F2550": {("IPR1", "SPPIP"), ("PIE1", "SPPIE"), ("PIR1", "SPPIF")},

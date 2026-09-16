@@ -69,6 +69,7 @@ variants = [
   "16F874A",
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 dfp      = "Microchip.PIC16Fxxx_DFP"
@@ -136,6 +137,7 @@ path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
 variants = [
   "16F874",
   "16F874A",
+  "16F877",
   "16F877A",
 ]
 
@@ -814,6 +816,7 @@ PIC16F87XA = [
   "16F874A",
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 
@@ -1300,6 +1303,7 @@ needs_hal  = true
 # clears disable the source).
 [modules.epic-combo-uart-ssp.supported]
 PIC16F87XA = [
+  "16F877",
   "16F877A",
 ]
 
@@ -1351,6 +1355,7 @@ needs_hal  = true
 # module dependencies; needs_hal builds on the HAL like C1.
 [modules.epic-combo-multitimer.supported]
 PIC16F87XA = [
+  "16F877",
   "16F877A",
 ]
 
@@ -1400,6 +1405,7 @@ needs_hal  = true
 # HAL like C1.
 [modules.epic-combo-adc-uart.supported]
 PIC16F87XA = [
+  "16F877",
   "16F877A",
 ]
 
@@ -1446,6 +1452,7 @@ needs_hal  = true
 # TSR-empty wait).
 [modules.epic-combo-rb-uart.supported]
 PIC16F87XA = [
+  "16F877",
   "16F877A",
 ]
 
@@ -1549,6 +1556,7 @@ needs_hal  = true
 
 [modules.epic-combo-encoder-tick.supported]
 PIC16F87XA = [
+  "16F877",
   "16F877A",
 ]
 
@@ -1595,6 +1603,7 @@ needs_hal  = true
 # stayed alive, and PIE1/PIE2 hold exactly the armed sources.
 [modules.epic-combo-swuart-tick.supported]
 PIC16F87XA = [
+  "16F877",
   "16F877A",
 ]
 
@@ -1643,6 +1652,7 @@ needs_hal  = true
 # under a live tick vector.
 [modules.epic-combo-tick-serial.supported]
 PIC16F87XA = [
+  "16F877",
   "16F877A",
 ]
 
@@ -1746,6 +1756,7 @@ needs_hal  = true
 # pic16f87xa_sim_drive_usart_rx (tests/test_rx_loopback.c).
 [modules.epic-combo-rx-loopback.supported]
 PIC16F87XA = [
+  "16F877",
   "16F877A",
 ]
 
@@ -1794,6 +1805,7 @@ PIC16F87XA = [
   "16F874A",
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -1950,6 +1962,7 @@ PIC16F87XA = [
   "16F874A",
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -2038,6 +2051,7 @@ PIC16F87XA = [
   "16F874A",
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -2126,6 +2140,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
 PIC16F87XA = [
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -2214,6 +2229,7 @@ depends_on = [
 PIC16F87XA = [
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -2309,6 +2325,7 @@ PIC16F87XA = [
   "16F874A",
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -2454,6 +2471,7 @@ PIC16F87XA = [
   "16F874A",
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -2583,6 +2601,7 @@ needs_hal  = false
 
 [modules.epic-lcd.supported]
 PIC16F87XA = [
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -2675,6 +2694,7 @@ PIC16F87XA = [
   "16F874A",
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -2953,6 +2973,7 @@ PIC16F87XA = [
   "16F874A",
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -3113,6 +3134,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
 PIC16F87XA = [
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -3371,6 +3393,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
 PIC16F87XA = [
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -3475,6 +3498,7 @@ depends_on = []
 PIC16F87XA = [
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -3556,6 +3580,7 @@ PIC16F87XA = [
   "16F874A",
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
@@ -3833,6 +3858,7 @@ PIC16F87XA = [
   "16F874A",
   "16F876",
   "16F876A",
+  "16F877",
   "16F877A",
 ]
 PIC16F88X = [
