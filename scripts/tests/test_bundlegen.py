@@ -21,6 +21,11 @@ includes = ["pic16f87xa-hal/include/target", "pic16f87xa-hal/include",
             "epic-common/include"]
 hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c"]
 
+[[families.PIC16F87XA.conditional_sources]]
+path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+variants = ["16F877A"]
+after    = "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c"
+
 [families.PIC18Fxx5x]
 hal_dir  = "pic18fxx5x-hal"
 variants = ["18F4550"]
@@ -330,6 +335,15 @@ class TestSourcesJson(unittest.TestCase):
             self.doc["hal_sources"],
         )
         self.assertIsInstance(self.doc["conditional_sources"], list)
+
+    def test_conditional_source_carries_its_after_field(self):
+        entry = next(
+            c for c in self.doc["conditional_sources"]
+            if c["path"] == "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+        )
+        self.assertEqual(
+            entry["after"], "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c"
+        )
 
     def test_module_entry_is_complete(self):
         entry = self.doc["modules"]["epic-serial"]

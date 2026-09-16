@@ -245,7 +245,7 @@ def emit_sources_json(manifest, family_name: str, version: str) -> str:
         "variants": fam.variants,
         "hal_sources": fam.hal_sources,
         "conditional_sources": [
-            {"path": c.path, "variants": c.variants}
+            {"path": c.path, "variants": c.variants, "after": c.after}
             for c in fam.conditional_sources
         ],
         "family_includes": fam.includes,
