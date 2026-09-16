@@ -175,15 +175,15 @@ includes = [
   "epic-common/include",
 ]
 # Classic mid-range surface riding the shared core: GPIO, Timers 0/1/2,
-# CCP1/CCP2, USART, SPI-only SSP, 8-bit ADC. No EEPROM (the PM* program-
-# memory bank replaces it), no comparator/Vref; PSP is conditional below.
+# CCP1/CCP2, SPI-only SSP, 8-bit ADC. No EEPROM (the PM* program-
+# memory bank replaces it), no comparator/Vref; USART and PSP are
+# conditional below.
 hal_sources = [
   "pic14-midrange-core/src/peripherals/pic14_gpio.c",
   "pic14-midrange-core/src/peripherals/pic14_timer0.c",
   "pic14-midrange-core/src/peripherals/pic14_timer1.c",
   "pic14-midrange-core/src/peripherals/pic14_timer2.c",
   "pic14-midrange-core/src/peripherals/pic14_ccp.c",
-  "pic14-midrange-core/src/peripherals/pic14_usart.c",
   "pic14-midrange-core/src/peripherals/pic14_ssp.c",
   "pic14-midrange-core/src/peripherals/pic14_adc.c",
   "pic14-midrange-core/src/core/pic14_irq.c",
@@ -211,6 +211,19 @@ epiccc_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 
+[[families.PIC16F7x.conditional_sources]]
+path     = "pic14-midrange-core/src/peripherals/pic14_usart.c"
+after    = "pic14-midrange-core/src/peripherals/pic14_ccp.c"
+variants = [
+  "16F73",
+  "16F74",
+  "16F76",
+  "16F77",
+  "16F737",
+  "16F747",
+  "16F767",
+  "16F777",
+]
 [[families.PIC16F7x.conditional_sources]]
 path     = "pic16f7x-hal/src/peripherals/pic16f7x_psp.c"
 variants = [
@@ -894,10 +907,20 @@ config  = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "ON" }
 
 # HARNESS=sim: the banked-SFR probe (16F77 exemplar). WDTE=OFF like
 # every other sim variant (a diagnostic build that terminates and
-# reports does not need the watchdog running unattended).
+# reports does not need the watchdog running unattended). The 16F72 has
+# no USART, so its override uses the RA0 GPIO harness for the same
+# source (MODE=gpio).
 [modules.pic16f7x-hal.example.PIC16F7x.sim]
 name        = "bank-probe"
 harness_src = "pic16f7x-hal/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_bank_probe.c",
+]
+config      = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "OFF" }
+
+[modules.pic16f7x-hal.example.PIC16F7x.sim.variants.16F72]
+name        = "bank-probe"
+harness_src = "pic16f7x-hal/src/mdb/pic16f7x_harness_mdb_gpio.c"
 sources     = [
   "tests/sim_bank_probe.c",
 ]

@@ -13,7 +13,7 @@ table.
 ## Peripheral tier
 
 GPIO (PORTA/PORTB/PORTC, PORTD/PORTE on the 40-pin parts), Timer0/1/2,
-CCP1/CCP2, USART (no USART on the 16F72), SPI-only SSP, 8-bit or 10-bit
+CCP1 (CCP2 on every part except 16F72), USART (no USART on the 16F72), SPI-only SSP, 8-bit or 10-bit
 ADC (per generation), WDT/Sleep/BOR/POR. No data EEPROM (the PM*
 program-memory block replaces it), no comparator, no Vref, no I2C
 (SPI-only MSSP, no SSPCON2/BCL). The shared IRQ dispatch rows for

@@ -1,11 +1,11 @@
-/* HARNESS=sim probe for the pic16f7x-hal banked-SFR audit (16F77
- * exemplar): runs the plain Bank-1/Bank-2 SFR access sites with known
- * values under real XC8 v4.00, so bank misdirection shows up as a FAIL
- * instead of silent corruption. Each site is pre-set through the SAFE
- * macro (a misdirected write leaves the pre-set value, failing the
- * readback); readbacks go through EPIC_BANK1_READ8. The 16F77 has
- * no comparator/vref/EEPROM; the banked surface here is ADCON1,
- * TRISx, OPTION_REG, TXSTA, SPBRG, PR2 and SSP. */
+/* HARNESS=sim probe for the pic16f7x-hal banked-SFR audit: runs the
+ * plain Bank-1/Bank-2 SFR access sites with known values under real
+ * XC8 v4.00, so bank misdirection shows up as a FAIL instead of silent
+ * corruption. Each site is pre-set through the SAFE macro (a misdirected
+ * write leaves the pre-set value, failing the readback); readbacks go
+ * through EPIC_BANK1_READ8. USART-covered variants also check TXSTA and
+ * SPBRG. The 16F72 has no USART, so those sections compile out and its
+ * sim variant reports PASS/FAIL on RA0 instead. */
 
 #include "core/epic_harness.h"
 #include "core/pic16_irq.h"
@@ -14,7 +14,9 @@
 #include "peripherals/pic16f7x_ssp.h"
 #include "peripherals/pic16f7x_timer0.h"
 #include "peripherals/pic16f7x_timer2.h"
+#if PIC16F7X_FAMILY_HAS_USART
 #include "peripherals/pic16f7x_usart.h"
+#endif
 #include "target/pic16f7x_platform.h"
 
 #include <stdint.h>
@@ -50,15 +52,18 @@ static void fail(uint8_t idx)
 /* Bank-1 readback helper. */
 #define RD1(sfr, out) EPIC_BANK1_READ8(sfr, (out))
 
+#if PIC16F7X_FAMILY_HAS_USART
 /**
  * @brief TX-complete callback: non-null only to arm TXEN.
  */
 static void s_tx_noop(void)
 {
 }
+#endif
 
 /**
  * @brief Run the banked-SFR access probes and report pass/fail.
+ * @return 0 when every readback matches, 1 otherwise.
  */
 int main(void)
 {
@@ -79,6 +84,7 @@ int main(void)
     EPIC_TIMER2_WritePeriod(0xAAu);
     CHECK(EPIC_TIMER2_ReadPeriod() == 0xAAu, 0x01);
 
+#if PIC16F7X_FAMILY_HAS_USART
     /* Class A read side: EPIC_USART_DeInit restores TXSTA (0x98) and
      * SPBRG (0x99). */
     EPIC_BANK1_WRITE8(SPBRG, 0xAAu);
@@ -88,6 +94,7 @@ int main(void)
     CHECK(v == 0x00u, 0x02);
     RD1(TXSTA, v);
     CHECK(v == 0x02u, 0x03);
+#endif
 
     /* Class B: EPIC_SSP_ReadByte's SSPBUF value round-trip (Bank 0).
      * The BF-clear RMW is the safe Bank-1 pattern; BF itself is a
@@ -115,6 +122,7 @@ int main(void)
         CHECK(v == 0xDFu, 0x07);
     }
 
+#if PIC16F7X_FAMILY_HAS_USART
     /* Class B (last: kills the marker USART): EPIC_USART_Init's TXSTA
      * and SPBRG writes are the safe pattern. Verify the Init state,
      * then DeInit, then re-init so the harness marker can transmit.
@@ -144,4 +152,15 @@ int main(void)
         epic_harness_tick();
     }
     return epic_harness_report(g_fail == 0u);
+#else
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
+        epic_harness_tick();
+    }
+    (void)epic_harness_report(g_fail == 0u);
+    for (;;)
+    {
+        /* Hold RA0 at the reported value for the MODE=gpio readback. */
+    }
+#endif
 }

@@ -62,7 +62,7 @@
 #define PIC_REG_SSPBUF        0x13U
 #define PIC_REG_SSPCON        0x14U
 
-/* CCP (the 16F72 has neither; CCP2 is 40-pin-only). */
+/* CCP (CCP1 on every part; CCP2 on every part except the 16F72). */
 #define PIC_REG_CCP1RL        0x15U
 #define PIC_REG_CCP1RH        0x16U
 #define PIC_REG_CCP1CON       0x17U

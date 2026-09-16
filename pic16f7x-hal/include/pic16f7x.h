@@ -33,12 +33,13 @@
 /* Flash/RAM/EEPROM sizes per part (DS30325 / DS30498 device summary
  * tables). RAM bytes are the GPR total (all banks + common RAM). No
  * data EEPROM on any part: the PM* program-memory bank replaces it.
- * 16F72 is the minimal 40-pin-less die: it has no USART, no CCP2, no
+ * 16F72 is the minimal 28-pin die: it has no USART, no CCP2, no
  * PIR2/PIE2 (its interrupt surface is PIR1-only), hence HAS_USART,
- * HAS_CCP2 and HAS_PIR2 are all 0 there. */
+ * HAS_CCP2 and HAS_PIR2 are all 0 there. Its SPI-only SSP is present.
+ */
 #if   defined(PIC16F72)
   #define PIC16F7X_FAMILY_FLASH_KW   2
-  #define PIC16F7X_FAMILY_RAM_BYTES  64
+  #define PIC16F7X_FAMILY_RAM_BYTES  128
   #define PIC16F7X_FAMILY_ADC_10BIT  0
   #define PIC16F7X_FAMILY_HAS_USART  0
   #define PIC16F7X_FAMILY_HAS_CCP2   0
@@ -47,7 +48,7 @@
   #define PIC16F7X_FAMILY_HAS_PORTD  0
   #define PIC16F7X_FAMILY_HAS_PORTE  0
   #define PIC16F7X_FAMILY_HAS_PSP    0
-  #define PIC16F7X_FAMILY_HAS_SSP    0
+  #define PIC16F7X_FAMILY_HAS_SSP    1
   #define PIC16F7X_DEVICE_NAME       "PIC16F72"
 #elif defined(PIC16F73)
   #define PIC16F7X_FAMILY_FLASH_KW   4
