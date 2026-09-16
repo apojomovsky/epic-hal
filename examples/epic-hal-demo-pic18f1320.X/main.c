@@ -30,7 +30,7 @@
 #pragma config OSC = HS
 #pragma config PWRT = ON
 #pragma config STVR = ON
-#pragma config WDT = OFF
+#pragma config WDT = ON
 #pragma config WDTPS = 32768
 #pragma config WRT0 = OFF
 #pragma config WRT1 = OFF
