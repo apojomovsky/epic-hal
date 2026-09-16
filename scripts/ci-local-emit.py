@@ -62,6 +62,7 @@ SIM_VARIANTS = [
     ("epic-combo-swuart-tick", "16F877A"),
     ("epic-combo-modbus-full", "18F4550"),
     ("pic16f88x-hal", "16F887"),
+    ("pic16f5x-hal", "16F54"),
     ("epic-tick", "16F887"),
     ("epic-swuart", "16F887"),
     ("epic-math", "16F887"),

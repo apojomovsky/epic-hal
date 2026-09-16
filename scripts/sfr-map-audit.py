@@ -125,6 +125,16 @@ FAMILIES = {
             ("16F777", "Microchip.PIC16Fxxx_DFP", "pic16f777.h"),
         ],
     ),
+    "pic16f5x-hal": (
+        "pic16f5x-hal/include/pic16f5x_sfr.h",
+        [
+            ("16F54", "Microchip.PIC16Fxxx_DFP", "pic16f54.h"),
+            ("16F57", "Microchip.PIC16Fxxx_DFP", "pic16f57.h"),
+            ("16F59", "Microchip.PIC16Fxxx_DFP", "pic16f59.h"),
+            ("16F505", "Microchip.PIC16Fxxx_DFP", "pic16f505.h"),
+            ("16F506", "Microchip.PIC16Fxxx_DFP", "pic16f506.h"),
+        ],
+    ),
 }
 
 
@@ -394,6 +404,17 @@ CONDITIONAL_REGS.update({
     "16F767": {"ADRES", "PORTD", "TRISD", "TRISE"},
     "16F777": {"ADRES"},
 
+    # PIC16F5x: sfr.h carries every port register and OSCCAL,
+    # #if-guarded per part (pic16f5x_hal.h); parse_hal reads the raw
+    # text, so each absent die register is listed (DFP "equ" rows):
+    # PORTC on 57+, PORTD/E on 59, OSCCAL instead of PORTA on 505/506,
+    # comparator/ADC files on 506. TRIS/OPTION are control-space.
+    "16F54":  {"PORTC", "PORTD", "PORTE", "OSCCAL"},
+    "16F57":  {"PORTD", "PORTE", "OSCCAL"},
+    "16F59":  {"OSCCAL"},
+    "16F505": {"PORTA", "PORTD", "PORTE"},
+    "16F506": {"PORTA", "PORTD", "PORTE"},
+
 })
 
 # PIC16F7x bit rows absent from the smaller/older parts' DFP headers:
@@ -418,6 +439,15 @@ CONDITIONAL_BITS.update({
               ("RCSTA", "ADDEN")},
 })
 
+# PIC16F5x 20-pin parts: the DFP STATUS row carries PA0 only - the
+# 505/506 have no program-page bits (their 2-bit FSR bank select does
+# not ride STATUS; DS41319 sections 3.0/4.0). PA1/PA2 exist on the
+# 18/28/40-pin parts (16F54/57/59).
+CONDITIONAL_BITS.update({
+    "16F505": {("STATUS", "PA1"), ("STATUS", "PA2")},
+    "16F506": {("STATUS", "PA1"), ("STATUS", "PA2")},
+})
+
 # Bits the DFP does not define but the datasheet documents:
 # STATUS<PD>/<TO> (POR-only flags) have no _POSN macros; the 87XA
 # OPTION_REG RBPU and the 193X SRCON1 SRQEN/SRNQEN are documented in
@@ -430,6 +460,12 @@ DFP_MISSING_OK = {
     # DS40300/DS41262 but the 2-bank DFP headers carry no _POSN for
     # it (the 4-bank headers spell it nRABPU, covered by the alias).
     ("OPTION", "RABPU"),
+    # PIC16F5x OPTION: control-space (written with `option`, no SFR
+    # address; the DFP declares `extern volatile __control unsigned
+    # char OPTION` and no _POSN macros). The HAL's bits (PS/PSA/T0SE/
+    # T0CS) are datasheet facts (DS41213D Register 9-1).
+    ("OPTION", "PS0"), ("OPTION", "PS1"), ("OPTION", "PS2"),
+    ("OPTION", "PSA"), ("OPTION", "T0SE"), ("OPTION", "T0CS"),
 }
 
 # Bit aliases that the audit deliberately does not chase: aggregate or
@@ -451,7 +487,8 @@ def main() -> int:
                                          "PIC16F83_84",
                                          "PIC16F63x_67x_68x", "PIC18F1320",
                                          "PIC18F2520",
-                                         "PIC18F6520", "PIC16F7x"), default=None,
+                                         "PIC18F6520", "PIC16F7x",
+                                         "PIC16F5x"), default=None,
                     help="only this manifest family (the sharded CI jobs)")
     args = ap.parse_args()
     hal_label = {"PIC16F87XA": "pic16f87xa-hal",
@@ -464,7 +501,8 @@ def main() -> int:
                  "PIC18F1320": "pic18f1320-hal",
                  "PIC18F2520": "pic18f2520-hal",
                  "PIC18F6520": "pic18f6520-hal",
-                 "PIC16F7x": "pic16f7x-hal"}[args.family] \
+                 "PIC16F7x": "pic16f7x-hal",
+                 "PIC16F5x": "pic16f5x-hal"}[args.family] \
         if args.family else None
     bad = 0
     for family, (sfr_path, mcus) in FAMILIES.items():
