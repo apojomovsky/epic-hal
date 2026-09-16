@@ -88,27 +88,19 @@ static uint8_t port_pin_mask(GPIO_TypeDef port)
  * 16F54 exemplar carries only 2 bytes, not the 5 the 40-pin 16F59's
  * A..E surface needs. Indexing rides the port enum values, which are
  * contiguous from GPIOA once the wider parts are in scope. */
-static uint8_t s_tris[2
+static uint8_t s_tris[] = {
+    0xFFU,
+    0xFFU,
 #if PIC16F5X_FAMILY_HAS_PORTC
-                      + 1
+    0xFFU,
 #endif
 #if PIC16F5X_FAMILY_HAS_PORTD
-                      + 1
+    0xFFU,
 #endif
 #if PIC16F5X_FAMILY_HAS_PORTE
-                      + 1
+    0xFFU,
 #endif
-                      ] = {0xFFU, 0xFFU
-#if PIC16F5X_FAMILY_HAS_PORTC
-                           , 0xFFU
-#endif
-#if PIC16F5X_FAMILY_HAS_PORTD
-                           , 0xFFU
-#endif
-#if PIC16F5X_FAMILY_HAS_PORTE
-                           , 0xFFU
-#endif
-                          };
+};
 
 /* init / deinit. */
 
