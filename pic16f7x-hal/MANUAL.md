@@ -28,7 +28,7 @@ The DS30325 parts (72-77) carry one 8-bit ADC result register (`ADRES`,
 Bank 0 address 0x1E, no ADRESH/ADRESL, no ADCON2, no ADFM/ADCS2). The
 DS30498 parts (737-777) carry the 10-bit ADRESH/ADRESL pair plus
 ADCON2/ADCON1<ADFM>:ADCS2. The shared `pic14_adc.c` reads the result
-through `PIC16F7X_FAMILY_ADC_10BIT` to pick the 8-bit single-register
+through `PIC14MIDRANGE_HAS_ADC_10BIT` to pick the 8-bit single-register
 or 10-bit pair path. `16F72` is the minimal die: no USART, no CCP2, no
 PIR2/PIE2 (its interrupt surface is PIR1-only); 0x10D is PMADRL, with
 no PMDATA program-memory byte.
