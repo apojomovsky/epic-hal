@@ -129,10 +129,13 @@ int main(void)
         CHECK(v == 0xDFu, 0x0A);
     }
 
+#if PIC16F87XA_FAMILY_HAS_USART
     /* Class B (last: kills the marker USART): EPIC_USART_Init's TXSTA
      * and SPBRG writes are the safe pattern. Verify the Init state
      * first, then DeInit (SPBRG -> 0x00, TXSTA -> 0x02), then re-init.
-     * TXEN is expected from the non-null callback. */
+     * TXEN is expected from the non-null callback. Absent on the
+     * USART-less cut-down (16F872): no TXSTA/SPBRG to probe, and no
+     * uart-mode sim gate for that part. */
     {
         USART_HandleTypeDef h = USART_HANDLE_DEFAULT;
         h.SPBRG = (uint8_t)USART_ComputeSPBRG(
@@ -152,6 +155,7 @@ int main(void)
         (void)EPIC_USART_Init(&h);
         EPIC_IRQ_DisableSrc(PIC16_IRQ_USART_TX);
     }
+#endif
 
     for (uint32_t i = 0; epic_harness_running(i); i++)
     {
