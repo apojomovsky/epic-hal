@@ -2,8 +2,8 @@
  * device selection, and the SFR mapping layer. DS39582B is authoritative
  * for every constant; each peripheral header cites its own section.
  * Device (DS39582B §1.0, Table 1-1; non-A 870/871/872/873/874/876/877
- * per DS30529): 870/871/872/873/873A/874/874A/876/876A/877/877A,
- * 2/4/8 KW flash,
+ * per DS30529, plus the LF873A voltage variant): 870/871/872/873/873A/
+ * LF873A/874/874A/876/876A/877/877A, 2/4/8 KW flash,
  * 128/192/368 B RAM, 64/128/256 B EEPROM, 5/8 ADC channels. */
 
 #ifndef PIC16F87XA_H
@@ -23,17 +23,17 @@
  *            peripheral header. Defaults to PIC16F877A when none is set.
  * @{
  */
-#if !defined(PIC16F870) && !defined(PIC16F871) && !defined(PIC16F872) && !defined(PIC16F873) && !defined(PIC16F873A) && \
+#if !defined(PIC16F870) && !defined(PIC16F871) && !defined(PIC16F872) && !defined(PIC16F873) && !defined(PIC16LF873A) && !defined(PIC16F873A) && \
     !defined(PIC16F874) && !defined(PIC16F874A) && \
     !defined(PIC16F876) && !defined(PIC16F876A) && \
     !defined(PIC16F877) && !defined(PIC16F877A)
 #define PIC16F877A   1
 #endif
 
-#if defined(PIC16F870) + defined(PIC16F871) + defined(PIC16F872) + defined(PIC16F873) + defined(PIC16F873A) + defined(PIC16F874) + \
+#if defined(PIC16F870) + defined(PIC16F871) + defined(PIC16F872) + defined(PIC16F873) + defined(PIC16LF873A) + defined(PIC16F873A) + defined(PIC16F874) + \
     defined(PIC16F874A) + defined(PIC16F876) + defined(PIC16F876A) + \
     defined(PIC16F877) + defined(PIC16F877A) > 1
-#error "Define exactly one of PIC16F870 / PIC16F871 / PIC16F872 / PIC16F873 / PIC16F873A / PIC16F874 / PIC16F874A / PIC16F876 / PIC16F876A / PIC16F877 / PIC16F877A."
+#error "Define exactly one of PIC16F870 / PIC16F871 / PIC16F872 / PIC16F873 / PIC16LF873A / PIC16F873A / PIC16F874 / PIC16F874A / PIC16F876 / PIC16F876A / PIC16F877 / PIC16F877A."
 #endif
 
 #if   defined(PIC16F870)
@@ -106,6 +106,20 @@
   #define PIC16F87XA_FAMILY_HAS_PORTE  0
   #define PIC16F87XA_FAMILY_HAS_PSP    0
   #define PIC16F87XA_DEVICE_NAME       "PIC16F873A"
+#elif defined(PIC16LF873A)
+  #define PIC16F87XA_FAMILY_FLASH_KW   4
+  #define PIC16F87XA_FAMILY_HAS_USART  1
+  #define PIC16F87XA_FAMILY_HAS_SSP    1
+  #define PIC16F87XA_FAMILY_HAS_CCP2   1
+  #define PIC16F87XA_FAMILY_HAS_COMP   1
+  #define PIC16F87XA_FAMILY_HAS_VREF   1
+  #define PIC16F87XA_FAMILY_RAM_BYTES  192
+  #define PIC16F87XA_FAMILY_EEPROM_B   128
+  #define PIC16F87XA_FAMILY_ADC_CH     5
+  #define PIC16F87XA_FAMILY_HAS_PORTD  0
+  #define PIC16F87XA_FAMILY_HAS_PORTE  0
+  #define PIC16F87XA_FAMILY_HAS_PSP    0
+  #define PIC16F87XA_DEVICE_NAME       "PIC16LF873A"
 #elif defined(PIC16F874)
   #define PIC16F87XA_FAMILY_FLASH_KW   4
   #define PIC16F87XA_FAMILY_HAS_USART  1
