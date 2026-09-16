@@ -17,6 +17,9 @@
 #if PIC16F7X_FAMILY_HAS_PSP
 #include "peripherals/pic16f7x_psp.h"
 #endif
+#if PIC16F7X_FAMILY_HAS_CCP2
+#include "peripherals/pic16f7x_ccp.h"
+#endif
 #if PIC16F7X_FAMILY_HAS_USART
 #include "peripherals/pic16f7x_usart.h"
 #endif
@@ -138,6 +141,25 @@ int main(void)
     EPIC_PSP_Disable();
     RD1(TRISE, v);
     CHECK(v == PIC_TRISE_POR_VALUE, 0x0E);
+#endif
+#if PIC16F7X_FAMILY_HAS_CCP2
+    /* Class B: the CCP2 compare path (Bank 0, 0x1B..0x1D). Compare-set
+     * writes the 16-bit match value before enabling the mode; DeInit
+     * restores the module to off.
+     */
+    {
+        CCP_HandleTypeDef c;
+        c.Instance = CCP_INSTANCE_2;
+        c.Mode = CCP_MODE_COMPARE_SET;
+        c.EventCallback = NULL;
+        c.CompareValue = 0x1234U;
+        (void)EPIC_CCP_Init(&c);
+        CHECK(EPIC_REG8(PIC_REG_CCPR2L) == 0x34U, 0x0F);
+        CHECK(EPIC_REG8(PIC_REG_CCPR2H) == 0x12U, 0x10);
+        CHECK(EPIC_REG8(PIC_REG_CCP2CON) == 0x08U, 0x11);
+        (void)EPIC_CCP_DeInit(CCP_INSTANCE_2);
+        CHECK(EPIC_REG8(PIC_REG_CCP2CON) == 0x00U, 0x12);
+    }
 #endif
 
 #if PIC16F7X_FAMILY_HAS_USART
