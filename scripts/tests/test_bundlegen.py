@@ -333,11 +333,11 @@ variants = ["16F877A"]
             epicmanifest.load(pathlib.Path(tmp.name)), "PIC16F87XA", "v0.1.0"
         )
         self.assertIn(
-            "EPIC_HAL_HAL_SRCS := $(patsubst "
-            "%/pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c,"
-            "%/pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c "
-            "%/pic16f87xa-hal/src/peripherals/pic16f87xa_extra.c,"
-            "$(EPIC_HAL_HAL_SRCS))",
+            "EPIC_HAL_HAL_SRCS := $(foreach f,$(EPIC_HAL_HAL_SRCS),"
+            "$(f) $(if $(filter "
+            "%/pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c,$(f)),"
+            "$(EPIC_HAL_DIR)/pic16f87xa-hal/src/peripherals/"
+            "pic16f87xa_extra.c))",
             mk,
         )
 

@@ -159,13 +159,14 @@ def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
         else:
             # Splice after the named sibling so the bundle links in the
             # same order epic_build.py resolves (load-bearing for the
-            # byte-identical .hex gate).
+            # byte-identical .hex gate). A patsubst cannot do this: make
+            # substitutes only the first % in its replacement.
             out.append(
-                f"  EPIC_HAL_HAL_SRCS := $(patsubst %/{cond.after},"
-                f"%/{cond.after} %/{cond.path},$(EPIC_HAL_HAL_SRCS))"
+                f"  EPIC_HAL_HAL_SRCS := $(foreach f,$(EPIC_HAL_HAL_SRCS),"
+                f"$(f) $(if $(filter %/{cond.after},$(f)),"
+                f"$(EPIC_HAL_DIR)/{cond.path}))"
             )
         out.append("endif")
-    out.append("")
 
     fam_incs = " ".join(f"-I$(EPIC_HAL_DIR)/{i}" for i in fam.includes)
     out += [
