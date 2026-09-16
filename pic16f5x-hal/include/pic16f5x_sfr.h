@@ -1,0 +1,85 @@
+/* SFR map for the PIC16F5x family, 1-to-1 from DS41213D, cross-checked
+ * against the DFP EDC (Microchip.PIC16Fxxx_DFP, edc/PIC16F54.PIC; the
+ * five parts share the core block 0x00-0x06, per-part ports extend it).
+ * Register addresses are regenerated from the EDC by scripts/gen-sfr.py;
+ * bit positions and POR values are hand-maintained between the DS and
+ * the DFP headers at compile time.
+ * Regenerated via scripts/gen-sfr.py. */
+
+#ifndef PIC16F5X_SFR_H
+#define PIC16F5X_SFR_H
+
+#include "pic16f5x_hal.h"
+
+/* Core file registers (every part, DFP-verified addresses). */
+
+#define PIC_REG_INDF          0x00U
+#define PIC_REG_TMR0          0x01U
+#define PIC_REG_PCL           0x02U
+#define PIC_REG_STATUS        0x03U
+#define PIC_REG_FSR           0x04U
+
+/* I/O ports by part. PORTA (RA0..RA3, 4 output-capable pins) exists
+ * on the 18/28-pin parts (16F54/57/59); PORTB is full 8-bit on every
+ * part; PORTC on the 28-pin parts; PORTD/E on the 40-pin 16F59.
+ * DS41213D §2.0. */
+#if PIC16F5X_FAMILY_HAS_PORTA
+#define PIC_REG_PORTA         0x05U
+#endif
+#define PIC_REG_PORTB         0x06U
+#if PIC16F5X_FAMILY_HAS_PORTC
+#define PIC_REG_PORTC         0x07U
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+#define PIC_REG_PORTD         0x08U
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+#define PIC_REG_PORTE         0x09U
+#endif
+
+/* 20-pin parts: OSCCAL takes file 0x05 (there is no PORTA). */
+#if PIC16F5X_FAMILY_HAS_OSCCAL
+#define PIC_REG_OSCCAL        0x05U
+#endif
+
+/* STATUS register bits (DS41213D §3.0, Register 3-1). PA<2:0> is the
+ * program-page select (PC<10:8>), not a bank select; the 12-bit core
+ * banks its data through FSR<6:5>, never through STATUS. */
+#define PIC_STATUS_C          EPIC_BIT(0)
+#define PIC_STATUS_DC         EPIC_BIT(1)
+#define PIC_STATUS_Z          EPIC_BIT(2)
+#define PIC_STATUS_nPD        EPIC_BIT(3)
+#define PIC_STATUS_nTO        EPIC_BIT(4)
+#define PIC_STATUS_PA0        EPIC_BIT(5)
+#define PIC_STATUS_PA1        EPIC_BIT(6)
+#define PIC_STATUS_PA2        EPIC_BIT(7)
+
+/* Reset values (POR), DS41213D §3.0 Table 3-1 / §2.2. */
+#define PIC_STATUS_POR_VALUE      0x18U  /* nPD and nTO set; PA=0. */
+
+/* TRIS and OPTION are control-space on this core: they are written
+ * with the dedicated `tris <f>` / `option` instructions, not through
+ * the file register map (DS41213D §12.0). They carry no PIC_REG_*
+ * address and are accessed via the platform control helpers
+ * (EPIC_TRIS_WRITE / EPIC_OPTION_WRITE, see the platform header). The
+ * data direction convention is identical to classic PIC16: TRIS bit 1
+ * = input, 0 = output. */
+
+/* OPTION register bits (DS41213D §9.0, Register 9-1): Timer0 clock
+ * source/edge, the shared prescaler assignment and ratio. There is no
+ * RBPU (weak pull-ups) and no INTEDG on this core: RB0 has no
+ * interrupt, and pull-ups do not exist on the baseline die. */
+#define PIC_OPTION_PS_MASK    0x07U  /* PS<2:0>, prescaler ratio.      */
+#define PIC_OPTION_PSA        EPIC_BIT(3)  /* 1 = prescaler to WDT.    */
+#define PIC_OPTION_T0SE       EPIC_BIT(4)  /* 1 = T0CKI falling edge.  */
+#define PIC_OPTION_T0CS       EPIC_BIT(5)  /* 1 = T0CKI external.      */
+
+#define PIC_OPTION_POR_VALUE      0x3FU  /* PS=7, PSA=1, T0SE=1, T0CS=1;
+                                          * bits 6-7 unimplemented (read 0,
+                                          * EDC por="--111111"). */
+
+/* FSR file-register access: INDF addresses `FSR` (the full flat byte),
+ * exactly as on every PIC core (DS41213D §4.0). */
+#define PIC_FSR_INDIRECT_MASK 0x7FU  /* 7-bit flat file on all 5x parts. */
+
+#endif /* PIC16F5X_SFR_H */
