@@ -419,18 +419,33 @@ void pic16f7x_sim_drive_ssp_rx(uint8_t data)
 }
 
 /**
- * @brief Drive an A/D conversion to completion: clear GO/DONE, store the
- *        result in the 8-bit ADRES register and set PIR1<ADIF>. The 7x
- *        DS30325 parts carry one 8-bit result register (DS30325 §12);
- *        the DS30498 10-bit pairs are handled in the DS30498 sim slice.
- * @param result the 8-bit conversion result, 0..255.
+ * @brief Drive an A/D conversion to completion: clear GO/DONE, store
+ *        the result, and set PIR1<ADIF>. DS30325 parts use the 8-bit
+ *        ADRES register; DS30498 parts store the 10-bit result across
+ *        ADRESH/ADRESL using the ADCON1<ADFM> justification in effect.
+ * @param result the conversion result, 0..255 on 8-bit parts and
+ *        0..1023 on 10-bit parts.
  */
 void pic16f7x_sim_drive_adc_done(uint16_t result)
 {
     /* Clear GO/DONE in ADCON0. */
     pic16f7x_sim_sfr[0x1FU] &= (uint8_t)~0x04U;
+#if PIC16F7X_FAMILY_ADC_10BIT
+    uint16_t raw = (uint16_t)(result & 0x03FFU);
+    if (pic16f7x_sim_sfr[PIC_REG_ADCON1] & PIC_ADCON1_ADFM)
+    {
+        pic16f7x_sim_sfr[PIC_REG_ADRESH] = (uint8_t)(raw >> 8);
+        pic16f7x_sim_sfr[PIC_REG_ADRESL] = (uint8_t)(raw & 0xFFU);
+    }
+    else
+    {
+        pic16f7x_sim_sfr[PIC_REG_ADRESH] = (uint8_t)((raw >> 2) & 0xFFU);
+        pic16f7x_sim_sfr[PIC_REG_ADRESL] = (uint8_t)((raw & 0x03U) << 6);
+    }
+#else
     /* Store the 8-bit result right-justified in ADRES (0x1E). */
     pic16f7x_sim_sfr[0x1EU] = (uint8_t)(result & 0xFFU);
+#endif
     /* Set PIR1<ADIF> (bit 6). */
     pic16f7x_sim_sfr[0x0CU] |= 0x40U;
     if (sim_irq_cb) sim_irq_cb();
