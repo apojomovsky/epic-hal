@@ -1,7 +1,7 @@
 /* PIC16F7x IRQ translation table (DS30325 Figure 11-1 / DS30498
- * Figure 13-1). Single PIR/PIE pair plus PIR2/PIE2 (CCP2 only on the
- * 16F77). No EEPROM (no EEIF), no comparator, no SSP BCL on this part:
- * the shared body's row for those sources is absent here, gated out by
+ * Figure 13-1). Single PIR/PIE pair plus PIR2/PIE2 (CCP2 on every part
+ * except the 16F72). No EEPROM (no EEIF), no comparator, no SSP BCL on
+ * this part: the shared body's row for those sources is absent here,
  * the corresponding PIC14MIDRANGE_HAS_* selector. */
 
 #include "core/pic16_irq.h"
