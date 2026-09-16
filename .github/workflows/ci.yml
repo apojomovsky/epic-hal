@@ -196,24 +196,25 @@ jobs:
     with:
       family: PIC16F63x_67x_68x
 
-  # PIC18F1320 (epic-hal#178) is not wired into family-check.yml yet:
-  # that job's scaffold step needs a consumer module for the family
-  # (bundlegen.modules_for_family excludes the family's own -hal dir),
-  # which pic18f1320-hal does not have. PIC16F193X's own job followed
-  # the same order, added once epic-pic16f193x-firmware existed.
+  # The epic-hal#150 PIC18 groundwork families, wired once each had a
+  # reference MPLAB X project: with no epic-* consumer module for the
+  # part, the scaffold falls back to the HAL-only blink (epic_hal_init,
+  # bare-GPIO main.c + full-HAL Makefile), the same path the
+  # PIC16F193X job exercised at its wiring.
+  family-1320:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC18F1320
 
-  # PIC18F2520 (epic-hal#174) is not wired into family-check.yml yet,
-  # for the same reason: the scaffold step needs a consumer module,
-  # which pic18f2520-hal does not have at foundation time. The
-  # manifest family/module, device-data audits, and the sim-gate
-  # definition (ci-target-sim.sh) are wired and pass on their own.
+  family-2520:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC18F2520
 
-  # PIC18F6520 (epic-hal#182) is not wired into family-check.yml yet,
-  # same reason as the other two PIC18 foundation families: the
-  # scaffold step needs a consumer module, which pic18f6520-hal does
-  # not have at foundation time. The manifest family/module,
-  # device-data audits, and the sim-gate definition (ci-target-sim.sh)
-  # are wired and pass on their own.
+  family-6520:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC18F6520
 
   # The epic-cc conformance gate in this tree: "did a HAL change break
   # against a known good compiler". epic-cc's hal-887 job asks the reverse
