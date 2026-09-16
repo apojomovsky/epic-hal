@@ -262,7 +262,7 @@ PIC18Fxx5x = ["18F4550"]
 [modules.epic-usb.example.PIC18Fxx5x]
 name    = "usb-cdc"
 sources = ["examples/example_usb.c"]
-config  = { FOSC = "HS", PLLDIV = "5", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF" }
+config  = { FOSC = "HS", PLLDIV = "5", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF", BORV = "3" }
 
 [modules.epic-usb.example.PIC18Fxx5x.sim]
 name        = "usb-cdc-sim"
@@ -336,6 +336,13 @@ class TestEpicConfigSpecPic18(unittest.TestCase):
 
     def test_cpudiv_mnemonic_maps_to_the_postscaler_enum(self):
         self.assertIn("cpudiv=div1", self._spec())
+
+    def test_borv_digit_maps_to_the_word_vocabulary(self):
+        # The 4550-family device TOML names BORV minimum/low/mid/
+        # maximum; the manifest's numeric value must map to the word
+        # or resolve_config rejects it. Guards the numeric-passthrough
+        # branch added for the 2520/1320/6520 tomls.
+        self.assertIn("borv=maximum", self._spec())
 
     def test_plldiv_unity_maps_to_noprescale(self):
         # The digit map is the CPUDIV enum; a PLLDIV of 1 must not
