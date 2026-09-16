@@ -582,6 +582,26 @@ hal_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
+# The epic-cc conformant slice: GPIO + Timer0-3 + ECCP1 + USART + ADC +
+# EEPROM + the IRQ/WDT core and the toolchain-specific vector/dispatch/WDT
+# files.
+epiccc_sources = [
+  "pic18f1320-hal/src/peripherals/pic18f1320_gpio.c",
+  "pic18f1320-hal/src/peripherals/pic18f1320_timer0.c",
+  "pic18f1320-hal/src/peripherals/pic18f1320_timer1.c",
+  "pic18f1320-hal/src/peripherals/pic18f1320_timer2.c",
+  "pic18f1320-hal/src/peripherals/pic18f1320_timer3.c",
+  "pic18f1320-hal/src/peripherals/pic18f1320_eccp.c",
+  "pic18f1320-hal/src/peripherals/pic18f1320_usart.c",
+  "pic18f1320-hal/src/peripherals/pic18f1320_adc.c",
+  "pic18f1320-hal/src/peripherals/pic18f1320_eeprom.c",
+  "pic18f1320-hal/src/core/pic18_irq.c",
+  "pic18f1320-hal/src/core/pic18f1320_wdt_sleep.c",
+  "pic18f1320-hal/src/epiccc/pic18f1320_wdt_sleep_epiccc.c",
+  "pic18f1320-hal/src/epiccc/pic18_isr_vector.c",
+  "pic18f1320-hal/src/epiccc/pic18_irq_dispatch_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
 
 # Family A phase 1 (epic-hal#174, umbrella #150): 28-pin mid-generation
 # PIC18, forked from PIC18Fxx5x (same Access Bank / two-vector model,

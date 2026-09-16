@@ -363,6 +363,17 @@ jobs:
           make epiccc-build MODULE=epic-pic16f193x-firmware MCU=16F1937 EPIC_CC_HOST=1
           make epiccc-build MODULE=pic16f63x_67x_68x-hal MCU=16F677 EPIC_CC_HOST=1
           make epiccc-build MODULE=pic16f7x-hal MCU=16F77 EPIC_CC_HOST=1
+          # The three epic-hal#150 exemplars' legs: build-only, same as
+          # the #102 4550 pair above. Their sim toggle gates stay out for
+          # the same reason as the 4550 tick gate: the PIC18 sim core's
+          # INTCON gating (crates/sim `Pic18::interrupt_ready` keys on the
+          # INT0IE bit and GIE, which a Timer0-armed blink never satisfies)
+          # means the injected TMR0IF cannot vector, so no LATB toggle is
+          # observable on any PIC18 part yet. mdb/MPLAB SIM (family-check)
+          # stays the differential oracle.
+          make epiccc-build MODULE=pic18f2520-hal MCU=18F2520 EPIC_CC_HOST=1
+          make epiccc-build MODULE=pic18f1320-hal MCU=18F1320 EPIC_CC_HOST=1
+          make epiccc-build MODULE=pic18f6520-hal MCU=18F6520 EPIC_CC_HOST=1
           # The 16F54 leg (epic-hal#151) awaits the epic-cc p16f54 RAM
           # model fix (epic-cc#437): the device toml caps the GPR bank
           # at 9 bytes (ram_banks [[0x07,0x0F]] + common_ram
