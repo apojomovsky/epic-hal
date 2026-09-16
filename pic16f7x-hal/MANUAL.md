@@ -15,7 +15,7 @@ consistent with DS30325/DS30498):
 | part | pins | flash | SRAM | USART | ADC result | CCP | SSP | PSP | PIR2 |
 |---|---|---|---|---|---|---|---|---|---|
 | 16F72 | 28 | 2 KW | 128 B | - | 8-bit ADRES | CCP1 | Y | - | - |
-| 16F73 | 28 | 4 KW | 128 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | - | Y |
+| 16F73 | 28 | 4 KW | 192 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | - | Y |
 | 16F74 | 40 | 4 KW | 128 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | Y | Y |
 | 16F76 | 28 | 8 KW | 368 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | - | Y |
 | 16F77 | 40 | 8 KW | 368 B | Y | 8-bit ADRES | CCP1+CCP2 | Y | Y | Y |
