@@ -244,6 +244,11 @@
 #define PIC_TRISE_OBF          EPIC_BIT(6)
 #define PIC_TRISE_IBOV         EPIC_BIT(5)
 #define PIC_TRISE_PSPMODE      EPIC_BIT(4)
+#if PIC16F7X_FAMILY_ADC_10BIT
+#define PIC_TRISE_POR_VALUE    0x0FU   /* DS30498 TRISE3 exists. */
+#else
+#define PIC_TRISE_POR_VALUE    0x07U   /* DS30325 has no TRISE3. */
+#endif
 
 /* Bank-selection helper. Set the bank-select bits RP1:RP0 in STATUS
  * to access a given bank (DS30325 §2.2, Table 2-1). A macro, not a

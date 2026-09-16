@@ -14,6 +14,9 @@
 #include "peripherals/pic16f7x_ssp.h"
 #include "peripherals/pic16f7x_timer0.h"
 #include "peripherals/pic16f7x_timer2.h"
+#if PIC16F7X_FAMILY_HAS_PSP
+#include "peripherals/pic16f7x_psp.h"
+#endif
 #if PIC16F7X_FAMILY_HAS_USART
 #include "peripherals/pic16f7x_usart.h"
 #endif
@@ -121,6 +124,21 @@ int main(void)
         RD1(OPTION_REG, v);
         CHECK(v == 0xDFu, 0x07);
     }
+
+#if PIC16F7X_FAMILY_HAS_PSP
+    /* Class B: the 40-pin PSP TRISE path (Bank 1, 0x89). Init leaves
+     * TRISE at POR I/O mode, Enable sets PSPMODE, Disable restores it.
+     */
+    (void)EPIC_PSP_Init(NULL);
+    RD1(TRISE, v);
+    CHECK(v == PIC_TRISE_POR_VALUE, 0x0C);
+    EPIC_PSP_Enable();
+    RD1(TRISE, v);
+    CHECK((v & PIC_TRISE_PSPMODE) != 0u, 0x0D);
+    EPIC_PSP_Disable();
+    RD1(TRISE, v);
+    CHECK(v == PIC_TRISE_POR_VALUE, 0x0E);
+#endif
 
 #if PIC16F7X_FAMILY_HAS_USART
     /* Class B (last: kills the marker USART): EPIC_USART_Init's TXSTA
