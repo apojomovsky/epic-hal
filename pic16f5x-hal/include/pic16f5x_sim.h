@@ -48,6 +48,15 @@ uint8_t pic16f5x_sim_read_output(char port, uint8_t pin);
  * Reset to 0xFF (all inputs, option POR value). */
 extern uint8_t pic16f5x_sim_trisa;
 extern uint8_t pic16f5x_sim_trisb;
+#if PIC16F5X_FAMILY_HAS_PORTC
+extern uint8_t pic16f5x_sim_trisc;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+extern uint8_t pic16f5x_sim_trisd;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+extern uint8_t pic16f5x_sim_trise;
+#endif
 extern uint8_t pic16f5x_sim_option;
 
 #endif /* PIC16F5X_SIM_H */

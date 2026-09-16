@@ -58,6 +58,7 @@ CANONICAL = {
     "PIC18F2520": "18F2520",
     "PIC18F6520": "18F6520",
     "PIC16F7x": "16F777",
+    "PIC16F5x": "16F54",
 }
 
 # Families whose family-check.yml job calls this script but whose SFR

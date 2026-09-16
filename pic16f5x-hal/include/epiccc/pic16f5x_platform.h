@@ -72,11 +72,46 @@ static volatile uint8_t pic16f5x_scratch EPIC_AT(EPIC_SCRATCH_ADDR);
         {                                                                  \
             asm volatile("tris 5");                                        \
         }                                                                  \
-        else                                                               \
+        else if ((sel) == 'B')                                             \
         {                                                                  \
             asm volatile("tris 6");                                        \
         }                                                                  \
+        else                                                               \
+        {                                                                  \
+            _EPIC_TRIS_WRITE_OTHER((sel));                                 \
+        }                                                                  \
     } while (0)
+
+#if PIC16F5X_FAMILY_HAS_PORTC || PIC16F5X_FAMILY_HAS_PORTD \
+    || PIC16F5X_FAMILY_HAS_PORTE
+static inline void _EPIC_TRIS_WRITE_OTHER(char sel)
+{
+#if PIC16F5X_FAMILY_HAS_PORTC
+    if (sel == 'C')
+    {
+        asm volatile("tris 7");
+        return;
+    }
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+    if (sel == 'D')
+    {
+        asm volatile("tris 8");
+        return;
+    }
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+    if (sel == 'E')
+    {
+        asm volatile("tris 9");
+        return;
+    }
+#endif
+    (void)sel;
+}
+#else
+#define _EPIC_TRIS_WRITE_OTHER(sel) do { (void)(sel); } while (0)
+#endif
 
 #define EPIC_OPTION_WRITE(val)                                             \
     do {                                                                   \

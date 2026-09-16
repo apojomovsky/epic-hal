@@ -40,6 +40,15 @@ extern uint8_t pic16f5x_sim_sfr[256];
  * src/sim/pic16f5x_sim.c. */
 extern uint8_t pic16f5x_sim_trisa;
 extern uint8_t pic16f5x_sim_trisb;
+#if PIC16F5X_FAMILY_HAS_PORTC
+extern uint8_t pic16f5x_sim_trisc;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+extern uint8_t pic16f5x_sim_trisd;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+extern uint8_t pic16f5x_sim_trise;
+#endif
 extern uint8_t pic16f5x_sim_option;
 
 #define EPIC_TRIS_WRITE(sel, val)                                           \
@@ -48,11 +57,48 @@ extern uint8_t pic16f5x_sim_option;
         {                                                                   \
             pic16f5x_sim_trisa = (uint8_t)(val);                            \
         }                                                                   \
-        else                                                                \
+        else if ((sel) == 'B')                                              \
         {                                                                   \
             pic16f5x_sim_trisb = (uint8_t)(val);                            \
         }                                                                   \
+        else                                                                \
+        {                                                                   \
+            _EPIC_TRIS_WRITE_OTHER((sel), (uint8_t)(val));                  \
+        }                                                                   \
     } while (0)
+
+#if PIC16F5X_FAMILY_HAS_PORTC || PIC16F5X_FAMILY_HAS_PORTD \
+    || PIC16F5X_FAMILY_HAS_PORTE
+static inline void _EPIC_TRIS_WRITE_OTHER(char sel, uint8_t val)
+{
+#if PIC16F5X_FAMILY_HAS_PORTC
+    if (sel == 'C')
+    {
+        pic16f5x_sim_trisc = val;
+        return;
+    }
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+    if (sel == 'D')
+    {
+        pic16f5x_sim_trisd = val;
+        return;
+    }
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+    if (sel == 'E')
+    {
+        pic16f5x_sim_trise = val;
+        return;
+    }
+#endif
+    /* Unknown select: write nothing. */
+    (void)sel;
+    (void)val;
+}
+#else
+#define _EPIC_TRIS_WRITE_OTHER(sel, val) do { (void)(sel); (void)(val); } while (0)
+#endif
 
 #define EPIC_OPTION_WRITE(val) pic16f5x_sim_option = (uint8_t)(val)
 

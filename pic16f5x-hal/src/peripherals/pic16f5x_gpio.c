@@ -20,7 +20,9 @@ static char tris_select(GPIO_TypeDef port)
 {
     switch (port)
     {
+#if PIC16F5X_FAMILY_HAS_PORTA
         case GPIOA: return 'A';
+#endif
         case GPIOB: return 'B';
 #if PIC16F5X_FAMILY_HAS_PORTC
         case GPIOC: return 'C';
@@ -31,7 +33,7 @@ static char tris_select(GPIO_TypeDef port)
 #if PIC16F5X_FAMILY_HAS_PORTE
         case GPIOE: return 'E';
 #endif
-        default:    return 'A';
+        default:    return 'B';  /* PORTB exists on every part. */
     }
 }
 
@@ -44,7 +46,9 @@ static uint8_t port_addr(GPIO_TypeDef port)
 {
     switch (port)
     {
+#if PIC16F5X_FAMILY_HAS_PORTA
         case GPIOA: return PIC_REG_PORTA;
+#endif
         case GPIOB: return PIC_REG_PORTB;
 #if PIC16F5X_FAMILY_HAS_PORTC
         case GPIOC: return PIC_REG_PORTC;
@@ -55,7 +59,7 @@ static uint8_t port_addr(GPIO_TypeDef port)
 #if PIC16F5X_FAMILY_HAS_PORTE
         case GPIOE: return PIC_REG_PORTE;
 #endif
-        default:    return PIC_REG_PORTA;
+        default:    return PIC_REG_PORTB;  /* PORTB exists on every part. */
     }
 }
 

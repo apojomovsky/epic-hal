@@ -23,6 +23,15 @@ uint8_t pic16f5x_sim_sfr[256];
  * tests can read back what the driver programmed). */
 uint8_t pic16f5x_sim_trisa = 0xFFU;
 uint8_t pic16f5x_sim_trisb = 0xFFU;
+#if PIC16F5X_FAMILY_HAS_PORTC
+uint8_t pic16f5x_sim_trisc = 0xFFU;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+uint8_t pic16f5x_sim_trisd = 0xFFU;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+uint8_t pic16f5x_sim_trise = 0xFFU;
+#endif
 uint8_t pic16f5x_sim_option = 0xFFU;
 
 /** Pin latch overrides set by the host application (per pin, A..B). */
@@ -44,6 +53,15 @@ static uint16_t port_reg(char port)
         case 'A': case 'a': return PIC_REG_PORTA;
 #endif
         case 'B': case 'b': return PIC_REG_PORTB;
+#if PIC16F5X_FAMILY_HAS_PORTC
+        case 'C': case 'c': return PIC_REG_PORTC;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+        case 'D': case 'd': return PIC_REG_PORTD;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+        case 'E': case 'e': return PIC_REG_PORTE;
+#endif
         default:             return PIC_REG_PORTB;
     }
 }
@@ -81,6 +99,15 @@ void pic16f5x_sim_reset(void)
     pic16f5x_sim_sfr[PIC_REG_STATUS]   = PIC_STATUS_POR_VALUE;
     pic16f5x_sim_trisa = 0xFFU;
     pic16f5x_sim_trisb = 0xFFU;
+#if PIC16F5X_FAMILY_HAS_PORTC
+    pic16f5x_sim_trisc = 0xFFU;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+    pic16f5x_sim_trisd = 0xFFU;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+    pic16f5x_sim_trise = 0xFFU;
+#endif
     pic16f5x_sim_option = PIC_OPTION_POR_VALUE;
     memset(sim_input_override, 0, sizeof sim_input_override);
     memset(sim_input_value,    0, sizeof sim_input_value);
@@ -164,12 +191,18 @@ uint8_t pic16f5x_sim_read_output(char port, uint8_t pin)
     if (pin > 7U) return 0U;
     uint8_t idx  = port_index(port);
     uint8_t mask = (uint8_t)(1U << pin);
-    uint8_t tris;
+    uint8_t tris = pic16f5x_sim_trisb;
 #if PIC16F5X_FAMILY_HAS_PORTA
-    tris = (port == 'A' || port == 'a') ? pic16f5x_sim_trisa
-                                        : pic16f5x_sim_trisb;
-#else
-    tris = pic16f5x_sim_trisb;
+    if (port == 'A' || port == 'a') tris = pic16f5x_sim_trisa;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTC
+    if (port == 'C' || port == 'c') tris = pic16f5x_sim_trisc;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+    if (port == 'D' || port == 'd') tris = pic16f5x_sim_trisd;
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+    if (port == 'E' || port == 'e') tris = pic16f5x_sim_trise;
 #endif
 
     if (tris & mask)

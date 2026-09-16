@@ -37,11 +37,20 @@
  * family-internal so they never collide with xc.h's own SFR macros. */
 extern volatile __control unsigned char pic16f5x_trisa __at(0x005);
 extern volatile __control unsigned char pic16f5x_trisb __at(0x006);
+#if PIC16F5X_FAMILY_HAS_PORTC
+extern volatile __control unsigned char pic16f5x_trisc __at(0x007);
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+extern volatile __control unsigned char pic16f5x_trisd __at(0x008);
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+extern volatile __control unsigned char pic16f5x_trise __at(0x009);
+#endif
 extern volatile __control unsigned char pic16f5x_option __at(0x000);
 
 /**
  * @brief Write a port's TRIS control register.
- * @param sel the port select ('A' or 'B'); only A/B exist on this die.
+ * @param sel the port select ('A'..'E').
  * @param val the TRIS byte (1 = input bit, 0 = output bit).
  */
 #define EPIC_TRIS_WRITE(sel, val)                                          \
@@ -50,11 +59,48 @@ extern volatile __control unsigned char pic16f5x_option __at(0x000);
         {                                                                  \
             pic16f5x_trisa = (uint8_t)(val);                               \
         }                                                                  \
-        else                                                               \
+        else if ((sel) == 'B')                                             \
         {                                                                  \
             pic16f5x_trisb = (uint8_t)(val);                               \
         }                                                                  \
+        else                                                               \
+        {                                                                  \
+            _EPIC_TRIS_WRITE_OTHER((sel), (uint8_t)(val));                 \
+        }                                                                  \
     } while (0)
+
+#if PIC16F5X_FAMILY_HAS_PORTC || PIC16F5X_FAMILY_HAS_PORTD \
+    || PIC16F5X_FAMILY_HAS_PORTE
+static inline void _EPIC_TRIS_WRITE_OTHER(char sel, uint8_t val)
+{
+#if PIC16F5X_FAMILY_HAS_PORTC
+    if (sel == 'C')
+    {
+        pic16f5x_trisc = val;
+        return;
+    }
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTD
+    if (sel == 'D')
+    {
+        pic16f5x_trisd = val;
+        return;
+    }
+#endif
+#if PIC16F5X_FAMILY_HAS_PORTE
+    if (sel == 'E')
+    {
+        pic16f5x_trise = val;
+        return;
+    }
+#endif
+    /* Unknown select: write nothing. */
+    (void)sel;
+    (void)val;
+}
+#else
+#define _EPIC_TRIS_WRITE_OTHER(sel, val) do { (void)(sel); (void)(val); } while (0)
+#endif
 
 /**
  * @brief Write the OPTION control register.
