@@ -64,7 +64,7 @@ PIC18F2520 = ["18F2520"]
 [modules.epic-pic18f2520-firmware.example.PIC18F2520]
 name    = "firmware"
 sources = ["tests/example_blink.c"]
-config  = { OSC = "HS", BOREN = "ON", WDT = "OFF", WDTPS = "32768" }
+config  = { OSC = "HS", BOREN = "ON", BORV = "3", WDT = "OFF", WDTPS = "32768" }
 
 [modules.epic-pic18f6520-firmware]
 dir        = "pic18f6520-hal"
@@ -80,6 +80,21 @@ PIC18F6520 = ["18F6520"]
 name    = "firmware"
 sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOR = "ON", WDT = "OFF", WDTPS = "128" }
+
+[modules.epic-pic18f1320-firmware]
+dir        = "pic18f1320-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.epic-pic18f1320-firmware.supported]
+PIC18F1320 = ["18F1320"]
+
+[modules.epic-pic18f1320-firmware.example.PIC18F1320]
+name    = "firmware"
+sources = ["tests/example_blink.c"]
+config  = { OSC = "HS", BOR = "OFF", BORV = "27", WDT = "OFF", WDTPS = "32768" }
 
 [modules.epic-tick]
 dir        = "epic-tick"
@@ -210,6 +225,16 @@ variants = ["18F2520"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 fosc_hz  = 20000000
 includes = ["pic18f2520-hal/include/target", "pic18f2520-hal/include"]
+hal_sources = ["epic-common/src/core/epic_harness_target.c"]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+epiccc_sources = ["epic-common/src/core/epic_harness_target.c"]
+
+[families.PIC18F1320]
+hal_dir  = "pic18f1320-hal"
+variants = ["18F1320"]
+dfp      = "Microchip.PIC18Fxxxx_DFP"
+fosc_hz  = 20000000
+includes = ["pic18f1320-hal/include/target", "pic18f1320-hal/include"]
 hal_sources = ["epic-common/src/core/epic_harness_target.c"]
 harness_src = "epic-common/src/core/epic_harness_target.c"
 epiccc_sources = ["epic-common/src/core/epic_harness_target.c"]
@@ -371,6 +396,13 @@ class TestEpicConfigSpecPic18F2520(unittest.TestCase):
         self.assertIn("wdtps=32768", self._spec())
         self.assertNotIn("div", self._spec())
 
+    def test_borv_keeps_the_numeric_device_vocabulary(self):
+        # The 2520 device TOML names BORV 0..3 (DS39631E) rather than the
+        # 4550-family words (minimum/low/mid/maximum); the word map must
+        # not rewrite the manifest's numeric value (epic-cc#150).
+        self.assertIn("borv=3", self._spec())
+        self.assertNotIn("borv=maximum", self._spec())
+
     def test_family_fosc_reaches_xtal_hz(self):
         self.assertIn("xtal_hz=20000000", self._spec())
 
@@ -393,6 +425,34 @@ class TestEpicConfigSpecPic18F6520(unittest.TestCase):
         # (epic-cc resolve_config strict value matching); the reviewer
         # caught div128 being emitted for this part before the fix.
         self.assertIn("wdtps=128", self._spec())
+        self.assertNotIn("div", self._spec())
+
+    def test_family_fosc_reaches_xtal_hz(self):
+        self.assertIn("xtal_hz=20000000", self._spec())
+
+
+class TestEpicConfigSpecPic18F1320(unittest.TestCase):
+    """PIC18F1320 spells its brown-out-enable config field BOR (DS39605F
+    Register 4-2), not BOREN like the 2520; the PIC18 table keeps the
+    device field name (family B, epic-hal#178)."""
+
+    def _spec(self):
+        return epic_build._epic_config_spec(
+            load(), "epic-pic18f1320-firmware", "18F1320", "target", None)
+
+    def test_bor_keeps_the_device_field_name(self):
+        self.assertIn("bor=off", self._spec())
+        self.assertNotIn("boren=off", self._spec())
+
+    def test_borv_keeps_the_numeric_device_vocabulary(self):
+        # The 1320 device TOML names BORV as a voltage code (45/42/27,
+        # DS39605F Register 4-2), not the 4550-family words; the word map
+        # must not rewrite it (epic-hal#150).
+        self.assertIn("borv=27", self._spec())
+        self.assertNotIn("borv=maximum", self._spec())
+
+    def test_wdtps_keeps_the_numeric_device_vocabulary(self):
+        self.assertIn("wdtps=32768", self._spec())
         self.assertNotIn("div", self._spec())
 
     def test_family_fosc_reaches_xtal_hz(self):
