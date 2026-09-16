@@ -21,15 +21,15 @@ interrupt backend, peripheral drivers) live here.
 
 ## Status
 
-**Phases 1-3 (epic-hal#182, #183, #184, umbrella #150):** platform, SFR
-map, GPIO (PORTA-G), Timer0-3, CCP1-5, MSSP, EUSART1/2, the
-dual-priority interrupt core, WDT/Sleep/BOR/POR, and the harness are
-implemented and verified under host sim and real `mdb` (each
-peripheral through docs/adding-a-device.md §4: host example + XC8
-target build + `mdb` register-readback gate). ADC, comparator, data
-EEPROM, PSP and LVD land in phase 4 (#185); TMR4 has no driver yet
-(#183 covered Timer0-3 only). This part has **no USB and no SPP**
-(DS39609B Table 1-1).
+**Complete (epic-hal#182, #183, #184, #185, umbrella #150):** platform,
+SFR map, GPIO (PORTA-G), Timer0-3, CCP1-5, MSSP, EUSART1/2, ADC,
+comparator, data EEPROM, the dual-priority interrupt core,
+WDT/Sleep/BOR/POR, and the harness are implemented and verified under
+host sim and real `mdb` (each peripheral through
+docs/adding-a-device.md §4: host example + XC8 target build + `mdb`
+register-readback gate). TMR4, PSP and LVD have no driver yet (SFRs
+are in the map). This part has **no USB and no SPP** (DS39609B
+Table 1-1).
 
 - ✅ Family header (`pic18f6520_hal.h`): device selection, capability
   macros, platform include. Named `_hal` to avoid shadowing the DFP
@@ -69,6 +69,18 @@ EEPROM, PSP and LVD land in phase 4 (#185); TMR4 has no driver yet
 - ✅ EUSART1/2 driver (`peripherals/pic18f6520_usart.h`): one driver with
   an instance selector over the two identical EUSART modules; 8-bit
   BRG only (no BAUDCON/SPBRGH on this part).
+- ✅ ADC driver (`peripherals/pic18f6520_adc.h`): 12-channel 10-bit SAR,
+  CHS/VCFG/PCFG/ADCS; no ACQT field on this part (ADCON2 carries only
+  ADCS + ADFM, DFP/EDC confirmed), so the Acquisition handle field is
+  kept for contract compatibility and ignored.
+- ✅ Comparator driver (`peripherals/pic18f6520_comp.h`): two
+  comparators, 8 CMCON modes, C1OUT/C2OUT readouts, CMIF change
+  interrupt. CVRCON (the comparator voltage reference) is a separate
+  module in the SFR map; no driver yet.
+- ✅ Data EEPROM driver (`peripherals/pic18f6520_eeprom.h`): 1 KB,
+  10-bit EEADRH:EEADR addressing (the 4550/2520 families use 8-bit
+  EEADR only), unlock 0x55/0xAA, EEIF write-complete (interrupt or
+  poll).
 - ✅ Interrupt core (`core/pic18_irq.h`): `PIC18_IRQn` enum (25 sources,
   the richest set in this repo: INT0-3, RB, TMR0-4, CCP1-5, SSP, USART1/2
   TX+RX, ADC, CMP, EEPROM, LVD, PSP), `EPIC_IRQ_*` against
@@ -85,7 +97,11 @@ EEPROM, PSP and LVD land in phase 4 (#185); TMR4 has no driver yet
   over all seven ports.
 - ✅ `example_blink` (Timer0 + GPIO + interrupt), `example_irq` (the
   dedicated IRQ-core smoke test), `example_smoke` (harness seam),
-  `example_timer1/2/3` (per-timer host overflow/match smokes).
+  `example_timer1/2/3` (per-timer host overflow/match smokes),
+  `example_ccp` (CCP1/CCP3 compare), `example_ssp` (SPI master),
+  `example_usart` (dual-EUSART async TX), `example_adc` (AN0
+  conversion), `example_comp` (two-independent mode), `example_eeprom`
+  (10-bit write/read round-trip).
 - ✅ MPLAB SIM gate, `MODE=gpio`: `src/mdb/pic18_harness_mdb.c`
   drives the PASS/FAIL marker on RA0 (the pic16f193x pattern), read by the
   CI wrapper via the latch `LATA` (`GPIO_REG=LATA`: PIC18's driven output
@@ -110,9 +126,11 @@ The 6520 is a 64-pin part and the largest of the three new PIC18 families:
 - **2 EUSARTs** (EUSART1 registers at 0xFAB-0xFAF, EUSART2 at 0xF6B-0xF6F;
   one driver with an instance selector; no BAUDCON and no SPBRGH on
   this part, the baud generator is 8-bit only).
-- **1 MSSP**, **PSP** (parallel slave port, PSPCON at 0xFB0), **dual
-  comparator + CVR**, **LVD**, **1 KB data EEPROM** (EEADR + EEADRH),
-  **12-channel 10-bit A/D** (AN0-AN11).
+- **1 MSSP**, **PSP** (parallel slave port, PSPCON at 0xFB0; no driver
+  yet), **dual comparator + CVR**, **LVD** (no driver yet), **1 KB data
+  EEPROM** (EEADR + EEADRH, 10-bit), **12-channel 10-bit A/D**
+  (AN0-AN11). The ADC's ADCON2 has no ACQT field (only ADCS + ADFM),
+  unlike the 4550/2520/1320.
 - No USB, no SPP. Config words drop usbdiv/cpudiv/plldiv/vregen; the
   brown-out and stack-reset fields are spelled `BOR` / `STVR` (not
   `BOREN` / `STVREN`), and there is no `MCLRE` / `IESO` / `FCMEN` /
@@ -129,9 +147,16 @@ The 6520 is a 64-pin part and the largest of the three new PIC18 families:
   device header's name; an umbrella of the same name shadows it through
   `-I` at link time so the compiler's auto-included SFRs are lost (the
   PIC16F628A lesson, epic-hal#137). The umbrella is `pic18f6520_hal.h`.
-- **No compiler bugs found in phase 1.** Every XC8 surprise traced to a DFP
-  misread or a SIM/mdb tool limit, not codegen. The literal-SFR-token rule
-  above is a design constraint verified by green builds, not a bug report.
+- **No compiler bugs found in any phase.** Every XC8 surprise traced to a
+  DFP misread or a SIM/mdb tool limit, not codegen. The literal-SFR-token
+  rule above is a design constraint verified by green builds, not a bug
+  report. The XC8 User's Guide is not shipped in the toolchain image, so
+  nothing here is claimed as a compiler bug without that source (the
+  adding-a-device.md rule).
+- **mdb SIM does not model EEPROM cell writes or SPI shifting.** The
+  EEPROM gate proves the address load + unlock + WR strobe (EEADRH/EEADR/
+  EECON1 readbacks); the cell contents are a host-sim-only model
+  (`pic18_sim_*eeprom*`). Same limit as the 4550/2520 families.
 
 ## Layout
 

@@ -16,8 +16,8 @@
 #include "core/pic18_irq.h"
 #include "core/pic18f6520_wdt_sleep.h"
 
-/* Peripherals (GPIO + Timer0-3 + CCP1-5 + MSSP + EUSART1/2; analog
- * and memory land in #185). */
+/* Peripherals: GPIO + Timer0-3 + CCP1-5 + MSSP + EUSART1/2 + ADC +
+ * Comparator + Data EEPROM. TMR4/LVD/PSP have no driver yet. */
 #include "peripherals/pic18f6520_gpio.h"
 #include "peripherals/pic18f6520_timer0.h"
 #include "peripherals/pic18f6520_timer1.h"
@@ -26,5 +26,8 @@
 #include "peripherals/pic18f6520_ccp.h"
 #include "peripherals/pic18f6520_ssp.h"
 #include "peripherals/pic18f6520_usart.h"
+#include "peripherals/pic18f6520_adc.h"
+#include "peripherals/pic18f6520_comp.h"
+#include "peripherals/pic18f6520_eeprom.h"
 
 #endif /* EPIC_H */

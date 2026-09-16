@@ -62,4 +62,25 @@ typedef void (*pic18_sim_irq_cb_t)(void);
  */
 void pic18_sim_set_irq_callback(pic18_sim_irq_cb_t cb);
 
+/**
+ * @brief Preload a data-EEPROM cell (test rig only).
+ * @param addr cell address 0..1023.
+ * @param data byte to store.
+ */
+void pic18_sim_drive_eeprom_byte(uint16_t addr, uint8_t data);
+
+/**
+ * @brief Complete an EEPROM write: store the byte and raise EEIF.
+ * @param addr cell address 0..1023.
+ * @param data byte to store.
+ */
+void pic18_sim_drive_eeprom_done(uint16_t addr, uint8_t data);
+
+/**
+ * @brief Read a data-EEPROM cell (driver read path on host).
+ * @param addr cell address 0..1023.
+ * @return the stored byte.
+ */
+uint8_t pic18_sim_eeprom_read(uint16_t addr);
+
 #endif /* PIC18F6520_SIM_H */
