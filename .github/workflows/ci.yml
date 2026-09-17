@@ -493,6 +493,11 @@ jobs:
               ("epic-bus", "16F887"),
               ("epic-mcp23x17", "16F887"), ("epic-serial", "16F887"),
               ("epic-debounce", "16F887"),
+              ("pic16f5x-hal", "16F54"),
+              ("pic16f5x-hal", "16F59"),
+              ("pic16f5x-hal", "16F57"),
+              ("pic16f5x-hal", "16F506"),
+              ("pic16f5x-hal", "16F505"),
           ]:
               # The sim list is shared across merge orders (the
               # rx-loopback module lands on its own PR); skip modules
