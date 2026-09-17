@@ -76,8 +76,12 @@ variants = [
   "16F877",
   "16F877A",
 ]
+# The pack version actually in the pinned image (Dockerfile
+# PIC16FXXX_DFP_VERSION): this value feeds the bundle's QUICKSTART
+# download URL, so a generated bundle advertises the same pack CI
+# builds against.
 dfp      = "Microchip.PIC16Fxxx_DFP"
-dfp_version = "1.8.167"
+dfp_version = "1.7.162"
 fosc_hz  = 20000000
 includes = [
   "pic16f87xa-hal/include/target",
@@ -166,7 +170,7 @@ variants = [
   "16F777", "16F77",
 ]
 dfp      = "Microchip.PIC16Fxxx_DFP"
-dfp_version = "1.8.167"
+dfp_version = "1.7.162"
 fosc_hz  = 20000000
 includes = [
   "pic16f7x-hal/include/target",
@@ -343,7 +347,7 @@ variants = [
   "16F628A",
 ]
 dfp      = "Microchip.PIC16Fxxx_DFP"
-dfp_version = "1.8.167"
+dfp_version = "1.7.162"
 fosc_hz  = 20000000
 includes = [
   "pic16f628a-hal/include/target",
@@ -459,7 +463,7 @@ variants = [
   "16F83", "16F84", "16F84A",
 ]
 dfp      = "Microchip.PIC16Fxxx_DFP"
-dfp_version = "1.8.167"
+dfp_version = "1.7.162"
 fosc_hz  = 4000000
 includes = [
   "pic16f83_84-hal/include/target",
@@ -505,9 +509,6 @@ variants = [
   "16F818", "16F819",
 ]
 dfp      = "Microchip.PIC16Fxxx_DFP"
-# The pack version actually in the pinned image (Dockerfile
-# PIC16FXXX_DFP_VERSION), not the stale 1.8.167 the 7x/83_84 blocks
-# carry: this value feeds the bundle's QUICKSTART download URL.
 dfp_version = "1.7.162"
 fosc_hz  = 20000000
 includes = [
