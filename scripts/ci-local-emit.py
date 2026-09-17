@@ -63,6 +63,7 @@ SIM_VARIANTS = [
     ("epic-combo-modbus-full", "18F4550"),
     ("pic16f88x-hal", "16F887"),
     ("pic16f5x-hal", "16F54"),
+("16F57"),
 ("16F506"),
 ("16F505"),
     ("epic-tick", "16F887"),
