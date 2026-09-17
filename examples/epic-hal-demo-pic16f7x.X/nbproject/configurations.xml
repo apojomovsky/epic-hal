@@ -61,7 +61,7 @@
         <platform>2</platform>
       </toolsSet>
       <packs>
-        <pack name="PIC16Fxxx_DFP" vendor="Microchip" version="1.7.162"/>
+        <pack name="PIC16Fxxx_DFP" vendor="Microchip" version="1.8.167"/>
       </packs>
       <ScriptingSettings>
       </ScriptingSettings>

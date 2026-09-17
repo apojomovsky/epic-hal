@@ -79,6 +79,25 @@ cannot drift.
 The tag formula above is the single source of truth for the image
 version; the targets in this section are the full command reference.
 
+## The two device-pack trees
+
+The image carries every device pack twice, and the two copies are not
+the same version. The Dockerfile downloads the three DFPs at its ARG
+versions into the XC8 tree
+(`/opt/microchip/xc8/v${XC8_VERSION}/pic/packs/Microchip.PIC16Fxxx_DFP`);
+the manifest's per-family `dfp_version`, the bundle QUICKSTART
+download URL, and the `make TOOLCHAIN=xc8` consumer path all use that
+copy. MPLAB X (installed for `mdb.sh`) bundles its own packs under
+`/opt/microchip/mplabx/v${MPLABX_VERSION}/packs/` at whatever version
+ships with that MPLAB X release (PIC16Fxxx_DFP 1.8.167 on 6.35), and
+the reference projects' nbproject pins
+(`examples/epic-hal-demo-*.X`, copied verbatim into every bundle as
+`examples/epic-hal-demo.X`) must reference the MPLAB X tree, because
+the CI isolated bundle gate builds them there. The two versions
+coincide for PIC12-16F1xxx and PIC18Fxxxx today and diverge for
+PIC16Fxxx; aligning one side to the other breaks either the bundle
+gate or the consumer install, so treat the split as deliberate.
+
 ## Worktrees and the pre-PR ritual
 
 Feature work happens in a worktree under `.worktrees/`, never on

@@ -33,4 +33,4 @@ MP_CC_DIR="/opt/microchip/xc8/v4.00/bin"
 MP_AS_DIR="/opt/microchip/xc8/v4.00/bin"
 MP_LD_DIR="/opt/microchip/xc8/v4.00/bin"
 MP_AR_DIR="/opt/microchip/xc8/v4.00/bin"
-DFP_DIR=/opt/microchip/mplabx/v6.35/packs/Microchip/PIC16Fxxx_DFP/1.7.162
+DFP_DIR=/opt/microchip/mplabx/v6.35/packs/Microchip/PIC16Fxxx_DFP/1.8.167
