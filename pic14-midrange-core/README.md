@@ -24,6 +24,22 @@ macros in `pic14_midrange.h`. Nothing here serves the enhanced mid-range
   pairs, plus the target-only ISR vector (`epic-common/MANUAL.md`
   §2.2).
 
+## epic-cc dispatch tiers
+
+A family's `epiccc_sources` slice picks one dispatch tier from
+`src/epiccc/`. The shared `pic16_irq_dispatch_epiccc.c` is the full
+fan-out: its USART, SSP, ADC, PSP, comparator, EEPROM and CCP2/BCL
+rows each gate on their own `PIC14MIDRANGE_HAS_*` flag, the same
+shape as the XC8 twin `pic14_irq_dispatch.c`. Two requirements the
+guards cannot hide: with `PIC14MIDRANGE_HAS_PIR1 1`, the die's PIR1
+map must name the Timer1, Timer2 and CCP1 flags, and the slice must
+link the TIMER0, RB and TIMER2 default handlers (`pic14_timer0.c`,
+`pic14_gpio.c`, `pic14_timer2.c`). `PIC14MIDRANGE_HAS_PIR1 0` is a
+supported path of its own (the PIR-less EEIF clear via EECON1).
+Families whose PIR1 lacks those tokens link
+`pic16_irq_dispatch_blink_epiccc.c` (Timer0 + RB change only) or a
+family-specific tier instead.
+
 ## What lives in a family instead
 
 A family directory holds everything that cannot be shared: the SFR map,
