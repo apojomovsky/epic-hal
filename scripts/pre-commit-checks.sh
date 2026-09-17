@@ -213,6 +213,7 @@ brace_style_check() {
 # did not. The hook analyzes code the way the host build compiles it, and
 # the host build never places anything, so the empty define is the correct
 # host semantics, not a lie to the analyzer.
+#
 # The include list stays sorted inside each group so a HAL's
 # include/host precedes its include/target: header resolution then
 # matches the host build (target headers carry the XC8 placement macros
@@ -241,7 +242,14 @@ group_includes() {
             printf '%s\n' "epic-common/include" "pic14-midrange-core/include"
             ;;
         *)
-            find ./epic-* ./tests -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort
+            # consumer modules, tests, examples: module headers plus one
+            # family's surface for epic_hal.h, chosen deterministically.
+            # Headers a file pulls in only under a per-family #if guard
+            # resolve nowhere without a family define (suppressed, as
+            # before for genuinely missing headers); the analyzable
+            # surface is the family-agnostic logic, whose per-family
+            # truth stays with the builds.
+            find epic-* tests -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort
             printf '%s\n' "epic-common/include"
             find "$CPPCHECK_CONSUMER_REF" -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort
             ;;
@@ -282,9 +290,12 @@ cppcheck_check() {
         [ "${#c_files[@]}" -eq 0 ] && continue
         local includes=()
         local d
+        # sort -u drops the dirs group_includes emits twice (its find
+        # hits overlap the explicit shared dirs); the order stays
+        # sorted, so host still precedes target.
         while IFS= read -r d; do
             [ -d "$d" ] && includes+=(-I "$d")
-        done < <(group_includes "$group")
+        done < <(group_includes "$group" | sort -u)
         [ "${#includes[@]}" -eq 0 ] && continue
 
     # --suppress=preprocessorErrorDirective: a #error in #ifndef <build-define>
