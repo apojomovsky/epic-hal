@@ -241,6 +241,11 @@ jobs:
     with:
       family: PIC16F5x
 
+  family-818_819:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F818_819
+
   epiccc-gate:
     runs-on: ubuntu-latest
     env:

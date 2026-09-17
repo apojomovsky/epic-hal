@@ -66,7 +66,8 @@ def main() -> int:
                                          "PIC16F63x_67x_68x", "PIC18F1320",
                                          "PIC18F2520",
                                          "PIC18F6520", "PIC16F7x",
-                                         "PIC16F5x"), default=None,
+                                         "PIC16F5x",
+                                         "PIC16F818_819"), default=None,
                     help="only this manifest family (the sharded CI jobs)")
     args = ap.parse_args()
     m = manifest_lib.load(manifest_lib.default_path())

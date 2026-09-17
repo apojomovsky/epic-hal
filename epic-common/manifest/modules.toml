@@ -499,6 +499,61 @@ epiccc_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 
+[families.PIC16F818_819]
+hal_dir  = "pic16f818_819-hal"
+variants = [
+  # 16F819 last: the canonical part (the larger flash of the two), and
+  # family-check's scaffold gate builds variants[-1].
+  "16F818", "16F819",
+]
+dfp      = "Microchip.PIC16Fxxx_DFP"
+# The pack version actually in the pinned image (Dockerfile
+# PIC16FXXX_DFP_VERSION), not the stale 1.8.167 the 7x/83_84 blocks
+# carry: this value feeds the bundle's QUICKSTART download URL.
+dfp_version = "1.7.162"
+fosc_hz  = 20000000
+includes = [
+  "pic16f818_819-hal/include/target",
+  "pic16f818_819-hal/include",
+  "pic14-midrange-core/include",
+  "epic-common/include",
+]
+# The die's whole surface: gpio + timers 0/1/2 + ccp1 + ssp + adc +
+# eeprom + the irq/wdt core. No USART, comparator or VREF source exists
+# on this die (DS39598F §1.0, DFP-verified: no CMCON/CVRCON).
+hal_sources = [
+  "pic14-midrange-core/src/peripherals/pic14_gpio.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer0.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer1.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_ccp.c",
+  "pic14-midrange-core/src/peripherals/pic14_ssp.c",
+  "pic14-midrange-core/src/peripherals/pic14_adc.c",
+  "pic14-midrange-core/src/peripherals/pic14_eeprom.c",
+  "pic14-midrange-core/src/core/pic14_irq.c",
+  "pic16f818_819-hal/src/core/pic16_irq_table.c",
+  "pic14-midrange-core/src/core/pic14_wdt_sleep.c",
+  "pic14-midrange-core/src/target/pic14_wdt_sleep_target.c",
+  "pic14-midrange-core/src/target/pic16_isr_vector.c",
+  "pic14-midrange-core/src/core/pic14_irq_dispatch.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+harness_src = "epic-common/src/core/epic_harness_target.c"
+# The epic-cc conformant slice: gpio + timer0 + the irq/wdt core and the
+# blink-tier dispatch, the blink minimum. Grows by adding entries, never
+# by editing the build driver.
+epiccc_sources = [
+  "pic14-midrange-core/src/peripherals/pic14_gpio.c",
+  "pic14-midrange-core/src/peripherals/pic14_timer0.c",
+  "pic14-midrange-core/src/core/pic14_irq.c",
+  "pic16f818_819-hal/src/core/pic16_irq_table.c",
+  "pic14-midrange-core/src/core/pic14_wdt_sleep.c",
+  "pic14-midrange-core/src/epiccc/pic14_wdt_sleep_epiccc.c",
+  "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
+  "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_blink_epiccc.c",
+  "epic-common/src/core/epic_harness_target.c",
+]
+
 [families.PIC18Fxx5x]
 hal_dir  = "pic18fxx5x-hal"
 variants = [
@@ -1138,6 +1193,51 @@ sources     = [
   "tests/sim_bank_probe.c",
 ]
 config      = { FOSC = "XT", PWRTE = "ON", WDTE = "OFF" }
+
+# pic16f818_819-hal's own manifest slot, mirroring the 83_84 pseudo-module:
+# no application code, just the family's real-target smoke
+# (tests/example_blink.c) and the HARNESS=sim banked-SFR probe gate. The
+# sim probe is the family's §4 mdb gate, so it must exercise every access
+# class the shared drivers use (Banks 0-3, the PIR1/PIR2 gates, and the
+# ADC/CCP1 register images).
+[modules.pic16f818_819-hal]
+dir        = "pic16f818_819-hal"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+[modules.pic16f818_819-hal.supported]
+PIC16F818_819 = [
+  "16F819",
+]
+[modules.pic16f818_819-hal.excluded]
+# Measured on the exemplar ladder (XC8 v4.00, -O2): the blink smoke
+# links 1089 words of flash and 71 B of RAM, and the 16F818 carries
+# 1024 words, so the linker fails with error 1347 (CODE class, listing
+# the psects with no home). The part is covered by the family's SFR map,
+# platform headers and host examples, but no real-target ladder entry
+# fits it: the blink is the smallest of them. Wording follows the
+# epic-serial 873A/874A and 16F83 precedents.
+"16F818" = "flash: the 1089-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
+
+[modules.pic16f818_819-hal.example.PIC16F818_819]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "ON" }
+
+# HARNESS=sim: the banked-SFR probe, reported on RA0 (MODE=gpio; the
+# family has no USART). WDTE=OFF like every other sim variant (a
+# diagnostic build that terminates and reports does not need the
+# watchdog running unattended).
+[modules.pic16f818_819-hal.example.PIC16F818_819.sim]
+name        = "bank-probe"
+harness_src = "pic16f818_819-hal/src/mdb/pic16f818_819_harness_mdb.c"
+sources     = [
+  "tests/sim_bank_probe.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
 
 # pic16f5x-hal's own manifest slot, mirroring the 83_84 pseudo-module:
 # no application code, just the family's real-target smoke

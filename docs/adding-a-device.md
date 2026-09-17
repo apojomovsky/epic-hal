@@ -423,27 +423,33 @@ assumes the previous ones are done and verified, not just written):
    from empirical probing alone without doing that check, and had to be
    corrected; don't repeat it.
 9. **CI wiring, done at foundation time, not deferred to "later":**
-   `scripts/ci-discover-xc8-matrix.py`'s `FAMILIES` dict and its
-   `if "<family>" in d` detection branch both need the new family the
-   moment its first `mcu/<family>-mplabx/Makefile` exists and builds,
-   even before every peripheral lands. Confirmed the hard way on
-   PIC16F193X: the family's real-target build had been passing locally
-   for a long time before anyone noticed the discovery script itself
-   still only recognized the original two families, and `xc8-build.yml`
-   was failing outright with `unrecognized family for
-   pic16f193x-hal/mcu/pic16f193x-mplabx` (a hard `sys.exit`, not a
-   silently-skipped family) the entire time. A local `make xc8-build
+   discovery is manifest-driven now. `scripts/epic_build.py matrix`
+   walks the manifest's family and module blocks, so the new family
+   enters CI's matrix as soon as its `[families.<NAME>]` block and its
+   pseudo-module's `example` block exist. The hand-maintained lists are
+   the ones that fail silently, so verify each by running it:
+   - `python3 scripts/epic_build.py matrix` and the same with
+     `--canonical-only` must both list the family and its variants (the
+     canonical part is `variants[-1]`; that is what the PR gate builds).
+   - `scripts/ci-target-sim.sh`'s `run_one` pilot list needs a line for
+     the family. Omit it and the family's mdb leg matches nothing and
+     passes vacuously, which reads as coverage and is not.
+   - `.github/workflows/family-check.yml`'s inline module/part list
+     needs the family's canonical part, or no `HARNESS=sim` build script
+     is emitted and the mdb step has nothing to run.
+   - `.github/workflows/ci.yml` and `nightly.yml` each carry their own
+     `family-<slug>` job list. Both need the new job: 83_84 was wired
+     into PR CI and missed in nightly, so recurrence is the norm.
+   - `scripts/ci-local-emit.py`'s `SIM_VARIANTS` mirrors the CI lists
+     for the local `make target-ci` replica.
+   The older shape of this mistake is worth knowing because it stayed
+   invisible for a long time: PIC16F193X's family discovery lived in a
+   script whose own family table had never been told about the family,
+   so local real-target builds passed while CI failed outright on every
+   push. The lesson survives the rewrite: a local `make xc8-build
    MODULE=<new>-hal MCU=<mcu>` passing is not the same signal as the CI
-   matrix actually including the family; run `python3
-   scripts/ci-discover-xc8-matrix.py` directly and grep its JSON output
-   for the new family's name as its own explicit checklist item, don't
-   infer it from local builds working. `xc8-build.yml`'s matrix then
-   picks the family up automatically via that discovery script (never
-   hand-list a family or MCU inside the workflow file itself);
-   `sim-tests.yml` gets the new family's pilot module once its
-   sim-target harness exists (that one's matrix is hand-listed by
-   design, see its own header comment, so it needs an explicit edit,
-   unlike `xc8-build.yml`).
+   matrix actually including the family. Run the discovery command and
+   read its output; don't infer it from local builds working.
 10. **Litmus test**: point an existing family-agnostic consumer (a
     `epic-*` module, the task manager, whatever exists by then) at the
     new family and confirm zero changes are needed to the consumer
@@ -465,16 +471,13 @@ exist and are accurate, not just present:
       `<family>-hal/README.md` (or a kept `docs/ARCHITECTURE.md`, per
       the docs-lifecycle rules) with manual citations, not bare
       assertions.
-- [ ] `scripts/ci-discover-xc8-matrix.py` reflects the new MCU(s)/family,
-      verified by actually running `python3
-      scripts/ci-discover-xc8-matrix.py` and finding the new family in
-      its JSON output, not by "the Makefile exists so it must be
-      picked up" (confirmed false on PIC16F193X: the Makefile existed
-      and built clean for a long time before anyone noticed the
-      discovery script itself had never been told about the family,
-      and `xc8-build.yml` was failing outright the whole time). Any
-      `excluded` manifest entries carry a real root-cause reason
-      string, not just a silent exclusion.
+- [ ] The manifest family block and the family's own pseudo-module
+      block are wired (per-variant `supported`, or a measured `excluded`
+      reason string), and the hand-listed CI spots of §5 step 9 are all
+      updated, verified by running `python3 scripts/epic_build.py matrix`
+      and `... --canonical-only` and finding the family in both, not by
+      "the directory exists so it must be picked up". Any `excluded`
+      entry carries a real root-cause reason, not a silent exclusion.
 - [ ] Full regression run: every module, every MCU variant in the
       affected family (or families, if a shared `epic-common` change
       was needed), host and real-target, immediately before the final
@@ -500,7 +503,7 @@ account lives.
 | Dangling pointer: a HAL `_Init` stores the caller's pointer instead of copying the handle, and the caller's storage is a non-`static` local | PIC16 (fixed); PIC18's own driver already copies the handle, not affected | `epic-common/MANUAL.md` (handle pattern) |
 | Read-only status/flag bits (RCIDL, CxOUT, FVRRDY, CPSOUT, ...) reading back set even though the driver never wrote them, mistaken for a write not landing | PIC16F193X (Enhanced Mid-range) | `pic16f193x-hal/docs/ARCHITECTURE.md`; §4 step 8 above |
 | `MODE=gpio` bounded-loop example starved by continuously-firing ISRs on MPLAB SIM, never reaching `epic_harness_report()` inside the `mdb` wait window, despite every ISR and the peripheral logic being correct | PIC16F193X (Timer2/4/6, 3 concurrent timer ISRs) | §4 step 6's sub-bullet above; the fix (early-exit + ISR-driven marker) is in `pic16f193x-hal/tests/example_timer246.c` |
-| CI matrix discovery script (`scripts/ci-discover-xc8-matrix.py`) not updated when a new family's first `mcu/*-mplabx/Makefile` lands, so local real-target builds pass indefinitely while `xc8-build.yml` fails outright on every push | PIC16F193X | §5 step 9 above; §6's CI-wiring checklist item |
+| A hand-listed CI spot left unupdated when a family lands (`ci-target-sim.sh`'s `run_one` pilot list, `family-check.yml`'s inline module/part list, a missing `family-<slug>` job), so the family's gate silently does not run: the mdb leg matches nothing and passes vacuously, or no `HARNESS=sim` build script is emitted at all | PIC16F193X (the original discovery script had this shape and failed outright instead); PIC16F83_84 (wired into PR CI, missed in `nightly.yml`) | §5 step 9 above; §6's CI-wiring checklist item |
 
 This table is deliberately family-specific in its "confirmed on" column
 and deliberately generic in its "pattern" column: a new family should
