@@ -64,7 +64,7 @@ static uint8_t port_addr(GPIO_TypeDef port)
  *        RE4..RE7 on the 16F59 (its upper nibble; DS41213D §6.5,
  *        DFP PORTA_/PORTE_ rows: RE0..RE3 do not exist). The 505/506
  *        carry 6-bit PORTB/PORTC (RB0..RB5, RC0..RC5, DS41236C/
- *        DS41268D §5.0 pin diagrams).
+ *        DS41268D Table 3-3 pinout tables).
  *        Every other port is contiguous from bit 0.
  * @param port GPIOA..GPIOE.
  * @return the bitmask of implemented pins.

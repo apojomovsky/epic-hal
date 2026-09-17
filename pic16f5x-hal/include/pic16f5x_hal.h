@@ -94,8 +94,8 @@
   #define PIC16F5X_DEVICE_NAME      "PIC16F505"
 #else  /* PIC16F506 */
   /* 1024 words, 67 B GPR (0x0D..0x0F common + 4x16, FSR<6:5>), 14-pin,
-   * comparator + ADC in files 0x08..0x0C (DS41268D Table 3-1, §4.2,
-   * Table 4-4). */
+   * comparator + ADC in files 0x08..0x0C (DS41268D Table 3-1,
+   * Figure 4-3, Table 4-2). */
   #define PIC16F5X_FAMILY_FLASH_KW  1
   #define PIC16F5X_FAMILY_RAM_BYTES 67
   #define PIC16F5X_FAMILY_FSR_BANK_BITS 2

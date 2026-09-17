@@ -42,8 +42,8 @@
 #define PIC_REG_OSCCAL        0x05U
 #endif
 
-/* 16F506 comparator and ADC files (DS41268D §4.2 register map, Table
- * 4-4 reset values; addresses cross-checked against the DFP
+/* 16F506 comparator and ADC files (DS41268D Figure 4-3 register map,
+ * Table 4-2 reset values; addresses cross-checked against the DFP
  * pic16f506.h). Only this part carries them, and both comparators plus
  * the ADC analog selects come out of reset enabled, which takes their
  * shared pins out of digital I/O (§9.1.2, §7.7): the GPIO driver
@@ -65,10 +65,6 @@
  * regardless of ADON. */
 #define PIC_ADCON0_ANS_MASK   0xC0U
 #define PIC_ADCON0_ADON       EPIC_BIT(0)
-
-#define PIC_CM1CON0_POR_VALUE 0xFFU
-#define PIC_CM2CON0_POR_VALUE 0xFFU
-#define PIC_ADCON0_POR_VALUE  0xFCU
 #endif
 
 /* STATUS register bits (DS41213D §3.0, Register 3-1). PA<2:0> is the

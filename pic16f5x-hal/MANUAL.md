@@ -3,8 +3,8 @@
 Register facts for the PIC16F5x family that are not shared conventions
 (those live in `epic-common/MANUAL.md`) and not driver behavior (each
 driver cites its own datasheet sections). Cited per part: DS41213D for
-the 16F54/57/59, DS41236C for the 16F505 and DS41268D for the 16F506
-(its own datasheet, shared with the PIC12F508/509 and PIC12F510), all
+the 16F54/57/59, DS41236C for the 16F505 (shared with the PIC12F508/509)
+and DS41268D for the 16F506 (shared with the PIC12F510), all
 cross-checked against the DFP (`Microchip.PIC16Fxxx_DFP`,
 `edc/PIC16Fnnn.PIC` and `xc8/pic/include/proc/pic16fnnn.h`).
 
@@ -30,7 +30,7 @@ tightest budget in this repo; every real-target example must fit both
 505/506) select their GPR window through FSR<6:5> or FSR<7:5>
 (DS41213D section 3.6); only the 16F54 has no bank bits. The 505/506
 have no PORTA: OSCCAL takes file 0x05 and the 14-pin die has no RA0
-output pins (DS41236C/DS41268D section 5.0 pin diagrams). The 506's
+output pins (DS41236C/DS41268D Table 3-3 pinout tables). The 506's
 GPR is 3 common bytes (0x0D..0x0F) plus 4x16 banked, not the 505's 8
 common bytes, so it holds 67 B to the 505's 72 (DS41268D section 4.2,
 Table 3-1).
@@ -82,7 +82,7 @@ OSCCAL 0x05 on 16F505/506; PORTC 0x07 on 16F57/59/505/506; PORTD/PORTE
 (program-page select PC<10:8>, not a bank select); the 505/506 drop
 PA1/PA2 (2-bit FSR bank addressing, DS41236C/DS41268D sections 3.0/4.0).
 The 16F506 adds the analog block below, files 0x08..0x0C
-(DS41268D section 4.2, Table 4-4).
+(DS41268D §4.2, Figure 4-3 and Table 4-2).
 
 The sfr-map audit cross-checks every `PIC_REG_*` address and bit row
 against the five DFP headers; OPTION's bits are DFP_MISSING_OK (control
@@ -91,7 +91,9 @@ space carries no `_POSN` macros) and are datasheet facts instead.
 ## 16F506 analog block, and why GPIO init clears it
 
 Only the 16F506 has the analog files, and both comparators plus the ADC
-analog selects come out of reset **enabled** (DS41268D Table 4-4):
+analog selects come out of reset **enabled** (DS41268D Table 4-2, the
+register-file summary's Power-on Reset column; the map itself is
+Figure 4-3 in §4.2):
 
 | file | register | POR | what it holds analog |
 |---|---|---|---|
@@ -119,9 +121,10 @@ There is no PWRTE and no BOREN on the baseline die. The config-key audit
 links each example's config TU per part, so the field spelling is
 compiler-verified.
 
-The 505/506 carry a wider config word (DS41236C/DS41268D section 7.1):
-12 bits with MCLRE and FOSC<2:0>, so eight oscillator selections
-including INTRC (internal 4 MHz), EXTRC and EC, and the datasheet names
+The 505/506 carry a wider config word (DS41236C section 7.1,
+Register 7-2 for the 505; DS41268D section 10.1, Register 10-2 for the
+506): 12 bits with MCLRE and FOSC<2:0>, so eight oscillator selections
+including INTRC (internal 4 MHz), EXTRC and EC, and the datasheets name
 the watchdog bit WDTE rather than WDT. The family's examples use
 OSC=XT, WDT=OFF, CP=OFF on every part, which all five accept and the
 config-key audit verifies per part.
