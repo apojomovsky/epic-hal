@@ -1,0 +1,85 @@
+/* Blink an LED on RB0 from a Timer0 overflow: the canonical "the HAL
+ * drives a real application" smoke test. Wiring: LED+resistor between
+ * RB0 and GND, 20 MHz HS crystal. Timer0 counts Fosc/4 with a 1:256
+ * prescaler and reload 0 (DS39598F §6.0), so it overflows every 65536
+ * instruction cycles (~13 ms at 20 MHz), toggling RB0 at ~76 toggles/s. */
+
+#include "pic16f818_819_hal.h"
+#include "pic16f818_819_sfr.h"
+#include "peripherals/hal_gpio.h"
+#include "peripherals/hal_timer0.h"
+#include "core/pic16_irq.h"
+#include "core/pic14_wdt_sleep.h"
+#include "core/epic_harness.h"
+
+/** Simulated run length (host only). 256 x 256 = 65536 instruction
+ *  cycles per Timer0 overflow at 1:256, so 600k cycles give ~9 toggles. */
+#define SIM_CYCLES  600000UL
+
+/* Toggle count, the ISR is the only writer. A 16-bit counter keeps the
+ * interrupt partition small on the 128 B part. */
+static volatile uint16_t g_toggle_count = 0;
+
+/* Timer0 overflow callback, runs in interrupt context (target) or the
+ * sim IRQ callback (host). The pin toggles through a direct latch RMW:
+ * the GPIO driver call path does not fit the 16F818's 128 B RAM inside
+ * the interrupt partition, the budget that made the 83/84 ladder file
+ * use the latch. Main still covers the EPIC_GPIO_* driver paths. */
+/**
+ * @brief Toggle RB0 and bump the toggle counter on each Timer0 overflow.
+ */
+static void on_t0_overflow(void)
+{
+    EPIC_REG8(PIC_REG_PORTB) ^= GPIO_PIN_0;
+    g_toggle_count++;
+}
+
+/**
+ * @brief Blink RB0 from a Timer0 overflow-driven loop.
+ */
+int main(void)
+{
+    epic_harness_init(SIM_CYCLES);
+
+    /* 1. RB0 as output, start low. */
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+
+    /* 2. Timer0: internal Fosc/4, 1:256 prescaler, reload 0, toggle on
+     *    each overflow. Local handle: Init/Start are header inlines, so
+     *    clang folds the callback store to a named literal and epic-cc
+     *    resolves the ISR dispatch (ADR-024). */
+    TIMER0_HandleTypeDef h = TIMER0_HANDLE_DEFAULT;
+    h.ClockSource       = TIMER0_CLOCK_INTERNAL;
+    h.Prescaler         = TIMER0_PRESCALER_1_256;
+    h.PrescalerAssigned = true;
+    h.ReloadValue       = 0x00U;
+    h.OverflowCallback  = on_t0_overflow;
+    EPIC_TIMER0_Init(&h);
+    EPIC_TIMER0_Start(&h);
+
+    /* 3. Arm the Timer0 interrupt (EPIC_TIMER0_Init set TMR0IE; now set GIE).
+     *    On the sim the IRQ fires regardless, so this is harmless there. */
+    EPIC_IRQ_Restore(1);
+
+    /* 4. Let time pass: the harness bounds the loop on the host and
+     *    pumps the sim each iteration (no-op on target, where real
+     *    time advances on its own). WDT refresh is a host no-op, so it
+     *    is called unconditionally. */
+    for (uint32_t i = 0; epic_harness_running(i); i++)
+    {
+        epic_harness_tick();
+        EPIC_WDT_Refresh();
+    }
+
+#ifdef __EPIC_CC__
+    /* epic-cc isel gaps, both filed: a const global as a pointer call
+     * argument (epic-cc#148) and a select between two string globals
+     * (epic-cc#147). The callback-driven loop above is shared. */
+    (void)g_toggle_count;
+    return 0;
+#else
+    epic_harness_log("RB0 toggled %u times.\n", (unsigned)g_toggle_count);
+    return epic_harness_report(g_toggle_count >= 2U);
+#endif
+}
