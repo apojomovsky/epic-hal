@@ -8,11 +8,7 @@
  * This test asserts what the driver does, not its register image: the
  * byte-level Bank 2/3 images are asserted on the real target by
  * tests/sim_bank_probe.c, which reaches those registers through the
- * same literal-token macros the driver uses. Indexing the host register
- * file by a literal address above 0xFF here would also trip the
- * pre-commit hook's cppcheck run, which resolves the family-blind
- * headers against every family's include dir at once and so compares
- * such an index against another die's smaller simulated array. */
+ * same literal-token macros the driver uses. */
 
 #include "pic16f818_819_hal.h"
 #include "pic16f818_819_sim.h"
