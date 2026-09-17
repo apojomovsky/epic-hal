@@ -213,11 +213,46 @@ brace_style_check() {
 # did not. The hook analyzes code the way the host build compiles it, and
 # the host build never places anything, so the empty define is the correct
 # host semantics, not a lie to the analyzer.
-#
-# The include list is sorted so each HAL's include/host precedes its
-# include/target: header resolution then matches the host build (target
-# headers carry the XC8 placement macros the host never sees), which keeps
-# EPIC_PLACE-style macros from expanding to __at inside cppcheck.
+# The include list stays sorted inside each group so a HAL's
+# include/host precedes its include/target: header resolution then
+# matches the host build (target headers carry the XC8 placement macros
+# the host never sees), which keeps EPIC_PLACE-style macros from
+# expanding to __at inside cppcheck.
+
+# Families whose register map the non-family partitions analyze against.
+# Deterministic picks, not preferences: analysis against any single
+# family is equivalent for logic bugs, while the per-family truth stays
+# with the builds. Constants, so a rename updates one place.
+CPPCHECK_MIDRANGE_REF="pic16f628a-hal"
+CPPCHECK_CONSUMER_REF="pic16f193x-hal"
+
+# Print the include dirs (one per line) for one staged top-level group.
+# A family group sees only its own headers plus the shared layer, so a
+# basename shared across families (pic14_midrange.h, epic_hal.h, ...)
+# cannot resolve to another die. The shared midrange drivers (pic14_*.h)
+# and epic-common headers have unique basenames repo-wide, so adding
+# them never shadows a family header. Caller keeps only the directories
+# that exist.
+group_includes() {
+    local group="$1"
+    case "$group" in
+        pic*-hal|pic14-midrange-core)
+            find "$group" -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort
+            printf '%s\n' "epic-common/include" "pic14-midrange-core/include"
+            ;;
+        *)
+            find ./epic-* ./tests -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort
+            printf '%s\n' "epic-common/include"
+            find "$CPPCHECK_CONSUMER_REF" -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort
+            ;;
+    esac
+    if [ "$group" = "pic14-midrange-core" ]; then
+        # midrange-core's own drivers include the family-blind
+        # pic14_midrange.h, which only families provide: analyze them
+        # against one family's map, deterministically.
+        find "$CPPCHECK_MIDRANGE_REF" -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort
+    fi
+}
 
 cppcheck_check() {
     command -v cppcheck >/dev/null 2>&1 || {
@@ -225,17 +260,32 @@ cppcheck_check() {
         return 0
     }
 
-    local c_files=()
-    local f
-    while IFS= read -r f; do
-        [[ "$f" == *.c ]] && [ -f "$f" ] && c_files+=("$f")
-    done < <(staged_files)
-    [ "${#c_files[@]}" -eq 0 ] && return 0
+    # Group the staged .c files by top-level directory: one invocation
+    # per group with that group's own include set, instead of every
+    # file against every family's headers at once.
+    local groups
+    groups="$(while IFS= read -r f; do
+        [[ "$f" == *.c ]] && [ -f "$f" ] || continue
+        printf '%s\n' "${f%%/*}"
+    done < <(staged_files) | sort -u)"
+    [ -z "$groups" ] && return 0
 
-    local includes=()
-    while IFS= read -r d; do
-        includes+=(-I "$d")
-    done < <(find . -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort)
+    local group
+    while IFS= read -r group; do
+        [ -z "$group" ] && continue
+        local c_files=()
+        local f
+        while IFS= read -r f; do
+            [[ "$f" == *.c ]] && [ -f "$f" ] && [ "${f%%/*}" = "$group" ] || continue
+            c_files+=("$f")
+        done < <(staged_files)
+        [ "${#c_files[@]}" -eq 0 ] && continue
+        local includes=()
+        local d
+        while IFS= read -r d; do
+            [ -d "$d" ] && includes+=(-I "$d")
+        done < <(group_includes "$group")
+        [ "${#includes[@]}" -eq 0 ] && continue
 
     # --suppress=preprocessorErrorDirective: a #error in #ifndef <build-define>
     # is a common vendored pattern (e.g. m-stack's mmc.h requires the
@@ -243,17 +293,18 @@ cppcheck_check() {
     # because this hook passes only -I dirs, no -D build defines (the real
     # CMake/Make build defines them; host-sim + xc8 are the source of truth).
     # Real "unsupported platform" #errors are caught by the actual build.
-    if ! cppcheck --enable=warning,performance,portability --std=c99 --error-exitcode=1 \
-        --suppress=missingInclude --suppress=missingIncludeSystem \
-        --suppress=unmatchedSuppression \
-        --suppress=preprocessorErrorDirective \
-        --suppress=nullPointerRedundantCheck \
-        --suppress=syntaxError:*/third_party/* \
-        -D'__at(x)=' \
-        --quiet "${includes[@]}" "${c_files[@]}"; then
-        echo "pre-commit: cppcheck found issues in the files above."
-        fail=1
-    fi
+        if ! cppcheck --enable=warning,performance,portability --std=c99 --error-exitcode=1 \
+            --suppress=missingInclude --suppress=missingIncludeSystem \
+            --suppress=unmatchedSuppression \
+            --suppress=preprocessorErrorDirective \
+            --suppress=nullPointerRedundantCheck \
+            --suppress=syntaxError:*/third_party/* \
+            -D'__at(x)=' \
+            --quiet "${includes[@]}" "${c_files[@]}"; then
+            echo "pre-commit: cppcheck found issues in the files above."
+            fail=1
+        fi
+    done <<<"$groups"
 }
 
 newline_whitespace_check
