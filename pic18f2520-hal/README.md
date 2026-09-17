@@ -53,6 +53,15 @@ are intentionally absent from `family-check.yml`'s mdb job list for this
 reason. A future small-flash part repeats this pattern (extend the
 `conditional_sources`/dispatch split's `variants` lists), not a new one.
 
+**18F2320 (epic-hal#155):** same DS39599 shape and capability macros as
+the 2220 (no ECCP1, no 16-bit BRG, same CONFIG3H/4L field set) but 8 KB
+flash, double the 2220's. Blink fits at 43.1% and, unlike the 2220, the
+mdb `irq-smoke` gate fits too (verified via `mdb` register readback), so
+it is in `family-check.yml`'s mdb job list. PIC18 does not mirror a
+driven `LATx` latch back into `PORTx` under MPLAB SIM (the same finding
+as the 2520/6520 gates), so its gate reads `LATA`
+(`scripts/ci-target-sim.sh`'s device allowlist).
+
 - ✅ Family header (`pic18f2520_hal.h`): device selection, capability
   macros, platform include. Named `_hal` to avoid shadowing the DFP
   `pic18f2520.h` (see "XC8 codegen gotchas" below).

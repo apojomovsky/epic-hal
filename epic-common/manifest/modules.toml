@@ -702,7 +702,7 @@ hal_dir  = "pic18f2520-hal"
 # Canonical 18F2520 last so family-check's scaffold gate builds
 # variants[-1] (as on 87XA/88X/18Fxx5x); gen-sfr.py's CANONICAL entry
 # for this family agrees.
-variants = ["18F2220", "18F2520"]
+variants = ["18F2220", "18F2320", "18F2520"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 dfp_version = "1.7.171"
 fosc_hz  = 20000000
@@ -715,19 +715,10 @@ includes = [
   "pic18f2520-hal/include",
   "epic-common/include",
 ]
-# Baseline (every variant, including small-flash siblings like the
-# 2220): GPIO + Timer0, the foundation blink/irq-smoke examples need,
-# plus the IRQ/WDT core. Timer1-3/CCP/SSP/USART/ADC/comparator/EEPROM
-# are conditional_sources below, spliced right after timer0.c so the
-# XC8 psect link order for the 2520 (the only variant that currently
-# links them) is byte-identical to before this split (epic-hal#155:
-# a 4 KB part cannot fit the family's full peripheral set just to
-# build blink, docs/adding-a-device.md §3.2). pic18_irq_dispatch.c is
-# NOT in the baseline either: its strong externs reference every
-# peripheral's IRQHandler, which only resolves when those drivers are
-# also linked, so dispatch itself is one of the two conditional
-# entries right below (the full family dispatch for 18F2520, the
-# Timer0/RB-only pic18_irq_dispatch_min.c for baseline-only variants).
+# Baseline (every variant): GPIO + Timer0 + IRQ/WDT core, what blink
+# needs. Timer1-3/CCP/SSP/USART/ADC/comparator/EEPROM and the dispatch
+# source are conditional_sources below (small-flash variants cannot
+# link the full set; see README.md "Flash-budget finding", epic-hal#155).
 hal_sources = [
   "pic18f2520-hal/src/peripherals/pic18f2520_gpio.c",
   "pic18f2520-hal/src/peripherals/pic18f2520_timer0.c",
@@ -745,7 +736,7 @@ variants = ["18F2520"]
 after    = "pic18f2520-hal/src/core/pic18_irq.c"
 [[families.PIC18F2520.conditional_sources]]
 path     = "pic18f2520-hal/src/core/pic18_irq_dispatch_min.c"
-variants = ["18F2220"]
+variants = ["18F2220", "18F2320"]
 after    = "pic18f2520-hal/src/core/pic18_irq.c"
 [[families.PIC18F2520.conditional_sources]]
 path     = "pic18f2520-hal/src/peripherals/pic18f2520_timer1.c"
@@ -1422,6 +1413,7 @@ needs_hal  = true
 [modules.pic18f2520-hal.supported]
 PIC18F2520 = [
   "18F2220",
+  "18F2320",
   "18F2520",
 ]
 
@@ -1447,19 +1439,11 @@ sources     = [
 config      = { BOREN = "ON", BORV = "3", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", FCMEN = "OFF", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", PBADEN = "OFF", PWRT = "ON", STVREN = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # sim_variant_for() resolves a per-MCU sim override from THIS block's
-# own .variants (epicmanifest.py), not from example.variants.<mcu>.sim;
-# the "18F2220" override belongs here, sibling to the base sim, not
-# nested under the target-variant block below.
-#
-# This override exists so config-key-audit's trivial config-pragma link
-# validates the 2220's own config-word shape; it does NOT mean the mdb
-# gate runs for this part. `make mdb-test MODULE=pic18f2520-hal
-# MCU=18F2220 DEVICE=PIC18F2220 MODE=gpio` overflows the 2220's 4 KB
-# flash (irq-smoke + the mdb harness together, even after the blink-only
-# hal_sources trim above; blink alone fits at 86%). 18F2220/18F4220 (the
-# family's only 4 KB variants) are intentionally absent from
-# family-check.yml's mdb job list for this reason; do not add them
-# there without first shrinking example_irq.c or the mdb harness.
+# own .variants (epicmanifest.py), not example.variants.<mcu>.sim. This
+# 18F2220 override only validates the config-pragma link (config-key-
+# audit); the mdb gate itself overflows the 2220's 4 KB flash even with
+# the blink-only hal_sources trim, so it stays out of family-check.yml's
+# mdb job list (README.md "Flash-budget finding").
 [modules.pic18f2520-hal.example.PIC18F2520.sim.variants.18F2220]
 name        = "irq-smoke"
 harness_src = "pic18f2520-hal/src/mdb/pic18_harness_mdb.c"
@@ -1467,6 +1451,17 @@ sources     = [
   "tests/example_irq.c",
 ]
 config      = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", MCLRE = "ON", OSC = "HS", PBAD = "DIG", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# 8 KB flash, double the 2220's, fits irq-smoke + the mdb harness (see
+# the 18F2320 target block below for the verified numbers), so this one
+# IS in family-check.yml's mdb job list.
+[modules.pic18f2520-hal.example.PIC18F2520.sim.variants.18F2320]
+name        = "irq-smoke"
+harness_src = "pic18f2520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", MCLRE = "ON", OSC = "HS", PBAD = "DIG", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 # The 2220's CONFIG3H/4L shape predates the 2520's: CCP2MX is ON/OFF (not
 # PORTC/PORTBE), PBAD is ANA/DIG (not PBADEN ON/OFF), STVR (not STVREN),
@@ -1479,6 +1474,15 @@ sources = [
   "tests/example_blink.c",
 ]
 config  = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", MCLRE = "ON", OSC = "HS", PBAD = "DIG", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Same CONFIG3H/4L shape as the 2220 (DS39599), plus CP2/CP3/EBTR2/
+# EBTR3/WRT2/WRT3 (4 code-protect blocks, matching its 8 KB flash).
+[modules.pic18f2520-hal.example.PIC18F2520.variants.18F2320]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", MCLRE = "ON", OSC = "HS", PBAD = "DIG", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 [modules.pic18f6520-hal]
 dir        = "pic18f6520-hal"

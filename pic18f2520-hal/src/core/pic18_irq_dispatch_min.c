@@ -1,12 +1,8 @@
 /*
- * Fan-out from both vectors, minimal baseline: Timer0 + RB change only,
- * for variants whose hal_sources baseline links just GPIO + Timer0 (the
- * blink/irq-smoke examples need nothing else). Timer1-3/CCP/SSP/EUSART/
- * ADC/COMP/EEPROM handlers are not referenced here, so their drivers
- * stay unlinked (epic-hal#155: the full pic18_irq_dispatch.c's strong
- * externs force every handler object into the link, which a 4 KB-flash
- * part cannot afford just to build blink). Prototypes are strong
- * externs, matching pic18_irq_dispatch.c's own rationale.
+ * Fan-out from both vectors, minimal baseline (Timer0 + RB only): the
+ * dispatch for hal_sources' small-flash baseline, which links no other
+ * peripheral driver (README.md "Flash-budget finding", epic-hal#155).
+ * Strong externs, matching pic18_irq_dispatch.c's own rationale.
  */
 
 #include "core/pic18_irq.h"

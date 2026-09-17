@@ -55,6 +55,7 @@ FAMILIES = {
         "pic18f2520-hal/include/pic18f2520_sfr.h",
         [
             ("18F2220", "Microchip.PIC18Fxxxx_DFP", "pic18f2220.h"),
+            ("18F2320", "Microchip.PIC18Fxxxx_DFP", "pic18f2320.h"),
             ("18F2520", "Microchip.PIC18Fxxxx_DFP", "pic18f2520.h"),
         ],
     ),
@@ -305,6 +306,8 @@ CONDITIONAL_REGS = {
     # BAUDCON register, 8-bit SPBRG only). DS39599, verified against the
     # DFP EDC.
     "18F2220": {"PORTE", "ECCP1AS", "PWM1CON", "BAUDCON", "SPBRGH"},
+    # Same DS39599 shape as the 2220 (8 KB flash sibling).
+    "18F2320": {"PORTE", "ECCP1AS", "PWM1CON", "BAUDCON", "SPBRGH"},
 }
 CONDITIONAL_BITS = {
     "16F870": {("PIE1", "PSPIE"), ("PIR1", "PSPIF"),
@@ -344,6 +347,8 @@ CONDITIONAL_BITS = {
     # HLVD interrupt bits; RCON has no SBOREN (simpler BOR config, no
     # runtime software-enable control).
     "18F2220": {("IPR2", "HLVDIP"), ("PIE2", "HLVDIE"), ("PIR2", "HLVDIF"),
+                ("RCON", "SBOREN")},
+    "18F2320": {("IPR2", "HLVDIP"), ("PIE2", "HLVDIE"), ("PIR2", "HLVDIF"),
                 ("RCON", "SBOREN")},
     # 88X 28-pin parts (882/883/886): ANSEL ANS5/ANS6/ANS7 are
     # unimplemented on the 11-channel ADC (present on 884/887).

@@ -27,7 +27,7 @@ set(EPIC_DEFAULT_DEVICE       ${PIC18F2520_DEFAULT_DEVICE})
 set(EPIC_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(EPIC_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
-set(EPIC_FAMILY_DEVICES        PIC18F2220 PIC18F2520)
+set(EPIC_FAMILY_DEVICES        PIC18F2220 PIC18F2320 PIC18F2520)
 
 # Foundation + Timer1 sources: GPIO + Timer0/1 drivers, the IRQ core and its
 # dispatch, the WDT/Sleep helpers, and the host sim backend + harness.

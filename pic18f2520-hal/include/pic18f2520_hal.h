@@ -20,12 +20,13 @@
  * @{
  */
 #if !defined(PIC18F2520) && !defined(PIC18LF2520) && \
-    !defined(PIC18F2220) && !defined(PIC18LF2220)
+    !defined(PIC18F2220) && !defined(PIC18LF2220) && \
+    !defined(PIC18F2320) && !defined(PIC18LF2320)
 #define PIC18F2520   1
 #endif
 
-#if defined(PIC18F2520) + defined(PIC18F2220) > 1
-#error "Define exactly one of PIC18F2520 / PIC18F2220."
+#if defined(PIC18F2520) + defined(PIC18F2220) + defined(PIC18F2320) > 1
+#error "Define exactly one of PIC18F2520 / PIC18F2220 / PIC18F2320."
 #endif
 /** @} */
 
@@ -70,6 +71,20 @@
 #define PIC18F2520_FAMILY_HAS_ECCP1      0   /* Standard CCP1: no ECCP1AS/PWM1CON (DS39599). */
 #define PIC18F2520_FAMILY_HAS_BRG16      0   /* No BAUDCON register: 8-bit SPBRG only (DS39599). */
 #define PIC18F2520_DEVICE_NAME           "PIC18F2220"
+#elif defined(PIC18F2320)
+#define PIC18F2520_FAMILY_FLASH_BYTES    8192U   /**< 8 KB (DS39599 §4.0). */
+#define PIC18F2520_FAMILY_FLASH_INSTR    4096U
+#define PIC18F2520_FAMILY_RAM_BYTES      512U    /**< 0x000-0x1FF (DS39599 §3.0), same as the 2220. */
+#define PIC18F2520_FAMILY_EEPROM_B       256U
+#define PIC18F2520_FAMILY_IO_PINS        24U   /* PORTA/B/C; no PORTE at all on the 2320 (DS39599 Table 1-1). */
+#define PIC18F2520_FAMILY_ADC_CH         10U
+#define PIC18F2520_FAMILY_HAS_PORTD      0
+#define PIC18F2520_FAMILY_HAS_PORTE      0   /* No PORTE SFR at all, not even an MCLR-only stub. */
+#define PIC18F2520_FAMILY_HAS_SPP        0
+#define PIC18F2520_FAMILY_HAS_USB        0
+#define PIC18F2520_FAMILY_HAS_ECCP1      0   /* Standard CCP1: no ECCP1AS/PWM1CON (DS39599), same as the 2220. */
+#define PIC18F2520_FAMILY_HAS_BRG16      0   /* No BAUDCON register: 8-bit SPBRG only (DS39599), same as the 2220. */
+#define PIC18F2520_DEVICE_NAME           "PIC18F2320"
 #endif
 /** @} */
 
