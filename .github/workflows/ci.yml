@@ -249,13 +249,14 @@ jobs:
   epiccc-gate:
     runs-on: ubuntu-latest
     env:
-      # epic-cc master at the epic-hal#146 bump, which carries the
-      # p16f677 target this job's 16F677 leg needs (epic-cc#421) on top
-      # of the #129 PIC14E port the 16F1937 leg needs. The previous pin
-      # (5fbde4c, the #129 bump) predates p16f677; it still serves the
-      # 877A/887/4550/1937 slices. See DEVELOPMENT.md
-      # "The epiccc gate pin".
-      EPIC_CC_PIN: e4a4e781c9a51b3dd0ebac5710ad5011c0ac7949
+      # epic-cc master at the epic-hal#213 bump (883ae52), which carries
+      # the p16f54 flat 25-byte GPR fix (epic-cc#437 / PR #438) this
+      # job's 16F54 leg needs, on top of the p16f677 target the 16F677
+      # leg needs (epic-cc#421) and the #129 PIC14E port the 16F1937
+      # leg needs. The previous pin (e4a4e78, the #146 bump) predates
+      # the p16f54 fix; it still serves every other slice this job
+      # builds. See DEVELOPMENT.md "The epiccc gate pin".
+      EPIC_CC_PIN: 883ae5216e2f2d138a969c422022b4eff8eb8ac3
       # The clang bundle comes from the stable v0.3.0 release (the same
       # clang 20.1.8 across the rolling cuts, cut from a driver that
       # satisfies epic-cc#198's opt requirement). Pinning the stable
@@ -380,12 +381,12 @@ jobs:
           make epiccc-build MODULE=pic18f2520-hal MCU=18F2520 EPIC_CC_HOST=1
           make epiccc-build MODULE=pic18f1320-hal MCU=18F1320 EPIC_CC_HOST=1
           make epiccc-build MODULE=pic18f6520-hal MCU=18F6520 EPIC_CC_HOST=1
-          # The 16F54 leg (epic-hal#151) stays out: this repo's
-          # EPIC_CC_PIN predates the p16f54 RAM model fix (epic-cc#437 /
-          # PR #438), and epic-cc's PicBaseline sim never advances TMR0
-          # while this family's blink is Timer0-polled, so the hex needs
-          # a software-loop toggle firmware before the runner has
-          # anything to watch. Measured 2026-09-17.
+          # The 16F54 toggle leg: the family's epic-cc example is a
+          # software-loop PORTB:0 toggle (manifest
+          # example.PIC16F5x.epiccc), because the canonical blink is
+          # Timer0-polled and epic-cc's PicBaseline sim executes
+          # instructions only, never advancing TMR0.
+          make epiccc-build MODULE=pic16f5x-hal MCU=16F54 EPIC_CC_HOST=1
       # The sim gates: the mdb toggle contract, run on crates/sim's CPU.
       # Watch PORTB bit 0 across the samples, require a transition. Blink
       # is Timer0 driven, so the runner raises its overflow (INTCON bit 2
@@ -414,11 +415,11 @@ jobs:
           "$runner" --hex build/epiccc/16F77-blink.hex --device 16F77 \
             --watch PORTB:0 --samples 12 --steps 200000 \
             --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
-          # The 16F54 toggle leg: see the build step above (pin bump
-          # plus a firmware the runner can actually toggle, since
-          # epic-cc's PicBaseline sim does not advance TMR0). The
-          # sim-runner PicBaseline arm itself is landed and
-          # fixture-verified.
+          # No --irq-every on the 16F54: the die has no interrupt and
+          # the model injects none. Its epic-cc example toggles the pin
+          # from a software loop, so plain sampling sees the edges.
+          "$runner" --hex build/epiccc/16F54-blink.hex --device 16F54 \
+            --watch PORTB:0 --samples 12 --steps 200000
 
   # Flake-hunt: REPEAT=N run of every sim gate (quality task 10),
   # manual-trigger only so a hunt does not slow the PR target job.

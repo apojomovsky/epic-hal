@@ -763,3 +763,48 @@ class TestEpicCcToolchain(unittest.TestCase):
         self.assertIn("epic-tick/src/epic_tick.c", s)
         self.assertNotIn("epic-sdcard/examples/example_sdcard.c", s)
         self.assertNotIn("epic-serial/src", s)
+
+EPICC_MANIFEST = MANIFEST.replace(
+    '[modules.epic-tick.example.PIC16F87XA.sim]',
+    '[modules.epic-tick.example.PIC16F87XA.epiccc]\n'
+    'name    = "tick-blink-cc"\n'
+    'sources = ["examples/example_tick_epiccc.c"]\n'
+    'config  = { FOSC = "HS", WDTE = "OFF" }\n\n'
+    '[modules.epic-tick.example.PIC16F87XA.sim]',
+)
+
+
+def epiccload():
+    tmp = tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False)
+    tmp.write(EPICC_MANIFEST)
+    tmp.close()
+    return epicmanifest.load(pathlib.Path(tmp.name))
+
+
+class TestEpicccExample(unittest.TestCase):
+    """The epiccc example variant replaces the target example on the
+    epic-cc path only: sources, config pragmas and hex basename all
+    follow the variant, while the XC8 build stays byte-comparable."""
+
+    def test_config_source_uses_the_variant_config(self):
+        out = epic_build.emit_config_source(
+            epiccload(), "epic-tick", "16F877A", toolchain="epic-cc")
+        self.assertIn("wdt=off", out.lower())
+        self.assertNotIn("wdt=on", out.lower())
+
+    def test_config_source_xc8_path_keeps_the_target_config(self):
+        out = epic_build.emit_config_source(epiccload(), "epic-tick", "16F877A")
+        self.assertIn("#pragma config WDTE = ON", out)
+
+    def test_build_script_links_the_variant_sources(self):
+        s = epic_build.emit_build_script(
+            epiccload(), "epic-tick", "16F877A",
+            build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc")
+        self.assertIn("epic-tick/examples/example_tick_epiccc.c", s)
+        self.assertNotIn("epic-tick/examples/example_tick.c", s)
+
+    def test_build_script_names_the_hex_after_the_variant(self):
+        s = epic_build.emit_build_script(
+            epiccload(), "epic-tick", "16F877A",
+            build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc")
+        self.assertIn("build/16F877A-tick-blink-cc.hex", s)

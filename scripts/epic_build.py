@@ -67,13 +67,18 @@ def _check_example_deps_supported(manifest, module, fam_name, mcu):
         )
 
 
-def _example_name_and_config(manifest, module, mcu, variant):
-    """The (name, config-pragmas) pair for this build, honouring variant.
+def _example_name_and_config(manifest, module, mcu, variant, toolchain="xc8"):
+    """The (name, config-pragmas) pair for this build, honouring variant
+    and toolchain.
 
     variant="sim" uses the sim variant's own name and config (a full
     override, see epicmanifest.SimVariant), and raises if the requested
     (module, family) has no sim variant, the same "fail loudly" posture
     as an unsupported (module, MCU) pair.
+
+    toolchain="epic-cc" uses the example's epiccc variant name and
+    config when the example declares one (see epicmanifest.EpicccVariant);
+    without a variant the target example is used unchanged.
     """
     fam = manifest.family_of(mcu)
     example = manifest.example_for(module, fam.name, mcu)
@@ -82,6 +87,9 @@ def _example_name_and_config(manifest, module, mcu, variant):
         if sim is None:
             raise UnsupportedError(f"{module} has no sim variant for {fam.name}")
         return sim.name, sim.config
+    if toolchain == "epic-cc" and example is not None \
+            and example.epiccc is not None:
+        return example.epiccc.name, example.epiccc.config
     return (example.name, example.config) if example is not None else (None, {})
 
 
@@ -96,11 +104,13 @@ def emit_config_source(manifest, module, mcu, variant="target", toolchain="xc8",
     driver can derive ``EPIC_FOSC_HZ`` without an extra CLI flag.
     """
     fam = manifest.family_of(mcu)
-    _, pragmas = _example_name_and_config(manifest, module, mcu, variant)
+    _, pragmas = _example_name_and_config(manifest, module, mcu, variant,
+                                          toolchain)
     if not pragmas:
         return None
     if toolchain == "epic-cc":
-        spec = _epic_config_spec(manifest, module, mcu, variant, fosc_hz)
+        spec = _epic_config_spec(manifest, module, mcu, variant, fosc_hz,
+                                 toolchain)
         if spec is None:
             return None
         # The epic-cc header provides EPIC_CONFIG; the TU must be a real
@@ -230,7 +240,8 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         includes = [_epiccc_include(i) for i in includes]
         # Epic-cc path: one invocation, no per-file compiles, no DFP.
         # Keep the same source set and include order; the driver adds its
-        example_name, _ = _example_name_and_config(manifest, module, mcu, variant)
+        example_name, _ = _example_name_and_config(manifest, module, mcu,
+                                                   variant, toolchain)
         if epiccc_driver and swap:
             has_config = False
             # Per-module basename so the drivers never collide in the
@@ -468,10 +479,12 @@ _BORV_MAP = {
     "3": "maximum",
 }
 
-def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
+def _epic_config_spec(manifest, module, mcu, variant, fosc_hz,
+                      toolchain="xc8"):
     """Build the EPIC_CONFIG string for epic-cc from the manifest example."""
     fam = manifest.family_of(mcu)
-    _, pragmas = _example_name_and_config(manifest, module, mcu, variant)
+    _, pragmas = _example_name_and_config(manifest, module, mcu, variant,
+                                          toolchain)
     if not pragmas:
         return None
     if fosc_hz is None:

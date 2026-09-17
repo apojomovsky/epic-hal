@@ -136,6 +136,27 @@ epic-cc path loudly ("no epiccc_sources; the epic-cc path needs a
 conformant slice"), so a module cannot silently fall back to the XC8
 set.
 
+### `example.<family>.epiccc`: the epic-cc build's example
+
+By default the epic-cc path links the family example's own sources and
+config. An example that the simulator cannot observe declares an
+`epiccc` variant instead: `sources` and `config` replace the target
+example's on `--toolchain epic-cc` only, and `name` keeps the two
+builds' hexes comparable. The XC8 target and sim builds are untouched.
+
+```toml
+[modules.pic16f5x-hal.example.PIC16F5x.epiccc]
+name    = "blink"
+sources = ["tests/example_blink_epiccc.c"]
+config  = { OSC = "XT", WDT = "OFF", CP = "OFF" }
+```
+
+The 16F5x case is the reason this exists: its canonical blink polls
+Timer0, and epic-cc's PicBaseline simulator executes instructions only
+(no TMR0 model) while the die has no interrupt to inject, so the
+sim-runner gate would sample a stuck pin forever. The epiccc example
+toggles the same pin from a software loop.
+
 ## Modules
 
 ```toml

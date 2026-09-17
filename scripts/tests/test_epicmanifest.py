@@ -538,3 +538,43 @@ class TestEpicccHalSources(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+EEXAMPLE = MINIMAL.replace(
+    '[modules.epic-tick.example.PIC18Fxx5x]',
+    '[modules.epic-tick.example.PIC16F87XA.epiccc]\n'
+    'name    = "tick-blink-epiccc"\n'
+    'sources = ["examples/example_tick_epiccc.c"]\n'
+    'config  = { FOSC = "HS", WDTE = "OFF" }\n\n'
+    '[modules.epic-tick.example.PIC18Fxx5x]',
+)
+
+
+class TestEpicccExample(unittest.TestCase):
+    def setUp(self):
+        self.m = epicmanifest.load(write(EEXAMPLE))
+
+    def test_epiccc_example_parsed(self):
+        ex = self.m.example_for("epic-tick", "PIC16F87XA")
+        self.assertEqual(ex.epiccc.name, "tick-blink-epiccc")
+        self.assertEqual(ex.epiccc.sources,
+                         ["examples/example_tick_epiccc.c"])
+        self.assertEqual(ex.epiccc.config, {"FOSC": "HS", "WDTE": "OFF"})
+
+    def test_epiccc_example_absent_is_none(self):
+        ex = self.m.example_for("epic-tick", "PIC18Fxx5x")
+        self.assertIsNone(ex.epiccc)
+
+    def test_epic_cc_path_swaps_the_example_sources(self):
+        srcs = self.m.sources_for("epic-tick", "16F877A", toolchain="epic-cc")
+        self.assertIn("epic-tick/examples/example_tick_epiccc.c", srcs)
+        self.assertNotIn("epic-tick/examples/example_tick.c", srcs)
+
+    def test_xc8_path_keeps_the_target_example(self):
+        srcs = self.m.sources_for("epic-tick", "16F877A")
+        self.assertIn("epic-tick/examples/example_tick.c", srcs)
+        self.assertNotIn("epic-tick/examples/example_tick_epiccc.c", srcs)
+
+    def test_epiccc_example_requires_sources(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(EEXAMPLE.replace(
+                'sources = ["examples/example_tick_epiccc.c"]\n', "")))

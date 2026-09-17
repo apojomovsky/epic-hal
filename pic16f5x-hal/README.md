@@ -36,13 +36,14 @@ phase, see `scripts/ci-target-sim.sh`). All five parts take the same
 parameters: swap `MCU=`/`DEVICE=` for `16F505`, `16F506`, `16F57` or
 `16F59` and the gate runs unchanged.
 Epic-cc gate: `make epiccc-build MODULE=pic16f5x-hal MCU=16F54
-EPIC_CC_HOST=1` stays out of CI for two reasons (measured 2026-09-17):
-`EPIC_CC_PIN` predates the p16f54 RAM model fix (epic-cc#437 / PR #438,
-landed on epic-cc master), and epic-cc's PicBaseline simulator executes
-instructions only (never advances TMR0) while this family's blink is
-Timer0-polled, so the leg needs a software-loop toggle firmware as well
-as the pin bump. The sim-runner PicBaseline arm itself is landed and
-fixture-verified.
+EPIC_CC_HOST=1` builds the family's epic-cc example, a software-loop
+PORTB:0 toggle (`tests/example_blink_epiccc.c`, wired through the
+manifest's `example.PIC16F5x.epiccc` variant): epic-cc's PicBaseline
+simulator executes instructions only (never advances TMR0) and the die
+has no interrupt to inject, so the Timer0-polled canonical blink gives
+the sim-runner nothing to watch. The CI epiccc-gate job builds the hex
+under the pinned epic-cc and gates the toggle through
+`scripts/sim-runner` with `--watch PORTB:0` and no `--irq-every`.
 
 ## XC8 codegen gotchas (live)
 
