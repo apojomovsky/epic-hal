@@ -93,8 +93,9 @@ That needs XC8 plus its device pack:
 | PIC18Fxx5x | `Microchip.PIC18Fxxxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC18Fxxxx_DFP.1.7.171.atpack> |
 <!-- docgen:packs end -->
 
-Install the pack next to XC8 (the exact version the bundle was built
-against is pinned in the bundle's `examples/epic-hal-demo.X` project):
+Install the pack next to XC8 (the exact version the bundle's `make
+TOOLCHAIN=xc8` build consumes is pinned in the bundle's `epic-hal.mk`
+as `EPIC_HAL_DFP_VERSION`):
 
     mkdir -p /opt/microchip/xc8/v4.00/pic/packs
     unzip ~/Downloads/Microchip.PIC16Fxxx_DFP.1.7.162.atpack \
