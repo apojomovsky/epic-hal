@@ -153,6 +153,7 @@ run_one pic16f5x 16F54 PIC16F54 pic16f5x-hal 5000 toggle "" PORTB 50000
 # blink period (measured per part 2026-09-17), and PORTB because the
 # 505/506 have no PORTA.
 run_one pic16f5x 16F505 PIC16F505 pic16f5x-hal 5000 toggle "" PORTB 50000
+run_one pic16f5x 16F506 PIC16F506 pic16f5x-hal 5000 toggle "" PORTB 50000
 run_one pic18f1320 18F1320 PIC18F1320 pic18f1320-hal 2000 toggle
 fi
 

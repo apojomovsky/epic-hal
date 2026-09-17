@@ -93,9 +93,11 @@
   #define PIC16F5X_FAMILY_HAS_SIXBIT_PORTS 1
   #define PIC16F5X_DEVICE_NAME      "PIC16F505"
 #else  /* PIC16F506 */
-  /* 1024 words, 72 B GPR, 4 data banks, comparator+ADC added. */
+  /* 1024 words, 67 B GPR (0x0D..0x0F common + 4x16, FSR<6:5>), 14-pin,
+   * comparator + ADC in files 0x08..0x0C (DS41268D Table 3-1, §4.2,
+   * Table 4-4). */
   #define PIC16F5X_FAMILY_FLASH_KW  1
-  #define PIC16F5X_FAMILY_RAM_BYTES 72
+  #define PIC16F5X_FAMILY_RAM_BYTES 67
   #define PIC16F5X_FAMILY_FSR_BANK_BITS 2
   #define PIC16F5X_FAMILY_HAS_PORTA 0
   #define PIC16F5X_FAMILY_HAS_PORTB 1
