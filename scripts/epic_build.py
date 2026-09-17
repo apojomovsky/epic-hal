@@ -491,7 +491,8 @@ def _epic_config_spec(manifest, module, mcu, variant, fosc_hz):
         # whose own device data spells it `boren`.
         if (not is_pic18 and epic_key == "bor"
                 and fam.name in ("PIC16F88X", "PIC16F193X", "PIC16F628A",
-                                 "PIC16F63x_67x_68x", "PIC16F7x")):
+                                 "PIC16F63x_67x_68x", "PIC16F7x",
+                                 "PIC16F818_819")):
             epic_key = "boren"
         # The PIC18 table maps `bor` -> `boren` for the 2455/2520
         # devices whose TOMLs spell the field that way; the 6520 and
@@ -630,6 +631,7 @@ CANONICAL = {
     "PIC16F63x_67x_68x": "16F677",
     "PIC16F7x": "16F777",
     "PIC16F5x": "16F54",
+    "PIC16F818_819": "16F819",
 }
 
 def cmd_matrix(args):

@@ -140,6 +140,7 @@ run_one pic16f88x 16F887 PIC16F887 epic-serial 10000 uart
 run_one pic16f88x 16F887 PIC16F887 epic-debounce 5000 uart
 run_one pic16f628a 16F628A PIC16F628A pic16f628a-hal 15000 uart
 run_one pic16f83_84 16F84A PIC16F84A pic16f83_84-hal 5000 gpio
+run_one pic16f818_819 16F819 PIC16F819 pic16f818_819-hal 5000 gpio
 run_one pic16f63x_67x_68x 16F677 PIC16F677 pic16f63x_67x_68x-hal 15000 gpio
 # MODE=toggle on PORTB bit 0 with a 50000-instruction sample step.
 # The blink's toggle period is ~50000 steps at 4 MHz (Timer0 Fosc/4,
