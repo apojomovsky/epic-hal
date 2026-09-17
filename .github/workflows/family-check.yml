@@ -233,6 +233,10 @@ jobs:
               ("pic16f63x_67x_68x-hal", "16F677"),
               ("pic16f7x-hal", "16F77"),
               ("pic16f5x-hal", "16F54"),
+              ("pic16f5x-hal", "16F59"),
+              ("pic16f5x-hal", "16F57"),
+              ("pic16f5x-hal", "16F506"),
+              ("pic16f5x-hal", "16F505"),
               ("pic16f818_819-hal", "16F819"),
           ]:
               if module not in m.modules:

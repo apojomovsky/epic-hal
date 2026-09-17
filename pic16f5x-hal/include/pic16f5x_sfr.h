@@ -37,9 +37,34 @@
 #define PIC_REG_PORTE         0x09U
 #endif
 
-/* 20-pin parts: OSCCAL takes file 0x05 (there is no PORTA). */
+/* 14-pin parts: OSCCAL takes file 0x05 (there is no PORTA). */
 #if PIC16F5X_FAMILY_HAS_OSCCAL
 #define PIC_REG_OSCCAL        0x05U
+#endif
+
+/* 16F506 comparator and ADC files (DS41268D Figure 4-3 register map,
+ * Table 4-2 reset values; addresses cross-checked against the DFP
+ * pic16f506.h). Only this part carries them, and both comparators plus
+ * the ADC analog selects come out of reset enabled, which takes their
+ * shared pins out of digital I/O (§9.1.2, §7.7): the GPIO driver
+ * clears this block before configuring a digital pin. */
+#if PIC16F5X_FAMILY_HAS_COMP_ADC
+#define PIC_REG_CM1CON0       0x08U
+#define PIC_REG_ADCON0        0x09U
+#define PIC_REG_ADRES         0x0AU
+#define PIC_REG_CM2CON0       0x0BU
+#define PIC_REG_VRCON         0x0CU
+
+/* CM1CON0/CM2CON0 (DS41268D Register 7-2/7-3): CxOUT is read-only,
+ * CxON enables the comparator. */
+#define PIC_CM1CON0_C1ON      EPIC_BIT(3)
+#define PIC_CM2CON0_C2ON      EPIC_BIT(3)
+
+/* ADCON0 (DS41268D Register 9-1): ANS<1:0> selects the analog input
+ * pins (11 = AN2/AN1/AN0, the POR value) and stays in effect
+ * regardless of ADON. */
+#define PIC_ADCON0_ANS_MASK   0xC0U
+#define PIC_ADCON0_ADON       EPIC_BIT(0)
 #endif
 
 /* STATUS register bits (DS41213D §3.0, Register 3-1). PA<2:0> is the

@@ -63,7 +63,8 @@ static uint8_t port_addr(GPIO_TypeDef port)
  * @brief Implemented-pin mask for a port. PORTA is RA0..RA3, PORTE is
  *        RE4..RE7 on the 16F59 (its upper nibble; DS41213D §6.5,
  *        DFP PORTA_/PORTE_ rows: RE0..RE3 do not exist). The 505/506
- *        carry 6-bit PORTB/PORTC (RB0..RB5, RC0..RC5, DS41319).
+ *        carry 6-bit PORTB/PORTC (RB0..RB5, RC0..RC5, DS41236C/
+ *        DS41268D Table 3-3 pinout tables).
  *        Every other port is contiguous from bit 0.
  * @param port GPIOA..GPIOE.
  * @return the bitmask of implemented pins.
@@ -114,6 +115,20 @@ void EPIC_GPIO_Init(GPIO_TypeDef port, uint16_t pins, GPIO_ModeTypeDef mode)
 {
     uint8_t mask = (uint8_t)pins & port_pin_mask(port);
     uint8_t ta = (uint8_t)port;
+
+#if PIC16F5X_FAMILY_HAS_COMP_ADC
+    /* The 16F506's two comparators and the ADC analog selects are
+     * enabled out of reset (CM1CON0/CM2CON0 = 0xFF, ADCON0 = 0xFC), and
+     * a pin held analog is not available for digital output
+     * (DS41268D §9.1.2, §7.7). Clear the analog block before the first
+     * digital configuration, or configuring a pin as an output does
+     * not drive it. Literal register tokens, never a computed address
+     * (the §4.9 high-risk shape); a future comparator/ADC driver
+     * re-enables what it needs. */
+    EPIC_REG8(PIC_REG_CM1CON0) = 0x00U;
+    EPIC_REG8(PIC_REG_CM2CON0) = 0x00U;
+    EPIC_REG8(PIC_REG_ADCON0)  = 0x00U;
+#endif
 
     switch (mode)
     {

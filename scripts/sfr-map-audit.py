@@ -465,15 +465,21 @@ CONDITIONAL_REGS.update({
     "16F767": {"ADRES", "PORTD", "TRISD", "TRISE"},
     "16F777": {"ADRES"},
 
-    # PIC16F5x: sfr.h carries every port register and OSCCAL,
-    # #if-guarded per part (pic16f5x_hal.h); parse_hal reads the raw
-    # text, so each absent die register is listed (DFP "equ" rows):
-    # PORTC on 57+, PORTD/E on 59, OSCCAL instead of PORTA on 505/506,
-    # comparator/ADC files on 506. TRIS/OPTION are control-space.
-    "16F54":  {"PORTC", "PORTD", "PORTE", "OSCCAL"},
-    "16F57":  {"PORTD", "PORTE", "OSCCAL"},
-    "16F59":  {"OSCCAL"},
-    "16F505": {"PORTA", "PORTD", "PORTE"},
+    # PIC16F5x: sfr.h carries every port register, OSCCAL and the
+    # 16F506's comparator/ADC block, #if-guarded per part
+    # (pic16f5x_hal.h); parse_hal reads the raw text, so each absent
+    # die register is listed (DFP "equ" rows): PORTC on 57+, PORTD/E on
+    # 59, OSCCAL instead of PORTA on 505/506, and the comparator/ADC
+    # files (CM1CON0/ADCON0/ADRES/CM2CON0/VRCON) on the 506 only.
+    # TRIS/OPTION are control-space.
+    "16F54":  {"PORTC", "PORTD", "PORTE", "OSCCAL", "CM1CON0", "ADCON0",
+               "ADRES", "CM2CON0", "VRCON"},
+    "16F57":  {"PORTD", "PORTE", "OSCCAL", "CM1CON0", "ADCON0", "ADRES",
+               "CM2CON0", "VRCON"},
+    "16F59":  {"OSCCAL", "CM1CON0", "ADCON0", "ADRES", "CM2CON0",
+               "VRCON"},
+    "16F505": {"PORTA", "PORTD", "PORTE", "CM1CON0", "ADCON0", "ADRES",
+               "CM2CON0", "VRCON"},
     "16F506": {"PORTA", "PORTD", "PORTE"},
 
 })
@@ -500,13 +506,22 @@ CONDITIONAL_BITS.update({
               ("RCSTA", "ADDEN")},
 })
 
-# PIC16F5x 20-pin parts: the DFP STATUS row carries PA0 only - the
+# PIC16F5x 14-pin parts: the DFP STATUS row carries PA0 only - the
 # 505/506 have no program-page bits (their 2-bit FSR bank select does
-# not ride STATUS; DS41319 sections 3.0/4.0). PA1/PA2 exist on the
-# 18/28/40-pin parts (16F54/57/59).
+# not ride STATUS; DS41236C/DS41268D sections 3.0/4.0). PA1/PA2 exist
+# on the 18/28/40-pin parts (16F54/57/59). The 506's comparator/ADC
+# bits are absent everywhere else, like their registers above.
 CONDITIONAL_BITS.update({
-    "16F505": {("STATUS", "PA1"), ("STATUS", "PA2")},
+    "16F505": {("STATUS", "PA1"), ("STATUS", "PA2"),
+               ("CM1CON0", "C1ON"), ("CM2CON0", "C2ON"),
+               ("ADCON0", "ADON")},
     "16F506": {("STATUS", "PA1"), ("STATUS", "PA2")},
+    "16F54":  {("CM1CON0", "C1ON"), ("CM2CON0", "C2ON"),
+               ("ADCON0", "ADON")},
+    "16F57":  {("CM1CON0", "C1ON"), ("CM2CON0", "C2ON"),
+               ("ADCON0", "ADON")},
+    "16F59":  {("CM1CON0", "C1ON"), ("CM2CON0", "C2ON"),
+               ("ADCON0", "ADON")},
 })
 
 # Bits the DFP does not define but the datasheet documents:
