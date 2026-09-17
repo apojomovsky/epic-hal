@@ -149,6 +149,10 @@ run_one pic16f63x_67x_68x 16F677 PIC16F677 pic16f63x_67x_68x-hal 15000 gpio
 # TOGGLE_REG=PORTB overrides the script-wide LATB export (that export
 # exists for PIC18F1320, whose simulated PORTB does not mirror LATB).
 run_one pic16f5x 16F54 PIC16F54 pic16f5x-hal 5000 toggle "" PORTB 50000
+# The four sibling parts take the same parameters: same 4 MHz config and
+# blink period (measured per part 2026-09-17), and PORTB because the
+# 505/506 have no PORTA.
+run_one pic16f5x 16F505 PIC16F505 pic16f5x-hal 5000 toggle "" PORTB 50000
 run_one pic18f1320 18F1320 PIC18F1320 pic18f1320-hal 2000 toggle
 fi
 

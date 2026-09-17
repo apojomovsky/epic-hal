@@ -77,8 +77,9 @@
   #define PIC16F5X_FAMILY_HAS_SIXBIT_PORTS 0
   #define PIC16F5X_DEVICE_NAME      "PIC16F59"
 #elif defined(PIC16F505)
-  /* 1024 words, 72 B GPR, 4 data banks selected by FSR<6:5>, no
-   * PORTA (OSCCAL takes file 0x05), 20-pin. */
+  /* 1024 words, 72 B GPR (0x08..0x0F common + 4x16, FSR<6:5>), no
+   * PORTA (OSCCAL takes file 0x05), 14-pin, no analog block.
+   * DS41236C Table 3-1, §4.3. */
   #define PIC16F5X_FAMILY_FLASH_KW  1
   #define PIC16F5X_FAMILY_RAM_BYTES 72
   #define PIC16F5X_FAMILY_FSR_BANK_BITS 2
