@@ -313,9 +313,9 @@ cppcheck_check() {
             --suppress=syntaxError:*/third_party/* \
             -D'__at(x)=' \
             --quiet "${includes[@]}" "${c_files[@]}" 2>&1)"; then
-            printf '%s\n' "$out"
+            [ -n "$out" ] && printf '%s\n' "$out"
             case "$out" in
-                *"Failed to load library configuration"*|*"installation is broken"*)
+                *"Failed to load library configuration"*|*"installation is broken"*|*"cannot open shared object file"*)
                     echo "pre-commit: cppcheck cannot run (broken install; no findings reported)."
                     echo "pre-commit:   fix the environment (make bootstrap installs cppcheck), then commit again."
                     ;;
