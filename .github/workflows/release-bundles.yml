@@ -247,6 +247,19 @@ jobs:
           set -euo pipefail
           fail=0
           base="$GITHUB_WORKSPACE"
+          # --list must name exactly the families the manifest has: its
+          # output is derived here from parts.txt, which the build job
+          # generated from that same manifest. The size check keeps a
+          # truncated parts.txt from rubber-stamping an empty diff.
+          if [ ! -s /tmp/bundles/parts.txt ]; then
+            echo "FAIL parts.txt is missing or empty"
+            fail=1
+          elif ! diff <(awk '!seen[$2]++ { print $2 }' /tmp/bundles/parts.txt) \
+                  <(EPIC_HAL_BASE_URL="file:///tmp/bundles" \
+                    sh "$base/install.sh" --list "${{ needs.build.outputs.version }}"); then
+            echo "FAIL install --list"
+            fail=1
+          fi
           # Part form: install.sh resolves each part to its family via
           # parts.txt, which exercises that asset plus the family
           # resolution end to end.

@@ -130,8 +130,8 @@ CI runs two jobs on every push (`.github/workflows/ci.yml`):
 
 - **host**: every module's CMake/ctest on a bare runner, plus the
   pre-commit checks.
-- **target**: one Docker pull, then every real XC8 build across all
-  three families, the mdb/MPLAB SIM runs, and the isolated bundle-gate
+- **target**: one Docker pull, then a real XC8 build for every family
+  the job covers, the mdb/MPLAB SIM runs, and the isolated bundle-gate
   build.
 
 Maintainers with `write:packages` access to this repo's GHCR packages
@@ -322,11 +322,11 @@ EPIC_HAL_BASE_URL=file://$PWD/bundles sh install.sh 16F877A ci-test
 ```
 
 The first argument is a part (`16F877A`; its family is resolved from
-`parts.txt`) or a family slug (`pic16f87xa`, `pic18fxx5x`,
-`pic16f193x`). `make_bundle.py --family` takes the manifest name
-(`PIC16F87XA`, `PIC18Fxx5x`, `PIC16F193X`). `EPIC_HAL_BASE_URL` is a
-flat asset dir, so `<version>` is required. The release gate runs the
-same flow for all three families and builds the scaffolds, see
+`parts.txt`) or a family slug (`pic16f87xa`; `install.sh --list` prints
+them all). `make_bundle.py --family` takes the manifest name
+(`PIC16F87XA`). `EPIC_HAL_BASE_URL` is a flat asset dir, so `<version>`
+is required. The release gate runs this flow end to end and builds the
+scaffolds, see
 [.github/workflows/release-bundles.yml](.github/workflows/release-bundles.yml).
 
 ## epic-hal CLI

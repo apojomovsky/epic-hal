@@ -1,8 +1,9 @@
 # AGENTS.md
 
-8-bit PIC HAL and tooling library. Families: PIC16F87XA, PIC18F2455 and
-PIC16F88X (full peripheral coverage), PIC16F193X/Enhanced Mid-range
-(foundation only, GPIO+Timer0, peripherals land incrementally). C99,
+8-bit PIC HAL and tooling library. The family set lives in
+`epic-common/manifest/modules.toml` (the `[families.*]` tables, the
+single source of truth; peripheral coverage varies by family, and each
+HAL's README states it). C99,
 MPLAB XC8. Every module dual-builds: host simulation (gcc/CMake, no
 hardware) and real-target (XC8 Makefile, produces `.hex`). Applications
 never `#ifdef` between them, the split happens at build time via
