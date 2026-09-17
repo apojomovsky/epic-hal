@@ -26,7 +26,6 @@ set -eu
 
 BASE_URL="${EPIC_HAL_BASE_URL:-https://github.com/apojomovsky/epic-hal/releases}"
 DEST="${EPIC_HAL_DIR:-./third_party/epic-hal}"
-FAMILIES="pic16f87xa pic18fxx5x pic16f193x pic16f88x"
 
 usage() {
     cat <<EOF
@@ -36,7 +35,8 @@ usage: install.sh <part-or-family> [<version>] [--part <part>] [--modules <a,b>]
 
 A part (16F877A; case and a PIC/p prefix do not matter) picks its family
 automatically; a family slug (pic16f87xa) installs that family's bundle.
-families: $FAMILIES
+--list prints the current families (read from the release, so it never
+goes stale).
 default toolchain is epic-cc (no Microchip download); pass --with-xc8 for the XC8 alternate.
 EOF
 }
@@ -54,6 +54,7 @@ norm_part() {
 family=
 version=
 part=
+list_only=0
 modules=
 name=myapp
 force=0
@@ -62,8 +63,8 @@ toolchain=epic-cc
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --list)
-            printf 'families: %s\n(or pass a part like 16F877A and the family is picked for you)\n' "$FAMILIES"
-            exit 0
+            list_only=1
+            shift
             ;;
         --help|-h)
             usage
@@ -120,7 +121,14 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ -z "$family" ]; then
+# "--list v0.1.0": a lone positional with --list is a version pin, not
+# a family; the list must describe that release's families.
+if [ "$list_only" -eq 1 ] && [ -z "$version" ] && [ -n "$family" ]; then
+    version="$family"
+    family=
+fi
+
+if [ -z "$family" ] && [ "$list_only" -eq 0 ]; then
     if [ -t 0 ]; then
         printf 'part or family [e.g. 16F877A or pic16f87xa]: '
         read -r family
@@ -131,32 +139,11 @@ if [ -z "$family" ]; then
     fi
 fi
 
-case " $FAMILIES " in
-    *" $family "*) ;;
-    *)
-        # Not a family slug: treat it as a part (case and a PIC/p prefix
-        # do not matter). Its family is resolved from the parts.txt
-        # release asset once the asset_dir is known. An explicit --part
-        # still overrides (install.sh 16F877A --part X).
-        token="$(printf '%s' "$family" | tr '[:upper:]' '[:lower:]')"
-        case " $FAMILIES " in
-            *" $token "*) family="$token" ;;
-            *)
-                part="${part:-$(norm_part "$family")}"
-                family=
-                ;;
-        esac
-        ;;
-esac
-
-if [ -n "$part" ]; then
-    part="$(norm_part "$part")"
-fi
-
 if [ -n "${EPIC_HAL_BASE_URL:-}" ]; then
     # CI override: treat the base as a flat directory of assets. The
-    # version is part of the asset filename, so it must be explicit.
-    if [ -z "$version" ]; then
+    # version is part of the bundle filename, so it must be explicit;
+    # --list only reads parts.txt, whose name carries no version.
+    if [ -z "$version" ] && [ "$list_only" -eq 0 ]; then
         echo "install.sh: EPIC_HAL_BASE_URL is set, a version argument is required" >&2
         exit 2
     fi
@@ -176,27 +163,59 @@ fi
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
+# One fetch of the parts map drives everything: part->family
+# resolution, the slug check, and --list. It is generated from the
+# manifest at release time, so the installer never carries a family
+# list of its own to go stale.
+parts_file="$tmp/parts.txt"
+if ! curl -fsSL "$asset_dir/parts.txt" -o "$parts_file"; then
+    echo "install.sh: could not fetch the parts map from $asset_dir" >&2
+    exit 1
+fi
+
+# parts.txt groups its lines by family in the manifest's order, so
+# first appearance is the family order and no sort is needed.
+families_list() {
+    awk '!seen[$2]++ { print $2 }' "$parts_file"
+}
+
+if [ "$list_only" -eq 1 ]; then
+    families_list
+    echo "(or pass a part like 16F877A and the family is picked for you)" >&2
+    exit 0
+fi
+
+# A family slug (any case) installs its bundle directly; anything else
+# is a part, whose family resolves from parts.txt below. An explicit
+# --part still overrides (install.sh 16F877A --part X).
+token="$(printf '%s' "$family" | tr '[:upper:]' '[:lower:]')"
+if families_list | grep -Fxq "$token"; then
+    family="$token"
+else
+    part="${part:-$(norm_part "$family")}"
+    family=
+fi
+
+if [ -n "$part" ]; then
+    part="$(norm_part "$part")"
+fi
+
 if [ -z "$family" ]; then
-    # Part form: resolve the family from the parts.txt release asset
-    # before downloading the full bundle.
+    # Part form: resolve the family before downloading the full bundle.
     echo "install.sh: resolving the family for part $part"
-    curl -fsSL "$asset_dir/parts.txt" -o "$tmp/parts.txt"
-    family="$(awk -v p="$part" '$1 == p { print $2; exit }' "$tmp/parts.txt")"
+    family="$(awk -v p="$part" '$1 == p { print $2; exit }' "$parts_file")"
     if [ -z "$family" ]; then
         echo "install.sh: unknown part '$part'" >&2
-        echo "install.sh: families: $FAMILIES (or pass a supported part like 16F877A)" >&2
+        echo "install.sh: families: $(families_list | paste -sd ' ' -)" >&2
         exit 2
     fi
 fi
 
-case " $FAMILIES " in
-    *" $family "*) ;;
-    *)
-        echo "install.sh: unknown family '$family'" >&2
-        echo "install.sh: families: $FAMILIES" >&2
-        exit 2
-        ;;
-esac
+if ! families_list | grep -Fxq "$family"; then
+    echo "install.sh: unknown family '$family'" >&2
+    echo "install.sh: families: $(families_list | paste -sd ' ' -)" >&2
+    exit 2
+fi
 
 if [ -e "$DEST" ] && [ "$force" -ne 1 ]; then
     echo "install.sh: $DEST already exists; pass --force to replace it" >&2
