@@ -77,7 +77,7 @@ That needs XC8 plus its device pack:
 
    | Family | Pack | Download |
    |---|---|---|
-   | PIC16F87XA | `Microchip.PIC16Fxxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC16Fxxx_DFP.1.8.167.atpack> |
+   | PIC16F87XA | `Microchip.PIC16Fxxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC16Fxxx_DFP.1.7.162.atpack> |
    | PIC18Fxx5x | `Microchip.PIC18Fxxxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC18Fxxxx_DFP.1.7.171.atpack> |
    | PIC16F193X | `Microchip.PIC12-16F1xxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC12-16F1xxx_DFP.1.9.258.atpack> |
 
@@ -85,7 +85,7 @@ That needs XC8 plus its device pack:
    is pinned in the bundle's `examples/epic-hal-demo.X` project):
 
        mkdir -p /opt/microchip/xc8/v4.00/pic/packs
-       unzip ~/Downloads/Microchip.PIC16Fxxx_DFP.1.8.167.atpack \
+       unzip ~/Downloads/Microchip.PIC16Fxxx_DFP.1.7.162.atpack \
          -d /opt/microchip/xc8/v4.00/pic/packs/Microchip.PIC16Fxxx_DFP
 
    (Or use MPLAB X's Tools > Packs manager, which does this for you.)
