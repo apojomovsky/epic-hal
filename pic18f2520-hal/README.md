@@ -30,10 +30,14 @@ Table 1-1).
 **18F2220 (epic-hal#155):** mid-generation sibling, DS39599. Same GPIO/
 Timer0/IRQ/WDT foundation; no ECCP1 (standard CCP1, no ECCP1AS/PWM1CON,
 `PIC18F2520_FAMILY_HAS_ECCP1=0`) and no 16-bit BRG/auto-baud (no BAUDCON
-register at all, `PIC18F2520_FAMILY_HAS_BRG16=0`), gated in
-`pic18f2520_ccp.c`/`pic18f2520_usart.c`. Its CONFIG3H/4L shape also
-predates the 2520's (`CCP2MX` is ON/OFF not PORTC/PORTBE, `PBAD` not
-`PBADEN`, `STVR`/`FSCM` not `STVREN`/`FCMEN`, no `XINST`/`LPT1OSC`).
+register at all, `PIC18F2520_FAMILY_HAS_BRG16=0`), recorded as
+informational capability macros for now (`pic18f2520_ccp.c`/
+`pic18f2520_usart.c` are `conditional_sources` scoped to 18F2520 only, so
+no build links them for the 2220/2320 yet; wire the macros in when a
+module needs CCP/USART on a variant without ECCP1/BRG16). Its CONFIG3H/4L
+shape also predates the 2520's (`CCP2MX` is ON/OFF not PORTC/PORTBE,
+`PBAD` not `PBADEN`, `STVR`/`FSCM` not `STVREN`/`FCMEN`, no
+`XINST`/`LPT1OSC`).
 **Flash-budget finding:** at 4 KB (2048 instructions, the smallest part
 in this family), the 2220 cannot link the family's full peripheral set
 just to build the foundation examples, so `hal_sources` was split:
@@ -48,8 +52,8 @@ RB only) is the baseline-variant dispatch, and the full dispatch is now
 itself a `conditional_sources` entry for 18F2520. Even with the trim,
 blink fits (86.3% flash) but the mdb `irq-smoke` gate does not (the mdb
 harness + `example_irq.c` overflow the remaining budget substantially,
-not marginally); 18F2220/18F4220 are the family's only 4 KB variants and
-are intentionally absent from `family-check.yml`'s mdb job list for this
+not marginally); 18F2220 is the family's only 4 KB variant and is
+intentionally absent from `family-check.yml`'s mdb job list for this
 reason. A future small-flash part repeats this pattern (extend the
 `conditional_sources`/dispatch split's `variants` lists), not a new one.
 

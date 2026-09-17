@@ -35,12 +35,13 @@
  * @brief     Facts that differ across the family, derived from each
  *            part's DFP EDC data, never assumed from the datasheet
  *            family grouping alone (epic-hal AGENTS.md "probe, don't
- *            assume"). HAS_ECCP1 gates ECCP1AS/PWM1CON auto-shutdown
- *            (pic18f2520_ccp.c); HAS_BRG16 gates the BAUDCON/SPBRGH
- *            16-bit baud generator and auto-baud detect
- *            (pic18f2520_usart.c). Both are 1 on the 2520 (DS39631E),
- *            0 on the 2220 (DS39599: standard CCP1, 8-bit BRG only, no
- *            BAUDCON register at all).
+ *            assume"). HAS_ECCP1/HAS_BRG16 are informational only for
+ *            now, like HAS_PORTD/HAS_PORTE below: pic18f2520_ccp.c and
+ *            pic18f2520_usart.c are conditional_sources scoped to
+ *            18F2520 only (epic-common/manifest/modules.toml), so no
+ *            build links them for the 2220/2320 yet. Wire the macros
+ *            into those drivers when a module actually needs CCP/USART
+ *            on a variant without ECCP1/BRG16.
  * @{
  */
 #if defined(PIC18F2520)

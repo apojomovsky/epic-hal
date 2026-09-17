@@ -43,13 +43,15 @@ so it never will; do not expect them here.
 
 ## 1. What this is
 
-One part, DS39631E:
+Three parts, DS39631E (2520) and DS39599 (2220/2320):
 
 | Part      | Pins | Flash | RAM    | EEPROM | I/O | ADC ch | CCP/ECCP |
 |-----------|------|-------|--------|--------|-----|--------|----------|
 | 18F2520   | 28   | 32 KB | 1520 B | 256 B  | 24* | 10     | 2/0      |
+| 18F2220   | 28   | 4 KB  | 512 B  | 256 B  | 24* | 10     | 2/0      |
+| 18F2320   | 28   | 8 KB  | 512 B  | 256 B  | 24* | 10     | 2/0      |
 
-\* 24 digital I/O (PORTA/B/C); Table 1-1 counts 25 by including the input-only RE3/MCLR pin, which this HAL excludes (no LAT/TRIS for it).
+\* 24 digital I/O (PORTA/B/C); Table 1-1 counts 25 by including the input-only RE3/MCLR pin, which this HAL excludes (no LAT/TRIS for it). The 2220/2320 have no PORTE SFR at all, not even that input-only stub (§20).
 
 28-pin (PDIP/SOIC/SSOP): PORTA/B/C plus a single RE3/MCLR input (no PORTD,
 no LATE/TRISE registers), 10-channel A/D, ECCP1 + CCP2, MSSP (SPI + I²C),
@@ -260,9 +262,11 @@ or `-DPIC18F2320`; `pic18f2520_hal.h` defaults to `PIC18F2520` when
 nothing is defined. The 2220/2320 share the same DS39599 peripheral
 shape: no ECCP1 (standard CCP1CON only, no ECCP1AS/PWM1CON, DS39599
 §16.0) and no 16-bit BRG (no BAUDCON register at all, 8-bit SPBRG only,
-DS39599 §17.0); both are gated by the `PIC18F2520_FAMILY_HAS_ECCP1` /
-`PIC18F2520_FAMILY_HAS_BRG16` capability macros in §13/§15's drivers.
-They differ only in flash: 4 KB (2220) vs 8 KB (2320).
+DS39599 §17.0), recorded as the `PIC18F2520_FAMILY_HAS_ECCP1` /
+`PIC18F2520_FAMILY_HAS_BRG16` capability macros. §13/§15's drivers do
+not consume them yet: they are `conditional_sources` scoped to 18F2520
+only (neither variant links CCP1/EUSART today). They differ only in
+flash: 4 KB (2220) vs 8 KB (2320).
 
 ## 21. The examples
 
