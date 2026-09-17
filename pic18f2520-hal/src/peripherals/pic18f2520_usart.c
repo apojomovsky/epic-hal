@@ -71,8 +71,12 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     g_usart_storage = *h;
     g_usart = &g_usart_storage;
 
-    /* BRG: SPBRG (low) always; SPBRGH (high) only used when BRG16=1. */
+    /* BRG: SPBRG (low) always; SPBRGH (high) and BAUDCON only exist on
+     * parts with the 16-bit BRG (HAS_BRG16=1, e.g. the 2520). Parts
+     * without it (e.g. the 2220) have no BAUDCON register at all: 8-bit
+     * SPBRG only, no auto-baud. */
     epic_sfr_write8(PIC_REG_SPBRG,  h->SPBRG);
+#if PIC18F2520_FAMILY_HAS_BRG16
     epic_sfr_write8(PIC_REG_SPBRGH, h->SPBRGH);
 
     /* BAUDCON: BRG16 + ABDEN. The polarity / wake-up bits default to 0.
@@ -81,6 +85,7 @@ EPIC_StatusTypeDef EPIC_USART_Init(const USART_HandleTypeDef *h)
     if (h->BaudGen  == USART_BAUDGEN_16BIT) baudcon |= PIC_BAUDCON_BRG16;
     if (h->AutoBaud)                         baudcon |= PIC_BAUDCON_ABDEN;
     epic_sfr_write8(PIC_REG_BAUDCON, baudcon);
+#endif
 
     /* Build TXSTA (Register 18-1): CSRC b7, TX9 b6, TXEN b5, SYNC b4,
      * BRGH b2, TRMT b1 (RO), TX9D b0. Reset 0x02 (TRMT=1). */
@@ -134,9 +139,11 @@ EPIC_StatusTypeDef EPIC_USART_DeInit(void)
     EPIC_IRQ_ClearFlag(PIC18_IRQ_USART_RX);
     epic_sfr_write8(PIC_REG_RCSTA,   PIC_RCSTA_POR_VALUE);    /* 0x00 */
     epic_sfr_write8(PIC_REG_TXSTA,    PIC_TXSTA_POR_VALUE);   /* 0x02, keep TRMT */
-    epic_sfr_write8(PIC_REG_BAUDCON,  PIC_BAUDCON_POR_VALUE); /* 0x00 */
     epic_sfr_write8(PIC_REG_SPBRG,    PIC_SPBRG_POR_VALUE);
+#if PIC18F2520_FAMILY_HAS_BRG16
+    epic_sfr_write8(PIC_REG_BAUDCON,  PIC_BAUDCON_POR_VALUE); /* 0x00 */
     epic_sfr_write8(PIC_REG_SPBRGH,   PIC_SPBRGH_POR_VALUE);
+#endif
     g_usart = NULL;
     return EPIC_OK;
 }
@@ -229,39 +236,55 @@ void EPIC_USART_ClearOverrun(void)
 }
 
 /**
- * @brief  Start auto-baud detection by setting BAUDCON<ABDEN>.
+ * @brief  Start auto-baud detection by setting BAUDCON<ABDEN>. No-op on
+ *         parts without a 16-bit BRG (HAS_BRG16=0, no BAUDCON register).
  */
 void EPIC_USART_StartAutoBaud(void)
 {
+#if PIC18F2520_FAMILY_HAS_BRG16
     uint8_t v = (uint8_t)(epic_sfr_read8(PIC_REG_BAUDCON) | PIC_BAUDCON_ABDEN);
     epic_sfr_write8(PIC_REG_BAUDCON, v);
+#endif
 }
 
 /**
  * @brief  Return 1 if auto-baud detection is in progress (BAUDCON<ABDEN>).
+ *         Always 0 on parts without a 16-bit BRG.
  * @return 1 if ABDEN is set, else 0.
  */
 uint8_t EPIC_USART_IsAutoBaudBusy(void)
 {
+#if PIC18F2520_FAMILY_HAS_BRG16
     return (epic_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDEN) ? 1U : 0U;
+#else
+    return 0U;
+#endif
 }
 
 /**
  * @brief  Return 1 if an auto-baud overflow occurred (BAUDCON<ABDOVF>).
+ *         Always 0 on parts without a 16-bit BRG.
  * @return 1 if ABDOVF is set, else 0.
  */
 uint8_t EPIC_USART_HasAutoBaudOverflow(void)
 {
+#if PIC18F2520_FAMILY_HAS_BRG16
     return (epic_sfr_read8(PIC_REG_BAUDCON) & PIC_BAUDCON_ABDOVF) ? 1U : 0U;
+#else
+    return 0U;
+#endif
 }
 
 /**
- * @brief  Clear the auto-baud overflow flag (BAUDCON<ABDOVF>).
+ * @brief  Clear the auto-baud overflow flag (BAUDCON<ABDOVF>). No-op on
+ *         parts without a 16-bit BRG.
  */
 void EPIC_USART_ClearAutoBaudOverflow(void)
 {
+#if PIC18F2520_FAMILY_HAS_BRG16
     uint8_t v = (uint8_t)(epic_sfr_read8(PIC_REG_BAUDCON) & (uint8_t)~PIC_BAUDCON_ABDOVF);
     epic_sfr_write8(PIC_REG_BAUDCON, v);
+#endif
 }
 
 /**

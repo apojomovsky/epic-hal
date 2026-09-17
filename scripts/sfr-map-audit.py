@@ -54,6 +54,7 @@ FAMILIES = {
     "pic18f2520-hal": (
         "pic18f2520-hal/include/pic18f2520_sfr.h",
         [
+            ("18F2220", "Microchip.PIC18Fxxxx_DFP", "pic18f2220.h"),
             ("18F2520", "Microchip.PIC18Fxxxx_DFP", "pic18f2520.h"),
         ],
     ),
@@ -299,6 +300,11 @@ CONDITIONAL_REGS = {
     "16F876": {"PORTD", "PORTE", "TRISD", "TRISE", "CMCON", "CVRCON"},
     "16F876A": {"PORTD", "PORTE", "TRISD", "TRISE", "PIE1", "PIR1", "PIR2"},
     "16F877": {"CMCON", "CVRCON"},
+    # No PORTE at all (not even an MCLR-only stub like the 2520's); no
+    # ECCP1 (standard CCP1 only, no auto-shutdown); no 16-bit BRG (no
+    # BAUDCON register, 8-bit SPBRG only). DS39599, verified against the
+    # DFP EDC.
+    "18F2220": {"PORTE", "ECCP1AS", "PWM1CON", "BAUDCON", "SPBRGH"},
 }
 CONDITIONAL_BITS = {
     "16F870": {("PIE1", "PSPIE"), ("PIR1", "PSPIF"),
@@ -334,6 +340,11 @@ CONDITIONAL_BITS = {
     # interrupt bits are absent from those parts' DFP headers.
     "18F2455": {("IPR1", "SPPIP"), ("PIE1", "SPPIE"), ("PIR1", "SPPIF")},
     "18F2550": {("IPR1", "SPPIP"), ("PIE1", "SPPIE"), ("PIR1", "SPPIF")},
+    # No HLVDCON on the 2220 (simpler LVDCON instead, DS39599), so no
+    # HLVD interrupt bits; RCON has no SBOREN (simpler BOR config, no
+    # runtime software-enable control).
+    "18F2220": {("IPR2", "HLVDIP"), ("PIE2", "HLVDIE"), ("PIR2", "HLVDIF"),
+                ("RCON", "SBOREN")},
     # 88X 28-pin parts (882/883/886): ANSEL ANS5/ANS6/ANS7 are
     # unimplemented on the 11-channel ADC (present on 884/887).
     "16F882": {("ANSEL", "ANS5"), ("ANSEL", "ANS6"), ("ANSEL", "ANS7")},

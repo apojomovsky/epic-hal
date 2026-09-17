@@ -120,8 +120,10 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
     }
 
     /* ECCP1-only: auto-shutdown (ECCP1AS) + auto-restart (PRSEN).
-     * No PDC, no PSSBD on the 2520. CCP2 has neither; skip. */
-    if (h->Instance == CCP_INSTANCE_1)
+     * No PDC, no PSSBD on the 2520. CCP2 has neither; skip. Parts
+     * without ECCP1 (HAS_ECCP1=0, e.g. the 2220: standard CCP1, no
+     * ECCP1AS/PWM1CON) skip this too. */
+    if (h->Instance == CCP_INSTANCE_1 && PIC18F2520_FAMILY_HAS_ECCP1)
     {
         if (h->AutoShutdown.AutoRestart)
         {
@@ -154,7 +156,7 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
     EPIC_IRQ_DisableSrc(ccp_irq(inst));
     EPIC_IRQ_ClearFlag(ccp_irq(inst));
     CCP_WRITE_CON(inst, PIC_CCPxCON_POR_VALUE);
-    if (inst == CCP_INSTANCE_1)
+    if (inst == CCP_INSTANCE_1 && PIC18F2520_FAMILY_HAS_ECCP1)
     {
         EPIC_REG8(PIC_REG_PWM1CON) = PIC_PWM1CON_POR_VALUE;
         EPIC_REG8(PIC_REG_ECCP1AS) = PIC_ECCP1AS_POR_VALUE;
@@ -232,7 +234,8 @@ void EPIC_CCP_SetPWMDuty(CCP_InstanceTypeDef inst, uint16_t duty)
 
 /**
  * @brief  Configure the ECCP1 auto-shutdown source + pin state + restart
- *         (ECCP1AS + PRSEN). No-op for CCP2.
+ *         (ECCP1AS + PRSEN). No-op for CCP2 and for parts without ECCP1
+ *         (HAS_ECCP1=0).
  * @param inst CCP instance (only CCP_INSTANCE_1 is acted on).
  * @param source Auto-shutdown trigger source.
  * @param pins_ac Pin states for the P1A/P1C pins on shutdown.
@@ -243,7 +246,7 @@ void EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
                                 CCP_PinStateTypeDef pins_ac,
                                 bool auto_restart)
 {
-    if (inst != CCP_INSTANCE_1) return;     /* ECCP1 only */
+    if (inst != CCP_INSTANCE_1 || !PIC18F2520_FAMILY_HAS_ECCP1) return;
     if (auto_restart)
     {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_PWM1CON), PIC_PWM1CON_PRSEN);
@@ -260,25 +263,26 @@ void EPIC_CCP_ConfigAutoShutdown(CCP_InstanceTypeDef inst,
 
 /**
  * @brief  Return 1 if an ECCP1 auto-shutdown event is active
- *         (ECCP1AS<ECCPASE>). Always 0 for CCP2.
+ *         (ECCP1AS<ECCPASE>). Always 0 for CCP2 and for parts without
+ *         ECCP1.
  * @param inst CCP instance.
  * @return 1 if shutdown is active, else 0.
  */
 uint8_t EPIC_CCP_IsShutdown(CCP_InstanceTypeDef inst)
 {
-    if (inst != CCP_INSTANCE_1) return 0U;
+    if (inst != CCP_INSTANCE_1 || !PIC18F2520_FAMILY_HAS_ECCP1) return 0U;
     return (EPIC_REG8(PIC_REG_ECCP1AS) & PIC_ECCP1AS_ECCPASE) ? 1U : 0U;
 }
 
 /**
  * @brief  Clear the ECCP1 auto-shutdown status (ECCPASE) to restart the
  *         PWM. Only effective when PRSEN = 0 (manual restart). No-op for
- *         CCP2.
+ *         CCP2 and for parts without ECCP1.
  * @param inst CCP instance.
  */
 void EPIC_CCP_Restart(CCP_InstanceTypeDef inst)
 {
-    if (inst != CCP_INSTANCE_1) return;
+    if (inst != CCP_INSTANCE_1 || !PIC18F2520_FAMILY_HAS_ECCP1) return;
     uint8_t asv = (uint8_t)(epic_sfr_read8(PIC_REG_ECCP1AS) & ~PIC_ECCP1AS_ECCPASE);
     epic_sfr_write8(PIC_REG_ECCP1AS, asv);
 }

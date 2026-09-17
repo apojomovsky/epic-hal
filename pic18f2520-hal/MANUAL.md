@@ -254,8 +254,13 @@ mechanism and silently writes nowhere (see §22).
 
 ## 20. Device selection
 
-`PIC18F2520` is the only variant. The build driver emits `-DPIC18F2520`;
-`pic18f2520_hal.h` defaults to it when nothing is defined.
+`PIC18F2520` (DS39631E) and `PIC18F2220` (DS39599) are the family's
+variants. The build driver emits `-DPIC18F2520` or `-DPIC18F2220`;
+`pic18f2520_hal.h` defaults to `PIC18F2520` when nothing is defined. The
+2220 has no ECCP1 (standard CCP1CON only, no ECCP1AS/PWM1CON, DS39599
+§16.0) and no 16-bit BRG (no BAUDCON register at all, 8-bit SPBRG only,
+DS39599 §17.0); both are gated by the `PIC18F2520_FAMILY_HAS_ECCP1` /
+`PIC18F2520_FAMILY_HAS_BRG16` capability macros in §13/§15's drivers.
 
 ## 21. The examples
 

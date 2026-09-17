@@ -15,7 +15,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(EPIC_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../epic-common)
 include(${EPIC_COMMON_DIR}/cmake/epic_family.cmake)
 
-# Default device. The PIC18F2520 is the only part in this family.
+# Default device: PIC18F2520 unless overridden.
 if(NOT DEFINED PIC18F2520_DEVICE)
     set(PIC18F2520_DEVICE "PIC18F2520")
 endif()
@@ -27,7 +27,7 @@ set(EPIC_DEFAULT_DEVICE       ${PIC18F2520_DEFAULT_DEVICE})
 set(EPIC_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(EPIC_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
-set(EPIC_FAMILY_DEVICES        PIC18F2520)
+set(EPIC_FAMILY_DEVICES        PIC18F2220 PIC18F2520)
 
 # Foundation + Timer1 sources: GPIO + Timer0/1 drivers, the IRQ core and its
 # dispatch, the WDT/Sleep helpers, and the host sim backend + harness.

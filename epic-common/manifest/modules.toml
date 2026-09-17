@@ -699,7 +699,10 @@ epiccc_sources = [
 # ADC/EEPROM (#177) grow this list.
 [families.PIC18F2520]
 hal_dir  = "pic18f2520-hal"
-variants = ["18F2520"]
+# Canonical 18F2520 last so family-check's scaffold gate builds
+# variants[-1] (as on 87XA/88X/18Fxx5x); gen-sfr.py's CANONICAL entry
+# for this family agrees.
+variants = ["18F2220", "18F2520"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 dfp_version = "1.7.171"
 fosc_hz  = 20000000
@@ -712,26 +715,74 @@ includes = [
   "pic18f2520-hal/include",
   "epic-common/include",
 ]
+# Baseline (every variant, including small-flash siblings like the
+# 2220): GPIO + Timer0, the foundation blink/irq-smoke examples need,
+# plus the IRQ/WDT core. Timer1-3/CCP/SSP/USART/ADC/comparator/EEPROM
+# are conditional_sources below, spliced right after timer0.c so the
+# XC8 psect link order for the 2520 (the only variant that currently
+# links them) is byte-identical to before this split (epic-hal#155:
+# a 4 KB part cannot fit the family's full peripheral set just to
+# build blink, docs/adding-a-device.md §3.2). pic18_irq_dispatch.c is
+# NOT in the baseline either: its strong externs reference every
+# peripheral's IRQHandler, which only resolves when those drivers are
+# also linked, so dispatch itself is one of the two conditional
+# entries right below (the full family dispatch for 18F2520, the
+# Timer0/RB-only pic18_irq_dispatch_min.c for baseline-only variants).
 hal_sources = [
   "pic18f2520-hal/src/peripherals/pic18f2520_gpio.c",
   "pic18f2520-hal/src/peripherals/pic18f2520_timer0.c",
-  "pic18f2520-hal/src/peripherals/pic18f2520_timer1.c",
-  "pic18f2520-hal/src/peripherals/pic18f2520_timer2.c",
-  "pic18f2520-hal/src/peripherals/pic18f2520_timer3.c",
-  "pic18f2520-hal/src/peripherals/pic18f2520_ccp.c",
-  "pic18f2520-hal/src/peripherals/pic18f2520_ssp.c",
-  "pic18f2520-hal/src/peripherals/pic18f2520_usart.c",
-  "pic18f2520-hal/src/peripherals/pic18f2520_adc.c",
-  "pic18f2520-hal/src/peripherals/pic18f2520_comp.c",
-  "pic18f2520-hal/src/peripherals/pic18f2520_eeprom.c",
   "pic18f2520-hal/src/core/pic18_irq.c",
-  "pic18f2520-hal/src/core/pic18_irq_dispatch.c",
   "pic18f2520-hal/src/target/pic18_isr_vector.c",
   "pic18f2520-hal/src/core/pic18f2520_wdt_sleep.c",
   "pic18f2520-hal/src/target/pic18f2520_wdt_sleep_target.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
+
+[[families.PIC18F2520.conditional_sources]]
+path     = "pic18f2520-hal/src/core/pic18_irq_dispatch.c"
+variants = ["18F2520"]
+after    = "pic18f2520-hal/src/core/pic18_irq.c"
+[[families.PIC18F2520.conditional_sources]]
+path     = "pic18f2520-hal/src/core/pic18_irq_dispatch_min.c"
+variants = ["18F2220"]
+after    = "pic18f2520-hal/src/core/pic18_irq.c"
+[[families.PIC18F2520.conditional_sources]]
+path     = "pic18f2520-hal/src/peripherals/pic18f2520_timer1.c"
+variants = ["18F2520"]
+after    = "pic18f2520-hal/src/peripherals/pic18f2520_timer0.c"
+[[families.PIC18F2520.conditional_sources]]
+path     = "pic18f2520-hal/src/peripherals/pic18f2520_timer2.c"
+variants = ["18F2520"]
+after    = "pic18f2520-hal/src/peripherals/pic18f2520_timer0.c"
+[[families.PIC18F2520.conditional_sources]]
+path     = "pic18f2520-hal/src/peripherals/pic18f2520_timer3.c"
+variants = ["18F2520"]
+after    = "pic18f2520-hal/src/peripherals/pic18f2520_timer0.c"
+[[families.PIC18F2520.conditional_sources]]
+path     = "pic18f2520-hal/src/peripherals/pic18f2520_ccp.c"
+variants = ["18F2520"]
+after    = "pic18f2520-hal/src/peripherals/pic18f2520_timer0.c"
+[[families.PIC18F2520.conditional_sources]]
+path     = "pic18f2520-hal/src/peripherals/pic18f2520_ssp.c"
+variants = ["18F2520"]
+after    = "pic18f2520-hal/src/peripherals/pic18f2520_timer0.c"
+[[families.PIC18F2520.conditional_sources]]
+path     = "pic18f2520-hal/src/peripherals/pic18f2520_usart.c"
+variants = ["18F2520"]
+after    = "pic18f2520-hal/src/peripherals/pic18f2520_timer0.c"
+[[families.PIC18F2520.conditional_sources]]
+path     = "pic18f2520-hal/src/peripherals/pic18f2520_adc.c"
+variants = ["18F2520"]
+after    = "pic18f2520-hal/src/peripherals/pic18f2520_timer0.c"
+[[families.PIC18F2520.conditional_sources]]
+path     = "pic18f2520-hal/src/peripherals/pic18f2520_comp.c"
+variants = ["18F2520"]
+after    = "pic18f2520-hal/src/peripherals/pic18f2520_timer0.c"
+[[families.PIC18F2520.conditional_sources]]
+path     = "pic18f2520-hal/src/peripherals/pic18f2520_eeprom.c"
+variants = ["18F2520"]
+after    = "pic18f2520-hal/src/peripherals/pic18f2520_timer0.c"
 # The epic-cc conformant slice (foundation + Timer1/2/3 + CCP): GPIO + Timer0-3/CCP + IRQ/WDT
 # core + the toolchain-specific vector/dispatch/WDT files, the blink/IRQ
 # smoke needs. Grows by adding entries as peripherals land, never by
@@ -1370,6 +1421,7 @@ needs_hal  = true
 
 [modules.pic18f2520-hal.supported]
 PIC18F2520 = [
+  "18F2220",
   "18F2520",
 ]
 
@@ -1393,6 +1445,40 @@ sources     = [
   "tests/example_irq.c",
 ]
 config      = { BOREN = "ON", BORV = "3", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", FCMEN = "OFF", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", PBADEN = "OFF", PWRT = "ON", STVREN = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# sim_variant_for() resolves a per-MCU sim override from THIS block's
+# own .variants (epicmanifest.py), not from example.variants.<mcu>.sim;
+# the "18F2220" override belongs here, sibling to the base sim, not
+# nested under the target-variant block below.
+#
+# This override exists so config-key-audit's trivial config-pragma link
+# validates the 2220's own config-word shape; it does NOT mean the mdb
+# gate runs for this part. `make mdb-test MODULE=pic18f2520-hal
+# MCU=18F2220 DEVICE=PIC18F2220 MODE=gpio` overflows the 2220's 4 KB
+# flash (irq-smoke + the mdb harness together, even after the blink-only
+# hal_sources trim above; blink alone fits at 86%). 18F2220/18F4220 (the
+# family's only 4 KB variants) are intentionally absent from
+# family-check.yml's mdb job list for this reason; do not add them
+# there without first shrinking example_irq.c or the mdb harness.
+[modules.pic18f2520-hal.example.PIC18F2520.sim.variants.18F2220]
+name        = "irq-smoke"
+harness_src = "pic18f2520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", MCLRE = "ON", OSC = "HS", PBAD = "DIG", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# The 2220's CONFIG3H/4L shape predates the 2520's: CCP2MX is ON/OFF (not
+# PORTC/PORTBE), PBAD is ANA/DIG (not PBADEN ON/OFF), STVR (not STVREN),
+# FSCM (not FCMEN); no CP2/CP3, EBTR2/EBTR3, WRT2/WRT3 (2 code-protect
+# blocks, not 4) and no XINST/LPT1OSC at all (DS39599 §23.0, verified
+# against the DFP EDC, not assumed from the 2520's field set).
+[modules.pic18f2520-hal.example.PIC18F2520.variants.18F2220]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", MCLRE = "ON", OSC = "HS", PBAD = "DIG", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 [modules.pic18f6520-hal]
 dir        = "pic18f6520-hal"
