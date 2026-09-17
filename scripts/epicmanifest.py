@@ -93,6 +93,23 @@ class SimVariant:
 
 
 @dataclasses.dataclass(frozen=True)
+class EpicccVariant:
+    """The epic-cc build's example (``--toolchain epic-cc``), for a
+    family whose target example is unobservable in epic-cc's simulator.
+
+    The 16F5x blink polls Timer0, which crates/sim's PicBaseline core
+    never advances and the die cannot interrupt, so the sim-runner
+    would gate on a stuck pin. The epiccc variant replaces the
+    example's sources and config on the epic-cc path only; the XC8
+    target and sim builds keep the canonical program byte-for-byte.
+    config is a full override, same posture as SimVariant's.
+    """
+    name: str
+    sources: list[str]
+    config: dict[str, str]
+
+
+@dataclasses.dataclass(frozen=True)
 class Example:
     name: str
     sources: list[str]
@@ -109,6 +126,10 @@ class Example:
     # sources_for/includes_for, before the example's own sources.
     depends_on: list[str] | None = None
     sim: SimVariant | None = None
+    # The epic-cc path's example override (see EpicccVariant). Family
+    # scoped like sim: every part of the family shares the simulator
+    # limitation that motivates it.
+    epiccc: EpicccVariant | None = None
     # Per-MCU overrides: a variant replaces the family example for one
     # MCU (flash budgets differ within a family, e.g. the 4K-word
     # 16F873A/16F874A cannot hold epic-math's golden-vector replay).
@@ -282,6 +303,10 @@ class Manifest:
         (same link-order reasoning as conditional sources), and uses the
         sim variant's own sources in place of the example's, when it
         overrides them.
+
+        toolchain="epic-cc" uses the example's epiccc variant sources
+        in place of the example's, when the example declares one (the
+        16F5x gate firmware the simulator can actually observe).
         """
         fam = self.family_of(mcu)
         sim = self.sim_variant_for(module_name, fam.name, mcu) if variant == "sim" else None
@@ -333,7 +358,9 @@ class Manifest:
         if example is not None:
             mod = self._module(module_name)
             example_sources = example.sources
-            if sim is not None and sim.sources is not None:
+            if toolchain == "epic-cc" and example.epiccc is not None:
+                example_sources = example.epiccc.sources
+            elif sim is not None and sim.sources is not None:
                 example_sources = sim.sources
             out += [f"{mod.dir}/{s}" for s in example_sources]
 
@@ -410,6 +437,17 @@ def _parse_sim_variant(module_name, family_name, table):
     )
 
 
+def _parse_epiccc_variant(module_name, family_name, table):
+    if table is None:
+        return None
+    where = f"modules.{module_name}.example.{family_name}.epiccc"
+    return EpicccVariant(
+        name=_require(table, "name", where),
+        sources=list(_require(table, "sources", where)),
+        config=dict(_require(table, "config", where)),
+    )
+
+
 def _parse_example(module_name, family_name, table, default_hal):
     variants = table.get("variants", {})
     where = f"modules.{module_name}.example.{family_name}"
@@ -420,6 +458,8 @@ def _parse_example(module_name, family_name, table, default_hal):
         hal=bool(table.get("hal", default_hal)),
         depends_on=list(table.get("depends_on", [])),
         sim=_parse_sim_variant(module_name, family_name, table.get("sim")),
+        epiccc=_parse_epiccc_variant(
+            module_name, family_name, table.get("epiccc")),
         variants={vname: _parse_example(
             module_name, f"{family_name}.variants.{vname}", vtable, default_hal)
             for vname, vtable in variants.items()} or None,

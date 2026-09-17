@@ -260,16 +260,14 @@ hal_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
-# The epic-cc conformant slice: the blink minimum that fits the
-# 25 B RAM exemplar, riding the landed p16f54 epic-cc target
-# (epic-cc#413). Grows by adding entries, never by editing the build
-# driver.
+# The epic-cc conformant slice, riding the landed p16f54 epic-cc
+# target (epic-cc#413). Measured 2026-09-17 under the corrected p16f54
+# geometry (epic-cc#437): the pre-#437 sizing no longer links (demand
+# exceeds the 18-byte banked span) and the GPIO driver is flash-bound
+# here (driver + minimal toggle = 557 of 512 words), so the XC8 legs
+# plus the mdb gate carry the HAL verification; the epic-cc build
+# drives the registers directly.
 epiccc_sources = [
-  "pic16f5x-hal/src/peripherals/pic16f5x_gpio.c",
-  "pic16f5x-hal/src/peripherals/pic16f5x_timer0.c",
-  "pic16f5x-hal/src/core/pic16_irq_stub.c",
-  "pic16f5x-hal/src/core/pic16_irq_dispatch.c",
-  "pic16f5x-hal/src/epiccc/pic16f5x_wdt_sleep_epiccc.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
 
@@ -1338,6 +1336,17 @@ sources = [
 # loop (measured; see example_blink.c header). WDT is off for the
 # sim build anyway; keeping it off on target makes the canonical
 # smoke match the gate build.
+config  = { OSC = "XT", WDT = "OFF", CP = "OFF" }
+
+# Epic-cc gate build: a software-loop PORTB:0 toggle instead of the
+# Timer0-polled blink. crates/sim's PicBaseline core advances no
+# oscillator-driven counter and this die has no interrupt to inject,
+# so the sim-runner cannot observe the canonical blink.
+[modules.pic16f5x-hal.example.PIC16F5x.epiccc]
+name    = "blink"
+sources = [
+  "tests/example_blink_epiccc.c",
+]
 config  = { OSC = "XT", WDT = "OFF", CP = "OFF" }
 
 [modules.pic16f5x-hal.example.PIC16F5x.sim]

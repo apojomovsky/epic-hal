@@ -61,12 +61,11 @@ whole TRIS on every transition (`src/peripherals/pic16f5x_gpio.c`).
 - Host sim: writes route into `pic16f5x_sim_trisa..e` shadow bytes so
   tests can observe the programmed direction.
 - epic-cc: literal scratch byte at 0x0C + inline `movf 12, w`/`tris N`
-  (the baseline asm pass resolves only literal operands). The epic-cc
-  gate leg stays out of CI until `EPIC_CC_PIN` carries the p16f54 RAM
-  model fix (epic-cc#437 / PR #438, landed on epic-cc master) and a
-  firmware the runner can toggle exists: epic-cc's PicBaseline sim
-  executes instructions only and never advances TMR0, which this
-  family's Timer0-polled blink depends on.
+  (the baseline asm pass resolves only literal operands). The CI
+  epiccc-gate leg builds the family's epic-cc example, a software-loop
+  PORTB:0 toggle rather than this family's Timer0-polled blink:
+  epic-cc's PicBaseline sim executes instructions only and never
+  advances TMR0, and the die has no interrupt to inject.
 
 OPTION bits (DS41213D Register 9-1): PS<2:0> prescaler ratio, PSA
 (prescaler assign), T0SE, T0CS. There is no RBPU (no weak pull-ups on
