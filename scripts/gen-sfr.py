@@ -46,7 +46,11 @@ REPO = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import epicmanifest  # noqa: E402
 
-# Canonical per family: largest part, covers all SFRs in the family.
+# Canonical per family: the part whose EDC drives the generated
+# addresses. Usually the largest part, so its EDC covers the family's
+# SFRs; PIC16F5x's canonical is the 16F54 exemplar instead (the family's
+# smallest part), so the wider parts' registers stay hand-maintained and
+# #if-guarded, and the sfr-map audit's CONDITIONAL_REGS carries them.
 CANONICAL = {
     "PIC16F87XA": "16F877A",
     "PIC16F88X": "16F887",

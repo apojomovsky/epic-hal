@@ -192,7 +192,7 @@ void pic16f5x_sim_drive_input(char port, uint8_t pin, uint8_t level)
     if (pin > 7U) return;
     uint8_t mask = (uint8_t)(1U << pin);
     /* Pins the die does not implement are a no-op, exactly as on
-     * silicon (DS41213D/DS41319 port tables). */
+     * silicon (DS41213D/DS41236C/DS41268D port tables). */
     if ((mask & port_pin_mask(port)) == 0U) return;
     uint8_t idx = port_index(port);
     sim_input_override[idx] |= mask;
