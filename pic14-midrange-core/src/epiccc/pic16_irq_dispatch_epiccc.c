@@ -46,6 +46,7 @@ void epic_dispatch_all_irqs(void)
 #if PIC14MIDRANGE_HAS_SSP
     if (pir1 & PIC_PIR1_SSPIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_SSPIF);
 #endif
+#if PIC14MIDRANGE_HAS_USART
     if (pir1 & PIC_PIR1_RCIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_RCIF);
     if (pir1 & PIC_PIR1_TXIF)
     {
@@ -53,6 +54,7 @@ void epic_dispatch_all_irqs(void)
         EPIC_PIE1_READ_TXIE(txie);
         if (!(txie & PIC_PIE1_TXIE)) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TXIF);
     }
+#endif
 #if PIC14MIDRANGE_HAS_ADC
     if (pir1 & PIC_PIR1_ADIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_ADIF);
 #endif
