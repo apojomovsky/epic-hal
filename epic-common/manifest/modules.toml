@@ -1293,6 +1293,19 @@ sources = [
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "ON" }
 
+# The epic-cc build states the CCP1 pin mux explicitly: the registry
+# entry carries no default for CCPMX (the DFP cfgdata states none) and
+# epic-cc's driver refuses no-default fields at boot. RB2 is the
+# part's erased-state value, so the epic-cc hex boots exactly like an
+# XC8 hex that leaves the bit unset; the XC8 builds keep stating
+# nothing.
+[modules.pic16f818_819-hal.example.PIC16F818_819.epiccc]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOREN = "ON", CCPMX = "RB2", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "ON" }
+
 # HARNESS=sim: the banked-SFR probe, reported on RA0 (MODE=gpio; the
 # family has no USART). WDTE=OFF like every other sim variant (a
 # diagnostic build that terminates and reports does not need the

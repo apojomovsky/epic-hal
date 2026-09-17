@@ -130,8 +130,9 @@ The `epiccc-gate` CI job (`.github/workflows/ci.yml`) builds
 `epic-pic16f193x-firmware` for the 16F1937,
 `pic16f63x_67x_68x-hal` for the 16F677, `pic16f7x-hal` for the 16F77,
 the #150 exemplars `pic18f2520-hal` for the 18F2520, `pic18f1320-hal`
-for the 18F1320 and `pic18f6520-hal` for the 18F6520 (build-only), and
-`pic16f5x-hal` for the 16F54 with a pinned
+for the 18F1320 and `pic18f6520-hal` for the 18F6520 (build-only),
+`pic16f5x-hal` for the 16F54 and `pic16f818_819-hal` for the 16F819
+with a pinned
 epic-cc compiler, and runs the deterministic
 PORTB toggle gate on the classic-PIC16 blink hexes (the 677 leg watches
 PORTB bit 4, the only implemented low bit on this family's PORTB), the LATB toggle gate on
@@ -165,16 +166,20 @@ release and the driver is pinned separately from source.
 
 Bumping the pin:
 
-The pin holds epic-cc master at 883ae52 (the epic-hal#213 bump), which
-carries the p16f54 flat 25-byte GPR fix (epic-cc#437 / PR #438) this
-job's 16F54 leg needs, on top of the p16f677 target (epic-cc#421) on
+The pin holds epic-cc master at ef2632b (the epic-hal#215 bump), which
+carries the p16f819 registry entry (epic-cc#439, merged by PR #440)
+this job's
+16F819 leg needs, on top of the p16f54 flat 25-byte GPR fix
+(epic-cc#437 / PR #438, the epic-hal#213 bump) the 16F54 leg needs, the
+p16f677 target (epic-cc#421) on
 top of the #129 PIC14E port (the isel-pic14e backend, the
 `Pic14e` sim core, `parse_hex_pic14e`, i1 loads/stores as bytes and the
 PIC14E config-field defaults) on top of everything the 877A/887 slices
 need plus the PIC18 fixes for the 4550 slice (epic-cc#180, #189, #194).
-The previous pin (e4a4e78, the #146 bump) predates the p16f54 fix: its
-driver caps the part's GPR, so the 16F54 slice links against a wrong
-RAM model. The pin comment in ci.yml's `EPIC_CC_PIN`
+The previous pin (883ae52, the #213 bump) introduced the p16f54 fix;
+the one before it (e4a4e78, the #146 bump) predates it: that driver
+caps the part's GPR, so the 16F54 slice links against a wrong RAM
+model. The pin comment in ci.yml's `EPIC_CC_PIN`
 records the reasoning for the current sha.
 
 1. Pick a new `EPIC_CC_PIN` that still builds the 887 slice. A quick
