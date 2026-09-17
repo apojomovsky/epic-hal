@@ -304,15 +304,25 @@ cppcheck_check() {
     # because this hook passes only -I dirs, no -D build defines (the real
     # CMake/Make build defines them; host-sim + xc8 are the source of truth).
     # Real "unsupported platform" #errors are caught by the actual build.
-        if ! cppcheck --enable=warning,performance,portability --std=c99 --error-exitcode=1 \
+        local out
+        if ! out="$(cppcheck --enable=warning,performance,portability --std=c99 --error-exitcode=1 \
             --suppress=missingInclude --suppress=missingIncludeSystem \
             --suppress=unmatchedSuppression \
             --suppress=preprocessorErrorDirective \
             --suppress=nullPointerRedundantCheck \
             --suppress=syntaxError:*/third_party/* \
             -D'__at(x)=' \
-            --quiet "${includes[@]}" "${c_files[@]}"; then
-            echo "pre-commit: cppcheck found issues in the files above."
+            --quiet "${includes[@]}" "${c_files[@]}" 2>&1)"; then
+            printf '%s\n' "$out"
+            case "$out" in
+                *"Failed to load library configuration"*|*"installation is broken"*)
+                    echo "pre-commit: cppcheck cannot run (broken install; no findings reported)."
+                    echo "pre-commit:   fix the environment (make bootstrap installs cppcheck), then commit again."
+                    ;;
+                *)
+                    echo "pre-commit: cppcheck found issues in the files above."
+                    ;;
+            esac
             fail=1
         fi
     done <<<"$groups"
