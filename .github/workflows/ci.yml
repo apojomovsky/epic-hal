@@ -10,9 +10,9 @@ name: ci
 #     job with an internal loop (same PASS/FAIL step-summary pattern the
 #     old xc8-build.yml used for MCU variants), plus the repo's
 #     pre-commit checks (trailing whitespace, no em-dash, cppcheck).
-#   - target: one Docker pull, then in that single job: every real XC8
-#     build across all 3 families, all 3 mdb/MPLAB SIM runs, and the
-#     isolated bundle-gate build. The old versions of these three were
+#   - target: one Docker pull, then in that single job: a real XC8
+#     build for every family wired in below, the mdb/MPLAB SIM runs,
+#     and the isolated bundle-gate build. The old versions of these three were
 #     separate jobs/workflows specifically to get one `container:` per
 #     job; this version invokes `docker run` directly per step instead
 #     of using the job-level `container:` field, which is what makes it
