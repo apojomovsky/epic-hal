@@ -20,12 +20,13 @@
  * @{
  */
 #if !defined(PIC18F6520) && !defined(PIC18LF6520) && \
-    !defined(PIC18F6620) && !defined(PIC18LF6620)
+    !defined(PIC18F6620) && !defined(PIC18LF6620) && \
+    !defined(PIC18F6720) && !defined(PIC18LF6720)
 #define PIC18F6520   1
 #endif
 
-#if defined(PIC18F6520) + defined(PIC18F6620) > 1
-#error "Define exactly one of PIC18F6520 / PIC18F6620."
+#if defined(PIC18F6520) + defined(PIC18F6620) + defined(PIC18F6720) > 1
+#error "Define exactly one of PIC18F6520 / PIC18F6620 / PIC18F6720."
 #endif
 /** @} */
 
@@ -60,6 +61,18 @@
 #define PIC18F6520_FAMILY_HAS_SPP        0
 #define PIC18F6520_FAMILY_HAS_USB        0
 #define PIC18F6520_DEVICE_NAME           "PIC18F6620"
+#elif defined(PIC18F6720)
+#define PIC18F6520_FAMILY_FLASH_BYTES    131072U /**< 128 KB (DS39609B §4.0, 65536 words). */
+#define PIC18F6520_FAMILY_FLASH_INSTR    65536U
+#define PIC18F6520_FAMILY_RAM_BYTES      3824U   /**< 0x0010-0x0EFF, same GPR map as the 6620. */
+#define PIC18F6520_FAMILY_EEPROM_B       1024U   /**< 1 KB, same as the 6520. */
+#define PIC18F6520_FAMILY_IO_PINS        52U     /* PORTA-G digital I/O, same pinout as the 6520. */
+#define PIC18F6520_FAMILY_ADC_CH         12U     /* AN0-11, same as the 6520. */
+#define PIC18F6520_FAMILY_HAS_PORTD      1
+#define PIC18F6520_FAMILY_HAS_PORTE      1
+#define PIC18F6520_FAMILY_HAS_SPP        0
+#define PIC18F6520_FAMILY_HAS_USB        0
+#define PIC18F6520_DEVICE_NAME           "PIC18F6720"
 #endif
 /** @} */
 /**
