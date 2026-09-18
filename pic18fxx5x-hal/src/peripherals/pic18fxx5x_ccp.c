@@ -55,9 +55,13 @@ static PIC18_IRQn ccp_irq(CCP_InstanceTypeDef inst)
 }
 
 /* Static handle storage, one per CCP instance. COPIES the caller's handle
- * (dangling-pointer rationale, see Timer1). The weak ISRs read from these. */
-static CCP_HandleTypeDef        g_ccp_storage[3];
-static const CCP_HandleTypeDef *g_ccp_handles[3] = { NULL, NULL, NULL };
+ * (dangling-pointer rationale, see Timer1). The weak ISRs read from these
+ * directly (EventCallback's own NULL-ness is the "is this instance
+ * active" sentinel, g_ccp_storage is zero-initialized); there is no
+ * separate pointer-array indirection to a runtime-indexed slot's
+ * address, which epic-cc's isel-pic18 cannot yet materialize as a
+ * value to store elsewhere (apojomovsky/epic-cc#468). */
+static CCP_HandleTypeDef g_ccp_storage[3];
 
 /**
  * @brief  Encode a PinState enum into the 2-bit PSS field value
@@ -88,8 +92,25 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
     {
         return EPIC_INVALID;
     }
-    g_ccp_storage[h->Instance] = *h;
-    g_ccp_handles[h->Instance] = &g_ccp_storage[h->Instance];
+    /* Field-by-field, not `g_ccp_storage[h->Instance] = *h;`: scalar
+     * stores through a runtime-indexed global are fine, only
+     * materializing a runtime-indexed GEP's address as a value (the
+     * former g_ccp_handles[h->Instance] = &g_ccp_storage[h->Instance]
+     * pointer-array pattern, removed) panics epic-cc's isel-pic18
+     * (apojomovsky/epic-cc#468). */
+    CCP_HandleTypeDef *dst = &g_ccp_storage[h->Instance];
+    dst->Instance             = h->Instance;
+    dst->Mode                 = h->Mode;
+    dst->CompareValue         = h->CompareValue;
+    dst->PWM.Period           = h->PWM.Period;
+    dst->PWM.Duty             = h->PWM.Duty;
+    dst->PWMOutputMode        = h->PWMOutputMode;
+    dst->DeadBand.Delay       = h->DeadBand.Delay;
+    dst->DeadBand.AutoRestart = h->DeadBand.AutoRestart;
+    dst->AutoShutdown.Source  = h->AutoShutdown.Source;
+    dst->AutoShutdown.PinsAC  = h->AutoShutdown.PinsAC;
+    dst->AutoShutdown.PinsBD  = h->AutoShutdown.PinsBD;
+    dst->EventCallback        = h->EventCallback;
 
     /* Clear/rearm the IRQ before reconfiguring. */
     EPIC_IRQ_ClearFlag(ccp_irq(h->Instance));
@@ -166,7 +187,7 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
         EPIC_REG8(PIC_REG_ECCP1DEL) = PIC_ECCP1DEL_POR_VALUE;
         EPIC_REG8(PIC_REG_ECCP1AS) = PIC_ECCP1AS_POR_VALUE;
     }
-    g_ccp_handles[inst] = NULL;
+    g_ccp_storage[inst].EventCallback = NULL;
     return EPIC_OK;
 }
 
@@ -314,10 +335,9 @@ void EPIC_CCP_Restart(CCP_InstanceTypeDef inst)
 void CCP1_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
-    if (g_ccp_handles[CCP_INSTANCE_1] &&
-        g_ccp_handles[CCP_INSTANCE_1]->EventCallback)
-        {
-        g_ccp_handles[CCP_INSTANCE_1]->EventCallback();
+    if (g_ccp_storage[CCP_INSTANCE_1].EventCallback)
+    {
+        g_ccp_storage[CCP_INSTANCE_1].EventCallback();
     }
 }
 
@@ -328,9 +348,8 @@ void CCP1_IRQHandler(void)
 void CCP2_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
-    if (g_ccp_handles[CCP_INSTANCE_2] &&
-        g_ccp_handles[CCP_INSTANCE_2]->EventCallback)
-        {
-        g_ccp_handles[CCP_INSTANCE_2]->EventCallback();
+    if (g_ccp_storage[CCP_INSTANCE_2].EventCallback)
+    {
+        g_ccp_storage[CCP_INSTANCE_2].EventCallback();
     }
 }
