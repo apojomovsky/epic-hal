@@ -837,7 +837,10 @@ epiccc_sources = [
 # TMR4/LVD/PSP have no driver yet.
 [families.PIC18F6520]
 hal_dir  = "pic18f6520-hal"
-variants = ["18F6520"]
+# Canonical 18F6520 last so family-check's scaffold gate builds
+# variants[-1] (as on the 2520 family); gen-sfr.py's CANONICAL entry
+# for this family agrees.
+variants = ["18F6620", "18F6720", "18F6585", "18F6680", "18F8525", "18F8585", "18F8621", "18F8680", "18F6525", "18F6621", "18F6520"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 dfp_version = "1.7.171"
 fosc_hz  = 20000000
@@ -854,26 +857,30 @@ includes = [
   "pic18f6520-hal/include",
   "epic-common/include",
 ]
+# Baseline (every variant): GPIO + Timer0-3 + MSSP + ADC + comparator +
+# EEPROM + the IRQ/WDT core, all present at the same addresses on every
+# part in this family. CCP1-5, EUSART1/2 and the full dispatch are
+# conditional_sources below: the ECAN parts (6585/6680/8585/8680) have
+# only CCP1-2 and a single EUSART, so those drivers and the full
+# dispatch's strong externs cannot link there.
 hal_sources = [
   "pic18f6520-hal/src/peripherals/pic18f6520_gpio.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_timer0.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_timer1.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_timer2.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_timer3.c",
-  "pic18f6520-hal/src/peripherals/pic18f6520_ccp.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_ssp.c",
-  "pic18f6520-hal/src/peripherals/pic18f6520_usart.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_adc.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_comp.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_eeprom.c",
   "pic18f6520-hal/src/core/pic18_irq.c",
-  "pic18f6520-hal/src/core/pic18_irq_dispatch.c",
   "pic18f6520-hal/src/target/pic18_isr_vector.c",
   "pic18f6520-hal/src/core/pic18f6520_wdt_sleep.c",
   "pic18f6520-hal/src/target/pic18f6520_wdt_sleep_target.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
+
 # The epic-cc conformant slice: GPIO + Timer0-3 + CCP/MSSP/EUSART +
 # the IRQ/WDT core + the toolchain-specific vector/dispatch/WDT files.
 # Grows by adding entries as peripherals land, never by editing the
@@ -897,6 +904,23 @@ epiccc_sources = [
   "pic18f6520-hal/src/epiccc/pic18_irq_dispatch_epiccc.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
+
+[[families.PIC18F6520.conditional_sources]]
+path     = "pic18f6520-hal/src/peripherals/pic18f6520_ccp.c"
+variants = ["18F6620", "18F6720", "18F8525", "18F8621", "18F6525", "18F6621", "18F6520"]
+after    = "pic18f6520-hal/src/peripherals/pic18f6520_timer3.c"
+[[families.PIC18F6520.conditional_sources]]
+path     = "pic18f6520-hal/src/peripherals/pic18f6520_usart.c"
+variants = ["18F6620", "18F6720", "18F8525", "18F8621", "18F6525", "18F6621", "18F6520"]
+after    = "pic18f6520-hal/src/peripherals/pic18f6520_ssp.c"
+[[families.PIC18F6520.conditional_sources]]
+path     = "pic18f6520-hal/src/core/pic18_irq_dispatch.c"
+variants = ["18F6620", "18F6720", "18F8525", "18F8621", "18F6525", "18F6621", "18F6520"]
+after    = "pic18f6520-hal/src/core/pic18_irq.c"
+[[families.PIC18F6520.conditional_sources]]
+path     = "pic18f6520-hal/src/core/pic18_irq_dispatch_min.c"
+variants = ["18F6585", "18F6680", "18F8585", "18F8680"]
+after    = "pic18f6520-hal/src/core/pic18_irq.c"
 
 # PIC16F193X has no higher-level modules yet (out of scope for the
 # distribution work), so nothing else exercises its family HAL. This
@@ -1546,6 +1570,16 @@ needs_hal  = true
 
 [modules.pic18f6520-hal.supported]
 PIC18F6520 = [
+  "18F6620",
+  "18F6720",
+  "18F6585",
+  "18F6680",
+  "18F8525",
+  "18F8585",
+  "18F8621",
+  "18F8680",
+  "18F6525",
+  "18F6621",
   "18F6520",
 ]
 
@@ -1553,6 +1587,8 @@ PIC18F6520 = [
 # own (DS39609B §23.0): BOR/STVR (not BOREN/STVREN), no MCLRE/IESO/
 # FCMEN/PBADEN/XINST; WDTPS is the postscaler ratio 1:1..1:128 (Table
 # 23-2), not the 2520/4550 families' period-derived names.
+# The 6620 shares this vocabulary (same DS line; its CONFIG3H lacks
+# T1OSCMX, unset here), so it reuses the base config with no override.
 [modules.pic18f6520-hal.example.PIC18F6520]
 name    = "blink"
 sources = [
@@ -1573,6 +1609,176 @@ sources     = [
   "tests/example_irq.c",
 ]
 config      = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+# ECAN line (DS39661): CCP2MX (ON = RC1, the default pin) instead of
+# CCP2MUX, MCLRE, and the 48 KB code-protect shape (CP0-CP2, no CP3;
+# same for EBTR/WRT). Shares BOR/STVR, WDTPS=128 and HS with the base.
+[modules.pic18f6520-hal.example.PIC18F6520.variants.18F6585]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Same ECAN vocabulary as the blink stanza above, on the irq-smoke sources.
+[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F6585]
+name        = "irq-smoke"
+harness_src = "pic18f6520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+# ECAN 64 KB sibling of the 6585 (DS39661): same CCP2MX/MCLRE
+# vocabulary, plus the CP3/EBTR3/WRT3 blocks its larger flash carries.
+# ECCPMX is fixed to PORTE on this part (single DFP value, unset here).
+[modules.pic18f6520-hal.example.PIC18F6520.variants.18F6680]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Same ECAN vocabulary as the blink stanza above, on the irq-smoke sources.
+[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F6680]
+name        = "irq-smoke"
+harness_src = "pic18f6520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+
+
+# Same shape as the 6520 (DS39609B), plus the CP4-CP7, EBTR4-7
+# and WRT4-7 blocks its 128 KB flash carries (8 code-protect blocks).
+[modules.pic18f6520-hal.example.PIC18F6520.variants.18F6720]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CP4 = "OFF", CP5 = "OFF", CP6 = "OFF", CP7 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTR4 = "OFF", EBTR5 = "OFF", EBTR6 = "OFF", EBTR7 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRT4 = "OFF", WRT5 = "OFF", WRT6 = "OFF", WRT7 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Same extra blocks as the blink stanza above, on the irq-smoke sources.
+[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F6720]
+name        = "irq-smoke"
+harness_src = "pic18f6520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CP4 = "OFF", CP5 = "OFF", CP6 = "OFF", CP7 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTR4 = "OFF", EBTR5 = "OFF", EBTR6 = "OFF", EBTR7 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRT4 = "OFF", WRT5 = "OFF", WRT6 = "OFF", WRT7 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# 80-pin full-map part (DFP EDC): CCP2MX=PORTC (RC1, the default pin),
+# ECCPMX=PORTE (RE6-RE3, the 64-pin-compatible mux), MCLRE, MODE=MC
+# (microcontroller, no external bus) with WAIT off, and the 48 KB
+# code-protect shape (CP0-CP2, no CP3; same for EBTR/WRT).
+[modules.pic18f6520-hal.example.PIC18F6520.variants.18F8525]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Same 80-pin vocabulary as the blink stanza above, on the irq-smoke sources.
+[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F8525]
+name        = "irq-smoke"
+harness_src = "pic18f6520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# ECAN 80-pin sibling of the 8525 (DS39661): CCP2MX=ON (RC1, the
+# default pin), ECCPMX=PORTE, MCLRE, MODE=MC with WAIT off, and the
+# 48 KB code-protect shape (CP0-CP2, no CP3; same for EBTR/WRT).
+[modules.pic18f6520-hal.example.PIC18F6520.variants.18F8585]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Same ECAN 80-pin vocabulary as the blink stanza above, on the irq-smoke sources.
+[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F8585]
+name        = "irq-smoke"
+harness_src = "pic18f6520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# 80-pin 64 KB sibling of the 8525 (DFP EDC): same PORTC/PORTE/MCLRE/
+# MODE/WAIT vocabulary, plus the CP3/EBTR3/WRT3 blocks its larger
+# flash carries.
+[modules.pic18f6520-hal.example.PIC18F6520.variants.18F8621]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Same 80-pin vocabulary as the blink stanza above, on the irq-smoke sources.
+[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F8621]
+name        = "irq-smoke"
+harness_src = "pic18f6520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# ECAN 80-pin 64 KB sibling of the 8585 (DS39661): same ON/PORTE/MCLRE/
+# MODE/WAIT vocabulary, plus the CP3/EBTR3/WRT3 blocks its larger flash
+# carries.
+[modules.pic18f6520-hal.example.PIC18F6520.variants.18F8680]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Same ECAN 80-pin vocabulary as the blink stanza above, on the irq-smoke sources.
+[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F8680]
+name        = "irq-smoke"
+harness_src = "pic18f6520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# 64-pin 48 KB full-map part (DFP EDC facts): CCP2MX=PORTC (RC1, the
+# default pin), MCLRE, and the 48 KB code-protect shape (CP0-CP2, no
+# CP3; same for EBTR/WRT). No ECCPMX/MODE/WAIT fields on this line.
+[modules.pic18f6520-hal.example.PIC18F6520.variants.18F6525]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Same 64-pin vocabulary as the blink stanza above, on the irq-smoke sources.
+[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F6525]
+name        = "irq-smoke"
+harness_src = "pic18f6520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# 64-pin 64 KB sibling of the 6525 (DFP EDC facts): same PORTC/MCLRE
+# vocabulary, plus the CP3/EBTR3/WRT3 blocks its larger flash carries.
+[modules.pic18f6520-hal.example.PIC18F6520.variants.18F6621]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Same 64-pin vocabulary as the blink stanza above, on the irq-smoke sources.
+[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F6621]
+name        = "irq-smoke"
+harness_src = "pic18f6520-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_irq.c",
+]
+config      = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 [modules.epic-combo-uart-ssp]
 dir        = "tests/epic-combo-uart-ssp"
