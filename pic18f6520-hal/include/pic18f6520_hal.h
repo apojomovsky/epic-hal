@@ -1,9 +1,10 @@
 /*
  * PIC18F6520 family top level: types, status codes, device selection,
- * SFR layer (DS39609B throughout). 64-pin: PORTA-G, no USB/SPP (no
- * usbdiv/cpudiv/plldiv/vregen in config). Two-vector interrupts
- * (0008h/0018h; DS39609B §9.0). Named _hal.h so it never shadows the
- * DFP proc header (the 628A lesson, epic-hal#137).
+ * SFR layer (DS39609B for the 6520 line, DS39661 for the ECAN line).
+ * 64-pin parts: PORTA-G; 80-pin parts add PORTH/J (gpio driver covers
+ * A-G). No USB/SPP (no usbdiv/cpudiv/plldiv/vregen in config).
+ * Two-vector interrupts (0008h/0018h; DS39609B §9.0). Named _hal.h so
+ * it never shadows the DFP proc header (the 628A lesson, epic-hal#137).
  */
 
 #ifndef PIC18F6520_HAL_H
@@ -23,13 +24,14 @@
     !defined(PIC18F6620) && !defined(PIC18LF6620) && \
     !defined(PIC18F6720) && !defined(PIC18LF6720) && \
     !defined(PIC18F6585) && !defined(PIC18LF6585) && \
-    !defined(PIC18F6680) && !defined(PIC18LF6680)
+    !defined(PIC18F6680) && !defined(PIC18LF6680) && \
+    !defined(PIC18F8525) && !defined(PIC18LF8525)
 #define PIC18F6520   1
 #endif
 
 #if defined(PIC18F6520) + defined(PIC18F6620) + defined(PIC18F6720) + \
-    defined(PIC18F6585) + defined(PIC18F6680) > 1
-#error "Define exactly one of PIC18F6520 / PIC18F6620 / PIC18F6720 / PIC18F6585 / PIC18F6680."
+    defined(PIC18F6585) + defined(PIC18F6680) + defined(PIC18F8525) > 1
+#error "Define exactly one of PIC18F6520 / PIC18F6620 / PIC18F6720 / PIC18F6585 / PIC18F6680 / PIC18F8525."
 #endif
 /** @} */
 
@@ -49,6 +51,8 @@
  #define PIC18F6520_FAMILY_ADC_CH         12U     /* AN0-11, DS39609B §19.0. */
  #define PIC18F6520_FAMILY_HAS_PORTD      1
  #define PIC18F6520_FAMILY_HAS_PORTE      1
+ #define PIC18F6520_FAMILY_HAS_PORTH      0   /* No PORTH/J SFRs on 64-pin parts. */
+ #define PIC18F6520_FAMILY_HAS_PORTJ      0
  #define PIC18F6520_FAMILY_HAS_SPP        0   /* no USB, so no SPP (DS39609B Table 1-1). */
  #define PIC18F6520_FAMILY_HAS_USB        0
  #define PIC18F6520_FAMILY_HAS_CAN        0
@@ -62,6 +66,8 @@
 #define PIC18F6520_FAMILY_ADC_CH         12U     /* AN0-11, same as the 6520. */
 #define PIC18F6520_FAMILY_HAS_PORTD      1
 #define PIC18F6520_FAMILY_HAS_PORTE      1
+#define PIC18F6520_FAMILY_HAS_PORTH      0   /* No PORTH/J SFRs on 64-pin parts. */
+#define PIC18F6520_FAMILY_HAS_PORTJ      0
 #define PIC18F6520_FAMILY_HAS_SPP        0
 #define PIC18F6520_FAMILY_HAS_USB        0
 #define PIC18F6520_FAMILY_HAS_CAN        0   /* No ECAN module (DS39609B Table 1-1). */
@@ -75,6 +81,8 @@
 #define PIC18F6520_FAMILY_ADC_CH         12U     /* AN0-11, same as the 6520. */
 #define PIC18F6520_FAMILY_HAS_PORTD      1
 #define PIC18F6520_FAMILY_HAS_PORTE      1
+#define PIC18F6520_FAMILY_HAS_PORTH      0   /* No PORTH/J SFRs on 64-pin parts. */
+#define PIC18F6520_FAMILY_HAS_PORTJ      0
 #define PIC18F6520_FAMILY_HAS_SPP        0
 #define PIC18F6520_FAMILY_HAS_USB        0
 #define PIC18F6520_FAMILY_HAS_CAN        0   /* No ECAN module, same as the 6520. */
@@ -88,6 +96,8 @@
 #define PIC18F6520_FAMILY_ADC_CH         12U     /* AN0-11. */
 #define PIC18F6520_FAMILY_HAS_PORTD      1
 #define PIC18F6520_FAMILY_HAS_PORTE      1
+#define PIC18F6520_FAMILY_HAS_PORTH      0   /* No PORTH/J SFRs on 64-pin parts. */
+#define PIC18F6520_FAMILY_HAS_PORTJ      0
 #define PIC18F6520_FAMILY_HAS_SPP        0
 #define PIC18F6520_FAMILY_HAS_USB        0
 #define PIC18F6520_FAMILY_HAS_CAN        1   /* ECAN module (DS39661 §22.0); no driver yet. */
@@ -101,10 +111,27 @@
 #define PIC18F6520_FAMILY_ADC_CH         12U     /* AN0-11, same as the 6585. */
 #define PIC18F6520_FAMILY_HAS_PORTD      1
 #define PIC18F6520_FAMILY_HAS_PORTE      1
+#define PIC18F6520_FAMILY_HAS_PORTH      0   /* No PORTH/J SFRs on 64-pin parts. */
+#define PIC18F6520_FAMILY_HAS_PORTJ      0
 #define PIC18F6520_FAMILY_HAS_SPP        0
 #define PIC18F6520_FAMILY_HAS_USB        0
 #define PIC18F6520_FAMILY_HAS_CAN        1   /* ECAN module, same as the 6585. */
 #define PIC18F6520_DEVICE_NAME           "PIC18F6680"
+#elif defined(PIC18F8525)
+#define PIC18F6520_FAMILY_FLASH_BYTES    49152U  /**< 48 KB (DFP EDC CodeSector, 24576 words). */
+#define PIC18F6520_FAMILY_FLASH_INSTR    24576U
+#define PIC18F6520_FAMILY_RAM_BYTES      3824U   /**< 0x0010-0x0EFF, same span math as the 6620. */
+#define PIC18F6520_FAMILY_EEPROM_B       1024U   /**< 1 KB (DFP EDC EEDataSector). */
+#define PIC18F6520_FAMILY_IO_PINS        69U     /* PORTA-J digital I/O (DFP EDC port pins). */
+#define PIC18F6520_FAMILY_ADC_CH         16U     /* AN0-15 (DFP EDC pin functions). */
+#define PIC18F6520_FAMILY_HAS_PORTD      1
+#define PIC18F6520_FAMILY_HAS_PORTE      1
+#define PIC18F6520_FAMILY_HAS_PORTH      1   /* PORTH/J present; gpio driver covers A-G. */
+#define PIC18F6520_FAMILY_HAS_PORTJ      1
+#define PIC18F6520_FAMILY_HAS_SPP        0
+#define PIC18F6520_FAMILY_HAS_USB        0
+#define PIC18F6520_FAMILY_HAS_CAN        0
+#define PIC18F6520_DEVICE_NAME           "PIC18F8525"
 #endif
 /** @} */
 /**
