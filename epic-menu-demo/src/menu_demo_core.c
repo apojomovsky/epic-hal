@@ -89,6 +89,11 @@ void menu_demo_push_event(menu_event_t ev)
     g_event_head = next;
 }
 
+/**
+ * @brief Pop one event from the ring, if any.
+ * @param out receives the popped event when non-empty
+ * @return 1 if an event was popped, 0 if the ring was empty
+ */
 static int event_pop(menu_event_t *out)
 {
     if (g_event_tail == g_event_head)
@@ -113,7 +118,11 @@ static int event_pop(menu_event_t *out)
  * need epic_tick running continuously; see menu_demo_init). */
 static char g_line_buf[LCD_COLS + 1u];
 
-/** Fill g_line_buf with prefix, then spaces out to LCD_COLS, NUL-terminated. */
+/**
+ * @brief Fill g_line_buf with prefix, then spaces out to LCD_COLS, NUL-terminated.
+ * @param prefix     bytes to copy in first
+ * @param prefix_len number of bytes in prefix
+ */
 static void build_line(const char *prefix, uint8_t prefix_len)
 {
     uint8_t i;
@@ -129,7 +138,11 @@ static void build_line(const char *prefix, uint8_t prefix_len)
 }
 #define BUILD_LINE(prefix) build_line((prefix), (uint8_t)(sizeof(prefix) - 1u))
 
-/** Right-justify v into the last `width` columns of g_line_buf. */
+/**
+ * @brief Right-justify v into the last `width` columns of g_line_buf.
+ * @param v     value to render, in decimal
+ * @param width number of trailing columns to fill
+ */
 static void put_u16_tail(uint16_t v, uint8_t width)
 {
     uint8_t i;
@@ -150,12 +163,17 @@ static void put_u16_tail(uint16_t v, uint8_t width)
     }
 }
 
+/**
+ * @brief Write g_line_buf to one LCD row.
+ * @param row target row, 0 or 1
+ */
 static void lcd_write_line(uint8_t row)
 {
     epic_lcd_set_cursor(&g_lcd, 0U, row);
     epic_lcd_print(&g_lcd, g_line_buf);
 }
 
+/** @brief Redraw the STATUS screen (tick count + ADC reading). */
 static void redraw_status(void)
 {
     BUILD_LINE("Ticks:");
@@ -166,6 +184,7 @@ static void redraw_status(void)
     lcd_write_line(1U);
 }
 
+/** @brief Redraw the BRIGHTNESS screen (label + a 10-segment bar). */
 static void redraw_brightness(void)
 {
     uint8_t i;
@@ -179,6 +198,7 @@ static void redraw_brightness(void)
     lcd_write_line(1U);
 }
 
+/** @brief Redraw the ABOUT screen (name + EEPROM write count). */
 static void redraw_about(void)
 {
     BUILD_LINE("epic-menu-demo");
@@ -188,6 +208,7 @@ static void redraw_about(void)
     lcd_write_line(1U);
 }
 
+/** @brief Redraw whichever screen is currently active. */
 static void redraw(void)
 {
     switch (g_screen)

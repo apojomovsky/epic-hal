@@ -28,28 +28,13 @@
 #include <stdint.h>
 
 /** Loop-iteration bound for epic_taskmgr_run()'s harness-driven loop
- * (core/epic_harness.h: not a real-time unit). Empirically calibrated,
- * not derived: this firmware's per-round cost (real LCD nibble
- * bit-banging, EEPROM state machine, epic_serial TX) is far heavier
- * than epic-taskmgr's own sim gate's, so its 1500 is nowhere near
- * enough headroom here. 200 was the smallest value observed to
- * reliably let the scripted 5-event sequence complete, the EEPROM
- * magic+brightness write pair complete (via the eeprom_writes mdb
- * poke cycles -- MPLAB SIM's EEPROM write never self-completes without
- * debugger intervention, see scripts/sim-mdb-run.sh's eeprom_writes
- * argument), and epic_taskmgr_ticks() clear the >=100 floor the final
- * checks require.
- *
- * NOTE: an earlier version of this gate also spawned menu_demo_task_adc
- * and needed a 300-600s wait_ms budget as a result -- MPLAB SIM's
- * floating-input ADC model logs a console warning on every conversion,
- * and that logging overhead (not target time) dominated the simulator's
- * real wall-clock throughput so badly the gate sometimes never
- * completed at all. See the comment above the task spawn list below
- * for why the ADC task is not part of this gate. Without it, `env
- * SIM_MDB_SKIP_BUILD=1 scripts/sim-mdb-run.sh local 18F4550 PIC18F4550
- * epic-menu-demo 60000 uart "" 4` (the trailing 4 is eeprom_writes, see
- * scripts/sim-mdb-run.sh) reliably completes in well under a minute. */
+ * (core/epic_harness.h: not a real-time unit), empirically calibrated:
+ * this firmware's per-round cost is far heavier than epic-taskmgr's
+ * own sim gate's 1500. 200 is the smallest value observed to reliably
+ * let the scripted sequence, the EEPROM write pair (via the
+ * eeprom_writes mdb poke cycles, see scripts/sim-mdb-run.sh), and the
+ * final ticks>=100 check all complete -- see the ADC comment below for
+ * why this gate needs no more than a 60s wait_ms budget. */
 #define SIM_ITERATIONS 200UL
 
 #define TICK_RELOAD    0U
@@ -103,7 +88,7 @@ static void task_stimulus(void *arg)
     }
 }
 
-/** Log each fired event's actual tick as 4 hex digits, space-separated. */
+/** @brief Log each fired event's actual tick as 4 hex digits, space-separated. */
 static void log_fire_ticks(void)
 {
     static const char hx[] = "0123456789ABCDEF";
@@ -125,6 +110,10 @@ static void log_fire_ticks(void)
 
 static uint16_t g_fail;
 
+/**
+ * @brief Record a check failure and log its index as two hex digits.
+ * @param idx check index (see the CHECK call sites in main)
+ */
 static void fail(uint8_t idx)
 {
     /* Static RAM buffer, not stack locals or const pointers: the
@@ -149,21 +138,12 @@ int main(void)
 
     epic_taskmgr_init();
     epic_taskmgr_spawn(task_stimulus,            NULL, TASK_PERIOD_STIMULUS,  0U);
-    /* menu_demo_task_adc deliberately not spawned here: MPLAB SIM's
-     * ADC model has no real analog stimulus on AN0, so every conversion
-     * logs a "W0223-ADC: ADC input voltage low, ADC output underflow"
-     * warning to the mdb console. That logging overhead dominates the
-     * simulator's real wall-clock throughput -- confirmed empirically:
-     * with the ADC task spawned, this gate's 5-event script plus report
-     * never completed in 10+ minutes of wait_ms despite the tick
-     * counter (driven by the real, unrelated Timer0 ISR) climbing past
-     * 16000 and the rest of the application state already being fully
-     * correct; with it removed, the same gate reaches PASS in under a
-     * minute. This is a simulator characteristic (console I/O cost, not
-     * a target-time cost), not an application or driver bug -- the ADC
-     * is still exercised structurally at init (EPIC_ADC_Init in
-     * menu_demo_init) and polled normally on real hardware
-     * (examples/example_menu_demo.c spawns this task). */
+    /* menu_demo_task_adc deliberately not spawned: MPLAB SIM logs a
+     * console warning on every conversion (no real analog stimulus on
+     * AN0), and that I/O overhead alone starved this gate for 10+
+     * minutes despite correct, complete application state; removing it
+     * reaches PASS in under a minute. The ADC is still exercised at
+     * init and polled on real hardware (example_menu_demo.c). */
     epic_taskmgr_spawn(menu_demo_task_ui,        NULL, TASK_PERIOD_UI,        2U);
     epic_taskmgr_spawn(menu_demo_task_eeprom,    NULL, TASK_PERIOD_EEPROM,    3U);
     epic_taskmgr_spawn(menu_demo_task_heartbeat, NULL, TASK_PERIOD_HEARTBEAT, 4U);

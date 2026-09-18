@@ -68,16 +68,28 @@ void menu_demo_task_eeprom(void *arg);
  */
 void menu_demo_task_heartbeat(void *arg);
 
-/** @brief Latest ADC reading, for the sim oracle's cross-checks. */
+/**
+ * @brief Latest ADC reading, for the sim oracle's cross-checks.
+ * @return the last sampled ADC value, 0..1023
+ */
 uint16_t menu_demo_adc_value(void);
 
-/** @brief Current brightness setting (0..10), for the sim oracle's cross-checks. */
+/**
+ * @brief Current brightness setting, for the sim oracle's cross-checks.
+ * @return the brightness setting, 0..10
+ */
 uint8_t menu_demo_brightness(void);
 
-/** @brief Current menu screen, for the sim oracle's cross-checks. */
+/**
+ * @brief Current menu screen, for the sim oracle's cross-checks.
+ * @return the active screen
+ */
 menu_screen_t menu_demo_screen(void);
 
-/** @brief Completed EEPROM write count, for the sim oracle's cross-checks. */
+/**
+ * @brief Completed EEPROM write count, for the sim oracle's cross-checks.
+ * @return the number of completed EEPROM byte writes
+ */
 uint16_t menu_demo_eeprom_writes(void);
 
 #endif /* MENU_DEMO_CORE_H */
