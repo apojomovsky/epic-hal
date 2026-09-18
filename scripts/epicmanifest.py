@@ -281,7 +281,9 @@ class Manifest:
         full XC8 set (which hits filed isel gaps and the GPR wall).
         Conditional sources are XC8-psect-order machinery and do not
         apply on the epic-cc path (single whole-program invocation,
-        no link order).
+        no link order). On variant="sim" the slice's harness entry
+        swaps for the sim variant's harness_src, mirroring the XC8
+        path, so an epic-cc mdb gate links the mdb harness.
 
         Order: family HAL sources with applicable conditional sources
         spliced in at their recorded position (only when the build uses
@@ -324,8 +326,6 @@ class Manifest:
         halt_override = toolchain == "epic-cc" and halt is not None
         if self.uses_hal(module_name, mcu):
             if toolchain == "epic-cc":
-                # The epic-cc path builds only variant="target"; the
-                # slice is the family's conformant real-target set.
                 if halt_override:
                     out += list(halt)
                 else:
@@ -335,7 +335,15 @@ class Manifest:
                             f"the epic-cc path needs a conformant slice "
                             f"(HAL-3)"
                         )
-                    out += list(fam.epiccc_sources)
+                    # The sim harness swap mirrors the XC8 loop: an
+                    # epic-cc mdb gate firmware needs the mdb harness
+                    # too, swapped at the slice's own harness position
+                    # (epic-taskmgr's gate, epic-hal#236).
+                    for hal_src in fam.epiccc_sources:
+                        if sim is not None and hal_src == fam.harness_src:
+                            out.append(sim.harness_src)
+                        else:
+                            out.append(hal_src)
             else:
                 applicable = [c for c in fam.conditional_sources if mcu in c.variants]
                 for hal_src in fam.hal_sources:

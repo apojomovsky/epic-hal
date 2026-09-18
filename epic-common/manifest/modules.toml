@@ -596,14 +596,18 @@ harness_src = "epic-common/src/core/epic_harness_target.c"
 
 # The epic-cc conformant slice (HAL-3g): the subset the combo
 # integration firmwares need. The dispatch is the epiccc tier file
-# (USART + TIMER2 + EEPROM, same gating semantics as the full fan-out),
-# because the shared pic18_irq_dispatch.c strong-references every
-# peripheral handler and cannot link against a partial set. SSP joined
+# (TIMER0 tick + USART + TIMER2 + EEPROM, same gating semantics as the
+# full fan-out), because the shared pic18_irq_dispatch.c
+# strong-references every peripheral handler and cannot link against a
+# partial set. TIMER0 joined with its tick tier (epic-hal#236): the
+# family hal_sources carry timer0.c, and epic-taskmgr's scheduler tick
+# plus the blink example call EPIC_TIMER0_* directly. SSP joined
 # for epic-sdcard (HAL-3d follow-up, epic-hal#102): the SD-over-SPI
 # driver polls SSPBUF/SSPSTAT and never vectors SSPIF, so the tier
 # dispatch is unchanged.
 epiccc_sources = [
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer0.c",
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer2.c",
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c",
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_ssp.c",
@@ -612,7 +616,7 @@ epiccc_sources = [
   "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
   "pic18fxx5x-hal/src/epiccc/pic18fxx5x_wdt_sleep_epiccc.c",
   "pic18fxx5x-hal/src/epiccc/pic18_isr_vector.c",
-  "pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc_tick.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
 
@@ -4239,11 +4243,11 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # it has no WDT refresh of its own (the WDT driver is family HAL
 # territory), so a watchdog would reset the run.
 
-# epic-cc slice (HAL-3g): the TMR0-tick + serial + EEPROM tier (the
-# taskmgr scheduler's tick source needs TIMER0_IRQHandler wired, see
-# epic-hal#237; pic18fxx5x_timer0.c itself still needs adding here,
-# see epic-hal#235) and the mdb harness, the sim-gate's report path
-# under epic-cc.
+# epic-cc slice (HAL-3g): the TMR0-tick + serial + EEPROM tier. The
+# taskmgr scheduler's tick source needs TIMER0_IRQHandler wired
+# (epic-hal#237); timer0.c joined this override in #238, before the
+# family default carried it (#236). The mdb harness is the sim-gate's
+# report path under epic-cc.
 [modules.epic-combo-taskmgr-serial.epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
