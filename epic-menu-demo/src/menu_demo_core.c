@@ -224,6 +224,7 @@ static void redraw(void)
 /* Init                                                                 */
 /* ------------------------------------------------------------------ */
 
+/** @brief Initialize the LCD, ADC, EEPROM-backed settings, and PWM. */
 void menu_demo_init(void)
 {
     epic_lcd_ops_t ops;
@@ -290,6 +291,7 @@ void menu_demo_init(void)
 /* taskmgr tasks                                                       */
 /* ------------------------------------------------------------------ */
 
+/** @brief taskmgr task: sample the ADC, redraw if on the status screen. */
 void menu_demo_task_adc(void *arg)
 {
     (void)arg;
@@ -309,6 +311,7 @@ void menu_demo_task_adc(void *arg)
     }
 }
 
+/** @brief taskmgr task: drain queued button events, update state, redraw. */
 void menu_demo_task_ui(void *arg)
 {
     menu_event_t ev;
@@ -345,6 +348,7 @@ void menu_demo_task_ui(void *arg)
     }
 }
 
+/** @brief taskmgr task: autosave the brightness setting when dirty. */
 void menu_demo_task_eeprom(void *arg)
 {
     (void)arg;
@@ -379,6 +383,7 @@ void menu_demo_task_eeprom(void *arg)
     }
 }
 
+/** @brief taskmgr task: UART heartbeat line + PWM duty update. */
 void menu_demo_task_heartbeat(void *arg)
 {
     (void)arg;
@@ -403,21 +408,25 @@ void menu_demo_task_heartbeat(void *arg)
 /* Introspection                                                       */
 /* ------------------------------------------------------------------ */
 
+/** @brief Latest ADC reading, for the sim oracle's cross-checks. */
 uint16_t menu_demo_adc_value(void)
 {
     return g_adc_value;
 }
 
+/** @brief Current brightness setting, for the sim oracle's cross-checks. */
 uint8_t menu_demo_brightness(void)
 {
     return g_brightness;
 }
 
+/** @brief Current menu screen, for the sim oracle's cross-checks. */
 menu_screen_t menu_demo_screen(void)
 {
     return g_screen;
 }
 
+/** @brief Completed EEPROM write count, for the sim oracle's cross-checks. */
 uint16_t menu_demo_eeprom_writes(void)
 {
     return g_eeprom_writes;

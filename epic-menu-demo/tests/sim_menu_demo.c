@@ -131,6 +131,10 @@ static void fail(uint8_t idx)
 
 #define CHECK(cond, idx) do { if (!(cond)) fail(idx); } while (0)
 
+/**
+ * @brief Run the scripted button sequence and report PASS/FAIL.
+ * @return 0 on pass, 1 on fail (see core/epic_harness.h)
+ */
 int main(void)
 {
     epic_harness_init(SIM_ITERATIONS);
