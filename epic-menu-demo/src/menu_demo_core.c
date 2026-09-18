@@ -118,25 +118,29 @@ static int event_pop(menu_event_t *out)
  * need epic_tick running continuously; see menu_demo_init). */
 static char g_line_buf[LCD_COLS + 1u];
 
-/**
- * @brief Fill g_line_buf with prefix, then spaces out to LCD_COLS, NUL-terminated.
- * @param prefix     bytes to copy in first
- * @param prefix_len number of bytes in prefix
- */
-static void build_line(const char *prefix, uint8_t prefix_len)
-{
-    uint8_t i;
-    for (i = 0; i < prefix_len && i < LCD_COLS; i++)
-    {
-        g_line_buf[i] = prefix[i];
-    }
-    for (; i < LCD_COLS; i++)
-    {
-        g_line_buf[i] = ' ';
-    }
-    g_line_buf[LCD_COLS] = '\0';
-}
-#define BUILD_LINE(prefix) build_line((prefix), (uint8_t)(sizeof(prefix) - 1u))
+/* Fill g_line_buf with a literal prefix, then spaces out to LCD_COLS,
+ * NUL-terminated. A macro, not a shared function taking (pointer,
+ * length): a real function called from several sites with differently
+ * sized literals is exactly the shape cppcheck's interprocedural
+ * analysis cannot correlate (it flags a possible out-of-bounds read
+ * using one call site's array size against another's bound), so each
+ * expansion here gets its own literal's compile-time size instead. */
+#define BUILD_LINE(prefix_literal) do {                               \
+    static const char epic_menu_lit_[] = (prefix_literal);            \
+    uint8_t epic_menu_i_;                                              \
+    for (epic_menu_i_ = 0;                                            \
+         epic_menu_i_ < LCD_COLS &&                                    \
+         epic_menu_i_ < (uint8_t)(sizeof(epic_menu_lit_) - 1u);        \
+         epic_menu_i_++)                                               \
+    {                                                                  \
+        g_line_buf[epic_menu_i_] = epic_menu_lit_[epic_menu_i_];       \
+    }                                                                  \
+    for (; epic_menu_i_ < LCD_COLS; epic_menu_i_++)                    \
+    {                                                                  \
+        g_line_buf[epic_menu_i_] = ' ';                                \
+    }                                                                  \
+    g_line_buf[LCD_COLS] = '\0';                                       \
+} while (0)
 
 /**
  * @brief Right-justify v into the last `width` columns of g_line_buf.
@@ -190,7 +194,7 @@ static void redraw_brightness(void)
     uint8_t i;
     BUILD_LINE("Brightness:");
     lcd_write_line(0U);
-    build_line("[          ]", (uint8_t)(sizeof("[          ]") - 1u));
+    BUILD_LINE("[          ]");
     for (i = 0; i < 10U; i++)
     {
         g_line_buf[1U + i] = (i < g_brightness) ? '#' : '.';
