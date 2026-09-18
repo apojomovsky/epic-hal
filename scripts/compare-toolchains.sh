@@ -1,21 +1,12 @@
 #!/usr/bin/env bash
 # Build a manifest module's sim variant under both XC8 and epic-cc,
 # compare flash/RAM size, and diff the mdb-captured UART behavioral
-# trace between the two builds. Local dev tool: needs `make image`
-# (XC8 + mdb) built once, and a fresh epic-cc release binary (build it
-# inside epic-cc-dev:local, e.g.
-#   docker run --rm --user $(id -u):$(id -g) \
-#     -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-#     -v ~/.cache/epic-hal-toolchain-home:$HOME \
-#     -v ~/.cache/epic-cc/target:/tmp/cargo-target \
-#     -v <epic-cc checkout>:/repo-epic-cc -w /repo-epic-cc \
-#     -e CARGO_TARGET_DIR=/tmp/cargo-target \
-#     epic-cc-dev:local cargo build --release
-# -- do not reuse a stale cached binary; epiccc-build's own docs
-# (epic-hal#240) document this trap).
-#
-# Nothing in this script is specific to epic-menu-demo: it takes any
-# manifest module/MCU/device that has a sim variant.
+# trace between the two builds. Not specific to epic-menu-demo: takes
+# any module/MCU/device with a sim variant. Local dev tool: needs
+# `make image` (XC8 + mdb) built once, and EPIC_CC_BIN pointing at a
+# freshly-built epic-cc release binary, not a stale cached one
+# (epic-hal#240 documents the trap and the build-inside-the-container
+# recipe).
 #
 # Usage: compare-toolchains.sh <module> <mcu> <device> [wait_ms] [eeprom_writes]
 #   e.g. scripts/compare-toolchains.sh epic-menu-demo 18F4550 PIC18F4550 60000 4

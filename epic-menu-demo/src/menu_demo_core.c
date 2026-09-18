@@ -231,17 +231,11 @@ static void redraw(void)
 /** @brief Initialize the LCD, ADC, EEPROM-backed settings, and PWM. */
 void menu_demo_init(void)
 {
-    /* static, not a stack local: epic_lcd_init stores &ops into the
-     * global g_lcd (g_lcd.ops), which every later epic_lcd_* call
-     * dereferences long after menu_demo_init returns -- a stack local
-     * here would leave g_lcd.ops dangling (undefined behavior; masked
-     * on XC8 since this repo's non-reentrant PIC call graphs often
-     * give automatics static-equivalent storage in practice, but not
-     * guaranteed, and epic-cc's isel-pic18 correctly balks at
-     * materializing an escaping stack address as a value to store).
-     * ops_ctx does not need to be static: only its *value* (already a
-     * pointer to the transport's own static storage) is stored into
-     * g_lcd, never its address. */
+    /* static, not a stack local: epic_lcd_init stores &ops into global
+     * g_lcd, dereferenced by every later epic_lcd_* call, long after
+     * this function returns (a stack local here would dangle -- see
+     * docs/pic18f4550-menu-demo.md). ops_ctx stays a plain local: only
+     * its value, not its address, ever gets stored anywhere. */
     static epic_lcd_ops_t ops;
     void *ops_ctx;
     /* Field-by-field, not a partial `{ ..., .row_addr = {0U} }`

@@ -1,19 +1,14 @@
 #!/usr/bin/env bash
 # Program an existing hex under MPLAB SIM and run EXTRA_MDB register
-# reads after the first wait; shared by make mdb-hex and the epiccc-gate
-# CI job (the mdb command sequence has one source of truth, same shape
-# as sim-mdb-run.sh's harness gates). No HARNESS=sim rebuild: this gates
-# hexes another toolchain produced. Container-only (mdb.sh, no python3).
+# reads after the first wait; shared by make mdb-hex and epiccc-gate
+# (one source of truth for the mdb sequence, same shape as
+# sim-mdb-run.sh). No HARNESS=sim rebuild: gates a hex another
+# toolchain produced. Container-only (mdb.sh, no python3).
 #
 # Usage: mdb-hex-run.sh <hex> <device> [wait_ms] [extra_mdb] [capture_uart_to] [eeprom_writes]
-#   capture_uart_to: if set, enables uart1io capture to that file (same
-#   mechanism as sim-mdb-run.sh's uart mode), for a toolchain-agnostic
-#   behavioral trace diff (see scripts/compare-toolchains.sh). Empty by
-#   default: most callers (epiccc-gate's register-read checks) don't
-#   need it.
-#   eeprom_writes: replays the EEPROM unlock sequence per cycle before
-#   the final run/wait (see sim-mdb-run.sh's own eeprom_writes doc);
-#   0 by default.
+#   capture_uart_to/eeprom_writes: optional, same meaning and defaults
+#   (empty / 0) as sim-mdb-run.sh's uart mode and eeprom_writes arg;
+#   see scripts/compare-toolchains.sh for a capture_uart_to caller.
 
 set -euo pipefail
 
