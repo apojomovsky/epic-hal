@@ -4239,8 +4239,11 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # it has no WDT refresh of its own (the WDT driver is family HAL
 # territory), so a watchdog would reset the run.
 
-# epic-cc slice (HAL-3g): the serial + tick + EEPROM tier and the
-# mdb harness, the sim-gate's report path under epic-cc.
+# epic-cc slice (HAL-3g): the TMR0-tick + serial + EEPROM tier (the
+# taskmgr scheduler's tick source needs TIMER0_IRQHandler wired, see
+# epic-hal#237; pic18fxx5x_timer0.c itself still needs adding here,
+# see epic-hal#235) and the mdb harness, the sim-gate's report path
+# under epic-cc.
 [modules.epic-combo-taskmgr-serial.epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
@@ -4251,7 +4254,7 @@ PIC18Fxx5x = [
   "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
   "pic18fxx5x-hal/src/epiccc/pic18fxx5x_wdt_sleep_epiccc.c",
   "pic18fxx5x-hal/src/epiccc/pic18_isr_vector.c",
-  "pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc_tick.c",
   "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c",
 ]
 
