@@ -837,7 +837,10 @@ epiccc_sources = [
 # TMR4/LVD/PSP have no driver yet.
 [families.PIC18F6520]
 hal_dir  = "pic18f6520-hal"
-variants = ["18F6520"]
+# Canonical 18F6520 last so family-check's scaffold gate builds
+# variants[-1] (as on the 2520 family); gen-sfr.py's CANONICAL entry
+# for this family agrees.
+variants = ["18F6620", "18F6520"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 dfp_version = "1.7.171"
 fosc_hz  = 20000000
@@ -1546,6 +1549,7 @@ needs_hal  = true
 
 [modules.pic18f6520-hal.supported]
 PIC18F6520 = [
+  "18F6620",
   "18F6520",
 ]
 
@@ -1553,6 +1557,8 @@ PIC18F6520 = [
 # own (DS39609B §23.0): BOR/STVR (not BOREN/STVREN), no MCLRE/IESO/
 # FCMEN/PBADEN/XINST; WDTPS is the postscaler ratio 1:1..1:128 (Table
 # 23-2), not the 2520/4550 families' period-derived names.
+# The 6620 shares this vocabulary (same DS line; its CONFIG3H lacks
+# T1OSCMX, unset here), so it reuses the base config with no override.
 [modules.pic18f6520-hal.example.PIC18F6520]
 name    = "blink"
 sources = [

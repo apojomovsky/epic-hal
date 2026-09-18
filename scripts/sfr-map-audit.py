@@ -62,6 +62,7 @@ FAMILIES = {
     "pic18f6520-hal": (
         "pic18f6520-hal/include/pic18f6520_sfr.h",
         [
+            ("18F6620", "Microchip.PIC18Fxxxx_DFP", "pic18f6620.h"),
             ("18F6520", "Microchip.PIC18Fxxxx_DFP", "pic18f6520.h"),
         ],
     ),

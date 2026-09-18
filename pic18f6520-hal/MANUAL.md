@@ -43,11 +43,17 @@ expect them here.
 
 ## 1. What this is
 
-One part, DS39609B:
+Two parts, DS39609B:
 
 | Part      | Pins | Flash | RAM    | EEPROM | I/O | ADC ch | CCP |
 |-----------|------|-------|--------|--------|-----|--------|-----|
 | 18F6520   | 64   | 32 KB | 2032 B | 1 KB   | 52  | 12     | 5   |
+| 18F6620   | 64   | 64 KB | 3824 B | 1 KB   | 52  | 12     | 5   |
+
+The 6620 is a size bump of the 6520 on the same die line: double the
+flash and RAM, identical pinout, peripheral set, and SFR addresses
+(verified against the DFP EDC, which differs only in the memory
+extents and one CONFIG3H field, T1OSCMX, absent on the 6620).
 
 64-pin TQFP: full PORTA-G I/O (7 ports, DS39609B Table 1-1), 12-channel
 10-bit A/D, five CCP modules, MSSP (SPI + I²C), **two** EUSARTs, a Parallel
@@ -292,8 +298,12 @@ mechanism and silently writes nowhere (see §16).
 
 ## 17. Device selection
 
-`PIC18F6520` is the only variant. The build driver emits `-DPIC18F6520`;
-`pic18f6520_hal.h` defaults to it when nothing is defined.
+Eleven variants (§1 table). The build driver emits `-D` for the part
+being built (`-DPIC18F6620`, `-DPIC18F8585`, ...);
+`pic18f6520_hal.h` defaults to `PIC18F6520` when nothing is defined
+and rejects more than one device define. The per-part capability
+macros (`PIC18F6520_FAMILY_*`, `PIC18F6520_DEVICE_NAME`) follow the
+selected define.
 
 ## 18. The examples
 
