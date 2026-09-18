@@ -20,23 +20,19 @@
  *            driver's contract). Defaults to PIC18F6520 when none is set.
  * @{
 #if !defined(PIC18F6520) && !defined(PIC18LF6520) && \
-    !defined(PIC18F6620) && !defined(PIC18LF6620) && \
-    !defined(PIC18F6720) && !defined(PIC18LF6720) && \
-    !defined(PIC18F6585) && !defined(PIC18LF6585) && \
-    !defined(PIC18F6680) && !defined(PIC18LF6680) && \
-    !defined(PIC18F8525) && !defined(PIC18LF8525) && \
-    !defined(PIC18F8585) && !defined(PIC18LF8585) && \
-    !defined(PIC18F8621) && !defined(PIC18LF8621) && \
-    !defined(PIC18F8680) && !defined(PIC18LF8680) && \
-    !defined(PIC18F6525) && !defined(PIC18LF6525)
+    !defined(PIC18F6620) && !defined(PIC18LF6620) && !defined(PIC18F6720) && !defined(PIC18LF6720) && \
+    !defined(PIC18F6585) && !defined(PIC18LF6585) && !defined(PIC18F6680) && !defined(PIC18LF6680) && \
+    !defined(PIC18F8525) && !defined(PIC18LF8525) && !defined(PIC18F8585) && !defined(PIC18LF8585) && \
+    !defined(PIC18F8621) && !defined(PIC18LF8621) && !defined(PIC18F8680) && !defined(PIC18LF8680) && \
+    !defined(PIC18F6525) && !defined(PIC18LF6525) && !defined(PIC18F6621) && !defined(PIC18LF6621)
 #define PIC18F6520   1
 #endif
 
 #if defined(PIC18F6520) + defined(PIC18F6620) + defined(PIC18F6720) + \
     defined(PIC18F6585) + defined(PIC18F6680) + defined(PIC18F8525) + \
     defined(PIC18F8585) + defined(PIC18F8621) + defined(PIC18F8680) + \
-    defined(PIC18F6525) > 1
-#error "Define exactly one of PIC18F6520 / PIC18F6620 / PIC18F6720 / PIC18F6585 / PIC18F6680 / PIC18F8525 / PIC18F8585 / PIC18F8621 / PIC18F8680 / PIC18F6525."
+    defined(PIC18F6525) + defined(PIC18F6621) > 1
+#error "Define exactly one of PIC18F6520 / PIC18F6620 / PIC18F6720 / PIC18F6585 / PIC18F6680 / PIC18F8525 / PIC18F8585 / PIC18F8621 / PIC18F8680 / PIC18F6525 / PIC18F6621."
 #endif
 /** @} */
 
@@ -197,6 +193,21 @@
 #define PIC18F6520_FAMILY_HAS_USB        0
 #define PIC18F6520_FAMILY_HAS_CAN        0
 #define PIC18F6520_DEVICE_NAME           "PIC18F6525"
+#elif defined(PIC18F6621)
+#define PIC18F6520_FAMILY_FLASH_BYTES    65536U  /**< 64 KB (DFP EDC CodeSector, 32768 words). */
+#define PIC18F6520_FAMILY_FLASH_INSTR    32768U
+#define PIC18F6520_FAMILY_RAM_BYTES      3824U   /**< 0x0010-0x0EFF, same span math as the 6620. */
+#define PIC18F6520_FAMILY_EEPROM_B       1024U   /**< 1 KB (DFP EDC EEDataSector). */
+#define PIC18F6520_FAMILY_IO_PINS        53U     /* PORTA-G digital I/O, same pinout as the 6525. */
+#define PIC18F6520_FAMILY_ADC_CH         12U     /* AN0-11, same as the 6525. */
+#define PIC18F6520_FAMILY_HAS_PORTD      1
+#define PIC18F6520_FAMILY_HAS_PORTE      1
+#define PIC18F6520_FAMILY_HAS_PORTH      0   /* No PORTH/J SFRs on 64-pin parts. */
+#define PIC18F6520_FAMILY_HAS_PORTJ      0
+#define PIC18F6520_FAMILY_HAS_SPP        0
+#define PIC18F6520_FAMILY_HAS_USB        0
+#define PIC18F6520_FAMILY_HAS_CAN        0
+#define PIC18F6520_DEVICE_NAME           "PIC18F6621"
 #endif
 /**
  * Family-neutral aliases of the capability macros above, so family-agnostic
