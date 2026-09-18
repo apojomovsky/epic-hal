@@ -363,18 +363,34 @@ def _part_define(mcu: str) -> str:
 def parse_memory_summary(log: str):
     """Pull flash and RAM usage out of XC8's Memory Summary.
 
-    XC8 reports Program space in words and Data space in bytes, each with a
-    hex total: `Program space used 102Ch (4140) of 2000h words` and
-    `Data space used 5Bh (91) of 170h bytes`. The paren number is the used
-    amount in the line's own unit, so flash is words, RAM is bytes.
+    XC8 reports Data space in bytes, always: `Data space used 5Bh (91) of
+    170h bytes`. Program space's *unit* depends on the family's program
+    memory addressing: word-addressed parts (PIC10/12/14/16) report
+    `Program space used 102Ch (4140) of 2000h words`; byte-addressed parts
+    (PIC18, 2 bytes per 16-bit instruction word) report the same shape
+    with `bytes` instead of `words`, e.g. `used 46D8h (18136) of 8000h
+    bytes`. This function always returns flash in *words* regardless of
+    which unit XC8 printed, halving a `bytes`-labeled figure -- so a
+    caller never needs to know which family it built for.
     """
-    flash = re.search(r"Program space\s+used\s+\S+\s+\(\s*(\d+)\)\s+of\s+(\S+)h\s+words", log)
+    flash_words_form = re.search(
+        r"Program space\s+used\s+\S+\s+\(\s*(\d+)\)\s+of\s+(\S+)h\s+words", log
+    )
+    flash_bytes_form = re.search(
+        r"Program space\s+used\s+\S+\s+\(\s*(\d+)\)\s+of\s+(\S+)h\s+bytes", log
+    )
     ram = re.search(r"Data space\s+used\s+\S+\s+\(\s*(\d+)\)\s+of\s+(\S+)h\s+bytes", log)
-    if not flash or not ram:
+    if not ram or not (flash_words_form or flash_bytes_form):
         return None
+    if flash_words_form:
+        flash_words = int(flash_words_form.group(1))
+        flash_total_words = int(flash_words_form.group(2), 16)
+    else:
+        flash_words = int(flash_bytes_form.group(1)) // 2
+        flash_total_words = int(flash_bytes_form.group(2), 16) // 2
     return {
-        "flash_words": int(flash.group(1)),
-        "flash_total_words": int(flash.group(2), 16),
+        "flash_words": flash_words,
+        "flash_total_words": flash_total_words,
         "ram_bytes": int(ram.group(1)),
         "ram_total_bytes": int(ram.group(2), 16),
     }
