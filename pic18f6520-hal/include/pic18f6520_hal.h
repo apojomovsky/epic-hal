@@ -27,14 +27,16 @@
     !defined(PIC18F8525) && !defined(PIC18LF8525) && \
     !defined(PIC18F8585) && !defined(PIC18LF8585) && \
     !defined(PIC18F8621) && !defined(PIC18LF8621) && \
-    !defined(PIC18F8680) && !defined(PIC18LF8680)
+    !defined(PIC18F8680) && !defined(PIC18LF8680) && \
+    !defined(PIC18F6525) && !defined(PIC18LF6525)
 #define PIC18F6520   1
 #endif
 
 #if defined(PIC18F6520) + defined(PIC18F6620) + defined(PIC18F6720) + \
     defined(PIC18F6585) + defined(PIC18F6680) + defined(PIC18F8525) + \
-    defined(PIC18F8585) + defined(PIC18F8621) + defined(PIC18F8680) > 1
-#error "Define exactly one of PIC18F6520 / PIC18F6620 / PIC18F6720 / PIC18F6585 / PIC18F6680 / PIC18F8525 / PIC18F8585 / PIC18F8621 / PIC18F8680."
+    defined(PIC18F8585) + defined(PIC18F8621) + defined(PIC18F8680) + \
+    defined(PIC18F6525) > 1
+#error "Define exactly one of PIC18F6520 / PIC18F6620 / PIC18F6720 / PIC18F6585 / PIC18F6680 / PIC18F8525 / PIC18F8585 / PIC18F8621 / PIC18F8680 / PIC18F6525."
 #endif
 /** @} */
 
@@ -180,6 +182,21 @@
 #define PIC18F6520_FAMILY_HAS_USB        0
 #define PIC18F6520_FAMILY_HAS_CAN        1   /* ECAN module, same as the 8585. */
 #define PIC18F6520_DEVICE_NAME           "PIC18F8680"
+#elif defined(PIC18F6525)
+#define PIC18F6520_FAMILY_FLASH_BYTES    49152U  /**< 48 KB (DFP EDC CodeSector, 24576 words). */
+#define PIC18F6520_FAMILY_FLASH_INSTR    24576U
+#define PIC18F6520_FAMILY_RAM_BYTES      3824U   /**< 0x0010-0x0EFF, same span math as the 6620. */
+#define PIC18F6520_FAMILY_EEPROM_B       1024U   /**< 1 KB (DFP EDC EEDataSector). */
+#define PIC18F6520_FAMILY_IO_PINS        53U     /* PORTA-G digital I/O (DFP EDC port pins). */
+#define PIC18F6520_FAMILY_ADC_CH         12U     /* AN0-11 (DFP EDC pin functions). */
+#define PIC18F6520_FAMILY_HAS_PORTD      1
+#define PIC18F6520_FAMILY_HAS_PORTE      1
+#define PIC18F6520_FAMILY_HAS_PORTH      0   /* No PORTH/J SFRs on 64-pin parts. */
+#define PIC18F6520_FAMILY_HAS_PORTJ      0
+#define PIC18F6520_FAMILY_HAS_SPP        0
+#define PIC18F6520_FAMILY_HAS_USB        0
+#define PIC18F6520_FAMILY_HAS_CAN        0
+#define PIC18F6520_DEVICE_NAME           "PIC18F6525"
 #endif
 /**
  * Family-neutral aliases of the capability macros above, so family-agnostic

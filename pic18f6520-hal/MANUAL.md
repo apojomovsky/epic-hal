@@ -43,7 +43,7 @@ expect them here.
 
 ## 1. What this is
 
-Nine parts (DS39609B for the 6520 line, DS39661 for ECAN, DFP EDC
+Ten parts (DS39609B for the 6520 line, DS39661 for ECAN, DFP EDC
 for the rest):
 
 | Part      | Pins | Flash  | RAM    | EEPROM | I/O | ADC ch | CCP |
@@ -57,6 +57,7 @@ for the rest):
 | 18F8585   | 80   | 48 KB  | 3312 B | 1 KB   | 69  | 16     | 2   |
 | 18F8621   | 80   | 64 KB  | 3824 B | 1 KB   | 69  | 16     | 5   |
 | 18F8680   | 80   | 64 KB  | 3312 B | 1 KB   | 69  | 16     | 2   |
+| 18F6525   | 64   | 48 KB  | 3824 B | 1 KB   | 53  | 12     | 5   |
 (verified against the DFP EDC, which differs only in the memory
 extents and one CONFIG3H field, T1OSCMX, absent on the 6620). The
 6720 doubles the flash again on the same RAM map, adding the CP4-CP7,
@@ -73,6 +74,9 @@ The 8585 is the 8525's ECAN sibling: the 80-pin map with CCP1-2, a
 single EUSART, no TMR4, and the ECAN module (no driver yet).
 The 8621 is the 8525's 64 KB sibling with the same 80-pin map.
 The 8680 is the 8585's 64 KB sibling with the same ECAN 80-pin shape.
+The 6525 is the 64-pin 48 KB full-map part: CCP1-5, EUSART1/2 and
+TMR4 at the same addresses, CCP2MX/MCLRE config vocabulary, and the
+48 KB code-protect shape (CP0-CP2, no CP3).
 
 64-pin TQFP: full PORTA-G I/O (7 ports, DS39609B Table 1-1), 12-channel
 10-bit A/D, five CCP modules, MSSP (SPI + I²C), **two** EUSARTs, a Parallel

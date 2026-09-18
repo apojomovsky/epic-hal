@@ -70,6 +70,7 @@ FAMILIES = {
             ("18F8585", "Microchip.PIC18Fxxxx_DFP", "pic18f8585.h"),
             ("18F8621", "Microchip.PIC18Fxxxx_DFP", "pic18f8621.h"),
             ("18F8680", "Microchip.PIC18Fxxxx_DFP", "pic18f8680.h"),
+            ("18F6525", "Microchip.PIC18Fxxxx_DFP", "pic18f6525.h"),
             ("18F6520", "Microchip.PIC18Fxxxx_DFP", "pic18f6520.h"),
         ],
     ),
