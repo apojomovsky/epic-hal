@@ -435,6 +435,29 @@ class TestResolution(unittest.TestCase):
         sim_pos = sim.index("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c")
         self.assertEqual(target_pos, sim_pos)
 
+    def test_epic_cc_sim_variant_swaps_the_harness_source(self):
+        # The mdb gate under epic-cc (epic-taskmgr's, epic-hal#236) needs
+        # the sim variant's harness too, not the family slice's no-op
+        # target harness.
+        srcs = self.m.sources_for("epic-tick", "16F877A",
+                                  variant="sim", toolchain="epic-cc")
+        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
+        self.assertNotIn("epic-common/src/core/epic_harness_target.c", srcs)
+
+    def test_epic_cc_sim_variant_keeps_the_harness_position(self):
+        sim = self.m.sources_for("epic-tick", "16F877A",
+                                 variant="sim", toolchain="epic-cc")
+        target = self.m.sources_for("epic-tick", "16F877A",
+                                    toolchain="epic-cc")
+        self.assertEqual(target.index("epic-common/src/core/epic_harness_target.c"),
+                         sim.index("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"))
+
+    def test_epic_cc_target_variant_keeps_the_family_harness(self):
+        srcs = self.m.sources_for("epic-tick", "16F877A",
+                                  variant="target", toolchain="epic-cc")
+        self.assertIn("epic-common/src/core/epic_harness_target.c", srcs)
+        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
+
     def test_sources_for_sim_variant_reuses_example_sources_when_no_override(self):
         sim = self.m.sources_for("epic-tick", "16F877A", variant="sim")
         self.assertIn("epic-tick/examples/example_tick.c", sim)
