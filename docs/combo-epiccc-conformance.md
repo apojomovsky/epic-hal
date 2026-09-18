@@ -41,17 +41,22 @@ compiler lowering, not in the combo sources themselves.
 
 | Combo | XC8 build | XC8 gate | epic-cc build | epic-cc gate | XC8 RAM | XC8 flash | epic-cc RAM | Notes |
 |---|---|---|---|---|---|---|---|---|
-| combo-eeprom-isr | PASS | PASS | PASS | FAIL (epic-cc#463) | 214 | 5649 | 179 | all five PASS builds verified 2026-09-18 on the epic-cc#464 driver (fix/462 branch, not yet on master); gate hangs on the first EE/TMR0 interrupt (epic-cc#463) |
-| combo-lcd-tick | PASS | PASS | PASS | FAIL (epic-cc#463) | 436 | 10415 | 434 | same driver as above; gate hangs on the first tick interrupt (epic-cc#463) |
-| combo-modbus-full | PASS | PASS | PASS | FAIL (epic-cc#463) | 618 | 16370 | 867 | same driver as above; gate hangs on the first tick/USART interrupt (epic-cc#463) |
-| combo-taskmgr-serial | PASS | PASS | PASS | FAIL (epic-cc#463) | 478 | 10919 | 506 | same driver as above (the named-entry panic reported here on Sep 18 was a stale driver binary, see epic-hal#240; the i1 flag-store gap behind the next panic is epic-cc#462, fix open as epic-cc#464); gate hangs on the first TMR0 interrupt (epic-cc#463) |
-| combo-tick-settings | PASS | PASS | PASS | FAIL (epic-cc#463) | 282 | 7927 | 748 | same driver as above; gate hangs on the first TMR2 tick interrupt (epic-cc#463) |
+| combo-eeprom-isr | PASS | PASS | PASS | FAIL (epic-cc#467) | 214 | 5649 | 179 | epic-cc#463's real-ISR frame-collision hang is fixed (epic-cc#466); gate still doesn't reach the report, tracked as epic-cc#467 |
+| combo-lcd-tick | PASS | PASS | PASS | FAIL | 436 | 10415 | 434 | epic-cc#463 fixed (epic-cc#466): the gate now runs to completion instead of hanging, but fails its own content checks (`F01.F03.F07`), a separate pre-existing bug the hang was masking; not yet filed |
+| combo-modbus-full | PASS | PASS | PASS | FAIL (epic-cc#467) | 618 | 16370 | 867 | epic-cc#463 fixed (epic-cc#466); gate still doesn't reach the report, tracked as epic-cc#467 |
+| combo-taskmgr-serial | PASS | PASS | PASS | FAIL (epic-cc#467) | 478 | 10919 | 506 | epic-cc#463 fixed (epic-cc#466) (the named-entry panic reported here on Sep 18 was a stale driver binary, see epic-hal#240; the i1 flag-store gap behind the next panic was epic-cc#462, fixed by epic-cc#464); gate still doesn't reach the report, tracked as epic-cc#467 |
+| combo-tick-settings | PASS | PASS | PASS | FAIL (epic-cc#467) | 282 | 7927 | 748 | epic-cc#463 fixed (epic-cc#466); gate still doesn't reach the report, tracked as epic-cc#467 |
 
 The five PIC18 rows were measured 2026-09-18 on the epic-cc#464 driver
 against the epic-hal#242 stack (family default carrying timer0.c and the
 `pic18_irq_dispatch_epiccc_tick.c` tier per #236, and the epic-cc sim
 path swapping in the sim variant's mdb harness); both are in review, not
 on master, so these rows are not reproducible from epic-cc master alone.
+The epic-cc gate column was re-measured the same day against the
+epic-cc#466 driver (epic-cc#463's fix, still on its own branch, not on
+epic-cc master either): the real-hardware-ISR hang itself is gone for all
+five combos, but only `combo-lcd-tick` now reaches the harness's report;
+the other four hit a distinct, narrower gap tracked as epic-cc#467.
 epic-taskmgr's own epic-cc target build links clean on the same stack
 (392/2048 bytes RAM), and its `tests/sim_taskmgr.c` mdb gate passes
 under XC8; its epic-cc gate is blocked by the same #463 hang. PIC18 has
