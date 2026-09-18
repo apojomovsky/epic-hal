@@ -74,6 +74,10 @@ static uint16_t g_adc_value;
 /* Event queue                                                         */
 /* ------------------------------------------------------------------ */
 
+/**
+ * @brief Queue a button event (small ring, drops silently if full).
+ * @param ev the event to queue
+ */
 void menu_demo_push_event(menu_event_t ev)
 {
     uint8_t next = (uint8_t)((g_event_head + 1U) % EVENT_RING_SZ);

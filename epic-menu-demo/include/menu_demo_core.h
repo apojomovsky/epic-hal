@@ -1,11 +1,9 @@
 /*
- * Shared application core for the PIC18F4550 menu demo: a 3-screen
- * LCD control panel driven by epic-taskmgr's cooperative scheduler.
- * One core, two entry points (examples/example_menu_demo.c for real
- * hardware, tests/sim_menu_demo.c for the mdb sim gate) so both
- * toolchains exercise byte-identical application logic; only the
- * button source differs (real RB-change IRQ vs a scripted sim
- * stimulus), via menu_demo_push_event.
+ * Shared application core for the PIC18F4550 menu demo: a 3-screen LCD
+ * control panel driven by epic-taskmgr. One core, two entry points
+ * (examples/example_menu_demo.c real hardware, tests/sim_menu_demo.c
+ * the mdb gate); only the button source (real RB-change IRQ vs a
+ * scripted sim stimulus, via menu_demo_push_event) differs.
  */
 
 #ifndef MENU_DEMO_CORE_H
@@ -46,22 +44,40 @@ void menu_demo_init(void);
  */
 void menu_demo_push_event(menu_event_t ev);
 
-/** @brief taskmgr task: sample the ADC, redraw if on the status screen. */
+/**
+ * @brief taskmgr task: sample the ADC, redraw if on the status screen.
+ * @param arg unused (epic_taskmgr_fn_t signature)
+ */
 void menu_demo_task_adc(void *arg);
 
-/** @brief taskmgr task: drain queued button events, update state, redraw. */
+/**
+ * @brief taskmgr task: drain queued button events, update state, redraw.
+ * @param arg unused (epic_taskmgr_fn_t signature)
+ */
 void menu_demo_task_ui(void *arg);
 
-/** @brief taskmgr task: autosave the brightness setting when dirty. */
+/**
+ * @brief taskmgr task: autosave the brightness setting when dirty.
+ * @param arg unused (epic_taskmgr_fn_t signature)
+ */
 void menu_demo_task_eeprom(void *arg);
 
-/** @brief taskmgr task: UART heartbeat line + PWM duty update. */
+/**
+ * @brief taskmgr task: UART heartbeat line + PWM duty update.
+ * @param arg unused (epic_taskmgr_fn_t signature)
+ */
 void menu_demo_task_heartbeat(void *arg);
 
-/* Introspection, for the sim oracle's cross-checks. */
-uint16_t      menu_demo_adc_value(void);
-uint8_t       menu_demo_brightness(void);
+/** @brief Latest ADC reading, for the sim oracle's cross-checks. */
+uint16_t menu_demo_adc_value(void);
+
+/** @brief Current brightness setting (0..10), for the sim oracle's cross-checks. */
+uint8_t menu_demo_brightness(void);
+
+/** @brief Current menu screen, for the sim oracle's cross-checks. */
 menu_screen_t menu_demo_screen(void);
-uint16_t      menu_demo_eeprom_writes(void);
+
+/** @brief Completed EEPROM write count, for the sim oracle's cross-checks. */
+uint16_t menu_demo_eeprom_writes(void);
 
 #endif /* MENU_DEMO_CORE_H */

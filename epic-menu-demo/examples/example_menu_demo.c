@@ -49,6 +49,10 @@ static void on_button_change(uint8_t portb_value)
     }
 }
 
+/**
+ * @brief Init the demo and run the cooperative scheduler forever.
+ * @return never returns
+ */
 int main(void)
 {
     menu_demo_init();

@@ -4231,15 +4231,12 @@ sources     = [
 ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# epic-cc slice: this module's own peripheral mix (ADC, CCP/PWM, EEPROM,
-# TIMER2) is wider than the family default (HAL-3), so it gets its own
-# override rather than growing the shared family slice for every other
-# consumer (the epic-hal#237 lesson: a shared slice change must not
-# force-link peripherals other consumers don't use). The mdb harness is
-# hardcoded, matching every epic-combo-* module's override: this repo
-# only ever gates the epic-cc path via `--variant sim`
-# (docs/combo-epiccc-conformance.md's Method), never a real-target
-# epic-cc artifact, so there is no swap to preserve here.
+# epic-cc slice: this module's peripheral mix (ADC, CCP/PWM, EEPROM,
+# TIMER2) is wider than the family default, so it gets its own override
+# rather than growing the shared slice for every other consumer (the
+# epic-hal#237 lesson). The mdb harness is hardcoded, matching every
+# epic-combo-* module: this repo only ever gates epic-cc via
+# `--variant sim`, never a real-target artifact, so no swap is needed.
 [modules.epic-menu-demo.epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
