@@ -19,21 +19,21 @@
  * @brief     Select the target device via a -D define (the build
  *            driver's contract). Defaults to PIC18F6520 when none is set.
  * @{
- */
 #if !defined(PIC18F6520) && !defined(PIC18LF6520) && \
     !defined(PIC18F6620) && !defined(PIC18LF6620) && \
     !defined(PIC18F6720) && !defined(PIC18LF6720) && \
     !defined(PIC18F6585) && !defined(PIC18LF6585) && \
     !defined(PIC18F6680) && !defined(PIC18LF6680) && \
-    !defined(PIC18F8525) && !defined(PIC18LF8525)
+    !defined(PIC18F8525) && !defined(PIC18LF8525) && \
+    !defined(PIC18F8585) && !defined(PIC18LF8585)
 #define PIC18F6520   1
 #endif
 
 #if defined(PIC18F6520) + defined(PIC18F6620) + defined(PIC18F6720) + \
-    defined(PIC18F6585) + defined(PIC18F6680) + defined(PIC18F8525) > 1
-#error "Define exactly one of PIC18F6520 / PIC18F6620 / PIC18F6720 / PIC18F6585 / PIC18F6680 / PIC18F8525."
+    defined(PIC18F6585) + defined(PIC18F6680) + defined(PIC18F8525) + \
+    defined(PIC18F8585) > 1
+#error "Define exactly one of PIC18F6520 / PIC18F6620 / PIC18F6720 / PIC18F6585 / PIC18F6680 / PIC18F8525 / PIC18F8585."
 #endif
-/** @} */
 
 /**
  * @defgroup PIC18F6520_Capability Per-variant capability macros
@@ -132,8 +132,22 @@
 #define PIC18F6520_FAMILY_HAS_USB        0
 #define PIC18F6520_FAMILY_HAS_CAN        0
 #define PIC18F6520_DEVICE_NAME           "PIC18F8525"
+#elif defined(PIC18F8585)
+#define PIC18F6520_FAMILY_FLASH_BYTES    49152U  /**< 48 KB (DS39661 §4.0, 24576 words). */
+#define PIC18F6520_FAMILY_FLASH_INSTR    24576U
+#define PIC18F6520_FAMILY_RAM_BYTES      3312U   /**< 0x0010-0x0CFF, GPR banks 0-12 (DS39661 §4.0). */
+#define PIC18F6520_FAMILY_EEPROM_B       1024U   /**< 1 KB, same EEADRH shape as the 6585. */
+#define PIC18F6520_FAMILY_IO_PINS        69U     /* PORTA-J digital I/O, same pinout as the 8525. */
+#define PIC18F6520_FAMILY_ADC_CH         16U     /* AN0-15, same as the 8525. */
+#define PIC18F6520_FAMILY_HAS_PORTD      1
+#define PIC18F6520_FAMILY_HAS_PORTE      1
+#define PIC18F6520_FAMILY_HAS_PORTH      1   /* PORTH/J present; gpio driver covers A-G. */
+#define PIC18F6520_FAMILY_HAS_PORTJ      1
+#define PIC18F6520_FAMILY_HAS_SPP        0
+#define PIC18F6520_FAMILY_HAS_USB        0
+#define PIC18F6520_FAMILY_HAS_CAN        1   /* ECAN module, same as the 6585. */
+#define PIC18F6520_DEVICE_NAME           "PIC18F8585"
 #endif
-/** @} */
 /**
  * Family-neutral aliases of the capability macros above, so family-agnostic
  * consumers (e.g. the task manager) can scale without a family-specific

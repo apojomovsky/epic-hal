@@ -67,6 +67,7 @@ FAMILIES = {
             ("18F6585", "Microchip.PIC18Fxxxx_DFP", "pic18f6585.h"),
             ("18F6680", "Microchip.PIC18Fxxxx_DFP", "pic18f6680.h"),
             ("18F8525", "Microchip.PIC18Fxxxx_DFP", "pic18f8525.h"),
+            ("18F8585", "Microchip.PIC18Fxxxx_DFP", "pic18f8585.h"),
             ("18F6520", "Microchip.PIC18Fxxxx_DFP", "pic18f6520.h"),
         ],
     ),
@@ -325,6 +326,11 @@ CONDITIONAL_REGS = {
                "CCPR4H", "CCPR4L", "CCPR5H", "CCPR5L", "PR4", "RCREG1",
                "RCREG2", "RCSTA1", "RCSTA2", "SPBRG1", "SPBRG2", "T4CON",
                "TMR4", "TXREG1", "TXREG2", "TXSTA1", "TXSTA2"},
+    # Same ECAN shape on the 80-pin parts (DS39661).
+    "18F8585": {"CCP3CON", "CCP4CON", "CCP5CON", "CCPR3H", "CCPR3L",
+               "CCPR4H", "CCPR4L", "CCPR5H", "CCPR5L", "PR4", "RCREG1",
+               "RCREG2", "RCSTA1", "RCSTA2", "SPBRG1", "SPBRG2", "T4CON",
+               "TMR4", "TXREG1", "TXREG2", "TXSTA1", "TXSTA2"},
 }
 CONDITIONAL_BITS = {
     "16F870": {("PIE1", "PSPIE"), ("PIR1", "PSPIF"),
@@ -377,6 +383,13 @@ CONDITIONAL_BITS = {
                 ("PIR3", "RC2IF"), ("PIR3", "TMR4IF"), ("PIR3", "TX2IF")},
     # Same ECAN shape as the 6585 (64 KB flash sibling).
     "18F6680": {("IPR3", "CCP3IP"), ("IPR3", "CCP4IP"), ("IPR3", "CCP5IP"),
+                ("IPR3", "RC2IP"), ("IPR3", "TMR4IP"), ("IPR3", "TX2IP"),
+                ("PIE3", "CCP3IE"), ("PIE3", "CCP4IE"), ("PIE3", "CCP5IE"),
+                ("PIE3", "RC2IE"), ("PIE3", "TMR4IE"), ("PIE3", "TX2IE"),
+                ("PIR3", "CCP3IF"), ("PIR3", "CCP4IF"), ("PIR3", "CCP5IF"),
+                ("PIR3", "RC2IF"), ("PIR3", "TMR4IF"), ("PIR3", "TX2IF")},
+    # Same ECAN shape on the 80-pin parts (DS39661).
+    "18F8585": {("IPR3", "CCP3IP"), ("IPR3", "CCP4IP"), ("IPR3", "CCP5IP"),
                 ("IPR3", "RC2IP"), ("IPR3", "TMR4IP"), ("IPR3", "TX2IP"),
                 ("PIE3", "CCP3IE"), ("PIE3", "CCP4IE"), ("PIE3", "CCP5IE"),
                 ("PIE3", "RC2IE"), ("PIE3", "TMR4IE"), ("PIE3", "TX2IE"),

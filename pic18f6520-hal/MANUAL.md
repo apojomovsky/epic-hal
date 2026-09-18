@@ -43,8 +43,8 @@ expect them here.
 
 ## 1. What this is
 
-Five parts (DS39609B for the 6520 line, DS39661 for ECAN, DFP EDC
-for the 8525's own facts):
+Seven parts (DS39609B for the 6520 line, DS39661 for ECAN, DFP EDC
+for the rest):
 
 | Part      | Pins | Flash  | RAM    | EEPROM | I/O | ADC ch | CCP |
 |-----------|------|--------|--------|--------|-----|--------|-----|
@@ -54,6 +54,8 @@ for the 8525's own facts):
 | 18F6585   | 64   | 48 KB  | 3312 B | 1 KB   | 53  | 12     | 2   |
 | 18F6680   | 64   | 64 KB  | 3312 B | 1 KB   | 53  | 12     | 2   |
 | 18F8525   | 80   | 48 KB  | 3824 B | 1 KB   | 69  | 16     | 5   |
+| 18F8585   | 80   | 48 KB  | 3312 B | 1 KB   | 69  | 16     | 2   |
+
 The 6620 is a size bump of the 6520 on the same die line: double the
 flash and RAM, identical pinout, peripheral set, and SFR addresses
 (verified against the DFP EDC, which differs only in the memory
@@ -68,6 +70,8 @@ The 6680 is the 6585's 64 KB sibling with the same ECAN shape.
 The 8525 is the first 80-pin part: PORTH/J join the map (69 I/O, 16
 ADC channels) at the same addresses for PORTA-G and every driven
 peripheral; the gpio driver covers A-G, PORTH/J have no driver yet.
+The 8585 is the 8525's ECAN sibling: the 80-pin map with CCP1-2, a
+single EUSART, no TMR4, and the ECAN module (no driver yet).
 
 64-pin TQFP: full PORTA-G I/O (7 ports, DS39609B Table 1-1), 12-channel
 10-bit A/D, five CCP modules, MSSP (SPI + I²C), **two** EUSARTs, a Parallel
