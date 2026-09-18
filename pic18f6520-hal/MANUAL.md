@@ -43,20 +43,24 @@ expect them here.
 
 ## 1. What this is
 
-Three parts, DS39609B:
+Four parts across two datasheets (DS39609B for the 6520 line, DS39661 for ECAN):
 
 | Part      | Pins | Flash  | RAM    | EEPROM | I/O | ADC ch | CCP |
 |-----------|------|--------|--------|--------|-----|--------|-----|
 | 18F6520   | 64   | 32 KB  | 2032 B | 1 KB   | 52  | 12     | 5   |
 | 18F6620   | 64   | 64 KB  | 3824 B | 1 KB   | 52  | 12     | 5   |
 | 18F6720   | 64   | 128 KB | 3824 B | 1 KB   | 52  | 12     | 5   |
+| 18F6585   | 64   | 48 KB  | 3312 B | 1 KB   | 53  | 12     | 2   |
 
 The 6620 is a size bump of the 6520 on the same die line: double the
 flash and RAM, identical pinout, peripheral set, and SFR addresses
 (verified against the DFP EDC, which differs only in the memory
 extents and one CONFIG3H field, T1OSCMX, absent on the 6620). The
 6720 doubles the flash again on the same RAM map, adding the CP4-CP7,
-EBTR4-7, and WRT4-7 code-protect fields (8 blocks total).
+EBTR4-7, and WRT4-7 code-protect fields (8 blocks total). The 6585 is
+the ECAN-line sibling: CCP1-2 only, a single EUSART (unsuffixed
+TXSTA/RCSTA/SPBRG), no TMR4, and the ECAN module itself (no driver
+yet); everything else matches the 6520's map at the same addresses.
 
 64-pin TQFP: full PORTA-G I/O (7 ports, DS39609B Table 1-1), 12-channel
 10-bit A/D, five CCP modules, MSSP (SPI + I²C), **two** EUSARTs, a Parallel
