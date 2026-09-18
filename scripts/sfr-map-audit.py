@@ -65,6 +65,7 @@ FAMILIES = {
             ("18F6620", "Microchip.PIC18Fxxxx_DFP", "pic18f6620.h"),
             ("18F6720", "Microchip.PIC18Fxxxx_DFP", "pic18f6720.h"),
             ("18F6585", "Microchip.PIC18Fxxxx_DFP", "pic18f6585.h"),
+            ("18F6680", "Microchip.PIC18Fxxxx_DFP", "pic18f6680.h"),
             ("18F6520", "Microchip.PIC18Fxxxx_DFP", "pic18f6520.h"),
         ],
     ),
@@ -318,6 +319,11 @@ CONDITIONAL_REGS = {
                "CCPR4H", "CCPR4L", "CCPR5H", "CCPR5L", "PR4", "RCREG1",
                "RCREG2", "RCSTA1", "RCSTA2", "SPBRG1", "SPBRG2", "T4CON",
                "TMR4", "TXREG1", "TXREG2", "TXSTA1", "TXSTA2"},
+    # Same ECAN shape as the 6585 (64 KB flash sibling).
+    "18F6680": {"CCP3CON", "CCP4CON", "CCP5CON", "CCPR3H", "CCPR3L",
+               "CCPR4H", "CCPR4L", "CCPR5H", "CCPR5L", "PR4", "RCREG1",
+               "RCREG2", "RCSTA1", "RCSTA2", "SPBRG1", "SPBRG2", "T4CON",
+               "TMR4", "TXREG1", "TXREG2", "TXSTA1", "TXSTA2"},
 }
 CONDITIONAL_BITS = {
     "16F870": {("PIE1", "PSPIE"), ("PIR1", "PSPIF"),
@@ -368,7 +374,13 @@ CONDITIONAL_BITS = {
                 ("PIE3", "RC2IE"), ("PIE3", "TMR4IE"), ("PIE3", "TX2IE"),
                 ("PIR3", "CCP3IF"), ("PIR3", "CCP4IF"), ("PIR3", "CCP5IF"),
                 ("PIR3", "RC2IF"), ("PIR3", "TMR4IF"), ("PIR3", "TX2IF")},
-    # 88X 28-pin parts (882/883/886): ANSEL ANS5/ANS6/ANS7 are
+    # Same ECAN shape as the 6585 (64 KB flash sibling).
+    "18F6680": {("IPR3", "CCP3IP"), ("IPR3", "CCP4IP"), ("IPR3", "CCP5IP"),
+                ("IPR3", "RC2IP"), ("IPR3", "TMR4IP"), ("IPR3", "TX2IP"),
+                ("PIE3", "CCP3IE"), ("PIE3", "CCP4IE"), ("PIE3", "CCP5IE"),
+                ("PIE3", "RC2IE"), ("PIE3", "TMR4IE"), ("PIE3", "TX2IE"),
+                ("PIR3", "CCP3IF"), ("PIR3", "CCP4IF"), ("PIR3", "CCP5IF"),
+                ("PIR3", "RC2IF"), ("PIR3", "TMR4IF"), ("PIR3", "TX2IF")},
     # unimplemented on the 11-channel ADC (present on 884/887).
     "16F882": {("ANSEL", "ANS5"), ("ANSEL", "ANS6"), ("ANSEL", "ANS7")},
     "16F883": {("ANSEL", "ANS5"), ("ANSEL", "ANS6"), ("ANSEL", "ANS7")},

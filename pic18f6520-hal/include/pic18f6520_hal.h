@@ -22,13 +22,14 @@
 #if !defined(PIC18F6520) && !defined(PIC18LF6520) && \
     !defined(PIC18F6620) && !defined(PIC18LF6620) && \
     !defined(PIC18F6720) && !defined(PIC18LF6720) && \
-    !defined(PIC18F6585) && !defined(PIC18LF6585)
+    !defined(PIC18F6585) && !defined(PIC18LF6585) && \
+    !defined(PIC18F6680) && !defined(PIC18LF6680)
 #define PIC18F6520   1
 #endif
 
 #if defined(PIC18F6520) + defined(PIC18F6620) + defined(PIC18F6720) + \
-    defined(PIC18F6585) > 1
-#error "Define exactly one of PIC18F6520 / PIC18F6620 / PIC18F6720 / PIC18F6585."
+    defined(PIC18F6585) + defined(PIC18F6680) > 1
+#error "Define exactly one of PIC18F6520 / PIC18F6620 / PIC18F6720 / PIC18F6585 / PIC18F6680."
 #endif
 /** @} */
 
@@ -91,6 +92,19 @@
 #define PIC18F6520_FAMILY_HAS_USB        0
 #define PIC18F6520_FAMILY_HAS_CAN        1   /* ECAN module (DS39661 §22.0); no driver yet. */
 #define PIC18F6520_DEVICE_NAME           "PIC18F6585"
+#elif defined(PIC18F6680)
+#define PIC18F6520_FAMILY_FLASH_BYTES    65536U  /**< 64 KB (DS39661 §4.0, 32768 words). */
+#define PIC18F6520_FAMILY_FLASH_INSTR    32768U
+#define PIC18F6520_FAMILY_RAM_BYTES      3312U   /**< 0x0010-0x0CFF, GPR banks 0-12 (DS39661 §4.0). */
+#define PIC18F6520_FAMILY_EEPROM_B       1024U   /**< 1 KB, same EEADRH shape as the 6585. */
+#define PIC18F6520_FAMILY_IO_PINS        53U     /* PORTA-G digital I/O, same pinout as the 6585. */
+#define PIC18F6520_FAMILY_ADC_CH         12U     /* AN0-11, same as the 6585. */
+#define PIC18F6520_FAMILY_HAS_PORTD      1
+#define PIC18F6520_FAMILY_HAS_PORTE      1
+#define PIC18F6520_FAMILY_HAS_SPP        0
+#define PIC18F6520_FAMILY_HAS_USB        0
+#define PIC18F6520_FAMILY_HAS_CAN        1   /* ECAN module, same as the 6585. */
+#define PIC18F6520_DEVICE_NAME           "PIC18F6680"
 #endif
 /** @} */
 /**
