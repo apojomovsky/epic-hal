@@ -4244,6 +4244,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 [modules.epic-combo-taskmgr-serial.epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer0.c",
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer2.c",
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c",
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c",
