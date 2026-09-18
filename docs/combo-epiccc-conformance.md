@@ -1,6 +1,6 @@
 # Combo firmware headroom under epic-cc (HAL-3g, epic-hal#92)
 
-Status: 2026-08-27. The 13 `epic-combo-*` integration firmwares link
+Status: 2026-09-18 (PIC18 rows refreshed; the 877A table below is the 2026-08-27 baseline). The 13 `epic-combo-*` integration firmwares link
 several modules into one image, the whole-program overlay's real test.
 On the 877A the overlay must fit 368 bytes GPR; on the 4550 it has
 2048 bytes. This doc records which combos build and gate under epic-cc,
@@ -41,18 +41,22 @@ compiler lowering, not in the combo sources themselves.
 
 | Combo | XC8 build | XC8 gate | epic-cc build | epic-cc gate | XC8 RAM | XC8 flash | epic-cc RAM | Notes |
 |---|---|---|---|---|---|---|---|---|
-| combo-eeprom-isr | PASS | PASS | PASS | - | 214 | 5649 | - | builds clean on epic-cc ef2632b (verified 2026-09-17, was the first PIC18 combo probed, previously failing at the i64 gate) |
-| combo-lcd-tick | PASS | PASS | FAIL | - | 436 | 10415 | - | same reshapes applied (fail() static, literals via `EPIC_HARNESS_LOG_STATIC`); build not yet probed past the i64 gate |
-| combo-modbus-full | PASS | PASS | FAIL | - | 618 | 16370 | - | same |
-| combo-taskmgr-serial | PASS | PASS | FAIL | - | 478 | 10919 | - | wholeprog: undefined EPIC_TIMER0_* symbols, slice omits timer0.c (epic-hal#235); with the slice fix: `isel-pic18: block has no terminator`, named-entry panic, epic-cc#446 |
-| combo-tick-settings | PASS | PASS | PASS | - | 282 | 7927 | - | builds clean on epic-cc ef2632b (verified 2026-09-17) |
+| combo-eeprom-isr | PASS | PASS | PASS | FAIL (epic-cc#463) | 214 | 5649 | 179 | all five PASS builds verified 2026-09-18 on the epic-cc#464 driver (fix/462 branch, not yet on master); gate hangs on the first EE/TMR0 interrupt (epic-cc#463) |
+| combo-lcd-tick | PASS | PASS | PASS | FAIL (epic-cc#463) | 436 | 10415 | 434 | same driver as above; gate hangs on the first tick interrupt (epic-cc#463) |
+| combo-modbus-full | PASS | PASS | PASS | FAIL (epic-cc#463) | 618 | 16370 | 867 | same driver as above; gate hangs on the first tick/USART interrupt (epic-cc#463) |
+| combo-taskmgr-serial | PASS | PASS | PASS | FAIL (epic-cc#463) | 478 | 10919 | 506 | same driver as above (the named-entry panic reported here on Sep 18 was a stale driver binary, see epic-hal#240; the i1 flag-store gap behind the next panic is epic-cc#462, fix open as epic-cc#464); gate hangs on the first TMR0 interrupt (epic-cc#463) |
+| combo-tick-settings | PASS | PASS | PASS | FAIL (epic-cc#463) | 282 | 7927 | 748 | same driver as above; gate hangs on the first TMR2 tick interrupt (epic-cc#463) |
 
-Family `epiccc_sources` for PIC18Fxx5x is declared
-(`gpio+timer2+usart+eeprom+irq+wdt/vector/dispatch+harness`) and the
-`pic18_irq_dispatch_epiccc.c` tier (USART+TMR2+EE, same gating as the
-full fan-out) is added. PIC18 has 2048 bytes GPR, so fit is not the
-wall; the wall is codegen for `i64` and the still-unproven PIC18 isel
-paths for `eeprom`, `usart`, and `tick` under epic-cc.
+The five PIC18 rows were measured 2026-09-18 on the epic-cc#464 driver
+against the epic-hal#242 stack (family default carrying timer0.c and the
+`pic18_irq_dispatch_epiccc_tick.c` tier per #236, and the epic-cc sim
+path swapping in the sim variant's mdb harness); both are in review, not
+on master, so these rows are not reproducible from epic-cc master alone.
+epic-taskmgr's own epic-cc target build links clean on the same stack
+(392/2048 bytes RAM), and its `tests/sim_taskmgr.c` mdb gate passes
+under XC8; its epic-cc gate is blocked by the same #463 hang. PIC18 has
+2048 bytes GPR, so fit is not the wall; the wall is the tick ISR hang
+(epic-cc#463).
 
 ## What landed in this PR
 
@@ -88,16 +92,29 @@ paths for `eeprom`, `usart`, and `tick` under epic-cc.
   `irparse` array `alloca` / `i6` / `i64` type gaps, `legalize` memset
   dst / `llvm.umin/umax` gaps, `iselcore` harness pointer chain gap, and
   the 877A GPR bin-packing regression (tick-serial repros on current
-  `epic-cc:master` even before this PR's tiers). Each combo's Notes row
-  above names the first panic that blocks it.
+  `epic-cc:master` even before this PR's tiers). Each PIC16 combo's
+  Notes row above names the first panic that blocks it; the 2026-09-18
+  PIC18 refresh filed epic-cc#462 (i1 flag store/load), epic-cc#463
+  (tick ISR hang), and epic-hal#240 (stale cached driver), which the
+  Next steps section tracks.
 
 ## Next steps (not in this PR)
 
-- epic-cc: `alloca [N x i8]`, struct zero-init `llvm.memset` with typed
-  dst, `llvm.umin/umax`, `i64` on PIC18, and the harness `epic_harness_log`
-  pointer chain (or a `epic_harness_report` that never calls through a
-  const pointer at all).
-- Once a fix lands and the 13 `epiccc-build` invocations advance past the
-  first panic, re-run the mdb gates and fill the `epic-cc RAM` / `gate`
-  columns above; the XC8 `RAM` / `flash` columns are the headroom
-  baseline until then.
+- epic-cc#463: the tick ISR never returns under MPLAB SIM when the HAL
+  dispatch chain runs in ISR context, while the identical chain works
+  polled from main; this is the single remaining blocker for every
+  PIC18 `epic-cc gate` cell above. Isolation probes and state captures
+  are recorded in the issue.
+- epic-cc#462 (i1 flag store/load) is open with its fix in review as
+  epic-cc#464; all five build columns above depend on it. PIC14's
+  `isel` has the same assertion and the same gap, noted for parity, no
+  PIC16 combo reaches it today.
+- epic-hal#240: `epiccc-build` resolves whatever release driver last
+  landed in `~/.cache/epic-cc/target`; a driver even one commit behind
+  master reruns yesterday's compiler bugs under today's failure
+  signatures (that is how the named-entry panic masqueraded as a #446
+  recurrence). Needs a staleness guard or the documented shared-cache
+  plumbing restored.
+- Once epic-cc#463 lands, re-run the mdb gates and turn the five
+  `epic-cc gate` cells above green; the XC8 `RAM` / `flash` columns
+  remain the headroom baseline.
