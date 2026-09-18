@@ -41,11 +41,11 @@ compiler lowering, not in the combo sources themselves.
 
 | Combo | XC8 build | XC8 gate | epic-cc build | epic-cc gate | XC8 RAM | XC8 flash | epic-cc RAM | Notes |
 |---|---|---|---|---|---|---|---|---|
-| combo-eeprom-isr | PASS | PASS | FAIL | - | 214 | 5649 | - | `irparse: unsupported type "i64"`, PIC18 backend has no 64-bit lowering yet (first PIC18 combo probed) |
+| combo-eeprom-isr | PASS | PASS | PASS | - | 214 | 5649 | - | builds clean on epic-cc ef2632b (verified 2026-09-17, was the first PIC18 combo probed, previously failing at the i64 gate) |
 | combo-lcd-tick | PASS | PASS | FAIL | - | 436 | 10415 | - | same reshapes applied (fail() static, literals via `EPIC_HARNESS_LOG_STATIC`); build not yet probed past the i64 gate |
 | combo-modbus-full | PASS | PASS | FAIL | - | 618 | 16370 | - | same |
-| combo-taskmgr-serial | PASS | PASS | FAIL | - | 478 | 10919 | - | same |
-| combo-tick-settings | PASS | PASS | FAIL | - | 282 | 7927 | - | same |
+| combo-taskmgr-serial | PASS | PASS | FAIL | - | 478 | 10919 | - | wholeprog: undefined EPIC_TIMER0_* symbols, slice omits timer0.c (epic-hal#235); with the slice fix: `isel-pic18: block has no terminator`, named-entry panic, epic-cc#446 |
+| combo-tick-settings | PASS | PASS | PASS | - | 282 | 7927 | - | builds clean on epic-cc ef2632b (verified 2026-09-17) |
 
 Family `epiccc_sources` for PIC18Fxx5x is declared
 (`gpio+timer2+usart+eeprom+irq+wdt/vector/dispatch+harness`) and the
