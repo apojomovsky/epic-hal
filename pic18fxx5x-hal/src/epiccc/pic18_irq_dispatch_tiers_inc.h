@@ -1,14 +1,10 @@
-/* epic-cc dispatch tiers for PIC18Fxx5x: one shared body per module
- * class via EPICCC_IRQ_* gates, mirroring pic14-midrange-core's pattern
- * (pic14-midrange-core/src/epiccc/pic16_irq_dispatch_tiers_inc.h).
- * Only gated sources dispatch; a source left ungated is not in the
- * including tier's HAL subset and cannot vector (PIE off), so it needs
- * no clear scaffolding. Each tier is a tiny wrapper .c file that
- * #defines the gates it needs and #includes this header (see
- * pic18_irq_dispatch_epiccc.c / pic18_irq_dispatch_epiccc_tick.c) so a
- * combo's `epiccc_hal_sources_by_family` picks a tier by filename
- * without forcing every other tier's consumer to link unused
- * handlers. */
+/* epic-cc dispatch tiers for PIC18Fxx5x: one shared body via
+ * EPICCC_IRQ_* gates, mirroring pic14-midrange-core's
+ * pic16_irq_dispatch_tiers_inc.h. A gated-out source is not in the
+ * including tier's HAL subset and cannot vector (PIE off). Each tier
+ * is a thin .c wrapper that #defines its gates and #includes this
+ * header, so a combo picks a tier by filename without force-linking
+ * unused handlers into every other tier's consumer. */
 
 #include "core/pic18_irq.h"
 
