@@ -433,11 +433,13 @@ hal_sources = [
   "epic-common/src/core/epic_harness_target.c",
 ]
 harness_src = "epic-common/src/core/epic_harness_target.c"
-# The epic-cc conformant slice: gpio + timer0 + core + harness, the
-# blink minimum that fits the exemplar's 64 B RAM. The blink-tier
-# dispatch (not the shared epiccc one, which names Timer2/USART
-# flags this die lacks) keeps the slice linkable. Grows by adding
-# entries, never by editing the build driver.
+# The epic-cc conformant slice: gpio + timer0 + core + harness and the
+# shared dispatch, which compiles here because the PIR1 map names the
+# TMR1IF token its fan-out reads and the TMR2/CCP1/USART rows compile
+# out under their HAS_ guards (this die defines none of those tokens).
+# The EE row is per-part: PIR1-resident on the 2-bank shapes,
+# PIR2-resident on the 4-bank ones (the dispatch's default-on EE_PIR2
+# block). Grows by adding entries, never by editing the build driver.
 epiccc_sources = [
   "pic16f63x_67x_68x-hal/src/peripherals/pic16f63x_67x_68x_gpio.c",
   "pic14-midrange-core/src/peripherals/pic14_timer0.c",
@@ -446,7 +448,7 @@ epiccc_sources = [
   "pic14-midrange-core/src/core/pic14_wdt_sleep.c",
   "pic14-midrange-core/src/epiccc/pic14_wdt_sleep_epiccc.c",
   "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
-  "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_blink_epiccc.c",
+  "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_epiccc.c",
   "epic-common/src/core/epic_harness_target.c",
 ]
 
