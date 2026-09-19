@@ -617,6 +617,22 @@ Memory Summary:
     def test_returns_none_when_absent(self):
         self.assertIsNone(epic_build.parse_memory_summary("no summary here"))
 
+    # PIC18 (byte-addressed program memory, 2 bytes/instruction word)
+    # reports Program space in bytes, not words; the parser must halve
+    # it so callers always get words regardless of family.
+    BYTE_ADDRESSED_LOG = """
+18F4550 Memory Summary:
+    Program space        used  46D8h ( 18136) of  8000h bytes   ( 55.3%)
+    Data space           used   27Fh (   639) of   800h bytes   ( 31.2%)
+"""
+
+    def test_parses_byte_addressed_flash_as_words(self):
+        usage = epic_build.parse_memory_summary(self.BYTE_ADDRESSED_LOG)
+        self.assertEqual(usage["flash_words"], 18136 // 2)
+        self.assertEqual(usage["flash_total_words"], 0x8000 // 2)
+        self.assertEqual(usage["ram_bytes"], 639)
+        self.assertEqual(usage["ram_total_bytes"], 0x800)
+
 
 class TestXc8SizeBaseline(unittest.TestCase):
     """The one-command baseline script formats the Memory Summary into the

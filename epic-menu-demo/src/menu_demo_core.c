@@ -231,9 +231,25 @@ static void redraw(void)
 /** @brief Initialize the LCD, ADC, EEPROM-backed settings, and PWM. */
 void menu_demo_init(void)
 {
-    epic_lcd_ops_t ops;
+    /* static, not a stack local: epic_lcd_init stores &ops into global
+     * g_lcd, dereferenced by every later epic_lcd_* call, long after
+     * this function returns (a stack local here would dangle -- see
+     * docs/pic18f4550-menu-demo.md). ops_ctx stays a plain local: only
+     * its value, not its address, ever gets stored anywhere. */
+    static epic_lcd_ops_t ops;
     void *ops_ctx;
-    epic_lcd_config_t cfg = { .cols = 16U, .rows = 2U, .row_addr = { 0U } };
+    /* Field-by-field, not a partial `{ ..., .row_addr = {0U} }`
+     * aggregate literal: clang lowers the array's implied zero-fill to
+     * an `llvm.memset` intrinsic, which epic-cc's legalize pass does
+     * not yet support without a materialized destination address
+     * (epic-cc issue TBD). Unrolled scalar stores sidestep it. */
+    epic_lcd_config_t cfg;
+    cfg.cols = 16U;
+    cfg.rows = 2U;
+    cfg.row_addr[0] = 0U;
+    cfg.row_addr[1] = 0U;
+    cfg.row_addr[2] = 0U;
+    cfg.row_addr[3] = 0U;
 
     epic_serial_init(FOSC_HZ, 9600U);
 
@@ -265,11 +281,20 @@ void menu_demo_init(void)
     EPIC_TIMER2_Init(&t2);
     EPIC_TIMER2_Start(&t2);
 
-    CCP_HandleTypeDef ccp = { 0 };
-    ccp.Instance = CCP_INSTANCE_1;
-    ccp.Mode     = CCP_MODE_PWM;
-    ccp.PWM.Period = 255U;
-    ccp.PWM.Duty   = 0U;
+    /* Field-by-field, not `= { 0 }`: see the cfg comment above for why. */
+    CCP_HandleTypeDef ccp;
+    ccp.Instance             = CCP_INSTANCE_1;
+    ccp.Mode                 = CCP_MODE_PWM;
+    ccp.CompareValue         = 0U;
+    ccp.PWM.Period           = 255U;
+    ccp.PWM.Duty             = 0U;
+    ccp.PWMOutputMode        = CCP_PWM_OUTPUT_SINGLE;
+    ccp.DeadBand.Delay       = 0U;
+    ccp.DeadBand.AutoRestart = false;
+    ccp.AutoShutdown.Source  = CCP_AUTOSHUTDOWN_DISABLED;
+    ccp.AutoShutdown.PinsAC  = CCP_SHUTDOWN_DRIVE_0;
+    ccp.AutoShutdown.PinsBD  = CCP_SHUTDOWN_DRIVE_0;
+    ccp.EventCallback        = NULL;
     EPIC_CCP_Init(&ccp);
 
     uint8_t magic = EPIC_EEPROM_ReadByte(EE_ADDR_MAGIC);
