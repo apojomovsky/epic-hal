@@ -28,17 +28,21 @@ macros in `pic14_midrange.h`. Nothing here serves the enhanced mid-range
 
 A family's `epiccc_sources` slice picks one dispatch tier from
 `src/epiccc/`. The shared `pic16_irq_dispatch_epiccc.c` is the full
-fan-out: its USART, SSP, ADC, PSP, comparator, EEPROM and CCP2/BCL
-rows each gate on their own `PIC14MIDRANGE_HAS_*` flag, the same
-shape as the XC8 twin `pic14_irq_dispatch.c`. Two requirements the
-guards cannot hide: with `PIC14MIDRANGE_HAS_PIR1 1`, the die's PIR1
-map must name the Timer1, Timer2 and CCP1 flags, and the slice must
-link the TIMER0, RB and TIMER2 default handlers (`pic14_timer0.c`,
-`pic14_gpio.c`, `pic14_timer2.c`). `PIC14MIDRANGE_HAS_PIR1 0` is a
-supported path of its own (the PIR-less EEIF clear via EECON1).
-Families whose PIR1 lacks those tokens link
-`pic16_irq_dispatch_blink_epiccc.c` (Timer0 + RB change only) or a
-family-specific tier instead.
+fan-out: every peripheral row (USART, SSP, ADC, PSP, comparator,
+EEPROM, Timer2, CCP1, CCP2/BCL) gates on its own `PIC14MIDRANGE_HAS_*`
+flag, the same shape as the XC8 twin `pic14_irq_dispatch.c`. Two
+requirements the guards cannot hide: with `PIC14MIDRANGE_HAS_PIR1 1`,
+the die's PIR1 map must name the Timer1 flag (the TMR1IF row is the
+one unguarded PIR1 read), and a family that sets
+`PIC14MIDRANGE_HAS_TMR2 1` must link `pic14_timer2.c` beside the
+TIMER0 and RB default handlers (`pic14_timer0.c`, `pic14_gpio.c`).
+One deliberate divergence from the twin: the CCP1 row clears the flag
+instead of dispatching `CCP1_IRQHandler`, because no epiccc slice
+links `pic14_ccp.c` today. `PIC14MIDRANGE_HAS_PIR1 0` is a supported
+path of its own (the PIR-less EEIF clear via EECON1). The fallback
+for a die whose PIR1 map lacks even the TMR1IF token, or a slice kept
+at the blink minimum, is `pic16_irq_dispatch_blink_epiccc.c`
+(Timer0 + RB change only) or a family-specific tier.
 
 ## What lives in a family instead
 

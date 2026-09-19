@@ -21,9 +21,11 @@ extern void TIMER0_IRQHandler(void);
 /** @brief RB_IRQHandler (weak).
  */
 extern void RB_IRQHandler(void);
+#if PIC14MIDRANGE_HAS_TMR2
 /** @brief TIMER2_IRQHandler (weak).
  */
 extern void TIMER2_IRQHandler(void);
+#endif
 
 /**
  * @brief Dispatch all pending IRQs.
@@ -41,8 +43,17 @@ void epic_dispatch_all_irqs(void)
 #if PIC14MIDRANGE_HAS_PIR1
     uint8_t pir1 = EPIC_REG8(PIC_REG_PIR1);
     if (pir1 & PIC_PIR1_TMR1IF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR1IF);
+    /* The TMR2/CCP1 rows carry the twin's HAS_ guards: a die without
+     * the peripheral defines no PIR1 token for it. CCP1 stays
+     * clear-only, unlike the twin: no epiccc slice links pic14_ccp.c,
+     * so dispatching would grow every slice or call an unlinked
+     * handler. */
+#if PIC14MIDRANGE_HAS_TMR2
     if (pir1 & PIC_PIR1_TMR2IF) TIMER2_IRQHandler();
+#endif
+#if PIC14MIDRANGE_HAS_CCP1
     if (pir1 & PIC_PIR1_CCP1IF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
+#endif
 #if PIC14MIDRANGE_HAS_SSP
     if (pir1 & PIC_PIR1_SSPIF) EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_SSPIF);
 #endif
