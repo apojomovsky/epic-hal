@@ -296,6 +296,34 @@ rather than the trap: it runs the emitted script on the host, so a
 host-built driver is what that mode wants. CI uses it with its own
 target directory, never this cache.
 
+### The staleness guard
+
+Because that binary is a cache nobody invalidates, it can silently lag
+the checkout: a driver one commit behind reruns yesterday's compiler
+bugs under today's failure signatures, which reads like a fresh
+miscompile and costs a root-cause session (epic-hal#240).
+
+`epiccc-build` therefore refuses to run when all of these hold: the
+driver is still the shared default (`EPIC_CC_BIN` unset), the epic-cc
+checkout is discoverable at `<repo>/epic-cc`, and the newest commit
+touching `crates/`/`Cargo.toml`/`Cargo.lock` is newer than the binary.
+The failure names both timestamps, the commit, and the rebuild command.
+
+Two overrides, for when the check is not what you want:
+
+- `EPIC_CC_BIN=<path>`: any driver of your own, never second-guessed.
+  CI uses this, together with its own target directory.
+- `EPIC_CC_ALLOW_STALE=1`: build with the cached binary anyway.
+
+The check is mtime against commit time, a proxy: it catches a checkout
+that moved ahead of the binary, not one reset behind it, and a rebase
+rewrites commit times. In that second case the printed rebuild can be a
+cargo no-op (same sources, same artifact), which leaves the mtime where
+it was and refires the guard; `EPIC_CC_ALLOW_STALE=1` is the way out.
+Making the check exact needs the git sha stamped into the binary, which
+is epic-cc's side of the contract (`crates/driver` stamps only the
+release version today), filed as epic-cc#525.
+
 ## Releases
 
 **Automated (preferred)**: run the `cut-release` workflow
