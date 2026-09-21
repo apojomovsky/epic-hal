@@ -107,6 +107,50 @@ agree: `default.Pack.dfplocation` in
 manifest's `dfp_version` against the Dockerfile ARG, which is the pair
 that decides what a bundle tells a consumer to download.
 
+### What MPLAB X regenerates on open (epic-hal#230)
+
+Opening a reference project in MPLAB X can rewrite the makefiles, so the
+pins above are not purely ours once a developer opens one of these trees.
+Per Microchip's MPLAB X IDE User's Guide (DS-50002027E, §12.16.2 "Project
+Options Tab", §5.23.1 "Saving Project Files" with Table 5-10, and §8.2
+"Files Window View", checked 2026-09-21):
+
+- **Regeneration is conditional, not automatic.** "Force makefile
+  regeneration when opening a project" is unchecked by default, which
+  tells the IDE to "determine whether or not a makefile should be
+  regenerated when a project has opened (e.g., opening a project on a
+  different computer)". Microchip's stated example is a different
+  computer, not a pack mismatch, so a different pack set is our
+  inference from "the IDE decides": expect a rewrite and do not treat a
+  regenerated `DFP_DIR` as corruption.
+- **`configurations.xml` is the authoritative surface.** Table 5-10
+  marks it with a green check, "required to generate the project image",
+  alongside `project.xml` and `project.properties`. It is the metadata a
+  regeneration reads; reconcile that file, not its outputs.
+- **`Makefile-*` and `private/` are regenerated.** The same table marks
+  both with a red X, "regenerated and therefore do not need to be
+  saved", and §8.2 calls `nbproject/private/` "the user and computer
+  specific settings of the project". A regenerated `DFP_DIR` in
+  `Makefile-local-default.mk` is therefore an output difference, not
+  drift to chase. Some demos do commit `nbproject/private/configurations.xml`
+  (it holds the toolchain dir and run profile, not a pack pin) and it can
+  legitimately differ per machine.
+- **The project root `Makefile` is never regenerated**: "generated at
+  project creation time and it is not touched after that".
+
+The make side agrees: of the three pins, only `DFP_DIR` is consumed, by
+`-mdfp="${DFP_DIR}/xc8"` in `Makefile-default.mk`. Nothing in the make
+chain reads `dfplocation` or `private/configurations.xml`, so a
+regenerated project still builds whatever the IDE left behind.
+
+This is documented behaviour, not an observed diff: the toolchain image
+cannot run the IDE at all (`docker/ci-toolchain/Dockerfile` deletes the
+`mplab_ide` cluster to keep the image small, and MPLAB X's headless
+makefile generator resolves its classpath to an empty module dir, so it
+dies on a missing class), so the experiment in epic-hal#230's recipe
+still needs a human with a licensed IDE. What CI can hold to is the pin
+set itself, which is what `dfp-pin-audit.py` checks on every family.
+
 ## Worktrees and the pre-PR ritual
 
 Feature work happens in a worktree under `.worktrees/`, never on
