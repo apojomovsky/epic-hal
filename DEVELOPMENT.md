@@ -98,6 +98,15 @@ coincide for PIC12-16F1xxx and PIC18Fxxxx today and diverge for
 PIC16Fxxx; aligning one side to the other breaks either the bundle
 gate or the consumer install, so treat the split as deliberate.
 
+A reference project pins the pack in three places, and all three must
+agree: `default.Pack.dfplocation` in
+`nbproject/Makefile-genesis.properties`, `DFP_DIR` in
+`nbproject/Makefile-local-default.mk`, and the `<pack>` element in
+`nbproject/configurations.xml`. `scripts/dfp-pin-audit.py` (in
+`make audit` and each family's CI job) checks that, and checks the
+manifest's `dfp_version` against the Dockerfile ARG, which is the pair
+that decides what a bundle tells a consumer to download.
+
 ## Worktrees and the pre-PR ritual
 
 Feature work happens in a worktree under `.worktrees/`, never on
