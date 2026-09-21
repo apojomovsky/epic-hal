@@ -507,6 +507,35 @@ class TestPartsMap(unittest.TestCase):
         self.assertIn("18F4550 pic18fxx5x\n", doc)
         self.assertIn("16F1937 pic16f193x\n", doc)
 
+    def test_families_are_emitted_in_order_so_the_last_line_is_canonical(self):
+        """The installer gate's `awk 'last[$2]=$1'` reads canonical parts.
+
+        scripts/ci-target-installer-gate.sh takes the last line per family
+        as that family's canonical part, which is only variants[-1] while
+        emit_parts_map keeps each family's variants contiguous and in
+        order. A future sort of the whole table would break that silently,
+        so the property is pinned here. The second field is the family
+        slug, not the manifest key.
+        """
+        m = load()
+        lines = [line.split() for line in bundlegen.emit_parts_map(m).splitlines()]
+        by_slug = {fam.hal_dir.removesuffix("-hal"): fam for fam in m.families.values()}
+        # Each family's lines form one contiguous run.
+        runs = [slug for _part, slug in lines]
+        for slug in set(runs):
+            first, last = runs.index(slug), len(runs) - 1 - runs[::-1].index(slug)
+            self.assertEqual(runs[first:last + 1], [slug] * (last - first + 1),
+                             f"{slug} is interleaved with another family")
+        # The last line per family is that family's last variant, which is
+        # the part the gate installs.
+        last = {}
+        for part, slug in lines:
+            last[slug] = part
+        self.assertEqual(set(last), set(by_slug))
+        for slug, fam in by_slug.items():
+            self.assertEqual(last[slug], fam.variants[-1],
+                             f"{slug}: canonical part changed")
+
 
 class TestBundleGate(unittest.TestCase):
     """make_bundle's sim/mdb gate: the family file set must be clean,
