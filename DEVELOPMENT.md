@@ -203,9 +203,15 @@ records the reasoning for the current sha.
 
 1. Pick a new `EPIC_CC_PIN` that still builds the 887 slice. A quick
    check: build the driver at that sha (`cargo build --release -p
-   driver` in a checkout) and run
-   `make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1`
-   with the stable release bundle's clang exported.
+   driver` in a checkout) and run `make epiccc-build
+   MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
+   EPIC_CC_BIN=<checkout>/target/release/epic-cc` with the stable
+   release bundle's clang exported. `EPIC_CC_BIN` is what selects the
+   driver; its default names the container-side path, so without the
+   override the check runs whatever the image would have. A host build
+   like this stays in the checkout and must not be copied into the
+   shared `~/.cache/epic-cc/target` cache, which the container has to
+   load (see "The shared driver binary and the image's glibc").
 2. Change `EPIC_CC_PIN` in `.github/workflows/ci.yml` to the new sha.
    The pin is a chosen, deliberate bump: a compiler regression shows up
    as a bump that fails the gate, not as a mystery. The clang bundle
@@ -246,11 +252,49 @@ make sim-epiccc HEX=build/epiccc/16F877A-blink.hex DEVICE=PIC16F877A \
   IRQ_EVERY=65536 IRQ_FLAG=INTCON:2 IRQ_ENABLE=INTCON:5
 ```
 
-`sim-epiccc` runs the runner inside the epic-cc dev image (the host
-has no Rust toolchain); `--trace INTCON,PIR1,PIE1` on the runner
-prints register values per sample when a gate needs debugging. The
-host gcc/ctest build stays the fast inner loop; the sim gate is the
-CI verification layer between that and the mdb oracle.
+`sim-epiccc` runs the runner inside the epic-cc dev image, the same
+toolchain the compiler itself was built with; `--trace
+INTCON,PIR1,PIE1` on the runner prints register values per sample when
+a gate needs debugging. The host gcc/ctest build stays the fast inner
+loop; the sim gate is the CI verification layer between that and the
+mdb oracle.
+
+### The shared driver binary and the image's glibc
+
+`epiccc-build` resolves its driver as a path inside the container
+(`EPIC_CC_BIN`, default `/tmp/cargo-target/release/epic-cc`). That path
+is not part of the image: the Makefile bind-mounts the host's
+`~/.cache/epic-cc/target` onto it, so the release binary last written
+there is the one this target runs. (`sim-epiccc` and the mdb gates take
+an already built hex and never invoke the driver.)
+
+The container is Ubuntu 22.04 (glibc 2.35), so the binary at that path
+must be one the image can load. Building the driver with a host cargo
+on a newer glibc drops a binary requiring newer symbols into the shared
+cache, and every `epiccc-build` then dies with:
+
+    /tmp/cargo-target/release/epic-cc: /lib/x86_64-linux-gnu/libc.so.6:
+    version `GLIBC_2.39' not found
+
+Read that message as a build-location problem, not a corrupt cache: it
+names the symbol version, so the driver was built against a newer glibc
+than the image carries. Build it inside the dev image instead, with the
+same mounts the Makefile uses, and it lands at the shared path with the
+image's own glibc:
+
+```sh
+ln -s ~/projects/epic-cc epic-cc        # if not linked yet, see above
+cd epic-cc
+make exec TARGET_CACHE=$HOME/.cache/epic-cc/target \
+  CMD='cargo build --release -p driver'
+```
+
+`TARGET_CACHE` is what points the build at the shared path; without it
+`make exec` uses epic-cc's own per-worktree cache and the fix does not
+land where `epiccc-build` looks. `EPIC_CC_HOST=1` is the exception
+rather than the trap: it runs the emitted script on the host, so a
+host-built driver is what that mode wants. CI uses it with its own
+target directory, never this cache.
 
 ## Releases
 
