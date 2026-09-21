@@ -149,7 +149,13 @@ xc8-build: image
 # job prepares the driver and clang itself (see DEVELOPMENT.md "The
 # epiccc gate pin") and has no dev image to run in.
 EPIC_CC_IMAGE ?= epic-cc-dev:local
-EPIC_CC_BIN   ?= /tmp/cargo-target/release/epic-cc
+# The container sees the shared cache as /tmp/cargo-target, the host as
+# EPIC_CC_SHARED_BIN. EPIC_CC_BIN_DEFAULT names the in-container path so
+# the staleness guard can tell a caller's override from the default
+# (epic-hal#240).
+EPIC_CC_BIN_DEFAULT := /tmp/cargo-target/release/epic-cc
+EPIC_CC_SHARED_BIN  := $(HOME)/.cache/epic-cc/target/release/epic-cc
+EPIC_CC_BIN ?= $(EPIC_CC_BIN_DEFAULT)
 EPIC_CC_RUN := mkdir -p $(HOME_MOUNT) $(HOME)/.cache/epic-cc/target && docker run --rm \
 	--user $$(id -u):$$(id -g) \
 	-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
@@ -159,6 +165,28 @@ EPIC_CC_RUN := mkdir -p $(HOME_MOUNT) $(HOME)/.cache/epic-cc/target && docker ru
 epiccc-build:
 	@test -n "$(MODULE)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
 	@test -n "$(MCU)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
+	@if [ "$(EPIC_CC_BIN)" = "$(EPIC_CC_BIN_DEFAULT)" ] && [ -e "$(CURDIR)/epic-cc/.git" ] \
+			&& [ -z "$(EPIC_CC_ALLOW_STALE)" ] && [ -e "$(EPIC_CC_SHARED_BIN)" ]; then \
+		head_ct=$$(git -C "$(CURDIR)/epic-cc" log -1 --format=%ct -- crates Cargo.toml Cargo.lock 2>/dev/null); \
+		bin_ct=$$(stat -c %Y "$(EPIC_CC_SHARED_BIN)" 2>/dev/null || echo 0); \
+		case "$$head_ct" in \
+			''|*[!0-9]*) ;; \
+			*) \
+				if [ "$$head_ct" -gt "$$bin_ct" ]; then \
+					head_sha=$$(git -C "$(CURDIR)/epic-cc" log -1 --format=%h -- crates Cargo.toml Cargo.lock 2>/dev/null); \
+					echo "epiccc-build: the cached driver is older than the epic-cc compiler sources." >&2; \
+					echo "  binary: $(EPIC_CC_SHARED_BIN) ($$(date -d @$$bin_ct '+%Y-%m-%d %H:%M'))" >&2; \
+					echo "  epic-cc: $$head_sha ($$(date -d @$$head_ct '+%Y-%m-%d %H:%M'))" >&2; \
+					echo "  A stale driver reruns older compiler bugs under new failure signatures (epic-hal#240)." >&2; \
+					echo "  Rebuild it in the dev image, from the epic-cc checkout:" >&2; \
+					echo "    cd epic-cc && make exec TARGET_CACHE=\$$HOME/.cache/epic-cc/target CMD='cargo build --release -p driver'" >&2; \
+					echo "  If the sources are already built, cargo is a no-op and this keeps firing;" >&2; \
+					echo "  then set EPIC_CC_BIN to a driver of your own, or EPIC_CC_ALLOW_STALE=1 to use this one." >&2; \
+					exit 1; \
+				fi \
+				;; \
+		esac; \
+	fi
 	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --toolchain epic-cc --epic-cc $(EPIC_CC_BIN) --build-dir build/epiccc
 ifeq ($(EPIC_CC_HOST),1)
 	sh build/epiccc/$(MCU)/build.sh

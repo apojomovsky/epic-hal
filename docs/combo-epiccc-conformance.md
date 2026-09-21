@@ -114,12 +114,6 @@ under XC8; its epic-cc gate is blocked by the same #463 hang. PIC18 has
   epic-cc#464; all five build columns above depend on it. PIC14's
   `isel` has the same assertion and the same gap, noted for parity, no
   PIC16 combo reaches it today.
-- epic-hal#240: `epiccc-build` resolves whatever release driver last
-  landed in `~/.cache/epic-cc/target`; a driver even one commit behind
-  master reruns yesterday's compiler bugs under today's failure
-  signatures (that is how the named-entry panic masqueraded as a #446
-  recurrence). Needs a staleness guard or the documented shared-cache
-  plumbing restored.
 - Once epic-cc#463 lands, re-run the mdb gates and turn the five
   `epic-cc gate` cells above green; the XC8 `RAM` / `flash` columns
   remain the headroom baseline.
