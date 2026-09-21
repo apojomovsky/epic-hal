@@ -135,15 +135,19 @@ xc8-build: image
 # `build/epiccc` keeps the two toolchains from colliding. epic-cc and
 # its clang front end ship only in the epic-cc dev image (the hal
 # toolchain image has XC8 and mdb, no clang), so the emitted script
-# runs there, not on the host: no host toolchain exists or is
-# installed. EPIC_CC_IMAGE overrides the image; EPIC_CC_BIN is a path
-# inside it (defaults to the dev image's own cargo-built binary at
-# /tmp/cargo-target/release/epic-cc, shared with the epic-cc repo's
-# make exec plumbing).
+# runs there by default. EPIC_CC_IMAGE overrides the image; EPIC_CC_BIN
+# is a path inside it (defaults to the dev image's own cargo-built
+# binary at /tmp/cargo-target/release/epic-cc), a bind-mount of the
+# host's ~/.cache/epic-cc/target. That binary must be one the image can
+# load: it is Ubuntu 22.04 (glibc 2.35), so a host cargo build on a newer
+# glibc breaks every epiccc-build with `version GLIBC_2.39 not found`.
+# Build the driver in the image instead (DEVELOPMENT.md, "The shared
+# driver binary and the image's glibc").
 #
-# EPIC_CC_HOST=1 runs the emitted script directly on the host instead:
-# the CI epiccc-gate job prepares the driver and clang itself (see
-# DEVELOPMENT.md "The epiccc gate pin") and has no dev image to run in.
+# EPIC_CC_HOST=1 runs the emitted script directly on the host instead,
+# which is the one mode a host-built driver suits: the CI epiccc-gate
+# job prepares the driver and clang itself (see DEVELOPMENT.md "The
+# epiccc gate pin") and has no dev image to run in.
 EPIC_CC_IMAGE ?= epic-cc-dev:local
 EPIC_CC_BIN   ?= /tmp/cargo-target/release/epic-cc
 EPIC_CC_RUN := mkdir -p $(HOME_MOUNT) $(HOME)/.cache/epic-cc/target && docker run --rm \
