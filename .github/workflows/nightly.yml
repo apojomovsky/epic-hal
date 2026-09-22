@@ -51,10 +51,30 @@ jobs:
     with:
       family: PIC16F818_819
 
+  family-83_84:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F83_84
+
   family-18fxx5x:
     uses: ./.github/workflows/family-check.yml
     with:
       family: PIC18Fxx5x
+
+  family-1320:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC18F1320
+
+  family-2520:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC18F2520
+
+  family-6520:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC18F6520
 
   family-193x:
     uses: ./.github/workflows/family-check.yml
