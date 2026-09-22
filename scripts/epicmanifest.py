@@ -407,7 +407,17 @@ def _require(table, key, where):
     return table[key]
 
 
+def _check_keys(table, known, where):
+    for key in table:
+        if key not in known:
+            raise ManifestError(f"{where}: unknown key '{key}'")
+
+
 def _parse_family(name, table):
+    _check_keys(table, {"hal_dir", "variants", "dfp", "fosc_hz",
+                        "dfp_version", "includes", "hal_sources",
+                        "conditional_sources", "harness_src",
+                        "epiccc_sources", "xtal_hz"}, f"families.{name}")
     return Family(
         name=name,
         hal_dir=_require(table, "hal_dir", f"families.{name}"),
@@ -475,6 +485,10 @@ def _parse_example(module_name, family_name, table, default_hal):
 
 
 def _parse_module(name, table):
+    _check_keys(table, {"dir", "sources", "sources_by_family", "includes",
+                        "depends_on", "needs_hal", "supported", "excluded",
+                        "example", "epiccc_hal_sources_by_family"},
+                f"modules.{name}")
     needs_hal = bool(table.get("needs_hal", True))
     return Module(
         name=name,

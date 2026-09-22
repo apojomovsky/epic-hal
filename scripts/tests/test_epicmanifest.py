@@ -267,6 +267,22 @@ class TestValidation(unittest.TestCase):
             epicmanifest.load(write(bad))
         self.assertIn("fosc_hz", str(cm.exception))
 
+    def test_unknown_key_in_module_table_is_rejected(self):
+        # The issue's case: deleting the [modules.x.supported] header
+        # leaves bare family keys in the module table, silently
+        # accepted, and the family vanishes from the matrix.
+        bad = MINIMAL.replace("[modules.epic-tick.supported]\n", "")
+        with self.assertRaises(epicmanifest.ManifestError) as cm:
+            epicmanifest.load(write(bad))
+        self.assertIn("PIC16F87XA", str(cm.exception))
+
+    def test_unknown_key_in_family_table_is_rejected(self):
+        bad = MINIMAL.replace('[families.PIC18Fxx5x]\nhal_dir',
+                              '[families.PIC18Fxx5x]\nhal_dri')
+        with self.assertRaises(epicmanifest.ManifestError) as cm:
+            epicmanifest.load(write(bad))
+        self.assertIn("hal_dri", str(cm.exception))
+
 
 class TestResolution(unittest.TestCase):
     def setUp(self):
