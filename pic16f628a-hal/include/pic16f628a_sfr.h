@@ -14,6 +14,10 @@
 
 #define PIC_REG_INDF          0x00U
 #define PIC_REG_OPTION        0x81U   /* Bank 1. */
+/* The epic-cc bank macros token-paste the bare SFR name
+ * (EPIC_BANK1_WRITE8(OPTION_REG, ...) wants PIC_REG_OPTION_REG); the
+ * target path addresses the XC8 symbol directly. */
+#define PIC_REG_OPTION_REG    PIC_REG_OPTION
 #define PIC_REG_PCL           0x02U
 #define PIC_REG_STATUS        0x03U
 #define PIC_REG_FSR           0x04U
