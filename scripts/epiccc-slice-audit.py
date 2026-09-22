@@ -22,13 +22,19 @@ import epicmanifest as manifest_lib  # noqa: E402
 
 CI_WORKFLOW = REPO / ".github" / "workflows" / "ci.yml"
 
-# MODULE=<hal dir> MCU=<part> legs of the epiccc-gate job.
+# MODULE=<hal dir> MCU=<part> legs of the epiccc-gate job. The scan is
+# scoped to that job's block: a `make epiccc-build` elsewhere in ci.yml
+# (a reused emit step, say) is not a watched gate leg.
 LEG_RE = re.compile(r"make epiccc-build MODULE=(\S+) MCU=(\S+)")
+JOB_RE = re.compile(r"^  ([a-z0-9-]+):\s*$", re.M)
 
 
 def ci_leg_mcus() -> set[str]:
     text = CI_WORKFLOW.read_text(encoding="utf-8")
-    return {m.group(2) for m in LEG_RE.finditer(text)}
+    start = text.index("  epiccc-gate:")
+    nxt = JOB_RE.search(text, start + len("  epiccc-gate:"))
+    block = text[start:nxt.start()] if nxt else text[start:]
+    return {m.group(2) for m in LEG_RE.finditer(block)}
 
 
 def audit_family(fam, gaps: list[str]) -> None:
