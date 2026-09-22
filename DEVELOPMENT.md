@@ -203,7 +203,10 @@ The `epiccc-gate` CI job (`.github/workflows/ci.yml`) builds
 `pic16f63x_67x_68x-hal` for the 16F677, `pic16f7x-hal` for the 16F77,
 the #150 exemplars `pic18f2520-hal` for the 18F2520, `pic18f1320-hal`
 for the 18F1320 and `pic18f6520-hal` for the 18F6520 (build-only),
-`pic16f5x-hal` for the 16F54 and `pic16f818_819-hal` for the 16F819
+`pic16f5x-hal` for the 16F54, `pic16f818_819-hal` for the 16F819,
+`pic16f628a-hal` for the 16F628A, `pic16f83_84-hal` for the 16F84A
+(build-only, a baseline die like the 16F54) and `pic18fxx5x-hal` for
+the 18F4550
 with a pinned
 epic-cc compiler, and runs the deterministic
 PORTB toggle gate on the classic-PIC16 blink hexes (the 677 leg watches
@@ -211,7 +214,10 @@ PORTB bit 4, the only implemented low bit on this family's PORTB), the LATB togg
 the 1937 (its GPIO driver toggles the latch, DS41364E), plus the `mdb-hex`
 register read. The 16F54 leg runs its gate with no `--irq-every`: the
 die has no interrupt and its epic-cc example toggles from a software
-loop. It is
+loop. The set of families with a declared `epiccc_sources` slice is held
+equal to this job's coverage by `scripts/epiccc-slice-audit.py` (in
+`make audit` and every family-check audit step), so a new slice without
+a leg fails CI (epic-hal#257). It is
 the "did a HAL change break against a known good compiler" direction;
 epic-cc's own `hal-887` job asks the reverse question in its tree.
 

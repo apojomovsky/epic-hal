@@ -393,6 +393,16 @@ jobs:
           # XC8 already excludes it on flash grounds, and the gate
           # watches the canonical part.
           make epiccc-build MODULE=pic16f818_819-hal MCU=16F819 EPIC_CC_HOST=1
+          # The 628A and 84A legs (epic-hal#257): the last two families
+          # with a declared epiccc_sources slice, previously unwatched.
+          # scripts/epiccc-slice-audit.py holds the set equality between
+          # the manifest's slices and this job's legs.
+          make epiccc-build MODULE=pic16f628a-hal MCU=16F628A EPIC_CC_HOST=1
+          make epiccc-build MODULE=pic16f83_84-hal MCU=16F84A EPIC_CC_HOST=1
+          # The 18F4550 leg closes the same gap for the 18Fxx5x family:
+          # its slice built only ad hoc (the #252 CCP fix), the gate job
+          # watched the 1320/2520 exemplars but never this family.
+          make epiccc-build MODULE=pic18fxx5x-hal MCU=18F4550 EPIC_CC_HOST=1
       # The sim gates: the mdb toggle contract, run on crates/sim's CPU.
       # Watch PORTB bit 0 across the samples, require a transition. Blink
       # is Timer0 driven, so the runner raises its overflow (INTCON bit 2
@@ -427,6 +437,13 @@ jobs:
           "$runner" --hex build/epiccc/16F54-blink.hex --device 16F54 \
             --watch PORTB:0 --samples 12 --steps 200000
           "$runner" --hex build/epiccc/16F819-blink.hex --device 16F819 \
+            --watch PORTB:0 --samples 12 --steps 200000 \
+            --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
+          # The 628A blink is Timer0-driven like the 819's, on the same
+          # classic-PIC14 core. The 84A stays out: a baseline die, where
+          # the sim core executes instructions only and never advances
+          # TMR0 (the 16F54's reason), so no toggle is observable.
+          "$runner" --hex build/epiccc/16F628A-blink.hex --device 16F628A \
             --watch PORTB:0 --samples 12 --steps 200000 \
             --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
 
