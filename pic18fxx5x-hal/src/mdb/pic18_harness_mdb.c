@@ -21,17 +21,6 @@
 static uint32_t g_cycles = 0U;
 
 /**
- * @brief  USART transmit-complete callback stub. Exists only so
- *         EPIC_USART_Init's TXEN/TXIE gate sees a non-null callback (see
- *         pic16_harness_mdb.c's header comment). Transmission
- *         below is polled; this is never actually called in a way that
- *         matters.
- */
-static void s_tx_cplt(void)
-{
-}
-
-/**
  * @brief  Transmit one character on the EUSART, blocking until the shift
  *         register drains.
  * @param c character to transmit.
@@ -48,8 +37,8 @@ static void s_uart_putc(char c)
 /**
  * @brief  Harness start-up (sim-target build): configures the EUSART for
  *         polled 9600-baud output and stores `cycles` as the run bound.
- *         The USART TX interrupt source is turned back off after init
- *         because transmission here is polled.
+ *         The TX interrupt source stays disarmed throughout (TXEN without
+ *         TXIE); transmission here is polled.
  * @param cycles bound on the run; unused on the real target.
  */
 void epic_harness_init(uint32_t cycles)
@@ -65,12 +54,16 @@ void epic_harness_init(uint32_t cycles)
                                            USART_MODE_ASYNCHRONOUS,
                                            USART_BRGH_LOW,
                                            USART_BAUDGEN_8BIT);
-    h.TxCpltCallback = s_tx_cplt;
+    h.TxCpltCallback = NULL;
+    /* Polled transmission: a null callback leaves the TX source
+     * disabled in init. Set TXEN explicitly afterwards: arming TXIE
+     * for polled TX latches the level-held TXIF into a vector storm
+     * no flag-clear can quiet (epic-hal#270). Split read+write, XC8
+     * cannot lower a compound assignment on a volatile lvalue. */
     (void)EPIC_USART_Init(&h);
-    /* Transmission here is polled; TXIE is only a side effect of the
-     * TxCpltCallback workaround above, turn the source back off (TXEN
-     * stays untouched). Same pattern as pic16_harness_mdb.c. */
-    EPIC_IRQ_DisableSrc(PIC18_IRQ_USART_TX);
+    uint8_t txsta = epic_sfr_read8(PIC_REG_TXSTA);
+    txsta |= PIC_TXSTA_TXEN;
+    epic_sfr_write8(PIC_REG_TXSTA, txsta);
 }
 
 /**
