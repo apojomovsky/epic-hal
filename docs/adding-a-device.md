@@ -243,6 +243,14 @@ it done.
      varied with machine load. `make mdb-epiccc` uses `stepi` for that
      reason. Measure per family before relying on it; the caution above
      still holds wherever it has not been.
+   - Measured matrix, PIC18F4550 under MPLAB X v6.35 (2026-09-23):
+     `stepi` advances Timer0 and Timer2 but freezes Timer1 and Timer3.
+     Two `stepi 50000` windows with T1CON=0x01, T2CON=0x04, T3CON=0x01:
+     TMR0L moved (206 to 181), TMR2 moved (141 to 8), TMR1L/H and
+     TMR3L stayed 0. Sim gates must time off Timer0, Timer2, or
+     hand-pumped flags, never a free-running Timer1/3. The bridge
+     demo stages its Modbus T3.5 off the shared 1 ms tick for exactly
+     this reason (epic-hal#278; tracked here by epic-hal#282).
    - `print <REGISTER>` (or `x /1xbr <addr>` for a raw byte) for every
      SFR the peripheral touched.
    - Compare against the hand-computed expected values from step 3's
