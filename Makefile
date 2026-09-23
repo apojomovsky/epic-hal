@@ -223,7 +223,7 @@ epiccc-build:
 		fi; \
 	fi
 	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --toolchain epic-cc --epic-cc $(EPIC_CC_BIN) --build-dir build/epiccc
- ifeq ($(EPIC_CC_HOST),1)
+ifeq ($(EPIC_CC_HOST),1)
 	sh build/epiccc/$(MCU)/build.sh
 else
 	$(EPIC_CC_RUN) -e PIC8_CLANG_UNWRAPPED=/opt/clang/bin/clang \
