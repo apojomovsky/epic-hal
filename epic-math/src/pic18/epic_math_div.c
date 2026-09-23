@@ -8,6 +8,7 @@
  */
 
 #include <xc.h>
+#include <stddef.h>     /* NULL */
 #include "epic_math.h"
 
 /* 16/16 restoring division, 16 iterations. For a 16-bit dividend the

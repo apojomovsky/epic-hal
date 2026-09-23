@@ -7,6 +7,7 @@
  */
 
 #include <xc.h>
+#include <stddef.h>     /* NULL */
 #include "epic_math.h"
 #include "epic_math_scratch.h"
 
