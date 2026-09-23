@@ -80,3 +80,88 @@ jobs:
     uses: ./.github/workflows/family-check.yml
     with:
       family: PIC16F193X
+
+  # XC8 vs epic-cc demo scoreboard (epic-hal#279): the three flagship
+  # 18F4550 demos through scripts/compare-toolchains.sh, one matrix leg
+  # per scoreboard row in docs/demo-scoreboard.md. PRs stay XC8-only via
+  # the family jobs in ci.yml; this file never triggers on pull_request,
+  # so this job is the nightly-only full dual-toolchain size plus UART
+  # trace comparison. Legs report instead of gating while scoreboard
+  # cells are STALE or BLOCKED (see the doc), hence continue-on-error
+  # with the size table appended to the step summary below.
+  demo-scoreboard:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: epic-menu-demo
+            mcu: 18F4550
+            device: PIC18F4550
+            wait_ms: "60000"
+            eeprom_writes: "4"
+          - module: epic-control-demo
+            mcu: 18F4550
+            device: PIC18F4550
+            wait_ms: "60000"
+            eeprom_writes: "20"
+          - module: epic-bridge-demo
+            mcu: 18F4550
+            device: PIC18F4550
+            wait_ms: "60000"
+            eeprom_writes: "0"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Same private-image resolve plus pull as family-check.yml: the XC8
+      # build and the mdb legs of compare-toolchains.sh are license-gated,
+      # so they run in the published toolchain image, never built here.
+      - name: Resolve + pull the toolchain image
+        id: image
+        run: |
+          xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
+          image="ghcr.io/${{ github.repository_owner }}/epic-hal-ci:${tag}"
+          legacy_image="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          if docker pull "$image"; then
+            echo "image=$image" >> "$GITHUB_OUTPUT"
+          elif docker pull "$legacy_image"; then
+            echo "note: pulled legacy $legacy_image (epic-hal-ci not yet published; see #55)" >&2
+            echo "image=$legacy_image" >> "$GITHUB_OUTPUT"
+          else
+            echo "error: no cached $image nor $legacy_image on GHCR." >&2
+            exit 1
+          fi
+
+      # The script names its XC8 image epic-hal-toolchain:local (the local
+      # `make image` tag), so retag the pulled image instead of adding a
+      # flag to the script. Its epic-cc half expects EPIC_CC_IMAGE
+      # (default epic-cc-dev:local, built from the epic-cc repo); without
+      # it that half reports failure while the XC8 half still publishes.
+      # Modules on still-open sibling branches are not in this checkout
+      # yet; those legs skip, the doc rows carry their verified numbers
+      # until the branches merge.
+      - name: Run the toolchain comparison
+        continue-on-error: true
+        run: |
+          docker tag "${{ steps.image.outputs.image }}" epic-hal-toolchain:local
+          if [ ! -d "${{ matrix.module }}" ]; then
+            echo "| ${{ matrix.module }} | SKIP (module not in this checkout yet) |" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          ./scripts/compare-toolchains.sh "${{ matrix.module }}" "${{ matrix.mcu }}" "${{ matrix.device }}" "${{ matrix.wait_ms }}" "${{ matrix.eeprom_writes }}" > "compare-${{ matrix.module }}.log" 2>&1 || compare_status=$?
+          cat "compare-${{ matrix.module }}.log"
+          {
+            echo "## demo-scoreboard: ${{ matrix.module }} ${{ matrix.mcu }}"
+            echo '```'
+            awk '/== Size comparison/,/== Behavioral comparison/' "compare-${{ matrix.module }}.log" | grep -vE '^\(|^$|Behavioral' || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "${compare_status:-0}"
