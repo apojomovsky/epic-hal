@@ -4260,6 +4260,75 @@ PIC18Fxx5x = [
   "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c",
 ]
 
+[modules.epic-control-demo]
+dir        = "epic-control-demo"
+sources    = [
+  "src/control_demo_core.c",
+]
+includes   = [
+  "include",
+]
+depends_on = [
+  "epic-taskmgr",
+  "epic-pid",
+  "epic-adcfilter",
+  "epic-serial",
+]
+needs_hal  = true
+
+# Console-driven PID demo (epic-hal#277): a UART console tuning a Q8.8
+# PID loop over ADC AN0 and CCP1 PWM, with an EEPROM-backed settings
+# struct, PIC18F4550 only. epic-taskmgr's tick drives every task; see
+# epic-control-demo/include/control_demo_core.h for why the stimulus
+# source (live UART RX plus live ADC vs a scripted sim injection) is
+# the only thing that differs between the two examples below.
+[modules.epic-control-demo.supported]
+PIC18Fxx5x = [
+  "18F4550",
+]
+
+[modules.epic-control-demo.example.PIC18Fxx5x]
+name    = "control-demo"
+sources = [
+  "examples/example_control_demo.c",
+]
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# HARNESS=sim: bounded, self-reporting, scripted console plus plant
+# stimulus in place of real hardware (tests/sim_control_demo.c).
+# WDT=OFF like every other sim variant (a diagnostic build that
+# terminates and reports does not need the watchdog running
+# unattended).
+[modules.epic-control-demo.example.PIC18Fxx5x.sim]
+name        = "control-demo-sim"
+harness_src = "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/sim_control_demo.c",
+]
+config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
+
+# epic-cc slice: same peripheral mix as epic-menu-demo (ADC, CCP/PWM,
+# EEPROM, TIMER2), so the same verbatim override rather than growing
+# the shared family slice. The mdb harness is hardcoded, matching every
+# epic-combo-* module: this repo only ever gates epic-cc via
+# `--variant sim`, never a real-target artifact, so no swap is needed.
+[modules.epic-control-demo.epiccc_hal_sources_by_family]
+PIC18Fxx5x = [
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer0.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer2.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_adc.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_ccp.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c",
+  "pic18fxx5x-hal/src/core/pic18_irq.c",
+  "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
+  "pic18fxx5x-hal/src/epiccc/pic18fxx5x_wdt_sleep_epiccc.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_isr_vector.c",
+  "pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc_tick.c",
+  "pic18fxx5x-hal/src/mdb/pic18_harness_mdb.c",
+]
+
 [modules.epic-tick]
 dir        = "epic-tick"
 sources    = [
