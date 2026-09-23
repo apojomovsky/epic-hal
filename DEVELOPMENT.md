@@ -364,9 +364,20 @@ miscompile and costs a root-cause session (epic-hal#240).
 
 `epiccc-build` therefore refuses to run when all of these hold: the
 driver is still the shared default (`EPIC_CC_BIN` unset), the epic-cc
-checkout is discoverable at `<repo>/epic-cc`, and the newest commit
-touching `crates/`/`Cargo.toml`/`Cargo.lock` is newer than the binary.
-The failure names both timestamps, the commit, and the rebuild command.
+checkout is discoverable at `<repo>/epic-cc`, and the cached binary is
+not the checkout's binary. The failure names both shas and the rebuild
+command.
+
+The check is identity, not timestamps: the driver stamps its commit
+into `epic-cc --version` (epic-cc#525), and the guard compares that
+stamp against `rev-parse --short HEAD` of the checkout. A reset behind
+the binary or a rebase that rewrites commit times still changes HEAD,
+so both are detected where the old mtime comparison went the wrong
+way. The comparison is against full HEAD, not just compiler sources,
+so even a docs-only epic-cc commit invalidates the cached driver:
+rebuild or set `EPIC_CC_ALLOW_STALE=1`.
+
+A full-sha stamp matches its short prefix.
 
 Two overrides, for when the check is not what you want:
 
@@ -374,14 +385,10 @@ Two overrides, for when the check is not what you want:
   CI uses this, together with its own target directory.
 - `EPIC_CC_ALLOW_STALE=1`: build with the cached binary anyway.
 
-The check is mtime against commit time, a proxy: it catches a checkout
-that moved ahead of the binary, not one reset behind it, and a rebase
-rewrites commit times. In that second case the printed rebuild can be a
-cargo no-op (same sources, same artifact), which leaves the mtime where
-it was and refires the guard; `EPIC_CC_ALLOW_STALE=1` is the way out.
-Making the check exact needs the git sha stamped into the binary, which
-is epic-cc's side of the contract (`crates/driver` stamps only the
-release version today), filed as epic-cc#525.
+A driver that predates sha stamping reports a bare version with no
+commit, and falls back to the old mtime proxy: refuse when the newest
+commit touching `crates/`/`Cargo.toml`/`Cargo.lock` is newer than the
+binary. Rebuild that driver once to get the exact check.
 
 ## Releases
 

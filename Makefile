@@ -167,27 +167,61 @@ epiccc-build:
 	@test -n "$(MCU)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
 	@if [ "$(EPIC_CC_BIN)" = "$(EPIC_CC_BIN_DEFAULT)" ] && [ -e "$(CURDIR)/epic-cc/.git" ] \
 			&& [ -z "$(EPIC_CC_ALLOW_STALE)" ] && [ -e "$(EPIC_CC_SHARED_BIN)" ]; then \
-		head_ct=$$(git -C "$(CURDIR)/epic-cc" log -1 --format=%ct -- crates Cargo.toml Cargo.lock 2>/dev/null); \
-		bin_ct=$$(stat -c %Y "$(EPIC_CC_SHARED_BIN)" 2>/dev/null || echo 0); \
-		case "$$head_ct" in \
-			''|*[!0-9]*) ;; \
-			*) \
-				if [ "$$head_ct" -gt "$$bin_ct" ]; then \
-					head_sha=$$(git -C "$(CURDIR)/epic-cc" log -1 --format=%h -- crates Cargo.toml Cargo.lock 2>/dev/null); \
-					echo "epiccc-build: the cached driver is older than the epic-cc compiler sources." >&2; \
-					echo "  binary: $(EPIC_CC_SHARED_BIN) ($$(date -d @$$bin_ct '+%Y-%m-%d %H:%M'))" >&2; \
-					echo "  epic-cc: $$head_sha ($$(date -d @$$head_ct '+%Y-%m-%d %H:%M'))" >&2; \
-					echo "  A stale driver reruns older compiler bugs under new failure signatures (epic-hal#240)." >&2; \
-					echo "  Rebuild it in the dev image, from the epic-cc checkout:" >&2; \
-					echo "    cd epic-cc && make exec TARGET_CACHE=\$$HOME/.cache/epic-cc/target CMD='cargo build --release -p driver'" >&2; \
-					echo "  If the sources are already built, cargo is a no-op and this keeps firing;" >&2; \
-					echo "  then set EPIC_CC_BIN to a driver of your own, or EPIC_CC_ALLOW_STALE=1 to use this one." >&2; \
-					exit 1; \
-				fi \
+		checked=0; \
+		head_sha=$$(git -C "$(CURDIR)/epic-cc" rev-parse --short HEAD 2>/dev/null); \
+		bin_stamp=$$("$(EPIC_CC_SHARED_BIN)" --version 2>/dev/null); \
+		case "$$bin_stamp" in \
+			*+*) \
+				bin_sha=$${bin_stamp##*+}; bin_sha=$${bin_sha%% *}; \
+				case "$$bin_sha" in \
+					''|*[!0-9a-f]*) ;; \
+					*) \
+						case "$$head_sha" in \
+							''|*[!0-9a-f]*) ;; \
+							*) \
+								match=0; \
+								case "$$head_sha" in "$$bin_sha"*) match=1;; esac; \
+								case "$$bin_sha" in "$$head_sha"*) match=1;; esac; \
+								if [ "$$match" = 0 ]; then \
+									echo "epiccc-build: the cached driver does not match the epic-cc checkout." >&2; \
+									echo "  binary: $(EPIC_CC_SHARED_BIN) (stamp $$bin_sha)" >&2; \
+									echo "  epic-cc: $$head_sha ($(CURDIR)/epic-cc)" >&2; \
+									echo "  A stale driver reruns older compiler bugs under new failure signatures (epic-hal#240)." >&2; \
+									echo "  Rebuild it in the dev image, from the epic-cc checkout:" >&2; \
+									echo "    cd epic-cc && make exec TARGET_CACHE=\$$HOME/.cache/epic-cc/target CMD='cargo build --release -p driver'" >&2; \
+									echo "  Then set EPIC_CC_BIN to a driver of your own, or EPIC_CC_ALLOW_STALE=1 to use this one." >&2; \
+									exit 1; \
+								fi; \
+								checked=1; \
+								;; \
+						esac \
+						;; \
+				esac \
 				;; \
 		esac; \
+		if [ "$$checked" = 0 ]; then \
+			head_ct=$$(git -C "$(CURDIR)/epic-cc" log -1 --format=%ct -- crates Cargo.toml Cargo.lock 2>/dev/null); \
+			bin_ct=$$(stat -c %Y "$(EPIC_CC_SHARED_BIN)" 2>/dev/null || echo 0); \
+			case "$$head_ct" in \
+				''|*[!0-9]*) ;; \
+				*) \
+					if [ "$$head_ct" -gt "$$bin_ct" ]; then \
+						head_log_sha=$$(git -C "$(CURDIR)/epic-cc" log -1 --format=%h -- crates Cargo.toml Cargo.lock 2>/dev/null); \
+						echo "epiccc-build: the cached driver is older than the epic-cc compiler sources." >&2; \
+						echo "  binary: $(EPIC_CC_SHARED_BIN) ($$(date -d @$$bin_ct '+%Y-%m-%d %H:%M'))" >&2; \
+						echo "  epic-cc: $$head_log_sha ($$(date -d @$$head_ct '+%Y-%m-%d %H:%M'))" >&2; \
+						echo "  The driver predates sha stamping (epic-cc#525); rebuild it to get an exact identity check." >&2; \
+						echo "  A stale driver reruns older compiler bugs under new failure signatures (epic-hal#240)." >&2; \
+						echo "  Rebuild it in the dev image, from the epic-cc checkout:" >&2; \
+						echo "    cd epic-cc && make exec TARGET_CACHE=\$$HOME/.cache/epic-cc/target CMD='cargo build --release -p driver'" >&2; \
+						echo "  If the sources are already built, cargo is a no-op and this keeps firing;" >&2; \
+						echo "  then set EPIC_CC_BIN to a driver of your own, or EPIC_CC_ALLOW_STALE=1 to use this one." >&2; \
+						exit 1; \
+					fi \
+					;; \
+			esac; \
+		fi; \
 	fi
-	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --toolchain epic-cc --epic-cc $(EPIC_CC_BIN) --build-dir build/epiccc
 ifeq ($(EPIC_CC_HOST),1)
 	sh build/epiccc/$(MCU)/build.sh
 else
