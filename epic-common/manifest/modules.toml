@@ -4394,6 +4394,7 @@ PIC18Fxx5x = [
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_ssp.c",
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c",
   "pic18fxx5x-hal/src/peripherals/pic18fxx5x_adc.c",
+  "pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c",
   "pic18fxx5x-hal/src/core/pic18_irq.c",
   "pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c",
   "pic18fxx5x-hal/src/epiccc/pic18fxx5x_wdt_sleep_epiccc.c",
