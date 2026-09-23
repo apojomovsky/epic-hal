@@ -283,7 +283,7 @@ page:
 | `epic-hal-pic16f88x-<version>.tar.gz` | 16F882 / 16F883 / 16F884 / 16F886 / 16F887 |
 | `epic-hal-pic18f1320-<version>.tar.gz` | 18F1320 |
 | `epic-hal-pic18f2520-<version>.tar.gz` | 18F2220 / 18F2320 / 18F2520 |
-| `epic-hal-pic18f6520-<version>.tar.gz` | 18F6520 |
+| `epic-hal-pic18f6520-<version>.tar.gz` | 18F6620 / 18F6720 / 18F6585 / 18F6680 / 18F8525 / 18F8585 / 18F8621 / 18F8680 / 18F6525 / 18F6621 / 18F6520 |
 | `epic-hal-pic18fxx5x-<version>.tar.gz` | 18F2455 / 18F2550 / 18F4455 / 18F4550 |
 <!-- docgen:bundles end -->
 
@@ -420,7 +420,7 @@ which modules build for which family is in the manifest
 | PIC16F88X | 16F882 / 16F883 / 16F884 / 16F886 / 16F887 | [pic16f88x-hal](pic16f88x-hal/) |
 | PIC18F1320 | 18F1320 | [pic18f1320-hal](pic18f1320-hal/) |
 | PIC18F2520 | 18F2220 / 18F2320 / 18F2520 | [pic18f2520-hal](pic18f2520-hal/) |
-| PIC18F6520 | 18F6520 | [pic18f6520-hal](pic18f6520-hal/) |
+| PIC18F6520 | 18F6620 / 18F6720 / 18F6585 / 18F6680 / 18F8525 / 18F8585 / 18F8621 / 18F8680 / 18F6525 / 18F6621 / 18F6520 | [pic18f6520-hal](pic18f6520-hal/) |
 | PIC18Fxx5x | 18F2455 / 18F2550 / 18F4455 / 18F4550 | [pic18fxx5x-hal](pic18fxx5x-hal/) |
 <!-- docgen:families end -->
 
