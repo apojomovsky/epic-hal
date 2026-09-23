@@ -222,6 +222,7 @@ epiccc-build:
 			esac; \
 		fi; \
 	fi
+	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --toolchain epic-cc --epic-cc $(EPIC_CC_BIN) --build-dir build/epiccc
 ifeq ($(EPIC_CC_HOST),1)
 	sh build/epiccc/$(MCU)/build.sh
 else
