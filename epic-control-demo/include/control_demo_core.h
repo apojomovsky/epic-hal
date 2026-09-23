@@ -1,12 +1,9 @@
 /*
- * Shared application core for the PIC18F4550 control demo: a UART
- * console driven PID loop (ADC AN0 sense, CCP1 PWM drive) with
- * EEPROM-backed settings, run by epic-taskmgr. One core, two entry
- * points (examples/example_control_demo.c real hardware,
- * tests/sim_control_demo.c the mdb gate); only the stimulus source
- * (live UART RX plus live ADC vs scripted sim injections, via
- * control_demo_inject_console_byte and control_demo_inject_adc)
- * differs.
+ * PIC18F4550 control demo core: UART console PID loop (ADC AN0
+ * sense, CCP1 PWM drive, EEPROM settings) run by epic-taskmgr.
+ * One core, two entries (examples/ real hardware, tests/ the mdb
+ * gate); only the stimulus source differs (live RX/ADC vs the
+ * control_demo_inject_* sim seam).
  */
 
 #ifndef CONTROL_DEMO_CORE_H
