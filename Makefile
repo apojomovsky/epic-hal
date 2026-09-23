@@ -32,13 +32,15 @@ GHCR_OWNER      ?=
 CI_IMAGE        := ghcr.io/$(GHCR_OWNER)/epic-hal-ci:$(IMAGE_TAG)
 
 # --user + passwd/group bind-mounts + a writable HOME_MOUNT (~/.cache):
-# --user keeps build artifacts in the bind-mounted repo host-owned (root-
-# owned files break host `rm -rf`); the mounts let mdb.sh's JVM resolve the
-# UID and give its preferences a writable home, without which it wrote a
-# literal `?` dir into the repo during testing. Every target that writes to
-# the mounted repo needs this combo (shell/exec/audit reuse it).
+# --user keeps repo artifacts host-owned; the mounts give mdb.sh's JVM
+# a resolvable UID and writable home (else a literal `?` dir lands in
+# the repo). HOME names that mount: the image default (/root) is
+# root-owned, so $HOME-resolving tools (xc8 hexmate, signal 11 as
+# non-root, epic-hal#280) crash where root succeeds. shell/exec/audit
+# reuse this combo.
 HOME_MOUNT := $(HOME)/.cache/epic-hal-toolchain-home
 DOCKER_RUN := mkdir -p $(HOME_MOUNT) && docker run --rm --user $$(id -u):$$(id -g) \
+	-e HOME=$(HOME) \
 	-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 	-v $(HOME_MOUNT):$(HOME) \
 	-v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE)
@@ -158,6 +160,7 @@ EPIC_CC_SHARED_BIN  := $(HOME)/.cache/epic-cc/target/release/epic-cc
 EPIC_CC_BIN ?= $(EPIC_CC_BIN_DEFAULT)
 EPIC_CC_RUN := mkdir -p $(HOME_MOUNT) $(HOME)/.cache/epic-cc/target && docker run --rm \
 	--user $$(id -u):$$(id -g) \
+	-e HOME=$(HOME) \
 	-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 	-v $(HOME_MOUNT):$(HOME) \
 	-v $(HOME)/.cache/epic-cc/target:/tmp/cargo-target \
@@ -315,6 +318,7 @@ sim-epiccc:
 	@test -n "$(DEVICE)" || { echo "usage: make sim-epiccc HEX=build/epiccc/16F887-tick.hex DEVICE=16F887 [WATCH=PORTB:0] [SAMPLES=24] [STEPS=500000] [IRQ_EVERY=5000 IRQ_FLAG=PIR1:1 IRQ_ENABLE=PIE1:1]" >&2; exit 1; }
 	@test -f "$(CURDIR)/$(HEX)" || { echo "sim-epiccc: no hex at $(HEX)" >&2; exit 1; }
 	mkdir -p $(HOME_MOUNT) && docker run --rm --user $$(id -u):$$(id -g) \
+		-e HOME=$(HOME) \
 		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		-v $(HOME_MOUNT):$(HOME) \
 		-v $(realpath $(CURDIR)/epic-cc):$(HOME)/projects/epic-cc \
@@ -332,6 +336,7 @@ sim-epiccc:
 # variable doesn't carry -it and isn't worth complicating for one target.
 shell: image
 	mkdir -p $(HOME_MOUNT) && docker run --rm -it --user $$(id -u):$$(id -g) \
+		-e HOME=$(HOME) \
 		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		-v $(HOME_MOUNT):$(HOME) \
 		-v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) bash
