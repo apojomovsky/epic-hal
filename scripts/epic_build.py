@@ -645,27 +645,21 @@ def _path():
     return os.environ.get("PATH", "")
 
 
-# Canonical per family: PR CI builds only this variant (half of
-# variants x modules); nightly/schedule builds every variant.
-CANONICAL = {
-    "PIC16F87XA": "16F877A",
-    "PIC16F88X": "16F887",
-    "PIC18Fxx5x": "18F4550",
-    "PIC18F1320": "18F1320",
-    "PIC18F2520": "18F2520",
-    "PIC18F6520": "18F6520",
-    "PIC16F193X": "16F1937",
-    "PIC16F628A": "16F628A",
-    "PIC16F83_84": "16F84A",
-    "PIC16F63x_67x_68x": "16F677",
-    "PIC16F7x": "16F777",
-    "PIC16F5x": "16F54",
-    "PIC16F818_819": "16F819",
-}
+# Canonical per family is the manifest's variants[-1] (docs/adding-a-device.md):
+# PR CI builds only this variant (half of variants x modules);
+# nightly/schedule builds every variant. Derived, never hand-maintained,
+# so the PR gate and the release installer gate build the same part.
+def canonical_parts(manifest):
+    return {
+        name: fam.variants[-1]
+        for name, fam in manifest.families.items()
+        if fam.variants
+    }
 
 def cmd_matrix(args):
     import os
     manifest = epicmanifest.load(epicmanifest.default_path())
+    canonicals = canonical_parts(manifest)
     # --canonical-only or GITHUB_EVENT_NAME pull_request => canonical only
     canonical_only = bool(getattr(args, "canonical_only", False))
     if not canonical_only:
@@ -680,7 +674,7 @@ def cmd_matrix(args):
             if not mcus or manifest.example_for(name, fam.name) is None:
                 continue
             if canonical_only:
-                canonical = CANONICAL.get(fam.name)
+                canonical = canonicals.get(fam.name)
                 if canonical and canonical in mcus:
                     mcus = [canonical]
                 elif canonical:
