@@ -1,6 +1,6 @@
 # PIC18F4550 flagship demo: dual-toolchain comparison (epic-hal#250)
 
-Status: 2026-09-19. `epic-menu-demo` is a realistic, product-shaped
+Status: 2026-09-23 (close-out rerun, epic-hal#250). `epic-menu-demo` is a realistic, product-shaped
 PIC18F4550 firmware (LCD menu + buttons + ADC + EEPROM + CCP/PWM +
 epic-taskmgr + epic-serial together) built under both XC8 and epic-cc,
 and compared for flash/RAM size and (where both sides produce a hex)
@@ -25,21 +25,18 @@ real, unmocked driver code paths for every peripheral it touches.
 
 | Toolchain | Build | Real MPLAB SIM gate | Flash (words) | RAM (bytes) |
 |---|---|---|---|---|
-| XC8 | PASS | PASS (`EPIC_HARNESS_RESULT: PASS`) | 9068/16384 (55.3%) | 639/2048 (31.2%) |
-| epic-cc | **FAIL** (flash overflow) | not reached | 19497/16384 (119%, over budget) | not reached |
+| XC8 | PASS | PASS (`EPIC_HARNESS_RESULT: PASS` at a 1500 ms wait) | 9061/16384 (55.3%) | 639/2048 (31.2%) |
+| epic-cc | PASS | FAIL (no UART capture, epic-cc#632) | 11888/16384 (72.6%) | 743/2048 (36.3%) |
 
-epic-cc now **code-generates this entire module correctly**: every
-compiler panic hit along the way is fixed (see below), but the
-resulting program needs 19497 flash words against the PIC18F4550's
-16384-word budget, about 2.15x XC8's own 9068. This is a genuine,
-newly-quantified epic-cc code-density gap on a real, full-featured
-program (not a narrow combo), not a correctness bug; no epic-cc issue
-is filed for it here, since "epic-cc's PIC18 backend is less code-dense
-than a decades-tuned commercial compiler" is an expected, general
-characteristic, not a specific defect to chase. Revisit once epic-cc's
-PIC18 backend has had more general size-optimization work; this module
-is one of the largest real epic-cc PIC18 targets that exists as of this
-writing, so it's a good regression benchmark for that work as it lands.
+The flash overflow from the September baseline is resolved: epic-cc now
+fits the whole module in 11888 words against XC8's 9061 (1.31x, was
+2.15x at 19497 words), through the size work in apojomovsky/epic-cc#474,
+#475, #483, #485 (the umbrella #469 closed with the size-ladder entry
+in #490). The remaining gap is behavioral, not size: the epic-cc hex
+programs and runs, but its UART capture is 0 bytes where XC8's carries
+a full session. Filed as apojomovsky/epic-cc#632 (same symptom
+epic-cc#484 closed via #567; the HAL inputs are provably uninvolved,
+see below).
 
 ## What it took to get here
 
@@ -85,10 +82,15 @@ cleanly under epic-cc, in the order found:
 
 - `make xc8-build MODULE=epic-menu-demo MCU=18F4550`: clean.
 - Real MPLAB SIM gate (`scripts/sim-mdb-run.sh`, uart mode,
-  `eeprom_writes=4`): `EPIC_HARNESS_RESULT: PASS`, reproduced multiple
-  times (epic-hal#251).
-- epic-cc build: code-generates and assembles successfully through to
-  the final link step, which then reports the flash overflow above
-  (verified against a freshly-built epic-cc binary from current
-  master, not a cached one, see epic-hal#240 on why that distinction
-  matters).
+  `eeprom_writes=4`, 1500 ms wait): `EPIC_HARNESS_RESULT: PASS` with no
+  FAIL marker in the capture, reproduced at the close-out rerun and
+  earlier under epic-hal#251. A longer wait overruns the harness bound
+  and re-enters `main`, which the gate's own marker check reads as FAIL.
+- Close-out rerun (`scripts/compare-toolchains.sh epic-menu-demo 18F4550
+  PIC18F4550`, driver `epic-cc 0.1.0+885fe58` built inside the dev image,
+  not a cached host binary, see epic-hal#240): epic-cc links clean at
+  11888/16384 words and 743/2048 bytes; its mdb run produces no UART
+  capture at either wait (filed as apojomovsky/epic-cc#632). The HAL tree
+  is ruled out as a cause: no menu, xx5x, serial, LCD, taskmgr or EEPROM
+  input differs from master, and the XC8 hex from the same tree behaves
+  normally.
