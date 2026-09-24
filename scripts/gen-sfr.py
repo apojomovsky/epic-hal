@@ -46,25 +46,27 @@ REPO = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import epicmanifest  # noqa: E402
 
-# Canonical per family: the part whose EDC drives the generated
-# addresses. Usually the largest part, so its EDC covers the family's
-# SFRs; PIC16F5x's canonical is the 16F54 exemplar instead (the family's
-# smallest part), so the wider parts' registers stay hand-maintained and
-# #if-guarded, and the sfr-map audit's CONDITIONAL_REGS carries them.
-CANONICAL = {
-    "PIC16F87XA": "16F877A",
-    "PIC16F88X": "16F887",
-    "PIC16F628A": "16F628A",
-    "PIC16F83_84": "16F84A",
-    "PIC16F63x_67x_68x": "16F677",
-    "PIC18Fxx5x": "18F4550",
-    "PIC16F193X": "16F1937",
-    "PIC18F2520": "18F2520",
-    "PIC18F6520": "18F6520",
+# Canonical per family is the manifest's variants[-1], the part the PR
+# gate builds (epic_build.canonical_parts), read live so the EDC source
+# and the build part cannot drift apart again. EDC_COVERAGE_OVERRIDE pins
+# a different part only where the build canonical's EDC covers fewer
+# SFRs: PIC16F7x's 16F77 EDC models 54 SFRs against 16F777's 66 (same
+# addresses where they overlap), so the generator keeps the wider EDC.
+EDC_COVERAGE_OVERRIDE: dict[str, str] = {
     "PIC16F7x": "16F777",
-    "PIC16F5x": "16F54",
-    "PIC16F818_819": "16F819",
 }
+
+
+def canonical_for(family: str, manifest=None) -> str:
+    if family in EDC_COVERAGE_OVERRIDE:
+        return EDC_COVERAGE_OVERRIDE[family]
+    m = manifest if manifest is not None else epicmanifest.load(epicmanifest.default_path())
+    return m.families[family].variants[-1]
+
+
+def generated_families() -> list[str]:
+    manifest = epicmanifest.load(epicmanifest.default_path())
+    return [name for name in manifest.families if name not in UNGENERATED]
 
 # Families whose family-check.yml job calls this script but whose SFR
 # header the generator does not yet cover: pic18f1320-hal's foundation
@@ -192,7 +194,7 @@ def hal_header_path(family: str) -> pathlib.Path:
 
 
 def generate_for_family(family: str, edc_override: pathlib.Path | None, dfp_dir: pathlib.Path | None) -> str | None:
-    mcu = CANONICAL[family]
+    mcu = canonical_for(family)
     edc_path = edc_override if edc_override else find_edc(family, mcu, dfp_dir)
     if edc_path is None or not edc_path.exists():
         print(f"gen-sfr: skip {family} canonical {mcu}: EDC not found locally ({edc_path})", file=sys.stderr)
@@ -242,14 +244,14 @@ def generate_for_family(family: str, edc_override: pathlib.Path | None, dfp_dir:
 
 def main():
     ap = argparse.ArgumentParser(description="Generate per-family SFR headers from EDC (ATDF)")
-    ap.add_argument("--family", choices=list(CANONICAL.keys()) + list(UNGENERATED),
+    ap.add_argument("--family", choices=generated_families() + list(UNGENERATED),
                     help="only this family")
     ap.add_argument("--check", action="store_true", help="fail if committed file differs from generated")
     ap.add_argument("--edc", type=pathlib.Path, help="override EDC .PIC path for single family")
     ap.add_argument("--dfp-dir", type=pathlib.Path, help="override DFP dir for EDC lookup")
     args = ap.parse_args()
 
-    families = [args.family] if args.family else list(CANONICAL.keys())
+    families = [args.family] if args.family else generated_families()
     if args.edc and len(families) != 1:
         sys.exit("gen-sfr: --edc requires --family")
     failed = False
