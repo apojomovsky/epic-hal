@@ -541,7 +541,26 @@ CONDITIONAL_REGS.update({
     "16F505": {"PORTA", "PORTD", "PORTE", "CM1CON0", "ADCON0", "ADRES",
                "CM2CON0", "VRCON"},
     "16F506": {"PORTA", "PORTD", "PORTE"},
-
+    # PIC18F6520 64-pin parts: no PORTH/J (80-pin parts only, DS39661
+    # §10.0); the HAL defines PORTH/J + LATH/J + TRISH/J unconditionally
+    # and gates the usage on FAMILY_HAS_PORTH/_HAS_PORTJ. The ECAN quads
+    # repeat their main-table sets here because update() overwrites per
+    # key: 6585/6680 carry both the ECAN absences and the H/J absences.
+    "18F6520": {"PORTH", "PORTJ", "LATH", "LATJ", "TRISH", "TRISJ"},
+    "18F6620": {"PORTH", "PORTJ", "LATH", "LATJ", "TRISH", "TRISJ"},
+    "18F6720": {"PORTH", "PORTJ", "LATH", "LATJ", "TRISH", "TRISJ"},
+    "18F6585": {"CCP3CON", "CCP4CON", "CCP5CON", "CCPR3H", "CCPR3L",
+               "CCPR4H", "CCPR4L", "CCPR5H", "CCPR5L", "PR4", "RCREG1",
+               "RCREG2", "RCSTA1", "RCSTA2", "SPBRG1", "SPBRG2", "T4CON",
+               "TMR4", "TXREG1", "TXREG2", "TXSTA1", "TXSTA2",
+               "PORTH", "PORTJ", "LATH", "LATJ", "TRISH", "TRISJ"},
+    "18F6680": {"CCP3CON", "CCP4CON", "CCP5CON", "CCPR3H", "CCPR3L",
+               "CCPR4H", "CCPR4L", "CCPR5H", "CCPR5L", "PR4", "RCREG1",
+               "RCREG2", "RCSTA1", "RCSTA2", "SPBRG1", "SPBRG2", "T4CON",
+               "TMR4", "TXREG1", "TXREG2", "TXSTA1", "TXSTA2",
+               "PORTH", "PORTJ", "LATH", "LATJ", "TRISH", "TRISJ"},
+    "18F6525": {"PORTH", "PORTJ", "LATH", "LATJ", "TRISH", "TRISJ"},
+    "18F6621": {"PORTH", "PORTJ", "LATH", "LATJ", "TRISH", "TRISJ"},
 })
 
 # PIC16F7x bit rows absent from the smaller/older parts' DFP headers:

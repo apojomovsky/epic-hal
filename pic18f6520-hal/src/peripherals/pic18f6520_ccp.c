@@ -1,9 +1,8 @@
 /*
- * CCP1-5 driver, implementation (DS39609B §16.0). Every SFR access
- * branches on the instance BEFORE touching any register, so each
- * branch's own access stays a literal `PIC_REG_*` token (the §4
- * runtime-SFR-address rule, same shape as the 193x CCP1-5 and 2520
- * CCP drivers).
+ * CCP driver (DS39609B §16.0, DS39661 §16.0 for the ECAN quads):
+ * five modules, CCP1-2 only on the quads (same addresses). Every SFR
+ * access branches on the instance first, so each branch stays a literal
+ * `PIC_REG_*` token (the §4 rule, same shape as the 193x/2520 drivers).
  */
 
 #include "peripherals/pic18f6520_ccp.h"
@@ -87,13 +86,18 @@
     } while (0)
 
 /**
- * @brief  Return 1 if `inst` is a valid CCP instance (1..5), else 0.
+ * @brief  Return 1 if `inst` is a valid CCP instance, else 0. ECAN
+ *         quads carry CCP1-2 only (INSTANCE_3..5 rejected).
  * @param inst the instance to validate.
  * @return 1 if valid, else 0.
  */
 static uint8_t ccp_valid(CCP_InstanceTypeDef inst)
 {
+#if PIC18F6520_FAMILY_HAS_CAN
+    return (inst == CCP_INSTANCE_1 || inst == CCP_INSTANCE_2) ? 1U : 0U;
+#else
     return (inst >= CCP_INSTANCE_1 && inst <= CCP_INSTANCE_5) ? 1U : 0U;
+#endif
 }
 
 /**

@@ -844,8 +844,8 @@ epiccc_sources = [
 [families.PIC18F6520]
 hal_dir  = "pic18f6520-hal"
 # Canonical 18F6520 last so family-check's scaffold gate builds
-# variants[-1] (as on the 2520 family); gen-sfr.py's CANONICAL entry
-# for this family agrees.
+# variants[-1] (as on the 2520 family); gen-sfr.py derives the same
+# part from the manifest, so the EDC source agrees by construction.
 variants = ["18F6620", "18F6720", "18F6585", "18F6680", "18F8525", "18F8585", "18F8621", "18F8680", "18F6525", "18F6621", "18F6520"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 dfp_version = "1.7.171"
@@ -863,12 +863,14 @@ includes = [
   "pic18f6520-hal/include",
   "epic-common/include",
 ]
-# Baseline (every variant): GPIO + Timer0-3 + MSSP + ADC + comparator +
-# EEPROM + the IRQ/WDT core, all present at the same addresses on every
-# part in this family. CCP1-5, EUSART1/2 and the full dispatch are
-# conditional_sources below: the ECAN parts (6585/6680/8585/8680) have
-# only CCP1-2 and a single EUSART, so those drivers and the full
-# dispatch's strong externs cannot link there.
+# Baseline (every variant): GPIO (PORTA-G, plus PORTH/J on the 80-pin
+# parts) + Timer0-3 + MSSP + ADC + comparator + EEPROM + the IRQ/WDT
+# core, all present at the same addresses on every part in this family.
+# CCP, EUSART and the full dispatch link on all eleven variants: the
+# ECAN parts (6585/6680/8585/8680) carry CCP1-2 and a single EUSART at
+# the same addresses, and the drivers reject the absent CCP/USART
+# instances via the HAS_CAN capability macro. PORTH/J cases compile
+# out on the 64-pin parts via HAS_PORTH/_HAS_PORTJ.
 hal_sources = [
   "pic18f6520-hal/src/peripherals/pic18f6520_gpio.c",
   "pic18f6520-hal/src/peripherals/pic18f6520_timer0.c",
@@ -913,19 +915,15 @@ epiccc_sources = [
 
 [[families.PIC18F6520.conditional_sources]]
 path     = "pic18f6520-hal/src/peripherals/pic18f6520_ccp.c"
-variants = ["18F6620", "18F6720", "18F8525", "18F8621", "18F6525", "18F6621", "18F6520"]
+variants = ["18F6620", "18F6720", "18F6585", "18F6680", "18F8525", "18F8585", "18F8621", "18F8680", "18F6525", "18F6621", "18F6520"]
 after    = "pic18f6520-hal/src/peripherals/pic18f6520_timer3.c"
 [[families.PIC18F6520.conditional_sources]]
 path     = "pic18f6520-hal/src/peripherals/pic18f6520_usart.c"
-variants = ["18F6620", "18F6720", "18F8525", "18F8621", "18F6525", "18F6621", "18F6520"]
+variants = ["18F6620", "18F6720", "18F6585", "18F6680", "18F8525", "18F8585", "18F8621", "18F8680", "18F6525", "18F6621", "18F6520"]
 after    = "pic18f6520-hal/src/peripherals/pic18f6520_ssp.c"
 [[families.PIC18F6520.conditional_sources]]
 path     = "pic18f6520-hal/src/core/pic18_irq_dispatch.c"
-variants = ["18F6620", "18F6720", "18F8525", "18F8621", "18F6525", "18F6621", "18F6520"]
-after    = "pic18f6520-hal/src/core/pic18_irq.c"
-[[families.PIC18F6520.conditional_sources]]
-path     = "pic18f6520-hal/src/core/pic18_irq_dispatch_min.c"
-variants = ["18F6585", "18F6680", "18F8585", "18F8680"]
+variants = ["18F6620", "18F6720", "18F6585", "18F6680", "18F8525", "18F8585", "18F8621", "18F8680", "18F6525", "18F6621", "18F6520"]
 after    = "pic18f6520-hal/src/core/pic18_irq.c"
 
 # PIC16F193X has no higher-level modules yet (out of scope for the

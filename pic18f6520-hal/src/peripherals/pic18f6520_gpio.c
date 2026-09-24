@@ -26,6 +26,12 @@ static uint16_t tris_addr(GPIO_TypeDef port)
         case GPIOE: return PIC_REG_TRISE;
         case GPIOF: return PIC_REG_TRISF;
         case GPIOG: return PIC_REG_TRISG;
+#if PIC18F6520_FAMILY_HAS_PORTH
+        case GPIOH: return PIC_REG_TRISH;
+#endif
+#if PIC18F6520_FAMILY_HAS_PORTJ
+        case GPIOJ: return PIC_REG_TRISJ;
+#endif
         default:    return PIC_REG_TRISA;
     }
 }
@@ -46,6 +52,12 @@ static uint16_t lat_addr(GPIO_TypeDef port)
         case GPIOE: return PIC_REG_LATE;
         case GPIOF: return PIC_REG_LATF;
         case GPIOG: return PIC_REG_LATG;
+#if PIC18F6520_FAMILY_HAS_PORTH
+        case GPIOH: return PIC_REG_LATH;
+#endif
+#if PIC18F6520_FAMILY_HAS_PORTJ
+        case GPIOJ: return PIC_REG_LATJ;
+#endif
         default:    return PIC_REG_LATA;
     }
 }
@@ -66,6 +78,12 @@ static uint16_t port_addr(GPIO_TypeDef port)
         case GPIOE: return PIC_REG_PORTE;
         case GPIOF: return PIC_REG_PORTF;
         case GPIOG: return PIC_REG_PORTG;
+#if PIC18F6520_FAMILY_HAS_PORTH
+        case GPIOH: return PIC_REG_PORTH;
+#endif
+#if PIC18F6520_FAMILY_HAS_PORTJ
+        case GPIOJ: return PIC_REG_PORTJ;
+#endif
         default:    return PIC_REG_PORTA;
     }
 }

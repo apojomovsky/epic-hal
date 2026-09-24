@@ -70,7 +70,7 @@ The 6680 is the 6585's 64 KB sibling with the same ECAN shape.
 
 The 8525 is the first 80-pin part: PORTH/J join the map (69 I/O, 16
 ADC channels) at the same addresses for PORTA-G and every driven
-peripheral; the gpio driver covers A-G, PORTH/J have no driver yet.
+peripheral; the gpio driver covers A-J (GPIOH/J, full 8-bit).
 The 8585 is the 8525's ECAN sibling: the 80-pin map with CCP1-2, a
 single EUSART, no TMR4, and the ECAN module (no driver yet).
 The 8621 is the 8525's 64 KB sibling with the same 80-pin map.
@@ -241,15 +241,17 @@ gated under real mdb with register readbacks (T1CON=0x81 with
 TMR1IF set on 0xFFF0-reload overflow, T2CON=0x04 with PR2=9 and
 TMR2IF, T3CON=0x81 with PIR2<TMR3IF>).
 
-## 10. CCP1-5
+## 10. CCP1-5 (CCP1-2 on the ECAN quads)
 
 Five plain CCP modules (CP1CON/CCPR1 at 0xFBD-0xFBF, CCP2 at 0xFBA-0xFBC,
 CCP3 at 0xFB7-0xFB9, CCP4 at 0xF73-0xF75, CCP5 at 0xF70-0xF72; DS39609B
-§16.0, Register 16-1). All five share the identical plain-CCP layout
-(mode bits 3:0, duty LSBs 5:4): this part has no Enhanced-CCP hardware
-(no PSTRCON/ECCPAS/PWM1CON in the DFP), unlike the 4550's ECCP1 or the
-2520's reduced ECCP1, so there is no auto-shutdown/restart API. One
-driver with an instance selector (`CCP_INSTANCE_1..5`) programs
+§16.0, Register 16-1). The ECAN quads (6585/6680/8585/8680) carry
+CCP1-2 only at the same addresses (DS39661 §16.0); the driver rejects
+INSTANCE_3..5 there via HAS_CAN. All five share the identical plain-CCP
+layout (mode bits 3:0, duty LSBs 5:4): this part has no Enhanced-CCP
+hardware (no PSTRCON/ECCPAS/PWM1CON in the DFP), unlike the 4550's ECCP1
+or the 2520's reduced ECCP1, so there is no auto-shutdown/restart API.
+One driver with an instance selector (`CCP_INSTANCE_1..5`) programs
 capture/compare/PWM; Capture/Compare use Timer1 or Timer3 (T3CON<
 T3CCP2:T3CCP1>, reset default Timer1+Timer2), PWM uses Timer2. Each
 branch of the instance selector touches only literal `PIC_REG_*`
@@ -264,11 +266,13 @@ API follows the 2520 driver: `EPIC_SSP_Init` programs the mode/edges,
 (`_Start`/`_Stop`/`_RepeatedStart`/`_ReceiveEnable`/`_AcknowledgeEnable`)
 drive SSPCON2, and the weak `SSP_IRQHandler` fires `TransferCallback`.
 
-## 12. EUSART1/2
+## 12. EUSART1/2 (single EUSART on the ECAN quads)
 
 Two identical EUSART modules (EUSART1 registers at 0xFAB-0xFAF, EUSART2
-at 0xF6B-0xF6F; DS39609B §18.0). One driver with an instance selector
-(`USART_INSTANCE_1/2`). Async + sync master/slave, the 8-bit baud-rate
+at 0xF6B-0xF6F; DS39609B §18.0). On the ECAN quads the single EUSART
+lives at the EUSART1 addresses with unsuffixed names (TXSTA/RCSTA/SPBRG,
+DS39661 §18.0); the driver rejects INSTANCE_2 there via HAS_CAN. One
+driver with an instance selector (`USART_INSTANCE_1/2`). Async + sync
 generator per Table 18-1 (no BRG16/SPBRGH/BAUDCON, see §13), 9-bit data
 with address-detect. The weak handlers split per module: `USART_TX/
 RX_IRQHandler` for EUSART1 (PIR1<TXIF/RCIF>), `USART2_TX/RX_IRQHandler`

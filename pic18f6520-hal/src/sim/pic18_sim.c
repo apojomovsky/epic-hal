@@ -16,9 +16,9 @@
  * footprint; all SFRs the drivers use live in 0xF60-0xFFF. */
 uint8_t pic18_sim_sfr[0x1000];
 
-/* Per-pin input overrides set by the host application (A..G). */
-static uint8_t sim_input_override[7] = {0};
-static uint8_t sim_input_value   [7] = {0};
+/* Per-pin input overrides set by the host application (A..J; H/J on 80-pin parts). */
+static uint8_t sim_input_override[9] = {0};
+static uint8_t sim_input_value   [9] = {0};
 
 /* Optional ISR hook (the family dispatcher, registered by the harness). */
 static pic18_sim_irq_cb_t sim_irq_cb = 0;
@@ -66,6 +66,12 @@ static uint8_t port_index(char port)
         case 'E': case 'e': return 4;
         case 'F': case 'f': return 5;
         case 'G': case 'g': return 6;
+#if PIC18F6520_FAMILY_HAS_PORTH
+        case 'H': case 'h': return 7;
+#endif
+#if PIC18F6520_FAMILY_HAS_PORTJ
+        case 'J': case 'j': return 8;
+#endif
         default:             return 0;
     }
 }
@@ -73,7 +79,7 @@ static uint8_t port_index(char port)
 /**
  * @brief Return the register-file address of the LAT register for a port.
  *
- * @param port the port letter (A..G, case-insensitive)
+ * @param port the port letter (A..J, case-insensitive; H/J on 80-pin parts)
  * @return the register-file index of the port's LAT register, or LATA for
  *         unknown or unpopulated ports
  */
@@ -88,6 +94,12 @@ static uint16_t lat_addr(char port)
         case 'E': case 'e': return PIC_REG_LATE;
         case 'F': case 'f': return PIC_REG_LATF;
         case 'G': case 'g': return PIC_REG_LATG;
+#if PIC18F6520_FAMILY_HAS_PORTH
+        case 'H': case 'h': return PIC_REG_LATH;
+#endif
+#if PIC18F6520_FAMILY_HAS_PORTJ
+        case 'J': case 'j': return PIC_REG_LATJ;
+#endif
         default:             return PIC_REG_LATA;
     }
 }
@@ -95,7 +107,7 @@ static uint16_t lat_addr(char port)
 /**
  * @brief Return the register-file address of the TRIS register for a port.
  *
- * @param port the port letter (A..G, case-insensitive)
+ * @param port the port letter (A..J, case-insensitive; H/J on 80-pin parts)
  * @return the register-file index of the port's TRIS register, or TRISA
  *         for unknown or unpopulated ports
  */
@@ -110,6 +122,12 @@ static uint16_t tris_addr(char port)
         case 'E': case 'e': return PIC_REG_TRISE;
         case 'F': case 'f': return PIC_REG_TRISF;
         case 'G': case 'g': return PIC_REG_TRISG;
+#if PIC18F6520_FAMILY_HAS_PORTH
+        case 'H': case 'h': return PIC_REG_TRISH;
+#endif
+#if PIC18F6520_FAMILY_HAS_PORTJ
+        case 'J': case 'j': return PIC_REG_TRISJ;
+#endif
         default:             return PIC_REG_TRISA;
     }
 }
@@ -117,7 +135,7 @@ static uint16_t tris_addr(char port)
 /**
  * @brief Return the register-file address of the PORT register for a port.
  *
- * @param port the port letter (A..G, case-insensitive)
+ * @param port the port letter (A..J, case-insensitive; H/J on 80-pin parts)
  * @return the register-file index of the port's PORT register, or PORTA
  *         for unknown or unpopulated ports
  */
@@ -132,6 +150,12 @@ static uint16_t port_addr(char port)
         case 'E': case 'e': return PIC_REG_PORTE;
         case 'F': case 'f': return PIC_REG_PORTF;
         case 'G': case 'g': return PIC_REG_PORTG;
+#if PIC18F6520_FAMILY_HAS_PORTH
+        case 'H': case 'h': return PIC_REG_PORTH;
+#endif
+#if PIC18F6520_FAMILY_HAS_PORTJ
+        case 'J': case 'j': return PIC_REG_PORTJ;
+#endif
         default:             return PIC_REG_PORTA;
     }
 }
@@ -177,7 +201,8 @@ void pic18_sim_reset(void)
     pic18_sim_sfr[PIC_REG_OSCCON]   = 0x00U;                  /* Table 3-3. */
 
     /* TRIS defaults: 1 = input. All seven ports exist on the 64-pin part;
-     * TRISG implements only RG0-RG4 (bits 0-4, Table 4-3). */
+     * TRISG implements only RG0-RG4 (bits 0-4, Table 4-3). PORTH/J take
+     * the same POR values on the 80-pin parts (DS39661 Table 3-3). */
     pic18_sim_sfr[PIC_REG_TRISA] = PIC_TRISA_POR_VALUE;
     pic18_sim_sfr[PIC_REG_TRISB] = PIC_TRIS_POR_VALUE;
     pic18_sim_sfr[PIC_REG_TRISC] = PIC_TRIS_POR_VALUE;
@@ -185,6 +210,12 @@ void pic18_sim_reset(void)
     pic18_sim_sfr[PIC_REG_TRISE] = PIC_TRIS_POR_VALUE;
     pic18_sim_sfr[PIC_REG_TRISF] = PIC_TRIS_POR_VALUE;
     pic18_sim_sfr[PIC_REG_TRISG] = PIC_TRISG_POR_VALUE;
+#if PIC18F6520_FAMILY_HAS_PORTH
+    pic18_sim_sfr[PIC_REG_TRISH] = PIC_TRIS_POR_VALUE;
+#endif
+#if PIC18F6520_FAMILY_HAS_PORTJ
+    pic18_sim_sfr[PIC_REG_TRISJ] = PIC_TRIS_POR_VALUE;
+#endif
     pic18_sim_sfr[PIC_REG_LATA] = PIC_LAT_POR_VALUE;
     pic18_sim_sfr[PIC_REG_LATB] = PIC_LAT_POR_VALUE;
     pic18_sim_sfr[PIC_REG_LATC] = PIC_LAT_POR_VALUE;
@@ -192,6 +223,12 @@ void pic18_sim_reset(void)
     pic18_sim_sfr[PIC_REG_LATE] = PIC_LAT_POR_VALUE;
     pic18_sim_sfr[PIC_REG_LATF] = PIC_LAT_POR_VALUE;
     pic18_sim_sfr[PIC_REG_LATG] = PIC_LAT_POR_VALUE;
+#if PIC18F6520_FAMILY_HAS_PORTH
+    pic18_sim_sfr[PIC_REG_LATH] = PIC_LAT_POR_VALUE;
+#endif
+#if PIC18F6520_FAMILY_HAS_PORTJ
+    pic18_sim_sfr[PIC_REG_LATJ] = PIC_LAT_POR_VALUE;
+#endif
 
     memset(sim_input_override, 0, sizeof sim_input_override);
     memset(sim_input_value,    0, sizeof sim_input_value);
@@ -398,7 +435,7 @@ static void sim_step_timer3(void)
 /**
  * @brief Drive a digital input pin from the test rig.
  *
- * @param port the port letter ('A'..'G', case-insensitive).
+ * @param port the port letter ('A'..'J', case-insensitive; H/J on 80-pin parts).
  * @param pin pin number 0..7.
  * @param level 0 = low, 1 = high.
  */
@@ -425,7 +462,7 @@ void pic18_sim_drive_input(char port, uint8_t pin, uint8_t level)
  * @brief Read the level driven onto an output pin (or the driven level on
  *        an input pin).
  *
- * @param port the port letter ('A'..'G', case-insensitive).
+ * @param port the port letter ('A'..'J', case-insensitive; H/J on 80-pin parts).
  * @param pin the pin number, 0..7.
  * @return 0 = low, 1 = high.
  */
