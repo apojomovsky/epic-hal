@@ -22,7 +22,8 @@
 /* I/O ports, DS39609B §10.0, Table 4-3. PORTx is the pin input sample;
  * LATx is the output latch; TRISx is the direction register. 64-pin
  * part: full PORTA-G, every port with LAT/TRIS (unlike the 28-pin 2520;
- * RE3 is MCLR-but-readable on this part, DS39609B Table 1-1). */
+ * RE3 is MCLR-but-readable on this part, DS39609B Table 1-1). 80-pin
+ * parts add PORTH/J (DS39661 §10.0), full 8-bit with LAT/TRIS. */
 #define PIC_REG_PORTA         0xF80U
 #define PIC_REG_PORTB         0xF81U
 #define PIC_REG_PORTC         0xF82U
@@ -30,6 +31,8 @@
 #define PIC_REG_PORTE         0xF84U
 #define PIC_REG_PORTF         0xF85U
 #define PIC_REG_PORTG         0xF86U
+#define PIC_REG_PORTH         0xF87U   /**< 80-pin parts only (DS39661 §10.0, EDC impl 0xff). */
+#define PIC_REG_PORTJ         0xF88U   /**< 80-pin parts only (DS39661 §10.0, EDC impl 0xff). */
 
 #define PIC_REG_LATA          0xF89U
 #define PIC_REG_LATB          0xF8AU
@@ -38,6 +41,8 @@
 #define PIC_REG_LATE          0xF8DU
 #define PIC_REG_LATF          0xF8EU
 #define PIC_REG_LATG          0xF8FU
+#define PIC_REG_LATH          0xF90U   /**< 80-pin parts only. */
+#define PIC_REG_LATJ          0xF91U   /**< 80-pin parts only. */
 
 #define PIC_REG_TRISA         0xF92U
 #define PIC_REG_TRISB         0xF93U
@@ -46,6 +51,8 @@
 #define PIC_REG_TRISE         0xF96U
 #define PIC_REG_TRISF         0xF97U
 #define PIC_REG_TRISG         0xF98U
+#define PIC_REG_TRISH         0xF99U   /**< 80-pin parts only. */
+#define PIC_REG_TRISJ         0xF9AU   /**< 80-pin parts only. */
 
 /* Interrupt control, DS39609B §9.0, Register 9-1/9-2/9-3. */
 #define PIC_REG_INTCON        0xFF2U   /**< GIE/GIEL/TMR0IE/INT0IE/RBIE + flags. */

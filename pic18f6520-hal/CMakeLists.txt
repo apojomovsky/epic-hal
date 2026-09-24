@@ -30,8 +30,9 @@ set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
 set(EPIC_FAMILY_DEVICES        PIC18F6620 PIC18F6720 PIC18F6585 PIC18F6680 PIC18F8525 PIC18F8585 PIC18F8621 PIC18F8680 PIC18F6525 PIC18F6621 PIC18F6520)
 
 # GPIO + Timer0-3 drivers, the IRQ core and its dispatch, the
-# WDT/Sleep helpers, and the host sim backend + harness. The dispatch
-# strong-references only the handlers that exist this phase.
+# WDT/Sleep helpers, and the host sim backend + harness. Every listed
+# driver links on all eleven parts (absent CCP/USART instances rejected
+# at Init; PORTH/J compiled out on the 64-pin parts).
 set(EPIC_SOURCES
     src/sim/pic18_sim.c
     src/sim/pic18_harness_sim.c

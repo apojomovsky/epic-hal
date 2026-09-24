@@ -1,10 +1,10 @@
 /*
- * EUSART1 + EUSART2 driver, implementation (DS39609B §18.0). Every SFR
- * access branches on the instance BEFORE touching any register, so each
- * branch's own access stays a literal `PIC_REG_*` token (the §4
- * runtime-SFR-address rule, same shape as the CCP/mssp instance
- * selectors). Programs the SFRs only; the sim backend models nothing
- * beyond register writes, and the mdb uart gate captures real TX bytes.
+ * EUSART driver (DS39609B §18.0, DS39661 §18.0 for the ECAN quads):
+ * two modules, one on the quads (single EUSART at the EUSART1 addresses,
+ * 0xFAB-0xFAF). Every SFR access branches on the instance first, so each
+ * branch stays a literal `PIC_REG_*` token (the §4 rule, same shape as
+ * the CCP/mssp selectors). Programs the SFRs only; the mdb uart gate
+ * captures real TX bytes.
  */
 
 #include "peripherals/pic18f6520_usart.h"
@@ -114,12 +114,17 @@ uint16_t USART_ComputeSPBRG(uint32_t fosc_hz, uint32_t baud,
 
 /**
  * @brief  Return 1 if `inst` is a valid EUSART instance, else 0.
+ *         ECAN quads carry only the single EUSART (INSTANCE_1).
  * @param inst the instance to validate.
  * @return 1 if valid, else 0.
  */
 static uint8_t usart_valid(USART_InstanceTypeDef inst)
 {
+#if PIC18F6520_FAMILY_HAS_CAN
+    return (inst == USART_INSTANCE_1) ? 1U : 0U;
+#else
     return (inst == USART_INSTANCE_1 || inst == USART_INSTANCE_2) ? 1U : 0U;
+#endif
 }
 
 /**

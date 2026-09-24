@@ -1,8 +1,8 @@
 /*
- * EUSART1 + EUSART2 driver, async + sync master/slave (DS39609B §18.0).
- * Two identical modules, one driver with an instance selector (see
- * Table 18-2 note 1); the BRG is 8-bit only (no BAUDCON/SPBRGH on
- * this part). RMW uses split read+write: XC8 cannot lower compound
+ * EUSART driver, async + sync master/slave (DS39609B §18.0, DS39661
+ * §18.0 for the ECAN quads). Instance selector over the two modules
+ * (single EUSART on ECAN quads: INSTANCE_1 only); 8-bit BRG, no
+ * BAUDCON/SPBRGH. RMW uses split read+write: XC8 cannot lower compound
  * assignment on a volatile cast-lvalue.
  */
 
@@ -17,7 +17,7 @@
  */
 typedef enum {
     USART_INSTANCE_1 = 1,   /**< EUSART1: RCSTA1/TXSTA1/TXREG1/RCREG1/SPBRG1 (0xFAB-0xFAF). */
-    USART_INSTANCE_2 = 2,   /**< EUSART2: RCSTA2/TXSTA2/TXREG2/RCREG2/SPBRG2 (0xF6B-0xF6F). */
+    USART_INSTANCE_2 = 2,   /**< EUSART2: RCSTA2/TXSTA2/TXREG2/RCREG2/SPBRG2 (0xF6B-0xF6F). Absent on ECAN quads. */
 } USART_InstanceTypeDef;
 
 /**

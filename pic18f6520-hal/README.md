@@ -21,25 +21,27 @@ interrupt backend, peripheral drivers) live here.
 
 ## Status
 
-**Complete (epic-hal#182, #183, #184, #185, umbrella #150):** platform,
-SFR map, GPIO (PORTA-G), Timer0-3, CCP1-5, MSSP, EUSART1/2, ADC,
-comparator, data EEPROM, the dual-priority interrupt core,
-WDT/Sleep/BOR/POR, and the harness are implemented and verified under
-host sim and real `mdb` (each peripheral through
-docs/adding-a-device.md §4: host example + XC8 target build + `mdb`
-register-readback gate). TMR4, PSP and LVD have no driver yet (SFRs
-are in the map). This part has **no USB and no SPP** (DS39609B
-Table 1-1).
+**Complete (epic-hal#182, #183, #184, #185, umbrella #150; ECAN-quad and
+80-pin coverage #246):** platform, SFR map, GPIO (PORTA-G, plus PORTH/J
+on the 80-pin parts), Timer0-3, CCP (1-5, 1-2 on the ECAN quads), MSSP,
+EUSART (1/2, single on the ECAN quads), ADC, comparator, data EEPROM,
+the dual-priority interrupt core, WDT/Sleep/BOR/POR, and the harness are
+implemented and verified under host sim and real `mdb` (each peripheral
+through docs/adding-a-device.md §4: host example + XC8 target build +
+`mdb` register-readback gate). TMR4, PSP, LVD and the ECAN module have
+no driver yet (SFRs are in the map). This part has **no USB and no SPP**
+(DS39609B Table 1-1).
 
 - ✅ Family header (`pic18f6520_hal.h`): device selection, capability
   macros, platform include. Named `_hal` to avoid shadowing the DFP
   `pic18f6520.h` (see "XC8 codegen gotchas" below).
-- ✅ SFR map (`pic18f6520_sfr.h`): core status, GPIO (PORTA-G), INTCON/
-  INTCON2/INTCON3, PIR1-3/PIE1-3/IPR1-3, T0CON/TMR0L/H, T1CON/TMR1L/H,
-  T2CON/PR2/TMR2, T3CON/TMR3L/H, T4CON/PR4/TMR4, CCP1-5CON/CCPRxL/H,
-  MSSP, EUSART1/2, PSP, ADC, comparator, CVR, LVD, EEPROM; addresses
-  cross-checked against the PIC18Fxxxx DFP and the EDC, bits/reset values
-  cited to DS39609B. The PIC_REG_* address set is generator-projected
+- ✅ SFR map (`pic18f6520_sfr.h`): core status, GPIO (PORTA-G, plus
+  PORTH/J on the 80-pin parts), INTCON/INTCON2/INTCON3, PIR1-3/PIE1-3/
+  IPR1-3, T0CON/TMR0L/H, T1CON/TMR1L/H, T2CON/PR2/TMR2, T3CON/TMR3L/H,
+  T4CON/PR4/TMR4, CCP1-5CON/CCPRxL/H, MSSP, EUSART1/2, PSP, ADC,
+  comparator, CVR, LVD, EEPROM; addresses cross-checked against the
+  PIC18Fxxxx DFP and the EDC, bits/reset values cited to DS39609B. The
+  PIC_REG_* address set is generator-projected
   (`scripts/gen-sfr.py --family PIC18F6520 --check` is a CI gate).
 - ✅ Platform layer (`include/host` + `include/target` `pic18_platform.h`):
   the same `epic_sfr_read8` / `EPIC_REG8` / `EPIC_WEAK` contract as the
@@ -47,6 +49,7 @@ Table 1-1).
   physical 12-bit SFR address (all foundation SFRs are in the Access Bank
   0xF60-0xFFF).
 - ✅ GPIO driver (`peripherals/pic18f6520_gpio.h`): PORTA-G (7 ports),
+  plus PORTH/J on the 80-pin parts (GPIOH/J, full 8-bit, DS39661 §10.0);
   writes through LATx (DS39609B §10.0), reads PORTx, PORTB pull-ups via
   INTCON2<RBPU>, RB<7:4> change interrupt hook.
 - ✅ Timer0 driver (`peripherals/pic18f6520_timer0.h`): same API as PIC16
@@ -59,15 +62,17 @@ Table 1-1).
 - ✅ Timer3 driver (`peripherals/pic18f6520_timer3.h`): 16-bit with RD16,
   DS39609B Register 14-1. Timer4 (T4CON/PR4/TMR4 at 0xF76-0xF78) has no
   driver yet (#183 covered Timer0-3 only).
-- ✅ CCP1-5 driver (`peripherals/pic18f6520_ccp.h`): one driver with an
+- ✅ CCP driver (`peripherals/pic18f6520_ccp.h`): one driver with an
   instance selector over five plain CCP modules (CCP1CON/CCPR1 at
-  0xFBD-0xFBF through CCP5 at 0xF70-0xF72). All plain: no
+  0xFBD-0xFBF through CCP5 at 0xF70-0xF72); CCP1-2 only on the ECAN
+  quads (the rest rejected, same addresses). All plain: no
   auto-shutdown/PWM-bridge hardware on this part (no PSTRCON/ECCPAS/
   PWM1CON in the DFP), so no ECCP-specific API.
 - ✅ MSSP driver (`peripherals/pic18f6520_ssp.h`): SPI + I2C, same
   register shape as the 4550 family.
-- ✅ EUSART1/2 driver (`peripherals/pic18f6520_usart.h`): one driver with
-  an instance selector over the two identical EUSART modules; 8-bit
+- ✅ EUSART driver (`peripherals/pic18f6520_usart.h`): one driver with
+  an instance selector over the two identical EUSART modules (single
+  EUSART on the ECAN quads, same addresses as EUSART1); 8-bit
   BRG only (no BAUDCON/SPBRGH on this part).
 - ✅ ADC driver (`peripherals/pic18f6520_adc.h`): 12-channel 10-bit SAR,
   CHS/VCFG/PCFG/ADCS; no ACQT field on this part (ADCON2 carries only
@@ -94,7 +99,7 @@ Table 1-1).
   RCON.
 - ✅ Host simulation backend (`src/sim/pic18_sim.c`): Timer0-3 stepping
   (8/16-bit, prescaler, overflow -> flag + IRQ callback) + GPIO drive/read
-  over all seven ports.
+  over all nine ports.
 - ✅ `example_blink` (Timer0 + GPIO + interrupt), `example_irq` (the
   dedicated IRQ-core smoke test), `example_smoke` (harness seam),
   `example_timer1/2/3` (per-timer host overflow/match smokes),
@@ -109,7 +114,8 @@ Table 1-1).
 - ✅ CI wiring at foundation time: manifest family + pseudo-module,
   `scripts/ci-target-sim.sh` sim gate, `sfr-map-audit.py` / `config-key-audit.py`
   / `hex-identity-audit.py` / `gen-sfr.py` / `pre-commit-checks.sh` family
-  registration, and the `epic_build.py` PIC18 classifier + CANONICAL entry.
+  registration, and the `epic_build.py` PIC18 classifier (the canonical
+  part comes from the manifest's `variants[-1]`, shared with gen-sfr.py).
   The `family-check.yml` job is deferred until a consumer module exists (the
   1320/2520 pattern); the manifest family/module, device-data audits, and
   the sim-gate definition are wired and pass on their own.
@@ -118,8 +124,9 @@ Table 1-1).
 
 The 6520 is a 64-pin part and the largest of the three new PIC18 families:
 
-- **7 I/O ports** (PORTA-G), every one with PORTx/LATx/TRISx (the 2520/
-  1320 forks have 3 and 2); TRISG implements RG0-RG4 only.
+- **7 I/O ports on the 64-pin parts** (PORTA-G), **9 on the 80-pin ones**
+  (PORTH/J), every one with PORTx/LATx/TRISx (the 2520/1320 forks have 3
+  and 2); TRISG implements RG0-RG4 only.
 - **5 CCP modules** (CCP1-5, all plain CCP: no ECCP auto-shutdown/PWM
   registers exist on this part), PIR3/PIE3/IPR3 carry their flags.
 - **4 timers** (TMR0-3 plus TMR4, T4CON/PR4/TMR4 at 0xF76-0xF78).

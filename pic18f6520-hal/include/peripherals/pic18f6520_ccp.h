@@ -1,8 +1,9 @@
 /*
- * CCP1-5 driver (DS39609B §16.0): capture/compare/PWM. All five are
- * plain CCP (no ECCPAS/PSTRCON/PWM1CON in the DFP, unlike 4550/2520);
- * compare time base is Timer1 or Timer3, PWM uses Timer2. One driver,
- * instance selector, per adding-a-device.md §5 step 6.
+ * CCP driver (DS39609B §16.0, DS39661 §16.0 for the ECAN quads):
+ * capture/compare/PWM. All five are plain CCP (no ECCPAS/PSTRCON/PWM1CON
+ * in the DFP, unlike 4550/2520); compare time base is Timer1 or Timer3,
+ * PWM uses Timer2. One driver, instance selector, per adding-a-device.md
+ * §5 step 6. ECAN quads carry CCP1-2 only (INSTANCE_3..5 rejected).
  */
 
 #ifndef PIC18F6520_CCP_H
@@ -19,9 +20,9 @@
 typedef enum {
     CCP_INSTANCE_1 = 1,    /**< CCP1. */
     CCP_INSTANCE_2 = 2,    /**< CCP2. */
-    CCP_INSTANCE_3 = 3,    /**< CCP3. */
-    CCP_INSTANCE_4 = 4,    /**< CCP4. */
-    CCP_INSTANCE_5 = 5,    /**< CCP5. */
+    CCP_INSTANCE_3 = 3,    /**< CCP3. Absent on ECAN quads. */
+    CCP_INSTANCE_4 = 4,    /**< CCP4. Absent on ECAN quads. */
+    CCP_INSTANCE_5 = 5,    /**< CCP5. Absent on ECAN quads. */
 } CCP_InstanceTypeDef;
 
 /**

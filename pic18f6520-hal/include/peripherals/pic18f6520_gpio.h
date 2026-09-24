@@ -1,9 +1,9 @@
 /*
- * GPIO driver (DS39609B §10.0): Cube-style (GPIOx, GPIO_PIN_n) API.
- * Writes go through LATx (no PIC16 read-modify-write PORTx hazard),
- * reads come from PORTx. 64-pin part: full PORTA-G with LAT/TRIS for
- * every port (RE3/MCLR is a readable input on this part, unlike the
- * 28-pin 2520's no-register RE3). PORTB pull-ups are INTCON2<RBPU>.
+ * GPIO driver (DS39609B §10.0, DS39661 §10.0 for 80-pin PORTH/J):
+ * Cube-style (GPIOx, GPIO_PIN_n) API. Writes go through LATx, reads
+ * come from PORTx. 64-pin parts carry PORTA-G (RE3/MCLR readable,
+ * unlike the 28-pin 2520); 80-pin parts add full 8-bit PORTH/J.
+ * PORTB pull-ups are INTCON2<RBPU>.
  */
 
 #ifndef PIC18F6520_GPIO_H
@@ -14,14 +14,15 @@
 
 /**
  * @brief GPIO port identifier. Matches the Cube convention where
- *        `GPIOx` selects the port (x = A..G).
+ *        `GPIOx` selects the port (x = A..J).
  *
- * PORTA-G are the seven I/O ports on the 64-pin PIC18F6520 (DS39609B
+ * PORTA-G are the seven I/O ports on the 64-pin parts (DS39609B
  * Table 1-1). PORTA is 7 bits (RA0-RA6; no RA7), PORTG is 5 bits
  * (RG0-RG4; no RG5-RG7); the rest are full 8-bit ports, each with
  * PORTx/LATx/TRISx registers (DS39609B §10.0). TRISG uses only
  * RG0-RG4 (bits 0-4, Table 4-3) and the upper TRISG bits are
- * unimplemented.
+ * unimplemented. PORTH/J exist only on the 80-pin parts (DS39661
+ * Table 1-1), full 8-bit with PORTH/J + LATH/J + TRISH/J.
  */
 typedef enum {
     GPIOA = 0,   /**< PORTA, 7 bits (RA0..RA6), DS39609B §10.0. */
@@ -31,6 +32,8 @@ typedef enum {
     GPIOE = 4,   /**< PORTE, 8 bits (RE0..RE7), DS39609B §10.0. */
     GPIOF = 5,   /**< PORTF, 8 bits (RF0..RF7), DS39609B §10.0. */
     GPIOG = 6,   /**< PORTG, 5 bits (RG0..RG4), DS39609B §10.0. */
+    GPIOH = 7,   /**< PORTH, 8 bits, 80-pin parts only (DS39661 §10.0). */
+    GPIOJ = 8,   /**< PORTJ, 8 bits, 80-pin parts only (DS39661 §10.0). */
 } GPIO_TypeDef;
 
 /**
