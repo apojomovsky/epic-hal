@@ -709,8 +709,8 @@ epiccc_sources = [
 [families.PIC18F2520]
 hal_dir  = "pic18f2520-hal"
 # Canonical 18F2520 last so family-check's scaffold gate builds
-# variants[-1] (as on 87XA/88X/18Fxx5x); gen-sfr.py's CANONICAL entry
-# for this family agrees.
+# variants[-1] (as on 87XA/88X/18Fxx5x); gen-sfr.py derives the same
+# part from the manifest, so the EDC source agrees by construction.
 variants = ["18F2220", "18F2320", "18F2520"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 dfp_version = "1.7.171"
