@@ -254,7 +254,7 @@ jobs:
       # this job's 16F819 leg needs, on top of the p16f54 flat 25-byte
       # GPR fix (epic-cc#437 / PR #438, the epic-hal#213 bump) the
       # 16F54 leg needs, the p16f677 target (epic-cc#421) and the #129
-      # PIC14E port the 16F1937 leg needs. See DEVELOPMENT.md
+      # PIC14E port the 16F1939 leg needs. See DEVELOPMENT.md
       # "The epiccc gate pin".
       EPIC_CC_PIN: ef2632b6d4803cdb9a87b9b359e3d45667bfd84c
       # The clang bundle comes from the stable v0.3.0 release (the same
@@ -351,7 +351,7 @@ jobs:
       # epic_tick.c's OverflowCallback indirect call from the ISR traps
       # on the PIC18 backend (the 887's PIC14 path resolves it), and
       # the sdcard sizecheck is a register-read gate, not a toggle.
-      # The 1937 blink joins with epic-hal#129: the PIC14E port's
+      # The 1939 blink joins with epic-hal#129: the PIC14E port's
       # first family leg, watched on LATB (this family's GPIO driver
       # toggles the latch, not the port register). The 16F677 blink
       # joins with epic-hal#146: watched on PORTB bit 4 (this family's
@@ -367,7 +367,7 @@ jobs:
           make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
           make epiccc-build MODULE=epic-settings MCU=18F4550 EPIC_CC_HOST=1
           make epiccc-build MODULE=epic-sdcard MCU=18F4550 EPIC_CC_HOST=1
-          make epiccc-build MODULE=epic-pic16f193x-firmware MCU=16F1937 EPIC_CC_HOST=1
+          make epiccc-build MODULE=epic-pic16f193x-firmware MCU=16F1939 EPIC_CC_HOST=1
           make epiccc-build MODULE=pic16f63x_67x_68x-hal MCU=16F677 EPIC_CC_HOST=1
           make epiccc-build MODULE=pic16f7x-hal MCU=16F77 EPIC_CC_HOST=1
           # The three epic-hal#150 exemplars' legs: build-only, same as
@@ -408,7 +408,7 @@ jobs:
       # is Timer0 driven, so the runner raises its overflow (INTCON bit 2
       # through TMR0IE, bit 5) every 65536 steps (prescaler 256 x count
       # 256); INTCON is a mirrored register, so the gate needs no SFR
-      # banking. The 1937 gate watches LATB bit 0 (0x010D, bank 2) for
+      # banking. The 1939 gate watches LATB bit 0 (0x010D, bank 2) for
       # the same reason. The tick gates wait on epic-cc#173 (crates/sim
       # drops banked SFR writes, so PIE1:TMR2IE can never be observed
       # set); they are a config change here once that lands.
@@ -422,7 +422,7 @@ jobs:
           "$runner" --hex build/epiccc/16F887-blink.hex --device 16F887 \
             --watch PORTB:0 --samples 12 --steps 200000 \
             --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
-          "$runner" --hex build/epiccc/16F1937-firmware.hex --device 16F1937 \
+          "$runner" --hex build/epiccc/16F1939-firmware.hex --device 16F1939 \
             --watch LATB:0 --samples 12 --steps 200000 \
             --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
           "$runner" --hex build/epiccc/16F677-blink.hex --device 16F677 \
@@ -493,7 +493,7 @@ jobs:
           xc8_install_dir = os.environ["XC8_INSTALL_DIR"]
           for module, mcu in [
               ("epic-tick", "16F877A"), ("epic-tick", "18F4550"),
-              ("epic-pic16f193x-firmware", "16F1937"),
+              ("epic-pic16f193x-firmware", "16F1939"),
               ("epic-swuart", "16F877A"), ("epic-math", "16F877A"),
               ("epic-math", "18F4550"),
               ("pic16f87xa-hal", "16F877A"), ("pic18fxx5x-hal", "18F4550"),
