@@ -17,7 +17,7 @@ divided by 2. RAM is bytes on both sides. The 18F4550 budgets are
 
 | Demo | XC8 build | XC8 gate | XC8 flash (words) | XC8 RAM (bytes) | epic-cc build | epic-cc gate | epic-cc flash | epic-cc RAM | UART trace diff | Rerun |
 |---|---|---|---|---|---|---|---|---|---|---|
-| menu | PASS | PASS | 9068/16384 (55.3%) | 639/2048 (31.2%) | FAIL (flash overflow, STALE) | not reached | 19497/16384 (119%) | not reached | not reached (no epic-cc hex) | `scripts/compare-toolchains.sh epic-menu-demo 18F4550 PIC18F4550 60000 4` |
+| menu | PASS | PASS | 9061/16384 (55.3%) | 639/2048 (31.2%) | PASS | FAIL (epic-cc#632) | 11888/16384 (72.6%) | 743/2048 (36.3%) | no capture (epic-cc hex silent, see below) | `scripts/compare-toolchains.sh epic-menu-demo 18F4550 PIC18F4550 1500 4` |
 | control | PASS | PASS | 9625/16384 (58.7%) | 847/2048 (41.4%) | PASS | FAIL (epic-cc#613, epic-cc#614) | 13081/16384 (79.8%) | 961/2048 (46.9%) | DIVERGES (both hexes run; traces differ, see below) | `scripts/compare-toolchains.sh epic-control-demo 18F4550 PIC18F4550 60000 20` |
 | bridge | PASS | PASS | 11181/16384 (68.2%) | 955/2048 (46.6%) | BLOCKED (epic-cc#608) | blocked | blocked | blocked | pending (no epic-cc hex yet) | `scripts/compare-toolchains.sh epic-bridge-demo 18F4550 PIC18F4550 60000` |
 
@@ -28,10 +28,11 @@ words) with Data 3BBh (955 B). Menu XC8 figures come from
 
 ## Why each epic-cc cell is not green
 
-Menu overflow (19497 words, about 2.15x XC8) predates the epic-cc size
-work in apojomovsky/epic-cc#474, #475, #483 and #485, so the row is
-marked STALE instead of refreshed here: a pinned-driver rerun is its
-own job and stays out of this scoreboard.
+Menu fits again (11888 words, 1.31x XC8, was 19497 and over budget):
+the overflow predates the epic-cc size work and is resolved on current
+master. What remains is behavioral: the epic-cc hex runs the full SIM
+wait but captures no UART where XC8 captures a session, filed as
+apojomovsky/epic-cc#632.
 
 Control builds clean under epic-cc (driver 885fe58, built in-image per
 DEVELOPMENT.md) but its gate does not reach the report: the mdb run
