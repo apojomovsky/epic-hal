@@ -29,7 +29,7 @@ XC8_INSTALL_DIR = os.environ.get(
 SIM_VARIANTS = [
     ("epic-tick", "16F877A"),
     ("epic-tick", "18F4550"),
-    ("epic-pic16f193x-firmware", "16F1937"),
+    ("epic-pic16f193x-firmware", "16F1939"),
     ("epic-swuart", "16F877A"),
     ("epic-math", "16F877A"),
     ("epic-math", "18F4550"),

@@ -81,9 +81,9 @@ MCU variant of that family, real `mdb`/MPLAB SIM runs that check actual
 register/UART output not just "compiled", the device-data audits, and
 the isolated bundle-gate build), an `epiccc-gate` job that builds the
 877A and 887 blink hexes, the 4550 settings and sdcard pair and the
-16F1937 blink with a pinned epic-cc driver and the release bundle's
+16F1939 blink with a pinned epic-cc driver and the release bundle's
 clang, then verifies them in epic-cc's own simulator (`crates/sim`, via
-`scripts/sim-runner`: the blink PORTB toggle gates and the 1937 LATB
+`scripts/sim-runner`: the blink PORTB toggle gates and the 1939 LATB
 toggle gate; the tick gates wait on epic-cc#173, see DEVELOPMENT.md).
 This is the "did a HAL change break against a known
 good compiler" direction; how to bump the pin: DEVELOPMENT.md. The

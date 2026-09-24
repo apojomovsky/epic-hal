@@ -199,7 +199,7 @@ definitions and the consolidation tradeoff in its header comment.
 The `epiccc-gate` CI job (`.github/workflows/ci.yml`) builds
 `pic16f87xa-hal` for the 877A, `pic16f88x-hal` for the 887,
 `epic-settings` and `epic-sdcard` for the 4550 (build-only),
-`epic-pic16f193x-firmware` for the 16F1937,
+`epic-pic16f193x-firmware` for the 16F1939,
 `pic16f63x_67x_68x-hal` for the 16F677, `pic16f7x-hal` for the 16F77,
 the #150 exemplars `pic18f2520-hal` for the 18F2520, `pic18f1320-hal`
 for the 18F1320 and `pic18f6520-hal` for the 18F6520 (build-only),
@@ -211,7 +211,7 @@ with a pinned
 epic-cc compiler, and runs the deterministic
 PORTB toggle gate on the classic-PIC16 blink hexes (the 677 leg watches
 PORTB bit 4, the only implemented low bit on this family's PORTB), the LATB toggle gate on
-the 1937 (its GPIO driver toggles the latch, DS41364E), plus the `mdb-hex`
+the 1939 (its GPIO driver toggles the latch, DS41364E), plus the `mdb-hex`
 register read. The 16F54 leg runs its gate with no `--irq-every`: the
 die has no interrupt and its epic-cc example toggles from a software
 loop. The set of families with a declared `epiccc_sources` slice is held
