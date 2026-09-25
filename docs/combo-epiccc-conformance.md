@@ -42,7 +42,7 @@ compiler lowering, not in the combo sources themselves.
 | Combo | XC8 build | XC8 gate | epic-cc build | epic-cc gate | XC8 RAM | XC8 flash | epic-cc RAM | Notes |
 |---|---|---|---|---|---|---|---|---|
 | combo-eeprom-isr | PASS | PASS | PASS | FAIL (epic-cc#467) | 214 | 5649 | 179 | epic-cc#463's real-ISR frame-collision hang is fixed (epic-cc#466); gate still doesn't reach the report, tracked as epic-cc#467 |
-| combo-lcd-tick | PASS | PASS | PASS | FAIL (epic-cc#604) | 436 | 10415 | 434 | epic-cc#463 fixed (epic-cc#466): the gate runs to completion but fails its content checks (`F01.F03.F07`). Root-caused compiler-side: the `__EPIC_CC__` LCD stubs make the test unsatisfiable (no transport emissions, no real spins), and with stubs removed the live tick ISR derails the indirect-call path |
+| combo-lcd-tick | PASS | PASS | PASS | PASS | 436 | 10415 | 452 | PASS on driver c035be5 (epic-cc#604 ISR epilogue fix); the stale `__EPIC_CC__` stubs in `epic_lcd.c` are deleted (#249), the F01/F03/F07 content checks pass unmodified |
 | combo-modbus-full | PASS | PASS | PASS | FAIL (epic-cc#467) | 618 | 16370 | 867 | epic-cc#463 fixed (epic-cc#466); gate still doesn't reach the report, tracked as epic-cc#467 |
 | combo-taskmgr-serial | PASS | PASS | PASS | FAIL (epic-cc#467) | 478 | 10919 | 506 | epic-cc#463 fixed (epic-cc#466) (the named-entry panic reported here on Sep 18 was a stale driver binary, see epic-hal#240; the i1 flag-store gap behind the next panic was epic-cc#462, fixed by epic-cc#464); gate still doesn't reach the report, tracked as epic-cc#467 |
 | combo-tick-settings | PASS | PASS | PASS | FAIL (epic-cc#467) | 282 | 7927 | 748 | epic-cc#463 fixed (epic-cc#466); gate still doesn't reach the report, tracked as epic-cc#467 |

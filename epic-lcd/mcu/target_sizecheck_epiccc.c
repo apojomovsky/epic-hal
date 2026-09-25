@@ -1,7 +1,6 @@
 /* Pure footprint probe for epic-cc: reference the LCD state only.
- * The ops dispatch is stubbed under __EPIC_CC__ (iselcore gep gap on
- * the ops chain), so this links the core and reports its footprint
- * without the transport calls. XC8 keeps the full example. */
+ * This links the core and reports its footprint without transport
+ * calls. XC8 keeps the full example. */
 #include "epic_lcd.h"
 #include <stdint.h>
 
