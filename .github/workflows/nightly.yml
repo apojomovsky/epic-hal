@@ -143,8 +143,9 @@ jobs:
       # The script names its XC8 image epic-hal-toolchain:local (the local
       # `make image` tag), so retag the pulled image instead of adding a
       # flag to the script. Its epic-cc half expects EPIC_CC_IMAGE
-      # (default epic-cc-dev:local, built from the epic-cc repo); without
-      # it that half reports failure while the XC8 half still publishes.
+      # (default from epic-cc scripts/dev-image-tag.sh, built from the
+      # epic-cc repo); without it that half reports failure while the
+      # XC8 half still publishes.
       # Modules on still-open sibling branches are not in this checkout
       # yet; those legs skip, the doc rows carry their verified numbers
       # until the branches merge.

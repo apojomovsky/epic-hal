@@ -10,8 +10,8 @@ and the XC8 vs epic-cc RAM/flash headroom per combo.
 
 - Build: `python3 scripts/epic_build.py build --module <combo> --mcu <part>
   --variant sim --toolchain epic-cc` (emits `build-sim/<m>/<mcu>/build.sh`)
-  then `docker run ... epic-cc-dev:local sh <script>` with
-  `PIC8_CLANG_UNWRAPPED/PIC8_CLANG_RESOURCE_DIR` (Makefile `epiccc-build`).
+  then `docker run ... epic-cc-dev:local-<hash> sh <script>` (tag from
+  epic-cc `scripts/dev-image-tag.sh`) with
 - Gate: `env SIM_MDB_SKIP_BUILD=1 scripts/sim-mdb-run.sh local <mcu>
   <device> <combo> 8000 uart` in the hal toolchain image (captures
   `EPIC_HARNESS_RESULT: PASS` over UART). The sim firmware is the same

@@ -20,7 +20,16 @@ wait_ms="${4:-60000}"
 eeprom_writes="${5:-0}"
 
 local_image="epic-hal-toolchain:local"
-epic_cc_image="${EPIC_CC_IMAGE:-epic-cc-dev:local}"
+# Content-addressed default (epic-cc#736): resolve through epic-cc's
+# canonical script, still overrideable via EPIC_CC_IMAGE. The script
+# hashes the caller's checkout, so run it from the epic-cc tree.
+if [ -z "${EPIC_CC_IMAGE:-}" ] && [ ! -x "$repo_root/epic-cc/scripts/dev-image-tag.sh" ]; then
+  echo "compare-toolchains: no EPIC_CC_IMAGE and no usable epic-cc checkout at $repo_root/epic-cc" >&2
+  echo "  (missing, or predates epic-cc#760). Link or clone a current one there," >&2
+  echo "  or set EPIC_CC_IMAGE explicitly." >&2
+  exit 1
+fi
+epic_cc_image="${EPIC_CC_IMAGE:-$(cd "$repo_root/epic-cc" && bash scripts/dev-image-tag.sh)}"
 epic_cc_bin="${EPIC_CC_BIN:-/tmp/cargo-target/release/epic-cc}"
 home_mount="$HOME/.cache/epic-hal-toolchain-home"
 cargo_cache="$HOME/.cache/epic-cc/target"

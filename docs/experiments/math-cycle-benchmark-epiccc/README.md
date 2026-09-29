@@ -120,11 +120,12 @@ image available:
 
     mkdir -p build-sim/bench-epiccc   # epic-cc does not create output dirs
 
-    # build (epic-cc dev image, clang env as in the Makefile's epiccc-build)
+    # build (epic-cc dev image, clang env as in the Makefile's epiccc-build;
+    # tag from epic-cc scripts/dev-image-tag.sh, content-addressed)
     docker run --rm -v "$PWD":/repo -w /repo \
       -e PIC8_CLANG_UNWRAPPED=/opt/clang/bin/clang \
       -e PIC8_CLANG_RESOURCE_DIR=/opt/clang/lib/clang/20 \
-      epic-cc-dev:local /tmp/cargo-target/release/epic-cc --target 16F877A \
+      epic-cc-dev:local-<hash> /tmp/cargo-target/release/epic-cc --target 16F877A \
       -I epic-math/include -I docs/experiments/math-cycle-benchmark-epiccc \
       -D PIC16F877A -D FOSC_HZ=20000000 -D __EPIC_CC__ \
       -o build-sim/bench-epiccc/87-cpath.hex \
