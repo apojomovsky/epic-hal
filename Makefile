@@ -150,7 +150,11 @@ xc8-build: image
 # which is the one mode a host-built driver suits: the CI epiccc-gate
 # job prepares the driver and clang itself (see DEVELOPMENT.md "The
 # epiccc gate pin") and has no dev image to run in.
-EPIC_CC_IMAGE ?= epic-cc-dev:local
+# The default is the checkout's content-addressed tag (epic-cc#736
+# builds epic-cc-dev:local-<hash>, never the bare tag), resolved
+# through epic-cc's canonical script. Still overrideable via
+# EPIC_CC_IMAGE. Empty when no epic-cc checkout is linked; guarded below.
+EPIC_CC_IMAGE ?= $(shell cd $(CURDIR)/epic-cc 2>/dev/null && bash scripts/dev-image-tag.sh 2>/dev/null)
 # The container sees the shared cache as /tmp/cargo-target, the host as
 # EPIC_CC_SHARED_BIN. EPIC_CC_BIN_DEFAULT names the in-container path so
 # the staleness guard can tell a caller's override from the default
@@ -168,6 +172,12 @@ EPIC_CC_RUN := mkdir -p $(HOME_MOUNT) $(HOME)/.cache/epic-cc/target && docker ru
 epiccc-build:
 	@test -n "$(MODULE)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
 	@test -n "$(MCU)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
+	@if [ "$(EPIC_CC_HOST)" != "1" ] && [ -z "$(EPIC_CC_IMAGE)" ]; then \
+		echo "epiccc-build: no EPIC_CC_IMAGE and no usable epic-cc checkout at $(CURDIR)/epic-cc" >&2; \
+		echo "  (missing, or predates epic-cc#760 with no scripts/dev-image-tag.sh)." >&2; \
+		echo "  link or clone a current one there, or set EPIC_CC_IMAGE explicitly." >&2; \
+		exit 1; \
+	fi
 	@if [ "$(EPIC_CC_BIN)" = "$(EPIC_CC_BIN_DEFAULT)" ] && [ -e "$(CURDIR)/epic-cc/.git" ] \
 			&& [ -z "$(EPIC_CC_ALLOW_STALE)" ] && [ -e "$(EPIC_CC_SHARED_BIN)" ]; then \
 		checked=0; \
@@ -316,6 +326,7 @@ sim-epiccc:
 		exit 1; \
 	fi
 	@test -n "$(DEVICE)" || { echo "usage: make sim-epiccc HEX=build/epiccc/16F887-tick.hex DEVICE=16F887 [WATCH=PORTB:0] [SAMPLES=24] [STEPS=500000] [IRQ_EVERY=5000 IRQ_FLAG=PIR1:1 IRQ_ENABLE=PIE1:1]" >&2; exit 1; }
+	@test -n "$(EPIC_CC_IMAGE)" || { echo "sim-epiccc: checkout at $(CURDIR)/epic-cc predates epic-cc#760 (no scripts/dev-image-tag.sh); update it or set EPIC_CC_IMAGE." >&2; exit 1; }
 	@test -f "$(CURDIR)/$(HEX)" || { echo "sim-epiccc: no hex at $(HEX)" >&2; exit 1; }
 	mkdir -p $(HOME_MOUNT) && docker run --rm --user $$(id -u):$$(id -g) \
 		-e HOME=$(HOME) \
