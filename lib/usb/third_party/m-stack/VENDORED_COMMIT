@@ -9,23 +9,23 @@ directory). Not relicensed.
 Local fixes: this tree is NOT a pristine copy of the upstream commit above.
 Three MPLAB XC8 v3.10 compatibility fixes are applied on top (a token-paste
 placement macro, a min()/MIN() typo, a bit-field base type) -- see
-epic-usb/third_party/patches/0001-xc8-v3.10-compat.patch, which is this
+lib/usb/third_party/patches/0001-xc8-v3.10-compat.patch, which is this
 exact diff, kept reapplicable for when this vendored copy is upgraded.
-Details and why each was needed: epic-usb/README.md.
+Details and why each was needed: lib/usb/README.md.
 
 To upgrade to a newer upstream commit:
   1. git clone the URL above at the new commit.
   2. Replace this directory's contents with the fresh clone (keep this
-     VENDORED_COMMIT file and epic-usb/third_party/patches/, update the
+     VENDORED_COMMIT file and lib/usb/third_party/patches/, update the
      commit hash/date above).
   3. cd to the repo root and run:
-       patch -p1 --dry-run < epic-usb/third_party/patches/0001-xc8-v3.10-compat.patch
+       patch -p1 --dry-run < lib/usb/third_party/patches/0001-xc8-v3.10-compat.patch
      If it applies cleanly, apply for real (drop --dry-run). If a hunk
      fails, upstream likely touched the same lines -- check whether
      upstream already fixed that issue (in which case drop that hunk) or
      re-derive the fix against the new code.
   4. Re-run the real compile validation (xc8-cc against usb.c, usb_cdc.c,
      this module's usb_descriptors.c and epic_usb.c, targeting 18f4550 --
-     see epic-usb/README.md's "Real target (XC8)" section) and the host
-     test suite (ctest --test-dir epic-usb/build) before trusting the
+     see lib/usb/README.md's "Real target (XC8)" section) and the host
+     test suite (ctest --test-dir lib/usb/build) before trusting the
      upgrade.

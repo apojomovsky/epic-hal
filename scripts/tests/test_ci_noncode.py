@@ -18,6 +18,9 @@ class TestIsNonCode(unittest.TestCase):
     def test_docs_dir_at_any_depth(self):
         self.assertTrue(self.check(["a/b/docs/guide.md", "docs/x.md"]))
 
+    def test_docs_bench_script_is_code(self):
+        self.assertFalse(self.check(["docs/experiments/math-cycle-benchmark/matrix.sh"]))
+
     def test_license_and_configs(self):
         self.assertTrue(self.check([
             "LICENSE", "LICENSE.txt", ".gitignore",
