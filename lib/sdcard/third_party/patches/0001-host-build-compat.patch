@@ -1,5 +1,5 @@
---- epic-sdcard/third_party/m-stack-storage/src/mmc.c	2026-07-15 14:29:02.948282858 -0300
-+++ epic-sdcard/third_party/m-stack-storage/src/mmc.c	2026-07-15 15:59:06.165992025 -0300
+--- lib/sdcard/third_party/m-stack-storage/src/mmc.c	2026-07-15 14:29:02.948282858 -0300
++++ lib/sdcard/third_party/m-stack-storage/src/mmc.c	2026-07-15 15:59:06.165992025 -0300
 @@ -26,6 +26,16 @@
 
  #if defined(__XC32__) || defined(__XC16__) || defined(__XC8)
@@ -17,8 +17,8 @@
  #else
  #error "Compiler not supported"
  #endif
---- epic-sdcard/third_party/m-stack-storage/include/mmc.h	2026-07-15 14:29:02.948178716 -0300
-+++ epic-sdcard/third_party/m-stack-storage/include/mmc.h	2026-07-15 16:00:20.001744758 -0300
+--- lib/sdcard/third_party/m-stack-storage/include/mmc.h	2026-07-15 14:29:02.948178716 -0300
++++ lib/sdcard/third_party/m-stack-storage/include/mmc.h	2026-07-15 16:00:20.001744758 -0300
 @@ -55,6 +55,13 @@
 
  #include <stdbool.h>

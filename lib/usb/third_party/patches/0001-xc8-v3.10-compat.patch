@@ -1,7 +1,7 @@
-diff --git a/epic-usb/third_party/m-stack/usb/include/usb_cdc.h b/epic-usb/third_party/m-stack/usb/include/usb_cdc.h
+diff --git a/lib/usb/third_party/m-stack/usb/include/usb_cdc.h b/lib/usb/third_party/m-stack/usb/include/usb_cdc.h
 index 3a65133..8e28cfb 100644
---- a/epic-usb/third_party/m-stack/usb/include/usb_cdc.h
-+++ b/epic-usb/third_party/m-stack/usb/include/usb_cdc.h
+--- a/lib/usb/third_party/m-stack/usb/include/usb_cdc.h
++++ b/lib/usb/third_party/m-stack/usb/include/usb_cdc.h
 @@ -226,16 +226,24 @@ struct cdc_notification_header {
  struct cdc_serial_state_notification {
  	struct cdc_notification_header header;
@@ -36,10 +36,10 @@ index 3a65133..8e28cfb 100644
  		} bits;
  		uint16_t serial_state;
  	} data;
-diff --git a/epic-usb/third_party/m-stack/usb/src/usb_cdc.c b/epic-usb/third_party/m-stack/usb/src/usb_cdc.c
+diff --git a/lib/usb/third_party/m-stack/usb/src/usb_cdc.c b/lib/usb/third_party/m-stack/usb/src/usb_cdc.c
 index 1971ab6..286109a 100644
---- a/epic-usb/third_party/m-stack/usb/src/usb_cdc.c
-+++ b/epic-usb/third_party/m-stack/usb/src/usb_cdc.c
+--- a/lib/usb/third_party/m-stack/usb/src/usb_cdc.c
++++ b/lib/usb/third_party/m-stack/usb/src/usb_cdc.c
 @@ -160,7 +160,7 @@ uint8_t process_cdc_setup_request(const struct setup_packet *setup)
  			return -1;
 
@@ -76,10 +76,10 @@ index 1971ab6..286109a 100644
  		                        sizeof(transfer_data.line_coding)),
  		                    /*callback*/NULL, NULL);
  		return 0;
-diff --git a/epic-usb/third_party/m-stack/usb/src/usb_hal.h b/epic-usb/third_party/m-stack/usb/src/usb_hal.h
+diff --git a/lib/usb/third_party/m-stack/usb/src/usb_hal.h b/lib/usb/third_party/m-stack/usb/src/usb_hal.h
 index eb9a42f..efe6a33 100644
---- a/epic-usb/third_party/m-stack/usb/src/usb_hal.h
-+++ b/epic-usb/third_party/m-stack/usb/src/usb_hal.h
+--- a/lib/usb/third_party/m-stack/usb/src/usb_hal.h
++++ b/lib/usb/third_party/m-stack/usb/src/usb_hal.h
 @@ -285,7 +285,15 @@ struct buffer_descriptor {
  #define BDN_LENGTH(REG) (REG.BDnCNT)
  #endif

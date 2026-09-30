@@ -47,7 +47,7 @@ build() { # mcu dfp opt native(0|1) extra_srcs out  (extra_srcs may be empty)
   local nf=""; [ "$native" = "1" ] && nf="-DBENCH_NATIVE_ONLY"
   # shellcheck disable=SC2086
   xc8-cc -mcpu=$mcu -DPIC$mcu -O$opt -std=c99 -mdfp=$dfp \
-    -Iepic-math/include -Iepic-common/include \
+    -Ilib/math/include -Icommon/include \
     $nf $extra $BENCH -o "$OUT/$out" -ginhx32 2>/dev/null
 }
 

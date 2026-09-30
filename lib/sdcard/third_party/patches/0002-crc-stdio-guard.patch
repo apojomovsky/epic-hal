@@ -1,5 +1,5 @@
---- epic-sdcard/third_party/m-stack-storage/src/crc.c
-+++ epic-sdcard/third_party/m-stack-storage/src/crc.c
+--- lib/sdcard/third_party/m-stack-storage/src/crc.c
++++ lib/sdcard/third_party/m-stack-storage/src/crc.c
 @@ -26,0 +27 @@
 +#if PC_CODE_TO_GENERATE_THE_TABLES
 @@ -27,0 +29,7 @@

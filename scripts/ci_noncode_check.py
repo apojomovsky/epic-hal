@@ -24,10 +24,17 @@ _NON_CODE_RE = re.compile(
     r")"
 )
 
+# Shell scripts under docs/ are executable build tooling, not prose
+# (docs/experiments/math-cycle-benchmark/matrix.sh drives xc8-cc).
+_CODE_OVERRIDE_RE = re.compile(r"(^|/)docs/.*\.sh$")
+
 
 def is_non_code(changed_files):
     """True iff every changed file is provably unable to affect the build."""
-    return all(_NON_CODE_RE.search(p) for p in changed_files)
+    return all(
+        _NON_CODE_RE.search(p) and not _CODE_OVERRIDE_RE.search(p)
+        for p in changed_files
+    )
 
 
 def main():
