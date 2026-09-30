@@ -136,6 +136,33 @@ epic-cc path loudly ("no epiccc_sources; the epic-cc path needs a
 conformant slice"), so a module cannot silently fall back to the XC8
 set.
 
+### `epiccc_sim_hal_sources_by_family`: per-module epic-cc sim slice
+
+Same verbatim-replacement posture as the field above, but scoped to
+the sim firmware (`--toolchain epic-cc` with `--variant sim`) so a
+module with both a target example and a sim variant can give the mdb
+gate a USART-bearing set without rerouting the target leg. The plain
+override would flip the target sizecheck-probe swap off and link the
+mdb harness into the target build; the sim slice leaves both alone.
+The list names the sim harness directly (no swap runs under it),
+mirroring the combo tiers, and the loader requires the module's own
+sim harness to be present. `epic-encoder` uses this: its sim test
+logs over the harness USART under the live tick ISR, so its slice is
+the tick timebase plus the harness USART on the serial+tick tier.
+
+```toml
+[modules.epic-encoder.epiccc_sim_hal_sources_by_family]
+PIC16F87XA = [
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
+  "pic14-midrange-core/src/core/pic14_irq.c",
+  "pic16f87xa-hal/src/core/pic16_irq_table.c",
+  "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
+  "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
+```
+
 ### `example.<family>.epiccc`: the epic-cc build's example
 
 By default the epic-cc path links the family example's own sources and

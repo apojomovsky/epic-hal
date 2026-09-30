@@ -824,3 +824,50 @@ class TestEpicccExample(unittest.TestCase):
             epiccload(), "epic-tick", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc")
         self.assertIn("build/16F877A-tick-blink-cc.hex", s)
+
+
+SIMHALT_MANIFEST = MANIFEST + """
+[modules.epic-tick.epiccc_sim_hal_sources_by_family]
+PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
+"""
+
+
+def simhaltload():
+    tmp = tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False)
+    tmp.write(SIMHALT_MANIFEST)
+    tmp.close()
+    return epicmanifest.load(pathlib.Path(tmp.name))
+
+
+class TestEpicccSimHalSliceEmit(unittest.TestCase):
+    """The sim-scoped epic-cc slice reaches the emitted sim build
+    script, and only there: the XC8 sim script and the epic-cc target
+    script resolve exactly as without the field."""
+
+    def sim_epiccc(self):
+        return epic_build.emit_build_script(
+            simhaltload(), "epic-tick", "16F877A",
+            build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc",
+            variant="sim")
+
+    def test_sim_epiccc_links_the_sim_slice(self):
+        s = self.sim_epiccc()
+        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c", s)
+        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", s)
+        self.assertIn("build/16F877A-tick-blink-sim.hex", s)
+
+    def test_sim_xc8_ignores_the_sim_slice(self):
+        s = epic_build.emit_build_script(
+            simhaltload(), "epic-tick", "16F877A",
+            build_dir="build", dfp_dir="/opt/dfp", variant="sim")
+        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c", s)
+
+    def test_target_epiccc_ignores_the_sim_slice(self):
+        s = epic_build.emit_build_script(
+            simhaltload(), "epic-tick", "16F877A",
+            build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc")
+        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", s)
+        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c", s)
