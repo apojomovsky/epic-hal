@@ -617,3 +617,110 @@ class TestEpicccExample(unittest.TestCase):
         with self.assertRaises(epicmanifest.ManifestError):
             epicmanifest.load(write(EEXAMPLE.replace(
                 'sources = ["examples/example_tick_epiccc.c"]\n', "")))
+
+
+SIMHALT = MINIMAL + """
+[modules.epic-tick.epiccc_hal_sources_by_family]
+PIC16F87XA = ["epic-common/src/core/epic_harness_target.c"]
+
+[modules.epic-tick.epiccc_sim_hal_sources_by_family]
+PIC16F87XA = [
+  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
+
+[modules.epic-probe]
+dir        = "epic-probe"
+sources    = ["src/probe.c"]
+includes   = ["include"]
+depends_on = []
+
+[modules.epic-probe.supported]
+PIC16F87XA = ["16F877A"]
+
+[modules.epic-probe.epiccc_hal_sources_by_family]
+PIC16F87XA = ["epic-common/src/core/epic_harness_target.c"]
+
+[modules.epic-probe.example.PIC16F87XA]
+name    = "probe"
+sources = ["examples/example_probe.c"]
+config  = { FOSC = "HS", WDTE = "ON" }
+
+[modules.epic-probe.example.PIC16F87XA.sim]
+name        = "probe-sim"
+harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+config      = { FOSC = "HS", WDTE = "OFF" }
+"""
+
+
+class TestEpicccSimHalSources(unittest.TestCase):
+    def setUp(self):
+        self.m = epicmanifest.load(write(SIMHALT))
+
+    def test_sim_epiccc_uses_the_sim_slice_verbatim(self):
+        srcs = self.m.sources_for("epic-tick", "16F877A", variant="sim",
+                                  toolchain="epic-cc")
+        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+                      srcs)
+        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
+        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+                         srcs)
+        self.assertNotIn("epic-common/src/core/epic_harness_target.c", srcs)
+
+    def test_target_epiccc_ignores_the_sim_slice(self):
+        srcs = self.m.sources_for("epic-tick", "16F877A",
+                                  toolchain="epic-cc")
+        self.assertIn("epic-common/src/core/epic_harness_target.c", srcs)
+        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
+        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+                         srcs)
+
+    def test_sim_epiccc_without_a_sim_slice_keeps_the_target_override(self):
+        # Modules with only the target override (the combo tiers) keep
+        # resolving it verbatim on sim builds: no swap runs under an
+        # override, so the target harness stays linked there.
+        srcs = self.m.sources_for("epic-probe", "16F877A", variant="sim",
+                                  toolchain="epic-cc")
+        self.assertIn("epic-common/src/core/epic_harness_target.c", srcs)
+        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
+
+    def test_xc8_sim_ignores_the_sim_slice(self):
+        srcs = self.m.sources_for("epic-tick", "16F877A", variant="sim")
+        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+                      srcs)
+        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
+        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+                         srcs)
+
+    def test_unknown_family_rejected(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(SIMHALT.replace(
+                "epiccc_sim_hal_sources_by_family]\nPIC16F87XA",
+                "epiccc_sim_hal_sources_by_family]\nPIC16F99Z")))
+
+    def test_empty_sim_slice_rejected(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(SIMHALT.replace(
+                "PIC16F87XA = [\n"
+                '  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",\n'
+                '  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",\n'
+                "]",
+                "PIC16F87XA = []", 1)))
+
+    def test_outside_hal_dir_rejected(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(SIMHALT.replace(
+                '"pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c"',
+                '"../escape.c"')))
+
+    def test_sim_slice_without_a_sim_variant_rejected(self):
+        nosim = SIMHALT.replace(
+            "[modules.epic-tick.example.PIC16F87XA.sim]", "[modules.epic-tick.example.PIC16F87XA.nosim]")
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(nosim))
+
+    def test_sim_slice_missing_the_harness_rejected(self):
+        noharness = SIMHALT.replace(
+            '  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",\n', "")
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(noharness))

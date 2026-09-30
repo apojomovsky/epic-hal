@@ -156,6 +156,14 @@ class Module:
     # the scheduling core, and the whole-program overlay on 368-byte
     # parts cannot hold one slice serving both.
     epiccc_hal_sources_by_family: dict[str, list[str]] | None = None
+    # Optional per-module HAL subset for epic-cc sim builds only:
+    # same verbatim posture, scoped to the mdb-gate firmware. A
+    # module with both legs cannot use the field above for a
+    # USART-bearing sim set: it would reroute the target leg too
+    # and link the mdb harness into the target build. The list
+    # names the sim harness directly (no swap runs under it), so it
+    # stays family-uniform; validation enforces the harness below.
+    epiccc_sim_hal_sources_by_family: dict[str, list[str]] | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -279,6 +287,12 @@ class Manifest:
         listed verbatim, epiccc-named variants included, and a family
         without one fails loudly rather than silently compiling the
         full XC8 set (which hits filed isel gaps and the GPR wall).
+        A module with both a target example and a sim variant can
+        instead declare epiccc_sim_hal_sources_by_family for the sim
+        firmware alone: used only when toolchain="epic-cc" and
+        variant="sim", verbatim (the sim harness named directly, no
+        swap), so the target leg keeps the family slice or its own
+        epiccc_hal_sources_by_family override untouched.
         Conditional sources are XC8-psect-order machinery and do not
         apply on the epic-cc path (single whole-program invocation,
         no link order). On variant="sim" the slice's harness entry
@@ -324,9 +338,17 @@ class Manifest:
         # shared tail below.
         halt = (mod.epiccc_hal_sources_by_family or {}).get(fam.name)
         halt_override = toolchain == "epic-cc" and halt is not None
+        # Sim-scoped epic-cc slice: wins over the target override on
+        # sim builds only, verbatim (the sim harness is named
+        # directly, so no swap runs under it).
+        simhalt = ((mod.epiccc_sim_hal_sources_by_family or {}).get(fam.name)
+                   if sim is not None else None)
+        simhalt_override = toolchain == "epic-cc" and simhalt is not None
         if self.uses_hal(module_name, mcu):
             if toolchain == "epic-cc":
-                if halt_override:
+                if simhalt_override:
+                    out += list(simhalt)
+                elif halt_override:
                     out += list(halt)
                 else:
                     if not fam.epiccc_sources:
@@ -487,7 +509,8 @@ def _parse_example(module_name, family_name, table, default_hal):
 def _parse_module(name, table):
     _check_keys(table, {"dir", "sources", "sources_by_family", "includes",
                         "depends_on", "needs_hal", "supported", "excluded",
-                        "example", "epiccc_hal_sources_by_family"},
+                        "example", "epiccc_hal_sources_by_family",
+                        "epiccc_sim_hal_sources_by_family"},
                 f"modules.{name}")
     needs_hal = bool(table.get("needs_hal", True))
     return Module(
@@ -515,6 +538,15 @@ def _parse_module(name, table):
                 fam: list(paths)
                 for fam, paths in table.get(
                     "epiccc_hal_sources_by_family", {}
+                ).items()
+            }
+            or None
+        ),
+        epiccc_sim_hal_sources_by_family=(
+            {
+                fam: list(paths)
+                for fam, paths in table.get(
+                    "epiccc_sim_hal_sources_by_family", {}
                 ).items()
             }
             or None
@@ -631,6 +663,45 @@ def _validate(manifest):
                         f"{fam_name}: '{p}' is outside {fam.hal_dir}/, "
                         f"epic-common and the shared cores"
                     )
+        # The sim-scoped epic-cc slice: same path rules, plus it must
+        # name the module's own sim harness (the verbatim list is the
+        # sim firmware's whole HAL portion, and a sim build without
+        # its harness fails wholeprog on the report symbols).
+        for fam_name, paths in (
+            mod.epiccc_sim_hal_sources_by_family or {}
+        ).items():
+            fam = manifest.families.get(fam_name)
+            if fam is None:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_sim_hal_sources_by_family: "
+                    f"unknown family '{fam_name}'"
+                )
+            if not paths:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_sim_hal_sources_by_family."
+                    f"{fam_name}: must not be empty"
+                )
+            for p in paths:
+                if not (p.startswith("epic-common/")
+                        or p.startswith(fam.hal_dir + "/")
+                        or p.startswith(_SHARED_CORE_DIRS)):
+                    raise ManifestError(
+                        f"modules.{mod.name}.epiccc_sim_hal_sources_by_family."
+                        f"{fam_name}: '{p}' is outside {fam.hal_dir}/, "
+                        f"epic-common and the shared cores"
+                    )
+            example = mod.examples.get(fam_name)
+            sim = example.sim if example is not None else None
+            if sim is None:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_sim_hal_sources_by_family."
+                    f"{fam_name}: no sim variant to scope it to"
+                )
+            if sim.harness_src not in paths:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_sim_hal_sources_by_family."
+                    f"{fam_name}: missing the sim harness '{sim.harness_src}'"
+                )
     _check_cycles(manifest.modules)
 
 

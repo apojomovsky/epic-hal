@@ -2994,6 +2994,34 @@ sources     = [
 depends_on  = []
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
+# epic-cc sim slice (epic-hal#302): the sim test logs over the
+# harness USART under the live tick ISR, but the family slice
+# carries no USART TU (it would overflow GPR there). The plain
+# per-module override cannot serve this module: it would reroute
+# the target sizecheck leg too and link the mdb harness into the
+# target build. So the sim firmware alone gets the tick timebase
+# plus the harness USART on the serial+tick tier, mirroring
+# epic-combo-encoder-tick's proven set.
+[modules.epic-encoder.epiccc_sim_hal_sources_by_family]
+PIC16F87XA = [
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
+  "pic14-midrange-core/src/core/pic14_irq.c",
+  "pic16f87xa-hal/src/core/pic16_irq_table.c",
+  "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
+  "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+]
+PIC16F88X = [
+  "pic14-midrange-core/src/peripherals/pic14_timer2.c",
+  "pic14-midrange-core/src/peripherals/pic14_usart.c",
+  "pic14-midrange-core/src/core/pic14_irq.c",
+  "pic16f88x-hal/src/core/pic16_irq_table.c",
+  "pic14-midrange-core/src/epiccc/pic16_isr_vector.c",
+  "pic14-midrange-core/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "pic16f88x-hal/src/mdb/pic16_harness_mdb.c",
+]
+
 [modules.epic-encoder.example.PIC18Fxx5x]
 name    = "encoder"
 sources = [
