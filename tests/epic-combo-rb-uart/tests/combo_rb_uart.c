@@ -18,7 +18,7 @@
  *     never emits the marker; a corrupted TXREG write garbles the
  *     capture.
  *   - GIE health: RBIF asserted from firmware (the documented
- *     test-only fallback, same pattern as pic16f87xa-hal/tests/
+ *     test-only fallback, same pattern as hal/pic14/16f87xa/tests/
  *     example_rb_change.c) must be serviced exactly once per assert
  *     while GIE stays set and the timer keeps firing.
  *

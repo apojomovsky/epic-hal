@@ -161,7 +161,7 @@ def _gpio_header(manifest, family_name) -> str:
     for src in fam.hal_sources:
         if src.endswith("gpio.c"):
             return "peripherals/" + src.rsplit("/", 1)[-1][:-len(".c")] + ".h"
-    base = fam.hal_dir.removesuffix("-hal")
+    base = fam.slug
     return f"peripherals/{base}_gpio.h"
 
 

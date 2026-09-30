@@ -18,23 +18,23 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="core" displayName="core" projectFiles="true">
-        <itemPath>../../epic-common/src/core/epic_harness_target.c</itemPath>
-        <itemPath>../../pic16f5x-hal/src/core/pic16_irq_stub.c</itemPath>
-        <itemPath>../../pic16f5x-hal/src/core/pic16_irq_dispatch.c</itemPath>
-        <itemPath>../../pic16f5x-hal/src/target/pic16f5x_wdt_sleep_target.c</itemPath>
+        <itemPath>../../common/src/core/epic_harness_target.c</itemPath>
+        <itemPath>../../hal/pic12/16f5x/src/core/pic16_irq_stub.c</itemPath>
+        <itemPath>../../hal/pic12/16f5x/src/core/pic16_irq_dispatch.c</itemPath>
+        <itemPath>../../hal/pic12/16f5x/src/target/pic16f5x_wdt_sleep_target.c</itemPath>
       </logicalFolder>
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
-        <itemPath>../../pic16f5x-hal/src/peripherals/pic16f5x_gpio.c</itemPath>
-        <itemPath>../../pic16f5x-hal/src/peripherals/pic16f5x_timer0.c</itemPath>
+        <itemPath>../../hal/pic12/16f5x/src/peripherals/pic16f5x_gpio.c</itemPath>
+        <itemPath>../../hal/pic12/16f5x/src/peripherals/pic16f5x_timer0.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
-    <Elem>../../epic-common/src/core</Elem>
-    <Elem>../../pic16f5x-hal/src/core</Elem>
-    <Elem>../../pic16f5x-hal/src/target</Elem>
-    <Elem>../../pic16f5x-hal/src/peripherals</Elem>
+    <Elem>../../common/src/core</Elem>
+    <Elem>../../hal/pic12/16f5x/src/core</Elem>
+    <Elem>../../hal/pic12/16f5x/src/target</Elem>
+    <Elem>../../hal/pic12/16f5x/src/peripherals</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -88,7 +88,7 @@
         <property key="define-macros" value="PIC16F54;FOSC_HZ=4000000"/>
         <property key="disable-optimizations" value="true"/>
         <property key="extra-include-directories"
-                  value="../../pic16f5x-hal/include/target;../../pic16f5x-hal/include;../../epic-common/include"/>
+                  value="../../hal/pic12/16f5x/include/target;../../hal/pic12/16f5x/include;../../common/include"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
         <property key="garbage-collect-data" value="true"/>
         <property key="garbage-collect-functions" value="true"/>

@@ -13,37 +13,37 @@ import make_bundle  # noqa: E402
 
 MANIFEST = """
 [families.PIC16F87XA]
-hal_dir  = "pic16f87xa-hal"
+hal_dir  = "hal/pic14/16f87xa"
 variants = ["16F873A", "16F877A"]
 dfp      = "Microchip.PIC16Fxxx_DFP"
 fosc_hz  = 20000000
-includes = ["pic16f87xa-hal/include/target", "pic16f87xa-hal/include",
-            "epic-common/include"]
-hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c"]
+includes = ["hal/pic14/16f87xa/include/target", "hal/pic14/16f87xa/include",
+            "common/include"]
+hal_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c"]
 
 [[families.PIC16F87XA.conditional_sources]]
-path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+path     = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c"
 variants = ["16F877A"]
-after    = "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c"
+after    = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c"
 
 [families.PIC18Fxx5x]
-hal_dir  = "pic18fxx5x-hal"
+hal_dir  = "hal/pic18/18fxx5x"
 variants = ["18F4550"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 fosc_hz  = 48000000
-includes = ["pic18fxx5x-hal/include/target", "epic-common/include"]
-hal_sources = ["pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c"]
+includes = ["hal/pic18/18fxx5x/include/target", "common/include"]
+hal_sources = ["hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c"]
 
 [families.PIC16F193X]
-hal_dir  = "pic16f193x-hal"
+hal_dir  = "hal/pic14e/16f193x"
 variants = ["16F1937"]
 dfp      = "Microchip.PIC12-16F1xxx_DFP"
 fosc_hz  = 32000000
-includes = ["pic16f193x-hal/include/target", "epic-common/include"]
-hal_sources = ["pic16f193x-hal/src/peripherals/pic16f193x_gpio.c"]
+includes = ["hal/pic14e/16f193x/include/target", "common/include"]
+hal_sources = ["hal/pic14e/16f193x/src/peripherals/pic16f193x_gpio.c"]
 
 [modules.epic-tick]
-dir        = "epic-tick"
+dir        = "lib/tick"
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
@@ -62,7 +62,7 @@ name    = "tick-blink"
 sources = ["examples/example_tick.c"]
 
 [modules.epic-serial]
-dir        = "epic-serial"
+dir        = "lib/serial"
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = ["epic-tick"]
@@ -80,7 +80,7 @@ name    = "serial-echo"
 sources = ["tests/example_serial.c", "mcu/target_sizecheck.c"]
 
 [modules.epic-usb]
-dir        = "epic-usb"
+dir        = "lib/usb"
 sources    = ["src/epic_usb.c"]
 includes   = ["include"]
 depends_on = []
@@ -97,7 +97,7 @@ sources = ["examples/example_usb.c"]
 # in the real manifest: must not appear in a bundle's module list, it
 # is CI coverage plumbing, not a consumer-facing library.
 [modules.epic-pic16f193x-firmware]
-dir        = "pic16f193x-hal"
+dir        = "hal/pic14e/16f193x"
 sources    = []
 includes   = []
 depends_on = []
@@ -179,17 +179,17 @@ class TestFileSelection(unittest.TestCase):
         self.files = bundlegen.files_for_family(load(), "PIC16F87XA")
 
     def test_includes_family_hal_sources(self):
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", self.files)
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", self.files)
 
     def test_includes_module_sources(self):
-        self.assertIn("epic-serial/src/epic_serial.c", self.files)
-        self.assertIn("epic-tick/src/epic_tick.c", self.files)
+        self.assertIn("lib/serial/src/epic_serial.c", self.files)
+        self.assertIn("lib/tick/src/epic_tick.c", self.files)
 
     def test_includes_consumer_example_sources(self):
         # Manifest example sources that are consumer samples (under
         # examples/) ship in the bundle: epic-tick's example_tick.c is a
         # real sample a consumer can build.
-        self.assertIn("epic-tick/examples/example_tick.c", self.files)
+        self.assertIn("lib/tick/examples/example_tick.c", self.files)
 
     def test_excludes_non_consumer_example_sources(self):
         # Manifest example sources that are not consumer samples never
@@ -198,18 +198,18 @@ class TestFileSelection(unittest.TestCase):
         # under tests/ is the same shape), mcu/ sources are size-check
         # probes (epic-serial's target_sizecheck.c), and the combo test
         # modules are CI coverage. Only examples/ sources ship.
-        self.assertNotIn("epic-serial/tests/example_serial.c", self.files)
-        self.assertNotIn("epic-serial/mcu/target_sizecheck.c", self.files)
+        self.assertNotIn("lib/serial/tests/example_serial.c", self.files)
+        self.assertNotIn("lib/serial/mcu/target_sizecheck.c", self.files)
         self.assertNotIn("tests/combo_uart_ssp.c", self.files)
         self.assertNotIn("tests/example_blink.c", self.files)
         self.assertFalse(any(f.startswith("tests/") for f in self.files))
         self.assertFalse(any("tests/" in f for f in self.files))
 
     def test_excludes_other_families_hal(self):
-        self.assertFalse(any(f.startswith("pic18fxx5x-hal/") for f in self.files))
+        self.assertFalse(any(f.startswith("hal/pic18/18fxx5x/") for f in self.files))
 
     def test_excludes_modules_not_supported_here(self):
-        self.assertFalse(any(f.startswith("epic-usb/") for f in self.files))
+        self.assertFalse(any(f.startswith("lib/usb/") for f in self.files))
 
     def test_is_sorted_and_deduplicated(self):
         self.assertEqual(self.files, sorted(set(self.files)))
@@ -249,17 +249,17 @@ class TestEpicHalMk(unittest.TestCase):
 
     def test_hal_sources_are_prefixed_with_the_bundle_dir(self):
         self.assertIn(
-            "$(EPIC_HAL_DIR)/pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+            "$(EPIC_HAL_DIR)/hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c",
             self.mk,
         )
 
     def test_module_sources_are_prefixed_with_the_bundle_dir(self):
-        self.assertIn("$(EPIC_HAL_DIR)/epic-serial/src/epic_serial.c", self.mk)
+        self.assertIn("$(EPIC_HAL_DIR)/lib/serial/src/epic_serial.c", self.mk)
 
     def test_includes_are_prefixed_and_ordered(self):
         self.assertIn(
-            "-I$(EPIC_HAL_DIR)/pic16f87xa-hal/include/target "
-            "-I$(EPIC_HAL_DIR)/pic16f87xa-hal/include",
+            "-I$(EPIC_HAL_DIR)/hal/pic14/16f87xa/include/target "
+            "-I$(EPIC_HAL_DIR)/hal/pic14/16f87xa/include",
             self.mk,
         )
 
@@ -271,7 +271,7 @@ class TestEpicHalMk(unittest.TestCase):
         # was unbuildable for that module. Each dir needs its own -I.
         two_inc = MANIFEST + """
 [modules.epic-math]
-dir        = "epic-math"
+dir        = "lib/math"
 sources    = ["src/epic_math.c"]
 includes   = ["include", "tests"]
 depends_on = []
@@ -295,8 +295,8 @@ PIC16F87XA = ["src/pic16/epic_math_mul.c"]
         )
         self.assertIn(
             "EPIC_HAL_INCS_epic-math := "
-            "$(EPIC_HAL_DIR)/epic-math/include "
-            "$(EPIC_HAL_DIR)/epic-math/tests",
+            "$(EPIC_HAL_DIR)/lib/math/include "
+            "$(EPIC_HAL_DIR)/lib/math/tests",
             mk,
         )
 
@@ -322,8 +322,8 @@ PIC16F87XA = ["src/pic16/epic_math_mul.c"]
         # resolves it (load-bearing link order), not appended at the end.
         cond = MANIFEST + """
 [[families.PIC16F87XA.conditional_sources]]
-path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_extra.c"
-after    = "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c"
+path     = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_extra.c"
+after    = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c"
 variants = ["16F877A"]
 """
         tmp = tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False)
@@ -335,8 +335,8 @@ variants = ["16F877A"]
         self.assertIn(
             "EPIC_HAL_HAL_SRCS := $(foreach f,$(EPIC_HAL_HAL_SRCS),"
             "$(f) $(if $(filter "
-            "%/pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c,$(f)),"
-            "$(EPIC_HAL_DIR)/pic16f87xa-hal/src/peripherals/"
+            "%/hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c,$(f)),"
+            "$(EPIC_HAL_DIR)/hal/pic14/16f87xa/src/peripherals/"
             "pic16f87xa_extra.c))",
             mk,
         )
@@ -355,7 +355,7 @@ class TestSourcesJson(unittest.TestCase):
 
     def test_lists_hal_and_conditional_sources(self):
         self.assertIn(
-            "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+            "hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c",
             self.doc["hal_sources"],
         )
         self.assertIsInstance(self.doc["conditional_sources"], list)
@@ -363,17 +363,17 @@ class TestSourcesJson(unittest.TestCase):
     def test_conditional_source_carries_its_after_field(self):
         entry = next(
             c for c in self.doc["conditional_sources"]
-            if c["path"] == "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+            if c["path"] == "hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c"
         )
         self.assertEqual(
-            entry["after"], "pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c"
+            entry["after"], "hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c"
         )
 
     def test_module_entry_is_complete(self):
         entry = self.doc["modules"]["epic-serial"]
         self.assertEqual(entry["resolved"], ["epic-tick", "epic-serial"])
-        self.assertEqual(entry["sources"], ["epic-serial/src/epic_serial.c"])
-        self.assertEqual(entry["includes"], ["epic-serial/include"])
+        self.assertEqual(entry["sources"], ["lib/serial/src/epic_serial.c"])
+        self.assertEqual(entry["includes"], ["lib/serial/include"])
         self.assertEqual(entry["supported"], ["16F877A"])
         self.assertEqual(
             entry["excluded"]["16F873A"], "RAM: 32-byte g_rx_buf does not fit"
@@ -383,7 +383,7 @@ class TestSourcesJson(unittest.TestCase):
         entry = self.doc["modules"]["epic-tick"]
         self.assertEqual(entry["example"]["name"], "tick-blink")
         self.assertEqual(
-            entry["example"]["sources"], ["epic-tick/examples/example_tick.c"]
+            entry["example"]["sources"], ["lib/tick/examples/example_tick.c"]
         )
         self.assertEqual(entry["example"]["config"], {"FOSC": "HS"})
 
@@ -460,13 +460,13 @@ class TestMplabxMd(unittest.TestCase):
         self.md = bundlegen.emit_mplabx_md(load(), "PIC16F87XA", "v0.1.0")
 
     def test_lists_the_source_folders_to_add(self):
-        self.assertIn("pic16f87xa-hal/src", self.md)
-        self.assertIn("epic-serial/src", self.md)
+        self.assertIn("hal/pic14/16f87xa/src", self.md)
+        self.assertIn("lib/serial/src", self.md)
 
     def test_lists_the_include_paths_in_order(self):
-        self.assertIn("pic16f87xa-hal/include/target", self.md)
-        idx_target = self.md.index("pic16f87xa-hal/include/target")
-        idx_plain = self.md.index("epic-common/include")
+        self.assertIn("hal/pic14/16f87xa/include/target", self.md)
+        idx_target = self.md.index("hal/pic14/16f87xa/include/target")
+        idx_plain = self.md.index("common/include")
         self.assertLess(idx_target, idx_plain)
 
     def test_names_the_dfp_pack(self):
@@ -519,7 +519,7 @@ class TestPartsMap(unittest.TestCase):
         """
         m = load()
         lines = [line.split() for line in bundlegen.emit_parts_map(m).splitlines()]
-        by_slug = {fam.hal_dir.removesuffix("-hal"): fam for fam in m.families.values()}
+        by_slug = {fam.slug: fam for fam in m.families.values()}
         # Each family's lines form one contiguous run.
         runs = [slug for _part, slug in lines]
         for slug in set(runs):
@@ -553,39 +553,39 @@ class TestBundleGate(unittest.TestCase):
 
     def test_gate_rejects_mdb_sources_and_sim_named_headers(self):
         offenders = make_bundle._sim_mdb_offenders([
-            "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
-            "pic16f87xa-hal/include/pic16f87xa_sim.h",
+            "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
+            "hal/pic14/16f87xa/include/pic16f87xa_sim.h",
         ])
         self.assertEqual(offenders, [
-            "pic16f87xa-hal/include/pic16f87xa_sim.h",
-            "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+            "hal/pic14/16f87xa/include/pic16f87xa_sim.h",
+            "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
         ])
 
     def test_gate_rejects_sim_prefixed_fixtures(self):
         offenders = make_bundle._sim_mdb_offenders([
-            "epic-bus/tests/sim_bus.c",
-            "pic16f87xa-hal/tests/sim_bank_probe.c",
+            "lib/bus/tests/sim_bus.c",
+            "hal/pic14/16f87xa/tests/sim_bank_probe.c",
             "sim_console.c",
         ])
         self.assertEqual(offenders, [
-            "epic-bus/tests/sim_bus.c",
-            "pic16f87xa-hal/tests/sim_bank_probe.c",
+            "hal/pic14/16f87xa/tests/sim_bank_probe.c",
+            "lib/bus/tests/sim_bus.c",
             "sim_console.c",
         ])
 
     def test_nonconsumer_gate_rejects_tests_host_and_design_docs(self):
         offenders = make_bundle._nonconsumer_offenders([
-            "epic-serial/tests/sim_serial.c",
+            "lib/serial/tests/sim_serial.c",
             "tests/epic-combo-uart-ssp/tests/combo_uart_ssp.c",
-            "pic16f87xa-hal/include/host/pic16_platform.h",
-            "epic-common/docs/ARCHITECTURE.md",
-            "epic-serial/src/epic_serial.c",
-            "epic-serial/README.md",
+            "hal/pic14/16f87xa/include/host/pic16_platform.h",
+            "common/docs/ARCHITECTURE.md",
+            "lib/serial/src/epic_serial.c",
+            "lib/serial/README.md",
         ])
         self.assertEqual(offenders, [
-            "epic-common/docs/ARCHITECTURE.md",
-            "epic-serial/tests/sim_serial.c",
-            "pic16f87xa-hal/include/host/pic16_platform.h",
+            "common/docs/ARCHITECTURE.md",
+            "hal/pic14/16f87xa/include/host/pic16_platform.h",
+            "lib/serial/tests/sim_serial.c",
             "tests/epic-combo-uart-ssp/tests/combo_uart_ssp.c",
         ])
 
@@ -595,15 +595,15 @@ class TestBundleGate(unittest.TestCase):
         # artifacts and must ship. A tests/ path outside any declared
         # include dir is still rejected.
         offenders = make_bundle._nonconsumer_offenders([
-            "epic-math/tests/golden_vectors.h",
-            "epic-serial/tests/sim_serial.c",
-        ], allowed_prefixes=["epic-math/tests"])
-        self.assertEqual(offenders, ["epic-serial/tests/sim_serial.c"])
+            "lib/math/tests/golden_vectors.h",
+            "lib/serial/tests/sim_serial.c",
+        ], allowed_prefixes=["lib/math/tests"])
+        self.assertEqual(offenders, ["lib/serial/tests/sim_serial.c"])
 
     def test_gate_passes_legit_target_sources(self):
         offenders = make_bundle._sim_mdb_offenders([
-            "pic16f87xa-hal/src/target/pic16_isr_vector.c",
-            "epic-common/src/core/epic_harness_target.c",
+            "hal/pic14/16f87xa/src/target/pic16_isr_vector.c",
+            "common/src/core/epic_harness_target.c",
         ])
         self.assertEqual(offenders, [])
 

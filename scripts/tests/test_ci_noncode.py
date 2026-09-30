@@ -36,16 +36,16 @@ class TestIsNonCode(unittest.TestCase):
         self.assertFalse(self.check(["examples/epic-hal-demo-pic16f87xa.X/Makefile"]))
 
     def test_c_source_is_code(self):
-        self.assertFalse(self.check(["epic-tick/src/epic_tick.c"]))
+        self.assertFalse(self.check(["lib/tick/src/epic_tick.c"]))
 
     def test_header_is_code(self):
-        self.assertFalse(self.check(["pic16f87xa-hal/include/target/epic_hal.h"]))
+        self.assertFalse(self.check(["hal/pic14/16f87xa/include/target/epic_hal.h"]))
 
     def test_cmakelists_is_code(self):
-        self.assertFalse(self.check(["epic-tick/CMakeLists.txt"]))
+        self.assertFalse(self.check(["lib/tick/CMakeLists.txt"]))
 
     def test_manifest_is_code(self):
-        self.assertFalse(self.check(["epic-common/manifest/modules.toml"]))
+        self.assertFalse(self.check(["common/manifest/modules.toml"]))
 
     def test_ci_scripts_are_code(self):
         self.assertFalse(self.check(["scripts/epic_build.py"]))
@@ -62,7 +62,7 @@ class TestIsNonCode(unittest.TestCase):
         self.assertFalse(self.check(["data/foo.bin"]))
 
     def test_mixed_with_one_code_file(self):
-        self.assertFalse(self.check(["README.md", "epic-tick/src/epic_tick.c"]))
+        self.assertFalse(self.check(["README.md", "lib/tick/src/epic_tick.c"]))
 
     def test_empty_list_is_skip(self):
         self.assertTrue(self.check([]))

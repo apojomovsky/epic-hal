@@ -16,31 +16,31 @@
     </logicalFolder>
         <logicalFolder name="SourceFiles" displayName="Source Files" projectFiles="true">
       <logicalFolder name="core" displayName="core" projectFiles="true">
-        <itemPath>../../epic-common/src/core/epic_harness_target.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/core/pic18_irq.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/core/pic18_irq_dispatch.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/core/pic18f1320_wdt_sleep.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/target/pic18_isr_vector.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/target/pic18f1320_wdt_sleep_target.c</itemPath>
+        <itemPath>../../common/src/core/epic_harness_target.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/core/pic18_irq.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/core/pic18_irq_dispatch.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/core/pic18f1320_wdt_sleep.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/target/pic18_isr_vector.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/target/pic18f1320_wdt_sleep_target.c</itemPath>
       </logicalFolder>
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
-        <itemPath>../../pic18f1320-hal/src/peripherals/pic18f1320_gpio.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/peripherals/pic18f1320_timer0.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/peripherals/pic18f1320_timer1.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/peripherals/pic18f1320_timer2.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/peripherals/pic18f1320_timer3.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/peripherals/pic18f1320_eccp.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/peripherals/pic18f1320_usart.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/peripherals/pic18f1320_adc.c</itemPath>
-        <itemPath>../../pic18f1320-hal/src/peripherals/pic18f1320_eeprom.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/peripherals/pic18f1320_gpio.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/peripherals/pic18f1320_timer0.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/peripherals/pic18f1320_timer1.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/peripherals/pic18f1320_timer2.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/peripherals/pic18f1320_timer3.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/peripherals/pic18f1320_eccp.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/peripherals/pic18f1320_usart.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/peripherals/pic18f1320_adc.c</itemPath>
+        <itemPath>../../hal/pic18/18f1320/src/peripherals/pic18f1320_eeprom.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
 </logicalFolder></logicalFolder>
   <sourceRootList>
-    <Elem>../../epic-common/src/core</Elem>
-    <Elem>../../pic18f1320-hal/src/core</Elem>
-    <Elem>../../pic18f1320-hal/src/target</Elem>
-    <Elem>../../pic18f1320-hal/src/peripherals</Elem>
+    <Elem>../../common/src/core</Elem>
+    <Elem>../../hal/pic18/18f1320/src/core</Elem>
+    <Elem>../../hal/pic18/18f1320/src/target</Elem>
+    <Elem>../../hal/pic18/18f1320/src/peripherals</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -94,7 +94,7 @@
         <property key="define-macros" value="PIC18F1320;FOSC_HZ=20000000"/>
         <property key="disable-optimizations" value="true"/>
         <property key="extra-include-directories"
-                  value="../../pic18f1320-hal/include/target;../../pic18f1320-hal/include;../../epic-common/include"/>
+                  value="../../hal/pic18/18f1320/include/target;../../hal/pic18/18f1320/include;../../common/include"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
         <property key="garbage-collect-data" value="true"/>
         <property key="garbage-collect-functions" value="true"/>

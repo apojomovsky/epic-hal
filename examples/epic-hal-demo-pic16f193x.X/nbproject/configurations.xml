@@ -18,38 +18,38 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="core" displayName="core" projectFiles="true">
-        <itemPath>../../epic-common/src/core/epic_harness_target.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/core/pic16f193x_irq.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/core/pic16f193x_irq_dispatch.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/target/pic16f193x_isr_vector.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/core/pic16f193x_wdt_sleep.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/target/pic16f193x_wdt_sleep_target.c</itemPath>
+        <itemPath>../../common/src/core/epic_harness_target.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/core/pic16f193x_irq.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/core/pic16f193x_irq_dispatch.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/target/pic16f193x_isr_vector.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/core/pic16f193x_wdt_sleep.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/target/pic16f193x_wdt_sleep_target.c</itemPath>
       </logicalFolder>
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_adc.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_ccp.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_comp.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_cps.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_dac.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_eeprom.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_fvr.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_gpio.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_lcd.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_srlatch.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_ssp.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_timer0.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_timer1.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_timer246.c</itemPath>
-        <itemPath>../../pic16f193x-hal/src/peripherals/pic16f193x_usart.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_adc.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_ccp.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_comp.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_cps.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_dac.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_eeprom.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_fvr.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_gpio.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_lcd.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_srlatch.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_ssp.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_timer0.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_timer1.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_timer246.c</itemPath>
+        <itemPath>../../hal/pic14e/16f193x/src/peripherals/pic16f193x_usart.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
-    <Elem>../../epic-common/src/core</Elem>
-    <Elem>../../pic16f193x-hal/src/core</Elem>
-    <Elem>../../pic16f193x-hal/src/target</Elem>
-    <Elem>../../pic16f193x-hal/src/peripherals</Elem>
+    <Elem>../../common/src/core</Elem>
+    <Elem>../../hal/pic14e/16f193x/src/core</Elem>
+    <Elem>../../hal/pic14e/16f193x/src/target</Elem>
+    <Elem>../../hal/pic14e/16f193x/src/peripherals</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -103,7 +103,7 @@
         <property key="define-macros" value="PIC16F1937"/>
         <property key="disable-optimizations" value="true"/>
         <property key="extra-include-directories"
-                  value="../../pic16f193x-hal/include/target;../../pic16f193x-hal/include;../../epic-common/include"/>
+                  value="../../hal/pic14e/16f193x/include/target;../../hal/pic14e/16f193x/include;../../common/include"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
         <property key="garbage-collect-data" value="true"/>
         <property key="garbage-collect-functions" value="true"/>

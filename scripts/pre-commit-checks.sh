@@ -39,24 +39,20 @@ staged_files() {
 #     or a root-level *.d) fails, as does any staged root-level file
 #     outside the file whitelist.
 # (b) 2026-08-11: the 12 epic-combo-* test modules lived at the root
-#     and were moved under tests/. The root is reserved for modules
-#     (epic-*), the three HALs, and the known infra directories
-#     (dir_whitelist below); a staged file whose top-level directory is
-#     outside it fails the commit, so new test scaffolding or a stray
-#     directory cannot pollute the root.
+#     and were moved under tests/. The root is reserved for the fixed
+#     top-level directories (dir_whitelist below); a staged file whose
+#     top-level directory is outside it fails the commit, so new test
+#     scaffolding or a stray directory cannot pollute the root.
 # Build output under build*/ is already gitignored, so it never
 # reaches the staged set.
 
 stray_files_check() {
     local file_whitelist='^\.gitignore$|^\.clang-format$|^pyproject\.toml$|^AGENTS\.md$|^CLAUDE\.md$|^DEVELOPMENT\.md$|^LICENSE$|^Makefile$|^README\.md$|^install\.sh$|^CHANGELOG\.md$|^cliff\.toml$'
-    # Top-level directories: modules (epic-*), the HALs (pic*-hal), the
-    # shared ISA cores (pic*-core, epic-hal#136 naming decision), and the
-    # known infra directories. Anything else at the root is a stray
-    # (probe output, a dropped directory, an unplanned module): the
-    # 2026-08-11 cleanup moved the 12 epic-combo-* test modules under
-    # tests/ precisely so the root stays readable. A new module is
-    # added by extending this list deliberately, not by accident.
-    local dir_whitelist='^epic-[a-z0-9-]+$|^pic16f87xa-hal$|^pic18fxx5x-hal$|^pic16f193x-hal$|^pic16f88x-hal$|^pic16f628a-hal$|^pic16f83_84-hal$|^pic16f818_819-hal$|^pic16f63x_67x_68x-hal$|^pic18f1320-hal$|^pic18f2520-hal$|^pic18f6520-hal$|^pic16f7x-hal$|^pic16f5x-hal$|^pic[0-9a-z]+-midrange-core$|^pic[0-9a-z]+-enhanced-core$|^pic-baseline-core$|^pic18-core$|^docs$|^scripts$|^docker$|^examples$|^tests$|^\.github$'
+    # The root holds only the fixed top-level directories. A new module
+    # goes under lib/, a new device family under hal/<arch>/, so the root
+    # never grows: extend this list only for a genuinely new kind of
+    # directory.
+    local dir_whitelist='^(common|hal|lib|demos|examples|tests|docs|scripts|docker|\.github)$'
     local bad=0
     local f
     while IFS= read -r f; do
@@ -224,10 +220,19 @@ brace_style_check() {
 # Deterministic picks, not preferences: analysis against any single
 # family is equivalent for logic bugs, while the per-family truth stays
 # with the builds. Constants, so a rename updates one place.
-CPPCHECK_MIDRANGE_REF="pic16f628a-hal"
-CPPCHECK_CONSUMER_REF="pic16f193x-hal"
+CPPCHECK_MIDRANGE_REF="hal/pic14/16f628a"
+CPPCHECK_CONSUMER_REF="hal/pic14e/16f193x"
 
-# Print the include dirs (one per line) for one staged top-level group.
+# A staged file's analysis group: hal/<arch>/<family> (or hal/pic14/core)
+# for HAL code, the top-level directory for everything else.
+group_of() {
+    case "$1" in
+        hal/*/*/*) printf '%s\n' "$1" | cut -d/ -f1-3 ;;
+        *)         printf '%s\n' "${1%%/*}" ;;
+    esac
+}
+
+# Print the include dirs (one per line) for one staged group.
 # A family group sees only its own headers plus the shared layer, so a
 # basename shared across families (pic14_midrange.h, epic_hal.h, ...)
 # cannot resolve to another die. The shared midrange drivers (pic14_*.h)
@@ -237,9 +242,9 @@ CPPCHECK_CONSUMER_REF="pic16f193x-hal"
 group_includes() {
     local group="$1"
     case "$group" in
-        pic*-hal|pic14-midrange-core)
+        hal/*/*)
             find "$group" -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort
-            printf '%s\n' "epic-common/include" "pic14-midrange-core/include"
+            printf '%s\n' "common/include" "hal/pic14/core/include"
             ;;
         *)
             # consumer modules, tests, examples: module headers plus one
@@ -249,12 +254,12 @@ group_includes() {
             # before for genuinely missing headers); the analyzable
             # surface is the family-agnostic logic, whose per-family
             # truth stays with the builds.
-            find epic-* tests -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort
-            printf '%s\n' "epic-common/include"
+            find lib demos tests -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort
+            printf '%s\n' "common/include"
             find "$CPPCHECK_CONSUMER_REF" -type d \( -name include -o -path '*/include/host' -o -path '*/include/target' \) -not -path '*/build/*' 2>/dev/null | sort
             ;;
     esac
-    if [ "$group" = "pic14-midrange-core" ]; then
+    if [ "$group" = "hal/pic14/core" ]; then
         # midrange-core's own drivers include the family-blind
         # pic14_midrange.h, which only families provide: analyze them
         # against one family's map, deterministically.
@@ -268,13 +273,13 @@ cppcheck_check() {
         return 0
     }
 
-    # Group the staged .c files by top-level directory: one invocation
+    # Group the staged .c files by analysis group: one invocation
     # per group with that group's own include set, instead of every
     # file against every family's headers at once.
     local groups
     groups="$(while IFS= read -r f; do
         [[ "$f" == *.c ]] && [ -f "$f" ] || continue
-        printf '%s\n' "${f%%/*}"
+        group_of "$f"
     done < <(staged_files) | sort -u)"
     [ -z "$groups" ] && return 0
 
@@ -284,7 +289,7 @@ cppcheck_check() {
         local c_files=()
         local f
         while IFS= read -r f; do
-            [[ "$f" == *.c ]] && [ -f "$f" ] && [ "${f%%/*}" = "$group" ] || continue
+            [[ "$f" == *.c ]] && [ -f "$f" ] && [ "$(group_of "$f")" = "$group" ] || continue
             c_files+=("$f")
         done < <(staged_files)
         [ "${#c_files[@]}" -eq 0 ] && continue

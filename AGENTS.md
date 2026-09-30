@@ -1,7 +1,7 @@
 # AGENTS.md
 
 8-bit PIC HAL and tooling library. The family set lives in
-`epic-common/manifest/modules.toml` (the `[families.*]` tables, the
+`common/manifest/modules.toml` (the `[families.*]` tables, the
 single source of truth; peripheral coverage varies by family, and each
 HAL's README states it). C99,
 MPLAB XC8. Every module dual-builds: host simulation (gcc/CMake, no
@@ -11,12 +11,12 @@ include-path and linked-file selection.
 
 ## The one idea that matters most
 
-`epic-common/` holds everything architecture-blind (status codes, the
+`common/` holds everything architecture-blind (status codes, the
 4-function harness, shared CMake/Make fragments). Everything
 register-specific (SFR maps, bank/BSR addressing, IRQ vectors,
 peripheral bodies) lives per-family under a **fixed contract**: same
 names/signatures across families, different bodies. Read
-`epic-common/README.md` + `epic-common/MANUAL.md` before touching HAL
+`common/README.md` + `common/MANUAL.md` before touching HAL
 code; family manuals point back there instead of repeating it. Those
 two are the shared-contract design docs. `docs/adding-a-device.md` is
 the verification-gated playbook for a new device or family (used to
@@ -29,9 +29,19 @@ Every `epic-*` module: `README.md`, often `docs/ARCHITECTURE.md` +
 --build build && ctest`), real-target via `python3 scripts/epic_build.py
 build --module <name> --mcu <MCU> --run`. No top-level build, build each
 module directly. Each HAL additionally has `MANUAL.md`, datasheet-cited
-per-peripheral register reference; `epic-common/MANUAL.md` covers
+per-peripheral register reference; `common/MANUAL.md` covers
 shared conventions (naming, handle pattern, harness, interrupt model),
 family manuals only cover what's actually per-family.
+
+Where things live is fixed, and the root does not grow: `common/` is the
+architecture-blind layer, each device family is `hal/<arch>/<family>/`
+(`pic12` baseline, `pic14` classic mid-range, `pic14e` enhanced
+mid-range, `pic18`), code shared by one architecture's families is
+`hal/<arch>/core/`, portable middleware is `lib/<module>/`, and demos
+are `demos/<demo>/`. A new module goes under `lib/`, a new family under
+`hal/<arch>/`. Module ids in the manifest (`epic-serial`,
+`pic16f87xa-hal`) are names, not paths; a module's `dir` is its path.
+`scripts/tests/test_layout.py` and the pre-commit hook enforce this.
 
 Each HAL's `src/` mirrors its build environments: `src/core/` and
 `src/peripherals/` are shared, `src/target/` is real-hardware-only,
@@ -312,13 +322,13 @@ the mechanical rules fails the ritual and blocks the push.
   labels); an untested mnemonic or STATUS-bit combination can be
   rejected by XC8 with error (876), so probe a candidate instruction
   before assuming it assembles. Full writeup:
-  `epic-math/docs/ARCHITECTURE.md`.
+  `lib/math/docs/ARCHITECTURE.md`.
 - **Banking differs per family, not just "PIC16 vs PIC18."** Classic
   PIC16 (87XA): RP0/RP1 bank bits, `STATUS,7`=IRP selects a bank-*pair*.
   PIC18: Access Bank, no BSR. Enhanced Mid-range (193X): real BSR (32
   banks x 128B); runtime-dispatched SFR addresses there compile to safe
   FSR1:INDF1 indirect addressing, not the classic-PIC16 failure mode
-  (verified, not assumed: `pic16f193x-hal/docs/ARCHITECTURE.md` Finding
+  (verified, not assumed: `hal/pic14e/16f193x/docs/ARCHITECTURE.md` Finding
   1). The linker scatters unpinned `static` by best-fit, not declaration
   order, pin anything bank-sensitive with `__at(addr)`.
 - **Datasheet/app-note PDFs are not committed** (`*.pdf` gitignored).
@@ -328,7 +338,7 @@ the mechanical rules fails the ritual and blocks the push.
   `EPIC_IRQ_SetPriority` real. Enhanced Mid-range: one vector, no
   priority, but *automatic* hardware context save (no manual push/pop).
   Enable/disable API shape is otherwise identical,
-  `epic-common/MANUAL.md` §6.
+  `common/MANUAL.md` §6.
 
 ## Conventions
 
@@ -372,7 +382,7 @@ the mechanical rules fails the ritual and blocks the push.
   `epic_serial_init`); HALs export `EPIC_*` uppercase for the
   cross-family contract (EPIC_GPIO_Init); family-internal helpers use
   the family prefix (`pic16f87xa_*`, `pic18_*`, `pic16f193x_*`);
-  epic-common harness glue uses `epic_*`; third-party keeps its own
+  the `common/` harness glue uses `epic_*`; third-party keeps its own
   names. A module's public symbols never use a bare short prefix
   (`fsm_*`, `task_manager_*`).
 

@@ -12,7 +12,7 @@
  *
  * @details
  *   Verification is by transport-call counting, exactly the lcd gate's
- *   design (epic-lcd/tests/sim_lcd.c): the real epic_lcd_gpio4_init
+ *   design (lib/lcd/tests/sim_lcd.c): the real epic_lcd_gpio4_init
  *   runs (so the real transport init code, pin configuration and the
  *   initial E/RS writes are executed and checked), the send op is
  *   replaced by a recorder (the documented PIC16 constraint: gpio4_send

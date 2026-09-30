@@ -9,12 +9,12 @@
             <sourceEncoding>ISO-8859-1</sourceEncoding>
             <make-dep-projects/>
             <sourceRootList>
-                <sourceRootElem>../../epic-common/src/core</sourceRootElem>
-                <sourceRootElem>../../pic14-midrange-core/src/core</sourceRootElem>
-                <sourceRootElem>../../pic14-midrange-core/src/target</sourceRootElem>
-                <sourceRootElem>../../pic14-midrange-core/src/peripherals</sourceRootElem>
-                <sourceRootElem>../../pic16f7x-hal/src/core</sourceRootElem>
-                <sourceRootElem>../../pic16f7x-hal/src/peripherals</sourceRootElem>
+                <sourceRootElem>../../common/src/core</sourceRootElem>
+                <sourceRootElem>../../hal/pic14/core/src/core</sourceRootElem>
+                <sourceRootElem>../../hal/pic14/core/src/target</sourceRootElem>
+                <sourceRootElem>../../hal/pic14/core/src/peripherals</sourceRootElem>
+                <sourceRootElem>../../hal/pic14/16f7x/src/core</sourceRootElem>
+                <sourceRootElem>../../hal/pic14/16f7x/src/peripherals</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>

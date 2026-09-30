@@ -13,7 +13,7 @@
  *          documents the signature), stopping the tick dead.
  *
  * @details
- *   The encoder's own sim gate (epic-encoder/tests/sim_encoder.c)
+ *   The encoder's own sim gate (lib/encoder/tests/sim_encoder.c)
  *   already hammers `epic_encoder_get_position` under the live tick with
  *   the position held constant (any non-zero read is a tear). This
  *   combo goes one step further: the position CHANGES under the probe

@@ -1,4 +1,4 @@
-"""Load, validate, and resolve epic-common/manifest/modules.toml; the only
+"""Load, validate, and resolve common/manifest/modules.toml; the only
 module that knows the manifest's schema (build driver, CI matrix, and
 bundle generator all go through these dataclasses). Family paths are
 repo-root-relative, module paths module-dir-relative. Load-bearing
@@ -19,7 +19,7 @@ class ManifestError(Exception):
 # Shared ISA cores (epic-hal#136 naming decision): families consume
 # these verbatim, so per-module epic-cc slices may name them alongside
 # the family's own hal_dir and epic-common. Extend deliberately.
-_SHARED_CORE_DIRS = ("pic14-midrange-core/",)
+_SHARED_CORE_DIRS = ("hal/pic14/core/",)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -53,6 +53,13 @@ class Family:
     # post-PLL system clock: epic-cc derives clocks from the crystal and
     # checks xtal/plldiv hits the PLL's 4 MHz input (DS39632E).
     xtal_hz: int | None = None
+
+    @property
+    def slug(self) -> str:
+        """Bundle and install slug: the family key lowercased. Independent
+        of where hal_dir sits in the tree, so bundle and asset names
+        survive a directory move."""
+        return self.name.lower()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -655,13 +662,13 @@ def _validate(manifest):
                     f"{fam_name}: must not be empty"
                 )
             for p in paths:
-                if not (p.startswith("epic-common/")
+                if not (p.startswith("common/")
                         or p.startswith(fam.hal_dir + "/")
                         or p.startswith(_SHARED_CORE_DIRS)):
                     raise ManifestError(
                         f"modules.{mod.name}.epiccc_hal_sources_by_family."
                         f"{fam_name}: '{p}' is outside {fam.hal_dir}/, "
-                        f"epic-common and the shared cores"
+                        f"common/ and the shared cores"
                     )
         # The sim-scoped epic-cc slice: same path rules, plus it must
         # name the module's own sim harness (the verbatim list is the
@@ -682,13 +689,13 @@ def _validate(manifest):
                     f"{fam_name}: must not be empty"
                 )
             for p in paths:
-                if not (p.startswith("epic-common/")
+                if not (p.startswith("common/")
                         or p.startswith(fam.hal_dir + "/")
                         or p.startswith(_SHARED_CORE_DIRS)):
                     raise ManifestError(
                         f"modules.{mod.name}.epiccc_sim_hal_sources_by_family."
                         f"{fam_name}: '{p}' is outside {fam.hal_dir}/, "
-                        f"epic-common and the shared cores"
+                        f"common/ and the shared cores"
                     )
             example = mod.examples.get(fam_name)
             sim = example.sim if example is not None else None
@@ -728,5 +735,5 @@ def default_path() -> pathlib.Path:
     """The manifest's location relative to this file."""
     return (
         pathlib.Path(__file__).resolve().parents[1]
-        / "epic-common" / "manifest" / "modules.toml"
+        / "common" / "manifest" / "modules.toml"
     )

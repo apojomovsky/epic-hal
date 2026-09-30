@@ -12,10 +12,10 @@ Input priority (same as epic-cc):
      ($XC8_INSTALL_DIR defaults to /opt/microchip/xc8/v4.00)
 
 Output: per-family headers in place
-  pic16f87xa-hal/include/pic16f87xa_sfr.h
-  pic16f88x-hal/include/pic16f88x_sfr.h
-  pic18fxx5x-hal/include/pic18fxx5x_sfr.h
-  pic16f193x-hal/include/pic16f193x_sfr.h
+  hal/pic14/16f87xa/include/pic16f87xa_sfr.h
+  hal/pic14/16f88x/include/pic16f88x_sfr.h
+  hal/pic18/18fxx5x/include/pic18fxx5x_sfr.h
+  hal/pic14e/16f193x/include/pic16f193x_sfr.h
 
 For v1 the generator only projects SFR addresses (PIC_REG_*). Bit masks
 and POR values stay hand-maintained between markers, since POR is a DS
@@ -180,17 +180,17 @@ def hal_header_path(family: str) -> pathlib.Path:
     fam = manifest.families[family]
     # hal_dir/include/<stem>_sfr.h
     mapping = {
-        "PIC16F87XA": "pic16f87xa-hal/include/pic16f87xa_sfr.h",
-        "PIC16F88X": "pic16f88x-hal/include/pic16f88x_sfr.h",
-        "PIC16F628A": "pic16f628a-hal/include/pic16f628a_sfr.h",
-        "PIC16F63x_67x_68x": "pic16f63x_67x_68x-hal/include/pic16f63x_67x_68x_sfr.h",
-        "PIC18Fxx5x": "pic18fxx5x-hal/include/pic18fxx5x_sfr.h",
-        "PIC16F193X": "pic16f193x-hal/include/pic16f193x_sfr.h",
+        "PIC16F87XA": "hal/pic14/16f87xa/include/pic16f87xa_sfr.h",
+        "PIC16F88X": "hal/pic14/16f88x/include/pic16f88x_sfr.h",
+        "PIC16F628A": "hal/pic14/16f628a/include/pic16f628a_sfr.h",
+        "PIC16F63x_67x_68x": "hal/pic14/16f63x_67x_68x/include/pic16f63x_67x_68x_sfr.h",
+        "PIC18Fxx5x": "hal/pic18/18fxx5x/include/pic18fxx5x_sfr.h",
+        "PIC16F193X": "hal/pic14e/16f193x/include/pic16f193x_sfr.h",
     }
     if family in mapping:
         return REPO / mapping[family]
     # fallback generic
-    return REPO / fam.hal_dir / "include" / f"{fam.hal_dir.replace('-hal','')}_sfr.h"
+    return REPO / fam.hal_dir / "include" / f"{fam.slug}_sfr.h"
 
 
 def generate_for_family(family: str, edc_override: pathlib.Path | None, dfp_dir: pathlib.Path | None) -> str | None:

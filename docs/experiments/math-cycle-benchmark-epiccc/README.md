@@ -126,12 +126,12 @@ image available:
       -e PIC8_CLANG_UNWRAPPED=/opt/clang/bin/clang \
       -e PIC8_CLANG_RESOURCE_DIR=/opt/clang/lib/clang/20 \
       epic-cc-dev:local-<hash> /tmp/cargo-target/release/epic-cc --target 16F877A \
-      -I epic-math/include -I docs/experiments/math-cycle-benchmark-epiccc \
+      -I lib/math/include -I docs/experiments/math-cycle-benchmark-epiccc \
       -D PIC16F877A -D FOSC_HZ=20000000 -D __EPIC_CC__ \
       -o build-sim/bench-epiccc/87-cpath.hex \
       docs/experiments/math-cycle-benchmark-epiccc/bench_epiccc.c \
-      epic-math/src/host/epic_math_mul.c epic-math/src/host/epic_math_div.c \
-      epic-math/src/host/epic_math_addsub.c
+      lib/math/src/host/epic_math_mul.c lib/math/src/host/epic_math_div.c \
+      lib/math/src/host/epic_math_addsub.c
 
     # measure (hal toolchain image, mdb UART capture)
     docker run --rm -v "$PWD":/repo -w /repo epic-hal-toolchain:local \

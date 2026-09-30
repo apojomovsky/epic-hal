@@ -45,7 +45,7 @@ inspect the .s / .sym / .map (AGENTS.md).
 - **FSR1 indirect (193X)**: pointer derefs compile to FSR1 indirect
   (`movwf fsr1l; clrf fsr1h; moviw`), which reaches any bank; the
   193X statics are verified safe unpinned (Finding 1 in
-  pic16f193x-hal/docs/ARCHITECTURE.md; timer0 ISR disassembly probe,
+  hal/pic14e/16f193x/docs/ARCHITECTURE.md; timer0 ISR disassembly probe,
   2026-08-11).
 - **PIC16 bank-2/3 pointer reachability**: a runtime-computed SFR
   address on classic PIC16 compiles to FSR1:INDF1, which needs IRP
@@ -58,7 +58,7 @@ inspect the .s / .sym / .map (AGENTS.md).
   all three (XC8 1262/1482/2084, found 2026-08-11); the mul_u16
   layout was compressed to 12 bytes (bk reuses b's bytes) to fit.
   Per-routine scratch is a single struct per routine so the linker
-  cannot split it across banks (epic-math/docs/ARCHITECTURE.md).
+  cannot split it across banks (lib/math/docs/ARCHITECTURE.md).
 - **Linker best-fit**: unpinned `static` GPR is scattered by
   best-fit, not declaration order. Anything bank-sensitive gets
   `EPIC_PLACE`; the statics audit (scripts/statics-audit.py) flags

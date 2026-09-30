@@ -51,7 +51,7 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=main.c ../../pic16f5x-hal/src/peripherals/pic16f5x_gpio.c ../../pic16f5x-hal/src/peripherals/pic16f5x_timer0.c ../../pic16f5x-hal/src/core/pic16_irq_stub.c ../../pic16f5x-hal/src/core/pic16_irq_dispatch.c ../../pic16f5x-hal/src/target/pic16f5x_wdt_sleep_target.c ../../epic-common/src/core/epic_harness_target.c
+SOURCEFILES_QUOTED_IF_SPACED=main.c ../../hal/pic12/16f5x/src/peripherals/pic16f5x_gpio.c ../../hal/pic12/16f5x/src/peripherals/pic16f5x_timer0.c ../../hal/pic12/16f5x/src/core/pic16_irq_stub.c ../../hal/pic12/16f5x/src/core/pic16_irq_dispatch.c ../../hal/pic12/16f5x/src/target/pic16f5x_wdt_sleep_target.c ../../common/src/core/epic_harness_target.c
 
 # Object Files Quoted if spaced
 OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/main.p1 ${OBJECTDIR}/_ext/9990001/pic16f5x_gpio.p1 ${OBJECTDIR}/_ext/9990001/pic16f5x_timer0.p1 ${OBJECTDIR}/_ext/9990001/pic16_irq_stub.p1 ${OBJECTDIR}/_ext/9990001/pic16_irq_dispatch.p1 ${OBJECTDIR}/_ext/9990001/pic16f5x_wdt_sleep_target.p1 ${OBJECTDIR}/_ext/9990001/epic_harness_target.p1
@@ -62,7 +62,7 @@ POSSIBLE_DEPFILES=${OBJECTDIR}/main.p1.d ${OBJECTDIR}/_ext/9990001/pic16f5x_gpio
 OBJECTFILES=${OBJECTDIR}/main.p1 ${OBJECTDIR}/_ext/9990001/pic16f5x_gpio.p1 ${OBJECTDIR}/_ext/9990001/pic16f5x_timer0.p1 ${OBJECTDIR}/_ext/9990001/pic16_irq_stub.p1 ${OBJECTDIR}/_ext/9990001/pic16_irq_dispatch.p1 ${OBJECTDIR}/_ext/9990001/pic16f5x_wdt_sleep_target.p1 ${OBJECTDIR}/_ext/9990001/epic_harness_target.p1
 
 # Source Files
-SOURCEFILES=main.c ../../pic16f5x-hal/src/peripherals/pic16f5x_gpio.c ../../pic16f5x-hal/src/peripherals/pic16f5x_timer0.c ../../pic16f5x-hal/src/core/pic16_irq_stub.c ../../pic16f5x-hal/src/core/pic16_irq_dispatch.c ../../pic16f5x-hal/src/target/pic16f5x_wdt_sleep_target.c ../../epic-common/src/core/epic_harness_target.c
+SOURCEFILES=main.c ../../hal/pic12/16f5x/src/peripherals/pic16f5x_gpio.c ../../hal/pic12/16f5x/src/peripherals/pic16f5x_timer0.c ../../hal/pic12/16f5x/src/core/pic16_irq_stub.c ../../hal/pic12/16f5x/src/core/pic16_irq_dispatch.c ../../hal/pic12/16f5x/src/target/pic16f5x_wdt_sleep_target.c ../../common/src/core/epic_harness_target.c
 
 
 CFLAGS=
@@ -94,55 +94,55 @@ ${OBJECTDIR}/main.p1: main.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/main.p1.d
 	@${RM} ${OBJECTDIR}/main.p1
 	@${MKDIR} "${OBJECTDIR}"
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../pic16f5x-hal/include/target" -I"../../pic16f5x-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/main.p1 main.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../hal/pic12/16f5x/include/target" -I"../../hal/pic12/16f5x/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/main.p1 main.c
 	@-${MV} ${OBJECTDIR}/main.d ${OBJECTDIR}/main.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/main.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/9990001/pic16f5x_gpio.p1: ../../pic16f5x-hal/src/peripherals/pic16f5x_gpio.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/9990001/pic16f5x_gpio.p1: ../../hal/pic12/16f5x/src/peripherals/pic16f5x_gpio.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/_ext/9990001/pic16f5x_gpio.p1.d
 	@${RM} ${OBJECTDIR}/_ext/9990001/pic16f5x_gpio.p1
 	@${MKDIR} "${OBJECTDIR}/_ext/9990001"
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../pic16f5x-hal/include/target" -I"../../pic16f5x-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/pic16f5x_gpio.p1 ../../pic16f5x-hal/src/peripherals/pic16f5x_gpio.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../hal/pic12/16f5x/include/target" -I"../../hal/pic12/16f5x/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/pic16f5x_gpio.p1 ../../hal/pic12/16f5x/src/peripherals/pic16f5x_gpio.c
 	@-${MV} ${OBJECTDIR}/_ext/9990001/pic16f5x_gpio.d ${OBJECTDIR}/_ext/9990001/pic16f5x_gpio.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/9990001/pic16f5x_gpio.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/9990001/pic16f5x_timer0.p1: ../../pic16f5x-hal/src/peripherals/pic16f5x_timer0.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/9990001/pic16f5x_timer0.p1: ../../hal/pic12/16f5x/src/peripherals/pic16f5x_timer0.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/_ext/9990001/pic16f5x_timer0.p1.d
 	@${RM} ${OBJECTDIR}/_ext/9990001/pic16f5x_timer0.p1
 	@${MKDIR} "${OBJECTDIR}/_ext/9990001"
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../pic16f5x-hal/include/target" -I"../../pic16f5x-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/pic16f5x_timer0.p1 ../../pic16f5x-hal/src/peripherals/pic16f5x_timer0.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../hal/pic12/16f5x/include/target" -I"../../hal/pic12/16f5x/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/pic16f5x_timer0.p1 ../../hal/pic12/16f5x/src/peripherals/pic16f5x_timer0.c
 	@-${MV} ${OBJECTDIR}/_ext/9990001/pic16f5x_timer0.d ${OBJECTDIR}/_ext/9990001/pic16f5x_timer0.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/9990001/pic16f5x_timer0.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/9990001/pic16_irq_stub.p1: ../../pic16f5x-hal/src/core/pic16_irq_stub.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/9990001/pic16_irq_stub.p1: ../../hal/pic12/16f5x/src/core/pic16_irq_stub.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/_ext/9990001/pic16_irq_stub.p1.d
 	@${RM} ${OBJECTDIR}/_ext/9990001/pic16_irq_stub.p1
 	@${MKDIR} "${OBJECTDIR}/_ext/9990001"
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../pic16f5x-hal/include/target" -I"../../pic16f5x-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/pic16_irq_stub.p1 ../../pic16f5x-hal/src/core/pic16_irq_stub.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../hal/pic12/16f5x/include/target" -I"../../hal/pic12/16f5x/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/pic16_irq_stub.p1 ../../hal/pic12/16f5x/src/core/pic16_irq_stub.c
 	@-${MV} ${OBJECTDIR}/_ext/9990001/pic16_irq_stub.d ${OBJECTDIR}/_ext/9990001/pic16_irq_stub.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/9990001/pic16_irq_stub.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/9990001/pic16_irq_dispatch.p1: ../../pic16f5x-hal/src/core/pic16_irq_dispatch.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/9990001/pic16_irq_dispatch.p1: ../../hal/pic12/16f5x/src/core/pic16_irq_dispatch.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/_ext/9990001/pic16_irq_dispatch.p1.d
 	@${RM} ${OBJECTDIR}/_ext/9990001/pic16_irq_dispatch.p1
 	@${MKDIR} "${OBJECTDIR}/_ext/9990001"
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../pic16f5x-hal/include/target" -I"../../pic16f5x-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/pic16_irq_dispatch.p1 ../../pic16f5x-hal/src/core/pic16_irq_dispatch.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../hal/pic12/16f5x/include/target" -I"../../hal/pic12/16f5x/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/pic16_irq_dispatch.p1 ../../hal/pic12/16f5x/src/core/pic16_irq_dispatch.c
 	@-${MV} ${OBJECTDIR}/_ext/9990001/pic16_irq_dispatch.d ${OBJECTDIR}/_ext/9990001/pic16_irq_dispatch.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/9990001/pic16_irq_dispatch.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/9990001/pic16f5x_wdt_sleep_target.p1: ../../pic16f5x-hal/src/target/pic16f5x_wdt_sleep_target.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/9990001/pic16f5x_wdt_sleep_target.p1: ../../hal/pic12/16f5x/src/target/pic16f5x_wdt_sleep_target.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/_ext/9990001/pic16f5x_wdt_sleep_target.p1.d
 	@${RM} ${OBJECTDIR}/_ext/9990001/pic16f5x_wdt_sleep_target.p1
 	@${MKDIR} "${OBJECTDIR}/_ext/9990001"
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../pic16f5x-hal/include/target" -I"../../pic16f5x-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/pic16f5x_wdt_sleep_target.p1 ../../pic16f5x-hal/src/target/pic16f5x_wdt_sleep_target.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../hal/pic12/16f5x/include/target" -I"../../hal/pic12/16f5x/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/pic16f5x_wdt_sleep_target.p1 ../../hal/pic12/16f5x/src/target/pic16f5x_wdt_sleep_target.c
 	@-${MV} ${OBJECTDIR}/_ext/9990001/pic16f5x_wdt_sleep_target.d ${OBJECTDIR}/_ext/9990001/pic16f5x_wdt_sleep_target.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/9990001/pic16f5x_wdt_sleep_target.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/9990001/epic_harness_target.p1: ../../epic-common/src/core/epic_harness_target.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/9990001/epic_harness_target.p1: ../../common/src/core/epic_harness_target.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/_ext/9990001/epic_harness_target.p1.d
 	@${RM} ${OBJECTDIR}/_ext/9990001/epic_harness_target.p1
 	@${MKDIR} "${OBJECTDIR}/_ext/9990001"
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../pic16f5x-hal/include/target" -I"../../pic16f5x-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/epic_harness_target.p1 ../../epic-common/src/core/epic_harness_target.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../hal/pic12/16f5x/include/target" -I"../../hal/pic12/16f5x/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -o ${OBJECTDIR}/_ext/9990001/epic_harness_target.p1 ../../common/src/core/epic_harness_target.c
 	@-${MV} ${OBJECTDIR}/_ext/9990001/epic_harness_target.d ${OBJECTDIR}/_ext/9990001/epic_harness_target.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/9990001/epic_harness_target.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
@@ -153,14 +153,14 @@ endif
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 ${DISTDIR}/epic-hal-demo-pic16f5x.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${DISTDIR}
-	${MP_CC} $(MP_EXTRA_LD_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -Wl,-Map=${DISTDIR}/epic-hal-demo-pic16f5x.X.${IMAGE_TYPE}.map  -DXPRJ_default=$(CND_CONF)  -Wl,--defsym=__MPLAB_BUILD=1   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../pic16f5x-hal/include/target" -I"../../pic16f5x-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -D__DEBUG=1  -mdebugger=none   ${OBJECTFILES}  -o ${DISTDIR}/epic-hal-demo-pic16f5x.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
+	${MP_CC} $(MP_EXTRA_LD_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -Wl,-Map=${DISTDIR}/epic-hal-demo-pic16f5x.X.${IMAGE_TYPE}.map  -DXPRJ_default=$(CND_CONF)  -Wl,--defsym=__MPLAB_BUILD=1   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../hal/pic12/16f5x/include/target" -I"../../hal/pic12/16f5x/include" -I"../../common/include" -mwarn=-3 -Wa,-a -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  -D__DEBUG=1  -mdebugger=none   ${OBJECTFILES}  -o ${DISTDIR}/epic-hal-demo-pic16f5x.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
 	@${RM} ${DISTDIR}/epic-hal-demo-pic16f5x.X.${IMAGE_TYPE}.hex
 
 
 else
 ${DISTDIR}/epic-hal-demo-pic16f5x.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${DISTDIR}
-	${MP_CC} $(MP_EXTRA_LD_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -Wl,-Map=${DISTDIR}/epic-hal-demo-pic16f5x.X.${IMAGE_TYPE}.map  -DXPRJ_default=$(CND_CONF)  -Wl,--defsym=__MPLAB_BUILD=1   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../pic16f5x-hal/include/target" -I"../../pic16f5x-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  ${OBJECTFILES}  -o ${DISTDIR}/epic-hal-demo-pic16f5x.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
+	${MP_CC} $(MP_EXTRA_LD_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -Wl,-Map=${DISTDIR}/epic-hal-demo-pic16f5x.X.${IMAGE_TYPE}.map  -DXPRJ_default=$(CND_CONF)  -Wl,--defsym=__MPLAB_BUILD=1   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F54 -DFOSC_HZ=4000000 -xassembler-with-cpp -I"../../hal/pic12/16f5x/include/target" -I"../../hal/pic12/16f5x/include" -I"../../common/include" -mwarn=-3 -Wa,-a -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup  ${OBJECTFILES}  -o ${DISTDIR}/epic-hal-demo-pic16f5x.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
 
 
 endif

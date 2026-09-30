@@ -373,7 +373,7 @@ jobs:
           family = os.environ["FAMILY"]
           fam = m.families[family]
           print(fam.variants[-1])
-          print(f"bundles/epic-hal-{fam.hal_dir.removesuffix('-hal')}-ci-test")
+          print(f"bundles/epic-hal-{fam.slug}-ci-test")
           avail = [x.removeprefix("epic-") for x in modules_for_family(m, family)]
           print("serial,tick" if ("serial" in avail and "tick" in avail) else ",".join(avail[:2]))
           PY

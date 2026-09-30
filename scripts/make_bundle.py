@@ -33,7 +33,7 @@ REPO = pathlib.Path(__file__).resolve().parents[1]
 # Nothing else: no tests, no sim/mdb backends, no design docs, no mcu/
 # scaffolding. The gates below make that load-bearing.
 DOC_NAMES = {"README.md", "MANUAL.md"}
-# Vendored headers ARE included: epic-sdcard/epic-usb declare their
+# Vendored headers ARE included: lib/sdcard/epic-usb declare their
 # third_party include dirs in the manifest (the M-Stack storage/USB
 # headers their sources include), so a bundle that ships their .c files
 # without mmc.h/usb.h would not be self-sufficient. The skip set below
@@ -45,7 +45,7 @@ HEADER_SKIP = {"host", "sim", "mdb", "build", "build18", "__pycache__"}
 
 
 def _slug(family_name: str, manifest) -> str:
-    return manifest.families[family_name].hal_dir.removesuffix("-hal")
+    return manifest.families[family_name].slug
 
 
 def _is_sim_mdb(rel: str) -> bool:
@@ -78,7 +78,7 @@ def _nonconsumer_offenders(paths, allowed_prefixes=()) -> list[str]:
     tests, no host-simulation or MPLAB-SIM backends, no host include
     dir, and no design docs (ARCHITECTURE.md). Paths under a
     manifest-declared include dir are build-required and allowed even
-    when the dir name contains tests (epic-math/tests); sim/mdb is
+    when the dir name contains tests (lib/math/tests); sim/mdb is
     rejected even there. Anything else matching fails the bundle build
     instead of silently shipping.
     """
@@ -114,7 +114,7 @@ def _copy_sources(manifest, family_name: str, root: pathlib.Path) -> None:
 def _copy_headers(manifest, family_name: str, root: pathlib.Path) -> None:
     """Headers a consumer build needs: the manifest include dirs plus
     headers that live next to the shipped sources (quoted sibling
-    includes, e.g. epic-math/src/pic16/epic_math_scratch.h), minus the
+    includes, e.g. lib/math/src/pic16/epic_math_scratch.h), minus the
     host/sim/mdb backends. The manifest include dirs are authoritative:
     epic-math declares its tests/ dir as an include, so those headers
     ship; test-only headers never do, because no manifest include dir
@@ -148,7 +148,7 @@ def _copy_headers(manifest, family_name: str, root: pathlib.Path) -> None:
 def _copy_docs(manifest, family_name: str, root: pathlib.Path) -> None:
     """The living consumer docs at each module/HAL/epic-common root."""
     fam = manifest.families[family_name]
-    dirs = ["epic-common", fam.hal_dir]
+    dirs = ["common", fam.hal_dir]
     dirs += [manifest.modules[name].dir
              for name in bundlegen.modules_for_family(manifest, family_name)]
     for d in dirs:
@@ -196,7 +196,7 @@ def _quickstart(manifest, family_name: str, version: str) -> str:
             "for this family yet. There is no `EPIC_HAL_MODULES` value to",
             "give a worked example for.",
             "",
-            "Build the HAL directly against `epic-common/src/core/",
+            "Build the HAL directly against `common/src/core/",
             "epic_harness_target.c` and this bundle's own peripheral",
             "sources under the family's HAL directory; see the family's",
             "own `README.md`/`MANUAL.md` for a real-target example.",
@@ -228,7 +228,7 @@ def _make_cli_asset(version: str, out_dir: pathlib.Path) -> pathlib.Path:
     # stamping would otherwise be absent); the family bundles carry VERSION and
     # pio's framework packer requires it, so the CLI asset mirrors that file.
     (root / "VERSION").write_text(version + "\n")
-    manifest_dst = root / "epic-common" / "manifest" / "modules.toml"
+    manifest_dst = root / "common" / "manifest" / "modules.toml"
     manifest_dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(epicmanifest.default_path(), manifest_dst)
     tarball = root.parent / f"{root.name}.tar.gz"
@@ -304,7 +304,7 @@ def main():
     # not consumer-facing, and the allowlist copy above excludes them;
     # this assertion turns an accidental inclusion into a hard build
     # error instead of a silent packaging bug. Manifest-declared include
-    # dirs are build-required (epic-math/tests) and allowed by the gate.
+    # dirs are build-required (lib/math/tests) and allowed by the gate.
     fam = manifest.families[args.family]
     include_prefixes = list(fam.includes)
     for name in modules:

@@ -186,7 +186,7 @@ run, never let a real break merge unverified):
   module's own `CMakeLists.txt`, no separately-maintained dependency
   graph to drift). Conservative on both axes, falls back to the full,
   unfiltered module list the moment it sees a changed file it can't
-  attribute to a known module or `epic-common/`. Only ever applied to
+  attribute to a known module or `common/`. Only ever applied to
   `pull_request` runs; every push to `master` always gets the full
   matrix regardless of what changed.
 
@@ -230,7 +230,7 @@ scripts themselves run in).
 
 ## `epic_build.py`, the real-target build driver
 
-Reads `epic-common/manifest/modules.toml`, resolves a module's
+Reads `common/manifest/modules.toml`, resolves a module's
 dependencies and sources, and emits a POSIX `sh` script of `xc8-cc`
 invocations. Replaces the `mcu/*-mplabx/Makefile`s.
 
@@ -251,7 +251,7 @@ recorded in the manifest, rather than as a wall of XC8 linker errors.
 `--fosc-hz` overrides the family's default oscillator frequency; an
 example with no `config` table in the manifest compiles with no config
 translation unit at all, matching the Makefiles that never had one
-either. `epic-common/manifest/README.md` documents the schema this
+either. `common/manifest/README.md` documents the schema this
 driver reads.
 
 ## `make_bundle.py`, the release bundle generator

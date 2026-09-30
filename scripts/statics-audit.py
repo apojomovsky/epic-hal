@@ -55,21 +55,21 @@ SIZE_HINTS = {  # type token -> bytes
 #   193X FSR1 mechanism covers the pointer derefs. Same verified
 #   mechanism as the CCP callbacks.
 ALLOWLIST = {
-    ("pic16f193x-hal/src/peripherals/pic16f193x_ccp.c", "g_handle"):
+    ("hal/pic14e/16f193x/src/peripherals/pic16f193x_ccp.c", "g_handle"):
         "193X FSR1-indirect derefs, bank-agnostic (verified)",
-    ("pic16f193x-hal/src/peripherals/pic16f193x_timer0.c", "g_t0_storage"):
+    ("hal/pic14e/16f193x/src/peripherals/pic16f193x_timer0.c", "g_t0_storage"):
         "193X FSR1-indirect derefs, bank-agnostic (verified)",
-    ("pic16f193x-hal/src/peripherals/pic16f193x_timer246.c", "g_handle"):
+    ("hal/pic14e/16f193x/src/peripherals/pic16f193x_timer246.c", "g_handle"):
         "193X FSR1-indirect derefs, bank-agnostic (verified)",
-    ("pic16f87xa-hal/src/peripherals/pic16f87xa_ccp.c", "g_ccp_callbacks"):
+    ("hal/pic14/16f87xa/src/peripherals/pic16f87xa_ccp.c", "g_ccp_callbacks"):
         "87XA CCP ISR reads the array directly, auto-banksel (verified)",
-    ("pic16f88x-hal/src/peripherals/pic16f88x_ccp.c", "g_ccp_callbacks"):
+    ("hal/pic14/16f88x/src/peripherals/pic16f88x_ccp.c", "g_ccp_callbacks"):
         "88X CCP ISR reads the array directly, auto-banksel (same mechanism as 87XA)",
-    ("pic14-midrange-core/src/peripherals/pic14_ccp.c", "g_ccp_callbacks"):
+    ("hal/pic14/core/src/peripherals/pic14_ccp.c", "g_ccp_callbacks"):
         "shared CCP ISR reads the array directly with a constant index, auto-banksel (same mechanism as 87XA)",
-    ("epic-serial/src/epic_serial.c", "g_tx_buf"):
+    ("lib/serial/src/epic_serial.c", "g_tx_buf"):
         "direct symbol access, auto-banksel (verified)",
-    ("epic-tick/src/epic_tick.c", "g_tick_ms"):
+    ("lib/tick/src/epic_tick.c", "g_tick_ms"):
         "direct symbol access, auto-banksel (verified)",
 }
 

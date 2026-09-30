@@ -5,15 +5,15 @@ import epicmanifest, epic_hal_init
 
 MANIFEST = """
 [families.PIC16F87XA]
-hal_dir  = "pic16f87xa-hal"
+hal_dir  = "hal/pic14/16f87xa"
 variants = ["16F873A", "16F877A"]
 dfp      = "Microchip.PIC16Fxxx_DFP"
 fosc_hz  = 20000000
-includes = ["pic16f87xa-hal/include/target", "pic16f87xa-hal/include", "epic-common/include"]
-hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c"]
+includes = ["hal/pic14/16f87xa/include/target", "hal/pic14/16f87xa/include", "common/include"]
+hal_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c"]
 
 [modules.pic16f87xa-hal]
-dir        = "pic16f87xa-hal"
+dir        = "hal/pic14/16f87xa"
 sources    = []
 includes   = []
 depends_on = []
@@ -26,7 +26,7 @@ sources = ["tests/example_blink.c"]
 config  = { FOSC = "HS", WDTE = "ON", PWRTE = "ON", BOREN = "ON", LVP = "OFF", WRT = "OFF" }
 
 [modules.epic-tick]
-dir        = "epic-tick"
+dir        = "lib/tick"
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
@@ -38,7 +38,7 @@ sources = ["examples/example_tick.c"]
 config  = { FOSC = "HS" }
 
 [modules.epic-serial]
-dir        = "epic-serial"
+dir        = "lib/serial"
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = ["epic-tick"]
@@ -188,15 +188,15 @@ import xml.etree.ElementTree as ET
 SAMPLE_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <configurationDescriptor version="65">
   <sourceRootList>
-    <Elem>../../epic-tick/src</Elem>
-    <Elem>../../pic16f87xa-hal/src/peripherals</Elem>
+    <Elem>../../lib/tick/src</Elem>
+    <Elem>../../hal/pic14/16f87xa/src/peripherals</Elem>
   </sourceRootList>
   <confs>
     <conf name="default" type="2">
       <toolsSet><targetDevice>PIC16F877A</targetDevice></toolsSet>
       <HI-TECH-COMP>
         <property key="define-macros" value="PIC16F877A;FOSC_HZ=20000000"/>
-        <property key="extra-include-directories" value="../../pic16f87xa-hal/include/target"/>
+        <property key="extra-include-directories" value="../../hal/pic14/16f87xa/include/target"/>
       </HI-TECH-COMP>
     </conf>
   </confs>
@@ -209,17 +209,17 @@ class TestPatchX(unittest.TestCase):
         fam = self.m.families["PIC16F87XA"]
         sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
         d = epic_hal_init.source_dirs(self.m, fam, "16F877A", sel)
-        self.assertIn("pic16f87xa-hal/src/peripherals", d)
-        self.assertIn("epic-serial/src", d)
-        self.assertIn("epic-tick/src", d)
+        self.assertIn("hal/pic14/16f87xa/src/peripherals", d)
+        self.assertIn("lib/serial/src", d)
+        self.assertIn("lib/tick/src", d)
 
     def test_include_dirs_family_first(self):
         fam = self.m.families["PIC16F87XA"]
         sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
         d = epic_hal_init.include_dirs(self.m, fam, "16F877A", sel)
-        self.assertEqual(d[0], "pic16f87xa-hal/include/target")
-        self.assertIn("epic-serial/include", d)
-        self.assertIn("epic-tick/include", d)
+        self.assertEqual(d[0], "hal/pic14/16f87xa/include/target")
+        self.assertIn("lib/serial/include", d)
+        self.assertIn("lib/tick/include", d)
 
     def test_patch_changes_device_macros_includes_sourceroots(self):
         fam = self.m.families["PIC16F87XA"]
@@ -233,10 +233,10 @@ class TestPatchX(unittest.TestCase):
         dm = root.find(".//property[@key='define-macros']").get("value")
         self.assertEqual(dm, "PIC16F873A;FOSC_HZ=20000000")
         inc = root.find(".//property[@key='extra-include-directories']").get("value")
-        self.assertTrue(inc.startswith("../../pic16f87xa-hal/include/target;"))
+        self.assertTrue(inc.startswith("../../hal/pic14/16f87xa/include/target;"))
         elems = [e.text for e in root.findall(".//sourceRootList/Elem")]
-        self.assertIn("../../epic-serial/src", elems)
-        self.assertIn("../../epic-tick/src", elems)  # serial depends on tick
+        self.assertIn("../../lib/serial/src", elems)
+        self.assertIn("../../lib/tick/src", elems)  # serial depends on tick
 
     def test_patch_accepts_in_place_prefix(self):
         # A project scaffolded in place with the bundle vendored at
@@ -252,7 +252,7 @@ class TestPatchX(unittest.TestCase):
         root = ET.fromstring(out)
         inc = root.find(".//property[@key='extra-include-directories']").get("value")
         self.assertTrue(
-            inc.startswith("third_party/epic-hal/pic16f87xa-hal/include/target;"))
+            inc.startswith("third_party/epic-hal/hal/pic14/16f87xa/include/target;"))
         for e in root.findall(".//sourceRootList/Elem"):
             self.assertTrue(e.text.startswith("third_party/epic-hal/"), e.text)
 
@@ -290,8 +290,8 @@ class TestInitProject(unittest.TestCase):
                 os.path.normpath(self.bundle)), e.text)
         self.assertEqual(
             os.path.normpath(os.path.join(self.out, "myapp.X",
-                                          f"{prefix}/pic16f87xa-hal/src/peripherals")),
-            os.path.normpath(os.path.join(self.bundle, "pic16f87xa-hal/src/peripherals")))
+                                          f"{prefix}/hal/pic14/16f87xa/src/peripherals")),
+            os.path.normpath(os.path.join(self.bundle, "hal/pic14/16f87xa/src/peripherals")))
 
     def test_refuses_existing_project(self):
         epic_hal_init.init_project(
@@ -357,7 +357,7 @@ class TestInitProject(unittest.TestCase):
         # bundle one level up at third_party/epic-hal is ../third_party/epic-hal.
         inc = root.find(".//property[@key='extra-include-directories']").get("value")
         self.assertTrue(
-            inc.startswith("../third_party/epic-hal/pic16f87xa-hal/include/target;"))
+            inc.startswith("../third_party/epic-hal/hal/pic14/16f87xa/include/target;"))
         for e in root.findall(".//sourceRootList/Elem"):
             self.assertTrue(e.text.startswith("../third_party/epic-hal/"), e.text)
             resolved = os.path.normpath(os.path.join(proj, "myapp.X", e.text))
@@ -391,7 +391,7 @@ class TestBundlePresence(unittest.TestCase):
         # A consumer bundle is a pure library: the scaffolder CLI, its
         # helper modules, and the manifest must NOT ship.
         for p in ("epic-hal", "epic_hal_init.py", "epicmanifest.py",
-                  "bundlegen.py", "epic-common/manifest/modules.toml"):
+                  "bundlegen.py", "common/manifest/modules.toml"):
             self.assertFalse((root / p).exists(), f"bundle must not contain {p}")
 
     def test_cli_asset_contains_cli_helpers_and_manifest(self):
@@ -413,7 +413,7 @@ class TestBundlePresence(unittest.TestCase):
         names = tarfile.open(asset).getnames()
         joined = "\n".join(names)
         for p in ("/epic-hal", "/epic_hal_init.py", "/epicmanifest.py",
-                  "/bundlegen.py", "/epic-common/manifest/modules.toml"):
+                  "/bundlegen.py", "/common/manifest/modules.toml"):
             self.assertTrue(any(n.endswith(p) for n in names),
                             f"CLI asset missing {p}; has:\n{joined}")
 
