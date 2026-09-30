@@ -271,7 +271,7 @@ def emit_support_md(manifest, family_name: str, version: str) -> str:
     out = [
         f"# Supported parts, Epic HAL {version} ({family_name})",
         "",
-        "Generated from `epic-common/manifest/modules.toml`. A `no` here",
+        "Generated from `common/manifest/modules.toml`. A `no` here",
         "is a combination that genuinely does not build, not one that is",
         "merely untested: asking for it fails immediately with the reason",
         "rather than as a wall of XC8 linker errors.",
@@ -348,7 +348,7 @@ def emit_quickstart_md(manifest, family_name: str, version: str) -> str:
         "",
         "```sh",
         "mkdir -p third_party",
-        f"tar xzf epic-hal-{fam.hal_dir.removesuffix('-hal')}-{version}.tar.gz \\",
+        f"tar xzf epic-hal-{fam.slug}-{version}.tar.gz \\",
         "  -C third_party",
         "mv third_party/epic-hal-* third_party/epic-hal",
         "```",
@@ -446,7 +446,7 @@ def reference_project_dir(manifest, family_name: str) -> str:
     second lookup table to be kept in sync.
     """
     fam = _family(manifest, family_name)
-    slug = fam.hal_dir.removesuffix("-hal")
+    slug = fam.slug
     return f"examples/epic-hal-demo-{slug}.X"
 
 
@@ -549,7 +549,7 @@ def emit_mplabx_md(manifest, family_name: str, version: str) -> str:
 
 def _family_slug(fam) -> str:
     """The bundle/install slug for a family: its hal_dir minus -hal."""
-    return fam.hal_dir.removesuffix("-hal")
+    return fam.slug
 
 
 def emit_parts_map(manifest) -> str:

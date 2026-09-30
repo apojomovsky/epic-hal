@@ -50,7 +50,7 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=../../epic-common/src/core/epic_harness_target.c ../../pic18f6520-hal/src/core/pic18_irq.c ../../pic18f6520-hal/src/target/pic18_isr_vector.c ../../pic18f6520-hal/src/core/pic18_irq_dispatch.c ../../pic18f6520-hal/src/core/pic18f6520_wdt_sleep.c ../../pic18f6520-hal/src/target/pic18f6520_wdt_sleep_target.c ../../pic18f6520-hal/src/peripherals/pic18f6520_gpio.c ../../pic18f6520-hal/src/peripherals/pic18f6520_timer0.c ../../pic18f6520-hal/src/peripherals/pic18f6520_timer1.c ../../pic18f6520-hal/src/peripherals/pic18f6520_timer2.c ../../pic18f6520-hal/src/peripherals/pic18f6520_timer3.c ../../pic18f6520-hal/src/peripherals/pic18f6520_ccp.c ../../pic18f6520-hal/src/peripherals/pic18f6520_ssp.c ../../pic18f6520-hal/src/peripherals/pic18f6520_usart.c ../../pic18f6520-hal/src/peripherals/pic18f6520_adc.c ../../pic18f6520-hal/src/peripherals/pic18f6520_comp.c ../../pic18f6520-hal/src/peripherals/pic18f6520_eeprom.c main.c
+SOURCEFILES_QUOTED_IF_SPACED=../../common/src/core/epic_harness_target.c ../../hal/pic18/18f6520/src/core/pic18_irq.c ../../hal/pic18/18f6520/src/target/pic18_isr_vector.c ../../hal/pic18/18f6520/src/core/pic18_irq_dispatch.c ../../hal/pic18/18f6520/src/core/pic18f6520_wdt_sleep.c ../../hal/pic18/18f6520/src/target/pic18f6520_wdt_sleep_target.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_gpio.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer0.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer1.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer2.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer3.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ccp.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ssp.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_usart.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_adc.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_comp.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_eeprom.c main.c
 
 # Object Files Quoted if spaced
 OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/65206520/epic_harness_target.p1 ${OBJECTDIR}/_ext/65206520/pic18_irq.p1 ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1 ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1 ${OBJECTDIR}/main.p1
@@ -60,7 +60,7 @@ POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/65206520/epic_harness_target.p1.d ${OBJECTDI
 OBJECTFILES=${OBJECTDIR}/_ext/65206520/epic_harness_target.p1 ${OBJECTDIR}/_ext/65206520/pic18_irq.p1 ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1 ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1 ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1 ${OBJECTDIR}/main.p1
 
 # Source Files
-SOURCEFILES=../../epic-common/src/core/epic_harness_target.c ../../pic18f6520-hal/src/core/pic18_irq.c ../../pic18f6520-hal/src/target/pic18_isr_vector.c ../../pic18f6520-hal/src/core/pic18_irq_dispatch.c ../../pic18f6520-hal/src/core/pic18f6520_wdt_sleep.c ../../pic18f6520-hal/src/target/pic18f6520_wdt_sleep_target.c ../../pic18f6520-hal/src/peripherals/pic18f6520_gpio.c ../../pic18f6520-hal/src/peripherals/pic18f6520_timer0.c ../../pic18f6520-hal/src/peripherals/pic18f6520_timer1.c ../../pic18f6520-hal/src/peripherals/pic18f6520_timer2.c ../../pic18f6520-hal/src/peripherals/pic18f6520_timer3.c ../../pic18f6520-hal/src/peripherals/pic18f6520_ccp.c ../../pic18f6520-hal/src/peripherals/pic18f6520_ssp.c ../../pic18f6520-hal/src/peripherals/pic18f6520_usart.c ../../pic18f6520-hal/src/peripherals/pic18f6520_adc.c ../../pic18f6520-hal/src/peripherals/pic18f6520_comp.c ../../pic18f6520-hal/src/peripherals/pic18f6520_eeprom.c main.c
+SOURCEFILES=../../common/src/core/epic_harness_target.c ../../hal/pic18/18f6520/src/core/pic18_irq.c ../../hal/pic18/18f6520/src/target/pic18_isr_vector.c ../../hal/pic18/18f6520/src/core/pic18_irq_dispatch.c ../../hal/pic18/18f6520/src/core/pic18f6520_wdt_sleep.c ../../hal/pic18/18f6520/src/target/pic18f6520_wdt_sleep_target.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_gpio.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer0.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer1.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer2.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer3.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ccp.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ssp.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_usart.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_adc.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_comp.c ../../hal/pic18/18f6520/src/peripherals/pic18f6520_eeprom.c main.c
 
 
 
@@ -87,139 +87,139 @@ MP_PROCESSOR_OPTION=18F6520
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: compile
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
-${OBJECTDIR}/_ext/65206520/epic_harness_target.p1: ../../epic-common/src/core/epic_harness_target.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/epic_harness_target.p1: ../../common/src/core/epic_harness_target.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1 ../../epic-common/src/core/epic_harness_target.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1 ../../common/src/core/epic_harness_target.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/epic_harness_target.d ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18_irq.p1: ../../pic18f6520-hal/src/core/pic18_irq.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18_irq.p1: ../../hal/pic18/18f6520/src/core/pic18_irq.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_irq.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_irq.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_irq.p1 ../../pic18f6520-hal/src/core/pic18_irq.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_irq.p1 ../../hal/pic18/18f6520/src/core/pic18_irq.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18_irq.d ${OBJECTDIR}/_ext/65206520/pic18_irq.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18_irq.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1: ../../pic18f6520-hal/src/target/pic18_isr_vector.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1: ../../hal/pic18/18f6520/src/target/pic18_isr_vector.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1 ../../pic18f6520-hal/src/target/pic18_isr_vector.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1 ../../hal/pic18/18f6520/src/target/pic18_isr_vector.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.d ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1: ../../pic18f6520-hal/src/core/pic18_irq_dispatch.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1: ../../hal/pic18/18f6520/src/core/pic18_irq_dispatch.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1 ../../pic18f6520-hal/src/core/pic18_irq_dispatch.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1 ../../hal/pic18/18f6520/src/core/pic18_irq_dispatch.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.d ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1: ../../pic18f6520-hal/src/core/pic18f6520_wdt_sleep.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1: ../../hal/pic18/18f6520/src/core/pic18f6520_wdt_sleep.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1 ../../pic18f6520-hal/src/core/pic18f6520_wdt_sleep.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1 ../../hal/pic18/18f6520/src/core/pic18f6520_wdt_sleep.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.d ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1: ../../pic18f6520-hal/src/target/pic18f6520_wdt_sleep_target.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1: ../../hal/pic18/18f6520/src/target/pic18f6520_wdt_sleep_target.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1 ../../pic18f6520-hal/src/target/pic18f6520_wdt_sleep_target.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1 ../../hal/pic18/18f6520/src/target/pic18f6520_wdt_sleep_target.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.d ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_gpio.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_gpio.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_gpio.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_gpio.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.d ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_timer0.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer0.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_timer0.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer0.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.d ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_timer1.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer1.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_timer1.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer1.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.d ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_timer2.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer2.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_timer2.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer2.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.d ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_timer3.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer3.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_timer3.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer3.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.d ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_ccp.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ccp.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_ccp.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ccp.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.d ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_ssp.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ssp.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_ssp.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ssp.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.d ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_usart.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_usart.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_usart.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_usart.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.d ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_adc.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_adc.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_adc.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_adc.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.d ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_comp.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_comp.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_comp.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_comp.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.d ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_eeprom.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_eeprom.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_eeprom.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_eeprom.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.d ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
@@ -227,145 +227,145 @@ ${OBJECTDIR}/main.p1: main.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}"
 	@${RM} ${OBJECTDIR}/main.p1.d
 	@${RM} ${OBJECTDIR}/main.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/main.p1 main.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/main.p1 main.c
 	@-${MV} ${OBJECTDIR}/main.d ${OBJECTDIR}/main.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/main.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 
 else
-${OBJECTDIR}/_ext/65206520/epic_harness_target.p1: ../../epic-common/src/core/epic_harness_target.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/epic_harness_target.p1: ../../common/src/core/epic_harness_target.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1 ../../epic-common/src/core/epic_harness_target.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1 ../../common/src/core/epic_harness_target.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/epic_harness_target.d ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/epic_harness_target.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18_irq.p1: ../../pic18f6520-hal/src/core/pic18_irq.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18_irq.p1: ../../hal/pic18/18f6520/src/core/pic18_irq.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_irq.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_irq.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_irq.p1 ../../pic18f6520-hal/src/core/pic18_irq.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_irq.p1 ../../hal/pic18/18f6520/src/core/pic18_irq.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18_irq.d ${OBJECTDIR}/_ext/65206520/pic18_irq.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18_irq.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1: ../../pic18f6520-hal/src/target/pic18_isr_vector.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1: ../../hal/pic18/18f6520/src/target/pic18_isr_vector.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1 ../../pic18f6520-hal/src/target/pic18_isr_vector.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1 ../../hal/pic18/18f6520/src/target/pic18_isr_vector.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.d ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18_isr_vector.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1: ../../pic18f6520-hal/src/core/pic18_irq_dispatch.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1: ../../hal/pic18/18f6520/src/core/pic18_irq_dispatch.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1 ../../pic18f6520-hal/src/core/pic18_irq_dispatch.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1 ../../hal/pic18/18f6520/src/core/pic18_irq_dispatch.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.d ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18_irq_dispatch.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1: ../../pic18f6520-hal/src/core/pic18f6520_wdt_sleep.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1: ../../hal/pic18/18f6520/src/core/pic18f6520_wdt_sleep.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1 ../../pic18f6520-hal/src/core/pic18f6520_wdt_sleep.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1 ../../hal/pic18/18f6520/src/core/pic18f6520_wdt_sleep.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.d ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1: ../../pic18f6520-hal/src/target/pic18f6520_wdt_sleep_target.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1: ../../hal/pic18/18f6520/src/target/pic18f6520_wdt_sleep_target.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1 ../../pic18f6520-hal/src/target/pic18f6520_wdt_sleep_target.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1 ../../hal/pic18/18f6520/src/target/pic18f6520_wdt_sleep_target.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.d ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_wdt_sleep_target.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_gpio.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_gpio.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_gpio.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_gpio.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.d ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_gpio.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_timer0.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer0.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_timer0.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer0.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.d ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer0.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_timer1.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer1.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_timer1.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer1.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.d ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer1.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_timer2.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer2.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_timer2.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer2.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.d ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer2.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_timer3.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer3.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_timer3.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_timer3.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.d ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_timer3.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_ccp.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ccp.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_ccp.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ccp.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.d ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_ccp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_ssp.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ssp.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_ssp.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_ssp.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.d ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_ssp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_usart.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_usart.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_usart.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_usart.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.d ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_usart.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_adc.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_adc.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_adc.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_adc.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.d ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_adc.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_comp.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_comp.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_comp.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_comp.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.d ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_comp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
-${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1: ../../pic18f6520-hal/src/peripherals/pic18f6520_eeprom.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1: ../../hal/pic18/18f6520/src/peripherals/pic18f6520_eeprom.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/65206520"
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1.d
 	@${RM} ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1 ../../pic18f6520-hal/src/peripherals/pic18f6520_eeprom.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1 ../../hal/pic18/18f6520/src/peripherals/pic18f6520_eeprom.c
 	@-${MV} ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.d ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/65206520/pic18f6520_eeprom.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
@@ -373,7 +373,7 @@ ${OBJECTDIR}/main.p1: main.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}"
 	@${RM} ${OBJECTDIR}/main.p1.d
 	@${RM} ${OBJECTDIR}/main.p1
-	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/main.p1 main.c
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/main.p1 main.c
 	@-${MV} ${OBJECTDIR}/main.d ${OBJECTDIR}/main.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/main.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
@@ -396,14 +396,14 @@ endif
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 ${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${DISTDIR}
-	${MP_CC} $(MP_EXTRA_LD_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -Wl,-Map=${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.map  -D__DEBUG=1  -mdebugger=none  -DXPRJ_default=$(CND_CONF)  -Wl,--defsym=__MPLAB_BUILD=1   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits -std=c99 -gdwarf-3 -mstack=compiled:auto:auto        $(COMPARISON_BUILD) -Wl,--memorysummary,${DISTDIR}/memoryfile.xml ${OBJECTFILES_QUOTED_IF_SPACED} -o ${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
+	${MP_CC} $(MP_EXTRA_LD_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -Wl,-Map=${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.map  -D__DEBUG=1  -mdebugger=none  -DXPRJ_default=$(CND_CONF)  -Wl,--defsym=__MPLAB_BUILD=1   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits -std=c99 -gdwarf-3 -mstack=compiled:auto:auto        $(COMPARISON_BUILD) -Wl,--memorysummary,${DISTDIR}/memoryfile.xml ${OBJECTFILES_QUOTED_IF_SPACED} -o ${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
 	@${RM} ${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.hex
 
 
 else
 ${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${DISTDIR}
-	${MP_CC} $(MP_EXTRA_LD_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -Wl,-Map=${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.map  -DXPRJ_default=$(CND_CONF)  -Wl,--defsym=__MPLAB_BUILD=1   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../pic18f6520-hal/include/target" -I"../../pic18f6520-hal/include" -I"../../epic-common/include" -mwarn=-3 -Wa,-a -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits -std=c99 -gdwarf-3 -mstack=compiled:auto:auto        $(COMPARISON_BUILD) -Wl,--memorysummary,${DISTDIR}/memoryfile.xml ${OBJECTFILES_QUOTED_IF_SPACED} -o ${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
+	${MP_CC} $(MP_EXTRA_LD_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -Wl,-Map=${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.map  -DXPRJ_default=$(CND_CONF)  -Wl,--defsym=__MPLAB_BUILD=1   -mdfp="${DFP_DIR}/xc8"  -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -DPIC18F6520 -DFOSC_HZ=20000000 -xassembler-with-cpp -I"../../hal/pic18/18f6520/include/target" -I"../../hal/pic18/18f6520/include" -I"../../common/include" -mwarn=-3 -Wa,-a -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits -std=c99 -gdwarf-3 -mstack=compiled:auto:auto        $(COMPARISON_BUILD) -Wl,--memorysummary,${DISTDIR}/memoryfile.xml ${OBJECTFILES_QUOTED_IF_SPACED} -o ${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
 	@${RM} ${DISTDIR}/epic-hal-demo-pic18f6520.X.${IMAGE_TYPE}.hex
 
 

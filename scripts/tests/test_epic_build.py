@@ -12,32 +12,32 @@ import epicmanifest  # noqa: E402
 
 MANIFEST = """
 [families.PIC16F87XA]
-hal_dir  = "pic16f87xa-hal"
+hal_dir  = "hal/pic14/16f87xa"
 variants = ["16F873A", "16F877A"]
 dfp      = "Microchip.PIC16Fxxx_DFP"
 fosc_hz  = 20000000
-includes = ["pic16f87xa-hal/include/target", "pic16f87xa-hal/include"]
-hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
-harness_src = "epic-common/src/core/epic_harness_target.c"
+includes = ["hal/pic14/16f87xa/include/target", "hal/pic14/16f87xa/include"]
+hal_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", "common/src/core/epic_harness_target.c"]
+harness_src = "common/src/core/epic_harness_target.c"
 
-epiccc_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
+epiccc_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", "common/src/core/epic_harness_target.c"]
 
 [[families.PIC16F87XA.conditional_sources]]
-path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+path     = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c"
 variants = ["16F877A"]
 
 [families.PIC16F193X]
-hal_dir  = "pic16f193x-hal"
+hal_dir  = "hal/pic14e/16f193x"
 variants = ["16F1937"]
 dfp      = "Microchip.PIC12-16F1xxx_DFP"
 fosc_hz  = 32000000
-includes = ["pic16f193x-hal/include/target", "pic16f193x-hal/include"]
-hal_sources = ["epic-common/src/core/epic_harness_target.c"]
-harness_src = "epic-common/src/core/epic_harness_target.c"
-epiccc_sources = ["epic-common/src/core/epic_harness_target.c"]
+includes = ["hal/pic14e/16f193x/include/target", "hal/pic14e/16f193x/include"]
+hal_sources = ["common/src/core/epic_harness_target.c"]
+harness_src = "common/src/core/epic_harness_target.c"
+epiccc_sources = ["common/src/core/epic_harness_target.c"]
 
 [modules.epic-pic16f193x-firmware]
-dir        = "pic16f193x-hal"
+dir        = "hal/pic14e/16f193x"
 sources    = []
 includes   = []
 depends_on = []
@@ -52,7 +52,7 @@ sources = ["tests/example_blink.c"]
 config  = { FOSC = "INTOSC", WDTE = "ON", BOREN = "ON" }
 
 [modules.epic-pic18f2520-firmware]
-dir        = "pic18f2520-hal"
+dir        = "hal/pic18/18f2520"
 sources    = []
 includes   = []
 depends_on = []
@@ -67,7 +67,7 @@ sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOREN = "ON", BORV = "3", WDT = "OFF", WDTPS = "32768" }
 
 [modules.epic-pic18f6520-firmware]
-dir        = "pic18f6520-hal"
+dir        = "hal/pic18/18f6520"
 sources    = []
 includes   = []
 depends_on = []
@@ -82,7 +82,7 @@ sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOR = "ON", WDT = "OFF", WDTPS = "128" }
 
 [modules.epic-pic18f1320-firmware]
-dir        = "pic18f1320-hal"
+dir        = "hal/pic18/18f1320"
 sources    = []
 includes   = []
 depends_on = []
@@ -97,7 +97,7 @@ sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOR = "OFF", BORV = "27", WDT = "OFF", WDTPS = "32768" }
 
 [modules.epic-tick]
-dir        = "epic-tick"
+dir        = "lib/tick"
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
@@ -115,11 +115,11 @@ config  = { FOSC = "HS", WDTE = "ON" }
 
 [modules.epic-tick.example.PIC16F87XA.sim]
 name        = "tick-blink-sim"
-harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { FOSC = "HS", WDTE = "OFF" }
 
 [modules.epic-adcfilter]
-dir        = "epic-adcfilter"
+dir        = "lib/adcfilter"
 sources    = ["src/epic_adcfilter.c"]
 includes   = ["include"]
 depends_on = []
@@ -137,7 +137,7 @@ sources = ["mcu/target_sizecheck.c"]
 depends_on = ["epic-tick"]
 
 [modules.epic-math]
-dir        = "epic-math"
+dir        = "lib/math"
 sources    = ["src/common/epic_math_numeric.c"]
 includes   = ["include"]
 depends_on = []
@@ -153,19 +153,19 @@ PIC16F87XA = [
 ]
 
 [modules.epic-pid]
-dir        = "epic-pid"
+dir        = "lib/pid"
 sources    = ["src/pid.c"]
 includes   = ["include"]
 depends_on = ["epic-math"]
 needs_hal  = false
 
 epiccc_hal_sources_by_family.PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_timer2.c",
-  "pic16f87xa-hal/src/core/pic16_irq.c",
-  "pic16f87xa-hal/src/epiccc/pic16_isr_vector.c",
-  "pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
-  "epic-common/src/core/epic_harness_target.c",
+  "hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c",
+  "hal/pic14/16f87xa/src/peripherals/pic16f87xa_timer2.c",
+  "hal/pic14/16f87xa/src/core/pic16_irq.c",
+  "hal/pic14/16f87xa/src/epiccc/pic16_isr_vector.c",
+  "hal/pic14/16f87xa/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "common/src/core/epic_harness_target.c",
 ]
 
 [modules.epic-pid.supported]
@@ -178,7 +178,7 @@ hal     = true
 depends_on = ["epic-tick", "epic-serial"]
 
 [modules.epic-encoder]
-dir        = "epic-encoder"
+dir        = "lib/encoder"
 sources    = ["src/encoder.c"]
 includes   = ["include"]
 depends_on = ["epic-tick"]
@@ -195,7 +195,7 @@ sources = ["mcu/target_sizecheck.c"]
 depends_on = ["epic-serial"]
 
 [modules.epic-serial]
-dir        = "epic-serial"
+dir        = "lib/serial"
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = []
@@ -209,48 +209,48 @@ name    = "serial-sizecheck"
 sources = ["mcu/target_sizecheck.c"]
 
 [families.PIC18Fxx5x]
-hal_dir  = "pic18fxx5x-hal"
+hal_dir  = "hal/pic18/18fxx5x"
 variants = ["18F2455", "18F4550"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 fosc_hz  = 48000000
 xtal_hz  = 20000000
-includes = ["pic18fxx5x-hal/include/target", "pic18fxx5x-hal/include"]
-hal_sources = ["pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c", "epic-common/src/core/epic_harness_target.c"]
-harness_src = "epic-common/src/core/epic_harness_target.c"
-epiccc_sources = ["pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c", "epic-common/src/core/epic_harness_target.c"]
+includes = ["hal/pic18/18fxx5x/include/target", "hal/pic18/18fxx5x/include"]
+hal_sources = ["hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c", "common/src/core/epic_harness_target.c"]
+harness_src = "common/src/core/epic_harness_target.c"
+epiccc_sources = ["hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c", "common/src/core/epic_harness_target.c"]
 
 [families.PIC18F2520]
-hal_dir  = "pic18f2520-hal"
+hal_dir  = "hal/pic18/18f2520"
 variants = ["18F2520"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 fosc_hz  = 20000000
-includes = ["pic18f2520-hal/include/target", "pic18f2520-hal/include"]
-hal_sources = ["epic-common/src/core/epic_harness_target.c"]
-harness_src = "epic-common/src/core/epic_harness_target.c"
-epiccc_sources = ["epic-common/src/core/epic_harness_target.c"]
+includes = ["hal/pic18/18f2520/include/target", "hal/pic18/18f2520/include"]
+hal_sources = ["common/src/core/epic_harness_target.c"]
+harness_src = "common/src/core/epic_harness_target.c"
+epiccc_sources = ["common/src/core/epic_harness_target.c"]
 
 [families.PIC18F1320]
-hal_dir  = "pic18f1320-hal"
+hal_dir  = "hal/pic18/18f1320"
 variants = ["18F1320"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 fosc_hz  = 20000000
-includes = ["pic18f1320-hal/include/target", "pic18f1320-hal/include"]
-hal_sources = ["epic-common/src/core/epic_harness_target.c"]
-harness_src = "epic-common/src/core/epic_harness_target.c"
-epiccc_sources = ["epic-common/src/core/epic_harness_target.c"]
+includes = ["hal/pic18/18f1320/include/target", "hal/pic18/18f1320/include"]
+hal_sources = ["common/src/core/epic_harness_target.c"]
+harness_src = "common/src/core/epic_harness_target.c"
+epiccc_sources = ["common/src/core/epic_harness_target.c"]
 
 [families.PIC18F6520]
-hal_dir  = "pic18f6520-hal"
+hal_dir  = "hal/pic18/18f6520"
 variants = ["18F6520"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 fosc_hz  = 20000000
-includes = ["pic18f6520-hal/include/target", "pic18f6520-hal/include"]
-hal_sources = ["epic-common/src/core/epic_harness_target.c"]
-harness_src = "epic-common/src/core/epic_harness_target.c"
-epiccc_sources = ["epic-common/src/core/epic_harness_target.c"]
+includes = ["hal/pic18/18f6520/include/target", "hal/pic18/18f6520/include"]
+hal_sources = ["common/src/core/epic_harness_target.c"]
+harness_src = "common/src/core/epic_harness_target.c"
+epiccc_sources = ["common/src/core/epic_harness_target.c"]
 
 [modules.epic-usb]
-dir        = "epic-usb"
+dir        = "lib/usb"
 sources    = ["src/epic_usb.c"]
 includes   = ["include"]
 depends_on = []
@@ -266,11 +266,11 @@ config  = { FOSC = "HS", PLLDIV = "5", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2M
 
 [modules.epic-usb.example.PIC18Fxx5x.sim]
 name        = "usb-cdc-sim"
-harness_src = "epic-common/src/core/epic_harness_sim.c"
+harness_src = "common/src/core/epic_harness_sim.c"
 config      = { FOSC = "HS", PLLDIV = "1", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF" }
 
 [modules.epic-sdcard]
-dir        = "epic-sdcard"
+dir        = "lib/sdcard"
 sources    = ["src/epic_sdcard.c", "third_party/m-stack-storage/src/mmc.c", "third_party/m-stack-storage/src/crc.c"]
 includes   = ["include", "third_party/m-stack-storage/include", "src/target"]
 depends_on = ["epic-tick"]
@@ -501,9 +501,9 @@ class TestBuildScript(unittest.TestCase):
 
     def test_compiles_every_source_to_p1(self):
         s = self.script()
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", s)
-        self.assertIn("epic-tick/src/epic_tick.c", s)
-        self.assertIn("epic-tick/examples/example_tick.c", s)
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", s)
+        self.assertIn("lib/tick/src/epic_tick.c", s)
+        self.assertIn("lib/tick/examples/example_tick.c", s)
         self.assertIn("build/16F877A/epic_tick.p1", s)
 
     def test_example_dependency_sources_are_in_the_build(self):
@@ -513,8 +513,8 @@ class TestBuildScript(unittest.TestCase):
         s = epic_build.emit_build_script(
             load(), "epic-adcfilter", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp")
-        self.assertIn("epic-tick/src/epic_tick.c", s)
-        self.assertIn("epic-adcfilter/mcu/target_sizecheck.c", s)
+        self.assertIn("lib/tick/src/epic_tick.c", s)
+        self.assertIn("lib/adcfilter/mcu/target_sizecheck.c", s)
 
     def test_example_dep_excluded_on_mcu_raises(self):
         # epic-tick is excluded on 16F873A; epic-adcfilter's example
@@ -553,7 +553,7 @@ class TestBuildScript(unittest.TestCase):
     def test_include_flags_preserve_manifest_order(self):
         s = self.script()
         self.assertIn(
-            "-Ipic16f87xa-hal/include/target -Ipic16f87xa-hal/include -Iepic-tick/include",
+            "-Ihal/pic14/16f87xa/include/target -Ihal/pic14/16f87xa/include -Ilib/tick/include",
             s,
         )
 
@@ -588,10 +588,10 @@ class TestBuildScript(unittest.TestCase):
     def test_sim_variant_swaps_the_harness_source_and_hex_name(self):
         target = self.script(variant="target")
         sim = self.script(variant="sim")
-        self.assertIn("epic-common/src/core/epic_harness_target.c", target)
-        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", target)
-        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", sim)
-        self.assertNotIn("epic-common/src/core/epic_harness_target.c", sim)
+        self.assertIn("common/src/core/epic_harness_target.c", target)
+        self.assertNotIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", target)
+        self.assertIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", sim)
+        self.assertNotIn("common/src/core/epic_harness_target.c", sim)
         self.assertIn("build/16F877A-tick-blink-sim.hex", sim)
 
     def test_sim_variant_without_one_raises(self):
@@ -727,7 +727,7 @@ class TestEpicCcToolchain(unittest.TestCase):
         # asm backend needs XC8's xc.h, so the epic-cc path links the
         # portable host C implementation instead (the independent oracle).
         s = self.pid_script()
-        self.assertIn("epic-math/src/host/epic_math_mul.c", s)
+        self.assertIn("lib/math/src/host/epic_math_mul.c", s)
         self.assertNotIn("src/pic16/epic_math_mul.c", s)
 
     def test_pid_epiccc_builds_the_full_example_with_the_serial_tick_slice(self):
@@ -736,13 +736,13 @@ class TestEpicCcToolchain(unittest.TestCase):
         # replaces the sizecheck driver, and the example's tick/serial
         # deps join the link.
         s = self.pid_script()
-        self.assertIn("epic-pid/examples/example_pid.c", s)
-        self.assertNotIn("epic-pid/mcu/target_sizecheck_epiccc.c", s)
-        self.assertIn("pic16f87xa-hal/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c", s)
-        self.assertIn("epic-tick/src/epic_tick.c", s)
-        self.assertIn("epic-serial/src/epic_serial.c", s)
-        self.assertIn("epic-math/src/host/epic_math_mul.c", s)
-        self.assertNotIn("epic-math/src/common/", s)
+        self.assertIn("lib/pid/examples/example_pid.c", s)
+        self.assertNotIn("lib/pid/mcu/target_sizecheck_epiccc.c", s)
+        self.assertIn("hal/pic14/16f87xa/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c", s)
+        self.assertIn("lib/tick/src/epic_tick.c", s)
+        self.assertIn("lib/serial/src/epic_serial.c", s)
+        self.assertIn("lib/math/src/host/epic_math_mul.c", s)
+        self.assertNotIn("lib/math/src/common/", s)
 
     def test_pid_epiccc_drops_the_pic16_math_sources(self):
         # The math SOURCES that hit the pic16 asm dialect are dropped for
@@ -756,9 +756,9 @@ class TestEpicCcToolchain(unittest.TestCase):
         # deps must not join the link (their include dirs may remain as
         # harmless search paths).
         s = self.encoder_script()
-        self.assertIn("epic-encoder/mcu/target_sizecheck_epiccc.c", s)
-        self.assertNotIn("epic-tick/src", s)
-        self.assertNotIn("epic-serial/src", s)
+        self.assertIn("lib/encoder/mcu/target_sizecheck_epiccc.c", s)
+        self.assertNotIn("lib/tick/src", s)
+        self.assertNotIn("lib/serial/src", s)
 
     def sdcard_script(self):
         return epic_build.emit_build_script(
@@ -772,13 +772,13 @@ class TestEpicCcToolchain(unittest.TestCase):
         # epic_tick_get/epic_tick_elapsed_since), the example and its
         # serial dep go.
         s = self.sdcard_script()
-        self.assertIn("epic-sdcard/mcu/target_sizecheck_epiccc.c", s)
-        self.assertIn("epic-sdcard/src/epic_sdcard.c", s)
-        self.assertIn("epic-sdcard/third_party/m-stack-storage/src/mmc.c", s)
-        self.assertIn("epic-sdcard/third_party/m-stack-storage/src/crc.c", s)
-        self.assertIn("epic-tick/src/epic_tick.c", s)
-        self.assertNotIn("epic-sdcard/examples/example_sdcard.c", s)
-        self.assertNotIn("epic-serial/src", s)
+        self.assertIn("lib/sdcard/mcu/target_sizecheck_epiccc.c", s)
+        self.assertIn("lib/sdcard/src/epic_sdcard.c", s)
+        self.assertIn("lib/sdcard/third_party/m-stack-storage/src/mmc.c", s)
+        self.assertIn("lib/sdcard/third_party/m-stack-storage/src/crc.c", s)
+        self.assertIn("lib/tick/src/epic_tick.c", s)
+        self.assertNotIn("lib/sdcard/examples/example_sdcard.c", s)
+        self.assertNotIn("lib/serial/src", s)
 
 EPICC_MANIFEST = MANIFEST.replace(
     '[modules.epic-tick.example.PIC16F87XA.sim]',
@@ -816,8 +816,8 @@ class TestEpicccExample(unittest.TestCase):
         s = epic_build.emit_build_script(
             epiccload(), "epic-tick", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc")
-        self.assertIn("epic-tick/examples/example_tick_epiccc.c", s)
-        self.assertNotIn("epic-tick/examples/example_tick.c", s)
+        self.assertIn("lib/tick/examples/example_tick_epiccc.c", s)
+        self.assertNotIn("lib/tick/examples/example_tick.c", s)
 
     def test_build_script_names_the_hex_after_the_variant(self):
         s = epic_build.emit_build_script(
@@ -829,8 +829,8 @@ class TestEpicccExample(unittest.TestCase):
 SIMHALT_MANIFEST = MANIFEST + """
 [modules.epic-tick.epiccc_sim_hal_sources_by_family]
 PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
-  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+  "hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c",
+  "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
 ]
 """
 
@@ -855,19 +855,19 @@ class TestEpicccSimHalSliceEmit(unittest.TestCase):
 
     def test_sim_epiccc_links_the_sim_slice(self):
         s = self.sim_epiccc()
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c", s)
-        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", s)
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c", s)
+        self.assertIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", s)
         self.assertIn("build/16F877A-tick-blink-sim.hex", s)
 
     def test_sim_xc8_ignores_the_sim_slice(self):
         s = epic_build.emit_build_script(
             simhaltload(), "epic-tick", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp", variant="sim")
-        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c", s)
+        self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c", s)
 
     def test_target_epiccc_ignores_the_sim_slice(self):
         s = epic_build.emit_build_script(
             simhaltload(), "epic-tick", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc")
-        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", s)
-        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c", s)
+        self.assertNotIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", s)
+        self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c", s)

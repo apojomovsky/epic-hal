@@ -53,7 +53,7 @@ build() { # mcu dfp opt native(0|1) extra_srcs out  (extra_srcs may be empty)
 
 # PIC16F877A: no hardware multiplier; both sides use software math.
 for opt in 2 3; do
-  build 16F877A "$DFP87" "$opt" 0 "epic-math/src/pic16/*.c epic-math/src/common/*.c" "87-full-o$opt.hex"
+  build 16F877A "$DFP87" "$opt" 0 "lib/math/src/pic16/*.c lib/math/src/common/*.c" "87-full-o$opt.hex"
   measure "87XA full -O$opt" PIC16F877A "$OUT/87-full-o$opt.hex"
 done
 for opt in 0 1 2 3; do
@@ -62,7 +62,7 @@ for opt in 0 1 2 3; do
 done
 # PIC18F4550: single-cycle MULWF; XC8 inlines 8x8 and 16x16->16 products.
 for opt in 2 3; do
-  build 18F4550 "$DFP18" "$opt" 0 "epic-math/src/pic18/*.c epic-math/src/common/*.c" "18-full-o$opt.hex"
+  build 18F4550 "$DFP18" "$opt" 0 "lib/math/src/pic18/*.c lib/math/src/common/*.c" "18-full-o$opt.hex"
   measure "18F4550 full -O$opt" PIC18F4550 "$OUT/18-full-o$opt.hex"
 done
 for opt in 0 1 2 3; do

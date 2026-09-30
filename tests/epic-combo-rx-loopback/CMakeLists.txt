@@ -16,7 +16,7 @@ project(epic_combo_rx_loopback C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../pic16f87xa-hal
+set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/pic14/16f87xa
     CACHE PATH "Path to the pic16f87xa-hal source tree")
 set(EPIC_LIB pic16f87xa_hal)
 

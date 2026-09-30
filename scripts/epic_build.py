@@ -180,6 +180,14 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
                                     "epic-sdcard")
                      and variant == "target")
     swap = True
+
+    def under(path: str, *modules: str) -> bool:
+        """True when path sits inside one of the named modules' directories."""
+        return any(path.startswith(manifest.modules[m].dir + "/") for m in modules)
+
+    def in_hal_slice(path: str) -> bool:
+        return any(path.startswith(f.hal_dir + "/") for f in manifest.families.values())
+
     if epiccc_driver:
         mod = manifest.modules[module]
         example = manifest.example_for(module, fam.name, mcu)
@@ -199,36 +207,36 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
             # Pure-logic drivers (fsm/pid/encoder/debounce) and the HAL-free
             # lcd/adcfilter drop the HAL slice; bus/mcp23x17 keep it (GPIO+SSP).
             if module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-lcd", "epic-adcfilter"):
-                sources = [s for s in sources if not s.startswith("pic16f") and not s.startswith("pic18") and "pic16f193x" not in s and "epic-common/src/core/epic_harness" not in s]
+                sources = [s for s in sources if not in_hal_slice(s) and "common/src/core/epic_harness" not in s]
             # Drop tick/serial/math (the example's deps): timer2/usart isel is
             # #86's domain, and the pic16 math asm backend needs XC8's xc.h.
             # epic-sdcard keeps epic-tick: epic_sdcard.c's timer callbacks
             # call epic_tick_get/epic_tick_elapsed_since (module-level dep).
             if module == "epic-sdcard":
-                sources = [s for s in sources if "epic-serial" not in s and "epic-math" not in s]
+                sources = [s for s in sources if not under(s, "epic-serial", "epic-math")]
             else:
-                sources = [s for s in sources if "epic-tick" not in s and "epic-serial" not in s and "epic-math" not in s]
+                sources = [s for s in sources if not under(s, "epic-tick", "epic-serial", "epic-math")]
         # pid.c calls epic_math_mul_s16 for real now; link the host C-path
         # implementation (the portable oracle), not the pic16 asm backend.
         if module == "epic-pid":
             if not swap:
-                sources = [s for s in sources if "epic-math/src" not in s]
-            sources.append("epic-math/src/host/epic_math_mul.c")
+                sources = [s for s in sources if "lib/math/src" not in s]
+            sources.append("lib/math/src/host/epic_math_mul.c")
     includes = manifest.includes_for(module, mcu)
     # Drop tick/serial includes the full example pulls (they need
     # timer2/usart isel, #86's domain). Encoder/debounce keep the tick
     # header for compilation; pid keeps the epic-math header (pid.c
     # includes it; the math SOURCES are handled above).
     if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid") and variant == "target" and swap:
-        includes = [i for i in includes if "epic-tick" not in i and "epic-serial" not in i]
+        includes = [i for i in includes if not under(i, "epic-tick", "epic-serial")]
     # HAL-3d drivers: drop tick/serial includes the example pulls.
     if toolchain == "epic-cc" and module in ("epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
-        includes = [i for i in includes if "epic-tick" not in i and "epic-serial" not in i]
+        includes = [i for i in includes if not under(i, "epic-tick", "epic-serial")]
     # epic-sdcard: the probe links epic_sdcard.c, which includes
     # epic_tick.h for its timer callbacks, so only the serial include
     # (pulled by the dropped example) goes.
     if toolchain == "epic-cc" and module == "epic-sdcard" and variant == "target":
-        includes = [i for i in includes if "epic-serial" not in i]
+        includes = [i for i in includes if not under(i, "epic-serial")]
     objdir = f"{build_dir}/{mcu}"
 
     if toolchain == "epic-cc":

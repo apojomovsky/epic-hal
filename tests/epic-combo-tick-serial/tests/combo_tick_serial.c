@@ -14,7 +14,7 @@
  *   gate must keep the TX handler out of every tick vector.
  *
  *   MPLAB SIM's USART model shapes the discipline (the same findings
- *   that shaped epic-serial/tests/sim_serial.c):
+ *   that shaped lib/serial/tests/sim_serial.c):
  *   - TXIF is a permanent pending status bit in the sim (it never
  *     clears on a TXREG write), so TXIE on with GIE on is an
  *     interrupt storm, and the storm's in-ISR Disable/Restore churn

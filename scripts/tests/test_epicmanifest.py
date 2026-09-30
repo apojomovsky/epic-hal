@@ -10,29 +10,29 @@ import epicmanifest  # noqa: E402
 
 MINIMAL = """
 [families.PIC16F87XA]
-hal_dir  = "pic16f87xa-hal"
+hal_dir  = "hal/pic14/16f87xa"
 variants = ["16F873A", "16F877A"]
 dfp      = "Microchip.PIC16Fxxx_DFP"
 fosc_hz  = 20000000
-includes = ["pic16f87xa-hal/include", "epic-common/include"]
-hal_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
-harness_src = "epic-common/src/core/epic_harness_target.c"
-epiccc_sources = ["pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", "epic-common/src/core/epic_harness_target.c"]
+includes = ["hal/pic14/16f87xa/include", "common/include"]
+hal_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", "common/src/core/epic_harness_target.c"]
+harness_src = "common/src/core/epic_harness_target.c"
+epiccc_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", "common/src/core/epic_harness_target.c"]
 
 [[families.PIC16F87XA.conditional_sources]]
-path     = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+path     = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c"
 variants = ["16F877A"]
 
 [families.PIC18Fxx5x]
-hal_dir  = "pic18fxx5x-hal"
+hal_dir  = "hal/pic18/18fxx5x"
 variants = ["18F4550"]
 dfp      = "Microchip.PIC18Fxxxx_DFP"
 fosc_hz  = 48000000
-includes = ["pic18fxx5x-hal/include", "epic-common/include"]
-hal_sources = ["pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c"]
+includes = ["hal/pic18/18fxx5x/include", "common/include"]
+hal_sources = ["hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c"]
 
 [modules.epic-tick]
-dir        = "epic-tick"
+dir        = "lib/tick"
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
@@ -48,7 +48,7 @@ config  = { FOSC = "HS", WDTE = "ON" }
 
 [modules.epic-tick.example.PIC16F87XA.sim]
 name        = "tick-blink-sim"
-harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { FOSC = "HS", WDTE = "OFF" }
 
 [modules.epic-tick.example.PIC18Fxx5x]
@@ -57,7 +57,7 @@ sources = ["examples/example_tick.c"]
 config  = { FOSC = "HS" }
 
 [modules.epic-serial]
-dir        = "epic-serial"
+dir        = "lib/serial"
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = ["epic-tick"]
@@ -69,7 +69,7 @@ PIC16F87XA = ["16F877A"]
 "16F873A" = "RAM: 32-byte rx buffer does not fit"
 
 [modules.epic-math]
-dir        = "epic-math"
+dir        = "lib/math"
 sources    = ["src/common/epic_math_sqrt.c", "src/common/epic_math_numeric.c"]
 includes   = ["include"]
 depends_on = []
@@ -104,7 +104,7 @@ hal     = true
 depends_on = ["epic-serial"]
 
 [modules.epic-adcfilter]
-dir        = "epic-adcfilter"
+dir        = "lib/adcfilter"
 sources    = ["src/epic_adcfilter.c"]
 includes   = ["include"]
 depends_on = []
@@ -132,7 +132,7 @@ class TestLoad(unittest.TestCase):
 
     def test_families_parsed(self):
         fam = self.m.families["PIC16F87XA"]
-        self.assertEqual(fam.hal_dir, "pic16f87xa-hal")
+        self.assertEqual(fam.hal_dir, "hal/pic14/16f87xa")
         self.assertEqual(fam.variants, ["16F873A", "16F877A"])
         self.assertEqual(fam.dfp, "Microchip.PIC16Fxxx_DFP")
         self.assertEqual(fam.fosc_hz, 20000000)
@@ -148,7 +148,7 @@ class TestLoad(unittest.TestCase):
     def test_modules_parsed(self):
         mod = self.m.modules["epic-serial"]
         self.assertEqual(mod.name, "epic-serial")
-        self.assertEqual(mod.dir, "epic-serial")
+        self.assertEqual(mod.dir, "lib/serial")
         self.assertEqual(mod.depends_on, ["epic-tick"])
         self.assertEqual(mod.supported["PIC16F87XA"], ["16F877A"])
         self.assertEqual(mod.excluded["16F873A"], "RAM: 32-byte rx buffer does not fit")
@@ -228,8 +228,8 @@ class TestValidation(unittest.TestCase):
         self.assertIn("16F877A", str(cm.exception))
 
     def test_dependency_cycle_is_rejected(self):
-        bad = MINIMAL.replace('[modules.epic-tick]\ndir        = "epic-tick"\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = []',
-                              '[modules.epic-tick]\ndir        = "epic-tick"\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = ["epic-serial"]')
+        bad = MINIMAL.replace('[modules.epic-tick]\ndir        = "lib/tick"\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = []',
+                              '[modules.epic-tick]\ndir        = "lib/tick"\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = ["epic-serial"]')
         with self.assertRaises(epicmanifest.ManifestError) as cm:
             epicmanifest.load(write(bad))
         self.assertIn("cycle", str(cm.exception).lower())
@@ -336,58 +336,58 @@ class TestResolution(unittest.TestCase):
 
     def test_hal_true_build_includes_family_hal_sources(self):
         srcs = self.m.sources_for("epic-tick", "16F877A")
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", srcs)
 
     def test_needs_hal_false_with_no_override_omits_family_hal_sources(self):
         srcs = self.m.sources_for("epic-adcfilter", "16F877A")
-        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
+        self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", srcs)
 
     def test_needs_hal_false_but_example_hal_true_includes_family_hal_sources(self):
         srcs = self.m.sources_for("epic-math", "16F877A")
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", srcs)
 
     def test_needs_hal_false_omits_family_includes(self):
         incs = self.m.includes_for("epic-adcfilter", "16F877A")
-        self.assertNotIn("pic16f87xa-hal/include", incs)
-        self.assertNotIn("epic-common/include", incs)
-        self.assertIn("epic-adcfilter/include", incs)
+        self.assertNotIn("hal/pic14/16f87xa/include", incs)
+        self.assertNotIn("common/include", incs)
+        self.assertIn("lib/adcfilter/include", incs)
 
     def test_conditional_source_included_only_on_matching_variant(self):
-        psp = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+        psp = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c"
         self.assertIn(psp, self.m.sources_for("epic-tick", "16F877A"))
         self.assertNotIn(psp, self.m.sources_for("epic-tick", "16F873A"))
 
     def test_conditional_source_omitted_when_hal_not_used(self):
-        psp = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+        psp = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c"
         self.assertNotIn(psp, self.m.sources_for("epic-adcfilter", "16F877A"))
 
     def test_sources_include_module_and_example(self):
         srcs = self.m.sources_for("epic-tick", "16F877A")
-        self.assertIn("epic-tick/src/epic_tick.c", srcs)
-        self.assertIn("epic-tick/examples/example_tick.c", srcs)
+        self.assertIn("lib/tick/src/epic_tick.c", srcs)
+        self.assertIn("lib/tick/examples/example_tick.c", srcs)
 
     def test_sources_pull_in_dependency_sources(self):
         srcs = self.m.sources_for("epic-serial", "16F877A")
-        self.assertIn("epic-tick/src/epic_tick.c", srcs)
-        self.assertIn("epic-serial/src/epic_serial.c", srcs)
+        self.assertIn("lib/tick/src/epic_tick.c", srcs)
+        self.assertIn("lib/serial/src/epic_serial.c", srcs)
 
     def test_sources_pull_in_example_dependency_sources(self):
         # epic-math's example depends_on epic-serial (the library does
         # not), so the serial library joins the math example's build.
         srcs = self.m.sources_for("epic-math", "16F877A")
-        self.assertIn("epic-serial/src/epic_serial.c", srcs)
+        self.assertIn("lib/serial/src/epic_serial.c", srcs)
 
     def test_includes_pull_in_example_dependency_includes(self):
         incs = self.m.includes_for("epic-math", "16F877A")
-        self.assertIn("epic-serial/include", incs)
+        self.assertIn("lib/serial/include", incs)
 
     def test_example_dependency_respects_per_mcu_variant_override(self):
         # The 16F873A variant of epic-math's example drops the serial
         # dep (it is excluded on that part for RAM), so the small-part
         # probe build must not compile epic-serial.
         srcs = self.m.sources_for("epic-math", "16F873A")
-        self.assertNotIn("epic-serial/src/epic_serial.c", srcs)
-        self.assertIn("epic-math/tests/target_smoke16.c", srcs)
+        self.assertNotIn("lib/serial/src/epic_serial.c", srcs)
+        self.assertIn("lib/math/tests/target_smoke16.c", srcs)
 
     def test_example_dependency_sources_are_deduplicated(self):
         srcs = self.m.sources_for("epic-math", "16F877A")
@@ -395,25 +395,25 @@ class TestResolution(unittest.TestCase):
 
     def test_sources_only_include_the_requested_modules_example(self):
         srcs = self.m.sources_for("epic-serial", "16F877A")
-        self.assertNotIn("epic-tick/examples/example_tick.c", srcs)
+        self.assertNotIn("lib/tick/examples/example_tick.c", srcs)
 
     def test_sources_by_family_contributes_only_the_matching_family(self):
         srcs16 = self.m.sources_for("epic-math", "16F877A")
-        self.assertIn("epic-math/src/pic16/epic_math_mul.c", srcs16)
-        self.assertIn("epic-math/src/pic16/epic_math_scratch.c", srcs16)
-        self.assertNotIn("epic-math/src/pic18/epic_math_mul.c", srcs16)
-        self.assertIn("epic-math/src/common/epic_math_sqrt.c", srcs16)
+        self.assertIn("lib/math/src/pic16/epic_math_mul.c", srcs16)
+        self.assertIn("lib/math/src/pic16/epic_math_scratch.c", srcs16)
+        self.assertNotIn("lib/math/src/pic18/epic_math_mul.c", srcs16)
+        self.assertIn("lib/math/src/common/epic_math_sqrt.c", srcs16)
         srcs18 = self.m.sources_for("epic-math", "18F4550")
-        self.assertIn("epic-math/src/pic18/epic_math_mul.c", srcs18)
-        self.assertNotIn("epic-math/src/pic16/epic_math_mul.c", srcs18)
-        self.assertIn("epic-math/src/common/epic_math_sqrt.c", srcs18)
+        self.assertIn("lib/math/src/pic18/epic_math_mul.c", srcs18)
+        self.assertNotIn("lib/math/src/pic16/epic_math_mul.c", srcs18)
+        self.assertIn("lib/math/src/common/epic_math_sqrt.c", srcs18)
 
     def test_the_right_example_is_used_per_family(self):
-        self.assertIn("epic-math/tests/target_smoke16.c",
+        self.assertIn("lib/math/tests/target_smoke16.c",
                       self.m.sources_for("epic-math", "16F877A"))
-        self.assertIn("epic-math/tests/target_selftest.c",
+        self.assertIn("lib/math/tests/target_selftest.c",
                       self.m.sources_for("epic-math", "18F4550"))
-        self.assertNotIn("epic-math/tests/target_selftest.c",
+        self.assertNotIn("lib/math/tests/target_selftest.c",
                          self.m.sources_for("epic-math", "16F877A"))
 
     def test_sources_have_no_duplicates(self):
@@ -422,16 +422,16 @@ class TestResolution(unittest.TestCase):
 
     def test_includes_preserve_family_order_then_modules(self):
         incs = self.m.includes_for("epic-serial", "16F877A")
-        self.assertEqual(incs[0], "pic16f87xa-hal/include")
-        self.assertEqual(incs[1], "epic-common/include")
-        self.assertIn("epic-tick/include", incs)
-        self.assertIn("epic-serial/include", incs)
+        self.assertEqual(incs[0], "hal/pic14/16f87xa/include")
+        self.assertEqual(incs[1], "common/include")
+        self.assertIn("lib/tick/include", incs)
+        self.assertIn("lib/serial/include", incs)
 
     def test_sim_variant_for_returns_the_sim_data(self):
         sim = self.m.sim_variant_for("epic-tick", "PIC16F87XA")
         self.assertEqual(sim.name, "tick-blink-sim")
         self.assertEqual(sim.harness_src,
-                         "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c")
+                         "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c")
 
     def test_sim_variant_for_returns_none_without_one(self):
         self.assertIsNone(self.m.sim_variant_for("epic-tick", "PIC18Fxx5x"))
@@ -439,16 +439,16 @@ class TestResolution(unittest.TestCase):
     def test_sources_for_sim_variant_swaps_the_harness_source(self):
         target = self.m.sources_for("epic-tick", "16F877A", variant="target")
         sim = self.m.sources_for("epic-tick", "16F877A", variant="sim")
-        self.assertIn("epic-common/src/core/epic_harness_target.c", target)
-        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", target)
-        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", sim)
-        self.assertNotIn("epic-common/src/core/epic_harness_target.c", sim)
+        self.assertIn("common/src/core/epic_harness_target.c", target)
+        self.assertNotIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", target)
+        self.assertIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", sim)
+        self.assertNotIn("common/src/core/epic_harness_target.c", sim)
 
     def test_sources_for_sim_variant_keeps_the_harness_source_position(self):
         sim = self.m.sources_for("epic-tick", "16F877A", variant="sim")
         target = self.m.sources_for("epic-tick", "16F877A", variant="target")
-        target_pos = target.index("epic-common/src/core/epic_harness_target.c")
-        sim_pos = sim.index("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c")
+        target_pos = target.index("common/src/core/epic_harness_target.c")
+        sim_pos = sim.index("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c")
         self.assertEqual(target_pos, sim_pos)
 
     def test_epic_cc_sim_variant_swaps_the_harness_source(self):
@@ -457,26 +457,26 @@ class TestResolution(unittest.TestCase):
         # target harness.
         srcs = self.m.sources_for("epic-tick", "16F877A",
                                   variant="sim", toolchain="epic-cc")
-        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
-        self.assertNotIn("epic-common/src/core/epic_harness_target.c", srcs)
+        self.assertIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", srcs)
+        self.assertNotIn("common/src/core/epic_harness_target.c", srcs)
 
     def test_epic_cc_sim_variant_keeps_the_harness_position(self):
         sim = self.m.sources_for("epic-tick", "16F877A",
                                  variant="sim", toolchain="epic-cc")
         target = self.m.sources_for("epic-tick", "16F877A",
                                     toolchain="epic-cc")
-        self.assertEqual(target.index("epic-common/src/core/epic_harness_target.c"),
-                         sim.index("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"))
+        self.assertEqual(target.index("common/src/core/epic_harness_target.c"),
+                         sim.index("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"))
 
     def test_epic_cc_target_variant_keeps_the_family_harness(self):
         srcs = self.m.sources_for("epic-tick", "16F877A",
                                   variant="target", toolchain="epic-cc")
-        self.assertIn("epic-common/src/core/epic_harness_target.c", srcs)
-        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
+        self.assertIn("common/src/core/epic_harness_target.c", srcs)
+        self.assertNotIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", srcs)
 
     def test_sources_for_sim_variant_reuses_example_sources_when_no_override(self):
         sim = self.m.sources_for("epic-tick", "16F877A", variant="sim")
-        self.assertIn("epic-tick/examples/example_tick.c", sim)
+        self.assertIn("lib/tick/examples/example_tick.c", sim)
 
     def test_sources_for_sim_variant_raises_without_one(self):
         with self.assertRaises(epicmanifest.ManifestError):
@@ -484,13 +484,13 @@ class TestResolution(unittest.TestCase):
 
     def test_epiccc_sources_used_for_epic_cc_toolchain(self):
         srcs = self.m.sources_for("epic-tick", "16F877A", toolchain="epic-cc")
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
-        self.assertNotIn("pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c", srcs)
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", srcs)
+        self.assertNotIn("hal/pic14/16f87xa/src/epiccc/pic16f87xa_gpio_epiccc.c", srcs)
 
     def test_epiccc_sources_do_not_splice_conditional_sources(self):
         # Conditional sources are XC8 psect-order machinery; the epic-cc
         # path is a single whole-program invocation with no link order.
-        psp = "pic16f87xa-hal/src/peripherals/pic16f87xa_psp.c"
+        psp = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c"
         srcs = self.m.sources_for("epic-tick", "16F877A", toolchain="epic-cc")
         self.assertNotIn(psp, srcs)
 
@@ -504,21 +504,21 @@ class TestResolution(unittest.TestCase):
 
     def test_epiccc_sources_keep_the_example(self):
         srcs = self.m.sources_for("epic-tick", "16F877A", toolchain="epic-cc")
-        self.assertIn("epic-tick/examples/example_tick.c", srcs)
+        self.assertIn("lib/tick/examples/example_tick.c", srcs)
 
     def test_xc8_path_is_unchanged_with_epiccc_sources_present(self):
         # The epiccc_sources key must not leak into the XC8 resolution.
         srcs = self.m.sources_for("epic-tick", "16F877A")
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c", srcs)
-        self.assertNotIn("pic16f87xa-hal/src/epiccc/pic16f87xa_gpio_epiccc.c", srcs)
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", srcs)
+        self.assertNotIn("hal/pic14/16f87xa/src/epiccc/pic16f87xa_gpio_epiccc.c", srcs)
 
 
 
 HALT = MINIMAL.replace(
     '[modules.epic-serial.supported]',
     'epiccc_hal_sources_by_family.PIC16F87XA = ['
-    '"pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c", '
-    '"epic-common/src/core/epic_harness_target.c"]\n\n'
+    '"hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c", '
+    '"common/src/core/epic_harness_target.c"]\n\n'
     '[modules.epic-serial.supported]'
 ).replace(
     '[modules.epic-serial.excluded]',
@@ -536,42 +536,42 @@ class TestEpicccHalSources(unittest.TestCase):
     def test_override_replaces_the_family_slice_verbatim(self):
         srcs = self.m.sources_for("epic-serial", "16F877A",
                                   toolchain="epic-cc")
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c",
                       srcs)
-        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+        self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c",
                          srcs)
 
     def test_override_keeps_deps_and_the_example(self):
         srcs = self.m.sources_for("epic-serial", "16F877A",
                                   toolchain="epic-cc")
-        self.assertIn("epic-tick/src/epic_tick.c", srcs)
-        self.assertIn("epic-serial/examples/example_serial.c", srcs)
+        self.assertIn("lib/tick/src/epic_tick.c", srcs)
+        self.assertIn("lib/serial/examples/example_serial.c", srcs)
 
     def test_xc8_path_unaffected_by_the_override(self):
         srcs = self.m.sources_for("epic-serial", "16F877A")
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c",
                       srcs)
-        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+        self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c",
                          srcs)
 
     def test_modules_without_the_key_keep_the_family_slice(self):
         srcs = self.m.sources_for("epic-tick", "16F877A",
                                   toolchain="epic-cc")
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c",
                       srcs)
 
     def test_empty_override_rejected(self):
         with self.assertRaises(epicmanifest.ManifestError):
             epicmanifest.load(write(HALT.replace(
                 'epiccc_hal_sources_by_family.PIC16F87XA = [' +
-                '"pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c", '
-                '"epic-common/src/core/epic_harness_target.c"]',
+                '"hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c", '
+                '"common/src/core/epic_harness_target.c"]',
                 'epiccc_hal_sources_by_family.PIC16F87XA = []')))
 
     def test_outside_hal_dir_rejected(self):
         with self.assertRaises(epicmanifest.ManifestError):
             epicmanifest.load(write(HALT.replace(
-                '"pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c"',
+                '"hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c"',
                 '"../escape.c"')))
 
 
@@ -605,13 +605,13 @@ class TestEpicccExample(unittest.TestCase):
 
     def test_epic_cc_path_swaps_the_example_sources(self):
         srcs = self.m.sources_for("epic-tick", "16F877A", toolchain="epic-cc")
-        self.assertIn("epic-tick/examples/example_tick_epiccc.c", srcs)
-        self.assertNotIn("epic-tick/examples/example_tick.c", srcs)
+        self.assertIn("lib/tick/examples/example_tick_epiccc.c", srcs)
+        self.assertNotIn("lib/tick/examples/example_tick.c", srcs)
 
     def test_xc8_path_keeps_the_target_example(self):
         srcs = self.m.sources_for("epic-tick", "16F877A")
-        self.assertIn("epic-tick/examples/example_tick.c", srcs)
-        self.assertNotIn("epic-tick/examples/example_tick_epiccc.c", srcs)
+        self.assertIn("lib/tick/examples/example_tick.c", srcs)
+        self.assertNotIn("lib/tick/examples/example_tick_epiccc.c", srcs)
 
     def test_epiccc_example_requires_sources(self):
         with self.assertRaises(epicmanifest.ManifestError):
@@ -621,12 +621,12 @@ class TestEpicccExample(unittest.TestCase):
 
 SIMHALT = MINIMAL + """
 [modules.epic-tick.epiccc_hal_sources_by_family]
-PIC16F87XA = ["epic-common/src/core/epic_harness_target.c"]
+PIC16F87XA = ["common/src/core/epic_harness_target.c"]
 
 [modules.epic-tick.epiccc_sim_hal_sources_by_family]
 PIC16F87XA = [
-  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
-  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",
+  "hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c",
+  "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
 ]
 
 [modules.epic-probe]
@@ -639,7 +639,7 @@ depends_on = []
 PIC16F87XA = ["16F877A"]
 
 [modules.epic-probe.epiccc_hal_sources_by_family]
-PIC16F87XA = ["epic-common/src/core/epic_harness_target.c"]
+PIC16F87XA = ["common/src/core/epic_harness_target.c"]
 
 [modules.epic-probe.example.PIC16F87XA]
 name    = "probe"
@@ -648,7 +648,7 @@ config  = { FOSC = "HS", WDTE = "ON" }
 
 [modules.epic-probe.example.PIC16F87XA.sim]
 name        = "probe-sim"
-harness_src = "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { FOSC = "HS", WDTE = "OFF" }
 """
 
@@ -660,19 +660,19 @@ class TestEpicccSimHalSources(unittest.TestCase):
     def test_sim_epiccc_uses_the_sim_slice_verbatim(self):
         srcs = self.m.sources_for("epic-tick", "16F877A", variant="sim",
                                   toolchain="epic-cc")
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c",
                       srcs)
-        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
-        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+        self.assertIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", srcs)
+        self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c",
                          srcs)
-        self.assertNotIn("epic-common/src/core/epic_harness_target.c", srcs)
+        self.assertNotIn("common/src/core/epic_harness_target.c", srcs)
 
     def test_target_epiccc_ignores_the_sim_slice(self):
         srcs = self.m.sources_for("epic-tick", "16F877A",
                                   toolchain="epic-cc")
-        self.assertIn("epic-common/src/core/epic_harness_target.c", srcs)
-        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
-        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+        self.assertIn("common/src/core/epic_harness_target.c", srcs)
+        self.assertNotIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", srcs)
+        self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c",
                          srcs)
 
     def test_sim_epiccc_without_a_sim_slice_keeps_the_target_override(self):
@@ -681,15 +681,15 @@ class TestEpicccSimHalSources(unittest.TestCase):
         # override, so the target harness stays linked there.
         srcs = self.m.sources_for("epic-probe", "16F877A", variant="sim",
                                   toolchain="epic-cc")
-        self.assertIn("epic-common/src/core/epic_harness_target.c", srcs)
-        self.assertNotIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
+        self.assertIn("common/src/core/epic_harness_target.c", srcs)
+        self.assertNotIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", srcs)
 
     def test_xc8_sim_ignores_the_sim_slice(self):
         srcs = self.m.sources_for("epic-tick", "16F877A", variant="sim")
-        self.assertIn("pic16f87xa-hal/src/peripherals/pic16f87xa_gpio.c",
+        self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c",
                       srcs)
-        self.assertIn("pic16f87xa-hal/src/mdb/pic16_harness_mdb.c", srcs)
-        self.assertNotIn("pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",
+        self.assertIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", srcs)
+        self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c",
                          srcs)
 
     def test_unknown_family_rejected(self):
@@ -702,15 +702,15 @@ class TestEpicccSimHalSources(unittest.TestCase):
         with self.assertRaises(epicmanifest.ManifestError):
             epicmanifest.load(write(SIMHALT.replace(
                 "PIC16F87XA = [\n"
-                '  "pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c",\n'
-                '  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",\n'
+                '  "hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c",\n'
+                '  "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",\n'
                 "]",
                 "PIC16F87XA = []", 1)))
 
     def test_outside_hal_dir_rejected(self):
         with self.assertRaises(epicmanifest.ManifestError):
             epicmanifest.load(write(SIMHALT.replace(
-                '"pic16f87xa-hal/src/peripherals/pic16f87xa_usart.c"',
+                '"hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c"',
                 '"../escape.c"')))
 
     def test_sim_slice_without_a_sim_variant_rejected(self):
@@ -721,6 +721,6 @@ class TestEpicccSimHalSources(unittest.TestCase):
 
     def test_sim_slice_missing_the_harness_rejected(self):
         noharness = SIMHALT.replace(
-            '  "pic16f87xa-hal/src/mdb/pic16_harness_mdb.c",\n', "")
+            '  "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",\n', "")
         with self.assertRaises(epicmanifest.ManifestError):
             epicmanifest.load(write(noharness))

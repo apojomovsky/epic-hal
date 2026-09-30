@@ -9,10 +9,10 @@
             <sourceEncoding>ISO-8859-1</sourceEncoding>
             <make-dep-projects/>
             <sourceRootList>
-                <sourceRootElem>../../epic-common/src/core</sourceRootElem>
-                <sourceRootElem>../../pic18f2520-hal/src/core</sourceRootElem>
-                <sourceRootElem>../../pic18f2520-hal/src/target</sourceRootElem>
-                <sourceRootElem>../../pic18f2520-hal/src/peripherals</sourceRootElem>
+                <sourceRootElem>../../common/src/core</sourceRootElem>
+                <sourceRootElem>../../hal/pic18/18f2520/src/core</sourceRootElem>
+                <sourceRootElem>../../hal/pic18/18f2520/src/target</sourceRootElem>
+                <sourceRootElem>../../hal/pic18/18f2520/src/peripherals</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>

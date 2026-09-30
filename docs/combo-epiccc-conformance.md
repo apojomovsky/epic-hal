@@ -69,18 +69,18 @@ under XC8; its epic-cc gate is blocked by the same #463 hang. PIC18 has
 - `pic16f87xa_platform.h` / `pic16f88x_platform.h` (epiccc): `EPIC_PIE1_READ_*`
   helpers for `TMR2IE/SSPIE/ADIE/CCP1IE` + `PIE2:C CP2IE`, so dispatch tiers
   read PIE through the same 0x8C/0x8D derefs as the helper family.
-- `pic16*_hal/src/epiccc/pic16_irq_dispatch_tiers_inc.h`: gates for
+- `hal/pic14/core/src/epiccc/pic16_irq_dispatch_tiers_inc.h`: gates for
   `TMR0/RB/SSP/ADC/EE` (each gated on its enable bit, else clear) so combo
   tiers need not hand-roll RMW clearing.
 - Five new PIC16 tier files (both families, 10 files total):
   `serial_timers`, `serial_rb_tick`, `serial_timer1_adc`,
   `serial_tick_ssp_ee`, `swuart_tick` (each a 5-line define list over the
   shared body).
-- `pic18fxx5x-hal/src/epiccc/pic18_irq_dispatch_epiccc.c` (USART+TMR2+EE).
-- `epic-common/manifest/modules.toml`: family `epiccc_sources` for
+- `hal/pic18/18fxx5x/src/epiccc/pic18_irq_dispatch_epiccc.c` (USART+TMR2+EE).
+- `common/manifest/modules.toml`: family `epiccc_sources` for
   PIC18Fxx5x plus 13 per-combo `epiccc_hal_sources_by_family` overrides
   (each verbatim, mdb harness in place of the target no-op harness).
-- `epic-common/include/core/epic_harness.h`: `epic_harness_report` now
+- `common/include/core/epic_harness.h`: `epic_harness_report` now
   copies the marker into a static RAM buffer before logging (so no const
   address is materialized; epic-cc#138), plus `EPIC_HARNESS_LOG_STATIC`
   for gate firmware literals.

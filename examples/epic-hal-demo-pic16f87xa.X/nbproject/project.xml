@@ -9,21 +9,21 @@
             <sourceEncoding>ISO-8859-1</sourceEncoding>
             <make-dep-projects/>
             <sourceRootList>
-                <sourceRootElem>../../epic-adcfilter/src</sourceRootElem>
-                <sourceRootElem>../../epic-bus/src</sourceRootElem>
-                <sourceRootElem>../../epic-common/src/core</sourceRootElem>
-                <sourceRootElem>../../epic-debounce/src</sourceRootElem>
-                <sourceRootElem>../../epic-encoder/src</sourceRootElem>
-                <sourceRootElem>../../epic-fsm/src</sourceRootElem>
-                <sourceRootElem>../../epic-math/src/common</sourceRootElem>
-                <sourceRootElem>../../epic-math/src/pic16</sourceRootElem>
-                <sourceRootElem>../../epic-pid/src</sourceRootElem>
-                <sourceRootElem>../../epic-serial/src</sourceRootElem>
-                <sourceRootElem>../../epic-taskmgr/src</sourceRootElem>
-                <sourceRootElem>../../epic-tick/src</sourceRootElem>
-                <sourceRootElem>../../pic16f87xa-hal/src/core</sourceRootElem>
-                <sourceRootElem>../../pic16f87xa-hal/src/target</sourceRootElem>
-                <sourceRootElem>../../pic16f87xa-hal/src/peripherals</sourceRootElem>
+                <sourceRootElem>../../lib/adcfilter/src</sourceRootElem>
+                <sourceRootElem>../../lib/bus/src</sourceRootElem>
+                <sourceRootElem>../../common/src/core</sourceRootElem>
+                <sourceRootElem>../../lib/debounce/src</sourceRootElem>
+                <sourceRootElem>../../lib/encoder/src</sourceRootElem>
+                <sourceRootElem>../../lib/fsm/src</sourceRootElem>
+                <sourceRootElem>../../lib/math/src/common</sourceRootElem>
+                <sourceRootElem>../../lib/math/src/pic16</sourceRootElem>
+                <sourceRootElem>../../lib/pid/src</sourceRootElem>
+                <sourceRootElem>../../lib/serial/src</sourceRootElem>
+                <sourceRootElem>../../lib/taskmgr/src</sourceRootElem>
+                <sourceRootElem>../../lib/tick/src</sourceRootElem>
+                <sourceRootElem>../../hal/pic14/16f87xa/src/core</sourceRootElem>
+                <sourceRootElem>../../hal/pic14/16f87xa/src/target</sourceRootElem>
+                <sourceRootElem>../../hal/pic14/16f87xa/src/peripherals</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>

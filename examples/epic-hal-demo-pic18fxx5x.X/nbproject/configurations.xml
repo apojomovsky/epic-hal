@@ -18,68 +18,68 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="common" displayName="common" projectFiles="true">
-        <itemPath>../../epic-math/src/common/epic_math_rand.c</itemPath>
-        <itemPath>../../epic-math/src/common/epic_math_numeric.c</itemPath>
-        <itemPath>../../epic-math/src/common/epic_math_sqrt.c</itemPath>
+        <itemPath>../../lib/math/src/common/epic_math_rand.c</itemPath>
+        <itemPath>../../lib/math/src/common/epic_math_numeric.c</itemPath>
+        <itemPath>../../lib/math/src/common/epic_math_sqrt.c</itemPath>
       </logicalFolder>
       <logicalFolder name="core" displayName="core" projectFiles="true">
-        <itemPath>../../epic-common/src/core/epic_harness_target.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/core/pic18_irq.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/target/pic18_isr_vector.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/core/pic18_irq_dispatch.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/core/pic18fxx5x_wdt_sleep.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/target/pic18fxx5x_wdt_sleep_target.c</itemPath>
+        <itemPath>../../common/src/core/epic_harness_target.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/core/pic18_irq.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/target/pic18_isr_vector.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/core/pic18_irq_dispatch.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/core/pic18fxx5x_wdt_sleep.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/target/pic18fxx5x_wdt_sleep_target.c</itemPath>
       </logicalFolder>
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_adc.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_ccp.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_comp.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_eeprom.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_gpio.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_spp.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_ssp.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer0.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer1.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer2.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_timer3.c</itemPath>
-        <itemPath>../../pic18fxx5x-hal/src/peripherals/pic18fxx5x_usart.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_adc.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_ccp.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_comp.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_eeprom.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_spp.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_ssp.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer0.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer1.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer2.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer3.c</itemPath>
+        <itemPath>../../hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_usart.c</itemPath>
       </logicalFolder>
       <logicalFolder name="pic18" displayName="pic18" projectFiles="true">
-        <itemPath>../../epic-math/src/pic18/epic_math_addsub.c</itemPath>
-        <itemPath>../../epic-math/src/pic18/epic_math_bcd.c</itemPath>
-        <itemPath>../../epic-math/src/pic18/epic_math_div.c</itemPath>
-        <itemPath>../../epic-math/src/pic18/epic_math_mul.c</itemPath>
+        <itemPath>../../lib/math/src/pic18/epic_math_addsub.c</itemPath>
+        <itemPath>../../lib/math/src/pic18/epic_math_bcd.c</itemPath>
+        <itemPath>../../lib/math/src/pic18/epic_math_div.c</itemPath>
+        <itemPath>../../lib/math/src/pic18/epic_math_mul.c</itemPath>
       </logicalFolder>
       <logicalFolder name="src" displayName="src" projectFiles="true">
-        <itemPath>../../epic-adcfilter/src/epic_adcfilter.c</itemPath>
-        <itemPath>../../epic-bus/src/epic_bus.c</itemPath>
-        <itemPath>../../epic-debounce/src/debounce.c</itemPath>
-        <itemPath>../../epic-encoder/src/encoder.c</itemPath>
-        <itemPath>../../epic-fsm/src/fsm.c</itemPath>
-        <itemPath>../../epic-modbus/src/epic_modbus.c</itemPath>
-        <itemPath>../../epic-pid/src/pid.c</itemPath>
-        <itemPath>../../epic-serial/src/epic_serial.c</itemPath>
-        <itemPath>../../epic-tick/src/epic_tick.c</itemPath>
+        <itemPath>../../lib/adcfilter/src/epic_adcfilter.c</itemPath>
+        <itemPath>../../lib/bus/src/epic_bus.c</itemPath>
+        <itemPath>../../lib/debounce/src/debounce.c</itemPath>
+        <itemPath>../../lib/encoder/src/encoder.c</itemPath>
+        <itemPath>../../lib/fsm/src/fsm.c</itemPath>
+        <itemPath>../../lib/modbus/src/epic_modbus.c</itemPath>
+        <itemPath>../../lib/pid/src/pid.c</itemPath>
+        <itemPath>../../lib/serial/src/epic_serial.c</itemPath>
+        <itemPath>../../lib/tick/src/epic_tick.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
-    <Elem>../../epic-adcfilter/src</Elem>
-    <Elem>../../epic-bus/src</Elem>
-    <Elem>../../epic-common/src/core</Elem>
-    <Elem>../../epic-debounce/src</Elem>
-    <Elem>../../epic-encoder/src</Elem>
-    <Elem>../../epic-fsm/src</Elem>
-    <Elem>../../epic-math/src/common</Elem>
-    <Elem>../../epic-math/src/pic18</Elem>
-    <Elem>../../epic-modbus/src</Elem>
-    <Elem>../../epic-pid/src</Elem>
-    <Elem>../../epic-serial/src</Elem>
-    <Elem>../../epic-tick/src</Elem>
-    <Elem>../../pic18fxx5x-hal/src/core</Elem>
-    <Elem>../../pic18fxx5x-hal/src/target</Elem>
-    <Elem>../../pic18fxx5x-hal/src/peripherals</Elem>
+    <Elem>../../lib/adcfilter/src</Elem>
+    <Elem>../../lib/bus/src</Elem>
+    <Elem>../../common/src/core</Elem>
+    <Elem>../../lib/debounce/src</Elem>
+    <Elem>../../lib/encoder/src</Elem>
+    <Elem>../../lib/fsm/src</Elem>
+    <Elem>../../lib/math/src/common</Elem>
+    <Elem>../../lib/math/src/pic18</Elem>
+    <Elem>../../lib/modbus/src</Elem>
+    <Elem>../../lib/pid/src</Elem>
+    <Elem>../../lib/serial/src</Elem>
+    <Elem>../../lib/tick/src</Elem>
+    <Elem>../../hal/pic18/18fxx5x/src/core</Elem>
+    <Elem>../../hal/pic18/18fxx5x/src/target</Elem>
+    <Elem>../../hal/pic18/18fxx5x/src/peripherals</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -133,7 +133,7 @@
         <property key="define-macros" value="PIC18F4550;FOSC_HZ=48000000"/>
         <property key="disable-optimizations" value="true"/>
         <property key="extra-include-directories"
-                  value="../../pic18fxx5x-hal/include/target;../../pic18fxx5x-hal/include;../../epic-common/include;../../epic-adcfilter/include;../../epic-bus/include;../../epic-debounce/include;../../epic-encoder/include;../../epic-fsm/include;../../epic-math/include;../../epic-math/tests;../../epic-modbus/include;../../epic-pid/include;../../epic-serial/include;../../epic-tick/include"/>
+                  value="../../hal/pic18/18fxx5x/include/target;../../hal/pic18/18fxx5x/include;../../common/include;../../lib/adcfilter/include;../../lib/bus/include;../../lib/debounce/include;../../lib/encoder/include;../../lib/fsm/include;../../lib/math/include;../../lib/math/tests;../../lib/modbus/include;../../lib/pid/include;../../lib/serial/include;../../lib/tick/include"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
         <property key="garbage-collect-data" value="true"/>
         <property key="garbage-collect-functions" value="true"/>

@@ -18,34 +18,34 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="core" displayName="core" projectFiles="true">
-        <itemPath>../../epic-common/src/core/epic_harness_target.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/core/pic14_irq.c</itemPath>
-        <itemPath>../../pic16f628a-hal/src/core/pic16_irq_table.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/core/pic14_wdt_sleep.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/target/pic14_wdt_sleep_target.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/target/pic16_isr_vector.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/core/pic14_irq_dispatch.c</itemPath>
+        <itemPath>../../common/src/core/epic_harness_target.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/core/pic14_irq.c</itemPath>
+        <itemPath>../../hal/pic14/16f628a/src/core/pic16_irq_table.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/core/pic14_wdt_sleep.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/target/pic14_wdt_sleep_target.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/target/pic16_isr_vector.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/core/pic14_irq_dispatch.c</itemPath>
       </logicalFolder>
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
-        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_gpio.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_timer0.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_timer1.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_timer2.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_ccp.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_usart.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_comp.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_vref.c</itemPath>
-        <itemPath>../../pic14-midrange-core/src/peripherals/pic14_eeprom.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/peripherals/pic14_gpio.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/peripherals/pic14_timer0.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/peripherals/pic14_timer1.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/peripherals/pic14_timer2.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/peripherals/pic14_ccp.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/peripherals/pic14_usart.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/peripherals/pic14_comp.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/peripherals/pic14_vref.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/peripherals/pic14_eeprom.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
-    <Elem>../../epic-common/src/core</Elem>
-    <Elem>../../pic14-midrange-core/src/core</Elem>
-    <Elem>../../pic14-midrange-core/src/target</Elem>
-    <Elem>../../pic14-midrange-core/src/peripherals</Elem>
-    <Elem>../../pic16f628a-hal/src/core</Elem>
+    <Elem>../../common/src/core</Elem>
+    <Elem>../../hal/pic14/core/src/core</Elem>
+    <Elem>../../hal/pic14/core/src/target</Elem>
+    <Elem>../../hal/pic14/core/src/peripherals</Elem>
+    <Elem>../../hal/pic14/16f628a/src/core</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -99,7 +99,7 @@
         <property key="define-macros" value="PIC16F628A;FOSC_HZ=20000000"/>
         <property key="disable-optimizations" value="true"/>
         <property key="extra-include-directories"
-                  value="../../pic16f628a-hal/include/target;../../pic16f628a-hal/include;../../pic14-midrange-core/include;../../epic-common/include"/>
+                  value="../../hal/pic14/16f628a/include/target;../../hal/pic14/16f628a/include;../../hal/pic14/core/include;../../common/include"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
         <property key="garbage-collect-data" value="true"/>
         <property key="garbage-collect-functions" value="true"/>

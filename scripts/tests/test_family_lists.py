@@ -1,7 +1,7 @@
 """The family-bearing lists must follow the manifest, not drift.
 
 install.sh --list and the README's docgen blocks are generated from
-epic-common/manifest/modules.toml; these tests diff them against that
+common/manifest/modules.toml; these tests diff them against that
 manifest so a family landing alone cannot leave a stale list behind
 (epic-hal#219's failure mode: hand-maintained surfaces, all behind the
 manifest)."""
@@ -27,7 +27,7 @@ def load():
 
 
 def slugs(manifest):
-    return sorted(f.hal_dir.removesuffix("-hal") for f in manifest.families.values())
+    return sorted(f.slug for f in manifest.families.values())
 
 
 class TestInstallList(unittest.TestCase):

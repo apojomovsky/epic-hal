@@ -67,7 +67,7 @@
  *     stop is folded into EPIC_TIMER0_Init's bank-safe
  *     option_clr_set; EPIC_TIMER0_Stop itself is a plain OPTION_REG
  *     RMW that misdirects under XC8 v4.00, see
- *     pic16f87xa-hal/tests/sim_bank_probe.c.)
+ *     hal/pic14/16f87xa/tests/sim_bank_probe.c.)
  *   - TXIF is not cleared by the sim on a TXREG write (the driver
  *     clears it in software); polled TX uses the TRMT wait, which
  *     the sim does model (the harness's own log path proves it).

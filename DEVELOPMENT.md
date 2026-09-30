@@ -11,7 +11,7 @@ verification.
   host program under CMake/ctest, so logic gets exercised before it
   touches a programmer.
 - **Real-target builds** cross-compile with XC8, driven by a manifest
-  (`epic-common/manifest/modules.toml`) rather than per-module
+  (`common/manifest/modules.toml`) rather than per-module
   Makefiles.
 - **The mdb gate** runs the real compiled firmware headlessly under
   MPLAB SIM and checks actual register and UART output.
@@ -60,7 +60,7 @@ Docker image:
 make check-vendor    # one-time: tells you which 2 files to grab from Microchip
 make image           # build the toolchain image locally (once; cached after)
 make test            # host-sim build + test, every module
-make test MODULE=epic-lcd   # ... or just one
+make test MODULE=lib/lcd   # ... or just one (a directory here, a manifest id below)
 
 make xc8-build MODULE=epic-tick MCU=16F877A   # real-target build
 make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A  # the mdb gate

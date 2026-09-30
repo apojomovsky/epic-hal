@@ -4,11 +4,12 @@ test: if every changed file is on the shared non-code allowlist
 (ci_noncode_check.py), the matrix is empty and the job is skipped;
 otherwise the affected set is the transitive closure of the modules each
 CMakeLists.txt declares via its sibling <NAME>_DIR deps, plus every HAL
-for epic-common/ changes. Conservative: anything unrecognized means every
+for common/ changes. Conservative: anything unrecognized means every
 module. Prints {"non_code": bool, "modules": [...]}.
 """
 
 import json
+import posixpath
 import re
 import subprocess
 import sys
@@ -48,16 +49,12 @@ def build_dep_graph(modules):
     each module's own CMakeLists.txt. Pattern: a `<NAME>_DIR` CMake
     variable assigned `${CMAKE_CURRENT_SOURCE_DIR}/../<module>`, which is
     the one convention every module in this repo already follows for
-    pulling in a sibling (see epic-tick/CMakeLists.txt's EPIC_DIR for the
+    pulling in a sibling (see lib/tick/CMakeLists.txt's EPIC_DIR for the
     canonical example)."""
-    # Matches "../<module>" followed by a word boundary: either end of
-    # line (the multi-line `set(EPIC_DIR ... ../epic-tick` form, whose
-    # closing `CACHE PATH ...)` wraps to the next line) or a non-path
-    # character (the single-line `... ../pic18fxx5x-hal CACHE PATH "")`
-    # form). Module names in this repo are lowercase/digits/hyphen only,
-    # so `[^A-Za-z0-9_-]` or end-of-string both correctly terminate the
-    # match without slicing a longer name short.
-    pat = re.compile(r"\.\./([A-Za-z0-9_-]+)(?:$|[^A-Za-z0-9_-])")
+    # A relative "../.../<dir>" is resolved against the module's own
+    # directory and kept when it names a discovered module, so the graph
+    # does not depend on how deep modules sit in the tree.
+    pat = re.compile(r"((?:\.\./)+[A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*)")
     graph = {m: set() for m in modules}
     module_set = set(modules)
     for m in modules:
@@ -69,9 +66,20 @@ def build_dep_graph(modules):
             if "CMAKE_CURRENT_SOURCE_DIR" not in line or "_DIR" not in line:
                 continue
             match = pat.search(line.rstrip())
-            if match and match.group(1) in module_set and match.group(1) != m:
-                graph[m].add(match.group(1))
+            if not match:
+                continue
+            parts = posixpath.normpath(posixpath.join(m, match.group(1))).split("/")
+            for end in range(len(parts), 0, -1):
+                dep = "/".join(parts[:end])
+                if dep in module_set:
+                    if dep != m:
+                        graph[m].add(dep)
+                    break
     return graph
+
+
+def hal_modules(modules):
+    return [m for m in modules if m.startswith("hal/")]
 
 
 def transitive_closure(seeds, graph):
@@ -106,7 +114,7 @@ def main():
     module_set = set(modules)
 
     def owning_module(path):
-        # Longest matching module-dir prefix, so e.g. epic-tick/mcu/...
+        # Longest matching module-dir prefix, so e.g. lib/tick/mcu/...
         # attributes correctly even though epic-tick contains subdirs.
         best = None
         for m in module_set:
@@ -120,10 +128,10 @@ def main():
     for p in changed:
         if ci_noncode_check.is_non_code([p]):
             continue
-        if p.startswith("epic-common/"):
+        if p.startswith("common/"):
             # Implicit dependency of every HAL (include()'d, not its own
-            # module): treat as touching all three HAL directories.
-            touched_modules.update(m for m in modules if m.endswith("-hal"))
+            # module): treat as touching every module under hal/.
+            touched_modules.update(hal_modules(modules))
             continue
         m = owning_module(p)
         if m is None:
@@ -135,7 +143,7 @@ def main():
         print(json.dumps({"non_code": False, "modules": modules}))
         print(
             f"'{fallback_reason}' is outside any known module and outside "
-            f"epic-common/, falling back to the full {len(modules)}-module matrix",
+            f"common/, falling back to the full {len(modules)}-module matrix",
             file=sys.stderr,
         )
         return

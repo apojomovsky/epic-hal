@@ -11,7 +11,7 @@ decisions made for PIC18, not a checklist.
 ## Why this document is stricter than it looks
 
 Every peripheral driver bug found in this repo so far (the XC8 codegen
-sections of `pic16f87xa-hal/README.md` and `pic18fxx5x-hal/README.md`)
+sections of `hal/pic14/16f87xa/README.md` and `hal/pic18/18fxx5x/README.md`)
 was invisible to code review, to
 the host simulator, and to a clean `xc8-cc` compile-and-link. Every one
 of them was only caught by actually running the compiled firmware under
@@ -104,8 +104,8 @@ the exact same `mdb` reads.
 ## §2. Decide the path: same family, or new family
 
 **Path A (new variant, existing family)** if *all* of these hold
-against an already-supported sibling in `pic16f87xa-hal/` or
-`pic18fxx5x-hal/`:
+against an already-supported sibling in `hal/pic14/16f87xa/` or
+`hal/pic18/18fxx5x/`:
 - Same addressing model and same interrupt architecture (not just
   "similar", the same scheme, bit-for-bit compatible enough that the
   existing `pic16_irq.c`/`pic18_irq.c` register tables mostly still
@@ -143,10 +143,10 @@ deliverables) before calling it done.
    error". If
    the new variant has less RAM or flash than the smallest currently
    supported one, expect some existing modules to need an `excluded`
-   entry in `epic-common/manifest/modules.toml` for it, not a silent
+   entry in `common/manifest/modules.toml` for it, not a silent
    assumption that everything still fits.
 3. Add the MCU to the manifest and regenerate the SFR header:
-   - Add it to that family's `variants` in `epic-common/manifest/modules.toml`,
+   - Add it to that family's `variants` in `common/manifest/modules.toml`,
      then add it to every module's `supported` or `excluded` (the loader
      fails until every module has classified it).
    - Add a `[[families.<FAMILY>.conditional_sources]]` entry if the new part
@@ -189,7 +189,7 @@ it done.
 
 1. **Implement the driver**, citing the datasheet section for every
    register, bit, and computed value. Match this repo's existing
-   convention: family-neutral logic in `epic-common/`, register-specific
+   convention: family-neutral logic in `common/`, register-specific
    bodies per family, same names/signatures across families (the
    "fixed contract" root `CLAUDE.md` describes).
 2. **Extend the host-sim model** if the peripheral needs simulated
@@ -199,7 +199,7 @@ it done.
 3. **Write a host-testable example** that exercises the peripheral with
    *known* input values and asserts the *exact* expected register image
    or behavior, with the expected values computed and documented in the
-   test's own header comment (see `pic18fxx5x-hal/tests/
+   test's own header comment (see `hal/pic18/18fxx5x/tests/
    example_ccp_pwm.c`'s header for the exact style: "Expected register
    image: CCPR1L = 50 >> 2 = 0x0C ..."). If a suitable example already
    exists for this peripheral, extend it rather than writing a new one.
@@ -220,7 +220,7 @@ it done.
    (currently PIC16F193X, exercised via RA0/GPIO), pass `MODE=gpio`;
    the wrapper then reads the marker via `print PORTA` and checks bit
    0. The matching `epic_harness_log()` magic-string dispatch lives
-   in `pic16f193x-hal/src/mdb/pic16f193x_harness_mdb.c`.
+   in `hal/pic14e/16f193x/src/mdb/pic16f193x_harness_mdb.c`.
    Use this exact protocol, established the hard way this session:
    - Use `stepi <N>` with a generous instruction count, **not**
      `run` + `wait`. `run`+`wait` does not reliably respect `break`-set
@@ -266,7 +266,7 @@ it done.
      wait window, even though every ISR was firing correctly and the
      peripheral logic was right. Two independent fixes made this
      reliable: (1) an *early exit* from the bounded loop the moment the
-     pass condition is already true (mirrors `pic18fxx5x-hal/tests/
+     pass condition is already true (mirrors `hal/pic18/18fxx5x/tests/
      example_timer2.c`'s `if (overflows >= EXPECTED_OVERFLOWS) break;`
      idiom), and (2) having the slowest-firing instance's own ISR drive
      the RA0 marker directly the instant its condition is met, instead
@@ -339,7 +339,8 @@ it done.
 Bigger version of the same discipline, in dependency order (each step
 assumes the previous ones are done and verified, not just written):
 
-1. **New sibling tree** (`<partno>-hal/`), skeleton copied from
+1. **New family tree** (`hal/<arch>/<family>/`, where `<arch>` is
+   `pic12`, `pic14`, `pic14e` or `pic18`), skeleton copied from
    whichever existing family is architecturally *closest* by addressing
    model and interrupt architecture (not by pin count or peripheral
    list). Expect to still write real driver code even when copying a
@@ -405,23 +406,23 @@ assumes the previous ones are done and verified, not just written):
      CM2CON1 in Bank 2, SRCON/BAUDCTL/ANSEL/ANSELH in Bank 3). The
      banked-access layer must be built and probed before the
      peripherals, and the probe must exercise every banked access site
-     (see `pic16f88x-hal/docs/ARCHITECTURE.md`'s banking section).
+     (see `hal/pic14/16f88x/docs/ARCHITECTURE.md`'s banking section).
    - **The smallest part in the family can be RAM-starved enough to
      change driver storage strategy** (PIC16F882: 128 B RAM, no
      Bank 2/3 GPR to pin into). If the largest part's drivers fit only
      by pinning to high banks, the small part forces unpinned
      best-fit storage; verify the whole family builds, not just the
      flagship, before calling the family done.
-7. **`<family>-hal/MANUAL.md`** as you go, matching
-   `pic16f87xa-hal/MANUAL.md`/`pic18fxx5x-hal/MANUAL.md`'s shape:
+7. **`hal/<arch>/<family>/MANUAL.md`** as you go, matching
+   `hal/pic14/16f87xa/MANUAL.md`/`hal/pic18/18fxx5x/MANUAL.md`'s shape:
    datasheet-cited peripheral/register reference, pointing to
-   `epic-common/MANUAL.md` for every family-agnostic convention instead
-   of re-explaining it (see `epic-common/MANUAL.md`'s introduction for
+   `common/MANUAL.md` for every family-agnostic convention instead
+   of re-explaining it (see `common/MANUAL.md`'s introduction for
    why that split exists and how it was carved out).
 8. **Any compiler/codegen quirks discovered along the way** recorded as
-   a live-gotcha section in `<family>-hal/README.md`, in the format
-   established in `pic16f87xa-hal/README.md` and
-   `pic18fxx5x-hal/README.md` (a standalone `docs/ARCHITECTURE.md` is
+   a live-gotcha section in `hal/<arch>/<family>/README.md`, in the format
+   established in `hal/pic14/16f87xa/README.md` and
+   `hal/pic18/18fxx5x/README.md` (a standalone `docs/ARCHITECTURE.md` is
    only kept while it holds live conventions, as `pic16f193x-hal` does
    for its AGENTS.md-cited BSR findings): cross-check any claimed
    compiler "bug" against the actual XC8 User's Guide (extract it from
@@ -461,7 +462,7 @@ assumes the previous ones are done and verified, not just written):
 10. **Litmus test**: point an existing family-agnostic consumer (a
     `epic-*` module, the task manager, whatever exists by then) at the
     new family and confirm zero changes are needed to the consumer
-    itself. If something in `epic-common/` needed to change to fit the
+    itself. If something in `common/` needed to change to fit the
     new family, that's a signal the shared contract was accidentally
     family-specific somewhere, fix that contract, not a sign the whole
     approach is wrong.
@@ -473,10 +474,10 @@ exist and are accurate, not just present:
 
 - [ ] Every peripheral passed §4's full gate (host + real `mdb`), not
       just "looks right" or "builds".
-- [ ] `<family>-hal/MANUAL.md` covers every peripheral touched,
+- [ ] `hal/<arch>/<family>/MANUAL.md` covers every peripheral touched,
       datasheet-cited.
 - [ ] Any genuinely surprising codegen finding is recorded in
-      `<family>-hal/README.md` (or a kept `docs/ARCHITECTURE.md`, per
+      `hal/<arch>/<family>/README.md` (or a kept `docs/ARCHITECTURE.md`, per
       the docs-lifecycle rules) with manual citations, not bare
       assertions.
 - [ ] The manifest family block and the family's own pseudo-module
@@ -503,14 +504,14 @@ account lives.
 
 | Pattern | Confirmed on | Full account |
 |---|---|---|
-| SFR access while a `pic_select_bank`-style bank switch is in effect, via a plain C local/parameter | PIC16 (classic mid-range) | `pic16f87xa-hal/README.md` (XC8 codegen gotchas) |
+| SFR access while a `pic_select_bank`-style bank switch is in effect, via a plain C local/parameter | PIC16 (classic mid-range) | `hal/pic14/16f87xa/README.md` (XC8 codegen gotchas) |
 | Family umbrella header sharing the compiler device header name (`pic16f628a.h`), shadowing it through `-I` at link time so XC8's own `__eeprom.c` loses all SFRs; 87XA/88X dodge it only because `pic16f87xa.h` differs from `pic16f877a.h` | PIC16F628A | PR #137 (umbrella renamed to `pic16f628a_hal.h`) |
-| SFR address that is a runtime variable/struct-field/parameter at the point of access (not a literal token) | PIC18 | `pic18fxx5x-hal/README.md` (XC8 codegen gotchas) |
-| Baud-rate/timing divisor math that can silently overflow the target register width | PIC18 (found in `pic18_harness_mdb.c`) | `pic18fxx5x-hal/README.md` (XC8 codegen gotchas) |
+| SFR address that is a runtime variable/struct-field/parameter at the point of access (not a literal token) | PIC18 | `hal/pic18/18fxx5x/README.md` (XC8 codegen gotchas) |
+| Baud-rate/timing divisor math that can silently overflow the target register width | PIC18 (found in `pic18_harness_mdb.c`) | `hal/pic18/18fxx5x/README.md` (XC8 codegen gotchas) |
 | Missing `HARNESS=sim` → watchdog-off Makefile override, WDT resets a bounded diagnostic build mid-run | PIC16, PIC18 | manifest `example.*.sim` configs (`WDTE=OFF`/`WDT=OFF`) |
-| Dangling pointer: a HAL `_Init` stores the caller's pointer instead of copying the handle, and the caller's storage is a non-`static` local | PIC16 (fixed); PIC18's own driver already copies the handle, not affected | `epic-common/MANUAL.md` (handle pattern) |
-| Read-only status/flag bits (RCIDL, CxOUT, FVRRDY, CPSOUT, ...) reading back set even though the driver never wrote them, mistaken for a write not landing | PIC16F193X (Enhanced Mid-range) | `pic16f193x-hal/docs/ARCHITECTURE.md`; §4 step 8 above |
-| `MODE=gpio` bounded-loop example starved by continuously-firing ISRs on MPLAB SIM, never reaching `epic_harness_report()` inside the `mdb` wait window, despite every ISR and the peripheral logic being correct | PIC16F193X (Timer2/4/6, 3 concurrent timer ISRs) | §4 step 6's sub-bullet above; the fix (early-exit + ISR-driven marker) is in `pic16f193x-hal/tests/example_timer246.c` |
+| Dangling pointer: a HAL `_Init` stores the caller's pointer instead of copying the handle, and the caller's storage is a non-`static` local | PIC16 (fixed); PIC18's own driver already copies the handle, not affected | `common/MANUAL.md` (handle pattern) |
+| Read-only status/flag bits (RCIDL, CxOUT, FVRRDY, CPSOUT, ...) reading back set even though the driver never wrote them, mistaken for a write not landing | PIC16F193X (Enhanced Mid-range) | `hal/pic14e/16f193x/docs/ARCHITECTURE.md`; §4 step 8 above |
+| `MODE=gpio` bounded-loop example starved by continuously-firing ISRs on MPLAB SIM, never reaching `epic_harness_report()` inside the `mdb` wait window, despite every ISR and the peripheral logic being correct | PIC16F193X (Timer2/4/6, 3 concurrent timer ISRs) | §4 step 6's sub-bullet above; the fix (early-exit + ISR-driven marker) is in `hal/pic14e/16f193x/tests/example_timer246.c` |
 | A hand-listed CI spot left unupdated when a family lands (`ci-target-sim.sh`'s `run_one` pilot list, `family-check.yml`'s inline module/part list, a missing `family-<slug>` job), so the family's gate silently does not run: the mdb leg matches nothing and passes vacuously, or no `HARNESS=sim` build script is emitted at all | PIC16F193X (the original discovery script had this shape and failed outright instead); PIC16F83_84 (wired into PR CI, missed in `nightly.yml`) | §5 step 9 above; §6's CI-wiring checklist item |
 
 This table is deliberately family-specific in its "confirmed on" column
