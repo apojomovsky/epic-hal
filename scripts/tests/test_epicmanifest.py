@@ -596,9 +596,6 @@ class TestEpicccHalSources(unittest.TestCase):
                 '"../escape.c"')))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 EEXAMPLE = MINIMAL.replace(
     '[modules.epic-tick.example.PIC18Fxx5x]',
     '[modules.epic-tick.example.PIC16F87XA.epiccc]\n'
@@ -745,3 +742,7 @@ class TestEpicccSimHalSources(unittest.TestCase):
             '  "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",\n', "")
         with self.assertRaises(epicmanifest.ManifestError):
             epicmanifest.load(write(noharness))
+
+
+if __name__ == "__main__":
+    unittest.main()

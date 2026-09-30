@@ -703,10 +703,6 @@ Memory Summary:
         self.assertIn("no Memory Summary", proc.stderr)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class TestEpicCcToolchain(unittest.TestCase):
     """The epic-cc backend passes the manifest mcu through untranslated.
 
@@ -897,3 +893,7 @@ class TestEpicccSimHalSliceEmit(unittest.TestCase):
             build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc")
         self.assertNotIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", s)
         self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c", s)
+
+
+if __name__ == "__main__":
+    unittest.main()
