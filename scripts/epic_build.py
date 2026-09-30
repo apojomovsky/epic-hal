@@ -605,8 +605,9 @@ def cmd_build(args):
     toolchain = getattr(args, "toolchain", "xc8")
     epic_cc = getattr(args, "epic_cc", "epic-cc")
     try:
+        module = manifest.resolve_module(args.module).name
         script = emit_build_script(
-            manifest, args.module, args.mcu,
+            manifest, module, args.mcu,
             build_dir=args.build_dir, dfp_dir=args.dfp_dir, fosc_hz=args.fosc_hz,
             variant=args.variant, toolchain=toolchain, epic_cc=epic_cc,
         )
@@ -616,7 +617,7 @@ def cmd_build(args):
     objdir = (REPO / args.build_dir / args.mcu).resolve()
     objdir.mkdir(parents=True, exist_ok=True)
     config_source = emit_config_source(
-        manifest, args.module, args.mcu, variant=args.variant,
+        manifest, module, args.mcu, variant=args.variant,
         toolchain=toolchain, fosc_hz=args.fosc_hz,
     )
     if config_source is not None:

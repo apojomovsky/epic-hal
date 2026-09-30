@@ -108,13 +108,18 @@ ci-image-push: image
 
 # ─────────────────────────── host-sim tests ──────────────────────────
 # Every module with a top-level CMakeLists.txt, same discovery
-# host-tests.yml's own `discover` job uses; MODULE= scopes to one.
+# host-tests.yml's own `discover` job uses. MODULE names one module as
+# a manifest id or a directory; anything else fails naming the valid
+# ids.
 ALL_MODULES := $(shell git ls-files -- '*/CMakeLists.txt' | sed 's#/CMakeLists.txt$$##' | sort)
-TEST_MODULES := $(if $(MODULE),$(MODULE),$(ALL_MODULES))
 
 test: image
 	@fail=0; \
-	for m in $(TEST_MODULES); do \
+	mods="$(ALL_MODULES)"; \
+	if [ -n "$(MODULE)" ]; then \
+		mods=$$(python3 scripts/resolve_module.py --dir "$(MODULE)") || exit 1; \
+	fi; \
+	for m in $$mods; do \
 		echo "=== $$m ==="; \
 		$(DOCKER_RUN) bash -c "cd $$m && cmake -B build >/dev/null && cmake --build build && ctest --test-dir build --output-on-failure" || fail=1; \
 	done; \
@@ -124,8 +129,8 @@ test: image
 # Real-target build. Resolution runs on the host (needs python3), the
 # emitted sh script runs in the container (which has xc8-cc and no
 # python3, see docker/ci-toolchain/Dockerfile). MODULE is a manifest
-# module name, e.g. epic-serial, not a path: the mcu/*-mplabx dirs it
-# used to name are gone.
+# id or directory, e.g. epic-serial or lib/serial; epic_build.py
+# resolves either to the id.
 xc8-build: image
 	@test -n "$(MODULE)" || { echo "usage: make xc8-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
 	@test -n "$(MCU)" || { echo "usage: make xc8-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
@@ -243,7 +248,7 @@ else
 		-e PIC8_CLANG_RESOURCE_DIR=/opt/clang/lib/clang/20 \
 		$(EPIC_CC_IMAGE) sh build/epiccc/$(MCU)/build.sh
 endif
-	@echo "Built build/epiccc/$(MCU)-$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print(m.example_for('$(MODULE)', e.load(e.default_path()).family_of('$(MCU)').name).name)") .hex"
+	@echo "Built build/epiccc/$(MCU)-$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print(m.example_for(m.resolve_module('$(MODULE)').name, m.family_of('$(MCU)').name).name)") .hex"
 # ─────────────────────────── mdb / MPLAB SIM gate ────────────────────
 # Thin wrapper around scripts/sim-mdb-run.sh, the exact same script CI
 # and scripts/sim-test-local.sh call, so there is one source of truth
@@ -254,7 +259,7 @@ endif
 # python3.
 mdb-test: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
-		echo "usage: make mdb-test MODULE=<manifest module> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio] [EXTRA_MDB=<mdb commands>] [EEPROM_WRITES=<n>]" >&2; \
+		echo "usage: make mdb-test MODULE=<module id or dir> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio] [EXTRA_MDB=<mdb commands>] [EEPROM_WRITES=<n>]" >&2; \
 		echo "  MODE=uart (default) for PIC16F87XA/PIC18Fxxxx (UART capture);" >&2; \
 		echo "  MODE=gpio for PIC16F193X (RA0 register readback)." >&2; \
 		echo "  EXTRA_MDB: extra mdb commands inserted before quit, e.g." >&2; \
@@ -264,16 +269,18 @@ mdb-test: image
 		echo "  e.g. make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A" >&2; \
 		exit 1; \
 	fi
-	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --variant sim \
-	  --build-dir build-sim/$(MODULE) \
+	MID=$$(python3 scripts/resolve_module.py --id "$(MODULE)") || exit 1; \
+	python3 scripts/epic_build.py build --module $$MID --mcu $(MCU) --variant sim \
+	  --build-dir build-sim/$$MID \
 	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
+	MID=$$(python3 scripts/resolve_module.py --id "$(MODULE)") || exit 1; \
 	$(DOCKER_RUN) env \
 	  $(if $(filter toggle,$(or $(MODE),uart)),TOGGLE_REG=$(or $(REG),PORTB) TOGGLE_BIT=$(or $(BIT),0) TOGGLE_SAMPLES=$(or $(SAMPLES),12) TOGGLE_STEPI=$(or $(STEPI),200000),) \
-	  scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)" $(or $(EEPROM_WRITES),$(if $(filter epic-settings,$(MODULE)),24,0))
+	  scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $$MID $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)" $(or $(EEPROM_WRITES),$(if $(filter epic-settings lib/settings,$(patsubst %/,%,$(MODULE))),24,0))
 
 mdb-epiccc: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
-		echo "usage: make mdb-epiccc MODULE=<manifest module> MCU=<mcu> DEVICE=<device> [REG=PORTB] [BIT=0] [SAMPLES=12] [STEPI=200000]" >&2; \
+		echo "usage: make mdb-epiccc MODULE=<module id or dir> MCU=<mcu> DEVICE=<device> [REG=PORTB] [BIT=0] [SAMPLES=12] [STEPI=200000]" >&2; \
 		echo "  Runs an ALREADY BUILT epic-cc hex under MPLAB SIM and requires REG bit BIT to" >&2; \
 		echo "  change across SAMPLES samples of STEPI instructions each. Deterministic:" >&2; \
 		echo "  stepi, not wall-clock wait, so the sequence is identical run to run." >&2; \
@@ -285,10 +292,11 @@ mdb-epiccc: image
 		echo "  e.g. make mdb-epiccc MODULE=pic16f88x-hal MCU=16F887 DEVICE=PIC16F887" >&2; \
 		exit 1; \
 	fi
+	MID=$$(python3 scripts/resolve_module.py --id "$(MODULE)") || exit 1; \
 	$(DOCKER_RUN) env SIM_MDB_SKIP_BUILD=1 \
 	  TOGGLE_REG=$(or $(REG),PORTB) TOGGLE_BIT=$(or $(BIT),0) \
 	  TOGGLE_SAMPLES=$(or $(SAMPLES),12) TOGGLE_STEPI=$(or $(STEPI),200000) \
-	  scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $(MODULE) 0 toggle
+	  scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $$MID 0 toggle
 # ─────────────────── mdb run on an arbitrary hex ─────────────────────
 # Program an existing hex under MPLAB SIM and run EXTRA_MDB (register
 # reads) after the first wait. Unlike mdb-test there is no HARNESS=sim

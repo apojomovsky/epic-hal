@@ -206,7 +206,7 @@ checks you are in a `.worktrees/` worktree and not on `master`).
 ## Development cycle
 
 Fast inner loop stays host-sim only, either path: `cmake -B build &&
-cmake --build build && ctest` (native) or `make test MODULE=<dir>`
+cmake --build build && ctest` (native) or `make test MODULE=<id|dir>`
 (Docker), repeat. Only move to real-target + `mdb` once the host-sim
 example passes, that loop is much slower.
 

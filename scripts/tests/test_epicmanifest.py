@@ -297,6 +297,27 @@ class TestResolution(unittest.TestCase):
     def test_resolve_deps_rejects_unknown_module(self):
         with self.assertRaises(epicmanifest.ManifestError):
             self.m.resolve_deps("epic-nope")
+    def test_resolve_module_accepts_an_id(self):
+        mod = self.m.resolve_module("epic-tick")
+        self.assertEqual((mod.name, mod.dir), ("epic-tick", "lib/tick"))
+
+    def test_resolve_module_accepts_a_dir(self):
+        mod = self.m.resolve_module("lib/tick")
+        self.assertEqual(mod.name, "epic-tick")
+
+    def test_resolve_module_ignores_a_trailing_slash(self):
+        self.assertEqual(self.m.resolve_module("lib/tick/").name, "epic-tick")
+
+    def test_resolve_module_ignores_a_trailing_slash_on_an_id(self):
+        self.assertEqual(self.m.resolve_module("epic-tick/").name, "epic-tick")
+
+
+    def test_resolve_module_rejects_unknown_values_naming_valid_ids(self):
+        with self.assertRaisesRegex(
+            epicmanifest.ManifestError, "unknown module 'epic-nope'.*epic-tick"
+        ):
+            self.m.resolve_module("epic-nope")
+
 
     def test_family_of_maps_a_part_to_its_family(self):
         self.assertEqual(self.m.family_of("16F877A").name, "PIC16F87XA")

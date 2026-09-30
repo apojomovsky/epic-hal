@@ -600,6 +600,32 @@ class TestBuildScript(unittest.TestCase):
         self.assertIn("no sim variant", str(cm.exception))
 
 
+class TestModuleForm(unittest.TestCase):
+    """`build --module` accepts a manifest id or a directory."""
+
+    def _args(self, module):
+        import argparse
+        return argparse.Namespace(
+            module=module, mcu="16F877A", build_dir="build", dfp_dir="",
+            fosc_hz=None, variant="target", toolchain="xc8",
+            epic_cc="epic-cc", run=False,
+        )
+
+    def test_build_accepts_a_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old, epic_build.REPO = epic_build.REPO, pathlib.Path(tmp)
+            try:
+                epic_build.cmd_build(self._args("lib/tick"))
+            finally:
+                epic_build.REPO = old
+            self.assertTrue(
+                (pathlib.Path(tmp) / "build" / "16F877A" / "build.sh").exists())
+
+    def test_build_rejects_an_unknown_module_naming_valid_ids(self):
+        with self.assertRaisesRegex(SystemExit, "unknown module 'epic-nope'"):
+            epic_build.cmd_build(self._args("epic-nope"))
+
+
 class TestReport(unittest.TestCase):
     LOG = """
 Memory Summary:
