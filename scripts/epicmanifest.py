@@ -184,6 +184,22 @@ class Manifest:
             raise ManifestError(f"unknown module '{name}'")
         return mod
 
+    def resolve_module(self, value: str):
+        """The module named by a manifest id or a directory.
+
+        `make test` scopes by directory while the target builds scope
+        by id; both spellings name the same module, so every entry
+        point accepts either. A trailing slash is ignored.
+        """
+        want = value.rstrip("/")
+        if want in self.modules:
+            return self.modules[want]
+        for mod in self.modules.values():
+            if mod.dir == want:
+                return mod
+        known = ", ".join(sorted(self.modules))
+        raise ManifestError(f"unknown module '{value}'; known ids: {known}")
+
     def resolve_deps(self, module_name: str) -> list[str]:
         """The module plus every transitive dependency, dependencies first.
 

@@ -60,7 +60,7 @@ Docker image:
 make check-vendor    # one-time: tells you which 2 files to grab from Microchip
 make image           # build the toolchain image locally (once; cached after)
 make test            # host-sim build + test, every module
-make test MODULE=lib/lcd   # ... or just one (a directory here, a manifest id below)
+make test MODULE=epic-lcd   # ... or just one (a manifest id or a directory, everywhere)
 
 make xc8-build MODULE=epic-tick MCU=16F877A   # real-target build
 make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A  # the mdb gate
