@@ -11,8 +11,6 @@
             <sourceRootList>
                 <sourceRootElem>../../common/src/core</sourceRootElem>
                 <sourceRootElem>../../hal/pic14/16f628a/src/core</sourceRootElem>
-                <sourceRootElem>../../hal/pic14/16f628a/src/target</sourceRootElem>
-                <sourceRootElem>../../hal/pic14/16f628a/src/peripherals</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>

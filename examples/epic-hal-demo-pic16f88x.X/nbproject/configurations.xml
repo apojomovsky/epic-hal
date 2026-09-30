@@ -42,6 +42,7 @@
         <itemPath>../../hal/pic14/16f88x/src/peripherals/pic16f88x_osc.c</itemPath>
         <itemPath>../../hal/pic14/16f88x/src/peripherals/pic16f88x_ulpwu.c</itemPath>
       </logicalFolder>
+      <itemPath>main.c</itemPath>
     </logicalFolder>
 
   </logicalFolder>
@@ -51,7 +52,6 @@
     <Elem>../../hal/pic14/core/src/target</Elem>
     <Elem>../../hal/pic14/core/src/peripherals</Elem>
     <Elem>../../hal/pic14/16f88x/src/core</Elem>
-    <Elem>../../hal/pic14/16f88x/src/target</Elem>
     <Elem>../../hal/pic14/16f88x/src/peripherals</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>

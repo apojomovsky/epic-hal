@@ -22,7 +22,6 @@
                 <sourceRootElem>../../lib/taskmgr/src</sourceRootElem>
                 <sourceRootElem>../../lib/tick/src</sourceRootElem>
                 <sourceRootElem>../../hal/pic14/16f87xa/src/core</sourceRootElem>
-                <sourceRootElem>../../hal/pic14/16f87xa/src/target</sourceRootElem>
                 <sourceRootElem>../../hal/pic14/16f87xa/src/peripherals</sourceRootElem>
             </sourceRootList>
             <confList>
