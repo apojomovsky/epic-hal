@@ -4,10 +4,12 @@ names, so a layout move that it misreads shrinks the CI matrix silently."""
 import importlib.util
 import os
 import pathlib
+import sys
 import unittest
 
 SCRIPTS = pathlib.Path(__file__).resolve().parents[1]
 REPO_ROOT = SCRIPTS.parent
+sys.path.insert(0, str(SCRIPTS))
 
 
 def load():
