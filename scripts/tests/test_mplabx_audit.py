@@ -26,7 +26,12 @@ def family():
     return types.SimpleNamespace(
         name="PIC16F87XA",
         hal_sources=["hal/pic14/16f87xa/src/core/pic16_irq_table.c"],
-        conditional_sources=[],
+        conditional_sources=[
+            types.SimpleNamespace(
+                path="hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c",
+                variants=["16F877A"],
+            ),
+        ],
         harness_src="common/src/core/epic_harness_target.c",
     )
 
@@ -39,6 +44,7 @@ CONFIG = """<?xml version="1.0" encoding="UTF-8"?>
   </logicalFolder>
   <sourceRootList>
 {roots}  </sourceRootList>
+  <confs><conf><targetDevice>PIC16F877A</targetDevice></conf></confs>
 </configurationDescriptor>
 """
 
@@ -122,6 +128,24 @@ class AuditCase(unittest.TestCase):
         self.write_project(items, roots, list(items))
         errors = mplabx_audit.check_project(self.proj, family())
         self.assertTrue(any("rogue" in e and "manifest" in e for e in errors))
+
+    def test_conditional_for_this_part_passes(self):
+        items = ["../../hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c",
+                 "main.c"]
+        self.touch(*items)
+        self.write_project(items, [], list(items))
+        self.assertEqual(mplabx_audit.check_project(self.proj, family()), [])
+
+    def test_conditional_for_another_part_fails(self):
+        fam = family()
+        fam.conditional_sources[0].variants = ["16F874A"]
+        items = ["../../hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c",
+                 "main.c"]
+        self.touch(*items)
+        self.write_project(items, [], list(items))
+        errors = mplabx_audit.check_project(self.proj, fam)
+        self.assertTrue(any("psp" in e and "manifest" in e for e in errors))
+
 
     def test_lib_file_needs_existence_only(self):
         items = ["../../lib/whatever/src/thing.c", "main.c"]

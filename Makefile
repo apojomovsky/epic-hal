@@ -386,6 +386,7 @@ audit: image
 	python3 scripts/hex-identity-audit.py
 	python3 scripts/dfp-pin-audit.py
 	python3 scripts/epiccc-slice-audit.py
+	python3 scripts/mplabx-audit.py
 
 # ──────────────────── local replica of CI's target job ──────────────
 # One command to reproduce the whole "target" CI job locally: emit the

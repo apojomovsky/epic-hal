@@ -14,8 +14,9 @@ across renames (epic-hal#314). Per project this checks:
    scope, only examples/epic-hal-demo-*.X),
 2. the configurations.xml itemPaths equal the Makefile SOURCEFILES,
 3. every hal/ or common/ file the project builds is in the manifest
-   family's hal_sources, conditional_sources or harness_src (the
-   demo's own main.c and lib/ files need existence only).
+   family's hal_sources, harness_src, or the conditional_sources
+   applying to the project's own targetDevice (the demo's own
+   main.c and lib/ files need existence only).
 """
 import pathlib
 import re
@@ -76,10 +77,20 @@ def check_project(proj: pathlib.Path, family) -> list[str]:
             f"config-only {sorted(items - sources)}, "
             f"makefile-only {sorted(sources - items)}")
 
+    # Conditional sources apply per part (same rule as
+    # Manifest.sources_for): the project's targetDevice selects which
+    # variants count, so a conditional gated to another die fails here
+    # instead of hiding behind the family's full list.
+    device = re.search(r"<targetDevice>([^<]+)", cfg)
+    if device is None:
+        errors.append(f"{proj.name}: no targetDevice in configurations.xml")
+        return errors
+    mcu = device.group(1)
+    if mcu.startswith("PIC"):
+        mcu = mcu[len("PIC"):]
     known = set(family.hal_sources)
-    known.update(c.path for c in family.conditional_sources)
-    if family.harness_src is not None:
-        known.add(family.harness_src)
+    known.update(
+        c.path for c in family.conditional_sources if mcu in c.variants)
     for path in sorted(items | sources):
         if path.startswith("../../hal/") or path.startswith("../../common/"):
             rel = "/".join(pathlib.PurePosixPath(path).parts[2:])
