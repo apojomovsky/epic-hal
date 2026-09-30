@@ -27,14 +27,11 @@
         <itemPath>../../hal/pic14/core/src/core/pic14_irq_dispatch.c</itemPath>
       </logicalFolder>
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
-        <itemPath>../../hal/pic14/core/src/peripherals/pic14_gpio.c</itemPath>
-        <itemPath>../../hal/pic14/core/src/peripherals/pic14_timer0.c</itemPath>
+        <itemPath>../../hal/pic14/16f63x_67x_68x/src/peripherals/pic16f63x_67x_68x_gpio.c</itemPath>
         <itemPath>../../hal/pic14/core/src/peripherals/pic14_timer1.c</itemPath>
-        <itemPath>../../hal/pic14/core/src/peripherals/pic14_timer2.c</itemPath>
-        <itemPath>../../hal/pic14/core/src/peripherals/pic14_ccp.c</itemPath>
-        <itemPath>../../hal/pic14/core/src/peripherals/pic14_usart.c</itemPath>
-        <itemPath>../../hal/pic14/core/src/peripherals/pic14_comp.c</itemPath>
-        <itemPath>../../hal/pic14/core/src/peripherals/pic14_vref.c</itemPath>
+        <itemPath>../../hal/pic14/16f63x_67x_68x/src/peripherals/pic16f63x_67x_68x_comp.c</itemPath>
+        <itemPath>../../hal/pic14/16f63x_67x_68x/src/peripherals/pic16f63x_67x_68x_osc.c</itemPath>
+        <itemPath>../../hal/pic14/core/src/peripherals/pic14_timer0.c</itemPath>
         <itemPath>../../hal/pic14/core/src/peripherals/pic14_eeprom.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>

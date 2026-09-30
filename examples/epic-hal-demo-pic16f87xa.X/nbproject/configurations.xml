@@ -80,7 +80,6 @@
     <Elem>../../lib/taskmgr/src</Elem>
     <Elem>../../lib/tick/src</Elem>
     <Elem>../../hal/pic14/16f87xa/src/core</Elem>
-    <Elem>../../hal/pic14/16f87xa/src/target</Elem>
     <Elem>../../hal/pic14/16f87xa/src/peripherals</Elem>
     <Elem>../../hal/pic14/core/src/peripherals</Elem>
     <Elem>../../hal/pic14/core/src/target</Elem>

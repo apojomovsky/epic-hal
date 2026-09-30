@@ -35,6 +35,7 @@
         <itemPath>../../hal/pic14/core/src/peripherals/pic14_usart.c</itemPath>
         <itemPath>../../hal/pic14/core/src/peripherals/pic14_ssp.c</itemPath>
         <itemPath>../../hal/pic14/core/src/peripherals/pic14_adc.c</itemPath>
+        <itemPath>../../hal/pic14/16f7x/src/peripherals/pic16f7x_psp.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>

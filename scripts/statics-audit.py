@@ -61,10 +61,6 @@ ALLOWLIST = {
         "193X FSR1-indirect derefs, bank-agnostic (verified)",
     ("hal/pic14e/16f193x/src/peripherals/pic16f193x_timer246.c", "g_handle"):
         "193X FSR1-indirect derefs, bank-agnostic (verified)",
-    ("hal/pic14/16f87xa/src/peripherals/pic16f87xa_ccp.c", "g_ccp_callbacks"):
-        "87XA CCP ISR reads the array directly, auto-banksel (verified)",
-    ("hal/pic14/16f88x/src/peripherals/pic16f88x_ccp.c", "g_ccp_callbacks"):
-        "88X CCP ISR reads the array directly, auto-banksel (same mechanism as 87XA)",
     ("hal/pic14/core/src/peripherals/pic14_ccp.c", "g_ccp_callbacks"):
         "shared CCP ISR reads the array directly with a constant index, auto-banksel (same mechanism as 87XA)",
     ("lib/serial/src/epic_serial.c", "g_tx_buf"):
