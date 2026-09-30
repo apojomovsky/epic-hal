@@ -157,7 +157,12 @@ if [ ! -s "$xc8_capture" ] || [ ! -s "$epiccc_capture" ]; then
   exit 1
 fi
 
-if diff -u "$xc8_capture" "$epiccc_capture"; then
+. "$repo_root/scripts/compare-normalize.sh"
+normalize_trace "$module" "$xc8_capture" > "$xc8_capture.cmp"
+normalize_trace "$module" "$epiccc_capture" > "$epiccc_capture.cmp"
+show_fire_ticks "$module" "$xc8_capture" "$epiccc_capture"
+
+if diff -u "$xc8_capture.cmp" "$epiccc_capture.cmp"; then
   echo "IDENTICAL: XC8 and epic-cc UART traces match byte-for-byte."
 else
   echo ""
