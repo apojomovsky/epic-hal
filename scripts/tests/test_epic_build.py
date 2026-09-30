@@ -727,6 +727,27 @@ class TestEpicCcToolchain(unittest.TestCase):
     def test_no_per_part_name_table_remains(self):
         self.assertFalse(hasattr(epic_build, "_device_for_epic_cc"))
 
+    def test_report_off_by_default_for_the_pinned_gate_driver(self):
+        # The CI gate driver predates --report (epic-cc#698), so plain
+        # emission stays flag-free; only the measurement path opts in.
+        self.assertNotIn("--report", self.script())
+
+    def test_report_lands_beside_the_hex(self):
+        s = epic_build.emit_build_script(
+            load(), "epic-tick", "16F877A",
+            build_dir="build", dfp_dir="", toolchain="epic-cc",
+            report=True,
+        )
+        self.assertIn("--report build/16F877A-tick-blink.json", s)
+
+    def test_report_on_xc8_raises(self):
+        with self.assertRaises(epic_build.UnsupportedError) as ctx:
+            epic_build.emit_build_script(
+                load(), "epic-tick", "16F877A",
+                build_dir="build", dfp_dir="/opt/dfp", report=True,
+            )
+        self.assertIn("--toolchain epic-cc", str(ctx.exception))
+
     def test_unsupported_mcu_still_raises_with_the_reason(self):
         with self.assertRaises(epic_build.UnsupportedError) as ctx:
             self.script(mcu="16F873A")
