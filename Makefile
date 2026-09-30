@@ -110,7 +110,7 @@ ci-image-push: image
 # Every module with a top-level CMakeLists.txt, same discovery
 # host-tests.yml's own `discover` job uses. MODULE names one module as
 # a manifest id or a directory; anything else fails naming the valid
-# ids.
+# ids, and an id with no host-sim build fails naming the host-testable ones.
 ALL_MODULES := $(shell git ls-files -- '*/CMakeLists.txt' | sed 's#/CMakeLists.txt$$##' | sort)
 
 test: image
@@ -118,6 +118,10 @@ test: image
 	mods="$(ALL_MODULES)"; \
 	if [ -n "$(MODULE)" ]; then \
 		mods=$$(python3 scripts/resolve_module.py --dir "$(MODULE)") || exit 1; \
+		if [ ! -f "$$mods/CMakeLists.txt" ]; then \
+			echo "error: module '$(MODULE)' has no host-sim build; host-testable modules: $(ALL_MODULES)" >&2; \
+			exit 1; \
+		fi; \
 	fi; \
 	for m in $$mods; do \
 		echo "=== $$m ==="; \
