@@ -9,7 +9,7 @@
 # exactly what CI resolves and pulls.
 
 # ─────────────────────────── image identity ─────────────────────────
-.PHONY: vendor-link check-vendor image ci-image-push test xc8-build mdb-test mdb-epiccc mdb-hex sim-epiccc target-ci exec audit shell bootstrap doctor setup-hooks pre-pr-check
+.PHONY: vendor-link check-vendor image ci-image-push test xc8-build epiccc-build epiccc-sim-sizes mdb-test mdb-epiccc mdb-hex sim-epiccc target-ci exec audit shell bootstrap doctor setup-hooks pre-pr-check
 # Same tag-resolution formula CI and scripts/sim-test-local.sh already
 # use (read straight out of the Dockerfile's own ARGs), kept here in one
 # place so ci-image-push pushes to the exact tag CI resolves and pulls,
@@ -154,6 +154,12 @@ xc8-build: image
 # glibc breaks every epiccc-build with `version GLIBC_2.39 not found`.
 # Build the driver in the image instead (DEVELOPMENT.md, "The shared
 # driver binary and the image's glibc").
+# VARIANT=sim builds the MPLAB SIM diagnostic firmware with epic-cc
+# instead, for like-for-like measurement against the XC8 sim recipe.
+# Sim hexes land in build/epiccc-sim (never shared with target), and
+# the driver writes its flash/RAM JSON beside the hex (needs a driver
+# past epic-cc#698). The target path stays flag-free: the CI gate pins
+# an older driver.
 #
 # EPIC_CC_HOST=1 runs the emitted script directly on the host instead,
 # which is the one mode a host-built driver suits: the CI epiccc-gate
@@ -178,9 +184,12 @@ EPIC_CC_RUN := mkdir -p $(HOME_MOUNT) $(HOME)/.cache/epic-cc/target && docker ru
 	-v $(HOME_MOUNT):$(HOME) \
 	-v $(HOME)/.cache/epic-cc/target:/tmp/cargo-target \
 	-v $(CURDIR):/repo -w /repo
+VARIANT ?= target
+EPICCC_BUILD_DIR := build/epiccc$(if $(filter-out target,$(VARIANT)),-$(VARIANT))
+EPICCC_REPORT := $(if $(filter sim,$(VARIANT)),--report,)
 epiccc-build:
-	@test -n "$(MODULE)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
-	@test -n "$(MCU)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
+	@test -n "$(MODULE)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A [VARIANT=target|sim]" >&2; exit 1; }
+	@test -n "$(MCU)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A [VARIANT=target|sim]" >&2; exit 1; }
 	@if [ "$(EPIC_CC_HOST)" != "1" ] && [ -z "$(EPIC_CC_IMAGE)" ]; then \
 		echo "epiccc-build: no EPIC_CC_IMAGE and no usable epic-cc checkout at $(CURDIR)/epic-cc" >&2; \
 		echo "  (missing, or predates epic-cc#760 with no scripts/dev-image-tag.sh)." >&2; \
@@ -244,15 +253,34 @@ epiccc-build:
 			esac; \
 		fi; \
 	fi
-	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --toolchain epic-cc --epic-cc $(EPIC_CC_BIN) --build-dir build/epiccc
+	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --variant $(VARIANT) --toolchain epic-cc --epic-cc $(EPIC_CC_BIN) --build-dir $(EPICCC_BUILD_DIR) $(EPICCC_REPORT)
 ifeq ($(EPIC_CC_HOST),1)
-	sh build/epiccc/$(MCU)/build.sh
+	sh $(EPICCC_BUILD_DIR)/$(MCU)/build.sh
 else
 	$(EPIC_CC_RUN) -e PIC8_CLANG_UNWRAPPED=/opt/clang/bin/clang \
 		-e PIC8_CLANG_RESOURCE_DIR=/opt/clang/lib/clang/20 \
-		$(EPIC_CC_IMAGE) sh build/epiccc/$(MCU)/build.sh
+		$(EPIC_CC_IMAGE) sh $(EPICCC_BUILD_DIR)/$(MCU)/build.sh
 endif
-	@echo "Built build/epiccc/$(MCU)-$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print(m.example_for(m.resolve_module('$(MODULE)').name, m.family_of('$(MCU)').name).name)") .hex"
+# ─────────────────── epic-cc sim size table ──────────────────────────
+# One-shot like-for-like measurement for the RAM audit and the
+# benchmark matrix: every audit demo's sim variant through the epic-cc
+# path above, then a flash/RAM table read off the drivers' JSON
+# reports. Encoder is expected to fail (page overflow) and only it
+# may: its failure is reported, the table still prints, and any other
+# failure exits nonzero.
+EPICCC_SIM_SPECS := epic-menu-demo:18F4550 epic-control-demo:18F4550 epic-pid:18F4550 epic-bridge-demo:18F4550 epic-encoder:16F877A
+epiccc-sim-sizes:
+	@fail=0; \
+	for spec in $(EPICCC_SIM_SPECS); do \
+		m=$${spec%%:*}; c=$${spec##*:}; \
+		$(MAKE) --no-print-directory epiccc-build MODULE=$$m MCU=$$c VARIANT=sim || \
+			if [ "$$m" = epic-encoder ]; then \
+				echo "$$spec: build failed (known page overflow), continuing"; \
+			else fail=1; fi; \
+	done; \
+	python3 scripts/epiccc_sim_sizes.py --tolerate epic-encoder:16F877A $(EPICCC_SIM_SPECS) || fail=1; \
+	exit $$fail
+
 # ─────────────────────────── mdb / MPLAB SIM gate ────────────────────
 # Thin wrapper around scripts/sim-mdb-run.sh, the exact same script CI
 # and scripts/sim-test-local.sh call, so there is one source of truth

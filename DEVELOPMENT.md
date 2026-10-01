@@ -318,6 +318,32 @@ a gate needs debugging. The host gcc/ctest build stays the fast inner
 loop; the sim gate is the CI verification layer between that and the
 mdb oracle.
 
+### The sim variant with epic-cc
+
+VARIANT=sim builds the same MPLAB SIM diagnostic firmware the XC8
+mdb-test recipe builds, but with epic-cc, so a comparison prices the
+same sources on both sides:
+
+```sh
+make epiccc-build MODULE=epic-menu-demo MCU=18F4550 VARIANT=sim
+```
+
+Sim hexes land in build/epiccc-sim, never in build/epiccc, so the two
+variants never share a config TU or a hex basename. The driver also
+writes its size report beside the hex
+(build/epiccc-sim/18F4550-menu-demo-sim.json): flash_words.used and
+ram_bytes.used are the measured sizes, the matching total fields the
+part's capacities. The key layout is the driver's contract (epic-cc
+ADR-025); this side only fixes the filename. --report needs a driver
+past epic-cc#698, which is why only the sim path passes it: the CI
+gate pins an older driver.
+
+make epiccc-sim-sizes builds every audit demo's sim variant (menu,
+control, pid and bridge on 18F4550, encoder on 16F877A) and prints
+the flash/RAM table off those JSON files. Encoder is expected to
+fail (@main exceeds a page) and only it may: its row prints FAIL,
+the table still prints, and any other failure exits nonzero.
+
 ### The shared driver binary and the image's glibc
 
 `epiccc-build` resolves its driver as a path inside the container
