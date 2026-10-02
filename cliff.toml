@@ -11,12 +11,24 @@ body = """
 {% else %}\
 ## [Unreleased]
 {% endif %}\
-{% for group, commits in commits | group_by(attribute="group") %}
-### {{ group | upper_first }}
-{% for commit in commits %}
+{% for group in ["Breaking", "Features", "Fixes", "Performance"] %}\
+{% set entries = commits | filter(attribute="group", value=group) %}\
+{% if entries %}\
+### {{ group }}
+{% for commit in entries %}\
 - {{ commit.message | upper_first }}\
 {% if commit.remote.pr_number %} (#{{ commit.remote.pr_number }}){% endif %}
-{% endfor %}
+{% endfor %}\
+{% endif %}\
+{% endfor %}\
+{% for group, commits in commits | group_by(attribute="group") %}\
+{% if group != "Breaking" and group != "Features" and group != "Fixes" and group != "Performance" %}\
+### {{ group | upper_first }}
+{% for commit in commits %}\
+- {{ commit.message | upper_first }}\
+{% if commit.remote.pr_number %} (#{{ commit.remote.pr_number }}){% endif %}
+{% endfor %}\
+{% endif %}\
 {% endfor %}
 """
 trim = true
@@ -34,13 +46,14 @@ commit_preprocessors = [
   { pattern = '\s*\x{2014}\s*', replace = ": " },
 ]
 commit_parsers = [
+  { message = "^chore\\(release\\)", skip = true },
+  { message = "^[^:]+!:", group = "Breaking" },
   { message = "^feat", group = "Features" },
-  { message = "^fix", group = "Bug Fixes" },
+  { message = "^fix", group = "Fixes" },
   { message = "^perf", group = "Performance" },
   { message = "^refactor", group = "Refactor" },
   { message = "^docs", group = "Documentation" },
   { message = "^test", group = "Testing" },
-  { message = "^chore\\(release\\)", skip = true },
   { message = "^(chore|build|ci|style|plan|debug)", group = "Miscellaneous" },
   { message = ".*", group = "Other" },
 ]

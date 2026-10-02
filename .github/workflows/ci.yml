@@ -284,6 +284,29 @@ jobs:
           fi
           echo "non_code=$result" >> "$GITHUB_OUTPUT"
 
+      # The manifest declares the oldest epic-cc this tree builds
+      # against ([toolchain] min_epic_cc); the gate's clang bundle
+      # must be at least that new. The driver pin is a sha, so the
+      # bundle version (EPIC_CC_CLANG_VER) is what is compared.
+      - name: Check the pinned epic-cc meets the manifest minimum
+        if: steps.noncode.outputs.non_code != 'true'
+        run: |
+          python3 - <<'PY'
+          import os
+          import sys
+          sys.path.insert(0, "scripts")
+          from epicmanifest import default_path, load
+          minimum = load(default_path()).min_epic_cc
+          pinned = os.environ["EPIC_CC_CLANG_VER"]
+          def parts(v):
+              return tuple(int(p) for p in v.split("."))
+          print(f"epic-cc minimum: {minimum}, pinned bundle: {pinned}")
+          if parts(pinned) < parts(minimum):
+              print(f"::error::pinned epic-cc {pinned} is older "
+                    f"than the manifest minimum {minimum}", file=sys.stderr)
+              raise SystemExit(1)
+          PY
+
       - name: Check out epic-cc at the pinned driver sha
         if: steps.noncode.outputs.non_code != 'true'
         uses: actions/checkout@v4

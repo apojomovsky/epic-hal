@@ -276,7 +276,10 @@ records the reasoning for the current sha.
    as a bump that fails the gate, not as a mystery. The clang bundle
    stays on the stable release (`EPIC_CC_CLANG_TAG`/`EPIC_CC_CLANG_VER`)
    unless a driver change forces a front-end or `opt` change that
-   requires a re-cut.
+   requires a re-cut. The manifest's `[toolchain] min_epic_cc` is the
+   floor the bundle must clear: the gate fails while `EPIC_CC_CLANG_VER`
+   is older than it, and raising the floor is a breaking change (it
+   needs the `!` marker and ships in the notes Compatibility section).
 3. The job prints the driver sha and clang version in its step summary,
    so a failure names the compiler.
 

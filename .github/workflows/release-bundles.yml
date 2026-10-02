@@ -327,12 +327,21 @@ jobs:
         run: |
           version="${{ needs.build.outputs.version }}"
           git-cliff --tag "$version" --latest --strip header -o notes.md
+          # Compatibility closes the notes (release policy section 5):
+          # the manifest minimum this release needs. Appended after the
+          # commit groups; extra groups trail the policy sections above,
+          # nothing is dropped to fit the shape. This step runs on the
+          # bare runner (the toolchain image has no python3), and the
+          # strip keeps one blank line before the appended section.
+          printf '%s\n' "$(cat notes.md)" > notes.md
+          minimum="$(python3 -c "import sys; sys.path.insert(0, 'scripts'); import epicmanifest as e; print(e.load(e.default_path()).min_epic_cc)")"
+          printf '\n### Compatibility\n\n- Requires epic-cc >= %s (manifest `[toolchain] min_epic_cc`).\n' "$minimum" >> notes.md
           cat notes.md
       - name: Create the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${{ needs.build.outputs.version }}" \
-            --title "Epic HAL ${{ needs.build.outputs.version }}" \
+            --title "epic-hal ${{ needs.build.outputs.version }}" \
             --notes-file notes.md \
             bundles/*.tar.gz bundles/SHA256SUMS bundles/parts.txt install.sh

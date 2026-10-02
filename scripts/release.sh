@@ -143,6 +143,16 @@ if git rev-parse -q --verify "refs/tags/$new" >/dev/null; then
     exit 1
 fi
 
+# VERSION is the version source of truth (cut-release.yml moves it in
+# the release PR). A manual cut tags HEAD as is, so refuse when the
+# file does not already name the version being cut: commit the bump
+# first instead of tagging a tree that disagrees with its own file.
+if [ "$(cat VERSION 2>/dev/null)" != "${new#v}" ]; then
+    echo "release: VERSION says '$(cat VERSION 2>/dev/null)', cutting $new" >&2
+    echo "release: write ${new#v} to VERSION and commit it first" >&2
+    exit 1
+fi
+
 echo "release: $latest -> $new  ($(git rev-parse --short HEAD))"
 
 if [ "$latest" != "" ] && [ -z "$(git log --oneline "$latest..HEAD")" ]; then
@@ -157,7 +167,7 @@ fi
 # ---- preview ---------------------------------------------------------
 # Tag locally first so the preview is generated from the real tag rather
 # than an approximation of it. Declining removes the tag again.
-git tag -a "$new" -m "Epic HAL $new"
+git tag -a "$new" -m "epic-hal $new"
 
 cleanup_tag() {
     git tag -d "$new" >/dev/null 2>&1 || true
