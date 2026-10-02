@@ -45,6 +45,18 @@ jobs:
           bump="${{ inputs.bump }}"
           if [ "$bump" = "auto" ]; then
             next="$(git-cliff --bumped-version)"
+            # Release policy rule 1a: before 1.0 a break bumps minor,
+            # never major. git-cliff always answers a break with a
+            # major bump, so clamp a 0.x major answer to the next minor.
+            # A manual major override keeps its literal meaning.
+            latest="$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)"
+            lcore="${latest#v}"; lmajor="${lcore%%.*}"
+            ncore="${next#v}"; nmajor="${ncore%%.*}"
+            if [ "$lmajor" = "0" ] && [ "$nmajor" != "0" ]; then
+              lrest="${lcore#*.}"; lminor="${lrest%%.*}"
+              next="v0.$((10#$lminor + 1)).0"
+              echo "cut-release: 0.x break clamped to $next (was $ncore major)"
+            fi
           else
             latest="$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)"
             if [ -z "$latest" ]; then
@@ -91,7 +103,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          git add CHANGELOG.md
+          # VERSION is the version source of truth (release policy
+          # rule 1c): the release PR moves it with the tag, so the
+          # tag never points at a file claiming an older release.
+          printf '%s\n' "${next#v}" > VERSION
+          git add CHANGELOG.md VERSION
           git commit -m "chore(release): ${next}"
           git push origin "$branch"
           url="$(gh pr create --base master --head "$branch" \
@@ -130,5 +146,5 @@ jobs:
           next="${{ steps.version.outputs.next }}"
           sha="${{ steps.merged.outputs.sha }}"
           git fetch origin "$sha"
-          git tag -a "$next" "$sha" -m "Epic HAL ${next}"
+          git tag -a "$next" "$sha" -m "epic-hal ${next}"
           git push origin "refs/tags/${next}"

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Turn the Conventional Commits between two tags into the "What changed"
-section of a GitHub Release. Called by .github/workflows/release-bundles.yml,
-which prepends the result to the static usage block.
+section of a GitHub Release. Called by scripts/release.sh to preview the
+notes before tagging; release-bundles.yml renders the published notes
+from git-cliff against cliff.toml instead.
 
 Commit subjects are the only source. Nothing is read from a changelog file,
 so a release never disagrees with the history it was cut from.

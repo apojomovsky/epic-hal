@@ -11,6 +11,9 @@ import epic_build  # noqa: E402
 import epicmanifest  # noqa: E402
 
 MANIFEST = """
+[toolchain]
+min_epic_cc = "0.3.0"
+
 [families.PIC16F87XA]
 hal_dir  = "hal/pic14/16f87xa"
 variants = ["16F873A", "16F877A"]

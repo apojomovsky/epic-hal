@@ -177,6 +177,10 @@ class Module:
 class Manifest:
     families: dict[str, Family]
     modules: dict[str, Module]
+    # Oldest epic-cc release this tree builds against, from the
+    # manifest's [toolchain] table. A breaking surface: raising it
+    # needs the `!` marker like any other break.
+    min_epic_cc: str
 
     def _module(self, name):
         mod = self.modules.get(name)
@@ -728,6 +732,29 @@ def _validate(manifest):
     _check_cycles(manifest.modules)
 
 
+def _parse_toolchain(raw) -> str:
+    """The minimum epic-cc version from the manifest's [toolchain] table.
+
+    @param raw in: the whole decoded manifest.
+    @return the bare X.Y.Z minimum.
+    """
+    table = raw.get("toolchain", {})
+    unknown = set(table) - {"min_epic_cc"}
+    if unknown:
+        raise ManifestError(
+            f"toolchain: unknown key(s) {sorted(unknown)}"
+        )
+    minimum = table.get("min_epic_cc")
+    if not isinstance(minimum, str):
+        raise ManifestError("toolchain: min_epic_cc is required")
+    parts = minimum.split(".")
+    if len(parts) != 3 or not all(p.isdigit() for p in parts):
+        raise ManifestError(
+            f"toolchain: min_epic_cc {minimum!r} is not X.Y.Z"
+        )
+    return minimum
+
+
 def load(path: pathlib.Path) -> Manifest:
     """Parse and validate the manifest at `path`."""
     with open(path, "rb") as fh:
@@ -742,9 +769,11 @@ def load(path: pathlib.Path) -> Manifest:
             name: _parse_module(name, table)
             for name, table in raw.get("modules", {}).items()
         },
+        min_epic_cc=_parse_toolchain(raw),
     )
     _validate(manifest)
     return manifest
+
 
 
 def default_path() -> pathlib.Path:

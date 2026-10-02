@@ -4,6 +4,9 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 import epicmanifest, epic_hal_init
 
 MANIFEST = """
+[toolchain]
+min_epic_cc = "0.3.0"
+
 [families.PIC16F87XA]
 hal_dir  = "hal/pic14/16f87xa"
 variants = ["16F873A", "16F877A"]
