@@ -187,9 +187,14 @@ EPIC_CC_RUN := mkdir -p $(HOME_MOUNT) $(HOME)/.cache/epic-cc/target && docker ru
 VARIANT ?= target
 EPICCC_BUILD_DIR := build/epiccc$(if $(filter-out target,$(VARIANT)),-$(VARIANT))
 EPICCC_REPORT := $(if $(filter sim,$(VARIANT)),--report,)
+# Optimization profile for the epic-cc driver (O0, O1, O2, Os). The Os
+# default emits no flag: it is the driver's own default, and the
+# target path stays flag-free so the CI gate's pinned driver
+# (predating epic-cc#839) keeps building.
+OPTLEVEL ?= Os
 epiccc-build:
-	@test -n "$(MODULE)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A [VARIANT=target|sim]" >&2; exit 1; }
-	@test -n "$(MCU)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A [VARIANT=target|sim]" >&2; exit 1; }
+	@test -n "$(MODULE)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A [VARIANT=target|sim] [OPTLEVEL=O0|O1|O2|Os]" >&2; exit 1; }
+	@test -n "$(MCU)" || { echo "usage: make epiccc-build MODULE=epic-serial MCU=16F877A [VARIANT=target|sim] [OPTLEVEL=O0|O1|O2|Os]" >&2; exit 1; }
 	@if [ "$(EPIC_CC_HOST)" != "1" ] && [ -z "$(EPIC_CC_IMAGE)" ]; then \
 		echo "epiccc-build: no EPIC_CC_IMAGE and no usable epic-cc checkout at $(CURDIR)/epic-cc" >&2; \
 		echo "  (missing, or predates epic-cc#760 with no scripts/dev-image-tag.sh)." >&2; \
@@ -253,7 +258,7 @@ epiccc-build:
 			esac; \
 		fi; \
 	fi
-	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --variant $(VARIANT) --toolchain epic-cc --epic-cc $(EPIC_CC_BIN) --build-dir $(EPICCC_BUILD_DIR) $(EPICCC_REPORT)
+	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --variant $(VARIANT) --toolchain epic-cc --epic-cc $(EPIC_CC_BIN) --build-dir $(EPICCC_BUILD_DIR) $(EPICCC_REPORT) --opt-level $(OPTLEVEL)
 ifeq ($(EPIC_CC_HOST),1)
 	sh $(EPICCC_BUILD_DIR)/$(MCU)/build.sh
 else

@@ -751,6 +751,59 @@ class TestEpicCcToolchain(unittest.TestCase):
             )
         self.assertIn("--toolchain epic-cc", str(ctx.exception))
 
+    def test_opt_level_default_emits_no_flag(self):
+        # Os is the driver's own default, and the target path stays
+        # flag-free so the CI gate's pinned driver (predating
+        # epic-cc#839) keeps building; only the measurement path
+        # opts in, like --report.
+        s = self.script()
+        self.assertIn("--target 16F877A ", s)
+        for level in ("O0", "O1", "O2", "Os"):
+            with self.subTest(level=level):
+                self.assertNotIn(f" -{level} ", s)
+
+    def test_opt_level_reaches_the_driver_command(self):
+        for level in ("O0", "O1", "O2"):
+            with self.subTest(level=level):
+                s = epic_build.emit_build_script(
+                    load(), "epic-tick", "16F877A",
+                    build_dir="build", dfp_dir="", toolchain="epic-cc",
+                    opt_level=level,
+                )
+                self.assertIn(f"--target 16F877A -{level} ", s)
+
+    def test_opt_level_explicit_Os_matches_the_default(self):
+        s = epic_build.emit_build_script(
+            load(), "epic-tick", "16F877A",
+            build_dir="build", dfp_dir="", toolchain="epic-cc",
+            opt_level="Os",
+        )
+        self.assertEqual(s, self.script())
+
+    def test_opt_level_unknown_spelling_raises(self):
+        with self.assertRaises(epic_build.UnsupportedError):
+            epic_build.emit_build_script(
+                load(), "epic-tick", "16F877A",
+                build_dir="build", dfp_dir="", toolchain="epic-cc",
+                opt_level="O3",
+            )
+
+    def test_opt_level_on_xc8_raises(self):
+        with self.assertRaises(epic_build.UnsupportedError) as ctx:
+            epic_build.emit_build_script(
+                load(), "epic-tick", "16F877A",
+                build_dir="build", dfp_dir="/opt/dfp", opt_level="O2",
+            )
+        self.assertIn("--toolchain epic-cc", str(ctx.exception))
+
+    def test_opt_level_default_leaves_xc8_alone(self):
+        s = epic_build.emit_build_script(
+            load(), "epic-tick", "16F877A",
+            build_dir="build", dfp_dir="/opt/dfp",
+        )
+        self.assertIn("xc8-cc", s)
+        self.assertNotIn(" -Os ", s)
+
     def test_unsupported_mcu_still_raises_with_the_reason(self):
         with self.assertRaises(epic_build.UnsupportedError) as ctx:
             self.script(mcu="16F873A")
