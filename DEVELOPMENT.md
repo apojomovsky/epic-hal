@@ -341,6 +341,11 @@ ADR-025); this side only fixes the filename. --report needs a driver
 past epic-cc#698, which is why only the sim path passes it: the CI
 gate pins an older driver.
 
+OPTLEVEL=O0|O1|O2|Os appends -O<profile> to the driver command for
+anything but the Os default (which emits no flag, so the CI gate's
+pinned driver keeps building). The report's opt_level names the
+profile per build. Anything but Os needs a driver past epic-cc#839.
+
 make epiccc-sim-sizes builds every audit demo's sim variant (menu,
 control, pid and bridge on 18F4550, encoder on 16F877A) and prints
 the flash/RAM table off those JSON files. Encoder is expected to
