@@ -270,20 +270,17 @@ endif
 # One-shot like-for-like measurement for the RAM audit and the
 # benchmark matrix: every audit demo's sim variant through the epic-cc
 # path above, then a flash/RAM table read off the drivers' JSON
-# reports. Encoder is expected to fail (page overflow) and only it
-# may: its failure is reported, the table still prints, and any other
+# reports. Encoder fits since the phase-4 extraction (epic-hal#327)
+# on a driver past epic-cc#935, so every row must print and any
 # failure exits nonzero.
 EPICCC_SIM_SPECS := epic-menu-demo:18F4550 epic-control-demo:18F4550 epic-pid:18F4550 epic-bridge-demo:18F4550 epic-encoder:16F877A
 epiccc-sim-sizes:
 	@fail=0; \
 	for spec in $(EPICCC_SIM_SPECS); do \
 		m=$${spec%%:*}; c=$${spec##*:}; \
-		$(MAKE) --no-print-directory epiccc-build MODULE=$$m MCU=$$c VARIANT=sim || \
-			if [ "$$m" = epic-encoder ]; then \
-				echo "$$spec: build failed (known page overflow), continuing"; \
-			else fail=1; fi; \
+		$(MAKE) --no-print-directory epiccc-build MODULE=$$m MCU=$$c VARIANT=sim || fail=1; \
 	done; \
-	python3 scripts/epiccc_sim_sizes.py --tolerate epic-encoder:16F877A $(EPICCC_SIM_SPECS) || fail=1; \
+	python3 scripts/epiccc_sim_sizes.py $(EPICCC_SIM_SPECS) || fail=1; \
 	exit $$fail
 
 # ─────────────────────────── mdb / MPLAB SIM gate ────────────────────

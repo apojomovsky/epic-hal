@@ -4,9 +4,9 @@
 Reads each expected demo's ``<mcu>-<sim name>.json`` beside its hex in
 the sim build dir (written by the driver's ``--report`` flag, see
 ``epic_build.py build --report``) and prints one flash/RAM row per
-demo. A demo with no readable report prints FAIL; tolerated demos
-(``--tolerate``, the known-broken encoder page overflow) still print
-FAIL but exit 0. Exit 1 = an untolerated demo has no report.
+demo. A demo with no readable report prints FAIL; demos named by
+``--tolerate`` still print FAIL but exit 0. Exit 1 = an untolerated
+demo has no report.
 """
 
 from __future__ import annotations
