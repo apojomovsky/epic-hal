@@ -1,7 +1,9 @@
-# Sourced by compare-toolchains.sh. The menu, control and bridge demos
-# log the tick each scripted event was consumed at (sim_*_demo.c) and
-# document it as visibility-only: which scheduler round consumes an
-# event depends on lag under SIM. It is shown, not compared.
+# Sourced by compare-toolchains.sh. The menu and control demos log the
+# tick each scripted event was consumed at (sim_menu_demo.c,
+# sim_control_demo.c) and document it as visibility-only: which
+# scheduler round consumes an event depends on lag under SIM. It is
+# shown, not compared. Bridge defines the same emitter but never calls
+# it (epic-hal#345), so its id-scoped rule is a no-op until wired.
 _fire_ticks_re='^([0-9A-F]{4} )+$'
 
 is_fire_tick_module() {
