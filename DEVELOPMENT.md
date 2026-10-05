@@ -276,7 +276,10 @@ records the reasoning for the current sha.
    as a bump that fails the gate, not as a mystery. The clang bundle
    stays on the stable release (`EPIC_CC_CLANG_TAG`/`EPIC_CC_CLANG_VER`)
    unless a driver change forces a front-end or `opt` change that
-   requires a re-cut.
+   requires a re-cut. The manifest's `[toolchain] min_epic_cc` is the
+   floor the bundle must clear: the gate fails while `EPIC_CC_CLANG_VER`
+   is older than it, and raising the floor is a breaking change (it
+   needs the `!` marker and ships in the notes Compatibility section).
 3. The job prints the driver sha and clang version in its step summary,
    so a failure names the compiler.
 
@@ -317,6 +320,37 @@ INTCON,PIR1,PIE1` on the runner prints register values per sample when
 a gate needs debugging. The host gcc/ctest build stays the fast inner
 loop; the sim gate is the CI verification layer between that and the
 mdb oracle.
+
+### The sim variant with epic-cc
+
+VARIANT=sim builds the same MPLAB SIM diagnostic firmware the XC8
+mdb-test recipe builds, but with epic-cc, so a comparison prices the
+same sources on both sides:
+
+```sh
+make epiccc-build MODULE=epic-menu-demo MCU=18F4550 VARIANT=sim
+```
+
+Sim hexes land in build/epiccc-sim, never in build/epiccc, so the two
+variants never share a config TU or a hex basename. The driver also
+writes its size report beside the hex
+(build/epiccc-sim/18F4550-menu-demo-sim.json): flash_words.used and
+ram_bytes.used are the measured sizes, the matching total fields the
+part's capacities. The key layout is the driver's contract (epic-cc
+ADR-025); this side only fixes the filename. --report needs a driver
+past epic-cc#698, which is why only the sim path passes it: the CI
+gate pins an older driver.
+
+OPTLEVEL=O0|O1|O2|Os appends -O<profile> to the driver command for
+anything but the Os default (which emits no flag, so the CI gate's
+pinned driver keeps building). The report's opt_level names the
+profile per build. Anything but Os needs a driver past epic-cc#839.
+
+make epiccc-sim-sizes builds every audit demo's sim variant (menu,
+control, pid and bridge on 18F4550, encoder on 16F877A) and prints
+the flash/RAM table off those JSON files. Encoder is expected to
+fail (@main exceeds a page) and only it may: its row prints FAIL,
+the table still prints, and any other failure exits nonzero.
 
 ### The shared driver binary and the image's glibc
 

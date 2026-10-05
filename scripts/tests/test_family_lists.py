@@ -108,3 +108,7 @@ class TestNoHandEnumerations(unittest.TestCase):
         self.assertIsNone(
             re.search(r"\]\(pic\w+-hal/\)", text),
             "README hand-enumerates family HAL links outside a docgen block")
+
+
+if __name__ == "__main__":
+    unittest.main()

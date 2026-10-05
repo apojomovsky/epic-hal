@@ -1,4 +1,4 @@
-"""compare-toolchains.sh ignores the menu demo's fire-tick line, and only that."""
+"""compare-toolchains.sh ignores the menu/control/bridge fire-tick line, and only that."""
 import pathlib
 import subprocess
 import tempfile
@@ -35,6 +35,29 @@ class TestNormalize(unittest.TestCase):
         self.assertEqual(
             self.normalized("epic-menu-demo", head + XC8_TICKS + "PASS\n"),
             self.normalized("epic-menu-demo", head + CC_TICKS + "PASS\n"))
+
+    def test_differing_fire_ticks_normalize_equal_for_control_and_bridge(self):
+        for module in ("epic-control-demo", "epic-bridge-demo"):
+            with self.subTest(module=module):
+                self.assertEqual(
+                    self.normalized(module, XC8_TICKS + "PASS\n"),
+                    self.normalized(module, CC_TICKS + "PASS\n"))
+
+    def test_control_and_bridge_still_fail_on_any_other_line(self):
+        for module in ("epic-control-demo", "epic-bridge-demo"):
+            with self.subTest(module=module):
+                self.assertNotEqual(
+                    self.normalized(module, "HB t=53\n" + XC8_TICKS),
+                    self.normalized(module, "HB t=54\n" + XC8_TICKS))
+
+    def test_control_and_bridge_ticks_are_still_shown(self):
+        for module in ("epic-control-demo", "epic-bridge-demo"):
+            with self.subTest(module=module):
+                a = self.trace("a.txt", "x\n" + XC8_TICKS)
+                b = self.trace("b.txt", "x\n" + CC_TICKS)
+                out = run(f'show_fire_ticks {module} "$1" "$2"', a, b)
+                self.assertIn("xc8:     0005 001A 001A 001A 001A", out)
+                self.assertIn("epic-cc: 0005 000A 000F 0014 0019", out)
 
     def test_any_other_line_still_differs(self):
         self.assertNotEqual(

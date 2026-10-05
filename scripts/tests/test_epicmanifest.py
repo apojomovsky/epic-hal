@@ -9,6 +9,9 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 import epicmanifest  # noqa: E402
 
 MINIMAL = """
+[toolchain]
+min_epic_cc = "0.3.0"
+
 [families.PIC16F87XA]
 hal_dir  = "hal/pic14/16f87xa"
 variants = ["16F873A", "16F877A"]
@@ -282,6 +285,27 @@ class TestValidation(unittest.TestCase):
         with self.assertRaises(epicmanifest.ManifestError) as cm:
             epicmanifest.load(write(bad))
         self.assertIn("hal_dri", str(cm.exception))
+
+    def test_min_epic_cc_is_parsed(self):
+        self.assertEqual(epicmanifest.load(write(MINIMAL)).min_epic_cc, "0.3.0")
+
+    def test_missing_min_epic_cc_is_rejected(self):
+        bad = MINIMAL.replace('[toolchain]\nmin_epic_cc = "0.3.0"\n', '')
+        with self.assertRaises(epicmanifest.ManifestError) as cm:
+            epicmanifest.load(write(bad))
+        self.assertIn("min_epic_cc", str(cm.exception))
+
+    def test_malformed_min_epic_cc_is_rejected(self):
+        bad = MINIMAL.replace('min_epic_cc = "0.3.0"', 'min_epic_cc = "0.3"')
+        with self.assertRaises(epicmanifest.ManifestError) as cm:
+            epicmanifest.load(write(bad))
+        self.assertIn("X.Y.Z", str(cm.exception))
+
+    def test_unknown_toolchain_key_is_rejected(self):
+        bad = MINIMAL.replace('[toolchain]\n', '[toolchain]\nmax_epic_cc = "0.4.0"\n')
+        with self.assertRaises(epicmanifest.ManifestError) as cm:
+            epicmanifest.load(write(bad))
+        self.assertIn("max_epic_cc", str(cm.exception))
 
 
 class TestResolution(unittest.TestCase):
@@ -596,9 +620,6 @@ class TestEpicccHalSources(unittest.TestCase):
                 '"../escape.c"')))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 EEXAMPLE = MINIMAL.replace(
     '[modules.epic-tick.example.PIC18Fxx5x]',
     '[modules.epic-tick.example.PIC16F87XA.epiccc]\n'
@@ -745,3 +766,7 @@ class TestEpicccSimHalSources(unittest.TestCase):
             '  "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",\n', "")
         with self.assertRaises(epicmanifest.ManifestError):
             epicmanifest.load(write(noharness))
+
+
+if __name__ == "__main__":
+    unittest.main()

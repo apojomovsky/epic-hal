@@ -148,7 +148,7 @@ static void task_stimulus(void *arg)
     g_frame_idx++;
 }
 
-/** @brief Log each injected frame's actual tick as 4 hex digits. */
+/** @brief Log each injected frame's actual tick as 4 hex digits, for visibility, not asserted against. */
 static void log_fire_ticks(void)
 {
     static const char hx[] = "0123456789ABCDEF";

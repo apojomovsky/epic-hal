@@ -11,6 +11,9 @@ import epic_build  # noqa: E402
 import epicmanifest  # noqa: E402
 
 MANIFEST = """
+[toolchain]
+min_epic_cc = "0.3.0"
+
 [families.PIC16F87XA]
 hal_dir  = "hal/pic14/16f87xa"
 variants = ["16F873A", "16F877A"]
@@ -20,7 +23,7 @@ includes = ["hal/pic14/16f87xa/include/target", "hal/pic14/16f87xa/include"]
 hal_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", "common/src/core/epic_harness_target.c"]
 harness_src = "common/src/core/epic_harness_target.c"
 
-epiccc_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", "common/src/core/epic_harness_target.c"]
+epiccc_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", "hal/pic14/core/src/core/pic14_irq.c", "hal/pic14/16f87xa/src/core/pic16_irq_table.c", "common/src/core/epic_harness_target.c"]
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c"
@@ -190,6 +193,8 @@ PIC16F87XA = ["16F877A"]
 [modules.epic-encoder.example.PIC16F87XA]
 name    = "encoder-sizecheck"
 sources = ["mcu/target_sizecheck.c"]
+# The sizecheck probe links against the HAL slice (as in the real manifest).
+hal     = true
 # Example-level dep: the real example logs over epic-serial; the
 # epic-cc driver path must drop it.
 depends_on = ["epic-serial"]
@@ -703,10 +708,6 @@ Memory Summary:
         self.assertIn("no Memory Summary", proc.stderr)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class TestEpicCcToolchain(unittest.TestCase):
     """The epic-cc backend passes the manifest mcu through untranslated.
 
@@ -730,6 +731,80 @@ class TestEpicCcToolchain(unittest.TestCase):
 
     def test_no_per_part_name_table_remains(self):
         self.assertFalse(hasattr(epic_build, "_device_for_epic_cc"))
+
+    def test_report_off_by_default_for_the_pinned_gate_driver(self):
+        # The CI gate driver predates --report (epic-cc#698), so plain
+        # emission stays flag-free; only the measurement path opts in.
+        self.assertNotIn("--report", self.script())
+
+    def test_report_lands_beside_the_hex(self):
+        s = epic_build.emit_build_script(
+            load(), "epic-tick", "16F877A",
+            build_dir="build", dfp_dir="", toolchain="epic-cc",
+            report=True,
+        )
+        self.assertIn("--report build/16F877A-tick-blink.json", s)
+
+    def test_report_on_xc8_raises(self):
+        with self.assertRaises(epic_build.UnsupportedError) as ctx:
+            epic_build.emit_build_script(
+                load(), "epic-tick", "16F877A",
+                build_dir="build", dfp_dir="/opt/dfp", report=True,
+            )
+        self.assertIn("--toolchain epic-cc", str(ctx.exception))
+
+    def test_opt_level_default_emits_no_flag(self):
+        # Os is the driver's own default, and the target path stays
+        # flag-free so the CI gate's pinned driver (predating
+        # epic-cc#839) keeps building; only the measurement path
+        # opts in, like --report.
+        s = self.script()
+        self.assertIn("--target 16F877A ", s)
+        for level in ("O0", "O1", "O2", "Os"):
+            with self.subTest(level=level):
+                self.assertNotIn(f" -{level} ", s)
+
+    def test_opt_level_reaches_the_driver_command(self):
+        for level in ("O0", "O1", "O2"):
+            with self.subTest(level=level):
+                s = epic_build.emit_build_script(
+                    load(), "epic-tick", "16F877A",
+                    build_dir="build", dfp_dir="", toolchain="epic-cc",
+                    opt_level=level,
+                )
+                self.assertIn(f"--target 16F877A -{level} ", s)
+
+    def test_opt_level_explicit_Os_matches_the_default(self):
+        s = epic_build.emit_build_script(
+            load(), "epic-tick", "16F877A",
+            build_dir="build", dfp_dir="", toolchain="epic-cc",
+            opt_level="Os",
+        )
+        self.assertEqual(s, self.script())
+
+    def test_opt_level_unknown_spelling_raises(self):
+        with self.assertRaises(epic_build.UnsupportedError):
+            epic_build.emit_build_script(
+                load(), "epic-tick", "16F877A",
+                build_dir="build", dfp_dir="", toolchain="epic-cc",
+                opt_level="O3",
+            )
+
+    def test_opt_level_on_xc8_raises(self):
+        with self.assertRaises(epic_build.UnsupportedError) as ctx:
+            epic_build.emit_build_script(
+                load(), "epic-tick", "16F877A",
+                build_dir="build", dfp_dir="/opt/dfp", opt_level="O2",
+            )
+        self.assertIn("--toolchain epic-cc", str(ctx.exception))
+
+    def test_opt_level_default_leaves_xc8_alone(self):
+        s = epic_build.emit_build_script(
+            load(), "epic-tick", "16F877A",
+            build_dir="build", dfp_dir="/opt/dfp",
+        )
+        self.assertIn("xc8-cc", s)
+        self.assertNotIn(" -Os ", s)
 
     def test_unsupported_mcu_still_raises_with_the_reason(self):
         with self.assertRaises(epic_build.UnsupportedError) as ctx:
@@ -785,6 +860,14 @@ class TestEpicCcToolchain(unittest.TestCase):
         self.assertIn("lib/encoder/mcu/target_sizecheck_epiccc.c", s)
         self.assertNotIn("lib/tick/src", s)
         self.assertNotIn("lib/serial/src", s)
+
+    def test_encoder_epiccc_keeps_the_irq_table_with_the_irq_body(self):
+        # The HAL-slice drop keeps shared-core files (hal/pic14/core/)
+        # while removing family files, which orphaned pic14_irq.c's
+        # extern irq_table and made irparse reject the TU (epic-hal#331).
+        s = self.encoder_script()
+        self.assertIn("hal/pic14/core/src/core/pic14_irq.c", s)
+        self.assertIn("hal/pic14/16f87xa/src/core/pic16_irq_table.c", s)
 
     def sdcard_script(self):
         return epic_build.emit_build_script(
@@ -897,3 +980,7 @@ class TestEpicccSimHalSliceEmit(unittest.TestCase):
             build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc")
         self.assertNotIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", s)
         self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c", s)
+
+
+if __name__ == "__main__":
+    unittest.main()

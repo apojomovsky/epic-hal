@@ -127,8 +127,9 @@ For every ticket:
    (see Worktrees below, never work on `master`).
 3. Develop the fix or feature, then dispatch a separate reviewer for the code
    and address its findings (the Review gate, canonical in epic-tasks'
-   `AGENTS.md`). Only then run the takeoff ritual
-   (`make pre-pr-check` → `epic-tasks takeoff`).
+   `AGENTS.md`). The PR body carries the `## Review` record (reviewer,
+   question, findings by severity and resolution). Only then run the
+   takeoff ritual (`make pre-pr-check` → `epic-tasks takeoff`).
 4. Open the pull request with `Closes #N`, then
    `epic-tasks review <repo>#<n> --pr <url>`. The body must use real newlines:
    copy-paste-safe ``gh pr create --body-file - <<'EOF'`` (or
@@ -345,10 +346,13 @@ the mechanical rules fails the ritual and blocks the push.
 - **Commit whenever a piece of work is finished**, Conventional Commits
   (`type(scope): summary`; `feat`/`docs`/`plan`/`fix`/`refactor`/`style`).
   Scope is usually the module or `phaseN`. Don't batch unrelated changes.
-  Subjects are release-notes copy: `scripts/release_notes.py` groups them
-  into the GitHub Release verbatim, so write them for someone reading the
-  release page. A change that breaks consumers needs `type(scope)!:` or a
-  `BREAKING CHANGE:` footer, otherwise nothing flags it there.
+  Subjects are release-notes copy: `cliff.toml` groups them into the
+  GitHub Release (`scripts/release.sh` previews through
+  `scripts/release_notes.py`), so write them for someone reading the
+  release page. A breaking change carries the Conventional Commits `!`
+  marker (`type(scope)!:`); reviewers reject a break without it. The
+  breaking surfaces are the public `EPIC_*` and module APIs, the
+  manifest module ids, and the minimum epic-cc version.
 - **Never `Co-Authored-By:` or any other attribution trailer.** Git
   history is the human author's record, and the release notes are built
   from these commits, so a trailer makes them speak for someone who did

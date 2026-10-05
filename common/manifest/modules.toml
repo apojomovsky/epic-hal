@@ -2,6 +2,12 @@
 # mcu/*-mplabx/Makefiles it replaces. Reviewed by hand
 # afterwards; edit this file directly from now on.
 
+# The oldest epic-cc release this tree builds against. Bumped only
+# when a HAL change starts requiring a newer compiler; the epiccc-gate
+# CI job fails while its pinned bundle is older than this.
+[toolchain]
+min_epic_cc = "0.3.0"
+
 [families.PIC16F193X]
 hal_dir  = "hal/pic14e/16f193x"
 variants = [
