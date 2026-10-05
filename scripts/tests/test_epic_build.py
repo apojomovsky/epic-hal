@@ -23,7 +23,7 @@ includes = ["hal/pic14/16f87xa/include/target", "hal/pic14/16f87xa/include"]
 hal_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", "common/src/core/epic_harness_target.c"]
 harness_src = "common/src/core/epic_harness_target.c"
 
-epiccc_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", "common/src/core/epic_harness_target.c"]
+epiccc_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", "hal/pic14/core/src/core/pic14_irq.c", "hal/pic14/16f87xa/src/core/pic16_irq_table.c", "common/src/core/epic_harness_target.c"]
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c"
@@ -193,6 +193,8 @@ PIC16F87XA = ["16F877A"]
 [modules.epic-encoder.example.PIC16F87XA]
 name    = "encoder-sizecheck"
 sources = ["mcu/target_sizecheck.c"]
+# The sizecheck probe links against the HAL slice (as in the real manifest).
+hal     = true
 # Example-level dep: the real example logs over epic-serial; the
 # epic-cc driver path must drop it.
 depends_on = ["epic-serial"]
@@ -805,6 +807,14 @@ class TestEpicCcToolchain(unittest.TestCase):
         self.assertIn("lib/encoder/mcu/target_sizecheck_epiccc.c", s)
         self.assertNotIn("lib/tick/src", s)
         self.assertNotIn("lib/serial/src", s)
+
+    def test_encoder_epiccc_keeps_the_irq_table_with_the_irq_body(self):
+        # The HAL-slice drop keeps shared-core files (hal/pic14/core/)
+        # while removing family files, which orphaned pic14_irq.c's
+        # extern irq_table and made irparse reject the TU (epic-hal#331).
+        s = self.encoder_script()
+        self.assertIn("hal/pic14/core/src/core/pic14_irq.c", s)
+        self.assertIn("hal/pic14/16f87xa/src/core/pic16_irq_table.c", s)
 
     def sdcard_script(self):
         return epic_build.emit_build_script(

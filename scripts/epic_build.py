@@ -213,8 +213,13 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
                     sources.append(sizecheck)
             # Pure-logic drivers (fsm/pid/encoder/debounce) and the HAL-free
             # lcd/adcfilter drop the HAL slice; bus/mcp23x17 keep it (GPIO+SSP).
+            # The family IRQ table stays: the shared-core irq body consumes it,
+            # and dropping only the family half leaves a bare extern table
+            # that irparse rejects (epic-hal#331).
             if module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-lcd", "epic-adcfilter"):
-                sources = [s for s in sources if not in_hal_slice(s) and "common/src/core/epic_harness" not in s]
+                sources = [s for s in sources
+                           if s.endswith("/pic16_irq_table.c")
+                           or (not in_hal_slice(s) and "common/src/core/epic_harness" not in s)]
             # Drop tick/serial/math (the example's deps): timer2/usart isel is
             # #86's domain, and the pic16 math asm backend needs XC8's xc.h.
             # epic-sdcard keeps epic-tick: epic_sdcard.c's timer callbacks
