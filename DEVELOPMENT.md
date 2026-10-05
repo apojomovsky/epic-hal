@@ -348,9 +348,9 @@ profile per build. Anything but Os needs a driver past epic-cc#839.
 
 make epiccc-sim-sizes builds every audit demo's sim variant (menu,
 control, pid and bridge on 18F4550, encoder on 16F877A) and prints
-the flash/RAM table off those JSON files. Encoder is expected to
-fail (@main exceeds a page) and only it may: its row prints FAIL,
-the table still prints, and any other failure exits nonzero.
+the flash/RAM table off those JSON files. Encoder fits since the
+phase-4 extraction (epic-hal#327) on a driver past epic-cc#935, so
+every row must print and any failure exits nonzero.
 
 ### The shared driver binary and the image's glibc
 
