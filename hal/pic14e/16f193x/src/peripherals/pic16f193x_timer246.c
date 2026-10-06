@@ -68,6 +68,13 @@ static const uint8_t post_ratio[16] = {
  * reasoning as pic18fxx5x_ccp.c's ccp_irq() helper). */
 static const TIMER246_HandleTypeDef *g_handle[3] = { NULL, NULL, NULL };
 
+/* Driver-owned Timer2 handle for the EPIC_TIMER2_* shim
+ * (peripherals/hal_timer2.h). The shim copies the caller here and
+ * registers this address, so a stack-built caller handle never reaches
+ * the ISR. Shares instance 2 with direct TIMER246 users, same as the
+ * hardware: last Init wins. */
+TIMER246_HandleTypeDef g_timer2_owned_handle = TIMER246_HANDLE_DEFAULT;
+
 /**
  * @brief Convert an instance to its 0-based g_handle index.
  * @param inst timer instance (2, 4 or 6)
