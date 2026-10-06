@@ -4530,6 +4530,32 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
+# epic-cc sim slice (epic-hal#310): the sim gate logs over the
+# harness USART under the live tick ISR, but the family slice
+# carries no USART TU (it would overflow GPR there). The sim
+# firmware alone gets the tick timebase plus the harness USART
+# on the serial+tick tier, mirroring
+# epic-combo-encoder-tick's proven set.
+[modules.epic-tick.epiccc_sim_hal_sources_by_family]
+PIC16F87XA = [
+  "hal/pic14/core/src/peripherals/pic14_timer2.c",
+  "hal/pic14/core/src/peripherals/pic14_usart.c",
+  "hal/pic14/core/src/core/pic14_irq.c",
+  "hal/pic14/16f87xa/src/core/pic16_irq_table.c",
+  "hal/pic14/core/src/epiccc/pic16_isr_vector.c",
+  "hal/pic14/core/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
+]
+PIC16F88X = [
+  "hal/pic14/core/src/peripherals/pic14_timer2.c",
+  "hal/pic14/core/src/peripherals/pic14_usart.c",
+  "hal/pic14/core/src/core/pic14_irq.c",
+  "hal/pic14/16f88x/src/core/pic16_irq_table.c",
+  "hal/pic14/core/src/epiccc/pic16_isr_vector.c",
+  "hal/pic14/core/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c",
+]
+
 [modules.epic-tick.example.PIC16F628A]
 name    = "tick"
 sources = [
