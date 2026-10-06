@@ -104,6 +104,11 @@ epic_add_example(example_cps tests/example_cps.c)
 epic_add_example(example_ccp345 tests/example_ccp345.c)
 epic_add_example(example_lcd tests/example_lcd.c)
 
+# The Timer2 shim regression test asserts, so it runs under ctest
+# while the demo examples stay build-only.
+enable_testing()
+add_test(NAME timer2_shim COMMAND example_timer2)
+
 # Optional: example for every device in the family.
 epic_add_example_per_device(example_blink tests/example_blink.c)
 epic_add_example_per_device(example_timer1 tests/example_timer1.c)
