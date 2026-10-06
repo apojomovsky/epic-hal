@@ -549,6 +549,7 @@ jobs:
               ("epic-bus", "16F887"),
               ("epic-mcp23x17", "16F887"), ("epic-serial", "16F887"),
               ("epic-debounce", "16F887"),
+              ("epic-tick", "16F648A"),
               ("pic16f5x-hal", "16F54"),
               ("pic16f5x-hal", "16F59"),
               ("pic16f5x-hal", "16F57"),

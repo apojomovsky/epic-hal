@@ -4467,8 +4467,14 @@ PIC18Fxx5x = [
   "18F4455",
   "18F4550",
 ]
+PIC16F628A = [
+  "16F628", "16LF628A", "16F648A", "16F628A",
+]
 
 [modules.epic-tick.excluded]
+"16F627" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
+"16F627A" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
+"16LF627A" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
 "16F870" = "RAM: HAL _g_eeprom_cb byte does not fit (XC8 error 1250)"
 "16F871" = "RAM: HAL _g_eeprom_cb byte does not fit (XC8 error 1250)"
 "16F872" = "RAM: HAL _g_eeprom_cb byte does not fit (XC8 error 1250)"
@@ -4523,6 +4529,27 @@ sources     = [
   "tests/sim_tick.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules.epic-tick.example.PIC16F628A]
+name    = "tick"
+sources = [
+  "examples/example_tick.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
+
+# HARNESS=sim: the bounded, self-reporting delay-accuracy gate
+# (tests/sim_tick.c), distinct from the unbounded real-target demo
+# above, mirroring the PIC16F87XA sim variant. Config words match the
+# 628A blink example; WDTE stays off like every other sim variant.
+# The sim build needs 2639 words, so it fits only the 4K 16F648A (the
+# 2K parts overflow with XC8 error 1347); the sim gate runs there.
+[modules.epic-tick.example.PIC16F628A.sim]
+name        = "tick-sim"
+harness_src = "hal/pic14/16f628a/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_tick.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
 
 [modules.epic-tick.example.PIC18Fxx5x]
 name    = "tick"
