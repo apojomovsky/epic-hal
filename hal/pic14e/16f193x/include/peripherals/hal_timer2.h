@@ -2,11 +2,10 @@
  * instance 2. The include path selects which family's copy resolves.
  *
  * A header-only alias onto EPIC_TIMER246_Init would dangle: that Init
- * stores the handle pointer and the ISR calls back through it, while
- * epic_tick_init builds its handle as a stack local. So this shim's
- * Init copies the caller's fields into a driver-owned handle, and the
- * ISR only ever reads that owned copy. Same shape as the pic14
- * contract's g_t2_overflow_cb slot. */
+ * stores the handle pointer for the ISR while epic_tick_init builds
+ * its handle as a stack local. So this shim's Init copies the caller
+ * into a driver-owned handle the ISR reads, the pic14 contract's
+ * g_t2_overflow_cb shape. */
 
 #ifndef EPIC_TIMER2_H
 #define EPIC_TIMER2_H
