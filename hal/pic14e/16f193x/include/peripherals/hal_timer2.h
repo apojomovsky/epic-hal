@@ -76,8 +76,8 @@ static inline void timer2_copy_to_246(const TIMER2_HandleTypeDef *h,
 
 /**
  * @brief Initialize Timer2 from the handle. Static inline so the
- *        callback store lands in the caller's TU as a named literal,
- *        which the epic-cc cross-context analysis resolves.
+ *        callback copy into the owned slot happens in the caller's TU,
+ *        the same shape as the pic14 contract.
  * @param h handle with Prescaler, Postscaler, Period, OverflowCallback.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL.
  */
