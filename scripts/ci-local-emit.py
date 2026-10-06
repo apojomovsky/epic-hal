@@ -69,6 +69,7 @@ SIM_VARIANTS = [
     ("pic16f5x-hal", "16F506"),
     ("pic16f5x-hal", "16F505"),
     ("epic-tick", "16F887"),
+    ("epic-tick", "16F648A"),
     ("epic-swuart", "16F887"),
     ("epic-math", "16F887"),
     ("epic-fsm", "16F887"),
