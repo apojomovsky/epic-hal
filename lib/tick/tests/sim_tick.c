@@ -38,5 +38,13 @@ int main(void)
     epic_harness_log("tick: delay(5)  -> %lu ms\n", (unsigned long)e5);
 
     int ok = (e10 >= 10u) && (e10 <= 12u) && (e5 >= 5u) && (e5 <= 7u);
-    return epic_harness_report(ok);
+    int rc = epic_harness_report(ok);
+    /* Hold the verdict: on return XC8 re-enters main and a gpio
+     * harness would drive its marker pin low again before mdb reads
+     * it. UART gates already captured the marker, so this is a no-op
+     * for them. */
+    for (;;)
+    {
+    }
+    return rc;
 }
