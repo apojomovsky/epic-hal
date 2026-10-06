@@ -11,7 +11,7 @@ on:
     inputs:
       tags:
         description: "Space-separated tags to copy"
-        default: "xc8-v4.00-dfp1.7.171"
+        default: "xc8-v4.00-dfp1.7.162-1.7.171-1.9.258-mplabx6.35 xc8-v4.00-dfp1.7.162-1.7.171-mplabx6.35 xc8-v4.00-dfp1.7.162-1.7.171 xc8-v4.00-dfp1.7.171"
         required: true
 
 permissions:
