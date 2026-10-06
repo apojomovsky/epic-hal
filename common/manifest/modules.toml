@@ -51,13 +51,15 @@ hal_sources = [
 ]
 harness_src = "common/src/core/epic_harness_target.c"
 # The epic-cc conformant slice (epic-hal#129): the PIC14E port's GPIO +
-# Timer0 foundation, the family smoke's exact needs. Same contract as the
-# other families' slices: shared peripherals/core plus the toolchain-
-# specific vector/dispatch/WDT files from src/epiccc, grows by adding
-# entries, never by editing the build driver.
+# Timer0 foundation plus the Timer2/4/6 driver behind the dispatch's
+# TMR2 row, so the epic-tick timebase links. Same contract as the other
+# families' slices: shared peripherals/core plus the toolchain-specific
+# vector/dispatch/WDT files from src/epiccc, grows by adding entries,
+# never by editing the build driver.
 epiccc_sources = [
   "hal/pic14e/16f193x/src/peripherals/pic16f193x_gpio.c",
   "hal/pic14e/16f193x/src/peripherals/pic16f193x_timer0.c",
+  "hal/pic14e/16f193x/src/peripherals/pic16f193x_timer246.c",
   "hal/pic14e/16f193x/src/core/pic16f193x_irq.c",
   "hal/pic14e/16f193x/src/core/pic16f193x_wdt_sleep.c",
   "hal/pic14e/16f193x/src/epiccc/pic16f193x_wdt_sleep_epiccc.c",
@@ -932,9 +934,8 @@ path     = "hal/pic18/18f6520/src/core/pic18_irq_dispatch.c"
 variants = ["18F6620", "18F6720", "18F6585", "18F6680", "18F8525", "18F8585", "18F8621", "18F8680", "18F6525", "18F6621", "18F6520"]
 after    = "hal/pic18/18f6520/src/core/pic18_irq.c"
 
-# PIC16F193X has no higher-level modules yet (out of scope for the
-# distribution work), so nothing else exercises its family HAL. This
-# module is the family's own
+# The family's higher-level coverage is epic-tick and epic-fsm (each
+# with a family example below). This module is the family's own
 # top-level Makefile in manifest form: it links no application code of
 # its own, just tests/example_blink.c, the same real-target smoke every
 # xc8-build.yml run has always covered for this family. dir points at
@@ -3071,23 +3072,22 @@ PIC18Fxx5x = [
   "18F4455",
   "18F4550",
 ]
+PIC16F193X = [
+  "16F1933",
+  "16F1934",
+  "16F1936",
+  "16F1937",
+  "16F1938",
+  "16F1939",
+]
 
 # The example (examples/example_fsm.c) is a tick-driven traffic light.
-# Its epic-tick dependency is excluded on the smaller parts: epic-tick
-# has no PIC16F193X backend (the family HAL exposes the combined
-# TIMER246 shim, not the TIMER2 API epic_tick.c links), and it does not
-# fit on the 18F2455/18F2550 (RAM). The 193X example entry below stays
-# as the footprint probe, but no part is supported.
+# Its epic-tick dependency is excluded on the smaller parts: it does
+# not fit on the 18F2455/18F2550 (RAM).
 [modules.epic-fsm.excluded]
 "16F870" = "RAM: HAL _g_ccp_callbacks do not fit (XC8 error 1250)"
 "16F871" = "RAM: HAL _g_ccp_callbacks do not fit (XC8 error 1250)"
 "16F872" = "RAM: HAL _g_ccp_callbacks do not fit (XC8 error 1250)"
-"16F1933" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
-"16F1934" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
-"16F1936" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
-"16F1937" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
-"16F1938" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
-"16F1939" = "example needs epic-tick, which has no PIC16F193X backend (HAL exposes TIMER246, not TIMER2)"
 "18F2455" = "example needs epic-tick, which does not fit on this part (RAM)"
 "18F2550" = "example needs epic-tick, which does not fit on this part (RAM)"
 
@@ -3159,15 +3159,29 @@ depends_on = [
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# Footprint probe only (no supported part on this family since the
-# example needs epic-tick, which has no PIC16F193X backend). Kept per
-# the examples-v2 policy: mcu/ sizecheck entries stay for the xc8
-# footprint matrix, they never ship in bundles.
+# The tick-driven traffic light runs on this family through the Timer2
+# shim, with the same 32 MHz pin as the tick example (PLLEN=ON).
 [modules.epic-fsm.example.PIC16F193X]
-name    = "fsm-sizecheck"
+name    = "fsm"
 sources = [
-  "mcu/target_sizecheck.c",
+  "examples/example_fsm.c",
 ]
+hal     = true
+depends_on = [
+  "epic-tick",
+]
+config  = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "ON", WRT = "OFF" }
+
+# HARNESS=sim: the bounded, scripted 3-state gate (tests/sim_fsm.c),
+# pure computation plus the shared report marker, so the gpio harness
+# (RA0) carries it with no USART. Mirrors the PIC16F87XA sim variant.
+[modules.epic-fsm.example.PIC16F193X.sim]
+name        = "fsm-sim"
+harness_src = "hal/pic14e/16f193x/src/mdb/pic16f193x_harness_mdb.c"
+sources     = [
+  "tests/sim_fsm.c",
+]
+config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "ON", WRT = "OFF" }
 
 # epic-lcd's first manifest slot: transport-agnostic HD44780 driver.
 # The module core (src/epic_lcd.c) is HAL-free, so needs_hal is false;
@@ -4470,6 +4484,14 @@ PIC18Fxx5x = [
 PIC16F628A = [
   "16F628", "16LF628A", "16F648A", "16F628A",
 ]
+PIC16F193X = [
+  "16F1933",
+  "16F1934",
+  "16F1936",
+  "16F1937",
+  "16F1938",
+  "16F1939",
+]
 
 [modules.epic-tick.excluded]
 "16F627" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
@@ -4585,6 +4607,32 @@ sources     = [
   "tests/sim_tick.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
+
+[modules.epic-tick.example.PIC16F193X]
+name    = "tick"
+sources = [
+  "examples/example_tick.c",
+]
+# The family declares fosc_hz = 32000000, so this pins the 32 MHz
+# clock it assumes: FOSC=INTOSC with the 4xPLL on (PLLEN=ON clocks
+# the 8 MHz INTOSC up to 32 MHz, DS41364B section 5.0), giving
+# compute_period a true FOSC for the 500 ms blink. WDTE stays off:
+# the demo never refreshes the watchdog.
+config  = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "ON", WRT = "OFF" }
+
+# HARNESS=sim: the bounded, self-reporting delay-accuracy gate
+# (tests/sim_tick.c), distinct from the unbounded real-target demo
+# above, mirroring the PIC16F87XA sim variant. Config words match the
+# target entry (the 32 MHz pin included); the gpio harness reports
+# PASS/FAIL on RA0. The gate runs on the 16F1939, the family's
+# largest flash part.
+[modules.epic-tick.example.PIC16F193X.sim]
+name        = "tick-sim"
+harness_src = "hal/pic14e/16f193x/src/mdb/pic16f193x_harness_mdb.c"
+sources     = [
+  "tests/sim_tick.c",
+]
+config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "ON", WRT = "OFF" }
 
 [modules.epic-tick.example.PIC18Fxx5x]
 name    = "tick"

@@ -146,5 +146,13 @@ int main(void)
 
     epic_harness_log(ok ? "fsm sim: IDLE->RUN->DONE sequence ok\n"
                         : "fsm sim: sequence mismatch\n");
-    return epic_harness_report(ok);
+    int rc = epic_harness_report(ok);
+    /* Hold the verdict: on return XC8 re-enters main and a gpio
+     * harness would drive its marker pin low again before mdb reads
+     * it. UART gates already captured the marker, so this is a no-op
+     * for them. */
+    for (;;)
+    {
+    }
+    return rc;
 }

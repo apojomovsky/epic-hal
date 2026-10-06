@@ -212,6 +212,21 @@ before touching any register, so each branch's own access is a literal
 `PIC_REG_*` token (mirrors `pic18fxx5x_ccp.c`'s `CCP_WRITE_*`/
 `CCP_READ_*` shape, `docs/adding-a-device.md` §4.8's proven pattern).
 
+### Timer2 contract shim (`peripherals/hal_timer2.h`)
+
+Family-neutral `EPIC_TIMER2_*` on top of instance 2, for consumers
+that build unchanged across families (`lib/tick`'s `epic_tick.c`
+includes only this contract). `EPIC_TIMER2_Init` copies the caller's
+handle into the driver-owned `g_timer2_owned_handle` and registers
+that address with `EPIC_TIMER246_Init`, never the caller's: a
+stack-built handle would dangle once the caller returns, and the ISR
+reads the callback through the stored pointer. `EPIC_TIMER2_Start`
+programs PR2/T2CON from the caller's handle through a stack local
+(`EPIC_TIMER246_Start` stores no pointer). `DeInit`, `Stop`,
+`Read/WriteCounter`, `Read/WritePeriod`, and the ratio helpers forward
+to instance 2. Sharing instance 2 with direct `TIMER246` users is the
+hardware speaking: last `Init` wins.
+
 ### Errata
 
 DS80000479 does not list any Timer2/4/6-specific silicon issue (it

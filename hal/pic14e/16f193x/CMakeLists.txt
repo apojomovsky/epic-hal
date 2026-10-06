@@ -89,6 +89,7 @@ epic_add_hal_library(${EPIC_LIB})
 epic_add_example(example_blink tests/example_blink.c)
 epic_add_example(example_gpio tests/example_gpio.c)
 epic_add_example(example_timer1 tests/example_timer1.c)
+epic_add_example(example_timer2 tests/example_timer2.c)
 epic_add_example(example_timer246 tests/example_timer246.c)
 epic_add_example(example_ccp tests/example_ccp.c)
 epic_add_example(example_eusart tests/example_eusart.c)
@@ -103,9 +104,15 @@ epic_add_example(example_cps tests/example_cps.c)
 epic_add_example(example_ccp345 tests/example_ccp345.c)
 epic_add_example(example_lcd tests/example_lcd.c)
 
+# The Timer2 shim regression test asserts, so it runs under ctest
+# while the demo examples stay build-only.
+enable_testing()
+add_test(NAME timer2_shim COMMAND example_timer2)
+
 # Optional: example for every device in the family.
 epic_add_example_per_device(example_blink tests/example_blink.c)
 epic_add_example_per_device(example_timer1 tests/example_timer1.c)
+epic_add_example_per_device(example_timer2 tests/example_timer2.c)
 epic_add_example_per_device(example_timer246 tests/example_timer246.c)
 epic_add_example_per_device(example_ccp tests/example_ccp.c)
 epic_add_example_per_device(example_eusart tests/example_eusart.c)
