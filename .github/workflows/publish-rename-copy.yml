@@ -1,0 +1,49 @@
+name: publish-rename-copy
+
+# One-shot rename helper for epic-hal#349: server-side copy of the legacy
+# pic8-hal-ci tags to the epic-hal-ci name. No build and no vendor files;
+# imagetools create only references the existing blobs. This file is
+# deleted once the rename lands; the durable publish path stays
+# `make ci-image-push` (it already targets epic-hal-ci).
+
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "Space-separated tags to copy"
+        default: "xc8-v4.00-dfp1.7.171"
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy tags server-side
+        run: |
+          set -euo pipefail
+          for tag in ${{ inputs.tags }}; do
+            src="ghcr.io/${{ github.repository_owner }}/pic8-hal-ci:${tag}"
+            dst="ghcr.io/${{ github.repository_owner }}/epic-hal-ci:${tag}"
+            docker buildx imagetools create --tag "$dst" "$src"
+            echo "copied $src -> $dst"
+          done
+
+      - name: Report new package visibility
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api "users/${{ github.repository_owner }}/packages/container/epic-hal-ci" --jq '{visibility: .visibility}'
