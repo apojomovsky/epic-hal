@@ -4555,6 +4555,15 @@ PIC16F88X = [
   "hal/pic14/core/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
   "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c",
 ]
+PIC16F628A = [
+  "hal/pic14/core/src/peripherals/pic14_timer2.c",
+  "hal/pic14/core/src/peripherals/pic14_usart.c",
+  "hal/pic14/core/src/core/pic14_irq.c",
+  "hal/pic14/16f628a/src/core/pic16_irq_table.c",
+  "hal/pic14/core/src/epiccc/pic16_isr_vector.c",
+  "hal/pic14/core/src/epiccc/pic16_irq_dispatch_serial_tick_epiccc.c",
+  "hal/pic14/16f628a/src/mdb/pic16_harness_mdb.c",
+]
 
 [modules.epic-tick.example.PIC16F628A]
 name    = "tick"
