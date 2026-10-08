@@ -340,6 +340,8 @@ int main(void)
 
     epic_taskmgr_run(); /* harness-bounded on the sim target */
 
+    log_fire_ticks();
+
     CHECK(g_frame_idx == FRAME_LEN, 0x00);      /* full script ran */
     CHECK(bridge_demo_response_count() == 5U, 0x01); /* 2 silent drops */
     CHECK(get_resp(0U, 8U) && bufeq(g_buf, g_frames[0], 8U), 0x02);
