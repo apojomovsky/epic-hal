@@ -1,15 +1,10 @@
 #!/usr/bin/env bash
-# The commit-msg checks: no attribution trailers, no em-dashes. Run from
-# .git/hooks/commit-msg by the dispatcher install-git-hooks.sh installs.
+# Commit-msg checks: no attribution trailers, no em-dashes. Run from
+# .git/hooks/commit-msg by the install-git-hooks.sh dispatcher.
 #
-# Trailers are rejected because git history is the human author's record:
-# an agent-generated commit is still authored by the person who reviewed
-# and landed it, and a Co-Authored-By line makes the release notes
-# (scripts/release_notes.py reads these subjects) speak for someone who
-# did not sign off. Em-dashes are this repo's documented prose rule
-# (AGENTS.md); the same rule the pre-commit hook applies to added lines.
-#
-# Skip for one commit with `git commit --no-verify`.
+# Trailers are rejected because git history is the human author's
+# record; em-dashes violate the repo prose rule (AGENTS.md). Skip one
+# commit with `git commit --no-verify`.
 
 set -uo pipefail
 

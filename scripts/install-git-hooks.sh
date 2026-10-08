@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
-# One-time setup, called by scripts/bootstrap.sh (or by hand after a clone):
-# writes a small dispatcher per hook into the git hooks dir (that dir is
-# not tracked by git, so this is needed once per clone). See
+# One-time setup (or by hand after a clone): writes a dispatcher per
+# hook into the git hooks dir, which git does not track. See
 # scripts/README.md for what each hook checks.
 #
-# Worktree-aware: the hooks dir lives in the shared common dir, so one
-# install covers every worktree. Each dispatcher runs the checks script
-# from the worktree being committed in, falling back to the main
-# checkout, so a branch that edits a hook script checks with its own
-# copy instead of the main checkout's stale one.
+# The hooks dir is shared by every worktree, so one install covers all.
+# Each dispatcher runs the checks script from the worktree being
+# committed in, not the main checkout's stale copy.
 
 set -euo pipefail
 

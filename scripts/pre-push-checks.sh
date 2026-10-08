@@ -1,18 +1,10 @@
 #!/usr/bin/env bash
 # pre-push: block force pushes. Run from .git/hooks/pre-push by the
-# dispatcher scripts/install-git-hooks.sh installs.
+# dispatcher install-git-hooks.sh installs.
 #
-# A push is a force when the remote ref is not an ancestor of the local
-# oid (a non-fast-forward rewrite): the pushed commit drops the current
-# branch tip for every other agent pulling that branch. That loss is
-# unrecoverable without a reflog on each downstream clone, which is why
-# it must be an explicit human decision, not a default.
-#
-# When a rewrite is genuinely needed (messy history), get the human's
-# explicit go-ahead, then re-run with:
+# A force push drops the branch tip for every other agent pulling it.
+# A genuine rewrite needs a human go-ahead, then:
 #   EPIC_FORCE_PUSH_APPROVED=1 git push --force-with-lease
-#
-# New branches and branch deletions are not rewrites and always pass.
 
 set -u
 
