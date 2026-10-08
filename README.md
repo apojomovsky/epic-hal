@@ -15,10 +15,11 @@
 
 </p>
 
-A register-level HAL and a shelf of drop-in modules for 8-bit PIC
-microcontrollers: one datasheet-faithful API across every family in the
-manifest, plus the things firmware always needs: a scheduler, a 1 ms timebase,
-UART and bit-banged serial, Modbus, PID, fixed-point math, and more.
+A fully open source (MIT licensed) register-level HAL and shelf of drop-in
+modules for 8-bit PIC microcontrollers: one datasheet-faithful API across
+every family in the manifest, plus the things firmware always needs: a
+scheduler, a 1 ms timebase, UART and bit-banged serial, Modbus, PID,
+fixed-point math, and more.
 
 ## Getting started (one command)
 
@@ -95,15 +96,10 @@ That needs XC8 plus its device pack:
 
 Install the pack next to XC8 (the exact version the bundle's `make
 TOOLCHAIN=xc8` build consumes is pinned in the bundle's `epic-hal.mk`
-as `EPIC_HAL_DFP_VERSION`):
+as `EPIC_HAL_DFP_VERSION`; [getting-started](docs/getting-started.md)
+has the commands, or use MPLAB X's Tools > Packs manager).
 
-    mkdir -p /opt/microchip/xc8/v4.00/pic/packs
-    unzip ~/Downloads/Microchip.PIC16Fxxx_DFP.1.7.162.atpack \
-      -d /opt/microchip/xc8/v4.00/pic/packs/Microchip.PIC16Fxxx_DFP
-
-(Or use MPLAB X's Tools > Packs manager, which does this for you.)
-
-Pin a release with `... | sh -s -- 16F877A v0.1.0`, choose your modules
+Pin a release with `... | sh -s -- 16F877A v0.6.0`, choose your modules
 with `--modules` (e.g. `serial,tick`; the default is `tick`, which keeps
 the blink build clean and inside the PIC16 hardware stack), and the
 project name with `--name`.
@@ -117,11 +113,30 @@ Prefer to inspect before running? Download the script, read it, then run it:
     curl -fsSL -o install.sh https://github.com/apojomovsky/epic-hal/releases/latest/download/install.sh
     less install.sh && sh install.sh pic16f87xa
 
+### With PlatformIO
+
+Prefer `pio run`? Install the epic8 platform, which wires in epic-hal as
+the `epichal` framework with epic-cc as the default toolchain:
+
+    pio pkg install -g --platform apojomovsky/epic8
+
+```ini
+; platformio.ini
+[env:epic8]
+platform = apojomovsky/epic8
+board = pic16f877a
+framework = epichal
+```
+
+Then `pio run` builds `firmware.hex`. See
+[platform-epic8](https://github.com/apojomovsky/epic-platformio) for the
+full walkthrough, board list, and the XC8 alternate.
+
 ## What the API feels like
 
-Four programs, each complete. The same source builds against any
+Two programs, each complete. The same source builds against any
 supported family: swap the include path at build time, nothing else
-changes.
+changes. More live in [docs/examples.md](docs/examples.md).
 
 ### Blink a LED on a 1 ms timebase
 
@@ -180,74 +195,6 @@ int main(void)
 `printf` through the same pipe. Everything the code above calls is
 plain C functions, no IDE glue.
 
-### Run two tasks on a cooperative scheduler
-
-```c
-#include <xc.h>
-#include "epic_hal.h"
-#include "epic_taskmgr.h"
-
-static void toggle(void *arg)
-{
-    EPIC_GPIO_TogglePin(GPIOB, (uint16_t)(uintptr_t)arg);
-}
-
-int main(void)
-{
-    EPIC_GPIO_Init(GPIOB, GPIO_PIN_0 | GPIO_PIN_1, GPIO_MODE_OUTPUT);
-    epic_taskmgr_init();
-
-    epic_taskmgr_spawn(toggle, (void *)(uintptr_t)GPIO_PIN_0, 100u, 0u);
-    epic_taskmgr_spawn(toggle, (void *)(uintptr_t)GPIO_PIN_1, 300u, 0u);
-
-    epic_taskmgr_attach_timer0(61u, TIMER0_PRESCALER_1_256); /* ~10 ms tick */
-    EPIC_IRQ_Restore(1);                                     /* arm IRQs    */
-    epic_taskmgr_run();                                      /* never returns */
-}
-```
-
-`epic_taskmgr` is a priority-ordered, race-free cooperative scheduler:
-periodic and one-shot tasks, `EPIC_TASKMGR_MAX_TASKS` fixed slots, no
-per-task stack. The 10-line core of
-[example_taskmgr](lib/taskmgr/examples/example_taskmgr.c).
-
-### Oversample and average an ADC channel
-
-```c
-#include <xc.h>
-#include "peripherals/pic16f87xa_adc.h"
-#include "epic_adcfilter.h"
-
-static uint16_t read_ch3(void *ctx)
-{
-    (void)ctx;
-    EPIC_ADC_SelectChannel(ADC_CHANNEL_AN3);
-    EPIC_ADC_Start();
-    while (EPIC_ADC_IsConversionInProgress()) { }
-    return EPIC_ADC_Read();
-}
-
-int main(void)
-{
-    ADC_HandleTypeDef adc = ADC_HANDLE_DEFAULT;
-    EPIC_ADC_Init(&adc);
-
-    static uint16_t buf[8];
-    epic_adcfilter_avg_t avg;
-    epic_adcfilter_avg_init(&avg, buf, 8u);
-
-    for (;;) {
-        uint16_t v = epic_adcfilter_avg_push(
-            &avg, epic_adcfilter_oversample(read_ch3, NULL, 1u));
-        (void)v;
-    }
-}
-```
-
-`epic_adcfilter` decimates the raw samples and keeps an O(1) moving
-average, both over a callback you provide. The HAL layer is just
-select, start, poll, read.
-
 ## What you get
 
 - **One API, every family in the manifest.** The same names and
@@ -262,12 +209,12 @@ select, start, poll, read.
 - **One command to a `.hex`.** `curl ... | sh -s -- <family>` downloads,
   verifies, and scaffolds a project; build with `make` or MPLAB X.
 
-## Not using the one-liner?
-
-### 1. Download a bundle and run `epic-hal init`
+## Setting up by hand?
 
 Bundles live on the [Releases](https://github.com/apojomovsky/epic-hal/releases)
-page:
+page. [docs/getting-started.md](docs/getting-started.md) walks through
+`epic-hal init`, the MPLAB X reference project, and the hand-wired
+Makefile:
 
 <!-- docgen:bundles begin (regenerated by scripts/readme_tables.py; hand edits inside are overwritten) -->
 | Bundle | Parts inside |
@@ -287,68 +234,8 @@ page:
 | `epic-hal-pic18fxx5x-<version>.tar.gz` | 18F2455 / 18F2550 / 18F4455 / 18F4550 |
 <!-- docgen:bundles end -->
 
-The `<version>` is the release tag (e.g. `v0.1.0`); the badge above
+The `<version>` is the release tag (e.g. `v0.6.0`); the badge above
 always shows the latest one.
-
-Download and unpack one, then, with the CLI installed globally:
-
-    pipx install git+https://github.com/apojomovsky/epic-hal
-    epic-hal init --bundle /path/to/unpacked/bundle
-
-Answer family, part, and modules. It writes `main.c`, a filled `Makefile`,
-and a ready MPLAB X `.X` in your current directory for your exact part +
-module subset. Open `myapp.X` in MPLAB X (or the MPLAB extension for VS
-Code) and Build, or `make`.
-
-## Advanced: without the scaffolder
-
-Prefer to wire a project by hand, or add Epic HAL to one you already
-have? These two paths skip the scaffolder.
-
-### Open the reference project in MPLAB X
-
-Unpack the bundle, then open `examples/epic-hal-demo.X` (File > Open
-Project). Pick your exact part under Project Properties, and Build. It
-produces a `.hex` you can program with MPLAB IPE or any PICkit.
-
-<details>
-<summary>New to MPLAB X?</summary>
-
-You need MPLAB X IDE and the MPLAB XC8 compiler, both free from
-Microchip (the free XC8 tier is enough). The reference project is
-pre-wired: sources, include paths, and configuration words are already
-set. Selecting your part under Project Properties is the only manual
-step.
-</details>
-
-### Or skip the IDE: a six-line Makefile
-
-Just `epic-cc` and `make`, no MPLAB X, no Microchip download, no license:
-
-```make
-EPIC_HAL_DIR := third_party/epic-hal
-EPIC_HAL_MCU := 16F877A
-EPIC_HAL_MODULES := serial tick
-include $(EPIC_HAL_DIR)/epic-hal.mk
-
-SRCS := main.c $(EPIC_HAL_SRCS)
-CFLAGS += $(EPIC_HAL_CFLAGS)
-
-app.hex: $(SRCS)
-	epic-cc --device p16f877a $(CFLAGS) $^ -o $@
-```
-
-XC8 alternate: `xc8-cc $(CFLAGS) $^ -o $@ -ginhx32` with `TOOLCHAIN=xc8` (and
-its device pack, see above).
-
-Run `make`, program the result. Dependencies resolve automatically
-(`modbus` pulls in `serial` and `tick`), and asking for a module on a
-part it does not fit fails immediately with the reason instead of a
-wall of XC8 linker errors. Each bundle's `SUPPORT.md` has the full
-per-part table.
-
-Adding Epic HAL to an existing MPLAB X project instead? The bundle's
-`MPLABX.md` walks through it.
 
 ## What you can build
 
@@ -426,24 +313,23 @@ which modules build for which family is in the manifest
 
 ## Documentation
 
+- [docs/getting-started.md](docs/getting-started.md): setup paths beyond
+  the one-liner (`epic-hal init`, MPLAB X, the hand-wired Makefile).
+- [docs/examples.md](docs/examples.md): more API examples.
 - [common/MANUAL.md](common/MANUAL.md): the shared conventions,
   the handle pattern, the harness, the interrupt model. Read this first.
 - Per-family `MANUAL.md` (one per HAL directory, e.g.
   [hal/pic14/16f87xa/MANUAL.md](hal/pic14/16f87xa/MANUAL.md)):
   datasheet-cited register reference, one page per peripheral.
-- [common/README.md](common/README.md) +
-  [common/MANUAL.md](common/MANUAL.md): how the shared
-  contract was extracted and families added behind it.
+- [docs/adding-a-device.md](docs/adding-a-device.md): how a new device or
+  family lands, verification-gated.
 
 ## Contributing
 
 Bug reports, datasheet-cited corrections, and new devices are welcome.
-The repo is agent-friendly and plan-first: non-trivial work starts with
-a short-lived design doc (deleted on completion), and everything is
-verified by the CI pipeline (host tests, real XC8 cross-compiles,
-MPLAB SIM runs).
-See [AGENTS.md](AGENTS.md) for the conventions and
-[DEVELOPMENT.md](DEVELOPMENT.md) for the toolchain and build workflow.
+Start with [CONTRIBUTING.md](CONTRIBUTING.md): it covers setup, the test
+and `mdb` gates, and the conventions. [DEVELOPMENT.md](DEVELOPMENT.md)
+has the full toolchain and build workflow.
 
 ## License
 

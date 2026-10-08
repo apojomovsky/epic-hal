@@ -49,7 +49,7 @@ staged_files() {
 stray_files_check() {
     # VERSION is the release policy's version source of truth (rule
     # 1c), moved by cut-release.yml on every release.
-    local file_whitelist='^\.gitignore$|^\.clang-format$|^pyproject\.toml$|^AGENTS\.md$|^CLAUDE\.md$|^DEVELOPMENT\.md$|^LICENSE$|^Makefile$|^README\.md$|^install\.sh$|^CHANGELOG\.md$|^cliff\.toml$|^VERSION$'
+    local file_whitelist='^\.gitignore$|^\.clang-format$|^pyproject\.toml$|^AGENTS\.md$|^CLAUDE\.md$|^CONTRIBUTING\.md$|^DEVELOPMENT\.md$|^LICENSE$|^Makefile$|^README\.md$|^install\.sh$|^CHANGELOG\.md$|^cliff\.toml$|^VERSION$'
     # The root holds only the fixed top-level directories. A new module
     # goes under lib/, a new device family under hal/<arch>/, so the root
     # never grows: extend this list only for a genuinely new kind of
