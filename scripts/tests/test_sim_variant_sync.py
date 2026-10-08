@@ -6,7 +6,6 @@ but not the other means `make target-ci` either builds a hex no gate uses
 or runs a gate whose hex was never emitted (epic-hal#355)."""
 import importlib.util
 import pathlib
-import re
 import unittest
 
 SCRIPTS = pathlib.Path(__file__).resolve().parents[1]
