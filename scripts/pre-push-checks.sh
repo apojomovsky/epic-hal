@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# pre-push: block force pushes. Installed into .git/hooks/pre-push by
-# scripts/install-git-hooks.sh.
+# pre-push: block force pushes. Run from .git/hooks/pre-push by the
+# dispatcher scripts/install-git-hooks.sh installs.
 #
 # A push is a force when the remote ref is not an ancestor of the local
 # oid (a non-fast-forward rewrite): the pushed commit drops the current

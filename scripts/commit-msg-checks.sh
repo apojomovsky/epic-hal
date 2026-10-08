@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# The commit-msg checks: no attribution trailers, no em-dashes. Installed
-# into .git/hooks/commit-msg by scripts/install-git-hooks.sh.
+# The commit-msg checks: no attribution trailers, no em-dashes. Run from
+# .git/hooks/commit-msg by the dispatcher install-git-hooks.sh installs.
 #
 # Trailers are rejected because git history is the human author's record:
 # an agent-generated commit is still authored by the person who reviewed

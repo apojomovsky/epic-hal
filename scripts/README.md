@@ -39,14 +39,14 @@ Installed on their own, or as part of `bootstrap.sh` above:
 ```sh
 ./scripts/install-git-hooks.sh      # or: make setup-hooks
 ```
-This symlinks `pre-commit` to `scripts/pre-commit-checks.sh`,
-`commit-msg` to `scripts/commit-msg-checks.sh` and `pre-push` to
-`scripts/pre-push-checks.sh` in the git hooks
-directory (not tracked by git, so every clone needs to run the installer
-once). The hooks directory is shared by every worktree, so one install
-covers all of them; the symlinks point at the main checkout, which
-outlives any worktree under `.worktrees/`. Uninstall by deleting the
-symlinks, or skip them for one commit with `git commit --no-verify`.
+This writes a small dispatcher for `pre-commit`, `commit-msg` and
+`pre-push` into the git hooks directory (not tracked by git, so every
+clone needs to run the installer once). The hooks directory is shared
+by every worktree, so one install covers all of them. Each dispatcher
+runs the `scripts/<hook>-checks.sh` copy in the worktree being
+committed in, falling back to the main checkout, so a branch that edits
+a hook script commits with its own copy. Uninstall by deleting the
+dispatchers, or skip them for one commit with `git commit --no-verify`.
 
 ### What `commit-msg` checks
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # The pre-commit checks: trailing whitespace/newline, em-dashes and
 # Allman-brace style on added lines, cppcheck on staged .c files, stray
-# root-level files. Installed into .git/hooks/pre-commit by
-# scripts/install-git-hooks.sh; see scripts/README.md for what each check
-# does and why. Operates on staged content, except the whitespace fixer,
+# root-level files. Run from .git/hooks/pre-commit by the dispatcher
+# scripts/install-git-hooks.sh installs; see scripts/README.md for the
+# checks and why. Operates on staged content, except the whitespace fixer,
 # which edits the working-tree file in place and asks you to re-`git add`
 # it. CI reuses this script against PRE_COMMIT_BASE_REF; unset = index.
 
