@@ -10,8 +10,8 @@
 set -u
 fail=0
 
-# Resolve this script's real location: the pre-commit hook is a symlink
-# into .git/hooks, so $0/dirname would point into .git/hooks, not scripts/.
+# Resolve this script's real location: the hook dispatcher execs this
+# file, so $0/dirname would point into .git/hooks, not scripts/.
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")" && pwd)"
 
 if [ -n "${PRE_COMMIT_BASE_REF:-}" ]; then
