@@ -36,8 +36,11 @@ SIM_VARIANTS = [
     ("epic-math", "16F877A"),
     ("epic-math", "18F4550"),
     ("pic16f87xa-hal", "16F877A"),
+    ("pic16f7x-hal", "16F77"),
     ("pic16f818_819-hal", "16F819"),
     ("pic18fxx5x-hal", "18F4550"),
+    ("pic18f2520-hal", "18F2320"),
+    ("pic18f2520-hal", "18F2520"),
     ("pic18f6520-hal", "18F6520"),
     ("epic-pid", "18F4550"),
     ("epic-fsm", "16F877A"),
@@ -63,6 +66,7 @@ SIM_VARIANTS = [
     ("epic-combo-encoder-tick", "16F877A"),
     ("epic-combo-lcd-tick", "18F4550"),
     ("epic-combo-swuart-tick", "16F877A"),
+    ("epic-combo-rx-loopback", "16F877A"),
     ("epic-combo-modbus-full", "18F4550"),
     ("pic16f88x-hal", "16F887"),
     ("pic16f5x-hal", "16F54"),
@@ -81,6 +85,10 @@ SIM_VARIANTS = [
     ("epic-mcp23x17", "16F887"),
     ("epic-serial", "16F887"),
     ("epic-debounce", "16F887"),
+    ("pic16f628a-hal", "16F628A"),
+    ("pic16f83_84-hal", "16F84A"),
+    ("pic16f63x_67x_68x-hal", "16F677"),
+    ("pic18f1320-hal", "18F1320"),
 ]
 
 
