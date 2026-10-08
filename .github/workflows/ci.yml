@@ -339,20 +339,45 @@ jobs:
           cargo build --release --locked -p driver
         working-directory: epic-cc
 
+      # The clang bundle is immutable per tag, so it is cached by tag:
+      # a cache hit skips the GitHub API entirely, which is what makes
+      # repeat runs immune to the shared-runner IP rate limit (#344).
+      - name: Restore the clang bundle cache
+        id: clang-cache
+        if: steps.noncode.outputs.non_code != 'true'
+        uses: actions/cache@v4
+        with:
+          path: bundle
+          key: epic-cc-clang-${{ env.EPIC_CC_CLANG_TAG }}
+
       # The clang front end (and llvm-link) from the tagged release, the
       # artifact a user downloads; verified against the release's own
       # SHA256SUMS so a tampered or truncated fetch cannot silently gate.
       # gh release download (the authenticated API path, same as the
       # epic-cc workflow's own publish) rather than raw curl: the raw
       # release URL intermittently 404s on its signed redirect.
+      # GH_TOKEN authenticates the API call (#344: unauthenticated calls
+      # share the runner IP quota and fail with HTTP 403); the retry
+      # loop backs off through transient 403/429 responses.
       - name: Fetch the clang bundle (${{ env.EPIC_CC_CLANG_TAG }})
-        if: steps.noncode.outputs.non_code != 'true'
+        if: steps.noncode.outputs.non_code != 'true' && steps.clang-cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p bundle && cd bundle
           zip="epic-cc-${EPIC_CC_CLANG_VER}-x86_64-linux.zip"
-          gh release download "$EPIC_CC_CLANG_TAG" --repo apojomovsky/epic-cc \
-            --pattern "$zip" --pattern "SHA256SUMS"
+          for i in 1 2 3 4 5; do
+            if gh release download "$EPIC_CC_CLANG_TAG" --repo apojomovsky/epic-cc \
+              --pattern "$zip" --pattern "SHA256SUMS"; then
+              break
+            fi
+            if [ "$i" -eq 5 ]; then
+              echo "::error::clang bundle fetch failed after 5 attempts" >&2
+              exit 1
+            fi
+            sleep $((15 * (1 << (i - 1))))
+          done
           expected="$(awk '/'"${zip}"'$/{print $1}' SHA256SUMS)"
           actual="$(sha256sum "$zip" | awk '{print $1}')"
           test -n "$expected"
