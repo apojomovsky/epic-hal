@@ -368,8 +368,9 @@ jobs:
           mkdir -p bundle && cd bundle
           zip="epic-cc-${EPIC_CC_CLANG_VER}-x86_64-linux.zip"
           for i in 1 2 3 4 5; do
+            # --clobber: a partial first attempt must not poison retries.
             if gh release download "$EPIC_CC_CLANG_TAG" --repo apojomovsky/epic-cc \
-              --pattern "$zip" --pattern "SHA256SUMS"; then
+              --pattern "$zip" --pattern "SHA256SUMS" --clobber; then
               break
             fi
             if [ "$i" -eq 5 ]; then
