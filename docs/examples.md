@@ -1,8 +1,10 @@
 # More API examples
 
 Two programs beyond the [README](../README.md)'s blink and UART echo. The
-same source builds against any supported family: swap the include path at
-build time, nothing else changes.
+scheduler program is family-neutral: the same source builds against any
+supported family with only the include path swapped at build time. The ADC
+program names its family's peripheral header (`pic16f87xa_adc.h`), which
+changes per target; the filtering calls around it do not.
 
 ## Run two tasks on a cooperative scheduler
 

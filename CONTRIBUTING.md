@@ -19,27 +19,36 @@ before changing anything.
   the datasheet, that is a first-class bug: open an issue with the part, the
   register, and the datasheet section.
 - **Good first issues.** Look for issues labelled `good first issue`: small,
-  well-scoped tasks, often docs or single-peripheral work.
+  well-scoped tasks, often docs or single-peripheral work. Skim the epic8
+  board first to see what is already taken, so two people do not start the
+  same thing.
 - **New devices and peripherals.** See [docs/adding-a-device.md](docs/adding-a-device.md),
   the step-by-step playbook for bringing up a device or family.
 - **Demos and docs.** The [demos](demos/) always need exercising on real
   parts, and unclear docs are bugs too.
 
-Questions belong in GitHub issues or Discussions, whichever the repository
-offers. There are no silly questions about banking or config words.
+Questions belong in GitHub issues.
 
 ## Setup
 
-You need almost nothing to contribute docs, host-side logic, or reviews: a
-clone plus a C compiler and CMake is enough for the fast inner loop.
+You need almost nothing to contribute docs, host-side logic, or reviews.
+There is no top-level build: each module builds on its own. From the module
+you touched (for example `lib/tick`), run the native host-sim loop:
 
 ```sh
 cmake -B build && cmake --build build && ctest
 ```
 
-Real-target work (XC8 cross-compiles and the `mdb` simulator gate) runs
-through Docker so your machine stays clean. The full walkthrough, native and
-Docker paths alike, lives in [DEVELOPMENT.md](DEVELOPMENT.md).
+Or the Docker equivalent from the repo root, which needs nothing beyond the
+toolchain image:
+
+```sh
+make test MODULE=epic-tick
+```
+
+First-time setup is `./scripts/bootstrap.sh` (`make doctor` reports what is
+missing without changing anything). The full walkthrough, native and Docker
+paths alike, lives in [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ### The `mdb` gate is real
 
