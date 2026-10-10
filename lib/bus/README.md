@@ -39,6 +39,20 @@ The mock-MEM transaction logic is covered under MPLAB SIM by
 make mdb-test MODULE=epic-bus MCU=16F877A DEVICE=PIC16F877A
 ```
 
+### epic-cc toggle gate (18F4550)
+
+The epic-cc build for 18F4550 is a footprint probe
+(`mcu/target_sizecheck_epiccc.c`): it inits both buses, then toggles GPIOB
+bit 0 in a loop. Its digital-mode write to ADCON1 is what lets the gate read
+the pin back:
+
+```sh
+make mdb-epiccc MODULE=epic-bus MCU=18F4550 DEVICE=PIC18F4550 REG=PORTB BIT=0
+```
+
+The probe proves the bus init and GPIO toggle path under epic-cc. It does not
+exercise mem read/write dispatch, which the epic-cc build stubs out.
+
 ## Use it
 
 ```c
