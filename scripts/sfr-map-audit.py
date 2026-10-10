@@ -86,6 +86,13 @@ FAMILIES = {
             ("16F1939", "Microchip.PIC12-16F1xxx_DFP", "pic16f1939.h"),
         ],
     ),
+    "pic16f1508-hal": (
+        "hal/pic14e/16f1508/include/pic16f1508_sfr.h",
+        [
+            ("16F1508", "Microchip.PIC12-16F1xxx_DFP", "pic16f1508.h"),
+            ("16F1509", "Microchip.PIC12-16F1xxx_DFP", "pic16f1509.h"),
+        ],
+    ),
     "pic16f628a-hal": (
         "hal/pic14/16f628a/include/pic16f628a_sfr.h",
         [
@@ -639,6 +646,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
                                          "PIC16F193X", "PIC16F88X", "PIC16F628A",
+                                         "PIC16F1508",
                                          "PIC16F83_84",
                                          "PIC16F63x_67x_68x", "PIC18F1320",
                                          "PIC18F2520",
@@ -650,6 +658,7 @@ def main() -> int:
     hal_label = {"PIC16F87XA": "pic16f87xa-hal",
                  "PIC18Fxx5x": "pic18fxx5x-hal",
                  "PIC16F193X": "pic16f193x-hal",
+                 "PIC16F1508": "pic16f1508-hal",
                  "PIC16F88X": "pic16f88x-hal",
                  "PIC16F628A": "pic16f628a-hal",
                  "PIC16F83_84": "pic16f83_84-hal",

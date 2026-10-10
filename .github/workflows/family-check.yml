@@ -180,6 +180,7 @@ jobs:
               ("epic-tick", "16F877A"),
               ("epic-tick", "18F4550"),
               ("epic-pic16f193x-firmware", "16F1939"),
+              ("epic-pic16f1508-firmware", "16F1509"),
               ("epic-tick", "16F1939"),
               ("epic-fsm", "16F1939"),
               ("epic-swuart", "16F877A"),

@@ -96,6 +96,7 @@ run_one pic18fxx5x 18F4550 PIC18F4550 epic-tick 5000 uart
 run_one pic16f193x 16F1939 PIC16F1939 epic-pic16f193x-firmware 60000 gpio
 run_one pic16f193x 16F1939 PIC16F1939 epic-tick 5000 gpio
 run_one pic16f193x 16F1939 PIC16F1939 epic-fsm 5000 gpio
+run_one pic16f1508 16F1509 PIC16F1509 epic-pic16f1508-firmware 60000 gpio
 run_one pic16f87xa 16F877A PIC16F877A epic-swuart 15000 uart
 run_one pic16f87xa 16F877A PIC16F877A epic-math 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 epic-math 5000 uart
