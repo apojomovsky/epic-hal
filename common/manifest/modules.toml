@@ -4877,3 +4877,54 @@ sources = [
   "tests/example_harness.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[families.PIC16F1508]
+hal_dir     = "hal/pic14e/16f1508"
+variants    = [
+  "16F1508",
+  "16F1509",
+]
+dfp         = "Microchip.PIC12-16F1xxx_DFP"
+dfp_version = "1.9.258"
+fosc_hz     = 32000000
+includes    = [
+  "hal/pic14e/16f1508/include/target",
+  "hal/pic14e/16f1508/include",
+  "common/include",
+]
+hal_sources = [
+  "hal/pic14e/16f1508/src/peripherals/pic16f1508_gpio.c",
+  "hal/pic14e/16f1508/src/core/pic16f1508_irq.c",
+  "hal/pic14e/16f1508/src/core/pic16f1508_irq_dispatch.c",
+  "hal/pic14e/16f1508/src/target/pic16f1508_isr_vector.c",
+  "common/src/core/epic_harness_target.c",
+]
+harness_src = "common/src/core/epic_harness_target.c"
+
+[modules.epic-pic16f1508-firmware]
+dir        = "hal/pic14e/16f1508"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules.epic-pic16f1508-firmware.supported]
+PIC16F1508 = [
+  "16F1508",
+  "16F1509",
+]
+
+[modules.epic-pic16f1508-firmware.example.PIC16F1508]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", WRT = "OFF" }
+
+[modules.epic-pic16f1508-firmware.example.PIC16F1508.sim]
+name        = "gpio-sim"
+harness_src = "hal/pic14e/16f1508/src/mdb/pic16f1508_harness_mdb.c"
+sources     = [
+  "tests/example_gpio_mdb.c",
+]
+config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", WRT = "OFF" }
