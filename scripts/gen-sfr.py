@@ -16,6 +16,7 @@ Output: per-family headers in place
   hal/pic14/16f88x/include/pic16f88x_sfr.h
   hal/pic18/18fxx5x/include/pic18fxx5x_sfr.h
   hal/pic14e/16f193x/include/pic16f193x_sfr.h
+  hal/pic14e/16f1508/include/pic16f1508_sfr.h
 
 For v1 the generator only projects SFR addresses (PIC_REG_*). Bit masks
 and POR values stay hand-maintained between markers, since POR is a DS
@@ -186,6 +187,7 @@ def hal_header_path(family: str) -> pathlib.Path:
         "PIC16F63x_67x_68x": "hal/pic14/16f63x_67x_68x/include/pic16f63x_67x_68x_sfr.h",
         "PIC18Fxx5x": "hal/pic18/18fxx5x/include/pic18fxx5x_sfr.h",
         "PIC16F193X": "hal/pic14e/16f193x/include/pic16f193x_sfr.h",
+        "PIC16F1508": "hal/pic14e/16f1508/include/pic16f1508_sfr.h",
     }
     if family in mapping:
         return REPO / mapping[family]
@@ -208,7 +210,7 @@ def generate_for_family(family: str, edc_override: pathlib.Path | None, dfp_dir:
     text = header_path.read_text()
     # Replace each #define PIC_REG_* address with EDC value, preserving formatting
     # Pattern: #define PIC_REG_<NAME> 0x...U
-    pat = re.compile(r"^(\s*#define\s+PIC_REG_(\w+)\s+)0x[0-9A-Fa-f]+U?(\s*.*)$", re.MULTILINE)
+    pat = re.compile(r"^([ \t]*#define[ \t]+PIC_REG_(\w+)[ \t]+)0x[0-9A-Fa-f]+U?([ \t]*.*)$", re.MULTILINE)
 
     def repl(m):
         prefix = m.group(1)
