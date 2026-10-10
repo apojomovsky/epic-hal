@@ -1,11 +1,8 @@
 /**
- * Special Function Register (SFR) address map for the PIC16F1508/1509.
- *
- * The `PIC_REG_*` addresses are generated from the pinned DFP EDC
- * (scripts/gen-sfr.py); the EDC is identical for 16F1508 and 16F1509 for
- * every register listed here. Bit masks below are hand-maintained and
- * cite the register name, not a datasheet page number, until the
- * datasheet is checked against them (see MANUAL.md).
+ * SFR address map for PIC16F1508/1509. PIC_REG_* addresses are generated
+ * from the pinned DFP EDC by scripts/gen-sfr.py (identical for both parts).
+ * Bit masks are hand-maintained and cite register names, not datasheet
+ * pages, until checked against the datasheet (see MANUAL.md).
  */
 
 #ifndef PIC16F1508_SFR_H
