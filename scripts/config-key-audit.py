@@ -62,6 +62,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
                                          "PIC16F193X", "PIC16F88X", "PIC16F628A",
+                                         "PIC16F1508",
                                          "PIC16F83_84",
                                          "PIC16F63x_67x_68x", "PIC18F1320",
                                          "PIC18F2520",

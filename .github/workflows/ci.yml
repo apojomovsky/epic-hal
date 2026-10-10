@@ -186,6 +186,11 @@ jobs:
     with:
       family: PIC16F193X
 
+  family-1508:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F1508
+
   family-88x:
     uses: ./.github/workflows/family-check.yml
     with:
@@ -544,6 +549,7 @@ jobs:
           for module, mcu in [
               ("epic-tick", "16F877A"), ("epic-tick", "18F4550"),
               ("epic-pic16f193x-firmware", "16F1939"),
+              ("epic-pic16f1508-firmware", "16F1509"),
               ("epic-tick", "16F1939"), ("epic-fsm", "16F1939"),
               ("epic-swuart", "16F877A"), ("epic-math", "16F877A"),
               ("epic-math", "18F4550"),

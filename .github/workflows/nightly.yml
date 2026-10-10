@@ -81,6 +81,11 @@ jobs:
     with:
       family: PIC16F193X
 
+  family-1508:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F1508
+
   # XC8 vs epic-cc demo scoreboard (epic-hal#279): the three flagship
   # 18F4550 demos through scripts/compare-toolchains.sh, one matrix leg
   # per scoreboard row in docs/demo-scoreboard.md. PRs stay XC8-only via

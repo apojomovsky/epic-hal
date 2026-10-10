@@ -295,7 +295,7 @@ mdb-test: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
 		echo "usage: make mdb-test MODULE=<module id or dir> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio] [EXTRA_MDB=<mdb commands>] [EEPROM_WRITES=<n>]" >&2; \
 		echo "  MODE=uart (default) for PIC16F87XA/PIC18Fxxxx (UART capture);" >&2; \
-		echo "  MODE=gpio for PIC16F193X (RA0 register readback)." >&2; \
+		echo "  MODE=gpio for PIC16F193X/PIC16F1508 (RA0 register readback)." >&2; \
 		echo "  EXTRA_MDB: extra mdb commands inserted before quit, e.g." >&2; \
 		echo "    EXTRA_MDB=\$'print INTCON\\nprint PIR1' for register-level debugging." >&2; \
 		echo "  EEPROM_WRITES: halt+complete EEPROM-write cycles emitted before the final run" >&2; \
