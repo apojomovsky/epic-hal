@@ -13,6 +13,11 @@
 /** @brief Main. @return 0. */
 int main(void)
 {
+    /* ADCON1 at 0xFC1 is PIC18-only. RB0 is analog at reset (PCFG=0000, DS39632E
+     * Register 21-2), so PORTB reads 0 even while LATB drives it. */
+#if defined(PIC18F4550)
+    (*(volatile uint8_t *)0xFC1u) = 0x0Fu;
+#endif
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
     epic_bus_i2c_init(FOSC_HZ, 100000UL);
     epic_bus_spi_init(FOSC_HZ, 0u, 1u, 0u);
