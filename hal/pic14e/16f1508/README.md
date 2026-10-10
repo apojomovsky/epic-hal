@@ -101,7 +101,10 @@ PORTA and PORTC have no IOC in this HAL.
   and the mdb probe therefore use the implemented masks, and the LATA
   check compares only implemented bits. A host pass does not prove the
   driver masks correctly. The mdb gate is the proof for those bits.
-- The IOC handler calls the registered callback only when one is set.
-  The XC8 advisory (2098) and note (759) at `pic16f1508_gpio.c` come from
-  the blink build, where no callback is registered in the translation
-  unit. The cross-unit registration path is not verified here.
+- The IOC handler calls the registered callback only when one is set. In
+  the blink build XC8 advisory 2098 and warning 759 report the callback
+  call as ignored. [INFERENCE] The only writer of the callback pointer,
+  `EPIC_GPIO_RegisterChangeCallback`, is not referenced in that link, so
+  the pointer is known NULL. The host probe (`tests/example_gpio.c`)
+  registers a callback, the mdb probe does not. The cross-unit
+  registration path is not exercised by a target build.

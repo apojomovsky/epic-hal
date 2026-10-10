@@ -296,9 +296,10 @@ void EPIC_GPIO_EnableChangeDetect(uint8_t pos_mask, uint8_t neg_mask)
 /**
  * @brief Interrupt-on-change ISR: capture and clear the PORTB IOCBF flags,
  *        then forward them to the registered callback.
- * @details Returns without action unless INTCON.IOCIF is set. Clears only
- *          the captured IOCBF bits, so an edge that lands after the read
- *          keeps its flag and re-raises IOCIF.
+ * @details Returns unless INTCON.IOCIF is set. Each captured bit is cleared
+ *          by a single-bit clear, so a flag set by hardware meanwhile is kept
+ *          and re-raises IOCIF. A second edge on a captured bit merges into
+ *          that capture; the callback's PORTB byte is read after the clear.
  */
 void IOC_IRQHandler(void)
 {
@@ -310,11 +311,30 @@ void IOC_IRQHandler(void)
         return;
     }
 
-    /* Clear only the captured flags: an edge landing between the read and
-     * the clear keeps its IOCBF bit and re-raises IOCIF. */
+    /* Each captured bit gets its own single-bit clear: a masked write of the
+     * whole register can overwrite a flag hardware sets in its load/store
+     * window. PORTB is read after the clears, so its byte is never older
+     * than the flags being consumed. */
     iocbf = EPIC_REG8(PIC_REG_IOCBF);
+    if ((iocbf & EPIC_BIT(4)) != 0U)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_IOCBF), EPIC_BIT(4));
+    }
+    if ((iocbf & EPIC_BIT(5)) != 0U)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_IOCBF), EPIC_BIT(5));
+    }
+    if ((iocbf & EPIC_BIT(6)) != 0U)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_IOCBF), EPIC_BIT(6));
+    }
+    if ((iocbf & EPIC_BIT(7)) != 0U)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_IOCBF), EPIC_BIT(7));
+    }
     portb = EPIC_REG8(PIC_REG_PORTB);
-    EPIC_REG8(PIC_REG_IOCBF) = (uint8_t)(EPIC_REG8(PIC_REG_IOCBF) & (uint8_t)~iocbf);
+
+    /* The sim models IOCIF as RAM, so this clear is required there. */
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_IOCIF);
 
     if (s_ioc_callback != 0)

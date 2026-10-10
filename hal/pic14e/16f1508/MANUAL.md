@@ -80,9 +80,12 @@ because IOC is implemented on PORTB only.
 | INTCON<6> | PEIE  | Peripheral interrupt enable (not used by this HAL's IOC path). |
 | INTCON<7> | GIE   | Global interrupt enable.                                         |
 
-`IOCBF` flags are cleared in the handler by clearing only the bits read
-(`IOCBF &= ~captured`). An edge that lands between the read and the
-clear keeps its flag and re-raises IOCIF.
+`IOCBF` flags are cleared in the handler one captured bit at a time with a
+single-bit clear, never by a masked write of the whole register, so a flag
+hardware sets during the handler is not overwritten. An edge that lands
+after the clear re-raises IOCIF. A second edge on an already-captured bit
+merges into that capture; the PORTB byte passed to the callback is read
+after the clear, so it reflects the pin state at that read.
 
 ## Weak pull-ups
 
