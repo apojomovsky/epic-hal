@@ -27,7 +27,8 @@ regenerated header is byte-identical.
 
 Flags:
   --family <name>  limit to one family (e.g. PIC16F88X)
-  --check          fail (exit 1) if committed file differs from generated
+  --check          fail (exit 1) if committed file differs from generated, or if
+                   a family's EDC is absent (drift cannot be verified)
   --edc <path>     override EDC path for the chosen family
   --dfp-dir <path> override DFP dir for EDC lookup
 """
@@ -263,6 +264,10 @@ def main():
         header_path = hal_header_path(fam)
         generated = generate_for_family(fam, edc_override, args.dfp_dir)
         if generated is None:
+            # The drift check verifies nothing without the EDC; passing here would hide drift.
+            if args.check:
+                print(f"gen-sfr: {fam} drift unverified (--check): EDC missing", file=sys.stderr)
+                failed = True
             continue
         committed = header_path.read_text()
         if args.check:
