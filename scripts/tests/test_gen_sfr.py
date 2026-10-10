@@ -39,6 +39,17 @@ class TestCheckWithoutEdc(unittest.TestCase):
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("drift unverified", r.stderr)
 
+    def test_sweep_without_family_fails_check(self):
+        """A bare --check sweep that verifies no family must not pass either."""
+        with tempfile.TemporaryDirectory() as d:
+            env = {**os.environ, "XC8_INSTALL_DIR": d}
+            r = subprocess.run(
+                [sys.executable, str(SCRIPT), "--check"],
+                capture_output=True, text=True, env=env, cwd=REPO,
+            )
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("drift unverified", r.stderr)
+
 
 class TestCheckWithEdc(unittest.TestCase):
     def setUp(self):
