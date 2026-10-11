@@ -8,7 +8,6 @@
 #define PIC16F1508_CLC_GLS_H
 
 #include <stdint.h>
-#include "core/hal_status.h"
 #include "pic16f1508_sfr.h"
 
 /**

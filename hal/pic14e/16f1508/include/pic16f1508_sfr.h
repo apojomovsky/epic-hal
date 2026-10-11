@@ -1,10 +1,9 @@
 /**
- * SFR address map for PIC16F1508/1509. PIC_REG_* addresses are generated
- * from the pinned DFP EDC by scripts/gen-sfr.py (identical for both parts),
- * except the CLC block: gen-sfr.py does not emit it, so it is hand-maintained
- * and cross-checked against the pinned DFP header.
- * Bit masks are hand-maintained and cite register names, not datasheet
- * pages, until checked against the datasheet (see MANUAL.md).
+ * SFR address map for PIC16F1508/1509. PIC_REG_* addresses, CLC included,
+ * are generated from the pinned DFP EDC by scripts/gen-sfr.py (identical for
+ * both parts; --check detects drift). Bit masks are hand-maintained and
+ * cross-checked against the DFP 1.9.258 proc header. They cite register names,
+ * not datasheet pages, until checked against the datasheet (see MANUAL.md).
  */
 
 #ifndef PIC16F1508_SFR_H
@@ -101,9 +100,7 @@
 
 /* CLCxSEL0 and CLCxSEL1: D1S (SEL0) and D3S (SEL1) in bits 2:0, D2S (SEL0)
  * and D4S (SEL1) in bits 6:4. */
-#define PIC_CLCSEL_LOW_MASK   0x07U
 #define PIC_CLCSEL_HIGH_SHIFT 4U
-#define PIC_CLCSEL_HIGH_MASK  0x07U
 
 /* CLCxGLSn: gate n data input i has its negate bit at 2*(i-1) and its
  * true-enable bit at 2*(i-1)+1. */

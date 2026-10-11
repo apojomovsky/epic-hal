@@ -31,7 +31,7 @@ Implemented and verified:
 - [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`epic-pic16f1508-firmware`), `blink` example,
       and the mdb GPIO register-readback gate (`MODE=gpio`, RA0 PASS
-      marker). The CLC block is kept out of the mdb probe because of a
+      marker). The CLC block is kept out of the mdb probe because of an
       MPLAB-SIM exception (#383).
 
 Implemented but not verified against the datasheet: the `EPIC_CLC` driver
@@ -43,9 +43,10 @@ Not yet implemented (deliberate scope limit, each its own follow-up):
 
 - Timers, CCP, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
   comparators, DAC, FVR, and the SR latch.
-- The CLC input-select table (`EPIC_CLC` source codes from DS40001609E
-  Table 24-1) and the CLC interrupt routing (#385). The CLC register bit
-  positions are unverified against the datasheet (see MANUAL.md).
+- The CLC input-select table (`EPIC_CLC` source codes; the datasheet table
+  is not verified here, see #384) and the CLC interrupt routing (#385).
+  The CLC register bit positions are unverified against the datasheet
+  (see MANUAL.md).
 - A 16F188xx part. It is not in the pinned DFP.
 
 ## Quick start
