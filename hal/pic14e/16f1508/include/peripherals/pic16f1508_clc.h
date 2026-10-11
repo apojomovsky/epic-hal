@@ -45,6 +45,8 @@ EPIC_StatusTypeDef EPIC_CLC_Init(const CLC_HandleTypeDef *h);
 
 /**
  * @brief Disable one CLC cell and clear its configuration registers.
+ * @details Clears the callback slot as well. Disable the CLCn interrupt first
+ * when the cell is live: the handler reads that slot from interrupt context.
  * @param instance Cell to clear (CLC1..CLC4).
  * @return EPIC_OK on success, EPIC_INVALID for an unknown instance.
  */
