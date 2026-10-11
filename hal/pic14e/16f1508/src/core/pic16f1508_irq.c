@@ -28,51 +28,116 @@ void EPIC_IRQ_Restore(uint8_t prev_state)
 }
 
 /**
+ * @brief Map a CLC source to its PIE3 enable bit.
+ * @param irq Interrupt source.
+ * @return PIE3 mask for a CLC source, 0 for any other source.
+ */
+static uint8_t clc_enable_mask(PIC16F1508_IRQn irq)
+{
+    switch (irq)
+    {
+    case PIC16F1508_IRQ_CLC1: return PIC_PIE3_CLC1IE;
+    case PIC16F1508_IRQ_CLC2: return PIC_PIE3_CLC2IE;
+    case PIC16F1508_IRQ_CLC3: return PIC_PIE3_CLC3IE;
+    case PIC16F1508_IRQ_CLC4: return PIC_PIE3_CLC4IE;
+    default:                  return 0U;
+    }
+}
+
+/**
+ * @brief Map a CLC source to its PIR3 flag bit.
+ * @param irq Interrupt source.
+ * @return PIR3 mask for a CLC source, 0 for any other source.
+ */
+static uint8_t clc_flag_mask(PIC16F1508_IRQn irq)
+{
+    switch (irq)
+    {
+    case PIC16F1508_IRQ_CLC1: return PIC_PIR3_CLC1IF;
+    case PIC16F1508_IRQ_CLC2: return PIC_PIR3_CLC2IF;
+    case PIC16F1508_IRQ_CLC3: return PIC_PIR3_CLC3IF;
+    case PIC16F1508_IRQ_CLC4: return PIC_PIR3_CLC4IF;
+    default:                  return 0U;
+    }
+}
+
+/**
  * @brief Enable a single interrupt source.
- * @param irq Interrupt source. Only PIC16F1508_IRQ_IOC is implemented.
+ * @details IOC is enabled in INTCON. A CLC source is enabled in PIE3 and also
+ * sets INTCON.PEIE, because PIR3 sources reach the vector only through PEIE.
+ * GIE is left to EPIC_IRQ_Restore.
+ * @param irq Interrupt source to enable.
  */
 void EPIC_IRQ_Enable(PIC16F1508_IRQn irq)
 {
+    uint8_t ie_mask = clc_enable_mask(irq);
+
     if (irq == PIC16F1508_IRQ_IOC)
     {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_IOCIE);
+    }
+    else if (ie_mask != 0U)
+    {
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE3), ie_mask);
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
     }
 }
 
 /**
  * @brief Disable a single interrupt source.
- * @param irq Interrupt source. Only PIC16F1508_IRQ_IOC is implemented.
+ * @details Clears the source's enable bit. PEIE is left as set, since other
+ * peripheral sources may still rely on it.
+ * @param irq Interrupt source to disable.
  */
 void EPIC_IRQ_DisableSrc(PIC16F1508_IRQn irq)
 {
+    uint8_t ie_mask = clc_enable_mask(irq);
+
     if (irq == PIC16F1508_IRQ_IOC)
     {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_IOCIE);
+    }
+    else if (ie_mask != 0U)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE3), ie_mask);
     }
 }
 
 /**
  * @brief Clear the interrupt request flag for a source.
- * @param irq Interrupt source. Only PIC16F1508_IRQ_IOC is implemented.
+ * @details Each case uses a constant mask so the clear compiles to a single
+ * bit-clear on the flag register, not a read-modify-write with a runtime mask.
+ * @param irq Interrupt source whose flag to clear.
  */
 void EPIC_IRQ_ClearFlag(PIC16F1508_IRQn irq)
 {
-    if (irq == PIC16F1508_IRQ_IOC)
+    switch (irq)
     {
-        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_IOCIF);
+    case PIC16F1508_IRQ_IOC:  EPIC_BIT_CLR(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_IOCIF); break;
+    case PIC16F1508_IRQ_CLC1: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC1IF); break;
+    case PIC16F1508_IRQ_CLC2: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC2IF); break;
+    case PIC16F1508_IRQ_CLC3: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC3IF); break;
+    case PIC16F1508_IRQ_CLC4: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC4IF); break;
+    default:                  break;
     }
 }
 
 /**
  * @brief Read the interrupt request flag for a source.
- * @param irq Interrupt source. Only PIC16F1508_IRQ_IOC is implemented.
+ * @param irq Interrupt source whose flag to read.
  * @return 1 when the source flag is set, 0 otherwise or for an unknown source.
  */
 uint8_t EPIC_IRQ_GetFlag(PIC16F1508_IRQn irq)
 {
+    uint8_t flag_mask = clc_flag_mask(irq);
+
     if (irq == PIC16F1508_IRQ_IOC)
     {
         return (EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_IOCIF) ? 1U : 0U;
+    }
+    if (flag_mask != 0U)
+    {
+        return (EPIC_REG8(PIC_REG_PIR3) & flag_mask) ? 1U : 0U;
     }
     return 0U;
 }

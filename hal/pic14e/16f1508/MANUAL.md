@@ -127,9 +127,15 @@ datasheet yet.
 
 The input-select codes (the DS40001609E input-select table, not verified here) are not in this HAL (#384).
 The driver passes raw 0..7 mode and source codes through and validates
-only the range. Interrupt routing (PIR3/PIE3 CLC1IF..CLC4IF, bits 0..3
-per the DFP header) is not wired (#385).
+only the range.
+Interrupt routing: PIR3 bits 0..3 are CLC1IF..CLC4IF and PIE3 bits 0..3 are
+CLC1IE..CLC4IE (DFP 1.9.258 proc header `pic16f1509.h`; EDC `PIR3` at 0x13,
+`PIE3` at 0x93). Both are **unverified** against DS40001609E. `EPIC_IRQ_Enable`
+on a CLC source sets PIE3 and INTCON.PEIE. The dispatcher runs
+`CLCn_IRQHandler` only when CLCnIF and CLCnIE are both set, and that handler
+clears CLCnIF. No application callback exists yet, so an enabled CLC source
+wakes the vector and is acknowledged, but the application cannot act on it.
 
 MPLAB-SIM throws on some CLC register access sequences, so the mdb gate
 does not exercise CLC (follow-up #383). The CLC driver is covered by the
-host probe `example_clc` only.
+host probes `example_clc` (registers) and `example_clc_irq` (interrupt routing) only.

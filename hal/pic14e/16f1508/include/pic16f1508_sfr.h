@@ -14,6 +14,8 @@
 /* Core and interrupt control. */
 #define PIC_REG_INTCON        0x0BU
 #define PIC_REG_OPTION        0x95U
+#define PIC_REG_PIR3          0x13U
+#define PIC_REG_PIE3          0x93U
 
 /* GPIO (PORTA..PORTC). */
 #define PIC_REG_PORTA         0x0CU
@@ -118,6 +120,18 @@
 #define PIC_INTCON_IOCIE      EPIC_BIT(3)
 #define PIC_INTCON_PEIE       EPIC_BIT(6)
 #define PIC_INTCON_GIE        EPIC_BIT(7)
+
+/* PIR3 and PIE3 carry the CLC1..CLC4 flag and enable in the same bit
+ * positions, bits 0..3 (pinned DFP 1.9.258 header, not yet checked against
+ * DS40001609E). */
+#define PIC_PIR3_CLC1IF       EPIC_BIT(0)
+#define PIC_PIR3_CLC2IF       EPIC_BIT(1)
+#define PIC_PIR3_CLC3IF       EPIC_BIT(2)
+#define PIC_PIR3_CLC4IF       EPIC_BIT(3)
+#define PIC_PIE3_CLC1IE       EPIC_BIT(0)
+#define PIC_PIE3_CLC2IE       EPIC_BIT(1)
+#define PIC_PIE3_CLC3IE       EPIC_BIT(2)
+#define PIC_PIE3_CLC4IE       EPIC_BIT(3)
 
 /* OPTION_REG bit 7 is nWPUEN: active low, 0 enables the per-pin
  * weak pull-ups in WPUx. */
