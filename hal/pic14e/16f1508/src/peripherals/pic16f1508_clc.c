@@ -139,3 +139,35 @@ EPIC_StatusTypeDef EPIC_CLC_ReadOutput(CLC_InstanceTypeDef instance, uint8_t *le
     *level = (uint8_t)((EPIC_REG8(PIC_REG_CLCDATA) >> (unsigned int)instance) & 1U);
     return EPIC_OK;
 }
+
+/**
+ * @brief Acknowledge CLC1IF from the interrupt dispatcher.
+ */
+void CLC1_IRQHandler(void)
+{
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC1IF);
+}
+
+/**
+ * @brief Acknowledge CLC2IF from the interrupt dispatcher.
+ */
+void CLC2_IRQHandler(void)
+{
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC2IF);
+}
+
+/**
+ * @brief Acknowledge CLC3IF from the interrupt dispatcher.
+ */
+void CLC3_IRQHandler(void)
+{
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC3IF);
+}
+
+/**
+ * @brief Acknowledge CLC4IF from the interrupt dispatcher.
+ */
+void CLC4_IRQHandler(void)
+{
+    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC4IF);
+}

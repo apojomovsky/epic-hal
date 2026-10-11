@@ -56,4 +56,32 @@ EPIC_StatusTypeDef EPIC_CLC_DeInit(CLC_InstanceTypeDef instance);
  */
 EPIC_StatusTypeDef EPIC_CLC_ReadOutput(CLC_InstanceTypeDef instance, uint8_t *level);
 
+/**
+ * @brief Acknowledge CLC1IF when CLC1 is enabled and pending.
+ * @details Called from epic_dispatch_all_irqs only when CLC1IF and CLC1IE are
+ * both set. Clears CLC1IF so the vector does not re-enter on the same event.
+ */
+void CLC1_IRQHandler(void);
+
+/**
+ * @brief Acknowledge CLC2IF when CLC2 is enabled and pending.
+ * @details Called from epic_dispatch_all_irqs only when CLC2IF and CLC2IE are
+ * both set. Clears CLC2IF so the vector does not re-enter on the same event.
+ */
+void CLC2_IRQHandler(void);
+
+/**
+ * @brief Acknowledge CLC3IF when CLC3 is enabled and pending.
+ * @details Called from epic_dispatch_all_irqs only when CLC3IF and CLC3IE are
+ * both set. Clears CLC3IF so the vector does not re-enter on the same event.
+ */
+void CLC3_IRQHandler(void);
+
+/**
+ * @brief Acknowledge CLC4IF when CLC4 is enabled and pending.
+ * @details Called from epic_dispatch_all_irqs only when CLC4IF and CLC4IE are
+ * both set. Clears CLC4IF so the vector does not re-enter on the same event.
+ */
+void CLC4_IRQHandler(void);
+
 #endif
