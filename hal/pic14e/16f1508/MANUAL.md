@@ -79,7 +79,7 @@ because IOC is implemented on PORTB only.
 |-----|----------|------------------------------------------------------------------|
 | INTCON<0> | IOCIF | Set when any enabled IOCB flag is set. Cleared by the handler. |
 | INTCON<3> | IOCIE | Gates the IOC source. The dispatcher calls IOC only when IOCIF and IOCIE are both set. |
-| INTCON<6> | PEIE  | Set by `EPIC_IRQ_Enable` on a CLC source. Exposes all peripheral (PIR1..PIR3) sources. |
+| INTCON<6> | PEIE  | Set by `EPIC_IRQ_Enable` on a CLC source. Exposes PIR1, PIR2 and PIR3 sources; the dispatcher acknowledges enabled unowned ones (see CLC interrupt routing). |
 | INTCON<7> | GIE   | Global interrupt enable.                                         |
 
 `IOCBF` flags are cleared in the handler one captured bit at a time with a
@@ -135,9 +135,16 @@ on a CLC source sets PIE3 and INTCON.PEIE. The dispatcher runs
 `CLCn_IRQHandler` only when CLCnIF and CLCnIE are both set, and that handler
 clears CLCnIF. No application callback exists yet, so an enabled CLC source
 wakes the vector and is acknowledged, but the application cannot act on it.
-PEIE also unmasks PIE1 and PIE2 sources that the application may have enabled. The
-dispatcher acknowledges only IOC and CLC1..CLC4, so keep those enables clear while a
-CLC source is enabled, or the vector re-fires on each return.
+PEIE also exposes the PIR1 and PIR2 sources and PIR3<7:4>. No driver in this HAL owns them.
+While PEIE is set, the dispatcher acknowledges each one that is both flagged and enabled: it
+clears that source's PIE bit, then its flag, one bit at a time, and runs no handler. So a CLC
+enable next to a pending PIR1 or PIR2 source no longer re-enters the vector. Enabling an unowned
+peripheral interrupt alongside a CLC source is unsupported: the dispatcher disables it. A flagged
+source whose enable is clear stays pending for polling. With PEIE clear these sources cannot reach
+the vector, and the dispatcher leaves them alone. PIR3<7:4> are unimplemented on the PIC16F1508
+per EDC, so that part is inert on this device. The PIR1, PIR2, PIE1 and PIE2 addresses
+(0x11, 0x12, 0x91, 0x92) come from EDC. The PEIE behavior and the PIE/PIR bit map cite
+DS40001609E interrupt control and are **unverified** until #388.
 
 MPLAB-SIM throws on some CLC register access sequences, so the mdb gate
 does not exercise CLC (follow-up #383). The CLC driver is covered by the

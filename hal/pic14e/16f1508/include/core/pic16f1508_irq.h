@@ -1,7 +1,8 @@
 /**
  * PIC16F1508/1509 interrupt contract. Sources: interrupt-on-change (INTCON)
  * and the four CLC cells (PIR3/PIE3 bits 0..3). Enabling a CLC source also
- * sets INTCON.PEIE, since PIR3 sources reach the vector only through PEIE.
+ * sets INTCON.PEIE, which exposes PIR1, PIR2 and non-CLC PIR3 sources to the
+ * vector; the dispatcher acknowledges enabled ones (epic_dispatch_all_irqs).
  * Single vector, no priority levels.
  */
 #ifndef PIC16F1508_IRQ_H
@@ -67,7 +68,9 @@ void EPIC_IRQ_SetPriority(PIC16F1508_IRQn irq, EPIC_IRQ_Priority prio);
 /**
  * @brief Shared interrupt dispatcher, called from the single interrupt vector.
  * @details Runs IOC_IRQHandler when IOCIF and IOCIE are both set, and
- * CLCn_IRQHandler when the CLCn flag and enable are both set.
+ * CLCn_IRQHandler when the CLCn flag and enable are both set. With PEIE set,
+ * each enabled PIR1, PIR2 and non-CLC PIR3 flag is cleared together with its
+ * enable, and no handler runs for it.
  */
 void epic_dispatch_all_irqs(void);
 

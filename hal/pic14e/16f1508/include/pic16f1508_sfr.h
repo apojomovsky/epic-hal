@@ -14,7 +14,11 @@
 /* Core and interrupt control. */
 #define PIC_REG_INTCON        0x0BU
 #define PIC_REG_OPTION        0x95U
+#define PIC_REG_PIR1          0x11U
+#define PIC_REG_PIR2          0x12U
 #define PIC_REG_PIR3          0x13U
+#define PIC_REG_PIE1          0x91U
+#define PIC_REG_PIE2          0x92U
 #define PIC_REG_PIE3          0x93U
 
 /* GPIO (PORTA..PORTC). */
