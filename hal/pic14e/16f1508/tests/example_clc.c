@@ -19,6 +19,8 @@ int main(void)
     int ok = 1;
     CLC_HandleTypeDef h;
     uint8_t level = 0xFFU;
+    unsigned int i;
+    uint8_t before[8];
 
     epic_harness_init(10000UL);
 
@@ -38,7 +40,7 @@ int main(void)
     h.Source[3] = 4U;
     h.Gls[0] = (uint8_t)(EPIC_CLC_GLSInput(1U, 1U, 0U) | EPIC_CLC_GLSInput(3U, 0U, 1U));
     h.Gls[1] = EPIC_CLC_GLSInput(4U, 0U, 1U);
-    h.Gls[2] = 0U;
+    h.Gls[2] = EPIC_CLC_GLSInput(3U, 1U, 1U);
     h.Gls[3] = EPIC_CLC_GLSInput(2U, 1U, 1U);
     h.GatePolarity = 0x05U;
     h.OutputPolarity = 1U;
@@ -50,7 +52,7 @@ int main(void)
     ok &= (EPIC_REG8(PIC_REG_CLC2SEL1) == 0x43U);
     ok &= (EPIC_REG8(PIC_REG_CLC2GLS0) == 0x21U);
     ok &= (EPIC_REG8(PIC_REG_CLC2GLS1) == 0x80U);
-    ok &= (EPIC_REG8(PIC_REG_CLC2GLS2) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_CLC2GLS2) == 0x30U);
     ok &= (EPIC_REG8(PIC_REG_CLC2GLS3) == 0x0CU);
 
     /* Invalid handles return EPIC_INVALID and leave the CLC3 registers as the valid call above set them. */
@@ -63,9 +65,22 @@ int main(void)
     h.GatePolarity = 0x00U;
     h.OutputPolarity = 0U;
     h.OutputEnable = 0U;
+    h.Gls[0] = EPIC_CLC_GLSInput(1U, 0U, 1U);
+    h.Gls[1] = EPIC_CLC_GLSInput(2U, 1U, 0U);
+    h.Gls[2] = EPIC_CLC_GLSInput(3U, 1U, 1U);
+    h.Gls[3] = EPIC_CLC_GLSInput(4U, 1U, 0U);
     ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
     ok &= (EPIC_REG8(PIC_REG_CLC3SEL0) == (uint8_t)(5U | (6U << 4U)));
+    ok &= (EPIC_REG8(PIC_REG_CLC3CON) == 0x82U);
+    for (i = 0U; i < 8U; i++)
+    {
+        before[i] = EPIC_REG8(PIC_REG_CLC3CON + i);
+    }
 
+    for (i = 0U; i < 4U; i++)
+    {
+        h.Gls[i] = 0xFFU;
+    }
     h.Mode = 8U;
     ok &= (EPIC_CLC_Init(&h) == EPIC_INVALID);
     h.Mode = 2U;
@@ -78,8 +93,10 @@ int main(void)
     h.Instance = (CLC_InstanceTypeDef)4;
     ok &= (EPIC_CLC_Init(&h) == EPIC_INVALID);
     ok &= (EPIC_CLC_Init(NULL) == EPIC_INVALID);
-    ok &= (EPIC_REG8(PIC_REG_CLC3SEL0) == (uint8_t)(5U | (6U << 4U)));
-    ok &= (EPIC_REG8(PIC_REG_CLC3CON) == 0x82U);
+    for (i = 0U; i < 8U; i++)
+    {
+        ok &= (EPIC_REG8(PIC_REG_CLC3CON + i) == before[i]);
+    }
 
     /* CLCDATA readout: MCLC3OUT set reads back for CLC3 only. */
     EPIC_REG8(PIC_REG_CLCDATA) = PIC_CLCDATA_MCLC3OUT;
@@ -92,12 +109,15 @@ int main(void)
 
     /* DeInit clears every configuration register of the cell. */
     ok &= (EPIC_CLC_DeInit(CLC2) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CLC3CON) == 0x82U);
     ok &= (EPIC_REG8(PIC_REG_CLC2CON) == 0U);
     ok &= (EPIC_REG8(PIC_REG_CLC2POL) == 0U);
     ok &= (EPIC_REG8(PIC_REG_CLC2SEL0) == 0U);
     ok &= (EPIC_REG8(PIC_REG_CLC2SEL1) == 0U);
     ok &= (EPIC_REG8(PIC_REG_CLC2GLS0) == 0U);
     ok &= (EPIC_REG8(PIC_REG_CLC2GLS3) == 0U);
+    ok &= (EPIC_REG8(PIC_REG_CLC2GLS1) == 0U);
+    ok &= (EPIC_REG8(PIC_REG_CLC2GLS2) == 0U);
     ok &= (EPIC_CLC_DeInit((CLC_InstanceTypeDef)4) == EPIC_INVALID);
 
     epic_harness_log("clc/register smoke: %s\n", ok ? "PASS" : "FAIL");

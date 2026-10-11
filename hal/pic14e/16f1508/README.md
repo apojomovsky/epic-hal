@@ -28,13 +28,16 @@ Implemented and verified:
       toggle, pull-ups, analog select, interrupt-on-change enable
 - [x] Interrupt core for IOC only (`INTCON.IOCIE` gated dispatch, single
       vector, automatic hardware context save)
-- [x] Host simulation backend and `example_gpio` and `example_clc` probes
-      (ctest). `EPIC_CLC` driver with raw mode and source codes; the
-      input table is pending (#384).
+- [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`epic-pic16f1508-firmware`), `blink` example,
       and the mdb GPIO register-readback gate (`MODE=gpio`, RA0 PASS
       marker). The CLC block is kept out of the mdb probe because of a
       MPLAB-SIM exception (#383).
+
+Implemented but not verified against the datasheet: the `EPIC_CLC` driver
+(raw mode and source codes, host probe `example_clc` only). Its register
+bits come from the DFP header (see MANUAL.md). The input-select table is
+pending (#384).
 
 Not yet implemented (deliberate scope limit, each its own follow-up):
 

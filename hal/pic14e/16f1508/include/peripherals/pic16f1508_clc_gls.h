@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include "core/hal_status.h"
+#include "pic16f1508_sfr.h"
 
 /**
  * @brief GLS bits for one data input of a gate.
@@ -22,15 +23,15 @@
  */
 static inline uint8_t EPIC_CLC_GLSInput(uint8_t input, uint8_t negate, uint8_t true_en)
 {
-    uint8_t shift;
+    static const uint8_t neg[4] = {PIC_CLCGLS_D1N, PIC_CLCGLS_D2N, PIC_CLCGLS_D3N, PIC_CLCGLS_D4N};
+    static const uint8_t tru[4] = {PIC_CLCGLS_D1T, PIC_CLCGLS_D2T, PIC_CLCGLS_D3T, PIC_CLCGLS_D4T};
 
     if ((input < 1U) || (input > 4U))
     {
         return 0U;
     }
-    shift = (uint8_t)(2U * (input - 1U));
-    return (uint8_t)(((negate != 0U) ? EPIC_BIT(shift) : 0U) |
-                     ((true_en != 0U) ? EPIC_BIT(shift + 1U) : 0U));
+    return (uint8_t)(((negate != 0U) ? neg[input - 1U] : 0U) |
+                     ((true_en != 0U) ? tru[input - 1U] : 0U));
 }
 
 #endif
