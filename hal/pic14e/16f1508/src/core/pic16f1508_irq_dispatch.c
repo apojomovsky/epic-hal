@@ -6,6 +6,29 @@
 #define CLC_PIR3_MASK ((uint8_t)(PIC_PIR3_CLC1IF | PIC_PIR3_CLC2IF | PIC_PIR3_CLC3IF | PIC_PIR3_CLC4IF))
 
 /**
+ * @brief Clear one bit of a register using a constant mask for that index.
+ * @details A runtime mask makes the clear a load, AND and store of the whole
+ * byte, which can erase a flag the hardware sets in that window. Constant masks
+ * let XC8 emit one BCF per bit.
+ * @param reg Pointer to the register to modify.
+ * @param bit Bit index, 0 to 7.
+ */
+static void epic_clear_bit(volatile uint8_t *reg, uint8_t bit)
+{
+    switch (bit)
+    {
+    case 0U: EPIC_BIT_CLR(*reg, 0x01U); break;
+    case 1U: EPIC_BIT_CLR(*reg, 0x02U); break;
+    case 2U: EPIC_BIT_CLR(*reg, 0x04U); break;
+    case 3U: EPIC_BIT_CLR(*reg, 0x08U); break;
+    case 4U: EPIC_BIT_CLR(*reg, 0x10U); break;
+    case 5U: EPIC_BIT_CLR(*reg, 0x20U); break;
+    case 6U: EPIC_BIT_CLR(*reg, 0x40U); break;
+    default: EPIC_BIT_CLR(*reg, 0x80U); break;
+    }
+}
+
+/**
  * @brief Acknowledge the enabled, pending sources of one PIR/PIE pair with no driver.
  * @details Clears each acknowledged source's PIE bit, then its flag, one bit at
  * a time. A whole-byte write of PIR would erase a flag the hardware sets during
@@ -21,12 +44,10 @@ static void epic_ack_unowned(volatile uint8_t *pir, volatile uint8_t *pie, uint8
 
     for (bit = 0U; bit < 8U; bit++)
     {
-        uint8_t mask = EPIC_BIT(bit);
-
-        if ((pending & mask) != 0U)
+        if ((pending & EPIC_BIT(bit)) != 0U)
         {
-            EPIC_BIT_CLR(*pie, mask);
-            EPIC_BIT_CLR(*pir, mask);
+            epic_clear_bit(pie, bit);
+            epic_clear_bit(pir, bit);
         }
     }
 }
