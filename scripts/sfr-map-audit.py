@@ -272,6 +272,28 @@ BIT_ALIASES = {
     ("CCP2", "CCP2M3"): ("CCP2CON", "CCP2M3"),
     ("CCP2", "DC2B0"): ("CCP2CON", "DC2B0"),
     ("CCP2", "DC2B1"): ("CCP2CON", "DC2B1"),
+    # 16F1508/1509 CLC: the HAL's CLCCON/CLCGLS/CLCPOL names cover CLC1..4
+    # and the DFP spells them per instance. Positions are checked against
+    # CLC1 (CLCGLS against gate 1 in CLC1GLS0); the other instances and
+    # gates are not checked mechanically.
+    ("CLCCON", "EN"): ("CLC1CON", "LC1EN"),
+    ("CLCCON", "OE"): ("CLC1CON", "LC1OE"),
+    ("CLCCON", "OUT"): ("CLC1CON", "LC1OUT"),
+    ("CLCCON", "INTP"): ("CLC1CON", "LC1INTP"),
+    ("CLCCON", "INTN"): ("CLC1CON", "LC1INTN"),
+    ("CLCPOL", "G1POL"): ("CLC1POL", "G1POL"),
+    ("CLCPOL", "G2POL"): ("CLC1POL", "G2POL"),
+    ("CLCPOL", "G3POL"): ("CLC1POL", "G3POL"),
+    ("CLCPOL", "G4POL"): ("CLC1POL", "G4POL"),
+    ("CLCPOL", "POL"): ("CLC1POL", "POL"),
+    ("CLCGLS", "D1N"): ("CLC1GLS0", "LC1G1D1N"),
+    ("CLCGLS", "D1T"): ("CLC1GLS0", "LC1G1D1T"),
+    ("CLCGLS", "D2N"): ("CLC1GLS0", "LC1G1D2N"),
+    ("CLCGLS", "D2T"): ("CLC1GLS0", "LC1G1D2T"),
+    ("CLCGLS", "D3N"): ("CLC1GLS0", "LC1G1D3N"),
+    ("CLCGLS", "D3T"): ("CLC1GLS0", "LC1G1D3T"),
+    ("CLCGLS", "D4N"): ("CLC1GLS0", "LC1G1D4N"),
+    ("CLCGLS", "D4T"): ("CLC1GLS0", "LC1G1D4T"),
 }
 
 # Registers present on every shape but at a different address on

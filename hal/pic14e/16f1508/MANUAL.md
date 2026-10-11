@@ -127,8 +127,8 @@ datasheet yet.
 
 The input-select codes (the DS40001609E input-select table, not verified here) are not in this HAL (#384).
 The driver passes raw 0..7 mode and source codes through and validates
-only the range. Interrupt routing (PIR3/PIE3 CLC1IF..CLC4IF, bits 0..3)
-is not wired (#385).
+only the range. Interrupt routing (PIR3/PIE3 CLC1IF..CLC4IF, bits 0..3
+per the DFP header) is not wired (#385).
 
 MPLAB-SIM throws on some CLC register access sequences, so the mdb gate
 does not exercise CLC (follow-up #383). The CLC driver is covered by the
