@@ -36,8 +36,8 @@ Implemented and verified:
       MPLAB-SIM exception (#383).
 
 Implemented but not verified against the datasheet: the `EPIC_CLC` driver
-(raw mode, source codes, CLC1..CLC4 interrupt routing; host probes
-`example_clc` and `example_clc_irq`). Its register bits come from the DFP
+(raw mode, source codes, CLC1..CLC4 interrupt routing with an optional per-cell
+callback; host probes `example_clc` and `example_clc_irq`). Its register bits come from the DFP
 header (see MANUAL.md). The input-select table is pending (#384).
 
 Not yet implemented (deliberate scope limit, each its own follow-up):
