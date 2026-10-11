@@ -26,8 +26,9 @@ Implemented and verified:
 - [x] Implemented-pin masks per port (`include/pic16f1508.h`)
 - [x] GPIO on PORTA, PORTB, PORTC: init, read/write pin and port,
       toggle, pull-ups, analog select, interrupt-on-change enable
-- [x] Interrupt core for IOC only (`INTCON.IOCIE` gated dispatch, single
-      vector, automatic hardware context save)
+- [x] Interrupt core for IOC and CLC1..CLC4 (`INTCON.IOCIE`, and
+      `PIR3`/`PIE3` for CLC; gated dispatch, single vector, automatic
+      hardware context save)
 - [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`epic-pic16f1508-firmware`), `blink` example,
       and the mdb GPIO register-readback gate (`MODE=gpio`, RA0 PASS
@@ -35,18 +36,18 @@ Implemented and verified:
       MPLAB-SIM exception (#383).
 
 Implemented but not verified against the datasheet: the `EPIC_CLC` driver
-(raw mode and source codes, host probe `example_clc` only). Its register
-bits come from the DFP header (see MANUAL.md). The input-select table is
-pending (#384).
+(raw mode, source codes, CLC1..CLC4 interrupt routing; host probes
+`example_clc` and `example_clc_irq`). Its register bits come from the DFP
+header (see MANUAL.md). The input-select table is pending (#384).
 
 Not yet implemented (deliberate scope limit, each its own follow-up):
 
 - Timers, CCP, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
   comparators, DAC, FVR, and the SR latch.
 - The CLC input-select table (`EPIC_CLC` source codes; the datasheet table
-  is not verified here, see #384) and the CLC interrupt routing (#385).
-  The CLC register bit positions are unverified against the datasheet
-  (see MANUAL.md).
+  is not verified here, see #384).
+- The CLC register bit positions, including PIR3/PIE3 for CLC interrupts,
+  are unverified against the datasheet (see MANUAL.md, #388).
 - A 16F188xx part. It is not in the pinned DFP.
 
 ## Quick start
