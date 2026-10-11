@@ -53,6 +53,18 @@ static void epic_ack_unowned(volatile uint8_t *pir, volatile uint8_t *pie, uint8
 }
 
 /**
+ * @brief Test whether a CLC source's flag and enable are both still set.
+ * @details Evaluated at each call site: a callback that ran earlier in the same
+ * dispatch may have disabled a later source.
+ * @param mask PIR3 bit of the CLC source.
+ * @return Non-zero when the source is pending and enabled, zero otherwise.
+ */
+static uint8_t clc_live(uint8_t mask)
+{
+    return (uint8_t)(EPIC_REG8(PIC_REG_PIR3) & EPIC_REG8(PIC_REG_PIE3) & mask);
+}
+
+/**
  * @brief Route the pending interrupt to its handler.
  * @details Called from the single interrupt vector. A source runs its handler
  * only when its flag and its enable are both set. A disabled source keeps its
@@ -68,14 +80,12 @@ void epic_dispatch_all_irqs(void)
         IOC_IRQHandler();
     }
 
-    /* Re-read after the IOC handler: its user callback may disable a CLC source. */
-    uint8_t clc_pending = EPIC_REG8(PIC_REG_PIR3) & EPIC_REG8(PIC_REG_PIE3);
-
-    /* CLCnIF and CLCnIE share bit n-1; PIR3 & PIE3 keeps only enabled, pending CLCs. */
-    if (clc_pending & PIC_PIR3_CLC1IF) CLC1_IRQHandler();
-    if (clc_pending & PIC_PIR3_CLC2IF) CLC2_IRQHandler();
-    if (clc_pending & PIC_PIR3_CLC3IF) CLC3_IRQHandler();
-    if (clc_pending & PIC_PIR3_CLC4IF) CLC4_IRQHandler();
+    /* Read PIR3 and PIE3 per CLC, not once per dispatch: a callback that runs
+     * earlier in this dispatch may have disabled a later source. */
+    if (clc_live(PIC_PIR3_CLC1IF) != 0U) CLC1_IRQHandler();
+    if (clc_live(PIC_PIR3_CLC2IF) != 0U) CLC2_IRQHandler();
+    if (clc_live(PIC_PIR3_CLC3IF) != 0U) CLC3_IRQHandler();
+    if (clc_live(PIC_PIR3_CLC4IF) != 0U) CLC4_IRQHandler();
 
     /* No driver owns PIR1, PIR2 or PIR3 bits other than CLC. With PEIE set, an
      * enabled flag reaches the vector and re-enters it on every return unless

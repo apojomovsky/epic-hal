@@ -49,6 +49,23 @@ static void clc1_cb_b(void)
 }
 
 /**
+ * @brief CLC1 callback that disables CLC2 while the dispatcher is running.
+ */
+static void clc1_disable_clc2(void)
+{
+    EPIC_IRQ_DisableSrc(PIC16F1508_IRQ_CLC2);
+}
+
+/**
+ * @brief CLC2 callback that records a call, so a wrongly dispatched CLC2 is visible.
+ */
+static void clc2_cb(void)
+{
+    s_calls++;
+    s_last_cb = 'C';
+}
+
+/**
  * @brief Run the CLC interrupt routing checks on the host simulator.
  * @return Harness result: 0 on PASS, 1 on FAIL.
  */
@@ -221,6 +238,23 @@ int main(void)
         epic_dispatch_all_irqs();
         ok &= (s_calls == 4U);
         ok &= (s_last_cb == 'B');
+
+        /* The rejected Init above left GatePolarity invalid in h. */
+        h.GatePolarity = 0U;
+        /* A CLC1 callback that disables CLC2 stops CLC2's handler in the same dispatch. */
+        h.Instance = CLC1;
+        h.Callback = clc1_disable_clc2;
+        ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
+        h.Instance = CLC2;
+        h.Callback = clc2_cb;
+        ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
+        EPIC_REG8(PIC_REG_PIE3) = 0x03U;
+        EPIC_REG8(PIC_REG_PIR3) = 0x03U;
+        epic_dispatch_all_irqs();
+        ok &= (s_calls == 4U);
+        ok &= (EPIC_REG8(PIC_REG_PIE3) == 0x01U);
+        ok &= (EPIC_REG8(PIC_REG_PIR3) == 0x02U);
+        EPIC_REG8(PIC_REG_PIR3) = 0x00U;
 
         ok &= (EPIC_CLC_DeInit(CLC1) == EPIC_OK);
         ok &= (EPIC_CLC_DeInit(CLC2) == EPIC_OK);
