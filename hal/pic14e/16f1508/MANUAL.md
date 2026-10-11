@@ -133,8 +133,13 @@ CLC1IE..CLC4IE (DFP 1.9.258 proc header `pic16f1509.h`; EDC `PIR3` at 0x13,
 `PIE3` at 0x93). Both are **unverified** against DS40001609E. `EPIC_IRQ_Enable`
 on a CLC source sets PIE3 and INTCON.PEIE. The dispatcher runs
 `CLCn_IRQHandler` only when CLCnIF and CLCnIE are both set, and that handler
-clears CLCnIF. No application callback exists yet, so an enabled CLC source
-wakes the vector and is acknowledged, but the application cannot act on it.
+clears CLCnIF, then runs the callback stored in `CLC_HandleTypeDef.Callback` for that cell
+(NULL runs nothing). The callback runs in ISR context, after the flag is cleared, so an event
+that pends again inside it re-raises the vector. `EPIC_CLC_Init` stores the callback before it
+sets EN, so an enabled cell never runs the previous callback; `EPIC_CLC_DeInit` clears it.
+Because the handler reads the slot from ISR context, disable the CLCn interrupt
+(`EPIC_IRQ_DisableSrc`) before reconfiguring a live cell. A rejected `Init` returns `EPIC_INVALID`
+and writes nothing, so the previous callback stays in place.
 PEIE also exposes the PIR1 and PIR2 sources and PIR3<7:4>. No driver in this HAL owns them.
 While PEIE is set, the dispatcher acknowledges each one that is both flagged and enabled: it
 clears that source's PIE bit, then its flag, one bit at a time, and runs no handler. So a CLC

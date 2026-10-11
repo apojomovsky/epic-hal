@@ -28,13 +28,15 @@ typedef struct
     uint8_t GatePolarity;         /* G1POL..G4POL in bits 3:0, 0..0x0F */
     uint8_t OutputPolarity;       /* nonzero inverts the cell output (POL) */
     uint8_t OutputEnable;         /* nonzero sets LCxOE; pin PPS/TRIS not touched */
+    void (*Callback)(void);       /* optional; run from the CLCn handler */
 } CLC_HandleTypeDef;
 
 /**
  * @brief Configure one CLC cell and enable it.
  * @details Validates the whole handle before writing any register. The cell
  * is disabled while it is reprogrammed, so no half-written configuration
- * reaches the output.
+ * reaches the output. Disable the CLCn interrupt first when reconfiguring a
+ * live cell: the handler reads the callback slot Init writes.
  * @param h Handle to apply. NULL, a bad instance, a field out of range, or
  * a gate polarity above 0x0F returns EPIC_INVALID with no register written.
  * @return EPIC_OK on success, EPIC_INVALID otherwise.
@@ -57,30 +59,30 @@ EPIC_StatusTypeDef EPIC_CLC_DeInit(CLC_InstanceTypeDef instance);
 EPIC_StatusTypeDef EPIC_CLC_ReadOutput(CLC_InstanceTypeDef instance, uint8_t *level);
 
 /**
- * @brief Acknowledge CLC1IF when CLC1 is enabled and pending.
+ * @brief Acknowledge CLC1IF, then run the CLC1 callback if one is set.
  * @details Called from epic_dispatch_all_irqs only when CLC1IF and CLC1IE are
- * both set. Clears CLC1IF so the vector does not re-enter on the same event.
+ * both set. Clears CLC1IF before the callback so the vector does not re-enter.
  */
 void CLC1_IRQHandler(void);
 
 /**
- * @brief Acknowledge CLC2IF when CLC2 is enabled and pending.
+ * @brief Acknowledge CLC2IF, then run the CLC2 callback if one is set.
  * @details Called from epic_dispatch_all_irqs only when CLC2IF and CLC2IE are
- * both set. Clears CLC2IF so the vector does not re-enter on the same event.
+ * both set. Clears CLC2IF before the callback so the vector does not re-enter.
  */
 void CLC2_IRQHandler(void);
 
 /**
- * @brief Acknowledge CLC3IF when CLC3 is enabled and pending.
+ * @brief Acknowledge CLC3IF, then run the CLC3 callback if one is set.
  * @details Called from epic_dispatch_all_irqs only when CLC3IF and CLC3IE are
- * both set. Clears CLC3IF so the vector does not re-enter on the same event.
+ * both set. Clears CLC3IF before the callback so the vector does not re-enter.
  */
 void CLC3_IRQHandler(void);
 
 /**
- * @brief Acknowledge CLC4IF when CLC4 is enabled and pending.
+ * @brief Acknowledge CLC4IF, then run the CLC4 callback if one is set.
  * @details Called from epic_dispatch_all_irqs only when CLC4IF and CLC4IE are
- * both set. Clears CLC4IF so the vector does not re-enter on the same event.
+ * both set. Clears CLC4IF before the callback so the vector does not re-enter.
  */
 void CLC4_IRQHandler(void);
 

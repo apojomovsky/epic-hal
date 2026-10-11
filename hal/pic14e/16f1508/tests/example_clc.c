@@ -17,7 +17,7 @@
 int main(void)
 {
     int ok = 1;
-    CLC_HandleTypeDef h;
+    CLC_HandleTypeDef h = {0};
     uint8_t level = 0xFFU;
     unsigned int i;
     uint8_t before[8];

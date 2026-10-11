@@ -11,6 +11,9 @@
 #define CLC_FIELD_MAX    7U
 #define CLC_GATE_POL_MAX 0x0FU
 
+/* Indexed by instance; the handlers read it from interrupt context. */
+static void (*s_clc_callback[CLC4 + 1U])(void);
+
 /**
  * @brief Check that an instance is CLC1..CLC4.
  * @param instance Value to check.
@@ -88,6 +91,9 @@ EPIC_StatusTypeDef EPIC_CLC_Init(const CLC_HandleTypeDef *h)
         EPIC_REG8(cell_reg(h->Instance, (uint8_t)(CLC_OFF_GLS0 + g))) = h->Gls[g];
     }
 
+    /* Stored before EN so an enabled cell never runs the previous callback. */
+    s_clc_callback[h->Instance] = h->Callback;
+
     con = (uint8_t)((h->Mode & PIC_CLCCON_MODE_MASK) | PIC_CLCCON_EN);
     if (h->OutputEnable != 0U)
     {
@@ -113,6 +119,7 @@ EPIC_StatusTypeDef EPIC_CLC_DeInit(CLC_InstanceTypeDef instance)
 
     /* CON first: the cell stops before its inputs and gates are cleared. */
     EPIC_REG8(cell_reg(instance, CLC_OFF_CON)) = 0U;
+    s_clc_callback[instance] = NULL;
     EPIC_REG8(cell_reg(instance, CLC_OFF_POL)) = 0U;
     EPIC_REG8(cell_reg(instance, CLC_OFF_SEL0)) = 0U;
     EPIC_REG8(cell_reg(instance, CLC_OFF_SEL1)) = 0U;
@@ -141,33 +148,51 @@ EPIC_StatusTypeDef EPIC_CLC_ReadOutput(CLC_InstanceTypeDef instance, uint8_t *le
 }
 
 /**
- * @brief Acknowledge CLC1IF from the interrupt dispatcher.
+ * @brief Run the callback stored for one cell, if any.
+ * @details Runs after the flag is cleared, so an event that pends again inside
+ * the callback raises the vector again.
+ * @param instance Cell whose callback to run.
+ */
+static void clc_run_callback(CLC_InstanceTypeDef instance)
+{
+    if (s_clc_callback[instance] != NULL)
+    {
+        s_clc_callback[instance]();
+    }
+}
+
+/**
+ * @brief Acknowledge CLC1IF, then run the CLC1 callback if one is set.
  */
 void CLC1_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC1IF);
+    clc_run_callback(CLC1);
 }
 
 /**
- * @brief Acknowledge CLC2IF from the interrupt dispatcher.
+ * @brief Acknowledge CLC2IF, then run the CLC2 callback if one is set.
  */
 void CLC2_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC2IF);
+    clc_run_callback(CLC2);
 }
 
 /**
- * @brief Acknowledge CLC3IF from the interrupt dispatcher.
+ * @brief Acknowledge CLC3IF, then run the CLC3 callback if one is set.
  */
 void CLC3_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC3IF);
+    clc_run_callback(CLC3);
 }
 
 /**
- * @brief Acknowledge CLC4IF from the interrupt dispatcher.
+ * @brief Acknowledge CLC4IF, then run the CLC4 callback if one is set.
  */
 void CLC4_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC4IF);
+    clc_run_callback(CLC4);
 }
