@@ -2,7 +2,8 @@
  * CLC interrupt routing host-sim probe. Host-only: drives PIR3, PIE3 and INTCON
  * through the flat simulator SFR array via EPIC_REG8, so it is not in the XC8
  * build. Covers enable/disable of CLC1..CLC4 through the shared IRQ contract,
- * flag read/clear independent of enable, and dispatch gated on flag and enable.
+ * flag read/clear independent of enable, dispatch gated on flag and enable,
+ * and the PEIE fail-safe that acknowledges unowned PIR1/PIR2 sources.
  */
 #include "pic16f1508.h"
 #include "core/pic16f1508_irq.h"
@@ -92,6 +93,42 @@ int main(void)
     ok &= (EPIC_REG8(PIC_REG_PIR3) == 0x02U);
     EPIC_GPIO_RegisterChangeCallback(0);
     EPIC_REG8(PIC_REG_INTCON) = 0U;
+
+    /* CLC enable sets PEIE, which exposes PIR1 and PIR2. The dispatcher must acknowledge them. */
+    EPIC_REG8(PIC_REG_PIR1) = 0x01U;
+    EPIC_REG8(PIC_REG_PIE1) = 0x01U;
+    EPIC_REG8(PIC_REG_PIR2) = 0x80U;
+    EPIC_REG8(PIC_REG_PIE2) = 0x80U;
+    EPIC_REG8(PIC_REG_PIR3) = 0x01U;
+    EPIC_REG8(PIC_REG_PIE3) = 0x00U;
+    EPIC_IRQ_Enable(PIC16F1508_IRQ_CLC1);
+    epic_dispatch_all_irqs();
+    ok &= (EPIC_REG8(PIC_REG_PIR1) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_PIE1) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_PIR2) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_PIE2) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_PIR3) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_PIE3) == 0x01U);
+    EPIC_REG8(PIC_REG_INTCON) = 0U;
+    EPIC_REG8(PIC_REG_PIE3) = 0U;
+
+    /* A flagged PIR1 source whose enable is clear stays pending for polling. */
+    EPIC_REG8(PIC_REG_INTCON) = PIC_INTCON_PEIE;
+    EPIC_REG8(PIC_REG_PIR1) = 0x02U;
+    EPIC_REG8(PIC_REG_PIE1) = 0x00U;
+    epic_dispatch_all_irqs();
+    ok &= (EPIC_REG8(PIC_REG_PIR1) == 0x02U);
+    EPIC_REG8(PIC_REG_PIR1) = 0x00U;
+    EPIC_REG8(PIC_REG_INTCON) = 0U;
+
+    /* Without PEIE, PIR1 sources cannot reach the vector and are left as they are. */
+    EPIC_REG8(PIC_REG_PIR1) = 0x01U;
+    EPIC_REG8(PIC_REG_PIE1) = 0x01U;
+    epic_dispatch_all_irqs();
+    ok &= (EPIC_REG8(PIC_REG_PIR1) == 0x01U);
+    ok &= (EPIC_REG8(PIC_REG_PIE1) == 0x01U);
+    EPIC_REG8(PIC_REG_PIR1) = 0x00U;
+    EPIC_REG8(PIC_REG_PIE1) = 0x00U;
 
     epic_harness_log("clc/interrupt routing: %s\n", ok ? "PASS" : "FAIL");
     return epic_harness_report(ok);
