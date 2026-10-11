@@ -79,7 +79,7 @@ because IOC is implemented on PORTB only.
 |-----|----------|------------------------------------------------------------------|
 | INTCON<0> | IOCIF | Set when any enabled IOCB flag is set. Cleared by the handler. |
 | INTCON<3> | IOCIE | Gates the IOC source. The dispatcher calls IOC only when IOCIF and IOCIE are both set. |
-| INTCON<6> | PEIE  | Peripheral interrupt enable (not used by this HAL's IOC path). |
+| INTCON<6> | PEIE  | Set by `EPIC_IRQ_Enable` on a CLC source. Exposes all peripheral (PIR1..PIR3) sources. |
 | INTCON<7> | GIE   | Global interrupt enable.                                         |
 
 `IOCBF` flags are cleared in the handler one captured bit at a time with a
@@ -135,6 +135,9 @@ on a CLC source sets PIE3 and INTCON.PEIE. The dispatcher runs
 `CLCn_IRQHandler` only when CLCnIF and CLCnIE are both set, and that handler
 clears CLCnIF. No application callback exists yet, so an enabled CLC source
 wakes the vector and is acknowledged, but the application cannot act on it.
+PEIE also unmasks PIE1 and PIE2 sources that the application may have enabled. The
+dispatcher acknowledges only IOC and CLC1..CLC4, so keep those enables clear while a
+CLC source is enabled, or the vector re-fires on each return.
 
 MPLAB-SIM throws on some CLC register access sequences, so the mdb gate
 does not exercise CLC (follow-up #383). The CLC driver is covered by the

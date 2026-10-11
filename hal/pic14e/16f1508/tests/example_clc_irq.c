@@ -7,6 +7,19 @@
 #include "pic16f1508.h"
 #include "core/pic16f1508_irq.h"
 #include "core/epic_harness.h"
+#include "peripherals/pic16f1508_gpio.h"
+
+/**
+ * @brief IOC user callback that disables CLC2 while the dispatcher is running.
+ * @param iocbf Captured IOCBF mask (unused).
+ * @param portb PORTB byte (unused).
+ */
+static void disable_clc2_from_ioc(uint8_t iocbf, uint8_t portb)
+{
+    (void)iocbf;
+    (void)portb;
+    EPIC_IRQ_DisableSrc(PIC16F1508_IRQ_CLC2);
+}
 
 /**
  * @brief Run the CLC interrupt routing checks on the host simulator.
@@ -68,6 +81,17 @@ int main(void)
     /* A second dispatch with the same state does not re-acknowledge anything. */
     epic_dispatch_all_irqs();
     ok &= (EPIC_REG8(PIC_REG_PIR3) == 0x02U);
+
+    /* A disable from the IOC callback must stop the CLC flag being acknowledged. */
+    EPIC_REG8(PIC_REG_INTCON) = PIC_INTCON_IOCIF | PIC_INTCON_IOCIE | PIC_INTCON_PEIE;
+    EPIC_REG8(PIC_REG_PIR3) = 0x02U;
+    EPIC_REG8(PIC_REG_PIE3) = 0x02U;
+    EPIC_GPIO_RegisterChangeCallback(disable_clc2_from_ioc);
+    epic_dispatch_all_irqs();
+    ok &= (EPIC_REG8(PIC_REG_PIE3) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_PIR3) == 0x02U);
+    EPIC_GPIO_RegisterChangeCallback(0);
+    EPIC_REG8(PIC_REG_INTCON) = 0U;
 
     epic_harness_log("clc/interrupt routing: %s\n", ok ? "PASS" : "FAIL");
     return epic_harness_report(ok);

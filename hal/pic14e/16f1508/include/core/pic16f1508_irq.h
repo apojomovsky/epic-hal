@@ -33,7 +33,7 @@ uint8_t EPIC_IRQ_Disable(void);
 void EPIC_IRQ_Restore(uint8_t prev_state);
 
 /**
- * @brief Enable an interrupt source (INTCON.IOCIE, or PIE3.CLCnIE with PEIE set).
+ * @brief Enable an interrupt source (INTCON.IOCIE, or PIE3.CLCnIE; a CLC source also sets PEIE).
  * @param irq Source to enable.
  */
 void EPIC_IRQ_Enable(PIC16F1508_IRQn irq);
