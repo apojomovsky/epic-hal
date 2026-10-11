@@ -1,8 +1,8 @@
 /**
- * GPIO register-contract probe for the mdb gate. Target-safe: uses only the
- * public EPIC_GPIO_* and EPIC_IRQ_* contract, then reads back the SFRs it
- * configured. Edges need an external source, so the IOC check covers the
- * enable path only; the edge path is in example_gpio.c on the host sim.
+ * GPIO and IOC register-contract probe for the mdb gate. Target-safe: uses only
+ * the public EPIC_GPIO_* and EPIC_IRQ_* contracts, then reads back
+ * the SFRs it configured. Edges need an external source, so the IOC check covers
+ * the enable path only; the edge path is in example_gpio.c on the host sim.
  */
 #include "pic16f1508.h"
 #include "peripherals/pic16f1508_gpio.h"
@@ -13,7 +13,7 @@
 extern void pic16f1508_harness_halt(void);
 
 /**
- * @brief Register-level GPIO probe for the mdb gate.
+ * @brief Register-level GPIO and IOC probe for the mdb gate.
  * @return Harness result: 0 on PASS, 1 on FAIL.
  */
 int main(void)
@@ -39,8 +39,10 @@ int main(void)
     /* LATA3 is unimplemented (RA3 is input-only): target drops the bit, host sim keeps it.
      * Compare only the implemented latch bits, which both builds must match. */
     EPIC_GPIO_Init(GPIOA, GPIO_PIN_All, GPIO_MODE_OUTPUT);
-    EPIC_GPIO_WritePort(GPIOA, 0xFFU);
-    ok &= ((EPIC_REG8(PIC_REG_LATA) & PIC16F1508_FAMILY_LATA_MASK) == PIC16F1508_FAMILY_LATA_MASK);
+    /* RA0 stays low: the harness drives RA0 high only on PASS, so a stopped probe must not look passed. */
+    const uint8_t lata_pattern = (uint8_t)(PIC16F1508_FAMILY_LATA_MASK & (uint8_t)~GPIO_PIN_0);
+    EPIC_GPIO_WritePort(GPIOA, lata_pattern);
+    ok &= ((EPIC_REG8(PIC_REG_LATA) & PIC16F1508_FAMILY_LATA_MASK) == lata_pattern);
 
     /* Clear all pull-ups first: target reset is WPUA=0x3F and WPUB=0xF0, host sim is 0,
      * so the expectations below must not depend on the reset state. */
@@ -68,6 +70,8 @@ int main(void)
     EPIC_IRQ_DisableSrc(PIC16F1508_IRQ_IOC);
     ok &= ((EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_IOCIE) == 0U);
 
+    /* CLC is not exercised here: MPLAB-SIM throws on CLC SFR access sequences
+     * (sim fault, follow-up #383). The CLC driver is covered by the host probe. */
     int rc = epic_harness_report(ok);
     pic16f1508_harness_halt();
     return rc;

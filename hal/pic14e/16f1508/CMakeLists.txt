@@ -25,6 +25,7 @@ set(EPIC_FAMILY_DEVICES       PIC16F1508 PIC16F1509)
 
 set(EPIC_SOURCES
     src/peripherals/pic16f1508_gpio.c
+    src/peripherals/pic16f1508_clc.c
     src/core/pic16f1508_irq.c
     src/core/pic16f1508_irq_dispatch.c
     src/sim/pic16f1508_harness_sim.c
@@ -36,7 +37,9 @@ epic_add_hal_library(${EPIC_LIB})
 epic_add_example(example_blink tests/example_blink.c)
 epic_add_example(example_gpio tests/example_gpio.c)
 epic_add_example(example_gpio_mdb tests/example_gpio_mdb.c)
+epic_add_example(example_clc tests/example_clc.c)
 
 enable_testing()
 add_test(NAME gpio_host COMMAND example_gpio)
 add_test(NAME gpio_mdb_host COMMAND example_gpio_mdb)
+add_test(NAME clc_host COMMAND example_clc)

@@ -28,18 +28,21 @@ Implemented and verified:
       toggle, pull-ups, analog select, interrupt-on-change enable
 - [x] Interrupt core for IOC only (`INTCON.IOCIE` gated dispatch, single
       vector, automatic hardware context save)
-- [x] Host simulation backend and `example_gpio` probe (ctest)
+- [x] Host simulation backend and `example_gpio` and `example_clc` probes
+      (ctest). `EPIC_CLC` driver with raw mode and source codes; the
+      input table is pending (#384).
 - [x] Real-target firmware (`epic-pic16f1508-firmware`), `blink` example,
       and the mdb GPIO register-readback gate (`MODE=gpio`, RA0 PASS
-      marker)
+      marker). The CLC block is kept out of the mdb probe because of a
+      MPLAB-SIM exception (#383).
 
 Not yet implemented (deliberate scope limit, each its own follow-up):
 
 - Timers, CCP, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
   comparators, DAC, FVR, and the SR latch.
-- The CLC driver (`EPIC_CLC`). The CLC cell count is in the EDC (four
-  cells), but the CLC register bits and input-select table are not
-  verified against the datasheet yet.
+- The CLC input-select table (`EPIC_CLC` source codes from DS40001609E
+  Table 24-1) and the CLC interrupt routing (#385). The CLC register bit
+  positions are unverified against the datasheet (see MANUAL.md).
 - A 16F188xx part. It is not in the pinned DFP.
 
 ## Quick start
@@ -73,11 +76,12 @@ include/
   peripherals/          GPIO contract
 src/
   core/                 IRQ backend and IOC dispatch
-  peripherals/          GPIO body
+  peripherals/          GPIO and CLC bodies
   target/               ISR vector (real hardware only)
   sim/                  host simulation backend
   mdb/                  MPLAB SIM register-readback harness
-tests/                  example_blink, example_gpio (host), example_gpio_mdb
+tests/                  example_blink, example_gpio (host), example_clc (host),
+                        example_gpio_mdb
 ```
 
 ## Implemented pins

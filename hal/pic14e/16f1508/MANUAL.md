@@ -106,3 +106,28 @@ pull-up state must clear WPUA and WPUB first.
 Single vector, no priority. Hardware saves context automatically
 (`common/MANUAL.md` §6). The ISR vector is in
 `src/target/pic16f1508_isr_vector.c`.
+
+## Configurable logic cell (CLC)
+
+Four cells, CLC1..CLC4, at a stride of 8 from CLC1CON at 0xF10 (CLCDATA
+at 0xF0F). Addresses are from the DFP EDC. Bit positions below are from
+the pinned DFP 1.9.258 proc header and the #361 transcription. Both are
+**unverified** against DS40001609E; they are not checked against the
+datasheet yet.
+
+| Register | Bits used                                             | Source         |
+|----------|-------------------------------------------------------|----------------|
+| CLCxCON  | LCxMODE 2:0, INTN 3, INTP 4, OUT 5, OE 6, EN 7        | DFP + #361     |
+| CLCxPOL  | G1POL..G4POL 3:0, POL 7                               | DFP only       |
+| CLCxSEL0 | D1S 2:0, D2S 6:4                                      | DFP + #361     |
+| CLCxSEL1 | D3S 2:0, D4S 6:4                                      | DFP + #361     |
+| CLCxGLS0..3 | D1N..D4T, two bits per gate input (N then T)       | DFP only       |
+
+The input-select codes (Table 24-1 of DS40001609E) are not in this HAL (#384).
+The driver passes raw 0..7 mode and source codes through and validates
+only the range. Interrupt routing (PIR3/PIE3 CLC1IF..CLC4IF, bits 0..3)
+is not wired (#385).
+
+MPLAB-SIM throws on some CLC register access sequences, so the mdb gate
+does not exercise CLC (follow-up #383). The CLC driver is covered by the
+host probe `example_clc` only.
