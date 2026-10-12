@@ -266,10 +266,11 @@ def main():
         header_path = hal_header_path(fam)
         generated = generate_for_family(fam, edc_override, args.dfp_dir)
         if generated is None:
-            # The drift check verifies nothing without the EDC; passing here would hide drift.
             if args.check:
                 print(f"gen-sfr: {fam} drift unverified (--check): EDC missing", file=sys.stderr)
-                failed = True
+            else:
+                print(f"gen-sfr: {fam} not regenerated (write): EDC missing", file=sys.stderr)
+            failed = True
             continue
         committed = header_path.read_text()
         if args.check:
