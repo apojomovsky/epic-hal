@@ -168,8 +168,9 @@ edge and no flag, and keeps its sequential bit.
 
 Gate roles per mode follow Figure 24-3: S=G1 with R=G2 on the SR latch;
 clock=G1 with data and async set and reset on G2..G4 on the flip-flop and
-latch modes (2-input D takes D=G2|G3). S dominates R, and the clock rises
-on G1. The mode map is **unverified** against DS40001609E with the rest of
+latch modes (2-input D takes D=G2|G3). S dominates R. Modes 4..6 clock on
+the G1 rise; mode 7 follows D while G1 is high. The mode map is
+**unverified** against DS40001609E with the rest of
 this section. Covered by the host probe `example_clc_sim`.
 
 Two seams stay open. SEL codes are stored but not decoded: the Dx levels

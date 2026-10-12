@@ -66,8 +66,8 @@ static uint8_t sim_clc_gate(uint8_t gls, uint8_t d, uint8_t pol)
 /**
  * @brief Run one cell's mode logic over its four gate outputs.
  * @details Gate roles follow Figure 24-3 (S=G1, R=G2; clock=G1 with
- * data and async S/R on G2..G4; S dominates; rising clock). Unverified
- * against DS40001609E; checked only against the DFP bit layout.
+ * data and async S/R on G2..G4; S dominates; modes 4..6 rise, mode 7
+ * follows). Unverified against DS40001609E; checked only against the DFP bit layout.
  * @param n Cell index 0..3; carries the sequential and edge state.
  * @param mode LCxMODE value 0..7.
  * @param g0 Gate outputs G1..G4 packed in bits 3:0.
@@ -192,20 +192,20 @@ static void sim_step_clc(void)
         if ((con & PIC_CLCCON_EN) != 0U)
         {
             out = sim_clc_mode(n, (uint8_t)(con & PIC_CLCCON_MODE_MASK), g0);
+            out = (uint8_t)(out ^ ((pol & PIC_CLCPOL_POL) != 0U ? 1U : 0U));
+            if ((out != sim_clc_out[n]) && (sim_clc_out[n] == 0U) && ((con & PIC_CLCCON_INTP) != 0U))
+            {
+                pic16f1508_sim_sfr[PIC_REG_PIR3] |= (uint8_t)(1U << n);
+            }
+            if ((out != sim_clc_out[n]) && (sim_clc_out[n] != 0U) && ((con & PIC_CLCCON_INTN) != 0U))
+            {
+                pic16f1508_sim_sfr[PIC_REG_PIR3] |= (uint8_t)(1U << n);
+            }
         }
         else
         {
             sim_clc_g1[n] = (uint8_t)(g0 & 1U);
             out = 0U;
-        }
-        out = (uint8_t)(out ^ ((pol & PIC_CLCPOL_POL) != 0U ? 1U : 0U));
-        if ((out != sim_clc_out[n]) && (sim_clc_out[n] == 0U) && ((con & PIC_CLCCON_INTP) != 0U))
-        {
-            pic16f1508_sim_sfr[PIC_REG_PIR3] |= (uint8_t)(1U << n);
-        }
-        if ((out != sim_clc_out[n]) && (sim_clc_out[n] != 0U) && ((con & PIC_CLCCON_INTN) != 0U))
-        {
-            pic16f1508_sim_sfr[PIC_REG_PIR3] |= (uint8_t)(1U << n);
         }
         sim_clc_out[n] = out;
         if (out != 0U)

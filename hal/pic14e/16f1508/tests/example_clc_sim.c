@@ -272,6 +272,19 @@ int main(void)
     EPIC_IRQ_ClearFlag(PIC16F1508_IRQ_CLC1);
 
     /* Disabled cell: output forced to 0, no edge, no flag. */
+    h.OutputPolarity = 0U;
+    ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
+    drive_and_step(0U, 0x03U);
+    ok &= (read_cell(CLC1) == 1U);
+    EPIC_REG8(PIC_REG_CLC1CON) |= PIC_CLCCON_INTN;
+    EPIC_REG8(PIC_REG_CLC1CON) &= (uint8_t)~PIC_CLCCON_EN;
+    drive_and_step(0U, 0x03U);
+    ok &= (read_cell(CLC1) == 0U);
+    ok &= (EPIC_IRQ_GetFlag(PIC16F1508_IRQ_CLC1) == 0U);
+    EPIC_REG8(PIC_REG_CLC1POL) |= PIC_CLCPOL_POL;
+    drive_and_step(0U, 0x03U);
+    ok &= (read_cell(CLC1) == 0U);
+    ok &= (EPIC_IRQ_GetFlag(PIC16F1508_IRQ_CLC1) == 0U);
     ok &= (EPIC_CLC_DeInit(CLC1) == EPIC_OK);
     drive_and_step(0U, 0x03U);
     ok &= (read_cell(CLC1) == 0U);
