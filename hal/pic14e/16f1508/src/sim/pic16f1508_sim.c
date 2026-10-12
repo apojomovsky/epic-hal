@@ -1,7 +1,7 @@
 /**
- * Host model of the PIC16F1508/1509 port and interrupt-on-change behaviour.
- * Models only what the GPIO/IOC contract observes: no timers, USART, EEPROM,
- * or ADC, and no time base (one pin sample per step call).
+ * Host model of the PIC16F1508/1509 ports, interrupt-on-change, and CLC cells.
+ * Models only what the GPIO/IOC/CLC contracts observe: no timers, USART,
+ * EEPROM, or ADC, and no time base (one pin sample per step call).
  */
 #include <stddef.h>
 #include <string.h>
@@ -21,6 +21,212 @@ static const uint8_t  sim_mask[3] = {PIC16F1508_FAMILY_PORTA_MASK,
 static uint8_t sim_input_value[3];
 static uint8_t sim_last_portb;
 static pic16f1508_sim_irq_cb_t sim_irq_cb;
+/* Injected D1..D4 levels per cell in bits 3:0. SEL codes are stored but not
+ * decoded: the input-source table is unverified (#384), so tests drive Dx here. */
+static uint8_t sim_clc_d[4];
+/* Sequential bit, last gate-1 level for clock edges, and last output for INTN/INTP. */
+static uint8_t sim_clc_q[4];
+static uint8_t sim_clc_g1[4];
+static uint8_t sim_clc_out[4];
+
+/* Cell register block stride; matches the driver layout (CON, POL, SEL0, SEL1, GLS0..3). */
+#define SIM_CLC_STRIDE 8U
+
+/**
+ * @brief Evaluate one gate from its GLS image and the injected Dx levels.
+ * @param gls GLS register image; each input owns an N bit then a T bit.
+ * @param d Injected D1..D4 levels in bits 3:0.
+ * @param pol Gate polarity bit: inverted output when set.
+ * @return Gate output after polarity.
+ */
+static uint8_t sim_clc_gate(uint8_t gls, uint8_t d, uint8_t pol)
+{
+    uint8_t g = 0U;
+    uint8_t i;
+
+    for (i = 0U; i < 4U; i++)
+    {
+        uint8_t dv = (uint8_t)((d >> i) & 1U);
+        uint8_t t = (uint8_t)((gls >> (uint8_t)(i * 2U + 1U)) & 1U);
+        uint8_t n = (uint8_t)((gls >> (uint8_t)(i * 2U)) & 1U);
+
+        /* Dual select reads back zero before polarity; the part may glitch. */
+        if ((t != 0U) && (n != 0U))
+        {
+            return pol;
+        }
+        if (((t != 0U) && (dv != 0U)) || ((n != 0U) && (dv == 0U)))
+        {
+            g = 1U;
+        }
+    }
+    return (uint8_t)(g ^ pol);
+}
+
+/**
+ * @brief Run one cell's mode logic over its four gate outputs.
+ * @details Gate roles follow Figure 24-3 (S=G1, R=G2; clock=G1 with
+ * data and async S/R on G2..G4; S dominates; modes 4..6 rise, mode 7
+ * follows). Unverified against DS40001609E; checked only against the DFP bit layout.
+ * @param n Cell index 0..3; carries the sequential and edge state.
+ * @param mode LCxMODE value 0..7.
+ * @param g0 Gate outputs G1..G4 packed in bits 3:0.
+ * @return Raw cell output before the POL bit.
+ */
+static uint8_t sim_clc_mode(uint8_t n, uint8_t mode, uint8_t g0)
+{
+    uint8_t g1 = (uint8_t)(g0 & 1U);
+    uint8_t g2 = (uint8_t)((g0 >> 1U) & 1U);
+    uint8_t g3 = (uint8_t)((g0 >> 2U) & 1U);
+    uint8_t g4 = (uint8_t)((g0 >> 3U) & 1U);
+    uint8_t rise = (uint8_t)(g1 & (uint8_t)~sim_clc_g1[n]);
+    uint8_t q = sim_clc_q[n];
+
+    sim_clc_g1[n] = g1;
+    switch (mode)
+    {
+    case 0U:
+        q = (uint8_t)(((g1 & g2) | (g3 & g4)) & 1U);
+        break;
+    case 1U:
+        q = (uint8_t)(((g1 | g2) ^ (g3 | g4)) & 1U);
+        break;
+    case 2U:
+        q = (uint8_t)(g1 & g2 & g3 & g4);
+        break;
+    case 3U:
+        q = (uint8_t)(g1 | ((uint8_t)~g2 & q));
+        break;
+    case 4U:
+        if (g4 != 0U)
+        {
+            q = 1U;
+        }
+        else if (g3 != 0U)
+        {
+            q = 0U;
+        }
+        else if (rise != 0U)
+        {
+            q = g2;
+        }
+        break;
+    case 5U:
+        if (g4 != 0U)
+        {
+            q = 0U;
+        }
+        else if (rise != 0U)
+        {
+            q = (uint8_t)(g2 | g3);
+        }
+        break;
+    case 6U:
+        if (g4 != 0U)
+        {
+            q = 0U;
+        }
+        else if (rise != 0U)
+        {
+            if ((g2 != 0U) && (g3 == 0U))
+            {
+                q = 1U;
+            }
+            else if ((g2 == 0U) && (g3 != 0U))
+            {
+                q = 0U;
+            }
+            else if ((g2 != 0U) && (g3 != 0U))
+            {
+                q = (uint8_t)~q;
+            }
+        }
+        break;
+    case 7U:
+        if (g4 != 0U)
+        {
+            q = 1U;
+        }
+        else if (g3 != 0U)
+        {
+            q = 0U;
+        }
+        else if (g1 != 0U)
+        {
+            q = g2;
+        }
+        break;
+    default:
+        q = 0U;
+        break;
+    }
+    sim_clc_q[n] = (uint8_t)(q & 1U);
+    return sim_clc_q[n];
+}
+
+/**
+ * @brief Recompute every enabled cell, mirror outputs, and flag edges.
+ * @details A disabled cell reads 0 with no edge and no flag; its sequential
+ * bit is kept. Flags set on a configured edge even with the PIE bit clear,
+ * and the callback runs only under CLCxIF, CLCxIE, PEIE, and GIE.
+ */
+static void sim_step_clc(void)
+{
+    uint8_t n;
+
+    for (n = 0U; n < 4U; n++)
+    {
+        uint16_t base = (uint16_t)(PIC_REG_CLC1CON + ((uint16_t)n * SIM_CLC_STRIDE));
+        uint8_t con = pic16f1508_sim_sfr[base];
+        uint8_t pol = pic16f1508_sim_sfr[base + 1U];
+        uint8_t g0 = 0U;
+        uint8_t out;
+        uint8_t i;
+
+        for (i = 0U; i < 4U; i++)
+        {
+            uint8_t g = sim_clc_gate(pic16f1508_sim_sfr[base + 4U + i], sim_clc_d[n],
+                                     (uint8_t)((pol >> i) & 1U));
+            g0 = (uint8_t)(g0 | (uint8_t)(g << i));
+        }
+        if ((con & PIC_CLCCON_EN) != 0U)
+        {
+            out = sim_clc_mode(n, (uint8_t)(con & PIC_CLCCON_MODE_MASK), g0);
+            out = (uint8_t)(out ^ ((pol & PIC_CLCPOL_POL) != 0U ? 1U : 0U));
+            if ((out != sim_clc_out[n]) && (sim_clc_out[n] == 0U) && ((con & PIC_CLCCON_INTP) != 0U))
+            {
+                pic16f1508_sim_sfr[PIC_REG_PIR3] |= (uint8_t)(1U << n);
+            }
+            if ((out != sim_clc_out[n]) && (sim_clc_out[n] != 0U) && ((con & PIC_CLCCON_INTN) != 0U))
+            {
+                pic16f1508_sim_sfr[PIC_REG_PIR3] |= (uint8_t)(1U << n);
+            }
+        }
+        else
+        {
+            sim_clc_g1[n] = (uint8_t)(g0 & 1U);
+            out = 0U;
+        }
+        sim_clc_out[n] = out;
+        if (out != 0U)
+        {
+            pic16f1508_sim_sfr[base] |= PIC_CLCCON_OUT;
+            pic16f1508_sim_sfr[PIC_REG_CLCDATA] |= (uint8_t)(1U << n);
+        }
+        else
+        {
+            pic16f1508_sim_sfr[base] &= (uint8_t)~PIC_CLCCON_OUT;
+            pic16f1508_sim_sfr[PIC_REG_CLCDATA] &= (uint8_t)~(1U << n);
+        }
+    }
+    if ((((pic16f1508_sim_sfr[PIC_REG_PIR3] & pic16f1508_sim_sfr[PIC_REG_PIE3]) & 0x0FU) != 0U) &&
+        ((pic16f1508_sim_sfr[PIC_REG_INTCON] & (PIC_INTCON_PEIE | PIC_INTCON_GIE)) ==
+         (PIC_INTCON_PEIE | PIC_INTCON_GIE)) &&
+        (sim_irq_cb != NULL))
+    {
+        sim_irq_cb();
+    }
+}
 
 /**
  * @brief Map a port letter to its table index.
@@ -96,13 +302,17 @@ void pic16f1508_sim_reset(void)
     pic16f1508_sim_sfr[PIC_REG_TRISC]  = 0xFFU;
     pic16f1508_sim_sfr[PIC_REG_OPTION] = 0xFFU;
     memset(sim_input_value, 0, sizeof sim_input_value);
+    memset(sim_clc_d, 0, sizeof sim_clc_d);
+    memset(sim_clc_q, 0, sizeof sim_clc_q);
+    memset(sim_clc_g1, 0, sizeof sim_clc_g1);
+    memset(sim_clc_out, 0, sizeof sim_clc_out);
     sim_irq_cb = NULL;
     sim_refresh_ports();
     sim_last_portb = pic16f1508_sim_sfr[PIC_REG_PORTB];
 }
 
 /**
- * @brief Advance the simulation by one step, refreshing ports and IOC.
+ * @brief Advance the simulation by one step, refreshing ports, IOC, and CLC.
  * @param ticks Elapsed tick count, unused by this model.
  */
 void pic16f1508_sim_step(uint32_t ticks)
@@ -110,6 +320,7 @@ void pic16f1508_sim_step(uint32_t ticks)
     (void)ticks;
     sim_refresh_ports();
     sim_step_ioc();
+    sim_step_clc();
 }
 
 /**
@@ -136,6 +347,31 @@ void pic16f1508_sim_drive_input(char port, uint8_t pin, uint8_t level)
     else
     {
         sim_input_value[i] &= (uint8_t)~bit;
+    }
+}
+
+/**
+ * @brief Drive one Dx level into a CLC cell's gate logic.
+ * @param cell Cell index 0..3 (CLC1 is 0). Out of range is ignored.
+ * @param input Data input 1..4. Any other value is ignored.
+ * @param level Nonzero drives high, zero drives low.
+ */
+void pic16f1508_sim_drive_clc_input(uint8_t cell, uint8_t input, uint8_t level)
+{
+    uint8_t bit;
+
+    if ((cell > 3U) || (input < 1U) || (input > 4U))
+    {
+        return;
+    }
+    bit = (uint8_t)(1U << (input - 1U));
+    if (level != 0U)
+    {
+        sim_clc_d[cell] |= bit;
+    }
+    else
+    {
+        sim_clc_d[cell] &= (uint8_t)~bit;
     }
 }
 

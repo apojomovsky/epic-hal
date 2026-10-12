@@ -37,7 +37,10 @@ Implemented and verified:
 
 Implemented but not verified against the datasheet: the `EPIC_CLC` driver
 (raw mode, source codes, CLC1..CLC4 interrupt routing with an optional per-cell
-callback; host probes `example_clc` and `example_clc_irq`). Its register bits come from the DFP
+callback; host probes `example_clc` and `example_clc_irq`) and the host-sim
+CLC model (gate and mode logic with sequential state, CLCDATA and CON.OUT
+mirrors, INTN/INTP edge flags; Dx levels come from a host-only hook, probe
+`example_clc_sim`). Its register bits come from the DFP
 header (see MANUAL.md). The input-select table is pending (#384).
 
 Not yet implemented (deliberate scope limit, each its own follow-up):
@@ -86,6 +89,7 @@ src/
   sim/                  host simulation backend
   mdb/                  MPLAB SIM register-readback harness
 tests/                  example_blink, example_gpio (host), example_clc (host),
+                        example_clc_irq (host), example_clc_sim (host),
                         example_gpio_mdb
 ```
 

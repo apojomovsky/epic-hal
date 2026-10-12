@@ -154,3 +154,26 @@ DS40001609E interrupt control and are **unverified** until #388.
 MPLAB-SIM throws on some CLC register access sequences, so the mdb gate
 does not exercise CLC (follow-up #383). The CLC driver is covered by the
 host probes `example_clc` (registers) and `example_clc_irq` (interrupt routing) only.
+
+## Host simulation model
+
+`pic16f1508_sim_step` recomputes every cell from its CON, POL, and GLS
+registers: gates OR their selected true and negated terms (an empty gate
+reads 0 before its GxPOL bit), the mode logic combines the gates, POL
+inverts the cell, and the result lands in the CLCDATA bit and the CON.OUT
+bit. A 0 to 1 edge with INTP set, or a 1 to 0 edge with INTN set, raises
+the cell's PIR3 flag even with its PIE bit clear; the sim callback runs
+only under CLCxIF, CLCxIE, PEIE, and GIE. A disabled cell reads 0 with no
+edge and no flag, and keeps its sequential bit.
+
+Gate roles per mode follow Figure 24-3: S=G1 with R=G2 on the SR latch;
+clock=G1 with data and async set and reset on G2..G4 on the flip-flop and
+latch modes (2-input D takes D=G2|G3). S dominates R. Modes 4..6 clock on
+the G1 rise; mode 7 follows D while G1 is high. The mode map is
+**unverified** against DS40001609E with the rest of
+this section. Covered by the host probe `example_clc_sim`.
+
+Two seams stay open. SEL codes are stored but not decoded: the Dx levels
+come from `pic16f1508_sim_drive_clc_input`, a host-only hook, until the
+input-source table lands (#384). LCxOE does not drive a pin in the sim:
+the output-pin mapping is unverified, so only the mirrors observe it.
