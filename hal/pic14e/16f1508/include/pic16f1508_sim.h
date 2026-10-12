@@ -1,6 +1,6 @@
 /**
- * Host simulator API for the PIC16F1508/1509 port and IOC model. Host-only:
- * never in an XC8 build.
+ * Host simulator API for the PIC16F1508/1509 ports, IOC, and CLC cells.
+ * Host-only: never in an XC8 build.
  */
 #ifndef PIC16F1508_SIM_H
 #define PIC16F1508_SIM_H
@@ -15,10 +15,18 @@ typedef void (*pic16f1508_sim_irq_cb_t)(void);
 void pic16f1508_sim_reset(void);
 
 /**
- * @brief Sample pins once and evaluate interrupt-on-change.
+ * @brief Sample pins once and evaluate interrupt-on-change and the CLC cells.
  * @param ticks Accepted for API parity with the other families; not used (no time base).
  */
 void pic16f1508_sim_step(uint32_t ticks);
+
+/**
+ * @brief Drive one Dx level into a CLC cell's gate logic.
+ * @param cell Cell index 0..3 (CLC1 is 0). Out of range is ignored.
+ * @param input Data input 1..4. Any other value is ignored.
+ * @param level Non-zero drives high, zero drives low.
+ */
+void pic16f1508_sim_drive_clc_input(uint8_t cell, uint8_t input, uint8_t level);
 
 /**
  * @brief Drive an external level onto an input pin.
