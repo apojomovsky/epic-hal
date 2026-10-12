@@ -41,17 +41,21 @@ make mdb-test MODULE=epic-bus MCU=16F877A DEVICE=PIC16F877A
 
 ### epic-cc toggle gate (18F4550)
 
-The epic-cc build for 18F4550 is a footprint probe
-(`mcu/target_sizecheck_epiccc.c`): it inits both buses, then toggles GPIOB
-bit 0 in a loop. Its digital-mode write to ADCON1 is what lets the gate read
-the pin back:
+The epic-cc build for 18F4550 is a mem-dispatch probe
+(`mcu/target_sizecheck_epiccc.c`): I2C and SPI register round-trips
+through the ops seam against a RAM loopback device, toggling GPIOB
+bit 0 while both verify. Its digital-mode write to ADCON1 is what lets
+the gate read the pin back:
 
 ```sh
 make mdb-epiccc MODULE=epic-bus MCU=18F4550 DEVICE=PIC18F4550 REG=PORTB BIT=0
 ```
 
-The probe proves the bus init and GPIO toggle path under epic-cc. It does not
-exercise mem read/write dispatch, which the epic-cc build stubs out.
+The probe proves the mem read/write dispatch under epic-cc. No slave
+exists under the simulators, so the mock stands in for the MEM device;
+a silent pin means a NACK or a data mismatch. The bus inits stay out of
+the probe (the pinned driver cannot place the default ops table once
+init takes its address); init is covered by the XC8 gates below.
 
 ## Use it
 
