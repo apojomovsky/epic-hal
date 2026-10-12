@@ -317,7 +317,9 @@ python3 scripts/gen-sfr.py --family <FAMILY> --check  # CI drift gate
 The generator reads the same ATDF/EDC the compiler's `scripts/gen-device.py`
 does (`/opt/microchip/xc8/v*/pic/packs/<dfp>/edc/<PART>.PIC`), so a new part
 is a manifest entry plus `conditional_sources` if needed plus a regenerated
-header, with no hand-edited `PIC_REG_*` defines.
+header, with no hand-edited `PIC_REG_*` defines. Both modes fail when the
+family's EDC is absent, so a machine without XC8 cannot mistake an
+unwritten header for a successful regen.
 
 ## CI stratification (canonical vs full)
 
