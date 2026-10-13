@@ -87,8 +87,7 @@
 #define PIC_CLCDATA_MCLC3OUT  EPIC_BIT(2)
 #define PIC_CLCDATA_MCLC4OUT  EPIC_BIT(3)
 
-/* CLCxCON. Bit positions from the pinned DFP 1.9.258 header and the #361
- * transcription, both unverified against DS40001609E (see MANUAL.md). */
+/* CLCxCON bit positions: DS40001609E Register 24-1 (page 263). */
 #define PIC_CLCCON_MODE_MASK  0x07U
 #define PIC_CLCCON_INTN       EPIC_BIT(3)
 #define PIC_CLCCON_INTP       EPIC_BIT(4)
@@ -125,9 +124,9 @@
 #define PIC_INTCON_PEIE       EPIC_BIT(6)
 #define PIC_INTCON_GIE        EPIC_BIT(7)
 
-/* PIR3 and PIE3 carry the CLC1..CLC4 flag and enable in the same bit
- * positions, bits 0..3 (pinned DFP 1.9.258 header, not yet checked against
- * DS40001609E). */
+/* PIR3 and PIE3 carry the CLC1..CLC4 flag and enable in bits 0..3, bits 7:4
+ * unimplemented: DS40001609E Register 7-7 (PIR3, page 81) and Register 7-4
+ * (PIE3, page 78). Addresses 0x13 and 0x93: Table 3-9 (page 27). */
 #define PIC_PIR3_CLC1IF       EPIC_BIT(0)
 #define PIC_PIR3_CLC2IF       EPIC_BIT(1)
 #define PIC_PIR3_CLC3IF       EPIC_BIT(2)

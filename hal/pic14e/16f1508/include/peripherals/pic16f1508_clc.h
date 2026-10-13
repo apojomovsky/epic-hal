@@ -1,8 +1,8 @@
 /**
  * PIC16F1508/1509 CLC contract. Four configurable logic cells, each with four
  * data inputs (D1..D4), four gates built from those inputs (CLCxGLSg), and one
- * output. Bit layout from the pinned DFP 1.9.258 header, not yet checked
- * against the datasheet. Input-source codes (LCxDyS) and LCxMODE stay raw 0..7
+ * output. CLCxCON, PIR3 and PIE3 bit positions are checked against
+ * DS40001609E. Input-source codes (LCxDyS) and LCxMODE stay raw 0..7
  * until the per-device tables are verified.
  */
 #ifndef PIC16F1508_CLC_H
@@ -27,6 +27,8 @@ typedef struct
     uint8_t Gls[4];               /* CLCxGLS0..GLS3 images, see EPIC_CLC_GLSInput */
     uint8_t GatePolarity;         /* G1POL..G4POL in bits 3:0, 0..0x0F */
     uint8_t OutputPolarity;       /* nonzero inverts the cell output (POL) */
+    uint8_t InterruptRising;      /* 1 sets LCxINTP: output rising edge raises CLCxIF; 0 or 1 only */
+    uint8_t InterruptFalling;     /* 1 sets LCxINTN: output falling edge raises CLCxIF; 0 or 1 only */
     uint8_t OutputEnable;         /* nonzero sets LCxOE; pin PPS/TRIS not touched */
     void (*Callback)(void);       /* optional; run from the CLCn handler */
 } CLC_HandleTypeDef;
@@ -37,8 +39,9 @@ typedef struct
  * is disabled while it is reprogrammed, so no half-written configuration
  * reaches the output. Disable the CLCn interrupt first when reconfiguring a
  * live cell: the handler reads the callback slot Init writes.
- * @param h Handle to apply. NULL, a bad instance, a field out of range, or
- * a gate polarity above 0x0F returns EPIC_INVALID with no register written.
+ * @param h Handle to apply. NULL, a bad instance, a field out of range, a
+ * gate polarity above 0x0F, or an edge field other than 0 or 1 returns
+ * EPIC_INVALID with no register written.
  * @return EPIC_OK on success, EPIC_INVALID otherwise.
  */
 EPIC_StatusTypeDef EPIC_CLC_Init(const CLC_HandleTypeDef *h);

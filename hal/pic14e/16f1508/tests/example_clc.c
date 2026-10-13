@@ -45,8 +45,10 @@ int main(void)
     h.GatePolarity = 0x05U;
     h.OutputPolarity = 1U;
     h.OutputEnable = 1U;
+    h.InterruptRising = 1U;
+    h.InterruptFalling = 0U;
     ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
-    ok &= (EPIC_REG8(PIC_REG_CLC2CON) == 0xC3U);
+    ok &= (EPIC_REG8(PIC_REG_CLC2CON) == 0xD3U);
     ok &= (EPIC_REG8(PIC_REG_CLC2POL) == 0x85U);
     ok &= (EPIC_REG8(PIC_REG_CLC2SEL0) == 0x21U);
     ok &= (EPIC_REG8(PIC_REG_CLC2SEL1) == 0x43U);
@@ -54,6 +56,20 @@ int main(void)
     ok &= (EPIC_REG8(PIC_REG_CLC2GLS1) == 0x80U);
     ok &= (EPIC_REG8(PIC_REG_CLC2GLS2) == 0x30U);
     ok &= (EPIC_REG8(PIC_REG_CLC2GLS3) == 0x0CU);
+
+    /* Edge enables land in CON bits 4 (INTP) and 3 (INTN) independently. */
+    h.InterruptRising = 0U;
+    ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CLC2CON) == 0xC3U);
+    h.InterruptFalling = 1U;
+    ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CLC2CON) == 0xCBU);
+    h.InterruptRising = 1U;
+    ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CLC2CON) == 0xDBU);
+    h.InterruptFalling = 0U;
+    ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CLC2CON) == 0xD3U);
 
     /* Invalid handles return EPIC_INVALID and leave the CLC3 registers as the valid call above set them. */
     h.Instance = CLC3;
@@ -65,6 +81,8 @@ int main(void)
     h.GatePolarity = 0x00U;
     h.OutputPolarity = 0U;
     h.OutputEnable = 0U;
+    h.InterruptRising = 0U;
+    h.InterruptFalling = 0U;
     h.Gls[0] = EPIC_CLC_GLSInput(1U, 0U, 1U);
     h.Gls[1] = EPIC_CLC_GLSInput(2U, 1U, 0U);
     h.Gls[2] = EPIC_CLC_GLSInput(3U, 1U, 1U);
@@ -90,6 +108,12 @@ int main(void)
     h.GatePolarity = 0x10U;
     ok &= (EPIC_CLC_Init(&h) == EPIC_INVALID);
     h.GatePolarity = 0x00U;
+    h.InterruptRising = 2U;
+    ok &= (EPIC_CLC_Init(&h) == EPIC_INVALID);
+    h.InterruptRising = 0U;
+    h.InterruptFalling = 0xFFU;
+    ok &= (EPIC_CLC_Init(&h) == EPIC_INVALID);
+    h.InterruptFalling = 0U;
     h.Instance = (CLC_InstanceTypeDef)4;
     ok &= (EPIC_CLC_Init(&h) == EPIC_INVALID);
     ok &= (EPIC_CLC_Init(NULL) == EPIC_INVALID);

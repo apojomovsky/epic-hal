@@ -80,6 +80,10 @@ static uint8_t handle_ok(const CLC_HandleTypeDef *h)
             return 0U;
         }
     }
+    if ((h->InterruptRising > 1U) || (h->InterruptFalling > 1U))
+    {
+        return 0U;
+    }
     return (h->GatePolarity <= CLC_GATE_POL_MAX) ? 1U : 0U;
 }
 
@@ -119,6 +123,14 @@ EPIC_StatusTypeDef EPIC_CLC_Init(const CLC_HandleTypeDef *h)
     if (h->OutputEnable != 0U)
     {
         con = (uint8_t)(con | PIC_CLCCON_OE);
+    }
+    if (h->InterruptRising != 0U)
+    {
+        con = (uint8_t)(con | PIC_CLCCON_INTP);
+    }
+    if (h->InterruptFalling != 0U)
+    {
+        con = (uint8_t)(con | PIC_CLCCON_INTN);
     }
     EPIC_REG8(cell_reg(h->Instance, CLC_OFF_CON)) = con;
     return EPIC_OK;

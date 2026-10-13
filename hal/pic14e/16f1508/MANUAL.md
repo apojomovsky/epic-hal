@@ -13,9 +13,11 @@ what is specific to this part.
   `scripts/gen-sfr.py` rewrites each `PIC_REG_*` address the EDC defines,
   CLC included. Do not hand-edit addresses. The CLC bit masks are
   hand-maintained and cross-checked against the DFP proc header.
-- Datasheet section and figure cites are **unverified**. The datasheet
-  must be supplied by a human, and this file gets section cites then.
-  No value here is taken from a datasheet page.
+- Datasheet: DS40001609E (PIC16(L)F1508/9), published at
+  <https://ww1.microchip.com/downloads/en/DeviceDoc/40001609E.pdf>. Page cites
+  below are its printed page numbers. Checked so far: the PIR3/PIE3 CLC bits and
+  addresses (#388), the CLCxCON bit layout (#395). A value or cite without a
+  datasheet page here is still DFP/EDC-derived and **unverified**.
 
 ## Implemented bits (from EDC impl masks)
 
@@ -112,14 +114,14 @@ Single vector, no priority. Hardware saves context automatically
 ## Configurable logic cell (CLC)
 
 Four cells, CLC1..CLC4, at a stride of 8 from CLC1CON at 0xF10 (CLCDATA
-at 0xF0F). Addresses are from the DFP EDC. Bit positions below are from
-the pinned DFP 1.9.258 proc header and the #361 transcription. Both are
-**unverified** against DS40001609E; they are not checked against the
-datasheet yet.
+at 0xF0F). Addresses are from the DFP EDC. The CLCxCON bit positions are
+verified against DS40001609E Register 24-1 (page 263). The other bit positions
+below are from the pinned DFP 1.9.258 proc header and the #361 transcription,
+and are **unverified** against the datasheet.
 
 | Register | Bits used                                             | Source         |
 |----------|-------------------------------------------------------|----------------|
-| CLCxCON  | LCxMODE 2:0, INTN 3, INTP 4, OUT 5, OE 6, EN 7        | DFP + #361     |
+| CLCxCON  | LCxMODE 2:0, INTN 3, INTP 4, OUT 5, OE 6, EN 7        | DS40001609E    |
 | CLCxPOL  | G1POL..G4POL 3:0, POL 7                               | DFP only       |
 | CLCxSEL0 | D1S 2:0, D2S 6:4                                      | DFP + #361     |
 | CLCxSEL1 | D3S 2:0, D4S 6:4                                      | DFP + #361     |
@@ -128,10 +130,20 @@ datasheet yet.
 The input-select codes (the DS40001609E input-select table, not verified here) are not in this HAL (#384).
 The driver passes raw 0..7 mode and source codes through and validates
 only the range.
+
+Edge interrupts: `CLC_HandleTypeDef.InterruptRising` sets LCxINTP (CLCxCON bit 4) and
+`InterruptFalling` sets LCxINTN (bit 3), written in the same CON store that sets EN. CLCnIF is
+raised on the matching edge of the cell output, after the POL inversion, only when the edge
+bit is set (DS40001609E Register 24-1 page 263, section 24.2 page 260). Each field accepts 0 or
+1; any other value makes `EPIC_CLC_Init` return `EPIC_INVALID` with no register written. The
+datasheet notes that an edge arriving while software clears CLCnIF still sets the flag again.
+
 Interrupt routing: PIR3 bits 0..3 are CLC1IF..CLC4IF and PIE3 bits 0..3 are
-CLC1IE..CLC4IE (DFP 1.9.258 proc header `pic16f1509.h`; EDC `PIR3` at 0x13,
-`PIE3` at 0x93). Both are **unverified** against DS40001609E. `EPIC_IRQ_Enable`
-on a CLC source sets PIE3 and INTCON.PEIE. The dispatcher runs
+CLC1IE..CLC4IE, with bits 7:4 unimplemented in both. Verified against
+DS40001609E Register 7-7 (PIR3, page 81), Register 7-4 (PIE3, page 78),
+Table 7-1 (page 82) and Table 3-9 (page 27), which also give PIR3 at 0x13 and
+PIE3 at 0x93; the EDC `_addr` values agree (PIR3 0x13, PIE3 0x93, impl mask 0x0F).
+`EPIC_IRQ_Enable` on a CLC source sets PIE3 and INTCON.PEIE. The dispatcher runs
 `CLCn_IRQHandler` only when CLCnIF and CLCnIE are both set, and that handler
 clears CLCnIF, then runs the callback stored in `CLC_HandleTypeDef.Callback` for that cell
 (NULL runs nothing). The callback runs in ISR context, after the flag is cleared, so an event
@@ -147,9 +159,9 @@ enable next to a pending PIR1 or PIR2 source no longer re-enters the vector. Ena
 peripheral interrupt alongside a CLC source is unsupported: the dispatcher disables it. A flagged
 source whose enable is clear stays pending for polling. With PEIE clear these sources cannot reach
 the vector, and the dispatcher leaves them alone. PIR3<7:4> are unimplemented on the PIC16F1508
-per EDC, so that part is inert on this device. The PIR1, PIR2, PIE1 and PIE2 addresses
-(0x11, 0x12, 0x91, 0x92) come from EDC. The PEIE behavior and the PIE/PIR bit map cite
-DS40001609E interrupt control and are **unverified** until #388.
+per EDC and Register 7-7 (PIR3 bits 7:4 read as 0). The PIR1, PIR2, PIE1 and PIE2 addresses
+(0x11, 0x12, 0x91, 0x92) are confirmed in DS40001609E Table 3-9 (page 27). The PEIE requirement
+for every peripheral interrupt is the note under Register 7-4 (PIE3, page 78).
 
 MPLAB-SIM throws on some CLC register access sequences, so the mdb gate
 does not exercise CLC (follow-up #383). The CLC driver is covered by the

@@ -45,6 +45,8 @@ static void setup_passthrough(CLC_InstanceTypeDef cell, uint8_t mode)
     h.GatePolarity = 0U;
     h.OutputPolarity = 0U;
     h.OutputEnable = 0U;
+    h.InterruptRising = 0U;
+    h.InterruptFalling = 0U;
     h.Callback = NULL;
     EPIC_CLC_Init(&h);
 }
@@ -116,6 +118,8 @@ int main(void)
     h.GatePolarity = 0x01U;
     h.OutputPolarity = 0U;
     h.OutputEnable = 0U;
+    h.InterruptRising = 0U;
+    h.InterruptFalling = 0U;
     h.Callback = NULL;
     ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
     drive_and_step(0U, 0x03U);
@@ -226,7 +230,7 @@ int main(void)
     ok &= (read_cell(CLC4) == 1U);
     ok &= (EPIC_CLC_DeInit(CLC4) == EPIC_OK);
 
-    /* Edges: INTP/INTN are outside the driver handle, so the probe sets them. */
+    /* Edges: rising-only first, then falling-only, both, and neither, all through the handle. */
     h.Instance = CLC1;
     h.Mode = 0U;
     h.Source[0] = 5U;
@@ -240,27 +244,50 @@ int main(void)
     h.GatePolarity = 0U;
     h.OutputPolarity = 0U;
     h.OutputEnable = 0U;
+    h.InterruptRising = 1U;
+    h.InterruptFalling = 0U;
     h.Callback = on_clc1;
     ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
     EPIC_IRQ_Enable(PIC16F1508_IRQ_CLC1);
     EPIC_IRQ_Restore(1U);
     drive_and_step(0U, 0x00U);
     ok &= (EPIC_IRQ_GetFlag(PIC16F1508_IRQ_CLC1) == 0U);
-    EPIC_REG8(PIC_REG_CLC1CON) |= PIC_CLCCON_INTP;
     drive_and_step(0U, 0x03U);
     ok &= (g_clc1_calls == 1U);
     ok &= (EPIC_IRQ_GetFlag(PIC16F1508_IRQ_CLC1) == 0U);
     drive_and_step(0U, 0x00U);
     ok &= (EPIC_IRQ_GetFlag(PIC16F1508_IRQ_CLC1) == 0U);
     ok &= (g_clc1_calls == 1U);
-    EPIC_REG8(PIC_REG_CLC1CON) &= (uint8_t)~PIC_CLCCON_INTP;
-    EPIC_REG8(PIC_REG_CLC1CON) |= PIC_CLCCON_INTN;
+
+    /* Falling only: the rising edge is silent, the falling edge dispatches. */
+    h.InterruptRising = 0U;
+    h.InterruptFalling = 1U;
+    ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
     drive_and_step(0U, 0x03U);
     ok &= (EPIC_IRQ_GetFlag(PIC16F1508_IRQ_CLC1) == 0U);
     ok &= (g_clc1_calls == 1U);
     drive_and_step(0U, 0x00U);
     ok &= (g_clc1_calls == 2U);
     ok &= (EPIC_IRQ_GetFlag(PIC16F1508_IRQ_CLC1) == 0U);
+
+    /* Both edges dispatch once each. */
+    h.InterruptRising = 1U;
+    ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
+    drive_and_step(0U, 0x03U);
+    ok &= (g_clc1_calls == 3U);
+    drive_and_step(0U, 0x00U);
+    ok &= (g_clc1_calls == 4U);
+
+    /* Neither edge: the cell toggles with no flag and no dispatch. */
+    h.InterruptRising = 0U;
+    h.InterruptFalling = 0U;
+    ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
+    drive_and_step(0U, 0x03U);
+    drive_and_step(0U, 0x00U);
+    ok &= (EPIC_IRQ_GetFlag(PIC16F1508_IRQ_CLC1) == 0U);
+    ok &= (g_clc1_calls == 4U);
+    h.InterruptFalling = 1U;
+    ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
 
     /* Flag sets for polling with the enable clear; no dispatch without it. */
     EPIC_IRQ_DisableSrc(PIC16F1508_IRQ_CLC1);
@@ -268,7 +295,7 @@ int main(void)
     drive_and_step(0U, 0x03U);
     drive_and_step(0U, 0x00U);
     ok &= (EPIC_IRQ_GetFlag(PIC16F1508_IRQ_CLC1) != 0U);
-    ok &= (g_clc1_calls == 2U);
+    ok &= (g_clc1_calls == 4U);
     EPIC_IRQ_ClearFlag(PIC16F1508_IRQ_CLC1);
 
     /* Disabled cell: output forced to 0, no edge, no flag. */
@@ -276,7 +303,6 @@ int main(void)
     ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
     drive_and_step(0U, 0x03U);
     ok &= (read_cell(CLC1) == 1U);
-    EPIC_REG8(PIC_REG_CLC1CON) |= PIC_CLCCON_INTN;
     EPIC_REG8(PIC_REG_CLC1CON) &= (uint8_t)~PIC_CLCCON_EN;
     drive_and_step(0U, 0x03U);
     ok &= (read_cell(CLC1) == 0U);
