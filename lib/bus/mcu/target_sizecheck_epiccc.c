@@ -2,13 +2,16 @@
  * through the ops seam against a RAM loopback device, toggling RB0
  * while both verify. No slave exists under the simulators, so the mock
  * stands in for the MEM device; a silent pin means a NACK or a data
- * mismatch, which is what the toggle gate fails on. The bus inits stay
- * out: they install the default ops table whose address the pinned
- * driver cannot place (isel-pic18 `no address` panic); the XC8 mdb
- * gates cover init on every family. */
+ * mismatch, which is what the toggle gate fails on. The inits run
+ * first: each installs the default ops table, so the loopback tables
+ * are installed after them. */
 #include "epic_bus.h"
 #include "epic_hal.h"
 #include <stdint.h>
+
+#ifndef FOSC_HZ
+#define FOSC_HZ 20000000UL
+#endif
 
 /* MEM device on the I2C bus (7-bit address). */
 #define I2C_DEV_ADDR 0x50u
@@ -180,6 +183,8 @@ int main(void)
     (*(volatile uint8_t *)0xFC1u) = 0x0Fu;
 #endif
     EPIC_GPIO_Init(GPIOB, GPIO_PIN_0, GPIO_MODE_OUTPUT);
+    epic_bus_i2c_init(FOSC_HZ, 100000UL);
+    epic_bus_spi_init(FOSC_HZ, 0u, 1u, 0u);
     epic_bus_set_i2c_ops(&mock_i2c);
     epic_bus_set_spi_ops(&mock_spi);
     for (;;)

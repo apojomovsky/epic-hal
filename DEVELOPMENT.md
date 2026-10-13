@@ -244,9 +244,12 @@ release and the driver is pinned separately from source.
 
 Bumping the pin:
 
-The pin holds epic-cc master at ef2632b (the epic-hal#215 bump), which
-carries the p16f819 registry entry (epic-cc#439, merged by PR #440)
-this job's
+The pin holds epic-cc master at 76c9a03 (the epic-hal#397 bump), which
+carries the isel-pic18 fixes for the ops-dispatch miscompile
+(epic-cc#1221) and the stored-const ROM-address refusal (epic-cc#1223),
+merged by PR #1250, that the init-included bus probe needs, on top of
+everything the #215 bump carried: the p16f819 registry entry
+(epic-cc#439, merged by PR #440) this job's
 16F819 leg needs, on top of the p16f54 flat 25-byte GPR fix
 (epic-cc#437 / PR #438, the epic-hal#213 bump) the 16F54 leg needs, the
 p16f677 target (epic-cc#421) on
@@ -254,10 +257,9 @@ top of the #129 PIC14E port (the isel-pic14e backend, the
 `Pic14e` sim core, `parse_hex_pic14e`, i1 loads/stores as bytes and the
 PIC14E config-field defaults) on top of everything the 877A/887 slices
 need plus the PIC18 fixes for the 4550 slice (epic-cc#180, #189, #194).
-The previous pin (883ae52, the #213 bump) introduced the p16f54 fix;
-the one before it (e4a4e78, the #146 bump) predates it: that driver
-caps the part's GPR, so the 16F54 slice links against a wrong RAM
-model. The pin comment in ci.yml's `EPIC_CC_PIN`
+The previous pin (ef2632b, the #215 bump) predates the #1221 miscompile
+window, so its baseline probe still passed without init calls. The pin
+comment in ci.yml's `EPIC_CC_PIN`
 records the reasoning for the current sha.
 
 1. Pick a new `EPIC_CC_PIN` that still builds the 887 slice. A quick

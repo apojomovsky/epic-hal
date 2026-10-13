@@ -259,14 +259,13 @@ jobs:
   epiccc-gate:
     runs-on: ubuntu-latest
     env:
-      # epic-cc master at the epic-hal#215 bump (ef2632b), which carries
-      # the p16f819 registry entry (epic-cc#439, merged by PR #440)
-      # this job's 16F819 leg needs, on top of the p16f54 flat 25-byte
-      # GPR fix (epic-cc#437 / PR #438, the epic-hal#213 bump) the
-      # 16F54 leg needs, the p16f677 target (epic-cc#421) and the #129
-      # PIC14E port the 16F1939 leg needs. See DEVELOPMENT.md
+      # epic-cc master at the epic-hal#397 bump (76c9a03), which carries
+      # the isel-pic18 fixes for the ops-dispatch miscompile (epic-cc#1221)
+      # and the stored-const ROM-address refusal (epic-cc#1223), merged by
+      # PR #1250, that the init-included bus probe needs. All gate legs
+      # build and toggle at this sha. See DEVELOPMENT.md
       # "The epiccc gate pin".
-      EPIC_CC_PIN: ef2632b6d4803cdb9a87b9b359e3d45667bfd84c
+      EPIC_CC_PIN: 76c9a03646ebfaa3eeb93c9151ea93c9c9d40395
       # The clang bundle comes from the stable v0.3.0 release (the same
       # clang 20.1.8 across the rolling cuts, cut from a driver that
       # satisfies epic-cc#198's opt requirement). Pinning the stable
