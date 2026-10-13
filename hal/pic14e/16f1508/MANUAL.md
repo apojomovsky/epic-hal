@@ -211,4 +211,3 @@ One seam stays open. SEL codes are stored but not decoded: the Dx levels
 come from `pic16f1508_sim_drive_clc_input`, a host-only hook. LCxOE does not
 drive a pin in the sim: the output-pin mapping is unverified, so only the
 mirrors observe it.
-
