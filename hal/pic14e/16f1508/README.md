@@ -52,8 +52,8 @@ Not yet implemented (deliberate scope limit, each its own follow-up):
 - The CLC input-select table (`EPIC_CLC` source codes; the datasheet table
   is not verified here, see #384).
 - Datasheet verification of the CLCxPOL, CLCxSEL and CLCxGLS bit positions
-  and the LCxMODE gate roles (see MANUAL.md). The CLCxCON bits and the
-  PIR3/PIE3 CLC bits are verified against DS40001609E (#400).
+  and the LCxMODE gate roles (#400, see MANUAL.md). The CLCxCON bits and the
+  PIR3/PIE3 CLC bits are verified against DS40001609E (#388, #395).
 - A 16F188xx part. It is not in the pinned DFP.
 
 ## Quick start
