@@ -31,29 +31,28 @@ Implemented and verified:
       hardware context save)
 - [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`epic-pic16f1508-firmware`), `blink` example,
-      and the mdb GPIO register-readback gate (`MODE=gpio`, RA0 PASS
-      marker). The CLC block is kept out of the mdb probe because of an
-      MPLAB-SIM exception (#383).
+      and the mdb register-readback gate (`MODE=gpio`, RA0 PASS marker) for
+      GPIO, IOC enable, and CLC combinational output behaviour (modes 0..2
+      through gate-polarity constants, CON.OUT readback; the SIM gaps that
+      shape it are in MANUAL.md, #383).
 
-Implemented, with the datasheet check partial: the `EPIC_CLC` driver
-(raw mode, source codes, per-cell INTP/INTN edge select, CLC1..CLC4 interrupt
-routing with an optional per-cell callback; host probes `example_clc` and
-`example_clc_irq`) and the host-sim CLC model (gate and mode logic with
-sequential state, CLCDATA and CON.OUT mirrors, INTN/INTP edge flags; Dx
-levels come from a host-only hook, probe `example_clc_sim`). The CLCxCON and
-PIR3/PIE3 bits are checked against DS40001609E; the rest of the CLC register
-bits come from the DFP header (see MANUAL.md). The input-select table is
-pending (#384).
+Implemented and verified against DS40001609E: the `EPIC_CLC` driver (mode,
+source codes from `EPIC_CLC_SourceCode`, per-cell INTP/INTN edge select,
+CLC1..CLC4 interrupt routing with an optional per-cell callback; host probes
+`example_clc`, `example_clc_src` and `example_clc_irq`) and the host-sim CLC
+model (gate and mode logic with sequential state, CLCDATA and CON.OUT
+mirrors, INTN/INTP edge flags; Dx levels come from a host-only hook, probe
+`example_clc_sim`). Register bits, the Table 24-1 input-select codes and the
+Figure 24-3 gate roles are checked against the datasheet (see MANUAL.md).
 
 Not yet implemented (deliberate scope limit, each its own follow-up):
 
 - Timers, CCP, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
   comparators, DAC, FVR, and the SR latch.
-- The CLC input-select table (`EPIC_CLC` source codes; the datasheet table
-  is not verified here, see #384).
-- Datasheet verification of the CLCxPOL, CLCxSEL and CLCxGLS bit positions
-  and the LCxMODE gate roles (#400, see MANUAL.md). The CLCxCON bits and the
-  PIR3/PIE3 CLC bits are verified against DS40001609E (#388, #395).
+- The CLC sequential modes on the mdb gate (modes 3..7 run host-only;
+  MPLAB-SIM shapes the gate, see MANUAL.md, #383).
+- SEL-code decoding in the host sim (codes are stored, Dx levels come from a
+  host-only hook).
 - A 16F188xx part. It is not in the pinned DFP.
 
 ## Quick start
