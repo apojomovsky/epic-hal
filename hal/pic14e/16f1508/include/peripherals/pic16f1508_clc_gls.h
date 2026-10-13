@@ -1,8 +1,8 @@
 /**
  * PIC16F1508/1509 CLC gate helper. Builds the CLCxGLSg bits for one data
  * input so callers never repeat the N/T bit layout. Header-only: static inline,
- * so no link dependency. Bit layout from the pinned DFP 1.9.258 header, not
- * yet checked against the datasheet.
+ * so no link dependency. Bit layout: DS40001609E Registers 24-5..24-8
+ * (pages 267 to 270).
  */
 #ifndef PIC16F1508_CLC_GLS_H
 #define PIC16F1508_CLC_GLS_H

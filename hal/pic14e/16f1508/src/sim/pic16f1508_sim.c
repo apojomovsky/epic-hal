@@ -22,7 +22,7 @@ static uint8_t sim_input_value[3];
 static uint8_t sim_last_portb;
 static pic16f1508_sim_irq_cb_t sim_irq_cb;
 /* Injected D1..D4 levels per cell in bits 3:0. SEL codes are stored but not
- * decoded: the input-source table is unverified (#384), so tests drive Dx here. */
+ * decoded (the model has no signal sources behind them), so tests drive Dx here. */
 static uint8_t sim_clc_d[4];
 /* Sequential bit, last gate-1 level for clock edges, and last output for INTN/INTP. */
 static uint8_t sim_clc_q[4];
@@ -65,9 +65,13 @@ static uint8_t sim_clc_gate(uint8_t gls, uint8_t d, uint8_t pol)
 
 /**
  * @brief Run one cell's mode logic over its four gate outputs.
- * @details Gate roles follow Figure 24-3 (S=G1, R=G2; clock=G1 with
- * data and async S/R on G2..G4; S dominates; modes 4..6 rise, mode 7
- * follows). Unverified against DS40001609E; checked only against the DFP bit layout.
+ * @details Gate roles are DS40001609E Figure 24-3 (page 262): S-R latch S=G1|G2
+ * and R=G3|G4; flip-flops clock on the G1 rise with D=G2 and R=G3, S=G4 on the
+ * 1-input D, D=G2|G4 on the 2-input D, K=G4 on the J-K (J=G2); transparent
+ * latch D=G2, LE=G3, S=G4, R=G1. The figure draws AND gates in front of the
+ * OR-XOR output while Register 24-1 and section 24.1.3 name it OR-XOR; the
+ * model follows the name. The datasheet gives no priority between S and R, so S
+ * wins here by assumption.
  * @param n Cell index 0..3; carries the sequential and edge state.
  * @param mode LCxMODE value 0..7.
  * @param g0 Gate outputs G1..G4 packed in bits 3:0.
@@ -95,7 +99,7 @@ static uint8_t sim_clc_mode(uint8_t n, uint8_t mode, uint8_t g0)
         q = (uint8_t)(g1 & g2 & g3 & g4);
         break;
     case 3U:
-        q = (uint8_t)(g1 | ((uint8_t)~g2 & q));
+        q = (uint8_t)(g1 | g2 | ((uint8_t)~(g3 | g4) & q));
         break;
     case 4U:
         if (g4 != 0U)
@@ -112,31 +116,31 @@ static uint8_t sim_clc_mode(uint8_t n, uint8_t mode, uint8_t g0)
         }
         break;
     case 5U:
-        if (g4 != 0U)
+        if (g3 != 0U)
         {
             q = 0U;
         }
         else if (rise != 0U)
         {
-            q = (uint8_t)(g2 | g3);
+            q = (uint8_t)(g2 | g4);
         }
         break;
     case 6U:
-        if (g4 != 0U)
+        if (g3 != 0U)
         {
             q = 0U;
         }
         else if (rise != 0U)
         {
-            if ((g2 != 0U) && (g3 == 0U))
+            if ((g2 != 0U) && (g4 == 0U))
             {
                 q = 1U;
             }
-            else if ((g2 == 0U) && (g3 != 0U))
+            else if ((g2 == 0U) && (g4 != 0U))
             {
                 q = 0U;
             }
-            else if ((g2 != 0U) && (g3 != 0U))
+            else if ((g2 != 0U) && (g4 != 0U))
             {
                 q = (uint8_t)~q;
             }
@@ -147,11 +151,11 @@ static uint8_t sim_clc_mode(uint8_t n, uint8_t mode, uint8_t g0)
         {
             q = 1U;
         }
-        else if (g3 != 0U)
+        else if (g1 != 0U)
         {
             q = 0U;
         }
-        else if (g1 != 0U)
+        else if (g3 != 0U)
         {
             q = g2;
         }

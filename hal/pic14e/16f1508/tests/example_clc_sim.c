@@ -1,7 +1,7 @@
 /**
  * CLC functional-model host-sim probe. Host-only: configures cells through
  * EPIC_CLC_Init, drives Dx levels through pic16f1508_sim_drive_clc_input
- * (SEL codes are stored but not decoded, #384), steps the simulator, and
+ * (SEL codes are stored but not decoded), steps the simulator, and
  * checks outputs, mirrors, sequential state, and edge interrupts.
  */
 #include <stddef.h>
@@ -134,7 +134,7 @@ int main(void)
     drive_and_step(0U, 0x00U);
     ok &= (read_cell(CLC1) == 1U);
 
-    /* OR-XOR: (D1|D2)^(D3|D4). 4-input AND: D1&D2&D3&D4. */
+    /* OR-XOR (by name, see MANUAL.md): (D1|D2)^(D3|D4). 4-input AND: D1&D2&D3&D4. */
     setup_passthrough(CLC2, 1U);
     drive_and_step(1U, 0x01U);
     ok &= (read_cell(CLC2) == 1U);
@@ -149,17 +149,23 @@ int main(void)
     ok &= (read_cell(CLC2) == 0U);
     ok &= (EPIC_CLC_DeInit(CLC2) == EPIC_OK);
 
-    /* SR latch on CLC3: S=G1, R=G2; set, hold, reset, S dominates. */
+    /* SR latch on CLC3: S=G1|G2, R=G3|G4. Either S input sets, either R input
+     * resets, and S wins when both are high (priority is assumed, the datasheet
+     * does not give one). */
     setup_passthrough(CLC3, 3U);
     drive_and_step(2U, 0x01U);
     ok &= (read_cell(CLC3) == 1U);
     drive_and_step(2U, 0x00U);
     ok &= (read_cell(CLC3) == 1U);
-    drive_and_step(2U, 0x02U);
+    drive_and_step(2U, 0x04U);
     ok &= (read_cell(CLC3) == 0U);
     drive_and_step(2U, 0x00U);
     ok &= (read_cell(CLC3) == 0U);
-    drive_and_step(2U, 0x03U);
+    drive_and_step(2U, 0x02U);
+    ok &= (read_cell(CLC3) == 1U);
+    drive_and_step(2U, 0x08U);
+    ok &= (read_cell(CLC3) == 0U);
+    drive_and_step(2U, 0x05U);
     ok &= (read_cell(CLC3) == 1U);
     ok &= (EPIC_CLC_DeInit(CLC3) == EPIC_OK);
 
@@ -181,20 +187,30 @@ int main(void)
     ok &= (read_cell(CLC4) == 1U);
     ok &= (EPIC_CLC_DeInit(CLC4) == EPIC_OK);
 
-    /* 2-input D flip-flop on CLC2: CLK=G1, D=G2|G3, R=G4. */
+    /* 2-input D flip-flop on CLC2: CLK=G1, D=G2|G4, R=G3; R beats the clock. */
     setup_passthrough(CLC2, 5U);
     drive_and_step(1U, 0x04U);
     ok &= (read_cell(CLC2) == 0U);
-    drive_and_step(1U, 0x05U);
+    drive_and_step(1U, 0x00U);
+    drive_and_step(1U, 0x09U);
     ok &= (read_cell(CLC2) == 1U);
-    drive_and_step(1U, 0x08U);
+    drive_and_step(1U, 0x00U);
+    ok &= (read_cell(CLC2) == 1U);
+    drive_and_step(1U, 0x01U);
     ok &= (read_cell(CLC2) == 0U);
+    drive_and_step(1U, 0x00U);
     drive_and_step(1U, 0x03U);
     ok &= (read_cell(CLC2) == 1U);
+    drive_and_step(1U, 0x00U);
+    drive_and_step(1U, 0x05U);
+    ok &= (read_cell(CLC2) == 0U);
     ok &= (EPIC_CLC_DeInit(CLC2) == EPIC_OK);
 
-    /* JK flip-flop on CLC3: CLK=G1, J=G2, K=G3, R=G4. */
+    /* JK flip-flop on CLC3: CLK=G1, J=G2, K=G4, R=G3. */
     setup_passthrough(CLC3, 6U);
+    drive_and_step(2U, 0x04U);
+    ok &= (read_cell(CLC3) == 0U);
+    drive_and_step(2U, 0x00U);
     drive_and_step(2U, 0x03U);
     ok &= (read_cell(CLC3) == 1U);
     drive_and_step(2U, 0x00U);
@@ -202,29 +218,44 @@ int main(void)
     drive_and_step(2U, 0x01U);
     ok &= (read_cell(CLC3) == 1U);
     drive_and_step(2U, 0x00U);
-    ok &= (read_cell(CLC3) == 1U);
-    drive_and_step(2U, 0x07U);
-    ok &= (read_cell(CLC3) == 0U);
-    drive_and_step(2U, 0x00U);
-    ok &= (read_cell(CLC3) == 0U);
-    drive_and_step(2U, 0x07U);
+    drive_and_step(2U, 0x08U);
     ok &= (read_cell(CLC3) == 1U);
     drive_and_step(2U, 0x00U);
-    drive_and_step(2U, 0x05U);
+    drive_and_step(2U, 0x09U);
     ok &= (read_cell(CLC3) == 0U);
+    drive_and_step(2U, 0x00U);
     drive_and_step(2U, 0x0BU);
+    ok &= (read_cell(CLC3) == 1U);
+    drive_and_step(2U, 0x00U);
+    drive_and_step(2U, 0x0BU);
+    ok &= (read_cell(CLC3) == 0U);
+    drive_and_step(2U, 0x00U);
+    drive_and_step(2U, 0x03U);
+    ok &= (read_cell(CLC3) == 1U);
+    drive_and_step(2U, 0x00U);
+    drive_and_step(2U, 0x07U);
     ok &= (read_cell(CLC3) == 0U);
     ok &= (EPIC_CLC_DeInit(CLC3) == EPIC_OK);
 
-    /* Transparent latch on CLC4: E=G1, D=G2, R=G3, S=G4. */
+    /* Transparent latch on CLC4: D=G2, LE=G3, S=G4, R=G1. */
     setup_passthrough(CLC4, 7U);
-    drive_and_step(3U, 0x03U);
-    ok &= (read_cell(CLC4) == 1U);
+    drive_and_step(3U, 0x01U);
+    ok &= (read_cell(CLC4) == 0U);
     drive_and_step(3U, 0x00U);
+    ok &= (read_cell(CLC4) == 0U);
+    drive_and_step(3U, 0x02U);
+    ok &= (read_cell(CLC4) == 0U);
+    drive_and_step(3U, 0x06U);
+    ok &= (read_cell(CLC4) == 1U);
+    drive_and_step(3U, 0x04U);
+    ok &= (read_cell(CLC4) == 0U);
+    drive_and_step(3U, 0x06U);
     ok &= (read_cell(CLC4) == 1U);
     drive_and_step(3U, 0x02U);
     ok &= (read_cell(CLC4) == 1U);
-    drive_and_step(3U, 0x04U);
+    drive_and_step(3U, 0x00U);
+    ok &= (read_cell(CLC4) == 1U);
+    drive_and_step(3U, 0x01U);
     ok &= (read_cell(CLC4) == 0U);
     drive_and_step(3U, 0x08U);
     ok &= (read_cell(CLC4) == 1U);

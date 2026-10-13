@@ -1,9 +1,10 @@
 /**
  * PIC16F1508/1509 CLC contract. Four configurable logic cells, each with four
  * data inputs (D1..D4), four gates built from those inputs (CLCxGLSg), and one
- * output. CLCxCON, PIR3 and PIE3 bit positions are checked against
- * DS40001609E. Input-source codes (LCxDyS) and LCxMODE stay raw 0..7
- * until the per-device tables are verified.
+ * output. Bit positions are checked against DS40001609E (see MANUAL.md).
+ * Input-source codes (LCxDyS) come from EPIC_CLC_SourceCode in
+ * pic16f1508_clc_src.h, and the gate images from EPIC_CLC_GLSInput in
+ * pic16f1508_clc_gls.h; LCxMODE stays a raw 0..7 value.
  */
 #ifndef PIC16F1508_CLC_H
 #define PIC16F1508_CLC_H
@@ -23,7 +24,7 @@ typedef struct
 {
     CLC_InstanceTypeDef Instance; /* required: no default handle exists */
     uint8_t Mode;                 /* LCxMODE, 0..7 */
-    uint8_t Source[4];            /* D1S..D4S, 0..7 each */
+    uint8_t Source[4];            /* D1S..D4S, 0..7 each, see EPIC_CLC_SourceCode */
     uint8_t Gls[4];               /* CLCxGLS0..GLS3 images, see EPIC_CLC_GLSInput */
     uint8_t GatePolarity;         /* G1POL..G4POL in bits 3:0, 0..0x0F */
     uint8_t OutputPolarity;       /* nonzero inverts the cell output (POL) */

@@ -1,9 +1,8 @@
 /**
  * SFR address map for PIC16F1508/1509. PIC_REG_* addresses, CLC included,
  * are generated from the pinned DFP EDC by scripts/gen-sfr.py (identical for
- * both parts; --check detects drift). Bit masks are hand-maintained and
- * cross-checked against the DFP 1.9.258 proc header. They cite register names,
- * not datasheet pages, until checked against the datasheet (see MANUAL.md).
+ * both parts; --check detects drift). Bit masks are hand-maintained and cite
+ * the DS40001609E register they come from (see MANUAL.md).
  */
 
 #ifndef PIC16F1508_SFR_H
@@ -81,7 +80,8 @@
 #define PIC_REG_CLC4GLS2      0xF2EU
 #define PIC_REG_CLC4GLS3      0xF2FU
 
-/* CLCDATA: MCLCnOUT is the live output of cell n (bit n-1). */
+/* CLCDATA: MCLCnOUT is the live output of cell n (bit n-1); bits 7:4 read as
+ * 0. DS40001609E Register 24-9 (page 271). */
 #define PIC_CLCDATA_MCLC1OUT  EPIC_BIT(0)
 #define PIC_CLCDATA_MCLC2OUT  EPIC_BIT(1)
 #define PIC_CLCDATA_MCLC3OUT  EPIC_BIT(2)
@@ -96,7 +96,7 @@
 #define PIC_CLCCON_EN         EPIC_BIT(7)
 
 /* CLCxPOL: G1POL..G4POL in bits 3:0 (gate inversion), POL in bit 7 (output
- * inversion). */
+ * inversion), bits 6:4 unimplemented. DS40001609E Register 24-2 (page 264). */
 #define PIC_CLCPOL_G1POL      EPIC_BIT(0)
 #define PIC_CLCPOL_G2POL      EPIC_BIT(1)
 #define PIC_CLCPOL_G3POL      EPIC_BIT(2)
@@ -104,11 +104,13 @@
 #define PIC_CLCPOL_POL        EPIC_BIT(7)
 
 /* CLCxSEL0 and CLCxSEL1: D1S (SEL0) and D3S (SEL1) in bits 2:0, D2S (SEL0)
- * and D4S (SEL1) in bits 6:4. */
+ * and D4S (SEL1) in bits 6:4, bits 7 and 3 unimplemented. DS40001609E
+ * Registers 24-3 and 24-4 (pages 265 and 266). */
 #define PIC_CLCSEL_HIGH_SHIFT 4U
 
 /* CLCxGLSn: gate n data input i has its negate bit at 2*(i-1) and its
- * true-enable bit at 2*(i-1)+1. */
+ * true-enable bit at 2*(i-1)+1. DS40001609E Registers 24-5..24-8 (pages 267
+ * to 270). */
 #define PIC_CLCGLS_D1N        EPIC_BIT(0)
 #define PIC_CLCGLS_D1T        EPIC_BIT(1)
 #define PIC_CLCGLS_D2N        EPIC_BIT(2)

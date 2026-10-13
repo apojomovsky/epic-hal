@@ -16,8 +16,11 @@ what is specific to this part.
 - Datasheet: DS40001609E (PIC16(L)F1508/9), published at
   <https://ww1.microchip.com/downloads/en/DeviceDoc/40001609E.pdf>. Page cites
   below are its printed page numbers. Checked so far: the PIR3/PIE3 CLC bits and
-  addresses (#388), the CLCxCON bit layout (#395). A value or cite without a
-  datasheet page here is still DFP/EDC-derived and **unverified**.
+  addresses (#388), the CLCxCON bit layout (#395), the CLCxPOL, CLCxSEL0/1 and
+  CLCxGLS0..3 bit positions with the Table 24-1 input-select codes (#384), and
+  the Figure 24-3 gate roles behind the host-sim mode map (#384, #400). A value
+  or cite without a datasheet page here is still DFP/EDC-derived and
+  **unverified**.
 
 ## Implemented bits (from EDC impl masks)
 
@@ -114,22 +117,30 @@ Single vector, no priority. Hardware saves context automatically
 ## Configurable logic cell (CLC)
 
 Four cells, CLC1..CLC4, at a stride of 8 from CLC1CON at 0xF10 (CLCDATA
-at 0xF0F). Addresses are from the DFP EDC. The CLCxCON bit positions are
-verified against DS40001609E Register 24-1 (page 263). The other bit positions
-below are from the pinned DFP 1.9.258 proc header and the #361 transcription,
-and are **unverified** against the datasheet.
+at 0xF0F). Addresses are from the DFP EDC and match the Bank 30 map and the
+register summary in DS40001609E Table 3-7 (page 25) and Table 3-9 (page 31).
+Bit positions: CLCxCON is Register 24-1 (page 263), CLCxPOL is Register 24-2
+(page 264), CLCxSEL0 is Register 24-3 (page 265), CLCxSEL1 is Register 24-4
+(page 266), CLCxGLS0..3 are Registers 24-5..24-8 (pages 267 to 270), and
+CLCDATA is Register 24-9 (page 271).
 
-| Register | Bits used                                             | Source         |
-|----------|-------------------------------------------------------|----------------|
-| CLCxCON  | LCxMODE 2:0, INTN 3, INTP 4, OUT 5, OE 6, EN 7        | DS40001609E    |
-| CLCxPOL  | G1POL..G4POL 3:0, POL 7                               | DFP only       |
-| CLCxSEL0 | D1S 2:0, D2S 6:4                                      | DFP + #361     |
-| CLCxSEL1 | D3S 2:0, D4S 6:4                                      | DFP + #361     |
-| CLCxGLS0..3 | D1N..D4T, two bits per gate input (N then T)       | DFP only       |
+| Register | Bits used                                             |
+|----------|-------------------------------------------------------|
+| CLCxCON  | LCxMODE 2:0, INTN 3, INTP 4, OUT 5, OE 6, EN 7        |
+| CLCxPOL  | G1POL..G4POL 3:0, POL 7 (bits 6:4 unimplemented)      |
+| CLCxSEL0 | D1S 2:0, D2S 6:4 (bits 7 and 3 unimplemented)         |
+| CLCxSEL1 | D3S 2:0, D4S 6:4 (bits 7 and 3 unimplemented)         |
+| CLCxGLS0..3 | D1N..D4T, two bits per gate input (N then T)       |
 
-The input-select codes (the DS40001609E input-select table, not verified here) are not in this HAL (#384).
-The driver passes raw 0..7 mode and source codes through and validates
-only the range.
+Input-select codes are DS40001609E Table 24-1 (page 258), built into
+`EPIC_CLC_SourceCode` (`include/peripherals/pic16f1508_clc_src.h`) and covered
+by the host probe `example_clc_src`. Each multiplexer sees eight of the 16
+LCx_in signals: D1 takes LCx_in[0..7], D2 takes [4..11], D3 takes [8..15], and
+D4 takes [12..15] at codes 0..3 then [0..3] at codes 4..7. Rows 0..11 name the
+same signal on every cell; rows 12..15 differ per cell. The driver still
+validates only the 0..7 range; a multiplexer that cannot see an input yields
+`EPIC_CLC_SRC_INVALID`, which `EPIC_CLC_Init` rejects with no register
+written.
 
 Edge interrupts: `CLC_HandleTypeDef.InterruptRising` sets LCxINTP (CLCxCON bit 4) and
 `InterruptFalling` sets LCxINTN (bit 3), written in the same CON store that sets EN. CLCnIF is
@@ -163,29 +174,40 @@ per EDC and Register 7-7 (PIR3 bits 7:4 read as 0). The PIR1, PIR2, PIE1 and PIE
 (0x11, 0x12, 0x91, 0x92) are confirmed in DS40001609E Table 3-9 (page 27). The PEIE requirement
 for every peripheral interrupt is the note under Register 7-4 (PIE3, page 78).
 
-MPLAB-SIM throws on some CLC register access sequences, so the mdb gate
-does not exercise CLC (follow-up #383). The CLC driver is covered by the
-host probes `example_clc` (registers) and `example_clc_irq` (interrupt routing) only.
+MPLAB-SIM limits the CLC coverage of the mdb gate (all recorded on #383).
+The gate configures CLC1 through `EPIC_CLC_Init` and drives gate-polarity
+constants through modes 0..2, reading the CON.OUT live output at every step,
+plus output-polarity inversion and the EN-cleared forced zero. Two SIM gaps
+shape this: writing most CLC1 D3S codes (anything but 0 and 5) throws
+`E0107-SIM ... CLC1SEL1 : null`, so the gate uses D3S 5 (HFINTOSC); and the
+SIM never sets the CLCDATA mirror copy (CON.OUT reads 1 while CLCDATA stays 0
+after a settle cycle), so the gate observes CON.OUT only. The CLCDATA mirror
+and the sequential modes 3..7 are covered by the host probes
+(`example_clc`, `example_clc_sim`) only.
 
 ## Host simulation model
 
 `pic16f1508_sim_step` recomputes every cell from its CON, POL, and GLS
 registers: gates OR their selected true and negated terms (an empty gate
-reads 0 before its GxPOL bit), the mode logic combines the gates, POL
-inverts the cell, and the result lands in the CLCDATA bit and the CON.OUT
-bit. A 0 to 1 edge with INTP set, or a 1 to 0 edge with INTN set, raises
-the cell's PIR3 flag even with its PIE bit clear; the sim callback runs
-only under CLCxIF, CLCxIE, PEIE, and GIE. A disabled cell reads 0 with no
-edge and no flag, and keeps its sequential bit.
+reads 0 before its GxPOL bit, per Table 24-2 rows 0x00; a gate with both the
+true and the negated term of one input selected reads 0, per section 24.1.2),
+the mode logic combines the gates, POL inverts the cell, and the result lands
+in the CLCDATA bit and the CON.OUT bit. A 0 to 1 edge with INTP set, or a 1 to
+0 edge with INTN set, raises the cell's PIR3 flag even with its PIE bit clear;
+the sim callback runs only under CLCxIF, CLCxIE, PEIE, and GIE. A disabled cell
+reads 0 with no edge and no flag, and keeps its sequential bit.
 
-Gate roles per mode follow Figure 24-3: S=G1 with R=G2 on the SR latch;
-clock=G1 with data and async set and reset on G2..G4 on the flip-flop and
-latch modes (2-input D takes D=G2|G3). S dominates R. Modes 4..6 clock on
-the G1 rise; mode 7 follows D while G1 is high. The mode map is
-**unverified** against DS40001609E with the rest of
-this section. Covered by the host probe `example_clc_sim`.
+Gate roles per mode are DS40001609E Figure 24-3 (page 262): S-R latch S=G1|G2
+and R=G3|G4; flip-flops clock on the G1 rise with D=G2 and R=G3, S=G4 on the
+1-input D, D=G2|G4 on the 2-input D, K=G4 on the J-K (J=G2); transparent latch
+D=G2, LE=G3, S=G4, R=G1. Two figure gaps stay open. The figure draws AND gates
+in front of the OR-XOR output while Register 24-1 (page 263) and section
+24.1.3 name mode 1 OR-XOR; the model follows the name, and the mdb gate only
+asserts vectors where both readings agree. The datasheet gives no priority
+between S and R, so S wins here by assumption. Covered by the host probe
+`example_clc_sim`.
 
-Two seams stay open. SEL codes are stored but not decoded: the Dx levels
-come from `pic16f1508_sim_drive_clc_input`, a host-only hook, until the
-input-source table lands (#384). LCxOE does not drive a pin in the sim:
-the output-pin mapping is unverified, so only the mirrors observe it.
+One seam stays open. SEL codes are stored but not decoded: the Dx levels
+come from `pic16f1508_sim_drive_clc_input`, a host-only hook. LCxOE does not
+drive a pin in the sim: the output-pin mapping is unverified, so only the
+mirrors observe it.
