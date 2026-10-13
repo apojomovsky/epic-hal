@@ -51,11 +51,11 @@ the gate read the pin back:
 make mdb-epiccc MODULE=epic-bus MCU=18F4550 DEVICE=PIC18F4550 REG=PORTB BIT=0
 ```
 
-The probe proves the mem read/write dispatch under epic-cc. No slave
-exists under the simulators, so the mock stands in for the MEM device;
-a silent pin means a NACK or a data mismatch. The bus inits stay out of
-the probe (the pinned driver cannot place the default ops table once
-init takes its address); init is covered by the XC8 gates below.
+The probe proves the mem read/write dispatch under epic-cc. It inits
+both buses first (each init installs the default ops table), then
+installs the loopback tables over them. No slave exists under the
+simulators, so the mock stands in for the MEM device; a silent pin
+means a NACK or a data mismatch.
 
 ## Use it
 
