@@ -32,7 +32,7 @@ Implemented and verified:
 - [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`epic-pic16f1508-firmware`), `blink` example,
       and the mdb register-readback gate (`MODE=gpio`, RA0 PASS marker) for
-      GPIO, IOC enable, and CLC output behaviour (modes 0..3
+      GPIO, IOC enable, and CLC output behaviour (modes 0..3, 5 and 6
       through gate-polarity constants, CON.OUT readback; the SIM gaps that
       shape it are in MANUAL.md, #383).
 
@@ -51,6 +51,15 @@ mdb gate on target. The beat-frequency sweep on top of it is probe
 duty from near-empty to near-full at a fixed output rate with no register
 written after setup. The on-silicon S and R trains come from TMR2 (PR2 255)
 and a TMR1 preloaded to 0xFF01 (see the timer drivers below).
+The switch-debouncer demo (AN2805 2-CLC shape: STAGE1 samples the switch on
+the slow clock, STAGE2 samples switch AND STAGE1, both mode 5) is probe
+`example_clc_debounce` on the host and D-flop plus filter-gate sections of
+the mdb gate on target; the slow clock is the `EPIC_TIMER2` free-run below.
+The quadrature-decoder-assist demo (two mode-6 J-K cells, each
+clocking on one encoder line while the other sets it, with a software
+counter and a 10-LED bar on RC0..RC7, RA4, RA5) is probe `example_clc_quad`
+on the host and a J-K section of the mdb gate on target; the counter path
+is the `EPIC_TIMER1` T1CKI counter below (no TMR3 on this part).
 
 Implemented and verified against DS40001609E: the `EPIC_TIMER2` driver
 (prescalers 1:1/1:4/1:16/1:64, postscaler 1:1..1:16, PR2 match with TMR2IF
@@ -72,10 +81,11 @@ Not yet implemented (deliberate scope limit, each its own follow-up):
 
 - Timer0, CCP, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
   comparators, DAC, FVR, NCO, CWG, and the SR latch.
-- The on-silicon TB3273 auto-dimmer (TMR2 plus the preloaded-TMR1 pulse
-  source into the latched CLC1) and the CLC sequential modes on the mdb gate
-  (mode 3 latch runs in the gate; modes 4..7 run host-only; MPLAB-SIM
-  shapes the gate, see MANUAL.md, #383). The sweep itself is probe
+- Wiring the landed timer drivers into the demos (the debouncer TMR2 clock,
+  the quadrature TMR1 counter, the on-silicon TB3273 auto-dimmer) and the
+  CLC sequential modes on the mdb gate (modes 3, 5 and 6 run in the gate;
+  modes 4 and 7 and cross-cell cascades run host-only; MPLAB-SIM shapes
+  the gate, see MANUAL.md, #383). The sweep itself is probe
   `example_clc_beat` on the host.
 - SEL-code decoding in the host sim (codes are stored, Dx levels come from a
   host-only hook, except timer overflow/match which the tick model raises).
@@ -117,6 +127,7 @@ src/
 tests/                  example_blink, example_gpio (host), example_clc (host),
                         example_clc_irq (host), example_clc_sim (host),
                         example_clc_latch (host), example_clc_beat (host),
+                        example_clc_debounce (host), example_clc_quad (host),
                         example_tmr1, example_tmr2 (host),
                         example_gpio_mdb
 ```
