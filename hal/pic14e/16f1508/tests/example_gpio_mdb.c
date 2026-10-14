@@ -3,14 +3,17 @@
  * only the public EPIC_GPIO_*, EPIC_IRQ_* and EPIC_CLC_* contracts, then reads
  * back the SFRs it configured. Edges need an external source, so the IOC check
  * covers the enable path only; the edge path is in example_gpio.c on the host
- * signal level, only on gate-polarity constants; sequential modes 4..7 stay
- * host-only in example_clc_sim.c, and the mode-3 S-R latch shape runs below.
+ * sim. CLC gates run empty (GLS 0), so the outputs below never depend on a
+ * signal level, only on gate-polarity constants; the mode-3 S-R latch, mode-5
+ * D-flop and mode-6 J-K sections prove sequential state in SIM, while modes 4
+ * and 7 and cross-cell LCx_OUT levels stay host-only (see MANUAL.md).
  */
 #include <stddef.h>
  #include "pic16f1508.h"
 #include "peripherals/pic16f1508_gpio.h"
 #include "peripherals/pic16f1508_clc.h"
 #include "peripherals/pic16f1508_clc_src.h"
+#include "peripherals/pic16f1508_clc_gls.h"
 #include "core/pic16f1508_irq.h"
 #include "core/epic_harness.h"
 
@@ -29,7 +32,7 @@ static const uint8_t k_mode1_want[] = {0U, 1U, 1U, 0U};
 
 /**
  * @brief Configure CLC1 for the gate.
- * @param mode LCxMODE value 0..3.
+ * @param mode LCxMODE value 0..7.
  * @return 1 on EPIC_OK, 0 otherwise.
  */
 static int clc1_gate_config(uint8_t mode)
@@ -194,6 +197,79 @@ int main(void)
     clc1_lines(0x0CU);
     ok &= clc1_check(0U);
     clc1_lines(0x00U);
+    ok &= clc1_check(0U);
+    /* Debouncer stage shape (mode 5, 2-input D with R): G1 clock, G2 data.
+     * SIM holds the flop state across samples, so the holds assert it. */
+    ok &= clc1_gate_config(5U);
+    clc1_lines(0x04U);
+    ok &= clc1_check(0U);
+    clc1_lines(0x02U);
+    ok &= clc1_check(0U);
+    clc1_lines(0x03U);
+    ok &= clc1_check(1U);
+    clc1_lines(0x02U);
+    ok &= clc1_check(1U);
+    clc1_lines(0x00U);
+    ok &= clc1_check(1U);
+    clc1_lines(0x01U);
+    ok &= clc1_check(0U);
+    clc1_lines(0x04U);
+    ok &= clc1_check(0U);
+    clc1_lines(0x00U);
+    ok &= clc1_check(0U);
+    /* Debouncer filter gate shape: G2 ORs the negated D2 input, then G2POL
+     * inverts it (the De Morgan AND of the host probe). D2 reads the
+     * disabled CLC2 output, a deterministic 0; flipping G2POL proves the
+     * gate evaluates that input instead of a constant. Live cross-cell
+     * levels stay host-only (SIM reads them 0 either way). */
+    ok &= (EPIC_CLC_DeInit(CLC2) == EPIC_OK);
+    {
+        CLC_HandleTypeDef h;
+        h.Instance = CLC1;
+        h.Mode = 0U;
+        h.Source[0] = EPIC_CLC_SourceCode(1U, CLC_IN_CLCIN0);
+        h.Source[1] = EPIC_CLC_SourceCode(2U, CLC_IN_LC2_OUT);
+        h.Source[2] = EPIC_CLC_SourceCode(3U, CLC_IN_LC1_OUT);
+        h.Source[3] = EPIC_CLC_SourceCode(4U, CLC_IN_CLCIN0);
+        h.Gls[0] = 0U;
+        h.Gls[1] = EPIC_CLC_GLSInput(2U, 1U, 0U);
+        h.Gls[2] = 0U;
+        h.Gls[3] = 0U;
+        h.GatePolarity = 0x03U;
+        h.OutputPolarity = 0U;
+        h.OutputEnable = 0U;
+        h.InterruptRising = 0U;
+        h.InterruptFalling = 0U;
+        h.Callback = NULL;
+        ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
+        epic_harness_tick();
+        ok &= (EPIC_REG8(PIC_REG_CLC1SEL0) == 0x50U);
+        ok &= (EPIC_REG8(PIC_REG_CLC1SEL1) == 0x40U);
+        clc1_lines(0x03U);
+        ok &= clc1_check(0U);
+        clc1_lines(0x01U);
+        ok &= clc1_check(1U);
+    }
+    /* Quadrature direction-cell shape (mode 6, J-K with R): G1 clock, G2 J,
+     * G4 K, G3 R. Toggle on J=K=1, set on J, hold, reset on K. */
+    ok &= clc1_gate_config(6U);
+    clc1_lines(0x04U);
+    ok &= clc1_check(0U);
+    clc1_lines(0x00U);
+    ok &= clc1_check(0U);
+    clc1_lines(0x0BU);
+    ok &= clc1_check(1U);
+    clc1_lines(0x0AU);
+    ok &= clc1_check(1U);
+    clc1_lines(0x0BU);
+    ok &= clc1_check(0U);
+    clc1_lines(0x02U);
+    ok &= clc1_check(0U);
+    clc1_lines(0x03U);
+    ok &= clc1_check(1U);
+    clc1_lines(0x00U);
+    ok &= clc1_check(1U);
+    clc1_lines(0x09U);
     ok &= clc1_check(0U);
     ok &= (EPIC_CLC_DeInit(CLC1) == EPIC_OK);
     int rc = epic_harness_report(ok);

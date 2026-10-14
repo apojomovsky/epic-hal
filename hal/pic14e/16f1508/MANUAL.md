@@ -176,24 +176,30 @@ for every peripheral interrupt is the note under Register 7-4 (PIE3, page 78).
 
 MPLAB-SIM limits the CLC coverage of the mdb gate (all recorded on #383).
 The gate configures CLC1 through `EPIC_CLC_Init` and drives gate-polarity
-constants through modes 0..3, reading the CON.OUT live output at every step,
-plus output-polarity inversion and the EN-cleared forced zero. Mode 3 runs
-the TB3273 S-R latch shape (S=G1|G2, R=G3|G4): set, hold, reset, hold-low.
-SIM keeps the sequential state across samples, so the holds prove the latch;
-S+R priority stays host-only (the sim assumes S wins). Two SIM gaps shape
-this: a single store of most CLC1 D3S codes (anything but 0 and 5) to
-CLC1SEL1 throws `E0107-SIM ... CLC1SEL1 : null`, with no preceding access
-needed (`EPIC_REG8(PIC_REG_CLC1SEL1) = 0x01U` as the only CLC access throws)
-and no CON order avoiding it (cleared first and enabled first both throw,
-while the same code writes cleanly to CLC2SEL1), so the gate uses D3S 5
-(HFINTOSC); and the SIM never sets the CLCDATA mirror copy (CON.OUT reads 1
-while CLCDATA stays 0 after a settle cycle), so the gate observes CON.OUT
-only. The CLCDATA mirror and the sequential modes 4..7 are covered by the
-host probes (`example_clc`, `example_clc_sim`, `example_clc_latch`,
-`example_clc_beat`) only.
-The SIM prints W0700/W0701 notes during the CLC steps (no propagation
-delay modelled; output-as-own-input loop warning). They are benign: no
-cell feeds its own output.
+constants through modes 0..3, 5 and 6, reading the CON.OUT live output at
+every step, plus output-polarity inversion and the EN-cleared forced zero.
+Mode 3 runs the TB3273 S-R latch shape (S=G1|G2, R=G3|G4): set, hold, reset,
+hold-low. Mode 5 runs the debouncer stage shape (G1 clock, G2 data): set,
+hold, reset, hold-low. Mode 6 runs the quadrature cell shape (G1 clock, G2
+J, G4 K, G3 R): toggle, set, hold, K-reset. SIM keeps each flop state
+across samples, so the holds prove them; S+R priority stays host-only (the
+sim assumes S wins). A mode-0 section pins the debouncer filter-gate image
+(G2 ORs the negated D2 input, G2POL inverts) against the disabled CLC2
+output, a deterministic 0. Two SIM gaps shape this: a single store of most
+CLC1 D3S codes (anything but 0 and 5) to CLC1SEL1 throws
+`E0107-SIM ... CLC1SEL1 : null`, with no preceding access needed
+(`EPIC_REG8(PIC_REG_CLC1SEL1) = 0x01U` as the only CLC access throws) and no
+CON order avoiding it (cleared first and enabled first both throw, while the
+same code writes cleanly to CLC2SEL1), so the gate uses D3S 0 and 5 only;
+and the SIM never sets the CLCDATA mirror copy (CON.OUT reads 1 while
+CLCDATA stays 0 after a settle cycle), so the gate observes CON.OUT only.
+Cross-cell LCx_OUT levels read 0 in SIM even after settle cycles (measured:
+CLC2 driven const-1 into CLC1 D2 still reads 0), so cascades stay host-only.
+The CLCDATA mirror and the sequential modes 4 and 7 are covered by the host
+probes (`example_clc`, `example_clc_sim`, `example_clc_beat`) only. The SIM
+prints W0700/W0701 notes during the CLC steps (no propagation delay
+modelled; output-as-own-input loop warning). They are benign: no cell feeds
+its own output.
 
 ## Host simulation model
 
@@ -218,6 +224,9 @@ between S and R, so S wins here by assumption. Covered by the host probe
 `example_clc_sim`.
 
 One seam stays open. SEL codes are stored but not decoded: the Dx levels
-come from `pic16f1508_sim_drive_clc_input`, a host-only hook. LCxOE does not
-drive a pin in the sim: the output-pin mapping is unverified, so only the
-mirrors observe it.
+come from `pic16f1508_sim_drive_clc_input`, a host-only hook. A demo that
+needs an inter-cell wire closes it through the hook: the debouncer probe
+re-drives STAGE2 D2 from the live STAGE1 output each half clock, so the AND
+the STAGE2 gate evaluates is the cell's own. LCxOE does not drive a pin in
+the sim: the output-pin mapping is unverified, so only the mirrors observe
+it.
