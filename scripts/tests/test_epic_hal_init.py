@@ -160,7 +160,31 @@ class TestEmitMainC(unittest.TestCase):
     def test_pragma_config_from_family_pseudo_module(self):
         src = epic_hal_init.emit_main_c(self.m, "PIC16F87XA", "16F877A", ["tick"])
         self.assertIn("#pragma config FOSC = HS", src)
-        self.assertIn("#pragma config WDTE = ON", src)
+        self.assertIn("#pragma config WDTE = OFF", src)
+        self.assertNotIn("#pragma config WDTE = ON", src)
+
+    def test_beginner_config_forces_watchdog_off(self):
+        out = epic_hal_init.beginner_config(
+            {"WDTE": "ON", "FOSC": "HS", "WDT": "ON", "WDTPS": "32768"})
+        self.assertEqual(out, {"WDTE": "OFF", "FOSC": "HS", "WDT": "OFF", "WDTPS": "32768"})
+
+    def test_every_family_template_has_watchdog_off(self):
+        # The templates never refresh the watchdog, so every family's
+        # scaffolded main.c must ship it disabled (epic-hal#426). Checks the
+        # real manifest, not the fixture, so a new family cannot regress.
+        real = epicmanifest.load(epicmanifest.default_path())
+        checked = 0
+        for fam in real.families.values():
+            part = sorted(fam.variants)[0]
+            for modules in ([], ["tick"], ["serial"]):
+                src = epic_hal_init.emit_main_c(real, fam.name, part, modules)
+                wdt = [l for l in src.splitlines() if "#pragma config WDT" in l and "= " in l]
+                for line in wdt:
+                    if line.startswith("#pragma config WDTPS"):
+                        continue
+                    checked += 1
+                    self.assertTrue(line.endswith("= OFF"), f"{fam.name} {part} {modules}: {line}")
+        self.assertGreater(checked, 0)
 
     def test_skeleton_uses_tick_and_gpio(self):
         src = epic_hal_init.emit_main_c(self.m, "PIC16F87XA", "16F877A", ["tick"])
