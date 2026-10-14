@@ -59,20 +59,17 @@ jobs:
       - name: Lint added comment blocks
         run: python3 epic-tasks/epic-tasks prose --verify
 
-  # Generated docs gate (epic-hal#420): re-render every data-driven
-  # page from the manifest and README.src.md, then fail on any diff,
-  # so a stale reference page or README cannot merge. Bare runner,
-  # stdlib python3 only, no Docker.
+  # Generated docs gate (epic-hal#420): fail on any stale data-driven
+  # page (reference pages from the manifest, README.md from its src),
+  # so a stale generated page cannot merge. Bare runner, stdlib
+  # python3 only, no Docker.
   docs:
     name: generated docs check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Regenerate and diff
-        run: |
-          python3 scripts/build/docs_gen.py
-          git diff --exit-code -- README.md docs/reference/ || \
-            (echo "stale generated docs; run make docs-gen" >&2; exit 1)
+        run: python3 scripts/build/docs_gen.py --check
 
   # Bare runner, no Docker: every module/HAL's cmake+ctest plus lint.
   # non-code PRs skip the build+test loop but still run lint (a

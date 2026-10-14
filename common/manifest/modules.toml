@@ -4879,7 +4879,7 @@ PIC18Fxx5x = [
 
 [modules.epic-common]
 dir        = "common"
-summary    = "Register-blind shared layer reused by every HAL family"
+summary    = "Architecture-blind status codes, harness and shared build fragments"
 sources    = [
   "src/core/epic_harness_target.c",
 ]

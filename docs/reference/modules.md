@@ -21,7 +21,7 @@ Every module in the manifest, with its one-line summary and the families it supp
 | `epic-combo-tick-serial` | 1 ms timebase plus interrupt-driven serial integration firmware | PIC16F87XA |
 | `epic-combo-tick-settings` | 1 ms timebase plus EEPROM settings integration firmware | PIC18Fxx5x |
 | `epic-combo-uart-ssp` | UART plus SSP and EEPROM integration firmware interleaved under a fast Timer2 ISR | PIC16F87XA |
-| `epic-common` | Register-blind shared layer reused by every HAL family | PIC16F87XA, PIC16F88X |
+| `epic-common` | Architecture-blind status codes, harness and shared build fragments | PIC16F87XA, PIC16F88X |
 | `epic-console` | Line-based command dispatcher over epic-serial | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `epic-control-demo` | PIC18F4550 control demo: UART console PID loop with ADC sense, PWM drive and EEPROM settings | PIC18Fxx5x |
 | `epic-debounce` | Vendor-agnostic digital-input debouncer | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
