@@ -1,4 +1,4 @@
-# epic-swuart API reference
+# lib/swuart API reference
 
 ## `EPIC_SWUART_Init`
 

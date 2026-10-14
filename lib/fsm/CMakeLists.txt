@@ -1,4 +1,4 @@
-# epic-fsm, vendor-agnostic table-driven finite state machine engine.
+# lib/fsm, vendor-agnostic table-driven finite state machine engine.
 #
 #   cmake -B build && cmake --build build
 #   ./build/test_fsm

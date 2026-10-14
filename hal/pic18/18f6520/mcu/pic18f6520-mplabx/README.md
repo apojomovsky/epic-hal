@@ -3,10 +3,10 @@
 This family's real-target build is manifest-driven (see
 `common/manifest/README.md`); there is no standalone Makefile here.
 CI builds the family's blink smoke and its MPLAB SIM gates via the
-`pic18f6520-hal` manifest pseudo-module:
+`hal/pic18/18f6520` manifest pseudo-module:
 
 ```sh
-python3 scripts/build/epic_build.py build --module pic18f6520-hal --mcu 18F6520 --run
+python3 scripts/build/epic_build.py build --module hal/pic18/18f6520 --mcu 18F6520 --run
 ```
 
 The PIC18F6520 uses the `Microchip.PIC18Fxxxx_DFP` device pack (the same

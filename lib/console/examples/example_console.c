@@ -1,9 +1,9 @@
 /*
- * epic-console target example: a line command dispatcher over the
+ * lib/console target example: a line command dispatcher over the
  * 115200-baud UART. "help" prints the command table, "led on|off"
  * tracks LED state in memory and reports it, and "status" reports the
  * LED state and a status counter. Typed lines are echoed and edited
- * by epic-console and dispatched on Enter.
+ * by lib/console and dispatched on Enter.
  */
 
 #include "epic_console.h"
@@ -24,7 +24,7 @@ static const char s_txt_led_usage[] = "usage: led on|off\r\n";
 static const char s_txt_status_led[] = "status: led=";
 static const char s_txt_status_cnt[] = " count=";
 static const char s_txt_crlf[] = "\r\n";
-static const char s_txt_banner[] = "epic-console example: type \"help\"\r\n";
+static const char s_txt_banner[] = "lib/console example: type \"help\"\r\n";
 typedef struct {
     uint8_t          led_on;
     uint8_t          status_count;

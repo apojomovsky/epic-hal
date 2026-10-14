@@ -8,7 +8,7 @@ typedef struct {
 } tiny_settings_t;
 
 /**
- * @brief Cross-compile sizecheck: touch every epic-settings entry point.
+ * @brief Cross-compile sizecheck: touch every lib/settings entry point.
  *
  * @return the last settings byte, so the call results are observable
  */

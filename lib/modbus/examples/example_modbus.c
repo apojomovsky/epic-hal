@@ -1,8 +1,8 @@
 /*
- * epic-modbus target example: an RTU slave (address 0x11, 9600 baud)
+ * lib/modbus target example: an RTU slave (address 0x11, 9600 baud)
  * exposing a 4-holding-register map and 8 coils, with an RS-485
  * driver-enable pin on GPIOB0. holding_regs[0] carries the uptime in
- * seconds refreshed from epic-tick, so a master polling FC 03 sees
+ * seconds refreshed from lib/tick, so a master polling FC 03 sees
  * live data; the other registers and the coils are writable by the
  * master (FC 06 / FC 05 / FC 16 / FC 15).
  */

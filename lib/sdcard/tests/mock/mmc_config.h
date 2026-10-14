@@ -2,7 +2,7 @@
  * epic_sdcard_mock_spi.c instead of real hardware. MMC_USE_TIMER is
  * deliberately not defined: a host mock has no real SPI latency to time
  * out against, so mmc.c's bounded-retry-count fallback suffices (the real
- * target mmc_config.h defines it, bound to epic-tick). */
+ * target mmc_config.h defines it, bound to lib/tick). */
 
 #ifndef EPIC_SDCARD_MOCK_MMC_CONFIG_H__
 #define EPIC_SDCARD_MOCK_MMC_CONFIG_H__

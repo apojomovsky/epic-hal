@@ -1,4 +1,4 @@
-# epic-mcp23x17, MCP23017 (I2C) / MCP23S17 (SPI) 16-bit I/O expander
+# lib/mcp23x17, MCP23017 (I2C) / MCP23S17 (SPI) 16-bit I/O expander
 # driver, on top of epic-bus.
 #
 #   cmake -B build && cmake --build build
@@ -6,10 +6,10 @@
 #   ./build/test_mcp23x17 && ./build/example_mcp23x17
 #
 # Reuses a HAL family's host sim backend via add_subdirectory (as the
-# other epic-* modules do) and epic-bus for the transport. The driver
+# other epic-* modules do) and lib/bus for the transport. The driver
 # itself is family-agnostic; the host test injects a mock MCP23017
-# device through the epic-bus ops seam (the host sim has no SSP slave
-# model), so the full module + epic-bus + mock-device stack runs
+# device through the lib/bus ops seam (the host sim has no SSP slave
+# model), so the full module + lib/bus + mock-device stack runs
 # host-side. Select the family with -DEPIC_FAMILY=PIC18 (default
 # PIC16). Real-target builds use the XC8 Makefiles under mcu/.
 
@@ -39,21 +39,21 @@ set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link: PIC16 or PIC18")
 
 if(EPIC_FAMILY STREQUAL "PIC18")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic18/18fxx5x
-        CACHE PATH "Path to the pic18fxx5x-hal source tree")
+        CACHE PATH "Path to the hal/pic18/18fxx5x source tree")
     set(EPIC_LIB          pic18fxx5x_hal)
     set(FAMILY_DEVICES   PIC18F2455 PIC18F2550 PIC18F4455 PIC18F4550)
     set(DEFAULT_DEVICE   PIC18F4550)
     set(DEFAULT_FOSC_HZ  48000000UL)
 elseif(EPIC_FAMILY STREQUAL "PIC16F88X")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f88x
-        CACHE PATH "Path to the pic16f88x-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f88x source tree")
     set(EPIC_LIB          pic16f88x_hal)
     set(FAMILY_DEVICES   PIC16F882 PIC16F883 PIC16F884 PIC16F886 PIC16F887)
     set(DEFAULT_DEVICE   PIC16F887)
     set(DEFAULT_FOSC_HZ  20000000UL)
 else()
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f87xa
-        CACHE PATH "Path to the pic16f87xa-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f87xa source tree")
     set(EPIC_LIB          pic16f87xa_hal)
     set(FAMILY_DEVICES   PIC16F873A PIC16F874A PIC16F876A PIC16F877A)
     set(DEFAULT_DEVICE   PIC16F877A)

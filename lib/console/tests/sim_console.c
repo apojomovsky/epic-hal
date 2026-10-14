@@ -1,5 +1,5 @@
 /*
- * Bounded, self-reporting HARNESS=sim build for epic-console: the
+ * Bounded, self-reporting HARNESS=sim build for lib/console: the
  * module's first real mdb gate (18F4550/MPLAB SIM), a TX-side/framing
  * gate. MPLAB SIM cannot inject UART RX data: firmware writes to RCREG
  * are ignored, RCIF writes are masked, mdb's set PIR1/set RCREG are
@@ -116,7 +116,7 @@ static uint8_t help_len(const epic_console_t *con)
     return n;
 }
 
-/* Paced drain of the epic-serial TX ring through the real TX ISR
+/* Paced drain of the lib/serial TX ring through the real TX ISR
  * entry: wait for the shift register to empty, pop one ring byte (which
  * loads TXREG), repeat. Same per-byte pacing the harness's polled
  * report TX uses, so the uart1io capture receives every byte intact. */

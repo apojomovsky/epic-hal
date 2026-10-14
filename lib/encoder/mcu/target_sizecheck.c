@@ -1,5 +1,5 @@
 /**
- * Minimal on-target build proving encoder.c (and the epic-tick timebase
+ * Minimal on-target build proving encoder.c (and the lib/tick timebase
  * it links) cross-compiles for real XC8/PIC16/PIC18 silicon and reports
  * flash/RAM footprint; not a correctness test (see ../tests/test_encoder.c).
  */

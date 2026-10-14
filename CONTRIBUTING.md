@@ -43,7 +43,7 @@ Or the Docker equivalent from the repo root, which needs nothing beyond the
 toolchain image:
 
 ```sh
-make test MODULE=epic-tick
+make test MODULE=lib/tick
 ```
 
 First-time setup is `./scripts/dev/bootstrap.sh` (`make doctor` reports what is

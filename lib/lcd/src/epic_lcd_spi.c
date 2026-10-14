@@ -1,6 +1,6 @@
 /** SPI transport for epic_lcd via a 74HC595 shift register: a layout
  *  struct maps each Q output to an LCD signal (RS, E, DB4-DB7). Uses the
- *  HAL SSP driver directly, not epic-bus, since the 595 is a raw shift
+ *  HAL SSP driver directly, not lib/bus, since the 595 is a raw shift
  *  register, not a register-addressed device. */
 
 #include "epic_lcd_transport.h"
@@ -97,7 +97,7 @@ static void spi_send(void *ctx, uint8_t rs, uint8_t byte)
 /**
  * @brief Delay a number of microseconds using epic-tick.
  *
- * Sub-ms delays are a best-effort busy wait: epic-tick's resolution is
+ * Sub-ms delays are a best-effort busy wait: lib/tick's resolution is
  * 1 ms.
  *
  * @param ctx transport context (unused)

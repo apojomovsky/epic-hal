@@ -1,4 +1,4 @@
-# epic-math, fixed-point math utility library for the 8-bit PIC HAL.
+# lib/math, fixed-point math utility library for the 8-bit PIC HAL.
 #
 #   cmake -B build && cmake --build build
 #   ctest --testdir build --output-on-failure
@@ -11,8 +11,8 @@
 # src/pic18/) are built by the XC8 Makefiles under mcu/, not by CMake --
 # that asm targets XC8's PIC16/PIC18 instruction sets, not the host.
 #
-# Unlike epic-taskmgr's CMake, this build does NOT add_subdirectory() a HAL.
-# epic-math is a stateless computation library: the public header needs only
+# Unlike lib/taskmgr's CMake, this build does NOT add_subdirectory() a HAL.
+# lib/math is a stateless computation library: the public header needs only
 # <stdint.h>/<stdbool.h>, and the host reference backend needs no peripheral
 # model. The family dimension (PIC16 vs PIC18, and the HAL each on-target
 # self-test links) lives entirely in the XC8 Makefile targets, which is the

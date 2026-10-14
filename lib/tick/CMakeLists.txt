@@ -1,9 +1,9 @@
-# epic-tick, a 1 ms timebase (HAL_GetTick/HAL_Delay equivalent) for 8-bit PICs.
+# lib/tick, a 1 ms timebase (HAL_GetTick/HAL_Delay equivalent) for 8-bit PICs.
 #
 #   cmake -B build && cmake --build build
 #
 # This build reuses the host simulation backend of a HAL family (pulled in via
-# add_subdirectory) exactly as epic-taskmgr does. The tick module is
+# add_subdirectory) exactly as lib/taskmgr does. The tick module is
 # family-agnostic: it includes only the neutral contracts
 # (peripherals/hal_timer2.h, core/hal_irq.h, core/epic_harness.h) and the
 # public epic_tick.h, so the same src/epic_tick.c builds against any family.
@@ -36,21 +36,21 @@ set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link: PIC16 or PIC18")
 
 if(EPIC_FAMILY STREQUAL "PIC18")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic18/18fxx5x
-        CACHE PATH "Path to the pic18fxx5x-hal source tree")
+        CACHE PATH "Path to the hal/pic18/18fxx5x source tree")
     set(EPIC_LIB          pic18fxx5x_hal)
     set(FAMILY_DEVICES   PIC18F2455 PIC18F2550 PIC18F4455 PIC18F4550)
     set(DEFAULT_DEVICE   PIC18F4550)
     set(DEFAULT_FOSC_HZ  48000000UL)
 elseif(EPIC_FAMILY STREQUAL "PIC16F88X")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f88x
-        CACHE PATH "Path to the pic16f88x-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f88x source tree")
     set(EPIC_LIB          pic16f88x_hal)
     set(FAMILY_DEVICES   PIC16F882 PIC16F883 PIC16F884 PIC16F886 PIC16F887)
     set(DEFAULT_DEVICE   PIC16F887)
     set(DEFAULT_FOSC_HZ  20000000UL)
 else()
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f87xa
-        CACHE PATH "Path to the pic16f87xa-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f87xa source tree")
     set(EPIC_LIB          pic16f87xa_hal)
     set(FAMILY_DEVICES   PIC16F873A PIC16F874A PIC16F876A PIC16F877A)
     set(DEFAULT_DEVICE   PIC16F877A)

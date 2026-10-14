@@ -1,6 +1,6 @@
 /**
  * Host-side example: drives the MCP23017 through the module with a
- * mock device injected at the epic-bus ops seam (the host sim has no
+ * mock device injected at the lib/bus ops seam (the host sim has no
  * SSP slave model). The real-target analog is example_mcp23x17_target.c.
  */
 
@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
-/* A tiny mock MCP23017 register file, wired as the epic-bus I2C ops. */
+/* A tiny mock MCP23017 register file, wired as the lib/bus I2C ops. */
 static uint8_t s_regs[22];
 static uint8_t s_reg_ptr;
 static int     s_phase;

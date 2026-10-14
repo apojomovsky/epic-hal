@@ -186,7 +186,7 @@ static void test_crc7_nonzero_and_deterministic(void)
     CHECK(on_wire == 0x95u, "crc7: CMD0's frame produces the spec-known 0x95 CRC byte");
 }
 
-/** @brief Run all epic-sdcard tests and report pass/fail counts. */
+/** @brief Run all lib/sdcard tests and report pass/fail counts. */
 int main(void)
 {
     test_init_sequence();

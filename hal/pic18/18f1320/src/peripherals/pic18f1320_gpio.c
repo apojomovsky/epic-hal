@@ -3,7 +3,7 @@
  * output latch as its own register, LATx, so this driver writes LATx
  * (not PORTx) and reads PORTx. Direction is programmed in TRISx. PORTB
  * pull-ups live in INTCON2<RBPU>. Both ports are full 8-bit on this
- * part; no per-port width table is needed (unlike pic18fxx5x-hal's
+ * part; no per-port width table is needed (unlike hal/pic18/18fxx5x's
  * 6-bit PORTA / 3-bit PORTE).
  */
 

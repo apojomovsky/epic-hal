@@ -1,5 +1,5 @@
 /*
- * epic-serial target demo: 115200 8N1 echo with a banner.
+ * lib/serial target demo: 115200 8N1 echo with a banner.
  * Demonstrates the interrupt-driven ring-buffered UART: the put_* family
  * formats through the TX ring on XC8 and epic-cc alike, and received
  * bytes round-trip through the RX ring back to the TX ring.
@@ -27,7 +27,7 @@ int main(void)
      * A const array plus put_char (never a string-literal argument):
      * the array gets a flash address through its gep, which is the
      * const shape the epic-cc isel places. */
-    static const uint8_t banner[] = "epic-serial ready at 115200 8N1\r\n";
+    static const uint8_t banner[] = "lib/serial ready at 115200 8N1\r\n";
     for (uint8_t i = 0u; i < (uint8_t)(sizeof(banner) - 1u); i++)
     {
         epic_serial_put_char((char)banner[i]);

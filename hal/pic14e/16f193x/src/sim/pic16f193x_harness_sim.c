@@ -2,7 +2,7 @@
  * PIC16F193X host-simulation implementation of the test harness
  * (core/epic_harness.h), linked by the CMake host build. The companion
  * target implementation is the family-blind epic_harness_target.c in
- * epic-common; the build picks one, so neither this file nor the
+ * common; the build picks one, so neither this file nor the
  * examples need `#ifdef`. PIC16F193X-specific only because it pumps the
  * PIC16F193X simulator; the harness contract is shared by every family.
  */

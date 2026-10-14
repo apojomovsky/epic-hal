@@ -5,8 +5,8 @@ Vendored on: 2026-07-15
 Files: storage/include/{crc.h,mmc.h}, storage/src/{crc.c,mmc.c} only --
 not the full M-Stack tree. Same upstream commit already pinned for
 lib/usb/third_party/m-stack/ (see that VENDORED_COMMIT), but this is a
-SEPARATE small vendored copy, not a dependency on the epic-usb module --
-epic-sdcard has no USB dependency (confirmed: grepped for usb.h/usb_config
+SEPARATE small vendored copy, not a dependency on the lib/usb module --
+lib/sdcard has no USB dependency (confirmed: grepped for usb.h/usb_config
 et al in these files, none found).
 
 License used: Apache License 2.0 (the Apache-2.0 arm of M-Stack's

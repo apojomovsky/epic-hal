@@ -1,5 +1,5 @@
 /**
- * Bounded, self-reporting HARNESS=sim build (epic-settings' `mdb` gate):
+ * Bounded, self-reporting HARNESS=sim build (lib/settings' `mdb` gate):
  * saves a known blob through the real compiled epic_settings.c, verifies
  * payload and CRC on load, corrupts one stored byte via a direct HAL EEPROM
  * write, verifies the next load detects it and falls back to (and persists)

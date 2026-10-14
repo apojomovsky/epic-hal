@@ -1,7 +1,7 @@
-/* Fixed-point PID loop on epic-pid, logged over the UART: a repeating
+/* Fixed-point PID loop on lib/pid, logged over the UART: a repeating
  * setpoint-step scenario (AUTO step, operator MANUAL takeover, then
  * bumpless AUTO resume) runs at a fixed 10 ms control period from
- * epic-tick against a small first-order software plant, printing one
+ * lib/tick against a small first-order software plant, printing one
  * line per step at 115200 baud. Wire a USB-serial adapter to the USART
  * TX/RX pins to watch the log. */
 
@@ -79,7 +79,7 @@ int main(void)
      * the log. Gains are integer Q8.8 literals, so no FP runtime is
      * linked on 8-bit targets. */
     /* Static: a stack-local address cannot cross a call boundary on the
-     * stackless epic-cc path (the same shape as epic-serial's example). */
+     * stackless epic-cc path (the same shape as lib/serial's example). */
     static epic_pid_t pid;
     epic_pid_init(&pid, 512, 128, 0, (int16_t)-200, (int16_t)200);
 

@@ -1,5 +1,5 @@
 /*
- * M-Stack application config for epic-usb, private to this module.
+ * M-Stack application config for lib/usb, private to this module.
  * Endpoint layout matches M-Stack's cdc_acm demo: EP1 IN is the
  * required CDC notification endpoint (never used), EP2 IN/OUT is the
  * bulk pipe epic_usb_write/read actually use.
@@ -25,7 +25,7 @@
 #define PPB_MODE PPB_NONE
 
 /* Polling, not interrupt-driven: epic_usb_service() runs from the
- * caller's main loop or an epic-taskmgr task, so USB_USE_INTERRUPTS
+ * caller's main loop or an lib/taskmgr task, so USB_USE_INTERRUPTS
  * stays undefined. */
 
 /* Objects from usb_descriptors.c */

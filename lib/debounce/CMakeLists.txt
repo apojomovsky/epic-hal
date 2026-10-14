@@ -1,13 +1,13 @@
-# epic-debounce, vendor-agnostic digital-input debouncer.
+# lib/debounce, vendor-agnostic digital-input debouncer.
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
 #   ./build/test_debounce
 #
-# The debounce core (src/debounce.c) depends on epic-tick for its timebase
-# (epic_tick_get / epic_tick_elapsed_since). epic-tick in turn pulls a HAL
+# The debounce core (src/debounce.c) depends on lib/tick for its timebase
+# (epic_tick_get / epic_tick_elapsed_since). lib/tick in turn pulls a HAL
 # family for its Timer2 host-sim backend. Select the family with
-# -DEPIC_FAMILY=PIC18 (default PIC16), same convention as epic-fsm's optional
+# -DEPIC_FAMILY=PIC18 (default PIC16), same convention as lib/fsm's optional
 # taskmgr example. The public header debounce.h is dependency-free (only
 # <stdint.h>/<stdbool.h>); only src/debounce.c includes epic_tick.h.
 
@@ -33,11 +33,11 @@ if(NOT DEFINED EPIC_ROOT)
     unset(_EPIC_PARENT)
 endif()
 
-set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family for the epic-tick timebase: PIC16 or PIC18")
+set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family for the lib/tick timebase: PIC16 or PIC18")
 
-# Pull in epic-tick (which add_subdirectory's the chosen HAL family).
+# Pull in lib/tick (which add_subdirectory's the chosen HAL family).
 set(TICK_DIR ${EPIC_ROOT}/lib/tick
-    CACHE PATH "Path to the epic-tick source tree")
+    CACHE PATH "Path to the lib/tick source tree")
 if(NOT TARGET epic_tick)
     add_subdirectory(${TICK_DIR} ${CMAKE_CURRENT_BINARY_DIR}/tick)
 endif()

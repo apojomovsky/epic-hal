@@ -1,8 +1,8 @@
 /**
  * @file    combo_tick_serial.c
  * @brief   C6 of the combination matrix:
- *          epic-tick's live 1 ms Timer2 ISR churning against
- *          epic-serial's ring-buffered TX path, both real modules,
+ *          lib/tick's live 1 ms Timer2 ISR churning against
+ *          lib/serial's ring-buffered TX path, both real modules,
  *          one firmware, one bank state.
  *
  * @details
@@ -135,7 +135,7 @@ static void log_tx_header(uint8_t n)
 }
 
 /**
- * @brief Run the epic-tick + epic-serial ring-buffered TX gate (C6).
+ * @brief Run the lib/tick + lib/serial ring-buffered TX gate (C6).
  */
 int main(void)
 {

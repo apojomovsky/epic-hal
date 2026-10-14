@@ -1,4 +1,4 @@
-# epic-math, fixed-point math utility library for 8-bit PICs
+# lib/math, fixed-point math utility library for 8-bit PICs
 
 A stateless fixed-point math library for the PIC families this repo already
 supports, **PIC16F87XA** (mid-range, no hardware multiply) and

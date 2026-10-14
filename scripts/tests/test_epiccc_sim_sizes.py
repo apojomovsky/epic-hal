@@ -43,24 +43,24 @@ class TestSimSizesTable(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self.write_report(tmp)
             code, out = self.run_main(
-                tmp, ["epic-menu-demo:18F4550"])
+                tmp, ["demos/menu:18F4550"])
         self.assertEqual(code, 0)
-        self.assertIn("epic-menu-demo 18F4550", out)
+        self.assertIn("demos/menu 18F4550", out)
         self.assertIn("9634 / 16384", out)
         self.assertIn("781 / 2048", out)
 
     def test_missing_report_fails_untolerated(self):
         with tempfile.TemporaryDirectory() as tmp:
             code, out = self.run_main(
-                tmp, ["epic-menu-demo:18F4550"])
+                tmp, ["demos/menu:18F4550"])
         self.assertEqual(code, 1)
         self.assertIn("FAIL", out)
 
     def test_missing_report_passes_when_tolerated(self):
         with tempfile.TemporaryDirectory() as tmp:
             code, out = self.run_main(
-                tmp, ["--tolerate", "epic-encoder:16F877A",
-                      "epic-encoder:16F877A"])
+                tmp, ["--tolerate", "lib/encoder:16F877A",
+                      "lib/encoder:16F877A"])
         self.assertEqual(code, 0)
         self.assertIn("FAIL", out)
 
@@ -69,7 +69,7 @@ class TestSimSizesTable(unittest.TestCase):
             path = pathlib.Path(tmp) / "18F4550-menu-demo-sim.json"
             path.write_text("{ not json")
             code, out = self.run_main(
-                tmp, ["epic-menu-demo:18F4550"])
+                tmp, ["demos/menu:18F4550"])
         self.assertEqual(code, 1)
         self.assertIn("FAIL", out)
 

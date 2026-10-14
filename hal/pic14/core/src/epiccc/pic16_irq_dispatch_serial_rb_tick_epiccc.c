@@ -1,4 +1,4 @@
-/* epic-cc dispatch, serial + RB + tick tier (epic-combo-rb-uart):
+/* epic-cc dispatch, serial + RB + tick tier (tests/epic-combo-rb-uart):
  * USART RX/TX, the RB port-change dispatch and the TIMER2 timebase,
  * the rest cleared. */
 

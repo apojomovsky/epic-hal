@@ -57,7 +57,7 @@ epic-cc#466 driver (epic-cc#463's fix, still on its own branch, not on
 epic-cc master either): the real-hardware-ISR hang itself is gone for all
 five combos, but only `combo-lcd-tick` now reaches the harness's report;
 the other four hit a distinct, narrower gap tracked as epic-cc#467.
-epic-taskmgr's own epic-cc target build links clean on the same stack
+lib/taskmgr's own epic-cc target build links clean on the same stack
 (392/2048 bytes RAM), and its `tests/sim_taskmgr.c` mdb gate passes
 under XC8; its epic-cc gate is blocked by the same #463 hang. PIC18 has
 2048 bytes GPR, so fit is not the wall; the wall is the tick ISR hang

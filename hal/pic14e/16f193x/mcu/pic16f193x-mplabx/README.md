@@ -23,7 +23,7 @@ existing PIC16Fxxx_DFP/PIC18Fxxxx_DFP convention).
 Build this example with the manifest-driven driver, from the repo root:
 
 ```sh
-python3 scripts/build/epic_build.py build --module epic-pic16f193x-firmware --mcu 16F1937 --run
+python3 scripts/build/epic_build.py build --module hal/pic14e/16f193x --mcu 16F1937 --run
 ```
 
 Also 16F1933/1934/1936/1938/1939. Output is
@@ -51,10 +51,10 @@ Per `docs/adding-a-device.md`, "it compiled" is necessary but not
 sufficient: no peripheral counts as done until the §4 `mdb`
 register-readback gate passes for it specifically. The toolchain gap is
 closed, `mdb` (MPLAB SIM, headless, part of MPLAB X) is installed and
-confirmed working (verified against `epic-tick`'s pilot module, both
+confirmed working (verified against `lib/tick`'s pilot module, both
 existing families, both reaching a real `EPIC_HARNESS_RESULT: PASS` via
 CI's sim gate, see DEVELOPMENT.md's Docker section). This
-family's own `HARNESS=sim` (`epic-pic16f193x-firmware`'s sim variant,
+family's own `HARNESS=sim` (`hal/pic14e/16f193x`'s sim variant,
 `common/manifest/modules.toml`) reports over `MODE=gpio` (RA0
 PASS/FAIL marker, this family has no EUSART driver yet) and is gated
-in `sim-tests.yml` alongside `epic-tick`'s two families.
+in `sim-tests.yml` alongside `lib/tick`'s two families.

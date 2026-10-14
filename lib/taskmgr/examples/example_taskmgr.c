@@ -1,5 +1,5 @@
 /*
- * epic-taskmgr target demo: two periodic tasks on the cooperative
+ * lib/taskmgr target demo: two periodic tasks on the cooperative
  * scheduler. A blink task toggles the RB0 LED every 25 ticks; a
  * counter task counts scheduler ticks and toggles the RB1 LED every
  * 40 counts. The ~10 ms Timer0 tick is derived from FOSC_HZ and wired

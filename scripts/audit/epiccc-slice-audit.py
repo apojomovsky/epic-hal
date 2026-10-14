@@ -56,7 +56,7 @@ def audit_family(fam, gaps: list[str]) -> None:
         )
     # A leg watches the family when its MCU is one of the family's
     # variants, whatever module the leg names (the 193X slice builds
-    # through the epic-pic16f193x-firmware module, not a pic16f193x-hal
+    # through the hal/pic14e/16f193x module, not a hal/pic14e/16f193x
     # MODULE).
     if not set(fam.variants) & ci_leg_mcus():
         gaps.append(

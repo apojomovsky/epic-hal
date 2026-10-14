@@ -141,7 +141,7 @@ cmake -B build -S hal/pic18/18f6520 && cmake --build build
 Real target (XC8, manifest-driven):
 
 ```sh
-python3 scripts/build/epic_build.py build --module pic18f6520-hal --mcu 18F6520 --run
+python3 scripts/build/epic_build.py build --module hal/pic18/18f6520 --mcu 18F6520 --run
 ```
 
 ## 4. Build systems
@@ -151,7 +151,7 @@ host build puts `include/host` ahead of `include` on the include path, so
 `pic18_platform.h` resolves to the memory-backed-SFR version and links the
 host harness; the XC8 build puts `include/target` first and links the family-
 blind target harness. The manifest (`common/manifest/modules.toml`)
-holds both the family table and the `pic18f6520-hal` pseudo-module that CI
+holds both the family table and the `hal/pic18/18f6520` pseudo-module that CI
 builds. See `common/MANUAL.md` and `common/manifest/README.md`.
 
 ## 5. The host simulation backend

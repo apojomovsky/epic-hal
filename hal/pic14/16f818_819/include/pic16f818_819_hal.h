@@ -41,7 +41,7 @@
   #define PIC16F818_819_DEVICE_NAME      "PIC16F819"
 #endif
 
-/* Family-neutral capability aliases (epic-common contract): exposed
+/* Family-neutral capability aliases (common contract): exposed
  * under family-neutral names too, so family-agnostic consumers (the
  * task manager) can scale without referencing a family-specific macro. */
 #define EPIC_FAMILY_RAM_BYTES   PIC16F818_819_FAMILY_RAM_BYTES

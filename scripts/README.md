@@ -249,7 +249,7 @@ dependencies and sources, and emits a POSIX `sh` script of `xc8-cc`
 invocations. Replaces the `mcu/*-mplabx/Makefile`s.
 
 ```sh
-python3 scripts/build/epic_build.py build --module epic-serial --mcu 16F877A --run
+python3 scripts/build/epic_build.py build --module lib/serial --mcu 16F877A --run
 python3 scripts/build/epic_build.py matrix          # CI matrix JSON
 python3 scripts/build/epic_build.py report --log build/16F877A/build.log
 ```

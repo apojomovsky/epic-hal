@@ -100,17 +100,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - module: epic-menu-demo
+          - module: demos/menu
             mcu: 18F4550
             device: PIC18F4550
             wait_ms: "60000"
             eeprom_writes: "4"
-          - module: epic-control-demo
+          - module: demos/control
             mcu: 18F4550
             device: PIC18F4550
             wait_ms: "60000"
             eeprom_writes: "20"
-          - module: epic-bridge-demo
+          - module: demos/bridge
             mcu: 18F4550
             device: PIC18F4550
             wait_ms: "60000"

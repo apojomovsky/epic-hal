@@ -1,4 +1,4 @@
-# epic-lcd, HD44780-compatible character LCD driver
+# lib/lcd, HD44780-compatible character LCD driver
 
 A transport-agnostic HD44780/ST7066 character LCD driver with configurable
 GPIO and SPI backends, built on the HAL.

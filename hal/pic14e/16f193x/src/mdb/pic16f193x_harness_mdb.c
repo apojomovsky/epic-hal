@@ -8,7 +8,7 @@
  * codebase that ever pass these literals. init() leaves RA0 driving low;
  * the toggle happens on log() (marker line drives RA0 to ok's value,
  * every other log line is a no-op). running() is bounded by `cycles` so
- * a run terminates on its own. Not in epic-common: the marker line needs
+ * a run terminates on its own. Not in common: the marker line needs
  * GPIO pin access, unlike epic_harness_target.c's four no-ops.
  */
 

@@ -1,5 +1,5 @@
 /* Real-driver epic-cc build and PORTB execution gate: links the real
- * encoder.c (tick symbols provided here; epic-tick is HAL-3c, #86) and
+ * encoder.c (tick symbols provided here; lib/tick is HAL-3c, #86) and
  * runs init plus three port samples, one glitch-rejected through the
  * real tick gate; the glitch count lands on PORTB for mdb-hex. */
 #include "encoder.h"

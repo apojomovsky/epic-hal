@@ -100,7 +100,7 @@ void epic_dispatch_all_irqs(void)
 #if PIC14MIDRANGE_HAS_PIR1
     uint8_t pir1 = EPIC_REG8(PIC_REG_PIR1);
     /* TMR1 is gated on TMR1IE, not just TMR1IF: Timer1 free-runs with
-     * its overflow interrupt disabled (epic-swuart needs the counter,
+     * its overflow interrupt disabled (lib/swuart needs the counter,
      * never the overflow), so TMR1IF latches at every 65536-cycle wrap.
      * Without the gate every later event pays the full handler cost
      * before its own dispatch; when the source is disabled the stale

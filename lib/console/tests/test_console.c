@@ -1,4 +1,4 @@
-/* Host tests for epic-console over injected serial RX bytes. */
+/* Host tests for lib/console over injected serial RX bytes. */
 
 #include "epic_console.h"
 #include "epic_serial.h"
@@ -311,7 +311,7 @@ static void test_init_macro_table_len(void)
 }
 
 /**
- * @brief Run all epic-console host tests.
+ * @brief Run all lib/console host tests.
  *
  * @return 0 when all tests pass, 1 otherwise
  */

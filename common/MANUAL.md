@@ -1,4 +1,4 @@
-# epic-common, Manual
+# common, Manual
 
 The family-agnostic conventions, patterns, and shared contract every
 `<family>-hal` in this repo builds on. This manual is for humans: it

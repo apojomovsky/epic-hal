@@ -1,15 +1,15 @@
-# epic-pid, vendor-agnostic fixed-point PID controller.
+# lib/pid, vendor-agnostic fixed-point PID controller.
 
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
 #   ./build/test_pid
 
 # The pid core (src/pid.c) is a fixed-point arithmetic engine on plain
-# data. It depends only on epic-math (for the 16x16->32 signed multiply
-# epic_math_mul_s16 the Q8.8 math needs). epic-math's host build is itself
+# data. It depends only on lib/math (for the 16x16->32 signed multiply
+# epic_math_mul_s16 the Q8.8 math needs). lib/math's host build is itself
 # HAL-free (see lib/math/CMakeLists.txt for the reasoning: a stateless
 # computation library needs no peripheral model), so this CMake build also
-# does NOT add_subdirectory() a HAL -- the family dimension for epic-pid
+# does NOT add_subdirectory() a HAL -- the family dimension for lib/pid
 # lives entirely in the XC8 Makefiles under mcu/. The public header pid.h
 # is dependency-free (only <stdint.h>/<stdbool.h>); only src/pid.c includes
 
@@ -37,9 +37,9 @@ if(NOT DEFINED EPIC_ROOT)
     unset(_EPIC_PARENT)
 endif()
 
-# Pull in epic-math (the host reference build, which is HAL-free).
+# Pull in lib/math (the host reference build, which is HAL-free).
 set(MATH_DIR ${EPIC_ROOT}/lib/math
-    CACHE PATH "Path to the epic-math source tree")
+    CACHE PATH "Path to the lib/math source tree")
 if(NOT TARGET epic_math)
     add_subdirectory(${MATH_DIR} ${CMAKE_CURRENT_BINARY_DIR}/math)
 endif()

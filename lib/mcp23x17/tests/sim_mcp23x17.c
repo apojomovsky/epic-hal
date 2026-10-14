@@ -1,8 +1,8 @@
 /**
- * HARNESS=sim build for epic-mcp23x17: the module's real `mdb` gate
+ * HARNESS=sim build for lib/mcp23x17: the module's real `mdb` gate
  * on a 16F877A. MPLAB SIM has no I2C/SPI slave to inject (SEN
  * latches, SSPIF never sets), so the gate proves what the sim CAN:
- * the module + epic-bus + HAL SSP link and initialize under the real
+ * the module + lib/bus + HAL SSP link and initialize under the real
  * toolchain. Transaction and register semantics are covered by the
  * host tests against the mock device.
  */

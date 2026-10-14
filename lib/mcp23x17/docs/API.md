@@ -1,4 +1,4 @@
-# epic-mcp23x17 API
+# lib/mcp23x17 API
 
 All functions take the expander handle first and return the
 transport's status: `> 0` bytes transferred on success (1 for a
@@ -11,7 +11,7 @@ single register, 2 for a 16-bit composite), `-1` on a device NACK.
   `EPIC_MCP23X17_BUS_SPI` (MCP23S17).
 - `epic_mcp23x17_transport_t`: the injectable register transport
   (read_reg / write_reg / ctx). NULL on the handle selects the
-  built-in epic-bus transport for the handle's bus.
+  built-in lib/bus transport for the handle's bus.
 - `epic_mcp23x17_handle_t`: the caller-owned handle.
 
 ## GPIO-mimic layer (HAL-shaped per-pin convenience)

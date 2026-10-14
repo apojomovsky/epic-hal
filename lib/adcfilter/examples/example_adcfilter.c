@@ -1,5 +1,5 @@
 /*
- * epic-adcfilter target example: oversample-and-decimate plus a moving
+ * lib/adcfilter target example: oversample-and-decimate plus a moving
  * average on one ADC channel (AN0), the averaged value logged over
  * serial. The read callback runs a full blocking conversion, so the
  * filter consumes real EPIC_ADC_* hardware samples.
@@ -51,7 +51,7 @@ int main(void)
 
     epic_adcfilter_avg_init(&g_filter, g_avg_buf, AVG_WINDOW);
 
-    printf("epic-adcfilter: AN0 oversampled 16x + %u-sample moving average\r\n",
+    printf("lib/adcfilter: AN0 oversampled 16x + %u-sample moving average\r\n",
            (unsigned)AVG_WINDOW);
 
     uint32_t last_log = epic_tick_get();

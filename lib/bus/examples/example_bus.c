@@ -1,5 +1,5 @@
 /*
- * epic-bus target example: register read/write round-trip to a MEM
+ * lib/bus target example: register read/write round-trip to a MEM
  * device on the I2C bus, then the same round-trip over SPI. Both
  * phases run against the module's default (HAL) ops, so a real device
  * on the bus sees the transaction shapes documented in docs/API.md.

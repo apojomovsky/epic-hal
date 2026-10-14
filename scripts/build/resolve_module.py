@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Resolve a MODULE value (manifest id or directory) to either form.
+"""Resolve a MODULE value (a path module id, epic-hal#308) to either form.
 
-The Makefile calls this wherever a recipe needs the other spelling:
-`make test` builds by directory, the target builds by id.
+The id is the directory, so both spellings print the same string; the
+flags stay so existing Makefile recipes keep working unchanged.
 
 Usage: resolve_module.py --id|--dir <value>
 """

@@ -403,7 +403,7 @@ jobs:
 
       # The gate hexes from the #60 amendment: {877A, 887} x {blink,
       # tick} plus the HAL-3d follow-up's 4550 pair (epic-hal#102):
-      # epic-settings (full example) and epic-sdcard (sizecheck driver;
+      # lib/settings (full example) and lib/sdcard (sizecheck driver;
       # the full example's 512-byte block buffer exceeds epic-cc's
       # array cap). The 4550 tick sim gate stays out: the real
       # epic_tick.c's OverflowCallback indirect call from the ISR traps
@@ -423,13 +423,13 @@ jobs:
           PIC8_CLANG_UNWRAPPED: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/bin/clang
           PIC8_CLANG_RESOURCE_DIR: ${{ github.workspace }}/bundle/epic-cc-${{ env.EPIC_CC_CLANG_VER }}-x86_64-linux/clang/lib/clang/20
         run: |
-          make epiccc-build MODULE=pic16f87xa-hal MCU=16F877A EPIC_CC_HOST=1
-          make epiccc-build MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
-          make epiccc-build MODULE=epic-settings MCU=18F4550 EPIC_CC_HOST=1
-          make epiccc-build MODULE=epic-sdcard MCU=18F4550 EPIC_CC_HOST=1
-          make epiccc-build MODULE=epic-pic16f193x-firmware MCU=16F1939 EPIC_CC_HOST=1
-          make epiccc-build MODULE=pic16f63x_67x_68x-hal MCU=16F677 EPIC_CC_HOST=1
-          make epiccc-build MODULE=pic16f7x-hal MCU=16F77 EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic14/16f87xa MCU=16F877A EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic14/16f88x MCU=16F887 EPIC_CC_HOST=1
+          make epiccc-build MODULE=lib/settings MCU=18F4550 EPIC_CC_HOST=1
+          make epiccc-build MODULE=lib/sdcard MCU=18F4550 EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic14e/16f193x MCU=16F1939 EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic14/16f63x_67x_68x MCU=16F677 EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic14/16f7x MCU=16F77 EPIC_CC_HOST=1
           # The three epic-hal#150 exemplars' legs: build-only, same as
           # the #102 4550 pair above. Their sim toggle gates stay out for
           # the same reason as the 4550 tick gate: the PIC18 sim core's
@@ -438,35 +438,35 @@ jobs:
           # means the injected TMR0IF cannot vector, so no LATB toggle is
           # observable on any PIC18 part yet. mdb/MPLAB SIM (family-check)
           # stays the differential oracle.
-          make epiccc-build MODULE=pic18f2520-hal MCU=18F2520 EPIC_CC_HOST=1
-          make epiccc-build MODULE=pic18f1320-hal MCU=18F1320 EPIC_CC_HOST=1
-          make epiccc-build MODULE=pic18f6520-hal MCU=18F6520 EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic18/18f2520 MCU=18F2520 EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic18/18f1320 MCU=18F1320 EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic18/18f6520 MCU=18F6520 EPIC_CC_HOST=1
           # The 16F54 toggle leg: the family's epic-cc example is a
           # software-loop PORTB:0 toggle (manifest
           # example.PIC16F5x.epiccc), because the canonical blink is
           # Timer0-polled and epic-cc's PicBaseline sim executes
           # instructions only, never advancing TMR0.
-          make epiccc-build MODULE=pic16f5x-hal MCU=16F54 EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic12/16f5x MCU=16F54 EPIC_CC_HOST=1
           # The 16F819 leg: the family's epic-cc blink, whose slice the
           # p16f819 registry entry (epic-cc#439) is what put the
           # canonical part within this job's reach. 16F818 stays out:
           # XC8 already excludes it on flash grounds, and the gate
           # watches the canonical part.
-          make epiccc-build MODULE=pic16f818_819-hal MCU=16F819 EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic14/16f818_819 MCU=16F819 EPIC_CC_HOST=1
           # The 628A and 84A legs (epic-hal#257): the last two families
           # with a declared epiccc_sources slice, previously unwatched.
           # scripts/audit/epiccc-slice-audit.py holds the set equality between
           # the manifest's slices and this job's legs.
-          make epiccc-build MODULE=pic16f628a-hal MCU=16F628A EPIC_CC_HOST=1
-          make epiccc-build MODULE=pic16f83_84-hal MCU=16F84A EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic14/16f628a MCU=16F628A EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic14/16f83_84 MCU=16F84A EPIC_CC_HOST=1
           # The 18F4550 leg closes the same gap for the 18Fxx5x family:
           # its slice built only ad hoc (the #252 CCP fix), the gate job
           # watched the 1320/2520 exemplars but never this family.
-          make epiccc-build MODULE=pic18fxx5x-hal MCU=18F4550 EPIC_CC_HOST=1
+          make epiccc-build MODULE=hal/pic18/18fxx5x MCU=18F4550 EPIC_CC_HOST=1
           # The 18F4550 bus leg (epic-hal#380/#381): the probe round-trips
           # the mem dispatch against a RAM loopback and toggles RB0 while
           # both buses verify, gated below on LATB.
-          make epiccc-build MODULE=epic-bus MCU=18F4550 EPIC_CC_HOST=1
+          make epiccc-build MODULE=lib/bus MCU=18F4550 EPIC_CC_HOST=1
       # The sim gates: the mdb toggle contract, run on crates/sim's CPU.
       # Watch PORTB bit 0 across the samples, require a transition. Blink
       # is Timer0 driven, so the runner raises its overflow (INTCON bit 2
@@ -559,52 +559,52 @@ jobs:
           m = epicmanifest.load(epicmanifest.default_path())
           xc8_install_dir = os.environ["XC8_INSTALL_DIR"]
           for module, mcu in [
-              ("epic-tick", "16F877A"), ("epic-tick", "18F4550"),
-              ("epic-pic16f193x-firmware", "16F1939"),
-              ("epic-pic16f1508-firmware", "16F1509"),
-              ("epic-tick", "16F1939"), ("epic-fsm", "16F1939"),
-              ("epic-swuart", "16F877A"), ("epic-math", "16F877A"),
-              ("epic-math", "18F4550"),
-              ("pic16f87xa-hal", "16F877A"), ("pic18fxx5x-hal", "18F4550"),
-              ("pic18f6520-hal", "18F6520"),
-              ("pic18f2520-hal", "18F2320"), ("pic18f2520-hal", "18F2520"),
-              ("pic18f1320-hal", "18F1320"),
-              ("epic-pid", "18F4550"), ("epic-fsm", "16F877A"),
-              ("epic-adcfilter", "16F877A"), ("epic-encoder", "16F877A"),
-              ("epic-bus", "16F877A"),
-              ("epic-mcp23x17", "16F877A"), ("epic-serial", "16F877A"),
-              ("epic-lcd", "16F877A"), ("epic-debounce", "16F877A"),
-              ("epic-console", "18F4550"), ("epic-taskmgr", "18F4550"),
-              ("epic-settings", "18F4550"), ("epic-modbus", "18F4550"),
-              ("epic-combo-uart-ssp", "16F877A"),
-              ("epic-combo-multitimer", "16F877A"),
-              ("epic-combo-adc-uart", "16F877A"),
-              ("epic-combo-rb-uart", "16F877A"),
-              ("epic-combo-eeprom-isr", "18F4550"),
-              ("epic-combo-tick-serial", "16F877A"),
-              ("epic-combo-tick-settings", "18F4550"),
-              ("epic-combo-taskmgr-serial", "18F4550"),
-              ("epic-combo-encoder-tick", "16F877A"),
-              ("epic-combo-lcd-tick", "18F4550"),
-              ("epic-combo-swuart-tick", "16F877A"),
-              ("epic-combo-modbus-full", "18F4550"),
-              ("epic-combo-rx-loopback", "16F877A"),
-              ("pic16f88x-hal", "16F887"), ("epic-tick", "16F887"),
-              ("epic-swuart", "16F887"), ("epic-math", "16F887"),
-              ("epic-fsm", "16F887"),
-              ("epic-adcfilter", "16F887"), ("epic-encoder", "16F887"),
-              ("epic-bus", "16F887"),
-              ("epic-mcp23x17", "16F887"), ("epic-serial", "16F887"),
-              ("epic-debounce", "16F887"),
-              ("epic-tick", "16F648A"),
-              ("pic16f628a-hal", "16F628A"), ("pic16f818_819-hal", "16F819"),
-              ("pic16f83_84-hal", "16F84A"), ("pic16f7x-hal", "16F77"),
-              ("pic16f63x_67x_68x-hal", "16F677"),
-              ("pic16f5x-hal", "16F54"),
-              ("pic16f5x-hal", "16F59"),
-              ("pic16f5x-hal", "16F57"),
-              ("pic16f5x-hal", "16F506"),
-              ("pic16f5x-hal", "16F505"),
+              ("lib/tick", "16F877A"), ("lib/tick", "18F4550"),
+              ("hal/pic14e/16f193x", "16F1939"),
+              ("hal/pic14e/16f1508", "16F1509"),
+              ("lib/tick", "16F1939"), ("lib/fsm", "16F1939"),
+              ("lib/swuart", "16F877A"), ("lib/math", "16F877A"),
+              ("lib/math", "18F4550"),
+              ("hal/pic14/16f87xa", "16F877A"), ("hal/pic18/18fxx5x", "18F4550"),
+              ("hal/pic18/18f6520", "18F6520"),
+              ("hal/pic18/18f2520", "18F2320"), ("hal/pic18/18f2520", "18F2520"),
+              ("hal/pic18/18f1320", "18F1320"),
+              ("lib/pid", "18F4550"), ("lib/fsm", "16F877A"),
+              ("lib/adcfilter", "16F877A"), ("lib/encoder", "16F877A"),
+              ("lib/bus", "16F877A"),
+              ("lib/mcp23x17", "16F877A"), ("lib/serial", "16F877A"),
+              ("lib/lcd", "16F877A"), ("lib/debounce", "16F877A"),
+              ("lib/console", "18F4550"), ("lib/taskmgr", "18F4550"),
+              ("lib/settings", "18F4550"), ("lib/modbus", "18F4550"),
+              ("tests/epic-combo-uart-ssp", "16F877A"),
+              ("tests/epic-combo-multitimer", "16F877A"),
+              ("tests/epic-combo-adc-uart", "16F877A"),
+              ("tests/epic-combo-rb-uart", "16F877A"),
+              ("tests/epic-combo-eeprom-isr", "18F4550"),
+              ("tests/epic-combo-tick-serial", "16F877A"),
+              ("tests/epic-combo-tick-settings", "18F4550"),
+              ("tests/epic-combo-taskmgr-serial", "18F4550"),
+              ("tests/epic-combo-encoder-tick", "16F877A"),
+              ("tests/epic-combo-lcd-tick", "18F4550"),
+              ("tests/epic-combo-swuart-tick", "16F877A"),
+              ("tests/epic-combo-modbus-full", "18F4550"),
+              ("tests/epic-combo-rx-loopback", "16F877A"),
+              ("hal/pic14/16f88x", "16F887"), ("lib/tick", "16F887"),
+              ("lib/swuart", "16F887"), ("lib/math", "16F887"),
+              ("lib/fsm", "16F887"),
+              ("lib/adcfilter", "16F887"), ("lib/encoder", "16F887"),
+              ("lib/bus", "16F887"),
+              ("lib/mcp23x17", "16F887"), ("lib/serial", "16F887"),
+              ("lib/debounce", "16F887"),
+              ("lib/tick", "16F648A"),
+              ("hal/pic14/16f628a", "16F628A"), ("hal/pic14/16f818_819", "16F819"),
+              ("hal/pic14/16f83_84", "16F84A"), ("hal/pic14/16f7x", "16F77"),
+              ("hal/pic14/16f63x_67x_68x", "16F677"),
+              ("hal/pic12/16f5x", "16F54"),
+              ("hal/pic12/16f5x", "16F59"),
+              ("hal/pic12/16f5x", "16F57"),
+              ("hal/pic12/16f5x", "16F506"),
+              ("hal/pic12/16f5x", "16F505"),
           ]:
               # The sim list is shared across merge orders (the
               # rx-loopback module lands on its own PR); skip modules

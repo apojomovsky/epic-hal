@@ -19,7 +19,7 @@ PACKS = f"{os.environ.get('EPIC_XC8_ROOT', '/opt/microchip/xc8/v4.00')}/pic/pack
 
 # family -> (hal sfr.h path, [(mcu, dfp pack, proc header)])
 FAMILIES = {
-    "pic16f87xa-hal": (
+    "hal/pic14/16f87xa": (
         "hal/pic14/16f87xa/include/pic16f87xa_sfr.h",
         [
             ("16F870", "Microchip.PIC16Fxxx_DFP", "pic16f870.h"),
@@ -36,7 +36,7 @@ FAMILIES = {
             ("16F877A", "Microchip.PIC16Fxxx_DFP", "pic16f877a.h"),
         ],
     ),
-    "pic18fxx5x-hal": (
+    "hal/pic18/18fxx5x": (
         "hal/pic18/18fxx5x/include/pic18fxx5x_sfr.h",
         [
             ("18F2455", "Microchip.PIC18Fxxxx_DFP", "pic18f2455.h"),
@@ -45,13 +45,13 @@ FAMILIES = {
             ("18F4550", "Microchip.PIC18Fxxxx_DFP", "pic18f4550.h"),
         ],
     ),
-    "pic18f1320-hal": (
+    "hal/pic18/18f1320": (
         "hal/pic18/18f1320/include/pic18f1320_sfr.h",
         [
             ("18F1320", "Microchip.PIC18Fxxxx_DFP", "pic18f1320.h"),
         ],
     ),
-    "pic18f2520-hal": (
+    "hal/pic18/18f2520": (
         "hal/pic18/18f2520/include/pic18f2520_sfr.h",
         [
             ("18F2220", "Microchip.PIC18Fxxxx_DFP", "pic18f2220.h"),
@@ -59,7 +59,7 @@ FAMILIES = {
             ("18F2520", "Microchip.PIC18Fxxxx_DFP", "pic18f2520.h"),
         ],
     ),
-    "pic18f6520-hal": (
+    "hal/pic18/18f6520": (
         "hal/pic18/18f6520/include/pic18f6520_sfr.h",
         [
             ("18F6620", "Microchip.PIC18Fxxxx_DFP", "pic18f6620.h"),
@@ -75,7 +75,7 @@ FAMILIES = {
             ("18F6520", "Microchip.PIC18Fxxxx_DFP", "pic18f6520.h"),
         ],
     ),
-    "pic16f193x-hal": (
+    "hal/pic14e/16f193x": (
         "hal/pic14e/16f193x/include/pic16f193x_sfr.h",
         [
             ("16F1933", "Microchip.PIC12-16F1xxx_DFP", "pic16f1933.h"),
@@ -86,14 +86,14 @@ FAMILIES = {
             ("16F1939", "Microchip.PIC12-16F1xxx_DFP", "pic16f1939.h"),
         ],
     ),
-    "pic16f1508-hal": (
+    "hal/pic14e/16f1508": (
         "hal/pic14e/16f1508/include/pic16f1508_sfr.h",
         [
             ("16F1508", "Microchip.PIC12-16F1xxx_DFP", "pic16f1508.h"),
             ("16F1509", "Microchip.PIC12-16F1xxx_DFP", "pic16f1509.h"),
         ],
     ),
-    "pic16f628a-hal": (
+    "hal/pic14/16f628a": (
         "hal/pic14/16f628a/include/pic16f628a_sfr.h",
         [
             ("16F627", "Microchip.PIC16Fxxx_DFP", "pic16f627.h"),
@@ -105,7 +105,7 @@ FAMILIES = {
             ("16F628A", "Microchip.PIC16Fxxx_DFP", "pic16f628a.h"),
         ],
     ),
-    "pic16f83_84-hal": (
+    "hal/pic14/16f83_84": (
         "hal/pic14/16f83_84/include/pic16f83_84_sfr.h",
         [
             ("16F83", "Microchip.PIC16Fxxx_DFP", "pic16f83.h"),
@@ -113,14 +113,14 @@ FAMILIES = {
             ("16F84A", "Microchip.PIC16Fxxx_DFP", "pic16f84a.h"),
         ],
     ),
-    "pic16f818_819-hal": (
+    "hal/pic14/16f818_819": (
         "hal/pic14/16f818_819/include/pic16f818_819_sfr.h",
         [
             ("16F818", "Microchip.PIC16Fxxx_DFP", "pic16f818.h"),
             ("16F819", "Microchip.PIC16Fxxx_DFP", "pic16f819.h"),
         ],
     ),
-    "pic16f63x_67x_68x-hal": (
+    "hal/pic14/16f63x_67x_68x": (
         "hal/pic14/16f63x_67x_68x/include/pic16f63x_67x_68x_sfr.h",
         [
             ("16F631", "Microchip.PIC16Fxxx_DFP", "pic16f631.h"),
@@ -134,7 +134,7 @@ FAMILIES = {
             ("16F677", "Microchip.PIC16Fxxx_DFP", "pic16f677.h"),
         ],
     ),
-    "pic16f88x-hal": (
+    "hal/pic14/16f88x": (
         "hal/pic14/16f88x/include/pic16f88x_sfr.h",
         [
             ("16F882", "Microchip.PIC16Fxxx_DFP", "pic16f882.h"),
@@ -144,7 +144,7 @@ FAMILIES = {
             ("16F887", "Microchip.PIC16Fxxx_DFP", "pic16f887.h"),
         ],
     ),
-    "pic16f7x-hal": (
+    "hal/pic14/16f7x": (
         "hal/pic14/16f7x/include/pic16f7x_sfr.h",
         [
             ("16F72", "Microchip.PIC16Fxxx_DFP", "pic16f72.h"),
@@ -158,7 +158,7 @@ FAMILIES = {
             ("16F777", "Microchip.PIC16Fxxx_DFP", "pic16f777.h"),
         ],
     ),
-    "pic16f5x-hal": (
+    "hal/pic12/16f5x": (
         "hal/pic12/16f5x/include/pic16f5x_sfr.h",
         [
             ("16F54", "Microchip.PIC16Fxxx_DFP", "pic16f54.h"),
@@ -677,20 +677,20 @@ def main() -> int:
                                          "PIC16F818_819"), default=None,
                     help="only this manifest family (the sharded CI jobs)")
     args = ap.parse_args()
-    hal_label = {"PIC16F87XA": "pic16f87xa-hal",
-                 "PIC18Fxx5x": "pic18fxx5x-hal",
-                 "PIC16F193X": "pic16f193x-hal",
-                 "PIC16F1508": "pic16f1508-hal",
-                 "PIC16F88X": "pic16f88x-hal",
-                 "PIC16F628A": "pic16f628a-hal",
-                 "PIC16F83_84": "pic16f83_84-hal",
-                 "PIC16F63x_67x_68x": "pic16f63x_67x_68x-hal",
-                 "PIC18F1320": "pic18f1320-hal",
-                 "PIC18F2520": "pic18f2520-hal",
-                 "PIC18F6520": "pic18f6520-hal",
-                 "PIC16F7x": "pic16f7x-hal",
-                 "PIC16F5x": "pic16f5x-hal",
-                 "PIC16F818_819": "pic16f818_819-hal"}[args.family] \
+    hal_label = {"PIC16F87XA": "hal/pic14/16f87xa",
+                 "PIC18Fxx5x": "hal/pic18/18fxx5x",
+                 "PIC16F193X": "hal/pic14e/16f193x",
+                 "PIC16F1508": "hal/pic14e/16f1508",
+                 "PIC16F88X": "hal/pic14/16f88x",
+                 "PIC16F628A": "hal/pic14/16f628a",
+                 "PIC16F83_84": "hal/pic14/16f83_84",
+                 "PIC16F63x_67x_68x": "hal/pic14/16f63x_67x_68x",
+                 "PIC18F1320": "hal/pic18/18f1320",
+                 "PIC18F2520": "hal/pic18/18f2520",
+                 "PIC18F6520": "hal/pic18/18f6520",
+                 "PIC16F7x": "hal/pic14/16f7x",
+                 "PIC16F5x": "hal/pic12/16f5x",
+                 "PIC16F818_819": "hal/pic14/16f818_819"}[args.family] \
         if args.family else None
     bad = 0
     for family, (sfr_path, mcus) in FAMILIES.items():

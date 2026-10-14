@@ -1,7 +1,7 @@
-# `epic-sdcard` API reference
+# `lib/sdcard` API reference
 
 Authoritative declarations: [`include/epic_sdcard.h`](../include/epic_sdcard.h).
-Depends on `epic_hal.h` (for `GPIO_TypeDef`) and `epic-tick` (for real
+Depends on `epic_hal.h` (for `GPIO_TypeDef`) and `lib/tick` (for real
 wall-clock timeouts on the target build).
 
 ### `bool epic_sdcard_init(const epic_sdcard_pins_t *pins, uint32_t fosc_hz)`

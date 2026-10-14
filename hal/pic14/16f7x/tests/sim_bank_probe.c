@@ -1,4 +1,4 @@
-/* HARNESS=sim probe for the pic16f7x-hal banked-SFR audit: runs the
+/* HARNESS=sim probe for the hal/pic14/16f7x banked-SFR audit: runs the
  * plain Bank-1/Bank-2 SFR access sites with known values under real
  * XC8 v4.00, so bank misdirection shows up as a FAIL instead of silent
  * corruption. Each site is pre-set through the SAFE macro (a misdirected

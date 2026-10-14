@@ -1,5 +1,5 @@
 /*
- * epic-settings on-target demo: an EEPROM-backed settings blob that
+ * lib/settings on-target demo: an EEPROM-backed settings blob that
  * survives power cycles. On the first boot (blank EEPROM) or after a
  * corrupt blob, load_or_default applies the defaults and persists them
  * so the next boot sees a valid blob; the demo then modifies one field,
@@ -99,7 +99,7 @@ int main(void)
     bool first_boot = !epic_settings_load_or_default(SETTINGS_ADDR, &cfg,
                                                      (uint8_t)sizeof(cfg),
                                                      &defaults);
-    putstr("epic-settings: ");
+    putstr("lib/settings: ");
     putstr(first_boot ? "first boot, defaults applied\r\n"
                       : "stored blob loaded\r\n");
     report_cfg("loaded", &cfg);

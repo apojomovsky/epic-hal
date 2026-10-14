@@ -1,9 +1,9 @@
-# epic-usb, USB CDC-ACM virtual serial port for PIC18F2455/2550/4455/4550
+# lib/usb, USB CDC-ACM virtual serial port for PIC18F2455/2550/4455/4550
 
 A `epic_serial_*`-shaped non-blocking USB CDC-ACM device, wrapping the
 vendored M-Stack USB device stack (`third_party/m-stack`).
 
-- **Mirrors epic-serial's API**: same `write`/`read`/`available`/`flush`
+- **Mirrors lib/serial's API**: same `write`/`read`/`available`/`flush`
   contract, same ring-buffer discipline (TX demand-driven, RX always-on),
   plus `connected()` — true once the host opens the CDC port (DTR asserted),
   not merely once enumeration finishes.
@@ -12,7 +12,7 @@ vendored M-Stack USB device stack (`third_party/m-stack`).
   PIC16 backend and never will be. Not a scope choice — a hardware constraint.
 - **Polling, not interrupts**: `epic_usb_service()` pumps M-Stack's
   enumeration and endpoint state machine; call it every main-loop iteration or
-  from a short-period `epic-taskmgr` task. M-Stack's interrupt-driven mode is
+  from a short-period `lib/taskmgr` task. M-Stack's interrupt-driven mode is
   deliberately not wired up.
 - **Host stub tests the contract, not the silicon**: the host build links a
   separate `epic_usb_host_stub.c` (not a compile-time swap of the same

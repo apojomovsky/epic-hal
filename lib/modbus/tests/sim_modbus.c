@@ -1,4 +1,4 @@
-/* Bounded, self-reporting HARNESS=sim `mdb` gate for epic-modbus: runs
+/* Bounded, self-reporting HARNESS=sim `mdb` gate for lib/modbus: runs
  * the compiled epic_modbus.c under MPLAB SIM on an 18F4550 and verifies
  * the RTU wire format + an independent CRC-16 through the real TX path.
  * RX-driven dispatch is unreachable: MPLAB SIM cannot inject UART RX at

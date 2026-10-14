@@ -28,6 +28,6 @@ of this through `PIC14MIDRANGE_HAS_*` (see `pic14_midrange.h`).
 
 Host simulation (`cmake -B build && cmake --build build`, run
 `./build/example_*`), real-target XC8 (`make xc8-build
-MODULE=pic16f628a-hal MCU=16F628A`), and the `mdb` gate (`make
-mdb-test MODULE=pic16f628a-hal MCU=16F628A DEVICE=PIC16F628A`).
+MODULE=hal/pic14/16f628a MCU=16F628A`), and the `mdb` gate (`make
+mdb-test MODULE=hal/pic14/16f628a MCU=16F628A DEVICE=PIC16F628A`).
 `docs/adding-a-device.md` §4 is the mandatory per-peripheral gate.

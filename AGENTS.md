@@ -39,9 +39,10 @@ architecture-blind layer, each device family is `hal/<arch>/<family>/`
 mid-range, `pic18`), code shared by one architecture's families is
 `hal/<arch>/core/`, portable middleware is `lib/<module>/`, and demos
 are `demos/<demo>/`. A new module goes under `lib/`, a new family under
-`hal/<arch>/`. Module ids in the manifest (`epic-serial`,
-`pic16f87xa-hal`) are names, not paths; a module's `dir` is its path.
-`scripts/tests/test_layout.py` and the pre-commit hook enforce this.
+`hal/<arch>/`. Module ids in the manifest (`lib/serial`,
+`hal/pic14/16f87xa`) are the module's repo-root-relative directory;
+there is no separate `dir` field. `scripts/tests/test_layout.py` and
+the pre-commit hook enforce this.
 
 Each HAL's `src/` mirrors its build environments: `src/core/` and
 `src/peripherals/` are shared, `src/target/` is real-hardware-only,
@@ -164,7 +165,7 @@ runtime and machine. `claim` refuses to act without an identity, because an
 anonymous claim tells the other agents nothing.
 
 An issue also carries `area:*` labels naming the surfaces it touches
-(`pic16-hal`, `pic18-hal`, `epic-math`, `build`, `docs`, `ci`). Two tickets
+(`pic16-hal`, `pic18-hal`, `lib/math`, `build`, `docs`, `ci`). Two tickets
 sharing an area cannot be worked at the same time even when neither blocks the
 other, which is why selection goes through the tool: what is blocked, taken, or
 conflicting is decided there, not in this file.
@@ -383,7 +384,7 @@ the mechanical rules fails the ritual and blocks the push.
 - **Before trusting an uncertain compiler/hardware behavior**, write a
   throwaway probe and inspect the generated `.s`/`.map`, don't assume
   from the datasheet alone. Has caught real wrong assumptions every
-  time it's been tried (`epic-math`'s XC8 round-trip probe, the
+  time it's been tried (`lib/math`'s XC8 round-trip probe, the
   PIC16F193X BSR-addressing probe).
 - **No em-dashes (,).** Not in docs, not in commit messages, not in code
   comments. Use a comma, a colon, or a period and a new sentence instead.

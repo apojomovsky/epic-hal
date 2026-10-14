@@ -1,8 +1,8 @@
 # Demo scoreboard: XC8 vs epic-cc on the 18F4550 flagships (epic-hal#279)
 
 Status: 2026-09-23. One table for the three product-shaped PIC18F4550
-demos: menu (`epic-menu-demo`), control (`epic-control-demo`,
-epic-hal#277, PR #281), bridge (`epic-bridge-demo`, epic-hal#278,
+demos: menu (`demos/menu`), control (`demos/control`,
+epic-hal#277, PR #281), bridge (`demos/bridge`, epic-hal#278,
 PR #283). Control and bridge are still open branches, so their rows
 carry verified rerun numbers, not live CI output yet.
 
@@ -17,9 +17,9 @@ divided by 2. RAM is bytes on both sides. The 18F4550 budgets are
 
 | Demo | XC8 build | XC8 gate | XC8 flash (words) | XC8 RAM (bytes) | epic-cc build | epic-cc gate | epic-cc flash | epic-cc RAM | UART trace diff | Rerun |
 |---|---|---|---|---|---|---|---|---|---|---|
-| menu | PASS | PASS | 9061/16384 (55.3%) | 639/2048 (31.2%) | PASS | FAIL (epic-cc#632) | 11888/16384 (72.6%) | 743/2048 (36.3%) | no capture (epic-cc hex silent, see below) | `scripts/sim/compare-toolchains.sh epic-menu-demo 18F4550 PIC18F4550 1500 4` |
-| control | PASS | PASS | 9625/16384 (58.7%) | 847/2048 (41.4%) | PASS | FAIL (epic-cc#613, epic-cc#614) | 13081/16384 (79.8%) | 961/2048 (46.9%) | DIVERGES (both hexes run; traces differ, see below) | `scripts/sim/compare-toolchains.sh epic-control-demo 18F4550 PIC18F4550 60000 20` |
-| bridge | PASS | PASS | 11181/16384 (68.2%) | 955/2048 (46.6%) | BLOCKED (epic-cc#608) | blocked | blocked | blocked | pending (no epic-cc hex yet) | `scripts/sim/compare-toolchains.sh epic-bridge-demo 18F4550 PIC18F4550 60000` |
+| menu | PASS | PASS | 9061/16384 (55.3%) | 639/2048 (31.2%) | PASS | FAIL (epic-cc#632) | 11888/16384 (72.6%) | 743/2048 (36.3%) | no capture (epic-cc hex silent, see below) | `scripts/sim/compare-toolchains.sh demos/menu 18F4550 PIC18F4550 1500 4` |
+| control | PASS | PASS | 9625/16384 (58.7%) | 847/2048 (41.4%) | PASS | FAIL (epic-cc#613, epic-cc#614) | 13081/16384 (79.8%) | 961/2048 (46.9%) | DIVERGES (both hexes run; traces differ, see below) | `scripts/sim/compare-toolchains.sh demos/control 18F4550 PIC18F4550 60000 20` |
+| bridge | PASS | PASS | 11181/16384 (68.2%) | 955/2048 (46.6%) | BLOCKED (epic-cc#608) | blocked | blocked | blocked | pending (no epic-cc hex yet) | `scripts/sim/compare-toolchains.sh demos/bridge 18F4550 PIC18F4550 60000` |
 
 Raw XC8 figures behind the normalized words (sim variant): control Program
 4B33h (9625 words) with Data 34Fh (847 B); bridge Program 575Ah (11181

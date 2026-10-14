@@ -110,7 +110,7 @@
   #define PIC16F5X_DEVICE_NAME      "PIC16F506"
 #endif
 
-/* Family-neutral capability aliases (epic-common contract): exposed
+/* Family-neutral capability aliases (common contract): exposed
  * under family-neutral names too, so family-agnostic consumers can
  * scale without referencing a family-specific macro. */
 #define EPIC_FAMILY_RAM_BYTES   PIC16F5X_FAMILY_RAM_BYTES

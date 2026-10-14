@@ -1,10 +1,10 @@
 /* epic-cc dispatch tier: Timer0 overflow and Timer2 match to their
- * handlers (the blink smoke and the epic-tick timebase), every other
+ * handlers (the blink smoke and the lib/tick timebase), every other
  * flag dropped so a stale flag cannot re-trigger. The full fan-out
  * (pic16f193x_irq_dispatch.c) strong-references every peripheral
  * handler, which would pull the whole HAL into the whole-program link;
  * tiers grow by adding entries here, the same shape as
- * pic16f87xa-hal's pic16_irq_dispatch_epiccc.c. */
+ * hal/pic14/16f87xa's pic16_irq_dispatch_epiccc.c. */
 
 #include "core/pic16f193x_irq.h"
 
@@ -24,7 +24,7 @@ void epic_dispatch_all_irqs(void)
     uint8_t intcon = EPIC_REG8(PIC_REG_INTCON);
     if (intcon & PIC_INTCON_TMR0IF) TIMER0_IRQHandler();
 
-    /* Timer2 match drives the epic-tick timebase. The handler clears
+    /* Timer2 match drives the lib/tick timebase. The handler clears
      * TMR2IF itself, so re-read first: writing the stale snapshot back
      * would re-set the just-cleared flag and re-trigger forever. */
     uint8_t pir1 = EPIC_REG8(PIC_REG_PIR1);

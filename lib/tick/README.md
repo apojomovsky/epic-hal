@@ -1,4 +1,4 @@
-# epic-tick, a 1 ms timebase for 8-bit PICs
+# lib/tick, a 1 ms timebase for 8-bit PICs
 
 The STM32Cube `HAL_GetTick` / `HAL_Delay` equivalent: a monotonic millisecond
 counter, a blocking delay, and a non-blocking elapsed-time helper, built on
@@ -6,7 +6,7 @@ the HAL's Timer2 (auto-reload, so the ISR just increments a counter).
 
 - **One family-agnostic API** (`epic_tick_init` / `epic_tick_get` /
   `epic_tick_delay_ms` / `epic_tick_elapsed_since`), same `src/epic_tick.c`
-  builds against `pic16f87xa-hal` or `pic18fxx5x-hal`.
+  builds against `hal/pic14/16f87xa` or `hal/pic18/18fxx5x`.
 - **Atomic 32-bit tick read** via double-read retry: disabling GIE is
   unreliable under MPLAB SIM (a latched request can still vector and can
   leave GIE cleared, killing the tick), so the read retries while two

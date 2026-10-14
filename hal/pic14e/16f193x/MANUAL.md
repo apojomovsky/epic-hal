@@ -18,8 +18,8 @@ where they matter.
 ## 1. What this is
 
 The PIC16F193X HAL is the repo's third family, implementing the shared
-`epic-common` contract with bodies for the Enhanced Mid-range core. It
-is a new family, not a variant of `pic16f87xa-hal`, because the
+`common` contract with bodies for the Enhanced Mid-range core. It
+is a new family, not a variant of `hal/pic14/16f87xa`, because the
 addressing model (BSR), interrupt entry (auto context save), and I/O
 model (LAT/ANSEL) differ (DS41364B §2.2, §4.0, §6.0).
 
@@ -47,7 +47,7 @@ Real target (needs the PIC12-16F1xxx DFP):
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-python3 scripts/build/epic_build.py build --module epic-pic16f193x-firmware --mcu 16F1937 --run
+python3 scripts/build/epic_build.py build --module hal/pic14e/16f193x --mcu 16F1937 --run
 ```
 
 ## 4. Build systems
@@ -511,7 +511,7 @@ MODE=gpio` payload (its header documents the expected register image).
 - The target platform's PIE1/2/3 RMW uses an inline-asm `movlb 1` +
   `iorwf PIE1,f` / `andwf PIE1,f` shape (in `pic16f193x_platform.h`,
   with a `__at(0x70)` scratch byte in `pic16f193x_isr_vector.c`),
-  mirroring `pic16f87xa-hal`'s proven pattern. The plain-C RMW
+  mirroring `hal/pic14/16f87xa`'s proven pattern. The plain-C RMW
   that the foundation originally shipped silently failed under XC8
   v3.10 (FSR1H=0 read of address 0x91, which is the linear/GPR
   byte, not PIE1 in bank 1). See `docs/ARCHITECTURE.md` Finding 2

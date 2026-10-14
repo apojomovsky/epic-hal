@@ -1,14 +1,14 @@
-# epic-modbus, a Modbus RTU slave for 8-bit PICs.
+# lib/modbus, a Modbus RTU slave for 8-bit PICs.
 #
 #   cmake -B build && cmake --build build
 #
-# Builds on two sibling epic-* modules: epic-serial (the UART) and epic-tick
-# (the T3.5 silence timebase), the same sibling-link pattern epic-debounce
-# uses for epic-tick alone. epic-tick in turn pulls in a HAL family for its
-# Timer2 host-sim backend; epic-serial links the same family's USART. The
+# Builds on two sibling epic-* modules: lib/serial (the UART) and lib/tick
+# (the T3.5 silence timebase), the same sibling-link pattern lib/debounce
+# uses for lib/tick alone. lib/tick in turn pulls in a HAL family for its
+# Timer2 host-sim backend; lib/serial links the same family's USART. The
 # target-only example (examples/example_modbus.c) is compiled by the
 # manifest's xc8 matrix, and the framing/T3.5 test runs under MPLAB SIM
-# (tests/sim_modbus.c, via `make mdb-test MODULE=epic-modbus MCU=18F4550
+# (tests/sim_modbus.c, via `make mdb-test MODULE=lib/modbus MCU=18F4550
 # DEVICE=PIC18F4550`). Select the family with -DEPIC_FAMILY=PIC18 (default
 # PIC16).
 
@@ -47,12 +47,12 @@ else()
     set(DEFAULT_FOSC_HZ  20000000UL)
 endif()
 
-# Pull in epic-serial and epic-tick (each add_subdirectory's the chosen HAL
+# Pull in lib/serial and lib/tick (each add_subdirectory's the chosen HAL
 # family; guard with NOT TARGET so either can be pulled in first).
 set(SERIAL_DIR ${EPIC_ROOT}/lib/serial
-    CACHE PATH "Path to the epic-serial source tree")
+    CACHE PATH "Path to the lib/serial source tree")
 set(TICK_DIR ${EPIC_ROOT}/lib/tick
-    CACHE PATH "Path to the epic-tick source tree")
+    CACHE PATH "Path to the lib/tick source tree")
 
 if(NOT TARGET epic_serial)
     add_subdirectory(${SERIAL_DIR} ${CMAKE_CURRENT_BINARY_DIR}/serial)

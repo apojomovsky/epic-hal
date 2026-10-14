@@ -98,7 +98,7 @@ next `global` line.
 **Status:** fixed; verified by both the disassembly comparison below and
 the `mdb` register readback (§4 control-register check) of the Timer1
 example now showing `PIE1=0x01` (TMR1IE bit 0 set) where the broken
-build showed `PIE1=0x00`. The fix mirrors `pic16f87xa-hal`'s proven
+build showed `PIE1=0x00`. The fix mirrors `hal/pic14/16f87xa`'s proven
 `__at(0x70)`-pinned scratch + inline-asm bank-switch shape; the
 Enhanced-Mid-range idiom is `movlb 1` instead of classic's
 `bsf STATUS,5`.
@@ -228,7 +228,7 @@ write8(_v)` tried to do. The read half is implicit in `iorwf PIE1,f`
 written back). The `movlb 0` at the end restores bank 0 because the
 *callers* of `EPIC_IRQ_Enable` (e.g. `EPIC_TIMER1_Init`) expect bank 0
 to be active on return. The same defensive-restoring shape as
-`pic16f87xa-hal`'s `bcf STATUS,5` exit.
+`hal/pic14/16f87xa`'s `bcf STATUS,5` exit.
 
 The exact form for `pir_index=1` and `pir_index=2` (PIE2 and PIE3)
 is the same shape with `iorwf PIE2,f` / `iorwf PIE3,f`. Both
@@ -269,7 +269,7 @@ marker found (PORTA bit 0 set, byte=1)`). The brief's default
 real-time, see Phase 0 notes); passing `WAIT_MS=60000` to
 `make mdb-test` produces PASS in the same session.
 
-### Why the same shape as pic16f87xa-hal
+### Why the same shape as hal/pic14/16f87xa
 
 `hal/pic14/16f87xa/include/target/pic16f87xa_platform.h` carries the same
 fix shape because the same codegen trap existed on the classic PIC16

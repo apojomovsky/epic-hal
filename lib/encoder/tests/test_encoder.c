@@ -260,7 +260,7 @@ static void test_two_instances_independent(void)
 }
 
 
-/** @brief Run every epic-encoder unit test and report pass/fail counts. */
+/** @brief Run every lib/encoder unit test and report pass/fail counts. */
 int main(void)
 {
     epic_harness_init(2000000UL);

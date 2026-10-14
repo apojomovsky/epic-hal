@@ -1,4 +1,4 @@
-# epic-adcfilter, vendor-agnostic ADC oversampling + moving-average filter.
+# lib/adcfilter, vendor-agnostic ADC oversampling + moving-average filter.
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure

@@ -1,4 +1,4 @@
-# epic-usb, USB CDC-ACM device for PIC18F2455/2550/4455/4550, wrapping the
+# lib/usb, USB CDC-ACM device for PIC18F2455/2550/4455/4550, wrapping the
 # vendored M-Stack USB stack (third_party/m-stack).
 
 #   cmake -B build && cmake --build build

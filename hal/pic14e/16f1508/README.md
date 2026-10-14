@@ -30,7 +30,7 @@ Implemented and verified:
       `PIR3`/`PIE3` for CLC; gated dispatch, single vector, automatic
       hardware context save)
 - [x] Host simulation backend and `example_gpio` probe (ctest).
-- [x] Real-target firmware (`epic-pic16f1508-firmware`), `blink` example,
+- [x] Real-target firmware (`hal/pic14e/16f1508`), `blink` example,
       and the mdb register-readback gate (`MODE=gpio`, RA0 PASS marker) for
       GPIO, IOC enable, and CLC output behaviour (modes 0..3, 5 and 6
       through gate-polarity constants, CON.OUT readback; the SIM gaps that
@@ -103,12 +103,12 @@ cmake -B build && cmake --build build && ctest --test-dir build
 Real target (needs XC8 and the PIC12-16F1xxx DFP):
 
 ```sh
-python3 scripts/build/epic_build.py build --module epic-pic16f1508-firmware --mcu 16F1509 --run
+python3 scripts/build/epic_build.py build --module hal/pic14e/16f1508 --mcu 16F1509 --run
 ```
 
 Docker: `make test MODULE=hal/pic14e/16f1508`,
-`make xc8-build MODULE=epic-pic16f1508-firmware MCU=16F1509`,
-`make mdb-test MODULE=epic-pic16f1508-firmware MCU=16F1509 DEVICE=PIC16F1509 WAIT_MS=60000 MODE=gpio`.
+`make xc8-build MODULE=hal/pic14e/16f1508 MCU=16F1509`,
+`make mdb-test MODULE=hal/pic14e/16f1508 MCU=16F1509 DEVICE=PIC16F1509 WAIT_MS=60000 MODE=gpio`.
 
 ```
 include/

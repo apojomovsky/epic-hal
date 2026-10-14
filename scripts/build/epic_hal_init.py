@@ -334,7 +334,7 @@ def init_project(manifest, family_name, part, modules, bundle_dir, out_dir, name
     computed, like any MPLAB X project."""
     fam = manifest.families[family_name]
     selected = resolve_selection(manifest, family_name, part, modules)
-    short = [m.removeprefix("epic-") for m in modules]
+    short = [bundlegen.short_name(m) for m in modules]
     out = pathlib.Path(out_dir)
     x_dst = out / f"{name}.X"
     if x_dst.exists():

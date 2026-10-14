@@ -65,7 +65,7 @@ macros.
 Deliberate asymmetries, settled in epic-hal#138, named so they stop
 coming up:
 
-- Renaming the PIC16F193X module (`epic-pic16f193x-firmware`) to the
+- Renaming the PIC16F193X module (`hal/pic14e/16f193x`) to the
   `<slug>-hal` convention.
 - Recasing the PIC18 family key (`PIC18Fxx5x`) in the manifest.
 - Renaming the 18F arch-named epiccc header.

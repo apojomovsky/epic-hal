@@ -1,5 +1,5 @@
 /*
- * epic-swuart on-target demo: a software UART echo on channel A's
+ * lib/swuart on-target demo: a software UART echo on channel A's
  * CCP-wired pins (TX = RC1 / CCP2 compare, RX = RC2 / CCP1 capture,
  * identical on every supported family). Connect a serial terminal at
  * 9600 baud 8N1: a banner goes out on startup, then every received
@@ -31,7 +31,7 @@ int main(void)
         }
     }
 
-    static const uint8_t banner[] = "epic-swuart echo ready\r\n";
+    static const uint8_t banner[] = "lib/swuart echo ready\r\n";
     for (size_t i = 0u; i < sizeof(banner) - 1u; i++)
     {
         while (EPIC_SWUART_Write(&h, &banner[i], 1u) != 1u)

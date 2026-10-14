@@ -1,4 +1,4 @@
-# epic-taskmgr, cooperative task manager for the 8-bit PIC HAL.
+# lib/taskmgr, cooperative task manager for the 8-bit PIC HAL.
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
@@ -14,7 +14,7 @@
 # epic_taskmgr.c/.h builds against any family. Select the family with
 # -DEPIC_FAMILY=PIC18 (default PIC16); the build points at that family's
 # tree and device list. This is the Phase 3 litmus test: pointing the task
-# manager at pic18fxx5x-hal needs zero changes to epic_taskmgr.c/.h.
+# manager at hal/pic18/18fxx5x needs zero changes to epic_taskmgr.c/.h.
 #
 # The host/target split is done at build time, not with #ifdef, exactly as
 # in the HAL: the CMake build puts include/host first on the HAL's include
@@ -44,27 +44,27 @@ if(NOT DEFINED EPIC_ROOT)
     unset(_EPIC_PARENT)
 endif()
 
-# Which HAL family to link against. PIC16 (default) -> pic16f87xa-hal,
-# PIC18 -> pic18fxx5x-hal. Override with -DEPIC_FAMILY=PIC18.
+# Which HAL family to link against. PIC16 (default) -> hal/pic14/16f87xa,
+# PIC18 -> hal/pic18/18fxx5x. Override with -DEPIC_FAMILY=PIC18.
 set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link: PIC16 or PIC18")
 
 if(EPIC_FAMILY STREQUAL "PIC18")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic18/18fxx5x
-        CACHE PATH "Path to the pic18fxx5x-hal source tree")
+        CACHE PATH "Path to the hal/pic18/18fxx5x source tree")
     set(EPIC_LIB          pic18fxx5x_hal)
     set(FAMILY_DEVICES   PIC18F2455 PIC18F2550 PIC18F4455 PIC18F4550)
     set(DEFAULT_DEVICE   PIC18F4550)
     set(DEFAULT_FOSC_HZ  48000000UL)
 elseif(EPIC_FAMILY STREQUAL "PIC16F88X")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f88x
-        CACHE PATH "Path to the pic16f88x-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f88x source tree")
     set(EPIC_LIB          pic16f88x_hal)
     set(FAMILY_DEVICES   PIC16F882 PIC16F883 PIC16F884 PIC16F886 PIC16F887)
     set(DEFAULT_DEVICE   PIC16F887)
     set(DEFAULT_FOSC_HZ  20000000UL)
 else()
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f87xa
-        CACHE PATH "Path to the pic16f87xa-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f87xa source tree")
     set(EPIC_LIB          pic16f87xa_hal)
     set(FAMILY_DEVICES   PIC16F873A PIC16F874A PIC16F876A PIC16F877A)
     set(DEFAULT_DEVICE   PIC16F877A)

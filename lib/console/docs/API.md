@@ -1,4 +1,4 @@
-# epic-console API
+# lib/console API
 
 ## Public header
 
@@ -50,7 +50,7 @@ decayed pointer.
 
 ### `void epic_console_poll(epic_console_t *con);`
 
-Drain all bytes currently available from `epic-serial`, echo/edit them, and
+Drain all bytes currently available from `lib/serial`, echo/edit them, and
 dispatch any complete lines found during that drain.
 
 Handlers receive the conventional C shape:
@@ -61,6 +61,6 @@ Handlers receive the conventional C shape:
 
 ### `void epic_console_print_help(const epic_console_t *con);`
 
-Prints one `name - help` line per table row through `epic-serial`. This is not
+Prints one `name - help` line per table row through `lib/serial`. This is not
 auto-registered to any command name; callers wire it to their own `"help"` row
 if desired.

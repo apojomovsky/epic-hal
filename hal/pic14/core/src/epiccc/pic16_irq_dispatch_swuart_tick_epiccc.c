@@ -1,4 +1,4 @@
-/* epic-cc dispatch, software-UART + tick tier (epic-combo-swuart-tick):
+/* epic-cc dispatch, software-UART + tick tier (tests/epic-combo-swuart-tick):
  * the swuart bit-times off CCP on a free-running Timer1, so the TMR1
  * and CCP gates mirror the full fan-out, plus the TIMER2 tick. */
 

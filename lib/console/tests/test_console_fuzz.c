@@ -1,5 +1,5 @@
 /*
- * Host fuzz test for epic-console's line state machine: random byte
+ * Host fuzz test for lib/console's line state machine: random byte
  * streams through epic_console_poll must never wedge the parser, keep
  * the line buffer in bounds, hit the unknown-command error path without
  * calling a handler, and recover to a sane state (a sentinel "ping\r"

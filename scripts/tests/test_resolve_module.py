@@ -14,18 +14,18 @@ def run(*args):
 
 class TestResolveModuleCli(unittest.TestCase):
     def test_dir_from_an_id(self):
-        proc = run("--dir", "epic-tick")
+        proc = run("--dir", "lib/tick")
         self.assertEqual((proc.returncode, proc.stdout.strip()), (0, "lib/tick"))
 
     def test_id_from_a_dir(self):
         proc = run("--id", "lib/lcd")
-        self.assertEqual((proc.returncode, proc.stdout.strip()), (0, "epic-lcd"))
+        self.assertEqual((proc.returncode, proc.stdout.strip()), (0, "lib/lcd"))
 
     def test_unknown_value_fails_naming_valid_ids(self):
         proc = run("--id", "epic-nope")
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("unknown module 'epic-nope'", proc.stderr)
-        self.assertIn("epic-tick", proc.stderr)
+        self.assertIn("lib/tick", proc.stderr)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 /**
- * Bounded, self-reporting HARNESS=sim build: epic-debounce's real mdb
+ * Bounded, self-reporting HARNESS=sim build: lib/debounce's real mdb
  * gate. `sim_level()` synthesizes the raw level from `epic_tick_get()`
  * time, since the sim loop polls faster than once per ms (bouncy press
  * 10..15 ms, stable high to 39, bouncy release 40..45, low after).

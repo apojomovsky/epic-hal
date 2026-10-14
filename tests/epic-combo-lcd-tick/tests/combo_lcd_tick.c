@@ -1,10 +1,10 @@
 /**
  * @file    combo_lcd_tick.c
  * @brief   C10 of the combination matrix:
- *          epic-lcd + epic-tick on the 16F877A. The real compiled
+ *          lib/lcd + lib/tick on the 16F877A. The real compiled
  *          HD44780 driver (src/epic_lcd.c) runs its init sequence plus
  *          a small print through the gpio4 transport ops while
- *          epic-tick's live 1 ms Timer2 ISR churns underneath, then
+ *          lib/tick's live 1 ms Timer2 ISR churns underneath, then
  *          the gate verifies the driver's full emission contract (the
  *          lcd gate's byte-exact oracle) and that the tick stayed
  *          alive through the LCD work, reporting PASS/FAIL over the
@@ -36,7 +36,7 @@
  *   derailed the sequence deterministically, dropping the last two
  *   commands and leaving GIE cleared). At depth 4 the ISR only ever
  *   clobbers the oldest slot (main's return address), which is
- *   consumed after the PASS marker (the epic-tick gate's own proven
+ *   consumed after the PASS marker (the lib/tick gate's own proven
  *   shape). The gate therefore keeps every driver path at depth <= 4:
  *   sends are recorded (the fptable constraint), "Hi!" goes through
  *   epic_lcd_write (identical bytes and delays, one frame shallower
@@ -221,7 +221,7 @@ static void combo_delay_ms(void *ctx, uint32_t ms)
 /**
  * @brief Record a delay_us call and spin on the tick for delays >= 2 ms.
  *
- * Same policy as the real gpio4_delay_us: epic-tick's resolution is
+ * Same policy as the real gpio4_delay_us: lib/tick's resolution is
  * 1 ms, so only >= 1000 us spin (the E-pulse setup/hold time is
  * already met by the pin-write overhead). Two exceptions, both the
  * lcd gate's documented stack constraint, not firmware bugs: the
@@ -267,7 +267,7 @@ static uint8_t portb_latch_read(void)
     return epic_sfr_read8(PIC_REG_LATB);
 }
 
-/* ---- failure reporting (same shape as pic16f87xa-hal's probe) ---- */
+/* ---- failure reporting (same shape as hal/pic14/16f87xa's probe) ---- */
 
 static uint16_t g_fail = 0u;
 
@@ -294,7 +294,7 @@ static void fail(uint8_t idx)
 } while (0)
 
 /**
- * @brief Run the epic-lcd + epic-tick interleave gate (C10).
+ * @brief Run the lib/lcd + lib/tick interleave gate (C10).
  */
 int main(void)
 {
@@ -372,7 +372,7 @@ int main(void)
 
     /* Real epic_tick_delay_ms round trip after the LCD work: the
      * tick must still block-and-advance with the driver's sequence
-     * behind it (the epic-tick gate's bounds). */
+     * behind it (the lib/tick gate's bounds). */
     uint32_t t10 = epic_tick_get();
     epic_tick_delay_ms(10u);
     t10 = epic_tick_get() - t10;
@@ -411,7 +411,7 @@ int main(void)
     CHECK(tck >= 54u, 0x03);
 
     /* 0x0B: the post-sequence epic_tick_delay_ms round trip landed
-     * within one tick of the request (the epic-tick gate's bounds):
+     * within one tick of the request (the lib/tick gate's bounds):
      * the tick still blocks and advances after the LCD work. */
     CHECK((t10 >= 10u) && (t10 <= 12u), 0x0B);
 

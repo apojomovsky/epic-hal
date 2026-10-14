@@ -1,6 +1,6 @@
-# Experiment: epic-math C path under epic-cc, cycles per op
+# Experiment: lib/math C path under epic-cc, cycles per op
 
-Status: 2026-08-26. Records the cycle benchmark of epic-math's portable C
+Status: 2026-08-26. Records the cycle benchmark of lib/math's portable C
 path (`src/host/` + `src/common/`) compiled by epic-cc on the PIC14
 devices, the measurement epic-hal#90 exists to produce. Same probe shape,
 same operands, same TMR1 method as the hand-asm benchmark in
@@ -9,7 +9,7 @@ against that directory's tables.
 
 ## Question
 
-epic-math ships fixed-cycle hand-asm primitives for PIC16F87XA and
+lib/math ships fixed-cycle hand-asm primitives for PIC16F87XA and
 PIC18Fxx5x, and a portable C implementation of the same four modules in
 `src/host/`. Doc 31 says the right first move for HAL-3 is to build the C
 path under epic-cc and measure it, not to port the assembly. How does the
@@ -83,8 +83,8 @@ baseline.
    concluded for XC8.
 4. The hand asm's fixed-cycle property is not load-bearing: no consumer
    in the shelf, the combo firmwares, or the demos depends on math-call
-   cycle counts. The only epic-math consumers outside the module are
-   epic-pid (mul_s16 in the control loop, speed not cycle-determinism)
+   cycle counts. The only lib/math consumers outside the module are
+   lib/pid (mul_s16 in the control loop, speed not cycle-determinism)
    and the demos' example_math.c. Nothing times a math call.
 
 ## The fixed-cycle question, answered with evidence

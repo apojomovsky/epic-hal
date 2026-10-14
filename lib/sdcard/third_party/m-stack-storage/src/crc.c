@@ -27,7 +27,7 @@
 #if PC_CODE_TO_GENERATE_THE_TABLES
 #include <stdio.h>
 #endif
-/* Deviation from upstream (epic-sdcard, not sent upstream): upstream
+/* Deviation from upstream (lib/sdcard, not sent upstream): upstream
  * includes <stdio.h> unconditionally, but only the PC table-generator
  * main (guarded by PC_CODE_TO_GENERATE_THE_TABLES, always false) uses
  * it. Under epic-cc the include pulls the driver's stdio formatter,

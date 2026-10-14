@@ -1,4 +1,4 @@
-# `epic-modbus` API reference
+# `lib/modbus` API reference
 
 Authoritative declarations: [`include/epic_modbus.h`](../include/epic_modbus.h).
 Override the frame buffer size with `-DEPIC_MODBUS_MAX_ADU=128` (bytes)
@@ -42,9 +42,9 @@ index (`GPIOA`=0, `GPIOB`=1, ...), `pin` a bit index 0..7. If never called,
 responses go out through `epic_serial_write` untouched.
 
 ### `void epic_modbus_slave_poll(void)`
-Call every main-loop iteration (or wire as a `epic-taskmgr` task). Drains
+Call every main-loop iteration (or wire as a `lib/taskmgr` task). Drains
 newly received UART bytes into the internal frame buffer; once
-`epic-tick` shows the RTU T3.5 silence has elapsed since the last received
+`lib/tick` shows the RTU T3.5 silence has elapsed since the last received
 byte, validates the frame (length, CRC-16, address match or broadcast) and,
 if valid, dispatches it and transmits the response (broadcast requests
 never get a response). The frame buffer resets after every dispatch

@@ -1,4 +1,4 @@
-# `epic-serial` API reference
+# `lib/serial` API reference
 
 Authoritative declarations: [`include/epic_serial.h`](../include/epic_serial.h).
 Override the ring size with `-DEPIC_SERIAL_RING_SZ=64` (power of two) before

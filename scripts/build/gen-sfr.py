@@ -71,7 +71,7 @@ def generated_families() -> list[str]:
     return [name for name in manifest.families if name not in UNGENERATED]
 
 # Families whose family-check.yml job calls this script but whose SFR
-# header the generator does not yet cover: pic18f1320-hal's foundation
+# header the generator does not yet cover: hal/pic18/18f1320's foundation
 # header (epic-hal#178) is a deliberate register subset (grows per
 # ticket, #179-181), so a full-family generation would always drift
 # against it. Accepted as a --family value and skipped with a note

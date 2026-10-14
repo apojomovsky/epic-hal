@@ -1,10 +1,10 @@
-# epic-sdcard, SD/MMC-over-SPI block storage for PIC18F2455/2550/4455/4550,
+# lib/sdcard, SD/MMC-over-SPI block storage for PIC18F2455/2550/4455/4550,
 # wrapping the vendored M-Stack storage driver (third_party/m-stack-storage).
 
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
 
-# Unlike epic-usb, the vendored mmc.c/crc.c ARE compiled for the host build
+# Unlike lib/usb, the vendored mmc.c/crc.c ARE compiled for the host build
 # here -- they're portable C with no real hardware dependency (confirmed:
 # grepped for SFR names/__delay_*/interrupt keywords, found none). The one
 # thing that needed a small patch (see third_party/patches/) was mmc.c's

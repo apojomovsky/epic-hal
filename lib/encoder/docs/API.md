@@ -1,4 +1,4 @@
-# `epic-encoder` API reference
+# `lib/encoder` API reference
 
 Per-function semantics, the port-byte/bit-position wiring convention, and
 the hard constraints (`at most two encoders per port`, `PORTB only`, the
@@ -12,14 +12,14 @@ module's [README](../README.md).
 ```
 
 `encoder.h` is the only header a consumer includes. It is dependency-free
-(only `<stdint.h>`), matching `epic-debounce`'s header/.c split: the
+(only `<stdint.h>`), matching `lib/debounce`'s header/.c split: the
 `epic_tick.h` timebase and the family-neutral `core/hal_irq.h` are included
 only by `src/encoder.c`, so a unit including `encoder.h` does not drag in
 the HAL or the timebase.
 
 Build (host): `cmake -B build && cmake --build build` (default PIC16;
 `-DEPIC_FAMILY=PIC18` selects the PIC18 family). The CMake build links
-`epic-tick` (the glitch-gate timebase) and the chosen HAL family
+`lib/tick` (the glitch-gate timebase) and the chosen HAL family
 (`epic_encoder_get_position`'s atomic read is the one HAL call this module
 makes). Real targets use the XC8 Makefiles under `mcu/`; the target-only
 example (`examples/example_encoder.c`) builds through the manifest.
@@ -169,7 +169,7 @@ constraint, not a tunable, and not a roadmap item.
 
 ### The glitch gate's 1 ms resolution
 
-`min_edge_interval_ms` is measured on `epic-tick`'s 1 ms timebase. That
+`min_edge_interval_ms` is measured on `lib/tick`'s 1 ms timebase. That
 is coarse relative to true electrical bounce timescales (sub-ms) but
 adequate for mechanical detent bounce, which typically resolves within a
 few ms. Do not treat the gate as a precision sub-ms filter; if a concrete
@@ -182,9 +182,9 @@ channel is not held to a timing gate a bouncy mechanical one needs.
 ## What composes at the call site (and so is not in this module)
 
 - **Velocity/RPM**: two `epic_encoder_get_position()` reads across a known
-  `epic_tick_elapsed_since()` interval, exactly like `epic-adcfilter`
+  `epic_tick_elapsed_since()` interval, exactly like `lib/adcfilter`
   composes with anything wanting filtered ADC. Nothing about it belongs
   inside `epic_encoder_update`.
 - **A PID loop**: feed `epic_encoder_get_position()` straight into
   `epic_pid_update()`'s `measurement` each control cycle (see the
-  epic-pid module's example).
+  lib/pid module's example).

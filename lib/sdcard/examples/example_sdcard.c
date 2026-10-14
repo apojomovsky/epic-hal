@@ -1,5 +1,5 @@
 /*
- * epic-sdcard on-target demo: bring up the SD card over SPI, read block 0
+ * lib/sdcard on-target demo: bring up the SD card over SPI, read block 0
  * (the first sector), and print its first 16 bytes over epic-serial.
  * PIC18Fxx5x only: a 512-byte block exceeds every PIC16F87XA variant's
  * total RAM, so this module exists only for this family.
@@ -24,19 +24,19 @@ int main(void)
     epic_sdcard_pins_t pins = { .cs_port = GPIOC, .cs_pin = 6 };
     if (!epic_sdcard_init(&pins, FOSC_HZ))
     {
-        printf("epic-sdcard: init failed\r\n");
+        printf("lib/sdcard: init failed\r\n");
         for (;;)
         {
         }
     }
 
-    printf("epic-sdcard: %lu blocks\r\n",
+    printf("lib/sdcard: %lu blocks\r\n",
            (unsigned long)epic_sdcard_num_blocks());
 
     static uint8_t block[512];
     if (!epic_sdcard_read_block(0, block))
     {
-        printf("epic-sdcard: read_block(0) failed\r\n");
+        printf("lib/sdcard: read_block(0) failed\r\n");
         for (;;)
         {
         }

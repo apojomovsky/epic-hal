@@ -24,9 +24,9 @@ selectors.
 
 Host sim: `cmake -B build && cmake --build build`, run any
 `build/example_*` directly. Real target: `make xc8-build
-MODULE=pic16f7x-hal MCU=16F77` (blink) and the USART mdb gate `make
-mdb-test MODULE=pic16f7x-hal MCU=16F77 DEVICE=PIC16F77` (banked-SFR
-probe, MODE=uart). Epic-cc gate: `make epiccc-build MODULE=pic16f7x-hal
+MODULE=hal/pic14/16f7x MCU=16F77` (blink) and the USART mdb gate `make
+mdb-test MODULE=hal/pic14/16f7x MCU=16F77 DEVICE=PIC16F77` (banked-SFR
+probe, MODE=uart). Epic-cc gate: `make epiccc-build MODULE=hal/pic14/16f7x
 MCU=16F77 EPIC_CC_HOST=1` against the p16f77 target.
 
 ## XC8 codegen gotchas (live)

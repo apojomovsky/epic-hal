@@ -1,5 +1,5 @@
 /*
- * epic-lcd target example: HD44780 "Hello, World!" banner plus a
+ * lib/lcd target example: HD44780 "Hello, World!" banner plus a
  * seconds counter on line 2 of a 16x2 display, driven through the
  * 4-bit GPIO transport. Pin map: RS=RB0, E=RB1, DB4..DB7=RB4..RB7
  * (16F877A); adapt to your board.

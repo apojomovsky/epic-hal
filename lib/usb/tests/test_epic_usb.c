@@ -176,7 +176,7 @@ static void test_two_independent_calls_to_reset(void)
 }
 
 /**
- * @brief Run all epic-usb host stub tests.
+ * @brief Run all lib/usb host stub tests.
  *
  * @return 0 when all tests pass, 1 otherwise
  */

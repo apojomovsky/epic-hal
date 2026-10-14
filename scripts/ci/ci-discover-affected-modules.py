@@ -124,7 +124,7 @@ def main():
 
     def owning_module(path):
         # Longest matching module-dir prefix, so e.g. lib/tick/mcu/...
-        # attributes correctly even though epic-tick contains subdirs.
+        # attributes correctly even though lib/tick contains subdirs.
         best = None
         for m in module_set:
             if path == m or path.startswith(m + "/"):

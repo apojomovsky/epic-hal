@@ -8,6 +8,13 @@ builds. Three consumers read it and nothing else encodes the knowledge:
   `target` job
 - `scripts/build/make_bundle.py`, which generates release bundles
 
+## Module ids are paths
+
+Each `[modules.<id>]` key is the module's repo-root-relative directory:
+`lib/serial`, `hal/pic14/16f87xa`, `demos/menu`. There is no separate
+`dir` field, so an id and its location cannot drift. `--module`,
+`MODULE=`, and the CI matrix all take this same spelling.
+
 ## Path conventions
 
 Two roots, deliberately:
@@ -16,8 +23,8 @@ Two roots, deliberately:
   `conditional_sources.path`) are **repo-root-relative**, because family
   data spans directories.
 - **Module-level** paths (`sources`, `sources_by_family`, `includes`,
-  `example.sources`) are relative to that module's own `dir`, so a module
-  entry stays short and the module can be moved without rewriting it.
+  `example.sources`) are relative to the module's own directory (its
+  id), so a module entry stays short.
 
 ## Families
 
@@ -104,11 +111,11 @@ shape); it will follow when #138 lands.
 ### `epiccc_hal_sources_by_family`: per-module epic-cc slice override
 
 When a module's fit requires fewer peripherals than the family slice
-(e.g. `epic-serial` needs only `USART` + `pic16_irq` + vector), it can
+(e.g. `lib/serial` needs only `USART` + `pic16_irq` + vector), it can
 declare a verbatim replacement for that module:
 
 ```toml
-[modules.epic-serial.epiccc_hal_sources_by_family]
+[modules."lib/serial".epiccc_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c",
   "hal/pic14/16f87xa/src/core/pic16_irq.c",
@@ -119,12 +126,12 @@ PIC16F87XA = [
 ```
 
 The loader validates each path against the family's `hal_dir` or
-`epic-common`, and the build driver links **only** this list for the
+`common`, and the build driver links **only** this list for the
 module (no merging with `epiccc_sources`). Prefer growing the family
 slice when the peripheral is generally useful (so other modules benefit);
 use the override when the family slice would overflow GPR or pull a
-known-bad driver into the module. `epic-console`/`epic-modbus` and
-`epic-swuart` use this for the same reason.
+known-bad driver into the module. `lib/console`/`lib/modbus` and
+`lib/swuart` use this for the same reason.
 **The recipe for adding a module to the epic-cc path is a manifest
 edit, nothing else:** add the module's epiccc-compliant source files
 to its family's `epiccc_sources` (or a new family's, with the epiccc
@@ -146,12 +153,12 @@ override would flip the target sizecheck-probe swap off and link the
 mdb harness into the target build; the sim slice leaves both alone.
 The list names the sim harness directly (no swap runs under it),
 mirroring the combo tiers, and the loader requires the module's own
-sim harness to be present. `epic-encoder` uses this: its sim test
+sim harness to be present. `lib/encoder` uses this: its sim test
 logs over the harness USART under the live tick ISR, so its slice is
 the tick timebase plus the harness USART on the serial+tick tier.
 
 ```toml
-[modules.epic-encoder.epiccc_sim_hal_sources_by_family]
+[modules."lib/encoder".epiccc_sim_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/core/src/peripherals/pic14_timer2.c",
   "hal/pic14/core/src/peripherals/pic14_usart.c",
@@ -172,7 +179,7 @@ example's on `--toolchain epic-cc` only, and `name` keeps the two
 builds' hexes comparable. The XC8 target and sim builds are untouched.
 
 ```toml
-[modules.pic16f5x-hal.example.PIC16F5x.epiccc]
+[modules."hal/pic12/16f5x".example.PIC16F5x.epiccc]
 name    = "blink"
 sources = ["tests/example_blink_epiccc.c"]
 config  = { OSC = "XT", WDT = "OFF", CP = "OFF" }
@@ -187,15 +194,14 @@ toggles the same pin from a software loop.
 ## Modules
 
 ```toml
-[modules.epic-modbus]
-dir        = "lib/modbus"
+[modules."lib/modbus"]
 sources    = ["src/epic_modbus.c"]
 includes   = ["include"]
-depends_on = ["epic-serial", "epic-tick"]
+depends_on = ["lib/serial", "lib/tick"]
 ```
 
-`depends_on` is resolved transitively, so a consumer naming `epic-modbus`
-gets `epic-serial` and `epic-tick` automatically. Cycles are rejected at
+`depends_on` is resolved transitively, so a consumer naming `lib/modbus`
+gets `lib/serial` and `lib/tick` automatically. Cycles are rejected at
 load time.
 
 ### `needs_hal`: not every module uses the family HAL
@@ -206,10 +212,10 @@ needs_hal  = false
 ```
 
 Whether the family HAL is needed is a property of the **program**, not
-the module. `epic-math`'s library sources touch no HAL symbol, but its
+the module. `lib/math`'s library sources touch no HAL symbol, but its
 smoke-test example includes the harness, so its build compiles the whole
 HAL. `needs_hal` is therefore `false` for the four modules whose library
-is HAL-independent: `epic-adcfilter`, `epic-fsm`, `epic-pid`, `epic-math`.
+is HAL-independent: `lib/adcfilter`, `lib/fsm`, `lib/pid`, `lib/math`.
 A build whose effective `hal` is `false` gets no family HAL sources, no
 conditional sources, and no family includes, only the module's own and
 its dependencies'.
@@ -222,7 +228,7 @@ PIC16F87XA = ["src/pic16/epic_math_mul.c", "src/pic16/epic_math_scratch.c"]
 PIC18Fxx5x = ["src/pic18/epic_math_mul.c"]
 ```
 
-`epic-math` compiles a `src/pic16/` inline-asm backend on PIC16 and a
+`lib/math` compiles a `src/pic16/` inline-asm backend on PIC16 and a
 `src/pic18/` one on PIC18, over a shared `src/common/`. The family-blind
 `sources` list holds what every family links (the common files); the
 per-family table holds the backend. The build concatenates `sources`
@@ -231,17 +237,17 @@ then `sources_by_family[family]`.
 ## Supported and excluded parts
 
 ```toml
-[modules.epic-serial.supported]
+[modules."lib/serial".supported]
 PIC16F87XA = ["16F876A", "16F877A"]
 PIC18Fxx5x = ["18F4455", "18F4550"]
 
-[modules.epic-serial.excluded]
+[modules."lib/serial".excluded]
 "16F873A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
 ```
 
 Every part of a family must appear in exactly one of the two, and the
 loader rejects a part listed in both. A module that builds on no part of
-a family simply omits that family from `supported` (see `epic-modbus`,
+a family simply omits that family from `supported` (see `lib/modbus`,
 which has no `PIC16F87XA` entry). `excluded` reasons are user-facing:
 they are printed by the build driver and, in a later plan, by the
 generated `epic-hal.mk` and `SUPPORT.md`.
@@ -253,11 +259,11 @@ link-gaps work is now "no `excluded` entries remain."
 ## Examples
 
 Examples are keyed by family, because a module's example program can
-differ per family (`epic-math` ships a PIC16 smoke test and a PIC18
+differ per family (`lib/math` ships a PIC16 smoke test and a PIC18
 self-test), and so can its config words:
 
 ```toml
-[modules.epic-taskmgr.example.PIC16F87XA]
+[modules."lib/taskmgr".example.PIC16F87XA]
 name    = "taskmgr"
 sources = ["examples/example_taskmgr.c"]
 config  = { FOSC = "HS", WDTE = "OFF" }
@@ -273,7 +279,7 @@ the link, matching the sizecheck programs that carry no config words.
 An example may override the module's `needs_hal` with its own `hal`:
 
 ```toml
-[modules.epic-math.example.PIC16F87XA]
+[modules."lib/math".example.PIC16F87XA]
 hal     = true              # the smoke test uses the harness
 ```
 
@@ -289,7 +295,7 @@ library source; everything else the module owns is its program.
 
 ## Adding a module
 
-1. Add a `[modules.<name>]` table with `dir`, `sources`, `includes`,
+1. Add a `[modules."<dir>"]` table with `sources`, `includes`,
    `depends_on`, and `needs_hal` (omit for the common `true` case).
 2. Add `sources_by_family` if the module has per-family backends.
 3. List the parts it builds on under `supported`, and every other part

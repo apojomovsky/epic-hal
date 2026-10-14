@@ -1,13 +1,13 @@
 /**
  * @file    combo_swuart_tick.c
  * @brief   C11 of the combination matrix:
- *          epic-swuart + epic-tick interleaved on PIC16F877A.
+ *          lib/swuart + lib/tick interleaved on PIC16F877A.
  *
  * @details
  *   The swuart TX state machine is CCP2-compare-driven on a
  *   free-running Timer1 (its overflow interrupt stays disabled: the
  *   swuart gate notes it needs TMR1 as a timebase, never its ISR).
- *   epic-tick's 1 ms timebase is a Timer2 period-match ISR. The
+ *   lib/tick's 1 ms timebase is a Timer2 period-match ISR. The
  *   interleave under test: while the CCP2 ISR steps a real 4-byte
  *   payload through the shift register (10 compare events per byte,
  *   ~1 ms of wire time per byte at 9600 baud), the Timer2 ISR fires
@@ -27,7 +27,7 @@
  *   (RAM banks 2/3 only), so the ISR path only worked when the CCP
  *   handle structs happened to land in 0x100-0x1FF. The linker's
  *   best-fit placement of the auto pool is layout-dependent: in an
- *   early build, adding epic-tick's code moved the handles to bank
+ *   early build, adding lib/tick's code moved the handles to bank
  *   0/1, the CCP2 handler's callback read landed in the wrong bank,
  *   and the TX chain stalled at the first compare event (the deadline
  *   never advanced; the EventCallback slot resolved to the tick's own
@@ -102,7 +102,7 @@ static void fail(uint8_t idx)
 static uint8_t g_payload[TX_BYTES] = { 0x41u, 0x42u, 0x43u, 0x44u };
 
 /**
- * @brief Run the epic-swuart + epic-tick interleave gate (C11).
+ * @brief Run the lib/swuart + lib/tick interleave gate (C11).
  */
 int main(void)
 {

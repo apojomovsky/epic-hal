@@ -64,7 +64,7 @@ not a Vref equivalent.
 hal/pic18/18fxx5x/
 ├── include/
 │   ├── pic18fxx5x.h              family header: device select, SFR mapping;
-│   │                              pulls shared status codes from epic-common
+│   │                              pulls shared status codes from common
 │   ├── pic18fxx5x_sfr.h          SFR address map + bit names (1:1 DS39632E)
 │   ├── pic18fxx5x_sim.h          simulation backend public API
 │   ├── epic_hal.h                 family-neutral top-level include (pulls in
@@ -92,7 +92,7 @@ hal/pic18/18fxx5x/
 └── CMakeLists.txt                host build (thin caller of common/cmake)
 ```
 
-The `epic-common`/per-family split, the include-path-selected platform
+The `common`/per-family split, the include-path-selected platform
 header trick, and the host/target execution-model split are identical in
 substance to PIC16F87XA's, see `common/MANUAL.md` §2. The one thing
 that genuinely differs at this level is interrupt vectoring:
@@ -135,7 +135,7 @@ either way:
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-python3 scripts/build/epic_build.py build --module epic-tick --mcu 18F4550 --run   # also 18F2455 / 18F2550 / 18F4455
+python3 scripts/build/epic_build.py build --module lib/tick --mcu 18F4550 --run   # also 18F2455 / 18F2550 / 18F4455
 ```
 
 Produces `build/18F4550-tick.hex` with vectors placed at 0008h/0018h.
@@ -337,7 +337,7 @@ Same names/signatures as PIC16F87XA's hook (the fixed contract across
 families), PIC18 register-level body. A whole-port callback for the
 RB<7:4> interrupt-on-change source, the same shape as Timer2's
 one-callback-per-handle but simpler (there is only one PORTB, so no
-handle struct). Added so family-agnostic modules (notably `epic-encoder`)
+handle struct). Added so family-agnostic modules (notably `lib/encoder`)
 can consume the RB-change interrupt without a family-specific include;
 the family-neutral shim `peripherals/hal_gpio.h` pulls this header in.
 

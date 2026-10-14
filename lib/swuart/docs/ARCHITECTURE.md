@@ -1,4 +1,4 @@
-# epic-swuart architecture
+# lib/swuart architecture
 
 ## Overview: CCP hardware timing, not software scheduling
 
@@ -170,7 +170,7 @@ event). Every scheduling deadline stored in a handle
 (`tx_deadline`/`rx_deadline`, both `uint16_t`) is an absolute Timer1
 count, not a relative countdown, and wraparound is handled for free by
 unsigned 16-bit subtraction/addition, not by explicit rollover logic.
-`epic-swuart` still exclusively owns Timer1 for as long as any channel
+`lib/swuart` still exclusively owns Timer1 for as long as any channel
 is active, the same resource-ownership contract v1/v2 already
 documented: do not also drive Timer1 directly from application code
 while a channel is initialised.
@@ -264,7 +264,7 @@ compare hardware at all: the CCP driver's own `.c` file compiles
 unchanged into the host build with zero simulated hardware behind it
 (confirmed by reading the host build, not assumed). Tests therefore
 cannot drive the state machine by injecting a simulated pin edge and
-waiting for a simulated capture, the way, for example, `epic-serial`'s
+waiting for a simulated capture, the way, for example, `lib/serial`'s
 host tests inject simulated USART RX. Instead, `src/epic_swuart.c`
 exposes a set of test-only accessor functions
 (`epic_swuart_test_fire_tx_event[_b]`, `epic_swuart_test_fire_rx_event[_b]`,
@@ -293,7 +293,7 @@ where that verification's own limits show up.
 
 ## Real-hardware verification: what is proven, and what is not
 
-`epic-swuart` has a real `mdb` gate
+`lib/swuart` has a real `mdb` gate
 (`lib/swuart/tests/sim_mdb_swuart.c`, wired into
 `scripts/ci/ci-target-sim.sh`), the first real-hardware behavioral
 verification this module has ever had, on PIC16F877A. What it actually

@@ -1,4 +1,4 @@
-# epic-debounce, vendor-agnostic digital-input debouncer
+# lib/debounce, vendor-agnostic digital-input debouncer
 
 A reusable, instantiable debouncer for one digital input: given a raw,
 possibly-bouncy pin read, decide when the *stable* state has actually changed
@@ -8,7 +8,7 @@ plain data, cover multiple inputs.
 - **Vendor-agnostic**: the caller supplies an `epic_debounce_read_fn` callback
   returning `true` = active. The core never sees a HAL type, equally useful
   over a GPIO pin, an I2C-expander bit, or a mock in a test.
-- **Depends on `epic-tick`** for its timebase (`epic_tick_get` /
+- **Depends on `lib/tick`** for its timebase (`epic_tick_get` /
   `epic_tick_elapsed_since`), so the host test suite exercises real timing
   semantics, not a mock clock.
 - **One implementation**, `src/debounce.c` compiles unchanged for host, PIC16,
