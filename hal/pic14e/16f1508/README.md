@@ -32,7 +32,7 @@ Implemented and verified:
 - [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`epic-pic16f1508-firmware`), `blink` example,
       and the mdb register-readback gate (`MODE=gpio`, RA0 PASS marker) for
-      GPIO, IOC enable, and CLC combinational output behaviour (modes 0..2
+      GPIO, IOC enable, and CLC output behaviour (modes 0..3
       through gate-polarity constants, CON.OUT readback; the SIM gaps that
       shape it are in MANUAL.md, #383).
 
@@ -44,13 +44,19 @@ model (gate and mode logic with sequential state, CLCDATA and CON.OUT
 mirrors, INTN/INTP edge flags; Dx levels come from a host-only hook, probe
 `example_clc_sim`). Register bits, the Table 24-1 input-select codes and the
 Figure 24-3 gate roles are checked against the datasheet (see MANUAL.md).
+The S-R latch demo (TB3273 shape: S on D1+D2, R on D3+D4, mode 3) is probe
+`example_clc_latch` on the host and a set/hold/reset/hold-low section of the
+mdb gate on target; the timer-driven beat-frequency dimmer on top of it
+waits on TMR2/PWM drivers.
 
 Not yet implemented (deliberate scope limit, each its own follow-up):
 
 - Timers, CCP, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
   comparators, DAC, FVR, and the SR latch.
-- The CLC sequential modes on the mdb gate (modes 3..7 run host-only;
-  MPLAB-SIM shapes the gate, see MANUAL.md, #383).
+- The TB3273 beat-frequency auto-dimmer (needs TMR2 plus a second slow
+  pulse source) and the CLC sequential modes on the mdb gate (mode 3 latch
+  is gated; modes 4..7 run host-only; MPLAB-SIM shapes the gate, see
+  MANUAL.md, #383).
 - SEL-code decoding in the host sim (codes are stored, Dx levels come from a
   host-only hook).
 - A 16F188xx part. It is not in the pinned DFP.
@@ -92,7 +98,7 @@ src/
   mdb/                  MPLAB SIM register-readback harness
 tests/                  example_blink, example_gpio (host), example_clc (host),
                         example_clc_irq (host), example_clc_sim (host),
-                        example_gpio_mdb
+                        example_clc_latch (host), example_gpio_mdb
 ```
 
 ## Implemented pins

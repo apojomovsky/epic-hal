@@ -182,6 +182,20 @@ int main(void)
     epic_harness_tick();
     clc1_lines(0x0FU);
     ok &= clc1_check(0U);
+    /* S-R latch demo gate (mode 3, TB3273 shape): S=G1|G2, R=G3|G4 from
+     * gate-polarity constants with sim-safe sources. SIM holds the
+     * sequential state across samples, so the holds assert the latch. */
+    ok &= clc1_gate_config(3U);
+    clc1_lines(0x00U);
+    ok &= clc1_check(0U);
+    clc1_lines(0x03U);
+    ok &= clc1_check(1U);
+    clc1_lines(0x00U);
+    ok &= clc1_check(1U);
+    clc1_lines(0x0CU);
+    ok &= clc1_check(0U);
+    clc1_lines(0x00U);
+    ok &= clc1_check(0U);
     ok &= (EPIC_CLC_DeInit(CLC1) == EPIC_OK);
     int rc = epic_harness_report(ok);
     pic16f1508_harness_halt();
