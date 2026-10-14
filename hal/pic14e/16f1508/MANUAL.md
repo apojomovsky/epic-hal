@@ -189,7 +189,8 @@ while the same code writes cleanly to CLC2SEL1), so the gate uses D3S 5
 (HFINTOSC); and the SIM never sets the CLCDATA mirror copy (CON.OUT reads 1
 while CLCDATA stays 0 after a settle cycle), so the gate observes CON.OUT
 only. The CLCDATA mirror and the sequential modes 4..7 are covered by the
-host probes (`example_clc`, `example_clc_sim`, `example_clc_latch`) only.
+host probes (`example_clc`, `example_clc_sim`, `example_clc_latch`,
+`example_clc_beat`) only.
 The SIM prints W0700/W0701 notes during the CLC steps (no propagation
 delay modelled; output-as-own-input loop warning). They are benign: no
 cell feeds its own output.
