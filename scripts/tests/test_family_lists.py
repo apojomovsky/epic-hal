@@ -85,9 +85,13 @@ class TestReadmeDocgenBlocks(unittest.TestCase):
         _, stale = readme_tables.regenerate((REPO_ROOT / "README.md").read_text())
         self.assertEqual(stale, [])
 
-    def test_missing_markers_fail_naming_the_block(self):
+    def test_unclosed_block_fails_naming_the_block(self):
         with self.assertRaisesRegex(readme_tables.DocgenError, "docgen:packs"):
-            readme_tables.regenerate("no markers here")
+            readme_tables.regenerate("<!-- docgen:packs begin -->")
+
+    def test_readme_without_blocks_is_left_alone(self):
+        self.assertEqual(readme_tables.regenerate("no markers here"),
+                         ("no markers here", []))
 
 
 class TestNoHandEnumerations(unittest.TestCase):

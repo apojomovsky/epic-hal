@@ -89,5 +89,23 @@ class TestIncludes(unittest.TestCase):
             docs_gen.render_includes(text, REPO_ROOT), text)
 
 
+class TestReadmeSnippets(unittest.TestCase):
+    def test_install_snippet_matches_installer_usage(self):
+        snippet = (REPO_ROOT / "docs/snippets/install.sh").read_text()
+        header = (REPO_ROOT / "install.sh").read_text()
+        url = snippet.split("| sh")[0].split()[-1]
+        self.assertIn(url, header)
+
+    def test_blink_example_is_the_reference_project(self):
+        src = (REPO_ROOT / "docs/README.src.md").read_text()
+        ref = "examples/epic-hal-demo-pic16f87xa.X/main.c"
+        self.assertIn(f'--8<-- "{ref}"', src)
+        self.assertTrue((REPO_ROOT / ref).is_file())
+
+    def test_readme_length(self):
+        n = len((REPO_ROOT / "README.md").read_text().splitlines())
+        self.assertTrue(80 <= n <= 120, n)
+
+
 if __name__ == "__main__":
     unittest.main()
