@@ -37,6 +37,7 @@ hal_sources = ["hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c"]
 
 [modules.epic-tick]
 dir        = "lib/tick"
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
@@ -62,6 +63,7 @@ config  = { FOSC = "HS" }
 
 [modules.epic-serial]
 dir        = "lib/serial"
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = ["epic-tick"]
@@ -74,6 +76,7 @@ PIC16F87XA = ["16F877A"]
 
 [modules.epic-math]
 dir        = "lib/math"
+summary    = "Tooling-test fixture."
 sources    = ["src/common/epic_math_sqrt.c", "src/common/epic_math_numeric.c"]
 includes   = ["include"]
 depends_on = []
@@ -109,6 +112,7 @@ depends_on = ["epic-serial"]
 
 [modules.epic-adcfilter]
 dir        = "lib/adcfilter"
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_adcfilter.c"]
 includes   = ["include"]
 depends_on = []
@@ -232,8 +236,8 @@ class TestValidation(unittest.TestCase):
         self.assertIn("16F877A", str(cm.exception))
 
     def test_dependency_cycle_is_rejected(self):
-        bad = MINIMAL.replace('[modules.epic-tick]\ndir        = "lib/tick"\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = []',
-                              '[modules.epic-tick]\ndir        = "lib/tick"\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = ["epic-serial"]')
+        bad = MINIMAL.replace('[modules.epic-tick]\ndir        = "lib/tick"\nsummary    = "Tooling-test fixture."\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = []',
+                              '[modules.epic-tick]\ndir        = "lib/tick"\nsummary    = "Tooling-test fixture."\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = ["epic-serial"]')
         with self.assertRaises(epicmanifest.ManifestError) as cm:
             epicmanifest.load(write(bad))
         self.assertIn("cycle", str(cm.exception).lower())
@@ -674,6 +678,7 @@ PIC16F87XA = [
 
 [modules.epic-probe]
 dir        = "epic-probe"
+summary    = "Tooling-test fixture."
 sources    = ["src/probe.c"]
 includes   = ["include"]
 depends_on = []

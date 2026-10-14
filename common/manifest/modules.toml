@@ -942,6 +942,7 @@ after    = "hal/pic18/18f6520/src/core/pic18_irq.c"
 # the HAL directory itself because that is where its example lives.
 [modules.epic-pic16f193x-firmware]
 dir        = "hal/pic14e/16f193x"
+summary    = "Register-level HAL and smoke firmware for the PIC16F193X family"
 sources    = []
 includes   = []
 depends_on = []
@@ -992,6 +993,7 @@ config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = 
 # corrupting silently.
 [modules.pic16f87xa-hal]
 dir        = "hal/pic14/16f87xa"
+summary    = "Register-level HAL and smoke firmware for the PIC16F87XA family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1041,6 +1043,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # macros are proven).
 [modules.pic16f7x-hal]
 dir        = "hal/pic14/16f7x"
+summary    = "Register-level HAL and smoke firmware for the PIC16F7x family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1097,6 +1100,7 @@ config      = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "OFF
 # misdirection fails the gate instead of corrupting silently.
 [modules.pic16f88x-hal]
 dir        = "hal/pic14/16f88x"
+summary    = "Register-level HAL and smoke firmware for the PIC16F88X family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1135,6 +1139,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # shared pic14-midrange-core drivers.
 [modules.pic16f628a-hal]
 dir        = "hal/pic14/16f628a"
+summary    = "Register-level HAL and smoke firmware for the PIC16F628A family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1177,6 +1182,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "O
 # USART on this die; MODE=gpio).
 [modules.pic16f63x_67x_68x-hal]
 dir        = "hal/pic14/16f63x_67x_68x"
+summary    = "Register-level HAL and smoke firmware for the PIC16F63x_67x_68x family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1266,6 +1272,7 @@ config      = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "IN
 
 [modules.pic16f83_84-hal]
 dir        = "hal/pic14/16f83_84"
+summary    = "Register-level HAL and smoke firmware for the PIC16F83_84 family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1308,6 +1315,7 @@ config      = { FOSC = "XT", PWRTE = "ON", WDTE = "OFF" }
 # ADC/CCP1 register images).
 [modules.pic16f818_819-hal]
 dir        = "hal/pic14/16f818_819"
+summary    = "Register-level HAL and smoke firmware for the PIC16F818_819 family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1366,6 +1374,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "O
 # values, so a platform-header miscompile fails the gate.
 [modules.pic16f5x-hal]
 dir        = "hal/pic12/16f5x"
+summary    = "Register-level HAL and smoke firmware for the PIC16F5x family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1427,6 +1436,7 @@ config      = { OSC = "XT", WDT = "OFF", CP = "OFF" }
 
 [modules.pic18fxx5x-hal]
 dir        = "hal/pic18/18fxx5x"
+summary    = "Register-level HAL and smoke firmware for the PIC18Fxx5x family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1463,6 +1473,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # STVREN (both DS39605F Register 26-1's own spelling).
 [modules.pic18f1320-hal]
 dir        = "hal/pic18/18f1320"
+summary    = "Register-level HAL and smoke firmware for the PIC18F1320 family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1493,6 +1504,7 @@ config      = { BOR = "OFF", BORV = "27", CP0 = "OFF", CP1 = "OFF", CPB = "OFF",
 
 [modules.pic18f2520-hal]
 dir        = "hal/pic18/18f2520"
+summary    = "Register-level HAL and smoke firmware for the PIC18F2520 family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1574,6 +1586,7 @@ config  = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", C
 
 [modules.pic18f6520-hal]
 dir        = "hal/pic18/18f6520"
+summary    = "Register-level HAL and smoke firmware for the PIC18F6520 family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1793,6 +1806,7 @@ config      = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "O
 
 [modules.epic-combo-uart-ssp]
 dir        = "tests/epic-combo-uart-ssp"
+summary    = "UART plus SSP and EEPROM integration firmware interleaved under a fast Timer2 ISR"
 sources    = []
 includes   = []
 depends_on = []
@@ -1841,6 +1855,7 @@ PIC16F87XA = [
 
 [modules.epic-combo-multitimer]
 dir        = "tests/epic-combo-multitimer"
+summary    = "Timer0, Timer1 and Timer2 integration firmware checking dispatch count ratios"
 sources    = []
 includes   = []
 depends_on = []
@@ -1892,6 +1907,7 @@ PIC16F87XA = [
 
 [modules.epic-combo-adc-uart]
 dir        = "tests/epic-combo-adc-uart"
+summary    = "ADC plus polled USART integration firmware"
 sources    = []
 includes   = []
 depends_on = []
@@ -1941,6 +1957,7 @@ PIC16F87XA = [
 
 [modules.epic-combo-rb-uart]
 dir        = "tests/epic-combo-rb-uart"
+summary    = "PORTB change plus Timer2 multi-source dispatch integration firmware with polled transmit"
 sources    = []
 includes   = []
 depends_on = []
@@ -1988,6 +2005,7 @@ PIC16F87XA = [
 
 [modules.epic-combo-eeprom-isr]
 dir        = "tests/epic-combo-eeprom-isr"
+summary    = "EEPROM writes under serial and tick ISR load on PIC18"
 sources    = []
 includes   = []
 depends_on = []
@@ -2048,6 +2066,7 @@ PIC18Fxx5x = [
 
 [modules.epic-combo-encoder-tick]
 dir        = "tests/epic-combo-encoder-tick"
+summary    = "Quadrature decoder plus 1 ms timebase integration firmware"
 sources    = []
 includes   = []
 depends_on = [
@@ -2092,6 +2111,7 @@ PIC16F87XA = [
 
 [modules.epic-combo-swuart-tick]
 dir        = "tests/epic-combo-swuart-tick"
+summary    = "Bit-banged UART plus 1 ms timebase integration firmware"
 sources    = []
 includes   = []
 depends_on = ["epic-swuart", "epic-tick"]
@@ -2142,6 +2162,7 @@ PIC16F87XA = [
 
 [modules.epic-combo-tick-serial]
 dir        = "tests/epic-combo-tick-serial"
+summary    = "1 ms timebase plus interrupt-driven serial integration firmware"
 sources    = []
 includes   = []
 depends_on = ["epic-tick", "epic-serial"]
@@ -2188,6 +2209,7 @@ PIC16F87XA = [
 
 [modules.epic-combo-lcd-tick]
 dir        = "tests/epic-combo-lcd-tick"
+summary    = "Character LCD plus 1 ms timebase integration firmware"
 sources    = []
 includes   = []
 depends_on = ["epic-lcd", "epic-tick"]
@@ -2240,6 +2262,7 @@ PIC18Fxx5x = [
 
 [modules.epic-combo-rx-loopback]
 dir        = "tests/epic-combo-rx-loopback"
+summary    = "Serial receive loopback integration firmware"
 sources    = []
 includes   = []
 depends_on = []
@@ -2290,6 +2313,7 @@ PIC16F87XA = [
 
 [modules.epic-adcfilter]
 dir        = "lib/adcfilter"
+summary    = "Vendor-agnostic ADC oversampling and moving-average filter"
 sources    = [
   "src/epic_adcfilter.c",
 ]
@@ -2476,6 +2500,7 @@ sources = [
 
 [modules.epic-bus]
 dir        = "lib/bus"
+summary    = "I2C and SPI MEM register access for 8-bit PICs"
 sources    = [
   "src/epic_bus.c",
 ]
@@ -2569,6 +2594,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 
 [modules.epic-mcp23x17]
 dir        = "lib/mcp23x17"
+summary    = "MCP23017 and MCP23S17 16-bit I/O expander driver on epic-bus"
 sources    = [
   "src/epic_mcp23x17.c",
 ]
@@ -2649,6 +2675,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 
 [modules.epic-console]
 dir        = "lib/console"
+summary    = "Line-based command dispatcher over epic-serial"
 sources    = [
   "src/epic_console.c",
 ]
@@ -2759,6 +2786,7 @@ config      = { BOR = "OFF", FOSC = "HS", WDT = "OFF" }
 
 [modules.epic-debounce]
 dir        = "lib/debounce"
+summary    = "Vendor-agnostic digital-input debouncer"
 sources    = [
   "src/debounce.c",
 ]
@@ -2855,6 +2883,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 
 [modules.epic-encoder]
 dir        = "lib/encoder"
+summary    = "Interrupt-driven x4 quadrature decoder for 8-bit PICs"
 sources    = [
   "src/encoder.c",
 ]
@@ -3041,6 +3070,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 
 [modules.epic-fsm]
 dir        = "lib/fsm"
+summary    = "Vendor-agnostic table-driven finite state machine engine"
 sources    = [
   "src/fsm.c",
 ]
@@ -3192,6 +3222,7 @@ config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = 
 # real-target build before this entry, so 16F877A and 16F887 only.
 [modules.epic-lcd]
 dir        = "lib/lcd"
+summary    = "HD44780-compatible character LCD driver"
 sources    = [
   "src/epic_lcd.c",
 ]
@@ -3256,6 +3287,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 
 [modules.epic-math]
 dir        = "lib/math"
+summary    = "Fixed-point math utility library for 8-bit PICs"
 sources    = [
   "src/common/epic_math_numeric.c",
   "src/common/epic_math_rand.c",
@@ -3490,6 +3522,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 
 [modules.epic-modbus]
 dir        = "lib/modbus"
+summary    = "Modbus RTU slave for 8-bit PICs"
 sources    = [
   "src/epic_modbus.c",
 ]
@@ -3574,6 +3607,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 
 [modules.epic-pid]
 dir        = "lib/pid"
+summary    = "Vendor-agnostic fixed-point PID controller"
 sources    = [
   "src/pid.c",
 ]
@@ -3762,6 +3796,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 
 [modules.epic-serial]
 dir        = "lib/serial"
+summary    = "Interrupt-driven ring-buffered UART"
 sources    = [
   "src/epic_serial.c",
 ]
@@ -3871,6 +3906,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 
 [modules.epic-settings]
 dir        = "lib/settings"
+summary    = "EEPROM-backed settings blobs with CRC validation"
 sources    = [
   "src/epic_settings.c",
 ]
@@ -3942,6 +3978,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # first bytes over epic-serial.
 [modules.epic-sdcard]
 dir        = "lib/sdcard"
+summary    = "SD/MMC over SPI block storage for PIC18F2455, 2550, 4455 and 4550"
 sources    = [
   "src/epic_sdcard.c",
   "third_party/m-stack-storage/src/mmc.c",
@@ -3993,6 +4030,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # host's CDC input.
 [modules.epic-usb]
 dir        = "lib/usb"
+summary    = "USB CDC-ACM virtual serial port for PIC18F2455, 2550, 4455 and 4550"
 sources    = [
   "src/epic_usb.c",
   "src/usb_descriptors.c",
@@ -4025,6 +4063,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 
 [modules.epic-swuart]
 dir        = "lib/swuart"
+summary    = "Bit-banged full-duplex UART"
 sources    = [
   "src/epic_swuart.c",
 ]
@@ -4156,6 +4195,7 @@ config  = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF
 
 [modules.epic-taskmgr]
 dir        = "lib/taskmgr"
+summary    = "Cooperative non-preemptive task scheduler for 8-bit PICs"
 sources    = [
   "src/epic_taskmgr.c",
 ]
@@ -4238,6 +4278,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 
 [modules.epic-menu-demo]
 dir        = "demos/menu"
+summary    = "PIC18F4550 menu demo: LCD menu with buttons, ADC, EEPROM and PWM"
 sources    = [
   "src/menu_demo_core.c",
   "lib/lcd/src/epic_lcd_gpio4.c",
@@ -4308,6 +4349,7 @@ PIC18Fxx5x = [
 
 [modules.epic-control-demo]
 dir        = "demos/control"
+summary    = "PIC18F4550 control demo: UART console PID loop with ADC sense, PWM drive and EEPROM settings"
 sources    = [
   "src/control_demo_core.c",
 ]
@@ -4377,6 +4419,7 @@ PIC18Fxx5x = [
 
 [modules.epic-bridge-demo]
 dir        = "demos/bridge"
+summary    = "PIC18F4550 bridge demo: Modbus RTU slave bridged to an I2C expander plus ADC"
 sources    = [
   "src/bridge_demo_core.c",
 ]
@@ -4451,6 +4494,7 @@ PIC18Fxx5x = [
 
 [modules.epic-tick]
 dir        = "lib/tick"
+summary    = "1 ms timebase for 8-bit PICs"
 sources    = [
   "src/epic_tick.c",
 ]
@@ -4664,6 +4708,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # absorb the ISR/EEIF race documented in the gate's header).
 [modules.epic-combo-tick-settings]
 dir        = "tests/epic-combo-tick-settings"
+summary    = "1 ms timebase plus EEPROM settings integration firmware"
 sources    = []
 includes   = []
 depends_on = [
@@ -4719,6 +4764,7 @@ PIC18Fxx5x = [
 
 [modules.epic-combo-modbus-full]
 dir        = "tests/epic-combo-modbus-full"
+summary    = "Modbus RTU slave plus serial stack integration firmware"
 sources    = []
 includes   = []
 depends_on = [
@@ -4765,6 +4811,7 @@ PIC18Fxx5x = [
 
 [modules.epic-combo-taskmgr-serial]
 dir        = "tests/epic-combo-taskmgr-serial"
+summary    = "Cooperative scheduler plus interrupt-driven serial integration firmware"
 sources    = []
 includes   = []
 depends_on = [
@@ -4832,6 +4879,7 @@ PIC18Fxx5x = [
 
 [modules.epic-common]
 dir        = "common"
+summary    = "Register-blind shared layer reused by every HAL family"
 sources    = [
   "src/core/epic_harness_target.c",
 ]
@@ -4880,6 +4928,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 
 [families.PIC16F1508]
 hal_dir     = "hal/pic14e/16f1508"
+sim_note    = "Single stores of most CLC1 D3S codes to CLC1SEL1 throw in the simulator, and the CLCDATA mirror copy never sets, so the gate observes CON.OUT only (family MANUAL.md)"
 variants    = [
   "16F1508",
   "16F1509",
@@ -4906,6 +4955,7 @@ harness_src = "common/src/core/epic_harness_target.c"
 
 [modules.epic-pic16f1508-firmware]
 dir        = "hal/pic14e/16f1508"
+summary    = "Register-level HAL and smoke firmware for the PIC16F1508 family"
 sources    = []
 includes   = []
 depends_on = []
