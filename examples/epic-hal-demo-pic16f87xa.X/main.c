@@ -1,7 +1,7 @@
 /*
- * Epic HAL reference project, PIC16F87XA: a 1 ms tick toggles RB0,
- * the minimal build smoke test. See MPLABX.md to add Epic HAL to an
- * existing project.
+ * Epic HAL reference project, PIC16F87XA: RB0 toggles every 500 ms
+ * off the 1 ms tick, the minimal build smoke test. See MPLABX.md to add
+ * Epic HAL to an existing project.
  */
 #include <xc.h>
 

@@ -39,6 +39,8 @@ def regenerate(text: str) -> tuple[str, list[str]]:
     for key, emit in BLOCKS.items():
         begin = f"<!-- docgen:{key} begin"
         end = f"<!-- docgen:{key} end -->"
+        if begin not in text:
+            continue
         try:
             start = text.index(begin)
             stop = text.index(end, start) + len(end)

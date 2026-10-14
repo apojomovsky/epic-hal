@@ -7,9 +7,9 @@ setup, MPLAB X, wiring by hand, and the XC8 device packs.
 ## 1. Download a bundle and run `epic-hal init`
 
 Bundles live on the [Releases](https://github.com/apojomovsky/epic-hal/releases)
-page; the README's bundle table lists which parts each one holds. The
+page; each bundle's `SUPPORT.md` lists the parts it holds. The
 `<version>` in a bundle name is the release tag (e.g. `v0.6.0`); the badge on
-the README always shows the latest one.
+the Release badge in the README shows the latest one.
 
 Download and unpack one, then, with the CLI installed globally:
 
@@ -71,8 +71,7 @@ per-part table.
 ## XC8 device packs
 
 XC8 needs the device pack for your family; it ships with MPLAB X or
-downloads separately from Microchip's pack CDN. The pack for every family
-is in the README's pack table. The exact version a bundle's
+downloads separately from Microchip's pack CDN. The exact version a bundle's
 `make TOOLCHAIN=xc8` build consumes is pinned in the bundle's
 `epic-hal.mk` as `EPIC_HAL_DFP_VERSION`. Install the pack next to XC8:
 
