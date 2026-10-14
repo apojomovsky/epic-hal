@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
-# pr-body-lint.sh — fail when a PR body contains literal \n escapes.
-# Resilience for oh-my-pi shell-quoting bug (epic-cc#129): `gh pr create --body "a\nb"`
-# never expands, GitHub renders literal \n as text.
-# Single source is epic_tasks/gh.py:contains_literal_escapes / normalize_pr_body
-# and epic_tasks/takeoff.py:check_pr_body; this shell is a thin wrapper
-# so all three repos share one rule. Fallback grep is fixed-string, not ANSI-C.
-# Usage:
-#   bash scripts/hooks/pr-body-lint.sh [file]          # lint a file (or stdin with -)
-#   bash scripts/hooks/pr-body-lint.sh --pr            # lint `gh pr view --json body` for current branch
-#   python3 -c 'from epic_tasks.gh import normalize_pr_body; ...' to heal.
+# pr-body-lint.sh: fail when a PR body contains literal \n escapes
+# (oh-my-pi never expands `--body "a\nb"`, GitHub renders literal \n, epic-cc#129).
+# Single source is epic_tasks/gh.py + takeoff.py:check_pr_body; this
+# shell is a thin wrapper so all three repos share one rule, with a
+# fixed-string grep fallback (not ANSI-C).
+# Usage: bash scripts/hooks/pr-body-lint.sh [file|--pr]; normalize with
+#   python3 -c 'from epic_tasks.gh import normalize_pr_body; ...'.
 set -euo pipefail
 
 lint_file() {
