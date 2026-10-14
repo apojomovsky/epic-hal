@@ -13,4 +13,4 @@ epic-hal = "epic_hal:main"
 
 [tool.setuptools]
 py-modules = ["epic_hal", "epic_hal_init", "epicmanifest", "bundlegen"]
-package-dir = {"" = "scripts"}
+package-dir = {"" = "scripts/build"}

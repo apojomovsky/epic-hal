@@ -1,4 +1,4 @@
-"""Unit tests for scripts/epic_build.py."""
+"""Unit tests for scripts/build/epic_build.py."""
 import pathlib
 import subprocess
 import sys
@@ -6,6 +6,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "build"))
 
 import epic_build  # noqa: E402
 import epicmanifest  # noqa: E402
@@ -677,7 +678,7 @@ Memory Summary:
 """
 
     def test_formats_flash_and_ram(self):
-        script = pathlib.Path(__file__).resolve().parents[1] / "xc8-size-baseline.sh"
+        script = pathlib.Path(__file__).resolve().parents[1] / "sim" / "xc8-size-baseline.sh"
         with tempfile.NamedTemporaryFile("w", suffix=".log", delete=False) as f:
             f.write(self.LOG)
             log = f.name
@@ -693,7 +694,7 @@ Memory Summary:
         self.assertIn("RAM: 91/368 bytes (24.7%)", proc.stdout)
 
     def test_missing_summary_fails(self):
-        script = pathlib.Path(__file__).resolve().parents[1] / "xc8-size-baseline.sh"
+        script = pathlib.Path(__file__).resolve().parents[1] / "sim" / "xc8-size-baseline.sh"
         with tempfile.NamedTemporaryFile("w", suffix=".log", delete=False) as f:
             f.write("no summary here\n")
             log = f.name

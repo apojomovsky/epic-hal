@@ -142,7 +142,7 @@ The matrix builds all 12 variants (2 families x full/native x -O levels)
 and prints per-build "<op> <hexdelta>" lines captured from the simulator
 UART. Per-op cycles = (delta - loop_empty) / 100. Functional
 verification of the asm on the real target uses the epic-math
-golden-vector selftest through the repo's mdb gate (scripts/
+golden-vector selftest through the repo's mdb gate (scripts/sim/
 sim-mdb-run.sh), which must report PASS=94 FAIL=0.
 
 ## Tools in this directory

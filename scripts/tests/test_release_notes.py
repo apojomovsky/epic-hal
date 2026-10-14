@@ -1,4 +1,4 @@
-"""Unit tests for scripts/release_notes.py."""
+"""Unit tests for scripts/release/release_notes.py."""
 import os
 import pathlib
 import subprocess
@@ -7,6 +7,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "release"))
 
 import release_notes  # noqa: E402
 

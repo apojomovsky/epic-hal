@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 import unittest
 
-HELPER = pathlib.Path(__file__).resolve().parents[1] / "compare-normalize.sh"
+HELPER = pathlib.Path(__file__).resolve().parents[1] / "sim" / "compare-normalize.sh"
 XC8_TICKS = "0005 001A 001A 001A 001A \n"
 CC_TICKS = "0005 000A 000F 0014 0019 \n"
 

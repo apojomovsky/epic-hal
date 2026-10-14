@@ -152,7 +152,7 @@ family's modules, which compile the full HAL either way:
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-python3 scripts/epic_build.py build --module epic-tick --mcu 16F877A --run
+python3 scripts/build/epic_build.py build --module epic-tick --mcu 16F877A --run
 # → build/16F877A-tick.hex, program with MPLAB X, ippe, PK2CMD, …
 ```
 
@@ -195,10 +195,10 @@ device define, and links the HAL library (which propagates the
 ### 4.2 Target build, manifest-driven
 
 ```sh
-python3 scripts/epic_build.py build --module epic-tick --mcu 16F877A --run   # also 870/871/872/873/LF873A/874/876/877 and the A-parts
+python3 scripts/build/epic_build.py build --module epic-tick --mcu 16F877A --run   # also 870/871/872/873/LF873A/874/876/877 and the A-parts
 ```
 
-CLI flags (see `python3 scripts/epic_build.py build --help`):
+CLI flags (see `python3 scripts/build/epic_build.py build --help`):
 
 | Flag            | Default                          | Meaning                                    |
 |-----------------|-----------------------------------|---------------------------------------------|

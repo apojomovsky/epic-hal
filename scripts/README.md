@@ -1,4 +1,18 @@
-# Dev environment scripts
+# Tooling scripts, grouped by purpose
+
+Each group dir holds the Python and shell for one purpose:
+`build/` (build driver, manifest library, bundler, scaffolder CLI,
+generators), `ci/` (CI emit and container-side loops), `sim/`
+(MPLAB SIM gates, toolchain comparison, `sim-runner/`), `audit/`
+(device-data and style audits), `release/` (release cutting and
+notes), `hooks/` (git hooks and the takeoff ritual), `dev/`
+(fresh-clone setup). `tests/` holds the tooling unit tests.
+
+Six top-level symlinks stay where external callers pin them:
+`epic_build.py` (epic-cc's `hal-887` job), `doxygen_doc_check.py` and
+`pre-pr-check.sh` (`epic-tasks takeoff`), and the three `*-checks.sh`
+hook scripts (already-installed git-hook dispatchers). Everything else
+lives in its group dir; new scripts go there, not at the top.
 
 Covers the host-toolchain bootstrap, the git hooks, and the pre-PR
 takeoff ritual below. For
@@ -7,16 +21,16 @@ without installing XC8/MPLAB X yourself, see the root
 [`Makefile`](../Makefile) and [DEVELOPMENT.md](../DEVELOPMENT.md)'s Docker
 section instead, everything runs inside a Docker image built from
 installers you
-drop in `docker/ci-toolchain/vendor/`. `scripts/sim-mdb-run.sh` and
-`scripts/sim-test-local.sh` (this directory) are the lower-level pieces
+drop in `docker/ci-toolchain/vendor/`. `scripts/sim/sim-mdb-run.sh` and
+`scripts/sim/sim-test-local.sh` are the lower-level pieces
 that flow reuses; their own header comments cover direct use if you
 need it.
 
 ## Bootstrap
 
 ```sh
-./scripts/bootstrap.sh              # install missing host packages + the git hooks
-./scripts/bootstrap.sh --check-only # report what's missing, install nothing,
+./scripts/dev/bootstrap.sh              # install missing host packages + the git hooks
+./scripts/dev/bootstrap.sh --check-only # report what's missing, install nothing,
                                      # exit nonzero if anything is missing
 ```
 
@@ -37,13 +51,13 @@ installed on the host; host builds work with or without it.
 Installed on their own, or as part of `bootstrap.sh` above:
 
 ```sh
-./scripts/install-git-hooks.sh      # or: make setup-hooks
+./scripts/hooks/install-git-hooks.sh      # or: make setup-hooks
 ```
 This writes a small dispatcher for `pre-commit`, `commit-msg` and
 `pre-push` into the git hooks directory (not tracked by git, so every
 clone needs to run the installer once). The hooks directory is shared
 by every worktree, so one install covers all of them. Each dispatcher
-runs the `scripts/<hook>-checks.sh` copy in the worktree being
+runs the `scripts/hooks/<hook>-checks.sh` copy in the worktree being
 committed in, falling back to the main checkout, so a branch that edits
 a hook script commits with its own copy. Uninstall by deleting the
 dispatchers, or skip them for one commit with `git commit --no-verify`.
@@ -89,7 +103,7 @@ dispatchers, or skip them for one commit with `git commit --no-verify`.
    `void f(void) {` are violations, `if (x)\n{` is the house form.
    Scoped like the em-dash rule to lines a commit *adds*, so pre-existing
    style in files an unrelated commit touches never blocks it. The
-   checker (`scripts/brace-style-check.sh`) is a hard gate: the commit is
+   checker (`scripts/hooks/brace-style-check.sh`) is a hard gate: the commit is
    blocked with `file:line` hits.
 4. **`cppcheck`** on staged `.c` files (`--enable=warning,performance,
    portability`), a real static-analysis gate (uninitialized variables,
@@ -104,7 +118,7 @@ dispatchers, or skip them for one commit with `git commit --no-verify`.
 ### Brace style and `clang-format`
 
 The enforceable house rule is Allman (**Microsoft**) braces, checked by
-`scripts/brace-style-check.sh` on added lines: an opening brace owns its
+`scripts/hooks/brace-style-check.sh` on added lines: an opening brace owns its
 line. The gate lives in three places so it cannot be skipped: the
 pre-commit hook (above), CI's pre-commit-checks job, and the
 `epic-tasks takeoff` ritual via the shared takeoff gate.
@@ -120,7 +134,7 @@ without applying it.
 
 ```sh
 git add <files>
-bash scripts/pre-commit-checks.sh
+bash scripts/hooks/pre-commit-checks.sh
 ```
 
 Runs the exact same checks the hook runs, without committing.
@@ -140,7 +154,7 @@ is identical to before.
 ## Takeoff ritual (`pre-pr-check.sh`, `prose-diff.sh`)
 
 ```sh
-make pre-pr-check                   # or: bash scripts/pre-pr-check.sh
+make pre-pr-check                   # or: bash scripts/hooks/pre-pr-check.sh
 make pre-pr-check TEST=1            # also run the host-sim suite
 BASE_REF=<fork>/master make pre-pr-check
 ```
@@ -174,7 +188,7 @@ run, never let a real break merge unverified):
   this change affect the build?". Prints `true` only when every changed
   file is on its explicit non-code allowlist (markdown, any `docs/`
   directory, `LICENSE*`, repo config files, image assets, and the
-  dev-only `scripts/bootstrap.sh` / `scripts/install-git-hooks.sh` /
+  dev-only `scripts/dev/bootstrap.sh` / `scripts/hooks/install-git-hooks.sh` /
   repo-root `Makefile`). Workflow files and everything else are code by
   default. `family-check.yml` calls it to skip all real-target steps on
   a non-code PR; `ci-discover-affected-modules.py` imports
@@ -196,7 +210,7 @@ Committed shell scripts, not inline workflow YAML, so they can be
 shellchecked and dry-run locally against the real toolchain rather than
 only ever exercised inside a GitHub Actions run. `ci.yml`'s `target` job
 runs each one via `docker run --rm -v "$PWD:/work" -w /work <image>
-bash scripts/ci-target-*.sh`, bind-mounting the checkout instead of the
+bash scripts/ci/ci-target-*.sh`, bind-mounting the checkout instead of the
 old per-job `container:` field (this job also needs `python3`, which the
 toolchain image deliberately doesn't have, so no single `container:`
 value could cover every step in the job). None of the three stop at the
@@ -205,39 +219,39 @@ calling workflow step cats into `$GITHUB_STEP_SUMMARY` afterward (a file
 on the runner, not reliably reachable from inside the container the
 scripts themselves run in).
 
-- `ci-target-build.sh [matrix.txt] [summary.md]`: real XC8 build for
+- `ci/ci-target-build.sh [matrix.txt] [summary.md]`: real XC8 build for
   every `family module mcu` triple in `matrix.txt` (plain text, one
   triple per line, emitted by `ci.yml`'s emit step; deliberately not
   JSON, since the container has no `jq` either).
-- `ci-target-sim.sh [summary.md]`: the fixed 3-entry `mdb`/MPLAB SIM run
-  list (one per family), via `sim-mdb-run.sh`.
-- `ci-target-bundle.sh [bundles-dir] [summary.md]`: the isolated bundle
+- `ci/ci-target-sim.sh [summary.md]`: the fixed 3-entry `mdb`/MPLAB SIM run
+  list (one per family), via `scripts/sim/sim-mdb-run.sh`.
+- `ci/ci-target-bundle.sh [bundles-dir] [summary.md]`: the isolated bundle
   build, proving each generated bundle is self-contained by building it
   from `/isolated` (no repo above it) rather than in place. Also builds
   each bundle's reference MPLAB X project headlessly.
-- `release.sh <major|minor|patch|vX.Y.Z> [-y] [--watch] [--dry-run]`:
+- `release/release.sh <major|minor|patch|vX.Y.Z> [-y] [--watch] [--dry-run]`:
   cut a release. Syncs with the remote, computes the next version from
   the newest tag, previews the notes, and pushes the tag that triggers
   `release-bundles.yml`. Refuses a dirty tree, a non-`master` branch, or
   a `master` that is not level with the remote. See DEVELOPMENT.md's
   Releases section.
-- `release_notes.py <tag> [--previous <tag>] [--repo-url <url>]`: the
+- `release/release_notes.py <tag> [--previous <tag>] [--repo-url <url>]`: the
   "What changed" section of a GitHub Release, grouped from the
   Conventional Commit subjects since the previous version tag. Called by
   `release-bundles.yml`; run it by hand to preview a tag before pushing
   it. Breaking changes need `type(scope)!:` or a `BREAKING CHANGE:`
   footer to be called out. See DEVELOPMENT.md's Releases section.
 
-## `epic_build.py`, the real-target build driver
+## `epic_build.py` (in `scripts/build/`), the real-target build driver
 
 Reads `common/manifest/modules.toml`, resolves a module's
 dependencies and sources, and emits a POSIX `sh` script of `xc8-cc`
 invocations. Replaces the `mcu/*-mplabx/Makefile`s.
 
 ```sh
-python3 scripts/epic_build.py build --module epic-serial --mcu 16F877A --run
-python3 scripts/epic_build.py matrix          # CI matrix JSON
-python3 scripts/epic_build.py report --log build/16F877A/build.log
+python3 scripts/build/epic_build.py build --module epic-serial --mcu 16F877A --run
+python3 scripts/build/epic_build.py matrix          # CI matrix JSON
+python3 scripts/build/epic_build.py report --log build/16F877A/build.log
 ```
 
 Without `--run` it only writes `build/<MCU>/build.sh`, which is the mode
@@ -254,21 +268,21 @@ translation unit at all, matching the Makefiles that never had one
 either. `common/manifest/README.md` documents the schema this
 driver reads.
 
-## `make_bundle.py`, the release bundle generator
+## `make_bundle.py` (in `scripts/build/`), the release bundle generator
 
 Assembles a self-contained, per-family source tree from the manifest,
 plus the generated consumer files (`epic-hal.mk`,
 `epic-hal-sources.json`, `SUPPORT.md`, `QUICKSTART.md`, `MPLABX.md`).
 
 ```sh
-python3 scripts/make_bundle.py --family PIC16F87XA --version v0.1.0
+python3 scripts/build/make_bundle.py --family PIC16F87XA --version v0.1.0
 ```
 
 Output lands in `bundles/`, which is gitignored: bundles are build
 output, attached to a GitHub Release, never committed.
 
-`bundlegen.py` holds the generation logic and is where every emitted
+`scripts/build/bundlegen.py` holds the generation logic and is where every emitted
 file's format lives. `.github/workflows/ci.yml`'s `target` job (its
-"Isolated bundle build" step, `scripts/ci-target-bundle.sh`) proves a
+"Isolated bundle build" step, `scripts/ci/ci-target-bundle.sh`) proves a
 bundle is self-contained by building it from a scratch directory
 outside the repo.

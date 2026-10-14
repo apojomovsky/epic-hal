@@ -1,4 +1,4 @@
-"""Behaviour of scripts/gen-sfr.py when a family's EDC is absent: both modes fail, never a silent pass."""
+"""Behaviour of scripts/build/gen-sfr.py when a family's EDC is absent: both modes fail, never a silent pass."""
 import os
 import pathlib
 import re
@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
-SCRIPT = REPO / "scripts" / "gen-sfr.py"
+SCRIPT = REPO / "scripts" / "build" / "gen-sfr.py"
 HEADER = REPO / "hal" / "pic14" / "16f88x" / "include" / "pic16f88x_sfr.h"
 DEFINE = re.compile(r"#define\s+PIC_REG_(\w+)\s+0x([0-9A-Fa-f]+)U?")
 

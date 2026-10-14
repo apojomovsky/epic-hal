@@ -7,7 +7,7 @@
  * EEDATA/EEADR/WPUB/IOCB/VRCON/CMx/ANSEL; Bank 3: EECON1/EECON2/
  * SRCON), so the probe covers each bank through the same literal-token
  * macros the drivers use. Reports PASS/FAIL on RA0 (MODE=gpio in
- * scripts/sim-mdb-run.sh; no USART on this family). */
+ * scripts/sim/sim-mdb-run.sh; no USART on this family). */
 
 #include "core/epic_harness.h"
 #include "core/pic16_irq.h"

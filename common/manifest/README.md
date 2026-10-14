@@ -3,10 +3,10 @@
 One declarative description of what every module needs and where it
 builds. Three consumers read it and nothing else encodes the knowledge:
 
-- `scripts/epic_build.py`, the real-target build driver
-- `scripts/epic_build.py matrix`, which feeds `.github/workflows/ci.yml`'s
+- `scripts/build/epic_build.py`, the real-target build driver
+- `scripts/build/epic_build.py matrix`, which feeds `.github/workflows/ci.yml`'s
   `target` job
-- `scripts/make_bundle.py`, which generates release bundles
+- `scripts/build/make_bundle.py`, which generates release bundles
 
 ## Path conventions
 
@@ -297,7 +297,7 @@ library source; everything else the module owns is its program.
 4. Add a per-family `example` table for each family it ships a program
    on; set `hal = true` if the example needs the HAL but the library
    does not.
-5. `python3 scripts/epic_build.py build --module <name> --mcu <part> --run`
+5. `python3 scripts/build/epic_build.py build --module <name> --mcu <part> --run`
 6. Nothing else. CI's matrix picks it up automatically.
 
 ## Adding a part to an existing family
@@ -310,8 +310,8 @@ appear supported everywhere.
 Then regenerate the family's SFR header and verify it:
 
 ```bash
-python3 scripts/gen-sfr.py --family <FAMILY>   # writes the header in place
-python3 scripts/gen-sfr.py --family <FAMILY> --check  # CI drift gate
+python3 scripts/build/gen-sfr.py --family <FAMILY>   # writes the header in place
+python3 scripts/build/gen-sfr.py --family <FAMILY> --check  # CI drift gate
 ```
 
 The generator reads the same ATDF/EDC the compiler's `scripts/gen-device.py`
@@ -323,7 +323,7 @@ unwritten header for a successful regen.
 
 ## CI stratification (canonical vs full)
 
-`scripts/epic_build.py matrix` is what `ci.yml`/`family-check.yml` builds.
+`scripts/build/epic_build.py matrix` is what `ci.yml`/`family-check.yml` builds.
 On a pull request (`GITHUB_EVENT_NAME == pull_request`) it emits only the
 canonical variant per family, so the per-family job is `modules` not
 `variants × modules`:

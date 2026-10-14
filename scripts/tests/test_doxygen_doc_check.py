@@ -1,9 +1,10 @@
-"""Unit tests for scripts/doxygen_doc_check.py."""
+"""Unit tests for scripts/audit/doxygen_doc_check.py."""
 import pathlib
 import sys
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "audit"))
 
 import doxygen_doc_check  # noqa: E402
 

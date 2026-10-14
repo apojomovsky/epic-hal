@@ -26,7 +26,7 @@ add PIC16F193X).
 
 Every `epic-*` module: `README.md`, often `docs/ARCHITECTURE.md` +
 `docs/API.md`, host-testable via CMake (`cmake -B build && cmake
---build build && ctest`), real-target via `python3 scripts/epic_build.py
+--build build && ctest`), real-target via `python3 scripts/build/epic_build.py
 build --module <name> --mcu <MCU> --run`. No top-level build, build each
 module directly. Each HAL additionally has `MANUAL.md`, datasheet-cited
 per-peripheral register reference; `common/MANUAL.md` covers
@@ -48,7 +48,7 @@ Each HAL's `src/` mirrors its build environments: `src/core/` and
 `src/sim/` is host-simulation-only, `src/mdb/` holds the MPLAB-SIM gate
 variant. Never glob a HAL `src/` directory into a build; select files
 through the manifest (the bundle's `epic-hal.mk` or a reference project).
-The `epic-hal` CLI (`scripts/epic_hal.py`) scaffolds consumer projects
+The `epic-hal` CLI (`scripts/build/epic_hal.py`) scaffolds consumer projects
 from a bundle: it writes `main.c`, a filled `Makefile`, and a patched
 MPLAB X `.X` for a chosen part and module subset.
 
@@ -58,8 +58,8 @@ First-time setup: `make bootstrap` (installs host packages, git hooks,
 and the docker toolchain image; `make doctor` reports what is missing
 without changing anything). **Native**: XC8/MPLAB X installed by hand
 (license-gated), `export PATH=$PATH:/opt/microchip/xc8/v3.10/bin`,
-`python3 scripts/epic_build.py build --module <name> --mcu <MCU> --run`;
-`./scripts/bootstrap.sh` covers the host-sim side plus the Docker
+`python3 scripts/build/epic_build.py build --module <name> --mcu <MCU> --run`;
+`./scripts/dev/bootstrap.sh` covers the host-sim side plus the Docker
 toolchain readiness checks. **Docker** (no
 local installs beyond two vendor files only a human can fetch,
 Microchip's CDN blocks scripted downloads): root `Makefile`, `make
@@ -93,7 +93,7 @@ the isolated bundle-gate build), an `epiccc-gate` job that builds the
 877A and 887 blink hexes, the 4550 settings and sdcard pair and the
 16F1939 blink with a pinned epic-cc driver and the release bundle's
 clang, then verifies them in epic-cc's own simulator (`crates/sim`, via
-`scripts/sim-runner`: the blink PORTB toggle gates and the 1939 LATB
+`scripts/sim/sim-runner`: the blink PORTB toggle gates and the 1939 LATB
 toggle gate; the tick gates wait on epic-cc#173, see DEVELOPMENT.md).
 This is the "did a HAL change break against a known
 good compiler" direction; how to bump the pin: DEVELOPMENT.md. The
@@ -215,9 +215,9 @@ cmake --build build && ctest` (native) or `make test MODULE=<id|dir>`
 (Docker), repeat. Only move to real-target + `mdb` once the host-sim
 example passes, that loop is much slower.
 
-Real-target build: `python3 scripts/epic_build.py build --module <name>
+Real-target build: `python3 scripts/build/epic_build.py build --module <name>
 --mcu <mcu> --run` (native) or `make xc8-build MODULE=<name> MCU=<mcu>`
-(Docker). `scripts/sim-mdb-run.sh` runs the `mdb` gate either way, inside
+(Docker). `scripts/sim/sim-mdb-run.sh` runs the `mdb` gate either way, inside
 the container or directly if `xc8-cc`/`mdb.sh` are on `PATH` and
 `$XC8_INSTALL_DIR` is set the same way (its own header comment covers
 direct use); `make mdb-test` is just the Docker-wrapped call to it.
@@ -251,11 +251,11 @@ Run `make pre-pr-check` before opening a PR. It is a thin wrapper around
    master plan-free. The plan stays visible in the PR's commit history.
 4. Commit hygiene: conventional subjects, no attribution trailers, no
    em-dashes, no whitespace errors in the diff.
-5. **Docstring compliance.** `scripts/doxygen_doc_check.py` over the C
+5. **Docstring compliance.** `scripts/audit/doxygen_doc_check.py` over the C
    files the PR touches, `--brief-only` for `tests/` and `examples/`.
    Hard gate, and scoped to the diff, so a PR is never charged for a
    pre-existing violation elsewhere in the tree.
-6. **Comment and doc prose review.** `scripts/prose-diff.sh` prints
+6. **Comment and doc prose review.** `scripts/hooks/prose-diff.sh` prints
    every added comment block in the PR, and `epic-tasks prose --verify`
    (part of this ritual) fails it on the mechanical rules: the 8-line
    block cap, no `@file`/`@brief` decoration, no iteration or
@@ -358,8 +358,8 @@ the mechanical rules fails the ritual and blocks the push.
   (`type(scope): summary`; `feat`/`docs`/`plan`/`fix`/`refactor`/`style`).
   Scope is usually the module or `phaseN`. Don't batch unrelated changes.
   Subjects are release-notes copy: `cliff.toml` groups them into the
-  GitHub Release (`scripts/release.sh` previews through
-  `scripts/release_notes.py`), so write them for someone reading the
+  GitHub Release (`scripts/release/release.sh` previews through
+  `scripts/release/release_notes.py`), so write them for someone reading the
   release page. A breaking change carries the Conventional Commits `!`
   marker (`type(scope)!:`); reviewers reject a break without it. The
   breaking surfaces are the public `EPIC_*` and module APIs, the
@@ -442,7 +442,7 @@ Every first-party function carries a Doxygen-style docstring:
 - Placement: every signature in every checked file needs a doc block
   before it; the header remains the canonical public-API doc.
   Tests and examples: `@brief`-only.
-- `scripts/doxygen_doc_check.py` is the compliance checker; run it
+- `scripts/audit/doxygen_doc_check.py` is the compliance checker; run it
   before finishing work that touches functions.
 
 ### Docs lifecycle

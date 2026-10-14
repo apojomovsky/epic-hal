@@ -89,7 +89,7 @@ jobs:
         run: |
           git-cliff --tag "${{ steps.version.outputs.next }}" -o CHANGELOG.md
           # git-cliff always leaves a trailing blank line; the repo's
-          # whitespace gate (scripts/pre-pr-check.sh) rejects one.
+          # whitespace gate (scripts/hooks/pre-pr-check.sh) rejects one.
           printf '%s\n' "$(cat CHANGELOG.md)" > CHANGELOG.md
 
       - name: Open the release PR and enable auto-merge

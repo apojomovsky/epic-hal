@@ -2,7 +2,7 @@
  * SFR map, foundation subset: every address/mask/reset 1-to-1 from
  * DS39609B (PIC18F6520/6620/8520/8620 family), cross-checked against
  * the DFP proc header pic18f6520.h and the EDC PIC18F6520.PIC. The
- * generator (scripts/gen-sfr.py) projects the PIC_REG_* addresses; the
+ * generator (scripts/build/gen-sfr.py) projects the PIC_REG_* addresses; the
  * bit names and POR values are hand-maintained from the datasheet.
  */
 

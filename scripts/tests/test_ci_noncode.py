@@ -4,6 +4,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "ci"))
 
 import ci_noncode_check  # noqa: E402
 
@@ -31,8 +32,8 @@ class TestIsNonCode(unittest.TestCase):
         self.assertTrue(self.check(["docs/assets/logo.svg", "img/icon.png"]))
 
     def test_dev_tooling(self):
-        self.assertTrue(self.check(["scripts/bootstrap.sh"]))
-        self.assertTrue(self.check(["scripts/install-git-hooks.sh"]))
+        self.assertTrue(self.check(["scripts/dev/bootstrap.sh"]))
+        self.assertTrue(self.check(["scripts/hooks/install-git-hooks.sh"]))
         self.assertTrue(self.check(["Makefile"]))
 
     def test_nested_makefile_is_code(self):
@@ -51,9 +52,9 @@ class TestIsNonCode(unittest.TestCase):
         self.assertFalse(self.check(["common/manifest/modules.toml"]))
 
     def test_ci_scripts_are_code(self):
-        self.assertFalse(self.check(["scripts/epic_build.py"]))
-        self.assertFalse(self.check(["scripts/sim-mdb-run.sh"]))
-        self.assertFalse(self.check(["scripts/pre-commit-checks.sh"]))
+        self.assertFalse(self.check(["scripts/build/epic_build.py"]))
+        self.assertFalse(self.check(["scripts/sim/sim-mdb-run.sh"]))
+        self.assertFalse(self.check(["scripts/hooks/pre-commit-checks.sh"]))
 
     def test_workflow_is_code(self):
         self.assertFalse(self.check([".github/workflows/ci.yml"]))

@@ -135,7 +135,7 @@ either way:
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-python3 scripts/epic_build.py build --module epic-tick --mcu 18F4550 --run   # also 18F2455 / 18F2550 / 18F4455
+python3 scripts/build/epic_build.py build --module epic-tick --mcu 18F4550 --run   # also 18F2455 / 18F2550 / 18F4455
 ```
 
 Produces `build/18F4550-tick.hex` with vectors placed at 0008h/0018h.

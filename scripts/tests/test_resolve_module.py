@@ -1,10 +1,10 @@
-"""Unit tests for scripts/resolve_module.py."""
+"""Unit tests for scripts/build/resolve_module.py."""
 import pathlib
 import subprocess
 import sys
 import unittest
 
-SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "resolve_module.py"
+SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "build" / "resolve_module.py"
 
 
 def run(*args):

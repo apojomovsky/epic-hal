@@ -10,7 +10,7 @@
 
 # ─────────────────────────── image identity ─────────────────────────
 .PHONY: vendor-link check-vendor image ci-image-push test xc8-build epiccc-build epiccc-sim-sizes mdb-test mdb-epiccc mdb-hex sim-epiccc target-ci exec audit shell bootstrap doctor setup-hooks pre-pr-check
-# Same tag-resolution formula CI and scripts/sim-test-local.sh already
+# Same tag-resolution formula CI and scripts/sim/sim-test-local.sh already
 # use (read straight out of the Dockerfile's own ARGs), kept here in one
 # place so ci-image-push pushes to the exact tag CI resolves and pulls,
 # not a hand-typed guess that can drift from it.
@@ -24,7 +24,7 @@ IMAGE_TAG       := xc8-v$(XC8_VERSION)-dfp$(PIC16_DFP_VER)-$(PIC18_DFP_VER)-$(PI
 
 LOCAL_IMAGE     := epic-hal-toolchain:local
 # GHCR_OWNER is not auto-derived from `git remote` here (unlike
-# scripts/sim-test-local.sh, which only reads, never writes): pushing is
+# scripts/sim/sim-test-local.sh, which only reads, never writes): pushing is
 # a deliberate, infrequent, human-triggered action, so requiring an
 # explicit override protects against silently pushing to the wrong
 # owner's package if this repo is ever forked/cloned under another name.
@@ -117,7 +117,7 @@ test: image
 	@fail=0; \
 	mods="$(ALL_MODULES)"; \
 	if [ -n "$(MODULE)" ]; then \
-		mods=$$(python3 scripts/resolve_module.py --dir "$(MODULE)") || exit 1; \
+		mods=$$(python3 scripts/build/resolve_module.py --dir "$(MODULE)") || exit 1; \
 		if [ ! -f "$$mods/CMakeLists.txt" ]; then \
 			echo "error: module '$(MODULE)' has no host-sim build; host-testable modules: $(ALL_MODULES)" >&2; \
 			exit 1; \
@@ -138,8 +138,8 @@ test: image
 xc8-build: image
 	@test -n "$(MODULE)" || { echo "usage: make xc8-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
 	@test -n "$(MCU)" || { echo "usage: make xc8-build MODULE=epic-serial MCU=16F877A" >&2; exit 1; }
-	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) \
-	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
+	python3 scripts/build/epic_build.py build --module $(MODULE) --mcu $(MCU) \
+	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts/build'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
 	$(DOCKER_RUN) sh build/$(MCU)/build.sh
 
 # ─────────────────────────── real-target epic-cc build ───────────────
@@ -257,7 +257,7 @@ epiccc-build:
 			esac; \
 		fi; \
 	fi
-	python3 scripts/epic_build.py build --module $(MODULE) --mcu $(MCU) --variant $(VARIANT) --toolchain epic-cc --epic-cc $(EPIC_CC_BIN) --build-dir $(EPICCC_BUILD_DIR) $(EPICCC_REPORT) --opt-level $(OPTLEVEL)
+	python3 scripts/build/epic_build.py build --module $(MODULE) --mcu $(MCU) --variant $(VARIANT) --toolchain epic-cc --epic-cc $(EPIC_CC_BIN) --build-dir $(EPICCC_BUILD_DIR) $(EPICCC_REPORT) --opt-level $(OPTLEVEL)
 ifeq ($(EPIC_CC_HOST),1)
 	sh $(EPICCC_BUILD_DIR)/$(MCU)/build.sh
 else
@@ -279,12 +279,12 @@ epiccc-sim-sizes:
 		m=$${spec%%:*}; c=$${spec##*:}; \
 		$(MAKE) --no-print-directory epiccc-build MODULE=$$m MCU=$$c VARIANT=sim || fail=1; \
 	done; \
-	python3 scripts/epiccc_sim_sizes.py $(EPICCC_SIM_SPECS) || fail=1; \
+	python3 scripts/sim/epiccc_sim_sizes.py $(EPICCC_SIM_SPECS) || fail=1; \
 	exit $$fail
 
 # ─────────────────────────── mdb / MPLAB SIM gate ────────────────────
-# Thin wrapper around scripts/sim-mdb-run.sh, the exact same script CI
-# and scripts/sim-test-local.sh call, so there is one source of truth
+# Thin wrapper around scripts/sim/sim-mdb-run.sh, the exact same script CI
+# and scripts/sim/sim-test-local.sh call, so there is one source of truth
 # for the mdb command sequence, not a fourth copy of it here. Resolution
 # (epic_build.py build --variant sim, needs python3) runs on the host,
 # before $(DOCKER_RUN); sim-mdb-run.sh itself only ever executes the
@@ -302,14 +302,14 @@ mdb-test: image
 		echo "  e.g. make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A" >&2; \
 		exit 1; \
 	fi
-	MID=$$(python3 scripts/resolve_module.py --id "$(MODULE)") || exit 1; \
-	python3 scripts/epic_build.py build --module $$MID --mcu $(MCU) --variant sim \
+	MID=$$(python3 scripts/build/resolve_module.py --id "$(MODULE)") || exit 1; \
+	python3 scripts/build/epic_build.py build --module $$MID --mcu $(MCU) --variant sim \
 	  --build-dir build-sim/$$MID \
-	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
-	MID=$$(python3 scripts/resolve_module.py --id "$(MODULE)") || exit 1; \
+	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts/build'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
+	MID=$$(python3 scripts/build/resolve_module.py --id "$(MODULE)") || exit 1; \
 	$(DOCKER_RUN) env \
 	  $(if $(filter toggle,$(or $(MODE),uart)),TOGGLE_REG=$(or $(REG),PORTB) TOGGLE_BIT=$(or $(BIT),0) TOGGLE_SAMPLES=$(or $(SAMPLES),12) TOGGLE_STEPI=$(or $(STEPI),200000),) \
-	  scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $$MID $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)" $(or $(EEPROM_WRITES),$(if $(filter epic-settings lib/settings,$(patsubst %/,%,$(MODULE))),24,0))
+	  scripts/sim/sim-mdb-run.sh local $(MCU) $(DEVICE) $$MID $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)" $(or $(EEPROM_WRITES),$(if $(filter epic-settings lib/settings,$(patsubst %/,%,$(MODULE))),24,0))
 
 mdb-epiccc: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
@@ -319,23 +319,23 @@ mdb-epiccc: image
 		echo "  stepi, not wall-clock wait, so the sequence is identical run to run." >&2; \
 		echo "  Build the hex first where epic-cc lives (its compiler and clang are not in" >&2; \
 		echo "  this image):" >&2; \
-		echo "    python3 scripts/epic_build.py build --module <m> --mcu <mcu> \\" >&2; \
+		echo "    python3 scripts/build/epic_build.py build --module <m> --mcu <mcu> \\" >&2; \
 		echo "      --toolchain epic-cc --epic-cc <path> --build-dir build-sim/<m>" >&2; \
 		echo "    then run the emitted build-sim/<m>/<mcu>/build.sh there" >&2; \
 		echo "  e.g. make mdb-epiccc MODULE=pic16f88x-hal MCU=16F887 DEVICE=PIC16F887" >&2; \
 		exit 1; \
 	fi
-	MID=$$(python3 scripts/resolve_module.py --id "$(MODULE)") || exit 1; \
+	MID=$$(python3 scripts/build/resolve_module.py --id "$(MODULE)") || exit 1; \
 	$(DOCKER_RUN) env SIM_MDB_SKIP_BUILD=1 \
 	  TOGGLE_REG=$(or $(REG),PORTB) TOGGLE_BIT=$(or $(BIT),0) \
 	  TOGGLE_SAMPLES=$(or $(SAMPLES),12) TOGGLE_STEPI=$(or $(STEPI),200000) \
-	  scripts/sim-mdb-run.sh local $(MCU) $(DEVICE) $$MID 0 toggle
+	  scripts/sim/sim-mdb-run.sh local $(MCU) $(DEVICE) $$MID 0 toggle
 # ─────────────────── mdb run on an arbitrary hex ─────────────────────
 # Program an existing hex under MPLAB SIM and run EXTRA_MDB (register
 # reads) after the first wait. Unlike mdb-test there is no HARNESS=sim
 # rebuild: this is the gate for hexes another toolchain produced, e.g.
 # epiccc-build's output, where the acceptance is a register read, not a
-# UART marker. Thin wrapper around scripts/mdb-hex-run.sh, the same
+# UART marker. Thin wrapper around scripts/sim/mdb-hex-run.sh, the same
 # "one source of truth" shape sim-mdb-run.sh gives the harness gates:
 # the CI epiccc-gate job runs that script directly. HEX is
 # repo-relative, DEVICE is the MPLAB part name, and EXTRA_MDB uses
@@ -350,11 +350,11 @@ mdb-hex: image
 		echo "  e.g. make mdb-hex HEX=build/epiccc/16F887-blink.hex DEVICE=PIC16F887" >&2; \
 		exit 1; \
 	fi
-	$(DOCKER_RUN) scripts/mdb-hex-run.sh /repo/$(HEX) $(DEVICE) $(or $(WAIT_MS),2000) "$(EXTRA_MDB)"
+	$(DOCKER_RUN) scripts/sim/mdb-hex-run.sh /repo/$(HEX) $(DEVICE) $(or $(WAIT_MS),2000) "$(EXTRA_MDB)"
 
 # ─────── epic-cc sim gate (HAL-4) ───────
 # The public gate: run an epic-cc hex under its own ISA simulator
-# (crates/sim, via scripts/sim-runner), replacing the mdb half of
+# (crates/sim, via scripts/sim/sim-runner), replacing the mdb half of
 # the epiccc-gate job (epic-hal#60): no XC8, no mdb, no private
 # image. Needs an epic-cc checkout at <repo>/epic-cc (locally
 # `ln -s ~/projects/epic-cc epic-cc`). WATCH requires a toggle;
@@ -376,7 +376,7 @@ sim-epiccc:
 		-v $(realpath $(CURDIR)/epic-cc):$(HOME)/projects/epic-cc \
 		-e CARGO_HOME=$(HOME)/.cargo-sim-runner -e CARGO_TARGET_DIR=$(HOME)/.target-sim-runner \
 		-v $(CURDIR):/repo \
-		-w /repo/scripts/sim-runner $(EPIC_CC_IMAGE) \
+		-w /repo/scripts/sim/sim-runner $(EPIC_CC_IMAGE) \
 		cargo run --release --locked -- \
 		--hex /repo/$(HEX) --device $(DEVICE) --watch $(or $(WATCH),PORTB:0) \
 		--samples $(or $(SAMPLES),24) --steps $(or $(STEPS),500000) \
@@ -398,7 +398,7 @@ shell: image
 # with the same --user/passwd/HOME mount plumbing as every other target
 # (probes, clean rebuilds, custom mdb sessions). The CMD is handed to
 # `bash -c`, so avoid double quotes inside it:
-#   make exec CMD='bash scripts/sim-mdb-run.sh pic16f87xa 16F877A PIC16F877A epic-tick 60000 gpio'
+#   make exec CMD='bash scripts/sim/sim-mdb-run.sh pic16f87xa 16F877A PIC16F877A epic-tick 60000 gpio'
 exec: image
 	@test -n "$(CMD)" || { echo "usage: make exec CMD='bash scripts/... args'" >&2; exit 1; }
 	$(DOCKER_RUN) bash -c "$(CMD)"
@@ -413,13 +413,13 @@ exec: image
 # container for the DFP headers and xc8-cc. The dfp-pin audit is pure
 # text (Dockerfile, manifest, reference projects), so it needs neither.
 audit: image
-	python3 scripts/sfr-map-audit.py
-	python3 scripts/config-key-audit.py
-	python3 scripts/statics-audit.py
-	python3 scripts/hex-identity-audit.py
-	python3 scripts/dfp-pin-audit.py
-	python3 scripts/epiccc-slice-audit.py
-	python3 scripts/mplabx-audit.py
+	python3 scripts/audit/sfr-map-audit.py
+	python3 scripts/audit/config-key-audit.py
+	python3 scripts/audit/statics-audit.py
+	python3 scripts/audit/hex-identity-audit.py
+	python3 scripts/audit/dfp-pin-audit.py
+	python3 scripts/audit/epiccc-slice-audit.py
+	python3 scripts/audit/mplabx-audit.py
 
 # ──────────────────── local replica of CI's target job ──────────────
 # One command to reproduce the whole "target" CI job locally: emit the
@@ -432,16 +432,16 @@ audit: image
 # --user container cannot create /isolated); everything else uses
 # DOCKER_RUN so build artifacts stay host-owned.
 target-ci: image
-	python3 scripts/ci-local-emit.py
-	$(DOCKER_RUN) bash scripts/ci-target-build.sh matrix.txt ci-summary-build.md
-	$(DOCKER_RUN) bash scripts/ci-target-sim.sh ci-summary-sim.md
+	python3 scripts/ci/ci-local-emit.py
+	$(DOCKER_RUN) bash scripts/ci/ci-target-build.sh matrix.txt ci-summary-build.md
+	$(DOCKER_RUN) bash scripts/ci/ci-target-sim.sh ci-summary-sim.md
 	docker run --rm -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) \
-		bash scripts/ci-target-bundle.sh bundles ci-summary-bundle.md
+		bash scripts/ci/ci-target-bundle.sh bundles ci-summary-bundle.md
 	@cat ci-summary-build.md ci-summary-sim.md ci-summary-bundle.md
-	$(DOCKER_RUN) bash scripts/ci-target-build.sh matrix.txt ci-summary-build.md
-	$(DOCKER_RUN) bash scripts/ci-target-sim.sh ci-summary-sim.md
+	$(DOCKER_RUN) bash scripts/ci/ci-target-build.sh matrix.txt ci-summary-build.md
+	$(DOCKER_RUN) bash scripts/ci/ci-target-sim.sh ci-summary-sim.md
 	docker run --rm -v $(CURDIR):/repo -w /repo $(LOCAL_IMAGE) \
-		bash scripts/ci-target-bundle.sh bundles ci-summary-bundle.md
+		bash scripts/ci/ci-target-bundle.sh bundles ci-summary-bundle.md
 	@cat ci-summary-build.md ci-summary-sim.md ci-summary-bundle.md
 
 # ───────────────────── local-only developer rituals ─────────────────
@@ -449,13 +449,13 @@ target-ci: image
 # build, so they must run before `make image` is even possible.
 
 bootstrap:
-	@bash scripts/bootstrap.sh
+	@bash scripts/dev/bootstrap.sh
 
 doctor:
-	@bash scripts/bootstrap.sh --check-only
+	@bash scripts/dev/bootstrap.sh --check-only
 
 setup-hooks:
-	@bash scripts/install-git-hooks.sh
+	@bash scripts/hooks/install-git-hooks.sh
 
 pre-pr-check: ## Takeoff ritual before opening a PR; TEST=1 runs the suite
-	@bash scripts/pre-pr-check.sh $(if $(TEST),--test,)
+	@bash scripts/hooks/pre-pr-check.sh $(if $(TEST),--test,)

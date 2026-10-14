@@ -45,6 +45,6 @@ part), the `mdb` gate (`make mdb-test MODULE=pic16f818_819-hal
 MCU=16F819 DEVICE=PIC16F819 MODE=gpio`; the family has no USART, so the
 harness reports the pass/fail verdict on RA0), and the epic-cc gate
 (`make epiccc-build MODULE=pic16f818_819-hal MCU=16F819
-EPIC_CC_HOST=1`, gated in CI through `scripts/sim-runner` watching
+EPIC_CC_HOST=1`, gated in CI through `scripts/sim/sim-runner` watching
 PORTB:0 as the Timer0 overflow toggles it). `docs/adding-a-device.md`
 §4 is the mandatory per-peripheral gate.

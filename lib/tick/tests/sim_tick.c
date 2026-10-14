@@ -1,7 +1,7 @@
 /**
  * epic-tick HARNESS=sim gate: the bounded, self-reporting diagnostic
  * build the manifest's `.sim` variant runs under MPLAB SIM (see
- * scripts/ci-target-sim.sh). Deliberately separate from the target-only
+ * scripts/ci/ci-target-sim.sh). Deliberately separate from the target-only
  * examples/example_tick.c demo (an unbounded LED blink): this program
  * delays 10 ms and 5 ms, checks the elapsed counts land within one tick
  * of the requested value, and reports PASS/FAIL via the harness. The

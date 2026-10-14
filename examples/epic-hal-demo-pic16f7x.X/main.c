@@ -13,7 +13,7 @@
 #include "peripherals/pic16f7x_gpio.h"
 
 /* Config words validated against the 16F77 DFP by the config-key audit
- * (see scripts/config-key-audit.py): the 16F77 exposes FOSC, WDTE,
+ * (see scripts/audit/config-key-audit.py): the 16F77 exposes FOSC, WDTE,
  * PWRTE, BOREN, CP only. */
 #pragma config FOSC = HS
 #pragma config WDTE = ON

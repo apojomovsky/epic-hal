@@ -8,7 +8,7 @@
  *
  * EEPROM is real device state under MPLAB SIM, so the actual hardware path
  * is exercised. Simulator limitation: a CPU-executed EEPROM write never
- * completes (WR held set, EEIF never raised), so scripts/sim-mdb-run.sh
+ * completes (WR held set, EEIF never raised), so scripts/sim/sim-mdb-run.sh
  * (EEPROM_WRITES=24) halts at each stalled write, replays the EECON2
  * unlock, and resumes. This scenario makes exactly 19 writes; keep
  * EEPROM_WRITES >= 19 if the scenario changes.

@@ -11,7 +11,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 def _load():
     """Import config-key-audit.py, whose filename is not a valid module name."""
-    path = SCRIPTS / "config-key-audit.py"
+    path = SCRIPTS / "audit" / "config-key-audit.py"
     spec = importlib.util.spec_from_file_location("config_key_audit", path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

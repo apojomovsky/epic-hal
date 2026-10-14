@@ -2,7 +2,7 @@
 
 Register reference for the PIC16F628A family HAL (DS40044G). Every
 address below is DFP-verified against `Microchip.PIC16Fxxx_DFP`
-`edc/PIC16F628A.PIC` and pinned by `scripts/gen-sfr.py --family
+`edc/PIC16F628A.PIC` and pinned by `scripts/build/gen-sfr.py --family
 PIC16F628A` (`--check` runs in CI). Shared conventions (naming, handle
 pattern, harness, interrupt model) live in `common/MANUAL.md`;
 shared driver behavior lives in `hal/pic14/core/` sources. This

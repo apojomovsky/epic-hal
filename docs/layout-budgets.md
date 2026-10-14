@@ -61,7 +61,7 @@ inspect the .s / .sym / .map (AGENTS.md).
   cannot split it across banks (lib/math/docs/ARCHITECTURE.md).
 - **Linker best-fit**: unpinned `static` GPR is scattered by
   best-fit, not declaration order. Anything bank-sensitive gets
-  `EPIC_PLACE`; the statics audit (scripts/statics-audit.py) flags
+  `EPIC_PLACE`; the statics audit (scripts/audit/statics-audit.py) flags
   unpinned IRQ-shared multi-byte statics mechanically.
 
 ## SFR bank rules

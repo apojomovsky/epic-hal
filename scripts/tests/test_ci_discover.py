@@ -1,4 +1,4 @@
-"""Unit tests for scripts/ci-discover-affected-modules.py, run against the
+"""Unit tests for scripts/ci/ci-discover-affected-modules.py, run against the
 real tree: the change-detection reads CMakeLists.txt files and directory
 names, so a layout move that it misreads shrinks the CI matrix silently."""
 import importlib.util
@@ -10,11 +10,12 @@ import unittest
 SCRIPTS = pathlib.Path(__file__).resolve().parents[1]
 REPO_ROOT = SCRIPTS.parent
 sys.path.insert(0, str(SCRIPTS))
+sys.path.insert(0, str(SCRIPTS / "ci"))
 
 
 def load():
     spec = importlib.util.spec_from_file_location(
-        "ci_discover", SCRIPTS / "ci-discover-affected-modules.py")
+        "ci_discover", SCRIPTS / "ci" / "ci-discover-affected-modules.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod

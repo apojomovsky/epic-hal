@@ -22,16 +22,16 @@ cmake -B build && cmake --build build
 Real target (XC8, via the manifest):
 
 ```sh
-python3 scripts/epic_build.py build --module pic16f88x-hal --mcu 16F887 \
+python3 scripts/build/epic_build.py build --module pic16f88x-hal --mcu 16F887 \
     --variant target --build-dir build-target --dfp-dir <dfp>/xc8
 ```
 
 MPLAB SIM gate (HARNESS=sim, the banked-SFR probe):
 
 ```sh
-python3 scripts/epic_build.py build --module pic16f88x-hal --mcu 16F887 \
+python3 scripts/build/epic_build.py build --module pic16f88x-hal --mcu 16F887 \
     --variant sim --build-dir build-sim/pic16f88x-hal --dfp-dir <dfp>/xc8
-bash scripts/sim-mdb-run.sh pic16f88x 16F887 PIC16F887 pic16f88x-hal 5000 uart
+bash scripts/sim/sim-mdb-run.sh pic16f88x 16F887 PIC16F887 pic16f88x-hal 5000 uart
 ```
 
 ## Layout

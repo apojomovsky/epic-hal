@@ -6,7 +6,7 @@
 
 # The target-only example (examples/example_settings.c) is not built by
 # this host build: it is a manifest-governed consumer program compiled
-# with XC8 by scripts/epic_build.py (see common/manifest/
+# with XC8 by scripts/build/epic_build.py (see common/manifest/
 # modules.toml), like every other module's examples/ demo.
 
 # One family-agnostic implementation (src/epic_settings.c) builds against

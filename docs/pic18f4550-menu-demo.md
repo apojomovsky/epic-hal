@@ -11,14 +11,14 @@ real, unmocked driver code paths for every peripheral it touches.
 
 ## Method
 
-- `scripts/compare-toolchains.sh <module> <mcu> <device> [wait_ms]
+- `scripts/sim/compare-toolchains.sh <module> <mcu> <device> [wait_ms]
   [eeprom_writes]` builds the module's sim variant under both
   toolchains, prints a flash/RAM size table (both figures normalized to
-  flash *words*; `scripts/epic_build.py`'s `parse_memory_summary` does
+  flash *words*; `scripts/build/epic_build.py`'s `parse_memory_summary` does
   the XC8 byte-to-word conversion PIC18's byte-addressed program space
   needs); if both builds succeed, it also diffs the two builds' real
   MPLAB SIM (`mdb.sh`) UART traces byte-for-byte.
-- e.g. `scripts/compare-toolchains.sh epic-menu-demo 18F4550
+- e.g. `scripts/sim/compare-toolchains.sh epic-menu-demo 18F4550
   PIC18F4550 60000 4`.
 
 ## Result
@@ -81,12 +81,12 @@ cleanly under epic-cc, in the order found:
 ## Verification
 
 - `make xc8-build MODULE=epic-menu-demo MCU=18F4550`: clean.
-- Real MPLAB SIM gate (`scripts/sim-mdb-run.sh`, uart mode,
+- Real MPLAB SIM gate (`scripts/sim/sim-mdb-run.sh`, uart mode,
   `eeprom_writes=4`, 1500 ms wait): `EPIC_HARNESS_RESULT: PASS` with no
   FAIL marker in the capture, reproduced at the close-out rerun and
   earlier under epic-hal#251. A longer wait overruns the harness bound
   and re-enters `main`, which the gate's own marker check reads as FAIL.
-- Close-out rerun (`scripts/compare-toolchains.sh epic-menu-demo 18F4550
+- Close-out rerun (`scripts/sim/compare-toolchains.sh epic-menu-demo 18F4550
   PIC18F4550`, driver `epic-cc 0.1.0+885fe58` built inside the dev image,
   not a cached host binary, see epic-hal#240): epic-cc links clean at
   11888/16384 words and 743/2048 bytes; its mdb run produces no UART

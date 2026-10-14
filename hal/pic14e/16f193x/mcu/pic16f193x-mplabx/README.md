@@ -23,7 +23,7 @@ existing PIC16Fxxx_DFP/PIC18Fxxxx_DFP convention).
 Build this example with the manifest-driven driver, from the repo root:
 
 ```sh
-python3 scripts/epic_build.py build --module epic-pic16f193x-firmware --mcu 16F1937 --run
+python3 scripts/build/epic_build.py build --module epic-pic16f193x-firmware --mcu 16F1937 --run
 ```
 
 Also 16F1933/1934/1936/1938/1939. Output is

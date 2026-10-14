@@ -55,11 +55,11 @@ type; RB1 toggles per echoed byte.
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-python3 scripts/epic_build.py build --module epic-swuart --mcu 16F877A --run
+python3 scripts/build/epic_build.py build --module epic-swuart --mcu 16F877A --run
 ```
 
 **Real-hardware verification status:** the module's `mdb` gate
-(`scripts/ci-target-sim.sh`) proves real CCP-compare-driven TX firmware
+(`scripts/ci/ci-target-sim.sh`) proves real CCP-compare-driven TX firmware
 runs to completion under MPLAB SIM without hanging, and a separate
 hand-trace confirmed the compiled `.hex`'s TX bit sequence is
 byte-exact hardware-correct. It does **not** prove real-hardware RX

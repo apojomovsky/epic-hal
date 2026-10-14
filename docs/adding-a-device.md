@@ -156,9 +156,9 @@ deliverables) before calling it done.
    - Regenerate the per-family SFR header from the ATDF/EDC (same source the
      compiler's `scripts/gen-device.py` uses):
      ```bash
-     python3 scripts/gen-sfr.py --family <FAMILY>
+     python3 scripts/build/gen-sfr.py --family <FAMILY>
      git diff --exit-code  # should be empty if the new part shares the family map
-     python3 scripts/gen-sfr.py --family <FAMILY> --check  # CI drift gate
+     python3 scripts/build/gen-sfr.py --family <FAMILY> --check  # CI drift gate
      ```
      No hand-edited `PIC_REG_*` defines; the generator reads
      `/opt/microchip/xc8/v*/pic/packs/<dfp>/edc/<PART>.PIC` (or `Device.sfrs`
@@ -208,11 +208,11 @@ it done.
    exists for, don't stop here.
 5. **Build for real target**, the pinned XC8 Docker image (resolve the
    tag from `docker/ci-toolchain/Dockerfile`'s `ARG`s the way
-   `scripts/sim-test-local.sh` does), for **every** MCU variant in the
+   `scripts/sim/sim-test-local.sh` does), for **every** MCU variant in the
    family this peripheral applies to, not just one. A clean build is
    necessary, not sufficient, keep going.
 6. **Run the same test under real `mdb`** (MPLAB SIM, headless). The
-   `make mdb-test` recipe wraps `scripts/sim-mdb-run.sh`, which builds
+   `make mdb-test` recipe wraps `scripts/sim/sim-mdb-run.sh`, which builds
    the `HARNESS=sim` firmware and drives `mdb.sh`. For families that
    report PASS/FAIL over UART (PIC16F87XA, PIC18Fxxxx), the default
    `MODE=uart` captures the `EPIC_HARNESS_RESULT` marker from the
@@ -432,15 +432,15 @@ assumes the previous ones are done and verified, not just written):
    from empirical probing alone without doing that check, and had to be
    corrected; don't repeat it.
 9. **CI wiring, done at foundation time, not deferred to "later":**
-   discovery is manifest-driven now. `scripts/epic_build.py matrix`
+   discovery is manifest-driven now. `scripts/build/epic_build.py matrix`
    walks the manifest's family and module blocks, so the new family
    enters CI's matrix as soon as its `[families.<NAME>]` block and its
    pseudo-module's `example` block exist. The hand-maintained lists are
    the ones that fail silently, so verify each by running it:
-   - `python3 scripts/epic_build.py matrix` and the same with
+   - `python3 scripts/build/epic_build.py matrix` and the same with
      `--canonical-only` must both list the family and its variants (the
      canonical part is `variants[-1]`; that is what the PR gate builds).
-   - `scripts/ci-target-sim.sh`'s `run_one` pilot list needs a line for
+   - `scripts/ci/ci-target-sim.sh`'s `run_one` pilot list needs a line for
      the family. Omit it and the family's mdb leg matches nothing and
      passes vacuously, which reads as coverage and is not.
    - `.github/workflows/family-check.yml`'s inline module/part list
@@ -449,7 +449,7 @@ assumes the previous ones are done and verified, not just written):
    - `.github/workflows/ci.yml` and `nightly.yml` each carry their own
      `family-<slug>` job list. Both need the new job: 83_84 was wired
      into PR CI and missed in nightly, so recurrence is the norm.
-   - `scripts/ci-local-emit.py`'s `SIM_VARIANTS` mirrors the CI lists
+   - `scripts/ci/ci-local-emit.py`'s `SIM_VARIANTS` mirrors the CI lists
      for the local `make target-ci` replica.
    The older shape of this mistake is worth knowing because it stayed
    invisible for a long time: PIC16F193X's family discovery lived in a
@@ -483,7 +483,7 @@ exist and are accurate, not just present:
 - [ ] The manifest family block and the family's own pseudo-module
       block are wired (per-variant `supported`, or a measured `excluded`
       reason string), and the hand-listed CI spots of §5 step 9 are all
-      updated, verified by running `python3 scripts/epic_build.py matrix`
+      updated, verified by running `python3 scripts/build/epic_build.py matrix`
       and `... --canonical-only` and finding the family in both, not by
       "the directory exists so it must be picked up". Any `excluded`
       entry carries a real root-cause reason, not a silent exclusion.

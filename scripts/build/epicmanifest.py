@@ -1,0 +1,820 @@
+"""Load, validate, and resolve common/manifest/modules.toml; the only
+module that knows the manifest's schema (build driver, CI matrix, and
+bundle generator all go through these dataclasses). Family paths are
+repo-root-relative; module paths are module-dir-relative, except a path
+whose first segment is a top-level tree directory (common/, hal/, lib/,
+demos/), which names the repo root so moving a module's directory only
+changes its `dir` entry. Load-bearing amendments: needs_hal (with
+per-example hal override), sources_by_family, fosc_hz.
+"""
+from __future__ import annotations
+
+import dataclasses
+import pathlib
+import posixpath
+import tomllib
+
+
+class ManifestError(Exception):
+    """A manifest that parsed as TOML but is not internally consistent."""
+
+
+# Shared ISA cores (epic-hal#136 naming decision): families consume
+# these verbatim, so per-module epic-cc slices may name them alongside
+# the family's own hal_dir and epic-common. Extend deliberately.
+_SHARED_CORE_DIRS = ("hal/pic14/core/",)
+
+# First segments that anchor a manifest path at the repo root instead
+# of the module's `dir` (epic-hal#313). Mirrors the layout test's
+# top-level directories; extend both together.
+_ROOT_DIRS = ("common/", "hal/", "lib/", "demos/")
+
+
+def join_module_path(mod_dir: str, path: str) -> str:
+    """Repo-root-relative form of one manifest source or include path.
+
+    Module-local files resolve under the module's `dir`; a path whose
+    first segment is a top-level tree directory passes through
+    unchanged, so the result never depends on how deep the module sits.
+    """
+    if path.startswith(_ROOT_DIRS):
+        return posixpath.normpath(path)
+    return posixpath.normpath(f"{mod_dir}/{path}")
+
+
+@dataclasses.dataclass(frozen=True)
+class ConditionalSource:
+    path: str
+    variants: list[str]
+    after: str | None = None
+
+
+@dataclasses.dataclass(frozen=True)
+class Family:
+    name: str
+    hal_dir: str
+    variants: list[str]
+    dfp: str
+    fosc_hz: int
+    includes: list[str]
+    hal_sources: list[str]
+    conditional_sources: list[ConditionalSource]
+    harness_src: str | None = None
+    dfp_version: str | None = None
+    # The family HAL's epic-cc conformant slice (HAL-3): exactly the
+    # files that build under epic-cc and fit the part's RAM, listed
+    # verbatim (epiccc-named variants included). Replaces the build
+    # driver's hardcoded keep-list: a later cluster grows the slice by
+    # adding entries here, not by touching shared tooling. Empty means
+    # the family is not yet reachable on the epic-cc path and the
+    # driver fails loudly.
+    epiccc_sources: list[str] = dataclasses.field(default_factory=list)
+    # Crystal frequency for PLL-based families whose fosc_hz records the
+    # post-PLL system clock: epic-cc derives clocks from the crystal and
+    # checks xtal/plldiv hits the PLL's 4 MHz input (DS39632E).
+    xtal_hz: int | None = None
+
+    @property
+    def slug(self) -> str:
+        """Bundle and install slug: the family key lowercased. Independent
+        of where hal_dir sits in the tree, so bundle and asset names
+        survive a directory move."""
+        return self.name.lower()
+
+
+@dataclasses.dataclass(frozen=True)
+class SimVariant:
+    """The HARNESS=sim build: a bounded, self-reporting firmware used to
+    drive MPLAB SIM (see sim-tests.yml), distinct from the real-target
+    HARNESS=target build the same example otherwise produces.
+
+    harness_src replaces the family's harness_src at its recorded
+    position in hal_sources (not appended: XC8 lays out psects in link
+    order). sources, when set, replaces the target example's own
+    sources entirely (pic16f193x-hal's sim variant links a different
+    diagnostic program than its target example); when unset the target
+    example's sources are reused unchanged (epic-tick's sim variant
+    links the same example_tick.c, only the harness and config differ).
+    config is a full override, not a merge: PIC16's WDTE / PIC18's WDT
+    is off in every sim variant seen so far, and restating the whole
+    config table keeps this dataclass's contract simple (no partial-
+    override merge logic to get subtly wrong).
+
+    depends_on, when set, replaces the example's depends_on for the sim
+    build (the sim variant's sources replace the example's, so its
+    deps replace the example's too; unset inherits the example's).
+    epic-encoder's sim test logs over the harness USART and needs no
+    epic-serial, but the target example does, so the sim variant
+    declares an empty list to drop it.
+    """
+    name: str
+    harness_src: str
+    config: dict[str, str]
+    sources: list[str] | None = None
+    depends_on: list[str] | None = None
+    # Per-MCU full overrides, mirroring Example.variants: a part whose
+    # config spelling differs from the family default (63x INTOSCIO
+    # vs INTRCIO) restates the sim entry. Absent MCUs use the family
+    # default unchanged.
+    variants: dict[str, SimVariant] | None = None
+
+
+@dataclasses.dataclass(frozen=True)
+class EpicccVariant:
+    """The epic-cc build's example (``--toolchain epic-cc``), for a
+    family whose target example is unobservable in epic-cc's simulator.
+
+    The 16F5x blink polls Timer0, which crates/sim's PicBaseline core
+    never advances and the die cannot interrupt, so the sim-runner
+    would gate on a stuck pin. The epiccc variant replaces the
+    example's sources and config on the epic-cc path only; the XC8
+    target and sim builds keep the canonical program byte-for-byte.
+    config is a full override, same posture as SimVariant's.
+    """
+    name: str
+    sources: list[str]
+    config: dict[str, str]
+
+
+@dataclasses.dataclass(frozen=True)
+class Example:
+    name: str
+    sources: list[str]
+    config: dict[str, str]
+    hal: bool
+    # Per-example module dependencies, distinct from the module-level
+    # depends_on: the example program needs these modules in the build
+    # even when the library itself does not (epic-math's example logs
+    # over epic-serial, but epic-math the library is pure logic). Kept
+    # on the example so the dep is scoped per family and per MCU: a
+    # small-part variant whose probe does not use serial carries no
+    # serial dep, so excluded-MCU builds do not compile excluded code.
+    # Resolved together with the module's own depends_on in
+    # sources_for/includes_for, before the example's own sources.
+    depends_on: list[str] | None = None
+    sim: SimVariant | None = None
+    # The epic-cc path's example override (see EpicccVariant). Family
+    # scoped like sim: every part of the family shares the simulator
+    # limitation that motivates it.
+    epiccc: EpicccVariant | None = None
+    # Per-MCU overrides: a variant replaces the family example for one
+    # MCU (flash budgets differ within a family, e.g. the 4K-word
+    # 16F873A/16F874A cannot hold epic-math's golden-vector replay).
+    # example_for(module, family, mcu) resolves the variant.
+    variants: dict[str, Example] | None = None
+
+
+@dataclasses.dataclass(frozen=True)
+class Module:
+    name: str
+    dir: str
+    sources: list[str]
+    sources_by_family: dict[str, list[str]]
+    includes: list[str]
+    depends_on: list[str]
+    needs_hal: bool
+    supported: dict[str, list[str]]
+    excluded: dict[str, str]
+    examples: dict[str, Example]
+    # Optional per-module HAL subset for epic-cc builds, family name to
+    # repo-root-relative paths, replacing the family's flat
+    # epiccc_sources slice for this module on that family only. The
+    # serial stack needs a narrower (and different) peripheral set than
+    # the scheduling core, and the whole-program overlay on 368-byte
+    # parts cannot hold one slice serving both.
+    epiccc_hal_sources_by_family: dict[str, list[str]] | None = None
+    # Optional per-module HAL subset for epic-cc sim builds only:
+    # same verbatim posture, scoped to the mdb-gate firmware. A
+    # module with both legs cannot use the field above for a
+    # USART-bearing sim set: it would reroute the target leg too
+    # and link the mdb harness into the target build. The list
+    # names the sim harness directly (no swap runs under it), so it
+    # stays family-uniform; validation enforces the harness below.
+    epiccc_sim_hal_sources_by_family: dict[str, list[str]] | None = None
+
+
+@dataclasses.dataclass(frozen=True)
+class Manifest:
+    families: dict[str, Family]
+    modules: dict[str, Module]
+    # Oldest epic-cc release this tree builds against, from the
+    # manifest's [toolchain] table. A breaking surface: raising it
+    # needs the `!` marker like any other break.
+    min_epic_cc: str
+
+    def _module(self, name):
+        mod = self.modules.get(name)
+        if mod is None:
+            raise ManifestError(f"unknown module '{name}'")
+        return mod
+
+    def resolve_module(self, value: str):
+        """The module named by a manifest id or a directory.
+
+        `make test` scopes by directory while the target builds scope
+        by id; both spellings name the same module, so every entry
+        point accepts either. A trailing slash is ignored.
+        """
+        want = value.rstrip("/")
+        if want in self.modules:
+            return self.modules[want]
+        for mod in self.modules.values():
+            if mod.dir == want:
+                return mod
+        known = ", ".join(sorted(self.modules))
+        raise ManifestError(f"unknown module '{value}'; known ids: {known}")
+
+    def resolve_deps(self, module_name: str) -> list[str]:
+        """The module plus every transitive dependency, dependencies first.
+
+        Order is deterministic (depth-first over `depends_on` as written),
+        so a source list is reproducible and a .hex is byte-comparable
+        across runs. Cycles are already rejected at load time.
+        """
+        seen, ordered = set(), []
+
+        def visit(name):
+            if name in seen:
+                return
+            seen.add(name)
+            for dep in self._module(name).depends_on:
+                visit(dep)
+            ordered.append(name)
+
+        visit(module_name)
+        return ordered
+
+    def resolved_deps(self, module_name: str, mcu: str,
+                      variant: str = "target") -> list[str]:
+        """The module's deps plus the resolved example's deps, dependencies
+        first, de-duplicated.
+
+        The example deps are scoped per family and per MCU (the
+        resolved example may be a per-MCU variant with its own
+        depends_on, e.g. epic-math's small-part probes carry no serial
+        dep), and expanded transitively just like the module's own.
+        A sim variant's own depends_on replaces the example's (its
+        sources replace the example's, so its deps do too).
+        """
+        names = list(self.resolve_deps(module_name))
+        fam = self.family_of(mcu)
+        example = self.example_for(module_name, fam.name, mcu)
+        if example is not None:
+            deps = example.depends_on
+            if variant == "sim" and example.sim is not None \
+                    and example.sim.depends_on is not None:
+                deps = example.sim.depends_on
+            for dep in deps:
+                names += self.resolve_deps(dep)
+        return _dedupe(names)
+
+    def family_of(self, mcu: str) -> Family:
+        for fam in self.families.values():
+            if mcu in fam.variants:
+                return fam
+        known = sorted(v for f in self.families.values() for v in f.variants)
+        raise ManifestError(f"unknown MCU '{mcu}'; known parts: {', '.join(known)}")
+
+    def is_supported(self, module_name: str, family: str, mcu: str) -> bool:
+        return mcu in self._module(module_name).supported.get(family, [])
+
+    def exclusion_reason(self, module_name: str, mcu: str) -> str | None:
+        return self._module(module_name).excluded.get(mcu)
+
+    def example_for(self, module_name: str, family_name: str,
+                    mcu: str | None = None):
+        """This module's example program for a family, or None.
+
+        With mcu, a per-MCU variant override (Example.variants) wins;
+        without one the family example is returned unchanged.
+        """
+        example = self._module(module_name).examples.get(family_name)
+        if example is not None and mcu is not None and example.variants:
+            return example.variants.get(mcu, example)
+        return example
+
+    def uses_hal(self, module_name: str, mcu: str) -> bool:
+        """Does this (module, MCU) build need the family HAL?
+
+        The example decides, because the HAL requirement belongs to the
+        program: epic-math's library touches no HAL, but its smoke test
+        includes the harness. Falls back to the module's own needs_hal
+        when there is no example for this family.
+        """
+        fam = self.family_of(mcu)
+        example = self.example_for(module_name, fam.name, mcu)
+        if example is not None:
+            return example.hal
+        return self._module(module_name).needs_hal
+
+    def sim_variant_for(self, module_name: str, family_name: str,
+                        mcu: str | None = None) -> SimVariant | None:
+        """This module's HARNESS=sim variant for a family, or None.
+
+        Only three (module, family) pairs have one today: epic-tick on
+        PIC16F87XA and PIC18Fxx5x, and the PIC16F193X bare-HAL firmware
+        module, mirroring the three sim-tests.yml legs that exist.
+
+        With mcu, a per-MCU variant override (SimVariant.variants)
+        wins; without one the family entry is returned unchanged.
+        """
+        example = self.example_for(module_name, family_name)
+        sim = None if example is None else example.sim
+        if sim is not None and mcu is not None and sim.variants:
+            return sim.variants.get(mcu, sim)
+        return sim
+
+    def sources_for(self, module_name: str, mcu: str, variant: str = "target",
+                    toolchain: str = "xc8") -> list[str]:
+        """Repo-root-relative sources for one (module, MCU) build.
+
+        toolchain="epic-cc" swaps the family HAL sources for the
+        family's epiccc_sources slice (HAL-3): the conformant subset
+        that builds under epic-cc and fits the part's RAM. The slice is
+        listed verbatim, epiccc-named variants included, and a family
+        without one fails loudly rather than silently compiling the
+        full XC8 set (which hits filed isel gaps and the GPR wall).
+        A module with both a target example and a sim variant can
+        instead declare epiccc_sim_hal_sources_by_family for the sim
+        firmware alone: used only when toolchain="epic-cc" and
+        variant="sim", verbatim (the sim harness named directly, no
+        swap), so the target leg keeps the family slice or its own
+        epiccc_hal_sources_by_family override untouched.
+        Conditional sources are XC8-psect-order machinery and do not
+        apply on the epic-cc path (single whole-program invocation,
+        no link order). On variant="sim" the slice's harness entry
+        swaps for the sim variant's harness_src, mirroring the XC8
+        path, so an epic-cc mdb gate links the mdb harness.
+
+        Order: family HAL sources with applicable conditional sources
+        spliced in at their recorded position (only when the build uses
+        the HAL), each resolved module's own sources plus its per-family
+        sources, then the requested module's example. Only the requested
+        module's example is included; a dependency's example is a
+        separate program.
+
+        Conditional-source position matters, not just presence: XC8 lays
+        out psects in link order, so a source inserted at the wrong point
+        in the list changes the .hex even though the same files compile.
+        A conditional with `after` set is spliced in right after that
+        sibling path; one with no `after` is appended at the end (the
+        historical default, still correct for the one family that needs
+        it that way).
+
+        variant="sim" (see sim-tests.yml) swaps the family's harness_src
+        for the sim variant's own harness_src, at the same position
+        (same link-order reasoning as conditional sources), and uses the
+        sim variant's own sources in place of the example's, when it
+        overrides them.
+
+        toolchain="epic-cc" uses the example's epiccc variant sources
+        in place of the example's, when the example declares one (the
+        16F5x gate firmware the simulator can actually observe).
+        """
+        fam = self.family_of(mcu)
+        sim = self.sim_variant_for(module_name, fam.name, mcu) if variant == "sim" else None
+        if variant == "sim" and sim is None:
+            raise ManifestError(
+                f"{module_name} has no sim variant for {fam.name}"
+            )
+
+        out = []
+        mod = self._module(module_name)
+        # Per-module HAL subset for epic-cc builds replaces the family
+        # slice verbatim; deps and the example keep flowing through the
+        # shared tail below.
+        halt = (mod.epiccc_hal_sources_by_family or {}).get(fam.name)
+        halt_override = toolchain == "epic-cc" and halt is not None
+        # Sim-scoped epic-cc slice: wins over the target override on
+        # sim builds only, verbatim (the sim harness is named
+        # directly, so no swap runs under it).
+        simhalt = ((mod.epiccc_sim_hal_sources_by_family or {}).get(fam.name)
+                   if sim is not None else None)
+        simhalt_override = toolchain == "epic-cc" and simhalt is not None
+        if self.uses_hal(module_name, mcu):
+            if toolchain == "epic-cc":
+                if simhalt_override:
+                    out += list(simhalt)
+                elif halt_override:
+                    out += list(halt)
+                else:
+                    if not fam.epiccc_sources:
+                        raise ManifestError(
+                            f"families.{fam.name} has no epiccc_sources; "
+                            f"the epic-cc path needs a conformant slice "
+                            f"(HAL-3)"
+                        )
+                    # The sim harness swap mirrors the XC8 loop: an
+                    # epic-cc mdb gate firmware needs the mdb harness
+                    # too, swapped at the slice's own harness position
+                    # (epic-taskmgr's gate, epic-hal#236).
+                    for hal_src in fam.epiccc_sources:
+                        if sim is not None and hal_src == fam.harness_src:
+                            out.append(sim.harness_src)
+                        else:
+                            out.append(hal_src)
+            else:
+                applicable = [c for c in fam.conditional_sources if mcu in c.variants]
+                for hal_src in fam.hal_sources:
+                    if sim is not None and hal_src == fam.harness_src:
+                        out.append(sim.harness_src)
+                    else:
+                        out.append(hal_src)
+                    for c in applicable:
+                        if c.after == hal_src:
+                            out.append(c.path)
+                out += [c.path for c in applicable if c.after is None]
+
+        for name in self.resolved_deps(module_name, mcu, variant=variant):
+            mod = self._module(name)
+            out += [join_module_path(mod.dir, s) for s in mod.sources]
+            out += [join_module_path(mod.dir, s)
+                    for s in mod.sources_by_family.get(fam.name, [])]
+
+        example = self.example_for(module_name, fam.name, mcu)
+        if example is not None:
+            mod = self._module(module_name)
+            example_sources = example.sources
+            if toolchain == "epic-cc" and example.epiccc is not None:
+                example_sources = example.epiccc.sources
+            elif sim is not None and sim.sources is not None:
+                example_sources = sim.sources
+            out += [join_module_path(mod.dir, s) for s in example_sources]
+
+        return _dedupe(out)
+
+    def includes_for(self, module_name: str, mcu: str,
+                     variant: str = "target") -> list[str]:
+        """Repo-root-relative include dirs, family first when the HAL is used.
+
+        Family order is preserved verbatim: include/target must precede
+        include so the platform header resolves to the real-target
+        (volatile-dereference) version, not the host memory-backed one.
+        A build that does not use the HAL gets none of the family includes.
+        """
+        fam = self.family_of(mcu)
+        out = list(fam.includes) if self.uses_hal(module_name, mcu) else []
+        for name in self.resolved_deps(module_name, mcu, variant=variant):
+            mod = self._module(name)
+            out += [join_module_path(mod.dir, i) for i in mod.includes]
+        return _dedupe(out)
+
+
+def _dedupe(items):
+    """Order-preserving de-duplication."""
+    seen, out = set(), []
+    for item in items:
+        if item not in seen:
+            seen.add(item)
+            out.append(item)
+    return out
+
+
+def _require(table, key, where):
+    if key not in table:
+        raise ManifestError(f"{where}: missing required key '{key}'")
+    return table[key]
+
+
+def _check_keys(table, known, where):
+    for key in table:
+        if key not in known:
+            raise ManifestError(f"{where}: unknown key '{key}'")
+
+
+def _parse_family(name, table):
+    _check_keys(table, {"hal_dir", "variants", "dfp", "fosc_hz",
+                        "dfp_version", "includes", "hal_sources",
+                        "conditional_sources", "harness_src",
+                        "epiccc_sources", "xtal_hz"}, f"families.{name}")
+    return Family(
+        name=name,
+        hal_dir=_require(table, "hal_dir", f"families.{name}"),
+        variants=list(_require(table, "variants", f"families.{name}")),
+        dfp=_require(table, "dfp", f"families.{name}"),
+        fosc_hz=_require(table, "fosc_hz", f"families.{name}"),
+        dfp_version=table.get("dfp_version"),
+        includes=list(_require(table, "includes", f"families.{name}")),
+        hal_sources=list(_require(table, "hal_sources", f"families.{name}")),
+        conditional_sources=[
+            ConditionalSource(path=c["path"], variants=list(c["variants"]),
+                              after=c.get("after"))
+            for c in table.get("conditional_sources", [])
+        ],
+        harness_src=table.get("harness_src"),
+        epiccc_sources=list(table.get("epiccc_sources", [])),
+        xtal_hz=table.get("xtal_hz"),
+    )
+
+
+def _parse_sim_variant(module_name, family_name, table):
+    if table is None:
+        return None
+    where = f"modules.{module_name}.example.{family_name}.sim"
+    variants = table.get("variants", {})
+    return SimVariant(
+        name=_require(table, "name", where),
+        harness_src=_require(table, "harness_src", where),
+        config=dict(_require(table, "config", where)),
+        sources=(list(table["sources"]) if "sources" in table else None),
+        depends_on=(list(table["depends_on"]) if "depends_on" in table else None),
+        variants={vname: _parse_sim_variant(
+            module_name, f"{family_name}.variants.{vname}", vtable)
+            for vname, vtable in variants.items()} or None,
+    )
+
+
+def _parse_epiccc_variant(module_name, family_name, table):
+    if table is None:
+        return None
+    where = f"modules.{module_name}.example.{family_name}.epiccc"
+    return EpicccVariant(
+        name=_require(table, "name", where),
+        sources=list(_require(table, "sources", where)),
+        config=dict(_require(table, "config", where)),
+    )
+
+
+def _parse_example(module_name, family_name, table, default_hal):
+    variants = table.get("variants", {})
+    where = f"modules.{module_name}.example.{family_name}"
+    return Example(
+        name=_require(table, "name", where),
+        sources=list(_require(table, "sources", where)),
+        config=dict(table.get("config", {})),
+        hal=bool(table.get("hal", default_hal)),
+        depends_on=list(table.get("depends_on", [])),
+        sim=_parse_sim_variant(module_name, family_name, table.get("sim")),
+        epiccc=_parse_epiccc_variant(
+            module_name, family_name, table.get("epiccc")),
+        variants={vname: _parse_example(
+            module_name, f"{family_name}.variants.{vname}", vtable, default_hal)
+            for vname, vtable in variants.items()} or None,
+    )
+
+
+def _parse_module(name, table):
+    _check_keys(table, {"dir", "sources", "sources_by_family", "includes",
+                        "depends_on", "needs_hal", "supported", "excluded",
+                        "example", "epiccc_hal_sources_by_family",
+                        "epiccc_sim_hal_sources_by_family"},
+                f"modules.{name}")
+    needs_hal = bool(table.get("needs_hal", True))
+    return Module(
+        name=name,
+        dir=_require(table, "dir", f"modules.{name}"),
+        sources=list(_require(table, "sources", f"modules.{name}")),
+        sources_by_family={
+            fam: list(paths)
+            for fam, paths in table.get("sources_by_family", {}).items()
+        },
+        includes=list(table.get("includes", [])),
+        depends_on=list(table.get("depends_on", [])),
+        needs_hal=needs_hal,
+        supported={
+            fam: list(variants)
+            for fam, variants in table.get("supported", {}).items()
+        },
+        excluded=dict(table.get("excluded", {})),
+        examples={
+            fam: _parse_example(name, fam, tbl, needs_hal)
+            for fam, tbl in table.get("example", {}).items()
+        },
+        epiccc_hal_sources_by_family=(
+            {
+                fam: list(paths)
+                for fam, paths in table.get(
+                    "epiccc_hal_sources_by_family", {}
+                ).items()
+            }
+            or None
+        ),
+        epiccc_sim_hal_sources_by_family=(
+            {
+                fam: list(paths)
+                for fam, paths in table.get(
+                    "epiccc_sim_hal_sources_by_family", {}
+                ).items()
+            }
+            or None
+        ),
+    )
+
+
+def _check_cycles(modules):
+    """Depth-first search for a dependency cycle, reporting the path.
+
+    Follows both module-level depends_on and every example's depends_on
+    (an example dep is a real build dependency: its sources are linked
+    into the example's program, so a cycle through it would recurse
+    forever in sources_for).
+    """
+    WHITE, GREY, BLACK = 0, 1, 2
+    colour = {name: WHITE for name in modules}
+
+    def example_deps(mod):
+        deps = list(mod.depends_on)
+        for example in mod.examples.values():
+            deps += list(example.depends_on)
+            if example.variants:
+                for v in example.variants.values():
+                    deps += list(v.depends_on)
+        return deps
+
+    def visit(name, stack):
+        if colour[name] == GREY:
+            joined = " -> ".join(stack + [name])
+            raise ManifestError(f"dependency cycle: {joined}")
+        if colour[name] == BLACK:
+            return
+        colour[name] = GREY
+        for dep in example_deps(modules[name]):
+            visit(dep, stack + [name])
+        colour[name] = BLACK
+
+    for name in modules:
+        visit(name, [])
+
+
+def _validate(manifest):
+    for mod in manifest.modules.values():
+        for dep in mod.depends_on:
+            if dep not in manifest.modules:
+                raise ManifestError(
+                    f"modules.{mod.name}: depends_on unknown module '{dep}'"
+                )
+        def check_paths(paths, where):
+            for p in paths:
+                if ".." in posixpath.normpath(p).split("/"):
+                    raise ManifestError(
+                        f"modules.{mod.name}.{where}: '{p}' climbs with '..'; "
+                        f"write cross-module paths from the repo root"
+                    )
+        check_paths(mod.sources, "sources")
+        for fam_name, paths in mod.sources_by_family.items():
+            check_paths(paths, f"sources_by_family.{fam_name}")
+        check_paths(mod.includes, "includes")
+        for fam_name in mod.sources_by_family:
+            if fam_name not in manifest.families:
+                raise ManifestError(
+                    f"modules.{mod.name}.sources_by_family: "
+                    f"unknown family '{fam_name}'"
+                )
+        def check_example(example, where):
+            for dep in example.depends_on:
+                if dep not in manifest.modules:
+                    raise ManifestError(
+                        f"modules.{mod.name}.example.{where}: "
+                        f"depends_on unknown module '{dep}'"
+                    )
+            check_paths(example.sources, f"example.{where}.sources")
+            if example.sim is not None and example.sim.sources is not None:
+                check_paths(example.sim.sources, f"example.{where}.sim.sources")
+            if example.epiccc is not None:
+                check_paths(example.epiccc.sources, f"example.{where}.epiccc.sources")
+            if example.variants:
+                for vname, v in example.variants.items():
+                    check_example(v, f"{where}.variants.{vname}")
+
+        for fam_name, example in mod.examples.items():
+            if fam_name not in manifest.families:
+                raise ManifestError(
+                    f"modules.{mod.name}.example: unknown family '{fam_name}'"
+                )
+            if example.sim is not None and manifest.families[fam_name].harness_src is None:
+                raise ManifestError(
+                    f"modules.{mod.name}.example.{fam_name}.sim: "
+                    f"families.{fam_name} has no harness_src to swap"
+                )
+            check_example(example, fam_name)
+        for fam_name, variants in mod.supported.items():
+            fam = manifest.families.get(fam_name)
+            if fam is None:
+                raise ManifestError(
+                    f"modules.{mod.name}.supported: unknown family '{fam_name}'"
+                )
+            for v in variants:
+                if v not in fam.variants:
+                    raise ManifestError(
+                        f"modules.{mod.name}.supported.{fam_name}: "
+                        f"'{v}' is not a variant of {fam_name} ({fam.variants})"
+                    )
+                if v in mod.excluded:
+                    raise ManifestError(
+                        f"modules.{mod.name}: '{v}' is both supported and excluded"
+                    )
+        # An example may name a family; its config is family-scoped, so no
+        # per-family subkeys to validate here.
+        for fam_name, paths in (mod.epiccc_hal_sources_by_family or {}).items():
+            fam = manifest.families.get(fam_name)
+            if fam is None:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_hal_sources_by_family: "
+                    f"unknown family '{fam_name}'"
+                )
+            if not paths:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_hal_sources_by_family."
+                    f"{fam_name}: must not be empty"
+                )
+            for p in paths:
+                if not (p.startswith("common/")
+                        or p.startswith(fam.hal_dir + "/")
+                        or p.startswith(_SHARED_CORE_DIRS)):
+                    raise ManifestError(
+                        f"modules.{mod.name}.epiccc_hal_sources_by_family."
+                        f"{fam_name}: '{p}' is outside {fam.hal_dir}/, "
+                        f"common/ and the shared cores"
+                    )
+        # The sim-scoped epic-cc slice: same path rules, plus it must
+        # name the module's own sim harness (the verbatim list is the
+        # sim firmware's whole HAL portion, and a sim build without
+        # its harness fails wholeprog on the report symbols).
+        for fam_name, paths in (
+            mod.epiccc_sim_hal_sources_by_family or {}
+        ).items():
+            fam = manifest.families.get(fam_name)
+            if fam is None:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_sim_hal_sources_by_family: "
+                    f"unknown family '{fam_name}'"
+                )
+            if not paths:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_sim_hal_sources_by_family."
+                    f"{fam_name}: must not be empty"
+                )
+            for p in paths:
+                if not (p.startswith("common/")
+                        or p.startswith(fam.hal_dir + "/")
+                        or p.startswith(_SHARED_CORE_DIRS)):
+                    raise ManifestError(
+                        f"modules.{mod.name}.epiccc_sim_hal_sources_by_family."
+                        f"{fam_name}: '{p}' is outside {fam.hal_dir}/, "
+                        f"common/ and the shared cores"
+                    )
+            example = mod.examples.get(fam_name)
+            sim = example.sim if example is not None else None
+            if sim is None:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_sim_hal_sources_by_family."
+                    f"{fam_name}: no sim variant to scope it to"
+                )
+            if sim.harness_src not in paths:
+                raise ManifestError(
+                    f"modules.{mod.name}.epiccc_sim_hal_sources_by_family."
+                    f"{fam_name}: missing the sim harness '{sim.harness_src}'"
+                )
+    _check_cycles(manifest.modules)
+
+
+def _parse_toolchain(raw) -> str:
+    """The minimum epic-cc version from the manifest's [toolchain] table.
+
+    @param raw in: the whole decoded manifest.
+    @return the bare X.Y.Z minimum.
+    """
+    table = raw.get("toolchain", {})
+    unknown = set(table) - {"min_epic_cc"}
+    if unknown:
+        raise ManifestError(
+            f"toolchain: unknown key(s) {sorted(unknown)}"
+        )
+    minimum = table.get("min_epic_cc")
+    if not isinstance(minimum, str):
+        raise ManifestError("toolchain: min_epic_cc is required")
+    parts = minimum.split(".")
+    if len(parts) != 3 or not all(p.isdigit() for p in parts):
+        raise ManifestError(
+            f"toolchain: min_epic_cc {minimum!r} is not X.Y.Z"
+        )
+    return minimum
+
+
+def load(path: pathlib.Path) -> Manifest:
+    """Parse and validate the manifest at `path`."""
+    with open(path, "rb") as fh:
+        raw = tomllib.load(fh)
+
+    manifest = Manifest(
+        families={
+            name: _parse_family(name, table)
+            for name, table in raw.get("families", {}).items()
+        },
+        modules={
+            name: _parse_module(name, table)
+            for name, table in raw.get("modules", {}).items()
+        },
+        min_epic_cc=_parse_toolchain(raw),
+    )
+    _validate(manifest)
+    return manifest
+
+
+
+def default_path() -> pathlib.Path:
+    """The manifest's location relative to this file."""
+    return (
+        pathlib.Path(__file__).resolve().parents[2]
+        / "common" / "manifest" / "modules.toml"
+    )

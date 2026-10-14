@@ -10,7 +10,7 @@
  * vector runs (tests/test_rx_loopback.c).
  *
  * Line protocol (the byte-exact contract the host test and
- * scripts/serial-rx-loop.py both check): boot emits "RXLOOP UP\r\n";
+ * scripts/sim/serial-rx-loop.py both check): boot emits "RXLOOP UP\r\n";
  * a line is a byte run terminated by '\n' (a lone '\r' is a plain
  * payload byte); well-formed = non-empty payload, CRLF-terminated,
  * never over 32 bytes; the echo is "OK:<payload>\r\n" or

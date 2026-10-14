@@ -1,10 +1,10 @@
 /* SFR map for the PIC16F5x family, 1-to-1 from DS41213D, cross-checked
  * against the DFP EDC (Microchip.PIC16Fxxx_DFP, edc/PIC16F54.PIC; the
  * five parts share the core block 0x00-0x06, per-part ports extend it).
- * Register addresses are regenerated from the EDC by scripts/gen-sfr.py;
+ * Register addresses are regenerated from the EDC by scripts/build/gen-sfr.py;
  * bit positions and POR values are hand-maintained between the DS and
  * the DFP headers at compile time.
- * Regenerated via scripts/gen-sfr.py. */
+ * Regenerated via scripts/build/gen-sfr.py. */
 
 #ifndef PIC16F5X_SFR_H
 #define PIC16F5X_SFR_H

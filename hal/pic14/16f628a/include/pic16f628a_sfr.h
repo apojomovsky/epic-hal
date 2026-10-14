@@ -3,7 +3,7 @@
  * bit positions match the EDC field order. Registers the part lacks
  * (PORTC/D/E, PIR2/PIE2, SSP, ADC, CCP2, EEDATH/H, SPBRGH/BAUDCTL,
  * OSCCON) are deliberately absent: referencing one must fail at
- * compile time. Regenerated via scripts/gen-sfr.py. */
+ * compile time. Regenerated via scripts/build/gen-sfr.py. */
 
 #ifndef PIC16F628A_SFR_H
 #define PIC16F628A_SFR_H

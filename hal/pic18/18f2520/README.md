@@ -64,7 +64,7 @@ mdb `irq-smoke` gate fits too (verified via `mdb` register readback), so
 it is in `family-check.yml`'s mdb job list. PIC18 does not mirror a
 driven `LATx` latch back into `PORTx` under MPLAB SIM (the same finding
 as the 2520/6520 gates), so its gate reads `LATA`
-(`scripts/ci-target-sim.sh`'s device allowlist).
+(`scripts/ci/ci-target-sim.sh`'s device allowlist).
 
 - ✅ Family header (`pic18f2520_hal.h`): device selection, capability
   macros, platform include. Named `_hal` to avoid shadowing the DFP
@@ -169,7 +169,7 @@ the `pic18f2520-hal` pseudo-module); see `mcu/pic18f2520-mplabx/README.md` and
 `common/manifest/README.md`.
 
 ```sh
-python3 scripts/epic_build.py build --module pic18f2520-hal --mcu 18F2520 --run
+python3 scripts/build/epic_build.py build --module pic18f2520-hal --mcu 18F2520 --run
 ```
 
 ## Environment split
