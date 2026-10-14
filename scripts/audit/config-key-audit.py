@@ -94,8 +94,11 @@ def main() -> int:
                         m, module_name, mcu, variant=variant)
                     if src is None:
                         continue
+                    # Path ids nest (lib/serial__target__16F877A.c), so
+                    # the parent may not exist yet.
                     rel = pathlib.Path("build-sim") / "audit-config" / (
                         f"{module_name}__{variant}__{mcu}.c")
+                    (REPO / rel).parent.mkdir(parents=True, exist_ok=True)
                     (REPO / rel).write_text(src)
                     fam = m.family_of(mcu)
                     jobs.append((module_name, mcu, variant, fam.dfp, str(rel)))
