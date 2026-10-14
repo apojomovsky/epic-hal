@@ -3,9 +3,8 @@
  * only the public EPIC_GPIO_*, EPIC_IRQ_* and EPIC_CLC_* contracts, then reads
  * back the SFRs it configured. Edges need an external source, so the IOC check
  * covers the enable path only; the edge path is in example_gpio.c on the host
- * sim. CLC gates run empty (GLS 0), so the outputs below never depend on a
- * signal level, only on gate-polarity constants; sequential modes stay
- * host-only in example_clc_sim.c.
+ * signal level, only on gate-polarity constants; sequential modes 4..7 stay
+ * host-only in example_clc_sim.c, and the mode-3 S-R latch shape runs below.
  */
 #include <stddef.h>
  #include "pic16f1508.h"
@@ -30,7 +29,7 @@ static const uint8_t k_mode1_want[] = {0U, 1U, 1U, 0U};
 
 /**
  * @brief Configure CLC1 for the gate.
- * @param mode LCxMODE value 0..2.
+ * @param mode LCxMODE value 0..3.
  * @return 1 on EPIC_OK, 0 otherwise.
  */
 static int clc1_gate_config(uint8_t mode)
@@ -181,6 +180,20 @@ int main(void)
     EPIC_REG8(PIC_REG_CLC1CON) &= (uint8_t)~PIC_CLCCON_EN;
     epic_harness_tick();
     clc1_lines(0x0FU);
+    ok &= clc1_check(0U);
+    /* S-R latch demo gate (mode 3, TB3273 shape): S=G1|G2, R=G3|G4 from
+     * gate-polarity constants with sim-safe sources. SIM holds the
+     * sequential state across samples, so the holds assert the latch. */
+    ok &= clc1_gate_config(3U);
+    clc1_lines(0x00U);
+    ok &= clc1_check(0U);
+    clc1_lines(0x03U);
+    ok &= clc1_check(1U);
+    clc1_lines(0x00U);
+    ok &= clc1_check(1U);
+    clc1_lines(0x0CU);
+    ok &= clc1_check(0U);
+    clc1_lines(0x00U);
     ok &= clc1_check(0U);
     ok &= (EPIC_CLC_DeInit(CLC1) == EPIC_OK);
     int rc = epic_harness_report(ok);
