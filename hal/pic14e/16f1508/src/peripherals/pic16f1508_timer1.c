@@ -49,14 +49,25 @@ static void timer1_write_con(const TIMER1_HandleTypeDef *h)
 }
 
 /**
- * @brief Read the 16-bit counter value, low byte first.
+ * @brief Read the 16-bit counter value without tearing on overflow.
+ * @details Reads high, low, then high again; a changed high byte means the
+ * low byte rolled over mid-read, so the pass repeats with the fresh high
+ * (DS40001609E §19.5.1: the timer may overflow between the two 8-bit reads).
  * @return TMR1H:TMR1L value, 0..65535.
  */
 uint16_t EPIC_TIMER1_ReadCounter(void)
 {
-    uint8_t lo = EPIC_REG8(PIC_REG_TMR1L);
-    uint8_t hi = EPIC_REG8(PIC_REG_TMR1H);
-    return (uint16_t)(((uint16_t)hi << 8) | lo);
+    uint8_t hi1;
+    uint8_t lo;
+    uint8_t hi2;
+
+    do
+    {
+        hi1 = EPIC_REG8(PIC_REG_TMR1H);
+        lo = EPIC_REG8(PIC_REG_TMR1L);
+        hi2 = EPIC_REG8(PIC_REG_TMR1H);
+    } while (hi1 != hi2);
+    return (uint16_t)(((uint16_t)hi1 << 8) | lo);
 }
 
 /**

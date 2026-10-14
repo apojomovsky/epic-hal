@@ -85,7 +85,7 @@ EPIC_StatusTypeDef EPIC_TIMER1_Start(const TIMER1_HandleTypeDef *h);
 EPIC_StatusTypeDef EPIC_TIMER1_Stop(void);
 
 /**
- * @brief Read the 16-bit counter value (low byte first, then high).
+ * @brief Read the 16-bit counter value without tearing on overflow.
  * @return TMR1H:TMR1L value, 0..65535.
  */
 uint16_t EPIC_TIMER1_ReadCounter(void);

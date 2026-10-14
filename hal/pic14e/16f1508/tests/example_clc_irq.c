@@ -139,9 +139,9 @@ int main(void)
 
     /* CLC enable sets PEIE, which exposes PIR1 and PIR2. The dispatcher must acknowledge them. */
     /* PIR1 bits 0 and 1 are TMR1IF/TMR2IF, owned by the timer drivers, so the
-     * unowned-ack check uses SSP1IF (bit 2) instead. */
-    EPIC_REG8(PIC_REG_PIR1) = 0x04U;
-    EPIC_REG8(PIC_REG_PIE1) = 0x04U;
+     * unowned-ack check uses SSP1IF (bit 3) instead. */
+    EPIC_REG8(PIC_REG_PIR1) = 0x08U;
+    EPIC_REG8(PIC_REG_PIE1) = 0x08U;
     EPIC_REG8(PIC_REG_PIR2) = 0x80U;
     EPIC_REG8(PIC_REG_PIE2) = 0x80U;
     EPIC_REG8(PIC_REG_PIR3) = 0x01U;

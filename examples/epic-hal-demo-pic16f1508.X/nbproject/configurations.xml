@@ -26,6 +26,8 @@
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
         <itemPath>../../hal/pic14e/16f1508/src/peripherals/pic16f1508_gpio.c</itemPath>
         <itemPath>../../hal/pic14e/16f1508/src/peripherals/pic16f1508_clc.c</itemPath>
+        <itemPath>../../hal/pic14e/16f1508/src/peripherals/pic16f1508_timer1.c</itemPath>
+        <itemPath>../../hal/pic14e/16f1508/src/peripherals/pic16f1508_timer2.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>
