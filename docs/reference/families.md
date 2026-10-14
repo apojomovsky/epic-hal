@@ -142,4 +142,3 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 | Modules | `epic-adcfilter`, `epic-bridge-demo`, `epic-bus`, `epic-combo-eeprom-isr`, `epic-combo-lcd-tick`, `epic-combo-modbus-full`, `epic-combo-taskmgr-serial`, `epic-combo-tick-settings`, `epic-console`, `epic-control-demo`, `epic-debounce`, `epic-encoder`, `epic-fsm`, `epic-math`, `epic-menu-demo`, `epic-modbus`, `epic-pid`, `epic-sdcard`, `epic-serial`, `epic-settings`, `epic-swuart`, `epic-taskmgr`, `epic-tick`, `epic-usb`, `pic18fxx5x-hal` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
-

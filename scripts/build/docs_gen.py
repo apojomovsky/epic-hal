@@ -117,7 +117,7 @@ def emit_families_md(manifest: epicmanifest.Manifest) -> str:
             f" {_cell(fam.sim_note or 'None documented')} |",
             "",
         ]
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines).rstrip("\n") + "\n"
 
 
 def render_includes(text: str, root: pathlib.Path,
