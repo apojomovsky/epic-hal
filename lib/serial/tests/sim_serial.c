@@ -1,5 +1,5 @@
 /*
- * Bounded, self-reporting HARNESS=sim build for epic-serial: the module's
+ * Bounded, self-reporting HARNESS=sim build for lib/serial: the module's
  * first real mdb gate, running the actual epic_serial.c under MPLAB SIM
  * on a 16F877A and reporting PASS/FAIL over the real hardware USART.
  *
@@ -27,7 +27,7 @@
 #define PHASE4_ITERS    5000UL
 
 /* Timer2 tick, ~819 us period at 20 MHz ((PR2+1) x prescaler, the same
- * ~1 ms class epic-tick's compute_period picks). Deliberately long: a
+ * ~1 ms class lib/tick's compute_period picks). Deliberately long: a
  * shorter period lets the tick ISR consume all of the simulator's time,
  * starving main and freezing the run. */
 #define TICK_PR2 ((uint8_t)255)
@@ -168,7 +168,7 @@ int main(void)
     t2.OverflowCallback = s_tick_inc;
     (void)EPIC_TIMER2_Init(&t2);
     (void)EPIC_TIMER2_Start(&t2);
-    EPIC_IRQ_Restore(1);                 /* GIE on: the epic-tick role */
+    EPIC_IRQ_Restore(1);                 /* GIE on: the lib/tick role */
 
     uint32_t t0 = tick_now();
     for (uint32_t i = 0; epic_harness_running(i) && i < PHASE4_ITERS &&

@@ -17,6 +17,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
+import bundlegen  # noqa: E402
 import epicmanifest  # noqa: E402
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
@@ -191,13 +192,13 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     # on the epic-cc path (real module logic where the compiler supports it,
     # a footprint probe where a filed isel gap remains). A module with its
     # own epiccc_hal_sources_by_family override for this family builds the
-    # full example instead (epic-pid on PIC16, HAL-3b). XC8 keeps the full
+    # full example instead (lib/pid on PIC16, HAL-3b). XC8 keeps the full
     # example.
     epiccc_driver = (toolchain == "epic-cc"
-                     and module in ("epic-fsm", "epic-pid", "epic-encoder",
-                                    "epic-debounce", "epic-bus", "epic-lcd",
-                                    "epic-mcp23x17", "epic-adcfilter",
-                                    "epic-sdcard")
+                     and module in ("lib/fsm", "lib/pid", "lib/encoder",
+                                    "lib/debounce", "lib/bus", "lib/lcd",
+                                    "lib/mcp23x17", "lib/adcfilter",
+                                    "lib/sdcard")
                      and variant == "target")
     swap = True
 
@@ -229,39 +230,39 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
             # The family IRQ table stays: the shared-core irq body consumes it,
             # and dropping only the family half leaves a bare extern table
             # that irparse rejects (epic-hal#331).
-            if module in ("epic-fsm", "epic-pid", "epic-encoder", "epic-debounce", "epic-lcd", "epic-adcfilter"):
+            if module in ("lib/fsm", "lib/pid", "lib/encoder", "lib/debounce", "lib/lcd", "lib/adcfilter"):
                 sources = [s for s in sources
                            if s.endswith("/pic16_irq_table.c")
                            or (not in_hal_slice(s) and "common/src/core/epic_harness" not in s)]
             # Drop tick/serial/math (the example's deps): timer2/usart isel is
             # #86's domain, and the pic16 math asm backend needs XC8's xc.h.
-            # epic-sdcard keeps epic-tick: epic_sdcard.c's timer callbacks
+            # lib/sdcard keeps lib/tick: epic_sdcard.c's timer callbacks
             # call epic_tick_get/epic_tick_elapsed_since (module-level dep).
-            if module == "epic-sdcard":
-                sources = [s for s in sources if not under(s, "epic-serial", "epic-math")]
+            if module == "lib/sdcard":
+                sources = [s for s in sources if not under(s, "lib/serial", "lib/math")]
             else:
-                sources = [s for s in sources if not under(s, "epic-tick", "epic-serial", "epic-math")]
+                sources = [s for s in sources if not under(s, "lib/tick", "lib/serial", "lib/math")]
         # pid.c calls epic_math_mul_s16 for real now; link the host C-path
         # implementation (the portable oracle), not the pic16 asm backend.
-        if module == "epic-pid":
+        if module == "lib/pid":
             if not swap:
                 sources = [s for s in sources if "lib/math/src" not in s]
             sources.append("lib/math/src/host/epic_math_mul.c")
     includes = manifest.includes_for(module, mcu)
     # Drop tick/serial includes the full example pulls (they need
     # timer2/usart isel, #86's domain). Encoder/debounce keep the tick
-    # header for compilation; pid keeps the epic-math header (pid.c
+    # header for compilation; pid keeps the lib/math header (pid.c
     # includes it; the math SOURCES are handled above).
-    if toolchain == "epic-cc" and module in ("epic-fsm", "epic-pid") and variant == "target" and swap:
-        includes = [i for i in includes if not under(i, "epic-tick", "epic-serial")]
+    if toolchain == "epic-cc" and module in ("lib/fsm", "lib/pid") and variant == "target" and swap:
+        includes = [i for i in includes if not under(i, "lib/tick", "lib/serial")]
     # HAL-3d drivers: drop tick/serial includes the example pulls.
-    if toolchain == "epic-cc" and module in ("epic-bus", "epic-lcd", "epic-mcp23x17", "epic-adcfilter") and variant == "target":
-        includes = [i for i in includes if not under(i, "epic-tick", "epic-serial")]
-    # epic-sdcard: the probe links epic_sdcard.c, which includes
+    if toolchain == "epic-cc" and module in ("lib/bus", "lib/lcd", "lib/mcp23x17", "lib/adcfilter") and variant == "target":
+        includes = [i for i in includes if not under(i, "lib/tick", "lib/serial")]
+    # lib/sdcard: the probe links epic_sdcard.c, which includes
     # epic_tick.h for its timer callbacks, so only the serial include
     # (pulled by the dropped example) goes.
-    if toolchain == "epic-cc" and module == "epic-sdcard" and variant == "target":
-        includes = [i for i in includes if not under(i, "epic-serial")]
+    if toolchain == "epic-cc" and module == "lib/sdcard" and variant == "target":
+        includes = [i for i in includes if not under(i, "lib/serial")]
     objdir = f"{build_dir}/{mcu}"
 
     if toolchain == "epic-cc":
@@ -279,7 +280,7 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
             has_config = False
             # Per-module basename so the drivers never collide in the
             # shared build dir: 16F877A-bus-sizecheck.hex etc.
-            example_name = module.removeprefix("epic-") + "-sizecheck"
+            example_name = bundlegen.short_name(module) + "-sizecheck"
         else:
             has_config = emit_config_source(
                 manifest, module, mcu, variant=variant, toolchain=toolchain, fosc_hz=fosc_hz

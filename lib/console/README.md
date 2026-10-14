@@ -1,10 +1,10 @@
-# epic-console, line-based command dispatcher over epic-serial
+# lib/console, line-based command dispatcher over lib/serial
 
 Turn the existing interrupt-driven UART into a tiny shell: buffer one line,
 tokenize it in place, and dispatch it through a caller-owned command table.
 
 - **Table-driven**: the whole command set is one `static const
-  epic_console_cmd_t[]`, like `epic-fsm`.
+  epic_console_cmd_t[]`, like `lib/fsm`.
 - **No hidden commands**: `epic_console_print_help()` is just a function; wire
   it to your own `"help"` row if you want one.
 - **Terminal-friendly editing**: echoes typed bytes, supports backspace/DEL,

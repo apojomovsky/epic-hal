@@ -2,7 +2,7 @@
  * SFR address map for PIC18F1320 (foundation subset: core, GPIO,
  * interrupts, Timer0; grows per ticket). Every address, mask, and
  * reset value is 1-to-1 from DS39605F and the DFP header; addresses
- * match pic18fxx5x-hal's map (same Access Bank shape, far smaller GPR
+ * match hal/pic18/18fxx5x's map (same Access Bank shape, far smaller GPR
  * window). Only PORTA/PORTB exist; no MSSP, CCP2, comparator, BAUDCON.
  */
 
@@ -116,7 +116,7 @@
 #define PIC_STATUS_DC         EPIC_BIT(1)   /**< Digit carry/borrow.           */
 #define PIC_STATUS_C          EPIC_BIT(0)   /**< Carry/borrow.                 */
 
-/* RCON bits (Register 4-1). Bit 6 (SBOREN on pic18fxx5x-hal's 4550/2455)
+/* RCON bits (Register 4-1). Bit 6 (SBOREN on hal/pic18/18fxx5x's 4550/2455)
  * is unimplemented on this part: confirmed absent from the DFP header's
  * own _RCON_*_POSN macros (only bits 0-4 and 7 exist), not assumed. */
 #define PIC_RCON_IPEN         EPIC_BIT(7)   /**< Interrupt Priority Enable.    */

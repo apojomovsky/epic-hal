@@ -1,13 +1,11 @@
-# epic-adcfilter, vendor-agnostic ADC oversampling + moving-average filter.
+# lib/adcfilter, ADC oversampling plus moving-average filter.
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
 #
-# The core (src/epic_adcfilter.c) has ZERO hardware dependency: it includes
-# only <stdint.h> and takes a read callback, so it compiles and tests on the
-# host with no HAL family selection at all. The target-only example
-# (examples/example_adcfilter.c) wires a real EPIC_ADC_* read callback and
-# builds through the manifest-driven XC8 build, not this host CMake build.
+# Zero hardware dependency (read callback only), so no HAL family
+# selection. The target-only example wires a real EPIC_ADC read via
+# the manifest-driven XC8 build.
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_adcfilter C)

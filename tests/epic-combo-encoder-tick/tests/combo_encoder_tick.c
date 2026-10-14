@@ -1,7 +1,7 @@
 /**
  * @file    combo_encoder_tick.c
  * @brief   C9 of the combination matrix:
- *          epic-encoder + epic-tick. Scripted quadrature edges are fed
+ *          lib/encoder + epic-tick. Scripted quadrature edges are fed
  *          through the encoder's own `epic_encoder_update` API, interleaved
  *          with 1 ms tick-delay waits, while every position read is
  *          checked against the running scripted expectation under the
@@ -28,7 +28,7 @@
  *
  *   MPLAB SIM behaviors pinned down here (all in the documented
  *   class-G / Finding 10.1 family; see the C1 gate
- *   epic-combo-uart-ssp/tests/combo_uart_ssp.c and epic_tick.c's
+ *   tests/epic-combo-uart-ssp/tests/combo_uart_ssp.c and epic_tick.c's
  *   read-twice-retry comment):
  *   - Found 2026-08-09 while building this gate: interleaving
  *     `epic_encoder_get_position` reads (their Disable/Restore edges) with
@@ -160,7 +160,7 @@ static void edge_with_delay(epic_encoder_t *enc, uint8_t state, int32_t expected
 }
 
 /**
- * @brief Run the epic-encoder + epic-tick interleave gate (C9).
+ * @brief Run the lib/encoder + lib/tick interleave gate (C9).
  */
 int main(void)
 {

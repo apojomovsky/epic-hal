@@ -256,7 +256,7 @@ int main(void)
          * visible one spin before GO/DONE clears on the first
          * conversion) and every later byte is 'L'/'M'/'N'/'O' (both
          * flags set, iteration low nibble). */
-        /* NOTE: no polled USART TX here. C4 (epic-combo-rb-uart) proved
+        /* NOTE: no polled USART TX here. C4 (tests/epic-combo-rb-uart) proved
          * the polled-TX TSR-empty wait is a landing zone for MPLAB
          * SIM's ISR wedge under a live ISR; the run loop stays TX-free
          * and the status byte goes out after the checks (GIE off). */

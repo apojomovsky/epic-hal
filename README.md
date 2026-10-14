@@ -249,45 +249,45 @@ carry a datasheet-cited register reference.
 
 | Module | What it does |
 |---|---|
-| [epic-tick](lib/tick/) | 1 ms timebase on a Timer2 auto-reload ISR (`HAL_GetTick` equivalent). |
-| [epic-taskmgr](lib/taskmgr/) | Cooperative scheduler: periodic and one-shot tasks, priority-ordered, race-free. |
-| [epic-debounce](lib/debounce/) | Instantiable digital-input debouncer on the real timebase. |
-| [epic-encoder](lib/encoder/) | Interrupt-driven x4 quadrature decoder, instantiable. |
-| [epic-fsm](lib/fsm/) | Table-driven finite state machine, the whole machine is one `static const` table. |
-| [epic-pid](lib/pid/) | Fixed-point (Q8.8) PID with anti-windup, derivative-on-measurement, bumpless auto/manual. |
-| [epic-adcfilter](lib/adcfilter/) | ADC oversample-and-decimate plus an O(1) moving-average filter. |
+| [lib/tick](lib/tick/) | 1 ms timebase on a Timer2 auto-reload ISR (`HAL_GetTick` equivalent). |
+| [lib/taskmgr](lib/taskmgr/) | Cooperative scheduler: periodic and one-shot tasks, priority-ordered, race-free. |
+| [lib/debounce](lib/debounce/) | Instantiable digital-input debouncer on the real timebase. |
+| [lib/encoder](lib/encoder/) | Interrupt-driven x4 quadrature decoder, instantiable. |
+| [lib/fsm](lib/fsm/) | Table-driven finite state machine, the whole machine is one `static const` table. |
+| [lib/pid](lib/pid/) | Fixed-point (Q8.8) PID with anti-windup, derivative-on-measurement, bumpless auto/manual. |
+| [lib/adcfilter](lib/adcfilter/) | ADC oversample-and-decimate plus an O(1) moving-average filter. |
 
 **Communication**
 
 | Module | What it does |
 |---|---|
-| [epic-serial](lib/serial/) | Interrupt-driven ring-buffered UART + `printf` retarget. |
-| [epic-swuart](lib/swuart/) | Bit-banged software UART on CCP capture/compare, two channels on PIC16F193X. |
-| [epic-bus](lib/bus/) | I2C/SPI register-access idiom on top of MSSP/SSP. |
-| [epic-modbus](lib/modbus/) | Modbus RTU slave: core function codes, T3.5 framing, CRC-16, RS-485 driver-enable. |
-| [epic-console](lib/console/) | Line-based serial command dispatcher over `epic-serial`. |
-| [epic-usb](lib/usb/) | USB CDC-ACM virtual serial port. PIC18Fxx5x only. |
+| [lib/serial](lib/serial/) | Interrupt-driven ring-buffered UART + `printf` retarget. |
+| [lib/swuart](lib/swuart/) | Bit-banged software UART on CCP capture/compare, two channels on PIC16F193X. |
+| [lib/bus](lib/bus/) | I2C/SPI register-access idiom on top of MSSP/SSP. |
+| [lib/modbus](lib/modbus/) | Modbus RTU slave: core function codes, T3.5 framing, CRC-16, RS-485 driver-enable. |
+| [lib/console](lib/console/) | Line-based serial command dispatcher over `lib/serial`. |
+| [lib/usb](lib/usb/) | USB CDC-ACM virtual serial port. PIC18Fxx5x only. |
 
 **Storage**
 
 | Module | What it does |
 |---|---|
-| [epic-settings](lib/settings/) | EEPROM-backed settings blobs with CRC-16 validation and first-boot defaults. |
-| [epic-sdcard](lib/sdcard/) | SD/MMC over SPI block storage. PIC18Fxx5x only (RAM constraint). |
+| [lib/settings](lib/settings/) | EEPROM-backed settings blobs with CRC-16 validation and first-boot defaults. |
+| [lib/sdcard](lib/sdcard/) | SD/MMC over SPI block storage. PIC18Fxx5x only (RAM constraint). |
 
 **Math**
 
 | Module | What it does |
 |---|---|
-| [epic-math](lib/math/) | Fixed-point math: multiply, divide, BCD, sqrt, numerical diff/integration, RNGs, with PIC16/PIC18 inline-asm backends behind one API. |
+| [lib/math](lib/math/) | Fixed-point math: multiply, divide, BCD, sqrt, numerical diff/integration, RNGs, with PIC16/PIC18 inline-asm backends behind one API. |
 
 **Peripherals**
 
 | Module | What it does |
 |---|---|
-| [epic-lcd](lib/lcd/) | HD44780-compatible character LCD: 4-bit GPIO, 8-bit GPIO, or SPI via 74HC595. |
+| [lib/lcd](lib/lcd/) | HD44780-compatible character LCD: 4-bit GPIO, 8-bit GPIO, or SPI via 74HC595. |
 
-The full catalog, including every family HAL and `epic-common`, lives
+The full catalog, including every family HAL and `common`, lives
 in the table below. Peripheral coverage is stated in each HAL's
 README and `MANUAL.md`, the docs kept current as peripherals land;
 which modules build for which family is in the manifest

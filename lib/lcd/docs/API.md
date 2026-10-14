@@ -1,4 +1,4 @@
-# `epic-lcd` API reference
+# `lib/lcd` API reference
 
 Authoritative declarations: [`include/epic_lcd.h`](../include/epic_lcd.h)
 (core types and functions) and [`include/epic_lcd_transport.h`](../include/epic_lcd_transport.h)

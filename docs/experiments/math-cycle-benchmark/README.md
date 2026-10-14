@@ -1,6 +1,6 @@
-# Experiment: epic-math hand asm vs XC8 native arithmetic
+# Experiment: lib/math hand asm vs XC8 native arithmetic
 
-Status: 2026-08-12. Records a cycle benchmark comparing epic-math's
+Status: 2026-08-12. Records a cycle benchmark comparing lib/math's
 hand-written PIC16/PIC18 inline-asm math routines against XC8's native
 arithmetic (compiler-generated code and runtime library routines) across
 -O0..-O3, plus the follow-up study of whether the faster -O3 library
@@ -11,7 +11,7 @@ after deterministic measurements showed they did not help.
 
 ## Question
 
-epic-math ships fixed-cycle hand-asm primitives (16-bit add/sub/mul/div,
+lib/math ships fixed-cycle hand-asm primitives (16-bit add/sub/mul/div,
 32-bit mul/negate, BCD) for the PIC16F87XA and PIC18Fxx5x families. The
 compiler's own arithmetic output varies with -O; the library routines
 (__wmul, __lwdiv, __bmul) also differ between -O2 and -O3. How does the
@@ -37,7 +37,7 @@ behind regardless of -O?
   (bit 15 set, so the library's early-exit multiply cannot trigger);
   div16 den=0x0013 (so the library's normalized division runs 12 of 16
   iterations). Full sources: bench.c in this directory.
-- Builds: "full" links the epic-math sources (the asm leaves are
+- Builds: "full" links the lib/math sources (the asm leaves are
   __at-pinned and only link at -O2/-O3, see the pin constraint below);
   "native" is the same firmware with BENCH_NATIVE_ONLY (no epic sources),
   which links at every -O.
@@ -80,7 +80,7 @@ op is effectively free inlined.
   is 2 cycles for 8x8 and 13 for 16x16->16; the hand asm (MULWF-based,
   but through a call and computing 32-bit products) is 48-55. The asm
   add/sub win (30/29 vs 37/32) because the native add is not free there.
-- The epic-math mul16/div numbers are the same at -O2 and -O3 (the asm
+- The lib/math mul16/div numbers are the same at -O2 and -O3 (the asm
   is fixed); the apparent 87XA -O3 mul16_epic 489 reading is the caller
   loop restructuring around the call at -O3, not the routine.
 
@@ -141,7 +141,7 @@ Inside the XC8 toolchain container, from the repo root:
 The matrix builds all 12 variants (2 families x full/native x -O levels)
 and prints per-build "<op> <hexdelta>" lines captured from the simulator
 UART. Per-op cycles = (delta - loop_empty) / 100. Functional
-verification of the asm on the real target uses the epic-math
+verification of the asm on the real target uses the lib/math
 golden-vector selftest through the repo's mdb gate (scripts/sim/
 sim-mdb-run.sh), which must report PASS=94 FAIL=0.
 

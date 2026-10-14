@@ -7,7 +7,7 @@ _fire_ticks_re='^([0-9A-F]{4} )+$'
 
 is_fire_tick_module() {
   case "$1" in
-    epic-menu-demo|epic-control-demo|epic-bridge-demo) return 0;;
+    demos/menu|demos/control|demos/bridge) return 0;;
     *) return 1;;
   esac
 }

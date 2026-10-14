@@ -1,4 +1,4 @@
-/* epic-cc dispatch, serial + all-timers tier (epic-combo-multitimer):
+/* epic-cc dispatch, serial + all-timers tier (tests/epic-combo-multitimer):
  * USART RX/TX and the TIMER0/1/2 overflow dispatch, the rest cleared. */
 
 #define EPICCC_IRQ_USART 1

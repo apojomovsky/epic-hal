@@ -15,7 +15,7 @@ if(NOT DEFINED EPIC_ROOT)
 endif()
 
 # Build the family's static library. Host include dir goes first so the
-# build selects the memory-backed platform header; the shared epic-common
+# build selects the memory-backed platform header; the shared common
 # headers and the family's own headers are PUBLIC so every consumer that
 # links this library resolves them. The default device is a PRIVATE define
 # on the library so the host platform is chosen by include path, not #ifdef.

@@ -1,4 +1,4 @@
-# epic-adcfilter API
+# lib/adcfilter API
 
 ## Public header
 

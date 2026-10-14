@@ -41,13 +41,13 @@ Build a real target:
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-python3 scripts/build/epic_build.py build --module epic-tick --mcu 16F877A --run
+python3 scripts/build/epic_build.py build --module lib/tick --mcu 16F877A --run
 ```
 
 Run the mdb gate:
 
 ```sh
-scripts/sim/sim-mdb-run.sh pic16f87xa 16F877A PIC16F877A epic-tick
+scripts/sim/sim-mdb-run.sh pic16f87xa 16F877A PIC16F877A lib/tick
 ```
 
 ## Docker (no local installs)
@@ -60,12 +60,12 @@ Docker image:
 make check-vendor    # one-time: tells you which 2 files to grab from Microchip
 make image           # build the toolchain image locally (once; cached after)
 make test            # host-sim build + test, every module
-make test MODULE=epic-lcd   # ... or just one (a manifest id or a directory, everywhere)
+make test MODULE=lib/lcd   # ... or just one (a manifest id or a directory, everywhere)
 
-make xc8-build MODULE=epic-tick MCU=16F877A   # real-target build
-make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A  # the mdb gate
+make xc8-build MODULE=lib/tick MCU=16F877A   # real-target build
+make mdb-test MODULE=lib/tick MCU=16F877A DEVICE=PIC16F877A  # the mdb gate
 
-scripts/sim/xc8-size-baseline.sh epic-encoder 16F877A  # flash/RAM size baseline
+scripts/sim/xc8-size-baseline.sh lib/encoder 16F877A  # flash/RAM size baseline
                                                     # for epic-cc#200's table
 
 make shell           # interactive shell, repo mounted at /repo
@@ -197,15 +197,15 @@ definitions and the consolidation tradeoff in its header comment.
 ## The epiccc gate pin
 
 The `epiccc-gate` CI job (`.github/workflows/ci.yml`) builds
-`pic16f87xa-hal` for the 877A, `pic16f88x-hal` for the 887,
-`epic-settings` and `epic-sdcard` for the 4550 (build-only),
-`epic-pic16f193x-firmware` for the 16F1939,
-`pic16f63x_67x_68x-hal` for the 16F677, `pic16f7x-hal` for the 16F77,
-the #150 exemplars `pic18f2520-hal` for the 18F2520, `pic18f1320-hal`
-for the 18F1320 and `pic18f6520-hal` for the 18F6520 (build-only),
-`pic16f5x-hal` for the 16F54, `pic16f818_819-hal` for the 16F819,
-`pic16f628a-hal` for the 16F628A, `pic16f83_84-hal` for the 16F84A
-(build-only, a baseline die like the 16F54) and `pic18fxx5x-hal` for
+`hal/pic14/16f87xa` for the 877A, `hal/pic14/16f88x` for the 887,
+`lib/settings` and `lib/sdcard` for the 4550 (build-only),
+`hal/pic14e/16f193x` for the 16F1939,
+`hal/pic14/16f63x_67x_68x` for the 16F677, `hal/pic14/16f7x` for the 16F77,
+the #150 exemplars `hal/pic18/18f2520` for the 18F2520, `hal/pic18/18f1320`
+for the 18F1320 and `hal/pic18/18f6520` for the 18F6520 (build-only),
+`hal/pic12/16f5x` for the 16F54, `hal/pic14/16f818_819` for the 16F819,
+`hal/pic14/16f628a` for the 16F628A, `hal/pic14/16f83_84` for the 16F84A
+(build-only, a baseline die like the 16F54) and `hal/pic18/18fxx5x` for
 the 18F4550
 with a pinned
 epic-cc compiler, and runs the deterministic
@@ -265,7 +265,7 @@ records the reasoning for the current sha.
 1. Pick a new `EPIC_CC_PIN` that still builds the 887 slice. A quick
    check: build the driver at that sha (`cargo build --release -p
    driver` in a checkout) and run `make epiccc-build
-   MODULE=pic16f88x-hal MCU=16F887 EPIC_CC_HOST=1
+   MODULE=hal/pic14/16f88x MCU=16F887 EPIC_CC_HOST=1
    EPIC_CC_BIN=<checkout>/target/release/epic-cc` with the stable
    release bundle's clang exported. `EPIC_CC_BIN` is what selects the
    driver; its default names the container-side path, so without the
@@ -310,7 +310,7 @@ Local run of the same gate the CI job runs:
 
 ```sh
 ln -s ~/projects/epic-cc epic-cc        # once per worktree
-make epiccc-build MODULE=pic16f87xa-hal MCU=16F877A
+make epiccc-build MODULE=hal/pic14/16f87xa MCU=16F877A
 make sim-epiccc HEX=build/epiccc/16F877A-blink.hex DEVICE=PIC16F877A \
   SAMPLES=12 STEPS=200000 \
   IRQ_EVERY=65536 IRQ_FLAG=INTCON:2 IRQ_ENABLE=INTCON:5
@@ -330,7 +330,7 @@ mdb-test recipe builds, but with epic-cc, so a comparison prices the
 same sources on both sides:
 
 ```sh
-make epiccc-build MODULE=epic-menu-demo MCU=18F4550 VARIANT=sim
+make epiccc-build MODULE=demos/menu MCU=18F4550 VARIANT=sim
 ```
 
 Sim hexes land in build/epiccc-sim, never in build/epiccc, so the two

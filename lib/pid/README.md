@@ -1,4 +1,4 @@
-# epic-pid, vendor-agnostic fixed-point PID controller
+# lib/pid, vendor-agnostic fixed-point PID controller
 
 A single-loop, fixed-point PID controller with anti-windup,
 derivative-on-measurement, and bumpless auto/manual transfer. One
@@ -14,14 +14,14 @@ then stepped once per fixed-period control cycle via `epic_pid_update()`.
   terms), so the same source runs on 8-bit parts that pay dearly
   for `float` (XC8 emulates it in software). The only non-trivial
   arithmetic primitive is a 16x16->32 signed multiply, which
-  `epic-pid` gets from `epic-math` (the host reference build links
-  no HAL; the XC8 cross-compile links `epic-math`'s real per-family
+  `lib/pid` gets from `lib/math` (the host reference build links
+  no HAL; the XC8 cross-compile links `lib/math`'s real per-family
   asm backend).
 - **Discrete-time gains, pre-scaled by the sample period**: the
   caller calls `epic_pid_update` at a fixed, known period `Ts` and
   pre-scales `Ki`/`Kd` by `Ts` once at configuration. This keeps
   `epic_pid_update` division-free (the most expensive primitive
-  `epic-math` provides on PIC16) and lets the module have zero
+  `lib/math` provides on PIC16) and lets the module have zero
   dependency on any timebase.
 - **Anti-windup by clamping** (the integrator is hard-capped to
   the Q8.8 clamp rails after every accumulation, not back-

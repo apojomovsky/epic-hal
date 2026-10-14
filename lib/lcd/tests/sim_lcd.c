@@ -1,5 +1,5 @@
 /**
- * Bounded, self-reporting HARNESS=sim build: epic-lcd's `mdb` gate. Runs
+ * Bounded, self-reporting HARNESS=sim build: lib/lcd's `mdb` gate. Runs
  * the real compiled driver (src/epic_lcd.c) under MPLAB SIM on a 16F877A
  * and verifies the emitted command/data byte stream and delay pattern over
  * the harness USART (see hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c).
@@ -186,7 +186,7 @@ static uint16_t g_fail = 0u;
 /**
  * @brief Report a check failure over the harness USART.
  *
- * Same shape as pic16f87xa-hal's probe: logs 'F' plus the failing
+ * Same shape as hal/pic14/16f87xa's probe: logs 'F' plus the failing
  * index in hex.
  */
 static void fail(uint8_t idx)

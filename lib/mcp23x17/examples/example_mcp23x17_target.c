@@ -1,5 +1,5 @@
 /**
- * epic-mcp23x17 on-target example: drives a real MCP23017 on the
+ * lib/mcp23x17 on-target example: drives a real MCP23017 on the
  * PIC's I2C bus (plus the MCP23S17 SPI twin's config), proving the
  * module links against the real HAL. The MSSP data path is unmodeled
  * under MPLAB SIM (SEN latches, SSPIF never sets), so no MEM

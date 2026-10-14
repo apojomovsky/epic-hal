@@ -1,4 +1,4 @@
-# pic16f88x-hal architecture
+# hal/pic14/16f88x architecture
 
 How the PIC16F88X HAL is structured and why. The shared contract
 (naming, handle pattern, harness, interrupt model) is in
@@ -14,7 +14,7 @@ EUSART with BRG16/auto-baud/wake-up, an MSSP with I2C address mask, a
 with an SR latch, an ECCP with dead-time/steering/auto-shutdown, an
 internal oscillator with fail-safe monitor, and ULPWU. Architecturally
 it is the 87XA's sibling (same core, same banking model), so
-`pic16f87xa-hal` is the template; every register address, bit and
+`hal/pic14/16f87xa` is the template; every register address, bit and
 reset value is 1:1 from DS40001291H.
 
 ## Build-time split
@@ -71,7 +71,7 @@ The dispatch gates three sources on their enable bits, not just the
 flag:
 
 - **TMR1IF**: Timer1 free-runs with its overflow interrupt disabled
-  (epic-swuart needs the counter, never the overflow), so TMR1IF
+  (lib/swuart needs the counter, never the overflow), so TMR1IF
   latches at every 65536-cycle wrap. Without the gate every later
   event pays the full handler cost; the stale flag is dropped when the
   source is disabled.
@@ -130,6 +130,6 @@ The 87XA reference project links every epic-* module and sits at 97.8%
 of the 16F877A's RAM. The 88X HAL's correct handle-copy pattern plus
 three extra drivers (osc, ulpwu, srlatch) tips the same all-modules
 link over the 16F887's 368 B. The 88X reference project therefore
-mirrors the 193X precedent: HAL + epic-common only, a Timer0-overflow
+mirrors the 193X precedent: HAL + common only, a Timer0-overflow
 blink, at ~35% RAM. Consumers add modules through the bundle's
 epic-hal.mk or the epic-hal CLI, which select only what they need.

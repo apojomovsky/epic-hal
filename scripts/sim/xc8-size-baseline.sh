@@ -15,7 +15,7 @@ fi
 if [ "$#" -ne 2 ] && [ -z "$log_file" ]; then
     echo "usage: $0 <module> <mcu>" >&2
     echo "  or:  $0 --log-file <path>" >&2
-    echo "  e.g. $0 epic-encoder 16F877A" >&2
+    echo "  e.g. $0 lib/encoder 16F877A" >&2
     exit 2
 fi
 

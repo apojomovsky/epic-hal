@@ -1,14 +1,14 @@
-# epic-mcp23x17
+# lib/mcp23x17
 
 MCP23017 (I2C) / MCP23S17 (SPI) 16-bit remote I/O expander driver for
 8-bit PICs (Microchip DS20001952), on top of the HAL via the
-[epic-bus](../bus) transport layer.
+[lib/bus](../bus) transport layer.
 
 Both parts share one register map; only the transport differs. The
-driver is family-agnostic: it rides on epic-bus's I2C "MEM" idiom for
+driver is family-agnostic: it rides on lib/bus's I2C "MEM" idiom for
 the MCP23017 and builds the MCP23S17's control-byte SPI transactions
-from epic-bus's raw SPI ops. The transport is injectable, so the host
-tests run the full module + epic-bus + mock-device stack.
+from lib/bus's raw SPI ops. The transport is injectable, so the host
+tests run the full module + lib/bus + mock-device stack.
 
 ## Quick start
 

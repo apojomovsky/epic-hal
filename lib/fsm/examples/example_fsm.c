@@ -1,4 +1,4 @@
-/* Traffic-light state machine on epic-fsm, driven by the epic-tick
+/* Traffic-light state machine on lib/fsm, driven by the lib/tick
  * timebase: a timed RED to GREEN to YELLOW cycle on three LEDs, with a
  * pedestrian button that ends the green phase early through a guarded
  * wildcard transition. Wiring: LEDs on RB0 (red), RB1 (yellow), RB2

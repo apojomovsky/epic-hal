@@ -1,4 +1,4 @@
-# epic-console, line-based serial command dispatcher over epic-serial.
+# lib/console, line-based serial command dispatcher over epic-serial.
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
@@ -26,10 +26,10 @@ if(NOT DEFINED EPIC_ROOT)
     unset(_EPIC_PARENT)
 endif()
 
-set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link through epic-serial: PIC16 or PIC18")
+set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link through lib/serial: PIC16 or PIC18")
 
 set(SERIAL_DIR ${EPIC_ROOT}/lib/serial
-    CACHE PATH "Path to the epic-serial source tree")
+    CACHE PATH "Path to the lib/serial source tree")
 if(NOT TARGET epic_serial)
     add_subdirectory(${SERIAL_DIR} ${CMAKE_CURRENT_BINARY_DIR}/serial)
 endif()

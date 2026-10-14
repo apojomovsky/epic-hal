@@ -1,4 +1,4 @@
-# `epic-debounce` API reference
+# `lib/debounce` API reference
 
 Authoritative declarations: [`include/debounce.h`](../include/debounce.h).
 

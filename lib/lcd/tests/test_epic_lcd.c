@@ -252,7 +252,7 @@ static void test_custom_config_row_addr(void)
     CHECK(e->byte == (0x80u | 0x54u), "row3: DDRAM addr 0x54");
 }
 
-/** @brief Run all epic-lcd tests and report pass/fail counts. */
+/** @brief Run all lib/lcd tests and report pass/fail counts. */
 int main(void)
 {
     test_init_sequence();

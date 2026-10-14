@@ -1,15 +1,10 @@
 /**
- * PIC16F193X sim-target implementation of the test harness
- * (core/epic_harness.h): epic_harness_log() inspects its format string
- * and, on the EPIC_HARNESS_RESULT marker, drives RA0 (PORTA bit 0) so
- * the mdb wrapper can read the result via 'print PORTA' in MODE=gpio.
- * The marker strings are passed verbatim from epic_harness_report()
- * (static inline in epic_harness.h) and are the only call sites in the
- * codebase that ever pass these literals. init() leaves RA0 driving low;
- * the toggle happens on log() (marker line drives RA0 to ok's value,
- * every other log line is a no-op). running() is bounded by `cycles` so
- * a run terminates on its own. Not in epic-common: the marker line needs
- * GPIO pin access, unlike epic_harness_target.c's four no-ops.
+ * Sim-target harness (core/epic_harness.h): log() drives RA0 on the
+ * EPIC_HARNESS_RESULT marker so the mdb wrapper reads the result via
+ * 'print PORTA' in MODE=gpio. Marker literals come only from
+ * epic_harness_report(); init() leaves RA0 low, running() is bounded
+ * by `cycles` so a run terminates. Kept out of common: the marker
+ * needs GPIO access, unlike epic_harness_target.c's no-ops.
  */
 
 #include "core/epic_harness.h"

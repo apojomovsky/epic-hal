@@ -15,7 +15,7 @@ the DFP header, every peripheral through its own real `mdb` gate.
 
 The smallest of epic-hal's three new PIC18 families (family B, umbrella
 #150): an 18-pin part, 4096 words flash, 240 B RAM (0x10-0xFF, a single
-bank), forked from `pic18fxx5x-hal` because it shares the same Access
+bank), forked from `hal/pic18/18fxx5x` because it shares the same Access
 Bank addressing shape and the same two-vector (high/low priority)
 interrupt architecture. Confirmed directly against the DFP header and
 `p18f1320.toml` in epic-cc, not assumed from the family name: this part
@@ -24,11 +24,11 @@ has no USB, no MSSP, a single ECCP1 (no CCP2), and no comparator.
 ## 2. Interrupts
 
 Two-vector priority scheme (0008h high, 0018h low), `EPIC_IRQ_*` API
-identical in shape to `pic18fxx5x-hal`. Sources confirmed present on this
+identical in shape to `hal/pic18/18fxx5x`. Sources confirmed present on this
 part: INT0/INT1/INT2, RB<7:4> change, Timer0-3, ECCP1, USART TX/RX, ADC,
 EEPROM write-complete. No SSP, CCP2, comparator or SPP sources: those
 peripherals do not exist on this part (confirmed absent from the DFP
-header, not carried over from `pic18fxx5x-hal`'s IRQn enum).
+header, not carried over from `hal/pic18/18fxx5x`'s IRQn enum).
 
 The IRQ backend's own dedicated `mdb` smoke test is
 `tests/example_timer0_irq.c`, verified under real `mdb` via `MODE=toggle`
@@ -36,7 +36,7 @@ The IRQ backend's own dedicated `mdb` smoke test is
 
 ## 3. Core: WDT, Sleep, BOR/POR
 
-Same shape as `pic18fxx5x-hal`: `EPIC_WDT_Refresh`/`EPIC_Sleep_Enter` are
+Same shape as `hal/pic18/18fxx5x`: `EPIC_WDT_Refresh`/`EPIC_Sleep_Enter` are
 link-time-selected (`*_sim.c` host, `*_target.c` XC8); BOR/POR status
 reads/clears RCON directly. One real difference: RCON bit 6 (SBOREN on
 the sibling family's 4550/2455) is unimplemented on this part, confirmed
@@ -46,13 +46,13 @@ absent from the DFP header's own bitfield macros.
 
 Only two ports exist: PORTA and PORTB, both full 8-bit (RA0-7, RB0-7); no
 PORTC/D/E (an 18-pin package has no room for them, confirmed absent from
-the DFP header). Otherwise identical to `pic18fxx5x-hal`'s GPIO driver:
+the DFP header). Otherwise identical to `hal/pic18/18fxx5x`'s GPIO driver:
 `EPIC_GPIO_*` writes go through LATx, reads come from PORTx, PORTB pull-
 ups live in INTCON2<RBPU>.
 
 ## 5. Timers 0-3
 
-All four timers share the `pic18fxx5x-hal` register shape and drivers,
+All four timers share the `hal/pic18/18fxx5x` register shape and drivers,
 verified 1-to-1 against the 1320's own DFP header (Microchip.PIC18Fxxxx_DFP
 1.7.171): identical Access Bank addresses and bit layouts. Register
 sections cited from the 1320's own datasheet, DS39605F, not the 4550's.
@@ -121,7 +121,7 @@ proves CCPR1H:L read 0x1000, CCP1CON reads 0x02 and CCP1IF clears.
 *DS39605F §16.0, Register 16-1 (TXSTA 0xFAC), 16-2 (RCSTA 0xFAB),
 16-3 (BAUDCTL 0xFAA).*
 
-Async + sync, same shape as `pic18fxx5x-hal`: 16-bit BRG
+Async + sync, same shape as `hal/pic18/18fxx5x`: 16-bit BRG
 (BAUDCTL<BRG16>, SPBRG:SPBRGH), auto-baud detect (BAUDCTL<ABDEN>) and
 9-bit address-detect (RCSTA<ADDEN>). The baud control register is
 BAUDCTL (0xFAA), not BAUDCON. **BAUDCTL has no ABDOVF auto-baud-overflow
@@ -150,7 +150,7 @@ ADCON0/ADCON2 program correctly.
 *DS39605F §7.0 (256 bytes, EECON1 0xFA6 / EECON2 0xFA7 / EEDATA 0xFA8 /
 EEADR 0xFA9).*
 
-Same shape and API as `pic18fxx5x-hal`: registers in the Access Bank, no
+Same shape and API as `hal/pic18/18fxx5x`: registers in the Access Bank, no
 bank switching; a byte-write performs the mandatory 0x55/0xAA unlock.
 The write-complete flag is PIR2<EEIF>. `example_eeprom`: write 0xA5 to
 0x42 and read back; mdb proves EEADR/EEDATA/EECON1 program correctly.
@@ -163,7 +163,7 @@ debugger, same as every other PIC18 family.)
 - **No comparator, no MSSP, no CCP2, no SPP, no USB**: confirmed absent
   from the PIC18Fxxxx DFP header for `pic18f1320`/`pic18lf1320`, not
   assumed from pin count.
-- **`#pragma config` field set is smaller than `pic18fxx5x-hal`'s**: no
+- **`#pragma config` field set is smaller than `hal/pic18/18fxx5x`'s**: no
   `CPUDIV`/`PLLDIV`/`USBDIV`/`VREGEN`/`CCP2MX`/`PBADEN`/`LPT1OSC`/`EBTR2`/
   `CP2`/`WRT2` fields (no USB, no CCP2, fewer flash-protection blocks
   given the smaller 4096-word flash); `STVR` replaces `STVREN`. Confirmed

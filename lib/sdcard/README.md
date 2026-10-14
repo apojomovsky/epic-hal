@@ -1,13 +1,13 @@
-# epic-sdcard, SD/MMC-over-SPI block storage for PIC18F2455/2550/4455/4550
+# lib/sdcard, SD/MMC-over-SPI block storage for PIC18F2455/2550/4455/4550
 
 A thin block-storage driver wrapping the vendored M-Stack `mmc.c`/`crc.c`
 SD-over-SPI driver (`third_party/m-stack-storage`), bound to this repo's
-SSP/GPIO HAL and `epic-tick`.
+SSP/GPIO HAL and `lib/tick`.
 
-- **Thin by design**: unlike `epic-usb`, M-Stack's `mmc_read_block`/
+- **Thin by design**: unlike `lib/usb`, M-Stack's `mmc_read_block`/
   `mmc_write_block` are already the right shape — this module's real job is
   binding `MMC_SPI_TRANSFER`/`MMC_SPI_SET_CS`/`MMC_SPI_SET_SPEED` to
-  `EPIC_SSP_*` and `EPIC_GPIO_WritePin`, and the timer macros to `epic-tick`,
+  `EPIC_SSP_*` and `EPIC_GPIO_WritePin`, and the timer macros to `lib/tick`,
   not inventing new buffering.
 - **PIC18Fxx5x-only for a RAM reason**: `MMC_BLOCK_SIZE` is a fixed 512
   bytes; every PIC16F87XA family member's total RAM (192–368 B) is smaller
@@ -15,13 +15,13 @@ SSP/GPIO HAL and `epic-tick`.
   the blocker is memory, not the peripheral.
 - **CS pin is caller-supplied**: SCK/SDI/SDO are fixed to the SSP
   peripheral's pins, but CS is ordinary GPIO wired however the board wires
-  it. Pass it at init time, same as `epic-debounce`'s read callback and
-  `epic-adcfilter`'s read callback.
+  it. Pass it at init time, same as `lib/debounce`'s read callback and
+  `lib/adcfilter`'s read callback.
 - **Host tests exercise the real protocol logic**: the mock SPI slave
   (`tests/mock/epic_sdcard_mock_spi.c`) plays the SD card's side of the
   command/response protocol well enough that the **actual vendored
   `mmc.c`/`crc.c`** are compiled and tested directly — not a hand-written
-  stand-in for them, unlike `epic-usb`'s host stub.
+  stand-in for them, unlike `lib/usb`'s host stub.
 - **Bring-up clock gap**: at 48 MHz the SSP's slowest fixed divisor is
   750 kHz, above the SD spec's 400 kHz bring-up ceiling; many cards
   tolerate it, unverified on real hardware.
@@ -66,7 +66,7 @@ if (epic_sdcard_read_block(0, block)) {
 
 `third_party/m-stack-storage/` vendors the storage subset of
 [M-Stack](https://github.com/signal11/m-stack) (same pinned upstream commit
-as `epic-usb`) under the Apache-2.0 arm of its dual LGPLv3 / Apache-2.0
+as `lib/usb`) under the Apache-2.0 arm of its dual LGPLv3 / Apache-2.0
 license. Remove it from your fork if you do not want to redistribute
 third-party code.
 

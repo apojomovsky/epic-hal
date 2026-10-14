@@ -1,4 +1,4 @@
-# epic-serial, interrupt-driven ring-buffered UART
+# lib/serial, interrupt-driven ring-buffered UART
 
 The non-blocking serial layer STM32Cube's `HAL_UART_Transmit_DMA`/
 `Receive_DMA`/`_IT` give, for 8-bit PICs, built on the HAL's USART driver.
@@ -16,7 +16,7 @@ The non-blocking serial layer STM32Cube's `HAL_UART_Transmit_DMA`/
   `printf` with arguments is a compile error there, which keeps the
   silent-output class impossible.
 - **Family-agnostic**: one `src/epic_serial.c` builds against
-  `pic16f87xa-hal` or `pic18fxx5x-hal` (one `#if` branch for the
+  `hal/pic14/16f87xa` or `hal/pic18/18fxx5x` (one `#if` branch for the
   family-specific USART handle/IRQ/TXREG-write); runs on the host sim and real
   silicon. Configurable ring size (`-DEPIC_SERIAL_RING_SZ=64`).
 

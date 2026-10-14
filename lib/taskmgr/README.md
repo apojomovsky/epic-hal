@@ -56,7 +56,7 @@ contract headers (`epic_hal.h`, `core/hal_irq.h`,
 `peripherals/hal_timer0.h`, `core/hal_wdt_sleep.h`) plus the shared
 `epic_harness.h`, so the same `epic_taskmgr.c`/`.h` builds against any
 8-bit PIC family. To build against the PIC18F2455 family instead
-(`pic18fxx5x-hal`), pass `-DEPIC_FAMILY=PIC18`:
+(`hal/pic18/18fxx5x`), pass `-DEPIC_FAMILY=PIC18`:
 
 ```sh
 cmake -B build18 -S . -DEPIC_FAMILY=PIC18
@@ -65,7 +65,7 @@ cmake --build build18
 
 This is the multi-family litmus test (per the shared-contract design
 in [common/README.md](../../common/README.md)):
-pointing the task manager at `pic18fxx5x-hal` needs zero changes to
+pointing the task manager at `hal/pic18/18fxx5x` needs zero changes to
 `epic_taskmgr.c`/`epic_taskmgr.h` (only the 3 family-neutral include
 lines, which are the same for either family). Both builds also compile
 the [target example](examples/example_taskmgr.c) as a syntax/link gate;
@@ -85,12 +85,12 @@ export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
 # PIC16F87XA family (16F873A/16F874A are manifest-excluded from the
 # real-target build: the full-HAL example does not fit their 192 B
 # RAM):
-python3 scripts/build/epic_build.py build --module epic-taskmgr --mcu 16F877A --run
-python3 scripts/build/epic_build.py build --module epic-taskmgr --mcu 16F876A --run
+python3 scripts/build/epic_build.py build --module lib/taskmgr --mcu 16F877A --run
+python3 scripts/build/epic_build.py build --module lib/taskmgr --mcu 16F876A --run
 
 # PIC18F2455 family (needs the PIC18Fxxxx DFP installed; see
 # hal/pic18/18fxx5x/mcu/pic18fxx5x-mplabx/README.md):
-python3 scripts/build/epic_build.py build --module epic-taskmgr --mcu 18F4550 --run
+python3 scripts/build/epic_build.py build --module lib/taskmgr --mcu 18F4550 --run
 ```
 
 This produces `build/16F877A-taskmgr.hex` (or the MCU you built for).

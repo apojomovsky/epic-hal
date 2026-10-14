@@ -122,7 +122,7 @@ actually set in that snapshot, instead of calling all of them
 unconditionally; each handler that *is* called still checks (and
 clears) its own flag internally, so it stays correct when called from
 anywhere else too. Applications never wire interrupt vectors themselves. (Contrast with
-`pic18fxx5x-hal`, which has two vectors and a priority model — see its own
+`hal/pic18/18fxx5x`, which has two vectors and a priority model: see its own
 manual §2 and `common/MANUAL.md` §6 for what's shared about the
 interrupt story across families.)
 
@@ -152,7 +152,7 @@ family's modules, which compile the full HAL either way:
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-python3 scripts/build/epic_build.py build --module epic-tick --mcu 16F877A --run
+python3 scripts/build/epic_build.py build --module lib/tick --mcu 16F877A --run
 # → build/16F877A-tick.hex, program with MPLAB X, ippe, PK2CMD, …
 ```
 
@@ -195,14 +195,14 @@ device define, and links the HAL library (which propagates the
 ### 4.2 Target build, manifest-driven
 
 ```sh
-python3 scripts/build/epic_build.py build --module epic-tick --mcu 16F877A --run   # also 870/871/872/873/LF873A/874/876/877 and the A-parts
+python3 scripts/build/epic_build.py build --module lib/tick --mcu 16F877A --run   # also 870/871/872/873/LF873A/874/876/877 and the A-parts
 ```
 
 CLI flags (see `python3 scripts/build/epic_build.py build --help`):
 
 | Flag            | Default                          | Meaning                                    |
 |-----------------|-----------------------------------|---------------------------------------------|
-| `--module`      | (required)                        | Manifest module name, e.g. `epic-tick`.    |
+| `--module`      | (required)                        | Manifest module name, e.g. `lib/tick`.    |
 | `--mcu`         | (required)                        | Target part (any `variants` entry).        |
 | `--fosc-hz`     | the family's `fosc_hz` (20000000) | Oscillator frequency, passed as `-DFOSC_HZ`. |
 | `--dfp-dir`     | empty (omit `-mdfp`)              | Device Family Pack dir.                    |
@@ -215,7 +215,7 @@ Output: `<build-dir>/<MCU>-<example-name>.hex` (Intel HEX, via
 The driver generates a Configuration Word source at build time
 (`<build-dir>/<MCU>/config_<MCU>.c`) from the manifest's per-module,
 per-family `example.config` table; adjust it there for your board. A
-typical example (`epic-tick`'s):
+typical example (`lib/tick`'s):
 
 ```c
 #pragma config FOSC = HS     // high-speed crystal (≤ 20 MHz)
@@ -395,7 +395,7 @@ others 8-bit; out-of-range bits in `pins` are masked off.
 A whole-port callback hook for the RB<7:4> interrupt-on-change source,
 the same shape as Timer2's one-callback-per-handle but simpler (there is
 only one PORTB, so no handle struct). Added so family-agnostic modules
-(notably `epic-encoder`) can consume the RB-change interrupt without a
+(notably `lib/encoder`) can consume the RB-change interrupt without a
 family-specific include; the family-neutral shim `peripherals/hal_gpio.h`
 pulls this header in.
 

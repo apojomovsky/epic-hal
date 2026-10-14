@@ -1,5 +1,5 @@
 /**
- * HARNESS=sim build for epic-adcfilter: the module's `mdb` gate. Runs
+ * HARNESS=sim build for lib/adcfilter: the module's `mdb` gate. Runs
  * the actual compiled epic_adcfilter.c under MPLAB SIM on a 16F877A,
  * feeding a scripted sample stream through the real API and checking
  * the host-test oracle values, then reports PASS/FAIL over the

@@ -50,7 +50,7 @@ SIZE_HINTS = {  # type token -> bytes
 # - The 87XA g_ccp_callbacks: the CCP ISRs read the array DIRECTLY
 #   (auto-banksel), never through a pointer; the PR #19 disassembly
 #   shows the direct read + null check + functab call, no IRP/FSR.
-# - The module objects (epic-serial's ring buffers, epic-tick's tick
+# - The module objects (lib/serial's ring buffers, lib/tick's tick
 #   counter): the ISR path touches them by direct symbol access
 #   (auto-banksel), never through a pointer, so any bank works; the
 #   193X FSR1 mechanism covers the pointer derefs. Same verified

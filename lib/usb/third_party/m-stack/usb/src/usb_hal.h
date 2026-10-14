@@ -290,10 +290,10 @@ struct buffer_descriptor {
 /* PIC18F2455/2550/4455/4550: USB RAM is banks 4-7 (0x400-0x7FF), BDT at
  * bank 4 (0x400-0x4FF) -- DS39632E Section 17.3 "USB RAM". Same address as
  * the already-supported J50, confirmed identical layout by datasheet
- * cross-reference (see epic-usb/README.md); the generic _PIC18
+ * cross-reference (see lib/usb/README.md); the generic _PIC18
  * SFR macros above this #ifdef already apply unchanged to the 2455/2550/
  * 4455/4550 family, this was the only chip-specific gap. Added for
- * epic-usb (github.com/apojomovsky/pic -- vendored copy, not upstreamed). */
+ * lib/usb (github.com/apojomovsky/pic -- vendored copy, not upstreamed). */
 #define BD_ADDR 0x400
 //#undef BUFFER_ADDR
 #else
@@ -314,7 +314,7 @@ struct buffer_descriptor {
 #elif defined __XC8
 	#define memcpy_from_rom(x,y,z) memcpy(x,y,z)
 	#define FAR
-	/* Deviation from upstream (epic-usb, not sent upstream): upstream reads
+	/* Deviation from upstream (lib/usb, not sent upstream): upstream reads
 	 * "@##BD_ADDR" -- the legacy PIC18 pic-cc placement syntax
 	 * ("var @ address"), pasted into one token via ##. XC8 v3.10's
 	 * Clang-based PIC18 frontend accepts neither: ## on '@' and an
@@ -323,7 +323,7 @@ struct buffer_descriptor {
 	 * level declarator") -- confirmed with a standalone repro. The
 	 * replacement, __at(address), is the syntax this compiler's own
 	 * headers use (see e.g. proc/pic16f59.h's "__at(0x000)"), confirmed
-	 * working the same way. See epic-usb/README.md for how this was
+	 * working the same way. See lib/usb/README.md for how this was
 	 * found. */
 	#define BD_ATTR_TAG __at(BD_ADDR)
 	#ifdef BUFFER_ADDR

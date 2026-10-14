@@ -1,4 +1,4 @@
-# `epic-tick` API reference
+# `lib/tick` API reference
 
 Authoritative declarations: [`include/epic_tick.h`](../include/epic_tick.h).
 

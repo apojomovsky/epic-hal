@@ -1,8 +1,8 @@
-# epic-encoder, interrupt-driven x4 quadrature decoder for 8-bit PICs
+# lib/encoder, interrupt-driven x4 quadrature decoder for 8-bit PICs
 
 A vendor-agnostic decoder for a standard 2-channel (A/B) incremental
 quadrature encoder, x4 resolution (counts every edge of both channels),
-instantiable (one `epic_encoder_t` per A/B pair), composable with `epic-pid`:
+instantiable (one `epic_encoder_t` per A/B pair), composable with `lib/pid`:
 feed `epic_encoder_get_position()` into `epic_pid_update()`'s `measurement`
 argument every control cycle.
 
@@ -15,7 +15,7 @@ one shared interrupt; decode with a software Gray-code transition table.
 - **One family-agnostic API** (`epic_encoder_init` / `epic_encoder_reset` /
   `epic_encoder_update` / `epic_encoder_get_position` / `epic_encoder_get_error_count` /
   `epic_encoder_get_glitch_count`), same `src/encoder.c` builds against
-  `pic16f87xa-hal` or `pic18fxx5x-hal` (`-DEPIC_FAMILY=PIC18`).
+  `hal/pic14/16f87xa` or `hal/pic18/18fxx5x` (`-DEPIC_FAMILY=PIC18`).
 - **Push, not poll**: an edge-triggered decoder, called from the
   application's RB-change callback, so it does not miss counts the way a
   poll-driven design would.
@@ -25,7 +25,7 @@ one shared interrupt; decode with a software Gray-code transition table.
 - **Atomic reads**: `epic_encoder_get_position()` wraps the 32-bit read in
   `EPIC_IRQ_Disable`/`Restore` (the ISR writes it asynchronously), mirroring
   `epic_tick_get()`.
-- **No `epic-math` link**: only integer add/compare/shift, no multiply.
+- **No `lib/math` link**: only integer add/compare/shift, no multiply.
 - **Works on the host simulator and real silicon**; the host test suite
   tests the exact code that ships on-target.
 
@@ -96,7 +96,7 @@ wiring (A/B on RB4/RB5, position logged over serial).
 - **PORTB only, at most two encoders per port**: mismatch-style IOC exists
   only on PORTB on both families, and RB<7:4> is 4 pins (one A/B pair uses
   2). A hard ceiling, not a tunable.
-- **1 ms glitch-gate resolution**: the optional gate uses `epic-tick`'s
+- **1 ms glitch-gate resolution**: the optional gate uses `lib/tick`'s
   1 ms timebase, adequate for mechanical detent bounce, not sub-ms
   electrical noise.
 - **Swap `pin_a`/`pin_b` to invert direction**: the count sign is fixed

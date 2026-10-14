@@ -1,4 +1,4 @@
-# `epic-usb` API reference
+# `lib/usb` API reference
 
 Authoritative declarations: [`include/epic_usb.h`](../include/epic_usb.h).
 Override the ring size with `-DEPIC_USB_RING_SZ=128` (power of two) before
@@ -16,7 +16,7 @@ Call once at startup.
 Pump the USB stack: services control transfers, drains the TX ring into the
 IN endpoint when the host is ready, and fills the RX ring from the OUT
 endpoint. Call this often (low single-digit milliseconds) — every main-loop
-iteration, or from a short-period `epic-taskmgr` task. Nothing else in this
+iteration, or from a short-period `lib/taskmgr` task. Nothing else in this
 API does anything useful before `epic_usb_connected()` is true.
 
 ### `size_t epic_usb_write(const uint8_t *data, size_t len)`

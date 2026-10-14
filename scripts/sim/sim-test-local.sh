@@ -5,7 +5,7 @@
 # scripts/sim/sim-mdb-run.sh inside it with this repo bind-mounted
 # (needs `docker login ghcr.io` with read:packages first).
 # Usage: sim-test-local.sh <family> <mcu> <device> <module> [wait_ms] [mode]
-#   e.g. scripts/sim/sim-test-local.sh pic16f87xa 16F877A PIC16F877A epic-tick
+#   e.g. scripts/sim/sim-test-local.sh pic16f87xa 16F877A PIC16F877A lib/tick
 
 set -euo pipefail
 

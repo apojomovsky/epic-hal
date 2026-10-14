@@ -1,8 +1,8 @@
 # PIC18F4550 flagship demo: dual-toolchain comparison (epic-hal#250)
 
-Status: 2026-09-23 (close-out rerun, epic-hal#250). `epic-menu-demo` is a realistic, product-shaped
+Status: 2026-09-23 (close-out rerun, epic-hal#250). `demos/menu` is a realistic, product-shaped
 PIC18F4550 firmware (LCD menu + buttons + ADC + EEPROM + CCP/PWM +
-epic-taskmgr + epic-serial together) built under both XC8 and epic-cc,
+lib/taskmgr + lib/serial together) built under both XC8 and epic-cc,
 and compared for flash/RAM size and (where both sides produce a hex)
 behavioral UART trace. Unlike the `epic-combo-*` firmwares in
 `docs/combo-epiccc-conformance.md` (narrow, white-box compiler-
@@ -18,7 +18,7 @@ real, unmocked driver code paths for every peripheral it touches.
   the XC8 byte-to-word conversion PIC18's byte-addressed program space
   needs); if both builds succeed, it also diffs the two builds' real
   MPLAB SIM (`mdb.sh`) UART traces byte-for-byte.
-- e.g. `scripts/sim/compare-toolchains.sh epic-menu-demo 18F4550
+- e.g. `scripts/sim/compare-toolchains.sh demos/menu 18F4550
   PIC18F4550 60000 4`.
 
 ## Result
@@ -40,7 +40,7 @@ see below).
 
 ## What it took to get here
 
-Three real bugs surfaced getting `epic-menu-demo` to code-generate
+Three real bugs surfaced getting `demos/menu` to code-generate
 cleanly under epic-cc, in the order found:
 
 1. **`legalize: llvm.memset.p0.i16 must carry a dst`**: a partial
@@ -80,13 +80,13 @@ cleanly under epic-cc, in the order found:
 
 ## Verification
 
-- `make xc8-build MODULE=epic-menu-demo MCU=18F4550`: clean.
+- `make xc8-build MODULE=demos/menu MCU=18F4550`: clean.
 - Real MPLAB SIM gate (`scripts/sim/sim-mdb-run.sh`, uart mode,
   `eeprom_writes=4`, 1500 ms wait): `EPIC_HARNESS_RESULT: PASS` with no
   FAIL marker in the capture, reproduced at the close-out rerun and
   earlier under epic-hal#251. A longer wait overruns the harness bound
   and re-enters `main`, which the gate's own marker check reads as FAIL.
-- Close-out rerun (`scripts/sim/compare-toolchains.sh epic-menu-demo 18F4550
+- Close-out rerun (`scripts/sim/compare-toolchains.sh demos/menu 18F4550
   PIC18F4550`, driver `epic-cc 0.1.0+885fe58` built inside the dev image,
   not a cached host binary, see epic-hal#240): epic-cc links clean at
   11888/16384 words and 743/2048 bytes; its mdb run produces no UART

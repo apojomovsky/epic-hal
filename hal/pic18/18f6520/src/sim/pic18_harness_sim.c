@@ -2,7 +2,7 @@
  * PIC18F6520 host-simulation implementation of the test harness
  * (see core/epic_harness.h), linked by the CMake host build. The target
  * implementation is the family-blind `epic_harness_target.c` in
- * `epic-common`, so neither this file nor the examples need `#ifdef`;
+ * `common`, so neither this file nor the examples need `#ifdef`;
  * this file is PIC18F6520-specific only because it pumps the PIC18F6520
  * simulator.
  */

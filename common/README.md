@@ -1,4 +1,4 @@
-# epic-common
+# common
 
 The shared layer reused by every 8-bit PIC HAL family. Nothing here
 references a register, a bank, an interrupt vector, or any other detail

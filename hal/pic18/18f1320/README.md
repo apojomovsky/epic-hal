@@ -1,7 +1,7 @@
 # PIC18F1320 HAL
 
 Hardware abstraction layer for **PIC18F1320**, family B phase 1 of 4
-(umbrella epic-hal#150), forked from `pic18fxx5x-hal` (same Access Bank
+(umbrella epic-hal#150), forked from `hal/pic18/18fxx5x` (same Access Bank
 addressing and two-vector interrupt architecture). Every constant,
 register address and behavior is taken 1-to-1 from the datasheet
 [DS39605F](https://ww1.microchip.com/downloads/en/DeviceDoc/30009605g.pdf)
@@ -21,7 +21,7 @@ from the DFP header.
 
 ## XC8 codegen gotchas
 
-Same rule as `pic18fxx5x-hal`: never pass an SFR address as a runtime
+Same rule as `hal/pic18/18fxx5x`: never pass an SFR address as a runtime
 value on PIC18 (a runtime-computed SFR pointer compiles to the
 program-memory table mechanism, silently writing nowhere). Every SFR
 access here names a compile-time-constant `PIC_REG_*` token.
@@ -47,10 +47,10 @@ cmake --build build
 ## Build (real target) and the mdb gate
 
 Manifest-driven (`common/manifest/modules.toml`'s `PIC18F1320`
-family and `pic18f1320-hal` module), same as every other family:
+family and `hal/pic18/18f1320` module), same as every other family:
 
 ```sh
-python3 scripts/build/epic_build.py build --module pic18f1320-hal --mcu 18F1320 \
+python3 scripts/build/epic_build.py build --module hal/pic18/18f1320 --mcu 18F1320 \
   --dfp-dir /opt/microchip/xc8/v4.00/pic/packs/Microchip.PIC18Fxxxx_DFP/xc8
 ```
 
@@ -75,9 +75,9 @@ This family is not yet added to `.github/workflows/ci.yml`'s
 `family-check.yml` calls: that reusable job's "epic-hal init
 scaffold-and-build" step needs at least one consumer module for the
 family (`bundlegen.modules_for_family` excludes the family's own `-hal`
-dir by design), which `pic18f1320-hal` does not have yet.
+dir by design), which `hal/pic18/18f1320` does not have yet.
 `PIC16F193X`'s own job was wired in only once
-`epic-pic16f193x-firmware` existed as that consumer; this family gets
+`hal/pic14e/16f193x` existed as that consumer; this family gets
 the same treatment once a real module targets it. Until then, this
 family's device-data audits (`scripts/audit/sfr-map-audit.py`,
 `scripts/audit/config-key-audit.py`, `scripts/audit/hex-identity-audit.py`) and its `mdb` gate

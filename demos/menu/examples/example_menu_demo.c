@@ -1,5 +1,5 @@
 /*
- * epic-menu-demo target build: real PIC18F4550 hardware. Wires the
+ * demos/menu target build: real PIC18F4550 hardware. Wires the
  * real RB<7:4> change interrupt to menu_demo_core's event queue, spawns
  * the cooperative-scheduler tasks, and runs forever. Config words come
  * from the manifest (see common/manifest/modules.toml), not a

@@ -1,4 +1,4 @@
-# epic-swuart, bit-banged full-duplex UART
+# lib/swuart, bit-banged full-duplex UART
 
 Software UART on CCP-wired pins: a second serial channel (or, on
 PIC16F193X only, a third and fourth) when the one hardware EUSART is
@@ -18,7 +18,7 @@ instant, both immune to ISR service latency.
   spare). Resolved by family detection in `epic_swuart.h`, not
   user-overridable.
 - **9600 baud, 8N1**, non-blocking ring-buffered read/write, same shape
-  as `epic-serial`'s.
+  as `lib/serial`'s.
 - **Owns Timer1 and its channels' CCP instances** for as long as any
   channel is active. Do not also drive Timer1 or those CCP instances
   directly from application code while a channel is initialised.
@@ -55,7 +55,7 @@ type; RB1 toggles per echoed byte.
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-python3 scripts/build/epic_build.py build --module epic-swuart --mcu 16F877A --run
+python3 scripts/build/epic_build.py build --module lib/swuart --mcu 16F877A --run
 ```
 
 **Real-hardware verification status:** the module's `mdb` gate

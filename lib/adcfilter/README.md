@@ -1,4 +1,4 @@
-# epic-adcfilter, vendor-agnostic ADC oversampling and moving-average filter
+# lib/adcfilter, vendor-agnostic ADC oversampling and moving-average filter
 
 Two composable utilities for noisy 10-bit ADC readings on 8-bit PICs:
 oversample-and-decimate (gain extra bits of resolution) and an O(1) moving

@@ -1,4 +1,4 @@
-# epic-settings, EEPROM-backed settings blobs with CRC validation
+# lib/settings, EEPROM-backed settings blobs with CRC validation
 
 Save an opaque caller-owned blob to data EEPROM and load it back later with a
 CRC-16 integrity check.

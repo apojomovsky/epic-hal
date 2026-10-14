@@ -1,6 +1,6 @@
 /**
  * Timer1 overflow fires an ISR that toggles RB0, the canonical "Timer1
- * counts and the ISR runs" smoke for pic16f193x-hal. The main loop just
+ * counts and the ISR runs" smoke for hal/pic14e/16f193x. The main loop just
  * lets time pass (pumping the sim on host, busy-spinning on target, via
  * core/epic_harness.h) and refreshes the WDT.
  *

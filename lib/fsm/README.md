@@ -1,4 +1,4 @@
-# epic-fsm
+# lib/fsm
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 [![Runs on: host & silicon](https://img.shields.io/badge/runs%20on-host%20%26%20silicon-orange.svg)](#quick-start)
@@ -7,7 +7,7 @@ A vendor-agnostic, table-driven finite state machine engine. Unlike every
 other module in this repo, it has **no HAL dependency and no per-family
 backend** — a state machine is pure control-flow logic, so the same
 `src/fsm.c` compiles unchanged for the host, PIC16, and PIC18. It composes
-with [epic-taskmgr](../taskmgr) (or anything else) by staying decoupled
+with [lib/taskmgr](../taskmgr) (or anything else) by staying decoupled
 from it: a task callback just owns an `epic_fsm_t` and calls `epic_fsm_dispatch()`.
 
 > 📖 **Documentation**: [API reference](docs/API.md)
@@ -78,9 +78,9 @@ not a second correctness gate, correctness is already fully proven on host.
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
 
-python3 scripts/build/epic_build.py build --module epic-fsm --mcu 16F877A --run
-python3 scripts/build/epic_build.py build --module epic-fsm --mcu 18F4550 --run
-python3 scripts/build/epic_build.py build --module epic-fsm --mcu 16F1937 --run
+python3 scripts/build/epic_build.py build --module lib/fsm --mcu 16F877A --run
+python3 scripts/build/epic_build.py build --module lib/fsm --mcu 18F4550 --run
+python3 scripts/build/epic_build.py build --module lib/fsm --mcu 16F1937 --run
 ```
 
 ## Use it in your own firmware

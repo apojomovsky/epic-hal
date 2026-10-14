@@ -1,6 +1,6 @@
 /*
  * EUSART driver, async + sync master/slave (DS39605F §16.0), same shape
- * as `pic18fxx5x-hal` but with the baud control register BAUDCTL (0xFAA)
+ * as `hal/pic18/18fxx5x` but with the baud control register BAUDCTL (0xFAA)
  * rather than BAUDCON. BAUDCTL has no ABDOVF bit; the ABDOVF accessors of
  * the 4550/2520 drivers are absent here.
  */

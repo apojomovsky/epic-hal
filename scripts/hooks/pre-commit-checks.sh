@@ -205,7 +205,7 @@ brace_style_check() {
 # as preprocessorErrorDirective (suppressed below) is reclassified as
 # syntaxError, always inside third_party/ paths this repo does not own.
 #
-# -D'__at(x)=': XC8's __at(addr) placement attribute (direct in epic-math's
+# -D'__at(x)=': XC8's __at(addr) placement attribute (direct in lib/math's
 # pic16 backends, via EPIC_PLACE/..._PLACE macros in the target platform
 # headers elsewhere) is not C99; cppcheck 2.19 fails on it, cppcheck 2.13
 # did not. The hook analyzes code the way the host build compiles it, and
@@ -238,7 +238,7 @@ group_of() {
 # A family group sees only its own headers plus the shared layer, so a
 # basename shared across families (pic14_midrange.h, epic_hal.h, ...)
 # cannot resolve to another die. The shared midrange drivers (pic14_*.h)
-# and epic-common headers have unique basenames repo-wide, so adding
+# and common headers have unique basenames repo-wide, so adding
 # them never shadows a family header. Caller keeps only the directories
 # that exist.
 group_includes() {

@@ -57,7 +57,7 @@ void epic_dispatch_all_irqs(void)
 
     uint8_t pir1 = epic_sfr_read8(PIC_REG_PIR1);
     /* Gate TMR1 on TMR1IE, not TMR1IF: Timer1 free-runs with its
-     * overflow IRQ disabled (epic-swuart needs the counter but never
+     * overflow IRQ disabled (lib/swuart needs the counter but never
      * the overflow), so TMR1IF latches at every 65536-cycle wrap and
      * stays set. Dispatching on the stale flag would pay the full
      * table-driven handler cost on unrelated events; when the source
@@ -103,7 +103,7 @@ void epic_dispatch_all_irqs(void)
     if (pir2 & PIC_PIR2_CCP2IF) CCP2_IRQHandler();
     if (pir2 & PIC_PIR2_CMIF)   COMP_IRQHandler();
     /* Gate EEIF on EEIE and leave it untouched when the source is
-     * disabled: EEPROM completion is often polled (epic-settings spins
+     * disabled: EEPROM completion is often polled (lib/settings spins
      * on EEIF with EEIE off), and an unconditional dispatch would clear
      * the flag from a live ISR and hang the poller. No stale-flag drop:
      * the polling consumer owns EEIF. */

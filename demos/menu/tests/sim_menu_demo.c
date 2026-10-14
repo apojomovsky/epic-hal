@@ -14,7 +14,7 @@
  * tick number in an XC8 build and an epic-cc build alike. That is the
  * property scripts/sim/compare-toolchains.sh's UART trace diff relies on.
  *
- * Timer0 tick config mirrors epic-taskmgr's own proven sim gate
+ * Timer0 tick config mirrors lib/taskmgr's own proven sim gate
  * (tests/sim_taskmgr.c): 1:16 prescaler, reload 0, ~341 us/tick at
  * 48 MHz, well past the PIC18-vs-PIC16 SIM caveats documented there.
  */
@@ -29,7 +29,7 @@
 
 /** Loop-iteration bound for epic_taskmgr_run()'s harness-driven loop
  * (core/epic_harness.h: not a real-time unit), empirically calibrated:
- * this firmware's per-round cost is far heavier than epic-taskmgr's
+ * this firmware's per-round cost is far heavier than lib/taskmgr's
  * own sim gate's 1500. 200 is the smallest value observed to reliably
  * let the scripted sequence, the EEPROM write pair (via the
  * eeprom_writes mdb poke cycles, see scripts/sim/sim-mdb-run.sh), and the

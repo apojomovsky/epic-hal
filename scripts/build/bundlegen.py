@@ -29,11 +29,21 @@ def _family(manifest, family_name):
     return fam
 
 
+def short_name(name: str) -> str:
+    """Consumer-facing short form of a path module id.
+
+    The last path segment minus an `epic-` prefix: `lib/serial` is
+    `serial`, `tests/epic-combo-uart-ssp` is `combo-uart-ssp`,
+    `demos/menu` is `menu`. Make-safe and unique across the manifest;
+    the bundle Makefile and the init CLI speak only this form.
+    """
+    return name.rsplit("/", 1)[-1].removeprefix("epic-")
+
 def modules_for_family(manifest, family_name: str) -> list[str]:
     """Every consumer module with at least one supported part in this family.
 
     Excludes a module whose dir equals the family's own hal_dir (the
-    epic-pic16f193x-firmware shape: CI-coverage plumbing, not a library a
+    hal/pic14e/16f193x shape: CI-coverage plumbing, not a library a
     consumer asks for) and any module whose dir sits under tests/ (the
     epic-combo-* modules: combination-matrix CI gates, not consumer
     libraries). Both are what keeps a bundle genuinely consumer-facing.
@@ -103,7 +113,8 @@ def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
         "#   CFLAGS += $(EPIC_HAL_CFLAGS)",
         "#",
         "# Sets EPIC_HAL_SRCS, EPIC_HAL_INCLUDES, and EPIC_HAL_CFLAGS.",
-        "# Module names are given without the epic- prefix.",
+        "# Module names are short: the id's last path segment, minus an",
+        "# epic- prefix (lib/serial is `serial`).",
         "",
         f"EPIC_HAL_VERSION := {version}",
         f"EPIC_HAL_FAMILY  := {family_name}",
@@ -122,7 +133,7 @@ def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
     ]
 
     for name in modules:
-        short = name.removeprefix("epic-")
+        short = short_name(name)
         out.append(f"EPIC_HAL_MODULE_{short} := {name}")
     out.append("")
 
@@ -314,7 +325,7 @@ def _sample_module(manifest, family_name, mcu):
     """A module that actually builds on `mcu`, for use in examples."""
     for name in modules_for_family(manifest, family_name):
         if mcu in manifest.modules[name].supported.get(family_name, []):
-            return name.removeprefix("epic-")
+            return short_name(name)
     raise BundleError(f"no module supports {mcu}; cannot write a quickstart")
 
 

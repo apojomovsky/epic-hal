@@ -9,7 +9,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 16F1508, 16F1509 |
 | Core | Enhanced mid-range |
-| Modules | `epic-pic16f1508-firmware` |
+| Modules | `hal/pic14e/16f1508` |
 | Simulator | MDB sim gate |
 | Simulator limits | Single stores of most CLC1 D3S codes to CLC1SEL1 throw in the simulator, and the CLCDATA mirror copy never sets, so the gate observes CON.OUT only (family MANUAL.md) |
 
@@ -19,7 +19,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 16F1933, 16F1934, 16F1936, 16F1937, 16F1938, 16F1939 |
 | Core | Enhanced mid-range |
-| Modules | `epic-fsm`, `epic-pic16f193x-firmware`, `epic-swuart`, `epic-tick` |
+| Modules | `hal/pic14e/16f193x`, `lib/fsm`, `lib/swuart`, `lib/tick` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -29,7 +29,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 16F505, 16F506, 16F57, 16F59, 16F54 |
 | Core | Baseline |
-| Modules | `pic16f5x-hal` |
+| Modules | `hal/pic12/16f5x` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -39,7 +39,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 16F627, 16F627A, 16LF627A, 16F628, 16LF628A, 16F648A, 16F628A |
 | Core | Mid-range (classic) |
-| Modules | `epic-tick`, `pic16f628a-hal` |
+| Modules | `hal/pic14/16f628a`, `lib/tick` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -49,7 +49,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 16F631, 16F630, 16F676, 16F639, 16F684, 16F685, 16F688, 16F689, 16F677 |
 | Core | Mid-range (classic) |
-| Modules | `pic16f63x_67x_68x-hal` |
+| Modules | `hal/pic14/16f63x_67x_68x` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -59,7 +59,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 16F72, 16F73, 16F74, 16F737, 16F747, 16F76, 16F767, 16F777, 16F77 |
 | Core | Mid-range (classic) |
-| Modules | `pic16f7x-hal` |
+| Modules | `hal/pic14/16f7x` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -69,7 +69,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 16F818, 16F819 |
 | Core | Mid-range (classic) |
-| Modules | `pic16f818_819-hal` |
+| Modules | `hal/pic14/16f818_819` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -79,7 +79,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 16F83, 16F84, 16F84A |
 | Core | Mid-range (classic) |
-| Modules | `pic16f83_84-hal` |
+| Modules | `hal/pic14/16f83_84` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -89,7 +89,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 16F870, 16F871, 16F872, 16F873, 16F873A, 16LF873A, 16F874, 16F874A, 16F876, 16F876A, 16F877, 16F877A |
 | Core | Mid-range (classic) |
-| Modules | `epic-adcfilter`, `epic-bus`, `epic-combo-adc-uart`, `epic-combo-encoder-tick`, `epic-combo-multitimer`, `epic-combo-rb-uart`, `epic-combo-rx-loopback`, `epic-combo-swuart-tick`, `epic-combo-tick-serial`, `epic-combo-uart-ssp`, `epic-common`, `epic-console`, `epic-debounce`, `epic-encoder`, `epic-fsm`, `epic-lcd`, `epic-math`, `epic-mcp23x17`, `epic-pid`, `epic-serial`, `epic-swuart`, `epic-taskmgr`, `epic-tick`, `pic16f87xa-hal` |
+| Modules | `common`, `hal/pic14/16f87xa`, `lib/adcfilter`, `lib/bus`, `lib/console`, `lib/debounce`, `lib/encoder`, `lib/fsm`, `lib/lcd`, `lib/math`, `lib/mcp23x17`, `lib/pid`, `lib/serial`, `lib/swuart`, `lib/taskmgr`, `lib/tick`, `tests/epic-combo-adc-uart`, `tests/epic-combo-encoder-tick`, `tests/epic-combo-multitimer`, `tests/epic-combo-rb-uart`, `tests/epic-combo-rx-loopback`, `tests/epic-combo-swuart-tick`, `tests/epic-combo-tick-serial`, `tests/epic-combo-uart-ssp` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -99,7 +99,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 16F882, 16F883, 16F884, 16F886, 16F887 |
 | Core | Mid-range (classic) |
-| Modules | `epic-adcfilter`, `epic-bus`, `epic-common`, `epic-console`, `epic-debounce`, `epic-encoder`, `epic-fsm`, `epic-lcd`, `epic-math`, `epic-mcp23x17`, `epic-pid`, `epic-serial`, `epic-swuart`, `epic-taskmgr`, `epic-tick`, `pic16f88x-hal` |
+| Modules | `common`, `hal/pic14/16f88x`, `lib/adcfilter`, `lib/bus`, `lib/console`, `lib/debounce`, `lib/encoder`, `lib/fsm`, `lib/lcd`, `lib/math`, `lib/mcp23x17`, `lib/pid`, `lib/serial`, `lib/swuart`, `lib/taskmgr`, `lib/tick` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -109,7 +109,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 18F1320 |
 | Core | PIC18 |
-| Modules | `pic18f1320-hal` |
+| Modules | `hal/pic18/18f1320` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -119,7 +119,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 18F2220, 18F2320, 18F2520 |
 | Core | PIC18 |
-| Modules | `pic18f2520-hal` |
+| Modules | `hal/pic18/18f2520` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -129,7 +129,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 18F6620, 18F6720, 18F6585, 18F6680, 18F8525, 18F8585, 18F8621, 18F8680, 18F6525, 18F6621, 18F6520 |
 | Core | PIC18 |
-| Modules | `pic18f6520-hal` |
+| Modules | `hal/pic18/18f6520` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
 
@@ -139,6 +139,6 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 18F2455, 18F2550, 18F4455, 18F4550 |
 | Core | PIC18 |
-| Modules | `epic-adcfilter`, `epic-bridge-demo`, `epic-bus`, `epic-combo-eeprom-isr`, `epic-combo-lcd-tick`, `epic-combo-modbus-full`, `epic-combo-taskmgr-serial`, `epic-combo-tick-settings`, `epic-console`, `epic-control-demo`, `epic-debounce`, `epic-encoder`, `epic-fsm`, `epic-math`, `epic-menu-demo`, `epic-modbus`, `epic-pid`, `epic-sdcard`, `epic-serial`, `epic-settings`, `epic-swuart`, `epic-taskmgr`, `epic-tick`, `epic-usb`, `pic18fxx5x-hal` |
+| Modules | `demos/bridge`, `demos/control`, `demos/menu`, `hal/pic18/18fxx5x`, `lib/adcfilter`, `lib/bus`, `lib/console`, `lib/debounce`, `lib/encoder`, `lib/fsm`, `lib/math`, `lib/modbus`, `lib/pid`, `lib/sdcard`, `lib/serial`, `lib/settings`, `lib/swuart`, `lib/taskmgr`, `lib/tick`, `lib/usb`, `tests/epic-combo-eeprom-isr`, `tests/epic-combo-lcd-tick`, `tests/epic-combo-modbus-full`, `tests/epic-combo-taskmgr-serial`, `tests/epic-combo-tick-settings` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |

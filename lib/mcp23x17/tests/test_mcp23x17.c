@@ -1,8 +1,8 @@
 /**
- * Host test for epic-mcp23x17: the full module + epic-bus +
- * mock-device stack, through the epic-bus ops seam. A mock MCP23017
+ * Host test for lib/mcp23x17: the full module + lib/bus +
+ * mock-device stack, through the lib/bus ops seam. A mock MCP23017
  * (a 22-byte register file with the I2C framing) and an SPI twin
- * (control-byte framing) are injected as the epic-bus i2c/spi ops;
+ * (control-byte framing) are injected as the lib/bus i2c/spi ops;
  * a third case drives the module's own injectable transport directly.
  *
  * Register map under test (BANK=0 sequential, DS20001952E 3.5): IODIR
@@ -229,7 +229,7 @@ static const epic_mcp23x17_transport_t g_mock_transport = {
     mock_read_reg, mock_write_reg, &g_mock
 };
 
-/** @brief Reset and wire the mock I2C device as the epic-bus ops. */
+/** @brief Reset and wire the mock I2C device as the lib/bus ops. */
 static void setup_i2c(uint8_t dev)
 {
     memset(&g_i2c, 0, sizeof(g_i2c));
@@ -243,7 +243,7 @@ static void setup_i2c(uint8_t dev)
     epic_bus_set_i2c_ops(&ops);
 }
 
-/** @brief Reset and wire the mock SPI device as the epic-bus ops. */
+/** @brief Reset and wire the mock SPI device as the lib/bus ops. */
 static void setup_spi(uint8_t dev)
 {
     memset(&g_spi, 0, sizeof(g_spi));

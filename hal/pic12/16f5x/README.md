@@ -27,15 +27,15 @@ Host sim: `cmake -B build && cmake --build build`, run any
 `build/example_*` directly (`example_blink`, `example_control`, and the
 per-device `example_blink_PIC16F505` .. `example_blink_PIC16F59`). The
 verdict is the printed `EPIC_HARNESS_RESULT` marker, not the exit code.
-Real target: `make xc8-build MODULE=pic16f5x-hal MCU=16F54` (blink).
-MPLAB SIM toggle gate: `make mdb-test MODULE=pic16f5x-hal MCU=16F54
+Real target: `make xc8-build MODULE=hal/pic12/16f5x MCU=16F54` (blink).
+MPLAB SIM toggle gate: `make mdb-test MODULE=hal/pic12/16f5x MCU=16F54
 DEVICE=PIC16F54 MODE=toggle STEPI=50000` (PORTB bit 0; the family has
 no UART. The blink's toggle period is ~50000 instructions, so STEPI
 50000 alternates cleanly while the 200000 default aliases to a constant
 phase, see `scripts/ci/ci-target-sim.sh`). All five parts take the same
 parameters: swap `MCU=`/`DEVICE=` for `16F505`, `16F506`, `16F57` or
 `16F59` and the gate runs unchanged.
-Epic-cc gate: `make epiccc-build MODULE=pic16f5x-hal MCU=16F54
+Epic-cc gate: `make epiccc-build MODULE=hal/pic12/16f5x MCU=16F54
 EPIC_CC_HOST=1` builds the family's epic-cc example, a software-loop
 PORTB:0 toggle (`tests/example_blink_epiccc.c`, wired through the
 manifest's `example.PIC16F5x.epiccc` variant): epic-cc's PicBaseline

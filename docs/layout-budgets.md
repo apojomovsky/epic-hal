@@ -17,7 +17,7 @@ inspect the .s / .sym / .map (AGENTS.md).
   PCLATH management for calls); the constraint is the ISR body and
   any hand-asm routine with internal gotos.
 - **Hand-asm internal gotos**: a `goto` inside hand-asm is
-  page-local only. This is why the epic-math PIC16 asm leaves are
+  page-local only. This is why the lib/math PIC16 asm leaves are
   planned to be pinned below 0x800 (quality task 5a) so the full
   golden-vector selftest can run on PIC16 without the 1356 aborts.
 
@@ -51,7 +51,7 @@ inspect the .s / .sym / .map (AGENTS.md).
   address on classic PIC16 compiles to FSR1:INDF1, which needs IRP
   set for banks 2/3; the 87XA CCP incident (baked IRP=1) is the
   cautionary record.
-- **Math scratch (epic-math)**: the shared 12-byte
+- **Math scratch (lib/math)**: the shared 12-byte
   `pic16_mscratch` is pinned to common RAM 0x72-0x7D, clear of the
   HAL RMW scratches (0x70/0x71) and the compiler's top-of-common-RAM
   working area (0x7E/0x7F). The 16-byte original at 0x70 overlapped
@@ -81,11 +81,11 @@ inspect the .s / .sym / .map (AGENTS.md).
 
 | Address | Size | Object | Why |
 |---|---|---|---|
-| 0x72-0x7D | 12 | pic16_mscratch (epic-math) | common RAM, clear of HAL/compiler |
+| 0x72-0x7D | 12 | pic16_mscratch (lib/math) | common RAM, clear of HAL/compiler |
 | 0x70 | 1 | epic_irq_pie_scratch (HAL) | common RAM, asm operand reach |
 | 0x71 | 1 | epic_bank1_scratch (HAL) | common RAM, asm operand reach |
 | 0xA0 | 7 | s_usart_handle (harness) | USART ISR bakes IRP=0 |
-| 0x100-0x540 | ~0x440 | epic-math PIC16 asm leaves (10 fns) | internal gotos, page 0 only; gaps sized to worst-case (-O0) codegen (old pins fit -O2 only and collided at -O0/-O1) |
+| 0x100-0x540 | ~0x440 | lib/math PIC16 asm leaves (10 fns) | internal gotos, page 0 only; gaps sized to worst-case (-O0) codegen (old pins fit -O2 only and collided at -O0/-O1) |
 | 0xA0 | 7 | s_usart_handle (harness) | USART ISR bakes IRP=0 |
 
 New pins must land outside these ranges (the linker skips pinned

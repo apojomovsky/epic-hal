@@ -454,7 +454,7 @@ static void test_two_independent_instances(void)
 }
 
 
-/** @brief Run every epic-pid unit test and report pass/fail counts. */
+/** @brief Run every lib/pid unit test and report pass/fail counts. */
 int main(void)
 {
     test_pure_p();

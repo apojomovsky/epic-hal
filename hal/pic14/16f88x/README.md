@@ -1,4 +1,4 @@
-# pic16f88x-hal
+# hal/pic14/16f88x
 
 HAL for the PIC16F88X family (PIC16F882/883/884/886/887), classic
 mid-range 8-bit parts. Full peripheral coverage: GPIO (per-pin
@@ -22,16 +22,16 @@ cmake -B build && cmake --build build
 Real target (XC8, via the manifest):
 
 ```sh
-python3 scripts/build/epic_build.py build --module pic16f88x-hal --mcu 16F887 \
+python3 scripts/build/epic_build.py build --module hal/pic14/16f88x --mcu 16F887 \
     --variant target --build-dir build-target --dfp-dir <dfp>/xc8
 ```
 
 MPLAB SIM gate (HARNESS=sim, the banked-SFR probe):
 
 ```sh
-python3 scripts/build/epic_build.py build --module pic16f88x-hal --mcu 16F887 \
-    --variant sim --build-dir build-sim/pic16f88x-hal --dfp-dir <dfp>/xc8
-bash scripts/sim/sim-mdb-run.sh pic16f88x 16F887 PIC16F887 pic16f88x-hal 5000 uart
+python3 scripts/build/epic_build.py build --module hal/pic14/16f88x --mcu 16F887 \
+    --variant sim --build-dir build-sim/hal/pic14/16f88x --dfp-dir <dfp>/xc8
+bash scripts/sim/sim-mdb-run.sh pic16f88x 16F887 PIC16F887 hal/pic14/16f88x 5000 uart
 ```
 
 ## Layout

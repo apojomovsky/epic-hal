@@ -112,7 +112,7 @@ against an already-supported sibling in `hal/pic14/16f87xa/` or
   apply).
 - Same peripheral module identities (Timer2 is Timer2, EUSART is
   EUSART), even if some are present/absent (that's normal, PSP is
-  40/44-pin-only within PIC16F87XA already, `epic-tick`'s own family
+  40/44-pin-only within PIC16F87XA already, `lib/tick`'s own family
   guard `PIC16F87XA_FAMILY_HAS_PSP` is the existing pattern for this).
 - Register addresses for shared peripherals are the same, or
   differences are small enough to express as a per-MCU `#if` inside the
@@ -353,7 +353,7 @@ assumes the previous ones are done and verified, not just written):
    still one file, not ten.
 3. **SFR map**, datasheet-cited, matching the existing families'
    `<family>fxx_sfr.h` convention.
-4. **`epic-common`'s four-function harness target implementation** for
+4. **`common`'s four-function harness target implementation** for
    the new family (mirrors `epic_harness_target.c`).
 5. **IRQ backend next, before any peripheral that needs it**, and give
    it its own dedicated `mdb` smoke test (enable one timer interrupt,
@@ -423,7 +423,7 @@ assumes the previous ones are done and verified, not just written):
    a live-gotcha section in `hal/<arch>/<family>/README.md`, in the format
    established in `hal/pic14/16f87xa/README.md` and
    `hal/pic18/18fxx5x/README.md` (a standalone `docs/ARCHITECTURE.md` is
-   only kept while it holds live conventions, as `pic16f193x-hal` does
+   only kept while it holds live conventions, as `hal/pic14e/16f193x` does
    for its AGENTS.md-cited BSR findings): cross-check any claimed
    compiler "bug" against the actual XC8 User's Guide (extract it from
    the toolchain image, don't assume from general PIC knowledge) before
@@ -488,7 +488,7 @@ exist and are accurate, not just present:
       "the directory exists so it must be picked up". Any `excluded`
       entry carries a real root-cause reason, not a silent exclusion.
 - [ ] Full regression run: every module, every MCU variant in the
-      affected family (or families, if a shared `epic-common` change
+      affected family (or families, if a shared `common` change
       was needed), host and real-target, immediately before the final
       commit, not from memory of an earlier run.
 - [ ] User has signed off on the final state before anything gets

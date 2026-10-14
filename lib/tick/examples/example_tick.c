@@ -1,5 +1,5 @@
 /*
- * epic-tick target demo: 1 ms timebase toggling an LED at 500 ms.
+ * lib/tick target demo: 1 ms timebase toggling an LED at 500 ms.
  * Demonstrates epic_tick_init (the Timer2-based 1 ms timebase derived
  * from FOSC_HZ), the blocking epic_tick_delay_ms, and the non-blocking
  * epic_tick_elapsed_since timing idiom.

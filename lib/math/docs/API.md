@@ -1,4 +1,4 @@
-# `epic-math` API reference
+# `lib/math` API reference
 
 The authoritative declarations live in [`include/epic_math.h`](../include/epic_math.h);
 this document is the prose reference (per-function semantics, the

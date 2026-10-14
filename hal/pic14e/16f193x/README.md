@@ -9,7 +9,7 @@ are taken from
 [DS41364B](https://ww1.microchip.com/downloads/en/DeviceDoc/41364B.pdf).
 
 Third family in this repo, alongside the PIC16F87XA and PIC18F2455
-HALs. All three implement a shared API contract from epic-common: same
+HALs. All three implement a shared API contract from common: same
 function names and signatures, family-specific register bodies
 underneath. Applications written against the shared API are portable
 across families at build time (include-path swap), not source time.
@@ -48,7 +48,7 @@ stages: host simulation, six-part real-target XC8 build, and the mdb
       GPIO, IOC, EUSART TRMT, EEPROM 256-byte model)
 - [x] Test harness (bounded host run, real-target firmware, MODE=gpio
       RA0 PASS/FAIL marker for the mdb gate)
-- [x] Real-target build (manifest-driven, `epic-pic16f193x-firmware`
+- [x] Real-target build (manifest-driven, `hal/pic14e/16f193x`
       module, all 6 parts)
 
 ## Quick start

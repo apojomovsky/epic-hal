@@ -1,12 +1,12 @@
 /*
- * HARNESS=sim probe for the pic18fxx5x-hal GPIO audit: the GPIO driver
+ * HARNESS=sim probe for the hal/pic18/18fxx5x GPIO audit: the GPIO driver
  * computes
  * TRIS/LAT/PORT addresses at runtime and derefs them, the exact shape
  * pic18_irq.c and pic18fxx5x_ccp.c were fixed to avoid (a runtime SFR
  * address compiles to program-memory table access under XC8 v4.00).
  * Every GPIO operation is exercised with known values and verified
  * through the literal-token access path, the proven-safe side. Runs as
- * the sim variant of the pic18fxx5x-hal pseudo-module under MPLAB SIM.
+ * the sim variant of the hal/pic18/18fxx5x pseudo-module under MPLAB SIM.
  */
 
 #include "core/epic_harness.h"

@@ -46,91 +46,86 @@ fosc_hz  = 32000000
 includes = ["hal/pic14e/16f193x/include/target", "common/include"]
 hal_sources = ["hal/pic14e/16f193x/src/peripherals/pic16f193x_gpio.c"]
 
-[modules.epic-tick]
-dir        = "lib/tick"
+[modules."lib/tick"]
 summary    = "Tooling-test fixture."
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
 
-[modules.epic-tick.supported]
+[modules."lib/tick".supported]
 PIC16F87XA = ["16F873A", "16F877A"]
 PIC18Fxx5x = ["18F4550"]
 
-[modules.epic-tick.example.PIC16F87XA]
+[modules."lib/tick".example.PIC16F87XA]
 name    = "tick-blink"
 sources = ["examples/example_tick.c"]
 config  = { FOSC = "HS" }
 
-[modules.epic-tick.example.PIC18Fxx5x]
+[modules."lib/tick".example.PIC18Fxx5x]
 name    = "tick-blink"
 sources = ["examples/example_tick.c"]
 
-[modules.epic-serial]
-dir        = "lib/serial"
+[modules."lib/serial"]
 summary    = "Tooling-test fixture."
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
-depends_on = ["epic-tick"]
+depends_on = ["lib/tick"]
 
-[modules.epic-serial.supported]
+[modules."lib/serial".supported]
 PIC16F87XA = ["16F877A"]
 
-[modules.epic-serial.excluded]
+[modules."lib/serial".excluded]
 "16F873A" = "RAM: 32-byte g_rx_buf does not fit"
 
-[modules.epic-serial.example.PIC16F87XA]
+[modules."lib/serial".example.PIC16F87XA]
 name    = "serial-echo"
 # Two non-consumer example shapes, the same as real manifest modules:
 # a tests/ real-target smoke test and an mcu/ size-check probe.
 sources = ["tests/example_serial.c", "mcu/target_sizecheck.c"]
 
-[modules.epic-usb]
-dir        = "lib/usb"
+[modules."lib/usb"]
 summary    = "Tooling-test fixture."
 sources    = ["src/epic_usb.c"]
 includes   = ["include"]
 depends_on = []
 
-[modules.epic-usb.supported]
+[modules."lib/usb".supported]
 PIC18Fxx5x = ["18F4550"]
 
-[modules.epic-usb.example.PIC18Fxx5x]
+[modules."lib/usb".example.PIC18Fxx5x]
 name    = "usb-cdc"
 sources = ["examples/example_usb.c"]
 
 # A module standing in for the family's own bare-HAL build, dir equal
-# to the family's hal_dir, the same shape as epic-pic16f193x-firmware
+# to the family's hal_dir, the same shape as hal/pic14e/16f193x
 # in the real manifest: must not appear in a bundle's module list, it
 # is CI coverage plumbing, not a consumer-facing library.
-[modules.epic-pic16f193x-firmware]
-dir        = "hal/pic14e/16f193x"
+[modules."hal/pic14e/16f193x"]
 summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
 
-[modules.epic-pic16f193x-firmware.supported]
+[modules."hal/pic14e/16f193x".supported]
 PIC16F193X = ["16F1937"]
 
-[modules.epic-pic16f193x-firmware.example.PIC16F193X]
+[modules."hal/pic14e/16f193x".example.PIC16F193X]
 name    = "firmware"
 sources = ["tests/example_blink.c"]
 
 # A combination-matrix CI gate module, the same shape as the real
 # epic-combo-* modules under tests/: must never appear in a bundle's
 # module list or file set, it is CI coverage, not a consumer library.
-[modules.epic-combo-uart-ssp]
-dir        = "tests/epic-combo-uart-ssp"
+[modules."tests/epic-combo-uart-ssp"]
 summary    = "Tooling-test fixture."
 sources    = ["tests/combo_uart_ssp.c"]
 includes   = []
 depends_on = []
 
-[modules.epic-combo-uart-ssp.supported]
+[modules."tests/epic-combo-uart-ssp".supported]
 PIC16F87XA = ["16F877A"]
 
-[modules.epic-combo-uart-ssp.example.PIC16F87XA]
+[modules."tests/epic-combo-uart-ssp".example.PIC16F87XA]
 name    = "combo-uart-ssp"
 sources = ["tests/combo_uart_ssp.c"]
 """
@@ -150,22 +145,22 @@ class TestModuleSelection(unittest.TestCase):
     def test_includes_modules_supported_on_the_family(self):
         self.assertEqual(
             bundlegen.modules_for_family(self.m, "PIC16F87XA"),
-            ["epic-serial", "epic-tick"],
+            ["lib/serial", "lib/tick"],
         )
 
     def test_excludes_modules_with_no_supported_part(self):
         self.assertNotIn(
-            "epic-usb", bundlegen.modules_for_family(self.m, "PIC16F87XA")
+            "lib/usb", bundlegen.modules_for_family(self.m, "PIC16F87XA")
         )
 
     def test_other_family_gets_its_own_module_set(self):
         self.assertEqual(
             bundlegen.modules_for_family(self.m, "PIC18Fxx5x"),
-            ["epic-tick", "epic-usb"],
+            ["lib/tick", "lib/usb"],
         )
 
     def test_excludes_the_family_hal_wrapper_pseudo_module(self):
-        # epic-pic16f193x-firmware's dir equals its family's hal_dir: it
+        # hal/pic14e/16f193x's dir equals its family's hal_dir: it
         # is CI-coverage plumbing (plan 1's fallback for a family with no
         # real modules yet), not a library a bundle consumer would ask
         # for by name. PIC16F193X is correctly a HAL-only bundle.
@@ -175,7 +170,7 @@ class TestModuleSelection(unittest.TestCase):
         # epic-combo-* are combination-matrix CI gates, not consumer
         # libraries: they must not appear in a bundle's module list.
         self.assertNotIn(
-            "epic-combo-uart-ssp", bundlegen.modules_for_family(self.m, "PIC16F87XA")
+            "tests/epic-combo-uart-ssp", bundlegen.modules_for_family(self.m, "PIC16F87XA")
         )
 
     def test_unknown_family_raises(self):
@@ -196,16 +191,16 @@ class TestFileSelection(unittest.TestCase):
 
     def test_includes_consumer_example_sources(self):
         # Manifest example sources that are consumer samples (under
-        # examples/) ship in the bundle: epic-tick's example_tick.c is a
+        # examples/) ship in the bundle: lib/tick's example_tick.c is a
         # real sample a consumer can build.
         self.assertIn("lib/tick/examples/example_tick.c", self.files)
 
     def test_excludes_non_consumer_example_sources(self):
         # Manifest example sources that are not consumer samples never
-        # ship: tests/ sources are real-target smoke tests (epic-serial's
+        # ship: tests/ sources are real-target smoke tests (lib/serial's
         # serial-echo here; the fixture's pic16f193x-firmware example
         # under tests/ is the same shape), mcu/ sources are size-check
-        # probes (epic-serial's target_sizecheck.c), and the combo test
+        # probes (lib/serial's target_sizecheck.c), and the combo test
         # modules are CI coverage. Only examples/ sources ship.
         self.assertNotIn("lib/serial/tests/example_serial.c", self.files)
         self.assertNotIn("lib/serial/mcu/target_sizecheck.c", self.files)
@@ -233,25 +228,25 @@ class TestEpicHalMk(unittest.TestCase):
         self.assertIn("v0.1.0", self.mk)
 
     def test_maps_short_module_names_to_full_ones(self):
-        self.assertIn("EPIC_HAL_MODULE_serial := epic-serial", self.mk)
-        self.assertIn("EPIC_HAL_MODULE_tick := epic-tick", self.mk)
+        self.assertIn("EPIC_HAL_MODULE_serial := lib/serial", self.mk)
+        self.assertIn("EPIC_HAL_MODULE_tick := lib/tick", self.mk)
 
     def test_flattens_dependencies_at_generation_time(self):
         self.assertIn(
-            "EPIC_HAL_RESOLVED_epic-serial := epic-tick epic-serial", self.mk
+            "EPIC_HAL_RESOLVED_lib/serial := lib/tick lib/serial", self.mk
         )
 
     def test_lists_supported_parts_per_module(self):
         self.assertIn(
-            "EPIC_HAL_SUPPORTED_epic-serial := 16F877A", self.mk
+            "EPIC_HAL_SUPPORTED_lib/serial := 16F877A", self.mk
         )
         self.assertIn(
-            "EPIC_HAL_SUPPORTED_epic-tick := 16F873A 16F877A", self.mk
+            "EPIC_HAL_SUPPORTED_lib/tick := 16F873A 16F877A", self.mk
         )
 
     def test_carries_the_exclusion_reason(self):
         self.assertIn(
-            "EPIC_HAL_WHYNOT_epic-serial_16F873A := "
+            "EPIC_HAL_WHYNOT_lib/serial_16F873A := "
             "RAM: 32-byte g_rx_buf does not fit",
             self.mk,
         )
@@ -275,21 +270,20 @@ class TestEpicHalMk(unittest.TestCase):
     def test_every_module_include_dir_gets_its_own_prefix(self):
         # Regression: EPIC_HAL_INCLUDES used to emit one -I before the
         # whole space-joined per-module dir list, so the second dir of a
-        # module with two includes (epic-math ships include + tests) was
+        # module with two includes (lib/math ships include + tests) was
         # passed to xc8-cc as a source file (error 894) and the bundle
         # was unbuildable for that module. Each dir needs its own -I.
         two_inc = MANIFEST + """
-[modules.epic-math]
-dir        = "lib/math"
+[modules."lib/math"]
 summary    = "Tooling-test fixture."
 sources    = ["src/epic_math.c"]
 includes   = ["include", "tests"]
 depends_on = []
 
-[modules.epic-math.supported]
+[modules."lib/math".supported]
 PIC16F87XA = ["16F873A", "16F877A"]
 
-[modules.epic-math.sources_by_family]
+[modules."lib/math".sources_by_family]
 PIC16F87XA = ["src/pic16/epic_math_mul.c"]
 """
         tmp = tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False)
@@ -304,7 +298,7 @@ PIC16F87XA = ["src/pic16/epic_math_mul.c"]
             mk,
         )
         self.assertIn(
-            "EPIC_HAL_INCS_epic-math := "
+            "EPIC_HAL_INCS_lib/math := "
             "$(EPIC_HAL_DIR)/lib/math/include "
             "$(EPIC_HAL_DIR)/lib/math/tests",
             mk,
@@ -323,9 +317,9 @@ PIC16F87XA = ["src/pic16/epic_math_mul.c"]
 
     def test_excludes_the_family_hal_wrapper_pseudo_module(self):
         # Same rule as modules_for_family: PIC16F193X's epic-hal.mk must
-        # not map a short name for epic-pic16f193x-firmware.
+        # not map a short name for the family's bare-HAL module.
         mk193x = bundlegen.emit_epic_hal_mk(load(), "PIC16F193X", "v0.1.0")
-        self.assertNotIn("EPIC_HAL_MODULE_pic16f193x-firmware", mk193x)
+        self.assertNotIn("EPIC_HAL_MODULE_16f193x", mk193x)
 
     def test_splices_a_positioned_conditional_after_its_sibling(self):
         # A conditional with `after` must land mid-list where epic_build
@@ -380,8 +374,8 @@ class TestSourcesJson(unittest.TestCase):
         )
 
     def test_module_entry_is_complete(self):
-        entry = self.doc["modules"]["epic-serial"]
-        self.assertEqual(entry["resolved"], ["epic-tick", "epic-serial"])
+        entry = self.doc["modules"]["lib/serial"]
+        self.assertEqual(entry["resolved"], ["lib/tick", "lib/serial"])
         self.assertEqual(entry["sources"], ["lib/serial/src/epic_serial.c"])
         self.assertEqual(entry["includes"], ["lib/serial/include"])
         self.assertEqual(entry["supported"], ["16F877A"])
@@ -390,7 +384,7 @@ class TestSourcesJson(unittest.TestCase):
         )
 
     def test_module_entry_carries_its_family_example(self):
-        entry = self.doc["modules"]["epic-tick"]
+        entry = self.doc["modules"]["lib/tick"]
         self.assertEqual(entry["example"]["name"], "tick-blink")
         self.assertEqual(
             entry["example"]["sources"], ["lib/tick/examples/example_tick.c"]
@@ -398,13 +392,13 @@ class TestSourcesJson(unittest.TestCase):
         self.assertEqual(entry["example"]["config"], {"FOSC": "HS"})
 
     def test_omits_modules_from_other_families(self):
-        self.assertNotIn("epic-usb", self.doc["modules"])
+        self.assertNotIn("lib/usb", self.doc["modules"])
 
     def test_omits_the_family_hal_wrapper_pseudo_module(self):
         doc193x = json.loads(
             bundlegen.emit_sources_json(load(), "PIC16F193X", "v0.1.0")
         )
-        self.assertNotIn("epic-pic16f193x-firmware", doc193x["modules"])
+        self.assertNotIn("hal/pic14e/16f193x", doc193x["modules"])
 
     def test_paths_are_bundle_relative(self):
         for path in self.doc["hal_sources"]:
@@ -417,8 +411,8 @@ class TestSupportMd(unittest.TestCase):
         self.md = bundlegen.emit_support_md(load(), "PIC16F87XA", "v0.1.0")
 
     def test_has_a_row_per_module(self):
-        self.assertIn("epic-serial", self.md)
-        self.assertIn("epic-tick", self.md)
+        self.assertIn("lib/serial", self.md)
+        self.assertIn("lib/tick", self.md)
 
     def test_marks_supported_and_unsupported_parts(self):
         self.assertIn("yes", self.md)
@@ -600,7 +594,7 @@ class TestBundleGate(unittest.TestCase):
         ])
 
     def test_gate_allows_manifest_declared_include_dirs(self):
-        # epic-math declares tests/ as an include dir (the library's
+        # lib/math declares tests/ as an include dir (the library's
         # quoted includes resolve there); those headers are build
         # artifacts and must ship. A tests/ path outside any declared
         # include dir is still rejected.

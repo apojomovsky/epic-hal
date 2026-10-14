@@ -1,4 +1,4 @@
-# `epic-bus` API reference
+# `lib/bus` API reference
 
 Authoritative declarations: [`include/epic_bus.h`](../include/epic_bus.h).
 

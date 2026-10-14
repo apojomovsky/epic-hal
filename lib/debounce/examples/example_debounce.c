@@ -1,6 +1,6 @@
-/* Two debounced buttons on epic-debounce: each drives its own LED, a
+/* Two debounced buttons on lib/debounce: each drives its own LED, a
  * PRESSED event lights it and a RELEASED event turns it off, with a
- * 20 ms stability window from the epic-tick timebase. Wiring: buttons
+ * 20 ms stability window from the lib/tick timebase. Wiring: buttons
  * on RB0/RB1 to VCC with 10k pull-downs (active high); LEDs on
  * RB2/RB3 to GND via resistors. */
 

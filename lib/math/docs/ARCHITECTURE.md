@@ -1,4 +1,4 @@
-# `epic-math` architecture
+# `lib/math` architecture
 
 > Status: **Phases 0-5 complete.** The inline-asm operand-binding convention
 > (the XC8 round-trip probe), the per-family backend write-up, and the
@@ -6,7 +6,7 @@
 
 ## What it is
 
-`epic-math` is a stateless fixed-point math utility library for the 8-bit
+`lib/math` is a stateless fixed-point math utility library for the 8-bit
 PIC families this repo already supports (PIC16F87XA, PIC18F2455/2550/4455/
 4550), ported from Microchip application notes AN526 and AN544 and
 modernized into one family-agnostic C library with a hand-written
@@ -26,7 +26,7 @@ pattern the HALs use for their host/target split.
 
 ## Why the host build links no HAL
 
-Unlike `epic-taskmgr` (which `add_subdirectory()`s a HAL), `epic-math`'s
+Unlike `lib/taskmgr` (which `add_subdirectory()`s a HAL), `lib/math`'s
 CMake host build links only `src/host/` + `src/common/`. The public header
 needs only `<stdint.h>`/`<stdbool.h>` and the library is stateless
 computation, so the Tier-1 host tests need no peripheral model. The family
@@ -126,7 +126,7 @@ The load-bearing details:
 - **No `pic18fxx5x_sfr.h` edit was needed.** The plan predicted adding
   `PIC_REG_WREG`/`PIC_REG_PRODL`/`PIC_REG_PRODH` there; the probe showed
   the asm uses the `xc.h` SFR symbols directly and the C code never touches
-  `PROD`, so the HAL's SFR header is left untouched. `epic-math` stays
+  `PROD`, so the HAL's SFR header is left untouched. `lib/math` stays
   self-contained, it adds no symbols to any other module.
 
 ### Per-family scratch layout (banking)

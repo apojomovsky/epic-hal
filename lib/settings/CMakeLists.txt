@@ -1,4 +1,4 @@
-# epic-settings, EEPROM-backed settings blobs with CRC validation.
+# lib/settings, EEPROM-backed settings blobs with CRC validation.
 
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
@@ -40,17 +40,17 @@ set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link: PIC16 or PIC18")
 
 if(EPIC_FAMILY STREQUAL "PIC18")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic18/18fxx5x
-        CACHE PATH "Path to the pic18fxx5x-hal source tree")
+        CACHE PATH "Path to the hal/pic18/18fxx5x source tree")
     set(EPIC_LIB         pic18fxx5x_hal)
     set(DEFAULT_DEVICE  PIC18F4550)
 elseif(EPIC_FAMILY STREQUAL "PIC16F88X")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f88x
-        CACHE PATH "Path to the pic16f88x-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f88x source tree")
     set(EPIC_LIB         pic16f88x_hal)
     set(DEFAULT_DEVICE  PIC16F887)
 else()
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f87xa
-        CACHE PATH "Path to the pic16f87xa-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f87xa source tree")
     set(EPIC_LIB         pic16f87xa_hal)
     set(DEFAULT_DEVICE  PIC16F877A)
 endif()

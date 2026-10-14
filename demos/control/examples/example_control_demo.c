@@ -1,5 +1,5 @@
 /*
- * epic-control-demo target build: real PIC18F4550 hardware. Spawns the
+ * demos/control target build: real PIC18F4550 hardware. Spawns the
  * shared core's cooperative-scheduler tasks and runs forever. Config
  * words come from the manifest, not a #pragma config block here.
  */

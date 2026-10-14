@@ -1,4 +1,4 @@
-/** Host property tests for epic-settings over the simulated EEPROM backend:
+/** Host property tests for lib/settings over the simulated EEPROM backend:
  *  randomized save/load round trips, a per-byte corruption sweep proving
  *  that flipping ANY stored byte (payload or CRC) is detected with the
  *  output buffer untouched, defaults on blank regions, region isolation,
@@ -193,7 +193,7 @@ static void test_region_isolation(void)
     }
 }
 
-/** @brief Run all epic-settings fuzz tests and report pass/fail counts. */
+/** @brief Run all lib/settings fuzz tests and report pass/fail counts. */
 int main(void)
 {
     test_random_roundtrips();

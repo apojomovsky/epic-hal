@@ -45,7 +45,7 @@
 #pragma config CPD = OFF
 
 /**
- * @brief Toggle RB0 every 500 ms using the 1 ms epic-tick timebase.
+ * @brief Toggle RB0 every 500 ms using the 1 ms lib/tick timebase.
  */
 int main(void)
 {

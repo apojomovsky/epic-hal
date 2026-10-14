@@ -31,8 +31,8 @@ class TestGeneratedPagesFresh(unittest.TestCase):
 class TestModuleId(unittest.TestCase):
     def test_table_key_when_no_id_field(self):
         mod = epicmanifest.load(epicmanifest.default_path()).modules[
-            "epic-serial"]
-        self.assertEqual(docs_gen.module_id(mod), "epic-serial")
+            "lib/serial"]
+        self.assertEqual(docs_gen.module_id(mod), "lib/serial")
 
     def test_id_field_wins_when_present(self):
         @dataclasses.dataclass

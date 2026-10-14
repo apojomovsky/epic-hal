@@ -80,7 +80,7 @@
 #endif
 /** @} */
 
-/* Family-neutral capability aliases (epic-common contract): exposed
+/* Family-neutral capability aliases (common contract): exposed
  * under family-neutral names too, so family-agnostic consumers (the
  * task manager) can scale without referencing a family-specific macro.
  * `pic16f87xa.h` and `pic18fxx5x.h` define the same names to their own

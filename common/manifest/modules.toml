@@ -52,7 +52,7 @@ hal_sources = [
 harness_src = "common/src/core/epic_harness_target.c"
 # The epic-cc conformant slice (epic-hal#129): the PIC14E port's GPIO +
 # Timer0 foundation plus the Timer2/4/6 driver behind the dispatch's
-# TMR2 row, so the epic-tick timebase links. Same contract as the other
+# TMR2 row, so the lib/tick timebase links. Same contract as the other
 # families' slices: shared peripherals/core plus the toolchain-specific
 # vector/dispatch/WDT files from src/epiccc, grows by adding entries,
 # never by editing the build driver.
@@ -120,7 +120,7 @@ harness_src = "common/src/core/epic_harness_target.c"
 # verbatim; later clusters grow the slice here. The family slice is the
 # default: every module on the epic-cc path links the same set unless
 # it declares its own `epiccc_hal_sources_by_family` override (verbatim
-# replacement, validated against `hal_dir`/`epic-common`). See README
+# replacement, validated against `hal_dir`/`common`). See README
 # `epiccc_hal_sources_by_family` section for when to use the per-module
 # slice.
 epiccc_sources = [
@@ -614,9 +614,9 @@ harness_src = "common/src/core/epic_harness_target.c"
 # full fan-out), because the shared pic18_irq_dispatch.c
 # strong-references every peripheral handler and cannot link against a
 # partial set. TIMER0 joined with its tick tier (epic-hal#236): the
-# family hal_sources carry timer0.c, and epic-taskmgr's scheduler tick
+# family hal_sources carry timer0.c, and lib/taskmgr's scheduler tick
 # plus the blink example call EPIC_TIMER0_* directly. SSP joined
-# for epic-sdcard (HAL-3d follow-up, epic-hal#102): the SD-over-SPI
+# for lib/sdcard (HAL-3d follow-up, epic-hal#102): the SD-over-SPI
 # driver polls SSPBUF/SSPSTAT and never vectors SSPIF, so the tier
 # dispatch is unchanged.
 epiccc_sources = [
@@ -635,7 +635,7 @@ epiccc_sources = [
 ]
 
 # The eight PIC18 module Makefiles agree exactly on this order, which
-# differs from pic18fxx5x-hal's own top-level Makefile (that one is a
+# differs from hal/pic18/18fxx5x's own top-level Makefile (that one is a
 # separate, unrelated build, not the one this migration replaces). SPP
 # is only on the 40/44-pin parts; splice it in right after eeprom.c, its
 # real position in every module Makefile's EPIC_SOURCES, not appended at
@@ -934,21 +934,20 @@ path     = "hal/pic18/18f6520/src/core/pic18_irq_dispatch.c"
 variants = ["18F6620", "18F6720", "18F6585", "18F6680", "18F8525", "18F8585", "18F8621", "18F8680", "18F6525", "18F6621", "18F6520"]
 after    = "hal/pic18/18f6520/src/core/pic18_irq.c"
 
-# The family's higher-level coverage is epic-tick and epic-fsm (each
+# The family's higher-level coverage is lib/tick and lib/fsm (each
 # with a family example below). This module is the family's own
 # top-level Makefile in manifest form: it links no application code of
 # its own, just tests/example_blink.c, the same real-target smoke every
 # xc8-build.yml run has always covered for this family. dir points at
 # the HAL directory itself because that is where its example lives.
-[modules.epic-pic16f193x-firmware]
-dir        = "hal/pic14e/16f193x"
+[modules."hal/pic14e/16f193x"]
 summary    = "Register-level HAL and smoke firmware for the PIC16F193X family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.epic-pic16f193x-firmware.supported]
+[modules."hal/pic14e/16f193x".supported]
 PIC16F193X = [
   "16F1933",
   "16F1934",
@@ -958,7 +957,7 @@ PIC16F193X = [
   "16F1939",
 ]
 
-[modules.epic-pic16f193x-firmware.example.PIC16F193X]
+[modules."hal/pic14e/16f193x".example.PIC16F193X]
 name    = "firmware"
 sources = [
   "tests/example_blink.c",
@@ -974,7 +973,7 @@ config  = { FOSC = "INTOSC", WDTE = "ON", PWRTE = "ON", MCLRE = "ON", CP = "OFF"
 # than reusing it. WDTE=OFF for the same reason as every other family's
 # sim variant: a diagnostic build that terminates and reports does not
 # need the watchdog running unattended.
-[modules.epic-pic16f193x-firmware.example.PIC16F193X.sim]
+[modules."hal/pic14e/16f193x".example.PIC16F193X.sim]
 name        = "firmware-sim"
 harness_src = "hal/pic14e/16f193x/src/mdb/pic16f193x_harness_mdb.c"
 sources     = [
@@ -982,7 +981,7 @@ sources     = [
 ]
 config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "OFF", WRT = "OFF" }
 
-# pic16f87xa-hal's own manifest slot, mirroring the 193X firmware
+# hal/pic14/16f87xa's own manifest slot, mirroring the 193X firmware
 # pseudo-module: no application code, just the family's real-target
 # smoke (tests/example_blink.c) and the HARNESS=sim banked-SFR probe
 # gate. The probe (tests/sim_bank_probe.c) exercises every ungated
@@ -991,15 +990,14 @@ config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = 
 # so XC8 v4.00 bank
 # misdirection (Finding 9's mechanism) fails the gate instead of
 # corrupting silently.
-[modules.pic16f87xa-hal]
-dir        = "hal/pic14/16f87xa"
+[modules."hal/pic14/16f87xa"]
 summary    = "Register-level HAL and smoke firmware for the PIC16F87XA family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.pic16f87xa-hal.supported]
+[modules."hal/pic14/16f87xa".supported]
 PIC16F87XA = [
   "16F870",
   "16F871",
@@ -1015,7 +1013,7 @@ PIC16F87XA = [
   "16F877A",
 ]
 
-[modules.pic16f87xa-hal.example.PIC16F87XA]
+[modules."hal/pic14/16f87xa".example.PIC16F87XA]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1025,7 +1023,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # HARNESS=sim: the banked-SFR probe. WDTE=OFF like every other sim
 # variant (a diagnostic build that terminates and reports does not need
 # the watchdog).
-[modules.pic16f87xa-hal.example.PIC16F87XA.sim]
+[modules."hal/pic14/16f87xa".example.PIC16F87XA.sim]
 name        = "bank-probe"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -1033,7 +1031,7 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-# pic16f7x-hal's own manifest slot, mirroring the 87XA pseudo-module:
+# hal/pic14/16f7x's own manifest slot, mirroring the 87XA pseudo-module:
 # no application code, just the family's real-target smoke
 # (tests/example_blink.c, RB0). The blink example is the section-4
 # exemplar proof for 16F77; the other variants are proven up to the
@@ -1041,15 +1039,14 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # real-target verification is the mechanical follow-on (the ticket
 # calls the remaining parts mechanical once the exemplar's capability
 # macros are proven).
-[modules.pic16f7x-hal]
-dir        = "hal/pic14/16f7x"
+[modules."hal/pic14/16f7x"]
 summary    = "Register-level HAL and smoke firmware for the PIC16F7x family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.pic16f7x-hal.supported]
+[modules."hal/pic14/16f7x".supported]
 PIC16F7x = [
   "16F72",
   "16F73",
@@ -1062,7 +1059,7 @@ PIC16F7x = [
   "16F77",
 ]
 
-[modules.pic16f7x-hal.example.PIC16F7x]
+[modules."hal/pic14/16f7x".example.PIC16F7x]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1074,7 +1071,7 @@ config  = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "ON" }
 # reports does not need the watchdog running unattended). The 16F72 has
 # no USART, so its override uses the RA0 GPIO harness for the same
 # source (MODE=gpio).
-[modules.pic16f7x-hal.example.PIC16F7x.sim]
+[modules."hal/pic14/16f7x".example.PIC16F7x.sim]
 name        = "bank-probe"
 harness_src = "hal/pic14/16f7x/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -1082,7 +1079,7 @@ sources     = [
 ]
 config      = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "OFF" }
 
-[modules.pic16f7x-hal.example.PIC16F7x.sim.variants.16F72]
+[modules."hal/pic14/16f7x".example.PIC16F7x.sim.variants.16F72]
 name        = "bank-probe"
 harness_src = "hal/pic14/16f7x/src/mdb/pic16f7x_harness_mdb_gpio.c"
 sources     = [
@@ -1090,7 +1087,7 @@ sources     = [
 ]
 config      = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "OFF" }
 
-# pic16f88x-hal's own manifest slot, mirroring the 87XA pseudo-module:
+# hal/pic14/16f88x's own manifest slot, mirroring the 87XA pseudo-module:
 # no application code, just the family's real-target smoke
 # (tests/example_blink.c) and the HARNESS=sim banked-SFR probe gate.
 # The probe (tests/sim_bank_probe.c) exercises every banked-SFR access
@@ -1098,15 +1095,14 @@ config      = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "OFF
 # ADCON1/VRCON; Bank 2: WDTCON/CM1CON0/CM2CON0/CM2CON1; Bank 3:
 # SRCON) with known values and reads them back, so XC8 v4.00 bank
 # misdirection fails the gate instead of corrupting silently.
-[modules.pic16f88x-hal]
-dir        = "hal/pic14/16f88x"
+[modules."hal/pic14/16f88x"]
 summary    = "Register-level HAL and smoke firmware for the PIC16F88X family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.pic16f88x-hal.supported]
+[modules."hal/pic14/16f88x".supported]
 PIC16F88X = [
   "16F882",
   "16F883",
@@ -1115,7 +1111,7 @@ PIC16F88X = [
   "16F887",
 ]
 
-[modules.pic16f88x-hal.example.PIC16F88X]
+[modules."hal/pic14/16f88x".example.PIC16F88X]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1125,7 +1121,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "ON", W
 # HARNESS=sim: the banked-SFR probe. WDTE=OFF like every other sim
 # variant (a diagnostic build that terminates and reports does not need
 # the watchdog).
-[modules.pic16f88x-hal.example.PIC16F88X.sim]
+[modules."hal/pic14/16f88x".example.PIC16F88X.sim]
 name        = "bank-probe"
 harness_src = "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -1133,32 +1129,31 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-# pic16f628a-hal's own manifest slot, mirroring the other families'
+# hal/pic14/16f628a's own manifest slot, mirroring the other families'
 # pseudo-modules: no application code, just the family's real-target
 # smoke (tests/example_blink.c) and a HARNESS=sim blink gate over the
 # shared pic14-midrange-core drivers.
-[modules.pic16f628a-hal]
-dir        = "hal/pic14/16f628a"
+[modules."hal/pic14/16f628a"]
 summary    = "Register-level HAL and smoke firmware for the PIC16F628A family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.pic16f628a-hal.supported]
+[modules."hal/pic14/16f628a".supported]
 PIC16F628A = [
   "16F628", "16LF628A", "16F648A", "16F628A",
 ]
 
-[modules.pic16f628a-hal.excluded]
+[modules."hal/pic14/16f628a".excluded]
 # The 1087-word blink smoke cannot fit the 1K-word parts (measured:
 # XC8 error 1347, class CODE, on 16F627/16F627A/16LF627A); the
-# exclusion wording follows the epic-serial 873A/874A precedent.
+# exclusion wording follows the lib/serial 873A/874A precedent.
 "16F627" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
 "16F627A" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
 "16LF627A" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
 
-[modules.pic16f628a-hal.example.PIC16F628A]
+[modules."hal/pic14/16f628a".example.PIC16F628A]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1168,27 +1163,26 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", 
 # HARNESS=sim: the blink example as a bounded diagnostic build. WDTE=OFF
 # like every other sim variant (a diagnostic build that terminates and
 # reports does not need the watchdog running unattended).
-[modules.pic16f628a-hal.example.PIC16F628A.sim]
+[modules."hal/pic14/16f628a".example.PIC16F628A.sim]
 name        = "bank-probe"
 harness_src = "hal/pic14/16f628a/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_bank_probe.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
-# pic16f63x_67x_68x-hal's own manifest slot, mirroring the other
+# hal/pic14/16f63x_67x_68x's own manifest slot, mirroring the other
 # families' pseudo-modules: no application code, just the family's
 # real-target smoke (tests/example_blink.c, RB4) and a HARNESS=sim
 # bank probe over the exemplar tier drivers, reported on RA0 (no
 # USART on this die; MODE=gpio).
-[modules.pic16f63x_67x_68x-hal]
-dir        = "hal/pic14/16f63x_67x_68x"
+[modules."hal/pic14/16f63x_67x_68x"]
 summary    = "Register-level HAL and smoke firmware for the PIC16F63x_67x_68x family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.pic16f63x_67x_68x-hal.supported]
+[modules."hal/pic14/16f63x_67x_68x".supported]
 PIC16F63x_67x_68x = [
   "16F639",
   "16F684",
@@ -1197,37 +1191,37 @@ PIC16F63x_67x_68x = [
   "16F689",
   "16F677",
 ]
-[modules.pic16f63x_67x_68x-hal.excluded]
+[modules."hal/pic14/16f63x_67x_68x".excluded]
 # Measured on the exemplar ladder: the 1314-word blink smoke cannot fit
 # the 1K-word flash (XC8 error 1347, class CODE), and the bank-probe sim
 # variant cannot fit the 64 B RAM (XC8 error 1250 on the harness cycle
-# bound). Wording follows the epic-serial 873A/874A precedent.
+# bound). Wording follows the lib/serial 873A/874A precedent.
 "16F631" = "flash and RAM: the 1314-word blink smoke does not fit the 1K-word flash (XC8 error 1347), and the bank-probe sim variant does not fit the 64 B RAM (XC8 error 1250)"
 "16F630" = "flash and RAM: the 942-word blink leaves no headroom in the 1K-word flash and banked access is impossible without common RAM (target build fails loudly at the #error gate); the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
 "16F676" = "flash and RAM: the 1058-word blink smoke does not fit the 1K-word flash (XC8 error 1347, measured), and the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
 
-[modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x]
+[modules."hal/pic14/16f63x_67x_68x".example.PIC16F63x_67x_68x]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
 ]
 config  = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTRCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "ON" }
 
-[modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x.variants.16F639]
+[modules."hal/pic14/16f63x_67x_68x".example.PIC16F63x_67x_68x.variants.16F639]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
 ]
 config  = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTOSCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "ON" }
 
-[modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x.variants.16F684]
+[modules."hal/pic14/16f63x_67x_68x".example.PIC16F63x_67x_68x.variants.16F684]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
 ]
 config  = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTOSCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "ON" }
 
-[modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x.variants.16F688]
+[modules."hal/pic14/16f63x_67x_68x".example.PIC16F63x_67x_68x.variants.16F688]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1238,7 +1232,7 @@ config  = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTOSC
 # family has no USART). WDTE=OFF like every other sim variant (a
 # diagnostic build that terminates and reports does not need the
 # watchdog running unattended).
-[modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x.sim]
+[modules."hal/pic14/16f63x_67x_68x".example.PIC16F63x_67x_68x.sim]
 name        = "bank-probe"
 harness_src = "hal/pic14/16f63x_67x_68x/src/mdb/pic16f63x_67x_68x_harness_mdb.c"
 sources     = [
@@ -1246,7 +1240,7 @@ sources     = [
 ]
 config      = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTRCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
 
-[modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x.sim.variants.16F639]
+[modules."hal/pic14/16f63x_67x_68x".example.PIC16F63x_67x_68x.sim.variants.16F639]
 name        = "bank-probe"
 harness_src = "hal/pic14/16f63x_67x_68x/src/mdb/pic16f63x_67x_68x_harness_mdb.c"
 sources     = [
@@ -1254,7 +1248,7 @@ sources     = [
 ]
 config      = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTOSCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
 
-[modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x.sim.variants.16F684]
+[modules."hal/pic14/16f63x_67x_68x".example.PIC16F63x_67x_68x.sim.variants.16F684]
 name        = "bank-probe"
 harness_src = "hal/pic14/16f63x_67x_68x/src/mdb/pic16f63x_67x_68x_harness_mdb.c"
 sources     = [
@@ -1262,7 +1256,7 @@ sources     = [
 ]
 config      = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTOSCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
 
-[modules.pic16f63x_67x_68x-hal.example.PIC16F63x_67x_68x.sim.variants.16F688]
+[modules."hal/pic14/16f63x_67x_68x".example.PIC16F63x_67x_68x.sim.variants.16F688]
 name        = "bank-probe"
 harness_src = "hal/pic14/16f63x_67x_68x/src/mdb/pic16f63x_67x_68x_harness_mdb.c"
 sources     = [
@@ -1270,25 +1264,24 @@ sources     = [
 ]
 config      = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTOSCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
 
-[modules.pic16f83_84-hal]
-dir        = "hal/pic14/16f83_84"
+[modules."hal/pic14/16f83_84"]
 summary    = "Register-level HAL and smoke firmware for the PIC16F83_84 family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
-[modules.pic16f83_84-hal.supported]
+[modules."hal/pic14/16f83_84".supported]
 PIC16F83_84 = [
   "16F84", "16F84A",
 ]
-[modules.pic16f83_84-hal.excluded]
+[modules."hal/pic14/16f83_84".excluded]
 # Measured on the exemplar ladder: the blink smoke allocates 46 B of
 # data RAM and 844 words of flash, and the 16F83 carries only 36 B /
 # 512 words (XC8 error 1360 on the RAM allocation; flash would follow
-# at error 1347). Wording follows the epic-serial 873A/874A precedent.
+# at error 1347). Wording follows the lib/serial 873A/874A precedent.
 "16F83" = "RAM and flash: the 844-word, 46-B blink smoke does not fit the 512-word, 36-B part (XC8 error 1360)"
 
-[modules.pic16f83_84-hal.example.PIC16F83_84]
+[modules."hal/pic14/16f83_84".example.PIC16F83_84]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1299,7 +1292,7 @@ config  = { FOSC = "XT", PWRTE = "ON", WDTE = "ON" }
 # family has no USART). WDTE=OFF like every other sim variant (a
 # diagnostic build that terminates and reports does not need the
 # watchdog running unattended).
-[modules.pic16f83_84-hal.example.PIC16F83_84.sim]
+[modules."hal/pic14/16f83_84".example.PIC16F83_84.sim]
 name        = "bank-probe"
 harness_src = "hal/pic14/16f83_84/src/mdb/pic16f83_84_harness_mdb.c"
 sources     = [
@@ -1307,34 +1300,33 @@ sources     = [
 ]
 config      = { FOSC = "XT", PWRTE = "ON", WDTE = "OFF" }
 
-# pic16f818_819-hal's own manifest slot, mirroring the 83_84 pseudo-module:
+# hal/pic14/16f818_819's own manifest slot, mirroring the 83_84 pseudo-module:
 # no application code, just the family's real-target smoke
 # (tests/example_blink.c) and the HARNESS=sim banked-SFR probe gate. The
 # sim probe is the family's §4 mdb gate, so it must exercise every access
 # class the shared drivers use (Banks 0-3, the PIR1/PIR2 gates, and the
 # ADC/CCP1 register images).
-[modules.pic16f818_819-hal]
-dir        = "hal/pic14/16f818_819"
+[modules."hal/pic14/16f818_819"]
 summary    = "Register-level HAL and smoke firmware for the PIC16F818_819 family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
-[modules.pic16f818_819-hal.supported]
+[modules."hal/pic14/16f818_819".supported]
 PIC16F818_819 = [
   "16F819",
 ]
-[modules.pic16f818_819-hal.excluded]
+[modules."hal/pic14/16f818_819".excluded]
 # Measured on the exemplar ladder (XC8 v4.00, -O2): the blink smoke
 # links 1089 words of flash and 71 B of RAM, and the 16F818 carries
 # 1024 words, so the linker fails with error 1347 (CODE class, listing
 # the psects with no home). The part is covered by the family's SFR map,
 # platform headers and host examples, but no real-target ladder entry
 # fits it: the blink is the smallest of them. Wording follows the
-# epic-serial 873A/874A and 16F83 precedents.
+# lib/serial 873A/874A and 16F83 precedents.
 "16F818" = "flash: the 1089-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
 
-[modules.pic16f818_819-hal.example.PIC16F818_819]
+[modules."hal/pic14/16f818_819".example.PIC16F818_819]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1347,7 +1339,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", 
 # part's erased-state value, so the epic-cc hex boots exactly like an
 # XC8 hex that leaves the bit unset; the XC8 builds keep stating
 # nothing.
-[modules.pic16f818_819-hal.example.PIC16F818_819.epiccc]
+[modules."hal/pic14/16f818_819".example.PIC16F818_819.epiccc]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1358,7 +1350,7 @@ config  = { BOREN = "ON", CCPMX = "RB2", FOSC = "HS", LVP = "OFF", MCLRE = "ON",
 # family has no USART). WDTE=OFF like every other sim variant (a
 # diagnostic build that terminates and reports does not need the
 # watchdog running unattended).
-[modules.pic16f818_819-hal.example.PIC16F818_819.sim]
+[modules."hal/pic14/16f818_819".example.PIC16F818_819.sim]
 name        = "bank-probe"
 harness_src = "hal/pic14/16f818_819/src/mdb/pic16f818_819_harness_mdb.c"
 sources     = [
@@ -1366,21 +1358,20 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
 
-# pic16f5x-hal's own manifest slot, mirroring the 83_84 pseudo-module:
+# hal/pic12/16f5x's own manifest slot, mirroring the 83_84 pseudo-module:
 # no application code, just the family's real-target smoke
 # (tests/example_blink.c) and the HARNESS=sim control-space probe gate.
 # The probe (tests/sim_control_probe.c) exercises the TRIS/OPTION
 # control-space writes and the polled Timer0 against hand-computed
 # values, so a platform-header miscompile fails the gate.
-[modules.pic16f5x-hal]
-dir        = "hal/pic12/16f5x"
+[modules."hal/pic12/16f5x"]
 summary    = "Register-level HAL and smoke firmware for the PIC16F5x family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.pic16f5x-hal.supported]
+[modules."hal/pic12/16f5x".supported]
 PIC16F5x = [
   "16F505",
   "16F506",
@@ -1389,7 +1380,7 @@ PIC16F5x = [
   "16F54",
 ]
 
-[modules.pic16f5x-hal.example.PIC16F5x]
+[modules."hal/pic12/16f5x".example.PIC16F5x]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1404,14 +1395,14 @@ config  = { OSC = "XT", WDT = "OFF", CP = "OFF" }
 # Timer0-polled blink. crates/sim's PicBaseline core advances no
 # oscillator-driven counter and this die has no interrupt to inject,
 # so the sim-runner cannot observe the canonical blink.
-[modules.pic16f5x-hal.example.PIC16F5x.epiccc]
+[modules."hal/pic12/16f5x".example.PIC16F5x.epiccc]
 name    = "blink"
 sources = [
   "tests/example_blink_epiccc.c",
 ]
 config  = { OSC = "XT", WDT = "OFF", CP = "OFF" }
 
-[modules.pic16f5x-hal.example.PIC16F5x.sim]
+[modules."hal/pic12/16f5x".example.PIC16F5x.sim]
 name        = "blink"
 # MODE=toggle mdb gate: the blink itself toggles PORTB bit 0, and
 # sim-mdb-run.sh's toggle mode requires exactly that (the family has
@@ -1425,7 +1416,7 @@ sources     = [
 ]
 config      = { OSC = "XT", WDT = "OFF", CP = "OFF" }
 
-# pic18fxx5x-hal's own manifest slot, mirroring the 87XA and 193X
+# hal/pic18/18fxx5x's own manifest slot, mirroring the 87XA and 193X
 # pseudo-modules: the family's real-target smoke (tests/example_blink.c)
 # and the HARNESS=sim GPIO probe gate. The probe
 # (tests/sim_gpio_probe.c) exercises the runtime-computed SFR address
@@ -1434,15 +1425,14 @@ config      = { OSC = "XT", WDT = "OFF", CP = "OFF" }
 # literal-token path, so a program-memory-table misdirection fails the
 # gate instead of corrupting silently.
 
-[modules.pic18fxx5x-hal]
-dir        = "hal/pic18/18fxx5x"
+[modules."hal/pic18/18fxx5x"]
 summary    = "Register-level HAL and smoke firmware for the PIC18Fxx5x family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.pic18fxx5x-hal.supported]
+[modules."hal/pic18/18fxx5x".supported]
 PIC18Fxx5x = [
   "18F2455",
   "18F2550",
@@ -1450,7 +1440,7 @@ PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.pic18fxx5x-hal.example.PIC18Fxx5x]
+[modules."hal/pic18/18fxx5x".example.PIC18Fxx5x]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1458,7 +1448,7 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "ON", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim: the GPIO probe. WDT=OFF like every other sim variant.
-[modules.pic18fxx5x-hal.example.PIC18Fxx5x.sim]
+[modules."hal/pic18/18fxx5x".example.PIC18Fxx5x.sim]
 name        = "gpio-probe"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1466,25 +1456,24 @@ sources     = [
 ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# pic18f1320-hal's own manifest slot (family B phase 1, epic-hal#178),
-# mirroring pic18fxx5x-hal's pseudo-module shape. Config field set is
+# hal/pic18/18f1320's own manifest slot (family B phase 1, epic-hal#178),
+# mirroring hal/pic18/18fxx5x's pseudo-module shape. Config field set is
 # smaller than PIC18Fxx5x's (no USB/CCP2/PBADEN/LPT1OSC/EBTR2/CP2/WRT2
 # fields, confirmed against the DFP's 18f1320.cfgmap) and STVR replaces
 # STVREN (both DS39605F Register 26-1's own spelling).
-[modules.pic18f1320-hal]
-dir        = "hal/pic18/18f1320"
+[modules."hal/pic18/18f1320"]
 summary    = "Register-level HAL and smoke firmware for the PIC18F1320 family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.pic18f1320-hal.supported]
+[modules."hal/pic18/18f1320".supported]
 PIC18F1320 = [
   "18F1320",
 ]
 
-[modules.pic18f1320-hal.example.PIC18F1320]
+[modules."hal/pic18/18f1320".example.PIC18F1320]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1494,7 +1483,7 @@ config  = { BOR = "OFF", BORV = "27", CP0 = "OFF", CP1 = "OFF", CPB = "OFF", CPD
 # Gated via MODE=toggle (watches LATB, see ci-target-sim.sh), not
 # MODE=gpio; harness_src stays the family default, see
 # tests/example_timer0_irq.c's header comment.
-[modules.pic18f1320-hal.example.PIC18F1320.sim]
+[modules."hal/pic18/18f1320".example.PIC18F1320.sim]
 name        = "timer0-irq"
 harness_src = "common/src/core/epic_harness_target.c"
 sources     = [
@@ -1502,22 +1491,21 @@ sources     = [
 ]
 config      = { BOR = "OFF", BORV = "27", CP0 = "OFF", CP1 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
-[modules.pic18f2520-hal]
-dir        = "hal/pic18/18f2520"
+[modules."hal/pic18/18f2520"]
 summary    = "Register-level HAL and smoke firmware for the PIC18F2520 family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.pic18f2520-hal.supported]
+[modules."hal/pic18/18f2520".supported]
 PIC18F2520 = [
   "18F2220",
   "18F2320",
   "18F2520",
 ]
 
-[modules.pic18f2520-hal.example.PIC18F2520]
+[modules."hal/pic18/18f2520".example.PIC18F2520]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1530,7 +1518,7 @@ config  = { BOREN = "ON", BORV = "3", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF"
 # it fires and the flag/enable bits read back correctly). Reporting on
 # RA0 in MODE=gpio (no EUSART in the foundation). WDT=OFF like every
 # other sim variant.
-[modules.pic18f2520-hal.example.PIC18F2520.sim]
+[modules."hal/pic18/18f2520".example.PIC18F2520.sim]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f2520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1544,7 +1532,7 @@ config      = { BOREN = "ON", BORV = "3", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "
 # audit); the mdb gate itself overflows the 2220's 4 KB flash even with
 # the blink-only hal_sources trim, so it stays out of family-check.yml's
 # mdb job list (README.md "Flash-budget finding").
-[modules.pic18f2520-hal.example.PIC18F2520.sim.variants.18F2220]
+[modules."hal/pic18/18f2520".example.PIC18F2520.sim.variants.18F2220]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f2520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1555,7 +1543,7 @@ config      = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF
 # 8 KB flash, double the 2220's, fits irq-smoke + the mdb harness (see
 # the 18F2320 target block below for the verified numbers), so this one
 # IS in family-check.yml's mdb job list.
-[modules.pic18f2520-hal.example.PIC18F2520.sim.variants.18F2320]
+[modules."hal/pic18/18f2520".example.PIC18F2520.sim.variants.18F2320]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f2520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1568,7 +1556,7 @@ config      = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF
 # FSCM (not FCMEN); no CP2/CP3, EBTR2/EBTR3, WRT2/WRT3 (2 code-protect
 # blocks, not 4) and no XINST/LPT1OSC at all (DS39599 §23.0, verified
 # against the DFP EDC, not assumed from the 2520's field set).
-[modules.pic18f2520-hal.example.PIC18F2520.variants.18F2220]
+[modules."hal/pic18/18f2520".example.PIC18F2520.variants.18F2220]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1577,22 +1565,21 @@ config  = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", C
 
 # Same CONFIG3H/4L shape as the 2220 (DS39599), plus CP2/CP3/EBTR2/
 # EBTR3/WRT2/WRT3 (4 code-protect blocks, matching its 8 KB flash).
-[modules.pic18f2520-hal.example.PIC18F2520.variants.18F2320]
+[modules."hal/pic18/18f2520".example.PIC18F2520.variants.18F2320]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
 ]
 config  = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", MCLRE = "ON", OSC = "HS", PBAD = "DIG", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
-[modules.pic18f6520-hal]
-dir        = "hal/pic18/18f6520"
+[modules."hal/pic18/18f6520"]
 summary    = "Register-level HAL and smoke firmware for the PIC18F6520 family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.pic18f6520-hal.supported]
+[modules."hal/pic18/18f6520".supported]
 PIC18F6520 = [
   "18F6620",
   "18F6720",
@@ -1613,7 +1600,7 @@ PIC18F6520 = [
 # 23-2), not the 2520/4550 families' period-derived names.
 # The 6620 shares this vocabulary (same DS line; its CONFIG3H lacks
 # T1OSCMX, unset here), so it reuses the base config with no override.
-[modules.pic18f6520-hal.example.PIC18F6520]
+[modules."hal/pic18/18f6520".example.PIC18F6520]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1626,7 +1613,7 @@ config  = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", C
 # it fires and the flag/enable bits read back correctly). Reporting on
 # RA0 in MODE=gpio (no EUSART in the foundation). WDT=OFF like every
 # other sim variant.
-[modules.pic18f6520-hal.example.PIC18F6520.sim]
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1636,7 +1623,7 @@ config      = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF
 # ECAN line (DS39661): CCP2MX (ON = RC1, the default pin) instead of
 # CCP2MUX, MCLRE, and the 48 KB code-protect shape (CP0-CP2, no CP3;
 # same for EBTR/WRT). Shares BOR/STVR, WDTPS=128 and HS with the base.
-[modules.pic18f6520-hal.example.PIC18F6520.variants.18F6585]
+[modules."hal/pic18/18f6520".example.PIC18F6520.variants.18F6585]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1644,7 +1631,7 @@ sources = [
 config  = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 # Same ECAN vocabulary as the blink stanza above, on the irq-smoke sources.
-[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F6585]
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim.variants.18F6585]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1654,7 +1641,7 @@ config      = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # ECAN 64 KB sibling of the 6585 (DS39661): same CCP2MX/MCLRE
 # vocabulary, plus the CP3/EBTR3/WRT3 blocks its larger flash carries.
 # ECCPMX is fixed to PORTE on this part (single DFP value, unset here).
-[modules.pic18f6520-hal.example.PIC18F6520.variants.18F6680]
+[modules."hal/pic18/18f6520".example.PIC18F6520.variants.18F6680]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1662,7 +1649,7 @@ sources = [
 config  = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 # Same ECAN vocabulary as the blink stanza above, on the irq-smoke sources.
-[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F6680]
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim.variants.18F6680]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1674,7 +1661,7 @@ config      = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 
 # Same shape as the 6520 (DS39609B), plus the CP4-CP7, EBTR4-7
 # and WRT4-7 blocks its 128 KB flash carries (8 code-protect blocks).
-[modules.pic18f6520-hal.example.PIC18F6520.variants.18F6720]
+[modules."hal/pic18/18f6520".example.PIC18F6520.variants.18F6720]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1682,7 +1669,7 @@ sources = [
 config  = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CP4 = "OFF", CP5 = "OFF", CP6 = "OFF", CP7 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTR4 = "OFF", EBTR5 = "OFF", EBTR6 = "OFF", EBTR7 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRT4 = "OFF", WRT5 = "OFF", WRT6 = "OFF", WRT7 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 # Same extra blocks as the blink stanza above, on the irq-smoke sources.
-[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F6720]
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim.variants.18F6720]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1694,7 +1681,7 @@ config      = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF
 # ECCPMX=PORTE (RE6-RE3, the 64-pin-compatible mux), MCLRE, MODE=MC
 # (microcontroller, no external bus) with WAIT off, and the 48 KB
 # code-protect shape (CP0-CP2, no CP3; same for EBTR/WRT).
-[modules.pic18f6520-hal.example.PIC18F6520.variants.18F8525]
+[modules."hal/pic18/18f6520".example.PIC18F6520.variants.18F8525]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1702,7 +1689,7 @@ sources = [
 config  = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 # Same 80-pin vocabulary as the blink stanza above, on the irq-smoke sources.
-[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F8525]
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim.variants.18F8525]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1713,7 +1700,7 @@ config      = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "O
 # ECAN 80-pin sibling of the 8525 (DS39661): CCP2MX=ON (RC1, the
 # default pin), ECCPMX=PORTE, MCLRE, MODE=MC with WAIT off, and the
 # 48 KB code-protect shape (CP0-CP2, no CP3; same for EBTR/WRT).
-[modules.pic18f6520-hal.example.PIC18F6520.variants.18F8585]
+[modules."hal/pic18/18f6520".example.PIC18F6520.variants.18F8585]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1721,7 +1708,7 @@ sources = [
 config  = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 # Same ECAN 80-pin vocabulary as the blink stanza above, on the irq-smoke sources.
-[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F8585]
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim.variants.18F8585]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1732,7 +1719,7 @@ config      = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # 80-pin 64 KB sibling of the 8525 (DFP EDC): same PORTC/PORTE/MCLRE/
 # MODE/WAIT vocabulary, plus the CP3/EBTR3/WRT3 blocks its larger
 # flash carries.
-[modules.pic18f6520-hal.example.PIC18F6520.variants.18F8621]
+[modules."hal/pic18/18f6520".example.PIC18F6520.variants.18F8621]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1740,7 +1727,7 @@ sources = [
 config  = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 # Same 80-pin vocabulary as the blink stanza above, on the irq-smoke sources.
-[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F8621]
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim.variants.18F8621]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1751,7 +1738,7 @@ config      = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "O
 # ECAN 80-pin 64 KB sibling of the 8585 (DS39661): same ON/PORTE/MCLRE/
 # MODE/WAIT vocabulary, plus the CP3/EBTR3/WRT3 blocks its larger flash
 # carries.
-[modules.pic18f6520-hal.example.PIC18F6520.variants.18F8680]
+[modules."hal/pic18/18f6520".example.PIC18F6520.variants.18F8680]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1759,7 +1746,7 @@ sources = [
 config  = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", ECCPMX = "PORTE", LVP = "OFF", MCLRE = "ON", MODE = "MC", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WAIT = "OFF", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 # Same ECAN 80-pin vocabulary as the blink stanza above, on the irq-smoke sources.
-[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F8680]
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim.variants.18F8680]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1770,7 +1757,7 @@ config      = { BOR = "ON", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # 64-pin 48 KB full-map part (DFP EDC facts): CCP2MX=PORTC (RC1, the
 # default pin), MCLRE, and the 48 KB code-protect shape (CP0-CP2, no
 # CP3; same for EBTR/WRT). No ECCPMX/MODE/WAIT fields on this line.
-[modules.pic18f6520-hal.example.PIC18F6520.variants.18F6525]
+[modules."hal/pic18/18f6520".example.PIC18F6520.variants.18F6525]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1778,7 +1765,7 @@ sources = [
 config  = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 # Same 64-pin vocabulary as the blink stanza above, on the irq-smoke sources.
-[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F6525]
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim.variants.18F6525]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1788,7 +1775,7 @@ config      = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "O
 
 # 64-pin 64 KB sibling of the 6525 (DFP EDC facts): same PORTC/MCLRE
 # vocabulary, plus the CP3/EBTR3/WRT3 blocks its larger flash carries.
-[modules.pic18f6520-hal.example.PIC18F6520.variants.18F6621]
+[modules."hal/pic18/18f6520".example.PIC18F6520.variants.18F6621]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
@@ -1796,7 +1783,7 @@ sources = [
 config  = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 # Same 64-pin vocabulary as the blink stanza above, on the irq-smoke sources.
-[modules.pic18f6520-hal.example.PIC18F6520.sim.variants.18F6621]
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim.variants.18F6621]
 name        = "irq-smoke"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -1804,8 +1791,7 @@ sources     = [
 ]
 config      = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
-[modules.epic-combo-uart-ssp]
-dir        = "tests/epic-combo-uart-ssp"
+[modules."tests/epic-combo-uart-ssp"]
 summary    = "UART plus SSP and EEPROM integration firmware interleaved under a fast Timer2 ISR"
 sources    = []
 includes   = []
@@ -1817,13 +1803,13 @@ needs_hal  = true
 # banksel-less ISR read class (an interrupt inside a bank-macro window
 # makes the dispatch read PIE1 instead of PIR1 and the misdirected
 # clears disable the source).
-[modules.epic-combo-uart-ssp.supported]
+[modules."tests/epic-combo-uart-ssp".supported]
 PIC16F87XA = [
   "16F877",
   "16F877A",
 ]
 
-[modules.epic-combo-uart-ssp.example.PIC16F87XA]
+[modules."tests/epic-combo-uart-ssp".example.PIC16F87XA]
 name    = "combo-uart-ssp"
 sources = [
   "tests/combo_uart_ssp.c",
@@ -1831,7 +1817,7 @@ sources = [
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
-[modules.epic-combo-uart-ssp.example.PIC16F87XA.sim]
+[modules."tests/epic-combo-uart-ssp".example.PIC16F87XA.sim]
 name        = "combo-uart-ssp-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
@@ -1840,7 +1826,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # epic-cc slice (HAL-3g): USART + SSP + EEPROM under the TIMER2 ISR;
 # the tier clears the polled SSP/EEPROM flags and dispatches the tick
 # and USART sources, and the mdb harness reports the sim gate.
-[modules.epic-combo-uart-ssp.epiccc_hal_sources_by_family]
+[modules."tests/epic-combo-uart-ssp".epiccc_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/core/src/peripherals/pic14_usart.c",
   "hal/pic14/core/src/peripherals/pic14_ssp.c",
@@ -1853,8 +1839,7 @@ PIC16F87XA = [
   "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
 ]
 
-[modules.epic-combo-multitimer]
-dir        = "tests/epic-combo-multitimer"
+[modules."tests/epic-combo-multitimer"]
 summary    = "Timer0, Timer1 and Timer2 integration firmware checking dispatch count ratios"
 sources    = []
 includes   = []
@@ -1868,15 +1853,15 @@ needs_hal  = true
 # (the Finding 10.1 class), and cross-timer corruption (a dropped
 # TMR1 dispatch or a misdirected callback breaks the exact 2:1
 # TMR1/TMR0 and the 65:1 TMR2/TMR0 count ratios). The combined
-# peripherals are all pic16f87xa-hal drivers, so there are no separate
+# peripherals are all hal/pic14/16f87xa drivers, so there are no separate
 # module dependencies; needs_hal builds on the HAL like C1.
-[modules.epic-combo-multitimer.supported]
+[modules."tests/epic-combo-multitimer".supported]
 PIC16F87XA = [
   "16F877",
   "16F877A",
 ]
 
-[modules.epic-combo-multitimer.example.PIC16F87XA]
+[modules."tests/epic-combo-multitimer".example.PIC16F87XA]
 name    = "combo-multitimer"
 sources = [
   "tests/combo_multitimer.c",
@@ -1884,7 +1869,7 @@ sources = [
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
-[modules.epic-combo-multitimer.example.PIC16F87XA.sim]
+[modules."tests/epic-combo-multitimer".example.PIC16F87XA.sim]
 name        = "combo-multitimer-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
@@ -1892,7 +1877,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 
 # epic-cc slice (HAL-3g): the three timer ISRs and the harness USART;
 # the tier dispatches TMR0/TMR1/TMR2 and the USART sources.
-[modules.epic-combo-multitimer.epiccc_hal_sources_by_family]
+[modules."tests/epic-combo-multitimer".epiccc_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/core/src/peripherals/pic14_timer0.c",
   "hal/pic14/core/src/peripherals/pic14_timer1.c",
@@ -1905,8 +1890,7 @@ PIC16F87XA = [
   "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
 ]
 
-[modules.epic-combo-adc-uart]
-dir        = "tests/epic-combo-adc-uart"
+[modules."tests/epic-combo-adc-uart"]
 summary    = "ADC plus polled USART integration firmware"
 sources    = []
 includes   = []
@@ -1918,16 +1902,16 @@ needs_hal  = true
 # ISR. The gate hunts the bank-window preemption class with the ADC
 # read path (two EPIC_BANK1_READ8 windows plus the Bank-0 ADRESH read
 # per EPIC_ADC_Read) competing with the polled-USART Bank-1 TXSTA
-# reads. The combined peripherals are all pic16f87xa-hal drivers, so
+# reads. The combined peripherals are all hal/pic14/16f87xa drivers, so
 # there are no separate module dependencies; needs_hal builds on the
 # HAL like C1.
-[modules.epic-combo-adc-uart.supported]
+[modules."tests/epic-combo-adc-uart".supported]
 PIC16F87XA = [
   "16F877",
   "16F877A",
 ]
 
-[modules.epic-combo-adc-uart.example.PIC16F87XA]
+[modules."tests/epic-combo-adc-uart".example.PIC16F87XA]
 name    = "combo-adc-uart"
 sources = [
   "tests/combo_adc_uart.c",
@@ -1935,7 +1919,7 @@ sources = [
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
-[modules.epic-combo-adc-uart.example.PIC16F87XA.sim]
+[modules."tests/epic-combo-adc-uart".example.PIC16F87XA.sim]
 name        = "combo-adc-uart-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
@@ -1943,7 +1927,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 
 # epic-cc slice (HAL-3g): polled ADC plus the TIMER1 overflow ISR and
 # the harness USART; the tier clears the latched conversion-done flag.
-[modules.epic-combo-adc-uart.epiccc_hal_sources_by_family]
+[modules."tests/epic-combo-adc-uart".epiccc_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/core/src/peripherals/pic14_adc.c",
   "hal/pic14/core/src/peripherals/pic14_timer1.c",
@@ -1955,8 +1939,7 @@ PIC16F87XA = [
   "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
 ]
 
-[modules.epic-combo-rb-uart]
-dir        = "tests/epic-combo-rb-uart"
+[modules."tests/epic-combo-rb-uart"]
 summary    = "PORTB change plus Timer2 multi-source dispatch integration firmware with polled transmit"
 sources    = []
 includes   = []
@@ -1969,13 +1952,13 @@ needs_hal  = true
 # ISR entry), the RB read-before-clear ordering, and the polled-TX
 # path under ISR load (a misdirected Bank-1 TXSTA read wedges the
 # TSR-empty wait).
-[modules.epic-combo-rb-uart.supported]
+[modules."tests/epic-combo-rb-uart".supported]
 PIC16F87XA = [
   "16F877",
   "16F877A",
 ]
 
-[modules.epic-combo-rb-uart.example.PIC16F87XA]
+[modules."tests/epic-combo-rb-uart".example.PIC16F87XA]
 name    = "combo-rb-uart"
 sources = [
   "tests/combo_rb_uart.c",
@@ -1983,7 +1966,7 @@ sources = [
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
-[modules.epic-combo-rb-uart.example.PIC16F87XA.sim]
+[modules."tests/epic-combo-rb-uart".example.PIC16F87XA.sim]
 name        = "combo-rb-uart-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
@@ -1991,7 +1974,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 
 # epic-cc slice (HAL-3g): the RB port-change ISR and TIMER2 tick under
 # the harness USART; the tier dispatches RB, TMR2 and the USART sources.
-[modules.epic-combo-rb-uart.epiccc_hal_sources_by_family]
+[modules."tests/epic-combo-rb-uart".epiccc_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/core/src/peripherals/pic14_gpio.c",
   "hal/pic14/core/src/peripherals/pic14_timer2.c",
@@ -2003,8 +1986,7 @@ PIC16F87XA = [
   "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
 ]
 
-[modules.epic-combo-eeprom-isr]
-dir        = "tests/epic-combo-eeprom-isr"
+[modules."tests/epic-combo-eeprom-isr"]
 summary    = "EEPROM writes under serial and tick ISR load on PIC18"
 sources    = []
 includes   = []
@@ -2021,15 +2003,15 @@ needs_hal  = true
 # model is inert (no write completion via CPU or debugger, RD strobe
 # never refreshes EEDATA; verified 2026-08-09), while the runner's
 # EEPROM_WRITES mechanism and the default EECON1/EECON2 addresses
-# (0xFA6/0xFA7) are proven on PIC18 by the epic-settings gate. Run
+# (0xFA6/0xFA7) are proven on PIC18 by the lib/settings gate. Run
 # with EEPROM_WRITES=32 (the gate writes 8 bytes per main pass and
 # the CRT re-runs main, up to 4 passes per 32 cycles).
-[modules.epic-combo-eeprom-isr.supported]
+[modules."tests/epic-combo-eeprom-isr".supported]
 PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-combo-eeprom-isr.example.PIC18Fxx5x]
+[modules."tests/epic-combo-eeprom-isr".example.PIC18Fxx5x]
 name    = "combo-eeprom-isr"
 sources = [
   "tests/combo_eeprom_isr.c",
@@ -2037,12 +2019,12 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, WDT=OFF like every other sim variant.
-[modules.epic-combo-eeprom-isr.example.PIC18Fxx5x.sim]
+[modules."tests/epic-combo-eeprom-isr".example.PIC18Fxx5x.sim]
 name        = "combo-eeprom-isr-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# C9 of the combination matrix: epic-encoder + epic-tick. The gate
+# C9 of the combination matrix: lib/encoder + epic-tick. The gate
 # interleaves scripted quadrature edges with real epic_tick_delay_ms
 # waits and reads the 32-bit position (the class-G Disable/Restore
 # site) under the live 1 ms tick ISR, checking every read against the
@@ -2050,7 +2032,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 
 # epic-cc slice (HAL-3g): the serial + tick + EEPROM tier and the
 # mdb harness, the sim-gate's report path under epic-cc.
-[modules.epic-combo-eeprom-isr.epiccc_hal_sources_by_family]
+[modules."tests/epic-combo-eeprom-isr".epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c",
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer2.c",
@@ -2064,24 +2046,23 @@ PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c",
 ]
 
-[modules.epic-combo-encoder-tick]
-dir        = "tests/epic-combo-encoder-tick"
+[modules."tests/epic-combo-encoder-tick"]
 summary    = "Quadrature decoder plus 1 ms timebase integration firmware"
 sources    = []
 includes   = []
 depends_on = [
-  "epic-encoder",
-  "epic-tick",
+  "lib/encoder",
+  "lib/tick",
 ]
 needs_hal  = true
 
-[modules.epic-combo-encoder-tick.supported]
+[modules."tests/epic-combo-encoder-tick".supported]
 PIC16F87XA = [
   "16F877",
   "16F877A",
 ]
 
-[modules.epic-combo-encoder-tick.example.PIC16F87XA]
+[modules."tests/epic-combo-encoder-tick".example.PIC16F87XA]
 name    = "combo-encoder-tick"
 sources = [
   "tests/combo_encoder_tick.c",
@@ -2089,7 +2070,7 @@ sources = [
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
-[modules.epic-combo-encoder-tick.example.PIC16F87XA.sim]
+[modules."tests/epic-combo-encoder-tick".example.PIC16F87XA.sim]
 name        = "combo-encoder-tick-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
@@ -2097,8 +2078,8 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 
 # epic-cc slice (HAL-3g): the encoder library is HAL-free (it reads the
 # port through the platform header), so the slice is the tick timebase
-# and the harness USART on epic-modbus's serial+tick tier.
-[modules.epic-combo-encoder-tick.epiccc_hal_sources_by_family]
+# and the harness USART on lib/modbus's serial+tick tier.
+[modules."tests/epic-combo-encoder-tick".epiccc_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/core/src/peripherals/pic14_timer2.c",
   "hal/pic14/core/src/peripherals/pic14_usart.c",
@@ -2109,27 +2090,26 @@ PIC16F87XA = [
   "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
 ]
 
-[modules.epic-combo-swuart-tick]
-dir        = "tests/epic-combo-swuart-tick"
+[modules."tests/epic-combo-swuart-tick"]
 summary    = "Bit-banged UART plus 1 ms timebase integration firmware"
 sources    = []
 includes   = []
-depends_on = ["epic-swuart", "epic-tick"]
+depends_on = ["lib/swuart", "lib/tick"]
 needs_hal  = true
 
-# C11 of the combination matrix: epic-swuart + epic-tick. The gate
+# C11 of the combination matrix: lib/swuart + epic-tick. The gate
 # transmits a known payload through the real CCP2-compare-driven swuart
 # TX path (Timer1 free-running, overflow interrupt off) while the tick's
 # 1 ms Timer2 ISR preempts it, then verifies the payload drains back to
 # TX_IDLE, the tick kept counting through every transmission, GIE
 # stayed alive, and PIE1/PIE2 hold exactly the armed sources.
-[modules.epic-combo-swuart-tick.supported]
+[modules."tests/epic-combo-swuart-tick".supported]
 PIC16F87XA = [
   "16F877",
   "16F877A",
 ]
 
-[modules.epic-combo-swuart-tick.example.PIC16F87XA]
+[modules."tests/epic-combo-swuart-tick".example.PIC16F87XA]
 name    = "combo-swuart-tick"
 sources = [
   "tests/combo_swuart_tick.c",
@@ -2137,7 +2117,7 @@ sources = [
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
-[modules.epic-combo-swuart-tick.example.PIC16F87XA.sim]
+[modules."tests/epic-combo-swuart-tick".example.PIC16F87XA.sim]
 name        = "combo-swuart-tick-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
@@ -2145,8 +2125,8 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 
 # epic-cc slice (HAL-3g): the software UART's CCP/Timer1 timebase plus
 # the tick's Timer2 and the harness USART; the tier mirrors
-# epic-swuart's CCP gates and adds the tick.
-[modules.epic-combo-swuart-tick.epiccc_hal_sources_by_family]
+# lib/swuart's CCP gates and adds the tick.
+[modules."tests/epic-combo-swuart-tick".epiccc_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/core/src/peripherals/pic14_ccp.c",
   "hal/pic14/core/src/peripherals/pic14_timer1.c",
@@ -2160,26 +2140,25 @@ PIC16F87XA = [
   "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
 ]
 
-[modules.epic-combo-tick-serial]
-dir        = "tests/epic-combo-tick-serial"
+[modules."tests/epic-combo-tick-serial"]
 summary    = "1 ms timebase plus interrupt-driven serial integration firmware"
 sources    = []
 includes   = []
-depends_on = ["epic-tick", "epic-serial"]
+depends_on = ["lib/tick", "lib/serial"]
 needs_hal  = true
 
-# C6 of the combination matrix: epic-tick's
-# live 1 ms Timer2 ISR churning against epic-serial's ring-buffered TX
+# C6 of the combination matrix: lib/tick's
+# live 1 ms Timer2 ISR churning against lib/serial's ring-buffered TX
 # path. The gate hunts the class-G race surface (the tick ISR vs the
 # serial layer's Disable/Restore sites) and the TXIE-gated dispatch
 # under a live tick vector.
-[modules.epic-combo-tick-serial.supported]
+[modules."tests/epic-combo-tick-serial".supported]
 PIC16F87XA = [
   "16F877",
   "16F877A",
 ]
 
-[modules.epic-combo-tick-serial.example.PIC16F87XA]
+[modules."tests/epic-combo-tick-serial".example.PIC16F87XA]
 name    = "combo-tick-serial"
 sources = [
   "tests/combo_tick_serial.c",
@@ -2187,16 +2166,16 @@ sources = [
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
-[modules.epic-combo-tick-serial.example.PIC16F87XA.sim]
+[modules."tests/epic-combo-tick-serial".example.PIC16F87XA.sim]
 name        = "combo-tick-serial-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # epic-cc slice (HAL-3g): the C6 gate links the tick's Timer2 timebase
-# and epic-serial's USART stack, so the override is epic-modbus's
+# and lib/serial's USART stack, so the override is lib/modbus's
 # serial+tick tier; the mdb harness replaces the target no-op harness
 # because this module's epic-cc build exists to report the sim gate.
-[modules.epic-combo-tick-serial.epiccc_hal_sources_by_family]
+[modules."tests/epic-combo-tick-serial".epiccc_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/core/src/peripherals/pic14_usart.c",
   "hal/pic14/core/src/peripherals/pic14_timer2.c",
@@ -2207,29 +2186,28 @@ PIC16F87XA = [
   "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
 ]
 
-[modules.epic-combo-lcd-tick]
-dir        = "tests/epic-combo-lcd-tick"
+[modules."tests/epic-combo-lcd-tick"]
 summary    = "Character LCD plus 1 ms timebase integration firmware"
 sources    = []
 includes   = []
-depends_on = ["epic-lcd", "epic-tick"]
+depends_on = ["lib/lcd", "lib/tick"]
 needs_hal  = true
 
 # C10 of the combination matrix: the real
-# HD44780 driver (epic-lcd) running its init + print sequence through
-# the gpio4 transport ops while epic-tick's live 1 ms Timer2 ISR
+# HD44780 driver (lib/lcd) running its init + print sequence through
+# the gpio4 transport ops while lib/tick's live 1 ms Timer2 ISR
 # churns underneath. The gate verifies the driver's byte-exact
 # emission contract (the lcd gate's oracle) and that the tick stayed
-# alive through the LCD work. The gpio4 transport is an epic-lcd
+# alive through the LCD work. The gpio4 transport is an lib/lcd
 # example-level source (deliberately not in the module's sources: it
 # pulls in the HAL), so this example references it across module dirs.
 # PIC16F87XA/16F877A only, like epic-lcd.
-[modules.epic-combo-lcd-tick.supported]
+[modules."tests/epic-combo-lcd-tick".supported]
 PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-combo-lcd-tick.example.PIC18Fxx5x]
+[modules."tests/epic-combo-lcd-tick".example.PIC18Fxx5x]
 name    = "combo-lcd-tick"
 sources = [
   "tests/combo_lcd_tick.c",
@@ -2238,7 +2216,7 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
-[modules.epic-combo-lcd-tick.example.PIC18Fxx5x.sim]
+[modules."tests/epic-combo-lcd-tick".example.PIC18Fxx5x.sim]
 name        = "combo-lcd-tick-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
@@ -2246,7 +2224,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 
 # epic-cc slice (HAL-3g): the serial + tick + EEPROM tier and the
 # mdb harness, the sim-gate's report path under epic-cc.
-[modules.epic-combo-lcd-tick.epiccc_hal_sources_by_family]
+[modules."tests/epic-combo-lcd-tick".epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c",
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer2.c",
@@ -2260,8 +2238,7 @@ PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c",
 ]
 
-[modules.epic-combo-rx-loopback]
-dir        = "tests/epic-combo-rx-loopback"
+[modules."tests/epic-combo-rx-loopback"]
 summary    = "Serial receive loopback integration firmware"
 sources    = []
 includes   = []
@@ -2279,13 +2256,13 @@ needs_hal  = true
 # on the host sim instead: this module is the first combo with a host
 # CMake test, driving the same firmware through
 # pic16f87xa_sim_drive_usart_rx (tests/test_rx_loopback.c).
-[modules.epic-combo-rx-loopback.supported]
+[modules."tests/epic-combo-rx-loopback".supported]
 PIC16F87XA = [
   "16F877",
   "16F877A",
 ]
 
-[modules.epic-combo-rx-loopback.example.PIC16F87XA]
+[modules."tests/epic-combo-rx-loopback".example.PIC16F87XA]
 name    = "rx_loopback"
 sources = [
   "tests/combo_rx_loopback.c",
@@ -2293,15 +2270,15 @@ sources = [
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 # HARNESS=sim, WDTE=OFF like every other sim variant.
-[modules.epic-combo-rx-loopback.example.PIC16F87XA.sim]
+[modules."tests/epic-combo-rx-loopback".example.PIC16F87XA.sim]
 name        = "rx_loopback-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 
 # epic-cc slice (HAL-3g): the loopback runs on the USART alone, so the
-# slice is epic-serial's serial tier with the mdb harness reporting.
-[modules.epic-combo-rx-loopback.epiccc_hal_sources_by_family]
+# slice is lib/serial's serial tier with the mdb harness reporting.
+[modules."tests/epic-combo-rx-loopback".epiccc_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/core/src/peripherals/pic14_usart.c",
   "hal/pic14/core/src/core/pic14_irq.c",
@@ -2311,8 +2288,7 @@ PIC16F87XA = [
   "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
 ]
 
-[modules.epic-adcfilter]
-dir        = "lib/adcfilter"
+[modules."lib/adcfilter"]
 summary    = "Vendor-agnostic ADC oversampling and moving-average filter"
 sources    = [
   "src/epic_adcfilter.c",
@@ -2323,7 +2299,7 @@ includes   = [
 depends_on = []
 needs_hal = false
 
-[modules.epic-adcfilter.supported]
+[modules."lib/adcfilter".supported]
 PIC16F87XA = [
   "16F870",
   "16F871",
@@ -2352,14 +2328,14 @@ PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-adcfilter.example.PIC16F87XA]
+[modules."lib/adcfilter".example.PIC16F87XA]
 name    = "adcfilter"
 sources = [
   "examples/example_adcfilter.c",
 ]
 depends_on = [
-  "epic-tick",
-  "epic-serial",
+  "lib/tick",
+  "lib/serial",
 ]
 # HARNESS=sim needs the family HAL for the harness USART, and the
 # example uses EPIC_ADC_*/epic_tick/epic_serial, so the example opts
@@ -2367,51 +2343,51 @@ depends_on = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-# The example logs over epic-serial, which is excluded on the 4K-word
+# The example logs over lib/serial, which is excluded on the 4K-word
 # parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
 # parts keep the footprint probe.
-[modules.epic-adcfilter.example.PIC16F87XA.variants.16LF873A]
+[modules."lib/adcfilter".example.PIC16F87XA.variants.16LF873A]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
-[modules.epic-adcfilter.example.PIC16F87XA.variants.16F873A]
+[modules."lib/adcfilter".example.PIC16F87XA.variants.16F873A]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-[modules.epic-adcfilter.example.PIC16F87XA.variants.16F872]
-name    = "adcfilter-sizecheck"
-sources = [
-  "mcu/target_sizecheck.c",
-]
-
-[modules.epic-adcfilter.example.PIC16F87XA.variants.16F871]
+[modules."lib/adcfilter".example.PIC16F87XA.variants.16F872]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
-[modules.epic-adcfilter.example.PIC16F87XA.variants.16F870]
+[modules."lib/adcfilter".example.PIC16F87XA.variants.16F871]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
-[modules.epic-adcfilter.example.PIC16F87XA.variants.16F873]
+[modules."lib/adcfilter".example.PIC16F87XA.variants.16F870]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-[modules.epic-adcfilter.example.PIC16F88X]
+
+[modules."lib/adcfilter".example.PIC16F87XA.variants.16F873]
+name    = "adcfilter-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+[modules."lib/adcfilter".example.PIC16F88X]
 name    = "adcfilter"
 sources = [
   "examples/example_adcfilter.c",
 ]
 depends_on = [
-  "epic-tick",
-  "epic-serial",
+  "lib/tick",
+  "lib/serial",
 ]
 # HARNESS=sim needs the family HAL for the harness USART, and the
 # example uses EPIC_ADC_*/epic_tick/epic_serial, so the example opts
@@ -2419,32 +2395,32 @@ depends_on = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-# The example logs over epic-serial, which is excluded on the small
+# The example logs over lib/serial, which is excluded on the small
 # parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
 # parts keep the footprint probe.
-[modules.epic-adcfilter.example.PIC16F88X.variants.16F882]
+[modules."lib/adcfilter".example.PIC16F88X.variants.16F882]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-[modules.epic-adcfilter.example.PIC16F88X.variants.16F883]
+[modules."lib/adcfilter".example.PIC16F88X.variants.16F883]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-[modules.epic-adcfilter.example.PIC16F88X.variants.16F884]
-name    = "adcfilter-sizecheck"
-sources = [
-  "mcu/target_sizecheck.c",
-]
-
-[modules.epic-adcfilter.example.PIC16F87XA.variants.16F874]
+[modules."lib/adcfilter".example.PIC16F88X.variants.16F884]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
-[modules.epic-adcfilter.example.PIC16F87XA.variants.16F874A]
+[modules."lib/adcfilter".example.PIC16F87XA.variants.16F874]
+name    = "adcfilter-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+
+[modules."lib/adcfilter".example.PIC16F87XA.variants.16F874A]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
@@ -2458,14 +2434,14 @@ sources = [
 # reset path. WDTE=OFF for the same reason as every other family's own
 # sim variant: a diagnostic build that terminates and reports does not
 # need the watchdog running unattended.
-[modules.epic-adcfilter.example.PIC16F87XA.sim]
+[modules."lib/adcfilter".example.PIC16F87XA.sim]
 name        = "adcfilter-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_adcfilter.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-adcfilter.example.PIC16F88X.sim]
+[modules."lib/adcfilter".example.PIC16F88X.sim]
 name        = "adcfilter-sim"
 harness_src = "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -2473,33 +2449,32 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-adcfilter.example.PIC18Fxx5x]
+[modules."lib/adcfilter".example.PIC18Fxx5x]
 name    = "adcfilter"
 sources = [
   "examples/example_adcfilter.c",
 ]
 hal     = true
 depends_on = [
-  "epic-tick",
-  "epic-serial",
+  "lib/tick",
+  "lib/serial",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# Same epic-serial RAM exclusion as the PIC16 small parts.
-[modules.epic-adcfilter.example.PIC18Fxx5x.variants.18F2455]
+# Same lib/serial RAM exclusion as the PIC16 small parts.
+[modules."lib/adcfilter".example.PIC18Fxx5x.variants.18F2455]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
-[modules.epic-adcfilter.example.PIC18Fxx5x.variants.18F2550]
+[modules."lib/adcfilter".example.PIC18Fxx5x.variants.18F2550]
 name    = "adcfilter-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
-[modules.epic-bus]
-dir        = "lib/bus"
+[modules."lib/bus"]
 summary    = "I2C and SPI MEM register access for 8-bit PICs"
 sources    = [
   "src/epic_bus.c",
@@ -2509,7 +2484,7 @@ includes   = [
 ]
 depends_on = []
 
-[modules.epic-bus.supported]
+[modules."lib/bus".supported]
 PIC16F87XA = [
   "16F873A",
   "16LF873A",
@@ -2532,14 +2507,14 @@ PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-bus.excluded]
+[modules."lib/bus".excluded]
 "16F870" = "no SSP peripheral on this cut-down"
 "16F871" = "no SSP peripheral on this cut-down"
 "16F872" = "flash: bus example does not fit 2K CODE (XC8 error 1347)"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
-[modules.epic-bus.example.PIC16F87XA]
+[modules."lib/bus".example.PIC16F87XA]
 name    = "bus"
 sources = [
   "examples/example_bus.c",
@@ -2554,18 +2529,18 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # bounded SSPIF polls (the default ops' own waits are unbounded), and
 # the MEM transaction logic through the documented ops seam (MPLAB SIM
 # has no slave device to inject on the I2C/SPI bus, same constraint as
-# epic-swuart's sim build). hal = true because the build links the
+# lib/swuart's sim build). hal = true because the build links the
 # family HAL for the harness USART. WDTE=OFF for the same reason as
 # every other family's own sim variant: a diagnostic build that
 # terminates and reports does not need the watchdog running unattended.
-[modules.epic-bus.example.PIC16F87XA.sim]
+[modules."lib/bus".example.PIC16F87XA.sim]
 name        = "bus-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_bus.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-bus.example.PIC16F88X]
+[modules."lib/bus".example.PIC16F88X]
 name    = "bus"
 sources = [
   "examples/example_bus.c",
@@ -2580,11 +2555,11 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # bounded SSPIF polls (the default ops' own waits are unbounded), and
 # the MEM transaction logic through the documented ops seam (MPLAB SIM
 # has no slave device to inject on the I2C/SPI bus, same constraint as
-# epic-swuart's sim build). hal = true because the build links the
+# lib/swuart's sim build). hal = true because the build links the
 # family HAL for the harness USART. WDTE=OFF for the same reason as
 # every other family's own sim variant: a diagnostic build that
 # terminates and reports does not need the watchdog running unattended.
-[modules.epic-bus.example.PIC16F88X.sim]
+[modules."lib/bus".example.PIC16F88X.sim]
 name        = "bus-sim"
 harness_src = "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -2592,8 +2567,7 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-mcp23x17]
-dir        = "lib/mcp23x17"
+[modules."lib/mcp23x17"]
 summary    = "MCP23017 and MCP23S17 16-bit I/O expander driver on epic-bus"
 sources    = [
   "src/epic_mcp23x17.c",
@@ -2601,9 +2575,9 @@ sources    = [
 includes   = [
   "include",
 ]
-depends_on = ["epic-bus"]
+depends_on = ["lib/bus"]
 
-[modules.epic-mcp23x17.supported]
+[modules."lib/mcp23x17".supported]
 PIC16F87XA = [
   "16F873A",
   "16LF873A",
@@ -2623,11 +2597,11 @@ PIC16F88X = [
   "16F887",
 ]
 
-[modules.epic-mcp23x17.excluded]
+[modules."lib/mcp23x17".excluded]
 "16F870" = "no SSP peripheral on this cut-down"
 "16F871" = "no SSP peripheral on this cut-down"
 
-[modules.epic-mcp23x17.example.PIC16F87XA]
+[modules."lib/mcp23x17".example.PIC16F87XA]
 name    = "mcp23x17"
 sources = [
   "examples/example_mcp23x17_target.c",
@@ -2635,18 +2609,18 @@ sources = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-# HARNESS=sim: the same bounded, self-reporting shape as epic-bus's
+# HARNESS=sim: the same bounded, self-reporting shape as lib/bus's
 # gate (the sim SSP data path is unmodeled, so the gate proves the
 # module links and the init runs; the register semantics are
 # host-tested against the mock device).
-[modules.epic-mcp23x17.example.PIC16F87XA.sim]
+[modules."lib/mcp23x17".example.PIC16F87XA.sim]
 name        = "mcp23x17-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_mcp23x17.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-mcp23x17.example.PIC16F88X]
+[modules."lib/mcp23x17".example.PIC16F88X]
 name    = "mcp23x17"
 sources = [
   "examples/example_mcp23x17_target.c",
@@ -2654,11 +2628,11 @@ sources = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-# HARNESS=sim: the same bounded, self-reporting shape as epic-bus's
+# HARNESS=sim: the same bounded, self-reporting shape as lib/bus's
 # gate (the sim SSP data path is unmodeled, so the gate proves the
 # module links and the init runs; the register semantics are
 # host-tested against the mock device).
-[modules.epic-mcp23x17.example.PIC16F88X.sim]
+[modules."lib/mcp23x17".example.PIC16F88X.sim]
 name        = "mcp23x17-sim"
 harness_src = "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -2666,15 +2640,14 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-bus.example.PIC18Fxx5x]
+[modules."lib/bus".example.PIC18Fxx5x]
 name    = "bus"
 sources = [
   "examples/example_bus.c",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-[modules.epic-console]
-dir        = "lib/console"
+[modules."lib/console"]
 summary    = "Line-based command dispatcher over epic-serial"
 sources    = [
   "src/epic_console.c",
@@ -2683,7 +2656,7 @@ includes   = [
   "include",
 ]
 depends_on = [
-  "epic-serial",
+  "lib/serial",
 ]
 
 epiccc_hal_sources_by_family.PIC16F87XA = [
@@ -2703,7 +2676,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
   "common/src/core/epic_harness_target.c",
 ]
 
-[modules.epic-console.supported]
+[modules."lib/console".supported]
 PIC16F87XA = [
   "16F876",
   "16F876A",
@@ -2719,13 +2692,13 @@ PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-console.excluded]
+[modules."lib/console".excluded]
 # The old all-MCU exclusion ("link: irq dispatch needs every peripheral
 # handler") is stale: that failure class cannot recur since the
 # manifest links the family's full hal_sources set for every HAL build.
 # The smaller parts stay excluded because the module pulls in
-# epic-serial, which does not fit there (the same RAM reason
-# epic-serial and epic-debounce exclude them).
+# lib/serial, which does not fit there (the same RAM reason
+# lib/serial and lib/debounce exclude them).
 "16F873A" = "RAM: does not fit on this smaller part"
 "16LF873A" = "RAM: does not fit on this smaller part"
 "16F873" = "RAM: does not fit on this smaller part"
@@ -2737,20 +2710,20 @@ PIC18Fxx5x = [
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
-[modules.epic-console.example.PIC16F87XA]
+[modules."lib/console".example.PIC16F87XA]
 name    = "console"
 sources = [
   "examples/example_console.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-console.example.PIC16F88X]
+[modules."lib/console".example.PIC16F88X]
 name    = "console"
 sources = [
   "examples/example_console.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-console.example.PIC18Fxx5x]
+[modules."lib/console".example.PIC18Fxx5x]
 name    = "console"
 sources = [
   "examples/example_console.c",
@@ -2758,7 +2731,7 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 # HARNESS=sim needs the family HAL for the harness USART (the module
 # defaults to needs_hal = true anyway; explicit for the same reason as
-# epic-fsm's and epic-pid's examples with a .sim variant).
+# lib/fsm's and lib/pid's examples with a .sim variant).
 hal     = true
 
 # HARNESS=sim (see scripts/ci/ci-target-sim.sh): a bounded, self-reporting
@@ -2768,7 +2741,7 @@ hal     = true
 # sim file header), so the gate is TX-side / framing / internal-state:
 # it verifies the EPIC_CONSOLE_INIT contract, that
 # epic_console_print_help emits exactly the documented "name - help"
-# CRLF framing through the real epic-serial TX ring and drains it
+# CRLF framing through the real lib/serial TX ring and drains it
 # through the real TX ISR (paced per byte), that a zero-row table
 # prints nothing, and that an idle epic_console_poll is a no-op. The
 # RX-bound parser contracts (dispatch, unknown-command error path,
@@ -2776,7 +2749,7 @@ hal     = true
 # reason as every other family's own sim variant: a diagnostic build
 # that terminates and reports does not need the watchdog running
 # unattended.
-[modules.epic-console.example.PIC18Fxx5x.sim]
+[modules."lib/console".example.PIC18Fxx5x.sim]
 name        = "console-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -2784,8 +2757,7 @@ sources     = [
 ]
 config      = { BOR = "OFF", FOSC = "HS", WDT = "OFF" }
 
-[modules.epic-debounce]
-dir        = "lib/debounce"
+[modules."lib/debounce"]
 summary    = "Vendor-agnostic digital-input debouncer"
 sources    = [
   "src/debounce.c",
@@ -2794,10 +2766,10 @@ includes   = [
   "include",
 ]
 depends_on = [
-  "epic-tick",
+  "lib/tick",
 ]
 
-[modules.epic-debounce.supported]
+[modules."lib/debounce".supported]
 PIC16F87XA = [
   "16F876",
   "16F876A",
@@ -2815,7 +2787,7 @@ PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-debounce.excluded]
+[modules."lib/debounce".excluded]
 "16F873A" = "RAM: does not fit on this smaller part"
 "16LF873A" = "RAM: does not fit on this smaller part"
 "16F873" = "RAM: does not fit on this smaller part"
@@ -2827,7 +2799,7 @@ PIC18Fxx5x = [
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
-[modules.epic-debounce.example.PIC16F87XA]
+[modules."lib/debounce".example.PIC16F87XA]
 name    = "debounce"
 sources = [
   "examples/example_debounce.c",
@@ -2843,14 +2815,14 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # for the same reason as every other family's sim variant: a diagnostic
 # build that terminates and reports does not need the watchdog running
 # unattended.
-[modules.epic-debounce.example.PIC16F87XA.sim]
+[modules."lib/debounce".example.PIC16F87XA.sim]
 name        = "debounce-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_debounce.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-debounce.example.PIC16F88X]
+[modules."lib/debounce".example.PIC16F88X]
 name    = "debounce"
 sources = [
   "examples/example_debounce.c",
@@ -2866,7 +2838,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # for the same reason as every other family's sim variant: a diagnostic
 # build that terminates and reports does not need the watchdog running
 # unattended.
-[modules.epic-debounce.example.PIC16F88X.sim]
+[modules."lib/debounce".example.PIC16F88X.sim]
 name        = "debounce-sim"
 harness_src = "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -2874,15 +2846,14 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-debounce.example.PIC18Fxx5x]
+[modules."lib/debounce".example.PIC18Fxx5x]
 name    = "debounce"
 sources = [
   "examples/example_debounce.c",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-[modules.epic-encoder]
-dir        = "lib/encoder"
+[modules."lib/encoder"]
 summary    = "Interrupt-driven x4 quadrature decoder for 8-bit PICs"
 sources    = [
   "src/encoder.c",
@@ -2891,10 +2862,10 @@ includes   = [
   "include",
 ]
 depends_on = [
-  "epic-tick",
+  "lib/tick",
 ]
 
-[modules.epic-encoder.supported]
+[modules."lib/encoder".supported]
 PIC16F87XA = [
   "16F873A",
   "16LF873A",
@@ -2917,85 +2888,85 @@ PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-encoder.excluded]
+[modules."lib/encoder".excluded]
 "16F870" = "RAM: sizecheck _g_enc does not fit (XC8 error 1250)"
 "16F871" = "RAM: sizecheck _g_enc does not fit (XC8 error 1250)"
 "16F872" = "RAM: sizecheck _g_enc does not fit (XC8 error 1250)"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
-[modules.epic-encoder.example.PIC16F87XA]
+[modules."lib/encoder".example.PIC16F87XA]
 name    = "encoder"
 sources = [
   "examples/example_encoder.c",
 ]
 depends_on = [
-  "epic-serial",
+  "lib/serial",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-# The example logs over epic-serial, which is excluded on the 4K-word
+# The example logs over lib/serial, which is excluded on the 4K-word
 # parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
 # parts keep the footprint probe.
-[modules.epic-encoder.example.PIC16F87XA.variants.16LF873A]
+[modules."lib/encoder".example.PIC16F87XA.variants.16LF873A]
 name    = "encoder-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-encoder.example.PIC16F87XA.variants.16F873A]
+[modules."lib/encoder".example.PIC16F87XA.variants.16F873A]
 name    = "encoder-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-encoder.example.PIC16F87XA.variants.16F873]
+[modules."lib/encoder".example.PIC16F87XA.variants.16F873]
 name    = "encoder-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-encoder.example.PIC16F88X]
+[modules."lib/encoder".example.PIC16F88X]
 name    = "encoder"
 sources = [
   "examples/example_encoder.c",
 ]
 depends_on = [
-  "epic-serial",
+  "lib/serial",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-# The example logs over epic-serial, which is excluded on the small
+# The example logs over lib/serial, which is excluded on the small
 # parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
 # parts keep the footprint probe.
-[modules.epic-encoder.example.PIC16F88X.variants.16F882]
+[modules."lib/encoder".example.PIC16F88X.variants.16F882]
 name    = "encoder-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-encoder.example.PIC16F88X.variants.16F883]
+[modules."lib/encoder".example.PIC16F88X.variants.16F883]
 name    = "encoder-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-encoder.example.PIC16F88X.variants.16F884]
-name    = "encoder-sizecheck"
-sources = [
-  "mcu/target_sizecheck.c",
-]
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-
-[modules.epic-encoder.example.PIC16F87XA.variants.16F874]
+[modules."lib/encoder".example.PIC16F88X.variants.16F884]
 name    = "encoder-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-encoder.example.PIC16F87XA.variants.16F874A]
+[modules."lib/encoder".example.PIC16F87XA.variants.16F874]
+name    = "encoder-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules."lib/encoder".example.PIC16F87XA.variants.16F874A]
 name    = "encoder-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
@@ -3007,25 +2978,25 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # reason as every other family's own sim variant: a diagnostic build
 # that terminates and reports does not need the watchdog running
 # unattended.
-[modules.epic-encoder.example.PIC16F87XA.sim]
+[modules."lib/encoder".example.PIC16F87XA.sim]
 name        = "encoder-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_encoder.c",
 ]
-# The sim test logs over the harness USART, not epic-serial; the
-# example's epic-serial dep would pull in a 9-byte local that
+# The sim test logs over the harness USART, not lib/serial; the
+# example's lib/serial dep would pull in a 9-byte local that
 # overflows 16F887 RAM (XC8 error 1250).
 depends_on  = []
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-encoder.example.PIC16F88X.sim]
+[modules."lib/encoder".example.PIC16F88X.sim]
 name        = "encoder-sim"
 harness_src = "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_encoder.c",
 ]
-# The sim test logs over the harness USART, not epic-serial; the
-# example's epic-serial dep would pull in a 9-byte local that
+# The sim test logs over the harness USART, not lib/serial; the
+# example's lib/serial dep would pull in a 9-byte local that
 # overflows 16F887 RAM (XC8 error 1250).
 depends_on  = []
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
@@ -3037,8 +3008,8 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # the target sizecheck leg too and link the mdb harness into the
 # target build. So the sim firmware alone gets the tick timebase
 # plus the harness USART on the serial+tick tier, mirroring
-# epic-combo-encoder-tick's proven set.
-[modules.epic-encoder.epiccc_sim_hal_sources_by_family]
+# tests/epic-combo-encoder-tick's proven set.
+[modules."lib/encoder".epiccc_sim_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/core/src/peripherals/pic14_timer2.c",
   "hal/pic14/core/src/peripherals/pic14_usart.c",
@@ -3058,18 +3029,17 @@ PIC16F88X = [
   "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c",
 ]
 
-[modules.epic-encoder.example.PIC18Fxx5x]
+[modules."lib/encoder".example.PIC18Fxx5x]
 name    = "encoder"
 sources = [
   "examples/example_encoder.c",
 ]
 depends_on = [
-  "epic-serial",
+  "lib/serial",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-[modules.epic-fsm]
-dir        = "lib/fsm"
+[modules."lib/fsm"]
 summary    = "Vendor-agnostic table-driven finite state machine engine"
 sources    = [
   "src/fsm.c",
@@ -3080,7 +3050,7 @@ includes   = [
 depends_on = []
 needs_hal = false
 
-[modules.epic-fsm.supported]
+[modules."lib/fsm".supported]
 PIC16F87XA = [
   "16F873A",
   "16LF873A",
@@ -3112,23 +3082,23 @@ PIC16F193X = [
 ]
 
 # The example (examples/example_fsm.c) is a tick-driven traffic light.
-# Its epic-tick dependency is excluded on the smaller parts: it does
+# Its lib/tick dependency is excluded on the smaller parts: it does
 # not fit on the 18F2455/18F2550 (RAM).
-[modules.epic-fsm.excluded]
+[modules."lib/fsm".excluded]
 "16F870" = "RAM: HAL _g_ccp_callbacks do not fit (XC8 error 1250)"
 "16F871" = "RAM: HAL _g_ccp_callbacks do not fit (XC8 error 1250)"
 "16F872" = "RAM: HAL _g_ccp_callbacks do not fit (XC8 error 1250)"
-"18F2455" = "example needs epic-tick, which does not fit on this part (RAM)"
-"18F2550" = "example needs epic-tick, which does not fit on this part (RAM)"
+"18F2455" = "example needs lib/tick, which does not fit on this part (RAM)"
+"18F2550" = "example needs lib/tick, which does not fit on this part (RAM)"
 
-[modules.epic-fsm.example.PIC16F87XA]
+[modules."lib/fsm".example.PIC16F87XA]
 name    = "fsm"
 sources = [
   "examples/example_fsm.c",
 ]
 hal     = true
 depends_on = [
-  "epic-tick",
+  "lib/tick",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
@@ -3142,21 +3112,21 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # example's hal flag). WDTE=OFF for the same reason as every other
 # family's own sim variant: a diagnostic build that terminates and
 # reports does not need the watchdog running unattended.
-[modules.epic-fsm.example.PIC16F87XA.sim]
+[modules."lib/fsm".example.PIC16F87XA.sim]
 name        = "fsm-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_fsm.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-fsm.example.PIC16F88X]
+[modules."lib/fsm".example.PIC16F88X]
 name    = "fsm"
 sources = [
   "examples/example_fsm.c",
 ]
 hal     = true
 depends_on = [
-  "epic-tick",
+  "lib/tick",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
@@ -3170,7 +3140,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # example's hal flag). WDTE=OFF for the same reason as every other
 # family's own sim variant: a diagnostic build that terminates and
 # reports does not need the watchdog running unattended.
-[modules.epic-fsm.example.PIC16F88X.sim]
+[modules."lib/fsm".example.PIC16F88X.sim]
 name        = "fsm-sim"
 harness_src = "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -3178,34 +3148,34 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-fsm.example.PIC18Fxx5x]
+[modules."lib/fsm".example.PIC18Fxx5x]
 name    = "fsm"
 sources = [
   "examples/example_fsm.c",
 ]
 hal     = true
 depends_on = [
-  "epic-tick",
+  "lib/tick",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # The tick-driven traffic light runs on this family through the Timer2
 # shim, with the same 32 MHz pin as the tick example (PLLEN=ON).
-[modules.epic-fsm.example.PIC16F193X]
+[modules."lib/fsm".example.PIC16F193X]
 name    = "fsm"
 sources = [
   "examples/example_fsm.c",
 ]
 hal     = true
 depends_on = [
-  "epic-tick",
+  "lib/tick",
 ]
 config  = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "ON", WRT = "OFF" }
 
 # HARNESS=sim: the bounded, scripted 3-state gate (tests/sim_fsm.c),
 # pure computation plus the shared report marker, so the gpio harness
 # (RA0) carries it with no USART. Mirrors the PIC16F87XA sim variant.
-[modules.epic-fsm.example.PIC16F193X.sim]
+[modules."lib/fsm".example.PIC16F193X.sim]
 name        = "fsm-sim"
 harness_src = "hal/pic14e/16f193x/src/mdb/pic16f193x_harness_mdb.c"
 sources     = [
@@ -3213,15 +3183,14 @@ sources     = [
 ]
 config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "ON", WRT = "OFF" }
 
-# epic-lcd's first manifest slot: transport-agnostic HD44780 driver.
+# lib/lcd's first manifest slot: transport-agnostic HD44780 driver.
 # The module core (src/epic_lcd.c) is HAL-free, so needs_hal is false;
 # the example opts in (hal = true) because the GPIO 4-bit transport
 # (src/epic_lcd_gpio4.c) uses the family HAL's EPIC_GPIO_* and
-# epic-tick's ms delays (hence depends_on = epic-tick), and the sim
+# lib/tick's ms delays (hence depends_on = lib/tick), and the sim
 # gate needs the family HAL for the harness USART. The module had no
 # real-target build before this entry, so 16F877A and 16F887 only.
-[modules.epic-lcd]
-dir        = "lib/lcd"
+[modules."lib/lcd"]
 summary    = "HD44780-compatible character LCD driver"
 sources    = [
   "src/epic_lcd.c",
@@ -3230,11 +3199,11 @@ includes   = [
   "include",
 ]
 depends_on = [
-  "epic-tick",
+  "lib/tick",
 ]
 needs_hal  = false
 
-[modules.epic-lcd.supported]
+[modules."lib/lcd".supported]
 PIC16F87XA = [
   "16F877",
   "16F877A",
@@ -3243,7 +3212,7 @@ PIC16F88X = [
   "16F887",
 ]
 
-[modules.epic-lcd.example.PIC16F87XA]
+[modules."lib/lcd".example.PIC16F87XA]
 name    = "lcd"
 sources = [
   "examples/example_lcd.c",
@@ -3252,7 +3221,7 @@ sources = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-lcd.example.PIC16F88X]
+[modules."lib/lcd".example.PIC16F88X]
 name    = "lcd"
 sources = [
   "examples/example_lcd.c",
@@ -3276,7 +3245,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # as every other family's own sim variant: a diagnostic build that
 # terminates and reports does not need the watchdog running
 # unattended.
-[modules.epic-lcd.example.PIC16F87XA.sim]
+[modules."lib/lcd".example.PIC16F87XA.sim]
 name        = "lcd-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -3285,8 +3254,7 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-math]
-dir        = "lib/math"
+[modules."lib/math"]
 summary    = "Fixed-point math utility library for 8-bit PICs"
 sources    = [
   "src/common/epic_math_numeric.c",
@@ -3300,7 +3268,7 @@ includes   = [
 depends_on = []
 needs_hal = false
 
-[modules.epic-math.sources_by_family]
+[modules."lib/math".sources_by_family]
 PIC16F87XA = [
   "src/pic16/epic_math_addsub.c",
   "src/pic16/epic_math_bcd.c",
@@ -3322,7 +3290,7 @@ PIC18Fxx5x = [
   "src/pic18/epic_math_mul.c",
 ]
 
-[modules.epic-math.supported]
+[modules."lib/math".supported]
 PIC16F87XA = [
   "16F870",
   "16F871",
@@ -3349,18 +3317,18 @@ PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-math.excluded]
+[modules."lib/math".excluded]
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
-[modules.epic-math.example.PIC16F87XA]
+[modules."lib/math".example.PIC16F87XA]
 name    = "math"
 sources = [
   "examples/example_math.c",
 ]
 hal    = true
 depends_on = [
-  "epic-serial",
+  "lib/serial",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
@@ -3368,10 +3336,10 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # replay: the selftest plus the page-0-pinned asm leaves fragments the
 # CODE space and the link fails with 1347 (measured 2026-08-11). They
 # keep the smoke, which still proves every asm body links and executes.
-# They also cannot hold the new example: epic-serial (which it logs
+# They also cannot hold the new example: lib/serial (which it logs
 # over) is excluded there for RAM, so these parts keep the smoke
 # instead of the example.
-[modules.epic-math.example.PIC16F87XA.variants.16LF873A]
+[modules."lib/math".example.PIC16F87XA.variants.16LF873A]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
@@ -3379,22 +3347,14 @@ sources = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-math.example.PIC16F87XA.variants.16F873A]
+[modules."lib/math".example.PIC16F87XA.variants.16F873A]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
 ]
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-math.example.PIC16F87XA.variants.16F872]
-name    = "math-selftest"
-sources = [
-  "tests/target_smoke16.c",
-]
-hal     = true
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-
-[modules.epic-math.example.PIC16F87XA.variants.16F871]
+[modules."lib/math".example.PIC16F87XA.variants.16F872]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
@@ -3402,7 +3362,7 @@ sources = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-math.example.PIC16F87XA.variants.16F870]
+[modules."lib/math".example.PIC16F87XA.variants.16F871]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
@@ -3410,21 +3370,29 @@ sources = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-math.example.PIC16F87XA.variants.16F873]
+[modules."lib/math".example.PIC16F87XA.variants.16F870]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
 ]
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-math.example.PIC16F88X]
+
+[modules."lib/math".example.PIC16F87XA.variants.16F873]
+name    = "math-selftest"
+sources = [
+  "tests/target_smoke16.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules."lib/math".example.PIC16F88X]
 name    = "math"
 sources = [
   "examples/example_math.c",
 ]
 hal    = true
 depends_on = [
-  "epic-serial",
+  "lib/serial",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
@@ -3432,32 +3400,24 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # plus the page-0-pinned asm leaves fragments the CODE space and the
 # link fails with 1347 (measured 2026-08-11). They keep the smoke,
 # which still proves every asm body links and executes. They also
-# cannot hold the new example: epic-serial (which it logs over) is
+# cannot hold the new example: lib/serial (which it logs over) is
 # excluded there for RAM, so these parts keep the smoke instead of the
 # example.
-[modules.epic-math.example.PIC16F88X.variants.16F882]
+[modules."lib/math".example.PIC16F88X.variants.16F882]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
 ]
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-math.example.PIC16F88X.variants.16F883]
+[modules."lib/math".example.PIC16F88X.variants.16F883]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
 ]
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-math.example.PIC16F88X.variants.16F884]
-name    = "math-selftest"
-sources = [
-  "tests/target_smoke16.c",
-]
-hal     = true
-config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-
-[modules.epic-math.example.PIC16F87XA.variants.16F874]
+[modules."lib/math".example.PIC16F88X.variants.16F884]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
@@ -3465,7 +3425,15 @@ sources = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-math.example.PIC16F87XA.variants.16F874A]
+[modules."lib/math".example.PIC16F87XA.variants.16F874]
+name    = "math-selftest"
+sources = [
+  "tests/target_smoke16.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules."lib/math".example.PIC16F87XA.variants.16F874A]
 name    = "math-selftest"
 sources = [
   "tests/target_smoke16.c",
@@ -3482,14 +3450,14 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # fix, applied 2026-08-11 (quality task 5a): every asm leaf is
 # __at-pinned below 0x800 (0x100-0x420, see docs/layout-budgets.md),
 # so the page-0 requirement holds regardless of the build size.
-[modules.epic-math.example.PIC16F87XA.sim]
+[modules."lib/math".example.PIC16F87XA.sim]
 name        = "math-selftest-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/target_selftest.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-math.example.PIC16F88X.sim]
+[modules."lib/math".example.PIC16F88X.sim]
 name        = "math-selftest-sim"
 harness_src = "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -3497,14 +3465,14 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-math.example.PIC18Fxx5x]
+[modules."lib/math".example.PIC18Fxx5x]
 name    = "math"
 sources = [
   "examples/example_math.c",
 ]
 hal    = true
 depends_on = [
-  "epic-serial",
+  "lib/serial",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
@@ -3512,7 +3480,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # replay (tests/target_selftest.c, explicit sources so the sim gate
 # does not inherit the unbounded target example above), only the
 # harness source and the WDT config bit differ.
-[modules.epic-math.example.PIC18Fxx5x.sim]
+[modules."lib/math".example.PIC18Fxx5x.sim]
 name        = "math-selftest-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -3520,8 +3488,7 @@ sources     = [
 ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-[modules.epic-modbus]
-dir        = "lib/modbus"
+[modules."lib/modbus"]
 summary    = "Modbus RTU slave for 8-bit PICs"
 sources    = [
   "src/epic_modbus.c",
@@ -3530,8 +3497,8 @@ includes   = [
   "include",
 ]
 depends_on = [
-  "epic-serial",
-  "epic-tick",
+  "lib/serial",
+  "lib/tick",
 ]
 
 epiccc_hal_sources_by_family.PIC16F87XA = [
@@ -3553,13 +3520,13 @@ epiccc_hal_sources_by_family.PIC16F88X = [
   "common/src/core/epic_harness_target.c",
 ]
 
-[modules.epic-modbus.supported]
+[modules."lib/modbus".supported]
 PIC18Fxx5x = [
   "18F4455",
   "18F4550",
 ]
 
-[modules.epic-modbus.excluded]
+[modules."lib/modbus".excluded]
 "16F873A" = "RAM: does not fit on this smaller part"
 "16LF873A" = "RAM: does not fit on this smaller part"
 "16F873" = "RAM: does not fit on this smaller part"
@@ -3575,14 +3542,14 @@ PIC18Fxx5x = [
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
-[modules.epic-modbus.example.PIC16F87XA]
+[modules."lib/modbus".example.PIC16F87XA]
 name    = "modbus"
 sources = [
   "examples/example_modbus.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-modbus.example.PIC18Fxx5x]
+[modules."lib/modbus".example.PIC18Fxx5x]
 name    = "modbus"
 sources = [
   "examples/example_modbus.c",
@@ -3599,14 +3566,13 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # independent reference. WDT is off for the same reason every other
 # sim variant disables it: the gate needs the tick-based waits to be
 # the only timing authority in the image.
-[modules.epic-modbus.example.PIC18Fxx5x.sim]
+[modules."lib/modbus".example.PIC18Fxx5x.sim]
 name        = "modbus-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 sources     = [ "tests/sim_modbus.c", ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-[modules.epic-pid]
-dir        = "lib/pid"
+[modules."lib/pid"]
 summary    = "Vendor-agnostic fixed-point PID controller"
 sources    = [
   "src/pid.c",
@@ -3615,13 +3581,13 @@ includes   = [
   "include",
 ]
 depends_on = [
-  "epic-math",
+  "lib/math",
 ]
 needs_hal = false
 
 # The epic-cc slice for the full example (HAL-3b): the serial + tick
 # tier (USART + Timer2 + irq + vector + the serial_tick dispatch) and
-# the target no-op harness, mirroring epic-serial's override plus the
+# the target no-op harness, mirroring lib/serial's override plus the
 # tick timebase. The family slice would pull gpio/timer0/ssp into the
 # 368-byte GPR overlay for no reason; the PIC18 slice stays the
 # sizecheck (the PIC18 epic-cc backend is not yet conformant, HAL-3d).
@@ -3644,7 +3610,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
   "common/src/core/epic_harness_target.c",
 ]
 
-[modules.epic-pid.supported]
+[modules."lib/pid".supported]
 PIC16F87XA = [
   "16F873A",
   "16LF873A",
@@ -3669,107 +3635,107 @@ PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-pid.excluded]
+[modules."lib/pid".excluded]
 "16F870" = "RAM: sizecheck _g_pid does not fit (XC8 error 1250)"
 "16F871" = "RAM: sizecheck _g_pid does not fit (XC8 error 1250)"
 "16F872" = "RAM: sizecheck _g_pid does not fit (XC8 error 1250)"
 
-[modules.epic-pid.example.PIC16F87XA]
+[modules."lib/pid".example.PIC16F87XA]
 name    = "pid"
 sources = [
   "examples/example_pid.c",
 ]
 hal     = true
 depends_on = [
-  "epic-tick",
-  "epic-serial",
+  "lib/tick",
+  "lib/serial",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-# The example logs over epic-serial, which is excluded on the 4K-word
+# The example logs over lib/serial, which is excluded on the 4K-word
 # parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
 # parts keep the footprint probe while the serial-capable parts build
 # the real example.
-[modules.epic-pid.example.PIC16F87XA.variants.16LF873A]
+[modules."lib/pid".example.PIC16F87XA.variants.16LF873A]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
-[modules.epic-pid.example.PIC16F87XA.variants.16F873A]
+[modules."lib/pid".example.PIC16F87XA.variants.16F873A]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-[modules.epic-pid.example.PIC16F87XA.variants.16F873]
+[modules."lib/pid".example.PIC16F87XA.variants.16F873]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-[modules.epic-pid.example.PIC16F88X]
+[modules."lib/pid".example.PIC16F88X]
 name    = "pid"
 sources = [
   "examples/example_pid.c",
 ]
 hal     = true
 depends_on = [
-  "epic-tick",
-  "epic-serial",
+  "lib/tick",
+  "lib/serial",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-# The example logs over epic-serial, which is excluded on the small
+# The example logs over lib/serial, which is excluded on the small
 # parts (RAM: 32-byte g_rx_buf does not fit, XC8 error 1250), so those
 # parts keep the footprint probe while the serial-capable parts build
 # the real example.
-[modules.epic-pid.example.PIC16F88X.variants.16F882]
+[modules."lib/pid".example.PIC16F88X.variants.16F882]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-[modules.epic-pid.example.PIC16F88X.variants.16F883]
+[modules."lib/pid".example.PIC16F88X.variants.16F883]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
-[modules.epic-pid.example.PIC16F88X.variants.16F884]
-name    = "pid-sizecheck"
-sources = [
-  "mcu/target_sizecheck.c",
-]
-
-[modules.epic-pid.example.PIC16F87XA.variants.16F874]
+[modules."lib/pid".example.PIC16F88X.variants.16F884]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
-[modules.epic-pid.example.PIC16F87XA.variants.16F874A]
+[modules."lib/pid".example.PIC16F87XA.variants.16F874]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
-[modules.epic-pid.example.PIC18Fxx5x]
+[modules."lib/pid".example.PIC16F87XA.variants.16F874A]
+name    = "pid-sizecheck"
+sources = [
+  "mcu/target_sizecheck.c",
+]
+
+[modules."lib/pid".example.PIC18Fxx5x]
 name    = "pid"
 sources = [
   "examples/example_pid.c",
 ]
 hal     = true
 depends_on = [
-  "epic-tick",
-  "epic-serial",
+  "lib/tick",
+  "lib/serial",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# Same epic-serial RAM exclusion as the PIC16 small parts.
-[modules.epic-pid.example.PIC18Fxx5x.variants.18F2455]
+# Same lib/serial RAM exclusion as the PIC16 small parts.
+[modules."lib/pid".example.PIC18Fxx5x.variants.18F2455]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
-[modules.epic-pid.example.PIC18Fxx5x.variants.18F2550]
+[modules."lib/pid".example.PIC18Fxx5x.variants.18F2550]
 name    = "pid-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
@@ -3786,7 +3752,7 @@ sources = [
 # interrupt handler body (fixup-overflow 1356 at pic16_isr_vector.c:30
 # once the total passes ~4.2 K words; measured 2026-08-09). PIC18 has
 # absolute calls, so no such constraint.
-[modules.epic-pid.example.PIC18Fxx5x.sim]
+[modules."lib/pid".example.PIC18Fxx5x.sim]
 name        = "pid-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -3794,8 +3760,7 @@ sources     = [
 ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-[modules.epic-serial]
-dir        = "lib/serial"
+[modules."lib/serial"]
 summary    = "Interrupt-driven ring-buffered UART"
 sources    = [
   "src/epic_serial.c",
@@ -3822,7 +3787,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
   "common/src/core/epic_harness_target.c",
 ]
 
-[modules.epic-serial.supported]
+[modules."lib/serial".supported]
 PIC16F87XA = [
   "16F876",
   "16F876A",
@@ -3838,7 +3803,7 @@ PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-serial.excluded]
+[modules."lib/serial".excluded]
 "16F873A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
 "16LF873A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
 "16F873" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
@@ -3850,7 +3815,7 @@ PIC18Fxx5x = [
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
-[modules.epic-serial.example.PIC16F87XA]
+[modules."lib/serial".example.PIC16F87XA]
 name    = "serial"
 sources = [
   "examples/example_serial.c",
@@ -3866,14 +3831,14 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # WDTE=OFF for the same reason as every other sim variant: a diagnostic
 # build that terminates and reports does not need the watchdog running
 # unattended.
-[modules.epic-serial.example.PIC16F87XA.sim]
+[modules."lib/serial".example.PIC16F87XA.sim]
 name        = "serial-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_serial.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-serial.example.PIC16F88X]
+[modules."lib/serial".example.PIC16F88X]
 name    = "serial"
 sources = [
   "examples/example_serial.c",
@@ -3889,7 +3854,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # WDTE=OFF for the same reason as every other sim variant: a diagnostic
 # build that terminates and reports does not need the watchdog running
 # unattended.
-[modules.epic-serial.example.PIC16F88X.sim]
+[modules."lib/serial".example.PIC16F88X.sim]
 name        = "serial-sim"
 harness_src = "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -3897,15 +3862,14 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-serial.example.PIC18Fxx5x]
+[modules."lib/serial".example.PIC18Fxx5x]
 name    = "serial"
 sources = [
   "examples/example_serial.c",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-[modules.epic-settings]
-dir        = "lib/settings"
+[modules."lib/settings"]
 summary    = "EEPROM-backed settings blobs with CRC validation"
 sources    = [
   "src/epic_settings.c",
@@ -3915,12 +3879,12 @@ includes   = [
 ]
 depends_on = []
 
-[modules.epic-settings.supported]
+[modules."lib/settings".supported]
 PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-settings.excluded]
+[modules."lib/settings".excluded]
 "16F873A" = "link: irq dispatch needs every peripheral handler"
 "16LF873A" = "link: irq dispatch needs every peripheral handler"
 "16F873" = "link: irq dispatch needs every peripheral handler"
@@ -3937,20 +3901,20 @@ PIC18Fxx5x = [
 "18F2550" = "link: irq dispatch needs every peripheral handler"
 "18F4455" = "link: irq dispatch needs every peripheral handler"
 
-[modules.epic-settings.example.PIC16F87XA]
+[modules."lib/settings".example.PIC16F87XA]
 name    = "settings-sizecheck"
 sources = [
   "mcu/target_sizecheck.c",
 ]
 
-[modules.epic-settings.example.PIC18Fxx5x]
+[modules."lib/settings".example.PIC18Fxx5x]
 name    = "settings"
 sources = [
   "examples/example_settings.c",
 ]
 hal     = true
 depends_on = [
-  "epic-serial",
+  "lib/serial",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
@@ -3962,7 +3926,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # on the PIC18Fxx5x side with the PIC18 sim harness. WDT=OFF like every
 # other sim variant (a diagnostic build that terminates and reports
 # does not need the watchdog running unattended).
-[modules.epic-settings.example.PIC18Fxx5x.sim]
+[modules."lib/settings".example.PIC18Fxx5x.sim]
 name        = "settings-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -3970,14 +3934,13 @@ sources     = [
 ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# epic-sdcard, SD/MMC-over-SPI block storage: wraps the vendored
+# lib/sdcard, SD/MMC-over-SPI block storage: wraps the vendored
 # M-Stack storage driver (third_party/m-stack-storage, compiled from
 # source) and binds its MMC_SPI_/timer macros to this repo's HAL and
 # epic-tick. PIC18Fxx5x only: a 512-byte block exceeds every PIC16F87XA
 # variant's total RAM. The example reads SD block 0 and prints its
 # first bytes over epic-serial.
-[modules.epic-sdcard]
-dir        = "lib/sdcard"
+[modules."lib/sdcard"]
 summary    = "SD/MMC over SPI block storage for PIC18F2455, 2550, 4455 and 4550"
 sources    = [
   "src/epic_sdcard.c",
@@ -3989,47 +3952,46 @@ includes   = [
   "third_party/m-stack-storage/include",
   "src/target",
 ]
-# epic-tick is a genuine library dependency: epic_sdcard.c's exported
+# lib/tick is a genuine library dependency: epic_sdcard.c's exported
 # MMC_TIMER_START/EXPIRED callbacks call epic_tick_get() and
 # epic_tick_elapsed_since() directly. Only the example's serial usage is
 # example-scoped (see the example's depends_on below).
 depends_on = [
-  "epic-tick",
+  "lib/tick",
 ]
 needs_hal  = true
 
-[modules.epic-sdcard.supported]
+[modules."lib/sdcard".supported]
 PIC18Fxx5x = [
   "18F4455",
   "18F4550",
 ]
 
-# Mirrors epic-serial's exclusion: the example's epic-serial sources
+# Mirrors lib/serial's exclusion: the example's lib/serial sources
 # (32-byte g_rx_buf) do not fit on the smaller parts, and the example
 # links them.
-[modules.epic-sdcard.excluded]
+[modules."lib/sdcard".excluded]
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
-[modules.epic-sdcard.example.PIC18Fxx5x]
+[modules."lib/sdcard".example.PIC18Fxx5x]
 name    = "sdcard"
 sources = [
   "examples/example_sdcard.c",
 ]
 # Only serial is example-scoped here: the example prints over
-# epic-serial, while epic-tick is already a module-level dependency.
+# lib/serial, while lib/tick is already a module-level dependency.
 depends_on = [
-  "epic-serial",
+  "lib/serial",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# epic-usb, USB CDC-ACM virtual serial port: wraps the vendored M-Stack
+# lib/usb, USB CDC-ACM virtual serial port: wraps the vendored M-Stack
 # USB device stack (third_party/m-stack), polling (epic_usb_service),
 # not interrupt-driven. PIC18Fxx5x only: the family's SIE has no
 # equivalent on PIC16F87XA parts. The example enumerates and echoes the
 # host's CDC input.
-[modules.epic-usb]
-dir        = "lib/usb"
+[modules."lib/usb"]
 summary    = "USB CDC-ACM virtual serial port for PIC18F2455, 2550, 4455 and 4550"
 sources    = [
   "src/epic_usb.c",
@@ -4046,7 +4008,7 @@ includes   = [
 depends_on = []
 needs_hal  = false
 
-[modules.epic-usb.supported]
+[modules."lib/usb".supported]
 PIC18Fxx5x = [
   "18F2455",
   "18F2550",
@@ -4054,15 +4016,14 @@ PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-usb.example.PIC18Fxx5x]
+[modules."lib/usb".example.PIC18Fxx5x]
 name    = "usb-cdc"
 sources = [
   "examples/example_usb.c",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-[modules.epic-swuart]
-dir        = "lib/swuart"
+[modules."lib/swuart"]
 summary    = "Bit-banged full-duplex UART"
 sources    = [
   "src/epic_swuart.c",
@@ -4094,7 +4055,7 @@ epiccc_hal_sources_by_family.PIC16F88X = [
   "common/src/core/epic_harness_target.c",
 ]
 
-[modules.epic-swuart.supported]
+[modules."lib/swuart".supported]
 PIC16F87XA = [
   "16F876",
   "16F876A",
@@ -4120,7 +4081,7 @@ PIC16F193X = [
   "16F1939",
 ]
 
-[modules.epic-swuart.excluded]
+[modules."lib/swuart".excluded]
 "16F873A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 "16LF873A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 "16F873" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
@@ -4130,7 +4091,7 @@ PIC16F193X = [
 "16F874A" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 "16F874" = "RAM: full-HAL example's auto/param pool does not fit on this smaller part"
 
-[modules.epic-swuart.example.PIC16F87XA]
+[modules."lib/swuart".example.PIC16F87XA]
 name    = "swuart"
 sources = [
   "examples/example_swuart.c",
@@ -4147,14 +4108,14 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # the same reason as every other family's own sim variant: a
 # diagnostic build that terminates and reports does not need the
 # watchdog running unattended.
-[modules.epic-swuart.example.PIC16F87XA.sim]
+[modules."lib/swuart".example.PIC16F87XA.sim]
 name        = "swuart-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_mdb_swuart.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-swuart.example.PIC16F88X]
+[modules."lib/swuart".example.PIC16F88X]
 name    = "swuart"
 sources = [
   "examples/example_swuart.c",
@@ -4171,7 +4132,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # the same reason as every other family's own sim variant: a
 # diagnostic build that terminates and reports does not need the
 # watchdog running unattended.
-[modules.epic-swuart.example.PIC16F88X.sim]
+[modules."lib/swuart".example.PIC16F88X.sim]
 name        = "swuart-sim"
 harness_src = "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -4179,22 +4140,21 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-swuart.example.PIC18Fxx5x]
+[modules."lib/swuart".example.PIC18Fxx5x]
 name    = "swuart"
 sources = [
   "examples/example_swuart.c",
 ]
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-[modules.epic-swuart.example.PIC16F193X]
+[modules."lib/swuart".example.PIC16F193X]
 name    = "swuart"
 sources = [
   "examples/example_swuart.c",
 ]
 config  = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "OFF", WRT = "OFF" }
 
-[modules.epic-taskmgr]
-dir        = "lib/taskmgr"
+[modules."lib/taskmgr"]
 summary    = "Cooperative non-preemptive task scheduler for 8-bit PICs"
 sources    = [
   "src/epic_taskmgr.c",
@@ -4204,7 +4164,7 @@ includes   = [
 ]
 depends_on = []
 
-[modules.epic-taskmgr.supported]
+[modules."lib/taskmgr".supported]
 PIC16F87XA = [
   "16F876",
   "16F876A",
@@ -4223,7 +4183,7 @@ PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-taskmgr.excluded]
+[modules."lib/taskmgr".excluded]
 "16F873A" = "RAM: 54-byte task table does not fit on this smaller part"
 "16LF873A" = "RAM: 54-byte task table does not fit on this smaller part"
 "16F873" = "RAM: 54-byte task table does not fit on this smaller part"
@@ -4235,20 +4195,20 @@ PIC18Fxx5x = [
 "18F2455" = "link: irq dispatch needs every peripheral handler"
 "18F2550" = "link: irq dispatch needs every peripheral handler"
 
-[modules.epic-taskmgr.example.PIC16F87XA]
+[modules."lib/taskmgr".example.PIC16F87XA]
 name    = "taskmgr"
 sources = [
   "examples/example_taskmgr.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-taskmgr.example.PIC16F88X]
+[modules."lib/taskmgr".example.PIC16F88X]
 name    = "taskmgr"
 sources = [
   "examples/example_taskmgr.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-taskmgr.example.PIC18Fxx5x]
+[modules."lib/taskmgr".example.PIC18Fxx5x]
 name    = "taskmgr"
 sources = [
   "examples/example_taskmgr.c",
@@ -4260,15 +4220,15 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # (an unbounded LED demo with no core/epic_harness.h dependency). This
 # module's first-ever real mdb gate coverage. Wired on PIC18Fxx5x
 # (18F4550), not PIC16F87XA: SIM's PIC16 leg has a hard layout budget
-# (interrupt-handler body must stay in flash page 0, see the epic-pid
+# (interrupt-handler body must stay in flash page 0, see the lib/pid
 # 1356 finding) and the PIC16 Timer0-tick ISR path proved unusable
 # under SIM for this module (ISR-storm at short ticks, and a GIE bit
 # set on INTCON that never persisted at longer ticks); PIC18's absolute
-# calls sidestep both, and the epic-tick PIC18 sim gate already proves
+# calls sidestep both, and the lib/tick PIC18 sim gate already proves
 # PIC18 Timer interrupts work under SIM. WDT=OFF for the same reason as
 # every other family's own sim variant: a diagnostic build that
 # terminates and reports does not need the watchdog running unattended.
-[modules.epic-taskmgr.example.PIC18Fxx5x.sim]
+[modules."lib/taskmgr".example.PIC18Fxx5x.sim]
 name        = "taskmgr-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -4276,8 +4236,7 @@ sources     = [
 ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-[modules.epic-menu-demo]
-dir        = "demos/menu"
+[modules."demos/menu"]
 summary    = "PIC18F4550 menu demo: LCD menu with buttons, ADC, EEPROM and PWM"
 sources    = [
   "src/menu_demo_core.c",
@@ -4287,25 +4246,25 @@ includes   = [
   "include",
 ]
 depends_on = [
-  "epic-taskmgr",
-  "epic-lcd",
-  "epic-serial",
+  "lib/taskmgr",
+  "lib/lcd",
+  "lib/serial",
 ]
 needs_hal  = true
 
 # Flagship dual-toolchain demo (epic-hal#250): a 3-screen LCD menu
-# control panel exercising ADC + EEPROM + CCP/PWM + epic-taskmgr +
-# epic-lcd + epic-serial together, PIC18F4550 only. epic-taskmgr's tick
+# control panel exercising ADC + EEPROM + CCP/PWM + lib/taskmgr +
+# lib/lcd + lib/serial together, PIC18F4550 only. lib/taskmgr's tick
 # drives every task; see demos/menu/include/menu_demo_core.h for
 # why the button source (real RB-change IRQ vs a scripted sim
 # stimulus) is the only thing that differs between the two examples
 # below.
-[modules.epic-menu-demo.supported]
+[modules."demos/menu".supported]
 PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-menu-demo.example.PIC18Fxx5x]
+[modules."demos/menu".example.PIC18Fxx5x]
 name    = "menu-demo"
 sources = [
   "examples/example_menu_demo.c",
@@ -4316,7 +4275,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # place of real hardware (tests/sim_menu_demo.c). WDT=OFF like every
 # other sim variant (a diagnostic build that terminates and reports
 # does not need the watchdog running unattended).
-[modules.epic-menu-demo.example.PIC18Fxx5x.sim]
+[modules."demos/menu".example.PIC18Fxx5x.sim]
 name        = "menu-demo-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -4330,7 +4289,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # epic-hal#237 lesson). The mdb harness is hardcoded, matching every
 # epic-combo-* module: this repo only ever gates epic-cc via
 # `--variant sim`, never a real-target artifact, so no swap is needed.
-[modules.epic-menu-demo.epiccc_hal_sources_by_family]
+[modules."demos/menu".epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c",
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer0.c",
@@ -4347,8 +4306,7 @@ PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c",
 ]
 
-[modules.epic-control-demo]
-dir        = "demos/control"
+[modules."demos/control"]
 summary    = "PIC18F4550 control demo: UART console PID loop with ADC sense, PWM drive and EEPROM settings"
 sources    = [
   "src/control_demo_core.c",
@@ -4357,25 +4315,25 @@ includes   = [
   "include",
 ]
 depends_on = [
-  "epic-taskmgr",
-  "epic-pid",
-  "epic-adcfilter",
-  "epic-serial",
+  "lib/taskmgr",
+  "lib/pid",
+  "lib/adcfilter",
+  "lib/serial",
 ]
 needs_hal  = true
 
 # Console-driven PID demo (epic-hal#277): a UART console tuning a Q8.8
 # PID loop over ADC AN0 and CCP1 PWM, with an EEPROM-backed settings
-# struct, PIC18F4550 only. epic-taskmgr's tick drives every task; see
+# struct, PIC18F4550 only. lib/taskmgr's tick drives every task; see
 # demos/control/include/control_demo_core.h for why the stimulus
 # source (live UART RX plus live ADC vs a scripted sim injection) is
 # the only thing that differs between the two examples below.
-[modules.epic-control-demo.supported]
+[modules."demos/control".supported]
 PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-control-demo.example.PIC18Fxx5x]
+[modules."demos/control".example.PIC18Fxx5x]
 name    = "control-demo"
 sources = [
   "examples/example_control_demo.c",
@@ -4387,7 +4345,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # WDT=OFF like every other sim variant (a diagnostic build that
 # terminates and reports does not need the watchdog running
 # unattended).
-[modules.epic-control-demo.example.PIC18Fxx5x.sim]
+[modules."demos/control".example.PIC18Fxx5x.sim]
 name        = "control-demo-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -4395,12 +4353,12 @@ sources     = [
 ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# epic-cc slice: same peripheral mix as epic-menu-demo (ADC, CCP/PWM,
+# epic-cc slice: same peripheral mix as demos/menu (ADC, CCP/PWM,
 # EEPROM, TIMER2), so the same verbatim override rather than growing
 # the shared family slice. The mdb harness is hardcoded, matching every
 # epic-combo-* module: this repo only ever gates epic-cc via
 # `--variant sim`, never a real-target artifact, so no swap is needed.
-[modules.epic-control-demo.epiccc_hal_sources_by_family]
+[modules."demos/control".epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c",
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer0.c",
@@ -4417,8 +4375,7 @@ PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c",
 ]
 
-[modules.epic-bridge-demo]
-dir        = "demos/bridge"
+[modules."demos/bridge"]
 summary    = "PIC18F4550 bridge demo: Modbus RTU slave bridged to an I2C expander plus ADC"
 sources    = [
   "src/bridge_demo_core.c",
@@ -4427,29 +4384,29 @@ includes   = [
   "include",
 ]
 depends_on = [
-  "epic-taskmgr",
-  "epic-modbus",
-  "epic-mcp23x17",
-  "epic-adcfilter",
-  "epic-serial",
-  "epic-bus",
+  "lib/taskmgr",
+  "lib/modbus",
+  "lib/mcp23x17",
+  "lib/adcfilter",
+  "lib/serial",
+  "lib/bus",
 ]
 needs_hal  = true
 
 # Modbus RTU slave plus I2C expander bridge (epic-hal#278): a
 # UART slave whose holding regs drive MCP23017 GPIOs, with ADC
 # AN0/AN1 and a tick counter published back into the map,
-# PIC18F4550 only. epic-taskmgr drives every task; see
+# PIC18F4550 only. lib/taskmgr drives every task; see
 # demos/bridge/include/bridge_demo_core.h for why the
 # stimulus source (live UART/I2C/ADC vs a scripted sim seam)
 # is the only thing that differs between the two examples
 # below.
-[modules.epic-bridge-demo.supported]
+[modules."demos/bridge".supported]
 PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-bridge-demo.example.PIC18Fxx5x]
+[modules."demos/bridge".example.PIC18Fxx5x]
 name    = "bridge-demo"
 sources = [
   "examples/example_bridge_demo.c",
@@ -4461,7 +4418,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # (tests/sim_bridge_demo.c). WDT=OFF like every other sim
 # variant (a diagnostic build that terminates and reports
 # does not need the watchdog running unattended).
-[modules.epic-bridge-demo.example.PIC18Fxx5x.sim]
+[modules."demos/bridge".example.PIC18Fxx5x.sim]
 name        = "bridge-demo-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -4475,7 +4432,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # Timer1 override is needed. The mdb harness is hardcoded,
 # matching every epic-combo-* module: this repo only ever gates
 # epic-cc via `--variant sim`, never a real-target artifact.
-[modules.epic-bridge-demo.epiccc_hal_sources_by_family]
+[modules."demos/bridge".epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c",
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer0.c",
@@ -4492,8 +4449,7 @@ PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c",
 ]
 
-[modules.epic-tick]
-dir        = "lib/tick"
+[modules."lib/tick"]
 summary    = "1 ms timebase for 8-bit PICs"
 sources    = [
   "src/epic_tick.c",
@@ -4503,7 +4459,7 @@ includes   = [
 ]
 depends_on = []
 
-[modules.epic-tick.supported]
+[modules."lib/tick".supported]
 PIC16F87XA = [
   "16F873A",
   "16LF873A",
@@ -4537,7 +4493,7 @@ PIC16F193X = [
   "16F1939",
 ]
 
-[modules.epic-tick.excluded]
+[modules."lib/tick".excluded]
 "16F627" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
 "16F627A" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
 "16LF627A" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
@@ -4547,7 +4503,7 @@ PIC16F193X = [
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
-[modules.epic-tick.example.PIC16F87XA]
+[modules."lib/tick".example.PIC16F87XA]
 name    = "tick"
 sources = [
   "examples/example_tick.c",
@@ -4564,14 +4520,14 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # lib/tick/mcu/pic16f87xa-tick-mplabx/Makefile's HARNESS=sim branch
 # (real-target firmware needs the watchdog running unattended, a
 # diagnostic build that terminates and reports over USART does not).
-[modules.epic-tick.example.PIC16F87XA.sim]
+[modules."lib/tick".example.PIC16F87XA.sim]
 name        = "tick-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_tick.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
-[modules.epic-tick.example.PIC16F88X]
+[modules."lib/tick".example.PIC16F88X]
 name    = "tick"
 sources = [
   "examples/example_tick.c",
@@ -4588,7 +4544,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # lib/tick/mcu/pic16f87xa-tick-mplabx/Makefile's HARNESS=sim branch
 # (real-target firmware needs the watchdog running unattended, a
 # diagnostic build that terminates and reports over USART does not).
-[modules.epic-tick.example.PIC16F88X.sim]
+[modules."lib/tick".example.PIC16F88X.sim]
 name        = "tick-sim"
 harness_src = "hal/pic14/16f88x/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -4601,8 +4557,8 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # carries no USART TU (it would overflow GPR there). The sim
 # firmware alone gets the tick timebase plus the harness USART
 # on the serial+tick tier, mirroring
-# epic-combo-encoder-tick's proven set.
-[modules.epic-tick.epiccc_sim_hal_sources_by_family]
+# tests/epic-combo-encoder-tick's proven set.
+[modules."lib/tick".epiccc_sim_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/core/src/peripherals/pic14_timer2.c",
   "hal/pic14/core/src/peripherals/pic14_usart.c",
@@ -4631,7 +4587,7 @@ PIC16F628A = [
   "hal/pic14/16f628a/src/mdb/pic16_harness_mdb.c",
 ]
 
-[modules.epic-tick.example.PIC16F628A]
+[modules."lib/tick".example.PIC16F628A]
 name    = "tick"
 sources = [
   "examples/example_tick.c",
@@ -4644,7 +4600,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", 
 # 628A blink example; WDTE stays off like every other sim variant.
 # The sim build needs 2639 words, so it fits only the 4K 16F648A (the
 # 2K parts overflow with XC8 error 1347); the sim gate runs there.
-[modules.epic-tick.example.PIC16F628A.sim]
+[modules."lib/tick".example.PIC16F628A.sim]
 name        = "tick-sim"
 harness_src = "hal/pic14/16f628a/src/mdb/pic16_harness_mdb.c"
 sources     = [
@@ -4652,7 +4608,7 @@ sources     = [
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
 
-[modules.epic-tick.example.PIC16F193X]
+[modules."lib/tick".example.PIC16F193X]
 name    = "tick"
 sources = [
   "examples/example_tick.c",
@@ -4670,7 +4626,7 @@ config  = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF
 # target entry (the 32 MHz pin included); the gpio harness reports
 # PASS/FAIL on RA0. The gate runs on the 16F1939, the family's
 # largest flash part.
-[modules.epic-tick.example.PIC16F193X.sim]
+[modules."lib/tick".example.PIC16F193X.sim]
 name        = "tick-sim"
 harness_src = "hal/pic14e/16f193x/src/mdb/pic16f193x_harness_mdb.c"
 sources     = [
@@ -4678,7 +4634,7 @@ sources     = [
 ]
 config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "ON", WRT = "OFF" }
 
-[modules.epic-tick.example.PIC18Fxx5x]
+[modules."lib/tick".example.PIC18Fxx5x]
 name    = "tick"
 sources = [
   "examples/example_tick.c",
@@ -4689,7 +4645,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # own HARNESS=sim branch: bounded harness source (tests/sim_tick.c,
 # same reason as the PIC16F87XA sim variant above), harness source swap,
 # and WDT (PIC18's watchdog config bit) off.
-[modules.epic-tick.example.PIC18Fxx5x.sim]
+[modules."lib/tick".example.PIC18Fxx5x.sim]
 name        = "tick-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 sources     = [
@@ -4698,31 +4654,30 @@ sources     = [
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 
-# C7 of the combination matrix: epic-tick +
-# epic-settings on PIC18 (18F4550, the only part epic-settings supports).
+# C7 of the combination matrix: lib/tick +
+# lib/settings on PIC18 (18F4550, the only part lib/settings supports).
 # The gate (tests/combo_tick_settings.c) saves a blob through the real
 # epic_settings.c while the 1 ms tick ISR is live, corrupts one stored
 # byte, verifies the load detects it and defaults are persisted, and
 # checks the tick kept advancing with GIE alive. The sim runner needs
 # EEPROM_WRITES=32 (the scenario performs 13 writes; the spare cycles
 # absorb the ISR/EEIF race documented in the gate's header).
-[modules.epic-combo-tick-settings]
-dir        = "tests/epic-combo-tick-settings"
+[modules."tests/epic-combo-tick-settings"]
 summary    = "1 ms timebase plus EEPROM settings integration firmware"
 sources    = []
 includes   = []
 depends_on = [
-  "epic-tick",
-  "epic-settings",
+  "lib/tick",
+  "lib/settings",
 ]
 needs_hal  = true
 
-[modules.epic-combo-tick-settings.supported]
+[modules."tests/epic-combo-tick-settings".supported]
 PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-combo-tick-settings.example.PIC18Fxx5x]
+[modules."tests/epic-combo-tick-settings".example.PIC18Fxx5x]
 name    = "combo-tick-settings"
 sources = [
   "tests/combo_tick_settings.c",
@@ -4730,13 +4685,13 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, WDT=OFF like every other sim variant.
-[modules.epic-combo-tick-settings.example.PIC18Fxx5x.sim]
+[modules."tests/epic-combo-tick-settings".example.PIC18Fxx5x.sim]
 name        = "combo-tick-settings-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
-# C12 of the combination matrix: epic-modbus
-# + epic-serial + epic-tick on PIC18 (18F4550, modbus is PIC18-only).
+# C12 of the combination matrix: lib/modbus
+# + lib/serial + lib/tick on PIC18 (18F4550, modbus is PIC18-only).
 # The gate (tests/combo_modbus_full.c) pushes an FC03 read-holding-
 # registers request through the module's real TX path (epic_serial_write
 # into the ring, drained by the real TX ISR into TXREG) while the 1 ms
@@ -4748,7 +4703,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 
 # epic-cc slice (HAL-3g): the serial + tick + EEPROM tier and the
 # mdb harness, the sim-gate's report path under epic-cc.
-[modules.epic-combo-tick-settings.epiccc_hal_sources_by_family]
+[modules."tests/epic-combo-tick-settings".epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c",
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer2.c",
@@ -4762,24 +4717,23 @@ PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c",
 ]
 
-[modules.epic-combo-modbus-full]
-dir        = "tests/epic-combo-modbus-full"
+[modules."tests/epic-combo-modbus-full"]
 summary    = "Modbus RTU slave plus serial stack integration firmware"
 sources    = []
 includes   = []
 depends_on = [
-  "epic-modbus",
-  "epic-serial",
-  "epic-tick",
+  "lib/modbus",
+  "lib/serial",
+  "lib/tick",
 ]
 needs_hal  = true
 
-[modules.epic-combo-modbus-full.supported]
+[modules."tests/epic-combo-modbus-full".supported]
 PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-combo-modbus-full.example.PIC18Fxx5x]
+[modules."tests/epic-combo-modbus-full".example.PIC18Fxx5x]
 name    = "combo-modbus-full"
 sources = [
   "tests/combo_modbus_full.c",
@@ -4787,7 +4741,7 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, WDT=OFF like every other sim variant.
-[modules.epic-combo-modbus-full.example.PIC18Fxx5x.sim]
+[modules."tests/epic-combo-modbus-full".example.PIC18Fxx5x.sim]
 name        = "combo-modbus-full-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
@@ -4795,7 +4749,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 
 # epic-cc slice (HAL-3g): the serial + tick + EEPROM tier and the
 # mdb harness, the sim-gate's report path under epic-cc.
-[modules.epic-combo-modbus-full.epiccc_hal_sources_by_family]
+[modules."tests/epic-combo-modbus-full".epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c",
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer2.c",
@@ -4809,19 +4763,18 @@ PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c",
 ]
 
-[modules.epic-combo-taskmgr-serial]
-dir        = "tests/epic-combo-taskmgr-serial"
+[modules."tests/epic-combo-taskmgr-serial"]
 summary    = "Cooperative scheduler plus interrupt-driven serial integration firmware"
 sources    = []
 includes   = []
 depends_on = [
-  "epic-taskmgr",
-  "epic-serial",
+  "lib/taskmgr",
+  "lib/serial",
 ]
 needs_hal  = true
 
 # C8 of the combination matrix: the
-# taskmgr scheduler and the epic-serial TX ring interleaved in one
+# taskmgr scheduler and the lib/serial TX ring interleaved in one
 # firmware. Three scheduler tasks with distinct periods push distinct
 # payloads through epic_serial_write every time they run; the ring is
 # drained between scheduler rounds (the serial gate's GIE-managed
@@ -4829,14 +4782,14 @@ needs_hal  = true
 # checks verify the run counts match the period ratios, every pushed
 # byte was popped exactly once, the ring drained fully, and the tick
 # counter advanced. PIC18Fxx5x (18F4550) only: the PIC16 Timer0-tick
-# ISR path is unreliable under SIM (same reason as epic-taskmgr's own
+# ISR path is unreliable under SIM (same reason as lib/taskmgr's own
 # sim gate).
-[modules.epic-combo-taskmgr-serial.supported]
+[modules."tests/epic-combo-taskmgr-serial".supported]
 PIC18Fxx5x = [
   "18F4550",
 ]
 
-[modules.epic-combo-taskmgr-serial.example.PIC18Fxx5x]
+[modules."tests/epic-combo-taskmgr-serial".example.PIC18Fxx5x]
 name    = "combo-taskmgr-serial"
 sources = [
   "tests/combo_taskmgr_serial.c",
@@ -4844,7 +4797,7 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # HARNESS=sim, WDT=OFF like every other sim variant.
-[modules.epic-combo-taskmgr-serial.example.PIC18Fxx5x.sim]
+[modules."tests/epic-combo-taskmgr-serial".example.PIC18Fxx5x.sim]
 name        = "combo-taskmgr-serial-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
@@ -4862,7 +4815,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # (epic-hal#237); timer0.c joined this override in #238, before the
 # family default carried it (#236). The mdb harness is the sim-gate's
 # report path under epic-cc.
-[modules.epic-combo-taskmgr-serial.epiccc_hal_sources_by_family]
+[modules."tests/epic-combo-taskmgr-serial".epiccc_hal_sources_by_family]
 PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c",
   "hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_timer0.c",
@@ -4877,8 +4830,7 @@ PIC18Fxx5x = [
   "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c",
 ]
 
-[modules.epic-common]
-dir        = "common"
+[modules."common"]
 summary    = "Architecture-blind status codes, harness and shared build fragments"
 sources    = [
   "src/core/epic_harness_target.c",
@@ -4889,7 +4841,7 @@ includes   = [
 depends_on = []
 needs_hal  = false
 
-[modules.epic-common.supported]
+[modules."common".supported]
 PIC16F87XA = [
   "16F870",
   "16F871",
@@ -4912,14 +4864,14 @@ PIC16F88X = [
   "16F887",
 ]
 
-[modules.epic-common.example.PIC16F87XA]
+[modules."common".example.PIC16F87XA]
 name    = "harness"
 sources = [
   "tests/example_harness.c",
 ]
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-[modules.epic-common.example.PIC16F88X]
+[modules."common".example.PIC16F88X]
 name    = "harness"
 sources = [
   "tests/example_harness.c",
@@ -4953,28 +4905,27 @@ hal_sources = [
 ]
 harness_src = "common/src/core/epic_harness_target.c"
 
-[modules.epic-pic16f1508-firmware]
-dir        = "hal/pic14e/16f1508"
+[modules."hal/pic14e/16f1508"]
 summary    = "Register-level HAL and smoke firmware for the PIC16F1508 family"
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.epic-pic16f1508-firmware.supported]
+[modules."hal/pic14e/16f1508".supported]
 PIC16F1508 = [
   "16F1508",
   "16F1509",
 ]
 
-[modules.epic-pic16f1508-firmware.example.PIC16F1508]
+[modules."hal/pic14e/16f1508".example.PIC16F1508]
 name    = "blink"
 sources = [
   "tests/example_blink.c",
 ]
 config  = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", WRT = "OFF" }
 
-[modules.epic-pic16f1508-firmware.example.PIC16F1508.sim]
+[modules."hal/pic14e/16f1508".example.PIC16F1508.sim]
 name        = "gpio-sim"
 harness_src = "hal/pic14e/16f1508/src/mdb/pic16f1508_harness_mdb.c"
 sources     = [

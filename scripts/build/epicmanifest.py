@@ -95,9 +95,9 @@ class SimVariant:
     harness_src replaces the family's harness_src at its recorded
     position in hal_sources (not appended: XC8 lays out psects in link
     order). sources, when set, replaces the target example's own
-    sources entirely (pic16f193x-hal's sim variant links a different
+    sources entirely (hal/pic14e/16f193x's sim variant links a different
     diagnostic program than its target example); when unset the target
-    example's sources are reused unchanged (epic-tick's sim variant
+    example's sources are reused unchanged (lib/tick's sim variant
     links the same example_tick.c, only the harness and config differ).
     config is a full override, not a merge: PIC16's WDTE / PIC18's WDT
     is off in every sim variant seen so far, and restating the whole
@@ -107,8 +107,8 @@ class SimVariant:
     depends_on, when set, replaces the example's depends_on for the sim
     build (the sim variant's sources replace the example's, so its
     deps replace the example's too; unset inherits the example's).
-    epic-encoder's sim test logs over the harness USART and needs no
-    epic-serial, but the target example does, so the sim variant
+    lib/encoder's sim test logs over the harness USART and needs no
+    lib/serial, but the target example does, so the sim variant
     declares an empty list to drop it.
     """
     name: str
@@ -148,8 +148,8 @@ class Example:
     hal: bool
     # Per-example module dependencies, distinct from the module-level
     # depends_on: the example program needs these modules in the build
-    # even when the library itself does not (epic-math's example logs
-    # over epic-serial, but epic-math the library is pure logic). Kept
+    # even when the library itself does not (lib/math's example logs
+    # over lib/serial, but lib/math the library is pure logic). Kept
     # on the example so the dep is scoped per family and per MCU: a
     # small-part variant whose probe does not use serial carries no
     # serial dep, so excluded-MCU builds do not compile excluded code.
@@ -163,7 +163,7 @@ class Example:
     epiccc: EpicccVariant | None = None
     # Per-MCU overrides: a variant replaces the family example for one
     # MCU (flash budgets differ within a family, e.g. the 4K-word
-    # 16F873A/16F874A cannot hold epic-math's golden-vector replay).
+    # 16F873A/16F874A cannot hold lib/math's golden-vector replay).
     # example_for(module, family, mcu) resolves the variant.
     variants: dict[str, Example] | None = None
 
@@ -217,11 +217,9 @@ class Manifest:
         return mod
 
     def resolve_module(self, value: str):
-        """The module named by a manifest id or a directory.
-
-        `make test` scopes by directory while the target builds scope
-        by id; both spellings name the same module, so every entry
-        point accepts either. A trailing slash is ignored.
+        """The module named by its path id (epic-hal#308: id and directory
+        are the same string, so every entry point accepts the one
+        spelling). A trailing slash is ignored.
         """
         want = value.rstrip("/")
         if want in self.modules:
@@ -259,7 +257,7 @@ class Manifest:
 
         The example deps are scoped per family and per MCU (the
         resolved example may be a per-MCU variant with its own
-        depends_on, e.g. epic-math's small-part probes carry no serial
+        depends_on, e.g. lib/math's small-part probes carry no serial
         dep), and expanded transitively just like the module's own.
         A sim variant's own depends_on replaces the example's (its
         sources replace the example's, so its deps do too).
@@ -305,7 +303,7 @@ class Manifest:
         """Does this (module, MCU) build need the family HAL?
 
         The example decides, because the HAL requirement belongs to the
-        program: epic-math's library touches no HAL, but its smoke test
+        program: lib/math's library touches no HAL, but its smoke test
         includes the harness. Falls back to the module's own needs_hal
         when there is no example for this family.
         """
@@ -319,7 +317,7 @@ class Manifest:
                         mcu: str | None = None) -> SimVariant | None:
         """This module's HARNESS=sim variant for a family, or None.
 
-        Only three (module, family) pairs have one today: epic-tick on
+        Only three (module, family) pairs have one today: lib/tick on
         PIC16F87XA and PIC18Fxx5x, and the PIC16F193X bare-HAL firmware
         module, mirroring the three sim-tests.yml legs that exist.
 
@@ -415,7 +413,7 @@ class Manifest:
                     # The sim harness swap mirrors the XC8 loop: an
                     # epic-cc mdb gate firmware needs the mdb harness
                     # too, swapped at the slice's own harness position
-                    # (epic-taskmgr's gate, epic-hal#236).
+                    # (lib/taskmgr's gate, epic-hal#236).
                     for hal_src in fam.epiccc_sources:
                         if sim is not None and hal_src == fam.harness_src:
                             out.append(sim.harness_src)
@@ -563,16 +561,27 @@ def _parse_example(module_name, family_name, table, default_hal):
 
 
 def _parse_module(name, table):
-    _check_keys(table, {"dir", "summary", "sources", "sources_by_family",
+    # Module ids are paths (epic-hal#308): the key names the module's
+    # directory, so an id and its location cannot drift. Reject any
+    # stray `dir` key rather than reading it.
+    _check_keys(table, {"summary", "sources", "sources_by_family",
                         "includes", "depends_on", "needs_hal", "supported",
                         "excluded", "example",
                         "epiccc_hal_sources_by_family",
                         "epiccc_sim_hal_sources_by_family"},
                 f"modules.{name}")
+    segments = name.split("/")
+    rooted = name == "common" or name.startswith(
+        ("common/", "hal/", "lib/", "demos/", "tests/"))
+    if not name or ".." in segments or "" in segments or not rooted:
+        raise ManifestError(
+            f"modules.{name}: id must be the module's repo-root-relative "
+            f"directory (epic-hal#308)"
+        )
     needs_hal = bool(table.get("needs_hal", True))
     return Module(
         name=name,
-        dir=_require(table, "dir", f"modules.{name}"),
+        dir=name,
         summary=_require(table, "summary", f"modules.{name}"),
         sources=list(_require(table, "sources", f"modules.{name}")),
         sources_by_family={

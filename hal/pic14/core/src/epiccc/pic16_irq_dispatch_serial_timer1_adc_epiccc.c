@@ -1,4 +1,4 @@
-/* epic-cc dispatch, serial + Timer1 + ADC tier (epic-combo-adc-uart):
+/* epic-cc dispatch, serial + Timer1 + ADC tier (tests/epic-combo-adc-uart):
  * USART RX/TX, the TIMER1 overflow dispatch and the conversion-done
  * flag, the rest cleared. */
 

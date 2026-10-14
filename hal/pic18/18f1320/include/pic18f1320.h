@@ -3,7 +3,7 @@
  * (DS39605F throughout). 18-pin part, smallest of epic-hal's three new
  * PIC18 families: 4096 words flash, 240 B RAM, no USB/MSSP/CCP2/
  * comparator (absent from the DFP). Same Access Bank/two-vector shape
- * as pic18fxx5x-hal. @copyright © 2007 Microchip (DS39605F).
+ * as hal/pic18/18fxx5x. @copyright © 2007 Microchip (DS39605F).
  */
 
 #ifndef PIC18F1320_H

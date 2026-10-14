@@ -1,5 +1,5 @@
 /*
- * USB descriptors for epic-usb, adapted from M-Stack's cdc_acm demo
+ * USB descriptors for lib/usb, adapted from M-Stack's cdc_acm demo
  * (the shape the CDC-ACM spec requires). VID/PID 0xA0A0/0x0004 is
  * M-Stack's placeholder pair: bench bring-up only, swap for a real
  * pid.codes allocation before shipping a device carrying it.

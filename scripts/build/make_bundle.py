@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Assemble a per-family Epic HAL bundle (a build output, attached to a
-GitHub Release, never committed): copy one family's HAL, epic-common, and
+GitHub Release, never committed): copy one family's HAL, common, and
 every module that builds on it into a self-contained tree with the
 generated consumer files. Called by CI's emit step and
 scripts/ci/ci-local-emit.py.
@@ -38,7 +38,7 @@ DOC_NAMES = {"README.md", "MANUAL.md"}
 # headers their sources include), so a bundle that ships their .c files
 # without mmc.h/usb.h would not be self-sufficient. The skip set below
 # covers the non-consumer dirs; third_party and tests are deliberately
-# absent, because the manifest include dirs are authoritative (epic-math
+# absent, because the manifest include dirs are authoritative (lib/math
 # declares its tests/ dir as an include: the library's quoted includes
 # resolve there). Only host/sim/mdb backends never ship.
 HEADER_SKIP = {"host", "sim", "mdb", "build", "build18", "__pycache__"}
@@ -116,7 +116,7 @@ def _copy_headers(manifest, family_name: str, root: pathlib.Path) -> None:
     headers that live next to the shipped sources (quoted sibling
     includes, e.g. lib/math/src/pic16/epic_math_scratch.h), minus the
     host/sim/mdb backends. The manifest include dirs are authoritative:
-    epic-math declares its tests/ dir as an include, so those headers
+    lib/math declares its tests/ dir as an include, so those headers
     ship; test-only headers never do, because no manifest include dir
     names them."""
     fam = manifest.families[family_name]

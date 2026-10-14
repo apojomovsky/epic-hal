@@ -16,7 +16,7 @@
  *       16-bit timer wraps to 0x0000 on overflow, so without the
  *       callback re-arm the steady-state period would be a full
  *       65536 cycles. The callback re-arm is the classic periodic
- *       TMR1 pattern, same as epic-swuart).
+ *       TMR1 pattern, same as lib/swuart).
  *     - TMR2, prescaler 1:16, PR2 = 62:       1008 cycles = 0.202 ms
  *       (the 200 us "tick"; TMR2 resets to 0 on the PR2 match in
  *       hardware, so the period is exact).
@@ -36,7 +36,7 @@
  *   ISR therefore exercises the dispatch's TXIE gate (TXIF is pending
  *   whenever TXREG is empty, so without the gate each ISR would
  *   dispatch the TX handler through XC8's PC-relative
- *   function-pointer table, the epic-tick wedge class). The loop also
+ *   function-pointer table, the lib/tick wedge class). The loop also
  *   transmits a fixed byte every 256 iterations under the live ISR
  *   load; the marker line's byte-exact arrival in the mdb UART
  *   capture is the TX integrity check.

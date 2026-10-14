@@ -49,7 +49,7 @@ static void gpio8_send(void *ctx, uint8_t rs, uint8_t byte)
 /**
  * @brief Delay a number of microseconds using epic-tick.
  *
- * Sub-ms delays are a best-effort busy wait: epic-tick's resolution is
+ * Sub-ms delays are a best-effort busy wait: lib/tick's resolution is
  * 1 ms and the E-pulse setup/hold time is satisfied by the GPIO write
  * call overhead.
  *

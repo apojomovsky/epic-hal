@@ -1,5 +1,5 @@
 /*
- * epic-math on-target demo: a free-running 16-bit counter feeds the
+ * lib/math on-target demo: a free-running 16-bit counter feeds the
  * fixed-point core. Each step multiplies the counter by a constant
  * (16x16 -> 32), divides it with remainder (16/16, divide-by-zero
  * flagged via the ok out-param), and takes its integer square root;

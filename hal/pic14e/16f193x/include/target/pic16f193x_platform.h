@@ -58,7 +58,7 @@ extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
  * (0x11/0x12/0x13 within bank 1) and the asm picks the right symbol
  * via the C switch. Bits go in via the `__at()`-pinned scratch byte so
  * the load of W can happen before the bank switch without disturbing
- * any C-level local (matches pic16f87xa-hal's proven pattern). */
+ * any C-level local (matches hal/pic14/16f87xa's proven pattern). */
 #define EPIC_PIE_ENABLE_BIT(pir_index, mask)                              \
     do {                                                                  \
         epic_irq_pie_scratch = (uint8_t)(mask);                          \
@@ -105,7 +105,7 @@ extern volatile uint8_t epic_irq_pie_scratch __at(0x70);
  * variable, via the same `movlb 1` bank-switch idiom as the
  * enable/disable macros above. Used by the shared interrupt dispatcher
  * to skip TIMER1_IRQHandler when TMR1IE is disabled: Timer1 free-runs
- * with its overflow interrupt off (epic-swuart needs the counter but
+ * with its overflow interrupt off (lib/swuart needs the counter but
  * never the overflow), so TMR1IF latches at every 65536-cycle wrap and
  * would otherwise make every subsequent CCP event pay the full handler
  * cost before its own dispatch. */

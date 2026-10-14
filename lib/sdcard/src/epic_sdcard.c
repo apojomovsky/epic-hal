@@ -1,4 +1,4 @@
-/** Binds M-Stack's mmc.c to this repo's SSP/GPIO HAL and epic-tick: SPI
+/** Binds M-Stack's mmc.c to this repo's SSP/GPIO HAL and lib/tick: SPI
  *  byte transfer, CS control, clock-speed selection, and timeout timing,
  *  against one owned mmc_card. */
 
@@ -139,7 +139,7 @@ void epic_sdcard_spi_set_speed(uint8_t instance, uint32_t speed_hz)
     EPIC_SSP_Init(&h);
 }
 
-/* MMC_TIMER_* callbacks: real wall-clock timeouts via epic-tick */
+/* MMC_TIMER_* callbacks: real wall-clock timeouts via lib/tick */
 
 /**
  * @brief MMC_TIMER_START callback: arm the card timeout.

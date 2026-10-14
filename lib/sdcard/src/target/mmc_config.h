@@ -2,7 +2,7 @@
  * module (included only by the vendored mmc.c for real-silicon builds;
  * tests/mock/mmc_config.h is the host-build equivalent). Binds the
  * MMC_SPI_ and timer macros to epic_sdcard.c's HAL-backed functions,
- * using epic-tick for real wall-clock timeouts instead of mmc.c's
+ * using lib/tick for real wall-clock timeouts instead of mmc.c's
  * bounded-retry fallback. */
 
 #ifndef EPIC_SDCARD_MMC_CONFIG_H__

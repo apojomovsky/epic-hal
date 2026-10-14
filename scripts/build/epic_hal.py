@@ -8,7 +8,7 @@ import argparse, pathlib, sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import epicmanifest, epic_hal_init
-from bundlegen import modules_for_family
+from bundlegen import modules_for_family, short_name
 
 
 def _find_manifest(bundle: pathlib.Path) -> pathlib.Path:
@@ -64,8 +64,8 @@ def cmd_init(args) -> int:
     # bundle vendored alongside (e.g. third_party/epic-hal); -o overrides.
     out_dir = args.output or "."
     # The user gives short module names (serial,tick); init_project and
-    # resolve_selection expect full manifest names (epic-serial, epic-tick).
-    by_short = {f.removeprefix("epic-"): f for f in modules_for_family(manifest, family)}
+    # resolve_selection expect full manifest names (lib/serial, lib/tick).
+    by_short = {short_name(f): f for f in modules_for_family(manifest, family)}
     full_modules = []
     for m in modules:
         if m not in by_short:

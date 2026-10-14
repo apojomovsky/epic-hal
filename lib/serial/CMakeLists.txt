@@ -1,14 +1,11 @@
-# epic-serial, interrupt-driven ring-buffered UART + printf retarget.
+# lib/serial, interrupt-driven ring-buffered UART + printf retarget.
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
 #
-# Reuses a HAL family's host sim backend via add_subdirectory (as epic-taskmgr
-# / epic-tick do). The serial module is family-agnostic: it includes only the
-# neutral contracts (epic_hal.h, core/epic_harness.h) and the public
-# epic_serial.h, so the same src/epic_serial.c builds against any family.
-# Select the family with -DEPIC_FAMILY=PIC18 (default PIC16). Real-target
-# builds use the XC8 Makefiles under mcu/.
+# Family-agnostic (neutral contracts plus epic_serial.h) against any
+# family's host sim backend via add_subdirectory. -DEPIC_FAMILY=PIC18
+# selects the family (default PIC16); real-target builds use mcu/.
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_serial C)
@@ -36,21 +33,21 @@ set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link: PIC16 or PIC18")
 
 if(EPIC_FAMILY STREQUAL "PIC18")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic18/18fxx5x
-        CACHE PATH "Path to the pic18fxx5x-hal source tree")
+        CACHE PATH "Path to the hal/pic18/18fxx5x source tree")
     set(EPIC_LIB          pic18fxx5x_hal)
     set(FAMILY_DEVICES   PIC18F2455 PIC18F2550 PIC18F4455 PIC18F4550)
     set(DEFAULT_DEVICE   PIC18F4550)
     set(DEFAULT_FOSC_HZ  48000000UL)
 elseif(EPIC_FAMILY STREQUAL "PIC16F88X")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f88x
-        CACHE PATH "Path to the pic16f88x-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f88x source tree")
     set(EPIC_LIB          pic16f88x_hal)
     set(FAMILY_DEVICES   PIC16F882 PIC16F883 PIC16F884 PIC16F886 PIC16F887)
     set(DEFAULT_DEVICE   PIC16F887)
     set(DEFAULT_FOSC_HZ  20000000UL)
 else()
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f87xa
-        CACHE PATH "Path to the pic16f87xa-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f87xa source tree")
     set(EPIC_LIB          pic16f87xa_hal)
     set(FAMILY_DEVICES   PIC16F873A PIC16F874A PIC16F876A PIC16F877A)
     set(DEFAULT_DEVICE   PIC16F877A)

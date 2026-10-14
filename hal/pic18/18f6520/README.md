@@ -203,11 +203,11 @@ cmake -B build -S hal/pic18/18f6520 && cmake --build build
 ## Build (real target)
 
 Manifest-driven via `common/manifest/modules.toml` (the family table and
-the `pic18f6520-hal` pseudo-module); see `mcu/pic18f6520-mplabx/README.md` and
+the `hal/pic18/18f6520` pseudo-module); see `mcu/pic18f6520-mplabx/README.md` and
 `common/manifest/README.md`.
 
 ```sh
-python3 scripts/build/epic_build.py build --module pic18f6520-hal --mcu 18F6520 --run
+python3 scripts/build/epic_build.py build --module hal/pic18/18f6520 --mcu 18F6520 --run
 ```
 
 ## Environment split

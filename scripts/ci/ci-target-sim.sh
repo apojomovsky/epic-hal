@@ -46,7 +46,7 @@ run_one() {
     || return 0
   # Args 7 (extra_mdb) and 8 (eeprom_writes) of sim-mdb-run.sh: no gate
   # here uses extra_mdb, so it stays empty and the 7th run_one arg maps
-  # to the 8th runner arg (eeprom_writes), which epic-settings needs.
+  # to the 8th runner arg (eeprom_writes), which lib/settings needs.
   # PIC18 does not reflect a driven LATx latch back into the PORTx input
   # register under MPSIM (verified on PIC18F2520 2026-09-14,
   # PIC18F6520 2026-09-15, and PIC18F2320 2026-09-17), so the PIC18
@@ -91,64 +91,64 @@ run_one() {
 }
 
 if [ "$parallel" -le 1 ]; then
-run_one pic16f87xa 16F877A PIC16F877A epic-tick 5000 uart
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-tick 5000 uart
-run_one pic16f193x 16F1939 PIC16F1939 epic-pic16f193x-firmware 60000 gpio
-run_one pic16f193x 16F1939 PIC16F1939 epic-tick 5000 gpio
-run_one pic16f193x 16F1939 PIC16F1939 epic-fsm 5000 gpio
-run_one pic16f1508 16F1509 PIC16F1509 epic-pic16f1508-firmware 60000 gpio
-run_one pic16f87xa 16F877A PIC16F877A epic-swuart 15000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-math 5000 uart
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-math 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A pic16f87xa-hal 5000 uart
-run_one pic16f7x 16F77 PIC16F77 pic16f7x-hal 5000 uart
-run_one pic18fxx5x 18F4550 PIC18F4550 pic18fxx5x-hal 5000 uart
-run_one pic18f2520 18F2320 PIC18F2320 pic18f2520-hal 5000 gpio
-run_one pic18f2520 18F2520 PIC18F2520 pic18f2520-hal 5000 gpio
-run_one pic18f6520 18F6520 PIC18F6520 pic18f6520-hal 5000 gpio
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-pid 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-fsm 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-adcfilter 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-encoder 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-bus 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-mcp23x17 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-serial 10000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-lcd 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-debounce 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-combo-uart-ssp 5000 uart
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-console 5000 uart
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-taskmgr 5000 uart
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-settings 5000 uart 24
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-modbus 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A lib/tick 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 lib/tick 5000 uart
+run_one pic16f193x 16F1939 PIC16F1939 hal/pic14e/16f193x 60000 gpio
+run_one pic16f193x 16F1939 PIC16F1939 lib/tick 5000 gpio
+run_one pic16f193x 16F1939 PIC16F1939 lib/fsm 5000 gpio
+run_one pic16f1508 16F1509 PIC16F1509 hal/pic14e/16f1508 60000 gpio
+run_one pic16f87xa 16F877A PIC16F877A lib/swuart 15000 uart
+run_one pic16f87xa 16F877A PIC16F877A lib/math 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 lib/math 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A hal/pic14/16f87xa 5000 uart
+run_one pic16f7x 16F77 PIC16F77 hal/pic14/16f7x 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 hal/pic18/18fxx5x 5000 uart
+run_one pic18f2520 18F2320 PIC18F2320 hal/pic18/18f2520 5000 gpio
+run_one pic18f2520 18F2520 PIC18F2520 hal/pic18/18f2520 5000 gpio
+run_one pic18f6520 18F6520 PIC18F6520 hal/pic18/18f6520 5000 gpio
+run_one pic18fxx5x 18F4550 PIC18F4550 lib/pid 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A lib/fsm 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A lib/adcfilter 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A lib/encoder 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A lib/bus 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A lib/mcp23x17 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A lib/serial 10000 uart
+run_one pic16f87xa 16F877A PIC16F877A lib/lcd 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A lib/debounce 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A tests/epic-combo-uart-ssp 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 lib/console 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 lib/taskmgr 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 lib/settings 5000 uart 24
+run_one pic18fxx5x 18F4550 PIC18F4550 lib/modbus 5000 uart
 
-run_one pic16f87xa 16F877A PIC16F877A epic-combo-multitimer 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-combo-adc-uart 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-combo-rb-uart 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-combo-tick-serial 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-combo-encoder-tick 5000 uart
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-lcd-tick 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-combo-swuart-tick 5000 uart
-run_one pic16f87xa 16F877A PIC16F877A epic-combo-rx-loopback 5000 uart
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-eeprom-isr 5000 uart 32
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-tick-settings 5000 uart 32
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-taskmgr-serial 5000 uart
-run_one pic18fxx5x 18F4550 PIC18F4550 epic-combo-modbus-full 5000 uart
-run_one pic16f88x 16F887 PIC16F887 pic16f88x-hal 5000 uart
-run_one pic16f88x 16F887 PIC16F887 epic-tick 5000 uart
-run_one pic16f88x 16F887 PIC16F887 epic-swuart 15000 uart
-run_one pic16f88x 16F887 PIC16F887 epic-math 5000 uart
-run_one pic16f88x 16F887 PIC16F887 epic-fsm 5000 uart
-run_one pic16f88x 16F887 PIC16F887 epic-adcfilter 5000 uart
-run_one pic16f88x 16F887 PIC16F887 epic-encoder 5000 uart
-run_one pic16f88x 16F887 PIC16F887 epic-bus 5000 uart
-run_one pic16f88x 16F887 PIC16F887 epic-mcp23x17 5000 uart
-run_one pic16f88x 16F887 PIC16F887 epic-serial 10000 uart
-run_one pic16f88x 16F887 PIC16F887 epic-debounce 5000 uart
-run_one pic16f628a 16F628A PIC16F628A pic16f628a-hal 15000 uart
-run_one pic16f628a 16F648A PIC16F648A epic-tick 5000 uart
-run_one pic16f83_84 16F84A PIC16F84A pic16f83_84-hal 5000 gpio
-run_one pic16f818_819 16F819 PIC16F819 pic16f818_819-hal 5000 gpio
-run_one pic16f63x_67x_68x 16F677 PIC16F677 pic16f63x_67x_68x-hal 15000 gpio
+run_one pic16f87xa 16F877A PIC16F877A tests/epic-combo-multitimer 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A tests/epic-combo-adc-uart 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A tests/epic-combo-rb-uart 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A tests/epic-combo-tick-serial 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A tests/epic-combo-encoder-tick 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 tests/epic-combo-lcd-tick 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A tests/epic-combo-swuart-tick 5000 uart
+run_one pic16f87xa 16F877A PIC16F877A tests/epic-combo-rx-loopback 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 tests/epic-combo-eeprom-isr 5000 uart 32
+run_one pic18fxx5x 18F4550 PIC18F4550 tests/epic-combo-tick-settings 5000 uart 32
+run_one pic18fxx5x 18F4550 PIC18F4550 tests/epic-combo-taskmgr-serial 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 tests/epic-combo-modbus-full 5000 uart
+run_one pic16f88x 16F887 PIC16F887 hal/pic14/16f88x 5000 uart
+run_one pic16f88x 16F887 PIC16F887 lib/tick 5000 uart
+run_one pic16f88x 16F887 PIC16F887 lib/swuart 15000 uart
+run_one pic16f88x 16F887 PIC16F887 lib/math 5000 uart
+run_one pic16f88x 16F887 PIC16F887 lib/fsm 5000 uart
+run_one pic16f88x 16F887 PIC16F887 lib/adcfilter 5000 uart
+run_one pic16f88x 16F887 PIC16F887 lib/encoder 5000 uart
+run_one pic16f88x 16F887 PIC16F887 lib/bus 5000 uart
+run_one pic16f88x 16F887 PIC16F887 lib/mcp23x17 5000 uart
+run_one pic16f88x 16F887 PIC16F887 lib/serial 10000 uart
+run_one pic16f88x 16F887 PIC16F887 lib/debounce 5000 uart
+run_one pic16f628a 16F628A PIC16F628A hal/pic14/16f628a 15000 uart
+run_one pic16f628a 16F648A PIC16F648A lib/tick 5000 uart
+run_one pic16f83_84 16F84A PIC16F84A hal/pic14/16f83_84 5000 gpio
+run_one pic16f818_819 16F819 PIC16F819 hal/pic14/16f818_819 5000 gpio
+run_one pic16f63x_67x_68x 16F677 PIC16F677 hal/pic14/16f63x_67x_68x 15000 gpio
 # MODE=toggle on PORTB bit 0 with a 50000-instruction sample step.
 # The blink's toggle period is ~50000 steps at 4 MHz (Timer0 Fosc/4,
 # 1:256 prescaler, reload 0: 65536 instr per overflow, one toggle per
@@ -156,15 +156,15 @@ run_one pic16f63x_67x_68x 16F677 PIC16F677 pic16f63x_67x_68x-hal 15000 gpio
 # constant phase (verified 2026-09-15) and would fail the gate.
 # TOGGLE_REG=PORTB overrides the script-wide LATB export (that export
 # exists for PIC18F1320, whose simulated PORTB does not mirror LATB).
-run_one pic16f5x 16F54 PIC16F54 pic16f5x-hal 5000 toggle "" PORTB 50000
+run_one pic16f5x 16F54 PIC16F54 hal/pic12/16f5x 5000 toggle "" PORTB 50000
 # The four sibling parts take the same parameters: same 4 MHz config and
 # blink period (measured per part 2026-09-17), and PORTB because the
 # 505/506 have no PORTA.
-run_one pic16f5x 16F505 PIC16F505 pic16f5x-hal 5000 toggle "" PORTB 50000
-run_one pic16f5x 16F506 PIC16F506 pic16f5x-hal 5000 toggle "" PORTB 50000
-run_one pic16f5x 16F57 PIC16F57 pic16f5x-hal 5000 toggle "" PORTB 50000
-run_one pic16f5x 16F59 PIC16F59 pic16f5x-hal 5000 toggle "" PORTB 50000
-run_one pic18f1320 18F1320 PIC18F1320 pic18f1320-hal 2000 toggle
+run_one pic16f5x 16F505 PIC16F505 hal/pic12/16f5x 5000 toggle "" PORTB 50000
+run_one pic16f5x 16F506 PIC16F506 hal/pic12/16f5x 5000 toggle "" PORTB 50000
+run_one pic16f5x 16F57 PIC16F57 hal/pic12/16f5x 5000 toggle "" PORTB 50000
+run_one pic16f5x 16F59 PIC16F59 hal/pic12/16f5x 5000 toggle "" PORTB 50000
+run_one pic18f1320 18F1320 PIC18F1320 hal/pic18/18f1320 2000 toggle
 fi
 
 if [ "$parallel" -gt 1 ]; then

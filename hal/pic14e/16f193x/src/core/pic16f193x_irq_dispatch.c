@@ -65,7 +65,7 @@ void epic_dispatch_all_irqs(void)
 
     uint8_t pir1 = EPIC_REG8(PIC_REG_PIR1);
     /* TMR1 is flag-gated on TMR1IE, not just TMR1IF: Timer1 free-runs
-     * with its overflow interrupt disabled (epic-swuart needs the
+     * with its overflow interrupt disabled (lib/swuart needs the
      * counter but never the overflow), so TMR1IF latches at every
      * 65536-cycle wrap and stays set. Without this check the next CCP
      * event would pay TIMER1_IRQHandler's full table-driven cost
@@ -115,7 +115,7 @@ void epic_dispatch_all_irqs(void)
     if (pir2 & PIC_PIR2_CCP2IF) CCP2_IRQHandler();
     if (pir2 & PIC_PIR2_LCDIF)  LCD_IRQHandler();
     /* EEIF is gated on EEIE and left untouched when the source is
-     * disabled: EEPROM completion is often polled (epic-settings spins
+     * disabled: EEPROM completion is often polled (lib/settings spins
      * on EEIF with EEIE off), and an unconditional dispatch would
      * clear the flag from a live ISR and hang the poller. No
      * stale-flag drop: the polling consumer owns EEIF. */

@@ -1,5 +1,5 @@
 /*
- * epic-usb on-target demo: enumerate as a USB CDC-ACM virtual serial
+ * lib/usb on-target demo: enumerate as a USB CDC-ACM virtual serial
  * port, then echo everything the host sends back to it. PIC18Fxx5x
  * only: the 8-bit PICs with a USB SIE are all in this family.
  */

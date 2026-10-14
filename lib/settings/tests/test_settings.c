@@ -1,4 +1,4 @@
-/** Host tests for epic-settings over the simulated EEPROM backend. */
+/** Host tests for lib/settings over the simulated EEPROM backend. */
 
 #include "epic_settings.h"
 #include "core/epic_harness.h"
@@ -158,7 +158,7 @@ static void test_load_or_default_returns_true_when_valid(void)
     CHECK(memcmp(&out, &in, sizeof(in)) == 0, "valid default: existing blob preserved");
 }
 
-/** @brief Run all epic-settings tests and report pass/fail counts. */
+/** @brief Run all lib/settings tests and report pass/fail counts. */
 int main(void)
 {
     test_save_then_load_roundtrip();

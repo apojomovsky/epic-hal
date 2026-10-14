@@ -16,7 +16,7 @@
  * epic_irq_pie_scratch to bank-independent common RAM at 0x70
  * (DS41364B Table 2-3) so the inline-asm PIE bit helpers can move the
  * value through W without disturbing any C-level local (the same shape
- * as pic16f87xa-hal's scratch-byte extern + pic16_isr_vector.c's
+ * as hal/pic14/16f87xa's scratch-byte extern + pic16_isr_vector.c's
  * `__at()`-pinned definition; see docs/ARCHITECTURE.md).
  */
 
@@ -25,7 +25,7 @@
 /* Definition for target/pic16f193x_platform.h's
  * `extern volatile uint8_t epic_irq_pie_scratch`; `__at()`-pinned into
  * PIC16F193X's bank-independent common RAM (Table 2-3, 0x70). The same
- * shape as pic16_isr_vector.c in pic16f87xa-hal. */
+ * shape as pic16_isr_vector.c in hal/pic14/16f87xa. */
 volatile uint8_t epic_irq_pie_scratch __at(0x70);
 
 /**

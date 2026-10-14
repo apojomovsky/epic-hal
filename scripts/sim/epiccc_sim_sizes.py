@@ -70,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
                         metavar="MODULE:MCU",
                         help="a demo allowed to FAIL (repeatable)")
     parser.add_argument("specs", nargs="+", type=parse_spec, metavar="MODULE:MCU",
-                        help="expected demos, e.g. epic-menu-demo:18F4550")
+                        help="expected demos, e.g. demos/menu:18F4550")
     args = parser.parse_args(argv)
     manifest = manifest_lib.load(manifest_lib.default_path())
     build_dir = pathlib.Path(args.build_dir)

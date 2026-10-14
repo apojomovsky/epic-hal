@@ -53,7 +53,7 @@ set(PIC18FXX5X_DEFAULT_DEVICE PIC18F4550)
 
 # Determine whether the default device has the SPP (40/44-pin only). The
 # CMake variable mirrors the C macro PIC18FXX5X_FAMILY_HAS_SPP so the SPP
-# source and example can be gated here, the way pic16f87xa-hal gates PSP.
+# source and example can be gated here, the way hal/pic14/16f87xa gates PSP.
 if(PIC18FXX5X_DEFAULT_DEVICE STREQUAL "PIC18F4455" OR
    PIC18FXX5X_DEFAULT_DEVICE STREQUAL "PIC18F4550")
     set(PIC18FXX5X_FAMILY_HAS_SPP 1)

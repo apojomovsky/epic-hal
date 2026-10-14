@@ -1,4 +1,4 @@
-# epic-swuart, bit-banged full-duplex UART, any GPIO pin, two channels
+# lib/swuart, bit-banged full-duplex UART, any GPIO pin, two channels
 # at once. Zero per-family branching: every HAL call this module makes
 # (EPIC_GPIO_*, EPIC_TIMER1_*, EPIC_IRQ_Restore) is already identical
 # across all three families, so src/epic_swuart.c is one file. Select
@@ -32,25 +32,25 @@ set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link: PIC16, PIC18, or PIC16
 
 if(EPIC_FAMILY STREQUAL "PIC18")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic18/18fxx5x
-        CACHE PATH "Path to the pic18fxx5x-hal source tree")
+        CACHE PATH "Path to the hal/pic18/18fxx5x source tree")
     set(EPIC_LIB          pic18fxx5x_hal)
     set(DEFAULT_DEVICE    PIC18F4550)
     set(DEFAULT_FOSC_HZ   48000000UL)
 elseif(EPIC_FAMILY STREQUAL "PIC16F88X")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f88x
-        CACHE PATH "Path to the pic16f88x-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f88x source tree")
     set(EPIC_LIB          pic16f88x_hal)
     set(DEFAULT_DEVICE    PIC16F887)
     set(DEFAULT_FOSC_HZ   20000000UL)
 elseif(EPIC_FAMILY STREQUAL "PIC16F193X")
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14e/16f193x
-        CACHE PATH "Path to the pic16f193x-hal source tree")
+        CACHE PATH "Path to the hal/pic14e/16f193x source tree")
     set(EPIC_LIB          pic16f193x_hal)
     set(DEFAULT_DEVICE    PIC16F1937)
     set(DEFAULT_FOSC_HZ   32000000UL)
 else()
     set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f87xa
-        CACHE PATH "Path to the pic16f87xa-hal source tree")
+        CACHE PATH "Path to the hal/pic14/16f87xa source tree")
     set(EPIC_LIB          pic16f87xa_hal)
     set(DEFAULT_DEVICE    PIC16F877A)
     set(DEFAULT_FOSC_HZ   20000000UL)

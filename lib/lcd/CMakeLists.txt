@@ -1,4 +1,4 @@
-# epic-lcd, HD44780-compatible character LCD driver with configurable transport
+# lib/lcd, HD44780-compatible character LCD driver with configurable transport
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure

@@ -226,14 +226,14 @@ struct cdc_notification_header {
 struct cdc_serial_state_notification {
 	struct cdc_notification_header header;
 	union {
-		/* Deviation from upstream (epic-usb, not sent upstream): upstream
+		/* Deviation from upstream (lib/usb, not sent upstream): upstream
 		 * bit-fields are typed uint16_t. XC8 v3.10's Clang-based frontend
 		 * rejects sized stdint types as a bit-field base type ("bit-field
 		 * ... has bad bitfield type 'uint16_t'") -- only plain int/unsigned
 		 * int is accepted, which matches strict ISO C's bit-field base type
 		 * rule anyway. unsigned int is 16 bits on PIC18/XC8, so the 16
 		 * declared bits below still total 16 and match the union's flat
-		 * uint16_t sibling member. See epic-usb/README.md. */
+		 * uint16_t sibling member. See lib/usb/README.md. */
 		struct {
 			unsigned int bRxCarrier : 1; /**< Indicates DCD */
 			unsigned int bTxCarrier : 1; /**< Indicates DSR */

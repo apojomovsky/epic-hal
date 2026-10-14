@@ -30,7 +30,7 @@ select all of this through `PIC14MIDRANGE_HAS_*` (see
 
 Host simulation (`cmake -B build && cmake --build build`, run
 `./build/example_*`), real-target XC8 (`make xc8-build
-MODULE=pic16f83_84-hal MCU=16F84A`), and the `mdb` gate (`make
-mdb-test MODULE=pic16f83_84-hal MCU=16F84A DEVICE=PIC16F84A`, MODE=gpio
+MODULE=hal/pic14/16f83_84 MCU=16F84A`), and the `mdb` gate (`make
+mdb-test MODULE=hal/pic14/16f83_84 MCU=16F84A DEVICE=PIC16F84A`, MODE=gpio
 over RA0; no USART to print markers).
 `docs/adding-a-device.md` §4 is the mandatory per-peripheral gate.

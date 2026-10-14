@@ -1,4 +1,4 @@
-# epic-combo-rx-loopback, task 8 of the quality roadmap: the RX wall,
+# tests/epic-combo-rx-loopback, task 8 of the quality roadmap: the RX wall,
 # via a target-in-the-loop harness. Unlike the other combos this
 # module carries a host CMake
 # build: MPLAB SIM cannot inject RX, so the firmware's echo path is
@@ -17,7 +17,7 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/pic14/16f87xa
-    CACHE PATH "Path to the pic16f87xa-hal source tree")
+    CACHE PATH "Path to the hal/pic14/16f87xa source tree")
 set(EPIC_LIB pic16f87xa_hal)
 
 if(NOT TARGET ${EPIC_LIB})

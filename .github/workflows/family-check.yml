@@ -177,69 +177,69 @@ jobs:
           # Sim build scripts for this family's gates (the run_one list
           # in scripts/ci/ci-target-sim.sh is the source of truth).
           for module, mcu in [
-              ("epic-tick", "16F877A"),
-              ("epic-tick", "18F4550"),
-              ("epic-pic16f193x-firmware", "16F1939"),
-              ("epic-pic16f1508-firmware", "16F1509"),
-              ("epic-tick", "16F1939"),
-              ("epic-fsm", "16F1939"),
-              ("epic-swuart", "16F877A"),
-              ("epic-math", "16F877A"),
-              ("epic-math", "18F4550"),
-              ("pic16f87xa-hal", "16F877A"),
-              ("pic18fxx5x-hal", "18F4550"),
-              ("pic18f2520-hal", "18F2320"),
-              ("pic18f2520-hal", "18F2520"),
-              ("pic18f1320-hal", "18F1320"),
-              ("pic18f6520-hal", "18F6520"),
-              ("epic-pid", "18F4550"),
-              ("epic-fsm", "16F877A"),
-              ("epic-adcfilter", "16F877A"),
-              ("epic-encoder", "16F877A"),
-              ("epic-bus", "16F877A"),
-              ("epic-mcp23x17", "16F877A"),
-              ("epic-serial", "16F877A"),
-              ("epic-lcd", "16F877A"),
-              ("epic-debounce", "16F877A"),
-              ("epic-console", "18F4550"),
-              ("epic-taskmgr", "18F4550"),
-              ("epic-settings", "18F4550"),
-              ("epic-modbus", "18F4550"),
-              ("epic-combo-uart-ssp", "16F877A"),
-              ("epic-combo-multitimer", "16F877A"),
-              ("epic-combo-adc-uart", "16F877A"),
-              ("epic-combo-rb-uart", "16F877A"),
-              ("epic-combo-eeprom-isr", "18F4550"),
-              ("epic-combo-tick-serial", "16F877A"),
-              ("epic-combo-tick-settings", "18F4550"),
-              ("epic-combo-taskmgr-serial", "18F4550"),
-              ("epic-combo-encoder-tick", "16F877A"),
-              ("epic-combo-lcd-tick", "18F4550"),
-              ("epic-combo-swuart-tick", "16F877A"),
-              ("epic-combo-modbus-full", "18F4550"),
-              ("epic-combo-rx-loopback", "16F877A"),
-              ("pic16f88x-hal", "16F887"),
-              ("epic-tick", "16F887"),
-              ("epic-swuart", "16F887"),
-              ("epic-math", "16F887"),
-              ("epic-fsm", "16F887"),
-              ("epic-adcfilter", "16F887"),
-              ("epic-encoder", "16F887"),
-              ("epic-bus", "16F887"),
-              ("epic-mcp23x17", "16F887"),
-              ("epic-serial", "16F887"),
-              ("epic-debounce", "16F887"),
-              ("pic16f628a-hal", "16F628A"),
-              ("epic-tick", "16F648A"),
-              ("pic16f83_84-hal", "16F84A"),
-              ("pic16f63x_67x_68x-hal", "16F677"),
-              ("pic16f7x-hal", "16F77"),
-              ("pic16f5x-hal", "16F54"),
-              ("pic16f5x-hal", "16F59"),
-              ("pic16f5x-hal", "16F57"),
-              ("pic16f5x-hal", "16F506"),
-              ("pic16f5x-hal", "16F505"),
-              ("pic16f818_819-hal", "16F819"),
+              ("lib/tick", "16F877A"),
+              ("lib/tick", "18F4550"),
+              ("hal/pic14e/16f193x", "16F1939"),
+              ("hal/pic14e/16f1508", "16F1509"),
+              ("lib/tick", "16F1939"),
+              ("lib/fsm", "16F1939"),
+              ("lib/swuart", "16F877A"),
+              ("lib/math", "16F877A"),
+              ("lib/math", "18F4550"),
+              ("hal/pic14/16f87xa", "16F877A"),
+              ("hal/pic18/18fxx5x", "18F4550"),
+              ("hal/pic18/18f2520", "18F2320"),
+              ("hal/pic18/18f2520", "18F2520"),
+              ("hal/pic18/18f1320", "18F1320"),
+              ("hal/pic18/18f6520", "18F6520"),
+              ("lib/pid", "18F4550"),
+              ("lib/fsm", "16F877A"),
+              ("lib/adcfilter", "16F877A"),
+              ("lib/encoder", "16F877A"),
+              ("lib/bus", "16F877A"),
+              ("lib/mcp23x17", "16F877A"),
+              ("lib/serial", "16F877A"),
+              ("lib/lcd", "16F877A"),
+              ("lib/debounce", "16F877A"),
+              ("lib/console", "18F4550"),
+              ("lib/taskmgr", "18F4550"),
+              ("lib/settings", "18F4550"),
+              ("lib/modbus", "18F4550"),
+              ("tests/epic-combo-uart-ssp", "16F877A"),
+              ("tests/epic-combo-multitimer", "16F877A"),
+              ("tests/epic-combo-adc-uart", "16F877A"),
+              ("tests/epic-combo-rb-uart", "16F877A"),
+              ("tests/epic-combo-eeprom-isr", "18F4550"),
+              ("tests/epic-combo-tick-serial", "16F877A"),
+              ("tests/epic-combo-tick-settings", "18F4550"),
+              ("tests/epic-combo-taskmgr-serial", "18F4550"),
+              ("tests/epic-combo-encoder-tick", "16F877A"),
+              ("tests/epic-combo-lcd-tick", "18F4550"),
+              ("tests/epic-combo-swuart-tick", "16F877A"),
+              ("tests/epic-combo-modbus-full", "18F4550"),
+              ("tests/epic-combo-rx-loopback", "16F877A"),
+              ("hal/pic14/16f88x", "16F887"),
+              ("lib/tick", "16F887"),
+              ("lib/swuart", "16F887"),
+              ("lib/math", "16F887"),
+              ("lib/fsm", "16F887"),
+              ("lib/adcfilter", "16F887"),
+              ("lib/encoder", "16F887"),
+              ("lib/bus", "16F887"),
+              ("lib/mcp23x17", "16F887"),
+              ("lib/serial", "16F887"),
+              ("lib/debounce", "16F887"),
+              ("hal/pic14/16f628a", "16F628A"),
+              ("lib/tick", "16F648A"),
+              ("hal/pic14/16f83_84", "16F84A"),
+              ("hal/pic14/16f63x_67x_68x", "16F677"),
+              ("hal/pic14/16f7x", "16F77"),
+              ("hal/pic12/16f5x", "16F54"),
+              ("hal/pic12/16f5x", "16F59"),
+              ("hal/pic12/16f5x", "16F57"),
+              ("hal/pic12/16f5x", "16F506"),
+              ("hal/pic12/16f5x", "16F505"),
+              ("hal/pic14/16f818_819", "16F819"),
           ]:
               if module not in m.modules:
                   continue
@@ -302,7 +302,7 @@ jobs:
       # passing wall-clock budgets under MPLAB SIM.
       # The gates stay SEQUENTIAL: at PARALLEL=2 on the 2-core runner
       # the concurrent mdb sessions halved the effective sim speed and
-      # two marginal 5s-budget gates (epic-bus, epic-combo-encoder-tick)
+      # two marginal 5s-budget gates (lib/bus, tests/epic-combo-encoder-tick)
       # missed their markers (2026-08-11, PR #25 first sharded run). A
       # new contention-flake class would undo the task-10 hardening, so
       # the gates keep their deterministic budgets; the builds above
@@ -365,13 +365,13 @@ jobs:
           import os, sys
           sys.path.insert(0, "scripts/build")
           import epicmanifest
-          from bundlegen import modules_for_family
+          from bundlegen import modules_for_family, short_name
           m = epicmanifest.load(epicmanifest.default_path())
           family = os.environ["FAMILY"]
           fam = m.families[family]
           print(fam.variants[-1])
           print(f"bundles/epic-hal-{fam.slug}-ci-test")
-          avail = [x.removeprefix("epic-") for x in modules_for_family(m, family)]
+          avail = [short_name(x) for x in modules_for_family(m, family)]
           print("serial,tick" if ("serial" in avail and "tick" in avail) else ",".join(avail[:2]))
           PY
           { read -r PART; read -r BUNDLE_DIR; read -r MODS; } < /tmp/epi-resolve

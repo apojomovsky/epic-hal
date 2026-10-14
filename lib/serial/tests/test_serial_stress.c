@@ -1,5 +1,5 @@
 /*
- * Host property test for epic-serial: randomized producer/consumer stress
+ * Host property test for lib/serial: randomized producer/consumer stress
  * through the real public API over the host sim's USART model. RX is
  * injected via *_sim_drive_usart_rx (which dispatches into the module's
  * RX ring), TX drained with epic_dispatch_all_irqs (the host equivalent
@@ -49,7 +49,7 @@ static int g_fail = 0;
         } \
     } while (0)
 
-/* Fixed-seed LCG, same shape as epic-math's epic_math_test_rand. */
+/* Fixed-seed LCG, same shape as lib/math's epic_math_test_rand. */
 static uint32_t g_seed = 0x5E2D0001u;
 /**
  * @brief Return the next fixed-seed LCG random value.

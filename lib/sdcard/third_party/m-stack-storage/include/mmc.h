@@ -56,7 +56,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>   /* size_t, used by mmc_multiblock_write_data() below --
-                       * deviation from upstream (epic-sdcard, not sent
+                       * deviation from upstream (lib/sdcard, not sent
                        * upstream): upstream relies on <xc.h> (included from
                        * mmc.c, not this header) pulling this in transitively;
                        * a host build doesn't include <xc.h> at all (see

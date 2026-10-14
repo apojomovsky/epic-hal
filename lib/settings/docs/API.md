@@ -1,4 +1,4 @@
-# epic-settings API
+# lib/settings API
 
 ## Public header
 

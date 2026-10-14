@@ -1,5 +1,5 @@
 /**
- * Unit tests for epic-fsm; exercises the exact fsm.c that ships on-target
+ * Unit tests for lib/fsm; exercises the exact fsm.c that ships on-target
  * (no per-family variant, no test-framework dependency).
  */
 
@@ -202,7 +202,7 @@ static void test_fsm_init_table_len(void)
           "EPIC_FSM_INIT computed table_len matches the array's real row count");
 }
 
-/** @brief Run every epic-fsm unit test and report the failure count. */
+/** @brief Run every lib/fsm unit test and report the failure count. */
 int main(void)
 {
     test_basic_cycle();
@@ -214,7 +214,7 @@ int main(void)
 
     if (g_failures == 0)
     {
-        printf("PASS: all epic-fsm unit tests\n");
+        printf("PASS: all lib/fsm unit tests\n");
         return 0;
     }
     printf("FAIL: %d assertion(s) failed\n", g_failures);

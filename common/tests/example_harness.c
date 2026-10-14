@@ -1,4 +1,4 @@
-/* Minimal epic-common smoke: the harness contract. Log/report are
+/* Minimal common smoke: the harness contract. Log/report are
  * omitted: const flash strings hit epic-cc#114 and the target harness
  * is a no-op, so the mdb gate checks liveness, not a marker. */
 

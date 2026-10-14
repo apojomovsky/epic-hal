@@ -1,6 +1,6 @@
-# epic-modbus, a Modbus RTU slave for 8-bit PICs
+# lib/modbus, a Modbus RTU slave for 8-bit PICs
 
-A Modbus RTU slave (server) built on `epic-serial` (the UART), `epic-tick`
+A Modbus RTU slave (server) built on `lib/serial` (the UART), `lib/tick`
 (the T3.5 inter-frame silence timing), and the HAL's GPIO (an optional
 RS-485 driver-enable pin).
 
@@ -11,11 +11,11 @@ RS-485 driver-enable pin).
   caller-owned coil/discrete-input/holding-register/input-register arrays,
   no callback indirection, no dynamic allocation.
 - **Silence-delimited framing, polled**: `epic_modbus_slave_poll()` drains
-  new UART bytes and, once `epic-tick` shows T3.5 has elapsed since the last
+  new UART bytes and, once `lib/tick` shows T3.5 has elapsed since the last
   byte, validates (length, CRC-16) and dispatches the frame in one call. Call
-  it every main-loop iteration, or wire it as a `epic-taskmgr` task.
+  it every main-loop iteration, or wire it as a `lib/taskmgr` task.
 - **Family-agnostic**: one `src/epic_modbus.c` builds against
-  `pic16f87xa-hal` or `pic18fxx5x-hal` (no `#if` at all, GPIO is already
+  `hal/pic14/16f87xa` or `hal/pic18/18fxx5x` (no `#if` at all, GPIO is already
   neutral through `epic_hal.h`), runs on the host sim and real silicon.
 - **Optional RS-485 direction control**: `epic_modbus_slave_set_rs485_dir_pin`
   asserts a driver-enable pin for the duration of each response, held until
@@ -27,7 +27,7 @@ RS-485 driver-enable pin).
 
 ### T3.5 caveat
 
-Above 19200 baud the spec fixes T3.5 at 1.75 ms and `epic-tick`'s 1 ms
+Above 19200 baud the spec fixes T3.5 at 1.75 ms and `lib/tick`'s 1 ms
 granularity rounds it up to ~2 ms: framing stays correct, silence
 detection just fires later (latency, not a correctness bug).
 PIC16F873A/874A (192 B RAM) cannot link this module at default ring
@@ -42,7 +42,7 @@ exposing 4 holding registers and 8 coils with an RS-485 driver-enable
 pin; the manifest build compiles it:
 
 ```sh
-make xc8-build MODULE=epic-modbus MCU=18F4550
+make xc8-build MODULE=lib/modbus MCU=18F4550
 ```
 
 ### MPLAB SIM gate (framing/T3.5)
@@ -51,7 +51,7 @@ The RTU framing and T3.5 behavior are covered under MPLAB SIM by
 `tests/sim_modbus.c`:
 
 ```sh
-make mdb-test MODULE=epic-modbus MCU=18F4550 DEVICE=PIC18F4550
+make mdb-test MODULE=lib/modbus MCU=18F4550 DEVICE=PIC18F4550
 ```
 
 ## Use it

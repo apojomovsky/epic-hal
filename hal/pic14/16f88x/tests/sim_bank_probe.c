@@ -1,4 +1,4 @@
-/* HARNESS=sim probe for the pic16f88x-hal banked-SFR audit: runs every
+/* HARNESS=sim probe for the hal/pic14/16f88x banked-SFR audit: runs every
  * ungated `pic_select_bank` + plain EPIC_REG8 site and every plain
  * Bank-1/2/3 SFR access from the Phase 0 audit with known values and
  * reads them back, so XC8 v4.00 bank misdirection (the PIC16 Finding

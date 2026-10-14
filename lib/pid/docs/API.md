@@ -1,4 +1,4 @@
-# `epic-pid` API reference
+# `lib/pid` API reference
 
 Authoritative declarations: [`include/pid.h`](../include/pid.h).
 The design discussion this module closes out is in the module's
@@ -185,7 +185,7 @@ void control_init(void)
     g_measurement = 0;
 }
 
-/* Call from a fixed-period task (e.g. a epic-taskmgr entry, or a
+/* Call from a fixed-period task (e.g. a lib/taskmgr entry, or a
  * timer ISR's deferred work, at exactly CONTROL_HZ). */
 void control_tick(void)
 {

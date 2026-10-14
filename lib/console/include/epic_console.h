@@ -1,5 +1,5 @@
 /*
- * Line-based serial command dispatcher over epic-serial: buffers one
+ * Line-based serial command dispatcher over lib/serial: buffers one
  * editable input line, tokenizes it in place, and dispatches it through
  * a caller-owned command table (one static const epic_console_cmd_t[],
  * no hidden registration or global tokenizer state).
@@ -82,7 +82,7 @@ void epic_console_init(epic_console_t *con, const epic_console_cmd_t *table,
 /**
  * @brief Drain serial input, echo/edit it, and dispatch complete lines.
  *
- * Drains all bytes currently available from epic-serial, echoes and
+ * Drains all bytes currently available from lib/serial, echoes and
  * edits them into the line buffer, and dispatches any complete lines
  * found during that drain.
  *

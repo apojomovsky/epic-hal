@@ -40,135 +40,127 @@ hal_sources = ["common/src/core/epic_harness_target.c"]
 harness_src = "common/src/core/epic_harness_target.c"
 epiccc_sources = ["common/src/core/epic_harness_target.c"]
 
-[modules.epic-pic16f193x-firmware]
-dir        = "hal/pic14e/16f193x"
+[modules."hal/pic14e/16f193x"]
 summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.epic-pic16f193x-firmware.supported]
+[modules."hal/pic14e/16f193x".supported]
 PIC16F193X = ["16F1937"]
 
-[modules.epic-pic16f193x-firmware.example.PIC16F193X]
+[modules."hal/pic14e/16f193x".example.PIC16F193X]
 name    = "firmware"
 sources = ["tests/example_blink.c"]
 config  = { FOSC = "INTOSC", WDTE = "ON", BOREN = "ON" }
 
-[modules.epic-pic18f2520-firmware]
-dir        = "hal/pic18/18f2520"
+[modules."hal/pic18/18f2520"]
 summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.epic-pic18f2520-firmware.supported]
+[modules."hal/pic18/18f2520".supported]
 PIC18F2520 = ["18F2520"]
 
-[modules.epic-pic18f2520-firmware.example.PIC18F2520]
+[modules."hal/pic18/18f2520".example.PIC18F2520]
 name    = "firmware"
 sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOREN = "ON", BORV = "3", WDT = "OFF", WDTPS = "32768" }
 
-[modules.epic-pic18f6520-firmware]
-dir        = "hal/pic18/18f6520"
+[modules."hal/pic18/18f6520"]
 summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.epic-pic18f6520-firmware.supported]
+[modules."hal/pic18/18f6520".supported]
 PIC18F6520 = ["18F6520"]
 
-[modules.epic-pic18f6520-firmware.example.PIC18F6520]
+[modules."hal/pic18/18f6520".example.PIC18F6520]
 name    = "firmware"
 sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOR = "ON", WDT = "OFF", WDTPS = "128" }
 
-[modules.epic-pic18f1320-firmware]
-dir        = "hal/pic18/18f1320"
+[modules."hal/pic18/18f1320"]
 summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
 
-[modules.epic-pic18f1320-firmware.supported]
+[modules."hal/pic18/18f1320".supported]
 PIC18F1320 = ["18F1320"]
 
-[modules.epic-pic18f1320-firmware.example.PIC18F1320]
+[modules."hal/pic18/18f1320".example.PIC18F1320]
 name    = "firmware"
 sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOR = "OFF", BORV = "27", WDT = "OFF", WDTPS = "32768" }
 
-[modules.epic-tick]
-dir        = "lib/tick"
+[modules."lib/tick"]
 summary    = "Tooling-test fixture."
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
 
-[modules.epic-tick.supported]
+[modules."lib/tick".supported]
 PIC16F87XA = ["16F877A"]
 
-[modules.epic-tick.excluded]
+[modules."lib/tick".excluded]
 "16F873A" = "RAM: does not fit"
 
-[modules.epic-tick.example.PIC16F87XA]
+[modules."lib/tick".example.PIC16F87XA]
 name    = "tick-blink"
 sources = ["examples/example_tick.c"]
 config  = { FOSC = "HS", WDTE = "ON" }
 
-[modules.epic-tick.example.PIC16F87XA.sim]
+[modules."lib/tick".example.PIC16F87XA.sim]
 name        = "tick-blink-sim"
 harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { FOSC = "HS", WDTE = "OFF" }
 
-[modules.epic-adcfilter]
-dir        = "lib/adcfilter"
+[modules."lib/adcfilter"]
 summary    = "Tooling-test fixture."
 sources    = ["src/epic_adcfilter.c"]
 includes   = ["include"]
 depends_on = []
 needs_hal  = false
 
-[modules.epic-adcfilter.supported]
+[modules."lib/adcfilter".supported]
 PIC16F87XA = ["16F873A", "16F877A"]
 
-[modules.epic-adcfilter.example.PIC16F87XA]
+[modules."lib/adcfilter".example.PIC16F87XA]
 name    = "adcfilter-sizecheck"
 sources = ["mcu/target_sizecheck.c"]
-# Example-level dep: epic-tick is excluded on 16F873A (see the tick
+# Example-level dep: lib/tick is excluded on 16F873A (see the tick
 # fixture's excluded), so a build of this example there must fail the
 # support check rather than compile excluded code.
-depends_on = ["epic-tick"]
+depends_on = ["lib/tick"]
 
-[modules.epic-math]
-dir        = "lib/math"
+[modules."lib/math"]
 summary    = "Tooling-test fixture."
 sources    = ["src/common/epic_math_numeric.c"]
 includes   = ["include"]
 depends_on = []
 needs_hal  = false
 
-[modules.epic-math.supported]
+[modules."lib/math".supported]
 PIC16F87XA = ["16F877A"]
 
-[modules.epic-math.sources_by_family]
+[modules."lib/math".sources_by_family]
 PIC16F87XA = [
   "src/pic16/epic_math_addsub.c",
   "src/pic16/epic_math_mul.c",
 ]
 
-[modules.epic-pid]
-dir        = "lib/pid"
+[modules."lib/pid"]
 summary    = "Tooling-test fixture."
 sources    = ["src/pid.c"]
 includes   = ["include"]
-depends_on = ["epic-math"]
+depends_on = ["lib/math"]
 needs_hal  = false
 
 epiccc_hal_sources_by_family.PIC16F87XA = [
@@ -180,47 +172,45 @@ epiccc_hal_sources_by_family.PIC16F87XA = [
   "common/src/core/epic_harness_target.c",
 ]
 
-[modules.epic-pid.supported]
+[modules."lib/pid".supported]
 PIC16F87XA = ["16F877A"]
 
-[modules.epic-pid.example.PIC16F87XA]
+[modules."lib/pid".example.PIC16F87XA]
 name    = "pid"
 sources = ["examples/example_pid.c"]
 hal     = true
-depends_on = ["epic-tick", "epic-serial"]
+depends_on = ["lib/tick", "lib/serial"]
 
-[modules.epic-encoder]
-dir        = "lib/encoder"
+[modules."lib/encoder"]
 summary    = "Tooling-test fixture."
 sources    = ["src/encoder.c"]
 includes   = ["include"]
-depends_on = ["epic-tick"]
+depends_on = ["lib/tick"]
 needs_hal  = false
 
-[modules.epic-encoder.supported]
+[modules."lib/encoder".supported]
 PIC16F87XA = ["16F877A"]
 
-[modules.epic-encoder.example.PIC16F87XA]
+[modules."lib/encoder".example.PIC16F87XA]
 name    = "encoder-sizecheck"
 sources = ["mcu/target_sizecheck.c"]
 # The sizecheck probe links against the HAL slice (as in the real manifest).
 hal     = true
-# Example-level dep: the real example logs over epic-serial; the
+# Example-level dep: the real example logs over lib/serial; the
 # epic-cc driver path must drop it.
-depends_on = ["epic-serial"]
+depends_on = ["lib/serial"]
 
-[modules.epic-serial]
-dir        = "lib/serial"
+[modules."lib/serial"]
 summary    = "Tooling-test fixture."
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = []
 
-[modules.epic-serial.supported]
+[modules."lib/serial".supported]
 PIC16F87XA = ["16F877A"]
 PIC18Fxx5x = ["18F4550"]
 
-[modules.epic-serial.example.PIC16F87XA]
+[modules."lib/serial".example.PIC16F87XA]
 name    = "serial-sizecheck"
 sources = ["mcu/target_sizecheck.c"]
 
@@ -265,44 +255,42 @@ hal_sources = ["common/src/core/epic_harness_target.c"]
 harness_src = "common/src/core/epic_harness_target.c"
 epiccc_sources = ["common/src/core/epic_harness_target.c"]
 
-[modules.epic-usb]
-dir        = "lib/usb"
+[modules."lib/usb"]
 summary    = "Tooling-test fixture."
 sources    = ["src/epic_usb.c"]
 includes   = ["include"]
 depends_on = []
 needs_hal  = false
 
-[modules.epic-usb.supported]
+[modules."lib/usb".supported]
 PIC18Fxx5x = ["18F4550"]
 
-[modules.epic-usb.example.PIC18Fxx5x]
+[modules."lib/usb".example.PIC18Fxx5x]
 name    = "usb-cdc"
 sources = ["examples/example_usb.c"]
 config  = { FOSC = "HS", PLLDIV = "5", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF", BORV = "3" }
 
-[modules.epic-usb.example.PIC18Fxx5x.sim]
+[modules."lib/usb".example.PIC18Fxx5x.sim]
 name        = "usb-cdc-sim"
 harness_src = "common/src/core/epic_harness_sim.c"
 config      = { FOSC = "HS", PLLDIV = "1", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF" }
 
-[modules.epic-sdcard]
-dir        = "lib/sdcard"
+[modules."lib/sdcard"]
 summary    = "Tooling-test fixture."
 sources    = ["src/epic_sdcard.c", "third_party/m-stack-storage/src/mmc.c", "third_party/m-stack-storage/src/crc.c"]
 includes   = ["include", "third_party/m-stack-storage/include", "src/target"]
-depends_on = ["epic-tick"]
+depends_on = ["lib/tick"]
 
-[modules.epic-sdcard.supported]
+[modules."lib/sdcard".supported]
 PIC18Fxx5x = ["18F4550"]
 
-[modules.epic-sdcard.example.PIC18Fxx5x]
+[modules."lib/sdcard".example.PIC18Fxx5x]
 name    = "sdcard"
 sources = ["examples/example_sdcard.c"]
 config  = { FOSC = "HS", PLLDIV = "5", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF" }
-# Example-level dep: the real example logs over epic-serial; the
+# Example-level dep: the real example logs over lib/serial; the
 # epic-cc driver path must drop it.
-depends_on = ["epic-serial"]
+depends_on = ["lib/serial"]
 """
 
 
@@ -315,23 +303,23 @@ def load():
 
 class TestConfigSource(unittest.TestCase):
     def test_emits_one_pragma_per_entry(self):
-        out = epic_build.emit_config_source(load(), "epic-tick", "16F877A")
+        out = epic_build.emit_config_source(load(), "lib/tick", "16F877A")
         self.assertIn("#include <xc.h>", out)
         self.assertIn("#pragma config FOSC = HS", out)
         self.assertIn("#pragma config WDTE = ON", out)
 
     def test_marks_the_file_generated(self):
-        out = epic_build.emit_config_source(load(), "epic-tick", "16F877A")
+        out = epic_build.emit_config_source(load(), "lib/tick", "16F877A")
         self.assertIn("Auto-generated", out)
 
     def test_returns_none_when_the_example_has_no_config_table(self):
-        # epic-adcfilter's example carries no config table, matching its
+        # lib/adcfilter's example carries no config table, matching its
         # Makefile, which never compiled a config translation unit.
-        out = epic_build.emit_config_source(load(), "epic-adcfilter", "16F877A")
+        out = epic_build.emit_config_source(load(), "lib/adcfilter", "16F877A")
         self.assertIsNone(out)
 
     def test_sim_variant_uses_its_own_config_override(self):
-        out = epic_build.emit_config_source(load(), "epic-tick", "16F877A", variant="sim")
+        out = epic_build.emit_config_source(load(), "lib/tick", "16F877A", variant="sim")
         self.assertIn("#pragma config WDTE = OFF", out)
         self.assertNotIn("#pragma config WDTE = ON", out)
 
@@ -343,7 +331,7 @@ class TestEpicConfigSpecPic18(unittest.TestCase):
     postscaler enum) and pass the crystal, not the system clock, as
     xtal_hz."""
 
-    def _spec(self, module="epic-usb", mcu="18F4550", fosc_hz=None):
+    def _spec(self, module="lib/usb", mcu="18F4550", fosc_hz=None):
         return epic_build._epic_config_spec(load(), module, mcu, "target", fosc_hz)
 
     def test_ccp2mx_on_names_the_pin(self):
@@ -366,7 +354,7 @@ class TestEpicConfigSpecPic18(unittest.TestCase):
         # The digit map is the CPUDIV enum; a PLLDIV of 1 must not
         # become div1, which epic-cc's prescaler vocabulary lacks.
         # The sim stanza carries PLLDIV = "1" to exercise it.
-        spec = epic_build._epic_config_spec(load(), "epic-usb", "18F4550", "sim", None)
+        spec = epic_build._epic_config_spec(load(), "lib/usb", "18F4550", "sim", None)
         self.assertIn("plldiv=noprescale", spec)
 
     def test_crystal_not_system_clock_reaches_xtal_hz(self):
@@ -377,7 +365,7 @@ class TestEpicConfigSpecPic18(unittest.TestCase):
 
     def test_pic16_xtal_hz_stays_the_family_fosc(self):
         self.assertIn("xtal_hz=20000000",
-                      self._spec(module="epic-tick", mcu="16F877A"))
+                      self._spec(module="lib/tick", mcu="16F877A"))
 
 
 class TestEpicConfigSpecPic16F193X(unittest.TestCase):
@@ -388,7 +376,7 @@ class TestEpicConfigSpecPic16F193X(unittest.TestCase):
 
     def _spec(self):
         return epic_build._epic_config_spec(
-            load(), "epic-pic16f193x-firmware", "16F1937", "target", None)
+            load(), "hal/pic14e/16f193x", "16F1937", "target", None)
 
     def test_boren_keeps_the_device_field_name(self):
         self.assertIn("boren=on", self._spec())
@@ -408,7 +396,7 @@ class TestEpicConfigSpecPic18F2520(unittest.TestCase):
 
     def _spec(self):
         return epic_build._epic_config_spec(
-            load(), "epic-pic18f2520-firmware", "18F2520", "target", None)
+            load(), "hal/pic18/18f2520", "18F2520", "target", None)
 
     def test_boren_keeps_the_device_field_name(self):
         self.assertIn("boren=on", self._spec())
@@ -439,7 +427,7 @@ class TestEpicConfigSpecPic18F6520(unittest.TestCase):
 
     def _spec(self):
         return epic_build._epic_config_spec(
-            load(), "epic-pic18f6520-firmware", "18F6520", "target", None)
+            load(), "hal/pic18/18f6520", "18F6520", "target", None)
 
     def test_bor_keeps_the_device_field_name(self):
         self.assertIn("bor=on", self._spec())
@@ -463,7 +451,7 @@ class TestEpicConfigSpecPic18F1320(unittest.TestCase):
 
     def _spec(self):
         return epic_build._epic_config_spec(
-            load(), "epic-pic18f1320-firmware", "18F1320", "target", None)
+            load(), "hal/pic18/18f1320", "18F1320", "target", None)
 
     def test_bor_keeps_the_device_field_name(self):
         self.assertIn("bor=off", self._spec())
@@ -505,7 +493,7 @@ class TestDisplayPath(unittest.TestCase):
 
 
 class TestBuildScript(unittest.TestCase):
-    def script(self, module="epic-tick", mcu="16F877A", dfp_dir="/opt/dfp", fosc_hz=None,
+    def script(self, module="lib/tick", mcu="16F877A", dfp_dir="/opt/dfp", fosc_hz=None,
               variant="target"):
         return epic_build.emit_build_script(
             load(), module, mcu,
@@ -525,24 +513,24 @@ class TestBuildScript(unittest.TestCase):
         self.assertIn("build/16F877A/epic_tick.p1", s)
 
     def test_example_dependency_sources_are_in_the_build(self):
-        # epic-adcfilter's example depends_on epic-tick, so the tick
+        # lib/adcfilter's example depends_on lib/tick, so the tick
         # library joins the example's build even though the module has
         # no module-level dep.
         s = epic_build.emit_build_script(
-            load(), "epic-adcfilter", "16F877A",
+            load(), "lib/adcfilter", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp")
         self.assertIn("lib/tick/src/epic_tick.c", s)
         self.assertIn("lib/adcfilter/mcu/target_sizecheck.c", s)
 
     def test_example_dep_excluded_on_mcu_raises(self):
-        # epic-tick is excluded on 16F873A; epic-adcfilter's example
+        # lib/tick is excluded on 16F873A; lib/adcfilter's example
         # depends on it, so that build must fail loudly instead of
         # compiling excluded code.
         with self.assertRaises(epic_build.UnsupportedError) as cm:
             epic_build.emit_build_script(
-                load(), "epic-adcfilter", "16F873A",
+                load(), "lib/adcfilter", "16F873A",
                 build_dir="build", dfp_dir="/opt/dfp")
-        self.assertIn("epic-tick", str(cm.exception))
+        self.assertIn("lib/tick", str(cm.exception))
         self.assertIn("16F873A", str(cm.exception))
 
     def test_includes_conditional_source_only_on_matching_variant(self):
@@ -595,7 +583,7 @@ class TestBuildScript(unittest.TestCase):
     def test_config_less_example_script_has_no_config_reference(self):
         # Amendment 2's correction: no CONFIG_SRC in the old Makefile means
         # no config translation unit and no config object in the link.
-        s = self.script(module="epic-adcfilter")
+        s = self.script(module="lib/adcfilter")
         self.assertNotIn("config_", s)
 
     def test_config_bearing_example_compiles_and_links_the_config_object(self):
@@ -614,7 +602,7 @@ class TestBuildScript(unittest.TestCase):
 
     def test_sim_variant_without_one_raises(self):
         with self.assertRaises(epic_build.UnsupportedError) as cm:
-            self.script(module="epic-adcfilter", mcu="16F877A", variant="sim")
+            self.script(module="lib/adcfilter", mcu="16F877A", variant="sim")
         self.assertIn("no sim variant", str(cm.exception))
 
 
@@ -730,7 +718,7 @@ class TestEpicCcToolchain(unittest.TestCase):
 
     def script(self, mcu="16F877A"):
         return epic_build.emit_build_script(
-            load(), "epic-tick", mcu,
+            load(), "lib/tick", mcu,
             build_dir="build", dfp_dir="", toolchain="epic-cc",
         )
 
@@ -752,7 +740,7 @@ class TestEpicCcToolchain(unittest.TestCase):
 
     def test_report_lands_beside_the_hex(self):
         s = epic_build.emit_build_script(
-            load(), "epic-tick", "16F877A",
+            load(), "lib/tick", "16F877A",
             build_dir="build", dfp_dir="", toolchain="epic-cc",
             report=True,
         )
@@ -761,7 +749,7 @@ class TestEpicCcToolchain(unittest.TestCase):
     def test_report_on_xc8_raises(self):
         with self.assertRaises(epic_build.UnsupportedError) as ctx:
             epic_build.emit_build_script(
-                load(), "epic-tick", "16F877A",
+                load(), "lib/tick", "16F877A",
                 build_dir="build", dfp_dir="/opt/dfp", report=True,
             )
         self.assertIn("--toolchain epic-cc", str(ctx.exception))
@@ -781,7 +769,7 @@ class TestEpicCcToolchain(unittest.TestCase):
         for level in ("O0", "O1", "O2"):
             with self.subTest(level=level):
                 s = epic_build.emit_build_script(
-                    load(), "epic-tick", "16F877A",
+                    load(), "lib/tick", "16F877A",
                     build_dir="build", dfp_dir="", toolchain="epic-cc",
                     opt_level=level,
                 )
@@ -789,7 +777,7 @@ class TestEpicCcToolchain(unittest.TestCase):
 
     def test_opt_level_explicit_Os_matches_the_default(self):
         s = epic_build.emit_build_script(
-            load(), "epic-tick", "16F877A",
+            load(), "lib/tick", "16F877A",
             build_dir="build", dfp_dir="", toolchain="epic-cc",
             opt_level="Os",
         )
@@ -798,7 +786,7 @@ class TestEpicCcToolchain(unittest.TestCase):
     def test_opt_level_unknown_spelling_raises(self):
         with self.assertRaises(epic_build.UnsupportedError):
             epic_build.emit_build_script(
-                load(), "epic-tick", "16F877A",
+                load(), "lib/tick", "16F877A",
                 build_dir="build", dfp_dir="", toolchain="epic-cc",
                 opt_level="O3",
             )
@@ -806,14 +794,14 @@ class TestEpicCcToolchain(unittest.TestCase):
     def test_opt_level_on_xc8_raises(self):
         with self.assertRaises(epic_build.UnsupportedError) as ctx:
             epic_build.emit_build_script(
-                load(), "epic-tick", "16F877A",
+                load(), "lib/tick", "16F877A",
                 build_dir="build", dfp_dir="/opt/dfp", opt_level="O2",
             )
         self.assertIn("--toolchain epic-cc", str(ctx.exception))
 
     def test_opt_level_default_leaves_xc8_alone(self):
         s = epic_build.emit_build_script(
-            load(), "epic-tick", "16F877A",
+            load(), "lib/tick", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp",
         )
         self.assertIn("xc8-cc", s)
@@ -826,13 +814,13 @@ class TestEpicCcToolchain(unittest.TestCase):
 
     def pid_script(self):
         return epic_build.emit_build_script(
-            load(), "epic-pid", "16F877A",
+            load(), "lib/pid", "16F877A",
             build_dir="build", dfp_dir="", toolchain="epic-cc",
         )
 
     def encoder_script(self):
         return epic_build.emit_build_script(
-            load(), "epic-encoder", "16F877A",
+            load(), "lib/encoder", "16F877A",
             build_dir="build", dfp_dir="", toolchain="epic-cc",
         )
 
@@ -845,7 +833,7 @@ class TestEpicCcToolchain(unittest.TestCase):
         self.assertNotIn("src/pic16/epic_math_mul.c", s)
 
     def test_pid_epiccc_builds_the_full_example_with_the_serial_tick_slice(self):
-        # epic-pid's epiccc_hal_sources_by_family override (HAL-3b) puts
+        # lib/pid's epiccc_hal_sources_by_family override (HAL-3b) puts
         # the full example on the epic-cc path: the serial + tick tier
         # replaces the sizecheck driver, and the example's tick/serial
         # deps join the link.
@@ -866,7 +854,7 @@ class TestEpicCcToolchain(unittest.TestCase):
 
     def test_encoder_epiccc_uses_the_driver_and_drops_tick_and_serial(self):
         # The driver supplies epic_tick_get/epic_tick_elapsed_since
-        # (epic-tick is HAL-3c, #86); the module's tick/serial example
+        # (lib/tick is HAL-3c, #86); the module's tick/serial example
         # deps must not join the link (their include dirs may remain as
         # harmless search paths).
         s = self.encoder_script()
@@ -884,13 +872,13 @@ class TestEpicCcToolchain(unittest.TestCase):
 
     def sdcard_script(self):
         return epic_build.emit_build_script(
-            load(), "epic-sdcard", "18F4550",
+            load(), "lib/sdcard", "18F4550",
             build_dir="build", dfp_dir="", toolchain="epic-cc",
         )
 
     def test_sdcard_epiccc_uses_the_driver_and_keeps_tick(self):
         # The probe links the real epic_sdcard.c and the vendored m-stack
-        # sources; epic-tick stays (epic_sdcard.c's timer callbacks call
+        # sources; lib/tick stays (epic_sdcard.c's timer callbacks call
         # epic_tick_get/epic_tick_elapsed_since), the example and its
         # serial dep go.
         s = self.sdcard_script()
@@ -903,12 +891,12 @@ class TestEpicCcToolchain(unittest.TestCase):
         self.assertNotIn("lib/serial/src", s)
 
 EPICC_MANIFEST = MANIFEST.replace(
-    '[modules.epic-tick.example.PIC16F87XA.sim]',
-    '[modules.epic-tick.example.PIC16F87XA.epiccc]\n'
+    '[modules."lib/tick".example.PIC16F87XA.sim]',
+    '[modules."lib/tick".example.PIC16F87XA.epiccc]\n'
     'name    = "tick-blink-cc"\n'
     'sources = ["examples/example_tick_epiccc.c"]\n'
     'config  = { FOSC = "HS", WDTE = "OFF" }\n\n'
-    '[modules.epic-tick.example.PIC16F87XA.sim]',
+    '[modules."lib/tick".example.PIC16F87XA.sim]',
 )
 
 
@@ -926,30 +914,30 @@ class TestEpicccExample(unittest.TestCase):
 
     def test_config_source_uses_the_variant_config(self):
         out = epic_build.emit_config_source(
-            epiccload(), "epic-tick", "16F877A", toolchain="epic-cc")
+            epiccload(), "lib/tick", "16F877A", toolchain="epic-cc")
         self.assertIn("wdt=off", out.lower())
         self.assertNotIn("wdt=on", out.lower())
 
     def test_config_source_xc8_path_keeps_the_target_config(self):
-        out = epic_build.emit_config_source(epiccload(), "epic-tick", "16F877A")
+        out = epic_build.emit_config_source(epiccload(), "lib/tick", "16F877A")
         self.assertIn("#pragma config WDTE = ON", out)
 
     def test_build_script_links_the_variant_sources(self):
         s = epic_build.emit_build_script(
-            epiccload(), "epic-tick", "16F877A",
+            epiccload(), "lib/tick", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc")
         self.assertIn("lib/tick/examples/example_tick_epiccc.c", s)
         self.assertNotIn("lib/tick/examples/example_tick.c", s)
 
     def test_build_script_names_the_hex_after_the_variant(self):
         s = epic_build.emit_build_script(
-            epiccload(), "epic-tick", "16F877A",
+            epiccload(), "lib/tick", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc")
         self.assertIn("build/16F877A-tick-blink-cc.hex", s)
 
 
 SIMHALT_MANIFEST = MANIFEST + """
-[modules.epic-tick.epiccc_sim_hal_sources_by_family]
+[modules."lib/tick".epiccc_sim_hal_sources_by_family]
 PIC16F87XA = [
   "hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c",
   "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c",
@@ -971,7 +959,7 @@ class TestEpicccSimHalSliceEmit(unittest.TestCase):
 
     def sim_epiccc(self):
         return epic_build.emit_build_script(
-            simhaltload(), "epic-tick", "16F877A",
+            simhaltload(), "lib/tick", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc",
             variant="sim")
 
@@ -983,13 +971,13 @@ class TestEpicccSimHalSliceEmit(unittest.TestCase):
 
     def test_sim_xc8_ignores_the_sim_slice(self):
         s = epic_build.emit_build_script(
-            simhaltload(), "epic-tick", "16F877A",
+            simhaltload(), "lib/tick", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp", variant="sim")
         self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c", s)
 
     def test_target_epiccc_ignores_the_sim_slice(self):
         s = epic_build.emit_build_script(
-            simhaltload(), "epic-tick", "16F877A",
+            simhaltload(), "lib/tick", "16F877A",
             build_dir="build", dfp_dir="/opt/dfp", toolchain="epic-cc")
         self.assertNotIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", s)
         self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c", s)

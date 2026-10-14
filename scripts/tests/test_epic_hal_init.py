@@ -16,42 +16,39 @@ fosc_hz  = 20000000
 includes = ["hal/pic14/16f87xa/include/target", "hal/pic14/16f87xa/include", "common/include"]
 hal_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c"]
 
-[modules.pic16f87xa-hal]
-dir        = "hal/pic14/16f87xa"
+[modules."hal/pic14/16f87xa"]
 summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
 needs_hal  = true
-[modules.pic16f87xa-hal.supported]
+[modules."hal/pic14/16f87xa".supported]
 PIC16F87XA = ["16F873A", "16F877A"]
-[modules.pic16f87xa-hal.example.PIC16F87XA]
+[modules."hal/pic14/16f87xa".example.PIC16F87XA]
 name    = "blink"
 sources = ["tests/example_blink.c"]
 config  = { FOSC = "HS", WDTE = "ON", PWRTE = "ON", BOREN = "ON", LVP = "OFF", WRT = "OFF" }
 
-[modules.epic-tick]
-dir        = "lib/tick"
+[modules."lib/tick"]
 summary    = "Tooling-test fixture."
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
-[modules.epic-tick.supported]
+[modules."lib/tick".supported]
 PIC16F87XA = ["16F873A", "16F877A"]
-[modules.epic-tick.example.PIC16F87XA]
+[modules."lib/tick".example.PIC16F87XA]
 name    = "tick-blink"
 sources = ["examples/example_tick.c"]
 config  = { FOSC = "HS" }
 
-[modules.epic-serial]
-dir        = "lib/serial"
+[modules."lib/serial"]
 summary    = "Tooling-test fixture."
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
-depends_on = ["epic-tick"]
-[modules.epic-serial.supported]
+depends_on = ["lib/tick"]
+[modules."lib/serial".supported]
 PIC16F87XA = ["16F877A"]
-[modules.epic-serial.excluded]
+[modules."lib/serial".excluded]
 16F873A = "UART only on 28-pin? no: demo exclusion reason"
 """
 
@@ -66,17 +63,17 @@ class TestResolveSelection(unittest.TestCase):
 
     def test_hal_pseudo_module_is_dir_match(self):
         fam = self.m.families["PIC16F87XA"]
-        self.assertEqual(epic_hal_init.hal_pseudo_module(self.m, fam), "pic16f87xa-hal")
+        self.assertEqual(epic_hal_init.hal_pseudo_module(self.m, fam), "hal/pic14/16f87xa")
 
     def test_depends_on_expands_transitively(self):
-        sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
-        self.assertIn("epic-serial", sel)
-        self.assertIn("epic-tick", sel)
+        sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["lib/serial"])
+        self.assertIn("lib/serial", sel)
+        self.assertIn("lib/tick", sel)
 
     def test_unsupported_part_refuses_with_reason(self):
         with self.assertRaises(epic_hal_init.SelectionError) as cm:
-            epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F873A", ["epic-serial"])
-        self.assertIn("epic-serial", str(cm.exception))
+            epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F873A", ["lib/serial"])
+        self.assertIn("lib/serial", str(cm.exception))
         self.assertIn("16F873A", str(cm.exception))
 
     def test_unknown_module_refuses(self):
@@ -85,7 +82,7 @@ class TestResolveSelection(unittest.TestCase):
 
     def test_unknown_family_refuses(self):
         with self.assertRaises(epic_hal_init.SelectionError):
-            epic_hal_init.resolve_selection(self.m, "NOPE", "16F877A", ["epic-tick"])
+            epic_hal_init.resolve_selection(self.m, "NOPE", "16F877A", ["lib/tick"])
 
     def test_family_for_part(self):
         self.assertEqual(epic_hal_init.family_for_part(self.m, "16F877A"), "PIC16F87XA")
@@ -214,7 +211,7 @@ class TestPatchX(unittest.TestCase):
 
     def test_source_dirs_hal_plus_modules(self):
         fam = self.m.families["PIC16F87XA"]
-        sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
+        sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["lib/serial"])
         d = epic_hal_init.source_dirs(self.m, fam, "16F877A", sel)
         self.assertIn("hal/pic14/16f87xa/src/peripherals", d)
         self.assertIn("lib/serial/src", d)
@@ -222,7 +219,7 @@ class TestPatchX(unittest.TestCase):
 
     def test_include_dirs_family_first(self):
         fam = self.m.families["PIC16F87XA"]
-        sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
+        sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["lib/serial"])
         d = epic_hal_init.include_dirs(self.m, fam, "16F877A", sel)
         self.assertEqual(d[0], "hal/pic14/16f87xa/include/target")
         self.assertIn("lib/serial/include", d)
@@ -230,7 +227,7 @@ class TestPatchX(unittest.TestCase):
 
     def test_patch_changes_device_macros_includes_sourceroots(self):
         fam = self.m.families["PIC16F87XA"]
-        sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
+        sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["lib/serial"])
         sd = epic_hal_init.source_dirs(self.m, fam, "16F877A", sel)
         idd = epic_hal_init.include_dirs(self.m, fam, "16F877A", sel)
         out = epic_hal_init.patch_configurations_xml(
@@ -250,7 +247,7 @@ class TestPatchX(unittest.TestCase):
         # third_party/epic-hal gets that prefix instead of ../..; from
         # <proj>/myapp.X it resolves to <proj>/third_party/epic-hal.
         fam = self.m.families["PIC16F87XA"]
-        sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["epic-serial"])
+        sel = epic_hal_init.resolve_selection(self.m, "PIC16F87XA", "16F877A", ["lib/serial"])
         sd = epic_hal_init.source_dirs(self.m, fam, "16F877A", sel)
         idd = epic_hal_init.include_dirs(self.m, fam, "16F877A", sel)
         out = epic_hal_init.patch_configurations_xml(
@@ -279,7 +276,7 @@ class TestInitProject(unittest.TestCase):
 
     def test_writes_main_makefile_and_x(self):
         epic_hal_init.init_project(
-            self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+            self.m, "PIC16F87XA", "16F877A", ["lib/serial"],
             self.bundle, self.out, "myapp")
         self.assertTrue(os.path.isfile(os.path.join(self.out, "main.c")))
         self.assertTrue(os.path.isfile(os.path.join(self.out, "Makefile")))
@@ -302,11 +299,11 @@ class TestInitProject(unittest.TestCase):
 
     def test_refuses_existing_project(self):
         epic_hal_init.init_project(
-            self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+            self.m, "PIC16F87XA", "16F877A", ["lib/serial"],
             self.bundle, self.out, "myapp")
         with self.assertRaises(FileExistsError):
             epic_hal_init.init_project(
-                self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+                self.m, "PIC16F87XA", "16F877A", ["lib/serial"],
                 self.bundle, self.out, "myapp")
 
     def test_writes_x_from_repo_layout(self):
@@ -319,7 +316,7 @@ class TestInitProject(unittest.TestCase):
         (xdir / "main.c").write_text("/* old */\n")
         out = tempfile.mkdtemp()
         epic_hal_init.init_project(
-            self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+            self.m, "PIC16F87XA", "16F877A", ["lib/serial"],
             str(bundle), out, "myapp")
         cfg = pathlib.Path(out) / "myapp.X" / "nbproject" / "configurations.xml"
         self.assertTrue(cfg.is_file())
@@ -332,7 +329,7 @@ class TestInitProject(unittest.TestCase):
         # so the consumer Makefile reaches the bundle's epic-hal.mk.
         out = pathlib.Path(self.bundle) / "scaffold"
         epic_hal_init.init_project(
-            self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+            self.m, "PIC16F87XA", "16F877A", ["lib/serial"],
             self.bundle, str(out), "myapp")
         mk = (out / "Makefile").read_text()
         self.assertIn("EPIC_HAL_DIR := ..\n", mk)
@@ -351,7 +348,7 @@ class TestInitProject(unittest.TestCase):
         (xdir / "nbproject" / "configurations.xml").write_text(SAMPLE_XML)
         (xdir / "main.c").write_text("/* old */\n")
         epic_hal_init.init_project(
-            self.m, "PIC16F87XA", "16F877A", ["epic-serial"],
+            self.m, "PIC16F87XA", "16F877A", ["lib/serial"],
             str(bundle), str(proj), "myapp")
         self.assertTrue((proj / "main.c").is_file())
         self.assertTrue((proj / "Makefile").is_file())
