@@ -534,4 +534,24 @@ class TestXc8Scaffold(unittest.TestCase):
         self.assertIn("not found at", bad.stderr)
         self.assertIn(self.m.families["PIC16F87XA"].dfp, bad.stderr)
 
+    @unittest.skipUnless(shutil.which("make"), "needs make")
+    def test_bundle_pack_name_wins_over_manifest_default(self):
+        # A bundle that names its own pack keeps it: the ?= default only fills a gap.
+        custom = "Custom.Test_DFP"
+        (self.bundle / "epic-hal.mk").write_text(
+            f"EPIC_HAL_DFP := {custom}\nEPIC_HAL_SRCS :=\nEPIC_HAL_CFLAGS :=\n"
+            "EPIC_HAL_BUILD_DIR := build\n")
+        xc8 = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, xc8, ignore_errors=True)
+        (xc8 / "bin").mkdir()
+        (xc8 / "bin" / "xc8-cc").write_text("#!/bin/sh\nexit 0\n")
+        (xc8 / "bin" / "xc8-cc").chmod(0o755)
+        (xc8 / "pic" / "packs" / custom / "xc8").mkdir(parents=True)
+        self.scaffold()
+        env = dict(os.environ, PATH=f"{xc8 / 'bin'}{os.pathsep}{os.environ['PATH']}")
+        run = subprocess.run(["make", "-n", "-C", str(self.out), "TOOLCHAIN=xc8"],
+                             capture_output=True, text=True, env=env)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertIn(f"{custom}/xc8", run.stdout)
+
 if __name__ == "__main__": unittest.main()
