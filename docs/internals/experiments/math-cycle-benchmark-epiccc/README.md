@@ -4,7 +4,7 @@ Status: 2026-08-26. Records the cycle benchmark of lib/math's portable C
 path (`src/host/` + `src/common/`) compiled by epic-cc on the PIC14
 devices, the measurement epic-hal#90 exists to produce. Same probe shape,
 same operands, same TMR1 method as the hand-asm benchmark in
-`docs/experiments/math-cycle-benchmark/`, so the numbers line up directly
+`docs/internals/experiments/math-cycle-benchmark/`, so the numbers line up directly
 against that directory's tables.
 
 ## Question
@@ -126,16 +126,16 @@ image available:
       -e PIC8_CLANG_UNWRAPPED=/opt/clang/bin/clang \
       -e PIC8_CLANG_RESOURCE_DIR=/opt/clang/lib/clang/20 \
       epic-cc-dev:local-<hash> /tmp/cargo-target/release/epic-cc --target 16F877A \
-      -I lib/math/include -I docs/experiments/math-cycle-benchmark-epiccc \
+      -I lib/math/include -I docs/internals/experiments/math-cycle-benchmark-epiccc \
       -D PIC16F877A -D FOSC_HZ=20000000 -D __EPIC_CC__ \
       -o build-sim/bench-epiccc/87-cpath.hex \
-      docs/experiments/math-cycle-benchmark-epiccc/bench_epiccc.c \
+      docs/internals/experiments/math-cycle-benchmark-epiccc/bench_epiccc.c \
       lib/math/src/host/epic_math_mul.c lib/math/src/host/epic_math_div.c \
       lib/math/src/host/epic_math_addsub.c
 
     # measure (hal toolchain image, mdb UART capture)
     docker run --rm -v "$PWD":/repo -w /repo epic-hal-toolchain:local \
-      mdb.sh /repo/docs/experiments/math-cycle-benchmark-epiccc/cap.mdb
+      mdb.sh /repo/docs/internals/experiments/math-cycle-benchmark-epiccc/cap.mdb
 
 `cap.mdb` programs `build-sim/bench-epiccc/87-cpath.hex` under MPLAB SIM
 and captures the UART stream to `build-sim/bench-epiccc/out-87.txt`.

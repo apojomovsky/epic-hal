@@ -32,4 +32,4 @@ if (!epic_settings_load_or_default(0x10u, &cfg, sizeof(cfg), &defaults)) {
 
 ## License
 
-MIT, see the [repo LICENSE](../LICENSE).
+MIT, see the [repo LICENSE](../../LICENSE).

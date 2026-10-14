@@ -84,4 +84,4 @@ int n = EPIC_SWUART_Read(&h, buf, sizeof(buf));  /* non-blocking RX */
 
 ## License
 
-MIT, see the [repo LICENSE](../LICENSE).
+MIT, see the [repo LICENSE](../../LICENSE).

@@ -17,7 +17,7 @@ The contract design is documented in
 [common/README.md](../../../common/README.md) +
 [common/MANUAL.md](../../../common/MANUAL.md), and the procedure
 for adding a new family in
-[docs/adding-a-device.md](../docs/adding-a-device.md).
+[docs/adding-a-device.md](../../../docs/adding-a-device.md).
 
 ## Status
 
@@ -113,7 +113,7 @@ source compiles unchanged in both builds.
 - [**../../../common/README.md**](../../../common/README.md) +
   [**../../../common/MANUAL.md**](../../../common/MANUAL.md): the fixed
   contract design and how families interoperate.
-- [**../docs/adding-a-device.md**](../docs/adding-a-device.md): the
+- [**../docs/adding-a-device.md**](../../../docs/adding-a-device.md): the
   verification-gated playbook for adding a new device or family.
 
 ## Environment split

@@ -136,7 +136,7 @@ Both are deterministic regressions (identical raw deltas across runs).
 Inside the XC8 toolchain container, from the repo root:
 
     docker run --rm -v "$PWD":/work -w /work epic-hal-toolchain:local \
-      sh docs/experiments/math-cycle-benchmark/matrix.sh
+      sh docs/internals/experiments/math-cycle-benchmark/matrix.sh
 
 The matrix builds all 12 variants (2 families x full/native x -O levels)
 and prints per-build "<op> <hexdelta>" lines captured from the simulator

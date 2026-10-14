@@ -81,4 +81,4 @@ for (;;) {
 
 ## License
 
-MIT, see the [repo LICENSE](../LICENSE).
+MIT, see the [repo LICENSE](../../LICENSE).

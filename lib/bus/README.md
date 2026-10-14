@@ -71,4 +71,4 @@ epic_bus_spi_mem_write(0x20, cfg, 2);          /* write 2 regs */
 
 ## License
 
-MIT, see the [repo LICENSE](../LICENSE).
+MIT, see the [repo LICENSE](../../LICENSE).

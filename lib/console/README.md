@@ -33,4 +33,4 @@ epic_console_poll(&con);
 
 ## License
 
-MIT, see the [repo LICENSE](../LICENSE).
+MIT, see the [repo LICENSE](../../LICENSE).

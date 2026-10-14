@@ -2,7 +2,7 @@
 
 **Status:** draft (pending user approval)<br>
 **Date:** 2026-08-22<br>
-**Parent:** `epic-cc/docs/superpowers/specs/2026-08-22-pic-variants-design.md` (compiler contract), `epic-hal/docs/adding-a-device.md` (existing playbook), `epic-common/MANUAL.md`<br>
+**Parent:** `epic-cc/docs/internals/superpowers/specs/2026-08-22-pic-variants-design.md` (compiler contract), `epic-hal/docs/adding-a-device.md` (existing playbook), `epic-common/MANUAL.md`<br>
 **Scope:** HAL only. `epic-cc#83` is the compiler-side contract this spec consumes.<br>
 **Tickets:** `epic-hal#70` (registry + generation + CI), `#71` (p16f887 exemplar).
 

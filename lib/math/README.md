@@ -68,4 +68,4 @@ uint16_t s; epic_math_rand_next(&s);                        /* explicit state */
 
 ## License
 
-MIT, see the [repo LICENSE](../LICENSE).
+MIT, see the [repo LICENSE](../../LICENSE).
