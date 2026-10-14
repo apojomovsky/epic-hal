@@ -1,13 +1,10 @@
 /**
- * CLC switch-debouncer demo probe, AN2805 2-CLC shape ported to the 2-input D
- * flip-flop cells. Host-only: the slow TMR2 clock and the switch arrive
- * through pic16f1508_sim_drive_clc_input (SEL codes are stored but not
- * decoded), and the probe closes the one inter-cell wire the host model does
- * not route by re-driving STAGE2 D2 from the live STAGE1 output each half
- * clock. The Q40 1-CLC toggle variant needs a monostable TMR2 the 1508 does
- * not have, so only the free-running 2-CLC shape ports. Wiring: STAGE1 (CLC2)
- * samples the switch, STAGE2 (CLC1) samples switch AND STAGE1 through a De
- * Morgan gate, so a glitch must persist across two slow edges to propagate.
+ * CLC switch-debouncer probe, AN2805 2-CLC shape on 2-input D cells.
+ * Host-only: the slow clock and switch arrive through the Dx hook (SEL codes
+ * stored, not decoded), and the probe closes the unrouted inter-cell wire by
+ * re-driving STAGE2 D2 from the live STAGE1 output each half clock. STAGE1
+ * samples the switch, STAGE2 samples switch AND STAGE1, so a glitch must
+ * persist across two slow edges to propagate.
  */
 #include <stddef.h>
 #include "pic16f1508.h"

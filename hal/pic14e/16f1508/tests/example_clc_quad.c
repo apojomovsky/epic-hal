@@ -1,12 +1,10 @@
 /**
- * CLC quadrature-decoder-assist demo probe, 2x J-K direction cells with a
- * software counter and a 10-LED bar graph. Host-only: the encoder A/B levels
- * arrive through pic16f1508_sim_drive_clc_input (SEL codes are stored but not
- * decoded); the hardware TMR1/TMR3 counters of the Q40 precedent do not exist
- * here yet, so rising edges dispatch callbacks that count instead. Wiring
- * mirrors the Q40 clc1.c/clc2.c pair: each cell clocks on one encoder line
- * while the other sets it, so only the cell whose input leads its clock fires.
- * LEDs RC0..RC7, RA4, RA5 follow the Q40 bar-graph layout.
+ * CLC quadrature-decoder-assist probe: 2x J-K direction cells, software
+ * counter, 10-LED bar graph. Host-only: A/B arrive through the Dx hook (SEL
+ * codes stored, not decoded); callbacks count rising edges until the
+ * TMR1/TMR3 counters land. Each cell clocks on one encoder line while the
+ * other sets it, so only the cell whose input leads its clock fires. LEDs
+ * RC0..RC7, RA4, RA5 follow the Q40 bar-graph layout.
  */
 #include <stddef.h>
 #include "pic16f1508.h"
