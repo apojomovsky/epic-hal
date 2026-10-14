@@ -32,10 +32,10 @@ _ROOT_DIRS = ("common/", "hal/", "lib/", "demos/")
 
 def join_module_path(mod_dir: str, path: str) -> str:
     """Repo-root-relative form of one manifest source or include path.
-    @brief Resolve without knowing how deep the module sits.
-    @param mod_dir the module's `dir` entry.
-    @param path a module-local file or a root-anchored cross-module path.
-    @return the normalized path from the repo root.
+
+    Module-local files resolve under the module's `dir`; a path whose
+    first segment is a top-level tree directory passes through
+    unchanged, so the result never depends on how deep the module sits.
     """
     if path.startswith(_ROOT_DIRS):
         return posixpath.normpath(path)
