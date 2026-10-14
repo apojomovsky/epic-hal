@@ -7,5 +7,5 @@ publish = false
 # Path deps land at `<repo>/epic-cc/`: CI checks the pinned epic-cc out
 # there, and `make sim-epiccc` creates the symlink locally (DEVELOPMENT.md).
 [dependencies]
-pic14-sim = { path = "../../epic-cc/crates/sim" }
-device = { path = "../../epic-cc/crates/device" }
+pic14-sim = { path = "../../../epic-cc/crates/sim" }
+device = { path = "../../../epic-cc/crates/device" }
