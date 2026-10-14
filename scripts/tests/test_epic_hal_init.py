@@ -260,7 +260,7 @@ class TestPatchX(unittest.TestCase):
         for e in root.findall(".//sourceRootList/Elem"):
             self.assertTrue(e.text.startswith("third_party/epic-hal/"), e.text)
 
-import os, tempfile, shutil
+import os, subprocess, tempfile, shutil
 
 class TestInitProject(unittest.TestCase):
     def setUp(self):
@@ -477,5 +477,61 @@ class TestBundlePresence(unittest.TestCase):
                              capture_output=True, text=True)
         self.assertEqual(run.returncode, 0)
         self.assertEqual(run.stdout.strip(), "epic-hal v0.6.0")
+
+class TestXc8Scaffold(unittest.TestCase):
+    """The xc8 Makefile must resolve the device pack without the bundle's
+    epic-hal.mk supplying EPIC_HAL_DFP (epic-hal#427)."""
+
+    def setUp(self):
+        self.m = load()
+        self.bundle = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.bundle, ignore_errors=True)
+        xdir = self.bundle / "examples" / "epic-hal-demo.X"
+        (xdir / "nbproject").mkdir(parents=True)
+        (xdir / "nbproject" / "configurations.xml").write_text(SAMPLE_XML)
+        (xdir / "main.c").write_text("/* old */\n")
+        # A bundle epic-hal.mk that, unlike the real one, never names the pack.
+        (self.bundle / "epic-hal.mk").write_text(
+            "EPIC_HAL_SRCS :=\nEPIC_HAL_CFLAGS :=\nEPIC_HAL_BUILD_DIR := build\n")
+        self.out = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.out, ignore_errors=True)
+
+    def scaffold(self):
+        epic_hal_init.init_project(
+            self.m, "PIC16F87XA", "16F877A", ["lib/serial"],
+            str(self.bundle), str(self.out), "myapp", toolchain="xc8")
+        return (self.out / "Makefile").read_text()
+
+    def test_xc8_makefile_defines_dfp_from_manifest(self):
+        mk = self.scaffold()
+        dfp = self.m.families["PIC16F87XA"].dfp
+        self.assertIn("TOOLCHAIN ?= xc8", mk)
+        self.assertIn(f"EPIC_HAL_DFP ?= {dfp}\n", mk)
+        # Defined after the bundle include, so a bundle value still wins.
+        self.assertLess(mk.index("include $(EPIC_HAL_DIR)/epic-hal.mk"),
+                        mk.index("EPIC_HAL_DFP ?="))
+        self.assertIn("not found at $(DFP)", mk)
+
+    @unittest.skipUnless(shutil.which("make"), "needs make")
+    def test_xc8_make_resolves_pack_and_refuses_when_missing(self):
+        # A fake XC8 install: xc8-cc on PATH, the pack under pic/packs.
+        xc8 = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, xc8, ignore_errors=True)
+        (xc8 / "bin").mkdir()
+        (xc8 / "bin" / "xc8-cc").write_text("#!/bin/sh\nexit 0\n")
+        (xc8 / "bin" / "xc8-cc").chmod(0o755)
+        pack = xc8 / "pic" / "packs" / self.m.families["PIC16F87XA"].dfp / "xc8"
+        pack.mkdir(parents=True)
+        self.scaffold()
+        env = dict(os.environ, PATH=f"{xc8 / 'bin'}{os.pathsep}{os.environ['PATH']}")
+        ok = subprocess.run(["make", "-n", "-C", str(self.out), "TOOLCHAIN=xc8"],
+                            capture_output=True, text=True, env=env)
+        self.assertEqual(ok.returncode, 0, ok.stderr)
+        shutil.rmtree(pack)
+        bad = subprocess.run(["make", "-n", "-C", str(self.out), "TOOLCHAIN=xc8"],
+                             capture_output=True, text=True, env=env)
+        self.assertNotEqual(bad.returncode, 0)
+        self.assertIn("not found at", bad.stderr)
+        self.assertIn(self.m.families["PIC16F87XA"].dfp, bad.stderr)
 
 if __name__ == "__main__": unittest.main()
