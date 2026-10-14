@@ -2,7 +2,6 @@
 # Builds and measures the cycle benchmark across families and -O levels.
 # The firmware (bench.c) times each op with TMR1 over N=100 iterations and
 # prints "<op> <hexdelta>" over UART; per-op cycles = (delta - loop_empty)/N.
-#
 # Run inside the XC8 toolchain container, from the repo root:
 #   docker run --rm -v "$PWD":/work -w /work epic-hal-toolchain:local \
 #     sh docs/internals/experiments/math-cycle-benchmark/matrix.sh
