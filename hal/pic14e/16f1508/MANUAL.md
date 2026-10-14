@@ -1,7 +1,7 @@
 # PIC16F1508 / PIC16F1509 register reference
 
-Per-peripheral register reference for the GPIO and interrupt-on-change
-sources in this HAL. Shared conventions (naming, handle pattern,
+Per-peripheral register reference for the GPIO, interrupt-on-change, timer,
+and CLC sources in this HAL. Shared conventions (naming, handle pattern,
 harness, interrupt model) are in
 [common/MANUAL.md](../../../common/MANUAL.md). This file covers only
 what is specific to this part.
@@ -17,10 +17,12 @@ what is specific to this part.
   <https://ww1.microchip.com/downloads/en/DeviceDoc/40001609E.pdf>. Page cites
   below are its printed page numbers. Checked so far: the PIR3/PIE3 CLC bits and
   addresses (#388), the CLCxCON bit layout (#395), the CLCxPOL, CLCxSEL0/1 and
-  CLCxGLS0..3 bit positions with the Table 24-1 input-select codes (#384), and
-  the Figure 24-3 gate roles behind the host-sim mode map (#384, #400). A value
-  or cite without a datasheet page here is still DFP/EDC-derived and
-  **unverified**.
+  CLCxGLS0..3 bit positions with the Table 24-1 input-select codes (#384), the
+  Figure 24-3 gate roles behind the host-sim mode map (#384, #400), the T1CON
+  and T2CON bit layouts with the PIR1/PIE1 TMR1/TMR2 bits (#415), and the
+  TMR1L/H, T1CON, T1GCON, TMR2, PR2 and T2CON addresses from the Table 3-7
+  memory map (#415). A value or cite without a datasheet page here is still
+  DFP/EDC-derived and **unverified**.
 
 ## Implemented bits (from EDC impl masks)
 
@@ -54,6 +56,13 @@ Addresses are the `PIC_REG_*` values in `include/pic16f1508_sfr.h`
 |----------|---------|
 | INTCON   | 0x0B    |
 | OPTION   | 0x95    |
+| TMR1L    | 0x16    |
+| TMR1H    | 0x17    |
+| T1CON    | 0x18    |
+| T1GCON   | 0x19    |
+| TMR2     | 0x1A    |
+| PR2      | 0x1B    |
+| T2CON    | 0x1C    |
 | PORTA    | 0x0C    |
 | PORTB    | 0x0D    |
 | PORTC    | 0x0E    |
@@ -84,7 +93,7 @@ because IOC is implemented on PORTB only.
 |-----|----------|------------------------------------------------------------------|
 | INTCON<0> | IOCIF | Set when any enabled IOCB flag is set. Cleared by the handler. |
 | INTCON<3> | IOCIE | Gates the IOC source. The dispatcher calls IOC only when IOCIF and IOCIE are both set. |
-| INTCON<6> | PEIE  | Set by `EPIC_IRQ_Enable` on a CLC source. Exposes PIR1, PIR2 and PIR3 sources; the dispatcher acknowledges enabled unowned ones (see CLC interrupt routing). |
+| INTCON<6> | PEIE  | Set by `EPIC_IRQ_Enable` on a CLC or timer source. Exposes PIR1, PIR2 and PIR3 sources; the dispatcher acknowledges enabled unowned ones (see CLC interrupt routing). |
 | INTCON<7> | GIE   | Global interrupt enable.                                         |
 
 `IOCBF` flags are cleared in the handler one captured bit at a time with a
@@ -113,6 +122,54 @@ pull-up state must clear WPUA and WPUB first.
 Single vector, no priority. Hardware saves context automatically
 (`common/MANUAL.md` §6). The ISR vector is in
 `src/target/pic16f1508_isr_vector.c`.
+
+## Timer1
+
+16-bit timer/counter (DS40001609E §19.0, page 155). TMR1L at 0x16 and TMR1H
+at 0x17 hold the count, T1CON at 0x18 holds the clock source, prescaler and
+on bit, T1GCON at 0x19 is the gate control. The driver covers the
+free-running timer path and the external counter path; the gate stays at
+POR (TMR1GE clear, counting regardless of the gate function).
+
+| Register | Bits used                                              |
+|----------|--------------------------------------------------------|
+| T1CON    | TMR1CS 7:6, T1CKPS 5:4, T1OSCEN 3, T1SYNC 2, TMR1ON 0 (bit 1 unimplemented) |
+
+T1CON is Register 19-1 (page 163). Clock sources: 00 is FOSC/4 (timer),
+01 is FOSC, 10 is the T1CKI pin or crystal with T1OSCEN, 11 is LFINTOSC.
+The driver accepts 00 and 10 with T1OSCEN clear (T1CKI pin, counter mode),
+setting T1SYNC so the input is not resynchronized; 01 and 11 return
+`EPIC_INVALID`. Prescaler T1CKPS<1:0> is 1:1, 1:2, 1:4, 1:8. T1CON POR is
+0x00 (Table 3-9); the counter holds no POR value. Overflow sets PIR1
+TMR1IF (bit 0), enabled by PIE1 TMR1IE (bit 0): Register 7-5 (PIR1,
+page 78) and Register 7-2 (PIE1, page 75). T1_overflow feeds the CLC data
+inputs at D1 code 6 and D2 code 2 (Table 24-1, page 258): it is the beat
+dimmer R source and the counter the quadrature assist feeds.
+
+## Timer2
+
+8-bit timer with PR2 period match (DS40001609E §20.0, page 166). TMR2 at
+0x1A holds the count, PR2 at 0x1B holds the period, T2CON at 0x1C holds the
+postscaler, on bit and prescaler. TMR2 counts 0..PR2 and resets to 0 on the
+cycle it matches PR2, so it never holds PR2+1; PR2 powers up at 0xFF (§20.1).
+A write to TMR2 or T2CON clears the prescaler and postscaler counters.
+
+| Register | Bits used                                              |
+|----------|--------------------------------------------------------|
+| T2CON    | T2OUTPS 6:3, TMR2ON 2, T2CKPS 1:0 (bit 7 unimplemented) |
+
+T2CON is Register 20-1 (page 168). Prescaler T2CKPS<1:0> is 1:1, 1:4, 1:16,
+1:64 (all four encodings distinct on this part); postscaler T2OUTPS<3:0> is
+1:(N+1) for N 0..15. T2CON POR is 0x00 (Table 3-9). Each match feeds the
+postscaler, which sets PIR1 TMR2IF (bit 1), enabled by PIE1 TMR2IE (bit 1):
+Register 7-5 (PIR1, page 78) and Register 7-2 (PIE1, page 75). The match
+output T2_match also feeds the CLC data inputs at D1 code 7 and D2 code 3
+(Table 24-1, page 258), the debouncer slow clock, and the PWM module (§23).
+
+This part has Timer0, Timer1 and Timer2 only (§18, §19, §20); there is no
+TMR3, TMR4 or TMR6. The second beat-dimmer pulse source is therefore a
+preloaded TMR1 (255 counts to overflow) against TMR2 with PR2 255 (256
+counts to match), not a second 8-bit match timer.
 
 ## Configurable logic cell (CLC)
 
@@ -163,13 +220,18 @@ sets EN, so an enabled cell never runs the previous callback; `EPIC_CLC_DeInit` 
 Because the handler reads the slot from ISR context, disable the CLCn interrupt
 (`EPIC_IRQ_DisableSrc`) before reconfiguring a live cell. A rejected `Init` returns `EPIC_INVALID`
 and writes nothing, so the previous callback stays in place.
-PEIE also exposes the PIR1 and PIR2 sources and PIR3<7:4>. No driver in this HAL owns them.
-While PEIE is set, the dispatcher acknowledges each one that is both flagged and enabled: it
-clears that source's PIE bit, then its flag, one bit at a time, and runs no handler. So a CLC
-enable next to a pending PIR1 or PIR2 source no longer re-enters the vector. Enabling an unowned
-peripheral interrupt alongside a CLC source is unsupported: the dispatcher disables it. A flagged
-source whose enable is clear stays pending for polling. With PEIE clear these sources cannot reach
-the vector, and the dispatcher leaves them alone. PIR3<7:4> are unimplemented on the PIC16F1508
+PEIE also exposes the PIR1 and PIR2 sources and PIR3<7:4>. The timer drivers own
+PIR1 bits 0 and 1 (TMR1IF/TMR1IE, TMR2IF/TMR2IE): with PEIE set the dispatcher
+runs `TIMER1_IRQHandler`/`TIMER2_IRQHandler` when the flag and enable are both
+set, and each handler clears its flag before running the stored callback. While
+PEIE is set, the dispatcher acknowledges each other source that is both flagged
+and enabled: it clears that source's PIE bit, then its flag, one bit at a time,
+and runs no handler. So a CLC enable next to a pending PIR1 or PIR2 source no
+longer re-enters the vector. Enabling an unowned peripheral interrupt alongside
+a CLC source is unsupported: the dispatcher disables it. A flagged source whose
+enable is clear stays pending for polling, as does a TMRnIF with PEIE clear.
+With PEIE clear the unowned sources cannot reach the vector, and the dispatcher
+leaves them alone. PIR3<7:4> are unimplemented on the PIC16F1508
 per EDC and Register 7-7 (PIR3 bits 7:4 read as 0). The PIR1, PIR2, PIE1 and PIE2 addresses
 (0x11, 0x12, 0x91, 0x92) are confirmed in DS40001609E Table 3-9 (page 27). The PEIE requirement
 for every peripheral interrupt is the note under Register 7-4 (PIE3, page 78).
@@ -201,6 +263,12 @@ prints W0700/W0701 notes during the CLC steps (no propagation delay
 modelled; output-as-own-input loop warning). They are benign: no cell feeds
 its own output.
 
+The gate also covers the timers: TMR2 with PR2 7 free-runs to a match (flag
+within a bounded spin, counter never above PR2, then T2CON 0 and PR2 0xFF),
+and TMR1 preloaded to 0xFFF0 overflows to its flag (then T1CON 0 and counter
+0). Both spins call `epic_harness_tick`, which pumps the host model and is a
+no-op on target, so the same section runs in both builds.
+
 ## Host simulation model
 
 `pic16f1508_sim_step` recomputes every cell from its CON, POL, and GLS
@@ -230,3 +298,16 @@ re-drives STAGE2 D2 from the live STAGE1 output each half clock, so the AND
 the STAGE2 gate evaluates is the cell's own. LCxOE does not drive a pin in
 the sim: the output-pin mapping is unverified, so only the mirrors observe
 it.
+
+Timers advance one instruction cycle per tick: TMR2 applies the T2CKPS
+prescaler, matches TMR2 against PR2 with reset to 0, and divides matches
+through the T2OUTPS postscaler to TMR2IF; TMR1 applies the T1CKPS prescaler
+and counts TMR1H:TMR1L to overflow and TMR1IF. Only the internal FOSC/4
+source advances; any other TMR1CS halts the model. The T1CKI counter path
+runs through `pic16f1508_sim_timer1_external_pulse`, one call per rising
+edge, prescaled the same way. A write to TMR2 or T2CON clears both scaler
+counters, tracked by change detection (an identical rewrite is invisible to
+the model). A raised flag fires the sim callback only with GIE set, like the
+IOC and CLC sites; the dispatcher then routes it exactly like the vector.
+Covered by the host probes `example_tmr1` and `example_tmr2`, including the
+256:255 beat ratio of TMR2 at PR2 255 against TMR1 preloaded to 0xFF01.

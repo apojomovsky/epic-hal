@@ -49,31 +49,46 @@ The S-R latch demo (TB3273 shape: S on D1+D2, R on D3+D4, mode 3) is probe
 mdb gate on target. The beat-frequency sweep on top of it is probe
 `example_clc_beat`: S and R trains at the MCC 256:255 period ratio sweep the
 duty from near-empty to near-full at a fixed output rate with no register
-written after setup. Sourcing those trains from real timer outputs on
-silicon waits on TMR2/PWM drivers.
+written after setup. The on-silicon S and R trains come from TMR2 (PR2 255)
+and a TMR1 preloaded to 0xFF01 (see the timer drivers below).
 The switch-debouncer demo (AN2805 2-CLC shape: STAGE1 samples the switch on
 the slow clock, STAGE2 samples switch AND STAGE1, both mode 5) is probe
 `example_clc_debounce` on the host and D-flop plus filter-gate sections of
-the mdb gate on target; the TMR2 clock that would drive it waits on a timer
-driver. The quadrature-decoder-assist demo (two mode-6 J-K cells, each
+the mdb gate on target; the slow clock is the `EPIC_TIMER2` free-run below.
+The quadrature-decoder-assist demo (two mode-6 J-K cells, each
 clocking on one encoder line while the other sets it, with a software
 counter and a 10-LED bar on RC0..RC7, RA4, RA5) is probe `example_clc_quad`
-on the host and a J-K section of the mdb gate on target; the TMR1/TMR3
-hardware counters it would feed wait on timer drivers.
+on the host and a J-K section of the mdb gate on target; the counter path
+is the `EPIC_TIMER1` T1CKI counter below (no TMR3 on this part).
+
+Implemented and verified against DS40001609E: the `EPIC_TIMER2` driver
+(prescalers 1:1/1:4/1:16/1:64, postscaler 1:1..1:16, PR2 match with TMR2IF
+and an optional match callback; host probe `example_tmr2`) and the
+`EPIC_TIMER1` driver (16-bit timer/counter: internal FOSC/4 plus external
+T1CKI counter mode for the quadrature assist, prescalers 1:1/1:2/1:4/1:8,
+overflow flag with an optional callback; host probe `example_tmr1`). TMR2IF
+and TMR1IF route through the shared dispatcher with PEIE gating, and the
+host sim advances both timers per instruction tick with prescalers, PR2
+match and postscaler modelled. T2_match reaches CLC Dx at D1 code 7 and D2
+code 3, T1_overflow at D1 code 6 and D2 code 2 (Table 24-1): TMR2 is the
+debouncer slow clock, and a TMR1 preloaded to 0xFF01 overflowing every 255
+counts against TMR2 at PR2 255 matching every 256 is the on-silicon 256:255
+beat pair (proven in `example_tmr1`). The part has no TMR3, TMR4 or TMR6,
+so the ticket's TMR1/TMR3 pair is TMR1-only here. The mdb gate covers both
+timers (match/overflow flag within a bounded spin, then the POR state).
 
 Not yet implemented (deliberate scope limit, each its own follow-up):
 
-- Timers, CCP, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
-  comparators, DAC, FVR, and the SR latch.
-- The on-silicon TB3273 auto-dimmer (TMR2 plus a second slow pulse source
-  into the latched CLC1), the debouncer TMR2 clock, and the quadrature
-  TMR1/TMR3 counters (the HAL has no timer drivers yet) and the CLC
-  sequential modes on the mdb gate (modes 3, 5 and 6 run in the gate;
+- Timer0, CCP, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
+  comparators, DAC, FVR, NCO, CWG, and the SR latch.
+- Wiring the landed timer drivers into the demos (the debouncer TMR2 clock,
+  the quadrature TMR1 counter, the on-silicon TB3273 auto-dimmer) and the
+  CLC sequential modes on the mdb gate (modes 3, 5 and 6 run in the gate;
   modes 4 and 7 and cross-cell cascades run host-only; MPLAB-SIM shapes
   the gate, see MANUAL.md, #383). The sweep itself is probe
   `example_clc_beat` on the host.
 - SEL-code decoding in the host sim (codes are stored, Dx levels come from a
-  host-only hook).
+  host-only hook, except timer overflow/match which the tick model raises).
 - A 16F188xx part. It is not in the pinned DFP.
 
 ## Quick start
@@ -95,8 +110,6 @@ Docker: `make test MODULE=hal/pic14e/16f1508`,
 `make xc8-build MODULE=epic-pic16f1508-firmware MCU=16F1509`,
 `make mdb-test MODULE=epic-pic16f1508-firmware MCU=16F1509 DEVICE=PIC16F1509 WAIT_MS=60000 MODE=gpio`.
 
-## Layout
-
 ```
 include/
   pic16f1508.h          device masks and capability macros
@@ -104,10 +117,10 @@ include/
   host/                 host platform header (memory-backed SFR array)
   target/               target platform header (volatile-deref SFR)
   core/                 IRQ contract
-  peripherals/          GPIO contract
+  peripherals/          GPIO, CLC, Timer1, Timer2 contracts
 src/
-  core/                 IRQ backend and IOC dispatch
-  peripherals/          GPIO and CLC bodies
+  core/                 IRQ backend and dispatch
+  peripherals/          GPIO, CLC, Timer1 and Timer2 bodies
   target/               ISR vector (real hardware only)
   sim/                  host simulation backend
   mdb/                  MPLAB SIM register-readback harness
@@ -115,6 +128,7 @@ tests/                  example_blink, example_gpio (host), example_clc (host),
                         example_clc_irq (host), example_clc_sim (host),
                         example_clc_latch (host), example_clc_beat (host),
                         example_clc_debounce (host), example_clc_quad (host),
+                        example_tmr1, example_tmr2 (host),
                         example_gpio_mdb
 ```
 
