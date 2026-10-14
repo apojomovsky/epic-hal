@@ -46,8 +46,11 @@ mirrors, INTN/INTP edge flags; Dx levels come from a host-only hook, probe
 Figure 24-3 gate roles are checked against the datasheet (see MANUAL.md).
 The S-R latch demo (TB3273 shape: S on D1+D2, R on D3+D4, mode 3) is probe
 `example_clc_latch` on the host and a set/hold/reset/hold-low section of the
-mdb gate on target; the timer-driven beat-frequency dimmer on top of it
-waits on TMR2/PWM drivers.
+mdb gate on target. The beat-frequency sweep on top of it is probe
+`example_clc_beat`: S and R trains at the MCC 256:255 period ratio sweep the
+duty from near-empty to near-full at a fixed output rate with no register
+written after setup. Sourcing those trains from real timer outputs on
+silicon waits on TMR2/PWM drivers.
 The switch-debouncer demo (AN2805 2-CLC shape: STAGE1 samples the switch on
 the slow clock, STAGE2 samples switch AND STAGE1, both mode 5) is probe
 `example_clc_debounce` on the host and D-flop plus filter-gate sections of
@@ -62,12 +65,13 @@ Not yet implemented (deliberate scope limit, each its own follow-up):
 
 - Timers, CCP, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
   comparators, DAC, FVR, and the SR latch.
-- The TB3273 beat-frequency auto-dimmer (needs TMR2 plus a second slow
-  pulse source), the debouncer TMR2 clock, and the quadrature TMR1/TMR3
-  counters (the HAL has no timer drivers yet) and the CLC sequential modes
-  on the mdb gate (modes 3, 5 and 6 run in the gate; modes 4 and 7 and
-  cross-cell cascades run host-only; MPLAB-SIM shapes the gate, see
-  MANUAL.md, #383).
+- The on-silicon TB3273 auto-dimmer (TMR2 plus a second slow pulse source
+  into the latched CLC1), the debouncer TMR2 clock, and the quadrature
+  TMR1/TMR3 counters (the HAL has no timer drivers yet) and the CLC
+  sequential modes on the mdb gate (modes 3, 5 and 6 run in the gate;
+  modes 4 and 7 and cross-cell cascades run host-only; MPLAB-SIM shapes
+  the gate, see MANUAL.md, #383). The sweep itself is probe
+  `example_clc_beat` on the host.
 - SEL-code decoding in the host sim (codes are stored, Dx levels come from a
   host-only hook).
 - A 16F188xx part. It is not in the pinned DFP.
@@ -109,8 +113,9 @@ src/
   mdb/                  MPLAB SIM register-readback harness
 tests/                  example_blink, example_gpio (host), example_clc (host),
                         example_clc_irq (host), example_clc_sim (host),
-                        example_clc_latch (host), example_clc_debounce (host),
-                        example_clc_quad (host), example_gpio_mdb
+                        example_clc_latch (host), example_clc_beat (host),
+                        example_clc_debounce (host), example_clc_quad (host),
+                        example_gpio_mdb
 ```
 
 ## Implemented pins

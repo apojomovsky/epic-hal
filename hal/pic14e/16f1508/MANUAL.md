@@ -196,10 +196,10 @@ CLCDATA stays 0 after a settle cycle), so the gate observes CON.OUT only.
 Cross-cell LCx_OUT levels read 0 in SIM even after settle cycles (measured:
 CLC2 driven const-1 into CLC1 D2 still reads 0), so cascades stay host-only.
 The CLCDATA mirror and the sequential modes 4 and 7 are covered by the host
-probes (`example_clc`, `example_clc_sim`) only. The SIM prints W0700/W0701
-notes during the CLC steps (no propagation delay modelled;
-output-as-own-input loop warning). They are benign: no cell feeds its own
-output.
+probes (`example_clc`, `example_clc_sim`, `example_clc_beat`) only. The SIM
+prints W0700/W0701 notes during the CLC steps (no propagation delay
+modelled; output-as-own-input loop warning). They are benign: no cell feeds
+its own output.
 
 ## Host simulation model
 
