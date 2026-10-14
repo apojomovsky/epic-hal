@@ -165,7 +165,7 @@ runtime and machine. `claim` refuses to act without an identity, because an
 anonymous claim tells the other agents nothing.
 
 An issue also carries `area:*` labels naming the surfaces it touches
-(`pic16-hal`, `pic18-hal`, `lib/math`, `build`, `docs`, `ci`). Two tickets
+(`pic16-hal`, `pic18-hal`, `epic-math`, `build`, `docs`, `ci`). Two tickets
 sharing an area cannot be worked at the same time even when neither blocks the
 other, which is why selection goes through the tool: what is blocked, taken, or
 conflicting is decided there, not in this file.
