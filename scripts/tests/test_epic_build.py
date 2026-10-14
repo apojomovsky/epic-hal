@@ -41,6 +41,7 @@ harness_src = "common/src/core/epic_harness_target.c"
 epiccc_sources = ["common/src/core/epic_harness_target.c"]
 
 [modules."hal/pic14e/16f193x"]
+summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
@@ -55,6 +56,7 @@ sources = ["tests/example_blink.c"]
 config  = { FOSC = "INTOSC", WDTE = "ON", BOREN = "ON" }
 
 [modules."hal/pic18/18f2520"]
+summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
@@ -69,6 +71,7 @@ sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOREN = "ON", BORV = "3", WDT = "OFF", WDTPS = "32768" }
 
 [modules."hal/pic18/18f6520"]
+summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
@@ -83,6 +86,7 @@ sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOR = "ON", WDT = "OFF", WDTPS = "128" }
 
 [modules."hal/pic18/18f1320"]
+summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
@@ -97,6 +101,7 @@ sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOR = "OFF", BORV = "27", WDT = "OFF", WDTPS = "32768" }
 
 [modules."lib/tick"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
@@ -118,6 +123,7 @@ harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 config      = { FOSC = "HS", WDTE = "OFF" }
 
 [modules."lib/adcfilter"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_adcfilter.c"]
 includes   = ["include"]
 depends_on = []
@@ -135,6 +141,7 @@ sources = ["mcu/target_sizecheck.c"]
 depends_on = ["lib/tick"]
 
 [modules."lib/math"]
+summary    = "Tooling-test fixture."
 sources    = ["src/common/epic_math_numeric.c"]
 includes   = ["include"]
 depends_on = []
@@ -150,6 +157,7 @@ PIC16F87XA = [
 ]
 
 [modules."lib/pid"]
+summary    = "Tooling-test fixture."
 sources    = ["src/pid.c"]
 includes   = ["include"]
 depends_on = ["lib/math"]
@@ -174,6 +182,7 @@ hal     = true
 depends_on = ["lib/tick", "lib/serial"]
 
 [modules."lib/encoder"]
+summary    = "Tooling-test fixture."
 sources    = ["src/encoder.c"]
 includes   = ["include"]
 depends_on = ["lib/tick"]
@@ -192,6 +201,7 @@ hal     = true
 depends_on = ["lib/serial"]
 
 [modules."lib/serial"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = []
@@ -246,6 +256,7 @@ harness_src = "common/src/core/epic_harness_target.c"
 epiccc_sources = ["common/src/core/epic_harness_target.c"]
 
 [modules."lib/usb"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_usb.c"]
 includes   = ["include"]
 depends_on = []
@@ -265,6 +276,7 @@ harness_src = "common/src/core/epic_harness_sim.c"
 config      = { FOSC = "HS", PLLDIV = "1", CPUDIV = "OSC1_PLL2", USBDIV = "2", CCP2MX = "ON", WDT = "OFF" }
 
 [modules."lib/sdcard"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_sdcard.c", "third_party/m-stack-storage/src/mmc.c", "third_party/m-stack-storage/src/crc.c"]
 includes   = ["include", "third_party/m-stack-storage/include", "src/target"]
 depends_on = ["lib/tick"]

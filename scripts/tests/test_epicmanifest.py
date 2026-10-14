@@ -36,6 +36,7 @@ includes = ["hal/pic18/18fxx5x/include", "common/include"]
 hal_sources = ["hal/pic18/18fxx5x/src/peripherals/pic18fxx5x_gpio.c"]
 
 [modules."lib/tick"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
@@ -60,6 +61,7 @@ sources = ["examples/example_tick.c"]
 config  = { FOSC = "HS" }
 
 [modules."lib/serial"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = ["lib/tick"]
@@ -71,6 +73,7 @@ PIC16F87XA = ["16F877A"]
 "16F873A" = "RAM: 32-byte rx buffer does not fit"
 
 [modules."lib/math"]
+summary    = "Tooling-test fixture."
 sources    = ["src/common/epic_math_sqrt.c", "src/common/epic_math_numeric.c"]
 includes   = ["include"]
 depends_on = []
@@ -105,6 +108,7 @@ hal     = true
 depends_on = ["lib/serial"]
 
 [modules."lib/adcfilter"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_adcfilter.c"]
 includes   = ["include"]
 depends_on = []
@@ -228,8 +232,8 @@ class TestValidation(unittest.TestCase):
         self.assertIn("16F877A", str(cm.exception))
 
     def test_dependency_cycle_is_rejected(self):
-        bad = MINIMAL.replace('[modules."lib/tick"]\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = []',
-                              '[modules."lib/tick"]\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = ["lib/serial"]')
+        bad = MINIMAL.replace('[modules."lib/tick"]\nsummary    = "Tooling-test fixture."\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = []',
+                              '[modules."lib/tick"]\nsummary    = "Tooling-test fixture."\nsources    = ["src/epic_tick.c"]\nincludes   = ["include"]\ndepends_on = ["lib/serial"]')
         with self.assertRaises(epicmanifest.ManifestError) as cm:
             epicmanifest.load(write(bad))
         self.assertIn("cycle", str(cm.exception).lower())
@@ -669,6 +673,7 @@ PIC16F87XA = [
 ]
 
 [modules."lib/probe"]
+summary    = "Tooling-test fixture."
 sources    = ["src/probe.c"]
 includes   = ["include"]
 depends_on = []

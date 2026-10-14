@@ -941,6 +941,7 @@ after    = "hal/pic18/18f6520/src/core/pic18_irq.c"
 # xc8-build.yml run has always covered for this family. dir points at
 # the HAL directory itself because that is where its example lives.
 [modules."hal/pic14e/16f193x"]
+summary    = "Register-level HAL and smoke firmware for the PIC16F193X family"
 sources    = []
 includes   = []
 depends_on = []
@@ -990,6 +991,7 @@ config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = 
 # misdirection (Finding 9's mechanism) fails the gate instead of
 # corrupting silently.
 [modules."hal/pic14/16f87xa"]
+summary    = "Register-level HAL and smoke firmware for the PIC16F87XA family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1038,6 +1040,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # calls the remaining parts mechanical once the exemplar's capability
 # macros are proven).
 [modules."hal/pic14/16f7x"]
+summary    = "Register-level HAL and smoke firmware for the PIC16F7x family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1093,6 +1096,7 @@ config      = { BOREN = "ON", CP = "OFF", FOSC = "HS", PWRTE = "ON", WDTE = "OFF
 # SRCON) with known values and reads them back, so XC8 v4.00 bank
 # misdirection fails the gate instead of corrupting silently.
 [modules."hal/pic14/16f88x"]
+summary    = "Register-level HAL and smoke firmware for the PIC16F88X family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1130,6 +1134,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # smoke (tests/example_blink.c) and a HARNESS=sim blink gate over the
 # shared pic14-midrange-core drivers.
 [modules."hal/pic14/16f628a"]
+summary    = "Register-level HAL and smoke firmware for the PIC16F628A family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1171,6 +1176,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "O
 # bank probe over the exemplar tier drivers, reported on RA0 (no
 # USART on this die; MODE=gpio).
 [modules."hal/pic14/16f63x_67x_68x"]
+summary    = "Register-level HAL and smoke firmware for the PIC16F63x_67x_68x family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1259,6 +1265,7 @@ sources     = [
 config      = { BOREN = "ON", CP = "OFF", CPD = "OFF", FCMEN = "OFF", FOSC = "INTOSCIO", IESO = "OFF", MCLRE = "ON", PWRTE = "ON", WDTE = "OFF" }
 
 [modules."hal/pic14/16f83_84"]
+summary    = "Register-level HAL and smoke firmware for the PIC16F83_84 family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1300,6 +1307,7 @@ config      = { FOSC = "XT", PWRTE = "ON", WDTE = "OFF" }
 # class the shared drivers use (Banks 0-3, the PIR1/PIR2 gates, and the
 # ADC/CCP1 register images).
 [modules."hal/pic14/16f818_819"]
+summary    = "Register-level HAL and smoke firmware for the PIC16F818_819 family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1357,6 +1365,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "O
 # control-space writes and the polled Timer0 against hand-computed
 # values, so a platform-header miscompile fails the gate.
 [modules."hal/pic12/16f5x"]
+summary    = "Register-level HAL and smoke firmware for the PIC16F5x family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1417,6 +1426,7 @@ config      = { OSC = "XT", WDT = "OFF", CP = "OFF" }
 # gate instead of corrupting silently.
 
 [modules."hal/pic18/18fxx5x"]
+summary    = "Register-level HAL and smoke firmware for the PIC18Fxx5x family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1452,6 +1462,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # fields, confirmed against the DFP's 18f1320.cfgmap) and STVR replaces
 # STVREN (both DS39605F Register 26-1's own spelling).
 [modules."hal/pic18/18f1320"]
+summary    = "Register-level HAL and smoke firmware for the PIC18F1320 family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1481,6 +1492,7 @@ sources     = [
 config      = { BOR = "OFF", BORV = "27", CP0 = "OFF", CP1 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 [modules."hal/pic18/18f2520"]
+summary    = "Register-level HAL and smoke firmware for the PIC18F2520 family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1561,6 +1573,7 @@ sources = [
 config  = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", MCLRE = "ON", OSC = "HS", PBAD = "DIG", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 [modules."hal/pic18/18f6520"]
+summary    = "Register-level HAL and smoke firmware for the PIC18F6520 family"
 sources    = []
 includes   = []
 depends_on = []
@@ -1779,6 +1792,7 @@ sources     = [
 config      = { BOR = "ON", BORV = "27", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
 [modules."tests/epic-combo-uart-ssp"]
+summary    = "UART plus SSP and EEPROM integration firmware interleaved under a fast Timer2 ISR"
 sources    = []
 includes   = []
 depends_on = []
@@ -1826,6 +1840,7 @@ PIC16F87XA = [
 ]
 
 [modules."tests/epic-combo-multitimer"]
+summary    = "Timer0, Timer1 and Timer2 integration firmware checking dispatch count ratios"
 sources    = []
 includes   = []
 depends_on = []
@@ -1876,6 +1891,7 @@ PIC16F87XA = [
 ]
 
 [modules."tests/epic-combo-adc-uart"]
+summary    = "ADC plus polled USART integration firmware"
 sources    = []
 includes   = []
 depends_on = []
@@ -1924,6 +1940,7 @@ PIC16F87XA = [
 ]
 
 [modules."tests/epic-combo-rb-uart"]
+summary    = "PORTB change plus Timer2 multi-source dispatch integration firmware with polled transmit"
 sources    = []
 includes   = []
 depends_on = []
@@ -1970,6 +1987,7 @@ PIC16F87XA = [
 ]
 
 [modules."tests/epic-combo-eeprom-isr"]
+summary    = "EEPROM writes under serial and tick ISR load on PIC18"
 sources    = []
 includes   = []
 depends_on = []
@@ -2029,6 +2047,7 @@ PIC18Fxx5x = [
 ]
 
 [modules."tests/epic-combo-encoder-tick"]
+summary    = "Quadrature decoder plus 1 ms timebase integration firmware"
 sources    = []
 includes   = []
 depends_on = [
@@ -2072,6 +2091,7 @@ PIC16F87XA = [
 ]
 
 [modules."tests/epic-combo-swuart-tick"]
+summary    = "Bit-banged UART plus 1 ms timebase integration firmware"
 sources    = []
 includes   = []
 depends_on = ["lib/swuart", "lib/tick"]
@@ -2121,6 +2141,7 @@ PIC16F87XA = [
 ]
 
 [modules."tests/epic-combo-tick-serial"]
+summary    = "1 ms timebase plus interrupt-driven serial integration firmware"
 sources    = []
 includes   = []
 depends_on = ["lib/tick", "lib/serial"]
@@ -2166,6 +2187,7 @@ PIC16F87XA = [
 ]
 
 [modules."tests/epic-combo-lcd-tick"]
+summary    = "Character LCD plus 1 ms timebase integration firmware"
 sources    = []
 includes   = []
 depends_on = ["lib/lcd", "lib/tick"]
@@ -2217,6 +2239,7 @@ PIC18Fxx5x = [
 ]
 
 [modules."tests/epic-combo-rx-loopback"]
+summary    = "Serial receive loopback integration firmware"
 sources    = []
 includes   = []
 depends_on = []
@@ -2266,6 +2289,7 @@ PIC16F87XA = [
 ]
 
 [modules."lib/adcfilter"]
+summary    = "Vendor-agnostic ADC oversampling and moving-average filter"
 sources    = [
   "src/epic_adcfilter.c",
 ]
@@ -2451,6 +2475,7 @@ sources = [
 ]
 
 [modules."lib/bus"]
+summary    = "I2C and SPI MEM register access for 8-bit PICs"
 sources    = [
   "src/epic_bus.c",
 ]
@@ -2543,6 +2568,7 @@ sources     = [
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules."lib/mcp23x17"]
+summary    = "MCP23017 and MCP23S17 16-bit I/O expander driver on epic-bus"
 sources    = [
   "src/epic_mcp23x17.c",
 ]
@@ -2622,6 +2648,7 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules."lib/console"]
+summary    = "Line-based command dispatcher over epic-serial"
 sources    = [
   "src/epic_console.c",
 ]
@@ -2731,6 +2758,7 @@ sources     = [
 config      = { BOR = "OFF", FOSC = "HS", WDT = "OFF" }
 
 [modules."lib/debounce"]
+summary    = "Vendor-agnostic digital-input debouncer"
 sources    = [
   "src/debounce.c",
 ]
@@ -2826,6 +2854,7 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules."lib/encoder"]
+summary    = "Interrupt-driven x4 quadrature decoder for 8-bit PICs"
 sources    = [
   "src/encoder.c",
 ]
@@ -3011,6 +3040,7 @@ depends_on = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules."lib/fsm"]
+summary    = "Vendor-agnostic table-driven finite state machine engine"
 sources    = [
   "src/fsm.c",
 ]
@@ -3161,6 +3191,7 @@ config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = 
 # gate needs the family HAL for the harness USART. The module had no
 # real-target build before this entry, so 16F877A and 16F887 only.
 [modules."lib/lcd"]
+summary    = "HD44780-compatible character LCD driver"
 sources    = [
   "src/epic_lcd.c",
 ]
@@ -3224,6 +3255,7 @@ sources     = [
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules."lib/math"]
+summary    = "Fixed-point math utility library for 8-bit PICs"
 sources    = [
   "src/common/epic_math_numeric.c",
   "src/common/epic_math_rand.c",
@@ -3457,6 +3489,7 @@ sources     = [
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules."lib/modbus"]
+summary    = "Modbus RTU slave for 8-bit PICs"
 sources    = [
   "src/epic_modbus.c",
 ]
@@ -3540,6 +3573,7 @@ sources     = [ "tests/sim_modbus.c", ]
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules."lib/pid"]
+summary    = "Vendor-agnostic fixed-point PID controller"
 sources    = [
   "src/pid.c",
 ]
@@ -3727,6 +3761,7 @@ sources     = [
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules."lib/serial"]
+summary    = "Interrupt-driven ring-buffered UART"
 sources    = [
   "src/epic_serial.c",
 ]
@@ -3835,6 +3870,7 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules."lib/settings"]
+summary    = "EEPROM-backed settings blobs with CRC validation"
 sources    = [
   "src/epic_settings.c",
 ]
@@ -3905,6 +3941,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # variant's total RAM. The example reads SD block 0 and prints its
 # first bytes over epic-serial.
 [modules."lib/sdcard"]
+summary    = "SD/MMC over SPI block storage for PIC18F2455, 2550, 4455 and 4550"
 sources    = [
   "src/epic_sdcard.c",
   "third_party/m-stack-storage/src/mmc.c",
@@ -3955,6 +3992,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # equivalent on PIC16F87XA parts. The example enumerates and echoes the
 # host's CDC input.
 [modules."lib/usb"]
+summary    = "USB CDC-ACM virtual serial port for PIC18F2455, 2550, 4455 and 4550"
 sources    = [
   "src/epic_usb.c",
   "src/usb_descriptors.c",
@@ -3986,6 +4024,7 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules."lib/swuart"]
+summary    = "Bit-banged full-duplex UART"
 sources    = [
   "src/epic_swuart.c",
 ]
@@ -4116,6 +4155,7 @@ sources = [
 config  = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "OFF", WRT = "OFF" }
 
 [modules."lib/taskmgr"]
+summary    = "Cooperative non-preemptive task scheduler for 8-bit PICs"
 sources    = [
   "src/epic_taskmgr.c",
 ]
@@ -4197,6 +4237,7 @@ sources     = [
 config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules."demos/menu"]
+summary    = "PIC18F4550 menu demo: LCD menu with buttons, ADC, EEPROM and PWM"
 sources    = [
   "src/menu_demo_core.c",
   "lib/lcd/src/epic_lcd_gpio4.c",
@@ -4266,6 +4307,7 @@ PIC18Fxx5x = [
 ]
 
 [modules."demos/control"]
+summary    = "PIC18F4550 control demo: UART console PID loop with ADC sense, PWM drive and EEPROM settings"
 sources    = [
   "src/control_demo_core.c",
 ]
@@ -4334,6 +4376,7 @@ PIC18Fxx5x = [
 ]
 
 [modules."demos/bridge"]
+summary    = "PIC18F4550 bridge demo: Modbus RTU slave bridged to an I2C expander plus ADC"
 sources    = [
   "src/bridge_demo_core.c",
 ]
@@ -4407,6 +4450,7 @@ PIC18Fxx5x = [
 ]
 
 [modules."lib/tick"]
+summary    = "1 ms timebase for 8-bit PICs"
 sources    = [
   "src/epic_tick.c",
 ]
@@ -4619,6 +4663,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # EEPROM_WRITES=32 (the scenario performs 13 writes; the spare cycles
 # absorb the ISR/EEIF race documented in the gate's header).
 [modules."tests/epic-combo-tick-settings"]
+summary    = "1 ms timebase plus EEPROM settings integration firmware"
 sources    = []
 includes   = []
 depends_on = [
@@ -4673,6 +4718,7 @@ PIC18Fxx5x = [
 ]
 
 [modules."tests/epic-combo-modbus-full"]
+summary    = "Modbus RTU slave plus serial stack integration firmware"
 sources    = []
 includes   = []
 depends_on = [
@@ -4718,6 +4764,7 @@ PIC18Fxx5x = [
 ]
 
 [modules."tests/epic-combo-taskmgr-serial"]
+summary    = "Cooperative scheduler plus interrupt-driven serial integration firmware"
 sources    = []
 includes   = []
 depends_on = [
@@ -4784,6 +4831,7 @@ PIC18Fxx5x = [
 ]
 
 [modules."common"]
+summary    = "Architecture-blind status codes, harness and shared build fragments"
 sources    = [
   "src/core/epic_harness_target.c",
 ]
@@ -4832,6 +4880,7 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 
 [families.PIC16F1508]
 hal_dir     = "hal/pic14e/16f1508"
+sim_note    = "Single stores of most CLC1 D3S codes to CLC1SEL1 throw in the simulator, and the CLCDATA mirror copy never sets, so the gate observes CON.OUT only (family MANUAL.md)"
 variants    = [
   "16F1508",
   "16F1509",
@@ -4857,6 +4906,7 @@ hal_sources = [
 harness_src = "common/src/core/epic_harness_target.c"
 
 [modules."hal/pic14e/16f1508"]
+summary    = "Register-level HAL and smoke firmware for the PIC16F1508 family"
 sources    = []
 includes   = []
 depends_on = []

@@ -47,6 +47,7 @@ includes = ["hal/pic14e/16f193x/include/target", "common/include"]
 hal_sources = ["hal/pic14e/16f193x/src/peripherals/pic16f193x_gpio.c"]
 
 [modules."lib/tick"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
@@ -65,6 +66,7 @@ name    = "tick-blink"
 sources = ["examples/example_tick.c"]
 
 [modules."lib/serial"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = ["lib/tick"]
@@ -82,6 +84,7 @@ name    = "serial-echo"
 sources = ["tests/example_serial.c", "mcu/target_sizecheck.c"]
 
 [modules."lib/usb"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_usb.c"]
 includes   = ["include"]
 depends_on = []
@@ -98,6 +101,7 @@ sources = ["examples/example_usb.c"]
 # in the real manifest: must not appear in a bundle's module list, it
 # is CI coverage plumbing, not a consumer-facing library.
 [modules."hal/pic14e/16f193x"]
+summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
@@ -113,6 +117,7 @@ sources = ["tests/example_blink.c"]
 # epic-combo-* modules under tests/: must never appear in a bundle's
 # module list or file set, it is CI coverage, not a consumer library.
 [modules."tests/epic-combo-uart-ssp"]
+summary    = "Tooling-test fixture."
 sources    = ["tests/combo_uart_ssp.c"]
 includes   = []
 depends_on = []
@@ -270,6 +275,7 @@ class TestEpicHalMk(unittest.TestCase):
         # was unbuildable for that module. Each dir needs its own -I.
         two_inc = MANIFEST + """
 [modules."lib/math"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_math.c"]
 includes   = ["include", "tests"]
 depends_on = []

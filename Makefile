@@ -453,6 +453,13 @@ bootstrap:
 doctor:
 	@bash scripts/dev/bootstrap.sh --check-only
 
+# Regenerate the data-driven docs from the manifest (reference pages)
+# and from docs/README.src.md (README.md with includes expanded), then the
+# README docgen tables. README.md and docs/reference/*.md are outputs:
+# edit the sources, never the outputs. CI fails on any diff this leaves.
+docs-gen:
+	@python3 scripts/build/docs_gen.py
+
 setup-hooks:
 	@bash scripts/hooks/install-git-hooks.sh
 

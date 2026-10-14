@@ -17,6 +17,7 @@ includes = ["hal/pic14/16f87xa/include/target", "hal/pic14/16f87xa/include", "co
 hal_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c"]
 
 [modules."hal/pic14/16f87xa"]
+summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
@@ -29,6 +30,7 @@ sources = ["tests/example_blink.c"]
 config  = { FOSC = "HS", WDTE = "ON", PWRTE = "ON", BOREN = "ON", LVP = "OFF", WRT = "OFF" }
 
 [modules."lib/tick"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
@@ -40,6 +42,7 @@ sources = ["examples/example_tick.c"]
 config  = { FOSC = "HS" }
 
 [modules."lib/serial"]
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = ["lib/tick"]

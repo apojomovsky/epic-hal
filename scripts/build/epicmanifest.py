@@ -69,6 +69,10 @@ class Family:
     # the family is not yet reachable on the epic-cc path and the
     # driver fails loudly.
     epiccc_sources: list[str] = dataclasses.field(default_factory=list)
+    # Documented MPLAB-SIM limit for the family, one line, rendered
+    # verbatim into docs/reference/families.md. Only families with a
+    # measured simulator gap carry one; unset renders as none documented.
+    sim_note: str | None = None
     # Crystal frequency for PLL-based families whose fosc_hz records the
     # post-PLL system clock: epic-cc derives clocks from the crystal and
     # checks xtal/plldiv hits the PLL's 4 MHz input (DS39632E).
@@ -168,6 +172,10 @@ class Example:
 class Module:
     name: str
     dir: str
+    # One-line summary for docs/reference/modules.md. Required: the
+    # reference index renders it verbatim, so a module without one
+    # fails at load time instead of shipping a blank row.
+    summary: str
     sources: list[str]
     sources_by_family: dict[str, list[str]]
     includes: list[str]
@@ -484,7 +492,7 @@ def _parse_family(name, table):
     _check_keys(table, {"hal_dir", "variants", "dfp", "fosc_hz",
                         "dfp_version", "includes", "hal_sources",
                         "conditional_sources", "harness_src",
-                        "epiccc_sources", "xtal_hz"}, f"families.{name}")
+                        "epiccc_sources", "xtal_hz", "sim_note"}, f"families.{name}")
     return Family(
         name=name,
         hal_dir=_require(table, "hal_dir", f"families.{name}"),
@@ -501,6 +509,7 @@ def _parse_family(name, table):
         ],
         harness_src=table.get("harness_src"),
         epiccc_sources=list(table.get("epiccc_sources", [])),
+        sim_note=table.get("sim_note"),
         xtal_hz=table.get("xtal_hz"),
     )
 
@@ -555,9 +564,10 @@ def _parse_module(name, table):
     # Module ids are paths (epic-hal#308): the key names the module's
     # directory, so an id and its location cannot drift. Reject any
     # stray `dir` key rather than reading it.
-    _check_keys(table, {"sources", "sources_by_family", "includes",
-                        "depends_on", "needs_hal", "supported", "excluded",
-                        "example", "epiccc_hal_sources_by_family",
+    _check_keys(table, {"summary", "sources", "sources_by_family",
+                        "includes", "depends_on", "needs_hal", "supported",
+                        "excluded", "example",
+                        "epiccc_hal_sources_by_family",
                         "epiccc_sim_hal_sources_by_family"},
                 f"modules.{name}")
     segments = name.split("/")
@@ -572,6 +582,7 @@ def _parse_module(name, table):
     return Module(
         name=name,
         dir=name,
+        summary=_require(table, "summary", f"modules.{name}"),
         sources=list(_require(table, "sources", f"modules.{name}")),
         sources_by_family={
             fam: list(paths)
