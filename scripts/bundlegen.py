@@ -64,12 +64,12 @@ def files_for_family(manifest, family_name: str) -> list[str]:
 
     for name in modules_for_family(manifest, family_name):
         mod = manifest.modules[name]
-        files |= {os.path.normpath(f"{mod.dir}/{s}") for s in mod.sources}
-        files |= {os.path.normpath(f"{mod.dir}/{s}") for s in mod.sources_by_family.get(family_name, [])}
+        files |= {epicmanifest.join_module_path(mod.dir, s) for s in mod.sources}
+        files |= {epicmanifest.join_module_path(mod.dir, s) for s in mod.sources_by_family.get(family_name, [])}
         example = mod.examples.get(family_name)
         if example is not None:
             files |= {
-                os.path.normpath(f"{mod.dir}/{s}")
+                epicmanifest.join_module_path(mod.dir, s)
                 for s in example.sources
                 if s.startswith("examples/")
             }
@@ -137,8 +137,8 @@ def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
             if mcu in fam.variants:
                 out.append(f"EPIC_HAL_WHYNOT_{name}_{mcu} := {reason}")
         own_srcs = list(mod.sources) + list(mod.sources_by_family.get(family_name, []))
-        srcs = " ".join(f"$(EPIC_HAL_DIR)/{mod.dir}/{s}" for s in own_srcs)
-        incs = " ".join(f"$(EPIC_HAL_DIR)/{mod.dir}/{i}" for i in mod.includes)
+        srcs = " ".join(f"$(EPIC_HAL_DIR)/{epicmanifest.join_module_path(mod.dir, s)}" for s in own_srcs)
+        incs = " ".join(f"$(EPIC_HAL_DIR)/{epicmanifest.join_module_path(mod.dir, i)}" for i in mod.includes)
         out.append(f"EPIC_HAL_SRCS_{name} := {srcs}")
         out.append(f"EPIC_HAL_INCS_{name} := {incs}")
         out.append("")
@@ -234,8 +234,8 @@ def emit_sources_json(manifest, family_name: str, version: str) -> str:
         example = mod.examples.get(family_name)
         modules[name] = {
             "resolved": manifest.resolve_deps(name),
-            "sources": [f"{mod.dir}/{s}" for s in own_srcs],
-            "includes": [f"{mod.dir}/{i}" for i in mod.includes],
+            "sources": [epicmanifest.join_module_path(mod.dir, s) for s in own_srcs],
+            "includes": [epicmanifest.join_module_path(mod.dir, i) for i in mod.includes],
             "supported": mod.supported.get(family_name, []),
             "excluded": {
                 mcu: reason for mcu, reason in sorted(mod.excluded.items())
@@ -243,7 +243,7 @@ def emit_sources_json(manifest, family_name: str, version: str) -> str:
             },
             "example": None if example is None else {
                 "name": example.name,
-                "sources": [f"{mod.dir}/{s}" for s in example.sources],
+                "sources": [epicmanifest.join_module_path(mod.dir, s) for s in example.sources],
                 "config": dict(example.config),
             },
         }
@@ -465,7 +465,7 @@ def emit_mplabx_md(manifest, family_name: str, version: str) -> str:
         mod = manifest.modules[name]
         own_srcs = list(mod.sources) + list(mod.sources_by_family.get(family_name, []))
         src_dirs += sorted({
-            f"{mod.dir}/{pathlib.PurePosixPath(s).parent}" for s in own_srcs
+            str(pathlib.PurePosixPath(epicmanifest.join_module_path(mod.dir, s)).parent) for s in own_srcs
         })
     src_dirs = sorted(set(src_dirs))
 

@@ -12,28 +12,44 @@ project(epic_swuart C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# Root anchor: walk up to the shared helpers, so moving this directory
+# changes no path below. Cross-module paths hang off EPIC_ROOT.
+if(NOT DEFINED EPIC_ROOT)
+    set(_EPIC_PROBE "${CMAKE_CURRENT_SOURCE_DIR}")
+    while(NOT EXISTS "${_EPIC_PROBE}/common/cmake/epic_family.cmake")
+        get_filename_component(_EPIC_PARENT "${_EPIC_PROBE}/.." ABSOLUTE)
+        if("${_EPIC_PARENT}" STREQUAL "${_EPIC_PROBE}")
+            message(FATAL_ERROR "EPIC_ROOT not found above ${CMAKE_CURRENT_SOURCE_DIR}")
+        endif()
+        set(_EPIC_PROBE "${_EPIC_PARENT}")
+    endwhile()
+    set(EPIC_ROOT "${_EPIC_PROBE}")
+    unset(_EPIC_PROBE)
+    unset(_EPIC_PARENT)
+endif()
+
 set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family to link: PIC16, PIC18, or PIC16F193X")
 
 if(EPIC_FAMILY STREQUAL "PIC18")
-    set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/pic18/18fxx5x
+    set(EPIC_DIR ${EPIC_ROOT}/hal/pic18/18fxx5x
         CACHE PATH "Path to the pic18fxx5x-hal source tree")
     set(EPIC_LIB          pic18fxx5x_hal)
     set(DEFAULT_DEVICE    PIC18F4550)
     set(DEFAULT_FOSC_HZ   48000000UL)
 elseif(EPIC_FAMILY STREQUAL "PIC16F88X")
-    set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/pic14/16f88x
+    set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f88x
         CACHE PATH "Path to the pic16f88x-hal source tree")
     set(EPIC_LIB          pic16f88x_hal)
     set(DEFAULT_DEVICE    PIC16F887)
     set(DEFAULT_FOSC_HZ   20000000UL)
 elseif(EPIC_FAMILY STREQUAL "PIC16F193X")
-    set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/pic14e/16f193x
+    set(EPIC_DIR ${EPIC_ROOT}/hal/pic14e/16f193x
         CACHE PATH "Path to the pic16f193x-hal source tree")
     set(EPIC_LIB          pic16f193x_hal)
     set(DEFAULT_DEVICE    PIC16F1937)
     set(DEFAULT_FOSC_HZ   32000000UL)
 else()
-    set(EPIC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../hal/pic14/16f87xa
+    set(EPIC_DIR ${EPIC_ROOT}/hal/pic14/16f87xa
         CACHE PATH "Path to the pic16f87xa-hal source tree")
     set(EPIC_LIB          pic16f87xa_hal)
     set(DEFAULT_DEVICE    PIC16F877A)

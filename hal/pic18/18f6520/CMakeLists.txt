@@ -12,8 +12,23 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Shared layer: status codes, harness, CMake helpers.
-set(EPIC_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../common)
-include(${EPIC_COMMON_DIR}/cmake/epic_family.cmake)
+# Root anchor: walk up to the shared helpers, so moving this directory
+# changes no path below. Cross-module paths hang off EPIC_ROOT.
+if(NOT DEFINED EPIC_ROOT)
+    set(_EPIC_PROBE "${CMAKE_CURRENT_SOURCE_DIR}")
+    while(NOT EXISTS "${_EPIC_PROBE}/common/cmake/epic_family.cmake")
+        get_filename_component(_EPIC_PARENT "${_EPIC_PROBE}/.." ABSOLUTE)
+        if("${_EPIC_PARENT}" STREQUAL "${_EPIC_PROBE}")
+            message(FATAL_ERROR "EPIC_ROOT not found above ${CMAKE_CURRENT_SOURCE_DIR}")
+        endif()
+        set(_EPIC_PROBE "${_EPIC_PARENT}")
+    endwhile()
+    set(EPIC_ROOT "${_EPIC_PROBE}")
+    unset(_EPIC_PROBE)
+    unset(_EPIC_PARENT)
+endif()
+include(${EPIC_ROOT}/common/cmake/epic_family.cmake)
+set(EPIC_COMMON_DIR ${EPIC_ROOT}/common)
 
 # Default device. The PIC18F6520 is the canonical part in this family.
 if(NOT DEFINED PIC18F6520_DEVICE)

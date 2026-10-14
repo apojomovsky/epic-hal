@@ -269,7 +269,7 @@ def source_dirs(manifest, fam, part, selected) -> list[str]:
     for name in names:
         mod = manifest.modules[name]
         for s in list(mod.sources) + list(mod.sources_by_family.get(fam.name, [])):
-            dirs.add(f"{mod.dir}/{pathlib.PurePosixPath(s).parent}")
+            dirs.add(str(pathlib.PurePosixPath(epicmanifest.join_module_path(mod.dir, s)).parent))
     return sorted(dirs)
 
 

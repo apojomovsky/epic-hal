@@ -1,14 +1,17 @@
 """Load, validate, and resolve common/manifest/modules.toml; the only
 module that knows the manifest's schema (build driver, CI matrix, and
 bundle generator all go through these dataclasses). Family paths are
-repo-root-relative, module paths module-dir-relative. Load-bearing
-amendments: needs_hal (with per-example hal override), sources_by_family,
-fosc_hz.
+repo-root-relative; module paths are module-dir-relative, except a path
+whose first segment is a top-level tree directory (common/, hal/, lib/,
+demos/), which names the repo root so moving a module's directory only
+changes its `dir` entry. Load-bearing amendments: needs_hal (with
+per-example hal override), sources_by_family, fosc_hz.
 """
 from __future__ import annotations
 
 import dataclasses
 import pathlib
+import posixpath
 import tomllib
 
 
@@ -20,6 +23,23 @@ class ManifestError(Exception):
 # these verbatim, so per-module epic-cc slices may name them alongside
 # the family's own hal_dir and epic-common. Extend deliberately.
 _SHARED_CORE_DIRS = ("hal/pic14/core/",)
+
+# First segments that anchor a manifest path at the repo root instead
+# of the module's `dir` (epic-hal#313). Mirrors the layout test's
+# top-level directories; extend both together.
+_ROOT_DIRS = ("common/", "hal/", "lib/", "demos/")
+
+
+def join_module_path(mod_dir: str, path: str) -> str:
+    """Repo-root-relative form of one manifest source or include path.
+
+    Module-local files resolve under the module's `dir`; a path whose
+    first segment is a top-level tree directory passes through
+    unchanged, so the result never depends on how deep the module sits.
+    """
+    if path.startswith(_ROOT_DIRS):
+        return posixpath.normpath(path)
+    return posixpath.normpath(f"{mod_dir}/{path}")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -407,8 +427,8 @@ class Manifest:
 
         for name in self.resolved_deps(module_name, mcu, variant=variant):
             mod = self._module(name)
-            out += [f"{mod.dir}/{s}" for s in mod.sources]
-            out += [f"{mod.dir}/{s}"
+            out += [join_module_path(mod.dir, s) for s in mod.sources]
+            out += [join_module_path(mod.dir, s)
                     for s in mod.sources_by_family.get(fam.name, [])]
 
         example = self.example_for(module_name, fam.name, mcu)
@@ -419,7 +439,7 @@ class Manifest:
                 example_sources = example.epiccc.sources
             elif sim is not None and sim.sources is not None:
                 example_sources = sim.sources
-            out += [f"{mod.dir}/{s}" for s in example_sources]
+            out += [join_module_path(mod.dir, s) for s in example_sources]
 
         return _dedupe(out)
 
@@ -436,7 +456,7 @@ class Manifest:
         out = list(fam.includes) if self.uses_hal(module_name, mcu) else []
         for name in self.resolved_deps(module_name, mcu, variant=variant):
             mod = self._module(name)
-            out += [f"{mod.dir}/{i}" for i in mod.includes]
+            out += [join_module_path(mod.dir, i) for i in mod.includes]
         return _dedupe(out)
 
 
@@ -623,6 +643,17 @@ def _validate(manifest):
                 raise ManifestError(
                     f"modules.{mod.name}: depends_on unknown module '{dep}'"
                 )
+        def check_paths(paths, where):
+            for p in paths:
+                if ".." in posixpath.normpath(p).split("/"):
+                    raise ManifestError(
+                        f"modules.{mod.name}.{where}: '{p}' climbs with '..'; "
+                        f"write cross-module paths from the repo root"
+                    )
+        check_paths(mod.sources, "sources")
+        for fam_name, paths in mod.sources_by_family.items():
+            check_paths(paths, f"sources_by_family.{fam_name}")
+        check_paths(mod.includes, "includes")
         for fam_name in mod.sources_by_family:
             if fam_name not in manifest.families:
                 raise ManifestError(
@@ -636,6 +667,11 @@ def _validate(manifest):
                         f"modules.{mod.name}.example.{where}: "
                         f"depends_on unknown module '{dep}'"
                     )
+            check_paths(example.sources, f"example.{where}.sources")
+            if example.sim is not None and example.sim.sources is not None:
+                check_paths(example.sim.sources, f"example.{where}.sim.sources")
+            if example.epiccc is not None:
+                check_paths(example.epiccc.sources, f"example.{where}.epiccc.sources")
             if example.variants:
                 for vname, v in example.variants.items():
                     check_example(v, f"{where}.variants.{vname}")

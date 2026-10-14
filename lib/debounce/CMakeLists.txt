@@ -17,10 +17,26 @@ project(epic_debounce C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# Root anchor: walk up to the shared helpers, so moving this directory
+# changes no path below. Cross-module paths hang off EPIC_ROOT.
+if(NOT DEFINED EPIC_ROOT)
+    set(_EPIC_PROBE "${CMAKE_CURRENT_SOURCE_DIR}")
+    while(NOT EXISTS "${_EPIC_PROBE}/common/cmake/epic_family.cmake")
+        get_filename_component(_EPIC_PARENT "${_EPIC_PROBE}/.." ABSOLUTE)
+        if("${_EPIC_PARENT}" STREQUAL "${_EPIC_PROBE}")
+            message(FATAL_ERROR "EPIC_ROOT not found above ${CMAKE_CURRENT_SOURCE_DIR}")
+        endif()
+        set(_EPIC_PROBE "${_EPIC_PARENT}")
+    endwhile()
+    set(EPIC_ROOT "${_EPIC_PROBE}")
+    unset(_EPIC_PROBE)
+    unset(_EPIC_PARENT)
+endif()
+
 set(EPIC_FAMILY "PIC16" CACHE STRING "HAL family for the epic-tick timebase: PIC16 or PIC18")
 
 # Pull in epic-tick (which add_subdirectory's the chosen HAL family).
-set(TICK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../tick
+set(TICK_DIR ${EPIC_ROOT}/lib/tick
     CACHE PATH "Path to the epic-tick source tree")
 if(NOT TARGET epic_tick)
     add_subdirectory(${TICK_DIR} ${CMAKE_CURRENT_BINARY_DIR}/tick)

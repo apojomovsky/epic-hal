@@ -74,14 +74,15 @@ ALLOWLIST = {
 def module_sources(m, module: str, family: str) -> list[str]:
     """Repo-root-relative sources one build compiles for (module, family).
 
-    Module sources are stored module-relative (src/foo.c); the HAL
-    family sources are already repo-root-relative.
+    Module paths resolve through epicmanifest.join_module_path: own
+    files hang off the module dir, root-anchored cross-module paths
+    pass through unchanged.
     """
     out = []
     for dep in m.resolve_deps(module):
         mod = m.modules[dep]
-        out += [f"{mod.dir}/{s}" for s in mod.sources]
-        out += [f"{mod.dir}/{s}"
+        out += [manifest_lib.join_module_path(mod.dir, s) for s in mod.sources]
+        out += [manifest_lib.join_module_path(mod.dir, s)
                 for s in mod.sources_by_family.get(family, [])]
     return list(dict.fromkeys(out))
 
