@@ -2,23 +2,10 @@
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
-#   ./build/test_encoder
 #
-# This build reuses the host simulation backend of a HAL family (pulled in via
-# add_subdirectory) exactly as lib/tick does: epic_encoder_get_position() reads a
-# volatile int32_t the ISR writes asynchronously, so it wraps the read in
-# EPIC_IRQ_Disable()/EPIC_IRQ_Restore() -- the one HAL call this module makes.
-# The optional glitch gate also calls epic_tick_get()/epic_tick_elapsed_since(),
-# so lib/encoder links lib/tick, which in turn links the HAL family. Select
-# the family with -DEPIC_FAMILY=PIC18 (default PIC16), same convention as
-# epic-tick. Real-target builds use the XC8 Makefiles under mcu/.
-#
-# epic_encoder_update() itself is pure C with no HAL dependency (same as
-# epic_fsm_dispatch); the family dimension lives entirely in the atomic-read
-# helper + the XC8 Makefiles. One src/encoder.c builds against any family.
-# Only src/encoder.c includes the family-neutral shims (core/hal_irq.h,
-# epic_tick.h); the public encoder.h is dependency-free (only <stdint.h>),
-# matching lib/debounce's header/.c split.
+# Position reads wrap in EPIC_IRQ_Disable/Restore (the one HAL call);
+# the glitch gate's lib/tick pulls the HAL family (default PIC16,
+# -DEPIC_FAMILY=PIC18). Update itself is pure C; real-target uses mcu/.
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_encoder C)

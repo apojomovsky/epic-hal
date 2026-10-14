@@ -3,24 +3,9 @@
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
 #
-# This build reuses the host simulation backend of a HAL family: it pulls
-# the HAL in via add_subdirectory() so the family's static library (and its
-# host platform header / harness) is built once and linked here. Real-target
-# builds use the XC8 Makefile(s) under mcu/.
-#
-# The task manager is family-agnostic: it includes only the neutral HAL
-# contract headers (epic_hal.h, core/hal_irq.h, peripherals/hal_timer0.h,
-# core/hal_wdt_sleep.h) and the shared epic_harness.h, so the same
-# epic_taskmgr.c/.h builds against any family. Select the family with
-# -DEPIC_FAMILY=PIC18 (default PIC16); the build points at that family's
-# tree and device list. This is the Phase 3 litmus test: pointing the task
-# manager at hal/pic18/18fxx5x needs zero changes to epic_taskmgr.c/.h.
-#
-# The host/target split is done at build time, not with #ifdef, exactly as
-# in the HAL: the CMake build puts include/host first on the HAL's include
-# path (inherited from the family's HAL target) so the memory-backed SFR
-# platform and the host harness link. No example or scheduler source needs a
-# preprocessor branch for either build or either family.
+# Family-agnostic (neutral HAL contracts plus epic_harness.h) against
+# any family's host sim backend via add_subdirectory. Real-target
+# builds use mcu/; -DEPIC_FAMILY=PIC18 selects family (default PIC16).
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_taskmgr C)

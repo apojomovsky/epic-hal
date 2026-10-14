@@ -4,26 +4,8 @@
 #   ctest --testdir build --output-on-failure
 #   ./build/test_mul
 #
-# This is the host reference build: src/host/ (portable-C leaf primitives)
-# plus src/common/ (the portable-C derived routines every backend shares),
-# built as a host static library and exercised by the Tier-1 unit tests
-# under tests/. The family-specific inline-asm backends (src/pic16/,
-# src/pic18/) are built by the XC8 Makefiles under mcu/, not by CMake --
-# that asm targets XC8's PIC16/PIC18 instruction sets, not the host.
-#
-# Unlike lib/taskmgr's CMake, this build does NOT add_subdirectory() a HAL.
-# lib/math is a stateless computation library: the public header needs only
-# <stdint.h>/<stdbool.h>, and the host reference backend needs no peripheral
-# model. The family dimension (PIC16 vs PIC18, and the HAL each on-target
-# self-test links) lives entirely in the XC8 Makefile targets, which is the
-# only place a HAL is actually required. Keeping the host build HAL-free is
-# the plan-consistent reading of "Build src/host/ + src/common/ as a host
-# static lib and test it directly" (Tier 1); see docs/ARCHITECTURE.md.
-#
-# The host/target split is done at build time, not with #ifdef, exactly as
-# in the HAL: CMake links src/host/, the XC8 Makefiles link src/pic16/ or
-# src/pic18/. No math source file has a preprocessor branch for either
-# build or either family.
+# Host reference build: src/host/ plus src/common/ as a static lib
+# (docs/ARCHITECTURE.md); asm backends build under mcu/, no HAL here.
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_math C)

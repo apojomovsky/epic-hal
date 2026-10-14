@@ -1,15 +1,11 @@
-# lib/debounce, vendor-agnostic digital-input debouncer.
+# lib/debounce, digital-input debouncer on a lib/tick timebase.
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
-#   ./build/test_debounce
 #
-# The debounce core (src/debounce.c) depends on lib/tick for its timebase
-# (epic_tick_get / epic_tick_elapsed_since). lib/tick in turn pulls a HAL
-# family for its Timer2 host-sim backend. Select the family with
-# -DEPIC_FAMILY=PIC18 (default PIC16), same convention as lib/fsm's optional
-# taskmgr example. The public header debounce.h is dependency-free (only
-# <stdint.h>/<stdbool.h>); only src/debounce.c includes epic_tick.h.
+# lib/tick pulls a HAL family for its Timer2 host-sim backend.
+# -DEPIC_FAMILY=PIC18 selects the family (default PIC16). debounce.h
+# is dependency-free; only src/debounce.c includes epic_tick.h.
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_debounce C)

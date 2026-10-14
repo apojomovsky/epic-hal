@@ -1,15 +1,11 @@
-# lib/bus, I2C/SPI "MEM" register-access idiom (HAL_I2C_Mem_Read/Write equiv).
+# lib/bus, I2C/SPI MEM register-access idiom for 8-bit PICs.
 #
 #   cmake -B build && cmake --build build
 #
-# Reuses a HAL family's host sim backend via add_subdirectory (as the other
-# epic-* modules do). The MEM transaction logic is family-agnostic; the
-# default ops wrap the HAL SSP driver (target), and the mock-MEM test now
-# lives under MPLAB SIM (tests/sim_bus.c, run via `make mdb-test MODULE=
-# lib/bus MCU=16F877A DEVICE=PIC16F877A`). The target-only example
-# (examples/example_bus.c) is compiled by the manifest's xc8 matrix, not
-# by this host CMake. Select the family with -DEPIC_FAMILY=PIC18 (default
-# PIC16).
+# Family-agnostic MEM logic over the HAL SSP driver (target); the
+# mock-MEM test runs under MPLAB SIM (tests/sim_bus.c). The target
+# example builds via the manifest matrix. -DEPIC_FAMILY=PIC18 selects
+# the family (default PIC16).
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_bus C)

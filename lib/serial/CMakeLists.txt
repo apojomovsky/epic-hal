@@ -3,12 +3,9 @@
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
 #
-# Reuses a HAL family's host sim backend via add_subdirectory (as lib/taskmgr
-# / lib/tick do). The serial module is family-agnostic: it includes only the
-# neutral contracts (epic_hal.h, core/epic_harness.h) and the public
-# epic_serial.h, so the same src/epic_serial.c builds against any family.
-# Select the family with -DEPIC_FAMILY=PIC18 (default PIC16). Real-target
-# builds use the XC8 Makefiles under mcu/.
+# Family-agnostic (neutral contracts plus epic_serial.h) against any
+# family's host sim backend via add_subdirectory. -DEPIC_FAMILY=PIC18
+# selects the family (default PIC16); real-target builds use mcu/.
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_serial C)

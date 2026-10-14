@@ -2,15 +2,10 @@
 #
 #   cmake -B build && cmake --build build
 #
-# Builds on two sibling epic-* modules: lib/serial (the UART) and lib/tick
-# (the T3.5 silence timebase), the same sibling-link pattern lib/debounce
-# uses for lib/tick alone. lib/tick in turn pulls in a HAL family for its
-# Timer2 host-sim backend; lib/serial links the same family's USART. The
-# target-only example (examples/example_modbus.c) is compiled by the
-# manifest's xc8 matrix, and the framing/T3.5 test runs under MPLAB SIM
-# (tests/sim_modbus.c, via `make mdb-test MODULE=lib/modbus MCU=18F4550
-# DEVICE=PIC18F4550`). Select the family with -DEPIC_FAMILY=PIC18 (default
-# PIC16).
+# Sibling links: lib/serial (UART) and lib/tick (T3.5 timebase), which
+# pull the HAL family for USART/Timer2 backends. Framing test under
+# MPLAB SIM (tests/sim_modbus.c); example via manifest matrix.
+# -DEPIC_FAMILY=PIC18 selects the family (default PIC16).
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_modbus C)

@@ -1,17 +1,11 @@
-# lib/mcp23x17, MCP23017 (I2C) / MCP23S17 (SPI) 16-bit I/O expander
-# driver, on top of epic-bus.
+# lib/mcp23x17, MCP23017/MCP23S17 16-bit I/O expander over lib/bus.
 #
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
-#   ./build/test_mcp23x17 && ./build/example_mcp23x17
 #
-# Reuses a HAL family's host sim backend via add_subdirectory (as the
-# other epic-* modules do) and lib/bus for the transport. The driver
-# itself is family-agnostic; the host test injects a mock MCP23017
-# device through the lib/bus ops seam (the host sim has no SSP slave
-# model), so the full module + lib/bus + mock-device stack runs
-# host-side. Select the family with -DEPIC_FAMILY=PIC18 (default
-# PIC16). Real-target builds use the XC8 Makefiles under mcu/.
+# Family-agnostic driver; host test injects a mock device via the
+# lib/bus ops seam. -DEPIC_FAMILY=PIC18 selects family (default
+# PIC16); real-target builds use mcu/.
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_mcp23x17 C)

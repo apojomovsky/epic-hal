@@ -1,14 +1,10 @@
-# lib/tick, a 1 ms timebase (HAL_GetTick/HAL_Delay equivalent) for 8-bit PICs.
+# lib/tick, a 1 ms timebase for 8-bit PICs.
 #
 #   cmake -B build && cmake --build build
 #
-# This build reuses the host simulation backend of a HAL family (pulled in via
-# add_subdirectory) exactly as lib/taskmgr does. The tick module is
-# family-agnostic: it includes only the neutral contracts
-# (peripherals/hal_timer2.h, core/hal_irq.h, core/epic_harness.h) and the
-# public epic_tick.h, so the same src/epic_tick.c builds against any family.
-# Select the family with -DEPIC_FAMILY=PIC18 (default PIC16). Real-target
-# builds use the XC8 Makefiles under mcu/.
+# Family-agnostic (neutral contracts plus epic_tick.h) against any
+# family's host sim backend via add_subdirectory. -DEPIC_FAMILY=PIC18
+# selects the family (default PIC16); real-target builds use mcu/.
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_tick C)
