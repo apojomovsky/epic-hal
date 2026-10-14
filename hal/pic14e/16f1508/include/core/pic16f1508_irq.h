@@ -1,9 +1,10 @@
 /**
- * PIC16F1508/1509 interrupt contract. Sources: interrupt-on-change (INTCON)
- * and the four CLC cells (PIR3/PIE3 bits 0..3). Enabling a CLC source also
- * sets INTCON.PEIE, which exposes PIR1, PIR2 and non-CLC PIR3 sources to the
- * vector; the dispatcher acknowledges enabled ones (epic_dispatch_all_irqs).
- * Single vector, no priority levels.
+ * PIC16F1508/1509 interrupt contract. Sources: interrupt-on-change (INTCON),
+ * the four CLC cells (PIR3/PIE3 bits 0..3), and timers 1 and 2 (PIR1/PIE1
+ * bits 0 and 1). Enabling a PIE1 or PIE3 source also sets INTCON.PEIE, which
+ * exposes PIR1, PIR2 and non-CLC PIR3 sources to the vector; the dispatcher
+ * acknowledges enabled ones (epic_dispatch_all_irqs). Single vector, no
+ * priority levels.
  */
 #ifndef PIC16F1508_IRQ_H
 #define PIC16F1508_IRQ_H
@@ -18,7 +19,9 @@ typedef enum
     PIC16F1508_IRQ_CLC1 = 1,
     PIC16F1508_IRQ_CLC2 = 2,
     PIC16F1508_IRQ_CLC3 = 3,
-    PIC16F1508_IRQ_CLC4 = 4
+    PIC16F1508_IRQ_CLC4 = 4,
+    PIC16F1508_IRQ_TMR1 = 5,
+    PIC16F1508_IRQ_TMR2 = 6
 } PIC16F1508_IRQn;
 
 /**
@@ -34,7 +37,7 @@ uint8_t EPIC_IRQ_Disable(void);
 void EPIC_IRQ_Restore(uint8_t prev_state);
 
 /**
- * @brief Enable an interrupt source (INTCON.IOCIE, or PIE3.CLCnIE; a CLC source also sets PEIE).
+ * @brief Enable an interrupt source (INTCON.IOCIE, PIE3.CLCnIE, or PIE1.TMRnIE; a PIE source also sets PEIE).
  * @param irq Source to enable.
  */
 void EPIC_IRQ_Enable(PIC16F1508_IRQn irq);
@@ -67,9 +70,10 @@ void EPIC_IRQ_SetPriority(PIC16F1508_IRQn irq, EPIC_IRQ_Priority prio);
 
 /**
  * @brief Shared interrupt dispatcher, called from the single interrupt vector.
- * @details Runs IOC_IRQHandler when IOCIF and IOCIE are both set, and
- * CLCn_IRQHandler when the CLCn flag and enable are both set. With PEIE set,
- * each enabled PIR1, PIR2 and non-CLC PIR3 flag is cleared together with its
+ * @details Runs IOC_IRQHandler when IOCIF and IOCIE are both set, CLCn_IRQHandler
+ * when the CLCn flag and enable are both set, and TIMERn_IRQHandler when the
+ * TMRn flag and enable are both set with PEIE set. With PEIE set, each other
+ * enabled PIR1, PIR2 and non-CLC PIR3 flag is cleared together with its
  * enable, and no handler runs for it.
  */
 void epic_dispatch_all_irqs(void);

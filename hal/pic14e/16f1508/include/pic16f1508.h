@@ -32,6 +32,10 @@
 #define PIC16F1508_FAMILY_PORTC_MASK 0xFFU
 /* IOCBP/IOCBN/IOCBF are implemented for RB4..RB7 only. */
 #define PIC16F1508_FAMILY_IOCB_MASK  0xF0U
+/* Timer drivers present in this HAL. Demos gate timer use on these so the
+ * same demo source builds on family members without the timer. */
+#define PIC16F1508_HAS_TMR1 1
+#define PIC16F1508_HAS_TMR2 1
 
 #include "pic16f1508_sfr.h"
 

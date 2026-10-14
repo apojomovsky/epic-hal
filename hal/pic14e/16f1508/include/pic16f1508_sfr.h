@@ -45,6 +45,16 @@
 #define PIC_REG_IOCBN         0x395U
 #define PIC_REG_IOCBF         0x396U
 
+/* Timers: 16-bit TMR1 with gate control, 8-bit TMR2 with period match.
+ * Addresses from the DS40001609E memory map (Table 3-7, pages 25 and 26). */
+#define PIC_REG_TMR1L         0x16U
+#define PIC_REG_TMR1H         0x17U
+#define PIC_REG_T1CON         0x18U
+#define PIC_REG_T1GCON        0x19U
+#define PIC_REG_TMR2          0x1AU
+#define PIC_REG_PR2           0x1BU
+#define PIC_REG_T2CON         0x1CU
+
 /* CLC: four configurable logic cells. CLCDATA mirrors LCxOUT of all four. */
 #define PIC_REG_CLCDATA       0xF0FU
 #define PIC_REG_CLC1CON       0xF10U
@@ -119,6 +129,32 @@
 #define PIC_CLCGLS_D3T        EPIC_BIT(5)
 #define PIC_CLCGLS_D4N        EPIC_BIT(6)
 #define PIC_CLCGLS_D4T        EPIC_BIT(7)
+
+/* PIR1/PIE1 carry the TMR1 and TMR2 flags and enables in bits 0 and 1:
+ * DS40001609E Register 7-5 (PIR1, page 78) and Register 7-2 (PIE1, page 75). */
+#define PIC_PIR1_TMR1IF       EPIC_BIT(0)
+#define PIC_PIR1_TMR2IF       EPIC_BIT(1)
+#define PIC_PIE1_TMR1IE       EPIC_BIT(0)
+#define PIC_PIE1_TMR2IE       EPIC_BIT(1)
+
+/* T1CON: TMR1CS<1:0> clock select in bits 7:6, T1CKPS<1:0> prescaler in bits
+ * 5:4, T1OSCEN bit 3, T1SYNC bit 2, bit 1 unimplemented, TMR1ON bit 0.
+ * DS40001609E Register 19-1 (page 163). */
+#define PIC_T1CON_TMR1ON        EPIC_BIT(0)
+#define PIC_T1CON_T1SYNC        EPIC_BIT(2)
+#define PIC_T1CON_T1OSCEN       EPIC_BIT(3)
+#define PIC_T1CON_T1CKPS_MASK   0x30U
+#define PIC_T1CON_T1CKPS_SHIFT  4U
+#define PIC_T1CON_TMR1CS_MASK   0xC0U
+#define PIC_T1CON_TMR1CS_SHIFT  6U
+
+/* T2CON: T2OUTPS<3:0> postscaler in bits 6:3, TMR2ON bit 2, T2CKPS<1:0>
+ * prescaler in bits 1:0, bit 7 unimplemented. DS40001609E Register 20-1
+ * (page 168). */
+#define PIC_T2CON_TMR2ON        EPIC_BIT(2)
+#define PIC_T2CON_T2CKPS_MASK   0x03U
+#define PIC_T2CON_T2OUTPS_MASK  0x78U
+#define PIC_T2CON_T2OUTPS_SHIFT 3U
 
 /* INTCON bits (same positions as the 16F1xxx enhanced mid-range core). */
 #define PIC_INTCON_IOCIF      EPIC_BIT(0)

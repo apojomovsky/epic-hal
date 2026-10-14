@@ -62,15 +62,46 @@ static uint8_t clc_flag_mask(PIC16F1508_IRQn irq)
 }
 
 /**
+ * @brief Map a timer source to its PIE1 enable bit.
+ * @param irq Interrupt source.
+ * @return PIE1 mask for a timer source, 0 for any other source.
+ */
+static uint8_t tmr_enable_mask(PIC16F1508_IRQn irq)
+{
+    switch (irq)
+    {
+    case PIC16F1508_IRQ_TMR1: return PIC_PIE1_TMR1IE;
+    case PIC16F1508_IRQ_TMR2: return PIC_PIE1_TMR2IE;
+    default:                  return 0U;
+    }
+}
+
+/**
+ * @brief Map a timer source to its PIR1 flag bit.
+ * @param irq Interrupt source.
+ * @return PIR1 mask for a timer source, 0 for any other source.
+ */
+static uint8_t tmr_flag_mask(PIC16F1508_IRQn irq)
+{
+    switch (irq)
+    {
+    case PIC16F1508_IRQ_TMR1: return PIC_PIR1_TMR1IF;
+    case PIC16F1508_IRQ_TMR2: return PIC_PIR1_TMR2IF;
+    default:                  return 0U;
+    }
+}
+
+/**
  * @brief Enable a single interrupt source.
- * @details IOC is enabled in INTCON. A CLC source is enabled in PIE3 and also
- * sets INTCON.PEIE, because PIR3 sources reach the vector only through PEIE.
- * GIE is left to EPIC_IRQ_Restore.
+ * @details IOC is enabled in INTCON. A CLC source is enabled in PIE3 and a
+ * timer source in PIE1; both also set INTCON.PEIE, because PIR1 and PIR3
+ * sources reach the vector only through PEIE. GIE is left to EPIC_IRQ_Restore.
  * @param irq Interrupt source to enable.
  */
 void EPIC_IRQ_Enable(PIC16F1508_IRQn irq)
 {
     uint8_t ie_mask = clc_enable_mask(irq);
+    uint8_t tmr_mask = tmr_enable_mask(irq);
 
     if (irq == PIC16F1508_IRQ_IOC)
     {
@@ -79,6 +110,11 @@ void EPIC_IRQ_Enable(PIC16F1508_IRQn irq)
     else if (ie_mask != 0U)
     {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE3), ie_mask);
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
+    }
+    else if (tmr_mask != 0U)
+    {
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE1), tmr_mask);
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
     }
 }
@@ -92,6 +128,7 @@ void EPIC_IRQ_Enable(PIC16F1508_IRQn irq)
 void EPIC_IRQ_DisableSrc(PIC16F1508_IRQn irq)
 {
     uint8_t ie_mask = clc_enable_mask(irq);
+    uint8_t tmr_mask = tmr_enable_mask(irq);
 
     if (irq == PIC16F1508_IRQ_IOC)
     {
@@ -100,6 +137,10 @@ void EPIC_IRQ_DisableSrc(PIC16F1508_IRQn irq)
     else if (ie_mask != 0U)
     {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE3), ie_mask);
+    }
+    else if (tmr_mask != 0U)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE1), tmr_mask);
     }
 }
 
@@ -118,6 +159,8 @@ void EPIC_IRQ_ClearFlag(PIC16F1508_IRQn irq)
     case PIC16F1508_IRQ_CLC2: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC2IF); break;
     case PIC16F1508_IRQ_CLC3: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC3IF); break;
     case PIC16F1508_IRQ_CLC4: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_CLC4IF); break;
+    case PIC16F1508_IRQ_TMR1: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR1IF); break;
+    case PIC16F1508_IRQ_TMR2: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_TMR2IF); break;
     default:                  break;
     }
 }
@@ -130,6 +173,7 @@ void EPIC_IRQ_ClearFlag(PIC16F1508_IRQn irq)
 uint8_t EPIC_IRQ_GetFlag(PIC16F1508_IRQn irq)
 {
     uint8_t flag_mask = clc_flag_mask(irq);
+    uint8_t tmr_mask = tmr_flag_mask(irq);
 
     if (irq == PIC16F1508_IRQ_IOC)
     {
@@ -138,6 +182,10 @@ uint8_t EPIC_IRQ_GetFlag(PIC16F1508_IRQn irq)
     if (flag_mask != 0U)
     {
         return (EPIC_REG8(PIC_REG_PIR3) & flag_mask) ? 1U : 0U;
+    }
+    if (tmr_mask != 0U)
+    {
+        return (EPIC_REG8(PIC_REG_PIR1) & tmr_mask) ? 1U : 0U;
     }
     return 0U;
 }

@@ -1,9 +1,14 @@
 #include "core/pic16f1508_irq.h"
 #include "peripherals/pic16f1508_clc.h"
 #include "peripherals/pic16f1508_gpio.h"
+#include "peripherals/pic16f1508_timer1.h"
+#include "peripherals/pic16f1508_timer2.h"
 
 /* PIR3 flags with a driver: CLC1IF..CLC4IF. */
 #define CLC_PIR3_MASK ((uint8_t)(PIC_PIR3_CLC1IF | PIC_PIR3_CLC2IF | PIC_PIR3_CLC3IF | PIC_PIR3_CLC4IF))
+
+/* PIR1 flags with a driver: TMR1IF and TMR2IF. */
+#define TMR_PIR1_MASK ((uint8_t)(PIC_PIR1_TMR1IF | PIC_PIR1_TMR2IF))
 
 /**
  * @brief Clear one bit of a register using a constant mask for that index.
@@ -65,11 +70,25 @@ static uint8_t clc_live(uint8_t mask)
 }
 
 /**
+ * @brief Test whether a timer source's flag and enable are both still set.
+ * @details Same shape as clc_live: evaluated at each call site, since a
+ * callback that ran earlier in the same dispatch may have disabled a later
+ * source.
+ * @param mask PIR1 bit of the timer source.
+ * @return Non-zero when the source is pending and enabled, zero otherwise.
+ */
+static uint8_t tmr_live(uint8_t mask)
+{
+    return (uint8_t)(EPIC_REG8(PIC_REG_PIR1) & EPIC_REG8(PIC_REG_PIE1) & mask);
+}
+
+/**
  * @brief Route the pending interrupt to its handler.
  * @details Called from the single interrupt vector. A source runs its handler
  * only when its flag and its enable are both set. A disabled source keeps its
  * flag as status for polling through EPIC_IRQ_GetFlag. With PEIE set, enabled
- * PIR1, PIR2 and non-CLC PIR3 sources are acknowledged without a handler.
+ * PIR1, PIR2 and non-CLC PIR3 sources without a driver are acknowledged
+ * without a handler.
  */
 void epic_dispatch_all_irqs(void)
 {
@@ -86,13 +105,21 @@ void epic_dispatch_all_irqs(void)
     if (clc_live(PIC_PIR3_CLC2IF) != 0U) CLC2_IRQHandler();
     if (clc_live(PIC_PIR3_CLC3IF) != 0U) CLC3_IRQHandler();
     if (clc_live(PIC_PIR3_CLC4IF) != 0U) CLC4_IRQHandler();
-
-    /* No driver owns PIR1, PIR2 or PIR3 bits other than CLC. With PEIE set, an
-     * enabled flag reaches the vector and re-enters it on every return unless
-     * acknowledged here. Without PEIE those sources cannot reach the vector. */
+    /* PIR1 sources reach the vector only through PEIE, so the timer handlers
+     * stay gated on it: without PEIE a pending TMRnIF is left for polling. */
     if ((EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_PEIE) != 0U)
     {
-        epic_ack_unowned(EPIC_SFR_PTR(PIC_REG_PIR1), EPIC_SFR_PTR(PIC_REG_PIE1), 0xFFU);
+        if (tmr_live(PIC_PIR1_TMR1IF) != 0U) TIMER1_IRQHandler();
+        if (tmr_live(PIC_PIR1_TMR2IF) != 0U) TIMER2_IRQHandler();
+    }
+
+    /* Timers 1 and 2 and the CLC cells own their PIR1/PIR3 bits. With PEIE
+     * set, any other enabled flag reaches the vector and re-enters it on
+     * every return unless acknowledged here. Without PEIE those sources
+     * cannot reach the vector. */
+    if ((EPIC_REG8(PIC_REG_INTCON) & PIC_INTCON_PEIE) != 0U)
+    {
+        epic_ack_unowned(EPIC_SFR_PTR(PIC_REG_PIR1), EPIC_SFR_PTR(PIC_REG_PIE1), (uint8_t)~TMR_PIR1_MASK);
         epic_ack_unowned(EPIC_SFR_PTR(PIC_REG_PIR2), EPIC_SFR_PTR(PIC_REG_PIE2), 0xFFU);
         epic_ack_unowned(EPIC_SFR_PTR(PIC_REG_PIR3), EPIC_SFR_PTR(PIC_REG_PIE3), (uint8_t)~CLC_PIR3_MASK);
     }
