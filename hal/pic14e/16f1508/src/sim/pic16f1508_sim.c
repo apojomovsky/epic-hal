@@ -1,7 +1,10 @@
 /**
- * Host model of the PIC16F1508/1509 ports, interrupt-on-change, and CLC cells.
- * Models only what the GPIO/IOC/CLC contracts observe: no timers, USART,
- * EEPROM, or ADC, and no time base (one pin sample per step call).
+ * Host model of the PIC16F1508/1509 ports, interrupt-on-change, CLC cells,
+ * and timers 1 and 2. Models only what the GPIO/IOC/CLC/TMR contracts
+ * observe: timers count instruction cycles (ticks per step call), with
+ * prescalers, PR2 match and postscaler for TMR2 and 16-bit overflow for
+ * TMR1. External clock sources are not modeled except through
+ * pic16f1508_sim_timer1_external_pulse.
  */
 #include <stddef.h>
 #include <string.h>
@@ -28,6 +31,11 @@ static uint8_t sim_clc_d[4];
 static uint8_t sim_clc_q[4];
 static uint8_t sim_clc_g1[4];
 static uint8_t sim_clc_out[4];
+/* Timer prescaler and postscaler residuals: consumed input cycles toward the
+ * next TMR1 count, and consumed matches toward the next TMR2IF. */
+static uint16_t sim_t1_prescaler;
+static uint16_t sim_t2_prescaler;
+static uint8_t sim_t2_postscaler;
 
 /* Cell register block stride; matches the driver layout (CON, POL, SEL0, SEL1, GLS0..3). */
 #define SIM_CLC_STRIDE 8U
@@ -295,6 +303,108 @@ static void sim_step_ioc(void)
 }
 
 /**
+ * @brief Count one prescaled TMR1 tick: increment TMR1H:TMR1L and flag overflow.
+ */
+static void sim_timer1_count(void)
+{
+    uint8_t lo = pic16f1508_sim_sfr[PIC_REG_TMR1L];
+    uint8_t hi = pic16f1508_sim_sfr[PIC_REG_TMR1H];
+    uint16_t full = (uint16_t)(((uint16_t)hi << 8) | lo);
+
+    full++;
+    pic16f1508_sim_sfr[PIC_REG_TMR1L] = (uint8_t)(full & 0xFFU);
+    pic16f1508_sim_sfr[PIC_REG_TMR1H] = (uint8_t)(full >> 8);
+    if (full == 0x0000U)
+    {
+        pic16f1508_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR1IF;
+        if (sim_irq_cb != NULL)
+        {
+            sim_irq_cb();
+        }
+    }
+}
+
+/**
+ * @brief Advance the TMR1 model by one instruction cycle.
+ * @details T1CON layout (DS40001609E Register 19-1): TMR1CS<1:0> in bits 7:6,
+ * T1CKPS<1:0> in bits 5:4, TMR1ON in bit 0. Only the internal FOSC/4 source
+ * (TMR1CS 00) advances here; any other source halts, since the model has no
+ * signal behind it. External T1CKI edges arrive through
+ * pic16f1508_sim_timer1_external_pulse instead.
+ */
+static void sim_step_timer1(void)
+{
+    static const uint16_t ps_ratio[4] = { 1, 2, 4, 8 };
+    uint8_t t1con = pic16f1508_sim_sfr[PIC_REG_T1CON];
+    uint8_t ckps;
+
+    if ((t1con & PIC_T1CON_TMR1ON) == 0U)
+    {
+        return;
+    }
+    if ((t1con & PIC_T1CON_TMR1CS_MASK) != 0U)
+    {
+        return;
+    }
+    ckps = (uint8_t)(((unsigned int)t1con & PIC_T1CON_T1CKPS_MASK) >> PIC_T1CON_T1CKPS_SHIFT);
+    sim_t1_prescaler++;
+    if (sim_t1_prescaler < ps_ratio[ckps & 0x03U])
+    {
+        return;
+    }
+    sim_t1_prescaler = 0U;
+    sim_timer1_count();
+}
+
+/**
+ * @brief Advance the TMR2 model by one instruction cycle.
+ * @details T2CON layout (DS40001609E Register 20-1): T2OUTPS<3:0> in bits
+ * 6:3, TMR2ON in bit 2, T2CKPS<1:0> in bits 1:0 with ratios 1:1, 1:4, 1:16
+ * and 1:64. Each prescaled tick compares TMR2 against PR2: a match resets
+ * TMR2 to 0 and feeds the postscaler, which sets TMR2IF every N+1 matches.
+ */
+static void sim_step_timer2(void)
+{
+    static const uint16_t ps_ratio[4] = { 1, 4, 16, 64 };
+    uint8_t t2con = pic16f1508_sim_sfr[PIC_REG_T2CON];
+    uint8_t tmr2;
+    uint8_t pr2;
+    uint8_t outps;
+
+    if ((t2con & PIC_T2CON_TMR2ON) == 0U)
+    {
+        return;
+    }
+    sim_t2_prescaler++;
+    if (sim_t2_prescaler < ps_ratio[t2con & PIC_T2CON_T2CKPS_MASK])
+    {
+        return;
+    }
+    sim_t2_prescaler = 0U;
+    tmr2 = pic16f1508_sim_sfr[PIC_REG_TMR2];
+    pr2 = pic16f1508_sim_sfr[PIC_REG_PR2];
+    if (tmr2 == pr2)
+    {
+        pic16f1508_sim_sfr[PIC_REG_TMR2] = 0U;
+        sim_t2_postscaler++;
+        outps = (uint8_t)(((unsigned int)t2con & PIC_T2CON_T2OUTPS_MASK) >> PIC_T2CON_T2OUTPS_SHIFT);
+        if (sim_t2_postscaler > outps)
+        {
+            sim_t2_postscaler = 0U;
+            pic16f1508_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR2IF;
+            if (sim_irq_cb != NULL)
+            {
+                sim_irq_cb();
+            }
+        }
+    }
+    else
+    {
+        pic16f1508_sim_sfr[PIC_REG_TMR2] = (uint8_t)(tmr2 + 1U);
+    }
+}
+
+/**
  * @brief Reset the simulated SFRs to power-up state with all pins as inputs.
  */
 void pic16f1508_sim_reset(void)
@@ -305,26 +415,70 @@ void pic16f1508_sim_reset(void)
     pic16f1508_sim_sfr[PIC_REG_TRISB]  = 0xFFU;
     pic16f1508_sim_sfr[PIC_REG_TRISC]  = 0xFFU;
     pic16f1508_sim_sfr[PIC_REG_OPTION] = 0xFFU;
+    /* PR2 powers up at 0xFF (DS40001609E §20.1). */
+    pic16f1508_sim_sfr[PIC_REG_PR2] = 0xFFU;
     memset(sim_input_value, 0, sizeof sim_input_value);
     memset(sim_clc_d, 0, sizeof sim_clc_d);
     memset(sim_clc_q, 0, sizeof sim_clc_q);
     memset(sim_clc_g1, 0, sizeof sim_clc_g1);
     memset(sim_clc_out, 0, sizeof sim_clc_out);
+    sim_t1_prescaler = 0U;
+    sim_t2_prescaler = 0U;
+    sim_t2_postscaler = 0U;
     sim_irq_cb = NULL;
     sim_refresh_ports();
     sim_last_portb = pic16f1508_sim_sfr[PIC_REG_PORTB];
 }
 
 /**
- * @brief Advance the simulation by one step, refreshing ports, IOC, and CLC.
- * @param ticks Elapsed tick count, unused by this model.
+ * @brief Advance the simulation by a tick count, then sample pins, IOC and CLC once.
+ * @details Each tick advances the timers by one instruction cycle. Ports, IOC
+ * and CLC still sample once per call, as before: at one tick per call the
+ * behavior matches the old model exactly.
+ * @param ticks Instruction cycles to run the timers for.
  */
 void pic16f1508_sim_step(uint32_t ticks)
 {
-    (void)ticks;
+    uint32_t i;
+
+    for (i = 0U; i < ticks; i++)
+    {
+        sim_step_timer1();
+        sim_step_timer2();
+    }
     sim_refresh_ports();
     sim_step_ioc();
     sim_step_clc();
+}
+
+/**
+ * @brief Inject one T1CKI rising edge into the TMR1 counter path.
+ * @details Applies the T1CKPS prescaler, then counts exactly like an internal
+ * tick. Edges advance the counter only while TMR1ON is set with the external
+ * source selected (TMR1CS 10); any other setup ignores them.
+ */
+void pic16f1508_sim_timer1_external_pulse(void)
+{
+    static const uint16_t ps_ratio[4] = { 1, 2, 4, 8 };
+    uint8_t t1con = pic16f1508_sim_sfr[PIC_REG_T1CON];
+    uint8_t ckps;
+
+    if ((t1con & PIC_T1CON_TMR1ON) == 0U)
+    {
+        return;
+    }
+    if ((t1con & PIC_T1CON_TMR1CS_MASK) != (uint8_t)(0x2U << PIC_T1CON_TMR1CS_SHIFT))
+    {
+        return;
+    }
+    ckps = (uint8_t)(((unsigned int)t1con & PIC_T1CON_T1CKPS_MASK) >> PIC_T1CON_T1CKPS_SHIFT);
+    sim_t1_prescaler++;
+    if (sim_t1_prescaler < ps_ratio[ckps & 0x03U])
+    {
+        return;
+    }
+    sim_t1_prescaler = 0U;
+    sim_timer1_count();
 }
 
 /**

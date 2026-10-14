@@ -1,6 +1,6 @@
 /**
- * Host simulator API for the PIC16F1508/1509 ports, IOC, and CLC cells.
- * Host-only: never in an XC8 build.
+ * Host simulator API for the PIC16F1508/1509 ports, IOC, CLC cells, and
+ * timers. Host-only: never in an XC8 build.
  */
 #ifndef PIC16F1508_SIM_H
 #define PIC16F1508_SIM_H
@@ -15,10 +15,17 @@ typedef void (*pic16f1508_sim_irq_cb_t)(void);
 void pic16f1508_sim_reset(void);
 
 /**
- * @brief Sample pins once and evaluate interrupt-on-change and the CLC cells.
- * @param ticks Accepted for API parity with the other families; not used (no time base).
+ * @brief Run the timers for a tick count, then sample pins, IOC and CLC once.
+ * @param ticks Instruction cycles the timers advance; pins, IOC and CLC still sample once per call.
  */
 void pic16f1508_sim_step(uint32_t ticks);
+
+/**
+ * @brief Inject one T1CKI rising edge into the TMR1 counter path.
+ * @details Counts only while TMR1ON is set with the external source selected;
+ * any other setup ignores the edge.
+ */
+void pic16f1508_sim_timer1_external_pulse(void);
 
 /**
  * @brief Drive one Dx level into a CLC cell's gate logic.
