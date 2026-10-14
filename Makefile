@@ -157,9 +157,8 @@ xc8-build: image
 # VARIANT=sim builds the MPLAB SIM diagnostic firmware with epic-cc
 # instead, for like-for-like measurement against the XC8 sim recipe.
 # Sim hexes land in build/epiccc-sim (never shared with target), and
-# the driver writes its flash/RAM JSON beside the hex (needs a driver
-# past epic-cc#698). The target path stays flag-free: the CI gate pins
-# an older driver.
+# the driver writes its flash/RAM JSON beside the hex on both paths
+# (needs a driver past epic-cc#698; the gate pin carries it).
 #
 # EPIC_CC_HOST=1 runs the emitted script directly on the host instead,
 # which is the one mode a host-built driver suits: the CI epiccc-gate
@@ -186,7 +185,7 @@ EPIC_CC_RUN := mkdir -p $(HOME_MOUNT) $(HOME)/.cache/epic-cc/target && docker ru
 	-v $(CURDIR):/repo -w /repo
 VARIANT ?= target
 EPICCC_BUILD_DIR := build/epiccc$(if $(filter-out target,$(VARIANT)),-$(VARIANT))
-EPICCC_REPORT := $(if $(filter sim,$(VARIANT)),--report,)
+EPICCC_REPORT := --report
 # Optimization profile for the epic-cc driver (O0, O1, O2, Os). The Os
 # default emits no flag: it is the driver's own default, and the
 # target path stays flag-free so the CI gate's pinned driver
