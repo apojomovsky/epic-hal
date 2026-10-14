@@ -207,7 +207,7 @@ load time.
 ### `needs_hal`: not every module uses the family HAL
 
 ```toml
-[modules.epic-math]
+[modules."lib/math"]
 needs_hal  = false
 ```
 
@@ -223,7 +223,7 @@ its dependencies'.
 ### `sources_by_family`: a module's sources can differ per family
 
 ```toml
-[modules.epic-math.sources_by_family]
+[modules."lib/math".sources_by_family]
 PIC16F87XA = ["src/pic16/epic_math_mul.c", "src/pic16/epic_math_scratch.c"]
 PIC18Fxx5x = ["src/pic18/epic_math_mul.c"]
 ```

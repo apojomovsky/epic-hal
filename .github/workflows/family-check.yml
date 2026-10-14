@@ -365,13 +365,13 @@ jobs:
           import os, sys
           sys.path.insert(0, "scripts/build")
           import epicmanifest
-          from bundlegen import modules_for_family
+          from bundlegen import modules_for_family, short_name
           m = epicmanifest.load(epicmanifest.default_path())
           family = os.environ["FAMILY"]
           fam = m.families[family]
           print(fam.variants[-1])
           print(f"bundles/epic-hal-{fam.slug}-ci-test")
-          avail = [x.removeprefix("epic-") for x in modules_for_family(m, family)]
+          avail = [short_name(x) for x in modules_for_family(m, family)]
           print("serial,tick" if ("serial" in avail and "tick" in avail) else ",".join(avail[:2]))
           PY
           { read -r PART; read -r BUNDLE_DIR; read -r MODS; } < /tmp/epi-resolve
