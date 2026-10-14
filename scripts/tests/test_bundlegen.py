@@ -48,6 +48,7 @@ hal_sources = ["hal/pic14e/16f193x/src/peripherals/pic16f193x_gpio.c"]
 
 [modules.epic-tick]
 dir        = "lib/tick"
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
@@ -67,6 +68,7 @@ sources = ["examples/example_tick.c"]
 
 [modules.epic-serial]
 dir        = "lib/serial"
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = ["epic-tick"]
@@ -85,6 +87,7 @@ sources = ["tests/example_serial.c", "mcu/target_sizecheck.c"]
 
 [modules.epic-usb]
 dir        = "lib/usb"
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_usb.c"]
 includes   = ["include"]
 depends_on = []
@@ -102,6 +105,7 @@ sources = ["examples/example_usb.c"]
 # is CI coverage plumbing, not a consumer-facing library.
 [modules.epic-pic16f193x-firmware]
 dir        = "hal/pic14e/16f193x"
+summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
@@ -118,6 +122,7 @@ sources = ["tests/example_blink.c"]
 # module list or file set, it is CI coverage, not a consumer library.
 [modules.epic-combo-uart-ssp]
 dir        = "tests/epic-combo-uart-ssp"
+summary    = "Tooling-test fixture."
 sources    = ["tests/combo_uart_ssp.c"]
 includes   = []
 depends_on = []
@@ -276,6 +281,7 @@ class TestEpicHalMk(unittest.TestCase):
         two_inc = MANIFEST + """
 [modules.epic-math]
 dir        = "lib/math"
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_math.c"]
 includes   = ["include", "tests"]
 depends_on = []

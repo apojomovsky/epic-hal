@@ -18,6 +18,7 @@ hal_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c"]
 
 [modules.pic16f87xa-hal]
 dir        = "hal/pic14/16f87xa"
+summary    = "Tooling-test fixture."
 sources    = []
 includes   = []
 depends_on = []
@@ -31,6 +32,7 @@ config  = { FOSC = "HS", WDTE = "ON", PWRTE = "ON", BOREN = "ON", LVP = "OFF", W
 
 [modules.epic-tick]
 dir        = "lib/tick"
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_tick.c"]
 includes   = ["include"]
 depends_on = []
@@ -43,6 +45,7 @@ config  = { FOSC = "HS" }
 
 [modules.epic-serial]
 dir        = "lib/serial"
+summary    = "Tooling-test fixture."
 sources    = ["src/epic_serial.c"]
 includes   = ["include"]
 depends_on = ["epic-tick"]
