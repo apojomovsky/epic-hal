@@ -166,7 +166,7 @@ def _gpio_header(manifest, family_name) -> str:
 
 
 # The config keys that enable the watchdog: PIC16 names it WDTE, PIC18 and
-# the 16F5x WDT. Their values are ON/OFF on every family.
+# the 16F5x WDT. OFF is a valid value for each of them.
 _WDT_ENABLE_KEYS = ("WDTE", "WDT")
 
 

@@ -173,18 +173,15 @@ class TestEmitMainC(unittest.TestCase):
         # scaffolded main.c must ship it disabled (epic-hal#426). Checks the
         # real manifest, not the fixture, so a new family cannot regress.
         real = epicmanifest.load(epicmanifest.default_path())
-        checked = 0
         for fam in real.families.values():
             part = sorted(fam.variants)[0]
             for modules in ([], ["tick"], ["serial"]):
                 src = epic_hal_init.emit_main_c(real, fam.name, part, modules)
-                wdt = [l for l in src.splitlines() if "#pragma config WDT" in l and "= " in l]
+                wdt = [l for l in src.splitlines()
+                       if "#pragma config WDT" in l and "= " in l and not l.startswith("#pragma config WDTPS")]
+                self.assertTrue(wdt, f"{fam.name} {part} {modules}: no watchdog pragma emitted")
                 for line in wdt:
-                    if line.startswith("#pragma config WDTPS"):
-                        continue
-                    checked += 1
                     self.assertTrue(line.endswith("= OFF"), f"{fam.name} {part} {modules}: {line}")
-        self.assertGreater(checked, 0)
 
     def test_skeleton_uses_tick_and_gpio(self):
         src = epic_hal_init.emit_main_c(self.m, "PIC16F87XA", "16F877A", ["tick"])
