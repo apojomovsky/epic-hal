@@ -278,7 +278,7 @@ underneath it.
 This is scoped to host-sim builds only: `EPIC_SWUART_TEST_HOOKS` is
 defined by `lib/swuart/CMakeLists.txt`'s `target_compile_definitions`
 on the `epic_swuart` CMake target, which only exists in the host-sim
-CMake build. Real-target builds go through `scripts/epic_build.py`'s
+CMake build. Real-target builds go through `scripts/build/epic_build.py`'s
 manifest and the XC8 toolchain directly, never touch
 `lib/swuart/CMakeLists.txt`, and therefore never define
 `EPIC_SWUART_TEST_HOOKS`; the test-only functions are compiled out of
@@ -295,7 +295,7 @@ where that verification's own limits show up.
 
 `epic-swuart` has a real `mdb` gate
 (`lib/swuart/tests/sim_mdb_swuart.c`, wired into
-`scripts/ci-target-sim.sh`), the first real-hardware behavioral
+`scripts/ci/ci-target-sim.sh`), the first real-hardware behavioral
 verification this module has ever had, on PIC16F877A. What it actually
 proves:
 

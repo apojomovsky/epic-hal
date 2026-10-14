@@ -6,7 +6,7 @@ equivalent, since PIC18Fxx5x's own modules (e.g. `epic-tick`) already
 compile the family's full HAL and are what CI actually exercises:
 
 ```sh
-python3 scripts/epic_build.py build --module epic-tick --mcu 18F4550 --run
+python3 scripts/build/epic_build.py build --module epic-tick --mcu 18F4550 --run
 ```
 
 Also 18F2455/2550/4455. See `common/manifest/README.md` for the

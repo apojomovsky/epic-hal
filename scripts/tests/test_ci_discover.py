@@ -10,11 +10,12 @@ import unittest
 SCRIPTS = pathlib.Path(__file__).resolve().parents[1]
 REPO_ROOT = SCRIPTS.parent
 sys.path.insert(0, str(SCRIPTS))
+sys.path.insert(0, str(SCRIPTS / "ci"))
 
 
 def load():
     spec = importlib.util.spec_from_file_location(
-        "ci_discover", SCRIPTS / "ci-discover-affected-modules.py")
+        "ci_discover", SCRIPTS / "ci" / "ci-discover-affected-modules.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod

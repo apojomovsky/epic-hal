@@ -47,7 +47,7 @@ Real target (needs the PIC12-16F1xxx DFP):
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-python3 scripts/epic_build.py build --module epic-pic16f193x-firmware --mcu 16F1937 --run
+python3 scripts/build/epic_build.py build --module epic-pic16f193x-firmware --mcu 16F1937 --run
 ```
 
 ## 4. Build systems

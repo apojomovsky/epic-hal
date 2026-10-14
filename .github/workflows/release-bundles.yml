@@ -63,14 +63,14 @@ jobs:
         run: |
           python3 - <<'PY' > families.txt
           import sys
-          sys.path.insert(0, "scripts")
+          sys.path.insert(0, "scripts/build")
           import epicmanifest
           m = epicmanifest.load(epicmanifest.default_path())
           for name in sorted(m.families):
               print(name)
           PY
           while read -r fam; do
-            python3 scripts/make_bundle.py \
+            python3 scripts/build/make_bundle.py \
               --family "$fam" --version "${{ steps.version.outputs.version }}"
           done < families.txt
       - name: Emit the standalone epic-hal CLI asset
@@ -79,7 +79,7 @@ jobs:
           # (Python + manifest) ships as its own asset install.sh fetches
           # alongside a bundle. Created before the checksum step so its
           # SHA-256 lands in SHA256SUMS.
-          python3 scripts/make_bundle.py --cli --version "${{ steps.version.outputs.version }}"
+          python3 scripts/build/make_bundle.py --cli --version "${{ steps.version.outputs.version }}"
       - name: Checksum the tarballs
         run: |
           cd bundles
@@ -92,7 +92,7 @@ jobs:
           # so it cannot drift from the bundles it describes.
           python3 - <<'PY' > bundles/parts.txt
           import sys
-          sys.path.insert(0, "scripts")
+          sys.path.insert(0, "scripts/build")
           import bundlegen, epicmanifest
           m = epicmanifest.load(epicmanifest.default_path())
           sys.stdout.write(bundlegen.emit_parts_map(m))
@@ -236,11 +236,11 @@ jobs:
         env:
           EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
         run: |
-          # The loop itself lives in scripts/ci-target-installer-gate.sh
+          # The loop itself lives in scripts/ci/ci-target-installer-gate.sh
           # (committed, shellcheck-able, testable on its own) rather than
           # inline here; see that file's header. It covers one canonical
           # part per manifest family, derived from the bundle's parts.txt.
-          bash scripts/ci-target-installer-gate.sh \
+          bash scripts/ci/ci-target-installer-gate.sh \
             /tmp/bundles "${{ needs.build.outputs.version }}"
       - name: Exercise the latest-version resolution branch against a local mock
         run: |
@@ -326,7 +326,7 @@ jobs:
           # bare runner (the toolchain image has no python3), and the
           # strip keeps one blank line before the appended section.
           printf '%s\n' "$(cat notes.md)" > notes.md
-          minimum="$(python3 -c "import sys; sys.path.insert(0, 'scripts'); import epicmanifest as e; print(e.load(e.default_path()).min_epic_cc)")"
+          minimum="$(python3 -c "import sys; sys.path.insert(0, 'scripts/build'); import epicmanifest as e; print(e.load(e.default_path()).min_epic_cc)")"
           printf '\n### Compatibility\n\n- Requires epic-cc >= %s (manifest `[toolchain] min_epic_cc`).\n' "$minimum" >> notes.md
           cat notes.md
       - name: Create the release

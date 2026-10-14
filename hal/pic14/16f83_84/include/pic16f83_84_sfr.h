@@ -2,9 +2,9 @@
  * and DS30189 (16F83/84), cross-checked against the DFP EDC
  * (Microchip.PIC16Fxxx_DFP, edc/PIC16F84A.PIC; the three parts carry a
  * byte-identical map). Register addresses are regenerated from the EDC
- * by scripts/gen-sfr.py; bit positions and POR values are
+ * by scripts/build/gen-sfr.py; bit positions and POR values are
  * hand-maintained between the DS and the DFP headers at compile time.
- * Regenerated via scripts/gen-sfr.py. */
+ * Regenerated via scripts/build/gen-sfr.py. */
 
 #ifndef PIC16F83_84_SFR_H
 #define PIC16F83_84_SFR_H

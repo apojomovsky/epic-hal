@@ -815,6 +815,6 @@ def load(path: pathlib.Path) -> Manifest:
 def default_path() -> pathlib.Path:
     """The manifest's location relative to this file."""
     return (
-        pathlib.Path(__file__).resolve().parents[1]
+        pathlib.Path(__file__).resolve().parents[2]
         / "common" / "manifest" / "modules.toml"
     )

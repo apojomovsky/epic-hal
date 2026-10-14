@@ -2,7 +2,7 @@
  * 2-3/2-4 and Registers 2-1 .. 11-1), cross-checked against the DFP EDC
  * (edc/PIC16F818.PIC, edc/PIC16F819.PIC; the two parts carry a
  * byte-identical map). Addresses are regenerated from the EDC by
- * scripts/gen-sfr.py; bit positions and POR values are hand-maintained
+ * scripts/build/gen-sfr.py; bit positions and POR values are hand-maintained
  * between the DS and the DFP. Registers the die lacks (USART, CCP2,
  * SSPCON2, SSPMSK, CMCON, CVRCON, ANSEL, WDTCON, PORTC/D/E) are
  * deliberately absent: referencing one must fail at compile time. */

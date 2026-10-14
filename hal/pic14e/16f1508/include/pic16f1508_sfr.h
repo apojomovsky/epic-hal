@@ -1,6 +1,6 @@
 /**
  * SFR address map for PIC16F1508/1509. PIC_REG_* addresses, CLC included,
- * are generated from the pinned DFP EDC by scripts/gen-sfr.py (identical for
+ * are generated from the pinned DFP EDC by scripts/build/gen-sfr.py (identical for
  * both parts; --check detects drift). Bit masks are hand-maintained and cite
  * the DS40001609E register they come from (see MANUAL.md).
  */

@@ -107,7 +107,7 @@ cmake -B build -S hal/pic18/18f2520 && cmake --build build
 Real target (XC8, manifest-driven):
 
 ```sh
-python3 scripts/epic_build.py build --module pic18f2520-hal --mcu 18F2520 --run
+python3 scripts/build/epic_build.py build --module pic18f2520-hal --mcu 18F2520 --run
 ```
 
 ## 4. Build systems

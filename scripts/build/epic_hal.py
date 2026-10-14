@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# scripts/epic_hal.py
+# scripts/build/epic_hal.py
 """epic-hal init: scaffold a ready PIC project from an Epic HAL bundle."""
 from __future__ import annotations
 import argparse, pathlib, sys

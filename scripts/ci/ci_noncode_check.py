@@ -18,8 +18,8 @@ _NON_CODE_RE = re.compile(
     r"|^LICENSE"
     r"|\.gitignore$|\.gitattributes$|\.clang-format$|\.editorconfig$"
     r"|\.(svg|png|jpg|jpeg|gif|ico)$"
-    r"|^scripts/bootstrap\.sh$"
-    r"|^scripts/install-git-hooks\.sh$"
+    r"|^scripts/dev/bootstrap\.sh$"
+    r"|^scripts/hooks/install-git-hooks\.sh$"
     r"|^Makefile$"
     r")"
 )

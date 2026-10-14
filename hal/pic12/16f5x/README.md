@@ -32,7 +32,7 @@ MPLAB SIM toggle gate: `make mdb-test MODULE=pic16f5x-hal MCU=16F54
 DEVICE=PIC16F54 MODE=toggle STEPI=50000` (PORTB bit 0; the family has
 no UART. The blink's toggle period is ~50000 instructions, so STEPI
 50000 alternates cleanly while the 200000 default aliases to a constant
-phase, see `scripts/ci-target-sim.sh`). All five parts take the same
+phase, see `scripts/ci/ci-target-sim.sh`). All five parts take the same
 parameters: swap `MCU=`/`DEVICE=` for `16F505`, `16F506`, `16F57` or
 `16F59` and the gate runs unchanged.
 Epic-cc gate: `make epiccc-build MODULE=pic16f5x-hal MCU=16F54
@@ -43,7 +43,7 @@ simulator executes instructions only (never advances TMR0) and the die
 has no interrupt to inject, so the Timer0-polled canonical blink gives
 the sim-runner nothing to watch. The CI epiccc-gate job builds the hex
 under the pinned epic-cc and gates the toggle through
-`scripts/sim-runner` with `--watch PORTB:0` and no `--irq-every`.
+`scripts/sim/sim-runner` with `--watch PORTB:0` and no `--irq-every`.
 
 ## XC8 codegen gotchas (live)
 

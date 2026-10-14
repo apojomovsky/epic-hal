@@ -1,6 +1,7 @@
 # scripts/tests/test_epic_hal_init.py
 import pathlib, sys, unittest
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "build"))
 import epicmanifest, epic_hal_init
 
 MANIFEST = """
@@ -446,11 +447,11 @@ class TestBundlePresence(unittest.TestCase):
         # file) it says dev rather than fabricating a release number.
         import subprocess
         repo = pathlib.Path(__file__).resolve().parents[2]
-        cli = repo / "scripts" / "epic_hal.py"
+        cli = repo / "scripts" / "build" / "epic_hal.py"
 
-        # Source checkout: scripts/epic_hal.py with no VERSION beside it.
+        # Source checkout: scripts/build/epic_hal.py with no VERSION beside it.
         self.assertFalse((cli.parent / "VERSION").exists(),
-                         "scripts/ has no VERSION in a source checkout")
+                         "scripts/build/ has no VERSION in a source checkout")
         run = subprocess.run(["python3", str(cli), "--version"],
                              capture_output=True, text=True)
         self.assertEqual(run.returncode, 0)
@@ -467,7 +468,7 @@ class TestBundlePresence(unittest.TestCase):
         # exactly as the release asset lays them out.
         asset_dir = pathlib.Path(tempfile.mkdtemp(dir=repo))
         self.addCleanup(shutil.rmtree, asset_dir, ignore_errors=True)
-        scripts = repo / "scripts"
+        scripts = repo / "scripts" / "build"
         shutil.copy2(scripts / "epic_hal.py", asset_dir / "epic-hal")
         for helper in ("epic_hal_init.py", "epicmanifest.py", "bundlegen.py"):
             shutil.copy2(scripts / helper, asset_dir / helper)

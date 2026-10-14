@@ -5,7 +5,7 @@
  * OPTION_REG via the GPIO pull-up path, EECON1 direct), the Bank-0
  * data pair (EEDATA/EEADR through EPIC_BANK0_*), and the INTCON
  * interrupt gates (TMR0IE, EEIE). Reports PASS/FAIL on RA0 (MODE=gpio
- * in scripts/sim-mdb-run.sh; no USART on this family). A bank
+ * in scripts/sim/sim-mdb-run.sh; no USART on this family). A bank
  * misdirection fails the gate instead of corrupting silently.
  *
  * The EEPROM and IRQ accessor calls are excluded for flash: at 1K

@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$repo_root"
 
 module="${1:?usage: compare-toolchains.sh <module> <mcu> <device> [wait_ms] [eeprom_writes]}"
@@ -157,7 +157,7 @@ if [ ! -s "$xc8_capture" ] || [ ! -s "$epiccc_capture" ]; then
   exit 1
 fi
 
-. "$repo_root/scripts/compare-normalize.sh"
+. "$repo_root/scripts/sim/compare-normalize.sh"
 normalize_trace "$module" "$xc8_capture" > "$xc8_capture.cmp"
 normalize_trace "$module" "$epiccc_capture" > "$epiccc_capture.cmp"
 show_fire_ticks "$module" "$xc8_capture" "$epiccc_capture"

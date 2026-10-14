@@ -17,7 +17,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import bundlegen  # noqa: E402
 import epicmanifest  # noqa: E402
 
-README = pathlib.Path(__file__).resolve().parents[1] / "README.md"
+README = pathlib.Path(__file__).resolve().parents[2] / "README.md"
 
 BLOCKS = {
     "packs": bundlegen.emit_readme_pack_table,
@@ -67,7 +67,7 @@ def main() -> int:
     if args.check:
         if stale:
             print(f"readme_tables: stale docgen blocks: {', '.join(stale)};"
-                  f" run scripts/readme_tables.py to regenerate",
+                  f" run scripts/build/readme_tables.py to regenerate",
                   file=sys.stderr)
             return 1
         return 0

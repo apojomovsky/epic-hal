@@ -13,12 +13,12 @@ correctly: initialise the HAL, toggle a pin, loop.
 | `epic-hal-demo-pic16f818_819.X` | PIC16F818_819 | PIC16F819 |
 | `epic-hal-demo-pic16f63x_67x_68x.X` | PIC16F63x_67x_68x | PIC16F677 |
 
-`scripts/make_bundle.py` copies the matching one into each bundle as
+`scripts/build/make_bundle.py` copies the matching one into each bundle as
 `examples/epic-hal-demo.X`, so inside a bundle the project sits one level
 below the bundle root and every path in it resolves as `../..`.
 
 These `.X` projects are also the base templates the `epic-hal init`
-scaffolder patches: `scripts/epic_hal_init.py` copies the matching
+scaffolder patches: `scripts/build/epic_hal_init.py` copies the matching
 reference project and rewrites its part and module set, so a scaffolded
 project starts from a known-good reference instead of a blank one.
 

@@ -19,8 +19,8 @@ IMAGE = os.environ.get("EPIC_TOOLCHAIN_IMAGE", "epic-hal-toolchain:local")
 XC8_ROOT = os.environ.get("EPIC_XC8_ROOT", "/opt/microchip/xc8/v4.00")
 PACKS = f"{XC8_ROOT}/pic/packs"
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts"))
+REPO = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "scripts" / "build"))
 import epicmanifest as manifest_lib  # noqa: E402
 import epic_build  # noqa: E402
 

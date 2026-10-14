@@ -1,15 +1,7 @@
 #!/usr/bin/env sh
 # Cut a release: sync with upstream, work out the next version, show the
 # notes that would publish, and push the tag that triggers
-# release-bundles.yml.
-#
-#   scripts/release.sh patch     0.3.7 -> 0.3.8
-#   scripts/release.sh minor     0.3.7 -> 0.4.0
-#   scripts/release.sh major     0.3.7 -> 1.0.0
-#   scripts/release.sh v0.5.0    an explicit version
-#
-# Options: -y skip the confirmation, --watch follow the release run,
-#          --dry-run stop before tagging, --remote NAME (default origin).
+# release-bundles.yml (usage() below has the full synopsis).
 #
 # Pushing the tag is the point of no return: it publishes a public
 # GitHub Release. Everything before the confirmation is local and
@@ -26,7 +18,7 @@ DRY_RUN=0
 
 usage() {
     cat <<EOF
-usage: scripts/release.sh <major|minor|patch|vX.Y.Z> [-y] [--watch]
+usage: scripts/release/release.sh <major|minor|patch|vX.Y.Z> [-y] [--watch]
                           [--dry-run] [--remote NAME] [--branch NAME]
 
 Syncs with the remote, computes the next version from the latest tag,
@@ -179,14 +171,15 @@ repo_url="$(git remote get-url "$REMOTE" \
           -e 's#\.git$##')"
 
 echo
-if [ -x scripts/release_notes.py ] || [ -f scripts/release_notes.py ]; then
-    if ! python3 scripts/release_notes.py "$new" --repo-url "$repo_url"; then
+notes="$(dirname "$0")/release_notes.py"
+if [ -x "$notes" ] || [ -f "$notes" ]; then
+    if ! python3 "$notes" "$new" --repo-url "$repo_url"; then
         cleanup_tag
         echo "release: could not generate the notes preview" >&2
         exit 1
     fi
 else
-    echo "## What changed (preview unavailable, scripts/release_notes.py missing)"
+    echo "## What changed (preview unavailable, scripts/release/release_notes.py missing)"
     git log --pretty='- %s' "$latest..$new"
 fi
 echo

@@ -35,7 +35,7 @@ jobs:
         id: noncode
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            result="$(python3 scripts/ci_noncode_check.py '${{ github.event.pull_request.base.sha }}')"
+            result="$(python3 scripts/ci/ci_noncode_check.py '${{ github.event.pull_request.base.sha }}')"
           else
             result="false"
           fi
@@ -81,11 +81,11 @@ jobs:
         env:
           EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
         run: |
-          python3 scripts/sfr-map-audit.py --family "$FAMILY" || audit_status=$?
-          python3 scripts/config-key-audit.py --family "$FAMILY" || audit_status=$?
-          python3 scripts/dfp-pin-audit.py --family "$FAMILY" || audit_status=$?
-          python3 scripts/epiccc-slice-audit.py --family "$FAMILY" || audit_status=$?
-          python3 scripts/statics-audit.py || audit_status=$?
+          python3 scripts/audit/sfr-map-audit.py --family "$FAMILY" || audit_status=$?
+          python3 scripts/audit/config-key-audit.py --family "$FAMILY" || audit_status=$?
+          python3 scripts/audit/dfp-pin-audit.py --family "$FAMILY" || audit_status=$?
+          python3 scripts/audit/epiccc-slice-audit.py --family "$FAMILY" || audit_status=$?
+          python3 scripts/audit/statics-audit.py || audit_status=$?
           # SFR header drift gate: generated header must match committed one.
           # EDC packs live inside the toolchain image (/opt/microchip/xc8);
           # the runner host may not have the PIC18 pack, so extract once and
@@ -103,9 +103,9 @@ jobs:
           # XC8 version is pinned in Dockerfile; the extracted tree contains v4.00 etc.
           xc8_root=$(ls -d /tmp/xc8-extracted/v* 2>/dev/null | head -n1)
           if [ -n "$xc8_root" ]; then
-            XC8_INSTALL_DIR="$xc8_root" python3 scripts/gen-sfr.py --family "$FAMILY" --check || audit_status=$?
+            XC8_INSTALL_DIR="$xc8_root" python3 scripts/build/gen-sfr.py --family "$FAMILY" --check || audit_status=$?
           else
-            python3 scripts/gen-sfr.py --family "$FAMILY" --check || audit_status=$?
+            python3 scripts/build/gen-sfr.py --family "$FAMILY" --check || audit_status=$?
           fi
           exit "${audit_status:-0}"
 
@@ -117,7 +117,7 @@ jobs:
         if: steps.noncode.outputs.non_code != 'true'
         env:
           EPIC_TOOLCHAIN_IMAGE: ${{ steps.image.outputs.image }}
-        run: python3 scripts/hex-identity-audit.py --family "$FAMILY"
+        run: python3 scripts/audit/hex-identity-audit.py --family "$FAMILY"
 
       # Resolution (reading the manifest, computing sources, generating
       # bundles) needs python3 and runs here, on the bare runner;
@@ -125,13 +125,13 @@ jobs:
       # sh script, a plain-text matrix.txt, or an already-generated
       # bundle directory, since the toolchain image deliberately has no
       # python3 AND no jq (docker/ci-toolchain/Dockerfile), so the
-      # scripts that run inside it (scripts/ci-target-*.sh) can't parse
+      # scripts that run inside it (scripts/ci/ci-target-*.sh) can't parse
       # JSON either; matrix.txt is one "family module mcu" triple per
       # line for exactly that reason. Emits this family only:
       #   - build/<module>/<mcu>/build.sh for every (module, family,
       #     mcu) in the manifest with an example, plus matrix.txt.
       #   - build-sim/<module>/<mcu>/build.sh for the family's sim
-      #     gates (matches scripts/ci-target-sim.sh's run_one list; keep
+      #     gates (matches scripts/ci/ci-target-sim.sh's run_one list; keep
       #     both in sync by hand if either changes).
       #   - bundles/<family>-*.tar.gz via make_bundle.py.
       - name: Emit real-target + sim build scripts, generate the bundle
@@ -141,7 +141,7 @@ jobs:
           xc8_install_dir="/opt/microchip/xc8/v${xc8_version}"
           XC8_INSTALL_DIR="$xc8_install_dir" python3 - <<'PY'
           import json, os, subprocess, sys
-          sys.path.insert(0, "scripts")
+          sys.path.insert(0, "scripts/build")
           import epicmanifest
 
           m = epicmanifest.load(epicmanifest.default_path())
@@ -152,7 +152,7 @@ jobs:
           # matrix.txt the build step below loops over. Reuses
           # `epic_build.py matrix`'s own family/module/mcu filter.
           matrix_json = subprocess.run(
-              ["python3", "scripts/epic_build.py", "matrix"],
+              ["python3", "scripts/build/epic_build.py", "matrix"],
               check=True, capture_output=True, text=True,
           ).stdout
           with open("matrix.txt", "w") as matrix_f:
@@ -167,7 +167,7 @@ jobs:
                       for mcu in mcus.split(","):
                           matrix_f.write(f"{fam_name} {name} {mcu}\n")
                           subprocess.run(
-                              ["python3", "scripts/epic_build.py", "build",
+                              ["python3", "scripts/build/epic_build.py", "build",
                                "--module", name, "--mcu", mcu,
                                "--build-dir", f"build/{name}",
                                "--dfp-dir", dfp_dir],
@@ -175,7 +175,7 @@ jobs:
                           )
 
           # Sim build scripts for this family's gates (the run_one list
-          # in scripts/ci-target-sim.sh is the source of truth).
+          # in scripts/ci/ci-target-sim.sh is the source of truth).
           for module, mcu in [
               ("epic-tick", "16F877A"),
               ("epic-tick", "18F4550"),
@@ -248,7 +248,7 @@ jobs:
                   continue
               dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
               subprocess.run(
-                  ["python3", "scripts/epic_build.py", "build",
+                  ["python3", "scripts/build/epic_build.py", "build",
                    "--module", module, "--mcu", mcu, "--variant", "sim",
                    "--build-dir", f"build-sim/{module}",
                    "--dfp-dir", dfp_dir],
@@ -257,7 +257,7 @@ jobs:
 
           # This family's bundle.
           subprocess.run(
-              ["python3", "scripts/make_bundle.py",
+              ["python3", "scripts/build/make_bundle.py",
                "--family", family, "--version", "ci-test"],
               check=True,
           )
@@ -272,7 +272,7 @@ jobs:
       # 'cd "${EPIC_REPO_ROOT:-.}"' convention; every path inside it is
       # relative from there, so the mount point doesn't matter otherwise.
       #
-      # The actual loop logic lives in scripts/ci-target-*.sh (committed,
+      # The actual loop logic lives in scripts/ci/ci-target-*.sh (committed,
       # shellcheck-able files), not inlined here: this same payload used
       # to be a docker-run-with-inline-bash-c string, which meant the
       # loop's own quoting had to survive being embedded inside this
@@ -290,12 +290,12 @@ jobs:
           docker run --rm -v "$PWD:/work" -w /work \
             -e PARALLEL="$PARALLEL" \
             "${{ steps.image.outputs.image }}" \
-            bash scripts/ci-target-build.sh || build_status=$?
+            bash scripts/ci/ci-target-build.sh || build_status=$?
           cat ci-summary-build.md >> "$GITHUB_STEP_SUMMARY"
           exit "${build_status:-0}"
 
-      # scripts/ci-target-sim.sh calls scripts/sim-mdb-run.sh, the same
-      # script scripts/sim-test-local.sh also calls for a local repro,
+      # scripts/ci/ci-target-sim.sh calls scripts/sim/sim-mdb-run.sh, the same
+      # script scripts/sim/sim-test-local.sh also calls for a local repro,
       # so CI and a local run go through one source of truth. FAMILY
       # filters this job's gates; PARALLEL=2 runs them concurrently.
       # wait_ms values (5000, 60000 for pic16f193x) are confirmed-
@@ -313,11 +313,11 @@ jobs:
           docker run --rm -v "$PWD:/work" -w /work \
             -e PARALLEL="$PARALLEL" -e FAMILY="$FAMILY" \
             "${{ steps.image.outputs.image }}" \
-            bash scripts/ci-target-sim.sh || sim_status=$?
+            bash scripts/ci/ci-target-sim.sh || sim_status=$?
           cat ci-summary-sim.md >> "$GITHUB_STEP_SUMMARY"
           exit "${sim_status:-0}"
 
-      # scripts/ci-target-bundle.sh: proves the generated bundle is
+      # scripts/ci/ci-target-bundle.sh: proves the generated bundle is
       # genuinely self-contained by copying it to /isolated (no repo
       # above it) and building there, ported verbatim from the old
       # bundle-gate.yml's build-isolated job.
@@ -326,7 +326,7 @@ jobs:
         run: |
           docker run --rm -v "$PWD:/work" -w /work \
             "${{ steps.image.outputs.image }}" \
-            bash scripts/ci-target-bundle.sh || bundle_status=$?
+            bash scripts/ci/ci-target-bundle.sh || bundle_status=$?
           cat ci-summary-bundle.md >> "$GITHUB_STEP_SUMMARY"
           exit "${bundle_status:-0}"
 
@@ -363,7 +363,7 @@ jobs:
         run: |
           python3 - <<'PY' > /tmp/epi-resolve
           import os, sys
-          sys.path.insert(0, "scripts")
+          sys.path.insert(0, "scripts/build")
           import epicmanifest
           from bundlegen import modules_for_family
           m = epicmanifest.load(epicmanifest.default_path())
@@ -376,7 +376,7 @@ jobs:
           PY
           { read -r PART; read -r BUNDLE_DIR; read -r MODS; } < /tmp/epi-resolve
           echo "scaffold: family=$FAMILY part=$PART modules=$MODS bundle=$BUNDLE_DIR"
-          python3 scripts/epic_hal.py init \
+          python3 scripts/build/epic_hal.py init \
             --family "$FAMILY" --part "$PART" --modules "$MODS" \
             --bundle "$BUNDLE_DIR" -o "$BUNDLE_DIR/scaffold" --name myapp --toolchain xc8
           docker run --rm -v "$PWD:/work" -w /work \

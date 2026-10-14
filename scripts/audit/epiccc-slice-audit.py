@@ -16,8 +16,8 @@ import pathlib
 import re
 import sys
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts"))
+REPO = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "scripts" / "build"))
 import epicmanifest as manifest_lib  # noqa: E402
 
 CI_WORKFLOW = REPO / ".github" / "workflows" / "ci.yml"

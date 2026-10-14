@@ -13,7 +13,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 def _load():
     """Import dfp-pin-audit.py, whose filename is not a module name."""
-    path = SCRIPTS / "dfp-pin-audit.py"
+    path = SCRIPTS / "audit" / "dfp-pin-audit.py"
     spec = importlib.util.spec_from_file_location("dfp_pin_audit", path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

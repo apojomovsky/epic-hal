@@ -87,7 +87,7 @@ jobs:
       family: PIC16F1508
 
   # XC8 vs epic-cc demo scoreboard (epic-hal#279): the three flagship
-  # 18F4550 demos through scripts/compare-toolchains.sh, one matrix leg
+  # 18F4550 demos through scripts/sim/compare-toolchains.sh, one matrix leg
   # per scoreboard row in docs/demo-scoreboard.md. PRs stay XC8-only via
   # the family jobs in ci.yml; this file never triggers on pull_request,
   # so this job is the nightly-only full dual-toolchain size plus UART
@@ -158,7 +158,7 @@ jobs:
             echo "| ${{ matrix.module }} | SKIP (module not in this checkout yet) |" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          ./scripts/compare-toolchains.sh "${{ matrix.module }}" "${{ matrix.mcu }}" "${{ matrix.device }}" "${{ matrix.wait_ms }}" "${{ matrix.eeprom_writes }}" > "compare-${{ matrix.module }}.log" 2>&1 || compare_status=$?
+          ./scripts/sim/compare-toolchains.sh "${{ matrix.module }}" "${{ matrix.mcu }}" "${{ matrix.device }}" "${{ matrix.wait_ms }}" "${{ matrix.eeprom_writes }}" > "compare-${{ matrix.module }}.log" 2>&1 || compare_status=$?
           cat "compare-${{ matrix.module }}.log"
           {
             echo "## demo-scoreboard: ${{ matrix.module }} ${{ matrix.mcu }}"

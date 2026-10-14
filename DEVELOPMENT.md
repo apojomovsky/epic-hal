@@ -20,7 +20,7 @@ verification.
 
 ## Native toolchain
 
-`./scripts/bootstrap.sh` sets up a fresh clone: installs the host
+`./scripts/dev/bootstrap.sh` sets up a fresh clone: installs the host
 toolchain the CMake builds need and the git hooks (`pre-commit`:
 trailing newline/whitespace, no em-dash, `cppcheck` on staged `.c`
 files; `commit-msg`: no attribution trailers, no em-dash), then
@@ -41,13 +41,13 @@ Build a real target:
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-python3 scripts/epic_build.py build --module epic-tick --mcu 16F877A --run
+python3 scripts/build/epic_build.py build --module epic-tick --mcu 16F877A --run
 ```
 
 Run the mdb gate:
 
 ```sh
-scripts/sim-mdb-run.sh pic16f87xa 16F877A PIC16F877A epic-tick
+scripts/sim/sim-mdb-run.sh pic16f87xa 16F877A PIC16F877A epic-tick
 ```
 
 ## Docker (no local installs)
@@ -65,7 +65,7 @@ make test MODULE=epic-lcd   # ... or just one (a manifest id or a directory, eve
 make xc8-build MODULE=epic-tick MCU=16F877A   # real-target build
 make mdb-test MODULE=epic-tick MCU=16F877A DEVICE=PIC16F877A  # the mdb gate
 
-scripts/xc8-size-baseline.sh epic-encoder 16F877A  # flash/RAM size baseline
+scripts/sim/xc8-size-baseline.sh epic-encoder 16F877A  # flash/RAM size baseline
                                                     # for epic-cc#200's table
 
 make shell           # interactive shell, repo mounted at /repo
@@ -102,7 +102,7 @@ A reference project pins the pack in three places, and all three must
 agree: `default.Pack.dfplocation` in
 `nbproject/Makefile-genesis.properties`, `DFP_DIR` in
 `nbproject/Makefile-local-default.mk`, and the `<pack>` element in
-`nbproject/configurations.xml`. `scripts/dfp-pin-audit.py` (in
+`nbproject/configurations.xml`. `scripts/audit/dfp-pin-audit.py` (in
 `make audit` and each family's CI job) checks that, and checks the
 manifest's `dfp_version` against the Dockerfile ARG, which is the pair
 that decides what a bundle tells a consumer to download.
@@ -215,7 +215,7 @@ the 1939 (its GPIO driver toggles the latch, DS41364E), plus the `mdb-hex`
 register read. The 16F54 leg runs its gate with no `--irq-every`: the
 die has no interrupt and its epic-cc example toggles from a software
 loop. The set of families with a declared `epiccc_sources` slice is held
-equal to this job's coverage by `scripts/epiccc-slice-audit.py` (in
+equal to this job's coverage by `scripts/audit/epiccc-slice-audit.py` (in
 `make audit` and every family-check audit step), so a new slice without
 a leg fails CI (epic-hal#257). It is
 the "did a HAL change break against a known good compiler" direction;
@@ -288,7 +288,7 @@ records the reasoning for the current sha.
 ## The sim gate (HAL-4)
 
 The epiccc-gate CI job verifies its hexes in epic-cc's own ISA
-simulator (`crates/sim`, via `scripts/sim-runner/`), so the epic-cc
+simulator (`crates/sim`, via `scripts/sim/sim-runner/`), so the epic-cc
 path needs neither mdb nor the private toolchain image; the XC8 + mdb
 jobs stay as the differential oracle. The runner is a thin wrapper:
 it loads a hex, raises the firmware's interrupt source the way the
@@ -436,16 +436,16 @@ commits it to `master` as `chore(release): vX.Y.Z`, and pushes the
 annotated tag, no local checkout required. See
 [.github/workflows/cut-release.yml](.github/workflows/cut-release.yml).
 
-**Manual**: `scripts/release.sh` still works for a local, previewed cut:
+**Manual**: `scripts/release/release.sh` still works for a local, previewed cut:
 
-    scripts/release.sh patch     # 0.3.7 -> 0.3.8
-    scripts/release.sh minor     # 0.3.7 -> 0.4.0
-    scripts/release.sh major     # 0.3.7 -> 1.0.0
-    scripts/release.sh v0.5.0    # or name the version outright
+    scripts/release/release.sh patch     # 0.3.7 -> 0.3.8
+    scripts/release/release.sh minor     # 0.3.7 -> 0.4.0
+    scripts/release/release.sh major     # 0.3.7 -> 1.0.0
+    scripts/release/release.sh v0.5.0    # or name the version outright
 
 It syncs with the remote, refuses to run on a dirty tree, off `master`,
 or when `master` is not level with the remote, computes the next version
-from the newest tag, prints a `scripts/release_notes.py` preview of what
+from the newest tag, prints a `scripts/release/release_notes.py` preview of what
 would publish, and asks before pushing. Everything up to that prompt is
 local: declining deletes the tag it made to preview with. `-y` skips the
 prompt, `--dry-run` stops before tagging, `--watch` follows the run.
@@ -461,7 +461,7 @@ any repo checkout, and only then attaches the tarballs to a GitHub
 Release, with notes generated from the tag's `git-cliff` section. See
 [.github/workflows/release-bundles.yml](.github/workflows/release-bundles.yml).
 
-`scripts/release.sh -y` also skips the warning about a tag with no
+`scripts/release/release.sh -y` also skips the warning about a tag with no
 commits behind it, so a scripted `-y` run can republish an unchanged tree
 the way v0.3.3 and v0.3.4 did.
 
@@ -487,10 +487,10 @@ part-to-family map, and the standalone CLI asset, then point the
 installer at the result:
 
 ```sh
-python3 scripts/make_bundle.py --family PIC16F87XA --version ci-test
-python3 scripts/make_bundle.py --cli --version ci-test
+python3 scripts/build/make_bundle.py --family PIC16F87XA --version ci-test
+python3 scripts/build/make_bundle.py --cli --version ci-test
 cd bundles && sha256sum ./*.tar.gz > SHA256SUMS
-python3 -c "import sys; sys.path.insert(0, 'scripts'); import bundlegen, epicmanifest; sys.stdout.write(bundlegen.emit_parts_map(epicmanifest.load(epicmanifest.default_path())))" > parts.txt
+python3 -c "import sys; sys.path.insert(0, 'scripts/build'); import bundlegen, epicmanifest; sys.stdout.write(bundlegen.emit_parts_map(epicmanifest.load(epicmanifest.default_path())))" > parts.txt
 cd ..
 EPIC_HAL_BASE_URL=file://$PWD/bundles sh install.sh 16F877A ci-test
 ```
@@ -505,14 +505,14 @@ scaffolds, see
 
 ## epic-hal CLI
 
-The `epic-hal` CLI (`scripts/epic_hal.py`, with `epic_hal_init.py`,
+The `epic-hal` CLI (`scripts/build/epic_hal.py`, with `epic_hal_init.py`,
 `epicmanifest.py`, and `bundlegen.py`) scaffolds a consumer project from
 a bundle: `main.c`, a filled `Makefile`, and a patched MPLAB X `.X` for
 the chosen part and module subset. Run it from a checkout or an unpacked
 bundle:
 
 ```sh
-python3 scripts/epic_hal.py init --bundle path/to/epic-hal-pic16f87xa-v0.1.0
+python3 scripts/build/epic_hal.py init --bundle path/to/epic-hal-pic16f87xa-v0.1.0
 ```
 
 `epic-hal --version` reports the release stamp (the `VERSION` file

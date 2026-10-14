@@ -94,7 +94,7 @@ jobs:
       # Every module/HAL follows the fixed host-testable contract (see
       # AGENTS.md "Module anatomy"). On a pull_request, narrow to just
       # the modules actually touched plus their transitive dependents
-      # (scripts/ci-discover-affected-modules.py); a push to master
+      # (scripts/ci/ci-discover-affected-modules.py); a push to master
       # always gets the full, unfiltered list. Non-code PRs get an
       # empty module list, so the build+test step below is a no-op for
       # them, not an error.
@@ -107,7 +107,7 @@ jobs:
             echo "modules=$modules" >> "$GITHUB_OUTPUT"
             echo "non_code=false" >> "$GITHUB_OUTPUT"
           else
-            result="$(python3 scripts/ci-discover-affected-modules.py \
+            result="$(python3 scripts/ci/ci-discover-affected-modules.py \
               '${{ github.event.pull_request.base.sha }}')"
             echo "modules=$(echo "$result" | jq -c '.modules')" >> "$GITHUB_OUTPUT"
             echo "non_code=$(echo "$result" | jq -r '.non_code')" >> "$GITHUB_OUTPUT"
@@ -154,7 +154,7 @@ jobs:
       # name only files that exist and agree with the manifest
       # (epic-hal#314). Runs on every PR like the tooling tests above.
       - name: Reference MPLAB X project audit
-        run: python3 scripts/mplabx-audit.py
+        run: python3 scripts/audit/mplabx-audit.py
 
       # Always runs, even if the loop above failed, so a build break and
       # a lint break both surface in the same run instead of the second
@@ -163,7 +163,7 @@ jobs:
         if: always()
         env:
           PRE_COMMIT_BASE_REF: ${{ steps.base.outputs.ref }}
-        run: bash scripts/pre-commit-checks.sh
+        run: bash scripts/hooks/pre-commit-checks.sh
 
   # Per-family real-target checks (XC8 builds, mdb/MPLAB SIM gates,
   # audits, bundle), each via the reusable family-check workflow: the
@@ -233,7 +233,7 @@ jobs:
   # artifact a user gets. A deliberate bump: a regression shows up as a
   # chosen bump that fails, not a mystery (how: DEVELOPMENT.md
   # "The epiccc gate pin"). Public since HAL-4 (epic-hal#60): the hexes
-  # verify in epic-cc's own crates/sim via scripts/sim-runner, so this job
+  # verify in epic-cc's own crates/sim via scripts/sim/sim-runner, so this job
   # pulls neither the private toolchain image nor anything Microchip.
 
   family-83_84:
@@ -282,7 +282,7 @@ jobs:
         id: noncode
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            result="$(python3 scripts/ci_noncode_check.py '${{ github.event.pull_request.base.sha }}')"
+            result="$(python3 scripts/ci/ci_noncode_check.py '${{ github.event.pull_request.base.sha }}')"
           else
             result="false"
           fi
@@ -298,7 +298,7 @@ jobs:
           python3 - <<'PY'
           import os
           import sys
-          sys.path.insert(0, "scripts")
+          sys.path.insert(0, "scripts/build")
           from epicmanifest import default_path, load
           minimum = load(default_path()).min_epic_cc
           pinned = os.environ["EPIC_CC_CLANG_VER"]
@@ -399,7 +399,7 @@ jobs:
       - name: Build the sim runner
         if: steps.noncode.outputs.non_code != 'true'
         run: cargo build --release --locked
-        working-directory: scripts/sim-runner
+        working-directory: scripts/sim/sim-runner
 
       # The gate hexes from the #60 amendment: {877A, 887} x {blink,
       # tick} plus the HAL-3d follow-up's 4550 pair (epic-hal#102):
@@ -455,7 +455,7 @@ jobs:
           make epiccc-build MODULE=pic16f818_819-hal MCU=16F819 EPIC_CC_HOST=1
           # The 628A and 84A legs (epic-hal#257): the last two families
           # with a declared epiccc_sources slice, previously unwatched.
-          # scripts/epiccc-slice-audit.py holds the set equality between
+          # scripts/audit/epiccc-slice-audit.py holds the set equality between
           # the manifest's slices and this job's legs.
           make epiccc-build MODULE=pic16f628a-hal MCU=16F628A EPIC_CC_HOST=1
           make epiccc-build MODULE=pic16f83_84-hal MCU=16F84A EPIC_CC_HOST=1
@@ -479,7 +479,7 @@ jobs:
       - name: Sim gates (crates/sim)
         if: steps.noncode.outputs.non_code != 'true'
         run: |
-          runner=scripts/sim-runner/target/release/sim-runner
+          runner=scripts/sim/sim-runner/target/release/sim-runner
           "$runner" --hex build/epiccc/16F877A-blink.hex --device 16F877A \
             --watch PORTB:0 --samples 12 --steps 200000 \
             --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
@@ -554,7 +554,7 @@ jobs:
           xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           XC8_INSTALL_DIR="/opt/microchip/xc8/v${xc8_version}" python3 - <<'PY'
           import os, subprocess, sys
-          sys.path.insert(0, "scripts")
+          sys.path.insert(0, "scripts/build")
           import epicmanifest
           m = epicmanifest.load(epicmanifest.default_path())
           xc8_install_dir = os.environ["XC8_INSTALL_DIR"]
@@ -614,7 +614,7 @@ jobs:
               fam = m.family_of(mcu)
               dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
               subprocess.run(
-                  ["python3", "scripts/epic_build.py", "build",
+                  ["python3", "scripts/build/epic_build.py", "build",
                    "--module", module, "--mcu", mcu, "--variant", "sim",
                    "--build-dir", f"build-sim/{module}",
                    "--dfp-dir", dfp_dir],
@@ -627,6 +627,6 @@ jobs:
           docker run --rm -v "$PWD:/work" -w /work \
             -e REPEAT=5 \
             "${{ steps.image.outputs.image }}" \
-            bash scripts/ci-target-sim.sh ci-summary-sim.md || sim_status=$?
+            bash scripts/ci/ci-target-sim.sh ci-summary-sim.md || sim_status=$?
           cat ci-summary-sim.md >> "$GITHUB_STEP_SUMMARY"
           exit "${sim_status:-0}"

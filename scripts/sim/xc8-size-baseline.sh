@@ -19,7 +19,7 @@ if [ "$#" -ne 2 ] && [ -z "$log_file" ]; then
     exit 2
 fi
 
-repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$repo_root"
 
 if [ -n "$log_file" ]; then
@@ -38,7 +38,7 @@ fi
 # Reuse epic_build's parser so the regex has one home.
 usage="$(python3 -c "
 import sys
-sys.path.insert(0, 'scripts')
+sys.path.insert(0, 'scripts/build')
 import epic_build
 u = epic_build.parse_memory_summary(sys.stdin.read())
 if u is None:

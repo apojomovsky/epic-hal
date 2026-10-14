@@ -2,7 +2,7 @@
  * audit: this is the family's section-4 mdb gate, so it drives every
  * access class the shared drivers use and every peripheral image the
  * ladder configures, on the real target under MPLAB SIM. Reports
- * PASS/FAIL on RA0 (MODE=gpio in scripts/sim-mdb-run.sh; the family has
+ * PASS/FAIL on RA0 (MODE=gpio in scripts/sim/sim-mdb-run.sh; the family has
  * no USART). A bank misdirection or a miscompiled register write fails
  * the gate instead of corrupting silently.
  *

@@ -1,7 +1,7 @@
 # PIC16F1508/1509 HAL, host simulation build.
 #   cmake -B build && cmake --build build && ctest --test-dir build
 #
-# Real-target builds use the XC8 Makefile path (scripts/epic_build.py). The
+# Real-target builds use the XC8 Makefile path (scripts/build/epic_build.py). The
 # host vs target split is by include path (include/host ahead of include) and
 # source selection, not #ifdef. Shared helpers: common/cmake/epic_family.cmake.
 

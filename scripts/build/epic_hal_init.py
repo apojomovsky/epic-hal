@@ -1,6 +1,6 @@
-# scripts/epic_hal_init.py
+# scripts/build/epic_hal_init.py
 """Project scaffolder for Epic HAL: manifest in, ready main.c + Makefile +
-patched MPLAB X .X out. Pure helpers here; scripts/epic_hal.py is the CLI."""
+patched MPLAB X .X out. Pure helpers here; scripts/build/epic_hal.py is the CLI."""
 from __future__ import annotations
 import os
 import pathlib

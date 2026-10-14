@@ -19,7 +19,7 @@ import sys
 IMAGE = os.environ.get("EPIC_TOOLCHAIN_IMAGE", "epic-hal-toolchain:local")
 XC8_ROOT = os.environ.get("EPIC_XC8_ROOT", "/opt/microchip/xc8/v4.00")
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
+REPO = pathlib.Path(__file__).resolve().parents[2]
 
 OUT_ROOT = REPO / "build-ident"
 

@@ -42,7 +42,7 @@ no driver yet (SFRs are in the map). This part has **no USB and no SPP**
   comparator, CVR, LVD, EEPROM; addresses cross-checked against the
   PIC18Fxxxx DFP and the EDC, bits/reset values cited to DS39609B. The
   PIC_REG_* address set is generator-projected
-  (`scripts/gen-sfr.py --family PIC18F6520 --check` is a CI gate).
+  (`scripts/build/gen-sfr.py --family PIC18F6520 --check` is a CI gate).
 - ✅ Platform layer (`include/host` + `include/target` `pic18_platform.h`):
   the same `epic_sfr_read8` / `EPIC_REG8` / `EPIC_WEAK` contract as the
   other PIC18 families; host sim is a flat 4096-byte array indexed by the
@@ -112,9 +112,9 @@ no driver yet (SFRs are in the map). This part has **no USB and no SPP**
   CI wrapper via the latch `LATA` (`GPIO_REG=LATA`: PIC18's driven output
   latch does not read back on PORTx under MPSIM, verified 2026-09-15).
 - ✅ CI wiring at foundation time: manifest family + pseudo-module,
-  `scripts/ci-target-sim.sh` sim gate, `sfr-map-audit.py` / `config-key-audit.py`
-  / `hex-identity-audit.py` / `gen-sfr.py` / `pre-commit-checks.sh` family
-  registration, and the `epic_build.py` PIC18 classifier (the canonical
+  `scripts/ci/ci-target-sim.sh` sim gate, `scripts/audit/sfr-map-audit.py` / `scripts/audit/config-key-audit.py`
+  / `scripts/audit/hex-identity-audit.py` / `scripts/build/gen-sfr.py` / `scripts/hooks/pre-commit-checks.sh` family
+  registration, and the `scripts/build/epic_build.py` PIC18 classifier (the canonical
   part comes from the manifest's `variants[-1]`, shared with gen-sfr.py).
   The `family-check.yml` job is deferred until a consumer module exists (the
   1320/2520 pattern); the manifest family/module, device-data audits, and
@@ -207,7 +207,7 @@ the `pic18f6520-hal` pseudo-module); see `mcu/pic18f6520-mplabx/README.md` and
 `common/manifest/README.md`.
 
 ```sh
-python3 scripts/epic_build.py build --module pic18f6520-hal --mcu 18F6520 --run
+python3 scripts/build/epic_build.py build --module pic18f6520-hal --mcu 18F6520 --run
 ```
 
 ## Environment split

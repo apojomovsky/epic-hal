@@ -62,7 +62,7 @@ ctest --test-dir build --output-on-failure
 ```
 
 Select the HAL family with `-DEPIC_FAMILY=PIC18` (default PIC16).
-Real-target builds use the manifest + `scripts/epic_build.py`.
+Real-target builds use the manifest + `scripts/build/epic_build.py`.
 
 ## Documentation
 

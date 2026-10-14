@@ -1,20 +1,18 @@
 #!/usr/bin/env bash
-# One-time (idempotent) dev-environment setup, run by hand on a fresh
-# checkout: installs the host-toolchain packages every module's CMake host
-# build needs, then the git hooks (scripts/install-git-hooks.sh).
-# Linux only (Debian/Ubuntu apt). Real-target builds run in the
-# docker/ci-toolchain/ image; only the vendor/ installers need a human
+# One-time (idempotent) setup, run by hand on a fresh checkout:
+# installs the host-toolchain packages every module's CMake host build
+# needs, then the git hooks (scripts/hooks/install-git-hooks.sh).
+# Linux only (Debian/Ubuntu apt); real-target builds run in the
+# docker/ci-toolchain/ image whose vendor installers need a human
 # (their CDN blocks scripted downloads).
-#
-#   ./scripts/bootstrap.sh [--check-only]   --check-only: report only, exit
-#                                            nonzero if anything is missing
+# Usage: ./scripts/dev/bootstrap.sh [--check-only] (report only, exit nonzero if missing)
 
 set -euo pipefail
 
 check_only=0
 [ "${1:-}" = "--check-only" ] && check_only=1
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 problems=0
 
 # ---- host toolchain packages ----
@@ -61,12 +59,12 @@ if [ "$check_only" = 1 ]; then
         if [ -e "$hooks_dir/$hook" ]; then
             echo "bootstrap: $hook hook already installed."
         else
-            echo "bootstrap: $hook hook not installed (run ./scripts/install-git-hooks.sh)."
+            echo "bootstrap: $hook hook not installed (run ./scripts/hooks/install-git-hooks.sh)."
             problems=1
         fi
     done
 else
-    "$repo_root/scripts/install-git-hooks.sh"
+    "$repo_root/scripts/hooks/install-git-hooks.sh"
 fi
 
 # ---- Docker toolchain (real-target builds) ----
@@ -99,7 +97,7 @@ if [ "$toolchain_ok" = 1 ]; then
             echo "bootstrap: docker toolchain image present (epic-hal-toolchain:local);"
             echo "  real-target builds are ready (make xc8-build / make mdb-test)."
         elif [ "$check_only" = 1 ]; then
-            echo "bootstrap: docker toolchain image not built yet (run ./scripts/bootstrap.sh"
+            echo "bootstrap: docker toolchain image not built yet (run ./scripts/dev/bootstrap.sh"
             echo "  or 'make image')."
             problems=1
         else
@@ -111,7 +109,7 @@ if [ "$toolchain_ok" = 1 ]; then
         echo "     make output above; the bot-challenge blocks scripted downloads):"
         echo "       docker/ci-toolchain/vendor/xc8-installer.run"
         echo "       docker/ci-toolchain/vendor/mplabx-installer.tar"
-        echo "  2. Re-run ./scripts/bootstrap.sh (or run 'make image')."
+        echo "  2. Re-run ./scripts/dev/bootstrap.sh (or run 'make image')."
         echo "  Host-simulation builds and tests work without this."
         problems=1
     fi

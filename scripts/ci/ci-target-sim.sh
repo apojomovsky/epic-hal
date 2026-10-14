@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # MPLAB SIM run loop for the target job and `make target-ci`, over
-# scripts/sim-mdb-run.sh. wait_ms is wall-clock. Exits 1 on any failure.
+# scripts/sim/sim-mdb-run.sh. wait_ms is wall-clock. Exits 1 on any failure.
 # Usage: ci-target-sim.sh [summary.md]; REPEAT=N; FAMILY=<fam> (sharded CI);
 # PARALLEL=N (sim-mdb-run.sh temps are PID-suffixed).
 
@@ -61,18 +61,18 @@ run_one() {
   local n pass=0
   for n in $(seq 1 "$repeat"); do
     if [ -n "$tog_env" ]; then
-      if env $tog_env scripts/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
+      if env $tog_env scripts/sim/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
         pass=$((pass + 1))
       else
         echo "FAIL (run ${n}/${repeat}): ${family} ${mcu} ${module}"
       fi
     elif [ -n "$gpio_reg_env" ]; then
-      if env "$gpio_reg_env" scripts/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
+      if env "$gpio_reg_env" scripts/sim/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
         pass=$((pass + 1))
       else
         echo "FAIL (run ${n}/${repeat}): ${family} ${mcu} ${module}"
       fi
-    elif scripts/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
+    elif scripts/sim/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
       pass=$((pass + 1))
     else
       echo "FAIL (run ${n}/${repeat}): ${family} ${mcu} ${module}"

@@ -2,7 +2,7 @@
 #   cmake -B build -S hal/pic18/18f1320 && cmake --build build
 #   ./build/example_smoke
 #
-# Real-target builds are manifest-driven (scripts/epic_build.py), not a
+# Real-target builds are manifest-driven (scripts/build/epic_build.py), not a
 # standalone Makefile. Thin caller of the shared epic_family.cmake
 # helpers; only the source and device lists are family-specific.
 

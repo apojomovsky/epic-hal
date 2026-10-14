@@ -50,7 +50,7 @@ Manifest-driven (`common/manifest/modules.toml`'s `PIC18F1320`
 family and `pic18f1320-hal` module), same as every other family:
 
 ```sh
-python3 scripts/epic_build.py build --module pic18f1320-hal --mcu 18F1320 \
+python3 scripts/build/epic_build.py build --module pic18f1320-hal --mcu 18F1320 \
   --dfp-dir /opt/microchip/xc8/v4.00/pic/packs/Microchip.PIC18Fxxxx_DFP/xc8
 ```
 
@@ -66,7 +66,7 @@ continuously-firing ISRs under MPLAB SIM.
 for an output-configured pin under MPLAB SIM (confirmed empirically:
 `LATB` visibly toggled across `stepi` samples while `PORTB` read a
 constant 0 across the same run), unlike every other family's
-toggle/gpio gate. `scripts/ci-target-sim.sh` exports `TOGGLE_REG=LATB`
+toggle/gpio gate. `scripts/ci/ci-target-sim.sh` exports `TOGGLE_REG=LATB`
 for this family's gate for that reason.
 
 ## Not yet wired into `family-check.yml`
@@ -79,6 +79,6 @@ dir by design), which `pic18f1320-hal` does not have yet.
 `PIC16F193X`'s own job was wired in only once
 `epic-pic16f193x-firmware` existed as that consumer; this family gets
 the same treatment once a real module targets it. Until then, this
-family's device-data audits (`scripts/sfr-map-audit.py`,
-`config-key-audit.py`, `hex-identity-audit.py`) and its `mdb` gate
-(`scripts/ci-target-sim.sh`) are wired and pass, verified manually.
+family's device-data audits (`scripts/audit/sfr-map-audit.py`,
+`scripts/audit/config-key-audit.py`, `scripts/audit/hex-identity-audit.py`) and its `mdb` gate
+(`scripts/ci/ci-target-sim.sh`) are wired and pass, verified manually.

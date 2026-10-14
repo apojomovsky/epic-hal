@@ -46,7 +46,7 @@ toolchain image:
 make test MODULE=epic-tick
 ```
 
-First-time setup is `./scripts/bootstrap.sh` (`make doctor` reports what is
+First-time setup is `./scripts/dev/bootstrap.sh` (`make doctor` reports what is
 missing without changing anything). The full walkthrough, native and Docker
 paths alike, lives in [DEVELOPMENT.md](DEVELOPMENT.md).
 

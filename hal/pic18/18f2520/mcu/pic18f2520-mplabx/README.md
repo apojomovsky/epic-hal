@@ -6,7 +6,7 @@ CI builds the family's blink smoke and its MPLAB SIM gates via the
 `pic18f2520-hal` manifest pseudo-module:
 
 ```sh
-python3 scripts/epic_build.py build --module pic18f2520-hal --mcu 18F2520 --run
+python3 scripts/build/epic_build.py build --module pic18f2520-hal --mcu 18F2520 --run
 ```
 
 The PIC18F2520 uses the `Microchip.PIC18Fxxxx_DFP` device pack (the same
@@ -34,7 +34,7 @@ PASS/FAIL marker on a GPIO pin, not UART: the mdb harness
 (`src/mdb/pic18_harness_mdb.c`) drives RA0 (PORTA bit 0) on the marker.
 Under MPSIM, a PIC18 driven output latch does not read back on the PORTx
 input register, so the CI wrapper reads the latch `LATA` (via
-`GPIO_REG=LATA` in `scripts/ci-target-sim.sh`), not `PORTA`. This is the
+`GPIO_REG=LATA` in `scripts/ci/ci-target-sim.sh`), not `PORTA`. This is the
 PIC16F193X pattern adapted for PIC18 (see
 `hal/pic14e/16f193x/mcu/pic16f193x-mplabx/README.md`); once the EUSART driver
 lands in phase 3 the gates can switch to `MODE=uart`.

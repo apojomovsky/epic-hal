@@ -1,7 +1,7 @@
 /* Sim-target implementation of the test harness (core/epic_harness.h):
  * real compiled firmware run under MPLAB SIM via mdb. This family has
  * no USART, so the PASS/FAIL marker goes out on RA0 (MODE=gpio in
- * scripts/sim-mdb-run.sh): PASS drives RA0 high, FAIL leaves it low;
+ * scripts/sim/sim-mdb-run.sh): PASS drives RA0 high, FAIL leaves it low;
  * epic_harness_log discards every other line. running() is bounded by
  * `cycles`. */
 

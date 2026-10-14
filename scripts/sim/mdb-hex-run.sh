@@ -4,7 +4,7 @@
 # epiccc-gate's mdb sequence. No rebuild: gates a hex another toolchain
 # produced. Container-only (mdb.sh, no python3). capture_uart_to and
 # eeprom_writes mirror sim-mdb-run.sh's uart mode / eeprom_writes arg
-# (see scripts/compare-toolchains.sh for a capture_uart_to caller).
+# (see scripts/sim/compare-toolchains.sh for a capture_uart_to caller).
 #
 # Usage: mdb-hex-run.sh <hex> <device> [wait_ms] [extra_mdb] [capture_uart_to] [eeprom_writes]
 

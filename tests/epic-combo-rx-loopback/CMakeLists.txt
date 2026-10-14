@@ -4,7 +4,7 @@
 # build: MPLAB SIM cannot inject RX, so the firmware's echo path is
 # verified on the host sim, which CAN (pic16f87xa_sim_drive_usart_rx),
 # through the same dispatch and callback the real interrupt vector
-# runs. The mdb gate (scripts/ci-target-sim.sh) builds the same
+# runs. The mdb gate (scripts/ci/ci-target-sim.sh) builds the same
 # firmware under XC8 and checks the arm state + boot banner.
 #
 #   cmake -B build && cmake --build build

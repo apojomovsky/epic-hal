@@ -43,7 +43,7 @@ if [ "${SIM_MDB_SKIP_BUILD:-0}" = "1" ]; then
 else
   if [ ! -f "$script" ]; then
     echo "::error::no emitted build script at ${script}." \
-         "Run 'python3 scripts/epic_build.py build --module ${module}" \
+         "Run 'python3 scripts/build/epic_build.py build --module ${module}" \
          "--mcu ${mcu} --variant sim --build-dir ${build_dir}'" \
          "first (needs python3, so outside this container)." >&2
     exit 1

@@ -4,7 +4,7 @@ Manifest-driven, same as `pic18fxx5x-hal`: no standalone Makefile here.
 Build the HAL directly via its own manifest module:
 
 ```sh
-python3 scripts/epic_build.py build --module pic18f1320-hal --mcu 18F1320 --run
+python3 scripts/build/epic_build.py build --module pic18f1320-hal --mcu 18F1320 --run
 ```
 
 See `common/manifest/README.md` for the full module list.

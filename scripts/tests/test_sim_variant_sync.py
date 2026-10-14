@@ -18,7 +18,7 @@ FLAKE_HUNT_END = "- name: REPEAT=5 sim gate hunt"
 
 def load_sim_variants():
     spec = importlib.util.spec_from_file_location(
-        "ci_local_emit", SCRIPTS / "ci-local-emit.py")
+        "ci_local_emit", SCRIPTS / "ci" / "ci-local-emit.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod.SIM_VARIANTS
@@ -26,7 +26,7 @@ def load_sim_variants():
 
 def load_run_one_pairs():
     pairs = set()
-    for line in (SCRIPTS / "ci-target-sim.sh").read_text().splitlines():
+    for line in (SCRIPTS / "ci" / "ci-target-sim.sh").read_text().splitlines():
         parts = line.split()
         if len(parts) < 5 or parts[0] != "run_one":
             continue

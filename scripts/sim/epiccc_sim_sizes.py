@@ -16,8 +16,8 @@ import json
 import pathlib
 import sys
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts"))
+REPO = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "scripts" / "build"))
 import epic_build  # noqa: E402
 import epicmanifest as manifest_lib  # noqa: E402
 

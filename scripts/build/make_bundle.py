@@ -3,9 +3,9 @@
 GitHub Release, never committed): copy one family's HAL, epic-common, and
 every module that builds on it into a self-contained tree with the
 generated consumer files. Called by CI's emit step and
-scripts/ci-local-emit.py.
+scripts/ci/ci-local-emit.py.
 
-Usage: python3 scripts/make_bundle.py --family <FAMILY> --version <VERSION>
+Usage: python3 scripts/build/make_bundle.py --family <FAMILY> --version <VERSION>
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import bundlegen  # noqa: E402
 import epicmanifest  # noqa: E402
 
-REPO = pathlib.Path(__file__).resolve().parents[1]
+REPO = pathlib.Path(__file__).resolve().parents[2]
 
 # Consumer-bundle content policy: the manifest is the single source of
 # truth for what builds on a real target. Sources are exactly the
@@ -220,10 +220,10 @@ def _make_cli_asset(version: str, out_dir: pathlib.Path) -> pathlib.Path:
     if root.exists():
         shutil.rmtree(root)
     root.mkdir(parents=True)
-    shutil.copy2(REPO / "scripts" / "epic_hal.py", root / "epic-hal")
+    shutil.copy2(REPO / "scripts" / "build" / "epic_hal.py", root / "epic-hal")
     (root / "epic-hal").chmod(0o755)
     for mod in ("epic_hal_init.py", "epicmanifest.py", "bundlegen.py"):
-        shutil.copy2(REPO / "scripts" / mod, root / mod)
+        shutil.copy2(REPO / "scripts" / "build" / mod, root / mod)
     # The CLI reports this version through `epic-hal --version` (crate-level
     # stamping would otherwise be absent); the family bundles carry VERSION and
     # pio's framework packer requires it, so the CLI asset mirrors that file.

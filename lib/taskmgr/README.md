@@ -85,12 +85,12 @@ export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
 # PIC16F87XA family (16F873A/16F874A are manifest-excluded from the
 # real-target build: the full-HAL example does not fit their 192 B
 # RAM):
-python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F877A --run
-python3 scripts/epic_build.py build --module epic-taskmgr --mcu 16F876A --run
+python3 scripts/build/epic_build.py build --module epic-taskmgr --mcu 16F877A --run
+python3 scripts/build/epic_build.py build --module epic-taskmgr --mcu 16F876A --run
 
 # PIC18F2455 family (needs the PIC18Fxxxx DFP installed; see
 # hal/pic18/18fxx5x/mcu/pic18fxx5x-mplabx/README.md):
-python3 scripts/epic_build.py build --module epic-taskmgr --mcu 18F4550 --run
+python3 scripts/build/epic_build.py build --module epic-taskmgr --mcu 18F4550 --run
 ```
 
 This produces `build/16F877A-taskmgr.hex` (or the MCU you built for).

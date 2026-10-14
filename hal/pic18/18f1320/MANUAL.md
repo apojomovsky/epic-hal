@@ -172,7 +172,7 @@ debugger, same as every other PIC18 family.)
   simulated `PORTB` (mdb `print PORTB`) does not mirror the `LATB` output
   latch for an output-configured pin under MPLAB SIM, confirmed
   empirically (LATB visibly toggled across `stepi` samples while PORTB
-  read a constant 0 across the same run). `scripts/ci-target-sim.sh`
+  read a constant 0 across the same run). `scripts/ci/ci-target-sim.sh`
   exports `TOGGLE_REG=LATB` for this family's gate for that reason.
 
 ## 15. The examples

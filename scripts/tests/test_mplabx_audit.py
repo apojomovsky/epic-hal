@@ -12,7 +12,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 def _load():
     """Import mplabx-audit.py, whose filename is not a valid module name."""
-    path = SCRIPTS / "mplabx-audit.py"
+    path = SCRIPTS / "audit" / "mplabx-audit.py"
     spec = importlib.util.spec_from_file_location("mplabx_audit", path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

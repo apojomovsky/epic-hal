@@ -157,6 +157,6 @@ toggle protocol samples PORTB bit 0 every 50000 instructions: the
 blink's Timer0 toggles at a ~50000-instruction period (prescaler 256 x
 count 256 at Fosc/4), so 50000 alternates cleanly while the 200000
 default aliases to a constant phase (verified 2026-09-15; see
-`scripts/ci-target-sim.sh`). The same parameters hold for the four
+`scripts/ci/ci-target-sim.sh`). The same parameters hold for the four
 siblings (verified 2026-09-17), and the 16F506 is the part whose analog
 POR defaults the gate caught (see the analog section above).

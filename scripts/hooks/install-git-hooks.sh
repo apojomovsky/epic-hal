@@ -17,23 +17,23 @@ for hook in pre-commit commit-msg pre-push; do
     rm -f "$hooks/$hook"
     cat > "$hooks/$hook" <<EOF
 #!/usr/bin/env bash
-# $hook dispatcher: exec this worktree's own scripts/$hook-checks.sh, so
+# $hook dispatcher: exec this worktree's own scripts/hooks/$hook-checks.sh, so
 # a branch editing a hook checks with its edited copy. Falls back to the
 # main checkout when the worktree copy is missing. Written by
-# scripts/install-git-hooks.sh; edit the checks script, not this file.
+# scripts/hooks/install-git-hooks.sh; edit the checks script, not this file.
 set -euo pipefail
 top="\$(git rev-parse --show-toplevel 2>/dev/null || true)"
-if [ -n "\$top" ] && [ -f "\$top/scripts/$hook-checks.sh" ]; then
-    exec bash "\$top/scripts/$hook-checks.sh" "\$@"
+if [ -n "\$top" ] && [ -f "\$top/scripts/hooks/$hook-checks.sh" ]; then
+    exec bash "\$top/scripts/hooks/$hook-checks.sh" "\$@"
 fi
 common="\$(git rev-parse --git-common-dir 2>/dev/null || true)"
 if [ -n "\$common" ]; then
-    fallback="\$(cd "\$common" && pwd)/../scripts/$hook-checks.sh"
+    fallback="\$(cd "\$common" && pwd)/../scripts/hooks/$hook-checks.sh"
     if [ -f "\$fallback" ]; then
         exec bash "\$fallback" "\$@"
     fi
 fi
-echo "$hook: no scripts/$hook-checks.sh here or in the main checkout" >&2
+echo "$hook: no scripts/hooks/$hook-checks.sh here or in the main checkout" >&2
 exit 1
 EOF
     chmod +x "$hooks/$hook"

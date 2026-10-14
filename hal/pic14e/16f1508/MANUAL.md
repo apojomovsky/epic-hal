@@ -10,7 +10,7 @@ what is specific to this part.
 
 - Addresses and implemented-bit masks come from the Microchip DFP
   1.9.258 EDC (`PIC16F1509.PIC`), pinned by the manifest.
-  `scripts/gen-sfr.py` rewrites each `PIC_REG_*` address the EDC defines,
+  `scripts/build/gen-sfr.py` rewrites each `PIC_REG_*` address the EDC defines,
   CLC included. Do not hand-edit addresses. The CLC bit masks are
   hand-maintained and cross-checked against the DFP proc header.
 - Datasheet: DS40001609E (PIC16(L)F1508/9), published at

@@ -78,9 +78,9 @@ not a second correctness gate, correctness is already fully proven on host.
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
 
-python3 scripts/epic_build.py build --module epic-fsm --mcu 16F877A --run
-python3 scripts/epic_build.py build --module epic-fsm --mcu 18F4550 --run
-python3 scripts/epic_build.py build --module epic-fsm --mcu 16F1937 --run
+python3 scripts/build/epic_build.py build --module epic-fsm --mcu 16F877A --run
+python3 scripts/build/epic_build.py build --module epic-fsm --mcu 18F4550 --run
+python3 scripts/build/epic_build.py build --module epic-fsm --mcu 16F1937 --run
 ```
 
 ## Use it in your own firmware

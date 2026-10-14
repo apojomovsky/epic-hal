@@ -14,8 +14,8 @@ import pathlib
 import re
 import sys
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts"))
+REPO = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "scripts" / "build"))
 import epicmanifest as manifest_lib  # noqa: E402
 
 BANKED_FAMILIES = ("PIC16F87XA", "PIC16F193X", "PIC16F88X", "PIC16F628A",
