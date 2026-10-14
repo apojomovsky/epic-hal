@@ -296,7 +296,9 @@ through the T2OUTPS postscaler to TMR2IF; TMR1 applies the T1CKPS prescaler
 and counts TMR1H:TMR1L to overflow and TMR1IF. Only the internal FOSC/4
 source advances; any other TMR1CS halts the model. The T1CKI counter path
 runs through `pic16f1508_sim_timer1_external_pulse`, one call per rising
-edge, prescaled the same way. A raised flag fires the sim callback, which
-routes through the shared dispatcher exactly like the vector. Covered by the
-host probes `example_tmr1` and `example_tmr2`, including the 256:255 beat
-ratio of TMR2 at PR2 255 against TMR1 preloaded to 0xFF01.
+edge, prescaled the same way. A write to TMR2 or T2CON clears both scaler
+counters, tracked by change detection (an identical rewrite is invisible to
+the model). A raised flag fires the sim callback only with GIE set, like the
+IOC and CLC sites; the dispatcher then routes it exactly like the vector.
+Covered by the host probes `example_tmr1` and `example_tmr2`, including the
+256:255 beat ratio of TMR2 at PR2 255 against TMR1 preloaded to 0xFF01.

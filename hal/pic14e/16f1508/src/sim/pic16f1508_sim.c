@@ -36,6 +36,19 @@ static uint8_t sim_clc_out[4];
 static uint16_t sim_t1_prescaler;
 static uint16_t sim_t2_prescaler;
 static uint8_t sim_t2_postscaler;
+/* Last observed TMR2 and T2CON: a change is a software write, which clears
+ * the prescaler and postscaler counters (DS40001609E §20.1). */
+static uint8_t sim_t2_last_tmr;
+static uint8_t sim_t2_last_con;
+
+/**
+ * @brief Test whether the simulated GIE bit is set.
+ * @return Non-zero when interrupts can vector, zero otherwise.
+ */
+static uint8_t sim_gie(void)
+{
+    return (pic16f1508_sim_sfr[PIC_REG_INTCON] & PIC_INTCON_GIE) ? 1U : 0U;
+}
 
 /* Cell register block stride; matches the driver layout (CON, POL, SEL0, SEL1, GLS0..3). */
 #define SIM_CLC_STRIDE 8U
@@ -317,7 +330,8 @@ static void sim_timer1_count(void)
     if (full == 0x0000U)
     {
         pic16f1508_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR1IF;
-        if (sim_irq_cb != NULL)
+        /* The flag latches regardless; the vector needs GIE, as on silicon. */
+        if ((sim_irq_cb != NULL) && (sim_gie() != 0U))
         {
             sim_irq_cb();
         }
@@ -375,24 +389,35 @@ static void sim_step_timer2(void)
     {
         return;
     }
+    /* A changed TMR2 or T2CON is a software write: both scaler counters
+     * clear, so the next match counts from zero again. */
+    tmr2 = pic16f1508_sim_sfr[PIC_REG_TMR2];
+    if ((t2con != sim_t2_last_con) || (tmr2 != sim_t2_last_tmr))
+    {
+        sim_t2_prescaler = 0U;
+        sim_t2_postscaler = 0U;
+        sim_t2_last_con = t2con;
+        sim_t2_last_tmr = tmr2;
+    }
     sim_t2_prescaler++;
     if (sim_t2_prescaler < ps_ratio[t2con & PIC_T2CON_T2CKPS_MASK])
     {
         return;
     }
     sim_t2_prescaler = 0U;
-    tmr2 = pic16f1508_sim_sfr[PIC_REG_TMR2];
     pr2 = pic16f1508_sim_sfr[PIC_REG_PR2];
     if (tmr2 == pr2)
     {
         pic16f1508_sim_sfr[PIC_REG_TMR2] = 0U;
+        sim_t2_last_tmr = 0U;
         sim_t2_postscaler++;
         outps = (uint8_t)(((unsigned int)t2con & PIC_T2CON_T2OUTPS_MASK) >> PIC_T2CON_T2OUTPS_SHIFT);
         if (sim_t2_postscaler > outps)
         {
             sim_t2_postscaler = 0U;
             pic16f1508_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR2IF;
-            if (sim_irq_cb != NULL)
+            /* The flag latches regardless; the vector needs GIE. */
+            if ((sim_irq_cb != NULL) && (sim_gie() != 0U))
             {
                 sim_irq_cb();
             }
@@ -401,6 +426,7 @@ static void sim_step_timer2(void)
     else
     {
         pic16f1508_sim_sfr[PIC_REG_TMR2] = (uint8_t)(tmr2 + 1U);
+        sim_t2_last_tmr = (uint8_t)(tmr2 + 1U);
     }
 }
 
@@ -425,6 +451,8 @@ void pic16f1508_sim_reset(void)
     sim_t1_prescaler = 0U;
     sim_t2_prescaler = 0U;
     sim_t2_postscaler = 0U;
+    sim_t2_last_tmr = 0U;
+    sim_t2_last_con = 0U;
     sim_irq_cb = NULL;
     sim_refresh_ports();
     sim_last_portb = pic16f1508_sim_sfr[PIC_REG_PORTB];

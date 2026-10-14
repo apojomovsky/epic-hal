@@ -48,6 +48,8 @@ int main(void)
 
     epic_harness_init(10000UL);
 
+    /* The sim vectors timer callbacks only with GIE set, as on silicon. */
+    EPIC_IRQ_Restore(1U);
     /* Ratio lookups, including the out-of-range fallbacks. */
     ok &= (EPIC_TIMER2_PrescalerToRatio(TIMER2_PRESCALER_1_1) == 1U);
     ok &= (EPIC_TIMER2_PrescalerToRatio(TIMER2_PRESCALER_1_4) == 4U);
@@ -112,6 +114,23 @@ int main(void)
     step(3U);
     ok &= ((EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) == 0U);
     step(1U);
+    ok &= ((EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) != 0U);
+    ok &= (EPIC_TIMER2_Stop() == EPIC_OK);
+    ok &= (EPIC_TIMER2_DeInit() == EPIC_OK);
+
+    /* A counter write clears a partial prescaler: 6 ticks in with prescaler
+     * 1:4 and PR2 3, WriteCounter(0) restarts the count, so the match needs
+     * 16 more ticks, not 10. */
+    h.Prescaler = TIMER2_PRESCALER_1_4;
+    h.Postscaler = TIMER2_POSTSCALER_1_1;
+    h.Period = 3U;
+    ok &= (EPIC_TIMER2_Init(&h) == EPIC_OK);
+    ok &= (EPIC_TIMER2_Start(&h) == EPIC_OK);
+    step(6U);
+    EPIC_TIMER2_WriteCounter(0U);
+    step(14U);
+    ok &= ((EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) == 0U);
+    step(2U);
     ok &= ((EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) != 0U);
     ok &= (EPIC_TIMER2_Stop() == EPIC_OK);
     ok &= (EPIC_TIMER2_DeInit() == EPIC_OK);

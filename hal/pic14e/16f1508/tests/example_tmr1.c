@@ -52,6 +52,8 @@ int main(void)
     TIMER2_HandleTypeDef h2 = TIMER2_HANDLE_DEFAULT;
 
     epic_harness_init(10000UL);
+    /* The sim vectors timer callbacks only with GIE set, as on silicon. */
+    EPIC_IRQ_Restore(1U);
 
     /* Ratio lookups, including the out-of-range fallbacks. */
     ok &= (EPIC_TIMER1_PrescalerToRatio(TIMER1_PRESCALER_1_1) == 1U);
@@ -60,8 +62,6 @@ int main(void)
     ok &= (EPIC_TIMER1_PrescalerToRatio(TIMER1_PRESCALER_1_8) == 8U);
     ok &= (EPIC_TIMER1_PrescalerToRatio((TIMER1_PrescalerTypeDef)4) == 1U);
 
-    /* Validation: NULL, non-internal/external clocks and bad prescalers
-     * are rejected unwritten. */
     ok &= (EPIC_TIMER1_Init(NULL) == EPIC_INVALID);
     ok &= (EPIC_TIMER1_Start(NULL) == EPIC_INVALID);
     h.ClockSource = (TIMER1_ClockSourceTypeDef)1;
