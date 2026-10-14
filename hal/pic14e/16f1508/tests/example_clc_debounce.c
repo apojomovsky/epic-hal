@@ -14,7 +14,8 @@
 #include "core/epic_harness.h"
 #include "pic16f1508_sim.h"
 
-/** @brief Read back the STAGE1 (CLC2) output through the driver contract. */
+/** @brief Read back the STAGE1 (CLC2) output through the driver contract.
+ * @return 0 or 1. */
 static uint8_t read_stage1(void)
 {
     uint8_t level = 0U;
@@ -23,7 +24,8 @@ static uint8_t read_stage1(void)
     return level;
 }
 
-/** @brief Read back the STAGE2 (CLC1) output through the driver contract. */
+/** @brief Read back the STAGE2 (CLC1) output through the driver contract.
+ * @return 0 or 1. */
 static uint8_t read_stage2(void)
 {
     uint8_t level = 0U;
