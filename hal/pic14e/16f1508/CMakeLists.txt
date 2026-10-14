@@ -26,6 +26,8 @@ set(EPIC_FAMILY_DEVICES       PIC16F1508 PIC16F1509)
 set(EPIC_SOURCES
     src/peripherals/pic16f1508_gpio.c
     src/peripherals/pic16f1508_clc.c
+    src/peripherals/pic16f1508_timer1.c
+    src/peripherals/pic16f1508_timer2.c
     src/core/pic16f1508_irq.c
     src/core/pic16f1508_irq_dispatch.c
     src/sim/pic16f1508_harness_sim.c
@@ -43,6 +45,8 @@ epic_add_example(example_clc_irq tests/example_clc_irq.c)
 epic_add_example(example_clc_sim tests/example_clc_sim.c)
 epic_add_example(example_clc_latch tests/example_clc_latch.c)
 epic_add_example(example_clc_beat tests/example_clc_beat.c)
+epic_add_example(example_tmr1 tests/example_tmr1.c)
+epic_add_example(example_tmr2 tests/example_tmr2.c)
 
 enable_testing()
 add_test(NAME gpio_host COMMAND example_gpio)
@@ -53,3 +57,5 @@ add_test(NAME clc_irq_host COMMAND example_clc_irq)
 add_test(NAME clc_sim_host COMMAND example_clc_sim)
 add_test(NAME clc_latch_host COMMAND example_clc_latch)
 add_test(NAME clc_beat_host COMMAND example_clc_beat)
+add_test(NAME tmr1_host COMMAND example_tmr1)
+add_test(NAME tmr2_host COMMAND example_tmr2)

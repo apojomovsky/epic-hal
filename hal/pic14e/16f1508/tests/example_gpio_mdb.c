@@ -11,6 +11,8 @@
 #include "peripherals/pic16f1508_gpio.h"
 #include "peripherals/pic16f1508_clc.h"
 #include "peripherals/pic16f1508_clc_src.h"
+#include "peripherals/pic16f1508_timer1.h"
+#include "peripherals/pic16f1508_timer2.h"
 #include "core/pic16f1508_irq.h"
 #include "core/epic_harness.h"
 
@@ -196,6 +198,49 @@ int main(void)
     clc1_lines(0x00U);
     ok &= clc1_check(0U);
     ok &= (EPIC_CLC_DeInit(CLC1) == EPIC_OK);
+    /* TMR2 free-run to PR2 match: the configured registers read back, the
+     * match flag arrives within a bounded spin, and the counter never
+     * exceeds PR2. epic_harness_tick pumps the host model; on target the
+     * timer runs on its own clock. */
+    {
+        TIMER2_HandleTypeDef t2 = TIMER2_HANDLE_DEFAULT;
+        t2.Period = 7U;
+        ok &= (EPIC_TIMER2_Init(&t2) == EPIC_OK);
+        ok &= (EPIC_TIMER2_ReadPeriod() == 7U);
+        ok &= (EPIC_TIMER2_Start(&t2) == EPIC_OK);
+        ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_TMR2ON) != 0U);
+        for (i = 0U; (i < 255U)
+            && ((EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) == 0U); i++)
+        {
+            epic_harness_tick();
+        }
+        ok &= ((EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) != 0U);
+        ok &= (EPIC_TIMER2_ReadCounter() <= 7U);
+        ok &= (EPIC_TIMER2_Stop() == EPIC_OK);
+        ok &= (EPIC_TIMER2_DeInit() == EPIC_OK);
+        ok &= (EPIC_REG8(PIC_REG_T2CON) == 0U);
+        ok &= (EPIC_TIMER2_ReadPeriod() == 0xFFU);
+    }
+    /* TMR1 overflow from a preloaded counter: the flag arrives within a
+     * bounded spin, then Stop and DeInit restore the POR state. */
+    {
+        TIMER1_HandleTypeDef t1 = TIMER1_HANDLE_DEFAULT;
+        t1.ReloadValue = 0xFFF0U;
+        ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
+        ok &= (EPIC_TIMER1_ReadCounter() == 0xFFF0U);
+        ok &= (EPIC_TIMER1_Start(&t1) == EPIC_OK);
+        ok &= (EPIC_REG8(PIC_REG_T1CON) == PIC_T1CON_TMR1ON);
+        for (i = 0U; (i < 255U)
+            && ((EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR1IF) == 0U); i++)
+        {
+            epic_harness_tick();
+        }
+        ok &= ((EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR1IF) != 0U);
+        ok &= (EPIC_TIMER1_Stop() == EPIC_OK);
+        ok &= (EPIC_TIMER1_DeInit() == EPIC_OK);
+        ok &= (EPIC_REG8(PIC_REG_T1CON) == 0U);
+        ok &= (EPIC_TIMER1_ReadCounter() == 0U);
+    }
     int rc = epic_harness_report(ok);
     pic16f1508_harness_halt();
     return rc;
