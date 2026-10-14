@@ -1,11 +1,9 @@
 /**
- * PIC16F1508/1509 Timer1 driver (DS40001609E §19.0): 16-bit timer/counter
- * with gate control. The driver covers the free-running timer path (FOSC/4)
- * and the external counter path (T1CKI pin, the input the quadrature assist
- * counts through); the gate (T1GCON) stays at POR and counts regardless of
- * the gate function. T1_overflow feeds the CLC data inputs (Table 24-1, D1
- * code 6 and D2 code 2), so a preloaded TMR1 is also the second pulse source
- * of the beat dimmer: 255 counts to overflow against TMR2's 256 to match.
+ * PIC16F1508/1509 Timer1 driver (DS40001609E §19.0): 16-bit timer/counter.
+ * Covers the free-running timer path (FOSC/4) and the external T1CKI counter
+ * the quadrature assist feeds; the gate stays at POR. T1_overflow feeds the
+ * CLC data inputs (Table 24-1, D1 code 6 and D2 code 2), so a preloaded TMR1
+ * is the beat dimmer second pulse source: 255 to overflow vs TMR2's 256.
  */
 #ifndef PIC16F1508_TIMER1_H
 #define PIC16F1508_TIMER1_H
