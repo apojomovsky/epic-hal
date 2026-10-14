@@ -191,8 +191,8 @@ while CLCDATA stays 0 after a settle cycle), so the gate observes CON.OUT
 only. The CLCDATA mirror and the sequential modes 4..7 are covered by the
 host probes (`example_clc`, `example_clc_sim`, `example_clc_latch`) only.
 The SIM prints W0700/W0701 notes during the CLC steps (no propagation
-delay modelled; output-as-own-input loop warning). They are benign: the gate
-passes and no cell feeds its own output.
+delay modelled; output-as-own-input loop warning). They are benign: no
+cell feeds its own output.
 
 ## Host simulation model
 

@@ -55,8 +55,8 @@ Not yet implemented (deliberate scope limit, each its own follow-up):
   comparators, DAC, FVR, and the SR latch.
 - The TB3273 beat-frequency auto-dimmer (needs TMR2 plus a second slow
   pulse source) and the CLC sequential modes on the mdb gate (mode 3 latch
-  is gated; modes 4..7 run host-only; MPLAB-SIM shapes the gate, see
-  MANUAL.md, #383).
+  runs in the gate; modes 4..7 run host-only; MPLAB-SIM shapes the gate,
+  see MANUAL.md, #383).
 - SEL-code decoding in the host sim (codes are stored, Dx levels come from a
   host-only hook).
 - A 16F188xx part. It is not in the pinned DFP.
