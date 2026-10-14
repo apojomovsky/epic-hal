@@ -10,8 +10,23 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Shared layer: status codes, harness, CMake helpers.
-set(EPIC_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../common)
-include(${EPIC_COMMON_DIR}/cmake/epic_family.cmake)
+# Root anchor: walk up to the shared helpers, so moving this directory
+# changes no path below. Cross-module paths hang off EPIC_ROOT.
+if(NOT DEFINED EPIC_ROOT)
+    set(_EPIC_PROBE "${CMAKE_CURRENT_SOURCE_DIR}")
+    while(NOT EXISTS "${_EPIC_PROBE}/common/cmake/epic_family.cmake")
+        get_filename_component(_EPIC_PARENT "${_EPIC_PROBE}/.." ABSOLUTE)
+        if("${_EPIC_PARENT}" STREQUAL "${_EPIC_PROBE}")
+            message(FATAL_ERROR "EPIC_ROOT not found above ${CMAKE_CURRENT_SOURCE_DIR}")
+        endif()
+        set(_EPIC_PROBE "${_EPIC_PARENT}")
+    endwhile()
+    set(EPIC_ROOT "${_EPIC_PROBE}")
+    unset(_EPIC_PROBE)
+    unset(_EPIC_PARENT)
+endif()
+include(${EPIC_ROOT}/common/cmake/epic_family.cmake)
+set(EPIC_COMMON_DIR ${EPIC_ROOT}/common)
 
 # Default device (the canonical part; -DPIC16F63X_67X_68X_DEVICE=<part>
 # picks another). Per-example device selection goes through
@@ -26,23 +41,23 @@ set(PIC16F63X_67X_68X_DEFAULT_DEVICE PIC16F631)
 set(EPIC_LIB              pic16f63x_67x_68x_hal)
 set(EPIC_DEFAULT_DEVICE       ${PIC16F63X_67X_68X_DEFAULT_DEVICE})
 set(EPIC_FAMILY_INCLUDE_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(EPIC_CORE_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/../core/include)
+set(EPIC_CORE_INCLUDE_DIR      ${EPIC_ROOT}/hal/pic14/core/include)
 set(EPIC_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
 set(EPIC_FAMILY_DEVICES        PIC16F631 PIC16F630 PIC16F676 PIC16F639 PIC16F684 PIC16F685 PIC16F688 PIC16F689 PIC16F677)
 
 set(EPIC_SOURCES
     src/peripherals/pic16f63x_67x_68x_gpio.c
-    ../core/src/peripherals/pic14_timer0.c
-    ../core/src/peripherals/pic14_timer1.c
+    ${EPIC_ROOT}/hal/pic14/core/src/peripherals/pic14_timer0.c
+    ${EPIC_ROOT}/hal/pic14/core/src/peripherals/pic14_timer1.c
     src/peripherals/pic16f63x_67x_68x_comp.c
-    ../core/src/peripherals/pic14_eeprom.c
+    ${EPIC_ROOT}/hal/pic14/core/src/peripherals/pic14_eeprom.c
     src/peripherals/pic16f63x_67x_68x_osc.c
-    ../core/src/core/pic14_irq.c
+    ${EPIC_ROOT}/hal/pic14/core/src/core/pic14_irq.c
     src/core/pic16_irq_table.c
-    ../core/src/core/pic14_wdt_sleep.c
-    ../core/src/sim/pic14_wdt_sleep_sim.c
-    ../core/src/core/pic14_irq_dispatch.c
+    ${EPIC_ROOT}/hal/pic14/core/src/core/pic14_wdt_sleep.c
+    ${EPIC_ROOT}/hal/pic14/core/src/sim/pic14_wdt_sleep_sim.c
+    ${EPIC_ROOT}/hal/pic14/core/src/core/pic14_irq_dispatch.c
     src/sim/pic16_harness_sim.c
     src/sim/pic16f63x_67x_68x_sim.c
 )

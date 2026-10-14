@@ -123,7 +123,7 @@ def _copy_headers(manifest, family_name: str, root: pathlib.Path) -> None:
     dirs = list(fam.includes)
     for name in bundlegen.modules_for_family(manifest, family_name):
         mod = manifest.modules[name]
-        dirs += [f"{mod.dir}/{i}" for i in mod.includes]
+        dirs += [epicmanifest.join_module_path(mod.dir, i) for i in mod.includes]
     # Quoted includes resolve relative to the includer, so every dir
     # that holds a shipped source can contribute headers too.
     dirs += sorted({str(pathlib.PurePosixPath(f).parent)

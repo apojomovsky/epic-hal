@@ -768,5 +768,40 @@ class TestEpicccSimHalSources(unittest.TestCase):
             epicmanifest.load(write(noharness))
 
 
+class TestRootAnchoredPaths(unittest.TestCase):
+    """Cross-module manifest paths hang off the repo root (epic-hal#313):
+    moving a module directory changes only its `dir` entry."""
+
+    def test_join_ignores_module_depth(self):
+        for mod_dir in ("demos/menu", "a/b/c/menu"):
+            self.assertEqual(
+                epicmanifest.join_module_path(
+                    mod_dir, "lib/lcd/src/epic_lcd_gpio4.c"),
+                "lib/lcd/src/epic_lcd_gpio4.c")
+            self.assertEqual(
+                epicmanifest.join_module_path(mod_dir, "src/menu_demo_core.c"),
+                f"{mod_dir}/src/menu_demo_core.c")
+
+    def test_dotdot_source_rejected(self):
+        bad = MINIMAL.replace(
+            'sources    = ["src/epic_tick.c"]',
+            'sources    = ["src/epic_tick.c", "../../lib/lcd/src/epic_lcd_gpio4.c"]')
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(bad))
+
+    def test_dotdot_example_source_rejected(self):
+        bad = MINIMAL.replace(
+            'sources = ["examples/example_tick.c"]',
+            'sources = ["../shared/example_tick.c"]', 1)
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(bad))
+
+    def test_real_menu_entries_are_root_anchored(self):
+        m = epicmanifest.load(epicmanifest.default_path())
+        for module in ("epic-menu-demo", "epic-combo-lcd-tick"):
+            srcs = m.sources_for(module, "18F4550")
+            self.assertIn("lib/lcd/src/epic_lcd_gpio4.c", srcs)
+            self.assertFalse(any(".." in s for s in srcs))
+
 if __name__ == "__main__":
     unittest.main()

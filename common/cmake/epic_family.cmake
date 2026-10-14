@@ -7,6 +7,13 @@
 # optional peripheral on some devices gates it itself first (see the
 # 87XA's PSP gate).
 
+# Repo root, derived from this file's own location so no caller needs
+# a depth-coded hop to find it. Callers that already probed upward
+# keep their value; this is the fallback.
+if(NOT DEFINED EPIC_ROOT)
+    get_filename_component(EPIC_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+endif()
+
 # Build the family's static library. Host include dir goes first so the
 # build selects the memory-backed platform header; the shared epic-common
 # headers and the family's own headers are PUBLIC so every consumer that

@@ -216,11 +216,11 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
             "examples/" in s for s in example.sources)
         swap = not (override and full_example)
         if swap:
-            sizecheck = f"{mod.dir}/mcu/target_sizecheck_epiccc.c"
+            sizecheck = epicmanifest.join_module_path(mod.dir, "mcu/target_sizecheck_epiccc.c")
             if example is not None:
-                ex_srcs = {f"{mod.dir}/{s}" for s in example.sources}
+                ex_srcs = {epicmanifest.join_module_path(mod.dir, s) for s in example.sources}
                 if example.variants and mcu in example.variants:
-                    ex_srcs = {f"{mod.dir}/{s}" for s in example.variants[mcu].sources}
+                    ex_srcs = {epicmanifest.join_module_path(mod.dir, s) for s in example.variants[mcu].sources}
                 sources = [s for s in sources if s not in ex_srcs]
                 if sizecheck not in sources:
                     sources.append(sizecheck)

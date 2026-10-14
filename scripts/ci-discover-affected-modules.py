@@ -47,14 +47,15 @@ def discover_modules():
 def build_dep_graph(modules):
     """module -> set of sibling modules it add_subdirectory()'s, read from
     each module's own CMakeLists.txt. Pattern: a `<NAME>_DIR` CMake
-    variable assigned `${CMAKE_CURRENT_SOURCE_DIR}/../<module>`, which is
-    the one convention every module in this repo already follows for
-    pulling in a sibling (see lib/tick/CMakeLists.txt's EPIC_DIR for the
-    canonical example)."""
+    variable assigned a cross-module path, either root-anchored
+    `${EPIC_ROOT}/<dir>` or the legacy `${CMAKE_CURRENT_SOURCE_DIR}/../<module>`
+    hop (see lib/tick/CMakeLists.txt's EPIC_DIR for the canonical example)."""
+    # A root-anchored `${EPIC_ROOT}/<dir>` names the repo root directly.
     # A relative "../.../<dir>" is resolved against the module's own
     # directory and kept when it names a discovered module, so the graph
     # does not depend on how deep modules sit in the tree.
-    pat = re.compile(r"((?:\.\./)+[A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*)")
+    root_pat = re.compile(r"\$\{EPIC_ROOT\}/([A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*)")
+    rel_pat = re.compile(r"((?:\.\./)+[A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*)")
     graph = {m: set() for m in modules}
     module_set = set(modules)
     for m in modules:
@@ -63,9 +64,17 @@ def build_dep_graph(modules):
         except OSError:
             continue
         for line in text.splitlines():
-            if "CMAKE_CURRENT_SOURCE_DIR" not in line or "_DIR" not in line:
+            if "_DIR" not in line:
                 continue
-            match = pat.search(line.rstrip())
+            if "CMAKE_CURRENT_SOURCE_DIR" not in line and "EPIC_ROOT" not in line:
+                continue
+            match = root_pat.search(line.rstrip())
+            if match:
+                dep = match.group(1)
+                if dep in module_set and dep != m:
+                    graph[m].add(dep)
+                continue
+            match = rel_pat.search(line.rstrip())
             if not match:
                 continue
             parts = posixpath.normpath(posixpath.join(m, match.group(1))).split("/")
