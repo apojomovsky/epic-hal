@@ -178,12 +178,15 @@ MPLAB-SIM limits the CLC coverage of the mdb gate (all recorded on #383).
 The gate configures CLC1 through `EPIC_CLC_Init` and drives gate-polarity
 constants through modes 0..2, reading the CON.OUT live output at every step,
 plus output-polarity inversion and the EN-cleared forced zero. Two SIM gaps
-shape this: writing most CLC1 D3S codes (anything but 0 and 5) throws
-`E0107-SIM ... CLC1SEL1 : null`, so the gate uses D3S 5 (HFINTOSC); and the
-SIM never sets the CLCDATA mirror copy (CON.OUT reads 1 while CLCDATA stays 0
-after a settle cycle), so the gate observes CON.OUT only. The CLCDATA mirror
-and the sequential modes 3..7 are covered by the host probes
-(`example_clc`, `example_clc_sim`) only.
+shape this: a single store of most CLC1 D3S codes (anything but 0 and 5) to
+CLC1SEL1 throws `E0107-SIM ... CLC1SEL1 : null`, with no preceding access
+needed (`EPIC_REG8(PIC_REG_CLC1SEL1) = 0x01U` as the only CLC access throws)
+and no CON order avoiding it (cleared first and enabled first both throw,
+while the same code writes cleanly to CLC2SEL1), so the gate uses D3S 5
+(HFINTOSC); and the SIM never sets the CLCDATA mirror copy (CON.OUT reads 1
+while CLCDATA stays 0 after a settle cycle), so the gate observes CON.OUT
+only. The CLCDATA mirror and the sequential modes 3..7 are covered by the
+host probes (`example_clc`, `example_clc_sim`) only.
 
 ## Host simulation model
 
