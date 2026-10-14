@@ -6,8 +6,8 @@
 # Run inside the XC8 toolchain container, from the repo root:
 #   docker run --rm -v "$PWD":/work -w /work epic-hal-toolchain:local \
 #     sh docs/internals/experiments/math-cycle-benchmark/matrix.sh
-# Output per build is a "### <name>" header followed by the raw <op> <hexdelta>
-# lines captured from the simulator's UART. See README.md in this directory.
+# Output per build: a "### <name>" header, then the raw <op> <hexdelta> lines
+# from the simulator's UART. See README.md in this directory.
 set -u
 cd "$(dirname "$0")/../../../.."       # repo root inside the container
 DFP87=/opt/microchip/xc8/v4.00/pic/packs/Microchip.PIC16Fxxx_DFP/xc8
