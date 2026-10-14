@@ -100,7 +100,7 @@ int main(void)
     ok &= (EPIC_CLC_Init(&h) == EPIC_OK);
     snap_wiring(before);
 
-    /* One full beat: 256 S windows of 255-drifting R phase. */
+    /* One full beat: 255 S windows of 255-drifting R phase. */
     for (t = 0U; t < (BEAT_S_PERIOD * BEAT_R_PERIOD); t++)
     {
         beat_step(t);
@@ -132,12 +132,11 @@ int main(void)
     /* Duty sweeps near-empty to near-full across the beat, averaging half. */
     ok &= (win_min <= 16U);
     ok &= (win_max >= 240U);
-    ok &= (total_high > (105UL * 256UL));
-    ok &= (total_high < (150UL * 256UL));
+    ok &= (total_high > (105UL * 255UL));
+    ok &= (total_high < (150UL * 255UL));
 
     /* One set per S window: the output rate stays fixed while duty sweeps. */
-    ok &= (sets >= 200U);
-    ok &= (sets <= 255U);
+    ok &= (sets == 255U);
 
     /* No CPU involvement: the wiring images are untouched and no flag raised. */
     {
