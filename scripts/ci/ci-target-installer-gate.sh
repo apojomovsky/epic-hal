@@ -19,7 +19,7 @@ fail=0
 
 # Resolved from this script's own location, not the caller's cwd: the
 # workflow runs it from the checkout root, but a local run may not.
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # --list must name exactly the families the manifest has: its output is
 # derived here from parts.txt, which the build job generated from that
@@ -46,7 +46,7 @@ parts="$(awk '{ last[$2] = $1 } END { for (f in last) print last[f] }' \
 covered="$(awk '{ print $2 }' "$bundles/parts.txt" | sort -u | grep -c . || true)"
 declared="$(python3 -c "
 import sys
-sys.path.insert(0, '$repo_root/scripts')
+sys.path.insert(0, '$repo_root/scripts/build')
 import epicmanifest
 print(len(epicmanifest.load(epicmanifest.default_path()).families))
 ")"

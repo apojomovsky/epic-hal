@@ -32,7 +32,7 @@ def emit_build(module: str, mcu: str, dfp_dir: str, rel_dir: str) -> None:
     and the hex both land under it.
     """
     subprocess.run(
-        ["python3", "scripts/epic_build.py", "build",
+        ["python3", "scripts/build/epic_build.py", "build",
          "--module", module, "--mcu", mcu,
          "--build-dir", rel_dir, "--dfp-dir", dfp_dir],
         check=True, stdout=subprocess.DEVNULL,
@@ -76,7 +76,7 @@ def main() -> int:
                     help="only this manifest family (the sharded CI jobs)")
     args = ap.parse_args()
     matrix = json.loads(subprocess.run(
-        ["python3", "scripts/epic_build.py", "matrix"],
+        ["python3", "scripts/build/epic_build.py", "matrix"],
         check=True, capture_output=True, text=True, cwd=REPO,
     ).stdout)
 

@@ -5,7 +5,7 @@ the manifest and the reference MPLAB X projects must not drift apart.
 Two surfaces, checked by pure text parsing (no container, no XC8):
 
 - The manifest's per-family dfp_version must equal the Dockerfile ARG
-  for that family's pack, because scripts/bundlegen.py emits it into the
+  for that family's pack, because scripts/build/bundlegen.py emits it into the
   bundle's QUICKSTART download URL and EPIC_HAL_DFP_VERSION. A mismatch
   tells a user to fetch a pack the image does not carry.
 

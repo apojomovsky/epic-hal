@@ -1,4 +1,4 @@
-"""Behaviour of scripts/gen-sfr.py when a family's EDC is absent: both modes fail, never a silent pass."""
+"""Behaviour of scripts/build/gen-sfr.py when a family's EDC is absent: both modes fail, never a silent pass."""
 import os
 import pathlib
 import re

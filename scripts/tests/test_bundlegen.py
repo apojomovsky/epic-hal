@@ -1,4 +1,4 @@
-"""Unit tests for scripts/bundlegen.py."""
+"""Unit tests for scripts/build/bundlegen.py."""
 import json
 import pathlib
 import sys
@@ -514,7 +514,7 @@ class TestPartsMap(unittest.TestCase):
     def test_families_are_emitted_in_order_so_the_last_line_is_canonical(self):
         """The installer gate's `awk 'last[$2]=$1'` reads canonical parts.
 
-        scripts/ci-target-installer-gate.sh takes the last line per family
+        scripts/ci/ci-target-installer-gate.sh takes the last line per family
         as that family's canonical part, which is only variants[-1] while
         emit_parts_map keeps each family's variants contiguous and in
         order. A future sort of the whole table would break that silently,

@@ -1,4 +1,4 @@
-"""Unit tests for scripts/ci-discover-affected-modules.py, run against the
+"""Unit tests for scripts/ci/ci-discover-affected-modules.py, run against the
 real tree: the change-detection reads CMakeLists.txt files and directory
 names, so a layout move that it misreads shrinks the CI matrix silently."""
 import importlib.util

@@ -15,7 +15,7 @@ Anything that looks like a function but cannot be parsed is reported as
 UNPARSEABLE and fails the run (fail-closed), so a human looks.
 
 Usage:
-    python3 scripts/doxygen_doc_check.py [--brief-only] FILE...
+    python3 scripts/audit/doxygen_doc_check.py [--brief-only] FILE...
 
 Exit status: 0 if every function is compliant, 1 otherwise (violations are
 printed to stderr, one line per violation).

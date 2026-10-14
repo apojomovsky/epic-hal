@@ -1,4 +1,4 @@
-"""Unit tests for scripts/epic_build.py."""
+"""Unit tests for scripts/build/epic_build.py."""
 import pathlib
 import subprocess
 import sys

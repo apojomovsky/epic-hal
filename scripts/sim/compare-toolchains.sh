@@ -56,7 +56,7 @@ epiccc_run() {
 
 xc8_version="$(grep -m1 '^ARG XC8_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
 dfp_dir="$(python3 -c "
-import sys; sys.path.insert(0, 'scripts')
+import sys; sys.path.insert(0, 'scripts/build')
 import epicmanifest as e
 m = e.load(e.default_path())
 fam = m.family_of('${mcu}')
@@ -68,14 +68,14 @@ epiccc_dir="build-cmp/${module}-epiccc"
 mkdir -p "$xc8_dir" "$epiccc_dir"
 
 echo "== XC8 build (${module} ${mcu}, sim variant) ==" >&2
-python3 scripts/epic_build.py build --module "$module" --mcu "$mcu" \
+python3 scripts/build/epic_build.py build --module "$module" --mcu "$mcu" \
   --variant sim --dfp-dir "$dfp_dir" --build-dir "$xc8_dir"
 xc8_log="$(hal_run sh "${xc8_dir}/${mcu}/build.sh" 2>&1)"
 echo "$xc8_log"
 xc8_hex="$(ls "${xc8_dir}/${mcu}"-*.hex)"
 
 echo "== epic-cc build (${module} ${mcu}, sim variant) ==" >&2
-python3 scripts/epic_build.py build --module "$module" --mcu "$mcu" \
+python3 scripts/build/epic_build.py build --module "$module" --mcu "$mcu" \
   --variant sim --toolchain epic-cc --epic-cc "$epic_cc_bin" \
   --build-dir "$epiccc_dir"
 # A failed epic-cc build (compiler panic, flash overflow, ...) is an
@@ -87,7 +87,7 @@ epiccc_hex="$(ls "${epiccc_dir}/${mcu}"-*.hex 2>/dev/null | head -1 || true)"
 
 echo ""
 echo "== Size comparison (both figures in flash words) =="
-echo "(scripts/epic_build.py's parse_memory_summary already converts XC8's"
+echo "(scripts/build/epic_build.py's parse_memory_summary already converts XC8's"
 echo "byte-addressed PIC18 'Program space' figure to words; epic-cc reports"
 echo "words directly.)"
 
@@ -101,7 +101,7 @@ printf '%s' "$epiccc_log" > "$epiccc_log_file"
 
 xc8_usage="$(python3 -c "
 import sys
-sys.path.insert(0, 'scripts')
+sys.path.insert(0, 'scripts/build')
 import epic_build
 with open('${xc8_log_file}') as f:
     log = f.read()
@@ -147,10 +147,10 @@ epiccc_capture="build-cmp/${module}-epiccc-uart.txt"
 rm -f "$xc8_capture" "$epiccc_capture"
 
 echo "-- running XC8 hex under mdb --" >&2
-hal_run scripts/mdb-hex-run.sh "$xc8_hex" "$device" "$wait_ms" "" "$xc8_capture" "$eeprom_writes" >&2
+hal_run scripts/sim/mdb-hex-run.sh "$xc8_hex" "$device" "$wait_ms" "" "$xc8_capture" "$eeprom_writes" >&2
 
 echo "-- running epic-cc hex under mdb --" >&2
-hal_run scripts/mdb-hex-run.sh "$epiccc_hex" "$device" "$wait_ms" "" "$epiccc_capture" "$eeprom_writes" >&2
+hal_run scripts/sim/mdb-hex-run.sh "$epiccc_hex" "$device" "$wait_ms" "" "$epiccc_capture" "$eeprom_writes" >&2
 
 if [ ! -s "$xc8_capture" ] || [ ! -s "$epiccc_capture" ]; then
   echo "::error::one or both mdb runs produced no UART capture" >&2

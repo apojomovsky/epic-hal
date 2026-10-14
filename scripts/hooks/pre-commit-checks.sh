@@ -175,7 +175,7 @@ emdash_check() {
 # bodies and control statements alike. Scoped like the em-dash rule (added
 # lines only, PRE_COMMIT_BASE_REF respects) so pre-existing style in files
 # an unrelated commit touches never blocks it; the standalone checker
-# scripts/brace-style-check.sh holds the implementation and the rationale.
+# scripts/hooks/brace-style-check.sh holds the implementation and the rationale.
 
 brace_style_check() {
     # Forward the CI base ref exactly like git_diff/emdash_check: in CI

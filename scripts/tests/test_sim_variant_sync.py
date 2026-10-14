@@ -1,8 +1,8 @@
 """SIM_VARIANTS must match the run_one gates, or the local replica skips them.
 
-scripts/ci-local-emit.py emits sim build scripts for its SIM_VARIANTS list,
+scripts/ci/ci-local-emit.py emits sim build scripts for its SIM_VARIANTS list,
 the flake-hunt job in .github/workflows/ci.yml embeds a third copy of that
-list inline, and scripts/ci-target-sim.sh runs every run_one gate. A pair
+list inline, and scripts/ci/ci-target-sim.sh runs every run_one gate. A pair
 missing from any of them means a gate with no emitted hex, or a hex no gate
 uses (epic-hal#355, epic-hal#365)."""
 import importlib.util

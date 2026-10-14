@@ -1,4 +1,4 @@
-"""Unit tests for scripts/epicmanifest.py."""
+"""Unit tests for scripts/build/epicmanifest.py."""
 import pathlib
 import sys
 import tempfile

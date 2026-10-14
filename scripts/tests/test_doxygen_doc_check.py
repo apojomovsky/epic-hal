@@ -1,4 +1,4 @@
-"""Unit tests for scripts/doxygen_doc_check.py."""
+"""Unit tests for scripts/audit/doxygen_doc_check.py."""
 import pathlib
 import sys
 import unittest

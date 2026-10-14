@@ -1,4 +1,4 @@
-"""Unit tests for scripts/release_notes.py."""
+"""Unit tests for scripts/release/release_notes.py."""
 import os
 import pathlib
 import subprocess

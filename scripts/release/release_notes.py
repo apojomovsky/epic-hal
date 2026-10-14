@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Turn the Conventional Commits between two tags into the "What changed"
-section of a GitHub Release. Called by scripts/release.sh to preview the
+section of a GitHub Release. Called by scripts/release/release.sh to preview the
 notes before tagging; release-bundles.yml renders the published notes
 from git-cliff against cliff.toml instead.
 

@@ -1,4 +1,4 @@
-"""Unit tests for scripts/resolve_module.py."""
+"""Unit tests for scripts/build/resolve_module.py."""
 import pathlib
 import subprocess
 import sys

@@ -6,8 +6,8 @@
 # and epic_tasks/takeoff.py:check_pr_body; this shell is a thin wrapper
 # so all three repos share one rule. Fallback grep is fixed-string, not ANSI-C.
 # Usage:
-#   bash scripts/pr-body-lint.sh [file]          # lint a file (or stdin with -)
-#   bash scripts/pr-body-lint.sh --pr            # lint `gh pr view --json body` for current branch
+#   bash scripts/hooks/pr-body-lint.sh [file]          # lint a file (or stdin with -)
+#   bash scripts/hooks/pr-body-lint.sh --pr            # lint `gh pr view --json body` for current branch
 #   python3 -c 'from epic_tasks.gh import normalize_pr_body; ...' to heal.
 set -euo pipefail
 
