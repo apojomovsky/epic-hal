@@ -26,9 +26,9 @@ Blink an LED on pin RB0 of a PIC16F877A, driven by the 1 ms timebase module:
 
 ```c
 /*
- * Epic HAL reference project, PIC16F87XA: a 1 ms tick toggles RB0,
- * the minimal build smoke test. See MPLABX.md to add Epic HAL to an
- * existing project.
+ * Epic HAL reference project, PIC16F87XA: RB0 toggles every 500 ms
+ * off the 1 ms tick, the minimal build smoke test. See MPLABX.md to add
+ * Epic HAL to an existing project.
  */
 #include <xc.h>
 
@@ -64,17 +64,17 @@ int main(void)
 }
 ```
 
-The installer below scaffolds this project for your part. Build it from its directory:
+The installer below scaffolds a blink like this for your part. Build it from its directory:
 
 ```bash
 make
 ```
 
-You get `build/myapp.hex`. Program it onto the chip, and the LED on RB0 toggles every 500 ms.
+The hex file lands under `build/`. Program it with a PICkit or similar programmer. With a 20 MHz crystal on the oscillator pins and an LED plus resistor from RB0 to ground, the LED toggles every 500 ms.
 
 ## Install
 
-The installer downloads the HAL bundle for your part, verifies its checksum and writes `third_party/epic-hal/`, a `Makefile` and a working `main.c` into the current directory. It needs `python3` and the epic-cc compiler on your `PATH`, and no Microchip download. Pass `--modules` to choose which modules to add.
+The installer downloads the HAL bundle for your part, verifies its checksum and writes `third_party/epic-hal/`, a `Makefile`, a working `main.c` and an MPLAB X project (`myapp.X`) into the current directory. The installer needs `python3`. To build, put [epic-cc](https://github.com/apojomovsky/epic-cc/releases), the open source compiler, on your `PATH`; no Microchip download is needed. Pass `--modules` to choose which modules to add.
 
 ```bash
 curl -fsSL https://github.com/apojomovsky/epic-hal/releases/latest/download/install.sh | sh -s -- 16F877A
