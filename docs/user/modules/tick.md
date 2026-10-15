@@ -42,7 +42,7 @@ The API is documented next to the code, in the [`lib/tick` directory](https://gi
 
 - Not built for PIC18F2455, PIC18F2550. Reason: RAM: does not fit on this smaller part.
 - Not built for PIC16F870, PIC16F871, PIC16F872. Reason: RAM: one byte of HAL state does not fit.
-- Not built for PIC16F627, PIC16F627A, PIC16LF627A. Reason: flash: tick example needs 1692 words on the 2K 16F628A, exceeds the 1K-word part.
+- Not built for PIC16F627, PIC16F627A, PIC16LF627A. Reason: flash: tick example exceeds the 1K-word part.
 
 ## Related
 
