@@ -10,9 +10,9 @@ Vendor-agnostic ADC oversampling and moving-average filter. This page is the ref
 | Module id | `lib/adcfilter` |
 | Source | [`lib/adcfilter`](https://github.com/apojomovsky/epic-hal/tree/master/lib/adcfilter) |
 | Families | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| Parts, PIC16F87XA | 16F870, 16F871, 16F872, 16F873A, 16LF873A, 16F873, 16F874, 16F874A, 16F876, 16F876A, 16F877, 16F877A |
-| Parts, PIC16F88X | 16F882, 16F883, 16F884, 16F886, 16F887 |
-| Parts, PIC18Fxx5x | 18F2455, 18F2550, 18F4455, 18F4550 |
+| Parts, PIC16F87XA | PIC16F870, PIC16F871, PIC16F872, PIC16F873A, PIC16LF873A, PIC16F873, PIC16F874, PIC16F874A, PIC16F876, PIC16F876A, PIC16F877, PIC16F877A |
+| Parts, PIC16F88X | PIC16F882, PIC16F883, PIC16F884, PIC16F886, PIC16F887 |
+| Parts, PIC18Fxx5x | PIC18F2455, PIC18F2550, PIC18F4455, PIC18F4550 |
 | Source files | `lib/adcfilter/src/epic_adcfilter.c` |
 | Depends on | Nothing |
 | Used by | No other module |
@@ -32,7 +32,7 @@ The manifest lists one example program per family. Build it with the repository 
 
 ## API
 
-The API is documented next to the code, in the [`lib/adcfilter` directory](https://github.com/apojomovsky/epic-hal/tree/master/lib/adcfilter). This page does not restate it. This is a documentation gap: the manifest carries no function list to generate a table from.
+The API is documented next to the code, in the [`lib/adcfilter` directory](https://github.com/apojomovsky/epic-hal/tree/master/lib/adcfilter). This page does not restate it. The manifest carries no function list, so no API table is generated here yet.
 
 ## Limits
 

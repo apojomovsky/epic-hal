@@ -10,11 +10,11 @@
 | Module id | `lib/tick` |
 | Source | [`lib/tick`](https://github.com/apojomovsky/epic-hal/tree/master/lib/tick) |
 | Families | PIC16F193X, PIC16F628A, PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| Parts, PIC16F193X | 16F1933, 16F1934, 16F1936, 16F1937, 16F1938, 16F1939 |
-| Parts, PIC16F628A | 16F628, 16LF628A, 16F648A, 16F628A |
-| Parts, PIC16F87XA | 16F873A, 16LF873A, 16F873, 16F874, 16F874A, 16F876, 16F876A, 16F877, 16F877A |
-| Parts, PIC16F88X | 16F883, 16F884, 16F886, 16F887 |
-| Parts, PIC18Fxx5x | 18F4455, 18F4550 |
+| Parts, PIC16F193X | PIC16F1933, PIC16F1934, PIC16F1936, PIC16F1937, PIC16F1938, PIC16F1939 |
+| Parts, PIC16F628A | PIC16F628, PIC16LF628A, PIC16F648A, PIC16F628A |
+| Parts, PIC16F87XA | PIC16F873A, PIC16LF873A, PIC16F873, PIC16F874, PIC16F874A, PIC16F876, PIC16F876A, PIC16F877, PIC16F877A |
+| Parts, PIC16F88X | PIC16F883, PIC16F884, PIC16F886, PIC16F887 |
+| Parts, PIC18Fxx5x | PIC18F4455, PIC18F4550 |
 | Source files | `lib/tick/src/epic_tick.c` |
 | Depends on | Nothing |
 | Used by | [`lib/debounce`](debounce.md), [`lib/encoder`](encoder.md), [`lib/lcd`](lcd.md), [`lib/modbus`](modbus.md), [`lib/sdcard`](sdcard.md) |
@@ -36,13 +36,13 @@ The manifest lists one example program per family. Build it with the repository 
 
 ## API
 
-The API is documented next to the code, in the [`lib/tick` directory](https://github.com/apojomovsky/epic-hal/tree/master/lib/tick). This page does not restate it. This is a documentation gap: the manifest carries no function list to generate a table from.
+The API is documented next to the code, in the [`lib/tick` directory](https://github.com/apojomovsky/epic-hal/tree/master/lib/tick). This page does not restate it. The manifest carries no function list, so no API table is generated here yet.
 
 ## Limits
 
-- Not built for 16F870, 16F871, 16F872. Reason: RAM: HAL _g_eeprom_cb byte does not fit (XC8 error 1250).
-- Not built for 18F2455, 18F2550. Reason: RAM: does not fit on this smaller part.
-- Not built for 16F627, 16F627A, 16LF627A. Reason: flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part.
+- Not built for PIC18F2455, PIC18F2550. Reason: RAM: does not fit on this smaller part.
+- Not built for PIC16F870, PIC16F871, PIC16F872. Reason: RAM: one byte of HAL state does not fit.
+- Not built for PIC16F627, PIC16F627A, PIC16LF627A. Reason: flash: tick example needs 1692 words on the 2K 16F628A, exceeds the 1K-word part.
 
 ## Related
 

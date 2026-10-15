@@ -140,6 +140,11 @@ def _page_name(mod) -> str:
     return module_id(mod).split("/", 1)[1]
 
 
+def _pic(part: str) -> str:
+    """A manifest part spelled as Microchip does (16F877A to PIC16F877A)."""
+    return part if part.startswith("PIC") else f"PIC{part}"
+
+
 def _sentence(text: str) -> str:
     text = text.strip()
     return text if text.endswith((".", "!", "?")) else text + "."
@@ -209,7 +214,8 @@ def emit_user_module_md(manifest: epicmanifest.Manifest, name: str) -> str:
         f"| Families | {_cell(', '.join(fams) or 'None')} |",
     ]
     for fam in fams:
-        lines.append(f"| Parts, {fam} | {_cell(', '.join(mod.supported[fam]))} |")
+        lines.append(f"| Parts, {fam} |"
+            f" {_cell(', '.join(_pic(p) for p in mod.supported[fam]))} |")
     srcs = [epicmanifest.join_module_path(mod.dir, p) for p in mod.sources]
     lines += [
         f"| Source files | {_cell(', '.join(f'`{p}`' for p in srcs))} |",
@@ -256,15 +262,15 @@ def emit_user_module_md(manifest: epicmanifest.Manifest, name: str) -> str:
         ]
     else:
         lines.append("No example program is listed in the manifest for this"
-                     " module. This is a documentation gap.")
+                     " module, so there is no example to link yet.")
     lines += [
         "",
         "## API",
         "",
         f"The API is documented next to the code, in the"
         f" [`{mid}` directory]({REPO_URL}/tree/master/{mod.dir}). This"
-        " page does not restate it. This is a documentation gap: the"
-        " manifest carries no function list to generate a table from.",
+        " page does not restate it. The manifest carries no function list,"
+        " so no API table is generated here yet.",
         "",
         "## Limits",
         "",
@@ -273,7 +279,7 @@ def emit_user_module_md(manifest: epicmanifest.Manifest, name: str) -> str:
     for part, why in mod.excluded.items():
         reasons.setdefault(why, []).append(part)
     for why in sorted(reasons):
-        parts = ", ".join(sorted(reasons[why]))
+        parts = ", ".join(_pic(p) for p in sorted(reasons[why]))
         lines.append(f"- Not built for {parts}. Reason: {why}.")
     for note in notes:
         lines.append(f"- Simulator: {note}.")

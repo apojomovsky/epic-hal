@@ -10,10 +10,10 @@ Bit-banged full-duplex UART. This page is the reference for the `lib/swuart` HAL
 | Module id | `lib/swuart` |
 | Source | [`lib/swuart`](https://github.com/apojomovsky/epic-hal/tree/master/lib/swuart) |
 | Families | PIC16F193X, PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| Parts, PIC16F193X | 16F1933, 16F1934, 16F1936, 16F1937, 16F1938, 16F1939 |
-| Parts, PIC16F87XA | 16F876, 16F876A, 16F877, 16F877A |
-| Parts, PIC16F88X | 16F886, 16F887 |
-| Parts, PIC18Fxx5x | 18F2455, 18F2550, 18F4455, 18F4550 |
+| Parts, PIC16F193X | PIC16F1933, PIC16F1934, PIC16F1936, PIC16F1937, PIC16F1938, PIC16F1939 |
+| Parts, PIC16F87XA | PIC16F876, PIC16F876A, PIC16F877, PIC16F877A |
+| Parts, PIC16F88X | PIC16F886, PIC16F887 |
+| Parts, PIC18Fxx5x | PIC18F2455, PIC18F2550, PIC18F4455, PIC18F4550 |
 | Source files | `lib/swuart/src/epic_swuart.c` |
 | Depends on | Nothing |
 | Used by | No other module |
@@ -34,11 +34,11 @@ The manifest lists one example program per family. Build it with the repository 
 
 ## API
 
-The API is documented next to the code, in the [`lib/swuart` directory](https://github.com/apojomovsky/epic-hal/tree/master/lib/swuart). This page does not restate it. This is a documentation gap: the manifest carries no function list to generate a table from.
+The API is documented next to the code, in the [`lib/swuart` directory](https://github.com/apojomovsky/epic-hal/tree/master/lib/swuart). This page does not restate it. The manifest carries no function list, so no API table is generated here yet.
 
 ## Limits
 
-- Not built for 16F870, 16F871, 16F872, 16F873, 16F873A, 16F874, 16F874A, 16LF873A. Reason: RAM: full-HAL example's auto/param pool does not fit on this smaller part.
+- Not built for PIC16F870, PIC16F871, PIC16F872, PIC16F873, PIC16F873A, PIC16F874, PIC16F874A, PIC16LF873A. Reason: RAM: full-HAL example's auto/param pool does not fit on this smaller part.
 
 ## Related
 

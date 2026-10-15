@@ -46,11 +46,12 @@ class TestUserPages(unittest.TestCase):
             if path.startswith("docs/user/modules/"):
                 self.assertIn(f"(modules/{path.rsplit('/', 1)[1]})", index)
 
-    def test_pages_have_no_em_dash_or_version_prose(self):
+    def test_pages_have_no_banned_text(self):
         for path, text in self.outputs.items():
             if path.startswith("docs/user/"):
                 with self.subTest(page=path):
                     self.assertNotIn("\u2014", text)
+                    self.assertNotRegex(text, r"XC8")
 
     def test_dependency_is_linked(self):
         page = self.outputs["docs/user/modules/console.md"]

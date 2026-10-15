@@ -25,22 +25,22 @@ Every module in the manifest, with its one-line summary and the families it supp
 | `hal/pic18/18fxx5x` | Register-level HAL and smoke firmware for the PIC18Fxx5x family | PIC18Fxx5x |
 | `lib/adcfilter` | Vendor-agnostic ADC oversampling and moving-average filter | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/bus` | I2C and SPI MEM register access for 8-bit PICs | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| `lib/console` | Line-based command dispatcher over epic-serial | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
+| `lib/console` | Line-based command dispatcher over lib/serial | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/debounce` | Vendor-agnostic digital-input debouncer | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/encoder` | Interrupt-driven x4 quadrature decoder for 8-bit PICs | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/fsm` | Vendor-agnostic table-driven finite state machine engine | PIC16F193X, PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| `lib/lcd` | HD44780-compatible character LCD driver | PIC16F87XA, PIC16F88X |
-| `lib/math` | Fixed-point math utility library for 8-bit PICs | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| `lib/mcp23x17` | MCP23017 and MCP23S17 16-bit I/O expander driver on epic-bus | PIC16F87XA, PIC16F88X |
+| `lib/lcd` | HD44780-compatible character LCD HAL module | PIC16F87XA, PIC16F88X |
+| `lib/math` | Fixed-point math HAL module for 8-bit PICs | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
+| `lib/mcp23x17` | MCP23017 and MCP23S17 16-bit I/O expander HAL module on lib/bus | PIC16F87XA, PIC16F88X |
 | `lib/modbus` | Modbus RTU slave for 8-bit PICs | PIC18Fxx5x |
 | `lib/pid` | Vendor-agnostic fixed-point PID controller | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| `lib/sdcard` | SD/MMC over SPI block storage for PIC18F2455, 2550, 4455 and 4550 | PIC18Fxx5x |
+| `lib/sdcard` | SD/MMC over SPI block storage for the PIC18Fxx5x family | PIC18Fxx5x |
 | `lib/serial` | Interrupt-driven ring-buffered UART | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/settings` | EEPROM-backed settings blobs with CRC validation | PIC18Fxx5x |
 | `lib/swuart` | Bit-banged full-duplex UART | PIC16F193X, PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/taskmgr` | Cooperative non-preemptive task scheduler for 8-bit PICs | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/tick` | 1 ms timebase for 8-bit PICs | PIC16F193X, PIC16F628A, PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| `lib/usb` | USB CDC-ACM virtual serial port for PIC18F2455, 2550, 4455 and 4550 | PIC18Fxx5x |
+| `lib/usb` | USB CDC-ACM virtual serial port for the PIC18Fxx5x family | PIC18Fxx5x |
 | `tests/epic-combo-adc-uart` | ADC plus polled USART integration firmware | PIC16F87XA |
 | `tests/epic-combo-eeprom-isr` | EEPROM writes under serial and tick ISR load on PIC18 | PIC18Fxx5x |
 | `tests/epic-combo-encoder-tick` | Quadrature decoder plus 1 ms timebase integration firmware | PIC16F87XA |
