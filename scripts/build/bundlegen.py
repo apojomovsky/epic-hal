@@ -230,9 +230,10 @@ def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
     out += [
         "# ---- family HAL, epic-cc slice -----------------------------------",
         "# The conformant subset epic-cc builds (the XC8 list above hits",
-        "# XC8-only syntax). A module that declares its own slice replaces",
-        "# the family one verbatim. Used only when TOOLCHAIN=epic-cc is set",
-        "# before this file is included.",
+        "# XC8-only syntax). When any selected module declares its own slice,",
+        "# those slices replace the family one, as epic_build.py does for the",
+        "# requested module. Used only when TOOLCHAIN=epic-cc is set before",
+        "# this file is included.",
         f"EPIC_HAL_EPICCC_HAL_SRCS := \\\n  {epiccc_slice}",
     ]
     for name, paths in epiccc_hal_overrides(manifest, family_name).items():
