@@ -58,4 +58,4 @@ epic_serial_put_str("\r\n");
 
 ## License
 
-MIT, see the [repo LICENSE](../LICENSE).
+MIT, see the [repo LICENSE](../../LICENSE).

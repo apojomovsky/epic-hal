@@ -28,4 +28,4 @@ uint16_t avg = epic_adcfilter_avg_push(&filter, raw);        /* O(1) average */
 
 ## License
 
-MIT, see the [repo LICENSE](../LICENSE).
+MIT, see the [repo LICENSE](../../LICENSE).

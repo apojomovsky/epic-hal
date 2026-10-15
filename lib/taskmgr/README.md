@@ -1,6 +1,6 @@
 # 8-bit PIC Task Manager
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](../../LICENSE)
 [![Runs on: host & silicon](https://img.shields.io/badge/runs%20on-host%20%26%20silicon-orange.svg)](#quick-start)
 
 A cooperative (non-preemptive) task scheduler for 8-bit PIC
@@ -137,4 +137,4 @@ See the [API reference](docs/API.md).
 
 ## License
 
-MIT; see the top-level [LICENSE](../LICENSE).
+MIT; see the top-level [LICENSE](../../LICENSE).

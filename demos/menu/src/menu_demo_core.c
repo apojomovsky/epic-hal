@@ -234,8 +234,8 @@ void menu_demo_init(void)
     /* static, not a stack local: epic_lcd_init stores &ops into global
      * g_lcd, dereferenced by every later epic_lcd_* call, long after
      * this function returns (a stack local here would dangle -- see
-     * docs/pic18f4550-menu-demo.md). ops_ctx stays a plain local: only
-     * its value, not its address, ever gets stored anywhere. */
+     * docs/internals/pic18f4550-menu-demo.md). ops_ctx stays a plain local:
+     * only its value, not its address, ever gets stored anywhere. */
     static epic_lcd_ops_t ops;
     void *ops_ctx;
     /* Field-by-field, not a partial `{ ..., .row_addr = {0U} }`

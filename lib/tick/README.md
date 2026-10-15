@@ -51,4 +51,4 @@ if (epic_tick_elapsed_since(t0) >= 50u) { /* timeout */ }
 
 ## License
 
-MIT, see the [repo LICENSE](../LICENSE).
+MIT, see the [repo LICENSE](../../LICENSE).
