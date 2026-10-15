@@ -1149,9 +1149,9 @@ PIC16F628A = [
 # The 1087-word blink smoke cannot fit the 1K-word parts (measured:
 # XC8 error 1347, class CODE, on 16F627/16F627A/16LF627A); the
 # exclusion wording follows the lib/serial 873A/874A precedent.
-"16F627" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
-"16F627A" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
-"16LF627A" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
+"16F627" = "flash: 1087-word blink smoke does not fit the 1K-word part"
+"16F627A" = "flash: 1087-word blink smoke does not fit the 1K-word part"
+"16LF627A" = "flash: 1087-word blink smoke does not fit the 1K-word part"
 
 [modules."hal/pic14/16f628a".example.PIC16F628A]
 name    = "blink"
@@ -1196,7 +1196,7 @@ PIC16F63x_67x_68x = [
 # the 1K-word flash (XC8 error 1347, class CODE), and the bank-probe sim
 # variant cannot fit the 64 B RAM (XC8 error 1250 on the harness cycle
 # bound). Wording follows the lib/serial 873A/874A precedent.
-"16F631" = "flash and RAM: the 1314-word blink smoke does not fit the 1K-word flash (XC8 error 1347), and the bank-probe sim variant does not fit the 64 B RAM (XC8 error 1250)"
+"16F631" = "flash and RAM: the 1314-word blink smoke does not fit the 1K-word flash, and the bank-probe sim variant does not fit the 64 B RAM (XC8 error 1250)"
 "16F630" = "flash and RAM: the 942-word blink leaves no headroom in the 1K-word flash and banked access is impossible without common RAM (target build fails loudly at the #error gate); the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
 "16F676" = "flash and RAM: the 1058-word blink smoke does not fit the 1K-word flash (XC8 error 1347, measured), and the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
 
@@ -1279,7 +1279,7 @@ PIC16F83_84 = [
 # data RAM and 844 words of flash, and the 16F83 carries only 36 B /
 # 512 words (XC8 error 1360 on the RAM allocation; flash would follow
 # at error 1347). Wording follows the lib/serial 873A/874A precedent.
-"16F83" = "RAM and flash: the 844-word, 46-B blink smoke does not fit the 512-word, 36-B part (XC8 error 1360)"
+"16F83" = "RAM and flash: the 844-word, 46-B blink smoke does not fit the 512-word, 36-B part"
 
 [modules."hal/pic14/16f83_84".example.PIC16F83_84]
 name    = "blink"
@@ -1324,7 +1324,7 @@ PIC16F818_819 = [
 # platform headers and host examples, but no real-target ladder entry
 # fits it: the blink is the smallest of them. Wording follows the
 # lib/serial 873A/874A and 16F83 precedents.
-"16F818" = "flash: the 1089-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
+"16F818" = "flash: the 1089-word blink smoke does not fit the 1K-word part"
 
 [modules."hal/pic14/16f818_819".example.PIC16F818_819]
 name    = "blink"
@@ -2510,7 +2510,7 @@ PIC18Fxx5x = [
 [modules."lib/bus".excluded]
 "16F870" = "no SSP peripheral on this cut-down"
 "16F871" = "no SSP peripheral on this cut-down"
-"16F872" = "flash: bus example does not fit 2K CODE (XC8 error 1347)"
+"16F872" = "flash: bus example does not fit 2K CODE"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
@@ -2568,7 +2568,7 @@ sources     = [
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules."lib/mcp23x17"]
-summary    = "MCP23017 and MCP23S17 16-bit I/O expander driver on epic-bus"
+summary    = "MCP23017 and MCP23S17 16-bit I/O expander HAL module on lib/bus"
 sources    = [
   "src/epic_mcp23x17.c",
 ]
@@ -2648,7 +2648,7 @@ sources = [
 config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules."lib/console"]
-summary    = "Line-based command dispatcher over epic-serial"
+summary    = "Line-based command dispatcher over lib/serial"
 sources    = [
   "src/epic_console.c",
 ]
@@ -2889,9 +2889,9 @@ PIC18Fxx5x = [
 ]
 
 [modules."lib/encoder".excluded]
-"16F870" = "RAM: sizecheck _g_enc does not fit (XC8 error 1250)"
-"16F871" = "RAM: sizecheck _g_enc does not fit (XC8 error 1250)"
-"16F872" = "RAM: sizecheck _g_enc does not fit (XC8 error 1250)"
+"16F870" = "RAM: module state does not fit"
+"16F871" = "RAM: module state does not fit"
+"16F872" = "RAM: module state does not fit"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
@@ -2986,7 +2986,7 @@ sources     = [
 ]
 # The sim test logs over the harness USART, not lib/serial; the
 # example's lib/serial dep would pull in a 9-byte local that
-# overflows 16F887 RAM (XC8 error 1250).
+# overflows 16F887 RAM.
 depends_on  = []
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 [modules."lib/encoder".example.PIC16F88X.sim]
@@ -2997,7 +2997,7 @@ sources     = [
 ]
 # The sim test logs over the harness USART, not lib/serial; the
 # example's lib/serial dep would pull in a 9-byte local that
-# overflows 16F887 RAM (XC8 error 1250).
+# overflows 16F887 RAM.
 depends_on  = []
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
@@ -3085,9 +3085,9 @@ PIC16F193X = [
 # Its lib/tick dependency is excluded on the smaller parts: it does
 # not fit on the 18F2455/18F2550 (RAM).
 [modules."lib/fsm".excluded]
-"16F870" = "RAM: HAL _g_ccp_callbacks do not fit (XC8 error 1250)"
-"16F871" = "RAM: HAL _g_ccp_callbacks do not fit (XC8 error 1250)"
-"16F872" = "RAM: HAL _g_ccp_callbacks do not fit (XC8 error 1250)"
+"16F870" = "RAM: HAL callback table does not fit"
+"16F871" = "RAM: HAL callback table does not fit"
+"16F872" = "RAM: HAL callback table does not fit"
 "18F2455" = "example needs lib/tick, which does not fit on this part (RAM)"
 "18F2550" = "example needs lib/tick, which does not fit on this part (RAM)"
 
@@ -3191,7 +3191,7 @@ config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = 
 # gate needs the family HAL for the harness USART. The module had no
 # real-target build before this entry, so 16F877A and 16F887 only.
 [modules."lib/lcd"]
-summary    = "HD44780-compatible character LCD driver"
+summary    = "HD44780-compatible character LCD HAL module"
 sources    = [
   "src/epic_lcd.c",
 ]
@@ -3255,7 +3255,7 @@ sources     = [
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
 [modules."lib/math"]
-summary    = "Fixed-point math utility library for 8-bit PICs"
+summary    = "Fixed-point math HAL module for 8-bit PICs"
 sources    = [
   "src/common/epic_math_numeric.c",
   "src/common/epic_math_rand.c",
@@ -3535,10 +3535,10 @@ PIC18Fxx5x = [
 "16F872" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
 "16F874" = "RAM: does not fit on this smaller part"
-"16F876" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
-"16F876A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
-"16F877" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
-"16F877A" = "RAM: PIE1/PIE2 fix byte tipped a marginal build over"
+"16F876" = "RAM: does not fit on this part"
+"16F876A" = "RAM: does not fit on this part"
+"16F877" = "RAM: does not fit on this part"
+"16F877A" = "RAM: does not fit on this part"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
@@ -3636,9 +3636,9 @@ PIC18Fxx5x = [
 ]
 
 [modules."lib/pid".excluded]
-"16F870" = "RAM: sizecheck _g_pid does not fit (XC8 error 1250)"
-"16F871" = "RAM: sizecheck _g_pid does not fit (XC8 error 1250)"
-"16F872" = "RAM: sizecheck _g_pid does not fit (XC8 error 1250)"
+"16F870" = "RAM: module state does not fit"
+"16F871" = "RAM: module state does not fit"
+"16F872" = "RAM: module state does not fit"
 
 [modules."lib/pid".example.PIC16F87XA]
 name    = "pid"
@@ -3804,14 +3804,14 @@ PIC18Fxx5x = [
 ]
 
 [modules."lib/serial".excluded]
-"16F873A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
-"16LF873A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
-"16F873" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
-"16F870" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
-"16F871" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
-"16F872" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
-"16F874A" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
-"16F874" = "RAM: 32-byte g_rx_buf does not fit (XC8 error 1250)"
+"16F873A" = "RAM: 32-byte g_rx_buf does not fit"
+"16LF873A" = "RAM: 32-byte g_rx_buf does not fit"
+"16F873" = "RAM: 32-byte g_rx_buf does not fit"
+"16F870" = "RAM: 32-byte g_rx_buf does not fit"
+"16F871" = "RAM: 32-byte g_rx_buf does not fit"
+"16F872" = "RAM: 32-byte g_rx_buf does not fit"
+"16F874A" = "RAM: 32-byte g_rx_buf does not fit"
+"16F874" = "RAM: 32-byte g_rx_buf does not fit"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 
@@ -3941,7 +3941,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 # variant's total RAM. The example reads SD block 0 and prints its
 # first bytes over epic-serial.
 [modules."lib/sdcard"]
-summary    = "SD/MMC over SPI block storage for PIC18F2455, 2550, 4455 and 4550"
+summary    = "SD/MMC over SPI block storage for the PIC18Fxx5x family"
 sources    = [
   "src/epic_sdcard.c",
   "third_party/m-stack-storage/src/mmc.c",
@@ -3992,7 +3992,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # equivalent on PIC16F87XA parts. The example enumerates and echoes the
 # host's CDC input.
 [modules."lib/usb"]
-summary    = "USB CDC-ACM virtual serial port for PIC18F2455, 2550, 4455 and 4550"
+summary    = "USB CDC-ACM virtual serial port for the PIC18Fxx5x family"
 sources    = [
   "src/epic_usb.c",
   "src/usb_descriptors.c",
@@ -4494,12 +4494,12 @@ PIC16F193X = [
 ]
 
 [modules."lib/tick".excluded]
-"16F627" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
-"16F627A" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
-"16LF627A" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
-"16F870" = "RAM: HAL _g_eeprom_cb byte does not fit (XC8 error 1250)"
-"16F871" = "RAM: HAL _g_eeprom_cb byte does not fit (XC8 error 1250)"
-"16F872" = "RAM: HAL _g_eeprom_cb byte does not fit (XC8 error 1250)"
+"16F627" = "flash: tick example needs 1692 words on the 2K 16F628A, exceeds the 1K-word part"
+"16F627A" = "flash: tick example needs 1692 words on the 2K 16F628A, exceeds the 1K-word part"
+"16LF627A" = "flash: tick example needs 1692 words on the 2K 16F628A, exceeds the 1K-word part"
+"16F870" = "RAM: one byte of HAL state does not fit"
+"16F871" = "RAM: one byte of HAL state does not fit"
+"16F872" = "RAM: one byte of HAL state does not fit"
 "18F2455" = "RAM: does not fit on this smaller part"
 "18F2550" = "RAM: does not fit on this smaller part"
 

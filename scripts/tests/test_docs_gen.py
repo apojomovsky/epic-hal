@@ -28,6 +28,45 @@ class TestGeneratedPagesFresh(unittest.TestCase):
                 self.assertEqual((REPO_ROOT / path).read_text(), text)
 
 
+class TestUserPages(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.manifest = epicmanifest.load(epicmanifest.default_path())
+        cls.outputs = docs_gen.generate(REPO_ROOT)
+
+    def test_one_page_per_library_module_and_no_others(self):
+        pages = {p for p in self.outputs if p.startswith("docs/user/modules/")}
+        want = {f"docs/user/modules/{n.split('/', 1)[1]}.md"
+                for n in self.manifest.modules if n.startswith("lib/")}
+        self.assertEqual(pages, want)
+
+    def test_index_links_every_page(self):
+        index = self.outputs["docs/user/index.md"]
+        for path in self.outputs:
+            if path.startswith("docs/user/modules/"):
+                self.assertIn(f"(modules/{path.rsplit('/', 1)[1]})", index)
+
+    def test_pages_have_no_banned_text(self):
+        for path, text in self.outputs.items():
+            if path.startswith("docs/user/"):
+                with self.subTest(page=path):
+                    self.assertNotIn("\u2014", text)
+                    self.assertNotRegex(text, r"XC8")
+
+    def test_dependency_is_linked(self):
+        page = self.outputs["docs/user/modules/console.md"]
+        self.assertIn("[`lib/serial`](serial.md)", page)
+
+    def test_orphan_pages_are_found(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            (root / "docs/user/modules").mkdir(parents=True)
+            (root / "docs/user/modules/gone.md").write_text("x")
+            self.assertEqual(docs_gen.orphan_pages(root, {}),
+                             ["docs/user/modules/gone.md"])
+
+
 class TestPacksPage(unittest.TestCase):
     def test_lists_every_family_pack_and_bundle(self):
         manifest = epicmanifest.load(epicmanifest.default_path())
