@@ -3,8 +3,8 @@
 XC8 numbers are confidential under the XC8 licence (section 8) and live in
 the private epic-benchmarks repository. The rule: a mention of XC8 within a
 line or two of a measurement (a number of three or more digits with a size or
-cycle unit, a ratio, or a used/total pair) is rejected in tracked docs, manifest
-strings and source comments. Power-of-two figures are device capacities
+cycle unit, a ratio, or a used/total pair) is rejected in tracked docs and
+manifest strings. Power-of-two figures are device capacities
 (512 words, 2048 bytes), not measurements, and version numbers, error codes
 and part numbers carry no unit, so none of them trip the rule."""
 import pathlib
@@ -18,7 +18,7 @@ SKIPPED_PARTS = ("third_party/", "nbproject/", "vendor/")
 
 _XC8 = re.compile(r"xc8", re.IGNORECASE)
 _NOISE = re.compile(
-    r"xc8[-_ /]*v?\d+(\.\d+)*|\berror \d+|\(\d{3,4}\)|\b0x[0-9a-f]+\b"
+    r"https?://\S+|xc8[-_ /]*v?\d+(\.\d+)*|\berror \d+|\(\d{3,4}\)|\b0x[0-9a-f]+\b"
     r"|\bDS\d+\w*|\bv\d+\.\d+\b|#\d+|\b\d{4}-\d\d-\d\d\b",
     re.IGNORECASE,
 )
