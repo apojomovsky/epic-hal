@@ -101,7 +101,7 @@ def main() -> int:
                     (REPO / rel).parent.mkdir(parents=True, exist_ok=True)
                     (REPO / rel).write_text(src)
                     fam = m.family_of(mcu)
-                    jobs.append((module_name, mcu, variant, fam.dfp, str(rel)))
+                    jobs.append((module_name, mcu, variant, manifest_lib.dfp_name(fam), str(rel)))
 
     # The links are independent docker runs; thread them (the runner's
     # cores) so the ~150 links do not serialize on docker's startup.

@@ -731,7 +731,7 @@ def cmd_matrix(args):
         if modules:
             entries.append({
                 "family": fam.name,
-                "dfp": fam.dfp,
+                "dfp": epicmanifest.dfp_name(fam),
                 "modules": ";".join(modules),
             })
     if not entries:

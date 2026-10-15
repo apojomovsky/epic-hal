@@ -106,7 +106,7 @@ def main() -> None:
         for entry in json.loads(matrix_json):
             fam_name = entry["family"]
             fam = manifest.families[fam_name]
-            dfp_dir = f"{XC8_INSTALL_DIR}/pic/packs/{fam.dfp}/xc8"
+            dfp_dir = f"{XC8_INSTALL_DIR}/pic/packs/{epicmanifest.dfp_name(fam)}/xc8"
             for pair in entry["modules"].split(";"):
                 name, mcus = pair.split("=")
                 for mcu in mcus.split(","):
@@ -122,7 +122,7 @@ def main() -> None:
     # Sim build scripts for the fixed gate list.
     for module, mcu in SIM_VARIANTS:
         fam = manifest.family_of(mcu)
-        dfp_dir = f"{XC8_INSTALL_DIR}/pic/packs/{fam.dfp}/xc8"
+        dfp_dir = f"{XC8_INSTALL_DIR}/pic/packs/{epicmanifest.dfp_name(fam)}/xc8"
         subprocess.run(
             [sys.executable, "scripts/build/epic_build.py", "build",
              "--module", module, "--mcu", mcu, "--variant", "sim",
