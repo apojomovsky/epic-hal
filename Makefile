@@ -363,6 +363,7 @@ sim-epiccc:
 	@if [ ! -e "$(CURDIR)/epic-cc/crates/sim" ]; then \
 		echo "sim-epiccc: no epic-cc checkout at $(CURDIR)/epic-cc." >&2; \
 		echo "  link or clone one there, e.g.: ln -s ~/projects/epic-cc epic-cc" >&2; \
+		echo "  the link must be absolute: a relative one fails inside the container." >&2; \
 		exit 1; \
 	fi
 	@test -n "$(DEVICE)" || { echo "usage: make sim-epiccc HEX=build/epiccc/16F887-tick.hex DEVICE=16F887 [WATCH=PORTB:0] [SAMPLES=24] [STEPS=500000] [IRQ_EVERY=5000 IRQ_FLAG=PIR1:1 IRQ_ENABLE=PIE1:1]" >&2; exit 1; }
@@ -453,7 +454,7 @@ bootstrap:
 doctor:
 	@bash scripts/dev/bootstrap.sh --check-only
 
-# Regenerate the data-driven docs from the manifest (reference pages)
+# Regenerate the data-driven docs from the manifest (reference pages, docs/user)
 # and from docs/README.src.md (README.md with includes expanded), then the
 # README docgen tables. README.md and docs/reference/*.md are outputs:
 # edit the sources, never the outputs. CI fails on any diff this leaves.

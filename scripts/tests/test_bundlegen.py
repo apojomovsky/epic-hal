@@ -24,6 +24,8 @@ fosc_hz  = 20000000
 includes = ["hal/pic14/16f87xa/include/target", "hal/pic14/16f87xa/include",
             "common/include"]
 hal_sources = ["hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c"]
+epiccc_sources = ["hal/pic14/core/src/peripherals/pic14_gpio.c",
+                  "hal/pic14/core/src/epiccc/pic16_isr_vector.c"]
 
 [[families.PIC16F87XA.conditional_sources]]
 path     = "hal/pic14/16f87xa/src/peripherals/pic16f87xa_psp.c"
@@ -73,6 +75,11 @@ depends_on = ["lib/tick"]
 
 [modules."lib/serial".supported]
 PIC16F87XA = ["16F877A"]
+
+[modules."lib/serial".epiccc_hal_sources_by_family]
+PIC16F87XA = ["hal/pic14/core/src/peripherals/pic14_usart.c",
+              "hal/pic14/core/src/epiccc/pic16_isr_vector.c",
+              "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"]
 
 [modules."lib/serial".excluded]
 "16F873A" = "RAM: 32-byte g_rx_buf does not fit"
@@ -209,6 +216,11 @@ class TestFileSelection(unittest.TestCase):
         self.assertFalse(any(f.startswith("tests/") for f in self.files))
         self.assertFalse(any("tests/" in f for f in self.files))
 
+    def test_includes_epiccc_slice_and_overrides_without_mdb(self):
+        self.assertIn("hal/pic14/core/src/epiccc/pic16_isr_vector.c", self.files)
+        self.assertIn("hal/pic14/core/src/peripherals/pic14_usart.c", self.files)
+        self.assertFalse([f for f in self.files if "/mdb/" in f])
+
     def test_excludes_other_families_hal(self):
         self.assertFalse(any(f.startswith("hal/pic18/18fxx5x/") for f in self.files))
 
@@ -222,6 +234,24 @@ class TestFileSelection(unittest.TestCase):
 class TestEpicHalMk(unittest.TestCase):
     def setUp(self):
         self.mk = bundlegen.emit_epic_hal_mk(load(), "PIC16F87XA", "v0.1.0")
+
+    def test_epiccc_slice_and_overrides_are_emitted(self):
+        self.assertIn("EPIC_HAL_EPICCC_HAL_SRCS := \\\n"
+                      "  $(EPIC_HAL_DIR)/hal/pic14/core/src/peripherals/pic14_gpio.c", self.mk)
+        override = [l for l in self.mk.splitlines()
+                    if l.startswith("EPIC_HAL_EPICCC_HAL_SRCS_lib/serial :=")]
+        self.assertEqual(len(override), 1)
+        self.assertIn("pic14_usart.c", override[0])
+        # The mdb harness is gate plumbing: named nowhere, shipped nowhere.
+        self.assertNotIn("pic16_harness_mdb", self.mk)
+
+    def test_epiccc_swap_precedes_the_assignments_and_ignores_the_default(self):
+        swap = self.mk.index("ifeq ($(TOOLCHAIN),epic-cc)")
+        self.assertLess(swap, self.mk.index("EPIC_HAL_SRCS := $(EPIC_HAL_HAL_SRCS)"))
+        self.assertLess(swap, self.mk.index("TOOLCHAIN ?= epic-cc"))
+        # The XC8 list assignment is untouched, so a consumer that never
+        # sets TOOLCHAIN keeps XC8 sources.
+        self.assertIn("EPIC_HAL_HAL_SRCS := \\\n  $(EPIC_HAL_DIR)/hal/pic14/16f87xa/src/peripherals/pic16f87xa_gpio.c", self.mk)
 
     def test_declares_the_family_and_version(self):
         self.assertIn("PIC16F87XA", self.mk)
