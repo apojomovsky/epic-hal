@@ -303,10 +303,12 @@ interrupts, not cycles, which is what makes that honest: the gate
 proves the interrupt path, not a timing figure. It also needs every
 register the gate touches to be reachable in the simulator; INTCON is
 mirrored on the PIC14 core, which is why the blink gates run in CI
-today. The tick gates need PIE1, a banked register on the 877A and 887:
-crates/sim applies banked SFR writes since epic-cc#173 closed
-(2026-09-02), and the tick gate passes locally (below). It is not yet
-in the CI job.
+today. The 877A and 887 tick gates need PIE1, a banked register on
+those parts: crates/sim applies banked SFR writes since epic-cc#173
+closed (2026-09-02), and the 877A tick gate passes locally (below). It
+is not yet in the CI job. The 18F4550 tick gate stays out for the
+PIC18 reason in the CI comments: the ISR's indirect call traps on the
+PIC18 backend.
 
 Local run of the same gate the CI job runs:
 

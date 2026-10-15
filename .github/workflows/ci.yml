@@ -485,10 +485,11 @@ jobs:
       # through TMR0IE, bit 5) every 65536 steps (prescaler 256 x count
       # 256); INTCON is a mirrored register, so the gate needs no SFR
       # banking. The 1939 gate watches LATB bit 0 (0x010D, bank 2) for
-      # the same reason. The tick gates are not run here yet: they pass
-      # locally under make sim-epiccc (IRQ_EVERY=200, PIR1:1, PIE1:1)
-      # now that crates/sim applies banked SFR writes (epic-cc#173,
-      # closed), so adding them is a config change in this job.
+      # the same reason. The 877A and 887 tick gates are not run here yet:
+      # they pass locally under make sim-epiccc (IRQ_EVERY=200, PIR1:1,
+      # PIE1:1) now that crates/sim applies banked SFR writes (epic-cc#173,
+      # closed), so adding them is a config change in this job. The 4550
+      # tick gate stays out for the PIC18 reason above.
       - name: Sim gates (crates/sim)
         if: steps.noncode.outputs.non_code != 'true'
         run: |
