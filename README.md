@@ -89,7 +89,7 @@ curl -fsSL https://github.com/apojomovsky/epic-hal/releases/latest/download/inst
 
 - [Getting started](https://apojomovsky.github.io/epic-docs/getting-started/): your first blink, in the simulator and on a chip.
 - [Guides](https://apojomovsky.github.io/epic-docs/guides/): how to do specific things.
-- Reference: every [part family](docs/reference/families.md) and every [module](docs/reference/modules.md), generated from the manifest.
+- Reference: every [part family](docs/reference/families.md), every [module](docs/reference/modules.md) and the [XC8 device packs and release bundles](docs/reference/packs.md), generated from the manifest.
 - [How it works](https://apojomovsky.github.io/epic-docs/explanation/): the design, for the curious.
 
 ## Contributing and licence

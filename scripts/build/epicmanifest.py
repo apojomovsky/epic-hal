@@ -832,6 +832,13 @@ def load(path: pathlib.Path) -> Manifest:
 
 
 
+def dfp_name(fam: Family) -> str:
+    """The family's device-pack name as the bundle's epic-hal.mk, the
+    scaffolded Makefile and the README and reference pack tables print it.
+    Those writers all call this, so a manifest rename cannot split them."""
+    return fam.dfp
+
+
 def default_path() -> pathlib.Path:
     """The manifest's location relative to this file."""
     return (
