@@ -95,7 +95,8 @@ the isolated bundle-gate build), an `epiccc-gate` job that builds the
 16F1939 blink with a pinned epic-cc driver and the release bundle's
 clang, then verifies them in epic-cc's own simulator (`crates/sim`, via
 `scripts/sim/sim-runner`: the blink PORTB toggle gates and the 1939 LATB
-toggle gate; the tick gates wait on epic-cc#173, see DEVELOPMENT.md).
+toggle gate; the tick gates pass locally under `make sim-epiccc` but are
+not yet in this job, see DEVELOPMENT.md).
 This is the "did a HAL change break against a known
 good compiler" direction; how to bump the pin: DEVELOPMENT.md. The
 epiccc-gate job is fully public: it pulls no image, Microchip or GHCR.
