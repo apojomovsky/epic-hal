@@ -29,9 +29,9 @@ shapes spread SFRs across all four banks (PIR1+PIR2). EUSART appears
 only on 688/689, ECCP only on 684/685. The 16F677 canonical proves
 the full tier with the bank probe; the 639/684/685/688/689 siblings
 prove their shapes the same way. The three 1 KW parts (630/631/676)
-cannot link the tier: the 1058-word 676 blink overflows flash (XC8
+cannot link the tier: the 676 blink overflows flash (XC8
 error 1347, measured), the 630 has no common RAM for banked access
-and its 942-word blink leaves no headroom, and the bank probe
+and its blink leaves no headroom, and the bank probe
 cannot fit 64 B RAM (error 1250 measured on the same-die 631), so
 they are manifest-excluded variants with host-sim coverage only.
 The -1 DFP spellings (16F631-1 and siblings) are a non-goal: XC8
@@ -70,8 +70,8 @@ Single-page flash (1 KW), so the dispatcher carries no page pin.
 16F631: 1 KW flash, 64 B SRAM (Bank-0 GPR 0x40..0x6F plus common
 0x70..0x7F), 128 B data EEPROM. 16F677: 2 KW flash, 128 B SRAM,
 256 B data EEPROM. Measured on the canonical 677 (XC8 v4.00): the
-blink smoke uses 1321 words / 62 B (64.5%/48.4% of flash/RAM, clear
-of the 20%-headroom bar); no 1 KW/64 B part can hold either image
+blink smoke on the 677 clears the 20%-headroom bar, but no 1 KW/64 B part
+can hold the blink smoke or the bank probe
 (see the exclusion notes above). The ISR scratch bytes pin to
 common RAM at 0x70/0x71. The blink ISR toggles the port latch
 directly (the GPIO driver call path in the ISR partition tips the

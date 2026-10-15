@@ -43,8 +43,7 @@ ctest --test-dir build --output-on-failure
 
 Real-silicon bring-up is Phase 3 — the `mcu/pic18fxx5x-sdcard-mplabx/Makefile`
 does not exist yet. Phase 2 confirmed that `mmc.c` + `crc.c` compile and
-link clean under `xc8-cc` against real PIC18F4550 headers: 3924 bytes flash
-(12.0%), 919 bytes RAM (44.9% of 2048). No PIC16 `mcu/` directory will be
+link clean under `xc8-cc` against real PIC18F4550 headers. No PIC16 `mcu/` directory will be
 added — RAM is the blocker, not the peripheral.
 
 ## Use it

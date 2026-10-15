@@ -16,8 +16,8 @@
  * undeclared identifier, so channel B must not compile there. PORTD
  * alone is not enough: PIC16F1934 has PORTD but only 4KW of flash
  * (PIC16F193X_FAMILY_FLASH_KW), and the compiled real-target example
- * with channel B needs 4127 words, 31 over 1934's 4096-word budget
- * (measured XC8 build). Requiring >=8KW alongside PORTD excludes
+ * with channel B overflows 1934's 4096-word budget (measured XC8
+ * build). Requiring >=8KW alongside PORTD excludes
  * exactly 1934 and nothing else. */
 #if (defined(PIC16F1933) || defined(PIC16F1934) || defined(PIC16F1936) || \
      defined(PIC16F1937) || defined(PIC16F1938) || defined(PIC16F1939)) && \

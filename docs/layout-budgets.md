@@ -55,7 +55,7 @@ inspect the .s / .sym / .map (AGENTS.md).
   `pic16_mscratch` is pinned to common RAM 0x72-0x7D, clear of the
   HAL RMW scratches (0x70/0x71) and the compiler's top-of-common-RAM
   working area (0x7E/0x7F). The 16-byte original at 0x70 overlapped
-  all three (XC8 1262/1482/2084, found 2026-08-11); the mul_u16
+  all three (found 2026-08-11 from compiler diagnostics); the mul_u16
   layout was compressed to 12 bytes (bk reuses b's bytes) to fit.
   Per-routine scratch is a single struct per routine so the linker
   cannot split it across banks (lib/math/docs/ARCHITECTURE.md).

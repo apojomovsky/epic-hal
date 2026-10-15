@@ -25,12 +25,11 @@ real, unmocked driver code paths for every peripheral it touches.
 
 | Toolchain | Build | Real MPLAB SIM gate | Flash (words) | RAM (bytes) |
 |---|---|---|---|---|
-| XC8 | PASS | PASS (`EPIC_HARNESS_RESULT: PASS` at a 1500 ms wait) | 9061/16384 (55.3%) | 639/2048 (31.2%) |
+| XC8 | PASS | PASS (`EPIC_HARNESS_RESULT: PASS` at a 1500 ms wait) | not published | not published |
 | epic-cc | PASS | FAIL (no UART capture, epic-cc#632) | 11888/16384 (72.6%) | 743/2048 (36.3%) |
 
 The flash overflow from the September baseline is resolved: epic-cc now
-fits the whole module in 11888 words against XC8's 9061 (1.31x, was
-2.15x at 19497 words), through the size work in apojomovsky/epic-cc#474,
+fits the whole module in 11888 words (was 19497), through the size work in apojomovsky/epic-cc#474,
 #475, #483, #485 (the umbrella #469 closed with the size-ladder entry
 in #490). The remaining gap is behavioral, not size: the epic-cc hex
 programs and runs, but its UART capture is 0 bytes where XC8's carries

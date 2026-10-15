@@ -46,8 +46,8 @@ dispatcher carries no `__at(0x900)` page pin.
 ## Flash and RAM budget
 
 0.5/1 KW flash, 36/68 B RAM, 64 B data EEPROM. Measured on the
-exemplar (XC8 v4.00, -O2): the blink smoke uses 844 words / 46 B on
-the 84/84A; the 16F83 (512 words / 36 B) cannot hold it on either
+exemplar (XC8 v4.00, -O2): the blink smoke fits the 84/84A; the
+16F83 (512 words / 36 B) cannot hold it on either
 axis, which is its manifest exclusion. The ISR-only call graph is the
 RAM pivot: the blink ISR toggles the port latch directly because
 XC8's compiled stack would permanently reserve the
