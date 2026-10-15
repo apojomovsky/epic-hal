@@ -20,7 +20,7 @@ class TestIsNonCode(unittest.TestCase):
         self.assertTrue(self.check(["a/b/docs/guide.md", "docs/x.md"]))
 
     def test_docs_bench_script_is_code(self):
-        self.assertFalse(self.check(["docs/experiments/math-cycle-benchmark/matrix.sh"]))
+        self.assertFalse(self.check(["docs/internals/experiments/math-cycle-benchmark/matrix.sh"]))
 
     def test_license_and_configs(self):
         self.assertTrue(self.check([

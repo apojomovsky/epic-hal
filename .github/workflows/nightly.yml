@@ -88,8 +88,9 @@ jobs:
 
   # XC8 vs epic-cc demo scoreboard (epic-hal#279): the three flagship
   # 18F4550 demos through scripts/sim/compare-toolchains.sh, one matrix leg
-  # per scoreboard row in docs/demo-scoreboard.md. PRs stay XC8-only via
-  # the family jobs in ci.yml; this file never triggers on pull_request,
+  # per scoreboard row in docs/internals/demo-scoreboard.md. PRs stay
+  # XC8-only via the family jobs in ci.yml; this file never triggers on
+  # pull_request,
   # so this job is the nightly-only full dual-toolchain size plus UART
   # trace comparison. Legs report instead of gating while scoreboard
   # cells are STALE or BLOCKED (see the doc), hence continue-on-error

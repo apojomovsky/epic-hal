@@ -2,17 +2,16 @@
 # Builds and measures the cycle benchmark across families and -O levels.
 # The firmware (bench.c) times each op with TMR1 over N=100 iterations and
 # prints "<op> <hexdelta>" over UART; per-op cycles = (delta - loop_empty)/N.
-#
 # Run inside the XC8 toolchain container, from the repo root:
 #   docker run --rm -v "$PWD":/work -w /work epic-hal-toolchain:local \
-#     sh docs/experiments/math-cycle-benchmark/matrix.sh
-# Output per build is a "### <name>" header followed by the raw <op> <hexdelta>
-# lines captured from the simulator's UART. See README.md in this directory.
+#     sh docs/internals/experiments/math-cycle-benchmark/matrix.sh
+# Output per build: a "### <name>" header, then the raw <op> <hexdelta> lines
+# from the simulator's UART. See README.md in this directory.
 set -u
-cd "$(dirname "$0")/../../.."         # repo root inside the container
+cd "$(dirname "$0")/../../../.."       # repo root inside the container
 DFP87=/opt/microchip/xc8/v4.00/pic/packs/Microchip.PIC16Fxxx_DFP/xc8
 DFP18=/opt/microchip/xc8/v4.00/pic/packs/Microchip.PIC18Fxxxx_DFP/xc8
-BENCH=docs/experiments/math-cycle-benchmark/bench.c
+BENCH=docs/internals/experiments/math-cycle-benchmark/bench.c
 OUT=build-sim/bench-cycles
 mkdir -p "$OUT"
 OPS="loop_empty add_native add_epic sub_native sub_epic mul8_native mul8_epic"

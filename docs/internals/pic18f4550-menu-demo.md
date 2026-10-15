@@ -5,7 +5,7 @@ PIC18F4550 firmware (LCD menu + buttons + ADC + EEPROM + CCP/PWM +
 lib/taskmgr + lib/serial together) built under both XC8 and epic-cc,
 and compared for flash/RAM size and (where both sides produce a hex)
 behavioral UART trace. Unlike the `epic-combo-*` firmwares in
-`docs/combo-epiccc-conformance.md` (narrow, white-box compiler-
+`docs/internals/combo-epiccc-conformance.md` (narrow, white-box compiler-
 conformance probes with recorder-mocked transports), this exercises the
 real, unmocked driver code paths for every peripheral it touches.
 
@@ -48,7 +48,7 @@ cleanly under epic-cc, in the order found:
    .row_addr = {0U} }`, `CCP_HandleTypeDef ccp = { 0 }`) lowers its
    implied zero-fill to an `llvm.memset` intrinsic epic-cc's legalize
    pass doesn't yet support without a materialized destination address,
-   the same gap class `docs/combo-epiccc-conformance.md` already
+   the same gap class `docs/internals/combo-epiccc-conformance.md` already
    documents for `combo-multitimer`/`combo-adc-uart`. Fixed in
    `menu_demo_core.c` with unrolled, field-by-field initialization
    (epic-hal#251).

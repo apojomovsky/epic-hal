@@ -61,4 +61,4 @@ if (ev == DEBOUNCE_EVENT_RELEASED) { /* ... */ }
 
 ## License
 
-MIT, see the [repo LICENSE](../LICENSE).
+MIT, see the [repo LICENSE](../../LICENSE).

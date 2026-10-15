@@ -25,7 +25,7 @@ _NON_CODE_RE = re.compile(
 )
 
 # Shell scripts under docs/ are executable build tooling, not prose
-# (docs/experiments/math-cycle-benchmark/matrix.sh drives xc8-cc).
+# (docs/internals/experiments/math-cycle-benchmark/matrix.sh drives xc8-cc).
 _CODE_OVERRIDE_RE = re.compile(r"(^|/)docs/.*\.sh$")
 
 

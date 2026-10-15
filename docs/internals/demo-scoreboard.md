@@ -24,7 +24,7 @@ divided by 2. RAM is bytes on both sides. The 18F4550 budgets are
 Raw XC8 figures behind the normalized words (sim variant): control Program
 4B33h (9625 words) with Data 34Fh (847 B); bridge Program 575Ah (11181
 words) with Data 3BBh (955 B). Menu XC8 figures come from
-`docs/pic18f4550-menu-demo.md`, kept as the source of truth there.
+`docs/internals/pic18f4550-menu-demo.md`, kept as the source of truth there.
 
 ## Why each epic-cc cell is not green
 
