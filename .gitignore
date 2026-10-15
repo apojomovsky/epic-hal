@@ -1,5 +1,7 @@
-# Build outputs
+# Build outputs (build*/ matches at any depth, so the real source directory
+# scripts/build/ is re-included; a new file there must never be ignored)
 build*/
+!/scripts/build/
 *.o
 *.a
 *.so
