@@ -575,4 +575,61 @@ class TestXc8Scaffold(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr)
         self.assertIn(f"{custom}/xc8", run.stdout)
 
+
+class TestEpicCcScaffold(unittest.TestCase):
+    """The epic-cc Makefile must pass only flags epic-cc's CLI accepts
+    (epic-hal#432: -Wno-unused-function reached epic-cc and was rejected)."""
+
+    # A stand-in epic-cc that rejects -W options as the real CLI does
+    # ("unknown option"), fails on an -I directory that does not exist, and
+    # records the argv of every accepted call.
+    FAKE_EPIC_CC = (
+        "#!/bin/sh\n"
+        "for a in \"$@\"; do\n"
+        "  case \"$a\" in\n"
+        "    -W*) echo \"epic-cc: unknown option $a\" >&2; exit 2;;\n"
+        "    -I*) [ -d \"${a#-I}\" ] || { echo \"epic-cc: no such include dir ${a#-I}\" >&2; exit 3; };;\n"
+        "  esac\n"
+        "done\n"
+        "printf '%s\\n' \"$@\" > \"$(dirname \"$0\")/argv.txt\"\n"
+        "touch \"$(dirname \"$0\")/called\"\n"
+    )
+
+    def setUp(self):
+        self.m = load()
+        self.bundle = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.bundle, ignore_errors=True)
+        xdir = self.bundle / "examples" / "epic-hal-demo.X"
+        (xdir / "nbproject").mkdir(parents=True)
+        (xdir / "nbproject" / "configurations.xml").write_text(SAMPLE_XML)
+        (xdir / "main.c").write_text("/* old */\n")
+        (self.bundle / "epic-hal.mk").write_text(
+            "EPIC_HAL_SRCS :=\nEPIC_HAL_CFLAGS :=\nEPIC_HAL_BUILD_DIR := build\n")
+        # The family's epic-cc headers live under its hal_dir, not the bundle root.
+        (self.bundle / self.m.families["PIC16F87XA"].hal_dir / "include" / "epiccc").mkdir(parents=True)
+        self.out = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.out, ignore_errors=True)
+        self.bin = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.bin, ignore_errors=True)
+        fake = self.bin / "epic-cc"
+        fake.write_text(self.FAKE_EPIC_CC)
+        fake.chmod(0o755)
+
+    @unittest.skipUnless(shutil.which("make"), "needs make")
+    def test_epic_cc_make_passes_only_accepted_flags(self):
+        epic_hal_init.init_project(
+            self.m, "PIC16F87XA", "16F877A", ["lib/serial"],
+            str(self.bundle), str(self.out), "myapp", toolchain="epic-cc")
+        env = dict(os.environ, PATH=f"{self.bin}{os.pathsep}{os.environ['PATH']}")
+        run = subprocess.run(["make", "-C", str(self.out)],
+                             capture_output=True, text=True, env=env)
+        self.assertEqual(run.returncode, 0, run.stderr + run.stdout)
+        self.assertTrue((self.bin / "called").exists())
+        argv = (self.bin / "argv.txt").read_text().split()
+        self.assertFalse([a for a in argv if a.startswith("-W")], argv)
+        # Every option epic-cc sees is one its CLI parses: -I, -D, -o, --device.
+        for a in argv:
+            if a.startswith("-"):
+                self.assertTrue(a.startswith(("-I", "-D", "-o", "--device")), a)
+
 if __name__ == "__main__": unittest.main()
