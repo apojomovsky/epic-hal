@@ -31,9 +31,9 @@ GENERATED_BY = "scripts/build/docs_gen.py"
 # (hal/<arch>/<family>). A new arch fails loudly here instead of
 # rendering a wrong core, so the mapping stays deliberate.
 _CORE_BY_ARCH = {
-    "pic12": "Baseline",
-    "pic14": "Mid-range (classic)",
-    "pic14e": "Enhanced mid-range",
+    "pic12": "PIC12 baseline",
+    "pic14": "PIC14 (mid-range)",
+    "pic14e": "PIC14E (enhanced mid-range)",
     "pic18": "PIC18",
 }
 

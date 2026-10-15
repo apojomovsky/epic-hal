@@ -93,11 +93,12 @@ class TestModuleId(unittest.TestCase):
 
 class TestCoreOf(unittest.TestCase):
     def test_known_arches(self):
-        self.assertEqual(docs_gen.core_of("hal/pic12/16f5x"), "Baseline")
+        self.assertEqual(docs_gen.core_of("hal/pic12/16f5x"), "PIC12 baseline")
         self.assertEqual(
-            docs_gen.core_of("hal/pic14/16f87xa"), "Mid-range (classic)")
+            docs_gen.core_of("hal/pic14/16f87xa"), "PIC14 (mid-range)")
         self.assertEqual(
-            docs_gen.core_of("hal/pic14e/16f193x"), "Enhanced mid-range")
+            docs_gen.core_of("hal/pic14e/16f193x"),
+            "PIC14E (enhanced mid-range)")
         self.assertEqual(docs_gen.core_of("hal/pic18/18fxx5x"), "PIC18")
 
     def test_unknown_arch_fails(self):
