@@ -460,6 +460,11 @@ doctor:
 docs-gen:
 	@python3 scripts/build/docs_gen.py
 
+# Refresh docs/snippets/ways-to-use-epic8.md from apojomovsky/epic-docs at a
+# commit sha (REF is required). Needs the network; docs-gen only checks locally.
+sync-shared-includes:
+	@python3 scripts/build/shared_includes.py sync --ref "$(REF)"
+
 setup-hooks:
 	@bash scripts/hooks/install-git-hooks.sh
 

@@ -20,6 +20,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import epicmanifest  # noqa: E402
 import readme_tables  # noqa: E402
+import shared_includes  # noqa: E402
 
 GENERATED_BY = "scripts/build/docs_gen.py"
 
@@ -171,6 +172,11 @@ def main() -> int:
                         help="fail on a stale page instead of writing it")
     args = parser.parse_args()
     root = pathlib.Path(__file__).resolve().parents[2]
+    problems = shared_includes.check(root)
+    if problems:
+        for problem in problems:
+            print(f"docs_gen: {problem}", file=sys.stderr)
+        return 1
     try:
         outputs = generate(root)
     except DocsGenError as exc:
