@@ -58,7 +58,8 @@ class TestCoreOf(unittest.TestCase):
         self.assertEqual(
             docs_gen.core_of("hal/pic14/16f87xa"), "PIC14 (mid-range)")
         self.assertEqual(
-            docs_gen.core_of("hal/pic14e/16f193x"), "PIC14E (enhanced mid-range)")
+            docs_gen.core_of("hal/pic14e/16f193x"),
+            "PIC14E (enhanced mid-range)")
         self.assertEqual(docs_gen.core_of("hal/pic18/18fxx5x"), "PIC18")
 
     def test_unknown_arch_fails(self):
