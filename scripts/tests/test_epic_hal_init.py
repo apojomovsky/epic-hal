@@ -111,6 +111,19 @@ class TestResolveSelection(unittest.TestCase):
 class TestEmitMakefile(unittest.TestCase):
     def setUp(self): self.m = load()
 
+    def test_scaffold_and_bundle_name_the_same_dfp(self):
+        """The scaffold and the bundle read the pack name from one helper."""
+        import bundlegen
+        import epicmanifest
+        for name, fam in self.m.families.items():
+            with self.subTest(family=name):
+                mk = epic_hal_init.emit_makefile(
+                    self.m, name, fam.variants[0], [], "../..", "app")
+                bundle_mk = bundlegen.emit_epic_hal_mk(self.m, name, "v0.0.0")
+                pack = epicmanifest.dfp_name(fam)
+                self.assertIn(f"EPIC_HAL_DFP ?= {pack}\n", mk + "\n")
+                self.assertIn(f"EPIC_HAL_DFP     := {pack}\n", bundle_mk)
+
     def test_makefile_has_required_fields(self):
         mk = epic_hal_init.emit_makefile(
             self.m, "PIC16F87XA", "16F877A", ["serial"], "../..", "myapp")

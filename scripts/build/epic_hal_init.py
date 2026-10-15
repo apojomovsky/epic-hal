@@ -90,7 +90,7 @@ def emit_makefile(manifest, family_name, part, modules, bundle_dir, name, toolch
         f"include $(EPIC_HAL_DIR)/epic-hal.mk",
         "# The pack name normally comes from the bundle's epic-hal.mk; default it",
         "# from the manifest so a bundle without the variable still finds the pack.",
-        f"EPIC_HAL_DFP ?= {fam.dfp}",
+        f"EPIC_HAL_DFP ?= {epicmanifest.dfp_name(fam)}",
         "# Toolchain: epic-cc (default, no Microchip pack) or xc8 (alternate).",
         "# `make TOOLCHAIN=xc8` builds the same sources with XC8.",
         f"TOOLCHAIN ?= {default_toolchain}",
