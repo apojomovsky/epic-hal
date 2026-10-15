@@ -116,7 +116,7 @@ def find_edc(family: str, mcu: str, dfp_dir: pathlib.Path | None) -> pathlib.Pat
     # family dfp from manifest
     manifest = epicmanifest.load(epicmanifest.default_path())
     fam = manifest.families[family]
-    dfp = fam.dfp
+    dfp = epicmanifest.dfp_name(fam)
     if dfp_dir is not None:
         p = pathlib.Path(dfp_dir) / "edc" / f"{part}.PIC"
         if p.exists():

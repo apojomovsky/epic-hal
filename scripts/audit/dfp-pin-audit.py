@@ -143,17 +143,17 @@ def check(m, repo: pathlib.Path, argv: dict[str, str],
             continue
         if not fam.dfp_version:
             continue
-        arg = pack_arg.get(fam.dfp)
+        arg = pack_arg.get(manifest_lib.dfp_name(fam))
         if arg is None:
             problems.append(
-                f"{name}: dfp {fam.dfp} is not one of the Dockerfile's "
+                f"{name}: dfp {manifest_lib.dfp_name(fam)} is not one of the Dockerfile's "
                 f"packs ({', '.join(sorted(pack_arg))})")
             continue
         want = argv.get(arg)
         if want != fam.dfp_version:
             problems.append(
                 f"{name}: manifest dfp_version {fam.dfp_version} != "
-                f"Dockerfile {arg}={want} for {fam.dfp}")
+                f"Dockerfile {arg}={want} for {manifest_lib.dfp_name(fam)}")
 
     # Surface 2: each reference project's pins agree and name its pack.
     for name, fam in sorted(m.families.items()):
@@ -178,10 +178,10 @@ def check(m, repo: pathlib.Path, argv: dict[str, str],
         packs = {pack for _src, pack, _vendor, _ver in pins}
         vendors = {vendor for _src, _pack, vendor, _ver in pins}
         versions = {ver for _src, _pack, _vendor, ver in pins}
-        if packs != {bare_pack(fam.dfp)}:
+        if packs != {bare_pack(manifest_lib.dfp_name(fam))}:
             problems.append(
                 f"{name}: {project.name} pins pack "
-                f"{', '.join(sorted(packs))}, family uses {fam.dfp}")
+                f"{', '.join(sorted(packs))}, family uses {manifest_lib.dfp_name(fam)}")
         if vendors != {"Microchip"}:
             problems.append(
                 f"{name}: {project.name} pins vendor "
