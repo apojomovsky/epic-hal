@@ -70,8 +70,8 @@ Single-page flash (1 KW), so the dispatcher carries no page pin.
 16F631: 1 KW flash, 64 B SRAM (Bank-0 GPR 0x40..0x6F plus common
 0x70..0x7F), 128 B data EEPROM. 16F677: 2 KW flash, 128 B SRAM,
 256 B data EEPROM. Measured on the canonical 677 (XC8 v4.00): the
-blink smoke is clear of the 20%-headroom bar; no 1 KW/64 B part
-can hold either image
+blink smoke on the 677 clears the 20%-headroom bar, but no 1 KW/64 B part
+can hold the blink smoke or the bank probe
 (see the exclusion notes above). The ISR scratch bytes pin to
 common RAM at 0x70/0x71. The blink ISR toggles the port latch
 directly (the GPIO driver call path in the ISR partition tips the

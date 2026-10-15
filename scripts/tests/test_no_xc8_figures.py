@@ -63,21 +63,21 @@ def find_xc8_figures(text):
 class TestDetector(unittest.TestCase):
     def test_flags_size_figures(self):
         for text in (
-            "XC8 uses 1087 words on the 628A",
-            "the blink links 1,089 words under XC8",
-            "XC8 flash 9061/16384",
+            "XC8 uses 777 words on the 628A",
+            "the blink links 7,771 words under XC8",
+            "XC8 flash 7771/16384",
             "1.31x XC8",
-            "XC8 emits 3924 bytes",
-            "| XC8 RAM | 436 B |",
-            "XC8 takes 1500 cycles",
-            "overlapped all three (XC8 1262/1482/2084, found 2026-08-11)",
-            "| XC8 | PASS | 9061/16384 | 639/2048 |",
+            "XC8 emits 7777 bytes",
+            "| XC8 RAM | 777 B |",
+            "XC8 takes 7777 cycles",
+            "overlapped all three (XC8 7771/7772/7773, found 2026-08-11)",
+            "| XC8 | PASS | 7771/16384 | 777/2048 |",
         ):
             with self.subTest(text=text):
                 self.assertTrue(find_xc8_figures(text), text)
 
     def test_window_covers_wrapped_prose(self):
-        self.assertTrue(find_xc8_figures("the XC8 build\nneeds 1321 words\nof flash"))
+        self.assertTrue(find_xc8_figures("the XC8 build\nneeds 7774 words\nof flash"))
 
     def test_allows_versions_codes_capacities_and_parts(self):
         for text in (
@@ -90,13 +90,13 @@ class TestDetector(unittest.TestCase):
             "XC8 builds the PIC16F877A and PIC18F4550",
             "xc8-cc -mdfp=... -mcpu=18f4550",
             "XC8 2026-09-17 measured under #450",
-            "| epic-cc | PASS | 11888/16384 |\n| XC8 | PASS | - |",
+            "| epic-cc | PASS | 7778/16384 |\n| XC8 | PASS | - |",
         ):
             with self.subTest(text=text):
                 self.assertEqual(find_xc8_figures(text), [])
 
     def test_no_xc8_no_hit(self):
-        self.assertEqual(find_xc8_figures("blink uses 1087 words"), [])
+        self.assertEqual(find_xc8_figures("blink uses 777 words"), [])
 
 
 def _tracked_files():
