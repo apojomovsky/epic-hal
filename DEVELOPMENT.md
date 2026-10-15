@@ -302,19 +302,35 @@ counted from a clock. The tick counter in the firmware counts
 interrupts, not cycles, which is what makes that honest: the gate
 proves the interrupt path, not a timing figure. It also needs every
 register the gate touches to be reachable in the simulator; INTCON is
-mirrored on the PIC14 core, which is why the blink gates run today
-while the tick gates wait on epic-cc#173 (banked SFR writes do not
-land in the simulator yet).
+mirrored on the PIC14 core, which is why the blink gates run in CI
+today. The tick gates need PIE1, a banked register on the 877A and 887:
+crates/sim applies banked SFR writes since epic-cc#173 closed
+(2026-09-02), and the tick gate passes locally (below). It is not yet
+in the CI job.
 
 Local run of the same gate the CI job runs:
 
 ```sh
-ln -s ~/projects/epic-cc epic-cc        # once per worktree
+ln -s ~/projects/epic-cc epic-cc        # once per worktree, absolute target
 make epiccc-build MODULE=hal/pic14/16f87xa MCU=16F877A
 make sim-epiccc HEX=build/epiccc/16F877A-blink.hex DEVICE=PIC16F877A \
   SAMPLES=12 STEPS=200000 \
   IRQ_EVERY=65536 IRQ_FLAG=INTCON:2 IRQ_ENABLE=INTCON:5
 ```
+
+The tick gate runs the same way on the lib/tick hex, with the timer
+flag and enable on PIR1 and PIE1 (`ls build/epiccc` shows the hex name
+after `make epiccc-build MODULE=lib/tick MCU=16F877A`):
+
+```sh
+make sim-epiccc HEX=build/epiccc/16F877A-<example>.hex DEVICE=PIC16F877A \
+  SAMPLES=12 STEPS=200000 \
+  IRQ_EVERY=200 IRQ_FLAG=PIR1:1 IRQ_ENABLE=PIE1:1
+```
+
+The epic-cc link must be an absolute path: a relative symlink resolves
+inside the container and fails with `failed to read
+/repo/epic-cc/crates/device/Cargo.toml`.
 
 `sim-epiccc` runs the runner inside the epic-cc dev image, the same
 toolchain the compiler itself was built with; `--trace
