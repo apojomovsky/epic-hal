@@ -833,9 +833,9 @@ def load(path: pathlib.Path) -> Manifest:
 
 
 def dfp_name(fam: Family) -> str:
-    """The family's device-pack name: the one string the bundle's epic-hal.mk,
-    the scaffolded Makefile and the generated pack pages all print. Every
-    generator goes through here so a manifest rename cannot split them."""
+    """The family's device-pack name as the bundle's epic-hal.mk, the
+    scaffolded Makefile and the README and reference pack tables print it.
+    Those writers all call this, so a manifest rename cannot split them."""
     return fam.dfp
 
 
