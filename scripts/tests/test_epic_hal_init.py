@@ -575,6 +575,35 @@ class TestXc8Scaffold(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr)
         self.assertIn(f"{custom}/xc8", run.stdout)
 
+    @unittest.skipUnless(shutil.which("make"), "needs make")
+    def test_xc8_scaffold_defaults_to_xc8_without_command_line_toolchain(self):
+        # The default must be set before epic-hal.mk is included, or its own
+        # TOOLCHAIN ?= epic-cc wins (epic-hal#442). No TOOLCHAIN anywhere.
+        xc8 = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, xc8, ignore_errors=True)
+        (xc8 / "bin").mkdir()
+        (xc8 / "bin" / "xc8-cc").write_text("#!/bin/sh\nexit 0\n")
+        (xc8 / "bin" / "xc8-cc").chmod(0o755)
+        env = {k: v for k, v in os.environ.items() if k != "TOOLCHAIN"}
+        env["PATH"] = f"{xc8 / 'bin'}{os.pathsep}{os.environ['PATH']}"
+        # The shipped epic-hal.mk defaults to epic-cc; that default must lose.
+        (self.bundle / "epic-hal.mk").write_text(
+            "TOOLCHAIN ?= epic-cc\nEPIC_HAL_SRCS :=\nEPIC_HAL_CFLAGS :=\n"
+            "EPIC_HAL_BUILD_DIR := build\n")
+        self.scaffold()
+        # No pack installed: only the xc8 branch checks for one.
+        bad = subprocess.run(["make", "-n", "-C", str(self.out)],
+                             capture_output=True, text=True, env=env)
+        self.assertNotEqual(bad.returncode, 0)
+        self.assertIn("device pack", bad.stderr)
+        self.assertNotIn("epic-cc", bad.stderr)
+        pack = xc8 / "pic" / "packs" / self.m.families["PIC16F87XA"].dfp / "xc8"
+        pack.mkdir(parents=True)
+        ok = subprocess.run(["make", "-n", "-C", str(self.out)],
+                            capture_output=True, text=True, env=env)
+        self.assertEqual(ok.returncode, 0, ok.stderr)
+        self.assertIn("xc8-cc", ok.stdout)
+
 
 class TestEpicCcScaffold(unittest.TestCase):
     """The epic-cc Makefile must pass only flags epic-cc's CLI accepts
