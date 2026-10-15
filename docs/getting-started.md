@@ -82,3 +82,5 @@ unzip ~/Downloads/Microchip.PIC16Fxxx_DFP.1.7.162.atpack \
 ```
 
 Or use MPLAB X's Tools > Packs manager, which does this for you.
+
+The pack and download for every family, and the parts each release bundle carries, are listed in the [device pack reference](reference/packs.md).

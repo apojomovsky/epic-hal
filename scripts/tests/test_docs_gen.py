@@ -67,6 +67,16 @@ class TestUserPages(unittest.TestCase):
                              ["docs/user/modules/gone.md"])
 
 
+class TestPacksPage(unittest.TestCase):
+    def test_lists_every_family_pack_and_bundle(self):
+        manifest = epicmanifest.load(epicmanifest.default_path())
+        page = docs_gen.emit_packs_md(manifest)
+        for name, fam in manifest.families.items():
+            with self.subTest(family=name):
+                self.assertIn(f"`{fam.dfp}`", page)
+                self.assertIn(f"`epic-hal-{fam.slug}-<version>.tar.gz`", page)
+
+
 class TestModuleId(unittest.TestCase):
     def test_table_key_when_no_id_field(self):
         mod = epicmanifest.load(epicmanifest.default_path()).modules[
