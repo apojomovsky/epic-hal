@@ -117,7 +117,5 @@ pin applies there (as on the 88X family).
 ## Flash and RAM budget
 
 1/2/4 KW flash, 224 B RAM (three GPR banks + 16 B common; 256 B on
-the 648A), 128 B data EEPROM (256 B on the 648A). The blink firmware
-uses 1087 words / 70 B on the 628A; the bank probe
-uses 1945 words / 135 B. Peripheral-heavy applications must watch
-both budgets; see `docs/adding-a-device.md` §3.2.
+the 648A), 128 B data EEPROM (256 B on the 648A). Peripheral-heavy applications
+must watch both budgets; see `docs/adding-a-device.md` §3.2.

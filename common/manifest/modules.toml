@@ -276,7 +276,7 @@ harness_src = "common/src/core/epic_harness_target.c"
 # target (epic-cc#413). Measured 2026-09-17 under the corrected p16f54
 # geometry (epic-cc#437): the pre-#437 sizing no longer links (demand
 # exceeds the 18-byte banked span) and the GPIO driver is flash-bound
-# here (driver + minimal toggle = 557 of 512 words), so the XC8 legs
+# here (the driver plus a minimal toggle exceed the 512-word flash), so the XC8 legs
 # plus the mdb gate carry the HAL verification; the epic-cc build
 # drives the registers directly.
 epiccc_sources = [
@@ -1146,12 +1146,12 @@ PIC16F628A = [
 ]
 
 [modules."hal/pic14/16f628a".excluded]
-# The 1087-word blink smoke cannot fit the 1K-word parts (measured:
-# XC8 error 1347, class CODE, on 16F627/16F627A/16LF627A); the
+# The blink smoke cannot fit the 1K-word parts (measured: XC8 error
+# 1347, class CODE, on 16F627/16F627A/16LF627A); the
 # exclusion wording follows the lib/serial 873A/874A precedent.
-"16F627" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
-"16F627A" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
-"16LF627A" = "flash: 1087-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
+"16F627" = "flash: blink smoke does not fit the 1K-word part (XC8 error 1347)"
+"16F627A" = "flash: blink smoke does not fit the 1K-word part (XC8 error 1347)"
+"16LF627A" = "flash: blink smoke does not fit the 1K-word part (XC8 error 1347)"
 
 [modules."hal/pic14/16f628a".example.PIC16F628A]
 name    = "blink"
@@ -1192,13 +1192,13 @@ PIC16F63x_67x_68x = [
   "16F677",
 ]
 [modules."hal/pic14/16f63x_67x_68x".excluded]
-# Measured on the exemplar ladder: the 1314-word blink smoke cannot fit
+# Measured on the exemplar ladder: the blink smoke cannot fit
 # the 1K-word flash (XC8 error 1347, class CODE), and the bank-probe sim
 # variant cannot fit the 64 B RAM (XC8 error 1250 on the harness cycle
 # bound). Wording follows the lib/serial 873A/874A precedent.
-"16F631" = "flash and RAM: the 1314-word blink smoke does not fit the 1K-word flash (XC8 error 1347), and the bank-probe sim variant does not fit the 64 B RAM (XC8 error 1250)"
-"16F630" = "flash and RAM: the 942-word blink leaves no headroom in the 1K-word flash and banked access is impossible without common RAM (target build fails loudly at the #error gate); the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
-"16F676" = "flash and RAM: the 1058-word blink smoke does not fit the 1K-word flash (XC8 error 1347, measured), and the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
+"16F631" = "flash and RAM: the blink smoke does not fit the 1K-word flash (XC8 error 1347), and the bank-probe sim variant does not fit the 64 B RAM (XC8 error 1250)"
+"16F630" = "flash and RAM: the blink leaves no headroom in the 1K-word flash and banked access is impossible without common RAM (target build fails loudly at the #error gate); the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
+"16F676" = "flash and RAM: the blink smoke does not fit the 1K-word flash (XC8 error 1347, measured), and the bank-probe sim variant does not fit the 64 B RAM (same 1K/64B die class as the measured 16F631 error 1250)"
 
 [modules."hal/pic14/16f63x_67x_68x".example.PIC16F63x_67x_68x]
 name    = "blink"
@@ -1275,11 +1275,10 @@ PIC16F83_84 = [
   "16F84", "16F84A",
 ]
 [modules."hal/pic14/16f83_84".excluded]
-# Measured on the exemplar ladder: the blink smoke allocates 46 B of
-# data RAM and 844 words of flash, and the 16F83 carries only 36 B /
-# 512 words (XC8 error 1360 on the RAM allocation; flash would follow
-# at error 1347). Wording follows the lib/serial 873A/874A precedent.
-"16F83" = "RAM and flash: the 844-word, 46-B blink smoke does not fit the 512-word, 36-B part (XC8 error 1360)"
+# Measured on the exemplar ladder: the blink smoke needs more data RAM
+# and flash than the 16F83 carries (36 B / 512 words; XC8 error 1360 on
+# the RAM allocation, flash would follow at error 1347). Wording follows the lib/serial 873A/874A precedent.
+"16F83" = "RAM and flash: the blink smoke does not fit the 512-word, 36-B part (XC8 error 1360)"
 
 [modules."hal/pic14/16f83_84".example.PIC16F83_84]
 name    = "blink"
@@ -1318,13 +1317,12 @@ PIC16F818_819 = [
 ]
 [modules."hal/pic14/16f818_819".excluded]
 # Measured on the exemplar ladder (XC8 v4.00, -O2): the blink smoke
-# links 1089 words of flash and 71 B of RAM, and the 16F818 carries
-# 1024 words, so the linker fails with error 1347 (CODE class, listing
-# the psects with no home). The part is covered by the family's SFR map,
+# is larger than the 1024 words the 16F818 carries, so the linker fails
+# with error 1347 (CODE class, listing the psects with no home). The part is covered by the family's SFR map,
 # platform headers and host examples, but no real-target ladder entry
 # fits it: the blink is the smallest of them. Wording follows the
 # lib/serial 873A/874A and 16F83 precedents.
-"16F818" = "flash: the 1089-word blink smoke does not fit the 1K-word part (XC8 error 1347)"
+"16F818" = "flash: the blink smoke does not fit the 1K-word part (XC8 error 1347)"
 
 [modules."hal/pic14/16f818_819".example.PIC16F818_819]
 name    = "blink"
@@ -3445,8 +3443,8 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", 
 # as the real-target example and the PIC18 gate). The replay was
 # blocked by an XC8 v4.00 layout constraint, measured 2026-08-09: the
 # hand-asm routines' internal `goto`s carry no PCLATH management, so
-# the linker must keep them in flash page 0; past ~2.5 K words it
-# spilled them to page 1 and aborted with fixup-overflow 1356. The
+# the linker must keep them in flash page 0; past a certain build
+# size it spilled them to page 1 and aborted with fixup-overflow 1356. The
 # fix, applied 2026-08-11 (quality task 5a): every asm leaf is
 # __at-pinned below 0x800 (0x100-0x420, see docs/layout-budgets.md),
 # so the page-0 requirement holds regardless of the build size.
@@ -3750,7 +3748,7 @@ sources = [
 # on PIC18 deliberately: pid.c is family-agnostic pure logic, and the
 # PIC16F87XA sim build exceeds XC8's flash-page-0 constraint for the
 # interrupt handler body (fixup-overflow 1356 at pic16_isr_vector.c:30
-# once the total passes ~4.2 K words; measured 2026-08-09). PIC18 has
+# once the total grows large enough; measured 2026-08-09). PIC18 has
 # absolute calls, so no such constraint.
 [modules."lib/pid".example.PIC18Fxx5x.sim]
 name        = "pid-sim"
@@ -4494,9 +4492,9 @@ PIC16F193X = [
 ]
 
 [modules."lib/tick".excluded]
-"16F627" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
-"16F627A" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
-"16LF627A" = "flash: tick example needs 1692 words on the 2K 16F628A (XC8 memory summary), exceeds the 1K-word part"
+"16F627" = "flash: tick example is larger than the 1K-word part"
+"16F627A" = "flash: tick example is larger than the 1K-word part"
+"16LF627A" = "flash: tick example is larger than the 1K-word part"
 "16F870" = "RAM: HAL _g_eeprom_cb byte does not fit (XC8 error 1250)"
 "16F871" = "RAM: HAL _g_eeprom_cb byte does not fit (XC8 error 1250)"
 "16F872" = "RAM: HAL _g_eeprom_cb byte does not fit (XC8 error 1250)"
@@ -4598,8 +4596,8 @@ config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", MCLRE = "ON", PWRTE = "ON", 
 # (tests/sim_tick.c), distinct from the unbounded real-target demo
 # above, mirroring the PIC16F87XA sim variant. Config words match the
 # 628A blink example; WDTE stays off like every other sim variant.
-# The sim build needs 2639 words, so it fits only the 4K 16F648A (the
-# 2K parts overflow with XC8 error 1347); the sim gate runs there.
+# The sim build fits only the 4K 16F648A (the 2K parts overflow with
+# XC8 error 1347); the sim gate runs there.
 [modules."lib/tick".example.PIC16F628A.sim]
 name        = "tick-sim"
 harness_src = "hal/pic14/16f628a/src/mdb/pic16_harness_mdb.c"

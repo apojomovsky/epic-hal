@@ -38,8 +38,7 @@ ctest --test-dir build --output-on-failure
 Real-silicon bring-up is Phase 3 — the `mcu/pic18fxx5x-usb-mplabx/Makefile`
 does not exist yet. Phase 2 confirmed that `epic_usb.c` + M-Stack's core +
 CDC class driver compile and link clean under `xc8-cc` against real
-PIC18F4550 headers (8500 bytes flash / 25.9%, 454 bytes RAM / 22.2% of
-2 KiB). No PIC16 `mcu/` directory will ever be added — that family has no
+PIC18F4550 headers, well inside the part's flash and RAM. No PIC16 `mcu/` directory will ever be added: that family has no
 USB peripheral.
 
 ## Use it
