@@ -8,7 +8,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 | Fact | Value |
 |---|---|
 | Parts | 16F1508, 16F1509 |
-| Core | Enhanced mid-range |
+| Core | PIC14E (enhanced mid-range) |
 | Modules | `hal/pic14e/16f1508` |
 | Simulator | MDB sim gate |
 | Simulator limits | Single stores of most CLC1 D3S codes to CLC1SEL1 throw in the simulator, and the CLCDATA mirror copy never sets, so the gate observes CON.OUT only (family MANUAL.md) |
@@ -18,7 +18,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 | Fact | Value |
 |---|---|
 | Parts | 16F1933, 16F1934, 16F1936, 16F1937, 16F1938, 16F1939 |
-| Core | Enhanced mid-range |
+| Core | PIC14E (enhanced mid-range) |
 | Modules | `hal/pic14e/16f193x`, `lib/fsm`, `lib/swuart`, `lib/tick` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
@@ -28,7 +28,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 | Fact | Value |
 |---|---|
 | Parts | 16F505, 16F506, 16F57, 16F59, 16F54 |
-| Core | Baseline |
+| Core | PIC12 baseline |
 | Modules | `hal/pic12/16f5x` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
@@ -38,7 +38,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 | Fact | Value |
 |---|---|
 | Parts | 16F627, 16F627A, 16LF627A, 16F628, 16LF628A, 16F648A, 16F628A |
-| Core | Mid-range (classic) |
+| Core | PIC14 (mid-range) |
 | Modules | `hal/pic14/16f628a`, `lib/tick` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
@@ -48,7 +48,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 | Fact | Value |
 |---|---|
 | Parts | 16F631, 16F630, 16F676, 16F639, 16F684, 16F685, 16F688, 16F689, 16F677 |
-| Core | Mid-range (classic) |
+| Core | PIC14 (mid-range) |
 | Modules | `hal/pic14/16f63x_67x_68x` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
@@ -58,7 +58,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 | Fact | Value |
 |---|---|
 | Parts | 16F72, 16F73, 16F74, 16F737, 16F747, 16F76, 16F767, 16F777, 16F77 |
-| Core | Mid-range (classic) |
+| Core | PIC14 (mid-range) |
 | Modules | `hal/pic14/16f7x` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
@@ -68,7 +68,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 | Fact | Value |
 |---|---|
 | Parts | 16F818, 16F819 |
-| Core | Mid-range (classic) |
+| Core | PIC14 (mid-range) |
 | Modules | `hal/pic14/16f818_819` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
@@ -78,7 +78,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 | Fact | Value |
 |---|---|
 | Parts | 16F83, 16F84, 16F84A |
-| Core | Mid-range (classic) |
+| Core | PIC14 (mid-range) |
 | Modules | `hal/pic14/16f83_84` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
@@ -88,7 +88,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 | Fact | Value |
 |---|---|
 | Parts | 16F870, 16F871, 16F872, 16F873, 16F873A, 16LF873A, 16F874, 16F874A, 16F876, 16F876A, 16F877, 16F877A |
-| Core | Mid-range (classic) |
+| Core | PIC14 (mid-range) |
 | Modules | `common`, `hal/pic14/16f87xa`, `lib/adcfilter`, `lib/bus`, `lib/console`, `lib/debounce`, `lib/encoder`, `lib/fsm`, `lib/lcd`, `lib/math`, `lib/mcp23x17`, `lib/pid`, `lib/serial`, `lib/swuart`, `lib/taskmgr`, `lib/tick`, `tests/epic-combo-adc-uart`, `tests/epic-combo-encoder-tick`, `tests/epic-combo-multitimer`, `tests/epic-combo-rb-uart`, `tests/epic-combo-rx-loopback`, `tests/epic-combo-swuart-tick`, `tests/epic-combo-tick-serial`, `tests/epic-combo-uart-ssp` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
@@ -98,7 +98,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 | Fact | Value |
 |---|---|
 | Parts | 16F882, 16F883, 16F884, 16F886, 16F887 |
-| Core | Mid-range (classic) |
+| Core | PIC14 (mid-range) |
 | Modules | `common`, `hal/pic14/16f88x`, `lib/adcfilter`, `lib/bus`, `lib/console`, `lib/debounce`, `lib/encoder`, `lib/fsm`, `lib/lcd`, `lib/math`, `lib/mcp23x17`, `lib/pid`, `lib/serial`, `lib/swuart`, `lib/taskmgr`, `lib/tick` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |
