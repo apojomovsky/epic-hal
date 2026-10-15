@@ -57,11 +57,57 @@ def modules_for_family(manifest, family_name: str) -> list[str]:
     )
 
 
+def is_sim_mdb(rel: str) -> bool:
+    """True when a repo-relative path names a sim or mdb artifact.
+
+    The split src/ layout mirrors the build environments: src/sim/ holds
+    host-simulation sources, src/mdb/ holds the MPLAB SIM gate harness,
+    and every such file carries _sim/_mdb in its name (including the
+    include/pic16f87xa_sim.h API headers) or a sim_ fixture prefix
+    (tests/sim_bus.c and friends). None of it is consumer-facing.
+    """
+    parts = rel.split("/")
+    if "_sim" in rel or "_mdb" in rel:
+        return True
+    if any(part.startswith("sim_") for part in parts):
+        return True
+    return any(parts[i] == "src" and parts[i + 1] in ("sim", "mdb")
+               for i in range(len(parts) - 1))
+
+
+def epiccc_hal_overrides(manifest, family_name: str) -> dict[str, list[str]]:
+    """Per-consumer-module epic-cc HAL slices for this family, shippable only.
+
+    The manifest's epiccc_hal_sources_by_family replaces the family slice
+    verbatim for one module. Sim/mdb harness entries are dropped: they
+    are CI gate plumbing that a bundle never ships.
+    """
+    out = {}
+    for name in modules_for_family(manifest, family_name):
+        override = (manifest.modules[name].epiccc_hal_sources_by_family or {}).get(family_name)
+        if override is not None:
+            out[name] = [f for f in override if not is_sim_mdb(f)]
+    return out
+
+
+def epiccc_files_for_family(manifest, family_name: str) -> list[str]:
+    """The src/epiccc slice files a bundle carries for the epic-cc path.
+
+    The family's epiccc_sources plus every consumer module's per-family
+    override, so `TOOLCHAIN=epic-cc` finds the sources epic-hal.mk names.
+    """
+    fam = _family(manifest, family_name)
+    files = {f for f in fam.epiccc_sources if not is_sim_mdb(f)}
+    for paths in epiccc_hal_overrides(manifest, family_name).values():
+        files |= set(paths)
+    return sorted(files)
+
+
 def files_for_family(manifest, family_name: str) -> list[str]:
     """Every repo-root-relative source file a consumer bundle must carry.
 
     Sources only: the family HAL plus each consumer module's library
-    sources, plus the manifest example sources that are consumer
+    sources, the epic-cc slice (family and per-module overrides), plus the manifest example sources that are consumer
     samples (under examples/). Manifest example sources elsewhere in a
     module (mcu/ size-check probes, tests/ real-target smoke tests)
     never ship. Headers/docs are copied by make_bundle.py's explicit
@@ -71,6 +117,7 @@ def files_for_family(manifest, family_name: str) -> list[str]:
     fam = _family(manifest, family_name)
     files = set(fam.hal_sources)
     files |= {c.path for c in fam.conditional_sources}
+    files |= set(epiccc_files_for_family(manifest, family_name))
 
     for name in modules_for_family(manifest, family_name):
         mod = manifest.modules[name]
@@ -179,6 +226,20 @@ def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
             )
         out.append("endif")
 
+    epiccc_slice = " \\\n  ".join(f"$(EPIC_HAL_DIR)/{s}" for s in fam.epiccc_sources if not is_sim_mdb(s))
+    out += [
+        "# ---- family HAL, epic-cc slice -----------------------------------",
+        "# The conformant subset epic-cc builds (the XC8 list above hits",
+        "# XC8-only syntax). A module that declares its own slice replaces",
+        "# the family one verbatim. Used only when TOOLCHAIN=epic-cc is set",
+        "# before this file is included.",
+        f"EPIC_HAL_EPICCC_HAL_SRCS := \\\n  {epiccc_slice}",
+    ]
+    for name, paths in epiccc_hal_overrides(manifest, family_name).items():
+        joined = " ".join(f"$(EPIC_HAL_DIR)/{p}" for p in paths)
+        out.append(f"EPIC_HAL_EPICCC_HAL_SRCS_{name} := {joined}")
+    out.append("")
+
     fam_incs = " ".join(f"-I$(EPIC_HAL_DIR)/{i}" for i in fam.includes)
     out += [
         "# Include order is significant: include/target must precede",
@@ -193,6 +254,19 @@ def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
         "",
         "EPIC_HAL_ALL := $(sort $(foreach m,$(EPIC_HAL_SELECTED),"
         "$(EPIC_HAL_RESOLVED_$(m))))",
+        "",
+        "# TOOLCHAIN=epic-cc set by the includer (not the default below, so an",
+        "# XC8 consumer that never sets it keeps the XC8 lists) swaps in the",
+        "# epic-cc sources and include dirs before the := assignments use them.",
+        "EPIC_HAL_UNIQ = $(if $(strip $(1)),$(firstword $(1)) "
+        "$(call EPIC_HAL_UNIQ,$(filter-out $(firstword $(1)),$(1))))",
+        "ifeq ($(TOOLCHAIN),epic-cc)",
+        "  EPIC_HAL_EPICCC_PICK := $(call EPIC_HAL_UNIQ,"
+        "$(foreach m,$(EPIC_HAL_SELECTED),$(EPIC_HAL_EPICCC_HAL_SRCS_$(m))))",
+        "  EPIC_HAL_HAL_SRCS := $(if $(strip $(EPIC_HAL_EPICCC_PICK)),"
+        "$(EPIC_HAL_EPICCC_PICK),$(EPIC_HAL_EPICCC_HAL_SRCS))",
+        "  EPIC_HAL_FAMILY_INCLUDES := $(subst /target,/epiccc,$(EPIC_HAL_FAMILY_INCLUDES))",
+        "endif",
         "",
         "# Every selected module must declare this part as supported.",
         "$(foreach m,$(EPIC_HAL_ALL),\\",

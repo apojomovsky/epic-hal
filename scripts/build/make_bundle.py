@@ -48,22 +48,7 @@ def _slug(family_name: str, manifest) -> str:
     return manifest.families[family_name].slug
 
 
-def _is_sim_mdb(rel: str) -> bool:
-    """True when a bundle-relative path names a sim or mdb artifact.
-
-    The split src/ layout mirrors the build environments: src/sim/ holds
-    host-simulation sources, src/mdb/ holds the MPLAB SIM gate harness,
-    and every such file carries _sim/_mdb in its name (including the
-    include/pic16f87xa_sim.h API headers) or a sim_ fixture prefix
-    (tests/sim_bus.c and friends). None of it is consumer-facing.
-    """
-    parts = rel.split("/")
-    if "_sim" in rel or "_mdb" in rel:
-        return True
-    if any(part.startswith("sim_") for part in parts):
-        return True
-    return any(parts[i] == "src" and parts[i + 1] in ("sim", "mdb")
-               for i in range(len(parts) - 1))
+_is_sim_mdb = bundlegen.is_sim_mdb
 
 
 def _sim_mdb_offenders(paths) -> list[str]:
