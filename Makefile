@@ -138,7 +138,7 @@ xc8-build: image
 	@test -n "$(MODULE)" || { echo "usage: make xc8-build MODULE=lib/serial MCU=16F877A" >&2; exit 1; }
 	@test -n "$(MCU)" || { echo "usage: make xc8-build MODULE=lib/serial MCU=16F877A" >&2; exit 1; }
 	python3 scripts/build/epic_build.py build --module $(MODULE) --mcu $(MCU) \
-	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts/build'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
+  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts/build'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+e.dfp_name(m.family_of('$(MCU)'))+'/xc8')")"
 	$(DOCKER_RUN) sh build/$(MCU)/build.sh
 
 # ─────────────────────────── real-target epic-cc build ───────────────
@@ -304,7 +304,7 @@ mdb-test: image
 	MID=$$(python3 scripts/build/resolve_module.py --id "$(MODULE)") || exit 1; \
 	python3 scripts/build/epic_build.py build --module $$MID --mcu $(MCU) --variant sim \
 	  --build-dir build-sim/$$MID \
-	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts/build'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+m.family_of('$(MCU)').dfp+'/xc8')")"
+  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts/build'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+e.dfp_name(m.family_of('$(MCU)'))+'/xc8')")"
 	MID=$$(python3 scripts/build/resolve_module.py --id "$(MODULE)") || exit 1; \
 	$(DOCKER_RUN) env \
 	  $(if $(filter toggle,$(or $(MODE),uart)),TOGGLE_REG=$(or $(REG),PORTB) TOGGLE_BIT=$(or $(BIT),0) TOGGLE_SAMPLES=$(or $(SAMPLES),12) TOGGLE_STEPI=$(or $(STEPI),200000),) \

@@ -30,7 +30,7 @@ import sys; sys.path.insert(0, 'scripts/build')
 import epicmanifest as e
 m = e.load(e.default_path())
 fam = m.family_of('${mcu}')
-print('${xc8_install_dir}/pic/packs/' + fam.dfp + '/xc8')
+print('${xc8_install_dir}/pic/packs/' + e.dfp_name(fam) + '/xc8')
 ")"
 
 echo "Emitting the HARNESS=sim build script for ${module} ${mcu} (host, python3)..." >&2
