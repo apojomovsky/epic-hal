@@ -62,16 +62,13 @@
   #define PIC16F188XX_FAMILY_BANKED_HI  0
 #endif
 
-/* Implemented pins per port, from the pinned DFP EDCs.
- * Every PORTx/TRISx/LATx/WPUx/ANSELx/IOCx register reports impl 0xff,
- * except the PORTC read register which reports impl 0xc0 (all eight RC
- * fields are defined and TRISC/LATC report 0xff, so the 0xFF mask
- * stands). RA6/RA7 are digital I/O under the manifest config
- * (FEXTOSC=OFF), so the 28-pin parts implement all of PORTA..PORTC.
- * PORTD is fully implemented on the 40-pin parts (impl 0xff). PORTE is
- * RE0..RE2 plus input-only RE3 (MCLR): TRISE/LATE/ANSELE report impl
- * 0x7, so the driver mask covers the three driven pins and RE3 keeps
- * no driver. PORTE/IOCE exist on every part for RE3. */
+/* Implemented pins per port, from the pinned DFP EDCs. PORTA..PORTC
+ * report impl 0xff (PORTC reads 0xc0 but all eight RC fields exist,
+ * so the 0xFF mask stands); RA6/RA7 need FEXTOSC=OFF for digital use.
+ * PORTD is fully implemented on the 40-pin parts (impl 0xff). PORTE
+ * is RE0..RE2 plus input-only RE3 (MCLR): TRISE/LATE/ANSELE report
+ * impl 0x7, so the driver covers the three driven pins only.
+ * PORTE/IOCE exist on every part for RE3. */
 #define PIC16F188XX_FAMILY_PORTA_MASK 0xFFU
 #define PIC16F188XX_FAMILY_LATA_MASK  0xFFU
 #define PIC16F188XX_FAMILY_PORTB_MASK 0xFFU

@@ -1,11 +1,10 @@
 /**
- * SFR address map for the PIC16F188xx family. PIC_REG_* addresses from
- * the pinned Microchip.PIC16F1xxxx_DFP 1.32.471 EDC (PIC16F18855.PIC);
- * bit positions from the same pack's proc header (pic16f18855.h).
- * DS40001802 is the datasheet; its PDF is bot-walled against scripted
- * fetch, so every address and bit below names the DFP as ground truth
- * instead. Every part's EDC is cloned from a sibling: the 28-pin parts
- * share this map exactly, the 40-pin parts add PORTD and widen PORTE.
+ * SFR address map for the PIC16F188xx family, from the pinned
+ * Microchip.PIC16F1xxxx_DFP 1.32.471 EDC (PIC16F18855.PIC) and proc
+ * header (pic16f18855.h). DS40001802's PDF is bot-walled against
+ * scripted fetch, so every fact below names the DFP as ground truth.
+ * Bank 0 is shared; banked SFRs spell 0xFxx, or 0x1Fxx on
+ * 16F18857/16F18877 (same low 12 bits, selected per part).
  */
 
 #ifndef PIC16F188XX_SFR_H

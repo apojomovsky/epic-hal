@@ -14,41 +14,45 @@
 
 uint8_t pic16f188xx_sim_sfr[0x2000];
 
-static const uint16_t sim_tris[] = {PIC_REG_TRISA, PIC_REG_TRISB, PIC_REG_TRISC
+static const uint16_t sim_tris[] = {
+    PIC_REG_TRISA, PIC_REG_TRISB, PIC_REG_TRISC,
 #if PIC16F188XX_FAMILY_HAS_PORTD
-    , PIC_REG_TRISD
+    PIC_REG_TRISD,
 #endif
 #if PIC16F188XX_FAMILY_HAS_PORTE
-    , PIC_REG_TRISE
+    PIC_REG_TRISE,
 #endif
 };
-static const uint16_t sim_lat[]  = {PIC_REG_LATA,  PIC_REG_LATB,  PIC_REG_LATC
+static const uint16_t sim_lat[]  = {
+    PIC_REG_LATA,  PIC_REG_LATB,  PIC_REG_LATC,
 #if PIC16F188XX_FAMILY_HAS_PORTD
-    , PIC_REG_LATD
+    PIC_REG_LATD,
 #endif
 #if PIC16F188XX_FAMILY_HAS_PORTE
-    , PIC_REG_LATE
+    PIC_REG_LATE,
 #endif
 };
-static const uint16_t sim_port[] = {PIC_REG_PORTA, PIC_REG_PORTB, PIC_REG_PORTC
+static const uint16_t sim_port[] = {
+    PIC_REG_PORTA, PIC_REG_PORTB, PIC_REG_PORTC,
 #if PIC16F188XX_FAMILY_HAS_PORTD
-    , PIC_REG_PORTD
+    PIC_REG_PORTD,
 #endif
 #if PIC16F188XX_FAMILY_HAS_PORTE
-    , PIC_REG_PORTE
+    PIC_REG_PORTE,
 #endif
 };
 static const uint16_t sim_ioc_pos[3] = {PIC_REG_IOCAP, PIC_REG_IOCBP, PIC_REG_IOCCP};
 static const uint16_t sim_ioc_neg[3] = {PIC_REG_IOCAN, PIC_REG_IOCBN, PIC_REG_IOCCN};
 static const uint16_t sim_ioc_flag[3] = {PIC_REG_IOCAF, PIC_REG_IOCBF, PIC_REG_IOCCF};
-static const uint8_t  sim_mask[] = {PIC16F188XX_FAMILY_PORTA_MASK,
-                                     PIC16F188XX_FAMILY_PORTB_MASK,
-                                     PIC16F188XX_FAMILY_PORTC_MASK
+static const uint8_t  sim_mask[] = {
+    PIC16F188XX_FAMILY_PORTA_MASK,
+    PIC16F188XX_FAMILY_PORTB_MASK,
+    PIC16F188XX_FAMILY_PORTC_MASK,
 #if PIC16F188XX_FAMILY_HAS_PORTD
-    , PIC16F188XX_FAMILY_PORTD_MASK
+    PIC16F188XX_FAMILY_PORTD_MASK,
 #endif
 #if PIC16F188XX_FAMILY_HAS_PORTE
-    , PIC16F188XX_FAMILY_PORTE_MASK
+    PIC16F188XX_FAMILY_PORTE_MASK,
 #endif
 };
 
