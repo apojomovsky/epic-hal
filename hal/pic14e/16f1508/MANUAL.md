@@ -271,8 +271,9 @@ no-op on target, so the same section runs in both builds.
 
 ## Host simulation model
 
-`pic16f1508_sim_step` recomputes every cell from its CON, POL, and GLS
-registers: gates OR their selected true and negated terms (an empty gate
+`pic16f1508_sim_step` recomputes every cell from its CON, POL, SEL, and GLS
+registers: each Dx decodes its select code (see below) unless the host hook
+drove it, gates OR their selected true and negated terms (an empty gate
 reads 0 before its GxPOL bit, per Table 24-2 rows 0x00; a gate with both the
 true and the negated term of one input selected reads 0, per section 24.1.2),
 the mode logic combines the gates, POL inverts the cell, and the result lands
@@ -291,13 +292,23 @@ asserts vectors where both readings agree. The datasheet gives no priority
 between S and R, so S wins here by assumption. Covered by the host probe
 `example_clc_sim`.
 
-One seam stays open. SEL codes are stored but not decoded: the Dx levels
-come from `pic16f1508_sim_drive_clc_input`, a host-only hook. A demo that
-needs an inter-cell wire closes it through the hook: the debouncer probe
-re-drives STAGE2 D2 from the live STAGE1 output each half clock, so the AND
-the STAGE2 gate evaluates is the cell's own. LCxOE does not drive a pin in
-the sim: the output-pin mapping is unverified, so only the mirrors observe
-it.
+SEL codes decode in the sim step. A Dx the host hook drove keeps the driven
+level; any other Dx resolves its Table 24-1 source. CLCxIN0 and CLCxIN1 read
+the fixed input pins from the pin-function tables in section 2 (CLC1 on
+RA3/RC7, CLC2 on RC3/RC4, CLC3 on RB4/RC6, CLC4 on RB5/RA1). T1_overflow and
+T2_match read the latched TMR1IF/TMR2IF flags. LCx_OUT reads the post-POL
+wire (Register 24-1: LCxOUT is after LCxPOL, sampled from lcx_out, the same
+wire Table 24-1 taps). Cross-cell taps read the previous step, so a cascade
+settles one cell per step whatever the wiring order. Sources with no sim
+behind them (comparators, FOSC, T0 overflow, NCO, PWM, EUSART, MSSP, the
+internal oscillators) read 0. Two host assumptions stay unverified: the
+timer sources are flag levels rather than the one-cycle hardware pulses,
+and the one-step cascade delay. Covered by the host probe `example_clc_sel`.
+A demo that needs an inter-cell wire can still close it through the hook:
+the debouncer probe re-drives STAGE2 D2 from the live STAGE1 output each
+half clock, so the AND the STAGE2 gate evaluates is the cell's own. LCxOE
+does not drive a pin in the sim: the output-pin mapping is unverified, so
+only the mirrors observe it.
 
 Timers advance one instruction cycle per tick: TMR2 applies the T2CKPS
 prescaler, matches TMR2 against PR2 with reset to 0, and divides matches

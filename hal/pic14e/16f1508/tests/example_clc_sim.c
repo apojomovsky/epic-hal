@@ -1,7 +1,7 @@
 /**
  * CLC functional-model host-sim probe. Host-only: configures cells through
  * EPIC_CLC_Init, drives Dx levels through pic16f1508_sim_drive_clc_input
- * (SEL codes are stored but not decoded), steps the simulator, and
+ * (driven levels win over the SEL decode), steps the simulator, and
  * checks outputs, mirrors, sequential state, and edge interrupts.
  */
 #include <stddef.h>

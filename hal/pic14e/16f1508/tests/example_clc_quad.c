@@ -1,7 +1,7 @@
 /**
  * CLC quadrature-decoder-assist probe: 2x J-K direction cells, software
- * counter, 10-LED bar graph. Host-only: A/B arrive through the Dx hook (SEL
- * codes stored, not decoded); callbacks count rising edges until the
+ * counter, 10-LED bar graph. Host-only: A/B arrive through the Dx hook
+ * (driven levels win over the SEL decode); callbacks count rising edges until the
  * TMR1/TMR3 counters land. Each cell clocks on one encoder line while the
  * other sets it, so only the cell whose input leads its clock fires. LEDs
  * RC0..RC7, RA4, RA5 follow the Q40 bar-graph layout.
