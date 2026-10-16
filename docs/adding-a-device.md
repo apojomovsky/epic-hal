@@ -16,7 +16,7 @@ was invisible to code review, to
 the host simulator, and to a clean `xc8-cc` compile-and-link. Every one
 of them was only caught by actually running the compiled firmware under
 `mdb` (MPLAB SIM, headless) and reading back real register values. Two
-completely different, family-specific compiler misbehaviors (PIC16's
+completely different, family-specific compiler misbehaviors (the PIC14 (mid-range)
 bank-switch misdirection, PIC18's runtime-address-to-flash-table
 misdirection) both had the same shape: code that looks correct, builds
 clean, links clean, and silently writes the wrong thing to a register
@@ -304,7 +304,7 @@ it done.
    these shapes:
    - **Any SFR address that is a variable, struct field, or function
      parameter at the point of access**, not a literal `PIC_REG_*`
-     token. On PIC16, a value read/written while a bank switch
+     token. On PIC14 (mid-range), a value read/written while a bank switch
      (`pic_select_bank`) is in effect can get misdirected to the wrong
      memory location (latest instance: the 628A EEPROM driver's
      EEDATA/EEADR writes landed in Bank 0 GPRs while EECON1 landed,
@@ -361,7 +361,7 @@ assumes the previous ones are done and verified, not just written):
    correctly) *before* building peripherals on top of it. This is the
    single highest-risk component: both real bugs found in this
    session's two families were in or adjacent to interrupt/bank-select
-   plumbing (PIC16's `pic_select_bank`-adjacent corruption, PIC18's
+   plumbing (the PIC14 (mid-range) `pic_select_bank`-adjacent corruption, PIC18's
    `pic18_irq.c` table-driven dispatch), and every peripheral driver
    depends on `EPIC_IRQ_*` working correctly. Finding this bug on day
    one of a new family, isolated, is much cheaper than finding it after
@@ -508,8 +508,8 @@ account lives.
 | Family umbrella header sharing the compiler device header name (`pic16f628a.h`), shadowing it through `-I` at link time so XC8's own `__eeprom.c` loses all SFRs; 87XA/88X dodge it only because `pic16f87xa.h` differs from `pic16f877a.h` | PIC16F628A | PR #137 (umbrella renamed to `pic16f628a_hal.h`) |
 | SFR address that is a runtime variable/struct-field/parameter at the point of access (not a literal token) | PIC18 | `hal/pic18/18fxx5x/README.md` (XC8 codegen gotchas) |
 | Baud-rate/timing divisor math that can silently overflow the target register width | PIC18 (found in `pic18_harness_mdb.c`) | `hal/pic18/18fxx5x/README.md` (XC8 codegen gotchas) |
-| Missing `HARNESS=sim` → watchdog-off Makefile override, WDT resets a bounded diagnostic build mid-run | PIC16, PIC18 | manifest `example.*.sim` configs (`WDTE=OFF`/`WDT=OFF`) |
-| Dangling pointer: a HAL `_Init` stores the caller's pointer instead of copying the handle, and the caller's storage is a non-`static` local | PIC16 (fixed); PIC18's own driver already copies the handle, not affected | `common/MANUAL.md` (handle pattern) |
+| Missing `HARNESS=sim` → watchdog-off Makefile override, WDT resets a bounded diagnostic build mid-run | PIC14 (mid-range), PIC18 | manifest `example.*.sim` configs (`WDTE=OFF`/`WDT=OFF`) |
+| Dangling pointer: a HAL `_Init` stores the caller's pointer instead of copying the handle, and the caller's storage is a non-`static` local | PIC14 (mid-range) (fixed); PIC18's own driver already copies the handle, not affected | `common/MANUAL.md` (handle pattern) |
 | Read-only status/flag bits (RCIDL, CxOUT, FVRRDY, CPSOUT, ...) reading back set even though the driver never wrote them, mistaken for a write not landing | PIC16F193X (Enhanced Mid-range) | `hal/pic14e/16f193x/docs/ARCHITECTURE.md`; §4 step 8 above |
 | `MODE=gpio` bounded-loop example starved by continuously-firing ISRs on MPLAB SIM, never reaching `epic_harness_report()` inside the `mdb` wait window, despite every ISR and the peripheral logic being correct | PIC16F193X (Timer2/4/6, 3 concurrent timer ISRs) | §4 step 6's sub-bullet above; the fix (early-exit + ISR-driven marker) is in `hal/pic14e/16f193x/tests/example_timer246.c` |
 | A hand-listed CI spot left unupdated when a family lands (`ci-target-sim.sh`'s `run_one` pilot list, `family-check.yml`'s inline module/part list, a missing `family-<slug>` job), so the family's gate silently does not run: the mdb leg matches nothing and passes vacuously, or no `HARNESS=sim` build script is emitted at all | PIC16F193X (the original discovery script had this shape and failed outright instead); PIC16F83_84 (wired into PR CI, missed in `nightly.yml`) | §5 step 9 above; §6's CI-wiring checklist item |
