@@ -7,18 +7,27 @@
 
 # epic-hal
 
-A register-level HAL plus drop-in modules for 8-bit PIC microcontrollers, fully open source and MIT licensed.
+epic-hal is a hardware abstraction layer (HAL) for 8-bit PIC
+microcontrollers. You call one set of C functions, like `EPIC_GPIO_Init` or
+`epic_tick_get`, and they work the same on every supported PIC family.
+Underneath, each family has a small port that drives that chip's registers.
+On top sit ready-made modules (serial, timers, ADC, LCD, Modbus, PID and
+more) that use only the HAL, so code you write once moves to another chip by
+changing an include path.
+
+It's built for small parts: no RTOS, no dynamic memory, buffer sizes you set
+at compile time, and only the modules you add get compiled. MIT licensed,
+and it builds with epic-cc or XC8.
 
 [![CI](https://github.com/apojomovsky/epic-hal/actions/workflows/ci.yml/badge.svg)](https://github.com/apojomovsky/epic-hal/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Release](https://img.shields.io/github/v/release/apojomovsky/epic-hal)](https://github.com/apojomovsky/epic-hal/releases)
 
 ## Why epic-hal
 
-- **Fully open source, MIT licensed.** The HAL, the modules and the build scripts are plain C99 and Python you can read, change and ship.
 - **One API across PIC families.** A HAL (hardware abstraction layer) hides each chip's registers behind the same function names, so code for one family builds for the others with only the include path changed.
 - **Drop-in modules.** Timebase, serial, scheduler, Modbus, PID and more are folders of `.c` files you add to a build. No RTOS, no dynamic allocation.
 - **Tested before silicon.** Every module builds as a host program, and CI runs real-target builds in the simulator, checking registers and UART output.
 
-**Status:** Ready for hobby projects on the supported parts. See [What's in 1.0](https://apojomovsky.github.io/epic-docs/status/).
+**Status:** Ready for projects on the supported parts. See [What's in 1.0](https://apojomovsky.github.io/epic-docs/status/).
 
 ## The shortest example
 
