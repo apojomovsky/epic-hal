@@ -189,6 +189,7 @@ def hal_header_path(family: str) -> pathlib.Path:
         "PIC18Fxx5x": "hal/pic18/18fxx5x/include/pic18fxx5x_sfr.h",
         "PIC16F193X": "hal/pic14e/16f193x/include/pic16f193x_sfr.h",
         "PIC16F1508": "hal/pic14e/16f1508/include/pic16f1508_sfr.h",
+        "PIC16F188XX": "hal/pic14e/16f188xx/include/pic16f188xx_sfr.h",
     }
     if family in mapping:
         return REPO / mapping[family]

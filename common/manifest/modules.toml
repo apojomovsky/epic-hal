@@ -4931,3 +4931,52 @@ sources     = [
   "tests/example_gpio_mdb.c",
 ]
 config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", WRT = "OFF" }
+
+[families.PIC16F188XX]
+hal_dir     = "hal/pic14e/16f188xx"
+variants    = [
+  "16F18855",
+]
+dfp         = "Microchip.PIC16F1xxxx_DFP"
+dfp_version = "1.32.471"
+fosc_hz     = 32000000
+includes    = [
+  "hal/pic14e/16f188xx/include/target",
+  "hal/pic14e/16f188xx/include",
+  "common/include",
+]
+hal_sources = [
+  "hal/pic14e/16f188xx/src/peripherals/pic16f188xx_gpio.c",
+  "hal/pic14e/16f188xx/src/core/pic16f188xx_irq.c",
+  "hal/pic14e/16f188xx/src/core/pic16f188xx_irq_dispatch.c",
+  "hal/pic14e/16f188xx/src/target/pic16f188xx_isr_vector.c",
+  "common/src/core/epic_harness_target.c",
+]
+harness_src = "common/src/core/epic_harness_target.c"
+
+[modules."hal/pic14e/16f188xx"]
+summary    = "Register-level HAL and smoke firmware for the PIC16F188xx family"
+sources    = []
+includes   = []
+depends_on = []
+needs_hal  = true
+
+[modules."hal/pic14e/16f188xx".supported]
+PIC16F188XX = [
+  "16F18855",
+]
+
+[modules."hal/pic14e/16f188xx".example.PIC16F188XX]
+name    = "blink"
+sources = [
+  "tests/example_blink.c",
+]
+config  = { FEXTOSC = "OFF", RSTOSC = "HFINT32", CLKOUTEN = "OFF", CSWEN = "ON", FCMEN = "OFF", MCLRE = "ON", PWRTE = "ON", BOREN = "ON", STVREN = "ON", WDTE = "OFF", WRT = "OFF", LVP = "OFF", CP = "OFF", CPD = "OFF" }
+
+[modules."hal/pic14e/16f188xx".example.PIC16F188XX.sim]
+name        = "gpio-sim"
+harness_src = "hal/pic14e/16f188xx/src/mdb/pic16f188xx_harness_mdb.c"
+sources     = [
+  "tests/example_gpio_mdb.c",
+]
+config      = { FEXTOSC = "OFF", RSTOSC = "HFINT32", CLKOUTEN = "OFF", CSWEN = "ON", FCMEN = "OFF", MCLRE = "ON", PWRTE = "ON", BOREN = "ON", STVREN = "ON", WDTE = "OFF", WRT = "OFF", LVP = "OFF", CP = "OFF", CPD = "OFF" }
