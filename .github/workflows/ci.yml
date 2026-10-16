@@ -203,6 +203,11 @@ jobs:
     with:
       family: PIC16F1508
 
+  family-188xx:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F188XX
+
   family-88x:
     uses: ./.github/workflows/family-check.yml
     with:
@@ -566,8 +571,9 @@ jobs:
           pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic16f1xxxx_dfp_version="$(grep -m1 '^ARG PIC16F1XXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-${pic16f1xxxx_dfp_version}-mplabx${mplabx_version}"
           image="ghcr.io/${{ github.repository_owner }}/epic-hal-ci:${tag}"
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           if docker pull "$image"; then
@@ -590,6 +596,7 @@ jobs:
               ("lib/tick", "16F877A"), ("lib/tick", "18F4550"),
               ("hal/pic14e/16f193x", "16F1939"),
               ("hal/pic14e/16f1508", "16F1509"),
+              ("hal/pic14e/16f188xx", "16F18855"),
               ("lib/tick", "16F1939"), ("lib/fsm", "16F1939"),
               ("lib/swuart", "16F877A"), ("lib/math", "16F877A"),
               ("lib/math", "18F4550"),
