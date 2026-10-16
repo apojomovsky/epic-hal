@@ -303,10 +303,10 @@ interrupts, not cycles, which is what makes that honest: the gate
 proves the interrupt path, not a timing figure. It also needs every
 register the gate touches to be reachable in the simulator; INTCON is
 mirrored on the PIC14 core, which is why the blink gates run in CI
-today. The 877A and 887 tick gates need PIE1, a banked register on
+The 877A and 887 tick gates need PIE1, a banked register on
 those parts: crates/sim applies banked SFR writes since epic-cc#173
-closed (2026-09-02), and the 877A tick gate passes locally (below). It
-is not yet in the CI job. The 18F4550 tick gate stays out for the
+closed (2026-09-02), and both tick gates run in the CI job
+(epic-hal#445). The 18F4550 tick gate stays out for the
 PIC18 reason in the CI comments: the ISR's indirect call traps on the
 PIC18 backend.
 
@@ -326,9 +326,15 @@ after `make epiccc-build MODULE=lib/tick MCU=16F877A`):
 
 ```sh
 make sim-epiccc HEX=build/epiccc/16F877A-<example>.hex DEVICE=PIC16F877A \
-  SAMPLES=12 STEPS=200000 \
+  SAMPLES=24 STEPS=500000 \
   IRQ_EVERY=200 IRQ_FLAG=PIR1:1 IRQ_ENABLE=PIE1:1
 ```
+
+The tick sample geometry is load-bearing: the LED does a full on plus
+off every 1000 interrupts, so a 200000-step sample at IRQ_EVERY=200 is
+two whole cycles and every sample lands on the same phase. 24 samples
+of 500000 steps is 2.5 cycles per sample, so consecutive samples
+alternate.
 
 The epic-cc link must be an absolute path: a relative symlink resolves
 inside the container and fails with `failed to read
