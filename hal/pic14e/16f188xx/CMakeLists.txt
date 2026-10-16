@@ -1,4 +1,4 @@
-# PIC16F18855 HAL, host simulation build.
+# PIC16F188xx HAL, host simulation build.
 #   cmake -B build && cmake --build build && ctest --test-dir build
 #
 # Real-target builds use the XC8 Makefile path (scripts/build/epic_build.py). The
@@ -29,14 +29,14 @@ endif()
 include(${EPIC_ROOT}/common/cmake/epic_family.cmake)
 set(EPIC_COMMON_DIR ${EPIC_ROOT}/common)
 
-set(PIC16F188XX_DEFAULT_DEVICE PIC16F18855)
+set(PIC16F188XX_DEFAULT_DEVICE PIC16F18877)
 
 set(EPIC_LIB                  pic16f188xx_hal)
 set(EPIC_DEFAULT_DEVICE       ${PIC16F188XX_DEFAULT_DEVICE})
 set(EPIC_FAMILY_INCLUDE_DIR   ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(EPIC_HOST_INCLUDE_DIR     ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(EPIC_COMMON_INCLUDE_DIR   ${EPIC_COMMON_DIR}/include)
-set(EPIC_FAMILY_DEVICES       PIC16F18855)
+set(EPIC_FAMILY_DEVICES       PIC16F18854 PIC16F18855 PIC16F18856 PIC16F18857 PIC16F18875 PIC16F18876 PIC16F18877)
 
 set(EPIC_SOURCES
     src/peripherals/pic16f188xx_gpio.c
@@ -51,6 +51,7 @@ epic_add_hal_library(${EPIC_LIB})
 epic_add_example(example_blink tests/example_blink.c)
 epic_add_example(example_gpio tests/example_gpio.c)
 epic_add_example(example_gpio_mdb tests/example_gpio_mdb.c)
+epic_add_example_per_device(example_blink tests/example_blink.c)
 
 enable_testing()
 add_test(NAME gpio_host COMMAND example_gpio)

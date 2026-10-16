@@ -1,8 +1,10 @@
 /**
- * Host model of the PIC16F18855 ports and interrupt-on-change. Each port's
- * IOCxP/IOCxN edge masks set that port's IOCxF flags and the shared PIR0
- * IOCIF, mirroring silicon; the interrupt callback is gated on IOCIF,
- * IOCIE, PEIE and GIE.
+ * Host model of the PIC16F188xx ports and interrupt-on-change. Each
+ * port's IOCxP/IOCxN edge masks set that port's IOCxF flags and the
+ * shared PIR0 IOCIF, mirroring silicon; the interrupt callback is gated
+ * on IOCIF, IOCIE, PEIE and GIE. PORTD has no IOC registers and PORTE
+ * IOC is RE3 only, so edge detection is modelled for PORTA..PORTC
+ * while PORTD/PORTE join the latch/level model.
  */
 #include <stddef.h>
 #include <stdint.h>
@@ -10,20 +12,51 @@
 #include "pic16f188xx.h"
 #include "pic16f188xx_sim.h"
 
-uint8_t pic16f188xx_sim_sfr[0x1000];
+uint8_t pic16f188xx_sim_sfr[0x2000];
 
-static const uint16_t sim_tris[3] = {PIC_REG_TRISA, PIC_REG_TRISB, PIC_REG_TRISC};
-static const uint16_t sim_lat[3]  = {PIC_REG_LATA,  PIC_REG_LATB,  PIC_REG_LATC};
-static const uint16_t sim_port[3] = {PIC_REG_PORTA, PIC_REG_PORTB, PIC_REG_PORTC};
+static const uint16_t sim_tris[] = {PIC_REG_TRISA, PIC_REG_TRISB, PIC_REG_TRISC
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    , PIC_REG_TRISD
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    , PIC_REG_TRISE
+#endif
+};
+static const uint16_t sim_lat[]  = {PIC_REG_LATA,  PIC_REG_LATB,  PIC_REG_LATC
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    , PIC_REG_LATD
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    , PIC_REG_LATE
+#endif
+};
+static const uint16_t sim_port[] = {PIC_REG_PORTA, PIC_REG_PORTB, PIC_REG_PORTC
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    , PIC_REG_PORTD
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    , PIC_REG_PORTE
+#endif
+};
 static const uint16_t sim_ioc_pos[3] = {PIC_REG_IOCAP, PIC_REG_IOCBP, PIC_REG_IOCCP};
 static const uint16_t sim_ioc_neg[3] = {PIC_REG_IOCAN, PIC_REG_IOCBN, PIC_REG_IOCCN};
 static const uint16_t sim_ioc_flag[3] = {PIC_REG_IOCAF, PIC_REG_IOCBF, PIC_REG_IOCCF};
-static const uint8_t  sim_mask[3] = {PIC16F188XX_FAMILY_PORTA_MASK,
+static const uint8_t  sim_mask[] = {PIC16F188XX_FAMILY_PORTA_MASK,
                                      PIC16F188XX_FAMILY_PORTB_MASK,
-                                     PIC16F188XX_FAMILY_PORTC_MASK};
+                                     PIC16F188XX_FAMILY_PORTC_MASK
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    , PIC16F188XX_FAMILY_PORTD_MASK
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    , PIC16F188XX_FAMILY_PORTE_MASK
+#endif
+};
+
+/* Latch/level model covers every port; edge detection covers PORTA..PORTC. */
+#define SIM_NPORTS (sizeof sim_port / sizeof sim_port[0])
 
 /* Externally driven level per port bit; undriven pins read 0. */
-static uint8_t sim_input_value[3];
+static uint8_t sim_input_value[SIM_NPORTS];
 static uint8_t sim_last_port[3];
 static pic16f188xx_sim_irq_cb_t sim_irq_cb;
 
@@ -38,8 +71,8 @@ static uint8_t sim_gie(void)
 
 /**
  * @brief Map a port letter to its table index.
- * @param port 'A', 'B', or 'C'.
- * @return 0..2, or -1 for anything else.
+ * @param port 'A'..'C', plus 'D'/'E' on 40-pin parts.
+ * @return Table index, or -1 for anything else.
  */
 static int port_index(char port)
 {
@@ -48,6 +81,12 @@ static int port_index(char port)
     case 'A': return 0;
     case 'B': return 1;
     case 'C': return 2;
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    case 'D': return 3;
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    case 'E': return (3 + PIC16F188XX_FAMILY_HAS_PORTD);
+#endif
     default:  return -1;
     }
 }
@@ -57,8 +96,8 @@ static int port_index(char port)
  */
 static void sim_refresh_ports(void)
 {
-    int i;
-    for (i = 0; i < 3; i++)
+    unsigned int i;
+    for (i = 0; i < SIM_NPORTS; i++)
     {
         uint8_t tris = pic16f188xx_sim_sfr[sim_tris[i]];
         uint8_t lat  = pic16f188xx_sim_sfr[sim_lat[i]];
@@ -118,9 +157,21 @@ void pic16f188xx_sim_reset(void)
     pic16f188xx_sim_sfr[PIC_REG_TRISA]  = PIC16F188XX_FAMILY_PORTA_MASK;
     pic16f188xx_sim_sfr[PIC_REG_TRISB]  = PIC16F188XX_FAMILY_PORTB_MASK;
     pic16f188xx_sim_sfr[PIC_REG_TRISC]  = PIC16F188XX_FAMILY_PORTC_MASK;
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    pic16f188xx_sim_sfr[PIC_REG_TRISD]  = PIC16F188XX_FAMILY_PORTD_MASK;
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    pic16f188xx_sim_sfr[PIC_REG_TRISE]  = PIC16F188XX_FAMILY_PORTE_MASK;
+#endif
     pic16f188xx_sim_sfr[PIC_REG_ANSELA] = PIC16F188XX_FAMILY_PORTA_MASK;
     pic16f188xx_sim_sfr[PIC_REG_ANSELB] = PIC16F188XX_FAMILY_PORTB_MASK;
     pic16f188xx_sim_sfr[PIC_REG_ANSELC] = PIC16F188XX_FAMILY_PORTC_MASK;
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    pic16f188xx_sim_sfr[PIC_REG_ANSELD] = PIC16F188XX_FAMILY_PORTD_MASK;
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    pic16f188xx_sim_sfr[PIC_REG_ANSELE] = PIC16F188XX_FAMILY_PORTE_MASK;
+#endif
     memset(sim_input_value, 0, sizeof sim_input_value);
     sim_irq_cb = NULL;
     sim_refresh_ports();
@@ -143,7 +194,7 @@ void pic16f188xx_sim_step(uint32_t ticks)
 
 /**
  * @brief Set the external level presented on an input pin.
- * @param port Port letter, 'A', 'B' or 'C'. Invalid ports are ignored.
+ * @param port Port letter, 'A'..'C' ('D'/'E' on 40-pin parts). Invalid ports are ignored.
  * @param pin Pin number 0..7. Values above 7 are ignored.
  * @param level Nonzero drives high, zero drives low.
  */
@@ -170,7 +221,7 @@ void pic16f188xx_sim_drive_input(char port, uint8_t pin, uint8_t level)
 
 /**
  * @brief Read the simulated output level of one pin.
- * @param port Port letter, 'A', 'B' or 'C'.
+ * @param port Port letter, 'A'..'C' ('D'/'E' on 40-pin parts).
  * @param pin Pin number 0..7.
  * @return 1 when the pin drives high, 0 when low or invalid.
  */

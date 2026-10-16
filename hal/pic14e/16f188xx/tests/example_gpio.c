@@ -2,7 +2,8 @@
  * GPIO and interrupt-on-change host-sim probe. Host-only: drives the
  * simulator (pic16f188xx_sim_*), so it is not in the XC8 build. Covers a
  * full-port write on PORTA, RB4 output, RB5 input, and an RB6 rising edge
- * through the registered callback. All three ports are IOC-capable; the
+ * through the registered callback, plus the 40-pin PORTD full-port path
+ * and the RE0..RE2 PORTE mask. All of PORTA..PORTC are IOC-capable; the
  * shared contract reports PORTB.
  */
 #include "pic16f188xx.h"
@@ -77,6 +78,32 @@ int main(void)
     epic_harness_tick();
     ok &= (g_ioc_seen == 1U);
     ok &= (g_ioc_iocbf == GPIO_PIN_6);
+
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    /* PORTD is 8 driven pins: full-port write lands every bit. */
+    EPIC_GPIO_Init(GPIOD, GPIO_PIN_All, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePort(GPIOD, 0xA5U);
+    epic_harness_tick();
+    ok &= (EPIC_GPIO_ReadPort(GPIOD) == 0xA5U);
+    EPIC_GPIO_DeInit(GPIOD);
+    ok &= (EPIC_REG8(PIC_REG_TRISD) == PIC16F188XX_FAMILY_PORTD_MASK);
+    ok &= (EPIC_REG8(PIC_REG_ANSELD) == PIC16F188XX_FAMILY_PORTD_MASK);
+    ok &= (EPIC_REG8(PIC_REG_LATD) == 0U);
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    /* PORTE is RE0..RE2 (RE3 is input-only MCLR): writes above bit 2
+     * are ignored, reads mask to the driven pins. */
+    EPIC_GPIO_Init(GPIOE, GPIO_PIN_All, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePort(GPIOE, 0xFFU);
+    epic_harness_tick();
+    ok &= (EPIC_GPIO_ReadPort(GPIOE) == PIC16F188XX_FAMILY_PORTE_MASK);
+    ok &= ((EPIC_REG8(PIC_REG_LATE) & (uint8_t)~PIC16F188XX_FAMILY_PORTE_MASK) == 0U);
+    /* PORTD/E arm no edges: the PORTB/C IOC registers keep their values. */
+    EPIC_GPIO_EnableChangeDetect(GPIOD, GPIO_PIN_All, GPIO_PIN_All);
+    EPIC_GPIO_EnableChangeDetect(GPIOE, GPIO_PIN_All, GPIO_PIN_All);
+    ok &= (EPIC_REG8(PIC_REG_IOCBP) == GPIO_PIN_6);
+    ok &= (EPIC_REG8(PIC_REG_IOCCP) == 0U);
+#endif
 
     epic_harness_log("gpio/IOC smoke: %s\n", ok ? "PASS" : "FAIL");
     return epic_harness_report(ok);

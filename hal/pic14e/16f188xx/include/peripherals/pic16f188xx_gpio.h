@@ -1,9 +1,10 @@
 /**
- * PIC16F18855 GPIO contract. Names and signatures match the other PIC14E
+ * PIC16F188xx GPIO contract. Names and signatures match the other PIC14E
  * families so consumers build unchanged, except EPIC_GPIO_EnableChangeDetect
  * takes a leading port: every pin of PORTA..PORTC is IOC-capable here,
- * while the siblings arm PORTB only. Port set, pull-up registers, and the
- * IOC layout are family-specific.
+ * while the siblings arm PORTB only. PORTD has no IOC registers and PORTE
+ * IOC is RE3 only, so neither arms edges. Port set, pull-up registers,
+ * and the IOC layout are family-specific.
  */
 #ifndef PIC16F188XX_GPIO_H
 #define PIC16F188XX_GPIO_H
@@ -15,7 +16,13 @@ typedef enum
 {
     GPIOA = 0,
     GPIOB = 1,
-    GPIOC = 2
+    GPIOC = 2,
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    GPIOD = 3,
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    GPIOE = 4,
+#endif
 } GPIO_TypeDef;
 
 #define GPIO_PIN_0   EPIC_BIT(0)
@@ -97,7 +104,7 @@ uint8_t EPIC_GPIO_ReadPort(GPIO_TypeDef port);
  * @details Every port has its own WPUx register and there is no global
  * enable (the pack ships no OPTION_REG for this part), so the call only
  * touches WPUx.
- * @param port Port (GPIOA, GPIOB, or GPIOC).
+ * @param port Port (GPIOA, GPIOB, or GPIOC; plus GPIOD/GPIOE on 40-pin parts).
  * @param pins Pin mask (GPIO_PIN_*).
  * @param state GPIO_PIN_SET enables, GPIO_PIN_RESET disables.
  */
@@ -113,7 +120,8 @@ void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t iocbf, uint8_t po
 /**
  * @brief Select the edges that set the IOC flags on one port.
  * @details Writes that port's IOCxP and IOCxN in full, masked to its implemented pins.
- * @param port Port to arm (GPIOA, GPIOB, or GPIOC).
+ * @param port Port to arm (GPIOA, GPIOB, or GPIOC; GPIOD/GPIOE arm
+ *        nothing, PORTD has no IOC registers and PORTE IOC is RE3 only).
  * @param pos_mask Rising-edge pins (bit n = Pn).
  * @param neg_mask Falling-edge pins (bit n = Pn).
  */

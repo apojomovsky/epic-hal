@@ -4935,7 +4935,13 @@ config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = 
 [families.PIC16F188XX]
 hal_dir     = "hal/pic14e/16f188xx"
 variants    = [
+  "16F18854",
   "16F18855",
+  "16F18856",
+  "16F18857",
+  "16F18875",
+  "16F18876",
+  "16F18877",
 ]
 dfp         = "Microchip.PIC16F1xxxx_DFP"
 dfp_version = "1.32.471"
@@ -4963,7 +4969,13 @@ needs_hal  = true
 
 [modules."hal/pic14e/16f188xx".supported]
 PIC16F188XX = [
+  "16F18854",
   "16F18855",
+  "16F18856",
+  "16F18857",
+  "16F18875",
+  "16F18876",
+  "16F18877",
 ]
 
 [modules."hal/pic14e/16f188xx".example.PIC16F188XX]

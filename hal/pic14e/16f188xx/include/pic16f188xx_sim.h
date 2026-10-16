@@ -1,5 +1,5 @@
 /**
- * Host simulator API for the PIC16F18855 ports and interrupt-on-change.
+ * Host simulator API for the PIC16F188xx ports and interrupt-on-change.
  * Host-only: never in an XC8 build.
  */
 #ifndef PIC16F188XX_SIM_H
@@ -22,7 +22,7 @@ void pic16f188xx_sim_step(uint32_t ticks);
 
 /**
  * @brief Drive an external level onto an input pin.
- * @param port 'A', 'B', or 'C'.
+ * @param port 'A', 'B', or 'C' ('D'/'E' on 40-pin parts).
  * @param pin Bit number 0..7.
  * @param level Non-zero for high.
  */
@@ -30,7 +30,7 @@ void pic16f188xx_sim_drive_input(char port, uint8_t pin, uint8_t level);
 
 /**
  * @brief Read the PORTx level of a pin as the simulator currently holds it.
- * @param port 'A', 'B', or 'C'.
+ * @param port 'A', 'B', or 'C' ('D'/'E' on 40-pin parts).
  * @param pin Bit number 0..7.
  * @return 0 or 1; 0 for an invalid port or pin.
  */
