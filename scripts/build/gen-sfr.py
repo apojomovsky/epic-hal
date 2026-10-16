@@ -51,11 +51,16 @@ import epicmanifest  # noqa: E402
 # Canonical per family is the manifest's variants[-1], the part the PR
 # gate builds (epic_build.canonical_parts), read live so the EDC source
 # and the build part cannot drift apart again. EDC_COVERAGE_OVERRIDE pins
-# a different part only where the build canonical's EDC covers fewer
-# SFRs: PIC16F7x's 16F77 EDC models 54 SFRs against 16F777's 66 (same
-# addresses where they overlap), so the generator keeps the wider EDC.
+# a different part where the build canonical's EDC is unusable:
+# PIC16F7x's 16F77 EDC models 54 SFRs against 16F777's 66 (same
+# addresses where they overlap), so the generator keeps the wider EDC;
+# PIC16F188XX's canonical 16F18877 EDC (like 16F18857's) carries a bank
+# prefix on banked _addr values (ANSELA 0x1F38 instead of 0xF38, same
+# low 12 bits everywhere), so the generator keeps the clean 16F18855
+# EDC, which models the shared map exactly.
 EDC_COVERAGE_OVERRIDE: dict[str, str] = {
     "PIC16F7x": "16F777",
+    "PIC16F188XX": "16F18855",
 }
 
 
@@ -218,6 +223,12 @@ def generate_for_family(family: str, edc_override: pathlib.Path | None, dfp_dir:
         prefix = m.group(1)
         name = m.group(2)
         suffix = m.group(3)
+        # Alternate-spelling lines (16F18857/16F18877's 0x1Fxx banked
+        # base, marked P57-77) keep their value: the canonical EDC
+        # models the 0xFxx spelling, and the sfr-map audit checks the
+        # marked lines against those parts' own DFPs.
+        if "P57-77" in suffix:
+            return m.group(0)
         # lookup: try HAL name, then EDC name
         addr = addrs.get(name)
         if addr is None:

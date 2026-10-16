@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-extern uint8_t pic16f188xx_sim_sfr[0x1000];
+extern uint8_t pic16f188xx_sim_sfr[0x2000];
 
 #define EPIC_WEAK __attribute__((weak))
 #define EPIC_PLACE(addr)
