@@ -99,7 +99,9 @@ int main(void)
     ok &= (EPIC_GPIO_ReadPort(GPIOE) == PIC16F188XX_FAMILY_PORTE_MASK);
     ok &= ((EPIC_REG8(PIC_REG_LATE) & (uint8_t)~PIC16F188XX_FAMILY_PORTE_MASK) == 0U);
     /* PORTD/E arm no edges: the PORTB/C IOC registers keep their values. */
+#if PIC16F188XX_FAMILY_HAS_PORTD
     EPIC_GPIO_EnableChangeDetect(GPIOD, GPIO_PIN_All, GPIO_PIN_All);
+#endif
     EPIC_GPIO_EnableChangeDetect(GPIOE, GPIO_PIN_All, GPIO_PIN_All);
     ok &= (EPIC_REG8(PIC_REG_IOCBP) == GPIO_PIN_6);
     ok &= (EPIC_REG8(PIC_REG_IOCCP) == 0U);

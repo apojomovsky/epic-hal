@@ -46,11 +46,11 @@ what is specific to this family: 16F18854/55/56/57 (28-pin) and
 | TRISD    | 0xFF  | 0xFF       | Direction for RD0..RD7, all input        |
 | ANSELD   | 0xFF  | 0xFF       | Analog select, all analog                |
 | WPUD     | 0xFF  | 0x00       | Weak pull-up per PORTD pin               |
-| PORTE    | 0x0F  | ----xxxx  | RE0..RE3 read; RE3 is input-only (MCLR)  |
+| PORTE    | 0x0F (0x08 on 28-pin, RE3 only) | ----xxxx | RE0..RE3 read; RE3 is input-only (MCLR), 40-pin parts add RE0..RE2 |
 | LATE     | 0x07  | -----xxx  | Latch for RE0..RE2, 40-pin parts only    |
 | TRISE    | 0x07  | -----111  | Direction for RE0..RE2, 40-pin parts only|
 | ANSELE   | 0x07  | -----111  | Analog select RE0..RE2, 40-pin parts only|
-| WPUE     | 0x0F  | ----x000  | Weak pull-up RE0..RE2 (RE3 bit exists)   |
+| WPUE     | 0x0F (0x08 on 28-pin) | ----x000 | Weak pull-up RE0..RE2 (RE3 bit exists) |
 | IOCEP, IOCEN, IOCEF | 0x08 | ----0--- | Rising, falling, flag for RE3 only |
 | INTCON   | 0xC1  | 00-----1   | INTEDG, PEIE, GIE only                   |
 | PIR0     | 0x31  | --00---0   | INTF, IOCIF, TMR0IF                      |
