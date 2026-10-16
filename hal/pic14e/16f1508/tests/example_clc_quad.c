@@ -1,10 +1,9 @@
 /**
- * CLC quadrature-decoder-assist probe: 2x J-K direction cells, software
- * counter, 10-LED bar graph. Host-only: A/B arrive through the Dx hook
- * (driven levels win over the SEL decode); callbacks count rising edges until the
- * TMR1/TMR3 counters land. Each cell clocks on one encoder line while the
- * other sets it, so only the cell whose input leads its clock fires. LEDs
- * RC0..RC7, RA4, RA5 follow the Q40 bar-graph layout.
+ * CLC quadrature-decoder-assist probe: 2x J-K direction cells, TMR1
+ * position counter, 10-LED bar graph. Host-only: A/B arrive through the Dx
+ * hook; CW edges reach TMR1 through the T1CKI pulse hook (the board wire
+ * from LC1OUT on silicon), CCW edges decrement through the driver (this
+ * part has no down-counter). LEDs RC0..RC7, RA4, RA5 follow the Q40 layout.
  */
 #include <stddef.h>
 #include "pic16f1508.h"
@@ -12,27 +11,28 @@
 #include "peripherals/pic16f1508_clc_src.h"
 #include "peripherals/pic16f1508_clc_gls.h"
 #include "peripherals/pic16f1508_gpio.h"
+#include "peripherals/pic16f1508_timer1.h"
 #include "core/pic16f1508_irq.h"
 #include "core/epic_harness.h"
 #include "pic16f1508_sim.h"
 
-static int s_volume;
-
-/** @brief Count one clockwise step, saturating at 100. */
+/** @brief Count one clockwise step on TMR1, saturating at 100. */
 static void on_cw(void)
 {
-    if (s_volume < 100)
+    if (EPIC_TIMER1_ReadCounter() < 100U)
     {
-        s_volume += 10;
+        pic16f1508_sim_timer1_external_pulse();
     }
 }
 
-/** @brief Count one counter-clockwise step, saturating at 0. */
+/** @brief Count one counter-clockwise step on TMR1, saturating at 0. */
 static void on_ccw(void)
 {
-    if (s_volume > 0)
+    uint16_t v = EPIC_TIMER1_ReadCounter();
+
+    if (v > 0U)
     {
-        s_volume -= 10;
+        EPIC_TIMER1_WriteCounter((uint16_t)(v - 1U));
     }
 }
 
@@ -74,10 +74,10 @@ static uint8_t read_ccw(void)
     return level;
 }
 
-/** @brief Repaint the 10-LED bar graph from the volume. */
+/** @brief Repaint the 10-LED bar graph from the TMR1 position. */
 static void show_bar(void)
 {
-    uint8_t n = (uint8_t)(s_volume / 10);
+    uint8_t n = (uint8_t)(EPIC_TIMER1_ReadCounter() / 10U);
     uint8_t c = 0U;
     uint8_t i;
 
@@ -124,9 +124,17 @@ int main(void)
     int ok = 1;
     CLC_HandleTypeDef cw;
     CLC_HandleTypeDef ccw;
+    TIMER1_HandleTypeDef t1 = TIMER1_HANDLE_DEFAULT;
+    unsigned int i;
 
     epic_harness_init(10000UL);
-    s_volume = 50;
+
+    /* Position counter: T1CKI counter mode, 1:1, parked at mid-scale. */
+    t1.ClockSource = TIMER1_CLOCK_EXTERNAL;
+    t1.ReloadValue = 50U;
+    ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
+    ok &= (EPIC_TIMER1_Start(&t1) == EPIC_OK);
+    ok &= (EPIC_TIMER1_ReadCounter() == 50U);
 
     cw.Instance = CLC1;
     cw.Mode = 6U;
@@ -190,40 +198,57 @@ int main(void)
     EPIC_IRQ_Enable(PIC16F1508_IRQ_CLC2);
     EPIC_REG8(PIC_REG_INTCON) |= PIC_INTCON_GIE;
 
-    /* Idle: both cells low. */
+    /* Idle: both cells low, counter parked. */
     drive_and_step(0U, 0U);
     ok &= (read_cw() == 0U);
     ok &= (read_ccw() == 0U);
+    ok &= (EPIC_TIMER1_ReadCounter() == 50U);
 
     /* Clockwise: only the CW cell pulses, once per Gray cycle. */
     cycle_cw();
-    ok &= (s_volume == 60);
+    ok &= (EPIC_TIMER1_ReadCounter() == 51U);
     drive_and_step(1U, 0U);
     ok &= (read_cw() == 0U);
     ok &= (read_ccw() == 0U);
+    ok &= (EPIC_TIMER1_ReadCounter() == 51U);
     drive_and_step(1U, 1U);
     ok &= (read_cw() == 1U);
     ok &= (read_ccw() == 0U);
+    ok &= (EPIC_TIMER1_ReadCounter() == 52U);
     drive_and_step(0U, 0U);
     cycle_cw();
-    ok &= (s_volume == 80);
+    ok &= (EPIC_TIMER1_ReadCounter() == 53U);
+
+    /* Climb to 80: the 8 RC LEDs light, RA4/RA5 stay off. */
+    for (i = 0U; i < 27U; i++)
+    {
+        cycle_cw();
+    }
+    ok &= (EPIC_TIMER1_ReadCounter() == 80U);
     show_bar();
     ok &= (EPIC_REG8(PIC_REG_LATC) == 0xFFU);
     ok &= ((EPIC_REG8(PIC_REG_LATA) & GPIO_PIN_4) == 0U);
     ok &= ((EPIC_REG8(PIC_REG_LATA) & GPIO_PIN_5) == 0U);
 
-    /* Counter-clockwise: only the CCW cell pulses, volume falls back. */
+    /* Counter-clockwise: only the CCW cell pulses, counter walks back. */
     cycle_ccw();
-    ok &= (s_volume == 70);
+    ok &= (EPIC_TIMER1_ReadCounter() == 79U);
     drive_and_step(0U, 1U);
     ok &= (read_cw() == 0U);
     ok &= (read_ccw() == 0U);
+    ok &= (EPIC_TIMER1_ReadCounter() == 79U);
     drive_and_step(1U, 1U);
     ok &= (read_cw() == 0U);
     ok &= (read_ccw() == 1U);
+    ok &= (EPIC_TIMER1_ReadCounter() == 78U);
     drive_and_step(0U, 0U);
     cycle_ccw();
-    ok &= (s_volume == 50);
+    ok &= (EPIC_TIMER1_ReadCounter() == 77U);
+    for (i = 0U; i < 27U; i++)
+    {
+        cycle_ccw();
+    }
+    ok &= (EPIC_TIMER1_ReadCounter() == 50U);
     show_bar();
     ok &= (EPIC_REG8(PIC_REG_LATC) == 0x1FU);
     ok &= ((EPIC_REG8(PIC_REG_LATA) & (uint8_t)(GPIO_PIN_4 | GPIO_PIN_5)) == 0U);
@@ -235,7 +260,19 @@ int main(void)
     drive_and_step(0U, 0U);
     ok &= (read_cw() == 0U);
     ok &= (read_ccw() == 0U);
-    ok &= (s_volume == 50);
+    ok &= (EPIC_TIMER1_ReadCounter() == 50U);
+
+    /* Ends saturate instead of wrapping. */
+    EPIC_TIMER1_WriteCounter(99U);
+    cycle_cw();
+    ok &= (EPIC_TIMER1_ReadCounter() == 100U);
+    cycle_cw();
+    ok &= (EPIC_TIMER1_ReadCounter() == 100U);
+    EPIC_TIMER1_WriteCounter(1U);
+    cycle_ccw();
+    ok &= (EPIC_TIMER1_ReadCounter() == 0U);
+    cycle_ccw();
+    ok &= (EPIC_TIMER1_ReadCounter() == 0U);
 
     EPIC_IRQ_DisableSrc(PIC16F1508_IRQ_CLC1);
     EPIC_IRQ_DisableSrc(PIC16F1508_IRQ_CLC2);
@@ -243,6 +280,8 @@ int main(void)
     /* Disabled cells read 0 even with both encoder lines driven. */
     ok &= (EPIC_CLC_DeInit(CLC1) == EPIC_OK);
     ok &= (EPIC_CLC_DeInit(CLC2) == EPIC_OK);
+    ok &= (EPIC_TIMER1_DeInit() == EPIC_OK);
+    ok &= (EPIC_TIMER1_ReadCounter() == 0U);
     drive_and_step(1U, 1U);
     ok &= (read_cw() == 0U);
     ok &= (read_ccw() == 0U);
