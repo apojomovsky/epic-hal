@@ -161,7 +161,7 @@ jobs:
                   if fam_name != family:
                       continue
                   fam = m.families[fam_name]
-                  dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
+                  dfp_dir = f"{xc8_install_dir}/pic/packs/{epicmanifest.dfp_name(fam)}/xc8"
                   for pair in entry["modules"].split(";"):
                       name, mcus = pair.split("=")
                       for mcu in mcus.split(","):
@@ -246,7 +246,7 @@ jobs:
               fam = m.family_of(mcu)
               if fam.name != family:
                   continue
-              dfp_dir = f"{xc8_install_dir}/pic/packs/{fam.dfp}/xc8"
+              dfp_dir = f"{xc8_install_dir}/pic/packs/{epicmanifest.dfp_name(fam)}/xc8"
               subprocess.run(
                   ["python3", "scripts/build/epic_build.py", "build",
                    "--module", module, "--mcu", mcu, "--variant", "sim",

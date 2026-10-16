@@ -60,7 +60,7 @@ import sys; sys.path.insert(0, 'scripts/build')
 import epicmanifest as e
 m = e.load(e.default_path())
 fam = m.family_of('${mcu}')
-print('/opt/microchip/xc8/v${xc8_version}/pic/packs/' + fam.dfp + '/xc8')
+print('/opt/microchip/xc8/v${xc8_version}/pic/packs/' + e.dfp_name(fam) + '/xc8')
 ")"
 
 xc8_dir="build-cmp/${module}-xc8"
