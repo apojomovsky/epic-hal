@@ -570,6 +570,13 @@ class TestBuildScript(unittest.TestCase):
         self.assertIn("-DFOSC_HZ=4000000", self.script(fosc_hz=4000000))
         self.assertNotIn("-DFOSC_HZ=20000000", self.script(fosc_hz=4000000))
 
+    def test_link_carries_the_whole_program_suppressions(self):
+        # The 759/2098 pair is link-stage only (epic-hal#393), so the
+        # compile-line copies never reach it; the link line repeats them.
+        s = self.script()
+        link = [ln for ln in s.splitlines() if "-ginhx32" in ln][0]
+        self.assertIn("-mcpu=16f877a -O2 -Wno-759 -Wno-2098", link)
+
     def test_links_to_the_example_named_hex_with_ginhx32(self):
         s = self.script()
         self.assertIn("build/16F877A-tick-blink.hex", s)
