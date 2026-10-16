@@ -87,8 +87,9 @@ Not yet implemented (deliberate scope limit, each its own follow-up):
   modes 4 and 7 and cross-cell cascades run host-only; MPLAB-SIM shapes
   the gate, see MANUAL.md, #383). The sweep itself is probe
   `example_clc_beat` on the host.
-- SEL-code decoding in the host sim (codes are stored, Dx levels come from a
-  host-only hook, except timer overflow/match which the tick model raises).
+- SEL decoding for sources with no sim behind them (comparators, FOSC, T0
+  overflow, NCO, PWM, EUSART, MSSP and the internal oscillators read 0;
+  the Dx hook overrides any decoded input), and LCxOE driving a pin.
 - A 16F188xx part. It is not in the pinned DFP.
 
 ## Quick start

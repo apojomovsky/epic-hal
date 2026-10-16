@@ -24,9 +24,11 @@ static const uint8_t  sim_mask[3] = {PIC16F1508_FAMILY_PORTA_MASK,
 static uint8_t sim_input_value[3];
 static uint8_t sim_last_portb;
 static pic16f1508_sim_irq_cb_t sim_irq_cb;
-/* Injected D1..D4 levels per cell in bits 3:0. SEL codes are stored but not
- * decoded (the model has no signal sources behind them), so tests drive Dx here. */
+/* Hook-driven D1..D4 levels per cell in bits 3:0, with a valid bit per Dx.
+ * A driven Dx wins over the SEL decode below, so probes that drive every Dx
+ * observe exactly what they drive. An undriven Dx decodes its SEL code. */
 static uint8_t sim_clc_d[4];
+static uint8_t sim_clc_hooked[4];
 /* Sequential bit, last gate-1 level for clock edges, and last output for INTN/INTP. */
 static uint8_t sim_clc_q[4];
 static uint8_t sim_clc_g1[4];
@@ -190,6 +192,82 @@ static uint8_t sim_clc_mode(uint8_t n, uint8_t mode, uint8_t g0)
 }
 
 /**
+ * @brief Read the fixed input pin behind CLCxIN0 or CLCxIN1.
+ * @details Pin map is the pin-function tables (DS40001609E section 2):
+ * CLC1 on RA3/RC7, CLC2 on RC3/RC4, CLC3 on RB4/RC6, CLC4 on RB5/RA1.
+ * PORTx holds the driven level for input pins after the refresh ahead of
+ * the CLC step.
+ * @param cell Cell index 0..3.
+ * @param second Zero for CLCxIN0, nonzero for CLCxIN1.
+ * @return Pinned level, 0 or 1.
+ */
+static uint8_t sim_clc_pin(uint8_t cell, uint8_t second)
+{
+    static const uint8_t port[4][2] = {{0U, 2U}, {2U, 2U}, {1U, 2U}, {1U, 0U}};
+    static const uint8_t pin[4][2] = {{3U, 7U}, {3U, 4U}, {4U, 6U}, {5U, 1U}};
+    static const uint16_t reg[3] = {PIC_REG_PORTA, PIC_REG_PORTB, PIC_REG_PORTC};
+    uint8_t side = (second != 0U) ? 1U : 0U;
+
+    return (uint8_t)((pic16f1508_sim_sfr[reg[port[cell][side]]] >> pin[cell][side]) & 1U);
+}
+
+/**
+ * @brief Resolve one Dx multiplexer to its Table 24-1 signal level.
+ * @details Inverts EPIC_CLC_SourceCode: D1 sees LCx_in[0..7], D2 [4..11],
+ * D3 [8..15], D4 [12..15] at codes 0..3 then [0..3] at codes 4..7.
+ * LCxOUT reads the post-POL wire (Register 24-1: LCxOUT is after LCxPOL,
+ * sampled from lcx_out, the same wire Table 24-1 taps). T1_overflow and
+ * T2_match read the latched PIR1 flags: a one-cycle hardware pulse would
+ * alias under the once-per-step sampler, so the model holds the flag level
+ * until software clears it. Anything without a sim source reads 0.
+ * @param cell Cell index 0..3.
+ * @param mux Data input 0..3 (D1..D4).
+ * @param prev Cell outputs at step entry, post-POL.
+ * @return Decoded level, 0 or 1.
+ */
+static uint8_t sim_clc_sel(uint8_t cell, uint8_t mux, const uint8_t prev[4])
+{
+    uint16_t base = (uint16_t)(PIC_REG_CLC1CON + ((uint16_t)cell * SIM_CLC_STRIDE));
+    uint8_t code = (mux < 2U) ? pic16f1508_sim_sfr[base + 2U] : pic16f1508_sim_sfr[base + 3U];
+    uint8_t in;
+
+    code = (uint8_t)((code >> (((mux & 1U) != 0U) ? PIC_CLCSEL_HIGH_SHIFT : 0U)) & 0x07U);
+    if (mux == 0U)
+    {
+        in = code;
+    }
+    else if (mux == 1U)
+    {
+        in = (uint8_t)(code + 4U);
+    }
+    else if (mux == 2U)
+    {
+        in = (uint8_t)(code + 8U);
+    }
+    else
+    {
+        in = (code < 4U) ? (uint8_t)(code + 12U) : (uint8_t)(code - 4U);
+    }
+    if (in < 2U)
+    {
+        return sim_clc_pin(cell, in);
+    }
+    if (in == 6U)
+    {
+        return (pic16f1508_sim_sfr[PIC_REG_PIR1] & PIC_PIR1_TMR1IF) ? 1U : 0U;
+    }
+    if (in == 7U)
+    {
+        return (pic16f1508_sim_sfr[PIC_REG_PIR1] & PIC_PIR1_TMR2IF) ? 1U : 0U;
+    }
+    if ((in >= 8U) && (in < 12U))
+    {
+        return prev[in - 8U];
+    }
+    return 0U;
+}
+
+/**
  * @brief Recompute every enabled cell, mirror outputs, and flag edges.
  * @details A disabled cell reads 0 with no edge and no flag; its sequential
  * bit is kept. Flags set on a configured edge even with the PIE bit clear,
@@ -198,19 +276,30 @@ static uint8_t sim_clc_mode(uint8_t n, uint8_t mode, uint8_t g0)
 static void sim_step_clc(void)
 {
     uint8_t n;
+    /* Entry snapshot: every cross-cell tap reads the same step, so a cascade
+     * settles one cell per step whatever the wiring order. */
+    uint8_t prev[4] = {sim_clc_out[0], sim_clc_out[1], sim_clc_out[2], sim_clc_out[3]};
 
     for (n = 0U; n < 4U; n++)
     {
         uint16_t base = (uint16_t)(PIC_REG_CLC1CON + ((uint16_t)n * SIM_CLC_STRIDE));
         uint8_t con = pic16f1508_sim_sfr[base];
         uint8_t pol = pic16f1508_sim_sfr[base + 1U];
+        uint8_t d = 0U;
         uint8_t g0 = 0U;
         uint8_t out;
         uint8_t i;
 
         for (i = 0U; i < 4U; i++)
         {
-            uint8_t g = sim_clc_gate(pic16f1508_sim_sfr[base + 4U + i], sim_clc_d[n],
+            uint8_t dv = (((sim_clc_hooked[n] >> i) & 1U) != 0U)
+                ? (uint8_t)((sim_clc_d[n] >> i) & 1U)
+                : sim_clc_sel(n, i, prev);
+            d = (uint8_t)(d | (uint8_t)(dv << i));
+        }
+        for (i = 0U; i < 4U; i++)
+        {
+            uint8_t g = sim_clc_gate(pic16f1508_sim_sfr[base + 4U + i], d,
                                      (uint8_t)((pol >> i) & 1U));
             g0 = (uint8_t)(g0 | (uint8_t)(g << i));
         }
@@ -445,6 +534,7 @@ void pic16f1508_sim_reset(void)
     pic16f1508_sim_sfr[PIC_REG_PR2] = 0xFFU;
     memset(sim_input_value, 0, sizeof sim_input_value);
     memset(sim_clc_d, 0, sizeof sim_clc_d);
+    memset(sim_clc_hooked, 0, sizeof sim_clc_hooked);
     memset(sim_clc_q, 0, sizeof sim_clc_q);
     memset(sim_clc_g1, 0, sizeof sim_clc_g1);
     memset(sim_clc_out, 0, sizeof sim_clc_out);
@@ -538,6 +628,7 @@ void pic16f1508_sim_drive_input(char port, uint8_t pin, uint8_t level)
 
 /**
  * @brief Drive one Dx level into a CLC cell's gate logic.
+ * @details Marks the Dx hook-driven: it wins over the SEL decode until reset.
  * @param cell Cell index 0..3 (CLC1 is 0). Out of range is ignored.
  * @param input Data input 1..4. Any other value is ignored.
  * @param level Nonzero drives high, zero drives low.
@@ -551,6 +642,7 @@ void pic16f1508_sim_drive_clc_input(uint8_t cell, uint8_t input, uint8_t level)
         return;
     }
     bit = (uint8_t)(1U << (input - 1U));
+    sim_clc_hooked[cell] |= bit;
     if (level != 0U)
     {
         sim_clc_d[cell] |= bit;

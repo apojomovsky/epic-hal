@@ -1,10 +1,10 @@
 /**
  * CLC switch-debouncer probe, AN2805 2-CLC shape on 2-input D cells.
- * Host-only: the slow clock and switch arrive through the Dx hook (SEL codes
- * stored, not decoded), and the probe closes the unrouted inter-cell wire by
- * re-driving STAGE2 D2 from the live STAGE1 output each half clock. STAGE1
- * samples the switch, STAGE2 samples switch AND STAGE1, so a glitch must
- * persist across two slow edges to propagate.
+ * Host-only: the slow clock and switch arrive through the Dx hook (driven
+ * levels win over the SEL decode), and the probe closes the unrouted
+ * inter-cell wire by re-driving STAGE2 D2 from the live STAGE1 output each
+ * half clock. STAGE1 samples the switch, STAGE2 samples switch AND STAGE1,
+ * so a glitch must persist across two slow edges to propagate.
  */
 #include <stddef.h>
 #include "pic16f1508.h"

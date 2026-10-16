@@ -1,8 +1,8 @@
 /**
  * CLC S-R latch demo probe, TB3273 LED-dimmer front half. Host-only: drives
- * Dx levels through pic16f1508_sim_drive_clc_input (SEL codes are stored but
- * not decoded), so the Dx levels driven below stand in for the real timer
- * and PWM sources until those drivers land. Wiring mirrors the MCC clc1.c
+ * Dx levels through pic16f1508_sim_drive_clc_input (driven levels win over
+ * the SEL decode), so the Dx levels driven below stand in for the real
+ * timer and PWM sources. Wiring mirrors the MCC clc1.c
  * beat pair: S on D1+D2, R on D3+D4, S-R latch mode, no polarity.
  */
 #include <stddef.h>
