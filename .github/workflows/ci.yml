@@ -489,12 +489,12 @@ jobs:
       # through TMR0IE, bit 5) every 65536 steps (prescaler 256 x count
       # 256); INTCON is a mirrored register, so the gate needs no SFR
       # banking. The 1939 gate watches LATB bit 0 (0x010D, bank 2) for
-      # the same reason. The 877A and 887 tick gates raise the Timer2
-      # flag (PIR1 bit 1 through TMR2IE, PIE1 bit 1) every 200 steps and
-      # watch the 500 ms LED, a full on plus off every 1000 interrupts.
-      # Their sample geometry differs from the blink legs on purpose: a
-      # 200000-step sample is two LED cycles, so every sample lands on
-      # the same phase and the gate never sees a transition. The 4550
+      # the same reason. The 877A and 887 tick gates raise TMR2IF (PIR1
+      # bit 1), gated by TMR2IE (PIE1 bit 1), every 200 steps and watch
+      # the 500 ms LED, a full on plus off every 1000 interrupts. Their
+      # sample geometry differs from the blink legs on purpose: a
+      # 200000-step sample is one whole LED cycle, so every sample lands
+      # on the same phase and the gate never sees a transition. The 4550
       # tick gate stays out for the PIC18 reason above.
       - name: Sim gates (crates/sim)
         if: steps.noncode.outputs.non_code != 'true'

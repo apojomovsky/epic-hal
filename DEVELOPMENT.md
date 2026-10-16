@@ -332,7 +332,7 @@ make sim-epiccc HEX=build/epiccc/16F877A-<example>.hex DEVICE=PIC16F877A \
 
 The tick sample geometry is load-bearing: the LED does a full on plus
 off every 1000 interrupts, so a 200000-step sample at IRQ_EVERY=200 is
-two whole cycles and every sample lands on the same phase. 24 samples
+one whole cycle and every sample lands on the same phase. 24 samples
 of 500000 steps is 2.5 cycles per sample, so consecutive samples
 alternate.
 
