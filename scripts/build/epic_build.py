@@ -346,14 +346,16 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     flags.append(f"-DFOSC_HZ={fosc_hz}")
     cflags = " ".join(flags)
 
-    # Link with device + optimization only. The link inputs are prebuilt
-    # objects, so -std/-Wall/-D/-I are void there; worse, XC8 v4.00
-    # forwards them into its runtime-support compile (__eeprom.c) and
-    # miscompiles it for the 16F628A with any extras present
-    # (epic-hal#136: undeclared-identifier errors on EECON1bits et al).
-    # -O2 stays: it still governs support codegen.
-    linkflags = f"-mdfp={dfp_dir} -mcpu={mcu.lower()} -O2" if dfp_dir \
-        else f"-mcpu={mcu.lower()} -O2"
+    # Link carries device + optimization + the two whole-program warning
+    # suppressions. -std/-Wall/-D/-I stay off the link line: XC8 v4.00
+    # forwards them into its runtime-support compile and miscompiles the
+    # 16F628A support (epic-hal#136). -Wno-759/-Wno-2098 are exempt: they
+    # only suppress diagnostics, never codegen. They must be here because
+    # the link-stage analysis emits them (epic-hal#393: provably-NULL
+    # callback slots in callback-free links; a registering link keeps the
+    # callw with no warning), out of reach of the compile-line copies.
+    linkflags = f"-mdfp={dfp_dir} -mcpu={mcu.lower()} -O2 -Wno-759 -Wno-2098" if dfp_dir \
+        else f"-mcpu={mcu.lower()} -O2 -Wno-759 -Wno-2098"
 
     example_name, _ = _example_name_and_config(manifest, module, mcu, variant)
     target = f"{build_dir}/{mcu}-{example_name}.hex"
