@@ -56,7 +56,7 @@ the slow clock, STAGE2 samples switch AND STAGE1, both mode 5) is probe
 `example_clc_debounce` on the host and D-flop plus filter-gate sections of
 the mdb gate on target; the slow clock is the `EPIC_TIMER2` free-run below.
 The quadrature-decoder-assist demo (two mode-6 J-K cells, each
-clocking on one encoder line while the other sets it, with a software
+clocking on one encoder line while the other sets it, with a TMR1 position
 counter and a 10-LED bar on RC0..RC7, RA4, RA5) is probe `example_clc_quad`
 on the host and a J-K section of the mdb gate on target; the counter path
 is the `EPIC_TIMER1` T1CKI counter below (no TMR3 on this part).
