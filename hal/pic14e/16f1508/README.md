@@ -82,7 +82,7 @@ Not yet implemented (deliberate scope limit, each its own follow-up):
 - Timer0, CCP, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
   comparators, DAC, FVR, NCO, CWG, and the SR latch.
 - Wiring the landed timer drivers into the demos (the debouncer TMR2 clock,
-  the quadrature TMR1 counter, the on-silicon TB3273 auto-dimmer) and the
+  the on-silicon TB3273 auto-dimmer) and the
   CLC sequential modes on the mdb gate (modes 3, 5 and 6 run in the gate;
   modes 4 and 7 and cross-cell cascades run host-only; MPLAB-SIM shapes
   the gate, see MANUAL.md, #383). The sweep itself is probe
