@@ -19,8 +19,9 @@ XC8_VERSION     := $(shell grep -m1 '^ARG XC8_VERSION=' $(DOCKERFILE) | cut -d= 
 PIC16_DFP_VER   := $(shell grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' $(DOCKERFILE) | cut -d= -f2)
 PIC18_DFP_VER   := $(shell grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' $(DOCKERFILE) | cut -d= -f2)
 PIC1216F1_DFP_VER := $(shell grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' $(DOCKERFILE) | cut -d= -f2)
+PIC16F1XXXX_DFP_VER := $(shell grep -m1 '^ARG PIC16F1XXXX_DFP_VERSION=' $(DOCKERFILE) | cut -d= -f2)
 MPLABX_VERSION  := $(shell grep -m1 '^ARG MPLABX_VERSION=' $(DOCKERFILE) | cut -d= -f2)
-IMAGE_TAG       := xc8-v$(XC8_VERSION)-dfp$(PIC16_DFP_VER)-$(PIC18_DFP_VER)-$(PIC1216F1_DFP_VER)-mplabx$(MPLABX_VERSION)
+IMAGE_TAG       := xc8-v$(XC8_VERSION)-dfp$(PIC16_DFP_VER)-$(PIC18_DFP_VER)-$(PIC1216F1_DFP_VER)-$(PIC16F1XXXX_DFP_VER)-mplabx$(MPLABX_VERSION)
 
 LOCAL_IMAGE     := epic-hal-toolchain:local
 # GHCR_OWNER is not auto-derived from `git remote` here (unlike
@@ -293,7 +294,7 @@ mdb-test: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
 		echo "usage: make mdb-test MODULE=<module id or dir> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio] [EXTRA_MDB=<mdb commands>] [EEPROM_WRITES=<n>]" >&2; \
 		echo "  MODE=uart (default) for PIC16F87XA/PIC18Fxxxx (UART capture);" >&2; \
-		echo "  MODE=gpio for PIC16F193X/PIC16F1508 (RA0 register readback)." >&2; \
+		echo "  MODE=gpio for PIC16F193X/PIC16F1508/PIC16F188XX (RA0 register readback)." >&2; \
 		echo "  EXTRA_MDB: extra mdb commands inserted before quit, e.g." >&2; \
 		echo "    EXTRA_MDB=\$'print INTCON\\nprint PIR1' for register-level debugging." >&2; \
 		echo "  EEPROM_WRITES: halt+complete EEPROM-write cycles emitted before the final run" >&2; \

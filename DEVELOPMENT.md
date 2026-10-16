@@ -82,7 +82,7 @@ version; the targets in this section are the full command reference.
 ## The two device-pack trees
 
 The image carries every device pack twice, and the two copies are not
-the same version. The Dockerfile downloads the three DFPs at its ARG
+the same version. The Dockerfile downloads the four DFPs at its ARG
 versions into the XC8 tree
 (`/opt/microchip/xc8/v${XC8_VERSION}/pic/packs/Microchip.PIC16Fxxx_DFP`);
 the manifest's per-family `dfp_version`, the bundle QUICKSTART

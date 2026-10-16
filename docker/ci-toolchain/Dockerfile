@@ -15,6 +15,7 @@ ARG XC8_VERSION=4.00
 ARG PIC16FXXX_DFP_VERSION=1.7.162
 ARG PIC18FXXXX_DFP_VERSION=1.7.171
 ARG PIC12_16F1XXX_DFP_VERSION=1.9.258
+ARG PIC16F1XXXX_DFP_VERSION=1.32.471
 ARG MPLABX_VERSION=6.35
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -49,7 +50,7 @@ RUN set -eu; \
         "Uninstall MPLAB XC8 C Compiler.desktop" \
         Uninstall-xc8-v4.00 Uninstall-xc8-v4.dat
 
-# None of the three DFPs is bundled with the standalone XC8 v4.00
+# None of the four DFPs is bundled with the standalone XC8 v4.00
 # installer. Unzipped to the paths this repo's
 # mcu/*-mplabx/Makefile DFP_DIR override targets (xc8-build.yml passes
 # DFP_DIR explicitly, these paths don't match the Makefiles' own
@@ -58,7 +59,8 @@ RUN set -eu; \
     for pack_ver in \
         "Microchip.PIC16Fxxx_DFP:${PIC16FXXX_DFP_VERSION}" \
         "Microchip.PIC18Fxxxx_DFP:${PIC18FXXXX_DFP_VERSION}" \
-        "Microchip.PIC12-16F1xxx_DFP:${PIC12_16F1XXX_DFP_VERSION}"; \
+        "Microchip.PIC12-16F1xxx_DFP:${PIC12_16F1XXX_DFP_VERSION}" \
+        "Microchip.PIC16F1xxxx_DFP:${PIC16F1XXXX_DFP_VERSION}"; \
     do \
         pack="${pack_ver%%:*}"; \
         ver="${pack_ver##*:}"; \
@@ -119,6 +121,6 @@ RUN set -eu; \
         ATautomotive_DFP \
         PIC18F-Q_DFP PIC18F-K_DFP PIC18F-J_DFP PIC10-12Fxxx_DFP \
         PIC12-16Cxxx_DFP PIC18Cxxx_DFP MCPxxxx_DFP PIC-8bitAC_DFP \
-        MCVxxxx_DFP PIC16F1xxxx_DFP
+        MCVxxxx_DFP
 
 ENV PATH="${XC8_INSTALL_DIR}/bin:${MPLABX_INSTALL_DIR}/mplab_platform/bin:${PATH}"
