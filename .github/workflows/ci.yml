@@ -437,6 +437,10 @@ jobs:
         run: |
           make epiccc-build MODULE=hal/pic14/16f87xa MCU=16F877A EPIC_CC_HOST=1
           make epiccc-build MODULE=hal/pic14/16f88x MCU=16F887 EPIC_CC_HOST=1
+          # The 877A and 887 tick legs (epic-hal#445): the lib/tick 1 ms
+          # timebase on the same two dice, gated below on the 500 ms LED.
+          make epiccc-build MODULE=lib/tick MCU=16F877A EPIC_CC_HOST=1
+          make epiccc-build MODULE=lib/tick MCU=16F887 EPIC_CC_HOST=1
           make epiccc-build MODULE=lib/settings MCU=18F4550 EPIC_CC_HOST=1
           make epiccc-build MODULE=lib/sdcard MCU=18F4550 EPIC_CC_HOST=1
           make epiccc-build MODULE=hal/pic14e/16f193x MCU=16F1939 EPIC_CC_HOST=1
@@ -485,10 +489,12 @@ jobs:
       # through TMR0IE, bit 5) every 65536 steps (prescaler 256 x count
       # 256); INTCON is a mirrored register, so the gate needs no SFR
       # banking. The 1939 gate watches LATB bit 0 (0x010D, bank 2) for
-      # the same reason. The 877A and 887 tick gates are not run here yet:
-      # they pass locally under make sim-epiccc (IRQ_EVERY=200, PIR1:1,
-      # PIE1:1) now that crates/sim applies banked SFR writes (epic-cc#173,
-      # closed), so adding them is a config change in this job. The 4550
+      # the same reason. The 877A and 887 tick gates raise TMR2IF (PIR1
+      # bit 1), gated by TMR2IE (PIE1 bit 1), every 200 steps and watch
+      # the 500 ms LED, a full on plus off every 1000 interrupts. Their
+      # sample geometry differs from the blink legs on purpose: a
+      # 200000-step sample is one whole LED cycle, so every sample lands
+      # on the same phase and the gate never sees a transition. The 4550
       # tick gate stays out for the PIC18 reason above.
       - name: Sim gates (crates/sim)
         if: steps.noncode.outputs.non_code != 'true'
@@ -500,6 +506,14 @@ jobs:
           "$runner" --hex build/epiccc/16F887-blink.hex --device 16F887 \
             --watch PORTB:0 --samples 12 --steps 200000 \
             --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
+          # 24 samples of 500000 steps is 2.5 LED cycles per sample, so
+          # consecutive samples land on opposite phases (epic-hal#445).
+          "$runner" --hex build/epiccc/16F877A-tick.hex --device 16F877A \
+            --watch PORTB:0 --samples 24 --steps 500000 \
+            --irq-every 200 --irq-flag PIR1:1 --irq-enable PIE1:1
+          "$runner" --hex build/epiccc/16F887-tick.hex --device 16F887 \
+            --watch PORTB:0 --samples 24 --steps 500000 \
+            --irq-every 200 --irq-flag PIR1:1 --irq-enable PIE1:1
           "$runner" --hex build/epiccc/16F1939-firmware.hex --device 16F1939 \
             --watch LATB:0 --samples 12 --steps 200000 \
             --irq-every 65536 --irq-flag INTCON:2 --irq-enable INTCON:5
