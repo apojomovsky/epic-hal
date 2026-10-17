@@ -328,6 +328,23 @@ int main(void)
     ok &= (EPIC_SSP_I2C_Stop() == EPIC_OK);
     (void)wait_idle();
 
+    /* A receive that ends while the previous byte is unread sets SSPOV
+     * and keeps the first byte, as on the SPI side. */
+    ok &= (EPIC_SSP_I2C_Start() == EPIC_OK);
+    (void)wait_idle();
+    ok &= (i2c_write(0xA1U) == 1U);
+    ok &= (EPIC_SSP_I2C_ReceiveEnable() == EPIC_OK);
+    (void)wait_idle();
+    ok &= (EPIC_SSP_IsBufferFull() == 1U);
+    ok &= (EPIC_SSP_I2C_ReceiveEnable() == EPIC_OK);
+    (void)wait_idle();
+    ok &= (EPIC_SSP_HasOverflow() == 1U);
+    ok &= (EPIC_SSP_ReadByte() == 0xDEU);
+    EPIC_SSP_ClearOverflow();
+    ok &= (EPIC_SSP_HasOverflow() == 0U);
+    ok &= (EPIC_SSP_I2C_Stop() == EPIC_OK);
+    (void)wait_idle();
+
     /* Bus collision is a PIR3 flag with its own read and clear. */
     ok &= (EPIC_SSP_I2C_HasBusCollision() == 0U);
     EPIC_REG8(PIC_REG_PIR3) |= PIC_PIR3_BCL1IF;

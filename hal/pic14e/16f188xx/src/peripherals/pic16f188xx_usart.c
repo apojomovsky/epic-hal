@@ -149,6 +149,8 @@ EPIC_StatusTypeDef EPIC_USART_DeInit(void)
     epic_sfr_write8(PIC_REG_SP1BRGH, 0U);
     s_tx_cb = NULL;
     s_rx_cb = NULL;
+    s_rx_byte = 0U;
+    s_rx_9d = 0U;
     return EPIC_OK;
 }
 

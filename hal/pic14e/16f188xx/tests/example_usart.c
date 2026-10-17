@@ -102,6 +102,8 @@ int main(void)
      * and TX1REG is empty. */
     h.SPBRG = 207U;
     ok &= (EPIC_USART_Init(&h) == EPIC_OK);
+    ok &= (EPIC_USART_IsTxBufferEmpty() == 1U);
+    ok &= (EPIC_USART_IsTxShiftRegisterEmpty() == 1U);
     step(1U);
     ok &= (EPIC_REG8(PIC_REG_SP1BRGL) == 0xCFU);
     ok &= (EPIC_REG8(PIC_REG_SP1BRGH) == 0x00U);
@@ -234,6 +236,7 @@ int main(void)
     ok &= (s_rx_last == 0x55U);
     ok &= (s_rx_last9 == 1U);
     ok &= (EPIC_USART_DeInit() == EPIC_OK);
+    ok &= (EPIC_USART_GetLastRX9D() == 0U);
     step(4U);
     ok &= (s_rx_calls == 2U);
 

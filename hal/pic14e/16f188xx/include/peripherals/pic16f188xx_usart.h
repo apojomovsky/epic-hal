@@ -82,7 +82,8 @@ typedef struct {
  * (BRG16), then RC1STA (SPEN, RX9, CREN, ADDEN) last so the port goes live
  * fully configured. TXIE stays off: TXIF is set whenever the buffer is
  * empty, so a callback fires only after EPIC_USART_EnableTxInterrupt.
- * RCIE is enabled only with an RX callback.
+ * RCIE is enabled only with an RX callback. AddressDetect is ignored unless
+ * DataWidth is 9-bit.
  * @param h Handle with baud, width and callbacks.
  * @return EPIC_OK on success, EPIC_INVALID for a NULL or out-of-range handle
  *         (including SPBRG above 255 on the 8-bit generator).

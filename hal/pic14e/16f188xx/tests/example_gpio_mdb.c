@@ -39,7 +39,7 @@
  * vectored one-shot TX interrupt; the MSSP1 SPI and I2C images, an I2C
  * START request, an SPI byte where the target shifts it (MPLAB SIM does
  * not) and a software-set SSP1IF that vectors. The PPS lock section runs
- * last: PPS1WAY, the XC8 default, allows one unlock and one lock per reset.
+ * last; the gate config sets PPS1WAY=OFF so the unlock path is real.
  */
 #include "pic16f188xx.h"
 #include "peripherals/pic16f188xx_gpio.h"
@@ -457,7 +457,7 @@ int main(void)
     }
 
     /* EUSART, MSSP and PPS register images and vectored interrupts. The
-     * PPS lock goes last: PPS1WAY permits one unlock and one lock. */
+     * PPS lock goes last: while locked, mapping and DeInit are refused. */
     ok &= gate_pps();
     ok &= gate_usart();
     ok &= gate_ssp();

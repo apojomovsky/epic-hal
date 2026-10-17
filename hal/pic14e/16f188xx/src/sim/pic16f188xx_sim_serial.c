@@ -6,8 +6,8 @@
  * SSP1BUF read pops or clears, and the read-only status bits keep their
  * hardware value across a software write. Timing runs on instruction ticks
  * (Fosc/4): a baud-generator or SCK period is derived from the programmed
- * divisors. Bus collision, SPI slave, I2C slave, framing errors and the
- * PPS1WAY one-shot are not modelled.
+ * divisors. Bus collision, the SPI and I2C slave modes, framing errors and
+ * the PPS1WAY one-shot are not modelled.
  */
 #include <stddef.h>
 #include <stdint.h>
@@ -284,6 +284,7 @@ void pic16f188xx_sim_sfr_write8(uint16_t addr, uint8_t value)
     case PIC_REG_TX1STA:
         *cell(addr) = (uint8_t)((value & (uint8_t)~PIC_TX1STA_TRMT) |
                                 (old & PIC_TX1STA_TRMT));
+        sim_usart_flags();
         break;
     case PIC_REG_RC1STA:
     {
@@ -301,6 +302,7 @@ void pic16f188xx_sim_sfr_write8(uint16_t addr, uint8_t value)
         }
         *cell(addr) = nv;
         sim_rx_sync();
+        sim_usart_flags();
         break;
     }
     case PIC_REG_BAUD1CON:
@@ -510,8 +512,15 @@ static void sim_ssp_complete(void)
         {
             byte = sim_i2c_tx[sim_i2c_tx_idx++];
         }
-        *cell(PIC_REG_SSP1BUF) = byte;
-        *cell(PIC_REG_SSP1STAT) |= PIC_SSP1STAT_BF;
+        if ((*cell(PIC_REG_SSP1STAT) & PIC_SSP1STAT_BF) != 0U)
+        {
+            *cell(PIC_REG_SSP1CON1) |= PIC_SSP1CON1_SSPOV;
+        }
+        else
+        {
+            *cell(PIC_REG_SSP1BUF) = byte;
+            *cell(PIC_REG_SSP1STAT) |= PIC_SSP1STAT_BF;
+        }
         *cell(PIC_REG_SSP1CON2) &= (uint8_t)~PIC_SSP1CON2_RCEN;
         sim_i2c_note((uint16_t)(PIC16F188XX_SIM_I2C_READ | byte));
         break;
