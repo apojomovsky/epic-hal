@@ -16,8 +16,6 @@ Self-contained probes, each with its own README recording the question, the
 method, the results and the conclusion. See the
 [experiments index](experiments/README.md) for the full list.
 
-- [math-cycle-benchmark](experiments/math-cycle-benchmark/README.md): lib/math
-  hand asm against XC8 native arithmetic, cycles per operation across -O levels.
 - [math-cycle-benchmark-epiccc](experiments/math-cycle-benchmark-epiccc/README.md):
   the lib/math C path under epic-cc, cycles per operation.
 

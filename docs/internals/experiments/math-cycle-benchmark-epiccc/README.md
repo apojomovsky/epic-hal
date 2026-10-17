@@ -3,9 +3,9 @@
 Status: 2026-08-26. Records the cycle benchmark of lib/math's portable C
 path (`src/host/` + `src/common/`) compiled by epic-cc on the PIC14
 devices, the measurement epic-hal#90 exists to produce. Same probe shape,
-same operands, same TMR1 method as the hand-asm benchmark in
-`docs/internals/experiments/math-cycle-benchmark/`, so the numbers line up directly
-against that directory's tables.
+same operands, same TMR1 method as the hand-asm benchmark (moved to the
+private epic-benchmarks repo), so the numbers line up directly against
+that benchmark's tables.
 
 ## Question
 
@@ -59,10 +59,10 @@ the fixed-cycle property the asm advertises?
 | mul_u16   | 302             | 797                  | 497                  |
 | divmod_u16| 441             | 1000                 | 485                  |
 
-The hand-asm column is the 877A `-O2` column of the hand-asm benchmark's
-table (the shipped build level). "native" is the same C operators
-(`a + b`, `a * b`, `a / b`) compiled by epic-cc, the inlined-arithmetic
-baseline.
+The hand-asm column is the 877A shipped-build-level column of the hand-asm
+benchmark's table (moved to the private epic-benchmarks repo). "native" is
+the same C operators (`a + b`, `a * b`, `a / b`) compiled by epic-cc, the
+inlined-arithmetic baseline.
 
 ## What the numbers say
 
