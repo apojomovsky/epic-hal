@@ -7,8 +7,10 @@ records the hub commit the copy came from and the sha256 of the copy.
 
 `check` runs from docs_gen.py (make docs-gen and the CI docs job) and fails
 when the copy no longer matches its recorded checksum, which means it was
-edited here. It is local and never touches the network. `sync` fetches the
-hub file at a commit and rewrites the copy and the record; only that
+edited here. It also fails when the copy or the record no longer matches the
+HUB_SHA256 pin below, so recomputing the record after an edit cannot pass.
+It is local and never touches the network. `sync` fetches the
+hub file at a commit and rewrites the copy, the record and the pin; only that
 make target needs the network.
 """
 
@@ -29,9 +31,16 @@ COPY = "docs/snippets/ways-to-use-epic8.md"
 RECORD = "docs/snippets/SHARED-INCLUDES"
 RAW_URL = "https://raw.githubusercontent.com/{hub}/{commit}/{path}"
 
+# Digest of the hub file at the synced commit. check() compares the copy
+# against this, so editing the copy and recomputing the record cannot pass.
+# sync --ref rewrites this line along with the copy and the record.
+HUB_SHA256 = "0a54fe1e12c604163cf3ab0533bd04f1593818c0607f59fa566bb874ae31eb40"
+
 _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 _DIGEST_RE = re.compile(r"^[0-9a-f]{64}$")
 _SYNC_HINT = "run make sync-shared-includes REF=<epic-docs commit sha>"
+_PIN_RE = re.compile(r"^HUB_SHA256 = \"[0-9a-f]{64}\"$", re.M)
+_SELF = pathlib.Path(__file__).resolve().relative_to(ROOT)
 
 
 def sha256_hex(data: bytes) -> str:
@@ -88,6 +97,15 @@ def check(root: pathlib.Path) -> list[str]:
             f"{COPY} does not match its recorded sha256: it was edited here."
             f" Restore it with git checkout, or change {HUB}:{HUB_FILE}"
             f" and {_SYNC_HINT}")
+    if digest_ok and digest != HUB_SHA256:
+        problems.append(
+            f"{RECORD}: sha256 does not match the pinned hub digest"
+            f" {HUB_SHA256}; {_SYNC_HINT}")
+    if copy_path.is_file() and sha256_hex(copy_path.read_bytes()) != HUB_SHA256:
+        problems.append(
+            f"{COPY} does not match the pinned hub digest {HUB_SHA256}:"
+            f" it was edited here or synced without the pin."
+            f" Restore it with git checkout, or {_SYNC_HINT}")
     return problems
 
 
@@ -95,6 +113,15 @@ def fetch_hub(commit: str) -> bytes:
     url = RAW_URL.format(hub=HUB, commit=commit, path=HUB_FILE)
     with urllib.request.urlopen(url, timeout=30) as resp:
         return resp.read()
+
+
+def rewrite_pin(script_path: pathlib.Path, digest: str) -> None:
+    """Point the HUB_SHA256 line at `digest`; missing line is an error."""
+    text = script_path.read_text()
+    updated, count = _PIN_RE.subn(f'HUB_SHA256 = "{digest}"', text, count=1)
+    if count != 1:
+        raise ValueError(f"{script_path}: HUB_SHA256 line not found")
+    script_path.write_text(updated)
 
 
 def sync(root: pathlib.Path, commit: str, fetch=fetch_hub) -> str:
@@ -110,6 +137,9 @@ def sync(root: pathlib.Path, commit: str, fetch=fetch_hub) -> str:
     (root / COPY).parent.mkdir(parents=True, exist_ok=True)
     (root / COPY).write_bytes(data)
     (root / RECORD).write_text(render_record(commit, digest))
+    script_path = root / _SELF
+    if script_path.is_file():
+        rewrite_pin(script_path, digest)
     return digest
 
 
