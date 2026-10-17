@@ -15,8 +15,8 @@
 
 /**
  * @brief Clock source (T0CON1<T0CS2:T0CS0>, DS40001825F Register 27-2).
- *        T0CKIPPS needs a PPS pin mapping, which this HAL does not set
- *        up yet, so those two rows count but never tick in the sim.
+ *        T0CKIPPS counts edges on the pin EPIC_PPS_MapInput routes to
+ *        PPS_INPUT_T0CKI (POR pin RA4); the pin must be a digital input.
  */
 typedef enum {
     TIMER0_CS_T0CKIPPS      = 0x0U,

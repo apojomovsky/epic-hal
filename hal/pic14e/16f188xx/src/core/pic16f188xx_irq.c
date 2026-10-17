@@ -46,6 +46,21 @@ void EPIC_IRQ_Enable(PIC16F188XX_IRQn irq)
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE0), PIC_PIE0_TMR0IE);
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
     }
+    else if (irq == PIC16F188XX_IRQ_SSP1)
+    {
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE3), PIC_PIE3_SSP1IE);
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
+    }
+    else if (irq == PIC16F188XX_IRQ_USART_TX)
+    {
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE3), PIC_PIE3_TXIE);
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
+    }
+    else if (irq == PIC16F188XX_IRQ_USART_RX)
+    {
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE3), PIC_PIE3_RCIE);
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
+    }
 }
 
 /**
@@ -64,12 +79,25 @@ void EPIC_IRQ_DisableSrc(PIC16F188XX_IRQn irq)
     {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE0), PIC_PIE0_TMR0IE);
     }
+    else if (irq == PIC16F188XX_IRQ_SSP1)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE3), PIC_PIE3_SSP1IE);
+    }
+    else if (irq == PIC16F188XX_IRQ_USART_TX)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE3), PIC_PIE3_TXIE);
+    }
+    else if (irq == PIC16F188XX_IRQ_USART_RX)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE3), PIC_PIE3_RCIE);
+    }
 }
 
 /**
  * @brief Clear the interrupt request flag for a source.
  * @details Constant mask so the clear compiles to a single bit-clear on the
- * flag register, not a read-modify-write with a runtime mask.
+ * flag register, not a read-modify-write with a runtime mask. TXIF and RCIF
+ * are read-only status that hardware clears, so those two sources do nothing.
  * @param irq Interrupt source whose flag to clear.
  */
 void EPIC_IRQ_ClearFlag(PIC16F188XX_IRQn irq)
@@ -78,6 +106,7 @@ void EPIC_IRQ_ClearFlag(PIC16F188XX_IRQn irq)
     {
     case PIC16F188XX_IRQ_IOC:  EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR0), PIC_PIR0_IOCIF); break;
     case PIC16F188XX_IRQ_TMR0: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR0), PIC_PIR0_TMR0IF); break;
+    case PIC16F188XX_IRQ_SSP1: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_SSP1IF); break;
     default:                   break;
     }
 }
@@ -96,6 +125,18 @@ uint8_t EPIC_IRQ_GetFlag(PIC16F188XX_IRQn irq)
     if (irq == PIC16F188XX_IRQ_TMR0)
     {
         return (EPIC_REG8(PIC_REG_PIR0) & PIC_PIR0_TMR0IF) ? 1U : 0U;
+    }
+    if (irq == PIC16F188XX_IRQ_SSP1)
+    {
+        return (EPIC_REG8(PIC_REG_PIR3) & PIC_PIR3_SSP1IF) ? 1U : 0U;
+    }
+    if (irq == PIC16F188XX_IRQ_USART_TX)
+    {
+        return (EPIC_REG8(PIC_REG_PIR3) & PIC_PIR3_TXIF) ? 1U : 0U;
+    }
+    if (irq == PIC16F188XX_IRQ_USART_RX)
+    {
+        return (EPIC_REG8(PIC_REG_PIR3) & PIC_PIR3_RCIF) ? 1U : 0U;
     }
     return 0U;
 }

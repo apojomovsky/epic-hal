@@ -210,7 +210,8 @@ int main(void)
     ok &= (EPIC_REG8(PIC_REG_T0CON1) == 0x60U);
     ok &= (EPIC_TIMER0_DeInit() == EPIC_OK);
 
-    /* External rows never tick in the sim: 50 ticks move nothing. */
+    /* An external row with an idle pin never ticks: 50 ticks move nothing
+     * (edge counting on a mapped pin is covered by example_pps). */
     h.ClockSource = TIMER0_CS_T0CKIPPS_INV;
     h.Period = 7U;
     ok &= (EPIC_TIMER0_Init(&h) == EPIC_OK);

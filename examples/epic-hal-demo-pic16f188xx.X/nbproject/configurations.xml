@@ -26,6 +26,9 @@
       <logicalFolder name="peripherals" displayName="peripherals" projectFiles="true">
         <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_gpio.c</itemPath>
         <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer0.c</itemPath>
+        <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_pps.c</itemPath>
+        <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_usart.c</itemPath>
+        <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_ssp.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>
