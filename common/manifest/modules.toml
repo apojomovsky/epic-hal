@@ -4954,6 +4954,8 @@ includes    = [
 hal_sources = [
   "hal/pic14e/16f188xx/src/peripherals/pic16f188xx_gpio.c",
   "hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer0.c",
+  "hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer1.c",
+  "hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer2.c",
   "hal/pic14e/16f188xx/src/core/pic16f188xx_irq.c",
   "hal/pic14e/16f188xx/src/core/pic16f188xx_irq_dispatch.c",
   "hal/pic14e/16f188xx/src/target/pic16f188xx_isr_vector.c",

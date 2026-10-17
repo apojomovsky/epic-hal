@@ -83,11 +83,11 @@
 #define PIC16F188XX_FAMILY_IOCC_MASK  0xFFU
 #define PIC16F188XX_FAMILY_IOCD_MASK  0x00U
 #define PIC16F188XX_FAMILY_IOCE_MASK  0x00U
-/* Timer drivers are not ported yet, except Timer0; demos gate timer use
- * on these so the same demo source builds once they land. */
+/* Timer0, Timer1 and Timer2 have drivers; demos gate timer use on these
+ * so the same demo source builds across the PIC14E families. */
 #define PIC16F188XX_HAS_TMR0 1
-#define PIC16F188XX_HAS_TMR1 0
-#define PIC16F188XX_HAS_TMR2 0
+#define PIC16F188XX_HAS_TMR1 1
+#define PIC16F188XX_HAS_TMR2 1
 
 #include "pic16f188xx_sfr.h"
 

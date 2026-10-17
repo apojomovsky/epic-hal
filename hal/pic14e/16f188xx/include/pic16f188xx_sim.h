@@ -1,6 +1,6 @@
 /**
  * Host simulator API for the PIC16F188xx ports, interrupt-on-change and
- * Timer0. Host-only: never in an XC8 build.
+ * Timer0..Timer2. Host-only: never in an XC8 build.
  */
 #ifndef PIC16F188XX_SIM_H
 #define PIC16F188XX_SIM_H
@@ -15,7 +15,7 @@ typedef void (*pic16f188xx_sim_irq_cb_t)(void);
 void pic16f188xx_sim_reset(void);
 
 /**
- * @brief Sample pins and IOC once per tick, advancing Timer0 each tick.
+ * @brief Sample pins and IOC once per tick, advancing the timers each tick.
  * @param ticks Instruction ticks to advance.
  */
 void pic16f188xx_sim_step(uint32_t ticks);
