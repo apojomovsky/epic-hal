@@ -1,12 +1,15 @@
 """Public text must not carry XC8 size or speed figures (epic-hal#450).
 
 XC8 numbers are confidential under the XC8 licence (section 8) and live in
-the private epic-benchmarks repository. The rule: a mention of XC8 within a
-line or two of a measurement (a number of three or more digits with a size or
-cycle unit, a ratio, or a used/total pair) is rejected in tracked docs and
-manifest strings. Power-of-two figures are device capacities
-(512 words, 2048 bytes), not measurements, and version numbers, error codes
-and part numbers carry no unit, so none of them trip the rule."""
+the private epic-benchmarks repository. Two shapes are rejected in tracked
+docs and manifest strings. Prose: a mention of XC8 within a line or two of
+a measurement (a number of three or more digits with a size or cycle unit,
+a ratio, or a used/total pair). Tables: a markdown table whose header row
+names XC8 or "native -O" in some column, with digit-carrying cells under
+that column; the rows carry the figures while no single row names the
+compiler, so the prose window misses them. Power-of-two figures are device
+capacities (512 words, 2048 bytes), not measurements, and version numbers,
+error codes and part numbers carry no unit, so none of them trip the rule."""
 import pathlib
 import re
 import subprocess
@@ -28,6 +31,49 @@ _BARE = re.compile(r"\bxc8\W{1,3}\d{3,}", re.IGNORECASE)
 _RATIO = re.compile(r"(?<![\w.])\d+\.\d+x\b")
 _USED_OF_TOTAL = re.compile(r"(?<![\w.])\d{3,}\s*/\s*\d{3,}\b")
 WINDOW_AFTER = 1
+_NATIVE_O = re.compile(r"native\s*-O", re.IGNORECASE)
+_TABLE_NOISE = re.compile(r"#\d+|\b\d{4}-\d\d-\d\d\b")
+_DIGIT = re.compile(r"\d")
+_SEP_ROW = re.compile(r"^[\s|:\-]+$")
+
+
+def _cells(line):
+    return [c.strip() for c in line.strip().strip("|").split("|")]
+
+
+def find_table_figures(text):
+    """Return (line number, line) for numeric rows under XC8 columns.
+
+    Tables whose header row names XC8 or "native -O" in some column carry
+    the figures in that column's rows, with no compiler name on the row
+    itself. Only digit-carrying cells under such a column trip the rule,
+    so status columns (PASS/FAIL) and our own figure columns stay green.
+    """
+    lines = text.split("\n")
+    hits = []
+    i = 0
+    while i < len(lines):
+        if not lines[i].lstrip().startswith("|"):
+            i += 1
+            continue
+        start = i
+        while i < len(lines) and lines[i].lstrip().startswith("|"):
+            i += 1
+        header = _cells(lines[start])
+        flagged = [j for j, cell in enumerate(header)
+                   if _XC8.search(cell) or _NATIVE_O.search(cell)]
+        if not flagged:
+            continue
+        for k in range(start + 1, i):
+            row = lines[k]
+            if _SEP_ROW.match(row):
+                continue
+            cells = _cells(row)
+            if any(j < len(cells) and _DIGIT.search(_TABLE_NOISE.sub(" ", cells[j]))
+                   for j in flagged):
+                hits.append((k + 1, row.strip()))
+    return hits
+
 
 
 def _is_capacity(digits):
@@ -45,7 +91,7 @@ def _has_figure(text):
 
 
 def find_xc8_figures(text):
-    """Return (line number, line) for every XC8 mention near a figure."""
+    """Return (line number, line) for prose hits and table hits combined."""
     lines = text.split("\n")
     hits = []
     for i, line in enumerate(lines):
@@ -57,7 +103,7 @@ def find_xc8_figures(text):
             window = lines[i: i + WINDOW_AFTER + 1]
         if _has_figure(" ".join(window)):
             hits.append((i + 1, line.strip()))
-    return hits
+    return hits + find_table_figures(text)
 
 
 class TestDetector(unittest.TestCase):
@@ -97,6 +143,36 @@ class TestDetector(unittest.TestCase):
 
     def test_no_xc8_no_hit(self):
         self.assertEqual(find_xc8_figures("blink uses 777 words"), [])
+
+    def test_flags_table_rows_under_xc8_or_native_o_header(self):
+        fixture = (
+            "| op | epic asm | native -O0 | native -O3 |\n"
+            "|---|---|---|---|\n"
+            "| widget | 111 | 222 | 333 |\n"
+            "| gadget | 444 | 555 | 666 |\n"
+        )
+        self.assertEqual([n for n, _ in find_xc8_figures(fixture)], [3, 4])
+        xc8_fixture = (
+            "| op | XC8 |\n"
+            "|---|---|\n"
+            "| widget | 111 |\n"
+        )
+        self.assertTrue(find_xc8_figures(xc8_fixture))
+
+    def test_tables_allow_status_and_own_figures(self):
+        for text in (
+            "| Demo | XC8 build | epic-cc flash |\n"
+            "|---|---|---|\n"
+            "| menu | PASS | 11111/16384 |\n",
+            "| Toolchain | Flash (words) |\n"
+            "|---|---|\n"
+            "| XC8 | not published |\n",
+            "| op | epic asm | native under epic-cc |\n"
+            "|---|---|---|\n"
+            "| widget | 111 | 222 |\n",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(find_xc8_figures(text), [])
 
 
 def _tracked_files():
