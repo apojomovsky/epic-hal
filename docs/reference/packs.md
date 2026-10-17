@@ -8,6 +8,7 @@ Every family's XC8 device pack, with the Microchip download, and every release b
 | Family | Pack | Download |
 |---|---|---|
 | PIC16F1508 | `Microchip.PIC12-16F1xxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC12-16F1xxx_DFP.1.9.258.atpack> |
+| PIC16F188XX | `Microchip.PIC16F1xxxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC16F1xxxx_DFP.1.32.471.atpack> |
 | PIC16F193X | `Microchip.PIC12-16F1xxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC12-16F1xxx_DFP.1.9.258.atpack> |
 | PIC16F5x | `Microchip.PIC16Fxxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC16Fxxx_DFP.1.7.162.atpack> |
 | PIC16F628A | `Microchip.PIC16Fxxx_DFP` | <https://packs.download.microchip.com/Microchip.PIC16Fxxx_DFP.1.7.162.atpack> |
@@ -27,6 +28,7 @@ Every family's XC8 device pack, with the Microchip download, and every release b
 | Bundle | Parts inside |
 |---|---|
 | `epic-hal-pic16f1508-<version>.tar.gz` | 16F1508 / 16F1509 |
+| `epic-hal-pic16f188xx-<version>.tar.gz` | 16F18854 / 16F18855 / 16F18856 / 16F18857 / 16F18875 / 16F18876 / 16F18877 |
 | `epic-hal-pic16f193x-<version>.tar.gz` | 16F1933 / 16F1934 / 16F1936 / 16F1937 / 16F1938 / 16F1939 |
 | `epic-hal-pic16f5x-<version>.tar.gz` | 16F505 / 16F506 / 16F57 / 16F59 / 16F54 |
 | `epic-hal-pic16f628a-<version>.tar.gz` | 16F627 / 16F627A / 16LF627A / 16F628 / 16LF628A / 16F648A / 16F628A |

@@ -97,6 +97,7 @@ run_one pic16f193x 16F1939 PIC16F1939 hal/pic14e/16f193x 60000 gpio
 run_one pic16f193x 16F1939 PIC16F1939 lib/tick 5000 gpio
 run_one pic16f193x 16F1939 PIC16F1939 lib/fsm 5000 gpio
 run_one pic16f1508 16F1509 PIC16F1509 hal/pic14e/16f1508 60000 gpio
+run_one pic16f188xx 16F18877 PIC16F18877 hal/pic14e/16f188xx 60000 gpio
 run_one pic16f87xa 16F877A PIC16F877A lib/swuart 15000 uart
 run_one pic16f87xa 16F877A PIC16F877A lib/math 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 lib/math 5000 uart

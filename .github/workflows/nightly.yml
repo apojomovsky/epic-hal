@@ -86,6 +86,11 @@ jobs:
     with:
       family: PIC16F1508
 
+  family-188xx:
+    uses: ./.github/workflows/family-check.yml
+    with:
+      family: PIC16F188XX
+
   # XC8 vs epic-cc demo scoreboard (epic-hal#279): the three flagship
   # 18F4550 demos through scripts/sim/compare-toolchains.sh, one matrix leg
   # per scoreboard row in docs/internals/demo-scoreboard.md. PRs stay
@@ -131,8 +136,9 @@ jobs:
           pic16_dfp_version="$(grep -m1 '^ARG PIC16FXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           pic18_dfp_version="$(grep -m1 '^ARG PIC18FXXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           pic1216f1_dfp_version="$(grep -m1 '^ARG PIC12_16F1XXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
+          pic16f1xxxx_dfp_version="$(grep -m1 '^ARG PIC16F1XXXX_DFP_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
           mplabx_version="$(grep -m1 '^ARG MPLABX_VERSION=' docker/ci-toolchain/Dockerfile | cut -d= -f2)"
-          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-mplabx${mplabx_version}"
+          tag="xc8-v${xc8_version}-dfp${pic16_dfp_version}-${pic18_dfp_version}-${pic1216f1_dfp_version}-${pic16f1xxxx_dfp_version}-mplabx${mplabx_version}"
           image="ghcr.io/${{ github.repository_owner }}/epic-hal-ci:${tag}"
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           if docker pull "$image"; then

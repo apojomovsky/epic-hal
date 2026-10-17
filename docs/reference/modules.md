@@ -18,6 +18,7 @@ Every module in the manifest, with its one-line summary and the families it supp
 | `hal/pic14/16f87xa` | Register-level HAL and smoke firmware for the PIC16F87XA family | PIC16F87XA |
 | `hal/pic14/16f88x` | Register-level HAL and smoke firmware for the PIC16F88X family | PIC16F88X |
 | `hal/pic14e/16f1508` | Register-level HAL and smoke firmware for the PIC16F1508 family | PIC16F1508 |
+| `hal/pic14e/16f188xx` | Register-level HAL and smoke firmware for the PIC16F188xx family | PIC16F188XX |
 | `hal/pic14e/16f193x` | Register-level HAL and smoke firmware for the PIC16F193X family | PIC16F193X |
 | `hal/pic18/18f1320` | Register-level HAL and smoke firmware for the PIC18F1320 family | PIC18F1320 |
 | `hal/pic18/18f2520` | Register-level HAL and smoke firmware for the PIC18F2520 family | PIC18F2520 |

@@ -93,6 +93,18 @@ FAMILIES = {
             ("16F1509", "Microchip.PIC12-16F1xxx_DFP", "pic16f1509.h"),
         ],
     ),
+    "hal/pic14e/16f188xx": (
+        "hal/pic14e/16f188xx/include/pic16f188xx_sfr.h",
+        [
+            ("16F18854", "Microchip.PIC16F1xxxx_DFP", "pic16f18854.h"),
+            ("16F18855", "Microchip.PIC16F1xxxx_DFP", "pic16f18855.h"),
+            ("16F18856", "Microchip.PIC16F1xxxx_DFP", "pic16f18856.h"),
+            ("16F18857", "Microchip.PIC16F1xxxx_DFP", "pic16f18857.h"),
+            ("16F18875", "Microchip.PIC16F1xxxx_DFP", "pic16f18875.h"),
+            ("16F18876", "Microchip.PIC16F1xxxx_DFP", "pic16f18876.h"),
+            ("16F18877", "Microchip.PIC16F1xxxx_DFP", "pic16f18877.h"),
+        ],
+    ),
     "hal/pic14/16f628a": (
         "hal/pic14/16f628a/include/pic16f628a_sfr.h",
         [
@@ -319,6 +331,34 @@ BANK_VARIANT_ADDRS = {
     # ANSEL_BANK1 alias's premise); 639/684/688 keep WDTCON in Bank
     # 0 (0x18, the WDTCON_BANK0 alias's premise, used by the shared
     # WDT driver).
+    # 188XX 16F18857/16F18877: these two DFP revisions spell every
+    # banked SFR address with a bank prefix (ANSELA equ 0x1F38 instead
+    # of 0xF38, same low 12 bits on every register below), so each
+    # address is listed explicitly. A wrong override fails loudly in
+    # main; the HAL constants stay canonical.
+    "16F18857": {"ANSELA": 0x1F38, "ANSELB": 0x1F43, "ANSELC": 0x1F4E,
+                "INLVLA": 0x1F3C, "INLVLB": 0x1F47, "INLVLC": 0x1F52,
+                "INLVLE": 0x1F68, "IOCAF": 0x1F3F, "IOCAN": 0x1F3E,
+                "IOCAP": 0x1F3D, "IOCBF": 0x1F4A, "IOCBN": 0x1F49,
+                "IOCBP": 0x1F48, "IOCCF": 0x1F55, "IOCCN": 0x1F54,
+                "IOCCP": 0x1F53, "IOCEF": 0x1F6B, "IOCEN": 0x1F6A,
+                "IOCEP": 0x1F69, "ODCONA": 0x1F3A, "ODCONB": 0x1F45,
+                "ODCONC": 0x1F50, "SLRCONA": 0x1F3B, "SLRCONB": 0x1F46,
+                "SLRCONC": 0x1F51, "WPUA": 0x1F39, "WPUB": 0x1F44,
+                "WPUC": 0x1F4F, "WPUE": 0x1F65},
+    "16F18877": {"ANSELA": 0x1F38, "ANSELB": 0x1F43, "ANSELC": 0x1F4E,
+                "ANSELD": 0x1F59, "ANSELE": 0x1F64, "INLVLA": 0x1F3C,
+                "INLVLB": 0x1F47, "INLVLC": 0x1F52, "INLVLD": 0x1F5D,
+                "INLVLE": 0x1F68, "IOCAF": 0x1F3F, "IOCAN": 0x1F3E,
+                "IOCAP": 0x1F3D, "IOCBF": 0x1F4A, "IOCBN": 0x1F49,
+                "IOCBP": 0x1F48, "IOCCF": 0x1F55, "IOCCN": 0x1F54,
+                "IOCCP": 0x1F53, "IOCEF": 0x1F6B, "IOCEN": 0x1F6A,
+                "IOCEP": 0x1F69, "ODCONA": 0x1F3A, "ODCONB": 0x1F45,
+                "ODCONC": 0x1F50, "ODCOND": 0x1F5B, "ODCONE": 0x1F66,
+                "SLRCONA": 0x1F3B, "SLRCONB": 0x1F46, "SLRCONC": 0x1F51,
+                "SLRCOND": 0x1F5C, "SLRCONE": 0x1F67, "WPUA": 0x1F39,
+                "WPUB": 0x1F44, "WPUC": 0x1F4F, "WPUD": 0x1F5A,
+                "WPUE": 0x1F65},
 
 }
 # Registers and bits that are legitimately absent from a part's DFP
@@ -504,6 +544,23 @@ CONDITIONAL_REGS.update({
                 "LCDDATA2", "LCDDATA5", "LCDDATA8", "LCDDATA11"},
     "16F1938": {"PORTD", "TRISD", "ANSELD", "ANSELE", "LATD", "LCDSE2",
                 "LCDDATA2", "LCDDATA5", "LCDDATA8", "LCDDATA11"},
+    # 188XX 28-pin parts (18854/55/56/57): no PORTD block and no
+    # driven-PORTE registers (TRISE/LATE/ANSELE/ODCONE/SLRCONE);
+    # PORTE/WPUE/INLVLE/IOCE exist on every part for input-only RE3.
+    # Verified against the DFP proc headers, not the EDC (whose
+    # 18857/18877 revisions carry a bank prefix on _addr).
+    "16F18854": {"PORTD", "TRISD", "LATD", "ANSELD", "WPUD", "ODCOND",
+                "SLRCOND", "INLVLD", "TRISE", "LATE", "ANSELE",
+                "ODCONE", "SLRCONE"},
+    "16F18855": {"PORTD", "TRISD", "LATD", "ANSELD", "WPUD", "ODCOND",
+                "SLRCOND", "INLVLD", "TRISE", "LATE", "ANSELE",
+                "ODCONE", "SLRCONE"},
+    "16F18856": {"PORTD", "TRISD", "LATD", "ANSELD", "WPUD", "ODCOND",
+                "SLRCOND", "INLVLD", "TRISE", "LATE", "ANSELE",
+                "ODCONE", "SLRCONE"},
+    "16F18857": {"PORTD", "TRISD", "LATD", "ANSELD", "WPUD", "ODCOND",
+                "SLRCOND", "INLVLD", "TRISE", "LATE", "ANSELE",
+                "ODCONE", "SLRCONE"},
     # 88X 28-pin parts (882/883/886): no PORTD; the HAL defines
     # PORTD/TRISD unconditionally and guards the usage.
     "16F882": {"PORTD", "TRISD"},
@@ -668,7 +725,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--family", choices=("PIC16F87XA", "PIC18Fxx5x",
                                          "PIC16F193X", "PIC16F88X", "PIC16F628A",
-                                         "PIC16F1508",
+                                         "PIC16F1508", "PIC16F188XX",
                                          "PIC16F83_84",
                                          "PIC16F63x_67x_68x", "PIC18F1320",
                                          "PIC18F2520",
@@ -681,6 +738,7 @@ def main() -> int:
                  "PIC18Fxx5x": "hal/pic18/18fxx5x",
                  "PIC16F193X": "hal/pic14e/16f193x",
                  "PIC16F1508": "hal/pic14e/16f1508",
+                 "PIC16F188XX": "hal/pic14e/16f188xx",
                  "PIC16F88X": "hal/pic14/16f88x",
                  "PIC16F628A": "hal/pic14/16f628a",
                  "PIC16F83_84": "hal/pic14/16f83_84",
