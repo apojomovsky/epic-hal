@@ -412,8 +412,9 @@ def emit_quickstart_md(manifest, family_name: str, version: str) -> str:
     return "\n".join([
         f"# Quick start, Epic HAL {version} ({family_name})",
         "",
-        "You need `epic-cc` on your PATH (zero Microchip downloads) and GNU make.",
-        "No MPLAB X, no licence, no IDE. Get `epic-cc` from",
+        "The default path is fully open source and MIT licensed:",
+        "`epic-cc` on your PATH (zero Microchip downloads) and GNU make.",
+        "Get `epic-cc` from",
         "`https://github.com/apojomovsky/epic-cc/releases` or `cargo install --git https://github.com/apojomovsky/epic-cc epic-cc`.",
         "",
         "## XC8 alternate (needs Microchip pack)",

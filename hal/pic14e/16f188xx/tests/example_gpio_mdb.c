@@ -46,12 +46,22 @@
  * hardware-gate-high mode holds while RC3 is low and runs once high.
  * A full-field T2CON/T2HLT/T2RST image (1:128, 1:16, falling clock,
  * both sync bits, LC4 reset) pins every bit position.
+ *
+ * PPS, EUSART and MSSP1 follow: PPS select images at their (0xFxx or
+ * 0x1Fxx) addresses; the EUSART 9600 baud image, a polled frame and a
+ * vectored one-shot TX interrupt; the MSSP1 SPI and I2C images, an I2C
+ * START request, an SPI byte where the target shifts it (MPLAB SIM does
+ * not) and a software-set SSP1IF that vectors. The PPS lock section runs
+ * last; the gate config sets PPS1WAY=OFF so the unlock path is real.
  */
 #include "pic16f188xx.h"
 #include "peripherals/pic16f188xx_gpio.h"
 #include "peripherals/pic16f188xx_timer0.h"
 #include "peripherals/pic16f188xx_timer1.h"
 #include "peripherals/pic16f188xx_timer2.h"
+#include "peripherals/pic16f188xx_pps.h"
+#include "peripherals/pic16f188xx_usart.h"
+#include "peripherals/pic16f188xx_ssp.h"
 #include "core/pic16f188xx_irq.h"
 #include "core/epic_harness.h"
 
@@ -63,6 +73,8 @@ static volatile uint8_t s_ioc_iocbf = 0;
 static volatile uint8_t s_t0_seen = 0;
 static volatile uint8_t s_t1_seen = 0;
 static volatile uint8_t s_t2_seen = 0;
+static volatile uint8_t s_tx_seen = 0;
+static volatile uint8_t s_ssp_seen = 0;
 
 /**
  * @brief Smoke callback: records that the vectored handler ran.
@@ -109,7 +121,451 @@ static void on_t2(void)
 }
 
 /**
- * @brief GPIO, IOC, Timer0..Timer2 and interrupt smoke probe for the mdb gate.
+ * @brief EUSART TX callback: records that the vectored handler ran.
+ */
+static void on_tx(void)
+{
+    s_tx_seen = 1U;
+}
+
+/**
+ * @brief SSP1 callback: records that the vectored handler ran.
+ */
+static void on_ssp(void)
+{
+    s_ssp_seen = 1U;
+}
+
+/**
+ * @brief PPS register-image section: input and output selects land at their
+ *        (0xFxx or 0x1Fxx) addresses, and an unmapped pin hands back to the latch.
+ * @return 1 when every readback matches, 0 otherwise.
+ */
+static int gate_pps(void)
+{
+    int ok = 1;
+
+    ok &= (EPIC_PPS_Unlock() == EPIC_OK);
+    ok &= (EPIC_PPS_IsLocked() == 0U);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T0CKI, PPS_PORTB, 5U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_SSP1CLK, PPS_PORTC, 3U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_SSP1DAT, PPS_PORTC, 4U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_SSP1SS, PPS_PORTA, 5U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_EUSART_RX, PPS_PORTC, 7U) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T0CKIPPS) == 0x0DU);
+    ok &= (EPIC_REG8(PIC_REG_SSP1CLKPPS) == 0x13U);
+    ok &= (EPIC_REG8(PIC_REG_SSP1DATPPS) == 0x14U);
+    ok &= (EPIC_REG8(PIC_REG_SSP1SSPPS) == 0x05U);
+    ok &= (EPIC_REG8(PIC_REG_RXPPS) == 0x17U);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTC, 6U, PPS_OUTPUT_EUSART_TX) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTC, 3U, PPS_OUTPUT_SSP1_SCK) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTB, 0U, PPS_OUTPUT_SSP1_SDO) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTC, 5U, PPS_OUTPUT_SSP1_SDO) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_RC0PPS + 6U) == 0x10U);
+    ok &= (EPIC_REG8(PIC_REG_RC0PPS + 3U) == 0x14U);
+    ok &= (EPIC_REG8(PIC_REG_RC0PPS + 5U) == 0x15U);
+    ok &= (EPIC_REG8(PIC_REG_RB0PPS + 0U) == 0x15U);
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    /* PORTD takes no EUSART or MSSP output (MANUAL.md, PPS), so only the
+     * hand-back to the latch is written; its RD7PPS address still reads. */
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTD, 7U, PPS_OUTPUT_LAT) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_RD0PPS + 7U) == 0x00U);
+#endif
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTB, 0U, PPS_OUTPUT_LAT) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_RB0PPS + 0U) == 0x00U);
+    return ok;
+}
+
+/**
+ * @brief EUSART section: 9600 baud register image, a polled frame, the
+ *        vectored one-shot TX interrupt and the POR restore.
+ * @details TRMT is live read-only status, so it masks out of the TX1STA
+ * images. The TX interrupt proof relies on TXIF being set while the
+ * transmitter is on and TX1REG is empty; the handler masks TXIE before the
+ * callback, so the slot runs once.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static int gate_usart(void)
+{
+    int ok = 1;
+    unsigned int i;
+    USART_HandleTypeDef u = USART_HANDLE_DEFAULT;
+
+    EPIC_GPIO_Init(GPIOC, GPIO_PIN_6, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(GPIOC, GPIO_PIN_7, GPIO_MODE_INPUT);
+    u.SPBRG = USART_ComputeSPBRG(32000000UL, 9600UL, USART_BRGH_HIGH, USART_BAUDGEN_8BIT);
+    ok &= (u.SPBRG == 207U);
+    ok &= (EPIC_USART_Init(&u) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_SP1BRGL) == 0xCFU);
+    ok &= (EPIC_REG8(PIC_REG_SP1BRGH) == 0x00U);
+    ok &= ((EPIC_REG8(PIC_REG_BAUD1CON) & PIC_BAUD1CON_BRG16) == 0U);
+    ok &= ((EPIC_REG8(PIC_REG_TX1STA) & (uint8_t)~PIC_TX1STA_TRMT) == 0x24U);
+    ok &= (EPIC_REG8(PIC_REG_RC1STA) == 0x90U);
+    ok &= ((EPIC_REG8(PIC_REG_PIE3) & (PIC_PIE3_TXIE | PIC_PIE3_RCIE)) == 0U);
+
+    /* One polled frame: TXIF returns once the byte moves to the shifter,
+     * TRMT once the frame has left. Polling TXIF first avoids reading
+     * TRMT in the window before the byte is taken. */
+    EPIC_USART_Transmit(0x55U);
+    for (i = 0U; (i < 60000U) && (EPIC_USART_IsTxBufferEmpty() == 0U); i++)
+    {
+        epic_harness_tick();
+    }
+    for (i = 0U; (i < 60000U) && (EPIC_USART_IsTxShiftRegisterEmpty() == 0U); i++)
+    {
+        epic_harness_tick();
+    }
+    ok &= (EPIC_USART_IsTxShiftRegisterEmpty() == 1U);
+    ok &= (EPIC_USART_IsTxBufferEmpty() == 1U);
+    ok &= (EPIC_USART_DeInit() == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_RC1STA) == 0x00U);
+    ok &= ((EPIC_REG8(PIC_REG_TX1STA) & (uint8_t)~PIC_TX1STA_TRMT) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_SP1BRGL) == 0x00U);
+
+    /* Vectored TX interrupt: armed one-shot, runs the slot once and
+     * leaves TXIE masked. */
+    u.TxCpltCallback = on_tx;
+    ok &= (EPIC_USART_Init(&u) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PIE3) & PIC_PIE3_TXIE) == 0U);
+    s_tx_seen = 0U;
+    EPIC_IRQ_Restore(1U);
+    EPIC_USART_EnableTxInterrupt();
+    for (i = 0U; (i < 255U) && (s_tx_seen == 0U); i++)
+    {
+        epic_harness_tick();
+    }
+    ok &= (s_tx_seen == 1U);
+    ok &= ((EPIC_REG8(PIC_REG_PIE3) & PIC_PIE3_TXIE) == 0U);
+    EPIC_IRQ_Restore(0U);
+    ok &= (EPIC_USART_DeInit() == EPIC_OK);
+    return ok;
+}
+
+/**
+ * @brief MSSP1 section: SPI and I2C register images, an I2C START request,
+ *        one SPI byte through the shifter where the target models it, and
+ *        the vectored SSP1 interrupt.
+ * @details MPLAB SIM does not shift SSP1 data (BF and SSP1IF never set
+ * after a SSP1BUF write), so there the SPI byte check is skipped and the
+ * gate covers the register images; the host sim and silicon complete it.
+ * A software write to PIR3.SSP1IF does read back and vector on the SIM.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static int gate_ssp(void)
+{
+    int ok = 1;
+    unsigned int i;
+    SSP_HandleTypeDef s = SSP_HANDLE_DEFAULT;
+
+    /* SCK on RC3 and SDO on RC5 as outputs, SDI on RC4 as input, the way
+     * gate_pps routed them. */
+    EPIC_GPIO_Init(GPIOC, (uint8_t)(GPIO_PIN_3 | GPIO_PIN_5), GPIO_MODE_OUTPUT);
+    EPIC_GPIO_Init(GPIOC, GPIO_PIN_4, GPIO_MODE_INPUT);
+    ok &= (SSP_ComputeADD(32000000UL, 400000UL) == 19U);
+    ok &= (EPIC_SSP_Init(&s) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_SSP1STAT) & PIC_SSP1STAT_WRITE_MASK) == 0x40U);
+    ok &= (EPIC_REG8(PIC_REG_SSP1CON1) == 0x20U);
+    ok &= (EPIC_SSP_WriteByte(0xA5U) == 0xA5U);
+    for (i = 0U; (i < 40000U) && (EPIC_SSP_IsBufferFull() == 0U); i++)
+    {
+        epic_harness_tick();
+    }
+    if (EPIC_SSP_IsBufferFull() != 0U)
+    {
+        (void)EPIC_SSP_ReadByte();
+        ok &= (EPIC_SSP_IsBufferFull() == 0U);
+    }
+    ok &= (EPIC_SSP_DeInit() == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_SSP1CON1) == 0x00U);
+
+    s.Mode = SSP_MODE_I2C_MASTER;
+    s.SamplePhase = SSP_SPI_SMP_END;
+    s.Add = (uint8_t)SSP_ComputeADD(32000000UL, 400000UL);
+    ok &= (EPIC_SSP_Init(&s) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_SSP1STAT) & PIC_SSP1STAT_WRITE_MASK) == 0x80U);
+    ok &= (EPIC_REG8(PIC_REG_SSP1CON1) == 0x28U);
+    ok &= (EPIC_REG8(PIC_REG_SSP1ADD) == 19U);
+    ok &= (EPIC_SSP_I2C_Start() == EPIC_OK);
+    ok &= (EPIC_SSP_DeInit() == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_SSP1ADD) == 0x00U);
+
+    /* Vectored SSP1 interrupt: the flag set by software vectors the core,
+     * the handler clears it and runs the slot. */
+    s = (SSP_HandleTypeDef)SSP_HANDLE_DEFAULT;
+    s.TransferCallback = on_ssp;
+    ok &= (EPIC_SSP_Init(&s) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PIE3) & PIC_PIE3_SSP1IE) != 0U);
+    s_ssp_seen = 0U;
+    EPIC_REG8(PIC_REG_PIR3) |= PIC_PIR3_SSP1IF;
+    EPIC_IRQ_Restore(1U);
+    for (i = 0U; (i < 255U) && (s_ssp_seen == 0U); i++)
+    {
+        epic_harness_tick();
+    }
+    EPIC_IRQ_Restore(0U);
+    ok &= (s_ssp_seen == 1U);
+    ok &= ((EPIC_REG8(PIC_REG_PIR3) & PIC_PIR3_SSP1IF) == 0U);
+    ok &= (EPIC_SSP_DeInit() == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PIE3) & PIC_PIE3_SSP1IE) == 0U);
+    return ok;
+}
+
+/**
+ * @brief PPS lock section: PPSLOCKED sets, mapping and DeInit are refused
+ *        without a write, and the unlock sequence reopens them.
+ * @details This gate's config sets PPS1WAY=OFF so the unlock path is real.
+ * With PPS1WAY set (the XC8 default) silicon and MPLAB SIM honour one
+ * sequence per reset: a second one, or an Unlock before the first Lock,
+ * leaves PPSLOCKED unchanged (2026-10, 16F18877), so applications there
+ * map after reset and Lock once.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static int gate_pps_lock(void)
+{
+    int ok = 1;
+
+    ok &= (EPIC_PPS_Lock() == EPIC_OK);
+    ok &= (EPIC_PPS_IsLocked() == 1U);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_EUSART_RX, PPS_PORTB, 1U) == EPIC_BUSY);
+    ok &= (EPIC_REG8(PIC_REG_RXPPS) == 0x17U);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTC, 6U, PPS_OUTPUT_LAT) == EPIC_BUSY);
+    ok &= (EPIC_REG8(PIC_REG_RC0PPS + 6U) == 0x10U);
+    ok &= (EPIC_PPS_DeInit() == EPIC_BUSY);
+    ok &= (EPIC_PPS_Unlock() == EPIC_OK);
+    ok &= (EPIC_PPS_IsLocked() == 0U);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_EUSART_RX, PPS_PORTB, 1U) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_RXPPS) == 0x09U);
+    ok &= (EPIC_PPS_DeInit() == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_RXPPS) == 0x17U);
+    ok &= (EPIC_REG8(PIC_REG_RC0PPS + 6U) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_RC0PPS + 3U) == 0x00U);
+    ok &= (EPIC_PPS_Lock() == EPIC_OK);
+    return ok;
+}
+
+/**
+ * @brief Spin n instruction ticks (bounded, never waits on a condition).
+ * @param n Tick count.
+ */
+static void tick_n(unsigned int n)
+{
+    unsigned int i;
+
+    for (i = 0U; i < n; i++)
+    {
+        epic_harness_tick();
+    }
+}
+
+/**
+ * @brief Spin until a PIR4 flag sets, bounded at 40000 ticks.
+ * @param mask PIR4 flag bit to wait for.
+ */
+static void wait_pir4(uint8_t mask)
+{
+    unsigned int i;
+
+    for (i = 0U; (i < 40000U) && ((EPIC_REG8(PIC_REG_PIR4) & mask) == 0U); i++)
+    {
+        epic_harness_tick();
+    }
+}
+
+/**
+ * @brief Spin until a callback marker is set, bounded at 40000 ticks.
+ * @param seen Marker the vectored callback sets.
+ */
+static void wait_seen(volatile uint8_t *seen)
+{
+    unsigned int i;
+
+    for (i = 0U; (i < 40000U) && (*seen == 0U); i++)
+    {
+        epic_harness_tick();
+    }
+}
+
+/**
+ * @brief Load the Timer1 POR handle (one copy of the default image).
+ * @param h Handle to reset.
+ */
+static void t1_reset(TIMER1_HandleTypeDef *h)
+{
+    *h = (TIMER1_HandleTypeDef)TIMER1_HANDLE_DEFAULT;
+}
+
+/**
+ * @brief Load the Timer2 POR handle (one copy of the default image).
+ * @param h Handle to reset.
+ */
+static void t2_reset(TIMER2_HandleTypeDef *h)
+{
+    *h = (TIMER2_HandleTypeDef)TIMER2_HANDLE_DEFAULT;
+}
+
+/**
+ * @brief Timer1 section: FOSC/4 free-run at reload 0xFFF8 (overflow after
+ *        8 counts) as a callback-free setup proof then a vector proof,
+ *        then the RB5 gate and the toggle plus single-pulse image.
+ * @details RB5 (T1GPPS at POR) is an output so its latch is the gate
+ * level: held while low, counting once high, held again when it falls.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static uint8_t gate_timer1(void)
+{
+    uint8_t ok = 1U;
+    uint16_t held;
+    TIMER1_HandleTypeDef t1;
+
+    t1_reset(&t1);
+    t1.ReloadValue = 0xFFF8U;
+    ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T1CLK) == 0x01U);
+    ok &= (EPIC_REG8(PIC_REG_T1GATE) == 0x00U);
+    ok &= ((EPIC_REG8(PIC_REG_T1GCON) & (uint8_t)~PIC_T1GCON_GVAL) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T1CON) == 0x02U);
+    ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR1IE) == 0U);
+    ok &= (EPIC_TIMER1_Start(&t1) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T1CON) == 0x03U);
+    wait_pir4(PIC_PIR4_TMR1IF);
+    ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR1IF) != 0U);
+    ok &= (EPIC_TIMER1_ReadCounter() < 0x0100U);
+    EPIC_TIMER1_Stop();
+    EPIC_TIMER1_DeInit();
+
+    t1.OverflowCallback = on_t1;
+    ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR1IE) != 0U);
+    ok &= (EPIC_TIMER1_Start(&t1) == EPIC_OK);
+    wait_seen(&s_t1_seen);
+    ok &= (s_t1_seen == 1U);
+    ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR1IF) == 0U);
+    ok &= (EPIC_TIMER1_ReadCounter() < 0x0100U);
+    EPIC_TIMER1_Stop();
+    EPIC_TIMER1_DeInit();
+    ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR1IE) == 0U);
+    ok &= (EPIC_REG8(PIC_REG_T1CON) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T1CLK) == 0x00U);
+
+    t1_reset(&t1);
+    EPIC_GPIO_Init(GPIOB, GPIO_PIN_5, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
+    t1.Gate.Enable = 1U;
+    t1.Gate.ActiveHigh = 1U;
+    ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_T1GCON) & (uint8_t)~PIC_T1GCON_GVAL) == 0xC0U);
+    ok &= (EPIC_TIMER1_Start(&t1) == EPIC_OK);
+    tick_n(200U);
+    ok &= (EPIC_TIMER1_ReadCounter() == 0U);
+    ok &= (EPIC_TIMER1_GateValue() == 0U);
+    EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
+    tick_n(200U);
+    ok &= (EPIC_TIMER1_ReadCounter() != 0U);
+    ok &= (EPIC_TIMER1_GateValue() == 1U);
+    EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
+    tick_n(50U);
+    held = EPIC_TIMER1_ReadCounter();
+    tick_n(200U);
+    ok &= (EPIC_TIMER1_ReadCounter() == held);
+    ok &= (EPIC_TIMER1_GateValue() == 0U);
+    EPIC_TIMER1_Stop();
+    EPIC_TIMER1_DeInit();
+
+    t1.Gate.Toggle = 1U;
+    t1.Gate.SinglePulse = 1U;
+    t1.Gate.Source = TIMER1_GATE_TMR2_POST;
+    ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_T1GCON) & (uint8_t)~PIC_T1GCON_GVAL) == 0xF0U);
+    ok &= (EPIC_REG8(PIC_REG_T1GATE) == 0x03U);
+    EPIC_TIMER1_DeInit();
+    return ok;
+}
+
+/**
+ * @brief Timer2 section: FOSC/4 free-run at PR2 7 as a callback-free
+ *        setup proof then a vector proof, the full-field T2CON, T2HLT and
+ *        T2RST image, and the hardware gate on RC3.
+ * @details RC3 (T2INPPS at POR) is an output so its latch is the reset
+ * signal: mode 0x01 holds TMR2 while it is low and runs once it is high.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static uint8_t gate_timer2(void)
+{
+    uint8_t ok = 1U;
+    TIMER2_HandleTypeDef t2;
+
+    t2_reset(&t2);
+    t2.Period = 7U;
+    ok &= (EPIC_TIMER2_Init(&t2) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T2CLKCON) == 0x01U);
+    ok &= (EPIC_REG8(PIC_REG_T2RST) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T2CON) == 0x00U);
+    ok &= (EPIC_TIMER2_ReadPeriod() == 7U);
+    ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR2IE) == 0U);
+    ok &= (EPIC_TIMER2_Start(&t2) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T2CON) == 0x80U);
+    wait_pir4(PIC_PIR4_TMR2IF);
+    ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) != 0U);
+    ok &= (EPIC_TIMER2_ReadCounter() <= 7U);
+    EPIC_TIMER2_Stop();
+    EPIC_TIMER2_DeInit();
+
+    t2.OverflowCallback = on_t2;
+    ok &= (EPIC_TIMER2_Init(&t2) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR2IE) != 0U);
+    ok &= (EPIC_TIMER2_Start(&t2) == EPIC_OK);
+    wait_seen(&s_t2_seen);
+    ok &= (s_t2_seen == 1U);
+    ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) == 0U);
+    ok &= (EPIC_TIMER2_ReadCounter() <= 7U);
+    EPIC_TIMER2_Stop();
+    EPIC_TIMER2_DeInit();
+    ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR2IE) == 0U);
+    ok &= (EPIC_REG8(PIC_REG_T2CON) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T2CLKCON) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T2RST) == 0x00U);
+    ok &= (EPIC_TIMER2_ReadPeriod() == 0xFFU);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+
+    t2_reset(&t2);
+    t2.Prescaler = TIMER2_PRESCALER_1_128;
+    t2.Postscaler = TIMER2_POSTSCALER_1_16;
+    t2.Mode = TIMER2_MODE_FREE_GATE_HIGH;
+    t2.ResetSource = TIMER2_RST_LC4OUT;
+    t2.FallingEdge = 1U;
+    t2.SyncOn = 1U;
+    t2.SyncPrescaler = 1U;
+    ok &= (EPIC_TIMER2_Init(&t2) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T2CON) == 0x7FU);
+    ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0xE1U);
+    ok &= (EPIC_REG8(PIC_REG_T2RST) == 0x11U);
+    EPIC_TIMER2_DeInit();
+
+    t2_reset(&t2);
+    t2.Mode = TIMER2_MODE_FREE_GATE_HIGH;
+    t2.Period = 7U;
+    EPIC_GPIO_Init(GPIOC, GPIO_PIN_3, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+    ok &= (EPIC_TIMER2_Init(&t2) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0x01U);
+    ok &= (EPIC_TIMER2_Start(&t2) == EPIC_OK);
+    tick_n(200U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) == 0U);
+    EPIC_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+    wait_pir4(PIC_PIR4_TMR2IF);
+    ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) != 0U);
+    EPIC_TIMER2_Stop();
+    EPIC_TIMER2_DeInit();
+    EPIC_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+    return ok;
+}
+
+/**
+ * @brief GPIO, IOC, Timer0..Timer2, PPS, EUSART, MSSP1 and interrupt smoke
+ *        probe for the mdb gate.
  * @return Harness result: 0 on PASS, 1 on FAIL.
  */
 int main(void)
@@ -258,191 +714,16 @@ int main(void)
         ok &= (EPIC_REG8(PIC_REG_TMR0H) == 0xFFU);
     }
 
-    /* Timer1 free-run at FOSC/4, 1:1, reload 0xFFF8: overflow after 8
-     * counts, callback-free setup proof then the vector proof. */
-    {
-        TIMER1_HandleTypeDef t1 = TIMER1_HANDLE_DEFAULT;
-        t1.ReloadValue = 0xFFF8U;
-        ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
-        ok &= (EPIC_REG8(PIC_REG_T1CLK) == 0x01U);
-        ok &= (EPIC_REG8(PIC_REG_T1GATE) == 0x00U);
-        ok &= ((EPIC_REG8(PIC_REG_T1GCON) & (uint8_t)~PIC_T1GCON_GVAL) == 0x00U);
-        ok &= (EPIC_REG8(PIC_REG_T1CON) == 0x02U);
-        ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR1IE) == 0U);
-        ok &= (EPIC_TIMER1_Start(&t1) == EPIC_OK);
-        ok &= (EPIC_REG8(PIC_REG_T1CON) == 0x03U);
-        for (i = 0U; (i < 40000U) &&
-            ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR1IF) == 0U); i++)
-        {
-            epic_harness_tick();
-        }
-        ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR1IF) != 0U);
-        ok &= (EPIC_TIMER1_ReadCounter() < 0x0100U);
-        ok &= (EPIC_TIMER1_Stop() == EPIC_OK);
-        ok &= (EPIC_TIMER1_DeInit() == EPIC_OK);
-    }
-    {
-        TIMER1_HandleTypeDef t1 = TIMER1_HANDLE_DEFAULT;
-        t1.ReloadValue = 0xFFF8U;
-        t1.OverflowCallback = on_t1;
-        ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
-        ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR1IE) != 0U);
-        ok &= (EPIC_TIMER1_Start(&t1) == EPIC_OK);
-        for (i = 0U; (i < 40000U) && (s_t1_seen == 0U); i++)
-        {
-            epic_harness_tick();
-        }
-        ok &= (s_t1_seen == 1U);
-        ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR1IF) == 0U);
-        ok &= (EPIC_TIMER1_ReadCounter() < 0x0100U);
-        ok &= (EPIC_TIMER1_Stop() == EPIC_OK);
-        ok &= (EPIC_TIMER1_DeInit() == EPIC_OK);
-        ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR1IE) == 0U);
-        ok &= (EPIC_REG8(PIC_REG_T1CON) == 0x00U);
-        ok &= (EPIC_REG8(PIC_REG_T1CLK) == 0x00U);
-    }
+    /* Timer1 and Timer2: images, polled and vectored proofs, gates. */
+    ok &= gate_timer1();
+    ok &= gate_timer2();
 
-    /* Timer1 gate on RB5 (T1GPPS at POR), active-high, counting from 0:
-     * held while the pin is low, counting once it is high, held again
-     * when it falls. The toggle and single-pulse bits pin the image. */
-    {
-        TIMER1_HandleTypeDef t1 = TIMER1_HANDLE_DEFAULT;
-        uint16_t held;
-        EPIC_GPIO_Init(GPIOB, GPIO_PIN_5, GPIO_MODE_OUTPUT);
-        EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
-        t1.Gate.Enable = 1U;
-        t1.Gate.ActiveHigh = 1U;
-        ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
-        ok &= ((EPIC_REG8(PIC_REG_T1GCON) & (uint8_t)~PIC_T1GCON_GVAL) == 0xC0U);
-        ok &= (EPIC_TIMER1_Start(&t1) == EPIC_OK);
-        for (i = 0U; i < 200U; i++)
-        {
-            epic_harness_tick();
-        }
-        ok &= (EPIC_TIMER1_ReadCounter() == 0U);
-        ok &= (EPIC_TIMER1_GateValue() == 0U);
-        EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
-        for (i = 0U; (i < 40000U) && (EPIC_TIMER1_ReadCounter() == 0U); i++)
-        {
-            epic_harness_tick();
-        }
-        ok &= (EPIC_TIMER1_ReadCounter() != 0U);
-        ok &= (EPIC_TIMER1_GateValue() == 1U);
-        EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
-        for (i = 0U; i < 50U; i++)
-        {
-            epic_harness_tick();
-        }
-        held = EPIC_TIMER1_ReadCounter();
-        for (i = 0U; i < 200U; i++)
-        {
-            epic_harness_tick();
-        }
-        ok &= (EPIC_TIMER1_ReadCounter() == held);
-        ok &= (EPIC_TIMER1_GateValue() == 0U);
-        ok &= (EPIC_TIMER1_Stop() == EPIC_OK);
-        ok &= (EPIC_TIMER1_DeInit() == EPIC_OK);
-
-        t1.Gate.Toggle = 1U;
-        t1.Gate.SinglePulse = 1U;
-        t1.Gate.Source = TIMER1_GATE_TMR2_POST;
-        ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
-        ok &= ((EPIC_REG8(PIC_REG_T1GCON) & (uint8_t)~PIC_T1GCON_GVAL) == 0xF0U);
-        ok &= (EPIC_REG8(PIC_REG_T1GATE) == 0x03U);
-        ok &= (EPIC_TIMER1_DeInit() == EPIC_OK);
-    }
-
-    /* Timer2 free-run at FOSC/4, 1:1, 1:1, PR2 7, in two phases like
-     * Timer0. */
-    {
-        TIMER2_HandleTypeDef t2 = TIMER2_HANDLE_DEFAULT;
-        t2.Period = 7U;
-        ok &= (EPIC_TIMER2_Init(&t2) == EPIC_OK);
-        ok &= (EPIC_REG8(PIC_REG_T2CLKCON) == 0x01U);
-        ok &= (EPIC_REG8(PIC_REG_T2RST) == 0x00U);
-        ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0x00U);
-        ok &= (EPIC_REG8(PIC_REG_T2CON) == 0x00U);
-        ok &= (EPIC_TIMER2_ReadPeriod() == 7U);
-        ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR2IE) == 0U);
-        ok &= (EPIC_TIMER2_Start(&t2) == EPIC_OK);
-        ok &= (EPIC_REG8(PIC_REG_T2CON) == 0x80U);
-        for (i = 0U; (i < 40000U) &&
-            ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) == 0U); i++)
-        {
-            epic_harness_tick();
-        }
-        ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) != 0U);
-        ok &= (EPIC_TIMER2_ReadCounter() <= 7U);
-        ok &= (EPIC_TIMER2_Stop() == EPIC_OK);
-        ok &= (EPIC_TIMER2_DeInit() == EPIC_OK);
-    }
-    {
-        TIMER2_HandleTypeDef t2 = TIMER2_HANDLE_DEFAULT;
-        t2.Period = 7U;
-        t2.OverflowCallback = on_t2;
-        ok &= (EPIC_TIMER2_Init(&t2) == EPIC_OK);
-        ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR2IE) != 0U);
-        ok &= (EPIC_TIMER2_Start(&t2) == EPIC_OK);
-        for (i = 0U; (i < 40000U) && (s_t2_seen == 0U); i++)
-        {
-            epic_harness_tick();
-        }
-        ok &= (s_t2_seen == 1U);
-        ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) == 0U);
-        ok &= (EPIC_TIMER2_ReadCounter() <= 7U);
-        ok &= (EPIC_TIMER2_Stop() == EPIC_OK);
-        ok &= (EPIC_TIMER2_DeInit() == EPIC_OK);
-        ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR2IE) == 0U);
-        ok &= (EPIC_REG8(PIC_REG_T2CON) == 0x00U);
-        ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0x00U);
-        ok &= (EPIC_REG8(PIC_REG_T2CLKCON) == 0x00U);
-        ok &= (EPIC_REG8(PIC_REG_T2RST) == 0x00U);
-        ok &= (EPIC_TIMER2_ReadPeriod() == 0xFFU);
-        ok &= (EPIC_TIMER2_ReadCounter() == 0U);
-    }
-
-    /* Timer2 full-field image, then the hardware gate on RC3 (T2INPPS
-     * at POR): held while low, running once high. */
-    {
-        TIMER2_HandleTypeDef t2 = TIMER2_HANDLE_DEFAULT;
-        t2.Prescaler = TIMER2_PRESCALER_1_128;
-        t2.Postscaler = TIMER2_POSTSCALER_1_16;
-        t2.Mode = TIMER2_MODE_FREE_GATE_HIGH;
-        t2.ResetSource = TIMER2_RST_LC4OUT;
-        t2.FallingEdge = 1U;
-        t2.SyncOn = 1U;
-        t2.SyncPrescaler = 1U;
-        ok &= (EPIC_TIMER2_Init(&t2) == EPIC_OK);
-        ok &= (EPIC_REG8(PIC_REG_T2CON) == 0x7FU);
-        ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0xE1U);
-        ok &= (EPIC_REG8(PIC_REG_T2RST) == 0x11U);
-        ok &= (EPIC_TIMER2_DeInit() == EPIC_OK);
-
-        t2 = (TIMER2_HandleTypeDef)TIMER2_HANDLE_DEFAULT;
-        t2.Mode = TIMER2_MODE_FREE_GATE_HIGH;
-        t2.Period = 7U;
-        EPIC_GPIO_Init(GPIOC, GPIO_PIN_3, GPIO_MODE_OUTPUT);
-        EPIC_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
-        ok &= (EPIC_TIMER2_Init(&t2) == EPIC_OK);
-        ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0x01U);
-        ok &= (EPIC_TIMER2_Start(&t2) == EPIC_OK);
-        for (i = 0U; i < 200U; i++)
-        {
-            epic_harness_tick();
-        }
-        ok &= (EPIC_TIMER2_ReadCounter() == 0U);
-        ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) == 0U);
-        EPIC_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-        for (i = 0U; (i < 40000U) &&
-            ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) == 0U); i++)
-        {
-            epic_harness_tick();
-        }
-        ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) != 0U);
-        ok &= (EPIC_TIMER2_Stop() == EPIC_OK);
-        ok &= (EPIC_TIMER2_DeInit() == EPIC_OK);
-        EPIC_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
-    }
+    /* EUSART, MSSP and PPS register images and vectored interrupts. The
+     * PPS lock goes last: while locked, mapping and DeInit are refused. */
+    ok &= gate_pps();
+    ok &= gate_usart();
+    ok &= gate_ssp();
+    ok &= gate_pps_lock();
 
     int rc = epic_harness_report(ok);
     pic16f188xx_harness_halt();

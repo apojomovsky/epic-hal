@@ -1,15 +1,17 @@
 /**
- * Host model of the ports, IOC and Timer0..Timer2. IOC edges set IOCxF and
- * PIR0 IOCIF; timer callbacks gate on flag, enable, PEIE and GIE. Only
- * internal sources and the POR default PPS pins (RC0, RB5, RC3) clock or
- * gate; Timer1 models the gate, Timer2 the 0x00..0x08 modes. Edge
- * detection covers PORTA..PORTC; PORTD/PORTE join the level model.
+ * Host model of the ports, IOC and Timer0..Timer2. IOC edges (PORTA..PORTC)
+ * set IOCxF and PIR0 IOCIF; callbacks gate on flag, enable, PEIE and GIE.
+ * Timer0 counts T0CKIPPS edges on its PPS-selected pin; Timer1 and Timer2
+ * read the POR default PPS pins (RC0, RB5, RC3) and Timer2 models modes
+ * 0x00..0x08. The EUSART, MSSP1 and PPSLOCK models are in
+ * pic16f188xx_sim_serial.c.
  */
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include "pic16f188xx.h"
 #include "pic16f188xx_sim.h"
+#include "pic16f188xx_sim_priv.h"
 #include "peripherals/pic16f188xx_timer0.h"
 #include "peripherals/pic16f188xx_timer1.h"
 #include "peripherals/pic16f188xx_timer2.h"
@@ -70,6 +72,8 @@ static pic16f188xx_sim_irq_cb_t sim_irq_cb;
  * counts whole ratios from zero and test phases stay independent. */
 static uint32_t sim_t0_prescale_acc;
 static uint8_t sim_t0_post_acc;
+/* T0CKIPPS pin level seen on the previous tick, for edge detection. */
+static uint8_t sim_t0cki_last;
 
 /* Timer1 and Timer2 state. Dividers clear whenever their timer halts,
  * like Timer0, so each Start counts whole ratios from zero. The pulse
@@ -85,11 +89,11 @@ static uint8_t sim_t2_ers_prev;
 static uint8_t sim_t0_pulse;
 static uint8_t sim_t2_pulse;
 
-/* PPS is not modelled: the timer input rows read the pins the PPS input
- * registers select at POR (DS40001802H Table 13-1): T1CKIPPS RC0, T1GPPS
- * RB5 and T2INPPS RC3. An output pin reads back its latch, so a test
- * can drive an input either through pic16f188xx_sim_drive_input or by
- * making the pin an output. */
+/* The PPS select registers of these inputs are not modelled: the timer
+ * input rows read the pins they select at POR (DS40001802H Table 13-1):
+ * T1CKIPPS RC0, T1GPPS RB5 and T2INPPS RC3. An output pin reads back its
+ * latch, so a test can drive an input through pic16f188xx_sim_drive_input
+ * or by making the pin an output. */
 #define SIM_PIN_T1CKI() ((uint8_t)(pic16f188xx_sim_sfr[PIC_REG_PORTC] & 0x01U))
 #define SIM_PIN_T1G()   ((uint8_t)((pic16f188xx_sim_sfr[PIC_REG_PORTB] >> 5) & 0x01U))
 #define SIM_PIN_T2IN()  ((uint8_t)((pic16f188xx_sim_sfr[PIC_REG_PORTC] >> 3) & 0x01U))
@@ -211,6 +215,7 @@ void pic16f188xx_sim_reset(void)
     sim_irq_cb = NULL;
     sim_t0_prescale_acc = 0U;
     sim_t0_post_acc = 0U;
+    sim_t0cki_last = 0U;
     sim_t1_prescale_acc = 0U;
     sim_t1_sig_prev = 0U;
     sim_t1_toggle_ff = 0U;
@@ -223,6 +228,7 @@ void pic16f188xx_sim_reset(void)
     sim_t1ck_prev = 0U;
     pic16f188xx_sim_sfr[PIC_REG_TMR0H] = 0xFFU;
     pic16f188xx_sim_sfr[PIC_REG_PR2] = 0xFFU;
+    pic16f188xx_sim_serial_reset();
     sim_refresh_ports();
     for (i = 0; i < 3; i++)
     {
@@ -252,18 +258,27 @@ static void sim_t0_post_event(void)
 
 /**
  * @brief Advance Timer0 by one instruction tick.
- * @details Counts only for the internal sources (FOSC/4, HFINTOSC,
- * LFINTOSC, SOSC); the T0CKIPPS and LC1 rows have no stimulus model and
- * freeze the counter. 8-bit mode matches TMR0L against TMR0H and resets
- * on match; 16-bit mode rolls TMR0H:TMR0L over. Divider state clears
- * while halted, so a stopped timer restarts from whole ratios.
+ * @details The internal sources (FOSC/4, HFINTOSC, LFINTOSC, SOSC) tick
+ * every cycle. T0CKIPPS counts a rising edge on the pin T0CKIPPS selects
+ * (PORTA or PORTB), the inverted row a falling edge; the pin level is
+ * tracked even while the timer is halted, so enabling it mid-level does
+ * not count an edge. The LC1 row has no stimulus model and freezes the
+ * counter. 8-bit mode matches TMR0L against TMR0H and resets on match;
+ * 16-bit mode rolls TMR0H:TMR0L over. Divider state clears while halted,
+ * so a stopped timer restarts from whole ratios.
  */
 static void sim_step_timer0(void)
 {
     uint8_t con0;
     uint8_t con1;
     uint8_t cs;
+    uint8_t sel = pic16f188xx_sim_sfr[PIC_REG_T0CKIPPS];
+    uint8_t level = (uint8_t)((pic16f188xx_sim_sfr[sim_port[(sel >> 3) & 1U]] >>
+        (sel & 7U)) & 1U);
+    uint8_t rise = (uint8_t)((sim_t0cki_last == 0U) && (level != 0U));
+    uint8_t fall = (uint8_t)((sim_t0cki_last != 0U) && (level == 0U));
 
+    sim_t0cki_last = level;
     con0 = pic16f188xx_sim_sfr[PIC_REG_T0CON0];
     if ((con0 & PIC_T0CON0_T0EN) == 0U)
     {
@@ -274,7 +289,21 @@ static void sim_step_timer0(void)
     con1 = pic16f188xx_sim_sfr[PIC_REG_T0CON1];
     cs = (uint8_t)(((unsigned int)con1 & PIC_T0CON1_T0CS_MASK) >>
         PIC_T0CON1_T0CS_SHIFT);
-    if ((cs != (uint8_t)TIMER0_CS_FOSC4) && (cs != (uint8_t)TIMER0_CS_HFINTOSC) &&
+    if (cs == (uint8_t)TIMER0_CS_T0CKIPPS)
+    {
+        if (rise == 0U)
+        {
+            return;
+        }
+    }
+    else if (cs == (uint8_t)TIMER0_CS_T0CKIPPS_INV)
+    {
+        if (fall == 0U)
+        {
+            return;
+        }
+    }
+    else if ((cs != (uint8_t)TIMER0_CS_FOSC4) && (cs != (uint8_t)TIMER0_CS_HFINTOSC) &&
         (cs != (uint8_t)TIMER0_CS_LFINTOSC) && (cs != (uint8_t)TIMER0_CS_SOSC))
     {
         return;
@@ -612,8 +641,29 @@ static void sim_deliver_timers(void)
 }
 
 /**
- * @brief Sample pins, IOC and the timers once per instruction tick.
- * @param ticks Instruction ticks to advance (each ticks every timer once).
+ * @brief Deliver a pending EUSART or MSSP1 interrupt to the registered callback.
+ * @details Gated on a PIR3 flag with its PIE3 enable (SSP1, TX or RX),
+ * PEIE and GIE, matching silicon. TXIF stays set while the buffer is empty,
+ * so a TX callback that does not mask TXIE is re-entered every tick.
+ */
+static void sim_deliver_serial(void)
+{
+    uint8_t pending = (uint8_t)(pic16f188xx_sim_sfr[PIC_REG_PIR3] &
+        pic16f188xx_sim_sfr[PIC_REG_PIE3] &
+        (uint8_t)(PIC_PIR3_SSP1IF | PIC_PIR3_TXIF | PIC_PIR3_RCIF));
+
+    if ((pending != 0U) &&
+        ((pic16f188xx_sim_sfr[PIC_REG_INTCON] & PIC_INTCON_PEIE) != 0U) &&
+        (sim_gie() != 0U) &&
+        (sim_irq_cb != NULL))
+    {
+        sim_irq_cb();
+    }
+}
+
+/**
+ * @brief Sample pins, IOC, the timers, the EUSART and MSSP1 once per tick.
+ * @param ticks Instruction ticks to advance (each ticks every model once).
  */
 void pic16f188xx_sim_step(uint32_t ticks)
 {
@@ -628,7 +678,9 @@ void pic16f188xx_sim_step(uint32_t ticks)
         sim_step_timer1();
         sim_t0_pulse = 0U;
         sim_t2_pulse = 0U;
+        pic16f188xx_sim_serial_step();
         sim_deliver_timers();
+        sim_deliver_serial();
     }
 }
 

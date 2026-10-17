@@ -15,7 +15,7 @@
 /**
  * @brief Clock source (T2CLKCON<CS3:CS0>, DS40001802H Register 29-1).
  *        T2CKIPPS selects pin RC3 at POR (the sim never ticks that row);
- *        remapping needs PPS setup the HAL does not provide yet.
+ *        remapping is not exposed by EPIC_PPS_MapInput.
  *        Codes 1110 and 1111 are reserved and have no enumerator.
  */
 typedef enum {
@@ -111,7 +111,7 @@ typedef enum {
  * @brief External reset signal (T2RST<RSEL4:RSEL0>, DS40001802H
  *        Register 29-4). Code 00001 (TMR2_postscaled) is reserved on
  *        Timer2 and has no enumerator. T2INPPS selects pin RC3 at POR;
- *        remapping needs PPS setup the HAL does not provide yet.
+ *        remapping is not exposed by EPIC_PPS_MapInput.
  */
 typedef enum {
     TIMER2_RST_T2INPPS   = 0x00U,

@@ -60,6 +60,61 @@
 #define PIC_REG_T2CLKCON      0x290U
 #define PIC_REG_T2RST         0x291U
 
+/* PIR3/PIE3 carry the MSSP1 and EUSART flags and enables: same address
+ * on every part. */
+#define PIC_REG_PIR3          0x70FU
+#define PIC_REG_PIE3          0x719U
+/* EUSART (RC1REG..BAUD1CON) and MSSP1 (SSP1BUF..SSP1CON3): same address
+ * on every part. The 1 suffix names the first instance. */
+#define PIC_REG_RC1REG        0x119U
+#define PIC_REG_TX1REG        0x11AU
+#define PIC_REG_SP1BRGL       0x11BU
+#define PIC_REG_SP1BRGH       0x11CU
+#define PIC_REG_RC1STA        0x11DU
+#define PIC_REG_TX1STA        0x11EU
+#define PIC_REG_BAUD1CON      0x11FU
+#define PIC_REG_SSP1BUF       0x18CU
+#define PIC_REG_SSP1ADD       0x18DU
+#define PIC_REG_SSP1MSK       0x18EU
+#define PIC_REG_SSP1STAT      0x18FU
+#define PIC_REG_SSP1CON1      0x190U
+#define PIC_REG_SSP1CON2      0x191U
+#define PIC_REG_SSP1CON3      0x192U
+
+/* PPS (PPSLOCK, xxxPPS input selects, RxyPPS output selects): 0xE8F..
+ * and 0xF10.. on five parts, 0x1E8F../0x1F10.. on 16F18857/16F18877
+ * (same low 12 bits; selected on PIC16F188XX_FAMILY_BANKED_HI, lines
+ * marked P57-77 as for the banked GPIO block). The RxyPPS selects are
+ * eight consecutive registers per port (RA0PPS..RA7PPS from the base);
+ * PORTD/PORTE exist on the 40-pin parts only. */
+#if PIC16F188XX_FAMILY_BANKED_HI
+#define PIC_REG_PPSLOCK       0x1E8FU  /* P57-77 */
+#define PIC_REG_T0CKIPPS      0x1E91U  /* P57-77 */
+#define PIC_REG_SSP1CLKPPS    0x1EC5U  /* P57-77 */
+#define PIC_REG_SSP1DATPPS    0x1EC6U  /* P57-77 */
+#define PIC_REG_SSP1SSPPS     0x1EC7U  /* P57-77 */
+#define PIC_REG_RXPPS         0x1ECBU  /* P57-77 */
+#define PIC_REG_RA0PPS        0x1F10U  /* P57-77 */
+#define PIC_REG_RB0PPS        0x1F18U  /* P57-77 */
+#define PIC_REG_RC0PPS        0x1F20U  /* P57-77 */
+#if PIC16F188XX_FAMILY_HAS_PORTD
+#define PIC_REG_RD0PPS        0x1F28U  /* P57-77 */
+#endif
+#else
+#define PIC_REG_PPSLOCK       0xE8FU
+#define PIC_REG_T0CKIPPS      0xE91U
+#define PIC_REG_SSP1CLKPPS    0xEC5U
+#define PIC_REG_SSP1DATPPS    0xEC6U
+#define PIC_REG_SSP1SSPPS     0xEC7U
+#define PIC_REG_RXPPS         0xECBU
+#define PIC_REG_RA0PPS        0xF10U
+#define PIC_REG_RB0PPS        0xF18U
+#define PIC_REG_RC0PPS        0xF20U
+#if PIC16F188XX_FAMILY_HAS_PORTD
+#define PIC_REG_RD0PPS        0xF28U
+#endif
+#endif
+
 /* Banked GPIO (ANSELx/WPUx/ODCONx/SLRCONx/INLVLx/IOCx): 0xFxx on five
  * parts, 0x1Fxx on 16F18857/16F18877 (same low 12 bits; selected on
  * PIC16F188XX_FAMILY_BANKED_HI). gen-sfr manages the canonical
@@ -227,5 +282,75 @@
 #define PIC_T2HLT_MODE_MASK     0x1FU
 #define PIC_T2CLKCON_CS_MASK    0x0FU
 #define PIC_T2RST_RSEL_MASK     0x1FU
+/* PIR3/PIE3 bits: SSP1 event bit 0, SSP1 bus collision bit 1, EUSART TX
+ * bit 4, EUSART RX bit 5 (impl 0x3F; bits 2 and 3 are the MSSP2 pair,
+ * unused here). TXIF and RCIF are read-only status: hardware clears
+ * them (TXREG write, RCREG read). */
+#define PIC_PIR3_SSP1IF         EPIC_BIT(0)
+#define PIC_PIR3_BCL1IF         EPIC_BIT(1)
+#define PIC_PIR3_TXIF           EPIC_BIT(4)
+#define PIC_PIR3_RCIF           EPIC_BIT(5)
+#define PIC_PIE3_SSP1IE         EPIC_BIT(0)
+#define PIC_PIE3_BCL1IE         EPIC_BIT(1)
+#define PIC_PIE3_TXIE           EPIC_BIT(4)
+#define PIC_PIE3_RCIE           EPIC_BIT(5)
+
+/* RC1STA bits: SPEN 7, RX9 6, SREN 5, CREN 4, ADDEN 3, FERR 2 (read-only),
+ * OERR 1 (read-only, clears when CREN is cleared), RX9D 0 (read-only). */
+#define PIC_RC1STA_SPEN         EPIC_BIT(7)
+#define PIC_RC1STA_RX9          EPIC_BIT(6)
+#define PIC_RC1STA_CREN         EPIC_BIT(4)
+#define PIC_RC1STA_ADDEN        EPIC_BIT(3)
+#define PIC_RC1STA_FERR         EPIC_BIT(2)
+#define PIC_RC1STA_OERR         EPIC_BIT(1)
+#define PIC_RC1STA_RX9D         EPIC_BIT(0)
+
+/* TX1STA bits: CSRC 7, TX9 6, TXEN 5, SYNC 4, SENDB 3, BRGH 2, TRMT 1
+ * (read-only, set when the shift register is empty), TX9D 0. POR 0x02. */
+#define PIC_TX1STA_TX9          EPIC_BIT(6)
+#define PIC_TX1STA_TXEN         EPIC_BIT(5)
+#define PIC_TX1STA_SYNC         EPIC_BIT(4)
+#define PIC_TX1STA_BRGH         EPIC_BIT(2)
+#define PIC_TX1STA_TRMT         EPIC_BIT(1)
+#define PIC_TX1STA_TX9D         EPIC_BIT(0)
+#define PIC_TX1STA_POR_VALUE    0x02U
+
+/* BAUD1CON bits: ABDOVF 7 (read-only), RCIDL 6 (read-only, set while the
+ * receiver is idle), SCKP 4, BRG16 3, WUE 1, ABDEN 0 (impl 0xDB, POR 0x40). */
+#define PIC_BAUD1CON_RCIDL      EPIC_BIT(6)
+#define PIC_BAUD1CON_BRG16      EPIC_BIT(3)
+
+/* SSP1STAT bits: SMP 7, CKE 6, DA 5, P 4, S 3, RW 2, UA 1, BF 0. Only SMP
+ * and CKE are software-writable; the rest are hardware status. */
+#define PIC_SSP1STAT_SMP        EPIC_BIT(7)
+#define PIC_SSP1STAT_CKE        EPIC_BIT(6)
+#define PIC_SSP1STAT_DA         EPIC_BIT(5)
+#define PIC_SSP1STAT_P          EPIC_BIT(4)
+#define PIC_SSP1STAT_S          EPIC_BIT(3)
+#define PIC_SSP1STAT_RW         EPIC_BIT(2)
+#define PIC_SSP1STAT_BF         EPIC_BIT(0)
+#define PIC_SSP1STAT_WRITE_MASK 0xC0U
+
+/* SSP1CON1 bits: WCOL 7, SSPOV 6, SSPEN 5, CKP 4, SSPM value in bits 3:0. */
+#define PIC_SSP1CON1_WCOL       EPIC_BIT(7)
+#define PIC_SSP1CON1_SSPOV      EPIC_BIT(6)
+#define PIC_SSP1CON1_SSPEN      EPIC_BIT(5)
+#define PIC_SSP1CON1_CKP        EPIC_BIT(4)
+#define PIC_SSP1CON1_SSPM_MASK  0x0FU
+
+/* SSP1CON2 bits (I2C master): GCEN 7, ACKSTAT 6 (read-only, 0 = slave
+ * acknowledged), ACKDT 5, ACKEN 4, RCEN 3, PEN 2, RSEN 1, SEN 0. The five
+ * low bits are bus operations the hardware clears on completion. */
+#define PIC_SSP1CON2_ACKSTAT    EPIC_BIT(6)
+#define PIC_SSP1CON2_ACKDT      EPIC_BIT(5)
+#define PIC_SSP1CON2_ACKEN      EPIC_BIT(4)
+#define PIC_SSP1CON2_RCEN       EPIC_BIT(3)
+#define PIC_SSP1CON2_PEN        EPIC_BIT(2)
+#define PIC_SSP1CON2_RSEN       EPIC_BIT(1)
+#define PIC_SSP1CON2_SEN        EPIC_BIT(0)
+#define PIC_SSP1CON2_OP_MASK    0x1FU
+
+/* PPSLOCK bit 0 (PPSLOCKED): set locks the PPS registers against writes. */
+#define PIC_PPSLOCK_PPSLOCKED   EPIC_BIT(0)
 
 #endif /* PIC16F188XX_SFR_H */

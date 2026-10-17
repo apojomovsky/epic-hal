@@ -1,15 +1,20 @@
 #include "core/pic16f188xx_irq.h"
 #include "peripherals/pic16f188xx_gpio.h"
 #include "peripherals/pic16f188xx_timer0.h"
+#include "peripherals/pic16f188xx_ssp.h"
+#include "peripherals/pic16f188xx_usart.h"
 #include "peripherals/pic16f188xx_timer1.h"
 #include "peripherals/pic16f188xx_timer2.h"
 
-/* PIR0 flags with a driver: IOCIF and TMR0IF; PIR4 flags: TMR1IF and
- * TMR2IF. INT has no driver and no API enables it, and the other PIR4
- * bits (Timer3..6) have none either, so no unowned source can reach
- * the vector. */
+/* Flags with a driver: IOCIF and TMR0IF in PIR0, SSP1IF, TXIF and RCIF in
+ * PIR3, TMR1IF and TMR2IF in PIR4. INT, BCL1IF and Timer3..6 have no
+ * handler and no API enables them, so no unowned source can reach the
+ * vector. */
 #define IOC_PIR0_MASK ((uint8_t)PIC_PIR0_IOCIF)
 #define TMR0_PIR0_MASK ((uint8_t)PIC_PIR0_TMR0IF)
+#define SSP1_PIR3_MASK ((uint8_t)PIC_PIR3_SSP1IF)
+#define TX_PIR3_MASK ((uint8_t)PIC_PIR3_TXIF)
+#define RX_PIR3_MASK ((uint8_t)PIC_PIR3_RCIF)
 #define TMR1_PIR4_MASK ((uint8_t)PIC_PIR4_TMR1IF)
 #define TMR2_PIR4_MASK ((uint8_t)PIC_PIR4_TMR2IF)
 
@@ -36,6 +41,27 @@ void epic_dispatch_all_irqs(void)
         if ((EPIC_REG8(PIC_REG_PIE0) & TMR0_PIR0_MASK) != 0U)
         {
             TIMER0_IRQHandler();
+        }
+    }
+    if ((EPIC_REG8(PIC_REG_PIR3) & SSP1_PIR3_MASK) != 0U)
+    {
+        if ((EPIC_REG8(PIC_REG_PIE3) & SSP1_PIR3_MASK) != 0U)
+        {
+            SSP_IRQHandler();
+        }
+    }
+    if ((EPIC_REG8(PIC_REG_PIR3) & TX_PIR3_MASK) != 0U)
+    {
+        if ((EPIC_REG8(PIC_REG_PIE3) & TX_PIR3_MASK) != 0U)
+        {
+            USART_TX_IRQHandler();
+        }
+    }
+    if ((EPIC_REG8(PIC_REG_PIR3) & RX_PIR3_MASK) != 0U)
+    {
+        if ((EPIC_REG8(PIC_REG_PIE3) & RX_PIR3_MASK) != 0U)
+        {
+            USART_RX_IRQHandler();
         }
     }
     if ((EPIC_REG8(PIC_REG_PIR4) & TMR1_PIR4_MASK) != 0U)
