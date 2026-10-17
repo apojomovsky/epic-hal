@@ -37,6 +37,11 @@
 #define PIC_REG_PORTE         0x10U
 #define PIC_REG_TRISE         0x15U
 #define PIC_REG_LATE          0x1AU
+/* Timer0 bank 0 (TMR0L/TMR0H/T0CON0/T0CON1): same address on every part. */
+#define PIC_REG_TMR0L         0x1CU
+#define PIC_REG_TMR0H         0x1DU
+#define PIC_REG_T0CON0        0x1EU
+#define PIC_REG_T0CON1        0x1FU
 
 /* Banked GPIO (ANSELx/WPUx/ODCONx/SLRCONx/INLVLx/IOCx): 0xFxx on five
  * parts, 0x1Fxx on 16F18857/16F18877 (same low 12 bits; selected on
@@ -146,5 +151,18 @@
 #define PIC_PIE0_INTE         EPIC_BIT(0)
 #define PIC_PIE0_IOCIE        EPIC_BIT(4)
 #define PIC_PIE0_TMR0IE       EPIC_BIT(5)
+/* T0CON0 bits: T0EN bit 7, T0OUT bit 5 (read-only), T016BIT bit 4,
+ * T0OUTPS value in bits 3:0 (bit 6 unimplemented, impl 0xBF). */
+#define PIC_T0CON0_T0EN         EPIC_BIT(7)
+#define PIC_T0CON0_T0OUT        EPIC_BIT(5)
+#define PIC_T0CON0_T016BIT      EPIC_BIT(4)
+#define PIC_T0CON0_T0OUTPS_MASK 0x0FU
+
+/* T0CON1 bits: T0CS value in bits 7:5, T0ASYNC bit 4, T0CKPS value in
+ * bits 3:0 (impl 0xFF). */
+#define PIC_T0CON1_T0CS_SHIFT   5U
+#define PIC_T0CON1_T0CS_MASK    0xE0U
+#define PIC_T0CON1_T0ASYNC      EPIC_BIT(4)
+#define PIC_T0CON1_T0CKPS_MASK  0x0FU
 
 #endif /* PIC16F188XX_SFR_H */

@@ -1,16 +1,16 @@
 /**
- * Host model of the PIC16F188xx ports and interrupt-on-change. Each
- * port's IOCxP/IOCxN edge masks set that port's IOCxF flags and the
- * shared PIR0 IOCIF, mirroring silicon; the interrupt callback is gated
- * on IOCIF, IOCIE, PEIE and GIE. PORTD has no IOC registers and PORTE
- * IOC is RE3 only, so edge detection is modelled for PORTA..PORTC
- * while PORTD/PORTE join the latch/level model.
+ * Host model of the ports, interrupt-on-change and Timer0. IOC edge
+ * masks set IOCxF and PIR0 IOCIF; the callback gates on flag, enable,
+ * PEIE and GIE. Timer0 advances per tick with prescaler, 8/16-bit
+ * counting, postscaler and T0OUT modelled; only internal sources tick.
+ * Edge detection covers PORTA..PORTC; PORTD/PORTE join the level model.
  */
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include "pic16f188xx.h"
 #include "pic16f188xx_sim.h"
+#include "peripherals/pic16f188xx_timer0.h"
 
 uint8_t pic16f188xx_sim_sfr[0x2000];
 
@@ -63,6 +63,11 @@ static const uint8_t  sim_mask[] = {
 static uint8_t sim_input_value[SIM_NPORTS];
 static uint8_t sim_last_port[3];
 static pic16f188xx_sim_irq_cb_t sim_irq_cb;
+
+/* Timer0 divider state. Cleared whenever the timer halts, so each Start
+ * counts whole ratios from zero and test phases stay independent. */
+static uint32_t sim_t0_prescale_acc;
+static uint8_t sim_t0_post_acc;
 
 /**
  * @brief Test whether the simulated GIE bit is set.
@@ -151,7 +156,7 @@ static void sim_step_ioc(void)
 /**
  * @brief Reset the simulated SFRs to power-up state with all pins as inputs.
  * @details TRIS powers up all-input and ANSEL all-analog (EDC por); WPU and
- * the IOC edge registers power up cleared.
+ * the IOC edge registers power up cleared; TMR0H powers up 0xFF (EDC por).
  */
 void pic16f188xx_sim_reset(void)
 {
@@ -178,6 +183,9 @@ void pic16f188xx_sim_reset(void)
 #endif
     memset(sim_input_value, 0, sizeof sim_input_value);
     sim_irq_cb = NULL;
+    sim_t0_prescale_acc = 0U;
+    sim_t0_post_acc = 0U;
+    pic16f188xx_sim_sfr[PIC_REG_TMR0H] = 0xFFU;
     sim_refresh_ports();
     for (i = 0; i < 3; i++)
     {
@@ -186,14 +194,118 @@ void pic16f188xx_sim_reset(void)
 }
 
 /**
- * @brief Sample pins and IOC once.
- * @param ticks Ignored; kept so later timer models slot in without changing callers.
+ * @brief Fold one postscaler event: count it, and on terminal count set
+ * TMR0IF and toggle T0OUT (TMR0_out toggles the output per postscaled
+ * match/rollover, DS40001825F §27.7).
+ */
+static void sim_t0_post_event(void)
+{
+    uint8_t outps = (uint8_t)(pic16f188xx_sim_sfr[PIC_REG_T0CON0] &
+        PIC_T0CON0_T0OUTPS_MASK);
+
+    sim_t0_post_acc++;
+    if (sim_t0_post_acc > outps)
+    {
+        sim_t0_post_acc = 0U;
+        pic16f188xx_sim_sfr[PIC_REG_PIR0] |= PIC_PIR0_TMR0IF;
+        pic16f188xx_sim_sfr[PIC_REG_T0CON0] ^= PIC_T0CON0_T0OUT;
+    }
+}
+
+/**
+ * @brief Advance Timer0 by one instruction tick.
+ * @details Counts only for the internal sources (FOSC/4, HFINTOSC,
+ * LFINTOSC, SOSC); the T0CKIPPS and LC1 rows have no stimulus model and
+ * freeze the counter. 8-bit mode matches TMR0L against TMR0H and resets
+ * on match; 16-bit mode rolls TMR0H:TMR0L over. Divider state clears
+ * while halted, so a stopped timer restarts from whole ratios.
+ */
+static void sim_step_timer0(void)
+{
+    uint8_t con0;
+    uint8_t con1;
+    uint8_t cs;
+
+    con0 = pic16f188xx_sim_sfr[PIC_REG_T0CON0];
+    if ((con0 & PIC_T0CON0_T0EN) == 0U)
+    {
+        sim_t0_prescale_acc = 0U;
+        sim_t0_post_acc = 0U;
+        return;
+    }
+    con1 = pic16f188xx_sim_sfr[PIC_REG_T0CON1];
+    cs = (uint8_t)(((unsigned int)con1 & PIC_T0CON1_T0CS_MASK) >>
+        PIC_T0CON1_T0CS_SHIFT);
+    if ((cs != (uint8_t)TIMER0_CS_FOSC4) && (cs != (uint8_t)TIMER0_CS_HFINTOSC) &&
+        (cs != (uint8_t)TIMER0_CS_LFINTOSC) && (cs != (uint8_t)TIMER0_CS_SOSC))
+    {
+        return;
+    }
+    sim_t0_prescale_acc++;
+    if (sim_t0_prescale_acc < (1UL << (con1 & PIC_T0CON1_T0CKPS_MASK)))
+    {
+        return;
+    }
+    sim_t0_prescale_acc = 0U;
+    if ((con0 & PIC_T0CON0_T016BIT) != 0U)
+    {
+        uint16_t ctr = (uint16_t)(((uint16_t)pic16f188xx_sim_sfr[PIC_REG_TMR0H] << 8) |
+            pic16f188xx_sim_sfr[PIC_REG_TMR0L]);
+        ctr++;
+        if (ctr == 0U)
+        {
+            sim_t0_post_event();
+        }
+        pic16f188xx_sim_sfr[PIC_REG_TMR0L] = (uint8_t)ctr;
+        pic16f188xx_sim_sfr[PIC_REG_TMR0H] = (uint8_t)(ctr >> 8);
+    }
+    else
+    {
+        uint16_t next = (uint16_t)pic16f188xx_sim_sfr[PIC_REG_TMR0L] + 1U;
+        if (next > pic16f188xx_sim_sfr[PIC_REG_TMR0H])
+        {
+            pic16f188xx_sim_sfr[PIC_REG_TMR0L] = 0U;
+            sim_t0_post_event();
+        }
+        else
+        {
+            pic16f188xx_sim_sfr[PIC_REG_TMR0L] = (uint8_t)next;
+        }
+    }
+}
+
+/**
+ * @brief Deliver a pending Timer0 interrupt to the registered callback.
+ * @details Gated on TMR0IF, TMR0IE, PEIE and GIE, matching silicon: a
+ * pending flag is taken as soon as GIE allows it.
+ */
+static void sim_deliver_timer0(void)
+{
+    if (((pic16f188xx_sim_sfr[PIC_REG_PIR0] & PIC_PIR0_TMR0IF) != 0U) &&
+        ((pic16f188xx_sim_sfr[PIC_REG_PIE0] & PIC_PIE0_TMR0IE) != 0U) &&
+        ((pic16f188xx_sim_sfr[PIC_REG_INTCON] & PIC_INTCON_PEIE) != 0U) &&
+        (sim_gie() != 0U) &&
+        (sim_irq_cb != NULL))
+    {
+        sim_irq_cb();
+    }
+}
+
+/**
+ * @brief Sample pins, IOC and Timer0 once per instruction tick.
+ * @param ticks Instruction ticks to advance (each ticks Timer0 once).
  */
 void pic16f188xx_sim_step(uint32_t ticks)
 {
-    (void)ticks;
-    sim_refresh_ports();
-    sim_step_ioc();
+    uint32_t i;
+
+    for (i = 0U; i < ticks; i++)
+    {
+        sim_refresh_ports();
+        sim_step_ioc();
+        sim_step_timer0();
+        sim_deliver_timer0();
+    }
 }
 
 /**

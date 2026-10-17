@@ -83,8 +83,9 @@
 #define PIC16F188XX_FAMILY_IOCC_MASK  0xFFU
 #define PIC16F188XX_FAMILY_IOCD_MASK  0x00U
 #define PIC16F188XX_FAMILY_IOCE_MASK  0x00U
-/* Timer drivers are not ported yet; demos gate timer use on these so the
- * same demo source builds once they land. */
+/* Timer drivers are not ported yet, except Timer0; demos gate timer use
+ * on these so the same demo source builds once they land. */
+#define PIC16F188XX_HAS_TMR0 1
 #define PIC16F188XX_HAS_TMR1 0
 #define PIC16F188XX_HAS_TMR2 0
 

@@ -31,8 +31,14 @@ Implemented and verified:
 - [x] GPIO on PORTA..PORTC (all parts) and PORTD/PORTE (40-pin parts):
       init, read/write pin and port, toggle, pull-ups, analog select,
       per-port interrupt-on-change enable
-- [x] Interrupt core for IOC (`PIE0`/`PIR0` bit 4, PEIE-gated
-      dispatch, single vector, automatic hardware context save)
+- [x] Interrupt core for IOC and Timer0 overflow (`PIE0`/`PIR0` bits 4
+      and 5, PEIE-gated dispatch, single vector, automatic hardware
+      context save)
+- [x] Timer0 8/16-bit with prescaler, postscaler and overflow callback
+      (`EPIC_TIMER0_*`, `TIMER0_HANDLE_DEFAULT`): host probe
+      `example_timer0` (ctest) plus the mdb gate section (register
+      images, polled flag, vectored overflow with POR restore; T0OUT
+      masks out of the T0CON0 images, family MANUAL.md)
 - [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`hal/pic14e/16f188xx`), `blink` example,
       and the mdb register-readback gate (`MODE=gpio`, RA0 PASS marker)
@@ -41,7 +47,7 @@ Implemented and verified:
       silicon); MPLAB SIM ignores it, so there it covers readbacks
       only (family MANUAL.md).
 Not yet implemented (deliberate scope limit, each its own follow-up):
-- Timer0/1/2, CCP/PWM, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
+- Timer1/2, CCP/PWM, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
   comparators, DAC, FVR, NCO, PPS setup, and the remaining peripherals.
 - Wiring the family into the demos.
 
@@ -71,15 +77,15 @@ include/
   host/               host platform header (memory-backed SFR array)
   target/             target platform header (volatile-deref SFR)
   core/               IRQ contract
-  peripherals/        GPIO contract
+  peripherals/        GPIO and Timer0 contracts
 src/
   core/               IRQ backend and dispatch
-  peripherals/        GPIO body
+  peripherals/        GPIO and Timer0 bodies
   target/             ISR vector (real hardware only)
   sim/                host simulation backend
   mdb/                MPLAB SIM register-readback harness
-tests/                example_blink, example_gpio (host),
-                      example_gpio_mdb
+tests/                example_blink, example_gpio, example_timer0 (host),
+                      example_gpio_mdb (host and mdb gate)
 ```
 
 ## Implemented pins

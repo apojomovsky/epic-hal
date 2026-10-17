@@ -40,6 +40,7 @@ set(EPIC_FAMILY_DEVICES       PIC16F18854 PIC16F18855 PIC16F18856 PIC16F18857 PI
 
 set(EPIC_SOURCES
     src/peripherals/pic16f188xx_gpio.c
+    src/peripherals/pic16f188xx_timer0.c
     src/core/pic16f188xx_irq.c
     src/core/pic16f188xx_irq_dispatch.c
     src/sim/pic16f188xx_harness_sim.c
@@ -51,8 +52,10 @@ epic_add_hal_library(${EPIC_LIB})
 epic_add_example(example_blink tests/example_blink.c)
 epic_add_example(example_gpio tests/example_gpio.c)
 epic_add_example(example_gpio_mdb tests/example_gpio_mdb.c)
+epic_add_example(example_timer0 tests/example_timer0.c)
 epic_add_example_per_device(example_blink tests/example_blink.c)
 
 enable_testing()
 add_test(NAME gpio_host COMMAND example_gpio)
 add_test(NAME gpio_mdb_host COMMAND example_gpio_mdb)
+add_test(NAME timer0_host COMMAND example_timer0)
