@@ -31,7 +31,7 @@ SIM_VARIANTS = [
     ("lib/tick", "18F4550"),
     ("hal/pic14e/16f193x", "16F1939"),
     ("hal/pic14e/16f1508", "16F1509"),
-    ("hal/pic14e/16f188xx", "16F18855"),
+    ("hal/pic14e/16f188xx", "16F18877"),
     ("lib/tick", "16F1939"),
     ("lib/fsm", "16F1939"),
     ("lib/swuart", "16F877A"),

@@ -23,6 +23,12 @@ static uint8_t port_mask(GPIO_TypeDef port)
     case GPIOA: return PIC16F188XX_FAMILY_PORTA_MASK;
     case GPIOB: return PIC16F188XX_FAMILY_PORTB_MASK;
     case GPIOC: return PIC16F188XX_FAMILY_PORTC_MASK;
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    case GPIOD: return PIC16F188XX_FAMILY_PORTD_MASK;
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    case GPIOE: return PIC16F188XX_FAMILY_PORTE_MASK;
+#endif
     default:    return 0U;
     }
 }
@@ -38,6 +44,12 @@ static uint16_t tris_addr(GPIO_TypeDef port)
     {
     case GPIOA: return PIC_REG_TRISA;
     case GPIOB: return PIC_REG_TRISB;
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    case GPIOD: return PIC_REG_TRISD;
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    case GPIOE: return PIC_REG_TRISE;
+#endif
     default:    return PIC_REG_TRISC;
     }
 }
@@ -53,6 +65,12 @@ static uint16_t lat_addr(GPIO_TypeDef port)
     {
     case GPIOA: return PIC_REG_LATA;
     case GPIOB: return PIC_REG_LATB;
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    case GPIOD: return PIC_REG_LATD;
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    case GPIOE: return PIC_REG_LATE;
+#endif
     default:    return PIC_REG_LATC;
     }
 }
@@ -68,6 +86,12 @@ static uint16_t port_addr(GPIO_TypeDef port)
     {
     case GPIOA: return PIC_REG_PORTA;
     case GPIOB: return PIC_REG_PORTB;
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    case GPIOD: return PIC_REG_PORTD;
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    case GPIOE: return PIC_REG_PORTE;
+#endif
     default:    return PIC_REG_PORTC;
     }
 }
@@ -83,6 +107,12 @@ static uint16_t ansel_addr(GPIO_TypeDef port)
     {
     case GPIOA: return PIC_REG_ANSELA;
     case GPIOB: return PIC_REG_ANSELB;
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    case GPIOD: return PIC_REG_ANSELD;
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    case GPIOE: return PIC_REG_ANSELE;
+#endif
     default:    return PIC_REG_ANSELC;
     }
 }
@@ -98,6 +128,12 @@ static uint16_t wpu_addr(GPIO_TypeDef port)
     {
     case GPIOA: return PIC_REG_WPUA;
     case GPIOB: return PIC_REG_WPUB;
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    case GPIOD: return PIC_REG_WPUD;
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    case GPIOE: return PIC_REG_WPUE;
+#endif
     default:    return PIC_REG_WPUC;
     }
 }
@@ -314,14 +350,31 @@ void EPIC_GPIO_RegisterChangeCallback(void (*callback)(uint8_t iocbf, uint8_t po
 }
 
 /**
+ * @brief Edge-arm mask for a port. PORTD has no IOC registers and PORTE
+ *        IOC is RE3 only, which has no driver, so both arm nothing.
+ * @param port GPIO port.
+ * @return IOC mask, or 0 for a port with no drivable edge detection.
+ */
+static uint8_t ioc_mask(GPIO_TypeDef port)
+{
+    switch (port)
+    {
+    case GPIOA: return PIC16F188XX_FAMILY_IOCA_MASK;
+    case GPIOB: return PIC16F188XX_FAMILY_IOCB_MASK;
+    case GPIOC: return PIC16F188XX_FAMILY_IOCC_MASK;
+    default:    return 0U;
+    }
+}
+
+/**
  * @brief Set the rising and falling edge masks for one port's interrupt-on-change.
- * @param port Port to arm (GPIOA, GPIOB, or GPIOC).
+ * @param port Port to arm (GPIOA, GPIOB, or GPIOC; GPIOD/GPIOE arm nothing).
  * @param pos_mask Pins that trigger on a rising edge (IOCxP).
  * @param neg_mask Pins that trigger on a falling edge (IOCxN).
  */
 void EPIC_GPIO_EnableChangeDetect(GPIO_TypeDef port, uint8_t pos_mask, uint8_t neg_mask)
 {
-    uint8_t mask = port_mask(port);
+    uint8_t mask = ioc_mask(port);
     if (mask == 0U)
     {
         return;

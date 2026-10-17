@@ -1,10 +1,11 @@
-# PIC16F18855 register reference
+# PIC16F188xx register reference
 
 Per-peripheral register reference for the GPIO and interrupt-on-change
 sources in this HAL. Shared conventions (naming, handle pattern,
 harness, interrupt model) are in
 [common/MANUAL.md](../../../common/MANUAL.md). This file covers only
-what is specific to this part.
+what is specific to this family: 16F18854/55/56/57 (28-pin) and
+16F18875/76/77 (40-pin, adding PORTD and PORTE).
 
 ## Sources and verification
 
@@ -40,7 +41,17 @@ what is specific to this part.
 | TRISC    | 0xFF  | 0xFF       | Direction for RC0..RC7, all input        |
 | ANSELC   | 0xFF  | 0xFF       | Analog select, all analog                |
 | WPUC     | 0xFF  | 0x00       | Weak pull-up per PORTC pin               |
-| IOCCP, IOCCN, IOCCF | 0xFF | 0x00 | Rising, falling, flag per PORTC pin |
+| PORTD    | 0xFF  | xxxxxxxx   | RD0..RD7, 40-pin parts only              |
+| LATD     | 0xFF  | xxxxxxxx   | Latch follows the PORTD pins             |
+| TRISD    | 0xFF  | 0xFF       | Direction for RD0..RD7, all input        |
+| ANSELD   | 0xFF  | 0xFF       | Analog select, all analog                |
+| WPUD     | 0xFF  | 0x00       | Weak pull-up per PORTD pin               |
+| PORTE    | 0x0F (0x08 on 28-pin, RE3 only) | ----xxxx | RE0..RE3 read; RE3 is input-only (MCLR), 40-pin parts add RE0..RE2 |
+| LATE     | 0x07  | -----xxx  | Latch for RE0..RE2, 40-pin parts only    |
+| TRISE    | 0x07  | -----111  | Direction for RE0..RE2, 40-pin parts only|
+| ANSELE   | 0x07  | -----111  | Analog select RE0..RE2, 40-pin parts only|
+| WPUE     | 0x0F (0x08 on 28-pin) | ----x000 | Weak pull-up RE0..RE2 (RE3 bit exists) |
+| IOCEP, IOCEN, IOCEF | 0x08 | ----0--- | Rising, falling, flag for RE3 only |
 | INTCON   | 0xC1  | 00-----1   | INTEDG, PEIE, GIE only                   |
 | PIR0     | 0x31  | --00---0   | INTF, IOCIF, TMR0IF                      |
 | PIE0     | 0x31  | --00---0   | INTE, IOCIE, TMR0IE                      |
@@ -48,7 +59,10 @@ what is specific to this part.
 ## Register addresses
 
 Addresses are the `PIC_REG_*` values in `include/pic16f188xx_sfr.h`
-(generated). The table below only lists the ones this HAL uses:
+(generated). The table below only lists the ones this HAL uses, in the
+canonical 0xFxx spelling: on 16F18857/16F18877 every banked address at
+or above 0xF00 reads 0x1Fxx instead (same low 12 bits; the header
+selects the spelling per part, and the sfr-map audit checks both).
 
 | Name     | Address |
 |----------|---------|
@@ -78,7 +92,16 @@ Addresses are the `PIC_REG_*` values in `include/pic16f188xx_sfr.h`
 | WPUC     | 0xF4F   |
 | IOCCP    | 0xF53   |
 | IOCCN    | 0xF54   |
-| IOCCF    | 0xF55   |
+| PORTD    | 0x0F    |
+| TRISD    | 0x14    |
+| LATD     | 0x19    |
+| PORTE    | 0x10    |
+| TRISE    | 0x15    |
+| LATE     | 0x1A    |
+| ANSELD   | 0xF59   |
+| WPUD     | 0xF5A   |
+| ANSELE   | 0xF64   |
+| WPUE     | 0xF65   |
 
 ## Interrupt-on-change bits
 

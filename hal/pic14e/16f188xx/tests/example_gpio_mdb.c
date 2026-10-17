@@ -6,7 +6,9 @@
  * Expected register image: TRISB RB4 clears on output init; ANSELB RB4/5
  * clear on digital init; LATB follows WritePin then TogglePin; PORTA
  * full-port write lands every bit but RA0 (the harness result pin, held
- * low until PASS); WPUC follows SetPullups; IOCBP arms 0xFF; PIE0.IOCIE
+ * low until PASS); WPUC follows SetPullups; LATD follows a PORTD
+ * full-port write and TRISD/ANSELD clear on output init (40-pin parts);
+ * LATE keeps only RE0..RE2 (40-pin parts); IOCBP arms 0xFF; PIE0.IOCIE
  * and INTCON.PEIE set on enable and IOCIE clears on disable.
  *
  * Live smoke: software-set IOCAF1, IOCBF0 and IOCCF2 with IOCIE, PEIE
@@ -78,6 +80,24 @@ int main(void)
     ok &= ((EPIC_REG8(PIC_REG_WPUC) & (GPIO_PIN_2 | GPIO_PIN_3)) == (GPIO_PIN_2 | GPIO_PIN_3));
     EPIC_GPIO_SetPullups(GPIOC, GPIO_PIN_2 | GPIO_PIN_3, GPIO_PIN_RESET);
     ok &= ((EPIC_REG8(PIC_REG_WPUC) & (GPIO_PIN_2 | GPIO_PIN_3)) == 0U);
+
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    /* PORTD full-port path: direction and analog clear on output init,
+     * the latch follows a full-port write. */
+    EPIC_GPIO_Init(GPIOD, GPIO_PIN_All, GPIO_MODE_OUTPUT);
+    ok &= ((EPIC_REG8(PIC_REG_TRISD) & PIC16F188XX_FAMILY_PORTD_MASK) == 0U);
+    ok &= ((EPIC_REG8(PIC_REG_ANSELD) & PIC16F188XX_FAMILY_PORTD_MASK) == 0U);
+    EPIC_GPIO_WritePort(GPIOD, 0xA5U);
+    ok &= (EPIC_REG8(PIC_REG_LATD) == 0xA5U);
+#endif
+#if PIC16F188XX_FAMILY_HAS_PORTE
+    /* PORTE mask: RE3 is input-only, so only RE0..RE2 land in LATE. */
+    EPIC_GPIO_Init(GPIOE, GPIO_PIN_All, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePort(GPIOE, 0xFFU);
+    ok &= ((EPIC_REG8(PIC_REG_LATE) & (uint8_t)~PIC16F188XX_FAMILY_PORTE_MASK) == 0U);
+    ok &= ((EPIC_REG8(PIC_REG_LATE) & PIC16F188XX_FAMILY_PORTE_MASK) ==
+           PIC16F188XX_FAMILY_PORTE_MASK);
+#endif
 
     /* IOC enable path: arming PORTB writes IOCBP in full, enabling sets
      * PIE0.IOCIE and PEIE, disabling clears IOCIE. */

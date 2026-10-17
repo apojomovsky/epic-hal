@@ -17,7 +17,7 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 
 | Fact | Value |
 |---|---|
-| Parts | 16F18855 |
+| Parts | 16F18854, 16F18855, 16F18856, 16F18857, 16F18875, 16F18876, 16F18877 |
 | Core | PIC14E (enhanced mid-range) |
 | Modules | `hal/pic14e/16f188xx` |
 | Simulator | MDB sim gate |

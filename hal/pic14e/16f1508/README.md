@@ -56,7 +56,7 @@ the slow clock, STAGE2 samples switch AND STAGE1, both mode 5) is probe
 `example_clc_debounce` on the host and D-flop plus filter-gate sections of
 the mdb gate on target; the slow clock is the `EPIC_TIMER2` free-run below.
 The quadrature-decoder-assist demo (two mode-6 J-K cells, each
-clocking on one encoder line while the other sets it, with a software
+clocking on one encoder line while the other sets it, with a TMR1 position
 counter and a 10-LED bar on RC0..RC7, RA4, RA5) is probe `example_clc_quad`
 on the host and a J-K section of the mdb gate on target; the counter path
 is the `EPIC_TIMER1` T1CKI counter below (no TMR3 on this part).
@@ -82,7 +82,7 @@ Not yet implemented (deliberate scope limit, each its own follow-up):
 - Timer0, CCP, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
   comparators, DAC, FVR, NCO, CWG, and the SR latch.
 - Wiring the landed timer drivers into the demos (the debouncer TMR2 clock,
-  the quadrature TMR1 counter, the on-silicon TB3273 auto-dimmer) and the
+  the on-silicon TB3273 auto-dimmer) and the
   CLC sequential modes on the mdb gate (modes 3, 5 and 6 run in the gate;
   modes 4 and 7 and cross-cell cascades run host-only; MPLAB-SIM shapes
   the gate, see MANUAL.md, #383). The sweep itself is probe
