@@ -3,8 +3,8 @@
 #include "epic_math.h"
 #include <epic-cc.h>
 
-/* Cycle benchmark via TMR1, the epic-cc twin of
- * docs/internals/experiments/math-cycle-benchmark/bench.c: same probe shape and
+/* Cycle benchmark via TMR1, the epic-cc twin of the hand-asm probe (moved
+ * to the private epic-benchmarks repo): same probe shape and
  * operands, but linking the portable C path (src/host/ + src/common/)
  * under epic-cc instead of the XC8-dialect inline-asm backends. N=50,
  * not 100: the 16-bit TMR1 wraps at 65536 and the C-path mul16/div16

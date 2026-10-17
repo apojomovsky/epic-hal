@@ -20,6 +20,7 @@ moved files, the scripts and the code comments that name them.
 | `docs/experiments/math-cycle-benchmark-epiccc/bench_epiccc.c` | `docs/internals/experiments/math-cycle-benchmark-epiccc/bench_epiccc.c` |
 | `docs/experiments/math-cycle-benchmark-epiccc/cap.mdb` | `docs/internals/experiments/math-cycle-benchmark-epiccc/cap.mdb` |
 | `docs/superpowers/specs/2026-08-22-pic-variants-design.md` | `docs/internals/superpowers/specs/2026-08-22-pic-variants-design.md` |
+| `docs/internals/experiments/math-cycle-benchmark/` (README, bench.c, matrix.sh, pic16dis.py) | moved to the private epic-benchmarks repo |
 
 Not moved: `docs/superpowers/plans/` (both plans stay in place, see
 [index.md](index.md#plans)). The takeoff plan gate matches that exact path, so
