@@ -1,13 +1,9 @@
 /**
- * Host model of the EUSART (asynchronous transmit and receive), MSSP1 (SPI
- * master and I2C master against one scripted slave) and the PPSLOCK unlock
- * sequence. Register side effects hang off the epic_sfr_read8/write8
- * hooks: a TX1REG, SSP1BUF or SSP1CON2 write starts work, an RC1REG or
- * SSP1BUF read pops or clears, and the read-only status bits keep their
- * hardware value across a software write. Timing runs on instruction ticks
- * (Fosc/4): a baud-generator or SCK period is derived from the programmed
- * divisors. Bus collision, the SPI and I2C slave modes, framing errors and
- * the PPS1WAY one-shot are not modelled.
+ * Host model of the EUSART (async TX/RX), MSSP1 (SPI master, I2C master vs
+ * one scripted slave) and the PPSLOCK key sequence. Side effects hang off
+ * the epic_sfr_read8/write8 hooks; time is instruction ticks (Fosc/4)
+ * derived from the programmed divisors. Not modelled: bus collision, slave
+ * modes, framing errors, the PPS1WAY one-shot.
  */
 #include <stddef.h>
 #include <stdint.h>

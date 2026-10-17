@@ -1,12 +1,9 @@
 /**
- * PIC16F188xx MSSP1 driver: SPI master and I2C master (SSP1STAT, SSP1CON1,
- * SSP1CON2, SSP1ADD; EDC register map, the module matches the sibling
- * PIC16F193X MSSP, DS41364B). SPI slave, I2C slave and the Timer2 clock
- * mode are not driven. The pins come from PPS (EPIC_PPS_MapOutput and
- * MapInput) plus EPIC_GPIO_Init; this driver sets no pin. The I2C calls
- * start one bus operation and return: poll EPIC_SSP_I2C_IsIdle, or wait for
- * the SSP1 interrupt flag, before the next. API shape mirrors
- * hal/pic14e/16f193x (SPI). Full reference: MANUAL.md.
+ * PIC16F188xx MSSP1 driver: SPI master and I2C master (EDC register map;
+ * the module matches the PIC16F193X MSSP, DS41364B). Slave modes and the
+ * Timer2 clock mode are not driven. Pins come from PPS plus EPIC_GPIO_Init.
+ * I2C calls start one bus operation and return: poll EPIC_SSP_I2C_IsIdle.
+ * Full reference: MANUAL.md.
  */
 #ifndef PIC16F188XX_SSP_H
 #define PIC16F188XX_SSP_H

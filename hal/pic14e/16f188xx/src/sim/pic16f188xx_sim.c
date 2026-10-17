@@ -1,12 +1,9 @@
 /**
- * Host model of the ports, interrupt-on-change and Timer0. IOC edge
- * masks set IOCxF and PIR0 IOCIF; the callback gates on flag, enable,
- * PEIE and GIE. Timer0 advances per tick with prescaler, 8/16-bit
- * counting, postscaler and T0OUT modelled; the internal sources tick
- * every cycle and the T0CKIPPS rows count edges on the PPS-selected pin
- * (PORTA or PORTB). Edge detection covers PORTA..PORTC; PORTD/PORTE join
- * the level model. The EUSART, MSSP1 and PPSLOCK models live in
- * pic16f188xx_sim_serial.c.
+ * Host model of the ports, IOC and Timer0. IOC edges (PORTA..PORTC) set
+ * IOCxF and PIR0 IOCIF; callbacks gate on flag, enable, PEIE and GIE.
+ * Timer0 models prescaler, 8/16-bit counting, postscaler and T0OUT; the
+ * T0CKIPPS rows count edges on the PPS-selected PORTA or PORTB pin. The
+ * EUSART, MSSP1 and PPSLOCK models are in pic16f188xx_sim_serial.c.
  */
 #include <stddef.h>
 #include <stdint.h>

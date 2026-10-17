@@ -1,11 +1,9 @@
 /**
- * PIC16F18855 interrupt contract. Sources: interrupt-on-change (PIR0/PIE0
- * bit 4), Timer0 overflow (PIR0/PIE0 bit 5), MSSP1 event (PIR3/PIE3 bit 0)
- * and EUSART TX/RX (PIR3/PIE3 bits 4 and 5), each gated by INTCON.PEIE
- * like every peripheral source. Enabling one also sets PEIE, which
- * exposes PIR0/PIR3 to the vector; the dispatcher acknowledges enabled ones
- * (epic_dispatch_all_irqs). Single vector, no priority levels, hardware
- * context save.
+ * PIC16F18855 interrupt contract. Sources: IOC and Timer0 (PIR0/PIE0 bits
+ * 4 and 5), MSSP1 event and EUSART TX/RX (PIR3/PIE3 bits 0, 4 and 5), each
+ * gated by INTCON.PEIE; enabling one sets PEIE. The dispatcher acknowledges
+ * enabled ones (epic_dispatch_all_irqs). Single vector, no priority levels,
+ * hardware context save.
  */
 #ifndef PIC16F188XX_IRQ_H
 #define PIC16F188XX_IRQ_H

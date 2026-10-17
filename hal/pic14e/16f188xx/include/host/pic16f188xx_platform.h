@@ -1,11 +1,9 @@
 /**
- * Host simulation platform: SFRs live in a memory array owned by the
- * simulator. Selected at build time by putting include/host first.
- * EPIC_REG8 is the raw array cell; epic_sfr_read8/write8 go through the
- * simulator's access hooks, which model the side effects of reading or
- * writing a few registers (RC1REG, TX1REG, SSP1BUF and the read-only
- * status bits). Drivers use the hooked pair only where a register has
- * such effects on silicon.
+ * Host simulation platform: SFRs live in a simulator-owned array, selected
+ * by putting include/host first. EPIC_REG8 is the raw cell; epic_sfr_read8
+ * and write8 go through the simulator's hooks, which model the side
+ * effects of a few registers (RC1REG, TX1REG, SSP1BUF, read-only status
+ * bits). Drivers use the hooked pair only where silicon has such effects.
  */
 #ifndef PIC16F188XX_PLATFORM_H
 #define PIC16F188XX_PLATFORM_H

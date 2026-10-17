@@ -1,10 +1,8 @@
 /**
- * PIC16F188xx EUSART driver: asynchronous mode, 8- or 9-bit frames, 8- or
- * 16-bit baud generator (TX1STA/RC1STA/BAUD1CON, EDC register map; the
- * module matches the sibling PIC16F193X EUSART, DS41364B §23). Synchronous
- * mode, auto-baud and break are not driven. The pins come from PPS
- * (EPIC_PPS_MapOutput/MapInput) plus EPIC_GPIO_Init; this driver sets no
- * pin. API shape mirrors hal/pic18/18f1320 (9-bit accessors) and
+ * PIC16F188xx EUSART driver: asynchronous mode, 8/9-bit frames, 8/16-bit
+ * baud generator (EDC register map; matches the PIC16F193X EUSART, DS41364B).
+ * Synchronous mode and auto-baud are not driven. Pins come from PPS plus
+ * EPIC_GPIO_Init. API mirrors hal/pic18/18f1320 (9-bit accessors) and
  * hal/pic14e/16f193x. Full reference: MANUAL.md.
  */
 #ifndef PIC16F188XX_USART_H
