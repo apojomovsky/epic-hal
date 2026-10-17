@@ -1,7 +1,8 @@
 /**
- * GPIO and IOC register-image probe for the mdb gate, ending in a live
- * interrupt smoke where the target allows it. Target-safe: only register
- * reads and bounded spins. Also runs on the host simulator through ctest.
+ * GPIO, IOC and Timer0 register-image probe for the mdb gate, ending in
+ * live interrupt smokes where the target allows them. Target-safe: only
+ * register reads and bounded spins. Also runs on the host simulator
+ * through ctest.
  *
  * Expected register image: TRISB RB4 clears on output init; ANSELB RB4/5
  * clear on digital init; LATB follows WritePin then TogglePin; PORTA
@@ -19,9 +20,23 @@
  * skipped and the gate covers the register images only; where it does
  * (host sim, real silicon) the vectored path runs and asserts the
  * callback and the cleared flags.
+ *
+ * Timer0 8-bit free-run at FOSC/4, 1:1, 1:1, period 7, in two phases.
+ * Setup proof runs without a callback, so no vector can stop the timer
+ * between Start and the image reads: T0CON1 reads 0x40, T0CON0 reads
+ * T0EN set with the config bits clear, TMR0H holds 7, and a bounded
+ * spin reaches TMR0IF with the counter still inside the period. T0OUT
+ * is live read-only status and masks out of both T0CON0 images. The
+ * vector proof then re-inits with the slot armed and goes straight from
+ * Start into the spin: the overflow vectors through the dispatcher, the
+ * handler clears TMR0IF and runs the slot, and the callback stops the
+ * timer so the flag and counter readbacks that follow are stable.
+ * DeInit restores T0CON1 0x00, TMR0H 0xFF and T0CON0 masked the same
+ * way.
  */
 #include "pic16f188xx.h"
 #include "peripherals/pic16f188xx_gpio.h"
+#include "peripherals/pic16f188xx_timer0.h"
 #include "core/pic16f188xx_irq.h"
 #include "core/epic_harness.h"
 
@@ -30,6 +45,7 @@ extern void pic16f188xx_harness_halt(void);
 
 static volatile uint8_t s_ioc_seen = 0;
 static volatile uint8_t s_ioc_iocbf = 0;
+static volatile uint8_t s_t0_seen = 0;
 
 /**
  * @brief Smoke callback: records that the vectored handler ran.
@@ -44,7 +60,19 @@ static void on_ioc(uint8_t iocbf, uint8_t portb)
 }
 
 /**
- * @brief GPIO, IOC and interrupt smoke probe for the mdb gate.
+ * @brief Overflow callback: records the vectored run and halts the timer.
+ * @details Stopping here freezes the counter the moment the handler clears
+ * TMR0IF, so no later overflow re-sets the flag before main reads it back.
+ * Without this the flag readback races the free-running timer.
+ */
+static void on_t0(void)
+{
+    s_t0_seen = 1U;
+    EPIC_TIMER0_Stop();
+}
+
+/**
+ * @brief GPIO, IOC, Timer0 and interrupt smoke probe for the mdb gate.
  * @return Harness result: 0 on PASS, 1 on FAIL.
  */
 int main(void)
@@ -141,6 +169,56 @@ int main(void)
         EPIC_REG8(PIC_REG_IOCAF) &= (uint8_t)~GPIO_PIN_1;
         EPIC_REG8(PIC_REG_IOCBF) &= (uint8_t)~GPIO_PIN_0;
         EPIC_REG8(PIC_REG_IOCCF) &= (uint8_t)~GPIO_PIN_2;
+    }
+
+    /* Timer0 8-bit free-run at FOSC/4, 1:1, 1:1, period 7, in two
+     * phases. Setup proof runs callback-free (no vector can stop the
+     * timer before the image reads); the vector proof goes straight
+     * from the armed Start into the spin. T0OUT masks out of both
+     * T0CON0 images; either spin exits on its condition, so the gate
+     * never depends on SIM wall-clock speed. */
+    {
+        TIMER0_HandleTypeDef t0 = TIMER0_HANDLE_DEFAULT;
+        t0.Period = 7U;
+        t0.OverflowCallback = NULL;
+        ok &= (EPIC_TIMER0_Init(&t0) == EPIC_OK);
+        ok &= (EPIC_REG8(PIC_REG_T0CON1) == 0x40U);
+        ok &= (EPIC_REG8(PIC_REG_T0CON0) == 0x00U);
+        ok &= (EPIC_REG8(PIC_REG_TMR0H) == 7U);
+        ok &= ((EPIC_REG8(PIC_REG_PIE0) & PIC_PIE0_TMR0IE) == 0U);
+        ok &= (EPIC_TIMER0_Start(&t0) == EPIC_OK);
+        ok &= ((EPIC_REG8(PIC_REG_T0CON0) & PIC_T0CON0_T0EN) != 0U);
+        ok &= ((EPIC_REG8(PIC_REG_T0CON0) &
+               (uint8_t)~(PIC_T0CON0_T0EN | PIC_T0CON0_T0OUT)) == 0U);
+        for (i = 0U; (i < 40000U) &&
+            ((EPIC_REG8(PIC_REG_PIR0) & PIC_PIR0_TMR0IF) == 0U); i++)
+        {
+            epic_harness_tick();
+        }
+        ok &= ((EPIC_REG8(PIC_REG_PIR0) & PIC_PIR0_TMR0IF) != 0U);
+        ok &= (EPIC_TIMER0_ReadCounter() <= 0x0707U);
+        ok &= (EPIC_TIMER0_Stop() == EPIC_OK);
+        ok &= (EPIC_TIMER0_DeInit() == EPIC_OK);
+    }
+    {
+        TIMER0_HandleTypeDef t0 = TIMER0_HANDLE_DEFAULT;
+        t0.Period = 7U;
+        t0.OverflowCallback = on_t0;
+        ok &= (EPIC_TIMER0_Init(&t0) == EPIC_OK);
+        ok &= ((EPIC_REG8(PIC_REG_PIE0) & PIC_PIE0_TMR0IE) != 0U);
+        ok &= (EPIC_TIMER0_Start(&t0) == EPIC_OK);
+        for (i = 0U; (i < 40000U) && (s_t0_seen == 0U); i++)
+        {
+            epic_harness_tick();
+        }
+        ok &= (s_t0_seen == 1U);
+        ok &= ((EPIC_REG8(PIC_REG_PIR0) & PIC_PIR0_TMR0IF) == 0U);
+        ok &= (EPIC_TIMER0_ReadCounter() <= 0x0707U);
+        ok &= (EPIC_TIMER0_Stop() == EPIC_OK);
+        ok &= (EPIC_TIMER0_DeInit() == EPIC_OK);
+        ok &= ((EPIC_REG8(PIC_REG_T0CON0) & (uint8_t)~PIC_T0CON0_T0OUT) == 0U);
+        ok &= (EPIC_REG8(PIC_REG_T0CON1) == 0U);
+        ok &= (EPIC_REG8(PIC_REG_TMR0H) == 0xFFU);
     }
 
     int rc = epic_harness_report(ok);

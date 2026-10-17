@@ -1,8 +1,8 @@
 # PIC16F188xx register reference
 
-Per-peripheral register reference for the GPIO and interrupt-on-change
-sources in this HAL. Shared conventions (naming, handle pattern,
-harness, interrupt model) are in
+Per-peripheral register reference for the GPIO, interrupt-on-change
+and Timer0 sources in this HAL. Shared conventions (naming, handle
+pattern, harness, interrupt model) are in
 [common/MANUAL.md](../../../common/MANUAL.md). This file covers only
 what is specific to this family: 16F18854/55/56/57 (28-pin) and
 16F18875/76/77 (40-pin, adding PORTD and PORTE).
@@ -19,6 +19,11 @@ what is specific to this family: 16F18854/55/56/57 (28-pin) and
   bot-walled against scripted fetch, so no page cite below is checked.
   A value or cite without a checked page is still DFP-derived and
   **unverified** against the datasheet.
+- Timer0 encodings (clock sources, prescaler, postscaler, T0OUT) cite
+  DS40001825F §27, Registers 27-1/27-2 instead: the sibling 18857/77
+  datasheet documents this exact Timer0 module (EDC _modsrc
+  DOS-01631_tmr_mid0_v1_8bit on both), read as text, not from a
+  bot-walled PDF.
 
 ## Implemented bits (from EDC impl masks)
 
@@ -55,6 +60,10 @@ what is specific to this family: 16F18854/55/56/57 (28-pin) and
 | INTCON   | 0xC1  | 00-----1   | INTEDG, PEIE, GIE only                   |
 | PIR0     | 0x31  | --00---0   | INTF, IOCIF, TMR0IF                      |
 | PIE0     | 0x31  | --00---0   | INTE, IOCIE, TMR0IE                      |
+| TMR0L    | 0xFF  | 00000000   | Counter low byte                         |
+| TMR0H    | 0xFF  | 11111111   | Counter high byte, match value in 8-bit mode |
+| T0CON0   | 0xBF  | 0-000000   | T0EN, T0OUT (read-only), T016BIT, T0OUTPS |
+| T0CON1   | 0xFF  | 00000000   | T0CS, T0ASYNC, T0CKPS                    |
 
 ## Register addresses
 
@@ -98,6 +107,10 @@ selects the spelling per part, and the sfr-map audit checks both).
 | PORTE    | 0x10    |
 | TRISE    | 0x15    |
 | LATE     | 0x1A    |
+| TMR0L    | 0x1C    |
+| TMR0H    | 0x1D    |
+| T0CON0   | 0x1E    |
+| T0CON1   | 0x1F    |
 | ANSELD   | 0xF59   |
 | WPUD     | 0xF5A   |
 | ANSELE   | 0xF64   |
@@ -109,8 +122,35 @@ selects the spelling per part, and the sfr-map audit checks both).
 |-----|----------|------------------------------------------------------------------|
 | PIR0<4> | IOCIF | Set when any enabled IOCx flag is set. Cleared by the handler. |
 | PIE0<4> | IOCIE | Gates the IOC source. The dispatcher calls IOC only when IOCIF and IOCIE are both set. |
-| INTCON<6> | PEIE  | Set by `EPIC_IRQ_Enable` on IOC. Exposes PIR0 sources. |
+| PIR0<5> | TMR0IF | Set on 8-bit match or 16-bit rollover, postscaled. Cleared by the handler. |
+| PIE0<5> | TMR0IE | Gates the Timer0 source. Set by Init only with a callback. |
+| INTCON<6> | PEIE  | Set by `EPIC_IRQ_Enable` on either source. Exposes PIR0 sources. |
 | INTCON<7> | GIE   | Global interrupt enable.                                         |
+
+## Timer0 bits
+
+Clock source (T0CON1<T0CS2:T0CS0>, DS40001825F Register 27-2):
+000 T0CKIPPS, 001 T0CKIPPS inverted, 010 FOSC/4, 011 HFINTOSC,
+100 LFINTOSC, 101 SOSC, 110 LC1_out, 111 reserved (no driver value).
+T0CKIPPS needs a PPS pin mapping the HAL does not set up yet.
+Prescaler (T0CON1<T0CKPS3:T0CKPS0>): encoding N divides by 2^N,
+0000=1:1 through 1111=1:32768. Postscaler (T0CON0<T0OUTPS3:T0OUTPS0>):
+value N divides by N+1, 0000=1:1 through 1111=1:16. 8-bit mode
+(T016BIT=0) matches TMR0L against TMR0H and resets on match; 16-bit
+mode rolls TMR0H:TMR0L over. T0OUT toggles per postscaled
+match/rollover (§27.7) and is read-only: a T0CON0 write never changes
+it, so readbacks taken while the timer runs mask it out.
+
+`EPIC_TIMER0_Init` sets T0ASYNC from the source: asynchronous rows
+(T0CKIPPS, LFINTOSC, SOSC, LC1_out) run async, FOSC/4 and HFINTOSC
+run synced. The handler clears TMR0IF first, then runs the owned
+slot, with no cstack autos (ISR bank rule below).
+
+Gate shape, learned the hard way: a stop-on-overflow callback always
+beats main's post-Start readback (overflow at 8 ticks lands inside the
+read window), so the gate proves setup callback-free and reads no
+image after the armed Start. Either spin exits on its condition, so
+the gate never depends on SIM wall-clock speed.
 
 Unlike the older enhanced mid-range parts, INTCON on this part carries
 no IOCIF/IOCIE bits (impl 0xC1): the flag and enable live in PIR0/PIE0.
@@ -134,11 +174,11 @@ family's own `.s` (the `ioc_capture` switch form first): the restore
 `movlb` is missing, `IOCBF` never clears, and the mdb gate stays red.
 The same `.s` shows a static pinned to bank 2 getting a correct
 `movlb 2` before every access, so the rule is proven both ways.
-Therefore ISR-reachable code (the vector, the dispatcher, the IOC
-handler) keeps no cstack autos: flag snapshots are file-scope statics,
-tests run on WREG, and every SFR names its register literally. Normal
-(non-ISR) driver code is unaffected: calls reset the tracking there,
-and the gate's register readbacks prove it.
+Therefore ISR-reachable code (the vector, the dispatcher, the IOC and
+Timer0 handlers) keeps no cstack autos: flag snapshots are file-scope
+statics, tests run on WREG, and every SFR names its register literally.
+Normal (non-ISR) driver code is unaffected: calls reset the tracking
+there, and the gate's register readbacks prove it.
 
 ## SIM gaps
 
@@ -150,6 +190,11 @@ the host sim and real silicon. On the SIM gate it covers the register
 images and the IOC enable path. A software write to `IOCxF` does land
 in SIM (the gate observes `IOCBF` set), only the aggregate `IOCIF`
 does not follow it.
+
+Timer0 runs freely under `run`: an 8-tick overflow lands inside
+main's post-Start read window, so the gate never asserts a post-Start
+image with the stop-callback armed (see Timer0 bits). The T0CKIPPS and
+LC1 rows have no stimulus model anywhere and never tick.
 
 ## Weak pull-ups
 
@@ -169,4 +214,10 @@ Single vector, no priority. Hardware saves context automatically
 then samples IOC on every port: an edge matching the port's IOCxP/IOCxN
 mask sets that port's IOCxF flags and PIR0.IOCIF. The sim callback runs
 only under IOCIF, IOCIE, PEIE, and GIE. Pin reads are not gated on
-ANSEL (see README known limits).
+ANSEL (see README known limits). Timer0 advances per tick with
+prescaler, 8/16-bit counting, postscaler and T0OUT toggle modelled;
+only the internal sources (FOSC/4, HFINTOSC, LFINTOSC, SOSC) tick, and
+delivery to the dispatcher gates on TMR0IF, TMR0IE, PEIE and GIE like
+silicon. One divergence: a full T0CON0 write clears T0OUT in the sim
+array, while silicon preserves the read-only bit; tests pin T0CON0
+images only where no full write intervenes.

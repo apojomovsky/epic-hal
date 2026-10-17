@@ -29,8 +29,9 @@ void EPIC_IRQ_Restore(uint8_t prev_state)
 
 /**
  * @brief Enable a single interrupt source.
- * @details IOC is enabled in PIE0 and also sets INTCON.PEIE, because PIR0
- * sources reach the vector only through PEIE. GIE is left to EPIC_IRQ_Restore.
+ * @details The source is enabled in PIE0 and also sets INTCON.PEIE,
+ * because PIR0 sources reach the vector only through PEIE. GIE is left
+ * to EPIC_IRQ_Restore.
  * @param irq Interrupt source to enable.
  */
 void EPIC_IRQ_Enable(PIC16F188XX_IRQn irq)
@@ -38,6 +39,11 @@ void EPIC_IRQ_Enable(PIC16F188XX_IRQn irq)
     if (irq == PIC16F188XX_IRQ_IOC)
     {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE0), PIC_PIE0_IOCIE);
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
+    }
+    else if (irq == PIC16F188XX_IRQ_TMR0)
+    {
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE0), PIC_PIE0_TMR0IE);
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
     }
 }
@@ -54,6 +60,10 @@ void EPIC_IRQ_DisableSrc(PIC16F188XX_IRQn irq)
     {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE0), PIC_PIE0_IOCIE);
     }
+    else if (irq == PIC16F188XX_IRQ_TMR0)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE0), PIC_PIE0_TMR0IE);
+    }
 }
 
 /**
@@ -67,6 +77,7 @@ void EPIC_IRQ_ClearFlag(PIC16F188XX_IRQn irq)
     switch (irq)
     {
     case PIC16F188XX_IRQ_IOC:  EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR0), PIC_PIR0_IOCIF); break;
+    case PIC16F188XX_IRQ_TMR0: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR0), PIC_PIR0_TMR0IF); break;
     default:                   break;
     }
 }
@@ -81,6 +92,10 @@ uint8_t EPIC_IRQ_GetFlag(PIC16F188XX_IRQn irq)
     if (irq == PIC16F188XX_IRQ_IOC)
     {
         return (EPIC_REG8(PIC_REG_PIR0) & PIC_PIR0_IOCIF) ? 1U : 0U;
+    }
+    if (irq == PIC16F188XX_IRQ_TMR0)
+    {
+        return (EPIC_REG8(PIC_REG_PIR0) & PIC_PIR0_TMR0IF) ? 1U : 0U;
     }
     return 0U;
 }
