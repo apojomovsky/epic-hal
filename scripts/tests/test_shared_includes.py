@@ -17,7 +17,8 @@ import shared_includes  # noqa: E402
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 COMMIT = "2ad7d851c1d39888dda84adcbf9fa8d0667453c8"
-HUB_TEXT = b"## Ways to use epic8\n\n- **Command line:** one line.\n"
+# The fixture is the hub bytes themselves, so its digest is the pin.
+HUB_TEXT = (REPO_ROOT / shared_includes.COPY).read_bytes()
 
 
 def _write(root, rel, data):
@@ -47,8 +48,21 @@ class TestCheck(unittest.TestCase):
             root = _synced_root(pathlib.Path(tmp))
             _write(root, shared_includes.COPY, HUB_TEXT + b"edited here\n")
             problems = shared_includes.check(root)
-            self.assertEqual(len(problems), 1)
+            self.assertEqual(len(problems), 2)
             self.assertIn("edited here", problems[0])
+            self.assertTrue(any("pinned" in p for p in problems))
+
+    def test_recomputed_record_after_edit_still_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = _synced_root(pathlib.Path(tmp))
+            edited = HUB_TEXT + b"edited here\n"
+            _write(root, shared_includes.COPY, edited)
+            _write(root, shared_includes.RECORD,
+                   shared_includes.render_record(
+                       COMMIT, shared_includes.sha256_hex(edited)).encode())
+            problems = shared_includes.check(root)
+            self.assertTrue(problems)
+            self.assertTrue(all("pinned" in p for p in problems))
 
     def test_missing_copy_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -112,6 +126,25 @@ class TestSync(unittest.TestCase):
             _write(root, shared_includes.COPY, b"edited\n")
             shared_includes.sync(root, COMMIT, fetch=lambda commit: HUB_TEXT)
             self.assertEqual(shared_includes.check(root), [])
+
+    def test_sync_refreshes_a_stale_pin(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            script = root / shared_includes._SELF
+            script.parent.mkdir(parents=True, exist_ok=True)
+            script.write_text(f'HUB_SHA256 = "{"0" * 64}"\n')
+            shared_includes.sync(root, COMMIT, fetch=lambda commit: HUB_TEXT)
+            self.assertIn(shared_includes.sha256_hex(HUB_TEXT),
+                          script.read_text())
+            self.assertEqual(shared_includes.check(root), [])
+
+    def test_rewrite_pin_rejects_a_missing_line(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            script = root / "shared_includes.py"
+            script.write_text("# no pin here\n")
+            with self.assertRaises(ValueError):
+                shared_includes.rewrite_pin(script, "0" * 64)
 
     def test_sync_rejects_a_branch_name_without_fetching(self):
         def no_fetch(commit):
