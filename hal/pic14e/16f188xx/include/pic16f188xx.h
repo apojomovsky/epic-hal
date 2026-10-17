@@ -88,6 +88,11 @@
 #define PIC16F188XX_HAS_TMR0 1
 #define PIC16F188XX_HAS_TMR1 0
 #define PIC16F188XX_HAS_TMR2 0
+/* One EUSART, one MSSP (MSSP1) and the PPS selector are driven; the
+ * second MSSP instance stays unported. */
+#define PIC16F188XX_HAS_USART 1
+#define PIC16F188XX_HAS_SSP   1
+#define PIC16F188XX_HAS_PPS   1
 
 #include "pic16f188xx_sfr.h"
 

@@ -1,8 +1,9 @@
 /**
  * PIC16F18855 interrupt contract. Sources: interrupt-on-change (PIR0/PIE0
- * bit 4) and Timer0 overflow (PIR0/PIE0 bit 5), each gated by INTCON.PEIE
- * like every peripheral source. Enabling either also sets PEIE, which
- * exposes PIR0 to the vector; the dispatcher acknowledges enabled ones
+ * bit 4), Timer0 overflow (PIR0/PIE0 bit 5), MSSP1 event (PIR3/PIE3 bit 0)
+ * and EUSART TX/RX (PIR3/PIE3 bits 4 and 5), each gated by INTCON.PEIE
+ * like every peripheral source. Enabling one also sets PEIE, which
+ * exposes PIR0/PIR3 to the vector; the dispatcher acknowledges enabled ones
  * (epic_dispatch_all_irqs). Single vector, no priority levels, hardware
  * context save.
  */
@@ -15,8 +16,11 @@
 
 typedef enum
 {
-    PIC16F188XX_IRQ_IOC  = 0,
-    PIC16F188XX_IRQ_TMR0 = 1
+    PIC16F188XX_IRQ_IOC      = 0,
+    PIC16F188XX_IRQ_TMR0     = 1,
+    PIC16F188XX_IRQ_SSP1     = 2,
+    PIC16F188XX_IRQ_USART_TX = 3,
+    PIC16F188XX_IRQ_USART_RX = 4
 } PIC16F188XX_IRQn;
 
 /**
@@ -32,7 +36,7 @@ uint8_t EPIC_IRQ_Disable(void);
 void EPIC_IRQ_Restore(uint8_t prev_state);
 
 /**
- * @brief Enable an interrupt source (its PIE0 bit; also sets PEIE).
+ * @brief Enable an interrupt source (its PIE0 or PIE3 bit; also sets PEIE).
  * @param irq Source to enable.
  */
 void EPIC_IRQ_Enable(PIC16F188XX_IRQn irq);
@@ -45,6 +49,8 @@ void EPIC_IRQ_DisableSrc(PIC16F188XX_IRQn irq);
 
 /**
  * @brief Clear a pending interrupt flag.
+ * @details USART_TX and USART_RX flags are read-only status that hardware
+ * clears (TXREG write, RCREG read), so clearing them is a no-op.
  * @param irq Source whose flag to clear.
  */
 void EPIC_IRQ_ClearFlag(PIC16F188XX_IRQn irq);
@@ -66,9 +72,10 @@ void EPIC_IRQ_SetPriority(PIC16F188XX_IRQn irq, EPIC_IRQ_Priority prio);
 /**
  * @brief Shared interrupt dispatcher, called from the single interrupt vector.
  * @details Runs IOC_IRQHandler when the IOC flag and enable are both set,
- * then TIMER0_IRQHandler when the TMR0 flag and enable are both set.
- * INT has no driver and no API enables it, so no other PIR0 source can
- * reach the vector.
+ * then TIMER0_IRQHandler for TMR0, then SSP_IRQHandler, USART_TX_IRQHandler
+ * and USART_RX_IRQHandler for their PIR3 flags, each gated the same way.
+ * INT and the bus-collision flag have no handler and no API enables them,
+ * so no other source can reach the vector.
  */
 void epic_dispatch_all_irqs(void);
 

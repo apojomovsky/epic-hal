@@ -3,9 +3,10 @@
 Register-level HAL for the PIC16F188xx family (Enhanced Mid-range
 core): 16F18854/55/56/57 (28-pin) and 16F18875/76/77 (40-pin, adding
 PORTD and PORTE). This HAL covers the family header and SFR map, GPIO
-(PORTA..PORTC, plus PORTD/PORTE on the 40-pin parts), and the
-interrupt-on-change (IOC) interrupt source with the shared dispatcher
-behind the single vector.
+(PORTA..PORTC, plus PORTD/PORTE on the 40-pin parts), Timer0, the
+EUSART, MSSP1 (SPI master and I2C master) and the PPS pin selector, and
+the interrupt sources behind the single vector through the shared
+dispatcher.
 
 Register facts come from the pinned Microchip.PIC16F1xxxx_DFP 1.32.471
 EDC (`PIC16F18855.PIC`) and its proc header, not from a datasheet page.
@@ -39,6 +40,19 @@ Implemented and verified:
       `example_timer0` (ctest) plus the mdb gate section (register
       images, polled flag, vectored overflow with POR restore; T0OUT
       masks out of the T0CON0 images, family MANUAL.md)
+- [x] PPS (`EPIC_PPS_*`): input and output pin selects for T0CKI, MSSP1
+      and the EUSART, lock and unlock sequence. Host probe `example_pps`
+      (also drives Timer0 from a mapped T0CKI pin) plus the mdb gate
+      section (select images at their 0xFxx or 0x1Fxx addresses, lock).
+- [x] EUSART asynchronous 8/9-bit with 8/16-bit baud generator, address
+      detect, RX callback and one-shot TX interrupt (`EPIC_USART_*`,
+      `USART_HANDLE_DEFAULT`): host probe `example_usart` plus the mdb
+      gate section (register image, polled frame, vectored TX).
+- [x] MSSP1 SPI master and I2C master (`EPIC_SSP_*`, `SSP_HANDLE_DEFAULT`):
+      host probe `example_mssp` (SPI timing, write collision, overflow, an
+      I2C master against a scripted slave) plus the mdb gate section
+      (register images, vectored SSP1; MPLAB SIM does not shift MSSP
+      data, family MANUAL.md).
 - [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`hal/pic14e/16f188xx`), `blink` example,
       and the mdb register-readback gate (`MODE=gpio`, RA0 PASS marker)
@@ -47,8 +61,9 @@ Implemented and verified:
       silicon); MPLAB SIM ignores it, so there it covers readbacks
       only (family MANUAL.md).
 Not yet implemented (deliberate scope limit, each its own follow-up):
-- Timer1/2, CCP/PWM, ADC, EEPROM, EUSART, MSSP, WDT and sleep helpers,
-  comparators, DAC, FVR, NCO, PPS setup, and the remaining peripherals.
+- Timer1/2, CCP/PWM, ADC, EEPROM, WDT and sleep helpers, comparators,
+  DAC, FVR, NCO, MSSP2, EUSART synchronous mode and auto-baud, SPI and
+  I2C slave, the Timer2 SPI clock, and the remaining peripherals.
 - Wiring the family into the demos.
 
 ## Quick start
@@ -77,14 +92,15 @@ include/
   host/               host platform header (memory-backed SFR array)
   target/             target platform header (volatile-deref SFR)
   core/               IRQ contract
-  peripherals/        GPIO and Timer0 contracts
+  peripherals/        GPIO, Timer0, PPS, EUSART and MSSP contracts
 src/
   core/               IRQ backend and dispatch
-  peripherals/        GPIO and Timer0 bodies
+  peripherals/        GPIO, Timer0, PPS, EUSART and MSSP bodies
   target/             ISR vector (real hardware only)
   sim/                host simulation backend
   mdb/                MPLAB SIM register-readback harness
-tests/                example_blink, example_gpio, example_timer0 (host),
+tests/                example_blink, example_gpio, example_timer0,
+                      example_pps, example_usart, example_mssp (host),
                       example_gpio_mdb (host and mdb gate)
 ```
 
@@ -112,3 +128,9 @@ registers; PORTE IOC is RE3 only, which has no driver.
   still reads its driven level. The driver sets ANSEL correctly, and
   the mdb gate is the proof those writes land.
 - The IOC handler calls the registered callback only when one is set.
+- Host and SIM EUSART/MSSP models ignore PPS routing: a mapped pin is not
+  needed for a byte to move. Port availability per function is in
+  `MANUAL.md` (PPS).
+- With the PPS1WAY config bit set (the XC8 default) the hardware honours
+  one PPS unlock and lock per reset: map after reset and `EPIC_PPS_Lock`
+  once.

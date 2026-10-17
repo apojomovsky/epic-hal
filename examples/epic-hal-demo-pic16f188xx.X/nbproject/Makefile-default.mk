@@ -51,17 +51,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=../../common/src/core/epic_harness_target.c ../../hal/pic14e/16f188xx/src/core/pic16f188xx_irq.c ../../hal/pic14e/16f188xx/src/core/pic16f188xx_irq_dispatch.c ../../hal/pic14e/16f188xx/src/target/pic16f188xx_isr_vector.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_gpio.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer0.c main.c
+SOURCEFILES_QUOTED_IF_SPACED=../../common/src/core/epic_harness_target.c ../../hal/pic14e/16f188xx/src/core/pic16f188xx_irq.c ../../hal/pic14e/16f188xx/src/core/pic16f188xx_irq_dispatch.c ../../hal/pic14e/16f188xx/src/target/pic16f188xx_isr_vector.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_gpio.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer0.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_pps.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_usart.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_ssp.c main.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/common/epic_harness_target.p1 ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq.p1 ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq_dispatch.p1 ${OBJECTDIR}/_ext/hal_target/pic16f188xx_isr_vector.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_gpio.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1 ${OBJECTDIR}/main.p1
-POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/common/epic_harness_target.p1.d ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq.p1.d ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq_dispatch.p1.d ${OBJECTDIR}/_ext/hal_target/pic16f188xx_isr_vector.p1.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_gpio.p1.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1.d ${OBJECTDIR}/main.p1.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/common/epic_harness_target.p1 ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq.p1 ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq_dispatch.p1 ${OBJECTDIR}/_ext/hal_target/pic16f188xx_isr_vector.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_gpio.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1 ${OBJECTDIR}/main.p1
+POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/common/epic_harness_target.p1.d ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq.p1.d ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq_dispatch.p1.d ${OBJECTDIR}/_ext/hal_target/pic16f188xx_isr_vector.p1.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_gpio.p1.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1.d ${OBJECTDIR}/main.p1.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/_ext/common/epic_harness_target.p1 ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq.p1 ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq_dispatch.p1 ${OBJECTDIR}/_ext/hal_target/pic16f188xx_isr_vector.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_gpio.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1 ${OBJECTDIR}/main.p1
+OBJECTFILES=${OBJECTDIR}/_ext/common/epic_harness_target.p1 ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq.p1 ${OBJECTDIR}/_ext/hal_core/pic16f188xx_irq_dispatch.p1 ${OBJECTDIR}/_ext/hal_target/pic16f188xx_isr_vector.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_gpio.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1 ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1 ${OBJECTDIR}/main.p1
 
 # Source Files
-SOURCEFILES=../../common/src/core/epic_harness_target.c ../../hal/pic14e/16f188xx/src/core/pic16f188xx_irq.c ../../hal/pic14e/16f188xx/src/core/pic16f188xx_irq_dispatch.c ../../hal/pic14e/16f188xx/src/target/pic16f188xx_isr_vector.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_gpio.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer0.c main.c
+SOURCEFILES=../../common/src/core/epic_harness_target.c ../../hal/pic14e/16f188xx/src/core/pic16f188xx_irq.c ../../hal/pic14e/16f188xx/src/core/pic16f188xx_irq_dispatch.c ../../hal/pic14e/16f188xx/src/target/pic16f188xx_isr_vector.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_gpio.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer0.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_pps.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_usart.c ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_ssp.c main.c
 
 
 
@@ -134,6 +134,27 @@ ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1: ../../hal/pic14e/16f188
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F18855 -xassembler-with-cpp -I"../../hal/pic14e/16f188xx/include/target" -I"../../hal/pic14e/16f188xx/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1 ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer0.c
 	@-${MV} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
+${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1: ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_pps.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/hal_peripherals"
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1.d
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F18855 -xassembler-with-cpp -I"../../hal/pic14e/16f188xx/include/target" -I"../../hal/pic14e/16f188xx/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1 ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_pps.c
+	@-${MV} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1.d
+	@${FIXDEPS} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
+${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1: ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_usart.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/hal_peripherals"
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1.d
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F18855 -xassembler-with-cpp -I"../../hal/pic14e/16f188xx/include/target" -I"../../hal/pic14e/16f188xx/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1 ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_usart.c
+	@-${MV} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1.d
+	@${FIXDEPS} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
+${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1: ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_ssp.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/hal_peripherals"
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1.d
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=none   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F18855 -xassembler-with-cpp -I"../../hal/pic14e/16f188xx/include/target" -I"../../hal/pic14e/16f188xx/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1 ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_ssp.c
+	@-${MV} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1.d
+	@${FIXDEPS} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 
 ${OBJECTDIR}/main.p1: main.c  nbproject/Makefile-${CND_CONF}.mk
@@ -191,6 +212,27 @@ ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1: ../../hal/pic14e/16f188
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F18855 -xassembler-with-cpp -I"../../hal/pic14e/16f188xx/include/target" -I"../../hal/pic14e/16f188xx/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD) -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1 ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer0.c
 	@-${MV} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1.d
 	@${FIXDEPS} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_timer0.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
+${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1: ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_pps.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/hal_peripherals"
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1.d
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F18855 -xassembler-with-cpp -I"../../hal/pic14e/16f188xx/include/target" -I"../../hal/pic14e/16f188xx/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD) -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1 ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_pps.c
+	@-${MV} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1.d
+	@${FIXDEPS} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_pps.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
+${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1: ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_usart.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/hal_peripherals"
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1.d
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F18855 -xassembler-with-cpp -I"../../hal/pic14e/16f188xx/include/target" -I"../../hal/pic14e/16f188xx/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD) -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1 ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_usart.c
+	@-${MV} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1.d
+	@${FIXDEPS} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_usart.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
+${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1: ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_ssp.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/hal_peripherals"
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1.d
+	@${RM} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -O0 -fasmfile -maddrqual=ignore -DPIC16F18855 -xassembler-with-cpp -I"../../hal/pic14e/16f188xx/include/target" -I"../../hal/pic14e/16f188xx/include" -I"../../common/include" -mwarn=-3 -Wa,-a -DXPRJ_default=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-osccal -mno-resetbits -mno-save-resetbits -mno-download -mno-stackcall -mno-default-config-bits $(COMPARISON_BUILD) -std=c99 -gdwarf-3 -mstack=compiled:auto:auto     -o ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1 ../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_ssp.c
+	@-${MV} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.d ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1.d
+	@${FIXDEPS} ${OBJECTDIR}/_ext/hal_peripherals/pic16f188xx_ssp.p1.d $(SILENT) -rsi ${MP_CC_DIR}../
 
 
 ${OBJECTDIR}/main.p1: main.c  nbproject/Makefile-${CND_CONF}.mk

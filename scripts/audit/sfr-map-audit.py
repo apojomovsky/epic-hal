@@ -345,7 +345,11 @@ BANK_VARIANT_ADDRS = {
                 "IOCEP": 0x1F69, "ODCONA": 0x1F3A, "ODCONB": 0x1F45,
                 "ODCONC": 0x1F50, "SLRCONA": 0x1F3B, "SLRCONB": 0x1F46,
                 "SLRCONC": 0x1F51, "WPUA": 0x1F39, "WPUB": 0x1F44,
-                "WPUC": 0x1F4F, "WPUE": 0x1F65},
+                "WPUC": 0x1F4F, "WPUE": 0x1F65,
+                "PPSLOCK": 0x1E8F, "T0CKIPPS": 0x1E91,
+                "SSP1CLKPPS": 0x1EC5, "SSP1DATPPS": 0x1EC6,
+                "SSP1SSPPS": 0x1EC7, "RXPPS": 0x1ECB,
+                "RA0PPS": 0x1F10, "RB0PPS": 0x1F18, "RC0PPS": 0x1F20},
     "16F18877": {"ANSELA": 0x1F38, "ANSELB": 0x1F43, "ANSELC": 0x1F4E,
                 "ANSELD": 0x1F59, "ANSELE": 0x1F64, "INLVLA": 0x1F3C,
                 "INLVLB": 0x1F47, "INLVLC": 0x1F52, "INLVLD": 0x1F5D,
@@ -358,7 +362,12 @@ BANK_VARIANT_ADDRS = {
                 "SLRCONA": 0x1F3B, "SLRCONB": 0x1F46, "SLRCONC": 0x1F51,
                 "SLRCOND": 0x1F5C, "SLRCONE": 0x1F67, "WPUA": 0x1F39,
                 "WPUB": 0x1F44, "WPUC": 0x1F4F, "WPUD": 0x1F5A,
-                "WPUE": 0x1F65},
+                "WPUE": 0x1F65,
+                "PPSLOCK": 0x1E8F, "T0CKIPPS": 0x1E91,
+                "SSP1CLKPPS": 0x1EC5, "SSP1DATPPS": 0x1EC6,
+                "SSP1SSPPS": 0x1EC7, "RXPPS": 0x1ECB,
+                "RA0PPS": 0x1F10, "RB0PPS": 0x1F18, "RC0PPS": 0x1F20,
+                "RD0PPS": 0x1F28},
 
 }
 # Registers and bits that are legitimately absent from a part's DFP
@@ -551,16 +560,16 @@ CONDITIONAL_REGS.update({
     # 18857/18877 revisions carry a bank prefix on _addr).
     "16F18854": {"PORTD", "TRISD", "LATD", "ANSELD", "WPUD", "ODCOND",
                 "SLRCOND", "INLVLD", "TRISE", "LATE", "ANSELE",
-                "ODCONE", "SLRCONE"},
+                "ODCONE", "SLRCONE", "RD0PPS"},
     "16F18855": {"PORTD", "TRISD", "LATD", "ANSELD", "WPUD", "ODCOND",
                 "SLRCOND", "INLVLD", "TRISE", "LATE", "ANSELE",
-                "ODCONE", "SLRCONE"},
+                "ODCONE", "SLRCONE", "RD0PPS"},
     "16F18856": {"PORTD", "TRISD", "LATD", "ANSELD", "WPUD", "ODCOND",
                 "SLRCOND", "INLVLD", "TRISE", "LATE", "ANSELE",
-                "ODCONE", "SLRCONE"},
+                "ODCONE", "SLRCONE", "RD0PPS"},
     "16F18857": {"PORTD", "TRISD", "LATD", "ANSELD", "WPUD", "ODCOND",
                 "SLRCOND", "INLVLD", "TRISE", "LATE", "ANSELE",
-                "ODCONE", "SLRCONE"},
+                "ODCONE", "SLRCONE", "RD0PPS"},
     # 88X 28-pin parts (882/883/886): no PORTD; the HAL defines
     # PORTD/TRISD unconditionally and guards the usage.
     "16F882": {"PORTD", "TRISD"},
