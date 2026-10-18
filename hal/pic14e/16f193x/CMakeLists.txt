@@ -141,3 +141,6 @@ epic_add_example_per_device(example_srlatch tests/example_srlatch.c)
 epic_add_example_per_device(example_cps tests/example_cps.c)
 epic_add_example_per_device(example_ccp345 tests/example_ccp345.c)
 epic_add_example_per_device(example_lcd tests/example_lcd.c)
+
+epic_add_example(example_wdt_sleep tests/example_wdt_sleep.c)
+add_test(NAME wdt_sleep_host COMMAND example_wdt_sleep)

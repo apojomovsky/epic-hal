@@ -77,3 +77,8 @@ epic_add_example(example_rb_change   tests/example_rb_change.c)
 # device-specific register paths (ANSELH lives in the target-only mdb
 # probe for that reason).
 epic_add_example_per_device(example_blink tests/example_blink.c)
+
+# example_wdt_sleep asserts the active-low PCON reset flags, so it runs
+# under ctest while the demo examples stay build-only.
+enable_testing()
+add_test(NAME wdt_sleep_host COMMAND example_wdt_sleep)

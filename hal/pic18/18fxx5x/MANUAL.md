@@ -282,17 +282,20 @@ PIC16's single-dispatcher shape, see `common/MANUAL.md` §2.3.
 ```c
 void    EPIC_WDT_Refresh(void);     // asm("clrwdt") on target; no-op on host
 void    EPIC_Sleep_Enter(void);     // asm("sleep")  on target; no-op on host
-uint8_t EPIC_BOR_GetStatus(void);   // RCON<BOR> (bit 0)
-void    EPIC_BOR_ClearFlag(void);
-uint8_t EPIC_POR_GetStatus(void);   // RCON<POR> (bit 1)
-void    EPIC_POR_ClearFlag(void);
+uint8_t EPIC_BOR_GetStatus(void);   // RCON<BOR> (bit 0), active low
+void    EPIC_BOR_ClearFlag(void);   // sets RCON<BOR> back (re-arm)
+uint8_t EPIC_POR_GetStatus(void);   // RCON<POR> (bit 1), active low
+void    EPIC_POR_ClearFlag(void);   // sets RCON<POR> back (re-arm)
 ```
 
 Same function names/signatures as PIC16F87XA (portable caller code), but
 PIC18 folds the reset-status bits into **`RCON`** rather than a separate
 `PCON`: `RCON<TO>` (bit 3, WDT time-out, 1 = not timed out), `RCON<PD>`
 (bit 2, Sleep detection, 1 = not in Sleep), `RCON<POR>` (bit 1), `RCON<BOR>`
-(bit 0). `RCON<IPEN>` (bit 7) is the priority-mode bit, [§6](#6-interrupts).
+(bit 0). POR and BOR are active low: hardware clears the bit on the event,
+the Get helpers return 1 while it reads clear, and the ClearFlag helpers set
+it back. `RCON<IPEN>` (bit 7) is the
+priority-mode bit, [§6](#6-interrupts).
 
 ## 8. GPIO
 
