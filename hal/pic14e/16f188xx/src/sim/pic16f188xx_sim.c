@@ -1,11 +1,10 @@
 /**
  * Host model of the ports, IOC and Timer0..Timer2. IOC edges (PORTA..PORTC)
  * set IOCxF and PIR0 IOCIF; callbacks gate on flag, enable, PEIE and GIE.
- * Timer0 counts T0CKIPPS edges on its PPS-selected pin; Timer1 and Timer2
- * read the POR default PPS pins (RC0, RB5, RC3) and Timer2 models modes
- * 0x00..0x08. The EUSART, MSSP1 and PPSLOCK models are in
- * pic16f188xx_sim_serial.c, the EEPROM, NCO1 and WDT/Sleep models in
- * pic16f188xx_sim_sys.c.
+ * Timer0 counts T0CKIPPS edges on its PPS pin; Timer1 and Timer2 read the
+ * POR default PPS pins (RC0, RB5, RC3), Timer2 models modes 0x00..0x08.
+ * The EUSART, MSSP1 and PPSLOCK models are in pic16f188xx_sim_serial.c,
+ * the EEPROM, NCO1 and WDT/Sleep models in pic16f188xx_sim_sys.c.
  */
 #include <stddef.h>
 #include <stdint.h>
