@@ -31,7 +31,7 @@
  * early; 160 rounds (the 5-slot task table makes a round cheaper) keeps
  * the whole gate, report included, inside a 60 s wait budget where 200
  * overruns it. */
-#define SIM_ITERATIONS 200UL
+#define SIM_ITERATIONS 160UL
 #define TASK_PERIOD_STIMULUS  1U
 #define TICK_RELOAD    0U
 #define TICK_PRESCALER TIMER0_PRESCALER_1_16
