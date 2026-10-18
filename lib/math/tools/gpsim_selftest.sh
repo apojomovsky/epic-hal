@@ -1,26 +1,12 @@
 #!/bin/sh
-# tools/gpsim_selftest.sh: Tier 2 gpsim regression for the PIC16 asm backend.
-#
-# Loads the PIC16 self-test hex under gpsim, captures the firmware USART
-# report, and exits nonzero on any golden-vector mismatch. The firmware
-# (tests/target_selftest.c) replays golden_vectors.h on the simulated core
-# and prints per-vector FAIL lines plus a PASS=/FAIL=/RESULT summary, so
-# the verdict here is a strict parse of that report, never gpsim's own
-# exit status. gpsim is PIC16-only and absent from the toolchain image, so
-# a missing gpsim skips cleanly (exit 0); a present gpsim with no hex to
-# load is an error (exit 1), so this gate can never pass by skipping work.
-#
-# Run: tools/gpsim_selftest.sh [hex]
-# Env: GPSIM_HEX (same as [hex]), GPSIM_PROCESSOR (default p16f877a),
-#   GPSIM_STEPS (default 5000000), GPSIM_CMDFILE (custom .stc, skips the
-#   generated USART-tap script below).
-#
-# Driving core follows the gpsim manual CLI: -i (CLI only), -p (processor),
-# -c (command file). The generated script taps firmware TX with the
-# documented usart module (module/node/attach), bounds the run with step,
-# then quits. gpsim was not installable where this was written, so the tap
-# is manual-faithful but sim-unverified; any capture failure lands in the
-# strict verdict below as a nonzero exit, never a silent pass.
+# Tier 2 gpsim regression for the PIC16 asm backend: loads the self-test
+# hex under gpsim and parses the firmware USART report strictly, never
+# gpsim's own exit status. Skips cleanly (exit 0) only when gpsim is absent;
+# a present gpsim with no hex to load exits 1, so the gate cannot pass by
+# skipping work. Run: tools/gpsim_selftest.sh [hex]. Env: GPSIM_HEX,
+# GPSIM_PROCESSOR (default p16f877a), GPSIM_STEPS (default 5000000),
+# GPSIM_CMDFILE (custom .stc). The tap follows the gpsim manual; it is
+# sim-unverified here, and any capture failure exits nonzero, never passes.
 
 set -e
 
