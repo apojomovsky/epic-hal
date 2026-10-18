@@ -3,8 +3,9 @@
  * both builds. Reads INTCON/PIRx once, calls only handlers whose bit
  * is set. Prototypes are strong externs (not EPIC_WEAK) so the host
  * linker keeps every handler object. Final tier: Timer0-4, CCP1-5,
- * SSP, EUSART1/2, ADC, COMP, EEPROM (EE gated on EEIE for pollers).
- * TIMER4_IRQHandler no-ops on the ECAN quads; LVD/PSP have no driver.
+ * SSP, EUSART1/2, ADC, COMP, EEPROM, LVD (EE and LVD gated on their
+ * enable bits for pollers). TIMER4_IRQHandler no-ops on the ECAN quads;
+ * PSP has no driver.
  */
 
 #include "core/pic18_irq.h"
@@ -21,6 +22,8 @@ extern void TIMER2_IRQHandler(void);
 extern void TIMER3_IRQHandler(void);
 /** @brief Timer4 match interrupt handler. */
 extern void TIMER4_IRQHandler(void);
+/** @brief Low-voltage detect interrupt handler. */
+extern void LVD_IRQHandler(void);
 /** @brief CCP1 event interrupt handler. */
 extern void CCP1_IRQHandler(void);
 /** @brief CCP2 event interrupt handler. */
@@ -94,6 +97,14 @@ void epic_dispatch_all_irqs(void)
         if (epic_sfr_read8(PIC_REG_PIE2) & PIC_PIE2_EEIE)
         {
             EEPROM_IRQHandler();
+        }
+    }
+    /* Gate LVDIF on LVDIE like EEIF: a poller owns the flag. */
+    if (pir2 & PIC_PIR2_LVDIF)
+    {
+        if (epic_sfr_read8(PIC_REG_PIE2) & PIC_PIE2_LVDIE)
+        {
+            LVD_IRQHandler();
         }
     }
     uint8_t pir3 = epic_sfr_read8(PIC_REG_PIR3);

@@ -83,4 +83,14 @@ void pic18_sim_drive_eeprom_done(uint16_t addr, uint8_t data);
  */
 uint8_t pic18_sim_eeprom_read(uint16_t addr);
 
+/**
+ * @brief Drive the modeled supply relative to the programmed LVD trip
+ *        point (test rig only). The sim does not map LVDL codes to
+ *        volts: the rig states which side of the selected trip point the
+ *        supply is on. With LVDEN set and IRVST stable, a 0 -> 1
+ *        transition raises PIR2<LVDIF> once.
+ * @param below 1 = supply below the trip point, 0 = above it.
+ */
+void pic18_sim_drive_supply_low(uint8_t below);
+
 #endif /* PIC18F6520_SIM_H */

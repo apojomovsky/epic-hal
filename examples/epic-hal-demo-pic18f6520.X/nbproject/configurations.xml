@@ -36,6 +36,7 @@
         <itemPath>../../hal/pic18/18f6520/src/peripherals/pic18f6520_adc.c</itemPath>
         <itemPath>../../hal/pic18/18f6520/src/peripherals/pic18f6520_comp.c</itemPath>
         <itemPath>../../hal/pic18/18f6520/src/peripherals/pic18f6520_eeprom.c</itemPath>
+        <itemPath>../../hal/pic18/18f6520/src/peripherals/pic18f6520_lvd.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
 </logicalFolder></logicalFolder>

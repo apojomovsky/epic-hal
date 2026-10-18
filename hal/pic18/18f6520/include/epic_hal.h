@@ -17,7 +17,7 @@
 #include "core/pic18f6520_wdt_sleep.h"
 
 /* Peripherals: GPIO + Timer0-4 + CCP1-5 + MSSP + EUSART1/2 + ADC +
- * Comparator + Data EEPROM. LVD/PSP have no driver yet. */
+ * Comparator + Data EEPROM + LVD. PSP has no driver yet. */
 #include "peripherals/pic18f6520_gpio.h"
 #include "peripherals/pic18f6520_timer0.h"
 #include "peripherals/pic18f6520_timer1.h"
@@ -30,5 +30,6 @@
 #include "peripherals/pic18f6520_adc.h"
 #include "peripherals/pic18f6520_comp.h"
 #include "peripherals/pic18f6520_eeprom.h"
+#include "peripherals/pic18f6520_lvd.h"
 
 #endif /* EPIC_H */

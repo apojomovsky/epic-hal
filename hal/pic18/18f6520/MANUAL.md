@@ -9,8 +9,8 @@ against the Microchip datasheet **DS39609B** (PIC18F6520/6620/8520/8620/
 **Status: complete.** Platform layer, SFR map, GPIO, Timer0-4, CCP1-5,
 MSSP, EUSART1/2, ADC, comparator, data EEPROM, the interrupt core,
 WDT/Sleep/BOR/POR, and the harness are all implemented (epic-hal#182,
-#183, #184, #185, #525) and verified under host sim and real `mdb`.
-PSP and LVD have no driver yet (the SFRs are in the map). This family
+#183, #184, #185, #525, #526) and verified under host sim and real `mdb`.
+Only PSP has no driver yet (its SFRs are in the map). This family
 has no USB and no SPP (DS39609B Table 1-1), so it never will; do not
 expect them here.
 
@@ -33,11 +33,12 @@ expect them here.
 13. [ADC](#13-adc)
 14. [Comparator](#14-comparator)
 15. [Data EEPROM](#15-data-eeprom)
-16. [The SFR layer](#16-the-sfr-layer)
-17. [Device selection](#17-device-selection)
-18. [The examples](#18-the-examples)
-19. [Known gaps and gotchas](#19-known-gaps-and-gotchas)
-20. [Appendix: datasheet section index](#20-appendix-datasheet-section-index)
+16. [Low-Voltage Detect](#16-low-voltage-detect)
+17. [The SFR layer](#17-the-sfr-layer)
+18. [Device selection](#18-device-selection)
+19. [The examples](#19-the-examples)
+20. [Known gaps and gotchas](#20-known-gaps-and-gotchas)
+21. [Appendix: datasheet section index](#21-appendix-datasheet-section-index)
 
 ---
 
@@ -331,14 +332,41 @@ proving the high-address byte); the mdb gate reads back
 EEADRH=0x01, EEADR=0x42 and EECON1=WR strobed (SIM does not model
 cell writes, same as the other PIC18 families).
 
-## 16. The SFR layer
+## 16. Low-Voltage Detect
+
+*DS39609B §22.0, Register 22-1 (LVDCON 0xFD2, Access Bank; present on
+every part in the family at the same address).*
+
+LVDCON carries LVDL<3:0> (trip select; 1111 takes the trip point from
+the LVDIN pin), LVDEN, and IRVST (reference stable, read-only). POR
+image is 0x05 (LVDL = 0101, detector off). The event is PIR2<LVDIF>,
+enabled by PIE2<LVDIE>, priority IPR2<LVDIP>.
+
+`EPIC_LVD_Init` programs the trip code with the detector off and stores
+the callback; `EPIC_LVD_Start` sets LVDEN; `EPIC_LVD_IsStable` polls
+IRVST; `EPIC_LVD_EnableInterrupt` (refused with `EPIC_BUSY` until IRVST
+is set) clears LVDIF and sets LVDIE, because the flag can be raised
+spuriously while the reference settles. The driver takes the LVDL code
+as a raw 0..15 value: the volts each code selects are in Register 22-1.
+The dispatcher gates LVDIF on LVDIE (like EEIF), so a poller can own the
+flag with the interrupt disabled.
+
+Verification limit: no headless rig can move the supply across a trip
+point. The host sim models IRVST settling (a fixed cycle count, not the
+datasheet time) and takes the supply side from the test rig
+(`pic18_sim_drive_supply_low`): a 0 -> 1 transition raises LVDIF once.
+The mdb gate (`example_lvd`) asserts control-register readback only: the
+0x05 POR image, then LVDL/LVDEN after Init, Start and Stop. The callback
+path is host-only.
+
+## 17. The SFR layer
 
 Every SFR access names a compile-time-constant `PIC_REG_*` token through
 `epic_sfr_read8` / `EPIC_REG8` (see `pic18_platform.h`). This is load-bearing:
 on PIC18, a runtime SFR address compiles to the program-memory table
-mechanism and silently writes nowhere (see §16).
+mechanism and silently writes nowhere (see §19).
 
-## 17. Device selection
+## 18. Device selection
 
 Eleven variants (§1 table). The build driver emits `-D` for the part
 being built (`-DPIC18F6620`, `-DPIC18F8585`, ...);
@@ -347,7 +375,7 @@ and rejects more than one device define. The per-part capability
 macros (`PIC18F6520_FAMILY_*`, `PIC18F6520_DEVICE_NAME`) follow the
 selected define.
 
-## 18. The examples
+## 19. The examples
 
 - `example_smoke`: bare harness contract (family-blind).
 - `example_blink`: Timer0 + GPIO + interrupt, RB0 toggle.
@@ -360,8 +388,10 @@ selected define.
 - `example_adc`: AN0 conversion programming check.
 - `example_comp`: two-independent comparator mode check.
 - `example_eeprom`: 10-bit-address write/read round-trip check.
+- `example_lvd`: LVDCON POR image and LVDL/LVDEN readback (mdb gate);
+  on the host also IRVST settling and the LVDIF callback.
 
-## 19. Known gaps and gotchas
+## 20. Known gaps and gotchas
 
 - **Umbrella header name.** The family header is `pic18f6520_hal.h`, not
   `pic18f6520.h`: the DFP proc header for this part is literally
@@ -389,13 +419,15 @@ selected define.
 - **1 KB EEPROM, 10-bit addressing.** The EEPROM APIs take `uint16_t`
   addresses and program EEADRH + EEADR; the 4550/2520 drivers use
   8-bit EEADR only. See §15.
-- PSP and LVD have no driver yet, so their SFRs are in the map but
-  there is no PSP/LVD header. The MPLAB SIM CI gate (the Timer4 match
-  probe, `example_timer4`) reports PASS/FAIL on the RA0 GPIO marker
+- PSP has no driver yet, so its SFRs are in the map but there is no
+  PSP header. The MPLAB SIM CI gate (the LVD readback probe,
+  `example_lvd`) reports PASS/FAIL on the RA0 GPIO marker
   (`MODE=gpio`, read through LATA); the EUSART's mdb gate uses `uartio`
-  capture directly (see PR #203's EUSART verification).
+  capture directly (see PR #203's EUSART verification). Each variant
+  carries one sim gate, so the Timer4 match probe (`example_timer4`)
+  runs on the host only.
 
-## 20. Appendix: datasheet section index
+## 21. Appendix: datasheet section index
 
 | Section | Topic        | Where covered here                |
 |---------|--------------|-----------------------------------|
@@ -413,5 +445,6 @@ selected define.
 | §19.0   | ADC          | `peripherals/pic18f6520_adc.h`     |
 | §20.0   | Comparator   | `peripherals/pic18f6520_comp.h`    |
 | §7.0    | Data EEPROM  | `peripherals/pic18f6520_eeprom.h`  |
+| §22.0   | LVD          | `peripherals/pic18f6520_lvd.h`     |
 | §23.0   | Config words | `mcu/pic18f6520-mplabx/README.md` |
 | Table 1-1 | Device features | §1                            |
