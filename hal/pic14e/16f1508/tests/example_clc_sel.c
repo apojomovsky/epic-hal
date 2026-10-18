@@ -2,8 +2,9 @@
  * CLC SEL-decode host-sim probe. Host-only: configures cells through
  * EPIC_CLC_Init and checks that undriven Dx levels decode their SEL codes
  * (Table 24-1): LCx_OUT taps post-POL with a one-step cascade delay, timer
- * sources follow the PIR1 flags, CLCxIN0/1 follow their fixed pins, and
- * unmodelled sources read 0 unless the Dx hook overrides them.
+ * sources are the TMR1 wrap and pre-postscaler TMR2 match pulses, CLCxIN0/1
+ * follow their fixed pins, and unmodelled sources read 0 unless the Dx hook
+ * overrides them.
  */
 #include <stddef.h>
 #include "pic16f1508.h"
@@ -100,19 +101,37 @@ int main(void)
     ok &= (read_cell(CLC1) == 1U);
     ok &= (read_cell(CLC2) == 1U);
 
-    /* Timer decode follows the latched flags until software clears them. */
-    EPIC_REG8(PIC_REG_PIR1) |= PIC_PIR1_TMR1IF;
+    /* T1_overflow is the wrap pulse, not the TMR1IF level: the flag stays
+     * latched while the tap drops back to 0 on the next step. */
+    EPIC_REG8(PIC_REG_TMR1H) = 0xFFU;
+    EPIC_REG8(PIC_REG_TMR1L) = 0xFFU;
+    EPIC_REG8(PIC_REG_T1CON) = PIC_T1CON_TMR1ON;
     epic_harness_tick();
     ok &= (read_cell(CLC3) == 1U);
-    EPIC_REG8(PIC_REG_PIR1) &= (uint8_t)~PIC_PIR1_TMR1IF;
     epic_harness_tick();
     ok &= (read_cell(CLC3) == 0U);
-    EPIC_REG8(PIC_REG_PIR1) |= PIC_PIR1_TMR2IF;
-    epic_harness_tick();
-    ok &= (read_cell(CLC4) == 1U);
-    EPIC_REG8(PIC_REG_PIR1) &= (uint8_t)~PIC_PIR1_TMR2IF;
+    ok &= ((EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR1IF) != 0U);
+    EPIC_REG8(PIC_REG_T1CON) = 0U;
+
+    /* T2_match is the PR2 match ahead of the 1:4 postscaler: it pulses on
+     * every second step while TMR2IF waits for the fourth match. */
+    EPIC_REG8(PIC_REG_PR2) = 1U;
+    EPIC_REG8(PIC_REG_T2CON) = (uint8_t)(PIC_T2CON_TMR2ON | (3U << PIC_T2CON_T2OUTPS_SHIFT));
     epic_harness_tick();
     ok &= (read_cell(CLC4) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC4) == 1U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC4) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC4) == 1U);
+    ok &= ((EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) == 0U);
+    epic_harness_tick();
+    epic_harness_tick();
+    epic_harness_tick();
+    epic_harness_tick();
+    ok &= ((EPIC_REG8(PIC_REG_PIR1) & PIC_PIR1_TMR2IF) != 0U);
+    EPIC_REG8(PIC_REG_T2CON) = 0U;
 
     /* Unmodelled FOSC reads 0; a hooked Dx wins over the decode. */
     setup_tap(CLC4, 1U, EPIC_CLC_SourceCode(1U, CLC_IN_FOSC));

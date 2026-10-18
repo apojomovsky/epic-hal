@@ -163,8 +163,12 @@ T2CON is Register 20-1 (page 168). Prescaler T2CKPS<1:0> is 1:1, 1:4, 1:16,
 1:(N+1) for N 0..15. T2CON POR is 0x00 (Table 3-9). Each match feeds the
 postscaler, which sets PIR1 TMR2IF (bit 1), enabled by PIE1 TMR2IE (bit 1):
 Register 7-5 (PIR1, page 78) and Register 7-2 (PIE1, page 75). The match
-output T2_match also feeds the CLC data inputs at D1 code 7 and D2 code 3
-(Table 24-1, page 258), the debouncer slow clock, and the PWM module (§23).
+output T2_match is taken ahead of the postscaler (Figure 20-1, page 166) and
+is synchronous with the system clock (§20.3). It feeds the CLC data inputs at
+D1 code 7 and D2 code 3 (Table 24-1, page 258), the debouncer slow clock, and
+the PWM module (§23). The datasheet draws the pulse one scaled TMR2 clock
+wide in Figure 20-2 and one FOSC/4 cycle wide in Figure 20-3 (page 167); the
+sim holds it for the one step in which the match occurs.
 
 This part has Timer0, Timer1 and Timer2 only (§18, §19, §20); there is no
 TMR3, TMR4 or TMR6. The second beat-dimmer pulse source is therefore a
@@ -296,19 +300,27 @@ SEL codes decode in the sim step. A Dx the host hook drove keeps the driven
 level; any other Dx resolves its Table 24-1 source. CLCxIN0 and CLCxIN1 read
 the fixed input pins from the pin-function tables in section 2 (CLC1 on
 RA3/RC7, CLC2 on RC3/RC4, CLC3 on RB4/RC6, CLC4 on RB5/RA1). T1_overflow and
-T2_match read the latched TMR1IF/TMR2IF flags. LCx_OUT reads the post-POL
+T2_match read the pulse seen since the previous sim step, not the latched
+TMR1IF/TMR2IF flags: Figure 19-1 taps T1_overflow at the TMR1 wrap and sets
+TMR1IF from the same event, and Figure 20-1 taps T2_match at the PR2
+comparator ahead of the postscaler (page 166), so T2_match pulses on every
+match whatever T2OUTPS says. LCx_OUT reads the post-POL
 wire (Register 24-1: LCxOUT is after LCxPOL, sampled from lcx_out, the same
 wire Table 24-1 taps). Cross-cell taps read the previous step, so a cascade
-settles one cell per step whatever the wiring order. Sources with no sim
-behind them (comparators, FOSC, T0 overflow, NCO, PWM, EUSART, MSSP, the
-internal oscillators) read 0. Two host assumptions stay unverified: the
-timer sources are flag levels rather than the one-cycle hardware pulses,
-and the one-step cascade delay. Covered by the host probe `example_clc_sel`.
-A demo that needs an inter-cell wire can still close it through the hook:
-the debouncer probe re-drives STAGE2 D2 from the live STAGE1 output each
-half clock, so the AND the STAGE2 gate evaluates is the cell's own. LCxOE
-does not drive a pin in the sim: the output-pin mapping is unverified, so
-only the mirrors observe it.
+settles one cell per step whatever the wiring order. On silicon lcx_out is
+unclocked: Figure 24-1 (page 257) clocks only the readable LCxOUT/MLCxOUT
+flop at Q1, while the wire to the other peripherals, the pin and the edge
+detectors is combinational, and the datasheet gives no propagation figure.
+The one-step delay is therefore a host approximation, visible only when a
+cascade feeds a clocked mode. Sources with no sim behind them (comparators,
+FOSC, T0 overflow, NCO, PWM, EUSART, MSSP, the internal oscillators) read 0.
+Several wraps or matches inside one multi-tick step collapse into one pulse,
+since the CLC samples once per step. Covered by the host probe
+`example_clc_sel`. A demo that needs an inter-cell wire can still close it
+through the hook: the debouncer probe re-drives STAGE2 D2 from the live
+STAGE1 output each half clock, so the AND the STAGE2 gate evaluates is the
+cell's own. LCxOE does not drive a pin in the sim: the output-pin mapping is
+unverified, so only the mirrors observe it.
 
 Timers advance one instruction cycle per tick: TMR2 applies the T2CKPS
 prescaler, matches TMR2 against PR2 with reset to 0, and divides matches
