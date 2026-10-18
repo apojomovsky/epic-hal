@@ -397,11 +397,17 @@ Hardware limit modes (T2HLT<MODE4:MODE0>, Register 29-3, Table 29-1):
 the free-running group 0x00 (software gate), 0x01/0x02 (hardware gate
 high/low), 0x03/0x04/0x05 (reset on any, rising or falling edge of
 the reset signal), 0x06/0x07 (held in reset while low/high); the
-one-shot group 0x08 (software start), 0x09..0x0F (edge start, with
-edge or level reset); the monostable group 0x11..0x13; and the level
+one-shot group 0x08 (software start), 0x09..0x0B (edge start),
+0x0C/0x0D (edge start with edge reset), 0x0E/0x0F (edge start with
+level reset); the monostable group 0x11..0x13; and the level
 triggered one-shots 0x16/0x17. 0x10, 0x14, 0x15 and 0x18..0x1F are
-reserved. T2HLT also carries PSYNC (bit 7), CKPOL (bit 6) and CKSYNC
-(bit 5). The reset signal (T2RST<RSEL4:RSEL0>, Register 29-4) is the
+reserved. In every one-shot mode the match clears ON and stops TMR2
+at 00h; monostable keeps ON and the next start edge runs again. A
+pure edge start (0x09..0x0B) ignores edges mid-run, only the modes
+with a reset row restart on them, and every start mode
+needs a fresh edge or level after each ON cycle. T2HLT also carries
+PSYNC (bit 7), CKPOL (bit 6) and CKSYNC (bit 5). The reset signal
+(T2RST<RSEL4:RSEL0>, Register 29-4) is the
 T2INPPS pin for 00000, TMR4/TMR6 postscaled for 00010/00011,
 CCP1..5_out 00100..01000, PWM6/7_out 01001/01010, C1/C2OUT_sync
 01011/01100, ZCD1 01101, LC1..4_out 01110..10001; 00001 (Timer2
@@ -819,9 +825,11 @@ SIM feeds the output latch back through the POR PPS mapping, so the
 gate level is deterministic without a stimulus file. MPLAB SIM prints
 a W0106 partial-support warning for TMR5 at load; it is unrelated to
 the Timer1/Timer2 sections. The gate-event interrupt (TMR1GIF) has no
-driver, and the Timer2 edge-start, monostable and level-start modes
-have no behavioural coverage in either the host sim (it freezes the
-counter) or the mdb gate (only mode 0x01 is exercised live).
+driver. Every defined Timer2 mode runs in the host sim. MPLAB SIM
+holds the measured start-controlled modes at zero and never starts
+them (2026-10 on the 16F18877 for 0x09, 0x11 and 0x16: images and
+the armed hold pass, no edge or level starts the counter), so the
+gate covers mode 0x09 register images and the armed hold only.
 
 The gate image is built -O2. Probe sections live in small helper
 functions that share spin loops and handle resets, since inlining every
@@ -911,13 +919,15 @@ at four counts per tick), for each Timer0 overflow pulse, and for each
 rising edge of RC0 (the POR T1CKIPPS pin); its gate reads RB5 (POR
 T1GPPS), the Timer0 overflow pulse or the Timer2 postscaled pulse, and
 models GPOL, GTM (toggle flip-flop cleared while the timer is off),
-GSPM with GGO/DONE (cleared on the trailing edge) and GVAL. Timer2
-ticks the same internal sources and models modes 0x00..0x07 and the
-software one-shot 0x08 against RC3 (POR T2INPPS); the edge-start,
-monostable and level-start modes and every unmodelled clock row
-(T2CKIPPS included) freeze the counter, and every unmodelled gate and
-reset row reads low, which holds a gated counter except in active-low
-gate mode, where a low signal lets it run.
+GSPM with GGO/DONE (cleared on the trailing edge) and GVAL.
+Timer2 ticks the same internal sources and models every defined mode
+against RC3 (POR T2INPPS): edge-start waits for its edge and the match
+clears ON, monostable restarts on the edge with ON kept, level modes
+follow ers, and a start latch cleared by each ON cycle keeps a stale
+start from leaking across Start calls. Reserved codes and every
+unmodelled clock row (T2CKIPPS included) freeze the counter, and every
+unmodelled gate and reset row reads low, which holds a gated counter
+except in active-low gate mode, where a low signal lets it run.
 The pin rows read the PORTx array at the POR PPS defaults (the PPS
 select registers of these three inputs are not modelled, and
 `EPIC_PPS_MapInput` does not expose them), so a test drives them with
