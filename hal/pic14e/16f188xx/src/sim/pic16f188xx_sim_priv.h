@@ -1,7 +1,8 @@
 /**
  * Private seam between the port/Timer0 model (pic16f188xx_sim.c), the
  * EUSART, MSSP and PPS-lock model (pic16f188xx_sim_serial.c), the EEPROM,
- * NCO and WDT/Sleep model (pic16f188xx_sim_sys.c) and the CCP and PWM model
+ * NCO and WDT/Sleep model (pic16f188xx_sim_sys.c), the ADC, FVR, DAC and
+ * comparator model (pic16f188xx_sim_analog.c) and the CCP and PWM model
  * (pic16f188xx_sim_ccp.c). Not part of the sim API a probe sees.
  */
 #ifndef PIC16F188XX_SIM_PRIV_H
@@ -60,6 +61,17 @@ void pic16f188xx_sim_ccp_reset(void);
  * @param t2_pos TMR2 x 4 plus the prescaler fraction (the 10-bit time base).
  */
 void pic16f188xx_sim_ccp_step(uint8_t t2_wrap, uint8_t t2_live, uint16_t t2_pos);
+/**
+ * @brief Clear the analog state and load the POR values of its SFRs.
+ */
+void pic16f188xx_sim_analog_reset(void);
+
+/**
+ * @brief Advance the ADC conversion, FVR ready flag and comparators.
+ * @param t0_pulse Non-zero on the tick Timer0 overflowed.
+ * @param t2_pulse Non-zero on the tick Timer2 matched PR2.
+ */
+void pic16f188xx_sim_analog_step(uint8_t t0_pulse, uint8_t t2_pulse);
 
 /**
  * @brief Apply a write to a CCPxCON or PWMxCON register.

@@ -45,6 +45,14 @@ what is specific to this family: 16F18854/55/56/57 (28-pin) and
   codes. That revision (the datasheet file in hand, page footers read
   DS40001802D) was read as text; its CCP tables were checked against the
   EDC impl and POR values.
+- ADC, DAC1, FVR and comparator encodings (channels, references, gains,
+  triggers, PPS output codes) cite DS40001802D §23 (Registers 23-1..23-8,
+  Table 23-2), §25 (Registers 25-1/25-2), §16 (Register 16-1), §18
+  (Registers 18-1..18-5) and Table 13-3, read as text from the same copy.
+  ADCON0 bit 3 and CMxCON0 bit 2 are unimplemented (read 0) on the
+  Register 23-1/18-1 diagrams but implemented in the EDC (ADCON0 impl
+  0xDD, CMxCON0 impl 0xD7 with POR 1 on bit 2); the driver leaves both
+  at 0, the MCC norm, and names neither bit.
 
 ## Implemented bits (from EDC impl masks)
 
@@ -145,6 +153,26 @@ what is specific to this family: 16F18854/55/56/57 (28-pin) and
 | PWMxDCL  | 0xC0  | xx------   | Duty bits 1:0 in bits 7:6                |
 | PWMxDCH  | 0xFF  | xxxxxxxx   | Duty bits 9:2                            |
 | CCPxPPS  | 0x1F  | per input  | Capture pin select, port in bits 4:3 (CCP5PPS 0x3F on 16F18877) |
+| ADRESL, ADRESH | 0xFF | 00000000 | Conversion result low and high byte |
+| ADCON0   | 0xDD  | 00-000-0   | ADON, ADCONT, ADCS (FRC), ADFRM0, ADGO (hardware-cleared); bit 3 EDC-only, unnamed |
+| ADCON1   | 0xE1  | 000----0   | ADPPOL, ADIPEN, ADGPOL, ADDSEN: basic mode, all clear |
+| ADCON2   | 0xFF  | 00000000   | ADPSIS, ADCRS, ADACLR, ADMD: basic mode, all clear |
+| ADCLK    | 0x3F  | --000000   | ADCCS FOSC divider (FOSC/(2*(n+1))) |
+| ADACT    | 0x1F  | ---00000   | Auto-conversion trigger select (Table 23-2) |
+| ADREF    | 0x13  | ---0--00   | ADNREF (VREF- pin), ADPREF (VDD, VREF+ pin, FVR) |
+| ADPCH    | 0x3F  | --000000   | Channel: pins to 0x17 (0x22 on 40-pin), 0x3C..0x3F internal |
+| PIR1     | 0xC3  | 00----00   | ADIF bit 0, ADTIF bit 1 (threshold, no driver) |
+| PIE1     | 0xC3  | 00----00   | ADIE bit 0, ADTIE bit 1 (no driver) |
+| PIR2     | 0x43  | -0----00   | C1IF bit 0, C2IF bit 1 |
+| PIE2     | 0x43  | -0----00   | C1IE bit 0, C2IE bit 1 |
+| FVRCON   | 0xFF  | 0xxxxxxx   | FVREN, FVRRDY (read-only, always 1 on 18855/75 once on), TSEN/TSRNG (off), CDAFVR, ADFVR |
+| DAC1CON0 | 0x1C (EDC; EN, OE1, OE2, NSS per Register 25-1 and the proc header) | 0-0000-0 | DAC1EN, DAC1OE1 (RA2), DAC1OE2 (RB7), DAC1PSS, DAC1NSS |
+| DAC1CON1 | 0x1F  | ---xxxxx   | DAC1R 5-bit code |
+| CMOUT    | 0x03  | ------00   | MC2OUT, MC1OUT mirrors (read-only) |
+| CMxCON0  | 0xD7  | 00-0-100   | ON, OUT (read-only), POL, HYS, SYNC; bit 2 EDC-only, unnamed |
+| CMxCON1  | 0x03  | ------00   | INTP, INTN edge enables |
+| CMxNSEL  | 0x07  | -----000   | NCH: 0..3 pins, 6 FVR buffer 2, 7 AVSS |
+| CMxPSEL  | 0x07  | -----000   | PCH: 0..1 pins, 5 DAC, 6 FVR buffer 2, 7 AVSS |
 
 ## Register addresses
 
@@ -253,6 +281,23 @@ selects the spelling per part, and the sfr-map audit checks both).
 | PIR6     | 0x712   |
 | PIE6     | 0x71C   |
 | CCP1PPS  | 0xEA1 (CCP2PPS 0xEA2 .. CCP5PPS 0xEA5) |
+| ADRESL   | 0x08C (ADRESH 0x08D) |
+| ADCON0   | 0x093   |
+| ADCON1   | 0x094   |
+| ADCON2   | 0x095   |
+| ADCLK    | 0x098   |
+| ADACT    | 0x099   |
+| ADREF    | 0x09A   |
+| ADPCH    | 0x09E   |
+| PIR1     | 0x70D   |
+| PIE1     | 0x717   |
+| PIR2     | 0x70E   |
+| PIE2     | 0x718   |
+| FVRCON   | 0x90C   |
+| DAC1CON0 | 0x90E   |
+| DAC1CON1 | 0x90F   |
+| CMOUT    | 0x98F   |
+| CM1CON0  | 0x990 (CM1CON1 0x991, CM1NSEL 0x992, CM1PSEL 0x993; C2 from 0x994) |
 
 ## Interrupt-on-change bits
 
@@ -266,7 +311,10 @@ selects the spelling per part, and the sfr-map audit checks both).
 | PIE4<0> | TMR1IE | Gates the Timer1 source. Set by Init only with a callback. |
 | PIR4<1> | TMR2IF | Set on the postscaled TMR2 = PR2 match. Cleared by the handler. |
 | PIE4<1> | TMR2IE | Gates the Timer2 source. Set by Init only with a callback. |
-| INTCON<6> | PEIE  | Set by `EPIC_IRQ_Enable` on any source. Exposes the PIR0 and PIR4 sources. |
+| PIR1<0> / PIE1<0> | ADIF / ADIE | Set when a conversion completes. The handler clears the flag. ADTIF/ADTIE (bit 1) have no driver. |
+| PIR2<0> / PIE2<0> | C1IF / C1IE | Set on an armed CxOUT edge. The handler clears the flag, then runs the callback. |
+| PIR2<1> / PIE2<1> | C2IF / C2IE | Same for C2. |
+| INTCON<6> | PEIE  | Set by `EPIC_IRQ_Enable` on any source. Exposes every PIRx source. |
 | INTCON<7> | GIE   | Global interrupt enable.                                         |
 | PIR3<0> / PIE3<0> | SSP1IF / SSP1IE | MSSP1 event. The handler clears the flag, then runs the callback. |
 | PIR3<4> / PIE3<4> | TXIF / TXIE | Read-only flag, set while the transmitter is on and TX1REG is empty. TXIE is a one-shot the handler clears. |
@@ -509,6 +557,67 @@ are not driven.
   `PPS_INPUT_SSP1CLK` and `PPS_INPUT_SSP1DAT`; the bus needs external
   pull-ups.
 
+## ADC bits
+
+*DS40001802D §23, Registers 23-1 to 23-8, Table 23-2.* Basic polling
+mode only: ADCON1 and ADCON2 stay at POR (no precharge, no double
+sample, ADMD 000 basic), ADCONT is clear (one conversion per trigger).
+Clock (ADCON0<ADCS>): FRC dedicated oscillator (the default, errata-safe
+at 32 MHz) or FOSC through ADCLK<ADCCS> (value N divides FOSC by
+2*(N+1), 000000 = FOSC/2 through 111111 = FOSC/128). Format
+(ADCON0<ADFRM0>): left (result in ADRESH:ADRESL<7:6>) or right
+(ADRESH:ADRESL); `EPIC_ADC_Read` returns the 10-bit value in both.
+References (ADREF): ADPREF 00 VDD, 10 VREF+ pin, 11 FVR buffer 1 (01
+reserved); ADNREF 0 AVSS, 1 VREF- pin. Channels (ADPCH): ANA0..ANA7
+0x00..0x07, ANB 0x08..0x0F, ANC 0x10..0x17 on every part, AND 0x18..0x1F
+and ANE0..ANE2 0x20..0x22 on the 40-pin parts, then 0x3C AVSS, 0x3D
+temperature indicator, 0x3E DAC1 output, 0x3F FVR (Register 23-8; the
+0x23..0x3B codes are reserved). `EPIC_ADC_SelectChannel` rejects a
+reserved code and a pin code the part lacks. Trigger (ADACT, Table 23-2):
+0x00 manual (`EPIC_ADC_Start`), 0x02..0x08 timers, 0x0B..0x11 CCP/PWM,
+0x12/0x13 comparator outputs, 0x01 ADACTPPS pin, plus the SMT, IOC, CLC
+and read-back sources. ADGO starts a conversion and hardware clears it;
+ADIF (PIR1<0>) sets at completion and the handler clears it. The
+threshold flag ADTIF and the computation registers (ADPRE, ADACQ,
+ADACC, ADRPT, ADLTH/ADUTH, ADSTAT) have no driver.
+
+## DAC1 bits
+
+*DS40001802D §25, Registers 25-1/25-2.* 5-bit code in DAC1CON1<DAC1R>
+(VOUT = (VSRC+ - VSRC-) * code/32 + VSRC-). Sources (DAC1CON0): PSS 00
+VDD, 01 VREF+ pin, 10 FVR buffer 2 (11 reserved); NSS 0 VSS, 1 VREF-
+pin. Pin enables OE1 (DAC1OUT1, RA2) and OE2 (DAC1OUT2, RB7); with both
+clear the DAC still feeds the ADC (channel 0x3E) and the comparators
+(PCH 5) internally. `EPIC_DAC_SetValue` changes the code with the DAC
+running and rejects codes above 31.
+
+## FVR bits
+
+*DS40001802D §16, Register 16-1.* Two independent gain buffers off the
+1.024V reference: ADFVR (buffer 1, to the ADC input channel and the
+ADC positive reference) and CDAFVR (buffer 2, to the DAC and the
+comparators), each 00 off, 01 1.024V, 10 2.048V, 11 4.096V (output
+cannot exceed VDD). FVRRDY is read-only: hardware sets it once the
+reference stabilizes, and it reads always 1 on 16F18855/75 once FVREN
+is set. TSEN/TSRNG (temperature indicator) stay off, so the ADC
+temperature channel (0x3D) has no stimulus from this HAL.
+
+## Comparator bits
+
+*DS40001802D §18, Registers 18-1 to 18-5.* One enable bit per instance
+(CMxCON0<ON>), hysteresis (HYS), polarity (POL) and edge enables
+(CMxCON1 INTP/INTN); SYNC stays asynchronous. Inputs: NCH 0..3 are
+CxIN0- (RA0), CxIN1- (RA1), CxIN2- (RB3), CxIN3- (RB1), 6 is FVR
+buffer 2, 7 is AVSS (4/5 unconnected); PCH 0 is CxIN0+ (RA2), 1 is
+C1IN1+ (RA3) or C2IN1+ (RB0), 5 is the DAC1 output, 6 is FVR buffer 2,
+7 is AVSS (2..4 unconnected). `EPIC_COMP_Init` rejects the unconnected
+codes. The output reads on CMxCON0<OUT> or CMOUT<MCxOUT> (both
+post-polarity, read-only) and reaches a pin only through RxyPPS
+(`PPS_OUTPUT_C1OUT` 0x12, `PPS_OUTPUT_C2OUT` 0x13, Table 13-3); there is
+no output-to-pin bit. CxIF (PIR2) sets on an armed OUT edge and the
+handler clears it, then runs the instance slot. `EPIC_COMP_ReadOutput`
+reads low for an unknown instance.
+
 ## PPS
 
 PPS routes peripherals to pins; the HAL never touches TRIS or ANSEL, so
@@ -666,12 +775,12 @@ family's own `.s` (the `ioc_capture` switch form first): the restore
 The same `.s` shows a static pinned to bank 2 getting a correct
 `movlb 2` before every access, so the rule is proven both ways.
 Therefore ISR-reachable code (the vector, the dispatcher, the IOC,
-Timer0..Timer2, CCP1..CCP5, EUSART and MSSP handlers) keeps no cstack
-autos: flag snapshots are file-scope statics, tests run on WREG, and
-every SFR names its register literally. The five CCP handlers follow
-it with one scalar callback slot each, and the CCP1 and CCP5 `.s`
-show the PIR6 clear as a single `andwf` and a `movlb` before the slot
-load.
+Timer0..Timer2, ADC, C1/C2, CCP1..CCP5, EUSART and MSSP handlers) keeps
+no cstack autos: flag snapshots are file-scope statics, tests run on
+WREG, and every SFR names its register literally. The five CCP and two
+comparator handlers follow it with one scalar callback slot each, and
+the CCP1 and CCP5 `.s` show the PIR6 clear as a single `andwf` and a
+`movlb` before the slot load.
 Normal (non-ISR) driver code is unaffected: calls reset the tracking
 there, and the gate's register readbacks prove it.
 
@@ -746,6 +855,12 @@ pulse-with-clear, while plain toggle read OUT high and TMR1H at the
 match count. The gate pins their CCPxCON images only. W1600 fires for
 PWM6OUT on RB4, for the CCP3 input on RC0 and for the CCP5 output on RC0;
 the gate maps only routes that map clean (PPS tables above).
+
+The analog gate sections are images only. MPLAB SIM was not probed for
+ADC completion timing (ADGO clear, ADIF set) or for comparator/FVR
+live status (CxOUT, FVRRDY), so the gate asserts the control images
+with CxOUT and FVRRDY masked and never waits on a conversion; the host
+probes cover completion, triggers and edges instead.
 
 ## Weak pull-ups
 
@@ -852,3 +967,19 @@ duty; a 0 duty never raises the output. Probes read the outputs with
 `pic16f188xx_sim_ccp_out` and `pic16f188xx_sim_pwm_out` (the CCP
 output latch, and the PWM pin level after polarity); pin routing is
 not modelled, so no output reaches a PORTx bit.
+
+The ADC, FVR, DAC1 and comparators are stepped each tick after the
+CCP model, in `pic16f188xx_sim_analog.c`, with delivery to the
+dispatcher on ADIF with ADIE and on CxIF with CxIE (gated on PEIE and
+GIE like silicon). A set ADGO with the module on and no conversion
+running arms a two-tick conversion: ADRES loads the injected sample
+for the selected channel (`pic16f188xx_sim_adc_set_sample`, per ADPCH
+code, 10-bit), ADGO clears and ADIF sets. The manual, Timer0-overflow,
+Timer2-match and comparator-output-rising triggers start conversions;
+every other ADACT source is a SIM gap. FVRRDY follows FVREN. DAC1 has
+no dynamic state. Each comparator evaluates its NSEL/PSEL sources in
+millivolts at VDD 5000 mV (pins from the digital PORTx level, FVR
+buffer 2 from CDAFVR, DAC1 from DAC1CON0/1, AVSS 0), updates CxOUT and
+CMOUT with polarity applied, and raises CxIF on armed OUT edges. Not
+modelled: acquisition timing, computation modes, the threshold
+interrupt, hysteresis voltage, SYNC, and the temperature indicator.

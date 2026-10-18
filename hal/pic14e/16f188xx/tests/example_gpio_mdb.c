@@ -1,6 +1,7 @@
 /**
- * GPIO, IOC, Timer0..Timer2, CCP and PWM register-image probe for the mdb gate,
- * ending in live interrupt smokes where the target allows them.
+ * GPIO, IOC, Timer0..Timer2, ADC, DAC1, FVR, comparators, CCP and PWM
+ * register-image probe for the mdb gate, ending in live interrupt smokes
+ * where the target allows them.
  * Target-safe: only register reads and bounded spins. Also runs on the
  * host simulator through ctest.
  *
@@ -64,16 +65,22 @@
  * not) and a software-set SSP1IF that vectors. The PPS lock section runs
  * last; the gate config sets PPS1WAY=OFF so the unlock path is real.
  *
- * Data EEPROM, NCO1, WDT and Idle come before the PPS lock. The EEPROM
- * read leaves NVMADR at 0xF0xx with NVMCON1 = NVMREGS (0x40); a write
- * leaves its address and data in NVMADR/NVMDATL with NVMREGS and WREN set
- * (0x44) until polled complete (0x40), and the bytes read back through
- * NVM. NCO1 images: pulse mode, width 8, inverted, increment 0x12345 reads
- * NCO1CON 0x11 (N1OUT masked), NCO1CLK 0x60, NCO1INC 0x012345; the
- * accumulator takes 0xABCDE while stopped; DeInit restores NCO1INCL 0x01
- * and zeroes the rest. WDTCON0 reads (WDTPS << 1) | SWDTEN for 1 ms
- * (0x01), 2 s (0x17) and 256 s (0x25). Idle wakes on a WDT time-out and
- * leaves CPUDOZE<IDLEN> clear.
+ * Data EEPROM, NCO1, ADC, DAC1, FVR, comparators, WDT and Idle come
+ * before the PPS lock. The EEPROM read leaves NVMADR at 0xF0xx with
+ * NVMCON1 = NVMREGS (0x40); a write leaves its address and data in
+ * NVMADR/NVMDATL with NVMREGS and WREN set (0x44) until polled complete
+ * (0x40), and the bytes read back through NVM. NCO1 images: pulse mode,
+ * width 8, inverted, increment 0x12345 reads NCO1CON 0x11 (N1OUT
+ * masked), NCO1CLK 0x60, NCO1INC 0x012345; the accumulator takes 0xABCDE
+ * while stopped; DeInit restores NCO1INCL 0x01 and zeroes the rest. ADC
+ * images: default ADCON0 0x94 with ADPCH following SelectChannel, and
+ * FOSC/div/FVR/TMR0 ADCON0 0x84, ADCLK 0x0F, ADREF 0x13, ADACT 0x02.
+ * DAC1 images: code 0x0F reads DAC1CON 0x0F/0x80, full-house 0x1F/0xB9.
+ * FVR image: default gains read 0x8A (FVRRDY masked). Comparator
+ * images: C1 default CM1CON0 0x80 (CxOUT masked), C2 DAC/FVR CM2CON0
+ * 0x92 with NSEL 0x06, PSEL 0x05, CON1 0x03. WDTCON0 reads
+ * (WDTPS << 1) | SWDTEN for 1 ms (0x01), 2 s (0x17) and 256 s (0x25).
+ * Idle wakes on a WDT time-out and leaves CPUDOZE<IDLEN> clear.
  */
 #include "pic16f188xx.h"
 #include "peripherals/pic16f188xx_gpio.h"
@@ -85,6 +92,10 @@
 #include "peripherals/pic16f188xx_ssp.h"
 #include "peripherals/pic16f188xx_eeprom.h"
 #include "peripherals/pic16f188xx_nco.h"
+#include "peripherals/pic16f188xx_adc.h"
+#include "peripherals/pic16f188xx_dac.h"
+#include "peripherals/pic16f188xx_fvr.h"
+#include "peripherals/pic16f188xx_comp.h"
 #include "core/pic16f188xx_wdt_sleep.h"
 #include "core/pic16f188xx_irq.h"
 #include "peripherals/pic16f188xx_ccp.h"
@@ -483,6 +494,91 @@ static int gate_nco(void)
     ok &= (EPIC_REG8(PIC_REG_NCO1ACCU) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_NCO1ACCH) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_NCO1ACCL) == 0x00U);
+    return ok;
+}
+
+/**
+ * @brief ADC, DAC1, FVR and comparator section: register images only.
+ * @details CxOUT (CMxCON0 bit 6) is live read-only status and masks out
+ * of the comparator images, as does FVRCON FVRRDY (silicon sets it once
+ * the reference stabilizes). No conversion is waited on: completion
+ * timing differs between the host model and MPLAB SIM, the host probes
+ * cover conversion and triggers instead.
+ * @return 1 when every readback matches, 0 otherwise.
+ */
+static int gate_analog(void)
+{
+    int ok = 1;
+    ADC_HandleTypeDef adc = ADC_HANDLE_DEFAULT;
+    DAC_HandleTypeDef dac = DAC_HANDLE_DEFAULT;
+    FVR_HandleTypeDef fvr = FVR_HANDLE_DEFAULT;
+    COMP_HandleTypeDef cmp = COMP_HANDLE_DEFAULT;
+
+    ok &= (EPIC_ADC_Init(&adc) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_ADCON0) == 0x94U);
+    ok &= (EPIC_REG8(PIC_REG_ADCON1) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_ADCON2) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_ADREF) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_ADCLK) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_ADACT) == 0x00U);
+    ok &= (EPIC_ADC_SelectChannel(PIC16F188XX_FAMILY_ADC_MAX_PIN) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_ADPCH) == PIC16F188XX_FAMILY_ADC_MAX_PIN);
+    ok &= (EPIC_ADC_SelectChannel(ADC_CHANNEL_FVR) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_ADPCH) == ADC_CHANNEL_FVR);
+    ok &= (EPIC_ADC_SelectChannel(0x23U) == EPIC_INVALID);
+    adc.ClockSource = ADC_CLOCK_FOSC;
+    adc.ClockDiv = 0x0FU;
+    adc.PosRef = ADC_POSREF_FVR;
+    adc.NegRef = ADC_NEGREF_VREFPIN;
+    adc.Trigger = ADC_TRIGGER_TMR0;
+    ok &= (EPIC_ADC_Init(&adc) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_ADCON0) == 0x84U);
+    ok &= (EPIC_REG8(PIC_REG_ADCLK) == 0x0FU);
+    ok &= (EPIC_REG8(PIC_REG_ADREF) == 0x13U);
+    ok &= (EPIC_REG8(PIC_REG_ADACT) == 0x02U);
+    ok &= (EPIC_ADC_DeInit() == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_ADCON0) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_ADACT) == 0x00U);
+
+    ok &= (EPIC_DAC_Init(&dac) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_DAC1CON1) == 0x0FU);
+    ok &= (EPIC_REG8(PIC_REG_DAC1CON0) == 0x80U);
+    dac.OutputValue = 0x1FU;
+    dac.PosSource = DAC_POSSRC_FVR;
+    dac.NegSource = DAC_NEGSRC_VREFPIN;
+    dac.OutputEnable = (uint8_t)(DAC_OUT1_ENABLE | DAC_OUT2_ENABLE);
+    ok &= (EPIC_DAC_Init(&dac) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_DAC1CON1) == 0x1FU);
+    ok &= (EPIC_REG8(PIC_REG_DAC1CON0) == 0xB9U);
+    ok &= (EPIC_DAC_DeInit() == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_DAC1CON0) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_DAC1CON1) == 0x00U);
+
+    ok &= (EPIC_FVR_Init(&fvr) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_FVRCON) & (uint8_t)~PIC_FVRCON_FVRRDY) == 0x8AU);
+    ok &= (EPIC_FVR_DeInit() == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_FVRCON) == 0x00U);
+
+    ok &= (EPIC_COMP_Init(&cmp) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CM1NSEL) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_CM1PSEL) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_CM1CON1) == 0x00U);
+    ok &= ((EPIC_REG8(PIC_REG_CM1CON0) & (uint8_t)~PIC_CM1CON0_OUT) == 0x80U);
+    cmp.Instance = COMP_INSTANCE_2;
+    cmp.PosChannel = COMP_POS_DAC;
+    cmp.NegChannel = COMP_NEG_FVR;
+    cmp.HysteresisOn = 1U;
+    cmp.InvertOutput = 1U;
+    cmp.InterruptEdge = COMP_INT_EDGE_BOTH;
+    ok &= (EPIC_COMP_Init(&cmp) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CM2NSEL) == 0x06U);
+    ok &= (EPIC_REG8(PIC_REG_CM2PSEL) == 0x05U);
+    ok &= (EPIC_REG8(PIC_REG_CM2CON1) == 0x03U);
+    ok &= ((EPIC_REG8(PIC_REG_CM2CON0) & (uint8_t)~PIC_CM2CON0_OUT) == 0x92U);
+    ok &= (EPIC_COMP_DeInit(COMP_INSTANCE_1) == EPIC_OK);
+    ok &= (EPIC_COMP_DeInit(COMP_INSTANCE_2) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CM1CON0) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_CM2CON0) == 0x00U);
     return ok;
 }
 
@@ -1213,6 +1309,7 @@ int main(void)
     ok &= gate_ssp();
     ok &= gate_eeprom();
     ok &= gate_nco();
+    ok &= gate_analog();
     ok &= gate_wdt();
     ok &= gate_idle();
     ok &= gate_pps_lock();

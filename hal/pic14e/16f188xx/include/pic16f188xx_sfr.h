@@ -114,6 +114,22 @@
 #define PIC_REG_SSP1CON1      0x190U
 #define PIC_REG_SSP1CON2      0x191U
 #define PIC_REG_SSP1CON3      0x192U
+/* ADC bank 1 (ADRESL/ADRESH/ADCON0..ADPCH): same address on every
+ * part. PIR1/PIE1 carry ADIF/ADIE in bit 0, PIR2/PIE2 the C1IF/C1IE
+ * and C2IF/C2IE pairs in bits 0 and 1. */
+#define PIC_REG_ADRESL        0x08CU
+#define PIC_REG_ADRESH        0x08DU
+#define PIC_REG_ADCON0        0x093U
+#define PIC_REG_ADCON1        0x094U
+#define PIC_REG_ADCON2        0x095U
+#define PIC_REG_ADCLK         0x098U
+#define PIC_REG_ADACT         0x099U
+#define PIC_REG_ADREF         0x09AU
+#define PIC_REG_ADPCH         0x09EU
+#define PIC_REG_PIR1          0x70DU
+#define PIC_REG_PIE1          0x717U
+#define PIC_REG_PIR2          0x70EU
+#define PIC_REG_PIE2          0x718U
 
 /* NCO1 (accumulator NCO1ACCL/H/U, increment NCO1INCL/H/U, NCO1CON,
  * NCO1CLK) and the NVM block (NVMADRL..NVMCON2): same address on every
@@ -134,6 +150,21 @@
 #define PIC_REG_NVMDATH       0x81DU
 #define PIC_REG_NVMCON1       0x81EU
 #define PIC_REG_NVMCON2       0x81FU
+/* FVR (FVRCON), DAC1 (DAC1CON0/1, 5-bit) and the comparator pair
+ * (CMOUT, CM1CON0/1, CM1NSEL/PSEL, CM2CON0/1, CM2NSEL/PSEL): same
+ * address on every part. */
+#define PIC_REG_FVRCON        0x90CU
+#define PIC_REG_DAC1CON0      0x90EU
+#define PIC_REG_DAC1CON1      0x90FU
+#define PIC_REG_CMOUT         0x98FU
+#define PIC_REG_CM1CON0       0x990U
+#define PIC_REG_CM1CON1       0x991U
+#define PIC_REG_CM1NSEL       0x992U
+#define PIC_REG_CM1PSEL       0x993U
+#define PIC_REG_CM2CON0       0x994U
+#define PIC_REG_CM2CON1       0x995U
+#define PIC_REG_CM2NSEL       0x996U
+#define PIC_REG_CM2PSEL       0x997U
 /* WDT control (WDTCON0/WDTCON1), power and reset status (PCON0) and the
  * Doze/Idle control (CPUDOZE): same address on every part. */
 #define PIC_REG_WDTCON0       0x80CU
@@ -419,6 +450,75 @@
 #define PIC_SSP1CON2_RSEN       EPIC_BIT(1)
 #define PIC_SSP1CON2_SEN        EPIC_BIT(0)
 #define PIC_SSP1CON2_OP_MASK    0x1FU
+/* ADCON0 bits (DS40001802D Register 23-1): ADON 7, ADCONT 6, ADCS 4
+ * (1: FRC, 0: FOSC through ADCLK), ADFM 2 (1: right justified), ADGO
+ * 0 (set to start, hardware clears). Bit 3 is unimplemented on the
+ * datasheet diagram, so only the documented format bit is named. */
+#define PIC_ADCON0_ADON         EPIC_BIT(7)
+#define PIC_ADCON0_ADCONT       EPIC_BIT(6)
+#define PIC_ADCON0_ADCS         EPIC_BIT(4)
+#define PIC_ADCON0_ADFM         EPIC_BIT(2)
+#define PIC_ADCON0_GO_NDONE     EPIC_BIT(0)
+/* ADPCH channel field in bits 5:0, ADCLK divider in bits 5:0, ADACT
+ * trigger select in bits 4:0 (DS40001802D Table 23-2). */
+#define PIC_ADPCH_CHS_MASK      0x3FU
+#define PIC_ADCLK_ADCCS_MASK    0x3FU
+#define PIC_ADACT_ADACT_MASK    0x1FU
+/* ADREF bits (Register 23-7): ADPREF value in bits 1:0
+ * (00 VDD, 10 VREF+ pin, 11 FVR buffer 1), ADNREF bit 4. */
+#define PIC_ADREF_ADPREF_MASK   0x03U
+#define PIC_ADREF_ADNREF        EPIC_BIT(4)
+/* PIR1/PIE1 carry ADIF/ADIE in bit 0; PIR2/PIE2 the C1 and C2 pairs
+ * in bits 0 and 1. */
+#define PIC_PIR1_ADIF           EPIC_BIT(0)
+#define PIC_PIE1_ADIE           EPIC_BIT(0)
+#define PIC_PIR2_C1IF           EPIC_BIT(0)
+#define PIC_PIR2_C2IF           EPIC_BIT(1)
+#define PIC_PIE2_C1IE           EPIC_BIT(0)
+#define PIC_PIE2_C2IE           EPIC_BIT(1)
+/* FVRCON bits (Register 16-1): FVREN 7, FVRRDY 6 (read-only, always 1
+ * on 16F18855/75 once enabled), ADFVR value in bits 1:0, CDAFVR value
+ * in bits 3:2 (00 off, 01 1.024V, 10 2.048V, 11 4.096V). */
+#define PIC_FVRCON_FVREN        EPIC_BIT(7)
+#define PIC_FVRCON_FVRRDY       EPIC_BIT(6)
+#define PIC_FVRCON_CDAFVR_SHIFT 2U
+#define PIC_FVRCON_CDAFVR_MASK  0x0CU
+#define PIC_FVRCON_ADFVR_MASK   0x03U
+/* DAC1CON0 bits (Register 25-1): EN 7, OE1 5 (DAC1OUT1 pin, RA2), OE2
+ * 4 (DAC1OUT2 pin, RB7), PSS value in bits 3:2 (00 VDD, 01 VREF+ pin,
+ * 10 FVR), NSS 0 (1: VREF- pin, 0: VSS). DAC1R value in bits 4:0. */
+#define PIC_DAC1CON0_EN         EPIC_BIT(7)
+#define PIC_DAC1CON0_OE1        EPIC_BIT(5)
+#define PIC_DAC1CON0_OE2        EPIC_BIT(4)
+#define PIC_DAC1CON0_PSS_SHIFT  2U
+#define PIC_DAC1CON0_PSS_MASK   0x0CU
+#define PIC_DAC1CON0_NSS        EPIC_BIT(0)
+#define PIC_DAC1CON1_DAC1R_MASK 0x1FU
+/* CMxCON0 bits (Register 18-1): ON 7, OUT 6 (read-only), POL 4, HYS 1,
+ * SYNC 0. CMxCON1 (Register 18-2): INTP 1, INTN 0. CMxNSEL (Register
+ * 18-3): NCH value in bits 2:0 (0..3 pins, 6 FVR buffer 2, 7 AVSS).
+ * CMxPSEL (Register 18-4): PCH value in bits 2:0 (0..1 pins, 5 DAC,
+ * 6 FVR buffer 2, 7 AVSS). CMOUT (Register 18-5): MCxOUT mirrors.
+ * CM1CON0/CM1CON1 names carry both instances (one comparator module in
+ * the EDC, positions identical, the audit checks them once). */
+#define PIC_CM1CON0_ON          EPIC_BIT(7)
+#define PIC_CM1CON0_OUT         EPIC_BIT(6)
+#define PIC_CM1CON0_POL         EPIC_BIT(4)
+#define PIC_CM1CON0_HYS         EPIC_BIT(1)
+#define PIC_CM1CON1_INTP        EPIC_BIT(1)
+#define PIC_CM1CON1_INTN        EPIC_BIT(0)
+#define PIC_CM1NSEL_NCH_MASK    0x07U
+#define PIC_CM1PSEL_PCH_MASK    0x07U
+#define PIC_CM2CON0_ON          EPIC_BIT(7)
+#define PIC_CM2CON0_OUT         EPIC_BIT(6)
+#define PIC_CM2CON0_POL         EPIC_BIT(4)
+#define PIC_CM2CON0_HYS         EPIC_BIT(1)
+#define PIC_CM2CON1_INTP        EPIC_BIT(1)
+#define PIC_CM2CON1_INTN        EPIC_BIT(0)
+#define PIC_CM2NSEL_NCH_MASK    0x07U
+#define PIC_CM2PSEL_PCH_MASK    0x07U
+#define PIC_CMOUT_MC1OUT        EPIC_BIT(0)
+#define PIC_CMOUT_MC2OUT        EPIC_BIT(1)
 
 /* PPSLOCK bit 0 (PPSLOCKED): set locks the PPS registers against writes. */
 #define PIC_PPSLOCK_PPSLOCKED   EPIC_BIT(0)
