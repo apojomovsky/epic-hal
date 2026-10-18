@@ -39,8 +39,10 @@ ctest --test-dir build --output-on-failure
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
-# MCU Makefile not wired up yet -- see examples/example_lcd.c for pin setup
+python3 scripts/build/epic_build.py build --module lib/lcd --mcu 16F877A --run
 ```
+The manifest builds the 4-bit GPIO example; the gpio8 and SPI
+transports compile into the host tests (see above).
 
 ## Use it
 
