@@ -31,6 +31,7 @@ void mock_hal_reset(void)
     g_write_len = 0u;
     g_ssp_len = 0u;
     g_ssp_inits = 0u;
+    g_ssp_mode = SSP_MODE_SPI_MASTER_FOSC_4;
     g_tick_len = 0u;
 }
 
