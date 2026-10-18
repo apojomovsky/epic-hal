@@ -93,6 +93,9 @@
 #define PIC16F188XX_HAS_USART 1
 #define PIC16F188XX_HAS_SSP   1
 #define PIC16F188XX_HAS_PPS   1
+/* CCP1..CCP5 and the dedicated PWM6/PWM7 modules are driven. */
+#define PIC16F188XX_HAS_CCP   1
+#define PIC16F188XX_HAS_PWM   1
 
 #include "pic16f188xx_sfr.h"
 

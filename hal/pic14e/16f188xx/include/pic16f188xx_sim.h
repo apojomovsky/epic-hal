@@ -1,7 +1,7 @@
 /**
  * Host simulator API for the PIC16F188xx ports, interrupt-on-change,
- * Timer0..Timer2, EUSART, MSSP1, PPS, data EEPROM, NCO1 and the WDT/Sleep
- * helpers. Host-only: never in an XC8 build.
+ * Timer0..Timer2, CCP1..CCP5, PWM6/PWM7, EUSART, MSSP1, PPS, data EEPROM, NCO1
+ * and the WDT/Sleep helpers. Host-only: never in an XC8 build.
  */
 #ifndef PIC16F188XX_SIM_H
 #define PIC16F188XX_SIM_H
@@ -170,5 +170,20 @@ uint32_t pic16f188xx_sim_sleep_count(void);
  * @return Idle entry count.
  */
 uint32_t pic16f188xx_sim_idle_count(void);
+
+/**
+ * @brief Read the modelled output latch of a CCP instance (compare level or
+ *        PWM level, before any pin routing).
+ * @param instance CCP instance 1..5.
+ * @return 1 when the output is high, 0 when low or the instance is invalid.
+ */
+uint8_t pic16f188xx_sim_ccp_out(uint8_t instance);
+
+/**
+ * @brief Read the modelled output of a dedicated PWM module.
+ * @param instance PWM module 6 or 7.
+ * @return The output level after polarity (1 high), 0 for an invalid module.
+ */
+uint8_t pic16f188xx_sim_pwm_out(uint8_t instance);
 
 #endif

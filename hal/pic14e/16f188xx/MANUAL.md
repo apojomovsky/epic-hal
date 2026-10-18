@@ -1,7 +1,8 @@
 # PIC16F188xx register reference
 
 Per-peripheral register reference for the GPIO, interrupt-on-change,
-Timer0..Timer2, EUSART, MSSP1, PPS, data EEPROM, NCO1 and WDT/Sleep sources in
+Timer0..Timer2, CCP1..CCP5, PWM6/PWM7, EUSART, MSSP1, PPS, data EEPROM, NCO1 and
+WDT/Sleep sources in
 this HAL. Shared conventions (naming, handle pattern, harness, interrupt
 model) are in
 [common/MANUAL.md](../../../common/MANUAL.md). This file covers only
@@ -38,6 +39,12 @@ what is specific to this family: 16F18854/55/56/57 (28-pin) and
   their EDCs carry the same NCO and windowed-WDT module (_modsrc
   DOS-01444B_NCO_v1_a and DOS-02448_wdt_windowed_v1 on all seven) and
   the same register addresses, which the sfr-map audit checks.
+- CCP and PWM encodings (modes, capture sources, timer couples, FMT
+  alignment, PWMxCON and the duty layout) cite DS40001802D §30 and §19,
+  Registers 19-1..19-3 and 30-1..30-6, and Table 13-3 for the output
+  codes. That revision (the datasheet file in hand, page footers read
+  DS40001802D) was read as text; its CCP tables were checked against the
+  EDC impl and POR values.
 
 ## Implemented bits (from EDC impl masks)
 
@@ -127,6 +134,17 @@ what is specific to this family: 16F18854/55/56/57 (28-pin) and
 | PPSLOCK  | 0x01  | -------0   | PPSLOCKED                                |
 | xxxPPS   | 0x1F (T0CKIPPS 0x0F) | per input | Input pin select: port in bits 4:3, pin in 2:0 |
 | RxyPPS   | 0x3F  | --000000   | Output source select, 0 = port latch     |
+| PIR6     | 0x1F  | ---00000   | CCP1IF..CCP5IF                           |
+| PIE6     | 0x1F  | ---00000   | CCP1IE..CCP5IE                           |
+| CCPxCON  | 0xBF  | 0-000000   | EN, OUT (read-only), FMT, MODE (4 bits)  |
+| CCPxCAP  | 0x07  | -----000   | CTS capture input select                 |
+| CCPRxL, CCPRxH | 0xFF | xxxxxxxx | Capture, compare or PWM duty byte    |
+| CCPTMRS0 | 0xFF  | 01010101   | C1TSEL..C4TSEL timer couple per CCP      |
+| CCPTMRS1 | 0x3F  | --010101   | C5TSEL, P6TSEL, P7TSEL                   |
+| PWMxCON  | 0xB0  | 0-00----   | EN, OUT (read-only), POL                 |
+| PWMxDCL  | 0xC0  | xx------   | Duty bits 1:0 in bits 7:6                |
+| PWMxDCH  | 0xFF  | xxxxxxxx   | Duty bits 9:2                            |
+| CCPxPPS  | 0x1F  | per input  | Capture pin select, port in bits 4:3 (CCP5PPS 0x3F on 16F18877) |
 
 ## Register addresses
 
@@ -228,6 +246,13 @@ selects the spelling per part, and the sfr-map audit checks both).
 | SSP1SSPPS | 0xEC7  |
 | RXPPS    | 0xECB   |
 | RA0PPS   | 0xF10 (RB0PPS 0xF18, RC0PPS 0xF20, RD0PPS 0xF28; 8 consecutive per port) |
+| CCPTMRS0 | 0x21E   |
+| CCPTMRS1 | 0x21F   |
+| CCPR1L   | 0x30C (CCPR1H 0x30D, CCP1CON 0x30E, CCP1CAP 0x30F; CCP2 from 0x310, CCP3 0x314, CCP4 0x318, CCP5 0x31C) |
+| PWM6DCL  | 0x38C (PWM6DCH 0x38D, PWM6CON 0x38E; PWM7DCL 0x390, PWM7DCH 0x391, PWM7CON 0x392) |
+| PIR6     | 0x712   |
+| PIE6     | 0x71C   |
+| CCP1PPS  | 0xEA1 (CCP2PPS 0xEA2 .. CCP5PPS 0xEA5) |
 
 ## Interrupt-on-change bits
 
@@ -246,6 +271,7 @@ selects the spelling per part, and the sfr-map audit checks both).
 | PIR3<0> / PIE3<0> | SSP1IF / SSP1IE | MSSP1 event. The handler clears the flag, then runs the callback. |
 | PIR3<4> / PIE3<4> | TXIF / TXIE | Read-only flag, set while the transmitter is on and TX1REG is empty. TXIE is a one-shot the handler clears. |
 | PIR3<5> / PIE3<5> | RCIF / RCIE | Read-only flag, set while the receive FIFO holds a byte. |
+| PIR6<0> / PIE6<0> | CCP1IF / CCP1IE | CCP1 capture, compare match or PWM period. CCP2..CCP5 take bits 1..4. The handler clears the flag, then runs the callback. |
 
 ## Timer0 bits
 
@@ -351,6 +377,73 @@ The handler clears all three ports' flags but reports PORTB only
 contract. IOCAF/IOCCF edges still vector and are still cleared, so no
 armed edge sticks the vector; they just have no callback argument.
 
+## CCP bits
+
+CCP1..CCP5 are one module five times over (DS40001802D §30, Registers
+30-1..30-6, read as text; EDC `_modsrc` DOS-02493_ccp_v4 on all five):
+CCPxCON EN bit 7, OUT bit 5 (read-only), FMT bit 4, MODE value in bits
+3:0. Instances sit at a 4-byte stride from CCPR1L 0x30C (CCPRxL, CCPRxH,
+CCPxCON, CCPxCAP). Modes (CCPxCON<MODE3:MODE0>): 0000 off (resets the
+module), 0001 toggle and clear TMR1, 0010 toggle, 0011 capture every
+edge, 0100 falling, 0101 rising, 0110 every 4th rising, 0111 every 16th
+rising, 1000 set on match, 1001 clear on match, 1010 pulse 0-1-0, 1011
+pulse and clear TMR1, 1111 PWM; 1100..1110 are reserved and
+`EPIC_CCP_Init` rejects them. Clearing CCPxCON also forces the compare
+output latch low (the latch is not the PORT latch, §30.2.1).
+
+Capture and compare use Timer1 (Timer3/Timer5 on the other couples) and
+want it clocked from FOSC/4 or an external clock, synchronized, not
+FOSC (§30.1.2, §30.2.2). CCPxCAP<CTS2:CTS0> picks the capture trigger
+(Register 30-2): 000 CCPxPPS pin, 001 C1OUT, 010 C2OUT, 011 the IOC
+event, 100..111 LC1..LC4_out. CCPTMRS0 holds C1TSEL..C4TSEL (bit pairs
+1:0, 3:2, 5:4, 7:6) and CCPTMRS1 holds C5TSEL (1:0), P6TSEL (3:2) and
+P7TSEL (5:4); 01 is the Timer1/Timer2 couple (the POR value, 0x55 and
+0x15), 10 Timer3/Timer4, 11 Timer5/Timer6 and 00 is reserved (Registers
+30-5, 30-6). CCPR1H:L holds the capture or compare value, or the PWM
+duty.
+
+PWM (§30.3): the period is 4 x (PR2 + 1) counts of 1/4 timer step
+(Equation 30-1), the duty is a 10-bit count of the same unit (Equation
+30-3), so 100% is 4 x (PR2 + 1) or more and the resolution is
+log2(4 x (PR2 + 1)) bits, 10 at PR2 255. FMT clear keeps duty bits 9:8
+in CCPRxH<1:0> and 7:0 in CCPRxL; FMT set keeps bits 9:2 in CCPRxH and
+bits 1:0 in CCPRxL<7:6> (Figure 30-5). The duty reaches a 10-bit
+buffer when TMR2 = PR2, so a write at any time is glitch-free and takes
+effect at the next period; a 0 duty never raises the pin. The PWM
+timer must run from FOSC/4 (§30.3.4) and the postscaler plays no part.
+Setup order from §30.3.2: route the pin and keep its TRIS bit set, load
+PR2, write CCPxCON and the duty, start the timer, and clear TRIS once
+the first period has passed. CCPxIF sets every period.
+
+`EPIC_CCP_Init` clears CCPxCON, writes CCPTMRS and CCPxCAP, loads CCPRxH:L
+(the compare value, or the duty in the FMT layout), clears CCPxIF, arms
+PIE6 (plus PEIE) only with a callback, and writes CCPxCON last with EN
+set for every mode but OFF. It starts no timer. `EPIC_CCP_SetMode` keeps
+FMT and the value; the datasheet advises writing OFF before changing a
+capture prescaler and clearing CCPxIF after any mode change, because a
+mode change can raise a false event (§30.1.3, §30.1.4). Images with the
+default handle: CCPxCON 0x00, CCPxCAP 0x00, CCPTMRS0 0x55, CCPTMRS1
+0x15; compare-set 0x1234 gives CCPxCON 0x88, CCPRxH 0x12, CCPRxL 0x34;
+PWM with the duty 0x155 right-aligned gives 0x8F, 0x01, 0x55 and left
+aligned 0x9F, 0x55, 0x40. CCPxCON.OUT is live read-only status and
+masks out of the gate's CCPxCON images.
+
+## PWM6 and PWM7 bits
+
+Two dedicated 10-bit PWM modules (DS40001802D §19, Registers 19-1..19-3,
+read as text; EDC `_modsrc` DOS-02719_pwm_10bit_v3_8Bit): PWMxCON EN bit
+7, OUT bit 5 (read-only), POL bit 4 (set: active low; impl 0xB0),
+PWMxDCH duty bits 9:2, PWMxDCL duty bits 1:0 in bits 7:6 (impl 0xC0).
+PWM6 sits at 0x38C..0x38E and PWM7 at 0x390..0x392. The time base is
+Timer2, 4 or 6 (P6TSEL, P7TSEL in CCPTMRS1, §30.3.3), clocked from
+FOSC/4; the period, resolution and duty formulas are the CCP PWM ones
+(Equations 19-1..19-4), and the duty latches at TMR2 = PR2 with no
+interrupt flag. A disabled module sits at its idle level, 0 for POL
+clear and 1 for POL set (§19.1). `EPIC_PWM_Init` follows §19.1.9: POL is
+written with EN clear, then the time base and duty, and EN last. Image
+for PWM6 with the duty 0x2A5, active high: PWM6CON 0x80, PWM6DCH 0xA9,
+PWM6DCL 0x40.
+
 ## EUSART bits
 
 Asynchronous mode only; the module matches the sibling PIC16F193X
@@ -431,10 +524,16 @@ datasheet tables are unchecked.
 | MSSP1 data | SSP1DATPPS | RC4 | port<<3 \| pin |
 | MSSP1 SS | SSP1SSPPS | RA5 | port<<3 \| pin |
 | EUSART RX | RXPPS | RC7 | port<<3 \| pin |
+| CCP1 capture | CCP1PPS | RC2 | port<<3 \| pin |
+| CCP2 capture | CCP2PPS | RC1 | port<<3 \| pin |
+| CCP3 capture | CCP3PPS | RB5 | port<<3 \| pin |
+| CCP4 capture | CCP4PPS | RB0 | port<<3 \| pin |
+| CCP5 capture | CCP5PPS | RA4 | port<<3 \| pin |
 
 Port field: A 0, B 1, C 2, D 3 (40-pin parts). Output codes written to
-RxyPPS: 0x00 port latch, 0x10 EUSART TX, 0x14 MSSP1 SCK/SCL, 0x15 MSSP1
-SDO/SDA, 0x19 NCO1 (the EDC lists many more; they belong to unported
+RxyPPS: 0x00 port latch, 0x09..0x0D CCP1..CCP5, 0x0E PWM6, 0x0F PWM7,
+0x10 EUSART TX, 0x14 MSSP1 SCK/SCL, 0x15 MSSP1 SDO/SDA, 0x19 NCO1
+(DS40001802D Table 13-3; the EDC lists many more; they belong to unported
 peripherals).
 
 The EDC's `ppsports` attribute on each output's RemappablePin names the
@@ -448,6 +547,13 @@ and C, SS1 on A and D, SSP1CLKPPS and SSP1DATPPS on any port) maps clean.
 The driver writes any valid-looking pin and leaves the choice to the
 caller: use PORTB or PORTC for the EUSART and MSSP outputs, and a port
 from the list above for NCO1 (PORTA reaches it on every part).
+
+The CCP inputs and outputs follow the same rule. The routes the gate
+maps clean on 16F18877: CCP1 in on RB2, CCP2 in on RC6, CCP3 in on RB4,
+CCP4 in on RB7, CCP5 in on RA1; CCP1 out on RC2, CCP2 out on RC1, CCP3
+out on RB6, CCP4 out on RB7, CCP5 out on RA3, PWM6 out on RA1, PWM7 out
+on RA2. W1600 fires for PWM6 on RB4, the CCP3 input on RC0 and the CCP5
+output on RC0, so those routes stay out of the gate.
 
 Lock: `EPIC_PPS_Unlock` and `EPIC_PPS_Lock` run the 0x55, 0xAA key writes
 and then a single `bcf` or `bsf` on PPSLOCKED, consecutively with
@@ -560,9 +666,12 @@ family's own `.s` (the `ioc_capture` switch form first): the restore
 The same `.s` shows a static pinned to bank 2 getting a correct
 `movlb 2` before every access, so the rule is proven both ways.
 Therefore ISR-reachable code (the vector, the dispatcher, the IOC,
-Timer0..Timer2, EUSART and MSSP handlers) keeps no cstack autos: flag
-snapshots are file-scope
-statics, tests run on WREG, and every SFR names its register literally.
+Timer0..Timer2, CCP1..CCP5, EUSART and MSSP handlers) keeps no cstack
+autos: flag snapshots are file-scope statics, tests run on WREG, and
+every SFR names its register literally. The five CCP handlers follow
+it with one scalar callback slot each, and the CCP1 and CCP5 `.s`
+show the PIR6 clear as a single `andwf` and a `movlb` before the slot
+load.
 Normal (non-ISR) driver code is unaffected: calls reset the tracking
 there, and the gate's register readbacks prove it.
 
@@ -608,10 +717,10 @@ counter) or the mdb gate (only mode 0x01 is exercised live).
 The gate image is built -O2. Probe sections live in small helper
 functions that share spin loops and handle resets, since inlining every
 readback into main overflowed the 16F18855's 8K words of flash (link error
-1347). With the EEPROM, NCO, WDT and Idle sections added the image is
-about 9.3K words and no longer fits a 16F18855 (it needs the 16K-word
-16F18856 or larger); the CI gate runs on the 16F18877, and the other
-parts still build the blink example.
+1347). With the EEPROM, NCO, WDT, Idle, CCP and PWM sections added the
+image is 13746 words and fits only the 16K-word 16F18856 or larger; the
+CI gate runs on the 16F18877 (42% of its flash), and the other parts
+still build the blink example and the demo.
 
 A CPU-executed EEPROM write completes under MPLAB SIM 6.35 on the
 16F18877 (2026-10): WR clears at once, the byte reads back through NVM,
@@ -623,6 +732,20 @@ CPU never woke), so the gate wakes Idle with a WDT time-out instead: its
 config has WDTE=SWDTEN, and the watchdog runs only between
 `EPIC_WDT_Enable` and `EPIC_WDT_Disable`. The NCO is checked as register
 images only, no output timing.
+
+CCP1..CCP5 and PWM6/PWM7 in MPLAB SIM 6.35 (probed 2026-10): a software
+write to `PIR6.CCPxIF` reads back and vectors, the compare-set match
+flags and vectors on its own, and PWM runs against Timer2 (CCPxCON.OUT
+and PWM6CON.OUT follow the pulse; high-sample ratios of 7/32 and 16/32
+for 25% and 50% duty). Capture never fired in any probe (every edge,
+rising with CCP1PPS remapped, every 4th rising edge, RC2 driven through
+its latch), so the gate has no capture proof. The timer-clearing and
+pulse compare modes did not read like the host model: at the flag TMR1H
+read 0 and OUT read low for toggle-with-clear, pulse and
+pulse-with-clear, while plain toggle read OUT high and TMR1H at the
+match count. The gate pins their CCPxCON images only. W1600 fires for
+PWM6OUT on RB4, for the CCP3 input on RC0 and for the CCP5 output on RC0;
+the gate maps only routes that map clean (PPS tables above).
 
 ## Weak pull-ups
 
@@ -707,3 +830,25 @@ pins WDTPS the way CONFIG3 WDTCPS does. PCON0 resets to 0x3D, WDTCON0 to
 0x16 and WDTCON1 to 0x07. Not modelled: program Flash, user ID and
 configuration NVM access, the one-instruction read stall, the NVM
 write protect, and the WDT window.
+
+CCP1..CCP5 and PWM6/PWM7 are stepped each tick after the timers, in
+`pic16f188xx_sim_ccp.c`. Only the Timer1/Timer2 couple (CCPTMRS value
+01) runs: capture and compare use TMR1, PWM uses a 10-bit time base
+built from TMR2 (TMR2 x 4 plus the prescaler position in quarter
+steps) and runs only while Timer2 is on and clocked from FOSC/4; any
+other couple, or a Timer2 clock other than FOSC/4, holds the output
+low (high for an active-low PWM6/PWM7). Compare matches on the tick
+TMR1 reaches the compare value (an edge: a halted timer cannot match
+again), sets CCPxIF and drives the output; the pulse modes hold the
+output high for one tick and the two clear modes zero TMR1. Capture
+reads the pin CCPxPPS selects (the PPS select is modelled, and
+`EPIC_PPS_MapInput` writes it) when CCPxCAP selects it; the other
+capture sources read low. Every CCPxCON write that changes EN or MODE
+resets the output latch, the pulse and the capture prescaler, and OUT
+is read-only (`pic16f188xx_sim_ccp_write`, reached through
+`epic_sfr_write8`). PWM latches the duty at the TMR2 = PR2 match, sets
+CCPxIF there, and reads high until the 10-bit position reaches the
+duty; a 0 duty never raises the output. Probes read the outputs with
+`pic16f188xx_sim_ccp_out` and `pic16f188xx_sim_pwm_out` (the CCP
+output latch, and the PWM pin level after polarity); pin routing is
+not modelled, so no output reaches a PORTx bit.

@@ -30,6 +30,11 @@ typedef enum {
     PPS_INPUT_SSP1DAT    = 2U,   /**< MSSP1 SDI/SDA input (SSP1DATPPS). */
     PPS_INPUT_SSP1SS     = 3U,   /**< MSSP1 slave-select input (SSP1SSPPS). */
     PPS_INPUT_EUSART_RX  = 4U,   /**< EUSART RX input (RXPPS). */
+    PPS_INPUT_CCP1       = 5U,   /**< CCP1 capture input (CCP1PPS). */
+    PPS_INPUT_CCP2       = 6U,   /**< CCP2 capture input (CCP2PPS). */
+    PPS_INPUT_CCP3       = 7U,   /**< CCP3 capture input (CCP3PPS). */
+    PPS_INPUT_CCP4       = 8U,   /**< CCP4 capture input (CCP4PPS). */
+    PPS_INPUT_CCP5       = 9U,   /**< CCP5 capture input (CCP5PPS). */
 } PPS_InputTypeDef;
 
 /**
@@ -38,6 +43,13 @@ typedef enum {
  */
 typedef enum {
     PPS_OUTPUT_LAT        = 0x00U,   /**< Port latch: the pin is plain GPIO. */
+    PPS_OUTPUT_CCP1       = 0x09U,   /**< CCP1 output (compare or PWM). */
+    PPS_OUTPUT_CCP2       = 0x0AU,   /**< CCP2 output. */
+    PPS_OUTPUT_CCP3       = 0x0BU,   /**< CCP3 output. */
+    PPS_OUTPUT_CCP4       = 0x0CU,   /**< CCP4 output. */
+    PPS_OUTPUT_CCP5       = 0x0DU,   /**< CCP5 output. */
+    PPS_OUTPUT_PWM6       = 0x0EU,   /**< PWM6 output. */
+    PPS_OUTPUT_PWM7       = 0x0FU,   /**< PWM7 output. */
     PPS_OUTPUT_EUSART_TX  = 0x10U,   /**< EUSART TX. */
     PPS_OUTPUT_SSP1_SCK   = 0x14U,   /**< MSSP1 SCK (SPI) or SCL (I2C). */
     PPS_OUTPUT_SSP1_SDO   = 0x15U,   /**< MSSP1 SDO (SPI) or SDA (I2C). */

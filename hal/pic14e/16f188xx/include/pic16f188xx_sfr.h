@@ -60,6 +60,40 @@
 #define PIC_REG_T2CLKCON      0x290U
 #define PIC_REG_T2RST         0x291U
 
+/* CCP1..CCP5 (CCPRxL/H, CCPxCON, CCPxCAP) in bank 6, CCPTMRS0/1 in bank 4
+ * and PWM6/PWM7 (PWMxDCL/H, PWMxCON) in bank 7: same address on every
+ * part. PIR6/PIE6 hold the CCP flags and enables. */
+#define PIC_REG_PIR6          0x712U
+#define PIC_REG_PIE6          0x71CU
+#define PIC_REG_CCPTMRS0      0x21EU
+#define PIC_REG_CCPTMRS1      0x21FU
+#define PIC_REG_CCPR1L        0x30CU
+#define PIC_REG_CCPR1H        0x30DU
+#define PIC_REG_CCP1CON       0x30EU
+#define PIC_REG_CCP1CAP       0x30FU
+#define PIC_REG_CCPR2L        0x310U
+#define PIC_REG_CCPR2H        0x311U
+#define PIC_REG_CCP2CON       0x312U
+#define PIC_REG_CCP2CAP       0x313U
+#define PIC_REG_CCPR3L        0x314U
+#define PIC_REG_CCPR3H        0x315U
+#define PIC_REG_CCP3CON       0x316U
+#define PIC_REG_CCP3CAP       0x317U
+#define PIC_REG_CCPR4L        0x318U
+#define PIC_REG_CCPR4H        0x319U
+#define PIC_REG_CCP4CON       0x31AU
+#define PIC_REG_CCP4CAP       0x31BU
+#define PIC_REG_CCPR5L        0x31CU
+#define PIC_REG_CCPR5H        0x31DU
+#define PIC_REG_CCP5CON       0x31EU
+#define PIC_REG_CCP5CAP       0x31FU
+#define PIC_REG_PWM6DCL       0x38CU
+#define PIC_REG_PWM6DCH       0x38DU
+#define PIC_REG_PWM6CON       0x38EU
+#define PIC_REG_PWM7DCL       0x390U
+#define PIC_REG_PWM7DCH       0x391U
+#define PIC_REG_PWM7CON       0x392U
+
 /* PIR3/PIE3 carry the MSSP1 and EUSART flags and enables: same address
  * on every part. */
 #define PIC_REG_PIR3          0x70FU
@@ -120,6 +154,11 @@
 #define PIC_REG_SSP1DATPPS    0x1EC6U  /* P57-77 */
 #define PIC_REG_SSP1SSPPS     0x1EC7U  /* P57-77 */
 #define PIC_REG_RXPPS         0x1ECBU  /* P57-77 */
+#define PIC_REG_CCP1PPS       0x1EA1U  /* P57-77 */
+#define PIC_REG_CCP2PPS       0x1EA2U  /* P57-77 */
+#define PIC_REG_CCP3PPS       0x1EA3U  /* P57-77 */
+#define PIC_REG_CCP4PPS       0x1EA4U  /* P57-77 */
+#define PIC_REG_CCP5PPS       0x1EA5U  /* P57-77 */
 #define PIC_REG_RA0PPS        0x1F10U  /* P57-77 */
 #define PIC_REG_RB0PPS        0x1F18U  /* P57-77 */
 #define PIC_REG_RC0PPS        0x1F20U  /* P57-77 */
@@ -133,6 +172,11 @@
 #define PIC_REG_SSP1DATPPS    0xEC6U
 #define PIC_REG_SSP1SSPPS     0xEC7U
 #define PIC_REG_RXPPS         0xECBU
+#define PIC_REG_CCP1PPS       0xEA1U
+#define PIC_REG_CCP2PPS       0xEA2U
+#define PIC_REG_CCP3PPS       0xEA3U
+#define PIC_REG_CCP4PPS       0xEA4U
+#define PIC_REG_CCP5PPS       0xEA5U
 #define PIC_REG_RA0PPS        0xF10U
 #define PIC_REG_RB0PPS        0xF18U
 #define PIC_REG_RC0PPS        0xF20U
@@ -431,5 +475,47 @@
 #define PIC_NCO1CLK_N1PWS_SHIFT 5U
 #define PIC_NCO1CLK_N1PWS_MASK  0xE0U
 #define PIC_NCO1CLK_N1CKS_MASK  0x07U
+
+/* PIR6/PIE6 carry the CCP1..CCP5 flags and enables in bits 0..4 (impl
+ * 0x1F, bits 7:5 unimplemented). */
+#define PIC_PIR6_CCP1IF       EPIC_BIT(0)
+#define PIC_PIR6_CCP2IF       EPIC_BIT(1)
+#define PIC_PIR6_CCP3IF       EPIC_BIT(2)
+#define PIC_PIR6_CCP4IF       EPIC_BIT(3)
+#define PIC_PIR6_CCP5IF       EPIC_BIT(4)
+#define PIC_PIE6_CCP1IE       EPIC_BIT(0)
+#define PIC_PIE6_CCP2IE       EPIC_BIT(1)
+#define PIC_PIE6_CCP3IE       EPIC_BIT(2)
+#define PIC_PIE6_CCP4IE       EPIC_BIT(3)
+#define PIC_PIE6_CCP5IE       EPIC_BIT(4)
+
+/* CCPxCON bits: EN bit 7, OUT bit 5 (read-only), FMT bit 4 (PWM duty
+ * alignment), MODE value in bits 3:0 (impl 0xBF, bit 6 unimplemented).
+ * CCP1..CCP5 share one module (EDC _modsrc DOS-02493_ccp_v4), so the
+ * CCP1CON names carry every instance and the audit checks them once. */
+#define PIC_CCP1CON_EN          EPIC_BIT(7)
+#define PIC_CCP1CON_OUT         EPIC_BIT(5)
+#define PIC_CCP1CON_FMT         EPIC_BIT(4)
+#define PIC_CCP1CON_MODE_MASK   0x0FU
+
+/* CCPxCAP CTS capture input select in bits 2:0 (impl 0x07). */
+#define PIC_CCPCAP_CTS_MASK     0x07U
+
+/* CCPTMRS0 holds C1TSEL..C4TSEL in bit pairs 1:0, 3:2, 5:4 and 7:6;
+ * CCPTMRS1 holds C5TSEL (1:0), P6TSEL (3:2) and P7TSEL (5:4). A pair
+ * selects the timer couple: 01 Timer1/Timer2, 10 Timer3/Timer4, 11
+ * Timer5/Timer6; 00 is reserved. POR 0x55 and 0x15. */
+#define PIC_CCPTMRS_TSEL_MASK   0x03U
+#define PIC_CCPTMRS0_POR_VALUE  0x55U
+#define PIC_CCPTMRS1_POR_VALUE  0x15U
+
+/* PWMxCON bits: EN bit 7, OUT bit 5 (read-only), POL bit 4 (set: active
+ * low), impl 0xB0. PWMxDCL carries duty bits 1:0 in bits 7:6 (impl
+ * 0xC0), PWMxDCH duty bits 9:2. PWM6 and PWM7 share one module (EDC
+ * _modsrc DOS-02719_pwm_10bit_v3_8Bit), so PWM6CON carries both. */
+#define PIC_PWM6CON_EN          EPIC_BIT(7)
+#define PIC_PWM6CON_OUT         EPIC_BIT(5)
+#define PIC_PWM6CON_POL         EPIC_BIT(4)
+#define PIC_PWMDCL_DC_SHIFT     6U
 
 #endif /* PIC16F188XX_SFR_H */
