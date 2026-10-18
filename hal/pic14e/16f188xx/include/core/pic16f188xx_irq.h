@@ -90,5 +90,6 @@ void EPIC_IRQ_SetPriority(PIC16F188XX_IRQn irq, EPIC_IRQ_Priority prio);
  * each gated the same way. INT and the bus-collision flag have no handler
  * and no API enables them, so no other source can reach the vector.
  */
+void epic_dispatch_all_irqs(void);
 
 #endif
