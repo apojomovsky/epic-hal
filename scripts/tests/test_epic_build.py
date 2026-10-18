@@ -17,7 +17,7 @@ min_epic_cc = "0.3.0"
 
 [families.PIC16F87XA]
 hal_dir  = "hal/pic14/16f87xa"
-variants = ["16F873A", "16F877A"]
+variants = ["16F873A", "16F876A", "16F877A"]
 dfp      = "Microchip.PIC16Fxxx_DFP"
 fosc_hz  = 20000000
 includes = ["hal/pic14/16f87xa/include/target", "hal/pic14/16f87xa/include"]
@@ -130,7 +130,7 @@ depends_on = []
 needs_hal  = false
 
 [modules."lib/adcfilter".supported]
-PIC16F87XA = ["16F873A", "16F877A"]
+PIC16F87XA = ["16F873A", "16F876A", "16F877A"]
 
 [modules."lib/adcfilter".example.PIC16F87XA]
 name    = "adcfilter-sizecheck"
@@ -263,7 +263,7 @@ depends_on = []
 needs_hal  = false
 
 [modules."lib/usb".supported]
-PIC18Fxx5x = ["18F4550"]
+PIC18Fxx5x = ["18F2455", "18F4550"]
 
 [modules."lib/usb".example.PIC18Fxx5x]
 name    = "usb-cdc"
@@ -637,6 +637,50 @@ class TestModuleForm(unittest.TestCase):
     def test_build_rejects_an_unknown_module_naming_valid_ids(self):
         with self.assertRaisesRegex(SystemExit, "unknown module 'epic-nope'"):
             epic_build.cmd_build(self._args("epic-nope"))
+
+
+class TestPrMatrix(unittest.TestCase):
+    """The PR matrix gates the smallest-flash variant, not just the flagship."""
+
+    def legs(self, canonical_only=True):
+        entries = epic_build.matrix_entries(load(), canonical_only)
+        out = {}
+        for entry in entries:
+            legs = {}
+            for pair in entry["modules"].split(";"):
+                name, mcus = pair.split("=")
+                legs[name] = mcus.split(",")
+            out[entry["family"]] = legs
+        return out
+
+    def test_smallest_variant_appears_in_the_pr_matrix(self):
+        manifest = load()
+        pr = self.legs()
+        for name, fam in manifest.families.items():
+            mcus = [mcu for legs in pr[name].values() for mcu in legs]
+            self.assertIn(fam.variants[0], mcus)
+
+    def test_canonical_variant_stays_in_the_pr_matrix(self):
+        manifest = load()
+        pr = self.legs()
+        for name, fam in manifest.families.items():
+            mcus = [mcu for legs in pr[name].values() for mcu in legs]
+            self.assertIn(fam.variants[-1], mcus)
+
+    def test_excluded_smallest_is_not_forced_onto_the_module(self):
+        self.assertEqual(self.legs()["PIC16F87XA"]["lib/tick"], ["16F877A"])
+
+    def test_single_variant_family_emits_one_leg(self):
+        legs = self.legs()["PIC16F193X"]["hal/pic14e/16f193x"]
+        self.assertEqual(legs, ["16F1937"])
+
+    def test_pr_matrix_drops_the_middle_variant(self):
+        legs = self.legs()["PIC16F87XA"]["lib/adcfilter"]
+        self.assertEqual(legs, ["16F873A", "16F877A"])
+
+    def test_full_matrix_still_lists_every_supported_mcu(self):
+        legs = self.legs(canonical_only=False)["PIC16F87XA"]["lib/adcfilter"]
+        self.assertEqual(legs, ["16F873A", "16F876A", "16F877A"])
 
 
 class TestReport(unittest.TestCase):
