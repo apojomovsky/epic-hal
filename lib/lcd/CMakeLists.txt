@@ -3,9 +3,9 @@
 #   cmake -B build && cmake --build build
 #   ctest --test-dir build --output-on-failure
 #
-# The host test links the core logic against a mock transport (no HAL needed).
-# The GPIO and SPI transports depend on the HAL and only build on target
-# (via mcu/ Makefiles, not this CMakeLists.txt).
+# Core test uses a mock transport (no HAL). The gpio8/SPI sources ship
+# on target only; the transport tests below build them against the
+# mock_hal recorder to assert their exact sequences without hardware.
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_lcd C)
@@ -27,3 +27,30 @@ enable_testing()
 add_executable(test_epic_lcd tests/test_epic_lcd.c)
 target_link_libraries(test_epic_lcd PRIVATE epic_lcd_core epic_lcd_mock)
 add_test(NAME epic_lcd_tests COMMAND test_epic_lcd)
+
+# Transport tests: the real gpio8/SPI sources against the mock_hal
+# recorder. tests/mock_hal shadows epic_hal.h/epic_tick.h on these
+# targets only (listed first); the core test above is untouched.
+add_library(epic_lcd_mock_hal STATIC tests/mock_hal/mock_hal.c)
+target_include_directories(epic_lcd_mock_hal PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/mock_hal)
+
+add_executable(test_epic_lcd_gpio8
+    tests/test_epic_lcd_gpio8.c
+    src/epic_lcd.c
+    src/epic_lcd_gpio8.c)
+target_include_directories(test_epic_lcd_gpio8 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/mock_hal
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_epic_lcd_gpio8 PRIVATE epic_lcd_mock_hal)
+add_test(NAME epic_lcd_gpio8_tests COMMAND test_epic_lcd_gpio8)
+
+add_executable(test_epic_lcd_spi
+    tests/test_epic_lcd_spi.c
+    src/epic_lcd.c
+    src/epic_lcd_spi.c)
+target_include_directories(test_epic_lcd_spi PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/mock_hal
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_epic_lcd_spi PRIVATE epic_lcd_mock_hal)
+add_test(NAME epic_lcd_spi_tests COMMAND test_epic_lcd_spi)
