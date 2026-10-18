@@ -4,8 +4,10 @@
  * lookups, Init/Start validation, the register images, the PR2 match
  * period and flag, prescaler and postscaler division, FOSC clocking,
  * the match callback through the shared dispatcher, the DeInit POR
- * state, and the T2HLT modes: hardware gate, edge and level reset,
- * software one-shot, and the frozen edge-start rows.
+ * state, and every defined T2HLT mode against RC3: hardware gate, edge
+ * and level reset, software one-shot, edge-start one-shot (a mid-run
+ * edge only resets where Table 29-1 carries a reset row), retriggerable
+ * monostable with ON kept, and level-start one-shot.
  *
  * Expected register image (FOSC/4, 1:1, 1:1, free-running software
  * mode, period 7, no callback, after Init, before Start):
@@ -359,12 +361,291 @@ int main(void)
     ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
     ok &= (end_mode() != 0);
 
-    /* Edge-start modes are not modelled: the counter stays frozen. */
-    start_mode(TIMER2_MODE_ONESHOT_RISING, 3U);
-    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    /* Rising-edge one-shot: armed at zero until the edge, one period to
+     * flag with ON cleared in hardware. A mid-run edge is ignored (no
+     * reset row), and a bare ON cycle without an edge stays frozen. */
+    start_mode(TIMER2_MODE_ONESHOT_RISING, 7U);
+    ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0x09U);
     step(10U);
     ok &= (EPIC_TIMER2_ReadCounter() == 0U);
     ok &= (t2_flag() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(2U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 2U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 3U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 4U);
+    step(3U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 7U);
+    ok &= (t2_flag() == 0U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
+    EPIC_REG8(PIC_REG_PIR4) = 0U;
+    h = (TIMER2_HandleTypeDef)TIMER2_HANDLE_DEFAULT;
+    h.Mode = TIMER2_MODE_ONESHOT_RISING;
+    h.Period = 7U;
+    ok &= (EPIC_TIMER2_Start(&h) == EPIC_OK);
+    step(10U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= (t2_flag() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(1U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(8U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
+    ok &= (end_mode() != 0);
+
+    /* Falling-edge one-shot is the mirror: rising edges never start it. */
+    start_mode(TIMER2_MODE_ONESHOT_FALLING, 7U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(2U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 1U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 2U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 3U);
+    step(4U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 7U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
+    ok &= (end_mode() != 0);
+
+    /* Any-edge one-shot starts on the first edge either way. */
+    start_mode(TIMER2_MODE_ONESHOT_ANY_EDGE, 3U);
+    step(3U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(4U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
+    EPIC_REG8(PIC_REG_PIR4) = 0U;
+    h = (TIMER2_HandleTypeDef)TIMER2_HANDLE_DEFAULT;
+    h.Mode = TIMER2_MODE_ONESHOT_ANY_EDGE;
+    h.Period = 3U;
+    ok &= (EPIC_TIMER2_Start(&h) == EPIC_OK);
+    step(5U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(4U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
+    ok &= (end_mode() != 0);
+
+    /* Rising start with rising reset: a second rising edge mid-run
+     * restarts the count, unlike the pure edge-start above. */
+    start_mode(TIMER2_MODE_ONESHOT_RISE_RST_RISE, 100U);
+    step(5U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(10U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 10U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 11U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() <= 1U);
+    step(99U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 100U);
+    ok &= (t2_flag() == 0U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
+    ok &= (end_mode() != 0);
+
+    /* Falling start with falling reset is the mirror image. */
+    start_mode(TIMER2_MODE_ONESHOT_FALL_RST_FALL, 100U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(5U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(10U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 10U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 11U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() <= 1U);
+    step(99U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 100U);
+    ok &= (t2_flag() == 0U);
+    step(1U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
+    ok &= (end_mode() != 0);
+
+    /* Rising start with low-level reset: held at zero while low, runs
+     * while high, restarts on the next rise with ON kept throughout. */
+    start_mode(TIMER2_MODE_ONESHOT_RISE_RST_LOW, 100U);
+    step(5U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(6U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 6U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    step(5U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(4U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 4U);
+    step(96U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 100U);
+    step(1U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
+    ok &= (end_mode() != 0);
+
+    /* Falling start with high-level reset is the mirror image. */
+    start_mode(TIMER2_MODE_ONESHOT_FALL_RST_HIGH, 100U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(5U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(6U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 6U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    step(5U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(4U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 4U);
+    step(96U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 100U);
+    step(1U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
+    ok &= (end_mode() != 0);
+
+    /* Monostable rising: like one-shot, but the match keeps ON and the
+     * next edge runs again; an edge mid-run retriggers from zero. */
+    start_mode(TIMER2_MODE_MONO_RISING, 3U);
+    ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0x11U);
+    step(5U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= (t2_flag() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(2U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 2U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 3U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() <= 1U);
+    ok &= (t2_flag() == 0U);
+    step(3U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) != 0U);
+    EPIC_REG8(PIC_REG_PIR4) = 0U;
+    step(10U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= (t2_flag() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(1U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(4U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) != 0U);
+    ok &= (end_mode() != 0);
+
+    /* Monostable falling restarts on the fall with ON kept; a mid-run
+     * rise is ignored, a mid-run fall retriggers from zero. */
+    start_mode(TIMER2_MODE_MONO_FALLING, 3U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(5U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(2U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 2U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 3U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() <= 1U);
+    ok &= (t2_flag() == 0U);
+    step(3U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) != 0U);
+    EPIC_REG8(PIC_REG_PIR4) = 0U;
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(1U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(4U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) != 0U);
+    ok &= (end_mode() != 0);
+
+    /* Monostable any-edge restarts on either edge with ON kept. */
+    start_mode(TIMER2_MODE_MONO_ANY_EDGE, 3U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(4U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) != 0U);
+    EPIC_REG8(PIC_REG_PIR4) = 0U;
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(4U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) != 0U);
+    ok &= (end_mode() != 0);
+
+    /* High-level start with low-level reset: the active level runs,
+     * the other holds in reset, the match clears ON. */
+    start_mode(TIMER2_MODE_ONESHOT_HIGH_START_LOW_RST, 3U);
+    ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0x16U);
+    step(5U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(2U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 2U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(4U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
+    ok &= (end_mode() != 0);
+
+    /* Low-level start with high-level reset is the mirror image. */
+    start_mode(TIMER2_MODE_ONESHOT_LOW_START_HIGH_RST, 3U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(5U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(2U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 2U);
+    pic16f188xx_sim_drive_input('C', 3U, 1U);
+    step(1U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    pic16f188xx_sim_drive_input('C', 3U, 0U);
+    step(4U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= (t2_flag() != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_T2CON) & PIC_T2CON_ON) == 0U);
     ok &= (end_mode() != 0);
 
     epic_harness_log("timer2: %s\n", ok ? "PASS" : "FAIL");

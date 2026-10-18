@@ -2,9 +2,9 @@
  * Host model of the ports, IOC and Timer0..Timer2. IOC edges (PORTA..PORTC)
  * set IOCxF and PIR0 IOCIF; callbacks gate on flag, enable, PEIE and GIE.
  * Timer0 counts T0CKIPPS edges on its PPS pin; Timer1 and Timer2 read the
- * POR default PPS pins (RC0, RB5, RC3), Timer2 models modes 0x00..0x08.
- * The EUSART, MSSP1 and PPSLOCK models are in pic16f188xx_sim_serial.c,
- * the EEPROM, NCO1 and WDT/Sleep models in pic16f188xx_sim_sys.c.
+ * POR default PPS pins (RC0, RB5, RC3), Timer2 models every defined
+ * T2HLT mode (DS40001802H Table 29-1) and freezes reserved codes.
+ * The serial, EEPROM, NCO1 and WDT/Sleep models live in sibling sim files.
  */
 #include <stddef.h>
 #include <stdint.h>
@@ -86,6 +86,12 @@ static uint8_t sim_t1_sp_seen;
 static uint32_t sim_t2_prescale_acc;
 static uint8_t sim_t2_post_acc;
 static uint8_t sim_t2_ers_prev;
+/* Start latch for the edge, monostable and level modes: set by the start
+ * edge or level, cleared at the period match. ON cycling re-arms it, so
+ * a stale start never leaks across Start calls. */
+static uint8_t sim_t2_run;
+/* ON level on the previous tick, to spot the re-arming ON rise. */
+static uint8_t sim_t2_on_prev;
 static uint8_t sim_t0_pulse;
 static uint8_t sim_t2_pulse;
 static uint8_t sim_t2_wrap;
@@ -225,6 +231,8 @@ void pic16f188xx_sim_reset(void)
     sim_t2_prescale_acc = 0U;
     sim_t2_post_acc = 0U;
     sim_t2_ers_prev = 0U;
+    sim_t2_run = 0U;
+    sim_t2_on_prev = 0U;
     sim_t0_pulse = 0U;
     sim_t2_pulse = 0U;
     sim_t2_wrap = 0U;
@@ -350,8 +358,10 @@ static void sim_step_timer0(void)
  * @brief Advance Timer2 by one instruction tick.
  * @details Internal sources only (FOSC counts four clocks per tick). A
  * match clears TMR2 and steps the postscaler; its terminal count sets
- * TMR2IF and pulses TMR2_postscaled. Modes 0x00..0x08 are modelled
- * against RC3; the other modes freeze the counter.
+ * TMR2IF and pulses TMR2_postscaled. Every defined T2HLT mode runs
+ * against RC3 (DS40001802H Table 29-1): edge-start waits for its edge,
+ * monostable restarts on it with ON kept, level modes follow ers.
+ * Reserved codes freeze the counter.
  */
 static void sim_step_timer2(void)
 {
@@ -360,6 +370,9 @@ static void sim_step_timer2(void)
     uint8_t cs = (uint8_t)(pic16f188xx_sim_sfr[PIC_REG_T2CLKCON] & PIC_T2CLKCON_CS_MASK);
     uint8_t ers = 0U;
     uint8_t prev = sim_t2_ers_prev;
+    uint8_t rise;
+    uint8_t fall;
+    uint8_t any;
     uint8_t enable = 1U;
     uint8_t reset = 0U;
     uint8_t clocks = 1U;
@@ -372,12 +385,24 @@ static void sim_step_timer2(void)
         ers = SIM_PIN_T2IN();
     }
     sim_t2_ers_prev = ers;
+    rise = (uint8_t)((ers != 0U) && (prev == 0U));
+    fall = (uint8_t)((ers == 0U) && (prev != 0U));
+    any = (uint8_t)(ers != prev);
     if ((con & PIC_T2CON_ON) == 0U)
     {
         sim_t2_prescale_acc = 0U;
         sim_t2_post_acc = 0U;
+        sim_t2_run = 0U;
+        sim_t2_on_prev = 0U;
         return;
     }
+    if (sim_t2_on_prev == 0U)
+    {
+        /* Fresh arm: a start edge or level is still owed, so a stale
+         * run never leaks across Start calls (Table 29-1 Note 1). */
+        sim_t2_run = 0U;
+    }
+    sim_t2_on_prev = 1U;
     switch (mode)
     {
     case TIMER2_MODE_FREE_SOFTWARE:
@@ -405,6 +430,122 @@ static void sim_step_timer2(void)
     case TIMER2_MODE_FREE_RESET_HIGH:
         reset = ers;
         enable = (uint8_t)(ers == 0U);
+        break;
+    case TIMER2_MODE_ONESHOT_RISING:
+        /* No reset row: an edge only starts an idle timer, one mid-run
+         * is ignored (Table 29-1 Reset is blank). */
+        if ((rise != 0U) && (sim_t2_run == 0U))
+        {
+            sim_t2_run = 1U;
+            reset = 1U;
+        }
+        enable = sim_t2_run;
+        break;
+    case TIMER2_MODE_ONESHOT_FALLING:
+        if ((fall != 0U) && (sim_t2_run == 0U))
+        {
+            sim_t2_run = 1U;
+            reset = 1U;
+        }
+        enable = sim_t2_run;
+        break;
+    case TIMER2_MODE_ONESHOT_ANY_EDGE:
+        if ((any != 0U) && (sim_t2_run == 0U))
+        {
+            sim_t2_run = 1U;
+            reset = 1U;
+        }
+        enable = sim_t2_run;
+        break;
+    case TIMER2_MODE_ONESHOT_RISE_RST_RISE:
+        /* The start edge doubles as the running reset. */
+        if (rise != 0U)
+        {
+            sim_t2_run = 1U;
+            reset = 1U;
+        }
+        enable = sim_t2_run;
+        break;
+    case TIMER2_MODE_ONESHOT_FALL_RST_FALL:
+        if (fall != 0U)
+        {
+            sim_t2_run = 1U;
+            reset = 1U;
+        }
+        enable = sim_t2_run;
+        break;
+    case TIMER2_MODE_ONESHOT_RISE_RST_LOW:
+        /* Edge starts, opposite level holds in reset while running. */
+        if ((rise != 0U) && (sim_t2_run == 0U))
+        {
+            sim_t2_run = 1U;
+        }
+        if (ers == 0U)
+        {
+            reset = 1U;
+        }
+        enable = (uint8_t)((ers != 0U) && (sim_t2_run != 0U));
+        break;
+    case TIMER2_MODE_ONESHOT_FALL_RST_HIGH:
+        if ((fall != 0U) && (sim_t2_run == 0U))
+        {
+            sim_t2_run = 1U;
+        }
+        if (ers != 0U)
+        {
+            reset = 1U;
+        }
+        enable = (uint8_t)((ers == 0U) && (sim_t2_run != 0U));
+        break;
+    case TIMER2_MODE_MONO_RISING:
+        /* Retriggerable: every edge restarts from zero, ON stays set. */
+        if (rise != 0U)
+        {
+            sim_t2_run = 1U;
+            reset = 1U;
+        }
+        enable = sim_t2_run;
+        break;
+    case TIMER2_MODE_MONO_FALLING:
+        if (fall != 0U)
+        {
+            sim_t2_run = 1U;
+            reset = 1U;
+        }
+        enable = sim_t2_run;
+        break;
+    case TIMER2_MODE_MONO_ANY_EDGE:
+        if (any != 0U)
+        {
+            sim_t2_run = 1U;
+            reset = 1U;
+        }
+        enable = sim_t2_run;
+        break;
+    case TIMER2_MODE_ONESHOT_HIGH_START_LOW_RST:
+        /* Level start: the active level runs, the other holds in reset. */
+        if (ers == 0U)
+        {
+            sim_t2_run = 0U;
+            reset = 1U;
+        }
+        else
+        {
+            sim_t2_run = 1U;
+        }
+        enable = sim_t2_run;
+        break;
+    case TIMER2_MODE_ONESHOT_LOW_START_HIGH_RST:
+        if (ers != 0U)
+        {
+            sim_t2_run = 0U;
+            reset = 1U;
+        }
+        else
+        {
+            sim_t2_run = 1U;
+        }
+        enable = sim_t2_run;
         break;
     default:
         return;
@@ -452,9 +593,24 @@ static void sim_step_timer2(void)
             pic16f188xx_sim_sfr[PIC_REG_PIR4] |= PIC_PIR4_TMR2IF;
             sim_t2_pulse = 1U;
         }
-        if (mode == (uint8_t)TIMER2_MODE_ONESHOT_SOFTWARE)
+        if (((mode >= (uint8_t)TIMER2_MODE_ONESHOT_SOFTWARE) &&
+             (mode <= (uint8_t)TIMER2_MODE_ONESHOT_FALL_RST_HIGH)) ||
+            (mode == (uint8_t)TIMER2_MODE_ONESHOT_HIGH_START_LOW_RST) ||
+            (mode == (uint8_t)TIMER2_MODE_ONESHOT_LOW_START_HIGH_RST))
         {
+            /* Note 2: the match clears ON and stops TMR2 at 00h. */
             pic16f188xx_sim_sfr[PIC_REG_T2CON] &= (uint8_t)~PIC_T2CON_ON;
+            sim_t2_run = 0U;
+            sim_t2_prescale_acc = 0U;
+            sim_t2_post_acc = 0U;
+            return;
+        }
+        if ((mode >= (uint8_t)TIMER2_MODE_MONO_RISING) &&
+            (mode <= (uint8_t)TIMER2_MODE_MONO_ANY_EDGE))
+        {
+            /* Note 3: the match stops TMR2 at 00h with ON kept, and the
+             * next start edge runs again. */
+            sim_t2_run = 0U;
             sim_t2_prescale_acc = 0U;
             sim_t2_post_acc = 0U;
             return;
