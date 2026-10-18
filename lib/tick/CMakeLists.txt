@@ -69,3 +69,9 @@ target_compile_definitions(epic_tick PRIVATE -D${DEFAULT_DEVICE})
 add_executable(example_tick examples/example_tick.c)
 target_compile_definitions(example_tick PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
 target_link_libraries(example_tick PRIVATE epic_tick)
+
+# ---- tests: exercise the exact code that ships on-target ----
+enable_testing()
+add_executable(test_tick tests/test_tick.c)
+target_link_libraries(test_tick PRIVATE epic_tick)
+add_test(NAME tick_tests COMMAND test_tick)
