@@ -43,7 +43,9 @@
  * POR PPS pins as self-driven inputs (RB5 is T1G, RC3 is T2IN), set as
  * outputs so their latch is the pin level: Timer1 with an active-high
  * gate holds while RB5 is low and counts once it is high; Timer2 in
- * hardware-gate-high mode holds while RC3 is low and runs once high.
+ * hardware-gate-high mode holds while RC3 is low and runs once high,
+ * and in rising-edge one-shot mode holds at zero while armed (MPLAB
+ * SIM never starts it, see SIM gaps).
  * A full-field T2CON/T2HLT/T2RST image (1:128, 1:16, falling clock,
  * both sync bits, LC4 reset) pins every bit position.
  *
@@ -1049,6 +1051,44 @@ static uint8_t gate_pwm(void)
 }
 
 /**
+ * @brief Timer2 edge-start one-shot section: mode 0x09 register images
+ *        and the armed hold on RC3.
+ * @details RC3 (T2INPPS at POR) is an output so its latch is the start
+ * signal. MPLAB SIM never starts this mode (see SIM gaps), so the live
+ * part ends at the armed hold: the counter stays zero with no flag.
+ * DeInit restores the POR images.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static uint8_t gate_timer2_edge_start(void)
+{
+    uint8_t ok = 1U;
+    TIMER2_HandleTypeDef t2;
+
+    t2_reset(&t2);
+    t2.Mode = TIMER2_MODE_ONESHOT_RISING;
+    t2.Period = 7U;
+    EPIC_GPIO_Init(GPIOC, GPIO_PIN_3, GPIO_MODE_OUTPUT);
+    EPIC_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+    ok &= (EPIC_TIMER2_Init(&t2) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0x09U);
+    ok &= (EPIC_TIMER2_Start(&t2) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T2CON) == 0x80U);
+    tick_n(200U);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) == 0U);
+    EPIC_TIMER2_Stop();
+    EPIC_TIMER2_DeInit();
+    ok &= (EPIC_REG8(PIC_REG_T2CON) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T2HLT) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T2CLKCON) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T2RST) == 0x00U);
+    ok &= (EPIC_TIMER2_ReadPeriod() == 0xFFU);
+    ok &= (EPIC_TIMER2_ReadCounter() == 0U);
+    EPIC_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+    return ok;
+}
+
+/**
  * @brief GPIO, IOC, Timer0..Timer2, PPS, EUSART, MSSP1 and interrupt smoke
  *        probe for the mdb gate.
  * @return Harness result: 0 on PASS, 1 on FAIL.
@@ -1205,6 +1245,7 @@ int main(void)
     ok &= gate_timer2();
     ok &= gate_ccp();
     ok &= gate_pwm();
+    ok &= gate_timer2_edge_start();
 
     /* EUSART, MSSP and PPS register images and vectored interrupts. The
      * PPS lock goes last: while locked, mapping and DeInit are refused. */
