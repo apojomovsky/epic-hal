@@ -64,3 +64,10 @@ epic_math_add_test(test_properties tests/test_properties.c)
 #   ./build/gen_golden_vectors > tests/golden_vectors.h
 add_executable(gen_golden_vectors tools/gen_golden_vectors.c)
 target_link_libraries(gen_golden_vectors PRIVATE epic_math)
+# Gate: fail when the checked-in header drifts from the generator.
+add_test(NAME golden_vectors
+    COMMAND ${CMAKE_COMMAND}
+        -DGEN=$<TARGET_FILE:gen_golden_vectors>
+        -DREF=${CMAKE_CURRENT_SOURCE_DIR}/tests/golden_vectors.h
+        -DOUT=${CMAKE_CURRENT_BINARY_DIR}/golden_vectors.gen.h
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_golden_vectors.cmake)
