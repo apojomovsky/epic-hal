@@ -338,6 +338,22 @@ it done.
 10. Only once host **and** real-`mdb` verification both pass does the
     peripheral count as done. Move to the next one.
 
+### Live vector sections under MPLAB SIM
+
+A gate section that software-triggers the live interrupt vector (write an
+interrupt flag, expect the core to vector, run the handler, clear the flag)
+reads back on the host sim and on real silicon, but MPLAB SIM ignores the
+software flag write, so the vector never fires there and the section aliases
+to a constant phase that proves nothing.
+
+Rule: guard every live-vector section with a write-readback check first. Run
+the vector assertions only where the flag write reads back; where it does
+not, cover the register readbacks and the enable path instead, and clear back
+the flags the section set. Worked example: the live interrupt smoke in
+`hal/pic14e/16f188xx/tests/example_gpio_mdb.c`, the SIM gap note in
+`hal/pic14e/16f188xx/MANUAL.md` (SIM gaps), and the gate note in
+`hal/pic14e/16f188xx/README.md`.
+
 ## §5. Path B: new family from scratch
 
 Bigger version of the same discipline, in dependency order (each step
