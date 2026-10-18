@@ -44,6 +44,14 @@ static uint8_t sim_input_override[2] = {0};
 static uint8_t sim_input_value   [2] = {0};
 #endif
 
+#if PIC16F5X_FAMILY_HAS_COMP_ADC
+/* Driven analog levels per CHS channel (AN0..AN2, 0.6V slot) and
+ * the conversion countdown in instruction cycles. */
+static uint8_t sim_analog[4] = {0};
+static uint8_t sim_adc_converting = 0U;
+static uint8_t sim_adc_ticks_left = 0U;
+#endif
+
 /* GPIO model. */
 
 /**
@@ -125,6 +133,9 @@ void pic16f5x_sim_reset(void)
     pic16f5x_sim_sfr[PIC_REG_CM2CON0] = PIC_CM2CON0_POR_VALUE;
     pic16f5x_sim_sfr[PIC_REG_ADCON0]  = PIC_ADCON0_POR_VALUE;
     pic16f5x_sim_sfr[PIC_REG_VRCON]   = PIC_VRCON_POR_VALUE;
+    sim_adc_converting = 0U;
+    sim_adc_ticks_left = 0U;
+    memset(sim_analog, 0, sizeof sim_analog);
 #endif
     memset(sim_input_override, 0, sizeof sim_input_override);
     memset(sim_input_value,    0, sizeof sim_input_value);
@@ -198,6 +209,54 @@ static void sim_step_comp(void)
     pic16f5x_sim_sfr[PIC_REG_CM1CON0] = cm1;
     pic16f5x_sim_sfr[PIC_REG_CM2CON0] = cm2;
 }
+
+/**
+ * @brief Advance the ADC by one instruction cycle. A GO rising edge
+ *        arms a 13-TAD countdown (TAD in instruction cycles from
+ *        ADCS: FOSC/16 takes 4, FOSC/8 takes 2, the /4 pair takes 1;
+ *        §9.1); expiry latches the driven level into ADRES and
+ *        clears GO. GO cleared early or ADON off aborts, ADRES kept.
+ */
+static void sim_step_adc(void)
+{
+    static const uint8_t tad_ticks[4] = {4U, 2U, 1U, 1U};
+    uint8_t adcon0 = pic16f5x_sim_sfr[PIC_REG_ADCON0];
+    if ((adcon0 & PIC_ADCON0_ADON) == 0U)
+    {
+        sim_adc_converting = 0U;
+        return;
+    }
+    if ((adcon0 & PIC_ADCON0_GO) == 0U)
+    {
+        sim_adc_converting = 0U;
+        return;
+    }
+    if (sim_adc_converting == 0U)
+    {
+        uint8_t adcs = (uint8_t)((adcon0 & PIC_ADCON0_ADCS_MASK) >> PIC_ADCON0_ADCS_POS);
+        sim_adc_converting = 1U;
+        sim_adc_ticks_left = (uint8_t)(13U * tad_ticks[adcs]);
+    }
+    sim_adc_ticks_left--;
+    if (sim_adc_ticks_left != 0U) return;
+    sim_adc_converting = 0U;
+    pic16f5x_sim_sfr[PIC_REG_ADRES] =
+        sim_analog[(adcon0 & PIC_ADCON0_CHS_MASK) >> PIC_ADCON0_CHS_POS];
+    pic16f5x_sim_sfr[PIC_REG_ADCON0] = (uint8_t)(adcon0 & (uint8_t)~PIC_ADCON0_GO);
+}
+#endif
+
+#if PIC16F5X_FAMILY_HAS_COMP_ADC
+/**
+ * @brief Drive an analog channel level from the test rig.
+ * @param channel the CHS channel, 0..3 (AN0..AN2, 0.6V slot).
+ * @param level the 8-bit level the next conversion latches.
+ */
+void pic16f5x_sim_drive_analog(uint8_t channel, uint8_t level)
+{
+    if (channel > 3U) return;
+    sim_analog[channel] = level;
+}
 #endif
 
 /**
@@ -211,6 +270,7 @@ void pic16f5x_sim_step(uint32_t ticks)
         sim_step_timer0();
 #if PIC16F5X_FAMILY_HAS_COMP_ADC
         sim_step_comp();
+        sim_step_adc();
 #endif
     }
 }

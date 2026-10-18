@@ -42,6 +42,16 @@ void pic16f5x_sim_drive_input(char port, uint8_t pin, uint8_t level);
  */
 uint8_t pic16f5x_sim_read_output(char port, uint8_t pin);
 
+#if PIC16F5X_FAMILY_HAS_COMP_ADC
+/**
+ * @brief Drive an analog channel level from the test rig. The next
+ *        conversion on that channel latches it into ADRES.
+ * @param channel the CHS channel, 0..3 (AN0..AN2, 0.6V slot).
+ * @param level the 8-bit level (0..255, VDD reference).
+ */
+void pic16f5x_sim_drive_analog(uint8_t channel, uint8_t level);
+#endif
+
 /* The control shadow registers (the host platform header writes them
  * through EPIC_TRIS_WRITE / EPIC_OPTION_WRITE); exposed read-only so
  * tests can assert the direction/prescaler the driver programmed.
