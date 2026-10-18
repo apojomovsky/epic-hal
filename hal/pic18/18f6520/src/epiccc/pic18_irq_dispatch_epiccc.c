@@ -1,4 +1,4 @@
-/* epic-cc dispatch, final tier: fans out Timer0-3/RB plus CCP1-5,
+/* epic-cc dispatch, final tier: fans out Timer0-4/RB plus CCP1-5,
  * SSP, EUSART1/2, ADC, COMP and EEPROM (EE gated on EEIE), matching
  * the XC8 fan-out with the same per-source gating semantics. Sources
  * outside the slice are not listed in the HAL subset and cannot
@@ -16,6 +16,8 @@ extern void TIMER1_IRQHandler(void);
 extern void TIMER2_IRQHandler(void);
 /** @brief Timer3 overflow IRQ handler. */
 extern void TIMER3_IRQHandler(void);
+/** @brief Timer4 match IRQ handler. */
+extern void TIMER4_IRQHandler(void);
 /** @brief CCP1 event IRQ handler. */
 extern void CCP1_IRQHandler(void);
 /** @brief CCP2 event IRQ handler. */
@@ -90,6 +92,7 @@ void epic_dispatch_all_irqs(void)
     }
     uint8_t pir3 = epic_sfr_read8(PIC_REG_PIR3);
     if (pir3 & PIC_PIR3_CCP3IF) CCP3_IRQHandler();
+    if (pir3 & PIC_PIR3_TMR4IF) TIMER4_IRQHandler();
     if (pir3 & PIC_PIR3_CCP4IF) CCP4_IRQHandler();
     if (pir3 & PIC_PIR3_CCP5IF) CCP5_IRQHandler();
     if (pir3 & PIC_PIR3_TX2IF)

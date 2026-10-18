@@ -874,17 +874,18 @@ includes = [
 # Baseline (every variant): GPIO (PORTA-G, plus PORTH/J on the 80-pin
 # parts) + Timer0-3 + MSSP + ADC + comparator + EEPROM + the IRQ/WDT
 # core, all present at the same addresses on every part in this family.
-# CCP, EUSART and the full dispatch link on all eleven variants: the
-# ECAN parts (6585/6680/8585/8680) carry CCP1-2 and a single EUSART at
-# the same addresses, and the drivers reject the absent CCP/USART
-# instances via the HAS_CAN capability macro. PORTH/J cases compile
-# out on the 64-pin parts via HAS_PORTH/_HAS_PORTJ.
+# CCP, EUSART, Timer4 and the full dispatch link on all eleven variants:
+# the ECAN parts (6585/6680/8585/8680) carry CCP1-2, a single EUSART and
+# no Timer4, and the drivers reject the absent CCP/USART/TMR4 instances
+# via the HAS_CAN capability macro. PORTH/J cases compile out on the
+# 64-pin parts via HAS_PORTH/_HAS_PORTJ.
 hal_sources = [
   "hal/pic18/18f6520/src/peripherals/pic18f6520_gpio.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_timer0.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_timer1.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_timer2.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_timer3.c",
+  "hal/pic18/18f6520/src/peripherals/pic18f6520_timer4.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_ssp.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_adc.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_comp.c",
@@ -907,6 +908,7 @@ epiccc_sources = [
   "hal/pic18/18f6520/src/peripherals/pic18f6520_timer1.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_timer2.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_timer3.c",
+  "hal/pic18/18f6520/src/peripherals/pic18f6520_timer4.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_ccp.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_ssp.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_usart.c",
@@ -1606,17 +1608,17 @@ sources = [
 ]
 config  = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
-# HARNESS=sim: the dedicated IRQ-core smoke test, the step
-# docs/adding-a-device.md §5.5 makes mandatory before any peripheral
-# builds on the interrupt backend (enable the Timer0 interrupt, confirm
-# it fires and the flag/enable bits read back correctly). Reporting on
-# RA0 in MODE=gpio (no EUSART in the foundation). WDT=OFF like every
-# other sim variant.
+# HARNESS=sim: the Timer4 match gate. The PR4 match raises PIR3<TMR4IF>
+# and the ISR counts it, so a PASS also proves the interrupt core
+# (enable bit, flag, priority, vector, dispatch) that the Timer0
+# tests/example_irq.c smoke covers on the host
+# (docs/adding-a-device.md §5.5). Reporting on RA0 in MODE=gpio (no
+# EUSART in the foundation). WDT=OFF like every other sim variant.
 [modules."hal/pic18/18f6520".example.PIC18F6520.sim]
-name        = "irq-smoke"
+name        = "timer4-match"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
-  "tests/example_irq.c",
+  "tests/example_timer4.c",
 ]
 config      = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 # ECAN line (DS39661): CCP2MX (ON = RC1, the default pin) instead of
