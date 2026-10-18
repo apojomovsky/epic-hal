@@ -1,9 +1,9 @@
 /**
  * Host model of the ports, IOC and Timer0..Timer2. IOC edges set IOCxF
  * and PIR0 IOCIF; callbacks gate on flag, enable, PEIE and GIE. Timer0
- * counts T0CKIPPS edges; Timer1/2 read the POR PPS pins (RC0, RB5,
- * RC3), Timer2 models every defined T2HLT mode and freezes reserved
- * codes. Serial, sys, analog, CCP and Timer4 models are in sibling files.
+ * counts T0CKIPPS edges; Timer1/2 read the pins T1CKIPPS, T1GPPS and
+ * T2AINPPS select (POR: RC0, RB5, RC3), Timer2 models every defined
+ * T2HLT mode and freezes reserved codes. Serial, sys, analog, CCP and Timer4 models are in sibling files.
  */
 #include <stddef.h>
 #include <stdint.h>
@@ -96,15 +96,31 @@ static uint8_t sim_t2_pulse;
 static uint8_t sim_t2_wrap;
 #define SIM_PIR6_CCP_MASK 0x1FU
 
-/* The PPS select registers of these inputs are not modelled: the timer
- * input rows read the pins they select at POR (DS40001802H Table 13-1):
- * T1CKIPPS RC0, T1GPPS RB5 and T2INPPS RC3. An output pin reads back its
- * latch, so a test can drive an input through pic16f188xx_sim_drive_input
- * or by making the pin an output. */
-#define SIM_PIN_T1CKI() ((uint8_t)(pic16f188xx_sim_sfr[PIC_REG_PORTC] & 0x01U))
-#define SIM_PIN_T1G()   ((uint8_t)((pic16f188xx_sim_sfr[PIC_REG_PORTB] >> 5) & 0x01U))
-#define SIM_PIN_T2IN()  ((uint8_t)((pic16f188xx_sim_sfr[PIC_REG_PORTC] >> 3) & 0x01U))
+/* Timer1/2 inputs read the pin their xxxPPS select names (POR: T1CKIPPS
+ * RC0, T1GPPS RB5, T2AINPPS RC3, DS40001802H Table 13-1). An output pin
+ * reads back its latch, so a test drives an input through
+ * pic16f188xx_sim_drive_input or by making the pin an output. */
+#define SIM_PIN_T1CKI() sim_pps_level(PIC_REG_T1CKIPPS)
+#define SIM_PIN_T1G()   sim_pps_level(PIC_REG_T1GPPS)
+#define SIM_PIN_T2IN()  sim_pps_level(PIC_REG_T2AINPPS)
 static uint8_t sim_t1ck_prev;
+
+/**
+ * @brief Level of the pin an input select register points at.
+ * @param reg Address of the xxxPPS register (port in bits 4:3, pin in 2:0).
+ * @return The pin level, 0 when the port is absent on the simulated part.
+ */
+static uint8_t sim_pps_level(uint16_t reg)
+{
+    uint8_t sel = pic16f188xx_sim_sfr[reg];
+    uint8_t port = (uint8_t)((sel >> 3) & 3U);
+
+    if (port >= SIM_NPORTS)
+    {
+        return 0U;
+    }
+    return (uint8_t)((pic16f188xx_sim_sfr[sim_port[port]] >> (sel & 7U)) & 1U);
+}
 
 /**
  * @brief Test whether the simulated GIE bit is set.

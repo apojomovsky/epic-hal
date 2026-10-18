@@ -281,6 +281,9 @@ selects the spelling per part, and the sfr-map audit checks both).
 | SSP1CON3 | 0x192   |
 | PPSLOCK  | 0xE8F   |
 | T0CKIPPS | 0xE91   |
+| T1CKIPPS | 0xE92   |
+| T1GPPS   | 0xE93   |
+| T2AINPPS | 0xE9C   |
 | SSP1CLKPPS | 0xEC5 |
 | SSP1DATPPS | 0xEC6 |
 | SSP1SSPPS | 0xEC7  |
@@ -370,8 +373,9 @@ overflow, 1011 TMR5 overflow, 1100..1111 LC1..LC4_out; 1001 is
 reserved on Timer1 (no driver value). Prescaler (T1CON<CKPS1:CKPS0>)
 divides by 1, 2, 4 or 8. FOSC clocks the counter four times per
 instruction cycle (§28.2.1). The PPS inputs reset to T1CKIPPS RC0,
-T1GPPS RB5 and T2INPPS RC3 (Table 13-1); `EPIC_PPS_MapInput` does not
-expose these three inputs yet, so only those pins are usable.
+T1GPPS RB5 and T2INPPS RC3 (Table 13-1; the DFP spells the last one
+T2AINPPS). `EPIC_PPS_MapInput` moves them with `PPS_INPUT_T1CKI`,
+`PPS_INPUT_T1G` and `PPS_INPUT_T2IN` (see PPS for the reachable ports).
 
 Gate (T1GCON, T1GATE, §28.7): GE enables it, GPOL=1 counts while the
 gate is high, GTM turns rising edges of the source into a toggled
@@ -676,8 +680,15 @@ datasheet tables are unchecked.
 | CCP3 capture | CCP3PPS | RB5 | port<<3 \| pin |
 | CCP4 capture | CCP4PPS | RB0 | port<<3 \| pin |
 | CCP5 capture | CCP5PPS | RA4 | port<<3 \| pin |
+| Timer1 clock | T1CKIPPS | RC0 | port<<3 \| pin, port A or C |
+| Timer1 gate | T1GPPS | RB5 | port<<3 \| pin, port B or C |
+| Timer2 reset (T2IN) | T2AINPPS | RC3 | port<<3 \| pin, port A or C |
 
-Port field: A 0, B 1, C 2, D 3 (40-pin parts). Output codes written to
+Port field: A 0, B 1, C 2, D 3 (40-pin parts). The three timer inputs
+are 5-bit selects like the others, but the EDC `ppsports` of their virtual
+pins (T1CKI A and C, T1G B and C, T2IN A and C, identical on all seven
+parts) limits them, and `EPIC_PPS_MapInput` returns `EPIC_INVALID` for any
+other port. The DFP names the T2IN select T2AINPPS. Output codes written to
 RxyPPS: 0x00 port latch, 0x09..0x0D CCP1..CCP5, 0x0E PWM6, 0x0F PWM7,
 0x10 EUSART TX, 0x14 MSSP1 SCK/SCL, 0x15 MSSP1 SDO/SDA, 0x19 NCO1
 (DS40001802D Table 13-3; the EDC lists many more; they belong to unported
@@ -962,18 +973,16 @@ T1GPPS), the Timer0 overflow pulse or the Timer2 postscaled pulse, and
 models GPOL, GTM (toggle flip-flop cleared while the timer is off),
 GSPM with GGO/DONE (cleared on the trailing edge) and GVAL.
 Timer2 ticks the same internal sources and models every defined mode
-against RC3 (POR T2INPPS): edge-start waits for its edge and the match
+against RC3 (POR T2AINPPS): edge-start waits for its edge and the match
 clears ON, monostable restarts on the edge with ON kept, level modes
 follow ers, and a start latch cleared by each ON cycle keeps a stale
 start from leaking across Start calls. Reserved codes and every
 unmodelled clock row (T2CKIPPS included) freeze the counter, and every
 unmodelled gate and reset row reads low, which holds a gated counter
 except in active-low gate mode, where a low signal lets it run.
-The pin rows read the PORTx array at the POR PPS defaults (the PPS
-select registers of these three inputs are not modelled, and
-`EPIC_PPS_MapInput` does not expose them), so a test drives them with
-`pic16f188xx_sim_drive_input` ('C' 0, 'B' 5, 'C' 3) or by making the
-pin an output; an output pin reads back its latch, and pin reads are
+The pin rows read the PORTx pin that T1CKIPPS, T1GPPS and T2AINPPS select
+(POR RC0, RB5, RC3), so a test drives them with
+`pic16f188xx_sim_drive_input` on that pin or by making the pin an output; an output pin reads back its latch, and pin reads are
 not gated on ANSEL. The sim does not model the RD16 buffer or the
 prescaler clear on a TMR1L/TMR2 write: counter registers are plain
 memory, and the prescaler clears only while the timer is off.

@@ -67,7 +67,7 @@ int main(void)
     epic_harness_init(10000UL);
 
     /* Validation: nothing is written for a bad argument. */
-    ok &= (EPIC_PPS_MapInput((PPS_InputTypeDef)10, PPS_PORTA, 0U) == EPIC_INVALID);
+    ok &= (EPIC_PPS_MapInput((PPS_InputTypeDef)13, PPS_PORTA, 0U) == EPIC_INVALID);
     ok &= (EPIC_PPS_MapInput(PPS_INPUT_EUSART_RX, PPS_PORTC, 8U) == EPIC_INVALID);
     ok &= (EPIC_PPS_MapInput(PPS_INPUT_EUSART_RX, (PPS_PortTypeDef)4, 0U) == EPIC_INVALID);
     ok &= (EPIC_PPS_MapInput(PPS_INPUT_T0CKI, PPS_PORTC, 0U) == EPIC_INVALID);
@@ -175,6 +175,9 @@ int main(void)
     ok &= (EPIC_REG8(PIC_REG_CCP3PPS) == 0x0DU);
     ok &= (EPIC_REG8(PIC_REG_CCP4PPS) == 0x08U);
     ok &= (EPIC_REG8(PIC_REG_CCP5PPS) == 0x04U);
+    ok &= (EPIC_REG8(PIC_REG_T1CKIPPS) == 0x10U);
+    ok &= (EPIC_REG8(PIC_REG_T1GPPS) == 0x0DU);
+    ok &= (EPIC_REG8(PIC_REG_T2AINPPS) == 0x13U);
     ok &= (out_reg(PIC_REG_RB0PPS, 1U) == 0x00U);
     ok &= (out_reg(PIC_REG_RC0PPS, 5U) == 0x00U);
 

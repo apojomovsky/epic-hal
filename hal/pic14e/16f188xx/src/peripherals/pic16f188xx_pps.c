@@ -6,13 +6,18 @@
 #include "peripherals/pic16f188xx_pps.h"
 #include "core/pic16f188xx_irq.h"
 
-/* T0CKIPPS is a 4-bit field (EDC impl 0xF), so it reaches PORTA and PORTB
- * only; the other selects are 5 bits wide and reach every port. */
-#define PPS_T0CKI_LAST_PORT PPS_PORTB
+/* Ports each input can reach (bit n = port n), from the EDC ppsports of the
+ * input's virtual pin, identical on all seven parts. T0CKIPPS is a 4-bit
+ * field (EDC impl 0xF), which is why it stops at PORTB. Inputs not listed
+ * here take any port the part has. */
+#define PPS_PORTS_ANY   0x0FU
+#define PPS_PORTS_AB    0x03U
+#define PPS_PORTS_AC    0x05U
+#define PPS_PORTS_BC    0x06U
 
 /* POR pins of the input selects (EDC por): T0CKI RA4, SSP1CLK RC3,
  * SSP1DAT RC4, SSP1SS RA5, RX RC7, CCP1 RC2, CCP2 RC1, CCP3 RB5, CCP4 RB0,
- * CCP5 RA4. */
+ * CCP5 RA4, T1CKI RC0, T1G RB5, T2IN RC3. */
 #define PPS_POR_T0CKI   0x04U
 #define PPS_POR_SSP1CLK 0x13U
 #define PPS_POR_SSP1DAT 0x14U
@@ -23,6 +28,9 @@
 #define PPS_POR_CCP3    0x0DU
 #define PPS_POR_CCP4    0x08U
 #define PPS_POR_CCP5    0x04U
+#define PPS_POR_T1CKI   0x10U
+#define PPS_POR_T1G     0x0DU
+#define PPS_POR_T2IN    0x13U
 
 /**
  * @brief Check that a port exists on the selected part.
@@ -45,6 +53,23 @@ static uint8_t port_ok(PPS_PortTypeDef port)
 }
 
 /**
+ * @brief Ports a peripheral input can be routed from.
+ * @param input Input to route (validated by the caller).
+ * @return Bit mask with bit n set when port n reaches the input.
+ */
+static uint8_t input_ports(PPS_InputTypeDef input)
+{
+    switch (input)
+    {
+    case PPS_INPUT_T0CKI: return PPS_PORTS_AB;
+    case PPS_INPUT_T1CKI: return PPS_PORTS_AC;
+    case PPS_INPUT_T1G:   return PPS_PORTS_BC;
+    case PPS_INPUT_T2IN:  return PPS_PORTS_AC;
+    default:              return PPS_PORTS_ANY;
+    }
+}
+
+/**
  * @brief Input select register for a peripheral input.
  * @param input Input to route (validated by the caller).
  * @return SFR address of its xxxPPS register.
@@ -62,6 +87,9 @@ static uint16_t input_addr(PPS_InputTypeDef input)
     case PPS_INPUT_CCP3:      return PIC_REG_CCP3PPS;
     case PPS_INPUT_CCP4:      return PIC_REG_CCP4PPS;
     case PPS_INPUT_CCP5:      return PIC_REG_CCP5PPS;
+    case PPS_INPUT_T1CKI:     return PIC_REG_T1CKIPPS;
+    case PPS_INPUT_T1G:       return PIC_REG_T1GPPS;
+    case PPS_INPUT_T2IN:      return PIC_REG_T2AINPPS;
     default:                  return PIC_REG_RXPPS;
     }
 }
@@ -90,12 +118,9 @@ static uint16_t output_addr(PPS_PortTypeDef port, uint8_t pin)
 EPIC_StatusTypeDef EPIC_PPS_MapInput(PPS_InputTypeDef input,
                                      PPS_PortTypeDef port, uint8_t pin)
 {
-    if (((unsigned int)input > (unsigned int)PPS_INPUT_CCP5) ||
-        (port_ok(port) == 0U) || (pin > 7U))
-    {
-        return EPIC_INVALID;
-    }
-    if ((input == PPS_INPUT_T0CKI) && ((unsigned int)port > (unsigned int)PPS_T0CKI_LAST_PORT))
+    if (((unsigned int)input > (unsigned int)PPS_INPUT_T2IN) ||
+        (port_ok(port) == 0U) || (pin > 7U) ||
+        (((input_ports(input) >> (unsigned int)port) & 1U) == 0U))
     {
         return EPIC_INVALID;
     }
@@ -163,6 +188,9 @@ EPIC_StatusTypeDef EPIC_PPS_DeInit(void)
     EPIC_REG8(PIC_REG_CCP3PPS) = PPS_POR_CCP3;
     EPIC_REG8(PIC_REG_CCP4PPS) = PPS_POR_CCP4;
     EPIC_REG8(PIC_REG_CCP5PPS) = PPS_POR_CCP5;
+    EPIC_REG8(PIC_REG_T1CKIPPS) = PPS_POR_T1CKI;
+    EPIC_REG8(PIC_REG_T1GPPS) = PPS_POR_T1G;
+    EPIC_REG8(PIC_REG_T2AINPPS) = PPS_POR_T2IN;
     for (port = 0U; port <= (uint8_t)PPS_PORTD; port++)
     {
         if (port_ok((PPS_PortTypeDef)port) == 0U)

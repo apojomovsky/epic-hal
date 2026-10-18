@@ -422,6 +422,9 @@ void pic16f188xx_sim_serial_reset(void)
     *cell(PIC_REG_BAUD1CON) = PIC_BAUD1CON_RCIDL;
     *cell(PIC_REG_SSP1MSK) = 0xFFU;
     *cell(PIC_REG_T0CKIPPS) = 0x04U;
+    *cell(PIC_REG_T1CKIPPS) = 0x10U;
+    *cell(PIC_REG_T1GPPS) = 0x0DU;
+    *cell(PIC_REG_T2AINPPS) = 0x13U;
     *cell(PIC_REG_SSP1CLKPPS) = 0x13U;
     *cell(PIC_REG_SSP1DATPPS) = 0x14U;
     *cell(PIC_REG_SSP1SSPPS) = 0x05U;

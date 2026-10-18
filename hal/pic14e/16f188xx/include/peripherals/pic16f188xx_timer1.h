@@ -16,8 +16,8 @@
 /**
  * @brief Clock source (T1CLK<CS3:CS0>, DS40001802H Register 28-3).
  *        Code 1001 (the Timer1 overflow itself) is reserved on Timer1 and
- *        has no enumerator. T1CKIPPS selects pin RC0 at POR; remapping
- *        is not exposed by EPIC_PPS_MapInput. The TMR3/TMR5
+ *        has no enumerator. T1CKIPPS selects pin RC0 at POR; remap it
+ *        with EPIC_PPS_MapInput(PPS_INPUT_T1CKI, ...). The TMR3/TMR5
  *        overflow rows need timers this HAL has no driver for.
  */
 typedef enum {
@@ -51,8 +51,8 @@ typedef enum {
 /**
  * @brief Gate source (T1GATE<GSS4:GSS0>, DS40001802H Register 28-4).
  *        Code 00010 (the Timer1 overflow itself) is reserved on Timer1
- *        and has no enumerator. T1GPPS selects pin RB5 at POR; remapping
- *        is not exposed by EPIC_PPS_MapInput.
+ *        and has no enumerator. T1GPPS selects pin RB5 at POR; remap it
+ *        with EPIC_PPS_MapInput(PPS_INPUT_T1G, ...).
  */
 typedef enum {
     TIMER1_GATE_T1GPPS    = 0x00U,
