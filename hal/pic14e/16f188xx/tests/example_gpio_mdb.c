@@ -234,6 +234,46 @@ static int gate_pps_ccp(void)
 }
 
 /**
+ * @brief Timer input selects of the PPS section: T1CKIPPS, T1GPPS and
+ *        T2AINPPS land at their addresses, then go back to their POR pins
+ *        because the analog and idle sections that follow still rely on
+ *        them. Ports follow the EDC ppsports (T1CKI and T2IN on A and C,
+ *        T1G on B and C), so MPLAB SIM raises no W1600.
+ * @return 1 when every readback matches, 0 otherwise.
+ */
+static int gate_pps_timers(void)
+{
+    int ok = 1;
+
+    ok &= (EPIC_REG8(PIC_REG_T1CKIPPS) == 0x10U);
+    ok &= (EPIC_REG8(PIC_REG_T1GPPS) == 0x0DU);
+    ok &= (EPIC_REG8(PIC_REG_T2AINPPS) == 0x13U);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T1CKI, PPS_PORTA, 3U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T1G, PPS_PORTB, 2U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T2IN, PPS_PORTA, 5U) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T1CKIPPS) == 0x03U);
+    ok &= (EPIC_REG8(PIC_REG_T1GPPS) == 0x0AU);
+    ok &= (EPIC_REG8(PIC_REG_T2AINPPS) == 0x05U);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T1CKI, PPS_PORTC, 7U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T1G, PPS_PORTC, 6U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T2IN, PPS_PORTC, 4U) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T1CKIPPS) == 0x17U);
+    ok &= (EPIC_REG8(PIC_REG_T1GPPS) == 0x16U);
+    ok &= (EPIC_REG8(PIC_REG_T2AINPPS) == 0x14U);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T1CKI, PPS_PORTB, 0U) == EPIC_INVALID);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T1G, PPS_PORTA, 0U) == EPIC_INVALID);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T2IN, PPS_PORTB, 0U) == EPIC_INVALID);
+    ok &= (EPIC_REG8(PIC_REG_T1CKIPPS) == 0x17U);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T1CKI, PPS_PORTC, 0U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T1G, PPS_PORTB, 5U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T2IN, PPS_PORTC, 3U) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T1CKIPPS) == 0x10U);
+    ok &= (EPIC_REG8(PIC_REG_T1GPPS) == 0x0DU);
+    ok &= (EPIC_REG8(PIC_REG_T2AINPPS) == 0x13U);
+    return ok;
+}
+
+/**
  * @brief PPS register-image section: input and output selects land at their
  *        (0xFxx or 0x1Fxx) addresses, and an unmapped pin hands back to the latch.
  * @return 1 when every readback matches, 0 otherwise.
@@ -263,6 +303,7 @@ static int gate_pps(void)
     ok &= (EPIC_REG8(PIC_REG_RC0PPS + 5U) == 0x15U);
     ok &= (EPIC_REG8(PIC_REG_RB0PPS + 0U) == 0x15U);
     ok &= gate_pps_ccp();
+    ok &= gate_pps_timers();
 #if PIC16F188XX_FAMILY_HAS_PORTD
     /* PORTD takes no EUSART or MSSP output (MANUAL.md, PPS), so only the
      * hand-back to the latch is written; its RD7PPS address still reads. */
@@ -684,6 +725,12 @@ static int gate_pps_lock(void)
     ok &= (EPIC_PPS_IsLocked() == 1U);
     ok &= (EPIC_PPS_MapInput(PPS_INPUT_EUSART_RX, PPS_PORTB, 1U) == EPIC_BUSY);
     ok &= (EPIC_REG8(PIC_REG_RXPPS) == 0x17U);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T1CKI, PPS_PORTA, 3U) == EPIC_BUSY);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T1G, PPS_PORTB, 2U) == EPIC_BUSY);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_T2IN, PPS_PORTA, 5U) == EPIC_BUSY);
+    ok &= (EPIC_REG8(PIC_REG_T1CKIPPS) == 0x10U);
+    ok &= (EPIC_REG8(PIC_REG_T1GPPS) == 0x0DU);
+    ok &= (EPIC_REG8(PIC_REG_T2AINPPS) == 0x13U);
     ok &= (EPIC_PPS_MapOutput(PPS_PORTC, 6U, PPS_OUTPUT_LAT) == EPIC_BUSY);
     ok &= (EPIC_REG8(PIC_REG_RC0PPS + 6U) == 0x10U);
     ok &= (EPIC_PPS_DeInit() == EPIC_BUSY);

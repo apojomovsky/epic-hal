@@ -21,8 +21,9 @@ typedef enum {
 
 /**
  * @brief Remappable inputs this HAL drives. T0CKI picks from PORTA and
- *        PORTB only (T0CKIPPS is a 4-bit field); the others reach PORTA
- *        to PORTC, plus PORTD on the 40-pin parts.
+ *        PORTB only (T0CKIPPS is a 4-bit field). T1CKI and T2IN reach
+ *        PORTA and PORTC, T1G reaches PORTB and PORTC (EDC ppsports); the
+ *        others reach PORTA to PORTC, plus PORTD on the 40-pin parts.
  */
 typedef enum {
     PPS_INPUT_T0CKI      = 0U,   /**< Timer0 external clock (T0CKIPPS). */
@@ -35,6 +36,9 @@ typedef enum {
     PPS_INPUT_CCP3       = 7U,   /**< CCP3 capture input (CCP3PPS). */
     PPS_INPUT_CCP4       = 8U,   /**< CCP4 capture input (CCP4PPS). */
     PPS_INPUT_CCP5       = 9U,   /**< CCP5 capture input (CCP5PPS). */
+    PPS_INPUT_T1CKI      = 10U,  /**< Timer1 external clock (T1CKIPPS). */
+    PPS_INPUT_T1G        = 11U,  /**< Timer1 gate input (T1GPPS). */
+    PPS_INPUT_T2IN       = 12U,  /**< Timer2 external reset input (T2AINPPS). */
 } PPS_InputTypeDef;
 
 /**

@@ -191,6 +191,9 @@
 #if PIC16F188XX_FAMILY_BANKED_HI
 #define PIC_REG_PPSLOCK       0x1E8FU  /* P57-77 */
 #define PIC_REG_T0CKIPPS      0x1E91U  /* P57-77 */
+#define PIC_REG_T1CKIPPS      0x1E92U  /* P57-77 */
+#define PIC_REG_T1GPPS        0x1E93U  /* P57-77 */
+#define PIC_REG_T2AINPPS      0x1E9CU  /* P57-77 */
 #define PIC_REG_SSP1CLKPPS    0x1EC5U  /* P57-77 */
 #define PIC_REG_SSP1DATPPS    0x1EC6U  /* P57-77 */
 #define PIC_REG_SSP1SSPPS     0x1EC7U  /* P57-77 */
@@ -209,6 +212,9 @@
 #else
 #define PIC_REG_PPSLOCK       0xE8FU
 #define PIC_REG_T0CKIPPS      0xE91U
+#define PIC_REG_T1CKIPPS      0xE92U
+#define PIC_REG_T1GPPS        0xE93U
+#define PIC_REG_T2AINPPS      0xE9CU
 #define PIC_REG_SSP1CLKPPS    0xEC5U
 #define PIC_REG_SSP1DATPPS    0xEC6U
 #define PIC_REG_SSP1SSPPS     0xEC7U

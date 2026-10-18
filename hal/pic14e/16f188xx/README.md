@@ -45,10 +45,11 @@ Implemented and verified:
       `example_timer0` (ctest) plus the mdb gate section (register
       images, polled flag, vectored overflow with POR restore; T0OUT
       masks out of the T0CON0 images, family MANUAL.md)
-- [x] PPS (`EPIC_PPS_*`): input and output pin selects for T0CKI, MSSP1,
-      the EUSART and the comparator outputs, lock and unlock sequence.
-      Host probe `example_pps` (also drives Timer0 from a mapped T0CKI
-      pin) plus the mdb gate section (select images at their 0xFxx or
+- [x] PPS (`EPIC_PPS_*`): input and output pin selects for T0CKI, T1CKI,
+      T1G, T2IN, MSSP1, the EUSART and the comparator outputs, lock and
+      unlock sequence. Host probes `example_pps` (also drives Timer0 from
+      a mapped T0CKI pin) and `example_pps_inputs` (Timer1 clock and
+      gate and Timer2 gate follow the mapped pin) plus the mdb gate section (select images at their 0xFxx or
       0x1Fxx addresses, lock).
 - [x] EUSART asynchronous 8/9-bit with 8/16-bit baud generator, address
       detect, RX callback and one-shot TX interrupt (`EPIC_USART_*`,
@@ -133,7 +134,7 @@ Not yet implemented (deliberate scope limit, each its own follow-up):
   Timer2 SPI clock, Timer3, Timer5 and Timer6 (so capture and compare on
   the Timer3 and Timer5 couples and the Timer5/Timer6 PWM couple are
   programmable but nothing starts those timers), the Timer4 limit modes,
-  the Timer1 gate-event interrupt, PPS inputs for T1CKI, T1G and T2IN,
+  the Timer1 gate-event interrupt,
   program Flash self-write, the WDT window and Doze, and the remaining
   peripherals.
 - Wiring the family into the demos.
