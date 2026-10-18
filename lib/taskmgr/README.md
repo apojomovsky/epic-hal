@@ -30,7 +30,7 @@ contract.
   target with no `#ifdef`, via the HAL's harness seam.
 - **RAM-aware**: 6 task slots on the 192 B PIC16F873A/874A, 8 on the 368 B
   PIC16F876A/877A; banks cleanly into every part. Override with
-  `-DTASK_MGR_MAX_TASKS=N`. Note: the real-target example build is
+  `epic_taskmgr_config.h` (see API.md). Note: the real-target example build is
   manifest-excluded on the 192 B parts (the full-HAL build's 54-byte
   default table does not fit there), so CI covers 16F876A/16F877A
   only.
