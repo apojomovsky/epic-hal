@@ -283,6 +283,13 @@ epiccc_sources = [
   "common/src/core/epic_harness_target.c",
 ]
 
+# The 16F506 comparator-pair driver: the only part with the analog
+# block (DS41268D), so it links only there. The 87XA A-part comp
+# conditional is the precedent for a part-gated driver.
+[[families.PIC16F5x.conditional_sources]]
+path     = "hal/pic12/16f5x/src/peripherals/pic16f5x_comp.c"
+variants = ["16F506"]
+
 [families.PIC16F88X]
 hal_dir  = "hal/pic14/16f88x"
 variants = [
@@ -1414,6 +1421,26 @@ name        = "blink"
 harness_src = "common/src/core/epic_harness_target.c"
 sources     = [
   "tests/example_blink.c",
+]
+config      = { OSC = "XT", WDT = "OFF", CP = "OFF" }
+
+# 16F506-only comparator-pair probe (epic-hal#521): the sole part
+# with the analog block, so its target and sim firmwares are the comp
+# probe rather than the blink; every other part keeps the blink. The
+# probe reports by toggling PORTB bit 0 on pass (the same MODE=toggle
+# gate), and its in-firmware asserts gate the toggle.
+[modules."hal/pic12/16f5x".example.PIC16F5x.variants."16F506"]
+name    = "comp"
+sources = [
+  "tests/example_comp.c",
+]
+config  = { OSC = "XT", WDT = "OFF", CP = "OFF" }
+
+[modules."hal/pic12/16f5x".example.PIC16F5x.sim.variants."16F506"]
+name        = "comp"
+harness_src = "common/src/core/epic_harness_target.c"
+sources     = [
+  "tests/example_comp.c",
 ]
 config      = { OSC = "XT", WDT = "OFF", CP = "OFF" }
 
