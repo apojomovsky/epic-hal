@@ -110,8 +110,8 @@ typedef enum {
 /**
  * @brief External reset signal (T2RST<RSEL4:RSEL0>, DS40001802H
  *        Register 29-4). Code 00001 (TMR2_postscaled) is reserved on
- *        Timer2 and has no enumerator. T2INPPS selects pin RC3 at POR;
- *        remapping is not exposed by EPIC_PPS_MapInput.
+ *        Timer2 and has no enumerator. T2AINPPS (the datasheet's T2INPPS) selects
+ *        pin RC3 at POR; remap it with EPIC_PPS_MapInput(PPS_INPUT_T2IN, ...).
  */
 typedef enum {
     TIMER2_RST_T2INPPS   = 0x00U,
