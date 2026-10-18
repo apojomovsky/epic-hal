@@ -423,8 +423,10 @@ static int gate_idle(void)
 
 /**
  * @brief WDT section: period images, validation and Refresh.
- * @details The gate config has WDTE=OFF, so SWDTEN is stored but the
- * watchdog never runs and Refresh (read WDTCON0, clrwdt) just executes.
+ * @details The gate config has WDTE=SWDTEN, so the watchdog runs between
+ * EPIC_WDT_Enable and EPIC_WDT_Disable. Each Enable rewrites WDTCON0,
+ * which clears the WDT (DS40001802D §9.5), so no period elapses before
+ * the next image check; Refresh (read WDTCON0, clrwdt) runs once disabled.
  * @return 1 when every check passes, 0 otherwise.
  */
 static int gate_wdt(void)

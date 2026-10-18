@@ -38,7 +38,10 @@ EPIC_StatusTypeDef EPIC_EEPROM_DeInit(void);
  * @brief Read one byte.
  * @details Waits for a write in progress first, since NVMADR is in use
  * until WR clears, then loads the address and sets RD. A previous write's
- * WRERR flag is left as it was.
+ * WRERR flag is left as it was. On the host simulator with
+ * pic16f188xx_sim_eeprom_set_write_ticks(n > 0), advance the simulator
+ * (epic_harness_tick) until EPIC_EEPROM_IsWriteComplete reports 1 before
+ * calling: the wait does not advance simulated time.
  * @param addr Byte address 0..255.
  * @return The byte stored at addr.
  */
