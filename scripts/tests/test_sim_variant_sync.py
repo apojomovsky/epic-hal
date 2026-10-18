@@ -1,8 +1,9 @@
 """SIM_VARIANTS must match the run_one gates, or the local replica skips them.
 
 scripts/ci/ci-local-emit.py emits sim build scripts for its SIM_VARIANTS list,
-the flake-hunt job in .github/workflows/ci.yml embeds a third copy of that
-list inline, and scripts/ci/ci-target-sim.sh runs every run_one gate. A pair
+the flake-hunt job in .github/workflows/ci.yml and the emit step in
+.github/workflows/family-check.yml each embed a copy of that list inline,
+and scripts/ci/ci-target-sim.sh runs every run_one gate. A pair
 missing from any of them means a gate with no emitted hex, or a hex no gate
 uses (epic-hal#355, epic-hal#365)."""
 import importlib.util
@@ -12,8 +13,11 @@ import unittest
 
 SCRIPTS = pathlib.Path(__file__).resolve().parents[1]
 WORKFLOW = SCRIPTS.parent / ".github" / "workflows" / "ci.yml"
+FAMILY_CHECK = SCRIPTS.parent / ".github" / "workflows" / "family-check.yml"
 FLAKE_HUNT_START = "- name: Emit sim build scripts"
 FLAKE_HUNT_END = "- name: REPEAT=5 sim gate hunt"
+FAMILY_CHECK_START = "for module, mcu in ["
+FAMILY_CHECK_END = "]:"
 
 
 def load_sim_variants():
@@ -41,6 +45,13 @@ def load_flake_hunt_pairs():
     return set(re.findall(r'\("([^"]+)", "([^"]+)"\)', text[start:end]))
 
 
+def load_family_check_pairs():
+    text = FAMILY_CHECK.read_text()
+    start = text.index(FAMILY_CHECK_START)
+    end = text.index(FAMILY_CHECK_END, start)
+    return set(re.findall(r'\("([^"]+)", "([^"]+)"\)', text[start:end]))
+
+
 class TestSimVariantSync(unittest.TestCase):
     def test_emit_covers_every_sim_gate(self):
         """Each run_one (module, mcu) has an emitted sim build script."""
@@ -65,6 +76,16 @@ class TestSimVariantSync(unittest.TestCase):
     def test_flake_hunt_has_no_pair_without_a_sim_gate(self):
         """Every flake-hunt pair is exercised by a run_one gate."""
         extra = load_flake_hunt_pairs() - load_run_one_pairs()
+        self.assertEqual(extra, set())
+
+    def test_family_check_covers_every_sim_gate(self):
+        """The family-check emit list builds a hex for every run_one gate."""
+        missing = load_run_one_pairs() - load_family_check_pairs()
+        self.assertEqual(missing, set())
+
+    def test_family_check_has_no_pair_without_a_sim_gate(self):
+        """Every family-check emit pair is exercised by a run_one gate."""
+        extra = load_family_check_pairs() - load_run_one_pairs()
         self.assertEqual(extra, set())
 
 
