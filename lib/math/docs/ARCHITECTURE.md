@@ -217,11 +217,14 @@ add that bracket inside the wrappers if a caller needs it as a default.
   is machine-verified against native `/`,`%` so the asm hand-traces map to a
   tested algorithm. 8/8 tests pass.
 - **Tier 2, asm regression** (optional, best-effort): `tools/gpsim_selftest.sh`
-  feature-detects `gpsim` and, if present, replays `golden_vectors.h` against
-  the PIC16 inline asm. It is skipped cleanly if `gpsim` is absent (it is, in
-  this environment -- no passwordless sudo to install it). No PIC18
-  equivalent FOSS instruction-level simulator is available; PIC18 asm
-  correctness relies on Tier 3 + the hand-traces.
+  loads the PIC16 self-test hex under `gpsim` and parses the firmware USART
+  report strictly (banner, zero vector FAIL lines, `FAIL=0`, positive `PASS=`,
+  `RESULT: ALL PASS`); any mismatch or capture failure exits nonzero, and a
+  present `gpsim` with no hex to load is an error, so the gate cannot pass by
+  skipping work. It skips cleanly only when `gpsim` is absent (it is, in this
+  environment, and not in the toolchain image). No PIC18 equivalent FOSS
+  instruction-level simulator is available; PIC18 asm correctness relies on
+  Tier 3 + the hand-traces.
 - **Tier 3, on-target validation** (manual/deferred): `tests/target_selftest.c`
   replays `golden_vectors.h` through the per-family inline-asm routines on
   real silicon and streams `PASS=`/`FAIL=` over `EPIC_USART_*`. It is the
