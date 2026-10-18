@@ -1,10 +1,10 @@
 /**
  * CLC SEL-decode host-sim probe. Host-only: configures cells through
  * EPIC_CLC_Init and checks that undriven Dx levels decode their SEL codes
- * (Table 24-1): LCx_OUT taps post-POL with a one-step cascade delay, timer
- * sources are the TMR1 wrap and pre-postscaler TMR2 match pulses, CLCxIN0/1
- * follow their fixed pins, and unmodelled sources read 0 unless the Dx hook
- * overrides them.
+ * (Table 24-1): LCx_OUT taps post-POL settle combinationally in one step,
+ * timer sources are the TMR1 wrap and pre-postscaler TMR2 match pulses,
+ * CLCxIN0/1 follow their fixed pins, and unmodelled sources read 0 unless
+ * the Dx hook overrides them.
  */
 #include <stddef.h>
 #include "pic16f1508.h"
@@ -37,6 +37,34 @@ static void setup_tap(CLC_InstanceTypeDef cell, uint8_t mux, uint8_t code)
         h.Gls[i] = 0U;
     }
     h.Gls[mux - 1U] = EPIC_CLC_GLSInput(mux, 0U, 1U);
+    h.GatePolarity = 0U;
+    h.OutputPolarity = 0U;
+    h.OutputEnable = 0U;
+    h.InterruptRising = 0U;
+    h.InterruptFalling = 0U;
+    h.Callback = NULL;
+    EPIC_CLC_Init(&h);
+}
+
+/**
+ * @brief Configure one cell as a D flop clocked by the T2 match pulse.
+ * @param cell Cell to configure (CLC1..CLC4).
+ * @param code Select code for the D input on D2.
+ */
+static void setup_flop(CLC_InstanceTypeDef cell, uint8_t code)
+{
+    CLC_HandleTypeDef h;
+
+    h.Instance = cell;
+    h.Mode = 5U;
+    h.Source[0] = EPIC_CLC_SourceCode(1U, CLC_IN_T2_MATCH);
+    h.Source[1] = code;
+    h.Source[2] = EPIC_CLC_SourceCode(3U, CLC_IN_LC1_OUT);
+    h.Source[3] = EPIC_CLC_SourceCode(4U, CLC_IN_CLCIN0);
+    h.Gls[0] = EPIC_CLC_GLSInput(1U, 0U, 1U);
+    h.Gls[1] = EPIC_CLC_GLSInput(2U, 0U, 1U);
+    h.Gls[2] = 0U;
+    h.Gls[3] = 0U;
     h.GatePolarity = 0U;
     h.OutputPolarity = 0U;
     h.OutputEnable = 0U;
@@ -80,26 +108,44 @@ int main(void)
     ok &= (read_cell(CLC3) == 0U);
     ok &= (read_cell(CLC4) == 0U);
 
-    /* Pin decode with a one-step cascade: CLC1 answers at once, the LC1_OUT
-     * tap one step later. */
+    /* Pin decode with a settled cascade: CLC1 answers at once and the
+     * LC1_OUT tap lands in the same step. */
     pic16f1508_sim_drive_input('A', 3U, 1U);
     epic_harness_tick();
     ok &= (read_cell(CLC1) == 1U);
-    ok &= (read_cell(CLC2) == 0U);
-    epic_harness_tick();
     ok &= (read_cell(CLC2) == 1U);
 
-    /* Post-POL tap: inverting CLC1 inverts what CLC2 sees. */
+    /* Post-POL tap: inverting CLC1 inverts what CLC2 sees, same step. */
     EPIC_REG8(PIC_REG_CLC1POL) |= PIC_CLCPOL_POL;
-    epic_harness_tick();
     epic_harness_tick();
     ok &= (read_cell(CLC1) == 0U);
     ok &= (read_cell(CLC2) == 0U);
     EPIC_REG8(PIC_REG_CLC1POL) &= (uint8_t)~PIC_CLCPOL_POL;
     epic_harness_tick();
-    epic_harness_tick();
     ok &= (read_cell(CLC1) == 1U);
     ok &= (read_cell(CLC2) == 1U);
+
+    /* Four-deep cascade against the wiring order: CLC4 follows its pin while
+     * each lower cell taps the one above, so the lowest cell settles last.
+     * One step still lands all four outputs. */
+    setup_tap(CLC4, 1U, EPIC_CLC_SourceCode(1U, CLC_IN_CLCIN0));
+    setup_tap(CLC3, 2U, EPIC_CLC_SourceCode(2U, CLC_IN_LC4_OUT));
+    setup_tap(CLC2, 2U, EPIC_CLC_SourceCode(2U, CLC_IN_LC3_OUT));
+    setup_tap(CLC1, 2U, EPIC_CLC_SourceCode(2U, CLC_IN_LC2_OUT));
+    pic16f1508_sim_drive_input('B', 5U, 1U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC4) == 1U);
+    ok &= (read_cell(CLC3) == 1U);
+    ok &= (read_cell(CLC2) == 1U);
+    ok &= (read_cell(CLC1) == 1U);
+    pic16f1508_sim_drive_input('B', 5U, 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC4) == 0U);
+    ok &= (read_cell(CLC3) == 0U);
+    ok &= (read_cell(CLC2) == 0U);
+    ok &= (read_cell(CLC1) == 0U);
+    setup_tap(CLC3, 1U, EPIC_CLC_SourceCode(1U, CLC_IN_T1_OVERFLOW));
+    setup_tap(CLC4, 1U, EPIC_CLC_SourceCode(1U, CLC_IN_T2_MATCH));
 
     /* T1_overflow is the wrap pulse, not the TMR1IF level: the flag stays
      * latched while the tap drops back to 0 on the next step. */
@@ -149,6 +195,49 @@ int main(void)
     pic16f1508_sim_drive_input('C', 7U, 0U);
     epic_harness_tick();
     ok &= (read_cell(CLC1) == 0U);
+
+    /* Same-clock flop pair through the SEL tap: CLC2 samples the settled
+     * CLC1 output, so the pair advances one stage per shared T2 clock. */
+    setup_flop(CLC1, EPIC_CLC_SourceCode(2U, CLC_IN_FOSC));
+    setup_flop(CLC2, EPIC_CLC_SourceCode(2U, CLC_IN_LC1_OUT));
+    pic16f1508_sim_drive_clc_input(0U, 2U, 1U);
+    EPIC_REG8(PIC_REG_TMR2) = 0U;
+    EPIC_REG8(PIC_REG_PR2) = 1U;
+    EPIC_REG8(PIC_REG_T2CON) = (uint8_t)(PIC_T2CON_TMR2ON | (3U << PIC_T2CON_T2OUTPS_SHIFT));
+    epic_harness_tick();
+    ok &= (read_cell(CLC1) == 0U);
+    ok &= (read_cell(CLC2) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC1) == 1U);
+    ok &= (read_cell(CLC2) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC1) == 1U);
+    ok &= (read_cell(CLC2) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC1) == 1U);
+    ok &= (read_cell(CLC2) == 1U);
+
+    /* Opposite-order pair: CLC2 samples CLC3, so the cell order cannot
+     * smuggle a second stage into one shared clock either. CLC4 sits out:
+     * its D1 is still hooked high from the FOSC check, which would hide
+     * the T2 clock from its G1. */
+    setup_flop(CLC3, EPIC_CLC_SourceCode(2U, CLC_IN_FOSC));
+    setup_flop(CLC2, EPIC_CLC_SourceCode(2U, CLC_IN_LC3_OUT));
+    pic16f1508_sim_drive_clc_input(2U, 2U, 1U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC3) == 0U);
+    ok &= (read_cell(CLC2) == 1U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC3) == 1U);
+    ok &= (read_cell(CLC2) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC3) == 1U);
+    ok &= (read_cell(CLC2) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC3) == 1U);
+    ok &= (read_cell(CLC2) == 1U);
+    ok &= (read_cell(CLC1) == 1U);
+    EPIC_REG8(PIC_REG_T2CON) = 0U;
 
     epic_harness_log("clc/sel: %s\n", ok ? "PASS" : "FAIL");
     return epic_harness_report(ok);

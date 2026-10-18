@@ -306,13 +306,12 @@ TMR1IF from the same event, and Figure 20-1 taps T2_match at the PR2
 comparator ahead of the postscaler (page 166), so T2_match pulses on every
 match whatever T2OUTPS says. LCx_OUT reads the post-POL
 wire (Register 24-1: LCxOUT is after LCxPOL, sampled from lcx_out, the same
-wire Table 24-1 taps). Cross-cell taps read the previous step, so a cascade
-settles one cell per step whatever the wiring order. On silicon lcx_out is
-unclocked: Figure 24-1 (page 257) clocks only the readable LCxOUT/MLCxOUT
-flop at Q1, while the wire to the other peripherals, the pin and the edge
-detectors is combinational, and the datasheet gives no propagation figure.
-The one-step delay is therefore a host approximation, visible only when a
-cascade feeds a clocked mode. Sources with no sim behind them (comparators,
+wire Table 24-1 taps). Cross-cell taps settle combinationally in one step:
+modes 0..3 and 7 iterate to a fixed point, then modes 4..6 sample the settled
+levels on a single G1 edge, matching the unclocked lcx_out wire against the
+Q1-clocked readable bit in Figure 24-1 (page 257). Same-clock flop pairs
+still advance one stage per step, and an unstable loop keeps its last sweep.
+Sources with no sim behind them (comparators,
 FOSC, T0 overflow, NCO, PWM, EUSART, MSSP, the internal oscillators) read 0.
 Several wraps or matches inside one multi-tick step collapse into one pulse,
 since the CLC samples once per step. Covered by the host probe

@@ -92,29 +92,24 @@ static uint8_t sim_clc_gate(uint8_t gls, uint8_t d, uint8_t pol)
 }
 
 /**
- * @brief Run one cell's mode logic over its four gate outputs.
- * @details Gate roles are DS40001609E Figure 24-3 (page 262): S-R latch S=G1|G2
- * and R=G3|G4; flip-flops clock on the G1 rise with D=G2 and R=G3, S=G4 on the
- * 1-input D, D=G2|G4 on the 2-input D, K=G4 on the J-K (J=G2); transparent
- * latch D=G2, LE=G3, S=G4, R=G1. The figure draws AND gates in front of the
- * OR-XOR output while Register 24-1 and section 24.1.3 name it OR-XOR; the
- * model follows the name. The datasheet gives no priority between S and R, so S
- * wins here by assumption.
- * @param n Cell index 0..3; carries the sequential and edge state.
+ * @brief Evaluate one cell's mode logic without touching sequential state.
+ * @details The settle loop calls this for provisional outputs; the wrapper
+ * below commits q and the G1 edge memory once per step, so a clocked cell
+ * samples the settled cascade on a single edge.
  * @param mode LCxMODE value 0..7.
  * @param g0 Gate outputs G1..G4 packed in bits 3:0.
+ * @param q Sequential bit held at step entry.
+ * @param g1prev G1 level held at step entry, for edge detection.
  * @return Raw cell output before the POL bit.
  */
-static uint8_t sim_clc_mode(uint8_t n, uint8_t mode, uint8_t g0)
+static uint8_t sim_clc_mode_next(uint8_t mode, uint8_t g0, uint8_t q, uint8_t g1prev)
 {
     uint8_t g1 = (uint8_t)(g0 & 1U);
     uint8_t g2 = (uint8_t)((g0 >> 1U) & 1U);
     uint8_t g3 = (uint8_t)((g0 >> 2U) & 1U);
     uint8_t g4 = (uint8_t)((g0 >> 3U) & 1U);
-    uint8_t rise = (uint8_t)(g1 & (uint8_t)~sim_clc_g1[n]);
-    uint8_t q = sim_clc_q[n];
+    uint8_t rise = (uint8_t)(g1 & (uint8_t)~g1prev);
 
-    sim_clc_g1[n] = g1;
     switch (mode)
     {
     case 0U:
@@ -192,6 +187,28 @@ static uint8_t sim_clc_mode(uint8_t n, uint8_t mode, uint8_t g0)
         q = 0U;
         break;
     }
+    return (uint8_t)(q & 1U);
+}
+
+/**
+ * @brief Run one cell's mode logic over its four gate outputs.
+ * @details Gate roles are DS40001609E Figure 24-3 (page 262): S-R latch S=G1|G2
+ * and R=G3|G4; flip-flops clock on the G1 rise with D=G2 and R=G3, S=G4 on the
+ * 1-input D, D=G2|G4 on the 2-input D, K=G4 on the J-K (J=G2); transparent
+ * latch D=G2, LE=G3, S=G4, R=G1. The figure draws AND gates in front of the
+ * OR-XOR output while Register 24-1 and section 24.1.3 name it OR-XOR; the
+ * model follows the name. The datasheet gives no priority between S and R, so S
+ * wins here by assumption.
+ * @param n Cell index 0..3; carries the sequential and edge state.
+ * @param mode LCxMODE value 0..7.
+ * @param g0 Gate outputs G1..G4 packed in bits 3:0.
+ * @return Raw cell output before the POL bit.
+ */
+static uint8_t sim_clc_mode(uint8_t n, uint8_t mode, uint8_t g0)
+{
+    uint8_t q = sim_clc_mode_next(mode, g0, sim_clc_q[n], sim_clc_g1[n]);
+
+    sim_clc_g1[n] = (uint8_t)(g0 & 1U);
     sim_clc_q[n] = (uint8_t)(q & 1U);
     return sim_clc_q[n];
 }
@@ -227,10 +244,10 @@ static uint8_t sim_clc_pin(uint8_t cell, uint8_t second)
  * postscaler. Anything without a sim source reads 0.
  * @param cell Cell index 0..3.
  * @param mux Data input 0..3 (D1..D4).
- * @param prev Cell outputs at step entry, post-POL.
+ * @param tap Cell outputs settling this step, post-POL.
  * @return Decoded level, 0 or 1.
  */
-static uint8_t sim_clc_sel(uint8_t cell, uint8_t mux, const uint8_t prev[4])
+static uint8_t sim_clc_sel(uint8_t cell, uint8_t mux, const uint8_t tap[4])
 {
     uint16_t base = (uint16_t)(PIC_REG_CLC1CON + ((uint16_t)cell * SIM_CLC_STRIDE));
     uint8_t code = (mux < 2U) ? pic16f1508_sim_sfr[base + 2U] : pic16f1508_sim_sfr[base + 3U];
@@ -267,63 +284,172 @@ static uint8_t sim_clc_sel(uint8_t cell, uint8_t mux, const uint8_t prev[4])
     }
     if ((in >= 8U) && (in < 12U))
     {
-        return prev[in - 8U];
+        return tap[in - 8U];
     }
     return 0U;
+}
+
+/**
+ * @brief Evaluate one cell's four gates over its Dx levels.
+ * @param cell Cell index 0..3.
+ * @param tap Cell outputs settling this step, post-POL.
+ * @return Gate outputs G1..G4 packed in bits 3:0.
+ */
+static uint8_t sim_clc_gates(uint8_t cell, const uint8_t tap[4])
+{
+    uint16_t base = (uint16_t)(PIC_REG_CLC1CON + ((uint16_t)cell * SIM_CLC_STRIDE));
+    uint8_t pol = pic16f1508_sim_sfr[base + 1U];
+    uint8_t d = 0U;
+    uint8_t g0 = 0U;
+    uint8_t i;
+
+    for (i = 0U; i < 4U; i++)
+    {
+        uint8_t dv = (((sim_clc_hooked[cell] >> i) & 1U) != 0U)
+            ? (uint8_t)((sim_clc_d[cell] >> i) & 1U)
+            : sim_clc_sel(cell, i, tap);
+        d = (uint8_t)(d | (uint8_t)(dv << i));
+    }
+    for (i = 0U; i < 4U; i++)
+    {
+        uint8_t g = sim_clc_gate(pic16f1508_sim_sfr[base + 4U + i], d,
+                                 (uint8_t)((pol >> i) & 1U));
+        g0 = (uint8_t)(g0 | (uint8_t)(g << i));
+    }
+    return g0;
+}
+
+/**
+ * @brief Test whether a mode settles without a clock edge.
+ * @details Modes 0..3 and 7 are level logic (the S-R and transparent latches
+ * are asynchronous), so their outputs join the combinational fixed point.
+ * Modes 4..6 capture on the G1 rise and sample the settled cascade once.
+ * @param mode LCxMODE value 0..7.
+ * @return Non-zero for combinational modes, zero for clocked modes.
+ */
+static uint8_t sim_clc_is_combinational(uint8_t mode)
+{
+    return ((mode == 4U) || (mode == 5U) || (mode == 6U)) ? 0U : 1U;
+}
+
+/* Sweeps bounding the settle loop; a 4-cell cascade settles within 4. */
+#define SIM_CLC_SETTLE_PASSES 4U
+
+/**
+ * @brief Settle the combinational cells against the current tap levels.
+ * @details One bounded fixed-point sweep over modes 0..3 and 7; clocked
+ * cells hold their entry outputs while it runs, so same-clock flop pairs
+ * still advance one stage per step.
+ * @param cur Cell outputs settling this step, post-POL, updated in place.
+ * @param q_hold Provisional sequential bits, updated in place.
+ */
+static void sim_clc_settle(uint8_t cur[4], uint8_t q_hold[4])
+{
+    uint8_t n;
+    uint8_t pass;
+
+    for (pass = 0U; pass < SIM_CLC_SETTLE_PASSES; pass++)
+    {
+        uint8_t calm = 1U;
+
+        for (n = 0U; n < 4U; n++)
+        {
+            uint16_t base = (uint16_t)(PIC_REG_CLC1CON + ((uint16_t)n * SIM_CLC_STRIDE));
+            uint8_t con = pic16f1508_sim_sfr[base];
+            uint8_t mode = (uint8_t)(con & PIC_CLCCON_MODE_MASK);
+            uint8_t out;
+
+            if (((con & PIC_CLCCON_EN) == 0U) ||
+                (sim_clc_is_combinational(mode) == 0U))
+            {
+                continue;
+            }
+            out = sim_clc_mode_next(mode, sim_clc_gates(n, cur), q_hold[n], sim_clc_g1[n]);
+            q_hold[n] = out;
+            out = (uint8_t)(out ^ ((pic16f1508_sim_sfr[base + 1U] & PIC_CLCPOL_POL) != 0U ? 1U : 0U));
+            if (out != cur[n])
+            {
+                cur[n] = out;
+                calm = 0U;
+            }
+        }
+        if (calm != 0U)
+        {
+            break;
+        }
+    }
 }
 
 /**
  * @brief Recompute every enabled cell, mirror outputs, and flag edges.
  * @details A disabled cell reads 0 with no edge and no flag; its sequential
  * bit is kept. Flags set on a configured edge even with the PIE bit clear,
- * and the callback runs only under CLCxIF, CLCxIE, PEIE, and GIE.
+ * and the callback runs only under CLCxIF, CLCxIE, PEIE, and GIE. The step
+ * settles the combinational cells, samples the result into the clocked cells
+ * on one G1 edge, then settles again, so a cascade lands in one step like
+ * the unclocked lcx_out wire (DS40001609E Figure 24-1, page 257). An
+ * unstable loop keeps its last sweep and re-evaluates each step, the way
+ * silicon outruns the Q1 sample instead of holding still.
  */
+
 static void sim_step_clc(void)
 {
     uint8_t n;
-    /* Entry snapshot: every cross-cell tap reads the same step, so a cascade
-     * settles one cell per step whatever the wiring order. */
-    uint8_t prev[4] = {sim_clc_out[0], sim_clc_out[1], sim_clc_out[2], sim_clc_out[3]};
+    uint8_t cur[4] = {sim_clc_out[0], sim_clc_out[1], sim_clc_out[2], sim_clc_out[3]};
+    uint8_t entry[4] = {sim_clc_out[0], sim_clc_out[1], sim_clc_out[2], sim_clc_out[3]};
+    uint8_t q_hold[4] = {sim_clc_q[0], sim_clc_q[1], sim_clc_q[2], sim_clc_q[3]};
+    uint8_t fro[4];
 
+    sim_clc_settle(cur, q_hold);
+    fro[0] = cur[0];
+    fro[1] = cur[1];
+    fro[2] = cur[2];
+    fro[3] = cur[3];
     for (n = 0U; n < 4U; n++)
     {
         uint16_t base = (uint16_t)(PIC_REG_CLC1CON + ((uint16_t)n * SIM_CLC_STRIDE));
         uint8_t con = pic16f1508_sim_sfr[base];
-        uint8_t pol = pic16f1508_sim_sfr[base + 1U];
-        uint8_t d = 0U;
-        uint8_t g0 = 0U;
+        uint8_t mode = (uint8_t)(con & PIC_CLCCON_MODE_MASK);
         uint8_t out;
-        uint8_t i;
 
-        for (i = 0U; i < 4U; i++)
+        if (((con & PIC_CLCCON_EN) != 0U) &&
+            (sim_clc_is_combinational(mode) == 0U))
         {
-            uint8_t dv = (((sim_clc_hooked[n] >> i) & 1U) != 0U)
-                ? (uint8_t)((sim_clc_d[n] >> i) & 1U)
-                : sim_clc_sel(n, i, prev);
-            d = (uint8_t)(d | (uint8_t)(dv << i));
+            /* Frozen taps: same-clock flop pairs advance one stage per step
+             * whatever the wiring order, since no committed Q feeds a later
+             * sample in this loop. */
+            out = sim_clc_mode(n, mode, sim_clc_gates(n, fro));
+            out = (uint8_t)(out ^ ((pic16f1508_sim_sfr[base + 1U] & PIC_CLCPOL_POL) != 0U ? 1U : 0U));
+            cur[n] = out;
         }
-        for (i = 0U; i < 4U; i++)
-        {
-            uint8_t g = sim_clc_gate(pic16f1508_sim_sfr[base + 4U + i], d,
-                                     (uint8_t)((pol >> i) & 1U));
-            g0 = (uint8_t)(g0 | (uint8_t)(g << i));
-        }
+    }
+    sim_clc_settle(cur, q_hold);
+    for (n = 0U; n < 4U; n++)
+    {
+        uint16_t base = (uint16_t)(PIC_REG_CLC1CON + ((uint16_t)n * SIM_CLC_STRIDE));
+        uint8_t con = pic16f1508_sim_sfr[base];
+        uint8_t out;
+
         if ((con & PIC_CLCCON_EN) != 0U)
         {
-            out = sim_clc_mode(n, (uint8_t)(con & PIC_CLCCON_MODE_MASK), g0);
-            out = (uint8_t)(out ^ ((pol & PIC_CLCPOL_POL) != 0U ? 1U : 0U));
-            if ((out != sim_clc_out[n]) && (sim_clc_out[n] == 0U) && ((con & PIC_CLCCON_INTP) != 0U))
+            if (sim_clc_is_combinational((uint8_t)(con & PIC_CLCCON_MODE_MASK)) != 0U)
+            {
+                sim_clc_g1[n] = (uint8_t)(sim_clc_gates(n, cur) & 1U);
+                sim_clc_q[n] = q_hold[n];
+            }
+            out = cur[n];
+            if ((out != entry[n]) && (entry[n] == 0U) && ((con & PIC_CLCCON_INTP) != 0U))
             {
                 pic16f1508_sim_sfr[PIC_REG_PIR3] |= (uint8_t)(1U << n);
             }
-            if ((out != sim_clc_out[n]) && (sim_clc_out[n] != 0U) && ((con & PIC_CLCCON_INTN) != 0U))
+            if ((out != entry[n]) && (entry[n] != 0U) && ((con & PIC_CLCCON_INTN) != 0U))
             {
                 pic16f1508_sim_sfr[PIC_REG_PIR3] |= (uint8_t)(1U << n);
             }
         }
         else
         {
-            sim_clc_g1[n] = (uint8_t)(g0 & 1U);
+            sim_clc_g1[n] = (uint8_t)(sim_clc_gates(n, cur) & 1U);
             out = 0U;
         }
         sim_clc_out[n] = out;
