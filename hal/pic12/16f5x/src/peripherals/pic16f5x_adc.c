@@ -87,8 +87,8 @@ uint16_t EPIC_ADC_Start(void)
     uint8_t adcon0 = EPIC_REG8(PIC_REG_ADCON0);
 
     if ((adcon0 & PIC_ADCON0_ADON) == 0U) return 0xFFFFU;
-    if ((adcon0 & PIC_ADCON0_GO_DONE) != 0U) return 0xFFFFU;
-    EPIC_REG8(PIC_REG_ADCON0) = (uint8_t)(adcon0 | PIC_ADCON0_GO_DONE);
+    if ((adcon0 & PIC_ADCON0_GO) != 0U) return 0xFFFFU;
+    EPIC_REG8(PIC_REG_ADCON0) = (uint8_t)(adcon0 | PIC_ADCON0_GO);
     return 0x0000U;
 }
 
@@ -98,7 +98,7 @@ uint16_t EPIC_ADC_Start(void)
  */
 uint8_t EPIC_ADC_IsConversionInProgress(void)
 {
-    return (EPIC_REG8(PIC_REG_ADCON0) & PIC_ADCON0_GO_DONE) ? 1U : 0U;
+    return (EPIC_REG8(PIC_REG_ADCON0) & PIC_ADCON0_GO) ? 1U : 0U;
 }
 
 /**

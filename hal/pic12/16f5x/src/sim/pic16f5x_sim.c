@@ -226,7 +226,7 @@ static void sim_step_adc(void)
         sim_adc_converting = 0U;
         return;
     }
-    if ((adcon0 & PIC_ADCON0_GO_DONE) == 0U)
+    if ((adcon0 & PIC_ADCON0_GO) == 0U)
     {
         sim_adc_converting = 0U;
         return;
@@ -242,7 +242,7 @@ static void sim_step_adc(void)
     sim_adc_converting = 0U;
     pic16f5x_sim_sfr[PIC_REG_ADRES] =
         sim_analog[(adcon0 & PIC_ADCON0_CHS_MASK) >> PIC_ADCON0_CHS_POS];
-    pic16f5x_sim_sfr[PIC_REG_ADCON0] = (uint8_t)(adcon0 & (uint8_t)~PIC_ADCON0_GO_DONE);
+    pic16f5x_sim_sfr[PIC_REG_ADCON0] = (uint8_t)(adcon0 & (uint8_t)~PIC_ADCON0_GO);
 }
 #endif
 

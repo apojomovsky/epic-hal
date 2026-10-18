@@ -90,7 +90,7 @@
  * ADCS the conversion clock, ANS the analog input pins (stays in
  * effect regardless of ADON, §9.1.2). */
 #define PIC_ADCON0_ADON       EPIC_BIT(0)
-#define PIC_ADCON0_GO_DONE    EPIC_BIT(1)
+#define PIC_ADCON0_GO         EPIC_BIT(1)
 #define PIC_ADCON0_CHS_MASK   0x0CU
 #define PIC_ADCON0_CHS_POS    2U
 #define PIC_ADCON0_ADCS_MASK  0x30U
