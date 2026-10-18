@@ -34,9 +34,15 @@ uint8_t pic16f5x_sim_trise = 0xFFU;
 #endif
 uint8_t pic16f5x_sim_option = 0xFFU;
 
-/** Pin latch overrides set by the host application (per pin, A..B). */
+/* Input overrides per port (A, B, and C where the die has it; the
+ * 16F506's C2 inputs live on RC0/RC1). */
+#if PIC16F5X_FAMILY_HAS_PORTC
+static uint8_t sim_input_override[3] = {0};
+static uint8_t sim_input_value   [3] = {0};
+#else
 static uint8_t sim_input_override[2] = {0};
 static uint8_t sim_input_value   [2] = {0};
+#endif
 
 /* GPIO model. */
 
@@ -67,9 +73,9 @@ static uint16_t port_reg(char port)
 }
 
 /**
- * @brief Map a port letter to the override-array index (0..1).
- * @param port the port letter, 'A' or 'B'.
- * @return the index 0..1 (0 for an invalid port).
+ * @brief Map a port letter to the override-array index.
+ * @param port the port letter, 'A'..'C'.
+ * @return the index 0..2 (1 for an invalid port).
  */
 static uint8_t port_index(char port)
 {
@@ -79,6 +85,9 @@ static uint8_t port_index(char port)
         case 'A': case 'a': return 0;
 #endif
         case 'B': case 'b': return 1;
+#if PIC16F5X_FAMILY_HAS_PORTC
+        case 'C': case 'c': return 2;
+#endif
         default:             return 1;
     }
 }
@@ -109,6 +118,14 @@ void pic16f5x_sim_reset(void)
     pic16f5x_sim_trise = 0xFFU;
 #endif
     pic16f5x_sim_option = PIC_OPTION_POR_VALUE;
+#if PIC16F5X_FAMILY_HAS_COMP_ADC
+    /* 16F506 analog block POR (DS41268D Table 4-2); VRCON 0x00 is
+     * the EDC + MPLAB SIM value (see pic16f5x_sfr.h). */
+    pic16f5x_sim_sfr[PIC_REG_CM1CON0] = PIC_CM1CON0_POR_VALUE;
+    pic16f5x_sim_sfr[PIC_REG_CM2CON0] = PIC_CM2CON0_POR_VALUE;
+    pic16f5x_sim_sfr[PIC_REG_ADCON0]  = PIC_ADCON0_POR_VALUE;
+    pic16f5x_sim_sfr[PIC_REG_VRCON]   = PIC_VRCON_POR_VALUE;
+#endif
     memset(sim_input_override, 0, sizeof sim_input_override);
     memset(sim_input_value,    0, sizeof sim_input_value);
 }
@@ -146,6 +163,43 @@ static void sim_step_timer0(void)
     pic16f5x_sim_sfr[PIC_REG_TMR0] = t0;
 }
 
+#if PIC16F5X_FAMILY_HAS_COMP_ADC
+/**
+ * @brief Recompute C1OUT/C2OUT from the driven pin levels. C1
+ *        compares RB0 (+) against RB1 (-), C2 RC0 (+) against RC1
+ *        (the POR mux selects the pins; the 0.6V/CVREF selects are
+ *        not modeled). Disabled forces 0 (DS41268D Figure 7-1/7-2
+ *        note 1); CxPOL=1 is not inverted (Register 7-2/7-3).
+ */
+static void sim_step_comp(void)
+{
+    uint8_t portb = pic16f5x_sim_sfr[PIC_REG_PORTB];
+    uint8_t portc = pic16f5x_sim_sfr[PIC_REG_PORTC];
+    uint8_t cm1 = pic16f5x_sim_sfr[PIC_REG_CM1CON0];
+    uint8_t cm2 = pic16f5x_sim_sfr[PIC_REG_CM2CON0];
+    uint8_t raw1 = (((portb >> 0) & 1U) > ((portb >> 1) & 1U)) ? 1U : 0U;
+    uint8_t raw2 = (((portc >> 0) & 1U) > ((portc >> 1) & 1U)) ? 1U : 0U;
+    uint8_t out1 = 0U;
+    uint8_t out2 = 0U;
+    if (cm1 & PIC_CM1CON0_C1ON)
+    {
+        out1 = raw1;
+        if ((cm1 & PIC_CM1CON0_C1POL) == 0U) out1 ^= 1U;
+    }
+    if (cm2 & PIC_CM2CON0_C2ON)
+    {
+        out2 = raw2;
+        if ((cm2 & PIC_CM2CON0_C2POL) == 0U) out2 ^= 1U;
+    }
+    if (out1) cm1 |= PIC_CM1CON0_C1OUT;
+    else      cm1 &= (uint8_t)~PIC_CM1CON0_C1OUT;
+    if (out2) cm2 |= PIC_CM2CON0_C2OUT;
+    else      cm2 &= (uint8_t)~PIC_CM2CON0_C2OUT;
+    pic16f5x_sim_sfr[PIC_REG_CM1CON0] = cm1;
+    pic16f5x_sim_sfr[PIC_REG_CM2CON0] = cm2;
+}
+#endif
+
 /**
  * @brief Advance the simulation by `ticks` instruction cycles.
  * @param ticks the number of instruction cycles to advance.
@@ -155,6 +209,9 @@ void pic16f5x_sim_step(uint32_t ticks)
     for (uint32_t i = 0; i < ticks; i++)
     {
         sim_step_timer0();
+#if PIC16F5X_FAMILY_HAS_COMP_ADC
+        sim_step_comp();
+#endif
     }
 }
 
@@ -207,6 +264,9 @@ void pic16f5x_sim_drive_input(char port, uint8_t pin, uint8_t level)
     if (level) portval |= mask;
     else portval &= (uint8_t)~mask;
     pic16f5x_sim_sfr[pa] = portval;
+#if PIC16F5X_FAMILY_HAS_COMP_ADC
+    sim_step_comp();
+#endif
 }
 
 /**
