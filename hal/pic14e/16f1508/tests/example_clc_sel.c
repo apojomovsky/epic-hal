@@ -213,7 +213,26 @@ int main(void)
     epic_harness_tick();
     ok &= (read_cell(CLC1) == 1U);
     ok &= (read_cell(CLC2) == 0U);
+    ok &= (read_cell(CLC1) == 1U);
+    ok &= (read_cell(CLC2) == 1U);
+
+    /* Reverse-order pair: CLC3 samples CLC4, so the wiring order cannot
+     * smuggle a second stage into one shared clock either. */
+    setup_flop(CLC4, EPIC_CLC_SourceCode(2U, CLC_IN_FOSC));
+    setup_flop(CLC3, EPIC_CLC_SourceCode(2U, CLC_IN_LC4_OUT));
+    pic16f1508_sim_drive_clc_input(3U, 2U, 1U);
     epic_harness_tick();
+    ok &= (read_cell(CLC4) == 0U);
+    ok &= (read_cell(CLC3) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC4) == 1U);
+    ok &= (read_cell(CLC3) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC4) == 1U);
+    ok &= (read_cell(CLC3) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC4) == 1U);
+    ok &= (read_cell(CLC3) == 1U);
     ok &= (read_cell(CLC1) == 1U);
     ok &= (read_cell(CLC2) == 1U);
     EPIC_REG8(PIC_REG_T2CON) = 0U;
