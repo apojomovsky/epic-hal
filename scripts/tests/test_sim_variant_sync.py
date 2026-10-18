@@ -9,6 +9,7 @@ uses (epic-hal#355, epic-hal#365)."""
 import importlib.util
 import pathlib
 import re
+import sys
 import unittest
 
 SCRIPTS = pathlib.Path(__file__).resolve().parents[1]
@@ -36,6 +37,25 @@ def load_run_one_pairs():
             continue
         pairs.add((parts[4], parts[2]))
     return pairs
+
+def load_run_one_triples():
+    """(module, mcu, gate) per run_one line; gate is None for the
+    default gate. The gate is always the last field when present:
+    eeprom, TOGGLE_REG and TOGGLE_STEPI keep their positions."""
+    triples = set()
+    for line in (SCRIPTS / "ci" / "ci-target-sim.sh").read_text().splitlines():
+        parts = line.split()
+        if len(parts) < 5 or parts[0] != "run_one":
+            continue
+        gate = parts[10] if len(parts) > 10 else None
+        triples.add((parts[4], parts[2], gate))
+    return triples
+
+
+def load_manifest():
+    sys.path.insert(0, str(SCRIPTS / "build"))
+    import epicmanifest
+    return epicmanifest.load(epicmanifest.default_path())
 
 
 def load_flake_hunt_pairs():
@@ -88,6 +108,60 @@ class TestSimVariantSync(unittest.TestCase):
         extra = load_family_check_pairs() - load_run_one_pairs()
         self.assertEqual(extra, set())
 
+    def manifest_gates(self):
+        """(module, mcu, gate) triples the manifest resolves, keyed to
+        the run_one pairs: the default gate as None, extras by name."""
+        manifest = load_manifest()
+        triples = set()
+        for module, mcu in load_run_one_pairs():
+            fam = manifest.family_of(mcu)
+            default = manifest.sim_variant_for(module, fam.name, mcu)
+            for gate in manifest.sim_gates_for(module, fam.name, mcu):
+                triples.add((module, mcu, None
+                             if default is not None
+                             and gate.name == default.name else gate.name))
+        return triples
+
+    def test_every_extra_gate_has_a_run_one_line(self):
+        """A manifest extra gate with no run_one line never runs."""
+        missing = {t for t in self.manifest_gates() if t[2] is not None} \
+            - load_run_one_triples()
+        self.assertEqual(missing, set())
+
+    def test_no_run_one_line_without_a_manifest_gate(self):
+        """A named run_one gate must exist in the manifest as an extra;
+        the default gate is always addressed bare, never by name."""
+        extra = load_run_one_triples() - self.manifest_gates()
+        self.assertEqual(extra, set())
+
+    def test_run_one_gate_lines_are_unique(self):
+        """A duplicated gate line would run the same firmware twice."""
+        lines = [
+            line.split() for line in
+            (SCRIPTS / "ci" / "ci-target-sim.sh").read_text().splitlines()
+            if line.split()[:1] == ["run_one"]
+        ]
+        triples = [(p[4], p[2], p[10] if len(p) > 10 else None)
+                   for p in lines if len(p) >= 5]
+        self.assertEqual(len(triples), len(set(triples)))
+
+    def test_run_one_lines_have_a_valid_field_shape(self):
+        """A gate name in any field but the 11th never reaches the
+        runner (it reads $9; run_one forwards its $10), so the line
+        silently runs the default gate instead. Only toggle lines
+        carry fields 8-9, and only an 11th field may name a gate."""
+        bad = []
+        lines = (SCRIPTS / "ci" / "ci-target-sim.sh").read_text().splitlines()
+        for line in lines:
+            parts = line.split()
+            if len(parts) < 7 or parts[0] != "run_one":
+                continue
+            n, mode = len(parts), parts[6]
+            if n == 10 and mode != "toggle":
+                bad.append(line)
+            elif n not in (7, 8, 10, 11):
+                bad.append(line)
+        self.assertEqual(bad, [])
 
 if __name__ == "__main__":
     unittest.main()

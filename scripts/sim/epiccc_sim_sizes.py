@@ -2,7 +2,7 @@
 """Flash/RAM table over epic-cc sim builds' JSON size reports.
 
 Reads each expected demo's ``<mcu>-<sim name>.json`` beside its hex in
-the sim build dir (written by the driver's ``--report`` flag, see
+the gate objdir (written by the driver's ``--report`` flag, see
 ``epic_build.py build --report``) and prints one flash/RAM row per
 demo. A demo with no readable report prints FAIL; demos named by
 ``--tolerate`` still print FAIL but exit 0. Exit 1 = an untolerated
@@ -34,9 +34,10 @@ def parse_spec(text: str) -> tuple[str, str]:
 
 
 def report_path(manifest, build_dir: pathlib.Path, module: str, mcu: str) -> pathlib.Path:
-    """The JSON path the emitted sim build script writes for this demo."""
+    """The JSON path the emitted sim build script writes for this demo:
+    beside its build.sh in the gate objdir, not the build-dir root."""
     name, _ = epic_build._example_name_and_config(manifest, module, mcu, "sim", "epic-cc")
-    return build_dir / f"{mcu}-{name}.json"
+    return build_dir / mcu / f"{mcu}-{name}.json"
 
 def read_row(path: pathlib.Path) -> tuple[str, str] | None:
     """(flash, ram) used/total cells, or None when the report is missing."""
@@ -65,7 +66,7 @@ def collect(manifest, build_dir: pathlib.Path, specs: list[tuple[str, str]]):
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--build-dir", default="build/epiccc-sim",
-                        help="sim build dir holding the <mcu>-<name>.json reports")
+                        help="sim build dir; reports live in its per-MCU objdirs")
     parser.add_argument("--tolerate", action="append", default=[], type=parse_spec,
                         metavar="MODULE:MCU",
                         help="a demo allowed to FAIL (repeatable)")

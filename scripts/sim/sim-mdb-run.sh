@@ -2,15 +2,17 @@
 # Run a module's pre-emitted HARNESS=sim build under MPLAB SIM (mdb) and
 # check the EPIC_HARNESS_RESULT marker. Container-only (xc8-cc + mdb.sh).
 #
-# Usage: sim-mdb-run.sh <family> <mcu> <device> <module> [wait_ms] [mode] [extra_mdb] [eeprom_writes]
+# Usage: sim-mdb-run.sh <family> <mcu> <device> <module> [wait_ms] [mode] [extra_mdb] [eeprom_writes] [sim_gate]
 #   mode=uart|gpio|toggle (gpio: PORTA bit 0, pic16f193x and
 #   pic16f63x_67x_68x); eeprom_writes replays the unlock per cycle.
+#   sim_gate names an extra manifest gate (empty: the default gate);
+#   each gate builds in its own objdir with its hex beside build.sh.
 
 set -euo pipefail
 
 family="$1"; mcu="$2"; device="$3"; module="$4"
 wait_ms="${5:-2000}"; mode="${6:-uart}"; extra_mdb="${7:-}"
-eeprom_writes="${8:-0}"
+eeprom_writes="${8:-0}"; sim_gate="${9:-}"
 # PIC18 EECON1/EECON2 Access-Bank addresses (PIC18F4550); override for
 # other families if a future gate needs them.
 eeprom_econ1_addr="${EECON1_ADDR:-0xFA6}"
@@ -34,6 +36,9 @@ toggle_stepi="${TOGGLE_STEPI:-200000}"
 
 build_dir="build-sim/${module}"
 objdir="${build_dir}/${mcu}"
+if [ -n "${sim_gate}" ]; then
+  objdir="${build_dir}/${mcu}-${sim_gate}"
+fi
 script="${objdir}/build.sh"
 # SIM_MDB_SKIP_BUILD: the hex is already built and this container cannot rebuild
 # it. That is the epic-cc path, whose compiler and clang live in the epic-cc
@@ -52,9 +57,9 @@ else
   EPIC_REPO_ROOT="$PWD" sh "$script"
 fi
 
-hexes=("$build_dir"/"$mcu"-*.hex)
+hexes=("$objdir"/"$mcu"-*.hex)
 if [ ! -e "${hexes[0]}" ] || [ "${#hexes[@]}" -ne 1 ]; then
-  echo "::error::expected exactly one ${build_dir}/${mcu}-*.hex, found: ${hexes[*]}" >&2
+  echo "::error::expected exactly one ${objdir}/${mcu}-*.hex, found: ${hexes[*]}" >&2
   exit 1
 fi
 hex="${hexes[0]}"
