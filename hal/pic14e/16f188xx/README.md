@@ -32,8 +32,9 @@ Implemented and verified:
 - [x] GPIO on PORTA..PORTC (all parts) and PORTD/PORTE (40-pin parts):
       init, read/write pin and port, toggle, pull-ups, analog select,
       per-port interrupt-on-change enable
-- [x] Interrupt core for IOC and Timer0 overflow (`PIE0`/`PIR0` bits 4
-      and 5, PEIE-gated dispatch, single vector, automatic hardware
+- [x] Interrupt core for IOC, Timer0 overflow, Timer1 overflow and
+      Timer2 match (`PIE0`/`PIR0` bits 4 and 5, `PIE4`/`PIR4` bits 0
+      and 1, PEIE-gated dispatch, single vector, automatic hardware
       context save)
 - [x] Timer0 8/16-bit with prescaler, postscaler and overflow callback
       (`EPIC_TIMER0_*`, `TIMER0_HANDLE_DEFAULT`): host probe
@@ -53,6 +54,15 @@ Implemented and verified:
       I2C master against a scripted slave) plus the mdb gate section
       (register images, vectored SSP1; MPLAB SIM does not shift MSSP
       data, family MANUAL.md).
+- [x] Timer1 16-bit with prescaler, T1CLK clock select and gate
+      (polarity, toggle, single pulse, GVAL) and Timer2 8-bit with PR2
+      period, prescaler, postscaler and the T2HLT hardware limit modes
+      (`EPIC_TIMER1_*`/`EPIC_TIMER2_*`, `TIMER1_HANDLE_DEFAULT`/
+      `TIMER2_HANDLE_DEFAULT`): host probes `example_timer1` and
+      `example_timer2` (ctest) plus the mdb gate sections (register
+      images, polled flag, vectored overflow and match with POR
+      restore, gate proofs on the RB5 and RC3 POR PPS pins; family
+      MANUAL.md)
 - [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`hal/pic14e/16f188xx`), `blink` example,
       and the mdb register-readback gate (`MODE=gpio`, RA0 PASS marker)
@@ -61,9 +71,10 @@ Implemented and verified:
       silicon); MPLAB SIM ignores it, so there it covers readbacks
       only (family MANUAL.md).
 Not yet implemented (deliberate scope limit, each its own follow-up):
-- Timer1/2, CCP/PWM, ADC, EEPROM, WDT and sleep helpers, comparators,
-  DAC, FVR, NCO, MSSP2, EUSART synchronous mode and auto-baud, SPI and
-  I2C slave, the Timer2 SPI clock, and the remaining peripherals.
+- CCP/PWM, ADC, EEPROM, WDT and sleep helpers, comparators, DAC, FVR,
+  NCO, MSSP2, EUSART synchronous mode and auto-baud, SPI and I2C slave,
+  the Timer2 SPI clock, Timer3..Timer6, the Timer1 gate-event interrupt,
+  PPS inputs for T1CKI, T1G and T2IN, and the remaining peripherals.
 - Wiring the family into the demos.
 
 ## Quick start
@@ -92,15 +103,16 @@ include/
   host/               host platform header (memory-backed SFR array)
   target/             target platform header (volatile-deref SFR)
   core/               IRQ contract
-  peripherals/        GPIO, Timer0, PPS, EUSART and MSSP contracts
+  peripherals/        GPIO, Timer0..Timer2, PPS, EUSART and MSSP contracts
 src/
   core/               IRQ backend and dispatch
-  peripherals/        GPIO, Timer0, PPS, EUSART and MSSP bodies
+  peripherals/        GPIO, Timer0..Timer2, PPS, EUSART and MSSP bodies
   target/             ISR vector (real hardware only)
   sim/                host simulation backend
   mdb/                MPLAB SIM register-readback harness
 tests/                example_blink, example_gpio, example_timer0,
-                      example_pps, example_usart, example_mssp (host),
+                      example_timer1, example_timer2, example_pps,
+                      example_usart, example_mssp (host),
                       example_gpio_mdb (host and mdb gate)
 ```
 

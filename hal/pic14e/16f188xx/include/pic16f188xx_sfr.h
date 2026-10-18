@@ -17,6 +17,8 @@
 #define PIC_REG_INTCON        0x0BU
 #define PIC_REG_PIR0          0x70CU
 #define PIC_REG_PIE0          0x716U
+#define PIC_REG_PIR4          0x710U
+#define PIC_REG_PIE4          0x71AU
 
 /* GPIO bank 0 (PORTx/TRISx/LATx): same address on every part. */
 #define PIC_REG_PORTA         0x0CU
@@ -42,6 +44,21 @@
 #define PIC_REG_TMR0H         0x1DU
 #define PIC_REG_T0CON0        0x1EU
 #define PIC_REG_T0CON1        0x1FU
+/* Timer1 bank 4 (TMR1L/TMR1H/T1CON/T1GCON/T1GATE/T1CLK) and Timer2 bank 5
+ * (TMR2/PR2/T2CON/T2HLT/T2CLKCON/T2RST): same address on every part. The
+ * EDC names the Timer2 count and period registers T2TMR and T2PR. */
+#define PIC_REG_TMR1L         0x20CU
+#define PIC_REG_TMR1H         0x20DU
+#define PIC_REG_T1CON         0x20EU
+#define PIC_REG_T1GCON        0x20FU
+#define PIC_REG_T1GATE        0x210U
+#define PIC_REG_T1CLK         0x211U
+#define PIC_REG_TMR2          0x28CU
+#define PIC_REG_PR2           0x28DU
+#define PIC_REG_T2CON         0x28EU
+#define PIC_REG_T2HLT         0x28FU
+#define PIC_REG_T2CLKCON      0x290U
+#define PIC_REG_T2RST         0x291U
 
 /* PIR3/PIE3 carry the MSSP1 and EUSART flags and enables: same address
  * on every part. */
@@ -220,6 +237,51 @@
 #define PIC_T0CON1_T0ASYNC      EPIC_BIT(4)
 #define PIC_T0CON1_T0CKPS_MASK  0x0FU
 
+/* PIR4/PIE4 carry the Timer1 and Timer2 flags and enables in bits 0 and 1
+ * (impl 0x3F, bits 7:6 unimplemented). */
+#define PIC_PIR4_TMR1IF       EPIC_BIT(0)
+#define PIC_PIR4_TMR2IF       EPIC_BIT(1)
+#define PIC_PIE4_TMR1IE       EPIC_BIT(0)
+#define PIC_PIE4_TMR2IE       EPIC_BIT(1)
+
+/* T1CON bits: ON bit 0, RD16 bit 1, SYNC bit 2 (set: external input not
+ * synchronized), CKPS value in bits 5:4 (impl 0x37). */
+#define PIC_T1CON_ON            EPIC_BIT(0)
+#define PIC_T1CON_RD16          EPIC_BIT(1)
+#define PIC_T1CON_nSYNC         EPIC_BIT(2)
+#define PIC_T1CON_CKPS_SHIFT    4U
+#define PIC_T1CON_CKPS_MASK     0x30U
+
+/* T1GCON bits: GE bit 7, GPOL bit 6, GTM bit 5, GSPM bit 4, GGO/DONE
+ * bit 3 (cleared by hardware), GVAL bit 2 (read-only); impl 0xFC. */
+#define PIC_T1GCON_GE           EPIC_BIT(7)
+#define PIC_T1GCON_GPOL         EPIC_BIT(6)
+#define PIC_T1GCON_GTM          EPIC_BIT(5)
+#define PIC_T1GCON_GSPM         EPIC_BIT(4)
+#define PIC_T1GCON_GGO_nDONE  EPIC_BIT(3)
+#define PIC_T1GCON_GVAL         EPIC_BIT(2)
+
+/* T1GATE GSS value in bits 4:0 (impl 0x1F); T1CLK CS value in bits 3:0
+ * (impl 0x0F). */
+#define PIC_T1GATE_GSS_MASK     0x1FU
+#define PIC_T1CLK_CS_MASK       0x0FU
+
+/* T2CON bits: ON bit 7, CKPS value in bits 6:4, OUTPS value in bits 3:0
+ * (impl 0xFF). */
+#define PIC_T2CON_ON            EPIC_BIT(7)
+#define PIC_T2CON_CKPS_SHIFT    4U
+#define PIC_T2CON_CKPS_MASK     0x70U
+#define PIC_T2CON_OUTPS_MASK    0x0FU
+
+/* T2HLT bits: PSYNC bit 7, CKPOL bit 6, CKSYNC bit 5, MODE value in
+ * bits 4:0 (impl 0xFF). T2CLKCON CS value in bits 3:0 (impl 0x0F);
+ * T2RST RSEL value in bits 4:0 (impl 0x1F). */
+#define PIC_T2HLT_PSYNC         EPIC_BIT(7)
+#define PIC_T2HLT_CKPOL         EPIC_BIT(6)
+#define PIC_T2HLT_CKSYNC        EPIC_BIT(5)
+#define PIC_T2HLT_MODE_MASK     0x1FU
+#define PIC_T2CLKCON_CS_MASK    0x0FU
+#define PIC_T2RST_RSEL_MASK     0x1FU
 /* PIR3/PIE3 bits: SSP1 event bit 0, SSP1 bus collision bit 1, EUSART TX
  * bit 4, EUSART RX bit 5 (impl 0x3F; bits 2 and 3 are the MSSP2 pair,
  * unused here). TXIF and RCIF are read-only status: hardware clears
