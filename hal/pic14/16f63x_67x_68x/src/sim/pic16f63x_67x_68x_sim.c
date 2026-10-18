@@ -96,7 +96,7 @@ void pic16f63x_67x_68x_sim_reset(void)
 
     /* Power-on reset values (DS40001262F memory map; STATUS 0x18 has
      * TO/PD set). Fresh-POR PCON is the header image: SBOREN set,
-     * POR=0 (a POR occurred), BOR reads unknown. */
+     * POR=0 (a POR occurred), BOR modelled clear like the 88x image. */
     pic16f63x_67x_68x_sim_sfr[PIC_REG_STATUS]   = PIC_STATUS_POR_VALUE;
     pic16f63x_67x_68x_sim_sfr[PIC_REG_PCON]     = PIC_PCON_POR_VALUE;
     pic16f63x_67x_68x_sim_sfr[PIC_REG_INTCON]   = PIC_INTCON_POR_VALUE;

@@ -143,7 +143,7 @@
 #define PIC_TRISA_POR_VALUE      0x3FU  /* RA0..RA5 implemented. */
 #define PIC_TRISB_POR_VALUE      0xF0U  /* RB4..RB7 implemented. */
 #define PIC_TRISC_POR_VALUE      0xFFU
-#define PIC_PCON_POR_VALUE       0x10U  /* --01 --qq: SBOREN=1. */
+#define PIC_PCON_POR_VALUE       0x10U  /* --01 --0x: SBOREN=1, POR=0 (a POR occurred), BOR=x. */
 #define PIC_OSCCON_POR_VALUE     0x60U  /* -110 x000: IRCF=110. */
 #define PIC_OSCTUNE_POR_VALUE    0x00U
 #define PIC_WPUA_POR_VALUE       0x37U  /* WPUA0/1/2/4/5. */
