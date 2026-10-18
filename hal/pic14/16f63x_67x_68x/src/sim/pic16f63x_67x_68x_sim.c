@@ -95,11 +95,10 @@ void pic16f63x_67x_68x_sim_reset(void)
     memset(pic16f63x_67x_68x_sim_sfr, 0, sizeof pic16f63x_67x_68x_sim_sfr);
 
     /* Power-on reset values (DS40001262F memory map; STATUS 0x18 has
-     * TO/PD set). Fresh-POR PCON keeps SBOREN set with both status
-     * bits readable, the way the 628A sim models a just-powered part
-     * (the EDC por string leaves nBOR/nPOR unknown). */
+     * TO/PD set). Fresh-POR PCON is the header image: SBOREN set,
+     * POR=0 (a POR occurred), BOR reads unknown. */
     pic16f63x_67x_68x_sim_sfr[PIC_REG_STATUS]   = PIC_STATUS_POR_VALUE;
-    pic16f63x_67x_68x_sim_sfr[PIC_REG_PCON]     = 0x13U;
+    pic16f63x_67x_68x_sim_sfr[PIC_REG_PCON]     = PIC_PCON_POR_VALUE;
     pic16f63x_67x_68x_sim_sfr[PIC_REG_INTCON]   = PIC_INTCON_POR_VALUE;
     pic16f63x_67x_68x_sim_sfr[PIC_REG_PIR1]     = PIC_PIR1_POR_VALUE;
     pic16f63x_67x_68x_sim_sfr[PIC_REG_PIR2]     = PIC_PIR2_POR_VALUE;

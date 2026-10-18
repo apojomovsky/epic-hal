@@ -239,9 +239,9 @@
 #define PIC_PIR2_POR_VALUE       0x00U
 #define PIC_PIE1_POR_VALUE       0x00U
 #define PIC_PIE2_POR_VALUE       0x00U
-/* Both flags read as unknown after a POR, so both are modelled set
- * (neither reset cause is reported). */
-#define PIC_PCON_POR_VALUE       0x03U
+/* POR reads 0 after a Power-on Reset (the event occurred); BOR reads
+ * unknown, modelled set (no brown-out recorded). */
+#define PIC_PCON_POR_VALUE       0x01U
 #define PIC_OSCCON_POR_VALUE     0x00U
 #define PIC_OSCTUNE_POR_VALUE    0x00U
 #define PIC_T1CON_POR_VALUE      0x00U

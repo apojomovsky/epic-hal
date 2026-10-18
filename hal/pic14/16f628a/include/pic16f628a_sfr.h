@@ -119,7 +119,7 @@
 /* Reset values (POR). */
 
 #define PIC_STATUS_POR_VALUE     0x18U
-#define PIC_PCON_POR_VALUE       0x0FU  /* BOR and POR flags unknown. */
+#define PIC_PCON_POR_VALUE       0x0DU  /* POR=0 (a POR occurred), BOR unknown, modelled set. */
 #define PIC_INTCON_POR_VALUE     0x00U
 #define PIC_PIR1_POR_VALUE       0x00U
 #define PIC_PIE1_POR_VALUE       0x00U

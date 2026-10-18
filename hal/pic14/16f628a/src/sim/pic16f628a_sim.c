@@ -101,7 +101,7 @@ void pic16f628a_sim_reset(void)
     memset(pic16f628a_sim_sfr, 0, sizeof pic16f628a_sim_sfr);
 
     /* Power-on reset values (DS40044G §14; INTCON/PIR1/PIE1/T1CON/T2CON
-     * reset to 0, STATUS 0x18, PCON flags unknown). */
+     * reset to 0, STATUS 0x18, PCON POR=0 with BOR unknown). */
     pic16f628a_sim_sfr[PIC_REG_STATUS]   = PIC_STATUS_POR_VALUE;
     pic16f628a_sim_sfr[PIC_REG_PCON]     = PIC_PCON_POR_VALUE;
     pic16f628a_sim_sfr[PIC_REG_INTCON]   = PIC_INTCON_POR_VALUE;

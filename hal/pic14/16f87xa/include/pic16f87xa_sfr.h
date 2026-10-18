@@ -182,7 +182,7 @@
 
 /* DS39582B §14, Table 14-6. */
 #define PIC_STATUS_POR_VALUE     0x18U  /* 0001 1xxx, IRP=0,RP1=0,RP0=0,TO=1,PD=1,... */
-#define PIC_PCON_POR_VALUE       0x0FU  /* BOR and POR flags unknown. */
+#define PIC_PCON_POR_VALUE       0x0DU  /* POR=0 (a POR occurred), BOR unknown, modelled set. */
 #define PIC_INTCON_POR_VALUE     0x00U
 #define PIC_PIR1_POR_VALUE       0x00U
 #define PIC_PIR2_POR_VALUE       0x00U
