@@ -4,8 +4,7 @@
  * Timer1/Timer2 couple (CCPTMRS value 01). PWM runs on that couple (TMR2)
  * and the Timer3/Timer4 couple (value 10, TMR4), on the 10-bit time bases
  * the caller passes in. Other couples never fire and hold the output low.
- * Capture reads the pin CCPxPPS selects; outputs are read back through
- * pic16f188xx_sim_ccp_out and _pwm_out.
+ * Capture reads the pin CCPxPPS selects; outputs read back via _ccp_out/_pwm_out.
  */
 #include <stdint.h>
 #include <string.h>

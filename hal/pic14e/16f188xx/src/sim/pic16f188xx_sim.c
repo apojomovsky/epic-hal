@@ -4,8 +4,7 @@
  * Timer0 counts T0CKIPPS edges on its PPS pin; Timer1 and Timer2 read the
  * POR default PPS pins (RC0, RB5, RC3), Timer2 models every defined
  * T2HLT mode (DS40001802H Table 29-1) and freezes reserved codes.
- * The serial, EEPROM, NCO1, WDT/Sleep and Timer4 models live in sibling
- * sim files.
+ * The serial, EEPROM, NCO1, WDT/Sleep and Timer4 models are in sibling files.
  */
 #include <stddef.h>
 #include <stdint.h>
