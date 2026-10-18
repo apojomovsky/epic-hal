@@ -6,10 +6,10 @@ manual covers only what is genuinely specific to the **PIC18F6520**, verified
 against the Microchip datasheet **DS39609B** (PIC18F6520/6620/8520/8620/
 6720/8720).
 
-**Status: complete.** Platform layer, SFR map, GPIO, Timer0-3, CCP1-5,
+**Status: complete.** Platform layer, SFR map, GPIO, Timer0-4, CCP1-5,
 MSSP, EUSART1/2, ADC, comparator, data EEPROM, the interrupt core,
 WDT/Sleep/BOR/POR, and the harness are all implemented (epic-hal#182,
-#183, #184, #185) and verified under host sim and real `mdb`. Timer4,
+#183, #184, #185, #525) and verified under host sim and real `mdb`.
 PSP and LVD have no driver yet (the SFRs are in the map). This family
 has no USB and no SPP (DS39609B Table 1-1), so it never will; do not
 expect them here.
@@ -208,9 +208,8 @@ change interrupts are supported through
 
 ## 9. Timers: Timer0-4
 
-Four timer modules on this part (DS39609B Table 1-1; Timer4 is
-registered in the SFR map but has no driver yet, out of this ticket's
-scope).
+Five timer modules on 64/80-pin non-ECAN parts (DS39609B Table 1-1);
+the ECAN quads (6585/6680/8585/8680) have no Timer4.
 
 **Timer0** (DS39609B §11.0): 8/16-bit timer/counter with its own
 prescaler, controlled by T0CON; default 8-bit to stay a PIC16 drop-in.
@@ -232,14 +231,28 @@ access like Timer1; T3CCP1/T3CCP2 (T3CON<3>/<6>) select which CCP
 module uses Timer3 as its time base (left at reset, Timer1). Overflow
 -> PIR2<TMR3IF> + weak `TIMER3_IRQHandler`.
 
-All four drivers follow the Cube-style handle pattern (per-timer
-`*_HANDLE_DEFAULT`, `EPIC_TIMERx_Init` copies the handle and enables
-the interrupt when a callback is given, `EPIC_TIMERx_Start` loads the
+**Timer4** (DS39609B §15.0, Register 15-1): same 8-bit period-match
+timer as Timer2 on T4CON/PR4/TMR4 (0xF76-0xF78): 2-bit prescaler
+(1:1/4/16), 4-bit postscaler (1:(N+1)), match with PR4 fires
+PIR3<TMR4IF> when the postscaler wraps, delivered to the weak
+`TIMER4_IRQHandler`. No HLT modes on this part. The ECAN quads carry CAN
+registers at those addresses and no Timer4: every `EPIC_TIMER4_*`
+call returns `EPIC_INVALID` there (accessors read 0 / write nothing)
+and the dispatch handler is a no-op, so the CAN flag in PIR3<3> is
+never cleared by the timer.
+
+All five drivers follow the Cube-style handle pattern (per-timer
+`*_HANDLE_DEFAULT`, `EPIC_TIMERx_Init` stores the handle (Timer4: only
+the callback) and enables the interrupt when a callback is given,
+`EPIC_TIMERx_Start` loads the
 reload/period and starts counting, `_Stop`/`_DeInit` reverse it).
-Per-timer host smokes live in `tests/example_timer1/2/3.c`; each was
+Per-timer host smokes live in `tests/example_timer1/2/3/4.c`; each was
 gated under real mdb with register readbacks (T1CON=0x81 with
 TMR1IF set on 0xFFF0-reload overflow, T2CON=0x04 with PR2=9 and
-TMR2IF, T3CON=0x81 with PIR2<TMR3IF>).
+TMR2IF, T3CON=0x81 with PIR2<TMR3IF>). The Timer4 gate is the
+manifest's HARNESS=sim image: T4CON=0x06 (TMR4ON, 1:16) and PR4=0x7F
+read back, and two TMR4IF-driven callbacks must run before RA0 reports
+PASS (read through LATA, `MODE=gpio`).
 
 ## 10. CCP1-5 (CCP1-2 on the ECAN quads)
 
@@ -339,7 +352,7 @@ selected define.
 - `example_smoke`: bare harness contract (family-blind).
 - `example_blink`: Timer0 + GPIO + interrupt, RB0 toggle.
 - `example_irq`: the IRQ-core smoke test described in §6.
-- `example_timer1/2/3`: per-timer host overflow/match smokes (the §4
+- `example_timer1/2/3/4`: per-timer host overflow/match smokes (the §4
   gate's host-sim halves; the mdb halves run as register-readback gates).
 - `example_ccp`: CCP1/CCP3 compare programming + time-base check.
 - `example_ssp`: MSSP SPI-master programming check.
@@ -376,10 +389,11 @@ selected define.
 - **1 KB EEPROM, 10-bit addressing.** The EEPROM APIs take `uint16_t`
   addresses and program EEADRH + EEADR; the 4550/2520 drivers use
   8-bit EEADR only. See §15.
-- Timer4, PSP and LVD have no driver yet, so their SFRs are in the map
-  but there is no TMR4/PSP/LVD header. The MPLAB SIM CI gate reports
-  PASS/FAIL on the RA0 GPIO marker (`MODE=gpio`); the EUSART's mdb gate
-  uses `uartio` capture directly (see PR #203's EUSART verification).
+- PSP and LVD have no driver yet, so their SFRs are in the map but
+  there is no PSP/LVD header. The MPLAB SIM CI gate (the Timer4 match
+  probe, `example_timer4`) reports PASS/FAIL on the RA0 GPIO marker
+  (`MODE=gpio`, read through LATA); the EUSART's mdb gate uses `uartio`
+  capture directly (see PR #203's EUSART verification).
 
 ## 20. Appendix: datasheet section index
 
@@ -392,6 +406,7 @@ selected define.
 | §12.0   | Timer1       | `peripherals/pic18f6520_timer1.h` |
 | §13.0   | Timer2       | `peripherals/pic18f6520_timer2.h` |
 | §14.0   | Timer3       | `peripherals/pic18f6520_timer3.h` |
+| §15.0   | Timer4       | `peripherals/pic18f6520_timer4.h` |
 | §16.0   | CCP1-5       | `peripherals/pic18f6520_ccp.h`     |
 | §17.0   | MSSP         | `peripherals/pic18f6520_ssp.h`     |
 | §18.0   | EUSART1/2    | `peripherals/pic18f6520_usart.h`   |

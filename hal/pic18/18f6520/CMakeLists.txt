@@ -44,10 +44,10 @@ set(EPIC_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
 set(EPIC_FAMILY_DEVICES        PIC18F6620 PIC18F6720 PIC18F6585 PIC18F6680 PIC18F8525 PIC18F8585 PIC18F8621 PIC18F8680 PIC18F6525 PIC18F6621 PIC18F6520)
 
-# GPIO + Timer0-3 drivers, the IRQ core and its dispatch, the
+# GPIO + Timer0-4 drivers, the IRQ core and its dispatch, the
 # WDT/Sleep helpers, and the host sim backend + harness. Every listed
-# driver links on all eleven parts (absent CCP/USART instances rejected
-# at Init; PORTH/J compiled out on the 64-pin parts).
+# driver links on all eleven parts (absent CCP/USART/TMR4 instances
+# rejected at Init; PORTH/J compiled out on the 64-pin parts).
 set(EPIC_SOURCES
     src/sim/pic18_sim.c
     src/sim/pic18_harness_sim.c
@@ -60,6 +60,7 @@ set(EPIC_SOURCES
     src/peripherals/pic18f6520_timer1.c
     src/peripherals/pic18f6520_timer2.c
     src/peripherals/pic18f6520_timer3.c
+    src/peripherals/pic18f6520_timer4.c
     src/peripherals/pic18f6520_ccp.c
     src/peripherals/pic18f6520_ssp.c
     src/peripherals/pic18f6520_usart.c
@@ -76,6 +77,7 @@ epic_add_example(example_smoke tests/example_smoke.c)
 epic_add_example(example_timer1 tests/example_timer1.c)
 epic_add_example(example_timer2 tests/example_timer2.c)
 epic_add_example(example_timer3 tests/example_timer3.c)
+epic_add_example(example_timer4 tests/example_timer4.c)
 epic_add_example(example_ccp   tests/example_ccp.c)
 epic_add_example(example_ssp   tests/example_ssp.c)
 epic_add_example(example_usart tests/example_usart.c)

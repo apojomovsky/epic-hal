@@ -2,9 +2,9 @@
  * Fan-out from both vectors to this family's IRQHandlers, shared by
  * both builds. Reads INTCON/PIRx once, calls only handlers whose bit
  * is set. Prototypes are strong externs (not EPIC_WEAK) so the host
- * linker keeps every handler object. Final tier: Timer0-3, CCP1-5,
+ * linker keeps every handler object. Final tier: Timer0-4, CCP1-5,
  * SSP, EUSART1/2, ADC, COMP, EEPROM (EE gated on EEIE for pollers).
- * TMR4/LVD/PSP have no driver yet.
+ * TIMER4_IRQHandler no-ops on the ECAN quads; LVD/PSP have no driver.
  */
 
 #include "core/pic18_irq.h"
@@ -19,6 +19,8 @@ extern void TIMER1_IRQHandler(void);
 extern void TIMER2_IRQHandler(void);
 /** @brief Timer3 overflow interrupt handler. */
 extern void TIMER3_IRQHandler(void);
+/** @brief Timer4 match interrupt handler. */
+extern void TIMER4_IRQHandler(void);
 /** @brief CCP1 event interrupt handler. */
 extern void CCP1_IRQHandler(void);
 /** @brief CCP2 event interrupt handler. */
@@ -96,6 +98,7 @@ void epic_dispatch_all_irqs(void)
     }
     uint8_t pir3 = epic_sfr_read8(PIC_REG_PIR3);
     if (pir3 & PIC_PIR3_CCP3IF) CCP3_IRQHandler();
+    if (pir3 & PIC_PIR3_TMR4IF) TIMER4_IRQHandler();
     if (pir3 & PIC_PIR3_CCP4IF) CCP4_IRQHandler();
     if (pir3 & PIC_PIR3_CCP5IF) CCP5_IRQHandler();
     /* Gate EUSART2 TX on TX2IE, same read-only-TXIF rationale (PIR3). */

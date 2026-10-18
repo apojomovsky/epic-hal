@@ -21,14 +21,15 @@ interrupt backend, peripheral drivers) live here.
 
 ## Status
 
-**Complete (epic-hal#182, #183, #184, #185, umbrella #150; ECAN-quad and
-80-pin coverage #246):** platform, SFR map, GPIO (PORTA-G, plus PORTH/J
-on the 80-pin parts), Timer0-3, CCP (1-5, 1-2 on the ECAN quads), MSSP,
+**Complete (epic-hal#182, #183, #184, #185, #525, umbrella #150; ECAN-quad
+and 80-pin coverage #246):** platform, SFR map, GPIO (PORTA-G, plus PORTH/J
+on the 80-pin parts), Timer0-4 (no Timer4 on the ECAN quads), CCP (1-5,
+1-2 on the ECAN quads), MSSP,
 EUSART (1/2, single on the ECAN quads), ADC, comparator, data EEPROM,
 the dual-priority interrupt core, WDT/Sleep/BOR/POR, and the harness are
 implemented and verified under host sim and real `mdb` (each peripheral
 through docs/adding-a-device.md §4: host example + XC8 target build +
-`mdb` register-readback gate). TMR4, PSP, LVD and the ECAN module have
+`mdb` register-readback gate). PSP, LVD and the ECAN module have
 no driver yet (SFRs are in the map). This part has **no USB and no SPP**
 (DS39609B Table 1-1).
 
@@ -60,8 +61,11 @@ no driver yet (SFRs are in the map). This part has **no USB and no SPP**
 - ✅ Timer2 driver (`peripherals/pic18f6520_timer2.h`): period match with
   4-bit postscaler, DS39609B Register 13-1.
 - ✅ Timer3 driver (`peripherals/pic18f6520_timer3.h`): 16-bit with RD16,
-  DS39609B Register 14-1. Timer4 (T4CON/PR4/TMR4 at 0xF76-0xF78) has no
-  driver yet (#183 covered Timer0-3 only).
+  DS39609B Register 14-1.
+- ✅ Timer4 driver (`peripherals/pic18f6520_timer4.h`): period match with
+  4-bit postscaler on T4CON/PR4/TMR4 (0xF76-0xF78), TMR4IF in PIR3,
+  DS39609B Register 15-1; every call returns `EPIC_INVALID` on the ECAN
+  quads, which have no Timer4.
 - ✅ CCP driver (`peripherals/pic18f6520_ccp.h`): one driver with an
   instance selector over five plain CCP modules (CCP1CON/CCPR1 at
   0xFBD-0xFBF through CCP5 at 0xF70-0xF72); CCP1-2 only on the ECAN
@@ -97,12 +101,12 @@ no driver yet (SFRs are in the map). This part has **no USB and no SPP**
 - ✅ WDT / Sleep (`core/pic18f6520_wdt_sleep.h`): `EPIC_WDT_Refresh` /
   `EPIC_Sleep_Enter` (asm on target, no-op on host) + BOR/POR status from
   RCON.
-- ✅ Host simulation backend (`src/sim/pic18_sim.c`): Timer0-3 stepping
+- ✅ Host simulation backend (`src/sim/pic18_sim.c`): Timer0-4 stepping
   (8/16-bit, prescaler, overflow -> flag + IRQ callback) + GPIO drive/read
   over all nine ports.
 - ✅ `example_blink` (Timer0 + GPIO + interrupt), `example_irq` (the
   dedicated IRQ-core smoke test), `example_smoke` (harness seam),
-  `example_timer1/2/3` (per-timer host overflow/match smokes),
+  `example_timer1/2/3/4` (per-timer host overflow/match smokes),
   `example_ccp` (CCP1/CCP3 compare), `example_ssp` (SPI master),
   `example_usart` (dual-EUSART async TX), `example_adc` (AN0
   conversion), `example_comp` (two-independent mode), `example_eeprom`
@@ -129,7 +133,8 @@ The 6520 is a 64-pin part and the largest of the three new PIC18 families:
   and 2); TRISG implements RG0-RG4 only.
 - **5 CCP modules** (CCP1-5, all plain CCP: no ECCP auto-shutdown/PWM
   registers exist on this part), PIR3/PIE3/IPR3 carry their flags.
-- **4 timers** (TMR0-3 plus TMR4, T4CON/PR4/TMR4 at 0xF76-0xF78).
+- **5 timers** on the non-ECAN parts (TMR0-3 plus TMR4, T4CON/PR4/TMR4 at
+  0xF76-0xF78).
 - **2 EUSARTs** (EUSART1 registers at 0xFAB-0xFAF, EUSART2 at 0xF6B-0xF6F;
   one driver with an instance selector; no BAUDCON and no SPBRGH on
   this part, the baud generator is 8-bit only).
