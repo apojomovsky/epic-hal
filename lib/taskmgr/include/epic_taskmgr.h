@@ -11,10 +11,21 @@
 #include <stdint.h>
 #include "peripherals/hal_timer0.h"   /* Timer0 tick source (family-neutral) */
 
+/* A build may ship epic_taskmgr_config.h on its include path to size the
+ * table. Reading it here keeps the library's own compile and every
+ * consumer on one value, which a -D on a single translation unit would
+ * not. */
+#if defined(__has_include)
+#  if __has_include("epic_taskmgr_config.h")
+#    include "epic_taskmgr_config.h"
+#  endif
+#endif
+
 /**
  * Maximum simultaneously registered tasks (~12 B/slot); scales via
  * EPIC_FAMILY_RAM_BYTES: 6 on 192 B parts, 8 otherwise. Override with
- * `#define EPIC_TASKMGR_MAX_TASKS` before including this header.
+ * `EPIC_TASKMGR_MAX_TASKS` in an `epic_taskmgr_config.h` on the include
+ * path (a define before this header does not reach epic_taskmgr.c).
  */
 #ifndef EPIC_TASKMGR_MAX_TASKS
 #  if EPIC_FAMILY_RAM_BYTES <= 192
