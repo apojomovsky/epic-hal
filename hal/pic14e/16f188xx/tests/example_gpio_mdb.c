@@ -500,10 +500,10 @@ static int gate_nco(void)
 
 /**
  * @brief ADC, DAC1, FVR and comparator section: register images only.
- * @details ADGO masks out of the Init images only (the DeInit CON0
- * clear stays exact); CxOUT and FVRRDY mask out of every image
- * including after DeInit. No conversion is waited on: completion
- * timing differs between models, the host probes cover it.
+ * @details ADGO masks out of the Init images only; CxOUT and FVRRDY
+ * mask out of every image including after DeInit. Init images use the
+ * TMR0 trigger (SIM reports W0239 for ADACT:0; the host probe covers
+ * the manual-trigger image). No conversion is waited on.
  * @return 1 when every readback matches, 0 otherwise.
  */
 static int gate_analog(void)
@@ -514,13 +514,15 @@ static int gate_analog(void)
     FVR_HandleTypeDef fvr = FVR_HANDLE_DEFAULT;
     COMP_HandleTypeDef cmp = COMP_HANDLE_DEFAULT;
 
+    /* TMR0 trigger, not the manual default: see above. */
+    adc.Trigger = ADC_TRIGGER_TMR0;
     ok &= (EPIC_ADC_Init(&adc) == EPIC_OK);
     ok &= ((EPIC_REG8(PIC_REG_ADCON0) & (uint8_t)~PIC_ADCON0_GO_NDONE) == 0x94U);
     ok &= (EPIC_REG8(PIC_REG_ADCON1) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_ADCON2) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_ADREF) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_ADCLK) == 0x00U);
-    ok &= (EPIC_REG8(PIC_REG_ADACT) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_ADACT) == 0x02U);
 #if PIC16F188XX_FAMILY_HAS_PORTD
     /* ANE2 (RE2) is the top pin channel on 40-pin parts: analog input
      * first (DS40001802D §23.2.7 step 1), or the SIM ADC model warns
