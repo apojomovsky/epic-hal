@@ -117,15 +117,15 @@
 /* ADC bank 1 (ADRESL/ADRESH/ADCON0..ADPCH): same address on every
  * part. PIR1/PIE1 carry ADIF/ADIE in bit 0, PIR2/PIE2 the C1IF/C1IE
  * and C2IF/C2IE pairs in bits 0 and 1. */
-#define PIC_REG_ADRESL        0x08CU
-#define PIC_REG_ADRESH        0x08DU
-#define PIC_REG_ADCON0        0x093U
-#define PIC_REG_ADCON1        0x094U
-#define PIC_REG_ADCON2        0x095U
-#define PIC_REG_ADCLK         0x098U
-#define PIC_REG_ADACT         0x099U
-#define PIC_REG_ADREF         0x09AU
-#define PIC_REG_ADPCH         0x09EU
+#define PIC_REG_ADRESL        0x8CU
+#define PIC_REG_ADRESH        0x8DU
+#define PIC_REG_ADCON0        0x93U
+#define PIC_REG_ADCON1        0x94U
+#define PIC_REG_ADCON2        0x95U
+#define PIC_REG_ADCLK         0x98U
+#define PIC_REG_ADACT         0x99U
+#define PIC_REG_ADREF         0x9AU
+#define PIC_REG_ADPCH         0x9EU
 #define PIC_REG_PIR1          0x70DU
 #define PIC_REG_PIE1          0x717U
 #define PIC_REG_PIR2          0x70EU

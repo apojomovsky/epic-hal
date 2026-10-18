@@ -281,14 +281,14 @@ selects the spelling per part, and the sfr-map audit checks both).
 | PIR6     | 0x712   |
 | PIE6     | 0x71C   |
 | CCP1PPS  | 0xEA1 (CCP2PPS 0xEA2 .. CCP5PPS 0xEA5) |
-| ADRESL   | 0x08C (ADRESH 0x08D) |
-| ADCON0   | 0x093   |
-| ADCON1   | 0x094   |
-| ADCON2   | 0x095   |
-| ADCLK    | 0x098   |
-| ADACT    | 0x099   |
-| ADREF    | 0x09A   |
-| ADPCH    | 0x09E   |
+| ADRESL   | 0x8C (ADRESH 0x8D) |
+| ADCON0   | 0x93    |
+| ADCON1   | 0x94    |
+| ADCON2   | 0x95    |
+| ADCLK    | 0x98    |
+| ADACT    | 0x99    |
+| ADREF    | 0x9A    |
+| ADPCH    | 0x9E    |
 | PIR1     | 0x70D   |
 | PIE1     | 0x717   |
 | PIR2     | 0x70E   |
