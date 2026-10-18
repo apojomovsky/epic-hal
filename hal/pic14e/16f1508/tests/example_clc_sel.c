@@ -1,10 +1,10 @@
 /**
  * CLC SEL-decode host-sim probe. Host-only: configures cells through
  * EPIC_CLC_Init and checks that undriven Dx levels decode their SEL codes
- * (Table 24-1): LCx_OUT taps post-POL with a one-step cascade delay, timer
- * sources are the TMR1 wrap and pre-postscaler TMR2 match pulses, CLCxIN0/1
- * follow their fixed pins, and unmodelled sources read 0 unless the Dx hook
- * overrides them.
+ * (Table 24-1): LCx_OUT taps post-POL settle combinationally in one step,
+ * timer sources are the TMR1 wrap and pre-postscaler TMR2 match pulses,
+ * CLCxIN0/1 follow their fixed pins, and unmodelled sources read 0 unless
+ * the Dx hook overrides them.
  */
 #include <stddef.h>
 #include "pic16f1508.h"
@@ -80,26 +80,44 @@ int main(void)
     ok &= (read_cell(CLC3) == 0U);
     ok &= (read_cell(CLC4) == 0U);
 
-    /* Pin decode with a one-step cascade: CLC1 answers at once, the LC1_OUT
-     * tap one step later. */
+    /* Pin decode with a settled cascade: CLC1 answers at once and the
+     * LC1_OUT tap lands in the same step. */
     pic16f1508_sim_drive_input('A', 3U, 1U);
     epic_harness_tick();
     ok &= (read_cell(CLC1) == 1U);
-    ok &= (read_cell(CLC2) == 0U);
-    epic_harness_tick();
     ok &= (read_cell(CLC2) == 1U);
 
-    /* Post-POL tap: inverting CLC1 inverts what CLC2 sees. */
+    /* Post-POL tap: inverting CLC1 inverts what CLC2 sees, same step. */
     EPIC_REG8(PIC_REG_CLC1POL) |= PIC_CLCPOL_POL;
-    epic_harness_tick();
     epic_harness_tick();
     ok &= (read_cell(CLC1) == 0U);
     ok &= (read_cell(CLC2) == 0U);
     EPIC_REG8(PIC_REG_CLC1POL) &= (uint8_t)~PIC_CLCPOL_POL;
     epic_harness_tick();
-    epic_harness_tick();
     ok &= (read_cell(CLC1) == 1U);
     ok &= (read_cell(CLC2) == 1U);
+
+    /* Four-deep cascade against the wiring order: CLC4 follows its pin while
+     * each lower cell taps the one above, so the lowest cell settles last.
+     * One step still lands all four outputs. */
+    setup_tap(CLC4, 1U, EPIC_CLC_SourceCode(1U, CLC_IN_CLCIN0));
+    setup_tap(CLC3, 2U, EPIC_CLC_SourceCode(2U, CLC_IN_LC4_OUT));
+    setup_tap(CLC2, 2U, EPIC_CLC_SourceCode(2U, CLC_IN_LC3_OUT));
+    setup_tap(CLC1, 2U, EPIC_CLC_SourceCode(2U, CLC_IN_LC2_OUT));
+    pic16f1508_sim_drive_input('B', 5U, 1U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC4) == 1U);
+    ok &= (read_cell(CLC3) == 1U);
+    ok &= (read_cell(CLC2) == 1U);
+    ok &= (read_cell(CLC1) == 1U);
+    pic16f1508_sim_drive_input('B', 5U, 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC4) == 0U);
+    ok &= (read_cell(CLC3) == 0U);
+    ok &= (read_cell(CLC2) == 0U);
+    ok &= (read_cell(CLC1) == 0U);
+    setup_tap(CLC3, 1U, EPIC_CLC_SourceCode(1U, CLC_IN_T1_OVERFLOW));
+    setup_tap(CLC4, 1U, EPIC_CLC_SourceCode(1U, CLC_IN_T2_MATCH));
 
     /* T1_overflow is the wrap pulse, not the TMR1IF level: the flag stays
      * latched while the tap drops back to 0 on the next step. */
