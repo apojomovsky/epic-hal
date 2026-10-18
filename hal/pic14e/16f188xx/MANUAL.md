@@ -859,8 +859,10 @@ the gate maps only routes that map clean (PPS tables above).
 The analog gate sections are images only. MPLAB SIM was not probed for
 ADC completion timing (ADGO clear, ADIF set) or for comparator/FVR
 live status (CxOUT, FVRRDY), so the gate asserts the control images
-with CxOUT and FVRRDY masked and never waits on a conversion; the host
-probes cover completion, triggers and edges instead.
+with ADGO, CxOUT and FVRRDY masked and never waits on a conversion;
+the host probes cover completion, triggers and edges instead. The top
+pin channel goes analog input first (RE2/ANE2, RC7/ANC7): selecting it
+while digital prints SIM warnings W0214/W0215.
 
 ## Weak pull-ups
 

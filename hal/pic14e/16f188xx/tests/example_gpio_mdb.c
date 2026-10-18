@@ -75,6 +75,7 @@
  * while stopped; DeInit restores NCO1INCL 0x01 and zeroes the rest. ADC
  * images: default ADCON0 0x94 with ADPCH following SelectChannel, and
  * FOSC/div/FVR/TMR0 ADCON0 0x84, ADCLK 0x0F, ADREF 0x13, ADACT 0x02.
+ * The top pin channel goes analog input first (RE2/ANE2, RC7/ANC7).
  * DAC1 images: code 0x0F reads DAC1CON 0x0F/0x80, full-house 0x1F/0xB9.
  * FVR image: default gains read 0x8A (FVRRDY masked). Comparator
  * images: C1 default CM1CON0 0x80 (CxOUT masked), C2 DAC/FVR CM2CON0
@@ -520,6 +521,19 @@ static int gate_analog(void)
     ok &= (EPIC_REG8(PIC_REG_ADREF) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_ADCLK) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_ADACT) == 0x00U);
+#if PIC16F188XX_FAMILY_HAS_PORTD
+    /* ANE2 (RE2) is the top pin channel on 40-pin parts: analog input
+     * first (DS40001802D §23.2.7 step 1), or the SIM ADC model warns
+     * W0214/W0215 and rejects the channel. */
+    EPIC_GPIO_Init(GPIOE, GPIO_PIN_2, GPIO_MODE_ANALOG);
+    ok &= ((EPIC_REG8(PIC_REG_TRISE) & GPIO_PIN_2) != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_ANSELE) & GPIO_PIN_2) != 0U);
+#else
+    /* ANC7 (RC7) is the top pin channel on 28-pin parts: same setup. */
+    EPIC_GPIO_Init(GPIOC, GPIO_PIN_7, GPIO_MODE_ANALOG);
+    ok &= ((EPIC_REG8(PIC_REG_TRISC) & GPIO_PIN_7) != 0U);
+    ok &= ((EPIC_REG8(PIC_REG_ANSELC) & GPIO_PIN_7) != 0U);
+#endif
     ok &= (EPIC_ADC_SelectChannel(PIC16F188XX_FAMILY_ADC_MAX_PIN) == EPIC_OK);
     ok &= (EPIC_REG8(PIC_REG_ADPCH) == PIC16F188XX_FAMILY_ADC_MAX_PIN);
     ok &= (EPIC_ADC_SelectChannel(ADC_CHANNEL_FVR) == EPIC_OK);
