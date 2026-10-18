@@ -1,8 +1,8 @@
 # PIC16F188xx register reference
 
 Per-peripheral register reference for the GPIO, interrupt-on-change,
-Timer0..Timer2, CCP1..CCP5, PWM6/PWM7, EUSART, MSSP1, PPS, data EEPROM, NCO1 and
-WDT/Sleep sources in
+Timer0..Timer2, Timer4, CCP1..CCP5, PWM6/PWM7, EUSART, MSSP1, PPS, data EEPROM,
+NCO1 and WDT/Sleep sources in
 this HAL. Shared conventions (naming, handle pattern, harness, interrupt
 model) are in
 [common/MANUAL.md](../../../common/MANUAL.md). This file covers only
@@ -105,8 +105,14 @@ what is specific to this family: 16F18854/55/56/57 (28-pin) and
 | T2HLT    | 0xFF  | 00000000   | PSYNC, CKPOL, CKSYNC, MODE (5 bits)      |
 | T2CLKCON | 0x0F  | ----0000   | CS clock source select                   |
 | T2RST    | 0x1F  | ---00000   | RSEL external reset signal select        |
-| PIR4     | 0x3F  | --000000   | TMR1IF bit 0, TMR2IF bit 1 used (bits 2..5 are Timer3..6) |
-| PIE4     | 0x3F  | --000000   | TMR1IE bit 0, TMR2IE bit 1 used          |
+| TMR4     | 0xFF  | 00000000   | Counter (EDC name T4TMR)                 |
+| PR4      | 0xFF  | 11111111   | Period (EDC name T4PR)                   |
+| T4CON    | 0xFF  | 00000000   | ON, CKPS (3 bits), OUTPS                 |
+| T4HLT    | 0xFF  | 00000000   | PSYNC, CKPOL, CKSYNC, MODE (5 bits); mapped, driver writes 0 |
+| T4CLKCON | 0x0F  | ----0000   | CS clock source select                   |
+| T4RST    | 0x1F  | ---00000   | RSEL reset signal select; mapped, driver writes 0 |
+| PIR4     | 0x3F  | --000000   | TMR1IF bit 0, TMR2IF bit 1, TMR4IF bit 3 used (bits 2, 4, 5 are Timer3, 5, 6) |
+| PIE4     | 0x3F  | --000000   | TMR1IE bit 0, TMR2IE bit 1, TMR4IE bit 3 used |
 | PIR3     | 0x3F  | --000000   | SSP1IF, BCL1IF, SSP2IF, BCL2IF, TXIF (read-only), RCIF (read-only) |
 | PIE3     | 0x3F  | --000000   | SSP1IE, BCL1IE, SSP2IE, BCL2IE, TXIE, RCIE |
 | PIR7     | 0xF7  | 0000-000   | NCO1IF (bit 4), NVMIF (bit 5); the rest are CWG, CRC and scanner |
@@ -232,6 +238,12 @@ selects the spelling per part, and the sfr-map audit checks both).
 | T2HLT    | 0x28F   |
 | T2CLKCON | 0x290   |
 | T2RST    | 0x291   |
+| TMR4     | 0x292   |
+| PR4      | 0x293   |
+| T4CON    | 0x294   |
+| T4HLT    | 0x295   |
+| T4CLKCON | 0x296   |
+| T4RST    | 0x297   |
 | PIR4     | 0x710   |
 | PIE4     | 0x71A   |
 | ANSELD   | 0xF59   |
@@ -311,6 +323,8 @@ selects the spelling per part, and the sfr-map audit checks both).
 | PIE4<0> | TMR1IE | Gates the Timer1 source. Set by Init only with a callback. |
 | PIR4<1> | TMR2IF | Set on the postscaled TMR2 = PR2 match. Cleared by the handler. |
 | PIE4<1> | TMR2IE | Gates the Timer2 source. Set by Init only with a callback. |
+| PIR4<3> | TMR4IF | Set on the postscaled TMR4 = PR4 match. Cleared by the handler. |
+| PIE4<3> | TMR4IE | Gates the Timer4 source. Set by Init only with a callback. |
 | PIR1<0> / PIE1<0> | ADIF / ADIE | Set when a conversion completes. The handler clears the flag. ADTIF/ADTIE (bit 1) have no driver. |
 | PIR2<0> / PIE2<0> | C1IF / C1IE | Set on an armed CxOUT edge. The handler clears the flag, then runs the callback. |
 | PIR2<1> / PIE2<1> | C2IF / C2IE | Same for C2. |
@@ -418,6 +432,23 @@ T2RST and T2HLT; Start writes PR2, zeroes TMR2 and writes T2CON with
 ON. Image after Init with the default handle and PR2 7: T2CLKCON 0x01,
 T2RST 0x00, T2HLT 0x00, T2CON 0x00; after Start T2CON 0x80.
 
+## Timer4 bits
+
+Timer4 is Timer2's module (EDC `_modsrc` DOS-02458_tmr_mid2_v1), so
+T4CON (ON bit 7, CKPS<2:0>, OUTPS<3:0>), T4CLKCON (CS<3:0>), the PR4
+match and the TMR4IF timing are the Timer2 ones above, one register
+block at +6 from Timer2 (T4HLT, T4RST included). The T4HLT limit modes
+and the T4RST reset signal are mapped but not driven: `EPIC_TIMER4_Init`
+writes both to 0 (free-running, software gate), `EPIC_TIMER4_DeInit`
+restores them, and the host sim holds the counter for a nonzero MODE.
+Image after Init with the default handle and PR4 7: T4CLKCON 0x01,
+T4RST 0x00, T4HLT 0x00, T4CON 0x00; after Start T4CON 0x80.
+
+Timer4 is the PWM time base of the Timer3/Timer4 couple (CCPTMRS value
+10), for CCP1..CCP5 in PWM mode and for PWM6/PWM7 (see CCP bits). The
+driver starts Timer4 only; Timer3 has none, so capture and compare on
+that couple, which count Timer3, stay unstarted.
+
 Unlike the older enhanced mid-range parts, INTCON on this part carries
 no IOCIF/IOCIE bits (impl 0xC1): the flag and enable live in PIR0/PIE0.
 `IOCxF` flags are cleared in the handler one captured bit at a time
@@ -453,7 +484,8 @@ event, 100..111 LC1..LC4_out. CCPTMRS0 holds C1TSEL..C4TSEL (bit pairs
 1:0, 3:2, 5:4, 7:6) and CCPTMRS1 holds C5TSEL (1:0), P6TSEL (3:2) and
 P7TSEL (5:4); 01 is the Timer1/Timer2 couple (the POR value, 0x55 and
 0x15), 10 Timer3/Timer4, 11 Timer5/Timer6 and 00 is reserved (Registers
-30-5, 30-6). CCPR1H:L holds the capture or compare value, or the PWM
+30-5, 30-6). PWM on the Timer3/Timer4 couple runs from Timer4 (period in
+PR4), started with `EPIC_TIMER4_Start`. CCPR1H:L holds the capture or compare value, or the PWM
 duty.
 
 PWM (§30.3): the period is 4 x (PR2 + 1) counts of 1/4 timer step
@@ -781,8 +813,8 @@ family's own `.s` (the `ioc_capture` switch form first): the restore
 The same `.s` shows a static pinned to bank 2 getting a correct
 `movlb 2` before every access, so the rule is proven both ways.
 Therefore ISR-reachable code (the vector, the dispatcher, the IOC,
-Timer0..Timer2, ADC, C1/C2, CCP1..CCP5, EUSART and MSSP handlers) keeps
-no cstack autos: flag snapshots are file-scope statics, tests run on
+Timer0..Timer2, Timer4, ADC, C1/C2, CCP1..CCP5, EUSART and MSSP handlers)
+keeps no cstack autos: flag snapshots are file-scope statics, tests run on
 WREG, and every SFR names its register literally. The five CCP and two
 comparator handlers follow it with one scalar callback slot each, and
 the CCP1 and CCP5 `.s` show the PIR6 clear as a single `andwf` and a
@@ -831,12 +863,20 @@ them (2026-10 on the 16F18877 for 0x09, 0x11 and 0x16: images and
 the armed hold pass, no edge or level starts the counter), so the
 gate covers mode 0x09 register images and the armed hold only.
 
+Timer4 follows the same two-phase gate shape (PR4 7, a bounded spin to
+TMR4IF, then a vectored match whose callback stops the timer) plus the
+full-field T4CON image, and passes on the 16F18877 (2026-10). CCP1 PWM
+tied to the Timer3/Timer4 couple with Timer4 running did not pass under
+MPLAB SIM 6.35 (no CCP1IF and no OUT high samples in the probe, cause
+not isolated; the same PWM against Timer2 does), so the gate has no
+couple proof and the host sim carries it.
+
 The gate image is built -O2. Probe sections live in small helper
 functions that share spin loops and handle resets, since inlining every
 readback into main overflowed the 16F18855's 8K words of flash (link error
-1347). With the EEPROM, NCO, WDT, Idle, CCP and PWM sections added the
-image is 13746 words and fits only the 16K-word 16F18856 or larger; the
-CI gate runs on the 16F18877 (42% of its flash), and the other parts
+1347). With the EEPROM, NCO, WDT, Idle, CCP, PWM, Timer4 and analog sections
+added the image is 16234 words and fits only the 16K-word 16F18856 or
+larger; the CI gate runs on the 16F18877 (49.5% of its flash), and the other parts
 still build the blink example and the demo.
 
 A CPU-executed EEPROM write completes under MPLAB SIM 6.35 on the
@@ -938,6 +978,12 @@ not gated on ANSEL. The sim does not model the RD16 buffer or the
 prescaler clear on a TMR1L/TMR2 write: counter registers are plain
 memory, and the prescaler clears only while the timer is off.
 
+Timer4 is in `pic16f188xx_sim_timer4.c` and counts like Timer2 in
+software mode: the internal clock rows tick (FOSC at four counts per
+tick), every other row (T4CKIPPS, CLKR, NCO, ZCD1, LCx) and any nonzero
+T4HLT MODE freeze the counter, and T4RST is ignored. The postscaled match
+sets TMR4IF and hands the PWM model its wrap tick and time base.
+
 The EEPROM, NCO1 and WDT/Sleep models are in `pic16f188xx_sim_sys.c`,
 on the same hook pair. NVMCON2 collects the 0x55, 0xAA key state and an
 NVMCON1 write that sets WR consumes it: without WREN the request is
@@ -960,11 +1006,12 @@ configuration NVM access, the one-instruction read stall, the NVM
 write protect, and the WDT window.
 
 CCP1..CCP5 and PWM6/PWM7 are stepped each tick after the timers, in
-`pic16f188xx_sim_ccp.c`. Only the Timer1/Timer2 couple (CCPTMRS value
-01) runs: capture and compare use TMR1, PWM uses a 10-bit time base
-built from TMR2 (TMR2 x 4 plus the prescaler position in quarter
-steps) and runs only while Timer2 is on and clocked from FOSC/4; any
-other couple, or a Timer2 clock other than FOSC/4, holds the output
+`pic16f188xx_sim_ccp.c`. Capture and compare run on the Timer1/Timer2
+couple only (CCPTMRS value 01, TMR1). PWM runs on that couple and on the
+Timer3/Timer4 couple (value 10): it uses a 10-bit time base built from
+TMR2 or TMR4 (TMRx x 4 plus the prescaler position in quarter steps) and
+runs only while that timer is on and clocked from FOSC/4; any other
+couple, or a PWM timer clock other than FOSC/4, holds the output
 low (high for an active-low PWM6/PWM7). Compare matches on the tick
 TMR1 reaches the compare value (an edge: a halted timer cannot match
 again), sets CCPxIF and drives the output; the pulse modes hold the

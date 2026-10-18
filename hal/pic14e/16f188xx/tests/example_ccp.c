@@ -779,13 +779,14 @@ static int check_pwm(void)
         ok &= (EPIC_CCP_DeInit(CCP_INSTANCE_1) == EPIC_OK);
     }
 
-    /* A PWM instance tied to Timer4 is idle in the model. */
+    /* A PWM instance tied to Timer6 is idle in the model. Timer4 PWM is
+     * covered by example_timer4. */
     {
         CCP_HandleTypeDef h = CCP_HANDLE_DEFAULT;
 
         h.Instance = CCP_INSTANCE_1;
         h.Mode = CCP_MODE_PWM;
-        h.Timer = CCP_TIMER_3_4;
+        h.Timer = CCP_TIMER_5_6;
         h.PWMDuty = 20U;
         ok &= (EPIC_CCP_Init(&h) == EPIC_OK);
         t2_start(9U, TIMER2_PRESCALER_1_1);

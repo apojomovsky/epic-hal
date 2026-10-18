@@ -30,6 +30,7 @@
         <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer0.c</itemPath>
         <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer1.c</itemPath>
         <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer2.c</itemPath>
+        <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_timer4.c</itemPath>
         <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_ccp.c</itemPath>
         <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_pwm.c</itemPath>
         <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_pps.c</itemPath>

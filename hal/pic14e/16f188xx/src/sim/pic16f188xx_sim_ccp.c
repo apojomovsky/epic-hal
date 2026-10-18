@@ -1,10 +1,10 @@
 /**
  * Host model of CCP1..CCP5 and PWM6/PWM7, stepped once per tick by
- * pic16f188xx_sim.c after the timers. Only the Timer1/Timer2 couple is
- * modelled (CCPTMRS value 01): capture and compare use TMR1, PWM uses the
- * TMR2 10-bit time base the caller passes in. Other couples never fire
- * and hold the output low. Capture reads the pin CCPxPPS selects; outputs
- * are read back through pic16f188xx_sim_ccp_out and _pwm_out.
+ * pic16f188xx_sim.c after the timers. Capture and compare model only the
+ * Timer1/Timer2 couple (CCPTMRS value 01). PWM runs on that couple (TMR2)
+ * and the Timer3/Timer4 couple (value 10, TMR4), on the 10-bit time bases
+ * the caller passes in. Other couples never fire and hold the output low.
+ * Capture reads the pin CCPxPPS selects; outputs read back via _ccp_out/_pwm_out.
  */
 #include <stdint.h>
 #include <string.h>
@@ -127,13 +127,12 @@ static uint16_t sim_ccp_pwm_duty(unsigned int i, uint8_t con)
  * @param i Instance index 0..4.
  * @param tmr1 Current TMR1 value.
  * @param t1_changed Non-zero when TMR1 moved this tick (a match is an edge).
- * @param t2_wrap Non-zero on the tick TMR2 matched PR2.
- * @param t2_live Non-zero while TMR2 runs from FOSC/4.
- * @param t2_pos 10-bit time base position.
+ * @param base PWM time bases: [0] Timer2, [1] Timer4.
  */
 static void sim_step_ccp_one(unsigned int i, uint16_t tmr1, uint8_t t1_changed,
-                             uint8_t t2_wrap, uint8_t t2_live, uint16_t t2_pos)
+                             const pic16f188xx_sim_pwm_base_t base[2])
 {
+    uint8_t tsel = sim_ccp_tsel(i);
     uint8_t con = pic16f188xx_sim_sfr[sim_ccp_con[i]];
     uint8_t mode = (uint8_t)(con & PIC_CCP1CON_MODE_MASK);
     uint8_t img = (uint8_t)((con & PIC_CCP1CON_EN) | mode);
@@ -155,7 +154,8 @@ static void sim_step_ccp_one(unsigned int i, uint16_t tmr1, uint8_t t1_changed,
         sim_ccp_pulse[i] = 0U;
         sim_ccp_edges[i] = 0U;
     }
-    if ((en != 0U) && (sim_ccp_tsel(i) == 1U))
+    if ((en != 0U) &&
+        ((tsel == 1U) || ((tsel == 2U) && (mode == (uint8_t)CCP_MODE_PWM))))
     {
         switch (mode)
         {
@@ -182,15 +182,15 @@ static void sim_step_ccp_one(unsigned int i, uint16_t tmr1, uint8_t t1_changed,
             }
             break;
         case CCP_MODE_PWM:
-            if (t2_live != 0U)
+            if (base[tsel - 1U].live != 0U)
             {
-                if (t2_wrap != 0U)
+                if (base[tsel - 1U].wrap != 0U)
                 {
                     sim_ccp_duty[i] = sim_ccp_pwm_duty(i, con);
                     sim_ccp_out_lat[i] = (uint8_t)(sim_ccp_duty[i] != 0U);
                     pic16f188xx_sim_sfr[PIC_REG_PIR6] |= sim_ccp_flag[i];
                 }
-                if ((sim_ccp_out_lat[i] != 0U) && (t2_pos >= sim_ccp_duty[i]))
+                if ((sim_ccp_out_lat[i] != 0U) && (base[tsel - 1U].pos >= sim_ccp_duty[i]))
                 {
                     sim_ccp_out_lat[i] = 0U;
                 }
@@ -260,12 +260,9 @@ static void sim_step_ccp_one(unsigned int i, uint16_t tmr1, uint8_t t1_changed,
 /**
  * @brief Advance one dedicated PWM module by a tick.
  * @param k Module index 0 (PWM6) or 1 (PWM7).
- * @param t2_wrap Non-zero on the tick TMR2 matched PR2.
- * @param t2_live Non-zero while TMR2 runs from FOSC/4.
- * @param t2_pos 10-bit time base position.
+ * @param base PWM time bases: [0] Timer2, [1] Timer4.
  */
-static void sim_step_pwm_one(unsigned int k, uint8_t t2_wrap, uint8_t t2_live,
-                             uint16_t t2_pos)
+static void sim_step_pwm_one(unsigned int k, const pic16f188xx_sim_pwm_base_t base[2])
 {
     uint8_t con = pic16f188xx_sim_sfr[sim_pwm_con[k]];
     uint8_t tsel = (uint8_t)((pic16f188xx_sim_sfr[PIC_REG_CCPTMRS1] >> (2U + (2U * k))) &
@@ -276,15 +273,15 @@ static void sim_step_pwm_one(unsigned int k, uint8_t t2_wrap, uint8_t t2_live,
     {
         sim_pwm_hi[k] = 0U;
     }
-    else if ((tsel == 1U) && (t2_live != 0U))
+    else if (((tsel == 1U) || (tsel == 2U)) && (base[tsel - 1U].live != 0U))
     {
-        if (t2_wrap != 0U)
+        if (base[tsel - 1U].wrap != 0U)
         {
             sim_pwm_duty[k] = (uint16_t)(((uint16_t)pic16f188xx_sim_sfr[sim_pwm_dch[k]] << 2) |
                 (uint16_t)(pic16f188xx_sim_sfr[sim_pwm_dcl[k]] >> PIC_PWMDCL_DC_SHIFT));
             sim_pwm_hi[k] = (uint8_t)(sim_pwm_duty[k] != 0U);
         }
-        if ((sim_pwm_hi[k] != 0U) && (t2_pos >= sim_pwm_duty[k]))
+        if ((sim_pwm_hi[k] != 0U) && (base[tsel - 1U].pos >= sim_pwm_duty[k]))
         {
             sim_pwm_hi[k] = 0U;
         }
@@ -302,11 +299,11 @@ static void sim_step_pwm_one(unsigned int k, uint8_t t2_wrap, uint8_t t2_live,
 
 /**
  * @brief Advance every CCP and PWM module by a tick.
- * @param t2_wrap Non-zero on the tick TMR2 matched PR2.
- * @param t2_live Non-zero while TMR2 is on and clocked from FOSC/4.
- * @param t2_pos TMR2 x 4 plus the prescaler fraction, the 10-bit time base.
+ * @param base PWM time bases: [0] Timer2, [1] Timer4. Each is the timer's
+ *        match tick, FOSC/4 liveness and TMRx x 4 plus the prescaler
+ *        fraction, the 10-bit time base.
  */
-void pic16f188xx_sim_ccp_step(uint8_t t2_wrap, uint8_t t2_live, uint16_t t2_pos)
+void pic16f188xx_sim_ccp_step(const pic16f188xx_sim_pwm_base_t base[2])
 {
     uint16_t tmr1 = (uint16_t)(((uint16_t)pic16f188xx_sim_sfr[PIC_REG_TMR1H] << 8) |
         pic16f188xx_sim_sfr[PIC_REG_TMR1L]);
@@ -316,11 +313,11 @@ void pic16f188xx_sim_ccp_step(uint8_t t2_wrap, uint8_t t2_live, uint16_t t2_pos)
     sim_t1_prev = tmr1;
     for (i = 0U; i < SIM_CCP_N; i++)
     {
-        sim_step_ccp_one(i, tmr1, changed, t2_wrap, t2_live, t2_pos);
+        sim_step_ccp_one(i, tmr1, changed, base);
     }
     for (i = 0U; i < SIM_PWM_N; i++)
     {
-        sim_step_pwm_one(i, t2_wrap, t2_live, t2_pos);
+        sim_step_pwm_one(i, base);
     }
 }
 

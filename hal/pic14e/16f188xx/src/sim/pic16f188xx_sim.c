@@ -3,7 +3,7 @@
  * and PIR0 IOCIF; callbacks gate on flag, enable, PEIE and GIE. Timer0
  * counts T0CKIPPS edges; Timer1/2 read the POR PPS pins (RC0, RB5,
  * RC3), Timer2 models every defined T2HLT mode and freezes reserved
- * codes. Serial, sys, analog and CCP models live in sibling files.
+ * codes. Serial, sys, analog, CCP and Timer4 models are in sibling files.
  */
 #include <stddef.h>
 #include <stdint.h>
@@ -242,6 +242,7 @@ void pic16f188xx_sim_reset(void)
     pic16f188xx_sim_sys_reset();
     pic16f188xx_sim_analog_reset();
     pic16f188xx_sim_ccp_reset();
+    pic16f188xx_sim_timer4_reset();
     sim_refresh_ports();
     for (i = 0; i < 3; i++)
     {
@@ -780,26 +781,30 @@ static void sim_step_timer1(void)
 
 /**
  * @brief Advance the CCP and PWM models for this tick.
- * @details Hands them the Timer2 view: whether TMR2 matched PR2 this tick,
- * whether it runs from FOSC/4 (the only clock PWM accepts), and the 10-bit
- * time base, TMR2 x 4 plus the prescaler position scaled to quarter steps.
+ * @details Hands them the PWM time bases: for Timer2 whether TMR2 matched
+ * PR2 this tick, whether it runs from FOSC/4 (the only clock PWM accepts),
+ * and the 10-bit time base, TMR2 x 4 plus the prescaler position scaled to
+ * quarter steps; Timer4 supplies the same view.
  */
 static void sim_step_ccp(void)
 {
+    pic16f188xx_sim_pwm_base_t base[2];
     uint8_t con = pic16f188xx_sim_sfr[PIC_REG_T2CON];
-    uint8_t live = (uint8_t)(((con & PIC_T2CON_ON) != 0U) &&
+    uint32_t ratio = 1UL << ((con & PIC_T2CON_CKPS_MASK) >> PIC_T2CON_CKPS_SHIFT);
+
+    base[0].wrap = sim_t2_wrap;
+    base[0].live = (uint8_t)(((con & PIC_T2CON_ON) != 0U) &&
         ((pic16f188xx_sim_sfr[PIC_REG_T2CLKCON] & PIC_T2CLKCON_CS_MASK) ==
          (uint8_t)TIMER2_CS_FOSC4));
-    uint32_t ratio = 1UL << ((con & PIC_T2CON_CKPS_MASK) >> PIC_T2CON_CKPS_SHIFT);
-    uint16_t pos = (uint16_t)(((uint32_t)pic16f188xx_sim_sfr[PIC_REG_TMR2] * 4UL) +
+    base[0].pos = (uint16_t)(((uint32_t)pic16f188xx_sim_sfr[PIC_REG_TMR2] * 4UL) +
         ((sim_t2_prescale_acc * 4UL) / ratio));
-
-    pic16f188xx_sim_ccp_step(sim_t2_wrap, live, pos);
+    pic16f188xx_sim_timer4_base(&base[1]);
+    pic16f188xx_sim_ccp_step(base);
 }
 
 /**
  * @brief Deliver a pending timer interrupt to the registered callback.
- * @details Gated on a Timer0, Timer1 or Timer2 flag with its enable,
+ * @details Gated on a Timer0, Timer1, Timer2 or Timer4 flag with its enable,
  * plus PEIE and GIE, matching silicon: a pending flag is taken as soon
  * as GIE allows it. One call per tick: the callback is the dispatcher,
  * which routes every pending enabled source.
@@ -810,7 +815,7 @@ static void sim_deliver_timers(void)
                                  pic16f188xx_sim_sfr[PIC_REG_PIE0] & PIC_PIR0_TMR0IF) |
                                 (pic16f188xx_sim_sfr[PIC_REG_PIR4] &
                                  pic16f188xx_sim_sfr[PIC_REG_PIE4] &
-                                 (PIC_PIR4_TMR1IF | PIC_PIR4_TMR2IF)) |
+                                 (PIC_PIR4_TMR1IF | PIC_PIR4_TMR2IF | PIC_PIR4_TMR4IF)) |
                                 (pic16f188xx_sim_sfr[PIC_REG_PIR6] &
                                  pic16f188xx_sim_sfr[PIC_REG_PIE6] & SIM_PIR6_CCP_MASK));
 
@@ -902,6 +907,7 @@ void pic16f188xx_sim_step(uint32_t ticks)
         sim_step_timer0();
         sim_step_timer2();
         sim_step_timer1();
+        pic16f188xx_sim_timer4_step();
         sim_step_ccp();
         pic16f188xx_sim_analog_step(sim_t0_pulse, sim_t2_pulse);
         sim_t0_pulse = 0U;

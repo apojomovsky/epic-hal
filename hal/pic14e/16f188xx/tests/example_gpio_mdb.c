@@ -1,7 +1,7 @@
 /**
- * GPIO, IOC, Timer0..Timer2, ADC, DAC1, FVR, comparators, CCP and PWM
- * register-image probe for the mdb gate, ending in live interrupt smokes
- * where the target allows them.
+ * GPIO, IOC, Timer0..Timer2, Timer4, ADC, DAC1, FVR, comparators, CCP and
+ * PWM register-image probe for the mdb gate, ending in live interrupt
+ * smokes where the target allows them.
  * Target-safe: only register reads and bounded spins. Also runs on the
  * host simulator through ctest.
  *
@@ -50,6 +50,12 @@
  * A full-field T2CON/T2HLT/T2RST image (1:128, 1:16, falling clock,
  * both sync bits, LC4 reset) pins every bit position.
  *
+ * Timer4 follows Timer2's basic shape (PR4 7): T4CLKCON 0x01, T4RST,
+ * T4HLT and T4CON 0x00 after Init, 0x80 after Start, a bounded spin to
+ * TMR4IF, the vectored match, the full-field T4CON image and the DeInit
+ * POR images. MPLAB SIM does not run PWM on the Timer3/Timer4 couple
+ * (family MANUAL.md), so that couple is proven in the host sim only.
+ *
  * CCP and PWM follow Timer2: CCPxCON, CCPRxH:L, CCPxCAP and CCPTMRS
  * images (every mode, a capture source and timer couple, left-aligned PWM
  * duty), a compare match against Timer1 (polled, then vectored on CCP5),
@@ -90,6 +96,7 @@
 #include "peripherals/pic16f188xx_timer0.h"
 #include "peripherals/pic16f188xx_timer1.h"
 #include "peripherals/pic16f188xx_timer2.h"
+#include "peripherals/pic16f188xx_timer4.h"
 #include "peripherals/pic16f188xx_pps.h"
 #include "peripherals/pic16f188xx_usart.h"
 #include "peripherals/pic16f188xx_ssp.h"
@@ -113,6 +120,7 @@ static volatile uint8_t s_ioc_iocbf = 0;
 static volatile uint8_t s_t0_seen = 0;
 static volatile uint8_t s_t1_seen = 0;
 static volatile uint8_t s_t2_seen = 0;
+static volatile uint8_t s_t4_seen = 0;
 static volatile uint8_t s_tx_seen = 0;
 static volatile uint8_t s_ssp_seen = 0;
 static volatile uint8_t s_ccp_seen = 0;
@@ -159,6 +167,16 @@ static void on_t2(void)
 {
     s_t2_seen = 1U;
     EPIC_TIMER2_Stop();
+}
+
+/**
+ * @brief Timer4 match callback: records the vectored run and halts the timer.
+ * @details Same shape as on_t0: the stop keeps the flag readback stable.
+ */
+static void on_t4(void)
+{
+    s_t4_seen = 1U;
+    EPIC_TIMER4_Stop();
 }
 
 /**
@@ -1198,8 +1216,61 @@ static uint8_t gate_timer2_edge_start(void)
 }
 
 /**
- * @brief GPIO, IOC, Timer0..Timer2, PPS, EUSART, MSSP1 and interrupt smoke
- *        probe for the mdb gate.
+ * @brief Timer4 section: FOSC/4 free-run at PR4 7 as a callback-free setup
+ *        proof then a vector proof, and the full-field T4CON image.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static uint8_t gate_timer4(void)
+{
+    uint8_t ok = 1U;
+    TIMER4_HandleTypeDef t4 = TIMER4_HANDLE_DEFAULT;
+
+    t4.Period = 7U;
+    ok &= (EPIC_TIMER4_Init(&t4) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T4CLKCON) == 0x01U);
+    ok &= (EPIC_REG8(PIC_REG_T4RST) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T4HLT) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T4CON) == 0x00U);
+    ok &= (EPIC_TIMER4_ReadPeriod() == 7U);
+    ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR4IE) == 0U);
+    ok &= (EPIC_TIMER4_Start(&t4) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T4CON) == 0x80U);
+    wait_pir4(PIC_PIR4_TMR4IF);
+    ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR4IF) != 0U);
+    ok &= (EPIC_TIMER4_ReadCounter() <= 7U);
+    EPIC_TIMER4_Stop();
+    EPIC_TIMER4_DeInit();
+
+    t4.OverflowCallback = on_t4;
+    ok &= (EPIC_TIMER4_Init(&t4) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR4IE) != 0U);
+    ok &= (EPIC_TIMER4_Start(&t4) == EPIC_OK);
+    wait_seen(&s_t4_seen);
+    ok &= (s_t4_seen == 1U);
+    ok &= ((EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR4IF) == 0U);
+    ok &= (EPIC_TIMER4_ReadCounter() <= 7U);
+    EPIC_TIMER4_Stop();
+    EPIC_TIMER4_DeInit();
+    ok &= ((EPIC_REG8(PIC_REG_PIE4) & PIC_PIE4_TMR4IE) == 0U);
+    ok &= (EPIC_REG8(PIC_REG_T4CON) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T4HLT) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T4CLKCON) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_T4RST) == 0x00U);
+    ok &= (EPIC_TIMER4_ReadPeriod() == 0xFFU);
+    ok &= (EPIC_TIMER4_ReadCounter() == 0U);
+
+    t4 = (TIMER4_HandleTypeDef)TIMER4_HANDLE_DEFAULT;
+    t4.Prescaler = TIMER4_PRESCALER_1_128;
+    t4.Postscaler = TIMER4_POSTSCALER_1_16;
+    ok &= (EPIC_TIMER4_Init(&t4) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_T4CON) == 0x7FU);
+    EPIC_TIMER4_DeInit();
+    return ok;
+}
+
+/**
+ * @brief GPIO, IOC, Timer0..Timer2, Timer4, PPS, EUSART, MSSP1 and interrupt
+ *        smoke probe for the mdb gate.
  * @return Harness result: 0 on PASS, 1 on FAIL.
  */
 int main(void)
@@ -1352,6 +1423,7 @@ int main(void)
      * the CCP and PWM modules that run off them. */
     ok &= gate_timer1();
     ok &= gate_timer2();
+    ok &= gate_timer4();
     ok &= gate_ccp();
     ok &= gate_pwm();
     ok &= gate_timer2_edge_start();

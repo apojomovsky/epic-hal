@@ -1,8 +1,8 @@
 /**
  * PIC16F18855 interrupt contract. Sources: IOC/Timer0 (PIR0/PIE0),
  * ADC (PIR1/PIE1 bit 0), C1/C2 (PIR2/PIE2), MSSP1/EUSART (PIR3/PIE3),
- * Timer1/Timer2 (PIR4/PIE4), CCP1..CCP5 (PIR6/PIE6), NCO1/NVM (PIR7/
- * PIE7), each gated by INTCON.PEIE; enabling one sets PEIE. Single
+ * Timer1/Timer2/Timer4 (PIR4/PIE4), CCP1..CCP5 (PIR6/PIE6), NCO1/NVM
+ * (PIR7/PIE7), each gated by INTCON.PEIE; enabling one sets PEIE. Single
  * vector, no priority levels, hardware context save.
  */
 #ifndef PIC16F188XX_IRQ_H
@@ -30,7 +30,8 @@ typedef enum
     PIC16F188XX_IRQ_CCP5     = 13,
     PIC16F188XX_IRQ_ADC      = 14,
     PIC16F188XX_IRQ_CMP1     = 15,
-    PIC16F188XX_IRQ_CMP2     = 16
+    PIC16F188XX_IRQ_CMP2     = 16,
+    PIC16F188XX_IRQ_TMR4     = 17
 } PIC16F188XX_IRQn;
 
 /**
@@ -85,7 +86,7 @@ void EPIC_IRQ_SetPriority(PIC16F188XX_IRQn irq, EPIC_IRQ_Priority prio);
  * then TIMER0_IRQHandler for TMR0, ADC_IRQHandler for ADIF, CMP1_IRQHandler
  * and CMP2_IRQHandler for their PIR2 flags, then SSP_IRQHandler,
  * USART_TX_IRQHandler and USART_RX_IRQHandler for their PIR3 flags, the
- * Timer1 and Timer2 handlers for PIR4, CCP1_IRQHandler..CCP5_IRQHandler for
+ * Timer1, Timer2 and Timer4 handlers for PIR4, CCP1_IRQHandler..CCP5_IRQHandler for
  * PIR6, then EEPROM_IRQHandler and NCO_IRQHandler for their PIR7 flags,
  * each gated the same way. INT and the bus-collision flag have no handler
  * and no API enables them, so no other source can reach the vector.
