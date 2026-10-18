@@ -52,10 +52,13 @@ static PIC18_IRQn ccp_irq(CCP_InstanceTypeDef inst)
     return (inst == CCP_INSTANCE_1) ? PIC18_IRQ_CCP1 : PIC18_IRQ_CCP2;
 }
 
-/* Static handle storage, one per CCP instance. COPIES the caller's handle
- * (dangling-pointer rationale, see Timer1). The weak ISRs read from these. */
-static CCP_HandleTypeDef        g_ccp_storage[3];
-static const CCP_HandleTypeDef *g_ccp_handles[3] = { NULL, NULL, NULL };
+/* Callback storage, one slot per instance (index 0 unused). Only the
+ * callback is ever read back (the weak ISRs below), so keeping full
+ * handles spent globals on state no reader uses. Scalar stores
+ * through a runtime index are fine for epic-cc isel-pic18; only a
+ * runtime-indexed address taken as a value panics it
+ * (apojomovsky/epic-cc#468), which the removed pointer-array did. */
+static void (*g_ccp_callbacks[3])(void) = { NULL, NULL, NULL };
 
 /**
  * @brief  Encode a PinState enum into the 2-bit PSS field value
@@ -70,10 +73,11 @@ static uint8_t pss_encode(CCP_PinStateTypeDef s)
 }
 
 /**
- * @brief  Initialize a CCP module from a handle. Stores an owned copy of
- *         the handle, clears and optionally enables the instance IRQ, then
- *         programs the 16-bit CCPRx value and mode (PWM duty or
- *         capture/compare). ECCP1 additionally gets auto-shutdown + PRSEN.
+ * @brief  Initialize a CCP module from a handle. Keeps the event
+ *         callback in driver-owned storage, clears and optionally
+ *         enables the instance IRQ, then programs the 16-bit CCPRx
+ *         value and mode (PWM duty or capture/compare). ECCP1
+ *         additionally gets auto-shutdown + PRSEN.
  * @param h Handle describing the CCP instance and its configuration.
  * @return EPIC_OK on success, EPIC_INVALID if `h` is NULL or its Instance
  *         is not CCP_INSTANCE_1/2.
@@ -85,8 +89,9 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
     {
         return EPIC_INVALID;
     }
-    g_ccp_storage[h->Instance] = *h;
-    g_ccp_handles[h->Instance] = &g_ccp_storage[h->Instance];
+    /* Keep only the callback: every other field is consumed into SFR
+     * and IRQ state below, and no reader touches a stored copy. */
+    g_ccp_callbacks[h->Instance] = h->EventCallback;
 
     /* Clear/rearm the IRQ before reconfiguring. */
     EPIC_IRQ_ClearFlag(ccp_irq(h->Instance));
@@ -143,8 +148,8 @@ EPIC_StatusTypeDef EPIC_CCP_Init(const CCP_HandleTypeDef *h)
 
 /**
  * @brief  Reset a CCP module: clear the PIR flag, disable the IRQ, reset
- *         CCPxCON (and ECCP1AS/PRSEN for ECCP1) to POR and drop the
- *         stored handle.
+ *         CCPxCON (and ECCP1AS/PRSEN for ECCP1) to POR and clear the
+ *         stored callback.
  * @param inst CCP instance to de-initialize.
  * @return EPIC_OK on success, EPIC_INVALID for an unknown instance.
  */
@@ -159,7 +164,7 @@ EPIC_StatusTypeDef EPIC_CCP_DeInit(CCP_InstanceTypeDef inst)
         EPIC_REG8(PIC_REG_PWM1CON) = PIC_PWM1CON_POR_VALUE;
         EPIC_REG8(PIC_REG_ECCP1AS) = PIC_ECCP1AS_POR_VALUE;
     }
-    g_ccp_handles[inst] = NULL;
+    g_ccp_callbacks[inst] = NULL;
     return EPIC_OK;
 }
 
@@ -290,10 +295,9 @@ void EPIC_CCP_Restart(CCP_InstanceTypeDef inst)
 void CCP1_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR1), PIC_PIR1_CCP1IF);
-    if (g_ccp_handles[CCP_INSTANCE_1] &&
-        g_ccp_handles[CCP_INSTANCE_1]->EventCallback)
+    if (g_ccp_callbacks[CCP_INSTANCE_1])
     {
-        g_ccp_handles[CCP_INSTANCE_1]->EventCallback();
+        g_ccp_callbacks[CCP_INSTANCE_1]();
     }
 }
 
@@ -304,9 +308,8 @@ void CCP1_IRQHandler(void)
 void CCP2_IRQHandler(void)
 {
     EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR2), PIC_PIR2_CCP2IF);
-    if (g_ccp_handles[CCP_INSTANCE_2] &&
-        g_ccp_handles[CCP_INSTANCE_2]->EventCallback)
+    if (g_ccp_callbacks[CCP_INSTANCE_2])
     {
-        g_ccp_handles[CCP_INSTANCE_2]->EventCallback();
+        g_ccp_callbacks[CCP_INSTANCE_2]();
     }
 }
