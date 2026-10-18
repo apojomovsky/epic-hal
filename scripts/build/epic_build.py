@@ -692,9 +692,11 @@ def _path():
 
 
 # Canonical per family is the manifest's variants[-1] (docs/adding-a-device.md):
-# PR CI builds only this variant (half of variants x modules);
-# nightly/schedule builds every variant. Derived, never hand-maintained,
-# so the PR gate and the release installer gate build the same part.
+# the full sweep builds every variant; the PR gate builds the canonical plus
+# the smallest-flash variant (variants[0]), so a module that stops fitting
+# the smallest part fails on the PR path instead of at nightly. Both derived,
+# never hand-maintained, so the PR gate and the installer gate name the same
+# flagship part.
 def canonical_parts(manifest):
     return {
         name: fam.variants[-1]
@@ -702,16 +704,18 @@ def canonical_parts(manifest):
         if fam.variants
     }
 
-def cmd_matrix(args):
-    import os
-    manifest = epicmanifest.load(epicmanifest.default_path())
+
+def smallest_parts(manifest):
+    return {
+        name: fam.variants[0]
+        for name, fam in manifest.families.items()
+        if fam.variants
+    }
+
+
+def matrix_entries(manifest, canonical_only):
     canonicals = canonical_parts(manifest)
-    # --canonical-only or GITHUB_EVENT_NAME pull_request => canonical only
-    canonical_only = bool(getattr(args, "canonical_only", False))
-    if not canonical_only:
-        env = os.environ.get("GITHUB_EVENT_NAME", "")
-        if env == "pull_request":
-            canonical_only = True
+    smallest = smallest_parts(manifest)
     entries = []
     for fam in manifest.families.values():
         modules = []
@@ -720,15 +724,13 @@ def cmd_matrix(args):
             if not mcus or manifest.example_for(name, fam.name) is None:
                 continue
             if canonical_only:
-                canonical = canonicals.get(fam.name)
-                if canonical and canonical in mcus:
-                    mcus = [canonical]
-                elif canonical:
-                    # module does not support canonical (excluded) but supports family at all:
-                    # pick first supported so the module still gets built on this family
-                    mcus = [mcus[0]]
-                else:
-                    mcus = [mcus[0]]
+                legs = []
+                for part in (smallest.get(fam.name), canonicals.get(fam.name)):
+                    if part is not None and part in mcus and part not in legs:
+                        legs.append(part)
+                # module supports neither end of the family (both excluded):
+                # keep the old fallback so it still gets built on this family
+                mcus = legs or [mcus[0]]
             modules.append(f"{name}={','.join(mcus)}")
         if modules:
             entries.append({
@@ -736,6 +738,19 @@ def cmd_matrix(args):
                 "dfp": epicmanifest.dfp_name(fam),
                 "modules": ";".join(modules),
             })
+    return entries
+
+
+def cmd_matrix(args):
+    import os
+    manifest = epicmanifest.load(epicmanifest.default_path())
+    # --canonical-only or GITHUB_EVENT_NAME pull_request => smallest+canonical
+    canonical_only = bool(getattr(args, "canonical_only", False))
+    if not canonical_only:
+        env = os.environ.get("GITHUB_EVENT_NAME", "")
+        if env == "pull_request":
+            canonical_only = True
+    entries = matrix_entries(manifest, canonical_only)
     if not entries:
         sys.exit("manifest yields no buildable (module, MCU) pairs")
     print(json.dumps(entries))
@@ -783,7 +798,7 @@ def main():
     b.set_defaults(func=cmd_build)
 
     m = sub.add_parser("matrix", help="print the CI build matrix as JSON")
-    m.add_argument("--canonical-only", action="store_true", help="emit only the canonical variant per family (PR CI)")
+    m.add_argument("--canonical-only", action="store_true", help="emit the canonical plus smallest-flash variant per family (PR CI)")
     m.set_defaults(func=cmd_matrix)
 
     r = sub.add_parser("report", help="parse flash/RAM usage from a build log")
