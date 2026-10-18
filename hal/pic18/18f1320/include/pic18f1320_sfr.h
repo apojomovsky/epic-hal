@@ -302,13 +302,13 @@
 #define PIC_IPR2_TMR3IP       EPIC_BIT(1)
 
 /* Reset values (POR). DS39605F Table 5-1 + Register 4-1 reset notes.
- * RCON after POR: IPEN=0, bit 6 unimplemented, RI=0, TO=1, PD=1, POR=1,
- * BOR=1 (POR/BOR set per Register 4-1 Note 1). IPR1/IPR2 default to
- * all-high priority. T0CON resets to 0xFF (on, 8-bit, external, no
- * prescaler). */
+ * RCON after POR: IPEN=0, bit 6 unimplemented, RI/TO/PD set, POR/BOR
+ * cleared (both "a reset occurred" flags read 0 at power-on, the same
+ * shape as the 6520 image). IPR1/IPR2 default to all-high priority.
+ * T0CON resets to 0xFF (on, 8-bit, external, no prescaler). */
 #define PIC_STATUS_POR_VALUE     0x00U
 #define PIC_BSR_POR_VALUE        0x00U
-#define PIC_RCON_POR_VALUE       0x57U
+#define PIC_RCON_POR_VALUE       0x1CU
 #define PIC_INTCON_POR_VALUE     0x00U
 #define PIC_INTCON2_POR_VALUE    0xFBU
 #define PIC_INTCON3_POR_VALUE    0xC0U

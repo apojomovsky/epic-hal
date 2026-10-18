@@ -15,8 +15,8 @@
 
 /*
  * Expected register image: T0CON = 0xC7 (8-bit, Fosc/4, 1:256, ON);
- * INTCON = 0xE0 (GIE/GIEL/TMR0IE); INTCON2 = 0xFB; RCON = 0xD7 (POR
- * 0x57 | IPEN); TRISB = 0xFE (RB0 out); LATB = 0x00 (starts low).
+ * INTCON = 0xE0 (GIE/GIEL/TMR0IE); INTCON2 = 0xFB; RCON = 0xDC (POR
+ * 0x5C | IPEN); TRISB = 0xFE (RB0 out); LATB = 0x00 (starts low).
  */
 
 /** @brief Family-local harness extension: no-op on the CMake host build
@@ -56,6 +56,7 @@ static void on_t0_overflow(void)
  * @brief  IRQ-core smoke test: enable the Timer0 interrupt, let it fire,
  *         then read back the enable and a live fired flag through the
  *         literal-token path and report.
+ * @return Harness result: 0 on PASS, 1 on FAIL.
  */
 int main(void)
 {
