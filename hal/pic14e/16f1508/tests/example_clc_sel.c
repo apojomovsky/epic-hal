@@ -114,7 +114,7 @@ int main(void)
     EPIC_REG8(PIC_REG_T1CON) = 0U;
 
     /* T2_match is the PR2 match ahead of the 1:4 postscaler: it pulses on
-     * every second step while TMR2IF stays clear for the first eight. */
+     * every second step while TMR2IF waits for the fourth match. */
     EPIC_REG8(PIC_REG_PR2) = 1U;
     EPIC_REG8(PIC_REG_T2CON) = (uint8_t)(PIC_T2CON_TMR2ON | (3U << PIC_T2CON_T2OUTPS_SHIFT));
     epic_harness_tick();

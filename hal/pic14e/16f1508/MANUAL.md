@@ -312,14 +312,15 @@ unclocked: Figure 24-1 (page 257) clocks only the readable LCxOUT/MLCxOUT
 flop at Q1, while the wire to the other peripherals, the pin and the edge
 detectors is combinational, and the datasheet gives no propagation figure.
 The one-step delay is therefore a host approximation, visible only when a
-cascade feeds a clocked mode. Sources with no sim
-behind them (comparators, FOSC, T0 overflow, NCO, PWM, EUSART, MSSP, the
-internal oscillators) read 0. Covered by the host probe `example_clc_sel`.
-A demo that needs an inter-cell wire can still close it through the hook:
-the debouncer probe re-drives STAGE2 D2 from the live STAGE1 output each
-half clock, so the AND the STAGE2 gate evaluates is the cell's own. LCxOE
-does not drive a pin in the sim: the output-pin mapping is unverified, so
-only the mirrors observe it.
+cascade feeds a clocked mode. Sources with no sim behind them (comparators,
+FOSC, T0 overflow, NCO, PWM, EUSART, MSSP, the internal oscillators) read 0.
+Several wraps or matches inside one multi-tick step collapse into one pulse,
+since the CLC samples once per step. Covered by the host probe
+`example_clc_sel`. A demo that needs an inter-cell wire can still close it
+through the hook: the debouncer probe re-drives STAGE2 D2 from the live
+STAGE1 output each half clock, so the AND the STAGE2 gate evaluates is the
+cell's own. LCxOE does not drive a pin in the sim: the output-pin mapping is
+unverified, so only the mirrors observe it.
 
 Timers advance one instruction cycle per tick: TMR2 applies the T2CKPS
 prescaler, matches TMR2 against PR2 with reset to 0, and divides matches
