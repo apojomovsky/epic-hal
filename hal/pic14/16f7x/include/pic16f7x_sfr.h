@@ -161,6 +161,7 @@
 #define PIC_T2CON_POR_VALUE      0x00U
 #define PIC_ADCON0_POR_VALUE     0x00U
 #define PIC_ADCON1_POR_VALUE     0x00U
+#define PIC_OPTION_POR_VALUE     0xFFU
 
 /* OPTION_REG bits (Timer0 + WDT). */
 #define PIC_OPTION_RBPU         EPIC_BIT(7)
