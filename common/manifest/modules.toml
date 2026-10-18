@@ -1647,15 +1647,26 @@ sources = [
 ]
 config  = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
-# HARNESS=sim: the LVD readback gate. A real trip point cannot be
-# stimulated headless, so a PASS proves the LVDCON power-on image and the
-# LVDL/LVDEN readback through Init/Start/Stop only; the trip callback and
-# IRVST settling are covered by the host sim (tests/example_lvd.c). The
-# Timer4 match probe (tests/example_timer4.c) runs on the host only, since
-# each variant carries one sim gate. Reporting on RA0 in MODE=gpio (no
-# EUSART in the foundation).
-# WDT=OFF like every other sim variant.
+# HARNESS=sim: the Timer4 match gate (default). The PR4 match raises
+# PIR3<TMR4IF> and the ISR counts it, so a PASS also proves the
+# interrupt core (enable bit, flag, priority, vector, dispatch) that
+# the Timer0 tests/example_irq.c smoke covers on the host
+# (docs/adding-a-device.md §5.5). Reporting on RA0 in MODE=gpio (no
+# EUSART in the foundation). WDT=OFF like every other sim variant.
 [modules."hal/pic18/18f6520".example.PIC18F6520.sim]
+name        = "timer4-match"
+harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
+sources     = [
+  "tests/example_timer4.c",
+]
+config      = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+
+# Second HARNESS=sim gate: the LVD readback. A real trip point cannot
+# be stimulated headless, so a PASS proves the LVDCON power-on image
+# and the LVDL/LVDEN readback through Init/Start/Stop only; the trip
+# callback and IRVST settling are covered by the host sim
+# (tests/example_lvd.c). Same RA0 gpio reporting as the default gate.
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim_gates.lvd]
 name        = "lvd-readback"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [

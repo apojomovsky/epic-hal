@@ -85,6 +85,19 @@ name    = "firmware"
 sources = ["tests/example_blink.c"]
 config  = { OSC = "HS", BOR = "ON", WDT = "OFF", WDTPS = "128" }
 
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim]
+name        = "timer4-match"
+harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
+sources     = ["tests/example_timer4.c"]
+config      = { OSC = "HS", BOR = "ON", WDT = "OFF", WDTPS = "128" }
+
+[modules."hal/pic18/18f6520".example.PIC18F6520.sim_gates.lvd]
+name        = "lvd-readback"
+harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
+sources     = ["tests/example_lvd.c"]
+config      = { OSC = "HS", BOR = "ON", LVDL = "27", WDT = "OFF", WDTPS = "128" }
+depends_on  = ["lib/serial"]
+
 [modules."hal/pic18/18f1320"]
 summary    = "Tooling-test fixture."
 sources    = []
@@ -494,10 +507,11 @@ class TestDisplayPath(unittest.TestCase):
 
 class TestBuildScript(unittest.TestCase):
     def script(self, module="lib/tick", mcu="16F877A", dfp_dir="/opt/dfp", fosc_hz=None,
-              variant="target"):
+              variant="target", sim_gate=None):
         return epic_build.emit_build_script(
             load(), module, mcu,
             build_dir="build", dfp_dir=dfp_dir, fosc_hz=fosc_hz, variant=variant,
+            sim_gate=sim_gate,
         )
 
     def test_starts_with_a_posix_shebang_and_errexit(self):
@@ -605,12 +619,102 @@ class TestBuildScript(unittest.TestCase):
         self.assertNotIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", target)
         self.assertIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", sim)
         self.assertNotIn("common/src/core/epic_harness_target.c", sim)
-        self.assertIn("build/16F877A-tick-blink-sim.hex", sim)
+        self.assertIn("build/16F877A/16F877A-tick-blink-sim.hex", sim)
 
     def test_sim_variant_without_one_raises(self):
         with self.assertRaises(epic_build.UnsupportedError) as cm:
             self.script(module="lib/adcfilter", mcu="16F877A", variant="sim")
         self.assertIn("no sim variant", str(cm.exception))
+
+class TestSimGates(unittest.TestCase):
+    """A variant with more than one sim gate emits one firmware per gate."""
+
+    def test_default_gate_builds_at_the_legacy_paths(self):
+        s = epic_build.emit_build_script(
+            load(), "hal/pic18/18f6520", "18F6520",
+            build_dir="build", dfp_dir="/opt/dfp", variant="sim")
+        self.assertIn("tests/example_timer4.c", s)
+        self.assertNotIn("tests/example_lvd.c", s)
+        self.assertIn("build/18F6520/18F6520-timer4-match.hex", s)
+
+    def test_extra_gate_builds_in_its_own_objdir(self):
+        s = epic_build.emit_build_script(
+            load(), "hal/pic18/18f6520", "18F6520",
+            build_dir="build", dfp_dir="/opt/dfp", variant="sim",
+            sim_gate="lvd-readback")
+        self.assertIn("tests/example_lvd.c", s)
+        self.assertNotIn("tests/example_timer4.c", s)
+        self.assertIn("LVDL = 27", epic_build.emit_config_source(
+            load(), "hal/pic18/18f6520", "18F6520", variant="sim",
+            sim_gate="lvd-readback"))
+        self.assertIn(
+            "build/18F6520-lvd-readback/18F6520-lvd-readback.hex", s)
+
+    def test_extra_gate_carries_its_own_dependencies(self):
+        # The lvd fixture gate depends on lib/serial; the timer4 gate
+        # does not, so only the lvd script compiles the serial sources.
+        lvd = epic_build.emit_build_script(
+            load(), "hal/pic18/18f6520", "18F6520",
+            build_dir="build", dfp_dir="/opt/dfp", variant="sim",
+            sim_gate="lvd-readback")
+        timer4 = epic_build.emit_build_script(
+            load(), "hal/pic18/18f6520", "18F6520",
+            build_dir="build", dfp_dir="/opt/dfp", variant="sim")
+        self.assertIn("lib/serial/src/epic_serial.c", lvd)
+        self.assertNotIn("lib/serial/src/epic_serial.c", timer4)
+
+    def test_unknown_gate_raises(self):
+        with self.assertRaises(epicmanifest.ManifestError) as cm:
+            epic_build.emit_build_script(
+                load(), "hal/pic18/18f6520", "18F6520",
+                build_dir="build", dfp_dir="/opt/dfp", variant="sim",
+                sim_gate="psp-probe")
+        self.assertIn("psp-probe", str(cm.exception))
+
+    def test_gate_without_sim_variant_raises(self):
+        with self.assertRaises(epic_build.UnsupportedError):
+            epic_build.emit_build_script(
+                load(), "lib/tick", "16F877A",
+                build_dir="build", dfp_dir="/opt/dfp", variant="target",
+                sim_gate="tick-sim")
+
+    def test_emit_all_writes_one_script_per_gate(self):
+        import argparse
+        args = argparse.Namespace(
+            module="hal/pic18/18f6520", mcu="18F6520", build_dir="build",
+            dfp_dir="", fosc_hz=None, variant="sim", toolchain="xc8",
+            epic_cc="epic-cc", run=False, sim_gate=None,
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            old, epic_build.REPO = epic_build.REPO, pathlib.Path(tmp)
+            try:
+                epic_build.cmd_build(args)
+            finally:
+                epic_build.REPO = old
+            root = pathlib.Path(tmp) / "build"
+            self.assertTrue((root / "18F6520" / "build.sh").exists())
+            self.assertTrue(
+                (root / "18F6520-lvd-readback" / "build.sh").exists())
+            self.assertTrue(
+                (root / "18F6520-lvd-readback" / "config_18F6520.c").exists())
+
+    def test_emit_single_gate_writes_only_that_gate(self):
+        import argparse
+        args = argparse.Namespace(
+            module="hal/pic18/18f6520", mcu="18F6520", build_dir="build",
+            dfp_dir="", fosc_hz=None, variant="sim", toolchain="xc8",
+            epic_cc="epic-cc", run=False, sim_gate="lvd-readback",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            old, epic_build.REPO = epic_build.REPO, pathlib.Path(tmp)
+            try:
+                epic_build.cmd_build(args)
+            finally:
+                epic_build.REPO = old
+            root = pathlib.Path(tmp) / "build"
+            self.assertFalse((root / "18F6520" / "build.sh").exists())
+            self.assertTrue(
+                (root / "18F6520-lvd-readback" / "build.sh").exists())
 
 
 class TestModuleForm(unittest.TestCase):

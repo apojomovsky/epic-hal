@@ -292,14 +292,14 @@ epiccc-sim-sizes:
 # python3.
 mdb-test: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
-		echo "usage: make mdb-test MODULE=<module id or dir> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio] [GPIO_REG=<reg>] [EXTRA_MDB=<mdb commands>] [EEPROM_WRITES=<n>]" >&2; \
+		echo "usage: make mdb-test MODULE=<module id or dir> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio] [GPIO_REG=<reg>] [EXTRA_MDB=<mdb commands>] [EEPROM_WRITES=<n>] [SIM_GATE=<gate>]" >&2; \
 		echo "  MODE=uart (default) for PIC16F87XA/PIC18Fxxxx (UART capture);" >&2; \
 		echo "  MODE=gpio for PIC16F193X/PIC16F1508/PIC16F188XX (RA0 register readback);" >&2; \
 		echo "  GPIO_REG=LATA for the PIC18F2520/2320/6520 gpio gates (PORTA does not mirror the latch under MPSIM)." >&2; \
 		echo "  EXTRA_MDB: extra mdb commands inserted before quit, e.g." >&2; \
 		echo "    EXTRA_MDB=\$'print INTCON\\nprint PIR1' for register-level debugging." >&2; \
 		echo "  EEPROM_WRITES: halt+complete EEPROM-write cycles emitted before the final run" >&2; \
-		echo "    (MPLAB SIM never completes a CPU-executed EEPROM write; only lib/settings' gate needs this)." >&2; \
+		echo "  SIM_GATE: an extra manifest sim gate by name (empty runs the default gate)." >&2; \
 		echo "  e.g. make mdb-test MODULE=lib/tick MCU=16F877A DEVICE=PIC16F877A" >&2; \
 		exit 1; \
 	fi
@@ -311,7 +311,7 @@ mdb-test: image
 	$(DOCKER_RUN) env \
 	  $(if $(filter gpio,$(MODE)),$(if $(GPIO_REG),GPIO_REG=$(GPIO_REG),),) \
 	  $(if $(filter toggle,$(or $(MODE),uart)),TOGGLE_REG=$(or $(REG),PORTB) TOGGLE_BIT=$(or $(BIT),0) TOGGLE_SAMPLES=$(or $(SAMPLES),12) TOGGLE_STEPI=$(or $(STEPI),200000),) \
-	  scripts/sim/sim-mdb-run.sh local $(MCU) $(DEVICE) $$MID $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)" $(or $(EEPROM_WRITES),$(if $(filter lib/settings,$(patsubst %/,%,$(MODULE))),24,0))
+	  scripts/sim/sim-mdb-run.sh local $(MCU) $(DEVICE) $$MID $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)" $(or $(EEPROM_WRITES),$(if $(filter lib/settings,$(patsubst %/,%,$(MODULE))),24,0)) "$(SIM_GATE)"
 
 mdb-epiccc: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \

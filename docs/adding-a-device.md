@@ -463,6 +463,10 @@ assumes the previous ones are done and verified, not just written):
    - `scripts/ci/ci-target-sim.sh`'s `run_one` pilot list needs a line for
      the family. Omit it and the family's mdb leg matches nothing and
      passes vacuously, which reads as coverage and is not.
+   - A second `HARNESS=sim` gate on one MCU (`sim_gates`) needs its own
+     `run_one` line naming the gate; the default gate stays bare.
+     `test_sim_variant_sync.py` enforces one line per gate at review
+     time, so a gate with no line fails before it can pass vacuously.
    - `.github/workflows/family-check.yml`'s inline module/part list
      needs the family's canonical part, or no `HARNESS=sim` build script
      is emitted and the mdb step has nothing to run.

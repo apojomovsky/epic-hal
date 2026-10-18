@@ -768,6 +768,98 @@ class TestEpicccSimHalSources(unittest.TestCase):
         with self.assertRaises(epicmanifest.ManifestError):
             epicmanifest.load(write(noharness))
 
+SIMGATES = MINIMAL + """
+[modules."lib/tick".example.PIC16F87XA.sim_gates.second]
+name        = "tick-second"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
+sources     = ["examples/example_second.c"]
+config      = { FOSC = "HS", WDTE = "OFF" }
+depends_on  = ["lib/serial"]
+
+[modules."lib/tick".example.PIC16F87XA.sim_gates.second.variants.16F873A]
+name        = "tick-second-873"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
+sources     = ["examples/example_second.c"]
+config      = { FOSC = "HS", WDTE = "OFF" }
+"""
+
+
+class TestSimGates(unittest.TestCase):
+    def setUp(self):
+        self.m = epicmanifest.load(write(SIMGATES))
+
+    def test_gates_list_default_first_then_extras(self):
+        gates = self.m.sim_gates_for("lib/tick", "PIC16F87XA", "16F877A")
+        self.assertEqual([g.name for g in gates],
+                         ["tick-blink-sim", "tick-second"])
+
+    def test_extra_applies_its_own_mcu_variant(self):
+        gates = self.m.sim_gates_for("lib/tick", "PIC16F87XA", "16F873A")
+        self.assertEqual([g.name for g in gates],
+                         ["tick-blink-sim", "tick-second-873"])
+
+    def test_no_sim_means_no_gates(self):
+        self.assertEqual(
+            self.m.sim_gates_for("lib/tick", "PIC18Fxx5x", "18F4550"), [])
+
+    def test_unknown_gate_raises(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            self.m.sim_gate_for("lib/tick", "PIC16F87XA", "16F877A",
+                                "tick-third")
+
+    def test_sources_follow_the_selected_gate(self):
+        sim = self.m.sources_for("lib/tick", "16F877A", variant="sim")
+        second = self.m.sources_for("lib/tick", "16F877A", variant="sim",
+                                    sim_gate="tick-second")
+        self.assertIn("lib/tick/examples/example_tick.c", sim)
+        self.assertIn("lib/tick/examples/example_second.c", second)
+        self.assertNotIn("lib/tick/examples/example_second.c", sim)
+
+    def test_deps_follow_the_selected_gate(self):
+        # Only the extra gate declares the serial dep, so only its
+        # build links the serial library.
+        sim = self.m.sources_for("lib/tick", "16F877A", variant="sim")
+        second = self.m.sources_for("lib/tick", "16F877A", variant="sim",
+                                    sim_gate="tick-second")
+        self.assertNotIn("lib/serial/src/epic_serial.c", sim)
+        self.assertIn("lib/serial/src/epic_serial.c", second)
+
+    def test_base_mcu_override_replaces_the_whole_gate_set(self):
+        override = SIMGATES + """
+[modules."lib/tick".example.PIC16F87XA.sim.variants.16F873A]
+name        = "tick-873"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
+config      = { FOSC = "HS", WDTE = "OFF" }
+"""
+        m = epicmanifest.load(write(override))
+        gates = m.sim_gates_for("lib/tick", "PIC16F87XA", "16F873A")
+        self.assertEqual([g.name for g in gates], ["tick-873"])
+        gates = m.sim_gates_for("lib/tick", "PIC16F87XA", "16F877A")
+        self.assertEqual([g.name for g in gates],
+                         ["tick-blink-sim", "tick-second"])
+
+    def test_duplicate_gate_names_rejected(self):
+        dup = SIMGATES.replace('name        = "tick-second"',
+                               'name        = "tick-blink-sim"', 1)
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(dup))
+
+    def test_unknown_sim_key_rejected(self):
+        bad = SIMGATES.replace(
+            '[modules."lib/tick".example.PIC16F87XA.sim_gates.second]',
+            '[modules."lib/tick".example.PIC16F87XA.sim_gates.second]\nmode = "gpio"',
+            1)
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(bad))
+
+    def test_unknown_example_key_rejected(self):
+        bad = MINIMAL.replace(
+            '[modules."lib/tick".example.PIC16F87XA]\nname    = "tick-blink"',
+            '[modules."lib/tick".example.PIC16F87XA]\nname    = "tick-blink"\nsim_typo  = {}',
+            1)
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(bad))
+
 
 class TestRootAnchoredPaths(unittest.TestCase):
     """Cross-module manifest paths hang off the repo root (epic-hal#313):

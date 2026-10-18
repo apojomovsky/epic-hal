@@ -3,6 +3,8 @@
 # scripts/sim/sim-mdb-run.sh. wait_ms is wall-clock. Exits 1 on any failure.
 # Usage: ci-target-sim.sh [summary.md]; REPEAT=N; FAMILY=<fam> (sharded CI);
 # PARALLEL=N (sim-mdb-run.sh temps are PID-suffixed).
+# run_one takes an optional 10th arg naming an extra manifest sim gate
+# (empty: the default gate); one line per gate for multi-gate MCUs.
 
 set -uo pipefail
 
@@ -25,6 +27,12 @@ fail=0
 
 run_one() {
   family="$1"; mcu="$2"; device="$3"; module="$4"; wait_ms="$5"; mode="$6"; eeprom_writes="${7:-}"
+  # Arg 10 names an extra manifest sim gate (empty: the default gate).
+  # A module whose MCU resolves several gates carries one run_one line
+  # per gate; the extra lines name their gate here.
+  sim_gate="${10:-}"
+  gate_label=""
+  [ -n "$sim_gate" ] && gate_label=" ${sim_gate}"
   # Per-call toggle-gate overrides: TOGGLE_REG / TOGGLE_STEPI. The
   # global TOGGLE_REG=LATB export above serves the PIC18F1320 gate; a
   # family whose gate must sample a different register or step size
@@ -61,29 +69,29 @@ run_one() {
   local n pass=0
   for n in $(seq 1 "$repeat"); do
     if [ -n "$tog_env" ]; then
-      if env $tog_env scripts/sim/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
+      if env $tog_env scripts/sim/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes" "$sim_gate"; then
         pass=$((pass + 1))
       else
         echo "FAIL (run ${n}/${repeat}): ${family} ${mcu} ${module}"
       fi
     elif [ -n "$gpio_reg_env" ]; then
-      if env "$gpio_reg_env" scripts/sim/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
+      if env "$gpio_reg_env" scripts/sim/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes" "$sim_gate"; then
         pass=$((pass + 1))
       else
         echo "FAIL (run ${n}/${repeat}): ${family} ${mcu} ${module}"
       fi
-    elif scripts/sim/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes"; then
+    elif scripts/sim/sim-mdb-run.sh "$family" "$mcu" "$device" "$module" "$wait_ms" "$mode" "" "$eeprom_writes" "$sim_gate"; then
       pass=$((pass + 1))
     else
       echo "FAIL (run ${n}/${repeat}): ${family} ${mcu} ${module}"
     fi
   done
   if [ "$pass" -eq "$repeat" ]; then
-    echo "PASS: ${family} ${mcu} ${module}"
-    echo "| ${family} | ${mcu} | ${module} | PASS (${pass}/${repeat}) |" >> "$summary"
+    echo "PASS: ${family} ${mcu} ${module}${gate_label}"
+    echo "| ${family} | ${mcu} | ${module}${gate_label} | PASS (${pass}/${repeat}) |" >> "$summary"
   else
-    echo "FAIL: ${family} ${mcu} ${module} (${pass}/${repeat} runs passed)"
-    echo "| ${family} | ${mcu} | ${module} | FAIL (${pass}/${repeat}) |" >> "$summary"
+    echo "FAIL: ${family} ${mcu} ${module}${gate_label} (${pass}/${repeat} runs passed)"
+    echo "| ${family} | ${mcu} | ${module}${gate_label} | FAIL (${pass}/${repeat}) |" >> "$summary"
     fail=1
     return 1
   fi
@@ -107,6 +115,7 @@ run_one pic18fxx5x 18F4550 PIC18F4550 hal/pic18/18fxx5x 5000 uart
 run_one pic18f2520 18F2320 PIC18F2320 hal/pic18/18f2520 5000 gpio
 run_one pic18f2520 18F2520 PIC18F2520 hal/pic18/18f2520 5000 gpio
 run_one pic18f6520 18F6520 PIC18F6520 hal/pic18/18f6520 5000 gpio
+run_one pic18f6520 18F6520 PIC18F6520 hal/pic18/18f6520 5000 gpio "" "" "" lvd-readback
 run_one pic18fxx5x 18F4550 PIC18F4550 lib/pid 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A lib/fsm 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A lib/adcfilter 5000 uart
