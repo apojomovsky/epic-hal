@@ -1,10 +1,10 @@
 /**
  * PIC16F18855 interrupt contract. Sources: IOC and Timer0 (PIR0/PIE0 bits
  * 4 and 5), MSSP1 event and EUSART TX/RX (PIR3/PIE3 bits 0, 4 and 5),
- * Timer1 and Timer2 (PIR4/PIE4 bits 0 and 1), each gated by INTCON.PEIE;
- * enabling one sets PEIE. The dispatcher (epic_dispatch_all_irqs)
- * acknowledges enabled ones. Single vector, no priority levels, hardware
- * context save.
+ * Timer1 and Timer2 (PIR4/PIE4 bits 0 and 1), NCO1 overflow and NVM write
+ * complete (PIR7/PIE7 bits 4 and 5), each gated by INTCON.PEIE; enabling
+ * one sets PEIE. The dispatcher (epic_dispatch_all_irqs) acknowledges
+ * enabled ones. Single vector, no priority levels, hardware context save.
  */
 #ifndef PIC16F188XX_IRQ_H
 #define PIC16F188XX_IRQ_H
@@ -21,7 +21,9 @@ typedef enum
     PIC16F188XX_IRQ_USART_TX = 3,
     PIC16F188XX_IRQ_USART_RX = 4,
     PIC16F188XX_IRQ_TMR1     = 5,
-    PIC16F188XX_IRQ_TMR2     = 6
+    PIC16F188XX_IRQ_TMR2     = 6,
+    PIC16F188XX_IRQ_EEPROM   = 7,
+    PIC16F188XX_IRQ_NCO1     = 8
 } PIC16F188XX_IRQn;
 
 /**
@@ -37,7 +39,7 @@ uint8_t EPIC_IRQ_Disable(void);
 void EPIC_IRQ_Restore(uint8_t prev_state);
 
 /**
- * @brief Enable an interrupt source (its PIE0 or PIE3 bit; also sets PEIE).
+ * @brief Enable an interrupt source (its PIE0, PIE3 or PIE7 bit; also sets PEIE).
  * @param irq Source to enable.
  */
 void EPIC_IRQ_Enable(PIC16F188XX_IRQn irq);
@@ -74,7 +76,8 @@ void EPIC_IRQ_SetPriority(PIC16F188XX_IRQn irq, EPIC_IRQ_Priority prio);
  * @brief Shared interrupt dispatcher, called from the single interrupt vector.
  * @details Runs IOC_IRQHandler when the IOC flag and enable are both set,
  * then TIMER0_IRQHandler for TMR0, then SSP_IRQHandler, USART_TX_IRQHandler
- * and USART_RX_IRQHandler for their PIR3 flags, each gated the same way.
+ * and USART_RX_IRQHandler for their PIR3 flags, then EEPROM_IRQHandler and
+ * NCO_IRQHandler for their PIR7 flags, each gated the same way.
  * INT and the bus-collision flag have no handler and no API enables them,
  * so no other source can reach the vector.
  */

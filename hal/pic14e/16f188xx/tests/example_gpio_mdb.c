@@ -53,6 +53,17 @@
  * START request, an SPI byte where the target shifts it (MPLAB SIM does
  * not) and a software-set SSP1IF that vectors. The PPS lock section runs
  * last; the gate config sets PPS1WAY=OFF so the unlock path is real.
+ *
+ * Data EEPROM, NCO1, WDT and Idle come before the PPS lock. The EEPROM
+ * read leaves NVMADR at 0xF0xx with NVMCON1 = NVMREGS (0x40); a write
+ * leaves its address and data in NVMADR/NVMDATL with NVMREGS and WREN set
+ * (0x44) until polled complete (0x40), and the bytes read back through
+ * NVM. NCO1 images: pulse mode, width 8, inverted, increment 0x12345 reads
+ * NCO1CON 0x11 (N1OUT masked), NCO1CLK 0x60, NCO1INC 0x012345; the
+ * accumulator takes 0xABCDE while stopped; DeInit restores NCO1INCL 0x01
+ * and zeroes the rest. WDTCON0 reads (WDTPS << 1) | SWDTEN for 1 ms
+ * (0x01), 2 s (0x17) and 256 s (0x25). Idle wakes on a WDT time-out and
+ * leaves CPUDOZE<IDLEN> clear.
  */
 #include "pic16f188xx.h"
 #include "peripherals/pic16f188xx_gpio.h"
@@ -62,6 +73,9 @@
 #include "peripherals/pic16f188xx_pps.h"
 #include "peripherals/pic16f188xx_usart.h"
 #include "peripherals/pic16f188xx_ssp.h"
+#include "peripherals/pic16f188xx_eeprom.h"
+#include "peripherals/pic16f188xx_nco.h"
+#include "core/pic16f188xx_wdt_sleep.h"
 #include "core/pic16f188xx_irq.h"
 #include "core/epic_harness.h"
 
@@ -307,6 +321,167 @@ static int gate_ssp(void)
     ok &= ((EPIC_REG8(PIC_REG_PIR3) & PIC_PIR3_SSP1IF) == 0U);
     ok &= (EPIC_SSP_DeInit() == EPIC_OK);
     ok &= ((EPIC_REG8(PIC_REG_PIE3) & PIC_PIE3_SSP1IE) == 0U);
+    return ok;
+}
+
+/**
+ * @brief Spin until the EEPROM write finishes, bounded.
+ * @details MPLAB SIM 6.35 clears WR at once on a CPU-executed write to
+ * this part and sets no NVMIF (2026-10, 16F18877), so the bound is never
+ * reached there; it keeps the probe from hanging on a target where the
+ * write never completes.
+ * @return 1 when the write finished, 0 when the bound ran out.
+ */
+static int eeprom_wait(void)
+{
+    unsigned int spin;
+
+    for (spin = 0U; spin < 60000U; spin++)
+    {
+        if (EPIC_EEPROM_IsWriteComplete() != 0U)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/**
+ * @brief Data EEPROM section: read and write register images, with the
+ *        written bytes read back through NVM.
+ * @details The read image is NVMADR 0xF0xx with NVMCON1 = NVMREGS. A write
+ * leaves its address, data and NVMCON1 = NVMREGS|WREN (0x44) until polled
+ * complete, which drops WREN (0x40). Blank-cell contents are not asserted:
+ * MPLAB SIM's initial EEPROM is its own.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static int gate_eeprom(void)
+{
+    int ok = 1;
+
+    ok &= (EPIC_EEPROM_Init(NULL) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_NVMCON1) == 0x00U);
+    (void)EPIC_EEPROM_ReadByte(0x10U);
+    ok &= (EPIC_REG8(PIC_REG_NVMADRL) == 0x10U);
+    ok &= (EPIC_REG8(PIC_REG_NVMADRH) == 0xF0U);
+    ok &= (EPIC_REG8(PIC_REG_NVMCON1) == 0x40U);
+
+    ok &= (EPIC_EEPROM_WriteByte(0x42U, 0xA5U) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_NVMADRL) == 0x42U);
+    ok &= (EPIC_REG8(PIC_REG_NVMADRH) == 0xF0U);
+    ok &= (EPIC_REG8(PIC_REG_NVMDATL) == 0xA5U);
+    ok &= ((EPIC_REG8(PIC_REG_NVMCON1) & (PIC_NVMCON1_NVMREGS | PIC_NVMCON1_WREN)) ==
+           (PIC_NVMCON1_NVMREGS | PIC_NVMCON1_WREN));
+    ok &= eeprom_wait();
+    ok &= (EPIC_REG8(PIC_REG_NVMCON1) == 0x40U);
+    ok &= (EPIC_EEPROM_HasWriteError() == 0U);
+    ok &= (EPIC_EEPROM_ReadByte(0x42U) == 0xA5U);
+
+    ok &= (EPIC_EEPROM_WriteByte(0xFFU, 0x5AU) == EPIC_OK);
+    ok &= eeprom_wait();
+    ok &= (EPIC_EEPROM_ReadByte(0xFFU) == 0x5AU);
+    ok &= (EPIC_EEPROM_ReadByte(0x42U) == 0xA5U);
+    ok &= (EPIC_EEPROM_HasWriteError() == 0U);
+    ok &= (EPIC_EEPROM_DeInit() == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_NVMCON1) == 0x00U);
+    return ok;
+}
+
+/**
+ * @brief NCO1 section: register images only, no output timing.
+ * @details N1OUT is live read-only status (MPLAB SIM keeps the last level
+ * after the module is disabled), so it masks out of the NCO1CON images.
+ * @return 1 when every readback matches, 0 otherwise.
+ */
+static int gate_nco(void)
+{
+    int ok = 1;
+    NCO_HandleTypeDef h = NCO_HANDLE_DEFAULT;
+
+    h.Mode = NCO_MODE_PFM;
+    h.PulseWidth = NCO_PULSE_8;
+    h.Invert = 1U;
+    h.Increment = 0x12345UL;
+    ok &= (EPIC_NCO_Init(&h) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_NCO1CON) & (uint8_t)~PIC_NCO1CON_N1OUT) == 0x11U);
+    ok &= (EPIC_REG8(PIC_REG_NCO1CLK) == 0x60U);
+    ok &= (EPIC_REG8(PIC_REG_NCO1INCU) == 0x01U);
+    ok &= (EPIC_REG8(PIC_REG_NCO1INCH) == 0x23U);
+    ok &= (EPIC_REG8(PIC_REG_NCO1INCL) == 0x45U);
+    ok &= (EPIC_NCO_GetIncrement() == 0x12345UL);
+    ok &= (EPIC_NCO_WriteAccumulator(0xABCDEUL) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_NCO1ACCU) == 0x0AU);
+    ok &= (EPIC_REG8(PIC_REG_NCO1ACCH) == 0xBCU);
+    ok &= (EPIC_REG8(PIC_REG_NCO1ACCL) == 0xDEU);
+    ok &= (EPIC_NCO_ReadAccumulator() == 0xABCDEUL);
+    ok &= (EPIC_NCO_Start() == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_NCO1CON) & PIC_NCO1CON_N1EN) != 0U);
+    ok &= (EPIC_NCO_WriteAccumulator(0UL) == EPIC_BUSY);
+    ok &= (EPIC_NCO_Stop() == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_NCO1CON) & PIC_NCO1CON_N1EN) == 0U);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 2U, PPS_OUTPUT_NCO1) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_RA0PPS + 2U) == 0x19U);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 2U, PPS_OUTPUT_LAT) == EPIC_OK);
+    ok &= (EPIC_NCO_DeInit() == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_NCO1CON) & (uint8_t)~PIC_NCO1CON_N1OUT) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_NCO1CLK) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_NCO1INCU) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_NCO1INCH) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_NCO1INCL) == 0x01U);
+    ok &= (EPIC_REG8(PIC_REG_NCO1ACCU) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_NCO1ACCH) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_NCO1ACCL) == 0x00U);
+    return ok;
+}
+
+/**
+ * @brief Idle section: EPIC_Idle_Enter wakes on a WDT time-out.
+ * @details The gate config has WDTE=SWDTEN, so the watchdog runs only
+ * between EPIC_WDT_Enable and EPIC_WDT_Disable. In Sleep and Idle a
+ * time-out wakes the part without a Reset (DS40001802D §9.6), so execution
+ * resumes after the SLEEP. MPLAB SIM does not run Timer0 in Idle (2026-10,
+ * 16F18877: TMR0 stayed frozen under IDLEN), so no peripheral wake is
+ * used. The host simulator does not stop at SLEEP and only counts it.
+ * IDLEN must be clear again afterwards.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static int gate_idle(void)
+{
+    int ok = 1;
+    uint8_t gie = EPIC_IRQ_Disable();
+
+    ok &= (EPIC_WDT_Enable(WDT_PERIOD_1MS) == EPIC_OK);
+    EPIC_Idle_Enter();
+    ok &= (EPIC_WDT_Disable() == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_CPUDOZE) & PIC_CPUDOZE_IDLEN) == 0U);
+    EPIC_IRQ_Restore(gie);
+    return ok;
+}
+
+/**
+ * @brief WDT section: period images, validation and Refresh.
+ * @details The gate config has WDTE=SWDTEN, so the watchdog runs between
+ * EPIC_WDT_Enable and EPIC_WDT_Disable. Each Enable rewrites WDTCON0,
+ * which clears the WDT (DS40001802D §9.5), so no period elapses before
+ * the next image check; Refresh (read WDTCON0, clrwdt) runs once disabled.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static int gate_wdt(void)
+{
+    int ok = 1;
+
+    ok &= (EPIC_WDT_Enable(WDT_PERIOD_1MS) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_WDTCON0) == 0x01U);
+    ok &= (EPIC_WDT_Enable(WDT_PERIOD_2S) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_WDTCON0) == 0x17U);
+    ok &= (EPIC_WDT_Enable(WDT_PERIOD_256S) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_WDTCON0) == 0x25U);
+    ok &= (EPIC_WDT_Enable((WDT_PeriodTypeDef)19) == EPIC_INVALID);
+    ok &= (EPIC_REG8(PIC_REG_WDTCON0) == 0x25U);
+    ok &= (EPIC_WDT_Disable() == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_WDTCON0) == 0x24U);
+    EPIC_WDT_Refresh();
+    ok &= (EPIC_REG8(PIC_REG_WDTCON0) == 0x24U);
     return ok;
 }
 
@@ -723,6 +898,10 @@ int main(void)
     ok &= gate_pps();
     ok &= gate_usart();
     ok &= gate_ssp();
+    ok &= gate_eeprom();
+    ok &= gate_nco();
+    ok &= gate_wdt();
+    ok &= gate_idle();
     ok &= gate_pps_lock();
 
     int rc = epic_harness_report(ok);

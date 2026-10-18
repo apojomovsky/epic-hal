@@ -46,11 +46,16 @@ set(EPIC_SOURCES
     src/peripherals/pic16f188xx_pps.c
     src/peripherals/pic16f188xx_usart.c
     src/peripherals/pic16f188xx_ssp.c
+    src/peripherals/pic16f188xx_eeprom.c
+    src/peripherals/pic16f188xx_nco.c
     src/core/pic16f188xx_irq.c
     src/core/pic16f188xx_irq_dispatch.c
+    src/core/pic16f188xx_wdt_sleep.c
     src/sim/pic16f188xx_harness_sim.c
     src/sim/pic16f188xx_sim.c
     src/sim/pic16f188xx_sim_serial.c
+    src/sim/pic16f188xx_sim_sys.c
+    src/sim/pic16f188xx_wdt_sleep_sim.c
 )
 
 epic_add_hal_library(${EPIC_LIB})
@@ -64,6 +69,9 @@ epic_add_example(example_timer2 tests/example_timer2.c)
 epic_add_example(example_usart tests/example_usart.c)
 epic_add_example(example_mssp tests/example_mssp.c)
 epic_add_example(example_pps tests/example_pps.c)
+epic_add_example(example_eeprom tests/example_eeprom.c)
+epic_add_example(example_nco tests/example_nco.c)
+epic_add_example(example_wdt_sleep tests/example_wdt_sleep.c)
 epic_add_example_per_device(example_blink tests/example_blink.c)
 
 enable_testing()
@@ -75,3 +83,6 @@ add_test(NAME timer2_host COMMAND example_timer2)
 add_test(NAME usart_host COMMAND example_usart)
 add_test(NAME mssp_host COMMAND example_mssp)
 add_test(NAME pps_host COMMAND example_pps)
+add_test(NAME eeprom_host COMMAND example_eeprom)
+add_test(NAME nco_host COMMAND example_nco)
+add_test(NAME wdt_sleep_host COMMAND example_wdt_sleep)

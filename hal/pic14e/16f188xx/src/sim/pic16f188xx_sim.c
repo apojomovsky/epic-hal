@@ -1,10 +1,10 @@
 /**
  * Host model of the ports, IOC and Timer0..Timer2. IOC edges (PORTA..PORTC)
  * set IOCxF and PIR0 IOCIF; callbacks gate on flag, enable, PEIE and GIE.
- * Timer0 counts T0CKIPPS edges on its PPS-selected pin; Timer1 and Timer2
- * read the POR default PPS pins (RC0, RB5, RC3) and Timer2 models modes
- * 0x00..0x08. The EUSART, MSSP1 and PPSLOCK models are in
- * pic16f188xx_sim_serial.c.
+ * Timer0 counts T0CKIPPS edges on its PPS pin; Timer1 and Timer2 read the
+ * POR default PPS pins (RC0, RB5, RC3), Timer2 models modes 0x00..0x08.
+ * The EUSART, MSSP1 and PPSLOCK models are in pic16f188xx_sim_serial.c,
+ * the EEPROM, NCO1 and WDT/Sleep models in pic16f188xx_sim_sys.c.
  */
 #include <stddef.h>
 #include <stdint.h>
@@ -229,6 +229,7 @@ void pic16f188xx_sim_reset(void)
     pic16f188xx_sim_sfr[PIC_REG_TMR0H] = 0xFFU;
     pic16f188xx_sim_sfr[PIC_REG_PR2] = 0xFFU;
     pic16f188xx_sim_serial_reset();
+    pic16f188xx_sim_sys_reset();
     sim_refresh_ports();
     for (i = 0; i < 3; i++)
     {
@@ -662,7 +663,28 @@ static void sim_deliver_serial(void)
 }
 
 /**
- * @brief Sample pins, IOC, the timers, the EUSART and MSSP1 once per tick.
+ * @brief Deliver a pending NVM or NCO1 interrupt to the registered callback.
+ * @details Gated on a PIR7 flag with its PIE7 enable (NVMIF, NCO1IF), PEIE
+ * and GIE, matching silicon.
+ */
+static void sim_deliver_sys(void)
+{
+    uint8_t pending = (uint8_t)(pic16f188xx_sim_sfr[PIC_REG_PIR7] &
+        pic16f188xx_sim_sfr[PIC_REG_PIE7] &
+        (uint8_t)(PIC_PIR7_NVMIF | PIC_PIR7_NCO1IF));
+
+    if ((pending != 0U) &&
+        ((pic16f188xx_sim_sfr[PIC_REG_INTCON] & PIC_INTCON_PEIE) != 0U) &&
+        (sim_gie() != 0U) &&
+        (sim_irq_cb != NULL))
+    {
+        sim_irq_cb();
+    }
+}
+
+/**
+ * @brief Sample pins, IOC, the timers, the EUSART, MSSP1, the EEPROM and NCO1
+ *        once per instruction tick.
  * @param ticks Instruction ticks to advance (each ticks every model once).
  */
 void pic16f188xx_sim_step(uint32_t ticks)
@@ -679,8 +701,10 @@ void pic16f188xx_sim_step(uint32_t ticks)
         sim_t0_pulse = 0U;
         sim_t2_pulse = 0U;
         pic16f188xx_sim_serial_step();
+        pic16f188xx_sim_sys_step();
         sim_deliver_timers();
         sim_deliver_serial();
+        sim_deliver_sys();
     }
 }
 

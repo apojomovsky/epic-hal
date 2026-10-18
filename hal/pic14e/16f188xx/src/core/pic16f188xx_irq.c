@@ -29,9 +29,9 @@ void EPIC_IRQ_Restore(uint8_t prev_state)
 
 /**
  * @brief Enable a single interrupt source.
- * @details The source is enabled in PIE0 and also sets INTCON.PEIE,
- * because PIR0 sources reach the vector only through PEIE. GIE is left
- * to EPIC_IRQ_Restore.
+ * @details The source is enabled in PIE0, PIE3 or PIE7 and also sets
+ * INTCON.PEIE, because peripheral sources reach the vector only through
+ * PEIE. GIE is left to EPIC_IRQ_Restore.
  * @param irq Interrupt source to enable.
  */
 void EPIC_IRQ_Enable(PIC16F188XX_IRQn irq)
@@ -69,6 +69,16 @@ void EPIC_IRQ_Enable(PIC16F188XX_IRQn irq)
     else if (irq == PIC16F188XX_IRQ_TMR2)
     {
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE4), PIC_PIE4_TMR2IE);
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
+    }
+    else if (irq == PIC16F188XX_IRQ_EEPROM)
+    {
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE7), PIC_PIE7_NVMIE);
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
+    }
+    else if (irq == PIC16F188XX_IRQ_NCO1)
+    {
+        EPIC_BIT_SET(EPIC_REG8(PIC_REG_PIE7), PIC_PIE7_NCO1IE);
         EPIC_BIT_SET(EPIC_REG8(PIC_REG_INTCON), PIC_INTCON_PEIE);
     }
 }
@@ -109,6 +119,14 @@ void EPIC_IRQ_DisableSrc(PIC16F188XX_IRQn irq)
     {
         EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE4), PIC_PIE4_TMR2IE);
     }
+    else if (irq == PIC16F188XX_IRQ_EEPROM)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE7), PIC_PIE7_NVMIE);
+    }
+    else if (irq == PIC16F188XX_IRQ_NCO1)
+    {
+        EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIE7), PIC_PIE7_NCO1IE);
+    }
 }
 
 /**
@@ -127,6 +145,8 @@ void EPIC_IRQ_ClearFlag(PIC16F188XX_IRQn irq)
     case PIC16F188XX_IRQ_SSP1: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR3), PIC_PIR3_SSP1IF); break;
     case PIC16F188XX_IRQ_TMR1: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR4), PIC_PIR4_TMR1IF); break;
     case PIC16F188XX_IRQ_TMR2: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR4), PIC_PIR4_TMR2IF); break;
+    case PIC16F188XX_IRQ_EEPROM: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR7), PIC_PIR7_NVMIF); break;
+    case PIC16F188XX_IRQ_NCO1: EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PIR7), PIC_PIR7_NCO1IF); break;
     default:                   break;
     }
 }
@@ -165,6 +185,14 @@ uint8_t EPIC_IRQ_GetFlag(PIC16F188XX_IRQn irq)
     if (irq == PIC16F188XX_IRQ_TMR2)
     {
         return (EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) ? 1U : 0U;
+    }
+    if (irq == PIC16F188XX_IRQ_EEPROM)
+    {
+        return (EPIC_REG8(PIC_REG_PIR7) & PIC_PIR7_NVMIF) ? 1U : 0U;
+    }
+    if (irq == PIC16F188XX_IRQ_NCO1)
+    {
+        return (EPIC_REG8(PIC_REG_PIR7) & PIC_PIR7_NCO1IF) ? 1U : 0U;
     }
     return 0U;
 }

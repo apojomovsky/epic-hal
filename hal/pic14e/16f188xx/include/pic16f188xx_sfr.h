@@ -81,6 +81,32 @@
 #define PIC_REG_SSP1CON2      0x191U
 #define PIC_REG_SSP1CON3      0x192U
 
+/* NCO1 (accumulator NCO1ACCL/H/U, increment NCO1INCL/H/U, NCO1CON,
+ * NCO1CLK) and the NVM block (NVMADRL..NVMCON2): same address on every
+ * part. NVMCON2 is the write-only 0x55/0xAA unlock register. */
+#define PIC_REG_PIR7          0x713U
+#define PIC_REG_PIE7          0x71DU
+#define PIC_REG_NCO1ACCL      0x58CU
+#define PIC_REG_NCO1ACCH      0x58DU
+#define PIC_REG_NCO1ACCU      0x58EU
+#define PIC_REG_NCO1INCL      0x58FU
+#define PIC_REG_NCO1INCH      0x590U
+#define PIC_REG_NCO1INCU      0x591U
+#define PIC_REG_NCO1CON       0x592U
+#define PIC_REG_NCO1CLK       0x593U
+#define PIC_REG_NVMADRL       0x81AU
+#define PIC_REG_NVMADRH       0x81BU
+#define PIC_REG_NVMDATL       0x81CU
+#define PIC_REG_NVMDATH       0x81DU
+#define PIC_REG_NVMCON1       0x81EU
+#define PIC_REG_NVMCON2       0x81FU
+/* WDT control (WDTCON0/WDTCON1), power and reset status (PCON0) and the
+ * Doze/Idle control (CPUDOZE): same address on every part. */
+#define PIC_REG_WDTCON0       0x80CU
+#define PIC_REG_WDTCON1       0x80DU
+#define PIC_REG_PCON0         0x813U
+#define PIC_REG_CPUDOZE       0x88CU
+
 /* PPS (PPSLOCK, xxxPPS input selects, RxyPPS output selects): 0xE8F..
  * and 0xF10.. on five parts, 0x1E8F../0x1F10.. on 16F18857/16F18877
  * (same low 12 bits; selected on PIC16F188XX_FAMILY_BANKED_HI, lines
@@ -352,5 +378,58 @@
 
 /* PPSLOCK bit 0 (PPSLOCKED): set locks the PPS registers against writes. */
 #define PIC_PPSLOCK_PPSLOCKED   EPIC_BIT(0)
+
+/* PIR7/PIE7 bits: NCO1 overflow bit 4, NVM operation done bit 5 (impl
+ * 0xF7; the other bits belong to CWG, CRC and the scanner, unused here).
+ * NVMIF is set by hardware when an NVM write or erase completes and must
+ * be cleared by software. */
+#define PIC_PIR7_NCO1IF         EPIC_BIT(4)
+#define PIC_PIR7_NVMIF          EPIC_BIT(5)
+#define PIC_PIE7_NCO1IE         EPIC_BIT(4)
+#define PIC_PIE7_NVMIE          EPIC_BIT(5)
+
+/* NVMCON1 bits (DS40001802D Register 10-5): NVMREGS 6, LWLO 5, FREE 4,
+ * WRERR 3, WREN 2, WR 1, RD 0 (impl 0x7F). NVMREGS=1 selects the data
+ * EEPROM, user ID and configuration space. WR and RD can only be set by
+ * software; hardware clears them on completion. WRERR is cleared by
+ * software only. */
+#define PIC_NVMCON1_NVMREGS     EPIC_BIT(6)
+#define PIC_NVMCON1_LWLO        EPIC_BIT(5)
+#define PIC_NVMCON1_FREE        EPIC_BIT(4)
+#define PIC_NVMCON1_WRERR       EPIC_BIT(3)
+#define PIC_NVMCON1_WREN        EPIC_BIT(2)
+#define PIC_NVMCON1_WR          EPIC_BIT(1)
+#define PIC_NVMCON1_RD          EPIC_BIT(0)
+
+/* WDTCON0 (DS40001802D Register 9-1): WDTPS value in bits 5:1, SWDTEN
+ * bit 0 (the datasheet's SEN; impl 0x3F). WDTPS is writable only while
+ * CONFIG3 WDTCPS=11111. SWDTEN is honoured only with WDTE=01. */
+#define PIC_WDTCON0_WDTPS_SHIFT 1U
+#define PIC_WDTCON0_WDTPS_MASK  0x3EU
+#define PIC_WDTCON0_SWDTEN      EPIC_BIT(0)
+
+/* PCON0 bits (DS40001802D Register 5-2), all active low except the stack
+ * flags: STKOVF 7, STKUNF 6, WDTWV 5, RWDT 4, RMCLR 3, RI 2, POR 1,
+ * BOR 0. Hardware clears POR/BOR on the event; software sets them back. */
+#define PIC_PCON0_nPOR          EPIC_BIT(1)
+#define PIC_PCON0_nBOR          EPIC_BIT(0)
+
+/* CPUDOZE bit 7 (IDLEN, DS40001802D Register 8-2): with it set, SLEEP
+ * stops the CPU clock only (Idle); clear, SLEEP is full Sleep. */
+#define PIC_CPUDOZE_IDLEN       EPIC_BIT(7)
+
+/* NCO1CON bits (DS40001802D Register 24-1): N1EN 7, N1OUT 5 (read-only
+ * live output), N1POL 4, N1PFM 0 (impl 0xB1). */
+#define PIC_NCO1CON_N1EN        EPIC_BIT(7)
+#define PIC_NCO1CON_N1OUT       EPIC_BIT(5)
+#define PIC_NCO1CON_N1POL       EPIC_BIT(4)
+#define PIC_NCO1CON_N1PFM       EPIC_BIT(0)
+#define PIC_NCO1CON_WRITE_MASK  0x91U
+
+/* NCO1CLK (Register 24-2): N1PWS value in bits 7:5, N1CKS value in bits
+ * 2:0 (impl 0xE7). */
+#define PIC_NCO1CLK_N1PWS_SHIFT 5U
+#define PIC_NCO1CLK_N1PWS_MASK  0xE0U
+#define PIC_NCO1CLK_N1CKS_MASK  0x07U
 
 #endif /* PIC16F188XX_SFR_H */

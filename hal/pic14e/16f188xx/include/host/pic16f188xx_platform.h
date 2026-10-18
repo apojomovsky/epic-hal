@@ -49,4 +49,14 @@ void pic16f188xx_sim_sfr_write8(uint16_t addr, uint8_t value);
         pic16f188xx_sim_sfr_write8(PIC_REG_PPSLOCK, 0x01U); \
     } while (0)
 
+/* NVM write start: 0x55 and 0xAA to NVMCON2, then WR set in NVMCON1. The
+ * simulator checks the order in its write hook, as for PPSLOCK. */
+#define epic_nvm_start_write() \
+    do { \
+        pic16f188xx_sim_sfr_write8(PIC_REG_NVMCON2, 0x55U); \
+        pic16f188xx_sim_sfr_write8(PIC_REG_NVMCON2, 0xAAU); \
+        pic16f188xx_sim_sfr_write8(PIC_REG_NVMCON1, \
+            (uint8_t)(pic16f188xx_sim_sfr[PIC_REG_NVMCON1] | PIC_NVMCON1_WR)); \
+    } while (0)
+
 #endif

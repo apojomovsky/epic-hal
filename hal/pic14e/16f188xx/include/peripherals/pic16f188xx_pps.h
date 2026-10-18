@@ -41,6 +41,8 @@ typedef enum {
     PPS_OUTPUT_EUSART_TX  = 0x10U,   /**< EUSART TX. */
     PPS_OUTPUT_SSP1_SCK   = 0x14U,   /**< MSSP1 SCK (SPI) or SCL (I2C). */
     PPS_OUTPUT_SSP1_SDO   = 0x15U,   /**< MSSP1 SDO (SPI) or SDA (I2C). */
+    PPS_OUTPUT_NCO1       = 0x19U,   /**< NCO1 output: PORTA plus PORTC (18854/55/56),
+                                       PORTB (18857) or PORTD (18875/76/77). */
 } PPS_OutputTypeDef;
 
 /**

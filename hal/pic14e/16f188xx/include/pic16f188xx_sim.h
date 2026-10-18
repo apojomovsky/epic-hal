@@ -1,6 +1,7 @@
 /**
  * Host simulator API for the PIC16F188xx ports, interrupt-on-change,
- * Timer0..Timer2, EUSART, MSSP1 and PPS. Host-only: never in an XC8 build.
+ * Timer0..Timer2, EUSART, MSSP1, PPS, data EEPROM, NCO1 and the WDT/Sleep
+ * helpers. Host-only: never in an XC8 build.
  */
 #ifndef PIC16F188XX_SIM_H
 #define PIC16F188XX_SIM_H
@@ -130,5 +131,44 @@ uint16_t pic16f188xx_sim_i2c_trace_count(void);
  * @return The event code (PIC16F188XX_SIM_I2C_*), or 0 past the count.
  */
 uint16_t pic16f188xx_sim_i2c_trace(uint16_t index);
+
+/**
+ * @brief Set how long a data EEPROM write takes in the simulator.
+ * @param ticks Ticks from WR set to WR clear. 0 (the default, restored by
+ *              reset) completes the write inside the unlock sequence.
+ */
+void pic16f188xx_sim_eeprom_set_write_ticks(uint32_t ticks);
+
+/**
+ * @brief Read the data EEPROM backing store, bypassing NVM.
+ * @param addr Byte address 0..255.
+ * @return The stored byte; a blank part reads 0xFF.
+ */
+uint8_t pic16f188xx_sim_eeprom_peek(uint8_t addr);
+
+/**
+ * @brief Pin the WDT period the way CONFIG3 WDTCPS does.
+ * @param wdtps Period code 0..18 the WDTPS bits take and keep, or -1 (the
+ *              default, restored by reset) to leave them writable.
+ */
+void pic16f188xx_sim_wdt_set_fixed_period(int8_t wdtps);
+
+/**
+ * @brief Count the EPIC_WDT_Refresh calls since reset.
+ * @return Refresh count.
+ */
+uint32_t pic16f188xx_sim_wdt_refresh_count(void);
+
+/**
+ * @brief Count the EPIC_Sleep_Enter calls since reset, Idle entries included.
+ * @return Sleep entry count.
+ */
+uint32_t pic16f188xx_sim_sleep_count(void);
+
+/**
+ * @brief Count the sleeps entered while CPUDOZE<IDLEN> was set since reset.
+ * @return Idle entry count.
+ */
+uint32_t pic16f188xx_sim_idle_count(void);
 
 #endif

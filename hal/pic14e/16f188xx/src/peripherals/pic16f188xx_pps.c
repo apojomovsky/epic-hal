@@ -112,7 +112,8 @@ EPIC_StatusTypeDef EPIC_PPS_MapOutput(PPS_PortTypeDef port, uint8_t pin,
         return EPIC_INVALID;
     }
     if ((output != PPS_OUTPUT_LAT) && (output != PPS_OUTPUT_EUSART_TX) &&
-        (output != PPS_OUTPUT_SSP1_SCK) && (output != PPS_OUTPUT_SSP1_SDO))
+        (output != PPS_OUTPUT_SSP1_SCK) && (output != PPS_OUTPUT_SSP1_SDO) &&
+        (output != PPS_OUTPUT_NCO1))
     {
         return EPIC_INVALID;
     }

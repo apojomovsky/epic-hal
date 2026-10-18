@@ -4,8 +4,9 @@ Register-level HAL for the PIC16F188xx family (Enhanced Mid-range
 core): 16F18854/55/56/57 (28-pin) and 16F18875/76/77 (40-pin, adding
 PORTD and PORTE). This HAL covers the family header and SFR map, GPIO
 (PORTA..PORTC, plus PORTD/PORTE on the 40-pin parts), Timer0, the
-EUSART, MSSP1 (SPI master and I2C master) and the PPS pin selector, and
-the interrupt sources behind the single vector through the shared
+EUSART, MSSP1 (SPI master and I2C master), the PPS pin selector, the
+256-byte data EEPROM, the WDT, Sleep and Idle helpers and NCO1, and the
+interrupt sources behind the single vector through the shared
 dispatcher.
 
 Register facts come from the pinned Microchip.PIC16F1xxxx_DFP 1.32.471
@@ -63,6 +64,20 @@ Implemented and verified:
       images, polled flag, vectored overflow and match with POR
       restore, gate proofs on the RB5 and RC3 POR PPS pins; family
       MANUAL.md)
+- [x] Data EEPROM (`EPIC_EEPROM_*`): byte read and non-blocking write
+      with the 0x55/0xAA unlock, write-complete polling or callback
+      (NVMIF), write-error flag. Host probe `example_eeprom` plus the mdb
+      gate section (register images, writes read back through NVM).
+- [x] WDT, Sleep and Idle (`EPIC_WDT_*`, `EPIC_Sleep_Enter`,
+      `EPIC_Idle_Enter`, `EPIC_BOR_*`, `EPIC_POR_*`): period and enable
+      under software control, `clrwdt`/`sleep` on target, counters on the
+      host. Host probe `example_wdt_sleep` plus the mdb gate sections
+      (period images, a WDT-woken Idle).
+- [x] NCO1 (`EPIC_NCO_*`, `NCO_HANDLE_DEFAULT`): FDC and PFM modes,
+      20-bit accumulator and increment, overflow callback, output on a
+      pin through `PPS_OUTPUT_NCO1`. Host probe `example_nco` (the
+      accumulator walk, output levels, double-buffered increment) plus the
+      mdb gate section (register images only).
 - [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`hal/pic14e/16f188xx`), `blink` example,
       and the mdb register-readback gate (`MODE=gpio`, RA0 PASS marker)
@@ -71,10 +86,10 @@ Implemented and verified:
       silicon); MPLAB SIM ignores it, so there it covers readbacks
       only (family MANUAL.md).
 Not yet implemented (deliberate scope limit, each its own follow-up):
-- CCP/PWM, ADC, EEPROM, WDT and sleep helpers, comparators, DAC, FVR,
-  NCO, MSSP2, EUSART synchronous mode and auto-baud, SPI and I2C slave,
-  the Timer2 SPI clock, Timer3..Timer6, the Timer1 gate-event interrupt,
-  PPS inputs for T1CKI, T1G and T2IN, and the remaining peripherals.
+- CCP/PWM, ADC, comparators, DAC, FVR, MSSP2, EUSART synchronous mode and
+  auto-baud, SPI and I2C slave, the Timer2 SPI clock, Timer3..Timer6, the
+  Timer1 gate-event interrupt, PPS inputs for T1CKI, T1G and T2IN, program
+  Flash self-write, the WDT window and Doze, and the remaining peripherals.
 - Wiring the family into the demos.
 
 ## Quick start
@@ -102,17 +117,18 @@ include/
   pic16f188xx_sfr.h   SFR addresses (generated), bit masks
   host/               host platform header (memory-backed SFR array)
   target/             target platform header (volatile-deref SFR)
-  core/               IRQ contract
-  peripherals/        GPIO, Timer0..Timer2, PPS, EUSART and MSSP contracts
+  core/               IRQ and WDT/Sleep contracts
+  peripherals/        GPIO, Timer0..Timer2, PPS, EUSART, MSSP, EEPROM and NCO contracts
 src/
-  core/               IRQ backend and dispatch
-  peripherals/        GPIO, Timer0..Timer2, PPS, EUSART and MSSP bodies
-  target/             ISR vector (real hardware only)
+  core/               IRQ backend and dispatch, WDT control and BOR/POR
+  peripherals/        GPIO, Timer0..Timer2, PPS, EUSART, MSSP, EEPROM and NCO bodies
+  target/             ISR vector, clrwdt and sleep (real hardware only)
   sim/                host simulation backend
   mdb/                MPLAB SIM register-readback harness
 tests/                example_blink, example_gpio, example_timer0,
                       example_timer1, example_timer2, example_pps,
-                      example_usart, example_mssp (host),
+                      example_usart, example_mssp,
+                      example_eeprom, example_nco, example_wdt_sleep (host),
                       example_gpio_mdb (host and mdb gate)
 ```
 
@@ -143,6 +159,10 @@ registers; PORTE IOC is RE3 only, which has no driver.
 - Host and SIM EUSART/MSSP models ignore PPS routing: a mapped pin is not
   needed for a byte to move. Port availability per function is in
   `MANUAL.md` (PPS).
+- `EPIC_EEPROM_WriteByte` does not wait for the write: the part keeps
+  running during the roughly 5.6 ms cycle, and `ReadByte` waits for it.
+  `EPIC_WDT_Enable` and `EPIC_WDT_Disable` act only with CONFIG2
+  WDTE=SWDTEN.
 - With the PPS1WAY config bit set (the XC8 default) the hardware honours
   one PPS unlock and lock per reset: map after reset and `EPIC_PPS_Lock`
   once.
