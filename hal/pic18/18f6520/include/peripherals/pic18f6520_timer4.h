@@ -1,11 +1,9 @@
 /*
  * Timer4 driver, 8-bit timer with PR4 period register and postscaler
- * (DS39609B §15.0, Register 15-1). Same shape as Timer2 (T4CON at 0xF76,
- * PR4 0xF77, TMR4 0xF78). TMR4IF lives in PIR3<3> and fires every
- * prescaler x postscaler x (PR4+1) instruction cycles. The ECAN quads
- * (6585/6680/8585/8680) have no Timer4: every call there returns
- * EPIC_INVALID (accessors read 0 / write nothing) so the CAN registers
- * at the same addresses are never touched.
+ * (DS39609B §15.0, Register 15-1). Same shape as Timer2 (T4CON 0xF76,
+ * PR4 0xF77, TMR4 0xF78); TMR4IF is PIR3<3>. The ECAN quads have no
+ * Timer4 and carry CAN registers at those addresses: every call there
+ * returns EPIC_INVALID (accessors read 0 / write nothing).
  */
 
 #ifndef PIC18F6520_TIMER4_H

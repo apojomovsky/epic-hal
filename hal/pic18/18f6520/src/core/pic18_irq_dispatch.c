@@ -4,8 +4,7 @@
  * is set. Prototypes are strong externs (not EPIC_WEAK) so the host
  * linker keeps every handler object. Final tier: Timer0-4, CCP1-5,
  * SSP, EUSART1/2, ADC, COMP, EEPROM (EE gated on EEIE for pollers).
- * LVD/PSP have no driver yet. The Timer4 handler is a no-op on the
- * ECAN quads, where PIR3<3> is a CAN flag.
+ * TIMER4_IRQHandler no-ops on the ECAN quads; LVD/PSP have no driver.
  */
 
 #include "core/pic18_irq.h"
