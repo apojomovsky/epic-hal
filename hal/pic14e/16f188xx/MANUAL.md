@@ -873,6 +873,14 @@ holds the measured start-controlled modes at zero and never starts
 them (2026-10 on the 16F18877 for 0x09, 0x11 and 0x16: images and
 the armed hold pass, no edge or level starts the counter), so the
 gate covers mode 0x09 register images and the armed hold only.
+Driving ers from CCP1 instead of the pin latch changes nothing: with
+Timer1 free-running on FOSC/4 and CCP1 compare-toggle at count 200
+(the match flags, OUT reads high, and pulse-with-clear re-matches, so
+the compare output itself is modeled), Timer2 in 0x09, 0x11 and 0x16
+on RSEL CCP1_out at PR2 7 settles at counter zero with no flag and no
+drift, every edge confirmed at CCP1IF. Mode 0x09 also drops ON on its
+own: ON reads set right after Start, then clears with no edge and no
+count, so even the armed state does not hold.
 
 Timer4 follows the same two-phase gate shape (PR4 7, a bounded spin to
 TMR4IF, then a vectored match whose callback stops the timer) plus the
