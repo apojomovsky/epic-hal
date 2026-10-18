@@ -55,8 +55,29 @@
 #define PIC_REG_CM2CON0       0x0BU
 #define PIC_REG_VRCON         0x0CU
 
-/* CM1CON0/CM2CON0 (DS41268D Register 7-2/7-3): CxOUT is read-only,
- * CxON enables the comparator. */
+/* CM1CON0/CM2CON0 output + polarity (DS41268D Register 7-2/7-3, bit
+ * positions cross-checked against the DFP pic16f506.h). CxOUT is
+ * read-only (1 = VIN+ > VIN-); CxPOL is inverted from its name
+ * (1 = output not inverted, 0 = inverted). The input-mux bits select
+ * each input (C1PREF: C1+ is RB0/RB1; C1NREF: C1- is pin/0.6V;
+ * C2PREF1/C2NREF: C2+/- are pins or the reference/mux output). */
+#define PIC_CM1CON0_C1PREF     EPIC_BIT(1)
+#define PIC_CM1CON0_C1NREF     EPIC_BIT(2)
+#define PIC_CM1CON0_C1POL      EPIC_BIT(5)
+#define PIC_CM1CON0_C1OUT      EPIC_BIT(7)
+#define PIC_CM2CON0_C2PREF1    EPIC_BIT(1)
+#define PIC_CM2CON0_C2NREF     EPIC_BIT(2)
+#define PIC_CM2CON0_C2POL      EPIC_BIT(5)
+#define PIC_CM2CON0_C2OUT      EPIC_BIT(7)
+
+/* VRCON (DS41268D Register 8-1, DFP-verified): the comparator
+ * reference tap, range, pin output and enable. */
+#define PIC_VRCON_VR_MASK      0x0FU
+#define PIC_VRCON_VRR          EPIC_BIT(5)
+#define PIC_VRCON_VROE         EPIC_BIT(6)
+#define PIC_VRCON_VREN         EPIC_BIT(7)
+
+/* CM1CON0/CM2CON0 enable (DS41268D Register 7-2/7-3). */
 #define PIC_CM1CON0_C1ON      EPIC_BIT(3)
 #define PIC_CM2CON0_C2ON      EPIC_BIT(3)
 
@@ -65,6 +86,15 @@
  * regardless of ADON. */
 #define PIC_ADCON0_ANS_MASK   0xC0U
 #define PIC_ADCON0_ADON       EPIC_BIT(0)
+
+/* Analog-block POR images (DS41268D Table 4-2). VRCON reads 0x00
+ * under MPLAB SIM and in the EDC (por="000-0000"), against the
+ * table's 0x3F; VREN=0 both ways, so the reference is off at POR
+ * either way (see MANUAL.md). */
+#define PIC_CM1CON0_POR_VALUE  0xFFU
+#define PIC_CM2CON0_POR_VALUE  0xFFU
+#define PIC_ADCON0_POR_VALUE   0xFCU
+#define PIC_VRCON_POR_VALUE    0x00U
 #endif
 
 /* STATUS register bits (DS41213D §3.0, Register 3-1). PA<2:0> is the
