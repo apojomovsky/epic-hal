@@ -45,13 +45,14 @@ pin; the manifest build compiles it:
 make xc8-build MODULE=lib/modbus MCU=18F4550
 ```
 
-### MPLAB SIM gate (framing/T3.5)
+### Host test (RTU framing/CRC/dispatch)
 
-The RTU framing and T3.5 behavior are covered under MPLAB SIM by
-`tests/sim_modbus.c`:
+The same framing paths run on the host sim, no MPLAB SIM needed
+(`tests/test_modbus_host.c`: FC03 round trip, CRC rejection,
+address-mismatch and broadcast silence, exception frames):
 
 ```sh
-make mdb-test MODULE=lib/modbus MCU=18F4550 DEVICE=PIC18F4550
+cmake -B build && cmake --build build && ctest --test-dir build --output-on-failure
 ```
 
 ## Use it
