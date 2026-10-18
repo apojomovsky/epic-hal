@@ -43,6 +43,8 @@ set(EPIC_SOURCES
     src/peripherals/pic16f188xx_timer0.c
     src/peripherals/pic16f188xx_timer1.c
     src/peripherals/pic16f188xx_timer2.c
+    src/peripherals/pic16f188xx_ccp.c
+    src/peripherals/pic16f188xx_pwm.c
     src/peripherals/pic16f188xx_pps.c
     src/peripherals/pic16f188xx_usart.c
     src/peripherals/pic16f188xx_ssp.c
@@ -56,6 +58,7 @@ set(EPIC_SOURCES
     src/sim/pic16f188xx_sim_serial.c
     src/sim/pic16f188xx_sim_sys.c
     src/sim/pic16f188xx_wdt_sleep_sim.c
+    src/sim/pic16f188xx_sim_ccp.c
 )
 
 epic_add_hal_library(${EPIC_LIB})
@@ -66,6 +69,8 @@ epic_add_example(example_gpio_mdb tests/example_gpio_mdb.c)
 epic_add_example(example_timer0 tests/example_timer0.c)
 epic_add_example(example_timer1 tests/example_timer1.c)
 epic_add_example(example_timer2 tests/example_timer2.c)
+epic_add_example(example_ccp tests/example_ccp.c)
+epic_add_example(example_pwm tests/example_pwm.c)
 epic_add_example(example_usart tests/example_usart.c)
 epic_add_example(example_mssp tests/example_mssp.c)
 epic_add_example(example_pps tests/example_pps.c)
@@ -80,6 +85,8 @@ add_test(NAME gpio_mdb_host COMMAND example_gpio_mdb)
 add_test(NAME timer0_host COMMAND example_timer0)
 add_test(NAME timer1_host COMMAND example_timer1)
 add_test(NAME timer2_host COMMAND example_timer2)
+add_test(NAME ccp_host COMMAND example_ccp)
+add_test(NAME pwm_host COMMAND example_pwm)
 add_test(NAME usart_host COMMAND example_usart)
 add_test(NAME mssp_host COMMAND example_mssp)
 add_test(NAME pps_host COMMAND example_pps)

@@ -349,6 +349,8 @@ BANK_VARIANT_ADDRS = {
                 "PPSLOCK": 0x1E8F, "T0CKIPPS": 0x1E91,
                 "SSP1CLKPPS": 0x1EC5, "SSP1DATPPS": 0x1EC6,
                 "SSP1SSPPS": 0x1EC7, "RXPPS": 0x1ECB,
+                "CCP1PPS": 0x1EA1, "CCP2PPS": 0x1EA2, "CCP3PPS": 0x1EA3,
+                "CCP4PPS": 0x1EA4, "CCP5PPS": 0x1EA5,
                 "RA0PPS": 0x1F10, "RB0PPS": 0x1F18, "RC0PPS": 0x1F20},
     "16F18877": {"ANSELA": 0x1F38, "ANSELB": 0x1F43, "ANSELC": 0x1F4E,
                 "ANSELD": 0x1F59, "ANSELE": 0x1F64, "INLVLA": 0x1F3C,
@@ -366,6 +368,8 @@ BANK_VARIANT_ADDRS = {
                 "PPSLOCK": 0x1E8F, "T0CKIPPS": 0x1E91,
                 "SSP1CLKPPS": 0x1EC5, "SSP1DATPPS": 0x1EC6,
                 "SSP1SSPPS": 0x1EC7, "RXPPS": 0x1ECB,
+                "CCP1PPS": 0x1EA1, "CCP2PPS": 0x1EA2, "CCP3PPS": 0x1EA3,
+                "CCP4PPS": 0x1EA4, "CCP5PPS": 0x1EA5,
                 "RA0PPS": 0x1F10, "RB0PPS": 0x1F18, "RC0PPS": 0x1F20,
                 "RD0PPS": 0x1F28},
 

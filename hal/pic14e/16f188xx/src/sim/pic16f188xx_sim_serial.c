@@ -352,7 +352,8 @@ void pic16f188xx_sim_sfr_write8(uint16_t addr, uint8_t value)
         }
         break;
     default:
-        if (pic16f188xx_sim_sys_write(addr, value) == 0U)
+        if ((pic16f188xx_sim_sys_write(addr, value) == 0U) &&
+            (pic16f188xx_sim_ccp_write(addr, value) == 0U))
         {
             *cell(addr) = value;
         }

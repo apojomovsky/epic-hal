@@ -11,12 +11,18 @@
 #define PPS_T0CKI_LAST_PORT PPS_PORTB
 
 /* POR pins of the input selects (EDC por): T0CKI RA4, SSP1CLK RC3,
- * SSP1DAT RC4, SSP1SS RA5, RX RC7. */
+ * SSP1DAT RC4, SSP1SS RA5, RX RC7, CCP1 RC2, CCP2 RC1, CCP3 RB5, CCP4 RB0,
+ * CCP5 RA4. */
 #define PPS_POR_T0CKI   0x04U
 #define PPS_POR_SSP1CLK 0x13U
 #define PPS_POR_SSP1DAT 0x14U
 #define PPS_POR_SSP1SS  0x05U
 #define PPS_POR_RX      0x17U
+#define PPS_POR_CCP1    0x12U
+#define PPS_POR_CCP2    0x11U
+#define PPS_POR_CCP3    0x0DU
+#define PPS_POR_CCP4    0x08U
+#define PPS_POR_CCP5    0x04U
 
 /**
  * @brief Check that a port exists on the selected part.
@@ -51,6 +57,11 @@ static uint16_t input_addr(PPS_InputTypeDef input)
     case PPS_INPUT_SSP1CLK:   return PIC_REG_SSP1CLKPPS;
     case PPS_INPUT_SSP1DAT:   return PIC_REG_SSP1DATPPS;
     case PPS_INPUT_SSP1SS:    return PIC_REG_SSP1SSPPS;
+    case PPS_INPUT_CCP1:      return PIC_REG_CCP1PPS;
+    case PPS_INPUT_CCP2:      return PIC_REG_CCP2PPS;
+    case PPS_INPUT_CCP3:      return PIC_REG_CCP3PPS;
+    case PPS_INPUT_CCP4:      return PIC_REG_CCP4PPS;
+    case PPS_INPUT_CCP5:      return PIC_REG_CCP5PPS;
     default:                  return PIC_REG_RXPPS;
     }
 }
@@ -79,7 +90,7 @@ static uint16_t output_addr(PPS_PortTypeDef port, uint8_t pin)
 EPIC_StatusTypeDef EPIC_PPS_MapInput(PPS_InputTypeDef input,
                                      PPS_PortTypeDef port, uint8_t pin)
 {
-    if (((unsigned int)input > (unsigned int)PPS_INPUT_EUSART_RX) ||
+    if (((unsigned int)input > (unsigned int)PPS_INPUT_CCP5) ||
         (port_ok(port) == 0U) || (pin > 7U))
     {
         return EPIC_INVALID;
@@ -111,11 +122,15 @@ EPIC_StatusTypeDef EPIC_PPS_MapOutput(PPS_PortTypeDef port, uint8_t pin,
     {
         return EPIC_INVALID;
     }
-    if ((output != PPS_OUTPUT_LAT) && (output != PPS_OUTPUT_EUSART_TX) &&
-        (output != PPS_OUTPUT_SSP1_SCK) && (output != PPS_OUTPUT_SSP1_SDO) &&
-        (output != PPS_OUTPUT_NCO1))
+    if (output != PPS_OUTPUT_LAT)
     {
-        return EPIC_INVALID;
+        if ((((unsigned int)output < (unsigned int)PPS_OUTPUT_CCP1) ||
+             ((unsigned int)output > (unsigned int)PPS_OUTPUT_PWM7)) &&
+            (output != PPS_OUTPUT_EUSART_TX) && (output != PPS_OUTPUT_SSP1_SCK) &&
+            (output != PPS_OUTPUT_SSP1_SDO) && (output != PPS_OUTPUT_NCO1))
+        {
+            return EPIC_INVALID;
+        }
     }
     if (EPIC_PPS_IsLocked() != 0U)
     {
@@ -143,6 +158,11 @@ EPIC_StatusTypeDef EPIC_PPS_DeInit(void)
     EPIC_REG8(PIC_REG_SSP1DATPPS) = PPS_POR_SSP1DAT;
     EPIC_REG8(PIC_REG_SSP1SSPPS) = PPS_POR_SSP1SS;
     EPIC_REG8(PIC_REG_RXPPS) = PPS_POR_RX;
+    EPIC_REG8(PIC_REG_CCP1PPS) = PPS_POR_CCP1;
+    EPIC_REG8(PIC_REG_CCP2PPS) = PPS_POR_CCP2;
+    EPIC_REG8(PIC_REG_CCP3PPS) = PPS_POR_CCP3;
+    EPIC_REG8(PIC_REG_CCP4PPS) = PPS_POR_CCP4;
+    EPIC_REG8(PIC_REG_CCP5PPS) = PPS_POR_CCP5;
     for (port = 0U; port <= (uint8_t)PPS_PORTD; port++)
     {
         if (port_ok((PPS_PortTypeDef)port) == 0U)

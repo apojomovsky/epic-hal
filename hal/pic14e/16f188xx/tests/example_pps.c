@@ -67,13 +67,16 @@ int main(void)
     epic_harness_init(10000UL);
 
     /* Validation: nothing is written for a bad argument. */
-    ok &= (EPIC_PPS_MapInput((PPS_InputTypeDef)5, PPS_PORTA, 0U) == EPIC_INVALID);
+    ok &= (EPIC_PPS_MapInput((PPS_InputTypeDef)10, PPS_PORTA, 0U) == EPIC_INVALID);
     ok &= (EPIC_PPS_MapInput(PPS_INPUT_EUSART_RX, PPS_PORTC, 8U) == EPIC_INVALID);
     ok &= (EPIC_PPS_MapInput(PPS_INPUT_EUSART_RX, (PPS_PortTypeDef)4, 0U) == EPIC_INVALID);
     ok &= (EPIC_PPS_MapInput(PPS_INPUT_T0CKI, PPS_PORTC, 0U) == EPIC_INVALID);
     ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 8U, PPS_OUTPUT_EUSART_TX) == EPIC_INVALID);
     ok &= (EPIC_PPS_MapOutput((PPS_PortTypeDef)4, 0U, PPS_OUTPUT_EUSART_TX) == EPIC_INVALID);
     ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 0U, (PPS_OutputTypeDef)0x11) == EPIC_INVALID);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 0U, (PPS_OutputTypeDef)0x08) == EPIC_INVALID);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 0U, (PPS_OutputTypeDef)0x01) == EPIC_INVALID);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 0U, (PPS_OutputTypeDef)0x16) == EPIC_INVALID);
     ok &= (EPIC_REG8(PIC_REG_RXPPS) == 0x17U);
     ok &= (EPIC_REG8(PIC_REG_T0CKIPPS) == 0x04U);
     ok &= (out_reg(PIC_REG_RC0PPS, 6U) == 0x00U);
@@ -99,6 +102,32 @@ int main(void)
     ok &= (out_reg(PIC_REG_RC0PPS, 3U) == 0x14U);
     ok &= (out_reg(PIC_REG_RB0PPS, 0U) == 0x15U);
     ok &= (out_reg(PIC_REG_RA0PPS, 0U) == 0x00U);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_CCP1, PPS_PORTB, 2U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_CCP2, PPS_PORTC, 6U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_CCP3, PPS_PORTC, 0U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_CCP4, PPS_PORTB, 7U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_CCP5, PPS_PORTA, 1U) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CCP1PPS) == 0x0AU);
+    ok &= (EPIC_REG8(PIC_REG_CCP2PPS) == 0x16U);
+    ok &= (EPIC_REG8(PIC_REG_CCP3PPS) == 0x10U);
+    ok &= (EPIC_REG8(PIC_REG_CCP4PPS) == 0x0FU);
+    ok &= (EPIC_REG8(PIC_REG_CCP5PPS) == 0x01U);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTB, 1U, PPS_OUTPUT_CCP1) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTC, 5U, PPS_OUTPUT_PWM7) == EPIC_OK);
+    ok &= (out_reg(PIC_REG_RB0PPS, 1U) == 0x09U);
+    ok &= (out_reg(PIC_REG_RC0PPS, 5U) == 0x0FU);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTC, 4U, PPS_OUTPUT_CCP2) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTC, 2U, PPS_OUTPUT_CCP3) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTC, 1U, PPS_OUTPUT_CCP4) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 3U, PPS_OUTPUT_CCP5) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 2U, PPS_OUTPUT_PWM6) == EPIC_OK);
+    ok &= (out_reg(PIC_REG_RC0PPS, 4U) == 0x0AU);
+    ok &= (out_reg(PIC_REG_RC0PPS, 2U) == 0x0BU);
+    ok &= (out_reg(PIC_REG_RC0PPS, 1U) == 0x0CU);
+    ok &= (out_reg(PIC_REG_RA0PPS, 3U) == 0x0DU);
+    ok &= (out_reg(PIC_REG_RA0PPS, 2U) == 0x0EU);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 3U, PPS_OUTPUT_LAT) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 2U, PPS_OUTPUT_LAT) == EPIC_OK);
 #if PIC16F188XX_FAMILY_HAS_PORTD
     ok &= (EPIC_PPS_MapInput(PPS_INPUT_SSP1DAT, PPS_PORTD, 2U) == EPIC_OK);
     ok &= (EPIC_REG8(PIC_REG_SSP1DATPPS) == 0x1AU);
@@ -141,6 +170,13 @@ int main(void)
     ok &= (EPIC_REG8(PIC_REG_RXPPS) == 0x17U);
     ok &= (out_reg(PIC_REG_RC0PPS, 6U) == 0x00U);
     ok &= (out_reg(PIC_REG_RC0PPS, 3U) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_CCP1PPS) == 0x12U);
+    ok &= (EPIC_REG8(PIC_REG_CCP2PPS) == 0x11U);
+    ok &= (EPIC_REG8(PIC_REG_CCP3PPS) == 0x0DU);
+    ok &= (EPIC_REG8(PIC_REG_CCP4PPS) == 0x08U);
+    ok &= (EPIC_REG8(PIC_REG_CCP5PPS) == 0x04U);
+    ok &= (out_reg(PIC_REG_RB0PPS, 1U) == 0x00U);
+    ok &= (out_reg(PIC_REG_RC0PPS, 5U) == 0x00U);
 
     /* Timer0 on T0CKI: edges on the mapped pin count, edges on the POR
      * pin (RA4) do not. Period 3 in 8-bit mode flags on the 4th edge. */

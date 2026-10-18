@@ -1,5 +1,5 @@
 /**
- * GPIO, IOC and Timer0..Timer2 register-image probe for the mdb gate,
+ * GPIO, IOC, Timer0..Timer2, CCP and PWM register-image probe for the mdb gate,
  * ending in live interrupt smokes where the target allows them.
  * Target-safe: only register reads and bounded spins. Also runs on the
  * host simulator through ctest.
@@ -47,6 +47,16 @@
  * A full-field T2CON/T2HLT/T2RST image (1:128, 1:16, falling clock,
  * both sync bits, LC4 reset) pins every bit position.
  *
+ * CCP and PWM follow Timer2: CCPxCON, CCPRxH:L, CCPxCAP and CCPTMRS
+ * images (every mode, a capture source and timer couple, left-aligned PWM
+ * duty), a compare match against Timer1 (polled, then vectored on CCP5),
+ * CCP1 PWM against Timer2 and the PWM6/PWM7 images with PWM6 against
+ * Timer2. The PWM proofs sample the OUT bit and compare high counts of a
+ * quarter and three quarters duty. MPLAB SIM never captures (it does not
+ * drive CCPxPPS from a latch) and does not follow the timer-clearing and
+ * pulse compare modes, so those get images only (family MANUAL.md). The
+ * PPS section also maps the CCPx inputs and the CCP and PWM outputs.
+ *
  * PPS, EUSART and MSSP1 follow: PPS select images at their (0xFxx or
  * 0x1Fxx) addresses; the EUSART 9600 baud image, a polled frame and a
  * vectored one-shot TX interrupt; the MSSP1 SPI and I2C images, an I2C
@@ -77,6 +87,8 @@
 #include "peripherals/pic16f188xx_nco.h"
 #include "core/pic16f188xx_wdt_sleep.h"
 #include "core/pic16f188xx_irq.h"
+#include "peripherals/pic16f188xx_ccp.h"
+#include "peripherals/pic16f188xx_pwm.h"
 #include "core/epic_harness.h"
 
 /** @brief Halt the target after the probe result is written (mdb gate). */
@@ -89,6 +101,7 @@ static volatile uint8_t s_t1_seen = 0;
 static volatile uint8_t s_t2_seen = 0;
 static volatile uint8_t s_tx_seen = 0;
 static volatile uint8_t s_ssp_seen = 0;
+static volatile uint8_t s_ccp_seen = 0;
 
 /**
  * @brief Smoke callback: records that the vectored handler ran.
@@ -151,6 +164,44 @@ static void on_ssp(void)
 }
 
 /**
+ * @brief CCP and PWM selects of the PPS section: the five capture inputs
+ *        and the outputs. Ports follow the routes MPLAB SIM accepts on the
+ *        40-pin parts (CCP1 and CCP2 on PORTB and PORTC, CCP3 and CCP4 on
+ *        PORTB, CCP5, PWM6 and PWM7 on PORTA), so it raises no W1600.
+ * @return 1 when every readback matches, 0 otherwise.
+ */
+static int gate_pps_ccp(void)
+{
+    int ok = 1;
+
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_CCP1, PPS_PORTB, 2U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_CCP2, PPS_PORTC, 6U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_CCP3, PPS_PORTB, 4U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_CCP4, PPS_PORTB, 7U) == EPIC_OK);
+    ok &= (EPIC_PPS_MapInput(PPS_INPUT_CCP5, PPS_PORTA, 1U) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CCP1PPS) == 0x0AU);
+    ok &= (EPIC_REG8(PIC_REG_CCP2PPS) == 0x16U);
+    ok &= (EPIC_REG8(PIC_REG_CCP3PPS) == 0x0CU);
+    ok &= (EPIC_REG8(PIC_REG_CCP4PPS) == 0x0FU);
+    ok &= (EPIC_REG8(PIC_REG_CCP5PPS) == 0x01U);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTC, 2U, PPS_OUTPUT_CCP1) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTC, 1U, PPS_OUTPUT_CCP2) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTB, 6U, PPS_OUTPUT_CCP3) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTB, 7U, PPS_OUTPUT_CCP4) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 3U, PPS_OUTPUT_CCP5) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 1U, PPS_OUTPUT_PWM6) == EPIC_OK);
+    ok &= (EPIC_PPS_MapOutput(PPS_PORTA, 2U, PPS_OUTPUT_PWM7) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_RC0PPS + 2U) == 0x09U);
+    ok &= (EPIC_REG8(PIC_REG_RC0PPS + 1U) == 0x0AU);
+    ok &= (EPIC_REG8(PIC_REG_RB0PPS + 6U) == 0x0BU);
+    ok &= (EPIC_REG8(PIC_REG_RB0PPS + 7U) == 0x0CU);
+    ok &= (EPIC_REG8(PIC_REG_RA0PPS + 3U) == 0x0DU);
+    ok &= (EPIC_REG8(PIC_REG_RA0PPS + 1U) == 0x0EU);
+    ok &= (EPIC_REG8(PIC_REG_RA0PPS + 2U) == 0x0FU);
+    return ok;
+}
+
+/**
  * @brief PPS register-image section: input and output selects land at their
  *        (0xFxx or 0x1Fxx) addresses, and an unmapped pin hands back to the latch.
  * @return 1 when every readback matches, 0 otherwise.
@@ -179,6 +230,7 @@ static int gate_pps(void)
     ok &= (EPIC_REG8(PIC_REG_RC0PPS + 3U) == 0x14U);
     ok &= (EPIC_REG8(PIC_REG_RC0PPS + 5U) == 0x15U);
     ok &= (EPIC_REG8(PIC_REG_RB0PPS + 0U) == 0x15U);
+    ok &= gate_pps_ccp();
 #if PIC16F188XX_FAMILY_HAS_PORTD
     /* PORTD takes no EUSART or MSSP output (MANUAL.md, PPS), so only the
      * hand-back to the latch is written; its RD7PPS address still reads. */
@@ -514,6 +566,13 @@ static int gate_pps_lock(void)
     ok &= (EPIC_REG8(PIC_REG_RXPPS) == 0x17U);
     ok &= (EPIC_REG8(PIC_REG_RC0PPS + 6U) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_RC0PPS + 3U) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_CCP1PPS) == 0x12U);
+    ok &= (EPIC_REG8(PIC_REG_CCP2PPS) == 0x11U);
+    ok &= (EPIC_REG8(PIC_REG_CCP3PPS) == 0x0DU);
+    ok &= (EPIC_REG8(PIC_REG_CCP4PPS) == 0x08U);
+    ok &= (EPIC_REG8(PIC_REG_CCP5PPS) == 0x04U);
+    ok &= (EPIC_REG8(PIC_REG_RC0PPS + 2U) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_RA0PPS + 1U) == 0x00U);
     ok &= (EPIC_PPS_Lock() == EPIC_OK);
     return ok;
 }
@@ -739,6 +798,257 @@ static uint8_t gate_timer2(void)
 }
 
 /**
+ * @brief CCP1 callback: records that the vectored handler ran.
+ */
+static void on_ccp(void)
+{
+    s_ccp_seen = 1U;
+}
+
+/**
+ * @brief Count how often CCP1CON.OUT reads high over 1000 samples, one
+ *        harness tick apart (a no-op on target, where time runs on its own).
+ * @return High samples, 0..1000.
+ */
+static uint16_t ccp1_out_high(void)
+{
+    uint16_t i;
+    uint16_t hi = 0U;
+
+    for (i = 0U; i < 1000U; i++)
+    {
+        epic_harness_tick();
+        if ((EPIC_REG8(PIC_REG_CCP1CON) & PIC_CCP1CON_OUT) != 0U)
+        {
+            hi++;
+        }
+    }
+    return hi;
+}
+
+/**
+ * @brief Count how often PWM6CON.OUT reads high over 1000 samples, one
+ *        harness tick apart.
+ * @return High samples, 0..1000.
+ */
+static uint16_t pwm6_out_high(void)
+{
+    uint16_t i;
+    uint16_t hi = 0U;
+
+    for (i = 0U; i < 1000U; i++)
+    {
+        epic_harness_tick();
+        if ((EPIC_REG8(PIC_REG_PWM6CON) & PIC_PWM6CON_OUT) != 0U)
+        {
+            hi++;
+        }
+    }
+    return hi;
+}
+
+/**
+ * @brief Start Timer2 from FOSC/4 with PR2 63 (a 256 count PWM period).
+ */
+static void t2_pwm_start(void)
+{
+    TIMER2_HandleTypeDef t2 = TIMER2_HANDLE_DEFAULT;
+
+    t2.Period = 63U;
+    (void)EPIC_TIMER2_Init(&t2);
+    (void)EPIC_TIMER2_Start(&t2);
+}
+
+/**
+ * @brief CCP section: register images of the modes, timer couples, capture
+ *        source and PWM alignment, a compare match against Timer1 (polled,
+ *        then vectored on CCP5), and CCP1 PWM duty against Timer2.
+ * @details CCPxCON.OUT is live read-only status and masks out of the
+ * images. MPLAB SIM models the compare flag, the output bit, the vector and
+ * the PWM, but never captures (it does not drive CCPxPPS from a latch) and
+ * does not follow the timer-clearing and pulse compare modes, so those get
+ * images only. The PWM proof compares high-sample counts rather than
+ * absolute ratios: sampling a free-running output aliases against its
+ * period.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static uint8_t gate_ccp(void)
+{
+    uint8_t ok = 1U;
+    uint16_t i;
+    uint16_t lo;
+    uint16_t hi;
+    CCP_HandleTypeDef c = CCP_HANDLE_DEFAULT;
+    TIMER1_HandleTypeDef t1;
+
+    c.Mode = CCP_MODE_COMPARE_SET;
+    c.CompareValue = 0x1234U;
+    ok &= (EPIC_CCP_Init(&c) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_CCP1CON) & (uint8_t)~PIC_CCP1CON_OUT) == 0x88U);
+    ok &= (EPIC_REG8(PIC_REG_CCPR1H) == 0x12U);
+    ok &= (EPIC_REG8(PIC_REG_CCPR1L) == 0x34U);
+    ok &= (EPIC_REG8(PIC_REG_CCP1CAP) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_CCPTMRS0) == PIC_CCPTMRS0_POR_VALUE);
+    ok &= ((EPIC_REG8(PIC_REG_PIE6) & PIC_PIE6_CCP1IE) == 0U);
+    ok &= (EPIC_CCP_SetMode(CCP_INSTANCE_1, CCP_MODE_COMPARE_TOGGLE_CLR_TMR) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_CCP1CON) & (uint8_t)~PIC_CCP1CON_OUT) == 0x81U);
+    ok &= (EPIC_CCP_SetMode(CCP_INSTANCE_1, CCP_MODE_COMPARE_PULSE_CLR_TMR) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_CCP1CON) & (uint8_t)~PIC_CCP1CON_OUT) == 0x8BU);
+    ok &= (EPIC_CCP_SetMode(CCP_INSTANCE_1, CCP_MODE_OFF) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_CCP1CON) & (uint8_t)~PIC_CCP1CON_OUT) == 0x00U);
+    ok &= (EPIC_CCP_DeInit(CCP_INSTANCE_1) == EPIC_OK);
+
+    c = (CCP_HandleTypeDef)CCP_HANDLE_DEFAULT;
+    c.Instance = CCP_INSTANCE_2;
+    c.Mode = CCP_MODE_CAPTURE_RISING;
+    c.Timer = CCP_TIMER_3_4;
+    c.CaptureSource = CCP_CAPTURE_LC4OUT;
+    ok &= (EPIC_CCP_Init(&c) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_CCP2CON) & (uint8_t)~PIC_CCP1CON_OUT) == 0x85U);
+    ok &= (EPIC_REG8(PIC_REG_CCP2CAP) == 0x07U);
+    ok &= (EPIC_REG8(PIC_REG_CCPTMRS0) == 0x59U);
+    ok &= (EPIC_CCP_DeInit(CCP_INSTANCE_2) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CCP2CAP) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_CCPTMRS0) == PIC_CCPTMRS0_POR_VALUE);
+
+    c = (CCP_HandleTypeDef)CCP_HANDLE_DEFAULT;
+    c.Instance = CCP_INSTANCE_5;
+    c.Mode = CCP_MODE_PWM;
+    c.Timer = CCP_TIMER_5_6;
+    c.PWMDuty = 0x155U;
+    c.PWMLeftAligned = 1U;
+    ok &= (EPIC_CCP_Init(&c) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_CCP5CON) & (uint8_t)~PIC_CCP1CON_OUT) == 0x9FU);
+    ok &= (EPIC_REG8(PIC_REG_CCPR5H) == 0x55U);
+    ok &= (EPIC_REG8(PIC_REG_CCPR5L) == 0x40U);
+    ok &= (EPIC_REG8(PIC_REG_CCPTMRS1) == 0x17U);
+    ok &= (EPIC_CCP_SetPWMDuty(CCP_INSTANCE_5, 0x3FFU) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CCPR5H) == 0xFFU);
+    ok &= (EPIC_REG8(PIC_REG_CCPR5L) == 0xC0U);
+    ok &= (EPIC_CCP_DeInit(CCP_INSTANCE_5) == EPIC_OK);
+    ok &= (EPIC_REG8(PIC_REG_CCP5CON) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_CCPTMRS1) == PIC_CCPTMRS1_POR_VALUE);
+
+    /* Compare match against Timer1 at 200 counts: flag, output and the
+     * image with OUT live. */
+    t1_reset(&t1);
+    ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
+    ok &= (EPIC_TIMER1_Start(&t1) == EPIC_OK);
+    c = (CCP_HandleTypeDef)CCP_HANDLE_DEFAULT;
+    c.Mode = CCP_MODE_COMPARE_SET;
+    c.CompareValue = 200U;
+    ok &= (EPIC_CCP_Init(&c) == EPIC_OK);
+    for (i = 0U; (i < 40000U) && ((EPIC_REG8(PIC_REG_PIR6) & PIC_PIR6_CCP1IF) == 0U); i++)
+    {
+        epic_harness_tick();
+    }
+    ok &= ((EPIC_REG8(PIC_REG_PIR6) & PIC_PIR6_CCP1IF) != 0U);
+    ok &= (EPIC_CCP_GetOutput(CCP_INSTANCE_1) == 1U);
+    ok &= (EPIC_CCP_GetCapture(CCP_INSTANCE_1) == 200U);
+    ok &= (EPIC_CCP_DeInit(CCP_INSTANCE_1) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PIR6) & PIC_PIR6_CCP1IF) == 0U);
+
+    /* The same match vectored on CCP5, whose flag is PIR6 bit 4. Timer1
+     * restarts so the 200 count match is ahead of it again. */
+    EPIC_TIMER1_Stop();
+    EPIC_TIMER1_DeInit();
+    ok &= (EPIC_TIMER1_Init(&t1) == EPIC_OK);
+    ok &= (EPIC_TIMER1_Start(&t1) == EPIC_OK);
+    c.Instance = CCP_INSTANCE_5;
+    c.EventCallback = on_ccp;
+    s_ccp_seen = 0U;
+    ok &= (EPIC_CCP_Init(&c) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PIE6) & PIC_PIE6_CCP5IE) != 0U);
+    EPIC_IRQ_Restore(1U);
+    wait_seen(&s_ccp_seen);
+    EPIC_IRQ_Restore(0U);
+    ok &= (s_ccp_seen == 1U);
+    ok &= ((EPIC_REG8(PIC_REG_PIR6) & PIC_PIR6_CCP5IF) == 0U);
+    ok &= (EPIC_CCP_DeInit(CCP_INSTANCE_5) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PIE6) & PIC_PIE6_CCP5IE) == 0U);
+    EPIC_TIMER1_Stop();
+    EPIC_TIMER1_DeInit();
+
+    /* PWM on CCP1 against Timer2 (256 count period): 0 counts never raise
+     * the output, a quarter duty is high for fewer samples than three
+     * quarters, and the left-aligned format lands the same duty. */
+    c = (CCP_HandleTypeDef)CCP_HANDLE_DEFAULT;
+    c.Mode = CCP_MODE_PWM;
+    c.PWMDuty = 0U;
+    ok &= (EPIC_CCP_Init(&c) == EPIC_OK);
+    t2_pwm_start();
+    tick_n(1000U);
+    ok &= ((EPIC_REG8(PIC_REG_PIR6) & PIC_PIR6_CCP1IF) != 0U);
+    ok &= (ccp1_out_high() == 0U);
+    ok &= (EPIC_CCP_SetPWMDuty(CCP_INSTANCE_1, 64U) == EPIC_OK);
+    tick_n(1000U);
+    lo = ccp1_out_high();
+    ok &= (lo > 0U);
+    ok &= (EPIC_CCP_SetPWMDuty(CCP_INSTANCE_1, 192U) == EPIC_OK);
+    tick_n(1000U);
+    hi = ccp1_out_high();
+    ok &= (hi > (uint16_t)(lo + 250U));
+    ok &= (EPIC_CCP_DeInit(CCP_INSTANCE_1) == EPIC_OK);
+    c.PWMDuty = 64U;
+    c.PWMLeftAligned = 1U;
+    ok &= (EPIC_CCP_Init(&c) == EPIC_OK);
+    tick_n(1000U);
+    i = ccp1_out_high();
+    ok &= (i > (uint16_t)(lo / 2U)) && (i < (uint16_t)(lo * 2U));
+    EPIC_TIMER2_Stop();
+    EPIC_TIMER2_DeInit();
+    ok &= (EPIC_CCP_DeInit(CCP_INSTANCE_1) == EPIC_OK);
+    return ok;
+}
+
+/**
+ * @brief PWM6 and PWM7 section: register images, then PWM6 duty against
+ *        Timer2 sampled through PWM6CON.OUT.
+ * @return 1 when every check passes, 0 otherwise.
+ */
+static uint8_t gate_pwm(void)
+{
+    uint8_t ok = 1U;
+    uint16_t lo;
+    uint16_t hi;
+    PWM_HandleTypeDef p = PWM_HANDLE_DEFAULT;
+
+    p.Instance = PWM_INSTANCE_7;
+    p.Timer = PWM_TIMER_6;
+    p.Duty = 0x2A5U;
+    p.ActiveLow = 1U;
+    ok &= (EPIC_PWM_Init(&p) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PWM7CON) & (uint8_t)~PIC_PWM6CON_OUT) == 0x90U);
+    ok &= (EPIC_REG8(PIC_REG_PWM7DCH) == 0xA9U);
+    ok &= (EPIC_REG8(PIC_REG_PWM7DCL) == 0x40U);
+    ok &= (EPIC_REG8(PIC_REG_CCPTMRS1) == 0x35U);
+    ok &= (EPIC_PWM_DeInit(PWM_INSTANCE_7) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PWM7CON) & (uint8_t)~PIC_PWM6CON_OUT) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_PWM7DCH) == 0x00U);
+    ok &= (EPIC_REG8(PIC_REG_CCPTMRS1) == PIC_CCPTMRS1_POR_VALUE);
+
+    p = (PWM_HandleTypeDef)PWM_HANDLE_DEFAULT;
+    p.Duty = 64U;
+    ok &= (EPIC_PWM_Init(&p) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PWM6CON) & (uint8_t)~PIC_PWM6CON_OUT) == 0x80U);
+    ok &= (EPIC_REG8(PIC_REG_PWM6DCH) == 0x10U);
+    ok &= (EPIC_REG8(PIC_REG_PWM6DCL) == 0x00U);
+    t2_pwm_start();
+    tick_n(1000U);
+    lo = pwm6_out_high();
+    ok &= (lo > 0U);
+    ok &= (EPIC_PWM_SetDuty(PWM_INSTANCE_6, 192U) == EPIC_OK);
+    tick_n(1000U);
+    hi = pwm6_out_high();
+    ok &= (hi > (uint16_t)(lo + 250U));
+    EPIC_TIMER2_Stop();
+    EPIC_TIMER2_DeInit();
+    ok &= (EPIC_PWM_DeInit(PWM_INSTANCE_6) == EPIC_OK);
+    ok &= ((EPIC_REG8(PIC_REG_PWM6CON) & (uint8_t)~PIC_PWM6CON_OUT) == 0x00U);
+    return ok;
+}
+
+/**
  * @brief GPIO, IOC, Timer0..Timer2, PPS, EUSART, MSSP1 and interrupt smoke
  *        probe for the mdb gate.
  * @return Harness result: 0 on PASS, 1 on FAIL.
@@ -889,9 +1199,12 @@ int main(void)
         ok &= (EPIC_REG8(PIC_REG_TMR0H) == 0xFFU);
     }
 
-    /* Timer1 and Timer2: images, polled and vectored proofs, gates. */
+    /* Timer1 and Timer2: images, polled and vectored proofs, gates; then
+     * the CCP and PWM modules that run off them. */
     ok &= gate_timer1();
     ok &= gate_timer2();
+    ok &= gate_ccp();
+    ok &= gate_pwm();
 
     /* EUSART, MSSP and PPS register images and vectored interrupts. The
      * PPS lock goes last: while locked, mapping and DeInit are refused. */

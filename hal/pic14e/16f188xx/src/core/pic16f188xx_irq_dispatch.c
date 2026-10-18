@@ -7,11 +7,12 @@
 #include "peripherals/pic16f188xx_timer2.h"
 #include "peripherals/pic16f188xx_eeprom.h"
 #include "peripherals/pic16f188xx_nco.h"
+#include "peripherals/pic16f188xx_ccp.h"
 
 /* Flags with a driver: IOCIF and TMR0IF in PIR0, SSP1IF, TXIF and RCIF in
- * PIR3, TMR1IF and TMR2IF in PIR4, NVMIF and NCO1IF in PIR7. INT, BCL1IF
- * and Timer3..6 have no handler and no API enables them, so no unowned
- * source can reach the vector. */
+ * PIR3, TMR1IF and TMR2IF in PIR4, CCP1IF..CCP5IF in PIR6, NVMIF and NCO1IF
+ * in PIR7. INT, BCL1IF and Timer3..6 have no handler and no API enables
+ * them, so no unowned source can reach the vector. */
 #define IOC_PIR0_MASK ((uint8_t)PIC_PIR0_IOCIF)
 #define TMR0_PIR0_MASK ((uint8_t)PIC_PIR0_TMR0IF)
 #define SSP1_PIR3_MASK ((uint8_t)PIC_PIR3_SSP1IF)
@@ -19,6 +20,11 @@
 #define RX_PIR3_MASK ((uint8_t)PIC_PIR3_RCIF)
 #define TMR1_PIR4_MASK ((uint8_t)PIC_PIR4_TMR1IF)
 #define TMR2_PIR4_MASK ((uint8_t)PIC_PIR4_TMR2IF)
+#define CCP1_PIR6_MASK ((uint8_t)PIC_PIR6_CCP1IF)
+#define CCP2_PIR6_MASK ((uint8_t)PIC_PIR6_CCP2IF)
+#define CCP3_PIR6_MASK ((uint8_t)PIC_PIR6_CCP3IF)
+#define CCP4_PIR6_MASK ((uint8_t)PIC_PIR6_CCP4IF)
+#define CCP5_PIR6_MASK ((uint8_t)PIC_PIR6_CCP5IF)
 #define NVM_PIR7_MASK ((uint8_t)PIC_PIR7_NVMIF)
 #define NCO1_PIR7_MASK ((uint8_t)PIC_PIR7_NCO1IF)
 
@@ -94,6 +100,41 @@ void epic_dispatch_all_irqs(void)
         if ((EPIC_REG8(PIC_REG_PIE7) & NCO1_PIR7_MASK) != 0U)
         {
             NCO_IRQHandler();
+        }
+    }
+    if ((EPIC_REG8(PIC_REG_PIR6) & CCP1_PIR6_MASK) != 0U)
+    {
+        if ((EPIC_REG8(PIC_REG_PIE6) & CCP1_PIR6_MASK) != 0U)
+        {
+            CCP1_IRQHandler();
+        }
+    }
+    if ((EPIC_REG8(PIC_REG_PIR6) & CCP2_PIR6_MASK) != 0U)
+    {
+        if ((EPIC_REG8(PIC_REG_PIE6) & CCP2_PIR6_MASK) != 0U)
+        {
+            CCP2_IRQHandler();
+        }
+    }
+    if ((EPIC_REG8(PIC_REG_PIR6) & CCP3_PIR6_MASK) != 0U)
+    {
+        if ((EPIC_REG8(PIC_REG_PIE6) & CCP3_PIR6_MASK) != 0U)
+        {
+            CCP3_IRQHandler();
+        }
+    }
+    if ((EPIC_REG8(PIC_REG_PIR6) & CCP4_PIR6_MASK) != 0U)
+    {
+        if ((EPIC_REG8(PIC_REG_PIE6) & CCP4_PIR6_MASK) != 0U)
+        {
+            CCP4_IRQHandler();
+        }
+    }
+    if ((EPIC_REG8(PIC_REG_PIR6) & CCP5_PIR6_MASK) != 0U)
+    {
+        if ((EPIC_REG8(PIC_REG_PIE6) & CCP5_PIR6_MASK) != 0U)
+        {
+            CCP5_IRQHandler();
         }
     }
 }
