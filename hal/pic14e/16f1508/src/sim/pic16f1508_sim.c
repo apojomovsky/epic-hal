@@ -398,8 +398,13 @@ static void sim_step_clc(void)
     uint8_t cur[4] = {sim_clc_out[0], sim_clc_out[1], sim_clc_out[2], sim_clc_out[3]};
     uint8_t entry[4] = {sim_clc_out[0], sim_clc_out[1], sim_clc_out[2], sim_clc_out[3]};
     uint8_t q_hold[4] = {sim_clc_q[0], sim_clc_q[1], sim_clc_q[2], sim_clc_q[3]};
+    uint8_t fro[4];
 
     sim_clc_settle(cur, q_hold);
+    fro[0] = cur[0];
+    fro[1] = cur[1];
+    fro[2] = cur[2];
+    fro[3] = cur[3];
     for (n = 0U; n < 4U; n++)
     {
         uint16_t base = (uint16_t)(PIC_REG_CLC1CON + ((uint16_t)n * SIM_CLC_STRIDE));
@@ -410,7 +415,10 @@ static void sim_step_clc(void)
         if (((con & PIC_CLCCON_EN) != 0U) &&
             (sim_clc_is_combinational(mode) == 0U))
         {
-            out = sim_clc_mode(n, mode, sim_clc_gates(n, cur));
+            /* Frozen taps: same-clock flop pairs advance one stage per step
+             * whatever the wiring order, since no committed Q feeds a later
+             * sample in this loop. */
+            out = sim_clc_mode(n, mode, sim_clc_gates(n, fro));
             out = (uint8_t)(out ^ ((pic16f1508_sim_sfr[base + 1U] & PIC_CLCPOL_POL) != 0U ? 1U : 0U));
             cur[n] = out;
         }

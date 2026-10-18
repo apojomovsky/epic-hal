@@ -47,6 +47,34 @@ static void setup_tap(CLC_InstanceTypeDef cell, uint8_t mux, uint8_t code)
 }
 
 /**
+ * @brief Configure one cell as a D flop clocked by the T2 match pulse.
+ * @param cell Cell to configure (CLC1..CLC4).
+ * @param code Select code for the D input on D2.
+ */
+static void setup_flop(CLC_InstanceTypeDef cell, uint8_t code)
+{
+    CLC_HandleTypeDef h;
+
+    h.Instance = cell;
+    h.Mode = 5U;
+    h.Source[0] = EPIC_CLC_SourceCode(1U, CLC_IN_T2_MATCH);
+    h.Source[1] = code;
+    h.Source[2] = EPIC_CLC_SourceCode(3U, CLC_IN_LC1_OUT);
+    h.Source[3] = EPIC_CLC_SourceCode(4U, CLC_IN_CLCIN0);
+    h.Gls[0] = EPIC_CLC_GLSInput(1U, 0U, 1U);
+    h.Gls[1] = EPIC_CLC_GLSInput(2U, 0U, 1U);
+    h.Gls[2] = 0U;
+    h.Gls[3] = 0U;
+    h.GatePolarity = 0U;
+    h.OutputPolarity = 0U;
+    h.OutputEnable = 0U;
+    h.InterruptRising = 0U;
+    h.InterruptFalling = 0U;
+    h.Callback = NULL;
+    EPIC_CLC_Init(&h);
+}
+
+/**
  * @brief Read back a cell output through the driver contract.
  * @param cell Cell to read.
  * @return 0 or 1.
@@ -167,6 +195,28 @@ int main(void)
     pic16f1508_sim_drive_input('C', 7U, 0U);
     epic_harness_tick();
     ok &= (read_cell(CLC1) == 0U);
+
+    /* Same-clock flop pair through the SEL tap: CLC2 samples the settled
+     * CLC1 output, so the pair advances one stage per shared T2 clock. */
+    setup_flop(CLC1, EPIC_CLC_SourceCode(2U, CLC_IN_FOSC));
+    setup_flop(CLC2, EPIC_CLC_SourceCode(2U, CLC_IN_LC1_OUT));
+    pic16f1508_sim_drive_clc_input(0U, 2U, 1U);
+    EPIC_REG8(PIC_REG_TMR2) = 0U;
+    EPIC_REG8(PIC_REG_PR2) = 1U;
+    EPIC_REG8(PIC_REG_T2CON) = (uint8_t)(PIC_T2CON_TMR2ON | (3U << PIC_T2CON_T2OUTPS_SHIFT));
+    epic_harness_tick();
+    ok &= (read_cell(CLC1) == 0U);
+    ok &= (read_cell(CLC2) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC1) == 1U);
+    ok &= (read_cell(CLC2) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC1) == 1U);
+    ok &= (read_cell(CLC2) == 0U);
+    epic_harness_tick();
+    ok &= (read_cell(CLC1) == 1U);
+    ok &= (read_cell(CLC2) == 1U);
+    EPIC_REG8(PIC_REG_T2CON) = 0U;
 
     epic_harness_log("clc/sel: %s\n", ok ? "PASS" : "FAIL");
     return epic_harness_report(ok);
