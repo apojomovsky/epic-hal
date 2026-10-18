@@ -499,11 +499,10 @@ static int gate_nco(void)
 
 /**
  * @brief ADC, DAC1, FVR and comparator section: register images only.
- * @details CxOUT (CMxCON0 bit 6) is live read-only status and masks out
- * of the comparator images, as does FVRCON FVRRDY (silicon sets it once
- * the reference stabilizes). No conversion is waited on: completion
- * timing differs between the host model and MPLAB SIM, the host probes
- * cover conversion and triggers instead.
+ * @details ADGO masks out of the Init images only (the DeInit CON0
+ * clear stays exact); CxOUT and FVRRDY mask out of every image
+ * including after DeInit. No conversion is waited on: completion
+ * timing differs between models, the host probes cover it.
  * @return 1 when every readback matches, 0 otherwise.
  */
 static int gate_analog(void)
@@ -515,7 +514,7 @@ static int gate_analog(void)
     COMP_HandleTypeDef cmp = COMP_HANDLE_DEFAULT;
 
     ok &= (EPIC_ADC_Init(&adc) == EPIC_OK);
-    ok &= (EPIC_REG8(PIC_REG_ADCON0) == 0x94U);
+    ok &= ((EPIC_REG8(PIC_REG_ADCON0) & (uint8_t)~PIC_ADCON0_GO_NDONE) == 0x94U);
     ok &= (EPIC_REG8(PIC_REG_ADCON1) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_ADCON2) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_ADREF) == 0x00U);
@@ -532,7 +531,7 @@ static int gate_analog(void)
     adc.NegRef = ADC_NEGREF_VREFPIN;
     adc.Trigger = ADC_TRIGGER_TMR0;
     ok &= (EPIC_ADC_Init(&adc) == EPIC_OK);
-    ok &= (EPIC_REG8(PIC_REG_ADCON0) == 0x84U);
+    ok &= ((EPIC_REG8(PIC_REG_ADCON0) & (uint8_t)~PIC_ADCON0_GO_NDONE) == 0x84U);
     ok &= (EPIC_REG8(PIC_REG_ADCLK) == 0x0FU);
     ok &= (EPIC_REG8(PIC_REG_ADREF) == 0x13U);
     ok &= (EPIC_REG8(PIC_REG_ADACT) == 0x02U);
@@ -557,7 +556,7 @@ static int gate_analog(void)
     ok &= (EPIC_FVR_Init(&fvr) == EPIC_OK);
     ok &= ((EPIC_REG8(PIC_REG_FVRCON) & (uint8_t)~PIC_FVRCON_FVRRDY) == 0x8AU);
     ok &= (EPIC_FVR_DeInit() == EPIC_OK);
-    ok &= (EPIC_REG8(PIC_REG_FVRCON) == 0x00U);
+    ok &= ((EPIC_REG8(PIC_REG_FVRCON) & (uint8_t)~PIC_FVRCON_FVRRDY) == 0x00U);
 
     ok &= (EPIC_COMP_Init(&cmp) == EPIC_OK);
     ok &= (EPIC_REG8(PIC_REG_CM1NSEL) == 0x00U);
@@ -577,8 +576,8 @@ static int gate_analog(void)
     ok &= ((EPIC_REG8(PIC_REG_CM2CON0) & (uint8_t)~PIC_CM2CON0_OUT) == 0x92U);
     ok &= (EPIC_COMP_DeInit(COMP_INSTANCE_1) == EPIC_OK);
     ok &= (EPIC_COMP_DeInit(COMP_INSTANCE_2) == EPIC_OK);
-    ok &= (EPIC_REG8(PIC_REG_CM1CON0) == 0x00U);
-    ok &= (EPIC_REG8(PIC_REG_CM2CON0) == 0x00U);
+    ok &= ((EPIC_REG8(PIC_REG_CM1CON0) & (uint8_t)~PIC_CM1CON0_OUT) == 0x00U);
+    ok &= ((EPIC_REG8(PIC_REG_CM2CON0) & (uint8_t)~PIC_CM2CON0_OUT) == 0x00U);
     return ok;
 }
 
