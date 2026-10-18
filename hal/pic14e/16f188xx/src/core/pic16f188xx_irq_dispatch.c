@@ -1,6 +1,8 @@
 #include "core/pic16f188xx_irq.h"
 #include "peripherals/pic16f188xx_gpio.h"
 #include "peripherals/pic16f188xx_timer0.h"
+#include "peripherals/pic16f188xx_adc.h"
+#include "peripherals/pic16f188xx_comp.h"
 #include "peripherals/pic16f188xx_ssp.h"
 #include "peripherals/pic16f188xx_usart.h"
 #include "peripherals/pic16f188xx_timer1.h"
@@ -9,12 +11,16 @@
 #include "peripherals/pic16f188xx_nco.h"
 #include "peripherals/pic16f188xx_ccp.h"
 
-/* Flags with a driver: IOCIF and TMR0IF in PIR0, SSP1IF, TXIF and RCIF in
- * PIR3, TMR1IF and TMR2IF in PIR4, CCP1IF..CCP5IF in PIR6, NVMIF and NCO1IF
- * in PIR7. INT, BCL1IF and Timer3..6 have no handler and no API enables
- * them, so no unowned source can reach the vector. */
+/* Flags with a driver: IOCIF and TMR0IF in PIR0, ADIF in PIR1, C1IF and
+ * C2IF in PIR2, SSP1IF, TXIF and RCIF in PIR3, TMR1IF and TMR2IF in
+ * PIR4, CCP1IF..CCP5IF in PIR6, NVMIF and NCO1IF in PIR7. INT, BCL1IF
+ * and Timer3..6 have no handler and no API enables them, so no unowned
+ * source can reach the vector. */
 #define IOC_PIR0_MASK ((uint8_t)PIC_PIR0_IOCIF)
 #define TMR0_PIR0_MASK ((uint8_t)PIC_PIR0_TMR0IF)
+#define AD_PIR1_MASK ((uint8_t)PIC_PIR1_ADIF)
+#define C1_PIR2_MASK ((uint8_t)PIC_PIR2_C1IF)
+#define C2_PIR2_MASK ((uint8_t)PIC_PIR2_C2IF)
 #define SSP1_PIR3_MASK ((uint8_t)PIC_PIR3_SSP1IF)
 #define TX_PIR3_MASK ((uint8_t)PIC_PIR3_TXIF)
 #define RX_PIR3_MASK ((uint8_t)PIC_PIR3_RCIF)
@@ -51,6 +57,27 @@ void epic_dispatch_all_irqs(void)
         if ((EPIC_REG8(PIC_REG_PIE0) & TMR0_PIR0_MASK) != 0U)
         {
             TIMER0_IRQHandler();
+        }
+    }
+    if ((EPIC_REG8(PIC_REG_PIR1) & AD_PIR1_MASK) != 0U)
+    {
+        if ((EPIC_REG8(PIC_REG_PIE1) & AD_PIR1_MASK) != 0U)
+        {
+            ADC_IRQHandler();
+        }
+    }
+    if ((EPIC_REG8(PIC_REG_PIR2) & C1_PIR2_MASK) != 0U)
+    {
+        if ((EPIC_REG8(PIC_REG_PIE2) & C1_PIR2_MASK) != 0U)
+        {
+            CMP1_IRQHandler();
+        }
+    }
+    if ((EPIC_REG8(PIC_REG_PIR2) & C2_PIR2_MASK) != 0U)
+    {
+        if ((EPIC_REG8(PIC_REG_PIE2) & C2_PIR2_MASK) != 0U)
+        {
+            CMP2_IRQHandler();
         }
     }
     if ((EPIC_REG8(PIC_REG_PIR3) & SSP1_PIR3_MASK) != 0U)

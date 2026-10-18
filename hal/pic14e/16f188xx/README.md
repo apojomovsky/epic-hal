@@ -3,12 +3,13 @@
 Register-level HAL for the PIC16F188xx family (Enhanced Mid-range
 core): 16F18854/55/56/57 (28-pin) and 16F18875/76/77 (40-pin, adding
 PORTD and PORTE). This HAL covers the family header and SFR map, GPIO
-(PORTA..PORTC, plus PORTD/PORTE on the 40-pin parts), Timer0, the
-EUSART, MSSP1 (SPI master and I2C master), the PPS pin selector, Timer1,
-Timer2, CCP1..CCP5 and the dedicated PWM6/PWM7 modules, the 256-byte data
-EEPROM, the WDT, Sleep and Idle helpers and NCO1, and the
-interrupt sources behind the single vector through the shared
-dispatcher.
+(PORTA..PORTC, plus PORTD/PORTE on the 40-pin parts), Timer0, the ADC
+with auto-conversion triggers, the 5-bit DAC1, the FVR, comparators
+C1/C2, the EUSART, MSSP1 (SPI master and I2C master), the PPS pin
+selector, Timer1, Timer2, CCP1..CCP5 and the dedicated PWM6/PWM7
+modules, the 256-byte data EEPROM, the WDT, Sleep and Idle helpers and
+NCO1, and the interrupt sources behind the single vector through the
+shared dispatcher.
 
 Register facts come from the pinned Microchip.PIC16F1xxxx_DFP 1.32.471
 EDC (`PIC16F18855.PIC`) and its proc header, not from a datasheet page.
@@ -34,19 +35,21 @@ Implemented and verified:
 - [x] GPIO on PORTA..PORTC (all parts) and PORTD/PORTE (40-pin parts):
       init, read/write pin and port, toggle, pull-ups, analog select,
       per-port interrupt-on-change enable
-- [x] Interrupt core for IOC, Timer0 overflow, Timer1 overflow, Timer2
-      match and CCP1..CCP5 (`PIE0`/`PIR0` bits 4 and 5, `PIE4`/`PIR4`
-      bits 0 and 1, `PIE6`/`PIR6` bits 0 to 4, PEIE-gated dispatch,
-      single vector, automatic hardware context save)
+- [x] Interrupt core for IOC, Timer0 overflow, ADC done, C1/C2 edges,
+      Timer1 overflow, Timer2 match and CCP1..CCP5 (`PIE0`/`PIR0` bits 4
+      and 5, `PIE1`/`PIR1` bit 0, `PIE2`/`PIR2` bits 0 and 1,
+      `PIE4`/`PIR4` bits 0 and 1, `PIE6`/`PIR6` bits 0 to 4, PEIE-gated
+      dispatch, single vector, automatic hardware context save)
 - [x] Timer0 8/16-bit with prescaler, postscaler and overflow callback
       (`EPIC_TIMER0_*`, `TIMER0_HANDLE_DEFAULT`): host probe
       `example_timer0` (ctest) plus the mdb gate section (register
       images, polled flag, vectored overflow with POR restore; T0OUT
       masks out of the T0CON0 images, family MANUAL.md)
-- [x] PPS (`EPIC_PPS_*`): input and output pin selects for T0CKI, MSSP1
-      and the EUSART, lock and unlock sequence. Host probe `example_pps`
-      (also drives Timer0 from a mapped T0CKI pin) plus the mdb gate
-      section (select images at their 0xFxx or 0x1Fxx addresses, lock).
+- [x] PPS (`EPIC_PPS_*`): input and output pin selects for T0CKI, MSSP1,
+      the EUSART and the comparator outputs, lock and unlock sequence.
+      Host probe `example_pps` (also drives Timer0 from a mapped T0CKI
+      pin) plus the mdb gate section (select images at their 0xFxx or
+      0x1Fxx addresses, lock).
 - [x] EUSART asynchronous 8/9-bit with 8/16-bit baud generator, address
       detect, RX callback and one-shot TX interrupt (`EPIC_USART_*`,
       `USART_HANDLE_DEFAULT`): host probe `example_usart` plus the mdb
@@ -88,6 +91,27 @@ Implemented and verified:
       CCP5, PWM duty against Timer2; MPLAB SIM never captures and the
       gate image fits the 16K and 32K parts only, family MANUAL.md).
       Only the Timer1/Timer2 couple is modelled on the host sim.
+- [x] ADC (`EPIC_ADC_*`, `ADC_HANDLE_DEFAULT`): basic polling mode,
+      FRC or FOSC/ADCLK clock, VDD/VREF+/FVR references, left or right
+      justification, ADACT auto-conversion triggers, per-part channel
+      validation. Host probe `example_adc` (ctest: images, both
+      formats, vectored ADIF, Timer2-match trigger) plus the mdb gate
+      section (register images only; MPLAB SIM conversion timing is
+      unprobed, family MANUAL.md).
+- [x] 5-bit DAC1 (`EPIC_DAC_*`, `DAC_HANDLE_DEFAULT`): code, VDD/VREF+/
+      FVR positive source, VSS/VREF- negative source, DAC1OUT1/OUT2 pin
+      enables, live code update. Host probe `example_dac` plus the mdb
+      gate section (register images only).
+- [x] FVR (`EPIC_FVR_*`, `FVR_HANDLE_DEFAULT`): independent ADC and
+      comparator/DAC gain buffers with ready polling. Host probe
+      `example_fvr` plus the mdb gate section (register image, FVRRDY
+      masked).
+- [x] Comparators C1/C2 (`EPIC_COMP_*`, `COMP_HANDLE_DEFAULT`): NCH/PCH
+      channel selects, hysteresis, inversion, edge interrupts with
+      instance callbacks, output on pins through `PPS_OUTPUT_C1OUT` /
+      `PPS_OUTPUT_C2OUT`. Host probe `example_comp` (ctest: images,
+      pin-driven output, DAC-vs-FVR comparison, vectored edge) plus the
+      mdb gate section (register images only, CxOUT masked).
 - [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`hal/pic14e/16f188xx`), `blink` example,
       and the mdb register-readback gate (`MODE=gpio`, RA0 PASS marker)
@@ -96,12 +120,12 @@ Implemented and verified:
       silicon); MPLAB SIM ignores it, so there it covers readbacks
       only (family MANUAL.md).
 Not yet implemented (deliberate scope limit, each its own follow-up):
-- ADC, comparators, DAC, FVR, MSSP2, EUSART synchronous mode and
-  auto-baud, SPI and I2C slave, the Timer2 SPI clock, Timer3..Timer6 (so
-  the CCP and PWM Timer3..Timer6 couples are programmable but nothing
-  starts those timers), the Timer1 gate-event interrupt, PPS inputs for
-  T1CKI, T1G and T2IN, program Flash self-write, the WDT window and Doze,
-  and the remaining peripherals.
+- MSSP2, EUSART synchronous mode and auto-baud, SPI and I2C slave, the
+  Timer2 SPI clock, Timer3..Timer6 (so the CCP and PWM Timer3..Timer6
+  couples are programmable but nothing starts those timers), the Timer1
+  gate-event interrupt, PPS inputs for T1CKI, T1G and T2IN, program
+  Flash self-write, the WDT window and Doze, and the remaining
+  peripherals.
 - Wiring the family into the demos.
 
 ## Quick start

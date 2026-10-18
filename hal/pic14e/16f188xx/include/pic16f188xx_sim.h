@@ -1,7 +1,8 @@
 /**
  * Host simulator API for the PIC16F188xx ports, interrupt-on-change,
- * Timer0..Timer2, CCP1..CCP5, PWM6/PWM7, EUSART, MSSP1, PPS, data EEPROM, NCO1
- * and the WDT/Sleep helpers. Host-only: never in an XC8 build.
+ * Timer0..Timer2, ADC, DAC1, FVR, comparators C1/C2, CCP1..CCP5, PWM6/PWM7,
+ * EUSART, MSSP1, PPS, data EEPROM, NCO1 and the WDT/Sleep helpers.
+ * Host-only: never in an XC8 build.
  */
 #ifndef PIC16F188XX_SIM_H
 #define PIC16F188XX_SIM_H
@@ -185,5 +186,11 @@ uint8_t pic16f188xx_sim_ccp_out(uint8_t instance);
  * @return The output level after polarity (1 high), 0 for an invalid module.
  */
 uint8_t pic16f188xx_sim_pwm_out(uint8_t instance);
+/**
+ * @brief Inject the 10-bit sample an ADC channel converts.
+ * @param channel ADPCH code 0..63, selects the sample slot.
+ * @param value 10-bit sample (higher bits are ignored).
+ */
+void pic16f188xx_sim_adc_set_sample(uint8_t channel, uint16_t value);
 
 #endif

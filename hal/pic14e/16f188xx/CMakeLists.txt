@@ -50,6 +50,10 @@ set(EPIC_SOURCES
     src/peripherals/pic16f188xx_ssp.c
     src/peripherals/pic16f188xx_eeprom.c
     src/peripherals/pic16f188xx_nco.c
+    src/peripherals/pic16f188xx_adc.c
+    src/peripherals/pic16f188xx_dac.c
+    src/peripherals/pic16f188xx_fvr.c
+    src/peripherals/pic16f188xx_comp.c
     src/core/pic16f188xx_irq.c
     src/core/pic16f188xx_irq_dispatch.c
     src/core/pic16f188xx_wdt_sleep.c
@@ -59,6 +63,7 @@ set(EPIC_SOURCES
     src/sim/pic16f188xx_sim_sys.c
     src/sim/pic16f188xx_wdt_sleep_sim.c
     src/sim/pic16f188xx_sim_ccp.c
+    src/sim/pic16f188xx_sim_analog.c
 )
 
 epic_add_hal_library(${EPIC_LIB})
@@ -76,6 +81,10 @@ epic_add_example(example_mssp tests/example_mssp.c)
 epic_add_example(example_pps tests/example_pps.c)
 epic_add_example(example_eeprom tests/example_eeprom.c)
 epic_add_example(example_nco tests/example_nco.c)
+epic_add_example(example_adc tests/example_adc.c)
+epic_add_example(example_dac tests/example_dac.c)
+epic_add_example(example_fvr tests/example_fvr.c)
+epic_add_example(example_comp tests/example_comp.c)
 epic_add_example(example_wdt_sleep tests/example_wdt_sleep.c)
 epic_add_example_per_device(example_blink tests/example_blink.c)
 
@@ -92,4 +101,8 @@ add_test(NAME mssp_host COMMAND example_mssp)
 add_test(NAME pps_host COMMAND example_pps)
 add_test(NAME eeprom_host COMMAND example_eeprom)
 add_test(NAME nco_host COMMAND example_nco)
+add_test(NAME adc_host COMMAND example_adc)
+add_test(NAME dac_host COMMAND example_dac)
+add_test(NAME fvr_host COMMAND example_fvr)
+add_test(NAME comp_host COMMAND example_comp)
 add_test(NAME wdt_sleep_host COMMAND example_wdt_sleep)
