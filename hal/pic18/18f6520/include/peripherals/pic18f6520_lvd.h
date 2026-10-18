@@ -1,13 +1,10 @@
 /*
- * Low-Voltage Detect driver (DS39609B §22.0, Register 22-1). One control
- * register, LVDCON (0xFD2, Access Bank): LVDL<3:0> trip select,
- * LVDEN enable, IRVST (read-only) internal reference stable. The trip
- * event is PIR2<LVDIF>. Present on every part in the family, at the same
- * address (the ECAN quads too).
- *
- * Bring-up order the datasheet requires: enable (Start), poll IsStable,
- * then arm the interrupt (EnableInterrupt). The flag can be set
- * spuriously while the reference settles, which is why arming clears it.
+ * Low-Voltage Detect driver (DS39609B §22.0, Register 22-1). LVDCON
+ * (0xFD2, Access Bank): LVDL<3:0> trip select, LVDEN, IRVST (read-only
+ * reference stable). Trip event is PIR2<LVDIF>. Present at the same
+ * address on every part in the family, the ECAN quads too.
+ * Bring-up: Start, poll IsStable, then EnableInterrupt (the flag can be
+ * set spuriously while the reference settles).
  */
 
 #ifndef PIC18F6520_LVD_H
