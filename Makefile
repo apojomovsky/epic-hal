@@ -299,6 +299,7 @@ mdb-test: image
 		echo "  EXTRA_MDB: extra mdb commands inserted before quit, e.g." >&2; \
 		echo "    EXTRA_MDB=\$'print INTCON\\nprint PIR1' for register-level debugging." >&2; \
 		echo "  EEPROM_WRITES: halt+complete EEPROM-write cycles emitted before the final run" >&2; \
+		echo "    (MPLAB SIM never completes a CPU-executed EEPROM write; only lib/settings' gate needs this)." >&2; \
 		echo "  SIM_GATE: an extra manifest sim gate by name (empty runs the default gate)." >&2; \
 		echo "  e.g. make mdb-test MODULE=lib/tick MCU=16F877A DEVICE=PIC16F877A" >&2; \
 		exit 1; \
