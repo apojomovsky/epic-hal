@@ -38,6 +38,11 @@ static uint8_t sim_clc_out[4];
 static uint16_t sim_t1_prescaler;
 static uint16_t sim_t2_prescaler;
 static uint8_t sim_t2_postscaler;
+/* T1_overflow and T2_match pulses seen since the last CLC sample. Silicon
+ * feeds the CLC the overflow and the pre-postscaler PR2 match as pulses, not
+ * the latched TMR1IF/TMR2IF levels (DS40001609E Figures 19-1 and 20-1). */
+static uint8_t sim_t1_overflow_pulse;
+static uint8_t sim_t2_match_pulse;
 /* Last observed TMR2 and T2CON: a change is a software write, which clears
  * the prescaler and postscaler counters (DS40001609E §20.1). */
 static uint8_t sim_t2_last_tmr;
@@ -217,9 +222,9 @@ static uint8_t sim_clc_pin(uint8_t cell, uint8_t second)
  * D3 [8..15], D4 [12..15] at codes 0..3 then [0..3] at codes 4..7.
  * LCxOUT reads the post-POL wire (Register 24-1: LCxOUT is after LCxPOL,
  * sampled from lcx_out, the same wire Table 24-1 taps). T1_overflow and
- * T2_match read the latched PIR1 flags: a one-cycle hardware pulse would
- * alias under the once-per-step sampler, so the model holds the flag level
- * until software clears it. Anything without a sim source reads 0.
+ * T2_match read the pulse seen since the previous sample, so a single-cycle
+ * pulse is never lost and TMR2IF stays out of it: T2_match is ahead of the
+ * postscaler. Anything without a sim source reads 0.
  * @param cell Cell index 0..3.
  * @param mux Data input 0..3 (D1..D4).
  * @param prev Cell outputs at step entry, post-POL.
@@ -254,11 +259,11 @@ static uint8_t sim_clc_sel(uint8_t cell, uint8_t mux, const uint8_t prev[4])
     }
     if (in == 6U)
     {
-        return (pic16f1508_sim_sfr[PIC_REG_PIR1] & PIC_PIR1_TMR1IF) ? 1U : 0U;
+        return sim_t1_overflow_pulse;
     }
     if (in == 7U)
     {
-        return (pic16f1508_sim_sfr[PIC_REG_PIR1] & PIC_PIR1_TMR2IF) ? 1U : 0U;
+        return sim_t2_match_pulse;
     }
     if ((in >= 8U) && (in < 12U))
     {
@@ -333,6 +338,8 @@ static void sim_step_clc(void)
             pic16f1508_sim_sfr[PIC_REG_CLCDATA] &= (uint8_t)~(1U << n);
         }
     }
+    sim_t1_overflow_pulse = 0U;
+    sim_t2_match_pulse = 0U;
     if ((((pic16f1508_sim_sfr[PIC_REG_PIR3] & pic16f1508_sim_sfr[PIC_REG_PIE3]) & 0x0FU) != 0U) &&
         ((pic16f1508_sim_sfr[PIC_REG_INTCON] & (PIC_INTCON_PEIE | PIC_INTCON_GIE)) ==
          (PIC_INTCON_PEIE | PIC_INTCON_GIE)) &&
@@ -419,6 +426,7 @@ static void sim_timer1_count(void)
     if (full == 0x0000U)
     {
         pic16f1508_sim_sfr[PIC_REG_PIR1] |= PIC_PIR1_TMR1IF;
+        sim_t1_overflow_pulse = 1U;
         /* The flag latches regardless; the vector needs GIE, as on silicon. */
         if ((sim_irq_cb != NULL) && (sim_gie() != 0U))
         {
@@ -499,6 +507,7 @@ static void sim_step_timer2(void)
     {
         pic16f1508_sim_sfr[PIC_REG_TMR2] = 0U;
         sim_t2_last_tmr = 0U;
+        sim_t2_match_pulse = 1U;
         sim_t2_postscaler++;
         outps = (uint8_t)(((unsigned int)t2con & PIC_T2CON_T2OUTPS_MASK) >> PIC_T2CON_T2OUTPS_SHIFT);
         if (sim_t2_postscaler > outps)
@@ -543,6 +552,8 @@ void pic16f1508_sim_reset(void)
     sim_t2_postscaler = 0U;
     sim_t2_last_tmr = 0U;
     sim_t2_last_con = 0U;
+    sim_t1_overflow_pulse = 0U;
+    sim_t2_match_pulse = 0U;
     sim_irq_cb = NULL;
     sim_refresh_ports();
     sim_last_portb = pic16f1508_sim_sfr[PIC_REG_PORTB];
