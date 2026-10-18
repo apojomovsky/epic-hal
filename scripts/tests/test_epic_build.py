@@ -1122,7 +1122,7 @@ class TestEpicccSimHalSliceEmit(unittest.TestCase):
         s = self.sim_epiccc()
         self.assertIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c", s)
         self.assertIn("hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c", s)
-        self.assertIn("build/16F877A-tick-blink-sim.hex", s)
+        self.assertIn("build/16F877A/16F877A-tick-blink-sim.hex", s)
 
     def test_sim_xc8_ignores_the_sim_slice(self):
         s = epic_build.emit_build_script(

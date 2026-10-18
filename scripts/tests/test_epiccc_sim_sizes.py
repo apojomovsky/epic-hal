@@ -34,8 +34,9 @@ class TestSimSizesTable(unittest.TestCase):
         return code, out.getvalue()
 
     def write_report(self, build_dir, name="18F4550-menu-demo-sim.json",
-                     payload=REPORT):
-        path = pathlib.Path(build_dir) / name
+                     payload=REPORT, mcu="18F4550"):
+        path = pathlib.Path(build_dir) / mcu / name
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload))
         return path
 
@@ -66,7 +67,8 @@ class TestSimSizesTable(unittest.TestCase):
 
     def test_malformed_report_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = pathlib.Path(tmp) / "18F4550-menu-demo-sim.json"
+            path = pathlib.Path(tmp) / "18F4550" / "18F4550-menu-demo-sim.json"
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("{ not json")
             code, out = self.run_main(
                 tmp, ["demos/menu:18F4550"])

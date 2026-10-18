@@ -133,14 +133,12 @@ def emit_config_source(manifest, module, mcu, variant="target", toolchain="xc8",
     return "\n".join(lines) + "\n"
 
 
-def _sim_gate_objdirname(manifest, module, mcu, sim_gate):
-    """Objdir leaf for a sim gate: `<mcu>` for the default gate (named
-    or not), `<mcu>-<gate>` past it, so parallel gates share nothing."""
+def _sim_gate_objdirname(mcu, sim_gate):
+    """Objdir leaf for a sim gate: `<mcu>` for the unnamed default,
+    `<mcu>-<gate>` for any named gate, so parallel gates share
+    nothing. The runner and the emitter share this rule, which is why
+    a run_one line addresses the default gate bare, never by name."""
     if sim_gate is None:
-        return mcu
-    default = manifest.sim_variant_for(
-        module, manifest.family_of(mcu).name, mcu)
-    if default is not None and sim_gate == default.name:
         return mcu
     return f"{mcu}-{sim_gate}"
 
@@ -172,9 +170,9 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     swapped-out entry's position), a full config override, and a
     gate-specific .hex basename so the two builds never collide in
     the same build dir. sim_gate selects one gate by name (default:
-    the `sim` entry); each gate's .hex sits beside its build.sh in
-    its own objdir (`<mcu>` for the default, `<mcu>-<gate>` past it),
-    so parallel gates share nothing.
+    the unnamed `sim` entry); each gate's .hex sits beside its
+    build.sh in its own objdir (`<mcu>`, or `<mcu>-<gate>` for a
+    named gate), so parallel gates share nothing.
 
     report=True appends the driver's ``--report`` flag on the epic-cc
     path, writing ``<hex with .hex replaced by .json>`` beside the hex
@@ -199,7 +197,7 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     example = manifest.example_for(module, fam.name, mcu)
     if example is None:
         raise UnsupportedError(f"{module} has no example for {fam.name} to build")
-    if variant == "sim" and manifest.sim_variant_for(module, fam.name) is None:
+    if variant == "sim" and manifest.sim_variant_for(module, fam.name, mcu) is None:
         raise UnsupportedError(f"{module} has no sim variant for {fam.name}")
     if sim_gate is not None and variant != "sim":
         raise UnsupportedError("--sim-gate needs --variant sim")
@@ -212,7 +210,7 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     # carry their own config TU, so one objdir would race under
     # parallel gates and clobber config_<mcu>.c.
     gate_dir = mcu if variant != "sim" else _sim_gate_objdirname(
-        manifest, module, mcu, sim_gate)
+        mcu, sim_gate)
     # Epic-cc drivers: every module with a target_sizecheck_epiccc.c uses it
     # on the epic-cc path (real module logic where the compiler supports it,
     # a footprint probe where a filed isel gap remains). A module with its
@@ -312,7 +310,11 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
                 manifest, module, mcu, variant=variant, toolchain=toolchain, fosc_hz=fosc_hz,
                 sim_gate=sim_gate
             ) is not None
-        target = f"{build_dir}/{mcu}-{example_name}.hex"
+        # Sim hexes sit beside their build.sh like the XC8 sim path (the
+        # mdb runner globs the gate objdir); target builds keep the
+        # legacy build-dir-root hex the CI gates address by name.
+        target = f"{objdir}/{mcu}-{example_name}.hex" if variant == "sim" \
+            else f"{build_dir}/{mcu}-{example_name}.hex"
         inc_flags = " ".join(f"-I{inc}" for inc in includes)
         # PIC part define is harmless under epic-cc and keeps the HAL's
         # #ifdef PIC16F877A paths intact; forward it.  Defining __EPIC_CC__
@@ -698,7 +700,7 @@ def cmd_build(args):
     script_paths = []
     for gate, script in scripts:
         gate_dir = args.mcu if args.variant != "sim" else _sim_gate_objdirname(
-            manifest, module, args.mcu, gate)
+            args.mcu, gate)
         objdir = (REPO / args.build_dir / gate_dir).resolve()
         objdir.mkdir(parents=True, exist_ok=True)
         config_source = emit_config_source(

@@ -301,10 +301,12 @@ config      = { BOR = "ON", WDT = "OFF" }  # full override, abbreviated here
 
 `--variant sim` emits every gate: the default at
 `build-sim/<module>/<mcu>/`, each extra at
-`build-sim/<module>/<mcu>-<gate>/` with its hex beside its build.sh.
+`build-sim/<module>/<mcu>-<gate>/` with its hex beside its build.sh,
+where `<gate>` is the gate's manifest `name` (not the `sim_gates` key).
 A per-MCU `sim.variants` override replaces the whole gate set for that
 MCU, so parts with their own sim entry never grow extra gates by
-accident.
+accident. The runner addresses the default gate bare and each extra
+by its `name`.
 
 ### Where the example program lives
 

@@ -145,6 +145,23 @@ class TestSimVariantSync(unittest.TestCase):
                    for p in lines if len(p) >= 5]
         self.assertEqual(len(triples), len(set(triples)))
 
+    def test_run_one_lines_have_a_valid_field_shape(self):
+        """A gate name in any field but the 11th never reaches the
+        runner (it reads $9; run_one forwards its $10), so the line
+        silently runs the default gate instead. Only toggle lines
+        carry fields 8-9, and only an 11th field may name a gate."""
+        bad = []
+        lines = (SCRIPTS / "ci" / "ci-target-sim.sh").read_text().splitlines()
+        for line in lines:
+            parts = line.split()
+            if len(parts) < 7 or parts[0] != "run_one":
+                continue
+            n, mode = len(parts), parts[6]
+            if n == 10 and mode != "toggle":
+                bad.append(line)
+            elif n not in (7, 8, 10, 11):
+                bad.append(line)
+        self.assertEqual(bad, [])
 
 if __name__ == "__main__":
     unittest.main()
