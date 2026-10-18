@@ -157,6 +157,10 @@ class Example:
     # sources_for/includes_for, before the example's own sources.
     depends_on: list[str] | None = None
     sim: SimVariant | None = None
+    # Extra HARNESS=sim gates beyond the default `sim` above, keyed by
+    # a short TOML id. A gate's command-line and build-dir identity is
+    # still its own `name`; sim_gates_for resolves default plus extras.
+    sim_gates: dict[str, SimVariant] = dataclasses.field(default_factory=dict)
     # The epic-cc path's example override (see EpicccVariant). Family
     # scoped like sim: every part of the family shares the simulator
     # limitation that motivates it.
@@ -251,7 +255,7 @@ class Manifest:
         return ordered
 
     def resolved_deps(self, module_name: str, mcu: str,
-                      variant: str = "target") -> list[str]:
+                      variant: str = "target", sim_gate: str | None = None) -> list[str]:
         """The module's deps plus the resolved example's deps, dependencies
         first, de-duplicated.
 
@@ -267,9 +271,13 @@ class Manifest:
         example = self.example_for(module_name, fam.name, mcu)
         if example is not None:
             deps = example.depends_on
-            if variant == "sim" and example.sim is not None \
-                    and example.sim.depends_on is not None:
-                deps = example.sim.depends_on
+            if variant == "sim":
+                gate = self.sim_gate_for(
+                    module_name, fam.name, mcu, sim_gate) if sim_gate else None
+                if gate is None:
+                    gate = self.sim_variant_for(module_name, fam.name, mcu)
+                if gate is not None and gate.depends_on is not None:
+                    deps = gate.depends_on
             for dep in deps:
                 names += self.resolve_deps(dep)
         return _dedupe(names)
@@ -315,14 +323,10 @@ class Manifest:
 
     def sim_variant_for(self, module_name: str, family_name: str,
                         mcu: str | None = None) -> SimVariant | None:
-        """This module's HARNESS=sim variant for a family, or None.
+        """This module's default HARNESS=sim gate for a family, or None.
 
-        Only three (module, family) pairs have one today: lib/tick on
-        PIC16F87XA and PIC18Fxx5x, and the PIC16F193X bare-HAL firmware
-        module, mirroring the three sim-tests.yml legs that exist.
-
-        With mcu, a per-MCU variant override (SimVariant.variants)
-        wins; without one the family entry is returned unchanged.
+        The default is `example.sim` (extras live in `sim_gates`; see
+        sim_gates_for). With mcu, a per-MCU variant override wins.
         """
         example = self.example_for(module_name, family_name)
         sim = None if example is None else example.sim
@@ -330,8 +334,43 @@ class Manifest:
             return sim.variants.get(mcu, sim)
         return sim
 
+    def sim_gates_for(self, module_name: str, family_name: str,
+                      mcu: str | None = None) -> list[SimVariant]:
+        """Every HARNESS=sim gate for a (module, family, MCU): the
+        default `sim` first, then `sim_gates` extras in key order.
+
+        A per-MCU `sim.variants` override replaces the whole gate set
+        for that MCU (config is a full override, so the override
+        restates the entry; extras never apply where one exists).
+        Each extra applies its own per-MCU variant, when it has one.
+        """
+        example = self.example_for(module_name, family_name)
+        if example is None or example.sim is None:
+            return []
+        sim = example.sim
+        if mcu is not None and sim.variants and mcu in sim.variants:
+            return [sim.variants[mcu]]
+        gates = [sim]
+        for key in sorted(example.sim_gates):
+            extra = example.sim_gates[key]
+            if mcu is not None and extra.variants and mcu in extra.variants:
+                extra = extra.variants[mcu]
+            gates.append(extra)
+        return gates
+
+    def sim_gate_for(self, module_name: str, family_name: str,
+                     mcu: str | None, name: str) -> SimVariant:
+        """One gate by its `name`; fails loudly on an unknown name."""
+        for gate in self.sim_gates_for(module_name, family_name, mcu):
+            if gate.name == name:
+                return gate
+        raise ManifestError(
+            f"modules.{module_name}.example.{family_name}: "
+            f"unknown sim gate '{name}'"
+        )
+
     def sources_for(self, module_name: str, mcu: str, variant: str = "target",
-                    toolchain: str = "xc8") -> list[str]:
+                    toolchain: str = "xc8", sim_gate: str | None = None) -> list[str]:
         """Repo-root-relative sources for one (module, MCU) build.
 
         toolchain="epic-cc" swaps the family HAL sources for the
@@ -378,11 +417,16 @@ class Manifest:
         16F5x gate firmware the simulator can actually observe).
         """
         fam = self.family_of(mcu)
-        sim = self.sim_variant_for(module_name, fam.name, mcu) if variant == "sim" else None
-        if variant == "sim" and sim is None:
-            raise ManifestError(
-                f"{module_name} has no sim variant for {fam.name}"
-            )
+        sim = None
+        if variant == "sim":
+            sim = self.sim_gate_for(
+                module_name, fam.name, mcu, sim_gate) if sim_gate else None
+            if sim is None:
+                sim = self.sim_variant_for(module_name, fam.name, mcu)
+            if sim is None:
+                raise ManifestError(
+                    f"{module_name} has no sim variant for {fam.name}"
+                )
 
         out = []
         mod = self._module(module_name)
@@ -431,7 +475,8 @@ class Manifest:
                             out.append(c.path)
                 out += [c.path for c in applicable if c.after is None]
 
-        for name in self.resolved_deps(module_name, mcu, variant=variant):
+        for name in self.resolved_deps(module_name, mcu, variant=variant,
+                                       sim_gate=sim_gate):
             mod = self._module(name)
             out += [join_module_path(mod.dir, s) for s in mod.sources]
             out += [join_module_path(mod.dir, s)
@@ -450,7 +495,7 @@ class Manifest:
         return _dedupe(out)
 
     def includes_for(self, module_name: str, mcu: str,
-                     variant: str = "target") -> list[str]:
+                     variant: str = "target", sim_gate: str | None = None) -> list[str]:
         """Repo-root-relative include dirs, family first when the HAL is used.
 
         Family order is preserved verbatim: include/target must precede
@@ -460,7 +505,8 @@ class Manifest:
         """
         fam = self.family_of(mcu)
         out = list(fam.includes) if self.uses_hal(module_name, mcu) else []
-        for name in self.resolved_deps(module_name, mcu, variant=variant):
+        for name in self.resolved_deps(module_name, mcu, variant=variant,
+                                       sim_gate=sim_gate):
             mod = self._module(name)
             out += [join_module_path(mod.dir, i) for i in mod.includes]
         return _dedupe(out)
@@ -518,6 +564,8 @@ def _parse_sim_variant(module_name, family_name, table):
     if table is None:
         return None
     where = f"modules.{module_name}.example.{family_name}.sim"
+    _check_keys(table, {"name", "harness_src", "config", "sources",
+                        "depends_on", "variants"}, where)
     variants = table.get("variants", {})
     return SimVariant(
         name=_require(table, "name", where),
@@ -545,6 +593,8 @@ def _parse_epiccc_variant(module_name, family_name, table):
 def _parse_example(module_name, family_name, table, default_hal):
     variants = table.get("variants", {})
     where = f"modules.{module_name}.example.{family_name}"
+    _check_keys(table, {"name", "sources", "config", "hal", "depends_on",
+                        "sim", "sim_gates", "epiccc", "variants"}, where)
     return Example(
         name=_require(table, "name", where),
         sources=list(_require(table, "sources", where)),
@@ -552,6 +602,9 @@ def _parse_example(module_name, family_name, table, default_hal):
         hal=bool(table.get("hal", default_hal)),
         depends_on=list(table.get("depends_on", [])),
         sim=_parse_sim_variant(module_name, family_name, table.get("sim")),
+        sim_gates={key: _parse_sim_variant(
+            module_name, f"{family_name}.sim_gates.{key}", gtable)
+            for key, gtable in table.get("sim_gates", {}).items()},
         epiccc=_parse_epiccc_variant(
             module_name, family_name, table.get("epiccc")),
         variants={vname: _parse_example(
@@ -690,6 +743,10 @@ def _validate(manifest):
             check_paths(example.sources, f"example.{where}.sources")
             if example.sim is not None and example.sim.sources is not None:
                 check_paths(example.sim.sources, f"example.{where}.sim.sources")
+            for key, gate in example.sim_gates.items():
+                if gate.sources is not None:
+                    check_paths(gate.sources,
+                                f"example.{where}.sim_gates.{key}.sources")
             if example.epiccc is not None:
                 check_paths(example.epiccc.sources, f"example.{where}.epiccc.sources")
             if example.variants:
@@ -707,6 +764,20 @@ def _validate(manifest):
                     f"families.{fam_name} has no harness_src to swap"
                 )
             check_example(example, fam_name)
+            for key, gate in example.sim_gates.items():
+                if manifest.families[fam_name].harness_src is None:
+                    raise ManifestError(
+                        f"modules.{mod.name}.example.{fam_name}.sim_gates.{key}: "
+                        f"families.{fam_name} has no harness_src to swap"
+                    )
+            for mcu in manifest.families[fam_name].variants:
+                names = [g.name for g in manifest.sim_gates_for(
+                    mod.name, fam_name, mcu)]
+                if len(set(names)) != len(names):
+                    raise ManifestError(
+                        f"modules.{mod.name}.example.{fam_name}: "
+                        f"duplicate sim gate name on {mcu}: {names}"
+                    )
         for fam_name, variants in mod.supported.items():
             fam = manifest.families.get(fam_name)
             if fam is None:
