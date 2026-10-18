@@ -846,9 +846,8 @@ epiccc_sources = [
 # confirmed against p18f6520's device TOML in epic-cc). Largest of the
 # three new families: 7 ports, 5 CCP, TMR4, dual EUSART, MSSP, PSP,
 # 12-ch ADC, dual comparator, LVD, 1 KB EEPROM (DS39609B Table 1-1).
-# No USB, no SPP. GPIO + Timer0-3 + CCP1-5 + MSSP + EUSART1/2 + IRQ
-# backend; TMR4 has no driver yet (#183 covered Timer0-3 only).
-# TMR4/LVD/PSP have no driver yet.
+# No USB, no SPP. GPIO + Timer0-4 + CCP1-5 + MSSP + EUSART1/2 + ADC +
+# comparator + EEPROM + LVD + IRQ backend; PSP has no driver yet.
 [families.PIC18F6520]
 hal_dir  = "hal/pic18/18f6520"
 # Canonical 18F6520 last so family-check's scaffold gate builds
@@ -872,8 +871,8 @@ includes = [
   "common/include",
 ]
 # Baseline (every variant): GPIO (PORTA-G, plus PORTH/J on the 80-pin
-# parts) + Timer0-3 + MSSP + ADC + comparator + EEPROM + the IRQ/WDT
-# core, all present at the same addresses on every part in this family.
+# parts) + Timer0-3 + MSSP + ADC + comparator + EEPROM + LVD + the
+# IRQ/WDT core, all present at the same addresses on every part in this family.
 # CCP, EUSART, Timer4 and the full dispatch link on all eleven variants:
 # the ECAN parts (6585/6680/8585/8680) carry CCP1-2, a single EUSART and
 # no Timer4, and the drivers reject the absent CCP/USART/TMR4 instances
@@ -890,6 +889,7 @@ hal_sources = [
   "hal/pic18/18f6520/src/peripherals/pic18f6520_adc.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_comp.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_eeprom.c",
+  "hal/pic18/18f6520/src/peripherals/pic18f6520_lvd.c",
   "hal/pic18/18f6520/src/core/pic18_irq.c",
   "hal/pic18/18f6520/src/target/pic18_isr_vector.c",
   "hal/pic18/18f6520/src/core/pic18f6520_wdt_sleep.c",
@@ -915,6 +915,7 @@ epiccc_sources = [
   "hal/pic18/18f6520/src/peripherals/pic18f6520_adc.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_comp.c",
   "hal/pic18/18f6520/src/peripherals/pic18f6520_eeprom.c",
+  "hal/pic18/18f6520/src/peripherals/pic18f6520_lvd.c",
   "hal/pic18/18f6520/src/core/pic18_irq.c",
   "hal/pic18/18f6520/src/core/pic18f6520_wdt_sleep.c",
   "hal/pic18/18f6520/src/epiccc/pic18f6520_wdt_sleep_epiccc.c",
@@ -1608,17 +1609,19 @@ sources = [
 ]
 config  = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 
-# HARNESS=sim: the Timer4 match gate. The PR4 match raises PIR3<TMR4IF>
-# and the ISR counts it, so a PASS also proves the interrupt core
-# (enable bit, flag, priority, vector, dispatch) that the Timer0
-# tests/example_irq.c smoke covers on the host
-# (docs/adding-a-device.md §5.5). Reporting on RA0 in MODE=gpio (no
-# EUSART in the foundation). WDT=OFF like every other sim variant.
+# HARNESS=sim: the LVD readback gate. A real trip point cannot be
+# stimulated headless, so a PASS proves the LVDCON power-on image and the
+# LVDL/LVDEN readback through Init/Start/Stop only; the trip callback and
+# IRVST settling are covered by the host sim (tests/example_lvd.c). The
+# Timer4 match probe (tests/example_timer4.c) runs on the host only, since
+# each variant carries one sim gate. Reporting on RA0 in MODE=gpio (no
+# EUSART in the foundation).
+# WDT=OFF like every other sim variant.
 [modules."hal/pic18/18f6520".example.PIC18F6520.sim]
-name        = "timer4-match"
+name        = "lvd-readback"
 harness_src = "hal/pic18/18f6520/src/mdb/pic18_harness_mdb.c"
 sources     = [
-  "tests/example_timer4.c",
+  "tests/example_lvd.c",
 ]
 config      = { BOR = "ON", BORV = "27", CCP2MUX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", LVP = "OFF", OSC = "HS", OSCS = "OFF", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "128", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
 # ECAN line (DS39661): CCP2MX (ON = RC1, the default pin) instead of

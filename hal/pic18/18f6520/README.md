@@ -21,15 +21,15 @@ interrupt backend, peripheral drivers) live here.
 
 ## Status
 
-**Complete (epic-hal#182, #183, #184, #185, #525, umbrella #150; ECAN-quad
+**Complete (epic-hal#182, #183, #184, #185, #525, #526, umbrella #150; ECAN-quad
 and 80-pin coverage #246):** platform, SFR map, GPIO (PORTA-G, plus PORTH/J
 on the 80-pin parts), Timer0-4 (no Timer4 on the ECAN quads), CCP (1-5,
 1-2 on the ECAN quads), MSSP,
-EUSART (1/2, single on the ECAN quads), ADC, comparator, data EEPROM,
+EUSART (1/2, single on the ECAN quads), ADC, comparator, data EEPROM, LVD,
 the dual-priority interrupt core, WDT/Sleep/BOR/POR, and the harness are
 implemented and verified under host sim and real `mdb` (each peripheral
 through docs/adding-a-device.md §4: host example + XC8 target build +
-`mdb` register-readback gate). PSP, LVD and the ECAN module have
+`mdb` register-readback gate). PSP and the ECAN module have
 no driver yet (SFRs are in the map). This part has **no USB and no SPP**
 (DS39609B Table 1-1).
 
@@ -90,6 +90,11 @@ no driver yet (SFRs are in the map). This part has **no USB and no SPP**
   10-bit EEADRH:EEADR addressing (the 4550/2520 families use 8-bit
   EEADR only), unlock 0x55/0xAA, EEIF write-complete (interrupt or
   poll).
+- ✅ LVD driver (`peripherals/pic18f6520_lvd.h`): LVDCON trip select
+  (raw LVDL code), enable, IRVST stable poll, and a LVDIF callback armed
+  only once the reference is stable. A real trip point cannot be
+  stimulated headless, so the `mdb` gate proves LVDCON readback only;
+  the callback path runs on the host sim.
 - ✅ Interrupt core (`core/pic18_irq.h`): `PIC18_IRQn` enum (25 sources,
   the richest set in this repo: INT0-3, RB, TMR0-4, CCP1-5, SSP, USART1/2
   TX+RX, ADC, CMP, EEPROM, LVD, PSP), `EPIC_IRQ_*` against
@@ -139,7 +144,7 @@ The 6520 is a 64-pin part and the largest of the three new PIC18 families:
   one driver with an instance selector; no BAUDCON and no SPBRGH on
   this part, the baud generator is 8-bit only).
 - **1 MSSP**, **PSP** (parallel slave port, PSPCON at 0xFB0; no driver
-  yet), **dual comparator + CVR**, **LVD** (no driver yet), **1 KB data
+  yet), **dual comparator + CVR**, **LVD**, **1 KB data
   EEPROM** (EEADR + EEADRH, 10-bit), **12-channel 10-bit A/D**
   (AN0-AN11). The ADC's ADCON2 has no ACQT field (only ADCS + ADFM),
   unlike the 4550/2520/1320.
