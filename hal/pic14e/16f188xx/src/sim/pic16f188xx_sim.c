@@ -1,11 +1,11 @@
 /**
- * Host model of the ports, IOC and Timer0..Timer2 (Timer4 lives in
- * pic16f188xx_sim_timer4.c). IOC edges (PORTA..PORTC)
+ * Host model of the ports, IOC and Timer0..Timer2. IOC edges (PORTA..PORTC)
  * set IOCxF and PIR0 IOCIF; callbacks gate on flag, enable, PEIE and GIE.
  * Timer0 counts T0CKIPPS edges on its PPS pin; Timer1 and Timer2 read the
  * POR default PPS pins (RC0, RB5, RC3), Timer2 models every defined
  * T2HLT mode (DS40001802H Table 29-1) and freezes reserved codes.
- * The serial, EEPROM, NCO1 and WDT/Sleep models live in sibling sim files.
+ * The serial, EEPROM, NCO1, WDT/Sleep and Timer4 models live in sibling
+ * sim files.
  */
 #include <stddef.h>
 #include <stdint.h>

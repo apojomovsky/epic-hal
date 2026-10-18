@@ -1,11 +1,9 @@
 /**
  * Host model of Timer4, stepped once per tick by pic16f188xx_sim.c. Basic
- * free-running mode only: internal clock sources count (FOSC counts four
- * clocks per tick, the oscillator rows one, like Timer2), a PR4 match
- * clears TMR4 and steps the postscaler, and its terminal count sets
- * PIR4.TMR4IF. T4HLT and T4RST are stored but not modelled: a nonzero
- * T4HLT MODE holds the counter, and the pin, CLKR, NCO, ZCD and CLC
- * clock rows never tick.
+ * free-running mode: internal clock rows count like Timer2 (FOSC four
+ * clocks per tick), a PR4 match clears TMR4 and steps the postscaler, and
+ * its terminal count sets PIR4.TMR4IF. T4RST is ignored; a nonzero T4HLT
+ * MODE and the pin, CLKR, NCO, ZCD and CLC clock rows hold the counter.
  */
 #include <stdint.h>
 #include "pic16f188xx.h"

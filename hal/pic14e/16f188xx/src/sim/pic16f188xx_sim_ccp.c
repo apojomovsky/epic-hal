@@ -1,11 +1,11 @@
 /**
  * Host model of CCP1..CCP5 and PWM6/PWM7, stepped once per tick by
  * pic16f188xx_sim.c after the timers. Capture and compare model only the
- * Timer1/Timer2 couple (CCPTMRS value 01, TMR1). PWM runs on the
- * Timer1/Timer2 couple (TMR2) and the Timer3/Timer4 couple (value 10,
- * TMR4); the caller passes in each 10-bit time base. Other couples never
- * fire and hold the output low. Capture reads the pin CCPxPPS selects; outputs
- * are read back through pic16f188xx_sim_ccp_out and _pwm_out.
+ * Timer1/Timer2 couple (CCPTMRS value 01). PWM runs on that couple (TMR2)
+ * and the Timer3/Timer4 couple (value 10, TMR4), on the 10-bit time bases
+ * the caller passes in. Other couples never fire and hold the output low.
+ * Capture reads the pin CCPxPPS selects; outputs are read back through
+ * pic16f188xx_sim_ccp_out and _pwm_out.
  */
 #include <stdint.h>
 #include <string.h>

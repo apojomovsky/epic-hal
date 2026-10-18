@@ -1,11 +1,10 @@
 /**
- * PIC16F188xx Timer4 driver, basic free-running mode (DS40001802H §29,
- * Registers 29-1..29-4). 8-bit timer: PR4 match, 1:1..1:128 prescaler,
- * 1:1..1:16 postscaler and T4CLKCON clock select. TMR4 counts 0..PR4 and
- * clears on the next clock; TMR4IF (PIR4) fires every prescaler x (PR4+1)
- * x postscaler cycles. Timer4 is the PWM time base of the CCP and PWM
- * Timer3/Timer4 couple (CCPTMRS value 10). The T4HLT hardware limit modes
- * are not driven: Init always leaves T4HLT and T4RST at 0 (software mode).
+ * PIC16F188xx Timer4 driver, basic free-running mode (DS40001802H §29).
+ * 8-bit timer: PR4 match, 1:1..1:128 prescaler, 1:1..1:16 postscaler,
+ * T4CLKCON clock select. TMR4IF (PIR4) fires every prescaler x (PR4+1) x
+ * postscaler cycles. Timer4 is the PWM time base of the CCP and PWM
+ * Timer3/Timer4 couple (CCPTMRS value 10). The T4HLT limit modes are not
+ * driven: Init leaves T4HLT and T4RST at 0 (software mode).
  */
 #ifndef PIC16F188XX_TIMER4_H
 #define PIC16F188XX_TIMER4_H
