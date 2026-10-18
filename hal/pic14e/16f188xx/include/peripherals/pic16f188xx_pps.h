@@ -51,6 +51,8 @@ typedef enum {
     PPS_OUTPUT_PWM6       = 0x0EU,   /**< PWM6 output. */
     PPS_OUTPUT_PWM7       = 0x0FU,   /**< PWM7 output. */
     PPS_OUTPUT_EUSART_TX  = 0x10U,   /**< EUSART TX. */
+    PPS_OUTPUT_C1OUT      = 0x12U,   /**< Comparator C1 output (Table 13-3). */
+    PPS_OUTPUT_C2OUT      = 0x13U,   /**< Comparator C2 output (Table 13-3). */
     PPS_OUTPUT_SSP1_SCK   = 0x14U,   /**< MSSP1 SCK (SPI) or SCL (I2C). */
     PPS_OUTPUT_SSP1_SDO   = 0x15U,   /**< MSSP1 SDO (SPI) or SDA (I2C). */
     PPS_OUTPUT_NCO1       = 0x19U,   /**< NCO1 output: PORTA plus PORTC (18854/55/56),

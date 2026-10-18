@@ -38,6 +38,10 @@
         <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_ssp.c</itemPath>
         <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_eeprom.c</itemPath>
         <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_nco.c</itemPath>
+        <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_adc.c</itemPath>
+        <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_dac.c</itemPath>
+        <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_fvr.c</itemPath>
+        <itemPath>../../hal/pic14e/16f188xx/src/peripherals/pic16f188xx_comp.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>

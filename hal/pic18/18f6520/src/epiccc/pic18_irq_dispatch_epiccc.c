@@ -1,8 +1,8 @@
 /* epic-cc dispatch, final tier: fans out Timer0-4/RB plus CCP1-5,
- * SSP, EUSART1/2, ADC, COMP and EEPROM (EE gated on EEIE), matching
- * the XC8 fan-out with the same per-source gating semantics. Sources
- * outside the slice are not listed in the HAL subset and cannot
- * vector (PIE off). */
+ * SSP, EUSART1/2, ADC, COMP, EEPROM and LVD (EE and LVD gated on their
+ * enable bits), matching the XC8 fan-out with the same per-source gating
+ * semantics. Sources outside the slice are not listed in the HAL subset
+ * and cannot vector (PIE off). */
 
 #include "core/pic18_irq.h"
 
@@ -18,6 +18,8 @@ extern void TIMER2_IRQHandler(void);
 extern void TIMER3_IRQHandler(void);
 /** @brief Timer4 match IRQ handler. */
 extern void TIMER4_IRQHandler(void);
+/** @brief Low-voltage detect IRQ handler. */
+extern void LVD_IRQHandler(void);
 /** @brief CCP1 event IRQ handler. */
 extern void CCP1_IRQHandler(void);
 /** @brief CCP2 event IRQ handler. */
@@ -88,6 +90,14 @@ void epic_dispatch_all_irqs(void)
         if (epic_sfr_read8(PIC_REG_PIE2) & PIC_PIE2_EEIE)
         {
             EEPROM_IRQHandler();
+        }
+    }
+    /* Gate LVDIF on LVDIE like EEIF: a poller owns the flag. */
+    if (pir2 & PIC_PIR2_LVDIF)
+    {
+        if (epic_sfr_read8(PIC_REG_PIE2) & PIC_PIE2_LVDIE)
+        {
+            LVD_IRQHandler();
         }
     }
     uint8_t pir3 = epic_sfr_read8(PIC_REG_PIR3);

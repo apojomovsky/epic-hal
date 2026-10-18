@@ -44,7 +44,7 @@ set(EPIC_HOST_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/include/host)
 set(EPIC_COMMON_INCLUDE_DIR    ${EPIC_COMMON_DIR}/include)
 set(EPIC_FAMILY_DEVICES        PIC18F6620 PIC18F6720 PIC18F6585 PIC18F6680 PIC18F8525 PIC18F8585 PIC18F8621 PIC18F8680 PIC18F6525 PIC18F6621 PIC18F6520)
 
-# GPIO + Timer0-4 drivers, the IRQ core and its dispatch, the
+# GPIO + Timer0-4 + LVD drivers, the IRQ core and its dispatch, the
 # WDT/Sleep helpers, and the host sim backend + harness. Every listed
 # driver links on all eleven parts (absent CCP/USART/TMR4 instances
 # rejected at Init; PORTH/J compiled out on the 64-pin parts).
@@ -67,6 +67,7 @@ set(EPIC_SOURCES
     src/peripherals/pic18f6520_adc.c
     src/peripherals/pic18f6520_comp.c
     src/peripherals/pic18f6520_eeprom.c
+    src/peripherals/pic18f6520_lvd.c
 )
 
 epic_add_hal_library(${EPIC_LIB})
@@ -84,3 +85,4 @@ epic_add_example(example_usart tests/example_usart.c)
 epic_add_example(example_adc    tests/example_adc.c)
 epic_add_example(example_comp   tests/example_comp.c)
 epic_add_example(example_eeprom tests/example_eeprom.c)
+epic_add_example(example_lvd    tests/example_lvd.c)

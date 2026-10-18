@@ -27,6 +27,15 @@ static pic18_sim_irq_cb_t sim_irq_cb = 0;
  * read path and the test-rig drive hooks use these). */
 static uint8_t sim_eeprom[1024];
 
+/* LVD model: cycles IRVST takes to rise (a model constant, not the
+ * datasheet reference-settling time), the rig-driven supply state, and
+ * the settle/trip/LVDL bookkeeping the step uses. */
+#define SIM_LVD_SETTLE_CYCLES 64U
+static uint8_t  sim_lvd_below   = 0U;
+static uint8_t  sim_lvd_tripped = 0U;
+static uint8_t  sim_lvd_lvdl    = PIC_LVDCON_POR_VALUE & PIC_LVDCON_LVDL_MASK;
+static uint16_t sim_lvd_settle  = 0U;
+
 /**
  * @brief Advance the simulated Timer0 by one instruction cycle.
  */
@@ -51,6 +60,11 @@ static void sim_step_timer3(void);
  * @brief Advance the simulated Timer4 by one instruction cycle.
  */
 static void sim_step_timer4(void);
+
+/**
+ * @brief Advance the simulated low-voltage detect by one instruction cycle.
+ */
+static void sim_step_lvd(void);
 
 /**
  * @brief Map a port letter (A..G) to a 0-based index.
@@ -241,12 +255,17 @@ void pic18_sim_reset(void)
     memset(sim_input_value,    0, sizeof sim_input_value);
     memset(sim_eeprom,         0, sizeof sim_eeprom);
     sim_irq_cb = 0;
+    sim_lvd_below   = 0U;
+    sim_lvd_tripped = 0U;
+    sim_lvd_lvdl    = PIC_LVDCON_POR_VALUE & PIC_LVDCON_LVDL_MASK;
+    sim_lvd_settle  = 0U;
 }
 
 /**
  * @brief Advance the simulated device by a number of instruction cycles.
  *
- * Each cycle steps the enabled timers (Timer0 through Timer4).
+ * Each cycle steps the enabled timers (Timer0 through Timer4) and the
+ * low-voltage detect.
  *
  * @param ticks the number of instruction cycles to simulate
  */
@@ -259,6 +278,7 @@ void pic18_sim_step(uint32_t ticks)
         sim_step_timer2();
         sim_step_timer3();
         sim_step_timer4();
+        sim_step_lvd();
     }
 }
 
@@ -487,6 +507,58 @@ static void sim_step_timer4(void)
 }
 
 /**
+ * @brief Step the simulated LVD by one instruction cycle.
+ *
+ * LVDCON<IRVST> rises SIM_LVD_SETTLE_CYCLES after LVDEN is set or LVDL
+ * changes, and drops when LVDEN clears. Once stable, the transition of
+ * the rig-driven supply from "above" to "below" the trip point raises
+ * PIR2<LVDIF> once; the flag is not re-raised while the supply stays
+ * low, so an ISR that clears it cannot starve the main loop
+ * (DS39609B §22.0).
+ */
+static void sim_step_lvd(void)
+{
+    uint8_t lvdcon = pic18_sim_sfr[PIC_REG_LVDCON];
+    uint8_t lvdl   = (uint8_t)(lvdcon & PIC_LVDCON_LVDL_MASK);
+
+    if (!(lvdcon & PIC_LVDCON_LVDEN))
+    {
+        pic18_sim_sfr[PIC_REG_LVDCON] = (uint8_t)(lvdcon & ~PIC_LVDCON_IRVST);
+        sim_lvd_settle  = 0U;
+        sim_lvd_tripped = 0U;
+        sim_lvd_lvdl    = lvdl;
+        return;
+    }
+
+    if (lvdl != sim_lvd_lvdl)
+    {
+        pic18_sim_sfr[PIC_REG_LVDCON] = (uint8_t)(lvdcon & ~PIC_LVDCON_IRVST);
+        sim_lvd_settle  = 0U;
+        sim_lvd_tripped = 0U;
+        sim_lvd_lvdl    = lvdl;
+        lvdcon = pic18_sim_sfr[PIC_REG_LVDCON];
+    }
+
+    if (!(lvdcon & PIC_LVDCON_IRVST))
+    {
+        sim_lvd_settle++;
+        if (sim_lvd_settle < SIM_LVD_SETTLE_CYCLES) return;
+        pic18_sim_sfr[PIC_REG_LVDCON] = (uint8_t)(lvdcon | PIC_LVDCON_IRVST);
+    }
+
+    if (!sim_lvd_below)
+    {
+        sim_lvd_tripped = 0U;
+    }
+    else if (!sim_lvd_tripped)
+    {
+        sim_lvd_tripped = 1U;
+        pic18_sim_sfr[PIC_REG_PIR2] |= PIC_PIR2_LVDIF;
+        if (sim_irq_cb) sim_irq_cb();
+    }
+}
+
+/**
  * @brief Drive a digital input pin from the test rig.
  *
  * @param port the port letter ('A'..'J', case-insensitive; H/J on 80-pin parts).
@@ -545,6 +617,16 @@ uint8_t pic18_sim_read_output(char port, uint8_t pin)
 void pic18_sim_set_irq_callback(pic18_sim_irq_cb_t cb)
 {
     sim_irq_cb = cb;
+}
+
+/**
+ * @brief Drive the modeled supply relative to the programmed LVD trip point.
+ *
+ * @param below 1 = supply below the trip point, 0 = above it.
+ */
+void pic18_sim_drive_supply_low(uint8_t below)
+{
+    sim_lvd_below = below ? 1U : 0U;
 }
 
 /**

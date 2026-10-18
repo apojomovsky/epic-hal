@@ -100,7 +100,13 @@ Figure 4-3 in §4.2):
 | 0x09 | ADCON0 | 0xFC | ANS<1:0>=11: AN2/AN1/AN0 (RB2/RB1/RB0) |
 | 0x0A | ADRES | - | ADC result |
 | 0x0B | CM2CON0 | 0xFF | C2ON=1: RC0 (C2IN+) and RC1 (C2IN-) |
-| 0x0C | VRCON | 0x3F | comparator reference (VREN=0 at POR) |
+| 0x0C | VRCON | 0x00 | comparator reference (VREN=0 at POR) |
+
+VRCON reads 0x00 under MPLAB SIM and in the EDC
+(`por="000-0000"`), against Table 4-2 and the Register 8-1 legend
+(both 0x3F: VR=15, VRR=1, VROE=0, VREN=0). VREN=0 all three ways,
+so the reference is off at POR either way; the gate asserts 0x00
+(measured 2026-10-18).
 
 A pin held analog is not available for digital output, and the
 ANS<1:0> selection stays in effect regardless of ADON (DS41268D
@@ -110,8 +116,32 @@ nowhere until the block is cleared: `EPIC_GPIO_Init` writes
 CM1CON0/CM2CON0/ADCON0 to 0 before configuring a pin, and the MPLAB
 SIM toggle gate is what exposed it (PORTB read 0x08 with RB0 stuck,
 TMR0 counting, CM1CON0/ADCON0 still at their POR values; verified
-2026-09-17). A comparator/ADC driver re-enables what it needs; the
-digital-I/O default is analog off.
+2026-09-17). `EPIC_COMP_DeInit` returns the block to the same
+analog-off state (CxON and VREN clear); the digital-I/O default is
+analog off.
+
+## 16F506 comparator driver (`src/peripherals/pic16f5x_comp.c`)
+
+`EPIC_COMP_Init` programs CxON/CxPOL by read-modify-write (the
+bits it does not own keep their values: input mux, C1T0CS,
+wake-up, output-enable) and owns VRCON outright (tap, range, pin
+output, enable).
+CxPOL reads inverted from its name (Register 7-2/7-3: 1 means the
+output is not inverted), so the handle's `C1Inverted` clears it.
+There is no change interrupt on this core (see above), so the
+driver has no callback or flag API. `tests/example_comp.c` is the
+gate firmware: POR image, programmed images (CxOUT masked, it is
+read-only), C1 output following firmware-driven RB0 against the
+0.6V reference (C1NREF=0), both readings flipped by clearing
+C1POL, then a PORTB:0 blink on pass (the MODE=toggle gate).
+
+MPLAB SIM limits the gate shapes available (measured 2026-10-18):
+SIM models no pin-stimulus injection, so the output proof drives
+RB0 as a digital output instead of an analog level. SIM freezes
+CxOUT when the comparator is disabled (post-halt CM1CON0 reads
+0x82: ON=0 with C1OUT still 1), where Figure 7-1/7-2 note 1
+promises a 0 output; the host sim implements the datasheet 0.
+The gate asserts outputs only while enabled, where SIM tracks.
 
 ## Config word (DS41213D section 14.1)
 

@@ -1,10 +1,9 @@
 /**
- * Host model of the ports, IOC and Timer0..Timer2. IOC edges (PORTA..PORTC)
- * set IOCxF and PIR0 IOCIF; callbacks gate on flag, enable, PEIE and GIE.
- * Timer0 counts T0CKIPPS edges on its PPS pin; Timer1 and Timer2 read the
- * POR default PPS pins (RC0, RB5, RC3), Timer2 models every defined
- * T2HLT mode (DS40001802H Table 29-1) and freezes reserved codes.
- * The serial, EEPROM, NCO1, WDT/Sleep and Timer4 models are in sibling files.
+ * Host model of the ports, IOC and Timer0..Timer2. IOC edges set IOCxF
+ * and PIR0 IOCIF; callbacks gate on flag, enable, PEIE and GIE. Timer0
+ * counts T0CKIPPS edges; Timer1/2 read the POR PPS pins (RC0, RB5,
+ * RC3), Timer2 models every defined T2HLT mode and freezes reserved
+ * codes. Serial, sys, analog, CCP and Timer4 models are in sibling files.
  */
 #include <stddef.h>
 #include <stdint.h>
@@ -241,6 +240,7 @@ void pic16f188xx_sim_reset(void)
     pic16f188xx_sim_sfr[PIC_REG_PR2] = 0xFFU;
     pic16f188xx_sim_serial_reset();
     pic16f188xx_sim_sys_reset();
+    pic16f188xx_sim_analog_reset();
     pic16f188xx_sim_ccp_reset();
     pic16f188xx_sim_timer4_reset();
     sim_refresh_ports();
@@ -829,6 +829,28 @@ static void sim_deliver_timers(void)
 }
 
 /**
+ * @brief Deliver a pending ADC or comparator interrupt to the callback.
+ * @details Gated on ADIF with ADIE and on CxIF with CxIE, plus PEIE and
+ * GIE, matching silicon. One call per tick, like the other deliver rows.
+ */
+static void sim_deliver_analog(void)
+{
+    uint8_t pending = (uint8_t)((pic16f188xx_sim_sfr[PIC_REG_PIR1] &
+                                 pic16f188xx_sim_sfr[PIC_REG_PIE1] & PIC_PIR1_ADIF) |
+                                (pic16f188xx_sim_sfr[PIC_REG_PIR2] &
+                                 pic16f188xx_sim_sfr[PIC_REG_PIE2] &
+                                 (PIC_PIR2_C1IF | PIC_PIR2_C2IF)));
+
+    if ((pending != 0U) &&
+        ((pic16f188xx_sim_sfr[PIC_REG_INTCON] & PIC_INTCON_PEIE) != 0U) &&
+        (sim_gie() != 0U) &&
+        (sim_irq_cb != NULL))
+    {
+        sim_irq_cb();
+    }
+}
+
+/**
  * @brief Deliver a pending EUSART or MSSP1 interrupt to the registered callback.
  * @details Gated on a PIR3 flag with its PIE3 enable (SSP1, TX or RX),
  * PEIE and GIE, matching silicon. TXIF stays set while the buffer is empty,
@@ -870,8 +892,8 @@ static void sim_deliver_sys(void)
 }
 
 /**
- * @brief Sample pins, IOC, the timers, the EUSART, MSSP1, the EEPROM and NCO1
- *        once per instruction tick.
+ * @brief Sample pins, IOC, the timers, the EUSART, MSSP1, the EEPROM, NCO1
+ *        and the analog peripherals once per instruction tick.
  * @param ticks Instruction ticks to advance (each ticks every model once).
  */
 void pic16f188xx_sim_step(uint32_t ticks)
@@ -887,12 +909,14 @@ void pic16f188xx_sim_step(uint32_t ticks)
         sim_step_timer1();
         pic16f188xx_sim_timer4_step();
         sim_step_ccp();
+        pic16f188xx_sim_analog_step(sim_t0_pulse, sim_t2_pulse);
         sim_t0_pulse = 0U;
         sim_t2_pulse = 0U;
         sim_t2_wrap = 0U;
         pic16f188xx_sim_serial_step();
         pic16f188xx_sim_sys_step();
         sim_deliver_timers();
+        sim_deliver_analog();
         sim_deliver_serial();
         sim_deliver_sys();
     }

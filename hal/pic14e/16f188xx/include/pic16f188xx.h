@@ -97,6 +97,19 @@
 /* CCP1..CCP5 and the dedicated PWM6/PWM7 modules are driven. */
 #define PIC16F188XX_HAS_CCP   1
 #define PIC16F188XX_HAS_PWM   1
+/* ADC, DAC1, FVR and comparators C1/C2 are driven. ADPCH pin channels
+ * run ANA0..ANC7 on every part (Register 23-8) and add AND0..ANE2 on
+ * the 40-pin parts; 0x3C..0x3F are the internal AVSS, temp, DAC and
+ * FVR channels on all parts. */
+#define PIC16F188XX_HAS_ADC  1
+#define PIC16F188XX_HAS_DAC  1
+#define PIC16F188XX_HAS_FVR  1
+#define PIC16F188XX_HAS_COMP 1
+#if PIC16F188XX_FAMILY_HAS_PORTD
+  #define PIC16F188XX_FAMILY_ADC_MAX_PIN 0x22U
+#else
+  #define PIC16F188XX_FAMILY_ADC_MAX_PIN 0x17U
+#endif
 
 #include "pic16f188xx_sfr.h"
 

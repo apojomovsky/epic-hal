@@ -12,29 +12,36 @@ and the comparator/ADC surface.
 ## Peripheral tier
 
 GPIO (PORTA/PORTB, PORTC on the 28/40-pin and 14-pin parts,
-PORTD/PORTE on the 16F59), polled Timer0, WDT/Sleep, and a no-op IRQ
-stub: no part in this family has an interrupt vector (DS41213D section
+PORTD/PORTE on the 16F59), polled Timer0, WDT/Sleep, the 16F506
+comparator pair plus voltage reference (`src/peripherals/
+pic16f5x_comp.c`: CxON/CxPOL, VRCON tap/range/output/enable, output
+readback; no IRQ exists so no callback API), and a no-op IRQ stub:
+no part in this family has an interrupt vector (DS41213D section
 4.0), so `EPIC_IRQ_*` and the Timer0 overflow callback are contract
-parity only. The 16F506's two comparators and ADC are not a driver:
-`EPIC_GPIO_Init` clears the analog block so its shared pins are digital
-(see `MANUAL.md`), and a comparator/ADC driver is the follow-up batch.
-No USART/SSP exists on any part, and 512 words cannot hold the shared
+parity only. The 16F506's ADC is not a driver: `EPIC_GPIO_Init`
+clears the analog block so its shared pins are digital (see
+`MANUAL.md`), and `EPIC_COMP_DeInit` returns it there. No
+USART/SSP exists on any part, and 512 words cannot hold the shared
 serial/tick modules.
 
 ## Build and test
 
 Host sim: `cmake -B build && cmake --build build`, run any
 `build/example_*` directly (`example_blink`, `example_control`, and the
-per-device `example_blink_PIC16F505` .. `example_blink_PIC16F59`). The
+per-device `example_blink_PIC16F505` .. `example_blink_PIC16F59`)
+or `ctest` for the 16F506 `example_comp` probe. The
 verdict is the printed `EPIC_HARNESS_RESULT` marker, not the exit code.
-Real target: `make xc8-build MODULE=hal/pic12/16f5x MCU=16F54` (blink).
+Real target: `make xc8-build MODULE=hal/pic12/16f5x MCU=16F54` (blink;
+`MCU=16F506` builds the comp probe).
 MPLAB SIM toggle gate: `make mdb-test MODULE=hal/pic12/16f5x MCU=16F54
 DEVICE=PIC16F54 MODE=toggle STEPI=50000` (PORTB bit 0; the family has
 no UART. The blink's toggle period is ~50000 instructions, so STEPI
 50000 alternates cleanly while the 200000 default aliases to a constant
 phase, see `scripts/ci/ci-target-sim.sh`). All five parts take the same
 parameters: swap `MCU=`/`DEVICE=` for `16F505`, `16F506`, `16F57` or
-`16F59` and the gate runs unchanged.
+`16F59` and the gate runs unchanged. The 16F506 line runs the comp
+probe instead of the blink: same MODE=toggle watch, with the
+comparator asserts gating the toggle (see `MANUAL.md`).
 Epic-cc gate: `make epiccc-build MODULE=hal/pic12/16f5x MCU=16F54
 EPIC_CC_HOST=1` builds the family's epic-cc example, a software-loop
 PORTB:0 toggle (`tests/example_blink_epiccc.c`, wired through the
@@ -60,6 +67,14 @@ under the pinned epic-cc and gates the toggle through
   FSR<7:5> (DS41213D section 3.6); only the 16F54 exemplar is flat,
   so no runtime bank select exists on it. The 505/506's PORTB/PORTC
   are 6-bit (RB0..RB5, RC0..RC5) and the 16F59's PORTE is RE4..RE7.
+  Struct bulk-init copies do not survive the banked parts: an 8-byte
+  `= COMP_HANDLE_DEFAULT` copy lost byte 0 on the 16F506 (bank1
+  auto), so the programmed CM1CON0 read 0x22 with C1ON missing and
+  the gate stayed dark; assigning fields one by one (the
+  `example_blink` shape) programs 0x2A and passes (verified
+  2026-10-18). The out-of-line driver reads through FSR indirect
+  are fine (pointers carry the bank); only the initializer copy
+  was affected.
 - 16F506 analog defaults: both comparators and the ADC's ANS<1:0>
   selects come out of reset enabled, holding RB0..RB2 and RC0..RC1
   analog so digital writes to them land nowhere (DS41268D §9.1.2,
