@@ -14,7 +14,8 @@
  * RB0 as an output against the 0.6V reference (C1NREF=0 from the
  * clear), with a settle delay per §7.3.
  *
- * Hand-computed images, from the GPIO-cleared block (all 0x00):
+ * Hand-computed images, from the GPIO-cleared block (all 0x00).
+ * VRCON compares mask bit 4 (unimplemented, reads 1 on silicon).
  *   host phase 1 {C1 on, inverted; C2 off; Vref tap 0xA low range}:
  *     CM1CON0 = 0x08, CM2CON0 = 0x20, VRCON = 0xAA
  *   host pin mux (C1PREF|C1NREF, C2PREF1|C2NREF): 0x0E, 0x26
@@ -129,7 +130,7 @@ int main(void)
     CHECK(EPIC_COMP_Init(&h) == EPIC_OK, 0x06U);
     CHECK((EPIC_REG8(PIC_REG_CM1CON0) & COMP_OUT_MASK) == 0x08U, 0x07U);
     CHECK((EPIC_REG8(PIC_REG_CM2CON0) & COMP_OUT_MASK) == 0x20U, 0x08U);
-    CHECK(EPIC_REG8(PIC_REG_VRCON) == 0xAAU, 0x09U);
+    CHECK((EPIC_REG8(PIC_REG_VRCON) & PIC_VRCON_IMAGE_MASK) == 0xAAU, 0x09U);
     CHECK(EPIC_COMP_C2Out() == 0U, 0x0AU);
 
     /* Pin mux (the POR select; GPIO init cleared it). */
@@ -172,7 +173,7 @@ int main(void)
     CHECK(EPIC_COMP_DeInit() == EPIC_OK, 0x16U);
     CHECK((EPIC_REG8(PIC_REG_CM1CON0) & PIC_CM1CON0_C1ON) == 0U, 0x17U);
     CHECK((EPIC_REG8(PIC_REG_CM2CON0) & PIC_CM2CON0_C2ON) == 0U, 0x18U);
-    CHECK(EPIC_REG8(PIC_REG_VRCON) == 0x00U, 0x19U);
+    CHECK((EPIC_REG8(PIC_REG_VRCON) & PIC_VRCON_IMAGE_MASK) == 0x00U, 0x19U);
     CHECK(EPIC_COMP_C1Out() == 0U, 0x1AU);
     CHECK(EPIC_COMP_C2Out() == 0U, 0x1BU);
 
@@ -229,7 +230,7 @@ int main(void)
     EPIC_REG8(PIC_REG_CM1CON0) |= PIC_CM1CON0_C1PREF;
     if ((EPIC_REG8(PIC_REG_CM1CON0) & COMP_OUT_MASK) != 0x2AU) ok = 0U;
     if ((EPIC_REG8(PIC_REG_CM2CON0) & COMP_OUT_MASK) != 0x28U) ok = 0U;
-    if (EPIC_REG8(PIC_REG_VRCON) != 0xAAU) ok = 0U;
+    if ((EPIC_REG8(PIC_REG_VRCON) & PIC_VRCON_IMAGE_MASK) != 0xAAU) ok = 0U;
 
     /* C1 output follows the driven pin (settle per §7.3). */
     EPIC_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);

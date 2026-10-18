@@ -123,8 +123,9 @@ analog off.
 ## 16F506 comparator driver (`src/peripherals/pic16f5x_comp.c`)
 
 `EPIC_COMP_Init` programs CxON/CxPOL by read-modify-write (the
-mux, Timer0-source, wake-up and output-enable bits keep their
-values) and owns VRCON outright (tap, range, pin output, enable).
+bits it does not own keep their values: input mux, C1T0CS,
+wake-up, output-enable) and owns VRCON outright (tap, range, pin
+output, enable).
 CxPOL reads inverted from its name (Register 7-2/7-3: 1 means the
 output is not inverted), so the handle's `C1Inverted` clears it.
 There is no change interrupt on this core (see above), so the

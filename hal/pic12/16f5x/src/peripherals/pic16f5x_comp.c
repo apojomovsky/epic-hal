@@ -19,10 +19,10 @@ EPIC_StatusTypeDef EPIC_COMP_Init(const COMP_HandleTypeDef *h)
 
     if (h == NULL) return EPIC_INVALID;
 
-    /* Enable + polarity, preserving the mux, Timer0-source, wake-up
-     * and output-enable bits (Register 7-2/7-3). C1POL reads
-     * inverted from its name (1 = not inverted), so an inverted
-     * handle clears it. */
+    /* Enable + polarity, preserving the bits this driver does not
+     * own (input mux, C1T0CS, wake-up, output-enable;
+     * Register 7-2/7-3). C1POL reads inverted from its name
+     * (1 = not inverted), so an inverted handle clears it. */
     cm1 = EPIC_REG8(PIC_REG_CM1CON0);
     if (h->C1Enabled) cm1 |= PIC_CM1CON0_C1ON;
     else              cm1 &= (uint8_t)~PIC_CM1CON0_C1ON;

@@ -77,3 +77,7 @@ target_compile_definitions(example_comp PRIVATE -DPIC16F506)
 target_link_libraries(example_comp PRIVATE pic16f5x_hal_506)
 enable_testing()
 add_test(NAME comp_host COMMAND example_comp)
+
+# Optional: example for every device in the family (proves every part
+# compiles and links against the canonical sources).
+epic_add_example_per_device(example_blink tests/example_blink.c)

@@ -77,6 +77,10 @@
 #define PIC_VRCON_VROE         EPIC_BIT(6)
 #define PIC_VRCON_VREN         EPIC_BIT(7)
 
+/* VRCON image mask: bit 4 is unimplemented and reads as 1 on silicon
+ * (DS41268D Register 8-1), so image compares mask it out. */
+#define PIC_VRCON_IMAGE_MASK   0xEFU
+
 /* CM1CON0/CM2CON0 enable (DS41268D Register 7-2/7-3). */
 #define PIC_CM1CON0_C1ON      EPIC_BIT(3)
 #define PIC_CM2CON0_C2ON      EPIC_BIT(3)
