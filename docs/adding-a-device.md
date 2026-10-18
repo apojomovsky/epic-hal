@@ -180,6 +180,10 @@ deliverables) before calling it done.
    session, see recent commits touching `pic18_irq.c`/
    `pic18fxx5x_ccp.c` for the literal command shape.)
 
+### Gate-image flash budget
+
+Keep each gate probe section in a small shared helper function, never inlined into `main`: inlining every readback into `main` overflowed the smallest-flash part at link. Size the gate image against the smallest-flash part in the family, and run the CI gate on the largest part. Recorded case: `hal/pic14e/16f188xx/MANUAL.md` (gate-image paragraph).
+
 ## §4. The verification gate (mandatory, every peripheral, every path)
 
 This is the actual bug-prevention mechanism this whole document exists
