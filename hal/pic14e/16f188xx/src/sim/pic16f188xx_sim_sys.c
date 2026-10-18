@@ -1,13 +1,10 @@
 /**
  * Host model of the data EEPROM (NVM block), NCO1 and the WDT/Sleep
- * helpers. Side effects hang off the epic_sfr_write8 hook (called from
- * pic16f188xx_sim_sfr_write8's default case); time is instruction ticks.
- * The EEPROM completes a write after a settable tick count (default 0:
- * inside the write itself). NCO1 adds one increment per tick for the FOSC
- * and HFINTOSC clocks; the LCx clocks freeze it. Not modelled: program
- * Flash, user ID and configuration NVM access (a write there sets WRERR),
- * the EEPROM read stall, the WDT time-out and Sleep itself, which only
- * count.
+ * helpers, hung off the epic_sfr_write8 hook; time is instruction ticks.
+ * An EEPROM write completes after a settable tick count (default 0).
+ * NCO1 adds one increment per tick on the FOSC and HFINTOSC clocks, the
+ * LCx clocks freeze it. Not modelled: program Flash, user ID and
+ * configuration NVM (a write there sets WRERR), the WDT time-out, Sleep.
  */
 #include <stdint.h>
 #include "pic16f188xx.h"

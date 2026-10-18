@@ -1,13 +1,9 @@
 /**
- * CPU-level helpers: Windowed Watchdog Timer, Sleep and Idle, and the
- * BOR/POR reset status (DS40001802D §5.13 PCON0, §8.0 Power-Saving, §9.0
- * WDT). The WDT is switched by the CONFIG2 WDTE bits: 11 always on, 10 on
- * except in Sleep, 01 under software control of WDTCON0<SWDTEN>, 00 off.
- * EPIC_WDT_Enable and EPIC_WDT_Disable only act in the 01 mode; in the
- * others call EPIC_WDT_Refresh often enough for the configured period. The
- * period is software-settable only while CONFIG3 WDTCPS=11111, the XC8
- * default. EPIC_WDT_Refresh and EPIC_Sleep_Enter are link-time selected:
- * `clrwdt`/`sleep` on target, counters on the host simulator.
+ * WDT, Sleep, Idle and BOR/POR helpers (DS40001802D §5.13, §8.0, §9.0).
+ * CONFIG2 WDTE picks the WDT mode (11 on, 10 off in Sleep, 01 SWDTEN, 00
+ * off); Enable/Disable act only in 01. The period is settable only with
+ * CONFIG3 WDTCPS=11111 (the XC8 default). Refresh and Sleep are
+ * link-time selected: `clrwdt`/`sleep` on target, counters on host.
  */
 #ifndef PIC16F188XX_WDT_SLEEP_H
 #define PIC16F188XX_WDT_SLEEP_H

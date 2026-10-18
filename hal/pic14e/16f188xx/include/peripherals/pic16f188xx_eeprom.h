@@ -1,12 +1,9 @@
 /**
- * PIC16F188xx data EEPROM driver (DS40001802D §10.4, Registers 10-3 to
- * 10-6). 256 bytes, reached through the NVM block: NVMREGS=1 with
- * NVMADRH:NVMADRL = 0xF000 + address. Reads return in the next
- * instruction. A write runs the 0x55/0xAA unlock, then proceeds on its
- * own while the CPU keeps executing: WR clears and NVMIF sets on
- * completion (about 5.6 ms, EDC wait time). The driver does not block on
- * it; poll EPIC_EEPROM_IsWriteComplete or take the callback. Program
- * Flash self-write is not covered. Full reference: MANUAL.md.
+ * PIC16F188xx data EEPROM driver (DS40001802D §10.4): 256 bytes at NVM
+ * address 0xF000 + byte with NVMREGS=1. A write runs the 0x55/0xAA unlock
+ * and then proceeds without the CPU (about 5.6 ms): WR clears and NVMIF
+ * sets. WriteByte does not block; poll IsWriteComplete or take the
+ * callback. Program Flash self-write is not covered. Reference: MANUAL.md.
  */
 #ifndef PIC16F188XX_EEPROM_H
 #define PIC16F188XX_EEPROM_H

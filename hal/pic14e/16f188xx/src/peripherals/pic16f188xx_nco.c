@@ -1,11 +1,9 @@
 /**
  * NCO1 driver, implementation (DS40001802D §24). Every access names its
- * register literally, so XC8 emits a bank select per access; the handler
- * keeps no cstack autos (ISR bank rule, family MANUAL.md). Control, clock
- * and increment writes go through epic_sfr_write8 so the host simulator
- * can model the double-buffered increment and the read-only output bit.
- * The callback slot is a file-scope static written from main context
- * only, stored before the interrupt is armed.
+ * register literally; the handler keeps no cstack autos (ISR bank rule,
+ * family MANUAL.md). Control, clock and increment writes go through
+ * epic_sfr_write8 so the host simulator models the increment double
+ * buffer and N1OUT. The callback slot is main-context-written only.
  */
 #include <stddef.h>
 #include "peripherals/pic16f188xx_nco.h"

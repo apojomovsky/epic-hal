@@ -1,12 +1,9 @@
 /**
- * PIC16F188xx NCO1 driver (DS40001802D §24, Registers 24-1 to 24-8). A
- * 20-bit accumulator adds a 20-bit increment on every input clock; each
- * overflow is the raw output. Overflow frequency is
- * clock * increment / 2^20. Fixed Duty Cycle (FDC) mode toggles the output
- * on each overflow (50% duty, half the overflow rate); Pulse Frequency
- * (PFM) mode makes the output active for 1..128 input clocks per overflow.
- * The output reaches a pin through EPIC_PPS_MapOutput(PPS_OUTPUT_NCO1).
- * Reset clears every NCO register except NCO1INCL, which powers up 1.
+ * PIC16F188xx NCO1 driver (DS40001802D §24). A 20-bit accumulator adds a
+ * 20-bit increment per input clock; overflow rate is clock * increment /
+ * 2^20. FDC mode toggles the output per overflow, PFM mode pulses it for
+ * 1..128 clocks. The output reaches a pin through PPS_OUTPUT_NCO1. Every
+ * NCO register resets to 0 except NCO1INCL (1).
  */
 #ifndef PIC16F188XX_NCO_H
 #define PIC16F188XX_NCO_H
