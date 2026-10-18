@@ -33,25 +33,29 @@ void EPIC_Sleep_Enter(void);
 
 /**
  * @brief  Returns 1 if the last reset was a Brown-out Reset
- *         (RCON<BOR>). Clear after reading via @ref EPIC_BOR_ClearFlag.
+ *         (RCON<BOR> is active low: hardware clears it on the event).
+ *         Re-arm after reading via @ref EPIC_BOR_ClearFlag.
  * @return 1 if the last reset was a Brown-out Reset, else 0.
  */
 uint8_t EPIC_BOR_GetStatus(void);
 
 /**
- * @brief Clear RCON<BOR> (write 0).
+ * @brief Re-arm the BOR flag by setting RCON<BOR>, so the next
+ *        Brown-out Reset is detectable.
  */
 void EPIC_BOR_ClearFlag(void);
 
 /**
- * @brief  Returns 1 if the device just powered on (RCON<POR>).
- *         Set on Power-on Reset (DS39631E Register 4-1).
+ * @brief  Returns 1 if the device just powered on (RCON<POR> is active
+ *         low: hardware clears it on a Power-on Reset, DS39631E
+ *         Register 4-1).
  * @return 1 if the device just powered on, else 0.
  */
 uint8_t EPIC_POR_GetStatus(void);
 
 /**
- * @brief Clear RCON<POR> (write 0).
+ * @brief Re-arm the POR flag by setting RCON<POR>, so the next
+ *        Power-on Reset is detectable.
  */
 void EPIC_POR_ClearFlag(void);
 

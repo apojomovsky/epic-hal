@@ -150,7 +150,9 @@ set, lets an overflow fire the ISR, and reports.
 
 `EPIC_WDT_Refresh` (`clrwdt` on target), `EPIC_Sleep_Enter` (`sleep` on
 target), and RCON-based `EPIC_BOR_GetStatus` / `EPIC_BOR_ClearFlag` /
-`EPIC_POR_GetStatus` / `EPIC_POR_ClearFlag` (DS39631E Register 4-1).
+`EPIC_POR_GetStatus` / `EPIC_POR_ClearFlag` (DS39631E Register 4-1). POR and
+BOR are active low: hardware clears the bit on the event, the Get helpers
+return 1 while it reads clear, and ClearFlag sets it back.
 See `hal_wdt_sleep.h`.
 
 ## 8. GPIO

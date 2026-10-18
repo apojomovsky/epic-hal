@@ -81,3 +81,9 @@ epic_add_example(example_usart tests/example_usart.c)
 epic_add_example(example_adc tests/example_adc.c)
 epic_add_example(example_comp tests/example_comp.c)
 epic_add_example(example_eeprom tests/example_eeprom.c)
+epic_add_example(example_wdt_sleep tests/example_wdt_sleep.c)
+
+# example_wdt_sleep asserts the active-low RCON reset flags, so it runs
+# under ctest while the demo examples stay build-only.
+enable_testing()
+add_test(NAME wdt_sleep_host COMMAND example_wdt_sleep)

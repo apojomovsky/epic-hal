@@ -1,10 +1,6 @@
-/* WDT / Sleep / PCON smoke test. PCON carries only nBOR (bit 0) and
- * nPOR (bit 1), with bits 7:2 unimplemented and reading as 0 and no
- * SBOREN, WDTCON or ULPWU anywhere on this die (DS39598F Register 2-8,
- * §12.9). The sim models both flags set after reset
- * (PIC_PCON_POR_VALUE = 0x03), the ClearFlag helpers clear them one at
- * a time, and the WDT refresh and Sleep helpers are no-ops on the host
- * that must not fault. */
+/* WDT / Sleep / BOR / POR status smoke test: the active-low PCON flags
+ * are driven the way hardware does and the helpers must report and
+ * re-arm them correctly, and the WDT/Sleep no-ops must not crash. */
 
 #include "pic16f818_819_hal.h"
 #include "pic16f818_819_sim.h"
@@ -12,35 +8,49 @@
 #include "core/pic14_wdt_sleep.h"
 #include <stdio.h>
 
-static int g_pass = 0, g_fail = 0;
-#define CHECK(c, m) do { if (c) { g_pass++; } else { printf("FAIL: %s\n", m); g_fail++; } } while (0)
+#define CHECK(cond, msg) do { \
+    if (!(cond)) { printf("FAIL: %s\n", msg); return 1; } \
+} while (0)
+
+/* PCON<1:0> are nPOR and nBOR on this family. */
+#define TEST_PCON_nBOR  0x01U
+#define TEST_PCON_nPOR  0x02U
+#define TEST_PCON_MASK  0x03U
 
 /**
- * @brief Smoke-test the WDT/Sleep helpers and the PCON nBOR/nPOR image
- *        on the sim backend.
+ * @brief Smoke-test the WDT/Sleep/BOR/POR helpers on the sim backend.
  */
 int main(void)
 {
     pic16f818_819_sim_reset();
 
-    /* After POR both flags are modelled set (PCON = 0x03). */
-    CHECK(EPIC_REG8(PIC_REG_PCON) == PIC_PCON_POR_VALUE,
-          "PCON (0x8E) != 0x03 (nBOR | nPOR) after reset");
-    CHECK(EPIC_POR_GetStatus() == 1U, "POR not set after reset");
-    CHECK(EPIC_BOR_GetStatus() == 1U, "BOR not set after reset");
+    /* PCON<POR> and PCON<BOR> are active low: hardware clears the bit on
+     * the event. Set the bits the way hardware does instead of relying on
+     * the sim's reset image. */
+    EPIC_REG8(PIC_REG_PCON) |= (uint8_t)(TEST_PCON_nPOR | TEST_PCON_nBOR);
+    CHECK(EPIC_POR_GetStatus() == 0U, "POR reported with nPOR set");
+    CHECK(EPIC_BOR_GetStatus() == 0U, "BOR reported with nBOR set");
+    EPIC_REG8(PIC_REG_PCON) &= (uint8_t)~TEST_PCON_nPOR;
+    CHECK(EPIC_POR_GetStatus() == 1U, "POR not reported with nPOR clear");
+    CHECK(EPIC_BOR_GetStatus() == 0U, "BOR reported by a POR-only event");
+    EPIC_REG8(PIC_REG_PCON) &= (uint8_t)~TEST_PCON_nBOR;
+    CHECK(EPIC_BOR_GetStatus() == 1U, "BOR not reported with nBOR clear");
 
-    /* Clear them one at a time, the unimplemented bits stay 0. */
+    /* ClearFlag re-arms the flag by setting the bit back. */
     EPIC_POR_ClearFlag();
-    CHECK(EPIC_POR_GetStatus() == 0U, "POR not cleared");
-    CHECK(EPIC_REG8(PIC_REG_PCON) == PIC_PCON_BOR, "PCON != nBOR after POR clear");
+    CHECK(EPIC_POR_GetStatus() == 0U, "POR still reported after ClearFlag");
+    CHECK(EPIC_BOR_GetStatus() == 1U, "POR ClearFlag disturbed BOR");
+    CHECK((EPIC_REG8(PIC_REG_PCON) & TEST_PCON_MASK) == TEST_PCON_nPOR,
+          "PCON != nPOR after POR ClearFlag");
     EPIC_BOR_ClearFlag();
-    CHECK(EPIC_BOR_GetStatus() == 0U, "BOR not cleared");
-    CHECK(EPIC_REG8(PIC_REG_PCON) == 0x00U, "PCON != 0x00 after both clears");
+    CHECK(EPIC_BOR_GetStatus() == 0U, "BOR still reported after ClearFlag");
+    CHECK((EPIC_REG8(PIC_REG_PCON) & TEST_PCON_MASK) == TEST_PCON_MASK,
+          "PCON != nPOR | nBOR after both ClearFlags");
 
-    /* WDT refresh and Sleep are no-ops on sim but must not fault. */
+    /* WDT refresh and Sleep are no-ops on sim but must not crash. */
     EPIC_WDT_Refresh();
     EPIC_Sleep_Enter();
 
-    printf("example_wdt_sleep: %d passed, %d failed\n", g_pass, g_fail);
-    return (g_fail == 0) ? 0 : 1;
+    printf("OK: WDT/Sleep/BOR/POR helpers, flags and no-op instructions.\n");
+    return 0;
 }

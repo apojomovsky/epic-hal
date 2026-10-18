@@ -91,7 +91,9 @@ the 3-PIE-bank table in `src/core/pic16f193x_irq.c`.
 
 `EPIC_WDT_Refresh` = `clrwdt` (target) / no-op (host). `EPIC_Sleep_Enter` =
 `sleep` (target) / no-op (host). BOR/POR status reads PCON<0>/<1>
-(DS41364B §3.0, Register 3-3). The watchdog is enabled by the WDTEN
+(DS41364B §3.0, Register 3-3); both bits are active low (hardware clears
+the bit on the event), so the Get helpers return 1 while the bit reads clear
+and the ClearFlag helpers set it back. The watchdog is enabled by the WDTEN
 config bits or by SWDTEN in WDTCON (DS41364B §24.1).
 
 ## 9. GPIO

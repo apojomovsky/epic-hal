@@ -7,7 +7,8 @@
 
 #include "core/pic14_wdt_sleep.h"
 
-/* PCON bits (DS39582B §14.10, Register 14-2). */
+/* PCON bits (DS39582B §14.10, Register 14-2). Both are active low:
+ * hardware clears the bit on the event and software sets it back. */
 #define PIC_PCON_BOR   EPIC_BIT(0)
 #define PIC_PCON_POR   EPIC_BIT(1)
 
@@ -18,7 +19,8 @@
 
 #if PIC14MIDRANGE_HAS_PCON
 /**
- * @brief Return whether the last reset was a Brown-out Reset (PCON<BOR>).
+ * @brief Return whether the last reset was a Brown-out Reset (PCON<BOR>,
+ *        active low).
  * @return 1 if BOR was the reset cause, 0 otherwise.
  */
 uint8_t EPIC_BOR_GetStatus(void)
@@ -26,30 +28,30 @@ uint8_t EPIC_BOR_GetStatus(void)
 #ifdef EPIC_BANK1_READ8
     uint8_t pcon = 0u;
     EPIC_BANK1_READ8(PCON, pcon);
-    return (pcon & PIC_PCON_BOR) ? 1U : 0U;
+    return (pcon & PIC_PCON_BOR) ? 0U : 1U;
 #else
-    return (EPIC_REG8(PIC_REG_PCON) & PIC_PCON_BOR) ? 1U : 0U;
+    return (EPIC_REG8(PIC_REG_PCON) & PIC_PCON_BOR) ? 0U : 1U;
 #endif
 }
 
 /**
- * @brief Clear PCON<BOR>.
+ * @brief Re-arm the BOR flag by setting PCON<BOR>.
  */
 void EPIC_BOR_ClearFlag(void)
 {
 #ifdef EPIC_BANK1_READ8
     uint8_t pcon = 0u;
     EPIC_BANK1_READ8(PCON, pcon);
-    pcon &= (uint8_t)~PIC_PCON_BOR;
+    pcon |= PIC_PCON_BOR;
     EPIC_BANK1_WRITE8(PCON, pcon);
 #else
-    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PCON), PIC_PCON_BOR);
+    EPIC_BIT_SET(EPIC_REG8(PIC_REG_PCON), PIC_PCON_BOR);
 #endif
 }
 
 /**
  * @brief Return whether the device powered on via a Power-on Reset
- *        (PCON<POR>).
+ *        (PCON<POR>, active low).
  * @return 1 if POR was the reset cause, 0 otherwise.
  */
 uint8_t EPIC_POR_GetStatus(void)
@@ -57,24 +59,24 @@ uint8_t EPIC_POR_GetStatus(void)
 #ifdef EPIC_BANK1_READ8
     uint8_t pcon = 0u;
     EPIC_BANK1_READ8(PCON, pcon);
-    return (pcon & PIC_PCON_POR) ? 1U : 0U;
+    return (pcon & PIC_PCON_POR) ? 0U : 1U;
 #else
-    return (EPIC_REG8(PIC_REG_PCON) & PIC_PCON_POR) ? 1U : 0U;
+    return (EPIC_REG8(PIC_REG_PCON) & PIC_PCON_POR) ? 0U : 1U;
 #endif
 }
 
 /**
- * @brief Clear PCON<POR>.
+ * @brief Re-arm the POR flag by setting PCON<POR>.
  */
 void EPIC_POR_ClearFlag(void)
 {
 #ifdef EPIC_BANK1_READ8
     uint8_t pcon = 0u;
     EPIC_BANK1_READ8(PCON, pcon);
-    pcon &= (uint8_t)~PIC_PCON_POR;
+    pcon |= PIC_PCON_POR;
     EPIC_BANK1_WRITE8(PCON, pcon);
 #else
-    EPIC_BIT_CLR(EPIC_REG8(PIC_REG_PCON), PIC_PCON_POR);
+    EPIC_BIT_SET(EPIC_REG8(PIC_REG_PCON), PIC_PCON_POR);
 #endif
 }
 #endif /* PIC14MIDRANGE_HAS_PCON */

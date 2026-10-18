@@ -38,7 +38,9 @@ The IRQ backend's own dedicated `mdb` smoke test is
 
 Same shape as `hal/pic18/18fxx5x`: `EPIC_WDT_Refresh`/`EPIC_Sleep_Enter` are
 link-time-selected (`*_sim.c` host, `*_target.c` XC8); BOR/POR status
-reads/clears RCON directly. One real difference: RCON bit 6 (SBOREN on
+reads RCON directly. Both flags are active low: hardware clears the bit on
+the event, the Get helpers return 1 while it reads clear, and ClearFlag sets
+it back. One real difference: RCON bit 6 (SBOREN on
 the sibling family's 4550/2455) is unimplemented on this part, confirmed
 absent from the DFP header's own bitfield macros.
 

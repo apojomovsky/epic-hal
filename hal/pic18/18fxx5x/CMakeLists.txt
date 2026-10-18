@@ -119,3 +119,10 @@ epic_add_example(example_smoke tests/example_smoke.c)
 # Optional: the blink example for every device in the family, proving every
 # part compiles and links against the shared contract.
 epic_add_example_per_device(example_blink tests/example_blink.c)
+
+epic_add_example(example_wdt_sleep tests/example_wdt_sleep.c)
+
+# example_wdt_sleep asserts the active-low RCON reset flags, so it runs
+# under ctest while the demo examples stay build-only.
+enable_testing()
+add_test(NAME wdt_sleep_host COMMAND example_wdt_sleep)

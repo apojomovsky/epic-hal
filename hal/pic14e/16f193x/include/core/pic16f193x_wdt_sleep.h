@@ -28,26 +28,28 @@ void EPIC_Sleep_Enter(void);
 
 /**
  * @brief  Returns 1 if the last reset was a Brown-out Reset
- *         (PCON<BOR>, DS41364B §3.0). Clear after reading via
- *         @ref EPIC_BOR_ClearFlag.
+ *         (PCON<BOR>, DS41364B §3.0; active low: hardware clears it on
+ *         the event). Re-arm after reading via @ref EPIC_BOR_ClearFlag.
  * @return 1 if the last reset was a Brown-out Reset, 0 otherwise
  */
 uint8_t EPIC_BOR_GetStatus(void);
 
 /**
- * @brief Clear PCON<BOR>.
+ * @brief Re-arm the BOR flag by setting PCON<BOR>, so the next
+ *        Brown-out Reset is detectable.
  */
 void EPIC_BOR_ClearFlag(void);
 
 /**
  * @brief  Returns 1 if the device just powered on (PCON<POR>,
- *         DS41364B §3.0). Set only on Power-on Reset.
+ *         DS41364B §3.0; active low: hardware clears it on the event).
  * @return 1 if a Power-on Reset just occurred, 0 otherwise
  */
 uint8_t EPIC_POR_GetStatus(void);
 
 /**
- * @brief Clear PCON<POR>.
+ * @brief Re-arm the POR flag by setting PCON<POR>, so the next
+ *        Power-on Reset is detectable.
  */
 void EPIC_POR_ClearFlag(void);
 

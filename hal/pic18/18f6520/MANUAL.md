@@ -192,7 +192,9 @@ set, lets an overflow fire the ISR, and reports.
 target), and RCON-based `EPIC_BOR_GetStatus` / `EPIC_BOR_ClearFlag` /
 `EPIC_POR_GetStatus` / `EPIC_POR_ClearFlag` (DS39609B Register 4-4).
 See `hal_wdt_sleep.h`. RCON carries IPEN and the RI/TO/PD/POR/BOR flags;
-there is no SBOREN bit on this part (compare the 4550 family's RCON,
+POR and BOR are active low: hardware clears the bit on the event, the Get
+helpers return 1 while it reads clear, and ClearFlag sets it back.
+There is no SBOREN bit on this part (compare the 4550 family's RCON,
 Register 9-11).
 
 ## 8. GPIO

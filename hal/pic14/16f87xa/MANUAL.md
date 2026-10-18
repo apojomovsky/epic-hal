@@ -315,10 +315,10 @@ see git commit b679e21's message for the full measurement).
 ```c
 void   EPIC_WDT_Refresh(void);     // asm("clrwdt") on target; no-op on host
 void   EPIC_Sleep_Enter(void);     // asm("sleep")  on target; no-op on host
-uint8_t EPIC_BOR_GetStatus(void);  // PCON<BOR>, was the last reset a brown-out?
-void   EPIC_BOR_ClearFlag(void);
-uint8_t EPIC_POR_GetStatus(void);  // PCON<POR>, was the last reset a power-on?
-void   EPIC_POR_ClearFlag(void);
+uint8_t EPIC_BOR_GetStatus(void);  // PCON<BOR>, active low: was the last reset a brown-out?
+void   EPIC_BOR_ClearFlag(void);   // sets PCON<BOR> back (re-arm)
+uint8_t EPIC_POR_GetStatus(void);  // PCON<POR>, active low: was the last reset a power-on?
+void   EPIC_POR_ClearFlag(void);   // sets PCON<POR> back (re-arm)
 ```
 
 `EPIC_WDT_Refresh` executes `clrwdt`. If the configuration word has
@@ -335,8 +335,10 @@ crystal (asynchronous mode) is the canonical choice, along with INT/RB
 change, the WDT, SSP (I²C slave), EEPROM-done, etc.
 
 `EPIC_BOR_GetStatus` / `EPIC_POR_GetStatus` read the PCON reset-reason bits
-(§14.10). Clear them after reading so you can distinguish the next reset's
-cause.
+(§14.10). Both bits are active low: hardware clears the bit on the event, so
+the helpers return 1 while the bit reads clear. The `ClearFlag` helpers set
+the bit back, which the datasheet requires in software after a Power-on or
+Brown-out Reset so the next one can be told apart.
 
 ---
 
