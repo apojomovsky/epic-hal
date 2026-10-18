@@ -60,3 +60,11 @@ add_library(epic_modbus STATIC src/epic_modbus.c)
 target_include_directories(epic_modbus PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(epic_modbus PUBLIC epic_serial epic_tick)
+
+# Host test: RTU framing, CRC and dispatch through the real slave core
+# over the host-sim USART model (RX injection, host tick for T3.5).
+enable_testing()
+add_executable(test_modbus_host tests/test_modbus_host.c)
+target_compile_definitions(test_modbus_host PRIVATE -D${DEFAULT_DEVICE} -DFOSC_HZ=${DEFAULT_FOSC_HZ})
+target_link_libraries(test_modbus_host PRIVATE epic_modbus)
+add_test(NAME modbus_host COMMAND test_modbus_host)
