@@ -114,6 +114,7 @@ void pic16f628a_sim_reset(void)
     pic16f628a_sim_sfr[0x8CU] = PIC_PIE1_POR_VALUE;
     pic16f628a_sim_sfr[PIC_REG_T1CON]    = PIC_T1CON_POR_VALUE;
     pic16f628a_sim_sfr[PIC_REG_T2CON]    = PIC_T2CON_POR_VALUE;
+    pic16f628a_sim_sfr[PIC_REG_OPTION]   = PIC_OPTION_POR_VALUE;
 
     /* PORTA on POR reads as analog input '0'. */
     pic16f628a_sim_sfr[PIC_REG_PORTA]    = 0x00U;

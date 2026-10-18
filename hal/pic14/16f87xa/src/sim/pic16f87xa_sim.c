@@ -123,6 +123,7 @@ void pic16f87xa_sim_reset(void)
     pic16f87xa_sim_sfr[PIC_REG_T2CON]    = PIC_T2CON_POR_VALUE;
     pic16f87xa_sim_sfr[PIC_REG_ADCON0]   = PIC_ADCON0_POR_VALUE;
     pic16f87xa_sim_sfr[PIC_REG_ADCON1]   = PIC_ADCON1_POR_VALUE;
+    pic16f87xa_sim_sfr[PIC_REG_OPTION]   = PIC_OPTION_POR_VALUE;
 
     /* PORTA on POR reads as analog input '0' (DS39582B §4.1). */
     pic16f87xa_sim_sfr[PIC_REG_PORTA]    = 0x00U;

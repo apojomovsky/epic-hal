@@ -23,6 +23,10 @@
 int main(void)
 {
     pic16f88x_sim_reset();
+    /* OPTION_REG resets to all ones, so PSA=1 parks the prescaler on
+     * the WDT (silicon POR, not Timer0). */
+    CHECK(EPIC_REG8(PIC_REG_OPTION) == PIC_OPTION_POR_VALUE, "OPTION != POR after reset");
+    CHECK((EPIC_REG8(PIC_REG_OPTION) & PIC_OPTION_PSA) != 0U, "prescaler not on WDT after reset");
 
     /* PCON<POR> and PCON<BOR> are active low: hardware clears the bit on
      * the event. Set the bits the way hardware does instead of relying on
