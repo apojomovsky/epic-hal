@@ -55,6 +55,15 @@ address-mismatch and broadcast silence, exception frames):
 cmake -B build && cmake --build build && ctest --test-dir build --output-on-failure
 ```
 
+### MPLAB SIM gate (framing/T3.5)
+
+The RTU framing and T3.5 behavior are covered under MPLAB SIM by
+`tests/sim_modbus.c`:
+
+```sh
+make mdb-test MODULE=lib/modbus MCU=18F4550 DEVICE=PIC18F4550
+```
+
 ## Use it
 
 ```c
