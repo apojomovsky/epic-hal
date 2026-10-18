@@ -48,6 +48,11 @@ static void sim_step_timer2(void);
 static void sim_step_timer3(void);
 
 /**
+ * @brief Advance the simulated Timer4 by one instruction cycle.
+ */
+static void sim_step_timer4(void);
+
+/**
  * @brief Map a port letter (A..G) to a 0-based index.
  *
  * Unknown letters map to index 0, matching port A.
@@ -190,6 +195,8 @@ void pic18_sim_reset(void)
     pic18_sim_sfr[PIC_REG_T1CON]    = PIC_T1CON_POR_VALUE;    /* 0x00 */
     pic18_sim_sfr[PIC_REG_T2CON]    = PIC_T2CON_POR_VALUE;    /* 0x00 */
     pic18_sim_sfr[PIC_REG_PR2]      = PIC_PR2_POR_VALUE;      /* 0xFF */
+    pic18_sim_sfr[PIC_REG_T4CON]    = PIC_T4CON_POR_VALUE;    /* 0x00 */
+    pic18_sim_sfr[PIC_REG_PR4]      = PIC_PR4_POR_VALUE;      /* 0xFF */
     pic18_sim_sfr[PIC_REG_T3CON]    = PIC_T3CON_POR_VALUE;    /* 0x00 */
     pic18_sim_sfr[PIC_REG_ADCON0]   = PIC_ADCON0_POR_VALUE;   /* 0x00 */
     pic18_sim_sfr[PIC_REG_ADCON1]   = PIC_ADCON1_POR_VALUE;   /* 0x00 */
@@ -239,7 +246,7 @@ void pic18_sim_reset(void)
 /**
  * @brief Advance the simulated device by a number of instruction cycles.
  *
- * Each cycle steps the enabled timers (Timer0, Timer1, Timer2, Timer3).
+ * Each cycle steps the enabled timers (Timer0 through Timer4).
  *
  * @param ticks the number of instruction cycles to simulate
  */
@@ -251,6 +258,7 @@ void pic18_sim_step(uint32_t ticks)
         sim_step_timer1();
         sim_step_timer2();
         sim_step_timer3();
+        sim_step_timer4();
     }
 }
 
@@ -429,6 +437,52 @@ static void sim_step_timer3(void)
     {
         pic18_sim_sfr[PIC_REG_PIR2] |= PIC_PIR2_TMR3IF;
         if (sim_irq_cb) sim_irq_cb();
+    }
+}
+
+/**
+ * @brief Step the simulated Timer4 by one instruction cycle.
+ *
+ * Same model as Timer2 on T4CON/PR4/TMR4: applies the prescaler
+ * (1:1/4/16), increments TMR4, and on match with PR4 resets TMR4,
+ * advances the postscaler, and raises PIR3<TMR4IF> when the postscaler
+ * wraps (DS39609B §15.0).
+ */
+static void sim_step_timer4(void)
+{
+    /* T4CON layout (DS39609B Register 15-1):
+     *   bit 6..3 T4OUTPS3:T4OUTPS0 (postscaler 1:(N+1))
+     *   bit 2    TMR4ON
+     *   bit 1..0 T4CKPS1:T4CKPS0 (00=1:1, 01=1:4, 1x=1:16) */
+    uint8_t t4con = pic18_sim_sfr[PIC_REG_T4CON];
+    if (!(t4con & PIC_T4CON_TMR4ON)) return;
+
+    static const uint16_t pre_idx[4] = {1, 4, 16, 16};
+    uint32_t pre_rate = pre_idx[t4con & 0x3U];
+
+    static uint16_t t4_prescaler = 0U;
+    t4_prescaler++;
+    if (t4_prescaler < pre_rate) return;
+    t4_prescaler = 0U;
+
+    uint8_t tmr4 = (uint8_t)(pic18_sim_sfr[PIC_REG_TMR4] + 1U);
+    uint8_t pr4 = pic18_sim_sfr[PIC_REG_PR4];
+    if (tmr4 > pr4)
+    {
+        pic18_sim_sfr[PIC_REG_TMR4] = 0U;
+        static uint8_t t4_post = 0U;
+        uint8_t post_n = (uint8_t)((t4con >> 3) & 0xFU);
+        t4_post++;
+        if (t4_post > post_n)
+        {
+            t4_post = 0U;
+            pic18_sim_sfr[PIC_REG_PIR3] |= PIC_PIR3_TMR4IF;
+            if (sim_irq_cb) sim_irq_cb();
+        }
+    }
+    else
+    {
+        pic18_sim_sfr[PIC_REG_TMR4] = tmr4;
     }
 }
 
