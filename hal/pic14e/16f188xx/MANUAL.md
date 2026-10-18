@@ -605,10 +605,13 @@ driver, and the Timer2 edge-start, monostable and level-start modes
 have no behavioural coverage in either the host sim (it freezes the
 counter) or the mdb gate (only mode 0x01 is exercised live).
 
-The gate image is built -O2 and fills most of the 16F18855's 8K words of
-flash. Probe sections therefore live in small helper functions that share
-spin loops and handle resets, since inlining every readback into main
-overflowed that part (link error 1347) while the 16F18877 still fit.
+The gate image is built -O2. Probe sections live in small helper
+functions that share spin loops and handle resets, since inlining every
+readback into main overflowed the 16F18855's 8K words of flash (link error
+1347). With the EEPROM, NCO, WDT and Idle sections added the image is
+about 9.3K words and no longer fits a 16F18855 (it needs the 16K-word
+16F18856 or larger); the CI gate runs on the 16F18877, and the other
+parts still build the blink example.
 
 A CPU-executed EEPROM write completes under MPLAB SIM 6.35 on the
 16F18877 (2026-10): WR clears at once, the byte reads back through NVM,

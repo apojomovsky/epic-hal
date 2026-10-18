@@ -80,6 +80,7 @@ void epic_dispatch_all_irqs(void)
         if ((EPIC_REG8(PIC_REG_PIE4) & TMR2_PIR4_MASK) != 0U)
         {
             TIMER2_IRQHandler();
+        }
     }
     if ((EPIC_REG8(PIC_REG_PIR7) & NVM_PIR7_MASK) != 0U)
     {

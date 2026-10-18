@@ -185,6 +185,7 @@ uint8_t EPIC_IRQ_GetFlag(PIC16F188XX_IRQn irq)
     if (irq == PIC16F188XX_IRQ_TMR2)
     {
         return (EPIC_REG8(PIC_REG_PIR4) & PIC_PIR4_TMR2IF) ? 1U : 0U;
+    }
     if (irq == PIC16F188XX_IRQ_EEPROM)
     {
         return (EPIC_REG8(PIC_REG_PIR7) & PIC_PIR7_NVMIF) ? 1U : 0U;
