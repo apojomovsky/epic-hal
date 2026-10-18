@@ -20,8 +20,8 @@ typedef enum {
 
 /**
  * @brief Time base (CCPTMRS1 P6TSEL/P7TSEL, DS40001802D Register 30-6).
- *        Only Timer2 has a driver yet; the others are programmed but
- *        nothing here starts them.
+ *        Timer2 and Timer4 have drivers; Timer6 is programmed but nothing
+ *        here starts it.
  */
 typedef enum {
     PWM_TIMER_2 = 1U,   /**< 01: Timer2. */

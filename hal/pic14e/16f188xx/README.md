@@ -5,7 +5,7 @@ core): 16F18854/55/56/57 (28-pin) and 16F18875/76/77 (40-pin, adding
 PORTD and PORTE). This HAL covers the family header and SFR map, GPIO
 (PORTA..PORTC, plus PORTD/PORTE on the 40-pin parts), Timer0, the
 EUSART, MSSP1 (SPI master and I2C master), the PPS pin selector, Timer1,
-Timer2, CCP1..CCP5 and the dedicated PWM6/PWM7 modules, the 256-byte data
+Timer2, Timer4, CCP1..CCP5 and the dedicated PWM6/PWM7 modules, the 256-byte data
 EEPROM, the WDT, Sleep and Idle helpers and NCO1, and the
 interrupt sources behind the single vector through the shared
 dispatcher.
@@ -35,8 +35,8 @@ Implemented and verified:
       init, read/write pin and port, toggle, pull-ups, analog select,
       per-port interrupt-on-change enable
 - [x] Interrupt core for IOC, Timer0 overflow, Timer1 overflow, Timer2
-      match and CCP1..CCP5 (`PIE0`/`PIR0` bits 4 and 5, `PIE4`/`PIR4`
-      bits 0 and 1, `PIE6`/`PIR6` bits 0 to 4, PEIE-gated dispatch,
+      and Timer4 match and CCP1..CCP5 (`PIE0`/`PIR0` bits 4 and 5,
+      `PIE4`/`PIR4` bits 0, 1 and 3, `PIE6`/`PIR6` bits 0 to 4, PEIE-gated dispatch,
       single vector, automatic hardware context save)
 - [x] Timer0 8/16-bit with prescaler, postscaler and overflow callback
       (`EPIC_TIMER0_*`, `TIMER0_HANDLE_DEFAULT`): host probe
@@ -65,6 +65,14 @@ Implemented and verified:
       images, polled flag, vectored overflow and match with POR
       restore, gate proofs on the RB5 and RC3 POR PPS pins; family
       MANUAL.md)
+- [x] Timer4 basic free-running mode (`EPIC_TIMER4_*`,
+      `TIMER4_HANDLE_DEFAULT`): PR4 period, prescaler, postscaler,
+      T4CLKCON clock select and match callback; the T4HLT limit modes are
+      mapped but not driven. It starts the PWM time base of the CCP and
+      PWM Timer3/Timer4 couple. Host probe `example_timer4` (ctest,
+      including CCP1 and PWM6 PWM on Timer4) plus the mdb gate section
+      (register images, polled flag, vectored match; MPLAB SIM does not
+      run PWM on that couple, family MANUAL.md).
 - [x] Data EEPROM (`EPIC_EEPROM_*`): byte read and non-blocking write
       with the 0x55/0xAA unlock, write-complete polling or callback
       (NVMIF), write-error flag. Host probe `example_eeprom` plus the mdb
@@ -87,7 +95,8 @@ Implemented and verified:
       the mdb gate sections (register images, compare match, vectored
       CCP5, PWM duty against Timer2; MPLAB SIM never captures and the
       gate image fits the 16K and 32K parts only, family MANUAL.md).
-      Only the Timer1/Timer2 couple is modelled on the host sim.
+      The host sim models capture and compare on the Timer1/Timer2
+      couple and PWM on the Timer1/Timer2 and Timer3/Timer4 couples.
 - [x] Host simulation backend and `example_gpio` probe (ctest).
 - [x] Real-target firmware (`hal/pic14e/16f188xx`), `blink` example,
       and the mdb register-readback gate (`MODE=gpio`, RA0 PASS marker)
@@ -97,9 +106,10 @@ Implemented and verified:
       only (family MANUAL.md).
 Not yet implemented (deliberate scope limit, each its own follow-up):
 - ADC, comparators, DAC, FVR, MSSP2, EUSART synchronous mode and
-  auto-baud, SPI and I2C slave, the Timer2 SPI clock, Timer3..Timer6 (so
-  the CCP and PWM Timer3..Timer6 couples are programmable but nothing
-  starts those timers), the Timer1 gate-event interrupt, PPS inputs for
+  auto-baud, SPI and I2C slave, the Timer2 SPI clock, Timer3, Timer5 and
+  Timer6 (so capture and compare on the Timer3 and Timer5 couples and
+  the Timer5/Timer6 PWM couple are programmable but nothing starts those
+  timers), the Timer4 limit modes, the Timer1 gate-event interrupt, PPS inputs for
   T1CKI, T1G and T2IN, program Flash self-write, the WDT window and Doze,
   and the remaining peripherals.
 - Wiring the family into the demos.
@@ -130,15 +140,15 @@ include/
   host/               host platform header (memory-backed SFR array)
   target/             target platform header (volatile-deref SFR)
   core/               IRQ and WDT/Sleep contracts
-  peripherals/        GPIO, Timer0..Timer2, CCP, PWM, PPS, EUSART, MSSP, EEPROM and NCO contracts
+  peripherals/        GPIO, Timer0..Timer2, Timer4, CCP, PWM, PPS, EUSART, MSSP, EEPROM and NCO contracts
 src/
   core/               IRQ backend and dispatch, WDT control and BOR/POR
-  peripherals/        GPIO, Timer0..Timer2, CCP, PWM, PPS, EUSART, MSSP, EEPROM and NCO bodies
+  peripherals/        GPIO, Timer0..Timer2, Timer4, CCP, PWM, PPS, EUSART, MSSP, EEPROM and NCO bodies
   target/             ISR vector, clrwdt and sleep (real hardware only)
   sim/                host simulation backend
   mdb/                MPLAB SIM register-readback harness
 tests/                example_blink, example_gpio, example_timer0,
-                      example_timer1, example_timer2, example_ccp, example_pwm,
+                      example_timer1, example_timer2, example_timer4, example_ccp, example_pwm,
                       example_pps,
                       example_usart, example_mssp,
                       example_eeprom, example_nco, example_wdt_sleep (host),

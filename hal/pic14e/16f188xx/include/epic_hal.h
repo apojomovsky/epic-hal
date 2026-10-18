@@ -1,5 +1,5 @@
 /**
- * PIC16F18855 HAL, consumer umbrella. Exposes the GPIO, Timer0..Timer2,
+ * PIC16F18855 HAL, consumer umbrella. Exposes the GPIO, Timer0..Timer2, Timer4,
  * CCP, PWM, EUSART, MSSP, PPS, EEPROM, NCO, WDT/Sleep and interrupt contract
  * shared with the other PIC14E families.
  */
@@ -10,6 +10,7 @@
 #include "peripherals/hal_timer0.h"
 #include "peripherals/hal_timer1.h"
 #include "peripherals/hal_timer2.h"
+#include "peripherals/hal_timer4.h"
 #include "peripherals/hal_ccp.h"
 #include "peripherals/hal_pwm.h"
 #include "peripherals/hal_usart.h"

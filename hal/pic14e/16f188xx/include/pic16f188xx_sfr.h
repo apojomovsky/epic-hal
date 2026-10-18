@@ -59,6 +59,16 @@
 #define PIC_REG_T2HLT         0x28FU
 #define PIC_REG_T2CLKCON      0x290U
 #define PIC_REG_T2RST         0x291U
+/* Timer4 shares Timer2's module (EDC _modsrc DOS-02458_tmr_mid2_v1), so
+ * its bank 5 block has the same layout at +6. The EDC names the count and
+ * period registers T4TMR and T4PR. T4HLT, T4CLKCON and T4RST follow
+ * T2HLT, T2CLKCON and T2RST bit for bit. */
+#define PIC_REG_TMR4          0x292U
+#define PIC_REG_PR4           0x293U
+#define PIC_REG_T4CON         0x294U
+#define PIC_REG_T4HLT         0x295U
+#define PIC_REG_T4CLKCON      0x296U
+#define PIC_REG_T4RST         0x297U
 
 /* CCP1..CCP5 (CCPRxL/H, CCPxCON, CCPxCAP) in bank 6, CCPTMRS0/1 in bank 4
  * and PWM6/PWM7 (PWMxDCL/H, PWMxCON) in bank 7: same address on every
@@ -307,12 +317,15 @@
 #define PIC_T0CON1_T0ASYNC      EPIC_BIT(4)
 #define PIC_T0CON1_T0CKPS_MASK  0x0FU
 
-/* PIR4/PIE4 carry the Timer1 and Timer2 flags and enables in bits 0 and 1
- * (impl 0x3F, bits 7:6 unimplemented). */
+/* PIR4/PIE4 carry the Timer1, Timer2 and Timer4 flags and enables in
+ * bits 0, 1 and 3 (impl 0x3F, bits 7:6 unimplemented; bit 2 is Timer3,
+ * bits 4 and 5 are Timer5 and Timer6). */
 #define PIC_PIR4_TMR1IF       EPIC_BIT(0)
 #define PIC_PIR4_TMR2IF       EPIC_BIT(1)
 #define PIC_PIE4_TMR1IE       EPIC_BIT(0)
 #define PIC_PIE4_TMR2IE       EPIC_BIT(1)
+#define PIC_PIR4_TMR4IF       EPIC_BIT(3)
+#define PIC_PIE4_TMR4IE       EPIC_BIT(3)
 
 /* T1CON bits: ON bit 0, RD16 bit 1, SYNC bit 2 (set: external input not
  * synchronized), CKPS value in bits 5:4 (impl 0x37). */
@@ -352,6 +365,17 @@
 #define PIC_T2HLT_MODE_MASK     0x1FU
 #define PIC_T2CLKCON_CS_MASK    0x0FU
 #define PIC_T2RST_RSEL_MASK     0x1FU
+
+/* T4CON bits: same layout as T2CON (ON bit 7, CKPS value in bits 6:4,
+ * OUTPS value in bits 3:0; impl 0xFF). T4CLKCON CS value in bits 3:0
+ * (impl 0x0F). T4HLT MODE is bits 4:0 (impl 0xFF); the driver only ever
+ * writes 0 to T4HLT and T4RST. */
+#define PIC_T4CON_ON            EPIC_BIT(7)
+#define PIC_T4CON_CKPS_SHIFT    4U
+#define PIC_T4CON_CKPS_MASK     0x70U
+#define PIC_T4CON_OUTPS_MASK    0x0FU
+#define PIC_T4HLT_MODE_MASK     0x1FU
+#define PIC_T4CLKCON_CS_MASK    0x0FU
 /* PIR3/PIE3 bits: SSP1 event bit 0, SSP1 bus collision bit 1, EUSART TX
  * bit 4, EUSART RX bit 5 (impl 0x3F; bits 2 and 3 are the MSSP2 pair,
  * unused here). TXIF and RCIF are read-only status: hardware clears

@@ -1,6 +1,6 @@
 /**
  * PIC16F18855 interrupt contract. Sources: IOC and Timer0 (PIR0/PIE0 bits
- * 4 and 5), MSSP1 and EUSART (PIR3/PIE3), Timer1 and Timer2 (PIR4/PIE4),
+ * 4 and 5), MSSP1 and EUSART (PIR3/PIE3), Timer1, Timer2 and Timer4 (PIR4/PIE4),
  * CCP1..CCP5 (PIR6/PIE6 bits 0 to 4), NCO1 and NVM write complete (PIR7/
  * PIE7 bits 4 and 5), each gated by INTCON.PEIE; enabling one sets PEIE.
  * The dispatcher (epic_dispatch_all_irqs) acknowledges enabled ones.
@@ -28,7 +28,8 @@ typedef enum
     PIC16F188XX_IRQ_CCP2     = 10,
     PIC16F188XX_IRQ_CCP3     = 11,
     PIC16F188XX_IRQ_CCP4     = 12,
-    PIC16F188XX_IRQ_CCP5     = 13
+    PIC16F188XX_IRQ_CCP5     = 13,
+    PIC16F188XX_IRQ_TMR4     = 14
 } PIC16F188XX_IRQn;
 
 /**
@@ -81,7 +82,7 @@ void EPIC_IRQ_SetPriority(PIC16F188XX_IRQn irq, EPIC_IRQ_Priority prio);
  * @brief Shared interrupt dispatcher, called from the single interrupt vector.
  * @details Runs IOC_IRQHandler when the IOC flag and enable are both set,
  * then TIMER0_IRQHandler for TMR0, then SSP_IRQHandler, USART_TX_IRQHandler
- * and USART_RX_IRQHandler for their PIR3 flags, the Timer1 and Timer2 handlers
+ * and USART_RX_IRQHandler for their PIR3 flags, the Timer1, Timer2 and Timer4 handlers
  * for PIR4, CCP1_IRQHandler..CCP5_IRQHandler for PIR6, then EEPROM_IRQHandler
  * and NCO_IRQHandler for their PIR7 flags, each gated the same way.
  * INT and the bus-collision flag have no handler and no API enables them,

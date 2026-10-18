@@ -83,11 +83,12 @@
 #define PIC16F188XX_FAMILY_IOCC_MASK  0xFFU
 #define PIC16F188XX_FAMILY_IOCD_MASK  0x00U
 #define PIC16F188XX_FAMILY_IOCE_MASK  0x00U
-/* Timer0, Timer1 and Timer2 have drivers; demos gate timer use on these
+/* Timer0, Timer1, Timer2 and Timer4 have drivers; demos gate timer use on these
  * so the same demo source builds across the PIC14E families. */
 #define PIC16F188XX_HAS_TMR0 1
 #define PIC16F188XX_HAS_TMR1 1
 #define PIC16F188XX_HAS_TMR2 1
+#define PIC16F188XX_HAS_TMR4 1
 /* One EUSART, one MSSP (MSSP1) and the PPS selector are driven; the
  * second MSSP instance stays unported. */
 #define PIC16F188XX_HAS_USART 1

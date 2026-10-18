@@ -226,11 +226,12 @@ int main(void)
     ok &= (EPIC_PWM_DeInit(PWM_INSTANCE_7) == EPIC_OK);
     t2_stop();
 
-    /* A time base the model does not run holds the idle level. */
+    /* A time base the model does not run holds the idle level. Timer4 PWM
+     * is covered by example_timer4. */
     h = (PWM_HandleTypeDef)PWM_HANDLE_DEFAULT;
     h.Instance = PWM_INSTANCE_7;
     h.Duty = 20U;
-    h.Timer = PWM_TIMER_4;
+    h.Timer = PWM_TIMER_6;
     ok &= (EPIC_PWM_Init(&h) == EPIC_OK);
     t2_start();
     sample(7U, 40U, &high, &rises);

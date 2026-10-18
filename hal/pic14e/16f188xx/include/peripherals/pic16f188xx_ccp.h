@@ -44,8 +44,9 @@ typedef enum {
 /**
  * @brief Timer couple (CCPTMRS C1TSEL..C5TSEL, DS40001802D Registers 30-5
  *        and 30-6). Capture and compare use the first timer of the couple,
- *        PWM the second. Only Timer1 and Timer2 have drivers yet; the
- *        other couples are programmed but nothing here starts their timers.
+ *        PWM the second. Only Timer1, Timer2 and Timer4 have drivers yet;
+ *        the Timer5/Timer6 couple is programmed but nothing here starts
+ *        its timers, and Timer3 capture/compare is not started either.
  */
 typedef enum {
     CCP_TIMER_1_2 = 1U,   /**< 01: Timer1 (capture/compare) or Timer2 (PWM). */
