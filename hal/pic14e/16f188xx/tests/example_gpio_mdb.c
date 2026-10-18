@@ -502,10 +502,10 @@ static int gate_nco(void)
 
 /**
  * @brief ADC, DAC1, FVR and comparator section: register images only.
- * @details ADGO masks out of the Init images only; CxOUT and FVRRDY
- * mask out of every image including after DeInit. Init images use the
- * TMR0 trigger (SIM reports W0239 for ADACT:0; the host probe covers
- * the manual-trigger image). No conversion is waited on.
+ * @details ADGO masks out of the Init images only; CxOUT, FVRRDY and
+ * the EDC-only CMxCON0 bit 2 mask out of every image including after
+ * DeInit, with no conversion waited on. Init images use the TMR0
+ * trigger (SIM reports W0239 for ADACT:0; the host covers manual).
  * @return 1 when every readback matches, 0 otherwise.
  */
 static int gate_analog(void)
@@ -528,15 +528,11 @@ static int gate_analog(void)
 #if PIC16F188XX_FAMILY_HAS_PORTD
     /* ANE2 (RE2) is the top pin channel on 40-pin parts: analog input
      * first (DS40001802D §23.2.7 step 1), or the SIM ADC model warns
-     * W0214/W0215 and rejects the channel. */
+     * W0214/W0215. No readback: TRIS/ANSEL images belong to GPIO. */
     EPIC_GPIO_Init(GPIOE, GPIO_PIN_2, GPIO_MODE_ANALOG);
-    ok &= ((EPIC_REG8(PIC_REG_TRISE) & GPIO_PIN_2) != 0U);
-    ok &= ((EPIC_REG8(PIC_REG_ANSELE) & GPIO_PIN_2) != 0U);
 #else
     /* ANC7 (RC7) is the top pin channel on 28-pin parts: same setup. */
     EPIC_GPIO_Init(GPIOC, GPIO_PIN_7, GPIO_MODE_ANALOG);
-    ok &= ((EPIC_REG8(PIC_REG_TRISC) & GPIO_PIN_7) != 0U);
-    ok &= ((EPIC_REG8(PIC_REG_ANSELC) & GPIO_PIN_7) != 0U);
 #endif
     ok &= (EPIC_ADC_SelectChannel(PIC16F188XX_FAMILY_ADC_MAX_PIN) == EPIC_OK);
     ok &= (EPIC_REG8(PIC_REG_ADPCH) == PIC16F188XX_FAMILY_ADC_MAX_PIN);
@@ -580,7 +576,9 @@ static int gate_analog(void)
     ok &= (EPIC_REG8(PIC_REG_CM1NSEL) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_CM1PSEL) == 0x00U);
     ok &= (EPIC_REG8(PIC_REG_CM1CON1) == 0x00U);
-    ok &= ((EPIC_REG8(PIC_REG_CM1CON0) & (uint8_t)~PIC_CM1CON0_OUT) == 0x80U);
+    /* CMxCON0 bit 2 is EDC-only (POR 1) against datasheet-U and the
+     * driver leaves it clear, so it masks out with live CxOUT. */
+    ok &= ((EPIC_REG8(PIC_REG_CM1CON0) & (uint8_t)~(PIC_CM1CON0_OUT | 0x04U)) == 0x80U);
     cmp.Instance = COMP_INSTANCE_2;
     cmp.PosChannel = COMP_POS_DAC;
     cmp.NegChannel = COMP_NEG_FVR;
@@ -591,11 +589,11 @@ static int gate_analog(void)
     ok &= (EPIC_REG8(PIC_REG_CM2NSEL) == 0x06U);
     ok &= (EPIC_REG8(PIC_REG_CM2PSEL) == 0x05U);
     ok &= (EPIC_REG8(PIC_REG_CM2CON1) == 0x03U);
-    ok &= ((EPIC_REG8(PIC_REG_CM2CON0) & (uint8_t)~PIC_CM2CON0_OUT) == 0x92U);
+    ok &= ((EPIC_REG8(PIC_REG_CM2CON0) & (uint8_t)~(PIC_CM2CON0_OUT | 0x04U)) == 0x92U);
     ok &= (EPIC_COMP_DeInit(COMP_INSTANCE_1) == EPIC_OK);
     ok &= (EPIC_COMP_DeInit(COMP_INSTANCE_2) == EPIC_OK);
-    ok &= ((EPIC_REG8(PIC_REG_CM1CON0) & (uint8_t)~PIC_CM1CON0_OUT) == 0x00U);
-    ok &= ((EPIC_REG8(PIC_REG_CM2CON0) & (uint8_t)~PIC_CM2CON0_OUT) == 0x00U);
+    ok &= ((EPIC_REG8(PIC_REG_CM1CON0) & (uint8_t)~(PIC_CM1CON0_OUT | 0x04U)) == 0x00U);
+    ok &= ((EPIC_REG8(PIC_REG_CM2CON0) & (uint8_t)~(PIC_CM2CON0_OUT | 0x04U)) == 0x00U);
     return ok;
 }
 
