@@ -351,7 +351,7 @@ the vector assertions only where the flag write reads back; where it does
 not, cover the register readbacks and the enable path instead, and clear back
 the flags the section set. Worked example: the live interrupt smoke in
 `hal/pic14e/16f188xx/tests/example_gpio_mdb.c`, the SIM gap note in
-`hal/pic14e/16f188xx/MANUAL.md` (SIM gaps), and the quickstart note in
+`hal/pic14e/16f188xx/MANUAL.md` (SIM gaps), and the gate note in
 `hal/pic14e/16f188xx/README.md`.
 
 ## §5. Path B: new family from scratch
