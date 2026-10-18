@@ -36,4 +36,18 @@
         asm("bsf PPSLOCK,0"); \
     } while (0)
 
+/* NVM write start (DS40001802D §10.4.2): one banksel, the two key writes
+ * and an explicit bsf WR, so no instruction lands inside the unlock
+ * window. WREN, the address and the data are set before. Interrupts must
+ * be off around the sequence. */
+#define epic_nvm_start_write() \
+    do { \
+        asm("banksel NVMCON2"); \
+        asm("movlw 0x55"); \
+        asm("movwf NVMCON2"); \
+        asm("movlw 0xAA"); \
+        asm("movwf NVMCON2"); \
+        asm("bsf NVMCON1,1"); \
+    } while (0)
+
 #endif

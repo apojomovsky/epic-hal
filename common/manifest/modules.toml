@@ -4957,9 +4957,13 @@ hal_sources = [
   "hal/pic14e/16f188xx/src/peripherals/pic16f188xx_pps.c",
   "hal/pic14e/16f188xx/src/peripherals/pic16f188xx_usart.c",
   "hal/pic14e/16f188xx/src/peripherals/pic16f188xx_ssp.c",
+  "hal/pic14e/16f188xx/src/peripherals/pic16f188xx_eeprom.c",
+  "hal/pic14e/16f188xx/src/peripherals/pic16f188xx_nco.c",
   "hal/pic14e/16f188xx/src/core/pic16f188xx_irq.c",
   "hal/pic14e/16f188xx/src/core/pic16f188xx_irq_dispatch.c",
+  "hal/pic14e/16f188xx/src/core/pic16f188xx_wdt_sleep.c",
   "hal/pic14e/16f188xx/src/target/pic16f188xx_isr_vector.c",
+  "hal/pic14e/16f188xx/src/target/pic16f188xx_wdt_sleep_target.c",
   "common/src/core/epic_harness_target.c",
 ]
 harness_src = "common/src/core/epic_harness_target.c"
@@ -4995,4 +4999,4 @@ harness_src = "hal/pic14e/16f188xx/src/mdb/pic16f188xx_harness_mdb.c"
 sources     = [
   "tests/example_gpio_mdb.c",
 ]
-config      = { FEXTOSC = "OFF", RSTOSC = "HFINT32", CLKOUTEN = "OFF", CSWEN = "ON", FCMEN = "OFF", MCLRE = "ON", PWRTE = "ON", BOREN = "ON", STVREN = "ON", WDTE = "OFF", WRT = "OFF", LVP = "OFF", CP = "OFF", CPD = "OFF", PPS1WAY = "OFF" }
+config      = { FEXTOSC = "OFF", RSTOSC = "HFINT32", CLKOUTEN = "OFF", CSWEN = "ON", FCMEN = "OFF", MCLRE = "ON", PWRTE = "ON", BOREN = "ON", STVREN = "ON", WDTE = "SWDTEN", WRT = "OFF", LVP = "OFF", CP = "OFF", CPD = "OFF", PPS1WAY = "OFF" }

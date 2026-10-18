@@ -1,7 +1,8 @@
 # PIC16F188xx register reference
 
 Per-peripheral register reference for the GPIO, interrupt-on-change,
-Timer0, EUSART, MSSP1 and PPS sources in this HAL. Shared conventions (naming, handle
+Timer0, EUSART, MSSP1, PPS, data EEPROM, NCO1 and WDT/Sleep sources in
+this HAL. Shared conventions (naming, handle
 pattern, harness, interrupt model) are in
 [common/MANUAL.md](../../../common/MANUAL.md). This file covers only
 what is specific to this family: 16F18854/55/56/57 (28-pin) and
@@ -24,6 +25,12 @@ what is specific to this family: 16F18854/55/56/57 (28-pin) and
   datasheet documents this exact Timer0 module (EDC _modsrc
   DOS-01631_tmr_mid0_v1_8bit on both), read as text, not from a
   bot-walled PDF.
+- The data EEPROM (NVM), WDT, Sleep and Idle, PCON0 and NCO1 sections
+  cite DS40001802D (PIC16F18855/75), read as text from a copy fetched
+  with a browser user agent. The other parts are not in that document;
+  their EDCs carry the same NCO and windowed-WDT module (_modsrc
+  DOS-01444B_NCO_v1_a and DOS-02448_wdt_windowed_v1 on all seven) and
+  the same register addresses, which the sfr-map audit checks.
 
 ## Implemented bits (from EDC impl masks)
 
@@ -66,6 +73,25 @@ what is specific to this family: 16F18854/55/56/57 (28-pin) and
 | T0CON1   | 0xFF  | 00000000   | T0CS, T0ASYNC, T0CKPS                    |
 | PIR3     | 0x3F  | --000000   | SSP1IF, BCL1IF, SSP2IF, BCL2IF, TXIF (read-only), RCIF (read-only) |
 | PIE3     | 0x3F  | --000000   | SSP1IE, BCL1IE, SSP2IE, BCL2IE, TXIE, RCIE |
+| PIR7     | 0xF7  | 0000-000   | NCO1IF (bit 4), NVMIF (bit 5); the rest are CWG, CRC and scanner |
+| PIE7     | 0xF7  | 0000-000   | NCO1IE (bit 4), NVMIE (bit 5)            |
+| NVMADRL  | 0xFF  | 00000000   | NVM address low byte                     |
+| NVMADRH  | 0x7F  | 10000000   | NVM address high byte; bit 7 is unimplemented and reads 1 |
+| NVMDATL  | 0xFF  | 00000000   | NVM data low byte (the EEPROM byte)      |
+| NVMDATH  | 0x3F  | --000000   | NVM data high byte, program Flash only   |
+| NVMCON1  | 0x7F  | -0000000   | NVMREGS, LWLO, FREE, WRERR, WREN, WR, RD |
+| NVMCON2  | write-only | 00000000 | Unlock pattern register, reads 0       |
+| WDTCON0  | 0x3F  | --qqqqq0   | WDTPS<4:0>, SWDTEN                       |
+| WDTCON1  | 0x77  | -qqq-qqq   | WDTCS<2:0>, WINDOW<2:0>                  |
+| PCON0    | 0xFF  | 0011110x   | STKOVF, STKUNF, WDTWV, RWDT, RMCLR, RI, POR, BOR |
+| CPUDOZE  | 0xF7  | 0000-000   | IDLEN, DOZEN, ROI, DOE, DOZE<2:0>        |
+| NCO1ACCL, NCO1ACCH | 0xFF | 00000000 | Accumulator bits 7:0 and 15:8     |
+| NCO1ACCU | 0x0F  | ----0000   | Accumulator bits 19:16                   |
+| NCO1INCL | 0xFF  | 00000001   | Increment bits 7:0                       |
+| NCO1INCH | 0xFF  | 00000000   | Increment bits 15:8                      |
+| NCO1INCU | 0x0F  | ----0000   | Increment bits 19:16                     |
+| NCO1CON  | 0xB1  | 0-00---0   | N1EN, N1OUT (read-only), N1POL, N1PFM    |
+| NCO1CLK  | 0xE7  | 000--000   | N1PWS<2:0>, N1CKS<2:0>                   |
 | RC1REG   | 0xFF  | 00000000   | Receive FIFO head (read-only), a read pops it |
 | TX1REG   | 0xFF  | 00000000   | Transmit buffer, a write clears TXIF     |
 | SP1BRGL, SP1BRGH | 0xFF | 00000000 | Baud generator low and high byte  |
@@ -133,6 +159,20 @@ selects the spelling per part, and the sfr-map audit checks both).
 | WPUE     | 0xF65   |
 | PIR3     | 0x70F   |
 | PIE3     | 0x719   |
+| PIR7     | 0x713   |
+| PIE7     | 0x71D   |
+| NCO1ACCL | 0x58C (NCO1ACCH 0x58D, NCO1ACCU 0x58E) |
+| NCO1INCL | 0x58F (NCO1INCH 0x590, NCO1INCU 0x591) |
+| NCO1CON  | 0x592   |
+| NCO1CLK  | 0x593   |
+| WDTCON0  | 0x80C   |
+| WDTCON1  | 0x80D   |
+| PCON0    | 0x813   |
+| NVMADRL  | 0x81A (NVMADRH 0x81B) |
+| NVMDATL  | 0x81C (NVMDATH 0x81D) |
+| NVMCON1  | 0x81E   |
+| NVMCON2  | 0x81F   |
+| CPUDOZE  | 0x88C   |
 | RC1REG   | 0x119   |
 | TX1REG   | 0x11A   |
 | SP1BRGL  | 0x11B   |
@@ -290,15 +330,20 @@ datasheet tables are unchecked.
 
 Port field: A 0, B 1, C 2, D 3 (40-pin parts). Output codes written to
 RxyPPS: 0x00 port latch, 0x10 EUSART TX, 0x14 MSSP1 SCK/SCL, 0x15 MSSP1
-SDO/SDA (the EDC lists many more; they belong to unported peripherals).
+SDO/SDA, 0x19 NCO1 (the EDC lists many more; they belong to unported
+peripherals).
 
-Which ports a function reaches is not in the EDC. MPLAB SIM 6.35 raises
-W1600 ("invalid attempt to map pin") for TX, SCK and SDO on PORTA and
+The EDC's `ppsports` attribute on each output's RemappablePin names the
+ports it reaches: TX, SCK and SDO1 are B and C on every part; NCO1 is A and
+C on 16F18854/55/56, A and B on 16F18857, A and D on 16F18875/76/77. MPLAB
+SIM 6.35 agrees (W1600, "invalid attempt to map pin", for NCO1 on RC2 of a
+16F18877) and raises W1600 ("invalid attempt to map pin") for TX, SCK and SDO on PORTA and
 PORTD pins, for RX on PORTA and PORTD, and for SS1 on PORTB and PORTC;
 every other combination tried (TX, SCK, SDO on PORTB and PORTC, RX on B
 and C, SS1 on A and D, SSP1CLKPPS and SSP1DATPPS on any port) maps clean.
 The driver writes any valid-looking pin and leaves the choice to the
-caller: use PORTB or PORTC for the EUSART and MSSP outputs.
+caller: use PORTB or PORTC for the EUSART and MSSP outputs, and a port
+from the list above for NCO1 (PORTA reaches it on every part).
 
 Lock: `EPIC_PPS_Unlock` and `EPIC_PPS_Lock` run the 0x55, 0xAA key writes
 and then a single `bcf` or `bsf` on PPSLOCKED, consecutively with
@@ -312,6 +357,94 @@ accepts one sequence per reset, a Lock first, and leaves PPSLOCKED
 unchanged for an Unlock before it or after it. With PPS1WAY OFF, which the
 mdb gate's config sets, the cycle repeats. Map after reset and `Lock` once
 when PPS1WAY is on.
+
+## Data EEPROM
+
+*DS40001802D §10.4, Registers 10-1 to 10-6, Table 10-3.* 256 bytes, read
+and written through the NVM block, not through EEADR/EEDATA as on the
+older families. NVMCON1<NVMREGS> = 1 selects the EEPROM, user ID and
+configuration space; the EEPROM is NVMADRH:NVMADRL = 0xF000 + byte
+(0xF000 to 0xF0FF, the EDC EEDataSector). `EPIC_EEPROM_*` always writes
+NVMADRH = 0xF0.
+
+Read: write NVMADR, set RD; the byte is in NVMDATL in the next
+instruction and RD clears in hardware. `EPIC_EEPROM_ReadByte` waits for a
+running write first: NVMADR is in use until WR clears.
+
+Write: set WREN, load NVMADR and NVMDATL, then the unlock sequence: 0x55
+to NVMCON2, 0xAA to NVMCON2, set WR in NVMCON1, with nothing between. The
+sequence is the `epic_nvm_start_write` platform macro (target: `banksel`,
+two key writes and a `bsf NVMCON1,1`; the PPS lock sequence uses the same
+shape), run with GIE off. The write includes its own erase (FREE is not
+used) and takes about 5.6 ms (EDC wait time). The CPU keeps running: WR
+clears in hardware and NVMIF sets when it finishes, with an interrupt if
+NVMIE is set. `EPIC_EEPROM_WriteByte` returns as soon as the write has
+started, EPIC_BUSY while one is running, and the caller polls
+`EPIC_EEPROM_IsWriteComplete` or passes a callback to `EPIC_EEPROM_Init`.
+The driver writes NVMCON1 in one store (NVMREGS and WREN, so FREE, LWLO and
+WRERR clear) before each write, and `IsWriteComplete` drops WREN once WR is
+clear, so a write stays enabled only while it runs.
+
+WRERR sets when the unlock sequence is interrupted or WR is set for a
+write-protected address (the CPD configuration bit); the hardware does not
+clear it. `EPIC_EEPROM_HasWriteError` reads it, so call it after
+`IsWriteComplete` and before the next `WriteByte`, which clears it.
+
+## NCO1
+
+*DS40001802D §24, Registers 24-1 to 24-8.* A 20-bit accumulator adds a
+20-bit increment on every input clock; the carry is the raw output, so
+the overflow frequency is clock x increment / 2^20. FDC mode (N1PFM = 0)
+toggles the output on each overflow: 50% duty at half the overflow
+frequency. PFM mode makes it active for 2^N1PWS input clocks per
+overflow (a longer pulse than the overflow period is undefined). N1POL
+inverts the output; N1OUT reads it back. N1OUT is live read-only status,
+and MPLAB SIM leaves it at its last level once the module is disabled, so
+the gate masks it out of the NCO1CON images.
+
+Clock select (NCO1CLK<N1CKS2:N1CKS0>) on this part: 000 FOSC, 001
+HFINTOSC, 010 to 101 LC1_out to LC4_out, 110 and 111 reserved (other
+NCO parts order these differently). The increment registers are double
+buffered: written enabled, the three bytes load together on the second
+NCO clock after the NCO1INCL write, so write NCO1INCU and NCO1INCH first
+(`EPIC_NCO_SetIncrement` does). Disabled, they load at once. The
+accumulator has no atomic access: `EPIC_NCO_ReadAccumulator` may straddle
+an addition while running, and a write while running gives undefined
+results, so `EPIC_NCO_WriteAccumulator` refuses it (EPIC_BUSY). NCO1IF
+(PIR7<4>) sets on each overflow, needs N1EN, NCO1IE, PEIE and GIE, and is
+cleared in the handler. The NCO keeps running in Sleep on a clock that
+runs there. A Reset clears every NCO register except NCO1INCL (1).
+
+## WDT, Sleep and Idle
+
+*DS40001802D §9.0 (Registers 9-1 to 9-5), §8.2, §8.2.4, Register 8-2 and
+§5.13 Register 5-2.* The CONFIG2 WDTE bits pick the mode: 11 always on, 10
+on except in Sleep, 01 under software control of WDTCON0<SWDTEN>, 00 off.
+`EPIC_WDT_Enable` and `EPIC_WDT_Disable` only change SWDTEN, so they act
+in the 01 mode; in the others the bit is ignored. WDTPS (bits 5:1) is a
+2^(N+5) divider of the 31 kHz clock: 1 ms at 0, 2 s at 11 (the reset value
+when software controls it), 256 s at 18; values 19 to 31 are reserved and
+give the minimum. WDTPS is writable only while CONFIG3 WDTCPS = 11111 (the
+XC8 default); `EPIC_WDT_Enable` reads it back and returns EPIC_ERROR when
+a fixed period overrides the request. Any write to WDTCON0 clears the WDT.
+
+The window (CONFIG3 WDTCWS, or WDTCON1<WINDOW> when WDTCWS = 111) is not
+configured by this HAL. In a windowed configuration the WDT has to be
+armed by a WDTCON0 read before a CLRWDT counts (§9.5.1), so the target
+`EPIC_WDT_Refresh` reads WDTCON0 and then executes `clrwdt`.
+
+`EPIC_Sleep_Enter` is `sleep` followed by `nop` (§8.2.1: the instruction
+after SLEEP runs before any interrupt vector). With CPUDOZE<IDLEN> set
+the same instruction enters Idle: the CPU and flash stop, peripherals on
+FOSC keep running (§8.2.4), and any enabled interrupt ends it, with GIE
+off or on. `EPIC_Idle_Enter` sets IDLEN around one `EPIC_Sleep_Enter` and
+restores it to the value it had. A WDT time-out in Sleep or Idle wakes the
+part without a Reset (§9.6).
+
+PCON0 reset flags POR and BOR are active low: hardware clears the bit on
+the event and software sets it back (§5.13). `EPIC_POR_GetStatus` and
+`EPIC_BOR_GetStatus` return 1 while the bit reads clear;
+`EPIC_POR_ClearFlag` and `EPIC_BOR_ClearFlag` set it.
 
 ## ISR bank rule
 
@@ -356,6 +489,17 @@ are statics, every SFR access carries its own bank select, no autos.
 PPS mappings the SIM rejects print W1600 and still write the register
 (see PPS); the gate maps only combinations that map clean.
 
+A CPU-executed EEPROM write completes under MPLAB SIM 6.35 on the
+16F18877 (2026-10): WR clears at once, the byte reads back through NVM,
+and NVMIF stays clear. This differs from the PIC18 families, where the
+write never completes, so the gate reads its writes back and asserts no
+NVMIF; its bounded wait is only a guard. MPLAB SIM enters Idle on SLEEP
+with IDLEN set but does not run Timer0 there (TMR0 stayed frozen and the
+CPU never woke), so the gate wakes Idle with a WDT time-out instead: its
+config has WDTE=SWDTEN, and the watchdog runs only between
+`EPIC_WDT_Enable` and `EPIC_WDT_Disable`. The NCO is checked as register
+images only, no output timing.
+
 ## Weak pull-ups
 
 Each port's `WPUx` register enables its own pull-ups directly; the pack
@@ -396,3 +540,24 @@ SSP1ADD + 1 ticks per the SSPM mode. Probes stimulate it with
 scripted I2C slave (`_i2c_set_slave`) whose bus events land in a trace
 (`_i2c_trace`). Not modelled: pin routing (the serial models ignore
 PPS), framing errors, bus collision, the slave modes and PPS1WAY.
+
+The EEPROM, NCO1 and WDT/Sleep models are in `pic16f188xx_sim_sys.c`,
+on the same hook pair. NVMCON2 collects the 0x55, 0xAA key state and an
+NVMCON1 write that sets WR consumes it: without WREN the request is
+ignored, without the keys (or outside the data EEPROM) it sets WRERR, and
+otherwise it stores the byte after `pic16f188xx_sim_eeprom_set_write_ticks`
+ticks (default 0: inside the write, NVMIF set). A read loads NVMDATL at
+once. The EEPROM erases to 0xFF at `pic16f188xx_sim_reset`;
+`pic16f188xx_sim_eeprom_peek` reads the backing store. NCO1 adds the
+buffered increment once per tick for the FOSC and HFINTOSC clocks (the LCx
+clocks freeze it; one NCO clock per instruction tick, so the accumulator
+arithmetic is exact and only the clock ratio is simplified), models FDC
+toggling, PFM pulses and polarity, the increment double buffer (two clocks
+after an enabled NCO1INCL write) and NCO1IF. `EPIC_WDT_Refresh`,
+`EPIC_Sleep_Enter` and Idle entries only count
+(`pic16f188xx_sim_wdt_refresh_count`, `_sleep_count`, `_idle_count`); the
+simulator has no WDT time-out, and `pic16f188xx_sim_wdt_set_fixed_period`
+pins WDTPS the way CONFIG3 WDTCPS does. PCON0 resets to 0x3D, WDTCON0 to
+0x16 and WDTCON1 to 0x07. Not modelled: program Flash, user ID and
+configuration NVM access, the one-instruction read stall, the NVM
+write protect, and the WDT window.

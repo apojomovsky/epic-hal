@@ -256,7 +256,8 @@ static void sim_ssp_write(uint8_t value)
  * @details TX1REG load, SSP1BUF transfer start and the PPSLOCK key
  * sequence are actions; TX1STA, RC1STA, BAUD1CON, SSP1STAT, SSP1CON1 and
  * SSP1CON2 keep their read-only or clear-only bits; PIR3 keeps TXIF and
- * RCIF. Every other address is a plain store.
+ * RCIF. The NVM and NCO registers go to pic16f188xx_sim_sys_write; every
+ * other address is a plain store.
  * @param addr SFR address.
  * @param value Value written.
  */
@@ -351,7 +352,10 @@ void pic16f188xx_sim_sfr_write8(uint16_t addr, uint8_t value)
         }
         break;
     default:
-        *cell(addr) = value;
+        if (pic16f188xx_sim_sys_write(addr, value) == 0U)
+        {
+            *cell(addr) = value;
+        }
         break;
     }
 }
