@@ -34,7 +34,7 @@ family-agnostic C library with a hand-written inline-asm core.
 
 ```sh
 cmake -B build && cmake --build build
-ctest --test-dir build --output-on-failure   # 8/8 tests, incl. exhaustive
+ctest --test-dir build --output-on-failure
 ```
 
 The host build links `src/host/` + `src/common/` (no HAL, the library is
