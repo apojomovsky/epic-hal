@@ -143,6 +143,35 @@ CxOUT when the comparator is disabled (post-halt CM1CON0 reads
 promises a 0 output; the host sim implements the datasheet 0.
 The gate asserts outputs only while enabled, where SIM tracks.
 
+## 16F506 ADC driver (`src/peripherals/pic16f5x_adc.c`)
+
+`EPIC_ADC_Init` owns ADCON0 outright: ADON set, GO clear, CHS/ADCS
+from the handle, ANS covering the channel pin (Register 9-1: AN0
+needs ANS=10, AN1 ANS=11, AN2 ANS=01; the 0.6V channel keeps the
+current ANS, no pin is sampled). `EPIC_ADC_SelectChannel` re-muxes
+CHS plus the cover; call it idle, ANS must not change
+mid-conversion (§9.1.2). `EPIC_ADC_Start` sets GO, refused with
+0xFFFF while busy or with ADON clear (hardware cannot set GO then,
+Register 9-1); poll `EPIC_ADC_IsConversionInProgress`, read the
+byte with `EPIC_ADC_Read`. No ADIF exists (no vector), so done is
+GO clear. `EPIC_ADC_DeInit` writes ADCON0 to 0x00, the analog-off
+state GPIO init leaves. `tests/example_adc.c` is the gate firmware:
+POR and programmed images, driven levels vs ADRES on every channel,
+13-TAD timing edges, DeInit; the 16F506 SIM slot runs its target
+half (POR, programmed and DeInit images plus the Start return on
+AN2), then the PORTB:0 blink on pass.
+
+MPLAB SIM limits the gate shapes available (measured 2026-10-18):
+SIM latches no GO without an analog pin stimulus (a reset-stepi
+trace never reads ADCON0=0x5B: POR 0xFC, Init 0x59, then 0x00),
+and warns W0239-ADC with no modeled input on the 0.6V channel
+(CHS=3). The target half therefore asserts no GO-set and no exact
+ADRES value; the stuck-GO assert stays (it fails only if GO latches
+and never clears, a genuine failure anywhere). The host sim latches
+the driven level after 13 TAD (ADCS-scaled: FOSC/16 takes 4
+instruction cycles per TAD, FOSC/8 takes 2, the /4 pair takes 1)
+and asserts exact bytes there.
+
 ## Config word (DS41213D section 14.1)
 
 `#pragma config` surface: OSC (LP/XT/HS/RC), WDT (ON/OFF, not WDTE), CP.

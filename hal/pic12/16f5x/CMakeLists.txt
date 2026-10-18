@@ -62,12 +62,12 @@ epic_add_example(example_blink       tests/example_blink.c)
 epic_add_example(example_control     tests/sim_control_probe.c)
 
 # 16F506-only comparator/ADC block (DS41268D): a second library built
-# with -DPIC16F506 carries the driver plus the analog-aware sim, so
+# with -DPIC16F506 carries the drivers plus the analog-aware sim, so
 # the canonical 54-built lib keeps its budget and sources. The comp
-# probe links this one.
+# and ADC probes link this one.
 set(_EPIC_SAVED_SOURCES ${EPIC_SOURCES})
 set(_EPIC_SAVED_DEFAULT ${EPIC_DEFAULT_DEVICE})
-set(EPIC_SOURCES ${EPIC_SOURCES} src/peripherals/pic16f5x_comp.c)
+set(EPIC_SOURCES ${EPIC_SOURCES} src/peripherals/pic16f5x_comp.c src/peripherals/pic16f5x_adc.c)
 set(EPIC_DEFAULT_DEVICE PIC16F506)
 epic_add_hal_library(pic16f5x_hal_506)
 set(EPIC_SOURCES ${_EPIC_SAVED_SOURCES})
@@ -75,8 +75,12 @@ set(EPIC_DEFAULT_DEVICE ${_EPIC_SAVED_DEFAULT})
 add_executable(example_comp tests/example_comp.c)
 target_compile_definitions(example_comp PRIVATE -DPIC16F506)
 target_link_libraries(example_comp PRIVATE pic16f5x_hal_506)
+add_executable(example_adc tests/example_adc.c)
+target_compile_definitions(example_adc PRIVATE -DPIC16F506)
+target_link_libraries(example_adc PRIVATE pic16f5x_hal_506)
 enable_testing()
 add_test(NAME comp_host COMMAND example_comp)
+add_test(NAME adc_host COMMAND example_adc)
 
 # Optional: example for every device in the family (proves every part
 # compiles and links against the canonical sources).

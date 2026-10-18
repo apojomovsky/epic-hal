@@ -283,11 +283,15 @@ epiccc_sources = [
   "common/src/core/epic_harness_target.c",
 ]
 
-# The 16F506 comparator-pair driver: the only part with the analog
-# block (DS41268D), so it links only there. The 87XA A-part comp
-# conditional is the precedent for a part-gated driver.
+# The 16F506 comparator-pair and ADC drivers: the only part with the
+# analog block (DS41268D), so they link only there. The 87XA A-part
+# comp conditional is the precedent for a part-gated driver.
 [[families.PIC16F5x.conditional_sources]]
 path     = "hal/pic12/16f5x/src/peripherals/pic16f5x_comp.c"
+variants = ["16F506"]
+
+[[families.PIC16F5x.conditional_sources]]
+path     = "hal/pic12/16f5x/src/peripherals/pic16f5x_adc.c"
 variants = ["16F506"]
 
 [families.PIC16F88X]
@@ -1437,11 +1441,18 @@ sources = [
 ]
 config  = { OSC = "XT", WDT = "OFF", CP = "OFF" }
 
+# 16F506 SIM runs the ADC probe instead (epic-hal#524): one firmware
+# per slot, so the target slot keeps the comp probe and the SIM slot
+# carries the ADC gate (POR, programmed and DeInit ADCON0 images plus
+# the Start return on AN2; SIM latches no GO without an analog
+# stimulus and models no 0.6V input, W0239-ADC, so the host owns
+# completion). Both drivers keep XC8 build coverage; the mdb toggle
+# gate watches whichever probe the SIM slot holds.
 [modules."hal/pic12/16f5x".example.PIC16F5x.sim.variants."16F506"]
-name        = "comp"
+name        = "adc"
 harness_src = "common/src/core/epic_harness_target.c"
 sources     = [
-  "tests/example_comp.c",
+  "tests/example_adc.c",
 ]
 config      = { OSC = "XT", WDT = "OFF", CP = "OFF" }
 

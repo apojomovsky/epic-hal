@@ -15,13 +15,16 @@ GPIO (PORTA/PORTB, PORTC on the 28/40-pin and 14-pin parts,
 PORTD/PORTE on the 16F59), polled Timer0, WDT/Sleep, the 16F506
 comparator pair plus voltage reference (`src/peripherals/
 pic16f5x_comp.c`: CxON/CxPOL, VRCON tap/range/output/enable, output
-readback; no IRQ exists so no callback API), and a no-op IRQ stub:
-no part in this family has an interrupt vector (DS41213D section
-4.0), so `EPIC_IRQ_*` and the Timer0 overflow callback are contract
-parity only. The 16F506's ADC is not a driver: `EPIC_GPIO_Init`
-clears the analog block so its shared pins are digital (see
-`MANUAL.md`), and `EPIC_COMP_DeInit` returns it there. No
-USART/SSP exists on any part, and 512 words cannot hold the shared
+readback; no IRQ exists so no callback API), the 16F506 ADC
+(`src/peripherals/pic16f5x_adc.c`: ADCON0/ADRES, ANS cover plus CHS
+select, start + poll + 8-bit read; VDD reference, and no IRQ so no
+callback or flag API), and a no-op IRQ stub: no part in this family
+has an interrupt vector (DS41213D section 4.0), so `EPIC_IRQ_*` and
+the Timer0 overflow callback are contract parity only. The analog
+block defaults to off for digital I/O: `EPIC_GPIO_Init` clears it so
+its shared pins are digital (see `MANUAL.md`), and
+`EPIC_COMP_DeInit`/`EPIC_ADC_DeInit` return it there. No USART/SSP
+exists on any part, and 512 words cannot hold the shared
 serial/tick modules.
 
 ## Build and test
@@ -29,19 +32,21 @@ serial/tick modules.
 Host sim: `cmake -B build && cmake --build build`, run any
 `build/example_*` directly (`example_blink`, `example_control`, and the
 per-device `example_blink_PIC16F505` .. `example_blink_PIC16F59`)
-or `ctest` for the 16F506 `example_comp` probe. The
+or `ctest` for the 16F506 `example_comp` and `example_adc` probes. The
 verdict is the printed `EPIC_HARNESS_RESULT` marker, not the exit code.
 Real target: `make xc8-build MODULE=hal/pic12/16f5x MCU=16F54` (blink;
-`MCU=16F506` builds the comp probe).
+`MCU=16F506` builds the comp probe from the target slot, while the
+16F506 SIM run builds the ADC probe from the SIM slot).
 MPLAB SIM toggle gate: `make mdb-test MODULE=hal/pic12/16f5x MCU=16F54
 DEVICE=PIC16F54 MODE=toggle STEPI=50000` (PORTB bit 0; the family has
 no UART. The blink's toggle period is ~50000 instructions, so STEPI
 50000 alternates cleanly while the 200000 default aliases to a constant
 phase, see `scripts/ci/ci-target-sim.sh`). All five parts take the same
 parameters: swap `MCU=`/`DEVICE=` for `16F505`, `16F506`, `16F57` or
-`16F59` and the gate runs unchanged. The 16F506 line runs the comp
-probe instead of the blink: same MODE=toggle watch, with the
-comparator asserts gating the toggle (see `MANUAL.md`).
+`16F59` and the gate runs unchanged. The 16F506 line runs the ADC
+probe instead of the blink: same MODE=toggle watch, with the POR,
+programmed and DeInit ADCON0 images plus the Start return gating
+the toggle (see `MANUAL.md`).
 Epic-cc gate: `make epiccc-build MODULE=hal/pic12/16f5x MCU=16F54
 EPIC_CC_HOST=1` builds the family's epic-cc example, a software-loop
 PORTB:0 toggle (`tests/example_blink_epiccc.c`, wired through the

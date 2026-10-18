@@ -85,11 +85,18 @@
 #define PIC_CM1CON0_C1ON      EPIC_BIT(3)
 #define PIC_CM2CON0_C2ON      EPIC_BIT(3)
 
-/* ADCON0 (DS41268D Register 9-1): ANS<1:0> selects the analog input
- * pins (11 = AN2/AN1/AN0, the POR value) and stays in effect
- * regardless of ADON. */
-#define PIC_ADCON0_ANS_MASK   0xC0U
+/* ADCON0 (DS41268D Register 9-1, positions DFP-verified): ADON
+ * enables, GO/DONE starts and polls, CHS picks the sampled channel,
+ * ADCS the conversion clock, ANS the analog input pins (stays in
+ * effect regardless of ADON, §9.1.2). */
 #define PIC_ADCON0_ADON       EPIC_BIT(0)
+#define PIC_ADCON0_GO_DONE    EPIC_BIT(1)
+#define PIC_ADCON0_CHS_MASK   0x0CU
+#define PIC_ADCON0_CHS_POS    2U
+#define PIC_ADCON0_ADCS_MASK  0x30U
+#define PIC_ADCON0_ADCS_POS   4U
+#define PIC_ADCON0_ANS_MASK   0xC0U
+#define PIC_ADCON0_ANS_POS    6U
 
 /* Analog-block POR images (DS41268D Table 4-2). VRCON reads 0x00
  * under MPLAB SIM and in the EDC (por="000-0000"), against the
