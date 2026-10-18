@@ -26,7 +26,13 @@ PIC16F876A/877A, so the table banks cleanly into every device in the
 family when it fits alongside the rest of the image (the real-target
 full-HAL example overflows the 192 B parts and is manifest-excluded
 there).
-Override by defining `EPIC_TASKMGR_MAX_TASKS` before including the header.
+Override by shipping an `epic_taskmgr_config.h` on the build's include path
+that defines `EPIC_TASKMGR_MAX_TASKS`. `epic_taskmgr.h` includes it when the
+compiler supports `__has_include`, so the library's own compile and every
+consumer see one value; a define placed before the include in application
+code never reaches `epic_taskmgr.c` and must not be used. Without the file the
+defaults above apply unchanged. The menu, control and bridge demos use this to
+size the table to their spawn count.
 
 One-shot tasks free their slot after they run (see `epic_taskmgr_run_once`),
 so a periodic task that re-spawns one-shots does not permanently consume a slot

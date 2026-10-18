@@ -25,9 +25,9 @@
  * (core/epic_harness.h: not a real-time unit). Idle spins make one
  * iteration ~1/6 of a 341 us tick (measured 150 iters to 24 ticks),
  * and each scripted frame needs one 5 ms T3.5 silence (~15 ticks),
- * so seven frames need ~110 ticks; 900 leaves measured margin in
- * the 60 s mdb budget. */
-#define SIM_ITERATIONS 900UL
+ * so seven frames need ~110 ticks. The 3-slot task table shortens
+ * each spin; 1500 leaves measured margin in the 60 s mdb budget. */
+#define SIM_ITERATIONS 1500UL
 #define TASK_PERIOD_STIMULUS  1U
 #define TICK_RELOAD    0U
 #define TICK_PRESCALER TIMER0_PRESCALER_1_16
