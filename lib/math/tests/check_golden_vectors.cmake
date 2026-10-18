@@ -5,7 +5,7 @@
 if(NOT EXISTS "${GEN}")
     message(FATAL_ERROR "gen_golden_vectors not built at ${GEN}; run cmake --build build first")
 endif()
- execute_process(
+execute_process(
     COMMAND "${GEN}"
     OUTPUT_FILE "${OUT}"
     RESULT_VARIABLE gen_rc)
