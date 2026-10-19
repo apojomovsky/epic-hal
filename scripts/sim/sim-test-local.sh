@@ -6,8 +6,7 @@
 # (needs `docker login ghcr.io` with read:packages first).
 # Usage: sim-test-local.sh <family> <mcu> <device> <module> [wait_ms] [mode]
 #   e.g. scripts/sim/sim-test-local.sh pic16f87xa 16F877A PIC16F877A lib/tick
-# A peer example passes as <module@example>, e.g. lib/lcd@gpio8, and the
-# emit below splits it back into --module/--example.
+# A peer example passes as <module@example>, split below into --module/--example.
 
 set -euo pipefail
 

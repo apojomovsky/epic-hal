@@ -6,10 +6,7 @@
 #   mode=uart|gpio|toggle (gpio: PORTA bit 0, pic16f193x and
 #   pic16f63x_67x_68x); eeprom_writes replays the unlock per cycle.
 #   sim_gate names an extra manifest gate (empty: the default gate);
-#   each gate builds in its own objdir with its hex beside build.sh.
-#   A peer example passes as <module@example> (e.g. lib/lcd@gpio8):
-#   its gates emit under build-sim/<module@example>/<mcu>[-<gate>]-<example>,
-#   mirroring epic_build.py's _build_objdirname rule.
+#   <module@example> selects a peer example (objdir gains -<example>).
 
 set -euo pipefail
 
