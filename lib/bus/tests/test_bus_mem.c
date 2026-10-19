@@ -175,6 +175,9 @@ static void test_i2c_read(void)
         {EV_RSTART, 0}, {EV_WRITE, R_ADDR},
         {EV_READ, 0},
         {EV_STOP, 0});
+    SEQ(exp0,
+        {EV_START, 0}, {EV_WRITE, W_ADDR}, {EV_WRITE, 0x07},
+        {EV_RSTART, 0}, {EV_WRITE, R_ADDR}, {EV_STOP, 0});
     uint8_t buf[4] = {0};
 
     reset();
@@ -187,6 +190,10 @@ static void test_i2c_read(void)
     CHECK(epic_bus_i2c_mem_read(DEV, 0x07u, buf, 1) == 1, "i2c read n=1 returns 1");
     CHECK(SEQ_IS(exp1), "i2c read n=1 NACKs its only byte");
     CHECK(buf[0] == 0x10u, "i2c read n=1 data");
+
+    reset();
+    CHECK(epic_bus_i2c_mem_read(DEV, 0x07u, buf, 0) == 0, "i2c read n=0 returns 0");
+    CHECK(SEQ_IS(exp0), "i2c read n=0 reads no bytes");
 }
 
 /**
@@ -239,6 +246,12 @@ static void test_i2c_write(void)
         {EV_WRITE, 0xA0}, {EV_WRITE, 0xA1}, {EV_STOP, 0});
     SEQ(none,
         {EV_START, 0}, {EV_WRITE, W_ADDR}, {EV_WRITE, 0x05}, {EV_STOP, 0});
+    SEQ(data0,
+        {EV_START, 0}, {EV_WRITE, W_ADDR}, {EV_WRITE, 0x05},
+        {EV_WRITE, 0xA0}, {EV_STOP, 0});
+    SEQ(data2,
+        {EV_START, 0}, {EV_WRITE, W_ADDR}, {EV_WRITE, 0x05},
+        {EV_WRITE, 0xA0}, {EV_WRITE, 0xA1}, {EV_WRITE, 0xA2}, {EV_STOP, 0});
 
     reset();
     CHECK(epic_bus_i2c_mem_write(DEV, 0x05u, d, 3) == 3, "i2c write returns n");
@@ -253,6 +266,16 @@ static void test_i2c_write(void)
     g_nack_at = 1;
     CHECK(epic_bus_i2c_mem_write(DEV, 0x05u, d, 3) == -1, "i2c write reg NACK returns -1");
     CHECK(SEQ_IS(reg), "i2c write reg NACK sends no data");
+
+    reset();
+    g_nack_at = 2;   /* first data byte */
+    CHECK(epic_bus_i2c_mem_write(DEV, 0x05u, d, 3) == -1, "i2c write first-data NACK returns -1");
+    CHECK(SEQ_IS(data0), "i2c write first-data NACK stops at the first byte");
+
+    reset();
+    g_nack_at = 4;   /* last data byte */
+    CHECK(epic_bus_i2c_mem_write(DEV, 0x05u, d, 3) == -1, "i2c write last-data NACK returns -1");
+    CHECK(SEQ_IS(data2), "i2c write last-data NACK still stops after the last byte");
 
     reset();
     g_nack_at = 3;   /* second data byte */
