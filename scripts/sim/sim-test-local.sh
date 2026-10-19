@@ -6,6 +6,8 @@
 # (needs `docker login ghcr.io` with read:packages first).
 # Usage: sim-test-local.sh <family> <mcu> <device> <module> [wait_ms] [mode]
 #   e.g. scripts/sim/sim-test-local.sh pic16f87xa 16F877A PIC16F877A lib/tick
+# A peer example passes as <module@example>, e.g. lib/lcd@gpio8, and the
+# emit below splits it back into --module/--example.
 
 set -euo pipefail
 
@@ -35,8 +37,12 @@ print('${xc8_install_dir}/pic/packs/' + e.dfp_name(fam) + '/xc8')
 ")"
 
 echo "Emitting the HARNESS=sim build script for ${module} ${mcu} (host, python3)..." >&2
-python3 scripts/build/epic_build.py build --module "$module" --mcu "$mcu" \
-  --variant sim --build-dir "build-sim/${module}" --dfp-dir "$dfp_dir"
+name="${module%%@*}"; example="${module#*@}"
+extra_args=()
+[ "$example" != "$module" ] && extra_args+=(--example "$example")
+python3 scripts/build/epic_build.py build --module "$name" --mcu "$mcu" \
+  --variant sim --build-dir "build-sim/${module}" --dfp-dir "$dfp_dir" \
+  "${extra_args[@]:+${extra_args[@]}}"
 
 echo "Pulling ${image} (same tag CI resolves, cache hit expected)..." >&2
 docker pull "${image}"

@@ -642,5 +642,46 @@ class TestBundleGate(unittest.TestCase):
         self.assertEqual(offenders, [])
 
 
+PEER_TABLES = """
+[modules."lib/tick".extra_examples.PIC16F87XA.alt]
+name    = "tick-alt"
+sources = ["examples/example_tick_alt.c", "tests/probe_alt.c"]
+config  = { FOSC = "HS" }
+"""
+
+
+def peer_load():
+    tmp = tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False)
+    tmp.write(MANIFEST + PEER_TABLES)
+    tmp.close()
+    return epicmanifest.load(pathlib.Path(tmp.name))
+
+
+class TestPeerBundle(unittest.TestCase):
+    def setUp(self):
+        self.m = peer_load()
+
+    def test_peer_consumer_sample_ships(self):
+        files = bundlegen.files_for_family(self.m, "PIC16F87XA")
+        self.assertIn("lib/tick/examples/example_tick_alt.c", files)
+        self.assertIn("lib/tick/examples/example_tick.c", files)
+
+    def test_peer_non_sample_source_stays_out(self):
+        files = bundlegen.files_for_family(self.m, "PIC16F87XA")
+        self.assertNotIn("lib/tick/tests/probe_alt.c", files)
+
+    def test_peer_metadata_lists_extras(self):
+        doc = json.loads(bundlegen.emit_sources_json(self.m, "PIC16F87XA",
+                                                     "ci-test"))
+        tick = doc["modules"]["lib/tick"]
+        self.assertEqual(tick["example"]["name"], "tick-blink")
+        self.assertEqual(list(tick["extra_examples"]), ["alt"])
+        alt = tick["extra_examples"]["alt"]
+        self.assertEqual(alt["name"], "tick-alt")
+        self.assertEqual(alt["sources"],
+                         ["lib/tick/examples/example_tick_alt.c",
+                          "lib/tick/tests/probe_alt.c"])
+
+
 if __name__ == "__main__":
     unittest.main()

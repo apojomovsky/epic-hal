@@ -110,13 +110,18 @@ class TestSimVariantSync(unittest.TestCase):
 
     def manifest_gates(self):
         """(module, mcu, gate) triples the manifest resolves, keyed to
-        the run_one pairs: the default gate as None, extras by name."""
+        the run_one pairs: the default gate as None, extras by name.
+        A peer example's gates resolve under its own id (`lib/lcd@gpio8`
+        addresses the gpio8 program's default gate bare)."""
         manifest = load_manifest()
         triples = set()
         for module, mcu in load_run_one_pairs():
+            name, _, example = module.partition("@")
             fam = manifest.family_of(mcu)
-            default = manifest.sim_variant_for(module, fam.name, mcu)
-            for gate in manifest.sim_gates_for(module, fam.name, mcu):
+            default = manifest.sim_variant_for(name, fam.name, mcu,
+                                               example or None)
+            for gate in manifest.sim_gates_for(name, fam.name, mcu,
+                                               example or None):
                 triples.add((module, mcu, None
                              if default is not None
                              and gate.name == default.name else gate.name))

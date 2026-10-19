@@ -83,25 +83,28 @@ def main() -> int:
         for family_name, mcus in sorted(module.supported.items()):
             if args.family is not None and family_name != args.family:
                 continue
-            for mcu in sorted(mcus):
-                for variant in ("target", "sim"):
-                    if variant == "sim" and m.family_of(mcu).name != family_name:
-                        continue
-                    sim = m.sim_variant_for(module_name, family_name)
-                    if variant == "sim" and sim is None:
-                        continue
-                    src = epic_build.emit_config_source(
-                        m, module_name, mcu, variant=variant)
-                    if src is None:
-                        continue
-                    # Path ids nest (lib/serial__target__16F877A.c), so
-                    # the parent may not exist yet.
-                    rel = pathlib.Path("build-sim") / "audit-config" / (
-                        f"{module_name}__{variant}__{mcu}.c")
-                    (REPO / rel).parent.mkdir(parents=True, exist_ok=True)
-                    (REPO / rel).write_text(src)
-                    fam = m.family_of(mcu)
-                    jobs.append((module_name, mcu, variant, manifest_lib.dfp_name(fam), str(rel)))
+            for ex_id, _entry in m.examples_for(module_name, family_name):
+                leg = module_name if ex_id is None else f"{module_name}@{ex_id}"
+                for mcu in sorted(mcus):
+                    for variant in ("target", "sim"):
+                        if variant == "sim" and m.family_of(mcu).name != family_name:
+                            continue
+                        sim = m.sim_variant_for(module_name, family_name, None, ex_id)
+                        if variant == "sim" and sim is None:
+                            continue
+                        src = epic_build.emit_config_source(
+                            m, module_name, mcu, variant=variant, example=ex_id)
+                        if src is None:
+                            continue
+                        # Path ids nest (lib/serial__target__16F877A.c), so
+                        # the parent may not exist yet. Peer programs
+                        # namespace their TU by leg so they never collide.
+                        rel = pathlib.Path("build-sim") / "audit-config" / (
+                            f"{leg}__{variant}__{mcu}.c")
+                        (REPO / rel).parent.mkdir(parents=True, exist_ok=True)
+                        (REPO / rel).write_text(src)
+                        fam = m.family_of(mcu)
+                        jobs.append((leg, mcu, variant, manifest_lib.dfp_name(fam), str(rel)))
 
     # The links are independent docker runs; thread them (the runner's
     # cores) so the ~150 links do not serialize on docker's startup.

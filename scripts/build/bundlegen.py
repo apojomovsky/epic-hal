@@ -123,11 +123,10 @@ def files_for_family(manifest, family_name: str) -> list[str]:
         mod = manifest.modules[name]
         files |= {epicmanifest.join_module_path(mod.dir, s) for s in mod.sources}
         files |= {epicmanifest.join_module_path(mod.dir, s) for s in mod.sources_by_family.get(family_name, [])}
-        example = mod.examples.get(family_name)
-        if example is not None:
+        for _ex_id, entry in manifest.examples_for(name, family_name):
             files |= {
                 epicmanifest.join_module_path(mod.dir, s)
-                for s in example.sources
+                for s in entry.sources
                 if s.startswith("examples/")
             }
 
@@ -331,6 +330,15 @@ def emit_sources_json(manifest, family_name: str, version: str) -> str:
                 "name": example.name,
                 "sources": [epicmanifest.join_module_path(mod.dir, s) for s in example.sources],
                 "config": dict(example.config),
+            },
+            "extra_examples": {
+                ex_id: {
+                    "name": entry.name,
+                    "sources": [epicmanifest.join_module_path(mod.dir, s) for s in entry.sources],
+                    "config": dict(entry.config),
+                }
+                for ex_id, entry in manifest.examples_for(name, family_name)
+                if ex_id is not None
             },
         }
     doc = {

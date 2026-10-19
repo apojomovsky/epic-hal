@@ -35,14 +35,16 @@ cmake -B build -S lib/lcd && cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-### Real target (4-bit GPIO, XC8)
+### Real target (XC8)
 
 ```sh
 export PATH=$PATH:/opt/microchip/xc8/v3.10/bin
 python3 scripts/build/epic_build.py build --module lib/lcd --mcu 16F877A --run
 ```
-The manifest builds the 4-bit GPIO example; the gpio8 and SPI
-transports compile into the host tests (see above).
+The manifest builds the 4-bit GPIO example by default; `--example gpio8`
+or `--example spi` builds the peer programs (same banner and counter,
+other transports). All three transports also compile into the host
+tests (see above).
 
 ## Use it
 

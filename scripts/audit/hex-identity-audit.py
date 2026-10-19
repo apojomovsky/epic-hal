@@ -24,29 +24,32 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 OUT_ROOT = REPO / "build-ident"
 
 
-def emit_build(module: str, mcu: str, dfp_dir: str, rel_dir: str) -> None:
+def emit_build(module: str, mcu: str, dfp_dir: str, rel_dir: str,
+               example: str | None = None) -> None:
     """Emit one build script (with its config TU) via the build driver.
 
     rel_dir is repo-root-relative (e.g. build-ident/<module>/<mcu>/a),
     matching how CI and the probe invoke the driver; the emitted script
     and the hex both land under it.
     """
-    subprocess.run(
-        ["python3", "scripts/build/epic_build.py", "build",
+    cmd = ["python3", "scripts/build/epic_build.py", "build",
          "--module", module, "--mcu", mcu,
-         "--build-dir", rel_dir, "--dfp-dir", dfp_dir],
-        check=True, stdout=subprocess.DEVNULL,
-        cwd=REPO,
-    )
+         "--build-dir", rel_dir, "--dfp-dir", dfp_dir]
+    if example is not None:
+        cmd += ["--example", example]
+    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, cwd=REPO)
 
 
-def run_build(module: str, mcu: str, rel_dir: str) -> str:
+def run_build(module: str, mcu: str, rel_dir: str,
+              example: str | None = None) -> str:
     """Run one emitted build script in the container; return its output.
 
     The script path must stay repo-relative: the container only knows
-    /repo, so an absolute host path cannot be opened inside it.
+    /repo, so an absolute host path cannot be opened inside it. A peer
+    example's script sits in its namespaced objdir (<mcu>-<example>).
     """
-    rel_script = f"{rel_dir}/{mcu}/build.sh"
+    leaf = f"{mcu}-{example}" if example is not None else mcu
+    rel_script = f"{rel_dir}/{leaf}/build.sh"
     cmd = [
         "docker", "run", "--rm",
         "-v", f"{REPO}:/repo", "-w", "/repo",
@@ -87,33 +90,37 @@ def main() -> int:
             continue
         dfp_dir = f"{XC8_ROOT}/pic/packs/{entry['dfp']}/xc8"
         for pair in entry["modules"].split(";"):
-            module, mcus = pair.split("=")
+            leg, mcus = pair.split("=")
+            module, _, example = leg.partition("@")
+            example = example or None
             for mcu in mcus.split(","):
-                rel_root = f"build-ident/{module}/{mcu}"
+                rel_root = f"build-ident/{leg}/{mcu}"
                 for side in ("a", "b"):
-                    side_dir = OUT_ROOT / module / mcu / side
+                    side_dir = OUT_ROOT / leg / mcu / side
                     shutil.rmtree(side_dir, ignore_errors=True)
-                    emit_build(module, mcu, dfp_dir, f"{rel_root}/{side}")
+                    emit_build(module, mcu, dfp_dir, f"{rel_root}/{side}",
+                               example)
                 outputs = {}
                 ok = True
                 for side in ("a", "b"):
-                    side_dir = OUT_ROOT / module / mcu / side
-                    output = run_build(module, mcu, f"{rel_root}/{side}")
+                    side_dir = OUT_ROOT / leg / mcu / side
+                    output = run_build(module, mcu, f"{rel_root}/{side}",
+                                       example)
                     hexes = list(side_dir.glob("*.hex"))
                     if len(hexes) != 1:
-                        print(f"{module} {mcu}: build side '{side}' produced "
+                        print(f"{leg} {mcu}: build side '{side}' produced "
                               f"{len(hexes)} .hex files, expected 1")
                         print(output.strip()[-2000:])
                         ok = False
                         break
                     outputs[side] = sha256_of(hexes[0])
                 if not ok:
-                    print(f"hex-identity build failure: {module} ({mcu})")
+                    print(f"hex-identity build failure: {leg} ({mcu})")
                     bad += 1
                     continue
                 audited += 1
                 if outputs["a"] != outputs["b"]:
-                    print(f"hex-identity mismatch: {module} ({mcu})\n"
+                    print(f"hex-identity mismatch: {leg} ({mcu})\n"
                           f"  a: {outputs['a']}\n  b: {outputs['b']}")
                     bad += 1
 

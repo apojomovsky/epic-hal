@@ -308,6 +308,28 @@ MCU, so parts with their own sim entry never grow extra gates by
 accident. The runner addresses the default gate bare and each extra
 by its `name`.
 
+A module whose driver has several transports wires one program per
+transport: the family example stays the default, and each peer lives
+under `extra_examples`, keyed by family then by a short id. Each peer
+is the full example shape (own `name`, `sources`, `config`, `hal`,
+`sim`, per-MCU `variants`); peers never nest further:
+
+```toml
+[modules."lib/lcd".extra_examples.PIC16F87XA.gpio8]
+name    = "lcd-gpio8"
+sources = ["examples/example_lcd_gpio8.c", "src/epic_lcd_gpio8.c"]
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+[modules."lib/lcd".extra_examples.PIC16F87XA.gpio8.sim]
+name        = "lcd-gpio8-sim"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
+sources     = ["tests/sim_lcd_gpio8.c", "src/epic_lcd_gpio8.c"]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+```
+
+`--example <id>` builds one peer (target or sim); the matrix carries
+each peer as its own leg (`lib/lcd@gpio8`), emitted into
+`build/lib/lcd@gpio8` so the shell loops keep reading plain triples.
+
 ### Where the example program lives
 
 Not always under `examples/`. The sizecheck and self-test programs live

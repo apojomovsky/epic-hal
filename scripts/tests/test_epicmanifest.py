@@ -896,5 +896,88 @@ class TestRootAnchoredPaths(unittest.TestCase):
             self.assertIn("lib/lcd/src/epic_lcd_gpio4.c", srcs)
             self.assertFalse(any(".." in s for s in srcs))
 
+
+
+PEER_TABLES = """
+[modules."lib/tick".extra_examples.PIC16F87XA.alt]
+name    = "tick-alt"
+sources = ["examples/example_tick_alt.c"]
+config  = { FOSC = "HS" }
+
+[modules."lib/tick".extra_examples.PIC16F87XA.alt.sim]
+name        = "tick-alt-sim"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
+config      = { FOSC = "HS", WDTE = "OFF" }
+"""
+
+
+class TestExtraExamples(unittest.TestCase):
+    def setUp(self):
+        self.m = epicmanifest.load(write(MINIMAL + PEER_TABLES))
+
+    def test_examples_for_lists_default_first_then_extras(self):
+        pairs = self.m.examples_for("lib/tick", "PIC16F87XA")
+        self.assertEqual([i for i, _ in pairs], [None, "alt"])
+        self.assertEqual([e.name for _, e in pairs],
+                         ["tick-blink", "tick-alt"])
+
+    def test_example_for_selects_peer_by_id(self):
+        entry = self.m.example_for("lib/tick", "PIC16F87XA", "16F877A",
+                                   "alt")
+        self.assertEqual(entry.name, "tick-alt")
+
+    def test_example_for_unknown_id_fails_loudly(self):
+        with self.assertRaisesRegex(epicmanifest.ManifestError,
+                                    "unknown example 'nope'"):
+            self.m.example_for("lib/tick", "PIC16F87XA", "16F877A", "nope")
+
+    def test_sources_for_peer_swaps_example_sources(self):
+        srcs = self.m.sources_for("lib/tick", "16F877A", example="alt")
+        self.assertIn("lib/tick/examples/example_tick_alt.c", srcs)
+        self.assertNotIn("lib/tick/examples/example_tick.c", srcs)
+
+    def test_sim_variant_for_peer_resolves_peer_gate(self):
+        sim = self.m.sim_variant_for("lib/tick", "PIC16F87XA", "16F877A",
+                                     "alt")
+        self.assertEqual(sim.name, "tick-alt-sim")
+        default = self.m.sim_variant_for("lib/tick", "PIC16F87XA",
+                                         "16F877A")
+        self.assertEqual(default.name, "tick-blink-sim")
+
+    def test_uses_hal_follows_the_selected_peer(self):
+        self.assertTrue(self.m.uses_hal("lib/tick", "16F877A", "alt"))
+
+    def test_unknown_family_in_extra_examples_is_rejected(self):
+        bad = MINIMAL + PEER_TABLES + """
+[modules."lib/tick".extra_examples.PIC99X.alt]
+name    = "tick-alt99"
+sources = ["examples/example_tick_alt.c"]
+"""
+        with self.assertRaises(epicmanifest.ManifestError):
+            epicmanifest.load(write(bad))
+
+    def test_duplicate_sim_gate_name_within_one_extra_is_rejected(self):
+        bad = MINIMAL + PEER_TABLES + """
+[modules."lib/tick".extra_examples.PIC16F87XA.alt.sim_gates.dup]
+name        = "tick-alt-sim"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
+config      = { FOSC = "HS", WDTE = "OFF" }
+"""
+        with self.assertRaisesRegex(epicmanifest.ManifestError,
+                                    "duplicate sim gate name"):
+            epicmanifest.load(write(bad))
+
+    def test_same_sim_gate_name_across_peers_is_allowed(self):
+        same = PEER_TABLES.replace('name        = "tick-alt-sim"',
+                                   'name        = "tick-blink-sim"')
+        m = epicmanifest.load(write(MINIMAL + same))
+        names = [g.name for _, e in m.examples_for("lib/tick", "PIC16F87XA")
+                 for g in m.sim_gates_for("lib/tick", "PIC16F87XA",
+                                          "16F877A",
+                                          None if e.name == "tick-blink"
+                                          else "alt")]
+        self.assertEqual(names, ["tick-blink-sim", "tick-blink-sim"])
+
+
 if __name__ == "__main__":
     unittest.main()

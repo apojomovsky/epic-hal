@@ -32,8 +32,14 @@ PARALLEL="${PARALLEL:-1}"
 build_one() {
   family="$1"; name="$2"; mcu="$3"
   echo "::group::${family} ${name} MCU=${mcu}"
-  rm -f "build/${name}/${mcu}"/*.p1
-  if EPIC_REPO_ROOT="$PWD" sh "build/${name}/${mcu}/build.sh" \
+  # A peer-example leg namespaces its objdir (<mcu>-<example>, the
+  # _build_objdirname rule); the default leg keeps the bare <mcu> leaf.
+  # The hex glob below needs no such rule: target hexes sit at the
+  # build-dir root as <mcu>-<name>.hex on every leg.
+  leaf="${mcu}"
+  case "${name}" in *@*) leaf="${mcu}-${name##*@}";; esac
+  rm -f "build/${name}/${leaf}/"*.p1
+  if EPIC_REPO_ROOT="$PWD" sh "build/${name}/${leaf}/build.sh" \
      && [ "$(ls "build/${name}/${mcu}"-*.hex 2>/dev/null | wc -l)" -eq 1 ]; then
     echo "PASS: ${family} ${name} ${mcu}"
     echo "| ${family} | ${name} | ${mcu} | PASS |" >> "$summary"
