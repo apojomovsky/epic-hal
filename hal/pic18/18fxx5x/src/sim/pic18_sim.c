@@ -27,6 +27,8 @@ static uint8_t sim_eeprom[256] = {0};
 
 /* Optional ISR hook (the family dispatcher, registered by the harness). */
 static pic18_sim_irq_cb_t sim_irq_cb = 0;
+/* Timer0 prescaler accumulator kept here so reset can clear it. */
+static uint16_t sim_t0_prescaler = 0U;
 
 /**
  * @brief Advance the simulated Timer0 by one instruction cycle.
@@ -225,6 +227,7 @@ void pic18_sim_reset(void)
     memset(sim_input_value,    0, sizeof sim_input_value);
     memset(sim_eeprom,         0, sizeof sim_eeprom);
     sim_irq_cb = 0;
+    sim_t0_prescaler = 0U;
 }
 
 /**
@@ -251,7 +254,8 @@ void pic18_sim_step(uint32_t ticks)
  * @brief Step the simulated Timer0 by one instruction cycle.
  *
  * Applies the T0CON prescaler, increments the timer in 8- or 16-bit mode
- * per T08BIT, and raises TMR0IF on overflow.
+ * per T08BIT, and raises TMR0IF on overflow. sim_reset clears the
+ * prescaler accumulator so phases start aligned.
  */
 static void sim_step_timer0(void)
 {
@@ -274,10 +278,9 @@ static void sim_step_timer0(void)
     static const uint16_t ps_idx[8] = {2, 4, 8, 16, 32, 64, 128, 256};
     uint32_t rate = psa ? 1U : ps_idx[ps];
 
-    static uint16_t t0_prescaler = 0U;
-    t0_prescaler++;
-    if (t0_prescaler < rate) return;
-    t0_prescaler = 0U;
+    sim_t0_prescaler++;
+    if (sim_t0_prescaler < rate) return;
+    sim_t0_prescaler = 0U;
 
     if (t0con & PIC_T0CON_T08BIT)
     {

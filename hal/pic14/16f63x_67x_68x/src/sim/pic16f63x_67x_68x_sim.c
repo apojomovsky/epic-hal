@@ -24,6 +24,10 @@ static uint8_t sim_input_value   [3] = {0};
 /* Optional ISR hook. */
 static pic16f63x_67x_68x_sim_irq_cb_t sim_irq_cb = 0;
 
+/* Timer0 prescaler accumulator; reset clears it so the Timer0 phase
+ * returns to the power-on state. */
+static uint16_t sim_t0_prescaler = 0U;
+
 /* Forward declarations for the per-timer step helpers. */
 /**
  * @brief Advance the Timer0 model by one instruction cycle.
@@ -120,6 +124,8 @@ void pic16f63x_67x_68x_sim_reset(void)
 
     memset(sim_input_override, 0, sizeof sim_input_override);
     memset(sim_input_value,    0, sizeof sim_input_value);
+
+    sim_t0_prescaler = 0U;
 }
 
 /**
@@ -139,7 +145,8 @@ void pic16f63x_67x_68x_sim_step(uint32_t ticks)
 
 /**
  * @brief Advance the Timer0 model by one instruction cycle: apply the
- *        prescaler, increment TMR0, and set TMR0IF on overflow.
+ *        prescaler (PSA=1 bypasses it at 1:1), increment TMR0, and set
+ *        TMR0IF on overflow. Reset clears the prescaler accumulator.
  */
 static void sim_step_timer0(void)
 {
@@ -149,18 +156,15 @@ static void sim_step_timer0(void)
     uint8_t ps     = option & 0x07U;                  /* PS2:PS1:PS0 */
     uint8_t psa    = (option >> 3) & 0x01U;           /* PSA */
 
-    static uint16_t t0_prescaler = 0U;
-    /* PSA=1 assigns the prescaler to the WDT; TMR0 then runs with no
-     * prescaler, so psa does not gate the counter here. */
-    (void)psa;
-
+    /* PSA=1 assigns the prescaler to the WDT; TMR0 then runs on the
+     * raw clock at 1:1. */
     /* OPTION_REG<PS2:PS0> prescaler mapping (DS40001262F §5.0). */
-    static const uint8_t ps_idx[8] = {2, 4, 8, 16, 32, 64, 128, 255};
-    uint32_t rate = ps_idx[ps];
+    static const uint16_t ps_idx[8] = {2, 4, 8, 16, 32, 64, 128, 256};
+    uint32_t rate = (psa != 0U) ? 1U : (uint32_t)ps_idx[ps];
 
-    t0_prescaler++;
-    if (t0_prescaler < rate) return;
-    t0_prescaler = 0U;
+    sim_t0_prescaler++;
+    if (sim_t0_prescaler < rate) return;
+    sim_t0_prescaler = 0U;
 
     uint8_t t0 = pic16f63x_67x_68x_sim_sfr[PIC_REG_TMR0];
     t0++;

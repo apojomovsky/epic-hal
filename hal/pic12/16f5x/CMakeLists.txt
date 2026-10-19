@@ -60,6 +60,7 @@ epic_add_hal_library(${EPIC_LIB})
 
 epic_add_example(example_blink       tests/example_blink.c)
 epic_add_example(example_control     tests/sim_control_probe.c)
+epic_add_example(sim_timer0_psa tests/sim_timer0_psa.c)
 
 # 16F506-only comparator/ADC block (DS41268D): a second library built
 # with -DPIC16F506 carries the drivers plus the analog-aware sim, so
@@ -81,6 +82,7 @@ target_link_libraries(example_adc PRIVATE pic16f5x_hal_506)
 enable_testing()
 add_test(NAME comp_host COMMAND example_comp)
 add_test(NAME adc_host COMMAND example_adc)
+add_test(NAME timer0_psa_host COMMAND sim_timer0_psa)
 
 # Optional: example for every device in the family (proves every part
 # compiles and links against the canonical sources).

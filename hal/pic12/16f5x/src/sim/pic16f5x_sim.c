@@ -44,6 +44,10 @@ static uint8_t sim_input_override[2] = {0};
 static uint8_t sim_input_value   [2] = {0};
 #endif
 
+/* Timer0 prescaler phase; reset clears it to the power-on state so a
+ * stale divide count never leaks across runs. */
+static uint16_t sim_t0_prescaler = 0U;
+
 #if PIC16F5X_FAMILY_HAS_COMP_ADC
 /* Driven analog levels per CHS channel (AN0..AN2, 0.6V slot) and
  * the conversion countdown in instruction cycles. */
@@ -139,13 +143,16 @@ void pic16f5x_sim_reset(void)
 #endif
     memset(sim_input_override, 0, sizeof sim_input_override);
     memset(sim_input_value,    0, sizeof sim_input_value);
+    sim_t0_prescaler = 0U;
 }
 
 /* Timer0 step. */
 
 /**
  * @brief Advance the Timer0 model by one instruction cycle: apply the
- *        prescaler from the OPTION shadow, increment TMR0.
+ *        prescaler from the OPTION shadow, increment TMR0. PSA=1
+ *        assigns the prescaler to the WDT so TMR0 runs 1:1; reset
+ *        clears the accumulator.
  */
 static void sim_step_timer0(void)
 {
@@ -153,21 +160,17 @@ static void sim_step_timer0(void)
     uint8_t ps     = option & PIC_OPTION_PS_MASK;
     uint8_t psa    = (option >> 3) & 0x01U;
 
-    static uint16_t t0_prescaler = 0U;
-    /* PSA=1 assigns the prescaler to the WDT; TMR0 then runs with no
-     * prescaler, so psa does not gate the counter here. */
-    (void)psa;
-
+    /* PSA=1 gives TMR0 the raw clock; PSA=0 divides per Table 5-1. */
     /* OPTION<PS2:PS0> prescaler mapping (DS41213D §5.0, Table 5-1):
      * 1:2..1:256, matching the driver's ps_ratio table. The 1:256
      * entry is 256, not 255 (the 1-byte counter window would make
      * 255 a one-tick-slow alias; MPLAB SIM and XC8 agree on 256). */
     static const uint16_t ps_idx[8] = {2, 4, 8, 16, 32, 64, 128, 256};
-    uint32_t rate = ps_idx[ps];
+    uint32_t rate = (psa != 0U) ? 1U : (uint32_t)ps_idx[ps];
 
-    t0_prescaler++;
-    if (t0_prescaler < rate) return;
-    t0_prescaler = 0U;
+    sim_t0_prescaler++;
+    if (sim_t0_prescaler < rate) return;
+    sim_t0_prescaler = 0U;
 
     uint8_t t0 = pic16f5x_sim_sfr[PIC_REG_TMR0];
     t0++;

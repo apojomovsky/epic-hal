@@ -81,6 +81,7 @@ epic_add_hal_library(${EPIC_LIB})
 
 epic_add_example(example_blink       tests/example_blink.c)
 epic_add_example(example_wdt_sleep   tests/example_wdt_sleep.c)
+epic_add_example(sim_timer0_psa      tests/sim_timer0_psa.c)
 
 # Optional: example for every device in the family.
 epic_add_example_per_device(example_blink tests/example_blink.c)
@@ -89,3 +90,4 @@ epic_add_example_per_device(example_blink tests/example_blink.c)
 # ctest while the demo examples stay build-only.
 enable_testing()
 add_test(NAME wdt_sleep_host COMMAND example_wdt_sleep)
+add_test(NAME timer0_psa_host COMMAND sim_timer0_psa)
