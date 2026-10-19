@@ -27,10 +27,22 @@ class UnsupportedError(Exception):
     """A (module, MCU) pair the manifest says does not build."""
 
 
-def _check_supported(manifest, module, mcu):
+def split_example(name):
+    """A CI leg identity `module[@example]` into (module, example-or-None).
+
+    The matrix names an extra example's legs `lib/lcd@gpio8` so the
+    shell loops keep reading plain triples; every emitter splits the
+    identity back into --module/--example here.
+    """
+    mod, sep, ex = name.partition("@")
+    return mod, ex or None
+
+
+def _check_supported(manifest, module, mcu, example=None):
     fam = manifest.family_of(mcu)
     if manifest.is_supported(module, fam.name, mcu):
-        _check_example_deps_supported(manifest, module, fam.name, mcu)
+        _check_example_deps_supported(manifest, module, fam.name, mcu,
+                                      example)
         return fam
     reason = manifest.exclusion_reason(module, mcu)
     supported = manifest.modules[module].supported.get(fam.name, [])
@@ -42,7 +54,8 @@ def _check_supported(manifest, module, mcu):
     )
 
 
-def _check_example_deps_supported(manifest, module, fam_name, mcu):
+def _check_example_deps_supported(manifest, module, fam_name, mcu,
+                                  example=None):
     """Fail loudly when a resolved example dep is excluded on this MCU.
 
     sources_for would otherwise compile the dep's sources on a part
@@ -51,10 +64,10 @@ def _check_example_deps_supported(manifest, module, fam_name, mcu):
     depends_on is untouched: those deps are the library's own and were
     already validated when the manifest was written.
     """
-    example = manifest.example_for(module, fam_name, mcu)
-    if example is None or not example.depends_on:
+    entry = manifest.example_for(module, fam_name, mcu, example)
+    if entry is None or not entry.depends_on:
         return
-    for dep in example.depends_on:
+    for dep in entry.depends_on:
         if manifest.is_supported(dep, fam_name, mcu):
             continue
         reason = manifest.exclusion_reason(dep, mcu)
@@ -69,7 +82,7 @@ def _check_example_deps_supported(manifest, module, fam_name, mcu):
 
 
 def _example_name_and_config(manifest, module, mcu, variant, toolchain="xc8",
-                             sim_gate=None):
+                             sim_gate=None, example=None):
     """The (name, config-pragmas) pair for this build, honouring variant
     and toolchain.
 
@@ -81,25 +94,26 @@ def _example_name_and_config(manifest, module, mcu, variant, toolchain="xc8",
     toolchain="epic-cc" uses the example's epiccc variant name and
     config when the example declares one (see epicmanifest.EpicccVariant);
     without a variant the target example is used unchanged.
+    `example` selects a peer program from extra_examples.
     """
     fam = manifest.family_of(mcu)
-    example = manifest.example_for(module, fam.name, mcu)
+    entry = manifest.example_for(module, fam.name, mcu, example)
     if variant == "sim":
         sim = manifest.sim_gate_for(
-            module, fam.name, mcu, sim_gate) if sim_gate else None
+            module, fam.name, mcu, sim_gate, example) if sim_gate else None
         if sim is None:
-            sim = manifest.sim_variant_for(module, fam.name, mcu)
+            sim = manifest.sim_variant_for(module, fam.name, mcu, example)
         if sim is None:
             raise UnsupportedError(f"{module} has no sim variant for {fam.name}")
         return sim.name, sim.config
-    if toolchain == "epic-cc" and example is not None \
-            and example.epiccc is not None:
-        return example.epiccc.name, example.epiccc.config
-    return (example.name, example.config) if example is not None else (None, {})
+    if toolchain == "epic-cc" and entry is not None \
+            and entry.epiccc is not None:
+        return entry.epiccc.name, entry.epiccc.config
+    return (entry.name, entry.config) if entry is not None else (None, {})
 
 
 def emit_config_source(manifest, module, mcu, variant="target", toolchain="xc8",
-                       fosc_hz=None, sim_gate=None):
+                       fosc_hz=None, sim_gate=None, example=None):
     """The #pragma config / EPIC_CONFIG translation unit, from manifest data.
 
     For ``toolchain="xc8"`` this is the existing ``#pragma config`` TU
@@ -110,12 +124,12 @@ def emit_config_source(manifest, module, mcu, variant="target", toolchain="xc8",
     """
     fam = manifest.family_of(mcu)
     _, pragmas = _example_name_and_config(manifest, module, mcu, variant,
-                                          toolchain, sim_gate)
+                                          toolchain, sim_gate, example)
     if not pragmas:
         return None
     if toolchain == "epic-cc":
         spec = _epic_config_spec(manifest, module, mcu, variant, fosc_hz,
-                                 toolchain, sim_gate)
+                                 toolchain, sim_gate, example)
         if spec is None:
             return None
         # The epic-cc header provides EPIC_CONFIG; the TU must be a real
@@ -142,9 +156,21 @@ def _sim_gate_objdirname(mcu, sim_gate):
         return mcu
     return f"{mcu}-{sim_gate}"
 
+
+def _build_objdirname(mcu, variant, sim_gate, example):
+    """Objdir leaf for one build: the sim-gate rule above, namespaced
+    by extra example id when one is selected, so peer programs never
+    share an objdir (their config TUs and hex basenames all differ).
+    Without an example this is exactly the old rule, so every
+    existing emitted path is unchanged."""
+    leaf = _sim_gate_objdirname(mcu, sim_gate) if variant == "sim" else mcu
+    if example is not None:
+        leaf = f"{leaf}-{example}"
+    return leaf
+
 def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
                       variant="target", toolchain="xc8", epic_cc="epic-cc", report=False,
-                      opt_level="Os", sim_gate=None) -> str:
+                      opt_level="Os", sim_gate=None, example=None) -> str:
     """A self-contained POSIX sh script that produces the .hex.
 
     ``toolchain="xc8"`` reproduces the existing xc8-cc script (the byte-
@@ -187,17 +213,17 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
     ``--report`` a non-default profile is rejected on the xc8 path,
     where XC8 keeps its own flags.
     """
-    fam = _check_supported(manifest, module, mcu)
+    fam = _check_supported(manifest, module, mcu, example)
     if opt_level not in ("O0", "O1", "O2", "Os"):
         raise UnsupportedError(f"--opt-level {opt_level!r} is not a driver profile (O0, O1, O2, Os)")
     if opt_level != "Os" and toolchain != "epic-cc":
         raise UnsupportedError("--opt-level needs --toolchain epic-cc")
     if report and toolchain != "epic-cc":
         raise UnsupportedError("--report needs --toolchain epic-cc")
-    example = manifest.example_for(module, fam.name, mcu)
-    if example is None:
+    entry = manifest.example_for(module, fam.name, mcu, example)
+    if entry is None:
         raise UnsupportedError(f"{module} has no example for {fam.name} to build")
-    if variant == "sim" and manifest.sim_variant_for(module, fam.name, mcu) is None:
+    if variant == "sim" and manifest.sim_variant_for(module, fam.name, mcu, example) is None:
         raise UnsupportedError(f"{module} has no sim variant for {fam.name}")
     if sim_gate is not None and variant != "sim":
         raise UnsupportedError("--sim-gate needs --variant sim")
@@ -205,12 +231,13 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         fosc_hz = fam.fosc_hz
 
     sources = manifest.sources_for(module, mcu, variant=variant,
-                                   toolchain=toolchain, sim_gate=sim_gate)
+                                   toolchain=toolchain, sim_gate=sim_gate,
+                                   example=example)
     # Extra gates build in their own objdir: they share sources but
     # carry their own config TU, so one objdir would race under
-    # parallel gates and clobber config_<mcu>.c.
-    gate_dir = mcu if variant != "sim" else _sim_gate_objdirname(
-        mcu, sim_gate)
+    # parallel gates and clobber config_<mcu>.c. Peer examples
+    # namespace the leaf the same way (see _build_objdirname).
+    gate_dir = _build_objdirname(mcu, variant, sim_gate, example)
     # Epic-cc drivers: every module with a target_sizecheck_epiccc.c uses it
     # on the epic-cc path (real module logic where the compiler supports it,
     # a footprint probe where a filed isel gap remains). A module with its
@@ -234,17 +261,17 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
 
     if epiccc_driver:
         mod = manifest.modules[module]
-        example = manifest.example_for(module, fam.name, mcu)
+        entry = manifest.example_for(module, fam.name, mcu, example)
         override = (mod.epiccc_hal_sources_by_family or {}).get(fam.name)
-        full_example = example is not None and any(
-            "examples/" in s for s in example.sources)
+        full_example = entry is not None and any(
+            "examples/" in s for s in entry.sources)
         swap = not (override and full_example)
         if swap:
             sizecheck = epicmanifest.join_module_path(mod.dir, "mcu/target_sizecheck_epiccc.c")
-            if example is not None:
-                ex_srcs = {epicmanifest.join_module_path(mod.dir, s) for s in example.sources}
-                if example.variants and mcu in example.variants:
-                    ex_srcs = {epicmanifest.join_module_path(mod.dir, s) for s in example.variants[mcu].sources}
+            if entry is not None:
+                ex_srcs = {epicmanifest.join_module_path(mod.dir, s) for s in entry.sources}
+                if entry.variants and mcu in entry.variants:
+                    ex_srcs = {epicmanifest.join_module_path(mod.dir, s) for s in entry.variants[mcu].sources}
                 sources = [s for s in sources if s not in ex_srcs]
                 if sizecheck not in sources:
                     sources.append(sizecheck)
@@ -272,7 +299,7 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
                 sources = [s for s in sources if "lib/math/src" not in s]
             sources.append("lib/math/src/host/epic_math_mul.c")
     includes = manifest.includes_for(module, mcu, variant=variant,
-                                     sim_gate=sim_gate)
+                                     sim_gate=sim_gate, example=example)
     # Drop tick/serial includes the full example pulls (they need
     # timer2/usart isel, #86's domain). Encoder/debounce keep the tick
     # header for compilation; pid keeps the lib/math header (pid.c
@@ -299,7 +326,7 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         # Epic-cc path: one invocation, no per-file compiles, no DFP.
         # Keep the same source set and include order; the driver adds its
         example_name, _ = _example_name_and_config(manifest, module, mcu,
-                                                   variant, toolchain, sim_gate)
+                                                   variant, toolchain, sim_gate, example)
         if epiccc_driver and swap:
             has_config = False
             # Per-module basename so the drivers never collide in the
@@ -308,7 +335,7 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         else:
             has_config = emit_config_source(
                 manifest, module, mcu, variant=variant, toolchain=toolchain, fosc_hz=fosc_hz,
-                sim_gate=sim_gate
+                sim_gate=sim_gate, example=example
             ) is not None
         # Sim hexes sit beside their build.sh like the XC8 sim path (the
         # mdb runner globs the gate objdir); target builds keep the
@@ -387,7 +414,7 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         else f"-mcpu={mcu.lower()} -O2 -Wno-759 -Wno-2098"
 
     example_name, _ = _example_name_and_config(manifest, module, mcu, variant,
-                                               toolchain, sim_gate)
+                                               toolchain, sim_gate, example)
     # Sim hexes sit beside their build.sh in the (per-gate) objdir: the
     # shared build dir holds one hex per gate, which the runner's
     # exact-one glob cannot address. Target builds keep the legacy
@@ -396,13 +423,13 @@ def emit_build_script(manifest, module, mcu, build_dir, dfp_dir, fosc_hz=None,
         else f"{build_dir}/{mcu}-{example_name}.hex"
     config_source = emit_config_source(
         manifest, module, mcu, variant=variant, toolchain=toolchain, fosc_hz=fosc_hz,
-        sim_gate=sim_gate
+        sim_gate=sim_gate, example=example
     )
 
     out = [
         "#!/bin/sh",
         "# GENERATED by scripts/build/epic_build.py. Do not edit; regenerate.",
-        f"# module={module} mcu={mcu}" + ("" if sim_gate is None else f" sim_gate={sim_gate}"),
+        f"# module={module} mcu={mcu}" + ("" if example is None else f" example={example}") + ("" if sim_gate is None else f" sim_gate={sim_gate}"),
         "set -e",
         "",
         'cd "${EPIC_REPO_ROOT:-.}"',
@@ -574,11 +601,11 @@ _BORV_MAP = {
 }
 
 def _epic_config_spec(manifest, module, mcu, variant, fosc_hz,
-                      toolchain="xc8", sim_gate=None):
+                      toolchain="xc8", sim_gate=None, example=None):
     """Build the EPIC_CONFIG string for epic-cc from the manifest example."""
     fam = manifest.family_of(mcu)
     _, pragmas = _example_name_and_config(manifest, module, mcu, variant,
-                                          toolchain, sim_gate)
+                                          toolchain, sim_gate, example)
     if not pragmas:
         return None
     if fosc_hz is None:
@@ -676,6 +703,7 @@ def cmd_build(args):
     toolchain = getattr(args, "toolchain", "xc8")
     epic_cc = getattr(args, "epic_cc", "epic-cc")
     sim_gate = getattr(args, "sim_gate", None)
+    example = getattr(args, "example", None)
     if sim_gate is not None and args.variant != "sim":
         sys.exit("error: --sim-gate needs --variant sim")
     try:
@@ -683,29 +711,31 @@ def cmd_build(args):
         gates = [sim_gate] if sim_gate is not None else [None]
         if args.variant == "sim" and sim_gate is None:
             fam = manifest.family_of(args.mcu)
-            default = manifest.sim_variant_for(module, fam.name, args.mcu)
+            default = manifest.sim_variant_for(module, fam.name, args.mcu,
+                                               example)
             gates = [None if g.name == getattr(default, "name", None) else g.name
-                     for g in manifest.sim_gates_for(module, fam.name, args.mcu)] or [None]
+                     for g in manifest.sim_gates_for(module, fam.name, args.mcu,
+                                                     example)] or [None]
         scripts = [(g, emit_build_script(
             manifest, module, args.mcu,
             build_dir=args.build_dir, dfp_dir=args.dfp_dir, fosc_hz=args.fosc_hz,
             variant=args.variant, toolchain=toolchain, epic_cc=epic_cc,
             report=getattr(args, "report", False),
             opt_level=getattr(args, "opt_level", "Os"),
-            sim_gate=g,
+            sim_gate=g, example=example,
         )) for g in gates]
     except (UnsupportedError, epicmanifest.ManifestError) as exc:
         sys.exit(f"error: {exc}")
 
     script_paths = []
     for gate, script in scripts:
-        gate_dir = args.mcu if args.variant != "sim" else _sim_gate_objdirname(
-            args.mcu, gate)
+        gate_dir = _build_objdirname(args.mcu, args.variant, gate, example)
         objdir = (REPO / args.build_dir / gate_dir).resolve()
         objdir.mkdir(parents=True, exist_ok=True)
         config_source = emit_config_source(
             manifest, module, args.mcu, variant=args.variant,
             toolchain=toolchain, fosc_hz=args.fosc_hz, sim_gate=gate,
+            example=example,
         )
         if config_source is not None:
             (objdir / f"config_{args.mcu}.c").write_text(config_source)
@@ -773,17 +803,25 @@ def matrix_entries(manifest, canonical_only):
         modules = []
         for name in sorted(manifest.modules):
             mcus = manifest.modules[name].supported.get(fam.name, [])
-            if not mcus or manifest.example_for(name, fam.name) is None:
+            legs = manifest.examples_for(name, fam.name)
+            if not mcus or not legs:
                 continue
-            if canonical_only:
-                legs = []
-                for part in (smallest.get(fam.name), canonicals.get(fam.name)):
-                    if part is not None and part in mcus and part not in legs:
-                        legs.append(part)
-                # module supports neither end of the family (both excluded):
-                # keep the old fallback so it still gets built on this family
-                mcus = legs or [mcus[0]]
-            modules.append(f"{name}={','.join(mcus)}")
+            for ex_id, _entry in legs:
+                # Peer programs ride as their own legs (`lib/lcd@gpio8`):
+                # the emit loops split the identity back into
+                # --module/--example (see split_example), and the shell
+                # loops keep reading plain triples.
+                leg = name if ex_id is None else f"{name}@{ex_id}"
+                leg_mcus = list(mcus)
+                if canonical_only:
+                    picked = []
+                    for part in (smallest.get(fam.name), canonicals.get(fam.name)):
+                        if part is not None and part in leg_mcus and part not in picked:
+                            picked.append(part)
+                    # module supports neither end of the family (both excluded):
+                    # keep the old fallback so it still gets built on this family
+                    leg_mcus = picked or [leg_mcus[0]]
+                modules.append(f"{leg}={','.join(leg_mcus)}")
         if modules:
             entries.append({
                 "family": fam.name,
@@ -836,6 +874,11 @@ def main():
                         "manifest name). Without it every gate is emitted, "
                         "the default at <build-dir>/<mcu>/, extras at "
                         "<build-dir>/<mcu>-<gate>/.")
+    b.add_argument("--example", default=None,
+                   help="build a peer example from extra_examples by id "
+                        "(e.g. lib/lcd's gpio8); default builds the family's "
+                        "own example. Peer builds namespace their objdir "
+                        "as <mcu>-<example> (sim: <mcu>-<gate>-<example>).")
     b.add_argument("--toolchain", choices=["xc8", "epic-cc"], default="xc8",
                    help="xc8 (default): emit an xc8-cc script with DFP and "
                         "Memory Summary parsing. epic-cc: emit an epic-cc "

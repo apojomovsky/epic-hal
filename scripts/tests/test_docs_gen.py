@@ -157,5 +157,21 @@ class TestReadmeSnippets(unittest.TestCase):
         self.assertTrue(80 <= n <= 120, n)
 
 
+class TestPeerExampleRows(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.page = docs_gen.emit_user_module_md(
+            epicmanifest.load(epicmanifest.default_path()), "lib/lcd")
+
+    def test_peer_programs_get_their_own_rows(self):
+        self.assertIn("| PIC16F87XA (gpio8) | `lcd-gpio8` |", self.page)
+        self.assertIn("| PIC16F87XA (spi) | `lcd-spi` |", self.page)
+        self.assertIn("| PIC16F88X (gpio8) | `lcd-gpio8` |", self.page)
+        self.assertIn("| PIC16F88X (spi) | `lcd-spi` |", self.page)
+
+    def test_default_row_has_no_peer_label(self):
+        self.assertIn("| PIC16F87XA | `lcd` |", self.page)
+
+
 if __name__ == "__main__":
     unittest.main()

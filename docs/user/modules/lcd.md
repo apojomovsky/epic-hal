@@ -21,12 +21,16 @@ HD44780-compatible character LCD HAL module. This page is the reference for the 
 
 ## Use it
 
-The manifest lists one example program per family. Build it with the repository build driver, or read it as the working starting point for your own firmware.
+The manifest lists one example program per family, plus peer programs for extra transports where the driver has them. Build one with the repository build driver (--example names a peer), or read it as the working starting point for your own firmware.
 
 | Family | Example | Source |
 |---|---|---|
 | PIC16F87XA | `lcd` | [`lib/lcd/examples/example_lcd.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/examples/example_lcd.c), [`lib/lcd/src/epic_lcd_gpio4.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/src/epic_lcd_gpio4.c) |
+| PIC16F87XA (gpio8) | `lcd-gpio8` | [`lib/lcd/examples/example_lcd_gpio8.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/examples/example_lcd_gpio8.c), [`lib/lcd/src/epic_lcd_gpio8.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/src/epic_lcd_gpio8.c) |
+| PIC16F87XA (spi) | `lcd-spi` | [`lib/lcd/examples/example_lcd_spi.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/examples/example_lcd_spi.c), [`lib/lcd/src/epic_lcd_spi.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/src/epic_lcd_spi.c) |
 | PIC16F88X | `lcd` | [`lib/lcd/examples/example_lcd.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/examples/example_lcd.c), [`lib/lcd/src/epic_lcd_gpio4.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/src/epic_lcd_gpio4.c) |
+| PIC16F88X (gpio8) | `lcd-gpio8` | [`lib/lcd/examples/example_lcd_gpio8.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/examples/example_lcd_gpio8.c), [`lib/lcd/src/epic_lcd_gpio8.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/src/epic_lcd_gpio8.c) |
+| PIC16F88X (spi) | `lcd-spi` | [`lib/lcd/examples/example_lcd_spi.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/examples/example_lcd_spi.c), [`lib/lcd/src/epic_lcd_spi.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/src/epic_lcd_spi.c) |
 
 ## API
 

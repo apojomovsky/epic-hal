@@ -136,11 +136,12 @@ test: image
 # python3, see docker/ci-toolchain/Dockerfile). MODULE is a path module id,
 # e.g. lib/serial; a trailing slash is ignored.
 xc8-build: image
-	@test -n "$(MODULE)" || { echo "usage: make xc8-build MODULE=lib/serial MCU=16F877A" >&2; exit 1; }
-	@test -n "$(MCU)" || { echo "usage: make xc8-build MODULE=lib/serial MCU=16F877A" >&2; exit 1; }
+	@test -n "$(MODULE)" || { echo "usage: make xc8-build MODULE=lib/serial MCU=16F877A [EXAMPLE=<id>]" >&2; exit 1; }
+	@test -n "$(MCU)" || { echo "usage: make xc8-build MODULE=lib/serial MCU=16F877A [EXAMPLE=<id>]" >&2; exit 1; }
 	python3 scripts/build/epic_build.py build --module $(MODULE) --mcu $(MCU) \
+	  $(if $(EXAMPLE),--example $(EXAMPLE),) \
   --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts/build'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+e.dfp_name(m.family_of('$(MCU)'))+'/xc8')")"
-	$(DOCKER_RUN) sh build/$(MCU)/build.sh
+	$(DOCKER_RUN) sh build/$(MCU)$(if $(EXAMPLE),-$(EXAMPLE),)/build.sh
 
 # ─────────────────────────── real-target epic-cc build ───────────────
 # `build/epiccc` keeps the two toolchains from colliding. epic-cc and
@@ -292,7 +293,7 @@ epiccc-sim-sizes:
 # python3.
 mdb-test: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \
-		echo "usage: make mdb-test MODULE=<module id or dir> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio] [GPIO_REG=<reg>] [EXTRA_MDB=<mdb commands>] [EEPROM_WRITES=<n>] [SIM_GATE=<gate>]" >&2; \
+		echo "usage: make mdb-test MODULE=<module id or dir> MCU=<mcu> DEVICE=<device> [WAIT_MS=<ms>] [MODE=uart|gpio] [GPIO_REG=<reg>] [EXTRA_MDB=<mdb commands>] [EEPROM_WRITES=<n>] [SIM_GATE=<gate>] [EXAMPLE=<id>]" >&2; \
 		echo "  MODE=uart (default) for PIC16F87XA/PIC18Fxxxx (UART capture);" >&2; \
 		echo "  MODE=gpio for PIC16F193X/PIC16F1508/PIC16F188XX (RA0 register readback);" >&2; \
 		echo "  GPIO_REG=LATA for the PIC18F2520/2320/6520 gpio gates (PORTA does not mirror the latch under MPSIM)." >&2; \
@@ -301,18 +302,19 @@ mdb-test: image
 		echo "  EEPROM_WRITES: halt+complete EEPROM-write cycles emitted before the final run" >&2; \
 		echo "    (MPLAB SIM never completes a CPU-executed EEPROM write; only lib/settings' gate needs this)." >&2; \
 		echo "  SIM_GATE: an extra manifest sim gate by name (empty runs the default gate)." >&2; \
-		echo "  e.g. make mdb-test MODULE=lib/tick MCU=16F877A DEVICE=PIC16F877A" >&2; \
+		echo "  EXAMPLE: a peer example id from extra_examples (e.g. lib/lcd's gpio8)." >&2; \
 		exit 1; \
 	fi
 	MID=$$(python3 scripts/build/resolve_module.py --id "$(MODULE)") || exit 1; \
 	python3 scripts/build/epic_build.py build --module $$MID --mcu $(MCU) --variant sim \
-	  --build-dir build-sim/$$MID \
+	  --build-dir build-sim/$$MID$(if $(EXAMPLE),@$(EXAMPLE),) \
+	  $(if $(EXAMPLE),--example $(EXAMPLE),) \
   --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts/build'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+e.dfp_name(m.family_of('$(MCU)'))+'/xc8')")"
 	MID=$$(python3 scripts/build/resolve_module.py --id "$(MODULE)") || exit 1; \
 	$(DOCKER_RUN) env \
 	  $(if $(filter gpio,$(MODE)),$(if $(GPIO_REG),GPIO_REG=$(GPIO_REG),),) \
 	  $(if $(filter toggle,$(or $(MODE),uart)),TOGGLE_REG=$(or $(REG),PORTB) TOGGLE_BIT=$(or $(BIT),0) TOGGLE_SAMPLES=$(or $(SAMPLES),12) TOGGLE_STEPI=$(or $(STEPI),200000),) \
-	  scripts/sim/sim-mdb-run.sh local $(MCU) $(DEVICE) $$MID $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)" $(or $(EEPROM_WRITES),$(if $(filter lib/settings,$(patsubst %/,%,$(MODULE))),24,0)) "$(SIM_GATE)"
+	  scripts/sim/sim-mdb-run.sh local $(MCU) $(DEVICE) $$MID$(if $(EXAMPLE),@$(EXAMPLE),) $(or $(WAIT_MS),2000) $(or $(MODE),uart) "$(EXTRA_MDB)" $(or $(EEPROM_WRITES),$(if $(filter lib/settings,$(patsubst %/,%,$(MODULE))),24,0)) "$(SIM_GATE)"
 
 mdb-epiccc: image
 	@if [ -z "$(MODULE)" ] || [ -z "$(MCU)" ] || [ -z "$(DEVICE)" ]; then \

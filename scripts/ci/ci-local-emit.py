@@ -16,6 +16,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "build"))
 
 import epicmanifest  # noqa: E402
+from epic_build import split_example  # noqa: E402
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 XC8_INSTALL_DIR = os.environ.get(
@@ -53,6 +54,8 @@ SIM_VARIANTS = [
               ("lib/mcp23x17", "16F877A"),
     ("lib/serial", "16F877A"),
     ("lib/lcd", "16F877A"),
+    ("lib/lcd@gpio8", "16F877A"),
+    ("lib/lcd@spi", "16F877A"),
     ("lib/debounce", "16F877A"),
     ("lib/console", "18F4550"),
     ("lib/taskmgr", "18F4550"),
@@ -111,27 +114,32 @@ def main() -> None:
             dfp_dir = f"{XC8_INSTALL_DIR}/pic/packs/{epicmanifest.dfp_name(fam)}/xc8"
             for pair in entry["modules"].split(";"):
                 name, mcus = pair.split("=")
+                module, example = split_example(name)
                 for mcu in mcus.split(","):
                     matrix_f.write(f"{fam_name} {name} {mcu}\n")
-                    subprocess.run(
-                        [sys.executable, "scripts/build/epic_build.py", "build",
-                         "--module", name, "--mcu", mcu,
+                    cmd = [sys.executable, "scripts/build/epic_build.py", "build",
+                         "--module", module, "--mcu", mcu,
                          "--build-dir", f"build/{name}",
-                         "--dfp-dir", dfp_dir],
-                        check=True, stdout=subprocess.DEVNULL, cwd=REPO,
-                    )
+                         "--dfp-dir", dfp_dir]
+                    if example is not None:
+                        cmd += ["--example", example]
+                    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL,
+                                   cwd=REPO)
 
-    # Sim build scripts for the fixed gate list.
+    # Sim build scripts for the fixed gate list. A peer example's gates
+    # emit under build-sim/<module@example> so the default gates never
+    # collide (each example's default gate objdir is bare <mcu>).
     for module, mcu in SIM_VARIANTS:
+        name, example = split_example(module)
         fam = manifest.family_of(mcu)
         dfp_dir = f"{XC8_INSTALL_DIR}/pic/packs/{epicmanifest.dfp_name(fam)}/xc8"
-        subprocess.run(
-            [sys.executable, "scripts/build/epic_build.py", "build",
-             "--module", module, "--mcu", mcu, "--variant", "sim",
+        cmd = [sys.executable, "scripts/build/epic_build.py", "build",
+             "--module", name, "--mcu", mcu, "--variant", "sim",
              "--build-dir", f"build-sim/{module}",
-             "--dfp-dir", dfp_dir],
-            check=True, stdout=subprocess.DEVNULL, cwd=REPO,
-        )
+             "--dfp-dir", dfp_dir]
+        if example is not None:
+            cmd += ["--example", example]
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, cwd=REPO)
 
     # Bundles, one per family, for the bundle gate.
     for fam_name in sorted(manifest.families):

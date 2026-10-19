@@ -24,7 +24,7 @@
 
 ## Use it
 
-The manifest lists one example program per family. Build it with the repository build driver, or read it as the working starting point for your own firmware.
+The manifest lists one example program per family, plus peer programs for extra transports where the driver has them. Build one with the repository build driver (--example names a peer), or read it as the working starting point for your own firmware.
 
 | Family | Example | Source |
 |---|---|---|

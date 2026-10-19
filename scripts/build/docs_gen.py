@@ -105,9 +105,9 @@ def emit_families_md(manifest: epicmanifest.Manifest) -> str:
         fam = manifest.families[name]
         mods = sorted(m for m in manifest.modules
                       if name in manifest.modules[m].supported)
-        sim = any(manifest.modules[m].examples.get(name) is not None
-                  and manifest.modules[m].examples[name].sim is not None
-                  for m in mods)
+        sim = any(entry.sim is not None
+                  for m in mods
+                  for _, entry in manifest.examples_for(m, name))
         lines += [
             f"## {name}",
             "",
@@ -152,8 +152,8 @@ def _sentence(text: str) -> str:
 
 
 def _has_sim(manifest, mod, fam: str) -> bool:
-    ex = mod.examples.get(fam)
-    return ex is not None and ex.sim is not None
+    return any(entry.sim is not None
+               for _, entry in manifest.examples_for(mod.name, fam))
 
 
 def emit_user_index_md(manifest: epicmanifest.Manifest) -> str:
@@ -243,19 +243,20 @@ def emit_user_module_md(manifest: epicmanifest.Manifest, name: str) -> str:
     ]
     ex_rows = []
     for fam in fams:
-        ex = mod.examples.get(fam)
-        if ex is None:
-            continue
-        paths = [epicmanifest.join_module_path(mod.dir, p)
-                 for p in ex.sources]
-        links = ", ".join(f"[`{p}`]({REPO_URL}/blob/master/{p})"
-                          for p in paths)
-        ex_rows.append(f"| {fam} | `{ex.name}` | {links} |")
+        for ex_id, ex in manifest.examples_for(mod.name, fam):
+            paths = [epicmanifest.join_module_path(mod.dir, p)
+                     for p in ex.sources]
+            links = ", ".join(f"[`{p}`]({REPO_URL}/blob/master/{p})"
+                              for p in paths)
+            label = fam if ex_id is None else f"{fam} ({ex_id})"
+            ex_rows.append(f"| {label} | `{ex.name}` | {links} |")
     if ex_rows:
         lines += [
-            "The manifest lists one example program per family. Build it"
-            " with the repository build driver, or read it as the working"
-            " starting point for your own firmware.",
+            "The manifest lists one example program per family, plus peer"
+            " programs for extra transports where the driver has them."
+            " Build one with the repository build driver (--example names"
+            " a peer), or read it as the working starting point for your"
+            " own firmware.",
             "",
             "| Family | Example | Source |",
             "|---|---|---|",

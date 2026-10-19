@@ -1138,5 +1138,77 @@ class TestEpicccSimHalSliceEmit(unittest.TestCase):
         self.assertNotIn("hal/pic14/16f87xa/src/peripherals/pic16f87xa_usart.c", s)
 
 
+PEER_TABLES = """
+[modules."lib/tick".extra_examples.PIC16F87XA.alt]
+name    = "tick-alt"
+sources = ["examples/example_tick_alt.c"]
+config  = { FOSC = "HS" }
+
+[modules."lib/tick".extra_examples.PIC16F87XA.alt.sim]
+name        = "tick-alt-sim"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
+config      = { FOSC = "HS", WDTE = "OFF" }
+"""
+
+
+def peer_load():
+    tmp = tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False)
+    tmp.write(MANIFEST + PEER_TABLES)
+    tmp.close()
+    return epicmanifest.load(pathlib.Path(tmp.name))
+
+
+class TestSplitExample(unittest.TestCase):
+    def test_plain_module_has_no_example(self):
+        self.assertEqual(epic_build.split_example("lib/tick"),
+                         ("lib/tick", None))
+
+    def test_peer_leg_splits_into_module_and_id(self):
+        self.assertEqual(epic_build.split_example("lib/lcd@gpio8"),
+                         ("lib/lcd", "gpio8"))
+
+
+class TestPeerExampleEmit(unittest.TestCase):
+    def script(self, example=None, variant="target", sim_gate=None):
+        return epic_build.emit_build_script(
+            peer_load(), "lib/tick", "16F877A",
+            build_dir="build", dfp_dir="/opt/dfp", variant=variant,
+            sim_gate=sim_gate, example=example,
+        )
+
+    def test_peer_build_compiles_peer_sources(self):
+        s = self.script(example="alt")
+        self.assertIn("lib/tick/examples/example_tick_alt.c", s)
+        self.assertNotIn("lib/tick/examples/example_tick.c", s)
+
+    def test_peer_header_names_the_example(self):
+        self.assertIn("# module=lib/tick mcu=16F877A example=alt",
+                      self.script(example="alt"))
+
+    def test_default_header_carries_no_example(self):
+        self.assertIn("# module=lib/tick mcu=16F877A\n", self.script())
+
+    def test_peer_sim_uses_the_peer_gate(self):
+        s = self.script(example="alt", variant="sim")
+        self.assertIn("build/16F877A-alt/16F877A-tick-alt-sim.hex", s)
+        self.assertIn("lib/tick/examples/example_tick_alt.c", s)
+
+    def test_unknown_example_fails_loudly(self):
+        with self.assertRaises(epicmanifest.ManifestError):
+            self.script(example="nope")
+
+    def test_matrix_carries_peer_legs(self):
+        entries = epic_build.matrix_entries(peer_load(), True)
+        legs = {}
+        for entry in entries:
+            if entry["family"] != "PIC16F87XA":
+                continue
+            for pair in entry["modules"].split(";"):
+                name, mcus = pair.split("=")
+                legs[name] = mcus.split(",")
+        self.assertEqual(legs["lib/tick"], ["16F877A"])
+        self.assertEqual(legs["lib/tick@alt"], ["16F877A"])
+
+
 if __name__ == "__main__":
     unittest.main()

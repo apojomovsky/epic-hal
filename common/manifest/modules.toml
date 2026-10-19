@@ -3308,6 +3308,47 @@ sources = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
+# Peer example programs (extra_examples, epic-hal#520): one program per
+# LCD transport. The gpio4 tables above stay the default; gpio8 drives
+# the 8-bit bus (RS=RB0, E=RB1, DB0..DB7=RD0..RD7) and spi drives a
+# 74HC595 shift register (SCK=RC3, SDO=RC5, CS=RB0). Same config and
+# HAL requirement as the default on both families.
+[modules."lib/lcd".extra_examples.PIC16F87XA.gpio8]
+name    = "lcd-gpio8"
+sources = [
+  "examples/example_lcd_gpio8.c",
+  "src/epic_lcd_gpio8.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules."lib/lcd".extra_examples.PIC16F87XA.spi]
+name    = "lcd-spi"
+sources = [
+  "examples/example_lcd_spi.c",
+  "src/epic_lcd_spi.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules."lib/lcd".extra_examples.PIC16F88X.gpio8]
+name    = "lcd-gpio8"
+sources = [
+  "examples/example_lcd_gpio8.c",
+  "src/epic_lcd_gpio8.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules."lib/lcd".extra_examples.PIC16F88X.spi]
+name    = "lcd-spi"
+sources = [
+  "examples/example_lcd_spi.c",
+  "src/epic_lcd_spi.c",
+]
+hal     = true
+config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
 # HARNESS=sim (see scripts/ci/ci-target-sim.sh): a bounded, self-reporting
 # gate (tests/sim_lcd.c), distinct from the real-target hello example
 # above (an unbounded demo with no core/epic_harness.h dependency).
@@ -3329,6 +3370,28 @@ harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
 sources     = [
   "tests/sim_lcd.c",
   "src/epic_lcd_gpio4.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# Peer sim gates for the gpio8 and spi programs: same recorder shape as
+# lcd-sim (real transport init checked, then the driver byte stream and
+# delay pattern asserted), with the transport's own pin checks (gpio8:
+# TRISB 0xFC plus TRISD 0x00; spi: SSPCON 0x22 plus the idle CS).
+[modules."lib/lcd".extra_examples.PIC16F87XA.gpio8.sim]
+name        = "lcd-gpio8-sim"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_lcd_gpio8.c",
+  "src/epic_lcd_gpio8.c",
+]
+config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+[modules."lib/lcd".extra_examples.PIC16F87XA.spi.sim]
+name        = "lcd-spi-sim"
+harness_src = "hal/pic14/16f87xa/src/mdb/pic16_harness_mdb.c"
+sources     = [
+  "tests/sim_lcd_spi.c",
+  "src/epic_lcd_spi.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 

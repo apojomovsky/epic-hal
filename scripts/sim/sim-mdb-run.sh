@@ -6,7 +6,7 @@
 #   mode=uart|gpio|toggle (gpio: PORTA bit 0, pic16f193x and
 #   pic16f63x_67x_68x); eeprom_writes replays the unlock per cycle.
 #   sim_gate names an extra manifest gate (empty: the default gate);
-#   each gate builds in its own objdir with its hex beside build.sh.
+#   <module@example> selects a peer example (objdir gains -<example>).
 
 set -euo pipefail
 
@@ -35,9 +35,14 @@ toggle_samples="${TOGGLE_SAMPLES:-12}"
 toggle_stepi="${TOGGLE_STEPI:-200000}"
 
 build_dir="build-sim/${module}"
+example="${module#*@}"
+[ "$example" = "$module" ] && example=""
 objdir="${build_dir}/${mcu}"
 if [ -n "${sim_gate}" ]; then
   objdir="${build_dir}/${mcu}-${sim_gate}"
+fi
+if [ -n "${example}" ]; then
+  objdir="${objdir}-${example}"
 fi
 script="${objdir}/build.sh"
 # SIM_MDB_SKIP_BUILD: the hex is already built and this container cannot rebuild
@@ -48,8 +53,8 @@ if [ "${SIM_MDB_SKIP_BUILD:-0}" = "1" ]; then
 else
   if [ ! -f "$script" ]; then
     echo "::error::no emitted build script at ${script}." \
-         "Run 'python3 scripts/build/epic_build.py build --module ${module}" \
-         "--mcu ${mcu} --variant sim --build-dir ${build_dir}'" \
+         "Run 'python3 scripts/build/epic_build.py build --module ${module%%@*}" \
+         "--mcu ${mcu} --variant sim --build-dir ${build_dir}${example:+ --example ${example}}'" \
          "first (needs python3, so outside this container)." >&2
     exit 1
   fi

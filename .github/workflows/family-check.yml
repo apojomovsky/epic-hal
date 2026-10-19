@@ -165,15 +165,18 @@ jobs:
                   dfp_dir = f"{xc8_install_dir}/pic/packs/{epicmanifest.dfp_name(fam)}/xc8"
                   for pair in entry["modules"].split(";"):
                       name, mcus = pair.split("=")
+                      module, example = name.partition("@")[::2]
+                      example = example or None
                       for mcu in mcus.split(","):
                           matrix_f.write(f"{fam_name} {name} {mcu}\n")
-                          subprocess.run(
-                              ["python3", "scripts/build/epic_build.py", "build",
-                               "--module", name, "--mcu", mcu,
+                          cmd = ["python3", "scripts/build/epic_build.py", "build",
+                               "--module", module, "--mcu", mcu,
                                "--build-dir", f"build/{name}",
-                               "--dfp-dir", dfp_dir],
-                              check=True, stdout=subprocess.DEVNULL,
-                          )
+                               "--dfp-dir", dfp_dir]
+                          if example is not None:
+                              cmd += ["--example", example]
+                          subprocess.run(cmd, check=True,
+                                         stdout=subprocess.DEVNULL)
 
           # Sim build scripts for this family's gates (the run_one list
           # in scripts/ci/ci-target-sim.sh is the source of truth).
@@ -202,6 +205,8 @@ jobs:
               ("lib/mcp23x17", "16F877A"),
               ("lib/serial", "16F877A"),
               ("lib/lcd", "16F877A"),
+              ("lib/lcd@gpio8", "16F877A"),
+              ("lib/lcd@spi", "16F877A"),
               ("lib/debounce", "16F877A"),
               ("lib/console", "18F4550"),
               ("lib/taskmgr", "18F4550"),
@@ -244,19 +249,20 @@ jobs:
               ("hal/pic12/16f5x", "16F505"),
               ("hal/pic14/16f818_819", "16F819"),
           ]:
-              if module not in m.modules:
+              name, _, example = module.partition("@")
+              if name not in m.modules:
                   continue
               fam = m.family_of(mcu)
               if fam.name != family:
                   continue
               dfp_dir = f"{xc8_install_dir}/pic/packs/{epicmanifest.dfp_name(fam)}/xc8"
-              subprocess.run(
-                  ["python3", "scripts/build/epic_build.py", "build",
-                   "--module", module, "--mcu", mcu, "--variant", "sim",
+              cmd = ["python3", "scripts/build/epic_build.py", "build",
+                   "--module", name, "--mcu", mcu, "--variant", "sim",
                    "--build-dir", f"build-sim/{module}",
-                   "--dfp-dir", dfp_dir],
-                  check=True,
-              )
+                   "--dfp-dir", dfp_dir]
+              if example:
+                  cmd += ["--example", example]
+              subprocess.run(cmd, check=True)
 
           # This family's bundle.
           subprocess.run(
