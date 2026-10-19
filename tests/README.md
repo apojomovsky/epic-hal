@@ -44,7 +44,7 @@ gate lib modules against the tick ISR or the serial stack. The
 | `lib/lcd` | C10 | HD44780 print sequence under tick ISR |
 | `lib/adcfilter` | None | Pure computation over a caller-supplied read callback, no ISR-owned state. |
 | `lib/bus` | None | Synchronous register transactions over polled SSP, no ISR-owned state. |
-| `lib/console` | None | Polled line dispatcher over the serial receive path gated by C8. |
+| `lib/console` | None | Polled line dispatcher over the serial receive path; its concurrency surface is serial's. |
 | `lib/debounce` | None | Pure timebase consumer via `epic_tick_get`, no ISR critical section of its own. |
 | `lib/fsm` | None | Pure control-flow tables, no hardware or ISR interaction. |
 | `lib/math` | None | Stateless fixed-point arithmetic, no ISR interaction. |
