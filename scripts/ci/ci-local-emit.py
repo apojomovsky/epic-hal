@@ -39,6 +39,7 @@ SIM_VARIANTS = [
     ("lib/math", "18F4550"),
     ("hal/pic14/16f87xa", "16F877A"),
     ("hal/pic14/16f7x", "16F77"),
+    ("hal/pic14/16f7x", "16F72"),
     ("hal/pic14/16f818_819", "16F819"),
     ("hal/pic18/18fxx5x", "18F4550"),
     ("hal/pic18/18f2520", "18F2320"),
