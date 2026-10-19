@@ -23,7 +23,7 @@ last with NACK, STOP. Returns `n` or `-1` (address/reg NACK).
 Inject a custom I2C ops table (`NULL` restores the default HAL ops). The ops
 are `start`, `repeated_start`, `stop`, `write_byte` (returns 1=ACK/0=NACK),
 `read_byte(int ack)` (ack=1 sends ACK, 0 sends NACK). Used by the host test
-to wire in a mock MEM device.
+(`tests/test_bus_mem.c`) to wire in a mock MEM device.
 
 ## SPI
 
