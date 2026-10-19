@@ -491,7 +491,7 @@ alias consumers use.
 `example_blink.c`: Timer0 overflow drives an ISR that toggles RB0; the
 canonical dual-build smoke test, its header documents the expected
 register image for the §4 gate. `example_gpio.c`: host-only GPIO + IOC
-`example_timer1.c`: Timer1
+smoke test driving the sim directly. `example_timer1.c`: Timer1
 overflow drives an ISR that toggles RB0, the §4 gate's `HARNESS=sim
 MODE=gpio` payload (its header documents the expected register image).
 `example_eusart.c`: the `eusart-readback` §4 gate payload, init at 9600
