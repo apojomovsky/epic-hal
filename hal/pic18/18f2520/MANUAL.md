@@ -304,8 +304,11 @@ flash: 4 KB (2220) vs 8 KB (2320).
   flags, matching the 4550's accepted level.
 - **Config words.** The 2520 drops the 2455 family's USB config fields;
   see `mcu/pic18f2520-mplabx/README.md` for the default set.
-- **Gates stay `MODE=gpio`.** The EUSART exists, but the CI blink gate
-  reports on the RA0 latch by design (no UART in the blink path).
+- **Gates: gpio by default, uart for EUSART.** The blink and irq-smoke
+  gates stay `MODE=gpio`, reporting on the RA0 latch by design (no
+  UART in the blink path). The EUSART gate builds `example_usart`
+  against the UART mdb harness and runs `MODE=uart`, capturing the
+  `0x55` TX byte and the PASS marker via uartio.
 
 ## 23. Appendix: datasheet section index
 

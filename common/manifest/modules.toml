@@ -1602,6 +1602,19 @@ sources     = [
   "tests/example_irq.c",
 ]
 config      = { BOR = "OFF", BORV = "27", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", FSCM = "OFF", IESO = "OFF", MCLRE = "ON", OSC = "HS", PBAD = "DIG", PWRT = "ON", STVR = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF" }
+# Second HARNESS=sim gate: the EUSART live probe. Builds
+# tests/example_usart.c (async 9600 TX + 0x55 out) against the UART
+# mdb harness, so MODE=uart captures the TX byte and the PASS marker
+# in the uartio log. 18F2520-only by construction: the USART driver is
+# a conditional_source scoped to variants=["18F2520"], and the 18F2320
+# sim variant override above replaces the whole gate set for that MCU.
+[modules."hal/pic18/18f2520".example.PIC18F2520.sim_gates.usart]
+name        = "usart"
+harness_src = "hal/pic18/18f2520/src/mdb/pic18_harness_mdb_uart.c"
+sources     = [
+  "tests/example_usart.c",
+]
+config      = { BOREN = "ON", BORV = "3", CCP2MX = "PORTC", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CP3 = "OFF", CPB = "OFF", CPD = "OFF", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTR3 = "OFF", EBTRB = "OFF", FCMEN = "OFF", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", OSC = "HS", PBADEN = "OFF", PWRT = "ON", STVREN = "ON", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRT3 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # The 2220's CONFIG3H/4L shape predates the 2520's: CCP2MX is ON/OFF (not
 # PORTC/PORTBE), PBAD is ANA/DIG (not PBADEN ON/OFF), STVR (not STVREN),
