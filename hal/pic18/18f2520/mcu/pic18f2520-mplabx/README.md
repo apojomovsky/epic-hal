@@ -29,12 +29,13 @@ irrelevant for the foundation (no CCP driver yet, phase 3).
 
 ## HARNESS=sim gates
 
-The foundation has no EUSART driver, so the MPLAB SIM gates report the
-PASS/FAIL marker on a GPIO pin, not UART: the mdb harness
-(`src/mdb/pic18_harness_mdb.c`) drives RA0 (PORTA bit 0) on the marker.
-Under MPSIM, a PIC18 driven output latch does not read back on the PORTx
-input register, so the CI wrapper reads the latch `LATA` (via
-`GPIO_REG=LATA` in `scripts/ci/ci-target-sim.sh`), not `PORTA`. This is the
-PIC16F193X pattern adapted for PIC18 (see
-`hal/pic14e/16f193x/mcu/pic16f193x-mplabx/README.md`); once the EUSART driver
-lands in phase 3 the gates can switch to `MODE=uart`.
+The default gates report the PASS/FAIL marker on a GPIO pin, not UART:
+the mdb harness (`src/mdb/pic18_harness_mdb.c`) drives RA0 (PORTA bit
+0) on the marker. Under MPSIM, a PIC18 driven output latch does not
+read back on the PORTx input register, so the CI wrapper reads the
+latch `LATA` (via `GPIO_REG=LATA` in `scripts/ci/ci-target-sim.sh`),
+not `PORTA`. This is the PIC16F193X pattern adapted for PIC18 (see
+`hal/pic14e/16f193x/mcu/pic16f193x-mplabx/README.md`). The EUSART gate
+is the exception: `tests/example_usart.c` builds against the UART mdb
+harness (`src/mdb/pic18_harness_mdb_uart.c`) and runs `MODE=uart`, so
+the transmitted `0x55` and the PASS marker land in the uartio capture.

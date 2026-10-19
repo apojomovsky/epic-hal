@@ -99,6 +99,9 @@ as the 2520/6520 gates), so its gate reads `LATA`
   drives the PASS/FAIL marker on RA0 (the pic16f193x pattern), read by the
   CI wrapper via the latch `LATA` (`GPIO_REG=LATA`: PIC18's driven output
   latch does not read back on PORTx under MPSIM).
+- ✅ MPLAB SIM gate, `MODE=uart`: `src/mdb/pic18_harness_mdb_uart.c`
+  reports over the EUSART for `tests/example_usart.c`, so the `0x55` TX
+  byte and the PASS marker land in the uartio capture.
 
 ## XC8 codegen gotchas (settled)
 
