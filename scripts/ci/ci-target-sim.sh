@@ -115,6 +115,7 @@ run_one pic16f7x 16F72 PIC16F72 hal/pic14/16f7x 5000 gpio
 run_one pic18fxx5x 18F4550 PIC18F4550 hal/pic18/18fxx5x 5000 uart
 run_one pic18f2520 18F2320 PIC18F2320 hal/pic18/18f2520 5000 gpio
 run_one pic18f2520 18F2520 PIC18F2520 hal/pic18/18f2520 5000 gpio
+run_one pic18f2520 18F2520 PIC18F2520 hal/pic18/18f2520 5000 uart "" "" "" usart
 run_one pic18f6520 18F6520 PIC18F6520 hal/pic18/18f6520 5000 gpio
 run_one pic18f6520 18F6520 PIC18F6520 hal/pic18/18f6520 5000 gpio "" "" "" lvd-readback
 run_one pic18fxx5x 18F4550 PIC18F4550 lib/pid 5000 uart
