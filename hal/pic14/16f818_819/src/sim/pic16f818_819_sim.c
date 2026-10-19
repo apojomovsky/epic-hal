@@ -179,17 +179,19 @@ void pic16f818_819_sim_step(uint32_t ticks)
 
 /**
  * @brief Advance the Timer0 model by one instruction cycle: apply the
- *        prescaler, increment TMR0, and set TMR0IF on overflow.
+ *        prescaler, increment TMR0, and set TMR0IF on overflow. PSA=1
+ *        bypasses the prescaler at 1:1.
  */
 static void sim_step_timer0(void)
 {
     /* PS2:PS0 select the 1:2 to 1:256 ratio (DS39598F Register 2-2).
-     * PSA assigns the prescaler to the WDT, so with PSA=1 TMR0 counts
-     * raw instruction cycles: the prescaler is not an extra gate here. */
+     * PSA=1 assigns the prescaler to the WDT, so TMR0 counts the raw
+     * instruction clock at 1:1. */
     uint8_t option = pic16f818_819_sim_sfr[PIC_REG_OPTION];
+    uint8_t psa = (uint8_t)((option & PIC_OPTION_PSA) ? 1U : 0U);
 
     static const uint16_t ps_idx[8] = {2, 4, 8, 16, 32, 64, 128, 256};
-    uint32_t rate = ps_idx[option & PIC_OPTION_PS_MASK];
+    uint32_t rate = (psa != 0U) ? 1U : (uint32_t)ps_idx[option & PIC_OPTION_PS_MASK];
 
     sim_t0_prescaler++;
     if (sim_t0_prescaler < rate) return;

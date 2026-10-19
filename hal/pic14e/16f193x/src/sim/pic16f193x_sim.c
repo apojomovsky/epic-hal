@@ -24,6 +24,10 @@ static uint8_t sim_input_value   [5] = {0};
 /* Last-seen PORTB input level, for interrupt-on-change edge detection. */
 static uint8_t sim_last_portb = 0xFFU;
 
+/* Timer0 prescaler accumulator. File scope so sim_reset() returns the
+ * whole model to its power-on state. */
+static uint16_t sim_t0_prescaler = 0U;
+
 /* Optional ISR hook. */
 static pic16f193x_sim_irq_cb_t sim_irq_cb = 0;
 
@@ -140,6 +144,7 @@ void pic16f193x_sim_reset(void)
     memset(sim_input_override, 0, sizeof sim_input_override);
     memset(sim_input_value,    0, sizeof sim_input_value);
     sim_last_portb = 0xFFU;
+    sim_t0_prescaler = 0U;
 }
 
 /**
@@ -163,6 +168,7 @@ void pic16f193x_sim_step(uint32_t ticks)
 
 /**
  * @brief Timer0 step: advance the Timer0 model by one instruction cycle.
+ *        sim_reset clears the prescaler accumulator.
  */
 static void sim_step_timer0(void)
 {
@@ -180,13 +186,11 @@ static void sim_step_timer0(void)
 
     /* PSA=1 assigns the prescaler to the WDT, so TMR0 runs at 1:1. */
     static const uint16_t ps_ratio[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
-    static uint16_t t0_prescaler = 0U;
     uint32_t rate = psa ? 1U : (uint32_t)ps_ratio[ps & 0x07U];
-    (void)psa;
 
-    t0_prescaler++;
-    if (t0_prescaler < rate) return;
-    t0_prescaler = 0U;
+    sim_t0_prescaler++;
+    if (sim_t0_prescaler < rate) return;
+    sim_t0_prescaler = 0U;
 
     uint8_t t0 = pic16f193x_sim_sfr[PIC_REG_TMR0];
     t0++;
