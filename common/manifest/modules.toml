@@ -995,6 +995,18 @@ sources     = [
 ]
 config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "OFF", WRT = "OFF" }
 
+# Second HARNESS=sim gate: the EUSART register-image check. Same gpio
+# reporting as the default gate; the firmware (tests/example_eusart.c)
+# asserts TXSTA/RCSTA/SPBRGL/BAUDCON at the documented values and the
+# harness drives RA0 from the verdict.
+[modules."hal/pic14e/16f193x".example.PIC16F193X.sim_gates.eusart]
+name        = "eusart-readback"
+harness_src = "hal/pic14e/16f193x/src/mdb/pic16f193x_harness_mdb.c"
+sources     = [
+  "tests/example_eusart.c",
+]
+config      = { FOSC = "INTOSC", WDTE = "OFF", PWRTE = "ON", MCLRE = "ON", CP = "OFF", CPD = "OFF", BOREN = "ON", CLKOUTEN = "OFF", IESO = "OFF", FCMEN = "OFF", LVP = "OFF", STVREN = "ON", PLLEN = "OFF", WRT = "OFF" }
+
 # hal/pic14/16f87xa's own manifest slot, mirroring the 193X firmware
 # pseudo-module: no application code, just the family's real-target
 # smoke (tests/example_blink.c) and the HARNESS=sim banked-SFR probe

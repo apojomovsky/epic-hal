@@ -494,6 +494,8 @@ register image for the §4 gate. `example_gpio.c`: host-only GPIO + IOC
 smoke test driving the sim directly. `example_timer1.c`: Timer1
 overflow drives an ISR that toggles RB0, the §4 gate's `HARNESS=sim
 MODE=gpio` payload (its header documents the expected register image).
+`example_eusart.c`: the `eusart-readback` §4 gate payload, init at 9600
+baud plus one transmit with the same register-image assertion.
 
 ## 20. Known gaps and gotchas
 
@@ -501,10 +503,12 @@ MODE=gpio` payload (its header documents the expected register image).
   XC8 build passes for all six parts. Timer1 has cleared the §4 gate
   (Task 11 fix-round-1): `make mdb-test ... MODE=gpio WAIT_MS=60000`
   produces `EPIC_HARNESS_RESULT: PASS` and the §4 control-register
-  readback confirms `PIE1=0x01`. The remaining peripherals (Timer2/4/6,
-  CCP/ECCP, EUSART, MSSP, ADC, LCD, comparators, DAC, FVR, EEPROM, etc.)
-  still need to clear the §4 gate individually; none of them count as
-  done until they do.
+  readback confirms `PIE1=0x01`. EUSART has cleared it too: the
+  `eusart-readback` sim gate runs `tests/example_eusart.c` under mdb
+  and asserts `TXSTA=0x26 RCSTA=0x90 SPBRGL=0xCF BAUDCON=0x40`. The
+  remaining peripherals (Timer2/4/6, CCP/ECCP, MSSP, ADC, LCD,
+  comparators, DAC, FVR, EEPROM, etc.) still need to clear the §4 gate
+  individually; none of them count as done until they do.
 - Silicon errata DS80000479 (1934/1936/1937): ADC may not complete at
   FOSC > 8 MHz; ECCP 0%-duty direction-change and port-steering issues;
   Timer1 gate toggle issues; EUSART auto-baud SPBRG bug; MSSP SPI master
