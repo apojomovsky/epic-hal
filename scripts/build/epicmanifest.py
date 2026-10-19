@@ -850,6 +850,18 @@ def _validate(manifest):
                             fam_name)
         for fam_name in set(mod.examples) | set(mod.extra_examples or {}):
             for mcu in manifest.families[fam_name].variants:
+                # Peer programs share a build dir on local builds, so
+                # their hex basenames must differ. Kept separate from
+                # the sim-gate namespace below: an example and its own
+                # sim gate may share a name (16F5x blink), they land in
+                # different dirs (build/ vs build-sim/).
+                programs = [entry.name for _, entry in manifest.examples_for(
+                    mod.name, fam_name, mcu)]
+                if len(set(programs)) != len(programs):
+                    raise ManifestError(
+                        f"modules.{mod.name}.example.{fam_name}: "
+                        f"duplicate example name on {mcu}: {programs}"
+                    )
                 for ex_id, _entry in manifest.examples_for(
                         mod.name, fam_name):
                     names = [g.name for g in manifest.sim_gates_for(

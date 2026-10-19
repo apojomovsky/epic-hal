@@ -979,5 +979,13 @@ config      = { FOSC = "HS", WDTE = "OFF" }
         self.assertEqual(names, ["tick-blink-sim", "tick-blink-sim"])
 
 
+    def test_duplicate_example_name_across_peers_is_rejected(self):
+        same = PEER_TABLES.replace('name    = "tick-alt"',
+                                   'name    = "tick-blink"')
+        with self.assertRaisesRegex(epicmanifest.ManifestError,
+                                    "duplicate example name"):
+            epicmanifest.load(write(MINIMAL + same))
+
+
 if __name__ == "__main__":
     unittest.main()
