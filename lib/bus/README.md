@@ -11,8 +11,9 @@ address, then read/write N bytes" in one call, for both I2C and SPI.
   setter, no wait-for-idle); lib/bus adds the NACK-the-last-byte and
   SSPIF-poll pieces with one small family branch.
 - **Host-testable via an ops seam**: inject a mock MEM device
-  (`epic_bus_set_i2c_ops`/`set_spi_ops`) to exercise the transaction logic.
-  the host sim has no SSP slave model, so the default HAL ops are for target.
+  (`epic_bus_set_i2c_ops`/`set_spi_ops`) to exercise the transaction logic
+  (`tests/test_bus_mem.c`, run by ctest). The host sim has no SSP slave
+  model, so the default HAL ops are for target.
 
 ## Documentation
 
@@ -30,10 +31,16 @@ make xc8-build MODULE=lib/bus MCU=16F877A
 make xc8-build MODULE=lib/bus MCU=18F4550
 ```
 
-### MPLAB SIM gate (the mock-MEM test)
+### Host test (the mock-MEM test)
 
-The mock-MEM transaction logic is covered under MPLAB SIM by
-`tests/sim_bus.c`:
+```sh
+cmake -B build && cmake --build build && ctest --test-dir build
+```
+
+### MPLAB SIM gate
+
+The same transaction logic also runs under MPLAB SIM, alongside real SSP
+register traffic, in `tests/sim_bus.c`:
 
 ```sh
 make mdb-test MODULE=lib/bus MCU=16F877A DEVICE=PIC16F877A

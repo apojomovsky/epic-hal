@@ -2,10 +2,10 @@
 #
 #   cmake -B build && cmake --build build
 #
-# Family-agnostic MEM logic over the HAL SSP driver (target); the
-# mock-MEM test runs under MPLAB SIM (tests/sim_bus.c). The target
-# example builds via the manifest matrix. -DEPIC_FAMILY=PIC18 selects
-# the family (default PIC16).
+# Family-agnostic MEM logic over the HAL SSP driver (target). The mock-ops
+# host test runs under ctest (tests/test_bus_mem.c); the MPLAB SIM gate is
+# tests/sim_bus.c. The target example builds via the manifest matrix.
+# -DEPIC_FAMILY=PIC18 selects the family (default PIC16).
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_bus C)
@@ -63,3 +63,11 @@ target_include_directories(epic_bus PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(epic_bus PUBLIC ${EPIC_LIB})
 target_compile_definitions(epic_bus PRIVATE -D${DEFAULT_DEVICE})
+
+# Host test: the MEM transaction logic through mock ops (no SSP slave
+# model in the host sim, so the default HAL ops are not exercised).
+enable_testing()
+add_executable(test_bus_mem tests/test_bus_mem.c)
+target_compile_definitions(test_bus_mem PRIVATE -D${DEFAULT_DEVICE})
+target_link_libraries(test_bus_mem PRIVATE epic_bus)
+add_test(NAME bus_mem COMMAND test_bus_mem)
