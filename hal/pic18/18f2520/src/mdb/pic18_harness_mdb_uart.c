@@ -1,11 +1,10 @@
 /*
- * PIC18F2520-family UART sim-target implementation of the test harness
- * (see core/epic_harness.h): runs as real compiled firmware under MPLAB
- * SIM, driven headlessly via mdb. Mirrors hal/pic18/18fxx5x's UART
- * harness; only the EUSART surface differs (16-bit BRG option here,
- * 20 MHz FOSC_HZ). Used by the `usart` sim gate, whose firmware
- * (tests/example_usart.c) transmits 0x55 before the harness reports,
- * so the uartio capture holds both the TX byte and the PASS marker.
+ * PIC18F2520-family UART sim-target test harness (core/epic_harness.h):
+ * real firmware under MPLAB SIM, driven headlessly via mdb. Mirrors
+ * hal/pic18/18fxx5x's UART harness; only the EUSART surface differs
+ * (16-bit BRG option here, 20 MHz FOSC_HZ). The `usart` sim gate's
+ * firmware (tests/example_usart.c) transmits 0x55 before the harness
+ * reports, so the uartio capture holds the TX byte and PASS marker.
  */
 
 #include "core/epic_harness.h"
