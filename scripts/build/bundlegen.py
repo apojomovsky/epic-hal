@@ -134,6 +134,22 @@ def files_for_family(manifest, family_name: str) -> list[str]:
     return sorted(files)
 
 
+def _module_srcs(manifest, family_name, name):
+    """One module's own sources minus files the family HAL compiles.
+
+    A source the family HAL already compiles would land twice in a
+    consumer build, which XC8 rejects with error 1296. Only
+    unconditional HAL lists filter here, a conditional source may be
+    absent for the chosen MCU.
+    """
+    fam = _family(manifest, family_name)
+    mod = manifest.modules[name]
+    hal_paths = {posixpath.normpath(str(s)) for s in fam.hal_sources}
+    hal_paths |= {posixpath.normpath(str(s)) for s in fam.epiccc_sources}
+    return [s for s in list(mod.sources) + list(mod.sources_by_family.get(family_name, []))
+            if epicmanifest.join_module_path(mod.dir, s) not in hal_paths]
+
+
 def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
     """The consumer-facing make fragment.
 
@@ -194,15 +210,7 @@ def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
         for mcu, reason in sorted(mod.excluded.items()):
             if mcu in fam.variants:
                 out.append(f"EPIC_HAL_WHYNOT_{name}_{mcu} := {reason}")
-        own_srcs = list(mod.sources) + list(mod.sources_by_family.get(family_name, []))
-        # A module source the family HAL already compiles lands twice in
-        # EPIC_HAL_SRCS, which XC8 rejects with error 1296. The HAL copy
-        # stays; only unconditional HAL lists filter here, a conditional
-        # source may be absent for the chosen MCU.
-        hal_paths = {posixpath.normpath(str(s)) for s in fam.hal_sources}
-        hal_paths |= {posixpath.normpath(str(s)) for s in fam.epiccc_sources}
-        own_srcs = [s for s in own_srcs
-                    if epicmanifest.join_module_path(mod.dir, s) not in hal_paths]
+        own_srcs = _module_srcs(manifest, family_name, name)
         srcs = " ".join(f"$(EPIC_HAL_DIR)/{epicmanifest.join_module_path(mod.dir, s)}" for s in own_srcs)
         incs = " ".join(f"$(EPIC_HAL_DIR)/{epicmanifest.join_module_path(mod.dir, i)}" for i in mod.includes)
         out.append(f"EPIC_HAL_SRCS_{name} := {srcs}")
@@ -324,7 +332,7 @@ def emit_sources_json(manifest, family_name: str, version: str) -> str:
     modules = {}
     for name in modules_for_family(manifest, family_name):
         mod = manifest.modules[name]
-        own_srcs = list(mod.sources) + list(mod.sources_by_family.get(family_name, []))
+        own_srcs = _module_srcs(manifest, family_name, name)
         example = mod.examples.get(family_name)
         modules[name] = {
             "resolved": manifest.resolve_deps(name),
@@ -568,7 +576,7 @@ def emit_mplabx_md(manifest, family_name: str, version: str) -> str:
     src_dirs = sorted({str(pathlib.PurePosixPath(s).parent) for s in fam.hal_sources})
     for name in modules:
         mod = manifest.modules[name]
-        own_srcs = list(mod.sources) + list(mod.sources_by_family.get(family_name, []))
+        own_srcs = _module_srcs(manifest, family_name, name)
         src_dirs += sorted({
             str(pathlib.PurePosixPath(epicmanifest.join_module_path(mod.dir, s)).parent) for s in own_srcs
         })
