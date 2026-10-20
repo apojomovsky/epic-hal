@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import pathlib
+import posixpath
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -194,6 +195,14 @@ def emit_epic_hal_mk(manifest, family_name: str, version: str) -> str:
             if mcu in fam.variants:
                 out.append(f"EPIC_HAL_WHYNOT_{name}_{mcu} := {reason}")
         own_srcs = list(mod.sources) + list(mod.sources_by_family.get(family_name, []))
+        # A module source the family HAL already compiles lands twice in
+        # EPIC_HAL_SRCS, which XC8 rejects with error 1296. The HAL copy
+        # stays; only unconditional HAL lists filter here, a conditional
+        # source may be absent for the chosen MCU.
+        hal_paths = {posixpath.normpath(str(s)) for s in fam.hal_sources}
+        hal_paths |= {posixpath.normpath(str(s)) for s in fam.epiccc_sources}
+        own_srcs = [s for s in own_srcs
+                    if epicmanifest.join_module_path(mod.dir, s) not in hal_paths]
         srcs = " ".join(f"$(EPIC_HAL_DIR)/{epicmanifest.join_module_path(mod.dir, s)}" for s in own_srcs)
         incs = " ".join(f"$(EPIC_HAL_DIR)/{epicmanifest.join_module_path(mod.dir, i)}" for i in mod.includes)
         out.append(f"EPIC_HAL_SRCS_{name} := {srcs}")
