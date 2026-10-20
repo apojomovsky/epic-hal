@@ -137,6 +137,7 @@ Conventional Commits. Dates are UTC.
 - Report POR on fresh reset in PCON/RCON images (#545)
 - Load OPTION_REG POR 0xFF in pic14 host-sim resets (#556)
 - Gate Timer0 prescaler on PSA and clear it on reset (#566)
+- Sanitize warnings 759 and 2098 pair at changelog generation (#572)
 ### Performance
 - Store only CCP callbacks, drop 3x16B handle copies (#500)
 - Store only CCP callbacks on 18f1320, 18f2520 and 18f6520 (#512)
