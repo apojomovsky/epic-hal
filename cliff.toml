@@ -42,8 +42,15 @@ split_commits = false
 # pre-commit gate rejects em-dashes in any added line, including a
 # generated CHANGELOG.md that quotes them verbatim, so normalize to a
 # colon here rather than editing already-published commit history.
+# A merged subject names two link-stage warning numbers with a slash;
+# rendered directly below the subject that removes compiler size figures
+# from public text, the pair trips the no-XC8-figure guard, which reads it
+# as a used/total size figure. The subjects are published history, so
+# rewrite the pair here, at generation time, instead. Scoped to this one
+# known pair: a real figure must still fail loudly.
 commit_preprocessors = [
   { pattern = '\s*\x{2014}\s*', replace = ": " },
+  { pattern = '759/2098', replace = "warnings 759 and 2098" },
 ]
 commit_parsers = [
   { message = "^chore\\(release\\)", skip = true },
