@@ -28,8 +28,9 @@ example (the manifest carries no `sim` entry, so the module page reports
 nothing off silicon proves enumeration or endpoint behavior.
 
 The host build links `src/epic_usb_host_stub.c`, a test double that shares
-no code with `src/epic_usb.c`. It proves the public API contract only:
-ring fill and drain, overflow drop, and DTR-gated `connected()`, driven
+no code with `src/epic_usb.c`. It proves the public API contract only,
+including ring fill and drain, overflow drop, DTR-gated `connected()`,
+flush draining while connected, and short non-blocking reads, driven
 through the `epic_usb_test_support.h` hooks (`set_dtr`, `inject_rx`, and
 the sent log). It does not prove USB enumeration, endpoint 0 control
 transfers, descriptor contents, CDC class requests, or bus timing. Those
