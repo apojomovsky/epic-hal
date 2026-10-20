@@ -128,7 +128,7 @@ Conventional Commits. Dates are UTC.
 - Ship and select the epic-cc source slice for the scaffolded epic-cc build (#444)
 - Set the xc8 scaffold TOOLCHAIN default before epic-hal.mk is included (#447)
 - Remove XC8 size figures from public text (#450) (#451)
-- Suppress link-stage warnings 759 and 2098 on provably-NULL callbacks (#466)
+- Suppress link-stage 759/2098 on provably-NULL callbacks (#466)
 - Pin the hub sha256 in the shared-include check (#484)
 - Feed CLC T1_overflow and T2_match as pulses ahead of the postscaler (#489)
 - Read PCON and RCON POR and BOR flags as active low (#539)
