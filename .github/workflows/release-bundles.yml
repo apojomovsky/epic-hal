@@ -169,9 +169,45 @@ jobs:
               cd /isolated
               continue
             fi
-            part="$(grep -m1 "^EPIC_HAL_SUPPORTED_epic-$module " epic-hal.mk \
-              | awk '{print $3}')"
-            dfp_name="$(grep -m1 '^EPIC_HAL_DFP' epic-hal.mk | awk '{print $3}')"
+            # Pick the first module whose full dependency closure supports
+            # a common part: SUPPORTED/RESOLVED variables are keyed by the
+            # full module id (lib/serial), EPIC_HAL_MODULE_<short> maps the
+            # short consumer name to it, and EPIC_HAL_RESOLVED_<id> lists
+            # the closure the mk guard checks. A top-level module whose own
+            # dep is unsupported on every part (demos/bridge needs
+            # lib/mcp23x17, which has no PIC18Fxx5x entry) is skipped in
+            # favour of a buildable one; nothing here asserts new support.
+            module=""; part=""
+            for m in $(grep '^EPIC_HAL_MODULE_' epic-hal.mk \
+                | sed 's/^EPIC_HAL_MODULE_\([^ ]*\).*/\1/'); do
+              f="$(grep -m1 -F "EPIC_HAL_MODULE_${m} := " epic-hal.mk \
+                | awk '{print $3}' || true)"
+              [ -n "$f" ] || continue
+              resolved="$(grep -m1 -F "EPIC_HAL_RESOLVED_${f} " epic-hal.mk \
+                | sed 's/^.*:= //' || true)"
+              for p in $(grep -m1 -F "EPIC_HAL_SUPPORTED_${f} " epic-hal.mk \
+                  | sed 's/^.*:= //' || true); do
+                ok=1
+                for d in $resolved; do
+                  sup="$(grep -m1 -F "EPIC_HAL_SUPPORTED_${d} " epic-hal.mk \
+                    | sed 's/^.*:= //' || true)"
+                  case " $sup " in *" $p "*) ;; *) ok=0; break ;; esac
+                done
+                if [ "$ok" = 1 ]; then module="$m"; part="$p"; break 2; fi
+              done
+            done
+            if [ -z "$part" ]; then
+              echo "SKIP $name: no self-consistent module+part, nothing to link"
+              cd /isolated
+              continue
+            fi
+            dfp_name="$(grep -m1 '^EPIC_HAL_DFP ' epic-hal.mk | awk '{print $3}' || true)"
+            if [ -z "$dfp_name" ]; then
+              echo "FAIL $name: no EPIC_HAL_DFP in epic-hal.mk"
+              fail=1
+              cd /isolated
+              continue
+            fi
 
             cat > Makefile <<EOF
           EPIC_HAL_DIR := .
