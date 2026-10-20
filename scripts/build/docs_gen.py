@@ -269,11 +269,29 @@ def emit_user_module_md(manifest: epicmanifest.Manifest, name: str) -> str:
         "",
         "## API",
         "",
-        f"The API is documented next to the code, in the"
-        f" [`{mid}` directory]({REPO_URL}/tree/master/{mod.dir}). This"
-        " page does not restate it. The manifest carries no function list,"
-        " so no API table is generated here yet.",
-        "",
+    ]
+    if mod.functions:
+        lines += [
+            f"The API is documented next to the code, in the"
+            f" [`{mid}` directory]({REPO_URL}/tree/master/{mod.dir}). This"
+            " page does not restate it.",
+            "",
+            "The manifest lists these public functions:",
+            "",
+            "| Function |",
+            "|---|",
+            *(f"| `{f}` |" for f in mod.functions),
+            "",
+        ]
+    else:
+        lines += [
+            f"The API is documented next to the code, in the"
+            f" [`{mid}` directory]({REPO_URL}/tree/master/{mod.dir}). This"
+            " page does not restate it. The manifest carries no function list,"
+            " so no API table is generated here yet.",
+            "",
+        ]
+    lines += [
         "## Limits",
         "",
     ]

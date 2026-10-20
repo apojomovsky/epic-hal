@@ -185,6 +185,9 @@ class Module:
     includes: list[str]
     depends_on: list[str]
     needs_hal: bool
+    # Public function names, rendered as the API table on the module's
+    # user page by docs_gen. Empty renders the no-table fallback.
+    functions: list[str]
     supported: dict[str, list[str]]
     excluded: dict[str, str]
     examples: dict[str, Example]
@@ -670,7 +673,8 @@ def _parse_module(name, table):
     # directory, so an id and its location cannot drift. Reject any
     # stray `dir` key rather than reading it.
     _check_keys(table, {"summary", "sources", "sources_by_family",
-                        "includes", "depends_on", "needs_hal", "supported",
+                        "includes", "depends_on", "needs_hal", "functions",
+                        "supported",
                         "excluded", "example", "extra_examples",
                         "epiccc_hal_sources_by_family",
                         "epiccc_sim_hal_sources_by_family"},
@@ -684,6 +688,9 @@ def _parse_module(name, table):
             f"directory (epic-hal#308)"
         )
     needs_hal = bool(table.get("needs_hal", True))
+    functions = list(table.get("functions", []))
+    if any(not isinstance(f, str) or not f for f in functions):
+        raise ManifestError(f"modules.{name}: functions must be names")
     return Module(
         name=name,
         dir=name,
@@ -696,6 +703,7 @@ def _parse_module(name, table):
         includes=list(table.get("includes", [])),
         depends_on=list(table.get("depends_on", [])),
         needs_hal=needs_hal,
+        functions=functions,
         supported={
             fam: list(variants)
             for fam, variants in table.get("supported", {}).items()

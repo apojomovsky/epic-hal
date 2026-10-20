@@ -28,7 +28,19 @@ The manifest lists one example program per family, plus peer programs for extra 
 
 ## API
 
-The API is documented next to the code, in the [`lib/usb` directory](https://github.com/apojomovsky/epic-hal/tree/master/lib/usb). This page does not restate it. The manifest carries no function list, so no API table is generated here yet.
+The API is documented next to the code, in the [`lib/usb` directory](https://github.com/apojomovsky/epic-hal/tree/master/lib/usb). This page does not restate it.
+
+The manifest lists these public functions:
+
+| Function |
+|---|
+| `epic_usb_init` |
+| `epic_usb_service` |
+| `epic_usb_write` |
+| `epic_usb_read` |
+| `epic_usb_available` |
+| `epic_usb_flush` |
+| `epic_usb_connected` |
 
 ## Limits
 
