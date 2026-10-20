@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here, generated from
 Conventional Commits. Dates are UTC.
-## [0.7.0] - 2026-10-19
+## [0.7.0] - 2026-10-20
 ### Breaking
 - Group the repo root into common/, hal/<arch>/, lib/ and demos/ (#316)
 - Derive module ids from the directory path (#421)
@@ -79,6 +79,7 @@ Conventional Commits. Dates are UTC.
 - Port the 16F506 ADC (#537)
 - Route T1CKI, T1G and T2IN through PPS inputs (#540)
 - Allow more than one MPLAB SIM gate per variant (#541)
+- Gpio8 and SPI example programs plus manifest extra_examples (#565)
 ### Fixes
 - Carry conditional_sources' after field through bundlegen (#208)
 - Scope the pre-commit cppcheck includes per staged directory (#216) (#222)
@@ -135,6 +136,7 @@ Conventional Commits. Dates are UTC.
 - Restore EEPROM_WRITES help lost in multi-gate edit (#543)
 - Report POR on fresh reset in PCON/RCON images (#545)
 - Load OPTION_REG POR 0xFF in pic14 host-sim resets (#556)
+- Gate Timer0 prescaler on PSA and clear it on reset (#566)
 ### Performance
 - Store only CCP callbacks, drop 3x16B handle copies (#500)
 - Store only CCP callbacks on 18f1320, 18f2520 and 18f6520 (#512)
@@ -204,6 +206,10 @@ Conventional Commits. Dates are UTC.
 - Cover gpio8 and SPI transports on host (#517)
 - Add host ctest for RTU framing, CRC and dispatch (#554)
 - Gate golden_vectors.h against its generator in ctest (#555)
+- Wire 16F72 gpio bank-probe into CI sim gates (#559)
+- Gate EUSART live via uartio capture (#560)
+- Clear the EUSART section-4 live gate via mdb readback (#562)
+- Add host ctest for I2C/SPI MEM transactions via mock ops (#563)
 ## [0.6.0] - 2026-09-13
 ### Features
 - Add PIC16F628A family support on shared pic14 core (#137)
