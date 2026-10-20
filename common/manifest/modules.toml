@@ -4148,6 +4148,15 @@ includes   = [
 ]
 depends_on = []
 needs_hal  = false
+functions   = [
+  "epic_usb_init",
+  "epic_usb_service",
+  "epic_usb_write",
+  "epic_usb_read",
+  "epic_usb_available",
+  "epic_usb_flush",
+  "epic_usb_connected",
+]
 
 [modules."lib/usb".supported]
 PIC18Fxx5x = [
