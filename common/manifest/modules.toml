@@ -2660,7 +2660,6 @@ PIC16F87XA = [
   "16F873A",
   "16LF873A",
   "16F873",
-  "16F872",
   "16F874",
   "16F874A",
   "16F876",
@@ -2674,10 +2673,15 @@ PIC16F88X = [
   "16F886",
   "16F887",
 ]
+PIC18Fxx5x = [
+  "18F4455",
+  "18F4550",
+]
 
 [modules."lib/mcp23x17".excluded]
 "16F870" = "no SSP peripheral on this cut-down"
 "16F871" = "no SSP peripheral on this cut-down"
+"16F872" = "flash: the lib/bus dependency does not fit 2K CODE"
 
 [modules."lib/mcp23x17".example.PIC16F87XA]
 name    = "mcp23x17"
@@ -2717,6 +2721,18 @@ sources     = [
   "tests/sim_mcp23x17.c",
 ]
 config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# Same target program on the 40/44-pin PIC18 parts, whose MSSP the
+# lib/bus I2C transport already drives (see lib/bus's own PIC18Fxx5x
+# example). No sim gate: the SSP data path is unmodeled under MPLAB SIM
+# there too, and lib/bus's PIC18 gate already covers the transport.
+[modules."lib/mcp23x17".example.PIC18Fxx5x]
+name    = "mcp23x17"
+sources = [
+  "examples/example_mcp23x17_target.c",
+]
+hal     = true
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 [modules."lib/bus".example.PIC18Fxx5x]
 name    = "bus"
@@ -3289,6 +3305,10 @@ PIC16F87XA = [
 PIC16F88X = [
   "16F887",
 ]
+PIC18Fxx5x = [
+  "18F4455",
+  "18F4550",
+]
 
 [modules."lib/lcd".example.PIC16F87XA]
 name    = "lcd"
@@ -3307,6 +3327,18 @@ sources = [
 ]
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
+
+# The same program and pin map on the 40/44-pin PIC18 parts: PORTB has
+# RB0..RB7 there, and lib/tick (the transport's delay source) stops at
+# the 40/44-pin parts, so 18F2455/18F2550 do not reach this example.
+[modules."lib/lcd".example.PIC18Fxx5x]
+name    = "lcd"
+sources = [
+  "examples/example_lcd.c",
+  "src/epic_lcd_gpio4.c",
+]
+hal     = true
+config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP2 = "OFF", CPB = "OFF", CPD = "OFF", CPUDIV = "OSC1_PLL2", DEBUG = "OFF", EBTR0 = "OFF", EBTR1 = "OFF", EBTR2 = "OFF", EBTRB = "OFF", FCMEN = "OFF", FOSC = "HS", IESO = "OFF", LPT1OSC = "OFF", LVP = "OFF", MCLRE = "ON", PBADEN = "OFF", PLLDIV = "5", PWRT = "ON", STVREN = "ON", USBDIV = "2", VREGEN = "OFF", WDT = "OFF", WDTPS = "32768", WRT0 = "OFF", WRT1 = "OFF", WRT2 = "OFF", WRTB = "OFF", WRTC = "OFF", WRTD = "OFF", XINST = "OFF" }
 
 # Peer example programs (extra_examples, epic-hal#520): one program per
 # LCD transport. The gpio4 tables above stay the default; gpio8 drives
@@ -3454,13 +3486,11 @@ PIC16F88X = [
   "16F887",
 ]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
-
-[modules."lib/math".excluded]
-"18F2455" = "RAM: does not fit on this smaller part"
-"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules."lib/math".example.PIC16F87XA]
 name    = "math"
@@ -3940,6 +3970,8 @@ PIC16F88X = [
   "16F887",
 ]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
@@ -3953,8 +3985,6 @@ PIC18Fxx5x = [
 "16F872" = "RAM: 32-byte g_rx_buf does not fit"
 "16F874A" = "RAM: 32-byte g_rx_buf does not fit"
 "16F874" = "RAM: 32-byte g_rx_buf does not fit"
-"18F2455" = "RAM: does not fit on this smaller part"
-"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules."lib/serial".example.PIC16F87XA]
 name    = "serial"

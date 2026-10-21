@@ -238,6 +238,34 @@ class TestValidation(unittest.TestCase):
             epicmanifest.load(write(bad))
         self.assertIn("cycle", str(cm.exception).lower())
 
+    def test_supported_part_missing_from_a_dep_closure_is_rejected(self):
+        """A module cannot claim a part its own dependency does not.
+
+        The bundle's epic-hal.mk checks EPIC_HAL_SUPPORTED_<id> for every
+        module in the selected module's closure, so this manifest would
+        ship a bundle that rejects the part the module advertises."""
+        bad = MINIMAL.replace(
+            '[modules."lib/tick".supported]\nPIC16F87XA = ["16F873A", "16F877A"]',
+            '[modules."lib/tick".supported]\nPIC16F87XA = ["16F873A"]')
+        with self.assertRaises(epicmanifest.ManifestError) as cm:
+            epicmanifest.load(write(bad))
+        message = str(cm.exception)
+        self.assertIn("lib/serial", message)
+        self.assertIn("16F877A", message)
+
+    def test_closure_error_names_the_exclusion_reason(self):
+        """The error quotes the dependency's own excluded reason."""
+        bad = MINIMAL.replace(
+            '[modules."lib/tick".supported]\nPIC16F87XA = ["16F873A", "16F877A"]',
+            '[modules."lib/tick".supported]\nPIC16F87XA = ["16F873A"]')
+        bad = bad.replace(
+            '[modules."lib/serial"]',
+            '[modules."lib/tick".excluded]\n"16F877A" = "flash: probe reason"\n\n'
+            '[modules."lib/serial"]', 1)
+        with self.assertRaises(epicmanifest.ManifestError) as cm:
+            epicmanifest.load(write(bad))
+        self.assertIn("flash: probe reason", str(cm.exception))
+
     def test_unknown_family_in_sources_by_family_is_rejected(self):
         bad = MINIMAL.replace('[modules."lib/math".sources_by_family]\nPIC16F87XA',
                               '[modules."lib/math".sources_by_family]\nPIC99XXXX')

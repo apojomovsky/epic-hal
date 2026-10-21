@@ -966,6 +966,37 @@ def _validate(manifest):
                         f"{fam_name}: missing the sim harness '{sim.harness_src}'"
                     )
     _check_cycles(manifest.modules)
+    _check_dep_closure(manifest)
+
+
+def _check_dep_closure(manifest):
+    """Reject a module supported on a part its dependency closure is not.
+
+    The consumer bundle's epic-hal.mk emits one EPIC_HAL_SUPPORTED_<id>
+    per module and errors unless every module in the selected module's
+    resolved dependency closure lists the chosen MCU. A module whose own
+    supported list is wider than a dependency's would therefore ship a
+    bundle that refuses the very part the module claims, so the manifest
+    has to be closure-consistent. Checked here, at load time, because
+    epic_build.py trusts module-level depends_on (the bundle guard is the
+    only other place that sees the mismatch).
+    """
+    for mod in manifest.modules.values():
+        for fam_name, parts in mod.supported.items():
+            for part in parts:
+                for dep in manifest.resolve_deps(mod.name):
+                    dep_mod = manifest.modules[dep]
+                    if part in dep_mod.supported.get(fam_name, []):
+                        continue
+                    reason = dep_mod.excluded.get(part)
+                    raise ManifestError(
+                        f"modules.{mod.name}.supported.{fam_name}: "
+                        f"'{part}' resolves {dep}, which is not supported "
+                        f"there"
+                        + (f" ({reason})" if reason else "")
+                        + "; add the part to that module's supported list "
+                        "or drop it from this one"
+                    )
 
 
 def _parse_toolchain(raw) -> str:
