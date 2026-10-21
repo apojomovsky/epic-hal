@@ -42,15 +42,32 @@ else:
 class EchoRoundTripCase(unittest.TestCase):
     """The round trip over a pseudo-terminal."""
 
+    class Port:
+        """The serial port, plus the modem-control lines a pty lacks.
+
+        A pseudo-terminal carries no modem-control lines, so the real
+        board's DTR assertion cannot be reproduced with one. This
+        adapter provides the property the gate sets and forwards
+        everything else to the port underneath.
+        """
+
+        def __init__(self, port):
+            self._port = port
+            self.dtr = False
+
+        def __getattr__(self, name):
+            return getattr(self._port, name)
+
     def setUp(self):
         import pty
         self.master, slave = pty.openpty()
-        self.port = serial.Serial(
+        self.raw_port = serial.Serial(
             os.ttyname(slave), 115200, timeout=1.0)
+        self.port = self.Port(self.raw_port)
         self.slave_name = os.ttyname(slave)
 
     def tearDown(self):
-        self.port.close()
+        self.raw_port.close()
         os.close(self.master)
 
     def _echo_server(self, transform=None):
@@ -99,13 +116,22 @@ class EchoRoundTripCase(unittest.TestCase):
     def test_dtr_is_asserted(self):
         """The firmware's connected() waits for DTR, so it must be set."""
         self._echo_server()
-        try:
-            gate.echo_round_trip(self.port, b"x", 2.0)
-        except OSError:
-            # This port cannot carry modem-control lines at all, so
-            # there is no DTR to assert.
-            self.skipTest("this port does not support DTR")
+        gate.echo_round_trip(self.port, b"x", 2.0)
         self.assertTrue(self.port.dtr)
+
+    def test_a_port_that_cannot_set_dtr_fails_explicitly(self):
+        """No modem-control lines: that is the failure, not a mismatch."""
+
+        class NoDtr:
+            name = "/dev/null"
+
+            def __setattr__(self, name, value):
+                if name == "dtr":
+                    raise OSError("inappropriate ioctl")
+                object.__setattr__(self, name, value)
+
+        with self.assertRaises(gate.DtrError):
+            gate.echo_round_trip(NoDtr(), b"x", 2.0)
 
 
 if __name__ == "__main__":

@@ -42,6 +42,10 @@ DEFAULT_VID = 0xA0A0
 DEFAULT_PID = 0x0004
 DEFAULT_TIMEOUT = 30.0
 
+
+class DtrError(Exception):
+    """The port could not assert DTR, so the device will not echo."""
+
 # Deterministic, non-repeating payload: the echo comparison is byte-exact,
 # so a mangled ring index or a dropped packet fails here.
 PAYLOAD = bytes(range(0x20, 0x20 + 64))
@@ -66,10 +70,10 @@ def echo_round_trip(port, payload: bytes, timeout: float) -> bytes:
     """Write payload and collect the bytes the device sends back.
 
     DTR is asserted first: the firmware's connected() waits for it, so
-    without it the device never echoes. A device that cannot carry
-    modem-control lines (a pseudo-terminal, for one) raises here, and
-    that is not fatal: the round trip is still worth attempting, and
-    the failure it produces says what went wrong.
+    without it the device never echoes. A port that cannot carry
+    modem-control lines raises here, and that is a failure in its own
+    right: reporting it as a byte mismatch would point at the echo
+    instead of at the port.
 
     The read side has its own deadline: the time spent waiting for
     enumeration does not come out of the time allowed for the echo to
@@ -78,8 +82,9 @@ def echo_round_trip(port, payload: bytes, timeout: float) -> bytes:
     try:
         port.dtr = True
     except (OSError, IOError) as exc:
-        print("usb gate: note, cannot set DTR on %s (%s)"
-              % (port.name, exc), file=sys.stderr)
+        raise DtrError("cannot assert DTR on %s (%s); the firmware only "
+                       "echoes once the host opens the port"
+                       % (port.name, exc)) from exc
     time.sleep(0.5)
     port.reset_input_buffer()
     port.write(payload)
@@ -115,7 +120,11 @@ def main() -> int:
         return 2
 
     try:
-        got = echo_round_trip(port, PAYLOAD, args.timeout)
+        try:
+            got = echo_round_trip(port, PAYLOAD, args.timeout)
+        except DtrError as exc:
+            print("usb gate: FAIL, %s" % exc, file=sys.stderr)
+            return 1
         print("usb gate: enumerated %04X:%04X on %s"
               % (args.vid, args.pid, port.port))
         if got != PAYLOAD:
