@@ -32,6 +32,10 @@ gate actually proves.
   `VREGEN = "OFF"`, so the board must supply VUSB externally
   (DS39632E Section 17.2.2, note 1: do not enable the regulator when
   an external regulator is connected to VUSB).
+- The USB RAM layout is the same on every part of the family: each has
+  2 KB of data memory in eight banks, and banks 4-7 are the USB RAM
+  (DS39632E Table 1-1 and Section 17.3), so one `BUFFER_ADDR` fits
+  all of them.
 
 ## Build and program
 

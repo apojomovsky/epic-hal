@@ -5,18 +5,18 @@ vendored M-Stack USB device stack (`third_party/m-stack`).
 
 - **Mirrors lib/serial's API**: same `write`/`read`/`available`/`flush`
   contract, same ring-buffer discipline (TX demand-driven, RX always-on),
-  plus `connected()` — true once the host opens the CDC port (DTR asserted),
+  plus `connected()`, true once the host opens the CDC port (DTR asserted),
   not merely once enumeration finishes.
 - **PIC18Fxx5x-only**: the PIC18F2455/2550/4455/4550 SIE peripheral has no
   equivalent on PIC16F87XA parts (no USB peripheral at all), so there is no
-  PIC16 backend and never will be. Not a scope choice — a hardware constraint.
+  PIC16 backend and never will be. Not a scope choice, a hardware constraint.
 - **Polling, not interrupts**: `epic_usb_service()` pumps M-Stack's
   enumeration and endpoint state machine; call it every main-loop iteration or
   from a short-period `lib/taskmgr` task. M-Stack's interrupt-driven mode is
   deliberately not wired up.
 - **Host stub tests the contract, not the silicon**: the host build links a
   separate `epic_usb_host_stub.c` (not a compile-time swap of the same
-  source) that proves the ring-buffer and connection-state logic — it does
+  source) that proves the ring-buffer and connection-state logic. It does
   **not** simulate USB enumeration, and no host test substitutes for real
   silicon bring-up.
 
@@ -26,11 +26,13 @@ vendored M-Stack USB device stack (`third_party/m-stack`).
 |---|---|---|
 | 1 | Vendor M-Stack, confirm its actual API surface, port `usb_hal.h` to the PIC18F2455/2550/4455/4550 | Done |
 | 2 | The `epic_usb_*` wrapper, the host stub, the unit tests, a real XC8 build against PIC18F4550 headers | Done |
-| 3 | Silicon bring-up: the bring-up project, the simulator gate, and the hardware enumeration + CDC echo gate | Project and simulator gate done; the hardware half is unproven (no board on the machine that built it) |
+| 3 | Silicon bring-up: the bring-up project, the simulator gate, and the hardware enumeration + CDC echo gate | Project and simulator gate in place; the hardware half needs a board |
 
 Phase 3's project lives in
 [`mcu/pic18fxx5x-usb-mplabx/`](mcu/pic18fxx5x-usb-mplabx/README.md), and
-its gate is `make usb-gate MODULE=lib/usb MCU=18F4550`.
+its gate is `make usb-gate MODULE=lib/usb MCU=18F4550`. That gate's
+hardware half is the enumeration evidence, and it needs a board
+attached; the simulator half runs everywhere.
 
 ## Simulator coverage
 
@@ -105,7 +107,7 @@ under the Apache-2.0 arm of its dual LGPLv3 / Apache-2.0 license. M-Stack's
 own `LICENSE-*.txt` files are left untouched inside that directory. Remove it
 from your fork if you do not want to redistribute third-party code.
 
-The default VID/PID (0xA0A0 / 0x0004) is M-Stack's bundled placeholder —
+The default VID/PID (0xA0A0 / 0x0004) is M-Stack's bundled placeholder,
 fine for bench bring-up, **not for redistribution**. Replace with a real
 pid.codes allocation before shipping a device.
 
