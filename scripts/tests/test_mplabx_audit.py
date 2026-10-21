@@ -8,6 +8,9 @@ import unittest
 
 SCRIPTS = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS))
+sys.path.insert(0, str(SCRIPTS / "build"))
+
+import epicmanifest  # noqa: E402
 
 
 def _load():
@@ -152,6 +155,40 @@ class AuditCase(unittest.TestCase):
         self.touch(*items)
         self.write_project(items, [], list(items))
         self.assertEqual(mplabx_audit.check_project(self.proj, family()), [])
+
+
+class UsbProjectCase(unittest.TestCase):
+    """The USB bring-up project is checked against the manifest."""
+
+    def setUp(self):
+        self.manifest = epicmanifest.load(epicmanifest.default_path())
+        # The real project, so the test covers the committed tree.
+        self.proj = mplabx_audit.USB_PROJECT
+
+    def test_committed_project_matches_the_manifest(self):
+        self.assertEqual(mplabx_audit.check_usb_project(self.manifest), [])
+
+    def test_a_source_the_manifest_does_not_name_fails(self):
+        cfg = self.proj / "nbproject" / "configurations.xml"
+        original = cfg.read_text()
+        cfg.write_text(original.replace(
+            "<itemPath>../../../../../lib/usb/src/epic_usb.c</itemPath>",
+            "<itemPath>../../../../../lib/usb/src/epic_usb_rogue.c</itemPath>"))
+        try:
+            errors = mplabx_audit.check_usb_project(self.manifest)
+            self.assertTrue(any("rogue" in e for e in errors))
+        finally:
+            cfg.write_text(original)
+
+    def test_a_config_word_the_manifest_does_not_name_fails(self):
+        config = self.proj / "config.c"
+        original = config.read_text()
+        config.write_text(original + "#pragma config BOGUS = ON\n")
+        try:
+            errors = mplabx_audit.check_usb_project(self.manifest)
+            self.assertTrue(any("BOGUS" in e for e in errors))
+        finally:
+            config.write_text(original)
 
 
 if __name__ == "__main__":

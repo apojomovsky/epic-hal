@@ -20,12 +20,34 @@ vendored M-Stack USB device stack (`third_party/m-stack`).
   **not** simulate USB enumeration, and no host test substitutes for real
   silicon bring-up.
 
+## Bring-up phases
+
+| Phase | What it covers | State |
+|---|---|---|
+| 1 | Vendor M-Stack, confirm its actual API surface, port `usb_hal.h` to the PIC18F2455/2550/4455/4550 | Done |
+| 2 | The `epic_usb_*` wrapper, the host stub, the unit tests, a real XC8 build against PIC18F4550 headers | Done |
+| 3 | Silicon bring-up: the bring-up project, the simulator gate, and the hardware enumeration + CDC echo gate | Project and simulator gate done; the hardware half is unproven (no board on the machine that built it) |
+
+Phase 3's project lives in
+[`mcu/pic18fxx5x-usb-mplabx/`](mcu/pic18fxx5x-usb-mplabx/README.md), and
+its gate is `make usb-gate MODULE=lib/usb MCU=18F4550`.
+
 ## Simulator coverage
 
-USB is silicon-only today. There is no MPLAB SIM gate for the `usb-cdc`
-example (the manifest carries no `sim` entry, so the module page reports
-`Simulator gate: None`) and no SIE model in the epic-cc simulator, so
-nothing off silicon proves enumeration or endpoint behavior.
+The `usb-cdc` example has an MPLAB SIM gate (`tests/sim_usb.c`, the
+manifest's `sim` entry, so the module page reports
+`Simulator gate: PIC18Fxx5x`). It runs the real firmware and reads back
+the SIE state: the SIE is enabled, full speed is selected, the internal
+pull-up is on, EP0 is a control endpoint with handshaking, EP1/EP2 carry
+data, and every buffer descriptor at 400h points into USB RAM 500h-7FFh
+(DS39632E Section 17.4.3).
+
+MPLAB SIM models no USB SIE: no bus, no host, no token engine. The gate
+therefore proves the SIE is programmed and the buffers are reachable, and
+proves nothing about enumeration. The epic-cc simulator has no SIE model
+either. Enumeration is proven by the hardware gate, which needs a board:
+it finds the CDC-ACM port, opens it, asserts DTR and requires 64 bytes
+to come back byte-exact.
 
 The host build links `src/epic_usb_host_stub.c`, a test double that shares
 no code with `src/epic_usb.c`. It proves the public API contract only,
@@ -33,12 +55,13 @@ including ring fill and drain, overflow drop, DTR-gated `connected()`,
 flush draining while connected, and short non-blocking reads, driven
 through the `epic_usb_test_support.h` hooks (`set_dtr`, `inject_rx`, and
 the sent log). It does not prove USB enumeration, endpoint 0 control
-transfers, descriptor contents, CDC class requests, or bus timing. Those
-need real silicon bring-up (Phase 3).
+transfers, descriptor contents, CDC class requests, or bus timing.
 
 ## Documentation
 
 - [API reference](docs/API.md), per-function semantics + usage.
+- [Bring-up project](mcu/pic18fxx5x-usb-mplabx/README.md), the board
+  requirements, the gates and what each proves.
 
 ## Quick start
 
@@ -51,11 +74,13 @@ ctest --test-dir build --output-on-failure
 
 ### Real target (XC8)
 
-Real-silicon bring-up is Phase 3 — the `mcu/pic18fxx5x-usb-mplabx/Makefile`
-does not exist yet. Phase 2 confirmed that `epic_usb.c` + M-Stack's core +
-CDC class driver compile and link clean under `xc8-cc` against real
-PIC18F4550 headers. No PIC16 `mcu/` directory will ever be added: that family has no
-USB peripheral.
+```sh
+make xc8-build MODULE=lib/usb MCU=18F4550
+```
+
+The hex lands at `build/18F4550-usb-cdc.hex`. The bring-up project's
+MPLAB X project builds the same firmware from the IDE. No PIC16 `mcu/`
+directory will ever be added: that family has no USB peripheral.
 
 ## Use it
 

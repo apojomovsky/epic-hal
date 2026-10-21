@@ -61,6 +61,7 @@ SIM_VARIANTS = [
     ("lib/taskmgr", "18F4550"),
     ("lib/settings", "18F4550"),
     ("lib/modbus", "18F4550"),
+    ("lib/usb", "18F4550"),
     ("tests/epic-combo-uart-ssp", "16F877A"),
     ("tests/epic-combo-multitimer", "16F877A"),
     ("tests/epic-combo-adc-uart", "16F877A"),

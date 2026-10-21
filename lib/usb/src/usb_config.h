@@ -24,6 +24,17 @@
 
 #define PPB_MODE PPB_NONE
 
+/* M-Stack places its buffer descriptor table through BD_ADDR (0x400 for
+ * this family) but leaves the endpoint data buffers to the linker unless
+ * BUFFER_ADDR is defined, and XC8 then scatters them into the general
+ * GPR banks. The SIE can only reach USB RAM: DS39632E Section 17.3 puts
+ * bank 4 (400h-4FFh) on the buffer descriptors and banks 5-7 (500h-7FFh)
+ * on endpoint data, and Section 17.4.3 says a BD address outside
+ * 400h-7FFh loses or overwrites data. Pin the buffers at the first data
+ * byte: EP0 out/in 8+8, EP1 out/in 1+10 and EP2 out/in 64+64 give 155
+ * bytes, all inside bank 5. */
+#define BUFFER_ADDR 0x500
+
 /* Polling, not interrupt-driven: epic_usb_service() runs from the
  * caller's main loop or an lib/taskmgr task, so USB_USE_INTERRUPTS
  * stays undefined. */

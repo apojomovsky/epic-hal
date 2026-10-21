@@ -9,7 +9,7 @@
 # exactly what CI resolves and pulls.
 
 # ─────────────────────────── image identity ─────────────────────────
-.PHONY: vendor-link check-vendor image ci-image-push test xc8-build epiccc-build epiccc-sim-sizes mdb-test mdb-epiccc mdb-hex sim-epiccc target-ci exec audit shell bootstrap doctor setup-hooks pre-pr-check
+.PHONY: vendor-link check-vendor image ci-image-push test xc8-build epiccc-build epiccc-sim-sizes mdb-test mdb-epiccc mdb-hex usb-gate sim-epiccc target-ci exec audit shell bootstrap doctor setup-hooks pre-pr-check
 # Same tag-resolution formula CI and scripts/sim/sim-test-local.sh already
 # use (read straight out of the Dockerfile's own ARGs), kept here in one
 # place so ci-image-push pushes to the exact tag CI resolves and pulls,
@@ -356,6 +356,35 @@ mdb-hex: image
 		exit 1; \
 	fi
 	$(DOCKER_RUN) scripts/sim/mdb-hex-run.sh /repo/$(HEX) $(DEVICE) $(or $(WAIT_MS),2000) "$(EXTRA_MDB)"
+
+# ─────────────── lib/usb silicon bring-up gate ───────────────────
+# The repeatable half of the silicon check: the simulator gate (the
+# SIE register image and the buffer descriptor table, read back from
+# the real firmware) plus the host-side enumeration and CDC echo round
+# trip when a board is attached. MODULE names the manifest module,
+# MCU the part, DEVICE the MPLAB part name. The simulator half needs
+# the emitted sim build, so the target emits it first (resolution on
+# the host, execution in the container, as xc8-build does). The
+# hardware half runs on the host: the board is on this machine's USB
+# bus, which the container cannot see, so it cannot run inside
+# DOCKER_RUN.
+usb-gate: image
+	@test -n "$(MCU)" || { echo "usage: make usb-gate MODULE=lib/usb MCU=18F4550 [DEVICE=PIC18F4550]" >&2; exit 1; }
+	MID=$$(python3 scripts/build/resolve_module.py --id "$(or $(MODULE),lib/usb)") || exit 1; \
+	python3 scripts/build/epic_build.py build --module $$MID --mcu $(MCU) --variant sim \
+	  --build-dir build-sim/$$MID \
+	  --dfp-dir "$$(python3 -c "import sys; sys.path.insert(0,'scripts/build'); import epicmanifest as e; m=e.load(e.default_path()); print('/opt/microchip/xc8/v$(XC8_VERSION)/pic/packs/'+e.dfp_name(m.family_of('$(MCU)'))+'/xc8')")"
+	MID=$$(python3 scripts/build/resolve_module.py --id "$(or $(MODULE),lib/usb)") || exit 1; \
+	$(DOCKER_RUN) scripts/sim/usb-bringup-gate.sh sim $$MID $(MCU) $(or $(DEVICE),PIC$(MCU))
+	@echo
+	scripts/sim/usb-bringup-gate.sh hw $(if $(HW_TIMEOUT),--timeout $(HW_TIMEOUT),) || hw=$$?; \
+	case "$${hw:-0}" in \
+	  0) echo "PASS: simulator gate and hardware enumeration + echo round trip";; \
+	  2) echo "PASS: simulator gate; hardware gate skipped (no board on this machine)"; \
+	     echo "  Enumeration is unproven: run this target on a machine with the board"; \
+	     echo "  attached to complete the silicon evidence.";; \
+	  *) echo "::error::hardware gate failed" >&2; exit 1;; \
+	esac
 
 # ─────── epic-cc sim gate (HAL-4) ───────
 # The public gate: run an epic-cc hex under its own ISA simulator
