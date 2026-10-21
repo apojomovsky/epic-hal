@@ -135,6 +135,7 @@ run_one pic18fxx5x 18F4550 PIC18F4550 lib/console 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 lib/taskmgr 5000 uart
 run_one pic18fxx5x 18F4550 PIC18F4550 lib/settings 5000 uart 24
 run_one pic18fxx5x 18F4550 PIC18F4550 lib/modbus 5000 uart
+run_one pic18fxx5x 18F4550 PIC18F4550 lib/usb 5000 uart
 
 run_one pic16f87xa 16F877A PIC16F877A tests/epic-combo-multitimer 5000 uart
 run_one pic16f87xa 16F877A PIC16F877A tests/epic-combo-adc-uart 5000 uart

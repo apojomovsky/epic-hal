@@ -13,9 +13,12 @@
 # lib/usb/README.md's "Host stub tests the contract, not the silicon"
 # bullet and epic_usb_host_stub.c's own file header for why).
 
-# The real target build goes entirely through the XC8 Makefile under
-# mcu/pic18fxx5x-usb-mplabx/ (Phase 3 of the plan, not wired up yet), not
-# through this CMakeLists.txt at all.
+# The real target build goes through the manifest's build driver (the
+# same path every other module uses), not through this CMakeLists.txt
+# at all:
+#   make xc8-build MODULE=lib/usb MCU=18F4550
+# The bring-up project under mcu/pic18fxx5x-usb-mplabx/ carries the
+# MPLAB X project for the same firmware.
 
 cmake_minimum_required(VERSION 3.16)
 project(epic_usb C)

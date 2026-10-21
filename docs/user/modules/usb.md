@@ -15,7 +15,7 @@ USB CDC-ACM virtual serial port for the PIC18Fxx5x family. This page is the refe
 | Depends on | Nothing |
 | Used by | No other module |
 | Needs a family HAL | No |
-| Simulator gate | None |
+| Simulator gate | PIC18Fxx5x |
 | Simulator limits | None documented |
 
 ## Use it
