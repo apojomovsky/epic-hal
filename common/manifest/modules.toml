@@ -2725,7 +2725,7 @@ config      = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OF
 # Same target program on the 40/44-pin PIC18 parts, whose MSSP the
 # lib/bus I2C transport already drives (see lib/bus's own PIC18Fxx5x
 # example). No sim gate: the SSP data path is unmodeled under MPLAB SIM
-# there too, and lib/bus's PIC18 gate already covers the transport.
+# there too, and lib/bus's sim gates cover the transport on the PIC16.
 [modules."lib/mcp23x17".example.PIC18Fxx5x]
 name    = "mcp23x17"
 sources = [
