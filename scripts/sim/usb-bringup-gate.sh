@@ -1,32 +1,13 @@
 #!/usr/bin/env bash
 # lib/usb silicon bring-up gate: the repeatable half of the silicon
-# check, plus the host-side echo round trip when a board is attached.
-#
-# Two gates, because they prove different things:
-#
-#   sim  The MPLAB SIM gate (the CI one): the firmware's SIE register
-#        image and its buffer descriptor table, read back from the
-#        real compiled firmware under the simulator. MPLAB SIM models
-#        no USB SIE (no bus, no host, no token engine), so this proves
-#        the SIE is programmed and the buffers are in USB RAM, and
-#        proves nothing about enumeration.
-#   hw   The hardware gate (run by hand, needs a board): the device
-#        enumerates as a CDC-ACM port, the host opens it, and the
-#        bytes written come back byte-exact. This is the enumeration
-#        evidence.
-#
-# The sim half runs inside the toolchain container (mdb.sh lives
-# there); the hw half runs on the host, because the board is plugged
-# into the host's USB bus, which the container cannot see.
-#
-# Usage: usb-bringup-gate.sh sim <module> <mcu> <device>
-#        usb-bringup-gate.sh hw [--timeout <seconds>]
-#
-# Exit codes: 0 pass, 1 fail, 2 skipped (the hw half with no board, or
-# without pyserial installed).
+# check. The sim half runs the real firmware under MPLAB SIM and reads
+# back the SIE state (the simulator models no USB SIE, so it proves
+# the SIE is programmed, not that the device enumerates). The hw half
+# needs a board: it finds the CDC-ACM port and requires the bytes
+# written to come back, which is the enumeration evidence. The bring-up
+# project's README has what each half proves.
 
 set -uo pipefail
-
 mode="${1:-}"
 if [ -z "$mode" ]; then
   echo "usage: usb-bringup-gate.sh sim <module> <mcu> <device>" >&2

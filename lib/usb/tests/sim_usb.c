@@ -2,14 +2,14 @@
  * Bounded, self-reporting HARNESS=sim bring-up gate for lib/usb on
  * PIC18F4550. MPLAB SIM models no USB SIE: there is no bus, no host and
  * no token engine (the simulator's PIC18 peripheral set has no USB
- * model), so this gate cannot enumerate and must not pretend to. What
- * it can prove is the half of bring-up that enumeration depends on:
+ * model), so this gate cannot enumerate and must not pretend to. It
+ * proves the half of bring-up that enumeration depends on:
  * epic_usb_init() enables the SIE, selects full speed and the internal
- * pull-up, enables control transfers on EP0 and data transfers on EP1/
- * EP2, leaves UADDR at 0, and hands the SIE a buffer descriptor table
- * whose buffers all live in USB RAM. Enumeration, the descriptors on
- * the wire, CDC class requests and the echo round trip stay unproven
- * until a board runs the same firmware.
+ * pull-up, enables control transfers on EP0 and data transfers on
+ * EP1/EP2, leaves UADDR at 0, and hands the SIE a buffer descriptor
+ * table whose buffers all live in USB RAM. Enumeration, the
+ * descriptors on the wire, CDC class requests and the echo round trip
+ * stay unproven until a board runs the same firmware.
  *
  * Register and memory facts: DS39632E Section 17.2 (UCON, UCFG, UEPn,
  * UADDR), Section 17.3 (bank 4, 400h-4FFh, holds the buffer descriptor
@@ -97,11 +97,9 @@ int main(void)
     /* Section 17.3/17.4.3: every buffer the descriptors point at must be
      * endpoint data RAM (bank 5 and up), inside banks 4-7. A buffer the
      * linker left in the general GPR banks is the defect this gate is
-     * here to catch.
-     *
-     * The pointer is deliberately not const-qualified: on PIC18, XC8
-     * lowers a const pointer to a program-space reference, so a
-     * const volatile read of 0x400 returns the wrong bytes entirely
+     * here to catch. The pointer is deliberately not const-qualified: on
+     * PIC18, XC8 lowers a const pointer to a program-space reference, so
+     * a const volatile read of 0x400 returns the wrong bytes entirely
      * (verified under MPLAB SIM, 2026-10-20). */
     volatile uint8_t *bd = (volatile uint8_t *)BDT_ADDR;
     for (uint8_t i = 0; i < BDT_COUNT; i++)

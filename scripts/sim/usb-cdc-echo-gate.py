@@ -31,8 +31,12 @@ try:
     import serial
     from serial.tools import list_ports
 except ImportError:
-    sys.exit("error: pyserial is required (pip install pyserial); this "
-             "script drives real USB hardware")
+    # No pyserial means this host cannot drive the board. That is a
+    # skip, not a failure: exit 2, the same code the gate uses for "no
+    # board on this machine".
+    print("usb gate: pyserial is not installed (pip install pyserial); "
+          "the hardware gate cannot run on this host", file=sys.stderr)
+    sys.exit(2)
 
 DEFAULT_VID = 0xA0A0
 DEFAULT_PID = 0x0004
@@ -58,6 +62,38 @@ def find_port(vid: int, pid: int, deadline: float) -> serial.Serial | None:
     return None
 
 
+def echo_round_trip(port, payload: bytes, timeout: float) -> bytes:
+    """Write payload and collect the bytes the device sends back.
+
+    DTR is asserted first: the firmware's connected() waits for it, so
+    without it the device never echoes. A device that cannot carry
+    modem-control lines (a pseudo-terminal, for one) raises here, and
+    that is not fatal: the round trip is still worth attempting, and
+    the failure it produces says what went wrong.
+
+    The read side has its own deadline: the time spent waiting for
+    enumeration does not come out of the time allowed for the echo to
+    come back.
+    """
+    try:
+        port.dtr = True
+    except (OSError, IOError) as exc:
+        print("usb gate: note, cannot set DTR on %s (%s)"
+              % (port.name, exc), file=sys.stderr)
+    time.sleep(0.5)
+    port.reset_input_buffer()
+    port.write(payload)
+    port.flush()
+
+    deadline = time.monotonic() + timeout
+    got = bytearray()
+    while len(got) < len(payload) and time.monotonic() < deadline:
+        chunk = port.read(len(payload) - len(got))
+        if chunk:
+            got.extend(chunk)
+    return bytes(got)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--vid", type=lambda s: int(s, 0), default=DEFAULT_VID,
@@ -79,20 +115,7 @@ def main() -> int:
         return 2
 
     try:
-        # Assert DTR, which is what the firmware's connected() waits for:
-        # a host can enumerate the device and still never open the port.
-        port.dtr = True
-        time.sleep(0.5)
-        port.reset_input_buffer()
-        port.write(PAYLOAD)
-        port.flush()
-
-        got = bytearray()
-        while len(got) < len(PAYLOAD) and time.monotonic() < deadline:
-            chunk = port.read(len(PAYLOAD) - len(got))
-            if chunk:
-                got.extend(chunk)
-
+        got = echo_round_trip(port, PAYLOAD, args.timeout)
         print("usb gate: enumerated %04X:%04X on %s"
               % (args.vid, args.pid, port.port))
         if got != PAYLOAD:

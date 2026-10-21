@@ -363,11 +363,8 @@ mdb-hex: image
 # the real firmware) plus the host-side enumeration and CDC echo round
 # trip when a board is attached. MODULE names the manifest module,
 # MCU the part, DEVICE the MPLAB part name. The simulator half needs
-# the emitted sim build, so the target emits it first (resolution on
-# the host, execution in the container, as xc8-build does). The
-# hardware half runs on the host: the board is on this machine's USB
-# bus, which the container cannot see, so it cannot run inside
-# DOCKER_RUN.
+# the emitted sim build, so the target emits it first; the hardware
+# half runs on the host, where the board's USB bus is.
 usb-gate: image
 	@test -n "$(MCU)" || { echo "usage: make usb-gate MODULE=lib/usb MCU=18F4550 [DEVICE=PIC18F4550]" >&2; exit 1; }
 	MID=$$(python3 scripts/build/resolve_module.py --id "$(or $(MODULE),lib/usb)") || exit 1; \

@@ -4185,8 +4185,7 @@ config  = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF", CP
 # control and data bits) and every buffer descriptor at 400h points into
 # USB RAM 500h-7FFh (DS39632E Sections 17.2-17.4). Enumeration and the
 # CDC echo round trip are NOT exercised: they need a board, and
-# scripts/sim/usb-cdc-echo-gate.py runs them there. WDT off like every
-# other sim variant.
+# scripts/sim/usb-cdc-echo-gate.py runs them there.
 [modules."lib/usb".example.PIC18Fxx5x.sim]
 name        = "usb-sim"
 harness_src = "hal/pic18/18fxx5x/src/mdb/pic18_harness_mdb.c"
