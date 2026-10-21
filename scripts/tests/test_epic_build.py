@@ -121,6 +121,7 @@ depends_on = []
 
 [modules."lib/tick".supported]
 PIC16F87XA = ["16F877A"]
+PIC18Fxx5x = ["18F4550"]
 
 [modules."lib/tick".excluded]
 "16F873A" = "RAM: does not fit"

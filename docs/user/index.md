@@ -11,9 +11,9 @@ This page lists the HAL modules you can add to a firmware project, with what eac
 | [`lib/debounce`](modules/debounce.md) | Vendor-agnostic digital-input debouncer | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | [`lib/encoder`](modules/encoder.md) | Interrupt-driven x4 quadrature decoder for 8-bit PICs | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | [`lib/fsm`](modules/fsm.md) | Vendor-agnostic table-driven finite state machine engine | PIC16F193X, PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| [`lib/lcd`](modules/lcd.md) | HD44780-compatible character LCD HAL module | PIC16F87XA, PIC16F88X |
+| [`lib/lcd`](modules/lcd.md) | HD44780-compatible character LCD HAL module | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | [`lib/math`](modules/math.md) | Fixed-point math HAL module for 8-bit PICs | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| [`lib/mcp23x17`](modules/mcp23x17.md) | MCP23017 and MCP23S17 16-bit I/O expander HAL module on lib/bus | PIC16F87XA, PIC16F88X |
+| [`lib/mcp23x17`](modules/mcp23x17.md) | MCP23017 and MCP23S17 16-bit I/O expander HAL module on lib/bus | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | [`lib/modbus`](modules/modbus.md) | Modbus RTU slave for 8-bit PICs | PIC18Fxx5x |
 | [`lib/pid`](modules/pid.md) | Vendor-agnostic fixed-point PID controller | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | [`lib/sdcard`](modules/sdcard.md) | SD/MMC over SPI block storage for the PIC18Fxx5x family | PIC18Fxx5x |

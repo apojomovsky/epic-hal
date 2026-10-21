@@ -149,6 +149,6 @@ Per-family facts from the manifest: parts, core, modules available, simulator su
 |---|---|
 | Parts | 18F2455, 18F2550, 18F4455, 18F4550 |
 | Core | PIC18 |
-| Modules | `demos/bridge`, `demos/control`, `demos/menu`, `hal/pic18/18fxx5x`, `lib/adcfilter`, `lib/bus`, `lib/console`, `lib/debounce`, `lib/encoder`, `lib/fsm`, `lib/math`, `lib/modbus`, `lib/pid`, `lib/sdcard`, `lib/serial`, `lib/settings`, `lib/swuart`, `lib/taskmgr`, `lib/tick`, `lib/usb`, `tests/epic-combo-eeprom-isr`, `tests/epic-combo-lcd-tick`, `tests/epic-combo-modbus-full`, `tests/epic-combo-taskmgr-serial`, `tests/epic-combo-tick-settings` |
+| Modules | `demos/bridge`, `demos/control`, `demos/menu`, `hal/pic18/18fxx5x`, `lib/adcfilter`, `lib/bus`, `lib/console`, `lib/debounce`, `lib/encoder`, `lib/fsm`, `lib/lcd`, `lib/math`, `lib/mcp23x17`, `lib/modbus`, `lib/pid`, `lib/sdcard`, `lib/serial`, `lib/settings`, `lib/swuart`, `lib/taskmgr`, `lib/tick`, `lib/usb`, `tests/epic-combo-eeprom-isr`, `tests/epic-combo-lcd-tick`, `tests/epic-combo-modbus-full`, `tests/epic-combo-taskmgr-serial`, `tests/epic-combo-tick-settings` |
 | Simulator | MDB sim gate |
 | Simulator limits | None documented |

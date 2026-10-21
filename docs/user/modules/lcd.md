@@ -9,9 +9,10 @@ HD44780-compatible character LCD HAL module. This page is the reference for the 
 |---|---|
 | Module id | `lib/lcd` |
 | Source | [`lib/lcd`](https://github.com/apojomovsky/epic-hal/tree/master/lib/lcd) |
-| Families | PIC16F87XA, PIC16F88X |
+| Families | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | Parts, PIC16F87XA | PIC16F877, PIC16F877A |
 | Parts, PIC16F88X | PIC16F887 |
+| Parts, PIC18Fxx5x | PIC18F4455, PIC18F4550 |
 | Source files | `lib/lcd/src/epic_lcd.c` |
 | Depends on | [`lib/tick`](tick.md) |
 | Used by | No other module |
@@ -31,6 +32,7 @@ The manifest lists one example program per family, plus peer programs for extra 
 | PIC16F88X | `lcd` | [`lib/lcd/examples/example_lcd.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/examples/example_lcd.c), [`lib/lcd/src/epic_lcd_gpio4.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/src/epic_lcd_gpio4.c) |
 | PIC16F88X (gpio8) | `lcd-gpio8` | [`lib/lcd/examples/example_lcd_gpio8.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/examples/example_lcd_gpio8.c), [`lib/lcd/src/epic_lcd_gpio8.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/src/epic_lcd_gpio8.c) |
 | PIC16F88X (spi) | `lcd-spi` | [`lib/lcd/examples/example_lcd_spi.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/examples/example_lcd_spi.c), [`lib/lcd/src/epic_lcd_spi.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/src/epic_lcd_spi.c) |
+| PIC18Fxx5x | `lcd` | [`lib/lcd/examples/example_lcd.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/examples/example_lcd.c), [`lib/lcd/src/epic_lcd_gpio4.c`](https://github.com/apojomovsky/epic-hal/blob/master/lib/lcd/src/epic_lcd_gpio4.c) |
 
 ## API
 

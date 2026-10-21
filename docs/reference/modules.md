@@ -30,9 +30,9 @@ Every module in the manifest, with its one-line summary and the families it supp
 | `lib/debounce` | Vendor-agnostic digital-input debouncer | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/encoder` | Interrupt-driven x4 quadrature decoder for 8-bit PICs | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/fsm` | Vendor-agnostic table-driven finite state machine engine | PIC16F193X, PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| `lib/lcd` | HD44780-compatible character LCD HAL module | PIC16F87XA, PIC16F88X |
+| `lib/lcd` | HD44780-compatible character LCD HAL module | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/math` | Fixed-point math HAL module for 8-bit PICs | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
-| `lib/mcp23x17` | MCP23017 and MCP23S17 16-bit I/O expander HAL module on lib/bus | PIC16F87XA, PIC16F88X |
+| `lib/mcp23x17` | MCP23017 and MCP23S17 16-bit I/O expander HAL module on lib/bus | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/modbus` | Modbus RTU slave for 8-bit PICs | PIC18Fxx5x |
 | `lib/pid` | Vendor-agnostic fixed-point PID controller | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | `lib/sdcard` | SD/MMC over SPI block storage for the PIC18Fxx5x family | PIC18Fxx5x |
