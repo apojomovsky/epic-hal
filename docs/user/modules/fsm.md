@@ -13,7 +13,7 @@ Vendor-agnostic table-driven finite state machine engine. This page is the refer
 | Parts, PIC16F193X | PIC16F1933, PIC16F1934, PIC16F1936, PIC16F1937, PIC16F1938, PIC16F1939 |
 | Parts, PIC16F87XA | PIC16F873A, PIC16LF873A, PIC16F873, PIC16F874, PIC16F874A, PIC16F876, PIC16F876A, PIC16F877, PIC16F877A |
 | Parts, PIC16F88X | PIC16F883, PIC16F884, PIC16F886, PIC16F887 |
-| Parts, PIC18Fxx5x | PIC18F4455, PIC18F4550 |
+| Parts, PIC18Fxx5x | PIC18F2455, PIC18F2550, PIC18F4455, PIC18F4550 |
 | Source files | `lib/fsm/src/fsm.c` |
 | Depends on | Nothing |
 | Used by | No other module |
@@ -39,7 +39,6 @@ The API is documented next to the code, in the [`lib/fsm` directory](https://git
 ## Limits
 
 - Not built for PIC16F870, PIC16F871, PIC16F872. Reason: RAM: HAL callback table does not fit.
-- Not built for PIC18F2455, PIC18F2550. Reason: example needs lib/tick, which does not fit on this part (RAM).
 
 ## Related
 

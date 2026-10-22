@@ -10,7 +10,7 @@ SD/MMC over SPI block storage for the PIC18Fxx5x family. This page is the refere
 | Module id | `lib/sdcard` |
 | Source | [`lib/sdcard`](https://github.com/apojomovsky/epic-hal/tree/master/lib/sdcard) |
 | Families | PIC18Fxx5x |
-| Parts, PIC18Fxx5x | PIC18F4455, PIC18F4550 |
+| Parts, PIC18Fxx5x | PIC18F2455, PIC18F2550, PIC18F4455, PIC18F4550 |
 | Source files | `lib/sdcard/src/epic_sdcard.c`, `lib/sdcard/third_party/m-stack-storage/src/mmc.c`, `lib/sdcard/third_party/m-stack-storage/src/crc.c` |
 | Depends on | [`lib/tick`](tick.md) |
 | Used by | No other module |
@@ -32,7 +32,7 @@ The API is documented next to the code, in the [`lib/sdcard` directory](https://
 
 ## Limits
 
-- Not built for PIC18F2455, PIC18F2550. Reason: RAM: does not fit on this smaller part.
+- No limits are recorded in the manifest.
 
 ## Related
 

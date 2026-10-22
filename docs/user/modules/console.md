@@ -12,7 +12,7 @@ Line-based command dispatcher over lib/serial. This page is the reference for th
 | Families | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | Parts, PIC16F87XA | PIC16F876, PIC16F876A, PIC16F877, PIC16F877A |
 | Parts, PIC16F88X | PIC16F886, PIC16F887 |
-| Parts, PIC18Fxx5x | PIC18F4455, PIC18F4550 |
+| Parts, PIC18Fxx5x | PIC18F2455, PIC18F2550, PIC18F4455, PIC18F4550 |
 | Source files | `lib/console/src/epic_console.c` |
 | Depends on | [`lib/serial`](serial.md) |
 | Used by | No other module |
@@ -36,7 +36,7 @@ The API is documented next to the code, in the [`lib/console` directory](https:/
 
 ## Limits
 
-- Not built for PIC16F870, PIC16F871, PIC16F872, PIC16F873, PIC16F873A, PIC16F874, PIC16F874A, PIC16LF873A, PIC18F2455, PIC18F2550. Reason: RAM: does not fit on this smaller part.
+- Not built for PIC16F870, PIC16F871, PIC16F872, PIC16F873, PIC16F873A, PIC16F874, PIC16F874A, PIC16LF873A. Reason: RAM: does not fit on this smaller part.
 
 ## Related
 

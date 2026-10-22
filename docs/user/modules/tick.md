@@ -14,7 +14,7 @@
 | Parts, PIC16F628A | PIC16F628, PIC16LF628A, PIC16F648A, PIC16F628A |
 | Parts, PIC16F87XA | PIC16F873A, PIC16LF873A, PIC16F873, PIC16F874, PIC16F874A, PIC16F876, PIC16F876A, PIC16F877, PIC16F877A |
 | Parts, PIC16F88X | PIC16F883, PIC16F884, PIC16F886, PIC16F887 |
-| Parts, PIC18Fxx5x | PIC18F4455, PIC18F4550 |
+| Parts, PIC18Fxx5x | PIC18F2455, PIC18F2550, PIC18F4455, PIC18F4550 |
 | Source files | `lib/tick/src/epic_tick.c` |
 | Depends on | Nothing |
 | Used by | [`lib/debounce`](debounce.md), [`lib/encoder`](encoder.md), [`lib/lcd`](lcd.md), [`lib/modbus`](modbus.md), [`lib/sdcard`](sdcard.md) |
@@ -40,7 +40,6 @@ The API is documented next to the code, in the [`lib/tick` directory](https://gi
 
 ## Limits
 
-- Not built for PIC18F2455, PIC18F2550. Reason: RAM: does not fit on this smaller part.
 - Not built for PIC16F870, PIC16F871, PIC16F872. Reason: RAM: one byte of HAL state does not fit.
 - Not built for PIC16F627, PIC16F627A, PIC16LF627A. Reason: flash: tick example exceeds the 1K-word part.
 
