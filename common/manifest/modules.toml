@@ -2581,6 +2581,8 @@ PIC16F88X = [
   "16F887",
 ]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
@@ -2589,8 +2591,6 @@ PIC18Fxx5x = [
 "16F870" = "no SSP peripheral on this cut-down"
 "16F871" = "no SSP peripheral on this cut-down"
 "16F872" = "flash: bus example does not fit 2K CODE"
-"18F2455" = "RAM: does not fit on this smaller part"
-"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules."lib/bus".example.PIC16F87XA]
 name    = "bus"
@@ -2782,6 +2782,8 @@ PIC16F88X = [
   "16F887",
 ]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
@@ -2790,7 +2792,7 @@ PIC18Fxx5x = [
 # The old all-MCU exclusion ("link: irq dispatch needs every peripheral
 # handler") is stale: that failure class cannot recur since the
 # manifest links the family's full hal_sources set for every HAL build.
-# The smaller parts stay excluded because the module pulls in
+# The smaller PIC16 parts stay excluded because the module pulls in
 # lib/serial, which does not fit there (the same RAM reason
 # lib/serial and lib/debounce exclude them).
 "16F873A" = "RAM: does not fit on this smaller part"
@@ -2801,8 +2803,6 @@ PIC18Fxx5x = [
 "16F872" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
 "16F874" = "RAM: does not fit on this smaller part"
-"18F2455" = "RAM: does not fit on this smaller part"
-"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules."lib/console".example.PIC16F87XA]
 name    = "console"
@@ -2877,6 +2877,8 @@ PIC16F88X = [
   "16F887",
 ]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
@@ -2890,8 +2892,6 @@ PIC18Fxx5x = [
 "16F872" = "RAM: does not fit on this smaller part"
 "16F874A" = "RAM: does not fit on this smaller part"
 "16F874" = "RAM: does not fit on this smaller part"
-"18F2455" = "RAM: does not fit on this smaller part"
-"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules."lib/debounce".example.PIC16F87XA]
 name    = "debounce"
@@ -2978,6 +2978,8 @@ PIC16F88X = [
   "16F887",
 ]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
@@ -2986,8 +2988,6 @@ PIC18Fxx5x = [
 "16F870" = "RAM: module state does not fit"
 "16F871" = "RAM: module state does not fit"
 "16F872" = "RAM: module state does not fit"
-"18F2455" = "RAM: does not fit on this smaller part"
-"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules."lib/encoder".example.PIC16F87XA]
 name    = "encoder"
@@ -3163,6 +3163,8 @@ PIC16F88X = [
   "16F887",
 ]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
@@ -3176,14 +3178,12 @@ PIC16F193X = [
 ]
 
 # The example (examples/example_fsm.c) is a tick-driven traffic light.
-# Its lib/tick dependency is excluded on the smaller parts: it does
-# not fit on the 18F2455/18F2550 (RAM).
+# Its lib/tick dependency fits on every part of this family, so the
+# module builds on all four.
 [modules."lib/fsm".excluded]
 "16F870" = "RAM: HAL callback table does not fit"
 "16F871" = "RAM: HAL callback table does not fit"
 "16F872" = "RAM: HAL callback table does not fit"
-"18F2455" = "example needs lib/tick, which does not fit on this part (RAM)"
-"18F2550" = "example needs lib/tick, which does not fit on this part (RAM)"
 
 [modules."lib/fsm".example.PIC16F87XA]
 name    = "fsm"
@@ -3306,6 +3306,8 @@ PIC16F88X = [
   "16F887",
 ]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
@@ -3328,9 +3330,9 @@ sources = [
 hal     = true
 config  = { BOREN = "ON", FOSC = "HS", LVP = "OFF", PWRTE = "ON", WDTE = "OFF", WRT = "OFF" }
 
-# The same program and pin map on the 40/44-pin PIC18 parts: PORTB has
-# RB0..RB7 there, and lib/tick (the transport's delay source) stops at
-# the 40/44-pin parts, so 18F2455/18F2550 do not reach this example.
+# The same program and pin map on all four PIC18 parts: PORTB carries
+# RB0..RB7 on the 28-pin parts too, and lib/tick (the transport's
+# delay source) fits there.
 [modules."lib/lcd".example.PIC18Fxx5x]
 name    = "lcd"
 sources = [
@@ -3693,6 +3695,8 @@ epiccc_hal_sources_by_family.PIC16F88X = [
 
 [modules."lib/modbus".supported]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
@@ -3710,8 +3714,6 @@ PIC18Fxx5x = [
 "16F876A" = "RAM: does not fit on this part"
 "16F877" = "RAM: does not fit on this part"
 "16F877A" = "RAM: does not fit on this part"
-"18F2455" = "RAM: does not fit on this smaller part"
-"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules."lib/modbus".example.PIC16F87XA]
 name    = "modbus"
@@ -4052,6 +4054,9 @@ depends_on = []
 
 [modules."lib/settings".supported]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
+  "18F4455",
   "18F4550",
 ]
 
@@ -4068,9 +4073,6 @@ PIC18Fxx5x = [
 "16F876A" = "link: irq dispatch needs every peripheral handler"
 "16F877" = "link: irq dispatch needs every peripheral handler"
 "16F877A" = "link: irq dispatch needs every peripheral handler"
-"18F2455" = "link: irq dispatch needs every peripheral handler"
-"18F2550" = "link: irq dispatch needs every peripheral handler"
-"18F4455" = "link: irq dispatch needs every peripheral handler"
 
 [modules."lib/settings".example.PIC16F87XA]
 name    = "settings-sizecheck"
@@ -4134,16 +4136,11 @@ needs_hal  = true
 
 [modules."lib/sdcard".supported]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
-
-# Mirrors lib/serial's exclusion: the example's lib/serial sources
-# (32-byte g_rx_buf) do not fit on the smaller parts, and the example
-# links them.
-[modules."lib/sdcard".excluded]
-"18F2455" = "RAM: does not fit on this smaller part"
-"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules."lib/sdcard".example.PIC18Fxx5x]
 name    = "sdcard"
@@ -4381,6 +4378,8 @@ PIC16F88X = [
   "16F887",
 ]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
@@ -4394,8 +4393,6 @@ PIC18Fxx5x = [
 "16F872" = "RAM: 54-byte task table does not fit on this smaller part"
 "16F874A" = "RAM: 54-byte task table does not fit on this smaller part"
 "16F874" = "RAM: 54-byte task table does not fit on this smaller part"
-"18F2455" = "link: irq dispatch needs every peripheral handler"
-"18F2550" = "link: irq dispatch needs every peripheral handler"
 
 [modules."lib/taskmgr".example.PIC16F87XA]
 name    = "taskmgr"
@@ -4680,6 +4677,8 @@ PIC16F88X = [
   "16F887",
 ]
 PIC18Fxx5x = [
+  "18F2455",
+  "18F2550",
   "18F4455",
   "18F4550",
 ]
@@ -4702,8 +4701,6 @@ PIC16F193X = [
 "16F870" = "RAM: one byte of HAL state does not fit"
 "16F871" = "RAM: one byte of HAL state does not fit"
 "16F872" = "RAM: one byte of HAL state does not fit"
-"18F2455" = "RAM: does not fit on this smaller part"
-"18F2550" = "RAM: does not fit on this smaller part"
 
 [modules."lib/tick".example.PIC16F87XA]
 name    = "tick"

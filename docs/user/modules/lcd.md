@@ -12,7 +12,7 @@ HD44780-compatible character LCD HAL module. This page is the reference for the 
 | Families | PIC16F87XA, PIC16F88X, PIC18Fxx5x |
 | Parts, PIC16F87XA | PIC16F877, PIC16F877A |
 | Parts, PIC16F88X | PIC16F887 |
-| Parts, PIC18Fxx5x | PIC18F4455, PIC18F4550 |
+| Parts, PIC18Fxx5x | PIC18F2455, PIC18F2550, PIC18F4455, PIC18F4550 |
 | Source files | `lib/lcd/src/epic_lcd.c` |
 | Depends on | [`lib/tick`](tick.md) |
 | Used by | No other module |
