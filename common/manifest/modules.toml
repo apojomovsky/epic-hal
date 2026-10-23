@@ -4056,6 +4056,7 @@ depends_on = []
 PIC18Fxx5x = [
   "18F2455",
   "18F2550",
+  "18F4455",
   "18F4550",
 ]
 
@@ -4072,7 +4073,6 @@ PIC18Fxx5x = [
 "16F876A" = "link: irq dispatch needs every peripheral handler"
 "16F877" = "link: irq dispatch needs every peripheral handler"
 "16F877A" = "link: irq dispatch needs every peripheral handler"
-"18F4455" = "link: irq dispatch needs every peripheral handler"
 
 [modules."lib/settings".example.PIC16F87XA]
 name    = "settings-sizecheck"
