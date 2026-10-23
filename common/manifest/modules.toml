@@ -3177,9 +3177,8 @@ PIC16F193X = [
   "16F1939",
 ]
 
-# The example (examples/example_fsm.c) is a tick-driven traffic light.
-# Its lib/tick dependency fits on every part of this family, so the
-# module builds on all four.
+# The example (examples/example_fsm.c) is a tick-driven traffic light,
+# so the module needs lib/tick on every part it builds on.
 [modules."lib/fsm".excluded]
 "16F870" = "RAM: HAL callback table does not fit"
 "16F871" = "RAM: HAL callback table does not fit"
@@ -4854,7 +4853,7 @@ config      = { BOR = "OFF", BORV = "3", CCP2MX = "ON", CP0 = "OFF", CP1 = "OFF"
 
 
 # C7 of the combination matrix: lib/tick +
-# lib/settings on PIC18 (18F4550, the only part lib/settings supports).
+# lib/settings on PIC18 (18F4550, the part this gate runs on).
 # The gate (tests/combo_tick_settings.c) saves a blob through the real
 # epic_settings.c while the 1 ms tick ISR is live, corrupts one stored
 # byte, verifies the load detects it and defaults are persisted, and
